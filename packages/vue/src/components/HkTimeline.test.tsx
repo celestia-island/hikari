@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkTimeline, { computeTimelineWindow } from "./HkTimeline";
@@ -485,5 +488,24 @@ describe("HkTimeline navigation motion (round 16)", () => {
     current.value = "s0";
     await nextTick();
     expect(host().getAttribute("data-dir")).toBe("back");
+  });
+});
+
+describe("HkTimeline window-mode layout under the sticky pin (round 17)", () => {
+  // Round-17 regression: scoping the whole window rule with
+  // :not(.hk-scroll-pin) deleted the grid layout from every
+  // sticky-header timeline — the windowed wizard collapsed to a block
+  // stack (circles left, links gone). happy-dom does not resolve the
+  // SCSS, so this pins the SOURCE structure: the layout rule is
+  // unconditional; only the relative anchor escapes.
+  it("keeps the window layout unconditional and escapes only position", () => {
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkTimeline.scss"), "utf-8");
+    const layout = src.match(/\.hk-timeline\[data-mode="window"\]\s*\{([\s\S]*?)\n\}/)![1]!;
+    expect(layout).toContain("display: grid");
+    expect(layout).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+    expect(layout, "the layout rule must NOT carry the escape").not.toContain(":not(");
+    expect(layout, "position belongs to the escaped rule").not.toContain("position");
+    const anchor = src.match(/\.hk-timeline\[data-mode="window"\]:not\(\.hk-scroll-pin\)\s*\{([\s\S]*?)\n\}/)![1]!;
+    expect(anchor.trim()).toBe("position: relative;");
   });
 });

@@ -245,6 +245,17 @@ export function useSizeMorph(
    *  small, and opacity-composited by its own fade anyway) keep the
    *  stage-time promotion. */
   let residentRideEls: HTMLElement[] = [];
+  /** Height-morph promotion snapshot (round 20). Overlapping morphs are
+   *  possible (a second navigation lands while the first height
+   *  animation still runs): the FIRST demotion captures the real
+   *  resident values, later morphs leave the snapshot alone, and only
+   *  the newest generation's restore puts them back — otherwise a
+   *  superseded morph's watchdog re-promotes the riders in the middle
+   *  of the successor's animation (the rig caught exactly that). */
+  let morphEpoch = 0;
+  let morphDemoted = false;
+  let morphSavedFrameWill = "";
+  let morphSavedRiderWills: Array<[HTMLElement, string]> = [];
   /** Identity of the sweep currently staged/folding, echoed to consumers. */
   let sweepSeq = 0;
   let activeSweep = 0;
@@ -440,8 +451,14 @@ export function useSizeMorph(
   /** Drop the resident layer promotion (hold / release paths) — the
    *  frame's own and the resident riders' together: the whole open
    *  cycle's layerization unwinds at once, inside the close
-   *  choreography's own leave window. */
+   *  choreography's own leave window. A height morph still in flight
+   *  loses its restore snapshot here too: the cycle is over, so the
+   *  pending restore must not put the promotions back on a sheet that
+   *  already unwound them. */
   function clearResidentWill(): void {
+    morphSavedRiderWills = [];
+    morphSavedFrameWill = "";
+    morphDemoted = false;
     for (const el of residentRideEls) {
       el.style.willChange = "";
     }
@@ -936,36 +953,64 @@ export function useSizeMorph(
     // 2. Re-establish the OLD pin under no transition, flush it.
     f.style.height = `${pinned}px`;
     void f.offsetHeight;
-    // 3. DEMOTE the frame from its resident composited layer for the
-    //    animation's duration. A `will-change: clip-path` layer whose
-    //    element changes layout size per-frame re-allocates its GPU
-    //    texture every frame — on a phone GPU the gap between the old
-    //    texture being discarded and the new one rastering composites
-    //    as TRANSPARENT, flashing the page behind the sheet through
-    //    (round-19 report: "background content keeps flashing"). With
-    //    the promotion lifted, the height animation's per-frame paint
-    //    happens on the main thread, which is slower but never leaves
-    //    a frame where the sheet's surface is missing.
-    const residentWill_ = f.style.willChange;
+    // 3. DEMOTE every promoted layer in the sheet for the animation's
+    //    duration — the frame AND the resident riders. A composited
+    //    layer whose element changes layout size per-frame re-allocates
+    //    its GPU texture every frame; on a phone GPU the gap between the
+    //    old texture being discarded and the new one rastering
+    //    composites as TRANSPARENT, so the region that layer covers
+    //    flashes through to the page behind (round-19 report on the
+    //    frame; round-20 report showed the flicker persisting over
+    //    exactly the CONTENT area — the body block keeps its resident
+    //    promotion from round 15 and is a flex child, so its box
+    //    resizes every frame of a height transition). A backdrop-filter
+    //    on a resizing subtree is the same class of per-frame surface
+    //    churn (the sticky step indicator's blur), so the morph also
+    //    flags the frame for the stylesheet to drop it. With everything
+    //    demoted the height animation's per-frame paint happens on the
+    //    main thread, which is slower but never leaves a frame where
+    //    the sheet's surface is missing.
+    const epoch = ++morphEpoch;
+    if (!morphDemoted) {
+      morphSavedFrameWill = f.style.willChange;
+      morphSavedRiderWills = residentRideEls.map((el) => [
+        el,
+        el.style.willChange,
+      ]);
+      morphDemoted = true;
+    }
     if (residentWill) {
       f.style.willChange = "";
       residentWill = false;
     }
+    for (const el of residentRideEls) {
+      el.style.willChange = "";
+    }
+    f.setAttribute("data-hk-morphing", "");
     f.style.transition =
       `height ${durationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
     f.style.height = `${next}px`;
     pinned = next;
     // 4. Clean up on the animation's own clock: restore the transition
-    //    list and the resident layer promotion together — the frame is
-    //    at its final geometry and at rest, so the re-promotion's
+    //    list, the morph flag and every promotion together — the frame
+    //    is at its final geometry and at rest, so the re-promotion's
     //    raster has all the time it needs.
     const restore = (): void => {
       f.removeEventListener("transitionend", onEnd);
+      // A superseded morph must not touch the successor's demotion.
+      if (epoch !== morphEpoch) return;
       f.style.transition = "";
-      if (residentWill_ === "clip-path") {
+      f.removeAttribute("data-hk-morphing");
+      if (morphSavedFrameWill === "clip-path") {
         f.style.willChange = "clip-path";
         residentWill = true;
       }
+      for (const [el, will] of morphSavedRiderWills) {
+        el.style.willChange = will;
+      }
+      morphSavedRiderWills = [];
+      morphSavedFrameWill = "";
+      morphDemoted = false;
     };
     const onEnd = (ev: TransitionEvent): void => {
       if (ev.target === f && ev.propertyName === "height") {
@@ -973,10 +1018,7 @@ export function useSizeMorph(
       }
     };
     f.addEventListener("transitionend", onEnd);
-    const watchdog = setTimeout(restore, durationMs + 350);
-    // If the element goes away mid-flight, don't leak the timer.
-    const origClear = watchdog;
-    void origClear; // timer fires restore() which is idempotent
+    setTimeout(restore, durationMs + 350);
   }
 
   return { start, stop, hold, remeasure, heightMorph };

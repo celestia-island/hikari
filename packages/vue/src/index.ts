@@ -201,6 +201,10 @@ export { type GridItem } from "./components/HkDraggableGrid";
 export { type MinimapBox, type MinimapRect } from "./components/HkMinimap";
 export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./components/HkTrendChart";
 
+// ── Theme decor (theme-provided decorative widgets, host-placed) ──────────
+export { default as HkThemeDecor, type HkThemeDecorSize } from "./components/HkThemeDecor";
+export { default as HkStatusTray, type HkStatusTraySize } from "./components/HkStatusTray";
+
 // Theme system
 export {
   initTheme, useTheme, themePresets, tokensToCSSVars, getThemeTokens,
@@ -210,6 +214,9 @@ export {
   tokenGroupsVersion, tokenGroupSlotKind, tokenGroupSlotCssVar,
   isColorSlot, isNumberSlot, isEnumSlot,
   registerStandardThemeGroups, STANDARD_SHAPE_GROUP_ID,
+  registerStandardThemeDecor, STANDARD_THEME_DECOR_SLOTS,
+  registerThemeDecor, registerThemeDecorBuiltin, getThemeDecor, themeDecorSlots,
+  themeDecorVersion, isThemeDecorSlot, THEME_DECOR_SLOT_PATTERN, THEME_DECOR_WILDCARD,
   allGroupSlots, resolveLocalizedText, parseTokenGroupConfig, registerTokenGroupConfig,
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
@@ -224,6 +231,7 @@ export {
   type TokenGroupSlotKind, type TokenColorSlot, type TokenNumberSlot, type TokenEnumSlot,
   type ResolvedGroupTokens, type ColorHSL,
   type LocalizedText, type ParseTokenGroupResult,
+  type ThemeDecorSlot, type ThemeDecorRegistration, type ThemeDecorBuiltinRegistration,
   type FontContextOverrides,
 } from "./theme";
 

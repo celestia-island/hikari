@@ -1,0 +1,36 @@
+/* HkStatusTray — the size ladder for the gamepad/clock tray.
+ *
+ * The geometry itself already ships in styles/admin-tokens.scss
+ * (.s-status-bar-btn svg 9px, the `x` glyph 11px, .s-status-bar-time
+ * --text-2xs). Those rules stay untouched: this sheet only RE-READS them
+ * through the three custom properties the component publishes on its root
+ * (--hk-tray-glyph / --hk-tray-glyph-x / --hk-tray-time-size), with the
+ * shipped literals as fallbacks.
+ *
+ * Two consequences, both deliberate:
+ *
+ *  - a tray rendered without the component (bare markup, a host that only
+ *    loads the shared sheet) resolves the fallbacks and looks exactly like
+ *    the admin-tokens rule — zero visual change by construction;
+ *  - the selectors carry one extra class of specificity
+ *    (.s-status-bar-system-tray .s-status-bar-btn svg = 0,2,1 > 0,1,1), so
+ *    the override wins regardless of which sheet the bundle emits first.
+ *
+ * No `position:` here or in the component: a decor hands out content, the
+ * host decides where it goes (guarded by themeDecorLayout.contract.test.ts).
+ */
+.s-status-bar-system-tray {
+  .s-status-bar-btn svg {
+    width: var(--hk-tray-glyph, 9px);
+    height: var(--hk-tray-glyph, 9px);
+  }
+
+  .s-status-bar-btn[data-shape="x"] svg {
+    width: var(--hk-tray-glyph-x, 11px);
+    height: var(--hk-tray-glyph-x, 11px);
+  }
+
+  .s-status-bar-time {
+    font-size: var(--hk-tray-time-size, var(--text-2xs));
+  }
+}

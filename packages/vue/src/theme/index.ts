@@ -19,6 +19,14 @@ export type {
   LocalizedText, ParseTokenGroupResult,
 } from "./tokenGroups";
 export { registerStandardThemeGroups, STANDARD_SHAPE_GROUP_ID } from "./standardGroups";
+export {
+  registerThemeDecor, registerThemeDecorBuiltin, getThemeDecor, themeDecorSlots,
+  themeDecorVersion, isThemeDecorSlot, THEME_DECOR_SLOT_PATTERN, THEME_DECOR_WILDCARD,
+} from "./themeDecor";
+export type {
+  ThemeDecorSlot, ThemeDecorRegistration, ThemeDecorBuiltinRegistration,
+} from "./themeDecor";
+export { registerStandardThemeDecor, STANDARD_THEME_DECOR_SLOTS } from "./standardDecor";
 export { getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION, timezoneFallback, setGeolocationProvider } from "./useSolarTime";
 export type { GeoLocation, GeoLocationProvider } from "./useSolarTime";
 export { refreshThemeClock, stopThemeClock } from "./useTheme";

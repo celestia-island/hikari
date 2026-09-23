@@ -4,6 +4,7 @@ import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 import { addCustomTheme as addCustomThemeToStorage, loadCustomThemes, removeCustomTheme as removeCustomThemeFromStorage, themePresets, tokensToCSSVars, type CustomThemePreset, type ThemeId, type ThemeMode, type ThemePreset } from "./presets";
 import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from "./tokenGroups";
+import { registerStandardThemeDecor } from "./standardDecor";
 import { registerStandardThemeGroups } from "./standardGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
 import { getGeolocation, getTimePeriod, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
@@ -293,6 +294,12 @@ export function initTheme() {
   // Only a bare replacement registered before this point, with no explicit
   // registerStandardThemeGroups() call, is overwritten here.
   registerStandardThemeGroups();
+  // hikari's own decor defaults (the status tray, the placeholder/empty
+  // components) land on the decor registry's built-in floor BEFORE the
+  // first applyTheme, so the first themed render already resolves them.
+  // Same idempotence contract as the groups above: a host that registered
+  // its own replacement first survives, because this call is then a no-op.
+  registerStandardThemeDecor();
   const storedMode = localStorage.getItem(STORAGE_MODE_KEY) as ThemeMode | null;
   if (storedMode === "dark" || storedMode === "light") {
     currentMode.value = storedMode;

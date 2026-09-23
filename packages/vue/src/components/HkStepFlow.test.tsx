@@ -227,7 +227,7 @@ describe("HkStepFlow split-window swap (motion enabled)", () => {
     expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
     expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("b-body");
     expect(events).toHaveLength(2);
-    expect(events[1]!.detail).toMatchObject({ phase: "morph", durationMs: 1 });
+    expect(events[1]!.detail).toMatchObject({ phase: "morph", durationMs: 300 });
     expect(typeof events[1]!.detail.delta).toBe("number");
   });
 

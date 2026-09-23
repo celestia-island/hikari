@@ -39,6 +39,7 @@ interface Harness {
   stop(): void;
   hold(): void;
   remeasure(): void;
+  heightMorph(durationMs: number): void;
 }
 
 function mountHarness(initialHeight: number, initialContentHeight = 0, options?: SizeMorphOptions): Harness {
@@ -101,6 +102,7 @@ function mountHarness(initialHeight: number, initialContentHeight = 0, options?:
     stop: () => morph!.stop(),
     hold: () => morph!.hold(),
     remeasure: () => morph!.remeasure(),
+    heightMorph: (ms: number) => morph!.heightMorph(ms),
   };
 }
 
@@ -1162,6 +1164,43 @@ describe("useSizeMorph deferRemeasure gate (freeze protocol witness)", () => {
     await settle();
     await busFrames(3);
     expect(h.frame.style.height).toBe("420px");
+    h.stop();
+  });
+});
+
+describe("useSizeMorph heightMorph (round 18)", () => {
+  it("transitions the pin with an inline height transition and cleans up", async () => {
+    const h = mountHarness(300, 300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    expect(h.frame.style.height).toBe("300px");
+    expect(h.frame.style.willChange).toBe("clip-path");
+
+    h.setNatural(400);
+    (h as unknown as { heightMorph: (ms: number) => void }).heightMorph(300);
+    // The inline transition landed and the pin moved.
+    expect(h.frame.style.height).toBe("400px");
+    expect(h.frame.style.transition).toContain("height");
+    expect(h.frame.style.transition).toContain("300ms");
+    // No clip staging, no riders — this is a plain height animation.
+    expect(h.frame.style.clipPath).toBe("");
+
+    // The transitionend cleans the inline override.
+    const ev = new Event("transitionend");
+    Object.defineProperty(ev, "propertyName", { value: "height" });
+    h.frame.dispatchEvent(ev);
+    expect(h.frame.style.transition).toBe("");
+    h.stop();
+  });
+
+  it("is a no-op for sub-threshold deltas", async () => {
+    const h = mountHarness(300, 300);
+    h.start();
+    expect(h.frame.style.height).toBe("300px");
+    h.setNatural(301);
+    (h as unknown as { heightMorph: (ms: number) => void }).heightMorph(300);
+    expect(h.frame.style.height).toBe("301px");
+    expect(h.frame.style.transition).toBe("");
     h.stop();
   });
 });

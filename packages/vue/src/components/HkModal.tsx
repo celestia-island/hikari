@@ -328,15 +328,15 @@ export default defineComponent({
         swapFreezeTimer = setTimeout(() => clearSwapFreeze(true), ms + 650);
         return;
       }
-      // Morph / instant: the content settled — unfreeze and measure now.
+      // Morph / instant: the content settled — unfreeze and animate the
+      // height with a plain CSS transition (round 18: the clip-based
+      // morph's staging/warmup/rider choreography kept raster-racing on
+      // phone GPUs; the height transition has none of those moving
+      // parts). Instant settlements (reduced motion) still snap.
       clearSwapFreeze();
-      const frame = contentRef.value;
       const ms = detail?.durationMs;
-      if (frame && typeof ms === "number" && ms > 0) {
-        frame.style.setProperty("--hk-modal-morph-duration", `${ms}ms`);
-        morph.remeasure();
-        if (morphDurationTimer !== null) clearTimeout(morphDurationTimer);
-        morphDurationTimer = setTimeout(clearMorphDuration, ms + 350);
+      if (typeof ms === "number" && ms > 0) {
+        morph.heightMorph(ms);
       } else {
         morph.remeasure();
       }

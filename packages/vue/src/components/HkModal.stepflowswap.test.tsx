@@ -119,13 +119,9 @@ describe("HkModal stepflow swap handoff", () => {
     expect(rig.bodyEl()).not.toBeNull();
     expect(rig.morphToken()).toBe("");
 
-    // The morph window (after the slide settles) owns the height.
+    // The morph window (round 18: heightMorph, no clip override).
     rig.announceSwap({ delta: 120, durationMs: 150, phase: "morph" });
     await nextTick();
-    expect(rig.morphToken()).toBe("150ms");
-
-    // …and the override is scoped to that one sweep window.
-    await vi.advanceTimersByTimeAsync(500);
     expect(rig.morphToken()).toBe("");
   });
 
@@ -237,7 +233,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
     // The flow owns the new height and announces; the modal measures,
     // stages its conceal, and publishes the span it will sweep.
     content = 300;
-    rig.announceSwap({ delta: -200, durationMs: 150, phase: "enter" });
+    rig.announceSwap({ delta: -200, durationMs: 0, phase: "instant" });
     await nextTick();
     expect(stages).toEqual([
       { direction: "conceal", from: 596, to: 396, sweep: expect.any(Number) },
@@ -308,12 +304,13 @@ describe("HkModal publishes its own fold for the step flow", () => {
     await nextTick();
     expect(rig.morphToken()).toBe("");
 
-    // The morph window: the freeze lifts and the override lands (the
-    // stepflow requests a 1ms snap — see STEP_MORPH_SNAP_MS).
-    rig.announceSwap({ delta: 120, durationMs: 1, phase: "morph" });
+    // The morph window: the freeze lifts and the height transition
+    // runs (round 18 — no clip override token; heightMorph owns the
+    // frame's inline transition).
+    rig.announceSwap({ delta: 120, durationMs: 300, phase: "morph" });
     await nextTick();
-    expect(rig.morphToken()).toBe("1ms");
-    await vi.advanceTimersByTimeAsync(500);
+    expect(rig.morphToken()).toBe("");
+    await vi.advanceTimersByTimeAsync(700);
     expect(rig.morphToken()).toBe("");
   });
 
@@ -343,10 +340,10 @@ describe("HkModal publishes its own fold for the step flow", () => {
     rig.open.value = true;
     await vi.advanceTimersByTimeAsync(600);
 
-    rig.announceSwap({ delta: 80, durationMs: 150, phase: "exit" });
+    rig.announceSwap({ delta: 80, durationMs: 0, phase: "instant" });
     await nextTick();
     const frame = rig.frameEl()!;
-    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("150ms");
+    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("");
 
     // Unmount with the sweep still in flight: the timer must not outlive
     // the component, and the token must not survive on the detached node.
@@ -459,9 +456,9 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     await vi.advanceTimersByTimeAsync(700);
     expect(frame.style.height).toBe("656px");
     // …and a later morph event still works (no stranded freeze).
-    rig.announceSwap({ delta: -40, durationMs: 1, phase: "morph" });
+    rig.announceSwap({ delta: -40, durationMs: 300, phase: "morph" });
     await nextTick();
-    expect(rig.morphToken()).toBe("1ms");
+    expect(rig.morphToken()).toBe("");
     await vi.advanceTimersByTimeAsync(700);
     expect(rig.morphToken()).toBe("");
     restoreBox();
@@ -518,12 +515,9 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     restoreBox();
   });
 
-  it("rides its chrome with the staged fold", async () => {
-    // Round 16: only the host chrome rides (header/subheader/body
-    // block) — the per-swap registry is retired with the concurrent
-    // choreography. This pins the modal-level collection + the resident
-    // promotion (round 15); the ride's flip/settle lifecycle is
-    // unit-witnessed in useSizeMorph.test.ts.
+  it("animates the height with a plain CSS transition at the morph edge", async () => {
+    // Round 18: the stepflow morph no longer stages a clip sweep or
+    // rides anything — it just transitions the frame's height inline.
     vi.useFakeTimers();
     freezeRaf();
     stubClip();
@@ -538,7 +532,7 @@ describe("HkModal rides its chrome and gates the slide window", () => {
           h(HkModal, {
             modelValue: open.value,
             closable: true,
-            title: "ride-test",
+            title: "morph-test",
             "onUpdate:modelValue": (v: boolean) => { open.value = v; },
           }, {
             default: () => h("div", { class: "swap-body" }, "step content"),
@@ -553,30 +547,27 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     await vi.advanceTimersByTimeAsync(600);
 
     const frame = () => document.querySelector<HTMLElement>(".hk-modal-content")!;
-    const header = () => document.querySelector<HTMLElement>(".hk-modal-header")!;
-    const bodyBlock = () => document.querySelector<HTMLElement>(".hk-modal-body")!;
+    expect(frame().style.height).toBe("596px");
 
-    // Resident promotion from the arm moment (round 15).
-    expect(header().style.willChange).toBe("transform");
-    expect(bodyBlock().style.willChange).toBe("transform");
-
-    // The morph window (round 16 protocol) stages the fold: the chrome
-    // sits at its pre-growth offset, instantly.
+    // The morph edge: the height transitions inline, no clip staging.
     content = 700;
     document
       .querySelector<HTMLElement>(".hk-modal-body .swap-body")!
       .dispatchEvent(
         new CustomEvent(STEPFLOW_SWAP_EVENT, {
           bubbles: true,
-          detail: { delta: 200, durationMs: 300, phase: "morph" },
+          detail: { delta: 104, durationMs: 300, phase: "morph" },
         }),
       );
     await nextTick();
-    expect(header().style.transform).toBe("translateY(200px)");
-    expect(bodyBlock().style.transform).toBe("translateY(200px)");
-
-    // (The landing's release + resident survival are unit-witnessed in
-    // useSizeMorph.test.ts — this rig's frozen rAF never starts the
-    // sweep, so there is no listener to land here.)
+    expect(frame().style.height).toBe("796px");
+    expect(frame().style.transition).toContain("height");
+    expect(frame().style.transition).toContain("300ms");
+    expect(frame().style.clipPath).toBe("");
+    // No rider transforms — the chrome layers are untouched.
+    const header = document.querySelector<HTMLElement>(".hk-modal-header")!;
+    expect(header.style.transform).toBe("");
+    restoreBox();
   });
+
 });

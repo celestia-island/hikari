@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import { Languages, Globe } from "lucide-vue-next";
 import {
@@ -195,6 +196,54 @@ describe("settings content vocabulary", () => {
       }),
     );
     expect(container.querySelector(".hk-settings-group-title")).toBeNull();
+    unmount();
+  });
+});
+
+describe("settings dialog SCSS host contract (source-level)", () => {
+  // The stable-frame contract is three rules in the SCSS that happy-dom's
+  // cascade-free environment cannot exercise behaviorally — pin them at
+  // the source so a silent deletion turns this red (the R1 mutation-d
+  // gap). Known-positive control: the base rail rule every variant
+  // depends on.
+  // vitest serves modules through its own scheme, so import.meta.url is
+  // not a file URL here; the suite's cwd is packages/vue.
+  const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8");
+
+  it("self-check: the extractor sees a rule that exists", () => {
+    // The shell rules are BEM-nested in the source (&__rail-item inside
+    // .hk-settings) — the positive control matches the nested form.
+    expect(scss).toContain("&__rail-item {");
+  });
+
+  it("pins the stable-frame host rules (idle modal scrollbar, flush edge)", () => {
+    expect(scss).toContain(".hk-settings-host .hk-modal-body-inner {");
+    expect(scss).toContain("height: var(--hk-settings-height, calc(70vh - 6.5rem));");
+    expect(scss).toContain("margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));");
+  });
+
+  it("never activates a disabled section through a deep-linked prop", async () => {
+    const Deep = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody sections={SECTIONS} section="locked">
+            {{
+              language: () => <div data-test="pane-language" />,
+              network: () => <div data-test="pane-network" />,
+              locked: () => <div data-test="pane-locked" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    const { container, unmount } = mount(Deep);
+    await nextTick();
+    // The disabled key did not win: first usable section shows, the
+    // locked pane never renders, its rail entry stays grey.
+    expect(container.querySelector('[data-test="pane-language"]')).toBeTruthy();
+    expect(container.querySelector('[data-test="pane-locked"]')).toBeNull();
+    const items = container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item");
+    expect(items[2].classList.contains("is-active")).toBe(false);
     unmount();
   });
 });

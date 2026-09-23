@@ -66,7 +66,14 @@ export const HkSettingsBody = defineComponent({
     watch(
       () => props.section,
       (key) => {
-        if (key != null) internal.value = key;
+        if (key == null) return;
+        // A disabled (or unknown) key never activates — a host that
+        // deep-links to one keeps the first usable section instead
+        // (R1 gap: the locked pane used to render with its rail entry
+        // greyed out, contradicting "renders but cannot be activated").
+        if (props.sections.some((sec) => sec.key === key && !sec.disabled)) {
+          internal.value = key;
+        }
       },
       { immediate: true },
     );

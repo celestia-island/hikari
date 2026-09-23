@@ -56,6 +56,10 @@ export interface SizeMorph {
   hold(): void;
   /** Re-measure and pin now (resize events, open flows). */
   remeasure(): void;
+  /** Plain CSS height morph (round 18): transition the frame's pin
+   *  from its current value to the natural height under an inline
+   *  height transition — no clip staging, no riders, no warmup. */
+  heightMorph(durationMs: number): void;
 }
 
 export interface RideEntry {
@@ -896,5 +900,62 @@ export function useSizeMorph(
     clearResidentWill();
   });
 
-  return { start, stop, hold, remeasure };
+  /** Plain CSS height morph (round 18): pin the old height, then
+   *  transition to the natural height under an inline height transition
+   *  — no clip staging, no riders, no warmup. This is what a stepflow's
+   *  morph window wants: the content has already settled (the slide
+   *  finished), the sheet is the only thing moving, and a simple height
+   *  animation is both smooth and immune to the raster-race artifacts
+   *  the clip-based choreography kept producing on phone GPUs.
+   *  The pin bookkeeping stays in sync (pinned = target immediately),
+   *  and the inline transition is removed on the animation's own
+   *  transitionend or a watchdog — the stylesheet's transition list is
+   *  untouched for every other morph. */
+  function heightMorph(durationMs: number): void {
+    const f = frame.value;
+    if (!f || !armed) return;
+    // 1. Measure the natural height with transitions disabled.
+    const inlineTransition = f.style.transition;
+    f.style.transition = "none";
+    stopReveal();
+    f.style.height = "";
+    const natural = f.offsetHeight;
+    if (natural <= 0) {
+      if (pinned > 0) f.style.height = `${pinned}px`;
+      f.style.transition = inlineTransition;
+      return;
+    }
+    const next = Math.round(natural);
+    const delta = next - pinned;
+    if (Math.abs(delta) < 2) {
+      f.style.height = `${next}px`;
+      f.style.transition = inlineTransition;
+      pinned = next;
+      return;
+    }
+    // 2. Re-establish the OLD pin under no transition, flush it.
+    f.style.height = `${pinned}px`;
+    void f.offsetHeight;
+    // 3. Animate to the new pin under an inline height transition —
+    //    the CSS engine owns every frame; there is no staging task, no
+    //    warmup and no per-frame JS at all.
+    f.style.transition =
+      `height ${durationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+    f.style.height = `${next}px`;
+    pinned = next;
+    // 4. Clean the inline transition up on the animation's own clock.
+    const onEnd = (ev: TransitionEvent): void => {
+      if (ev.target === f && ev.propertyName === "height") {
+        f.removeEventListener("transitionend", onEnd);
+        f.style.transition = "";
+      }
+    };
+    f.addEventListener("transitionend", onEnd);
+    setTimeout(() => {
+      f.removeEventListener("transitionend", onEnd);
+      f.style.transition = "";
+    }, durationMs + 350);
+  }
+
+  return { start, stop, hold, remeasure, heightMorph };
 }

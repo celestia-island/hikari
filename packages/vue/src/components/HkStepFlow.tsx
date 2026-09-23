@@ -78,13 +78,12 @@ export const STEPFLOW_SWAP_EVENT = "hk-stepflow-swap";
  *  the swap without a transitionend. */
 const SWAP_WATCHDOG_GRACE_MS = 350;
 
-/** The morph window's sweep length: near-instant. A sustained clip
- *  animation re-rasters the moving edge per frame — the phone flicker
- *  the round-17 report caught in the height window even after the
- *  content had settled. One paint, no edge travel (the 2026-09-21
- *  shrink-snap decision, applied to stepflow morphs in both
- *  directions). */
-const STEP_MORPH_SNAP_MS = 1;
+/** The morph window's duration (round 18): a plain CSS height
+ *  transition. The clip-based choreography this replaces kept
+ *  raster-racing on phone GPUs through every variant (sweeps, snaps,
+ *  riders); a simple height animation has no moving clip edge, no
+ *  staged offsets and no warmup — the CSS engine owns every frame. */
+const STEP_MORPH_MS = 300;
 
 /** Fade level above which an entering body counts as the visible one. */
 const FADED_IN = 0.05;
@@ -242,12 +241,21 @@ export default defineComponent({
       const enteringEl = elFor(handle.enteringId);
       const newH = enteringEl?.offsetHeight ?? handle.oldH;
       bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
-      announce({
-        delta: newH - handle.oldH,
-        durationMs: STEP_MORPH_SNAP_MS,
-        phase: "morph",
+      // The morph event must fire AFTER the patch that removed the
+      // leaving body: heightMorph() reads the frame's natural height,
+      // and with the old body still in the DOM a SHRINK reads the old
+      // (taller) geometry, no-ops, and the observer then replays the
+      // old clip conceal — the round-18 rig caught exactly this on
+      // every conceal case (announce-before-patch = the leaving node
+      // still contributes to the cell).
+      void nextTick(() => {
+        swapPhase.value = "idle";
+        announce({
+          delta: newH - handle.oldH,
+          durationMs: STEP_MORPH_MS,
+          phase: "morph",
+        });
       });
-      swapPhase.value = "idle";
     }
 
     /** Pre-empt the running swap for a new one, keeping whichever body

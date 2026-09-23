@@ -8,6 +8,8 @@ import {
   tokensToCSSVars,
   type CustomThemePreset,
   type ThemeSchemeTokens,
+  type ThemeTokenGroupValues,
+  type ThemeTokenRGB,
 } from "./presets";
 import {
   allGroupSlots,
@@ -23,6 +25,7 @@ import {
   hslToRgb,
   setTokenGroupsReapply,
   tokenGroupsVersion,
+  type TokenColorSlot,
   type TokenGroupDefinition,
 } from "./tokenGroups";
 import { initTheme, useTheme } from "./useTheme";
@@ -63,10 +66,18 @@ const TEST_GROUP: TokenGroupDefinition = {
   ],
 };
 
-function slot(key: string) {
+function slot(key: string): TokenColorSlot {
   const found = (TEST_GROUP.slots ?? []).find((s) => s.key === key);
   if (!found) throw new Error(`unknown slot ${key}`);
-  return found;
+  // TEST_GROUP holds color slots only; the registry-wide slot type is the
+  // widened union, so the helper narrows (a cast, no runtime behavior).
+  return found as TokenColorSlot;
+}
+
+/** Same narrowing for resolved values: every group in this file is
+ *  color-only, while `ResolvedGroupTokens` carries the widened value type. */
+function asRgbGroups(values: ThemeTokenGroupValues): Record<string, Record<string, ThemeTokenRGB>> {
+  return values as Record<string, Record<string, ThemeTokenRGB>>;
 }
 
 beforeEach(() => {
@@ -108,9 +119,9 @@ describe("token group registry", () => {
   });
 
   it("returns resolved values as fresh copies", () => {
-    const resolved = resolveGroupTokens("dark");
+    const resolved = asRgbGroups(resolveGroupTokens("dark"));
     resolved["test-wires"]["power-l1"].r = 0;
-    expect(resolveGroupTokens("dark")["test-wires"]["power-l1"].r).toBe(220);
+    expect(asRgbGroups(resolveGroupTokens("dark"))["test-wires"]["power-l1"].r).toBe(220);
   });
 
   it("returns registry definitions as copies callers cannot mutate", () => {
@@ -118,12 +129,13 @@ describe("token group registry", () => {
     const wires = groups.find((g) => g.id === "test-wires")!;
     wires.label = "Mutated";
     const wiresSlots = wires.slots!;
-    wiresSlots[0].hueClamp = { center: 99, range: 99 };
-    wiresSlots[0].defaults.dark = { r: 0, g: 0, b: 0 };
+    const wiresSlot = wiresSlots[0] as TokenColorSlot;
+    wiresSlot.hueClamp = { center: 99, range: 99 };
+    wiresSlot.defaults.dark = { r: 0, g: 0, b: 0 };
     const again = getTokenGroups().find((g) => g.id === "test-wires")!;
     expect(again.label).toBe("Test wires");
     const againSlots = again.slots!;
-    expect(againSlots[0].hueClamp).toEqual({ center: 0, range: 20 });
+    expect((againSlots[0] as TokenColorSlot).hueClamp).toEqual({ center: 0, range: 20 });
     expect(againSlots[0].defaults.dark).toEqual({ r: 220, g: 60, b: 60 });
   });
 });
@@ -464,7 +476,7 @@ describe("parseTokenGroupConfig", () => {
     if (!result.ok) return;
     expect(result.group.id).toBe("scada");
     expect(result.group.sections).toHaveLength(1);
-    const slot = result.group.sections![0].slots[0];
+    const slot = result.group.sections![0].slots[0] as TokenColorSlot;
     expect(slot.defaults.dark).toEqual({ r: 234, g: 179, b: 8 });
     expect(slot.hueClamp).toEqual({ center: 45, range: 20 });
     expect(slot.sRange).toEqual([0.35, 0.95]);

@@ -3,6 +3,7 @@ import {
   HColorPicker,
   HExpansionPanel,
   HInput,
+  HSlider,
   HTabs,
 
   useI18n,
@@ -17,6 +18,7 @@ import {
   type ThemeTokenRGB,
   type ThemeTokenGroupModes,
   type ThemeTokenGroupValues,
+  type ThemeTokenValue,
   type TokenGroupDefinition,
   type TokenGroupSection,
   type TokenGroupSlot,
@@ -122,7 +124,9 @@ export interface HCustomTheme {
  * (`registerTokenGroup` / `registerTokenGroupConfig`), the section
  * renders one Material expansion panel per group — sub-sectioned groups
  * get one panel per section — with the slots laid out on a 2–3 column
- * grid of hue-clamped pickers showing full localized color names.
+ * grid: hue-clamped pickers showing full localized color names for color
+ * slots, unit-formatted sliders for number slots and segmented tab strips
+ * for enum slots.
  *
  * Exposes `reset()` (re-seed from props + current effective mode) and
  * `getDraft()` (snapshot the current edits as a `HCustomTheme`) for the
@@ -234,11 +238,16 @@ export const HkColorSchemeEditor = defineComponent({
       target[key] = { ...rgb };
     }
 
-    function updateGroupToken(groupId: string, slot: TokenGroupSlot, rgb: { r: number; g: number; b: number }) {
+    /**
+     * Write one slot edit. Which primitive arrives depends on the slot's
+     * kind (triplet / number / string); `clampToSlot` dispatches on the slot
+     * itself, so picker, slider and tab strip all funnel through the same
+     * defense-in-depth clamp before the value reaches the draft.
+     */
+    function updateGroupToken(groupId: string, slot: TokenGroupSlot, value: ThemeTokenValue) {
       const values = currentGroupValues.value;
       const group = values[groupId] ?? (values[groupId] = {});
-      // Defense in depth: the picker already clamps, clamp again on write.
-      group[slot.key] = clampToSlot(slot, rgb);
+      group[slot.key] = clampToSlot(slot, value);
     }
 
     function clampGroups(
@@ -247,7 +256,7 @@ export const HkColorSchemeEditor = defineComponent({
     ): ThemeTokenGroupValues {
       const out: ThemeTokenGroupValues = {};
       for (const group of registeredGroups.value) {
-        const slots: Record<string, { r: number; g: number; b: number }> = {};
+        const slots: Record<string, ThemeTokenValue> = {};
         for (const slot of allGroupSlots(group)) {
           const value = source[group.id]?.[slot.key] ?? slot.defaults[mode];
           slots[slot.key] = clampToSlot(slot, value);
@@ -304,16 +313,66 @@ export const HkColorSchemeEditor = defineComponent({
       return t("hikari::theme.groupCount", "{count} colors").replace("{count}", String(count));
     }
 
+    /**
+     * One slot cell of a group grid. The control follows the slot's kind:
+     *   color  → the hue-clamped picker (unchanged, label included),
+     *   number → a slider bound to the slot's min/max/step, formatting its
+     *            value with the slot's unit,
+     *   enum   → the segmented tab strip already used for the mode switch.
+     * A picker carries its own label; a slider and a tab strip do not, so
+     * non-color slots get a field wrapper with the slot label (and, for a
+     * slider, the value in the same unit the cssvar is written with).
+     */
     function renderGroupSlot(group: TokenGroupDefinition, slot: TokenGroupSlot) {
       const mode = modeTab.value === "dark" ? "dark" : "light";
-      const rgb = currentGroupValues.value[group.id]?.[slot.key] ?? slot.defaults[mode];
+      const value = currentGroupValues.value[group.id]?.[slot.key] ?? slot.defaults[mode];
+      const label = slotLabel(group.id, slot);
+      if (slot.kind === "number") {
+        // A stale/foreign draft value of the wrong type falls back to the
+        // registry default rather than feeding the slider a NaN.
+        const current = typeof value === "number" ? value : slot.defaults[mode];
+        return (
+          <div key={slot.key} class="s-scheme-group-field">
+            <span class="s-scheme-group-field-label">{label}</span>
+            <HSlider
+              modelValue={current}
+              min={slot.min}
+              max={slot.max}
+              step={slot.step}
+              size="sm"
+              ariaLabel={label}
+              formatValue={(v: number) => `${v}${slot.unit ?? ""}`}
+              onUpdate:modelValue={(v: number) => updateGroupToken(group.id, slot, v)}
+            />
+            <span class="s-scheme-group-field-value">{`${current}${slot.unit ?? ""}`}</span>
+          </div>
+        );
+      }
+      if (slot.kind === "enum") {
+        const current = typeof value === "string" ? value : slot.defaults[mode];
+        return (
+          <div key={slot.key} class="s-scheme-group-field">
+            <span class="s-scheme-group-field-label">{label}</span>
+            <HTabs
+              variant="segmented"
+              modelValue={current}
+              onUpdate:modelValue={(v: string) => updateGroupToken(group.id, slot, v)}
+              tabs={slot.options.map((option) => ({
+                key: option.value,
+                label: resolveLocalizedText(option.label, activeLocale.value),
+              }))}
+            />
+          </div>
+        );
+      }
+      const rgb = typeof value === "number" || typeof value === "string" ? slot.defaults[mode] : value;
       return (
         <HColorPicker
           key={slot.key}
           r={rgb.r}
           g={rgb.g}
           b={rgb.b}
-          label={slotLabel(group.id, slot)}
+          label={label}
           layout="row"
           hueClamp={slot.hueClamp}
           sRange={slot.sRange}

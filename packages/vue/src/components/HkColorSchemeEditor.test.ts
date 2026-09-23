@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick, onMounted, ref, type Ref } from "vue";
 
-import { registerTokenGroup, themePresets, useTheme, type TokenGroupDefinition } from "../theme";
+import { registerTokenGroup, themePresets, useTheme, type ThemeTokenRGB, type TokenGroupDefinition } from "../theme";
 import { HkColorSchemeEditor, type HCustomTheme } from "./HkColorSchemeEditor";
 
 // Fresh file = fresh registry module instance: no groups are registered
@@ -90,6 +90,7 @@ const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement 
 function mountEditor(initial?: {
   initialDark?: HCustomTheme["dark"];
   initialLight?: HCustomTheme["light"];
+  initialGroups?: HCustomTheme["groups"];
 }): { ref: Ref<EditorExpose | null>; container: HTMLElement } {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -100,6 +101,7 @@ function mountEditor(initial?: {
         ref: editorRef,
         ...(initial?.initialDark ? { initialDark: initial.initialDark } : {}),
         ...(initial?.initialLight ? { initialLight: initial.initialLight } : {}),
+        ...(initial?.initialGroups ? { initialGroups: initial.initialGroups } : {}),
       }),
   });
   app.mount(container);
@@ -238,7 +240,7 @@ describe("HkColorSchemeEditor", () => {
       b: { r: 7, g: 8, b: 9 },
     });
     // Sectioned group slots also land under their group id.
-    expect(darkGroups["editor-sectioned"].l1.r).toBe(234);
+    expect((darkGroups["editor-sectioned"].l1 as ThemeTokenRGB).r).toBe(234);
     expect(lightGroups["editor-sectioned"].l2).toEqual({ r: 21, g: 128, b: 61 });
   });
 
@@ -402,5 +404,128 @@ describe("HkColorSchemeEditor seed provenance", () => {
     } finally {
       table.default = stock;
     }
+  });
+});
+
+// ── Widened slot kinds: numbers and enums next to colors ─────────────
+
+/** Registered for the cases below only, so the counting assertions of the
+ *  cases above never see it. */
+const KIND_SLOTS_GROUP: TokenGroupDefinition = {
+  id: "editor-kinds",
+  label: "Editor kinds",
+  slots: [
+    {
+      key: "radius-md",
+      cssVar: "--radius-md",
+      kind: "number",
+      label: { en: "Medium radius", "zh-Hans": "中圆角" },
+      defaults: { dark: 8, light: 8 },
+      min: 0,
+      max: 32,
+      step: 1,
+      unit: "px",
+    },
+    {
+      key: "density",
+      kind: "enum",
+      label: { en: "Density", "zh-Hans": "密度" },
+      defaults: { dark: "compact", light: "cozy" },
+      options: [
+        { value: "compact", label: { en: "Compact", "zh-Hans": "紧凑" } },
+        { value: "cozy", label: "Cozy" },
+      ],
+    },
+    {
+      key: "wire",
+      label: { en: "Wire", "zh-Hans": "导线" },
+      defaults: { dark: { r: 220, g: 60, b: 60 }, light: { r: 180, g: 40, b: 40 } },
+    },
+  ],
+};
+
+describe("HkColorSchemeEditor slot kinds", () => {
+  beforeEach(() => {
+    registerTokenGroup(KIND_SLOTS_GROUP);
+  });
+
+  /** The expansion panel holding this group's slots. */
+  function kindPanel(container: HTMLElement): HTMLElement {
+    const slider = container.querySelector(".s-scheme-group-field .hk-slider");
+    expect(slider, "the number slot renders a slider").not.toBeNull();
+    return slider!.closest(".hk-expansion-panel") as HTMLElement;
+  }
+
+  it("renders a slider for number slots and a segmented strip for enum slots", async () => {
+    const { container } = mountEditor();
+    await nextTick();
+
+    const panel = kindPanel(container);
+    // The slot's own field wrapper carries the label a slider cannot show.
+    const fields = panel.querySelectorAll(".s-scheme-group-field");
+    expect(fields).toHaveLength(2); // number + enum (the color slot keeps its picker)
+    expect(fields[0].querySelector(".s-scheme-group-field-label")!.textContent).toBe(
+      "Medium radius",
+    );
+
+    const slider = panel.querySelector(".hk-slider") as HTMLElement;
+    expect(slider.getAttribute("aria-label")).toBe("Medium radius");
+    expect(slider.getAttribute("aria-valuemin")).toBe("0");
+    expect(slider.getAttribute("aria-valuemax")).toBe("32");
+    expect(slider.getAttribute("aria-valuenow")).toBe("8");
+    // formatValue feeds aria-valuetext with the slot's unit.
+    expect(slider.getAttribute("aria-valuetext")).toBe("8px");
+    expect(fields[0].querySelector(".s-scheme-group-field-value")!.textContent).toBe("8px");
+
+    // Enum slot: one segmented trigger per option, labeled per locale.
+    const triggers = [...panel.querySelectorAll(".hk-tabs-trigger")];
+    expect(triggers.map((t) => t.textContent?.trim())).toEqual(["Compact", "Cozy"]);
+
+    // The color slot is untouched: still the picker, still in the same grid.
+    expect(panel.querySelectorAll(".hk-color-picker")).toHaveLength(1);
+    expect(panel.querySelector(".s-scheme-group-grid")).not.toBeNull();
+  });
+
+  it("writes slider and tab edits into getDraft() as primitives", async () => {
+    const { ref, container } = mountEditor();
+    await nextTick();
+
+    const seeded = ref.value!.getDraft().groups!.dark!["editor-kinds"];
+    expect(seeded["radius-md"]).toBe(8);
+    expect(seeded.density).toBe("compact");
+
+    const panel = kindPanel(container);
+    const slider = panel.querySelector(".hk-slider") as HTMLElement;
+    slider.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    await nextTick();
+    const cozy = [...panel.querySelectorAll(".hk-tabs-trigger")].find(
+      (t) => t.textContent?.trim() === "Cozy",
+    ) as HTMLElement;
+    cozy.click();
+    await settle();
+
+    const edited = ref.value!.getDraft().groups!.dark!["editor-kinds"];
+    expect(edited["radius-md"]).toBe(9);
+    expect(edited.density).toBe("cozy");
+  });
+
+  it("clamps a stored draft value back into the slot on the way out", async () => {
+    // A saved theme carrying a hand-edited / since-retired value must not
+    // leak out of the editor: getDraft() re-clamps every slot by kind.
+    const { ref } = mountEditor({
+      initialGroups: {
+        dark: { "editor-kinds": { "radius-md": 999, density: "spacious" } },
+        light: { "editor-kinds": { "radius-md": 7, density: "cozy" } },
+      },
+    });
+    await nextTick();
+
+    const draft = ref.value!.getDraft();
+    // Out of range → the slot max; out of vocabulary → the dark anchor.
+    expect(draft.groups!.dark!["editor-kinds"]["radius-md"]).toBe(32);
+    expect(draft.groups!.dark!["editor-kinds"].density).toBe("compact");
+    // In-range values ride through untouched, per mode.
+    expect(draft.groups!.light!["editor-kinds"]["radius-md"]).toBe(7);
+    expect(draft.groups!.light!["editor-kinds"].density).toBe("cozy");
   });
 });

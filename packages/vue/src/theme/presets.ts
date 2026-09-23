@@ -36,12 +36,20 @@ export interface ThemeSchemeTokens {
 }
 
 /**
+ * One slot value: an rgb triplet (color slots — the only kind before the
+ * slot widening), a number (number slots) or a string (enum slots). See
+ * ./tokenGroups.ts for the slot kinds that produce/consume these.
+ */
+export type ThemeTokenValue = ThemeTokenRGB | number | string;
+
+/**
  * Extension token group values riding along with a preset/custom theme,
  * keyed by group id then slot key (see ./tokenGroups.ts). Optional and
  * additive: presets and saved custom themes without groups keep working —
- * the registry defaults are the final fallback.
+ * the registry defaults are the final fallback. Values are plain JSON
+ * (triplets, numbers, strings), so saved themes stay serializable.
  */
-export type ThemeTokenGroupValues = Record<string, Record<string, ThemeTokenRGB>>;
+export type ThemeTokenGroupValues = Record<string, Record<string, ThemeTokenValue>>;
 
 export interface ThemeTokenGroupModes {
   dark?: ThemeTokenGroupValues;

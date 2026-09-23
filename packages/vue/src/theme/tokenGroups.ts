@@ -1,20 +1,29 @@
 import { ref, type Ref } from "vue";
 
-import type { ThemeTokenGroupModes, ThemeTokenGroupValues, ThemeTokenRGB } from "./presets";
+import type { ThemeTokenGroupModes, ThemeTokenGroupValues, ThemeTokenRGB, ThemeTokenValue } from "./presets";
 
 /**
- * Extension token groups — namespaced color slots beyond the 16 fixed UI
- * tokens (industrial/SCADA theming: wire colors, pipe states, phase marks).
+ * Extension token groups — namespaced slots beyond the 16 fixed UI tokens
+ * (industrial/SCADA theming: wire colors, pipe states, phase marks — and,
+ * since the slot widening, non-color knobs of an existing scale family).
  *
  * A downstream app registers a group (`registerTokenGroup`); hikari then:
- *   - emits `--<groupId>-<slotKey>: "r g b"` CSS vars on every theme apply
- *     (registry defaults as the final fallback when no preset defines them),
- *     and re-applies the current theme right away when a group is
- *     registered after the theme is already live (see `setTokenGroupsReapply`),
+ *   - emits `--<groupId>-<slotKey>` (or the slot's explicit `cssVar`) CSS
+ *     vars on every theme apply (registry defaults as the final fallback
+ *     when no preset defines them), and re-applies the current theme right
+ *     away when a group is registered after the theme is already live (see
+ *     `setTokenGroupsReapply`),
  *   - rides the values along with presets and custom themes (both modes),
- *   - exposes them in the color scheme dialog with hue-clamped pickers
- *     (a green wire must stay green: hue locked to center±range, s/l kept
- *     inside safe bands).
+ *   - exposes them in the color scheme dialog: hue-clamped pickers for
+ *     color slots (a green wire must stay green: hue locked to center±range,
+ *     s/l kept inside safe bands), sliders for number slots and segmented
+ *     tabs for enum slots.
+ *
+ * Three slot kinds share one shape (kind-less slots stay COLOR — the
+ * pre-widening form every existing SCADA palette is written in):
+ *   color  → `"r g b"` triplet, clamped into the hue/s/l bands
+ *   number → `${value}${unit}`, clamped into [min, max] and onto the step grid
+ *   enum   → the option string verbatim, snapped back to the option list
  */
 
 export interface HueClamp {
@@ -37,11 +46,28 @@ export function resolveLocalizedText(text: LocalizedText, locale: string): strin
   return text[locale] ?? text.en ?? Object.values(text)[0] ?? "";
 }
 
-export interface TokenGroupSlot {
-  /** cssvar suffix → `--<groupId>-<key>` */
+/** Slot value kinds a token group can carry. */
+export type TokenGroupSlotKind = "color" | "number" | "enum";
+
+/**
+ * Fields every slot carries, whatever its kind. `key` still forms the
+ * default cssvar name; a slot that targets an EXISTING scale token (e.g.
+ * `--radius-md`) names it through `cssVar` instead of duplicating the name
+ * by hand into a group id.
+ */
+interface TokenGroupSlotBase {
+  /** cssvar suffix → `--<groupId>-<key>` unless `cssVar` overrides it. */
   key: string;
   /** Display label — bare string or per-locale map (config files). */
   label: LocalizedText;
+  /** Explicit target cssvar; defaults to `--<groupId>-<key>`. */
+  cssVar?: string;
+}
+
+/** Color slot: an rgb triplet both modes, hue/s/l clamped (the default kind). */
+export interface TokenColorSlot extends TokenGroupSlotBase {
+  /** Discriminant; absent means `"color"` (every legacy registration). */
+  kind?: "color";
   defaults: { dark: ThemeTokenRGB; light: ThemeTokenRGB };
   /** Picker hue clamp: hue locked to center±range (degrees, circular). */
   hueClamp?: HueClamp;
@@ -51,6 +77,34 @@ export interface TokenGroupSlot {
   /** Two-tone slot pair (e.g. PE wire a/b stripes): key of the sibling slot. */
   pairWith?: string;
 }
+
+/** Number slot: a numeric scale constant, rendered as a slider. */
+export interface TokenNumberSlot extends TokenGroupSlotBase {
+  kind: "number";
+  defaults: { dark: number; light: number };
+  min: number;
+  max: number;
+  /** Snap step — clamped values land on `min + n * step`. */
+  step: number;
+  /** CSS unit appended verbatim after the number (`"px"`, `"rem"`, `"s"`,
+   *  `"ms"`); absent/empty emits the bare number. */
+  unit?: string;
+}
+
+/** Enum slot: one of a closed set of strings, rendered as segmented tabs. */
+export interface TokenEnumSlot extends TokenGroupSlotBase {
+  kind: "enum";
+  defaults: { dark: string; light: string };
+  /** Selectable values; the defaults must be listed here. */
+  options: Array<{ value: string; label: LocalizedText }>;
+}
+
+/**
+ * A group slot — discriminated by `kind`. The union is what lets the
+ * dialog pick a picker / slider / tab strip per slot, and what lets
+ * serialization attach a unit only where one is defined.
+ */
+export type TokenGroupSlot = TokenColorSlot | TokenNumberSlot | TokenEnumSlot;
 
 /** Labeled sub-section of a group (e.g. "electrical power" inside "scada"). */
 export interface TokenGroupSection {
@@ -62,7 +116,7 @@ export interface TokenGroupSection {
 }
 
 export interface TokenGroupDefinition {
-  /** cssvar prefix → `--<id>-<slotKey>` */
+  /** cssvar prefix → `--<id>-<slotKey>` (a slot's `cssVar` overrides it) */
   id: string;
   /** Display label — bare string or per-locale map (config files). */
   label: LocalizedText;
@@ -81,7 +135,7 @@ export function allGroupSlots(group: TokenGroupDefinition): TokenGroupSlot[] {
   ];
 }
 
-/** Per-group slot values: `groups[groupId][slotKey] = rgb`. */
+/** Per-group slot values: `groups[groupId][slotKey] = rgb | number | string`. */
 export type { ThemeTokenGroupValues, ThemeTokenGroupModes };
 
 /** Fully resolved group values for one mode (every registered slot present). */
@@ -140,8 +194,27 @@ function cloneLabel(label: LocalizedText): LocalizedText {
   return typeof label === "string" ? label : { ...label };
 }
 
-/** Deep-copy a slot (label + defaults + clamp bands) so registry and callers never share state. */
+/** Deep-copy a slot (label + defaults + options/clamp bands) so registry
+ *  and callers never share state. Primitives (number/string defaults, unit,
+ *  min/max/step, option values) copy by value already, so each kind only
+ *  re-copies the fields that are objects; `...slot` keeps whatever else a
+ *  caller attached, exactly as the pre-widening clone did. */
 function cloneSlot(slot: TokenGroupSlot): TokenGroupSlot {
+  if (slot.kind === "number") {
+    return {
+      ...slot,
+      label: cloneLabel(slot.label),
+      defaults: { dark: slot.defaults.dark, light: slot.defaults.light },
+    };
+  }
+  if (slot.kind === "enum") {
+    return {
+      ...slot,
+      label: cloneLabel(slot.label),
+      defaults: { dark: slot.defaults.dark, light: slot.defaults.light },
+      options: slot.options.map((option) => ({ value: option.value, label: cloneLabel(option.label) })),
+    };
+  }
   return {
     ...slot,
     label: cloneLabel(slot.label),
@@ -195,10 +268,47 @@ export function getTokenGroups(): readonly TokenGroupDefinition[] {
   }));
 }
 
+/** The slot's kind; a missing discriminant is the legacy color form. */
+export function tokenGroupSlotKind(slot: TokenGroupSlot): TokenGroupSlotKind {
+  return slot.kind ?? "color";
+}
+
+/**
+ * Type guards over the same union `tokenGroupSlotKind` classifies — the
+ * narrowing form consumers migrate to. `tokenGroupSlotKind(slot) !== "color"`
+ * does NOT narrow the union (a plain function's return is not a type
+ * predicate), so the obvious guard leaves `slot.hueClamp` / `slot.options`
+ * unreachable without a cast; these three are the sanctioned exit.
+ *
+ * `isColorSlot` reads a missing discriminant as color, byte-for-byte the
+ * `tokenGroupSlotKind` default, so the two can never disagree.
+ */
+export function isColorSlot(slot: TokenGroupSlot): slot is TokenColorSlot {
+  return tokenGroupSlotKind(slot) === "color";
+}
+
+/** True for `kind: "number"` slots (sliders). */
+export function isNumberSlot(slot: TokenGroupSlot): slot is TokenNumberSlot {
+  return slot.kind === "number";
+}
+
+/** True for `kind: "enum"` slots (segmented tabs). */
+export function isEnumSlot(slot: TokenGroupSlot): slot is TokenEnumSlot {
+  return slot.kind === "enum";
+}
+
+/** The cssvar a slot emits: its explicit `cssVar`, else `--<groupId>-<key>`. */
+export function tokenGroupSlotCssVar(groupId: string, slot: TokenGroupSlot): string {
+  return slot.cssVar ?? `--${groupId}-${slot.key}`;
+}
+
 /**
  * Resolve every registered group/slot for a mode:
  * `overrides?.[group]?.[slot] ?? slot.defaults[mode]`. Unregistered
- * override entries are ignored; returned values are fresh copies.
+ * override entries are ignored. Color values come back as fresh copies
+ * (callers mutate them); number/string values are primitives. Values are
+ * NOT clamped here — the registry defaults are the zero-drift baseline and
+ * clamping belongs at the write path (`clampToSlot`).
  */
 export function resolveGroupTokens(
   mode: "dark" | "light",
@@ -206,11 +316,15 @@ export function resolveGroupTokens(
 ): ResolvedGroupTokens {
   const resolved: ResolvedGroupTokens = {};
   for (const group of registry.values()) {
-    const slots: Record<string, ThemeTokenRGB> = {};
+    const slots: Record<string, ThemeTokenValue> = {};
     for (const slot of allGroupSlots(group)) {
-      const override = overrides?.[group.id]?.[slot.key];
-      const value = override ?? slot.defaults[mode];
-      slots[slot.key] = { r: value.r, g: value.g, b: value.b };
+      const value = overrides?.[group.id]?.[slot.key] ?? slot.defaults[mode];
+      if (slot.kind === "number" || slot.kind === "enum") {
+        slots[slot.key] = value;
+      } else {
+        const rgb = value as ThemeTokenRGB;
+        slots[slot.key] = { r: rgb.r, g: rgb.g, b: rgb.b };
+      }
     }
     resolved[group.id] = slots;
   }
@@ -310,23 +424,85 @@ export function clampRgbToBands(
   return hslToRgb(hsl);
 }
 
-/** Defense-in-depth clamping of a value destined for one slot. */
-export function clampToSlot(slot: TokenGroupSlot, color: ThemeTokenRGB): ThemeTokenRGB {
-  return clampRgbToBands(color, slot.hueClamp, slot.sRange, slot.lRange);
+/**
+ * Defense-in-depth clamping of a value destined for one slot, per kind:
+ *
+ *   color  → hue/s/l bands (`clampRgbToBands`) — unchanged from before the
+ *            slot widening, including for kind-less (legacy) slots.
+ *   number → clamped into [min, max], then snapped onto the step grid
+ *            (`min + n * step`, float drift trimmed exactly like HkSlider's
+ *            snap) and clamped again, since the grid can overshoot max.
+ *   enum   → must be one of `options`; anything else falls back to
+ *            `slot.defaults.dark`. Picking the registry's dark anchor (not
+ *            the incoming value) keeps the emitted cssvar inside the option
+ *            set the tab strip can render — an out-of-vocabulary value is
+ *            unreachable through the dialog anyway, it can only arrive from
+ *            stale saved data.
+ *
+ * A value of the wrong primitive type for the slot's kind falls back to
+ * `defaults.dark` for the same reason: the registry anchor is the only
+ * value guaranteed to be valid for that slot.
+ */
+export function clampToSlot(slot: TokenGroupSlot, value: ThemeTokenRGB): ThemeTokenRGB;
+export function clampToSlot(slot: TokenGroupSlot, value: number): number;
+export function clampToSlot(slot: TokenGroupSlot, value: string): string;
+export function clampToSlot(slot: TokenGroupSlot, value: ThemeTokenValue): ThemeTokenValue;
+export function clampToSlot(slot: TokenGroupSlot, value: ThemeTokenValue): ThemeTokenValue {
+  if (slot.kind === "number") {
+    const raw = typeof value === "number" && Number.isFinite(value) ? value : slot.defaults.dark;
+    const step = slot.step > 0 ? slot.step : 1;
+    const clamped = Math.min(slot.max, Math.max(slot.min, raw));
+    const snapped = slot.min + Math.round((clamped - slot.min) / step) * step;
+    return Math.min(slot.max, Math.max(slot.min, Number(snapped.toFixed(6))));
+  }
+  if (slot.kind === "enum") {
+    const raw = typeof value === "string" ? value : slot.defaults.dark;
+    return slot.options.some((option) => option.value === raw) ? raw : slot.defaults.dark;
+  }
+  return clampRgbToBands(value as ThemeTokenRGB, slot.hueClamp, slot.sRange, slot.lRange);
+}
+
+/** Render one resolved slot value as its cssvar string. */
+function serializeSlotValue(slot: TokenGroupSlot, value: ThemeTokenValue): string {
+  if (slot.kind === "number") {
+    const n = typeof value === "number" && Number.isFinite(value) ? value : slot.defaults.dark;
+    return `${n}${slot.unit ?? ""}`;
+  }
+  if (slot.kind === "enum") {
+    return typeof value === "string" ? value : slot.defaults.dark;
+  }
+  const rgb = value as ThemeTokenRGB;
+  return `${rgb.r} ${rgb.g} ${rgb.b}`;
 }
 
 /**
- * Render resolved group values as CSS custom properties:
- * `{ "--<group>-<slot>": "r g b" }` — ready to merge into the theme
- * cssvar map (values feed `rgb(var(--…))` consumers).
+ * Render resolved group values as CSS custom properties — ready to merge
+ * into the theme cssvar map. The REGISTRY is the source of truth for names
+ * and kinds (only a slot definition knows its `cssVar` and `unit`), so the
+ * loop walks registered groups and reads the resolved map per slot:
+ *
+ *   color  → `{ "--<group>-<slot>": "r g b" }`
+ *   number → `{ "<cssVar>": "4px" }`        (`unit` appended verbatim)
+ *   enum   → `{ "<cssVar>": "pill" }`       (the option value as-is)
+ *
+ * Registry groups missing from `resolved` emit nothing (callers pair this
+ * with `resolveGroupTokens`, which covers every registered slot). Walking
+ * the registry rather than the caller's map is the one behavioural
+ * tightening here: a hand-built map can no longer leak
+ * `undefined undefined undefined` for a group or slot that was never
+ * registered. The documented path (resolve → serialize) is unchanged.
  */
 export function groupTokensToCSSVars(
   resolved: ResolvedGroupTokens,
 ): Record<string, string> {
   const vars: Record<string, string> = {};
-  for (const [groupId, slots] of Object.entries(resolved)) {
-    for (const [slotKey, rgb] of Object.entries(slots)) {
-      vars[`--${groupId}-${slotKey}`] = `${rgb.r} ${rgb.g} ${rgb.b}`;
+  for (const group of registry.values()) {
+    const slots = resolved[group.id];
+    if (!slots) continue;
+    for (const slot of allGroupSlots(group)) {
+      const value = slots[slot.key];
+      if (value === undefined) continue;
+      vars[tokenGroupSlotCssVar(group.id, slot)] = serializeSlotValue(slot, value);
     }
   }
   return vars;
@@ -340,13 +516,19 @@ export function groupTokensToCSSVars(
 // below validates the whole document and reports every problem at once,
 // so a typo in slot 37 names the slot instead of failing opaque. RGB
 // values are `[r, g, b]` arrays for brevity; labels are LocalizedText
-// maps so the config file carries its own translations.
+// maps so the config file carries its own translations. A slot may set
+// `kind: "color" | "number" | "enum"` — absent means color, the form every
+// palette written before the widening is in — and each kind validates its
+// own fields (number: min/max/step/unit, enum: a non-empty option list the
+// defaults must belong to).
 
 export type ParseTokenGroupResult =
   | { ok: true; group: TokenGroupDefinition }
   | { ok: false; errors: string[] };
 
 const IDENT_RE = /^[a-z][a-z0-9-]*$/;
+/** An explicit cssvar target: `--` plus at least one ident character. */
+const CSSVAR_RE = /^--[A-Za-z0-9_-]+$/;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -399,17 +581,54 @@ function parseRange01(v: unknown, where: string, errors: string[]): [number, num
   return [v[0] as number, v[1] as number];
 }
 
-function parseSlot(v: unknown, where: string, errors: string[]): TokenGroupSlot | null {
-  if (!isRecord(v)) {
-    errors.push(`${where}: must be an object`);
+function parseKind(v: unknown, where: string, errors: string[]): TokenGroupSlotKind | null {
+  if (v === undefined) return "color";
+  if (v === "color" || v === "number" || v === "enum") return v;
+  errors.push(`${where}.kind: must be "color", "number" or "enum"`);
+  return null;
+}
+
+function parseCssVar(v: unknown, where: string, errors: string[]): string | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v !== "string" || !CSSVAR_RE.test(v)) {
+    errors.push(`${where}: must be a cssvar name like "--radius-md"`);
+    return undefined;
+  }
+  return v;
+}
+
+function parseFiniteNumber(v: unknown, where: string, errors: string[]): number | null {
+  if (typeof v !== "number" || !Number.isFinite(v)) {
+    errors.push(`${where}: must be a finite number`);
     return null;
   }
-  const key = v.key;
-  if (typeof key !== "string" || !IDENT_RE.test(key)) {
-    errors.push(`${where}: key "${String(key)}" must match ${IDENT_RE}`);
-    return null;
+  return v;
+}
+
+/** Shared "label + defaults are required" diagnostic (mirrors the color path). */
+function reportMissingBasics(
+  where: string,
+  label: LocalizedText | null,
+  dark: unknown,
+  light: unknown,
+  errors: string[],
+): null {
+  if (!label && dark === null && light === null && errors.length === 0) {
+    // A slot whose only problem is a missing label object would otherwise
+    // drop silently with zero diagnostics — make sure something is said.
+    errors.push(`${where}: label and defaults are required`);
   }
-  const label = parseLocalized(v.label, `${where}.label`, errors);
+  return null;
+}
+
+function parseColorSlot(
+  v: Record<string, unknown>,
+  where: string,
+  key: string,
+  label: LocalizedText | null,
+  cssVar: string | undefined,
+  errors: string[],
+): TokenColorSlot | null {
   const defaults = v.defaults;
   let dark: ThemeTokenRGB | null = null;
   let light: ThemeTokenRGB | null = null;
@@ -437,22 +656,145 @@ function parseSlot(v: unknown, where: string, errors: string[]): TokenGroupSlot 
     return null;
   }
   if (!label || !dark || !light) {
-    if (!label && !dark && !light && errors.length === 0) {
-      // A slot whose only problem is a missing label object would otherwise
-      // drop silently with zero diagnostics — make sure something is said.
-      errors.push(`${where}: label and defaults are required`);
-    }
-    return null;
+    return reportMissingBasics(where, label, dark, light, errors);
   }
   return {
     key,
     label,
+    cssVar,
     defaults: { dark, light },
     hueClamp,
     sRange,
     lRange,
     pairWith,
   };
+}
+
+function parseNumberSlot(
+  v: Record<string, unknown>,
+  where: string,
+  key: string,
+  label: LocalizedText | null,
+  cssVar: string | undefined,
+  errors: string[],
+): TokenNumberSlot | null {
+  const min = parseFiniteNumber(v.min, `${where}.min`, errors);
+  const max = parseFiniteNumber(v.max, `${where}.max`, errors);
+  const step = parseFiniteNumber(v.step, `${where}.step`, errors);
+  if (min !== null && max !== null && max < min) {
+    errors.push(`${where}.max: must be ≥ min`);
+  }
+  if (step !== null && step <= 0) {
+    errors.push(`${where}.step: must be > 0`);
+  }
+  let unit: string | undefined;
+  if (v.unit !== undefined) {
+    if (typeof v.unit !== "string") {
+      errors.push(`${where}.unit: must be a string such as "px", "rem", "s" or ""`);
+    } else {
+      unit = v.unit;
+    }
+  }
+  const defaults = v.defaults;
+  let dark: number | null = null;
+  let light: number | null = null;
+  if (!isRecord(defaults)) {
+    errors.push(`${where}.defaults: must be an object with dark/light`);
+  } else {
+    dark = parseFiniteNumber(defaults.dark, `${where}.defaults.dark`, errors);
+    light = parseFiniteNumber(defaults.light, `${where}.defaults.light`, errors);
+  }
+  // A default outside the slider range is silently rewritten by the
+  // dialog's clamp on the first edit — reject it at parse time instead.
+  for (const mode of ["dark", "light"] as const) {
+    const value = mode === "dark" ? dark : light;
+    if (value !== null && min !== null && max !== null && (value < min || value > max)) {
+      errors.push(`${where}.defaults.${mode}: ${value} is outside [${min}, ${max}]`);
+    }
+  }
+  if (!label || dark === null || light === null || min === null || max === null || step === null) {
+    return reportMissingBasics(where, label, dark, light, errors);
+  }
+  return { key, kind: "number", label, cssVar, defaults: { dark, light }, min, max, step, unit };
+}
+
+function parseEnumSlot(
+  v: Record<string, unknown>,
+  where: string,
+  key: string,
+  label: LocalizedText | null,
+  cssVar: string | undefined,
+  errors: string[],
+): TokenEnumSlot | null {
+  const options: Array<{ value: string; label: LocalizedText }> = [];
+  const rawOptions = v.options;
+  if (!Array.isArray(rawOptions) || rawOptions.length === 0) {
+    errors.push(`${where}.options: must be a non-empty array of { value, label }`);
+  } else {
+    const seen = new Set<string>();
+    rawOptions.forEach((item, index) => {
+      if (!isRecord(item)) {
+        errors.push(`${where}.options[${index}]: must be an object with value/label`);
+        return;
+      }
+      const value = item.value;
+      if (typeof value !== "string" || value.length === 0) {
+        errors.push(`${where}.options[${index}].value: must be a non-empty string`);
+        return;
+      }
+      if (seen.has(value)) errors.push(`${where}.options[${index}].value: duplicate option "${value}"`);
+      seen.add(value);
+      const optionLabel = parseLocalized(item.label, `${where}.options[${index}].label`, errors);
+      if (optionLabel) options.push({ value, label: optionLabel });
+    });
+  }
+  const defaults = v.defaults;
+  let dark: string | null = null;
+  let light: string | null = null;
+  if (!isRecord(defaults)) {
+    errors.push(`${where}.defaults: must be an object with dark/light`);
+  } else {
+    for (const mode of ["dark", "light"] as const) {
+      const value = defaults[mode];
+      if (typeof value !== "string" || value.length === 0) {
+        errors.push(`${where}.defaults.${mode}: must be a non-empty option string`);
+      } else if (mode === "dark") {
+        dark = value;
+      } else {
+        light = value;
+      }
+    }
+  }
+  const values = new Set(options.map((option) => option.value));
+  for (const mode of ["dark", "light"] as const) {
+    const value = mode === "dark" ? dark : light;
+    if (value !== null && !values.has(value)) {
+      errors.push(`${where}.defaults.${mode}: "${value}" is not one of the declared options`);
+    }
+  }
+  if (!label || dark === null || light === null || options.length === 0) {
+    return reportMissingBasics(where, label, dark, light, errors);
+  }
+  return { key, kind: "enum", label, cssVar, defaults: { dark, light }, options };
+}
+
+function parseSlot(v: unknown, where: string, errors: string[]): TokenGroupSlot | null {
+  if (!isRecord(v)) {
+    errors.push(`${where}: must be an object`);
+    return null;
+  }
+  const key = v.key;
+  if (typeof key !== "string" || !IDENT_RE.test(key)) {
+    errors.push(`${where}: key "${String(key)}" must match ${IDENT_RE}`);
+    return null;
+  }
+  const kind = parseKind(v.kind, where, errors);
+  if (kind === null) return null;
+  const label = parseLocalized(v.label, `${where}.label`, errors);
+  const cssVar = parseCssVar(v.cssVar, `${where}.cssVar`, errors);
+  if (kind === "number") return parseNumberSlot(v, where, key, label, cssVar, errors);
+  if (kind === "enum") return parseEnumSlot(v, where, key, label, cssVar, errors);
+  return parseColorSlot(v, where, key, label, cssVar, errors);
 }
 
 function parseSlotList(v: unknown, where: string, errors: string[]): TokenGroupSlot[] | null {
@@ -469,17 +811,37 @@ function parseSlotList(v: unknown, where: string, errors: string[]): TokenGroupS
 }
 
 function crossValidate(def: TokenGroupDefinition, errors: string[]): void {
+  const slots = allGroupSlots(def);
   const seen = new Set<string>();
-  for (const slot of allGroupSlots(def)) {
+  const byKey = new Map<string, TokenGroupSlot>();
+  for (const slot of slots) {
     if (seen.has(slot.key)) errors.push(`duplicate slot key "${slot.key}"`);
     seen.add(slot.key);
+    byKey.set(slot.key, slot);
   }
-  for (const slot of allGroupSlots(def)) {
-    if (slot.pairWith !== undefined && !seen.has(slot.pairWith)) {
+  for (const slot of slots) {
+    // pairWith is a color-only field: number/enum slots have no pair.
+    if (slot.kind === "number" || slot.kind === "enum") continue;
+    if (slot.pairWith === undefined) continue;
+    const paired = byKey.get(slot.pairWith);
+    if (!paired) {
       errors.push(`slot "${slot.key}" pairs with unknown slot "${slot.pairWith}"`);
+    } else if (tokenGroupSlotKind(paired) !== "color") {
+      // Striped-pair semantics only exist for colors; pairing a color with
+      // a slider would leave the dialog with nothing to render a pair for.
+      errors.push(`slot "${slot.key}" pairs with "${slot.pairWith}", which is not a color slot`);
     }
   }
-  if (allGroupSlots(def).length === 0) {
+  // Two slots aimed at the same cssvar overwrite each other on every apply
+  // (last write wins, silently) — a widened slot that names an existing
+  // scale token makes that collision reachable, so it is checked here.
+  const targets = new Set<string>();
+  for (const slot of slots) {
+    const target = tokenGroupSlotCssVar(def.id, slot);
+    if (targets.has(target)) errors.push(`duplicate cssvar target "${target}"`);
+    targets.add(target);
+  }
+  if (slots.length === 0) {
     errors.push(`group "${def.id}" defines no slots`);
   }
 }

@@ -444,7 +444,7 @@
 // (the component positions it via transform/size), sliding between
 // nodes with the same clock. The first placement is instant (data-placed
 // gates the transition) so opening the sheet does not animate it.
-.hk-timeline[data-mode="full"] {
+.hk-timeline[data-mode="full"]:not(.hk-scroll-pin) {
   position: relative;
 }
 

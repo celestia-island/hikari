@@ -526,6 +526,14 @@
   }
 }
 
+// The global animation switch pauses animations; a paused wipe freezes
+// the cell in its from-frame (invisible) for any navigation that lands
+// in the paused window — disable instead, like the family's other
+// enter animations (HkPickerPane/HkCrossfade precedent).
+html[data-css-animations="0"] .hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hk-timeline-step [data-el="indicator"],
   .hk-timeline-step [data-el="label"],

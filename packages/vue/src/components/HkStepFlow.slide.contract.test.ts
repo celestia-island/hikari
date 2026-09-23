@@ -170,6 +170,12 @@ describe("HkStepFlow split-window swap contract", () => {
 
   it("releases the staged offset imperatively in the mount frame's successor", () => {
     expect(tsx).toContain('classList.remove("hk-stepflow-enter-from")');
+    // The staged mount itself is the vdom binding — without it the
+    // entering body would hard-cut in (adversarial MuI survived
+    // against every behavioral test because none covers the mount
+    // frame).
+    expect(tsx).toContain('swapPhase.value === "slide"');
+    expect(tsx).toContain('"hk-stepflow-enter-from"');
   });
 
   it("retires the old vocabulary and media forks", () => {

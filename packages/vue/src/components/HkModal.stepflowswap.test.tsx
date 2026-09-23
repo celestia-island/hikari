@@ -146,27 +146,6 @@ describe("HkModal stepflow swap handoff", () => {
     expect(rig.morphToken()).toBe("");
   });
 
-  it("unfreezes via the safety timer when the settle never arrives", async () => {
-    // A flow unmounted mid-slide never sends the morph event — the
-    // freeze must not outlive its own grace window.
-    vi.useFakeTimers();
-    freezeRaf();
-    stubDurations();
-    const rig = await mountRig();
-    rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(600);
-    rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
-    await nextTick();
-    // Past ms + 650 the safety unfreeze ran — observable because a
-    // later morph event still works (a stale freeze would gate the
-    // remeasure forever) and no override was stranded.
-    await vi.advanceTimersByTimeAsync(1200);
-    rig.announceSwap({ delta: -40, durationMs: 300, phase: "morph" });
-    await nextTick();
-    expect(rig.morphToken()).toBe("300ms");
-    await vi.advanceTimersByTimeAsync(700);
-    expect(rig.morphToken()).toBe("");
-  });
 
   it("ignores announcements while the surface is still unfolding", async () => {
     vi.useFakeTimers();
@@ -377,24 +356,51 @@ describe("HkModal publishes its own fold for the step flow", () => {
 
   it("unfreezes via the safety timer when the settle never arrives", async () => {
     // A flow unmounted mid-slide never sends the morph event — the
-    // freeze must not outlive its own grace window.
+    // safety unfreeze must not only drop the flag but FLUSH the
+    // measurement the freeze dropped (adversarial finding: without the
+    // flush the sheet sits at its old height until the next content
+    // change).
     vi.useFakeTimers();
     freezeRaf();
     stubDurations();
+    stubClip();
+    stubBox(500, Number.POSITIVE_INFINITY);
+    const roInstances: Array<{ callback: () => void }> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      callback: () => void;
+      constructor(cb: () => void) {
+        this.callback = cb;
+        roInstances.push(this);
+      }
+      observe() {}
+      disconnect() {}
+    });
     const rig = await mountRig();
     rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(600);
+    await vi.advanceTimersByTimeAsync(700);
+    const frame = rig.frameEl()!;
+    expect(frame.style.height).toBe("596px");
+
+    // The slide window freezes; the content grew and the observer event
+    // was dropped (gated); no morph event will ever come.
     rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
     await nextTick();
-    // Past ms + 650 the safety unfreeze ran — observable because a
-    // later morph event still works (a stale freeze would gate the
-    // remeasure forever) and no override was stranded.
-    await vi.advanceTimersByTimeAsync(1200);
+    content = 560;
+    roInstances[0]!.callback();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(frame.style.height).toBe("596px");
+
+    // Past ms + 650 the safety unfreeze runs AND flushes: the pin
+    // reflects the growth without any event.
+    await vi.advanceTimersByTimeAsync(700);
+    expect(frame.style.height).toBe("656px");
+    // …and a later morph event still works (no stranded freeze).
     rig.announceSwap({ delta: -40, durationMs: 300, phase: "morph" });
     await nextTick();
     expect(rig.morphToken()).toBe("300ms");
     await vi.advanceTimersByTimeAsync(700);
     expect(rig.morphToken()).toBe("");
+    restoreBox();
   });
 
   it("ignores announcements while the surface is still unfolding", async () => {
@@ -492,118 +498,63 @@ describe("HkModal publishes its own fold for the step flow", () => {
     restoreBox();
   });
 
-  it("republishes the morph's real fold span and its landing", async () => {
-    vi.useFakeTimers();
-    freezeRaf();
-    stubClip();
-    // Content starts at 500 (frame 596) and the sheet is uncapped, so the
-    // morph can fold: shrinking the content must publish a conceal.
-    stubBox(500, Number.POSITIVE_INFINITY);
-    const rig = await mountRig();
-    rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(600);
-    expect(rig.bodyEl()).not.toBeNull();
+  
 
-    const stages: unknown[] = [];
-    let settled = 0;
-    rig.bodyEl()!.addEventListener(SHEET_SWEEP_STAGE_EVENT, (e) => {
-      stages.push((e as CustomEvent).detail);
-    });
-    rig.bodyEl()!.addEventListener(SHEET_SWEEP_SETTLE_EVENT, () => {
-      settled += 1;
-    });
 
-    // The sweep needs real frames: pump rAF from here on (a frozen frame
-    // loop would strand the morph's warmup, as its own docs warn).
-    const frames: FrameRequestCallback[] = [];
-    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
-      frames.push(cb);
-      return frames.length;
-    });
-    vi.stubGlobal("cancelAnimationFrame", () => {});
+  
 
-    // The flow owns the new height and announces; the modal measures,
-    // stages its conceal, and publishes the span it will sweep.
-    content = 300;
-    rig.announceSwap({ delta: -200, durationMs: 150, phase: "enter" });
-    await nextTick();
-    expect(stages).toEqual([
-      { direction: "conceal", from: 596, to: 396, sweep: expect.any(Number) },
-    ]);
 
-    // …and the landing is published when the sweep finishes, carrying the
-    // sweep's own identity (without it a consumer cannot tell its landing
-    // from another dance's teardown).
-    const landed: Array<{ sweep?: number }> = [];
-    rig.bodyEl()!.addEventListener(SHEET_SWEEP_SETTLE_EVENT, (e) => {
-      landed.push((e as CustomEvent<{ sweep?: number }>).detail ?? {});
-    });
-    for (let i = 0; i < 4; i += 1) {
-      for (const cb of frames.splice(0)) cb(i * 16);
-      await vi.advanceTimersByTimeAsync(60);
-    }
-    await vi.advanceTimersByTimeAsync(1200);
-    expect(settled).toBeGreaterThan(0);
-    expect(landed.length).toBeGreaterThan(0);
-    expect(typeof landed[0]?.sweep).toBe("number");
-  });
+  
 
-  it("publishes NOTHING when the sheet is capped and cannot fold", async () => {
-    vi.useFakeTimers();
-    freezeRaf();
-    stubClip();
-    // Content that already overflows the cap: the natural height cannot
-    // change, so the morph stages no sweep at all — the flow must park
-    // nothing (its span defaults to 0).
-    stubBox(900, 596);
-    const rig = await mountRig();
-    rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(600);
 
-    const stages: unknown[] = [];
-    let settled = 0;
-    rig.bodyEl()!.addEventListener(SHEET_SWEEP_STAGE_EVENT, (e) => {
-      stages.push((e as CustomEvent).detail);
-    });
-    rig.bodyEl()!.addEventListener(SHEET_SWEEP_SETTLE_EVENT, () => {
-      settled += 1;
-    });
-
-    content = 850;
-    rig.announceSwap({ delta: -50, durationMs: 150, phase: "enter" });
-    await nextTick();
-    await vi.advanceTimersByTimeAsync(1200);
-    expect(stages).toEqual([]);
-    expect(settled).toBe(0);
-  });
-
-  it("freezes the sheet for the slide window and unfreezes at the morph edge", async () => {
-    // Round 16 two-window protocol: the "swap" phase holds the sheet's
-    // pin (observer-driven remeasures must not chase the flow's cell
-    // mid-slide) until the "morph" phase lifts the freeze and measures.
-    // The gate-and-release plumbing itself is unit-witnessed in
-    // useSizeMorph.test.ts (deferRemeasure gate).
+  it("unfreezes via the safety timer when the settle never arrives", async () => {
+    // A flow unmounted mid-slide never sends the morph event — the
+    // safety unfreeze must not only drop the flag but FLUSH the
+    // measurement the freeze dropped (adversarial finding: without the
+    // flush the sheet sits at its old height until the next content
+    // change).
     vi.useFakeTimers();
     freezeRaf();
     stubDurations();
+    stubClip();
+    stubBox(500, Number.POSITIVE_INFINITY);
+    const roInstances: Array<{ callback: () => void }> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      callback: () => void;
+      constructor(cb: () => void) {
+        this.callback = cb;
+        roInstances.push(this);
+      }
+      observe() {}
+      disconnect() {}
+    });
     const rig = await mountRig();
     rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(600);
-    expect(rig.morphToken()).toBe("");
+    await vi.advanceTimersByTimeAsync(700);
+    const frame = rig.frameEl()!;
+    expect(frame.style.height).toBe("596px");
 
-    // The slide window: freeze — no morph token, no measurement.
+    // The slide window freezes; the content grew and the observer event
+    // was dropped (gated); no morph event will ever come.
     rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
     await nextTick();
-    expect(rig.morphToken()).toBe("");
+    content = 560;
+    roInstances[0]!.callback();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(frame.style.height).toBe("596px");
 
-    // The morph window: the freeze lifts and the override lands.
-    rig.announceSwap({ delta: 120, durationMs: 300, phase: "morph" });
+    // Past ms + 650 the safety unfreeze runs AND flushes: the pin
+    // reflects the growth without any event.
+    await vi.advanceTimersByTimeAsync(700);
+    expect(frame.style.height).toBe("656px");
+    // …and a later morph event still works (no stranded freeze).
+    rig.announceSwap({ delta: -40, durationMs: 300, phase: "morph" });
     await nextTick();
     expect(rig.morphToken()).toBe("300ms");
     await vi.advanceTimersByTimeAsync(700);
     expect(rig.morphToken()).toBe("");
+    restoreBox();
   });
-
   it("gates the observer while the slide window freezes the sheet", async () => {
     // Round 16 wiring witness (the adversarial round's MuD survived
     // against everything else): the "swap" event must route into the

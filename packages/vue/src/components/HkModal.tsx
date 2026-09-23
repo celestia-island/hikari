@@ -291,12 +291,19 @@ export default defineComponent({
       }
       contentRef.value?.style.removeProperty("--hk-modal-morph-duration");
     };
-    const clearSwapFreeze = (): void => {
+    const clearSwapFreeze = (flush = false): void => {
+      const timed = swapFreezeTimer !== null;
       swapFrozen = false;
       if (swapFreezeTimer !== null) {
         clearTimeout(swapFreezeTimer);
         swapFreezeTimer = null;
       }
+      // The safety unfreeze (no morph event ever arrived — e.g. the flow
+      // unmounted mid-slide) must not just drop the flag: the slide-time
+      // content change was DROPPED, not queued, so without a flush here
+      // the sheet would sit at its old height until the next content
+      // change (adversarial round finding).
+      if (flush && timed) morph.remeasure();
     };
     const onStepflowSwap = (event: Event): void => {
       if (machine.phase.value !== "open") {
@@ -318,7 +325,7 @@ export default defineComponent({
         swapFrozen = true;
         if (swapFreezeTimer !== null) clearTimeout(swapFreezeTimer);
         const ms = typeof detail.durationMs === "number" ? detail.durationMs : 300;
-        swapFreezeTimer = setTimeout(clearSwapFreeze, ms + 650);
+        swapFreezeTimer = setTimeout(() => clearSwapFreeze(true), ms + 650);
         return;
       }
       // Morph / instant: the content settled — unfreeze and measure now.

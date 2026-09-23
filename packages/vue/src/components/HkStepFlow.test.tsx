@@ -306,6 +306,61 @@ describe("HkStepFlow split-window swap (motion enabled)", () => {
     expect(events).toHaveLength(2);
   });
 
+  it("keeps the staged classes through unrelated re-renders mid-slide", async () => {
+    // The imperative enter-from release survives re-renders ONLY while
+    // the vnode class strings stay equal between renders (Vue's
+    // patchProps short-circuits on equality; a changed string rewrites
+    // el.className wholesale and the staged state would resurrect —
+    // the adversarial round proved the premise holds, this pins it).
+    stubMotion();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const current = ref("a");
+    const tick = ref(0);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkStepFlow, {
+            steps: STEPS,
+            modelValue: current.value,
+            "onUpdate:modelValue": (key: string) => { current.value = key; },
+          }, {
+            a: () => h("p", { "data-tick": tick.value }, "a"),
+            b: () => h("p", { "data-tick": tick.value }, "b"),
+            c: () => h("p", { "data-tick": tick.value }, "c"),
+            d: () => h("p", { "data-tick": tick.value }, "d"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    current.value = "b";
+    await flushSwap();
+    const entering = container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(entering?.classList.contains("hk-stepflow-enter-from")).toBe(false);
+    // Three unrelated re-renders (fresh slot closures each time — the
+    // worst case for the class-string equality).
+    for (let i = 0; i < 3; i += 1) {
+      tick.value += 1;
+      await flushSwap();
+      expect(
+        container.querySelector<HTMLElement>(".hk-stepflow-body.active")
+          ?.classList.contains("hk-stepflow-enter-from"),
+      ).toBe(false);
+      expect(
+        container.querySelector<HTMLElement>(".hk-stepflow-body.leaving")
+          ?.classList.contains("hk-stepflow-leave-to"),
+      ).toBe(true);
+    }
+    endTransition(container.querySelector(".hk-stepflow-body.active"));
+    await flushSwap();
+    expect(container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(container.querySelector(".hk-stepflow-body")?.textContent).toBe("b");
+  });
+
   it("announces the measured height delta at the morph edge", async () => {
     stubMotion();
     stubHeights((text) => (text === "a-body" ? 100 : 220));

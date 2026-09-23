@@ -194,12 +194,25 @@
   margin: var(--space-6, 0.375rem) 0 0;
   font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-error));
+  /* The messages belong to the row's visual system, and the row centers
+   * itself unconditionally (`.hk-otp` is a flex `justify-content: center`
+   * line with no opt-out). A paragraph left at the page's default `start`
+   * alignment therefore hugs the host card's left edge under a centered
+   * row — the deployed chest step-up panel showed the TOTP hint pinned
+   * left below centered cells (user screenshot, 2026-09-23). Both message
+   * variants follow the row's own centering, so a wrapped second line
+   * stays balanced too. Hosts that want start-aligned messages can still
+   * override the paragraphs from outside; the class carries no extra
+   * specificity, so a one-class host rule wins. */
+  text-align: center;
 }
 
 .hk-otp-hint {
   margin: var(--space-6, 0.375rem) 0 0;
   font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-muted));
+  /* Same centering contract as the error message above. */
+  text-align: center;
 }
 
 /* Narrow viewports: shrink the ramps a step so a phone card shows the row

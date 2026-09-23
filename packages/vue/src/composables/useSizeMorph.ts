@@ -235,6 +235,22 @@ export function useSizeMorph(
    *  at open and KEEPING it means step morphs never cross a layer
    *  boundary at all. */
   let residentWill = false;
+  /** Resident RIDER promotions (2026-09-23 round 15, the black-block
+   *  regression report): the fold riders' own will-change initially
+   *  landed at STAGE time — three fresh layer promotions (header,
+   *  subheader, body block) inside the same task as the frame's
+   *  re-raster, with only the two-frame warmup to absorb them. On the
+   *  phone GPU the promoted-but-unrastered body block composited as
+   *  black tiles through the early sweep — the same race the frame's
+   *  resident promotion had fixed, re-entered from the side. The host
+   *  chrome riders (whatever collectRide returns at ARM time, when no
+   *  swap is registered) now promote ONCE at open and keep their layers
+   *  for the whole cycle; a sweep's settle no longer demotes them, so
+   *  stage and landing cross no layer boundaries at all. Per-swap
+   *  riders (the stepflow's entering body — registered mid-flight,
+   *  small, and opacity-composited by its own fade anyway) keep the
+   *  stage-time promotion. */
+  let residentRideEls: HTMLElement[] = [];
   /** Identity of the sweep currently staged/folding, echoed to consumers. */
   let sweepSeq = 0;
   let activeSweep = 0;
@@ -336,7 +352,12 @@ export function useSizeMorph(
       // instant; opacity (still listed with its own clock) keeps running.
       r.el.style.transition = r.ownTransition || "none";
       r.el.style.transform = "";
-      r.el.style.willChange = "";
+      // Resident-promoted riders (the host chrome, promoted at arm time)
+      // KEEP their layers through the settle — demoting here would put
+      // the raster race back at every landing (round 15 black blocks).
+      if (!residentRideEls.includes(r.el)) {
+        r.el.style.willChange = "";
+      }
     }
     void frame.value?.offsetHeight;
     for (const r of rideEls) {
@@ -423,8 +444,15 @@ export function useSizeMorph(
     }
   }
 
-  /** Drop the resident layer promotion (hold / release paths). */
+  /** Drop the resident layer promotion (hold / release paths) — the
+   *  frame's own and the resident riders' together: the whole open
+   *  cycle's layerization unwinds at once, inside the close
+   *  choreography's own leave window. */
   function clearResidentWill(): void {
+    for (const el of residentRideEls) {
+      el.style.willChange = "";
+    }
+    residentRideEls = [];
     if (!residentWill) return;
     residentWill = false;
     const f = frame.value;
@@ -551,7 +579,15 @@ export function useSizeMorph(
     const f = frame.value;
     if (f) f.style.height = "";
     stopReveal();
-    clearResidentWill();
+    // Deliberately NOT clearResidentWill(): release() runs both on the
+    // full-stop path AND mid-flight from the contamination guard, and
+    // the guard's pin drop is a measurement-hygiene event, not a cycle
+    // end — dropping the resident layers there re-armed the stage-time
+    // raster race for every later sweep of the same open cycle (round
+    // 15 rig finding, confirmed by the adversarial round: the capped
+    // case tore header/body/frame promotions down at the swap frame).
+    // The armed stop path clears them via hold(); a never-armed stop
+    // has nothing to clear; unmount owns its own teardown.
     pinned = 0;
   }
 
@@ -799,11 +835,30 @@ export function useSizeMorph(
     // Resident promotion on clip-mode surfaces (see residentWill): the
     // layer crosses no boundary during later step morphs. Applied here,
     // at the open edge — one promotion per open cycle instead of one
-    // per resize.
+    // per resize. The HOST CHROME RIDERS promote here too (see
+    // residentRideEls): collectRide at arm time returns exactly the
+    // chrome (no swap is registered mid-open), and their layers then
+    // live for the whole cycle — a sweep's stage promotes nothing but
+    // the small per-swap riders, so the phone GPU never rasterizes a
+    // big layer inside the morph window it cannot finish in time.
     const f0 = frame.value;
     if (f0 && clipMode(f0)) {
       f0.style.willChange = "clip-path";
       residentWill = true;
+      if (options.collectRide) {
+        residentRideEls = options.collectRide()
+          .map((entry) => entry.el)
+          .filter((el) => {
+            try {
+              return frame.value?.contains(el) ?? false;
+            } catch {
+              return false;
+            }
+          });
+        for (const el of residentRideEls) {
+          el.style.willChange = "transform";
+        }
+      }
     }
     if (typeof ResizeObserver === "undefined" || !content.value) {
       remeasure();

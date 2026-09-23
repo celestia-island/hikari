@@ -200,6 +200,35 @@ describe("useSizeMorph", () => {
     expect(h.frame.style.transition).toBe("");
   });
 
+  it("keeps the resident rider layers through a contamination-guard release", async () => {
+    // Round 15 rig finding: the guard's mid-flight release() used to
+    // call clearResidentWill(), tearing the chrome promotions down at
+    // the swap frame on capped sheets — every later sweep of the same
+    // open cycle then promoted at STAGE again (the black-block race).
+    // The pin drops (measurement hygiene) but the cycle's layers stay.
+    const rider = document.createElement("div");
+    const h = mountHarness(600, 560, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.content.appendChild(rider);
+    h.start();
+    expect(rider.style.willChange).toBe("transform");
+
+    h.setNatural(1728);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    // The pin dropped…
+    expect(h.frame.style.height).toBe("");
+    // …but the resident promotion survived the guard, and only the full
+    // stop unwinds it.
+    expect(rider.style.willChange).toBe("transform");
+    expect(h.frame.style.willChange).toBe("clip-path");
+    h.stop();
+    expect(rider.style.willChange).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
   it("recovers and pins again once a clean measurement returns", async () => {
     const h = mountHarness(600, 560);
     h.start();
@@ -874,14 +903,15 @@ describe("useSizeMorph fold riders", () => {
     h.setNatural(360);
     h.remeasure();
     await busFrames(2);
-    expect(collected).toBe(1);
+    // One collection at ARM (resident promotion) + one at the stage.
+    expect(collected).toBe(2);
     // A second growth mid-sweep: the old ride is cleared (atomically
     // with the interrupted sweep's landing) and re-collected for the new
     // dance's own stage.
     h.setNatural(420);
     h.remeasure();
     expect(rider.style.transform).toBe("translateY(60px)");
-    expect(collected).toBe(2);
+    expect(collected).toBe(3);
     // The successor sweep runs and lands on its own terms.
     await busFrames(2);
     expect(rider.style.transform).toBe("translateY(0px)");
@@ -1014,6 +1044,107 @@ describe("useSizeMorph fold rider settle handoff", () => {
     // …and the inline override is fully released afterwards.
     expect(rider.style.transition).toBe("");
     expect(rider.style.transform).toBe("");
+    h.stop();
+  });
+});
+
+// ── Resident rider promotion (round 15, 2026-09-23 black-block report) ──
+// The riders' will-change initially landed at STAGE time: three fresh
+// layer promotions inside the frame's re-raster task, with only the
+// two-frame warmup to absorb them — on the phone GPU the body block
+// composited as black tiles through the early sweep (the same raster
+// race the frame's resident promotion had fixed). The host chrome now
+// promotes ONCE at arm time and keeps its layers for the whole cycle.
+
+describe("useSizeMorph resident rider promotion", () => {
+  it("promotes in-frame riders at arm time and keeps them through settles", async () => {
+    const rider = document.createElement("div");
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.content.appendChild(rider);
+    // Before arming there is no promotion.
+    expect(rider.style.willChange).toBe("");
+    h.start();
+    // Armed: the rider (inside the frame subtree) is promoted once,
+    // together with the frame itself.
+    expect(rider.style.willChange).toBe("transform");
+    expect(h.frame.style.willChange).toBe("clip-path");
+
+    // A full sweep: stage → flip → settle. The rider rides, and the
+    // settle must NOT demote it — the landing crossing a layer boundary
+    // is the raster race that read as black blocks on the phone.
+    h.setNatural(360);
+    h.remeasure();
+    expect(rider.style.transform).toBe("translateY(60px)");
+    await busFrames(2);
+    expect(rider.style.transform).toBe("translateY(0px)");
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(rider.style.transform).toBe("");
+    expect(rider.style.willChange).toBe("transform");
+
+    // The whole open cycle's layerization unwinds at stop/hold.
+    h.stop();
+    expect(rider.style.willChange).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
+  it("leaves detached (per-swap) riders on the stage-time promotion path", async () => {
+    // A rider NOT in the frame subtree at arm time — the stepflow's
+    // entering body, registered mid-swap — never becomes resident: its
+    // promotion still lands at stage and still releases at the settle.
+    const resident = document.createElement("div");
+    let perSwap: HTMLElement | null = null;
+    const h = mountHarness(300, 300, {
+      collectRide: () => {
+        const out: Array<{ el: HTMLElement }> = [{ el: resident }];
+        if (perSwap) out.push({ el: perSwap });
+        return out;
+      },
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.content.appendChild(resident);
+    h.start();
+    expect(resident.style.willChange).toBe("transform");
+
+    perSwap = document.createElement("div"); // registered mid-flight, detached
+    h.setNatural(360);
+    h.remeasure();
+    expect(perSwap.style.willChange).toBe("transform");
+    await busFrames(2);
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(perSwap.style.willChange).toBe("");
+    expect(resident.style.willChange).toBe("transform");
+    h.stop();
+  });
+
+  it("unwinds the resident rider layers on unmount", async () => {
+    // The unmount teardown owns its own clearResidentWill (it must not
+    // rely on hold() — an open surface torn down mid-cycle leaves no
+    // other path). Witness: the promoted layer flag outlives the app.
+    const rider = document.createElement("div");
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.content.appendChild(rider);
+    h.start();
+    expect(rider.style.willChange).toBe("transform");
+    const mount = mounts.splice(-1)[0]!;
+    mount.app.unmount();
+    expect(rider.style.willChange).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
+  it("does not promote riders when the surface is not clip-mode", () => {
+    const rider = document.createElement("div");
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.content.appendChild(rider);
+    h.start();
+    expect(rider.style.willChange).toBe("");
     h.stop();
   });
 });

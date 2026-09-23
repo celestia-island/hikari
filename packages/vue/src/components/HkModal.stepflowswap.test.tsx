@@ -338,21 +338,14 @@ describe("HkModal publishes its own fold for the step flow", () => {
     stubClip();
     stubBox(500, Number.POSITIVE_INFINITY);
 
-    let registered = false;
+    // The rider models the stepflow's ENTERING body: registered
+    // MID-CYCLE (never at arm time), so it stays on the per-swap
+    // promotion path — resident promotion is the chrome's alone.
+    let lateRegistry: ReturnType<typeof useSheetRide> = null;
     const Rider = defineComponent({
       setup() {
-        const registry = useSheetRide();
-        return () =>
-          h("div", {
-            class: "rider-el",
-            ref: (el: unknown) => {
-              const node = el as HTMLElement | null;
-              if (node && registry && !registered) {
-                registered = true;
-                registry.register({ el: node, counter: true });
-              }
-            },
-          }, "rider");
+        lateRegistry = useSheetRide();
+        return () => h("div", { class: "rider-el" }, "rider");
       },
     });
 
@@ -384,7 +377,9 @@ describe("HkModal publishes its own fold for the step flow", () => {
     const header = () => document.querySelector<HTMLElement>(".hk-modal-header")!;
     const bodyBlock = () => document.querySelector<HTMLElement>(".hk-modal-body")!;
     const riderEl = () => document.querySelector<HTMLElement>(".rider-el")!;
-    expect(registered).toBe(true);
+    expect(lateRegistry).not.toBeNull();
+    // Register only AFTER the surface armed — the per-swap timing.
+    lateRegistry!.register({ el: riderEl(), counter: true });
 
     // The sweep needs real frames from here on.
     const frames: FrameRequestCallback[] = [];
@@ -422,13 +417,19 @@ describe("HkModal publishes its own fold for the step flow", () => {
     expect(riderEl().style.transform).toBe("translateY(0px)");
     expect(header().style.transition).toMatch(/^transform 0\.3s /);
 
-    // The landing releases the rides with the frame.
+    // The landing releases the rides with the frame — but the CHROME
+    // keeps its resident promotion (round 15: demoting at the settle
+    // put the phone-GPU raster race back at every landing = black
+    // blocks). Only the per-swap registration (the Rider div, not in
+    // the frame at arm time) releases its layer.
     const ev = new Event("transitionend");
     Object.defineProperty(ev, "propertyName", { value: "clip-path" });
     frame().dispatchEvent(ev);
     expect(header().style.transform).toBe("");
     expect(bodyBlock().style.transform).toBe("");
     expect(riderEl().style.transform).toBe("");
-    expect(header().style.willChange).toBe("");
+    expect(header().style.willChange).toBe("transform");
+    expect(bodyBlock().style.willChange).toBe("transform");
+    expect(riderEl().style.willChange).toBe("");
   });
 });

@@ -404,6 +404,12 @@ export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
 export { default as HAuthMethodList } from "./components/HkAuthMethodList";
 export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";
 export { default as HAuthSubmitButton } from "./components/HkAuthSubmitButton";
+export {
+  HkMfaVerifyCard as HMfaVerifyCard,
+  hkIsMfaFactor as isMfaFactor,
+  hkPreferredMfaFactor as preferredMfaFactor,
+  type HkMfaFactor as MfaFactor,
+} from "./components/HkMfaVerifyCard";
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
 export { provideActionBar, useActionBar } from "./composables/useActionBar";
 export type { ActionBarRenderer } from "./composables/useActionBar";

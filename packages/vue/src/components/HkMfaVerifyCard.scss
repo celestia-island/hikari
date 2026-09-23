@@ -1,0 +1,21 @@
+/* ── HkMfaVerifyCard ─────────────────────────────────────────────────
+ * The card shell, header and form vocabulary all come from the auth
+ * surfaces in styles/admin-tokens.scss (.s-auth-card / .s-auth-header /
+ * .s-auth-form); this sheet only owns the piece the card itself
+ * introduces: the factor picker's wrapper.
+ *
+ * The wrapper is a flex COLUMN child of .s-auth-form (admin-tokens
+ * stretches `.s-auth-form > *` to full width), so the row centers
+ * HORIZONTALLY via align-items — and the group must SHRINK-WRAP to its
+ * natural width: the slider thumb anchors from the strip's LEFT edge
+ * (inset + index × item-size), so a stretched root strands the thumb a
+ * full half-row left of the actually-centered active factor (empirically
+ * pinned by a chrome-headless probe when the panel lived in
+ * shittim-chest; jsdom cannot see it). This rule moved here verbatim
+ * from chest's host chrome sheet when the panel became this component —
+ * the host copy is deleted in the adoption change.
+ */
+
+.s-auth-form .s-mfa-factors {
+  align-items: center;
+}

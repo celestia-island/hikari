@@ -1184,12 +1184,19 @@ describe("useSizeMorph heightMorph (round 18)", () => {
     expect(h.frame.style.transition).toContain("300ms");
     // No clip staging, no riders — this is a plain height animation.
     expect(h.frame.style.clipPath).toBe("");
+    // The resident layer promotion is LIFTED for the animation's
+    // duration (round 19: the per-frame texture re-allocation of a
+    // composited layer during height animation composites as
+    // transparent on phone GPUs — the background flash-through).
+    expect(h.frame.style.willChange).toBe("");
 
-    // The transitionend cleans the inline override.
+    // The transitionend cleans the inline override AND restores the
+    // resident promotion (the frame is at rest).
     const ev = new Event("transitionend");
     Object.defineProperty(ev, "propertyName", { value: "height" });
     h.frame.dispatchEvent(ev);
     expect(h.frame.style.transition).toBe("");
+    expect(h.frame.style.willChange).toBe("clip-path");
     h.stop();
   });
 

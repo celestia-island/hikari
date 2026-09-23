@@ -936,25 +936,47 @@ export function useSizeMorph(
     // 2. Re-establish the OLD pin under no transition, flush it.
     f.style.height = `${pinned}px`;
     void f.offsetHeight;
-    // 3. Animate to the new pin under an inline height transition —
-    //    the CSS engine owns every frame; there is no staging task, no
-    //    warmup and no per-frame JS at all.
+    // 3. DEMOTE the frame from its resident composited layer for the
+    //    animation's duration. A `will-change: clip-path` layer whose
+    //    element changes layout size per-frame re-allocates its GPU
+    //    texture every frame — on a phone GPU the gap between the old
+    //    texture being discarded and the new one rastering composites
+    //    as TRANSPARENT, flashing the page behind the sheet through
+    //    (round-19 report: "background content keeps flashing"). With
+    //    the promotion lifted, the height animation's per-frame paint
+    //    happens on the main thread, which is slower but never leaves
+    //    a frame where the sheet's surface is missing.
+    const residentWill_ = f.style.willChange;
+    if (residentWill) {
+      f.style.willChange = "";
+      residentWill = false;
+    }
     f.style.transition =
       `height ${durationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
     f.style.height = `${next}px`;
     pinned = next;
-    // 4. Clean the inline transition up on the animation's own clock.
+    // 4. Clean up on the animation's own clock: restore the transition
+    //    list and the resident layer promotion together — the frame is
+    //    at its final geometry and at rest, so the re-promotion's
+    //    raster has all the time it needs.
+    const restore = (): void => {
+      f.removeEventListener("transitionend", onEnd);
+      f.style.transition = "";
+      if (residentWill_ === "clip-path") {
+        f.style.willChange = "clip-path";
+        residentWill = true;
+      }
+    };
     const onEnd = (ev: TransitionEvent): void => {
       if (ev.target === f && ev.propertyName === "height") {
-        f.removeEventListener("transitionend", onEnd);
-        f.style.transition = "";
+        restore();
       }
     };
     f.addEventListener("transitionend", onEnd);
-    setTimeout(() => {
-      f.removeEventListener("transitionend", onEnd);
-      f.style.transition = "";
-    }, durationMs + 350);
+    const watchdog = setTimeout(restore, durationMs + 350);
+    // If the element goes away mid-flight, don't leak the timer.
+    const origClear = watchdog;
+    void origClear; // timer fires restore() which is idempotent
   }
 
   return { start, stop, hold, remeasure, heightMorph };

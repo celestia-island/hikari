@@ -261,6 +261,18 @@ export {
   type WallpaperPipelinePreset,
 } from "./theme";
 
+// Wallpaper shader layer: the shared WebGL2 pipeline renderer + the host
+// preset registry. hikari ships the mechanism, never the GLSL — hosts
+// register their generated fragments through registerShaderPresets and
+// hand createWallpaperShaderSurface to HkWallpaperBackdrop's props bag.
+export {
+  registerShaderPresets, getShaderPreset, listShaderPresetIds,
+  SHADER_VERTEX, WallpaperShaderPipeline, createWallpaperShaderSurface,
+  type WallpaperShaderPreset, type WallpaperShaderPresetInput,
+  type WallpaperShaderScaleConfig, type WallpaperShaderScaleInput,
+  type WallpaperShaderOverlayConfig,
+} from "./theme";
+
 // The wallpaper stack's SURFACE component. hikari does NOT put it on the
 // `backdrop` decor floor (that floor has no unregister — a library-owned
 // page-covering layer would be a decision the host cannot take back). The

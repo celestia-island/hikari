@@ -256,11 +256,6 @@ export function useSizeMorph(
   let morphDemoted = false;
   let morphSavedFrameWill = "";
   let morphSavedRiderWills: Array<[HTMLElement, string]> = [];
-  /** The frame's promotion as it stood when the live sweep demoted it (see
-   *  startRevealSweep): put back on landing, dropped outright when the open
-   *  cycle unwinds first (clearResidentWill) so a sheet that is closing is
-   *  never re-promoted by a sweep's own settle. */
-  let revealSavedWill = "";
   /** Identity of the sweep currently staged/folding, echoed to consumers. */
   let sweepSeq = 0;
   let activeSweep = 0;
@@ -427,12 +422,6 @@ export function useSizeMorph(
       } else {
         revealEl.style.clipPath = "";
       }
-      // Put the sweep's demotion back (see startRevealSweep). Empty means
-      // the frame carried no promotion to begin with — nothing to restore.
-      if (revealSavedWill) {
-        revealEl.style.willChange = revealSavedWill;
-        revealSavedWill = "";
-      }
     }
     const hadSweep = revealEl !== null;
     const sweptId = activeSweep;
@@ -470,9 +459,6 @@ export function useSizeMorph(
     morphSavedRiderWills = [];
     morphSavedFrameWill = "";
     morphDemoted = false;
-    // A sweep still in flight must not put its promotion back on a sheet
-    // whose open cycle is already unwinding (mirrors morphSavedFrameWill).
-    revealSavedWill = "";
     for (const el of residentRideEls) {
       el.style.willChange = "";
     }
@@ -793,31 +779,6 @@ export function useSizeMorph(
       });
       const dir = revealDir;
       const insetPx = Math.abs(delta);
-      // Demote the frame for the whole sweep window — staging, warmup and
-      // edge travel. A promoted layer runs the per-frame clip re-raster on
-      // the GPU, and a phone GPU drops tiles under it, so the sheet's
-      // surface goes missing for those frames and the page behind shows
-      // through it (round-23 chest report: 变高必闪、变矮几乎不闪, and the
-      // same viewport on a desktop engine does not reproduce at all). The
-      // height-morph path has always demoted for exactly this reason
-      // ("the height animation's per-frame paint happens on the main
-      // thread, which is slower but never leaves a frame where the sheet's
-      // surface is missing"); the clip sweep kept its promotion and was
-      // the last per-frame GPU re-raster of the full-width sheet. The
-      // demotion lands BEFORE the warmup on purpose: those two bus frames
-      // are the window the demoted layout's raster needs, exactly as they
-      // already are for the staged pin. The promotion goes back on landing
-      // (stopReveal). Note this is a per-sweep DEMOTION of a promotion that
-      // is still resident from arm time — not the per-sweep promotion
-      // #620's round-5 finding ruled out.
-      // Idempotent across a re-staged dance: the FIRST staging remembers
-      // what to put back and later ones keep that answer — the frame is a
-      // clip-mode sheet by construction here, so the resident promotion is
-      // `clip-path`. clearResidentWill blanks it outright when the open
-      // cycle unwinds first, which is what keeps a closing sheet from
-      // being re-promoted by its own sweep's settle.
-      if (!revealSavedWill) revealSavedWill = f.style.willChange || "clip-path";
-      f.style.willChange = "";
       let framesLeft = REVEAL_WARMUP_FRAMES;
       const armWarmup = (): void => {
         revealWarmup = scheduleFrame(() => {

@@ -762,3 +762,18 @@ export { HkJsonTree as HkJsonTree } from "./components/HkJsonTree";
 export { HkTokenUsageBadge as HkTokenUsageBadge } from "./components/HkTokenUsageBadge";
 export { HkTokenUsagePanel as HkTokenUsagePanel } from "./components/HkTokenUsagePanel";
 export { HkModelTag as HkModelTag } from "./components/HkModelTag";
+
+// Canonical Hk* names for directly-exported types (2026-09-24
+// unification follow-up). These types were defined with their H*
+// names at the source and exported directly — not aliased from an Hk*
+// identifier — so the canonical Hk* form is an alias export here.
+export { type HAttachmentItem as HkAttachmentItem } from "./components/HkAttachmentModal";
+export { type HAttachmentDetail as HkAttachmentDetail } from "./components/HkAttachmentModal";
+export { type HModelMeta as HkModelMeta } from "./components/HkModelCatalog";
+export { type HModelPricing as HkModelPricing } from "./components/HkModelCatalog";
+export { type HAboutCredit as HkAboutCredit } from "./components/HkAboutModal";
+export { type HAboutLink as HkAboutLink } from "./components/HkAboutModal";
+export { type HAboutLinkFace as HkAboutLinkFace } from "./components/HkAboutModal";
+export { type HAboutLinkIcon as HkAboutLinkIcon } from "./components/HkAboutModal";
+export { type HAboutComponentVersion as HkAboutComponentVersion } from "./components/HkAboutModal";
+export { type HCustomTheme as HkCustomTheme } from "./components/HkColorSchemeDialog";

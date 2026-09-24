@@ -54,7 +54,18 @@
 
     &:focus-visible {
       outline: 2px solid rgb(var(--color-primary));
-      outline-offset: 1px;
+      // Drawn INSIDE the box: the rail's items sit flush with the rail's
+      // own start edge (the rail carries no start padding) and the rail
+      // scrolls, so an outside ring gets shaved down its inline-start
+      // side — "the selected item's contour is cut on the left" (user
+      // report 2026-09-23). Same reasoning as HSelectionGrid's inset ring.
+      //
+      // HOUSE CONVENTION (this bug class, third occurrence): a focus ring
+      // on a row that sits flush with a scroll container's edge MUST be
+      // drawn inside — `outline-offset: -2px`, or the border + inset-ring
+      // pairing HkSelectionGrid uses. Outside rings belong only on
+      // floating surfaces (popovers, panels) where nothing clips them.
+      outline-offset: -2px;
     }
 
     &:disabled {

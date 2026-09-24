@@ -219,7 +219,7 @@ export {
   themeDecorVersion, isThemeDecorSlot, THEME_DECOR_SLOT_PATTERN, THEME_DECOR_WILDCARD,
   allGroupSlots, resolveLocalizedText, parseTokenGroupConfig, registerTokenGroupConfig,
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
-  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement, LEGACY_WALLPAPER_SURFACE_IDS,
+  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement,
   retainLuminanceSampler, releaseLuminanceSampler, luminanceSamplerRefCount,
   type WallpaperSurfaceKind, type WallpaperSurfaceSources,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,

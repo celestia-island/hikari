@@ -32,7 +32,7 @@ export type { GeoLocation, GeoLocationProvider } from "./useSolarTime";
 export { refreshThemeClock, stopThemeClock } from "./useTheme";
 export {
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
-  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement, LEGACY_WALLPAPER_SURFACE_IDS,
+  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement,
   retainLuminanceSampler, releaseLuminanceSampler, luminanceSamplerRefCount,
 } from "./useBackgroundLuminance";
 export type { WallpaperSurfaceKind, WallpaperSurfaceSources } from "./useBackgroundLuminance";

@@ -184,7 +184,8 @@ describe("HkWallpaperBackdrop.tsx — no page-global DOM writes", () => {
   });
 
   it("does not read chest's fixed element ids", () => {
-    // The registry + legacy fallback live in the theme layer, not here.
+    // The surface registry lives in the theme layer, not here — and since the
+    // legacy id fallback was retired it is the only way in.
     expect(stripComments(tsx)).not.toContain("s-wallpaper-");
   });
 });

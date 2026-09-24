@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick, ref } from "vue";
+import { createApp, defineComponent, h, nextTick, onMounted, ref } from "vue";
 
 import HkStepFlow, { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 import type { StepFlowSlotProps } from "./HkStepFlow";
@@ -195,6 +195,138 @@ describe("HkStepFlow", () => {
   it("pins the collapse option onto the header timeline", () => {
     const t = mountStepFlow({ collapse: "always" });
     expect(t.container.querySelector(".hk-timeline")?.getAttribute("data-mode")).toBe("window");
+  });
+});
+
+describe("HkStepFlow focus handoff on swap", () => {
+  /** Mount with an input in `b`; `a` optionally autofocuses its own field
+   *  the moment the entering body mounts. */
+  function mountFocusRig(options: {
+    initial: string;
+    autoFocusEntry?: boolean;
+    hideTimeline?: boolean;
+    timelineClickable?: boolean;
+  }): { container: HTMLElement; setCurrent: (key: string) => void } {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const current = ref(options.initial);
+    const AutoField = defineComponent({
+      setup() {
+        const el = ref<HTMLInputElement | null>(null);
+        onMounted(() => el.value?.focus());
+        return () => h("input", { ref: el, class: "auto-input" });
+      },
+    });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkStepFlow,
+            {
+              steps: STEPS,
+              modelValue: current.value,
+              hideTimeline: options.hideTimeline ?? true,
+              timelineClickable: options.timelineClickable ?? false,
+              "onUpdate:modelValue": (key: string) => { current.value = key; },
+            },
+            {
+              a: () =>
+                options.autoFocusEntry
+                  ? h(AutoField)
+                  : h("p", { class: "step-body" }, "a-body"),
+              b: () => h("input", { class: "step-input" }),
+              c: () => h("p", { class: "step-body" }, "c-body"),
+              d: () => h("p", { class: "step-body" }, "d-body"),
+            },
+          );
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { container, setCurrent: (key) => { current.value = key; } };
+  }
+
+  it("drops focus out of the leaving body when an animated swap starts", async () => {
+    // Round-22 chest report: the leaving body keeps its DOM node — and so
+    // its focus — through the whole slide, so a focused endpoint field had
+    // Android re-anchoring its autofill suggestion panel on every frame of
+    // the height morph (the panel strobed for the length of the swap). The
+    // motion stub matters: on the instant path the node is recycled at
+    // once and the browser drops focus by itself, which would make this
+    // assertion pass for the wrong reason.
+    stubMotion("0.15s");
+    const t = mountFocusRig({ initial: "b" });
+    const input = t.container.querySelector<HTMLInputElement>(".step-input");
+    expect(input).not.toBeNull();
+    input!.focus();
+    expect(document.activeElement).toBe(input);
+
+    t.setCurrent("a");
+    await flushSwap();
+
+    // The slide is still in flight, so the leaving body — and its input —
+    // are still mounted; that is exactly the window that used to strobe.
+    expect(t.container.contains(input)).toBe(true);
+    expect(document.activeElement).not.toBe(input);
+  });
+
+  it("keeps focus on the timeline step that drove the change", async () => {
+    // The timeline sits inside the flow but is NOT leaving the stage: a
+    // keyboard or pointer user who activated a completed step must keep
+    // their focus. Blurring it drops them to <body> — the next Tab
+    // restarts at the top of the document, and HkModal's Tab trap stops
+    // engaging, so focus can escape the dialog.
+    stubMotion("0.15s");
+    const t = mountFocusRig({
+      initial: "c",
+      hideTimeline: false,
+      timelineClickable: true,
+    });
+    const stepEl = t.container.querySelector<HTMLElement>(
+      ".hk-timeline-step[data-clickable]",
+    );
+    expect(stepEl).not.toBeNull();
+    stepEl!.focus();
+    expect(document.activeElement).toBe(stepEl);
+
+    t.setCurrent("a");
+    await flushSwap();
+    expect(document.activeElement).toBe(stepEl);
+  });
+
+  it("lets the entering step's own autofocus win over the blur", async () => {
+    // The blur runs at the top of the swap watcher, before the entering
+    // body mounts, so a step that focuses its own first field on entry
+    // still wins. Moving the call below the mount turns this red.
+    stubMotion("0.15s");
+    const t = mountFocusRig({ initial: "b", autoFocusEntry: true });
+    const leaving = t.container.querySelector<HTMLInputElement>(".step-input");
+    expect(leaving).not.toBeNull();
+    leaving!.focus();
+    expect(document.activeElement).toBe(leaving);
+
+    t.setCurrent("a");
+    await flushSwap();
+
+    const entered = t.container.querySelector<HTMLInputElement>(".auto-input");
+    expect(entered).not.toBeNull();
+    expect(document.activeElement).toBe(entered);
+  });
+
+  it("leaves focus outside the flow alone", async () => {
+    const t = mountFocusRig({ initial: "a" });
+    const outside = document.createElement("input");
+    document.body.appendChild(outside);
+    containers.push(outside);
+
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+    t.setCurrent("b");
+    await flushSwap();
+    // Containment, not a blanket blur.
+    expect(document.activeElement).toBe(outside);
   });
 });
 

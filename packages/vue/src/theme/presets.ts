@@ -1,3 +1,5 @@
+import { readStorageItem, writeStorageItem } from "./safeStorage";
+
 export interface ThemeTokenRGB {
   r: number;
   g: number;
@@ -79,7 +81,7 @@ const CUSTOM_STORAGE_KEY = "hikari-custom-themes";
 
 export function loadCustomThemes(): CustomThemePreset[] {
   try {
-    const raw = localStorage.getItem(CUSTOM_STORAGE_KEY);
+    const raw = readStorageItem(CUSTOM_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -87,7 +89,7 @@ export function loadCustomThemes(): CustomThemePreset[] {
 }
 
 export function saveCustomThemes(list: CustomThemePreset[]) {
-  localStorage.setItem(CUSTOM_STORAGE_KEY, JSON.stringify(list));
+  writeStorageItem(CUSTOM_STORAGE_KEY, JSON.stringify(list));
 }
 
 export function addCustomTheme(theme: CustomThemePreset) {

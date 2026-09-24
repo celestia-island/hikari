@@ -235,6 +235,29 @@ export {
   type FontContextOverrides,
 } from "./theme";
 
+// Wallpaper logic layer (ported from shittim-chest). The pack, the brand map
+// and the pipeline registry arrive as host registrations.
+export {
+  FALLBACK_WALLPAPER_ID, DEFAULT_WALLPAPER_ID, DEFAULT_PRESETS, DEFAULT_DISPLAY_SETTINGS,
+  DEFAULT_WALLPAPER_STORAGE_PREFIX, registerWallpaperPack, configureWallpaperStorage,
+  wallpaperStorageKey, isWallpaperSource, isTimeAware,
+  loadActiveWallpaperId, hasStoredWallpaperId, saveActiveWallpaperId,
+  loadCustomWallpapers, saveCustomWallpapers, addCustomWallpaper, removeCustomWallpaper,
+  updateCustomWallpaper, loadCachedGeolocation, saveCachedGeolocation,
+  loadDisplaySettings, saveDisplaySettings, getDisplaySettings, setDisplaySettings,
+  buildWallpaperFilter, initWallpaper, destroyWallpaper, useWallpaper, ensureWallpaperState,
+  configureWallpaper, registerWallpaperBrandDefaults, registerServerThemeWallpaper,
+  brandDefaultWallpaperFor, resolveThemeFollowSwitch, setWallpaperPipelineLookup,
+  geo, currentPeriod,
+  hasStorage, readStorageItem, writeStorageItem, removeStorageItem,
+  type WallpaperType, type SolidSource, type ImageSource, type VideoSource,
+  type PipelineSource, type WallpaperSource, type TimeAwareWallpaper, type WallpaperPreset,
+  type WallpaperPackEntry, type CustomWallpaper, type WallpaperPosition, type WallpaperScale,
+  type WallpaperEffect, type WallpaperDisplaySettings, type WallpaperStorageSlot,
+  type WallpaperStorageConfig, type WallpaperInitConfig, type WallpaperPipelineLookup,
+  type WallpaperPipelinePreset,
+} from "./theme";
+
 // Runtime systems
 export {
   onFrame,

@@ -574,6 +574,18 @@ export type {
   HModelUsageEntry,
   HModelCosts,
 } from "./components/HkChatTypes";
+// Canonical Hk* names for the directly-exported types above (2026-09-24
+// unification follow-up, second batch — caught by the third-scan reverse
+// validation). These types are defined with their H* names at the source.
+export type {
+  HChatRole as HkChatRole,
+  HToolCall as HkToolCall,
+  HToolCallStatus as HkToolCallStatus,
+  HVoicePopupMode as HkVoicePopupMode,
+  HVoiceState as HkVoiceState,
+  HModelUsageEntry as HkModelUsageEntry,
+  HModelCosts as HkModelCosts,
+} from "./components/HkChatTypes";
 export { useSendShortcut } from "./composables/useSendShortcut";
 export type { SendShortcutMode } from "./composables/useSendShortcut";
 export { useAttachments } from "./composables/useAttachments";

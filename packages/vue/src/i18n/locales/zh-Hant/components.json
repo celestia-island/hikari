@@ -224,6 +224,7 @@
   "hikari::tagInput.reorder": "拖曳排序 — {label}",
   "hikari::modal.hiddenLayers": "隱藏層級",
   "hikari::theme.modeTabHint": "切換這裡編輯的是對應模式的調色盤；要切換應用整體深/淺，請用主題彈窗頂部的模式條。",
+  "hikari::theme.defaultThemeName": "預設",
   "hikari::emptyState.loading": "載入中",
   "hikari::mfaVerify.title": "驗證帳戶",
   "hikari::mfaVerify.verifySubtitle": "正在驗證 {name} 的身分，請完成驗證以繼續登入",

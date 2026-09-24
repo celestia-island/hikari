@@ -427,3 +427,26 @@ describe("HkThemeToggle exposed closeMenu", () => {
     expect(document.body.querySelector(".s-theme-menu")).toBeTruthy();
   });
 });
+
+describe("HkThemeToggle theme names", () => {
+  it("localizes a name that is a message key and passes literal names through", async () => {
+    // The ThemePreset.name convention: a resolvable catalog key renders its
+    // message (hosts ship localized built-ins); anything else — user-named
+    // customs, strings that merely LOOK like dotted keys — renders raw,
+    // because t() falls back to the input when the key is unknown.
+    useTheme().addCustomTheme({ ...anyPresetTokens(), id: "test-keyed", name: "hikari::theme.defaultThemeName" });
+    useTheme().addCustomTheme({ ...anyPresetTokens(), id: "test-literal", name: "Not A Catalog Key.At All" });
+    const { container } = mountToggle(true);
+    await settle();
+
+    openMenu(container);
+    await settle();
+
+    const names = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row .s-theme-item-name")]
+      .map((el) => el.textContent?.trim());
+    // en bundle value of the key (the test locale is hikari's default).
+    expect(names).toContain("Default");
+    expect(names).toContain("Not A Catalog Key.At All");
+    expect(names).not.toContain("hikari::theme.defaultThemeName");
+  });
+});

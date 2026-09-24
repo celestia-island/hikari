@@ -220,6 +220,7 @@
   "hikari::tagInput.reorder": "Neu anordnen — {label}",
   "hikari::modal.hiddenLayers": "Verdeckte Ebenen",
   "hikari::theme.modeTabHint": "Diese Reiter wählen die zu bearbeitende Palette; die appweite Hell/Dunkel-Umschaltung liegt im Modusstreifen des Themen-Popups.",
+  "hikari::theme.defaultThemeName": "Standard",
   "hikari::emptyState.loading": "Wird geladen",
   "hikari::mfaVerify.title": "Konto verifizieren",
   "hikari::mfaVerify.verifySubtitle": "{name} wird verifiziert — Anmeldung abschließen, um fortzufahren",

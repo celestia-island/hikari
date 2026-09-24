@@ -24,7 +24,9 @@ const AUTO_MERGE_KEYS = ["light", "dark"];
 
 /** Scoped payload handed to the `item-leading` / `item-trailing` slots:
  *  one object per theme row, carrying enough identity for the host to
- *  render swatches or affordances without re-deriving the preset. */
+ *  render swatches or affordances without re-deriving the preset.
+ *  `name` is the RAW stored string — it may be a message key (see
+ *  `ThemePreset.name`); the row cell resolves it through the catalog. */
 export interface ThemeItemScope {
   id: ThemeId;
   name: string;
@@ -314,6 +316,13 @@ export const HkThemeToggle = defineComponent({
               };
               const leadingSlot = slots["item-leading"];
               const trailingSlot = slots["item-trailing"];
+              // A preset/custom name may be a message key into hikari's own
+              // catalog (the documented ThemePreset.name convention — hosts
+              // ship localized built-ins like "hikari::theme.defaultThemeName").
+              // `t()` falls back to the raw string for anything that is not a
+              // key, so literal display names pass through unchanged, and the
+              // reactive message lookup re-renders rows on locale switches.
+              const displayName = t(th.name);
               return (
                 <div
                   key={th.id}
@@ -334,7 +343,7 @@ export const HkThemeToggle = defineComponent({
                     ) : currentTheme.value === th.id ? (
                       <span class="hk-menu-item-icon s-theme-item-check"><Check size={14} /></span>
                     ) : null}
-                    <span class="s-theme-item-name">{th.name}</span>
+                    <span class="s-theme-item-name">{displayName}</span>
                   </button>
                   {trailingSlot ? (
                     <span class="s-theme-item-trailing">{trailingSlot(scope)}</span>

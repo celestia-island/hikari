@@ -220,6 +220,7 @@
   "hikari::tagInput.reorder": "إعادة الترتيب — {label}",
   "hikari::modal.hiddenLayers": "الطبقات المخفية",
   "hikari::theme.modeTabHint": "هذه التبويبات تختار لوحة الألوان التي تحرّرها؛ لتبديل الوضع الفاتح/الداكن للتطبيق كله استخدم شريط الأوضاع أعلى نافذة السمة.",
+  "hikari::theme.defaultThemeName": "افتراضي",
   "hikari::emptyState.loading": "جارٍ التحميل",
   "hikari::mfaVerify.title": "التحقق من الحساب",
   "hikari::mfaVerify.verifySubtitle": "جارٍ التحقق من {name} — أكمل طريقة تسجيل الدخول للمتابعة",

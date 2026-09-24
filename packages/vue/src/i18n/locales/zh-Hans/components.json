@@ -224,6 +224,7 @@
   "hikari::tagInput.reorder": "拖动排序 — {label}",
   "hikari::modal.hiddenLayers": "隐藏层级",
   "hikari::theme.modeTabHint": "切换这里编辑的是对应模式的调色板；要切换应用整体深/浅，请用主题弹窗顶部的模式条。",
+  "hikari::theme.defaultThemeName": "默认",
   "hikari::emptyState.loading": "加载中",
   "hikari::mfaVerify.title": "验证账户",
   "hikari::mfaVerify.verifySubtitle": "正在验证 {name} 的身份，请完成验证以继续登录",

@@ -3,6 +3,21 @@ import { defineComponent, type PropType } from "vue";
 
 import "./HkSelectionGrid.scss";
 
+/**
+ * One trailing icon button on an item (e.g. a row's remove / dismiss
+ * affordance). Actions never select the item: their clicks stop the
+ * propagation the item's own handler rides on.
+ */
+export interface SelectionGridAction {
+  id: string;
+  /** Lucide component rendered inside the button. */
+  icon?: ReturnType<typeof defineComponent>;
+  /** Accessible name — becomes the button's `title` (the house tooltip
+   *  bridge upgrades it) and its aria-label. */
+  label: string;
+  disabled?: boolean;
+}
+
 export interface SelectionGridItem {
   id: string;
   title: string;
@@ -10,6 +25,8 @@ export interface SelectionGridItem {
   badge?: string;
   badgeVariant?: string;
   icon?: ReturnType<typeof defineComponent>;
+  /** Trailing icon buttons (right edge), rendered before the check cell. */
+  actions?: SelectionGridAction[];
 }
 
 export type SelectionGridCols = 2 | 3 | 4;
@@ -37,9 +54,18 @@ export default defineComponent({
     groupTitle: { type: String, default: undefined },
     hint: { type: String, default: undefined },
     dense: { type: Boolean, default: false },
+    /** `list` lays the same options as full-width rows in one column (a
+     *  picker list rather than a card grid): the check cell centers on the
+     *  row's trailing edge instead of parking at the top corner. */
+    layout: { type: String as PropType<"grid" | "list">, default: "grid" },
+    /** Optional emphasis for the selected item: a thickened primary edge
+     *  bar on the item's leading side (drawn inside the border box, so the
+     *  geometry never shifts). */
+    selectedEdge: { type: Boolean, default: false },
   },
   emits: {
     select: (_item: SelectionGridItem) => true,
+    action: (_item: SelectionGridItem, _action: SelectionGridAction) => true,
   },
   setup(props, { emit }) {
     return () => {
@@ -54,7 +80,11 @@ export default defineComponent({
         props.minItemWidth > 0;
 
       return (
-        <div class="hk-selection-grid">
+        <div
+          class="hk-selection-grid"
+          data-layout={props.layout}
+          data-edge={props.selectedEdge || undefined}
+        >
           {props.groupTitle && (
             <h4 class="hk-selection-grid-title">{props.groupTitle}</h4>
           )}
@@ -121,6 +151,31 @@ export default defineComponent({
                       </p>
                     )}
                   </div>
+                  {item.actions?.length ? (
+                    <div class="hk-selection-grid-actions">
+                      {item.actions.map((action) => {
+                        const ActionIcon = action.icon;
+                        return (
+                          <button
+                            key={action.id}
+                            type="button"
+                            class="hk-selection-grid-action"
+                            title={action.label}
+                            aria-label={action.label}
+                            disabled={action.disabled || undefined}
+                            onClick={(e: MouseEvent) => {
+                              // An action is not a selection: without this
+                              // the row's own handler fires too.
+                              e.stopPropagation();
+                              if (!action.disabled) emit("action", item, action);
+                            }}
+                          >
+                            {ActionIcon && <ActionIcon size={14} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

@@ -1040,3 +1040,24 @@
 .a-auth-page {
   min-height: calc(100vh - var(--s-footer-height, 3rem));
 }
+
+// ── adjacent-button spacing (the button-row grammar) ──────────────────────
+// EVERY horizontal run of buttons keeps a visible gap between neighbours —
+// two buttons touching reads as one split control (user direction
+// 2026-09-25). Hosts wrap their button clusters in .hk-button-row and get
+// the house rhythm; modal footers and step docks already carry their own
+// gap on the same token, so everything agrees.
+.hk-button-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+
+  &[data-compact] {
+    gap: var(--space-8, 0.5rem);
+  }
+
+  &[data-end] {
+    justify-content: flex-end;
+  }
+}

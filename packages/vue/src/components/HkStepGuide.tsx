@@ -5,10 +5,9 @@ import "./HkStepGuide.scss";
 /**
  * One step of an illustrated how-to guide.
  *
- * The visual is the step's OWN artwork — an SVG component, a lucide icon,
- * or a bitmap URL — rendered large in a soft circular bed, with the
- * ordinal pinned to the bed's corner and the caption beneath/beside it.
- * Hosts that only have an icon get the same grammar scaled down.
+ * Each step renders as a CARD — the step's OWN artwork (an SVG component,
+ * a lucide icon, or a bitmap URL) drawn large on the card face, with the
+ * ordinal pinned to the card's outer corner and the caption beneath it.
  */
 export interface StepGuideItem {
   /** Stable key (also the list rendering key). */
@@ -26,33 +25,34 @@ export interface StepGuideItem {
 }
 
 /**
- * HkStepGuide — the big-icon illustrated step list.
+ * HkStepGuide — the big-artwork illustrated step cards.
  *
  * The "what do I physically do now?" surface for hardware-adjacent flows
  * (upstreamed from the flasher's 等待上线 step and wowsp's install
- * walkthrough, user direction 2026-09-25): numbered steps, each with a
- * large artwork — inline SVG, an icon component, or a bitmap — a short
- * title and a one-line description.
+ * walkthrough, user direction 2026-09-25): every step is a rounded card —
+ * large artwork on the face, a short title and a one-line description
+ * under it, the ordinal badge pinned to the card's outer top corner.
  *
  * Orientation follows the AVAILABLE WIDTH, not the viewport: the guide is
- * its own container query root, so wide hosts lay the steps side by side
- * (art on top, caption below, a connector bridging the beds) and only
- * stack them vertically once the width runs out. `layout="grid"` instead
- * wraps the steps as equal cards.
+ * its own container query root, so wide hosts lay the cards side by side
+ * with a chevron bridging consecutive steps, and only stack them
+ * vertically once the width runs out. `layout="grid"` instead wraps the
+ * cards as an auto-fill grid.
  *
  * The artwork slots are deliberately permissive: pass a Vue component
  * (`icon: MySvg`) for crisp theme-aware SVGs, or `image: url` for
  * photos/screenshots the docs pipeline produces. Steps may be marked
- * `data-done` through the `doneIds` prop (the check replaces the ordinal)
- * so the guide doubles as a checklist while the flow progresses.
+ * `data-done` through the `doneIds` prop (the check replaces the ordinal,
+ * the card picks up a success edge) so the guide doubles as a checklist
+ * while the flow progresses.
  */
 export default defineComponent({
   name: "HkStepGuide",
   props: {
     items: { type: Array as PropType<StepGuideItem[]>, required: true },
-    /** Steps whose ids appear here render as completed (check, dim). */
+    /** Steps whose ids appear here render as completed (check, success edge). */
     doneIds: { type: Array as PropType<string[]>, default: () => [] },
-    /** Width-responsive flow steps (default) or equal cards. */
+    /** Width-responsive flow cards (default) or an auto-fill card grid. */
     layout: { type: String as PropType<"list" | "grid">, default: "list" },
     /** Section heading above the steps. */
     title: { type: String, default: undefined },
@@ -75,42 +75,40 @@ export default defineComponent({
                   class="hk-step-guide-item"
                   data-done={isDone || undefined}
                 >
-                  <span class="hk-step-guide-figure">
-                    <span
-                      class="hk-step-guide-art"
-                      aria-hidden={Art || item.image ? undefined : true}
-                    >
-                      {Art ? (
-                        h(Art, { class: "hk-step-guide-art-svg" })
-                      ) : item.image ? (
-                        <img
-                          class="hk-step-guide-art-img"
-                          src={item.image}
-                          alt={alt}
-                          draggable={false}
+                  <span class="hk-step-guide-ordinal">
+                    {isDone ? (
+                      <svg
+                        class="hk-step-guide-check"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M20 6L9 17l-5-5"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
                         />
-                      ) : null}
-                    </span>
-                    <span class="hk-step-guide-ordinal">
-                      {isDone ? (
-                        <svg
-                          class="hk-step-guide-check"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M20 6L9 17l-5-5"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="3"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          />
-                        </svg>
-                      ) : (
-                        idx + 1
-                      )}
-                    </span>
+                      </svg>
+                    ) : (
+                      idx + 1
+                    )}
+                  </span>
+                  <span
+                    class="hk-step-guide-art"
+                    aria-hidden={Art || item.image ? undefined : true}
+                  >
+                    {Art ? (
+                      h(Art, { class: "hk-step-guide-art-svg" })
+                    ) : item.image ? (
+                      <img
+                        class="hk-step-guide-art-img"
+                        src={item.image}
+                        alt={alt}
+                        draggable={false}
+                      />
+                    ) : null}
                   </span>
                   <span class="hk-step-guide-body">
                     <span class="hk-step-guide-item-title">{item.title}</span>

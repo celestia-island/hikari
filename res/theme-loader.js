@@ -5,7 +5,7 @@
         if (localStorage.getItem("shittim-locale") !== null) return "shittim-";
         if (localStorage.getItem("arona-locale") !== null) return "arona-";
       }
-    } catch (_) {}
+    } catch {}
     return "celestia-";
   }
   // Per-theme colors (kept in sync with src/theme/presets.ts).
@@ -96,7 +96,7 @@
 
   function resolveMode(mode) {
     if (mode === "light" || mode === "dark") return mode;
-    var geo = null;
+    var geo;
     try {
       geo = JSON.parse(localStorage.getItem(GEO_KEY) || "null");
     } catch {
@@ -108,8 +108,24 @@
     return isDaytimeFallback() ? "light" : "dark";
   }
 
-  var tid = localStorage.getItem(storagePrefix() + "theme") || window.__celestiaDefaultTheme || "default";
-  var mode = resolveMode(localStorage.getItem(storagePrefix() + "theme-mode") || "system");
+  // Stored id/mode, three sources in priority order:
+  //   1. the per-app prefixed keys (storagePrefix() + "theme[-mode]") — the
+  //      legacy locations pre-hikari apps wrote, kept first for back-compat;
+  //   2. the hikari engine keys ("hikari-theme"/"hikari-theme-mode") — what
+  //      every app on this library actually persists (see useTheme.ts); without
+  //      them the loading screen repaints the default brand while the app
+  //      restores another theme;
+  //   3. the page-declared default, then the stock table's own default.
+  var tid =
+    localStorage.getItem(storagePrefix() + "theme") ||
+    localStorage.getItem("hikari-theme") ||
+    window.__celestiaDefaultTheme ||
+    "default";
+  var mode = resolveMode(
+    localStorage.getItem(storagePrefix() + "theme-mode") ||
+    localStorage.getItem("hikari-theme-mode") ||
+    "system",
+  );
   var theme = THEMES[tid] || FALLBACK_THEME;
   var scheme = theme[mode] || theme.dark;
 

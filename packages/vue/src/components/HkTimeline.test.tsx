@@ -424,36 +424,20 @@ describe("HkTimeline navigation motion (round 16)", () => {
     return { container, current };
   }
 
-  it("positions the full-mode halo on the active step and slides it on navigation", async () => {
-    const { container, current } = mountTimeline(4, "s1");
-    // happy-dom has no layout engine: give the step nodes deterministic
-    // offsets so the halo's measured transform is observable.
-    const steps = () =>
-      Array.from(container.querySelectorAll<HTMLElement>(".hk-timeline-step"));
-    for (const [i, step] of steps().entries()) {
-      Object.defineProperty(step, "offsetLeft", {
-        configurable: true,
-        get: () => i * 100,
-      });
-      Object.defineProperty(step, "offsetWidth", {
-        configurable: true,
-        get: () => 80,
-      });
-    }
+  it("renders no full-mode halo behind the active step", async () => {
+    // The measured pill that used to slide behind the active step is gone
+    // (2026-09-24 user directive): in a wide multi-step flow it read as an
+    // unexplained primary blob, and the filled indicator plus the label
+    // weight already carry the active step. Pinned so a later "highlight"
+    // refactor cannot quietly reintroduce it.
+    const { container } = mountTimeline(4, "s1");
     await nextTick();
     await nextTick();
-    const halo = container.querySelector<HTMLElement>(".hk-timeline-halo");
-    expect(halo).not.toBeNull();
-    // Active = s1 (second node): translateX(100 - pad).
-    expect(halo!.style.transform).toBe("translateX(94px)");
-    expect(halo!.style.width).toBe("92px");
-    expect(halo!.hasAttribute("data-placed")).toBe(true);
-
-    current.value = "s3";
-    await nextTick();
-    await nextTick();
-    // Slid to the fourth node.
-    expect(halo!.style.transform).toBe("translateX(294px)");
+    expect(container.querySelector(".hk-timeline-halo")).toBeNull();
+    // The overlay the window mode owns is a different element and stays a
+    // window-mode concern — full mode draws its connectors inline.
+    expect(container.querySelector(".hk-timeline[data-mode='full']")).not.toBeNull();
+    expect(container.querySelector(".hk-timeline-links")).toBeNull();
   });
 
   it("marks the navigation direction for the window-mode wipe", async () => {

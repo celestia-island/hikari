@@ -441,10 +441,9 @@
 }
 
 // ── Navigation motion (2026-09-23 user directive, round 16) ──────────
-// The stepper never hard-cuts: status colors crossfade, the full-mode
-// active halo slides between step nodes, and the window-mode cells wipe
-// in from the navigation side. All of it rides the family's standard
-// duration/ease and collapses under reduced motion.
+// The stepper never hard-cuts: status colors crossfade and the window-mode
+// cells wipe in from the navigation side. All of it rides the family's
+// standard duration/ease and collapses under reduced motion.
 
 .hk-timeline {
   --hk-timeline-motion: 0.3s;
@@ -462,39 +461,15 @@
     border-color var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
 }
 
-// Full mode: the active halo — a measured pill behind the active step
-// (the component positions it via transform/size), sliding between
-// nodes with the same clock. The first placement is instant (data-placed
-// gates the transition) so opening the sheet does not animate it.
+// The full-mode active halo was removed here (2026-09-24 user directive):
+// a measured pill behind the active step, sliding between nodes, which
+// read as an unexplained primary blob in every wide multi-step flow and
+// duplicated what the filled indicator and the label weight already say.
+// Window mode never had one. The containing-block rule below stays — it is
+// the timeline's anchor for any absolutely positioned consumer content, and
+// the vertical rail anchors to the step rather than to this box.
 .hk-timeline[data-mode="full"]:not(.hk-scroll-pin) {
   position: relative;
-}
-
-.hk-timeline-halo {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  translate: 0 -50%;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
-  pointer-events: none;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.hk-timeline[data-orientation="vertical"] .hk-timeline-halo {
-  top: 0;
-  left: 50%;
-  translate: -50% 0;
-  width: 100%;
-  height: auto;
-}
-
-.hk-timeline-halo[data-placed] {
-  transition:
-    transform var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
-    width var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
-    height var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
 }
 
 // Window mode: each cell's step content is keyed by its step key, so a
@@ -561,9 +536,5 @@ html[data-css-animations="0"] .hk-timeline[data-mode="window"][data-dir] .hk-tim
 
   .hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
     animation: none;
-  }
-
-  .hk-timeline-halo[data-placed] {
-    transition: none;
   }
 }

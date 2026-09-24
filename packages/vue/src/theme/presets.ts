@@ -60,6 +60,13 @@ export interface ThemeTokenGroupModes {
 
 export interface ThemePreset {
   id: string;
+  /**
+   * Display name: either a literal string or a message key resolvable in
+   * hikari's own i18n catalog (e.g. "hikari::theme.defaultThemeName").
+   * Theme rows resolve names through `t()`, which falls back to the raw
+   * string for anything that is not a key, so user-named customs and
+   * literal preset names render unchanged while keyed built-ins localize.
+   */
   name: string;
   dark: ThemeSchemeTokens;
   light: ThemeSchemeTokens;

@@ -220,6 +220,7 @@
   "hikari::tagInput.reorder": "Изменить порядок — {label}",
   "hikari::modal.hiddenLayers": "Скрытые слои",
   "hikari::theme.modeTabHint": "Вкладки выбирают редактируемую палитру; общесистемное переключение светлой/тёмной — в полосе режимов вверху меню темы.",
+  "hikari::theme.defaultThemeName": "По умолчанию",
   "hikari::emptyState.loading": "Загрузка",
   "hikari::mfaVerify.title": "Подтверждение аккаунта",
   "hikari::mfaVerify.verifySubtitle": "Проверка {name} — завершите вход, чтобы продолжить",

@@ -220,6 +220,7 @@
   "hikari::tagInput.reorder": "순서 변경 — {label}",
   "hikari::modal.hiddenLayers": "숨겨진 레이어",
   "hikari::theme.modeTabHint": "이 탭은 편집할 팔레트를 고를 뿐입니다. 앱 전체 밝기/어둠은 테마 팝업 상단의 모드 스트립에서 바꾸세요.",
+  "hikari::theme.defaultThemeName": "기본값",
   "hikari::emptyState.loading": "불러오는 중",
   "hikari::mfaVerify.title": "계정 확인",
   "hikari::mfaVerify.verifySubtitle": "{name} 님의 신원을 확인하여 로그인을 계속하세요",

@@ -220,6 +220,7 @@
   "hikari::tagInput.reorder": "Reordenar — {label}",
   "hikari::modal.hiddenLayers": "Camadas ocultas",
   "hikari::theme.modeTabHint": "Estas abas escolhem a paleta que você está EDITANDO; para alternar o claro/escuro do app inteiro, use a faixa de modos no topo do painel de temas.",
+  "hikari::theme.defaultThemeName": "Padrão",
   "hikari::emptyState.loading": "Carregando",
   "hikari::mfaVerify.title": "Verificar conta",
   "hikari::mfaVerify.verifySubtitle": "Verificando {name} — conclua um método de acesso para continuar",

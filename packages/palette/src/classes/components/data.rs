@@ -58,34 +58,6 @@ impl UtilityClass for TableClass {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[allow(dead_code)]
-pub enum TableHeaderClass {
-    TableHeader,
-    HeaderRow,
-    HeaderCell,
-    HeaderCellActive,
-    HeaderCellContent,
-    SortIndicator,
-    FilterIcon,
-    ResizeHandle,
-}
-
-impl UtilityClass for TableHeaderClass {
-    fn as_suffix(&self) -> &'static str {
-        match self {
-            TableHeaderClass::TableHeader => "table-header",
-            TableHeaderClass::HeaderRow => "header-row",
-            TableHeaderClass::HeaderCell => "header-cell",
-            TableHeaderClass::HeaderCellActive => "header-cell-active",
-            TableHeaderClass::HeaderCellContent => "header-cell-content",
-            TableHeaderClass::SortIndicator => "sort-indicator",
-            TableHeaderClass::FilterIcon => "filter-icon",
-            TableHeaderClass::ResizeHandle => "resize-handle",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CellClass {
     Cell,
     CellHover,

@@ -80,7 +80,9 @@ impl Default for StyleProviderProps {
 
 /// StyleProvider component
 ///
-/// Provides global style configuration to child components.
+/// Provides global style configuration to child components through the
+/// tairitsu context registry, so [`use_style`] / [`try_use_style`] /
+/// [`use_component_class`] in descendants read this configuration.
 ///
 /// # Features
 /// - Custom class prefix
@@ -106,7 +108,6 @@ impl Default for StyleProviderProps {
 /// ```
 #[allow(non_snake_case)]
 pub fn StyleProvider(props: StyleProviderProps) -> VNode {
-    // Create style context (simplified - full implementation would use provide_context)
     let context = StyleContext {
         config: StyleConfig {
             class_prefix: props.class_prefix,
@@ -115,8 +116,9 @@ pub fn StyleProvider(props: StyleProviderProps) -> VNode {
         },
     };
 
-    // TODO: Implement proper context provider with tairitsu-hooks
-    // use_context_provider(move || context);
+    // Publish the configuration to descendants: `use_style` /
+    // `try_use_style` resolve it through the tairitsu context registry.
+    provide_context(context.clone());
 
     let css_vars = format!("--hi-style-class-prefix: {};", context.config.class_prefix);
     let extra_classes_str = context.config.extra_classes.join(" ");
@@ -135,20 +137,20 @@ pub fn StyleProvider(props: StyleProviderProps) -> VNode {
 ///
 /// # Panics
 ///
-/// Panics if called outside of a StyleProvider.
+/// Panics if called outside of a [`StyleProvider`] (no
+/// [`StyleContext`] has been provided).
 pub fn use_style() -> StyleContext {
-    // TODO: Implement with tairitsu-hooks context
-    // use_context::<StyleContext>()
-    StyleContext::default()
+    use_context::<StyleContext>()
+        .expect("StyleContext not found: `use_style` must be called inside a StyleProvider")
+        .get()
+        .clone()
 }
 
 /// Hook: Try to get style configuration context
 ///
 /// Returns None if called outside of a StyleProvider.
 pub fn try_use_style() -> Option<StyleContext> {
-    // TODO: Implement with tairitsu-hooks context
-    // try_consume_context::<StyleContext>()
-    None
+    use_context::<StyleContext>().map(|ctx| ctx.get().clone())
 }
 
 /// Hook: Get the complete class name for a component
@@ -177,6 +179,66 @@ pub fn use_component_class(component_name: &str, base_class: &str) -> String {
         ctx.get_component_class(component_name, base_class)
     } else {
         base_class.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn try_use_style_returns_none_without_provider() {
+        // The context registry is thread-local; drop any leftover value so
+        // this test does not depend on execution order.
+        tairitsu_hooks::drop_context::<StyleContext>();
+        assert!(try_use_style().is_none());
+    }
+
+    #[test]
+    #[should_panic(expected = "StyleContext not found")]
+    fn use_style_panics_outside_provider() {
+        tairitsu_hooks::drop_context::<StyleContext>();
+        let _ = use_style();
+    }
+
+    #[test]
+    fn style_provider_provides_context_to_descendants() {
+        tairitsu_hooks::drop_context::<StyleContext>();
+        assert!(try_use_style().is_none());
+
+        // Render the provider directly: its job is to publish StyleContext,
+        // so the hooks below must observe the configuration afterwards.
+        let _vnode = StyleProvider(StyleProviderProps {
+            class_prefix: "my-app".to_string(),
+            extra_classes: vec!["dark-mode".to_string()],
+            component_overrides: [("button".to_string(), "my-button".to_string())]
+                .into_iter()
+                .collect(),
+            children: Vec::new(),
+        });
+
+        let style = use_style();
+        assert_eq!(style.class_prefix(), "my-app");
+        assert_eq!(style.extra_classes_string(), "dark-mode");
+        assert_eq!(
+            style.get_component_class("button", "hk-button"),
+            "hk-button my-button"
+        );
+        assert_eq!(
+            try_use_style().map(|s| s.class_prefix()),
+            Some("my-app".to_string())
+        );
+
+        tairitsu_hooks::drop_context::<StyleContext>();
+    }
+
+    #[test]
+    fn use_component_class_falls_back_to_base_class() {
+        tairitsu_hooks::drop_context::<StyleContext>();
+        assert_eq!(
+            use_component_class("button", "hk-button"),
+            "hk-button".to_string()
+        );
     }
 }
 

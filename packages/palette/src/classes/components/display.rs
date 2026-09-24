@@ -78,26 +78,6 @@ impl UtilityClass for CardClass {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[allow(dead_code)]
-pub enum SpotlightClass {
-    Spotlight,
-    SpotlightWrapper,
-    SpotlightAuto,
-    SpotlightTheme,
-}
-
-impl UtilityClass for SpotlightClass {
-    fn as_suffix(&self) -> &'static str {
-        match self {
-            SpotlightClass::Spotlight => "spotlight",
-            SpotlightClass::SpotlightWrapper => "spotlight-wrapper",
-            SpotlightClass::SpotlightAuto => "spotlight-auto",
-            SpotlightClass::SpotlightTheme => "spotlight-theme",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GlowClass {
     Glow,
     GlowWrapper,

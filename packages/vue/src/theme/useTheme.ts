@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 import { addCustomTheme as addCustomThemeToStorage, loadCustomThemes, removeCustomTheme as removeCustomThemeFromStorage, themePresets, tokensToCSSVars, type CustomThemePreset, type ThemeId, type ThemeMode, type ThemePreset } from "./presets";
+import { readStorageItem, removeStorageItem, writeStorageItem } from "./safeStorage";
 import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from "./tokenGroups";
 import { registerStandardThemeDecor } from "./standardDecor";
 import { registerStandardThemeGroups } from "./standardGroups";
@@ -48,12 +49,12 @@ function resolveDefaultTheme(): ThemeId {
 }
 
 const currentMode = ref<ThemeMode>(
-  (localStorage.getItem(STORAGE_MODE_KEY) as ThemeMode) || "system",
+  (readStorageItem(STORAGE_MODE_KEY) as ThemeMode) || "system",
 );
 const customThemes = ref<CustomThemePreset[]>(loadCustomThemes());
 
 function storedThemeId(): ThemeId {
-  const stored = localStorage.getItem(STORAGE_THEME_KEY);
+  const stored = readStorageItem(STORAGE_THEME_KEY);
   if (stored) {
     const known = new Set<string>([
       ...Object.keys(themePresets),
@@ -63,7 +64,7 @@ function storedThemeId(): ThemeId {
     if (known.has(stored)) return stored as ThemeId;
     // Stale/invalid theme id (e.g. written by an older build): drop it so
     // applyTheme() never silently bails and leaves the page unthemed.
-    localStorage.removeItem(STORAGE_THEME_KEY);
+    removeStorageItem(STORAGE_THEME_KEY);
   }
   return resolveDefaultTheme();
 }
@@ -300,7 +301,7 @@ export function initTheme() {
   // Same idempotence contract as the groups above: a host that registered
   // its own replacement first survives, because this call is then a no-op.
   registerStandardThemeDecor();
-  const storedMode = localStorage.getItem(STORAGE_MODE_KEY) as ThemeMode | null;
+  const storedMode = readStorageItem(STORAGE_MODE_KEY) as ThemeMode | null;
   if (storedMode === "dark" || storedMode === "light") {
     currentMode.value = storedMode;
   }
@@ -335,13 +336,13 @@ export function useTheme() {
 
   function setTheme(id: ThemeId) {
     currentTheme.value = id;
-    localStorage.setItem(STORAGE_THEME_KEY, id);
+    writeStorageItem(STORAGE_THEME_KEY, id);
     applyTheme();
   }
 
   function setMode(mode: ThemeMode) {
     currentMode.value = mode;
-    localStorage.setItem(STORAGE_MODE_KEY, mode);
+    writeStorageItem(STORAGE_MODE_KEY, mode);
     applyTheme();
   }
 

@@ -25,6 +25,8 @@ export {
 } from "./components/HkDockBar";
 export { default as HDrawer } from "./components/HkDrawer";
 export { default as HEmptyState } from "./components/HkEmptyState";
+export { default as HStepGuide } from "./components/HkStepGuide";
+export type { StepGuideItem } from "./components/HkStepGuide";
 export { default as HExpansionPanel } from "./components/HkExpansionPanel";
 export { default as HFab, type HFabAction } from "./components/HkFab";
 export { default as HIcon } from "./components/HkIcon";

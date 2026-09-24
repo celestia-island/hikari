@@ -1,0 +1,157 @@
+// HkStepGuide — the big-icon illustrated step list.
+//
+// The artwork bed is a SOFT CIRCLE (primary-tinted, blurred) so any
+// artwork — SVG, icon, bitmap — sits on the same quiet frame; the ordinal
+// is a small solid disc pinned to its corner. Completed steps swap the
+// ordinal for a check and dim the artwork, letting the guide double as a
+// checklist while the flow progresses.
+
+.hk-step-guide-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin: 0 0 var(--space-8, 0.5rem);
+}
+
+.hk-step-guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.hk-step-guide-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-16, 1rem);
+
+  &[data-done] {
+    .hk-step-guide-art {
+      opacity: 0.45;
+    }
+
+    .hk-step-guide-ordinal {
+      background: var(--hi-color-success, #0eb840);
+    }
+  }
+}
+
+// ── the artwork bed ─────────────────────────────────────────────────────────
+// Sized by --hk-step-guide-art-size (default 88px, the "big icon" the
+// grammar asks for); hosts with tight quarters shrink the token.
+.hk-step-guide-art {
+  flex: none;
+  position: relative;
+  width: var(--hk-step-guide-art-size, 88px);
+  height: var(--hk-step-guide-art-size, 88px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.16),
+      transparent 60%
+    ),
+    rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
+  border: 1px solid rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.18);
+  color: var(--hi-color-primary, #7aa2f7);
+  transition: opacity 200ms ease;
+}
+
+.hk-step-guide-art-svg {
+  width: 55%;
+  height: 55%;
+}
+
+.hk-step-guide-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// ── the ordinal ────────────────────────────────────────────────────────────
+.hk-step-guide-ordinal {
+  position: absolute;
+  top: calc(var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
+  inset-inline-start: calc(var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
+  width: var(--space-20, 1.25rem);
+  height: var(--space-20, 1.25rem);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hi-color-primary, #7aa2f7);
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
+  font-size: var(--text-2xs, 0.625rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 2px solid var(--hi-color-bg, #10121b);
+  box-sizing: border-box;
+}
+
+.hk-step-guide-check {
+  width: 65%;
+  height: 65%;
+}
+
+// ── the caption ─────────────────────────────────────────────────────────────
+.hk-step-guide-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.125rem);
+}
+
+.hk-step-guide-item-title {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--hi-color-text-primary, #1f2328);
+}
+
+.hk-step-guide-item-desc {
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--hi-color-text-tertiary, #8b949e);
+}
+
+// ── grid layout: equal cards ───────────────────────────────────────────────
+.hk-step-guide[data-layout="grid"] {
+  .hk-step-guide-list {
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(var(--hk-step-guide-card-min, 180px), 100%), 1fr)
+    );
+    gap: var(--space-12, 0.75rem);
+  }
+
+  .hk-step-guide-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-10, 0.625rem);
+    padding: var(--space-16, 1rem);
+    border-radius: var(--radius-md, 0.5rem);
+    border: 1px solid rgb(from var(--hi-color-border, #646464) r g b / 0.35);
+  }
+
+  .hk-step-guide-ordinal {
+    top: calc(var(--space-16, 1rem) + var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
+    inset-inline-start: calc(var(--space-16, 1rem) + var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-step-guide-art {
+    transition: none;
+  }
+}

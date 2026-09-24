@@ -104,6 +104,12 @@ describe("initTheme() → registry → HkColorSchemeEditor", () => {
     expect(theme.getTokenGroups()).toEqual([]);
 
     theme.initTheme();
+    // Pin the editing tab. The editor seeds it from `effectiveMode`, which
+    // under the default "system" mode resolves from the SOLAR PERIOD — so
+    // without this the assertions below flip with the wall clock (they read
+    // the dark side while a daytime run edits the light side). Same pin as
+    // the sibling HkColorSchemeEditor.test.ts does in its beforeEach.
+    theme.useTheme().setMode("dark");
 
     const shape = theme
       .getTokenGroups()
@@ -154,6 +160,12 @@ describe("initTheme() → registry → HkColorSchemeEditor", () => {
   it("routes a slider edit into the dark draft only, and into the cssvars", async () => {
     const { theme, editor } = await freshGraph();
     theme.initTheme();
+    // Pin the editing tab. The editor seeds it from `effectiveMode`, which
+    // under the default "system" mode resolves from the SOLAR PERIOD — so
+    // without this the assertions below flip with the wall clock (they read
+    // the dark side while a daytime run edits the light side). Same pin as
+    // the sibling HkColorSchemeEditor.test.ts does in its beforeEach.
+    theme.useTheme().setMode("dark");
     const { exposed, container } = mountEditor(editor);
     await nextTick();
 

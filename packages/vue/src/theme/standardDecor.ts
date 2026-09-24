@@ -22,9 +22,15 @@ import { registerThemeDecorBuiltin, type ThemeDecorSlot } from "./themeDecor";
  *
  * Deliberate gap — `backdrop` is NOT registered here. A screen backdrop
  * resolves into the wallpaper/shader stack (geometry, blend mode, live
- * surface sampling), which is its own PR; registering a placeholder now
- * would pre-empt that decision with a component the host cannot configure
- * away. Until then `getThemeDecor("backdrop", …)` is `undefined` and
+ * surface sampling), which ships as `HkWallpaperBackdrop`; registering it on
+ * this floor would make it "a component the host cannot configure away",
+ * because `registerThemeDecor` has no unregister and the floor sits below
+ * both an exact theme id and the `"*"` wildcard. The HOST therefore owns the
+ * registration:
+ *
+ *   registerThemeDecor({ themeId: "*", slot: "backdrop", component: HkWallpaperBackdrop })
+ *
+ * Until a host does that, `getThemeDecor("backdrop", …)` is `undefined` and
  * `<HkThemeDecor slot="backdrop" />` renders nothing, which is the correct
  * "no backdrop configured" state — pinned by standardDecor.test.ts so the
  * gap is a decision on record, not an oversight.

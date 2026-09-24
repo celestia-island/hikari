@@ -30,7 +30,12 @@ export { registerStandardThemeDecor, STANDARD_THEME_DECOR_SLOTS } from "./standa
 export { getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION, timezoneFallback, setGeolocationProvider } from "./useSolarTime";
 export type { GeoLocation, GeoLocationProvider } from "./useSolarTime";
 export { refreshThemeClock, stopThemeClock } from "./useTheme";
-export { startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache } from "./useBackgroundLuminance";
+export {
+  startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
+  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement, LEGACY_WALLPAPER_SURFACE_IDS,
+  retainLuminanceSampler, releaseLuminanceSampler, luminanceSamplerRefCount,
+} from "./useBackgroundLuminance";
+export type { WallpaperSurfaceKind, WallpaperSurfaceSources } from "./useBackgroundLuminance";
 export type { TimePeriod } from "./useSolarTime";
 export { HK_AUTH_CARD_MAX_WIDTH, HK_AUTH_CARD_MAX_WIDTH_VAR } from "./authCard";
 // SSR-safe storage primitives (no-ops without DOM storage, never throw).

@@ -3,10 +3,105 @@ import { onceFrame, onFrame, type AnimationHandle } from "../runtime/animationBu
 const CVAR = "--float-text-color";
 const CVAR_BADGE = "--float-badge-color";
 
+// ── Wallpaper surface sources: the explicit DOM contract ────────────────
+//
+// This sampler used to find its source by hard-coded element id
+// (`s-wallpaper-canvas` / `s-wallpaper-video` — chest's renderer, the only
+// consumer at the time). That is an IMPLICIT contract between two packages,
+// and it fails SILENTLY for the second consumer: `getElementById` returns
+// null, `sampleFrame` falls through to the body background, and text
+// contrast is computed from the wrong surface with no error anywhere.
+//
+// The contract is now explicit in both directions:
+//   - whoever owns a wallpaper surface REGISTERS it (as a getter, because a
+//     renderer may re-create the element — hikari's HkWallpaperBackdrop
+//     re-renders its layers from state, so a captured element reference
+//     would go stale on the first wallpaper switch),
+//   - the legacy ids stay as the FALLBACK, so a host that has not migrated
+//     (chest, until its own PR) keeps sampling exactly what it samples
+//     today.
+
+/** The two wallpaper surfaces the sampler can read. */
+export type WallpaperSurfaceKind = "canvas" | "video";
+
+/** Getter bag a surface owner registers; both entries are optional. */
+export interface WallpaperSurfaceSources {
+  /** The pipeline/WebGL surface. */
+  canvas?: () => HTMLCanvasElement | null | undefined;
+  /** The moving-image surface. */
+  video?: () => HTMLVideoElement | null | undefined;
+}
+
+/**
+ * Element ids the sampler assumed before the registry existed. Read-only
+ * fallbacks for a host that has not registered a source; never written.
+ */
+export const LEGACY_WALLPAPER_SURFACE_IDS: Readonly<Record<WallpaperSurfaceKind, string>> = {
+  canvas: "s-wallpaper-canvas",
+  video: "s-wallpaper-video",
+};
+
+const surfaceSources = new Map<symbol, WallpaperSurfaceSources>();
+
+/**
+ * Register a surface owner's elements. Returns a disposer — call it on
+ * unmount, or a torn-down instance keeps answering the sampler with a
+ * detached element.
+ *
+ * Resolution is most-recently-registered-first among the entries that
+ * actually resolve: with two backdrops mounted (a chat layout and an admin
+ * layout, chest's shipped shape), the sampler reads the newest live surface
+ * and falls back rather than throwing.
+ */
+export function registerWallpaperSurfaceSources(sources: WallpaperSurfaceSources): () => void {
+  const token = Symbol("wallpaper-surface");
+  surfaceSources.set(token, sources);
+  return () => {
+    surfaceSources.delete(token);
+  };
+}
+
+/** Resolve the live element for `kind`: newest registered source that
+ *  resolves, else the legacy id, else null. */
+export function resolveWallpaperSurfaceElement(kind: WallpaperSurfaceKind): HTMLElement | null {
+  const tokens = [...surfaceSources.keys()];
+  for (let i = tokens.length - 1; i >= 0; i -= 1) {
+    const source = surfaceSources.get(tokens[i]!);
+    const el = source?.[kind]?.();
+    if (el) return el;
+  }
+  if (typeof document === "undefined") return null;
+  return document.getElementById(LEGACY_WALLPAPER_SURFACE_IDS[kind]);
+}
+
 let handle: AnimationHandle | null = null;
 let cachedText: string | null = null;
 let cachedPrimary: string | null = null;
 let pendingPBO: { buffer: WebGLBuffer; gl: WebGL2RenderingContext } | null = null;
+/** Live claims on the shared loop — see retainLuminanceSampler. */
+let retainCount = 0;
+/** One warning per loop start, not one per frame — see sampleFrameSafely. */
+let sampleFailureReported = false;
+
+/** Start the shared loop (no reference bookkeeping). */
+function beginSampler(): void {
+  endSampler();
+  sampleFailureReported = false;
+  sampleFrameSafely();
+  handle = onFrame(() => sampleFrameSafely(), "idle");
+}
+
+/** Stop the shared loop (no reference bookkeeping). */
+function endSampler(): void {
+  if (handle) {
+    handle.disconnect();
+    handle = null;
+  }
+  if (pendingPBO) {
+    try { pendingPBO.gl.deleteBuffer(pendingPBO.buffer); } catch {}
+    pendingPBO = null;
+  }
+}
 
 function luminance(r: number, g: number, b: number): number {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
@@ -29,7 +124,7 @@ function applyLuminance(lum: number) {
 }
 
 function sampleShader(): boolean {
-  const canvas = document.getElementById("s-wallpaper-canvas") as HTMLCanvasElement | null;
+  const canvas = resolveWallpaperSurfaceElement("canvas") as HTMLCanvasElement | null;
   if (!canvas) return false;
   const gl = canvas.getContext("webgl2");
   if (!gl) return false;
@@ -102,7 +197,7 @@ function sampleFromBodyBg(): boolean {
 
 function sampleFrame() {
   if (sampleShader()) return;
-  const video = document.getElementById("s-wallpaper-video") as HTMLVideoElement | null;
+  const video = resolveWallpaperSurfaceElement("video") as HTMLVideoElement | null;
   if (video && video.readyState >= 2 && sampleMedia(video)) return;
   const bgImg = getComputedStyle(document.body).backgroundImage;
   if (bgImg && bgImg !== "none") {
@@ -118,25 +213,78 @@ function sampleFrame() {
   sampleFromBodyBg();
 }
 
+/**
+ * Every sampler entry point goes through here.
+ *
+ * The surfaced element is HOST-provided DOM: a foreign WebGL context, a
+ * video whose media pipeline is in any state, an element detached mid-read.
+ * A throw from one of those used to be impossible to hit (the ids were the
+ * host renderer's own, in the host's own process) and is now a plain
+ * possibility — and the destructive shape of it is what matters: the first
+ * synchronous sample runs inside the registering component's `mounted` hook,
+ * so an escaping throw takes the COMPONENT's mount down over a luminance
+ * read. A surface that cannot be read is a missing sample, not a crash; the
+ * next frame tries again.
+ */
+function sampleFrameSafely(): void {
+  try {
+    sampleFrame();
+  } catch (err) {
+    // Reported ONCE per loop start (a broken surface would otherwise warn
+    // every idle beat), then the sampler keeps trying.
+    if (!sampleFailureReported) {
+      sampleFailureReported = true;
+      if (typeof console !== "undefined") {
+        console.warn("[useBackgroundLuminance] wallpaper surface unreadable; skipping samples", err);
+      }
+    }
+  }
+}
+
 export function startLuminanceSampler() {
-  stopLuminanceSampler();
-  sampleFrame();
-  handle = onFrame(() => sampleFrame(), "idle");
+  // An explicit start owns exactly one reference; a running retain/release
+  // pair from a mounted backdrop is replaced, not stacked.
+  retainCount = 1;
+  beginSampler();
 }
 
 export function stopLuminanceSampler() {
-  if (handle) {
-    handle.disconnect();
-    handle = null;
-  }
-  if (pendingPBO) {
-    try { pendingPBO.gl.deleteBuffer(pendingPBO.buffer); } catch {}
-    pendingPBO = null;
-  }
+  retainCount = 0;
+  endSampler();
+}
+
+/**
+ * Take a reference on the shared sampler loop. The first reference starts
+ * it; further references are no-ops (one loop, however many consumers
+ * started it).
+ *
+ * Why this exists next to `startLuminanceSampler`: a component that mounts
+ * the sampler and stops it on unmount is a SINGLE-instance contract —
+ * chest mounts a backdrop in both its chat layout and its admin layout, so
+ * the first unmount would stop sampling for the surviving backdrop and
+ * text contrast on the wallpaper would silently freeze at its last value.
+ * Reference counting makes "unmount releases MY claim" the observable
+ * behaviour; `start/stop` keep their absolute (host-owned) semantics.
+ */
+export function retainLuminanceSampler(): void {
+  retainCount += 1;
+  if (retainCount === 1) beginSampler();
+}
+
+/** Drop one reference; the loop stops when the last one goes. */
+export function releaseLuminanceSampler(): void {
+  if (retainCount === 0) return;
+  retainCount -= 1;
+  if (retainCount === 0) endSampler();
+}
+
+/** Live reference count (0 = not sampling). Diagnostic/test seam. */
+export function luminanceSamplerRefCount(): number {
+  return retainCount;
 }
 
 export function sampleLuminanceNow() {
-  onceFrame(() => sampleFrame());
+  onceFrame(() => sampleFrameSafely());
 }
 
 export function invalidateLuminanceCache() {

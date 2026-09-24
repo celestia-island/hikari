@@ -137,7 +137,16 @@
   // the current step is never a link endpoint (HkTimeline.tsx statusOf),
   // so no "active" key here.
   &[data-status="pending"] {
-    --_link-color: color-mix(in srgb, var(--hi-color-border) 30%, transparent);
+    // 30 % of a SOLID muted tone. Deriving from --hi-color-border multiplied
+    // that token's own alpha: the shipped schemes define it as
+    // `rgb(128 128 128 / 15%)`, so the bond computed to 15 % × 30 % = 4.5 %
+    // — a 2px line at 4.5 % reads as no line at all, which is what the
+    // round-24 report saw on the right bond and on both edge continuations
+    // (左中右三段式的步骤左右没有横线). --hi-color-muted is an opaque text
+    // tone in the family's schemes, so the 30 % below is the strength it
+    // looks like; the intent ("a third as loud as the completed bond")
+    // survives whatever alpha a theme gives its border token.
+    --_link-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 30%, transparent);
   }
 
   background-color: var(--_link-color);

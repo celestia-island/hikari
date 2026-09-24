@@ -12,14 +12,18 @@ const CVAR_BADGE = "--float-badge-color";
 // null, `sampleFrame` falls through to the body background, and text
 // contrast is computed from the wrong surface with no error anywhere.
 //
-// The contract is now explicit in both directions:
-//   - whoever owns a wallpaper surface REGISTERS it (as a getter, because a
-//     renderer may re-create the element — hikari's HkWallpaperBackdrop
-//     re-renders its layers from state, so a captured element reference
-//     would go stale on the first wallpaper switch),
-//   - the legacy ids stay as the FALLBACK, so a host that has not migrated
-//     (chest, until its own PR) keeps sampling exactly what it samples
-//     today.
+// The contract is explicit, in one direction only: whoever owns a wallpaper
+// surface REGISTERS it, as a getter, because a renderer may re-create the
+// element — hikari's HkWallpaperBackdrop re-renders its layers from state,
+// so a captured element reference would go stale on the first wallpaper
+// switch.
+//
+// The id fallback kept smaller hosts working while they migrated, and both
+// had landed by 2026-09-24 (chest #1123, erp.celestia.world #123): every
+// surface owner now registers, none of them renders those ids, and a
+// fallback that matches nothing is exactly the silent wrong-surface read it
+// was meant to avoid. So it is gone, and "no registration" means null —
+// `sampleFrame` then takes its documented body-background path.
 
 /** The two wallpaper surfaces the sampler can read. */
 export type WallpaperSurfaceKind = "canvas" | "video";
@@ -31,15 +35,6 @@ export interface WallpaperSurfaceSources {
   /** The moving-image surface. */
   video?: () => HTMLVideoElement | null | undefined;
 }
-
-/**
- * Element ids the sampler assumed before the registry existed. Read-only
- * fallbacks for a host that has not registered a source; never written.
- */
-export const LEGACY_WALLPAPER_SURFACE_IDS: Readonly<Record<WallpaperSurfaceKind, string>> = {
-  canvas: "s-wallpaper-canvas",
-  video: "s-wallpaper-video",
-};
 
 const surfaceSources = new Map<symbol, WallpaperSurfaceSources>();
 
@@ -61,8 +56,9 @@ export function registerWallpaperSurfaceSources(sources: WallpaperSurfaceSources
   };
 }
 
-/** Resolve the live element for `kind`: newest registered source that
- *  resolves, else the legacy id, else null. */
+/** Resolve the live element for `kind`: the newest registered source that
+ *  resolves, else null. Registration is the whole contract — there is no id
+ *  to fall back to. */
 export function resolveWallpaperSurfaceElement(kind: WallpaperSurfaceKind): HTMLElement | null {
   const tokens = [...surfaceSources.keys()];
   for (let i = tokens.length - 1; i >= 0; i -= 1) {
@@ -70,8 +66,7 @@ export function resolveWallpaperSurfaceElement(kind: WallpaperSurfaceKind): HTML
     const el = source?.[kind]?.();
     if (el) return el;
   }
-  if (typeof document === "undefined") return null;
-  return document.getElementById(LEGACY_WALLPAPER_SURFACE_IDS[kind]);
+  return null;
 }
 
 let handle: AnimationHandle | null = null;

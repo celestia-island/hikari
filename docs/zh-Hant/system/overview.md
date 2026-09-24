@@ -11,7 +11,6 @@ Hikari 框架採用模組化設計，基於 Tairitsu 執行時期構建，由 6 
 | hikari-icons | Material Design Icons（7000+）整合，SVG 生成 |
 | hikari-theme | 主題上下文、CSS 變數生成、主題切換 |
 | hikari-components | 核心 UI 元件庫（40+ 元件） |
-| hikari-extra-components | 進階元件（節點編輯器、富文本等） |
 
 ## 分層架構
 
@@ -21,7 +20,7 @@ block-beta
   block:layer["分層架構"]:1
     columns 1
     app["應用層 (examples/)"]
-    comp["元件層 (components, extra)"]
+    comp["元件層 (components)"]
     sys["系統層 (theme, animation, icons)"]
     found["基礎層 (palette)"]
   end
@@ -41,9 +40,6 @@ graph BT
   hikari-components --> hikari-palette
   hikari-components --> hikari-theme
   hikari-components --> hikari-icons
-  hikari-extra-components --> hikari-palette
-  hikari-extra-components --> hikari-theme
-  hikari-extra-components --> hikari-icons
 ```
 
 ## 外部依賴
@@ -297,63 +293,12 @@ let app = HikariRenderServicePlugin::new()
 - **styles_service** - 樣式注入
 - **plugin** - 外掛系統
 
-### 8. 進階元件庫 (hikari-extra-components)
+### 8. 進階元件資料模型（已退役）
 
-用於複雜互動場景的進階 UI 元件。
-
-**職責**：
-- 進階工具元件
-- 拖曳與縮放互動
-- 可摺疊面板
-- 動畫整合
-
-**核心元件**：
-
-1. **Collapsible** - 可摺疊面板
-   - 左右滑入/滑出動畫
-   - 可設定寬度
-   - 展開狀態回呼
-
-2. **DragLayer** - 拖曳圖層
-   - 邊界約束
-   - 拖曳事件回呼
-   - 自訂 z-index
-
-3. **ZoomControls** - 縮放控制
-   - 鍵盤快捷鍵支援
-   - 可設定縮放範圍
-   - 多種定位選項
-
-**核心功能**：
-```rust
-use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
-
-// 可摺疊面板
-Collapsible {
-    title: "Settings".to_string(),
-    expanded: true,
-    position: CollapsiblePosition::Right,
-    div { "Content" }
-}
-
-// 拖曳圖層
-DragLayer {
-    initial_x: 100.0,
-    initial_y: 100.0,
-    constraints: DragConstraints {
-        min_x: Some(0.0),
-        max_x: Some(500.0),
-        ..Default::default()
-    },
-    div { "Drag me" }
-}
-
-// 縮放控制
-ZoomControls {
-    zoom: 1.0,
-    on_zoom_change: move |z| println!("Zoom: {}", z)
-}
-```
+`hikari-extra-components` 套件——timeline、drag layer、zoom controls 與節點圖的框架無關資料
+模型——已刪除：工作區內無人依賴，且其型別與同名的渲染元件重複。請改用 `hikari-components`
+中的元件：`display::{Timeline, DragLayer, UserGuide, ZoomControls}`、
+`production::{VideoPlayer, RichTextEditor, CodeHighlight}`。
 
 ## 架構原則
 
@@ -448,9 +393,6 @@ graph BT
   hikari-components --> hikari-animation
   hikari-components --> hikari-icons
 
-  hikari-extra-components --> hikari-palette2[hikari-palette]
-  hikari-extra-components --> hikari-theme2[hikari-theme]
-  hikari-extra-components --> hikari-animation2[hikari-animation]
 
   tairitsu-packager --> hikari-components2[hikari-components]
   tairitsu-packager --> axum

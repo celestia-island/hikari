@@ -219,7 +219,7 @@ export {
   themeDecorVersion, isThemeDecorSlot, THEME_DECOR_SLOT_PATTERN, THEME_DECOR_WILDCARD,
   allGroupSlots, resolveLocalizedText, parseTokenGroupConfig, registerTokenGroupConfig,
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
-  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement, LEGACY_WALLPAPER_SURFACE_IDS,
+  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement,
   retainLuminanceSampler, releaseLuminanceSampler, luminanceSamplerRefCount,
   type WallpaperSurfaceKind, type WallpaperSurfaceSources,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
@@ -259,6 +259,18 @@ export {
   type WallpaperEffect, type WallpaperDisplaySettings, type WallpaperStorageSlot,
   type WallpaperStorageConfig, type WallpaperInitConfig, type WallpaperPipelineLookup,
   type WallpaperPipelinePreset,
+} from "./theme";
+
+// Wallpaper shader layer: the shared WebGL2 pipeline renderer + the host
+// preset registry. hikari ships the mechanism, never the GLSL — hosts
+// register their generated fragments through registerShaderPresets and
+// hand createWallpaperShaderSurface to HkWallpaperBackdrop's props bag.
+export {
+  registerShaderPresets, getShaderPreset, listShaderPresetIds,
+  SHADER_VERTEX, WallpaperShaderPipeline, createWallpaperShaderSurface,
+  type WallpaperShaderPreset, type WallpaperShaderPresetInput,
+  type WallpaperShaderScaleConfig, type WallpaperShaderScaleInput,
+  type WallpaperShaderOverlayConfig,
 } from "./theme";
 
 // The wallpaper stack's SURFACE component. hikari does NOT put it on the
@@ -591,3 +603,162 @@ export {
   type DialCodeEntry,
   type ParsedE164,
 } from "./data/dialCodes";
+
+// ── Canonical Hk* names (2026-09-24 unification) ─────────────────────
+// Every public name now exists in both spellings: the historical H*
+// aliases above (deprecated — migrate to the Hk* forms) and the Hk*
+// canonical names below, which match the source file names. Consumers
+// migrate at their own pace; the H* aliases are removed only after the
+// last consumer stops using them. Components export under the name of
+// their source file; named exports whose source identifier was already
+// Hk-prefixed now export that identifier unaliased.
+
+export { default as HkActionBar } from "./components/HkActionBar";
+export { default as HkAdaptiveDialog } from "./components/HkAdaptiveDialog";
+export { default as HkAlert } from "./components/HkAlert";
+export { default as HkAltSignIn } from "./components/HkAltSignIn";
+export { default as HkAvatar } from "./components/HkAvatar";
+export { default as HkBadge } from "./components/HkBadge";
+export { default as HkBoard } from "./components/HkBoard";
+export { default as HkBlockingToast } from "./components/HkBlockingToast";
+export { default as HkBreadcrumb } from "./components/HkBreadcrumb";
+export { default as HkButton } from "./components/HkButton";
+export { default as HkCard } from "./components/HkCard";
+export { default as HkCheckbox } from "./components/HkCheckbox";
+export { default as HkColorPicker } from "./components/HkColorPicker";
+export { default as HkConfirmDialog } from "./components/HkConfirmDialog";
+export { default as HkCrossfade } from "./components/HkCrossfade";
+export { default as HkDivider } from "./components/HkDivider";
+export { default as HkDockBar } from "./components/HkDockBar";
+export { default as HkDrawer } from "./components/HkDrawer";
+export { default as HkEmptyState } from "./components/HkEmptyState";
+export { default as HkExpansionPanel } from "./components/HkExpansionPanel";
+export { default as HkFab } from "./components/HkFab";
+export { default as HkIcon } from "./components/HkIcon";
+export { default as HkIconButton } from "./components/HkIconButton";
+export { default as HkIconButtonGroup } from "./components/HkIconButtonGroup";
+export { default as HkImageLightbox } from "./components/HkImageLightbox";
+export { default as HkImagePreview } from "./components/HkImagePreview";
+export { default as HkInput } from "./components/HkInput";
+export { default as HkPlaceholderMarquee } from "./components/HkPlaceholderMarquee";
+export { default as HkKbd } from "./components/HkKbd";
+export { default as HkLabel } from "./components/HkLabel";
+export { default as HkListTransition } from "./components/HkListTransition";
+export { default as HkLoadMore } from "./components/HkLoadMore";
+export { default as HkMarkdownRenderer } from "./components/HkMarkdownRenderer";
+export { default as HkModal } from "./components/HkModal";
+export { default as HkNavItem } from "./components/HkNavItem";
+export { default as HkNumberInput } from "./components/HkNumberInput";
+export { default as HkPhoneInput } from "./components/HkPhoneInput";
+export { default as HkAffixPicker } from "./components/HkAffixPicker";
+export { default as HkPhaseTransition } from "./components/HkPhaseTransition";
+export { default as HkGaugeRing } from "./components/HkGaugeRing";
+export { default as HkProgressRing } from "./components/HkProgressRing";
+export { default as HkQrCode } from "./components/HkQrCode";
+export { default as HkRollingNumber } from "./components/HkRollingNumber";
+export { default as HkLocalePickerPopup } from "./components/HkLocalePickerPopup";
+export { default as HkHoverRevealAction } from "./components/HkHoverRevealAction";
+export { default as HkKeywordSearchModal } from "./components/HkKeywordSearchModal";
+export { default as HkModalBreadcrumb } from "./components/HkModalBreadcrumb";
+export { default as HkPopover } from "./components/HkPopover";
+export { default as HkMenu } from "./components/HkMenu";
+export { default as HkContextMenuProvider } from "./components/HkContextMenuProvider";
+export { default as HkMenuPanel } from "./components/HkMenuPanel";
+export { default as HkMenuActionItem } from "./components/HkMenuActionItem";
+export { default as HkMenuIdentityItem } from "./components/HkMenuIdentityItem";
+export { default as HkPopupSelect } from "./components/HkPopupSelect";
+export { default as HkProgressBar } from "./components/HkProgressBar";
+export { default as HkProgressDialog } from "./components/HkProgressDialog";
+export { default as HkRadio } from "./components/HkRadio";
+export { default as HkScrollContainer } from "./components/HkScrollContainer";
+export { default as HkSearchInput } from "./components/HkSearchInput";
+export { default as HkSplash } from "./components/HkSplash";
+export { default as HkSelect } from "./components/HkSelect";
+export { default as HkSelectPanel } from "./components/HkSelectPanel";
+export { default as HkSidebar } from "./components/HkSidebar";
+export { default as HkSkeleton } from "./components/HkSkeleton";
+export { default as HkSkeletonList } from "./components/HkSkeletonList";
+export { default as HkSlider } from "./components/HkSlider";
+export { default as HkSpinner } from "./components/HkSpinner";
+export { default as HkSwitch } from "./components/HkSwitch";
+export { default as HkTable } from "./components/HkTable";
+export { default as HkTabs } from "./components/HkTabs";
+export { default as HkTag } from "./components/HkTag";
+export { default as HkTextarea } from "./components/HkTextarea";
+export { default as HkFileField } from "./components/HkFileField";
+export { default as HkFileBrowserDialog } from "./components/HkFileBrowserDialog";
+export { default as HkFilePickerField } from "./components/HkFilePickerField";
+export { default as HkToast } from "./components/HkToast";
+export { default as HkTooltip } from "./components/HkTooltip";
+export { default as HkTree } from "./components/HkTree";
+export { default as HkWindowedItem } from "./components/HkWindowedItem";
+export { default as HkWaterfall } from "./components/HkWaterfall";
+export { default as HkBlankCanvas } from "./components/HkBlankCanvas";
+export { default as HkKanban } from "./components/HkKanban";
+export { default as HkNodeCanvas } from "./components/HkNodeCanvas";
+export { default as HkDateTimePicker } from "./components/HkDateTimePicker";
+export { default as HkDatePicker } from "./components/HkDatePicker";
+export { default as HkTimeline } from "./components/HkTimeline";
+export { default as HkTitleBar } from "./components/HkTitleBar";
+export { default as HkStepFlow } from "./components/HkStepFlow";
+export { default as HkScrollPin } from "./components/HkScrollPin";
+export { default as HkMediaPlayer } from "./components/HkMediaPlayer";
+export { default as HkMediaControlBar } from "./components/HkMediaControlBar";
+export { default as HkMediaSlider } from "./components/HkMediaSlider";
+export { default as HkMediaVisualizer } from "./components/HkMediaVisualizer";
+export { default as HkImageViewer } from "./components/HkImageViewer";
+export { default as HkZoomToolbar } from "./components/HkZoomToolbar";
+export { default as HkMinimap } from "./components/HkMinimap";
+export { default as HkTrendChart } from "./components/HkTrendChart";
+export { default as HkErrorBoundary } from "./components/HkErrorBoundary";
+export { default as HkDraggableList } from "./components/HkDraggableList";
+export { default as HkDraggableGrid } from "./components/HkDraggableGrid";
+export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
+export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";
+export { default as HkLogo } from "./components/HkLogo";
+export { default as HkAuthMethodList } from "./components/HkAuthMethodList";
+export { default as HkAuthSubmitButton } from "./components/HkAuthSubmitButton";
+export { type HkDockBarAnchor as HkDockBarAnchor } from "./components/HkDockBar";
+export { type HkDockBarSurface as HkDockBarSurface } from "./components/HkDockBar";
+export { HkOtpInput as HkOtpInput } from "./components/HkOtpInput";
+export { HkLocalizedInput as HkLocalizedInput } from "./components/HkLocalizedInput";
+export { HkTagInput as HkTagInput } from "./components/HkTagInput";
+export { HkErrorLanding as HkErrorLanding } from "./components/HkErrorLanding";
+export { HkErrorReportingOverlay as HkErrorReportingOverlay } from "./errorReporting";
+export { HkAdminShell as HkAdminShell } from "./components/HkAdminShell";
+export { HkAdminHeader as HkAdminHeader } from "./components/HkAdminHeader";
+export { HkNavSidebar as HkNavSidebar } from "./components/HkNavSidebar";
+export { HkThemeToggle as HkThemeToggle } from "./components/HkThemeToggle";
+export { HkAuthCard as HkAuthCard } from "./components/HkAuthCard";
+export { HkSignInCard as HkSignInCard } from "./components/HkSignInCard";
+export { HkMfaVerifyCard as HkMfaVerifyCard } from "./components/HkMfaVerifyCard";
+export { type HkMfaFactor as HkMfaFactor } from "./components/HkMfaVerifyCard";
+export { HkLocalePicker as HkLocalePicker } from "./components/HkLocalePicker";
+export { HkAdminTablePage as HkAdminTablePage } from "./components/HkAdminTablePage";
+export { HkPageHeader as HkPageHeader } from "./components/HkPageHeader";
+export { HkStatCard as HkStatCard } from "./components/HkStatCard";
+export { HkStatusPill as HkStatusPill } from "./components/HkStatusPill";
+export { HkShareBar as HkShareBar } from "./components/HkShareBar";
+export { HkSecretRevealModal as HkSecretRevealModal } from "./components/HkSecretRevealModal";
+export { HkCaptchaWidget as HkCaptchaWidget } from "./components/HkCaptchaWidget";
+export { HkCaptchaModal as HkCaptchaModal } from "./components/HkCaptchaModal";
+export { HkProtocolModal as HkProtocolModal } from "./components/HkProtocolModal";
+export { HkAboutModal as HkAboutModal } from "./components/HkAboutModal";
+export { HkLogWindow as HkLogWindow } from "./components/HkLogWindow";
+export { HkSettingsBody as HkSettingsBody } from "./components/HkSettingsDialog";
+export { HkSettingsDialog as HkSettingsDialog } from "./components/HkSettingsDialog";
+export { HkSettingsGroup as HkSettingsGroup } from "./components/HkSettingsDialog";
+export { HkSettingsSub as HkSettingsSub } from "./components/HkSettingsDialog";
+export { HkSettingsHint as HkSettingsHint } from "./components/HkSettingsDialog";
+export { HkCookieConsent as HkCookieConsent } from "./components/HkCookieConsent";
+export { HkAttachmentModal as HkAttachmentModal } from "./components/HkAttachmentModal";
+export { HkStatusBar as HkStatusBar } from "./components/HkStatusBar";
+export { HkCountdownDigit as HkCountdownDigit } from "./components/HkCountdownDigit";
+export { HkConnectionStatus as HkConnectionStatus } from "./components/HkConnectionStatus";
+export { HkRichInput as HkRichInput } from "./components/HkRichInput";
+export { HkVoiceInputPopup as HkVoiceInputPopup } from "./components/HkVoiceInputPopup";
+export { HkToolBlock as HkToolBlock } from "./components/HkToolBlock";
+export { HkJsonTree as HkJsonTree } from "./components/HkJsonTree";
+export { HkTokenUsageBadge as HkTokenUsageBadge } from "./components/HkTokenUsageBadge";
+export { HkTokenUsagePanel as HkTokenUsagePanel } from "./components/HkTokenUsagePanel";
+export { HkModelTag as HkModelTag } from "./components/HkModelTag";

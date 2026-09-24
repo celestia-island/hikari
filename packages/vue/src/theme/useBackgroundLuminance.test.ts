@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  LEGACY_WALLPAPER_SURFACE_IDS,
   luminanceSamplerRefCount,
   registerWallpaperSurfaceSources,
   releaseLuminanceSampler,
@@ -23,14 +22,20 @@ import {
  * derived from the body background instead of the wallpaper.
  *
  * Three facts are pinned here:
- *   1. a REGISTERED surface is what gets sampled, even when its element id
- *      is nothing like chest's (the assertion that would have failed for
- *      every consumer but chest);
- *   2. the legacy ids still resolve when nothing is registered (chest keeps
- *      working until its own migration PR);
+ *   1. a REGISTERED surface is what gets sampled, whatever its element id
+ *      is (the assertion that would have failed for every consumer but
+ *      chest);
+ *   2. registration is the WHOLE contract: the retired ids are inert, and
+ *      "nothing registered" resolves to null so the sampler takes its
+ *      documented body-background path instead of reading a stranger's
+ *      element;
  *   3. the shared loop is reference-counted, so an unmounting backdrop
  *      releases only its own claim.
  */
+
+/** The ids the sampler used to look up before the registry existed. Still
+ *  spelled out here, because the point of case 2 is that they mean nothing. */
+const RETIRED_IDS = { canvas: "s-wallpaper-canvas", video: "s-wallpaper-video" } as const;
 
 /** A WebGL2 context stub just real enough for the PBO round trip. */
 function makeGl(pixel: [number, number, number, number]) {
@@ -105,20 +110,21 @@ afterEach(() => {
 
 describe("wallpaper surface registry", () => {
   it("proves the detector can tell two canvases apart (positive control)", () => {
-    makeCanvas(LEGACY_WALLPAPER_SURFACE_IDS.canvas, makeGl(BRIGHT));
+    makeCanvas("hk-wallpaper-canvas-decoy", makeGl(BRIGHT));
     const mine = makeCanvas("hk-wallpaper-canvas-instance-1", makeGl(DARK));
     stubCanvasContexts();
 
-    expect(resolveWallpaperSurfaceElement("canvas")).toBe(
-      document.getElementById(LEGACY_WALLPAPER_SURFACE_IDS.canvas),
-    );
+    expect(
+      resolveWallpaperSurfaceElement("canvas"),
+      "an unregistered element is not the sampler's source",
+    ).toBeNull();
 
     disposers.push(registerWallpaperSurfaceSources({ canvas: () => mine }));
     expect(resolveWallpaperSurfaceElement("canvas")).toBe(mine);
   });
 
-  it("samples the REGISTERED surface, not chest's fixed id", async () => {
-    const legacy = makeCanvas(LEGACY_WALLPAPER_SURFACE_IDS.canvas, makeGl(BRIGHT));
+  it("samples the REGISTERED surface, not the retired ids", async () => {
+    const retired = makeCanvas(RETIRED_IDS.canvas, makeGl(BRIGHT));
     // A different id AND a different class: nothing about this element
     // matches what the sampler used to look for.
     const registered = makeCanvas("hk-wallpaper-canvas-7f3a", makeGl(DARK));
@@ -133,31 +139,49 @@ describe("wallpaper surface registry", () => {
     await frame();
 
     expect(probed, "only the registered element is probed").toContain(registered);
-    expect(probed, "chest's element is never touched").not.toContain(legacy);
+    expect(probed, "the retired id is never touched").not.toContain(retired);
     // A DARK surface ⇒ white floating text (the registered element's pixels).
     expect(luminanceVar()).toBe("255, 255, 255");
   });
 
-  it("still resolves the legacy ids when nothing is registered", () => {
-    const legacyCanvas = makeCanvas(LEGACY_WALLPAPER_SURFACE_IDS.canvas, makeGl(BRIGHT));
-    const legacyVideo = document.createElement("video");
-    legacyVideo.id = LEGACY_WALLPAPER_SURFACE_IDS.video;
-    document.body.appendChild(legacyVideo);
+  it("does not resolve the retired ids when nothing is registered", () => {
+    const retiredCanvas = makeCanvas(RETIRED_IDS.canvas, makeGl(BRIGHT));
+    const retiredVideo = document.createElement("video");
+    retiredVideo.id = RETIRED_IDS.video;
+    document.body.appendChild(retiredVideo);
     stubCanvasContexts();
 
-    expect(resolveWallpaperSurfaceElement("canvas")).toBe(legacyCanvas);
-    expect(resolveWallpaperSurfaceElement("video")).toBe(legacyVideo);
+    expect(document.getElementById(RETIRED_IDS.canvas)).toBe(retiredCanvas);
+    expect(resolveWallpaperSurfaceElement("canvas")).toBeNull();
+    expect(resolveWallpaperSurfaceElement("video")).toBeNull();
   });
 
   it("stops using a surface as soon as its owner disposes the registration", () => {
-    const legacy = makeCanvas(LEGACY_WALLPAPER_SURFACE_IDS.canvas, null);
+    const retired = makeCanvas(RETIRED_IDS.canvas, null);
     const registered = makeCanvas("hk-wallpaper-canvas-transient", null);
     stubCanvasContexts();
 
     const dispose = registerWallpaperSurfaceSources({ canvas: () => registered });
     expect(resolveWallpaperSurfaceElement("canvas")).toBe(registered);
     dispose();
-    expect(resolveWallpaperSurfaceElement("canvas")).toBe(legacy);
+    expect(document.getElementById(RETIRED_IDS.canvas)).toBe(retired);
+    expect(resolveWallpaperSurfaceElement("canvas")).toBeNull();
+  });
+
+  it("keeps the other owner's surface when one registration disposes", () => {
+    const mine = makeCanvas("hk-wallpaper-canvas-my-owner", null);
+    const other = makeCanvas("hk-wallpaper-canvas-other-owner", null);
+    stubCanvasContexts();
+
+    const disposeMine = registerWallpaperSurfaceSources({ canvas: () => mine });
+    disposers.push(registerWallpaperSurfaceSources({ canvas: () => other }));
+    expect(resolveWallpaperSurfaceElement("canvas")).toBe(other);
+
+    disposeMine();
+    // Disposal is per registration, not a sweep: the survivor must keep
+    // answering, or the second backdrop (chest mounts one per layout) loses
+    // its contrast sampling the moment the first unmounts.
+    expect(resolveWallpaperSurfaceElement("canvas")).toBe(other);
   });
 
   it("prefers the newest registration that resolves", () => {

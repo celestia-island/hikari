@@ -249,63 +249,14 @@ let app = HikariRenderServicePlugin::new()
 - **styles_service** - Внедрение стилей
 - **plugin** - Система плагинов
 
-### 8. Библиотека дополнительных компонентов (hikari-extra-components)
+### 8. Модели данных дополнительных компонентов (удалены)
 
-Продвинутые UI-компоненты для сложных сценариев взаимодействия.
-
-**Обязанности**:
-- Продвинутые служебные компоненты
-- Взаимодействия перетаскивания и масштабирования
-- Сворачиваемые панели
-- Интеграция анимаций
-
-**Основные компоненты**:
-
-1. **Collapsible** - Сворачиваемая панель
-   - Анимация появления/исчезновения слева/справа
-   - Настраиваемая ширина
-   - Callback состояния развёрнутости
-
-2. **DragLayer** - Слой перетаскивания
-   - Ограничения границ
-   - Callback-события перетаскивания
-   - Настраиваемый z-index
-
-3. **ZoomControls** - Элементы управления масштабированием
-   - Поддержка горячих клавиш
-   - Настраиваемый диапазон масштабирования
-   - Несколько вариантов позиционирования
-
-**Основные возможности**:
-```rust
-use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
-
-// Сворачиваемая панель
-Collapsible {
-    title: "Настройки".to_string(),
-    expanded: true,
-    position: CollapsiblePosition::Right,
-    div { "Содержимое" }
-}
-
-// Слой перетаскивания
-DragLayer {
-    initial_x: 100.0,
-    initial_y: 100.0,
-    constraints: DragConstraints {
-        min_x: Some(0.0),
-        max_x: Some(500.0),
-        ..Default::default()
-    },
-    div { "Перетащи меня" }
-}
-
-// Элементы управления масштабированием
-ZoomControls {
-    zoom: 1.0,
-    on_zoom_change: move |z| println!("Масштаб: {}", z)
-}
-```
+Пакет `hikari-extra-components` — независимые от фреймворка модели данных для timeline,
+слоя перетаскивания, элементов масштабирования и графа узлов — удалён. В рабочем
+пространстве от него ничего не зависело, а его типы дублировали одноимённые компоненты
+отрисовки. Используйте компоненты из `hikari-components`:
+`display::{Timeline, DragLayer, UserGuide, ZoomControls}`,
+`production::{VideoPlayer, RichTextEditor, CodeHighlight}`.
 
 ## Принципы архитектуры
 
@@ -400,9 +351,6 @@ graph BT
   hikari-components --> hikari-animation
   hikari-components --> hikari-icons
 
-  hikari-extra-components --> hikari-palette2[hikari-palette]
-  hikari-extra-components --> hikari-theme2[hikari-theme]
-  hikari-extra-components --> hikari-animation2[hikari-animation]
 
   tairitsu-packager --> hikari-components2[hikari-components]
   tairitsu-packager --> axum

@@ -137,7 +137,16 @@
   // the current step is never a link endpoint (HkTimeline.tsx statusOf),
   // so no "active" key here.
   &[data-status="pending"] {
-    --_link-color: color-mix(in srgb, var(--hi-color-border) 30%, transparent);
+    // 30 % of a SOLID muted tone. Deriving from --hi-color-border multiplied
+    // that token's own alpha: the shipped schemes define it as
+    // `rgb(128 128 128 / 15%)`, so the bond computed to 15 % × 30 % = 4.5 %
+    // — a 2px line at 4.5 % reads as no line at all, which is what the
+    // round-24 report saw on the right bond and on both edge continuations
+    // (左中右三段式的步骤左右没有横线). --hi-color-muted is an opaque text
+    // tone in the family's schemes, so the 30 % below is the strength it
+    // looks like; the intent ("a third as loud as the completed bond")
+    // survives whatever alpha a theme gives its border token.
+    --_link-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 30%, transparent);
   }
 
   background-color: var(--_link-color);
@@ -432,10 +441,9 @@
 }
 
 // ── Navigation motion (2026-09-23 user directive, round 16) ──────────
-// The stepper never hard-cuts: status colors crossfade, the full-mode
-// active halo slides between step nodes, and the window-mode cells wipe
-// in from the navigation side. All of it rides the family's standard
-// duration/ease and collapses under reduced motion.
+// The stepper never hard-cuts: status colors crossfade and the window-mode
+// cells wipe in from the navigation side. All of it rides the family's
+// standard duration/ease and collapses under reduced motion.
 
 .hk-timeline {
   --hk-timeline-motion: 0.3s;
@@ -453,39 +461,15 @@
     border-color var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
 }
 
-// Full mode: the active halo — a measured pill behind the active step
-// (the component positions it via transform/size), sliding between
-// nodes with the same clock. The first placement is instant (data-placed
-// gates the transition) so opening the sheet does not animate it.
+// The full-mode active halo was removed here (2026-09-24 user directive):
+// a measured pill behind the active step, sliding between nodes, which
+// read as an unexplained primary blob in every wide multi-step flow and
+// duplicated what the filled indicator and the label weight already say.
+// Window mode never had one. The containing-block rule below stays — it is
+// the timeline's anchor for any absolutely positioned consumer content, and
+// the vertical rail anchors to the step rather than to this box.
 .hk-timeline[data-mode="full"]:not(.hk-scroll-pin) {
   position: relative;
-}
-
-.hk-timeline-halo {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  translate: 0 -50%;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
-  pointer-events: none;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.hk-timeline[data-orientation="vertical"] .hk-timeline-halo {
-  top: 0;
-  left: 50%;
-  translate: -50% 0;
-  width: 100%;
-  height: auto;
-}
-
-.hk-timeline-halo[data-placed] {
-  transition:
-    transform var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
-    width var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
-    height var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
 }
 
 // Window mode: each cell's step content is keyed by its step key, so a
@@ -552,9 +536,5 @@ html[data-css-animations="0"] .hk-timeline[data-mode="window"][data-dir] .hk-tim
 
   .hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
     animation: none;
-  }
-
-  .hk-timeline-halo[data-placed] {
-    transition: none;
   }
 }

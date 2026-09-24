@@ -32,7 +32,22 @@
     --hk-stepflow-sticky-bg,
     color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 95%, transparent)
   );
-  top: var(--hk-stepflow-sticky-top, 0px);
+  // The HOST's declared gutter owns the resting offset, not this rule. The
+  // pin contract's offset rule is (0,3,0) and parks a top pin at
+  // var(--hk-scroll-pad-top, 0px); this rule is (0,4,0), so a bare `0px`
+  // default silently out-specified it and parked the stuck pin flush
+  // against the scrollport edge instead of at the gutter line. The
+  // window-mode bonds sit 11-13px below the pin's top, so they landed
+  // INSIDE the host's own gutter cover (HkModal paints
+  // `.hk-modal-body::before` there at z-index 3), leaving their visibility
+  // resting entirely on the pin's z-index 10 staying inside that cover's
+  // stacking context. Any promoted wrapper between the scroll host and the
+  // pin collapses that: the bond measures 0 % under an opaque cover and
+  // exactly 5.0 % under a 95 % one — the round-24 phone signature
+  // (左中右三段式的步骤左右没有横线). Deferring to the gutter moves the
+  // bond to pad+11, clear of the cover band, and keeps a consumer's own
+  // override working through --hk-stepflow-sticky-top.
+  top: var(--hk-stepflow-sticky-top, var(--hk-scroll-pad-top, 0px));
   margin-bottom: 0;
   padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }

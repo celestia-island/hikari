@@ -23,7 +23,6 @@ jobs:
             "hikari-theme:packages/theme"
             "hikari-icons:packages/icons"
             "hikari-components:packages/components"
-            "hikari-extra-components:packages/extra-components"
           )
           for ENTRY in "${PACKAGES[@]}"; do
             PKG="${ENTRY%%:*}"

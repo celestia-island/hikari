@@ -381,9 +381,10 @@ export default defineComponent({
     });
 
     onMounted(() => {
-      // Registered BEFORE the first sample: the sampler resolves its source
-      // through this registry, and an unregistered instance falls back to
-      // the legacy element ids (the pre-component contract).
+      // Registered BEFORE the first sample: registration is the sampler's
+      // only way to find a wallpaper surface — an instance that has not
+      // registered is invisible to it, and the sample falls through to the
+      // body background.
       unregisterSources = registerWallpaperSurfaceSources({
         canvas: () => canvasRef.value,
         video: () => videoRef.value,

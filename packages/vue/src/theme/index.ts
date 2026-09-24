@@ -32,7 +32,7 @@ export type { GeoLocation, GeoLocationProvider } from "./useSolarTime";
 export { refreshThemeClock, stopThemeClock } from "./useTheme";
 export {
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
-  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement, LEGACY_WALLPAPER_SURFACE_IDS,
+  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement,
   retainLuminanceSampler, releaseLuminanceSampler, luminanceSamplerRefCount,
 } from "./useBackgroundLuminance";
 export type { WallpaperSurfaceKind, WallpaperSurfaceSources } from "./useBackgroundLuminance";
@@ -64,3 +64,16 @@ export {
   resolveThemeFollowSwitch, setWallpaperPipelineLookup, geo, currentPeriod,
 } from "./useWallpaper";
 export type { WallpaperInitConfig, WallpaperPipelineLookup, WallpaperPipelinePreset } from "./useWallpaper";
+// Wallpaper shader layer. The presets are host assets registered at
+// runtime — hikari ships the renderer and the registry, never any GLSL
+// and never a consumer-side alias import (see wallpaperShaderAliasGuard).
+export {
+  registerShaderPresets, getShaderPreset, listShaderPresetIds,
+} from "./wallpaperShaderPresets";
+export type {
+  WallpaperShaderPreset, WallpaperShaderPresetInput,
+  WallpaperShaderScaleConfig, WallpaperShaderScaleInput, WallpaperShaderOverlayConfig,
+} from "./wallpaperShaderPresets";
+export {
+  SHADER_VERTEX, WallpaperShaderPipeline, createWallpaperShaderSurface,
+} from "./wallpaperShaderRenderer";

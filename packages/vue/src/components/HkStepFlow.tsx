@@ -287,10 +287,39 @@ export default defineComponent({
     // Sticky-header whitespace strategy (2026-09-14): see HkScrollPin.
     const pinStrategy = ref<"offset" | "bleed">("bleed");
 
+    /** Drop focus out of the step bodies the moment a swap starts.
+     *
+     *  The leaving body keeps its DOM node — and therefore its focus —
+     *  for the whole slide window, and its input rides the cell while
+     *  the sheet morphs its height. Android re-anchors an open autofill
+     *  suggestion panel on every layout change, so a focused endpoint
+     *  field made the system's autofill sheet strobe at roughly the
+     *  frame rate for the entire animation (round-22 chest report: the
+     *  panel toggled over ~94% of the sheet body for ~250ms while the
+     *  step changed). Blurring before the first animated frame dismisses
+     *  the panel outright; the field the user was typing in is leaving
+     *  the stage anyway, so nothing is taken from them.
+     *
+     *  Containment is the BODIES, not the flow: HkTimeline renders the
+     *  completed steps as `role="button" tabindex="0"` inside this same
+     *  element, and a timeline step that drove the change is not leaving
+     *  the stage. Blurring it would drop a keyboard or pointer user to
+     *  `<body>` — Tab restarts at the top of the document, and HkModal's
+     *  Tab trap stops engaging so focus can escape the dialog. */
+    function dropFlowFocus(): void {
+      if (typeof document === "undefined") return; // SSR guard
+      const active = document.activeElement;
+      if (!(active instanceof HTMLElement)) return;
+      const body = active.closest(".hk-stepflow-body");
+      if (!body || !flowRef.value?.contains(body)) return;
+      active.blur();
+    }
+
     watch(
       () => props.modelValue,
       async (next, prev) => {
         if (next === prev) return;
+        dropFlowFocus();
         preemptSwap();
         const leaving = bodies.value.find((b) => b.phase === "active");
         if (!leaving) return;

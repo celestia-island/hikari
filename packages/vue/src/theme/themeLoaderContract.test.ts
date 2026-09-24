@@ -73,10 +73,38 @@ describe("pre-paint theme loader mirrors the stock preset table", () => {
   });
 
   it("keeps the stored-id default literal a declared, known id", () => {
-    const match = /__celestiaDefaultTheme \|\| "([A-Za-z0-9_-]+)"/.exec(source);
+    // The chain is formatted across lines, so allow any whitespace between
+    // the operator and the literal.
+    const match = /__celestiaDefaultTheme\s*\|\|\s*"([A-Za-z0-9_-]+)"/.exec(source);
     expect(match, "the stored-id chain ends in a literal id").toBeTruthy();
     expect(declaredIds()).toContain(match![1]);
     expect(Object.keys(themePresets)).toContain(match![1]);
+  });
+
+  it("consults the hikari engine keys ahead of the page default", () => {
+    // The running app persists its selection under these exact keys
+    // (useTheme.ts). Without them the loading screen repaints the default
+    // brand while the app restores another theme — the pre-paint and app
+    // halves would disagree on every non-default boot. The legacy per-app
+    // prefixed keys stay AHEAD of the engine keys for back-compat.
+    expect(source).toContain('localStorage.getItem("hikari-theme")');
+    expect(source).toContain('localStorage.getItem("hikari-theme-mode")');
+    // Order is asserted inside the tid chain itself — `window.__celestiaDefaultTheme`
+    // also appears earlier (the page-themes merge block), so a whole-file search
+    // would measure the wrong occurrence.
+    const chainStart = source.indexOf("var tid =");
+    const chainEnd = source.indexOf("var theme =", chainStart);
+    expect(chainStart, "the stored-id chain is still there").toBeGreaterThan(-1);
+    expect(chainEnd).toBeGreaterThan(chainStart);
+    const chain = source.slice(chainStart, chainEnd);
+    const prefixAt = chain.indexOf('storagePrefix() + "theme"');
+    const engineAt = chain.indexOf('localStorage.getItem("hikari-theme")');
+    const pageDefaultAt = chain.indexOf("window.__celestiaDefaultTheme");
+    expect(prefixAt, "the prefixed theme key is still read").toBeGreaterThan(-1);
+    expect(engineAt, "the engine theme key is read").toBeGreaterThan(-1);
+    expect(pageDefaultAt, "the page-declared default is still read").toBeGreaterThan(-1);
+    expect(engineAt, "prefixed key stays ahead of the engine key").toBeGreaterThan(prefixAt);
+    expect(engineAt, "engine key stays ahead of the page-declared default").toBeLessThan(pageDefaultAt);
   });
 
   it.each(["dark", "light"] as const)(

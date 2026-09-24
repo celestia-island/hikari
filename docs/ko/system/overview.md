@@ -11,7 +11,6 @@ Hikari 프레임워크는 모듈식 디자인을 채택하며, Tairitsu 런타�
 | hikari-icons | Material Design Icons (7000+) 통합, SVG 생성 |
 | hikari-theme | 테마 컨텍스트, CSS 변수 생성, 테마 전환 |
 | hikari-components | 핵심 UI 컴포넌트 라이브러리 (40+ 컴포넌트) |
-| hikari-extra-components | 고급 컴포넌트 (노드 편집기, 리치 텍스트 등) |
 
 ## 계층형 아키텍처
 
@@ -21,7 +20,7 @@ block-beta
   block:layer["계층형 아키텍처"]:1
     columns 1
     app["애플리케이션 계층 (examples/)"]
-    comp["컴포넌트 계층 (components, extra)"]
+    comp["컴포넌트 계층 (components)"]
     sys["시스템 계층 (theme, animation, icons)"]
     found["기반 계층 (palette)"]
   end
@@ -41,9 +40,6 @@ graph BT
   hikari-components --> hikari-palette
   hikari-components --> hikari-theme
   hikari-components --> hikari-icons
-  hikari-extra-components --> hikari-palette
-  hikari-extra-components --> hikari-theme
-  hikari-extra-components --> hikari-icons
 ```
 
 ## 외부 의존성
@@ -297,63 +293,13 @@ let app = HikariRenderServicePlugin::new()
 - **styles_service** - 스타일 주입
 - **plugin** - 플러그인 시스템
 
-### 8. 확장 컴포넌트 라이브러리 (hikari-extra-components)
+### 8. 확장 컴포넌트 데이터 모델 (폐기)
 
-복잡한 상호작용 시나리오를 위한 고급 UI 컴포넌트입니다.
-
-**담당 역할**:
-- 고급 유틸리티 컴포넌트
-- 드래그 및 줌 상호작용
-- 접이식 패널
-- 애니메이션 통합
-
-**핵심 컴포넌트**:
-
-1. **Collapsible** - 접이식 패널
-   - 좌/우 슬라이드 인/아웃 애니메이션
-   - 구성 가능한 너비
-   - 확장 상태 콜백
-
-2. **DragLayer** - 드래그 레이어
-   - 경계 제약 조건
-   - 드래그 이벤트 콜백
-   - 커스텀 z-index
-
-3. **ZoomControls** - 줌 컨트롤
-   - 키보드 단축키 지원
-   - 구성 가능한 줌 범위
-   - 다양한 배치 옵션
-
-**핵심 기능**:
-```rust
-use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
-
-// 접이식 패널
-Collapsible {
-    title: "Settings".to_string(),
-    expanded: true,
-    position: CollapsiblePosition::Right,
-    div { "Content" }
-}
-
-// 드래그 레이어
-DragLayer {
-    initial_x: 100.0,
-    initial_y: 100.0,
-    constraints: DragConstraints {
-        min_x: Some(0.0),
-        max_x: Some(500.0),
-        ..Default::default()
-    },
-    div { "Drag me" }
-}
-
-// 줌 컨트롤
-ZoomControls {
-    zoom: 1.0,
-    on_zoom_change: move |z| println!("Zoom: {}", z)
-}
-```
+`hikari-extra-components` 패키지(timeline·drag layer·zoom controls·노드 그래프의 프레임워크
+비의존 데이터 모델)는 삭제되었습니다. 워크스페이스에 의존하는 곳이 없고, 같은 이름의 렌더링
+컴포넌트와 타입이 중복되었습니다. 대신 `hikari-components`의 컴포넌트를 사용하십시오:
+`display::{Timeline, DragLayer, UserGuide, ZoomControls}`,
+`production::{VideoPlayer, RichTextEditor, CodeHighlight}`.
 
 ## 아키텍처 원칙
 
@@ -448,9 +394,6 @@ graph BT
   hikari-components --> hikari-animation
   hikari-components --> hikari-icons
 
-  hikari-extra-components --> hikari-palette2[hikari-palette]
-  hikari-extra-components --> hikari-theme2[hikari-theme]
-  hikari-extra-components --> hikari-animation2[hikari-animation]
 
   tairitsu-packager --> hikari-components2[hikari-components]
   tairitsu-packager --> axum

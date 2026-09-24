@@ -80,7 +80,6 @@ The result is a UI framework that feels both ancient and futuristic, professiona
 | `hikari-theme` | Theme context/provider, CSS variables, built-in themes, SCSS mixins |
 | `hikari-animation` | Animation engine (Tween, Motion, States) used by components |
 | `hikari-components` | Core UI components: layout, buttons, inputs, table, tree, feedback, navigation |
-| `hikari-extra-components` | Advanced components: node graph, collapsible, drag layer, zoom controls |
 | `hikari-icons` | Icon set with compile-time discovery (auto-discovers used icons) |
 | `hikari-builder` | Build-time ClassesBuilder system |
 | `hikari-i18n` | Locale resources |
@@ -226,7 +225,6 @@ Package-level docs:
 - [hikari-theme](packages/theme/README.md)
 - [hikari-animation](packages/animation/README.md)
 - [hikari-components](packages/components/README.md)
-- [hikari-extra-components](packages/extra-components/README.md)
 - [hikari-icons](packages/icons/README.md)
 - [hikari-vue (@celestia-island/hikari)](packages/vue/README.md)
 

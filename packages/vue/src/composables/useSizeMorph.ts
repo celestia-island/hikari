@@ -625,12 +625,23 @@ export function useSizeMorph(
 
   function remeasure(interrupt = true): void {
     if (!armed) return;
-    if (!interrupt && revealEl !== null) {
+    if (!interrupt && (revealEl !== null || morphDemoted)) {
       // A background measurement must never tear down a live sweep: doing so
       // republished the sweep's own teardown as its LANDING, so a consumer
       // parking geometry for that fold released it ~2ms in and the sheet
       // undid and replayed the fold (real-engine finding). The change is
       // measured as soon as the sweep lands instead.
+      // The same holds while a heightMorph is in flight (morphDemoted): a
+      // stepflow's morph targets the natural height measured the instant the
+      // slide settled, which can sit a few px off the frame's settled rest
+      // height (the chrome-allowance transient, the long-standing +20px
+      // drift). If the observer's settle-debounced remeasure runs mid-morph
+      // it reads that residual as a fresh shrink and replays a CLIP CONCEAL
+      // — re-promoting the riders and sweeping a moving edge for 300ms,
+      // which is exactly the shrink-time flash the phone kept reporting
+      // (round-21 rig: the conceal fired ~152ms into the morph, clobbering
+      // the running height transition before transitionend). Defer it; the
+      // morph's own restore absorbs the drift silently instead.
       pendingMeasure = true;
       return;
     }
@@ -1011,6 +1022,32 @@ export function useSizeMorph(
       morphSavedRiderWills = [];
       morphSavedFrameWill = "";
       morphDemoted = false;
+      // Absorb the settle transient silently. The morph targeted the natural
+      // height measured the instant the slide settled; that figure can sit a
+      // few px off the frame's settled rest height (the chrome-allowance
+      // transient — the long-standing +20px drift). The observer's
+      // settle-debounced remeasure was deferred for the morph's duration
+      // (see the morphDemoted gate in remeasure); if it ran now against the
+      // stale pin it would read the residual as a fresh shrink and replay a
+      // CLIP CONCEAL (re-promoting riders, sweeping a moving edge) — the
+      // shrink-time flash. Re-measure at rest and snap the pin to the
+      // settled height in one transition-disabled task instead: the few-px
+      // correction lands in the same frame the animation ends, so it is
+      // imperceptible, and the deferred remeasure finds nothing to sweep.
+      if (pendingMeasure) {
+        pendingMeasure = false;
+        const inlineT = f.style.transition;
+        f.style.transition = "none";
+        f.style.height = "";
+        const settled = Math.round(f.offsetHeight);
+        if (settled > 0) {
+          f.style.height = `${settled}px`;
+          pinned = settled;
+        } else if (pinned > 0) {
+          f.style.height = `${pinned}px`;
+        }
+        f.style.transition = inlineT;
+      }
     };
     const onEnd = (ev: TransitionEvent): void => {
       if (ev.target === f && ev.propertyName === "height") {

@@ -2,10 +2,9 @@
 mod tests {
 
     use hikari_components::navigation::{
-        self, AnchorItem, BreadcrumbItemProps, BreadcrumbProps, MenuItemHeight, MenuItemProps,
-        MenuMode, MenuProps, SidebarLeafProps, SidebarProps, SidebarSectionProps, StepData,
-        StepperDirection, StepperProps, StepsDirection, StepsProps, SubMenuProps, TabPaneProps,
-        TabPosition, TabsProps,
+        AnchorItem, BreadcrumbItemProps, BreadcrumbProps, MenuItemHeight, MenuItemProps, MenuMode,
+        MenuProps, SidebarLeafProps, SidebarProps, SidebarSectionProps, StepperDirection,
+        StepperProps, SubMenuProps, TabPaneProps, TabPosition, TabsProps,
     };
     use hikari_components::prelude::*;
 
@@ -423,148 +422,163 @@ mod tests {
         assert_eq!(props.direction, StepperDirection::Vertical);
     }
 
-    #[test]
-    fn test_steps_renders() {
-        let _ = StepsProps {
-            current: 1,
-            direction: StepsDirection::Horizontal,
-            steps: vec![
-                StepData {
-                    title: "Step 1".to_string(),
-                    description: None,
-                    icon: None,
-                    status: navigation::steps::StepStatus::default(),
-                    class: String::new(),
-                },
-                StepData {
-                    title: "Step 2".to_string(),
-                    description: Some("Desc".to_string()),
-                    icon: Some("icon".to_string()),
-                    status: navigation::steps::StepStatus::Finish,
-                    class: String::new(),
-                },
-            ],
-            class: "test-steps".to_string(),
-            style: String::new(),
-            on_change: None,
+    /// The `Steps` step bar was collapsed into `Stepper`; this module pins the
+    /// deprecated shim so the migration window cannot be closed by accident —
+    /// deleting `Steps`/`StepsProps`/`StepData`/`StepsDirection` breaks this
+    /// file at compile time.
+    mod deprecated_steps_alias {
+        #![allow(deprecated)]
+
+        use hikari_components::navigation::{
+            StepData, StepStatus, Steps, StepsDirection, StepsProps,
         };
-    }
 
-    #[test]
-    fn test_steps_props_default() {
-        let props = StepsProps::default();
-        assert_eq!(props.current, 0);
-        assert_eq!(props.direction, StepsDirection::Horizontal);
-        assert!(props.steps.is_empty());
-    }
+        #[test]
+        fn test_steps_alias_is_exported() {
+            // Referencing the shim itself (not just its prop types) is the pin.
+            let _alias = Steps;
+        }
 
-    #[test]
-    fn test_steps_horizontal_direction() {
-        let props = StepsProps {
-            direction: StepsDirection::Horizontal,
-            ..Default::default()
-        };
-        assert_eq!(props.direction, StepsDirection::Horizontal);
-    }
+        #[test]
+        fn test_steps_alias_status_vocabulary() {
+            assert_eq!(StepStatus::default(), StepStatus::Wait);
+            assert_eq!(StepData::default().status, StepStatus::Wait);
+        }
 
-    #[test]
-    fn test_steps_vertical_direction() {
-        let props = StepsProps {
-            direction: StepsDirection::Vertical,
-            ..Default::default()
-        };
-        assert_eq!(props.direction, StepsDirection::Vertical);
-    }
+        #[test]
+        fn test_steps_renders() {
+            let _ = StepsProps {
+                current: 1,
+                direction: StepsDirection::Horizontal,
+                steps: vec![
+                    StepData {
+                        title: "Step 1".to_string(),
+                        description: None,
+                        icon: None,
+                        status: StepStatus::default(),
+                        class: String::new(),
+                    },
+                    StepData {
+                        title: "Step 2".to_string(),
+                        description: Some("Desc".to_string()),
+                        icon: Some("icon".to_string()),
+                        status: StepStatus::Finish,
+                        class: String::new(),
+                    },
+                ],
+                class: "test-steps".to_string(),
+                style: String::new(),
+                on_change: None,
+            };
+        }
 
-    #[test]
-    fn test_steps_with_current() {
-        let props = StepsProps {
-            current: 2,
-            steps: vec![StepData {
-                title: "Step 1".to_string(),
+        #[test]
+        fn test_steps_props_default() {
+            let props = StepsProps::default();
+            assert_eq!(props.current, 0);
+            assert_eq!(props.direction, StepsDirection::Horizontal);
+            assert!(props.steps.is_empty());
+        }
+
+        #[test]
+        fn test_steps_horizontal_direction() {
+            let props = StepsProps {
+                direction: StepsDirection::Horizontal,
                 ..Default::default()
-            }],
-            ..Default::default()
-        };
-        assert_eq!(props.current, 2);
-        assert_eq!(props.steps.len(), 1);
-    }
+            };
+            assert_eq!(props.direction, StepsDirection::Horizontal);
+        }
 
-    #[test]
-    fn test_steps_with_multiple_steps() {
-        let props = StepsProps {
-            steps: vec![
-                StepData {
+        #[test]
+        fn test_steps_vertical_direction() {
+            let props = StepsProps {
+                direction: StepsDirection::Vertical,
+                ..Default::default()
+            };
+            assert_eq!(props.direction, StepsDirection::Vertical);
+        }
+
+        #[test]
+        fn test_steps_direction_maps_onto_stepper() {
+            use hikari_components::navigation::StepperDirection;
+
+            assert_eq!(
+                StepperDirection::from(StepsDirection::Horizontal),
+                StepperDirection::Horizontal
+            );
+            assert_eq!(
+                StepperDirection::from(StepsDirection::Vertical),
+                StepperDirection::Vertical
+            );
+        }
+
+        #[test]
+        fn test_steps_with_current() {
+            let props = StepsProps {
+                current: 2,
+                steps: vec![StepData {
                     title: "Step 1".to_string(),
                     ..Default::default()
-                },
-                StepData {
-                    title: "Step 2".to_string(),
+                }],
+                ..Default::default()
+            };
+            assert_eq!(props.current, 2);
+            assert_eq!(props.steps.len(), 1);
+        }
+
+        #[test]
+        fn test_steps_with_multiple_steps() {
+            let props = StepsProps {
+                steps: vec![
+                    StepData {
+                        title: "Step 1".to_string(),
+                        ..Default::default()
+                    },
+                    StepData {
+                        title: "Step 2".to_string(),
+                        ..Default::default()
+                    },
+                ],
+                ..Default::default()
+            };
+            assert_eq!(props.steps.len(), 2);
+        }
+
+        #[test]
+        fn test_step_data_with_description() {
+            let step = StepData {
+                title: "Step 1".to_string(),
+                description: Some("Description".to_string()),
+                ..Default::default()
+            };
+            assert_eq!(step.description, Some("Description".to_string()));
+        }
+
+        #[test]
+        fn test_step_data_with_icon() {
+            let step = StepData {
+                title: "Step 1".to_string(),
+                icon: Some("icon-name".to_string()),
+                ..Default::default()
+            };
+            assert_eq!(step.icon, Some("icon-name".to_string()));
+        }
+
+        #[test]
+        fn test_step_status_variants() {
+            for status in [
+                StepStatus::Wait,
+                StepStatus::Process,
+                StepStatus::Finish,
+                StepStatus::Error,
+            ] {
+                let step = StepData {
+                    title: "S1".to_string(),
+                    status,
                     ..Default::default()
-                },
-            ],
-            ..Default::default()
-        };
-        assert_eq!(props.steps.len(), 2);
-    }
-
-    #[test]
-    fn test_step_data_with_description() {
-        let step = StepData {
-            title: "Step 1".to_string(),
-            description: Some("Description".to_string()),
-            ..Default::default()
-        };
-        assert_eq!(step.description, Some("Description".to_string()));
-    }
-
-    #[test]
-    fn test_step_data_with_icon() {
-        let step = StepData {
-            title: "Step 1".to_string(),
-            icon: Some("icon-name".to_string()),
-            ..Default::default()
-        };
-        assert_eq!(step.icon, Some("icon-name".to_string()));
-    }
-
-    #[test]
-    fn test_step_status_wait() {
-        let step = StepData {
-            title: "S1".to_string(),
-            status: navigation::steps::StepStatus::Wait,
-            ..Default::default()
-        };
-        assert_eq!(step.status, navigation::steps::StepStatus::Wait);
-    }
-
-    #[test]
-    fn test_step_status_process() {
-        let step = StepData {
-            title: "S1".to_string(),
-            status: navigation::steps::StepStatus::Process,
-            ..Default::default()
-        };
-        assert_eq!(step.status, navigation::steps::StepStatus::Process);
-    }
-
-    #[test]
-    fn test_step_status_finish() {
-        let step = StepData {
-            title: "S1".to_string(),
-            status: navigation::steps::StepStatus::Finish,
-            ..Default::default()
-        };
-        assert_eq!(step.status, navigation::steps::StepStatus::Finish);
-    }
-
-    #[test]
-    fn test_step_status_error() {
-        let step = StepData {
-            title: "S1".to_string(),
-            status: navigation::steps::StepStatus::Error,
-            ..Default::default()
-        };
-        assert_eq!(step.status, navigation::steps::StepStatus::Error);
+                };
+                assert_eq!(step.status, status);
+            }
+        }
     }
 }

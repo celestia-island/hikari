@@ -224,6 +224,7 @@ impl AdvancedComponentsTests {
         })
     }
 
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_collapsible(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Collapsible component");
@@ -279,6 +280,7 @@ impl AdvancedComponentsTests {
         })
     }
 
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_zoom_controls(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing ZoomControls component");
@@ -329,6 +331,7 @@ impl AdvancedComponentsTests {
         })
     }
 
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_user_guide(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing UserGuide component");
@@ -449,6 +452,7 @@ impl AdvancedComponentsTests {
         })
     }
 
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_timeline(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Timeline component");

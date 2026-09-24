@@ -249,63 +249,14 @@ let app = HikariRenderServicePlugin::new()
 - **styles_service** - Injection de styles
 - **plugin** - Système de plugins
 
-### 8. Bibliothèque de Composants Supplémentaires (hikari-extra-components)
+### 8. Modèles de données des composants supplémentaires (retirés)
 
-Composants UI avancés pour scénarios d'interaction complexes.
-
-**Responsabilités**:
-- Composants utilitaires avancés
-- Interactions de glisser et zoomer
-- Panneaux réductibles
-- Intégration d'animation
-
-**Composants Principaux**:
-
-1. **Collapsible** - Panneau réductible
-   - Animation de glissement gauche/droite
-   - Largeur configurable
-   - Callback d'état déployé
-
-2. **DragLayer** - Calque de glissement
-   - Contraintes de limites
-   - Callbacks d'événements de glissement
-   - Z-index personnalisé
-
-3. **ZoomControls** - Contrôles de zoom
-   - Support des raccourcis clavier
-   - Plage de zoom configurable
-   - Multiples options de positionnement
-
-**Fonctionnalités Principales**:
-```rust
-use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
-
-// Panneau réductible
-Collapsible {
-    title: "Paramètres".to_string(),
-    expanded: true,
-    position: CollapsiblePosition::Right,
-    div { "Contenu" }
-}
-
-// Calque de glissement
-DragLayer {
-    initial_x: 100.0,
-    initial_y: 100.0,
-    constraints: DragConstraints {
-        min_x: Some(0.0),
-        max_x: Some(500.0),
-        ..Default::default()
-    },
-    div { "Glissez-moi" }
-}
-
-// Contrôles de zoom
-ZoomControls {
-    zoom: 1.0,
-    on_zoom_change: move |z| println!("Zoom: {}", z)
-}
-```
+Le paquet `hikari-extra-components` — modèles de données indépendants du framework pour la
+timeline, la couche de glisser-déposer, les contrôles de zoom et le graphe de nœuds — a été
+supprimé. Aucun membre de l'espace de travail n'en dépendait et ses types doublonnaient des
+composants de rendu homonymes. Utilisez plutôt les composants de `hikari-components` :
+`display::{Timeline, DragLayer, UserGuide, ZoomControls}`,
+`production::{VideoPlayer, RichTextEditor, CodeHighlight}`.
 
 ## Principes d'Architecture
 
@@ -400,9 +351,6 @@ graph BT
   hikari-components --> hikari-animation
   hikari-components --> hikari-icons
 
-  hikari-extra-components --> hikari-palette2[hikari-palette]
-  hikari-extra-components --> hikari-theme2[hikari-theme]
-  hikari-extra-components --> hikari-animation2[hikari-animation]
 
   tairitsu-packager --> hikari-components2[hikari-components]
   tairitsu-packager --> axum

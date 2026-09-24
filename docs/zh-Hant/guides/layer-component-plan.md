@@ -181,7 +181,7 @@ pub trait Layer1Component {
 | Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | yes 已完成 |
 | Modal | `packages/components/src/feedback/modal.rs` | Card, Button | yes 已完成 |
 | Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | yes 已完成 |
-| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | yes 已完成 |
+| Steps → Stepper | `packages/components/src/navigation/stepper.rs` | Button, Badge | yes 已完成（`Steps` 為已棄用別名） |
 | Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | yes 已完成 |
 
 ### 待開發的複合組件
@@ -193,7 +193,6 @@ pub trait Layer1Component {
 | **Upload** | 中 | 文件上傳 | Button, Progress |
 | **Calendar** | 中 | 日曆選擇器 | Button, Input |
 | **Carousel** | 低 | 輪播圖 | Button, Card |
-| **Stepper** | 低 | 步進器 | Button, Badge |
 | **Timeline** | 低 | 時間軸 | Card, Badge |
 
 ### 組件介面規範
@@ -433,7 +432,7 @@ pub fn RichTextEditor(
 3. Upload（中）
 4. Calendar（中）
 5. Carousel（低）
-6. Stepper（低）
+6. ~~Stepper（低）~~ — 已實作為 `Stepper`；`Steps` 為已棄用別名
 7. Timeline（低）
 
 **預計時間**：2-3 週

@@ -1,5 +1,13 @@
-// hi-components/src/navigation/stepper.rs
-// Stepper component with Arknights + FUI styling
+//! Stepper — the crate's step bar, with Arknights + FUI styling.
+//!
+//! This is the single step-bar implementation in the crate. The former
+//! `Steps` component was collapsed into it (its `#[deprecated]` thin alias now
+//! lives in [`crate::navigation::steps`]), so the step bar, its direction enum
+//! and its `hk-step*` class family each have exactly one definition.
+//!
+//! Step state is derived from `current`: steps before it render as completed,
+//! the current one as active, the ones after it as upcoming. Horizontal step
+//! bars join the steps with connector lines.
 
 use hikari_palette::classes::{ClassesBuilder, StepperClass, UtilityClass};
 
@@ -8,15 +16,7 @@ use crate::styled::StyledComponent;
 
 pub struct StepperComponent;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub enum StepStatus {
-    #[default]
-    Wait,
-    Process,
-    Finish,
-    Error,
-}
-
+/// Layout direction of the step bar.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum StepperDirection {
     #[default]
@@ -39,7 +39,11 @@ pub struct StepperProps {
     pub class: String,
 }
 
+/// Renders a horizontal or vertical step bar of `total` numbered steps.
 ///
+/// The step at `current` is the active one; earlier steps read as completed and
+/// later ones as upcoming. Consumers that need per-step titles, descriptions or
+/// click handling render them alongside the bar instead.
 #[component]
 pub fn Stepper(props: StepperProps) -> Element {
     let direction_class = match props.direction {
@@ -204,12 +208,6 @@ mod tests {
     fn test_stepper_direction() {
         let horizontal = StepperDirection::Horizontal;
         assert_eq!(horizontal, StepperDirection::default());
-    }
-
-    #[test]
-    fn test_step_status() {
-        let wait = StepStatus::Wait;
-        assert_eq!(wait, StepStatus::default());
     }
 
     #[test]

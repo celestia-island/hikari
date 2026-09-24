@@ -1,14 +1,39 @@
-// packages/components/src/navigation/steps.rs
-// Steps component with Arknights + FUI styling
+//! Deprecated `Steps` compatibility shim.
+//!
+//! `Steps` used to be a second, independent step-bar implementation living next
+//! to [`crate::navigation::stepper::Stepper`]: two components, two `StepStatus`
+//! enums, two `*Direction` enums and two overlapping `hk-step*` class families.
+//! It has been collapsed into `Stepper`, which is now the crate's single step
+//! bar.
+//!
+//! **Replacement**: render `Stepper` (horizontal or vertical, `current` of
+//! `total`). Everything this shim cannot express — per-step
+//! `title`/`description`/`icon`/`status`, `style` and `on_change` — is ignored;
+//! render labels or click handling next to the bar instead.
+//!
+//! **Removal condition**: delete `Steps`, `StepsProps`, `StepData` and
+//! `StepsDirection` once nothing references them. The last known caller is
+//! nothing: the former `render_stepper`-style consumer is gone, so the
+//!
+//! ⚠️ The `#[component]` macro re-emits only the function signature, so the
+//! `#[deprecated]` note written on [`Steps`] is not seen by rustc — the warning
+//! that reaches consumers comes from the deprecated [`StepsProps`]/[`StepData`]
+//! types, which every call has to build. Keep those attributes in place for as
+//! long as the shim exists.
 
-use hikari_palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
+// The shim necessarily names its own deprecated items.
+#![allow(deprecated)]
 
+use crate::navigation::stepper::{Stepper, StepperDirection, StepperProps};
 use crate::prelude::*;
-use crate::styled::StyledComponent;
 
-pub struct StepsComponent;
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+/// Step-state vocabulary of the navigation step APIs.
+///
+/// This is the crate's single definition: the duplicate that used to live in
+/// `stepper.rs` was removed by the `Steps`/`Stepper` convergence. `Stepper`
+/// derives each step's state from `current`/`total`; deprecated [`StepData`]
+/// still carries a `status` field so existing struct literals keep compiling.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum StepStatus {
     #[default]
     Wait,
@@ -28,6 +53,11 @@ impl IntoAttrValue for StepStatus {
     }
 }
 
+/// Direction of the deprecated [`Steps`] alias.
+///
+/// Mirrors [`StepperDirection`]; kept so existing `StepsProps` literals keep
+/// compiling.
+#[deprecated(note = "collapsed into `StepperDirection`, which `Stepper` consumes")]
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum StepsDirection {
     #[default]
@@ -35,8 +65,23 @@ pub enum StepsDirection {
     Vertical,
 }
 
+impl From<StepsDirection> for StepperDirection {
+    fn from(direction: StepsDirection) -> Self {
+        match direction {
+            StepsDirection::Horizontal => StepperDirection::Horizontal,
+            StepsDirection::Vertical => StepperDirection::Vertical,
+        }
+    }
+}
+
+/// One entry of the deprecated [`StepsProps::steps`] list.
+///
+/// Only the list length is still honoured (it becomes `StepperProps::total`);
+/// the per-step fields are ignored by the alias and kept for source
+/// compatibility.
 #[define_props]
 #[derive(Debug)]
+#[deprecated(note = "collapsed into `Stepper`: only the step count survives, the rest is ignored")]
 pub struct StepData {
     pub title: String,
 
@@ -59,7 +104,11 @@ impl IntoAttrValue for StepData {
     }
 }
 
+/// Props of the deprecated [`Steps`] alias.
 #[define_props]
+#[deprecated(
+    note = "collapsed into `StepperProps`; `style`, `on_change` and the per-step fields are ignored"
+)]
 pub struct StepsProps {
     #[default(0)]
     pub current: usize,
@@ -79,306 +128,26 @@ pub struct StepsProps {
     pub on_change: Option<Callback<usize, ()>>,
 }
 
-/// Internal data structure for step items
-struct StepItemData {
-    index: usize,
-    step: StepData,
-    step_classes: String,
-    is_clickable: bool,
-    step_status: StepStatus,
-}
-
+/// Deprecated thin alias of [`Stepper`].
 ///
+/// Forwards `current`, `total` (the length of [`StepsProps::steps`]),
+/// `direction` and `class` to `Stepper`. Everything the count-based step bar
+/// cannot express — per-step `title`/`description`/`icon`/`status`, `style` and
+/// `on_change` — is ignored; migrate to `Stepper` and render labels or
+/// click handling beside the bar.
 ///
-///
-///
+/// Removal condition: delete `Steps`, `StepsProps`, `StepData` and
+/// `StepsDirection` once no consumer references them — the last known caller is
+/// no live consumer left (the former `render_stepper`-style caller is gone), so the
 #[component]
+#[deprecated(
+    note = "use `Stepper`: the step bar is count-based now and drops the per-step payload"
+)]
 pub fn Steps(props: StepsProps) -> Element {
-    let direction_class = match props.direction {
-        StepsDirection::Horizontal => StepsClass::Horizontal,
-        StepsDirection::Vertical => StepsClass::Vertical,
-    };
-
-    let wrapper_classes = ClassesBuilder::new()
-        .add(StepsClass::Wrapper)
-        .add(direction_class)
-        .add_raw(&props.class)
-        .build();
-
-    let step_items: Vec<_> = props
-        .steps
-        .iter()
-        .enumerate()
-        .map(|(index, step)| {
-            let step_status = if index < props.current {
-                StepStatus::Finish
-            } else if index == props.current {
-                StepStatus::Process
-            } else {
-                StepStatus::Wait
-            };
-
-            let status_class = match step_status {
-                StepStatus::Wait => StepsClass::Wait,
-                StepStatus::Process => StepsClass::Process,
-                StepStatus::Finish => StepsClass::Finish,
-                StepStatus::Error => StepsClass::Error,
-            };
-
-            let step_classes = ClassesBuilder::new()
-                .add(StepsClass::Item)
-                .add(status_class)
-                .add_raw(&step.class)
-                .build();
-
-            let is_clickable = props.on_change.is_some();
-
-            StepItemData {
-                index,
-                step: step.clone(),
-                step_classes,
-                is_clickable,
-                step_status,
-            }
-        })
-        .collect();
-
-    let icon_class = StepsClass::Icon.as_class();
-    let number_class = StepsClass::Number.as_class();
-    let content_class = StepsClass::Content.as_class();
-    let title_class = StepsClass::Title.as_class();
-    let description_class = StepsClass::Description.as_class();
-
-    let step_elements: Vec<Element> = step_items
-        .into_iter()
-        .map(|item| {
-            rsx! {
-                StepItem {
-                    index: item.index,
-                    step: item.step,
-                    step_classes: item.step_classes,
-                    is_clickable: item.is_clickable,
-                    step_status: item.step_status,
-                    icon_class: icon_class.clone(),
-                    number_class: number_class.clone(),
-                    content_class: content_class.clone(),
-                    title_class: title_class.clone(),
-                    description_class: description_class.clone(),
-                    on_change: props.on_change.clone(),
-                }
-            }
-        })
-        .collect();
-
-    rsx! {
-        div { class: wrapper_classes, style: props.style, ..step_elements }
-    }
-}
-
-/// Internal component for rendering individual step items
-#[define_props]
-#[derive(Debug)]
-struct StepItemProps {
-    #[default]
-    index: usize,
-
-    #[default]
-    step: StepData,
-
-    #[default]
-    step_classes: String,
-
-    #[default]
-    is_clickable: bool,
-
-    #[default]
-    step_status: StepStatus,
-
-    #[default]
-    icon_class: String,
-    #[props(default)]
-    number_class: String,
-    #[props(default)]
-    content_class: String,
-    #[props(default)]
-    title_class: String,
-    #[props(default)]
-    description_class: String,
-    #[props(default)]
-    on_change: Option<Callback<usize, ()>>,
-}
-
-#[component]
-fn StepItem(props: StepItemProps) -> Element {
-    let step_number = props.index + 1;
-    let step_title = props.step.title.clone();
-    let step_description = props.step.description.clone();
-    let index = props.index;
-    let is_clickable = props.is_clickable;
-    let on_change = props.on_change.clone();
-
-    let icon_el = match props.step_status {
-        StepStatus::Wait => rsx! {
-            span { class: props.number_class, "{step_number}" }
-        },
-        StepStatus::Process => rsx! {
-            span { class: props.number_class, "{step_number}" }
-        },
-        StepStatus::Finish => rsx! {
-            Icon { icon: MdiIcon::Check, size: 16, class: props.number_class.clone(), color: String::new() }
-        },
-        StepStatus::Error => rsx! {
-            Icon { icon: MdiIcon::Alert, size: 16, class: props.number_class.clone(), color: String::new() }
-        },
-    };
-
-    let desc_el = if let Some(ref desc) = step_description {
-        rsx! {
-            div { class: props.description_class, "{desc}" }
-        }
-    } else {
-        VNode::empty()
-    };
-
-    rsx! {
-        div {
-            class: props.step_classes,
-            onclick: move |_e| {
-                if is_clickable && let Some(handler) = on_change.as_ref() {
-                    handler.call(index);
-                }
-            },
-
-            // Step indicator
-            div { class: props.icon_class, {icon_el} }
-
-            // Step content
-            div { class: props.content_class,
-                div { class: props.title_class, step_title }
-                {desc_el}
-            }
-        }
-    }
-}
-
-impl StyledComponent for StepsComponent {
-    fn styles() -> &'static str {
-        r#"
-.hk-steps-wrapper {
-    display: flex;
-    width: 100%;
-}
-
-.hk-steps-horizontal {
-    flex-direction: row;
-}
-
-.hk-steps-vertical {
-    flex-direction: column;
-}
-
-.hk-step-item {
-    display: flex;
-    align-items: flex-start;
-    position: relative;
-    flex: 1;
-    padding: 0.5rem 1rem;
-}
-
-.hk-step-item:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    background-color: var(--hi-color-border);
-}
-
-.hk-steps-horizontal .hk-step-item:not(:last-child)::after {
-    top: 1.5rem;
-    left: 2rem;
-    right: 1rem;
-    height: 1px;
-}
-
-.hk-steps-vertical .hk-step-item:not(:last-child)::after {
-    top: 1.5rem;
-    left: 1.5rem;
-    bottom: 0;
-    width: 1px;
-}
-
-.hk-step-process .hk-step-icon .hk-step-number-process {
-    background-color: var(--hi-color-primary);
-    color: var(--hi-color-text-on-solid, #ffffff);
-    box-shadow: 0 0 8px rgba(var(--hi-color-primary-rgb), 0.5);
-}
-
-.hk-step-finish .hk-step-icon .hk-step-number-finish {
-    color: var(--hi-color-primary);
-    width: 1.5rem;
-    height: 1.5rem;
-}
-
-.hk-step-error .hk-step-icon .hk-step-number-error {
-    color: var(--hi-color-error);
-    width: 1.5rem;
-    height: 1.5rem;
-}
-
-.hk-step-icon {
-    position: relative;
-    z-index: 1;
-    margin-right: 0.75rem;
-}
-
-.hk-step-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 50%;
-    font-size: 0.875rem;
-    font-weight: 600;
-    background-color: var(--hi-color-surface);
-    color: var(--hi-color-text-secondary);
-    border: 2px solid var(--hi-color-border);
-    transition: all 0.3s ease;
-}
-
-.hk-step-content {
-    flex: 1;
-}
-
-.hk-step-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--hi-color-text-primary);
-    margin-bottom: 0.25rem;
-}
-
-.hk-step-description {
-    font-size: 0.75rem;
-    color: var(--hi-color-text-secondary);
-}
-
-.hk-step-process .hk-step-title {
-    color: var(--hi-color-primary);
-}
-
-.hk-step-finish .hk-step-title {
-    color: var(--hi-color-text-primary);
-}
-
-.hk-step-wait .hk-step-title {
-    color: var(--hi-color-text-secondary);
-}
-
-.hk-step-error .hk-step-title {
-    color: var(--hi-color-error);
-}
-"#
-    }
-
-    fn name() -> &'static str {
-        "steps"
-    }
+    Stepper(StepperProps {
+        current: props.current,
+        total: props.steps.len(),
+        direction: props.direction.into(),
+        class: props.class,
+    })
 }

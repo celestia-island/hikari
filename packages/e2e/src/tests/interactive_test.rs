@@ -583,15 +583,15 @@ impl InteractiveTests {
             }
         }
 
-        // Test Steps component
-        match self.test_steps_interactive(driver).await {
+        // Test Stepper component
+        match self.test_stepper_interactive(driver).await {
             Ok(result) => {
-                info!("Steps test: {}", result.status);
+                info!("Stepper test: {}", result.status);
                 results.push(result);
             }
             Err(e) => {
-                warn!("Steps test failed: {}", e);
-                results.push(InteractiveTestResult::failure("Steps", &e.to_string()));
+                warn!("Stepper test failed: {}", e);
+                results.push(InteractiveTestResult::failure("Stepper", &e.to_string()));
             }
         }
 
@@ -1745,12 +1745,12 @@ impl InteractiveTests {
         })
     }
 
-    /// Perform interactive steps test
-    async fn test_steps_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    /// Perform interactive stepper test
+    async fn test_stepper_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
-        info!("Testing Steps with interactive steps");
+        info!("Testing Stepper with interactive steps");
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
@@ -1764,7 +1764,7 @@ impl InteractiveTests {
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
-            Self::take_screenshot(driver, "Steps", InteractionStep::Navigate, 1).await?;
+            Self::take_screenshot(driver, "Stepper", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to navigation components page".to_string(),
@@ -1773,16 +1773,16 @@ impl InteractiveTests {
             duration_ms: 0,
         });
 
-        // Find steps element
-        let steps_el = driver.find(By::Css(".hk-steps")).await.map_err(|e| {
-            warn!("Steps element not found: {}", e);
-            anyhow::anyhow!("Steps element not found: {}", e)
+        // Find the step bar (Stepper is the crate's only step-bar component)
+        let stepper_el = driver.find(By::Css(".hk-stepper")).await.map_err(|e| {
+            warn!("Stepper element not found: {}", e);
+            anyhow::anyhow!("Stepper element not found: {}", e)
         })?;
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
         let screenshot_2 =
-            Self::take_screenshot(driver, "Steps", InteractionStep::Initial, 2).await?;
+            Self::take_screenshot(driver, "Stepper", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (steps visible)".to_string(),
@@ -1792,7 +1792,7 @@ impl InteractiveTests {
         });
 
         // Find and click step to activate
-        let step_item = steps_el
+        let step_item = stepper_el
             .find(By::Css(".hk-step"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find step item: {}", e))?;
@@ -1804,7 +1804,7 @@ impl InteractiveTests {
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
-            Self::take_screenshot(driver, "Steps", InteractionStep::Click, 3).await?;
+            Self::take_screenshot(driver, "Stepper", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click step item".to_string(),
@@ -1813,32 +1813,33 @@ impl InteractiveTests {
             duration_ms: 0,
         });
 
-        // Verify steps class
-        let class_attr = steps_el
+        // Verify stepper class
+        let class_attr = stepper_el
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get steps attributes: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get stepper attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hk-steps") {
+        if !class_attr.contains("hk-stepper") {
             return Ok(InteractiveTestResult::failure(
-                "Steps",
-                "Steps element missing 'hi-steps' class",
+                "Stepper",
+                "Stepper element missing 'hk-stepper' class",
             ));
         }
 
         let duration = start.elapsed().as_millis() as u64;
 
         Ok(InteractiveTestResult {
-            component: "Steps".to_string(),
+            component: "Stepper".to_string(),
             status: "success".to_string(),
-            message: "Steps renders correctly and responds to step click".to_string(),
+            message: "Stepper renders correctly and responds to step click".to_string(),
             duration_ms: duration,
             steps,
         })
     }
 
     /// Perform interactive timeline test
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_timeline_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
@@ -1932,6 +1933,7 @@ impl InteractiveTests {
     }
 
     /// Perform interactive user_guide test
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_user_guide_interactive(
         &self,
         driver: &WebDriver,
@@ -2028,6 +2030,7 @@ impl InteractiveTests {
     }
 
     /// Perform interactive zoom_controls test
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_zoom_controls_interactive(
         &self,
         driver: &WebDriver,
@@ -2127,6 +2130,7 @@ impl InteractiveTests {
     }
 
     /// Perform interactive collapsible test
+    #[ignore = "demo page /components/extra/* was removed with the extra-components crate (M3.5); re-point against the surviving pages before re-enabling"]
     async fn test_collapsible_interactive(
         &self,
         driver: &WebDriver,

@@ -455,7 +455,7 @@ impl FormComponentsTests {
         if !class_attr.contains("hk-stepper") {
             return Ok(TestResult::failure(
                 "Stepper",
-                "Stepper element missing 'hi-stepper' class",
+                "Stepper element missing 'hk-stepper' class",
             ));
         }
 
@@ -499,7 +499,7 @@ impl FormComponentsTests {
         if !active_class_attr.contains("hk-step-active") {
             return Ok(TestResult::failure(
                 "Stepper",
-                "Active step missing 'hi-step-active' class",
+                "Active step missing 'hk-step-active' class",
             ));
         }
 

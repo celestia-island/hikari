@@ -249,63 +249,13 @@ let app = HikariRenderServicePlugin::new()
 - **styles_service** - Style injection
 - **plugin** - Plugin system
 
-### 8. Extra Components Library (hikari-extra-components)
+### 8. Extra component data models (retired)
 
-Advanced UI components for complex interaction scenarios.
-
-**Responsibilities**:
-- Advanced utility components
-- Drag and zoom interactions
-- Collapsible panels
-- Animation integration
-
-**Core Components**:
-
-1. **Collapsible** - Collapsible panel
-   - Left/right slide in/out animation
-   - Configurable width
-   - Expanded state callback
-
-2. **DragLayer** - Drag layer
-   - Boundary constraints
-   - Drag event callbacks
-   - Custom z-index
-
-3. **ZoomControls** - Zoom controls
-   - Keyboard shortcut support
-   - Configurable zoom range
-   - Multiple positioning options
-
-**Core Features**:
-```rust
-use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
-
-// Collapsible panel
-Collapsible {
-    title: "Settings".to_string(),
-    expanded: true,
-    position: CollapsiblePosition::Right,
-    div { "Content" }
-}
-
-// Drag layer
-DragLayer {
-    initial_x: 100.0,
-    initial_y: 100.0,
-    constraints: DragConstraints {
-        min_x: Some(0.0),
-        max_x: Some(500.0),
-        ..Default::default()
-    },
-    div { "Drag me" }
-}
-
-// Zoom controls
-ZoomControls {
-    zoom: 1.0,
-    on_zoom_change: move |z| println!("Zoom: {}", z)
-}
-```
+The `hikari-extra-components` package — framework-agnostic data models for the timeline,
+drag layer, zoom controls and the node graph — has been removed. Nothing in the workspace
+depended on it, and its types duplicated same-named render components. Use the components
+in `hikari-components` instead: `display::{Timeline, DragLayer, UserGuide, ZoomControls}`,
+`production::{VideoPlayer, RichTextEditor, CodeHighlight}`.
 
 ## Architecture Principles
 
@@ -400,9 +350,6 @@ graph BT
   hikari-components --> hikari-animation
   hikari-components --> hikari-icons
 
-  hikari-extra-components --> hikari-palette2[hikari-palette]
-  hikari-extra-components --> hikari-theme2[hikari-theme]
-  hikari-extra-components --> hikari-animation2[hikari-animation]
 
   tairitsu-packager --> hikari-components2[hikari-components]
   tairitsu-packager --> axum

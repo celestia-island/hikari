@@ -113,7 +113,6 @@ graph LR
   packages --> animation["hikari-animation/"]
   packages --> icons["hikari-icons/"]
   packages --> components["hikari-components/"]
-  packages --> extra["hikari-extra-components/"]
   examples --> website["website/"]
   examples --> tabledemo["table-demo/"]
   examples --> treedemo["tree-demo/"]

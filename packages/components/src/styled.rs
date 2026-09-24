@@ -136,13 +136,12 @@ impl StyleRegistry {
     #[cfg(feature = "navigation")]
     pub fn register_navigation_components(&mut self) {
         use crate::navigation::{
-            BreadcrumbComponent, MenuComponent, SidebarComponent, StepsComponent, TabsComponent,
+            BreadcrumbComponent, MenuComponent, SidebarComponent, TabsComponent,
         };
         MenuComponent::register(self);
         TabsComponent::register(self);
         BreadcrumbComponent::register(self);
         SidebarComponent::register(self);
-        StepsComponent::register(self);
     }
 
     #[cfg(not(feature = "navigation"))]

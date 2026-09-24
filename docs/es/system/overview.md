@@ -11,7 +11,6 @@ El framework Hikari adopta un diseño modular, construido sobre el runtime Tairi
 | hikari-icons | Integración de Material Design Icons (7000+), generación SVG |
 | hikari-theme | Contexto de tema, generación de variables CSS, cambio de tema |
 | hikari-components | Biblioteca de componentes UI principales (40+ componentes) |
-| hikari-extra-components | Componentes avanzados (editor de nodos, texto enriquecido, etc.) |
 
 ## Arquitectura en Capas
 
@@ -21,7 +20,7 @@ block-beta
   block:layer["Arquitectura en Capas"]:1
     columns 1
     app["Capa de Aplicación (examples/)"]
-    comp["Capa de Componentes (components, extra)"]
+    comp["Capa de Componentes (components)"]
     sys["Capa de Sistema (theme, animation, icons)"]
     found["Capa de Fundación (palette)"]
   end
@@ -41,9 +40,6 @@ graph BT
   hikari-components --> hikari-palette
   hikari-components --> hikari-theme
   hikari-components --> hikari-icons
-  hikari-extra-components --> hikari-palette
-  hikari-extra-components --> hikari-theme
-  hikari-extra-components --> hikari-icons
 ```
 
 ## Dependencias Externas
@@ -297,63 +293,14 @@ let app = HikariRenderServicePlugin::new()
 - **styles_service** - Inyección de estilos
 - **plugin** - Sistema de plugins
 
-### 8. Biblioteca de Componentes Extra (hikari-extra-components)
+### 8. Modelos de datos de componentes extra (retirados)
 
-Componentes UI avanzados para escenarios de interacción compleja.
-
-**Responsabilidades**:
-- Componentes utilitarios avanzados
-- Interacciones de arrastrar y zoom
-- Paneles colapsables
-- Integración de animaciones
-
-**Componentes Principales**:
-
-1. **Collapsible** - Panel colapsable
-   - Animación de deslizamiento hacia adentro/afuera izquierda/derecha
-   - Ancho configurable
-   - Callback de estado expandido
-
-2. **DragLayer** - Capa de arrastre
-   - Restricciones de límites
-   - Callbacks de eventos de arrastre
-   - z-index personalizado
-
-3. **ZoomControls** - Controles de zoom
-   - Soporte de atajos de teclado
-   - Rango de zoom configurable
-   - Múltiples opciones de posicionamiento
-
-**Características Principales**:
-```rust
-use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
-
-// Panel colapsable
-Collapsible {
-    title: "Settings".to_string(),
-    expanded: true,
-    position: CollapsiblePosition::Right,
-    div { "Content" }
-}
-
-// Capa de arrastre
-DragLayer {
-    initial_x: 100.0,
-    initial_y: 100.0,
-    constraints: DragConstraints {
-        min_x: Some(0.0),
-        max_x: Some(500.0),
-        ..Default::default()
-    },
-    div { "Drag me" }
-}
-
-// Controles de zoom
-ZoomControls {
-    zoom: 1.0,
-    on_zoom_change: move |z| println!("Zoom: {}", z)
-}
-```
+El paquete `hikari-extra-components` —modelos de datos independientes del framework para la
+timeline, la capa de arrastre, los controles de zoom y el grafo de nodos— se ha eliminado.
+Ningún miembro del workspace dependía de él y sus tipos duplicaban componentes de renderizado
+homónimos. Use en su lugar los componentes de `hikari-components`:
+`display::{Timeline, DragLayer, UserGuide, ZoomControls}`,
+`production::{VideoPlayer, RichTextEditor, CodeHighlight}`.
 
 ## Principios de Arquitectura
 
@@ -448,9 +395,6 @@ graph BT
   hikari-components --> hikari-animation
   hikari-components --> hikari-icons
 
-  hikari-extra-components --> hikari-palette2[hikari-palette]
-  hikari-extra-components --> hikari-theme2[hikari-theme]
-  hikari-extra-components --> hikari-animation2[hikari-animation]
 
   tairitsu-packager --> hikari-components2[hikari-components]
   tairitsu-packager --> axum

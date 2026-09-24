@@ -165,4 +165,72 @@ describe("HkSelectionGrid adaptive floor mode (minItemWidth)", () => {
       expect(grid.getAttribute("data-cols")).toBe("3");
     }
   });
+
+describe("HkSelectionGrid list layout, actions and edge", () => {
+  it("marks the root with the layout and edge hooks", () => {
+    const container = mount(
+      h(HkSelectionGrid, { items: ITEMS, layout: "list", selectedEdge: true }),
+    );
+    const root = container.querySelector(".hk-selection-grid")!;
+    expect(root.getAttribute("data-layout")).toBe("list");
+    expect(root.hasAttribute("data-edge")).toBe(true);
+  });
+
+  it("defaults to the grid layout with no edge", () => {
+    const container = mount(h(HkSelectionGrid, { items: ITEMS }));
+    const root = container.querySelector(".hk-selection-grid")!;
+    expect(root.getAttribute("data-layout")).toBe("grid");
+    expect(root.hasAttribute("data-edge")).toBe(false);
+  });
+
+  it("renders per-item trailing actions as labelled icon buttons", () => {
+    const items: SelectionGridItem[] = [
+      { id: "a", title: "A", actions: [{ id: "rm", label: "Remove" }] },
+      { id: "b", title: "B" },
+    ];
+    const container = mount(h(HkSelectionGrid, { items }));
+    const buttons = container.querySelectorAll(".hk-selection-grid-action");
+    expect(buttons.length).toBe(1);
+    expect(buttons[0].getAttribute("title")).toBe("Remove");
+    expect(buttons[0].getAttribute("aria-label")).toBe("Remove");
+    // Only the item that declared actions renders the actions cell.
+    const rows = cards(container);
+    expect(rows[0].querySelector(".hk-selection-grid-actions")).not.toBeNull();
+    expect(rows[1].querySelector(".hk-selection-grid-actions")).toBeNull();
+  });
+
+  it("emits action without selecting the item (propagation stopped)", () => {
+    const seen: Array<[string, string]> = [];
+    const items: SelectionGridItem[] = [
+      { id: "a", title: "A", actions: [{ id: "rm", label: "Remove" }] },
+    ];
+    const container = mount(
+      h(HkSelectionGrid, {
+        items,
+        onSelect: (item: SelectionGridItem) => seen.push(["select", item.id]),
+        onAction: (item: SelectionGridItem, action: { id: string }) =>
+          seen.push(["action", `${item.id}:${action.id}`]),
+      }),
+    );
+    (container.querySelector(".hk-selection-grid-action") as HTMLElement).click();
+    expect(seen).toEqual([["action", "a:rm"]]);
+  });
+
+  it("suppresses the action emit when the action is disabled", () => {
+    const seen: string[] = [];
+    const items: SelectionGridItem[] = [
+      { id: "a", title: "A", actions: [{ id: "rm", label: "Remove", disabled: true }] },
+    ];
+    const container = mount(
+      h(HkSelectionGrid, {
+        items,
+        onAction: () => seen.push("action"),
+      }),
+    );
+    const btn = container.querySelector(".hk-selection-grid-action") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    btn.click();
+    expect(seen).toEqual([]);
+  });
+});
 });

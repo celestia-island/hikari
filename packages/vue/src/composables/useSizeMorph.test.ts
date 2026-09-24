@@ -332,9 +332,12 @@ describe("useSizeMorph clip reveal", () => {
     await settle();
     // The pin landed at the new height with no height animation staged.
     expect(h.frame.style.height).toBe("360px");
-    // The sweep runs: end-state clip (promotion stays resident).
+    // The sweep runs: end-state clip, carried on a DEMOTED frame (see the
+    // demotion note in startRevealSweep). The clip contract is unchanged —
+    // only the promotion comes off, so the edge travels as a main-thread
+    // paint that a phone GPU cannot drop the sheet's tiles out from under.
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
-    expect(h.frame.style.willChange).toBe("clip-path");
+    expect(h.frame.style.willChange).toBe("");
     expect(h.frame.style.transition).toBe("");
 
     fireTransitionEnd(h.frame, "clip-path");
@@ -641,7 +644,9 @@ describe("useSizeMorph clip reveal", () => {
     h.remeasure();
     expect(h.frame.style.height).toBe("450px");
     expect(h.frame.style.clipPath).toBe("inset(70px 0 0 0 round 0px 0px 0px 0px)");
-    expect(h.frame.style.willChange).toBe("clip-path");
+    // Re-staging demotes again, and the remember-what-to-restore answer
+    // survives the re-stage (see startRevealSweep's idempotence note).
+    expect(h.frame.style.willChange).toBe("");
   });
 
   it("cancels a pending warmup when a second growth re-stages mid-warmup", async () => {

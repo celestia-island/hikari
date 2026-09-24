@@ -29,7 +29,6 @@ graph LR
   packages --> theme["hikari-theme/ — Theme management"]
   packages --> animation["hikari-animation/ — Animation engine"]
   packages --> components["hikari-components/ — Basic components"]
-  packages --> extra["hikari-extra-components/ — Advanced components"]
   packages --> icons["hikari-icons/ — Icon system"]
 ```
 
@@ -50,7 +49,6 @@ Each package handles a specific aspect of the framework:
 - **hikari-palette**: Color data and palette generation (no UI dependencies)
 - **hikari-theme**: Theme management and CSS variables (depends on palette)
 - **hikari-components**: UI components (depends on palette and theme)
-- **hikari-extra-components**: Advanced components (depends on components)
 - **hikari-animation**: Animation engine, easing, state machine (depends on tairitsu)
 - **hikari-icons**: MDI icon integration (depends on animation)
 
@@ -90,8 +88,6 @@ graph BT
   hikari-components --> hikari-icons
   hikari-components --> hikari-animation
   hikari-icons --> hikari-animation
-  hikari-extra-components --> hikari-components
-  hikari-extra-components --> hikari-theme
 ```
 
 ### Package Responsibilities
@@ -165,30 +161,14 @@ pub use entry::*;
 pub use production::*;
 ```
 
-#### hikari-extra-components
-**Purpose**: Framework-agnostic data models for advanced UI scenarios
+#### hikari-extra-components (retired)
 
-**Responsibilities**:
-- Pure state models for advanced components (DragLayerState, TimelineState, ZoomControlsState, UserGuideState, etc.)
-- Node graph system (NodeGraphState, Connection, Port, minimap, history, plugins)
-- Rich media state models (RichTextEditorState, VideoPlayerState, AudioWaveformState, CodeHighlighterState)
-- Event types and builder patterns for all state models
-
-**Design approach**: Pure Rust structs with `serde` support — no rendering framework dependency. These models can be used with any frontend framework (Tairitsu, Yew, Leptos) or in SSR/testing contexts without pulling in a DOM library.
-
-**Dependencies**:
-- `hikari-components` (reuses types like `sanitize_html`)
-- `hikari-theme` (for theme integration)
-- `hikari-palette` (for color types)
-- `serde` (for serialization)
-
-**Exports**:
-```rust
-pub use extra::*;
-pub use node_graph::*;
-```
-
-> **Note:** Some types share names across `hikari-components` and `hikari-extra-components` (e.g., `TimelinePosition`, `GuideStep`). The `components` versions are rendered tairitsu-style components with `Element` children and event handlers; the `extra-components` versions are pure data structs with `String` fields and `serde` derives. Import with explicit module paths to disambiguate.
+**Status**: Removed. The package held framework-agnostic data models (DragLayerState,
+TimelineState, ZoomControlsState, the node-graph model, rich-media state models) beside the
+rendered components. Nothing in the workspace depended on it, its types duplicated same-named
+components (`TimelinePosition`, `GuideStep`, …), and the node-graph model was referenced only
+by its own tests. Use `hikari-components` instead — `display::{Timeline, DragLayer,
+UserGuide, ZoomControls}` and `production::{VideoPlayer, RichTextEditor, CodeHighlight}`.
 
 #### hikari-animation
 **Purpose**: Animation engine and presets
@@ -487,7 +467,6 @@ members = [
     "packages/theme",
     "packages/animation",
     "packages/components",
-    "packages/extra-components",
     "packages/icons",
 ]
 ```
@@ -583,12 +562,14 @@ graph LR
 - [x] Comprehensive component testing (275+ tests)
 - [x] Component documentation
 
-### Phase 5: hikari-extra-components
+### Phase 5: hikari-extra-components (retired)
 
 - [x] Node graph system (with serialization, history, plugins)
 - [x] Advanced utilities (DragLayer, Collapsible, ZoomControls)
-- [ ] Performance optimization
-- [ ] Use case examples
+- [ ] ~~Performance optimization~~
+- [ ] ~~Use case examples~~
+
+The package was removed; the rendered components it shadowed live on in `hikari-components`.
 
 ### Phase 6: Examples
 
@@ -621,58 +602,22 @@ graph LR
 
 ## Architectural Decisions
 
-### Dual-Layer Package Architecture: components vs extra-components
+### Single-Package Component Architecture
 
-Hikari intentionally splits its component offerings into two packages with complementary responsibilities:
+Hikari ships its components in one package, `hikari-components`: `rsx!` rendered components
+with reactive hooks, typed class enums from `hikari-palette`, and `StyledComponent` CSS.
 
-```mermaid
-graph LR
-    subgraph "hikari-components"
-        RC["Rendered Components<br/>(rsx! + hooks + StyledComponent)"]
-    end
-    subgraph "hikari-extra-components"
-        DM["Data Models<br/>(pure structs + serde + builder)"]
-    end
-    RC -->|reads state from| DM
-    DM -->|feeds into| RC
-```
+An earlier dual-layer split kept framework-agnostic **data models** in a second package
+(`hikari-extra-components`) next to the rendered components. It was retired:
 
-**Why two packages?**
-
-| Concern | `hikari-components` | `hikari-extra-components` |
-|---------|---------------------|---------------------------|
-| **Rendering** | `rsx!` macro, reactive hooks | None (framework-agnostic) |
-| **State management** | `use_signal()`, `use_effect()` | Plain mutable struct fields |
-| **Event handling** | `EventHandler<T>` closures | `data-action` attributes + external wiring |
-| **CSS embedding** | `StyledComponent` trait | `pub const *_STYLES: &str` |
-| **Serialization** | Not required | `serde` derives on all state types |
-| **DOM dependency** | Requires Tairitsu framework | None |
-| **Use case** | Live UI rendering in Tairitsu apps | SSR, testing, state persistence, non-Tairitsu frameworks |
-
-**Overlapping component domains** (e.g., Timeline, DragLayer, UserGuide, ZoomControls, VideoPlayer, RichTextEditor, CodeHighlight) exist in both packages by design:
-
-- The `components` version provides a **ready-to-use rendered component** with animations, keyboard handling, icon integration, and `StyledComponent` CSS.
-- The `extra-components` version provides a **pure state model** with builder pattern, `serde` serialization, mutation methods, and unit tests — but no rendering.
-
-**When to use which:**
-- **Tairitsu application**: Use `hikari-components` for rendered UI; optionally use `hikari-extra-components` for state persistence, undo/redo, or serialization.
-- **Non-Tairitsu application**: Use `hikari-extra-components` data models and implement your own rendering.
-- **Testing**: Use `hikari-extra-components` for unit testing state logic without a DOM.
-- **SSR**: Use both — data models for server-side state, rendered components for client hydration.
-
-**Type name disambiguation:**
-
-Some types exist in both packages (e.g., `TimelinePosition`, `GuideStep`). Import with explicit paths:
-
-```rust,ignore
-use hikari_extra_components::extra::TimelineState;     // pure data model
-use hikari_components::display::Timeline;              // rendered component
-
-use hikari_extra_components::extra::ZoomControlsState; // pure state
-use hikari_components::display::ZoomControls;          // rendered component
-```
-
-**CSS class naming:** The two packages use different CSS class names for the same conceptual elements. This is intentional — `components` uses typed class enums from `hikari-palette` (e.g., `ZoomControlsClass::Button`), while `extra-components` uses hardcoded strings or computed methods. When both packages are used together, each renders with its own class set.
+- No crate in the workspace depended on it, and the node-graph model was referenced only by
+  its own tests.
+- Same-named types lived in both packages with different semantics (e.g. `TimelinePosition`
+  defaulted to `Left` in one and `Alternate` in the other), so importing the wrong one was
+  silent.
+- The rendered components it duplicated were already complete here:
+  `display::{Timeline, DragLayer, UserGuide, ZoomControls}`,
+  `production::{VideoPlayer, RichTextEditor, CodeHighlight}`.
 
 ### Why Tairitsu?
 

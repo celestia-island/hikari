@@ -535,6 +535,9 @@ impl VisualQualityTests {
 
         Ok(test)
     }
+    /// Currently uncalled: its demo page (/components/extra/collapsible) was
+    /// removed together with the extra-components crate in M3.5.
+    #[allow(dead_code)]
     pub async fn test_extra_components_quality(driver: &WebDriver) -> Result<VisualQualityTest> {
         let mut test = VisualQualityTest::new("Extra Components", "/components/extra/collapsible");
         let base_url = std::env::var("WEBSITE_BASE_URL")
@@ -863,21 +866,9 @@ impl VisualQualityTests {
             }
         }
 
-        info!("Testing Extra Components (Collapsible)...");
-        match Self::test_extra_components_quality(driver).await {
-            Ok(test) => {
-                info!(
-                    "Extra Components test: {} checks, {} passed, {} failed",
-                    test.tests.len(),
-                    test.passed,
-                    test.failed
-                );
-                results.push(test);
-            }
-            Err(e) => {
-                warn!("Extra Components test failed: {}", e);
-            }
-        }
+        // Extra Components (Collapsible) demo page was removed with the
+        // extra-components crate (M3.5); re-point test_extra_components_quality
+        // against the surviving pages before calling it again.
 
         info!("Testing Layer 3 Components...");
         match Self::test_layer3_components_quality(driver).await {

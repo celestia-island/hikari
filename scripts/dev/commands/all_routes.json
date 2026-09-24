@@ -176,34 +176,6 @@
   },
   {
     "action": "screenshot",
-    "url": "http://localhost:3000/components/extra/collapsible",
-    "output": "components_extra_collapsible.png",
-    "wait_ms": 10000,
-    "full_page": true
-  },
-  {
-    "action": "screenshot",
-    "url": "http://localhost:3000/components/extra/timeline",
-    "output": "components_extra_timeline.png",
-    "wait_ms": 10000,
-    "full_page": true
-  },
-  {
-    "action": "screenshot",
-    "url": "http://localhost:3000/components/extra/user_guide",
-    "output": "components_extra_user_guide.png",
-    "wait_ms": 10000,
-    "full_page": true
-  },
-  {
-    "action": "screenshot",
-    "url": "http://localhost:3000/components/extra/zoom_controls",
-    "output": "components_extra_zoom_controls.png",
-    "wait_ms": 10000,
-    "full_page": true
-  },
-  {
-    "action": "screenshot",
     "url": "http://localhost:3000/system",
     "output": "system.png",
     "wait_ms": 10000,

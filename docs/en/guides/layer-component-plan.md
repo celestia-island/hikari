@@ -181,7 +181,7 @@ pub trait Layer1Component {
 | Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | Completed |
 | Modal | `packages/components/src/feedback/modal.rs` | Card, Button | Completed |
 | Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | Completed |
-| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | Completed |
+| Steps → Stepper | `packages/components/src/navigation/stepper.rs` | Button, Badge | Completed (`Steps` is a deprecated alias) |
 | Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | Completed |
 
 ### Composite Components to be Developed
@@ -193,7 +193,6 @@ pub trait Layer1Component {
 | **Upload** | Medium | File upload | Button, Progress |
 | **Calendar** | Medium | Calendar picker | Button, Input |
 | **Carousel** | Low | Carousel | Button, Card |
-| **Stepper** | Low | Stepper | Button, Badge |
 | **Timeline** | Low | Timeline | Card, Badge |
 
 ### Component Interface Specification
@@ -433,7 +432,7 @@ pub fn RichTextEditor(
 3. Upload (Medium)
 4. Calendar (Medium)
 5. Carousel (Low)
-6. Stepper (Low)
+6. ~~Stepper (Low)~~ — shipped as `Stepper`; `Steps` is a deprecated alias
 7. Timeline (Low)
 
 **Estimated time**: 2-3 weeks

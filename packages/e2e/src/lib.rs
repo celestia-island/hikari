@@ -126,7 +126,7 @@ pub async fn run_interactive_tests(
 
     println!("\n=== Interactive Test Coverage ===");
     info!("Layer 1 (Basic): Button, Input, Card, Alert (4 components)");
-    info!("Layer 2 (Navigation): Tabs, Menu, Breadcrumb, Steps (4 components)");
+    info!("Layer 2 (Navigation): Tabs, Menu, Breadcrumb, Stepper (4 components)");
     info!("Layer 2 (Data): Table, Tree, Pagination (3 components)");
     info!("Layer 2 (Feedback): Modal, Dropdown, Drawer (3 components)");
     info!(

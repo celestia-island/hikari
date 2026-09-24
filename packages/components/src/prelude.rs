@@ -106,6 +106,9 @@ pub use crate::layout::{
     ContainerProps, DividerProps as LayoutDividerProps, FlexBoxProps, FooterProps, SpaceProps,
 };
 // Navigation component Props
+// `StepsProps` is the deprecated shim of `StepperProps`; re-exported so the
+// migration window keeps existing prelude users compiling.
+#[allow(deprecated)]
 pub use crate::navigation::{
     BreadcrumbItemProps, BreadcrumbProps, MenuItemProps, MenuProps, SidebarItemProps,
     SidebarLeafProps, SidebarProps, SidebarSectionProps, StepsProps, SubMenuProps, TabPaneProps,

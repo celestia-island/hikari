@@ -26,7 +26,6 @@ pub fn scan_icon_usage(workspace_root: &Path) -> Result<IconUsage> {
     // Common package directories to scan
     let scan_dirs = vec![
         workspace_root.join("packages/components/src"),
-        workspace_root.join("packages/extra-components/src"),
         workspace_root.join("examples"),
         workspace_root.join("apps"),
     ];

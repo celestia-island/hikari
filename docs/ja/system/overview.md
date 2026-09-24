@@ -249,63 +249,13 @@ let app = HikariRenderServicePlugin::new()
 - **styles_service** - スタイル注入
 - **plugin** - プラグインシステム
 
-### 8. Extra Components Library (hikari-extra-components)
+### 8. 追加コンポーネントのデータモデル（廃止）
 
-複雑なインタラクションシナリオ向けの高度なUIコンポーネント。
-
-**責任**:
-- 高度なユーティリティコンポーネント
-- ドラッグ＆ズームインタラクション
-- 折りたたみパネル
-- アニメーション統合
-
-**コアコンポーネント**:
-
-1. **Collapsible** - 折りたたみパネル
-   - 左右スライドイン/アウトアニメーション
-   - 設定可能な幅
-   - 展開状態コールバック
-
-2. **DragLayer** - ドラッグレイヤー
-   - 境界制約
-   - ドラッグイベントコールバック
-   - カスタムz-index
-
-3. **ZoomControls** - ズームコントロール
-   - キーボードショートカットサポート
-   - 設定可能なズーム範囲
-   - 複数の配置オプション
-
-**主な機能**:
-```rust
-use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
-
-// 折りたたみパネル
-Collapsible {
-    title: "設定".to_string(),
-    expanded: true,
-    position: CollapsiblePosition::Right,
-    div { "コンテンツ" }
-}
-
-// ドラッグレイヤー
-DragLayer {
-    initial_x: 100.0,
-    initial_y: 100.0,
-    constraints: DragConstraints {
-        min_x: Some(0.0),
-        max_x: Some(500.0),
-        ..Default::default()
-    },
-    div { "ドラッグして" }
-}
-
-// ズームコントロール
-ZoomControls {
-    zoom: 1.0,
-    on_zoom_change: move |z| println!("ズーム: {}", z)
-}
-```
+`hikari-extra-components` パッケージ（timeline・drag layer・zoom controls・ノードグラフの
+フレームワーク非依存データモデル）は削除されました。ワークスペース内に依存はなく、同名の描画
+コンポーネントと型が重複していました。代わりに `hikari-components` のコンポーネントを使って
+ください：`display::{Timeline, DragLayer, UserGuide, ZoomControls}`、
+`production::{VideoPlayer, RichTextEditor, CodeHighlight}`。
 
 ## アーキテクチャ原則
 
@@ -400,9 +350,6 @@ graph BT
   hikari-components --> hikari-animation
   hikari-components --> hikari-icons
 
-  hikari-extra-components --> hikari-palette2[hikari-palette]
-  hikari-extra-components --> hikari-theme2[hikari-theme]
-  hikari-extra-components --> hikari-animation2[hikari-animation]
 
   tairitsu-packager --> hikari-components2[hikari-components]
   tairitsu-packager --> axum

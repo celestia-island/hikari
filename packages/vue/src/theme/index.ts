@@ -64,3 +64,16 @@ export {
   resolveThemeFollowSwitch, setWallpaperPipelineLookup, geo, currentPeriod,
 } from "./useWallpaper";
 export type { WallpaperInitConfig, WallpaperPipelineLookup, WallpaperPipelinePreset } from "./useWallpaper";
+// Wallpaper shader layer. The presets are host assets registered at
+// runtime — hikari ships the renderer and the registry, never any GLSL
+// and never a consumer-side alias import (see wallpaperShaderAliasGuard).
+export {
+  registerShaderPresets, getShaderPreset, listShaderPresetIds,
+} from "./wallpaperShaderPresets";
+export type {
+  WallpaperShaderPreset, WallpaperShaderPresetInput,
+  WallpaperShaderScaleConfig, WallpaperShaderScaleInput, WallpaperShaderOverlayConfig,
+} from "./wallpaperShaderPresets";
+export {
+  SHADER_VERTEX, WallpaperShaderPipeline, createWallpaperShaderSurface,
+} from "./wallpaperShaderRenderer";

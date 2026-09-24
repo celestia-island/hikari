@@ -1,0 +1,68 @@
+// HkWallpaperBackdrop — the wallpaper stack's page layer.
+//
+// Ported from chest's `theme.scss` `.s-wallpaper-*` rules. The rules for
+// `body` (background-image / background-attachment / the `body::before`
+// scrim) stayed in the consumer: they are page-global selectors a component
+// must not own. What is here is exactly the component's own layer stack.
+//
+// Layering: the ROOT is the fixed, viewport-sized, z-index:-1 layer (one
+// placement, not one per art kind), and every art layer fills it. The ported
+// rules carried the same `position: fixed; inset: 0; z-index: -1` on each of
+// the three layers individually; hoisting it to the root keeps the stacking
+// result identical while giving the component one element to place.
+
+.hk-wallpaper-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  // The solid floor: what "solid" wallpaper has always rendered (the ported
+  // renderer REMOVED --wallpaper-solid-color instead of setting it, so the
+  // page background showed through), and what the pipeline branch degrades
+  // to when WebGL2 is unavailable. Painted by the root, so it is also the
+  // degradation target for a host that has no page background of its own.
+  background-color: rgb(var(--color-background, 0 0 0));
+}
+
+.hk-wallpaper-backdrop-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.hk-wallpaper-backdrop-img,
+.hk-wallpaper-backdrop-video {
+  object-fit: cover;
+  transition: filter var(--duration-normal) ease;
+  will-change: filter;
+}
+
+.hk-wallpaper-backdrop-canvas {
+  transition: filter var(--duration-normal) ease;
+  will-change: transform, filter;
+}
+
+// Phones: drop the wallpaper layers' permanent compositor promotion.
+// `will-change` keeps a full-screen texture alive per layer; while the soft
+// keyboard animates the viewport (resizes-content engines step it every
+// frame) each resize reallocates that texture and the gap before the next
+// frame shows as black-block flicker (2026-09-21 IME report). The filter
+// transition (theme/display-settings changes only) runs fine without
+// pre-promotion — it just rasterizes during the rare transition instead of
+// holding a layer forever.
+//
+// The host's half of that mitigation — `body { background-attachment:
+// scroll }` ≤767px, which skips the fixed-attachment raster path mobile
+// engines handle worst — stays in the consuming sheet, since `body` is not
+// the component's element.
+@media (max-width: 767px) {
+  .hk-wallpaper-backdrop-img,
+  .hk-wallpaper-backdrop-video,
+  .hk-wallpaper-backdrop-canvas {
+    will-change: auto;
+  }
+}

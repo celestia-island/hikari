@@ -219,6 +219,9 @@ export {
   themeDecorVersion, isThemeDecorSlot, THEME_DECOR_SLOT_PATTERN, THEME_DECOR_WILDCARD,
   allGroupSlots, resolveLocalizedText, parseTokenGroupConfig, registerTokenGroupConfig,
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
+  registerWallpaperSurfaceSources, resolveWallpaperSurfaceElement, LEGACY_WALLPAPER_SURFACE_IDS,
+  retainLuminanceSampler, releaseLuminanceSampler, luminanceSamplerRefCount,
+  type WallpaperSurfaceKind, type WallpaperSurfaceSources,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
   timezoneFallback, setGeolocationProvider, refreshThemeClock, stopThemeClock,
   initFontContext, applyFontContext, resetFontContext, useFontContext,
@@ -257,6 +260,24 @@ export {
   type WallpaperStorageConfig, type WallpaperInitConfig, type WallpaperPipelineLookup,
   type WallpaperPipelinePreset,
 } from "./theme";
+
+// The wallpaper stack's SURFACE component. hikari does NOT put it on the
+// `backdrop` decor floor (that floor has no unregister — a library-owned
+// page-covering layer would be a decision the host cannot take back). The
+// host registers it, and passes its pipeline driver (if it has one) through
+// the registration's props bag:
+//   registerThemeDecor({
+//     themeId: "*", slot: "backdrop", component: HkWallpaperBackdrop,
+//     props: { createSurface: mySurfaceFactory },
+//   })
+export {
+  default as HkWallpaperBackdrop,
+  WALLPAPER_REDUCED_MOTION_QUERY,
+  type HkWallpaperBackdropMode,
+  type HkWallpaperSurface,
+  type HkWallpaperSurfaceContext,
+  type HkWallpaperSurfaceFactory,
+} from "./components/HkWallpaperBackdrop";
 
 // Runtime systems
 export {

@@ -1268,4 +1268,71 @@ describe("useSizeMorph heightMorph (round 18)", () => {
     expect(h.frame.style.transition).toBe("");
     h.stop();
   });
+
+  it("does not replay a clip conceal for the settle transient after a shrink morph", async () => {
+    // Round-21 mechanism (rig REPORT-R21-shrink): a stepflow shrink's
+    // heightMorph targets the natural height measured the instant the slide
+    // settled — e.g. 503 — which sits a few px off the frame's settled rest
+    // height (483; the chrome-allowance transient, the long-standing +20px
+    // drift). The observer's settle-debounced remeasure then read that
+    // residual as a fresh shrink and replayed a CLIP CONCEAL ~152ms into
+    // the morph — re-promoting the riders and sweeping a moving edge for
+    // 300ms, which is the shrink-time flash the phone kept reporting. The
+    // remeasure must DEFER for the morph's duration, and the morph's
+    // restore must absorb the drift silently (snap the pin to the settled
+    // height, no clip sweep, no rider re-promotion).
+    const rider = document.createElement("div");
+    const h = mountHarness(786, 366, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.content.appendChild(rider);
+    h.start();
+    expect(h.frame.style.height).toBe("786px");
+    expect(rider.style.willChange).toBe("transform");
+
+    // The shrink morph: natural reads 503 at the settle instant.
+    h.setNatural(503);
+    h.heightMorph(300);
+    expect(h.frame.style.height).toBe("503px");
+    expect(h.frame.style.transition).toContain("height");
+    expect(h.frame.hasAttribute("data-hk-morphing")).toBe(true);
+    expect(rider.style.willChange).toBe("");
+
+    // Mid-morph the transient resolves: the settled rest height is 483.
+    // The observer fires on the content change — it must NOT start a clip
+    // conceal against the running morph.
+    h.setNatural(483);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    // No clip was staged and the rider was NOT re-promoted: the remeasure
+    // deferred instead of replaying a conceal.
+    expect(h.frame.style.clipPath).toBe("");
+    expect(rider.style.willChange).toBe("");
+    // The morph's own height transition is untouched (still running to 503).
+    expect(h.frame.style.transition).toContain("height");
+    expect(h.frame.hasAttribute("data-hk-morphing")).toBe(true);
+
+    // The morph's transition completes: restore absorbs the drift — the pin
+    // snaps to the settled 483 silently, with no clip sweep and no rider
+    // re-promotion beyond the restore of the ORIGINAL promotion.
+    const ev = new Event("transitionend");
+    Object.defineProperty(ev, "propertyName", { value: "height" });
+    h.frame.dispatchEvent(ev);
+    expect(h.frame.hasAttribute("data-hk-morphing")).toBe(false);
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.height).toBe("483px");
+    // The resident promotions are restored to their armed values (the frame
+    // is at rest), not left demoted and not re-swept.
+    expect(h.frame.style.willChange).toBe("clip-path");
+    expect(rider.style.willChange).toBe("transform");
+
+    // Nothing is left pending: a later observer tick finds the pin already
+    // settled and stays quiet (no delayed conceal).
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.height).toBe("483px");
+    h.stop();
+  });
 });

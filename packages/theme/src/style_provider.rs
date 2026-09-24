@@ -182,6 +182,16 @@ pub fn use_component_class(component_name: &str, base_class: &str) -> String {
     }
 }
 
+impl Default for StyleConfig {
+    fn default() -> Self {
+        Self {
+            class_prefix: "hi".to_string(),
+            extra_classes: Vec::new(),
+            component_overrides: HashMap::new(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -239,15 +249,5 @@ mod tests {
             use_component_class("button", "hk-button"),
             "hk-button".to_string()
         );
-    }
-}
-
-impl Default for StyleConfig {
-    fn default() -> Self {
-        Self {
-            class_prefix: "hi".to_string(),
-            extra_classes: Vec::new(),
-            component_overrides: HashMap::new(),
-        }
     }
 }

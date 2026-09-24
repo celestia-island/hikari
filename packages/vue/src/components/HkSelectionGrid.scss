@@ -218,3 +218,94 @@
     transition: opacity 200ms ease;
   }
 }
+
+/* ── List layout ─────────────────────────────────────────────────────────
+   The same option vocabulary as full-width rows in ONE column — the
+   picker-list dress (a credential, an image, a disk) rather than a card
+   grid. The check leaves the corner and sits centered on the row's
+   trailing edge, where a list's selection mark belongs. */
+.hk-selection-grid[data-layout="list"] {
+  .hk-selection-grid-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hk-selection-grid-item {
+    align-items: center;
+    padding-inline-end: var(--space-40, 2.5rem);
+  }
+
+  .hk-selection-grid-check {
+    top: 50%;
+    translate: 0 -50%;
+    inset-inline-end: var(--space-10, 0.625rem);
+  }
+}
+
+/* ── Trailing item actions ───────────────────────────────────────────────
+   Icon buttons on the row's right edge (remove / dismiss …). They never
+   select the item — the component stops their click propagation — and
+   they sit in the row's own trailing cell. */
+.hk-selection-grid-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.125rem);
+  margin-inline-start: auto;
+  align-self: center;
+  // Keep clear of the corner check in grid layout; the list layout already
+  // reserves that room on the item itself.
+  padding-inline-end: var(--space-16, 1rem);
+}
+
+.hk-selection-grid[data-layout="list"] .hk-selection-grid-actions {
+  padding-inline-end: 0;
+}
+
+.hk-selection-grid-action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background 200ms ease;
+
+  &:hover:not(:disabled) {
+    color: rgb(var(--color-text));
+    background: rgb(var(--color-text) / 8%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* ── Optional selected edge ──────────────────────────────────────────────
+   A thickened primary bar on the item's LEADING side, drawn inside the
+   border box (a pseudo element, so nothing shifts) — the "this is the
+   chosen one" cue some hosts want on top of the ring + check. */
+.hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-start-start-radius: var(--radius-sm, 4px);
+  border-end-start-radius: var(--radius-sm, 4px);
+  background: var(--hi-color-primary, #7aa2f7);
+}

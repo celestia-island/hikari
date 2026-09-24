@@ -69,8 +69,9 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
         _ => "ltr",
     };
 
-    // Create theme context
-    let _context = ThemeContext {
+    // Create theme context and publish it to descendants, so `use_theme` /
+    // `try_use_theme` inside children resolve this provider's configuration.
+    let context = ThemeContext {
         palette: props.initial_palette.clone(),
         colors,
         direction: if dir == "rtl" {
@@ -80,9 +81,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
         },
         set_theme: Callback::new(|_| {}),
     };
-
-    // Provide context to children (simplified - full implementation would use provide_context)
-    // TODO: Implement proper context provider with tairitsu-hooks
+    provide_context(context);
 
     rsx! {
         div {
@@ -92,5 +91,36 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
             "dir": dir,
             ..props.children
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::context::try_use_theme;
+
+    #[test]
+    fn try_use_theme_returns_none_without_provider() {
+        tairitsu_hooks::drop_context::<ThemeContext>();
+        assert!(try_use_theme().is_none());
+    }
+
+    #[test]
+    fn theme_provider_provides_context_to_descendants() {
+        tairitsu_hooks::drop_context::<ThemeContext>();
+        assert!(try_use_theme().is_none());
+
+        let _vnode = ThemeProvider(ThemeProviderProps {
+            initial_palette: "tairitsu".to_string(),
+            language: "zh-Hans".to_string(),
+            direction: "rtl".to_string(),
+            children: Vec::new(),
+        });
+
+        let theme = try_use_theme().expect("ThemeProvider must provide ThemeContext");
+        assert_eq!(theme.palette, "tairitsu");
+        assert_eq!(theme.direction, LayoutDirection::Rtl);
+
+        tairitsu_hooks::drop_context::<ThemeContext>();
     }
 }

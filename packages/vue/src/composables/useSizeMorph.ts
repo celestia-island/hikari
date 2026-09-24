@@ -529,6 +529,24 @@ export function useSizeMorph(
       dir === "reveal"
         ? `inset(0px 0 0 0 round ${radii})`
         : `inset(${insetPx}px 0 0 0 round ${radii})`;
+    // Reduced motion: the stylesheet collapses the clip transition to
+    // `none` — `transitionend` will never fire, and without this check the
+    // watchdog holds the clip for `durationMs + 350` ms while the page
+    // behind shows through it (round-24 phone report under
+    // `prefers-reduced-motion: reduce`: the sheet's top 254 px showed the
+    // page behind for 514 ms). Land now: the clip end state is already
+    // painted, the riders carry whatever motion survives, and the landing
+    // is the same `stopReveal()` that transitionend would have triggered.
+    let reduced = false;
+    try {
+      reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      // matchMedia unavailable (SSR) — the sweep path is unreachable anyway.
+    }
+    if (reduced) {
+      stopReveal();
+      return;
+    }
     // The riders flip WITH the clip, in the same task, under a mirrored
     // transform transition — same duration, same easing, same start
     // moment, so the ride tracks the edge sample-for-sample. Their own

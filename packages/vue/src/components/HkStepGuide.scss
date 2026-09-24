@@ -2,9 +2,19 @@
 //
 // The artwork bed is a SOFT CIRCLE (primary-tinted, blurred) so any
 // artwork — SVG, icon, bitmap — sits on the same quiet frame; the ordinal
-// is a small solid disc pinned to its corner. Completed steps swap the
-// ordinal for a check and dim the artwork, letting the guide double as a
-// checklist while the flow progresses.
+// is a small solid disc pinned to the bed's corner. Completed steps swap
+// the ordinal for a check and dim the artwork, letting the guide double as
+// a checklist while the flow progresses.
+//
+// Orientation follows the guide's OWN width (it is a container-query
+// root): wide → steps sit side by side, art on top, caption below, with a
+// hairline connector bridging consecutive beds; narrow → they stack as
+// rows (art beside the caption). Fixed 520px breakpoint: container-query
+// conditions cannot carry var(), so per-host thresholds would need a prop.
+
+.hk-step-guide {
+  container-type: inline-size;
+}
 
 .hk-step-guide-title {
   font-size: 0.6875rem;
@@ -12,7 +22,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--hi-color-text-tertiary, #8b949e);
-  margin: 0 0 var(--space-8, 0.5rem);
+  margin: 0 0 var(--space-12, 0.75rem);
 }
 
 .hk-step-guide-list {
@@ -41,12 +51,18 @@
   }
 }
 
-// ── the artwork bed ─────────────────────────────────────────────────────────
+// ── the artwork bed + pinned ordinal ────────────────────────────────────────
+// The figure owns the bed's box so the ordinal can hang off its corner in
+// BOTH orientations without re-deriving offsets from the item's layout.
+.hk-step-guide-figure {
+  flex: none;
+  position: relative;
+  z-index: 1;
+}
+
 // Sized by --hk-step-guide-art-size (default 88px, the "big icon" the
 // grammar asks for); hosts with tight quarters shrink the token.
 .hk-step-guide-art {
-  flex: none;
-  position: relative;
   width: var(--hk-step-guide-art-size, 88px);
   height: var(--hk-step-guide-art-size, 88px);
   border-radius: 50%;
@@ -77,11 +93,10 @@
   object-fit: cover;
 }
 
-// ── the ordinal ────────────────────────────────────────────────────────────
 .hk-step-guide-ordinal {
   position: absolute;
-  top: calc(var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
-  inset-inline-start: calc(var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
+  bottom: calc(var(--space-4, 0.25rem) * -1);
+  inset-inline-end: calc(var(--space-4, 0.25rem) * -1);
   width: var(--space-20, 1.25rem);
   height: var(--space-20, 1.25rem);
   border-radius: 50%;
@@ -124,7 +139,62 @@
   color: var(--hi-color-text-tertiary, #8b949e);
 }
 
-// ── grid layout: equal cards ───────────────────────────────────────────────
+// ── wide host: the steps lie side by side ───────────────────────────────────
+// Once the guide itself has room (user direction 2026-09-25: 横屏横着排，
+// 宽度不够才竖着排), each step becomes a centered column — art on top,
+// caption below — and a hairline connector bridges consecutive beds.
+@container (min-width: 520px) {
+  .hk-step-guide-list {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-12, 0.75rem);
+  }
+
+  .hk-step-guide-item {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-10, 0.625rem);
+
+    // The connector spans from this bed's rim to the next one's, passing
+    // UNDER the beds (figures carry z-index: 1 above).
+    &:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: calc(var(--hk-step-guide-art-size, 88px) / 2);
+      inset-inline-start: calc(50% + var(--hk-step-guide-art-size, 88px) / 2);
+      width: calc(100% - var(--hk-step-guide-art-size, 88px));
+      height: 1px;
+      transform: translateY(-50%);
+      background: linear-gradient(
+        to right,
+        rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.35),
+        rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.18)
+      );
+    }
+
+    &[data-done]:not(:last-child)::after {
+      background: linear-gradient(
+        to right,
+        rgb(from var(--hi-color-success, #0eb840) r g b / 0.45),
+        rgb(from var(--hi-color-success, #0eb840) r g b / 0.2)
+      );
+    }
+  }
+
+  .hk-step-guide-body {
+    flex: 0 1 auto;
+    align-items: center;
+  }
+
+  .hk-step-guide-item-desc {
+    max-width: 26ch;
+  }
+}
+
+// ── grid layout: equal cards ─────────────────────────────────────────────────
 .hk-step-guide[data-layout="grid"] {
   .hk-step-guide-list {
     display: grid;
@@ -142,11 +212,6 @@
     padding: var(--space-16, 1rem);
     border-radius: var(--radius-md, 0.5rem);
     border: 1px solid rgb(from var(--hi-color-border, #646464) r g b / 0.35);
-  }
-
-  .hk-step-guide-ordinal {
-    top: calc(var(--space-16, 1rem) + var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
-    inset-inline-start: calc(var(--space-16, 1rem) + var(--hk-step-guide-art-size, 88px) - var(--space-20, 1.25rem));
   }
 }
 

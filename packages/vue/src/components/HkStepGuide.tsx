@@ -7,8 +7,8 @@ import "./HkStepGuide.scss";
  *
  * The visual is the step's OWN artwork — an SVG component, a lucide icon,
  * or a bitmap URL — rendered large in a soft circular bed, with the
- * ordinal over it and the caption beside it. Hosts that only have an icon
- * get the same grammar scaled down.
+ * ordinal pinned to the bed's corner and the caption beneath/beside it.
+ * Hosts that only have an icon get the same grammar scaled down.
  */
 export interface StepGuideItem {
   /** Stable key (also the list rendering key). */
@@ -32,9 +32,13 @@ export interface StepGuideItem {
  * (upstreamed from the flasher's 等待上线 step and wowsp's install
  * walkthrough, user direction 2026-09-25): numbered steps, each with a
  * large artwork — inline SVG, an icon component, or a bitmap — a short
- * title and a one-line description. Vertical by default (a column of
- * steps beside the live status); `layout="grid"` lays the steps as equal
- * cards for wider hosts.
+ * title and a one-line description.
+ *
+ * Orientation follows the AVAILABLE WIDTH, not the viewport: the guide is
+ * its own container query root, so wide hosts lay the steps side by side
+ * (art on top, caption below, a connector bridging the beds) and only
+ * stack them vertically once the width runs out. `layout="grid"` instead
+ * wraps the steps as equal cards.
  *
  * The artwork slots are deliberately permissive: pass a Vue component
  * (`icon: MySvg`) for crisp theme-aware SVGs, or `image: url` for
@@ -48,7 +52,7 @@ export default defineComponent({
     items: { type: Array as PropType<StepGuideItem[]>, required: true },
     /** Steps whose ids appear here render as completed (check, dim). */
     doneIds: { type: Array as PropType<string[]>, default: () => [] },
-    /** Column of rows (default) or equal cards. */
+    /** Width-responsive flow steps (default) or equal cards. */
     layout: { type: String as PropType<"list" | "grid">, default: "list" },
     /** Section heading above the steps. */
     title: { type: String, default: undefined },
@@ -71,33 +75,49 @@ export default defineComponent({
                   class="hk-step-guide-item"
                   data-done={isDone || undefined}
                 >
-                  <span class="hk-step-guide-art" aria-hidden={Art || item.image ? undefined : true}>
-                    {Art ? (
-                      h(Art, { class: "hk-step-guide-art-svg" })
-                    ) : item.image ? (
-                      <img class="hk-step-guide-art-img" src={item.image} alt={alt} draggable={false} />
-                    ) : null}
-                  </span>
-                  <span class="hk-step-guide-ordinal">
-                    {isDone ? (
-                      <svg class="hk-step-guide-check" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          d="M20 6L9 17l-5-5"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="3"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                  <span class="hk-step-guide-figure">
+                    <span
+                      class="hk-step-guide-art"
+                      aria-hidden={Art || item.image ? undefined : true}
+                    >
+                      {Art ? (
+                        h(Art, { class: "hk-step-guide-art-svg" })
+                      ) : item.image ? (
+                        <img
+                          class="hk-step-guide-art-img"
+                          src={item.image}
+                          alt={alt}
+                          draggable={false}
                         />
-                      </svg>
-                    ) : (
-                      idx + 1
-                    )}
+                      ) : null}
+                    </span>
+                    <span class="hk-step-guide-ordinal">
+                      {isDone ? (
+                        <svg
+                          class="hk-step-guide-check"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M20 6L9 17l-5-5"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        idx + 1
+                      )}
+                    </span>
                   </span>
                   <span class="hk-step-guide-body">
                     <span class="hk-step-guide-item-title">{item.title}</span>
                     {item.description && (
-                      <span class="hk-step-guide-item-desc">{item.description}</span>
+                      <span class="hk-step-guide-item-desc">
+                        {item.description}
+                      </span>
                     )}
                   </span>
                 </li>

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, defineComponent } from "vue";
+import { createApp, h, defineComponent, nextTick } from "vue";
 
 import { HkStatCard, statToneColor } from "./HkStatCard";
 
@@ -126,6 +126,21 @@ describe("HkStatCard ring", () => {
     const c = mount(h(HkStatCard, { variant: "ring", value: "—", label: "L" }));
     const arc = c.querySelector(".hk-gauge-ring circle[stroke-dasharray]") as SVGElement;
     expect(arc.getAttribute("stroke-dashoffset")).not.toContain("NaN");
+  });
+
+  it("paints the ring through inline stroke styles, not only the presentation attribute", () => {
+    // var() in an SVG presentation attribute is not substituted on every
+    // engine (Firefox drops the declaration → stroke:none → an invisible
+    // gauge), so the tone color must ALSO ride the inline style — the same
+    // contract HkProgressRing documents for its segment color.
+    const c = mount(
+      h(HkStatCard, { variant: "ring", tone: "info", pct: 40, value: "40%", label: "L" }),
+    );
+    const [track, arc] = c.querySelectorAll(".hk-gauge-ring circle") as NodeListOf<SVGCircleElement>;
+    expect(track.getAttribute("stroke")).toBe("rgb(var(--color-text) / 8%)");
+    expect(track.style.stroke).toBe("rgb(var(--color-text) / 8%)");
+    expect(arc.getAttribute("stroke")).toBe(statToneColor("info"));
+    expect(arc.style.stroke).toBe(statToneColor("info"));
   });
 });
 

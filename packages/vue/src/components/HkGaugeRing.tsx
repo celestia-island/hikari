@@ -10,6 +10,14 @@ interface RingData {
   trackColor: string;
 }
 
+// Ring colors ride INLINE STYLES, not just the stroke presentation
+// attributes: var() references in a presentation attribute are not
+// substituted on every engine (Firefox drops the whole declaration →
+// stroke:none → an invisible ring; svgwg#1031, 2025-11: browsers still
+// disagree and the spec has not pinned the behavior). Same contract
+// HkProgressRing documents for its segment color.
+
+
 const RING_ANIM_MS = 800;
 
 export default defineComponent({
@@ -95,6 +103,7 @@ export default defineComponent({
                 r={ring.radius}
                 fill="none"
                 stroke={ring.trackColor}
+                style={{ stroke: ring.trackColor }}
                 stroke-width={ring.strokeWidth}
               />
               <circle
@@ -108,7 +117,10 @@ export default defineComponent({
                 stroke-dasharray={ring.circumference}
                 stroke-dashoffset={ring.dashOffset}
                 style={{
-                  transition: props.animate ? "stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)" : "none",
+                  stroke: ring.color,
+                  transition: props.animate
+                    ? "stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)"
+                    : "none",
                 }}
               />
             </g>

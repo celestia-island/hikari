@@ -193,7 +193,10 @@
     "hikari::statusBar.region.CN": "中國大陸",
     "hikari::statusBar.region.HK": "中國香港",
     "hikari::statusBar.region.MO": "中國澳門",
-    "hikari::statusBar.region.TW": "中國台灣"
+    "hikari::statusBar.region.TW": "中國台灣",
+    "hikari::filterBar.trigger": "篩選",
+    "hikari::filterBar.apply": "套用",
+    "hikari::filterBar.reset": "重設"
   },
   "hikari::affixPicker.title": "選項",
   "hikari::affixPicker.search": "搜尋",

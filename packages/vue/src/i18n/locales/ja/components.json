@@ -189,7 +189,10 @@
     "hikari::zoomToolbar.reset": "ズームをリセット",
     "hikari::zoomToolbar.zoomIn": "拡大",
     "hikari::zoomToolbar.zoomOut": "縮小",
-    "hikari::zoomToolbar.zoomSlider": "ズーム倍率"
+    "hikari::zoomToolbar.zoomSlider": "ズーム倍率",
+    "hikari::filterBar.trigger": "絞り込み",
+    "hikari::filterBar.apply": "適用",
+    "hikari::filterBar.reset": "リセット"
   },
   "hikari::affixPicker.unset": "未設定",
   "hikari::affixPicker.title": "オプション",

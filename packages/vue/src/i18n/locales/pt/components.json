@@ -189,7 +189,10 @@
     "hikari::zoomToolbar.reset": "Redefinir zoom",
     "hikari::zoomToolbar.zoomIn": "Ampliar",
     "hikari::zoomToolbar.zoomOut": "Reduzir",
-    "hikari::zoomToolbar.zoomSlider": "Nível de zoom"
+    "hikari::zoomToolbar.zoomSlider": "Nível de zoom",
+    "hikari::filterBar.trigger": "Filtros",
+    "hikari::filterBar.apply": "Aplicar",
+    "hikari::filterBar.reset": "Redefinir"
   },
   "hikari::affixPicker.unset": "Não definido",
   "hikari::affixPicker.title": "Opções",

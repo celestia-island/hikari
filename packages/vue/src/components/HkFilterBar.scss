@@ -1,0 +1,59 @@
+/* HkFilterBar — the standard filter strip chrome (inline + popover). */
+
+.hk-filter-bar {
+  min-width: 0;
+}
+
+/* ── inline: the standardized bare row ─────────────────────────────── */
+.hk-filter-bar:not(.hk-filter-bar-popover) {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-12, 0.75rem);
+  padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-md, 0.5rem);
+  background: rgb(var(--color-surface));
+}
+
+.hk-filter-bar-fields {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-12, 0.75rem);
+  min-width: 0;
+}
+
+.hk-filter-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  flex-shrink: 0;
+}
+
+/* ── popover: collapsed behind the trigger button ──────────────────── */
+.hk-filter-bar-popover {
+  display: inline-flex;
+}
+
+.hk-filter-bar-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.hk-filter-bar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 0.75rem);
+  min-width: 280px;
+  padding: var(--space-4, 0.25rem);
+}
+
+.hk-filter-bar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8, 0.5rem);
+  padding-top: var(--space-8, 0.5rem);
+  border-top: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+}

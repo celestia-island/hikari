@@ -189,7 +189,10 @@
     "hikari::zoomToolbar.reset": "Сбросить масштаб",
     "hikari::zoomToolbar.zoomIn": "Увеличить",
     "hikari::zoomToolbar.zoomOut": "Уменьшить",
-    "hikari::zoomToolbar.zoomSlider": "Уровень масштаба"
+    "hikari::zoomToolbar.zoomSlider": "Уровень масштаба",
+    "hikari::filterBar.trigger": "Фильтры",
+    "hikari::filterBar.apply": "Применить",
+    "hikari::filterBar.reset": "Сбросить"
   },
   "hikari::affixPicker.unset": "Не задано",
   "hikari::affixPicker.title": "Параметры",

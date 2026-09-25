@@ -754,6 +754,7 @@ export { HkStatCard as HkStatCard } from "./components/HkStatCard";
 export { statToneColor, type StatTone as StatTone, type StatVariant as StatVariant } from "./components/HkStatCard";
 export { HkStatusPill as HkStatusPill } from "./components/HkStatusPill";
 export { default as HkFilterBar } from "./components/HkFilterBar";
+export { default as HFilterBar } from "./components/HkFilterBar";
 export { HkShareBar as HkShareBar } from "./components/HkShareBar";
 export { HkSecretRevealModal as HkSecretRevealModal } from "./components/HkSecretRevealModal";
 export { HkCaptchaWidget as HkCaptchaWidget } from "./components/HkCaptchaWidget";

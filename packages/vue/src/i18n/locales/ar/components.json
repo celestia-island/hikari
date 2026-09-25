@@ -81,9 +81,6 @@
     "hikari::filePicker.size": "الحجم",
     "hikari::filePicker.title": "اختر الملفات",
     "hikari::filePicker.titleFolder": "استعراض المجلدات",
-    "hikari::filterBar.apply": "تطبيق",
-    "hikari::filterBar.reset": "إعادة تعيين",
-    "hikari::filterBar.trigger": "عوامل التصفية",
     "hikari::imageLightbox.close": "إغلاق",
     "hikari::imageLightbox.title": "عارض الصور",
     "hikari::imagePreview.enlarge": "تكبير الصورة",
@@ -192,7 +189,10 @@
     "hikari::zoomToolbar.reset": "إعادة تعيين التكبير",
     "hikari::zoomToolbar.zoomIn": "تكبير",
     "hikari::zoomToolbar.zoomOut": "تصغير",
-    "hikari::zoomToolbar.zoomSlider": "مستوى التكبير"
+    "hikari::zoomToolbar.zoomSlider": "مستوى التكبير",
+    "hikari::filterBar.trigger": "عوامل التصفية",
+    "hikari::filterBar.apply": "تطبيق",
+    "hikari::filterBar.reset": "إعادة تعيين"
   },
   "hikari::affixPicker.unset": "غير محدد",
   "hikari::affixPicker.title": "الخيارات",

@@ -81,9 +81,6 @@
     "hikari::filePicker.size": "크기",
     "hikari::filePicker.title": "파일 선택",
     "hikari::filePicker.titleFolder": "폴더 찾아보기",
-    "hikari::filterBar.apply": "적용",
-    "hikari::filterBar.reset": "초기화",
-    "hikari::filterBar.trigger": "필터",
     "hikari::imageLightbox.close": "닫기",
     "hikari::imageLightbox.title": "이미지 뷰어",
     "hikari::imagePreview.enlarge": "클릭하여 확대",
@@ -192,7 +189,10 @@
     "hikari::zoomToolbar.reset": "줌 초기화",
     "hikari::zoomToolbar.zoomIn": "확대",
     "hikari::zoomToolbar.zoomOut": "축소",
-    "hikari::zoomToolbar.zoomSlider": "확대 수준"
+    "hikari::zoomToolbar.zoomSlider": "확대 수준",
+    "hikari::filterBar.trigger": "필터",
+    "hikari::filterBar.apply": "적용",
+    "hikari::filterBar.reset": "초기화"
   },
   "hikari::affixPicker.unset": "미설정",
   "hikari::affixPicker.title": "옵션",

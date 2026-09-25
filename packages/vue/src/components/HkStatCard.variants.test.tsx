@@ -100,13 +100,26 @@ describe("HkStatCard ring", () => {
     expect(c.querySelector(".hk-stat-card-ring-detail")?.textContent).toBe("12 / 32 · monthly");
   });
 
-  it("clamps out-of-range percentages", () => {
+  it("clamps an over-range pct to a full gauge", () => {
     const c = mount(h(HkStatCard, { variant: "ring", pct: 140, value: "140%", label: "L" }));
     // The dash offset must reflect a clamped 100% fill, not an overshoot:
     // a clamped ring draws dashoffset 0.
     const arc = c.querySelector(".hk-gauge-ring circle[stroke-dasharray]") as SVGElement;
     expect(arc).toBeTruthy();
     expect(arc.getAttribute("stroke-dashoffset")).toBe("0");
+  });
+
+  it("clamps a negative pct to an empty gauge (the guard HkGaugeRing does not provide)", () => {
+    // HkGaugeRing only clamps the UPPER bound internally (Math.min(pct, 100)),
+    // so a negative pct surviving this component would draw dashoffset
+    // > circumference — an arc longer than the whole ring. This assertion is
+    // what kills a mutation that drops clampPct's lower clamp.
+    const c = mount(h(HkStatCard, { variant: "ring", pct: -20, value: "-20%", label: "L" }));
+    const arc = c.querySelector(".hk-gauge-ring circle[stroke-dasharray]") as SVGElement;
+    expect(arc).toBeTruthy();
+    const circumference = 2 * Math.PI * ((104 - 7) / 2);
+    const offset = Number(arc.getAttribute("stroke-dashoffset"));
+    expect(Math.abs(offset - circumference)).toBeLessThan(0.01);
   });
 
   it("treats a missing pct as an empty gauge, not NaN", () => {

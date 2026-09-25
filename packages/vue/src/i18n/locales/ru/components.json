@@ -81,9 +81,6 @@
     "hikari::filePicker.size": "Размер",
     "hikari::filePicker.title": "Выбор файлов",
     "hikari::filePicker.titleFolder": "Обзор папок",
-    "hikari::filterBar.apply": "Применить",
-    "hikari::filterBar.reset": "Сбросить",
-    "hikari::filterBar.trigger": "Фильтры",
     "hikari::imageLightbox.close": "Закрыть",
     "hikari::imageLightbox.title": "Просмотр изображения",
     "hikari::imagePreview.enlarge": "Увеличить",
@@ -192,7 +189,10 @@
     "hikari::zoomToolbar.reset": "Сбросить масштаб",
     "hikari::zoomToolbar.zoomIn": "Увеличить",
     "hikari::zoomToolbar.zoomOut": "Уменьшить",
-    "hikari::zoomToolbar.zoomSlider": "Уровень масштаба"
+    "hikari::zoomToolbar.zoomSlider": "Уровень масштаба",
+    "hikari::filterBar.trigger": "Фильтры",
+    "hikari::filterBar.apply": "Применить",
+    "hikari::filterBar.reset": "Сбросить"
   },
   "hikari::affixPicker.unset": "Не задано",
   "hikari::affixPicker.title": "Параметры",

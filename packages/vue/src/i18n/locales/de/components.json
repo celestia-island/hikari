@@ -81,9 +81,6 @@
     "hikari::filePicker.size": "Größe",
     "hikari::filePicker.title": "Dateien wählen",
     "hikari::filePicker.titleFolder": "Ordner durchsuchen",
-    "hikari::filterBar.apply": "Anwenden",
-    "hikari::filterBar.reset": "Zurücksetzen",
-    "hikari::filterBar.trigger": "Filter",
     "hikari::imageLightbox.close": "Schließen",
     "hikari::imageLightbox.title": "Bildbetrachter",
     "hikari::imagePreview.enlarge": "Vergrößern",
@@ -192,7 +189,10 @@
     "hikari::zoomToolbar.reset": "Zoom zurücksetzen",
     "hikari::zoomToolbar.zoomIn": "Vergrößern",
     "hikari::zoomToolbar.zoomOut": "Verkleinern",
-    "hikari::zoomToolbar.zoomSlider": "Zoom-Stufe"
+    "hikari::zoomToolbar.zoomSlider": "Zoom-Stufe",
+    "hikari::filterBar.trigger": "Filter",
+    "hikari::filterBar.apply": "Anwenden",
+    "hikari::filterBar.reset": "Zurücksetzen"
   },
   "hikari::affixPicker.unset": "Nicht festgelegt",
   "hikari::affixPicker.title": "Optionen",

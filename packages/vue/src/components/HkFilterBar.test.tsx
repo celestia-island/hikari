@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, ref } from "vue";
+import { createApp, h } from "vue";
 
 import HkFilterBar from "./HkFilterBar";
 
@@ -66,17 +66,8 @@ describe("HkFilterBar inline", () => {
 
 describe("HkFilterBar popover", () => {
   it("starts collapsed behind a trigger button carrying the count", () => {
-    const open = ref(false);
     const c = mount(
-      h(
-        HkFilterBar,
-        {
-          mode: "popover",
-          activeCount: 3,
-          "onUpdate:modelValue": (v: boolean) => (open.value = v),
-        },
-        { default: () => h("input", { "data-probe": "" }) },
-      ),
+      h(HkFilterBar, { mode: "popover", activeCount: 3 }, { default: () => h("input", { "data-probe": "" }) }),
     );
     const trigger = c.querySelector(".hk-filter-bar-popover button") as HTMLButtonElement;
     expect(trigger).toBeTruthy();

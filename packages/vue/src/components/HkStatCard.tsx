@@ -81,7 +81,7 @@ export const HkStatCard = defineComponent({
     /** ring: sub-label rendered inside the ring under the value (the unit). */
     unit: { type: String, default: undefined },
   },
-  emits: { click: (_e: MouseEvent) => true },
+  emits: { click: (_e: MouseEvent | KeyboardEvent) => true },
   setup(props, { emit, slots }) {
     return () => {
       const shared = {
@@ -93,6 +93,18 @@ export const HkStatCard = defineComponent({
         role: props.clickable ? "button" : undefined,
         tabindex: props.clickable ? 0 : undefined,
         onClick: props.clickable ? (e: MouseEvent) => emit("click", e) : undefined,
+        // role="button" promises keyboard activation (Enter/Space) — the
+        // same contract HkContextRing's clickable ring honors. Key events
+        // bubbling from a focusable INSIDE the card (an aside button) are
+        // left alone so they don't double-fire the card's click.
+        onKeydown: props.clickable
+          ? (e: KeyboardEvent) => {
+              if (e.target !== e.currentTarget) return;
+              if (e.key !== "Enter" && e.key !== " ") return;
+              e.preventDefault();
+              emit("click", e);
+            }
+          : undefined,
       };
 
       if (props.variant === "chip") {

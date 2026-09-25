@@ -144,6 +144,41 @@ describe("HkStatCard ring", () => {
   });
 });
 
+describe("HkStatCard clickable — role=button keyboard contract", () => {
+  it("activates on Enter and Space like a native button", async () => {
+    const clicks: string[] = [];
+    const c = mount(
+      h(HkStatCard, {
+        variant: "chip", value: 1, label: "L", clickable: true,
+        onClick: (e: MouseEvent | KeyboardEvent) => clicks.push("key" in e ? e.key : "mouse"),
+      }),
+    );
+    const card = c.querySelector(".hk-stat-card") as HTMLElement;
+    for (const key of ["Enter", " "]) {
+      card.dispatchEvent(
+        new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
+      );
+      await nextTick();
+    }
+    expect(clicks).toEqual(["Enter", " "]);
+  });
+
+  it("ignores keys bubbling from a focusable inside the card", async () => {
+    const clicks: unknown[] = [];
+    const c = mount(
+      h(HkStatCard, { variant: "chip", value: 1, label: "L", clickable: true, onClick: () => clicks.push(1) }, {
+        aside: () => h("button", { class: "aside-btn-probe" }, "x"),
+      }),
+    );
+    const inner = c.querySelector(".aside-btn-probe") as HTMLElement;
+    inner.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(clicks.length).toBe(0);
+  });
+});
+
 describe("HkStatCard bar", () => {
   it("renders label+value over a tone-colored segmented fill", () => {
     const c = mount(

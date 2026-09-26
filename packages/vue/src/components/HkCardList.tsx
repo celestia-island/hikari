@@ -1,9 +1,24 @@
-import { defineComponent, type Component, type PropType } from "vue";
+import { Comment, defineComponent, type Component, type PropType, type VNode } from "vue";
 
 import HkCard from "./HkCard";
 import { HkIconChip } from "./HkIconChip";
 import type { StatTone } from "./HkStatCard";
 import "./HkCardList.scss";
+
+/**
+ * Whether a default slot actually rendered any row. Testing
+ * `slots.default` for truthiness is not enough: the canonical template
+ * idiom (`<HkListRow v-for>` plus `<template #empty>`) always provides a
+ * default slot whose v-for renders zero vnodes, and a `v-if` row renders
+ * a comment placeholder — both would otherwise show an empty bordered
+ * card where the empty state belongs.
+ */
+function renderedRows(nodes: unknown): boolean {
+  if (nodes == null || nodes === false || nodes === "") return false;
+  if (Array.isArray(nodes)) return nodes.some((n) => renderedRows(n));
+  if (typeof nodes === "object") return (nodes as VNode).type !== Comment;
+  return true; // non-empty text content
+}
 
 /**
  * HkCardList — the standard card list: an unpadded HkCard whose body is
@@ -25,17 +40,20 @@ import "./HkCardList.scss";
 export const HkCardList = defineComponent({
   name: "HkCardList",
   setup(_props, { slots }) {
-    return () => (
-      <HkCard padded={false}>
-        {slots.empty && !slots.default ? (
-          slots.empty()
-        ) : (
-          <div class="hk-card-list" role="list">
-            {slots.default?.()}
-          </div>
-        )}
-      </HkCard>
-    );
+    return () => {
+      const rows = slots.default?.();
+      return (
+        <HkCard padded={false}>
+          {slots.empty && !renderedRows(rows) ? (
+            slots.empty()
+          ) : (
+            <div class="hk-card-list" role="list">
+              {rows}
+            </div>
+          )}
+        </HkCard>
+      );
+    };
   },
 });
 

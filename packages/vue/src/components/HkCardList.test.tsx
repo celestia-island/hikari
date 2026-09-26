@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, defineComponent, h } from "vue";
+import { createApp, createCommentVNode, defineComponent, h } from "vue";
 
 import { HkCardList, HkListRow } from "./HkCardList";
 
@@ -43,6 +43,52 @@ describe("HkCardList", () => {
     const c = mount(h(HkCardList, null, { empty: () => h("p", { class: "probe-empty" }, "empty") }));
     expect(c.querySelector(".hk-card-list")).toBeNull();
     expect(c.querySelector(".probe-empty")?.textContent).toBe("empty");
+  });
+
+  it("falls back to the empty slot when the default slot renders no rows (v-for idiom)", () => {
+    const rows: Array<{ name: string }> = [];
+    const c = mount(
+      h(HkCardList, null, {
+        default: () => rows.map((r) => h(HkListRow, { title: r.name })),
+        empty: () => h("p", { class: "probe-empty" }, "empty"),
+      }),
+    );
+    expect(c.querySelector(".hk-card-list")).toBeNull();
+    expect(c.querySelector(".probe-empty")?.textContent).toBe("empty");
+  });
+
+  it("falls back to the empty slot when the default slot renders null (v-if idiom)", () => {
+    const c = mount(
+      h(HkCardList, null, {
+        default: () => null,
+        empty: () => h("p", { class: "probe-empty" }, "empty"),
+      }),
+    );
+    expect(c.querySelector(".hk-card-list")).toBeNull();
+    expect(c.querySelector(".probe-empty")).toBeTruthy();
+  });
+
+  it("falls back to the empty slot when the default slot is only a comment placeholder", () => {
+    const c = mount(
+      h(HkCardList, null, {
+        default: () => [createCommentVNode("v-if", true)],
+        empty: () => h("p", { class: "probe-empty" }, "empty"),
+      }),
+    );
+    expect(c.querySelector(".hk-card-list")).toBeNull();
+    expect(c.querySelector(".probe-empty")).toBeTruthy();
+  });
+
+  it("keeps the list when rows exist even with the empty slot present", () => {
+    const c = mount(
+      h(HkCardList, null, {
+        default: () => [h(HkListRow, { title: "A" })],
+        empty: () => h("p", { class: "probe-empty" }, "empty"),
+      }),
+    );
+    expect(c.querySelector(".hk-card-list")).toBeTruthy();
+    expect(c.querySelectorAll(".hk-list-row")).toHaveLength(1);
+    expect(c.querySelector(".probe-empty")).toBeNull();
   });
 });
 

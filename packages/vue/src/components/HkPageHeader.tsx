@@ -22,7 +22,7 @@ export const HkPageHeader = defineComponent({
     title: { type: String, required: true },
     subtitle: { type: String, default: undefined },
     /** Leading icon component (rendered before the title text). */
-    icon: { type: Object as PropType<Component>, default: undefined },
+    icon: { type: [Object, Function] as PropType<Component>, default: undefined },
     /** Compact variant for dense pages (smaller title, tighter spacing). */
     dense: { type: Boolean, default: false },
   },

@@ -23,7 +23,7 @@ export const HkIconChip = defineComponent({
   name: "HkIconChip",
   props: {
     /** Icon component (lucide-vue-next style). */
-    icon: { type: Object as PropType<Component>, required: true },
+    icon: { type: [Object, Function] as PropType<Component>, required: true },
     /** Tone drives both the tint background and the glyph ink. */
     tone: { type: String as PropType<StatTone>, default: "primary" },
     /** sm = 24px box / 13px glyph, md = 28px box / 15px glyph. */

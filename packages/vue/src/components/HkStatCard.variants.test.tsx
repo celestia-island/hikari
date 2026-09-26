@@ -215,6 +215,13 @@ describe("HkStatCard footer slot (all variants)", () => {
     expect(bar.querySelector(".hk-stat-card-footer .probe-b")).toBeTruthy();
   });
 
+  it("renders the footer row on the chip variant too", () => {
+    const c = mount(
+      h(HkStatCard, { variant: "chip", value: 3, label: "Running" }, { footer: () => h("i", { class: "probe-c" }) }),
+    );
+    expect(c.querySelector(".hk-stat-card-footer .probe-c")).toBeTruthy();
+  });
+
   it("omits the footer node when the slot is absent", () => {
     const c = mount(h(HkStatCard, { label: "L", value: 1 }));
     expect(c.querySelector(".hk-stat-card-footer")).toBeNull();

@@ -15,6 +15,8 @@ export type StatTone = "success" | "warning" | "error" | "info" | "primary" | "m
  *   hint (the original anatomy, still the default).
  * - `chip`  — horizontal: a tone-tinted icon chip beside value + label,
  *   with an optional trailing `aside` slot (tier badge, delta, …).
+ *   Every variant also takes a `footer` slot — a free-form content row
+ *   under the value/hint for badge rows and deltas.
  * - `ring`  — a single utilization ring with the value inside, the label
  *   (with the icon) underneath, and the hint as the detail line.
  * - `bar`   — label + value on one row over a tone-colored progress bar,
@@ -126,6 +128,7 @@ export const HkStatCard = defineComponent({
               {slots.aside && <div class="hk-stat-card-aside">{slots.aside()}</div>}
             </div>
             {props.hint && <div class="hk-stat-card-hint">{props.hint}</div>}
+            {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
           </div>
         );
       }
@@ -157,6 +160,7 @@ export const HkStatCard = defineComponent({
                 {props.hint}
               </div>
             )}
+            {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
           </div>
         );
       }
@@ -178,6 +182,7 @@ export const HkStatCard = defineComponent({
                 {props.hint}
               </div>
             )}
+            {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
           </div>
         );
       }
@@ -191,6 +196,7 @@ export const HkStatCard = defineComponent({
           </div>
           <div class="hk-stat-card-value">{props.value}</div>
           {props.hint && <div class="hk-stat-card-hint" title={props.hint}>{props.hint}</div>}
+          {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
         </div>
       );
     };

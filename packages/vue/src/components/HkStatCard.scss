@@ -187,3 +187,13 @@
 .hk-stat-card-bar-detail {
   max-width: 100%;
 }
+
+/* footer slot — free-form content row under the value/hint (badge rows,
+ * deltas, sparklines). Wraps; does not collapse like the hint. */
+.hk-stat-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  max-width: 100%;
+}

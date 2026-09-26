@@ -31,12 +31,14 @@ export const HkPageHeader = defineComponent({
       <div class={["hk-page-header", props.dense && "hk-page-header-dense"]}>
         <div class="hk-page-header-main">
           <h1 class="hk-page-header-title">
+            {slots.lead ? <span class="hk-page-header-lead">{slots.lead()}</span> : null}
             {slots.icon
               ? <span class="hk-page-header-icon">{slots.icon()}</span>
               : props.icon
                 ? <span class="hk-page-header-icon">{h(props.icon)}</span>
                 : null}
             <span class="hk-page-header-title-text">{props.title}</span>
+            {slots.titleExtra ? <span class="hk-page-header-title-extra">{slots.titleExtra()}</span> : null}
           </h1>
           {props.subtitle && (
             <p class="hk-page-header-subtitle">{props.subtitle}</p>

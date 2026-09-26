@@ -196,6 +196,38 @@ describe("HkStatCard bar", () => {
   });
 });
 
+describe("HkStatCard footer slot (all variants)", () => {
+  it("renders the footer content row under the value on plain", () => {
+    const c = mount(
+      h(HkStatCard, { label: "Total", value: "1.2M" }, { footer: () => h("span", { class: "probe-badge" }, "3 dims") }),
+    );
+    expect(c.querySelector(".hk-stat-card-footer .probe-badge")?.textContent).toBe("3 dims");
+  });
+
+  it("renders the footer row after the detail line on ring and bar", () => {
+    const ring = mount(
+      h(HkStatCard, { variant: "ring", value: "40%", label: "L", pct: 40 }, { footer: () => h("i", { class: "probe-r" }) }),
+    );
+    expect(ring.querySelector(".hk-stat-card-footer .probe-r")).toBeTruthy();
+    const bar = mount(
+      h(HkStatCard, { variant: "bar", value: "72%", label: "L", pct: 72 }, { footer: () => h("i", { class: "probe-b" }) }),
+    );
+    expect(bar.querySelector(".hk-stat-card-footer .probe-b")).toBeTruthy();
+  });
+
+  it("renders the footer row on the chip variant too", () => {
+    const c = mount(
+      h(HkStatCard, { variant: "chip", value: 3, label: "Running" }, { footer: () => h("i", { class: "probe-c" }) }),
+    );
+    expect(c.querySelector(".hk-stat-card-footer .probe-c")).toBeTruthy();
+  });
+
+  it("omits the footer node when the slot is absent", () => {
+    const c = mount(h(HkStatCard, { label: "L", value: 1 }));
+    expect(c.querySelector(".hk-stat-card-footer")).toBeNull();
+  });
+});
+
 describe("statToneColor", () => {
   it("maps every tone to the theme-variable palette the card paints with", () => {
     expect(statToneColor("success")).toBe("rgb(var(--color-success))");

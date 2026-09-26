@@ -162,6 +162,15 @@ describe("index export surface smoke", () => {
       "HkEmptyState",
       "HkPageHeader",
       "HkTable",
+      "HkIconChip",
+      "HIconChip",
+      "HkCardList",
+      "HCardList",
+      "HkListRow",
+      "HListRow",
+      "HkSectionHeader",
+      "HSectionHeader",
+      "HkAdminTablePage",
     ] as const) {
       expect(Hk, `missing export: ${name}`).toHaveProperty(name);
     }

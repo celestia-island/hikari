@@ -1,0 +1,68 @@
+/* HkCardList / HkListRow — the standard card list anatomy. */
+
+.hk-card-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  /* hairline dividers between rows (the CSS-native divide-y) */
+  > .hk-list-row + .hk-list-row {
+    border-top: 1px solid rgb(var(--color-border) / 10%);
+  }
+}
+
+.hk-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+  padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
+  min-width: 0;
+  text-align: left;
+}
+
+.hk-list-row-clickable {
+  cursor: pointer;
+  transition: background-color var(--duration-normal, 0.3s) ease;
+
+  &:hover {
+    background: rgb(var(--color-text) / 4%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+}
+
+.hk-list-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.hk-list-row-title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-list-row-subtitle {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-list-row-trailing {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+}

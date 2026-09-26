@@ -1,0 +1,81 @@
+/* HkSectionHeader — the standard in-card / in-page section header. */
+
+.hk-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}
+
+.hk-section-header-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  min-width: 0;
+}
+
+.hk-section-header-icon {
+  display: inline-flex;
+  color: rgb(var(--color-muted));
+  flex-shrink: 0;
+}
+
+.hk-section-header-title {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8, 0.5rem);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.hk-section-header-count {
+  font-size: var(--text-2xs, 0.625rem);
+  font-weight: 400;
+  color: rgb(var(--color-muted));
+  white-space: nowrap;
+}
+
+.hk-section-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  flex-shrink: 0;
+}
+
+.hk-section-header-description {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* ── dense: tighter rhythm for dense panels ─────────────────────────── */
+.hk-section-header-dense {
+  gap: var(--space-2, 0.125rem);
+}
+
+/* ── micro: tiny uppercase eyebrow label ────────────────────────────── */
+.hk-section-header-micro .hk-section-header-title {
+  font-size: var(--text-2xs, 0.625rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(var(--color-muted));
+}
+
+/* ── mono: mono-caption idiom for ledgers/detail rails ──────────────── */
+.hk-section-header-mono .hk-section-header-title {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+}
+
+.hk-section-header-mono .hk-section-header-count {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}

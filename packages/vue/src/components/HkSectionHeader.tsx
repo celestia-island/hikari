@@ -34,7 +34,7 @@ export const HkSectionHeader = defineComponent({
     /** One-line description rendered under the heading. */
     description: { type: String, default: undefined },
     /** Leading icon component. */
-    icon: { type: Object as PropType<Component>, default: undefined },
+    icon: { type: [Object, Function] as PropType<Component>, default: undefined },
     /** Trailing count badge (e.g. "12 total") rendered beside the title. */
     count: { type: String, default: undefined },
     variant: { type: String as PropType<SectionHeaderVariant>, default: "default" },

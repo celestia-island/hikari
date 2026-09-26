@@ -1,4 +1,4 @@
-import { defineComponent, type PropType } from "vue";
+import { defineComponent, type Component, type PropType } from "vue";
 import { HAlert, HCard, HEmptyState, HSpinner, HTable, useI18n } from "@celestia-island/hikari";
 import { HkPageHeader } from "./HkPageHeader";
 
@@ -34,7 +34,7 @@ export const HkAdminTablePage = defineComponent({
     /** Forwarded to the page header. */
     subtitle: { type: String, default: undefined },
     /** Forwarded to the page header. */
-    icon: { type: Object, default: undefined },
+    icon: { type: [Object, Function] as PropType<Component>, default: undefined },
     /** Compact page header variant. */
     dense: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },

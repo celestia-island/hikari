@@ -70,7 +70,7 @@ export const HkListRow = defineComponent({
   name: "HkListRow",
   props: {
     /** Leading icon — rendered through the standard HkIconChip. */
-    icon: { type: Object as PropType<Component>, default: undefined },
+    icon: { type: [Object, Function] as PropType<Component>, default: undefined },
     iconTone: { type: String as PropType<StatTone>, default: "primary" },
     title: { type: String, default: undefined },
     subtitle: { type: String, default: undefined },

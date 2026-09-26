@@ -77,7 +77,7 @@ export const HkStatCard = defineComponent({
     /** Whole-card click (drill-through to the owning page). */
     clickable: { type: Boolean, default: false },
     /** chip/ring: leading icon component (lucide-vue-next style). */
-    icon: { type: Object as PropType<Component>, default: undefined },
+    icon: { type: [Object, Function] as PropType<Component>, default: undefined },
     /** ring/bar: gauge percentage, clamped to 0–100. */
     pct: { type: Number, default: undefined },
     /** ring: sub-label rendered inside the ring under the value (the unit). */

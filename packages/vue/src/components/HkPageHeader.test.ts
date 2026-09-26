@@ -64,4 +64,21 @@ describe("HkPageHeader", () => {
       "hk-page-header-dense",
     );
   });
+  it("renders the lead slot before the title icon", () => {
+    const c = mountHeader({ title: "T" }, { lead: () => h("button", { class: "probe-back" }, "Back") });
+    const title = c.querySelector(".hk-page-header-title")!;
+    expect(title.querySelector(".hk-page-header-lead .probe-back")).toBeTruthy();
+    const lead = c.querySelector(".hk-page-header-lead")!;
+    const icon = c.querySelector(".hk-page-header-icon");
+    if (icon) {
+      expect(lead.compareDocumentPosition(icon) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it("renders titleExtra inline after the title text", () => {
+    const c = mountHeader({ title: "T" }, { titleExtra: () => h("span", { class: "probe-chip" }, "stable") });
+    const extra = c.querySelector(".hk-page-header-title-text + .hk-page-header-title-extra") ??
+      c.querySelector(".hk-page-header-title-extra");
+    expect(extra?.textContent).toContain("stable");
+  });
 });

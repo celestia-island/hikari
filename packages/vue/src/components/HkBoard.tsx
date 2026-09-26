@@ -98,6 +98,11 @@ export interface BoardEdgeInput {
   width?: number;
 }
 
+// Ink colors ride INLINE STYLES beside the stroke presentation attribute:
+// var() references in a presentation attribute are not substituted on every
+// engine (Firefox drops the whole declaration → stroke:none → invisible
+// edges; svgwg#1031, 2025-11: browsers still disagree). Same contract as
+// HkGaugeRing/HkProgressRing.
 const DEFAULT_INK = "rgb(var(--color-primary) / 38%)";
 
 export default defineComponent({
@@ -426,6 +431,7 @@ export default defineComponent({
                 class="hk-board-edge"
                 d={e.d}
                 stroke={e.ink}
+                style={{ stroke: e.ink }}
                 stroke-width={e.width}
                 stroke-dasharray={e.dashed ? "6 5" : undefined}
                 fill="none"

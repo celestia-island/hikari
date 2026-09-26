@@ -1293,27 +1293,35 @@ export default defineComponent({
                       data-edge-id={edge.id}
                       data-edge-type={edge.type}
                     >
-                      {props.interactiveEdges && strokes.map((sp, i) => (
-                        <path
-                          key={`halo-${i}`}
-                          class="hk-node-canvas-edge-halo"
-                          d={sp.d}
-                          fill="none"
-                          stroke={edge.color ?? "var(--hk-border-3, #555)"}
-                          stroke-width={sp.width * 3}
-                          stroke-dasharray={sp.dashed ? "6 4" : undefined}
-                        />
-                      ))}
-                      {strokes.map((sp, i) => (
-                        <path
-                          key={`ink-${i}`}
-                          d={sp.d}
-                          fill="none"
-                          stroke={edge.color ?? "var(--hk-border-3, #555)"}
-                          stroke-width={sp.width}
-                          stroke-dasharray={sp.dashed ? "6 4" : undefined}
-                        />
-                      ))}
+                      {props.interactiveEdges && strokes.map((sp, i) => {
+                        const edgeInk = edge.color ?? "var(--hk-border-3, #555)";
+                        return (
+                          <path
+                            key={`halo-${i}`}
+                            class="hk-node-canvas-edge-halo"
+                            d={sp.d}
+                            fill="none"
+                            stroke={edgeInk}
+                            style={{ stroke: edgeInk }}
+                            stroke-width={sp.width * 3}
+                            stroke-dasharray={sp.dashed ? "6 4" : undefined}
+                          />
+                        );
+                      })}
+                      {strokes.map((sp, i) => {
+                        const edgeInk = edge.color ?? "var(--hk-border-3, #555)";
+                        return (
+                          <path
+                            key={`ink-${i}`}
+                            d={sp.d}
+                            fill="none"
+                            stroke={edgeInk}
+                            style={{ stroke: edgeInk }}
+                            stroke-width={sp.width}
+                            stroke-dasharray={sp.dashed ? "6 4" : undefined}
+                          />
+                        );
+                      })}
                       {edge.label && (
                         <text
                           x={mid.x}
@@ -1321,6 +1329,7 @@ export default defineComponent({
                           text-anchor="middle"
                           font-size="11"
                           fill="var(--hk-text-2, #aaa)"
+                          style={{ fill: "var(--hk-text-2, #aaa)" }}
                         >
                           {edge.label}
                         </text>

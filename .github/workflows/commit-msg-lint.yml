@@ -6,6 +6,13 @@ on:
   merge_group:
     types: [checks_requested]
 
+permissions:
+  # The reusable lint (devtools #150) resolves the PR on its dispatch path,
+  # which needs pull-requests: read; a called workflow cannot grant itself a
+  # permission the caller withholds — the mismatch reads as startup_failure.
+  contents: read
+  pull-requests: read
+
 jobs:
   lint-commits:
     uses: celestia-island/celestia-devtools/.github/workflows/commit-msg-lint.yml@master

@@ -269,6 +269,7 @@ export default defineComponent({
             height={b.bounds.h * s}
             rx={2}
             fill={b.color}
+            style={{ fill: b.color, stroke: b.color }}
             opacity="0.28"
             stroke={b.color}
             stroke-width="0.6"
@@ -305,6 +306,7 @@ export default defineComponent({
                   cy={hubP[1]}
                   r={3}
                   fill="rgb(var(--color-primary))"
+                  style={{ fill: "rgb(var(--color-primary))" }}
                   filter="drop-shadow(0 0 2px rgb(var(--color-primary) / 0.6))"
                 />
               )}
@@ -315,6 +317,7 @@ export default defineComponent({
                 height={Math.max(1, vr.h)}
                 fill="none"
                 stroke="rgb(var(--color-primary))"
+                style={{ stroke: "rgb(var(--color-primary))" }}
                 stroke-width="1"
                 stroke-dasharray="3 2"
                 rx="2"

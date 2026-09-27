@@ -48,6 +48,20 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "Publishing @celestia-island/hikari@$v"
 
+      # S1-2 guard (2026-09-27): the v* tag namespace historically triggered
+      # BOTH release lines, and npm had no floor check — a crates-style
+      # v0.3.x tag would have published 0.3.x to npm and dragged `latest`
+      # back by a year. The guard fails the job unless the version is
+      # strictly newer than the registry's latest (network failures fail
+      # closed too), and the selftest keeps the comparison logic honest.
+      - name: Release guard (no downgrades)
+        shell: bash
+        run: |
+          python3 scripts/release_guard.py --selftest
+          python3 scripts/release_guard.py --registry npm \
+            --package @celestia-island/hikari \
+            --version "${{ steps.ver.outputs.version }}"
+
       - name: Bump version
         shell: bash
         run: |

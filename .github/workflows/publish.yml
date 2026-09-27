@@ -1,7 +1,13 @@
 name: Publish to crates.io
 on:
   push:
-    tags: [v*]
+    # S1-2 (2026-09-27): the crates line gets its own tag namespace. The
+    # historical shared `v*` prefix let every npm tag (v0.55.*) also trigger
+    # this workflow, which then published "whatever the workspace declares"
+    # regardless of the tag — a bump that was not meant for release yet
+    # would ship early, and the two lines could masquerade as each other.
+    # npm keeps `v*` (62 historical tags); crates releases tag `cargo-v0.3.x`.
+    tags: ["cargo-v*"]
   workflow_dispatch:
 
 jobs:
@@ -12,11 +18,33 @@ jobs:
       - uses: actions/checkout@v7
       - name: Extract tag version
         id: tag
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
-      - name: Check all publishable packages match tag
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/cargo-v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/cargo-v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check all publishable packages match the workspace line
         run: |
           TAG_VERSION="${{ steps.tag.outputs.version }}"
+          ROOT_VER=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
           FAIL=0
+          # A tag ref whose cargo-v prefix carries no version (glob `*`
+          # matches empty) must not fall into the dispatch semantics.
+          if [[ "$GITHUB_REF" == refs/tags/* && -z "$TAG_VERSION" ]]; then
+            echo "::error::tag $GITHUB_REF carries no version after the cargo-v prefix"
+            FAIL=1
+          fi
+          if ! [[ "$ROOT_VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::workspace version ($ROOT_VER) is not a valid semver version"
+            FAIL=1
+          fi
+          # A tag must name exactly the version it releases; the workspace
+          # version must never be published under a tag from another line.
+          if [ -n "$TAG_VERSION" ] && [ "$ROOT_VER" != "$TAG_VERSION" ]; then
+            echo "::error::tag cargo-v$TAG_VERSION does not match the crates workspace version ($ROOT_VER) — bump Cargo.toml and re-tag"
+            FAIL=1
+          fi
           PACKAGES=(
             "hikari-palette:packages/palette"
             "hikari-animation:packages/animation"
@@ -38,32 +66,25 @@ jobs:
               VER=$(grep -oP 'version\.workspace\s*=\s*true' "$CARGO_TOML" >/dev/null 2>&1 && echo "workspace" || echo "MISSING")
             fi
             if [ "$VER" = "workspace" ]; then
-              ROOT_VER=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
               echo "::notice::$PKG uses workspace version ($ROOT_VER) — OK"
-            elif [ "$VER" = "$TAG_VERSION" ]; then
-              echo "::notice::$PKG version ($VER) matches tag — OK"
+            elif [ "$VER" = "$ROOT_VER" ]; then
+              echo "::notice::$PKG version ($VER) matches the workspace line — OK"
             else
-              echo "::error::$PKG version ($VER) != tag ($TAG_VERSION) in $CARGO_TOML"
+              echo "::error::$PKG version ($VER) != workspace version ($ROOT_VER) in $CARGO_TOML"
               FAIL=1
             fi
           done
-          ROOT_VER=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
-          # The v* tag namespace serves the npm release series (packages/vue),
-          # which diverged from the crates workspace series after 0.3.20, so a
-          # release tag generally no longer equals the crates version. Publish
-          # whatever version the workspace itself declares.
-          if [ "$ROOT_VER" != "$TAG_VERSION" ]; then
-            echo "::notice::tag version ($TAG_VERSION) belongs to the npm series; publishing the crates workspace version ($ROOT_VER)"
-          fi
-          if ! [[ "$ROOT_VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::workspace.package version ($ROOT_VER) is not a valid semver version"
-            FAIL=1
-          fi
           if [ "$FAIL" -ne 0 ]; then
             echo "::error::Version verification failed."
             exit 1
           fi
           echo "All packages resolve to workspace version $ROOT_VER"
+      - name: Release guard (no downgrades)
+        run: |
+          ROOT_VER=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
+          python3 scripts/release_guard.py --selftest
+          python3 scripts/release_guard.py --registry crates \
+            --crate hikari-palette --version "$ROOT_VER"
 
   publish:
     name: Publish to crates.io

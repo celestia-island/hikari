@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, defineComponent, nextTick } from "vue";
+import { dirname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { HkStatCard, statToneColor } from "./HkStatCard";
 
@@ -288,6 +291,40 @@ describe("HkStatCard action slot — the corner affordance", () => {
       expect(c.querySelector(".hk-stat-card-foot")).toBeNull();
       expect(c.querySelector(".hk-stat-card > .hk-stat-card-hint")?.textContent).toBe("detail");
     }
+  });
+
+  it("keeps each variant's pre-slot hint attributes when the slot is absent", () => {
+    // R1 finding: the chip variant's hint never carried a title before
+    // the action slot existed — "byte-identical without the slot" must
+    // hold attribute-for-attribute, not just structure-for-structure.
+    // plain/ring/bar always titled their hint; chip never did.
+    const titled = (variant: "plain" | "chip" | "ring" | "bar") => {
+      const c = mount(h(HkStatCard, { variant, value: "v", label: "L", hint: "detail" }));
+      const hint = c.querySelector(".hk-stat-card > .hk-stat-card-hint") as HTMLElement;
+      return hint.hasAttribute("title");
+    };
+    expect(titled("chip")).toBe(false);
+    expect(titled("plain")).toBe(true);
+    expect(titled("ring")).toBe(true);
+    expect(titled("bar")).toBe(true);
+  });
+
+  it("keeps the action-corner SCSS contract (source pin)", () => {
+    // happy-dom never applies the stylesheet, so the data-has-action
+    // layout rules (corner clearance + action-only min-height) are
+    // otherwise removable with zero red (R1 mutation c). The house
+    // source-contract style pins them.
+    const scss = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "HkStatCard.scss"),
+      "utf-8",
+    );
+    const foot = scss.match(/\.hk-stat-card-foot\[data-has-action\]\s*{[^}]*}/)?.[0] ?? "";
+    expect(foot, "action-only foot min-height rule must exist").toContain("min-height");
+    const clearance = scss.match(
+      /\.hk-stat-card-foot\[data-has-action\] \.hk-stat-card-hint\s*{[^}]*}/,
+    )?.[0];
+    expect(clearance, "hint corner-clearance rule must exist").toBeTruthy();
+    expect(clearance).toContain("padding-inline-end");
   });
 
   it("stops action clicks from double-firing a clickable card's click", async () => {

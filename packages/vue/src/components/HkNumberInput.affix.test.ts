@@ -155,9 +155,10 @@ describe("HkNumberInput suffix slot interactivity — the affix-picker host cont
     // The "unit picker" composition (an affix chip riding the suffix
     // slot — e.g. HkAffixPicker side="suffix" for KiB/MiB/GiB in the
     // quota editor) mounts a BUTTON inside the suffix span. The span is
-    // a plain flex item: it must not swallow pointer events. This pins
-    // the behavior so a future `pointer-events: none` on the affix
-    // spans cannot silently deaden every host chip.
+    // a plain flex item. This pins the event WIRING (a listener inside
+    // the suffix slot fires) — synthetic dispatch bypasses CSS
+    // hit-testing, so the pointer-events half of that guarantee lives
+    // in the SCSS source contract below (R1 observation).
     let clicks = 0;
     const { container } = mountNumberInput({
       slots: {

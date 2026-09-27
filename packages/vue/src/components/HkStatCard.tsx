@@ -120,8 +120,10 @@ export const HkStatCard = defineComponent({
       // The hint line, optionally hosting the `action` slot at the foot
       // row's trailing edge (the card's bottom-right corner). WITHOUT an
       // action slot the hint renders exactly as before — the foot wrapper
-      // exists only when a corner affordance needs the anchor, so hosts
-      // not using the slot see a byte-identical DOM.
+      // exists only when a corner affordance needs the anchor, and each
+      // variant keeps its pre-slot attributes (the chip variant's hint
+      // never carried a title — R1), so hosts not using the slot see a
+      // byte-identical DOM.
       const renderHint = (detailClass?: string, titled = true) => {
         const hintEl = props.hint && (
           <div
@@ -162,7 +164,7 @@ export const HkStatCard = defineComponent({
               </div>
               {slots.aside && <div class="hk-stat-card-aside">{slots.aside()}</div>}
             </div>
-            {renderHint()}
+            {renderHint(undefined, false)}
             {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
           </div>
         );

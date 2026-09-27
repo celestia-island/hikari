@@ -15,14 +15,14 @@ export type StatTone = "success" | "warning" | "error" | "info" | "primary" | "m
  *   hint (the original anatomy, still the default).
  * - `chip`  — horizontal: a tone-tinted icon chip beside value + label,
  *   with an optional trailing `aside` slot (tier badge, delta, …).
- *   Every variant also takes a `footer` slot — a free-form content row
- *   under the value/hint for badge rows and deltas.
  * - `ring`  — a single utilization ring with the value inside, the label
  *   (with the icon) underneath, and the hint as the detail line.
  * - `bar`   — label + value on one row over a tone-colored progress bar,
  *   with the hint as the detail line.
  *
- * Every variant also takes an `action` slot: a corner affordance
+ * Every variant also takes a `footer` slot — a free-form content row
+ * under the value/hint for badge rows and deltas — and an `action`
+ * slot: a corner affordance
  * (typically an icon button) pinned to the trailing edge of the hint
  * line — the card's bottom-right corner. Hosts use it for per-card
  * controls ("⋯" customization buttons) that must live on the KPI cell

@@ -325,6 +325,15 @@ describe("HkStatCard action slot — the corner affordance", () => {
     )?.[0];
     expect(clearance, "hint corner-clearance rule must exist").toBeTruthy();
     expect(clearance).toContain("padding-inline-end");
+    // The ring card centers its children, which would leave the foot
+    // fit-content-wide — dead centering AND a hint-edge-anchored action
+    // (R2 Major). The stretch is what puts the corner back.
+    const ringFoot = scss.match(
+      /\.hk-stat-card-ring \.hk-stat-card-foot\s*{[^}]*}/,
+    )?.[0];
+    expect(ringFoot, "ring foot stretch rule must exist").toBeTruthy();
+    expect(ringFoot).toContain("align-self: stretch");
+    expect(ringFoot).toContain("justify-content: center");
   });
 
   it("stops action clicks from double-firing a clickable card's click", async () => {

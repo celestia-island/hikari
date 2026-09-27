@@ -213,8 +213,14 @@
 }
 
 /* The ring variant centers its detail line — keep the hint visually
-   centered while the action hugs the trailing edge. */
+   centered while the action hugs the trailing edge. The card centers
+   its children (align-items:center), which would leave the foot row
+   fit-content-wide and BOTH of those goals dead: the centering would
+   have nothing to center and the absolutely-positioned action would
+   anchor to the hint's edge instead of the card's corner — so the foot
+   explicitly stretches back to the full card width (R2). */
 .hk-stat-card-ring .hk-stat-card-foot {
+  align-self: stretch;
   justify-content: center;
 }
 

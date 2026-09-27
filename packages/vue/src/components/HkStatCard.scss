@@ -197,3 +197,50 @@
   gap: var(--space-8, 0.5rem);
   max-width: 100%;
 }
+
+/* ── foot row — the `action` slot's corner anchor ──────────────────────
+   When a card hosts the `action` slot, the hint line is wrapped in a
+   relative foot row and the action content is pinned to the row's
+   trailing edge — the card's bottom-right corner (the per-card "⋯"
+   affordance). Clicks stop at the wrapper (the TSX stops propagation),
+   so an action button never double-fires a clickable card's click. */
+.hk-stat-card-foot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The ring variant centers its detail line — keep the hint visually
+   centered while the action hugs the trailing edge. The card centers
+   its children (align-items:center), which would leave the foot row
+   fit-content-wide and BOTH of those goals dead: the centering would
+   have nothing to center and the absolutely-positioned action would
+   anchor to the hint's edge instead of the card's corner — so the foot
+   explicitly stretches back to the full card width (R2). */
+.hk-stat-card-ring .hk-stat-card-foot {
+  align-self: stretch;
+  justify-content: center;
+}
+
+/* Reserve the corner: a min-height keeps an action-only foot (no hint)
+   from collapsing onto the content above, and the hint truncates before
+   it can slide under the affordance. */
+.hk-stat-card-foot[data-has-action] {
+  min-height: 1.5rem;
+}
+
+.hk-stat-card-foot[data-has-action] .hk-stat-card-hint {
+  padding-inline-end: 1.75rem;
+}
+
+.hk-stat-card-action {
+  position: absolute;
+  inset-inline-end: calc(-1 * var(--space-4, 0.25rem));
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}

@@ -149,3 +149,36 @@ describe("HkNumberInput affix contract", () => {
     expect(label?.textContent).toBe("轮播间隔");
   });
 });
+
+describe("HkNumberInput suffix slot interactivity — the affix-picker host contract", () => {
+  it("delivers clicks on interactive suffix content (the unit-picker chip)", () => {
+    // The "unit picker" composition (an affix chip riding the suffix
+    // slot — e.g. HkAffixPicker side="suffix" for KiB/MiB/GiB in the
+    // quota editor) mounts a BUTTON inside the suffix span. The span is
+    // a plain flex item. This pins the event WIRING (a listener inside
+    // the suffix slot fires) — synthetic dispatch bypasses CSS
+    // hit-testing, so the pointer-events half of that guarantee lives
+    // in the SCSS source contract below (R1 observation).
+    let clicks = 0;
+    const { container } = mountNumberInput({
+      slots: {
+        suffix: () =>
+          h("button", { class: "suffix-chip-probe", onClick: () => clicks++ }, "MiB"),
+      },
+    });
+    const chip = query(container, ".hk-number-input-suffix .suffix-chip-probe") as HTMLElement;
+    expect(chip, "chip button inside the suffix span must render").not.toBeNull();
+    chip.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(clicks).toBe(1);
+  });
+
+  it("keeps pointer-events off the affix spans themselves (SCSS contract)", () => {
+    // Only the wrapper's `-disabled` state may set pointer-events:none —
+    // the same rule the wrapper uses to disable the whole field. A none
+    // on the affix spans would deaden interactive suffix content while
+    // the field looked enabled.
+    const affixRule =
+      scss.match(/\.hk-number-input-prefix,\s*\.hk-number-input-suffix\s*{[^}]*}/)?.[0] ?? "";
+    expect(affixRule, "affix rule must exist").not.toContain("pointer-events: none");
+  });
+});

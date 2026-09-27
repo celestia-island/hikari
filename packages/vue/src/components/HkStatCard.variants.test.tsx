@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, defineComponent, nextTick } from "vue";
+import { dirname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { HkStatCard, statToneColor } from "./HkStatCard";
 
@@ -238,5 +241,130 @@ describe("statToneColor", () => {
     // info falls back to primary when the host palette omits it — the
     // same fallback the SCSS dot uses.
     expect(statToneColor("info")).toBe("rgb(var(--color-info, rgb(var(--color-primary))))");
+  });
+});
+
+describe("HkStatCard action slot — the corner affordance", () => {
+  it("hosts the action at the foot row's trailing edge on ring, hint stays centered-class", () => {
+    const c = mount(
+      h(
+        HkStatCard,
+        {
+          variant: "ring", tone: "success", pct: 37.5, value: "38%", unit: "cores",
+          icon: FakeIcon, label: "Cores", hint: "12 / 32 · monthly",
+        },
+        { action: () => h("button", { class: "action-probe" }, "⋯") },
+      ),
+    );
+    // The action content rides the dedicated wrapper inside the foot row.
+    const foot = c.querySelector(".hk-stat-card-foot") as HTMLElement;
+    expect(foot).toBeTruthy();
+    expect(foot.hasAttribute("data-has-action")).toBe(true);
+    expect(c.querySelector(".hk-stat-card-action .action-probe")?.textContent).toBe("⋯");
+    // The hint keeps its anatomy classes inside the foot — it is wrapped,
+    // not replaced.
+    expect(c.querySelector(".hk-stat-card-foot .hk-stat-card-hint")?.textContent).toBe(
+      "12 / 32 · monthly",
+    );
+    expect(c.querySelector(".hk-stat-card-foot .hk-stat-card-ring-detail")).toBeTruthy();
+  });
+
+  it("wraps the hint on plain, chip and bar the same way", () => {
+    for (const variant of ["plain", "chip", "bar"] as const) {
+      const c = mount(
+        h(HkStatCard, { variant, value: "v", label: "L", hint: "detail" }, {
+          action: () => h("span", { class: "action-probe-generic" }, "⋯"),
+        }),
+      );
+      expect(c.querySelector(".hk-stat-card-foot[data-has-action]")).toBeTruthy();
+      expect(c.querySelector(".hk-stat-card-action .action-probe-generic")).toBeTruthy();
+      expect(c.querySelector(".hk-stat-card-foot .hk-stat-card-hint")?.textContent).toBe("detail");
+    }
+  });
+
+  it("keeps the hint DOM bare (no foot wrapper) when the slot is absent", () => {
+    // The wrapper exists ONLY for the action anchor: a host not using the
+    // slot must see the exact pre-slot DOM. This kills an "always wrap"
+    // mutation, which would silently re-nest every existing hint.
+    for (const variant of ["plain", "chip", "ring", "bar"] as const) {
+      const c = mount(h(HkStatCard, { variant, value: "v", label: "L", hint: "detail" }));
+      expect(c.querySelector(".hk-stat-card-foot")).toBeNull();
+      expect(c.querySelector(".hk-stat-card > .hk-stat-card-hint")?.textContent).toBe("detail");
+    }
+  });
+
+  it("keeps each variant's pre-slot hint attributes when the slot is absent", () => {
+    // R1 finding: the chip variant's hint never carried a title before
+    // the action slot existed — "byte-identical without the slot" must
+    // hold attribute-for-attribute, not just structure-for-structure.
+    // plain/ring/bar always titled their hint; chip never did.
+    const titled = (variant: "plain" | "chip" | "ring" | "bar") => {
+      const c = mount(h(HkStatCard, { variant, value: "v", label: "L", hint: "detail" }));
+      const hint = c.querySelector(".hk-stat-card > .hk-stat-card-hint") as HTMLElement;
+      return hint.hasAttribute("title");
+    };
+    expect(titled("chip")).toBe(false);
+    expect(titled("plain")).toBe(true);
+    expect(titled("ring")).toBe(true);
+    expect(titled("bar")).toBe(true);
+  });
+
+  it("keeps the action-corner SCSS contract (source pin)", () => {
+    // happy-dom never applies the stylesheet, so the data-has-action
+    // layout rules (corner clearance + action-only min-height) are
+    // otherwise removable with zero red (R1 mutation c). The house
+    // source-contract style pins them.
+    const scss = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "HkStatCard.scss"),
+      "utf-8",
+    );
+    const foot = scss.match(/\.hk-stat-card-foot\[data-has-action\]\s*{[^}]*}/)?.[0] ?? "";
+    expect(foot, "action-only foot min-height rule must exist").toContain("min-height");
+    const clearance = scss.match(
+      /\.hk-stat-card-foot\[data-has-action\] \.hk-stat-card-hint\s*{[^}]*}/,
+    )?.[0];
+    expect(clearance, "hint corner-clearance rule must exist").toBeTruthy();
+    expect(clearance).toContain("padding-inline-end");
+    // The ring card centers its children, which would leave the foot
+    // fit-content-wide — dead centering AND a hint-edge-anchored action
+    // (R2 Major). The stretch is what puts the corner back.
+    const ringFoot = scss.match(
+      /\.hk-stat-card-ring \.hk-stat-card-foot\s*{[^}]*}/,
+    )?.[0];
+    expect(ringFoot, "ring foot stretch rule must exist").toBeTruthy();
+    expect(ringFoot).toContain("align-self: stretch");
+    expect(ringFoot).toContain("justify-content: center");
+  });
+
+  it("stops action clicks from double-firing a clickable card's click", async () => {
+    const clicks: number[] = [];
+    const c = mount(
+      h(
+        HkStatCard,
+        { variant: "ring", value: "38%", label: "L", pct: 38, clickable: true, onClick: () => clicks.push(1) },
+        { action: () => h("button", { class: "action-btn-probe" }, "⋯") },
+      ),
+    );
+    const btn = c.querySelector(".action-btn-probe") as HTMLElement;
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(clicks).toEqual([]);
+    // …while a click on the card surface itself still fires.
+    const card = c.querySelector(".hk-stat-card") as HTMLElement;
+    card.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(clicks).toEqual([1]);
+  });
+
+  it("renders an action-only foot (no hint) without collapsing onto the card body", () => {
+    const c = mount(
+      h(HkStatCard, { variant: "ring", value: "38%", label: "L", pct: 38 }, {
+        action: () => h("span", { class: "action-only-probe" }, "⋯"),
+      }),
+    );
+    const foot = c.querySelector(".hk-stat-card-foot") as HTMLElement;
+    expect(foot).toBeTruthy();
+    expect(foot.querySelector(".hk-stat-card-hint")).toBeNull();
+    expect(c.querySelector(".hk-stat-card-action .action-only-probe")).toBeTruthy();
   });
 });

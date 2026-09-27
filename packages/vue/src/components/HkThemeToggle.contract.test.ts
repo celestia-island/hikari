@@ -82,4 +82,27 @@ describe("HkThemeToggle row lead-cell contract", () => {
     expect(svgBlock).not.toBeNull();
     expect(svgBlock![0]).toContain("var(--hk-menu-item-icon-box)");
   });
+
+  it("pins the name-suffix mark against the name instead of the trailing edge", () => {
+    const css = read("HkThemeToggle.scss");
+    // happy-dom has no layout engine, so the "reads as part of the name"
+    // claim is pinned as the two declarations that produce it: the name
+    // stops stretching (the shared mixin's `flex: 1` would push the mark
+    // to the row's far end, next to the trailing affordances) and the
+    // suffix eats the leftover width on its leading side. Losing either
+    // one silently turns the marker into a trailing icon.
+    const nameBlock = css.match(
+      /\.s-theme-item-row\[data-name-suffix="slot"\] \.s-theme-item-name\s*\{[^}]*\}/,
+    );
+    expect(nameBlock).not.toBeNull();
+    expect(nameBlock![0]).toContain("flex: 0 1 auto");
+    // Long names must WRAP, not push the mark out of the row: the mixin's
+    // nowrap is exactly what would clip the marker away at narrow widths.
+    expect(nameBlock![0]).toContain("white-space: normal");
+
+    const suffixBlock = css.match(/\.s-theme-item-name-suffix\s*\{[^}]*\}/);
+    expect(suffixBlock).not.toBeNull();
+    expect(suffixBlock![0]).toContain("margin-inline-end: auto");
+    expect(suffixBlock![0]).toContain("flex-shrink: 0");
+  });
 });

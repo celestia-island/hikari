@@ -45,11 +45,16 @@ export interface ThemeItemScope {
  * color-mode group and preset/custom theme selection (custom themes are
  * removable), and opens HColorSchemeDialog to create a new custom scheme.
  *
- * Theme rows are host-customizable through two scoped slots (both render
+ * Theme rows are host-customizable through three scoped slots (all render
  * in the popover AND the mobile bottom sheet — same DOM):
  *  · `item-leading` — replaces the selected-check cell; renders for
  *    every row in the fixed icon cell so names align regardless of the
  *    active row. Scope: `ThemeItemScope` (id/name/isCustom/preset).
+ *  · `item-name-suffix` — an inline cell rendered INSIDE the row button,
+ *    immediately after the (catalog-resolved) name, so a host mark reads
+ *    as part of the name rather than as an affordance. Renders only when
+ *    the host provides the slot; the cell is `aria-hidden`-free and
+ *    layout-neutral (does not grow, never pushes the trailing column).
  *  · `item-trailing` — reserves a trailing column on every row and owns
  *    it entirely; the built-in custom-delete overlay is suppressed, so
  *    the host renders delete/edit itself where it wants them.
@@ -301,7 +306,10 @@ export const HkThemeToggle = defineComponent({
             {allThemeList.value.map((th) => {
               // Host-customizable row anatomy. `item-leading` replaces the
               // selected-check cell and renders for EVERY row (fixed icon
-              // cell, so names stay aligned); `item-trailing` reserves a
+              // cell, so names stay aligned); `item-name-suffix` renders
+              // INSIDE the row button right after the name, so a host mark
+              // (e.g. a provenance/sync glyph) reads as part of the name
+              // instead of as an affordance; `item-trailing` reserves a
               // real trailing column for every row and takes full
               // ownership of the affordances there — the built-in custom
               // delete overlay is suppressed in that mode, so the host
@@ -315,6 +323,7 @@ export const HkThemeToggle = defineComponent({
                 preset: presetOf(th.id),
               };
               const leadingSlot = slots["item-leading"];
+              const nameSuffixSlot = slots["item-name-suffix"];
               const trailingSlot = slots["item-trailing"];
               // A preset/custom name may be a message key into hikari's own
               // catalog (the documented ThemePreset.name convention — hosts
@@ -329,6 +338,7 @@ export const HkThemeToggle = defineComponent({
                   class="s-theme-item-row"
                   data-custom={th.isCustom || undefined}
                   data-trailing={trailingSlot ? "slot" : undefined}
+                  data-name-suffix={nameSuffixSlot ? "slot" : undefined}
                 >
                   <button
                     type="button"
@@ -344,6 +354,9 @@ export const HkThemeToggle = defineComponent({
                       <span class="hk-menu-item-icon s-theme-item-check"><Check size={14} /></span>
                     ) : null}
                     <span class="s-theme-item-name">{displayName}</span>
+                    {nameSuffixSlot ? (
+                      <span class="s-theme-item-name-suffix">{nameSuffixSlot(scope)}</span>
+                    ) : null}
                   </button>
                   {trailingSlot ? (
                     <span class="s-theme-item-trailing">{trailingSlot(scope)}</span>

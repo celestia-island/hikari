@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick } from "vue";
+import { dirname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import HkAffixPicker, { type HkAffixOption } from "./HkAffixPicker";
 
@@ -472,5 +475,22 @@ describe("HkAffixPicker", () => {
     expect(content, "the content wrapper renders").toBeTruthy();
     expect(content!.hasAttribute("style"), "no inline style on the content").toBe(false);
     expect(document.querySelector(".hk-affix-list .hk-scrollbar-track")).toBeNull();
+  });
+});
+
+describe("affix side → popup placement contract", () => {
+  it("anchors side=suffix popups to the bottom-end edge", () => {
+    // The suffix side hosts unit pickers (e.g. KiB/MiB/GiB chips on a
+    // number field — shittim-chest quota editor): the popup must anchor
+    // to the END edge so it opens toward the viewport instead of off
+    // the field's right edge. The mapping is one expression in the
+    // component; this source contract pins it against silent edits.
+    const src = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "HkAffixPicker.tsx"),
+      "utf-8",
+    );
+    expect(src).toContain(
+      'props.side === "suffix" ? "bottom-end" : "bottom-start"',
+    );
   });
 });

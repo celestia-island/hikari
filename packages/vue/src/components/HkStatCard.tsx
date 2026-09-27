@@ -21,6 +21,14 @@ export type StatTone = "success" | "warning" | "error" | "info" | "primary" | "m
  *   (with the icon) underneath, and the hint as the detail line.
  * - `bar`   — label + value on one row over a tone-colored progress bar,
  *   with the hint as the detail line.
+ *
+ * Every variant also takes an `action` slot: a corner affordance
+ * (typically an icon button) pinned to the trailing edge of the hint
+ * line — the card's bottom-right corner. Hosts use it for per-card
+ * controls ("⋯" customization buttons) that must live on the KPI cell
+ * itself. Clicks inside the action wrapper stop at the wrapper, so an
+ * action button never double-fires a `clickable` card's click. Without
+ * the slot the hint renders exactly as before (no wrapper node).
  */
 export type StatVariant = "plain" | "chip" | "ring" | "bar";
 
@@ -109,6 +117,33 @@ export const HkStatCard = defineComponent({
           : undefined,
       };
 
+      // The hint line, optionally hosting the `action` slot at the foot
+      // row's trailing edge (the card's bottom-right corner). WITHOUT an
+      // action slot the hint renders exactly as before — the foot wrapper
+      // exists only when a corner affordance needs the anchor, so hosts
+      // not using the slot see a byte-identical DOM.
+      const renderHint = (detailClass?: string, titled = true) => {
+        const hintEl = props.hint && (
+          <div
+            class={detailClass ? ["hk-stat-card-hint", detailClass] : "hk-stat-card-hint"}
+            title={titled ? props.hint : undefined}
+          >
+            {props.hint}
+          </div>
+        );
+        if (!slots.action) return hintEl;
+        return (
+          <div class="hk-stat-card-foot" data-has-action="">
+            {hintEl}
+            {/* The corner affordance stops clicks here: an action button
+                must never double-fire a clickable card's click. */}
+            <div class="hk-stat-card-action" onClick={(e: MouseEvent) => e.stopPropagation()}>
+              {slots.action()}
+            </div>
+          </div>
+        );
+      };
+
       if (props.variant === "chip") {
         return (
           <div {...shared}>
@@ -127,7 +162,7 @@ export const HkStatCard = defineComponent({
               </div>
               {slots.aside && <div class="hk-stat-card-aside">{slots.aside()}</div>}
             </div>
-            {props.hint && <div class="hk-stat-card-hint">{props.hint}</div>}
+            {renderHint()}
             {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
           </div>
         );
@@ -155,11 +190,7 @@ export const HkStatCard = defineComponent({
               {props.icon && h(props.icon, { size: 13, "aria-hidden": true })}
               <span class="hk-stat-card-ring-label-text">{props.label}</span>
             </div>
-            {props.hint && (
-              <div class="hk-stat-card-hint hk-stat-card-ring-detail" title={props.hint}>
-                {props.hint}
-              </div>
-            )}
+            {renderHint("hk-stat-card-ring-detail")}
             {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
           </div>
         );
@@ -177,11 +208,7 @@ export const HkStatCard = defineComponent({
               size="xs"
               segments={[{ value: clampPct(props.pct), color: statToneColor(props.tone) }]}
             />
-            {props.hint && (
-              <div class="hk-stat-card-hint hk-stat-card-bar-detail" title={props.hint}>
-                {props.hint}
-              </div>
-            )}
+            {renderHint("hk-stat-card-bar-detail")}
             {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
           </div>
         );
@@ -195,7 +222,7 @@ export const HkStatCard = defineComponent({
             <span class={`hk-stat-card-dot hk-stat-card-dot-${props.tone}`} aria-hidden="true" />
           </div>
           <div class="hk-stat-card-value">{props.value}</div>
-          {props.hint && <div class="hk-stat-card-hint" title={props.hint}>{props.hint}</div>}
+          {renderHint()}
           {slots.footer && <div class="hk-stat-card-footer">{slots.footer()}</div>}
         </div>
       );

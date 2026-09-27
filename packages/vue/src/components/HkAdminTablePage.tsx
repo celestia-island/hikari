@@ -17,6 +17,9 @@ export interface HTableColumn {
  * spinner + error alert + empty state + HTable. Slots:
  * - `actions`      — header actions (e.g. a "Create" button)
  * - `filter`       — filter chrome (HkFilterBar) between header and table
+ * - `body`         — replaces the default HTable card wholesale (card-list
+ *                    rosters, multi-table compounds); loading/error/empty
+ *                    states still come from the scaffold
  * - `cell-<key>`   — per-column cell templates, forwarded to HTable
  * - `empty-action` — action inside the empty state (Retry, …)
  * - `create-modal` — create dialog, rendered after the table
@@ -72,7 +75,11 @@ export const HkAdminTablePage = defineComponent({
           ) : null}
           {slots.filter ? <div class="hk-admin-table-page-filter">{slots.filter()}</div> : null}
 
-          {props.staleError ? <HAlert message={props.staleError} /> : null}
+          {/* A hard error wins the whole body; the stale banner only rides
+           *  above rows that survived a failed refresh, so it must never
+           *  render alongside the error branch (its precondition — rows on
+           *  screen — is exactly what the error branch removes). */}
+          {props.staleError && !props.error ? <HAlert message={props.staleError} /> : null}
           {props.error ? (
             <HAlert message={props.error} />
           ) : props.loading && !props.rows.length ? (
@@ -85,6 +92,8 @@ export const HkAdminTablePage = defineComponent({
             >
               {emptySlots}
             </HEmptyState>
+          ) : slots.body ? (
+            <div class="hk-admin-table-page-body">{slots.body()}</div>
           ) : (
             <HCard padded={false}>
               <HTable columns={props.columns} rows={props.rows} rowKey={props.rowKey}>

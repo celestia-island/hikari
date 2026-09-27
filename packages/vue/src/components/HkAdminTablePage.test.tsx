@@ -83,6 +83,31 @@ describe("HkAdminTablePage", () => {
     expect(c.querySelector(".probe-retry")).toBeTruthy();
   });
 
+  it("renders the body slot instead of the table card when provided", () => {
+    const c = mount(
+      h(HkAdminTablePage, {
+        title: "T", rows: [{ name: "a" }], columns: COLS,
+      }, {
+        body: () => h("div", { class: "probe-roster" }, "card-list rows"),
+      }),
+    );
+    expect(c.querySelector(".hk-admin-table-page-body .probe-roster")?.textContent).toBe("card-list rows");
+    // the default table path is fully replaced
+    expect(c.querySelector("table")).toBeNull();
+    // header/empty scaffolding still applies around the body
+    expect(c.querySelector(".hk-page-header-title-text")?.textContent).toBe("T");
+  });
+
+  it("suppresses the stale banner when a hard error replaces the body", () => {
+    const c = mount(
+      h(HkAdminTablePage, {
+        title: "T", staleError: "stale", error: "hard", rows: [], columns: COLS,
+      }),
+    );
+    expect(c.textContent).toContain("hard");
+    expect(c.textContent).not.toContain("stale");
+  });
+
   it("shows the spinner while loading with no rows yet", () => {
     const c = mount(
       h(HkAdminTablePage, { title: "T", loading: true, rows: [], columns: COLS }),

@@ -201,6 +201,36 @@
   @include mi.label;
 }
 
+/* `item-name-suffix` slot — a host mark that must read as PART OF the
+ * name, not as a trailing affordance. Layout is what makes that true:
+ * the shared label mixin is `flex: 1`, which would stretch the name to
+ * the full row and leave the mark floating at the far right, next to the
+ * trailing column (and, in the host's cloud/local marker case, next to
+ * the edit button — reading as a per-row action). On suffix rows the
+ * name therefore shrinks to its content (`flex: 0 1 auto`, keeping the
+ * mixin's `min-width: 0` so long names still wrap inside the available
+ * box) and the suffix claims the leftover space on its leading side
+ * (`margin-inline-end: auto`), pinning the mark directly against the
+ * name's trailing edge. `white-space: normal` overrides the mixin's
+ * nowrap so a long name WRAPS instead of pushing the mark out of the
+ * row — a name that clips its own provenance mark defeats the point.
+ * Rows without the slot are untouched (the mixin's behaviour stands). */
+.s-theme-item-row[data-name-suffix="slot"] .s-theme-item-name {
+  flex: 0 1 auto;
+  white-space: normal;
+}
+
+.s-theme-item-name-suffix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-start: var(--space-4, 0.25rem);
+  /* Trailing auto-margin eats the row's leftover width, so the mark sits
+   * with the name at the leading edge and the trailing column stays
+   * flush right. */
+  margin-inline-end: auto;
+}
+
 /* Leading slot glyphs share the spec's fixed icon cell — sized for the
  * WIDEST lead mark hosts render there, not the generic 16px box: chest's
  * three-dot palette swatch is 28px (3×8px dots + 2px gaps), and a mark

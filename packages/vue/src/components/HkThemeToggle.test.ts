@@ -269,6 +269,7 @@ describe("HkThemeToggle item slots", () => {
   function mountSlotted(
     lead: (scope: { id: string }) => unknown,
     trail: (scope: { id: string }) => unknown,
+    nameSuffix?: (scope: { id: string }) => unknown,
   ): HTMLElement {
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -279,6 +280,9 @@ describe("HkThemeToggle item slots", () => {
         }, {
           "item-leading": lead,
           "item-trailing": trail,
+          // Only provided when the case exercises it: the slot's ABSENCE is
+          // itself a contract (rows must stay exactly as before).
+          ...(nameSuffix ? { "item-name-suffix": nameSuffix } : {}),
         }),
     });
     app.mount(container);
@@ -340,6 +344,58 @@ describe("HkThemeToggle item slots", () => {
       if (row.hasAttribute("data-custom")) customRows += 1;
     }
     expect(customRows).toBe(2);
+  });
+
+  it("renders the name-suffix cell INSIDE the row button, right after the name", async () => {
+    // The whole point of the slot (vs. reusing item-trailing) is that the
+    // mark reads as part of the NAME. That is a DOM-position claim, so it
+    // is asserted structurally: inside `.s-theme-item-btn`, in the same
+    // row, and immediately after `.s-theme-item-name` — not merely
+    // "somewhere in the row".
+    useTheme().addCustomTheme(anyPresetTokens());
+    const container = mountSlotted(
+      () => null,
+      () => null,
+      (scope) => h("i", { class: "suffix-mark", "data-id": scope.id }),
+    );
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")];
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    for (const row of rows) {
+      expect(row.getAttribute("data-name-suffix")).toBe("slot");
+      const cell = row.querySelector<HTMLElement>(".s-theme-item-name-suffix .suffix-mark");
+      expect(cell).toBeTruthy();
+      expect(row.querySelectorAll(".suffix-mark")).toHaveLength(1);
+      const name = row.querySelector<HTMLElement>(".s-theme-item-name");
+      expect(name).toBeTruthy();
+      // Inside the row BUTTON (so a click on the row still selects the
+      // theme) and the name's immediate next sibling.
+      expect(name!.closest(".s-theme-item-btn")).toBeTruthy();
+      expect(cell!.closest(".s-theme-item-name-suffix")!.parentElement).toBe(name!.parentElement);
+      expect(name!.nextElementSibling).toBe(cell!.closest(".s-theme-item-name-suffix"));
+    }
+  });
+
+  it("leaves suffix rows untouched when the host provides no name-suffix slot", async () => {
+    // Absence is a contract: without the slot the row must keep the
+    // unmodified DOM (no empty cell, no data attribute), or every
+    // existing host gains a phantom cell.
+    useTheme().addCustomTheme(anyPresetTokens());
+    const container = mountSlotted(() => null, () => null);
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")];
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    for (const row of rows) {
+      expect(row.hasAttribute("data-name-suffix")).toBe(false);
+      expect(row.querySelector(".s-theme-item-name-suffix")).toBeNull();
+      expect(row.querySelector(".s-theme-item-name")).toBeTruthy();
+    }
   });
 
   it("scopes each row with its resolved preset definition", async () => {

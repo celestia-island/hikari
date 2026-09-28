@@ -247,4 +247,23 @@ describe("HkAdminHeader", () => {
     const c = mount(headerNode({ username: "alice" }));
     expect(c.textContent.toLowerCase()).not.toContain("emergency");
   });
+
+  it("renders the page centre group between the identity and the actions when provided", () => {
+    const c = mount(headerNode({ title: "My tasks" }, {
+      center: () => h("nav", { class: "centre-stub" }, "filter group"),
+    }));
+    const centre = c.querySelector(".s-admin-header-center");
+    expect(centre, "the centre wrapper must render when the slot is provided").not.toBeNull();
+    expect(centre?.querySelector(".centre-stub")?.textContent).toBe("filter group");
+    // Wing order: identity (left) → centre → actions (right).
+    const header = c.querySelector("header")!;
+    const kids = [...header.children].map((el) => el.className);
+    expect(kids.indexOf("s-admin-header-user")).toBeLessThan(kids.indexOf("s-admin-header-center"));
+    expect(kids.indexOf("s-admin-header-center")).toBeLessThan(kids.indexOf("s-admin-header-actions"));
+  });
+
+  it("renders no centre wrapper without the slot (DOM unchanged for hosts that skip it)", () => {
+    const c = mount(headerNode({ title: "Providers" }));
+    expect(c.querySelector(".s-admin-header-center")).toBeNull();
+  });
 });

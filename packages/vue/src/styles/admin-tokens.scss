@@ -378,7 +378,28 @@
 .s-admin-header-user {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  /* Avatar → title distance mirrors the chat frontend's header left
+   * wing: the panel's workspace button sits a flex gap PLUS its own
+   * 8px inline padding away from the avatar (16px visual), while the
+   * console title had only the flex gap — the console title visibly
+   * hugged the avatar (user report 2026-09-28: 后台标题离头像太近).
+   * The wing gap here carries the whole distance so the title text
+   * lands on the same rhythm as the panel's button content. */
+  gap: var(--space-16);
+  /* Balanced left wing (same grammar as ChatLayout's .s-header-bar-left):
+   * grows from the same flex basis as the actions wing so a centre
+   * group, when a page renders one, stays pinned to the true middle. */
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* The page-owned centre group (filter tab strips): keeps its natural
+ * width and hands overflow to the HTabs scroller inside it. */
+.s-admin-header-center {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
 }
 
@@ -430,8 +451,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  margin-left: auto;
-  flex-shrink: 0;
+  /* Balanced right wing: with the user wing at flex 1 1 0 the pair
+   * grows symmetrically, so the centre group stays centred and the
+   * actions still hug the right edge (justify-end replaces the old
+   * margin-left:auto push, which would fight the centre wing). The
+   * automatic min-content floor keeps the icon buttons from being
+   * squeezed below their own width on narrow viewports. */
+  flex: 1 1 0;
+  justify-content: flex-end;
 }
 
 .s-admin-header-action {

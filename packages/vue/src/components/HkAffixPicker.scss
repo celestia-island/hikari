@@ -13,9 +13,11 @@
   gap: 0.3rem;
   max-width: 11rem;
   /* Logical axes: the wide side reserves caret room at inline-end and
-   * flips together with the host input's RTL suffix/prefix side. */
-  padding-block: 2px;
-  padding-inline: 4px 6px;
+   * flips together with the host input's RTL suffix/prefix side.
+   * Roomy padding: the pill's fill must not hug the label — the text
+   * keeps clear air on both sides (user direction, round N). */
+  padding-block: 4px;
+  padding-inline: 9px 11px;
   border: none;
   border-radius: var(--radius-sm, 6px);
   background: transparent;

@@ -1,0 +1,34 @@
+/**
+ * HkFilterTrigger chrome: the header icon button, its active-filter dot
+ * and the mobile confirm footer. The panel's own bounded sizing lives in
+ * HkFilterPanel.scss.
+ */
+
+.hk-filter-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Active-filter marker: a small primary dot pinned to the button's
+ * top-right corner — visible only while at least one condition carries a
+ * value (the trigger's data-active drives it, so the empty-state panel
+ * never shows the dot). */
+.hk-filter-trigger-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--color-primary));
+  pointer-events: none;
+}
+
+.hk-filter-trigger-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-8, 0.5rem);
+  border-top: 1px solid rgb(var(--color-border) / 10%);
+  margin-top: var(--space-8, 0.5rem);
+}

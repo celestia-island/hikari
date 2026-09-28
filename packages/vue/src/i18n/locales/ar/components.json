@@ -192,7 +192,14 @@
     "hikari::zoomToolbar.zoomSlider": "مستوى التكبير",
     "hikari::filterBar.trigger": "عوامل التصفية",
     "hikari::filterBar.apply": "تطبيق",
-    "hikari::filterBar.reset": "إعادة تعيين"
+    "hikari::filterBar.reset": "إعادة تعيين",
+    "hikari::filterPanel.op.eq": "يساوي",
+    "hikari::filterPanel.op.ne": "لا يساوي",
+    "hikari::filterPanel.op.approx": "مطابقة تقريبية",
+    "hikari::filterPanel.op.lt": "أقل من",
+    "hikari::filterPanel.op.lte": "كحد أقصى",
+    "hikari::filterPanel.op.gte": "على الأقل",
+    "hikari::filterPanel.op.gt": "أكبر من"
   },
   "hikari::affixPicker.unset": "غير محدد",
   "hikari::affixPicker.title": "الخيارات",

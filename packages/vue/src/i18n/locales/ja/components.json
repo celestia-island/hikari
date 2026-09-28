@@ -192,7 +192,14 @@
     "hikari::zoomToolbar.zoomSlider": "ズーム倍率",
     "hikari::filterBar.trigger": "絞り込み",
     "hikari::filterBar.apply": "適用",
-    "hikari::filterBar.reset": "リセット"
+    "hikari::filterBar.reset": "リセット",
+    "hikari::filterPanel.op.eq": "等しい",
+    "hikari::filterPanel.op.ne": "等しくない",
+    "hikari::filterPanel.op.approx": "部分一致",
+    "hikari::filterPanel.op.lt": "未満",
+    "hikari::filterPanel.op.lte": "以下",
+    "hikari::filterPanel.op.gte": "以上",
+    "hikari::filterPanel.op.gt": "より大きい"
   },
   "hikari::affixPicker.unset": "未設定",
   "hikari::affixPicker.title": "オプション",

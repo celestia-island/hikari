@@ -196,7 +196,14 @@
     "hikari::statusBar.region.TW": "中國台灣",
     "hikari::filterBar.trigger": "篩選",
     "hikari::filterBar.apply": "套用",
-    "hikari::filterBar.reset": "重設"
+    "hikari::filterBar.reset": "重設",
+    "hikari::filterPanel.op.eq": "等於",
+    "hikari::filterPanel.op.ne": "不等於",
+    "hikari::filterPanel.op.approx": "模糊匹配",
+    "hikari::filterPanel.op.lt": "小於",
+    "hikari::filterPanel.op.lte": "不超過",
+    "hikari::filterPanel.op.gte": "不低於",
+    "hikari::filterPanel.op.gt": "大於"
   },
   "hikari::affixPicker.title": "選項",
   "hikari::affixPicker.search": "搜尋",

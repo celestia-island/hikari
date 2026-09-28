@@ -192,6 +192,7 @@
     "hikari::zoomToolbar.zoomSlider": "ズーム倍率",
     "hikari::filterBar.trigger": "絞り込み",
     "hikari::filterBar.apply": "適用",
+    "hikari::filterPanel.all": "すべて",
     "hikari::filterBar.reset": "リセット",
     "hikari::filterPanel.op.eq": "等しい",
     "hikari::filterPanel.op.ne": "等しくない",

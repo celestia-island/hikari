@@ -100,6 +100,42 @@ describe("HkFilterPanel", () => {
     expect(selectRow.querySelector(".hk-popup-select-trigger")).toBeTruthy();
   });
 
+  it("prepends a localized empty All row to select fields without one (the clear affordance)", async () => {
+    // The select field's ONLY clear affordance is the empty value row —
+    // there is no reset verb in the header trigger. A page without its
+    // own "all" entry must therefore always find the prepended
+    // {value:"", label:All} row; a page that ships one keeps its own
+    // label. (R1 mutation f2 removed the prepend and NOTHING went red —
+    // this test is that missing pin.)
+    const withOwnEmpty = [
+      { key: "level", label: "Level", kind: "select" as const, options: [{ value: "", label: "Everything" }, { value: "high", label: "High" }] },
+    ];
+    const c = mount(h(HkFilterPanel, { fields: withOwnEmpty, modelValue: {} }));
+    // A page shipping its own empty row keeps it as-is (no duplicate):
+    // the panel prepends only when NO option carries the empty value.
+    const ownTrigger = c.querySelector(".hk-filter-panel-row .hk-popup-select-trigger");
+    expect(ownTrigger).toBeTruthy();
+    // Drive the popup open to count rows: the real HkPopupSelect renders
+    // exactly the options it was given.
+    ownTrigger!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    const items = [...document.body.querySelectorAll(".hk-popup-select-item")].map((el) => el.textContent?.trim());
+    expect(items).toEqual(["Everything", "High"]);
+    document.body.querySelectorAll(".hk-popup-select-item, .hk-select-popout-host").forEach((el) => el.remove());
+
+    const withoutAll = [
+      { key: "level", label: "Level", kind: "select" as const, options: [{ value: "high", label: "High" }] },
+    ];
+    const c2 = mount(h(HkFilterPanel, { fields: withoutAll, modelValue: {} }));
+    const trigger2 = c2.querySelector(".hk-filter-panel-row .hk-popup-select-trigger")!;
+    trigger2.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    const items2 = [...document.body.querySelectorAll(".hk-popup-select-item")].map((el) => el.textContent?.trim());
+    expect(items2[0], "the localized All row is prepended").toBe("All");
+    expect(items2).toEqual(["All", "High"]);
+    document.body.querySelectorAll(".hk-popup-select-item, .hk-select-popout-host").forEach((el) => el.remove());
+  });
+
   it("marks the panel active when any condition carries a value", () => {
     const c = mount(h(HkFilterPanel, { fields: FIELDS, modelValue: { count: { op: "gt", value: "3" } } }));
     expect(c.querySelector(".hk-filter-panel")!.getAttribute("data-active")).toBe("true");

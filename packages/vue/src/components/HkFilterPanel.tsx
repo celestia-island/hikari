@@ -116,9 +116,11 @@ export default defineComponent({
     const selectOptions = (field: HkFilterFieldDef): HkPopupSelectOption[] => {
       const options = field.options ?? [];
       // The empty row IS the clear affordance for select fields (value ""
-      // filters nothing); pages that ship their own "all" row keep it.
+      // filters nothing) — pages that ship their own "all" row keep it;
+      // otherwise a LOCALIZED all-row is prepended so an empty-seeded
+      // select reads as "no filter", not as a dash.
       if (options.some((o) => o.value === "")) return options;
-      return [{ value: "", label: "—" }, ...options];
+      return [{ value: "", label: t("hikari::filterPanel.all", "All") }, ...options];
     };
 
     /** Active-count signal for the trigger's dot (also exported via the

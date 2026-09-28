@@ -192,6 +192,7 @@
     "hikari::zoomToolbar.zoomSlider": "Zoom-Stufe",
     "hikari::filterBar.trigger": "Filter",
     "hikari::filterBar.apply": "Anwenden",
+    "hikari::filterPanel.all": "Alle",
     "hikari::filterBar.reset": "Zurücksetzen",
     "hikari::filterPanel.op.eq": "gleich",
     "hikari::filterPanel.op.ne": "ungleich",

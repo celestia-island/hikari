@@ -196,6 +196,7 @@
     "hikari::statusBar.region.TW": "中国台湾",
     "hikari::filterBar.trigger": "筛选",
     "hikari::filterBar.apply": "应用",
+    "hikari::filterPanel.all": "全部",
     "hikari::filterBar.reset": "重置",
     "hikari::filterPanel.op.eq": "等于",
     "hikari::filterPanel.op.ne": "不等于",

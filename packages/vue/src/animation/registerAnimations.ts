@@ -66,6 +66,10 @@ export function isCssAnimationsEnabled(): boolean {
 registerCssAnimation("s-nav-item-badge-pulse", { infinite: true });
 // styles/admin-tokens.scss — auth card entrance (plays once).
 registerCssAnimation("s-auth-card-in");
+// styles/admin-tokens.scss — status-bar recovery flash (plays once):
+// the traffic light's green background blink when a dropped connection
+// comes back.
+registerCssAnimation("s-status-bar-recover-flash");
 // components/HkStatusPill.scss — live-dot pulse (loops forever).
 registerCssAnimation("hk-status-pill-pulse", { infinite: true });
 // components/HkRollingNumber.scss — digit roll-up (plays once, forwards).

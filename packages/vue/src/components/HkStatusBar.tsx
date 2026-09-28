@@ -1,4 +1,4 @@
-import { defineComponent, ref, type PropType } from "vue";
+import { defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 import { Wifi, WifiOff, Globe, Cable, Monitor, Cog, Plug } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
@@ -133,6 +133,38 @@ export const HkStatusBar = defineComponent({
       disconnected: "rgb(var(--color-error))",
     };
 
+    // ── Recovery flash ─────────────────────────────────────────────
+    // One soft green background blink when the light RETURNS to green
+    // after a drop (reconnecting/connecting/disconnected → connected).
+    // The FIRST connect of the component's life stays quiet: the flash
+    // acknowledges a connection the user saw go down, it is not an
+    // open-time announcement (hosts used to fire a toast for exactly
+    // this moment; the light now owns that feedback, quietly).
+    // `seenConnected` seeds from the initial prop so a component that
+    // mounts while already connected still counts as established and a
+    // LATER drop/recover pair flashes.
+    const RECOVER_FLASH_MS = 1200;
+    const seenConnected = ref(props.connectionStatus === "connected");
+    const recovering = ref(false);
+    let recoverTimer: ReturnType<typeof setTimeout> | null = null;
+
+    watch(() => props.connectionStatus, (next) => {
+      if (next !== "connected") return;
+      const wasEstablished = seenConnected.value;
+      seenConnected.value = true;
+      if (!wasEstablished) return;
+      if (recoverTimer) clearTimeout(recoverTimer);
+      recovering.value = true;
+      recoverTimer = setTimeout(() => {
+        recovering.value = false;
+        recoverTimer = null;
+      }, RECOVER_FLASH_MS);
+    });
+
+    onBeforeUnmount(() => {
+      if (recoverTimer) clearTimeout(recoverTimer);
+    });
+
     function onTagEnter() {
       if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
       popupOpen.value = true;
@@ -244,9 +276,11 @@ export const HkStatusBar = defineComponent({
       // + value column), so both rows share one true left edge — no
       // separator, no mid-token wrapping, at any footer width.
 
-      const tagClass = connecting
-        ? "s-status-bar-tag s-status-bar-tag-reconnecting"
-        : "s-status-bar-tag";
+      const tagClass = [
+        "s-status-bar-tag",
+        connecting ? "s-status-bar-tag-reconnecting" : "",
+        recovering.value ? "s-status-bar-tag-recovered" : "",
+      ].filter(Boolean).join(" ");
 
       const inner = (
         <>

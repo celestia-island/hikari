@@ -158,3 +158,21 @@ describe("HkThirdPartySignInCard SCSS contract", () => {
     expect(rule).toContain("height: 3.25rem");
   });
 });
+
+describe("HkThirdPartySignInCard public export surface", () => {
+  // 2026-09-28 R1 finding: removing either spelling from index.ts passed
+  // every gate — nothing guarded the barrel. Importing the full barrel in a
+  // test hangs (750+ transitive modules), so the guard is source-pinned:
+  // both export lines must exist verbatim. A dropped line goes red here.
+  it("exports both the canonical Hk* and legacy H* spellings from the barrel", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { resolve } = await import("node:path");
+    const index = await readFile(resolve(__dirname, "../index.ts"), "utf8");
+    expect(index).toContain(
+      'export { HkThirdPartySignInCard as HkThirdPartySignInCard } from "./components/HkThirdPartySignInCard";',
+    );
+    expect(index).toContain(
+      'export { HkThirdPartySignInCard as HThirdPartySignInCard } from "./components/HkThirdPartySignInCard";',
+    );
+  });
+});

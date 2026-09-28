@@ -17,6 +17,10 @@ import "./HkThirdPartySignInCard.scss";
  * `HkAuthMethodList` rendered into the card's form-body slot, promoted to
  * primary-flow presence through a context-scoped tile modifier.
  *
+ * NOTE on `methods`: it is a PROP (the provider array). Unlike HkSignInCard
+ * there is NO `#methods` slot on this card — a slot of that name is silently
+ * ignored; pass the array through the prop.
+ *
  * Control contract (same split as HkSignInCard): the card owns no state
  * and never talks to a backend. The consumer passes the provider
  * `methods` (same item shape as HkAuthMethodList) and binds the OAuth

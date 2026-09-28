@@ -40,7 +40,7 @@ rsx! {
 
 ## Icon Button Sizes
 
-Icon buttons support three sizes: small (24px), medium (32px), and large (40px).
+Icon buttons come in six box sizes: 16, 24, 28, 32, 36 and 40px. The glyph tracks the box: the dense steps (16/24) carry the xs glyph (12px — menus, table rows, dialogs), the 28 **header-chrome step** carries the sm glyph (16px — the geometry of the theme toggle's own trigger buttons, used by the header clusters: search, page refresh, filter), and 32/36/40 carry sm as well.
 
 ```hikari:rust
 rsx! {

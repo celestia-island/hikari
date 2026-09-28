@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createApp, defineComponent, h } from "vue";
 
 import HkIconButton from "./HkIconButton";
@@ -116,5 +119,35 @@ describe("HkIconButton", () => {
     );
     expect(propAndSlot.querySelector(".slot-probe")).not.toBeNull();
     expect(propAndSlot.querySelector(".hk-icon")).toBeNull();
+  });
+});
+
+/**
+ * Static pin for the header-chrome glyph step (user report 2026-09-29:
+ * the search / refresh / filter glyphs in the top-right clusters read
+ * visibly smaller than HkThemeToggle's sun beside them). The `.svg` rule
+ * in HkIconButton.scss forces ANY slotted glyph to
+ * `--hi-icon-button-icon-size`, so the 28 step must map that var to the
+ * sm token (16px — the theme toggle's own glyph size). happy-dom has no
+ * cascade here that a DOM test could measure, so — tokenInventory style —
+ * the declarations themselves are the contract; a deliberate remap is
+ * expected to update this file.
+ */
+describe("HkIconButton glyph step", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const vars = readFileSync(join(here, "HkIconButtonVars.scss"), "utf8");
+
+  it("maps the 28 header step to the sm glyph (16px), matching the theme toggle", () => {
+    const block = vars.slice(vars.indexOf(".hk-icon-button-28"), vars.indexOf(".hk-icon-button-32"));
+    expect(block).toContain("--hi-icon-button-size: 28px;");
+    expect(block).toContain("--hi-icon-button-icon-size: var(--hi-icon-size-sm);");
+    expect(block).not.toContain("var(--hi-icon-size-xs)");
+  });
+
+  it("keeps the dense steps (16/24) on the xs glyph", () => {
+    const block16 = vars.slice(vars.indexOf(".hk-icon-button-16"), vars.indexOf(".hk-icon-button-24"));
+    const block24 = vars.slice(vars.indexOf(".hk-icon-button-24"), vars.indexOf(".hk-icon-button-28"));
+    expect(block16).toContain("var(--hi-icon-size-xs)");
+    expect(block24).toContain("var(--hi-icon-size-xs)");
   });
 });

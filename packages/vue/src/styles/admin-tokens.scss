@@ -227,10 +227,11 @@
 
 /* One soft green blink when the light recovers: the pill background
    pulses from a success tint down to the resting surface colour
-   exactly once, then hands the property back. Mirrors the
-   reconnecting tint's intensity so the two states read as one family;
-   first connects never get it (see HkStatusBar's seenConnected guard).
-   Reduced-motion users get the plain state switch instead. */
+   exactly once, then hands the property back. The transient peak sits
+   slightly above the reconnecting tint's resting intensity so both
+   states read as one family; first connects never get it (see
+   HkStatusBar's seenConnected guard). Reduced-motion users get the
+   plain state switch instead. */
 .s-status-bar-tag-recovered {
   animation: s-status-bar-recover-flash 1.1s var(--ease-standard) 1;
 }

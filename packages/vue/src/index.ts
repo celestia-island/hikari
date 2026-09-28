@@ -472,6 +472,7 @@ export { HkThemeToggle as HThemeToggle, type ThemeItemScope } from "./components
 export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
 export { default as HAuthMethodList } from "./components/HkAuthMethodList";
 export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";
+export { HkThirdPartySignInCard as HThirdPartySignInCard } from "./components/HkThirdPartySignInCard";
 export { default as HAuthSubmitButton } from "./components/HkAuthSubmitButton";
 export {
   HkMfaVerifyCard as HMfaVerifyCard,
@@ -745,6 +746,7 @@ export { HkNavSidebar as HkNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HkThemeToggle } from "./components/HkThemeToggle";
 export { HkAuthCard as HkAuthCard } from "./components/HkAuthCard";
 export { HkSignInCard as HkSignInCard } from "./components/HkSignInCard";
+export { HkThirdPartySignInCard as HkThirdPartySignInCard } from "./components/HkThirdPartySignInCard";
 export { HkMfaVerifyCard as HkMfaVerifyCard } from "./components/HkMfaVerifyCard";
 export { type HkMfaFactor as HkMfaFactor } from "./components/HkMfaVerifyCard";
 export { HkLocalePicker as HkLocalePicker } from "./components/HkLocalePicker";

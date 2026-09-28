@@ -1,0 +1,38 @@
+/* HkThirdPartySignInCard — the passwordless login card body: the
+ * third-party method list as the card's ONLY content (no credentials
+ * form, no submit button). Everything about the divider, the tile row
+ * and the tiles themselves is owned by HkAuthMethodList.scss and
+ * admin-tokens.scss; this file only re-positions the reused methods
+ * container inside the card body and promotes the tiles one size step.
+ */
+
+/* The body wrapper reuses the `.s-auth-methods` container class — it owns
+   the block's flex-column rhythm, and through the `.s-auth-methods`
+   scope the tile row's centered layout and the tooltip wrappers' flex
+   sizing resolve too. But here the block sits INSIDE the card's
+   `.s-auth-form` body instead of under a credentials form, so the
+   banding that position needs (24px top margin + 8px/2rem padding, put
+   there to separate the divider from a submit button above) collapses
+   away: the body container already owns the padding. The (0,2,0)
+   selector deterministically beats both the container's own (0,1,0)
+   rules (including the ≤480px re-declaration) and the body's generic
+   `.s-auth-form > *` child gap, whatever the stylesheet order is. */
+.s-auth-form .s-auth-third-party-body {
+  margin-top: 0;
+  padding: 0;
+  gap: var(--space-8, 0.5rem);
+  /* Center the block vertically should a consumer give the body more
+     height than the content needs (the card itself still hugs its
+     content); horizontal centering is the tile row's own behavior. */
+  justify-content: center;
+}
+
+/* Primary-flow presence: with the tiles as the card's ONLY content, the
+   standard 44px (2.75rem) alternative-row tile reads undersized next to
+   the card header. One context-scoped step up to 52px — the frame, hover
+   wash, focus ring and icon fit all come from the unchanged tile rules
+   (the icon box is max-100% and follows the frame). */
+.s-auth-third-party-body .s-auth-methods-tile {
+  width: 3.25rem;
+  height: 3.25rem;
+}

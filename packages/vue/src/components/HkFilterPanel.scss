@@ -1,0 +1,115 @@
+/**
+ * HkFilterPanel — the condition-row list inside the header filter
+ * affordance. Bounded on BOTH axes by design (user direction
+ * 2026-09-29): never too tall, never too wide, but never so narrow that
+ * the operator symbol group cannot fit — on phones the operator column
+ * narrows to roughly TWO visible symbols and scrolls horizontally
+ * instead.
+ *
+ * Row anatomy: [field label | operator symbol group | value control].
+ * Edits commit LIVE (the desktop panel has no confirm button); the
+ * mobile sheet's single confirm merely closes — the standard HkPopover
+ * sheetOnMobile split renders the same panel in both shapes.
+ */
+
+.hk-filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+  /* Bounded width: wide enough for the operator group, narrow enough to
+   * read as a header dropdown (the popover host clamps to the viewport
+   * edge; this keeps the panel from stretching to meet it). */
+  width: clamp(21rem, 92vw, 27rem);
+  max-width: 100%;
+  /* Bounded height: ~7 rows of breathing room, then internal scroll —
+   * a field-rich page must not grow an unbounded dropdown. */
+  max-height: min(26rem, 60vh);
+  overflow-y: auto;
+  padding: var(--space-4, 0.25rem);
+}
+
+.hk-filter-panel-row {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-filter-panel-field {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted, var(--color-text-secondary)));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Operator symbol group: one glyph per toggle button. Scrolls
+ * horizontally when the kind's operator set (or a phone viewport)
+ * outgrows the column; scroll snapping keeps each symbol landing
+ * cleanly under the thumb. */
+.hk-filter-panel-ops {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.125rem);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding: 1px;
+}
+
+.hk-filter-panel-op {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 var(--space-6, 0.375rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: rgb(var(--color-muted, var(--color-text-secondary)));
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hk-filter-panel-op:hover {
+  background: rgb(var(--color-primary) / 12%);
+  color: rgb(var(--color-text));
+}
+
+.hk-filter-panel-op[aria-pressed="true"] {
+  background: rgb(var(--color-primary) / 18%);
+  color: rgb(var(--color-primary));
+  font-weight: 700;
+}
+
+.hk-filter-panel-op:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hk-filter-panel-value {
+  min-width: 0;
+}
+
+/* Phones: the operator column narrows hard (about two symbols visible)
+ * and the row lets the value control take the remaining width. The
+ * group itself scrolls — same interaction, smaller footprint. */
+@media (max-width: 767px) {
+  .hk-filter-panel {
+    width: 100%;
+  }
+
+  .hk-filter-panel-row {
+    grid-template-columns: minmax(3.75rem, auto) minmax(3.9rem, auto) minmax(0, 1fr);
+  }
+
+  .hk-filter-panel-ops {
+    max-width: 4.25rem;
+  }
+}

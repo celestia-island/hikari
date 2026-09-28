@@ -192,7 +192,15 @@
     "hikari::zoomToolbar.zoomSlider": "Zoom level",
     "hikari::filterBar.trigger": "Filters",
     "hikari::filterBar.apply": "Apply",
-    "hikari::filterBar.reset": "Reset"
+    "hikari::filterPanel.all": "All",
+    "hikari::filterBar.reset": "Reset",
+    "hikari::filterPanel.op.eq": "equals",
+    "hikari::filterPanel.op.ne": "not equals",
+    "hikari::filterPanel.op.approx": "fuzzy match",
+    "hikari::filterPanel.op.lt": "less than",
+    "hikari::filterPanel.op.lte": "at most",
+    "hikari::filterPanel.op.gte": "at least",
+    "hikari::filterPanel.op.gt": "greater than"
   },
   "hikari::affixPicker.title": "Options",
   "hikari::affixPicker.search": "Search",

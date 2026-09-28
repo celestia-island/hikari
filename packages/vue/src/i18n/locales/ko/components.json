@@ -192,7 +192,15 @@
     "hikari::zoomToolbar.zoomSlider": "확대 수준",
     "hikari::filterBar.trigger": "필터",
     "hikari::filterBar.apply": "적용",
-    "hikari::filterBar.reset": "초기화"
+    "hikari::filterPanel.all": "전체",
+    "hikari::filterBar.reset": "초기화",
+    "hikari::filterPanel.op.eq": "같음",
+    "hikari::filterPanel.op.ne": "같지 않음",
+    "hikari::filterPanel.op.approx": "부분 일치",
+    "hikari::filterPanel.op.lt": "미만",
+    "hikari::filterPanel.op.lte": "이하",
+    "hikari::filterPanel.op.gte": "이상",
+    "hikari::filterPanel.op.gt": "초과"
   },
   "hikari::affixPicker.unset": "미설정",
   "hikari::affixPicker.title": "옵션",

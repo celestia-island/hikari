@@ -192,7 +192,15 @@
     "hikari::zoomToolbar.zoomSlider": "Уровень масштаба",
     "hikari::filterBar.trigger": "Фильтры",
     "hikari::filterBar.apply": "Применить",
-    "hikari::filterBar.reset": "Сбросить"
+    "hikari::filterPanel.all": "Все",
+    "hikari::filterBar.reset": "Сбросить",
+    "hikari::filterPanel.op.eq": "равно",
+    "hikari::filterPanel.op.ne": "не равно",
+    "hikari::filterPanel.op.approx": "приблизительно",
+    "hikari::filterPanel.op.lt": "меньше",
+    "hikari::filterPanel.op.lte": "не более",
+    "hikari::filterPanel.op.gte": "не менее",
+    "hikari::filterPanel.op.gt": "больше"
   },
   "hikari::affixPicker.unset": "Не задано",
   "hikari::affixPicker.title": "Параметры",

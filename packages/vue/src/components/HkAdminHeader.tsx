@@ -283,6 +283,19 @@ export const HkAdminHeader = defineComponent({
           }}
         </HkMenu>
 
+        {/* Page-owned centre group (page filter tab strips, segmented
+         *  option pickers) — the console face of the balanced-wing
+         *  header the chat frontend's top bar already uses: the left
+         *  and right wings grow from the same flex basis so this group
+         *  stays pinned to the true viewport middle. Rendered only when
+         *  the host provides it, so headers without a centre keep the
+         *  exact DOM they always had. */}
+        {slots.center && (
+          <div class="s-admin-header-center">
+            {slots.center()}
+          </div>
+        )}
+
         <div class="s-admin-header-actions">
           {props.showEmergencyStop && (
             <button

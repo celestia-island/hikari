@@ -71,7 +71,11 @@ const DEFAULT_OPERATORS: Record<HkFilterFieldDef["kind"], HkFilterOperator[]> = 
 
 /** Keep only a legal number shape: optional leading minus, digits, one
  *  decimal point ("只允许输入合法数字" — the input filters the keystrokes
- *  rather than clamping afterwards). */
+ *  rather than clamping afterwards). The intermediate fragments "-",
+ *  "." and "-." survive deliberately: rejecting them mid-keystroke would
+ *  make typing a negative or a decimal impossible; no chest page ships a
+ *  number field yet, and one will want Number()-validation at the wire
+ *  boundary when the first does. */
 export function sanitizeNumberInput(raw: string): string {
   let out = raw.replace(/[^-0-9.]/g, "");
   // One minus, and only leading.

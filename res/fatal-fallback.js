@@ -78,12 +78,20 @@
       if (stored && supported.includes(stored)) return stored;
     } catch {
     }
-    const osPrefs = window.__CELESTIA_OS_PREFS__;
-    if (osPrefs?.locale) {
-      const mapped = mapBcp47(osPrefs.locale);
+    // The desktop shell publishes this global; a non-string `locale` (or a
+    // throwing getter) must degrade to the navigator languages rather than
+    // aborting the whole script — losing the only failure surface there is.
+    const osLocale = safe(function () {
+      const osPrefs = window.__CELESTIA_OS_PREFS__;
+      return osPrefs && typeof osPrefs.locale === "string" ? osPrefs.locale : null;
+    }, null);
+    if (osLocale) {
+      const mapped = mapBcp47(osLocale);
       if (mapped && supported.includes(mapped)) return mapped;
     }
-    const nav = navigator.languages || [navigator.language || navigator.userLanguage || "en"];
+    const nav = safe(function () {
+      return navigator.languages || [navigator.language || navigator.userLanguage || "en"];
+    }, ["en"]);
     for (const langRaw of nav) {
       const lang = langRaw.toLowerCase().replace("_", "-");
       for (const s of supported) if (s.toLowerCase() === lang) return s;
@@ -275,7 +283,11 @@
     // text (server messages, module URLs) and this pane must not become an
     // XSS sink on a page that is already failing.
     var text = serialize(payload);
-    if (!text) text = String(payload && payload.message || "");
+    if (!text) {
+      text = safe(function () {
+        return String(payload && payload.message || "");
+      }, "");
+    }
     pre.textContent = text;
   }
   /** Raise the landing for `reason`: localized headline + explanation from
@@ -360,6 +372,15 @@
     present(reasonOf(msg), msg || "", detail || null);
   };
   window.__appBlock = function(browserName, currentVersion, minVersion) {
+    // Abort FIRST: this is the only call that stops a bundle the rejected
+    // browser cannot run, and the check runs from a classic <script> during
+    // parse — before the module entry. `__appReady()` (fired on a
+    // successful mount) stands the overlay down, so nothing may throw ahead
+    // of the abort, or the operator is left on a shell that cannot work.
+    try {
+      window.stop();
+    } catch {
+    }
     if (currentLocale === "en") currentLocale = detectLocale();
     const t = strings();
     const ls = document.getElementById("loading-screen");
@@ -385,15 +406,6 @@
         .replace("{current}", String(currentVersion))
         .replace("{min}", String(minVersion))
     });
-    // An unsupported browser must not be handed a half-executed bundle: the
-    // check runs from a classic <script> during parse, BEFORE the module
-    // entry, and `__appReady()` (called on a successful mount) stands the
-    // overlay down — so without aborting the load a browser we just told to
-    // upgrade could silently land on a shell it cannot run.
-    try {
-      window.stop();
-    } catch {
-    }
   };
   setTimeout(() => {
     if (dismissed) return;
@@ -436,7 +448,9 @@
     const app = document.getElementById("app");
     if (app && app.children && app.children.length) return;
     const reason = e.reason;
-    const msg = reason && reason.message ? reason.message : String(reason);
+    var msg = safe(function () {
+      return reason && reason.message ? String(reason.message) : String(reason);
+    }, "");
     var info = errorInfo(reason) || { name: "UnhandledRejection", message: msg };
     if (reasonOf(msg) === "chunk") {
       remember("chunk", msg, info);
@@ -482,15 +496,20 @@
         return api.writeText(text);
       }, null);
       if (pending && typeof pending.then === "function") {
-        pending.then(
-          function () {
-            showToast(strings().copied);
-          },
-          function () {
-            showToast(legacyCopy(text) ? strings().copied : strings().copyFailed);
-          }
-        );
-        return;
+        // Attaching to a hostile thenable must not cost the click handler
+        // its fallback: a throw here just falls through to legacyCopy.
+        var attached = safe(function () {
+          pending.then(
+            function () {
+              showToast(strings().copied);
+            },
+            function () {
+              showToast(legacyCopy(text) ? strings().copied : strings().copyFailed);
+            }
+          );
+          return true;
+        }, false);
+        if (attached) return;
       }
     }
     showToast(legacyCopy(text) ? strings().copied : strings().copyFailed);

@@ -384,7 +384,13 @@
     lastPayload = safe(function () {
       return buildPayload(reason, message, error);
     }, null);
-    if (lastPayload) paintJson(lastPayload);
+    // The pane write is DOM work too: an unwritable #fatal-json must not
+    // throw out of __appFatal (the card is already up, the payload is not).
+    if (lastPayload) {
+      safe(function () {
+        paintJson(lastPayload);
+      });
+    }
   }
   /** Record a pre-mount error WITHOUT raising the overlay: the host's own
    *  lazy-load policy may still heal it (retry in place, then one bounded
@@ -456,7 +462,9 @@
     if (currentLocale === "en") currentLocale = detectLocale();
     const t = strings();
     const ls = document.getElementById("loading-screen");
-    if (ls) ls.style.display = "none";
+    safe(function () {
+      if (ls && ls.style) ls.style.display = "none";
+    });
     // Info severity, not error: hikari's landing repaints the disc AND the
     // card wash for its `info` variant, so the class carries both (and swaps
     // the glyph in CSS) — no inline styles, and nothing the script has to
@@ -465,26 +473,30 @@
     // The three arguments are host-supplied: coerce them inside guards so a
     // hostile value cannot cost the operator the card (the abort above has
     // already landed, which is the part that must never be skipped).
+    var text = function (value) {
+      return safe(function () {
+        return String(value);
+      }, "");
+    };
+    var browserText = text(browserName);
+    var currentText = text(currentVersion);
+    var minText = text(minVersion);
     var summary = safe(function () {
-      return `${browserName} ${currentVersion} (requires >= ${minVersion})`;
+      return `${browserText} ${currentText} (requires >= ${minText})`;
     }, "");
-    var desc = safe(function () {
-      // `replaceAll`, not `replace`: blockMsg names {browser} twice and the
-      // second one used to survive into the card verbatim.
-      return t.blockMsg
-        .split("{browser}").join(String(browserName))
-        .split("{current}").join(String(currentVersion))
-        .split("{min}").join(String(minVersion));
-    }, t.blockMsg);
+    var fill = function (template) {
+      // Every occurrence, and always with a string: a hostile argument
+      // degrades its own field instead of leaving `{browser}` on the card.
+      return template
+        .split("{browser}").join(browserText)
+        .split("{current}").join(currentText)
+        .split("{min}").join(minText);
+    };
     present("browser", summary, {
       name: "UnsupportedBrowser",
-      message: safe(function () {
-        return `${browserName} ${currentVersion}`;
-      }, ""),
-      required: safe(function () {
-        return String(minVersion);
-      }, "")
-    }, { title: t.blockTitle, desc: desc });
+      message: `${browserText} ${currentText}`,
+      required: minText
+    }, { title: t.blockTitle, desc: fill(t.blockMsg) });
   };
   setTimeout(() => {
     if (dismissed) return;
@@ -546,13 +558,15 @@
     window.__appFatal?.(msg, info);
   });
   function showToast(text) {
-    const toast = document.getElementById("fatal-toast");
-    if (!toast) return;
-    toast.textContent = text;
-    toast.classList.add("visible");
-    setTimeout(() => {
-      toast.classList.remove("visible");
-    }, 2e3);
+    safe(function () {
+      const toast = document.getElementById("fatal-toast");
+      if (!toast) return;
+      toast.textContent = text;
+      toast.classList.add("visible");
+      setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 2e3);
+    });
   }
   /** The legacy selection trick, kept for browsers without the async
    *  clipboard API and as the fallback when it refuses (insecure context,
@@ -573,10 +587,9 @@
   function copyError() {
     // The payload — not the clamped DOM copy — is what belongs in a bug
     // report: message, stack, failed resources, boot state.
+    // The payload always serializes (capped primitives), so the localized
+    // paragraph is only the pre-payload fallback.
     var text = lastPayload ? serialize(lastPayload) : "";
-    // Serialization can only fail on an exotic field; the raw message is
-    // still better evidence than the localized paragraph.
-    if (!text) text = lastPayload ? redact(lastPayload.message) : "";
     if (!text) text = document.getElementById("fatal-msg")?.textContent || "";
     var api = safe(function () {
       return navigator.clipboard;
@@ -619,7 +632,10 @@
   function bindActions() {
     document.getElementById("fatal-copy")?.addEventListener("click", copyError);
     document.getElementById("fatal-reload")?.addEventListener("click", () => {
-      location.reload();
+      // A sandboxed frame can refuse the navigation; the card stays usable.
+      safe(function () {
+        location.reload();
+      });
     });
   }
   // A host may vendor this file in <head>, before the card markup exists —

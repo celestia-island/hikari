@@ -275,7 +275,7 @@
 
   // The card's page-grade top padding (2.25rem desktop / 1.75rem mobile)
   // reads as a detached float inside a pane — slim it to one space step.
-  // Specificity (0,2,1) outranks the ≤480px media rule (0,1,0), so this
+  // Specificity (0,3,0) outranks the ≤480px media rule (0,1,0), so this
   // holds on phones too.
   .hk-error-landing__card {
     padding: var(--space-16, 1rem) var(--space-28, 1.75rem) var(--space-24, 1.5rem);

@@ -313,7 +313,9 @@
     // `payload.message` is a capped string by construction, so no coercion
     // guard is needed here — this branch exists so the pane can never go
     // blank when serialization fails (e.g. an exotic build-hash global).
-    if (!text) text = payload && payload.message ? payload.message : "";
+    // It still goes through `redact`: the mask is a property of the PANE,
+    // not of the serializer, and this is the one write that skips it.
+    if (!text) text = redact(payload && payload.message ? payload.message : "");
     pre.textContent = text;
   }
   /** Raise the landing for `reason`: localized headline + explanation from
@@ -357,6 +359,13 @@
   }
   function applyLocale(loc) {
     currentLocale = loc;
+    // The pre-boot card is the only thing on the page while the app is
+    // missing, so it owns the document language until the app sets its own.
+    // `dir` is deliberately NOT set: the SPA never sets it, so flipping the
+    // document to RTL from here would reach layouts nothing has tested.
+    safe(function () {
+      document.documentElement.lang = loc;
+    });
     const t = strings();
     const titleEl = document.getElementById("fatal-title");
     const msgEl = document.getElementById("fatal-msg");
@@ -483,7 +492,10 @@
     if (dismissed) return;
     const app = document.getElementById("app");
     if (app && app.children && app.children.length) return;
-    const reason = e.reason;
+    // Reading the event property can itself throw (hostile accessor).
+    var reason = safe(function () {
+      return e.reason;
+    }, null);
     var msg = safe(function () {
       return reason && reason.message ? String(reason.message) : String(reason);
     }, "");
@@ -535,7 +547,10 @@
     }, null);
     if (writeText) {
       var pending = safe(function () {
-        return writeText(text);
+        // Called on its owner: a WebIDL method brand-checks its receiver,
+        // so the detached form throws "Illegal invocation" in every engine
+        // and would silently kill the whole async clipboard path.
+        return api.writeText(text);
       }, null);
       var attachable = safe(function () {
         return !!pending && typeof pending.then === "function";

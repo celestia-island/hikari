@@ -260,11 +260,26 @@
 
 // Inline variant: the same card without the viewport takeover — used when
 // HkErrorBoundary captures a crash inside a pane and swaps in the landing
-// in-place instead of covering the whole screen.
+// in-place instead of covering the whole screen, or when a host view
+// renders it as its failed content region right under a sibling header.
 .hk-error-landing.is-inline {
   min-height: 0;
-  padding: var(--space-20, 1.25rem) var(--space-12, 0.75rem);
+  // In-pane, the host region already pads and a sibling header usually
+  // sits immediately above: the takeover's block-axis padding floated
+  // the card a full padding-frame below its context. The vertical
+  // padding is dropped entirely (the card's own slimmer top padding
+  // below supplies the breathing room); the horizontal inset stays so a
+  // narrow pane never seats the card edge-to-edge.
+  padding: 0 var(--space-12, 0.75rem);
   background: transparent;
+
+  // The card's page-grade top padding (2.25rem desktop / 1.75rem mobile)
+  // reads as a detached float inside a pane — slim it to one space step.
+  // Specificity (0,3,0) outranks the ≤480px media rule (0,1,0), so this
+  // holds on phones too.
+  .hk-error-landing__card {
+    padding: var(--space-16, 1rem) var(--space-28, 1.75rem) var(--space-24, 1.5rem);
+  }
 }
 
 @media (max-width: 480px) {

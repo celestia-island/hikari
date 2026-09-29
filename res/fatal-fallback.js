@@ -23,6 +23,13 @@
   //   #fatal-details-label   label above the raw payload pane
   //   #fatal-json            the raw error payload, as JSON text
   //   #fatal-copy / #fatal-reload / #fatal-toast   actions + feedback
+  //   #fatal-fallback .ff-icon   the tone disc; its textContent is swapped
+  //                          for the info glyph on the browser-block reason
+  //   #app                   read (never written) for the mount state —
+  //                          "did the SPA render?" gates the onerror hook
+  //   #loading-screen        hidden on the browser-block reason
+  // Renaming any of these costs that part of the landing silently, so a
+  // host that re-vendors its skeleton should keep the ids verbatim.
   //
   // Host-facing hooks: `window.__appFatal(msg, detail?)` (the host's own
   // fatal path — `detail` is an optional { name, message, stack } shape),

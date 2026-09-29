@@ -349,38 +349,43 @@
    *  relabelled for the active locale. */
   function present(reason, message, error, overrides) {
     const t = strings();
-    // The card owns the document language while it is the only thing on the
-    // page; the locale can resolve AFTER boot (a stored preference written
-    // later), so it is re-published on every present().
-    safe(function () {
-      document.documentElement.lang = currentLocale;
-    });
-    const root = document.getElementById("fatal-fallback");
-    // The browser-block reason paints the disc/wash in the info tone via
-    // this class; every other reason owns the error tone, so a later failure
-    // cannot inherit the upgrade screen's visuals.
-    if (root && reason !== "browser") root.classList.remove("is-info");
-    const titleEl = document.getElementById("fatal-title");
-    const msgEl = document.getElementById("fatal-msg");
-    const labelEl = document.getElementById("fatal-details-label");
-    const copyBtn = document.getElementById("fatal-copy");
-    const reloadBtn = document.getElementById("fatal-reload");
     var title = overrides && overrides.title ? overrides.title : reasonText(t, reason, "Title");
     var desc = overrides && overrides.desc ? overrides.desc : reasonText(t, reason, "Desc");
     if (reason === "timeout") desc = desc.replace("{seconds}", String(Math.round(TIMEOUT / 1e3)));
-    if (titleEl) titleEl.textContent = title;
-    if (msgEl) {
-      msgEl.removeAttribute("data-default");
-      msgEl.textContent = desc;
-    }
-    if (labelEl) labelEl.textContent = t.rawDetails;
-    if (copyBtn) copyBtn.textContent = t.copy;
-    if (reloadBtn) reloadBtn.textContent = t.reload;
-    // Raise BEFORE building the payload: the card is the point, the payload
-    // is a bonus. A hostile message or a throwing accessor inside payload
-    // collection must never cost the operator the explanation itself.
     dismissed = true;
-    document.getElementById("fatal-fallback")?.classList.add("visible");
+    // Raise FIRST and on its own: every later write is cosmetic next to the
+    // card existing. A hostile or frozen DOM must not be able to cost the
+    // operator the surface itself (the file's own rule: diagnostics never
+    // throw on top of an already broken page).
+    safe(function () {
+      var el = document.getElementById("fatal-fallback");
+      if (!el) return;
+      // The browser-block reason paints the disc AND the wash in the info
+      // tone via this class; every other reason owns the error tone, so a
+      // later failure cannot inherit the upgrade screen's visuals.
+      if (reason !== "browser") el.classList.remove("is-info");
+      el.classList.add("visible");
+    });
+    // Then the labels, each inside the same guard.
+    safe(function () {
+      // The card owns the document language while it is the only thing on
+      // the page; the locale can resolve AFTER boot (a stored preference
+      // written later), so it is re-published on every present().
+      document.documentElement.lang = currentLocale;
+      var titleEl = document.getElementById("fatal-title");
+      var msgEl = document.getElementById("fatal-msg");
+      var labelEl = document.getElementById("fatal-details-label");
+      var copyBtn = document.getElementById("fatal-copy");
+      var reloadBtn = document.getElementById("fatal-reload");
+      if (titleEl) titleEl.textContent = title;
+      if (msgEl) {
+        msgEl.removeAttribute("data-default");
+        msgEl.textContent = desc;
+      }
+      if (labelEl) labelEl.textContent = t.rawDetails;
+      if (copyBtn) copyBtn.textContent = t.copy;
+      if (reloadBtn) reloadBtn.textContent = t.reload;
+    });
     lastPayload = safe(function () {
       return buildPayload(reason, message, error);
     }, null);
@@ -415,11 +420,13 @@
     const labelEl = document.getElementById("fatal-details-label");
     const copyBtn = document.getElementById("fatal-copy");
     const reloadBtn = document.getElementById("fatal-reload");
-    if (titleEl) titleEl.textContent = t.errorTitle;
-    if (msgEl && msgEl.getAttribute("data-default") === "1") msgEl.textContent = t.errorDesc;
-    if (labelEl) labelEl.textContent = t.rawDetails;
-    if (copyBtn) copyBtn.textContent = t.copy;
-    if (reloadBtn) reloadBtn.textContent = t.reload;
+    safe(function () {
+      if (titleEl) titleEl.textContent = t.errorTitle;
+      if (msgEl && msgEl.getAttribute("data-default") === "1") msgEl.textContent = t.errorDesc;
+      if (labelEl) labelEl.textContent = t.rawDetails;
+      if (copyBtn) copyBtn.textContent = t.copy;
+      if (reloadBtn) reloadBtn.textContent = t.reload;
+    });
   }
   // Chunk-miss signatures across browsers — the same families the host's
   // own lazy-load recovery recognizes. A bundle that could not be fetched
@@ -440,7 +447,9 @@
     // successfully-mounted app stayed frozen behind a full-screen,
     // z-100000 blocker and every click landed on the overlay. Ready
     // means ready: pull the overlay back down.
-    document.getElementById("fatal-fallback")?.classList.remove("visible");
+    safe(function () {
+      document.getElementById("fatal-fallback")?.classList.remove("visible");
+    });
   };
   window.__appFatal = function(msg, detail) {
     // Default English is only a placeholder: resolve the real locale the
@@ -469,7 +478,9 @@
     // card wash for its `info` variant, so the class carries both (and swaps
     // the glyph in CSS) — no inline styles, and nothing the script has to
     // undo later.
-    document.getElementById("fatal-fallback")?.classList.add("is-info");
+    safe(function () {
+      document.getElementById("fatal-fallback")?.classList.add("is-info");
+    });
     // The three arguments are host-supplied: coerce them inside guards so a
     // hostile value cannot cost the operator the card (the abort above has
     // already landed, which is the part that must never be skipped).

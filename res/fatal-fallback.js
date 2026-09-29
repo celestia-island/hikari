@@ -89,8 +89,17 @@
       const mapped = mapBcp47(osLocale);
       if (mapped && supported.includes(mapped)) return mapped;
     }
+    // The navigator fallback is hostile-input territory too: `languages` is
+    // spec'd as a frozen array of strings, but the loop below runs at module
+    // scope — one non-string entry would abort the whole script and take the
+    // card, the hooks AND the browser-block abort with it.
     const nav = safe(function () {
-      return navigator.languages || [navigator.language || navigator.userLanguage || "en"];
+      var list = navigator.languages || [navigator.language || navigator.userLanguage || "en"];
+      var out = [];
+      for (var i = 0; i < list.length; i++) {
+        if (typeof list[i] === "string") out.push(list[i]);
+      }
+      return out.length ? out : ["en"];
     }, ["en"]);
     for (const langRaw of nav) {
       const lang = langRaw.toLowerCase().replace("_", "-");
@@ -158,7 +167,11 @@
     return safe(function () {
       var u = new URL(url, location.href);
       return u.pathname + u.search;
-    }, String(url));
+    }, safe(function () {
+      // The fallback is evaluated EAGERLY (it is a call argument), so it
+      // needs its own guard: `String(url)` throws on a hostile toString.
+      return String(url);
+    }, ""));
   }
   /** Every JS/CSS resource the browser has finished fetching, keyed by
    *  absolute URL. A <script src> WITH an entry here completed its fetch —
@@ -259,13 +272,27 @@
     payload.bootScripts = bootScripts(index);
     if (error) {
       // Caps live here, not only at capture: `__appFatal(msg, detail)` lets
-      // a host hand in its own detail object verbatim.
+      // a host hand in its own detail object verbatim, and EVERY string it
+      // carries lands in the pane and in the pasted payload — not just
+      // message/stack. Non-primitives are flattened to a capped JSON text
+      // so a huge nested object cannot do it either.
       var detail = {};
       for (var key in error) {
-        if (Object.prototype.hasOwnProperty.call(error, key)) detail[key] = error[key];
+        if (!Object.prototype.hasOwnProperty.call(error, key)) continue;
+        // Reading the property can itself throw (a hostile getter).
+        var value = safe(function () {
+          return error[key];
+        }, undefined);
+        if (typeof value === "string") {
+          detail[key] = cap(value, TEXT_LIMIT);
+        } else if (value === null || typeof value === "number" || typeof value === "boolean") {
+          detail[key] = value;
+        } else {
+          detail[key] = cap(safe(function () {
+            return JSON.stringify(value);
+          }, ""), TEXT_LIMIT);
+        }
       }
-      if (detail.message !== undefined) detail.message = cap(detail.message, TEXT_LIMIT);
-      if (detail.stack !== undefined) detail.stack = cap(detail.stack, TEXT_LIMIT);
       payload.error = detail;
     }
     return payload;
@@ -283,11 +310,10 @@
     // text (server messages, module URLs) and this pane must not become an
     // XSS sink on a page that is already failing.
     var text = serialize(payload);
-    if (!text) {
-      text = safe(function () {
-        return String(payload && payload.message || "");
-      }, "");
-    }
+    // `payload.message` is a capped string by construction, so no coercion
+    // guard is needed here — this branch exists so the pane can never go
+    // blank when serialization fails (e.g. an exotic build-hash global).
+    if (!text) text = payload && payload.message ? payload.message : "";
     pre.textContent = text;
   }
   /** Raise the landing for `reason`: localized headline + explanation from
@@ -395,17 +421,27 @@
       iconEl.style.setProperty("--ff-tone", "var(--loader-r, 58) var(--loader-g, 118) var(--loader-b, 236)");
       iconEl.style.fontSize = "28px";
     }
-    present("browser", `${browserName} ${currentVersion} (requires >= ${minVersion})`, {
-      name: "UnsupportedBrowser",
-      message: `${browserName} ${currentVersion}`,
-      required: String(minVersion)
-    }, {
-      title: t.blockTitle,
-      desc: t.blockMsg
+    // The three arguments are host-supplied: coerce them inside guards so a
+    // hostile value cannot cost the operator the card (the abort above has
+    // already landed, which is the part that must never be skipped).
+    var summary = safe(function () {
+      return `${browserName} ${currentVersion} (requires >= ${minVersion})`;
+    }, "");
+    var desc = safe(function () {
+      return t.blockMsg
         .replace("{browser}", browserName)
         .replace("{current}", String(currentVersion))
-        .replace("{min}", String(minVersion))
-    });
+        .replace("{min}", String(minVersion));
+    }, t.blockMsg);
+    present("browser", summary, {
+      name: "UnsupportedBrowser",
+      message: safe(function () {
+        return `${browserName} ${currentVersion}`;
+      }, ""),
+      required: safe(function () {
+        return String(minVersion);
+      }, "")
+    }, { title: t.blockTitle, desc: desc });
   };
   setTimeout(() => {
     if (dismissed) return;
@@ -488,14 +524,23 @@
     // report: message, stack, failed resources, boot state.
     var text = lastPayload ? serialize(lastPayload) : "";
     if (!text) text = document.getElementById("fatal-msg")?.textContent || "";
-    var api = navigator.clipboard;
-    if (api && typeof api.writeText === "function") {
-      // A toast that says "copied" while the write rejected sends the
-      // operator off with an empty clipboard and no idea why.
+    var api = safe(function () {
+      return navigator.clipboard;
+    }, null);
+    // Even reaching for `writeText` can throw (hostile accessor), and so can
+    // inspecting the returned thenable: both stay inside guards so the click
+    // always ends in a toast.
+    var writeText = safe(function () {
+      return api && typeof api.writeText === "function" ? api.writeText : null;
+    }, null);
+    if (writeText) {
       var pending = safe(function () {
-        return api.writeText(text);
+        return writeText(text);
       }, null);
-      if (pending && typeof pending.then === "function") {
+      var attachable = safe(function () {
+        return !!pending && typeof pending.then === "function";
+      }, false);
+      if (attachable) {
         // Attaching to a hostile thenable must not cost the click handler
         // its fallback: a throw here just falls through to legacyCopy.
         var attached = safe(function () {

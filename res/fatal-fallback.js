@@ -146,6 +146,15 @@
       return fallback;
     }
   }
+  /** Has the SPA rendered? This read decides whether the card is allowed to
+   *  appear at all, at four sites (payload, watchdog, both capture hooks). */
+  function appHasChildren() {
+    return safe(function () {
+      var app = byId("app");
+      return !!(app && app.children && app.children.length);
+    }, false);
+  }
+
   /** Guarded `getElementById`: even the lookup can be made to throw, and a
    *  module-scope throw here costs the whole landing (hooks and all). */
   function byId(id) {
@@ -271,7 +280,6 @@
     return s.length > limit ? s.slice(0, limit) + "\u2026" : s;
   }
   function buildPayload(reason, message, error) {
-    var app = byId("app");
     var index = resourceIndex();
     var payload = {
       reason: reason,
@@ -284,7 +292,7 @@
       readyState: safe(function () {
         return document.readyState;
       }, ""),
-      appMounted: !!(app && app.children && app.children.length),
+      appMounted: appHasChildren(),
       locale: currentLocale,
       // Every read here is guarded, and the value is coerced to a string:
       // the payload is collected while the page is already failing, and one
@@ -520,8 +528,7 @@
   };
   setTimeout(() => {
     if (dismissed) return;
-    const app = byId("app");
-    if (!app || !app.children || !app.children.length) {
+    if (!appHasChildren()) {
       applyLocale(detectLocale());
       // A captured cause beats the symptom: report WHAT failed before the
       // watchdog expired, not merely that time ran out.
@@ -542,8 +549,7 @@
     // a stray runtime error (e.g. a WebSocket frame that crashes a
     // transport handler) must not freeze the whole page behind the
     // blocker — the app is alive and can keep serving the operator.
-    const app = byId("app");
-    if (app && app.children && app.children.length) return;
+    if (appHasChildren()) return;
     if (dismissed || !msg || typeof msg !== "string") return;
     var info = errorInfo(error) || { name: "Error", message: msg };
     if (source) {
@@ -557,12 +563,13 @@
       remember("chunk", msg, info);
       return;
     }
-    window.__appFatal?.(msg, info);
+    safe(function () {
+      window.__appFatal?.(msg, info);
+    });
   };
   window.addEventListener("unhandledrejection", (e) => {
     if (dismissed) return;
-    const app = byId("app");
-    if (app && app.children && app.children.length) return;
+    if (appHasChildren()) return;
     // Reading the event property can itself throw (hostile accessor).
     var reason = safe(function () {
       return e.reason;
@@ -575,7 +582,9 @@
       remember("chunk", msg, info);
       return;
     }
-    window.__appFatal?.(msg, info);
+    safe(function () {
+      window.__appFatal?.(msg, info);
+    });
   });
   function showToast(text) {
     safe(function () {
@@ -611,12 +620,9 @@
     // report: message, stack, failed resources, boot state.
     // The payload always serializes (capped primitives), so the localized
     // paragraph is only the pre-payload fallback.
-    var text = lastPayload ? serialize(lastPayload) : "";
-    if (!text) {
-      text = safe(function () {
-        return byId("fatal-msg")?.textContent || "";
-      }, "");
-    }
+    // No payload (a host calling copy before any failure) falls back to the
+    // localized explanation — a string from the table, not a DOM read.
+    var text = lastPayload ? serialize(lastPayload) : strings().errorDesc;
     var api = safe(function () {
       return navigator.clipboard;
     }, null);
@@ -656,11 +662,15 @@
     showToast(legacyCopy(text) ? strings().copied : strings().copyFailed);
   }
   function bindActions() {
-    byId("fatal-copy")?.addEventListener("click", copyError);
-    byId("fatal-reload")?.addEventListener("click", () => {
-      // A sandboxed frame can refuse the navigation; the card stays usable.
-      safe(function () {
-        location.reload();
+    safe(function () {
+      byId("fatal-copy")?.addEventListener("click", copyError);
+    });
+    safe(function () {
+      byId("fatal-reload")?.addEventListener("click", () => {
+        // A sandboxed frame can refuse the navigation; the card stays usable.
+        safe(function () {
+          location.reload();
+        });
       });
     });
   }

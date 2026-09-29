@@ -281,7 +281,9 @@
       }, ""),
       elapsedMs: Date.now() - bootStartedAt,
       timeoutMs: TIMEOUT,
-      readyState: document.readyState,
+      readyState: safe(function () {
+        return document.readyState;
+      }, ""),
       appMounted: !!(app && app.children && app.children.length),
       locale: currentLocale,
       // Every read here is guarded, and the value is coerced to a string:
@@ -610,7 +612,11 @@
     // The payload always serializes (capped primitives), so the localized
     // paragraph is only the pre-payload fallback.
     var text = lastPayload ? serialize(lastPayload) : "";
-    if (!text) text = byId("fatal-msg")?.textContent || "";
+    if (!text) {
+      text = safe(function () {
+        return byId("fatal-msg")?.textContent || "";
+      }, "");
+    }
     var api = safe(function () {
       return navigator.clipboard;
     }, null);

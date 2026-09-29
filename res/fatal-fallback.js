@@ -262,7 +262,11 @@
       readyState: document.readyState,
       appMounted: !!(app && app.children && app.children.length),
       locale: currentLocale,
-      buildHash: window.__PANEL_BUILD_HASH__ || null,
+      // Every read here is guarded: the payload is collected while the page
+      // is already failing, and a hostile global must not blank the pane.
+      buildHash: safe(function () {
+        return window.__PANEL_BUILD_HASH__ || null;
+      }, null),
       href: safe(function () {
         return String(location.href);
       }, "")
@@ -277,18 +281,27 @@
       // message/stack. Non-primitives are flattened to a capped JSON text
       // so a huge nested object cannot do it either.
       var detail = {};
-      for (var key in error) {
-        if (!Object.prototype.hasOwnProperty.call(error, key)) continue;
-        // Reading the property can itself throw (a hostile getter).
+      // Enumerating the keys is itself hostile-input territory (a Proxy may
+      // throw from ownKeys/has/getOwnPropertyDescriptor), so the key list is
+      // collected under a guard, and so is each read.
+      var keys = safe(function () {
+        var own = [];
+        for (var key in error) {
+          if (Object.prototype.hasOwnProperty.call(error, key)) own.push(key);
+        }
+        return own;
+      }, []);
+      for (var i = 0; i < keys.length; i++) {
+        var name = keys[i];
         var value = safe(function () {
-          return error[key];
+          return error[name];
         }, undefined);
         if (typeof value === "string") {
-          detail[key] = cap(value, TEXT_LIMIT);
+          detail[name] = cap(value, TEXT_LIMIT);
         } else if (value === null || typeof value === "number" || typeof value === "boolean") {
-          detail[key] = value;
+          detail[name] = value;
         } else {
-          detail[key] = cap(safe(function () {
+          detail[name] = cap(safe(function () {
             return JSON.stringify(value);
           }, ""), TEXT_LIMIT);
         }

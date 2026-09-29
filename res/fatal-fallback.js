@@ -402,6 +402,9 @@
       if (labelEl) labelEl.textContent = t.rawDetails;
       if (copyBtn) copyBtn.textContent = t.copy;
       if (reloadBtn) reloadBtn.textContent = t.reload;
+      // The card is a modal alert: put the keyboard on its primary action
+      // instead of leaving focus on whatever the dead app left behind.
+      if (reloadBtn) reloadBtn.focus();
     });
     lastPayload = safe(function () {
       return buildPayload(reason, message, error);

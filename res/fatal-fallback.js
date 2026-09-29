@@ -146,6 +146,13 @@
       return fallback;
     }
   }
+  /** Guarded `getElementById`: even the lookup can be made to throw, and a
+   *  module-scope throw here costs the whole landing (hooks and all). */
+  function byId(id) {
+    return safe(function () {
+      return document.getElementById(id);
+    }, null);
+  }
   // The payload is offered to the operator as "copy this into the bug
   // report", so credential-shaped text must not ride along: the value of
   // `token=` / `api_key=` (case-insensitive, up to the next delimiter) is
@@ -264,7 +271,7 @@
     return s.length > limit ? s.slice(0, limit) + "\u2026" : s;
   }
   function buildPayload(reason, message, error) {
-    var app = document.getElementById("app");
+    var app = byId("app");
     var index = resourceIndex();
     var payload = {
       reason: reason,
@@ -335,7 +342,7 @@
     return redact(text);
   }
   function paintJson(payload) {
-    var pre = document.getElementById("fatal-json");
+    var pre = byId("fatal-json");
     if (!pre) return;
     // textContent, never innerHTML: the payload carries attacker-influenced
     // text (server messages, module URLs) and this pane must not become an
@@ -358,7 +365,7 @@
     // operator the surface itself (the file's own rule: diagnostics never
     // throw on top of an already broken page).
     safe(function () {
-      var el = document.getElementById("fatal-fallback");
+      var el = byId("fatal-fallback");
       if (!el) return;
       // The browser-block reason paints the disc AND the wash in the info
       // tone via this class; every other reason owns the error tone, so a
@@ -372,11 +379,11 @@
       // the page; the locale can resolve AFTER boot (a stored preference
       // written later), so it is re-published on every present().
       document.documentElement.lang = currentLocale;
-      var titleEl = document.getElementById("fatal-title");
-      var msgEl = document.getElementById("fatal-msg");
-      var labelEl = document.getElementById("fatal-details-label");
-      var copyBtn = document.getElementById("fatal-copy");
-      var reloadBtn = document.getElementById("fatal-reload");
+      var titleEl = byId("fatal-title");
+      var msgEl = byId("fatal-msg");
+      var labelEl = byId("fatal-details-label");
+      var copyBtn = byId("fatal-copy");
+      var reloadBtn = byId("fatal-reload");
       if (titleEl) titleEl.textContent = title;
       if (msgEl) {
         msgEl.removeAttribute("data-default");
@@ -415,11 +422,11 @@
       document.documentElement.lang = loc;
     });
     const t = strings();
-    const titleEl = document.getElementById("fatal-title");
-    const msgEl = document.getElementById("fatal-msg");
-    const labelEl = document.getElementById("fatal-details-label");
-    const copyBtn = document.getElementById("fatal-copy");
-    const reloadBtn = document.getElementById("fatal-reload");
+    const titleEl = byId("fatal-title");
+    const msgEl = byId("fatal-msg");
+    const labelEl = byId("fatal-details-label");
+    const copyBtn = byId("fatal-copy");
+    const reloadBtn = byId("fatal-reload");
     safe(function () {
       if (titleEl) titleEl.textContent = t.errorTitle;
       if (msgEl && msgEl.getAttribute("data-default") === "1") msgEl.textContent = t.errorDesc;
@@ -448,7 +455,7 @@
     // z-100000 blocker and every click landed on the overlay. Ready
     // means ready: pull the overlay back down.
     safe(function () {
-      document.getElementById("fatal-fallback")?.classList.remove("visible");
+      byId("fatal-fallback")?.classList.remove("visible");
     });
   };
   window.__appFatal = function(msg, detail) {
@@ -470,7 +477,7 @@
     }
     if (currentLocale === "en") currentLocale = detectLocale();
     const t = strings();
-    const ls = document.getElementById("loading-screen");
+    const ls = byId("loading-screen");
     safe(function () {
       if (ls && ls.style) ls.style.display = "none";
     });
@@ -479,7 +486,7 @@
     // the glyph in CSS) — no inline styles, and nothing the script has to
     // undo later.
     safe(function () {
-      document.getElementById("fatal-fallback")?.classList.add("is-info");
+      byId("fatal-fallback")?.classList.add("is-info");
     });
     // The three arguments are host-supplied: coerce them inside guards so a
     // hostile value cannot cost the operator the card (the abort above has
@@ -511,7 +518,7 @@
   };
   setTimeout(() => {
     if (dismissed) return;
-    const app = document.getElementById("app");
+    const app = byId("app");
     if (!app || !app.children || !app.children.length) {
       applyLocale(detectLocale());
       // A captured cause beats the symptom: report WHAT failed before the
@@ -533,7 +540,7 @@
     // a stray runtime error (e.g. a WebSocket frame that crashes a
     // transport handler) must not freeze the whole page behind the
     // blocker — the app is alive and can keep serving the operator.
-    const app = document.getElementById("app");
+    const app = byId("app");
     if (app && app.children && app.children.length) return;
     if (dismissed || !msg || typeof msg !== "string") return;
     var info = errorInfo(error) || { name: "Error", message: msg };
@@ -552,7 +559,7 @@
   };
   window.addEventListener("unhandledrejection", (e) => {
     if (dismissed) return;
-    const app = document.getElementById("app");
+    const app = byId("app");
     if (app && app.children && app.children.length) return;
     // Reading the event property can itself throw (hostile accessor).
     var reason = safe(function () {
@@ -570,12 +577,14 @@
   });
   function showToast(text) {
     safe(function () {
-      const toast = document.getElementById("fatal-toast");
+      const toast = byId("fatal-toast");
       if (!toast) return;
       toast.textContent = text;
       toast.classList.add("visible");
       setTimeout(() => {
-        toast.classList.remove("visible");
+        safe(function () {
+          toast.classList.remove("visible");
+        });
       }, 2e3);
     });
   }
@@ -601,7 +610,7 @@
     // The payload always serializes (capped primitives), so the localized
     // paragraph is only the pre-payload fallback.
     var text = lastPayload ? serialize(lastPayload) : "";
-    if (!text) text = document.getElementById("fatal-msg")?.textContent || "";
+    if (!text) text = byId("fatal-msg")?.textContent || "";
     var api = safe(function () {
       return navigator.clipboard;
     }, null);
@@ -641,8 +650,8 @@
     showToast(legacyCopy(text) ? strings().copied : strings().copyFailed);
   }
   function bindActions() {
-    document.getElementById("fatal-copy")?.addEventListener("click", copyError);
-    document.getElementById("fatal-reload")?.addEventListener("click", () => {
+    byId("fatal-copy")?.addEventListener("click", copyError);
+    byId("fatal-reload")?.addEventListener("click", () => {
       // A sandboxed frame can refuse the navigation; the card stays usable.
       safe(function () {
         location.reload();
@@ -653,7 +662,7 @@
   // binding then would leave both buttons dead, so the attempt is repeated
   // once the document has parsed.
   bindActions();
-  if (!document.getElementById("fatal-copy")) {
+  if (!byId("fatal-copy")) {
     document.addEventListener("DOMContentLoaded", bindActions);
   }
 })();

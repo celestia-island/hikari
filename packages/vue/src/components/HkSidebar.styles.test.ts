@@ -14,13 +14,16 @@ import { describe, expect, it } from "vitest";
  * gets: a tail the size of a hairline reads as "keep going". The 4px
  * tail let the final item kiss the panel's bottom edge at full scroll
  * (user screenshot on the chest admin sidebar, 2026-10-01 — the last
- * item sat flush against the footer boundary), so the rail now declares
- * an option-sized `--hk-sidebar-scroll-tail` and both density variants
- * of the body spend it as their block-end padding.
+ * item sat flush against the panel's bottom boundary), so the rail now
+ * declares an option-sized `--hk-sidebar-scroll-tail` and both density
+ * variants of the body spend it as their block-end padding.
  *
- * The assertions run on the COMPILED sheet, not the source text, so a
- * declaration cannot hide behind SCSS nesting, and comments are stripped
- * first so a commented-out tail cannot keep a hollow guard green.
+ * The structural assertions run on the COMPILED sheet, not the source
+ * text, so a declaration cannot hide behind SCSS nesting, and comments
+ * are stripped first so a commented-out tail cannot keep a hollow guard
+ * green. Two pins deliberately break that rule and read the raw source:
+ * the fallback literal and the single-declaration count (each explains
+ * why in place).
  */
 const componentDir = resolve(dirname(fileURLToPath(import.meta.url)));
 
@@ -85,7 +88,7 @@ describe("HkSidebar scroll end-cap", () => {
     expect(source).toContain("--hk-sidebar-scroll-tail: var(--space-24, 1.5rem);");
   });
 
-  it("declares the tail token exactly once in the sheet", () => {
+  it("declares the tail token exactly once in the source", () => {
     // The rule-body pins above inspect only specific rules, so a second
     // --hk-sidebar-scroll-tail declaration sneaking into a mid-tree rule
     // (.hk-sidebar-panel, .hk-sidebar-body-wrap, the collapsed block)
@@ -93,7 +96,8 @@ describe("HkSidebar scroll end-cap", () => {
     // declaration wins over the rail's — while every pin stays green.
     // Counting the source occurrences closes that hollow path (and
     // enforces the fallback's uniqueness for real, unlike toContain).
+    // The pattern takes any colon spelling, spaced or not.
     const source = readFileSync(resolve(componentDir, "HkSidebar.scss"), "utf8");
-    expect(source.match(/--hk-sidebar-scroll-tail:\s/g)).toHaveLength(1);
+    expect(source.match(/--hk-sidebar-scroll-tail\s*:/g)).toHaveLength(1);
   });
 });

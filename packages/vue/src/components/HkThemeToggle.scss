@@ -136,32 +136,63 @@
 }
 
 /* ── Theme list rows ────────────────────────────────────────────────────
- * Every row is ONE full-width pill: the delete affordance for custom
- * themes overlays the pill's trailing edge (the row is the positioning
- * context), so built-in rows reserve no trailing column — the old
- * invisible slot left a permanent dead strip right of every row in the
- * mobile bottom sheet — and every pill and highlight still shares the
- * exact same width.
+ * Every row is ONE full-width pill, and the pill is THE ROW (2026-10-01
+ * user report: with the trailing slot reserving a real column, the row
+ * button's wash stopped short of the row edge — theme rows and the
+ * standalone 自定义 row hovered at different widths). The unified
+ * menu-item chrome therefore lives on `.s-theme-item-row` (which also
+ * carries `data-active` from the TSX), and the row's button surrenders
+ * its own chrome below, so the hover/active wash, border and radius
+ * span the full row no matter how wide the trailing column is. The
+ * standalone pills (自定义 row, host mode-extra rows) keep the chrome on
+ * the button itself — same spec, same width as a row.
  *
  * Metrics/states come from the unified menu-item spec (./_menu-item.scss)
  * — the same grammar as menu rows and select options; inside the mobile
  * sheet the shared `.hk-popover-panel.hk-is-sheet` token context applies
- * the 44px touch geometry, so the old component-local media bump is gone
- * (only the overlaid delete button keeps its own touch sizing below).
+ * the 44px touch geometry (the row family is registered there), so the
+ * old component-local media bump is gone (only the overlaid delete
+ * button keeps its own touch sizing below).
  */
 
 .s-theme-item-row {
+  @include mi.item;
+
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
-/* Theme rows speak the SAME grammar as every dropdown option
- * (.hk-select-option): base-size text, roomy pill padding, hairline
- * border that tints on hover and strengthens when active — so a theme
- * list inside the popover reads like any select/menu panel. The old
- * bespoke 6×8 tight rows (small text, borderless 12% wash) are what
- * made the theme sheet read as "not from the standard dropdown". */
+/* The row's button keeps the CLICK and FOCUS semantics (keyboard parity,
+ * screen-reader role) but no visual chrome of its own: background and
+ * border-color go transparent while the 1px border BOX stays, so the
+ * content x stays identical to the standalone pills (row padding 12 +
+ * button border 1 = the same 13px the customize/DPI pills measure) — and
+ * the metrics come from the row (padding/min-height/font), so nothing
+ * double-applies. */
+.s-theme-item-row .s-theme-item-btn {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  width: auto;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+/* Suppress the button's own state chrome — the row above owns the wash.
+ * The hover guard repeats mi.item's guard chain so this override
+ * out-specifies the mixin's (0,6,0) hover rule. */
+.s-theme-item-row .s-theme-item-btn:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]),
+.s-theme-item-row .s-theme-item-btn[data-active],
+.s-theme-item-row .s-theme-item-btn[data-checked] {
+  background: transparent;
+  border-color: transparent;
+  color: inherit;
+  font-weight: inherit;
+}
+
 .s-theme-item-btn {
   @include mi.item;
 

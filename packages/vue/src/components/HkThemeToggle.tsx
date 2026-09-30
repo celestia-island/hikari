@@ -181,16 +181,18 @@ export const HkThemeToggle = defineComponent({
      * cache icon vnodes across renders, or closing/reopening the popover
      * would re-mount the same vnode instances. In AUTO mode the Light/
      * Dark options collapse into the group's merged cell (the altitude
-     * strip) via `mergeKeys`; they stay flagged disabled for the
-     * degradation path (merge requested without the #merged slot) and
-     * for semantic clarity.
+     * strip) via `mergeKeys`. They stay ENABLED (2026-10-01 user report:
+     * disabled Light/Dark read as the mode being locked to the sun): in
+     * the merged rendering they are not rendered at all, and on the
+     * degradation path (merge requested without the #merged slot) a
+     * click must drop OUT of auto onto the pressed side instead of
+     * doing nothing.
      */
     function modeOptions(): TabItem[] {
-      const auto = isAutoMode.value;
       return [
         { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={16} /> },
-        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={16} />, disabled: auto },
-        { key: "dark", label: t("hikari::theme.modeDark"), icon: <MoonStar size={16} />, disabled: auto },
+        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={16} /> },
+        { key: "dark", label: t("hikari::theme.modeDark"), icon: <MoonStar size={16} /> },
       ];
     }
 
@@ -336,6 +338,13 @@ export const HkThemeToggle = defineComponent({
                   data-custom={th.isCustom || undefined}
                   data-trailing={trailingSlot ? "slot" : undefined}
                   data-name-suffix={nameSuffixSlot ? "slot" : undefined}
+                  // The ROW is the pill: the highlight state lives here so
+                  // the hover/active wash spans the full row width — a
+                  // trailing slot column must not shrink it (2026-10-01
+                  // user report: theme rows and the 自定义 row hovered at
+                  // different widths). The button keeps the click/focus
+                  // semantics; the stylesheet strips its own chrome.
+                  data-active={currentTheme.value === th.id || undefined}
                 >
                   <button
                     type="button"

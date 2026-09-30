@@ -84,4 +84,16 @@ describe("HkSidebar scroll end-cap", () => {
     const source = readFileSync(resolve(componentDir, "HkSidebar.scss"), "utf8");
     expect(source).toContain("--hk-sidebar-scroll-tail: var(--space-24, 1.5rem);");
   });
+
+  it("declares the tail token exactly once in the sheet", () => {
+    // The rule-body pins above inspect only specific rules, so a second
+    // --hk-sidebar-scroll-tail declaration sneaking into a mid-tree rule
+    // (.hk-sidebar-panel, .hk-sidebar-body-wrap, the collapsed block)
+    // would silently re-kill the host knob — nearest-ancestor
+    // declaration wins over the rail's — while every pin stays green.
+    // Counting the source occurrences closes that hollow path (and
+    // enforces the fallback's uniqueness for real, unlike toContain).
+    const source = readFileSync(resolve(componentDir, "HkSidebar.scss"), "utf8");
+    expect(source.match(/--hk-sidebar-scroll-tail:\s/g)).toHaveLength(1);
+  });
 });

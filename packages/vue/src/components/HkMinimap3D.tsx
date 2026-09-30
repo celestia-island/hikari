@@ -37,7 +37,9 @@ import {
   BOARD3D_HELPERS_LAYER,
   clampMinimapZoom,
   fitDistance,
+  MINIMAP_MAX_POLAR,
   MINIMAP_MAX_ZOOM_PERCENT,
+  MINIMAP_MIN_POLAR,
   MINIMAP_MIN_ZOOM_PERCENT,
   MINIMAP_ZOOM_STEP_PERCENT,
   orbitDelta,
@@ -170,6 +172,18 @@ export default defineComponent({
 
     const tmpVec = new THREE.Vector3();
 
+    /** Dispose every geometry/material under a subtree (the camera glyph
+     *  is a group: cone + octahedron + their materials). */
+    function disposeNode(root: THREE.Object3D): void {
+      root.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        mesh.geometry?.dispose();
+        const mat = (mesh as unknown as { material?: THREE.Material | THREE.Material[] }).material;
+        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+        else mat?.dispose();
+      });
+    }
+
     function syncMarkers(): void {
       const s = scene.value;
       if (!s) return;
@@ -255,8 +269,11 @@ export default defineComponent({
         const off = camera.position.clone().sub(controls.target);
         theta = Math.atan2(off.x, off.z);
         phi = Math.min(
-          Math.PI - 0.12,
-          Math.max(0.12, Math.acos(Math.min(1, Math.max(-1, off.y / Math.max(off.length(), 1e-6))))),
+          MINIMAP_MAX_POLAR,
+          Math.max(
+            MINIMAP_MIN_POLAR,
+            Math.acos(Math.min(1, Math.max(-1, off.y / Math.max(off.length(), 1e-6)))),
+          ),
         );
         seeded = true;
       }
@@ -386,7 +403,10 @@ export default defineComponent({
       document.removeEventListener("keydown", onDocKeydown, true);
       const s = scene.value;
       if (s) {
-        if (glyph) s.remove(glyph);
+        if (glyph) {
+          s.remove(glyph);
+          disposeNode(glyph);
+        }
         if (planeFrame) {
           s.remove(planeFrame);
           planeFrame.geometry.dispose();
@@ -400,6 +420,9 @@ export default defineComponent({
       }
       markerMeshes.clear();
       renderer?.dispose();
+      // Free the GL context eagerly (mirrors HkBoard3D): repeated mounts
+      // in one SPA would otherwise brush the live-context cap.
+      renderer?.forceContextLoss?.();
     });
 
     return () => (

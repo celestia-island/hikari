@@ -165,6 +165,9 @@ export default defineComponent({
     const postHooks = new Set<() => void>();
     const themeHooks = new Set<(bg: string, primary: string) => void>();
     const registry = new Map<string, Board3DObjectDef>();
+    /** The CSS2D chip attached for a registered id — tracked so a
+     *  re-register or a clear detaches it instead of stacking chips. */
+    const labelTags = new Map<string, CSS2DObject>();
     const clock = new THREE.Timer();
 
     // ── picking state ─────────────────────────────────────────────────
@@ -172,7 +175,7 @@ export default defineComponent({
     const ndc = new THREE.Vector2();
     let hoverDirty = false;
     let lastHover: string | null = null;
-    let pressAt: { x: number; y: number } | null = null;
+    let pressAt: { pointerId: number; x: number; y: number } | null = null;
 
     // ── camera tween ──────────────────────────────────────────────────
     let tween: {
@@ -243,7 +246,11 @@ export default defineComponent({
     }
 
     function onPointerDown(e: PointerEvent): void {
-      pressAt = { x: e.clientX, y: e.clientY };
+      pressAt = { pointerId: e.pointerId, x: e.clientX, y: e.clientY };
+      // Capture every press: up/cancel are only guaranteed while capture
+      // holds, and without it a pointer released off-canvas would leave a
+      // stale press to synthesize a phantom click (HkBoard's convention).
+      canvasRef.value?.setPointerCapture?.(e.pointerId);
       tween = null; // a grab cancels any in-flight camera animation
     }
 
@@ -251,9 +258,25 @@ export default defineComponent({
       const p = pressAt;
       pressAt = null;
       if (!p) return;
+      // Only the pressing pointer's release clicks; the slop stays the
+      // Manhattan metric HkBoard uses (|dx| + |dy|).
+      if (p.pointerId !== e.pointerId) return;
       if (Math.abs(e.clientX - p.x) + Math.abs(e.clientY - p.y) > CLICK_SLOP_PX) return;
       const id = pickAt(e.clientX, e.clientY);
       if (id) emit("objectClick", id);
+    }
+
+    function onPointerCancel(): void {
+      // An aborted gesture must never synthesize a click: prune only.
+      pressAt = null;
+    }
+
+    /** Capture-loss backstop: up/cancel are only guaranteed while pointer
+     *  capture holds, so a pointer released without an up is pruned here
+     *  (fires on the capture target and does not bubble → capture phase;
+     *  a no-op after a normal up). */
+    function onLostPointerCapture(): void {
+      pressAt = null;
     }
 
     function easeInOutCubic(x: number): number {
@@ -342,6 +365,8 @@ export default defineComponent({
       canvas.addEventListener("pointermove", onPointerMove);
       canvas.addEventListener("pointerdown", onPointerDown);
       canvas.addEventListener("pointerup", onPointerUp);
+      canvas.addEventListener("pointercancel", onPointerCancel);
+      canvas.addEventListener("lostpointercapture", onLostPointerCapture, true);
 
       const engine: Board3DEngine = {
         scene,
@@ -362,6 +387,13 @@ export default defineComponent({
             scene?.remove(prev.object);
             registry.delete(id);
           }
+          // The label tag is owned per id: re-registering (or clearing) an
+          // id must not stack a second chip on the same anchor.
+          const prevTag = labelTags.get(id);
+          if (prevTag) {
+            prevTag.removeFromParent();
+            labelTags.delete(id);
+          }
           if (!def) return;
           def.object.userData.board3dId = id;
           if (def.label) {
@@ -370,6 +402,7 @@ export default defineComponent({
             const off = def.labelOffset ?? [0, 0, 0];
             tag.position.set(off[0], off[1], off[2]);
             def.object.add(tag);
+            labelTags.set(id, tag);
           }
           registry.set(id, def);
           scene?.add(def.object);
@@ -471,12 +504,19 @@ export default defineComponent({
         canvas.removeEventListener("pointermove", onPointerMove);
         canvas.removeEventListener("pointerdown", onPointerDown);
         canvas.removeEventListener("pointerup", onPointerUp);
+        canvas.removeEventListener("pointercancel", onPointerCancel);
+        canvas.removeEventListener("lostpointercapture", onLostPointerCapture, true);
       }
       controls?.dispose();
       if (labelRenderer?.domElement.parentNode) {
         labelRenderer.domElement.parentNode.removeChild(labelRenderer.domElement);
       }
+      for (const tag of labelTags.values()) tag.removeFromParent();
+      labelTags.clear();
       renderer?.dispose();
+      // Free the GL context eagerly: a SPA that remounts the board can
+      // otherwise brush the browser's live-context cap.
+      renderer?.forceContextLoss?.();
       registry.clear();
       tickHooks.clear();
       postHooks.clear();

@@ -283,4 +283,39 @@ describe("HkMinimap3D", () => {
     expect(H.FakeWebGLRenderer.instances[0].disposed).toBe(true);
     expect(scene.children.some((c) => (c.layers.mask & helpersMask) !== 0)).toBe(false);
   });
+
+  it("disposes the camera glyph's own geometries and materials on unmount", async () => {
+    const { engine } = fakeEngine();
+    mountMap(engine);
+    await nextTick();
+    // The glyph is a group (cone + octahedron); count what the map built
+    // on the helpers layer and assert every one of them is disposed.
+    const helpersMask = 1 << BOARD3D_HELPERS_LAYER;
+    const built: Array<{ dispose: () => void }> = [];
+    const builtMats: Array<{ dispose: () => void }> = [];
+    const seenGeo = new Set<unknown>();
+    const seenMat = new Set<unknown>();
+    for (const child of engine.scene.children) {
+      if ((child.layers.mask & helpersMask) === 0) continue;
+      child.traverse((obj: THREE.Object3D) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.geometry && !seenGeo.has(mesh.geometry)) {
+          seenGeo.add(mesh.geometry);
+          built.push(mesh.geometry as unknown as { dispose: () => void });
+        }
+        const mat = (mesh as unknown as { material?: { dispose: () => void } }).material;
+        if (mat && !seenMat.has(mat)) {
+          seenMat.add(mat);
+          builtMats.push(mat);
+        }
+      });
+    }
+    expect(built.length).toBeGreaterThan(1); // cone + octahedron + frame
+    const spies = [...built, ...builtMats].map((r) => vi.spyOn(r, "dispose"));
+
+    const m = mounts.splice(0)[0];
+    m.app.unmount();
+    m.container.remove();
+    for (const spy of spies) expect(spy).toHaveBeenCalled();
+  });
 });

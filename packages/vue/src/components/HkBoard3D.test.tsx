@@ -231,6 +231,89 @@ describe("HkBoard3D", () => {
     expect(engine!.camera.position.distanceTo(target)).toBeGreaterThan(1);
   });
 
+  it("frameAll honours its padding argument", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const body = new THREE.Mesh(
+      new THREE.SphereGeometry(2, 8, 6),
+      new THREE.MeshBasicMaterial(),
+    );
+    engine!.setObject("body", { object: body });
+
+    engine!.frameAll(1.3, 0);
+    const tight = engine!.camera.position.distanceTo(engine!.controls.target);
+    engine!.frameAll(3, 0);
+    const loose = engine!.camera.position.distanceTo(engine!.controls.target);
+    // More padding must push the camera strictly further out.
+    expect(loose).toBeGreaterThan(tight);
+    expect(loose / tight).toBeCloseTo(3 / 1.3, 4);
+  });
+
+  it("never picks, hovers or frames objects registered as pickable:false", async () => {
+    let engine: Board3DEngine | null = null;
+    const clicks: string[] = [];
+    const { container } = mountBoard(
+      {},
+      {
+        ready: ((e: Board3DEngine) => { engine = e; }) as never,
+        objectClick: ((id: string) => clicks.push(id)) as never,
+      },
+    );
+    await nextTick();
+
+    const canvas = container.querySelector("canvas")!;
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 800, height: 600,
+      right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+
+    // A mesh sitting exactly under the click ray, but registered as
+    // decoration: helpers must never become clickable.
+    const helper = new THREE.Mesh(
+      new THREE.SphereGeometry(4, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    engine!.setObject("hidden", { object: helper, pickable: false });
+    const pickable = new THREE.Mesh(
+      new THREE.SphereGeometry(4, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    pickable.position.set(200, 0, 0); // off the centre ray
+    engine!.setObject("visible", { object: pickable });
+
+    await tickFrames();
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 400, clientY: 300 }));
+    canvas.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, clientX: 400, clientY: 300 }));
+    expect(clicks).toEqual([]);
+  });
+
+  it("keeps one label chip per id across re-registration and clears it on null", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial());
+    const chip = () => {
+      const el = document.createElement("div");
+      el.textContent = "chip";
+      return el;
+    };
+    engine!.setObject("node", { object: body, label: chip() });
+    const labelChildren = () =>
+      body.children.filter((c) => (c as unknown as { isCSS2DObject?: boolean }).isCSS2DObject).length;
+    expect(labelChildren()).toBe(1);
+
+    // Re-registering the same id must REPLACE its chip, not stack a second.
+    engine!.setObject("node", { object: body, label: chip() });
+    expect(labelChildren()).toBe(1);
+
+    // Clearing the id detaches the chip from its anchor.
+    engine!.setObject("node", null);
+    expect(labelChildren()).toBe(0);
+  });
+
   it("projectToScreen lands the origin at canvas centre for the default pose", async () => {
     let engine: Board3DEngine | null = null;
     const { container } = mountBoard(

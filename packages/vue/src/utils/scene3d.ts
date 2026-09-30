@@ -53,7 +53,11 @@ function hexToRgb(hex: string): Vec3 {
 export function lerpPalette(palette: string[], t: number): Vec3 {
   if (palette.length === 0) return [1, 1, 1];
   if (palette.length === 1) return hexToRgb(palette[0]);
-  const x = Math.min(1, Math.max(0, t)) * (palette.length - 1);
+  // A non-finite position is a caller bug, not a colour: clamp it to the
+  // first stop instead of indexing the palette with NaN (which would
+  // throw from hexToRgb) — same tolerance clampMinimapZoom shows.
+  const clamped = Number.isFinite(t) ? Math.min(1, Math.max(0, t)) : 0;
+  const x = clamped * (palette.length - 1);
   const i = Math.min(palette.length - 2, Math.floor(x));
   const f = x - i;
   const a = hexToRgb(palette[i]);

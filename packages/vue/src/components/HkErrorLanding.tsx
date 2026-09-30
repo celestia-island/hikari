@@ -44,14 +44,14 @@ function normalizeSlotNodes(nodes: VNode | VNode[] | undefined): VNode[] {
  * carrying a tone icon, a (pre-translated) title and description, the wire
  * error code / HTTP status as HkBadge chips above the headline, an
  * always-open raw-details pane (the default slot — hosts render HkJsonTree
- * there) that hugs its payload under a hard ~20vh ceiling carried by the
- * family overlay scrollbar, and an actions slot.
+ * there) with a STABLE standing frame — the larger of 9rem and ~20vh,
+ * carried by the family overlay scrollbar — and an actions slot.
  *
- * The details pane never grows past its frame, but it follows its content
- * downward: folding every JSON node shrinks the pane to the surviving
- * summary row (a standing ~20vh empty box behind one line reads as dead
- * space), and a long stack trace scrolls inside the capped frame instead
- * of stretching the card.
+ * The pane never breathes with its content: folding every JSON node only
+ * changes what renders INSIDE the standing frame, and a long stack trace
+ * scrolls inside it instead of stretching the card. (The 2026-10-01
+ * content-hugging frame was reverted the same day: on mobile the whole
+ * error card visibly jumped between fold states, which read as broken.)
  *
  * The component is presentation-only and route-agnostic: it never touches
  * the router and can be mounted by an SPA overlay, a modal, or a standalone
@@ -111,12 +111,11 @@ export const HkErrorLanding = defineComponent({
 
     const detailsBodyRef = ref<HTMLElement | null>(null);
     let detailsScrollbars: OverlayScrollbarHandle | null = null;
-    // The composable's own viewport ResizeObserver covers the pane cap
-    // moving with the viewport, and a fold/expand DOES resize the
-    // content-sized body — but a fold re-renders HkJsonTree internally
-    // without touching the landing's own render, so observing the CONTENT
-    // element (the tree root) too keeps the thumb geometry re-read on
-    // every fold/expand by whichever observer sees it first.
+    // The pane's viewport box is fixed, so the composable's own viewport
+    // ResizeObserver never fires when the slot content changes size — and
+    // folding a JSON node re-renders HkJsonTree internally, so the landing
+    // itself does not re-render either. Observe the CONTENT element (the
+    // tree root) so every fold/expand re-reads the thumb geometry.
     let contentResizeObserver: ResizeObserver | null = null;
     let observedContent: Element | null = null;
 

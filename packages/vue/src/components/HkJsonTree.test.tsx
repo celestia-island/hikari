@@ -88,6 +88,25 @@ describe("HkJsonTree component", () => {
     expect(el.querySelector(".s-jv-num")!.textContent).toBe("2");
   });
 
+  it("marks both collapsed summary shapes with the one-line clip hook", async () => {
+    // Container summary: the preview span is the stylesheet's clip target.
+    const folded = mountTree({ text: JSON.stringify({ a: 1, b: 2 }) });
+    (folded.querySelector('.s-jt-row[data-parent]')! as HTMLElement).click();
+    await nextTick();
+    expect(folded.querySelector(".s-jt-preview")).not.toBeNull();
+    // Long string summary: the collapsed value span carries the hook and
+    // keeps its string coloring (the clip must not mute it).
+    const long = Array.from({ length: 15 }, (_, i) => `line-${i}`).join("\n");
+    const el = mountTree({ text: JSON.stringify({ log: long }) });
+    const longRow = el.querySelectorAll(".s-jt-row[data-parent]")[1]!;
+    (longRow as HTMLElement).click();
+    await nextTick();
+    const clamp = el.querySelector(".s-jt-clamp");
+    expect(clamp).not.toBeNull();
+    expect(clamp!.classList.contains("s-jv-str")).toBe(true);
+    expect(clamp!.textContent).toContain("line-0");
+  });
+
   it("collapses and re-expands long strings via row clicks", async () => {
     const long = Array.from({ length: 15 }, (_, i) => `line-${i}`).join("\n");
     const el = mountTree({ text: JSON.stringify({ log: long }) });

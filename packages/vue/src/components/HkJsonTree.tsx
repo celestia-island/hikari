@@ -148,6 +148,11 @@ function initialExpandedSet(root: HJsonNode): Set<number> {
  * align with the same left rhythm; `key:` gaps are one unit, type hints
  * two; the depth step is one toggle width (JT_INDENT = JT_TOGGLE,
  * pinned alongside the stylesheet contract).
+ *
+ * Collapse contract (same pin): a collapsed summary is ONE line — the
+ * container preview and the collapsed long-string value carry the
+ * one-line clip (`.s-jt-clamp` / `.s-jt-preview`) and ellipsize past the
+ * row edge instead of wrapping; expanding is the pager.
  */
 export const HkJsonTree = defineComponent({
   name: "HkJsonTree",
@@ -269,7 +274,7 @@ export const HkJsonTree = defineComponent({
             {node.key !== null && <span class="s-jt-key">{node.key}</span>}
             {node.key !== null && <span class="s-jt-colon">: </span>}
             <span class="s-jt-indent" />
-            <span class="s-jv-str">"{truncateStr(node.stringValue, STR_PREVIEW_LEN)}"</span>
+            <span class="s-jv-str s-jt-clamp">"{truncateStr(node.stringValue, STR_PREVIEW_LEN)}"</span>
             <span class="s-jt-type">string ({node.stringValue.length})</span>
           </div>
         );

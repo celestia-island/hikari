@@ -197,3 +197,21 @@
   font-weight: 400;
   opacity: 0.7;
 }
+
+/* Collapsed summaries live on ONE line: anything past the row's right
+   edge clips to an ellipsis instead of wrapping (a wrapped summary reads
+   as broken content, and the row is one click away from the full view —
+   expand, don't paginate). The box clip needs overflow != visible, which
+   per flexbox also zeroes the item's automatic minimum size, so the span
+   actually shrinks to the row instead of pushing it wide; min-width: 0
+   spells that out so the clip never depends on that spec side effect.
+   Applied to the container preview here and to the collapsed long-string
+   value via the .s-jt-clamp hook in the tsx — expanded leaf rows keep
+   their soft wrap. */
+.s-jt-preview,
+.s-jt-clamp {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

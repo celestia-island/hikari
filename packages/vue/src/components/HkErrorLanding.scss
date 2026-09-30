@@ -208,25 +208,38 @@
   user-select: none;
 }
 
-// Fixed-height details pane: the raw payload keeps a stable ~20vh
-// footprint. Folding every JSON node still leaves the pane standing at
-// the same height, and a long stack trace can never stretch the card —
-// the family overlay scrollbar (attachOverlayScrollbars) carries the
-// overflow inside the frame. The pane div is the track's positioning
-// context and wraps EXACTLY the scrolling body (useOverlayScrollbar
-// host contract).
+// Content-sized details pane under a hard ceiling: the pane hugs its
+// payload — folding the JSON tree down to one summary row shrinks the
+// frame with it (a ~20vh empty box behind a single line read as dead
+// space, the 2026-10-01 screenshot report) — while a long stack trace
+// still caps at the same ceiling and scrolls inside the frame instead of
+// stretching the card. The ceiling term keeps the 9rem alternative so
+// short viewports (20vh < 9rem) still grant tall stacks nine rem of
+// scroll area; a small payload is allowed BELOW that — hugging is the
+// point. The pane div is the
+// track's positioning context and wraps EXACTLY the scrolling body
+// (useOverlayScrollbar host contract); the family overlay scrollbar's
+// observers re-read thumb geometry on every fold/expand, so the
+// follow-the-content height rides the same update path.
 .hk-error-landing__details-pane {
   position: relative;
   margin-top: var(--space-6, 0.375rem);
-  height: max(9rem, 20vh);
-  height: max(9rem, 20dvh);
+  max-height: max(9rem, 20vh);
+  max-height: max(9rem, 20dvh);
   border: 1px solid rgb(var(--hel-border) / 70%);
   border-radius: var(--radius-md, 10px);
   background: rgb(var(--hel-muted) / 4%);
 }
 
 .hk-error-landing__details-body {
-  height: 100%;
+  // The pane's height IS the body's content height now, so the body can
+  // not reference it (a percentage height against an auto parent is
+  // circular) — instead it inherits the pane's cap and scrolls against
+  // it: small content hugs, tall content clamps at the ceiling and the
+  // overlay scrollbar carries the overflow. A max cap (not a fixed
+  // height) keeps the shrink direction free; overflow != visible is what
+  // lets the block actually clamp.
+  max-height: inherit;
   overflow: auto;
   border-radius: inherit;
   padding: var(--space-4, 0.25rem);

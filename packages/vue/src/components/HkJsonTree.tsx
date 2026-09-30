@@ -130,14 +130,24 @@ function initialExpandedSet(root: HJsonNode): Set<number> {
 /**
  * HkJsonTree — the interactive expandable JSON tree.
  *
- * This is the exact renderer the chat card flow uses for tool results
- * (extracted verbatim from HkToolBlock, same DOM and `s-jt-*` stylesheet, so
- * the two can never drift). Feed it either pre-parsed `value` or a raw JSON
- * `text`; non-container input renders nothing.
+ * A first-class family component (same tier as the rich-text surfaces):
+ * the chat tool blocks, the chest error landing's raw-details pane and
+ * any host pane render through THIS component — HkToolBlock consumes it
+ * directly, and the `s-jt-*` stylesheet single-sources the visual
+ * language, so the two can never drift. Feed it either pre-parsed
+ * `value` or a raw JSON `text`; non-container input renders nothing.
  *
  * The root keeps the legacy `s-tool-json-tree` class: hosts (including
  * HkToolBlock's deferred scrollbar pass) target it, and the pane chrome
  * (mono font, capped height, hidden native scrollbars) lives there.
+ *
+ * Spacing contract (pinned by HkJsonTree.contract.test.ts): the toggle
+ * box is 14px and sits ONE `--space-4` from the row text — identical for
+ * leaf dots, collapsed previews and expanded parents — and is centered
+ * on the first text line by formula, so collapsed and expanded states
+ * align with the same left rhythm; `key:` gaps are one unit, type hints
+ * two; the depth step is one toggle width (JT_INDENT = JT_TOGGLE,
+ * pinned alongside the stylesheet contract).
  */
 export const HkJsonTree = defineComponent({
   name: "HkJsonTree",

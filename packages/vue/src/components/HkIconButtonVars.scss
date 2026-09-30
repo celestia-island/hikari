@@ -76,9 +76,9 @@
   --hi-icon-button-size: 28px;
   /* The header-chrome step carries the sm glyph (16px): its consumers are
    * the header clusters — global search, the pages' refresh, the filter
-   * trigger — whose visual sibling is HkThemeToggle's own trigger buttons
-   * (28px boxes with direct 16px lucide glyphs). The xs mapping (12px)
-   * rendered those glyphs visibly smaller than the sun beside them
+   * trigger — whose visual sibling is HkThemeToggle's own trigger (one
+   * 28px box with a direct 16px lucide glyph). The xs mapping (12px)
+   * rendered those glyphs visibly smaller than the glyphs beside them
    * (user report 2026-09-29: 不像一个尺寸的图标按钮) — the `.svg` rule
    * in HkIconButton.scss forces ANY slotted glyph to this var, so the
    * slot's size-16 attribute never reached the screen. */

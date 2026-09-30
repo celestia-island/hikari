@@ -60,10 +60,18 @@ async function settle(): Promise<void> {
 }
 
 function openMenu(container: HTMLElement): void {
-  const arrow = container.querySelector(
-    '.s-theme-toggle-btn[data-variant="arrow"]',
+  // The single merged trigger (user direction 2026-09-30): ONE ghost
+  // HkIconButton opens the menu — the retired main/arrow pair is gone.
+  const trigger = container.querySelector(
+    ".s-theme-toggle-btn",
   ) as HTMLButtonElement | null;
-  arrow!.click();
+  trigger!.click();
+}
+
+function triggerButton(container: HTMLElement): HTMLButtonElement {
+  const trigger = container.querySelector<HTMLButtonElement>(".s-theme-toggle-btn");
+  expect(trigger).toBeTruthy();
+  return trigger!;
 }
 
 function paletteButton(): HTMLButtonElement {
@@ -94,6 +102,54 @@ afterEach(() => {
     container.remove();
   }
   vi.unstubAllGlobals();
+});
+
+describe("HkThemeToggle trigger", () => {
+  it("renders ONE standard ghost icon-button trigger and no retired pair", async () => {
+    const { container } = mountToggle(true);
+    await settle();
+
+    // Exactly one trigger, and it IS the shared standard part: the merged
+    // single button (user direction 2026-09-30) must be chrome-identical
+    // to the functional HkIconButtons hosts place beside it — the ghost
+    // variant's shared rest/hover/press paint, not a bespoke block. The
+    // 28 step is the header chrome step (user report 2026-09-28: the
+    // cluster reads as one row only at ghost/28, sm 16px glyph).
+    const triggers = container.querySelectorAll(".s-theme-toggle-btn");
+    expect(triggers).toHaveLength(1);
+    const trigger = triggers[0] as HTMLElement;
+    expect(trigger.classList.contains("hk-icon-button")).toBe(true);
+    expect(trigger.classList.contains("hk-icon-button-28")).toBe(true);
+    expect(trigger.classList.contains("hk-icon-button-ghost")).toBe(true);
+    // The retired main/arrow data hooks must never come back.
+    expect(trigger.hasAttribute("data-variant")).toBe(false);
+    // A palette glyph, not the retired mode glyphs (the mode state lives
+    // in the menu's segmented group now).
+    expect(trigger.querySelector("svg")).toBeTruthy();
+  });
+
+  it("opens the theme menu from the single trigger with menu aria wiring", async () => {
+    const { container } = mountToggle(true);
+    await settle();
+
+    const trigger = triggerButton(container);
+    expect(trigger.getAttribute("aria-haspopup")).toBe("menu");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    // A click opens the menu; no mode switch fires (the retired direct
+    // mode-cycle press is gone — mode switching lives in the strip).
+    const modeBefore = useTheme().currentMode.value;
+    trigger.click();
+    await settle();
+    expect(document.body.querySelector(".s-theme-menu")).toBeTruthy();
+    expect(useTheme().currentMode.value).toBe(modeBefore);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+
+    // Second press closes it again (plain toggle, same as before).
+    trigger.click();
+    await settle();
+    expect(document.body.querySelector(".s-theme-menu")).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
 });
 
 describe("HkThemeToggle external customization", () => {

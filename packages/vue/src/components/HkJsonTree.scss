@@ -69,14 +69,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--jt-toggle, 1rem);
-  height: var(--jt-toggle, 1rem);
+  width: var(--jt-toggle, 14px);
+  height: var(--jt-toggle, 14px);
   flex-shrink: 0;
-  margin-inline-end: var(--space-2, 0.125rem);
+  /* Toggle → text is ONE spacing unit everywhere (leaf, collapsed and
+     expanded parents alike) — the collapsed row and its children read
+     on the same rhythm instead of ad-hoc gaps. */
+  margin-inline-end: var(--space-4, 0.25rem);
   /* The toggle box has no text baseline of its own — pin it to the line
-     top instead of letting it join the row's baseline group with a
-     synthesized border-box baseline. */
+     top and center it on the FIRST text line by formula (line-height
+     1.55 × font-size vs the fixed box), so the chevron/leaf sits on the
+     text's optical center in collapsed and expanded rows alike instead
+     of floating above the baseline group. */
   align-self: flex-start;
+  margin-block-start: max(0px, calc((1.55em - var(--jt-toggle, 14px)) / 2));
 }
 
 .s-jt-toggle[data-parent] {
@@ -117,7 +123,7 @@
 
 .s-jt-colon {
   color: rgb(var(--color-muted));
-  margin-inline-end: 0.35em;
+  margin-inline-end: var(--space-4, 0.25rem);
 }
 
 .s-jv-null {
@@ -152,7 +158,7 @@
   font-size: var(--text-3xs, 0.5rem);
   font-style: italic;
   font-weight: 400;
-  margin-inline-start: 0.75em;
+  margin-inline-start: var(--space-8, 0.5rem);
 }
 
 .s-jt-badge {

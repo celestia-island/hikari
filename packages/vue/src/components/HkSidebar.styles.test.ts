@@ -14,8 +14,9 @@ import { describe, expect, it } from "vitest";
  * gets: a tail the size of a hairline reads as "keep going". The 4px
  * tail let the final item kiss the panel's bottom edge at full scroll
  * (user screenshot on the chest admin sidebar, 2026-10-01 — the last
- * item sat flush against the footer boundary), so the body now carries
- * an option-sized `--hk-sidebar-scroll-tail` on BOTH density variants.
+ * item sat flush against the footer boundary), so the rail now declares
+ * an option-sized `--hk-sidebar-scroll-tail` and both density variants
+ * of the body spend it as their block-end padding.
  *
  * The assertions run on the COMPILED sheet, not the source text, so a
  * declaration cannot hide behind SCSS nesting, and comments are stripped
@@ -50,10 +51,17 @@ describe("HkSidebar scroll end-cap", () => {
     expect(css).toContain(".hk-sidebar-footer");
   });
 
-  it("declares the tail token on the body", () => {
+  it("declares the tail token on the rail, not the body", () => {
+    // The rail-level declaration is what makes the knob real for hosts:
+    // an element's own custom-property declaration always beats an
+    // inherited value, so a body-level declaration would silently kill
+    // ancestor retunes (the menu-item sheet-token trap).
+    const rail = ruleBody(css, ".hk-sidebar");
+    expect(rail, "the rail rule exists").not.toBeNull();
+    expect(rail).toContain(TAIL_DECL);
     const body = ruleBody(css, ".hk-sidebar-body");
     expect(body, "the body rule exists").not.toBeNull();
-    expect(body).toContain(TAIL_DECL);
+    expect(body).not.toContain("--hk-sidebar-scroll-tail:");
   });
 
   it("spends the tail as the body's block-end padding", () => {

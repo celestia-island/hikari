@@ -168,9 +168,10 @@
   // The payload is offered to the operator as "copy this into the bug
   // report", so credential-shaped text must not ride along: the value of
   // `token=` / `api_key=` (case-insensitive, up to the next delimiter) is
-  // masked. Same rule as the app's utils/connectionError.ts
-  // (`redactConnectionSecrets`) and the backend's redact_credential_query,
-  // so every family surface masks identically — and idempotently.
+  // masked with the same rule as the app's utils/connectionError.ts
+  // (`redactConnectionSecrets`) — byte-identical and idempotent — and this
+  // surface additionally masks the serialized-JSON and header shapes below,
+  // because its payload is the thing an operator pastes into an issue.
   var CREDENTIAL_QUERY = /(?:token|api_key)=([^&)\]}"' \n\t]*)/gi;
   // Beyond the family rule: this payload is SERIALIZED JSON and offered for
   // pasting, so credential-shaped data also arrives as `"key": "value"` and
@@ -239,7 +240,12 @@
         // "failed" = fetched, but the server refused it (a 404 on the entry
         // chunk IS the stale-deploy signature); "loaded" = fetched fine.
         var state = "pending";
-        if (hit) state = hit.status !== null && hit.status >= 400 ? "failed" : "loaded";
+        if (hit) {
+          // A timing entry with no status is a fetch that never produced a
+          // response (network failure, opaque cross-origin): calling that
+          // "loaded" states the opposite of the truth.
+          state = hit.status === null ? "unknown" : hit.status >= 400 ? "failed" : "loaded";
+        }
         out.push({ src: raw, state: state, ms: hit ? hit.ms : null, status: hit ? hit.status : null });
       }
     });
@@ -379,6 +385,13 @@
     // card existing. A hostile or frozen DOM must not be able to cost the
     // operator the surface itself (the file's own rule: diagnostics never
     // throw on top of an already broken page).
+    // The card replaces the page: leaving the heartbeat loader animating
+    // behind it shows through a translucent backdrop. Its own guard, so a
+    // hostile loader cannot skip the raise below.
+    safe(function () {
+      var loader = byId("loading-screen");
+      if (loader && loader.style) loader.style.display = "none";
+    });
     safe(function () {
       var el = byId("fatal-fallback");
       if (!el) return;
@@ -407,9 +420,13 @@
       if (labelEl) labelEl.textContent = t.rawDetails;
       if (copyBtn) copyBtn.textContent = t.copy;
       if (reloadBtn) reloadBtn.textContent = t.reload;
+    });
+    // Focus gets its own guard: it is behavioural, and a hostile label write
+    // above must not be able to skip it.
+    safe(function () {
       // The card is a modal alert: put the keyboard on its primary action
       // instead of leaving focus on whatever the dead app left behind.
-      if (reloadBtn) reloadBtn.focus();
+      byId("fatal-reload")?.focus();
     });
     lastPayload = safe(function () {
       return buildPayload(reason, message, error);
@@ -480,7 +497,9 @@
     // Default English is only a placeholder: resolve the real locale the
     // first time a failure actually has to be shown (localStorage may be
     // seeded after this script ran).
-    if (currentLocale === "en") currentLocale = detectLocale();
+    // The stored preference can change after boot (the SPA writes it), so the
+    // card re-resolves every time instead of only while it is still "en".
+    currentLocale = detectLocale();
     present(reasonOf(msg), msg || "", detail || null);
   };
   window.__appBlock = function(browserName, currentVersion, minVersion) {
@@ -493,7 +512,7 @@
       window.stop();
     } catch {
     }
-    if (currentLocale === "en") currentLocale = detectLocale();
+    currentLocale = detectLocale();
     const t = strings();
     const ls = byId("loading-screen");
     safe(function () {
@@ -547,8 +566,13 @@
         // boot script that FETCHED and was refused (404 on the entry chunk,
         // the stale-tab-after-redeploy signature) never reaches window.onerror,
         // and calling that a timeout hides the one actionable fact there is.
-        var failed = failedResources(resourceIndex());
-        present(failed.length ? "chunk" : "timeout", failed.length ? failed[0].src + " -> HTTP " + failed[0].status : "", null);
+        // Only the BOOT scripts count: a 404 on some unrelated widget
+        // stylesheet is not why the app failed to mount, and calling that a
+        // resource failure sends the operator to the wrong remedy.
+        var stale = bootScripts(resourceIndex()).filter(function (entry) {
+          return entry.state === "failed";
+        });
+        present(stale.length ? "chunk" : "timeout", stale.length ? stale[0].src + " -> HTTP " + stale[0].status : "", null);
       }
     }
   }, TIMEOUT);

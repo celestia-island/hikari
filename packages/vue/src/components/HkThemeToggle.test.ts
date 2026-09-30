@@ -283,6 +283,13 @@ describe("HkThemeToggle color-mode group", () => {
     // Active check glyph sits inside the pill, leading the name.
     const activeBtn = document.body.querySelector<HTMLButtonElement>(".s-theme-item-btn[data-active]");
     expect(activeBtn?.querySelector(".s-theme-item-check")).toBeTruthy();
+
+    // The ROW is the pill (2026-10-01): the active state surfaces on the
+    // row element too, so the highlight spans the full row width instead
+    // of stopping short at a trailing column.
+    const activeRows = rows.filter((r) => r.hasAttribute("data-active"));
+    expect(activeRows).toHaveLength(1);
+    expect(activeRows[0].querySelector(".s-theme-item-btn[data-active]")).toBeTruthy();
   });
   it("renders the mode-extra strip under the mode group when provided", async () => {
     const container = document.createElement("div");

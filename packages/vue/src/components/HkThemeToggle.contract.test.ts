@@ -46,13 +46,22 @@ describe("HkThemeToggle theme-row pill contract", () => {
     const css = read("HkThemeToggle.scss");
     const block = css.match(/\.s-theme-item-row \.s-theme-item-btn\s*\{[^}]*\}/);
     expect(block).not.toBeNull();
-    expect(block![0]).toContain("padding: 0");
+    // The ROW owns the frame: its border 1 + padding 12 put the content at
+    // the same 13px the standalone pills measure (border 1 + padding 12), so
+    // the button drops its own border entirely.
+    expect(block![0]).toContain("border: none;");
     expect(block![0]).toContain("background: transparent");
     expect(block![0]).toContain("min-height: 0");
-    // The 1px border BOX stays (border-color only goes transparent) so the
-    // content x matches the standalone pills exactly.
-    expect(block![0]).toContain("border-color: transparent");
-    expect(block![0]).not.toContain("border: none");
+    // The button stretches over the row's frame (negative block margins
+    // mirrored by re-applied padding) so the WHOLE pill is the click/focus
+    // target — master's pill WAS the button — while the name's content box
+    // keeps the standalone offsets. Losing the stretch drops the button
+    // back to a centered auto-height box inside the row (misaligned and
+    // undersized); losing the bleed pair desyncs the content offset by the
+    // frame width.
+    expect(block![0]).toContain("align-self: stretch");
+    expect(block![0]).toContain("margin-block: calc(");
+    expect(block![0]).toContain("padding-block: calc(");
   });
 
   it("suppresses the row button's own hover and active state chrome", () => {

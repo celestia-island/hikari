@@ -162,20 +162,41 @@
 }
 
 /* The row's button keeps the CLICK and FOCUS semantics (keyboard parity,
- * screen-reader role) but no visual chrome of its own: background and
- * border-color go transparent while the 1px border BOX stays, so the
- * content x stays identical to the standalone pills (row padding 12 +
- * button border 1 = the same 13px the customize/DPI pills measure) — and
- * the metrics come from the row (padding/min-height/font), so nothing
- * double-applies. */
+ * screen-reader role) but no visual chrome of its own: background goes
+ * transparent and the border is dropped entirely — the ROW now owns the
+ * frame, and the content x lands on the same offset as the standalone
+ * pills anyway (row border 1 + row padding 12 = the standalone border 1 +
+ * padding 12 = 13px from the pill edge). Vertically the button bleeds
+ * over the row's frame (negative margins) and re-applies the padding
+ * inside, so the WHOLE pill is the click/focus target — master's pill
+ * WAS the button — while the name's content box keeps the standalone
+ * offsets (border 1 + pad-y). Row heights are unchanged: the button's
+ * net layout contribution is its content, so the row's own min-height
+ * rules exactly as the button's did before. */
 .s-theme-item-row .s-theme-item-btn {
   min-width: 0;
   min-height: 0;
   flex: 1;
   width: auto;
-  padding: 0;
-  border-color: transparent;
-  border-radius: 0;
+  /* Fill the row's full cross size (overriding the row's align-items:
+   * center FOR THIS ITEM only) so the click/focus target is the whole
+   * pill, not just the name's line box. */
+  align-self: stretch;
+  /* Bleed over the row's frame — its vertical padding plus the 1px
+   * mi.item border — then re-apply that padding inside: the name's
+   * content box keeps the standalone pills' offsets (border 1 + pad)
+   * while the hit area covers the pill edge to edge. The 1px constant
+   * mirrors mi.item's border width; if the mixin's border ever changes,
+   * this pair moves with it. */
+  margin-block: calc(-1 * var(--hk-menu-item-pad-y, 6px) - 1px);
+  padding-block: calc(var(--hk-menu-item-pad-y, 6px) + 1px);
+  padding-inline: 0;
+  border: none;
+  /* Follow the row's pill radius: the button keeps mi.item's :focus-visible
+   * inset outline (keyboard parity), and outlines follow border-radius —
+   * a zero radius here would render the ring as a sharp rectangle poking
+   * past the row's rounded corners. */
+  border-radius: inherit;
   background: transparent;
   font: inherit;
   color: inherit;

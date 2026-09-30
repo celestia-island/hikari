@@ -66,6 +66,34 @@ describe("HkJsonTree spacing contract", () => {
     expect(indent).toContain("flex-shrink: 0");
   });
 
+  it("clips collapsed summaries to one line instead of wrapping", () => {
+    const tsx = readFileSync(join(here, "HkJsonTree.tsx"), "utf-8");
+    const clampAt = scss.indexOf(".s-jt-preview,\n.s-jt-clamp {");
+    expect(clampAt, ".s-jt-clamp rule present").toBeGreaterThanOrEqual(0);
+    const clamp = scss.slice(clampAt);
+    // The container preview shares the clip block: dropping it from the
+    // selector group re-wraps the keyless root summary (the third-round
+    // screenshot complaint) while every other pin stays green.
+    expect(clamp).toContain("min-width: 0");
+    expect(clamp).toContain("overflow: hidden");
+    expect(clamp).toContain("white-space: nowrap");
+    expect(clamp).toContain("text-overflow: ellipsis");
+    // Exactly three selector sites: the color/size block plus the two
+    // entries of the clip group. A FOURTH (a later re-declaration in this
+    // file) would cascade over the clip — R2's B1 mutation proved a bare
+    // toContain pin lets `.s-jt-preview { white-space: normal; }` sail
+    // through green while re-wrapping the summary. Cross-file overrides
+    // are out of this file's reach by construction — the residual is
+    // covered by greps in review, not by a pin.
+    const selectorSites = scss.match(/\.s-jt-(?:preview|clamp)\s*[,{]/g) ?? [];
+    expect(selectorSites.length, `selector sites = ${selectorSites.join(" | ")}`).toBe(3);
+    // The clip hook rides exactly the collapsed long-string value (the
+    // container preview is covered by the selector group above); expanded
+    // leaf values keep their soft wrap.
+    expect(tsx.match(/class="[^"]*s-jt-clamp/g)?.length).toBe(1);
+    expect(tsx).toContain('class="s-jv-str s-jt-clamp"');
+  });
+
   it("keeps the key colon gap on one spacing unit", () => {
     const block = scss.slice(scss.indexOf(".s-jt-colon {"), scss.indexOf(".s-jv-null"));
     expect(block).toContain("margin-inline-end: var(--space-4");

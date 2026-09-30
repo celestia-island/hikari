@@ -95,7 +95,8 @@ describe("HkErrorLanding", () => {
     const el = mountLanding({
       details: () => h("pre", { class: "s-tool-json-tree" }, "raw"),
     });
-    // No collapse affordance anymore — the pane is a fixed region.
+    // No collapse affordance — the pane is always open; its frame now
+    // follows the payload under the ceiling cap (fold contract in scss).
     expect(el.querySelector(".hk-error-landing__details-toggle")).toBeNull();
     expect(el.querySelector(".hk-error-landing__details-label")!.textContent).toContain("Raw error details");
     expect(el.querySelector(".hk-error-landing__details-pane")).not.toBeNull();

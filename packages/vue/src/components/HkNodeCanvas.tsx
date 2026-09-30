@@ -13,6 +13,7 @@ import "./HkNodeCanvas.scss";
 
 import {
   computeLod,
+  clampCameraToBounds,
   edgeHitWidth,
   edgeMidpoint,
   edgePath,
@@ -39,7 +40,7 @@ export type {
   NodeCanvasPainter,
   PrintPaper,
 } from "./nodeCanvasTypes";
-export { computeLod, edgePath, edgeMidpoint, edgeHitWidth, sideOffset, oppositeSide, LOD_DEFAULTS, PAPER_SIZES } from "./nodeCanvasTypes";
+export { computeLod, edgePath, edgeMidpoint, edgeHitWidth, sideOffset, oppositeSide, LOD_DEFAULTS, PAPER_SIZES, clampCameraToBounds, CANVAS_BOUNDS_MARGIN } from "./nodeCanvasTypes";
 
 /** The pointer payload the edge events carry: a real MouseEvent for
  * hover/click/contextmenu, or a synthesized stand-in when a touch
@@ -143,6 +144,13 @@ interface PendingRequest {
  *     read to simplify their nodes at low zoom.
  *   - a **print mode**: disables gestures, fixes the camera, and exposes
  *     `exportSVG()` for vector output.
+ *   - a **bounds clamp** (default on): every camera write stops where the
+ *     content hull would leave half a viewport of itself past the visible
+ *     edge — a drag, a wheel or pinch zoom, a tween, an imperative call.
+ *     A graph can still be stranded only through the host's own channels:
+ *     opting out (`clampToBounds: false`), never supplying
+ *     `contentBounds`, or a controlled `camera` prop the host writes
+ *     verbatim (emitted gesture results are always pre-clamped).
  *
  * What it still does NOT own: what nodes look like, what data drives
  * them, or how they are laid out. The host draws node content through
@@ -165,7 +173,10 @@ export default defineComponent({
     /** Controlled camera (`v-model:camera`). Without it the component keeps
      *  its own, seeded by `fitOnLoad`. */
     camera: { type: Object as PropType<NodeCanvasCamera | undefined>, default: undefined },
-    /** Content rectangle, in world units, used for fit and clamping. */
+    /** Content rectangle, in world units — the hull every node on the
+     *  canvas forms. `fit` frames it, and the bounds clamp (`clampToBounds`,
+     *  on by default) refuses camera moves that would push it out of
+     *  reach. */
     contentBounds: { type: Object as PropType<NodeCanvasBounds | null>, default: null },
     /** Smallest zoom the camera will settle on. */
     minZoom: { type: Number, default: NODE_CANVAS_DEFAULTS.minZoom },
@@ -197,6 +208,15 @@ export default defineComponent({
     pannable: { type: Boolean, default: true },
     /** Whether the wheel zooms. */
     zoomable: { type: Boolean, default: true },
+    /** Keep the content within reach: the camera may never push the
+     *  content hull (the `contentBounds` envelope every node on the canvas
+     *  forms) farther than half a viewport past the visible edge, per
+     *  axis — the outward drag stops there instead of stranding the graph
+     *  off-screen. On by default; a canvas with a genuinely unbounded
+     *  surface (or one whose content the host moves independently) opts
+     *  out with `false`. Needs `contentBounds` to know the hull — without
+     *  it there is nothing to clamp against and this is a no-op. */
+    clampToBounds: { type: Boolean, default: true },
     /** Mount the minimap in the corner. */
     minimap: { type: Boolean, default: true },
     /** Which corner the minimap takes. */
@@ -558,12 +578,21 @@ export default defineComponent({
       // the surface freezes with no way back. Refuse to propagate it.
       if (!Number.isFinite(k) || k <= 0) return;
       if (!Number.isFinite(next.x) || !Number.isFinite(next.y)) return;
+      // Bounds clamp (default on): every write funnels through here, so a
+      // drag, a wheel/pinch zoom, a tween and an imperative `setCamera` all
+      // stop at the same edge — the content hull never leaves half a
+      // viewport of reach. `fit()` frames the hull inside the viewport and
+      // therefore always satisfies the clamp; it writes through
+      // `writeCamera` directly, so a host framing is never fought.
+      const bounded = props.clampToBounds
+        ? clampCameraToBounds({ k, x: next.x, y: next.y }, props.contentBounds, viewport.value)
+        : { k, x: next.x, y: next.y };
       // Any non-automatic camera move is the user's: a late `contentBounds`
       // must not throw that work away. It also means the host is somewhere
       // else, so a later `fit()` may ask for the same camera again.
       movedByHand = true;
       lastRequested = null;
-      writeCamera({ k, x: next.x, y: next.y });
+      writeCamera(bounded);
     }
 
     /** The camera that frames `contentBounds` inside the viewport. */

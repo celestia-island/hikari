@@ -278,6 +278,74 @@ export function edgeMidpoint(
   return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
 }
 
+// ── Camera bounds clamp ──────────────────────────────────────────────────
+
+/** How far past the content hull the camera may push it, as a fraction of
+ *  the viewport size per axis (0.5 = the hull may leave at most half a
+ *  viewport of itself past the visible edge — no farther). */
+export const CANVAS_BOUNDS_MARGIN = 0.5;
+
+/** Clamp a camera so the content cannot be dragged out of reach.
+ *
+ *  The binding geometry is the content hull — the axis-aligned envelope of
+ *  every component on the canvas (the hull's x/y extremes are exactly what
+ *  a pure translation can bind against). The camera is clamped so the
+ *  viewport's world window keeps intersecting that hull expanded by
+ *  `marginFactor` viewport sizes per axis: at the limit the hull itself
+ *  sits exactly `marginFactor` of a viewport outside the visible edge, and
+ *  past that the outward drag is refused.
+ *
+ *  Degenerate inputs pass the camera through unchanged: no bounds (the
+ *  host gave none), a non-finite or empty hull, an unmeasured viewport, a
+ *  non-finite zoom, or a coordinate combination whose clamp range is not
+ *  finite (an astronomically placed hull) — a clamped camera is only ever
+ *  returned finite, because the browser drops the whole transform
+ *  otherwise. */
+export function clampCameraToBounds(
+  camera: NodeCanvasCamera,
+  bounds: NodeCanvasBounds | null,
+  viewport: { width: number; height: number },
+  marginFactor: number = CANVAS_BOUNDS_MARGIN,
+): NodeCanvasCamera {
+  if (
+    !bounds ||
+    !(bounds.width > 0) ||
+    !(bounds.height > 0) ||
+    !Number.isFinite(bounds.x) ||
+    !Number.isFinite(bounds.y) ||
+    !(viewport.width > 0) ||
+    !(viewport.height > 0)
+  ) {
+    return camera;
+  }
+  const { k } = camera;
+  if (!Number.isFinite(k) || k <= 0) return camera;
+  if (!Number.isFinite(camera.x) || !Number.isFinite(camera.y)) return camera;
+  // The viewport's world window is [-x/k, (W-x)/k]; "keep intersecting the
+  // hull expanded by (f·W/k, f·H/k) world units" solves to these
+  // translation ranges. The viewport fraction cancels the zoom — the
+  // margin is a SCREEN distance (half a viewport) at any k.
+  const xLow = -k * (bounds.x + bounds.width) - marginFactor * viewport.width;
+  const xHigh = viewport.width - k * bounds.x + marginFactor * viewport.width;
+  const yLow = -k * (bounds.y + bounds.height) - marginFactor * viewport.height;
+  const yHigh = viewport.height - k * bounds.y + marginFactor * viewport.height;
+  // bounds.width/height > 0 keeps both intervals non-empty (dust aside);
+  // the finiteness guard refuses a hull so far out the range overflows —
+  // a non-finite translation would drop the whole transform.
+  if (!(xLow <= xHigh) || !(yLow <= yHigh)) return camera;
+  if (
+    !Number.isFinite(xLow) || !Number.isFinite(xHigh)
+    || !Number.isFinite(yLow) || !Number.isFinite(yHigh)
+  ) {
+    return camera;
+  }
+  return {
+    k,
+    x: Math.min(xHigh, Math.max(xLow, camera.x)),
+    y: Math.min(yHigh, Math.max(yLow, camera.y)),
+  };
+}
+
 // ── Print ────────────────────────────────────────────────────────────────
 
 export type PrintPaper = "a4-landscape" | "a3-landscape" | "auto";

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, isRef, nextTick, onUpdated, ref, type App } from "vue";
 
 import HkNodeCanvas, { NODE_CANVAS_DEFAULTS } from "./HkNodeCanvas";
+import { CANVAS_BOUNDS_MARGIN, clampCameraToBounds } from "./nodeCanvasTypes";
 
 /**
  * HkNodeCanvas tests — the camera protocol the three node surfaces share:
@@ -1049,5 +1050,143 @@ describe("HkNodeCanvas", () => {
     expect(onUpdate).toHaveBeenCalled();
     // Controlled: the internal camera did not move on its own.
     expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+  });
+
+  // ── Bounds clamp ─────────────────────────────────────────────────
+  // The camera may never push the content hull farther than half a
+  // viewport past the visible edge, per axis: at the limit the hull sits
+  // exactly CANVAS_BOUNDS_MARGIN of a viewport outside, and past it the
+  // outward drag is refused. Every camera write funnels through
+  // `setCamera`, so a drag, a wheel/pinch zoom, a tween and an imperative
+  // call all stop at the same edge.
+
+  describe("bounds clamp", () => {
+    // BOUNDS = 400×200 at (0,0), viewport 800×600, k = 1 ⇒
+    // x ∈ [-k·(x+w) - f·W, W - k·x + f·W] = [-800, 1200],
+    // y ∈ [-200 - 300, 600 + 300] = [-500, 900].
+    const X_LIMIT_LOW = -800;
+    const Y_LIMIT_LOW = -500;
+
+    it("clamps the pure camera to the expanded hull", () => {
+      const bounds = { x: 0, y: 0, width: 400, height: 200 };
+      const viewport = { width: 800, height: 600 };
+      // A camera already framing the content passes through untouched.
+      const inside = { k: 1, x: 100, y: 100 };
+      expect(clampCameraToBounds(inside, bounds, viewport)).toEqual(inside);
+      // Dragged far off-screen: stopped at the derived limit.
+      expect(clampCameraToBounds({ k: 1, x: -5000, y: -9000 }, bounds, viewport)).toEqual({
+        k: 1,
+        x: X_LIMIT_LOW,
+        y: Y_LIMIT_LOW,
+      });
+      // …and symmetrically for the far corners.
+      expect(clampCameraToBounds({ k: 1, x: 5000, y: 9000 }, bounds, viewport)).toEqual({
+        k: 1,
+        x: 1200,
+        y: 900,
+      });
+    });
+
+    it("holds the margin as a SCREEN distance at any zoom", () => {
+      // At k = 2 the world window halves, so the world-space margin halves
+      // with it — but the on-screen slack stays half a viewport.
+      const bounds = { x: 0, y: 0, width: 400, height: 200 };
+      const viewport = { width: 800, height: 600 };
+      const clamped = clampCameraToBounds({ k: 2, x: -99999, y: 0 }, bounds, viewport);
+      // xLow = -2·400 - 0.5·800 = -1200.
+      expect(clamped.x).toBe(-1200);
+      // At the limit the hull's right edge sits exactly half a viewport
+      // left of the screen's left edge.
+      const hullRightOnScreen = (bounds.width) * clamped.k + clamped.x;
+      expect(hullRightOnScreen).toBe(-viewport.width / 2);
+    });
+
+    it("passes degenerate inputs through unchanged", () => {
+      const cam = { k: 1, x: 123, y: 456 };
+      expect(clampCameraToBounds(cam, null, { width: 800, height: 600 })).toBe(cam);
+      expect(clampCameraToBounds(cam, { x: 0, y: 0, width: 0, height: 100 }, { width: 800, height: 600 })).toBe(cam);
+      expect(clampCameraToBounds(cam, { x: 0, y: 0, width: 100, height: 0 }, { width: 800, height: 600 })).toBe(cam);
+      expect(clampCameraToBounds(cam, { x: 0, y: 0, width: 100, height: 100 }, { width: 0, height: 0 })).toBe(cam);
+      expect(clampCameraToBounds({ k: 0, x: 1, y: 1 }, { x: 0, y: 0, width: 100, height: 100 }, { width: 800, height: 600 })).toEqual({ k: 0, x: 1, y: 1 });
+      // An astronomically placed hull overflows the clamp range (k·coord
+      // passes the double ceiling): refuse to clamp rather than write a
+      // non-finite translation (the browser would drop the transform).
+      const far = { x: 1e308, y: 1e308, width: 100, height: 100 };
+      expect(clampCameraToBounds({ k: 2, x: 123, y: 456 }, far, { width: 800, height: 600 })).toEqual({ k: 2, x: 123, y: 456 });
+      expect(clampCameraToBounds({ k: 1, x: NaN, y: 0 }, { x: 0, y: 0, width: 100, height: 100 }, { width: 800, height: 600 })).toEqual({ k: 1, x: NaN, y: 0 });
+    });
+
+    it("stops a pan that would drag the hull off-screen", async () => {
+      const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+      await nextTick();
+      instance.value?.panBy(-5000, -5000);
+      expect(instance.value!.camera).toEqual({ k: 1, x: X_LIMIT_LOW, y: Y_LIMIT_LOW });
+      // The far direction clamps at its own wall.
+      instance.value?.panBy(99999, 99999);
+      expect(instance.value!.camera).toEqual({ k: 1, x: 1200, y: 900 });
+      // Small moves apply on the free axis; the wall axis stays pinned.
+      instance.value?.panBy(-10, 5);
+      expect(instance.value!.camera).toEqual({ k: 1, x: 1190, y: 900 });
+    });
+
+    it("stops a pointer drag at the same edge", async () => {
+      const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+      await nextTick();
+      root.setPointerCapture = () => {};
+      root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 21, clientX: 400, clientY: 300 }));
+      // 400 px of drag left/up, in two moves, is nowhere near the limit —
+      // then one enormous move rides into the wall.
+      root.dispatchEvent(pointerEvent("pointermove", { pointerId: 21, clientX: 300, clientY: 250 }));
+      root.dispatchEvent(pointerEvent("pointermove", { pointerId: 21, clientX: 200, clientY: 200 }));
+      root.dispatchEvent(pointerEvent("pointermove", { pointerId: 21, clientX: -100000, clientY: -100000 }));
+      document.body.dispatchEvent(pointerEvent("pointerup", { pointerId: 21, clientX: -100000, clientY: -100000, buttons: 0 }));
+      expect(instance.value!.camera).toEqual({ k: 1, x: X_LIMIT_LOW, y: Y_LIMIT_LOW });
+    });
+
+    it("keeps a wheel zoom anchored without escaping the walls", async () => {
+      const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+      await nextTick();
+      // Ride to the low-x wall first, then zoom out hard: the anchor keeps
+      // the world point under the cursor, but the translation must stay
+      // inside the clamp interval for the new k.
+      instance.value?.panBy(-5000, 0);
+      for (let step = 0; step < 12; step++) instance.value?.zoomBy(-1);
+      const cam = instance.value!.camera;
+      const xLow = -cam.k * (BOUNDS.x + BOUNDS.width) - CANVAS_BOUNDS_MARGIN * VIEWPORT.width;
+      const xHigh = VIEWPORT.width - cam.k * BOUNDS.x + CANVAS_BOUNDS_MARGIN * VIEWPORT.width;
+      expect(cam.x).toBeGreaterThanOrEqual(xLow - 1e-6);
+      expect(cam.x).toBeLessThanOrEqual(xHigh + 1e-6);
+    });
+
+    it("lets a controlled host's gestures clamp before the emit", async () => {
+      const onUpdate = vi.fn();
+      const { instance } = mount({
+        contentBounds: BOUNDS,
+        camera: { k: 1, x: 0, y: 0 },
+        "onUpdate:camera": onUpdate,
+        fitOnLoad: false,
+      });
+      await nextTick();
+      instance.value?.panBy(-5000, -5000);
+      const last = onUpdate.mock.calls.at(-1)?.[0] as { k: number; x: number; y: number };
+      expect(last).toEqual({ k: 1, x: X_LIMIT_LOW, y: Y_LIMIT_LOW });
+    });
+
+    it("does nothing the host did not ask for when the clamp is off", async () => {
+      const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: false, clampToBounds: false });
+      await nextTick();
+      instance.value?.panBy(-5000, -5000);
+      expect(instance.value!.camera).toEqual({ k: 1, x: -5000, y: -5000 });
+    });
+
+    it("never fights a fit: framing still centres the hull", async () => {
+      const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+      await nextTick();
+      instance.value?.panBy(-5000, -5000);
+      expect(instance.value!.fit()).toBe(true);
+      // 400×200 in 800×600 with 40 px padding → k = min(1.8, 2.6) capped at
+      // fitCap 1.25, centred: x = (800-500)/2, y = (600-250)/2.
+      expect(instance.value!.camera).toEqual({ k: 1.25, x: 150, y: 175 });
+    });
   });
 });

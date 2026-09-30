@@ -33,11 +33,37 @@ describe("HkJsonTree spacing contract", () => {
     const fallbacks = [...scss.matchAll(/var\(--jt-toggle,\s*([^)]+)\)/g)].map((m) => m[1].trim());
     expect(fallbacks.length, "fallback sites were scanned").toBeGreaterThan(2);
     expect(fallbacks.every((f) => f === "14px"), `fallbacks = ${fallbacks}`).toBe(true);
+    // The canonical definition itself: the TSX drives depth steps and
+    // guide lines from JT_TOGGLE = 14 — a different definition desyncs
+    // CSS geometry from the TS geometry with zero other red.
+    expect(scss).toContain("--jt-toggle: 14px;");
   });
 
   it("pins the depth step to exactly one toggle width", () => {
     const tsx = readFileSync(join(here, "HkJsonTree.tsx"), "utf-8");
     expect(tsx).toContain("const JT_INDENT = JT_TOGGLE;");
+  });
+
+  it("reads collapsed summaries one tab in, at full row size", () => {
+    const tsx = readFileSync(join(here, "HkJsonTree.tsx"), "utf-8");
+    // Both collapsed shapes (object preview and long string) carry the
+    // one-tab slot before the summary — the collapsed text sits in the
+    // child column instead of hugging the chevron.
+    expect(tsx.match(/<span class="s-jt-indent" \/>/g)?.length).toBe(2);
+    const preview = scss.slice(scss.indexOf(".s-jt-preview {"));
+    // A smaller preview font would shrink a keyless row's line box below
+    // the toggle centering assumption and float the row high.
+    expect(preview).toContain("font-size: inherit");
+    expect(preview).not.toContain("0.5rem");
+  });
+
+  it("keeps the collapsed summary indent slot exactly one tab wide", () => {
+    const indent = scss.slice(scss.indexOf(".s-jt-indent {"), scss.indexOf(".s-jt-preview {"));
+    // Deleting the whole rule (not just tweaking it) must also go red —
+    // this slot IS the second-round "collapsed text hugs the chevron" fix.
+    expect(indent, ".s-jt-indent rule present").not.toBe("");
+    expect(indent).toContain("width: var(--jt-toggle, 14px)");
+    expect(indent).toContain("flex-shrink: 0");
   });
 
   it("keeps the key colon gap on one spacing unit", () => {

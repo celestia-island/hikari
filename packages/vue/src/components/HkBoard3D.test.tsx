@@ -314,6 +314,71 @@ describe("HkBoard3D", () => {
     expect(labelChildren()).toBe(0);
   });
 
+  it("stops calling a tick once its disposer runs", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    let calls = 0;
+    const stop = engine!.addTick(() => { calls += 1; });
+    await tickFrames();
+    expect(calls).toBeGreaterThan(0);
+
+    stop();
+    const frozen = calls;
+    await tickFrames();
+    expect(calls).toBe(frozen);
+  });
+
+  it("an instant flight cancels an in-flight animated one", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial());
+    body.position.set(120, 0, 0);
+    engine!.setObject("far", { object: body });
+
+    // A long animated flight, then the default instant frameAll (the
+    // page's "fit everything" button): the fit must survive the next
+    // frames instead of being overridden by the stale tween.
+    engine!.flyTo([200, 200, 200], [120, 0, 0], 5000);
+    engine!.frameAll(1.3, 0);
+    const fitted = engine!.camera.position.clone();
+    await tickFrames();
+    expect(engine!.camera.position.distanceTo(fitted)).toBeLessThan(1e-6);
+  });
+
+  it("keeps an object in the scene while another id still registers it", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const shared = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial());
+    engine!.setObject("alias-a", { object: shared });
+    engine!.setObject("alias-b", { object: shared });
+
+    // Clearing ONE id must not unparent an object the other id owns.
+    engine!.setObject("alias-a", null);
+    expect(engine!.objects().has("alias-b")).toBe(true);
+    expect(shared.parent).toBe(engine!.scene);
+
+    engine!.setObject("alias-b", null);
+    expect(shared.parent).toBeNull();
+  });
+
+  it("ignores non-finite camera poses instead of bricking the camera", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const before = engine!.camera.position.clone();
+    engine!.flyTo([Number.NaN, 0, 0] as never, [0, 0, 0], 0);
+    expect(engine!.camera.position.equals(before)).toBe(true);
+    const projected = engine!.projectToScreen([0, 0, 0]);
+    expect(Number.isFinite(projected.x)).toBe(true);
+  });
+
   it("projectToScreen lands the origin at canvas centre for the default pose", async () => {
     let engine: Board3DEngine | null = null;
     const { container } = mountBoard(

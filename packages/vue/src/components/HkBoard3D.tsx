@@ -29,7 +29,21 @@
  *    an `error` event; nothing throws out of mount.
  *
  * The engine handle arrives through the `ready` event (and is mirrored
- * on the exposed ref). Everything the engine hands out stays live —
+ * on the exposed ref) — EXACTLY once per mount, and only on success:
+ * when WebGL is unavailable the board renders the `fallback` slot and
+ * emits `error` instead, so a consumer registers its content from the
+ * ready handler and treats `error` as the inert path.
+ *
+ * OWNERSHIP: `setObject` hands the Object3D to the board, which adds it
+ * to the engine scene — an object that already had a parent is detached
+ * from it (three's `Object3D.add` semantics) and that parent is NOT
+ * restored when the id is cleared. The board also assumes one id per
+ * Object3D: registering the same object under a second id is allowed,
+ * but picking always resolves the LAST id, so alias registrations are
+ * best avoided. The board never disposes consumer objects — whoever
+ * created them disposes them.
+ *
+ * Everything the engine hands out stays live —
  * scene, camera, controls — so pages with deeper needs (the holographic
  * twin's lighting/world/assets stack) build directly on them.
  */
@@ -92,7 +106,8 @@ export interface Board3DEngine {
     target: [number, number, number],
     durationMs?: number,
   ): void;
-  /** Fit the camera onto all content objects (whole scene when none). */
+  /** Fit the camera onto every visible content object; a no-op
+   *  while nothing frameable is registered. */
   frameAll(padding?: number, durationMs?: number): void;
   /** World → canvas CSS pixels; `visible` = inside the frustum. */
   projectToScreen(p: [number, number, number]): { x: number; y: number; visible: boolean };
@@ -101,6 +116,17 @@ export interface Board3DEngine {
 }
 
 const CLICK_SLOP_PX = 4;
+
+/** A pose component is usable only if all three numbers are finite. */
+function isFiniteVec3(v: readonly number[] | undefined): v is readonly [number, number, number] {
+  return (
+    Array.isArray(v) &&
+    v.length >= 3 &&
+    Number.isFinite(v[0]) &&
+    Number.isFinite(v[1]) &&
+    Number.isFinite(v[2])
+  );
+}
 
 function readCssColor(varName: string, fallback: string): string {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
@@ -135,7 +161,9 @@ export default defineComponent({
     minDistance: { type: Number, default: 2 },
     maxDistance: { type: Number, default: 600 },
     enablePan: { type: Boolean, default: true },
-    /** Freeze the frame loop (content keeps its last pose). */
+    /** Freeze the frame loop (content keeps its last pose). An animated
+     *  flight issued while paused lands in a single jump on resume: the
+     *  tween is evaluated against wall-clock time. */
     paused: { type: Boolean, default: false },
   },
   emits: {
@@ -326,8 +354,13 @@ export default defineComponent({
 
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(props.fov, 1, 0.1, 4000);
-      camera.position.set(...props.initialPosition);
-      camera.lookAt(...props.initialTarget);
+      // Guard the initial pose too: a non-finite component (an untyped
+      // caller passing a short/garbage array) would poison every
+      // projection for the board's whole lifetime.
+      const initPos = isFiniteVec3(props.initialPosition) ? props.initialPosition : [22, 16, 26];
+      const initTarget = isFiniteVec3(props.initialTarget) ? props.initialTarget : [0, 0, 0];
+      camera.position.set(initPos[0], initPos[1], initPos[2]);
+      camera.lookAt(initTarget[0], initTarget[1], initTarget[2]);
 
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -347,7 +380,7 @@ export default defineComponent({
       controls.minDistance = props.minDistance;
       controls.maxDistance = props.maxDistance;
       controls.enablePan = props.enablePan;
-      controls.target.set(...props.initialTarget);
+      controls.target.set(initTarget[0], initTarget[1], initTarget[2]);
       controls.enabled = props.interactive;
       controls.update();
 
@@ -384,7 +417,12 @@ export default defineComponent({
         setObject(id, def) {
           const prev = registry.get(id);
           if (prev) {
-            scene?.remove(prev.object);
+            // One Object3D can be registered under several ids; only
+            // detach it from the scene when no other id still owns it.
+            const stillOwned = [...registry.entries()].some(
+              ([other, otherDef]) => other !== id && otherDef.object === prev.object,
+            );
+            if (!stillOwned) scene?.remove(prev.object);
             registry.delete(id);
           }
           // The label tag is owned per id: re-registering (or clearing) an
@@ -410,7 +448,14 @@ export default defineComponent({
         objects: () => registry,
         flyTo(position, target, durationMs = 600) {
           if (!camera || !controls) return;
+          // A non-finite pose would brick the camera silently (every later
+          // projection returns NaN) — ignore the call instead.
+          if (!isFiniteVec3(position) || !isFiniteVec3(target)) return;
           if (durationMs <= 0) {
+            // An instant flight must ALSO cancel any in-flight tween —
+            // otherwise the next frame re-applies the old animation and
+            // undoes this pose (frameAll's default duration is 0).
+            tween = null;
             camera.position.set(...position);
             controls.target.set(...target);
             controls.update();
@@ -431,11 +476,16 @@ export default defineComponent({
           let any = false;
           for (const def of registry.values()) {
             if (def.content === false) continue;
+            // Skip what the MAIN camera cannot see (the minimap's helpers
+            // live on their own layer): framing must never chase them.
+            if (!def.object.layers.test(camera.layers)) continue;
             box.expandByObject(def.object);
             any = true;
           }
-          if (!any && scene) box.setFromObject(scene);
-          if (box.isEmpty()) return;
+          // Nothing frameable registered yet (an async page calling
+          // frameAll before its content arrives): stay put rather than
+          // framing whatever happens to be in the scene.
+          if (!any || box.isEmpty()) return;
           const sphere = box.getBoundingSphere(new THREE.Sphere());
           const dist = fitDistance(sphere.radius, camera.fov, camera.aspect) * padding;
           // Keep the current viewing direction — a fit reframes, it

@@ -51,13 +51,9 @@
     "prepublishOnly": "vue-tsc --noEmit"
   },
   "peerDependencies": {
+    "@types/three": "^*",
     "three": "^0.185.1",
     "vue": "^*"
-  },
-  "peerDependenciesMeta": {
-    "three": {
-      "optional": true
-    }
   },
   "dependencies": {
     "dompurify": "^*",

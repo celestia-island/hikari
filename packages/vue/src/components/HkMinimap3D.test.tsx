@@ -270,6 +270,33 @@ describe("HkMinimap3D", () => {
     expect(d115 / d100).toBeCloseTo(100 / 115, 2);
   });
 
+  it("throttles its auto-refit to the 300 ms window", async () => {
+    const { engine, camera, firePostRender } = fakeEngine();
+    mountMap(engine);
+    await nextTick();
+    // First frame refits (the window is open from mount).
+    firePostRender();
+    const mapCam = H.FakeWebGLRenderer.instances[0].renders[0].camera;
+    const r0 = mapCam.position.distanceTo(camera.position);
+
+    // Move the main camera OUT and fire again well inside the window:
+    // the map eye radius (a function of the fit radius while throttled)
+    // must not follow yet.
+    camera.position.set(400, 300, 500);
+    firePostRender();
+    expect(mapCam.position.distanceTo(camera.position)).toBeCloseTo(r0, 6);
+
+    // Past the window it does follow.
+    const realNow = performance.now();
+    const spy = vi.spyOn(performance, "now").mockReturnValue(realNow + 400);
+    try {
+      firePostRender();
+    } finally {
+      spy.mockRestore();
+    }
+    expect(mapCam.position.distanceTo(camera.position)).not.toBeCloseTo(r0, 6);
+  });
+
   it("disposes its renderer and strips helpers on unmount", async () => {
     const { engine, scene } = fakeEngine();
     mountMap(engine);

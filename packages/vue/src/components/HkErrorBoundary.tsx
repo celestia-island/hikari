@@ -1,7 +1,6 @@
-import { Copy, RefreshCw } from "lucide-vue-next";
+import { RefreshCw } from "lucide-vue-next";
 import { computed, defineComponent, onErrorCaptured, ref, type PropType, type VNode } from "vue";
 
-import { useClipboard } from "../runtime/useClipboard";
 import { useI18n } from "../i18n/context";
 import HButton from "./HkButton";
 import { HkErrorLanding } from "./HkErrorLanding";
@@ -31,8 +30,9 @@ function formatError(err: CapturedError): string {
  * The built-in fallback is the same HkErrorLanding card the family's
  * full-page takeovers use (inline variant): tone icon, headline, the error
  * name as the tone-matched HkBadge chip, the message as the description,
- * the raw name/message/stack in the fixed-height JSON tree pane, plus
- * retry / copy actions.
+ * the raw name/message/stack in the fixed-height JSON tree pane, plus the
+ * retry action and the landing's built-in copy action (fed with the
+ * formatted error text).
  */
 export default defineComponent({
   name: "HkErrorBoundary",
@@ -44,7 +44,6 @@ export default defineComponent({
     retryLabel: { type: String, default: "" },
   },
   setup(props, { slots }) {
-    const clipboard = useClipboard();
     const { t } = useI18n();
     const error = ref<CapturedError | null>(null);
 
@@ -87,6 +86,11 @@ export default defineComponent({
           title={props.errorTitle || t("hikari::errors.defaultTitle", "Something went wrong")}
           description={err.message}
           code={err.name}
+          // The copy action is the landing's built-in now (seated left of
+          // the host actions, one design family-wide); this boundary only
+          // feeds it the formatted error and its legacy label override.
+          copyText={formatError(err)}
+          copyLabel={props.copyErrorLabel}
         >
           {{
             default: () => <HkJsonTree value={detailsValue.value} ariaLabel="stack trace" />,
@@ -94,10 +98,6 @@ export default defineComponent({
               <HButton variant="primary" size="sm" onClick={retry}>
                 <RefreshCw size={12} />
                 {props.retryLabel || t("hikari::errorBoundary.retry", "Retry")}
-              </HButton>,
-              <HButton variant="ghost" size="sm" onClick={() => clipboard.copy(formatError(err))}>
-                <Copy size={12} />
-                {props.copyErrorLabel || t("hikari::errorBoundary.copyError", "Copy Error")}
               </HButton>,
             ],
           }}

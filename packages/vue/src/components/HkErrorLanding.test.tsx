@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h } from "vue";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick } from "vue";
 
 import { HkErrorLanding } from "./HkErrorLanding";
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -11,6 +11,8 @@ interface MountOptions {
   status?: number;
   tone?: "error" | "warning" | "info";
   variant?: "page" | "inline";
+  copyText?: string;
+  copyLabel?: string;
   details?: () => ReturnType<typeof h>;
   actions?: () => ReturnType<typeof h>;
   brand?: () => ReturnType<typeof h>;
@@ -28,6 +30,8 @@ function mountLanding(opts: MountOptions = {}) {
         status: opts.status,
         tone: opts.tone ?? "error",
         variant: opts.variant ?? "page",
+        copyText: opts.copyText ?? "",
+        copyLabel: opts.copyLabel ?? "",
       }, {
         ...(opts.details ? { default: opts.details } : {}),
         ...(opts.actions ? { actions: opts.actions } : {}),
@@ -39,12 +43,29 @@ function mountLanding(opts: MountOptions = {}) {
   return container;
 }
 
+/** Stub the async clipboard (jsdom ships none) and restore afterwards. */
+function stubClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", {
+    value: { writeText },
+    configurable: true,
+    writable: true,
+  });
+  return writeText;
+}
+
+function actionButtons(el: HTMLElement): HTMLButtonElement[] {
+  return Array.from(el.querySelectorAll<HTMLButtonElement>(".hk-error-landing__actions button"));
+}
+
 afterEach(() => {
   for (const { app, container } of mounts) {
     app.unmount();
     container.remove();
   }
   mounts.length = 0;
+  Reflect.deleteProperty(navigator, "clipboard");
+  vi.restoreAllMocks();
 });
 
 describe("HkErrorLanding", () => {
@@ -141,5 +162,52 @@ describe("HkErrorLanding", () => {
     const el = mountLanding({ variant: "inline", title: "Boom" });
     const root = el.querySelector(".hk-error-landing")!;
     expect(root.classList.contains("is-inline")).toBe(true);
+  });
+
+  it("seats the built-in copy action FIRST, left of the host actions", () => {
+    const el = mountLanding({
+      copyText: "Boom: bad",
+      actions: () => h("button", { class: "fake-action" }, "Retry"),
+    });
+    const buttons = actionButtons(el);
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0]!.textContent).toBe("Copy error details");
+    expect(buttons[1]!.classList.contains("fake-action")).toBe(true);
+  });
+
+  it("writes the copy payload and flips the label to Copied", async () => {
+    const writeText = stubClipboard();
+    const el = mountLanding({ copyText: "full error info" });
+    const copy = actionButtons(el)[0]!;
+    copy.click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText).toHaveBeenCalledWith("full error info");
+    await nextTick();
+    await nextTick();
+    expect(actionButtons(el)[0]!.textContent).toBe("Copied");
+  });
+
+  it("renders the copy action alone when the host passes no actions", () => {
+    const el = mountLanding({ copyText: "raw" });
+    const buttons = actionButtons(el);
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]!.textContent).toBe("Copy error details");
+  });
+
+  it("renders no copy action and no actions row without copyText and slot", () => {
+    const el = mountLanding({ title: "Boom" });
+    expect(el.querySelector(".hk-error-landing__actions")).toBeNull();
+  });
+
+  it("keeps the actions row host-only when copyText is empty", () => {
+    const el = mountLanding({ actions: () => h("button", { class: "fake-action" }, "Retry") });
+    const buttons = actionButtons(el);
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]!.classList.contains("fake-action")).toBe(true);
+  });
+
+  it("honours a custom copy label override", () => {
+    const el = mountLanding({ copyText: "raw", copyLabel: "Copy Error" });
+    expect(actionButtons(el)[0]!.textContent).toBe("Copy Error");
   });
 });

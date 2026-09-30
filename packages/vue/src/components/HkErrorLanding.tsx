@@ -1,4 +1,4 @@
-import { Braces, Info, TriangleAlert } from "lucide-vue-next";
+import { Braces, Check, Copy, Info, TriangleAlert } from "lucide-vue-next";
 import {
   computed,
   defineComponent,
@@ -7,11 +7,14 @@ import {
   onUpdated,
   ref,
   type PropType,
+  type VNode,
 } from "vue";
 
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useI18n } from "../i18n/context";
+import { useClipboard } from "../runtime/useClipboard";
 import HkBadge from "./HkBadge";
+import HkButton from "./HkButton";
 
 import "./HkErrorLanding.scss";
 
@@ -26,6 +29,13 @@ export type HErrorTone = "error" | "warning" | "info";
  *   live inside a pane captured by HkErrorBoundary.
  */
 export type HErrorLandingVariant = "page" | "inline";
+
+/** Slot renderers may return a single vnode or an array — normalize to an
+ *  array so the built-in copy action and the host's actions share one row. */
+function normalizeSlotNodes(nodes: VNode | VNode[] | undefined): VNode[] {
+  if (!nodes) return [];
+  return Array.isArray(nodes) ? nodes : [nodes];
+}
 
 /**
  * HkErrorLanding — the shared full-page error landing.
@@ -46,6 +56,15 @@ export type HErrorLandingVariant = "page" | "inline";
  * server-rendered error page alike. All host-facing copy (`title`,
  * `description`, action buttons) arrives pre-translated; the component only
  * translates its own labels via `hikari::errors.*`.
+ *
+ * The standard copy action: hosts pass `copyText` (the full error info they
+ * want on the clipboard — headline, technical context, raw payload, …) and
+ * the landing seats its built-in "copy error details" button as the FIRST
+ * action, left of whatever the actions slot renders — one design for the
+ * whole error-landing family instead of every consumer hand-rolling its
+ * own copy row (the boundary used to ship a private one; it now feeds this
+ * hook). `copyLabel` overrides the button wording when a host already
+ * ships its own.
  */
 export const HkErrorLanding = defineComponent({
   name: "HkErrorLanding",
@@ -58,15 +77,29 @@ export const HkErrorLanding = defineComponent({
     code: { type: String, default: "" },
     /** HTTP status chip, e.g. 400. */
     status: { type: Number, default: undefined },
+    /** Full error info the built-in copy action puts on the clipboard
+     *  (headline + technical context + raw payload, host-composed).
+     *  Empty disables the action. */
+    copyText: { type: String, default: "" },
+    /** Optional wording override for the built-in copy button; empty
+     *  falls back to `hikari::errors.copyDetails`. */
+    copyLabel: { type: String, default: "" },
     tone: { type: String as PropType<HErrorTone>, default: "error" },
     /** Layout variant: `page` (viewport backdrop) or `inline` (in-flow card). */
     variant: { type: String as PropType<HErrorLandingVariant>, default: "page" },
   },
   setup(props, { slots }) {
     const { t } = useI18n();
+    const clipboard = useClipboard();
 
     const titleText = computed(() => props.title || t("hikari::errors.defaultTitle", "Something went wrong"));
     const hasDetails = computed(() => slots.default != null);
+    // The actions row carries the built-in copy action whenever the host
+    // feeds it a payload — with or without slot actions beside it.
+    // Frozen like hasDetails: the slots object identity is not reactive,
+    // so a slot appearing mid-lifetime wouldn't flip this row — every
+    // family host mounts the landing with its slot set already settled.
+    const hasActions = computed(() => slots.actions != null || props.copyText !== "");
 
     // Badge variant follows the landing tone so the chip, the icon and the
     // card wash always speak the same severity language.
@@ -175,7 +208,31 @@ export const HkErrorLanding = defineComponent({
             </div>
           )}
 
-          {slots.actions && <div class="hk-error-landing__actions">{slots.actions()}</div>}
+          {hasActions.value && (
+            <div class="hk-error-landing__actions" aria-live="polite">
+              {[
+                // The standard copy action seats FIRST — left of every
+                // host-provided action — so the whole family reads
+                // [copy] [retry] [dismiss…] no matter who hosts the card.
+                ...(props.copyText
+                  ? [(
+                    <HkButton
+                      key="hk-error-copy"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { void clipboard.copy(props.copyText); }}
+                    >
+                      {clipboard.copied.value ? <Check size={12} /> : <Copy size={12} />}
+                      {clipboard.copied.value
+                        ? t("hikari::errors.copied", "Copied")
+                        : props.copyLabel || t("hikari::errors.copyDetails", "Copy error details")}
+                    </HkButton>
+                  )]
+                  : []),
+                ...(normalizeSlotNodes(slots.actions?.())),
+              ]}
+            </div>
+          )}
         </div>
       </div>
     );

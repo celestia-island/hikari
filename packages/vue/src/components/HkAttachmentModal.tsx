@@ -286,7 +286,7 @@ export const HkAttachmentModal = defineComponent({
                 <p class="s-attachment-modal-text-empty">
                   {srcError.value
                     ? srcError.value
-                    : t("hikari::attachment.noPreview", "No preview available.")}
+                    : t("hikari::attachment.noPreview", "No preview available")}
                 </p>
               )}
               {textError.value && (

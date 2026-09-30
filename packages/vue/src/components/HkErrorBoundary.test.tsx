@@ -91,6 +91,17 @@ describe("HkErrorBoundary", () => {
     expect(el.querySelector(".hk-error-landing")).not.toBeNull();
   });
 
+  it("feeds the landing's built-in copy action with the captured error", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const el = mountWith(Boom, { copyErrorLabel: "Copy Error" });
+    await nextTick();
+
+    const buttons = Array.from(el.querySelectorAll<HTMLButtonElement>(".hk-error-landing__actions button"));
+    // Built-in copy seats first, the boundary's own retry follows.
+    expect(buttons[0]!.textContent).toBe("Copy Error");
+    expect(buttons.some((b) => b.textContent === "Retry")).toBe(true);
+  });
+
   it("keeps the custom fallback render prop contract", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const el = mountWith(Boom, {

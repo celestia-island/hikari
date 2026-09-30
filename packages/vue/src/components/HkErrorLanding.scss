@@ -173,6 +173,11 @@
   letter-spacing: -0.01em;
   line-height: 1.35;
   color: rgb(var(--hel-text));
+  // Headlines may carry their own line breaks (hosts ship per-line copy,
+  // e.g. a two-clause landing where the dash clause moved to its own
+  // line) — render them as breaks, not spaces.
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .hk-error-landing__desc {

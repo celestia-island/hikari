@@ -79,7 +79,7 @@ export const HkTokenUsagePanel = defineComponent({
         <div class="s-token-panel">
           {props.entries.length === 0 ? (
             <div class="s-token-panel-empty">
-              {t("hikari::tokenUsage.noData", "No token usage data available.")}
+              {t("hikari::tokenUsage.noData", "No token usage data available")}
             </div>
           ) : (
             <>

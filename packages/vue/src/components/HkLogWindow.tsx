@@ -179,7 +179,7 @@ export const HkLogWindow = defineComponent({
             ref={scrollRef}
           >
             {currentLines.value.length === 0 ? (
-              <div class="s-log-empty">{t("hikari::log.empty", "No log lines yet.")}</div>
+              <div class="s-log-empty">{t("hikari::log.empty", "No log lines yet")}</div>
             ) : (
               currentLines.value.map((line, i) => (
                 <div key={i} class={["s-log-entry", `s-log-entry-${levelOf(line)}`]}>

@@ -51,3 +51,15 @@ describe("HkErrorLanding inline contract", () => {
     expect(card).not.toContain("2.25rem");
   });
 });
+
+describe("HkErrorLanding multiline headline contract", () => {
+  const css = readFileSync(join(here, "HkErrorLanding.scss"), "utf-8");
+  const title = ruleBody(css, ".hk-error-landing__title");
+
+  it("renders authored line breaks in the headline as breaks", () => {
+    // Catalogs ship per-line copy (a dash clause moved onto its own
+    // line); without pre-line the h1 collapses those breaks to spaces.
+    expect(title).toContain("white-space: pre-line");
+    expect(title).toContain("overflow-wrap: anywhere");
+  });
+});

@@ -21,7 +21,7 @@ import { describe, expect, it } from "vitest";
  * (the reverse direction is what catches the key deleted from en only).
  */
 const modules = import.meta.glob<{ default: Record<string, unknown> }>(
-  "./locales/*/components.json",
+  "./locales/*/{components,errors}.json",
   { eager: true },
 );
 
@@ -59,18 +59,28 @@ const LOCALE_SPECIFIC_NESTED: Record<string, string[]> = {
   "zh-Hant": ["components::hikari::statusBar.region.CN", "components::hikari::statusBar.region.HK", "components::hikari::statusBar.region.MO", "components::hikari::statusBar.region.TW"],
 };
 
-describe("components.json flat-key parity", () => {
-  const bundles = Object.entries(modules).map(([path, mod]) => ({
-    locale: path.match(/locales\/([^/]+)\/components\.json/)?.[1] ?? "",
-    flat: Object.fromEntries(
-      Object.entries(mod.default).filter(([, v]) => typeof v === "string"),
-    ) as Record<string, string>,
-    flatAll: Object.keys(mod.default).filter(
-      (k) => typeof mod.default[k] === "string",
-    ),
-    nested: nestedStringLeaves(mod.default).leaves,
-    nonStringLeaves: nestedStringLeaves(mod.default).nonStringLeaves,
-  }));
+describe("locale bundle flat-key parity", () => {
+  // components.json AND errors.json merged per locale: the error
+  // landing's catalog rides the same silent-fallback failure mode (a
+  // key missing from one locale quietly renders English there), so the
+  // guard must see one bundle per locale, not one per file.
+  const bundles = EXPECTED_LOCALES.map((locale) => {
+    const merged: Record<string, unknown> = {};
+    for (const [path, mod] of Object.entries(modules)) {
+      if (path.includes(`/${locale}/`)) Object.assign(merged, mod.default);
+    }
+    return {
+      locale,
+      flat: Object.fromEntries(
+        Object.entries(merged).filter(([, v]) => typeof v === "string"),
+      ) as Record<string, string>,
+      flatAll: Object.keys(merged).filter(
+        (k) => typeof merged[k] === "string",
+      ),
+      nested: nestedStringLeaves(merged).leaves,
+      nonStringLeaves: nestedStringLeaves(merged).nonStringLeaves,
+    };
+  });
 
   it("covers all 11 locales", () => {
     expect(bundles.map((b) => b.locale).sort()).toEqual(EXPECTED_LOCALES);
@@ -122,6 +132,11 @@ describe("components.json flat-key parity", () => {
     // for the flat-only variant of this test).
     expect(enKeys, "the passwordInput family is nested").toContain(
       "components::hikari::passwordInput.strengthLabel",
+    );
+    // Self-check for the merged errors.json half: if the glob ever
+    // stops loading it, this guard would silently shrink to components.
+    expect(enKeys, "the errors catalog is nested").toContain(
+      "errors::hikari::errors.copyDetails",
     );
     for (const { locale, nested } of bundles) {
       const allowed = LOCALE_SPECIFIC_NESTED[locale] ?? [];

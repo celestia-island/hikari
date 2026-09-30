@@ -3,6 +3,8 @@
     "hikari::errors.defaultTitle": "問題が発生しました",
     "hikari::errors.rawDetails": "エラーの詳細（原文）",
     "hikari::errors.backHome": "ホームに戻る",
-    "hikari::errors.unexpectedDesc": "アプリケーションで未処理のエラーが発生しました。ホームに戻るか、再試行できます。"
+    "hikari::errors.unexpectedDesc": "アプリケーションで未処理のエラーが発生しました。ホームに戻るか、再試行できます",
+    "hikari::errors.copyDetails": "エラー詳細をコピー",
+    "hikari::errors.copied": "コピーしました"
   }
 }

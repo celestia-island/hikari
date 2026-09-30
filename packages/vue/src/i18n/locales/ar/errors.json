@@ -3,6 +3,8 @@
     "hikari::errors.defaultTitle": "حدث خطأ ما",
     "hikari::errors.rawDetails": "تفاصيل الخطأ الأصلية",
     "hikari::errors.backHome": "العودة إلى الرئيسية",
-    "hikari::errors.unexpectedDesc": "واجه التطبيق خطأً غير معالج. يمكنك العودة إلى الصفحة الرئيسية أو إعادة المحاولة."
+    "hikari::errors.unexpectedDesc": "واجه التطبيق خطأً غير معالج. يمكنك العودة إلى الصفحة الرئيسية أو إعادة المحاولة",
+    "hikari::errors.copyDetails": "نسخ تفاصيل الخطأ",
+    "hikari::errors.copied": "تم النسخ"
   }
 }

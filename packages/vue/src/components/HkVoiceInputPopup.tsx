@@ -63,7 +63,7 @@ export const HkVoiceInputPopup = defineComponent({
         {props.mode === "notConfigured" ? (
           <div class="s-voice-popup-body" data-phase="install">
             <p class="s-voice-popup-text">
-              {t("hikari::chat.voice_not_configured", "Voice input requires the Whisper service.")}
+              {t("hikari::chat.voice_not_configured", "Voice input requires the Whisper service")}
             </p>
             <button class="s-voice-popup-link" type="button" onClick={openSettings}>
               {t("hikari::chat.voice_go_settings", "Open Voice Settings →")}

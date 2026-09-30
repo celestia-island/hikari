@@ -3,6 +3,8 @@
     "hikari::errors.defaultTitle": "Une erreur est survenue",
     "hikari::errors.rawDetails": "Détails bruts de l'erreur",
     "hikari::errors.backHome": "Retour à l'accueil",
-    "hikari::errors.unexpectedDesc": "L'application a rencontré une erreur non gérée. Vous pouvez revenir à l'accueil ou réessayer."
+    "hikari::errors.unexpectedDesc": "L'application a rencontré une erreur non gérée. Vous pouvez revenir à l'accueil ou réessayer",
+    "hikari::errors.copyDetails": "Copier les détails de l'erreur",
+    "hikari::errors.copied": "Copié"
   }
 }

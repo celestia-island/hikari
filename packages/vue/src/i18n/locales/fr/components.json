@@ -252,5 +252,7 @@
   "hikari::mfaVerify.usePasskey": "Vérifier avec une clé d'accès",
   "hikari::mfaVerify.resend": "Renvoyer le code",
   "hikari::mfaVerify.back": "Retour à la connexion",
-  "hikari::mfaVerify.loading": "Chargement..."
+  "hikari::mfaVerify.loading": "Chargement...",
+  "hikari::board3d.resetView": "Réinitialiser la vue",
+  "hikari::board3d.unavailable": "La 3D n'est pas disponible sur cet appareil"
 }

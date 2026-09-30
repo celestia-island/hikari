@@ -256,5 +256,7 @@
   "hikari::mfaVerify.usePasskey": "使用 Passkey 驗證",
   "hikari::mfaVerify.resend": "重新傳送驗證碼",
   "hikari::mfaVerify.back": "返回重新登入",
-  "hikari::mfaVerify.loading": "加載中..."
+  "hikari::mfaVerify.loading": "加載中...",
+  "hikari::board3d.resetView": "重設視角",
+  "hikari::board3d.unavailable": "此裝置不支援 3D 顯示"
 }

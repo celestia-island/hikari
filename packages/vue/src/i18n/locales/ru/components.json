@@ -252,5 +252,7 @@
   "hikari::mfaVerify.usePasskey": "Подтвердить ключом доступа",
   "hikari::mfaVerify.resend": "Отправить код повторно",
   "hikari::mfaVerify.back": "Вернуться к входу",
-  "hikari::mfaVerify.loading": "Загрузка..."
+  "hikari::mfaVerify.loading": "Загрузка...",
+  "hikari::board3d.resetView": "Сбросить вид",
+  "hikari::board3d.unavailable": "3D недоступно на этом устройстве"
 }

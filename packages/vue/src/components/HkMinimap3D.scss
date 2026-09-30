@@ -1,0 +1,13 @@
+// HkMinimap3D — stereoscopic minimap. The card chrome (`.hk-minimap`),
+// zoom bar and slider pop are shared verbatim with the 2D minimap (this
+// component imports HkMinimap.scss; the module graph dedupes it) — only
+// the 3D canvas itself is styled here.
+
+.hk-minimap3d-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  // Deep-space tint behind the additive markers; the card's blur and
+  // border come from the shared .hk-minimap shell.
+  background: rgb(var(--color-background) / 0.55);
+}

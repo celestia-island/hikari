@@ -234,6 +234,7 @@ export const HkJsonTree = defineComponent({
             </span>
             {node.key !== null && <span class="s-jt-key">{node.key}</span>}
             {node.key !== null && <span class="s-jt-colon">: </span>}
+            <span class="s-jt-indent" />
             <span class="s-jt-preview">{node.preview}</span>
           </div>
         );
@@ -267,6 +268,7 @@ export const HkJsonTree = defineComponent({
             </span>
             {node.key !== null && <span class="s-jt-key">{node.key}</span>}
             {node.key !== null && <span class="s-jt-colon">: </span>}
+            <span class="s-jt-indent" />
             <span class="s-jv-str">"{truncateStr(node.stringValue, STR_PREVIEW_LEN)}"</span>
             <span class="s-jt-type">string ({node.stringValue.length})</span>
           </div>

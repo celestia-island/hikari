@@ -3,49 +3,22 @@
 .s-theme-toggle {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2, 2px);
 }
 
-.s-theme-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.75rem;
-  min-width: 1.75rem;
-  padding: 0 var(--space-6, 0.375rem);
-  /* Standard ghost icon-button chrome (2026-09-08 user report: the
-   * bordered surface box read as a mystery outline in the header and
-   * fought the host themes — the faint border, the host override layer
-   * and the border-var never agreed). The trigger now matches the
-   * standard ghost buttons beside it (same chrome as .hk-btn-ghost and
-   * the HkIconButton ghost variant): transparent at rest, primary wash
-   * on hover, no border, no surface, no shadow, no per-theme border var. */
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  background: transparent;
-  color: rgb(var(--color-text, var(--color-text-secondary, var(--color-muted))));
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.s-theme-toggle-btn:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
-  outline-offset: 1px;
-}
+/* The trigger carries NO css of its own (2026-09-30 user direction): the
+ * retired bespoke trigger block — whose primary hover wash disagreed with
+ * the ghost gray of the HkIconButtons beside it and made the header
+ * cluster read as two different button families — is gone. The trigger IS
+ * an HkIconButton (ghost/28, the header chrome step) now, so its
+ * rest/hover/press chrome, radius and focus ring come verbatim from the
+ * shared HkIconButtonVars contract; the s-theme-toggle-btn class survives
+ * only as a stable hook on that button (chest's chrome guard asserts
+ * chest never re-paints it). Do not reintroduce a chrome rule for it. */
 
 /* Host strip under the mode group (mode-extra slot). */
 .s-theme-mode-extra {
   margin-top: var(--space-8, 0.5rem);
   width: 100%;
-}
-
-.s-theme-toggle-btn:hover {
-  background: rgb(var(--color-primary) / 12%);
-  color: rgb(var(--color-text));
-}
-
-.s-theme-toggle-btn:active {
-  background: rgb(var(--color-primary) / 16%);
 }
 
 .s-theme-menu {

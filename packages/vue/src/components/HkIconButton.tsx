@@ -9,8 +9,8 @@ export default defineComponent({
   props: {
     icon: { type: String, default: "" },
     variant: { type: String as PropType<"ghost" | "primary" | "secondary" | "danger" | "success">, default: "ghost" },
-    // 28 is the header chrome step: HkThemeToggle's trigger buttons are
-    // 28px boxes with 16px glyphs, so a header action that must read as
+    // 28 is the header chrome step: HkThemeToggle's trigger is a 28px box
+    // with a 16px glyph, so a header action that must read as
     // "the same kind of button" (global search, the console pages'
     // refresh) composes at 28 — 24 read visibly smaller beside the toggle
     // (user report 2026-09-28: 前台全局搜索与主题切换按钮不同尺寸).

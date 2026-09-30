@@ -1,5 +1,5 @@
 import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
-import { Check, ChevronDown, Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
+import { Check, Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
 import {
   HDivider,
   HPopover,
@@ -14,6 +14,7 @@ import {
 } from "@celestia-island/hikari";
 
 import { HColorSchemeDialog, type HCustomTheme } from "./HkColorSchemeDialog";
+import HkIconButton from "./HkIconButton";
 import HTabs, { type TabItem } from "./HkTabs";
 import "./HkThemeToggle.scss";
 
@@ -40,10 +41,14 @@ export interface ThemeItemScope {
  * HkThemeToggle — light/dark/auto theme control over hikari's theme engine.
  *
  * Composes hikari's `useTheme()` (theme presets + custom themes + mode
- * persistence); it does NOT reimplement the theme engine. A main button
- * cycles light/dark (auto keeps a Monitor glyph); the popover offers the
- * color-mode group and preset/custom theme selection (custom themes are
- * removable), and opens HColorSchemeDialog to create a new custom scheme.
+ * persistence); it does NOT reimplement the theme engine. ONE trigger —
+ * a standard HkIconButton ghost/28 with a palette glyph, chrome-identical
+ * to the functional buttons hosts place beside it — opens the popover,
+ * which offers the color-mode group and preset/custom theme selection
+ * (custom themes are removable) and opens HColorSchemeDialog to create a
+ * new custom scheme. The retired main/arrow button pair cycled light/dark
+ * straight from the header; that press lives on only as the menu's
+ * altitude-strip resolution (auto) and the segmented group (manual).
  *
  * Theme rows are host-customizable through three scoped slots (all render
  * in the popover AND the mobile bottom sheet — same DOM):
@@ -102,7 +107,7 @@ export const HkThemeToggle = defineComponent({
   },
   setup(props, { emit, slots, expose }) {
     const { t } = useI18n();
-    const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme, customThemes } = useTheme();
+    const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, allThemeList, addCustomTheme, removeCustomTheme, customThemes } = useTheme();
 
     /** Resolve a row's full definition for the item slots: the user's
      *  stored custom schemes first, then the live preset table — the SAME
@@ -171,15 +176,6 @@ export const HkThemeToggle = defineComponent({
 
     const isAutoMode = computed(() => currentMode.value === "system");
 
-    const modeLabel = computed(() => {
-      const map: Record<string, string> = {
-        system: t("hikari::theme.modeAuto"),
-        light: t("hikari::theme.modeLight"),
-        dark: t("hikari::theme.modeDark"),
-      };
-      return map[currentMode.value] ?? currentMode.value;
-    });
-
     /**
      * Fresh option objects (and fresh icon vnodes) on every call — never
      * cache icon vnodes across renders, or closing/reopening the popover
@@ -229,31 +225,32 @@ export const HkThemeToggle = defineComponent({
 
     return () => (
       <div class="s-theme-toggle" ref={triggerRef}>
-        <button
-          type="button"
+        {/* ONE trigger (user direction 2026-09-30): the old main/arrow pair
+         * read as two separate header buttons whose hover washes disagreed
+         * (bespoke primary wash here vs the ghost gray beside them). The
+         * trigger is now a STANDARD HkIconButton ghost/28 with a palette
+         * glyph — identical chrome to the functional buttons it sits
+         * beside (transparent rest, ghost wash on hover/press, shared
+         * focus ring) at the SAME header chrome step (user report
+         * 2026-09-28: the cluster reads as one row only at ghost/28 with
+         * the sm 16px glyph, which the 28 step maps). And it only opens
+         * the menu; mode switching lives in the menu's color-mode strip
+         * (auto altitude strip resolves auto to a manual side), which
+         * loses nothing the old direct mode-cycle press offered. The
+         * `s-theme-toggle-btn` class stays as a stable consumer/test
+         * hook; it carries NO css of its own. */}
+        <HkIconButton
           class="s-theme-toggle-btn"
-          data-variant="main"
-          onClick={toggleMode}
-          title={modeLabel.value}
-          aria-label={t("hikari::theme.mode")}
-        >
-          {currentMode.value === "system" ? (
-            <Monitor size={16} />
-          ) : effectiveMode.value === "dark" ? (
-            <MoonStar size={16} />
-          ) : (
-            <Sun size={16} />
-          )}
-        </button>
-        <button
-          type="button"
-          class="s-theme-toggle-btn"
-          data-variant="arrow"
-          onClick={() => { menuOpen.value = !menuOpen.value; }}
+          size={28}
+          variant="ghost"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen.value ? "true" : "false"}
           aria-label={t("hikari::theme.themes")}
+          {...{ title: t("hikari::theme.themes") }}
+          onClick={() => { menuOpen.value = !menuOpen.value; }}
         >
-          <ChevronDown size={12} />
-        </button>
+          {{ icon: () => <Palette size={16} /> }}
+        </HkIconButton>
 
         <HPopover
           modelValue={menuOpen.value}

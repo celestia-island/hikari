@@ -53,7 +53,10 @@
   // watchdog finally gives up, the recorded cause — not the generic
   // timeout — is what gets reported.
   var pendingCause = null;
-  var bootStartedAt = Date.now();
+  // Guarded: this runs at module scope, where a throw costs every hook.
+  var bootStartedAt = safe(function () {
+    return Date.now();
+  }, 0);
   var I18N = {
     en: { errorTitle: "Application failed to load", errorDesc: "An uncaught error interrupted the boot. The raw details below may identify the cause.", timeoutTitle: "Application initialization timed out", timeoutDesc: "The application did not finish initializing within {seconds} seconds. This may be a temporary issue.", chunkTitle: "Application resources failed to load", chunkDesc: "Part of the frontend bundle could not be fetched \u2014 usually a tab left open across a redeploy. Reloading the page restores it.", rawDetails: "Raw error details", copy: "Copy error", copied: "Copied", copyFailed: "Copy failed", reload: "Reload", blockTitle: "Browser not supported", blockMsg: "Your browser ({browser} {current}) is too old to run this application. Please update to {browser} {min} or later, or switch to a modern browser such as Chrome, Firefox, or Edge." },
     "zh-Hans": { errorTitle: "\u5E94\u7528\u52A0\u8F7D\u5931\u8D25", errorDesc: "\u542F\u52A8\u8FC7\u7A0B\u4E2D\u51FA\u73B0\u672A\u6355\u83B7\u7684\u9519\u8BEF\uFF0C\u4E0B\u65B9\u539F\u59CB\u9519\u8BEF\u8BE6\u60C5\u53EF\u80FD\u6709\u52A9\u4E8E\u5B9A\u4F4D\u539F\u56E0\u3002", timeoutTitle: "\u5E94\u7528\u521D\u59CB\u5316\u8D85\u65F6", timeoutDesc: "\u5E94\u7528\u5728 {seconds} \u79D2\u5185\u6CA1\u6709\u5B8C\u6210\u521D\u59CB\u5316\uFF0C\u8FD9\u53EF\u80FD\u662F\u4E34\u65F6\u6027\u95EE\u9898\u3002", chunkTitle: "\u5E94\u7528\u8D44\u6E90\u52A0\u8F7D\u5931\u8D25", chunkDesc: "\u90E8\u5206\u524D\u7AEF\u8D44\u6E90\u672A\u80FD\u52A0\u8F7D\uFF0C\u901A\u5E38\u662F\u9875\u9762\u4ECD\u505C\u7559\u5728\u65E7\u7248\u672C\uFF08\u91CD\u65B0\u90E8\u7F72\u540E\u672A\u5237\u65B0\uFF09\u2014\u2014\u5237\u65B0\u9875\u9762\u5373\u53EF\u6062\u590D\u3002", rawDetails: "\u539F\u59CB\u9519\u8BEF\u8BE6\u60C5", copy: "\u590D\u5236\u9519\u8BEF", copied: "\u5DF2\u590D\u5236", copyFailed: "\u590D\u5236\u5931\u8D25", reload: "\u5237\u65B0\u9875\u9762", blockTitle: "\u6D4F\u89C8\u5668\u7248\u672C\u8FC7\u4F4E", blockMsg: "\u60A8\u5F53\u524D\u7684\u6D4F\u89C8\u5668\uFF08{browser} {current}\uFF09\u7248\u672C\u8FC7\u4F4E\uFF0C\u65E0\u6CD5\u8FD0\u884C\u6B64\u5E94\u7528\u3002\u8BF7\u5347\u7EA7\u5230 {browser} {min} \u6216\u66F4\u9AD8\u7248\u672C\uFF0C\u6216\u66F4\u6362\u4E3A Chrome\u3001Firefox\u3001Edge \u7B49\u73B0\u4EE3\u6D4F\u89C8\u5668\u3002" },
@@ -287,7 +290,9 @@
       capturedAt: safe(function () {
         return new Date().toISOString();
       }, ""),
-      elapsedMs: Date.now() - bootStartedAt,
+      elapsedMs: safe(function () {
+        return Date.now() - bootStartedAt;
+      }, 0),
       timeoutMs: TIMEOUT,
       readyState: safe(function () {
         return document.readyState;
@@ -570,23 +575,25 @@
       window.__appFatal?.(msg, info);
     });
   };
-  window.addEventListener("unhandledrejection", (e) => {
-    if (dismissed) return;
-    if (appHasChildren()) return;
-    // Reading the event property can itself throw (hostile accessor).
-    var reason = safe(function () {
-      return e.reason;
-    }, null);
-    var msg = safe(function () {
-      return reason && reason.message ? String(reason.message) : String(reason);
-    }, "");
-    var info = errorInfo(reason) || { name: "UnhandledRejection", message: msg };
-    if (reasonOf(msg) === "chunk") {
-      remember("chunk", msg, info);
-      return;
-    }
-    safe(function () {
-      window.__appFatal?.(msg, info);
+  safe(function () {
+    window.addEventListener("unhandledrejection", (e) => {
+      if (dismissed) return;
+      if (appHasChildren()) return;
+      // Reading the event property can itself throw (hostile accessor).
+      var reason = safe(function () {
+        return e.reason;
+      }, null);
+      var msg = safe(function () {
+        return reason && reason.message ? String(reason.message) : String(reason);
+      }, "");
+      var info = errorInfo(reason) || { name: "UnhandledRejection", message: msg };
+      if (reasonOf(msg) === "chunk") {
+        remember("chunk", msg, info);
+        return;
+      }
+      safe(function () {
+        window.__appFatal?.(msg, info);
+      });
     });
   });
   function showToast(text) {
@@ -681,7 +688,9 @@
   // binding then would leave both buttons dead, so the attempt is repeated
   // once the document has parsed.
   bindActions();
-  if (!byId("fatal-copy")) {
-    document.addEventListener("DOMContentLoaded", bindActions);
-  }
+  safe(function () {
+    if (!byId("fatal-copy")) {
+      document.addEventListener("DOMContentLoaded", bindActions);
+    }
+  });
 })();

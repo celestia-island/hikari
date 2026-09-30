@@ -1,4 +1,20 @@
+/* Scroll end-cap: trailing air BELOW the last row. When the nav list
+   overflows, the old 4px tail let the final item kiss the bottom edge at
+   full scroll — indistinguishable from "there is more below" (user
+   screenshot on the chest admin sidebar, 2026-10-01: the last item sat
+   flush against the panel's bottom boundary). One option-sized tail now
+   rides every sidebar body — desktop rail and mobile drawer alike — so
+   a fully scrolled list visibly ends ABOVE the edge.
+   The token is declared on the RAIL, not on the body: an element's own
+   custom-property declaration always beats an inherited value, so a
+   body-level declaration would silently kill the knob for hosts (the
+   same trap the menu-item sheet tokens document). Declared here, a host
+   retunes (or zeroes) it on ANY ancestor up to the rail — or straight
+   on the body for a one-off. Keep the fallback in step with the token
+   it mirrors. */
 .hk-sidebar {
+  --hk-sidebar-scroll-tail: var(--space-24, 1.5rem);
+
   flex-shrink: 0;
   height: 100%;
   transition: width var(--duration-normal, 0.3s) ease;
@@ -40,7 +56,10 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-block: var(--space-20) var(--space-4);
+  /* Spends the rail's --hk-sidebar-scroll-tail (see top of file) — the
+   * body deliberately does NOT re-declare it, or host retunes could
+   * never reach the tail through inheritance. */
+  padding-block: var(--space-20) var(--hk-sidebar-scroll-tail);
   padding-inline: var(--space-12);
 
   /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
@@ -65,7 +84,10 @@
   }
 
   .hk-sidebar-body {
-    padding-block: var(--space-12) var(--space-4);
+    /* Same end-cap as the expanded body — collapsed rows are icon-only
+     * but the tail's job (announcing the end of the scroll range) is
+     * identical, so only the leading air shrinks here. */
+    padding-block: var(--space-12) var(--hk-sidebar-scroll-tail);
   }
 
   .hk-sidebar-footer {

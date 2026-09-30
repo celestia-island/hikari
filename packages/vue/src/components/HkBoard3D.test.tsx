@@ -379,6 +379,59 @@ describe("HkBoard3D", () => {
     expect(Number.isFinite(projected.x)).toBe(true);
   });
 
+  it("hands out a registry snapshot a consumer cannot corrupt", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial());
+    engine!.setObject("node", { object: body });
+
+    // A consumer casting the view to a mutable Map must not be able to
+    // desynchronise the board from its own scene.
+    (engine!.objects() as unknown as Map<string, unknown>).clear();
+    expect(engine!.objects().has("node")).toBe(true);
+    engine!.setObject("node", null);
+    expect(body.parent).toBeNull();
+  });
+
+  it("falls back to a usable fov instead of bricking the projection", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({ fov: 0 }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial());
+    engine!.setObject("centre", { object: body });
+    await tickFrames();
+
+    const projected = engine!.projectToScreen([0, 0, 0]);
+    expect(Number.isFinite(projected.x)).toBe(true);
+    expect(Number.isFinite(projected.y)).toBe(true);
+    expect(engine!.camera.projectionMatrix.elements[5]).toBeLessThan(Infinity);
+  });
+
+  it("normalises a reversed orbit-distance window", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      { minDistance: 600, maxDistance: 2 },
+      { ready: ((e: Board3DEngine) => { engine = e; }) as never },
+    );
+    await nextTick();
+
+    // The window itself must come out ordered — OrbitControls clamps the
+    // radius to `max(min, min(max, r))`, so a reversed window pins the
+    // eye at 600 and defeats every fit (the mocked controls in this
+    // suite do not clamp, hence the direct assertion).
+    const controls = engine!.controls as unknown as { minDistance: number; maxDistance: number };
+    expect(controls.minDistance).toBe(2);
+    expect(controls.maxDistance).toBe(600);
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 6), new THREE.MeshBasicMaterial());
+    engine!.setObject("body", { object: body });
+    engine!.frameAll(1.3, 0);
+    await tickFrames();
+    expect(engine!.camera.position.distanceTo(engine!.controls.target)).toBeLessThan(100);
+  });
+
   it("projectToScreen lands the origin at canvas centre for the default pose", async () => {
     let engine: Board3DEngine | null = null;
     const { container } = mountBoard(

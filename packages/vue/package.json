@@ -52,7 +52,7 @@
   },
   "peerDependencies": {
     "@types/three": "^*",
-    "three": "^0.185.1",
+    "three": "^0.185",
     "vue": "^*"
   },
   "dependencies": {
@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@types/three": "^*",
-    "three": "^0.185.1",
+    "three": "^0.185",
     "@vitejs/plugin-vue": "^*",
     "@vitejs/plugin-vue-jsx": "^*",
     "@vue/server-renderer": "^*",

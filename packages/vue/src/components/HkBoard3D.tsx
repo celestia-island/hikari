@@ -98,7 +98,9 @@ export interface Board3DEngine {
   /** Post-render hook (the minimap lives here); returns the disposer. */
   addPostRender(fn: () => void): () => void;
   setObject(id: string, def: Board3DObjectDef | null): void;
-  /** Read-only view of the registered content (the minimap's marker set). */
+  /** Snapshot of the registered content (the minimap's marker set).
+   *  Mutating it does not touch the board — register through
+   *  `setObject` instead. */
   objects(): ReadonlyMap<string, Board3DObjectDef>;
   /** Animated camera flight; a user grab cancels it. */
   flyTo(
@@ -149,7 +151,11 @@ export default defineComponent({
     interactive: { type: Boolean, default: true },
     /** Pin the stereoscopic minimap bottom-right. */
     minimap: { type: Boolean, default: true },
+    /** Vertical field of view in degrees. STATIC after mount (the
+     *  camera is built in init; remount to change it). */
     fov: { type: Number, default: 45 },
+    /** Starting eye / orbit target. STATIC after mount (a non-finite
+     *  or short array falls back to the defaults). */
     initialPosition: {
       type: Array as unknown as PropType<[number, number, number]>,
       default: () => [22, 16, 26],
@@ -158,8 +164,11 @@ export default defineComponent({
       type: Array as unknown as PropType<[number, number, number]>,
       default: () => [0, 0, 0],
     },
+    /** Orbit distance window. STATIC after mount (applied to the
+     *  controls once; a reversed window is normalised). */
     minDistance: { type: Number, default: 2 },
     maxDistance: { type: Number, default: 600 },
+    /** Wire two-finger / right-drag panning. STATIC after mount. */
     enablePan: { type: Boolean, default: true },
     /** Freeze the frame loop (content keeps its last pose). An animated
      *  flight issued while paused lands in a single jump on resume: the
@@ -258,7 +267,8 @@ export default defineComponent({
         let node: THREE.Object3D | null = hit.object;
         while (node) {
           const id = node.userData?.board3dId as string | undefined;
-          if (id && registry.has(id)) return id;
+          // `id !== undefined`, not truthiness: "" is a legal id.
+          if (id !== undefined && registry.has(id)) return id;
           node = node.parent;
         }
       }
@@ -353,7 +363,11 @@ export default defineComponent({
       if (!canvas || !container) return;
 
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(props.fov, 1, 0.1, 4000);
+      // A degenerate fov (≤ 0 or ≥ 180) silently bricks the projection —
+      // projectionMatrix[5] becomes Infinity/negative, projection and
+      // picking return NaN, and nothing throws. Fall back to the default.
+      const fov = Number.isFinite(props.fov) && props.fov > 0 && props.fov < 180 ? props.fov : 45;
+      camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 4000);
       // Guard the initial pose too: a non-finite component (an untyped
       // caller passing a short/garbage array) would poison every
       // projection for the board's whole lifetime.
@@ -377,8 +391,11 @@ export default defineComponent({
       controls = new OrbitControls(camera, canvas);
       controls.enableDamping = true;
       controls.dampingFactor = 0.08;
-      controls.minDistance = props.minDistance;
-      controls.maxDistance = props.maxDistance;
+      // A reversed window (min > max) is not rejected by OrbitControls —
+      // it clamps the radius to `max(min, min(max, r))`, pinning the eye
+      // at min forever and defeating every frameAll. Normalise instead.
+      controls.minDistance = Math.min(props.minDistance, props.maxDistance);
+      controls.maxDistance = Math.max(props.minDistance, props.maxDistance);
       controls.enablePan = props.enablePan;
       controls.target.set(initTarget[0], initTarget[1], initTarget[2]);
       controls.enabled = props.interactive;
@@ -445,7 +462,9 @@ export default defineComponent({
           registry.set(id, def);
           scene?.add(def.object);
         },
-        objects: () => registry,
+        // A snapshot: a consumer that casts it to Map and clears it must
+        // not be able to desynchronise the board from its scene.
+        objects: () => new Map(registry),
         flyTo(position, target, durationMs = 600) {
           if (!camera || !controls) return;
           // A non-finite pose would brick the camera silently (every later

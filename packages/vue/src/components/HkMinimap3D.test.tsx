@@ -298,9 +298,19 @@ describe("HkMinimap3D", () => {
   });
 
   it("disposes its renderer and strips helpers on unmount", async () => {
-    const { engine, scene } = fakeEngine();
+    // Registered content matters here: the marker meshes are a separate
+    // branch of the teardown and only exist once objects() is non-empty.
+    const objects = new Map([
+      ["a", { object: new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial()) }],
+      ["b", { object: new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial()) }],
+    ]);
+    const { engine, scene, firePostRender } = fakeEngine({ objects: objects as never });
     mountMap(engine);
     await nextTick();
+    // Markers are spawned during the post-render pass — fire it so the
+    // teardown actually has marker meshes to strip.
+    firePostRender();
+    expect(scene.children.length).toBeGreaterThan(0);
     const helpersMask = 1 << BOARD3D_HELPERS_LAYER;
     expect(scene.children.some((c) => (c.layers.mask & helpersMask) !== 0)).toBe(true);
 
@@ -309,6 +319,9 @@ describe("HkMinimap3D", () => {
     m.container.remove();
     expect(H.FakeWebGLRenderer.instances[0].disposed).toBe(true);
     expect(scene.children.some((c) => (c.layers.mask & helpersMask) !== 0)).toBe(false);
+    // No marker survivors: the map must leave the scene exactly as it
+    // found it (this is what a hide/show toggle would leak otherwise).
+    expect(scene.children.length).toBe(0);
   });
 
   it("disposes the camera glyph's own geometries and materials on unmount", async () => {

@@ -166,7 +166,7 @@ export const HkCaptchaWidget = defineComponent({
         return (
           <div class="s-captcha-widget s-captcha-widget-placeholder">
             <ShieldAlert size={16} />
-            <span>{t("hikari::captcha.placeholder", "Verification is not configured for this deployment (no site key provided).")}</span>
+            <span>{t("hikari::captcha.placeholder", "Verification is not configured for this deployment (no site key provided)")}</span>
           </div>
         );
       }

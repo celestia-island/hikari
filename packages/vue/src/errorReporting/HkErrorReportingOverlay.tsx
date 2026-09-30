@@ -18,7 +18,8 @@ import "./HkErrorReportingOverlay.scss";
  * the family-wide HkErrorLanding (same design language as every unified
  * error surface): tone icon, headline, the error name as the code chip,
  * the message as the description, the raw error record in the fixed-height
- * raw-details pane, and Home / Retry actions.
+ * raw-details pane, the landing's built-in copy action (fed the plain-text
+ * error record), and Home / Retry actions.
  *
  * Mounted by `createErrorReporting` on a dedicated root appended to
  * `document.body` via its own tiny app instance, so it keeps working even
@@ -41,6 +42,18 @@ export const HkErrorReportingOverlay = defineComponent({
       if (err.stack) record.stack = err.stack;
       if (err.info) record.info = err.info;
       return record;
+    });
+
+    // Clipboard payload for the landing's built-in copy action: the same
+    // fields the raw-details pane shows, in plain-text form.
+    const copyText = computed(() => {
+      const err = state.value;
+      if (!err) return "";
+      const parts = [`${err.name}: ${err.message}`];
+      if (err.stack) parts.push("", err.stack);
+      if (err.source) parts.push("", `source: ${err.source}`);
+      if (err.info) parts.push("", `info: ${err.info}`);
+      return parts.join("\n");
     });
 
     function goHome() {
@@ -69,7 +82,7 @@ export const HkErrorReportingOverlay = defineComponent({
 
       const description = options.describe
         ? options.describe(err)
-        : err.message || t("hikari::errors.unexpectedDesc", "An unhandled error occurred.");
+        : err.message || t("hikari::errors.unexpectedDesc", "An unhandled error occurred");
 
       const showHome = Boolean(options.onHome) || options.homeHref !== false;
 
@@ -79,6 +92,7 @@ export const HkErrorReportingOverlay = defineComponent({
             title={options.title || t("hikari::errors.defaultTitle", "Something went wrong")}
             description={description}
             code={err.name}
+            copyText={copyText.value}
           >
             {{
               default: () => <HkJsonTree value={detailsValue.value} ariaLabel="stack trace" />,

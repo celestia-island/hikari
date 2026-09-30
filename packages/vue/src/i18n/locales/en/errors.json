@@ -3,6 +3,8 @@
     "hikari::errors.defaultTitle": "Something went wrong",
     "hikari::errors.rawDetails": "Raw error details",
     "hikari::errors.backHome": "Back to home",
-    "hikari::errors.unexpectedDesc": "The application hit an unhandled error. You can go back to the home page or retry."
+    "hikari::errors.unexpectedDesc": "The application hit an unhandled error. You can go back to the home page or retry",
+    "hikari::errors.copyDetails": "Copy error details",
+    "hikari::errors.copied": "Copied"
   }
 }

@@ -45,7 +45,7 @@ export const HkCookieConsent = defineComponent({
       if (accepted.value) return <Cookie size={12} class="s-cookie-consent-icon" />;
       return (
         <span class="s-cookie-consent">
-          {t("hikari::cookie.text", "This site uses cookies.")}
+          {t("hikari::cookie.text", "This site uses cookies")}
           <button type="button" class="s-cookie-consent-ok" onClick={accept}>
             {t("hikari::cookie.ok", "OK")}
           </button>

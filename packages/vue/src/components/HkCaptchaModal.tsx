@@ -41,7 +41,7 @@ export const HkCaptchaModal = defineComponent({
         width={props.width}
       >
         <div class="s-captcha-modal">
-          <p class="s-captcha-modal-prompt">{t("hikari::captcha.prompt", "Complete the verification below to continue.")}</p>
+          <p class="s-captcha-modal-prompt">{t("hikari::captcha.prompt", "Complete the verification below to continue")}</p>
           {props.modelValue && (
             <HkCaptchaWidget
               siteKey={props.siteKey}

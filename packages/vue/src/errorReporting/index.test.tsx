@@ -74,6 +74,8 @@ describe("createErrorReporting", () => {
 
     const host = overlayHost()!;
     const labels = Array.from(host.querySelectorAll("button")).map((b) => b.textContent);
+    // The built-in copy action seats first, left of Home / Retry.
+    expect(labels[0]).toBe("Copy error details");
     expect(labels).toContain("Back to home");
     expect(labels).toContain("Retry");
 
@@ -84,6 +86,7 @@ describe("createErrorReporting", () => {
     await nextTick();
     const labels2 = Array.from(overlayHost()!.querySelectorAll("button")).map((b) => b.textContent);
     expect(labels2).not.toContain("Back to home");
+    expect(labels2).toContain("Copy error details");
     expect(labels2).toContain("Retry");
   });
 

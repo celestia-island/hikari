@@ -51,7 +51,7 @@ describe("HkCookieConsent", () => {
     await nextTick();
     const notice = container.querySelector<HTMLElement>(".s-cookie-consent");
     expect(notice, "notice span renders").toBeTruthy();
-    expect(notice!.textContent).toContain("This site uses cookies.");
+    expect(notice!.textContent).toContain("This site uses cookies");
     const ok = container.querySelector<HTMLButtonElement>(".s-cookie-consent-ok");
     expect(ok, "OK button renders").toBeTruthy();
     expect(ok!.textContent).toBe("OK");

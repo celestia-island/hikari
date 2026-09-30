@@ -3,6 +3,8 @@
     "hikari::errors.defaultTitle": "Algo salió mal",
     "hikari::errors.rawDetails": "Detalles del error original",
     "hikari::errors.backHome": "Volver al inicio",
-    "hikari::errors.unexpectedDesc": "La aplicación encontró un error no controlado. Puede volver al inicio o reintentar."
+    "hikari::errors.unexpectedDesc": "La aplicación encontró un error no controlado. Puede volver al inicio o reintentar",
+    "hikari::errors.copyDetails": "Copiar detalles del error",
+    "hikari::errors.copied": "Copiado"
   }
 }

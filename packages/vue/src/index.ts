@@ -201,6 +201,27 @@ export { type TreeNode, type TreeSize, type TreeRowScope } from "./components/Hk
 export { type DragListItem } from "./components/HkDraggableList";
 export { type GridItem } from "./components/HkDraggableGrid";
 export { type MinimapBox, type MinimapRect } from "./components/HkMinimap";
+export {
+  type Board3DEngine,
+  type Board3DObjectDef,
+} from "./components/HkBoard3D";
+export {
+  hashIdToUnit,
+  lerpPalette,
+  paletteColorForId,
+  orbitDelta,
+  sphericalPosition,
+  fitDistance,
+  viewPlaneHalfExtents,
+  planeCorners,
+  clampMinimapZoom,
+  MINIMAP_MIN_POLAR,
+  MINIMAP_MAX_POLAR,
+  MINIMAP_ZOOM_STEP_PERCENT,
+  MINIMAP_MIN_ZOOM_PERCENT,
+  MINIMAP_MAX_ZOOM_PERCENT,
+  type Vec3,
+} from "./utils/scene3d";
 export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./components/HkTrendChart";
 
 // ── Theme decor (theme-provided decorative widgets, host-placed) ──────────
@@ -724,6 +745,8 @@ export { default as HkMediaVisualizer } from "./components/HkMediaVisualizer";
 export { default as HkImageViewer } from "./components/HkImageViewer";
 export { default as HkZoomToolbar } from "./components/HkZoomToolbar";
 export { default as HkMinimap } from "./components/HkMinimap";
+export { default as HkBoard3D, BOARD3D_HELPERS_LAYER } from "./components/HkBoard3D";
+export { default as HkMinimap3D } from "./components/HkMinimap3D";
 export { default as HkTrendChart } from "./components/HkTrendChart";
 export { default as HkErrorBoundary } from "./components/HkErrorBoundary";
 export { default as HkDraggableList } from "./components/HkDraggableList";

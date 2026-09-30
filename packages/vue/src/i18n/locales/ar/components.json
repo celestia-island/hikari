@@ -252,5 +252,7 @@
   "hikari::mfaVerify.usePasskey": "التحقق بمفتاح المرور",
   "hikari::mfaVerify.resend": "إعادة إرسال الرمز",
   "hikari::mfaVerify.back": "العودة لتسجيل الدخول",
-  "hikari::mfaVerify.loading": "جارٍ التحميل..."
+  "hikari::mfaVerify.loading": "جارٍ التحميل...",
+  "hikari::board3d.resetView": "إعادة تعيين العرض",
+  "hikari::board3d.unavailable": "العرض ثلاثي الأبعاد غير متوفر على هذا الجهاز"
 }

@@ -252,5 +252,7 @@
   "hikari::mfaVerify.usePasskey": "패스키로 인증",
   "hikari::mfaVerify.resend": "코드 재전송",
   "hikari::mfaVerify.back": "로그인으로 돌아가기",
-  "hikari::mfaVerify.loading": "로딩 중..."
+  "hikari::mfaVerify.loading": "로딩 중...",
+  "hikari::board3d.resetView": "시점 재설정",
+  "hikari::board3d.unavailable": "이 기기에서는 3D를 사용할 수 없습니다"
 }

@@ -223,6 +223,7 @@ export {
   MINIMAP_MAX_ZOOM_PERCENT,
   type Vec3,
 } from "./utils/scene3d";
+export { ModelLayer, type Board3DModelOptions } from "./scene3d/modelLayer";
 export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./components/HkTrendChart";
 
 // ── Theme decor (theme-provided decorative widgets, host-placed) ──────────

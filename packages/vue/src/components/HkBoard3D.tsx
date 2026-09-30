@@ -63,6 +63,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 
 import { useI18n } from "../i18n/context";
+import { ModelLayer, type Board3DModelOptions } from "../scene3d/modelLayer";
 import { BOARD3D_HELPERS_LAYER, fitDistance } from "../utils/scene3d";
 import HkMinimap3D from "./HkMinimap3D";
 import "./HkBoard3D.scss";
@@ -115,6 +116,24 @@ export interface Board3DEngine {
   projectToScreen(p: [number, number, number]): { x: number; y: number; visible: boolean };
   /** Re-tone hook fired on theme mutations (and once immediately). */
   onTheme(cb: (bg: string, primary: string) => void): void;
+
+  // ── Models (GLB) ─────────────────────────────────────────────────────
+  /** Load (or replace) a GLB under `id`; resolves to its root, or null
+   *  when the parse failed or a newer load superseded it. Registration
+   *  with the board (framing, picking, minimap) is the caller's job via
+   *  `setObject(id, { object })`. */
+  loadModel(id: string, opts: Board3DModelOptions): Promise<THREE.Group | null>;
+  /** Opacity 0..1 for a loaded model. */
+  setModelOpacity(id: string, opacity: number): void;
+  /** Emissive highlight; `clearHighlights()` restores every model. */
+  highlightModel(id: string, color?: number): void;
+  clearHighlights(): void;
+  /** Loaded model root (null when absent). */
+  modelObject(id: string): THREE.Object3D | null;
+  /** World-space position of a loaded model. */
+  modelWorldPosition(id: string): [number, number, number] | null;
+  /** Remove and dispose a loaded model. */
+  removeModel(id: string): void;
 }
 
 const CLICK_SLOP_PX = 4;
@@ -202,6 +221,8 @@ export default defineComponent({
     const postHooks = new Set<() => void>();
     const themeHooks = new Set<(bg: string, primary: string) => void>();
     const registry = new Map<string, Board3DObjectDef>();
+    /** GLB mechanics (load/place/opacity/highlight) — created in init(). */
+    let modelLayer: ModelLayer | null = null;
     /** The CSS2D chip attached for a registered id — tracked so a
      *  re-register or a clear detaches it instead of stacking chips. */
     const labelTags = new Map<string, CSS2DObject>();
@@ -418,6 +439,8 @@ export default defineComponent({
       canvas.addEventListener("pointercancel", onPointerCancel);
       canvas.addEventListener("lostpointercapture", onLostPointerCapture, true);
 
+      modelLayer = new ModelLayer(scene);
+
       const engine: Board3DEngine = {
         scene,
         camera,
@@ -538,6 +561,13 @@ export default defineComponent({
           const primaryRaw = readCssColor("--color-primary", "21 101 192");
           cb(bgRaw, primaryRaw);
         },
+        loadModel: (id, opts) => modelLayer!.loadModel(id, opts),
+        setModelOpacity: (id, opacity) => modelLayer?.setOpacity(id, opacity),
+        highlightModel: (id, color) => modelLayer?.highlight(id, color),
+        clearHighlights: () => modelLayer?.clearHighlights(),
+        modelObject: (id) => modelLayer?.objectOf(id) ?? null,
+        modelWorldPosition: (id) => modelLayer?.worldPosition(id) ?? null,
+        removeModel: (id) => modelLayer?.removeModel(id),
       };
 
       engineRef.value = engine;
@@ -580,6 +610,8 @@ export default defineComponent({
       if (labelRenderer?.domElement.parentNode) {
         labelRenderer.domElement.parentNode.removeChild(labelRenderer.domElement);
       }
+      modelLayer?.dispose();
+      modelLayer = null;
       for (const tag of labelTags.values()) tag.removeFromParent();
       labelTags.clear();
       renderer?.dispose();

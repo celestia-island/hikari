@@ -52,6 +52,23 @@ describe("hikari barrel — 3D board surface", () => {
     expect(barrel.BOARD3D_HELPERS_LAYER).toBe(1);
   });
 
+  it("exports the main-camera gizmo layer and the hover-frame geometry", () => {
+    // Consumers drawing their own main-camera-only affordance (and the
+    // tests pinning that the minimap never sees one) need the layer; the
+    // corner-bracket maths is shared so a bespoke frame matches the
+    // built-in one.
+    expect(barrel.BOARD3D_MAIN_LAYER).toBe(2);
+    expect(typeof barrel.hoverBoxSegments).toBe("function");
+    expect(barrel.hoverBoxSegments([1, 1, 1])).toHaveLength(48 * 3);
+    for (const name of [
+      "HOVER_BOX_ARM_RATIO",
+      "HOVER_BOX_PADDING",
+      "HOVER_BOX_MIN_EXTENT_RATIO",
+    ] as const) {
+      expect(typeof (barrel as Record<string, unknown>)[name], name).toBe("number");
+    }
+  });
+
   it("exports the scene3d utilities (palette, orbit, fit, zoom)", () => {
     const fns = [
       "hashIdToUnit",

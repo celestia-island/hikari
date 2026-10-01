@@ -20,6 +20,11 @@ export type Vec3 = [number, number, number];
  *  runtime import of the board — the two components stay acyclic.) */
 export const BOARD3D_HELPERS_LAYER = 1;
 
+/** Layer the main-camera-only gizmos live on — the hover frame. The
+ *  minimap camera never enables it, so a pointer affordance stays out of
+ *  the map render while the page's own eye still sees it. */
+export const BOARD3D_MAIN_LAYER = 2;
+
 /** FNV-1a 32-bit hash of a string folded into [0, 1). Stable across runs
  *  and platforms — the same node id always lands on the same palette stop. */
 export function hashIdToUnit(id: string): number {
@@ -161,6 +166,59 @@ export function planeCorners(
     center[2] + right[2] * halfW * sr + up[2] * halfH * su,
   ];
   return [at(-1, 1), at(1, 1), at(1, -1), at(-1, -1)];
+}
+
+// ── Hover frame (the 8-corner selection box) ────────────────────────────
+
+/** Corner arm length, as a fraction of the box's SMALLEST side. */
+export const HOVER_BOX_ARM_RATIO = 0.24;
+
+/** Breathing room between the object's bounds and its frame. */
+export const HOVER_BOX_PADDING = 1.08;
+
+/** Floor on a degenerate axis — a flat card or a zero-thickness plane
+ *  must still read as a box instead of collapsing onto one line. As a
+ *  fraction of the box's LONGEST side. */
+export const HOVER_BOX_MIN_EXTENT_RATIO = 0.12;
+
+/**
+ * The line-segment positions of a hover frame for a box of `size`
+ * centred on the origin: EIGHT CORNERS, three arms each (8 × 3 × 2 = 48
+ * vertices). Corner brackets rather than a full wireframe — the frame
+ * reads as a box around the object without drawing a cage over it.
+ *
+ * Degenerate sizes (non-finite, ≤ 0) are treated as 0; callers that care
+ * about a zero-size box collapse check it before building the frame.
+ */
+export function hoverBoxSegments(size: Vec3): Float32Array {
+  const [sx, sy, sz] = [0, 1, 2].map((i) => {
+    const v = size[i];
+    return Number.isFinite(v) && v > 0 ? v : 0;
+  }) as Vec3;
+  const arm = HOVER_BOX_ARM_RATIO * Math.min(sx, sy, sz);
+  const out = new Float32Array(8 * 3 * 2 * 3);
+  let at = 0;
+  for (const ix of [-1, 1]) {
+    for (const iy of [-1, 1]) {
+      for (const iz of [-1, 1]) {
+        const corner: Vec3 = [(ix * sx) / 2, (iy * sy) / 2, (iz * sz) / 2];
+        for (let axis = 0; axis < 3; axis += 1) {
+          // One arm per axis, all pointing INWARD from the corner (the
+          // sign flip is what makes the bracket hug the box).
+          const tip: Vec3 = [corner[0], corner[1], corner[2]];
+          tip[axis] -= [ix, iy, iz][axis] * arm;
+          out[at] = corner[0];
+          out[at + 1] = corner[1];
+          out[at + 2] = corner[2];
+          out[at + 3] = tip[0];
+          out[at + 4] = tip[1];
+          out[at + 5] = tip[2];
+          at += 6;
+        }
+      }
+    }
+  }
+  return out;
 }
 
 /** Minimap zoom-ladder governance: the ± buttons step the view-radius

@@ -215,6 +215,10 @@ export {
   viewPlaneHalfExtents,
   planeCorners,
   clampMinimapZoom,
+  hoverBoxSegments,
+  HOVER_BOX_ARM_RATIO,
+  HOVER_BOX_PADDING,
+  HOVER_BOX_MIN_EXTENT_RATIO,
   MINIMAP_MIN_POLAR,
   MINIMAP_MAX_POLAR,
   MINIMAP_DRAG_RADIANS_PER_PX,
@@ -759,7 +763,11 @@ export { default as HkMediaVisualizer } from "./components/HkMediaVisualizer";
 export { default as HkImageViewer } from "./components/HkImageViewer";
 export { default as HkZoomToolbar } from "./components/HkZoomToolbar";
 export { default as HkMinimap } from "./components/HkMinimap";
-export { default as HkBoard3D, BOARD3D_HELPERS_LAYER } from "./components/HkBoard3D";
+export {
+  default as HkBoard3D,
+  BOARD3D_HELPERS_LAYER,
+  BOARD3D_MAIN_LAYER,
+} from "./components/HkBoard3D";
 export { default as HkMinimap3D } from "./components/HkMinimap3D";
 export { default as HkTrendChart } from "./components/HkTrendChart";
 export { default as HkErrorBoundary } from "./components/HkErrorBoundary";

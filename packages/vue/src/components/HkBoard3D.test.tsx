@@ -74,7 +74,7 @@ vi.mock("three/examples/jsm/renderers/CSS2DRenderer.js", async (importOriginal) 
   return { ...actual, CSS2DRenderer: FakeCSS2DRenderer };
 });
 
-import HkBoard3D, { type Board3DEngine } from "./HkBoard3D";
+import HkBoard3D, { BOARD3D_MAIN_LAYER, type Board3DEngine } from "./HkBoard3D";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -685,5 +685,166 @@ describe("HkBoard3D", () => {
     m.container.remove();
     expect(renderer.disposed).toBe(true);
     expect(engine!.objects().size).toBe(0);
+  });
+});
+
+describe("HkBoard3D hover frame", () => {
+  /** The frame is the only scene child on the main-camera-only layer. */
+  function frameOf(engine: Board3DEngine): THREE.LineSegments {
+    const found = engine.scene.children.find((c) => c.layers.isEnabled(BOARD3D_MAIN_LAYER));
+    expect(found, "hover frame in the scene").toBeDefined();
+    return found as THREE.LineSegments;
+  }
+
+  function canvasOf(): HTMLCanvasElement {
+    const canvas = mounts[0].container.querySelector("canvas")!;
+    canvas.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 800, height: 600, right: 800, bottom: 600 }) as DOMRect;
+    return canvas;
+  }
+
+  function moveTo(canvas: HTMLCanvasElement, x: number, y: number): void {
+    canvas.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: x, clientY: y }));
+  }
+
+  async function hoveredBoard(props: Record<string, unknown> = {}) {
+    let engine: Board3DEngine | null = null;
+    mountBoard(props, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    const canvas = canvasOf();
+    const body = new THREE.Mesh(
+      new THREE.SphereGeometry(2, 16, 12),
+      new THREE.MeshBasicMaterial(),
+    );
+    engine!.setObject("star-1", { object: body });
+    await tickFrames();
+    moveTo(canvas, 400, 300);
+    await tickFrames();
+    return { engine: engine!, canvas, body };
+  }
+
+  it("wraps the hovered object in the corner frame without resizing it", async () => {
+    const { engine, body } = await hoveredBoard();
+    const frame = frameOf(engine);
+    expect(frame.visible).toBe(true);
+    // A radius-2 sphere at the origin: a 4-unit box plus the padding,
+    // placed by the frame's own matrix — the object is untouched.
+    expect(frame.matrix.elements[0]).toBeCloseTo(4 * 1.08, 4);
+    expect(frame.matrix.elements[13]).toBeCloseTo(0, 5);
+    expect(body.scale.x).toBe(1);
+    // The gizmo never joins picking or framing.
+    expect(engine.objects().get("star-1")!.object).toBe(body);
+    expect(frame.material).toBeInstanceOf(THREE.LineBasicMaterial);
+    expect((frame.material as THREE.LineBasicMaterial).depthTest).toBe(false);
+  });
+
+  it("hides the frame once the pointer leaves the body and the canvas", async () => {
+    const { engine, canvas } = await hoveredBoard();
+    const frame = frameOf(engine);
+    expect(frame.visible).toBe(true);
+
+    moveTo(canvas, 10, 10);
+    await tickFrames();
+    expect(frame.visible).toBe(false);
+
+    moveTo(canvas, 400, 300);
+    await tickFrames();
+    expect(frame.visible).toBe(true);
+    canvas.dispatchEvent(new PointerEvent("pointerleave", { bubbles: false }));
+    await tickFrames();
+    expect(frame.visible).toBe(false);
+  });
+
+  it("measures the frame target, and honours a per-object opt-out", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    const canvas = canvasOf();
+
+    // A body wearing a corona ten times its size: the frame must wrap the
+    // body, not the glow.
+    const group = new THREE.Group();
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial());
+    group.add(mesh);
+    const corona = new THREE.Sprite(new THREE.SpriteMaterial());
+    corona.scale.setScalar(20);
+    group.add(corona);
+    engine!.setObject("hub", { object: group, frameObject: mesh });
+    await tickFrames();
+    moveTo(canvas, 400, 300);
+    await tickFrames();
+    expect(frameOf(engine!).matrix.elements[0]).toBeCloseTo(2 * 1.08, 4);
+
+    // frameObject: null opts the object out entirely.
+    engine!.setObject("hub", { object: group, frameObject: null });
+    await tickFrames();
+    expect(frameOf(engine!).visible).toBe(false);
+  });
+
+  it("re-measures the frame when a rebuild hands the hovered id a new object", async () => {
+    const { engine } = await hoveredBoard();
+    const frame = frameOf(engine);
+    expect(frame.matrix.elements[12]).toBeCloseTo(0, 5);
+
+    // Pages rebuild their content: the frame must follow the object that
+    // is actually registered now, not the one that left the scene.
+    const next = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    next.position.set(30, 0, 0);
+    engine.setObject("star-1", { object: next });
+    await tickFrames();
+    expect(frame.visible).toBe(true);
+    expect(frame.matrix.elements[12]).toBeCloseTo(30, 4);
+    expect(frame.matrix.elements[0]).toBeCloseTo(2 * 1.08, 4);
+  });
+
+  it("never shows a frame when hoverBox is off", async () => {
+    const { engine, canvas } = await hoveredBoard({ hoverBox: false });
+    expect(frameOf(engine).visible).toBe(false);
+    // …and the picking contract itself is untouched.
+    moveTo(canvas, 400, 300);
+    await tickFrames();
+    expect(frameOf(engine).visible).toBe(false);
+  });
+
+  it("keeps only the main camera on the gizmo layer", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    expect(engine!.camera.layers.isEnabled(BOARD3D_MAIN_LAYER)).toBe(true);
+    // The minimap camera enables the helper layer only — its render pass
+    // must not pick the pointer affordance up.
+    expect(frameOf(engine!).layers.mask).toBe(1 << BOARD3D_MAIN_LAYER);
+  });
+
+  it("tints the frame from the palette: near-white by night, grey by day", async () => {
+    const previous = ["--color-background", "--color-text", "--color-muted"].map((name) => [
+      name,
+      document.documentElement.style.getPropertyValue(name),
+    ] as const);
+    try {
+      for (const [name] of previous) document.documentElement.style.removeProperty(name);
+      const { engine } = await hoveredBoard();
+      const color = (frameOf(engine).material as THREE.LineBasicMaterial).color;
+      // Night (the palette's dark fallback): the near-white TEXT channel.
+      expect(color.r * 255).toBeCloseTo(247, 0);
+      expect(color.g).toBeGreaterThan(0.9);
+
+      // Day: the MUTED channel (grey, not the near-black text one) — and
+      // a live theme mutation re-tints the frame in place.
+      document.documentElement.style.setProperty("--color-background", "245 245 240");
+      document.documentElement.style.setProperty("--color-text", "30 30 30");
+      document.documentElement.style.setProperty("--color-muted", "80 80 80");
+      await tickFrames();
+      expect(color.r * 255).toBeCloseTo(80, 0);
+      expect(color.r).toBeLessThan(0.5);
+    } finally {
+      for (const [name, value] of previous) {
+        document.documentElement.style.removeProperty(name);
+        if (value) document.documentElement.style.setProperty(name, value);
+      }
+    }
   });
 });

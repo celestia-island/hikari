@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   clampMinimapZoom,
   fitDistance,
+  HOVER_BOX_ARM_RATIO,
+  hoverBoxSegments,
   hashIdToUnit,
   lerpPalette,
   MINIMAP_MAX_POLAR,
@@ -159,5 +161,60 @@ describe("clampMinimapZoom", () => {
     expect(clampMinimapZoom(9999)).toBe(MINIMAP_MAX_ZOOM_PERCENT);
     expect(clampMinimapZoom(120)).toBe(120);
     expect(clampMinimapZoom(Number.NaN)).toBe(100);
+  });
+});
+
+describe("hoverBoxSegments", () => {
+  it("emits eight corners with three inward arms each", () => {
+    const size: [number, number, number] = [2, 4, 6];
+    const positions = hoverBoxSegments(size);
+    // 8 corners × 3 arms × 2 vertices.
+    expect(positions).toHaveLength(8 * 3 * 2 * 3);
+
+    const cornerSet = new Set<string>();
+    const armLengths: number[] = [];
+    const arm = HOVER_BOX_ARM_RATIO * 2; // smallest side wins
+    for (let i = 0; i < positions.length; i += 6) {
+      const a: [number, number, number] = [positions[i], positions[i + 1], positions[i + 2]];
+      const b: [number, number, number] = [positions[i + 3], positions[i + 4], positions[i + 5]];
+      cornerSet.add(a.join(","));
+      // Every arm runs along exactly one axis…
+      const deltas = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+      expect(deltas.filter((d) => d !== 0)).toHaveLength(1);
+      const len = Math.abs(deltas.find((d) => d !== 0) ?? 0);
+      expect(len).toBeCloseTo(arm, 6);
+      armLengths.push(len);
+      // …and points INWARD: the arm may never leave the box.
+      for (let axis = 0; axis < 3; axis += 1) {
+        const limit = size[axis] / 2;
+        expect(Math.abs(a[axis])).toBeLessThanOrEqual(limit + 1e-9);
+        expect(Math.abs(b[axis])).toBeLessThanOrEqual(limit + 1e-9);
+      }
+    }
+    // Every corner of the box is present exactly once.
+    expect(cornerSet.size).toBe(8);
+    for (const x of [-1, 1]) {
+      for (const y of [-2, 2]) {
+        for (const z of [-3, 3]) {
+          expect(cornerSet.has([x, y, z].join(",")), `${x},${y},${z}`).toBe(true);
+        }
+      }
+    }
+    expect(armLengths).toHaveLength(24);
+  });
+
+  it("scales the arm with the smallest side and survives junk sizes", () => {
+    const flat = hoverBoxSegments([10, 0, 10]);
+    // Zero on one axis ⇒ zero-length arms rather than a thrown error.
+    expect(flat.every((v) => Number.isFinite(v))).toBe(true);
+    expect(flat.every((v) => !Number.isNaN(v))).toBe(true);
+
+    const cubic = hoverBoxSegments([4, 4, 4]);
+    const arm = HOVER_BOX_ARM_RATIO * 4;
+    const firstLen = Math.abs(cubic[3] - cubic[0]) + Math.abs(cubic[4] - cubic[1]) + Math.abs(cubic[5] - cubic[2]);
+    expect(firstLen).toBeCloseTo(arm, 6);
+
+    const junk = hoverBoxSegments([Number.NaN, -3, 0] as [number, number, number]);
+    expect(junk.every((v) => Number.isFinite(v))).toBe(true);
   });
 });

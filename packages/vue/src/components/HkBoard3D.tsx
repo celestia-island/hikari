@@ -238,6 +238,13 @@ function studioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture {
   return tex;
 }
 
+/** How many frames to wait before re-measuring a hovered target that had
+ *  nothing measurable (≈ 100 ms at 60 fps): fast enough that content
+ *  streaming in under a resting pointer gets its frame, slow enough that
+ *  an unmeasurable target costs one subtree walk per interval instead of
+ *  one per frame. */
+const HOVER_BOX_RETRY_FRAMES = 6;
+
 /** A pose component is usable only if all three numbers are finite. */
 function isFiniteVec3(v: readonly number[] | undefined): v is readonly [number, number, number] {
   return (
@@ -444,6 +451,12 @@ export default defineComponent({
      *  measurement is the expensive half, so it happens on hover change
      *  only — the per-frame half is one matrix composition. */
     let frameBound = false;
+    /** Frames still to skip before the next measurement attempt while the
+     *  hovered target has nothing measurable to wrap (content still
+     *  streaming in). A permanently unmeasurable target — a group of
+     *  sprites, content that stays hidden — must not turn the loop into a
+     *  full subtree walk every frame. */
+    let measureCooldown = 0;
 
     function onPointerMove(e: PointerEvent): void {
       hoverDirty = true;
@@ -461,6 +474,10 @@ export default defineComponent({
      *  "on" the object — a hover card opened from `objectHover` would slam
      *  shut as the user reached for it. */
     function onPointerLeave(): void {
+      // Drop the PENDING pick as well: a move and a leave can land inside
+      // one frame, and the loop would otherwise re-pick the stale position
+      // and resurrect the hover after the pointer has left the board.
+      hoverDirty = false;
       if (lastHover === null) return;
       lastHover = null;
       if (canvasRef.value) canvasRef.value.style.cursor = "";
@@ -526,10 +543,16 @@ export default defineComponent({
       if (!def || def.pickable === false || !target || !isVisibleInHierarchy(target)) {
         hoverFrame.hide();
         frameBound = false;
+        measureCooldown = 0;
         return;
       }
       if (!frameBound) {
+        if (measureCooldown > 0) {
+          measureCooldown -= 1;
+          return;
+        }
         frameBound = hoverFrame.attach(def.object, target);
+        measureCooldown = frameBound ? 0 : HOVER_BOX_RETRY_FRAMES;
         return;
       }
       hoverFrame.refresh();
@@ -681,7 +704,19 @@ export default defineComponent({
           // would hang where that object used to be — it is out of the
           // scene now and never moves again. Measure again on the next
           // frame instead.
-          if (id === lastHover) frameBound = false;
+          if (id === lastHover) {
+            frameBound = false;
+            measureCooldown = 0;
+            if (!def) {
+              // The hovered object just left the board. Nothing will move
+              // the pointer for us, so the page has to be told here or its
+              // hover card outlives the object (and the cursor keeps
+              // promising a click that can no longer land).
+              lastHover = null;
+              if (canvasRef.value) canvasRef.value.style.cursor = "";
+              emit("objectHover", null);
+            }
+          }
           if (prev) {
             // One Object3D can be registered under several ids; only
             // detach it from the scene when no other id still owns it.

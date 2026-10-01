@@ -793,19 +793,30 @@ describe("HkBoard3D hover frame", () => {
     await nextTick();
     const canvas = canvasOf();
 
-    // A body wearing a corona ten times its size: the frame must wrap the
-    // body, not the glow.
+    // A body wearing a corona ten times its size AND a satellite parked
+    // 10 units out. The sprite is pruned as decoration either way, so the
+    // satellite is what makes this test discriminate: measuring the group
+    // instead of `frameObject` would wrap the moon system, not the body.
     const group = new THREE.Group();
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial());
     group.add(mesh);
     const corona = new THREE.Sprite(new THREE.SpriteMaterial());
     corona.scale.setScalar(20);
     group.add(corona);
+    const satellite = new THREE.Mesh(
+      new THREE.SphereGeometry(0.2, 8, 6),
+      new THREE.MeshBasicMaterial(),
+    );
+    satellite.position.set(10, 0, 0);
+    group.add(satellite);
     engine!.setObject("hub", { object: group, frameObject: mesh });
     await tickFrames();
     moveTo(canvas, 400, 300);
     await tickFrames();
     expect(frameOf(engine!).matrix.elements[0]).toBeCloseTo(2 * 1.08, 4);
+    expect(frameOf(engine!).matrix.elements[12]).toBeCloseTo(0, 5);
+    // Sanity: the group as a whole would have measured far wider.
+    expect(frameOf(engine!).matrix.elements[0]).toBeLessThan(10);
 
     // frameObject: null opts the object out entirely.
     engine!.setObject("hub", { object: group, frameObject: null });
@@ -899,6 +910,39 @@ describe("HkBoard3D hover frame", () => {
     expect(frameOf(engine!).visible).toBe(true);
   });
 
+  it("re-measures an unmeasurable target on a cadence, not every frame", async () => {
+    let engine: Board3DEngine | null = null;
+    // No minimap: its marker sync calls updateWorldMatrix on every
+    // registered object each frame, which would drown the measurement
+    // cadence this test is about.
+    mountBoard({ minimap: false }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    const canvas = canvasOf();
+
+    // Content that never becomes measurable (a group of decor only) must
+    // not turn every frame into a subtree walk — but the board must still
+    // look again, or streaming content would never be framed.
+    const group = new THREE.Group();
+    const decor = new THREE.Sprite(new THREE.SpriteMaterial());
+    group.add(decor);
+    engine!.setObject("empty", { object: group });
+    await tickFrames();
+    moveTo(canvas, 400, 300);
+    await tickFrames();
+    expect(frameOf(engine!).visible).toBe(false);
+
+    let frames = 0;
+    engine!.addTick(() => {
+      frames += 1;
+    });
+    // The measurement is the walk `frameLocalBounds` makes on the anchor.
+    const walk = vi.spyOn(group, "updateWorldMatrix");
+    await tickFrames();
+    expect(frames).toBeGreaterThan(10);
+    expect(walk.mock.calls.length).toBeGreaterThan(0);
+    expect(walk.mock.calls.length).toBeLessThan(frames / 3);
+  });
+
   it("tints the frame from the palette: near-white by night, grey by day", async () => {
     const previous = ["--color-background", "--color-text", "--color-muted"].map((name) => [
       name,
@@ -930,11 +974,14 @@ describe("HkBoard3D hover frame", () => {
     }
   });
 
-  it("detaches and frees the frame on unmount", async () => {
-    const { engine } = await hoveredBoard();
+  it("detaches and frees the frame, and its listeners, on unmount", async () => {
+    const { engine, board } = await hoveredBoard();
     const frame = frameOf(engine);
     const geoSpy = vi.spyOn(frame.geometry, "dispose");
     const matSpy = vi.spyOn(frame.material as THREE.Material, "dispose");
+    // A container listener left behind keeps a dead board reachable — and
+    // a remount would stack a second one.
+    const removeSpy = vi.spyOn(board, "removeEventListener");
 
     const m = mounts.splice(0)[0];
     m.app.unmount();
@@ -942,6 +989,41 @@ describe("HkBoard3D hover frame", () => {
 
     expect(geoSpy).toHaveBeenCalled();
     expect(matSpy).toHaveBeenCalled();
+    expect(removeSpy).toHaveBeenCalledWith("pointerleave", expect.any(Function));
     expect(engine.scene.children.some((c) => c.layers.isEnabled(BOARD3D_MAIN_LAYER))).toBe(false);
+  });
+
+  it("never resurrects the hover after the pointer has left the board", async () => {
+    const hovers: Array<string | null> = [];
+    const { engine, canvas, board } = await hoveredBoard({}, { hover: (id) => hovers.push(id) });
+    const frame = frameOf(engine);
+    expect(frame.visible).toBe(true);
+
+    // A move and a leave inside ONE frame: the pending pick must not be
+    // replayed against the stale position on the next loop iteration.
+    moveTo(canvas, 400, 300);
+    board.dispatchEvent(new PointerEvent("pointerleave", { bubbles: false }));
+    await tickFrames();
+    expect(frame.visible).toBe(false);
+    expect(hovers.at(-1)).toBeNull();
+
+    // …and it stays left, however many frames pass.
+    await tickFrames();
+    expect(frame.visible).toBe(false);
+    expect(hovers.filter((id) => id === "star-1").length).toBe(1);
+  });
+
+  it("tells the page when the hovered object leaves the registry", async () => {
+    const hovers: Array<string | null> = [];
+    const { engine, canvas } = await hoveredBoard({}, { hover: (id) => hovers.push(id) });
+    expect(canvas.style.cursor).toBe("pointer");
+
+    // The object is gone: no pointer movement will ever clear the hover,
+    // so the board has to say it here (and stop promising a click).
+    engine.setObject("star-1", null);
+    await tickFrames();
+    expect(hovers.at(-1)).toBeNull();
+    expect(canvas.style.cursor).toBe("");
+    expect(frameOf(engine).visible).toBe(false);
   });
 });

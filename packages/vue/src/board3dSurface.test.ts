@@ -109,6 +109,20 @@ describe("hikari barrel — 3D board surface", () => {
     expect(has).toBe(true);
   });
 
+  it("pins the engine's selection surface", () => {
+    // `setSelection` is how a page keeps the 8-corner frame on its
+    // selected object (the fleet sky's cube cursor). Type-level probe:
+    // vue-tsc covers this file, so dropping the method breaks the gate
+    // rather than the consumer's build.
+    const engine = null as Engine | null;
+    void engine;
+    type HasSelection = Engine extends { setSelection(id: string | null): void }
+      ? true
+      : false;
+    const has: HasSelection = true;
+    expect(has).toBe(true);
+  });
+
   it("exports the minimap governance constants, drag sensitivity included", () => {
     // A consumer writing its own drag control needs the same sensitivity
     // the built-in one uses — it must not stay module-private.

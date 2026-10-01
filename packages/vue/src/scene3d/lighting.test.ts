@@ -105,6 +105,17 @@ describe("LightingRig", () => {
     rig.dispose();
   });
 
+  it("dispose frees the sun's shadow depth map", () => {
+    const scene = new THREE.Scene();
+    const rig = new LightingRig(scene);
+    const sun = scene.children.find((c) => c.constructor === THREE.DirectionalLight) as unknown as THREE.DirectionalLight;
+    const spy = vi.spyOn(sun.shadow, "dispose");
+    rig.dispose();
+    // scene.remove alone frees nothing on the GPU — a surviving renderer
+    // would keep the 4096² depth target resident.
+    expect(spy).toHaveBeenCalled();
+  });
+
   it("dispose strips every light it created", () => {
     const scene = new THREE.Scene();
     const rig = new LightingRig(scene);

@@ -224,6 +224,11 @@ export {
   type Vec3,
 } from "./utils/scene3d";
 export { ModelLayer, type Board3DModelOptions } from "./scene3d/modelLayer";
+export {
+  type Board3DCameraConfig,
+  type Board3DFocusOptions,
+  type Board3DViewMode,
+} from "./components/HkBoard3D";
 export { createGround, type Board3DGroundConfig, type GroundHandle } from "./scene3d/ground";
 export {
   LightingRig,

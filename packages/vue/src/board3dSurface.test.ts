@@ -21,6 +21,9 @@ type Engine = barrel.Board3DEngine;
 type Def = barrel.Board3DObjectDef;
 type Vec = barrel.Vec3;
 type ModelOpts = barrel.Board3DModelOptions;
+type CameraCfg = barrel.Board3DCameraConfig;
+type FocusOpts = barrel.Board3DFocusOptions;
+type ViewModeT = barrel.Board3DViewMode;
 
 // Type-only probes: these lines exist so the checker resolves the three
 // exported types through the barrel itself.
@@ -28,10 +31,16 @@ const engineProbe: Engine | null = null;
 const defProbe: Def | null = null;
 const vecProbe: Vec = [0, 0, 0];
 const modelProbe: ModelOpts | null = null;
+const cameraProbe: CameraCfg = { fov: 45 };
+const focusProbe: FocusOpts = { padding: 1.6, lateralBias: 0 };
+const viewModeProbe: ViewModeT = "orbit";
 void engineProbe;
 void defProbe;
 void vecProbe;
 void modelProbe;
+void cameraProbe;
+void focusProbe;
+void viewModeProbe;
 
 describe("hikari barrel — 3D board surface", () => {
   it("exports both 3D components", () => {

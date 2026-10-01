@@ -11,6 +11,32 @@ import { ModelLayer } from "./modelLayer";
 
 /** A one-triangle GLB (binary glTF) — the same shape the chest holographic
  *  panel loads out of object storage, and immune to any network fetch. */
+/** Wrap glTF JSON + a BIN chunk into a GLB container. */
+function glbFromJson(jsonObj: unknown, bin: Uint8Array): ArrayBuffer {
+  const jsonText = JSON.stringify(jsonObj);
+  const enc = new TextEncoder();
+  const jsonBytes = enc.encode(jsonText);
+  const jsonPad = (4 - (jsonBytes.length % 4)) % 4;
+  const binPad = (4 - (bin.length % 4)) % 4;
+  const jsonChunkLen = jsonBytes.length + jsonPad;
+  const binChunkLen = bin.length + binPad;
+  const total = 12 + 8 + jsonChunkLen + 8 + binChunkLen;
+  const out = new Uint8Array(total);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, total, true);
+  view.setUint32(12, jsonChunkLen, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  out.set(jsonBytes, 20);
+  for (let i = 0; i < jsonPad; i++) out[20 + jsonBytes.length + i] = 0x20;
+  const binStart = 20 + jsonChunkLen;
+  view.setUint32(binStart, binChunkLen, true);
+  view.setUint32(binStart + 4, 0x004e4942, true);
+  out.set(bin, binStart + 8);
+  return out.buffer;
+}
+
 function triangleGlb(opts: { secondPrimitive?: boolean } = {}): ArrayBuffer {
   const verts = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
   const bin = new Uint8Array(verts.buffer.slice(0));
@@ -36,28 +62,7 @@ function triangleGlb(opts: { secondPrimitive?: boolean } = {}): ArrayBuffer {
     ],
   });
 
-  const enc = new TextEncoder();
-  const jsonBytes = enc.encode(jsonText);
-  const jsonPad = (4 - (jsonBytes.length % 4)) % 4;
-  const binPad = (4 - (bin.length % 4)) % 4;
-  const jsonChunkLen = jsonBytes.length + jsonPad;
-  const binChunkLen = bin.length + binPad;
-  const total = 12 + 8 + jsonChunkLen + 8 + binChunkLen;
-
-  const out = new Uint8Array(total);
-  const view = new DataView(out.buffer);
-  view.setUint32(0, 0x46546c67, true); // "glTF"
-  view.setUint32(4, 2, true);
-  view.setUint32(8, total, true);
-  view.setUint32(12, jsonChunkLen, true);
-  view.setUint32(16, 0x4e4f534a, true); // "JSON"
-  out.set(jsonBytes, 20);
-  for (let i = 0; i < jsonPad; i++) out[20 + jsonBytes.length + i] = 0x20; // spaces
-  const binStart = 20 + jsonChunkLen;
-  view.setUint32(binStart, binChunkLen, true);
-  view.setUint32(binStart + 4, 0x004e4942, true); // "BIN\0"
-  out.set(bin, binStart + 8);
-  return out.buffer;
+  return glbFromJson(JSON.parse(jsonText), bin);
 }
 
 function meshCount(root: THREE.Object3D): number {
@@ -114,6 +119,11 @@ describe("ModelLayer", () => {
 
     layer.setOpacity("m1", 1);
     expect(material.opacity).toBeCloseTo(1, 6);
+    // The dip is REVERSIBLE: an originally opaque material leaves the
+    // transparent pass and gets its depth writes back (a full-opacity
+    // model stuck transparent shows sorting artifacts).
+    expect(material.transparent).toBe(false);
+    expect(material.depthWrite).toBe(true);
     // Out-of-range and non-finite values clamp instead of corrupting state.
     layer.setOpacity("m1", Number.NaN);
     expect(material.opacity).toBeCloseTo(1, 6);
@@ -197,6 +207,59 @@ describe("ModelLayer", () => {
     expect([a, b].filter(Boolean)).toHaveLength(1);
     expect(scene.children).toHaveLength(1);
     expect(layer.worldPosition("m1")![0]).toBeCloseTo(2, 6);
+    layer.dispose();
+  });
+
+  it("falls back to unmerged meshes when attribute sets differ", async () => {
+    const scene = new THREE.Scene();
+    const layer = new ModelLayer(scene);
+    // One primitive carries NORMAL, the other does not — mergeGeometries
+    // refuses mixed attribute sets, so the fallback must keep every
+    // geometry instead of silently dropping meshes. Packed as a real GLB
+    // (loadModel treats bare strings as URLs).
+    const pos = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
+    const nor = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1]);
+    const bin = new Uint8Array(pos.buffer.byteLength * 3);
+    bin.set(new Uint8Array(pos.buffer), 0);
+    bin.set(new Uint8Array(nor.buffer), pos.buffer.byteLength);
+    const json = {
+      asset: { version: "2.0" },
+      scene: 0,
+      scenes: [{ nodes: [0, 1] }],
+      nodes: [{ mesh: 0 }, { mesh: 1 }],
+      meshes: [
+        { primitives: [{ attributes: { POSITION: 0 } }] },
+        { primitives: [{ attributes: { POSITION: 1, NORMAL: 2 } }] },
+      ],
+      buffers: [{ byteLength: bin.byteLength }],
+      bufferViews: [
+        { buffer: 0, byteOffset: 0, byteLength: pos.buffer.byteLength, target: 34962 },
+        {
+          buffer: 0,
+          byteOffset: pos.buffer.byteLength,
+          byteLength: pos.buffer.byteLength,
+          target: 34962,
+        },
+        {
+          buffer: 0,
+          byteOffset: pos.buffer.byteLength * 2,
+          byteLength: nor.buffer.byteLength,
+          target: 34962,
+        },
+      ],
+      accessors: [
+        { bufferView: 0, componentType: 5126, count: 3, type: "VEC3", max: [1, 1, 0], min: [0, 0, 0] },
+        { bufferView: 1, componentType: 5126, count: 3, type: "VEC3", max: [1, 1, 0], min: [0, 0, 0] },
+        { bufferView: 2, componentType: 5126, count: 3, type: "VEC3", max: [1, 1, 1], min: [0, 0, 1] },
+      ],
+    };
+    const group = await layer.loadModel("mixed", { source: glbFromJson(json, bin) });
+    expect(group).toBeTruthy();
+    let meshes = 0;
+    group!.traverse((c) => {
+      if ((c as THREE.Mesh).isMesh) meshes += 1;
+    });
+    expect(meshes).toBeGreaterThanOrEqual(2);
     layer.dispose();
   });
 

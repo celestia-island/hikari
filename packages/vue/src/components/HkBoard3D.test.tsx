@@ -526,6 +526,59 @@ describe("HkBoard3D", () => {
     void container;
   });
 
+  it("refits the ground onto the framed content", async () => {
+    let engine: Board3DEngine | null = null;
+    // No minimap: its helper glyph is also a two-child group and would
+    // win the lookup below.
+    mountBoard({ minimap: false }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    engine!.setGround({ enabled: true });
+    // The grid plane is the second child of the ground group.
+    const grid = engine!.scene.children
+      .find((c) => c.type === "Group" && c.children.length === 2)?.children[1] as THREE.Mesh;
+    expect(grid).toBeTruthy();
+    const uniforms = (grid.material as THREE.ShaderMaterial).uniforms as Record<
+      string,
+      { value: unknown }
+    >;
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 6), new THREE.MeshBasicMaterial());
+    body.position.set(100, 0, -40);
+    engine!.setObject("far", { object: body });
+    engine!.frameAll(1.3, 0);
+    const center = uniforms.uCenter.value as THREE.Vector2;
+    expect(center.x).toBeCloseTo(100, 6);
+    expect(center.y).toBeCloseTo(-40, 6);
+  });
+
+  it("clips the camera planes to the framed extent when autoClipping", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      { autoClipping: true },
+      { ready: ((e: Board3DEngine) => { engine = e; }) as never },
+    );
+    await nextTick();
+    const near0 = engine!.camera.near;
+    const far0 = engine!.camera.far;
+    // A BIG subject (not a distant small one — framing flies to it) is
+    // what pushes the planes apart.
+    const body = new THREE.Mesh(new THREE.SphereGeometry(200, 8, 6), new THREE.MeshBasicMaterial());
+    engine!.setObject("big", { object: body });
+    engine!.frameAll(1.3, 0);
+    expect(engine!.camera.near).toBeGreaterThan(near0);
+    expect(engine!.camera.far).toBeGreaterThan(far0);
+    expect(engine!.camera.far / engine!.camera.near).toBeGreaterThan(1000);
+  });
+
+  it("clears the studio environment on demand", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    engine!.scene.environment = new THREE.Texture();
+    engine!.applyEnvironment("none");
+    expect(engine!.scene.environment).toBeNull();
+  });
+
   it("fits the ground and drives the ambient directly", async () => {
     let engine: Board3DEngine | null = null;
     mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });

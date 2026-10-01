@@ -121,8 +121,9 @@ export interface Board3DEngine {
   frameAll(padding?: number, durationMs?: number): void;
   /** World → canvas CSS pixels; `visible` = inside the frustum. */
   projectToScreen(p: [number, number, number]): { x: number; y: number; visible: boolean };
-  /** Re-tone hook fired on theme mutations (and once immediately). */
-  onTheme(cb: (bg: string, primary: string) => void): void;
+  /** Re-tone hook fired on theme mutations (and once immediately);
+   *  the returned disposer detaches it. */
+  onTheme(cb: (bg: string, primary: string) => void): () => void;
 
   // ── Models (GLB) ─────────────────────────────────────────────────────
   /** Load (or replace) a GLB under `id`; resolves to its root, or null
@@ -214,8 +215,10 @@ const CLICK_SLOP_PX = 4;
 /** Procedural PBR environment so standard materials catch reflections. */
 function studioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture {
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const tex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const room = new RoomEnvironment();
+  const tex = pmrem.fromScene(room, 0.04).texture;
   pmrem.dispose();
+  room.dispose?.();
   return tex;
 }
 
@@ -666,6 +669,7 @@ export default defineComponent({
           const bgRaw = readCssColor("--color-background", "10 15 25");
           const primaryRaw = readCssColor("--color-primary", "21 101 192");
           cb(bgRaw, primaryRaw);
+          return () => themeHooks.delete(cb);
         },
         loadModel: (id, opts) => modelLayer!.loadModel(id, opts),
         setModelOpacity: (id, opacity) => modelLayer?.setOpacity(id, opacity),

@@ -42,9 +42,9 @@ export interface Board3DModelOptions {
   highlightColor?: number;
   /** Extra per-model data for the consumer (stored on userData). */
   userData?: Record<string, unknown>;
-  /** Inspect/adjust the freshly parsed rig AFTER merging and BEFORE
-   *  placement — the hook for consumer-side normalization (e.g. recentre
-   *  a world-space GLB onto its fixture). The rig is yours to mutate. */
+  /** Inspect/adjust the freshly parsed rig BEFORE merging and placement
+   *  — the hook for consumer-side normalization (e.g. re-centring a
+   *  world-space GLB onto its fixture). The rig is yours to mutate. */
   onRig?: (root: THREE.Object3D) => void;
 }
 
@@ -220,7 +220,10 @@ export class ModelLayer {
     return group;
   }
 
-  /** Opacity 0..1, multiplicative over the model's base opacity. */
+  /** Opacity 0..1, multiplicative over the model's base opacity.
+   *  Reversible: a dip and restore returns the material to its original
+   *  transparent/depthWrite state (a full-opacity model stuck in the
+   *  transparent pass shows sorting artifacts). */
   setOpacity(id: string, opacity: number): void {
     const entry = this.entries.get(id);
     if (!entry) return;
@@ -230,10 +233,20 @@ export class ModelLayer {
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
       for (const material of asMaterials(mesh.material)) {
-        const base = (material.userData.baseOpacity as number | undefined) ?? 1;
-        material.transparent = v < 1 || material.transparent;
+        const ud = material.userData;
+        if (ud.board3dTransparent === undefined) {
+          ud.board3dTransparent = material.transparent;
+          ud.board3dDepthWrite = material.depthWrite;
+        }
+        const base = (ud.baseOpacity as number | undefined) ?? 1;
         material.opacity = base * v;
-        material.depthWrite = v >= 0.99 ? material.depthWrite : false;
+        if (v < 0.99) {
+          material.transparent = true;
+          material.depthWrite = false;
+        } else {
+          material.transparent = ud.board3dTransparent as boolean;
+          material.depthWrite = ud.board3dDepthWrite as boolean;
+        }
         material.needsUpdate = true;
       }
     });
@@ -334,13 +347,13 @@ function asMaterials(material: THREE.Material | THREE.Material[]): THREE.Materia
  *  merge clones them); materials only when the layer owns them or the
  *  consumer marked them disposable. */
 function disposeSubtree(root: THREE.Object3D, entry: ModelEntry): void {
+  for (const geometry of entry.ownedGeometries) geometry.dispose();
+  entry.ownedGeometries.clear();
+  for (const material of entry.ownedMaterials) material.dispose();
+  entry.ownedMaterials.clear();
   root.traverse((child) => {
     const mesh = child as THREE.Mesh;
     if (!mesh.isMesh) return;
-    for (const geometry of entry.ownedGeometries) geometry.dispose();
-    entry.ownedGeometries.clear();
-    for (const material of entry.ownedMaterials) material.dispose();
-    entry.ownedMaterials.clear();
     for (const material of asMaterials(mesh.material)) {
       if (material.userData.board3dDisposable === true) material.dispose();
     }

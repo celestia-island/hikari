@@ -1088,8 +1088,12 @@ describe("HkBoard3D selection frame", () => {
   /** A board with one body registered and the id selected — NO pointer
    *  involvement anywhere: the selection frame must not need one. */
   async function selectedBoard(props: Record<string, unknown> = {}) {
+    const hovers: Array<string | null> = [];
     let engine: Board3DEngine | null = null;
-    mountBoard({ minimap: false, ...props }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    mountBoard({ minimap: false, ...props }, {
+      ready: ((e: Board3DEngine) => { engine = e; }) as never,
+      objectHover: ((id: string | null) => hovers.push(id)) as never,
+    });
     await nextTick();
     const body = new THREE.Mesh(
       new THREE.SphereGeometry(2, 16, 12),
@@ -1099,7 +1103,7 @@ describe("HkBoard3D selection frame", () => {
     engine!.setObject("star-1", { object: body });
     engine!.setSelection("star-1");
     await tickFrames();
-    return { engine: engine!, body };
+    return { engine: engine!, body, hovers };
   }
 
   it("pins the persistent corner frame without any pointer", async () => {
@@ -1116,6 +1120,13 @@ describe("HkBoard3D selection frame", () => {
     // registry (framing and picking never see it).
     expect(body.scale.x).toBe(1);
     expect([...engine.objects().keys()]).toEqual(["star-1"]);
+
+    // A selected object re-registered as UN-pickable stays marked: the
+    // frame marks what the page selected, and pointer reachability is a
+    // hover concern (decision pinned — R1).
+    engine.setObject("star-1", { object: body, pickable: false });
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(true);
   });
 
   it("only ever ends through setSelection(null)", async () => {
@@ -1156,8 +1167,28 @@ describe("HkBoard3D selection frame", () => {
     expect(selectionOf(engine).matrix.elements[0]).toBeCloseTo(2 * 1.08, 4);
   });
 
-  it("suppresses the hover frame on the selected body only", async () => {
+  it("re-measures when a rebuild hands the selected id a NEW object directly", async () => {
     const { engine } = await selectedBoard();
+    expect(selectionOf(engine).matrix.elements[12]).toBeCloseTo(0, 5);
+
+    // The ONE-step rebuild (strip + re-register fused into a single
+    // setObject): the latch must release here too, or the frame keeps
+    // riding the dead predecessor's matrix — the two-step test above
+    // cannot see this, the hide path resets the latch for it (R1 P1).
+    const next = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    next.position.set(30, 0, 0);
+    engine.setObject("star-1", { object: next });
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(true);
+    expect(selectionOf(engine).matrix.elements[12]).toBeCloseTo(30, 4);
+    expect(selectionOf(engine).matrix.elements[0]).toBeCloseTo(2 * 1.08, 4);
+  });
+
+  it("suppresses the hover frame on the selected body only", async () => {
+    const { engine, hovers } = await selectedBoard();
     const canvas = mounts[0]!.container.querySelector("canvas")!;
     canvas.getBoundingClientRect = () =>
       ({ left: 0, top: 0, width: 800, height: 600, right: 800, bottom: 600 }) as DOMRect;
@@ -1166,6 +1197,11 @@ describe("HkBoard3D selection frame", () => {
     // Hovering the selected body draws ONE bracket, not two.
     expect(selectionOf(engine).visible).toBe(true);
     expect(frameOf(engine).visible).toBe(false);
+    // Suppression is frame-only: the page still HEARS the hover (its
+    // hover card must keep working on the selected body) and the cursor
+    // still promises the click (R1 P2).
+    expect(hovers.at(-1)).toBe("star-1");
+    expect(canvas.style.cursor).toBe("pointer");
 
     // Moving the selection elsewhere un-suppresses the hover: the pointer
     // is still over star-1, which is no longer the selected body.
@@ -1180,6 +1216,58 @@ describe("HkBoard3D selection frame", () => {
     expect(frameOf(engine).visible).toBe(true);
     expect(selectionOf(engine).visible).toBe(true);
     expect(selectionOf(engine).matrix.elements[12]).toBeCloseTo(500, 4);
+  });
+
+  it("picks the selection up when the content arrives after the select", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({ minimap: false }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    // Content streams in: the registered group's only mesh is still
+    // hidden when the page selects it.
+    const group = new THREE.Group();
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    mesh.visible = false;
+    group.add(mesh);
+    engine!.setObject("stream", { object: group });
+    engine!.setSelection("stream");
+    await tickFrames();
+    expect(selectionOf(engine!).visible).toBe(false);
+
+    mesh.visible = true;
+    await tickFrames();
+    expect(selectionOf(engine!).visible).toBe(true);
+  });
+
+  it("re-measures an unmeasurable selection on a cadence, not every frame", async () => {
+    let engine: Board3DEngine | null = null;
+    // No minimap: its marker sync calls updateWorldMatrix on every
+    // registered object each frame, which would drown the measurement
+    // cadence this test is about.
+    mountBoard({ minimap: false }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const group = new THREE.Group();
+    const decor = new THREE.Sprite(new THREE.SpriteMaterial());
+    group.add(decor);
+    engine!.setObject("empty", { object: group });
+    engine!.setSelection("empty");
+    await tickFrames();
+    expect(selectionOf(engine!).visible).toBe(false);
+
+    let frames = 0;
+    engine!.addTick(() => {
+      frames += 1;
+    });
+    // The measurement is the walk `frameLocalBounds` makes on the anchor.
+    const walk = vi.spyOn(group, "updateWorldMatrix");
+    await tickFrames();
+    expect(frames).toBeGreaterThan(10);
+    expect(walk.mock.calls.length).toBeGreaterThan(0);
+    expect(walk.mock.calls.length).toBeLessThan(frames / 3);
   });
 
   it("hides while the body is invisible, and comes back with it", async () => {

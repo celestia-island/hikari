@@ -134,9 +134,11 @@ export interface Board3DEngine {
    *  object `id` (`null` clears it). The frame is independent of the
    *  pointer: it rides the object through orbits and rebuilds, hides
    *  while the object is absent or unmeasurable, and re-measures when
-   *  the id is re-registered. Selecting an object also suppresses the
-   *  HOVER frame on that same object — the selection frame is already
-   *  marking it. */
+   *  the id is re-registered. It marks what the page SELECTED — a
+   *  `pickable: false` object is marked all the same (pointer
+   *  reachability is a hover concern, not a selection one). Selecting
+   *  an object also suppresses the HOVER frame on that same object —
+   *  the selection frame is already marking it. */
   setSelection(id: string | null): void;
   /** Snapshot of the registered content (the minimap's marker set).
    *  Mutating it does not touch the board — register through

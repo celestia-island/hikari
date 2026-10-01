@@ -223,6 +223,19 @@ export {
   MINIMAP_MAX_ZOOM_PERCENT,
   type Vec3,
 } from "./utils/scene3d";
+export { ModelLayer, type Board3DModelOptions } from "./scene3d/modelLayer";
+export {
+  type Board3DCameraConfig,
+  type Board3DFocusOptions,
+  type Board3DViewMode,
+} from "./components/HkBoard3D";
+export { createGround, type Board3DGroundConfig, type GroundHandle } from "./scene3d/ground";
+export {
+  LightingRig,
+  type Board3DLightingDescriptor,
+  type Board3DLightPoint,
+  type LightingRigOptions,
+} from "./scene3d/lighting";
 export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./components/HkTrendChart";
 
 // ── Theme decor (theme-provided decorative widgets, host-placed) ──────────

@@ -74,7 +74,7 @@ function fakeEngine(opts: FakeEngineOpts = {}): {
     onTheme: () => {},
   };
   return {
-    engine: engine as Board3DEngine,
+    engine: engine as unknown as Board3DEngine,
     scene,
     camera,
     firePostRender: () => postRender?.(),

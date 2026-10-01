@@ -20,15 +20,27 @@ import * as barrel from "./index";
 type Engine = barrel.Board3DEngine;
 type Def = barrel.Board3DObjectDef;
 type Vec = barrel.Vec3;
+type ModelOpts = barrel.Board3DModelOptions;
+type CameraCfg = barrel.Board3DCameraConfig;
+type FocusOpts = barrel.Board3DFocusOptions;
+type ViewModeT = barrel.Board3DViewMode;
 
 // Type-only probes: these lines exist so the checker resolves the three
 // exported types through the barrel itself.
 const engineProbe: Engine | null = null;
 const defProbe: Def | null = null;
 const vecProbe: Vec = [0, 0, 0];
+const modelProbe: ModelOpts | null = null;
+const cameraProbe: CameraCfg = { fov: 45 };
+const focusProbe: FocusOpts = { padding: 1.6, lateralBias: 0 };
+const viewModeProbe: ViewModeT = "orbit";
 void engineProbe;
 void defProbe;
 void vecProbe;
+void modelProbe;
+void cameraProbe;
+void focusProbe;
+void viewModeProbe;
 
 describe("hikari barrel — 3D board surface", () => {
   it("exports both 3D components", () => {
@@ -55,6 +67,29 @@ describe("hikari barrel — 3D board surface", () => {
     for (const name of fns) {
       expect(typeof (barrel as Record<string, unknown>)[name], name).toBe("function");
     }
+  });
+
+  it("exports the GLB model layer", () => {
+    expect(typeof barrel.ModelLayer).toBe("function");
+    // The engine's model surface is part of that contract.
+    const engineMethods = [
+      "loadModel",
+      "setModelOpacity",
+      "highlightModel",
+      "clearHighlights",
+      "modelObject",
+      "modelWorldPosition",
+      "removeModel",
+    ] as const;
+    const engine = null as Engine | null;
+    void engine;
+    // Type-level: the methods exist on Board3DEngine (vue-tsc covers this
+    // file, so a rename breaks the gate rather than a consumer).
+    type HasModelSurface = Engine extends Record<(typeof engineMethods)[number], unknown>
+      ? true
+      : false;
+    const has: HasModelSurface = true;
+    expect(has).toBe(true);
   });
 
   it("exports the minimap governance constants, drag sensitivity included", () => {

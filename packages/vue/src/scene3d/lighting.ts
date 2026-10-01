@@ -132,10 +132,9 @@ export class LightingRig {
     for (const pl of this.points) this.scene.remove(pl);
     this.points = [];
     this.scene.remove(this.ambient, this.sun, this.sun.target, this.hemi);
-    // scene.remove frees nothing on the GPU: the sun's shadow depth map
-    // (4096² by default) lives until the shadow object is disposed —
-    // and a surviving renderer would keep it resident.
-    this.sun.shadow.dispose();
+    // scene.remove frees nothing on the GPU: DirectionalLight.dispose()
+    // disposes the sun's shadow depth map (4096² by default) with it —
+    // a surviving renderer would otherwise keep it resident.
     this.sun.dispose();
   }
 }

@@ -594,6 +594,37 @@ describe("HkBoard3D", () => {
     expect(ambient.intensity).toBeCloseTo(0.3, 5);
   });
 
+  it("disposes the lighting rig (and its shadow map) on unmount", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      {},
+      { ready: ((e: Board3DEngine) => { engine = e; }) as never },
+    );
+    await nextTick();
+    engine!.applyLighting({
+      ambientIntensity: 0.9,
+      points: [{ color: [1, 0, 0], intensity: 2, range: 10, position: [0, 3, 0] }],
+    });
+    const sun = engine!.scene.children.find(
+      (c) => c.constructor.name === "DirectionalLight",
+    ) as unknown as { dispose: () => void; shadow: { dispose: () => void } };
+    const sunSpy = vi.spyOn(sun, "dispose");
+    const shadowSpy = vi.spyOn(sun.shadow, "dispose");
+    const scene = engine!.scene;
+
+    const m = mounts.splice(0)[0];
+    m.app.unmount();
+    m.container.remove();
+    expect(sunSpy).toHaveBeenCalled();
+    expect(shadowSpy).toHaveBeenCalled();
+    // No rig light survives in the (detached) scene.
+    const kinds = scene.children.map((c) => c.constructor.name);
+    expect(kinds).not.toContain("AmbientLight");
+    expect(kinds).not.toContain("DirectionalLight");
+    expect(kinds).not.toContain("HemisphereLight");
+    expect(kinds).not.toContain("PointLight");
+  });
+
   it("installs the lighting rig on first applyLighting", async () => {
     let engine: Board3DEngine | null = null;
     mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import {
   createHoverBox,
   frameLocalBounds,
+  isVisibleInHierarchy,
   normalizeHoverBounds,
 } from "./board3dHoverBox";
 import { HOVER_BOX_MIN_EXTENT_RATIO, HOVER_BOX_PADDING } from "../utils/scene3d";
@@ -105,6 +106,35 @@ describe("normalizeHoverBounds", () => {
     expect(normalizeHoverBounds(new THREE.Box3())).toBe(false);
     const point = new THREE.Box3(new THREE.Vector3(5, 5, 5), new THREE.Vector3(5, 5, 5));
     expect(normalizeHoverBounds(point)).toBe(false);
+    // An infinite extent would compose a NaN matrix and un-render the
+    // frame silently: it counts as nothing to wrap.
+    const infinite = new THREE.Box3(
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(Number.POSITIVE_INFINITY, 1, 1),
+    );
+    expect(normalizeHoverBounds(infinite)).toBe(false);
+  });
+});
+
+describe("isVisibleInHierarchy", () => {
+  it("follows the renderer's rule — a hidden ANCESTOR hides the child", () => {
+    const root = new THREE.Group();
+    const parent = new THREE.Group();
+    const leaf = new THREE.Object3D();
+    root.add(parent);
+    parent.add(leaf);
+    expect(isVisibleInHierarchy(leaf)).toBe(true);
+
+    parent.visible = false;
+    // The leaf still reads visible=true: three only skips the subtree.
+    expect(leaf.visible).toBe(true);
+    expect(isVisibleInHierarchy(leaf)).toBe(false);
+    expect(isVisibleInHierarchy(parent)).toBe(false);
+
+    parent.visible = true;
+    leaf.visible = false;
+    expect(isVisibleInHierarchy(leaf)).toBe(false);
+    expect(isVisibleInHierarchy(parent)).toBe(true);
   });
 });
 
@@ -137,13 +167,15 @@ describe("createHoverBox", () => {
   it("stays hidden for a null target, an empty subtree, or a hide()", () => {
     const { anchor } = fixture();
     const frame = createHoverBox();
-    frame.attach(anchor, null);
+    // The return value is the caller's "look again" signal: an empty
+    // measurement must not latch a hidden frame for good.
+    expect(frame.attach(anchor, null)).toBe(false);
     expect(frame.object.visible).toBe(false);
 
-    frame.attach(anchor, new THREE.Object3D());
+    expect(frame.attach(anchor, new THREE.Object3D())).toBe(false);
     expect(frame.object.visible).toBe(false);
 
-    frame.attach(anchor, anchor);
+    expect(frame.attach(anchor, anchor)).toBe(true);
     expect(frame.object.visible).toBe(true);
     // A hidden frame is not re-placed behind the consumer's back.
     frame.hide();

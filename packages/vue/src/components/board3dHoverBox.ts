@@ -41,8 +41,11 @@ export interface HoverBoxHandle {
   /** The gizmo itself — add it to the scene, never to content. */
   readonly object: THREE.LineSegments;
   /** Wrap `target` measured inside `anchor`'s space; `null` hides the
-   *  frame. Measuring happens here and only here. */
-  attach(anchor: THREE.Object3D, target: THREE.Object3D | null): void;
+   *  frame. Measuring happens here and only here. Returns false when
+   *  there was nothing measurable to wrap (empty or hidden content), so
+   *  the caller knows to look again instead of latching onto a hidden
+   *  frame forever. */
+  attach(anchor: THREE.Object3D, target: THREE.Object3D | null): boolean;
   /** Re-place the frame from the anchor's current world matrix (per
    *  frame). A no-op while the frame is hidden. */
   refresh(): void;
@@ -50,6 +53,19 @@ export interface HoverBoxHandle {
   hide(): void;
   setColor(color: THREE.ColorRepresentation): void;
   dispose(): void;
+}
+
+/**
+ * `Object3D.visible` is per NODE: an object under a hidden parent is
+ * invisible to the renderer while reading `true` itself. The hover frame
+ * must follow the renderer's rule, or it keeps painting a bracket around
+ * something nobody can see.
+ */
+export function isVisibleInHierarchy(obj: THREE.Object3D): boolean {
+  for (let node: THREE.Object3D | null = obj; node; node = node.parent) {
+    if (!node.visible) return false;
+  }
+  return true;
 }
 
 /** Sprites and CSS2D/CSS3D anchors are decoration, never the object's
@@ -112,7 +128,10 @@ export function normalizeHoverBounds(
   if (box.isEmpty()) return false;
   const size = box.getSize(new THREE.Vector3());
   const longest = Math.max(size.x, size.y, size.z);
-  if (!(longest > 0)) return false;
+  // A non-finite extent (NaN or ±Infinity from a degenerate geometry
+  // bounding box) would compose a NaN placement matrix and silently
+  // un-render the frame: nothing measurable, stay hidden.
+  if (!(longest > 0) || !Number.isFinite(longest)) return false;
   const floor = minExtentRatio * longest;
   const center = box.getCenter(new THREE.Vector3());
   const half = new THREE.Vector3(
@@ -166,14 +185,15 @@ export function createHoverBox(): HoverBoxHandle {
       anchor = nextAnchor;
       localBox.makeEmpty();
       object.visible = false;
-      if (!target) return;
+      if (!target) return false;
       frameLocalBounds(nextAnchor, target, localBox);
-      if (!normalizeHoverBounds(localBox)) return;
+      if (!normalizeHoverBounds(localBox)) return false;
       localBox.getCenter(center);
       localBox.getSize(size);
       localMatrix.compose(center, identity, size);
       object.visible = true;
       refresh();
+      return true;
     },
     refresh,
     hide() {

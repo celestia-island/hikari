@@ -75,7 +75,11 @@ import {
   type LightingRigOptions,
 } from "../scene3d/lighting";
 import { BOARD3D_HELPERS_LAYER, BOARD3D_MAIN_LAYER, fitDistance } from "../utils/scene3d";
-import { createHoverBox, type HoverBoxHandle } from "./board3dHoverBox";
+import {
+  createHoverBox,
+  isVisibleInHierarchy,
+  type HoverBoxHandle,
+} from "./board3dHoverBox";
 import HkMinimap3D from "./HkMinimap3D";
 import "./HkBoard3D.scss";
 
@@ -447,13 +451,18 @@ export default defineComponent({
       lastPointer.y = e.clientY;
     }
 
-    /** Leaving the canvas drops the hover: nothing is under the pointer
-     *  any more, and a frame left hanging around reads as a stuck
-     *  selection. */
+    /** Leaving the BOARD drops the hover: nothing is under the pointer any
+     *  more, and a frame left hanging around reads as a stuck selection.
+     *
+     *  This listens on the CONTAINER, not the canvas, and that is the whole
+     *  point: the CSS2D label chips and the minimap card sit ON TOP of the
+     *  canvas as siblings, so a pointer moving from a body onto its own
+     *  chip fires `pointerleave` on the canvas while the user is still
+     *  "on" the object — a hover card opened from `objectHover` would slam
+     *  shut as the user reached for it. */
     function onPointerLeave(): void {
       if (lastHover === null) return;
       lastHover = null;
-      frameBound = false;
       if (canvasRef.value) canvasRef.value.style.cursor = "";
       emit("objectHover", null);
     }
@@ -498,22 +507,29 @@ export default defineComponent({
 
     /**
      * Keep the hover frame on what the pointer is aiming at: measure once
-     * per hover, then ride the target's world matrix. Anything the pointer
-     * cannot select (pickable:false, an opted-out `frameObject: null`,
-     * `hoverBox: false`, a cleared id) simply hides the frame.
+     * per hover, then ride the target's world matrix.
+     *
+     * The frame is hidden — and the latch released, so the next frame
+     * looks again — whenever there is nothing to mark: no hover, a cleared
+     * id, `hoverBox: false`, an object re-registered as `pickable: false`
+     * (the pointer can no longer select it), `frameObject: null`, or a
+     * target the renderer is not drawing (hidden itself or under a hidden
+     * ancestor). A target that measures to nothing measurable yet —
+     * content still streaming in under a resting pointer — also stays
+     * un-latched, which is what lets the frame appear when the content
+     * finally lands.
      */
     function syncHoverFrame(): void {
       if (!hoverFrame) return;
       const def = props.hoverBox && lastHover !== null ? registry.get(lastHover) : undefined;
       const target = def ? (def.frameObject === null ? null : (def.frameObject ?? def.object)) : null;
-      if (!def || !target) {
+      if (!def || def.pickable === false || !target || !isVisibleInHierarchy(target)) {
         hoverFrame.hide();
         frameBound = false;
         return;
       }
       if (!frameBound) {
-        hoverFrame.attach(def.object, target);
-        frameBound = true;
+        frameBound = hoverFrame.attach(def.object, target);
         return;
       }
       hoverFrame.refresh();
@@ -633,7 +649,7 @@ export default defineComponent({
       canvas.addEventListener("pointerup", onPointerUp);
       canvas.addEventListener("pointercancel", onPointerCancel);
       canvas.addEventListener("lostpointercapture", onLostPointerCapture, true);
-      canvas.addEventListener("pointerleave", onPointerLeave);
+      container.addEventListener("pointerleave", onPointerLeave);
 
       /** Depth planes from a subject distance (large scenes need it). */
       function applyClipping(dist: number): void {
@@ -908,8 +924,8 @@ export default defineComponent({
         canvas.removeEventListener("pointerup", onPointerUp);
         canvas.removeEventListener("pointercancel", onPointerCancel);
         canvas.removeEventListener("lostpointercapture", onLostPointerCapture, true);
-        canvas.removeEventListener("pointerleave", onPointerLeave);
       }
+      containerRef.value?.removeEventListener("pointerleave", onPointerLeave);
       if (hoverFrame) {
         scene?.remove(hoverFrame.object);
         hoverFrame.dispose();

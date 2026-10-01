@@ -218,8 +218,9 @@
 // stretching the card. The 9rem term keeps short viewports (20vh < 9rem)
 // at nine rem of scroll area. The pane div is the track's positioning
 // context and wraps EXACTLY the scrolling body (useOverlayScrollbar
-// host contract); the family overlay scrollbar's observers keep the
-// thumb geometry fresh on fold/expand.
+// host contract); the family overlay scrollbar — BOTH axes, the body
+// below hides the native bar horizontally too — keeps the thumb
+// geometry fresh on fold/expand.
 .hk-error-landing__details-pane {
   position: relative;
   margin-top: var(--space-6, 0.375rem);

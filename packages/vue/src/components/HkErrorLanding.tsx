@@ -45,7 +45,8 @@ function normalizeSlotNodes(nodes: VNode | VNode[] | undefined): VNode[] {
  * error code / HTTP status as HkBadge chips above the headline, an
  * always-open raw-details pane (the default slot — hosts render HkJsonTree
  * there) with a STABLE standing frame — the larger of 9rem and ~20vh,
- * carried by the family overlay scrollbar — and an actions slot.
+ * carried by the family overlay scrollbar on BOTH axes (vertical for long
+ * stacks, horizontal for deep/wide JSON) — and an actions slot.
  *
  * The pane never breathes with its content: folding every JSON node only
  * changes what renders INSIDE the standing frame, and a long stack trace
@@ -129,7 +130,12 @@ export const HkErrorLanding = defineComponent({
 
     function ensureDetailsScrollbars() {
       if (detailsScrollbars || !detailsBodyRef.value) return;
-      detailsScrollbars = attachOverlayScrollbars(detailsBodyRef.value);
+      // BOTH axes: the raw payload overflows down (long stacks) and across
+      // (deep JSON nesting, long unwrapped keys — the tree's preview rows
+      // ellipsize by design and never push the row wide) alike, and the
+      // pane's CSS hides the native bar on both axes — a vertical-only
+      // attach leaves a horizontal overflow with no scrollbar at all.
+      detailsScrollbars = attachOverlayScrollbars(detailsBodyRef.value, { axis: "both" });
       contentResizeObserver = new ResizeObserver(() => detailsScrollbars?.update());
       observeDetailsContent();
     }

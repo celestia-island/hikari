@@ -17,6 +17,9 @@
  *  - PICKING: click (press-release inside a 4 px slop) and hover both
  *    raycast the pickable set and surface the REGISTERED id (children
  *    walk up to the registered root via userData);
+ *  - HOVER FRAME: the hovered object is wrapped in an 8-corner selection
+ *    frame (default ON, see the `hoverBox` prop) — the pointer marks what
+ *    it is aiming at instead of resizing it;
  *  - LABELS: a CSS2DRenderer overlay — HTML chips that track world
  *    anchors, pointer-events opt-in per chip so drags still orbit;
  *  - MINIMAP: HkMinimap3D pinned bottom-right — a second, stereoscopic
@@ -71,11 +74,16 @@ import {
   type Board3DLightingDescriptor,
   type LightingRigOptions,
 } from "../scene3d/lighting";
-import { BOARD3D_HELPERS_LAYER, fitDistance } from "../utils/scene3d";
+import { BOARD3D_HELPERS_LAYER, BOARD3D_MAIN_LAYER, fitDistance } from "../utils/scene3d";
+import {
+  createHoverBox,
+  isVisibleInHierarchy,
+  type HoverBoxHandle,
+} from "./board3dHoverBox";
 import HkMinimap3D from "./HkMinimap3D";
 import "./HkBoard3D.scss";
 
-export { BOARD3D_HELPERS_LAYER };
+export { BOARD3D_HELPERS_LAYER, BOARD3D_MAIN_LAYER };
 
 export interface Board3DObjectDef {
   /** The scene-graph root for this content item. The board adds/removes
@@ -94,6 +102,11 @@ export interface Board3DObjectDef {
   marker?: "dot" | "cube" | "none";
   /** Minimap marker colour (any CSS colour; default theme primary). */
   markerColor?: string;
+  /** What the hover frame wraps, measured inside `object`'s space
+   *  (default `object` itself). Point it at the body mesh when satellites,
+   *  coronas or other decoration should stay outside the box, or pass
+   *  `null` to opt this object out of the frame entirely. */
+  frameObject?: THREE.Object3D | null;
 }
 
 export interface Board3DEngine {
@@ -225,6 +238,13 @@ function studioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture {
   return tex;
 }
 
+/** How many frames to wait before re-measuring a hovered target that had
+ *  nothing measurable (≈ 100 ms at 60 fps): fast enough that content
+ *  streaming in under a resting pointer gets its frame, slow enough that
+ *  an unmeasurable target costs one subtree walk per interval instead of
+ *  one per frame. */
+const HOVER_BOX_RETRY_FRAMES = 6;
+
 /** A pose component is usable only if all three numbers are finite. */
 function isFiniteVec3(v: readonly number[] | undefined): v is readonly [number, number, number] {
   return (
@@ -247,6 +267,27 @@ function cssRgbToColor(raw: string): THREE.Color {
     (parts[0] ?? 10) / 255,
     (parts[1] ?? 15) / 255,
     (parts[2] ?? 25) / 255,
+  );
+}
+
+/** Perceived brightness of a palette triplet, 0 (black) … 1 (white). */
+function colorLuminance(color: THREE.Color): number {
+  return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+}
+
+/**
+ * The hover frame's tint, taken from the page's own palette: the TEXT
+ * channel in a dark room, the MUTED channel in a light one. That is the
+ * user's rule — a whitish bracket over a night sky, a grey one over a day
+ * sky — expressed with tokens rather than literals, so a consumer that
+ * re-skins the palette re-skins the frame with it.
+ */
+function hoverFrameColor(background: THREE.Color): THREE.Color {
+  const dark = colorLuminance(background) < 0.5;
+  return cssRgbToColor(
+    dark
+      ? readCssColor("--color-text", "247 249 252")
+      : readCssColor("--color-muted", "80 80 80"),
   );
 }
 
@@ -285,9 +326,16 @@ export default defineComponent({
     /** Keep the camera's near/far planes clipped to the framed extent
      *  (large scenes lose depth precision without it). */
     autoClipping: { type: Boolean, default: false },
+    /** Wrap the hovered object in the 8-corner selection frame. Defaults
+     *  ON: anything the pointer can select gets one, and `frameObject:
+     *  null` opts a single object out. Turn it off for boards whose
+     *  content is not "selected" at all. */
+    hoverBox: { type: Boolean, default: true },
     /** Freeze the frame loop (content keeps its last pose). An animated
      *  flight issued while paused lands in a single jump on resume: the
-     *  tween is evaluated against wall-clock time. */
+     *  tween is evaluated against wall-clock time. Hover is frozen with
+     *  it: the frame keeps whatever it had painted until the loop resumes
+     *  (nothing re-renders while paused). */
     paused: { type: Boolean, default: false },
   },
   emits: {
@@ -308,6 +356,7 @@ export default defineComponent({
     let scene: THREE.Scene | null = null;
     let camera: THREE.PerspectiveCamera | null = null;
     let controls: OrbitControls | null = null;
+    let hoverFrame: HoverBoxHandle | null = null;
     let resizeObs: ResizeObserver | null = null;
     let themeObs: MutationObserver | null = null;
     let rafId = 0;
@@ -353,6 +402,7 @@ export default defineComponent({
       const bg = cssRgbToColor(bgRaw);
       if (scene) scene.background = bg;
       if (renderer) renderer.setClearColor(bg, 1);
+      hoverFrame?.setColor(hoverFrameColor(bg));
       for (const cb of themeHooks) cb(bgRaw, primaryRaw);
     }
 
@@ -399,11 +449,41 @@ export default defineComponent({
     }
 
     const lastPointer = { x: 0, y: 0 };
+    /** True while the frame has been measured for the current hover. The
+     *  measurement is the expensive half, so it happens on hover change
+     *  only — the per-frame half is one matrix composition. */
+    let frameBound = false;
+    /** Frames still to skip before the next measurement attempt while the
+     *  hovered target has nothing measurable to wrap (content still
+     *  streaming in). A permanently unmeasurable target — a group of
+     *  sprites, content that stays hidden — must not turn the loop into a
+     *  full subtree walk every frame. */
+    let measureCooldown = 0;
 
     function onPointerMove(e: PointerEvent): void {
       hoverDirty = true;
       lastPointer.x = e.clientX;
       lastPointer.y = e.clientY;
+    }
+
+    /** Leaving the BOARD drops the hover: nothing is under the pointer any
+     *  more, and a frame left hanging around reads as a stuck selection.
+     *
+     *  This listens on the CONTAINER, not the canvas, and that is the whole
+     *  point: the CSS2D label chips and the minimap card sit ON TOP of the
+     *  canvas as siblings, so a pointer moving from a body onto its own
+     *  chip fires `pointerleave` on the canvas while the user is still
+     *  "on" the object — a hover card opened from `objectHover` would slam
+     *  shut as the user reached for it. */
+    function onPointerLeave(): void {
+      // Drop the PENDING pick as well: a move and a leave can land inside
+      // one frame, and the loop would otherwise re-pick the stale position
+      // and resurrect the hover after the pointer has left the board.
+      hoverDirty = false;
+      if (lastHover === null) return;
+      lastHover = null;
+      if (canvasRef.value) canvasRef.value.style.cursor = "";
+      emit("objectHover", null);
     }
 
     function onPointerDown(e: PointerEvent): void {
@@ -444,6 +524,42 @@ export default defineComponent({
       return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     }
 
+    /**
+     * Keep the hover frame on what the pointer is aiming at: measure once
+     * per hover, then ride the target's world matrix.
+     *
+     * The frame is hidden — and the latch released, so the next frame
+     * looks again — whenever there is nothing to mark: no hover, a cleared
+     * id, `hoverBox: false`, an object re-registered as `pickable: false`
+     * (the pointer can no longer select it), `frameObject: null`, or a
+     * target the renderer is not drawing (hidden itself or under a hidden
+     * ancestor). A target that measures to nothing measurable yet —
+     * content still streaming in under a resting pointer — also stays
+     * un-latched, which is what lets the frame appear when the content
+     * finally lands.
+     */
+    function syncHoverFrame(): void {
+      if (!hoverFrame) return;
+      const def = props.hoverBox && lastHover !== null ? registry.get(lastHover) : undefined;
+      const target = def ? (def.frameObject === null ? null : (def.frameObject ?? def.object)) : null;
+      if (!def || def.pickable === false || !target || !isVisibleInHierarchy(target)) {
+        hoverFrame.hide();
+        frameBound = false;
+        measureCooldown = 0;
+        return;
+      }
+      if (!frameBound) {
+        if (measureCooldown > 0) {
+          measureCooldown -= 1;
+          return;
+        }
+        frameBound = hoverFrame.attach(def.object, target);
+        measureCooldown = frameBound ? 0 : HOVER_BOX_RETRY_FRAMES;
+        return;
+      }
+      hoverFrame.refresh();
+    }
+
     function frame(): void {
       if (disposed) return;
       rafId = requestAnimationFrame(frame);
@@ -468,12 +584,17 @@ export default defineComponent({
         const id = pickAt(lastPointer.x, lastPointer.y);
         if (id !== lastHover) {
           lastHover = id;
+          frameBound = false;
+          measureCooldown = 0;
           if (canvasRef.value) {
             canvasRef.value.style.cursor = id ? "pointer" : "";
           }
           emit("objectHover", id);
         }
       }
+      // After the tick hooks have posed the content, so the frame lands on
+      // this frame's pose rather than the previous one.
+      syncHoverFrame();
 
       renderer.render(scene, camera);
       labelRenderer?.render(scene, camera);
@@ -486,11 +607,18 @@ export default defineComponent({
       if (!canvas || !container) return;
 
       scene = new THREE.Scene();
+      // The hover frame is a pointer affordance, not scenery: it hangs off
+      // the scene root (so it never joins framing, markers or picking) and
+      // rides the main-camera-only layer, keeping the minimap render clean.
+      hoverFrame = createHoverBox();
+      hoverFrame.object.layers.set(BOARD3D_MAIN_LAYER);
+      scene.add(hoverFrame.object);
       // A degenerate fov (≤ 0 or ≥ 180) silently bricks the projection —
       // projectionMatrix[5] becomes Infinity/negative, projection and
       // picking return NaN, and nothing throws. Fall back to the default.
       const fov = Number.isFinite(props.fov) && props.fov > 0 && props.fov < 180 ? props.fov : 45;
       camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 4000);
+      camera.layers.enable(BOARD3D_MAIN_LAYER);
       // Guard the initial pose too: a non-finite component (an untyped
       // caller passing a short/garbage array) would poison every
       // projection for the board's whole lifetime.
@@ -547,6 +675,7 @@ export default defineComponent({
       canvas.addEventListener("pointerup", onPointerUp);
       canvas.addEventListener("pointercancel", onPointerCancel);
       canvas.addEventListener("lostpointercapture", onLostPointerCapture, true);
+      container.addEventListener("pointerleave", onPointerLeave);
 
       /** Depth planes from a subject distance (large scenes need it). */
       function applyClipping(dist: number): void {
@@ -573,6 +702,25 @@ export default defineComponent({
         },
         setObject(id, def) {
           const prev = registry.get(id);
+          // A re-register can hand over a DIFFERENT object (pages rebuild
+          // their content), and a frame still measured against the old one
+          // would hang where that object used to be — it is out of the
+          // scene now and never moves again. Measure again on the next
+          // frame instead.
+          if (id === lastHover) {
+            frameBound = false;
+            measureCooldown = 0;
+            // The hovered object either left the board or became
+            // unselectable. Nothing will move the pointer for us, so the
+            // page has to be told here — otherwise its hover card outlives
+            // the object and the cursor keeps promising a click that can
+            // no longer land.
+            if (!def || def.pickable === false) {
+              lastHover = null;
+              if (canvasRef.value) canvasRef.value.style.cursor = "";
+              emit("objectHover", null);
+            }
+          }
           if (prev) {
             // One Object3D can be registered under several ids; only
             // detach it from the scene when no other id still owns it.
@@ -816,6 +964,13 @@ export default defineComponent({
         canvas.removeEventListener("pointercancel", onPointerCancel);
         canvas.removeEventListener("lostpointercapture", onLostPointerCapture, true);
       }
+      containerRef.value?.removeEventListener("pointerleave", onPointerLeave);
+      if (hoverFrame) {
+        scene?.remove(hoverFrame.object);
+        hoverFrame.dispose();
+        hoverFrame = null;
+      }
+      frameBound = false;
       controls?.dispose();
       if (labelRenderer?.domElement.parentNode) {
         labelRenderer.domElement.parentNode.removeChild(labelRenderer.domElement);

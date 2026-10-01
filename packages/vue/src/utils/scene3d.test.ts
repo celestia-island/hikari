@@ -173,7 +173,9 @@ describe("hoverBoxSegments", () => {
 
     const cornerSet = new Set<string>();
     const armLengths: number[] = [];
-    const arm = HOVER_BOX_ARM_RATIO * 2; // smallest side wins
+    // One arm per axis, each a fraction of ITS OWN side: that is what lets
+    // the built-in frame scale a unit box by `size`.
+    const arms = size.map((side) => HOVER_BOX_ARM_RATIO * side);
     for (let i = 0; i < positions.length; i += 6) {
       const a: [number, number, number] = [positions[i], positions[i + 1], positions[i + 2]];
       const b: [number, number, number] = [positions[i + 3], positions[i + 4], positions[i + 5]];
@@ -181,8 +183,9 @@ describe("hoverBoxSegments", () => {
       // Every arm runs along exactly one axis…
       const deltas = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
       expect(deltas.filter((d) => d !== 0)).toHaveLength(1);
-      const len = Math.abs(deltas.find((d) => d !== 0) ?? 0);
-      expect(len).toBeCloseTo(arm, 6);
+      const axis = deltas.findIndex((d) => d !== 0);
+      const len = Math.abs(deltas[axis]);
+      expect(len).toBeCloseTo(arms[axis], 6);
       armLengths.push(len);
       // …and points INWARD: the arm may never leave the box.
       for (let axis = 0; axis < 3; axis += 1) {
@@ -203,9 +206,9 @@ describe("hoverBoxSegments", () => {
     expect(armLengths).toHaveLength(24);
   });
 
-  it("scales the arm with the smallest side and survives junk sizes", () => {
+  it("gives each axis its own arm, and survives junk sizes", () => {
     const flat = hoverBoxSegments([10, 0, 10]);
-    // Zero on one axis ⇒ zero-length arms rather than a thrown error.
+    // A zero side ⇒ zero-length arms on that axis rather than a throw.
     expect(flat.every((v) => Number.isFinite(v))).toBe(true);
     expect(flat.every((v) => !Number.isNaN(v))).toBe(true);
 
@@ -213,6 +216,15 @@ describe("hoverBoxSegments", () => {
     const arm = HOVER_BOX_ARM_RATIO * 4;
     const firstLen = Math.abs(cubic[3] - cubic[0]) + Math.abs(cubic[4] - cubic[1]) + Math.abs(cubic[5] - cubic[2]);
     expect(firstLen).toBeCloseTo(arm, 6);
+
+    // Scale invariance: the unit box scaled by `size` is the box's own
+    // bracket — the contract the barrel documents for bespoke frames.
+    const scaled = hoverBoxSegments([1, 1, 1]);
+    const stretched = hoverBoxSegments([2, 4, 6]);
+    for (let i = 0; i < stretched.length; i += 3) {
+      const axis = i % 3;
+      expect(stretched[i + axis] / scaled[i + axis]).toBeCloseTo([2, 4, 6][axis], 6);
+    }
 
     const junk = hoverBoxSegments([Number.NaN, -3, 0] as [number, number, number]);
     expect(junk.every((v) => Number.isFinite(v))).toBe(true);

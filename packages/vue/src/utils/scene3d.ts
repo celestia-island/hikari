@@ -170,7 +170,7 @@ export function planeCorners(
 
 // ── Hover frame (the 8-corner selection box) ────────────────────────────
 
-/** Corner arm length, as a fraction of the box's SMALLEST side. */
+/** Corner arm length, as a fraction of the side it runs along. */
 export const HOVER_BOX_ARM_RATIO = 0.24;
 
 /** Breathing room between the object's bounds and its frame. */
@@ -187,6 +187,11 @@ export const HOVER_BOX_MIN_EXTENT_RATIO = 0.12;
  * vertices). Corner brackets rather than a full wireframe — the frame
  * reads as a box around the object without drawing a cage over it.
  *
+ * Each arm runs along one axis and is HOVER_BOX_ARM_RATIO of THAT axis,
+ * which is what makes the geometry scale-invariant: the built-in frame
+ * builds a unit box and scales it by `size`, so a consumer building its
+ * own frame from this helper gets the same bracket.
+ *
  * Degenerate sizes (non-finite, ≤ 0) are treated as 0; callers that care
  * about a zero-size box collapse check it before building the frame.
  */
@@ -195,7 +200,11 @@ export function hoverBoxSegments(size: Vec3): Float32Array {
     const v = size[i];
     return Number.isFinite(v) && v > 0 ? v : 0;
   }) as Vec3;
-  const arm = HOVER_BOX_ARM_RATIO * Math.min(sx, sy, sz);
+  const arms: Vec3 = [
+    HOVER_BOX_ARM_RATIO * sx,
+    HOVER_BOX_ARM_RATIO * sy,
+    HOVER_BOX_ARM_RATIO * sz,
+  ];
   const out = new Float32Array(8 * 3 * 2 * 3);
   let at = 0;
   for (const ix of [-1, 1]) {
@@ -206,7 +215,7 @@ export function hoverBoxSegments(size: Vec3): Float32Array {
           // One arm per axis, all pointing INWARD from the corner (the
           // sign flip is what makes the bracket hug the box).
           const tip: Vec3 = [corner[0], corner[1], corner[2]];
-          tip[axis] -= [ix, iy, iz][axis] * arm;
+          tip[axis] -= [ix, iy, iz][axis] * arms[axis];
           out[at] = corner[0];
           out[at + 1] = corner[1];
           out[at + 2] = corner[2];

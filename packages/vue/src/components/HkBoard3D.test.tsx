@@ -867,7 +867,8 @@ describe("HkBoard3D hover frame", () => {
   });
 
   it("follows the target in and out of visibility, and drops a stale opt-out", async () => {
-    const { engine, body } = await hoveredBoard();
+    const hovers: Array<string | null> = [];
+    const { engine, body, canvas } = await hoveredBoard({}, { hover: (id) => hovers.push(id) });
     const frame = frameOf(engine);
     expect(frame.visible).toBe(true);
 
@@ -885,6 +886,41 @@ describe("HkBoard3D hover frame", () => {
     engine.setObject("star-1", { object: body, pickable: false });
     await tickFrames();
     expect(frame.visible).toBe(false);
+    // The pointer can no longer select it: the page must hear that here,
+    // because no pointer movement is coming to say it.
+    expect(hovers.at(-1)).toBeNull();
+    expect(canvas.style.cursor).toBe("");
+  });
+
+  it("hides the frame when an ANCESTOR of the frame target is hidden", async () => {
+    const hovers: Array<string | null> = [];
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, {
+      ready: ((e: Board3DEngine) => { engine = e; }) as never,
+      objectHover: ((id: string | null) => hovers.push(id)) as never,
+    });
+    await nextTick();
+    const canvas = canvasOf();
+
+    // The target stays `visible = true` while its PARENT is hidden: only
+    // the renderer's ancestor-chain rule catches that.
+    const group = new THREE.Group();
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshBasicMaterial());
+    group.add(mesh);
+    engine!.setObject("wrap", { object: group, frameObject: mesh });
+    await tickFrames();
+    moveTo(canvas, 400, 300);
+    await tickFrames();
+    expect(frameOf(engine!).visible).toBe(true);
+
+    group.visible = false;
+    await tickFrames();
+    expect(mesh.visible).toBe(true);
+    expect(frameOf(engine!).visible).toBe(false);
+
+    group.visible = true;
+    await tickFrames();
+    expect(frameOf(engine!).visible).toBe(true);
   });
 
   it("picks the frame up when the content arrives after the hover", async () => {

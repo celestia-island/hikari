@@ -333,7 +333,9 @@ export default defineComponent({
     hoverBox: { type: Boolean, default: true },
     /** Freeze the frame loop (content keeps its last pose). An animated
      *  flight issued while paused lands in a single jump on resume: the
-     *  tween is evaluated against wall-clock time. */
+     *  tween is evaluated against wall-clock time. Hover is frozen with
+     *  it: the frame keeps whatever it had painted until the loop resumes
+     *  (nothing re-renders while paused). */
     paused: { type: Boolean, default: false },
   },
   emits: {
@@ -583,6 +585,7 @@ export default defineComponent({
         if (id !== lastHover) {
           lastHover = id;
           frameBound = false;
+          measureCooldown = 0;
           if (canvasRef.value) {
             canvasRef.value.style.cursor = id ? "pointer" : "";
           }
@@ -707,11 +710,12 @@ export default defineComponent({
           if (id === lastHover) {
             frameBound = false;
             measureCooldown = 0;
-            if (!def) {
-              // The hovered object just left the board. Nothing will move
-              // the pointer for us, so the page has to be told here or its
-              // hover card outlives the object (and the cursor keeps
-              // promising a click that can no longer land).
+            // The hovered object either left the board or became
+            // unselectable. Nothing will move the pointer for us, so the
+            // page has to be told here — otherwise its hover card outlives
+            // the object and the cursor keeps promising a click that can
+            // no longer land.
+            if (!def || def.pickable === false) {
               lastHover = null;
               if (canvasRef.value) canvasRef.value.style.cursor = "";
               emit("objectHover", null);

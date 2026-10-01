@@ -119,10 +119,20 @@ describe("HkErrorLanding", () => {
     expect(el.querySelector(".hk-error-landing__desc")!.textContent).toBe("line1\nline2");
   });
 
-  it("attaches the overlay scrollbar chrome inside the details pane", () => {
+  it("attaches the overlay scrollbar chrome inside the details pane on BOTH axes", () => {
     const el = mountLanding({ details: () => h("pre", { class: "s-tool-json-tree" }, "raw") });
-    expect(el.querySelector(".hk-error-landing__details-pane .hk-scrollbar-track")).not.toBeNull();
-    expect(el.querySelector(".hk-error-landing__details-pane .hk-scrollbar-thumb")).not.toBeNull();
+    const pane = el.querySelector(".hk-error-landing__details-pane")!;
+    expect(pane.querySelector(".hk-scrollbar-track")).not.toBeNull();
+    expect(pane.querySelector(".hk-scrollbar-thumb")).not.toBeNull();
+    // The pane's CSS hides the NATIVE bar on both axes, so the overlay is
+    // the only scrollbar the raw payload can ever show. A vertical-only
+    // attach (the pre-fix default) leaves a horizontal overflow — deep
+    // JSON nesting, long unwrapped keys (preview rows ellipsize by
+    // design) — with no scrollbar at all: pin one track per axis.
+    expect(pane.querySelector(".hk-scrollbar-track[data-axis='horizontal']")).not.toBeNull();
+    expect(pane.querySelector(".hk-scrollbar-track:not([data-axis='horizontal'])")).not.toBeNull();
+    // Exactly the two tracks — no duplicate chrome from a double attach.
+    expect(pane.querySelectorAll(".hk-scrollbar-track")).toHaveLength(2);
   });
 
   it("renders no scrollbar chrome without a details pane", () => {

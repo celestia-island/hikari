@@ -56,12 +56,17 @@
 .hk-scrollbar-thumb {
   position: absolute;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--hi-color-muted) 35%, transparent);
+  /* Fallback = the landing's neutral muted seed (HkErrorLanding's
+     --hel-muted 118 122 128): themeless standalone renders (the error
+     landing's no-theme-init contract) get a visible neutral thumb; an
+     undefined --hi-color-muted would make color-mix invalid at
+     computed-value time and the thumb invisible on BOTH axes. */
+  background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 35%, transparent);
   transition: background var(--hi-duration-fast, 0.15s) ease;
 
   .is-hovering &,
   &.is-dragging {
-    background: color-mix(in srgb, var(--hi-color-muted) 55%, transparent);
+    background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 55%, transparent);
   }
 }
 

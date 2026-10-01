@@ -42,6 +42,10 @@ export interface Board3DModelOptions {
   highlightColor?: number;
   /** Extra per-model data for the consumer (stored on userData). */
   userData?: Record<string, unknown>;
+  /** Inspect/adjust the freshly parsed rig AFTER merging and BEFORE
+   *  placement — the hook for consumer-side normalization (e.g. recentre
+   *  a world-space GLB onto its fixture). The rig is yours to mutate. */
+  onRig?: (root: THREE.Object3D) => void;
 }
 
 interface ModelEntry {
@@ -150,6 +154,8 @@ export class ModelLayer {
 
     // Replace a previous model under the same id.
     this.removeModel(id);
+
+    opts.onRig?.(root);
 
     root.traverse((child) => {
       const mesh = child as THREE.Mesh;

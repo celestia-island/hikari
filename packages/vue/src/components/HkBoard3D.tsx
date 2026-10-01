@@ -167,11 +167,15 @@ export interface Board3DEngine {
    *  grid. `frameAll` refits it to the framed content. */
   setGround(cfg: Board3DGroundConfig): void;
   setGroundVisible(v: boolean): void;
+  /** Retarget the grid's fade/dot bounds onto a box (min/max corners). */
+  fitGround(box: { min: [number, number, number]; max: [number, number, number] }): void;
 
   // ── Lighting ─────────────────────────────────────────────────────────
   /** Apply a lighting descriptor (ambient / directional / points). The
    *  rig is created on first use with the `lighting` prop's options. */
   applyLighting(desc: Board3DLightingDescriptor): void;
+  /** Direct ambient control (overrides the descriptor's intensity). */
+  setAmbientIntensity(v: number): void;
   /** Policy-driven sun (e.g. a wall-clock arc). */
   setSunState(
     pos: [number, number, number],
@@ -719,6 +723,13 @@ export default defineComponent({
           groundHandle = createGround(scene!, cfg);
         },
         setGroundVisible: (v) => groundHandle?.setVisible(v),
+        fitGround: (box) =>
+          groundHandle?.fit(
+            new THREE.Box3(
+              new THREE.Vector3(...box.min),
+              new THREE.Vector3(...box.max),
+            ),
+          ),
         applyLighting(desc) {
           lightingRig ??= new LightingRig(scene!, props.lighting);
           lightingRig.apply(desc);
@@ -727,6 +738,7 @@ export default defineComponent({
           lightingRig ??= new LightingRig(scene!, props.lighting);
           lightingRig.setSun(pos, color, intensity);
         },
+        setAmbientIntensity: (v) => lightingRig?.setAmbientIntensity(v),
         setNightFill: (night) => lightingRig?.setNightFill(night),
         setShadowBounds: (extent, tx = 0, tz = 0) => lightingRig?.setShadowBounds(extent, tx, tz),
         applyEnvironment(preset) {

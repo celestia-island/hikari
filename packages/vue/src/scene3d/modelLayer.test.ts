@@ -200,6 +200,25 @@ describe("ModelLayer", () => {
     layer.dispose();
   });
 
+  it("hands the parsed rig to onRig before placement", async () => {
+    const scene = new THREE.Scene();
+    const layer = new ModelLayer(scene);
+    let seen: THREE.Object3D | null = null;
+    await layer.loadModel("m1", {
+      source: triangleGlb(),
+      position: [4, 0, 0],
+      // A world-space GLB gets re-centred onto its fixture here.
+      onRig: (root) => {
+        seen = root;
+        root.position.sub(new THREE.Vector3(27, 1.7, 25));
+      },
+    });
+    expect(seen).toBeTruthy();
+    // The wrapper still lands exactly where placement said.
+    expect(layer.worldPosition("m1")![0]).toBeCloseTo(4, 6);
+    layer.dispose();
+  });
+
   it("resolves null (and stays empty) when the source cannot be parsed", async () => {
     const scene = new THREE.Scene();
     const layer = new ModelLayer(scene);

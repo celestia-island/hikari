@@ -526,6 +526,21 @@ describe("HkBoard3D", () => {
     void container;
   });
 
+  it("fits the ground and drives the ambient directly", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    engine!.setGround({ enabled: true });
+    engine!.applyLighting({ ambientIntensity: 0.9 });
+    engine!.fitGround({ min: [0, 0, 0], max: [10, 0, 10] });
+    engine!.setAmbientIntensity(0.3);
+    const ambient = engine!.scene.children.find(
+      (c) => c.constructor.name === "AmbientLight",
+    ) as unknown as { intensity: number };
+    expect(ambient.intensity).toBeCloseTo(0.3, 5);
+  });
+
   it("installs the lighting rig on first applyLighting", async () => {
     let engine: Board3DEngine | null = null;
     mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });

@@ -15,20 +15,28 @@ const H = vi.hoisted(() => {
     renders: Array<{ scene: unknown; camera: unknown }> = [];
     sizes: Array<[number, number]> = [];
     clearColor: unknown = null;
+    clearAlpha: number | null = null;
+    /** The drawing buffer's alpha channel — only present when the board
+     *  asks for a transparent backdrop (`alpha: true`). */
+    alpha: boolean;
     toneMapping: unknown = null;
     shadowMap = { enabled: false };
     disposed = false;
-    constructor(opts: { canvas: HTMLCanvasElement }) {
+    constructor(opts: { canvas: HTMLCanvasElement; alpha?: boolean }) {
       if (FakeWebGLRenderer.failNext) {
         FakeWebGLRenderer.failNext = false;
         throw new Error("no webgl (test)");
       }
       this.domElement = opts.canvas;
+      this.alpha = opts.alpha === true;
       FakeWebGLRenderer.instances.push(this);
     }
     setPixelRatio(): void {}
     setSize(w: number, h: number): void { this.sizes.push([w, h]); }
-    setClearColor(c: unknown): void { this.clearColor = c; }
+    setClearColor(c: unknown, alpha = 1): void {
+      this.clearColor = c;
+      this.clearAlpha = alpha;
+    }
     render(scene: unknown, camera: unknown): void {
       // A real renderer maintains world matrices every pass; picking and
       // projection both read them.
@@ -103,6 +111,25 @@ function mountBoard(props: Record<string, unknown> = {}, on: Record<string, (arg
 /** Wait long enough for the RAF loop to tick at least twice. */
 async function tickFrames(): Promise<void> {
   await new Promise((r) => setTimeout(r, 50));
+}
+
+/** Both gizmo frames — hover, then selection — are the only scene
+ *  children on the main-camera-only layer, and init() creates them in
+ *  that order, so the index is a stable discriminator. */
+function framesOf(engine: Board3DEngine): THREE.LineSegments[] {
+  const found = engine.scene.children.filter((c) => c.layers.isEnabled(BOARD3D_MAIN_LAYER));
+  expect(found, "both gizmo frames in the scene").toHaveLength(2);
+  return found as THREE.LineSegments[];
+}
+
+/** The hover frame (created first in init). */
+function frameOf(engine: Board3DEngine): THREE.LineSegments {
+  return framesOf(engine)[0]!;
+}
+
+/** The selection frame (created second in init). */
+function selectionOf(engine: Board3DEngine): THREE.LineSegments {
+  return framesOf(engine)[1]!;
 }
 
 beforeEach(() => {
@@ -689,13 +716,6 @@ describe("HkBoard3D", () => {
 });
 
 describe("HkBoard3D hover frame", () => {
-  /** The frame is the only scene child on the main-camera-only layer. */
-  function frameOf(engine: Board3DEngine): THREE.LineSegments {
-    const found = engine.scene.children.find((c) => c.layers.isEnabled(BOARD3D_MAIN_LAYER));
-    expect(found, "hover frame in the scene").toBeDefined();
-    return found as THREE.LineSegments;
-  }
-
   function canvasOf(): HTMLCanvasElement {
     const canvas = mounts[0].container.querySelector("canvas")!;
     canvas.getBoundingClientRect = () =>
@@ -1061,5 +1081,299 @@ describe("HkBoard3D hover frame", () => {
     expect(hovers.at(-1)).toBeNull();
     expect(canvas.style.cursor).toBe("");
     expect(frameOf(engine).visible).toBe(false);
+  });
+});
+
+describe("HkBoard3D selection frame", () => {
+  /** A board with one body registered and the id selected — NO pointer
+   *  involvement anywhere: the selection frame must not need one. */
+  async function selectedBoard(props: Record<string, unknown> = {}) {
+    const hovers: Array<string | null> = [];
+    let engine: Board3DEngine | null = null;
+    mountBoard({ minimap: false, ...props }, {
+      ready: ((e: Board3DEngine) => { engine = e; }) as never,
+      objectHover: ((id: string | null) => hovers.push(id)) as never,
+    });
+    await nextTick();
+    const body = new THREE.Mesh(
+      new THREE.SphereGeometry(2, 16, 12),
+      new THREE.MeshBasicMaterial(),
+    );
+    body.name = "body";
+    engine!.setObject("star-1", { object: body });
+    engine!.setSelection("star-1");
+    await tickFrames();
+    return { engine: engine!, body, hovers };
+  }
+
+  it("pins the persistent corner frame without any pointer", async () => {
+    const { engine, body } = await selectedBoard();
+    const selection = selectionOf(engine);
+    expect(selection.visible).toBe(true);
+    // Same measurement contract as the hover frame: the body's own
+    // extents plus the padding, composed through its world matrix.
+    expect(selection.matrix.elements[0]).toBeCloseTo(4 * 1.08, 4);
+    expect(selection.matrix.elements[13]).toBeCloseTo(0, 5);
+    // The pointer frame has nothing to say here — nothing is hovered.
+    expect(frameOf(engine).visible).toBe(false);
+    // The body itself is untouched, and the gizmo never joins the
+    // registry (framing and picking never see it).
+    expect(body.scale.x).toBe(1);
+    expect([...engine.objects().keys()]).toEqual(["star-1"]);
+
+    // A selected object re-registered as UN-pickable stays marked: the
+    // frame marks what the page selected, and pointer reachability is a
+    // hover concern (decision pinned — R1).
+    engine.setObject("star-1", { object: body, pickable: false });
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(true);
+  });
+
+  it("re-selecting the same id does not re-measure", async () => {
+    const { engine, body } = await selectedBoard();
+    // Pages re-select on data refreshes; each redundant call must be a
+    // no-op, not a forced subtree walk (the hover path guards the same
+    // way at the event level — R2 P2). The measurement walk is the
+    // (updateParents=true, updateChildren=true) call; the per-frame
+    // refresh uses (true, false) and stays.
+    const walk = vi.spyOn(body, "updateWorldMatrix");
+    for (let i = 0; i < 5; i += 1) engine.setSelection("star-1");
+    await tickFrames();
+    const measured = walk.mock.calls.filter(
+      ([parents, children]) => parents === true && children === true,
+    ).length;
+    expect(measured).toBe(0);
+    expect(selectionOf(engine).visible).toBe(true);
+  });
+
+  it("only ever ends through setSelection(null)", async () => {
+    const { engine } = await selectedBoard();
+    expect(selectionOf(engine).visible).toBe(true);
+
+    // Frames pass — the selection is sticky, not a hover that decays.
+    await tickFrames();
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(true);
+
+    engine.setSelection(null);
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(false);
+  });
+
+  it("survives a rebuild: the removed id hides, re-registration re-measures", async () => {
+    const { engine } = await selectedBoard();
+    expect(selectionOf(engine).visible).toBe(true);
+
+    // A roster rebuild strips every body first — the frame hides while
+    // the id is gone but the SELECTION survives the interim.
+    engine.setObject("star-1", null);
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(false);
+
+    // …and the re-registered body (a fresh object at a new spot) gets the
+    // frame measured against IT, not against the dead predecessor.
+    const next = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    next.position.set(30, 0, 0);
+    engine.setObject("star-1", { object: next });
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(true);
+    expect(selectionOf(engine).matrix.elements[12]).toBeCloseTo(30, 4);
+    expect(selectionOf(engine).matrix.elements[0]).toBeCloseTo(2 * 1.08, 4);
+  });
+
+  it("re-measures when a rebuild hands the selected id a NEW object directly", async () => {
+    const { engine } = await selectedBoard();
+    expect(selectionOf(engine).matrix.elements[12]).toBeCloseTo(0, 5);
+
+    // The ONE-step rebuild (strip + re-register fused into a single
+    // setObject): the latch must release here too, or the frame keeps
+    // riding the dead predecessor's matrix — the two-step test above
+    // cannot see this, the hide path resets the latch for it (R1 P1).
+    const next = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    next.position.set(30, 0, 0);
+    engine.setObject("star-1", { object: next });
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(true);
+    expect(selectionOf(engine).matrix.elements[12]).toBeCloseTo(30, 4);
+    expect(selectionOf(engine).matrix.elements[0]).toBeCloseTo(2 * 1.08, 4);
+  });
+
+  it("suppresses the hover frame on the selected body only", async () => {
+    const { engine, hovers } = await selectedBoard();
+    const canvas = mounts[0]!.container.querySelector("canvas")!;
+    canvas.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 800, height: 600, right: 800, bottom: 600 }) as DOMRect;
+    canvas.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: 400, clientY: 300 }));
+    await tickFrames();
+    // Hovering the selected body draws ONE bracket, not two.
+    expect(selectionOf(engine).visible).toBe(true);
+    expect(frameOf(engine).visible).toBe(false);
+    // Suppression is frame-only: the page still HEARS the hover (its
+    // hover card must keep working on the selected body) and the cursor
+    // still promises the click (R1 P2).
+    expect(hovers.at(-1)).toBe("star-1");
+    expect(canvas.style.cursor).toBe("pointer");
+
+    // Moving the selection elsewhere un-suppresses the hover: the pointer
+    // is still over star-1, which is no longer the selected body.
+    const other = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    other.position.set(500, 500, 500);
+    engine.setObject("star-2", { object: other });
+    engine.setSelection("star-2");
+    await tickFrames();
+    expect(frameOf(engine).visible).toBe(true);
+    expect(selectionOf(engine).visible).toBe(true);
+    expect(selectionOf(engine).matrix.elements[12]).toBeCloseTo(500, 4);
+  });
+
+  it("picks the selection up when the content arrives after the select", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({ minimap: false }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    // Content streams in: the registered group's only mesh is still
+    // hidden when the page selects it.
+    const group = new THREE.Group();
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    mesh.visible = false;
+    group.add(mesh);
+    engine!.setObject("stream", { object: group });
+    engine!.setSelection("stream");
+    await tickFrames();
+    expect(selectionOf(engine!).visible).toBe(false);
+
+    mesh.visible = true;
+    await tickFrames();
+    expect(selectionOf(engine!).visible).toBe(true);
+  });
+
+  it("re-measures an unmeasurable selection on a cadence, not every frame", async () => {
+    let engine: Board3DEngine | null = null;
+    // No minimap: its marker sync calls updateWorldMatrix on every
+    // registered object each frame, which would drown the measurement
+    // cadence this test is about.
+    mountBoard({ minimap: false }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    const group = new THREE.Group();
+    const decor = new THREE.Sprite(new THREE.SpriteMaterial());
+    group.add(decor);
+    engine!.setObject("empty", { object: group });
+    engine!.setSelection("empty");
+    await tickFrames();
+    expect(selectionOf(engine!).visible).toBe(false);
+
+    let frames = 0;
+    engine!.addTick(() => {
+      frames += 1;
+    });
+    // The measurement is the walk `frameLocalBounds` makes on the anchor.
+    const walk = vi.spyOn(group, "updateWorldMatrix");
+    await tickFrames();
+    expect(frames).toBeGreaterThan(10);
+    expect(walk.mock.calls.length).toBeGreaterThan(0);
+    expect(walk.mock.calls.length).toBeLessThan(frames / 3);
+  });
+
+  it("hides while the body is invisible, and comes back with it", async () => {
+    const { engine, body } = await selectedBoard();
+    expect(selectionOf(engine).visible).toBe(true);
+
+    // three renders by the CHAIN: the frame must not paint the air.
+    body.visible = false;
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(false);
+
+    body.visible = true;
+    await tickFrames();
+    expect(selectionOf(engine).visible).toBe(true);
+  });
+
+  it("tints the selection from the primary channel, apart from the hover", async () => {
+    const previous = ["--color-background", "--color-text", "--color-primary"].map((name) => [
+      name,
+      document.documentElement.style.getPropertyValue(name),
+    ] as const);
+    try {
+      // Deliberately NOT the fallback literals: a variable read that fell
+      // through to its default must fail these assertions.
+      document.documentElement.style.setProperty("--color-background", "10 15 25");
+      document.documentElement.style.setProperty("--color-text", "250 10 10");
+      document.documentElement.style.setProperty("--color-primary", "10 10 250");
+      const { engine } = await selectedBoard();
+      const hoverColor = (frameOf(engine).material as THREE.LineBasicMaterial).color;
+      const selectionColor = (selectionOf(engine).material as THREE.LineBasicMaterial).color;
+      expect(selectionColor.r * 255).toBeCloseTo(10, 0);
+      expect(selectionColor.b * 255).toBeCloseTo(250, 0);
+      // The hover frame keeps its own channel (text) — the two stay
+      // readable apart at a glance.
+      expect(hoverColor.r * 255).toBeCloseTo(250, 0);
+      expect(hoverColor.b * 255).toBeCloseTo(10, 0);
+    } finally {
+      for (const [name, value] of previous) {
+        document.documentElement.style.removeProperty(name);
+        if (value) document.documentElement.style.setProperty(name, value);
+      }
+    }
+  });
+
+  it("disposes the selection frame on unmount", async () => {
+    const { engine } = await selectedBoard();
+    expect(selectionOf(engine).visible).toBe(true);
+    const selection = selectionOf(engine);
+    const geoSpy = vi.spyOn(selection.geometry, "dispose");
+    const matSpy = vi.spyOn(selection.material as THREE.Material, "dispose");
+
+    const m = mounts.splice(0)[0];
+    m.app.unmount();
+    m.container.remove();
+
+    expect(geoSpy).toHaveBeenCalled();
+    expect(matSpy).toHaveBeenCalled();
+    expect(engine.scene.children.some((c) => c.layers.isEnabled(BOARD3D_MAIN_LAYER))).toBe(false);
+  });
+});
+
+describe("HkBoard3D transparent background", () => {
+  function rendererOf(): InstanceType<typeof H.FakeWebGLRenderer> {
+    // The board's renderer is the first instance (the minimap spins up
+    // its own, and only when mounted).
+    return H.FakeWebGLRenderer.instances[0]!;
+  }
+
+  it("paints the theme background by default", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({ minimap: false }, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+    expect(engine!.scene.background).toBeInstanceOf(THREE.Color);
+    expect(rendererOf().alpha).toBe(false);
+    expect(rendererOf().clearAlpha).toBe(1);
+  });
+
+  it("clears to transparent with the transparentBackground prop", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      { minimap: false, transparentBackground: true },
+      { ready: ((e: Board3DEngine) => { engine = e; }) as never },
+    );
+    await nextTick();
+    // No scene backdrop: the page's own backdrop shows through. The
+    // drawing buffer must actually HAVE an alpha channel, and the clear
+    // must be fully transparent — an opaque clear would read as black.
+    expect(engine!.scene.background).toBeNull();
+    expect(rendererOf().alpha).toBe(true);
+    expect(rendererOf().clearAlpha).toBe(0);
   });
 });

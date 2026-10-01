@@ -19,7 +19,16 @@
  *    walk up to the registered root via userData);
  *  - HOVER FRAME: the hovered object is wrapped in an 8-corner selection
  *    frame (default ON, see the `hoverBox` prop) — the pointer marks what
- *    it is aiming at instead of resizing it;
+ *    it is aiming at instead of resizing it; hovering the SELECTED body
+ *    shows nothing extra (the selection frame is already there);
+ *  - SELECTION FRAME: `engine.setSelection(id)` pins the same 8-corner
+ *    frame on a registered object for as long as the selection lasts —
+ *    the persistent counterpart of the hover frame, tinted with the
+ *    theme's primary instead of the text channel (user direction
+ *    2026-10-01: the fleet sky marks its selection with the cube cursor,
+ *    never with a ring). The frame survives the object being removed and
+ *    re-registered under the same id (a roster rebuild re-measures), and
+ *    only `setSelection(null)` clears it;
  *  - LABELS: a CSS2DRenderer overlay — HTML chips that track world
  *    anchors, pointer-events opt-in per chip so drags still orbit;
  *  - MINIMAP: HkMinimap3D pinned bottom-right — a second, stereoscopic
@@ -27,7 +36,9 @@
  *    plane and content markers layered in;
  *  - THEME: scene background follows --color-background, re-read on
  *    data-mode / data-theme / style mutations; `engine.onTheme` lets the
- *    page re-tone its materials on the same signal;
+ *    page re-tone its materials on the same signal. With the
+ *    `transparentBackground` prop the canvas clears to transparent
+ *    instead, so the page's own backdrop shows through the sky;
  *  - FALLBACK: no WebGL → the `fallback` slot (or a localized note) and
  *    an `error` event; nothing throws out of mount.
  *
@@ -119,6 +130,16 @@ export interface Board3DEngine {
   /** Post-render hook (the minimap lives here); returns the disposer. */
   addPostRender(fn: () => void): () => void;
   setObject(id: string, def: Board3DObjectDef | null): void;
+  /** Pin the persistent 8-corner selection frame on the registered
+   *  object `id` (`null` clears it). The frame is independent of the
+   *  pointer: it rides the object through orbits and rebuilds, hides
+   *  while the object is absent or unmeasurable, and re-measures when
+   *  the id is re-registered. It marks what the page SELECTED — a
+   *  `pickable: false` object is marked all the same (pointer
+   *  reachability is a hover concern, not a selection one). Selecting
+   *  an object also suppresses the HOVER frame on that same object —
+   *  the selection frame is already marking it. */
+  setSelection(id: string | null): void;
   /** Snapshot of the registered content (the minimap's marker set).
    *  Mutating it does not touch the board — register through
    *  `setObject` instead. */
@@ -291,6 +312,17 @@ function hoverFrameColor(background: THREE.Color): THREE.Color {
   );
 }
 
+/**
+ * The selection frame's tint: the theme's PRIMARY channel on both modes.
+ * It has to read apart from the hover frame (text/muted, i.e. near-white
+ * over a night sky) at a glance — the selection is a statement about the
+ * page's data, and primary is the one channel already reserved for
+ * exactly that.
+ */
+function selectionFrameColor(): THREE.Color {
+  return cssRgbToColor(readCssColor("--color-primary", "21 101 192"));
+}
+
 export default defineComponent({
   name: "HkBoard3D",
   props: {
@@ -329,13 +361,20 @@ export default defineComponent({
     /** Wrap the hovered object in the 8-corner selection frame. Defaults
      *  ON: anything the pointer can select gets one, and `frameObject:
      *  null` opts a single object out. Turn it off for boards whose
-     *  content is not "selected" at all. */
+     *  content is not "selected" at all. Hovering the object pinned by
+     *  `engine.setSelection` draws no second frame — the selection
+     *  frame is already there. */
     hoverBox: { type: Boolean, default: true },
+    /** Clear the canvas to transparent instead of painting the theme
+     *  background, so the page's own backdrop shows through the sky.
+     *  STATIC after mount (the drawing buffer's alpha channel exists or
+     *  it does not — remount to change it). */
+    transparentBackground: { type: Boolean, default: false },
     /** Freeze the frame loop (content keeps its last pose). An animated
      *  flight issued while paused lands in a single jump on resume: the
-     *  tween is evaluated against wall-clock time. Hover is frozen with
-     *  it: the frame keeps whatever it had painted until the loop resumes
-     *  (nothing re-renders while paused). */
+     *  tween is evaluated against wall-clock time. Both pointer/selection
+     *  frames are frozen with it: each keeps whatever it had painted
+     *  until the loop resumes (nothing re-renders while paused). */
     paused: { type: Boolean, default: false },
   },
   emits: {
@@ -357,6 +396,7 @@ export default defineComponent({
     let camera: THREE.PerspectiveCamera | null = null;
     let controls: OrbitControls | null = null;
     let hoverFrame: HoverBoxHandle | null = null;
+    let selectionFrame: HoverBoxHandle | null = null;
     let resizeObs: ResizeObserver | null = null;
     let themeObs: MutationObserver | null = null;
     let rafId = 0;
@@ -384,6 +424,8 @@ export default defineComponent({
     const ndc = new THREE.Vector2();
     let hoverDirty = false;
     let lastHover: string | null = null;
+    /** The id pinned by `engine.setSelection` (null = no selection). */
+    let selectionId: string | null = null;
     let pressAt: { pointerId: number; x: number; y: number } | null = null;
 
     // ── camera tween ──────────────────────────────────────────────────
@@ -400,9 +442,14 @@ export default defineComponent({
       const bgRaw = readCssColor("--color-background", "10 15 25");
       const primaryRaw = readCssColor("--color-primary", "21 101 192");
       const bg = cssRgbToColor(bgRaw);
-      if (scene) scene.background = bg;
-      if (renderer) renderer.setClearColor(bg, 1);
+      // Transparent mode keeps the TINT for the clear colour but drops
+      // the scene backdrop and the clear ALPHA to 0, so the page's own
+      // backdrop shows through (the renderer must have been mounted with
+      // `alpha: true` — the prop is static for exactly this reason).
+      if (scene) scene.background = props.transparentBackground ? null : bg;
+      if (renderer) renderer.setClearColor(bg, props.transparentBackground ? 0 : 1);
       hoverFrame?.setColor(hoverFrameColor(bg));
+      selectionFrame?.setColor(selectionFrameColor());
       for (const cb of themeHooks) cb(bgRaw, primaryRaw);
     }
 
@@ -453,6 +500,10 @@ export default defineComponent({
      *  measurement is the expensive half, so it happens on hover change
      *  only — the per-frame half is one matrix composition. */
     let frameBound = false;
+    /** Same latch/cooldown pair for the SELECTION frame (it re-measures
+     *  when the selected id is re-registered, i.e. after a rebuild). */
+    let selectionBound = false;
+    let selectionCooldown = 0;
     /** Frames still to skip before the next measurement attempt while the
      *  hovered target has nothing measurable to wrap (content still
      *  streaming in). A permanently unmeasurable target — a group of
@@ -537,10 +588,16 @@ export default defineComponent({
      * content still streaming in under a resting pointer — also stays
      * un-latched, which is what lets the frame appear when the content
      * finally lands.
+     *
+     * The SELECTED object is likewise unmarked: its selection frame is
+     * already on, and two nested brackets around one body read as noise,
+     * not information.
      */
     function syncHoverFrame(): void {
       if (!hoverFrame) return;
-      const def = props.hoverBox && lastHover !== null ? registry.get(lastHover) : undefined;
+      const def = props.hoverBox && lastHover !== null && lastHover !== selectionId
+        ? registry.get(lastHover)
+        : undefined;
       const target = def ? (def.frameObject === null ? null : (def.frameObject ?? def.object)) : null;
       if (!def || def.pickable === false || !target || !isVisibleInHierarchy(target)) {
         hoverFrame.hide();
@@ -558,6 +615,36 @@ export default defineComponent({
         return;
       }
       hoverFrame.refresh();
+    }
+
+    /**
+     * The selection frame: the same measure-once / ride-the-world-matrix
+     * contract as the hover frame, driven by `engine.setSelection`
+     * instead of the pointer. It is deliberately STICKY — a removed id
+     * (a roster rebuild strips and re-registers every body) hides the
+     * frame for the interim and re-measures on re-registration, but the
+     * selection itself only ever ends through `setSelection(null)`.
+     */
+    function syncSelectionFrame(): void {
+      if (!selectionFrame) return;
+      const def = selectionId !== null ? registry.get(selectionId) : undefined;
+      const target = def ? (def.frameObject === null ? null : (def.frameObject ?? def.object)) : null;
+      if (!def || !target || !isVisibleInHierarchy(target)) {
+        selectionFrame.hide();
+        selectionBound = false;
+        selectionCooldown = 0;
+        return;
+      }
+      if (!selectionBound) {
+        if (selectionCooldown > 0) {
+          selectionCooldown -= 1;
+          return;
+        }
+        selectionBound = selectionFrame.attach(def.object, target);
+        selectionCooldown = selectionBound ? 0 : HOVER_BOX_RETRY_FRAMES;
+        return;
+      }
+      selectionFrame.refresh();
     }
 
     function frame(): void {
@@ -595,6 +682,7 @@ export default defineComponent({
       // After the tick hooks have posed the content, so the frame lands on
       // this frame's pose rather than the previous one.
       syncHoverFrame();
+      syncSelectionFrame();
 
       renderer.render(scene, camera);
       labelRenderer?.render(scene, camera);
@@ -607,12 +695,16 @@ export default defineComponent({
       if (!canvas || !container) return;
 
       scene = new THREE.Scene();
-      // The hover frame is a pointer affordance, not scenery: it hangs off
-      // the scene root (so it never joins framing, markers or picking) and
-      // rides the main-camera-only layer, keeping the minimap render clean.
+      // Both frames are pointer/selection affordances, not scenery: they
+      // hang off the scene root (so they never join framing, markers or
+      // picking) and ride the main-camera-only layer, keeping the minimap
+      // render clean.
       hoverFrame = createHoverBox();
       hoverFrame.object.layers.set(BOARD3D_MAIN_LAYER);
       scene.add(hoverFrame.object);
+      selectionFrame = createHoverBox();
+      selectionFrame.object.layers.set(BOARD3D_MAIN_LAYER);
+      scene.add(selectionFrame.object);
       // A degenerate fov (≤ 0 or ≥ 180) silently bricks the projection —
       // projectionMatrix[5] becomes Infinity/negative, projection and
       // picking return NaN, and nothing throws. Fall back to the default.
@@ -627,7 +719,15 @@ export default defineComponent({
       camera.position.set(initPos[0], initPos[1], initPos[2]);
       camera.lookAt(initTarget[0], initTarget[1], initTarget[2]);
 
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        // Transparent backdrops need an alpha channel in the drawing
+        // buffer — an `alpha: false` context would paint the cleared
+        // pixels opaque black over the page. This is why the prop is
+        // documented STATIC after mount.
+        alpha: props.transparentBackground,
+      });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.15;
@@ -706,7 +806,13 @@ export default defineComponent({
           // their content), and a frame still measured against the old one
           // would hang where that object used to be — it is out of the
           // scene now and never moves again. Measure again on the next
-          // frame instead.
+          // frame instead. The selection frame follows the same rule for
+          // its own id (the fleet sky strips and re-registers every body
+          // on a roster refresh; the selection must survive that).
+          if (id === selectionId) {
+            selectionBound = false;
+            selectionCooldown = 0;
+          }
           if (id === lastHover) {
             frameBound = false;
             measureCooldown = 0;
@@ -753,6 +859,24 @@ export default defineComponent({
         // A snapshot: a consumer that casts it to Map and clears it must
         // not be able to desynchronise the board from its scene.
         objects: () => new Map(registry),
+        setSelection(id) {
+          // Re-selecting the SAME id is a no-op: releasing the latch would
+          // force a full re-measure next frame for a frame that is already
+          // correct — a page that re-selects on every data refresh would
+          // otherwise pay the subtree walk each time (the hover path makes
+          // the same guard at the event level).
+          if (selectionId === id) return;
+          // The frame hides itself while the id is absent from the
+          // registry (syncSelectionFrame runs every frame), so an unknown
+          // or not-yet-registered id is accepted as-is — a consumer may
+          // legitimately select before the content lands. A CHANGED id
+          // must also release the measurement latch: without this, the
+          // frame keeps riding the PREVIOUS anchor's world matrix and
+          // paints a bracket around the body the user just deselected.
+          selectionId = id;
+          selectionBound = false;
+          selectionCooldown = 0;
+        },
         flyTo(position, target, durationMs = 600) {
           if (!camera || !controls) return;
           // A non-finite pose would brick the camera silently (every later
@@ -970,7 +1094,13 @@ export default defineComponent({
         hoverFrame.dispose();
         hoverFrame = null;
       }
+      if (selectionFrame) {
+        scene?.remove(selectionFrame.object);
+        selectionFrame.dispose();
+        selectionFrame = null;
+      }
       frameBound = false;
+      selectionBound = false;
       controls?.dispose();
       if (labelRenderer?.domElement.parentNode) {
         labelRenderer.domElement.parentNode.removeChild(labelRenderer.domElement);

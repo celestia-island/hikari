@@ -263,6 +263,63 @@ describe("ModelLayer", () => {
     layer.dispose();
   });
 
+  it("invalidates a load whose id was removed mid-flight", async () => {
+    const scene = new THREE.Scene();
+    const layer = new ModelLayer(scene);
+    // Stub the loader: hand back a controllable deferred.
+    const realLoad = layer["loader"].load.bind(layer["loader"]);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    (layer["loader"] as unknown as { load: unknown }).load = (
+      _url: string,
+      onLoad: (g: unknown) => void,
+    ) => {
+      void realLoad;
+      void gate.then(() => onLoad({ scene: new THREE.Group() }));
+      return undefined;
+    };
+    const pending = layer.loadModel("m-gone", { source: "https://x/m.glb" });
+    // The id is cleared while the fetch is still in flight.
+    layer.removeModel("m-gone");
+    release();
+    const group = await pending;
+    // A late parse must never install an orphan under a dead id.
+    expect(group).toBeNull();
+    expect(scene.children).toHaveLength(0);
+    layer.dispose();
+  });
+
+  it("carries the rig's userData onto merged meshes for the factory", async () => {
+    const scene = new THREE.Scene();
+    const layer = new ModelLayer(scene);
+    const seen: Array<Record<string, unknown>> = [];
+    const group = await layer.loadModel("m1", {
+      source: triangleGlb({ secondPrimitive: true }),
+      onRig: (root) => {
+        root.traverse((child) => {
+          const mesh = child as THREE.Mesh;
+          if (mesh.isMesh) {
+            mesh.userData.matRole = "shell";
+            mesh.userData.matOverride = "holographic";
+          }
+        });
+      },
+      materialFactory: (mesh) => {
+        seen.push({ ...mesh.userData });
+        return null;
+      },
+    });
+    expect(group).toBeTruthy();
+    // Both primitives merged into one mesh — and the factory SAW the
+    // stamps (the merge must not eat consumer userData).
+    expect(seen).toHaveLength(1);
+    expect(seen[0].matRole).toBe("shell");
+    expect(seen[0].matOverride).toBe("holographic");
+    layer.dispose();
+  });
+
   it("hands the parsed rig to onRig before placement", async () => {
     const scene = new THREE.Scene();
     const layer = new ModelLayer(scene);

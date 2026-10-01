@@ -120,7 +120,12 @@ function mergeByMaterial(root: THREE.Object3D): {
     const mesh = new THREE.Mesh(merged, material);
     mesh.castShadow = donor.castShadow;
     mesh.receiveShadow = donor.receiveShadow;
-    mesh.userData.matRole = donor.userData.matRole;
+    // The donor's whole userData travels with the merge: consumers stamp
+    // classification (material roles/overrides) on the rig in `onRig`,
+    // and the materialFactory walk only ever sees the MERGED meshes.
+    for (const [key, value] of Object.entries(donor.userData)) {
+      if (key !== "board3dId") mesh.userData[key] = value;
+    }
     root.add(mesh);
     geometries.add(merged);
   }
@@ -307,11 +312,14 @@ export class ModelLayer {
     return [v.x, v.y, v.z];
   }
 
-  /** Remove and dispose a model. */
+  /** Remove and dispose a model. Also invalidates any load still in
+   *  flight for the id — a late parse must not install an orphan under a
+   *  dead id (the bump happens even without an entry for exactly that
+   *  reason). */
   removeModel(id: string): void {
+    this.loadTokens.set(id, (this.loadTokens.get(id) ?? 0) + 1);
     const entry = this.entries.get(id);
     if (!entry) return;
-    this.loadTokens.set(id, (this.loadTokens.get(id) ?? 0) + 1);
     this.scene.remove(entry.root);
     disposeSubtree(entry.root, entry);
     this.entries.delete(id);

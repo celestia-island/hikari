@@ -199,6 +199,9 @@ export interface Board3DCameraConfig {
   far?: number;
   position?: [number, number, number];
   target?: [number, number, number];
+  /** Orbit distance window (normalized when reversed). */
+  minDistance?: number;
+  maxDistance?: number;
 }
 
 export interface Board3DFocusOptions {
@@ -519,6 +522,13 @@ export default defineComponent({
       controls.enablePan = props.enablePan;
       controls.target.set(initTarget[0], initTarget[1], initTarget[2]);
       controls.enabled = props.interactive;
+      if (!props.interactive) {
+        // An externally-driven camera (the board is just its renderer)
+        // must not be fought by the orbit distance window — the panel
+        // flies to poses far beyond any interactive zoom range.
+        controls.minDistance = 0;
+        controls.maxDistance = Infinity;
+      }
       controls.update();
 
       applyTheme();
@@ -687,6 +697,18 @@ export default defineComponent({
           camera.updateProjectionMatrix();
           if (isFiniteVec3(cfg.position)) camera.position.set(...cfg.position);
           if (isFiniteVec3(cfg.target)) controls.target.set(...cfg.target);
+          if (Number.isFinite(cfg.minDistance) && Number.isFinite(cfg.maxDistance)) {
+            // A reversed window normalises (same rule as the props).
+            controls.minDistance = Math.min(cfg.minDistance!, cfg.maxDistance!);
+            controls.maxDistance = Math.max(cfg.minDistance!, cfg.maxDistance!);
+          } else {
+            if (Number.isFinite(cfg.minDistance) && cfg.minDistance! >= 0) {
+              controls.minDistance = cfg.minDistance!;
+            }
+            if (Number.isFinite(cfg.maxDistance) && cfg.maxDistance! > 0) {
+              controls.maxDistance = cfg.maxDistance!;
+            }
+          }
           controls.update();
         },
         flyToFocus(target, radius, durationMs = 600, opts) {
@@ -756,6 +778,8 @@ export default defineComponent({
       };
 
       engineRef.value = engine;
+      // Zero the deltas across tab-hide gaps (Timer's whole job).
+      clock.connect(document);
       rafId = requestAnimationFrame(frame);
       emit("ready", engine);
     }
@@ -781,6 +805,7 @@ export default defineComponent({
     onBeforeUnmount(() => {
       disposed = true;
       cancelAnimationFrame(rafId);
+      clock.disconnect();
       resizeObs?.disconnect();
       themeObs?.disconnect();
       const canvas = canvasRef.value;

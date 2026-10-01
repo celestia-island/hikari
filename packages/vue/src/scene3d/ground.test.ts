@@ -84,6 +84,10 @@ describe("createGround", () => {
     const dotMax = uniforms.uDotMax.value as THREE.Vector2;
     expect(dotMin.x).toBeCloseTo(-12, 6);
     expect(dotMax.x).toBeCloseTo(32, 6);
+    // Z axis too (a z-only swap used to slip through).
+    expect(dotMin.y).toBeCloseTo(-6, 6);
+    expect(dotMax.y).toBeCloseTo(10, 6);
+    expect(uniforms.uFadeEnd.value).toBeCloseTo(40 * 2.0 + 120, 6);
     handle.dispose();
   });
 });

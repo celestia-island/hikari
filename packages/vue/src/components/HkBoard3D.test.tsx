@@ -432,6 +432,115 @@ describe("HkBoard3D", () => {
     expect(engine!.camera.position.distanceTo(engine!.controls.target)).toBeLessThan(100);
   });
 
+  it("applies a camera configuration and ignores degenerate values", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    engine!.applyCameraConfig({
+      fov: 30,
+      near: 0.5,
+      far: 900,
+      position: [4, 5, 6],
+      target: [1, 1, 1],
+    });
+    expect(engine!.camera.fov).toBe(30);
+    expect(engine!.camera.near).toBeCloseTo(0.5, 6);
+    expect(engine!.camera.far).toBeCloseTo(900, 6);
+    expect(engine!.camera.position.x).toBeCloseTo(4, 6);
+    expect(engine!.controls.target.x).toBeCloseTo(1, 6);
+
+    // A degenerate fov must not brick the projection (round-3 defect
+    // class): the previous good value survives.
+    engine!.applyCameraConfig({ fov: 0 });
+    expect(engine!.camera.fov).toBe(30);
+    // Neither may a non-finite pose.
+    engine!.applyCameraConfig({ position: [Number.NaN, 0, 0] as never });
+    expect(engine!.camera.position.x).toBeCloseTo(4, 6);
+  });
+
+  it("flies to a focus sphere with padding and lateral bias", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    engine!.flyToFocus([0, 0, 0], 10, 0);
+    const dist = engine!.camera.position.length();
+    // padding 1.6 over the fit distance for radius 10 at fov 45.
+    const fit = 10 / Math.sin(((45 * Math.PI) / 180 / 2)) * 1.6;
+    expect(dist).toBeCloseTo(fit, 1);
+    expect(engine!.controls.target.length()).toBeCloseTo(0, 6);
+
+    // A non-finite target or radius is ignored, not applied.
+    const before = engine!.camera.position.clone();
+    engine!.flyToFocus([Number.NaN, 0, 0] as never, 5, 0);
+    expect(engine!.camera.position.equals(before)).toBe(true);
+  });
+
+  it("parks the camera top-down and restores the orbit pose", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    engine!.applyCameraConfig({ position: [8, 6, 10], target: [2, 0, 2] });
+    engine!.setViewMode("topdown", 0);
+    expect(engine!.viewMode()).toBe("topdown");
+    // Instant application (the 300 ms flight is time-based; the mode and
+    // the destination are already computed).
+    const t = engine!.controls.target;
+    const p = engine!.camera.position;
+    expect(p.x).toBeCloseTo(t.x, 3);
+    // Directly above, bar the hair of Z that keeps `up` from degenerating.
+    expect(Math.abs(p.z - t.z)).toBeLessThan(0.01);
+    expect(p.y).toBeGreaterThan(t.y);
+
+    engine!.setViewMode("orbit", 0);
+    expect(engine!.viewMode()).toBe("orbit");
+    // …and the saved orbit pose came back.
+    expect(engine!.camera.position.x).toBeCloseTo(8, 3);
+    expect(engine!.controls.target.x).toBeCloseTo(2, 3);
+  });
+
+  it("builds a ground on demand and strips it on unmount", async () => {
+    let engine: Board3DEngine | null = null;
+    const { container } = mountBoard(
+      {},
+      { ready: ((e: Board3DEngine) => { engine = e; }) as never },
+    );
+    await nextTick();
+    const sceneChildrenBefore = engine!.scene.children.length;
+
+    engine!.setGround({ enabled: true, y: -1 });
+    expect(engine!.scene.children.length).toBe(sceneChildrenBefore + 1);
+
+    engine!.setGround({ enabled: false });
+    expect(engine!.scene.children.length).toBe(sceneChildrenBefore);
+
+    // Rebuild for the unmount path: a leaked ground would survive the
+    // component's death in the (detached) scene.
+    engine!.setGround({ enabled: true });
+    const m = mounts.splice(0)[0];
+    m.app.unmount();
+    m.container.remove();
+    expect(engine!.scene.children.some((c) => (c as THREE.Group).isObject3D && c.type === "Group" && c.children.length === 2)).toBe(false);
+    void container;
+  });
+
+  it("installs the lighting rig on first applyLighting", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard({}, { ready: ((e: Board3DEngine) => { engine = e; }) as never });
+    await nextTick();
+
+    engine!.applyLighting({ ambientIntensity: 0.9, points: [
+      { color: [1, 0, 0], intensity: 2, range: 10, position: [0, 3, 0] },
+    ] });
+    const kinds = engine!.scene.children.map((c) => c.constructor.name);
+    expect(kinds).toContain("AmbientLight");
+    expect(kinds).toContain("DirectionalLight");
+    expect(kinds).toContain("HemisphereLight");
+    expect(kinds).toContain("PointLight");
+  });
+
   it("projectToScreen lands the origin at canvas centre for the default pose", async () => {
     let engine: Board3DEngine | null = null;
     const { container } = mountBoard(

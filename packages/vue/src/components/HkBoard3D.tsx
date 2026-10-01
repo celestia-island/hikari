@@ -60,10 +60,17 @@ import {
 
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 
 import { useI18n } from "../i18n/context";
 import { ModelLayer, type Board3DModelOptions } from "../scene3d/modelLayer";
+import { createGround, type Board3DGroundConfig, type GroundHandle } from "../scene3d/ground";
+import {
+  LightingRig,
+  type Board3DLightingDescriptor,
+  type LightingRigOptions,
+} from "../scene3d/lighting";
 import { BOARD3D_HELPERS_LAYER, fitDistance } from "../utils/scene3d";
 import HkMinimap3D from "./HkMinimap3D";
 import "./HkBoard3D.scss";
@@ -134,9 +141,79 @@ export interface Board3DEngine {
   modelWorldPosition(id: string): [number, number, number] | null;
   /** Remove and dispose a loaded model. */
   removeModel(id: string): void;
+
+  // ── Camera policy ────────────────────────────────────────────────────
+  /** Apply a camera configuration (fov/near/far/pose); non-finite
+   *  values are ignored and a degenerate fov falls back to the default. */
+  applyCameraConfig(cfg: Board3DCameraConfig): void;
+  /** Fly the camera so a sphere of `radius` at `target` fills the view
+   *  from the framing angle; `opts` carries the policy knobs (padding,
+   *  lateral bias along the view's right axis). */
+  flyToFocus(
+    target: [number, number, number],
+    radius: number,
+    durationMs?: number,
+    opts?: Board3DFocusOptions,
+  ): void;
+  /** Preset flights: `topdown` parks the camera above the current
+   *  target; `orbit` returns to the pose saved when topdown began.
+   *  Pass durationMs 0 to snap. */
+  setViewMode(mode: Board3DViewMode, durationMs?: number): void;
+  /** The last preset (a free orbit does not clear `orbit`). */
+  viewMode(): Board3DViewMode;
+
+  // ── World ────────────────────────────────────────────────────────────
+  /** Build (or rebuild) the ground: a shadow catcher plus the shader
+   *  grid. `frameAll` refits it to the framed content. */
+  setGround(cfg: Board3DGroundConfig): void;
+  setGroundVisible(v: boolean): void;
+
+  // ── Lighting ─────────────────────────────────────────────────────────
+  /** Apply a lighting descriptor (ambient / directional / points). The
+   *  rig is created on first use with the `lighting` prop's options. */
+  applyLighting(desc: Board3DLightingDescriptor): void;
+  /** Policy-driven sun (e.g. a wall-clock arc). */
+  setSunState(
+    pos: [number, number, number],
+    color: [number, number, number],
+    intensity: number,
+  ): void;
+  setNightFill(night: boolean): void;
+  /** Resize the shadow frustum onto the scene extent. */
+  setShadowBounds(extent: number, targetX?: number, targetZ?: number): void;
+
+  // ── Environment ──────────────────────────────────────────────────────
+  /** `studio` sets a procedural PBR environment (PMREM RoomEnvironment)
+   *  so standard materials catch reflections; `none` clears it. */
+  applyEnvironment(preset: "studio" | "none"): void;
 }
 
+export interface Board3DCameraConfig {
+  fov?: number;
+  near?: number;
+  far?: number;
+  position?: [number, number, number];
+  target?: [number, number, number];
+}
+
+export interface Board3DFocusOptions {
+  /** Distance multiplier (default 1.6 — generous, avoids claustrophobia). */
+  padding?: number;
+  /** Camera shift along the view's right axis, world units. */
+  lateralBias?: number;
+}
+
+export type Board3DViewMode = "orbit" | "topdown";
+
 const CLICK_SLOP_PX = 4;
+
+/** Procedural PBR environment so standard materials catch reflections. */
+function studioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture {
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const tex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  pmrem.dispose();
+  return tex;
+}
 
 /** A pose component is usable only if all three numbers are finite. */
 function isFiniteVec3(v: readonly number[] | undefined): v is readonly [number, number, number] {
@@ -189,6 +266,15 @@ export default defineComponent({
     maxDistance: { type: Number, default: 600 },
     /** Wire two-finger / right-drag panning. STATIC after mount. */
     enablePan: { type: Boolean, default: true },
+    /** Options for the lighting rig created on first `applyLighting`
+     *  (ambient floor, shadow map size). */
+    lighting: {
+      type: Object as PropType<LightingRigOptions>,
+      default: () => ({}),
+    },
+    /** Keep the camera's near/far planes clipped to the framed extent
+     *  (large scenes lose depth precision without it). */
+    autoClipping: { type: Boolean, default: false },
     /** Freeze the frame loop (content keeps its last pose). An animated
      *  flight issued while paused lands in a single jump on resume: the
      *  tween is evaluated against wall-clock time. */
@@ -223,6 +309,12 @@ export default defineComponent({
     const registry = new Map<string, Board3DObjectDef>();
     /** GLB mechanics (load/place/opacity/highlight) — created in init(). */
     let modelLayer: ModelLayer | null = null;
+    let groundHandle: GroundHandle | null = null;
+    let lightingRig: LightingRig | null = null;
+    let envTexture: THREE.Texture | null = null;
+    /** The pose to restore when leaving topdown. */
+    let orbitPose: { pos: THREE.Vector3; target: THREE.Vector3 } | null = null;
+    let mode: "orbit" | "topdown" = "orbit";
     /** The CSS2D chip attached for a registered id — tracked so a
      *  re-register or a clear detaches it instead of stacking chips. */
     const labelTags = new Map<string, CSS2DObject>();
@@ -439,6 +531,14 @@ export default defineComponent({
       canvas.addEventListener("pointercancel", onPointerCancel);
       canvas.addEventListener("lostpointercapture", onLostPointerCapture, true);
 
+      /** Depth planes from a subject distance (large scenes need it). */
+      function applyClipping(dist: number): void {
+        if (!camera) return;
+        camera.near = Math.max(0.1, dist / 200);
+        camera.far = Math.max(dist * 200, camera.near + 1);
+        camera.updateProjectionMatrix();
+      }
+
       modelLayer = new ModelLayer(scene);
 
       const engine: Board3DEngine = {
@@ -528,8 +628,10 @@ export default defineComponent({
           // frameAll before its content arrives): stay put rather than
           // framing whatever happens to be in the scene.
           if (!any || box.isEmpty()) return;
+          groundHandle?.fit(box);
           const sphere = box.getBoundingSphere(new THREE.Sphere());
           const dist = fitDistance(sphere.radius, camera.fov, camera.aspect) * padding;
+          if (props.autoClipping) applyClipping(dist);
           // Keep the current viewing direction — a fit reframes, it
           // never whips the user around to a canonical side.
           const dir = camera.position.clone().sub(controls.target);
@@ -568,6 +670,73 @@ export default defineComponent({
         modelObject: (id) => modelLayer?.objectOf(id) ?? null,
         modelWorldPosition: (id) => modelLayer?.worldPosition(id) ?? null,
         removeModel: (id) => modelLayer?.removeModel(id),
+        applyCameraConfig(cfg) {
+          if (!camera || !controls) return;
+          const fov = Number.isFinite(cfg.fov) && cfg.fov! > 0 && cfg.fov! < 180 ? cfg.fov! : camera.fov;
+          camera.fov = fov;
+          if (Number.isFinite(cfg.near) && cfg.near! > 0) camera.near = cfg.near!;
+          if (Number.isFinite(cfg.far) && cfg.far! > camera.near) camera.far = cfg.far!;
+          camera.updateProjectionMatrix();
+          if (isFiniteVec3(cfg.position)) camera.position.set(...cfg.position);
+          if (isFiniteVec3(cfg.target)) controls.target.set(...cfg.target);
+          controls.update();
+        },
+        flyToFocus(target, radius, durationMs = 600, opts) {
+          if (!camera || !controls) return;
+          if (!isFiniteVec3(target) || !Number.isFinite(radius) || radius <= 0) return;
+          // The framing angle: slightly elevated, pulled back along -Z.
+          const dir = new THREE.Vector3(-0.03, 0.3, -1).normalize();
+          const dist = fitDistance(radius, camera.fov, camera.aspect) * (opts?.padding ?? 1.6);
+          const pos = new THREE.Vector3(...target).add(dir.multiplyScalar(dist));
+          const bias = opts?.lateralBias ?? 0;
+          if (bias !== 0) {
+            const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+            pos.add(right.multiplyScalar(bias));
+          }
+          engine.flyTo([pos.x, pos.y, pos.z], target, durationMs);
+          if (props.autoClipping) applyClipping(dist);
+        },
+        setViewMode(next, durationMs = 300) {
+          if (!camera || !controls || next === mode) return;
+          if (next === "topdown") {
+            orbitPose = { pos: camera.position.clone(), target: controls.target.clone() };
+            const ct = controls.target;
+            const dist = Math.max(camera.position.distanceTo(ct), 1);
+            // A hair of Z keeps the up axis from degenerating.
+            engine.flyTo([ct.x, ct.y + dist, ct.z + 0.001], [ct.x, ct.y, ct.z], durationMs);
+          } else if (orbitPose) {
+            engine.flyTo(
+              [orbitPose.pos.x, orbitPose.pos.y, orbitPose.pos.z],
+              [orbitPose.target.x, orbitPose.target.y, orbitPose.target.z],
+              durationMs,
+            );
+          }
+          mode = next;
+        },
+        viewMode: () => mode,
+        setGround(cfg) {
+          groundHandle?.dispose();
+          groundHandle = createGround(scene!, cfg);
+        },
+        setGroundVisible: (v) => groundHandle?.setVisible(v),
+        applyLighting(desc) {
+          lightingRig ??= new LightingRig(scene!, props.lighting);
+          lightingRig.apply(desc);
+        },
+        setSunState(pos, color, intensity) {
+          lightingRig ??= new LightingRig(scene!, props.lighting);
+          lightingRig.setSun(pos, color, intensity);
+        },
+        setNightFill: (night) => lightingRig?.setNightFill(night),
+        setShadowBounds: (extent, tx = 0, tz = 0) => lightingRig?.setShadowBounds(extent, tx, tz),
+        applyEnvironment(preset) {
+          if (preset === "none") {
+            if (scene) scene.environment = null;
+            return;
+          }
+          envTexture ??= studioEnvironment(renderer!);
+          if (scene) scene.environment = envTexture;
+        },
       };
 
       engineRef.value = engine;
@@ -612,6 +781,14 @@ export default defineComponent({
       }
       modelLayer?.dispose();
       modelLayer = null;
+      groundHandle?.dispose();
+      groundHandle = null;
+      lightingRig?.dispose();
+      lightingRig = null;
+      if (envTexture) {
+        envTexture.dispose();
+        envTexture = null;
+      }
       for (const tag of labelTags.values()) tag.removeFromParent();
       labelTags.clear();
       renderer?.dispose();

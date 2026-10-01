@@ -372,9 +372,9 @@ export default defineComponent({
     transparentBackground: { type: Boolean, default: false },
     /** Freeze the frame loop (content keeps its last pose). An animated
      *  flight issued while paused lands in a single jump on resume: the
-     *  tween is evaluated against wall-clock time. Hover is frozen with
-     *  it: the frame keeps whatever it had painted until the loop resumes
-     *  (nothing re-renders while paused). */
+     *  tween is evaluated against wall-clock time. Both pointer/selection
+     *  frames are frozen with it: each keeps whatever it had painted
+     *  until the loop resumes (nothing re-renders while paused). */
     paused: { type: Boolean, default: false },
   },
   emits: {
@@ -860,6 +860,12 @@ export default defineComponent({
         // not be able to desynchronise the board from its scene.
         objects: () => new Map(registry),
         setSelection(id) {
+          // Re-selecting the SAME id is a no-op: releasing the latch would
+          // force a full re-measure next frame for a frame that is already
+          // correct — a page that re-selects on every data refresh would
+          // otherwise pay the subtree walk each time (the hover path makes
+          // the same guard at the event level).
+          if (selectionId === id) return;
           // The frame hides itself while the id is absent from the
           // registry (syncSelectionFrame runs every frame), so an unknown
           // or not-yet-registered id is accepted as-is — a consumer may

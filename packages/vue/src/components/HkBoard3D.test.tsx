@@ -1129,6 +1129,23 @@ describe("HkBoard3D selection frame", () => {
     expect(selectionOf(engine).visible).toBe(true);
   });
 
+  it("re-selecting the same id does not re-measure", async () => {
+    const { engine, body } = await selectedBoard();
+    // Pages re-select on data refreshes; each redundant call must be a
+    // no-op, not a forced subtree walk (the hover path guards the same
+    // way at the event level — R2 P2). The measurement walk is the
+    // (updateParents=true, updateChildren=true) call; the per-frame
+    // refresh uses (true, false) and stays.
+    const walk = vi.spyOn(body, "updateWorldMatrix");
+    for (let i = 0; i < 5; i += 1) engine.setSelection("star-1");
+    await tickFrames();
+    const measured = walk.mock.calls.filter(
+      ([parents, children]) => parents === true && children === true,
+    ).length;
+    expect(measured).toBe(0);
+    expect(selectionOf(engine).visible).toBe(true);
+  });
+
   it("only ever ends through setSelection(null)", async () => {
     const { engine } = await selectedBoard();
     expect(selectionOf(engine).visible).toBe(true);

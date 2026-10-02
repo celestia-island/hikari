@@ -47,9 +47,11 @@
    target; sm keeps its compact --text-xs. xs (2026-10-02, connection
    popover action row) shrinks the footprint further for inline popover
    footers: same --text-xs, tighter padding, 1.375rem min-height, and a
-   13px glyph (HkButton.tsx scales icon/suffix with the size) inside a
-   0.8125rem fixed box so the square-glyph contract keeps its rhythm at
-   the smaller scale. */
+   13px glyph produced entirely by the CSS chain below (the glyph box
+   drops to 0.8125rem and the inner .hk-icon span scales to 100% of it,
+   so the svg that always renders at HIcon's size={16} lands at 13px)
+   while the square-glyph contract keeps its rhythm at the smaller
+   scale. HkButton.tsx itself renders every size's glyph identically. */
 
 .hk-btn-xs {
   padding: var(--space-4) var(--space-8);

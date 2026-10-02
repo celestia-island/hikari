@@ -414,4 +414,53 @@ describe("HkStatusBar", () => {
     const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
     expect(panel!.querySelector("[data-status-actions]")).toBeNull();
   });
+
+  it("keeps the actions row available while connection info is still fetching", async () => {
+    const onRetry = vi.fn();
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "disconnected",
+      connectionInfo: null,
+      onRetry,
+    });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    // The row must live OUTSIDE the info/fetching ternary: an outage that
+    // drops connectionInfo to null is exactly when the retry button is
+    // most needed.
+    const button = panel.querySelector<HTMLButtonElement>("[data-status-actions] button");
+    expect(button, "retry button renders without info").toBeTruthy();
+    button!.click();
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("no actions row when the slot renders nothing (wrapper forwards an empty slot)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkStatusBar, {
+          version: "1.2.3",
+          connectionStatus: "connected",
+          connectionInfo: INFO,
+        }, {
+          // HkConnectionStatus forwards `actions` unconditionally; an
+          // empty render must not paint a hairline-only row.
+          actions: () => [],
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel!.querySelector("[data-status-actions]")).toBeNull();
+  });
 });

@@ -286,7 +286,15 @@ export const HkStatusBar = defineComponent({
       // light; hosts append their own (e.g. a full manual refresh)
       // through the `actions` slot.
       const showRetryButton = mode !== "connected" && typeof props.onRetry === "function";
-      const hasActionsRow = showRetryButton || Boolean(slots.actions);
+      // Gate the row on RENDERED content, not on the slot function's
+      // existence: HkConnectionStatus forwards `actions` unconditionally,
+      // so a function-existence gate would paint an empty hairline row in
+      // the connected state for every host that passed no #actions.
+      const actionVnodes = slots.actions?.();
+      const hasHostActions = Array.isArray(actionVnodes)
+        ? actionVnodes.length > 0
+        : Boolean(actionVnodes);
+      const hasActionsRow = showRetryButton || hasHostActions;
 
       const pv = fmtVer(props.version, props.panelBuildHash);
       const ev = props.engineVersion;
@@ -389,7 +397,7 @@ export const HkStatusBar = defineComponent({
                       )}
                     </div>
                   )}
-                  {mode === "disconnected" && !props.onRetry && (
+                  {mode === "disconnected" && !showRetryButton && (
                     <div style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7 }}>
                       {t("hikari::statusBar.clickReconnect", "Click to retry")}
                     </div>
@@ -454,7 +462,7 @@ export const HkStatusBar = defineComponent({
                       {t("hikari::statusBar.retryNow", "Reconnect now")}
                     </HkButton>
                   )}
-                  {slots.actions?.()}
+                  {hasHostActions ? actionVnodes : null}
                 </div>
               )}
             </div>

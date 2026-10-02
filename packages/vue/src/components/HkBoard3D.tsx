@@ -1134,7 +1134,16 @@ export default defineComponent({
     });
 
     return () => (
-      <div class="hk-board3d" ref={containerRef}>
+      <div
+        class="hk-board3d"
+        // The transparent-backdrop mode clears the CANVAS to alpha 0, but
+        // the container's own surface paint would still sit behind it —
+        // a page-colored rectangle where the page's backdrop should show.
+        // An inline style wins over the stylesheet without a specificity
+        // war with consumer classes.
+        style={props.transparentBackground ? { background: "transparent" } : undefined}
+        ref={containerRef}
+      >
         <canvas ref={canvasRef} class="hk-board3d-canvas" />
         {failed.value ? (
           slots.fallback ? (

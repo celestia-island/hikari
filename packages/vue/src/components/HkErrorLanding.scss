@@ -276,21 +276,42 @@
 // in-place instead of covering the whole screen, or when a host view
 // renders it as its failed content region right under a sibling header.
 .hk-error-landing.is-inline {
-  min-height: 0;
-  // In-pane, the host region already pads and a sibling header usually
-  // sits immediately above: the takeover's block-axis padding floated
-  // the card a full padding-frame below its context. The vertical
-  // padding is dropped entirely (the card's own slimmer top padding
-  // below supplies the breathing room); the horizontal inset stays so a
-  // narrow pane never seats the card edge-to-edge.
+  // Fill the HOST REGION's height so the base centering (the align/justify
+  // center on .hk-error-landing — this element matches that selector too,
+  // which is how the centering reaches the inline variant) seats the card
+  // in the middle
+  // of whatever container it landed in — the inline twin of the page
+  // variant centering in the viewport. The old zero min-height collapsed
+  // the root to its content height, which silently disabled that
+  // centering and glued the card to the container's top edge; the #695
+  // padding removal traded "a padding-frame too low" for "flush against
+  // the header". Both were symptoms of spacing-by-inset; centering in the
+  // actual container fixes both hosts at once. A host whose height is
+  // auto (a growing content column, not a framed pane) resolves the
+  // percentage to nothing and keeps a content-sized, top-seated landing
+  // — centering applies exactly as far as the container can express it.
+  min-height: 100%;
+  // The horizontal inset stays so a narrow pane never seats the card
+  // edge-to-edge. No block-axis padding: the gap above/below the card is
+  // the centering's job now — a hardcoded top inset is exactly what read
+  // as "floating too low" under a sibling header in #695.
   padding: 0 var(--space-12, 0.75rem);
+  // Explicit overflow anchor: with the card's auto margins below
+  // collapsed there is no free space left to center in, and the alignment
+  // that then applies must be the START edge — reachable top, clip only
+  // at the unreachable bottom. Spelled out (and pinned by the contract
+  // test) rather than left emergent from the inherited center; with free
+  // space the margins absorb it before alignment ever applies, so this
+  // line only ever shows on overflow.
+  align-items: flex-start;
   background: transparent;
 
-  // The card's page-grade top padding (2.25rem desktop / 1.75rem mobile)
-  // reads as a detached float inside a pane — slim it to one space step.
-  // Specificity (0,3,0) outranks the ≤480px media rule (0,1,0), so this
-  // holds on phones too.
+  // Safe centering: auto margins center the card on both axes while free
+  // space exists and collapse to 0 when it doesn't (the overflow case
+  // anchored by align-items above). Specificity (0,3,0) also keeps the
+  // slim padding below outranking the ≤480px media rule (0,1,0).
   .hk-error-landing__card {
+    margin: auto;
     padding: var(--space-16, 1rem) var(--space-28, 1.75rem) var(--space-24, 1.5rem);
   }
 }

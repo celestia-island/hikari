@@ -25,8 +25,10 @@ export type HErrorTone = "error" | "warning" | "info";
  * Layout variant of the landing.
  * - `page` (default): owns a full-viewport backdrop — for overlays and
  *   standalone error pages.
- * - `inline`: drops the backdrop and viewport height so the same card can
- *   live inside a pane captured by HkErrorBoundary.
+ * - `inline`: drops the backdrop and fills its host region's height
+ *   instead of the viewport, so the same card centers inside whatever
+ *   pane captured it (HkErrorBoundary) or whatever content region a host
+ *   view hands it.
  */
 export type HErrorLandingVariant = "page" | "inline";
 

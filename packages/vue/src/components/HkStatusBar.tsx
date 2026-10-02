@@ -5,6 +5,7 @@ import { useI18n } from "../i18n/context";
 import { HIKARI_FONT_MONO } from "../theme/fontContext";
 
 import HPopover from "./HkPopover";
+import HkButton from "./HkButton";
 import type { HkConnectionInfo } from "./HkConnectionInfo";
 import { HkCountdownDigit } from "./HkCountdownDigit";
 
@@ -112,7 +113,7 @@ export const HkStatusBar = defineComponent({
       default: undefined,
     },
   },
-  setup(props) {
+  setup(props, { slots }) {
     const popupOpen = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
     let closeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -197,6 +198,16 @@ export const HkStatusBar = defineComponent({
       }
     }
 
+    // Popover retry button: the echo guard applies here too — a late
+    // synthetic click following the touch activation that opened the
+    // popover must not double-fire the retry through the button.
+    function onRetryButtonClick() {
+      if (Date.now() < touchEchoGuardUntil) return;
+      if (props.connectionStatus !== "connected") {
+        props.onRetry?.();
+      }
+    }
+
     // ── Touch activation ────────────────────────────────────────────
     // Mobile tap-to-retry used to ride the SYNTHESIZED mouse chain
     // (touchend → mouseenter → click → mouseleave), which browsers may
@@ -268,6 +279,22 @@ export const HkStatusBar = defineComponent({
         : t("hikari::statusBar.disconnected", "Disconnected");
 
       const connecting = mode === "reconnecting" || mode === "connecting";
+      // Actions row: the popover body teleports to <body>, so a click on
+      // the "click to reconnect" hint text inside it never reached the
+      // tag's own click handler — the popover now carries REAL buttons.
+      // The built-in one retriggers the reconnect for any non-green
+      // light; hosts append their own (e.g. a full manual refresh)
+      // through the `actions` slot.
+      const showRetryButton = mode !== "connected" && typeof props.onRetry === "function";
+      // Gate the row on RENDERED content, not on the slot function's
+      // existence: HkConnectionStatus forwards `actions` unconditionally,
+      // so a function-existence gate would paint an empty hairline row in
+      // the connected state for every host that passed no #actions.
+      const actionVnodes = slots.actions?.();
+      const hasHostActions = Array.isArray(actionVnodes)
+        ? actionVnodes.length > 0
+        : Boolean(actionVnodes);
+      const hasActionsRow = showRetryButton || hasHostActions;
 
       const pv = fmtVer(props.version, props.panelBuildHash);
       const ev = props.engineVersion;
@@ -370,7 +397,7 @@ export const HkStatusBar = defineComponent({
                       )}
                     </div>
                   )}
-                  {mode === "disconnected" && (
+                  {mode === "disconnected" && !showRetryButton && (
                     <div style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7 }}>
                       {t("hikari::statusBar.clickReconnect", "Click to retry")}
                     </div>
@@ -417,6 +444,26 @@ export const HkStatusBar = defineComponent({
                 </>
               ) : (
                 <div style={{ opacity: 0.5 }}>{t("hikari::statusBar.fetching", "Fetching connection info...")}</div>
+              )}
+              {hasActionsRow && (
+                <div
+                  data-status-actions
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginTop: "8px",
+                    paddingTop: "8px",
+                    borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
+                  }}
+                >
+                  {showRetryButton && (
+                    <HkButton size="sm" variant="secondary" onClick={onRetryButtonClick}>
+                      {t("hikari::statusBar.retryNow", "Reconnect now")}
+                    </HkButton>
+                  )}
+                  {hasHostActions ? actionVnodes : null}
+                </div>
               )}
             </div>
           </HPopover>

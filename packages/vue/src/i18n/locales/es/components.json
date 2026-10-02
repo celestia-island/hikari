@@ -150,6 +150,7 @@
     "hikari::statusBar.backend.unknown": "Desconocido",
     "hikari::statusBar.backend.warn": "Degradado",
     "hikari::statusBar.clickReconnect": "Haga clic para reintentar",
+    "hikari::statusBar.retryNow": "Reconectar ahora",
     "hikari::statusBar.connected": "Conectado",
     "hikari::statusBar.connecting": "Conectando...",
     "hikari::statusBar.disconnected": "Desconectado",

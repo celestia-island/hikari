@@ -150,6 +150,7 @@
     "hikari::statusBar.backend.unknown": "غير معروف",
     "hikari::statusBar.backend.warn": "متدهور",
     "hikari::statusBar.clickReconnect": "انقر لإعادة المحاولة",
+    "hikari::statusBar.retryNow": "أعد الاتصال الآن",
     "hikari::statusBar.connected": "متصل",
     "hikari::statusBar.connecting": "جارٍ الاتصال...",
     "hikari::statusBar.disconnected": "غير متصل",

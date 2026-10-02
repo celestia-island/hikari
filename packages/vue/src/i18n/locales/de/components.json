@@ -150,6 +150,7 @@
     "hikari::statusBar.backend.unknown": "Unbekannt",
     "hikari::statusBar.backend.warn": "Beeinträchtigt",
     "hikari::statusBar.clickReconnect": "Zum Wiederholen klicken",
+    "hikari::statusBar.retryNow": "Jetzt neu verbinden",
     "hikari::statusBar.connected": "Verbunden",
     "hikari::statusBar.connecting": "Verbinde...",
     "hikari::statusBar.disconnected": "Getrennt",

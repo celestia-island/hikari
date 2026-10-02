@@ -322,4 +322,96 @@ describe("HkStatusBar", () => {
       vi.useRealTimers();
     }
   });
+
+  it("shows a working reconnect button in the popover while disconnected (hint text retired)", async () => {
+    const onRetry = vi.fn();
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "disconnected",
+      connectionInfo: INFO,
+      onRetry,
+    });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    // The popover body teleports to <body>: the old italic "click to
+    // retry" hint pointed at an element whose clicks never reached the
+    // tag handler. The actions row carries a REAL button instead, and
+    // the misleading hint is gone whenever a retry is wired.
+    const row = panel.querySelector<HTMLElement>("[data-status-actions]")!;
+    expect(row, "actions row renders").toBeTruthy();
+    const button = row.querySelector<HTMLButtonElement>("button")!;
+    expect(button.textContent).toContain("Reconnect now");
+    expect(panel.textContent).not.toContain("Click to retry");
+    button.click();
+    expect(onRetry, "popover button click retries").toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the fallback hint when no onRetry is wired", async () => {
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "disconnected",
+      connectionInfo: INFO,
+    });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel.querySelector("[data-status-actions]")).toBeNull();
+    expect(panel.textContent).toContain("Click to retry");
+  });
+
+  it("renders host actions through the actions slot, connected or not", async () => {
+    for (const connectionStatus of ["connected", "disconnected"] as const) {
+      document.body.innerHTML = "";
+      const onRefresh = vi.fn();
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      const app = createApp({
+        render: () =>
+          h(HkStatusBar, {
+            version: "1.2.3",
+            connectionStatus,
+            connectionInfo: INFO,
+            onRetry: () => {},
+          }, {
+            actions: () => h("button", { class: "host-refresh", onClick: onRefresh }, "Refresh page"),
+          }),
+      });
+      app.mount(container);
+      mounts.push({ app, container });
+      await nextTick();
+      container
+        .querySelector<HTMLElement>(".s-status-bar-tag")!
+        .dispatchEvent(new MouseEvent("mouseenter"));
+      await nextTick();
+      const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+      const host = panel.querySelector<HTMLButtonElement>(".host-refresh")!;
+      expect(host, `host action renders (${connectionStatus})`).toBeTruthy();
+      expect(panel.querySelector("[data-status-actions]")).toBeTruthy();
+      host.click();
+      expect(onRefresh).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("no actions row when connected without host actions", async () => {
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+      onRetry: () => {},
+    });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel!.querySelector("[data-status-actions]")).toBeNull();
+  });
 });

@@ -150,6 +150,7 @@
     "hikari::statusBar.backend.unknown": "不明",
     "hikari::statusBar.backend.warn": "低下",
     "hikari::statusBar.clickReconnect": "クリックして再接続",
+    "hikari::statusBar.retryNow": "今すぐ再接続",
     "hikari::statusBar.connected": "接続済み",
     "hikari::statusBar.connecting": "接続中...",
     "hikari::statusBar.disconnected": "切断",

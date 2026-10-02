@@ -124,7 +124,12 @@ export const HkConnectionStatus = defineComponent({
               attemptNumber={probe.value.attemptNumber}
               countdown={probe.value.countdown}
               compact={props.compact}
-            />
+            >
+              {/* Host-appended popover actions (e.g. a manual page
+                  refresh) ride the same actions row as the built-in
+                  retry button. */}
+              {{ actions: () => slots.actions?.() }}
+            </HkStatusBar>
             {bs && (
               <span class="s-status-bar-tag" style={{ cursor: "default" }}>
                 <span

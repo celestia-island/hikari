@@ -11,7 +11,7 @@ export type ButtonVariant =
   | "ghost"
   | "danger"
   | "outline";
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 export default defineComponent({
   name: "HkButton",

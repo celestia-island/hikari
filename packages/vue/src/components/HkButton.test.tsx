@@ -62,6 +62,15 @@ describe("HkButton class mapping", () => {
     expect(cls).not.toContain("hk-btn-md");
   });
 
+  it("maps the xs size with its leading icon box", () => {
+    const xs = mount(h(HkButton, { size: "xs", icon: "RotateCw" }, () => "Reconnect"));
+    const xsBtn = button(xs);
+    expect(xsBtn.className).toContain("hk-btn-xs");
+    const box = xsBtn.querySelector(".hk-btn-icon");
+    expect(box, "xs renders the leading icon box").toBeTruthy();
+    expect(box!.querySelector(".hk-icon"), "HIcon span renders").toBeTruthy();
+  });
+
   it("adds the block modifier only when block is set", () => {
     const blocked = mount(h(HkButton, { block: true }, () => "wide"));
     expect(button(blocked).className).toContain("hk-btn-block");
@@ -207,8 +216,16 @@ describe("HkButton icon-only SCSS contract", () => {
     expect(rule).toContain("width: 100%");
   });
 
+  it("shrinks the xs glyph box and scales the HIcon span with it", () => {
+    const rule = scss.match(/\.hk-btn-xs \.hk-btn-icon,\n\.hk-btn-xs \.hk-btn-suffix\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule, "xs glyph-box rule must exist").toBeTruthy();
+    expect(rule).toContain("inline-size: 0.8125rem");
+    expect(rule).toContain("inline-size: 100%");
+  });
+
   it("locks each size variant width to its min-height", () => {
     const cases: Array<[string, string]> = [
+      ["xs", "1.375rem"],
       ["sm", "1.75rem"],
       ["md", "2.5rem"],
       ["lg", "2.75rem"],

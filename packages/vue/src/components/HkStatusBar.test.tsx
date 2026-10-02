@@ -345,6 +345,9 @@ describe("HkStatusBar", () => {
     expect(row, "actions row renders").toBeTruthy();
     const button = row.querySelector<HTMLButtonElement>("button")!;
     expect(button.textContent).toContain("Reconnect now");
+    // 2026-10-02 user direction: small buttons with a leading glyph.
+    expect(button.className).toContain("hk-btn-xs");
+    expect(button.querySelector(".hk-btn-icon svg"), "leading glyph renders").toBeTruthy();
     expect(panel.textContent).not.toContain("Click to retry");
     button.click();
     expect(onRetry, "popover button click retries").toHaveBeenCalledTimes(1);

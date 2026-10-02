@@ -1376,4 +1376,25 @@ describe("HkBoard3D transparent background", () => {
     expect(rendererOf().alpha).toBe(true);
     expect(rendererOf().clearAlpha).toBe(0);
   });
+
+  it("drops the container's own surface paint in transparent mode", async () => {
+    const { container } = mountBoard(
+      { minimap: false, transparentBackground: true },
+      {},
+    );
+    await nextTick();
+    const root = container.querySelector(".hk-board3d") as HTMLElement;
+    // The stylesheet paints --color-surface on .hk-board3d; an inline
+    // transparent style must win, or a page-colored rectangle sits
+    // behind the alpha-0 canvas (user report 2026-10-01: the scene
+    // background differs from the page background).
+    expect(root.style.background).toContain("transparent");
+  });
+
+  it("keeps the stylesheet surface paint when the backdrop is opaque", async () => {
+    const { container } = mountBoard({ minimap: false }, {});
+    await nextTick();
+    const root = container.querySelector(".hk-board3d") as HTMLElement;
+    expect(root.style.background).toBe("");
+  });
 });

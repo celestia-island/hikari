@@ -45,6 +45,13 @@
 }
 
 .hk-board3d-fallback {
+  // Self-carried contrast chip: in transparent-backdrop mode the root
+  // paints nothing, so the note cannot lean on the old surface fill.
+  background: rgb(var(--color-surface) / 0.9);
+  border-radius: var(--radius-md, 8px);
+  padding: 6px 12px;
+  margin: auto;
+  width: fit-content;
   position: absolute;
   inset: 0;
   display: flex;

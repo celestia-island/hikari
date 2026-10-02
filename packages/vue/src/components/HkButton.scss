@@ -44,7 +44,18 @@
    text and toolbar rows. Font size does NOT scale with the size
    (2026-08-30 user report, Material-Design convention): md and lg share
    --text-base and lg only grows padding/min-height for a larger touch
-   target; sm keeps its compact --text-xs. */
+   target; sm keeps its compact --text-xs. xs (2026-10-02, connection
+   popover action row) shrinks the footprint further for inline popover
+   footers: same --text-xs, tighter padding, 1.375rem min-height, and a
+   13px glyph (HkButton.tsx scales icon/suffix with the size) inside a
+   0.8125rem fixed box so the square-glyph contract keeps its rhythm at
+   the smaller scale. */
+
+.hk-btn-xs {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-xs);
+  min-height: 1.375rem;
+}
 
 .hk-btn-sm {
   padding: var(--space-6) var(--space-12);
@@ -73,6 +84,19 @@
    consistent margin from the adjacent label via the button's own gap.
    The 1rem box matches the 16px glyph HkButton renders for the
    icon/suffix props. */
+.hk-btn-xs .hk-btn-icon,
+.hk-btn-xs .hk-btn-suffix {
+  inline-size: 0.8125rem;
+  block-size: 0.8125rem;
+
+  /* HIcon's smallest span is 1rem; the box scales the span (and the svg
+     fills the span), so the glyph lands at 13px inside the 22px button. */
+  .hk-icon {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+}
+
 .hk-btn-icon,
 .hk-btn-suffix {
   display: inline-flex;
@@ -119,6 +143,10 @@
 .hk-btn-icon-only {
   padding: 0;
   box-sizing: border-box;
+}
+
+.hk-btn-xs.hk-btn-icon-only {
+  width: 1.375rem;
 }
 
 .hk-btn-sm.hk-btn-icon-only {

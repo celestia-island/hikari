@@ -458,7 +458,12 @@ export const HkStatusBar = defineComponent({
                   }}
                 >
                   {showRetryButton && (
-                    <HkButton size="sm" variant="secondary" onClick={onRetryButtonClick}>
+                    <HkButton
+                      size="xs"
+                      variant="secondary"
+                      icon="RotateCw"
+                      onClick={onRetryButtonClick}
+                    >
                       {t("hikari::statusBar.retryNow", "Reconnect now")}
                     </HkButton>
                   )}

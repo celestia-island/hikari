@@ -35,11 +35,19 @@ export const HkAdminShell = defineComponent({
     const sidebarOpen = ref(false);
 
     // Content padding with the mobile side-gutter rule applied: desktop
-    // gets the value verbatim; below the breakpoint the shorthand grows
-    // a zero horizontal track ("1.5rem" → "1.5rem 0"), keeping top/bottom
-    // clearance while the panels span the full viewport width.
+    // gets the value verbatim; below the breakpoint the horizontal
+    // tracks become zero while the vertical tracks survive. The CSS
+    // padding shorthand is parsed per side so multi-value values keep
+    // their meaning ("1rem 2rem" -> "1rem 0", not the invalid or
+    // inverted "1rem 2rem 0"). An empty value passes through untouched.
+    const mobileSideGutterFree = (value: string): string => {
+      const sides = value.trim().split(/\s+/).filter(Boolean);
+      if (sides.length === 0) return value;
+      const [top, , bottom] = sides;
+      return `${top} 0 ${bottom ?? top}`;
+    };
     const contentStyle = computed(() => ({
-      padding: isDesktop.value ? props.contentPadding : `${props.contentPadding} 0`,
+      padding: isDesktop.value ? props.contentPadding : mobileSideGutterFree(props.contentPadding),
     }));
 
     const actionBar = provideActionBar();

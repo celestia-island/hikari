@@ -76,6 +76,17 @@ const setWidth = (w: number) => {
   window.dispatchEvent(new Event("resize"));
 };
 
+function paddingInner(container: HTMLElement): HTMLElement | null | undefined {
+  const viewport = container.querySelector(".hk-scroll-container-viewport")
+    ?? container.querySelector(".hk-scroll-container");
+  return viewport?.firstElementChild as HTMLElement | null | undefined;
+}
+
+function mobileInnerPadding(container: HTMLElement): string {
+  return paddingInner(container)?.style.padding ?? "";
+}
+
+
 function shellNode(
   props: Record<string, unknown>,
   slots: Record<string, unknown>,
@@ -233,5 +244,38 @@ describe("HkAdminShell", () => {
     const inner = viewport?.firstElementChild as HTMLElement | null | undefined;
     expect(inner).toBeTruthy();
     expect(inner?.style.padding).toBe("2rem");
+  });
+
+  it("drops the horizontal half of the content padding below the mobile breakpoint", async () => {
+    // Phone width: side gutters must vanish; vertical clearance survives.
+    // Asserted via longhands: happy-dom's shorthand parser collapses
+    // 3-value paddings, so style.padding cannot distinguish them here.
+    setWidth(390);
+    const mobileShell = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "2rem" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const inner = paddingInner(mobileShell);
+    expect(inner?.style.paddingTop).toBe("2rem");
+    expect(inner?.style.paddingBottom).toBe("2rem");
+    expect(inner?.style.paddingLeft).toBe("0px");
+    expect(inner?.style.paddingRight).toBe("0px");
+
+    // Multi-value shorthand keeps per-side meaning: vertical survives,
+    // horizontal is zeroed (never the inverted "1rem 2rem 0").
+    const multi = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "1rem 2rem" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const multiInner = paddingInner(multi);
+    expect(multiInner?.style.paddingTop).toBe("1rem");
+    expect(multiInner?.style.paddingBottom).toBe("1rem");
+    expect(multiInner?.style.paddingLeft).toBe("0px");
+    expect(multiInner?.style.paddingRight).toBe("0px");
+
+    // Crossing back to desktop restores the verbatim padding.
+    setWidth(1280);
+    await nextTick();
+    expect(mobileInnerPadding(mobileShell)).toBe("2rem");
   });
 });

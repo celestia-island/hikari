@@ -21,7 +21,11 @@ export const HkAdminShell = defineComponent({
     drawerPanelClass: { type: String, default: undefined },
     /** Content-area padding (inside the scroll viewport). Padding is
      *  applied to an inner wrapper rather than the scroll container so
-     *  card box-shadows are never clipped at the viewport edges. */
+     *  card box-shadows are never clipped at the viewport edges. Below
+     *  the mobile breakpoint the horizontal half is dropped
+     *  automatically (2026-10-03 user direction: on phones the content
+     *  area must span the full width for 2D panels and the 3D scene —
+     *  only the vertical clearance survives). */
     contentPadding: { type: String, default: "1.5rem" },
   },
   setup(props, { slots }) {
@@ -29,6 +33,22 @@ export const HkAdminShell = defineComponent({
     const { width: viewportWidth } = useBreakpoint();
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
+
+    // Content padding with the mobile side-gutter rule applied: desktop
+    // gets the value verbatim; below the breakpoint the horizontal
+    // tracks become zero while the vertical tracks survive. The CSS
+    // padding shorthand is parsed per side so multi-value values keep
+    // their meaning ("1rem 2rem" -> "1rem 0", not the invalid or
+    // inverted "1rem 2rem 0"). An empty value passes through untouched.
+    const mobileSideGutterFree = (value: string): string => {
+      const sides = value.trim().split(/\s+/).filter(Boolean);
+      if (sides.length === 0) return value;
+      const [top, , bottom] = sides;
+      return `${top} 0 ${bottom ?? top}`;
+    };
+    const contentStyle = computed(() => ({
+      padding: isDesktop.value ? props.contentPadding : mobileSideGutterFree(props.contentPadding),
+    }));
 
     const actionBar = provideActionBar();
 
@@ -80,7 +100,7 @@ export const HkAdminShell = defineComponent({
               {/* Padding lives INSIDE the scroll viewport (an inner
                   wrapper) so card box-shadows are not clipped at the
                   viewport edges. */}
-              <div style={{ padding: props.contentPadding }}>{slots.content?.()}</div>
+              <div style={contentStyle.value}>{slots.content?.()}</div>
             </HScrollContainer>
           </main>
 

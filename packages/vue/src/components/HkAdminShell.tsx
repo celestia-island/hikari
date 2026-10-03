@@ -21,7 +21,11 @@ export const HkAdminShell = defineComponent({
     drawerPanelClass: { type: String, default: undefined },
     /** Content-area padding (inside the scroll viewport). Padding is
      *  applied to an inner wrapper rather than the scroll container so
-     *  card box-shadows are never clipped at the viewport edges. */
+     *  card box-shadows are never clipped at the viewport edges. Below
+     *  the mobile breakpoint the horizontal half is dropped
+     *  automatically (2026-10-03 user direction: on phones the content
+     *  area must span the full width for 2D panels and the 3D scene —
+     *  only the vertical clearance survives). */
     contentPadding: { type: String, default: "1.5rem" },
   },
   setup(props, { slots }) {
@@ -29,6 +33,14 @@ export const HkAdminShell = defineComponent({
     const { width: viewportWidth } = useBreakpoint();
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
+
+    // Content padding with the mobile side-gutter rule applied: desktop
+    // gets the value verbatim; below the breakpoint the shorthand grows
+    // a zero horizontal track ("1.5rem" → "1.5rem 0"), keeping top/bottom
+    // clearance while the panels span the full viewport width.
+    const contentStyle = computed(() => ({
+      padding: isDesktop.value ? props.contentPadding : `${props.contentPadding} 0`,
+    }));
 
     const actionBar = provideActionBar();
 
@@ -80,7 +92,7 @@ export const HkAdminShell = defineComponent({
               {/* Padding lives INSIDE the scroll viewport (an inner
                   wrapper) so card box-shadows are not clipped at the
                   viewport edges. */}
-              <div style={{ padding: props.contentPadding }}>{slots.content?.()}</div>
+              <div style={contentStyle.value}>{slots.content?.()}</div>
             </HScrollContainer>
           </main>
 

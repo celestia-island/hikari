@@ -234,4 +234,22 @@ describe("HkAdminShell", () => {
     expect(inner).toBeTruthy();
     expect(inner?.style.padding).toBe("2rem");
   });
+
+  it("drops the horizontal half of the content padding below the mobile breakpoint", async () => {
+    // Phone width: side gutters must vanish; vertical clearance survives.
+    setWidth(390);
+    const c = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "2rem" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const viewport = c.querySelector(".hk-scroll-container-viewport")
+      ?? c.querySelector(".hk-scroll-container");
+    const inner = viewport?.firstElementChild as HTMLElement | null | undefined;
+    expect(inner?.style.padding).toBe("2rem 0px");
+
+    // Crossing back to desktop restores the verbatim padding.
+    setWidth(1280);
+    await nextTick();
+    expect(inner?.style.padding).toBe("2rem");
+  });
 });

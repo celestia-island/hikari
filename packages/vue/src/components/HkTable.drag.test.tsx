@@ -318,11 +318,12 @@ describe("HkTable drag-to-reorder", () => {
 
   it("still emits after a MIDDLE row is removed (stale registry tail)", async () => {
     const t = mountTable(3);
-    // Keyed removal never nulls the removed row's ref: the registry keeps
-    // its old slot, which now holds a still-connected duplicate of the row
-    // that slid down into it. Without the tail trim + identity de-dupe the
-    // strip reports one entry too many, the drop resolves past the end and
-    // the bounds check swallows the emit — silently, for every later drag.
+    // Vue calls the removed row's function ref with null, and the index that
+    // callback captured is the one the row held in the PREVIOUS render — the
+    // slot the survivor just slid into. A ref registry therefore ends up
+    // with a live row missing (or a stale duplicate), the drop resolves past
+    // the end and the bounds check swallows the emit — silently, for every
+    // later drag. The strip is read from the DOM, so it cannot drift.
     const original = t.rows.value ?? [];
     await t.setOrder([original[0]!, original[2]!]);
 
@@ -335,6 +336,59 @@ describe("HkTable drag-to-reorder", () => {
     // The drop lands: Row-2 takes Row-0's place.
     await t.apply(0, 1);
     expect((t.rows.value ?? []).map((r) => r.name)).toEqual(["Row-2", "Row-0"]);
+  });
+
+  it("re-resolves the strip after a deletion that follows a completed drag", async () => {
+    const t = mountTable(3);
+    // Read the strip once (a real drag), then remove a middle row and drag
+    // again: a strip cached at first read would silently stop emitting, and
+    // only this ORDERING catches it — the plain removal case reads the
+    // strip for the first time after the deletion.
+    const grip0 = handles(t.container)[0]!;
+    grip0.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 60));
+    window.dispatchEvent(pointer("pointerup", 18, 60));
+    await nextTick();
+    expect(t.emitted).toEqual([[0, 1]]);
+    await t.apply(0, 1);
+
+    const original = t.rows.value ?? [];
+    await t.setOrder([original[0]!, original[2]!]);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 70));
+    window.dispatchEvent(pointer("pointerup", 18, 70));
+    await nextTick();
+    expect(t.emitted).toEqual([[0, 1], [0, 1]]);
+  });
+
+  it("ignores a nested table's rows when resolving the outer strip", async () => {
+    // A cell slot may render another HkTable; its rows are descendants of
+    // this host, so a bare descendant query would let an outer drag resolve
+    // onto them (R3 N1).
+    const t = mountTable(3);
+    const cell = t.container.querySelector("tbody .hk-table-row td:not(.hk-table-drag-cell)")!;
+    const nested = document.createElement("div");
+    cell.appendChild(nested);
+    const nestedApp = createApp({
+      render: () =>
+        h(HTable, {
+          columns: [{ key: "name", title: "Name" }],
+          rows: [{ name: "Inner-0" }, { name: "Inner-1" }],
+          rowKey: "name",
+        }),
+    });
+    mounts.push({ app: nestedApp, container: nested });
+    nestedApp.mount(nested);
+
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 101));
+    window.dispatchEvent(pointer("pointerup", 18, 101));
+    await nextTick();
+    // The strip is the OUTER table's three rows: dropping row 0 at the end
+    // is (0, 2) — not a slot among the five rows a descendant query sees.
+    expect(t.emitted).toEqual([[0, 2]]);
   });
 
   it("maps the drop onto the NEW array after a consumer reorder (reverse case)", async () => {

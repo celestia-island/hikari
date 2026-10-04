@@ -152,8 +152,16 @@ export default defineComponent({
      *  that changes under a held press honest. */
     function liveRowEls(): HTMLElement[] {
       const host = wrapperHostRef.value;
-      if (!host) return [];
-      return Array.from(host.querySelectorAll<HTMLElement>("tbody .hk-table-row"));
+      // The host's FIRST table is this component's own (a nested table can
+      // only live inside one of its cells), and the `closest` filter keeps a
+      // nested table's rows out of the strip: they are descendants of the
+      // host too, and a bare descendant query would let an outer drag
+      // resolve onto them.
+      const own = host?.querySelector<HTMLElement>("table.hk-table") ?? null;
+      if (!own) return [];
+      return Array.from(own.querySelectorAll<HTMLElement>("tbody > .hk-table-row")).filter(
+        (row) => row.closest("table") === own,
+      );
     }
 
     /** Reordering is meaningful only over the array the consumer owns. A

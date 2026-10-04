@@ -72,13 +72,23 @@ export default defineComponent({
       return String(index);
     }
 
+    /** Click-to-sort is TRI-state: ascending → descending → unsorted. The
+     *  third click restores the consumer's own array order, which is what
+     *  makes the state reachable again for a `draggable` table (reordering
+     *  is inert while an arrangement is derived from a sort — see
+     *  `reorderInert`). */
     function toggleSort(key: string) {
-      if (sortKey.value === key) {
-        sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
-      } else {
+      if (sortKey.value !== key) {
         sortKey.value = key;
         sortDirection.value = "asc";
+        return;
       }
+      if (sortDirection.value === "asc") {
+        sortDirection.value = "desc";
+        return;
+      }
+      sortKey.value = null;
+      sortDirection.value = "asc";
     }
 
     const sortedRows = computed(() => {
@@ -133,6 +143,13 @@ export default defineComponent({
     // engine, so the strip index space stays the engine's; with a stable
     // list under a held press — the only case a live drag cares about —
     // strip indices are display indices.
+    //
+    // The registry re-syncs itself on every re-render: Vue re-invokes a
+    // function ref on each keyed patch with the element and its NEW index
+    // (and never calls an old function ref with null), so a consumer that
+    // reorders `rows` after a drop leaves this array in display order
+    // without any bookkeeping here. `items()` still filters null/detached
+    // nodes, which is what makes a shrinking list safe mid-gesture.
     const rowEls = ref<(HTMLElement | null)[]>([]);
 
     function setRowEl(index: number, el: Element | null): void {
@@ -144,7 +161,8 @@ export default defineComponent({
      *  `reorder` indices could not tell the consumer how to reproduce the
      *  visual move — so a sorted table refuses to drag (dimmed handles,
      *  inert presses) rather than emit an edit that would land somewhere
-     *  the user did not drop it. */
+     *  the user did not drop it. Clicking the sorted header a third time
+     *  clears the sort (tri-state), which is the way back to dragging. */
     const reorderInert = computed(() => sortKey.value !== null);
 
     /** `moveTo` in the consumer's array: the entry at `from` takes `to`'s
@@ -158,10 +176,29 @@ export default defineComponent({
       emit("reorder", from, to);
     }
 
+    /** The scrollable ancestor a live drag pulls along, resolved on demand
+     *  (the engine re-reads it every frame while the pointer rests near an
+     *  edge): the nearest ancestor that actually overflows vertically — the
+     *  page shell, a modal body, a scroll container — or null when the
+     *  table sits fully in view, where there is nothing to scroll. */
+    function dragScrollContainer(): HTMLElement | null {
+      let el = wrapperHostRef.value?.parentElement ?? null;
+      while (el) {
+        const overflowY =
+          typeof getComputedStyle === "function" ? getComputedStyle(el).overflowY : "";
+        if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight + 1) {
+          return el;
+        }
+        el = el.parentElement;
+      }
+      return null;
+    }
+
     const rowDrag = usePointerReorder({
       items: () => rowEls.value.filter((el) => el != null && el.isConnected),
       axis: "y",
       onDrop: onReorderDrop,
+      scrollContainer: dragScrollContainer,
     });
 
     /** Display index → strip index (nulls and detached nodes skipped —
@@ -207,16 +244,25 @@ export default defineComponent({
       const label = rowLabel(row);
       if (!label) return t("hikari::table.dragHandle", "Drag to reorder");
       const template = t("hikari::table.dragHandleRow", "Reorder {label}");
-      return template.replace("{label}", label);
+      // split/join, not String.replace: a row label carrying `$&` / `$'`
+      // would otherwise be expanded as a replacement pattern (house
+      // interpolation, HkTagInput/HkAffixPicker).
+      const [before, after] = template.split("{label}");
+      if (after === undefined) return template;
+      return `${before}${label}${after}`;
     }
 
     /** Insertion cue for the slot the pointer currently resolves to:
      *  `dragOver` is a slot (0..n) over the strip — the line paints on the
      *  TOP edge of the row that would sit below the drop, or the BOTTOM
-     *  edge of the last row for the trailing slot. */
+     *  edge of the last row for the trailing slot. A slot that resolves
+     *  back onto the row being dragged paints nothing: the row already
+     *  carries its lift, and a "drop here" line on the row in hand reads
+     *  as a no-op target. */
     const dropCue = computed<{ index: number; edge: "before" | "after" } | null>(() => {
       if (!rowDrag.dragging.value || rowDrag.dragOver.value < 0) return null;
       const slot = rowDrag.dragOver.value;
+      if (slot === rowDrag.dragFrom.value) return null;
       const count = sortedRows.value.length;
       if (slot >= count) return { index: count - 1, edge: "after" };
       return { index: slot, edge: "before" };
@@ -236,12 +282,6 @@ export default defineComponent({
     );
 
     return () => {
-      // Registered row elements trail the list whenever rows shrink — drop
-      // the stale tail (guard keeps the write out of steady-state renders,
-      // where an unconditional length set would retrigger itself).
-      if (rowEls.value.length > sortedRows.value.length) {
-        rowEls.value.length = sortedRows.value.length;
-      }
       return (
       <div ref={wrapperHostRef} class="hk-table-host">
         <div ref={wrapperRef} class="hk-table-wrapper">

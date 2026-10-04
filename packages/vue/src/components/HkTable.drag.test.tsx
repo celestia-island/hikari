@@ -235,6 +235,43 @@ describe("HkTable drag-to-reorder", () => {
     expect(t.emitted).toEqual([]);
   });
 
+  it("clears the sort on a third header click, re-enabling the grips", async () => {
+    const t = mountTable(3, { sortable: true });
+    const header = t.container.querySelectorAll<HTMLElement>("thead th")[2]!;
+    header.click();
+    await nextTick();
+    expect(header.classList.contains("hk-table-header-sorted")).toBe(true);
+    header.click();
+    await nextTick();
+    // Still sorted (descending) — the grips stay inert.
+    expect(header.classList.contains("hk-table-header-sorted")).toBe(true);
+    expect(handles(t.container)[0]!.getAttribute("aria-disabled")).toBe("true");
+
+    header.click();
+    await nextTick();
+    // Third click: the consumer's own order is back, so the grips are live
+    // again and a nudge emits.
+    expect(header.classList.contains("hk-table-header-sorted")).toBe(false);
+    expect(handles(t.container)[0]!.getAttribute("aria-disabled")).toBeNull();
+    await pressKey(handles(t.container)[0]!, "ArrowDown");
+    expect(t.emitted).toEqual([[0, 1]]);
+  });
+
+  it("paints no insertion cue while the pointer still resolves to the dragged row", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    // Past the threshold but still inside row 0's own band (mid 20): the
+    // resolved slot is the row's own — a cue there would read as a no-op
+    // target.
+    window.dispatchEvent(pointer("pointermove", 18, 26));
+    await nextTick();
+    expect(t.container.querySelectorAll("tbody [data-drop]").length).toBe(0);
+    window.dispatchEvent(pointer("pointerup", 18, 26));
+    await nextTick();
+    expect(t.emitted).toEqual([]);
+  });
+
   /** A pointer gesture against an inert table: press + travel + release. */
   function gripDragAttempt(t: RowsRef & { container: HTMLElement }): void {
     const grip = handles(t.container)[0]!;

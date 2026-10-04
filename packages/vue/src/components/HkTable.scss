@@ -129,14 +129,16 @@
   }
 }
 
-/* Grip cells: tighter than a content cell and flush to the row's leading
-   edge (after the size variants, so the size paddings they override for
-   the right side win by order, not weight). */
-.hk-table-drag-col {
+/* Grip cells: tighter than a content cell and flush to the row's trailing
+   edge. Specificity 0,2,0 — equal to the size variants' `.hk-table-sm
+   .hk-table-cell` rules above but later in source order, which is what makes
+   the trim hold at EVERY size (a bare `.hk-table-drag-cell` is 0,1,0, so the
+   sm/lg padding silently won and the grip cell stayed wide). */
+.hk-table .hk-table-drag-col {
   padding-right: 0;
 }
 
-.hk-table-drag-cell {
+.hk-table .hk-table-drag-cell {
   padding-right: 0;
   width: 36px;
   white-space: nowrap;

@@ -309,11 +309,33 @@ describe("HkAdminShell", () => {
     expect(multiInner?.style.paddingLeft).toBe("0px");
     expect(multiInner?.style.paddingRight).toBe("0px");
 
+    // Three-value shorthand: the vertical tracks are the FIRST and the
+    // THIRD, so the parser has to keep top and bottom in order. The
+    // 1- and 2-value cases above cannot see a swapped pair — with ≤2
+    // values the bottom track defaults to the top one, which makes the
+    // correct and the transposed string identical (round-1 verification
+    // mutation (e) survived on exactly that hole).
+    const triple = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "1rem 2rem 3rem", contentBleedOnMobile: true },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const tripleInner = paddingInner(triple);
+    expect(tripleInner?.style.paddingTop).toBe("1rem");
+    expect(tripleInner?.style.paddingBottom).toBe("3rem");
+    expect(tripleInner?.style.paddingLeft).toBe("0px");
+    expect(tripleInner?.style.paddingRight).toBe("0px");
+
     // The declaration never reaches desktop: crossing back above the
     // breakpoint restores the verbatim padding.
     setWidth(1280);
     await nextTick();
     expect(mobileInnerPadding(mobileShell)).toBe("2rem");
     expect(mobileInnerPadding(multi)).toBe("1rem 2rem");
+    // …per side, too: the restored shorthand must not be a collapsed
+    // approximation of the three tracks it came from.
+    expect(tripleInner?.style.paddingTop).toBe("1rem");
+    expect(tripleInner?.style.paddingBottom).toBe("3rem");
+    expect(tripleInner?.style.paddingLeft).toBe("2rem");
+    expect(tripleInner?.style.paddingRight).toBe("2rem");
   });
 });

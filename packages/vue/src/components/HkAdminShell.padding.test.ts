@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mobileSideGutterFree, splitPaddingSides } from "./HkAdminShell";
+import { mobileSideGutterFree, scanPaddingSides, splitPaddingSides } from "./HkAdminShell";
 
 /**
  * Direct unit tests for the padding-shorthand helpers behind
@@ -60,6 +60,17 @@ describe("splitPaddingSides", () => {
     expect(splitPaddingSides("var(--pad, \") 1rem\") 2rem"))
       .toEqual(["var(--pad, \") 1rem\")", "2rem"]);
     expect(splitPaddingSides("var(--pad, ' + ')")).toEqual(["var(--pad, ' + ')"]);
+    // A paren inside a SINGLE-quoted argument, and the other quote char
+    // inside it: only the matching quote closes the string.
+    expect(splitPaddingSides("var(--pad, ') x') 2rem"))
+      .toEqual(["var(--pad, ') x')", "2rem"]);
+    expect(splitPaddingSides("var(--pad, 'a\") b') 2rem"))
+      .toEqual(["var(--pad, 'a\") b')", "2rem"]);
+  });
+
+  it("opens a quote at top level too (and reports it unterminated)", () => {
+    expect(splitPaddingSides("\"a b")).toEqual(["\u0022a b"]);
+    expect(scanPaddingSides("\"a b").balanced).toBe(false);
   });
 
   it("never lets a stray close paren invert the depth", () => {
@@ -67,6 +78,16 @@ describe("splitPaddingSides", () => {
     // the clamp the `)` would drive the depth to -1 and swallow the next
     // separator.
     expect(splitPaddingSides("1rem ) 2rem")).toEqual(["1rem", ")", "2rem"]);
+  });
+
+  it("reports an unterminated function or quote as unbalanced", () => {
+    expect(scanPaddingSides("calc(1rem + 2px")).toEqual({
+      sides: ["calc(1rem + 2px"],
+      balanced: false,
+    });
+    expect(scanPaddingSides("1rem 2rem").balanced).toBe(true);
+    expect(scanPaddingSides("calc(1rem + 2px) 1rem").balanced).toBe(true);
+    expect(scanPaddingSides("var(--pad, ') x')").balanced).toBe(true);
   });
 });
 
@@ -98,8 +119,49 @@ describe("mobileSideGutterFree", () => {
       expect(mobileSideGutterFree(keyword.toUpperCase()), keyword).toBe(keyword.toUpperCase());
     }
     // A comment's text is not a track; rebuilding would emit one
-    // ("1rem 0 x") that a browser drops whole.
+    // ("1rem 0 x") that a browser drops whole. An UNCLOSED comment bails
+    // the same way, and so does a quoted `/*` — the guard reads the raw
+    // text and does not try to be clever about strings.
     expect(mobileSideGutterFree("1rem /* x */ 2rem")).toBe("1rem /* x */ 2rem");
+    expect(mobileSideGutterFree("1rem /* x 2rem")).toBe("1rem /* x 2rem");
+    expect(mobileSideGutterFree("var(--pad, \"/*\") 2rem")).toBe("var(--pad, \"/*\") 2rem");
+  });
+
+  it("refuses any value carrying a backslash escape", () => {
+    // The scanner does not decode CSS escapes, and an escape can hide a
+    // quote, a paren or a whole keyword — `"\69 nherit"` IS `inherit` to
+    // an engine (measured in Chromium), so the literal text is not the
+    // value and no rewrite of it can be trusted. Round 4/5 verification
+    // measured every one of these losing all four sides to a dropped
+    // declaration.
+    const escaped = [
+      "\\69 nherit",
+      "var(--pad, \"a\\\"b\") 2rem",
+      "var(--pad, 'a\\'b') 2rem",
+      "var(--pad, a\\(b) 2rem",
+      "\"a\\\" b\" 1rem",
+    ];
+    for (const value of escaped) {
+      expect(mobileSideGutterFree(value), value).toBe(value);
+    }
+  });
+
+  it("refuses a value whose functions or quotes never close", () => {
+    // CSS auto-closes an open function at EOF, so the AUTHORED value can
+    // be a real padding (Chromium: 18px on all four sides for
+    // "calc(1rem + 2px") while the rewrite of it is not — the rewrite
+    // would cost the page every side, vertical included.
+    const unterminated = [
+      "calc(1rem + 2px",
+      "calc(1rem",
+      "min(1rem, 2rem",
+      "1rem calc(2px",
+      "\"a b",
+      "var(--pad, 'x",
+    ];
+    for (const value of unterminated) {
+      expect(mobileSideGutterFree(value), value).toBe(value);
+    }
   });
 
   it("still rewrites a keyword-shaped track that is not alone", () => {

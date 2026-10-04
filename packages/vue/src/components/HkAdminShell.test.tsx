@@ -288,8 +288,23 @@ describe("HkAdminShell", () => {
       await nextTick();
       expect(plainInner?.style.paddingLeft, `at ${width}px`).toBe("2rem");
       expect(plainInner?.style.paddingRight, `at ${width}px`).toBe("2rem");
+      // …VERTICAL included: the regression is not only "the sides moved".
+      expect(plainInner?.style.paddingTop, `at ${width}px`).toBe("2rem");
+      expect(plainInner?.style.paddingBottom, `at ${width}px`).toBe("2rem");
       expect(plainMultiInner?.style.paddingLeft, `at ${width}px (multi)`).toBe("2rem");
     }
+
+    // A custom breakpoint on an UNDECLARED page must not move its gutters
+    // either (round 4 mutated the guard to depend on the 1024 default and
+    // every custom-breakpoint mount in this file declared a bleed).
+    const plainNarrow = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "2rem", mobileBreakpoint: 768 },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    setWidth(500);
+    await nextTick();
+    expect(paddingInner(plainNarrow)?.style.paddingLeft).toBe("2rem");
+    expect(paddingInner(plainNarrow)?.style.paddingRight).toBe("2rem");
 
     // An explicit `false` reads exactly like an absent prop.
     const declaredOff = mount(shellNode(
@@ -441,6 +456,32 @@ describe("HkAdminShell", () => {
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
     expect(paddingInner(blank)?.style.padding).toBe("");
+
+    // The declared page bleeds across the WHOLE sub-breakpoint range, not
+    // just at the hand-picked widths above: round 4 mutated the bleed to
+    // stop inside [400, 499) and nothing in this file sampled a declared
+    // page in that band (412 / 430 px phones included).
+    for (const width of [320, 360, 390, 412, 430, 500, 640, 700, 768, 900, 1023]) {
+      setWidth(width);
+      await nextTick();
+      expect(paddingInner(mobileShell)?.style.paddingLeft, `declared at ${width}px`).toBe("0px");
+      expect(paddingInner(mobileShell)?.style.paddingRight, `declared at ${width}px`).toBe("0px");
+      expect(paddingInner(mobileShell)?.style.paddingTop, `declared at ${width}px`).toBe("2rem");
+    }
+
+    // The shell's own default padding (1.5rem) is what every consumer
+    // actually gets — pinned here because every other mount in this file
+    // passes `contentPadding` explicitly.
+    const defaulted = mount(shellNode(
+      { navTitle: "Navigation", contentBleedOnMobile: true },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    setWidth(390);
+    await nextTick();
+    expect(paddingInner(defaulted)?.style.paddingTop).toBe("1.5rem");
+    expect(paddingInner(defaulted)?.style.paddingBottom).toBe("1.5rem");
+    expect(paddingInner(defaulted)?.style.paddingLeft).toBe("0px");
+    expect(paddingInner(defaulted)?.style.paddingRight).toBe("0px");
 
     // The gate follows THIS shell's breakpoint, and the boundary is the
     // breakpoint itself: 1023 is still mobile (bleed), 1024 is desktop

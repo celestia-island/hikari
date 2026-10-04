@@ -10,23 +10,38 @@ import { useI18n } from "../i18n/context";
 const CSS_WIDE_KEYWORDS = new Set(["inherit", "initial", "unset", "revert", "revert-layer"]);
 
 /**
- * Split a CSS padding shorthand on TOP-LEVEL whitespace, quote- and
- * function-aware. Whitespace inside a function belongs to that value:
- * `calc(1rem + 2px)`, `var(--pad, 1rem)` and a quoted argument are ONE
- * track. A plain `split(/\s+/)` shreds them
- * (`["calc(1rem", "+", "2px)"]`), and the rebuilt shorthand is invalid
- * CSS — a browser drops the whole declaration, taking with it the
- * vertical clearance `contentBleedOnMobile` promises to keep (rounds 2
- * and 3 of this change hit exactly that). The depth counter balances
- * parentheses, so nested functions
+ * A scanned padding shorthand: the top-level `sides` plus whether the
+ * value ENDED with every function closed and every quote terminated.
+ * `balanced: false` means the scan cannot know where the value ends —
+ * CSS closes an open function at EOF, so the authored declaration can
+ * still be valid while a rewrite of it cannot be.
+ */
+export interface PaddingSidesScan {
+  sides: string[];
+  balanced: boolean;
+}
+
+/**
+ * Scan a CSS padding shorthand into its top-level tracks: split on
+ * TOP-LEVEL whitespace, quote- and function-aware, so whitespace inside
+ * a function belongs to that value — `calc(1rem + 2px)`,
+ * `var(--pad, 1rem)` and a quoted argument are ONE track. A plain
+ * `split(/\s+/)` shreds them (`["calc(1rem", "+", "2px)"]`), and the
+ * rebuilt shorthand is invalid CSS — a browser drops the whole
+ * declaration, taking with it the vertical clearance
+ * `contentBleedOnMobile` promises to keep (rounds 2 and 3 of this change
+ * hit exactly that; rounds 4 and 5 the escape and EOF variants). The
+ * depth counter balances parentheses, so nested functions
  * (`clamp(1rem, min(2vw, 3px), 4rem)`) survive; a stray `)` never drives
  * the depth negative. Tabs and newlines are valid CSS separators and
  * split like spaces, and the whitespace around a shorthand yields no
- * empty tracks. Exported for its own unit test: happy-dom cannot
- * round-trip `var()`/`clamp()` values, so the component-level suite
- * cannot observe these cases.
+ * empty tracks.
+ *
+ * Exported for its own unit test: happy-dom cannot round-trip
+ * `var()`/`clamp()` values or the hostile inputs below, so the
+ * component-level suite cannot observe them.
  */
-export function splitPaddingSides(value: string): string[] {
+export function scanPaddingSides(value: string): PaddingSidesScan {
   const sides: string[] = [];
   let current = "";
   let depth = 0;
@@ -52,33 +67,50 @@ export function splitPaddingSides(value: string): string[] {
     current += ch;
   }
   if (current) sides.push(current);
-  return sides;
+  return { sides, balanced: depth === 0 && quote === "" };
+}
+
+/** The tracks of {@link scanPaddingSides} — for callers that only need
+ *  the split, and for the unit test that pins the splitting rules. */
+export function splitPaddingSides(value: string): string[] {
+  return scanPaddingSides(value).sides;
 }
 
 /**
  * The side-gutter-free form of a padding shorthand: the vertical tracks
  * survive, the horizontal ones become zero (`"1rem 2rem"` -> `"1rem 0
  * 1rem"`). The value is returned VERBATIM — the page keeps its padding
- * and simply does not bleed — whenever the shorthand cannot express that
- * rewrite safely:
+ * and simply does not bleed — whenever the shorthand cannot be rewritten
+ * safely. That fallback IS the contract: emitting a declaration a browser
+ * drops costs the page ALL FOUR sides, including the vertical clearance
+ * this prop exists to keep.
+ *
+ * Verbatim cases:
  *
  * - an empty / whitespace-only value has nothing to strip;
- * - a single CSS-wide keyword cannot be combined per side (see above);
- * - a value carrying a CSS comment is not tokenizable at this level: the
- *   comment's text would land in the rebuilt declaration as a garbage
- *   track, which a browser rejects (measured in Chromium: the authored
- *   value renders, the rebuilt one is dropped and the content loses all
- *   four sides).
+ * - a LONE CSS-wide keyword cannot be combined per side (`inherit 0
+ *   inherit` is not a padding — every engine rejects it);
+ * - the value contains a CSS comment, whose text would land in the
+ *   rebuilt declaration as a garbage track (`1rem 0 x`, measured in
+ *   Chromium: dropped, all four sides lost);
+ * - the value contains a backslash: this scanner does not decode CSS
+ *   escapes, and an escape can hide a quote, a parenthesis or a whole
+ *   keyword (`\69 nherit` IS `inherit` to an engine) — the literal text
+ *   is not the value, so no rewrite of it is trustworthy (round 5);
+ * - the scan ends inside an open function or an unterminated quote: CSS
+ *   auto-closes a function at EOF, so `"calc(1rem + 2px"` is a real
+ *   padding (all four sides) while its rewrite is not (round 5).
  *
  * Known residual (documented, not fixable at string level): a `var()`
  * whose custom property resolves to MORE than one track cannot keep its
  * vertical half — `padding: var(--multi) 0 var(--multi)` is valid at
- * parse time and invalid at computed-value time. No consumer passes a
- * multi-track custom property today.
+ * parse time and invalid at computed-value time, and all four sides
+ * collapse. No consumer passes a multi-track custom property today.
  */
 export function mobileSideGutterFree(value: string): string {
-  if (value.includes("/*")) return value;
-  const sides = splitPaddingSides(value);
+  if (value.includes("/*") || value.includes("\\")) return value;
+  const { sides, balanced } = scanPaddingSides(value);
+  if (!balanced) return value;
   if (sides.length === 0) return value;
   if (sides.length === 1 && CSS_WIDE_KEYWORDS.has(sides[0].toLowerCase())) return value;
   const [top, , bottom] = sides;
@@ -118,10 +150,11 @@ export const HkAdminShell = defineComponent({
      *  survives; desktop is never affected and the verbatim padding is
      *  restored when the viewport crosses back above the breakpoint.
      *  A `contentPadding` that cannot be rewritten per side (empty, a
-     *  CSS-wide keyword, a value carrying a CSS comment) falls back to
-     *  the verbatim value — see `mobileSideGutterFree`; the page then
-     *  keeps its gutters instead of risking a declaration a browser
-     *  would drop whole.
+     *  lone CSS-wide keyword, or a value this scanner cannot trust: one
+     *  carrying a CSS comment or a backslash escape, or one whose
+     *  functions/quotes never close) falls back to the verbatim value —
+     *  see `mobileSideGutterFree`; the page then keeps its gutters
+     *  instead of risking a declaration a browser would drop whole.
      *  Default false: the padding reads the same at every width. */
     contentBleedOnMobile: { type: Boolean, default: false },
   },

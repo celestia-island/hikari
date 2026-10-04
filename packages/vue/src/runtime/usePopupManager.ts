@@ -1,4 +1,4 @@
-import { readonly, ref } from "vue";
+import { computed, readonly, ref } from "vue";
 
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
@@ -70,6 +70,14 @@ function effectiveBand(kind: PopupKind, blocking: boolean): number {
   return POPUP_Z_BANDS[kind];
 }
 
+/** True when a live entry is a WINDOW (blocks the page like one):
+ *  modal/drawer by kind, or a dropdown-kind surface docked as a
+ *  blocking mobile sheet. Page chrome (dials, floating pads) uses
+ *  this to yield the screen to whatever window is on top. */
+export function isWindowEntry(kind: PopupKind, blocking: boolean): boolean {
+  return effectiveBand(kind, blocking) === POPUP_Z_BANDS.modal;
+}
+
 /** In-band stacking step. Even numbers leave the odd slot free for the
  * +1 content/panel layer each overlay puts above its own root. */
 export const POPUP_Z_STEP = 2;
@@ -132,6 +140,27 @@ function uid(): string {
 }
 
 const registry = ref<Map<string, PopupEntry>>(new Map());
+
+// Derived window-stack signals (reactive over the live registry):
+// whether ANY window is open, and the topmost window's z slot. Stack
+// priority for dial chrome rides these — a window's own dial replaces
+// the page's while it is topmost; close the window and the page's
+// dial returns.
+export const hasLiveWindow = computed<boolean>(() => {
+  for (const entry of registry.value.values()) {
+    if (isWindowEntry(entry.kind, entry.blocking)) return true;
+  }
+  return false;
+});
+
+export const topWindowZ = computed<number | null>(() => {
+  let top: number | null = null;
+  for (const entry of registry.value.values()) {
+    if (!isWindowEntry(entry.kind, entry.blocking)) continue;
+    if (top === null || entry.zIndex > top) top = entry.zIndex;
+  }
+  return top;
+});
 let scrollLockCount = 0;
 
 // Runtime-registry reporting (the "context of contexts"). Lazy: the

@@ -143,3 +143,24 @@ describe("HkFloatingLayer", () => {
     expect(m.root()!.querySelector(".probe")).not.toBeNull();
   });
 });
+
+describe("HkFloatingLayer yieldToWindows", () => {
+  it("hides while any window is open and returns when the last window closes", async () => {
+    const manager = usePopupManager();
+    const win = manager.register("modal", true, "Blocking");
+    const m = mountLayer({ yieldToWindows: true });
+    expect(m.root()).toBeNull();
+    manager.unregister(win.id);
+    await nextTick();
+    expect(m.root()).not.toBeNull();
+  });
+
+  it("default layers keep floating over windows (opt-in only)", async () => {
+    const manager = usePopupManager();
+    const win = manager.register("modal", true, "Blocking");
+    const m = mountLayer({});
+    expect(m.root()).not.toBeNull();
+    manager.unregister(win.id);
+    await nextTick();
+  });
+});

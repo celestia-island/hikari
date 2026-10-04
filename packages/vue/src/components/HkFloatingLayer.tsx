@@ -7,7 +7,7 @@ import {
   type PropType,
 } from "vue";
 
-import { usePopupManager } from "../runtime/usePopupManager";
+import { hasLiveWindow, usePopupManager } from "../runtime/usePopupManager";
 import "./HkFloatingLayer.scss";
 
 type FloatCorner = "bottom-right" | "bottom-left" | "top-right" | "top-left";
@@ -63,6 +63,11 @@ export default defineComponent({
     offsetY: { type: String, default: undefined },
     /** Accessible group name for the chrome (e.g. "Date dial"). */
     ariaLabel: { type: String, default: "" },
+    /** Stack priority (user direction 2026-10-04): when true the layer
+     *  yields the screen while ANY window is open - page-level dial
+     *  chrome disappears under the top window instead of floating over
+     *  it, and returns when the last window closes. */
+    yieldToWindows: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
     const { register, unregister } = usePopupManager();
@@ -71,7 +76,10 @@ export default defineComponent({
     // Annotation-band chrome, not a breadcrumb level: non-blocking,
     // untitled, no scroll lock, no outside-dismiss channel. Registered
     // exactly while shown (immediate, so the first paint already
-    // carries the band z); a hidden layer holds no slot.
+    // carries the band z); a hidden layer holds no slot. (A
+    // yielded layer keeps its slot held while hidden — constant chrome
+    // flipping a registered slot on every window open/close would churn
+    // the band for no visual effect.)
     watch(
       () => props.open,
       (show) => {
@@ -89,7 +97,7 @@ export default defineComponent({
     });
 
     return () => {
-      if (!props.open) return null;
+      if (!props.open || (props.yieldToWindows && hasLiveWindow.value)) return null;
       return (
         <Teleport to="body">
           <div

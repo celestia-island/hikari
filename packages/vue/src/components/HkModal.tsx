@@ -2,9 +2,10 @@ import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, s
 
 import { useI18n } from "../i18n/context";
 import "./HkModal.scss";
+import HkFloatingLayer from "./HkFloatingLayer";
 import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
-import { usePopupManager } from "../runtime/usePopupManager";
+import { topWindowZ, usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
@@ -936,12 +937,24 @@ export default defineComponent({
 
     const contentHold = useSurfaceContentHold(machine.phase);
 
+    // Stack-priority dial chrome (user direction 2026-10-04): the
+    // window's own dial replaces the page's while this window is the
+    // topmost one, yields while another window stacks above it (dial
+    // or not), and the page dial returns when the last window closes.
+    const dialVisible = computed(() =>
+      Boolean(
+        machine.mounted.value &&
+          handle.value &&
+          (topWindowZ.value === null || topWindowZ.value <= handle.value.zIndex),
+      ),
+    );
+
     return () => {
       if (!machine.mounted.value) return null;
 
       const headerShown = props.title || props.closable || slots.header || slots.headerLead;
 
-      return (
+      const windowSurface = (
         <Teleport to="body">
           <div
             class="hk-modal-root"
@@ -1065,6 +1078,19 @@ export default defineComponent({
                 </div>
           </div>
         </Teleport>
+      );
+
+      // The dial rides the top layer beside its window (stack
+      // priority): mounted with the window, yielded above, retired
+      // when the window closes so the page dial can return.
+      if (!slots.dial) return windowSurface;
+      return (
+        <>
+          {windowSurface}
+          <HkFloatingLayer open={dialVisible.value} corner="bottom-right">
+            {slots.dial()}
+          </HkFloatingLayer>
+        </>
       );
     };
 

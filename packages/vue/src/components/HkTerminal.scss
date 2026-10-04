@@ -1,0 +1,27 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
+.hk-terminal {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 8rem;
+  padding: 0.35rem 0.45rem;
+  background: rgb(var(--color-background, 20 22 26));
+  border: 1px solid rgb(var(--color-border, 128 128 128) / 15%);
+  border-radius: vars.$hikari-radius-fui-md;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  /* xterm fills the host box */
+  .terminal,
+  .xterm {
+    height: 100%;
+  }
+
+  /* The viewport scrollbar inherits the shared chrome shape. */
+  .xterm-viewport {
+    border-radius: vars.$hikari-radius-fui-sm;
+  }
+}

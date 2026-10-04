@@ -1,6 +1,6 @@
 {
   "name": "@celestia-island/hikari",
-  "version": "0.55.108",
+  "version": "0.55.110",
   "private": false,
   "type": "module",
   "description": "Hikari Vue 3 component library — production-grade UI components based on shittim-chest design system",
@@ -56,11 +56,14 @@
     "vue": "^*"
   },
   "dependencies": {
+    "@xterm/addon-fit": "^0.*",
+    "@xterm/addon-image": "^0.10.0-beta.301",
+    "@xterm/xterm": "^6.1.0-beta.304",
     "dompurify": "^*",
     "echarts": "^*",
+    "highlight.js": "^*",
     "lucide-vue-next": "^*",
-    "marked": "^*",
-    "highlight.js": "^*"
+    "marked": "^*"
   },
   "devDependencies": {
     "@types/three": "^*",

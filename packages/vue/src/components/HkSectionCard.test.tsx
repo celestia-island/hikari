@@ -51,7 +51,7 @@ describe("HkSectionCard", () => {
     // The hint belongs to the HEADER, never to the card body.
     const card = c.querySelector(".hk-card")!;
     expect(card.textContent).not.toContain("Where this instance is reachable.");
-    expect(card.querySelector(".body-table")).not.toBeNull();
+    expect(card.querySelectorAll(".body-table")).toHaveLength(1);
     // Header precedes the card in document order (the one rhythm).
     expect(header.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -79,6 +79,33 @@ describe("HkSectionCard", () => {
     expect(c.querySelector(".hk-spinner")).not.toBeNull();
     expect(c.querySelector(".hk-card-body")!.className).not.toContain("hk-card-body-unpadded");
     expect(c.textContent).not.toContain("row");
+  });
+
+  it("lets error win when both error and loading are set", () => {
+    const c = mountCard({ title: "T", error: "boom", loading: true }, {
+      default: () => h("span", "row"),
+    });
+    expect(c.querySelector(".hk-alert")).not.toBeNull();
+    expect(c.querySelector(".hk-spinner")).toBeNull();
+    expect(c.textContent).toContain("boom");
+  });
+
+  it("forwards the description slot into the hint position", () => {
+    const c = mountCard({ title: "T" }, { description: () => h("span", "own hint") });
+    const header = c.querySelector(".hk-section-header")!;
+    expect(header.querySelector(".hk-section-header-description")!.textContent).toContain("own hint");
+    expect(c.querySelector(".hk-card")!.textContent).not.toContain("own hint");
+  });
+
+  it("forwards icon, level and dense to the heading", () => {
+    const Icon = () => h("svg", { class: "own-icon" });
+    const c = mountCard({ title: "T", icon: Icon, level: "h2", dense: true });
+    const header = c.querySelector(".hk-section-header")!;
+    expect(header.classList.contains("hk-section-header-dense")).toBe(true);
+    expect(header.querySelector("h2")).not.toBeNull();
+    expect(header.querySelector(".own-icon")).not.toBeNull();
+    const plain = mountCard({ title: "T" });
+    expect(plain.querySelector(".hk-section-header h3")).not.toBeNull();
   });
 
   it("forwards the actions slot into the heading row", () => {

@@ -24,7 +24,14 @@ import "./HkSectionCard.scss";
  * the body with an alert, `loading` with a centred spinner — both inside a
  * PADDED card (a state is content, not a table), while the normal body
  * honours `padded` (default false: tables carry their own cell padding and
- * sit flush in the card).
+ * sit flush in the card). `error` wins when both are set, as on the
+ * scaffold.
+ *
+ * One deliberate difference from the scaffold: `loading` replaces the body
+ * whenever it is true, where `HkAdminTablePage` only replaces an EMPTY body
+ * (`loading && !rows.length`) and keeps populated rows on screen through a
+ * refresh. A section therefore passes `loading` for its FIRST load, not for
+ * every refetch — or it blanks a table the user is reading.
  *
  * ```tsx
  * <HkSectionCard title={t("…")} hint={t("…")} loading={loading}>
@@ -56,12 +63,19 @@ export const HkSectionCard = defineComponent({
   setup(props, { slots }) {
     return () => {
       const state = props.error ? "error" : props.loading ? "loading" : "body";
-      // Hoisted to an identifier: an inline object literal as JSX children
-      // is not normalized to slots the way a bound one is (the same idiom
-      // HkAdminTablePage's empty-action slot needs).
-      const headerSlots = slots.actions
-        ? { actions: () => slots.actions?.() }
-        : undefined;
+      // Hoisted to an identifier: the CONDITIONAL inline form
+      // (`{slots.actions ? { actions: … } : undefined}` as children) lands in
+      // a child array, where the plain object is no longer normalized to
+      // slots and the button silently disappears. Hoisting fixes it; the
+      // bare inline literal happens to work, which is exactly why the
+      // conditional one is a trap.
+      const headerSlots =
+        slots.actions || slots.description
+          ? {
+              actions: () => slots.actions?.(),
+              description: () => slots.description?.(),
+            }
+          : undefined;
       return (
         <section class="hk-section-card">
           <HkSectionHeader

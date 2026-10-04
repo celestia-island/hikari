@@ -818,6 +818,8 @@ export { HkCardList, HkListRow } from "./components/HkCardList";
 export { HkCardList as HCardList, HkListRow as HListRow } from "./components/HkCardList";
 export { HkSectionHeader, type SectionHeaderVariant } from "./components/HkSectionHeader";
 export { HkSectionHeader as HSectionHeader } from "./components/HkSectionHeader";
+export { HkSectionCard } from "./components/HkSectionCard";
+export { HkSectionCard as HSectionCard } from "./components/HkSectionCard";
 export { default as HFilterBar } from "./components/HkFilterBar";
 export { HkShareBar as HkShareBar } from "./components/HkShareBar";
 export { HkSecretRevealModal as HkSecretRevealModal } from "./components/HkSecretRevealModal";

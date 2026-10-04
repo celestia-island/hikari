@@ -1,0 +1,22 @@
+/* HkSectionCard — the standard titled section: heading + hint above one
+ * card. The ONLY spacing definition for that anatomy; consumers must not
+ * add their own margins/wrappers around it (2026-10-05 unification: two
+ * tabs of one page had drifted apart in hint position and body padding). */
+.hk-section-card {
+  display: flex;
+  flex-direction: column;
+  /* Heading block → body. One token, both axes of the rhythm (the header
+     carries its own 4px title→hint gap). */
+  gap: var(--space-12, 0.75rem);
+  min-width: 0;
+}
+
+/* Trailing notes under the card (the section's own footnote slot). No font
+   override: a footer may carry prose or a control — it only owns the
+   rhythm, so consumers stop inventing their own top margin. */
+.hk-section-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -46,7 +46,11 @@ interface RowsRef {
 function mountTable(
   count: number,
   opts: { sortable?: boolean } = {},
-): RowsRef & { container: HTMLElement; apply(from: number, to: number): Promise<void> } {
+): RowsRef & {
+  container: HTMLElement;
+  apply(from: number, to: number): Promise<void>;
+  setOrder(next: Record<string, unknown>[]): Promise<void>;
+} {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const rows = ref<Record<string, unknown>[]>(
@@ -87,6 +91,19 @@ function mountTable(
       next.splice(to, 0, moved!);
       rows.value = next;
       await nextTick();
+    },
+    /** Replace the consumer's array outright (any reorder, including ones a
+     *  single moveTo cannot express) and flush. */
+    async setOrder(next: Record<string, unknown>[]): Promise<void> {
+      rows.value = next;
+      await nextTick();
+      // Re-pin geometry: the keyed `tr`s move with the data, so display
+      // order changed under the same elements.
+      host.querySelectorAll("tbody .hk-table-row").forEach((tr, i) => {
+        const start = i * 40;
+        const box = { left: 0, right: 300, top: start, bottom: start + 40, width: 300, height: 40, x: 0, y: start };
+        Object.defineProperty(tr, "getBoundingClientRect", { configurable: true, value: () => box as DOMRect });
+      });
     },
   };
 }
@@ -298,6 +315,100 @@ describe("HkTable drag-to-reorder", () => {
     window.dispatchEvent(pointer("pointermove", 18, 101));
     window.dispatchEvent(pointer("pointerup", 18, 101));
   }
+
+  it("maps the drop onto the NEW array after a consumer reorder (reverse case)", async () => {
+    const t = mountTable(3);
+    // The consumer replaces the order outright — [Row-0, Row-1, Row-2] →
+    // [Row-2, Row-1, Row-0]. A row-element registry that kept birth indices
+    // would resolve the drag below against the OLD positions and emit
+    // nothing; the contract is indices into the array as it is NOW.
+    const reversed = [...(t.rows.value ?? [])].reverse();
+    await t.setOrder(reversed);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    // Past row 1's midpoint (60) but not row 2's (100) → insert-at-target 1.
+    window.dispatchEvent(pointer("pointermove", 18, 70));
+    window.dispatchEvent(pointer("pointerup", 18, 70));
+    await nextTick();
+    expect(t.emitted).toEqual([[0, 1]]);
+    // And the prescribed move lands the reversal the user saw.
+    const [first] = reversed.splice(0, 1);
+    reversed.splice(1, 0, first!);
+    expect(reversed.map((r) => r.name)).toEqual(["Row-1", "Row-2", "Row-0"]);
+  });
+
+  it("pulls the nearest vertically scrollable ancestor while the pointer rests near its edge", async () => {
+    const scroller = document.createElement("div");
+    document.body.appendChild(scroller);
+    // happy-dom has no layout: the ancestor must LOOK like a scroller
+    // (overflow style + metrics) for the resolver to pick it.
+    Object.defineProperty(scroller, "scrollHeight", { configurable: true, value: 1000 });
+    Object.defineProperty(scroller, "clientHeight", { configurable: true, value: 100 });
+    const scrollerBox = { left: 0, right: 300, top: 0, bottom: 100, width: 300, height: 100, x: 0, y: 0 };
+    Object.defineProperty(scroller, "getBoundingClientRect", {
+      configurable: true,
+      value: () => scrollerBox as DOMRect,
+    });
+    const realGCS = window.getComputedStyle.bind(window);
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element) => {
+      if (el === scroller) return { overflowY: "auto" } as CSSStyleDeclaration;
+      return realGCS(el as Element);
+    });
+
+    const container = document.createElement("div");
+    scroller.appendChild(container);
+    const rows = ref<Record<string, unknown>[]>([
+      { name: "Row-0" },
+      { name: "Row-1" },
+      { name: "Row-2" },
+    ]);
+    const emitted: Array<[number, number]> = [];
+    const app = createApp({
+      render: () =>
+        h(HTable, {
+          columns: [{ key: "name", title: "Name" }],
+          rows: rows.value,
+          rowKey: "name",
+          draggable: true,
+          onReorder: (from: number, to: number) => emitted.push([from, to]),
+        }),
+    });
+    mounts.push({ app, container });
+    app.mount(container);
+    container.querySelectorAll("tbody .hk-table-row").forEach((tr, i) => {
+      const start = i * 40;
+      const box = { left: 0, right: 300, top: start, bottom: start + 40, width: 300, height: 40, x: 0, y: start };
+      Object.defineProperty(tr, "getBoundingClientRect", { configurable: true, value: () => box as DOMRect });
+    });
+
+    const grip = handles(container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    // Inside the scroller's bottom edge zone (rect 0..100, zone 24) → the
+    // engine starts pulling one frame at a time.
+    window.dispatchEvent(pointer("pointermove", 18, 95));
+    await nextTick();
+    for (let i = 0; i < 4; i += 1) {
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    }
+    expect(scroller.scrollTop).toBeGreaterThan(0);
+    window.dispatchEvent(pointer("pointerup", 18, 95));
+    await nextTick();
+    spy.mockRestore();
+    scroller.remove();
+  });
+});
+
+describe("HkTable grip CSS (source contract)", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const scss = readFileSync(join(here, "HkTable.scss"), "utf-8");
+
+  it("keeps the grip cells' padding rule at size-variant specificity", () => {
+    // The regression this pins: a bare `.hk-table-drag-cell` selector is
+    // 0,1,0 and silently loses to `.hk-table-sm .hk-table-cell` (0,2,0), so
+    // the grip cell grows a full cell's right padding at sm/lg.
+    expect(scss).toMatch(/\.hk-table \.hk-table-drag-cell\s*\{/);
+    expect(scss).toMatch(/\.hk-table \.hk-table-drag-col\s*\{/);
+  });
 });
 
 describe("HkAdminTablePage drag passthrough (source contract)", () => {

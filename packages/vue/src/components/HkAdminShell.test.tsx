@@ -277,18 +277,29 @@ describe("HkAdminShell", () => {
     expect(plainMultiInner?.style.paddingRight).toBe("2rem");
 
     // Resizing within the sub-breakpoint range never changes it either —
-    // asserted at a small phone AND at a wide phone / small tablet. The
-    // regression is "an ordinary page loses its gutters on phones", which
-    // spans the whole range below the breakpoint, not one hand-picked
-    // width: round-2 verification mutated the leak to bite only inside
-    // [400, 1024) and neither the 390 nor the 320 assertion could see it.
-    setWidth(320);
+    // asserted across the WHOLE range, not at one hand-picked width. The
+    // regression is "an ordinary page loses its gutters on phones", and
+    // round-2/round-3 verification both escaped guards that only sampled
+    // 320/390 by moving the leak into a band those widths miss.
+    for (const width of [320, 390, 500, 640, 700, 768, 900, 1023]) {
+      setWidth(width);
+      await nextTick();
+      expect(plainInner?.style.paddingLeft, `at ${width}px`).toBe("2rem");
+      expect(plainInner?.style.paddingRight, `at ${width}px`).toBe("2rem");
+      expect(plainMultiInner?.style.paddingLeft, `at ${width}px (multi)`).toBe("2rem");
+    }
+
+    // An explicit `false` reads exactly like an absent prop.
+    const declaredOff = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "1rem 2rem", contentBleedOnMobile: false },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    expect(paddingInner(declaredOff)?.style.paddingLeft).toBe("2rem");
+
+    // Above the breakpoint it is verbatim for the declared page too.
+    setWidth(1280);
     await nextTick();
     expect(mobileInnerPadding(plain)).toBe("2rem");
-    setWidth(500);
-    await nextTick();
-    expect(paddingInner(plain)?.style.paddingLeft).toBe("2rem");
-    expect(paddingInner(plainMulti)?.style.paddingLeft).toBe("2rem");
   });
 
   it("drops the horizontal half of the content padding below the mobile breakpoint when the page declares a bleed", async () => {
@@ -349,6 +360,74 @@ describe("HkAdminShell", () => {
     expect(quadInner?.style.paddingBottom).toBe("3rem");
     expect(quadInner?.style.paddingLeft).toBe("0px");
     expect(quadInner?.style.paddingRight).toBe("0px");
+
+    // A function value is ONE track: whitespace inside `calc(...)` belongs
+    // to the value, not to the shorthand. Splitting on plain whitespace
+    // shreds it into three tracks and rebuilds an invalid declaration,
+    // which a real browser drops WHOLE — taking the vertical clearance
+    // this prop promises to keep with it (rounds 2 and 3 both hit this on
+    // the shell as it shipped). happy-dom stores calc() values, so the
+    // longhands are readable here; it cannot round-trip var()/min(), which
+    // is why calc() is the probe.
+    const fn = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "calc(1rem + 2px) 1rem", contentBleedOnMobile: true },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const fnInner = paddingInner(fn);
+    expect(fnInner?.style.paddingTop).toBe("calc(1rem + 2px)");
+    expect(fnInner?.style.paddingBottom).toBe("calc(1rem + 2px)");
+    expect(fnInner?.style.paddingLeft).toBe("0px");
+    expect(fnInner?.style.paddingRight).toBe("0px");
+
+    // Tabs and newlines are valid CSS separators, and the whitespace
+    // around a shorthand is not a track of its own ("\t1rem 2rem" must
+    // read exactly like "1rem 2rem", never like a three-track value).
+    for (const padded of ["1rem\t2rem", "1rem\n2rem", " 1rem 2rem ", "\t1rem 2rem"]) {
+      const ws = mount(shellNode(
+        { navTitle: "Navigation", contentPadding: padded, contentBleedOnMobile: true },
+        { header: () => null, sidebar: NAV, content: CONTENT },
+      ));
+      const wsInner = paddingInner(ws);
+      expect(wsInner?.style.paddingTop, JSON.stringify(padded)).toBe("1rem");
+      expect(wsInner?.style.paddingBottom, JSON.stringify(padded)).toBe("1rem");
+      expect(wsInner?.style.paddingLeft, JSON.stringify(padded)).toBe("0px");
+      expect(wsInner?.style.paddingRight, JSON.stringify(padded)).toBe("0px");
+    }
+
+    // Nothing to strip: an empty value passes through untouched, it does
+    // NOT become a zero padding of its own.
+    const blank = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "", contentBleedOnMobile: true },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    expect(paddingInner(blank)?.style.padding).toBe("");
+
+    // The gate follows THIS shell's breakpoint, and the boundary is the
+    // breakpoint itself: 1023 is still mobile (bleed), 1024 is desktop
+    // (verbatim) — the same `>=` the sidebar takes over on.
+    setWidth(1023);
+    await nextTick();
+    expect(paddingInner(mobileShell)?.style.paddingLeft).toBe("0px");
+    setWidth(1024);
+    await nextTick();
+    expect(paddingInner(mobileShell)?.style.paddingLeft).toBe("2rem");
+
+    // …and a custom breakpoint moves it: the padding gate must read the
+    // same `isDesktop` the layout does, not the 1024 default (round 3
+    // mutated it to a hardcoded 1024 and the suite stayed green).
+    const narrow = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "2rem", contentBleedOnMobile: true, mobileBreakpoint: 768 },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    setWidth(767);
+    await nextTick();
+    expect(paddingInner(narrow)?.style.paddingLeft).toBe("0px");
+    setWidth(768);
+    await nextTick();
+    expect(paddingInner(narrow)?.style.paddingLeft).toBe("2rem");
+    setWidth(800);
+    await nextTick();
+    expect(paddingInner(narrow)?.style.paddingLeft).toBe("2rem");
 
     // The declaration never reaches desktop: crossing back above the
     // breakpoint restores the verbatim padding.

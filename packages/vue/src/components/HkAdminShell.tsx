@@ -51,8 +51,37 @@ export const HkAdminShell = defineComponent({
     // padding shorthand is parsed per side so multi-value values keep
     // their meaning ("1rem 2rem" -> "1rem 0", not the invalid or
     // inverted "1rem 2rem 0"). An empty value passes through untouched.
+    //
+    // The split is on TOP-LEVEL whitespace only: whitespace inside a
+    // function belongs to that value, since `calc(1rem + 2px)` and
+    // `var(--pad, 1rem)` are ONE track. A plain `split(/\s+/)` shreds
+    // them into `["calc(1rem", "+", "2px)"]`, and the rebuilt shorthand
+    // is invalid CSS — a browser drops the whole declaration, taking the
+    // vertical clearance this prop promises to keep with it (rounds 2
+    // and 3 both hit this on the shell as it shipped). A depth counter
+    // balances parentheses, so nested functions
+    // (`clamp(1rem, min(2vw, 3px), 4rem)`) survive too. Tabs and newlines
+    // are valid CSS separators and split like spaces; leading/trailing
+    // whitespace yields no empty tracks.
+    const splitPaddingSides = (value: string): string[] => {
+      const sides: string[] = [];
+      let current = "";
+      let depth = 0;
+      for (const ch of value) {
+        if (ch === "(") depth += 1;
+        else if (ch === ")") depth = Math.max(0, depth - 1);
+        if (depth === 0 && /\s/.test(ch)) {
+          if (current) sides.push(current);
+          current = "";
+          continue;
+        }
+        current += ch;
+      }
+      if (current) sides.push(current);
+      return sides;
+    };
     const mobileSideGutterFree = (value: string): string => {
-      const sides = value.trim().split(/\s+/).filter(Boolean);
+      const sides = splitPaddingSides(value);
       if (sides.length === 0) return value;
       const [top, , bottom] = sides;
       return `${top} 0 ${bottom ?? top}`;

@@ -415,3 +415,64 @@ describe("HkModal autoFollow", () => {
     expect(s.jump()).toBeNull();
   });
 });
+
+// Stack-priority dial slot (user direction 2026-10-04): the window owns
+// its dial while it is the topmost window, yields while another window
+// stacks above, and the page dial returns on close. The surface machine
+// runs on macrotask timers, so every stack transition below is staged
+// through vi.waitFor, never bare ticks.
+describe("HkModal dial slot (stack priority)", () => {
+  async function mountDialModal(withDial: boolean) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(true);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: open.value,
+            title: "Window",
+            "onUpdate:modelValue": (v: boolean) => { open.value = v; },
+          }, withDial
+            ? {
+                default: () => h("div", "body content"),
+                dial: () => h("button", { class: "dial-probe" }, "dial"),
+              }
+            : { default: () => h("div", "body content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { open };
+  }
+  const dialLayer = () => document.body.querySelector(".hk-floating-layer");
+
+  it("mounts its dial slot on the top layer while the window is topmost", async () => {
+    await mountDialModal(true);
+    await vi.waitFor(() => {
+      const layer = dialLayer();
+      expect(layer).not.toBeNull();
+      expect(layer!.querySelector(".dial-probe")).not.toBeNull();
+    });
+  });
+
+  it("yields while another window stacks above and returns when it closes", async () => {
+    const m = await mountDialModal(true);
+    await vi.waitFor(() => expect(dialLayer()).not.toBeNull());
+    const { register, unregister } = usePopupManager();
+    const above = register("modal", true, "Above");
+    await vi.waitFor(() => expect(dialLayer()).toBeNull());
+    unregister(above.id);
+    await vi.waitFor(() => expect(dialLayer()).not.toBeNull());
+    m.open.value = false;
+    await vi.waitFor(() => expect(dialLayer()).toBeNull());
+  });
+
+  it("renders no dial layer when the window declares none", async () => {
+    await mountDialModal(false);
+    await vi.waitFor(() => expect(document.body.querySelector(".hk-modal-root")).not.toBeNull());
+    expect(dialLayer()).toBeNull();
+  });
+});

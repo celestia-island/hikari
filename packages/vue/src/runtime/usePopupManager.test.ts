@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { watch } from "vue";
 
-import { POPUP_Z_BANDS, POPUP_Z_STEP, usePopupManager } from "./usePopupManager";
+import {
+  hasLiveWindow,
+  POPUP_Z_BANDS,
+  POPUP_Z_STEP,
+  topWindowZ,
+  usePopupManager,
+} from "./usePopupManager";
 
 const managers: ReturnType<typeof usePopupManager>[] = [];
 
@@ -336,5 +342,45 @@ describe("usePopupManager closeAbove", () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+describe("usePopupManager window-stack signals", () => {
+  it("derived signals track the live window band (page chrome's yield rule)", () => {
+    const m = usePopupManager();
+    const win = m.register("modal", true, "Window");
+    expect(hasLiveWindow.value).toBe(true);
+    expect(topWindowZ.value).toBe(win.zIndex);
+    // Tooltip-band entries are not windows: they must not flip the signals.
+    const tip = m.register("tooltip", false);
+    expect(hasLiveWindow.value).toBe(true);
+    expect(topWindowZ.value).toBe(win.zIndex);
+    m.unregister(tip.id);
+    m.unregister(win.id);
+    expect(hasLiveWindow.value).toBe(false);
+    expect(topWindowZ.value).toBeNull();
+  });
+
+  it("only window-band entries count: anchored dropdowns no, docked sheets yes", () => {
+    const m = usePopupManager();
+    const dd = m.register("dropdown", false);
+    expect(hasLiveWindow.value).toBe(false);
+    m.unregister(dd.id);
+    const sheet = m.register("dropdown", true, "Sheet", true);
+    expect(hasLiveWindow.value).toBe(true);
+    expect(topWindowZ.value).toBe(sheet.zIndex);
+    m.unregister(sheet.id);
+    expect(hasLiveWindow.value).toBe(false);
+  });
+
+  it("topWindowZ follows the topmost of stacked windows", () => {
+    const m = usePopupManager();
+    const low = m.register("modal", true, "Low");
+    const high = m.register("modal", true, "High");
+    expect(topWindowZ.value).toBe(high.zIndex);
+    expect(topWindowZ.value).toBeGreaterThan(low.zIndex);
+    m.unregister(high.id);
+    expect(topWindowZ.value).toBe(low.zIndex);
+    m.unregister(low.id);
   });
 });

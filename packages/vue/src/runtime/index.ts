@@ -56,7 +56,16 @@ export {
 } from "./backStack";
 export { useMediaQuery, releaseMediaQuery } from "./useMediaQuery";
 export { useOverlay, closeAll, isOverlayOpen, type OverlayHandle, type UseOverlayOptions } from "./useOverlay";
-export { usePopupManager, POPUP_Z_BANDS, POPUP_Z_STEP, type PopupHandle, type PopupKind } from "./usePopupManager";
+export {
+  hasLiveWindow,
+  isWindowEntry,
+  topWindowZ,
+  usePopupManager,
+  POPUP_Z_BANDS,
+  POPUP_Z_STEP,
+  type PopupHandle,
+  type PopupKind,
+} from "./usePopupManager";
 export { useToast, TOAST_DURATION, type ToastItem, type ToastMessage, type ToastType } from "./useToast";
 export { useConfirm } from "./useConfirm";
 export { useBlockingToast, showBlockingToast, resolveBlockingToast, clearBlockingToasts, type BlockingToastItem, type BlockingToastOptions, type BlockingToastVariant } from "./useBlockingToast";

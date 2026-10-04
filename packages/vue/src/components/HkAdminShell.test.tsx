@@ -42,7 +42,9 @@ import { HkAdminShell } from "./HkAdminShell";
  * 3. The header slot receives `onOpenDrawer` so a header trigger (the
  *    avatar in drawer action mode) can open the nav drawer.
  * 4. Content padding rides an inner wrapper inside the scroll viewport
- *    (card box-shadows are never clipped at the viewport edges).
+ *    (card box-shadows are never clipped at the viewport edges), and the
+ *    mobile side-gutter drop happens ONLY for a page that declares
+ *    `contentBleedOnMobile` — an ordinary page keeps its phone gutters.
  *
  * (Repo test convention: raw createApp + container queries, no
  * @vue/test-utils dependency.)
@@ -246,13 +248,47 @@ describe("HkAdminShell", () => {
     expect(inner?.style.padding).toBe("2rem");
   });
 
-  it("drops the horizontal half of the content padding below the mobile breakpoint", async () => {
-    // Phone width: side gutters must vanish; vertical clearance survives.
+  it("keeps the content padding on phones unless the page declares a bleed", async () => {
+    // 2026-10-04 regression: the shell used to drop the side gutters on
+    // EVERY page below the breakpoint, so an ordinary roster / overview
+    // page rendered flush against the phone edges. The drop is opt-in.
     // Asserted via longhands: happy-dom's shorthand parser collapses
     // 3-value paddings, so style.padding cannot distinguish them here.
     setWidth(390);
-    const mobileShell = mount(shellNode(
+    const plain = mount(shellNode(
       { navTitle: "Navigation", contentPadding: "2rem" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const plainInner = paddingInner(plain);
+    expect(plainInner?.style.paddingTop).toBe("2rem");
+    expect(plainInner?.style.paddingBottom).toBe("2rem");
+    expect(plainInner?.style.paddingLeft).toBe("2rem");
+    expect(plainInner?.style.paddingRight).toBe("2rem");
+
+    // A multi-value value stays verbatim too — no per-side rewriting of
+    // a page that never asked for the bleed.
+    const plainMulti = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "1rem 2rem" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const plainMultiInner = paddingInner(plainMulti);
+    expect(plainMultiInner?.style.paddingTop).toBe("1rem");
+    expect(plainMultiInner?.style.paddingLeft).toBe("2rem");
+    expect(plainMultiInner?.style.paddingRight).toBe("2rem");
+
+    // Resizing within/below the breakpoint never changes it either.
+    setWidth(320);
+    await nextTick();
+    expect(mobileInnerPadding(plain)).toBe("2rem");
+  });
+
+  it("drops the horizontal half of the content padding below the mobile breakpoint when the page declares a bleed", async () => {
+    // A page that declares `contentBleedOnMobile` (a 2D board or the 3D
+    // scene) loses the side gutters on phones; vertical clearance
+    // survives. Asserted via longhands — see the note above.
+    setWidth(390);
+    const mobileShell = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "2rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
     const inner = paddingInner(mobileShell);
@@ -264,7 +300,7 @@ describe("HkAdminShell", () => {
     // Multi-value shorthand keeps per-side meaning: vertical survives,
     // horizontal is zeroed (never the inverted "1rem 2rem 0").
     const multi = mount(shellNode(
-      { navTitle: "Navigation", contentPadding: "1rem 2rem" },
+      { navTitle: "Navigation", contentPadding: "1rem 2rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
     const multiInner = paddingInner(multi);
@@ -273,9 +309,11 @@ describe("HkAdminShell", () => {
     expect(multiInner?.style.paddingLeft).toBe("0px");
     expect(multiInner?.style.paddingRight).toBe("0px");
 
-    // Crossing back to desktop restores the verbatim padding.
+    // The declaration never reaches desktop: crossing back above the
+    // breakpoint restores the verbatim padding.
     setWidth(1280);
     await nextTick();
     expect(mobileInnerPadding(mobileShell)).toBe("2rem");
+    expect(mobileInnerPadding(multi)).toBe("1rem 2rem");
   });
 });

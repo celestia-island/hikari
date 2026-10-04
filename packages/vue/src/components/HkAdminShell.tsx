@@ -21,12 +21,22 @@ export const HkAdminShell = defineComponent({
     drawerPanelClass: { type: String, default: undefined },
     /** Content-area padding (inside the scroll viewport). Padding is
      *  applied to an inner wrapper rather than the scroll container so
-     *  card box-shadows are never clipped at the viewport edges. Below
-     *  the mobile breakpoint the horizontal half is dropped
-     *  automatically (2026-10-03 user direction: on phones the content
-     *  area must span the full width for 2D panels and the 3D scene —
-     *  only the vertical clearance survives). */
+     *  card box-shadows are never clipped at the viewport edges. Applied
+     *  verbatim at every width unless the page opts into
+     *  `contentBleedOnMobile`. */
     contentPadding: { type: String, default: "1.5rem" },
+    /** Whether the content on screen is a CANVAS — a 2D board or the 3D
+     *  scene — that must span the full phone width. OPT-IN, declared by
+     *  the page that renders the canvas (2026-10-04 user direction: the
+     *  side-gutter drop is a PER-PAGE declaration, never a shell-wide
+     *  rule — an ordinary page keeps its side gutters on phones).
+     *
+     *  When true, below `mobileBreakpoint` the horizontal half of
+     *  `contentPadding` is dropped while the vertical clearance
+     *  survives; desktop is never affected and the verbatim padding is
+     *  restored when the viewport crosses back above the breakpoint.
+     *  Default false: the padding reads the same at every width. */
+    contentBleedOnMobile: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
     const { t } = useI18n();
@@ -34,8 +44,9 @@ export const HkAdminShell = defineComponent({
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
 
-    // Content padding with the mobile side-gutter rule applied: desktop
-    // gets the value verbatim; below the breakpoint the horizontal
+    // Content padding: every page gets the value verbatim unless it has
+    // DECLARED itself a phone-width canvas (`contentBleedOnMobile`) AND
+    // the viewport is below the breakpoint — only then do the horizontal
     // tracks become zero while the vertical tracks survive. The CSS
     // padding shorthand is parsed per side so multi-value values keep
     // their meaning ("1rem 2rem" -> "1rem 0", not the invalid or
@@ -47,7 +58,9 @@ export const HkAdminShell = defineComponent({
       return `${top} 0 ${bottom ?? top}`;
     };
     const contentStyle = computed(() => ({
-      padding: isDesktop.value ? props.contentPadding : mobileSideGutterFree(props.contentPadding),
+      padding: isDesktop.value || !props.contentBleedOnMobile
+        ? props.contentPadding
+        : mobileSideGutterFree(props.contentPadding),
     }));
 
     const actionBar = provideActionBar();

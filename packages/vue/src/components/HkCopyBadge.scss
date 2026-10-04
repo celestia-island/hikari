@@ -1,0 +1,20 @@
+/*
+ * HkCopyBadge — the interactive tag face. The badge itself stays pure;
+ * this sheet only adds the interactivity contract: pointer cursor and a
+ * pressed/keyboard-focus affordance that keeps the HkBadge geometry.
+ * (Text selection is banned on every badge at the `.hk-badge` base —
+ * tags are labels, not prose.)
+ */
+
+.hk-badge.hk-copy-badge {
+  cursor: pointer;
+
+  &:active {
+    filter: brightness(0.92);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 60%);
+    outline-offset: 1px;
+  }
+}

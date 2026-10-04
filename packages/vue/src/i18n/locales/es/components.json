@@ -170,6 +170,8 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " ms",
     "hikari::table.noData": "Sin datos",
+    "hikari::table.dragHandle": "Arrastra para reordenar",
+    "hikari::table.dragHandleRow": "Reordenar «{label}»",
     "hikari::tablePage.emptyTitle": "Sin datos",
     "hikari::tabs.add": "Añadir pestaña",
     "hikari::theme.customThemeName": "Tema personalizado",

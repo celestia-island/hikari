@@ -170,6 +170,8 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " مللي ثانية",
     "hikari::table.noData": "لا توجد بيانات",
+    "hikari::table.dragHandle": "اسحب لإعادة الترتيب",
+    "hikari::table.dragHandleRow": "إعادة ترتيب {label}",
     "hikari::tablePage.emptyTitle": "لا توجد بيانات",
     "hikari::tabs.add": "إضافة علامة تبويب",
     "hikari::theme.customThemeName": "سمة مخصصة",

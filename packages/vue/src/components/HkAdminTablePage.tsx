@@ -50,8 +50,14 @@ export const HkAdminTablePage = defineComponent({
     rowKey: { type: String, default: "id" },
     emptyTitle: { type: String, default: "" },
     emptyDescription: { type: String as PropType<string | undefined>, default: undefined },
+    /** Left grip column with drag-to-reorder (forwarded to HTable; the
+     *  `reorder` event is forwarded verbatim — indices into `rows`). */
+    draggable: { type: Boolean, default: false },
   },
-  setup(props, { slots }) {
+  emits: {
+    reorder: (_fromIndex: number, _toIndex: number) => true,
+  },
+  setup(props, { emit, slots }) {
 
     return () => {
       const { t } = useI18n();
@@ -96,7 +102,13 @@ export const HkAdminTablePage = defineComponent({
             <div class="hk-admin-table-page-body">{slots.body()}</div>
           ) : (
             <HCard padded={false}>
-              <HTable columns={props.columns} rows={props.rows} rowKey={props.rowKey}>
+              <HTable
+                columns={props.columns}
+                rows={props.rows}
+                rowKey={props.rowKey}
+                draggable={props.draggable}
+                onReorder={(from: number, to: number) => emit("reorder", from, to)}
+              >
                 {slots}
               </HTable>
             </HCard>

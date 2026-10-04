@@ -170,6 +170,8 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " 毫秒",
     "hikari::table.noData": "暂无数据",
+    "hikari::table.dragHandle": "拖动以调整顺序",
+    "hikari::table.dragHandleRow": "调整「{label}」的顺序",
     "hikari::tablePage.emptyTitle": "暂无数据",
     "hikari::tabs.add": "添加标签页",
     "hikari::theme.customThemeName": "自定义主题",

@@ -109,6 +109,12 @@ export function splitPaddingSides(value: string): string[] {
  */
 export function mobileSideGutterFree(value: string): string {
   if (value.includes("/*") || value.includes("\\")) return value;
+  // `!important` is an annotation on the DECLARATION, not a track — it
+  // cannot ride a per-side rewrite: `2rem !important` would silently lose
+  // its priority, and `inherit !important` would rebuild into the
+  // `inherit 0 inherit` every engine drops (measured in Chromium, round
+  // 5). Bail out and let the authored padding stand.
+  if (/!\s*important\s*$/i.test(value)) return value;
   const { sides, balanced } = scanPaddingSides(value);
   if (!balanced) return value;
   if (sides.length === 0) return value;

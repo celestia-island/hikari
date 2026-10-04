@@ -469,9 +469,9 @@ describe("HkAdminShell", () => {
       expect(paddingInner(mobileShell)?.style.paddingTop, `declared at ${width}px`).toBe("2rem");
     }
 
-    // The shell's own default padding (1.5rem) is what every consumer
-    // actually gets — pinned here because every other mount in this file
-    // passes `contentPadding` explicitly.
+    // The shell's own default padding (1.5rem) is what a consumer that
+    // passes nothing actually gets — pinned here because this file
+    // otherwise only ever exercises explicit values.
     const defaulted = mount(shellNode(
       { navTitle: "Navigation", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },

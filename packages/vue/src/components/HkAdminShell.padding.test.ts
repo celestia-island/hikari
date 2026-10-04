@@ -164,9 +164,32 @@ describe("mobileSideGutterFree", () => {
     }
   });
 
+  it("refuses a value whose priority annotation cannot ride the rewrite", () => {
+    // `!important` annotates the DECLARATION, not a track. Rewriting it
+    // would either drop the priority (`2rem !important` -> `2rem 0 2rem`)
+    // or rebuild a declaration every engine drops (`inherit !important`
+    // -> `inherit 0 inherit`, measured in Chromium as rejected whole,
+    // with the page falling back to the cascade). Round 5 found the
+    // family; the value now passes through untouched.
+    const flagged = [
+      "2rem !important",
+      "1rem 2rem 3rem !important",
+      "inherit !important",
+      "unset !important",
+      "initial!important",
+      "revert-layer !important",
+      "2rem ! important",
+    ];
+    for (const value of flagged) {
+      expect(mobileSideGutterFree(value), value).toBe(value);
+    }
+  });
+
   it("still rewrites a keyword-shaped track that is not alone", () => {
-    // Only a LONE keyword is unrewritable; as one track of several it is
-    // just a value the author wrote.
+    // A CSS-wide keyword is only valid as a declaration's SOLE value, so
+    // "inherit 2rem" is invalid CSS whatever we do with it — the rewrite
+    // is no worse than the authored value (both are dropped). The lone
+    // spelling above IS valid, which is why it bails instead.
     expect(mobileSideGutterFree("inherit 2rem")).toBe("inherit 0 inherit");
     expect(mobileSideGutterFree("1rem inherit")).toBe("1rem 0 1rem");
   });

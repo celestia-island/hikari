@@ -1,0 +1,58 @@
+// HkFloatingLayer.scss — top-layer floating chrome.
+//
+// Anchoring mirrors HkFab's safe-area-aware corner insets, extended per
+// instance by --hk-float-offset-*. The z rides the popup manager's
+// tooltip band via --hk-float-z (inline from the component once the
+// registration resolves); the fallback must stay in sync with
+// POPUP_Z_BANDS.tooltip in runtime/usePopupManager.ts.
+.hk-floating-layer {
+  position: fixed;
+  z-index: var(--hk-float-z, 3000);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+  pointer-events: none;
+
+  --hk-float-inset-x: max(var(--space-14, 0.875rem), env(safe-area-inset-left, 0px));
+  --hk-float-inset-y: max(var(--space-14, 0.875rem), env(safe-area-inset-bottom, 0px));
+
+  &[data-corner$="-right"] {
+    --hk-float-inset-x: max(var(--space-14, 0.875rem), env(safe-area-inset-right, 0px));
+    right: calc(var(--hk-float-inset-x) + var(--hk-float-offset-x, 0px));
+  }
+
+  &[data-corner$="-left"] {
+    --hk-float-inset-x: max(var(--space-14, 0.875rem), env(safe-area-inset-left, 0px));
+    left: calc(var(--hk-float-inset-x) + var(--hk-float-offset-x, 0px));
+  }
+
+  &[data-corner^="top"] {
+    --hk-float-inset-y: max(var(--space-14, 0.875rem), env(safe-area-inset-top, 0px));
+    top: calc(var(--hk-float-inset-y) + var(--hk-float-offset-y, 0px));
+  }
+
+  &[data-corner^="bottom"] {
+    --hk-float-inset-y: max(var(--space-14, 0.875rem), env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--hk-float-inset-y) + var(--hk-float-offset-y, 0px));
+  }
+
+  // The layer never eats gestures; the widgets inside do. NOTE: for a
+  // floated HkFab this rule must LOSE to HkFab's own
+  // `.hk-fab { pointer-events: none }` (equal specificity — later sheet
+  // wins — and HkFab.tsx imports this component before its own sheet),
+  // so the fab root stays transparent while its button re-enables.
+  // Do not strengthen this selector or reorder those imports: the
+  // layer's gap boxes would start eating clicks.
+  > * {
+    pointer-events: auto;
+  }
+
+  // A floated HkFab (layer="top") hands viewport anchoring to this
+  // layer entirely: drop its own positioning so its corner lands in
+  // the layer's flow instead of double-resolving the insets.
+  > .hk-fab {
+    position: static;
+    inset: auto;
+    z-index: auto;
+  }
+}

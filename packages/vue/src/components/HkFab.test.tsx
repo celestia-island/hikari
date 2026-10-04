@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vitest } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkFab from "./HkFab";
+import { POPUP_Z_BANDS } from "../runtime/usePopupManager";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -41,8 +42,14 @@ function mountFab(props: Record<string, unknown> = {}): Harness {
   mounts.push(app);
   app.mount(container);
 
-  const root = container.querySelector<HTMLElement>(".hk-fab");
-  const button = container.querySelector<HTMLButtonElement>(".hk-fab-button");
+  // A layer="top" fab teleports into the floating layer on <body>;
+  // fall back to the document scope so both modes resolve.
+  const root =
+    container.querySelector<HTMLElement>(".hk-fab") ??
+    document.body.querySelector<HTMLElement>(".hk-fab");
+  const button =
+    container.querySelector<HTMLButtonElement>(".hk-fab-button") ??
+    document.body.querySelector<HTMLButtonElement>(".hk-fab-button");
   if (!root || !button) throw new Error("HkFab did not render its shell");
   harness.root = root;
   harness.button = button;
@@ -213,5 +220,30 @@ describe("HkFab speed dial", () => {
     expect(toggles).toEqual([true, false, true]);
     ctrl!.toggle();
     expect(toggles).toEqual([true, false, true, false]);
+  });
+});
+
+describe("HkFab layer", () => {
+  it("host (default) keeps the fab anchored in the host tree", () => {
+    const m = mountFab({ ariaLabel: "Host", positioning: "fixed" });
+    expect(document.body.querySelector(".hk-floating-layer")).toBeNull();
+    expect(m.root.getAttribute("data-positioning")).toBe("fixed");
+  });
+
+  it("top wraps the fab in an HkFloatingLayer above the window band", () => {
+    const m = mountFab({ ariaLabel: "Float", layer: "top", corner: "bottom-right" });
+    const layer = document.body.querySelector<HTMLElement>(".hk-floating-layer");
+    expect(layer).not.toBeNull();
+    expect(layer!.contains(m.root)).toBe(true);
+    // Geometry is owned by the layer alone once floated.
+    expect(m.root.getAttribute("data-positioning")).toBeNull();
+    expect(m.root.getAttribute("data-corner")).toBeNull();
+    // Offset vars hand off to the layer as well — the fab keeps none.
+    expect(m.root.style.getPropertyValue("--hk-fab-offset-x")).toBe("");
+    expect(m.root.style.getPropertyValue("--hk-fab-offset-y")).toBe("");
+    expect(layer!.getAttribute("data-corner")).toBe("bottom-right");
+    const z = Number(layer!.style.getPropertyValue("--hk-float-z"));
+    expect(z).toBeGreaterThanOrEqual(POPUP_Z_BANDS.tooltip);
+    expect(z).toBeLessThan(POPUP_Z_BANDS.toast);
   });
 });

@@ -11,6 +11,7 @@
     "hikari::protocol.copy": "복사",
     "hikari::protocol.copied": "복사됨",
     "hikari::clipboard.copied": "복사됨",
+    "hikari::clipboard.clickToCopy": "클릭하여 복사",
     "hikari::clipboard.copyFailed": "복사 실패",
     "hikari::about.title": "정보",
     "hikari::about.version": "버전",

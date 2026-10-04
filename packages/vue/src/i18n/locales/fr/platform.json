@@ -11,6 +11,7 @@
     "hikari::protocol.copy": "Copier",
     "hikari::protocol.copied": "Copié",
     "hikari::clipboard.copied": "Copié",
+    "hikari::clipboard.clickToCopy": "Cliquez pour copier",
     "hikari::clipboard.copyFailed": "Échec de la copie",
     "hikari::about.title": "À propos",
     "hikari::about.version": "Version",

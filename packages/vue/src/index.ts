@@ -16,6 +16,7 @@ export { default as HColorPicker } from "./components/HkColorPicker";
 export { HColorSchemeDialog, type HCustomTheme } from "./components/HkColorSchemeDialog";
 export { HkColorSchemeEditor } from "./components/HkColorSchemeEditor";
 export { default as HConfirmDialog } from "./components/HkConfirmDialog";
+export { default as HCopyBadge } from "./components/HkCopyBadge";
 export { default as HCrossfade } from "./components/HkCrossfade";
 export { default as HDivider } from "./components/HkDivider";
 export {
@@ -684,6 +685,7 @@ export { default as HkButton } from "./components/HkButton";
 export { default as HkCard } from "./components/HkCard";
 export { default as HkCheckbox } from "./components/HkCheckbox";
 export { default as HkColorPicker } from "./components/HkColorPicker";
+export { default as HkCopyBadge } from "./components/HkCopyBadge";
 export { default as HkConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HkCrossfade } from "./components/HkCrossfade";
 export { default as HkDivider } from "./components/HkDivider";

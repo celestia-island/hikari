@@ -27,6 +27,11 @@
   color: var(--hk-badge-text);
   line-height: 1.4;
   white-space: nowrap;
+  /* Tags are labels, not prose: dragging across a row of pills must never
+     start a text selection (the workspace tag contract makes HkCopyBadge
+     the copy path instead). */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* ---------- size ---------- */

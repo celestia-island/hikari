@@ -11,6 +11,7 @@
     "hikari::protocol.copy": "コピー",
     "hikari::protocol.copied": "コピーしました",
     "hikari::clipboard.copied": "コピーしました",
+    "hikari::clipboard.clickToCopy": "クリックでコピー",
     "hikari::clipboard.copyFailed": "コピーに失敗しました",
     "hikari::about.title": "このアプリについて",
     "hikari::about.version": "バージョン",

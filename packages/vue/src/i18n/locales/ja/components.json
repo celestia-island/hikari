@@ -170,6 +170,8 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " ミリ秒",
     "hikari::table.noData": "データなし",
+    "hikari::table.dragHandle": "ドラッグで並べ替え",
+    "hikari::table.dragHandleRow": "「{label}」の順序を変更",
     "hikari::tablePage.emptyTitle": "データがありません",
     "hikari::tabs.add": "タブを追加",
     "hikari::theme.customThemeName": "カスタムテーマ",

@@ -170,6 +170,8 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " мс",
     "hikari::table.noData": "Нет данных",
+    "hikari::table.dragHandle": "Перетащите, чтобы изменить порядок",
+    "hikari::table.dragHandleRow": "Изменить порядок: {label}",
     "hikari::tablePage.emptyTitle": "Нет данных",
     "hikari::tabs.add": "Добавить вкладку",
     "hikari::theme.customThemeName": "Пользовательская тема",

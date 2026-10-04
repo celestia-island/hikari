@@ -170,6 +170,8 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " 밀리초",
     "hikari::table.noData": "데이터 없음",
+    "hikari::table.dragHandle": "드래그하여 순서 변경",
+    "hikari::table.dragHandleRow": "'{label}' 순서 변경",
     "hikari::tablePage.emptyTitle": "데이터 없음",
     "hikari::tabs.add": "탭 추가",
     "hikari::theme.customThemeName": "사용자 정의 테마",

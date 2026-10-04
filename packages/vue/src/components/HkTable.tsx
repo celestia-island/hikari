@@ -137,23 +137,23 @@ export default defineComponent({
     );
 
     // ── Drag-to-reorder (draggable) ─────────────────────────────────────
-    // The strip the reorder engine measures: the body rows in display
-    // order, registered by the row `ref` callbacks. A null (row outside
-    // the viewport render, a row unmounting mid-gesture) is skipped by the
-    // engine, so the strip index space stays the engine's; with a stable
-    // list under a held press — the only case a live drag cares about —
-    // strip indices are display indices.
-    //
-    // The registry re-syncs itself on every re-render: Vue re-invokes a
-    // function ref on each keyed patch with the element and its NEW index
-    // (and never calls an old function ref with null), so a consumer that
-    // reorders `rows` after a drop leaves this array in display order
-    // without any bookkeeping here. `items()` still filters null/detached
-    // nodes, which is what makes a shrinking list safe mid-gesture.
-    const rowEls = ref<(HTMLElement | null)[]>([]);
-
-    function setRowEl(index: number, el: Element | null): void {
-      rowEls.value[index] = (el as HTMLElement | null) ?? null;
+    /** The strip the reorder engine measures: the body rows in display
+     *  order, read from the DOM on demand.
+     *
+     *  A ref registry cannot be trusted here. Vue calls a REMOVED row's
+     *  function ref with null, and the index that callback captured is the
+     *  one the row had in the PREVIOUS render — which, after a mid-list
+     *  deletion, is the very slot the row below just slid into. The stale
+     *  null lands last and erases a live registration (measured: rows
+     *  [Row-0, Row-2] render while the registry reads [Row-0, null]), so
+     *  every later pointer drop resolves past the end and is swallowed by
+     *  the bounds check. The DOM is the one source that cannot drift; the
+     *  engine re-reads it per resolution, which is also what keeps a list
+     *  that changes under a held press honest. */
+    function liveRowEls(): HTMLElement[] {
+      const host = wrapperHostRef.value;
+      if (!host) return [];
+      return Array.from(host.querySelectorAll<HTMLElement>("tbody .hk-table-row"));
     }
 
     /** Reordering is meaningful only over the array the consumer owns. A
@@ -195,27 +195,18 @@ export default defineComponent({
     }
 
     const rowDrag = usePointerReorder({
-      items: () => rowEls.value.filter((el) => el != null && el.isConnected),
+      items: liveRowEls,
       axis: "y",
       onDrop: onReorderDrop,
       scrollContainer: dragScrollContainer,
     });
 
-    /** Display index → strip index (nulls and detached nodes skipped —
-     *  exactly the filter `items()` applies, so `start`'s index lands on
-     *  the pressed row). */
-    function stripIndexOf(displayIndex: number): number {
-      let strip = 0;
-      for (let i = 0; i < displayIndex; i += 1) {
-        const el = rowEls.value[i];
-        if (el && el.isConnected) strip += 1;
-      }
-      return rowEls.value[displayIndex]?.isConnected ? strip : -1;
-    }
-
     function onHandlePointerdown(e: PointerEvent, index: number): void {
       if (reorderInert.value) return;
-      const strip = stripIndexOf(index);
+      // The press's own row is looked up in the live strip: the render-time
+      // index is a fallback for a handle that somehow left the table.
+      const row = (e.currentTarget as HTMLElement | null)?.closest("tr");
+      const strip = row ? liveRowEls().indexOf(row as HTMLElement) : index;
       if (strip >= 0) rowDrag.start(e, strip);
     }
 
@@ -376,7 +367,6 @@ export default defineComponent({
                 return (
                   <tr
                     key={rowKey}
-                    ref={(el) => setRowEl(index, el as Element | null)}
                     class="hk-table-row"
                     data-dragging={rowDrag.dragging.value && rowDrag.dragFrom.value === index ? "" : undefined}
                     data-drop={dropCueEdge || undefined}

@@ -316,6 +316,27 @@ describe("HkTable drag-to-reorder", () => {
     window.dispatchEvent(pointer("pointerup", 18, 101));
   }
 
+  it("still emits after a MIDDLE row is removed (stale registry tail)", async () => {
+    const t = mountTable(3);
+    // Keyed removal never nulls the removed row's ref: the registry keeps
+    // its old slot, which now holds a still-connected duplicate of the row
+    // that slid down into it. Without the tail trim + identity de-dupe the
+    // strip reports one entry too many, the drop resolves past the end and
+    // the bounds check swallows the emit — silently, for every later drag.
+    const original = t.rows.value ?? [];
+    await t.setOrder([original[0]!, original[2]!]);
+
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 70));
+    window.dispatchEvent(pointer("pointerup", 18, 70));
+    await nextTick();
+    expect(t.emitted).toEqual([[0, 1]]);
+    // The drop lands: Row-2 takes Row-0's place.
+    await t.apply(0, 1);
+    expect((t.rows.value ?? []).map((r) => r.name)).toEqual(["Row-2", "Row-0"]);
+  });
+
   it("maps the drop onto the NEW array after a consumer reorder (reverse case)", async () => {
     const t = mountTable(3);
     // The consumer replaces the order outright — [Row-0, Row-1, Row-2] →

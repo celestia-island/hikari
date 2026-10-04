@@ -689,6 +689,7 @@ export { default as HkDrawer } from "./components/HkDrawer";
 export { default as HkEmptyState } from "./components/HkEmptyState";
 export { default as HkExpansionPanel } from "./components/HkExpansionPanel";
 export { default as HkFab } from "./components/HkFab";
+export { default as HkFloatingLayer } from "./components/HkFloatingLayer";
 export { default as HkIcon } from "./components/HkIcon";
 export { default as HkIconButton } from "./components/HkIconButton";
 export { default as HkIconButtonGroup } from "./components/HkIconButtonGroup";

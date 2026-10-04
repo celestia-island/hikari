@@ -6,6 +6,7 @@ import {
 } from "vue";
 
 import { iconByName } from "../composables/iconRegistry";
+import HkFloatingLayer from "./HkFloatingLayer";
 import "./HkFab.scss";
 
 /** One entry of the HkFab speed dial. */
@@ -21,6 +22,7 @@ type FabCorner = "bottom-right" | "bottom-left" | "top-right" | "top-left";
 type FabSize = "sm" | "md" | "lg";
 type FabVariant = "primary" | "glass";
 type FabExpandDirection = "up" | "down" | "left" | "right";
+type FabLayer = "host" | "top";
 
 /**
  * Material-design-style floating action button with an optional
@@ -46,6 +48,13 @@ export default defineComponent({
     disabled: { type: Boolean, default: false },
     actions: { type: Array as PropType<HFabAction[]>, default: undefined },
     expandDirection: { type: String as PropType<FabExpandDirection>, default: "up" },
+    /** "top" floats the fab above every window (HkFloatingLayer — the
+     *  popup manager's tooltip band, teleported to <body>): dials stay
+     *  reachable no matter which modal/sheet opens over them. The layer
+     *  owns the geometry when floated — `positioning` is ignored, the
+     *  corner/offset props hand off to it. "host" keeps the classic
+     *  in-tree anchoring (the historical default, byte-identical). */
+    layer: { type: String as PropType<FabLayer>, default: "host" },
   },
   emits: {
     click: (_e: MouseEvent) => true,
@@ -116,6 +125,8 @@ export default defineComponent({
     }
 
     return () => {
+      const floated = props.layer === "top";
+
       // Icon precedence: slot > registry > inline chevron-down fallback.
       // `as any` matches HkIcon — the registry returns a loose Component.
       const RegistryIcon = props.icon ? (iconByName(props.icon) as any) : null;
@@ -144,19 +155,19 @@ export default defineComponent({
         </span>
       );
 
-      return (
+      const fab = (
         <div
           ref={rootRef}
           class="hk-fab"
-          data-positioning={props.positioning}
-          data-corner={props.corner}
+          data-positioning={floated ? undefined : props.positioning}
+          data-corner={floated ? undefined : props.corner}
           data-size={props.size}
           data-variant={props.variant}
           data-expand={props.expandDirection}
           data-expanded={isOpen.value ? "true" : undefined}
           style={{
-            "--hk-fab-offset-x": props.offsetX,
-            "--hk-fab-offset-y": props.offsetY,
+            "--hk-fab-offset-x": floated ? undefined : props.offsetX,
+            "--hk-fab-offset-y": floated ? undefined : props.offsetY,
           }}
         >
           {(props.actions?.length ?? 0) > 0 && (
@@ -196,6 +207,23 @@ export default defineComponent({
           </button>
         </div>
       );
+
+      // Floated: the HkFloatingLayer owns viewport anchoring (corner +
+      // safe-area + tooltip-band z); the fab itself renders bare inside
+      // it (data-positioning/corner stripped above so the geometry is
+      // owned by exactly one layer).
+      if (floated) {
+        return (
+          <HkFloatingLayer
+            corner={props.corner}
+            offsetX={props.offsetX}
+            offsetY={props.offsetY}
+          >
+            {fab}
+          </HkFloatingLayer>
+        );
+      }
+      return fab;
     };
   },
 });

@@ -79,11 +79,16 @@ export const HkSectionCard = defineComponent({
       // slots and the button silently disappears. Hoisting fixes it; the
       // bare inline literal happens to work, which is exactly why the
       // conditional one is a trap.
+      // Each slot is spread CONDITIONALLY: forwarding an absent one as a
+      // function that returns undefined defeats HkSectionHeader's own
+      // empty-node guard, which renders an empty wrapper (and, in the
+      // column-flex heading, a phantom gap slot) — a whitespace-only
+      // regression the R3 review caught.
       const headerSlots =
         slots.actions || slots.description
           ? {
-              actions: () => slots.actions?.(),
-              description: () => slots.description?.(),
+              ...(slots.actions ? { actions: () => slots.actions?.() } : {}),
+              ...(slots.description ? { description: () => slots.description?.() } : {}),
             }
           : undefined;
       return (

@@ -130,6 +130,24 @@ describe("HkSectionCard", () => {
     expect(bare.querySelector(".hk-section-card-footer")).toBeNull();
   });
 
+  it("renders no empty header wrapper when only one of the two slots is given", () => {
+    // R3 finding: forwarding an absent slot as a function returning
+    // undefined left an empty `.hk-section-header-actions` /
+    // `.hk-section-header-description` node behind — and in the column-flex
+    // heading a zero-height item still eats a gap slot.
+    const actionsOnly = mountCard({ title: "T" }, { actions: () => h("button", "x") });
+    expect(actionsOnly.querySelector(".hk-section-header-actions")).not.toBeNull();
+    expect(actionsOnly.querySelector(".hk-section-header-description")).toBeNull();
+
+    const descriptionOnly = mountCard({ title: "T" }, { description: () => h("span", "hint") });
+    expect(descriptionOnly.querySelector(".hk-section-header-description")).not.toBeNull();
+    expect(descriptionOnly.querySelector(".hk-section-header-actions")).toBeNull();
+
+    const neither = mountCard({ title: "T" });
+    expect(neither.querySelector(".hk-section-header-actions")).toBeNull();
+    expect(neither.querySelector(".hk-section-header-description")).toBeNull();
+  });
+
   it("carries the count into the title and renders no hint paragraph when none is given", () => {
     const c = mountCard({ title: "T", count: "3" });
     expect(c.querySelector(".hk-section-header-count")!.textContent).toBe("3");

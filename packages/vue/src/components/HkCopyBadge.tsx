@@ -27,9 +27,12 @@ import "./HkCopyBadge.scss";
  *
  * A11y: the tag is a real button (role, tab order, Enter/Space), and the
  * click is stopped from reaching clickable ancestors — a tag inside a
- * selectable row copies without selecting the row. Consumer attrs
- * (class/style/data-*) land on the badge element itself, so a call site
- * skinning the pill keeps working; the tooltip wrapper stays clean.
+ * selectable row copies without selecting the row. The tooltip popup is
+ * linked to the badge via aria-describedby (HkTooltip hands the popup id
+ * down as a slot prop, so the describedby lands on the actual focus
+ * target). Consumer attrs (class/style/data-*) land on the badge element
+ * itself, so a call site skinning the pill keeps working; the tooltip
+ * wrapper stays clean.
  */
 export default defineComponent({
   name: "HkCopyBadge",
@@ -95,7 +98,7 @@ export default defineComponent({
       // itself; only the interactive contract below is ours to add.
       const { class: attrClass, style: attrStyle, ...restAttrs } = attrs;
 
-      const badge = (
+      const buildBadge = (describedBy?: string) => (
         <HBadge
           ref={badgeRef}
           {...restAttrs}
@@ -110,6 +113,7 @@ export default defineComponent({
           color={props.color}
           bgColor={props.bgColor}
           borderColor={props.borderColor}
+          aria-describedby={describedBy}
           {...(props.disabled
             ? {}
             : {
@@ -133,8 +137,13 @@ export default defineComponent({
         </HBadge>
       );
 
-      if (props.disabled) return badge;
-      return <HTooltip text={tooltipText.value}>{badge}</HTooltip>;
+      if (props.disabled) return buildBadge();
+      return (
+        <HTooltip text={tooltipText.value}>
+          {(tip: { popupId: string; visible: boolean }) =>
+            buildBadge(tip?.visible ? tip.popupId : undefined)}
+        </HTooltip>
+      );
     };
   },
 });

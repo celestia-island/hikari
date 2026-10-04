@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, defineComponent } from "vue";
+import { createApp, h, defineComponent, nextTick } from "vue";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,7 @@ import HkCopyBadge from "./HkCopyBadge";
 import { useToast } from "../runtime/useToast";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
+const appUnmounts: Array<{ app: ReturnType<typeof createApp> }> = [];
 
 function mount(renderNode: () => ReturnType<typeof h>) {
   const container = document.createElement("div");
@@ -15,6 +16,7 @@ function mount(renderNode: () => ReturnType<typeof h>) {
   const app = createApp({ render: renderNode });
   app.mount(container);
   mounts.push({ app, container });
+  appUnmounts.push({ app });
   return container;
 }
 
@@ -126,16 +128,62 @@ describe("HkCopyBadge", () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
-  it("renders the custom tooltip text", () => {
+  /** Engage the lazy tooltip without hovering: a touch tap mounts the
+   *  popup immediately (showNow), no fake timers needed. */
+  function engageTooltip(c: HTMLElement) {
+    c.querySelector(".hk-tooltip-wrapper")!.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
+    );
+  }
+
+  it("renders the custom tooltip text", async () => {
     const c = mount(() => h(HkCopyBadge, { tooltip: "Open details" }, () => "#d.132"));
-    const content = c.parentElement!.querySelector(".hk-tooltip-popup .hk-tooltip-content");
+    // The popup mounts lazily on first engage (dense-list contract).
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+    engageTooltip(c);
+    await nextTick();
+    const content = document.body.querySelector(".hk-tooltip-popup .hk-tooltip-content");
     expect(content?.textContent).toBe("Open details");
   });
 
-  it("shows the localized click-to-copy tooltip by default", () => {
+  it("shows the localized click-to-copy tooltip by default", async () => {
     const c = mount(() => h(HkCopyBadge, null, () => "#d.132"));
-    const content = c.parentElement!.querySelector(".hk-tooltip-popup .hk-tooltip-content");
+    engageTooltip(c);
+    await nextTick();
+    const content = document.body.querySelector(".hk-tooltip-popup .hk-tooltip-content");
     expect(content?.textContent).toBe("Click to copy");
+  });
+
+  it("links the badge to the popup via aria-describedby across the whole lifecycle", async () => {
+    const c = mount(() => h(HkCopyBadge, { tooltip: "Open details" }, () => "#d.132"));
+    const badge = c.querySelector(".hk-badge")!;
+
+    // Dormant: no popup, no describedby.
+    expect(badge.getAttribute("aria-describedby")).toBeNull();
+    expect(document.body.querySelector(".hk-tooltip-popup")).toBeNull();
+
+    // Engage: describedby == the popup id.
+    engageTooltip(c);
+    await nextTick();
+    const popup = document.body.querySelector(".hk-tooltip-popup")!;
+    expect(badge.getAttribute("aria-describedby")).toBe(popup.getAttribute("id"));
+    expect(popup.querySelector(".hk-tooltip-content")!.textContent).toBe("Open details");
+
+    // Leave: the attribute flips BACK (slot re-invocation must not stick).
+    c.querySelector(".hk-tooltip-wrapper")!.dispatchEvent(new MouseEvent("mouseleave"));
+    await nextTick();
+    expect(badge.getAttribute("aria-describedby")).toBeNull();
+
+    // Re-engage: returns, reusing the same popup element.
+    engageTooltip(c);
+    await nextTick();
+    expect(badge.getAttribute("aria-describedby")).toBe(
+      document.body.querySelector(".hk-tooltip-popup")!.getAttribute("id"),
+    );
+
+    // Unmount while visible: the teleported popup goes away.
+    appUnmounts.splice(0).forEach(({ app }) => app.unmount());
+    expect(document.body.querySelector(".hk-tooltip-popup")).toBeNull();
   });
 
   it("renders the inert badge face when disabled", () => {

@@ -60,13 +60,18 @@ describe("HkAuthMethodList", () => {
     expect(c.querySelector(".s-auth-methods [role='radiogroup']")).toBeNull();
   });
 
-  it("wraps every tile in a tooltip carrying the provider label", () => {
+  it("wraps every tile in a tooltip carrying the provider label", async () => {
     const c = mount(
       h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })),
     );
     const wrappers = c.querySelectorAll(".hk-tooltip-wrapper");
     expect(wrappers.length).toBe(2);
-    // The teleported popups exist with the label text (hidden until hover).
+    // Popups mount lazily on first engage — a touch tap mounts each one
+    // immediately — and then carry the label text.
+    for (const w of wrappers) {
+      w.dispatchEvent(new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }));
+    }
+    await Promise.resolve();
     const popups = [...document.querySelectorAll(".hk-tooltip-popup .hk-tooltip-content")]
       .map((el) => el.textContent);
     expect(popups).toContain("GitHub");

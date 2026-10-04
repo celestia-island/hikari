@@ -105,8 +105,19 @@ const HkToastItem = defineComponent({
       const long = isLong(text);
       const count = props.toast.messages.length;
 
+      // Live-region semantics: errors interrupt (role=alert implies
+      // assertive), everything else announces politely (role=status).
+      const a11y: { role: string; "aria-live": "assertive" | "polite" } =
+        props.toast.type === "error"
+          ? { role: "alert", "aria-live": "assertive" }
+          : { role: "status", "aria-live": "polite" };
+
       return (
-        <div class={["hk-toast-item", `hk-toast-${props.toast.type}`]}>
+        <div
+          class={["hk-toast-item", `hk-toast-${props.toast.type}`]}
+          role={a11y.role}
+          aria-live={a11y["aria-live"]}
+        >
           <span class="hk-toast-icon">{renderIcon(props.toast.type)}</span>
           <div class="hk-toast-body">
             <Transition

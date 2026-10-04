@@ -82,8 +82,18 @@ afterEach(() => {
 });
 
 describe("HkTooltip popup-manager registration", () => {
+  it("defers the band entry until the first engage (lazy contract)", () => {
+    mount({ text: "dormant" });
+    // A never-engaged tooltip — the dense-list majority — costs no
+    // teleported popup and no registry entry at all.
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+    expect(tooltipEntries().length).toBe(0);
+  });
+
   it("registers one tooltip-kind entry at the tooltip band and stamps its z inline", async () => {
-    mount({ text: "hello" });
+    const { container } = mount({ text: "hello" });
+    enter(container);
+    await settle();
     const entries = tooltipEntries();
     expect(entries.length).toBe(1);
     expect(entries[0]!.kind).toBe("tooltip");
@@ -91,25 +101,28 @@ describe("HkTooltip popup-manager registration", () => {
     // Tooltips are transient annotations — they never lock scroll.
     expect(entries[0]!.locksScroll).toBe(false);
     expect(document.body.style.overflow).not.toBe("hidden");
-    // The band z lands on the teleported popup element (set from
-    // onMounted, so the patch flushes on the next tick), overriding the
+    // The band z lands on the teleported popup element, overriding the
     // --hi-z-tooltip SCSS fallback.
-    await nextTick();
     expect(popup().style.zIndex).toBe(String(POPUP_Z_BANDS.tooltip));
   });
 
-  it("stacks a second tooltip one step above within the band", () => {
-    mount({ text: "one" });
-    mount({ text: "two" });
+  it("stacks a second tooltip one step above within the band", async () => {
+    const a = mount({ text: "one" });
+    const b = mount({ text: "two" });
+    enter(a.container);
+    enter(b.container);
+    await settle();
     const entries = tooltipEntries();
     expect(entries.length).toBe(2);
-    const zs = entries.map((e) => e.zIndex).sort((a, b) => a - b);
-    expect(zs[1]).toBe(zs[0] + POPUP_Z_STEP);
+    const zs = entries.map((e) => e.zIndex).sort((x, y) => x - y);
+    expect(zs[1]).toBe(zs[0]! + POPUP_Z_STEP);
     expect(zs[0]).toBeGreaterThanOrEqual(POPUP_Z_BANDS.tooltip);
   });
 
-  it("removes its registry entry on unmount", () => {
-    const { app } = mount({ text: "bye" });
+  it("removes its registry entry on unmount", async () => {
+    const { app, container } = mount({ text: "bye" });
+    enter(container);
+    await settle();
     expect(tooltipEntries().length).toBe(1);
     app.unmount();
     expect(tooltipEntries().length).toBe(0);
@@ -128,8 +141,15 @@ describe("HkTooltip popup-manager registration", () => {
 });
 
 describe("HkTooltip show/hide", () => {
-  it("teleports the popup to body, hidden, with the text content", () => {
+  it("mounts the popup on first engage and keeps it hidden after hide, with the text content", async () => {
     const { container } = mount({ text: "the tip" });
+    // Nothing before the first engage…
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+    // …then engage and hide: the popup persists, hidden, for reuse.
+    enter(container);
+    await settle();
+    leave(container);
+    await nextTick();
     const el = popup();
     expect(document.body.contains(el)).toBe(true);
     expect(el.parentElement).toBe(document.body);
@@ -137,6 +157,46 @@ describe("HkTooltip show/hide", () => {
     expect(el.querySelector(".hk-tooltip-content")!.textContent).toBe("the tip");
     // The anchor slot renders inside the wrapper's trigger span.
     expect(wrapper(container).querySelector(".hk-tooltip-trigger .anchor-probe")).not.toBeNull();
+  });
+
+  it("wires aria: role=tooltip + id on the popup, describedby on the wrapper while visible", async () => {
+    const { container } = mount({ text: "a11y tip", delay: 0 });
+    enter(container);
+    await settle();
+    const el = popup();
+    expect(el.getAttribute("role")).toBe("tooltip");
+    const id = el.getAttribute("id");
+    expect(id).toBeTruthy();
+    expect(wrapper(container).getAttribute("aria-describedby")).toBe(id);
+    leave(container);
+    await nextTick();
+    expect(wrapper(container).getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("hands { popupId, visible } to the default slot for focus-target wiring", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    let seen: { popupId?: string; visible?: boolean } = {};
+    const app = createApp({
+      render: () =>
+        h(
+          HkTooltip,
+          { text: "slot props", delay: 0 } as never,
+          // The scoped-slot child needs a cast: HkTooltip does not declare
+          // slot prop types, so h() types the default slot as no-arg.
+          ((slotProps: { popupId: string; visible: boolean }) => {
+            seen = slotProps;
+            return h("span", { class: "anchor-probe" }, "anchor");
+          }) as never,
+        ),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    wrapper(container).dispatchEvent(new MouseEvent("mouseenter"));
+    await settle();
+    expect(seen.visible).toBe(true);
+    expect(seen.popupId).toBe(popup().getAttribute("id"));
   });
 
   it("waits out the default 300ms delay before showing", async () => {
@@ -236,7 +296,9 @@ describe("HkTooltip touch taps", () => {
       new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
     );
     await nextTick();
-    expect(popup().className).not.toContain("hk-tooltip-visible");
+    // A mouse press never engages the lazy tooltip at all — no popup
+    // node, no visible class.
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
   });
 
   it("does not re-open from the synthetic mouseenter right after a closing tap", async () => {

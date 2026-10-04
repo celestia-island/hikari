@@ -142,6 +142,25 @@ describe("HkTable drag-to-reorder", () => {
     expect(grips[0]?.getAttribute("aria-keyshortcuts")).toBe("ArrowUp ArrowDown");
   });
 
+  it("interpolates the row label literally (a $& label is not a replacement pattern)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HTable, {
+          columns: [{ key: "name", title: "Name" }],
+          rows: [{ name: "Cash $& more" }],
+          rowKey: "name",
+          draggable: true,
+        }),
+    });
+    mounts.push({ app, container });
+    app.mount(container);
+    // String.replace would expand `$&` into the matched text; the
+    // split/join interpolation must keep the label verbatim.
+    expect(handles(container)[0]?.getAttribute("aria-label")).toBe("Reorder Cash $& more");
+  });
+
   it("ArrowDown on a focused handle emits (from, from+1) into rows and the move lands", async () => {
     const t = mountTable(3);
     await pressKey(handles(t.container)[0]!, "ArrowDown");

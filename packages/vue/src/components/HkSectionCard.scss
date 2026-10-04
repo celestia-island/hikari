@@ -1,0 +1,12 @@
+/* HkSectionCard — the standard titled section: heading + hint above one
+ * card. The ONLY spacing definition for that anatomy; consumers must not
+ * add their own margins/wrappers around it (2026-10-05 unification: two
+ * tabs of one page had drifted apart in hint position and body padding). */
+.hk-section-card {
+  display: flex;
+  flex-direction: column;
+  /* Heading block → body. One token, both axes of the rhythm (the header
+     carries its own 4px title→hint gap). */
+  gap: var(--space-12, 0.75rem);
+  min-width: 0;
+}

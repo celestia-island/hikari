@@ -235,3 +235,31 @@ describe("HkToast", () => {
     expect(items().length).toBe(0);
   });
 });
+
+describe("HkToast live-region semantics", () => {
+  it("announces errors as alert/assertive and everything else as status/polite", async () => {
+    mountHost();
+    const toast = useToast();
+    toast.error("boom");
+    toast.success("nice");
+    toast.warning("hmm");
+    toast.info("fyi");
+    toast.loading("working");
+    await settle();
+
+    // The toast surface teleports to body — the host container never
+    // contains the items.
+    const items = [...document.body.querySelectorAll(".hk-toast-item")];
+    expect(items.length).toBe(5);
+    const byType = (type: string) =>
+      items.find((el) => el.classList.contains(`hk-toast-${type}`))!;
+    const err = byType("error");
+    expect(err.getAttribute("role")).toBe("alert");
+    expect(err.getAttribute("aria-live")).toBe("assertive");
+    for (const type of ["success", "warning", "info", "loading"]) {
+      const el = byType(type);
+      expect(el.getAttribute("role"), type).toBe("status");
+      expect(el.getAttribute("aria-live"), type).toBe("polite");
+    }
+  });
+});

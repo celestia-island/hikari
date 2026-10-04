@@ -1,7 +1,9 @@
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref, Teleport, type CSSProperties, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
 import "./HkTooltip.scss";
+
+let popupSeq = 0;
 
 export default defineComponent({
   name: "HkTooltip",
@@ -13,22 +15,35 @@ export default defineComponent({
   },
   setup(props, { slots }) {
     const visible = ref(false);
+    // Stable id for the aria-describedby link from the trigger wrapper to
+    // the popup (set while the popup is visible, mirroring the tooltip
+    // bridge's contract).
+    const popupId = `hk-tooltip-${++popupSeq}`;
     const wrapperRef = ref<HTMLElement | null>(null);
     const popupRef = ref<HTMLElement | null>(null);
     let showTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Registers with the popup manager (kind "tooltip") so tooltips hold
-    // the tooltip band (above modal/drawer overlays, below toasts); the
-    // zIndex lands on the popup element and overrides the --hi-z-tooltip
-    // fallback in the SCSS.
+    // The band handle and the popup DOM are both LAZY (dense-list contract,
+    // 2026-10-05): a tooltip that is never engaged — the overwhelming
+    // majority in a list of tags — costs no teleported node, no band
+    // registration and no pointer wiring beyond the wrapper's own handlers.
+    // The first engage registers the popup-manager handle (kind "tooltip",
+    // above modal/drawer overlays, below toasts) and mounts the popup;
+    // both are held until unmount so re-shows never churn.
     const manager = usePopupManager();
     let popupHandle: PopupHandle | null = null;
     const zIndex = ref<number | null>(null);
+    const everShown = ref(false);
 
-    onMounted(() => {
-      popupHandle = manager.register("tooltip", false);
-      zIndex.value = popupHandle.zIndex;
-    });
+    function ensureEngaged() {
+      if (!everShown.value) {
+        everShown.value = true;
+        if (!popupHandle) {
+          popupHandle = manager.register("tooltip", false);
+        }
+        zIndex.value = popupHandle.zIndex;
+      }
+    }
 
     function updatePosition() {
       if (!wrapperRef.value || !popupRef.value) return;
@@ -45,6 +60,7 @@ export default defineComponent({
 
     function show() {
       clearShowTimer();
+      ensureEngaged();
       showTimer = setTimeout(() => {
         visible.value = true;
         requestAnimationFrame(updatePosition);
@@ -53,6 +69,7 @@ export default defineComponent({
 
     function showNow() {
       clearShowTimer();
+      ensureEngaged();
       visible.value = true;
       requestAnimationFrame(updatePosition);
     }
@@ -136,6 +153,7 @@ export default defineComponent({
         ref={wrapperRef}
         class="hk-tooltip-wrapper"
         data-position={props.placement}
+        aria-describedby={visible.value ? popupId : undefined}
         onPointerdown={onPointerdown}
         onMouseenter={() => {
           // Synthetic mouseenter right after a touch tap must not
@@ -148,16 +166,20 @@ export default defineComponent({
         onFocusout={hide}
       >
         <span class="hk-tooltip-trigger">
-          {slots.default?.()}
+          {slots.default?.({ popupId, visible: visible.value })}
         </span>
         <Teleport to="body">
-          <div
-            ref={popupRef}
-            class={tooltipCls.value}
-            style={popupStyle.value}
-          >
-            <div class="hk-tooltip-content">{props.text}</div>
-          </div>
+          {everShown.value && (
+            <div
+              ref={popupRef}
+              id={popupId}
+              role="tooltip"
+              class={tooltipCls.value}
+              style={popupStyle.value}
+            >
+              <div class="hk-tooltip-content">{props.text}</div>
+            </div>
+          )}
         </Teleport>
       </span>
     );

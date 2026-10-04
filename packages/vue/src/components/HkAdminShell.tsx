@@ -3,6 +3,133 @@ import { HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikar
 import { provideActionBar } from "../composables/useActionBar";
 import { useI18n } from "../i18n/context";
 
+/** CSS-wide keywords. A shorthand rebuilt from one of them is NOT a
+ *  padding (`inherit 0 inherit` is rejected by every engine, measured in
+ *  Chromium), so the declaration would be dropped WHOLE and the page
+ *  would lose the vertical clearance too — worse than not bleeding. */
+const CSS_WIDE_KEYWORDS = new Set(["inherit", "initial", "unset", "revert", "revert-layer"]);
+
+/**
+ * A scanned padding shorthand: the top-level `sides` plus whether the
+ * value ENDED with every function closed and every quote terminated.
+ * `balanced: false` means the scan cannot know where the value ends —
+ * CSS closes an open function at EOF, so the authored declaration can
+ * still be valid while a rewrite of it cannot be.
+ */
+export interface PaddingSidesScan {
+  sides: string[];
+  balanced: boolean;
+}
+
+/**
+ * Scan a CSS padding shorthand into its top-level tracks: split on
+ * TOP-LEVEL whitespace, quote- and function-aware, so whitespace inside
+ * a function belongs to that value — `calc(1rem + 2px)`,
+ * `var(--pad, 1rem)` and a quoted argument are ONE track. A plain
+ * `split(/\s+/)` shreds them (`["calc(1rem", "+", "2px)"]`), and the
+ * rebuilt shorthand is invalid CSS — a browser drops the whole
+ * declaration, taking with it the vertical clearance
+ * `contentBleedOnMobile` promises to keep (rounds 2 and 3 of this change
+ * hit exactly that; rounds 4 and 5 the escape and EOF variants). The
+ * depth counter balances parentheses, so nested functions
+ * (`clamp(1rem, min(2vw, 3px), 4rem)`) survive; a stray `)` never drives
+ * the depth negative. Tabs and newlines are valid CSS separators and
+ * split like spaces, and the whitespace around a shorthand yields no
+ * empty tracks.
+ *
+ * Exported for its own unit test: happy-dom cannot round-trip
+ * `var()`/`clamp()` values or the hostile inputs below, so the
+ * component-level suite cannot observe them.
+ */
+export function scanPaddingSides(value: string): PaddingSidesScan {
+  const sides: string[] = [];
+  let current = "";
+  let depth = 0;
+  let quote = "";
+  for (const ch of value) {
+    if (quote) {
+      current += ch;
+      if (ch === quote) quote = "";
+      continue;
+    }
+    if (ch === "\"" || ch === "'") {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === "(") depth += 1;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    if (depth === 0 && /\s/.test(ch)) {
+      if (current) sides.push(current);
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  if (current) sides.push(current);
+  return { sides, balanced: depth === 0 && quote === "" };
+}
+
+/** The tracks of {@link scanPaddingSides} — for callers that only need
+ *  the split, and for the unit test that pins the splitting rules. */
+export function splitPaddingSides(value: string): string[] {
+  return scanPaddingSides(value).sides;
+}
+
+/**
+ * The side-gutter-free form of a padding shorthand: the vertical tracks
+ * survive, the horizontal ones become zero (`"1rem 2rem"` -> `"1rem 0
+ * 1rem"`). The value is returned VERBATIM — the page keeps its padding
+ * and simply does not bleed — whenever the shorthand cannot be rewritten
+ * safely. That fallback IS the contract: emitting a declaration a browser
+ * drops costs the page ALL FOUR sides, including the vertical clearance
+ * this prop exists to keep.
+ *
+ * Verbatim cases:
+ *
+ * - an empty / whitespace-only value has nothing to strip;
+ * - a LONE CSS-wide keyword cannot be combined per side (`inherit 0
+ *   inherit` is not a padding — every engine rejects it);
+ * - the value contains a CSS comment, whose text would land in the
+ *   rebuilt declaration as a garbage track (`1rem 0 x`, measured in
+ *   Chromium: dropped, all four sides lost);
+ * - the value contains a backslash: this scanner does not decode CSS
+ *   escapes, and an escape can hide a quote, a parenthesis or a whole
+ *   keyword (`\69 nherit` IS `inherit` to an engine) — the literal text
+ *   is not the value, so no rewrite of it is trustworthy (round 5);
+ * - the value ends with a `!important` annotation: the annotation
+ *   belongs to the DECLARATION, so a per-side rewrite would either
+ *   silently lose the priority (`2rem !important`) or rebuild the
+ *   `inherit 0 inherit` every engine rejects (`inherit !important`,
+ *   measured in Chromium, round 5);
+ * - the scan ends inside an open function or an unterminated quote: CSS
+ *   auto-closes a function at EOF, so `"calc(1rem + 2px"` IS a real
+ *   padding (measured: all four sides) while its rewrite is not; an
+ *   unterminated quote is invalid at both ends, and bailing keeps the
+ *   two paths identical (round 5).
+ *
+ * Known residual (documented, not fixable at string level): a `var()`
+ * whose custom property resolves to MORE than one track cannot keep its
+ * vertical half — `padding: var(--multi) 0 var(--multi)` is valid at
+ * parse time and invalid at computed-value time, and all four sides
+ * collapse. No consumer passes a multi-track custom property today.
+ */
+export function mobileSideGutterFree(value: string): string {
+  if (value.includes("/*") || value.includes("\\")) return value;
+  // `!important` is an annotation on the DECLARATION, not a track — it
+  // cannot ride a per-side rewrite: `2rem !important` would silently lose
+  // its priority, and `inherit !important` would rebuild into the
+  // `inherit 0 inherit` every engine drops (measured in Chromium, round
+  // 5). Bail out and let the authored padding stand.
+  if (/!\s*important\s*$/i.test(value)) return value;
+  const { sides, balanced } = scanPaddingSides(value);
+  if (!balanced) return value;
+  if (sides.length === 0) return value;
+  if (sides.length === 1 && CSS_WIDE_KEYWORDS.has(sides[0].toLowerCase())) return value;
+  const [top, , bottom] = sides;
+  return `${top} 0 ${bottom ?? top}`;
+}
+
 export const HkAdminShell = defineComponent({
   name: "HkAdminShell",
   props: {
@@ -21,12 +148,29 @@ export const HkAdminShell = defineComponent({
     drawerPanelClass: { type: String, default: undefined },
     /** Content-area padding (inside the scroll viewport). Padding is
      *  applied to an inner wrapper rather than the scroll container so
-     *  card box-shadows are never clipped at the viewport edges. Below
-     *  the mobile breakpoint the horizontal half is dropped
-     *  automatically (2026-10-03 user direction: on phones the content
-     *  area must span the full width for 2D panels and the 3D scene —
-     *  only the vertical clearance survives). */
+     *  card box-shadows are never clipped at the viewport edges. Applied
+     *  verbatim at every width unless the page opts into
+     *  `contentBleedOnMobile`. */
     contentPadding: { type: String, default: "1.5rem" },
+    /** Whether the content on screen is a CANVAS — a 2D board or the 3D
+     *  scene — that must span the full phone width. OPT-IN, declared by
+     *  the page that renders the canvas (2026-10-04 user direction: the
+     *  side-gutter drop is a PER-PAGE declaration, never a shell-wide
+     *  rule — an ordinary page keeps its side gutters on phones).
+     *
+     *  When true, below `mobileBreakpoint` the horizontal half of
+     *  `contentPadding` is dropped while the vertical clearance
+     *  survives; desktop is never affected and the verbatim padding is
+     *  restored when the viewport crosses back above the breakpoint.
+     *  A `contentPadding` that cannot be rewritten per side (empty, a
+     *  lone CSS-wide keyword, or a value this scanner cannot trust: one
+     *  carrying a CSS comment or a backslash escape, one ending in a
+     *  `!important` annotation, or one whose functions/quotes never
+     *  close) falls back to the verbatim value — see
+     *  `mobileSideGutterFree`; the page then keeps its gutters instead
+     *  of risking a declaration a browser would drop whole.
+     *  Default false: the padding reads the same at every width. */
+    contentBleedOnMobile: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
     const { t } = useI18n();
@@ -34,20 +178,10 @@ export const HkAdminShell = defineComponent({
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
 
-    // Content padding with the mobile side-gutter rule applied: desktop
-    // gets the value verbatim; below the breakpoint the horizontal
-    // tracks become zero while the vertical tracks survive. The CSS
-    // padding shorthand is parsed per side so multi-value values keep
-    // their meaning ("1rem 2rem" -> "1rem 0", not the invalid or
-    // inverted "1rem 2rem 0"). An empty value passes through untouched.
-    const mobileSideGutterFree = (value: string): string => {
-      const sides = value.trim().split(/\s+/).filter(Boolean);
-      if (sides.length === 0) return value;
-      const [top, , bottom] = sides;
-      return `${top} 0 ${bottom ?? top}`;
-    };
     const contentStyle = computed(() => ({
-      padding: isDesktop.value ? props.contentPadding : mobileSideGutterFree(props.contentPadding),
+      padding: isDesktop.value || !props.contentBleedOnMobile
+        ? props.contentPadding
+        : mobileSideGutterFree(props.contentPadding),
     }));
 
     const actionBar = provideActionBar();

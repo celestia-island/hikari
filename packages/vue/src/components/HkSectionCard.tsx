@@ -27,6 +27,16 @@ import "./HkSectionCard.scss";
  * sit flush in the card). `error` wins when both are set, as on the
  * scaffold.
  *
+ * The section owns the INTRA-section rhythm only (heading block → card). The
+ * page owns the gap BETWEEN sections: several siblings on one page need the
+ * parent's own `gap` (a flex/grid column), because this component adds no
+ * outer margin by design — otherwise a page that renders three sections
+ * would stack them flush.
+ *
+ * A `footer` slot renders trailing notes under the card (placeholder
+ * grammars, "what this list feeds" details) with the same rhythm, so those
+ * notes stop being a per-consumer margin.
+ *
  * One deliberate difference from the scaffold: `loading` replaces the body
  * whenever it is true, where `HkAdminTablePage` only replaces an EMPTY body
  * (`loading && !rows.length`) and keeps populated rows on screen through a
@@ -47,6 +57,7 @@ export const HkSectionCard = defineComponent({
      *  "what this list is for" copy every section used to spell its own. */
     hint: { type: String, default: undefined },
     icon: { type: [Object, Function] as PropType<Component>, default: undefined },
+    /** Heading level only; the visual size is fixed by the header styles. */
     level: { type: String as PropType<"h2" | "h3" | "div">, default: "h3" },
     /** Trailing count beside the title (e.g. "3"). */
     count: { type: String, default: undefined },
@@ -58,7 +69,6 @@ export const HkSectionCard = defineComponent({
     loading: { type: Boolean, default: false },
     /** Body padding for non-table content (tables stay flush). */
     padded: { type: Boolean, default: false },
-    /** Heading level only; visual size is fixed by the header styles. */
   },
   setup(props, { slots }) {
     return () => {
@@ -97,6 +107,7 @@ export const HkSectionCard = defineComponent({
               slots.default?.()
             )}
           </HkCard>
+          {slots.footer ? <div class="hk-section-card-footer">{slots.footer()}</div> : null}
         </section>
       );
     };

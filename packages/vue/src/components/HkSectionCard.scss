@@ -10,3 +10,13 @@
   gap: var(--space-12, 0.75rem);
   min-width: 0;
 }
+
+/* Trailing notes under the card (the section's own footnote slot). No font
+   override: a footer may carry prose or a control — it only owns the
+   rhythm, so consumers stop inventing their own top margin. */
+.hk-section-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}

@@ -114,6 +114,22 @@ describe("HkSectionCard", () => {
     expect(c.querySelector(".hk-card")!.querySelector(".hdr-act")).toBeNull();
   });
 
+  it("renders the footer under the card — and nothing when no footer is given", () => {
+    const c = mountCard({ title: "T" }, {
+      default: () => h("span", "row"),
+      footer: () => h("p", { class: "note" }, "keep this"),
+    });
+    const footer = c.querySelector(".hk-section-card-footer")!;
+    expect(footer.querySelector(".note")!.textContent).toBe("keep this");
+    // Under the CARD, not inside it, and after it in document order.
+    const card = c.querySelector(".hk-card")!;
+    expect(card.querySelector(".note")).toBeNull();
+    expect(card.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    const bare = mountCard({ title: "T" });
+    expect(bare.querySelector(".hk-section-card-footer")).toBeNull();
+  });
+
   it("carries the count into the title and renders no hint paragraph when none is given", () => {
     const c = mountCard({ title: "T", count: "3" });
     expect(c.querySelector(".hk-section-header-count")!.textContent).toBe("3");

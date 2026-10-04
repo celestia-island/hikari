@@ -179,17 +179,26 @@ describe("mobileSideGutterFree", () => {
       "initial!important",
       "revert-layer !important",
       "2rem ! important",
+      "2rem !IMPORTANT",
+      "2rem !important ",
     ];
     for (const value of flagged) {
       expect(mobileSideGutterFree(value), value).toBe(value);
     }
+    // …and only a TRAILING annotation is one: mid-value text is just
+    // another track (the authored value is invalid CSS either way, so
+    // this guard makes no promise about it).
+    expect(mobileSideGutterFree("1rem !important 2rem")).toBe("1rem 0 2rem");
   });
 
   it("still rewrites a keyword-shaped track that is not alone", () => {
     // A CSS-wide keyword is only valid as a declaration's SOLE value, so
-    // "inherit 2rem" is invalid CSS whatever we do with it — the rewrite
-    // is no worse than the authored value (both are dropped). The lone
-    // spelling above IS valid, which is why it bails instead.
+    // "inherit 2rem" is invalid CSS whatever we do with it, and its
+    // rewrite is dropped exactly like the authored value. The lone
+    // spelling above IS valid, which is why it bails instead. ("1rem
+    // inherit" is the looser case: the authored value is already
+    // invalid, while the rewrite happens to be valid — a repair, not a
+    // loss.)
     expect(mobileSideGutterFree("inherit 2rem")).toBe("inherit 0 inherit");
     expect(mobileSideGutterFree("1rem inherit")).toBe("1rem 0 1rem");
   });

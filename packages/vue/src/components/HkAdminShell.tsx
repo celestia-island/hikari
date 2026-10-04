@@ -97,9 +97,16 @@ export function splitPaddingSides(value: string): string[] {
  *   escapes, and an escape can hide a quote, a parenthesis or a whole
  *   keyword (`\69 nherit` IS `inherit` to an engine) — the literal text
  *   is not the value, so no rewrite of it is trustworthy (round 5);
+ * - the value ends with a `!important` annotation: the annotation
+ *   belongs to the DECLARATION, so a per-side rewrite would either
+ *   silently lose the priority (`2rem !important`) or rebuild the
+ *   `inherit 0 inherit` every engine rejects (`inherit !important`,
+ *   measured in Chromium, round 5);
  * - the scan ends inside an open function or an unterminated quote: CSS
- *   auto-closes a function at EOF, so `"calc(1rem + 2px"` is a real
- *   padding (all four sides) while its rewrite is not (round 5).
+ *   auto-closes a function at EOF, so `"calc(1rem + 2px"` IS a real
+ *   padding (measured: all four sides) while its rewrite is not; an
+ *   unterminated quote is invalid at both ends, and bailing keeps the
+ *   two paths identical (round 5).
  *
  * Known residual (documented, not fixable at string level): a `var()`
  * whose custom property resolves to MORE than one track cannot keep its
@@ -157,10 +164,11 @@ export const HkAdminShell = defineComponent({
      *  restored when the viewport crosses back above the breakpoint.
      *  A `contentPadding` that cannot be rewritten per side (empty, a
      *  lone CSS-wide keyword, or a value this scanner cannot trust: one
-     *  carrying a CSS comment or a backslash escape, or one whose
-     *  functions/quotes never close) falls back to the verbatim value —
-     *  see `mobileSideGutterFree`; the page then keeps its gutters
-     *  instead of risking a declaration a browser would drop whole.
+     *  carrying a CSS comment or a backslash escape, one ending in a
+     *  `!important` annotation, or one whose functions/quotes never
+     *  close) falls back to the verbatim value — see
+     *  `mobileSideGutterFree`; the page then keeps its gutters instead
+     *  of risking a declaration a browser would drop whole.
      *  Default false: the padding reads the same at every width. */
     contentBleedOnMobile: { type: Boolean, default: false },
   },

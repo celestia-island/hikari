@@ -36,6 +36,13 @@ const GAP_PX = 8;
 const SIDE_PADDING_PX = 32;
 const BORDER_PX = 1;
 const MORE_PX = 24;
+/** The strip's own height for the moments no box can be measured (first
+ *  resync, unit DOM): the stylesheet declares 12px vertical padding, a
+ *  ~17px label line and a 1px border — 12·2 + 17 + 1·2 ≈ 43. Models the
+ *  UNFOLDED strip; a folded one is ~50px (the 24px trigger line) — the
+ *  fallback only serves boxless DOMs, a real browser measures the live
+ *  nav and the slow tick re-derives from it. */
+const STRIP_HEIGHT_PX = 43;
 
 interface Crumb {
   /** Popup-registry id this crumb can navigate back to. */
@@ -66,11 +73,32 @@ export default defineComponent({
      * hidden-layers menu.
      */
     maxLabelUnits: { type: Number, default: 10 },
+    /**
+     * Least daylight, in px, between the app's top edge and the strip's own
+     * top edge. The strip is centred on the app header, and on the standard
+     * short header that centre line sits ~24px from the top — less than the
+     * strip's half height, so its upper half used to kiss the very top edge
+     * (2026-10-05 user report). The top is now the lower of "centred on the
+     * header" and "this clearance"; a header whose centre already sits at
+     * least this far down keeps the strip centred on it. Authored in the
+     * strip's LOCAL px like every length here — a host root zoom scales it
+     * at paint, so it can only over-deliver daylight. Below 8 the entrance
+     * keyframe's own 8px slide transiently pokes back above the app top.
+     */
+    topGap: { type: Number, default: 12 },
   },
   setup(props) {
     const manager = usePopupManager();
     const { t } = useI18n();
     const { isMobile } = useBreakpoint();
+
+    /** Sanitized once: a host passing NaN would otherwise poison both the
+     *  pre-resync ref and every resync (Math.max(x, NaN) is NaN, and the
+     *  browser drops `top: NaNpx`, parking the strip at its static
+     *  position). A NEGATIVE gap stays the host's choice: it lowers the
+     *  clearance candidate below the centre line, which then wins — i.e.
+     *  "I don't care about daylight". */
+    const topGapPx = computed(() => (Number.isFinite(props.topGap) ? props.topGap : 12));
 
     /** Which entries the strip navigates. Windows (modal/drawer) always;
      *  dropdown-kind surfaces only while they BLOCK like a window — the
@@ -375,7 +403,10 @@ export default defineComponent({
     });
     onBeforeUnmount(() => document.removeEventListener("keydown", onSurfaceKeydown));
 
-    const topPx = ref(24);
+    /** Pre-resync paint position: the clearance rule evaluated on the two
+     *  layout fallbacks (48px header, 43px strip). The first nextTick
+     *  resync replaces it with measured numbers. */
+    const topPx = ref(topGapPx.value + STRIP_HEIGHT_PX / 2);
     function resyncTop() {
       const app = document.getElementById(props.appRootId);
       if (!app) return;
@@ -397,7 +428,20 @@ export default defineComponent({
       const headerH = header
         ? header.getBoundingClientRect().height / z
         : props.headerFallbackHeight;
-      topPx.value = appTop + headerH / 2;
+      // The strip's own height comes back in the same VISUAL px the
+      // header's rect does (it teleports into the same zoomed subtree), so
+      // it divides by the zoom read at the strip itself. No box (first
+      // resync, unit DOM) falls back to the stylesheet-declared height.
+      let stripH = STRIP_HEIGHT_PX;
+      if (navRef.value) {
+        const navH = navRef.value.getBoundingClientRect().height;
+        if (navH > 0) stripH = navH / ancestorZoom(navRef.value);
+      }
+      // Centre on the header, but keep the promised daylight: whichever
+      // candidate parks the strip LOWER wins, so a centre line near the
+      // viewport top can no longer push the strip's upper half against
+      // (or past) the top edge.
+      topPx.value = appTop + Math.max(headerH / 2, topGapPx.value + stripH / 2);
     }
 
     /** Viewport fence, in the strip's OWN px. The stylesheet cap is
@@ -463,6 +507,9 @@ export default defineComponent({
           if (!handle) handle = scheduleEvery(onSlowTick, 1000);
           window.addEventListener("resize", onViewportChange);
           void nextTick(() => {
+            // The strip's own box exists only now: re-derive the top with
+            // a measured height (the pre-mount resync ran on fallbacks).
+            resyncBox();
             measureStrip();
             observeClone();
           });
@@ -495,7 +542,9 @@ export default defineComponent({
       if (!visible.value) return;
       // Synchronous first measure: the collapsed shape is committed in the
       // same task as the mount, so the strip never paints one frame wide
-      // enough to spill before folding.
+      // enough to spill before folding. The top is re-derived with the
+      // strip's now-measurable height for the same reason.
+      resyncBox();
       measureStrip();
       observeClone();
     });

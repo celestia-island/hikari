@@ -640,7 +640,9 @@ describe("HkModalBreadcrumb overflow fold", () => {
     // The strip is teleported into the host's zoomed root: the header's
     // rect is VISUAL px while the inline top it writes is LOCAL px, so the
     // height is divided by the zoom. Forgetting the division drifts the
-    // strip (zoom − 1) · height / 2 down its window.
+    // strip (zoom − 1) · height / 2 down its window. The strip's OWN height
+    // rides the same conversion (clearance branch), so it is mocked here
+    // too: 88 visual px = 44 local at zoom 2.
     const app = document.createElement("div");
     app.id = "app";
     app.style.top = "10px";
@@ -665,19 +667,89 @@ describe("HkModalBreadcrumb overflow fold", () => {
     const rect = (height: number): DOMRect =>
       ({ x: 0, y: 0, width: 200, height, top: 0, left: 0, right: 200, bottom: height, toJSON: () => ({}) }) as DOMRect;
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
-      return this === header ? rect(96) : rect(0);
+      if (this === header) return rect(96);
+      if (this.classList.contains("hk-modal-breadcrumb")) return rect(88);
+      return rect(0);
     });
     try {
       setViewport(1200);
       manager.register("modal", true, "第一层");
       manager.register("modal", true, "第二层");
       await mountStrip();
-      // 10 (app top, local) + (96 visual / 2 zoom) / 2
-      expect(strip()!.style.top).toBe("34px");
+      // 10 (app top, local) + the lower of: header centre (96 visual / 2
+      // zoom) / 2 = 24, and the clearance 12 + (88 visual / 2 zoom) / 2 =
+      // 34 — the clearance sits lower and wins.
+      expect(strip()!.style.top).toBe("44px");
     } finally {
       vi.restoreAllMocks();
       app.remove();
     }
+  });
+
+  it("keeps daylight between the app's top edge and the strip", async () => {
+    // Centred on a standard short header, the strip's own upper half used
+    // to kiss the very top edge (2026-10-05 user report): a ~24px centre
+    // line is less than the strip's half height. The top is now the LOWER
+    // of "header centre" and the topGap clearance; the boxless test DOM
+    // exercises the rule on the two layout fallbacks (48px header, 43px
+    // strip). The app top is deliberately non-zero (5px) so NO expectation
+    // coincides with the pre-resync initial ref — each leg proves resyncTop
+    // actually wrote: 5 + max(48/2, gap + 43/2).
+    const app = document.createElement("div");
+    app.id = "app";
+    app.style.top = "5px";
+    document.body.appendChild(app);
+    const unmountAll = () => {
+      for (const a of mounts.splice(0)) a.unmount();
+    };
+    try {
+      setViewport(1200);
+      manager.register("modal", true, "第一层");
+      manager.register("modal", true, "第二层");
+      await mountStrip();
+      expect(strip()!.style.top).toBe("38.5px");
+      unmountAll();
+
+      // A host pinning the legacy, header-centred position passes 0:
+      // 5 + max(24, 0 + 21.5) — the centre branch wins again.
+      await mountStrip({ topGap: 0 });
+      expect(strip()!.style.top).toBe("29px");
+      unmountAll();
+
+      // And a host wanting more air simply raises the gap.
+      await mountStrip({ topGap: 40 });
+      expect(strip()!.style.top).toBe("66.5px");
+      unmountAll();
+
+      // A NaN gap is host junk: it falls back to the default instead of
+      // poisoning Math.max into `top: NaNpx` (which the browser drops).
+      await mountStrip({ topGap: Number.NaN });
+      expect(strip()!.style.top).toBe("38.5px");
+    } finally {
+      unmountAll();
+      app.remove();
+    }
+  });
+
+  it("paints the fallback position before any resync can run", async () => {
+    // A host whose app root id never resolves leaves resyncTop at its
+    // early-return, so the strip paints the INITIAL ref: that line must
+    // already encode the clearance rule on the two layout fallbacks
+    // (48px header, 43px strip), not a legacy literal. Every other
+    // style.top assertion lives in tests that create #app, where the
+    // pre-mount resync overwrites the init before the first render
+    // (mutation round M5: reverting the init to a bare 24 passed
+    // everything else green).
+    setViewport(1200);
+    manager.register("modal", true, "第一层");
+    manager.register("modal", true, "第二层");
+    await mountStrip({ appRootId: "no-such-root" });
+    expect(strip()!.style.top).toBe("33.5px");
+    for (const a of mounts.splice(0)) a.unmount();
+
+    // The init follows the prop the same way the resync does.
+    await mountStrip({ appRootId: "no-such-root", topGap: 0 });
+    expect(strip()!.style.top).toBe("21.5px");
   });
 
   it("writes the viewport fence in the strip's own px", async () => {

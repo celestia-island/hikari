@@ -276,10 +276,19 @@ describe("HkAdminShell", () => {
     expect(plainMultiInner?.style.paddingLeft).toBe("2rem");
     expect(plainMultiInner?.style.paddingRight).toBe("2rem");
 
-    // Resizing within/below the breakpoint never changes it either.
+    // Resizing within the sub-breakpoint range never changes it either —
+    // asserted at a small phone AND at a wide phone / small tablet. The
+    // regression is "an ordinary page loses its gutters on phones", which
+    // spans the whole range below the breakpoint, not one hand-picked
+    // width: round-2 verification mutated the leak to bite only inside
+    // [400, 1024) and neither the 390 nor the 320 assertion could see it.
     setWidth(320);
     await nextTick();
     expect(mobileInnerPadding(plain)).toBe("2rem");
+    setWidth(500);
+    await nextTick();
+    expect(paddingInner(plain)?.style.paddingLeft).toBe("2rem");
+    expect(paddingInner(plainMulti)?.style.paddingLeft).toBe("2rem");
   });
 
   it("drops the horizontal half of the content padding below the mobile breakpoint when the page declares a bleed", async () => {
@@ -324,6 +333,22 @@ describe("HkAdminShell", () => {
     expect(tripleInner?.style.paddingBottom).toBe("3rem");
     expect(tripleInner?.style.paddingLeft).toBe("0px");
     expect(tripleInner?.style.paddingRight).toBe("0px");
+
+    // Four-value shorthand: right and left are DIFFERENT tracks, and the
+    // rebuilt declaration has no horizontal track at all — both sides
+    // must read zero. A parser that lands a horizontal value in the wrong
+    // slot is invisible to the shorter cases (round-2 verification
+    // mutated "1rem 2rem 3rem 4rem" into "1rem 0 3rem 2rem" and the suite
+    // stayed green).
+    const quad = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "1rem 2rem 3rem 4rem", contentBleedOnMobile: true },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const quadInner = paddingInner(quad);
+    expect(quadInner?.style.paddingTop).toBe("1rem");
+    expect(quadInner?.style.paddingBottom).toBe("3rem");
+    expect(quadInner?.style.paddingLeft).toBe("0px");
+    expect(quadInner?.style.paddingRight).toBe("0px");
 
     // The declaration never reaches desktop: crossing back above the
     // breakpoint restores the verbatim padding.

@@ -277,11 +277,13 @@ describe("HkAdminShell", () => {
     expect(plainMultiInner?.style.paddingRight).toBe("2rem");
 
     // Resizing within the sub-breakpoint range never changes it either —
-    // asserted across the WHOLE range, not at one hand-picked width. The
+    // asserted across the WHOLE range, not at hand-picked widths. The
     // regression is "an ordinary page loses its gutters on phones", and
-    // round-2/round-3 verification both escaped guards that only sampled
-    // 320/390 by moving the leak into a band those widths miss.
-    for (const width of [320, 390, 500, 640, 700, 768, 900, 1023]) {
+    // rounds 2 and 3 both escaped guards that sampled a few widths by
+    // moving the leak into a band those widths miss (a mutant confined to
+    // [400, 499] would strip the gutters of a Pixel 412 / iPhone 430
+    // while the suite stayed green).
+    for (const width of [320, 360, 390, 412, 430, 500, 640, 700, 768, 900, 1023]) {
       setWidth(width);
       await nextTick();
       expect(plainInner?.style.paddingLeft, `at ${width}px`).toBe("2rem");
@@ -379,6 +381,44 @@ describe("HkAdminShell", () => {
     expect(fnInner?.style.paddingLeft).toBe("0px");
     expect(fnInner?.style.paddingRight).toBe("0px");
 
+    // NESTED functions are one track as well (the depth counter, not a
+    // single-level check): a bare `clamp()` cannot be the probe because
+    // happy-dom rejects it outright, so the function rides in the second
+    // track of a plain length.
+    const nested = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "5rem clamp(1rem, min(2vw, 3px), 4rem)", contentBleedOnMobile: true },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const nestedInner = paddingInner(nested);
+    expect(nestedInner?.style.paddingTop).toBe("5rem");
+    expect(nestedInner?.style.paddingBottom).toBe("5rem");
+    expect(nestedInner?.style.paddingLeft).toBe("0px");
+    expect(nestedInner?.style.paddingRight).toBe("0px");
+
+    // …and so is a space directly after the opening parenthesis.
+    const spacedFn = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "calc( 1rem + 2px ) 1rem", contentBleedOnMobile: true },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const spacedFnInner = paddingInner(spacedFn);
+    expect(spacedFnInner?.style.paddingTop).toBe("calc( 1rem + 2px )");
+    expect(spacedFnInner?.style.paddingBottom).toBe("calc( 1rem + 2px )");
+    expect(spacedFnInner?.style.paddingLeft).toBe("0px");
+
+    // A lone CSS-wide keyword cannot be rewritten per side (`inherit 0
+    // inherit` is not a padding — every engine rejects it), so the value
+    // passes through VERBATIM: the page keeps its padding instead of
+    // losing all four sides to a dropped declaration. (The comment case
+    // behaves the same way; it is pinned in HkAdminShell.padding.test.ts
+    // because happy-dom refuses to store a comment-bearing value at all.)
+    for (const keyword of ["inherit", "unset"]) {
+      const wide = mount(shellNode(
+        { navTitle: "Navigation", contentPadding: keyword, contentBleedOnMobile: true },
+        { header: () => null, sidebar: NAV, content: CONTENT },
+      ));
+      expect(paddingInner(wide)?.style.padding, keyword).toBe(keyword);
+    }
+
     // Tabs and newlines are valid CSS separators, and the whitespace
     // around a shorthand is not a track of its own ("\t1rem 2rem" must
     // read exactly like "1rem 2rem", never like a three-track value).
@@ -428,6 +468,21 @@ describe("HkAdminShell", () => {
     setWidth(800);
     await nextTick();
     expect(paddingInner(narrow)?.style.paddingLeft).toBe("2rem");
+
+    // …in BOTH directions: a breakpoint raised above the 1024 default must
+    // move the padding gate too. Round 3 mutated the gate to saturate at
+    // 1024 and only a downward custom breakpoint was covered, so the
+    // mirror image survived.
+    const tablet = mount(shellNode(
+      { navTitle: "Navigation", contentPadding: "2rem", contentBleedOnMobile: true, mobileBreakpoint: 1440 },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    setWidth(1200);
+    await nextTick();
+    expect(paddingInner(tablet)?.style.paddingLeft).toBe("0px");
+    setWidth(1440);
+    await nextTick();
+    expect(paddingInner(tablet)?.style.paddingLeft).toBe("2rem");
 
     // The declaration never reaches desktop: crossing back above the
     // breakpoint restores the verbatim padding.

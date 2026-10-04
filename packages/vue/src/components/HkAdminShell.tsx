@@ -3,6 +3,88 @@ import { HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikar
 import { provideActionBar } from "../composables/useActionBar";
 import { useI18n } from "../i18n/context";
 
+/** CSS-wide keywords. A shorthand rebuilt from one of them is NOT a
+ *  padding (`inherit 0 inherit` is rejected by every engine, measured in
+ *  Chromium), so the declaration would be dropped WHOLE and the page
+ *  would lose the vertical clearance too — worse than not bleeding. */
+const CSS_WIDE_KEYWORDS = new Set(["inherit", "initial", "unset", "revert", "revert-layer"]);
+
+/**
+ * Split a CSS padding shorthand on TOP-LEVEL whitespace, quote- and
+ * function-aware. Whitespace inside a function belongs to that value:
+ * `calc(1rem + 2px)`, `var(--pad, 1rem)` and a quoted argument are ONE
+ * track. A plain `split(/\s+/)` shreds them
+ * (`["calc(1rem", "+", "2px)"]`), and the rebuilt shorthand is invalid
+ * CSS — a browser drops the whole declaration, taking with it the
+ * vertical clearance `contentBleedOnMobile` promises to keep (rounds 2
+ * and 3 of this change hit exactly that). The depth counter balances
+ * parentheses, so nested functions
+ * (`clamp(1rem, min(2vw, 3px), 4rem)`) survive; a stray `)` never drives
+ * the depth negative. Tabs and newlines are valid CSS separators and
+ * split like spaces, and the whitespace around a shorthand yields no
+ * empty tracks. Exported for its own unit test: happy-dom cannot
+ * round-trip `var()`/`clamp()` values, so the component-level suite
+ * cannot observe these cases.
+ */
+export function splitPaddingSides(value: string): string[] {
+  const sides: string[] = [];
+  let current = "";
+  let depth = 0;
+  let quote = "";
+  for (const ch of value) {
+    if (quote) {
+      current += ch;
+      if (ch === quote) quote = "";
+      continue;
+    }
+    if (ch === "\"" || ch === "'") {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === "(") depth += 1;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    if (depth === 0 && /\s/.test(ch)) {
+      if (current) sides.push(current);
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  if (current) sides.push(current);
+  return sides;
+}
+
+/**
+ * The side-gutter-free form of a padding shorthand: the vertical tracks
+ * survive, the horizontal ones become zero (`"1rem 2rem"` -> `"1rem 0
+ * 1rem"`). The value is returned VERBATIM — the page keeps its padding
+ * and simply does not bleed — whenever the shorthand cannot express that
+ * rewrite safely:
+ *
+ * - an empty / whitespace-only value has nothing to strip;
+ * - a single CSS-wide keyword cannot be combined per side (see above);
+ * - a value carrying a CSS comment is not tokenizable at this level: the
+ *   comment's text would land in the rebuilt declaration as a garbage
+ *   track, which a browser rejects (measured in Chromium: the authored
+ *   value renders, the rebuilt one is dropped and the content loses all
+ *   four sides).
+ *
+ * Known residual (documented, not fixable at string level): a `var()`
+ * whose custom property resolves to MORE than one track cannot keep its
+ * vertical half — `padding: var(--multi) 0 var(--multi)` is valid at
+ * parse time and invalid at computed-value time. No consumer passes a
+ * multi-track custom property today.
+ */
+export function mobileSideGutterFree(value: string): string {
+  if (value.includes("/*")) return value;
+  const sides = splitPaddingSides(value);
+  if (sides.length === 0) return value;
+  if (sides.length === 1 && CSS_WIDE_KEYWORDS.has(sides[0].toLowerCase())) return value;
+  const [top, , bottom] = sides;
+  return `${top} 0 ${bottom ?? top}`;
+}
+
 export const HkAdminShell = defineComponent({
   name: "HkAdminShell",
   props: {
@@ -35,6 +117,11 @@ export const HkAdminShell = defineComponent({
      *  `contentPadding` is dropped while the vertical clearance
      *  survives; desktop is never affected and the verbatim padding is
      *  restored when the viewport crosses back above the breakpoint.
+     *  A `contentPadding` that cannot be rewritten per side (empty, a
+     *  CSS-wide keyword, a value carrying a CSS comment) falls back to
+     *  the verbatim value — see `mobileSideGutterFree`; the page then
+     *  keeps its gutters instead of risking a declaration a browser
+     *  would drop whole.
      *  Default false: the padding reads the same at every width. */
     contentBleedOnMobile: { type: Boolean, default: false },
   },
@@ -44,48 +131,6 @@ export const HkAdminShell = defineComponent({
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
 
-    // Content padding: every page gets the value verbatim unless it has
-    // DECLARED itself a phone-width canvas (`contentBleedOnMobile`) AND
-    // the viewport is below the breakpoint — only then do the horizontal
-    // tracks become zero while the vertical tracks survive. The CSS
-    // padding shorthand is parsed per side so multi-value values keep
-    // their meaning ("1rem 2rem" -> "1rem 0", not the invalid or
-    // inverted "1rem 2rem 0"). An empty value passes through untouched.
-    //
-    // The split is on TOP-LEVEL whitespace only: whitespace inside a
-    // function belongs to that value, since `calc(1rem + 2px)` and
-    // `var(--pad, 1rem)` are ONE track. A plain `split(/\s+/)` shreds
-    // them into `["calc(1rem", "+", "2px)"]`, and the rebuilt shorthand
-    // is invalid CSS — a browser drops the whole declaration, taking the
-    // vertical clearance this prop promises to keep with it (rounds 2
-    // and 3 both hit this on the shell as it shipped). A depth counter
-    // balances parentheses, so nested functions
-    // (`clamp(1rem, min(2vw, 3px), 4rem)`) survive too. Tabs and newlines
-    // are valid CSS separators and split like spaces; leading/trailing
-    // whitespace yields no empty tracks.
-    const splitPaddingSides = (value: string): string[] => {
-      const sides: string[] = [];
-      let current = "";
-      let depth = 0;
-      for (const ch of value) {
-        if (ch === "(") depth += 1;
-        else if (ch === ")") depth = Math.max(0, depth - 1);
-        if (depth === 0 && /\s/.test(ch)) {
-          if (current) sides.push(current);
-          current = "";
-          continue;
-        }
-        current += ch;
-      }
-      if (current) sides.push(current);
-      return sides;
-    };
-    const mobileSideGutterFree = (value: string): string => {
-      const sides = splitPaddingSides(value);
-      if (sides.length === 0) return value;
-      const [top, , bottom] = sides;
-      return `${top} 0 ${bottom ?? top}`;
-    };
     const contentStyle = computed(() => ({
       padding: isDesktop.value || !props.contentBleedOnMobile
         ? props.contentPadding

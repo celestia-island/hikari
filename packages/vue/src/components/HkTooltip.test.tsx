@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
-import HkTooltip from "./HkTooltip";
+import HkTooltip, { type HkTooltipSlotProps } from "./HkTooltip";
 import { POPUP_Z_BANDS, POPUP_Z_STEP, usePopupManager } from "../runtime/usePopupManager";
 
 /**
@@ -176,18 +176,19 @@ describe("HkTooltip show/hide", () => {
   it("hands { popupId, visible } to the default slot for focus-target wiring", async () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
-    let seen: { popupId?: string; visible?: boolean } = {};
+    let seen: Partial<HkTooltipSlotProps> = {};
     const app = createApp({
       render: () =>
         h(
           HkTooltip,
-          { text: "slot props", delay: 0 } as never,
-          // The scoped-slot child needs a cast: HkTooltip does not declare
-          // slot prop types, so h() types the default slot as no-arg.
-          ((slotProps: { popupId: string; visible: boolean }) => {
+          { text: "slot props", delay: 0 },
+          // Object-form scoped slot; the arg type comes from the local
+          // annotation against the exported contract (h()'s RawSlots has
+          // no SlotsType-aware overload), not from the slots declaration.
+          { default: (slotProps: HkTooltipSlotProps) => {
             seen = slotProps;
             return h("span", { class: "anchor-probe" }, "anchor");
-          }) as never,
+          } },
         ),
     });
     app.mount(container);

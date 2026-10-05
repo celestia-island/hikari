@@ -752,6 +752,7 @@ export { default as HkFileBrowserDialog } from "./components/HkFileBrowserDialog
 export { default as HkFilePickerField } from "./components/HkFilePickerField";
 export { default as HkToast } from "./components/HkToast";
 export { default as HkTooltip } from "./components/HkTooltip";
+export { type HkTooltipSlotProps } from "./components/HkTooltip";
 export { default as HkTree } from "./components/HkTree";
 export { default as HkWindowedItem } from "./components/HkWindowedItem";
 export { default as HkWaterfall } from "./components/HkWaterfall";

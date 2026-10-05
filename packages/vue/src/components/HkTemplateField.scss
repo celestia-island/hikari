@@ -1,0 +1,235 @@
+// HkTemplateField / HkTemplateText — the fill-template surfaces.
+// Self-sufficient styling (house rule): the field box, label, hint and
+// error rows live here rather than borrowing HkInput's sheet, and the
+// chip is THE shared token visual — the editor's chips and the
+// read-only renderer's chips are the same class, so a stored template
+// reads identically wherever it appears.
+
+.hk-template-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+  width: 100%;
+
+  &[data-disabled] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.hk-template-field-label {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--hi-color-text-primary);
+}
+
+.hk-template-field-hint,
+.hk-template-field-error {
+  margin: 0;
+  font-size: var(--text-2xs, 0.625rem);
+  line-height: 1.4;
+}
+
+.hk-template-field-hint {
+  color: var(--hi-color-muted);
+}
+
+.hk-template-field-error {
+  color: var(--hi-color-danger);
+}
+
+.hk-template-field-box {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  padding: var(--space-6, 0.375rem) var(--space-10, 0.625rem);
+  background: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: 6px;
+  transition:
+    border-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1));
+
+  &:hover {
+    border-color: var(--hi-color-primary);
+  }
+
+  &:focus-within {
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 18%, transparent);
+  }
+}
+
+.hk-template-field-box-error {
+  border-color: var(--hi-color-danger);
+
+  &:focus-within {
+    border-color: var(--hi-color-danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-danger) 15%, transparent);
+  }
+}
+
+.hk-template-field-edit {
+  // Slightly tighter than a plain input: chips carry their own padding,
+  // and the field must not read taller than the HkInput beside it.
+  min-height: calc(1.5rem + var(--space-4, 4px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 3px;
+  font-size: var(--text-base, 0.875rem);
+  line-height: 1.5;
+  color: var(--hi-color-text-primary);
+  outline: none;
+  word-break: break-all;
+  cursor: text;
+
+  &:empty::before {
+    content: attr(data-ph);
+    color: var(--hi-color-muted);
+    opacity: 0.6;
+  }
+}
+
+// ── The chip ─────────────────────────────────────────────────────────
+// Monospace (it IS code — the exact text the host fills), primary
+// tinted, unbreakable. Editable context adds the click affordance and
+// the unknown marker both surfaces share.
+
+.hk-tpl-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-6, 6px);
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid color-mix(in srgb, var(--hi-color-primary) 32%, transparent);
+  background: color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
+  color: color-mix(in srgb, var(--hi-color-primary) 70%, rgb(0 0 0));
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8em;
+  line-height: 1.5;
+  white-space: nowrap;
+  user-select: none;
+
+  [data-theme="dark"] &,
+  .hk-theme-dark & {
+    color: color-mix(in srgb, var(--hi-color-primary) 60%, rgb(255 255 255));
+  }
+
+  &[data-unknown] {
+    border-color: var(--hi-color-border);
+    background: color-mix(in srgb, var(--hi-color-warning) 12%, transparent);
+    color: var(--hi-color-muted);
+    font-style: italic;
+  }
+}
+
+.hk-template-field-edit .hk-tpl-chip {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--hi-color-primary);
+    background: color-mix(in srgb, var(--hi-color-primary) 20%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 1px;
+  }
+}
+
+.hk-template-text {
+  display: inline;
+  max-width: 100%;
+
+  &[data-multiline] {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+}
+
+.hk-template-text-run {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+// ── Vocabulary rows (panel + chip editor share them) ────────────────
+
+.hk-tpl-rows,
+.hk-tpl-editor-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-4, 4px);
+}
+
+.hk-tpl-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: var(--space-4, 4px) var(--space-8, 8px);
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--hi-color-text-primary);
+  text-align: start;
+  cursor: pointer;
+
+  &:hover,
+  &[data-active] {
+    background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
+  }
+}
+
+.hk-tpl-row-name {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.hk-tpl-row-desc {
+  font-size: var(--text-2xs, 0.625rem);
+  color: var(--hi-color-muted);
+  line-height: 1.4;
+}
+
+.hk-tpl-rows-empty {
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-muted);
+}
+
+// ── Chip editor form ────────────────────────────────────────────────
+
+.hk-tpl-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 8px);
+  min-width: 16rem;
+  max-width: min(22rem, 90vw);
+  padding: var(--space-8, 8px);
+}
+
+.hk-tpl-editor-current {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8, 8px);
+  flex-wrap: wrap;
+}
+
+.hk-tpl-editor-desc {
+  font-size: var(--text-2xs, 0.625rem);
+  color: var(--hi-color-muted);
+  line-height: 1.4;
+  flex: 1 1 10rem;
+}
+
+.hk-tpl-editor-rows {
+  max-height: min(16rem, 40dvh);
+  overflow-y: auto;
+}
+
+.hk-tpl-editor-footer {
+  display: flex;
+  justify-content: flex-end;
+}

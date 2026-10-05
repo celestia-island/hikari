@@ -550,13 +550,13 @@ export const HkTemplateField = defineComponent({
     }
 
     // The active row highlight rides the render — Vue patches the data
-    // attribute; scroll-into-view keeps keyboard navigation visible.
-    const rowRefs = ref<HTMLElement[]>([]);
+    // attribute; the ACTIVE row keeps itself in view so keyboard
+    // navigation never scrolls the highlight off the panel.
     function setRowRef(i: number) {
       return (el: unknown) => {
-        if (el) {
-          rowRefs.value[i] = el as HTMLElement;
-          rowRefs.value[i]?.scrollIntoView?.({ block: "nearest" });
+        const row = el as HTMLElement | null;
+        if (row && row.dataset.active !== undefined) {
+          row.scrollIntoView?.({ block: "nearest" });
         }
       };
     }

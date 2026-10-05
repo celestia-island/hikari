@@ -110,8 +110,7 @@
   white-space: nowrap;
   user-select: none;
 
-  [data-theme="dark"] &,
-  .hk-theme-dark & {
+  [data-theme="dark"] & {
     color: color-mix(in srgb, var(--hi-color-primary) 60%, rgb(255 255 255));
   }
 

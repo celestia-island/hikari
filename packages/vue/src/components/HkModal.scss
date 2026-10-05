@@ -434,7 +434,10 @@
 //     detail sheet never carries a screenful of dead body)
 //   - never grows past the top band reserved for the secondary-window
 //     breadcrumb strip (--hk-sheet-top-inset; default 4.25rem keeps the
-//     floating breadcrumb visible above a full-height sheet)
+//     floating breadcrumb visible above a full-height sheet, and the
+//     strip itself PUBLISHES this property on <body> while it is up —
+//     its live "own height + one gap above + one gap below" — so the
+//     band tracks the real chrome instead of a static guess)
 //   - rounded top corners only, full width
 // ------
 @media (max-width: 767px) {
@@ -536,12 +539,16 @@
     // inside once the cap is hit); they no longer stretch it.
     // Plain-vh fallback first: dvh-less engines (older Android WebView /
     // Tauri) would drop the whole dvh calc and leave the sheet uncapped.
+    // !important on BOTH: an inline max-height (a host's `style` pass, a
+    // size prop's own cap) must lose to the family band — the strip's
+    // daylight is a guarantee, not a default (HkDrawer parity, 2026-10-05
+    // mobile report: a tall sheet covered the strip's band).
     max-height: calc(
       100vh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
-    );
+    ) !important;
     max-height: calc(
       100dvh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
-    );
+    ) !important;
   }
 
   // Sheet slide reveal replaces the height-clip reveal on mobile.

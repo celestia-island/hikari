@@ -18,6 +18,9 @@ afterEach(async () => {
     manager.unregister(entry.id);
   }
   document.body.style.overflow = "";
+  // The strip publishes its sheet top band on <body> inline while up —
+  // strip it here too, or one test's band leaks into the next.
+  document.body.style.removeProperty("--hk-sheet-top-inset");
   window.innerWidth = originalWidth;
   // happy-dom never fires transitionend, so a popover's leave never settles
   // and its teleported panel lingers on <body> — strip it, or the next
@@ -680,6 +683,11 @@ describe("HkModalBreadcrumb overflow fold", () => {
       // zoom) / 2 = 24, and the clearance 12 + (88 visual / 2 zoom) / 2 =
       // 34 — the clearance sits lower and wins.
       expect(strip()!.style.top).toBe("44px");
+      // The published sheet band rides the same conversions: strip centre
+      // 44 + its local half-height (88 visual / 2 zoom) / 2 = 22 + one gap
+      // 12 — a zoom-blind band would read 78 ± (zoom−1)·Δ and drift the
+      // sheet cap against the strip on zoomed hosts.
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).toBe("78px");
     } finally {
       vi.restoreAllMocks();
       app.remove();
@@ -731,6 +739,51 @@ describe("HkModalBreadcrumb overflow fold", () => {
     }
   });
 
+  it("publishes the sheet top band while up and clears it with the strip", async () => {
+    // The strip is the authority on its own band: while it is up, mobile
+    // bottom sheets must stop below "strip bottom edge + one more gap" —
+    // the sheet family consumes --hk-sheet-top-inset as exactly that
+    // line, so the strip PUBLISHES it on <body> (inline beats a host's
+    // :root token while up) and withdraws it when the strip goes away.
+    // Boxless DOM → fallback geometry: band = topPx + 43/2 + gap.
+    const app = document.createElement("div");
+    app.id = "app";
+    document.body.appendChild(app);
+    const unmountAll = () => {
+      for (const a of mounts.splice(0)) a.unmount();
+    };
+    try {
+      setViewport(1200);
+      manager.register("modal", true, "第一层");
+      manager.register("modal", true, "第二层");
+      await mountStrip();
+      // 0 (app top) + max(24, 12 + 21.5) + 21.5 + 12.
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).toBe("67px");
+
+      // Unmounting a visible strip withdraws the band synchronously
+      // (onBeforeUnmount) — a stale band must not outlive its publisher
+      // (mutation round M5: removing the unmount clear passed everything
+      // else green).
+      unmountAll();
+      await nextTick();
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).toBe("");
+
+      // A host wanting more air raises the gap; the band follows it.
+      await mountStrip({ topGap: 40 });
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).toBe("123px");
+
+      // The promise lives with the strip: drop back to a single layer and
+      // the property is withdrawn — the host token rules again.
+      const entries = [...manager.registry.value.values()];
+      manager.unregister(entries[entries.length - 1].id);
+      await until(() => strip() === null);
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).toBe("");
+    } finally {
+      unmountAll();
+      app.remove();
+    }
+  });
+
   it("paints the fallback position before any resync can run", async () => {
     // A host whose app root id never resolves leaves resyncTop at its
     // early-return, so the strip paints the INITIAL ref: that line must
@@ -745,11 +798,16 @@ describe("HkModalBreadcrumb overflow fold", () => {
     manager.register("modal", true, "第二层");
     await mountStrip({ appRootId: "no-such-root" });
     expect(strip()!.style.top).toBe("33.5px");
+    // The band promise holds on the fallbacks too (no app root is no
+    // excuse for going quiet while the sheets are watching):
+    // 33.5 + 43/2 + 12.
+    expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).toBe("67px");
     for (const a of mounts.splice(0)) a.unmount();
 
     // The init follows the prop the same way the resync does.
     await mountStrip({ appRootId: "no-such-root", topGap: 0 });
     expect(strip()!.style.top).toBe("21.5px");
+    expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).toBe("43px");
   });
 
   it("writes the viewport fence in the strip's own px", async () => {

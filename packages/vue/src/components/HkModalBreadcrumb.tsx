@@ -407,9 +407,32 @@ export default defineComponent({
      *  layout fallbacks (48px header, 43px strip). The first nextTick
      *  resync replaces it with measured numbers. */
     const topPx = ref(topGapPx.value + STRIP_HEIGHT_PX / 2);
+
+    /** Publish the sheet top band: while the strip is up, mobile bottom
+     *  sheets must stop BELOW the strip's bottom edge plus one more gap —
+     *  "the strip's own height, with one gap above and one below". The
+     *  sheet family consumes this exact custom property as its mobile
+     *  max-height inset (--hk-sheet-top-inset), so publishing it here
+     *  turns every host's static guess into the strip's live geometry.
+     *  Written on <body> inline (beats a host's :root token while up;
+     *  removed when the strip goes away so the host token rules again),
+     *  in the strip's LOCAL px — the sheets teleport into the same zoomed
+     *  subtree, so one px space is shared. */
+    function publishBand(bandPx: number | null): void {
+      if (typeof document === "undefined") return;
+      if (bandPx == null) document.body.style.removeProperty("--hk-sheet-top-inset");
+      else document.body.style.setProperty("--hk-sheet-top-inset", `${bandPx}px`);
+    }
+
     function resyncTop() {
       const app = document.getElementById(props.appRootId);
-      if (!app) return;
+      if (!app) {
+        // No app root to measure: the strip still paints on the fallback
+        // geometry (the init ref), so keep the band promise on those same
+        // fallbacks instead of going quiet while the sheets are watching.
+        publishBand(topPx.value + STRIP_HEIGHT_PX / 2 + topGapPx.value);
+        return;
+      }
       // The strip teleports to <body> — inside any root CSS zoom subtree
       // — so its inline top is LOCAL px. Keep every term in that local
       // space: the app root's computed top is already local, while the
@@ -442,6 +465,9 @@ export default defineComponent({
       // viewport top can no longer push the strip's upper half against
       // (or past) the top edge.
       topPx.value = appTop + Math.max(headerH / 2, topGapPx.value + stripH / 2);
+      // The band: strip bottom edge plus one more gap — the lowest line a
+      // bottom sheet may reach while the strip is up.
+      publishBand(topPx.value + stripH / 2 + topGapPx.value);
     }
 
     /** Viewport fence, in the strip's OWN px. The stylesheet cap is
@@ -524,6 +550,9 @@ export default defineComponent({
           menuOpen.value = false;
           revealed.value = null;
           hiddenCount.value = 0;
+          // The band is the strip's live promise to the sheet family: with
+          // the strip gone the host's own static token rules again.
+          publishBand(null);
         }
       },
       { immediate: true },
@@ -553,6 +582,9 @@ export default defineComponent({
       if (handle) handle.disconnect();
       window.removeEventListener("resize", onViewportChange);
       releaseClone();
+      // A mounted-but-gone strip must not leave its band behind: the host's
+      // static token rules again (same contract as the visible flip).
+      publishBand(null);
     });
 
     const itemClass = (crumb: Crumb) =>

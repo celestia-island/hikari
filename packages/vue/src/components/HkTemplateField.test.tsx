@@ -292,3 +292,97 @@ describe("HkTemplateField keyboard", () => {
     expect(submit).toHaveBeenCalledTimes(1);
   });
 });
+
+/** Drive the editable into an open `{{ query` trigger state with the
+ * caret at the end of the typed run, so the panel opens. */
+async function openTrigger(el: HTMLElement, typed: string) {
+  const edit = editable(el);
+  edit.append(document.createTextNode(typed));
+  const sel = window.getSelection();
+  const range = document.createRange();
+  range.setStart(edit.lastChild!, edit.lastChild!.nodeValue!.length);
+  range.collapse(true);
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+  fireInput(edit);
+  await nextTick();
+}
+
+describe("HkTemplateField vocabulary guardrails (R2 gap killers)", () => {
+  it("falls back to in-order subsequence matching (md5e finds md5_email)", async () => {
+    const el = mount({ modelValue: "" });
+    await nextTick();
+    // "md5e" is not a substring of any name/description — only the
+    // subsequence pass can surface the row.
+    await openTrigger(el, "{{ md5e");
+    const rows = Array.from(document.body.querySelectorAll<HTMLButtonElement>(".hk-tpl-row"));
+    expect(rows.some((r) => r.textContent!.includes("md5_email"))).toBe(true);
+  });
+
+  it("Shift+Tab does NOT pick the highlighted row", async () => {
+    const seen: string[] = [];
+    const el = mount({ modelValue: "", onUpdate: (v) => seen.push(v) });
+    await nextTick();
+    await openTrigger(el, "{{ us");
+    const before = seen.length;
+    editable(el).dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(seen.length).toBe(before);
+    expect(editable(el).querySelectorAll<HTMLElement>(".hk-tpl-chip")).toHaveLength(0);
+  });
+
+  it("a paste whose selection straddles the field boundary appends at the end", async () => {
+    const el = mount({ modelValue: "x" });
+    await nextTick();
+    const edit = editable(el);
+    // A selection that starts inside the field and ends in an outside
+    // node: the guard must treat it as foreign (delete nothing past
+    // the field, insert at the end).
+    const outsider = document.createElement("span");
+    outsider.textContent = "OUTSIDE";
+    el.appendChild(outsider);
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.setStart(edit.firstChild!, 0);
+    range.setEnd(outsider.firstChild!, 2);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+
+    const seen: string[] = [];
+    const dt = new DataTransfer();
+    dt.setData("text/plain", "{{ username }}");
+    const pasteEvent = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(pasteEvent, "clipboardData", { value: dt });
+    edit.dispatchEvent(pasteEvent);
+    await nextTick();
+    // The outside node survived the straddling selection…
+    expect(outsider.textContent).toBe("OUTSIDE");
+    // …and the paste landed at the field's end, chips up.
+    const chips = edit.querySelectorAll<HTMLElement>(".hk-tpl-chip");
+    expect(chips).toHaveLength(1);
+    expect(edit.textContent).toContain("x");
+  });
+
+  it("Enter in the chip editor search picks the first matching row", async () => {
+    const seen: string[] = [];
+    const el = mount({
+      modelValue: "a {{ username }} b",
+      onUpdate: (v) => seen.push(v),
+    });
+    await nextTick();
+    editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const search = document.body.querySelector<HTMLInputElement>(".hk-tpl-editor-search input")!;
+    expect(search).toBeTruthy();
+    search.value = "md5";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    search.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(seen.at(-1)).toBe("a {{ md5_email }} b");
+  });
+});

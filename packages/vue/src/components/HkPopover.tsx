@@ -76,6 +76,13 @@ export default defineComponent({
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
+    /** Fired once the close has fully settled (the leave transition
+     * completed and the panel left the DOM) — the moment focus that
+     * lived inside the closing panel falls back to <body>. Hosts that
+     * reclaim focus after an Escape-style close want THIS edge, not a
+     * timer: a fixed delay either races a long leave animation or
+     * waits past a short one. */
+    closed: () => true,
   },
   setup(props, { emit, slots }) {
     const attrs = useAttrs();
@@ -450,6 +457,14 @@ export default defineComponent({
 
     function onPopupAfterLeave() {
       fullCleanup();
+      // Emit AFTER the patch that removes the panel: the machine's
+      // closed phase triggers the re-render, so emitting inline would
+      // run hosts' handlers while the panel is still in the DOM (and
+      // focus still sits inside it) — the literal meaning of "closed"
+      // is only true once the vnode has been patched away.
+      nextTick(() => {
+        emit("closed");
+      });
     }
 
     // Overlay scrollbar (shared chrome) — only the mobile sheet scrolls

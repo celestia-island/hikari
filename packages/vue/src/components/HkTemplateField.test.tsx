@@ -34,6 +34,26 @@ interface MountOpts {
   submitOnEnter?: () => void;
 }
 
+function mountWithTokens(
+  tokens: Array<{ name: string; group?: string; description?: string }>,
+  opts: MountOpts & { groupLabel?: (g: string) => string } = {},
+) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const app = createApp({
+    render: () =>
+      h(HkTemplateField, {
+        modelValue: opts.modelValue ?? "",
+        tokens,
+        groupLabel: opts.groupLabel,
+        "onUpdate:modelValue": (v: string) => opts.onUpdate?.(v),
+      }),
+  });
+  app.mount(container);
+  mounts.push({ app, container });
+  return container;
+}
+
 function mount(opts: MountOpts = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -384,5 +404,98 @@ describe("HkTemplateField vocabulary guardrails (R2 gap killers)", () => {
     );
     await nextTick();
     expect(seen.at(-1)).toBe("a {{ md5_email }} b");
+  });
+});
+
+describe("HkTemplateField grouped vocabulary", () => {
+  const GROUPED = [
+    { name: "id", group: "identity" },
+    { name: "username", group: "identity" },
+    { name: "md5_email", group: "email" },
+    { name: "sha256_email", group: "email" },
+  ];
+
+  it("renders one heading per group run in the panel", async () => {
+    const el = mountWithTokens(GROUPED);
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
+    // Headings are presentational, not options.
+    expect(headings.every((h) => h.getAttribute("role") === "presentation")).toBe(true);
+  });
+
+  it("maps group keys through groupLabel", async () => {
+    const el = mountWithTokens(GROUPED, { groupLabel: (g) => g.toUpperCase() });
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(headings.map((h) => h.textContent)).toEqual(["IDENTITY", "EMAIL"]);
+  });
+
+  it("filters groups out with their members (no stray heading)", async () => {
+    const el = mountWithTokens(GROUPED);
+    await nextTick();
+    await openTrigger(el, "{{ md5");
+    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(headings.map((h) => h.textContent)).toEqual(["email"]);
+  });
+
+  it("ungrouped vocabularies render exactly as before (no headings)", async () => {
+    const el = mountWithTokens([{ name: "username" }, { name: "md5_email" }]);
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    expect(document.body.querySelectorAll(".hk-tpl-group")).toHaveLength(0);
+    expect(document.body.querySelectorAll(".hk-tpl-row").length).toBeGreaterThan(0);
+  });
+
+  it("groups the chip editor rows too", async () => {
+    const el = mountWithTokens(GROUPED, { modelValue: "a {{ username }} b" });
+    await nextTick();
+    editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const headings = Array.from(
+      document.body.querySelectorAll<HTMLElement>(".hk-tpl-editor .hk-tpl-group"),
+    );
+    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
+  });
+});
+
+describe("HkTemplateField editor scroll chrome", () => {
+  it("wraps the scrolling rows in a dedicated track host", async () => {
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const host = document.body.querySelector<HTMLElement>(".hk-tpl-editor-scroll");
+    expect(host).not.toBeNull();
+    // The host wraps EXACTLY the scrolling viewport (rails must not
+    // span the form's other bands).
+    expect(host!.firstElementChild?.classList.contains("hk-tpl-editor-rows")).toBe(true);
+  });
+});
+
+describe("HkTemplateField editor close reclaim (closed hook)", () => {
+  it("returns focus to the field after the popover settles its leave", async () => {
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    const edit = editable(el);
+    edit.querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel).not.toBeNull();
+    // The reclaim contract only engages when the editor HELD focus —
+    // put the caret in the search field like a real user would.
+    document.body.querySelector<HTMLInputElement>(".hk-tpl-editor-search input")!.focus();
+    await nextTick();
+    // Escape: the popover starts closing; focus sits in the search
+    // input until the leave finishes.
+    panel!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await nextTick();
+    // Past the leave window the machine emits `closed`, whose handler
+    // reclaims focus from the orphaned body state.
+    await new Promise((r) => setTimeout(r, 30));
+    await nextTick();
+    expect(document.activeElement).toBe(edit);
   });
 });

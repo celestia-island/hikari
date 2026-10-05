@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 import HkTemplateField from "./HkTemplateField";
 
@@ -94,6 +94,48 @@ describe("HkTemplateField render + value contract", () => {
     fireInput(edit);
     await nextTick();
     expect(edit.querySelectorAll<HTMLElement>(".hk-tpl-chip")).toHaveLength(1);
+  });
+
+  it("an external write re-renders; a parent echo of our own emit must not", async () => {
+    // The controlled-value contract: the parent writing a NEW value
+    // rebuilds the DOM; the parent echoing back the value we just
+    // emitted must NOT (a rebuild under the caret is what breaks
+    // mid-typing edits in controlled setups).
+    const value = ref("");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      setup() {
+        return () =>
+          h(HkTemplateField, {
+            modelValue: value.value,
+            tokens: [{ name: "username" }],
+            "onUpdate:modelValue": (v: string) => { value.value = v; },
+          });
+      },
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+
+    // External write: chips appear.
+    value.value = "x {{ username }} y";
+    await nextTick();
+    let edit = editable(container);
+    expect(edit.querySelectorAll<HTMLElement>(".hk-tpl-chip")).toHaveLength(1);
+
+    // Echo path: type more (emit fires, the parent writes the SAME
+    // string back); a planted marker node must survive — a rebuild
+    // would have dropped it.
+    const marker = document.createTextNode("");
+    edit.appendChild(marker);
+    edit.append(document.createTextNode("z"));
+    fireInput(edit);
+    await nextTick();
+    edit = editable(container);
+    expect(edit.contains(marker), "echo must not rebuild the DOM").toBe(true);
+    expect(edit.textContent).toContain("{{ username }}");
+    expect(value.value).toBe("x {{ username }} yz");
   });
 
   it("converts a hand-typed closed token into a chip and emits byte-exact", async () => {

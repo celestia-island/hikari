@@ -2,6 +2,7 @@ import {
   computed,
   defineComponent,
   nextTick,
+  useId,
   onMounted,
   ref,
   watch,
@@ -28,6 +29,17 @@ import "./HkTemplateField.scss";
  * autocomplete trigger. Identifiers only; anything else (a filter pipe,
  * a space) drops out of trigger state and closes the panel. */
 const OPEN_TRIGGER_RE = /\{\{\s*([A-Za-z0-9_]*)$/;
+
+/** True when every character of `query` appears in `text` in the same
+ * order — gaps allowed. The HkAffixPicker fuzzy-pass convention. */
+function isSubsequence(query: string, text: string): boolean {
+  let i = 0;
+  for (const ch of text) {
+    if (ch === query[i]) i++;
+    if (i === query.length) return true;
+  }
+  return false;
+}
 
 /**
  * HkTemplateField — the editing half of the fill-template surfaces.
@@ -78,6 +90,11 @@ export const HkTemplateField = defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
+
+    // Field identity: the rendered label points at the editable (same
+    // association HkInput gives a bare `label` prop — label clicks
+    // focus, screen readers announce the field by name).
+    const fieldId = useId();
 
     const editRef = ref<HTMLElement | null>(null);
     /** The value the DOM currently represents. Authoritative while the
@@ -140,6 +157,16 @@ export const HkTemplateField = defineComponent({
           root.append(document.createTextNode(seg.text));
         } else {
           root.append(makeChip(seg.token, seg.raw));
+          // Zero-width text node after every chip: editing engines
+          // refuse to accept typing at a caret parked directly against
+          // (or between) contenteditable=false elements — the caret
+          // silently snaps to the last text position BEFORE the chip
+          // and the next keystroke lands on the wrong side (real-browser
+          // R1 finding). An empty text node is a legal caret home, costs
+          // nothing in serialization ("" contributes nothing) and keeps
+          // the caret mapping byte-stable. Never a ZWSP — that would
+          // pollute the serialized value.
+          root.append(document.createTextNode(""));
         }
       }
     }
@@ -219,13 +246,52 @@ export const HkTemplateField = defineComponent({
             placeRange(child, at, child, at);
             return;
           }
-          // Mid-chip point: snap AFTER the chip (editing continues
-          // past it) — except offset 0, which stays before it.
-          const anchor = rest === 0 ? i : i + 1;
-          placeRange(root, anchor, root, anchor);
+          if (rest === 0) {
+            // Before the chip: end of the preceding text node when
+            // there is one (a parent-level position the engine would
+            // only normalize anyway), else the parent slot.
+            const prev = children[i - 1];
+            if (prev && prev.nodeType === Node.TEXT_NODE) {
+              const at = (prev.nodeValue ?? "").length;
+              placeRange(prev, at, prev, at);
+            } else {
+              placeRange(root, i, root, i);
+            }
+            return;
+          }
+          // Inside/after the chip: home the caret in the text node
+          // renderValue parks after EVERY chip. A parent-level
+          // boundary right after a contenteditable=false element is a
+          // position Chromium's editing engine refuses — it silently
+          // snaps the caret to the last text position BEFORE the chip,
+          // and the next keystroke lands on the wrong side (the
+          // real-browser P0: `Z` after a trailing chip became
+          // `aZ{{ uid }}`).
+          const next = children[i + 1];
+          if (next && next.nodeType === Node.TEXT_NODE) {
+            placeRange(next, 0, next, 0);
+          } else {
+            placeRange(root, i + 1, root, i + 1);
+          }
           return;
         }
+        if (rest === len && child.nodeType !== Node.TEXT_NODE) {
+          // Exactly at the chip's end boundary — same rule as above.
+          const next = children[i + 1];
+          if (next && next.nodeType === Node.TEXT_NODE) {
+            placeRange(next, 0, next, 0);
+            return;
+          }
+        }
         rest -= len;
+      }
+      // End of the value: prefer a trailing text-node home over the
+      // parent-level boundary (same engine rule).
+      const last = children[children.length - 1];
+      if (last && last.nodeType === Node.TEXT_NODE) {
+        const at = (last.nodeValue ?? "").length;
+        placeRange(last, at, last, at);
+        return;
       }
       placeRange(root, children.length, root, children.length);
     }
@@ -278,18 +344,25 @@ export const HkTemplateField = defineComponent({
 
     const tokenIndex = computed(() => templateTokenIndex(props.tokens));
 
-    const filteredTokens = computed(() => {
-      const q = suggestQuery.value.trim().toLowerCase();
-      if (!q) return props.tokens;
-      return props.tokens.filter(
-        (def) =>
-          def.name.toLowerCase().includes(q) ||
-          (def.label ?? "").toLowerCase().includes(q) ||
-          (def.description ?? "").toLowerCase().includes(q),
-      );
-    });
+    /** Two-pass vocabulary filter, the HkAffixPicker convention: exact
+     * substring first (precision), in-order character subsequence as
+     * the fallback (gaps allowed — "md5e" still finds md5_email). */
+    function filterTokens(
+      defs: readonly HkTemplateTokenDef[],
+      query: string,
+    ): readonly HkTemplateTokenDef[] {
+      const q = query.trim().toLowerCase();
+      if (!q) return defs;
+      const fields = (d: HkTemplateTokenDef) =>
+        [d.name, d.label ?? "", d.description ?? ""].map((f) => f.toLowerCase());
+      const substring = defs.filter((d) => fields(d).some((f) => f.includes(q)));
+      if (substring.length > 0) return substring;
+      return defs.filter((d) => fields(d).some((f) => isSubsequence(q, f)));
+    }
 
-    function syncSuggestState(): void {
+    const filteredTokens = computed(() => filterTokens(props.tokens, suggestQuery.value));
+
+    function syncSuggestState(caretOverride?: number): void {
       const root = editRef.value;
       if (!root || props.disabled) {
         suggestOpen.value = false;
@@ -297,7 +370,12 @@ export const HkTemplateField = defineComponent({
         return;
       }
       const text = serializeDom();
-      const before = text.slice(0, currentCaretOffset());
+      // The intercepted edit path re-renders on every keystroke, which
+      // detaches/resets the live selection before the scheduled caret
+      // placement lands — callers that KNOW the caret they just wrote
+      // pass it explicitly; the native path reads the live selection.
+      const caret = caretOverride ?? currentCaretOffset();
+      const before = text.slice(0, caret);
       const m = OPEN_TRIGGER_RE.exec(before);
       if (m) {
         const start = before.length - m[0].length;
@@ -339,16 +417,7 @@ export const HkTemplateField = defineComponent({
     /** Focus returns to the field after an editor-driven close. */
     const editorHoldsFocus = ref(false);
 
-    const editorRows = computed(() => {
-      const q = editorQuery.value.trim().toLowerCase();
-      if (!q) return props.tokens;
-      return props.tokens.filter(
-        (def) =>
-          def.name.toLowerCase().includes(q) ||
-          (def.label ?? "").toLowerCase().includes(q) ||
-          (def.description ?? "").toLowerCase().includes(q),
-      );
-    });
+    const editorRows = computed(() => filterTokens(props.tokens, editorQuery.value));
 
     const editorDef = computed(() => tokenIndex.value.get(editorToken.value));
 
@@ -439,6 +508,19 @@ export const HkTemplateField = defineComponent({
       if (editorHoldsFocus.value) {
         editorHoldsFocus.value = false;
         nextTick(() => {
+          // Return focus ONLY when it did not land on something else by
+          // user intent: an outside-click close that focused another
+          // control must not yank focus back 3ms later (real-browser R1
+          // finding — focus@t → blur@t+3ms → activeElement ended up on
+          // this field, not the clicked input). Focus that fell to
+          // <body> (the popover unmounted out from under it — Escape,
+          // scrim, apply/remove paths) is fair game to reclaim.
+          const active = document.activeElement;
+          const reclaimable =
+            !active ||
+            active === document.body ||
+            (editRef.value ? active === editRef.value || editRef.value.contains(active) : false);
+          if (!reclaimable) return;
           editRef.value?.focus();
           if (editorChip.value) applyCaretOffset(offsetAfterChip(editorChip.value));
         });
@@ -490,7 +572,10 @@ export const HkTemplateField = defineComponent({
       // only a selection INSIDE the field pastes at the caret, every
       // other state appends at the end.
       const range = sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
-      const inside = !!range && root.contains(range.startContainer);
+      // BOTH ends must sit inside the field: a selection straddling
+      // the field boundary would delete content past it.
+      const inside =
+        !!range && root.contains(range.startContainer) && root.contains(range.endContainer);
       if (inside && typeof sel.deleteFromDocument === "function") {
         sel.deleteFromDocument();
       } else if (inside && range) {
@@ -507,6 +592,126 @@ export const HkTemplateField = defineComponent({
       syncSuggestState();
     }
 
+    // ── Deterministic editing (beforeinput interception) ────────────
+    // Chromium's editing engine REFUSES a caret parked after a
+    // contenteditable=false chip: even with the selection inside a
+    // text node on the chip's trailing edge, insertText renormalizes
+    // the position to the last text BEFORE the chip and the keystroke
+    // lands on the wrong side (real-browser P0: `Z` after a trailing
+    // chip became `aZ{{ uid }}`). The fix is to own the edit itself:
+    // plain insert/delete edits are intercepted, applied in the
+    // SERIALIZED value space and re-rendered — engine-independent by
+    // construction, and chips become atomically deletable for free.
+    // Composition (IME) keeps the native path (composing flag already
+    // defers normalization to compositionend); paste keeps its plain-
+    // text handler.
+
+    function currentRangeOffsets(): { start: number; end: number } {
+      const root = editRef.value;
+      const sel = window.getSelection();
+      if (!root || !sel || sel.rangeCount === 0) {
+        const len = serializeDom().length;
+        return { start: len, end: len };
+      }
+      const range = sel.getRangeAt(0);
+      if (!root.contains(range.startContainer)) {
+        const len = serializeDom().length;
+        return { start: len, end: len };
+      }
+      const start = currentCaretOffset();
+      // Re-anchor to measure the END of the selection (collapsed
+      // selections short-circuit to the same value).
+      if (range.collapsed) return { start, end: start };
+      const probe = document.createRange();
+      probe.setStart(range.endContainer, range.endOffset);
+      probe.collapse(true);
+      const saved = range.cloneRange();
+      sel.removeAllRanges();
+      sel.addRange(probe);
+      const end = currentCaretOffset();
+      sel.removeAllRanges();
+      sel.addRange(saved);
+      return { start, end };
+    }
+
+    function insertAtCaret(text: string): void {
+      const { start, end } = currentRangeOffsets();
+      const value = serializeDom();
+      const next = value.slice(0, start) + text + value.slice(end);
+      const caret = start + text.length;
+      setValue(next, caret);
+      syncSuggestState(caret);
+    }
+
+    /** Delete one unit backward/forward. A caret hugging a chip edge
+     * takes the WHOLE chip (the atomic edit); anything else deletes a
+     * single character; a range selection deletes exactly the range. */
+    function deleteDirection(dir: -1 | 1): void {
+      const { start, end } = currentRangeOffsets();
+      const value = serializeDom();
+      if (start !== end) {
+        const next = value.slice(0, start) + value.slice(end);
+        setValue(next, start);
+        syncSuggestState(start);
+        return;
+      }
+      if (dir === -1 && start === 0) return;
+      if (dir === 1 && start === value.length) return;
+      // Chip edges: walk the parsed segments with their serialized
+      // offsets — a caret exactly at a chip boundary removes the chip.
+      let cursor = 0;
+      for (const seg of parseTemplate(value)) {
+        const width = seg.kind === "text" ? seg.text.length : seg.raw.length;
+        if (seg.kind === "token") {
+          if (dir === -1 && start === cursor + width) {
+            const next = value.slice(0, cursor) + value.slice(cursor + width);
+            setValue(next, cursor);
+            syncSuggestState(cursor);
+            return;
+          }
+          if (dir === 1 && start === cursor) {
+            const next = value.slice(0, cursor) + value.slice(cursor + width);
+            setValue(next, cursor);
+            syncSuggestState(cursor);
+            return;
+          }
+        }
+        cursor += width;
+      }
+      const at = dir === -1 ? start - 1 : start;
+      const next = value.slice(0, at) + value.slice(at + 1);
+      setValue(next, at);
+      syncSuggestState(at);
+    }
+
+    function onBeforeinput(e: InputEvent): void {
+      if (composing.value || props.disabled) return;
+      switch (e.inputType) {
+        case "insertText":
+          if (e.data) {
+            e.preventDefault();
+            insertAtCaret(e.data);
+          }
+          break;
+        case "deleteContentBackward":
+        case "deleteContentForward":
+          e.preventDefault();
+          deleteDirection(e.inputType === "deleteContentBackward" ? -1 : 1);
+          break;
+        case "insertParagraph":
+        case "insertLineBreak":
+          // Single-line field (Enter is the submit intent; Shift+Enter
+          // has no meaning in a URL template).
+          e.preventDefault();
+          break;
+        default:
+          // insertCompositionText, insertFromPaste (handled by the
+          // paste listener), historyUndo, deleteByCut… keep the native
+          // path; the input/normalize pass reconciles afterwards.
+          break;
+      }
+    }
+
     function onKeydown(e: KeyboardEvent): void {
       if (suggestOpen.value && filteredTokens.value.length > 0) {
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -516,7 +721,7 @@ export const HkTemplateField = defineComponent({
           suggestActive.value = (suggestActive.value + dir + n) % n;
           return;
         }
-        if (e.key === "Enter" || e.key === "Tab") {
+        if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
           e.preventDefault();
           const def = filteredTokens.value[
             Math.min(suggestActive.value, filteredTokens.value.length - 1)
@@ -586,7 +791,9 @@ export const HkTemplateField = defineComponent({
 
     return () => (
       <div class="hk-template-field" data-disabled={props.disabled || undefined}>
-        {props.label && <label class="hk-template-field-label">{props.label}</label>}
+        {props.label && (
+          <label class="hk-template-field-label" for={fieldId}>{props.label}</label>
+        )}
         <div
           class={[
             "hk-template-field-box",
@@ -599,12 +806,13 @@ export const HkTemplateField = defineComponent({
             contenteditable={!props.disabled}
             role="textbox"
             aria-multiline="false"
-            aria-label={props.label}
+            id={fieldId}
             spellcheck={false}
             data-ph={props.placeholder}
             onInput={onInput}
             onKeydown={onKeydown}
             onPaste={onPaste}
+            onBeforeinput={onBeforeinput}
             onClick={onClick}
             onCompositionstart={onCompositionStart}
             onCompositionend={onCompositionEnd}
@@ -671,7 +879,21 @@ export const HkTemplateField = defineComponent({
                 <span class="hk-tpl-editor-desc">{editorDef.value.description}</span>
               )}
             </div>
-            <div ref={editorSearchWrap} class="hk-tpl-editor-search">
+            <div
+              ref={editorSearchWrap}
+              class="hk-tpl-editor-search"
+              // Enter in the search picks the first matching row — the
+              // HkAffixPicker onSearchEnter convention (keyboard flow
+              // never has to leave the field to click).
+              onKeydown={(e: KeyboardEvent) => {
+                if (e.key !== "Enter") return;
+                const first = editorRows.value[0];
+                if (first) {
+                  e.preventDefault();
+                  applyChipToken(first.name);
+                }
+              }}
+            >
               <HkInput
                 modelValue={editorQuery.value}
                 onUpdate:modelValue={(v: string) => { editorQuery.value = v; }}

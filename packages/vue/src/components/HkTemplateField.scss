@@ -223,7 +223,11 @@
   flex: 1 1 10rem;
 }
 
-.hk-tpl-editor-rows {
+// ONE scrollbar per window (family contract): the mobile sheet's panel
+// already scrolls the whole form through its own overlay scrollbar, so
+// the rows cap exists ONLY in the desktop popover (which sizes to
+// content and otherwise has no scroll region at all).
+.hk-popover-panel:not(.hk-is-sheet) .hk-tpl-editor-rows {
   max-height: min(16rem, 40dvh);
   overflow-y: auto;
 }

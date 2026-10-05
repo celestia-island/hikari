@@ -14,9 +14,11 @@ import "./HkTemplateField.scss";
  * Renders a `{{ token }}` template with each token as an inline chip
  * (the same chip style the HkTemplateField editor types into), so a
  * stored template reads the same in a row, a card or a detail view as
- * it does in the editor that produced it. Pure display: the accessible
- * text content IS the raw template (screen readers read the exact
- * value), the chips only style it.
+ * it does in the editor that produced it. Pure display: chips spell the
+ * canonical `{{ name }}` form (whatever spacing the stored value used),
+ * and the exact stored value still round-trips through the shared
+ * grammar — parse/serialize are byte-exact, rendering never rewrites
+ * what storage holds.
  *
  * - tokens outside the host vocabulary still chip up, marked
  *   `data-unknown` (a renderer must not silently hide a value it does

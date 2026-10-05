@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
 
 import HkTemplateText from "./HkTemplateText";
+import { parseTemplate, serializeTemplate } from "./templateGrammar";
 
 /**
  * HkTemplateText contract tests:
@@ -51,15 +52,14 @@ describe("HkTemplateText", () => {
     expect(el.textContent).toContain(".png");
   });
 
-  it("keeps the accessible text equal to the exact template value", () => {
+  it("chip display normalizes the spelling; text runs stay byte-exact", () => {
     const raw = "a {{  md5_email  }} b";
     const el = mount({ content: raw, tokens: VOCAB });
-    // chip display normalizes the spelling, but the rendered text is
-    // only the visible surface — the exact value still round-trips
-    // through the shared grammar, and the text runs around the chip
-    // stay byte-exact.
+    // Chips spell the canonical form; the exact stored value is what
+    // round-trips through the shared grammar, not what the chip shows.
     expect(el.querySelector(".hk-tpl-chip")!.textContent).toBe("{{ md5_email }}");
     expect(el.querySelector(".hk-template-text-run")!.textContent).toBe("a ");
+    expect(serializeTemplate(parseTemplate(raw))).toBe(raw);
   });
 
   it("marks off-vocabulary tokens unknown instead of hiding them", () => {

@@ -168,6 +168,135 @@
   width: 100%;
 }
 
+/* ---- Responsive label collapse ---- */
+/* A `collapseLabel` button carries icon + text at wide viewports and
+   collapses to the SAME icon-only square below the chosen breakpoint
+   (chest 2026-10-05 direction: the ad-hoc `hidden sm:inline` label-span
+   pattern left the button as a padded icon rectangle on phones — the
+   exact squat shape the icon-only contract exists to prevent). The
+   geometry mirrors the icon-only ladder above per size; the breakpoint
+   px values mirror the runtime useBreakpoint scale (sm 640 / md 768 /
+   lg 1024 / xl 1280) — a media query cannot read the TS constant, keep
+   the two tables in sync. The TS side suppresses the collapse class
+   together with `block` (a full-width button has nothing to collapse
+   into), so no block override is needed here. */
+.hk-btn-label {
+  /* Inline-flex so multi-node labels (text + inline marks) stay on one
+     row and center against the glyph box. */
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+@mixin hk-btn-collapse-geometry($square) {
+  .hk-btn-label {
+    display: none;
+  }
+
+  /* The exact icon-only geometry (all-side padding zero, width locked),
+     mirrored per size from the ladder above. */
+  padding: 0;
+  box-sizing: border-box;
+  width: $square;
+}
+
+.hk-btn-label-collapse-sm.hk-btn-xs {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-sm.hk-btn-sm {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-sm.hk-btn-md {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-sm.hk-btn-lg {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-xs {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-sm {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-md {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-lg {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-xs {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-sm {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-md {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-lg {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-xs {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-sm {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-md {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-lg {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+
 /* ---- Primary ---- */
 
 .hk-btn-primary {

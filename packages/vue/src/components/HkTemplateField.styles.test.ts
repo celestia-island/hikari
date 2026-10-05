@@ -92,6 +92,14 @@ describe("HkTemplateField stylesheet contract", () => {
     }
   });
 
+  it("keeps the heading band on the label class, not the group wrapper", () => {
+    // The wrapper is a bare layout box; carrying the band's chrome
+    // (padding/font-weight) there would pad every row run.
+    expect(css).toMatch(/\.hk-tpl-group-label\s*\{[^}]*font-weight:\s*600/s);
+    expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*font-weight/s);
+    expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*padding/s);
+  });
+
   it("keeps group headings free of text-transform (the host owns casing)", () => {
     // R2 M13: re-adding `text-transform: uppercase` used to stay green.
     expect(css).not.toMatch(/\.hk-tpl-group[^{]*\{[^}]*text-transform/s);

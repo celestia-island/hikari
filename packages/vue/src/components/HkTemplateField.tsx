@@ -28,6 +28,12 @@ import {
 } from "./templateGrammar";
 import "./HkTemplateField.scss";
 
+/** What renderGroupedRows hands its row callback. */
+interface HkTemplateFieldRow {
+  def: HkTemplateTokenDef;
+  index: number;
+}
+
 /** Matches an UNFINISHED `{{ query` the caret is typing inside — the
  * autocomplete trigger. Identifiers only; anything else (a filter pipe,
  * a space) drops out of trigger state and closes the panel. */
@@ -875,34 +881,48 @@ export const HkTemplateField = defineComponent({
       };
     }
 
-    /** Rows with non-interactive group headings: a heading lands
-     * wherever the (filtered) vocabulary's group changes, so a family
-     * whose every member was filtered out never shows a stray header.
-     * Vocabulary order is the contract — consumers list each group's
-     * tokens contiguously. */
+    /** Grouped rows as labeled WRAPPERS, not sibling headings: a
+     *  `role="group"` box carrying the group's name in `aria-label` is
+     *  the pattern screen readers announce on entry (a bare
+     *  role="presentation" heading band was invisible to them — the
+     *  R3 P3 finding), and it is the sanctioned way to segment choices
+     *  inside HkMenu's role="menu" surface. The visible heading text
+     *  lives in the inner .hk-tpl-group-label band. */
     function renderGroupedRows(
       defs: readonly HkTemplateTokenDef[],
-      renderRow: (def: HkTemplateTokenDef, index: number) => unknown,
+      renderRow: (row: HkTemplateFieldRow) => unknown,
     ): unknown[] {
       const out: unknown[] = [];
-      let lastGroup: string | undefined;
+      let run: { label: string; rows: unknown[] } | null = null;
+      const flush = () => {
+        if (!run) return;
+        out.push(
+          <div class="hk-tpl-group" role="group" aria-label={run.label}>
+            <div class="hk-tpl-group-label" aria-hidden="true">{run.label}</div>
+            {run.rows}
+          </div>,
+        );
+        run = null;
+      };
       for (let i = 0; i < defs.length; i++) {
         const def = defs[i]!;
         if (def.group !== undefined) {
-          if (def.group !== lastGroup) {
-            out.push(
-              <div class="hk-tpl-group" role="presentation">
-                {props.groupLabel ? props.groupLabel(def.group) : def.group}
-              </div>,
-            );
+          const label = props.groupLabel ? props.groupLabel(def.group) : def.group;
+          if (!run || run.label !== label) {
+            flush();
+            run = { label, rows: [] };
           }
-          lastGroup = def.group;
         }
         // Tokens without a group simply continue under the previous
-        // heading's visual section — the documented contract for
-        // partially-grouped vocabularies (see the prop doc).
-        out.push(renderRow(def, i));
+        // group's visual section — the documented contract for
+        // partially-grouped vocabularies (see the prop doc). When the
+        // run is open they ride inside it; a leading ungrouped run
+        // renders bare, exactly as an ungrouped vocabulary does.
+        const row = renderRow({ def, index: i });
+        if (run) run.rows.push(row);
+        else out.push(row);
       }
+      flush();
       return out;
     }
 
@@ -981,13 +1001,13 @@ export const HkTemplateField = defineComponent({
           title={t("hikari::templateField.suggestTitle", "Placeholders")}
         >
           {filteredTokens.value.length > 0 ? (
-            <div class="hk-tpl-rows" role="listbox">
-              {renderGroupedRows(filteredTokens.value, (def, i) =>
+            <div class="hk-tpl-rows">
+              {renderGroupedRows(filteredTokens.value, ({ def, index }) =>
                 renderTokenRow(
                   def,
-                  i === Math.min(suggestActive.value, filteredTokens.value.length - 1),
+                  index === Math.min(suggestActive.value, filteredTokens.value.length - 1),
                   () => pickSuggestion(def),
-                  i,
+                  index,
                 ),
               )}
             </div>
@@ -1054,8 +1074,8 @@ export const HkTemplateField = defineComponent({
               />
             </div>
             <div ref={editorRowsHostRef} class="hk-tpl-editor-scroll">
-              <div ref={editorRowsRef} class="hk-tpl-editor-rows" role="listbox">
-                {renderGroupedRows(editorRows.value, (def) =>
+              <div ref={editorRowsRef} class="hk-tpl-editor-rows">
+                {renderGroupedRows(editorRows.value, ({ def }) =>
                   renderTokenRow(def, def.name === editorToken.value, () => applyChipToken(def.name)),
                 )}
                 {editorRows.value.length === 0 && (

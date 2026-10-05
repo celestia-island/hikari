@@ -415,30 +415,44 @@ describe("HkTemplateField grouped vocabulary", () => {
     { name: "sha256_email", group: "email" },
   ];
 
-  it("renders one heading per group run in the panel", async () => {
+  it("renders one labeled group wrapper per run in the panel", async () => {
     const el = mountWithTokens(GROUPED);
     await nextTick();
     await openTrigger(el, "{{ ");
-    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
-    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
-    // Headings are presentational, not options.
-    expect(headings.every((h) => h.getAttribute("role") === "presentation")).toBe(true);
+    const groups = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    // The accessible name rides on the wrapper (announced on entry);
+    // the visible text lives in the inner label band.
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["identity", "email"]);
+    expect(groups.every((g) => g.getAttribute("role") === "group")).toBe(true);
+    const labels = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group-label"));
+    expect(labels.map((l) => l.textContent)).toEqual(["identity", "email"]);
+    // The visible band is hidden from the a11y tree — the wrapper's
+    // aria-label already announced the name (no double reading).
+    expect(labels.every((l) => l.getAttribute("aria-hidden") === "true")).toBe(true);
+    // Rows ride INSIDE their group wrapper.
+    expect(groups[0]!.querySelectorAll(".hk-tpl-row")).toHaveLength(2);
+    expect(groups[1]!.querySelectorAll(".hk-tpl-row")).toHaveLength(2);
   });
 
   it("maps group keys through groupLabel", async () => {
     const el = mountWithTokens(GROUPED, { groupLabel: (g) => g.toUpperCase() });
     await nextTick();
     await openTrigger(el, "{{ ");
-    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
-    expect(headings.map((h) => h.textContent)).toEqual(["IDENTITY", "EMAIL"]);
+    const groups = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["IDENTITY", "EMAIL"]);
+    expect(groups.map((g) => g.querySelector(".hk-tpl-group-label")?.textContent)).toEqual([
+      "IDENTITY",
+      "EMAIL",
+    ]);
   });
 
   it("filters groups out with their members (no stray heading)", async () => {
     const el = mountWithTokens(GROUPED);
     await nextTick();
     await openTrigger(el, "{{ md5");
-    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
-    expect(headings.map((h) => h.textContent)).toEqual(["email"]);
+    const groups = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["email"]);
+    expect(groups[0]!.querySelectorAll(".hk-tpl-row")).toHaveLength(1);
   });
 
   it("ungrouped vocabularies render exactly as before (no headings)", async () => {
@@ -454,10 +468,10 @@ describe("HkTemplateField grouped vocabulary", () => {
     await nextTick();
     editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
     await nextTick();
-    const headings = Array.from(
+    const groups = Array.from(
       document.body.querySelectorAll<HTMLElement>(".hk-tpl-editor .hk-tpl-group"),
     );
-    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["identity", "email"]);
   });
 });
 
@@ -647,10 +661,53 @@ describe("HkTemplateField partially-grouped vocabulary", () => {
     ]);
     await nextTick();
     await openTrigger(el, "{{ ");
-    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
-    // Two headings for two group STARTS; the trailing ungrouped tokens
-    // stay under the last heading (see the groupLabel prop doc).
-    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
+    const groups = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    // Two wrappers for two group runs; the ungrouped tokens ride inside
+    // the open run (see the groupLabel prop doc) — free_a/b inside
+    // identity, free_c inside email.
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["identity", "email"]);
+    expect(groups[0]!.querySelectorAll(".hk-tpl-row")).toHaveLength(3);
+    expect(groups[1]!.querySelectorAll(".hk-tpl-row")).toHaveLength(2);
     expect(document.body.querySelectorAll(".hk-tpl-row")).toHaveLength(5);
+  });
+});
+
+describe("HkTemplateField vocabulary semantics guards", () => {
+  it("the rows containers carry no listbox role (menu/dialog context)", async () => {
+    const el = mountWithTokens([
+      { name: "id", group: "identity" },
+      { name: "md5_email", group: "email" },
+    ]);
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    const panelRows = document.body.querySelector<HTMLElement>(".hk-tpl-rows")!;
+    expect(panelRows.getAttribute("role")).toBeNull();
+
+    const el2 = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    editable(el2).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const editorRows = document.body.querySelector<HTMLElement>(".hk-tpl-editor-rows")!;
+    expect(editorRows.getAttribute("role")).toBeNull();
+  });
+
+  it("the panel's active highlight follows the filtered index inside wrappers", async () => {
+    const el = mountWithTokens([
+      { name: "id", group: "identity" },
+      { name: "username", group: "identity" },
+      { name: "md5_email", group: "email" },
+      { name: "sha256_email", group: "email" },
+    ]);
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    editable(el).dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    const active = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-row[data-active]"));
+    expect(active).toHaveLength(1);
+    // Index 1 across the WHOLE filtered list (username) — the highlight
+    // must not restart inside each group wrapper.
+    expect(active[0]!.textContent).toContain("username");
   });
 });

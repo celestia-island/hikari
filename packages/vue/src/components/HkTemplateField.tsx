@@ -423,6 +423,11 @@ export const HkTemplateField = defineComponent({
 
     function openChipEditor(chip: HTMLElement): void {
       if (props.disabled) return;
+      // Only one popup surface at a time: a chip click with the
+      // vocabulary panel open (its anchor is this same field, so the
+      // panel's outside-click shield does not fire) trades it for the
+      // editor instead of stacking both.
+      closeSuggestions();
       editorChip.value = chip;
       editorToken.value = chip.dataset.token ?? "";
       editorQuery.value = "";
@@ -507,23 +512,34 @@ export const HkTemplateField = defineComponent({
       editorOpen.value = false;
       if (editorHoldsFocus.value) {
         editorHoldsFocus.value = false;
-        nextTick(() => {
-          // Return focus ONLY when it did not land on something else by
-          // user intent: an outside-click close that focused another
-          // control must not yank focus back 3ms later (real-browser R1
-          // finding — focus@t → blur@t+3ms → activeElement ended up on
-          // this field, not the clicked input). Focus that fell to
-          // <body> (the popover unmounted out from under it — Escape,
-          // scrim, apply/remove paths) is fair game to reclaim.
+        /** True when focus is unowned (body/nowhere) or already back
+         * on this field — the only states we may reclaim it from. */
+        const reclaimable = () => {
           const active = document.activeElement;
-          const reclaimable =
+          return (
             !active ||
             active === document.body ||
-            (editRef.value ? active === editRef.value || editRef.value.contains(active) : false);
-          if (!reclaimable) return;
+            (editRef.value ? active === editRef.value || editRef.value.contains(active) : false)
+          );
+        };
+        const reclaim = () => {
+          if (!reclaimable()) return;
           editRef.value?.focus();
           if (editorChip.value) applyCaretOffset(offsetAfterChip(editorChip.value));
-        });
+        };
+        // Return focus ONLY when it did not land on something else by
+        // user intent: an outside-click close that focused another
+        // control must not yank focus back 3ms later (real-browser R1
+        // finding — focus@t → blur@t+3ms → activeElement ended up on
+        // this field, not the clicked input).
+        nextTick(reclaim);
+        // And once more past the popover's leave window: an Escape
+        // close leaves the search input holding focus THROUGH the
+        // closing animation, so the probe above correctly declines —
+        // but when the panel finishes unmounting, focus falls to
+        // <body> and nobody reclaims it. Re-run the same ownership
+        // probe after the leave budget (R2 finding).
+        setTimeout(reclaim, 400);
       }
     }
 

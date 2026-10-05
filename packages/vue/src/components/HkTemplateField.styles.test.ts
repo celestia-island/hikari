@@ -10,16 +10,16 @@ import { describe, expect, it } from "vitest";
  * so the runtime suite can never catch a lost rule — this test compiles
  * the sheet directly and pins the pieces the runtime tests cannot see:
  *
- *   1. the editor rows' native scrollbar is HIDDEN (`scrollbar-width:
- *      none` + `::-webkit-scrollbar { display: none }`) — the family
- *      draws its shared overlay chrome instead, and a component that
- *      kept the native bar would show two bars (the 2026-09-08
- *      double-scroll report class);
+ *   1. the editor rows' native scrollbar is HIDDEN inside the DESKTOP
+ *      branch only (`scrollbar-width: none` + `::-webkit-scrollbar {
+ *      display: none }` under `.hk-popover-panel:not(.hk-is-sheet)`) —
+ *      the family draws its shared overlay chrome instead, and the
+ *      mobile sheet must keep the panel as the ONE scroll region;
  *   2. the scroll host is a positioning context (`position: relative`)
  *      for the overlay rails;
- *   3. the sheet's `hk-tpl-*` / `hk-template-*` selectors and the TSX's
- *      class literals agree in BOTH directions (no dead rule, no
- *      unstyled element).
+ *   3. a curated class list checks TSX→CSS (no unstyled element) and a
+ *      reverse scan flags any `hk-tpl-*`/`hk-template-*` selector in the
+ *      sheet that no source file renders (no dead rule).
  */
 
 const componentDir = resolve(dirname(fileURLToPath(import.meta.url)));
@@ -35,14 +35,41 @@ function classTokensFrom(source: string): Set<string> {
 describe("HkTemplateField stylesheet contract", () => {
   const tsx = readFileSync(resolve(componentDir, "HkTemplateField.tsx"), "utf8");
   const rendererTsx = readFileSync(resolve(componentDir, "HkTemplateText.tsx"), "utf8");
+  const grammars = readFileSync(resolve(componentDir, "templateGrammar.ts"), "utf8");
   const css = compile(resolve(componentDir, "HkTemplateField.scss"), {
     style: "expanded",
   }).css;
 
-  it("hides the native scrollbar of the editor rows viewport", () => {
-    // Both spellings: standard property + the WebKit pseudo-element.
-    expect(css).toMatch(/\.hk-tpl-editor-rows[^{]*\{[^}]*scrollbar-width:\s*none/s);
-    expect(css).toMatch(/hk-tpl-editor-rows[^{]*::-webkit-scrollbar[^{]*\{[^}]*display:\s*none/s);
+  it("hides the native scrollbar of the editor rows viewport (desktop branch only)", () => {
+    // Both spellings: standard property + the WebKit pseudo-element,
+    // and both under the `:not(.hk-is-sheet)` scoping — a bare rule
+    // would also strip the sheet's native bar while no overlay is
+    // attached there (sheet attaches none; the panel owns its scroll).
+    expect(css).toMatch(
+      /\.hk-popover-panel:not\(\.hk-is-sheet\)[^{]*\.hk-tpl-editor-rows[^{]*\{[^}]*scrollbar-width:\s*none/s,
+    );
+    expect(css).toMatch(
+      /hk-tpl-editor-rows[^{]*::-webkit-scrollbar[^{]*\{[^}]*display:\s*none/s,
+    );
+    // No UNscoped rows rule may hide the native bar.
+    const unscoped = /(^|})\s*\.hk-tpl-editor-rows\s*\{([^}]*)\}/gs;
+    for (const m of css.matchAll(unscoped)) {
+      expect(m[2] ?? "").not.toContain("scrollbar-width");
+    }
+  });
+
+  it("has no dead template selector in the sheet", () => {
+    // Reverse direction: every `hk-tpl-*` / `hk-template-*` selector in
+    // the compiled CSS must appear in one of the two source files.
+    const sources = tsx + rendererTsx + grammars;
+    const selectors = new Set<string>();
+    for (const m of css.matchAll(/\.((?:hk-tpl|hk-template)[\w-]*)/g)) {
+      selectors.add(m[1]!);
+    }
+    expect(selectors.size).toBeGreaterThan(5); // extraction sanity (R1: never trust a 0-hit)
+    for (const sel of selectors) {
+      expect(sources.includes(sel), `no source renders ${sel}`).toBe(true);
+    }
   });
 
   it("gives the scroll host a positioning context for the overlay rails", () => {

@@ -81,7 +81,12 @@ export default defineComponent({
      * lived inside the closing panel falls back to <body>. Hosts that
      * reclaim focus after an Escape-style close want THIS edge, not a
      * timer: a fixed delay either races a long leave animation or
-     * waits past a short one. */
+     * waits past a short one.
+     *
+     *  The emit rides a nextTick after the machine's closed phase, so a
+     *  component UNMOUNTED in that same window drops it (Vue skips
+     *  emits on unmounted instances) — a host that itself is going away
+     *  has nothing to reclaim anyway. */
     closed: () => true,
   },
   setup(props, { emit, slots }) {

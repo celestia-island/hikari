@@ -90,7 +90,12 @@ export const HkTemplateField = defineComponent({
     /** Maps a token's `group` to the heading label shown over its run
      *  of rows (both the vocabulary panel and the chip editor). Passed
      *  through verbatim when omitted — groups are consumer-defined
-     *  technical keys, so the library has no opinion on their wording. */
+     *  technical keys, so the library has no opinion on their wording.
+     *
+     *  Partially-grouped vocabularies: a token WITHOUT a `group` is not
+     *  a section of its own — it renders under the previous heading's
+     *  band (the heading marks where a group STARTS, not where it ends).
+     *  Give every token a group when the sections must be airtight. */
     groupLabel: { type: Function as PropType<(group: string) => string>, default: undefined },
   },
   emits: {
@@ -442,6 +447,12 @@ export const HkTemplateField = defineComponent({
       editorRowsScrollbar?.update();
     }
 
+    // The shared scrollbar observes the VIEWPORT box; a vocabulary edit
+    // that changes the rows' content height without resizing the viewport
+    // would leave the thumb stale until the next scroll — refresh it when
+    // the (filtered) rows change.
+    watch(editorRows, () => { nextTick(syncEditorRowsScrollbar); });
+
     function detachEditorRowsScrollbar(): void {
       editorRowsScrollbar?.detach();
       editorRowsScrollbar = null;
@@ -478,6 +489,12 @@ export const HkTemplateField = defineComponent({
       // popover and the mobile sheet.
       nextTick(() => {
         editorSearchWrap.value?.querySelector("input")?.focus();
+        // Re-arm the focus latch explicitly: a reopen INSIDE the previous
+        // close's leave window focuses an input that (in programmatic
+        // flows) never blurred, so no focusin fires and the latch would
+        // stay false — the next close would then skip its reclaim and
+        // orphan focus on <body> (R1 S2 finding).
+        editorHoldsFocus.value = true;
         attachEditorRowsScrollbar();
       });
     }
@@ -865,11 +882,12 @@ export const HkTemplateField = defineComponent({
      * tokens contiguously. */
     function renderGroupedRows(
       defs: readonly HkTemplateTokenDef[],
-      renderRow: (def: HkTemplateTokenDef) => unknown,
+      renderRow: (def: HkTemplateTokenDef, index: number) => unknown,
     ): unknown[] {
       const out: unknown[] = [];
       let lastGroup: string | undefined;
-      for (const def of defs) {
+      for (let i = 0; i < defs.length; i++) {
+        const def = defs[i]!;
         if (def.group !== undefined) {
           if (def.group !== lastGroup) {
             out.push(
@@ -880,7 +898,10 @@ export const HkTemplateField = defineComponent({
           }
           lastGroup = def.group;
         }
-        out.push(renderRow(def));
+        // Tokens without a group simply continue under the previous
+        // heading's visual section — the documented contract for
+        // partially-grouped vocabularies (see the prop doc).
+        out.push(renderRow(def, i));
       }
       return out;
     }
@@ -961,15 +982,14 @@ export const HkTemplateField = defineComponent({
         >
           {filteredTokens.value.length > 0 ? (
             <div class="hk-tpl-rows" role="listbox">
-              {renderGroupedRows(filteredTokens.value, (def) => {
-                const i = filteredTokens.value.indexOf(def);
-                return renderTokenRow(
+              {renderGroupedRows(filteredTokens.value, (def, i) =>
+                renderTokenRow(
                   def,
                   i === Math.min(suggestActive.value, filteredTokens.value.length - 1),
                   () => pickSuggestion(def),
                   i,
-                );
-              })}
+                ),
+              )}
             </div>
           ) : (
             <p class="hk-tpl-rows-empty">
@@ -988,12 +1008,12 @@ export const HkTemplateField = defineComponent({
           onClosed={() => {
             if (!pendingEditorReclaim.value) return;
             pendingEditorReclaim.value = false;
-            // The `closed` edge fires as the machine leaves its last
-            // phase — the panel is still in the DOM for this tick, so
-            // focus is still sitting in the search input (not
-            // reclaimable yet). Run the probe after the patch that
-            // removes the panel, when focus has fallen to <body>.
-            nextTick(reclaimEditorFocus);
+            // HkPopover emits this from a nextTick AFTER the patch that
+            // removed the panel (its own doc contract, verified in a
+            // real browser: the handler sees no panel and focus already
+            // fallen to <body>) — so the ownership probe can run here
+            // directly.
+            reclaimEditorFocus();
           }}
           anchorRef={editorChip.value}
           sheetOnMobile

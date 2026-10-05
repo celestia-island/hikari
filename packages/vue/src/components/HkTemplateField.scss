@@ -165,8 +165,9 @@
   padding: var(--space-6, 6px) var(--space-8, 8px) var(--space-2, 2px);
   font-size: var(--text-2xs, 0.625rem);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  // No text-transform: labels arrive from the host (usually i18n
+  // strings) and the translator owns the casing.
   color: var(--hi-color-muted);
   user-select: none;
 }

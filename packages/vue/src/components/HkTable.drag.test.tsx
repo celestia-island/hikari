@@ -13,9 +13,16 @@ import HTable from "./HkTable";
  *   `reorder(from, to)` as indices into `rows` (the consumer applies
  *   moveTo(rows, from, to) — insert-at-target)
  * - a pointer drag past the neighbours' midpoints emits the same pair
+ * - the drag LIFTS: a detached ghost (a snapshot of the pressed row on
+ *   <body>) follows the pointer, the pressed row stays behind as the
+ *   equal-size placeholder (dimmed), and the slot the pointer resolves to
+ *   is painted by shifting the arrangement — the placeholder translates
+ *   onto the target row's spot, the rows in between glide one across
+ * - a real drop FREEZES the arrangement until the consumer's `rows`
+ *   carries it; a cancelled gesture glides everything home and never
+ *   emits
  * - the emit is INERT while a column sort is active (a derived arrangement
  *   cannot be reproduced by a two-index move) and the grips announce it
- * - a cancelled gesture never emits
  * - HkAdminTablePage forwards `draggable` + `reorder` (source contract)
  *
  * (Repo test convention: raw createApp + document queries, no
@@ -31,6 +38,9 @@ afterEach(() => {
     app.unmount();
     container.remove();
   }
+  // A ghost fading at release is removed by a bus timer — a test that
+  // ends inside that window must not leak it into the next one.
+  document.body.querySelectorAll(".hk-table-drag-ghost").forEach((n) => n.remove());
 });
 
 interface RowsRef {
@@ -236,7 +246,7 @@ describe("HkTable drag-to-reorder", () => {
     expect(t.container.querySelectorAll('tbody [data-dragging]').length).toBe(0);
   });
 
-  it("paints the insertion cue on the row the pointer resolves to", async () => {
+  it("shifts the arrangement onto the slot the pointer resolves to", async () => {
     const t = mountTable(3);
     const grip = handles(t.container)[0]!;
     grip.dispatchEvent(pointer("pointerdown", 18, 20));
@@ -244,12 +254,264 @@ describe("HkTable drag-to-reorder", () => {
     await nextTick();
     // Pointer between rows 1 (mid 60) and 2 (mid 100): the walk stops at
     // display row 2 (main=70 < mid 100) → slot 2, from=0 → insert-at-target
-    // = 1 (drop row 0 ON row 1); the cue rides display row 1's top edge.
+    // = 1. The placeholder (row 0) rides DOWN onto row 1's spot and row 1
+    // glides UP into the vacated slot — the swap the user watches, not a
+    // line on an edge. Row 2 is untouched.
     const trs = t.container.querySelectorAll("tbody .hk-table-row");
-    expect(trs[1]?.getAttribute("data-drop")).toBe("before");
+    // The row NAMES the shift (custom property + data-shift); the
+    // stylesheet moves its cells — happy-dom computes no CSS, so the
+    // paint wiring is pinned by the source contract below.
+    expect((trs[0]?.getAttribute("style") ?? "").replace(/\s+/g, "")).toContain("--hk-drag-shift:40px");
+    expect(trs[0]?.hasAttribute("data-shift")).toBe(true);
+    expect((trs[1]?.getAttribute("style") ?? "").replace(/\s+/g, "")).toContain("--hk-drag-shift:-40px");
+    expect(trs[1]?.hasAttribute("data-shift")).toBe(true);
+    expect(trs[2]?.getAttribute("style")).toBeNull();
+    expect(trs[2]?.hasAttribute("data-shift")).toBe(false);
     window.dispatchEvent(pointer("pointerup", 18, 70));
     await nextTick();
-    expect(trs[1]?.getAttribute("data-drop")).toBeNull();
+  });
+
+  it("paints no shift while the pointer still resolves to the dragged row", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    // Past the threshold but still inside row 0's own band (mid 20): the
+    // resolved slot is the row's own — an arrangement equal to the strip
+    // as laid out must not paint transforms.
+    window.dispatchEvent(pointer("pointermove", 18, 26));
+    await nextTick();
+    for (const tr of t.container.querySelectorAll("tbody .hk-table-row")) {
+      expect(tr.getAttribute("style")).toBeNull();
+    }
+    window.dispatchEvent(pointer("pointerup", 18, 26));
+    await nextTick();
+    expect(t.emitted).toEqual([]);
+  });
+
+  /** One animation-bus frame: the ghost attaches on `onceFrame`, so a lift
+   *  is only observable after the bus drains a frame. */
+  async function busFrame(): Promise<void> {
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    await nextTick();
+  }
+
+  function ghost(): HTMLElement | null {
+    // The LIVE ghost only — a previous gesture's node fading out is no
+    // longer the lift.
+    return document.body.querySelector<HTMLElement>(".hk-table-drag-ghost:not([data-fading])");
+  }
+
+  it("lifts the pressed row as a detached ghost over an equal-size placeholder", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 26));
+    await nextTick();
+    await busFrame();
+    // The ghost is a snapshot of the pressed row, mounted on <body> — NOT
+    // the strip — and carries no placeholder paint of its own.
+    const g = ghost();
+    expect(g, "the drag ghost on body").toBeTruthy();
+    expect(g!.textContent).toContain("Row-0");
+    expect(g!.querySelector("[data-dragging]")).toBeNull();
+    // The strip row it left is the placeholder: dimmed in place, same
+    // element (so exactly the size the strip laid out).
+    const trs = t.container.querySelectorAll("tbody .hk-table-row");
+    expect(trs[0]?.hasAttribute("data-dragging")).toBe(true);
+    expect(trs[0]?.getAttribute("style")).toBeNull();
+    window.dispatchEvent(pointer("pointerup", 18, 26));
+    await nextTick();
+  });
+
+  it("the ghost follows the pointer vertically and stays anchored to the row's left edge", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 26));
+    await nextTick();
+    await busFrame();
+    const g = ghost();
+    expect(g?.style.transform).toContain("translate3d(0px, 0px");
+    // Straight down from the press (86 - 20: the grab point stays under
+    // the pointer), and a horizontal jitter must NOT slide the ghost
+    // sideways. The move rides its own task, as a real gesture's does.
+    window.dispatchEvent(pointer("pointermove", 90, 86));
+    expect(g?.style.transform).toContain("translate3d(0px, 66px");
+    window.dispatchEvent(pointer("pointerup", 90, 86));
+    await nextTick();
+  });
+
+  it("a real drop freezes the arrangement until the consumer's rows carry it", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 70));
+    await nextTick();
+    await busFrame();
+    window.dispatchEvent(pointer("pointerup", 18, 70));
+    await nextTick();
+    // Dropped 0 → 1: the emit flew, but the consumer has not applied the
+    // move yet — the dropped arrangement must STAY painted (no snap back
+    // to the pre-drop order while the commit is in the air), the
+    // placeholder is un-dimmed, and the ghost is fading at the slot.
+    expect(t.emitted).toEqual([[0, 1]]);
+    const trs = t.container.querySelectorAll("tbody .hk-table-row");
+    expect((trs[0]?.getAttribute("style") ?? "").replace(/\s+/g, "")).toContain("--hk-drag-shift:40px");
+    expect(trs[0]?.hasAttribute("data-dragging")).toBe(false);
+    expect(document.body.querySelector(".hk-table-drag-ghost[data-fading]")).toBeTruthy();
+    expect(t.container.querySelector("table")?.hasAttribute("data-shift-held")).toBe(true);
+    // The consumer applies the emitted move: the hold lifts in the same
+    // paint that carries the new order (which is where the shift already
+    // put the rows — no jump).
+    await t.apply(0, 1);
+    const settled = t.container.querySelectorAll("tbody .hk-table-row");
+    for (const tr of settled) expect(tr.getAttribute("style")).toBeNull();
+    expect(t.container.querySelector("table")?.hasAttribute("data-shift-held")).toBe(false);
+  });
+
+  it("a cancelled gesture glides the arrangement home and never emits", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 70));
+    await nextTick();
+    expect(
+      (t.container.querySelector("tbody .hk-table-row")?.getAttribute("style") ?? "").replace(/\s+/g, ""),
+    ).toContain("--hk-drag-shift:40px");
+    window.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerId: 7 }));
+    await nextTick();
+    // No emit, transforms off. The release beat keeps the transitions
+    // ARMED (data-releasing) for exactly one shift window — a CSS
+    // transition reads the after-change style, so without it the glide
+    // home would snap.
+    expect(t.emitted).toEqual([]);
+    expect(t.container.querySelector("table")?.hasAttribute("data-releasing")).toBe(true);
+    for (const tr of t.container.querySelectorAll("tbody .hk-table-row")) {
+      expect(tr.getAttribute("style")).toBeNull();
+    }
+    // The beat lapses: the strip is idle again, no arming left behind.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(t.container.querySelector("table")?.hasAttribute("data-releasing")).toBe(false);
+  });
+
+  it("a new drag while a held arrangement is painted measures the clean strip", async () => {
+    const t = mountTable(3);
+    // First drag: drop 0 → 1 and leave the arrangement held (the consumer
+    // has not applied it).
+    const grip0 = handles(t.container)[0]!;
+    grip0.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 70));
+    window.dispatchEvent(pointer("pointerup", 18, 70));
+    await nextTick();
+    expect(t.container.querySelector("table")?.hasAttribute("data-shift-held")).toBe(true);
+    // Second drag starts immediately: the stale shifts must not pollute
+    // the measurement — the new gesture resolves against the strip the
+    // data describes (row 0 at top 0), not against the shifted paint.
+    const grip1 = handles(t.container)[1]!;
+    grip1.dispatchEvent(pointer("pointerdown", 18, 60));
+    window.dispatchEvent(pointer("pointermove", 18, 66));
+    await nextTick();
+    // Dragging the (display) row 1 in its own band: no arrangement shift.
+    for (const tr of t.container.querySelectorAll("tbody .hk-table-row")) {
+      const style = tr.getAttribute("style") ?? "";
+      // Row 0 still carries the HELD first-drop shift only if the second
+      // gesture resolved nothing — but the hold was released by the new
+      // drag, so nothing may be painted.
+      expect(style).not.toContain("--hk-drag-shift");
+    }
+    window.dispatchEvent(pointer("pointerup", 18, 66));
+    await nextTick();
+    expect(t.emitted).toEqual([[0, 1]]);
+  });
+
+  it("shifts pixel-exact across UNEVEN rows", async () => {
+    // happy-dom pins the geometry by hand, so uneven heights are one
+    // defineProperty away: a 40/100/20 strip exercises the anchored-delta
+    // math the uniform grid cannot distinguish from a height product.
+    const t = mountTable(3);
+    const heights = [40, 100, 20];
+    const tops: number[] = [];
+    let acc = 0;
+    t.container.querySelectorAll("tbody .hk-table-row").forEach((tr, i) => {
+      tops.push(acc);
+      const box = { left: 0, right: 300, top: acc, bottom: acc + heights[i]!, width: 300, height: heights[i]!, x: 0, y: acc };
+      Object.defineProperty(tr, "getBoundingClientRect", { configurable: true, value: () => box as DOMRect });
+      acc += heights[i]!;
+    });
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    // Past row 1's midpoint (top 40 + 50 = 90) but inside row 2 (140..160):
+    // slot 2, from 0 → insert-at-target 1: the placeholder takes row 1's
+    // spot (top 40), row 1 takes the placeholder's (top 0).
+    window.dispatchEvent(pointer("pointermove", 18, 145));
+    await nextTick();
+    const trs = t.container.querySelectorAll("tbody .hk-table-row");
+    expect((trs[0]?.getAttribute("style") ?? "").replace(/\s+/g, "")).toContain(`--hk-drag-shift:${tops[1]! - tops[0]!}px`);
+    expect((trs[1]?.getAttribute("style") ?? "").replace(/\s+/g, "")).toContain(`--hk-drag-shift:${tops[0]! - tops[1]!}px`);
+    expect(trs[2]?.getAttribute("style")).toBeNull();
+    window.dispatchEvent(pointer("pointerup", 18, 145));
+    await nextTick();
+  });
+
+  it("re-measures when the consumer replaces rows UNDER a live drag", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 70));
+    await nextTick();
+    expect(
+      (t.container.querySelector("tbody .hk-table-row")?.getAttribute("style") ?? "").replace(/\s+/g, ""),
+    ).toContain("--hk-drag-shift");
+    // The refresh lands mid-drag (a websocket push, a concurrent editor):
+    // the strip re-orders (the engine keeps the drag on the pressed
+    // ELEMENT, which now sits at display index 1) and the replacement
+    // must re-measure — the paint drops until the next resolution.
+    await t.setOrder([t.rows.value![2]!, t.rows.value![0]!, t.rows.value![1]!]);
+    // A SECOND push relayouts the strip UNEVEN (0 / 100 / 200): a shift
+    // computed against the stale 40px tops would read ±80px where the
+    // fresh measurement must read ±100px — the assertion separates
+    // re-measured from stale.
+    const trs = t.container.querySelectorAll("tbody .hk-table-row");
+    const stripTops = [0, 100, 200];
+    const stripHeights = [100, 100, 20];
+    trs.forEach((tr, i) => {
+      const start = stripTops[i]!;
+      const box = { left: 0, right: 300, top: start, bottom: start + stripHeights[i]!, width: 300, height: stripHeights[i]!, x: 0, y: start };
+      Object.defineProperty(tr, "getBoundingClientRect", { configurable: true, value: () => box as DOMRect });
+    });
+    t.rows.value = t.rows.value!.slice();
+    await nextTick();
+    // Gliding the pointer into the last row's band re-resolves the slot
+    // against the NEW strip: insert at 2 → the pressed row takes row 2's
+    // spot and row 2 takes the vacated one.
+    window.dispatchEvent(pointer("pointermove", 18, 215));
+    await nextTick();
+    const styles = [...trs].map((tr) => (tr.getAttribute("style") ?? "").replace(/\s+/g, ""));
+    expect(styles[1]).toContain("--hk-drag-shift:100px");
+    expect(styles[2]).toContain("--hk-drag-shift:-100px");
+    // Row 0 left put: no shift named. (happy-dom renders Vue's cleared
+    // style binding as an empty style="" husk; real engines drop it.)
+    expect(styles[0]).not.toContain("--hk-drag-shift");
+    window.dispatchEvent(pointer("pointerup", 18, 215));
+    await nextTick();
+    // The gesture ends with the drop against the replaced strip.
+    expect(t.emitted).toEqual([[1, 2]]);
+  });
+
+  it("the ghost is hidden from the accessibility tree and carries no focusable chrome", async () => {
+    const t = mountTable(3);
+    const grip = handles(t.container)[0]!;
+    grip.dispatchEvent(pointer("pointerdown", 18, 20));
+    window.dispatchEvent(pointer("pointermove", 18, 26));
+    await nextTick();
+    await busFrame();
+    const g = ghost();
+    expect(g?.getAttribute("aria-hidden")).toBe("true");
+    // The snapshot stripped the grip's tabindex/role: no second tab stop.
+    expect(g?.querySelector("[tabindex]")).toBeNull();
+    expect(g?.querySelector('[role="button"]')).toBeNull();
+    window.dispatchEvent(pointer("pointerup", 18, 26));
+    await nextTick();
   });
 
   it("is inert while a column sort is active — grips announce disabled and emits never fire", async () => {
@@ -291,21 +553,6 @@ describe("HkTable drag-to-reorder", () => {
     expect(handles(t.container)[0]!.getAttribute("aria-disabled")).toBeNull();
     await pressKey(handles(t.container)[0]!, "ArrowDown");
     expect(t.emitted).toEqual([[0, 1]]);
-  });
-
-  it("paints no insertion cue while the pointer still resolves to the dragged row", async () => {
-    const t = mountTable(3);
-    const grip = handles(t.container)[0]!;
-    grip.dispatchEvent(pointer("pointerdown", 18, 20));
-    // Past the threshold but still inside row 0's own band (mid 20): the
-    // resolved slot is the row's own — a cue there would read as a no-op
-    // target.
-    window.dispatchEvent(pointer("pointermove", 18, 26));
-    await nextTick();
-    expect(t.container.querySelectorAll("tbody [data-drop]").length).toBe(0);
-    window.dispatchEvent(pointer("pointerup", 18, 26));
-    await nextTick();
-    expect(t.emitted).toEqual([]);
   });
 
   /** A pointer gesture against an inert table: press + travel + release. */
@@ -483,6 +730,50 @@ describe("HkTable grip CSS (source contract)", () => {
     // the grip cell grows a full cell's right padding at sm/lg.
     expect(scss).toMatch(/\.hk-table \.hk-table-drag-cell\s*\{/);
     expect(scss).toMatch(/\.hk-table \.hk-table-drag-col\s*\{/);
+  });
+
+  it("paints the placeholder on the CELLS and rounds the end cells", () => {
+    // The regression this pins (R1 P1): <tr>-level decoration is the
+    // engine-unreliable class the predecessor's own warning ruled out —
+    // the placeholder tint and its rounding must live on the cells, whose
+    // boxes transform and round identically everywhere.
+    expect(scss).toMatch(/\.hk-table-draggable \.hk-table-row\[data-dragging\] > \.hk-table-cell \{/);
+    expect(scss).toMatch(/\[data-dragging\] > \.hk-table-cell:first-child \{[\s\S]*?border-top-left-radius: var\(--radius-md/);
+    expect(scss).toMatch(/\[data-dragging\] > \.hk-table-cell:last-child \{[\s\S]*?border-bottom-right-radius: var\(--radius-md/);
+    // The shift likewise rides the cells (named by the row's custom
+    // property), never a row transform.
+    expect(scss).toMatch(/\[data-shift\] > \.hk-table-cell \{[\s\S]*?transform: translateY\(var\(--hk-drag-shift/);
+    expect(scss).not.toMatch(/^\s*clip-path:/m);
+    // And the line-cue era is gone: no data-drop edge shadows survive.
+    expect(scss).not.toMatch(/data-drop/);
+  });
+
+  it("the shift glides ride only a live, held, or releasing strip", () => {
+    // Transitions armed by `data-dragging` / `data-shift-held` /
+    // `data-releasing` on the TABLE: idle cells carry no transform
+    // transition, so the forced stale-transform clear at a new drag's
+    // measure never glides — and `data-releasing` is what keeps the
+    // cancelled return a glide (the after-change style governs).
+    expect(scss).toMatch(/\.hk-table-draggable\[data-dragging\] \.hk-table-row > \.hk-table-cell,/);
+    expect(scss).toMatch(/\.hk-table-draggable\[data-shift-held\] \.hk-table-row > \.hk-table-cell,/);
+    expect(scss).toMatch(/\.hk-table-draggable\[data-releasing\] \.hk-table-row > \.hk-table-cell \{/);
+  });
+
+  it("the ghost is a detached, semi-transparent, rounded lift below the popup bands", () => {
+    expect(scss).toMatch(/\.hk-table-drag-ghost\s*\{/);
+    expect(scss).toMatch(/position: fixed;/);
+    expect(scss).toMatch(/border-radius: var\(--radius-md/);
+    expect(scss).toMatch(/z-index: var\(--hk-z-drag, 950\)/);
+    // The settle is a fade, driven by data-fading.
+    expect(scss).toMatch(/&\[data-fading]\s*\{/);
+  });
+
+  it("reduced motion snaps the arrangement glides and the ghost fade", () => {
+    const guard = scss.indexOf("@media (prefers-reduced-motion: reduce)");
+    expect(guard).toBeGreaterThan(-1);
+    const block = scss.slice(guard);
+    expect(block).toContain(".hk-table-drag-ghost");
+    expect(block).toContain("transition: opacity 150ms ease");
   });
 });
 

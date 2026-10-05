@@ -1,8 +1,12 @@
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 import { usePointerReorder } from "../composables/usePointerReorder";
+import { useReportedTransition } from "../composables/useReportedTransition";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { onceFrame } from "../runtime/animationBus";
+import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
+import { ancestorZoom } from "../runtime/cssZoom";
 import "./HkTable.scss";
 
 interface Column {
@@ -12,6 +16,13 @@ interface Column {
   sortable?: boolean;
   align?: "left" | "center" | "right";
 }
+
+/** Duration of every drag motion this component paints: the arrangement
+ *  shift (placeholder onto the resolved slot, neighbours gliding across)
+ *  and the ghost's settle fade on release. One number so the transition
+ *  the user sees and the animation window reported to the shared bus
+ *  (useReportedTransition) cannot drift apart. */
+const DRAG_SHIFT_MS = 150;
 
 export default defineComponent({
   name: "HkTable",
@@ -181,6 +192,15 @@ export default defineComponent({
       if (reorderInert.value) return;
       if (from === to || from < 0 || to < 0) return;
       if (from >= props.rows.length || to >= props.rows.length) return;
+      // The arrangement the user dropped is ALREADY on screen (the live
+      // shift painted it while the pointer hovered) — freeze it, so the
+      // commit-whenever-the-consumer-lands-it is seamless: the render that
+      // carries the new order paints the rows exactly where the shift
+      // already put them. A consumer that persists over the network first
+      // (the house pattern: every admin list upsert) keeps showing the
+      // chosen order instead of snapping back to the pre-drop one.
+      arrangement.value = { from, slot: to };
+      arrangementHeld.value = true;
       emit("reorder", from, to);
     }
 
@@ -209,13 +229,306 @@ export default defineComponent({
       scrollContainer: dragScrollContainer,
     });
 
+    // ── Drag lift: ghost, placeholder and the FLIP shift ────────────────
+    // A lift no longer paints on the strip alone. The pressed row becomes
+    // the PLACEHOLDER — the same element, so exactly the size the strip
+    // laid out, dimmed and tinted where it sits — and a detached,
+    // semi-transparent GHOST (a snapshot of the row the user grabbed)
+    // floats with the pointer above the page. The slot the pointer
+    // resolves to is painted by SHIFTING the arrangement: the placeholder
+    // translates onto the target row's spot and every row in between
+    // glides one slot across, so the drop commits an arrangement the user
+    // has already watched settle — the old paint (a line on an edge) is
+    // gone. Everything runs on the shared animation context: the shifts
+    // and the settle are reported transitions (useReportedTransition, so
+    // the bus knows motion is in flight), the ghost attaches on a bus
+    // frame (onceFrame) and its removal on a bus timer
+    // (scheduleCronAfter), and the `prefers-reduced-motion` media guard in
+    // the stylesheet snaps the glides.
+
+    const anim = useReportedTransition(DRAG_SHIFT_MS);
+
+    /** The strip measured at drag start: per-row visual tops/heights plus
+     *  the cumulative CSS zoom the rows paint under (chest's root DPI
+     *  scale). The arrangement math runs in these VISUAL px (gBCR space)
+     *  and divides by the zoom once at the write layer — a transform on a
+     *  row inside a zoomed subtree paints zoom× its local px. */
+    interface StripMeasure {
+      tops: number[];
+      zoom: number;
+      left: number;
+      width: number;
+    }
+    const stripMeasure = ref<StripMeasure | null>(null);
+    /** The painted arrangement: display index `from`'s placeholder sits at
+     *  slot `slot`. Live while the drag moves; FROZEN after a real drop
+     *  (see `onReorderDrop`) until `rows` carries the emitted move. */
+    const arrangement = ref<{ from: number; slot: number } | null>(null);
+    const arrangementHeld = ref(false);
+
+    /** Row displacement (LOCAL px, ready for a transform) for display
+     *  index `index` under the live arrangement — the FLIP delta between
+     *  the slot the strip measured the row at and the slot the arrangement
+     *  puts it in. Anchored to the strip's own measured positions: the row
+     *  landing at final slot f sits exactly where the strip laid the f-th
+     *  row out, so uneven rows land pixel-exact too. */
+    function rowShift(index: number): number {
+      const m = stripMeasure.value;
+      const a = arrangement.value;
+      if (!m || !a || a.from === a.slot) return 0;
+      if (index < 0 || index >= m.tops.length) return 0;
+      const order = m.tops.map((_, i) => i);
+      order.splice(a.from, 1);
+      order.splice(a.slot, 0, a.from);
+      const finalTop = new Array<number>(m.tops.length).fill(0);
+      for (let f = 0; f < order.length; f += 1) finalTop[order[f]!] = m.tops[f]!;
+      const delta = finalTop[index]! - m.tops[index]!;
+      return Math.abs(delta) < 0.5 ? 0 : delta / m.zoom;
+    }
+
+    function measureStrip(): void {
+      const rows = liveRowEls();
+      if (rows.length === 0) {
+        stripMeasure.value = null;
+        return;
+      }
+      // A drag starting while a HELD arrangement is still painted would
+      // measure the shifted paint — force the stale transforms off first
+      // (the render will not re-apply them: the arrangement was cleared).
+      // removeProperty rather than an empty write: an empty transform
+      // value would leave a `style=""` husk on rows that never carried
+      // anything else.
+      for (const row of rows) {
+        row.style.removeProperty("transform");
+        if (!row.getAttribute("style")) row.removeAttribute("style");
+      }
+      const zoom = ancestorZoom(rows[0]!);
+      const tops: number[] = [];
+      rows.forEach((row) => {
+        tops.push(row.getBoundingClientRect().top);
+      });
+      const source = rows[rowDrag.dragFrom.value]?.getBoundingClientRect();
+      stripMeasure.value = {
+        tops,
+        zoom,
+        left: source?.left ?? 0,
+        width: source?.width ?? 0,
+      };
+    }
+
+    // ── The ghost ──
+    let ghostNode: HTMLElement | null = null;
+    let ghostFading: HTMLElement | null = null;
+    let ghostHTML = "";
+    let ghostStartTop = 0;
+    let ghostGrabOffsetY = 0;
+    let pressClientY = 0;
+    let ghostFadeTimer: CronHandle | null = null;
+
+    /** Snapshot the pressed row BEFORE the drag paint lands on it (this
+     *  runs in the pre-render watcher): the ghost is the row the user
+     *  grabbed, not the dimmed placeholder it is about to become. The
+     *  clone must not carry the row's interactive chrome — its grip keeps
+     *  `tabindex`/`role` in the snapshot HTML, and a second tabbable copy
+     *  of every row would be a keyboard trap — so the attributes come off
+     *  and the ghost root is hidden from the accessibility tree. */
+    function captureGhost(): void {
+      const row = liveRowEls()[rowDrag.dragFrom.value];
+      ghostHTML = row
+        ? row.outerHTML
+            .replace(/\sdata-dragging="[^"]*"/g, "")
+            .replace(/\sdata-drop="[^"]*"/g, "")
+            .replace(/\stabindex="[^"]*"/g, "")
+            .replace(/\srole="button"/g, "")
+        : "";
+      const rect = row?.getBoundingClientRect();
+      ghostStartTop = rect?.top ?? 0;
+      ghostGrabOffsetY = pressClientY - ghostStartTop;
+    }
+
+    /** Attach the snapshot as a fixed-position clone above the page. The
+     *  ghost lives on <body> — inside any root CSS zoom subtree its px are
+     *  LOCAL while the measured rect reports the root VISUAL space — so
+     *  every write divides by the body's cumulative zoom (house pattern:
+     *  HkDraggableList's ghost). */
+    function attachGhost(): void {
+      const m = stripMeasure.value;
+      if (!m || !ghostHTML || m.width <= 0) return;
+      detachGhost();
+      const zb = ancestorZoom(document.body);
+      const node = document.createElement("div");
+      node.className = "hk-table-drag-ghost";
+      // The clone's table carries the source table's classes, so size and
+      // bordered variants paint identically to the row it lifted.
+      const table = document.createElement("table");
+      const sourceTable = wrapperHostRef.value?.querySelector("table.hk-table");
+      if (sourceTable) table.className = sourceTable.className;
+      table.style.width = `${m.width / zb}px`;
+      table.style.tableLayout = "fixed";
+      const tbody = document.createElement("tbody");
+      tbody.className = "hk-table-body";
+      tbody.innerHTML = ghostHTML;
+      // Fixed layout takes its column spec from the first row's widths —
+      // pin each clone cell to the source's rendered width so the ghost's
+      // columns line up with the strip it floats over.
+      const sourceCells = liveRowEls()[rowDrag.dragFrom.value]?.querySelectorAll<HTMLElement>("td, th");
+      const ghostCells = tbody.querySelectorAll<HTMLElement>("td, th");
+      ghostCells.forEach((cell, i) => {
+        const w = sourceCells?.[i]?.getBoundingClientRect().width ?? 0;
+        if (w > 0) cell.style.width = `${w / zb}px`;
+      });
+      table.appendChild(tbody);
+      node.appendChild(table);
+      node.style.width = `${m.width / zb}px`;
+      moveGhostTo(node, pressClientY);
+      node.style.pointerEvents = "none";
+      node.setAttribute("aria-hidden", "true");
+      document.body.appendChild(node);
+      ghostNode = node;
+    }
+
+    function moveGhostTo(node: HTMLElement, clientY: number): void {
+      const m = stripMeasure.value;
+      if (!m) return;
+      const zb = ancestorZoom(document.body);
+      // Vertical only: the ghost stays anchored to the row's own left
+      // edge, so a sideways jitter never slides the row across columns.
+      const x = m.left / zb;
+      const y = (clientY - ghostGrabOffsetY) / zb;
+      node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }
+
+    function onDragPointerMove(event: PointerEvent): void {
+      if (!ghostNode) return;
+      moveGhostTo(ghostNode, event.clientY);
+    }
+
+    /** The ghost hands off to the placeholder: a short fade at the
+     *  position where the pointer released, removed on a bus timer. */
+    function fadeGhost(): void {
+      if (!ghostNode) return;
+      const node = ghostNode;
+      ghostNode = null;
+      ghostFading = node;
+      node.setAttribute("data-fading", "");
+      ghostFadeTimer?.disconnect();
+      ghostFadeTimer = scheduleCronAfter(() => {
+        ghostFadeTimer = null;
+        ghostFading?.remove();
+        ghostFading = null;
+      }, DRAG_SHIFT_MS);
+    }
+
+    function detachGhost(): void {
+      ghostFadeTimer?.disconnect();
+      ghostFadeTimer = null;
+      ghostNode?.remove();
+      ghostNode = null;
+      // A fade in flight has already left `ghostNode` — it is owned by the
+      // timer alone, so an unmount mid-fade must reap it here or it would
+      // linger on <body> with its removal cancelled.
+      ghostFading?.remove();
+      ghostFading = null;
+    }
+
+    /** The beat after a cancel / release-on-origin: the transforms come
+     *  off in the same flush that removes `data-dragging`, and a CSS
+     *  transition takes the AFTER-change style — with the arming attribute
+     *  gone the return would snap. `data-releasing` keeps the transitions
+     *  armed for exactly one shift window so the glide is real. */
+    const releasing = ref(false);
+    let releaseTimer: CronHandle | null = null;
+
+    watch(() => rowDrag.dragging.value, (active) => {
+      if (active) {
+        arrangementHeld.value = false;
+        releaseTimer?.disconnect();
+        releaseTimer = null;
+        releasing.value = false;
+        arrangement.value = null;
+        measureStrip();
+        captureGhost();
+        onceFrame(() => {
+          // The frame may land after a fast release — never paint a lift
+          // for a gesture that is already over.
+          if (!rowDrag.dragging.value) return;
+          attachGhost();
+          anim.run();
+        });
+        window.addEventListener("pointermove", onDragPointerMove);
+      } else {
+        // The engine clears its refs before `onDrop` runs, so by the time
+        // this flushes, a real drop has already frozen the arrangement.
+        window.removeEventListener("pointermove", onDragPointerMove);
+        if (!arrangementHeld.value) {
+          // Cancel / release on the origin: glide the arrangement home.
+          const moved = arrangement.value != null && arrangement.value.from !== arrangement.value.slot;
+          arrangement.value = null;
+          if (moved) {
+            releasing.value = true;
+            anim.run();
+            releaseTimer?.disconnect();
+            releaseTimer = scheduleCronAfter(() => {
+              releaseTimer = null;
+              releasing.value = false;
+            }, DRAG_SHIFT_MS);
+          }
+        }
+        fadeGhost();
+      }
+    });
+
+    watch(() => rowDrag.dragOver.value, (slot) => {
+      if (!rowDrag.dragging.value || slot < 0) return;
+      const from = rowDrag.dragFrom.value;
+      const a = arrangement.value;
+      if (a && a.from === from && a.slot === slot) return;
+      arrangement.value = { from, slot };
+      // A slot equal to the origin paints no shift — reporting motion for
+      // nothing would only tell the bus a lie.
+      if (from !== slot) anim.run();
+    });
+
+    watch(() => props.rows, () => {
+      // The consumer's array moved — the committed drop, an external edit,
+      // a refresh. The held arrangement's job is done: clearing in this
+      // same pre-render flush paints the new order and drops the shifts in
+      // one paint, which coincide (that is the freeze's whole point).
+      // NOTE the contract: reference replacement. A consumer mutating the
+      // array in place must emit a replacement (or re-key) for the hold to
+      // lift — the house consumers all do.
+      arrangementHeld.value = false;
+      if (rowDrag.dragging.value) {
+        // A strip replaced UNDER a live drag: the measurement is stale
+        // (tops were read at press time) and the engine will resolve
+        // against the NEW elements — re-measure the clean strip so the
+        // paint follows, and let the shift re-arm on the next resolution.
+        arrangement.value = null;
+        measureStrip();
+        return;
+      }
+      arrangement.value = null;
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener("pointermove", onDragPointerMove);
+      releaseTimer?.disconnect();
+      releaseTimer = null;
+      detachGhost();
+    });
+
     function onHandlePointerdown(e: PointerEvent, index: number): void {
       if (reorderInert.value) return;
       // The press's own row is looked up in the live strip: the render-time
       // index is a fallback for a handle that somehow left the table.
       const row = (e.currentTarget as HTMLElement | null)?.closest("tr");
       const strip = row ? liveRowEls().indexOf(row as HTMLElement) : index;
-      if (strip >= 0) rowDrag.start(e, strip);
+      if (strip >= 0) {
+        // Where the finger grabbed the row — the ghost hangs the strip's
+        // lift off this point so the grab stays under the pointer.
+        pressClientY = e.clientY;
+        rowDrag.start(e, strip);
+      }
     }
 
     /** Keyboard twin of the drop: move one row one slot. Runs on a focused
@@ -251,22 +564,6 @@ export default defineComponent({
       return `${before}${label}${after}`;
     }
 
-    /** Insertion cue for the slot the pointer currently resolves to:
-     *  `dragOver` is a slot (0..n) over the strip — the line paints on the
-     *  TOP edge of the row that would sit below the drop, or the BOTTOM
-     *  edge of the last row for the trailing slot. A slot that resolves
-     *  back onto the row being dragged paints nothing: the row already
-     *  carries its lift, and a "drop here" line on the row in hand reads
-     *  as a no-op target. */
-    const dropCue = computed<{ index: number; edge: "before" | "after" } | null>(() => {
-      if (!rowDrag.dragging.value || rowDrag.dragOver.value < 0) return null;
-      const slot = rowDrag.dragOver.value;
-      if (slot === rowDrag.dragFrom.value) return null;
-      const count = sortedRows.value.length;
-      if (slot >= count) return { index: count - 1, edge: "after" };
-      return { index: slot, edge: "before" };
-    });
-
     const tableCls = computed(() => [
       "hk-table",
       `hk-table-${props.size}`,
@@ -276,6 +573,19 @@ export default defineComponent({
       props.draggable ? "hk-table-draggable" : "",
     ]);
 
+    /** Drag-scoped switches the stylesheet reads: `data-dragging` arms the
+     *  shift transitions for as long as a gesture owns the strip;
+     *  `data-shift-held` keeps them armed after a drop while the frozen
+     *  arrangement waits for `rows` to carry it; `data-releasing` arms
+     *  them for the one beat a cancelled arrangement needs to glide home
+     *  (the arming attribute must OUTLIVE the transform removal, or the
+     *  after-change style snaps). */
+    const dragScope = computed(() => ({
+      "data-dragging": rowDrag.dragging.value ? "" : undefined,
+      "data-shift-held": arrangementHeld.value ? "" : undefined,
+      "data-releasing": releasing.value ? "" : undefined,
+    }));
+
     const totalCols = computed(
       () => props.columns.length + (props.selectable ? 1 : 0) + (props.draggable ? 1 : 0)
     );
@@ -284,7 +594,7 @@ export default defineComponent({
       return (
       <div ref={wrapperHostRef} class="hk-table-host">
         <div ref={wrapperRef} class="hk-table-wrapper">
-        <table class={tableCls.value}>
+        <table class={tableCls.value} {...dragScope.value}>
           {props.caption && <caption class="hk-table-sr-only">{props.caption}</caption>}
           <thead>
             <tr class="hk-table-header-row">
@@ -370,14 +680,22 @@ export default defineComponent({
             ) : (
               sortedRows.value.map((row, index) => {
                 const rowKey = getRowKey(row, index);
-                const dropCueEdge =
-                  dropCue.value && dropCue.value.index === index ? dropCue.value.edge : null;
+                // The FLIP shift this row rides under the live (or frozen)
+                // arrangement — 0 for rows the arrangement leaves put. It
+                // travels to the CELLS as a custom property, not as a row
+                // transform: `<tr>` transforms are unreliable across
+                // engines (the predecessor lift avoided them for exactly
+                // this), while a <td> is a plain box everywhere — and a
+                // custom property is inert paint-wise, so the row element
+                // only NAMES the shift and the stylesheet moves the paint.
+                const shiftPx = rowShift(index);
                 return (
                   <tr
                     key={rowKey}
                     class="hk-table-row"
+                    style={shiftPx ? { "--hk-drag-shift": `${shiftPx}px` } : undefined}
+                    data-shift={shiftPx ? "" : undefined}
                     data-dragging={rowDrag.dragging.value && rowDrag.dragFrom.value === index ? "" : undefined}
-                    data-drop={dropCueEdge || undefined}
                   >
                     {props.draggable && (
                       <td class="hk-table-cell hk-table-drag-cell">

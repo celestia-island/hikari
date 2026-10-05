@@ -54,16 +54,21 @@ describe("HkTemplateField stylesheet contract", () => {
       /\.hk-popover-panel:not\(\.hk-is-sheet\)[^{]*hk-tpl-editor-rows[^{]*::-webkit-scrollbar[^{]*\{[^}]*display:\s*none/s,
     );
     // EVERY rule that hides a native bar must carry the desktop scoping
-    // — regardless of how its selector is spelled.
+    // — regardless of how its selector is spelled. Two spellings hide a
+    // bar: `scrollbar-width: none` (a declaration, body) and a
+    // `::-webkit-scrollbar` marker (a SELECTOR, not a declaration — the
+    // R3 P3-1 correction). At-rule preludes (`@media …`) are skipped:
+    // the naive block splitter attributes an at-rule's inner rules to
+    // its prelude, which would false-positive on any future media query.
     const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/gs)];
     let barHiding = 0;
     for (const [, selector, body] of rules) {
-      const hidesBar =
-        (body ?? "").includes("scrollbar-width: none") ||
-        (body ?? "").includes("::-webkit-scrollbar");
+      const sel = selector ?? "";
+      if (sel.trimStart().startsWith("@")) continue;
+      const hidesBar = (body ?? "").includes("scrollbar-width: none") || sel.includes("::-webkit-scrollbar");
       if (!hidesBar) continue;
       barHiding += 1;
-      expect(selector ?? "", `bar-hiding rule must be sheet-scoped: ${selector}`).toContain(
+      expect(sel, `bar-hiding rule must be sheet-scoped: ${sel}`).toContain(
         ":not(.hk-is-sheet)",
       );
     }

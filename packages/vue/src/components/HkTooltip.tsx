@@ -1,7 +1,19 @@
-import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType, type SlotsType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
 import "./HkTooltip.scss";
+
+/**
+ * The default-slot payload, handed to every render of the trigger. An
+ * interactive trigger should bind `popupId` onto itself via
+ * aria-describedby while `visible` is true — the focus target is the
+ * trigger element, not this component's wrapper (HkCopyBadge is the
+ * reference consumer).
+ */
+export interface HkTooltipSlotProps {
+  popupId: string;
+  visible: boolean;
+}
 
 let popupSeq = 0;
 
@@ -13,6 +25,9 @@ export default defineComponent({
     delay: { type: Number, default: 300 },
     maxWidth: { type: String, default: undefined },
   },
+  slots: Object as SlotsType<{
+    default?: (props: HkTooltipSlotProps) => unknown;
+  }>,
   setup(props, { slots }) {
     const visible = ref(false);
     // Stable id for the aria-describedby link from the trigger wrapper to

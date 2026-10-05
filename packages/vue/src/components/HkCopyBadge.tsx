@@ -1,7 +1,7 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
 
 import HBadge, { type BadgeVariant } from "./HkBadge";
-import HTooltip from "./HkTooltip";
+import HTooltip, { type HkTooltipSlotProps } from "./HkTooltip";
 import { useI18n } from "../i18n/context";
 import { useClipboardWithToast } from "../runtime/useClipboard";
 import { useToast } from "../runtime/useToast";
@@ -140,7 +140,7 @@ export default defineComponent({
       if (props.disabled) return buildBadge();
       return (
         <HTooltip text={tooltipText.value}>
-          {(tip: { popupId: string; visible: boolean }) =>
+          {(tip?: HkTooltipSlotProps) =>
             buildBadge(tip?.visible ? tip.popupId : undefined)}
         </HTooltip>
       );

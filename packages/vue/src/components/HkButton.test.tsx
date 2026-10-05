@@ -255,3 +255,134 @@ describe("HkButton attr fallthrough (inheritAttrs: false)", () => {
     expect(cls).toContain("extra-class");
   });
 });
+
+describe("HkButton label prop + responsive collapse contract", () => {
+  it("renders the label prop in a .hk-btn-label span and keeps the button textual", () => {
+    const c = mount(h(HkButton, { icon: "gauge", label: "Test all" }));
+    const btn = button(c);
+    const label = c.querySelector(".hk-btn-label");
+    expect(label).not.toBeNull();
+    expect(label!.textContent).toBe("Test all");
+    // icon + label = a text button at wide viewports, never icon-only.
+    expect(btn.className).not.toContain("hk-btn-icon-only");
+    // The label prop is the accessible name unless one is given.
+    expect(btn.getAttribute("aria-label")).toBe("Test all");
+  });
+
+  it("prefers the label prop over the default slot and an explicit ariaLabel over the label", () => {
+    const c = mount(h(HkButton, { label: "From prop" }, () => "From slot"));
+    expect(c.querySelector(".hk-btn-label")!.textContent).toBe("From prop");
+    expect(c.textContent).not.toContain("From slot");
+
+    const named = mount(h(HkButton, { label: "Visible", ariaLabel: "Custom" }));
+    expect(button(named).getAttribute("aria-label")).toBe("Custom");
+  });
+
+  it("emits the collapse modifier class from collapseLabel", () => {
+    const c = mount(h(HkButton, { icon: "gauge", label: "Probe", collapseLabel: "sm" }));
+    expect(button(c).className).toContain("hk-btn-label-collapse-sm");
+  });
+
+  it("suppresses the collapse class with block or shortcut (nothing to collapse into)", () => {
+    const blocked = mount(
+      h(HkButton, { icon: "gauge", label: "Probe", collapseLabel: "sm", block: true }),
+    );
+    expect(button(blocked).className).not.toContain("hk-btn-label-collapse");
+
+    const withShortcut = mount(
+      h(HkButton, { icon: "gauge", label: "Probe", collapseLabel: "sm", shortcut: "Ctrl+B" }),
+    );
+    expect(button(withShortcut).className).not.toContain("hk-btn-label-collapse");
+  });
+
+  it("keeps label-prop buttons out of the icon-only square class", () => {
+    // The narrow-end square is the SCSS media query's job; the class
+    // must not flip at mount time or the wide viewport would square a
+    // labeled button.
+    const c = mount(h(HkButton, { icon: "gauge", label: "Probe", collapseLabel: "sm" }));
+    expect(button(c).className).not.toContain("hk-btn-icon-only");
+  });
+});
+
+// SCSS geometry contract for the responsive collapse (same textual style
+// as the icon-only contract above — happy-dom does not lay out): every
+// collapse breakpoint × size pair must exist, must collapse below the
+// useBreakpoint px scale (sm 640 / md 768 / lg 1024 / xl 1280), and must
+// land on the exact icon-only square width of its size.
+describe("HkButton label-collapse SCSS contract", () => {
+  const scss = readFileSync(join(here, "HkButton.scss"), "utf-8");
+
+  const breakpoints: Array<[string, string]> = [
+    ["sm", "639.98px"],
+    ["md", "767.98px"],
+    ["lg", "1023.98px"],
+    ["xl", "1279.98px"],
+  ];
+  const squares: Array<[string, string]> = [
+    ["xs", "1.375rem"],
+    ["sm", "1.75rem"],
+    ["md", "2.5rem"],
+    ["lg", "2.75rem"],
+  ];
+
+  it("collapses every breakpoint × size pair to the icon-only square", () => {
+    for (const [bp, query] of breakpoints) {
+      for (const [size, square] of squares) {
+        const rule = scss.match(
+          new RegExp(
+            `\\.hk-btn-label-collapse-${bp}\\.hk-btn-${size}\\s*{\\s*@media \\(max-width: ${query}\\) {`,
+          ),
+        )?.[0];
+        expect(rule, `${bp}×${size} collapse rule must exist`).toBeTruthy();
+      }
+    }
+  });
+
+  it("hides the label and lands on the exact square inside each media block", () => {
+    // The per-pair rules @include one shared mixin; the geometry lives in
+    // its definition (the compiled CSS materializes it per media block).
+    const start = scss.indexOf("@mixin hk-btn-collapse-geometry($square) {");
+    expect(start, "collapse mixin must exist").toBeGreaterThan(-1);
+    // Slice to the mixin's closing brace (nested rules make a [^}] scan
+    // stop early, so index from the header to the documented tail line).
+    const end = scss.indexOf("width: $square;", start);
+    const mixin = scss.slice(start, end + "width: $square;".length);
+    expect(mixin).toContain(".hk-btn-label");
+    expect(mixin).toContain("display: none;");
+    expect(mixin).toContain("padding: 0;");
+    expect(mixin).toContain("box-sizing: border-box;");
+    expect(mixin).toContain("width: $square");
+
+    const smBlock = scss.match(
+      /\.hk-btn-label-collapse-sm\.hk-btn-sm\s*{\s*@media \(max-width: 639\.98px\) {([^}]*)}/,
+    )?.[1];
+    expect(smBlock, "sm×sm collapse body must exist").toBeTruthy();
+    expect(smBlock).toContain("@include hk-btn-collapse-geometry(1.75rem)");
+  });
+
+  it("mirrors the useBreakpoint scale breakpoints in order", () => {
+    // Keep the SCSS table honest against the runtime scale document —
+    // the px values appear in ascending breakpoint order.
+    const queries = [...scss.matchAll(/@media \(max-width: (\d+(?:\.\d+)?px)\)/g)].map(
+      (m) => m[1],
+    );
+    expect(queries).toEqual([
+      "639.98px",
+      "639.98px",
+      "639.98px",
+      "639.98px",
+      "767.98px",
+      "767.98px",
+      "767.98px",
+      "767.98px",
+      "1023.98px",
+      "1023.98px",
+      "1023.98px",
+      "1023.98px",
+      "1279.98px",
+      "1279.98px",
+      "1279.98px",
+      "1279.98px",
+    ]);
+  });
+});

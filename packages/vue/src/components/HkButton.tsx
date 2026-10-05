@@ -13,6 +13,14 @@ export type ButtonVariant =
   | "outline";
 export type ButtonSize = "xs" | "sm" | "md" | "lg";
 
+/** Breakpoints below which a `collapseLabel` button hides its label and
+ *  collapses to the icon-only square. Mirrors the runtime useBreakpoint
+ *  scale (sm 640 / md 768 / lg 1024 / xl 1280) — the SCSS side repeats
+ *  the px values because a media query cannot read a TS constant; keep
+ *  the two in sync. "xs" is deliberately absent: collapse-at-xs means
+ *  "always collapsed", which is just the icon prop + label-less button. */
+export type ButtonLabelCollapse = "sm" | "md" | "lg" | "xl";
+
 export default defineComponent({
   name: "HkButton",
   inheritAttrs: false,
@@ -26,6 +34,24 @@ export default defineComponent({
     shortcut: { type: String, default: undefined },
     icon: { type: String, default: undefined },
     suffix: { type: String, default: undefined },
+    /** Plain-text label, rendered in a `.hk-btn-label` span after the
+     *  glyph. Pairs with `collapseLabel`: at wide viewports the button
+     *  reads icon + text; below the chosen breakpoint the label hides
+     *  and the button collapses to the icon-only square. When set, the
+     *  default slot is ignored (one label source per button) and the
+     *  accessible name falls back to this text, so the button keeps its
+     *  name at breakpoints where the visible label is display:none. */
+    label: { type: String, default: undefined },
+    /** Breakpoint below which the label hides and the button collapses
+     *  to the icon-only square (see `ButtonLabelCollapse`). Requires
+     *  `label`; ignored together with `block` (a full-width button has
+     *  nothing to collapse into) and with `shortcut` (the shortcut chip
+     *  is an extra child the square width would visibly clip — the same
+     *  exclusion the icon-only contract applies). */
+    collapseLabel: {
+      type: String as PropType<ButtonLabelCollapse>,
+      default: undefined,
+    },
   },
   emits: {
     click: (_e: MouseEvent) => true,
@@ -40,6 +66,9 @@ export default defineComponent({
       props.block ? "hk-btn-block" : "",
       props.loading ? "hk-btn-loading" : "",
       props.shortcut ? "hk-btn-has-shortcut" : "",
+      props.collapseLabel && props.label && !props.block && !props.shortcut
+        ? `hk-btn-label-collapse-${props.collapseLabel}`
+        : "",
     ]);
 
     return () => {
@@ -51,9 +80,13 @@ export default defineComponent({
       // reactive, so a cached flag would go stale when a parent toggles
       // the label slot without touching the icon props. A shortcut chip
       // is excluded: it renders as an extra flex child the fixed square
-      // width would visibly clip.
+      // width would visibly clip. A `label` prop counts as text (the
+      // responsive collapse handles the narrow end via CSS instead).
       const iconOnly =
-        !slots.default && Boolean(props.icon || props.suffix) && !props.shortcut;
+        !slots.default &&
+        props.label === undefined &&
+        Boolean(props.icon || props.suffix) &&
+        !props.shortcut;
 
       return (
         <button
@@ -62,7 +95,7 @@ export default defineComponent({
           disabled={props.disabled || props.loading}
           class={[buttonClass.value, iconOnly ? "hk-btn-icon-only" : "", attrs.class]}
           style={attrs.style || undefined}
-          aria-label={props.ariaLabel}
+          aria-label={props.ariaLabel ?? props.label}
           aria-busy={props.loading || undefined}
           onClick={(e) => emit("click", e)}
         >
@@ -116,7 +149,11 @@ export default defineComponent({
               <HIcon name={props.icon} size={16} />
             </span>
           ) : null}
-          {slots.default?.()}
+          {props.label !== undefined && props.label !== "" ? (
+            <span class="hk-btn-label">{props.label}</span>
+          ) : (
+            slots.default?.()
+          )}
           {props.suffix ? (
             <span class="hk-btn-suffix">
               <HIcon name={props.suffix} size={16} />

@@ -74,6 +74,21 @@ describe("HkModal mobile sheet spacing contract", () => {
       expect(content).not.toMatch(/max-height:\s*none/);
     });
 
+    // 2026-10-05 mobile report: a tall sheet covered the breadcrumb's band.
+    // The drawer cap has carried !important for exactly this reason (the
+    // inline maxHeight from a `size` prop must lose to the family band —
+    // HkDrawer.sheetfamily pins its side); the modal cap must not be the
+    // weak sibling. Any host style/prop pass writing max-height inline
+    // would silently uncap the sheet and swallow the strip's band.
+    it("beats inline max-heights with !important on both caps", () => {
+      // [^;]+ runs to the declaration's own semicolon, so the assertion
+      // sees whatever sits between the closing paren and it.
+      const vh = content.match(/max-height: calc\(\s*100vh - var\(--hk-sheet-top-inset[^;]+/)?.[0] ?? "";
+      const dvh = content.match(/max-height: calc\(\s*100dvh - var\(--hk-sheet-top-inset[^;]+/)?.[0] ?? "";
+      expect(vh, "plain-vh fallback cap").toContain("!important");
+      expect(dvh, "dvh cap").toContain("!important");
+    });
+
     // 2026-09-21 phone-sheet transition contract (two Xiaomi WebView
     // chest reports the same day): the mobile list carries ONLY the
     // clip-path reveal.

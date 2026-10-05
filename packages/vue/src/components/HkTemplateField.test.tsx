@@ -575,6 +575,47 @@ describe("HkTemplateField editor focus ownership (R1 guards)", () => {
     expect(hosts[0]!.querySelectorAll(".hk-scrollbar-track")).toHaveLength(1);
   });
 
+  it("detaches the scrollbar machinery on close (no live observer leak)", async () => {
+    // R2 M4: the close-path detach is load-bearing — without it the
+    // rows handle's ResizeObserver + scroll listeners stay attached to
+    // a viewport that has left the document until the field unmounts
+    // (~a bounded leak). Counting LIVE observers (not bare disconnect
+    // calls — sibling components have their own ROs) is the precise
+    // signal, matching R2's real-browser instrumentation.
+    const RealRO = globalThis.ResizeObserver;
+    const live = new Set<unknown>();
+    class TrackingRO extends RealRO {
+      constructor(cb: ResizeObserverCallback) {
+        super(cb);
+        live.add(this);
+      }
+      override disconnect(): void {
+        live.delete(this);
+        super.disconnect();
+      }
+    }
+    (globalThis as unknown as Record<string, unknown>).ResizeObserver = TrackingRO;
+    try {
+      const el = mount({ modelValue: "a {{ username }} b" });
+      await nextTick();
+      const base = live.size;
+      const edit = editable(el);
+      edit.querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+      await nextTick();
+      expect(live.size, "scrollbar attached an observer").toBeGreaterThan(base);
+
+      document.body
+        .querySelector<HTMLElement>(".hk-popover-panel")!
+        .dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      await nextTick();
+      await new Promise((r) => setTimeout(r, 30));
+      await nextTick();
+      expect(live.size, "close detached every observer it attached").toBe(base);
+    } finally {
+      (globalThis as unknown as Record<string, unknown>).ResizeObserver = RealRO;
+    }
+  });
+
   it("attaches exactly one overlay scrollbar across repeated opens", async () => {
     const el = mount({ modelValue: "a {{ username }} b" });
     await nextTick();

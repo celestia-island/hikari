@@ -48,14 +48,29 @@ describe("HkTemplateField stylesheet contract", () => {
     expect(css).toMatch(
       /\.hk-popover-panel:not\(\.hk-is-sheet\)[^{]*\.hk-tpl-editor-rows[^{]*\{[^}]*scrollbar-width:\s*none/s,
     );
+    // The WebKit spelling gets the SAME desktop scoping (R2 M8c: the
+    // unscoped form of this rule survived every assertion).
     expect(css).toMatch(
-      /hk-tpl-editor-rows[^{]*::-webkit-scrollbar[^{]*\{[^}]*display:\s*none/s,
+      /\.hk-popover-panel:not\(\.hk-is-sheet\)[^{]*hk-tpl-editor-rows[^{]*::-webkit-scrollbar[^{]*\{[^}]*display:\s*none/s,
     );
-    // No UNscoped rows rule may hide the native bar.
-    const unscoped = /(^|})\s*\.hk-tpl-editor-rows\s*\{([^}]*)\}/gs;
-    for (const m of css.matchAll(unscoped)) {
-      expect(m[2] ?? "").not.toContain("scrollbar-width");
+    // EVERY rule that hides a native bar must carry the desktop scoping
+    // — regardless of how its selector is spelled.
+    const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/gs)];
+    let barHiding = 0;
+    for (const [, selector, body] of rules) {
+      const hidesBar =
+        (body ?? "").includes("scrollbar-width: none") ||
+        (body ?? "").includes("::-webkit-scrollbar");
+      if (!hidesBar) continue;
+      barHiding += 1;
+      expect(selector ?? "", `bar-hiding rule must be sheet-scoped: ${selector}`).toContain(
+        ":not(.hk-is-sheet)",
+      );
     }
+    // Extraction sanity (verification-loop rule: a 0-hit scan is a
+    // pattern bug until proven otherwise) — the sheet does hide the bar
+    // somewhere, so the loop above must have inspected at least one rule.
+    expect(barHiding).toBeGreaterThan(0);
   });
 
   it("has no dead template selector in the sheet", () => {
@@ -70,6 +85,11 @@ describe("HkTemplateField stylesheet contract", () => {
     for (const sel of selectors) {
       expect(sources.includes(sel), `no source renders ${sel}`).toBe(true);
     }
+  });
+
+  it("keeps group headings free of text-transform (the host owns casing)", () => {
+    // R2 M13: re-adding `text-transform: uppercase` used to stay green.
+    expect(css).not.toMatch(/\.hk-tpl-group[^{]*\{[^}]*text-transform/s);
   });
 
   it("gives the scroll host a positioning context for the overlay rails", () => {

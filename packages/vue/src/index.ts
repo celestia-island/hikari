@@ -97,6 +97,8 @@ export { default as HTable } from "./components/HkTable";
 export { default as HTabs } from "./components/HkTabs";
 export { default as HTag } from "./components/HkTag";
 export { HkTagInput as HTagInput, type HkTagOption } from "./components/HkTagInput";
+export { default as HTemplateField } from "./components/HkTemplateField";
+export { default as HTemplateText } from "./components/HkTemplateText";
 export { default as HTextarea } from "./components/HkTextarea";
 export { default as HFileField } from "./components/HkFileField";
 export { default as HFileBrowserDialog } from "./components/HkFileBrowserDialog";
@@ -792,6 +794,16 @@ export { type HkDockBarSurface as HkDockBarSurface } from "./components/HkDockBa
 export { HkOtpInput as HkOtpInput } from "./components/HkOtpInput";
 export { HkLocalizedInput as HkLocalizedInput } from "./components/HkLocalizedInput";
 export { HkTagInput as HkTagInput } from "./components/HkTagInput";
+export { default as HkTemplateField } from "./components/HkTemplateField";
+export { default as HkTemplateText } from "./components/HkTemplateText";
+export {
+  formatTokenDisplay,
+  parseTemplate,
+  serializeTemplate,
+  templateTokenIndex,
+  type HkTemplateSegment,
+  type HkTemplateTokenDef,
+} from "./components/templateGrammar";
 export { HkErrorLanding as HkErrorLanding } from "./components/HkErrorLanding";
 export { HkErrorReportingOverlay as HkErrorReportingOverlay } from "./errorReporting";
 export { HkAdminShell as HkAdminShell } from "./components/HkAdminShell";

@@ -462,6 +462,7 @@ export const HkTemplateField = defineComponent({
       const target = chipEls().indexOf(chip);
       let seen = -1;
       let caret = 0;
+      let caretAfterChip: number | null = null;
       const next = segments.map((seg) => {
         if (seg.kind === "text") {
           caret += seg.text.length;
@@ -471,14 +472,24 @@ export const HkTemplateField = defineComponent({
         if (seen === target) {
           const raw = formatTokenDisplay(name);
           caret += raw.length;
+          // Editing resumes right AFTER the swapped chip — the running
+          // total keeps growing past this point, so freeze the target
+          // here (the R3 finding: a caret accumulated over the whole
+          // value put the next typed char at the end).
+          caretAfterChip = caret;
           return { kind: "token" as const, token: name, raw };
         }
         caret += seg.raw.length;
         return seg;
       });
       const value = serializeTemplate(next);
+      // The apply path re-renders (which detaches the chip the reclaim
+      // closure would consult) and places the caret itself — suppress
+      // the whole reclaim machinery or it fights the setValue caret
+      // with a stale-chip offset (real-browser R3 finding).
+      editorHoldsFocus.value = false;
       closeChipEditor();
-      setValue(value, caret);
+      setValue(value, caretAfterChip ?? caret);
       editRef.value?.focus();
     }
 
@@ -489,11 +500,17 @@ export const HkTemplateField = defineComponent({
       const target = chipEls().indexOf(chip);
       let seen = -1;
       let caret = 0;
+      let caretAtChip: number | null = null;
       const next: HkTemplateSegment[] = [];
       for (const seg of segments) {
         if (seg.kind === "token") {
           seen += 1;
-          if (seen === target) continue; // dropped
+          if (seen === target) {
+            // Editing resumes WHERE the chip was — freeze the offset
+            // before the dropped raw (see applyChipToken's note).
+            caretAtChip = caret;
+            continue; // dropped
+          }
           caret += seg.raw.length;
           next.push(seg);
         } else {
@@ -502,8 +519,11 @@ export const HkTemplateField = defineComponent({
         }
       }
       const value = serializeTemplate(next);
+      // Same as applyChipToken: the remove path owns its caret; the
+      // reclaim machinery must not run against the removed chip.
+      editorHoldsFocus.value = false;
       closeChipEditor();
-      setValue(value, caret);
+      setValue(value, caretAtChip ?? caret);
       editRef.value?.focus();
     }
 
@@ -525,7 +545,12 @@ export const HkTemplateField = defineComponent({
         const reclaim = () => {
           if (!reclaimable()) return;
           editRef.value?.focus();
-          if (editorChip.value) applyCaretOffset(offsetAfterChip(editorChip.value));
+          // The chip may have been re-rendered away by the time this
+          // runs (late timers) — a detached reference must not steer
+          // the caret (offsetAfterChip would return the full length).
+          if (editorChip.value?.isConnected) {
+            applyCaretOffset(offsetAfterChip(editorChip.value));
+          }
         };
         // Return focus ONLY when it did not land on something else by
         // user intent: an outside-click close that focused another

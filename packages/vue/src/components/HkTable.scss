@@ -192,23 +192,31 @@
   }
 }
 
-/* The row being dragged lifts in place (house pattern: HkTagInput's drag
-   lift — no floating ghost): dimmed, primary-tinted edge. A transform on
-   a <tr> is unreliable across engines, so the lift is paint-only. */
+/* The pressed row becomes the PLACEHOLDER: the same element, so exactly
+   the size the strip laid out, dimmed and primary-tinted where it sits
+   (house pattern: HkDraggableList's source row). A <tr> cannot round a
+   ring — border-collapse draws every box-shadow square to the row grid —
+   so the whole paint is clipped to a rounded inset instead: the tint and
+   its edge follow the card radius the table sits in (the "selected border
+   is square" fix — the roundness now lives in the clip, not the shadow). */
 .hk-table-draggable .hk-table-row[data-dragging] {
-  opacity: 0.45;
+  opacity: 0.4;
   background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
   box-shadow: inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
+  clip-path: inset(0 round var(--radius-md, 8px));
 }
 
-/* Insertion cue: the slot the pointer resolves to paints a 2px line on
-   the edge the row would land across. */
-.hk-table-draggable .hk-table-row[data-drop="before"] {
-  box-shadow: inset 0 2px 0 0 var(--hi-color-primary, #7aa2f7);
-}
-
-.hk-table-draggable .hk-table-row[data-drop="after"] {
-  box-shadow: inset 0 -2px 0 0 var(--hi-color-primary, #7aa2f7);
+/* Arrangement shifts (the placeholder onto the resolved slot, neighbours
+   gliding one slot across) and the placeholder's un-dim on release glide;
+   they are armed only while a gesture owns the strip (`data-dragging` on
+   the table) or while a held drop waits for the consumer's rows
+   (`data-shift-held`) — so the forced stale-transform clear at a NEW
+   drag's measure never glides, and idle rows never carry a transition. */
+.hk-table-draggable[data-dragging] .hk-table-row,
+.hk-table-draggable[data-shift-held] .hk-table-row {
+  transition:
+    transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Text under a live drag must not select (the press starts on the grip,
@@ -218,8 +226,56 @@
   -webkit-user-select: none;
 }
 
-/* Reduced motion: the lift is paint-only already (no transform to snap);
-   the hover/press fades stay (house convention: HkDraggableList.scss). */
+/* The lifted row the pointer carries: a detached, semi-transparent clone
+   of the pressed row (house pattern: HkDraggableList's ghost), appended
+   to <body> and positioned via the inline translate3d the tsx writes on
+   every pointer move — no class transform could win that cascade. It is
+   a plain positioned box, so THIS is where the lift gets the rounded
+   corners and the elevation shadow the <tr> placeholder cannot draw. */
+.hk-table-drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  opacity: 0.88;
+  border-radius: var(--radius-md, 8px);
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 28%),
+    0 2px 6px rgb(0 0 0 / 18%),
+    inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
+  background: var(--hi-color-bg-elevated, #161b22);
+  overflow: hidden;
+  pointer-events: none;
+  /* Drag ghost: above page chrome (--z-sidebar 900) but below every
+     popup band (overlay 1000 < dropdown 2000 < tooltip 3000 < toast 4000)
+     so a drag never buries toasts or open panels. */
+  z-index: var(--hk-z-drag, 950);
+  will-change: transform;
+  transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &[data-fading] {
+    opacity: 0;
+  }
+
+  > .hk-table {
+    margin: 0;
+  }
+}
+
+/* Reduced motion: the arrangement glides snap instead of tweening, and
+   the ghost skips its fade (the row follows the pointer 1:1 — direct
+   manipulation, not autonomous motion — so IT is left alone; house
+   convention: HkDraggableList.scss / HkAffixPicker.scss guards). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-table-draggable[data-dragging] .hk-table-row,
+  .hk-table-draggable[data-shift-held] .hk-table-row {
+    transition: opacity 150ms ease;
+  }
+
+  .hk-table-drag-ghost {
+    transition: none;
+  }
+}
 
 /* Alignment helpers (start/end so aligned columns mirror in RTL; the
    tsx keeps emitting the hk-text-* names) */

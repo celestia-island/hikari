@@ -321,13 +321,19 @@ export default defineComponent({
 
     /** Snapshot the pressed row BEFORE the drag paint lands on it (this
      *  runs in the pre-render watcher): the ghost is the row the user
-     *  grabbed, not the dimmed placeholder it is about to become. */
+     *  grabbed, not the dimmed placeholder it is about to become. The
+     *  clone must not carry the row's interactive chrome — its grip keeps
+     *  `tabindex`/`role` in the snapshot HTML, and a second tabbable copy
+     *  of every row would be a keyboard trap — so the attributes come off
+     *  and the ghost root is hidden from the accessibility tree. */
     function captureGhost(): void {
       const row = liveRowEls()[rowDrag.dragFrom.value];
       ghostHTML = row
         ? row.outerHTML
             .replace(/\sdata-dragging="[^"]*"/g, "")
             .replace(/\sdata-drop="[^"]*"/g, "")
+            .replace(/\stabindex="[^"]*"/g, "")
+            .replace(/\srole="button"/g, "")
         : "";
       const rect = row?.getBoundingClientRect();
       ghostStartTop = rect?.top ?? 0;
@@ -370,6 +376,7 @@ export default defineComponent({
       node.style.width = `${m.width / zb}px`;
       moveGhostTo(node, pressClientY);
       node.style.pointerEvents = "none";
+      node.setAttribute("aria-hidden", "true");
       document.body.appendChild(node);
       ghostNode = node;
     }
@@ -418,9 +425,20 @@ export default defineComponent({
       ghostFading = null;
     }
 
+    /** The beat after a cancel / release-on-origin: the transforms come
+     *  off in the same flush that removes `data-dragging`, and a CSS
+     *  transition takes the AFTER-change style — with the arming attribute
+     *  gone the return would snap. `data-releasing` keeps the transitions
+     *  armed for exactly one shift window so the glide is real. */
+    const releasing = ref(false);
+    let releaseTimer: CronHandle | null = null;
+
     watch(() => rowDrag.dragging.value, (active) => {
       if (active) {
         arrangementHeld.value = false;
+        releaseTimer?.disconnect();
+        releaseTimer = null;
+        releasing.value = false;
         arrangement.value = null;
         measureStrip();
         captureGhost();
@@ -438,8 +456,17 @@ export default defineComponent({
         window.removeEventListener("pointermove", onDragPointerMove);
         if (!arrangementHeld.value) {
           // Cancel / release on the origin: glide the arrangement home.
+          const moved = arrangement.value != null && arrangement.value.from !== arrangement.value.slot;
           arrangement.value = null;
-          anim.run();
+          if (moved) {
+            releasing.value = true;
+            anim.run();
+            releaseTimer?.disconnect();
+            releaseTimer = scheduleCronAfter(() => {
+              releaseTimer = null;
+              releasing.value = false;
+            }, DRAG_SHIFT_MS);
+          }
         }
         fadeGhost();
       }
@@ -451,7 +478,9 @@ export default defineComponent({
       const a = arrangement.value;
       if (a && a.from === from && a.slot === slot) return;
       arrangement.value = { from, slot };
-      anim.run();
+      // A slot equal to the origin paints no shift — reporting motion for
+      // nothing would only tell the bus a lie.
+      if (from !== slot) anim.run();
     });
 
     watch(() => props.rows, () => {
@@ -462,14 +491,23 @@ export default defineComponent({
       // NOTE the contract: reference replacement. A consumer mutating the
       // array in place must emit a replacement (or re-key) for the hold to
       // lift — the house consumers all do.
-      if (arrangementHeld.value) {
-        arrangementHeld.value = false;
+      arrangementHeld.value = false;
+      if (rowDrag.dragging.value) {
+        // A strip replaced UNDER a live drag: the measurement is stale
+        // (tops were read at press time) and the engine will resolve
+        // against the NEW elements — re-measure the clean strip so the
+        // paint follows, and let the shift re-arm on the next resolution.
         arrangement.value = null;
+        measureStrip();
+        return;
       }
+      arrangement.value = null;
     });
 
     onBeforeUnmount(() => {
       window.removeEventListener("pointermove", onDragPointerMove);
+      releaseTimer?.disconnect();
+      releaseTimer = null;
       detachGhost();
     });
 
@@ -532,10 +570,14 @@ export default defineComponent({
     /** Drag-scoped switches the stylesheet reads: `data-dragging` arms the
      *  shift transitions for as long as a gesture owns the strip;
      *  `data-shift-held` keeps them armed after a drop while the frozen
-     *  arrangement waits for `rows` to carry it. */
+     *  arrangement waits for `rows` to carry it; `data-releasing` arms
+     *  them for the one beat a cancelled arrangement needs to glide home
+     *  (the arming attribute must OUTLIVE the transform removal, or the
+     *  after-change style snaps). */
     const dragScope = computed(() => ({
       "data-dragging": rowDrag.dragging.value ? "" : undefined,
       "data-shift-held": arrangementHeld.value ? "" : undefined,
+      "data-releasing": releasing.value ? "" : undefined,
     }));
 
     const totalCols = computed(
@@ -633,13 +675,20 @@ export default defineComponent({
               sortedRows.value.map((row, index) => {
                 const rowKey = getRowKey(row, index);
                 // The FLIP shift this row rides under the live (or frozen)
-                // arrangement — 0 for rows the arrangement leaves put.
+                // arrangement — 0 for rows the arrangement leaves put. It
+                // travels to the CELLS as a custom property, not as a row
+                // transform: `<tr>` transforms are unreliable across
+                // engines (the predecessor lift avoided them for exactly
+                // this), while a <td> is a plain box everywhere — and a
+                // custom property is inert paint-wise, so the row element
+                // only NAMES the shift and the stylesheet moves the paint.
                 const shiftPx = rowShift(index);
                 return (
                   <tr
                     key={rowKey}
                     class="hk-table-row"
-                    style={shiftPx ? { transform: `translateY(${shiftPx}px)` } : undefined}
+                    style={shiftPx ? { "--hk-drag-shift": `${shiftPx}px` } : undefined}
+                    data-shift={shiftPx ? "" : undefined}
                     data-dragging={rowDrag.dragging.value && rowDrag.dragFrom.value === index ? "" : undefined}
                   >
                     {props.draggable && (

@@ -194,29 +194,60 @@
 
 /* The pressed row becomes the PLACEHOLDER: the same element, so exactly
    the size the strip laid out, dimmed and primary-tinted where it sits
-   (house pattern: HkDraggableList's source row). A <tr> cannot round a
-   ring — border-collapse draws every box-shadow square to the row grid —
-   so the whole paint is clipped to a rounded inset instead: the tint and
-   its edge follow the card radius the table sits in (the "selected border
-   is square" fix — the roundness now lives in the clip, not the shadow). */
+   (house pattern: HkDraggableList's source row). The paint lives on the
+   CELLS, not the <tr>: a row's cells are plain boxes in every engine,
+   while row-level decoration (a clip-path rounding a box-shadow ring)
+   rides the engine's table paint pass and is exactly the kind of <tr>
+   styling the predecessor's own warning ruled unreliable. The tint rounds
+   on the end cells' radii — the "selected border is square" fix, drawn
+   where rounding is guaranteed. */
 .hk-table-draggable .hk-table-row[data-dragging] {
   opacity: 0.4;
+}
+
+.hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell {
   background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
-  box-shadow: inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
-  clip-path: inset(0 round var(--radius-md, 8px));
+}
+
+.hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell:first-child {
+  border-top-left-radius: var(--radius-md, 8px);
+  border-bottom-left-radius: var(--radius-md, 8px);
+}
+
+.hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell:last-child {
+  border-top-right-radius: var(--radius-md, 8px);
+  border-bottom-right-radius: var(--radius-md, 8px);
+}
+
+/* The FLIP shift: the row NAMES the displacement (a custom property is
+   inert paint-wise) and its cells carry it — a <td> is a plain box, so
+   the transform is engine-proof where a <tr> transform is not (the
+   predecessor's own warning). Rows the arrangement leaves put carry no
+   [data-shift] and no property. */
+.hk-table-draggable[data-dragging] .hk-table-row[data-shift] > .hk-table-cell,
+.hk-table-draggable[data-shift-held] .hk-table-row[data-shift] > .hk-table-cell,
+.hk-table-draggable[data-releasing] .hk-table-row[data-shift] > .hk-table-cell {
+  transform: translateY(var(--hk-drag-shift, 0px));
 }
 
 /* Arrangement shifts (the placeholder onto the resolved slot, neighbours
-   gliding one slot across) and the placeholder's un-dim on release glide;
-   they are armed only while a gesture owns the strip (`data-dragging` on
-   the table) or while a held drop waits for the consumer's rows
-   (`data-shift-held`) — so the forced stale-transform clear at a NEW
-   drag's measure never glides, and idle rows never carry a transition. */
+   gliding one slot across), the placeholder's un-dim on release and the
+   cancelled arrangement's return glide transition; they are armed only
+   while a gesture owns the strip (`data-dragging`), while a held drop
+   waits for the consumer's rows (`data-shift-held`), or for the one beat
+   a release needs to glide home (`data-releasing` — the arming attribute
+   must outlive the transform removal, since a CSS transition reads the
+   after-change style) — so the forced stale-transform clear at a NEW
+   drag's measure never glides, and idle cells never carry a transition. */
+.hk-table-draggable[data-dragging] .hk-table-row > .hk-table-cell,
+.hk-table-draggable[data-shift-held] .hk-table-row > .hk-table-cell,
+.hk-table-draggable[data-releasing] .hk-table-row > .hk-table-cell {
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .hk-table-draggable[data-dragging] .hk-table-row,
-.hk-table-draggable[data-shift-held] .hk-table-row {
-  transition:
-    transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+.hk-table-draggable[data-releasing] .hk-table-row {
+  transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Text under a live drag must not select (the press starts on the grip,
@@ -267,8 +298,14 @@
    manipulation, not autonomous motion — so IT is left alone; house
    convention: HkDraggableList.scss / HkAffixPicker.scss guards). */
 @media (prefers-reduced-motion: reduce) {
+  .hk-table-draggable[data-dragging] .hk-table-row > .hk-table-cell,
+  .hk-table-draggable[data-shift-held] .hk-table-row > .hk-table-cell,
+  .hk-table-draggable[data-releasing] .hk-table-row > .hk-table-cell {
+    transition: none;
+  }
+
   .hk-table-draggable[data-dragging] .hk-table-row,
-  .hk-table-draggable[data-shift-held] .hk-table-row {
+  .hk-table-draggable[data-releasing] .hk-table-row {
     transition: opacity 150ms ease;
   }
 

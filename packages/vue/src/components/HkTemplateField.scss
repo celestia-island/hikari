@@ -165,7 +165,11 @@
 // aria-label; the visible heading text is the inner label band (hidden
 // from the a11y tree — the wrapper already announced the name).
 .hk-tpl-group {
-  display: block;
+  // Flex like the sibling rows list, so the parent's row gap keeps
+  // applying INSIDE the wrapper (a bare block would drop it to 0).
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .hk-tpl-group-label {

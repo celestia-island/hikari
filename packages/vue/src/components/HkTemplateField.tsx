@@ -881,11 +881,6 @@ export const HkTemplateField = defineComponent({
       };
     }
 
-    /** Rows with non-interactive group headings: a heading lands
-     * wherever the (filtered) vocabulary's group changes, so a family
-     * whose every member was filtered out never shows a stray header.
-     * Vocabulary order is the contract — consumers list each group's
-     * tokens contiguously. */
     /** Grouped rows as labeled WRAPPERS, not sibling headings: a
      *  `role="group"` box carrying the group's name in `aria-label` is
      *  the pattern screen readers announce on entry (a bare

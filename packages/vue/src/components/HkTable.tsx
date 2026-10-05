@@ -295,7 +295,13 @@ export default defineComponent({
       // A drag starting while a HELD arrangement is still painted would
       // measure the shifted paint — force the stale transforms off first
       // (the render will not re-apply them: the arrangement was cleared).
-      for (const row of rows) row.style.transform = "";
+      // removeProperty rather than an empty write: an empty transform
+      // value would leave a `style=""` husk on rows that never carried
+      // anything else.
+      for (const row of rows) {
+        row.style.removeProperty("transform");
+        if (!row.getAttribute("style")) row.removeAttribute("style");
+      }
       const zoom = ancestorZoom(rows[0]!);
       const tops: number[] = [];
       rows.forEach((row) => {

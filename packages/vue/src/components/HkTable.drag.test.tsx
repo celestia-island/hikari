@@ -463,24 +463,39 @@ describe("HkTable drag-to-reorder", () => {
       (t.container.querySelector("tbody .hk-table-row")?.getAttribute("style") ?? "").replace(/\s+/g, ""),
     ).toContain("--hk-drag-shift");
     // The refresh lands mid-drag (a websocket push, a concurrent editor):
-    // two rows now, different order. The stale measurement must not paint
-    // shifts for rows that no longer exist / no longer sit where they did.
+    // the strip re-orders (the engine keeps the drag on the pressed
+    // ELEMENT, which now sits at display index 1) and the replacement
+    // must re-measure — the paint drops until the next resolution.
     await t.setOrder([t.rows.value![2]!, t.rows.value![0]!, t.rows.value![1]!]);
-    // The gesture is over from the engine's point of view once the pressed
-    // element is gone from the strip? No — Row-0 is still IN the strip, so
-    // the gesture survives; the paint must be CLEAN until the next move
-    // re-resolves against the fresh measurement.
-    const styles = [...t.container.querySelectorAll("tbody .hk-table-row")].map(
-      (tr) => tr.getAttribute("style"),
-    );
-    // No shift may name a displacement measured against the OLD strip.
-    for (const style of styles) {
-      if (style?.includes("--hk-drag-shift")) {
-        expect(style).not.toContain("-40px");
-      }
-    }
-    window.dispatchEvent(pointer("pointerup", 18, 70));
+    // A SECOND push relayouts the strip UNEVEN (0 / 100 / 200): a shift
+    // computed against the stale 40px tops would read ±80px where the
+    // fresh measurement must read ±100px — the assertion separates
+    // re-measured from stale.
+    const trs = t.container.querySelectorAll("tbody .hk-table-row");
+    const stripTops = [0, 100, 200];
+    const stripHeights = [100, 100, 20];
+    trs.forEach((tr, i) => {
+      const start = stripTops[i]!;
+      const box = { left: 0, right: 300, top: start, bottom: start + stripHeights[i]!, width: 300, height: stripHeights[i]!, x: 0, y: start };
+      Object.defineProperty(tr, "getBoundingClientRect", { configurable: true, value: () => box as DOMRect });
+    });
+    t.rows.value = t.rows.value!.slice();
     await nextTick();
+    // Gliding the pointer into the last row's band re-resolves the slot
+    // against the NEW strip: insert at 2 → the pressed row takes row 2's
+    // spot and row 2 takes the vacated one.
+    window.dispatchEvent(pointer("pointermove", 18, 215));
+    await nextTick();
+    const styles = [...trs].map((tr) => (tr.getAttribute("style") ?? "").replace(/\s+/g, ""));
+    expect(styles[1]).toContain("--hk-drag-shift:100px");
+    expect(styles[2]).toContain("--hk-drag-shift:-100px");
+    // Row 0 left put: no shift named. (happy-dom renders Vue's cleared
+    // style binding as an empty style="" husk; real engines drop it.)
+    expect(styles[0]).not.toContain("--hk-drag-shift");
+    window.dispatchEvent(pointer("pointerup", 18, 215));
+    await nextTick();
+    // The gesture ends with the drop against the replaced strip.
+    expect(t.emitted).toEqual([[1, 2]]);
   });
 
   it("the ghost is hidden from the accessibility tree and carries no focusable chrome", async () => {

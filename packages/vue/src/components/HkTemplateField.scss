@@ -161,6 +161,17 @@
   padding: var(--space-4, 4px);
 }
 
+.hk-tpl-group {
+  padding: var(--space-6, 6px) var(--space-8, 8px) var(--space-2, 2px);
+  font-size: var(--text-2xs, 0.625rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  // No text-transform: labels arrive from the host (usually i18n
+  // strings) and the translator owns the casing.
+  color: var(--hi-color-muted);
+  user-select: none;
+}
+
 .hk-tpl-row {
   display: flex;
   flex-direction: column;
@@ -225,11 +236,23 @@
 
 // ONE scrollbar per window (family contract): the mobile sheet's panel
 // already scrolls the whole form through its own overlay scrollbar, so
-// the rows cap exists ONLY in the desktop popover (which sizes to
-// content and otherwise has no scroll region at all).
+// the rows viewport exists ONLY in the desktop popover (which sizes to
+// content and otherwise has no scroll region at all). The viewport
+// keeps native overflow MECHANICS but hides the native bar — the shared
+// overlay scrollbar (attachOverlayScrollbars) draws the house chrome
+// onto the dedicated host wrapper, which wraps exactly this viewport.
+.hk-tpl-editor-scroll {
+  position: relative;
+}
+
 .hk-popover-panel:not(.hk-is-sheet) .hk-tpl-editor-rows {
   max-height: min(16rem, 40dvh);
   overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-tpl-editor-footer {

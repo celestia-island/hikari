@@ -2,9 +2,10 @@ import {
   computed,
   defineComponent,
   nextTick,
-  useId,
+  onBeforeUnmount,
   onMounted,
   ref,
+  useId,
   watch,
   type PropType,
 } from "vue";
@@ -12,6 +13,8 @@ import { Trash2 } from "lucide-vue-next";
 
 import HButton from "./HkButton";
 import HkInput from "./HkInput";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import HkMenu from "./HkMenu";
 import HPopover from "./HkPopover";
 import { useI18n } from "../i18n/context";
@@ -84,6 +87,16 @@ export const HkTemplateField = defineComponent({
     /** Submit intent on Enter (when no suggestion row is active) —
      * same contract as HkInput. */
     submitOnEnter: { type: Function, default: undefined },
+    /** Maps a token's `group` to the heading label shown over its run
+     *  of rows (both the vocabulary panel and the chip editor). Passed
+     *  through verbatim when omitted — groups are consumer-defined
+     *  technical keys, so the library has no opinion on their wording.
+     *
+     *  Partially-grouped vocabularies: a token WITHOUT a `group` is not
+     *  a section of its own — it renders under the previous heading's
+     *  band (the heading marks where a group STARTS, not where it ends).
+     *  Give every token a group when the sections must be airtight. */
+    groupLabel: { type: Function as PropType<(group: string) => string>, default: undefined },
   },
   emits: {
     "update:modelValue": (_v: string) => true,
@@ -419,6 +432,41 @@ export const HkTemplateField = defineComponent({
 
     const editorRows = computed(() => filterTokens(props.tokens, editorQuery.value));
 
+    // The rows list scrolls through the SHARED overlay scrollbar
+    // (house chrome — a native overflow bar inside a hikari popup is
+    // the family violation this replaces). The scroll host wraps
+    // EXACTLY the scrolling rows (rails must not span the form's other
+    // bands); sheet mode attaches nothing — the docked panel owns the
+    // window's one scrollbar there.
+    const { isMobile } = useBreakpoint();
+    const editorRowsHostRef = ref<HTMLElement | null>(null);
+    const editorRowsRef = ref<HTMLElement | null>(null);
+    let editorRowsScrollbar: OverlayScrollbarHandle | null = null;
+
+    function syncEditorRowsScrollbar(): void {
+      editorRowsScrollbar?.update();
+    }
+
+    // The shared scrollbar observes the VIEWPORT box; a vocabulary edit
+    // that changes the rows' content height without resizing the viewport
+    // would leave the thumb stale until the next scroll — refresh it when
+    // the (filtered) rows change.
+    watch(editorRows, () => { nextTick(syncEditorRowsScrollbar); });
+
+    function detachEditorRowsScrollbar(): void {
+      editorRowsScrollbar?.detach();
+      editorRowsScrollbar = null;
+    }
+
+    function attachEditorRowsScrollbar(): void {
+      detachEditorRowsScrollbar();
+      if (isMobile.value) return; // sheet: the panel owns the scrollbar
+      const viewport = editorRowsRef.value;
+      const host = editorRowsHostRef.value;
+      if (!viewport || !host) return;
+      editorRowsScrollbar = attachOverlayScrollbars(viewport, { axis: "vertical", host });
+    }
+
     const editorDef = computed(() => tokenIndex.value.get(editorToken.value));
 
     function openChipEditor(chip: HTMLElement): void {
@@ -428,6 +476,10 @@ export const HkTemplateField = defineComponent({
       // panel's outside-click shield does not fire) trades it for the
       // editor instead of stacking both.
       closeSuggestions();
+      // A reopen cancels any reclaim still owed by the previous close's
+      // leave window — firing it now would steal focus from the freshly
+      // opened editor's search input.
+      pendingEditorReclaim.value = false;
       editorChip.value = chip;
       editorToken.value = chip.dataset.token ?? "";
       editorQuery.value = "";
@@ -437,6 +489,13 @@ export const HkTemplateField = defineComponent({
       // popover and the mobile sheet.
       nextTick(() => {
         editorSearchWrap.value?.querySelector("input")?.focus();
+        // Re-arm the focus latch explicitly: a reopen INSIDE the previous
+        // close's leave window focuses an input that (in programmatic
+        // flows) never blurred, so no focusin fires and the latch would
+        // stay false — the next close would then skip its reclaim and
+        // orphan focus on <body> (R1 S2 finding).
+        editorHoldsFocus.value = true;
+        attachEditorRowsScrollbar();
       });
     }
 
@@ -527,44 +586,49 @@ export const HkTemplateField = defineComponent({
       editRef.value?.focus();
     }
 
+    /** True when focus is unowned (body/nowhere) or already back on
+     * this field — the only states the editor close may reclaim it
+     * from. An outside-click close that focused another control must
+     * not have focus yanked back 3ms later (real-browser R1 finding). */
+    function editorFocusReclaimable(): boolean {
+      const active = document.activeElement;
+      return (
+        !active ||
+        active === document.body ||
+        (editRef.value ? active === editRef.value || editRef.value.contains(active) : false)
+      );
+    }
+
+    function reclaimEditorFocus(): void {
+      if (!editorFocusReclaimable()) return;
+      editRef.value?.focus();
+      // The chip may have been re-rendered away by the time this runs
+      // (a late reclaim) — a detached reference must not steer the
+      // caret (offsetAfterChip would return the full length).
+      if (editorChip.value?.isConnected) {
+        applyCaretOffset(offsetAfterChip(editorChip.value));
+      }
+    }
+
+    /** Set when a closing chip editor may still owe the field its
+     * focus back (through the leave window); cleared by the popover's
+     * settled `closed` edge or the next open. */
+    const pendingEditorReclaim = ref(false);
+
     function closeChipEditor(): void {
       if (!editorOpen.value) return;
       editorOpen.value = false;
+      detachEditorRowsScrollbar();
       if (editorHoldsFocus.value) {
         editorHoldsFocus.value = false;
-        /** True when focus is unowned (body/nowhere) or already back
-         * on this field — the only states we may reclaim it from. */
-        const reclaimable = () => {
-          const active = document.activeElement;
-          return (
-            !active ||
-            active === document.body ||
-            (editRef.value ? active === editRef.value || editRef.value.contains(active) : false)
-          );
-        };
-        const reclaim = () => {
-          if (!reclaimable()) return;
-          editRef.value?.focus();
-          // The chip may have been re-rendered away by the time this
-          // runs (late timers) — a detached reference must not steer
-          // the caret (offsetAfterChip would return the full length).
-          if (editorChip.value?.isConnected) {
-            applyCaretOffset(offsetAfterChip(editorChip.value));
-          }
-        };
-        // Return focus ONLY when it did not land on something else by
-        // user intent: an outside-click close that focused another
-        // control must not yank focus back 3ms later (real-browser R1
-        // finding — focus@t → blur@t+3ms → activeElement ended up on
-        // this field, not the clicked input).
-        nextTick(reclaim);
-        // And once more past the popover's leave window: an Escape
-        // close leaves the search input holding focus THROUGH the
-        // closing animation, so the probe above correctly declines —
-        // but when the panel finishes unmounting, focus falls to
-        // <body> and nobody reclaims it. Re-run the same ownership
-        // probe after the leave budget (R2 finding).
-        setTimeout(reclaim, 400);
+        nextTick(reclaimEditorFocus);
+        // An Escape close keeps the search input holding focus THROUGH
+        // the closing animation, so the probe above correctly declines;
+        // when the panel finishes unmounting, focus falls to <body>
+        // with nobody to reclaim it. The popover's `closed` event (the
+        // settled leave edge) re-runs the same ownership probe exactly
+        // then — no timer race with a long or short leave animation.
+        pendingEditorReclaim.value = true;
       }
     }
 
@@ -580,6 +644,10 @@ export const HkTemplateField = defineComponent({
 
     onMounted(() => {
       renderValue(props.modelValue);
+    });
+
+    onBeforeUnmount(() => {
+      detachEditorRowsScrollbar();
     });
 
     // ── Editable event wiring ───────────────────────────────────────
@@ -807,6 +875,37 @@ export const HkTemplateField = defineComponent({
       };
     }
 
+    /** Rows with non-interactive group headings: a heading lands
+     * wherever the (filtered) vocabulary's group changes, so a family
+     * whose every member was filtered out never shows a stray header.
+     * Vocabulary order is the contract — consumers list each group's
+     * tokens contiguously. */
+    function renderGroupedRows(
+      defs: readonly HkTemplateTokenDef[],
+      renderRow: (def: HkTemplateTokenDef, index: number) => unknown,
+    ): unknown[] {
+      const out: unknown[] = [];
+      let lastGroup: string | undefined;
+      for (let i = 0; i < defs.length; i++) {
+        const def = defs[i]!;
+        if (def.group !== undefined) {
+          if (def.group !== lastGroup) {
+            out.push(
+              <div class="hk-tpl-group" role="presentation">
+                {props.groupLabel ? props.groupLabel(def.group) : def.group}
+              </div>,
+            );
+          }
+          lastGroup = def.group;
+        }
+        // Tokens without a group simply continue under the previous
+        // heading's visual section — the documented contract for
+        // partially-grouped vocabularies (see the prop doc).
+        out.push(renderRow(def, i));
+      }
+      return out;
+    }
+
     const renderTokenRow = (
       def: HkTemplateTokenDef,
       active: boolean,
@@ -883,7 +982,7 @@ export const HkTemplateField = defineComponent({
         >
           {filteredTokens.value.length > 0 ? (
             <div class="hk-tpl-rows" role="listbox">
-              {filteredTokens.value.map((def, i) =>
+              {renderGroupedRows(filteredTokens.value, (def, i) =>
                 renderTokenRow(
                   def,
                   i === Math.min(suggestActive.value, filteredTokens.value.length - 1),
@@ -905,6 +1004,16 @@ export const HkTemplateField = defineComponent({
           modelValue={editorOpen.value}
           onUpdate:modelValue={(v: boolean) => {
             if (!v) closeChipEditor();
+          }}
+          onClosed={() => {
+            if (!pendingEditorReclaim.value) return;
+            pendingEditorReclaim.value = false;
+            // HkPopover emits this from a nextTick AFTER the patch that
+            // removed the panel (its own doc contract, verified in a
+            // real browser: the handler sees no panel and focus already
+            // fallen to <body>) — so the ownership probe can run here
+            // directly.
+            reclaimEditorFocus();
           }}
           anchorRef={editorChip.value}
           sheetOnMobile
@@ -937,19 +1046,24 @@ export const HkTemplateField = defineComponent({
             >
               <HkInput
                 modelValue={editorQuery.value}
-                onUpdate:modelValue={(v: string) => { editorQuery.value = v; }}
+                onUpdate:modelValue={(v: string) => {
+                  editorQuery.value = v;
+                  nextTick(syncEditorRowsScrollbar);
+                }}
                 placeholder={t("hikari::templateField.chipSearch", "Search placeholders")}
               />
             </div>
-            <div class="hk-tpl-editor-rows" role="listbox">
-              {editorRows.value.map((def) =>
-                renderTokenRow(def, def.name === editorToken.value, () => applyChipToken(def.name)),
-              )}
-              {editorRows.value.length === 0 && (
-                <p class="hk-tpl-rows-empty">
-                  {t("hikari::templateField.suggestEmpty", "No matching placeholders")}
-                </p>
-              )}
+            <div ref={editorRowsHostRef} class="hk-tpl-editor-scroll">
+              <div ref={editorRowsRef} class="hk-tpl-editor-rows" role="listbox">
+                {renderGroupedRows(editorRows.value, (def) =>
+                  renderTokenRow(def, def.name === editorToken.value, () => applyChipToken(def.name)),
+                )}
+                {editorRows.value.length === 0 && (
+                  <p class="hk-tpl-rows-empty">
+                    {t("hikari::templateField.suggestEmpty", "No matching placeholders")}
+                  </p>
+                )}
+              </div>
             </div>
             <div class="hk-tpl-editor-footer">
               <HButton

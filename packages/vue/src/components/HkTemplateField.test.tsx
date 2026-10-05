@@ -34,6 +34,26 @@ interface MountOpts {
   submitOnEnter?: () => void;
 }
 
+function mountWithTokens(
+  tokens: Array<{ name: string; group?: string; description?: string }>,
+  opts: MountOpts & { groupLabel?: (g: string) => string } = {},
+) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const app = createApp({
+    render: () =>
+      h(HkTemplateField, {
+        modelValue: opts.modelValue ?? "",
+        tokens,
+        groupLabel: opts.groupLabel,
+        "onUpdate:modelValue": (v: string) => opts.onUpdate?.(v),
+      }),
+  });
+  app.mount(container);
+  mounts.push({ app, container });
+  return container;
+}
+
 function mount(opts: MountOpts = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -384,5 +404,253 @@ describe("HkTemplateField vocabulary guardrails (R2 gap killers)", () => {
     );
     await nextTick();
     expect(seen.at(-1)).toBe("a {{ md5_email }} b");
+  });
+});
+
+describe("HkTemplateField grouped vocabulary", () => {
+  const GROUPED = [
+    { name: "id", group: "identity" },
+    { name: "username", group: "identity" },
+    { name: "md5_email", group: "email" },
+    { name: "sha256_email", group: "email" },
+  ];
+
+  it("renders one heading per group run in the panel", async () => {
+    const el = mountWithTokens(GROUPED);
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
+    // Headings are presentational, not options.
+    expect(headings.every((h) => h.getAttribute("role") === "presentation")).toBe(true);
+  });
+
+  it("maps group keys through groupLabel", async () => {
+    const el = mountWithTokens(GROUPED, { groupLabel: (g) => g.toUpperCase() });
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(headings.map((h) => h.textContent)).toEqual(["IDENTITY", "EMAIL"]);
+  });
+
+  it("filters groups out with their members (no stray heading)", async () => {
+    const el = mountWithTokens(GROUPED);
+    await nextTick();
+    await openTrigger(el, "{{ md5");
+    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    expect(headings.map((h) => h.textContent)).toEqual(["email"]);
+  });
+
+  it("ungrouped vocabularies render exactly as before (no headings)", async () => {
+    const el = mountWithTokens([{ name: "username" }, { name: "md5_email" }]);
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    expect(document.body.querySelectorAll(".hk-tpl-group")).toHaveLength(0);
+    expect(document.body.querySelectorAll(".hk-tpl-row").length).toBeGreaterThan(0);
+  });
+
+  it("groups the chip editor rows too", async () => {
+    const el = mountWithTokens(GROUPED, { modelValue: "a {{ username }} b" });
+    await nextTick();
+    editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const headings = Array.from(
+      document.body.querySelectorAll<HTMLElement>(".hk-tpl-editor .hk-tpl-group"),
+    );
+    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
+  });
+});
+
+describe("HkTemplateField editor scroll chrome", () => {
+  it("wraps the scrolling rows in a dedicated track host", async () => {
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const host = document.body.querySelector<HTMLElement>(".hk-tpl-editor-scroll");
+    expect(host).not.toBeNull();
+    // The host wraps EXACTLY the scrolling viewport (rails must not
+    // span the form's other bands).
+    expect(host!.firstElementChild?.classList.contains("hk-tpl-editor-rows")).toBe(true);
+  });
+});
+
+describe("HkTemplateField editor close reclaim (closed hook)", () => {
+  it("returns focus to the field after the popover settles its leave", async () => {
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    const edit = editable(el);
+    edit.querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel).not.toBeNull();
+    // The reclaim contract only engages when the editor HELD focus —
+    // put the caret in the search field like a real user would.
+    document.body.querySelector<HTMLInputElement>(".hk-tpl-editor-search input")!.focus();
+    await nextTick();
+    // Escape: the popover starts closing; focus sits in the search
+    // input until the leave finishes.
+    panel!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await nextTick();
+    // Past the leave window the machine emits `closed`, whose handler
+    // reclaims focus from the orphaned body state.
+    await new Promise((r) => setTimeout(r, 30));
+    await nextTick();
+    expect(document.activeElement).toBe(edit);
+  });
+});
+
+describe("HkTemplateField editor focus ownership (R1 guards)", () => {
+  it("does NOT steal focus when an outside control takes it (real click path)", async () => {
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    const edit = editable(el);
+    edit.querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    document.body.querySelector<HTMLInputElement>(".hk-tpl-editor-search input")!.focus();
+    await nextTick();
+
+    // A real outside click: the popover's document-level shield closes
+    // it; the user's focus must stay where the click put it.
+    const outside = document.createElement("input");
+    document.body.appendChild(outside);
+    outside.focus();
+    outside.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 30));
+    await nextTick();
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+  });
+
+  it("still reclaims after a reopen inside the previous close's leave window", async () => {
+    // The focus latch must be re-armed on open: a programmatic reopen
+    // focuses an input that never blurred (no focusin fires), and the
+    // SECOND close would otherwise orphan focus on <body>.
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    const edit = editable(el);
+    const chip = edit.querySelector<HTMLElement>(".hk-tpl-chip")!;
+
+    chip.click();
+    await nextTick();
+    document.body.querySelector<HTMLInputElement>(".hk-tpl-editor-search input")!.focus();
+    await nextTick();
+    // Close #1 via the panel's Escape path.
+    document.body
+      .querySelector<HTMLElement>(".hk-popover-panel")!
+      .dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await nextTick();
+    // Reopen immediately (inside the leave window — the panel may still
+    // be unmounting).
+    chip.click();
+    await nextTick();
+    // Close #2.
+    document.body
+      .querySelector<HTMLElement>(".hk-popover-panel")!
+      .dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 40));
+    await nextTick();
+    expect(document.activeElement).toBe(edit);
+  });
+
+  it("re-targeting another chip while open keeps exactly one scrollbar", async () => {
+    // Whatever interaction interleaving the user produces (here: a
+    // second chip click while the editor is open — the popover's
+    // outside-click shield closes and the click handler reopens), the
+    // rows host must never end up with more than ONE rail pair. Pins
+    // the leak invariant, not any particular detach call site.
+    const el = mount({ modelValue: "a {{ username }} b {{ md5_email }}" });
+    await nextTick();
+    const edit = editable(el);
+    const chips = [...edit.querySelectorAll<HTMLElement>(".hk-tpl-chip")];
+    expect(chips).toHaveLength(2);
+    chips[0]!.click();
+    await nextTick();
+    chips[1]!.click();
+    await nextTick();
+    const hosts = document.body.querySelectorAll(".hk-tpl-editor-scroll");
+    expect(hosts).toHaveLength(1);
+    expect(hosts[0]!.querySelectorAll(".hk-scrollbar-track")).toHaveLength(1);
+  });
+
+  it("detaches the scrollbar machinery on close (no live observer leak)", async () => {
+    // R2 M4: the close-path detach is load-bearing — without it the
+    // rows handle's ResizeObserver + scroll listeners stay attached to
+    // a viewport that has left the document until the field unmounts
+    // (~a bounded leak). Counting LIVE observers (not bare disconnect
+    // calls — sibling components have their own ROs) is the precise
+    // signal, matching R2's real-browser instrumentation.
+    const RealRO = globalThis.ResizeObserver;
+    const live = new Set<unknown>();
+    class TrackingRO extends RealRO {
+      constructor(cb: ResizeObserverCallback) {
+        super(cb);
+        live.add(this);
+      }
+      override disconnect(): void {
+        live.delete(this);
+        super.disconnect();
+      }
+    }
+    (globalThis as unknown as Record<string, unknown>).ResizeObserver = TrackingRO;
+    try {
+      const el = mount({ modelValue: "a {{ username }} b" });
+      await nextTick();
+      const base = live.size;
+      const edit = editable(el);
+      edit.querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+      await nextTick();
+      expect(live.size, "scrollbar attached an observer").toBeGreaterThan(base);
+
+      document.body
+        .querySelector<HTMLElement>(".hk-popover-panel")!
+        .dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      await nextTick();
+      await new Promise((r) => setTimeout(r, 30));
+      await nextTick();
+      expect(live.size, "close detached every observer it attached").toBe(base);
+    } finally {
+      (globalThis as unknown as Record<string, unknown>).ResizeObserver = RealRO;
+    }
+  });
+
+  it("attaches exactly one overlay scrollbar across repeated opens", async () => {
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    const edit = editable(el);
+    const chip = edit.querySelector<HTMLElement>(".hk-tpl-chip")!;
+    for (let round = 0; round < 3; round++) {
+      chip.click();
+      await nextTick();
+      const host = document.body.querySelector(".hk-tpl-editor-scroll")!;
+      expect(host.querySelectorAll(".hk-scrollbar-track")).toHaveLength(1);
+      document.body
+        .querySelector<HTMLElement>(".hk-popover-panel")!
+        .dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      await nextTick();
+      await new Promise((r) => setTimeout(r, 20));
+      await nextTick();
+    }
+  });
+});
+
+describe("HkTemplateField partially-grouped vocabulary", () => {
+  it("renders a heading only where a group starts (documented contract)", async () => {
+    const el = mountWithTokens([
+      { name: "id", group: "identity" },
+      { name: "free_a" }, // ungrouped: continues the identity band
+      { name: "free_b" },
+      { name: "md5_email", group: "email" },
+      { name: "free_c" },
+    ]);
+    await nextTick();
+    await openTrigger(el, "{{ ");
+    const headings = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-group"));
+    // Two headings for two group STARTS; the trailing ungrouped tokens
+    // stay under the last heading (see the groupLabel prop doc).
+    expect(headings.map((h) => h.textContent)).toEqual(["identity", "email"]);
+    expect(document.body.querySelectorAll(".hk-tpl-row")).toHaveLength(5);
   });
 });

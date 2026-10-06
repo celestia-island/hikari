@@ -673,22 +673,78 @@ describe("HkTemplateField partially-grouped vocabulary", () => {
 });
 
 describe("HkTemplateField vocabulary semantics guards", () => {
-  it("the rows containers carry no listbox role (menu/dialog context)", async () => {
+  it("container roles split by context: panel bare in the menu, editor a labeled listbox", async () => {
     const el = mountWithTokens([
       { name: "id", group: "identity" },
       { name: "md5_email", group: "email" },
     ]);
     await nextTick();
     await openTrigger(el, "{{ ");
+    // The panel surface is HkMenu's role="menu" — the rows container
+    // must not re-role it (listbox-in-menu was the illegal nesting).
     const panelRows = document.body.querySelector<HTMLElement>(".hk-tpl-rows")!;
     expect(panelRows.getAttribute("role")).toBeNull();
 
+    // The editor surface is a DIALOG — a listbox is the correct list
+    // semantics there (restored deliberately, with an accessible name).
     const el2 = mount({ modelValue: "a {{ username }} b" });
     await nextTick();
     editable(el2).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
     await nextTick();
     const editorRows = document.body.querySelector<HTMLElement>(".hk-tpl-editor-rows")!;
-    expect(editorRows.getAttribute("role")).toBeNull();
+    expect(editorRows.getAttribute("role")).toBe("listbox");
+    expect(editorRows.getAttribute("aria-label")).toBeTruthy();
+  });
+
+  it("panel rows are menuitems and the editable announces the active one", async () => {
+    const el = mountWithTokens([
+      { name: "id", group: "identity" },
+      { name: "username", group: "identity" },
+    ]);
+    await nextTick();
+    const edit = editable(el);
+    await openTrigger(el, "{{ ");
+    // Combobox wiring on the editable: expanded + owns the rows.
+    expect(edit.getAttribute("aria-haspopup")).toBe("menu");
+    expect(edit.getAttribute("aria-expanded")).toBe("true");
+    const rowsId = edit.getAttribute("aria-owns")!;
+    expect(rowsId).toBeTruthy();
+    expect(document.getElementById(rowsId)?.classList.contains("hk-tpl-rows")).toBe(true);
+    // Rows are menuitems with stable ids.
+    const rows = Array.from(document.body.querySelectorAll<HTMLElement>(".hk-tpl-rows .hk-tpl-row"));
+    expect(rows.every((r) => r.getAttribute("role") === "menuitem")).toBe(true);
+    expect(rows[0]!.id).toBe(`${rowsId}-row-0`);
+    // The activedescendant starts at the first row and follows ArrowDown.
+    expect(edit.getAttribute("aria-activedescendant")).toBe(`${rowsId}-row-0`);
+    edit.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(edit.getAttribute("aria-activedescendant")).toBe(`${rowsId}-row-1`);
+
+    // Collapsed state: no expansion attributes dangle.
+    edit.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(edit.getAttribute("aria-expanded")).toBeNull();
+    expect(edit.getAttribute("aria-owns")).toBeNull();
+    expect(edit.getAttribute("aria-activedescendant")).toBeNull();
+  });
+
+  it("editor rows are options with the current token selected", async () => {
+    const el = mount({ modelValue: "a {{ username }} b" });
+    await nextTick();
+    editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+    await nextTick();
+    const options = Array.from(
+      document.body.querySelectorAll<HTMLElement>(".hk-tpl-editor-rows .hk-tpl-row"),
+    );
+    expect(options.length).toBeGreaterThan(1);
+    expect(options.every((o) => o.getAttribute("role") === "option")).toBe(true);
+    const selected = options.filter((o) => o.getAttribute("aria-selected") === "true");
+    expect(selected).toHaveLength(1);
+    expect(selected[0]!.textContent).toContain("username");
   });
 
   it("the panel's active highlight follows the filtered index inside wrappers", async () => {

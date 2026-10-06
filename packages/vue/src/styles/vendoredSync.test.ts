@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
  *
  * The re-copy adds exactly one provenance header comment block; everything
  * after it must match the upstream byte-for-byte. Edit the UPSTREAM, then
- * re-run scripts/theme/sync-vendored.sh — never hand-edit the copies.
+ * re-run scripts/theme/sync-vendored.py — never hand-edit the copies.
  */
 
 const stylesDir = resolve(dirname(fileURLToPath(import.meta.url)));

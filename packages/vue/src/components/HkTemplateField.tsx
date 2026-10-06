@@ -114,6 +114,9 @@ export const HkTemplateField = defineComponent({
     // association HkInput gives a bare `label` prop — label clicks
     // focus, screen readers announce the field by name).
     const fieldId = useId();
+    /** Stable id for the panel rows container + its row ids (combobox
+     *  aria-owns/activedescendant targets). */
+    const panelRowsId = `hk-tpl-panel-${fieldId}`;
 
     const editRef = ref<HTMLElement | null>(null);
     /** The value the DOM currently represents. Authoritative while the
@@ -926,18 +929,31 @@ export const HkTemplateField = defineComponent({
       return out;
     }
 
+    /** Row chrome shared by both surfaces. The ROLE rides the surface:
+     *  the panel lives inside HkMenu's role="menu" (menuitem — the
+     *  HkMenuActionItem family pattern), the editor lives in a dialog
+     *  and is a proper listbox (option + aria-selected on the token
+     *  being edited). */
     const renderTokenRow = (
       def: HkTemplateTokenDef,
       active: boolean,
       onPick: () => void,
-      i?: number,
+      opts: {
+        i?: number;
+        role: "menuitem" | "option";
+        selected?: boolean;
+        id?: string;
+      },
     ) => (
       <button
         key={def.name}
         type="button"
         class="hk-tpl-row"
+        role={opts.role}
+        id={opts.id}
+        aria-selected={opts.role === "option" ? (opts.selected || false) : undefined}
         data-active={active || undefined}
-        ref={i !== undefined ? setRowRef(i) : undefined}
+        ref={opts.i !== undefined ? setRowRef(opts.i) : undefined}
         onMousedown={(e: MouseEvent) => e.preventDefault()}
         onClick={(e: MouseEvent) => {
           e.stopPropagation();
@@ -966,6 +982,21 @@ export const HkTemplateField = defineComponent({
             contenteditable={!props.disabled}
             role="textbox"
             aria-multiline="false"
+            // Combobox announcement wiring: the editable OWNS the popup
+            // (aria-owns makes the teleported rows virtual descendants)
+            // and points aria-activedescendant at the highlighted row,
+            // so arrow-key navigation is announced without moving DOM
+            // focus out of the field.
+            aria-haspopup="menu"
+            aria-expanded={suggestOpen.value || undefined}
+            aria-owns={
+              suggestOpen.value && filteredTokens.value.length > 0 ? panelRowsId : undefined
+            }
+            aria-activedescendant={
+              suggestOpen.value && filteredTokens.value.length > 0
+                ? `${panelRowsId}-row-${Math.min(suggestActive.value, filteredTokens.value.length - 1)}`
+                : undefined
+            }
             id={fieldId}
             spellcheck={false}
             data-ph={props.placeholder}
@@ -1001,13 +1032,17 @@ export const HkTemplateField = defineComponent({
           title={t("hikari::templateField.suggestTitle", "Placeholders")}
         >
           {filteredTokens.value.length > 0 ? (
-            <div class="hk-tpl-rows">
+            <div class="hk-tpl-rows" id={panelRowsId}>
               {renderGroupedRows(filteredTokens.value, ({ def, index }) =>
                 renderTokenRow(
                   def,
                   index === Math.min(suggestActive.value, filteredTokens.value.length - 1),
                   () => pickSuggestion(def),
-                  index,
+                  {
+                    i: index,
+                    role: "menuitem",
+                    id: `${panelRowsId}-row-${index}`,
+                  },
                 ),
               )}
             </div>
@@ -1074,9 +1109,17 @@ export const HkTemplateField = defineComponent({
               />
             </div>
             <div ref={editorRowsHostRef} class="hk-tpl-editor-scroll">
-              <div ref={editorRowsRef} class="hk-tpl-editor-rows">
+              <div
+                ref={editorRowsRef}
+                class="hk-tpl-editor-rows"
+                role="listbox"
+                aria-label={t("hikari::templateField.chipEditorTitle", "Edit placeholder")}
+              >
                 {renderGroupedRows(editorRows.value, ({ def }) =>
-                  renderTokenRow(def, def.name === editorToken.value, () => applyChipToken(def.name)),
+                  renderTokenRow(def, def.name === editorToken.value, () => applyChipToken(def.name), {
+                    role: "option",
+                    selected: def.name === editorToken.value,
+                  }),
                 )}
                 {editorRows.value.length === 0 && (
                   <p class="hk-tpl-rows-empty">

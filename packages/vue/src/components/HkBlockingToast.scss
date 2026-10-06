@@ -93,6 +93,87 @@
   color: #fff;
 }
 
+// ── Actions on a tinted surface ─────────────────────────────────────
+// The card's surface IS the variant color, so the action row takes its
+// ink from that surface instead of leaking the global accent: a plain
+// primary button reads as a foreign brand on the tinted card (a pink
+// confirm on the teal info card under a pink-themed consumer), and the
+// danger confirm's own red dissolves into its red card. The confirm
+// inverts to a filled white control labeled in a deepened shade of the
+// variant color — the strongest move on every variant surface — and the
+// cancel quiets to a translucent outline in the card's own ink (the
+// house grammar for quiet controls on tinted toast surfaces).
+.hk-blocking-toast-info {
+  --hk-blocking-toast-ink: var(--hi-color-info, #6abed6);
+}
+
+.hk-blocking-toast-warning {
+  --hk-blocking-toast-ink: var(--hi-color-warning, #eed677);
+}
+
+.hk-blocking-toast-danger {
+  --hk-blocking-toast-ink: var(--hi-color-danger, #f85149);
+}
+
+/* The confirm arrives as .hk-btn-primary (info/warning cards) or
+   .hk-btn-danger (danger card) — both recolor to the same inverted
+   control. Labels darken the variant ink (55% toward black) so every
+   variant stays readable on the white fill; svg rides the label color
+   so a themed glyph ink can't wash out against it. */
+.hk-blocking-toast-actions .hk-btn-primary,
+.hk-blocking-toast-actions .hk-btn-danger {
+  background: #fff;
+  border-color: transparent;
+  color: color-mix(in srgb, var(--hk-blocking-toast-ink, #6abed6) 55%, #000);
+
+  svg {
+    color: inherit;
+  }
+}
+
+.hk-blocking-toast-actions .hk-btn-primary:hover:not(:disabled):not(:focus-visible),
+.hk-blocking-toast-actions .hk-btn-danger:hover:not(:disabled):not(:focus-visible) {
+  filter: none;
+  box-shadow: none;
+  background: rgb(255 255 255 / 88%);
+}
+
+.hk-blocking-toast-actions .hk-btn-primary:active:not(:disabled),
+.hk-blocking-toast-actions .hk-btn-danger:active:not(:disabled) {
+  filter: none;
+  background: rgb(255 255 255 / 78%);
+}
+
+/* The secondary cancel stops being a heavy surface block (it rendered
+   as a white pill competing with the confirm on the tinted card) and
+   picks up the quiet outline in the card's currentColor — white on
+   info/danger, near-black on warning — so it reads on every variant
+   without its own per-variant table. */
+.hk-blocking-toast-actions .hk-btn-secondary {
+  background: transparent;
+  border-color: color-mix(in srgb, currentColor 45%, transparent);
+  backdrop-filter: none;
+  color: inherit;
+}
+
+.hk-blocking-toast-actions .hk-btn-secondary:hover:not(:disabled) {
+  border-color: color-mix(in srgb, currentColor 70%, transparent);
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.hk-blocking-toast-actions .hk-btn-secondary:active:not(:disabled) {
+  filter: none;
+  background: color-mix(in srgb, currentColor 28%, transparent);
+}
+
+/* The keyboard ring follows the card ink too — the global primary ring
+   would leak the same foreign accent the fill just removed. */
+.hk-blocking-toast-actions .hk-btn:focus-visible {
+  box-shadow:
+    0 0 0 2px rgb(255 255 255 / 60%),
+    0 0 0 4px currentColor;
+}
+
 // Enter/leave mirrors the toast slide (settle, no bounce); leaving
 // cards go absolute so the remaining ones glide up (hk-toast pattern).
 .hk-blocking-toast-enter-active {

@@ -989,7 +989,9 @@ export const HkTemplateField = defineComponent({
             // focus out of the field.
             aria-haspopup="menu"
             aria-expanded={suggestOpen.value || undefined}
-            aria-owns={suggestOpen.value ? panelRowsId : undefined}
+            aria-owns={
+              suggestOpen.value && filteredTokens.value.length > 0 ? panelRowsId : undefined
+            }
             aria-activedescendant={
               suggestOpen.value && filteredTokens.value.length > 0
                 ? `${panelRowsId}-row-${Math.min(suggestActive.value, filteredTokens.value.length - 1)}`

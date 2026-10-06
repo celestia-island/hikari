@@ -722,6 +722,13 @@ describe("HkTemplateField vocabulary semantics guards", () => {
     await nextTick();
     expect(edit.getAttribute("aria-activedescendant")).toBe(`${rowsId}-row-1`);
 
+    // Zero matches while the panel is open: the rows container does
+    // not render, so aria-owns must not dangle (R1 finding).
+    await openTrigger(el, "{{ idzzz");
+    expect(edit.getAttribute("aria-owns")).toBeNull();
+    expect(edit.getAttribute("aria-activedescendant")).toBeNull();
+    expect(edit.getAttribute("aria-expanded")).toBe("true");
+
     // Collapsed state: no expansion attributes dangle.
     edit.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),

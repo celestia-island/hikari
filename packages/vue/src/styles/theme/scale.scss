@@ -9,7 +9,7 @@
  * foundation) were normalized to the values the production composition
  * resolves to (chest: admin-tokens + foundation last). This file is the
  * upstream of styles/theme/scale.scss — edit here, then re-run
- * scripts/theme/sync-vendored.sh; do not hand-edit the vendored copy.
+ * scripts/theme/sync-vendored.py; do not hand-edit the vendored copy.
  */
 :root {
   /* Spacing (N px at the 16px root). */

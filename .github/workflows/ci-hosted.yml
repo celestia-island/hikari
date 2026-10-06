@@ -28,6 +28,12 @@ permissions:
 
 jobs:
   web-test:
+    # Fork pull requests pay for their own CI: this job is heavy (it compiles,
+    # builds, tests or audits) and a fork's run would spend shared runner time on
+    # untrusted content. The required commit-lint and PR-title checks are the
+    # deliberate exception: they are sub-minute, execute no pull request code, and
+    # hold no secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: "web: vitest + vue-tsc (hosted)"
     runs-on: ubuntu-latest
     steps:

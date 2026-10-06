@@ -22,6 +22,12 @@ jobs:
     uses: celestia-island/celestia-devtools/.github/workflows/family-versions.yml@master
 
   rustfmt:
+    # Fork pull requests pay for their own CI: this job is heavy (it compiles,
+    # builds, tests or audits) and a fork's run would spend shared runner time on
+    # untrusted content. The required commit-lint and PR-title checks are the
+    # deliberate exception: they are sub-minute, execute no pull request code, and
+    # hold no secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: Check Formatting
     runs-on: [self-hosted, linux, x64, local]
     timeout-minutes: 300
@@ -41,6 +47,12 @@ jobs:
         run: cargo +nightly fmt --all -- --check --unstable-features
 
   lint:
+    # Fork pull requests pay for their own CI: this job is heavy (it compiles,
+    # builds, tests or audits) and a fork's run would spend shared runner time on
+    # untrusted content. The required commit-lint and PR-title checks are the
+    # deliberate exception: they are sub-minute, execute no pull request code, and
+    # hold no secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: Lint
     runs-on: [self-hosted, linux, x64, local]
     timeout-minutes: 300
@@ -68,6 +80,12 @@ jobs:
           RUSTFLAGS: '--cfg releasing'
 
   test:
+    # Fork pull requests pay for their own CI: this job is heavy (it compiles,
+    # builds, tests or audits) and a fork's run would spend shared runner time on
+    # untrusted content. The required commit-lint and PR-title checks are the
+    # deliberate exception: they are sub-minute, execute no pull request code, and
+    # hold no secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: Run tests
     runs-on: [self-hosted, linux, x64, local]
     timeout-minutes: 300

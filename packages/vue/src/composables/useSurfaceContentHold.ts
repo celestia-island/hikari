@@ -18,8 +18,20 @@ import type { SurfacePhase } from "../runtime/surfaceMachine";
  * always plays over the content the user was actually looking at. Vue's
  * patch skips identical vnode references, so the held DOM is never
  * re-patched during the close; child components with their own store
- * subscriptions may still self-update (harmless — the failure mode under
- * repair is content VANISHING, not content ticking).
+ * subscriptions may still self-update.
+ *
+ * ⚠️ CONTRACT for bodies under this hold (the 2026-10-06 chest crash:
+ * `TypeError: Cannot read properties of null (reading 'content')` in a
+ * report window's close fold): a held child that subscribed to the body's
+ * reactive reads re-renders with the FROZEN slot closures, so any slot
+ * body that re-reads a live ref at invocation time sees the host's
+ * teardown null and throws. The "self-updates are harmless" claim the
+ * original comment made is wrong in exactly that case. Bodies must render
+ * a per-render SNAPSHOT of their nullable state (read it once in the
+ * render function, hand the captured value to every deferred closure) —
+ * never re-read the live ref inside a slot or callback the fold can
+ * re-run. (The failure mode under repair remains content VANISHING; a
+ * throwing deferred read is the second, sharper failure mode.)
  *
  * The hold releases the moment the surface leaves a closing phase: a
  * reopen interrupt (closing → openingFrom) serves live slots again, and

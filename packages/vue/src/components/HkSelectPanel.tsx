@@ -14,6 +14,7 @@ import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
 import { ancestorZoom } from "../runtime/cssZoom";
+import { popupViewportRect } from "../runtime/popupBounds";
 import { clampWithGutter, viewportGutterPx } from "../runtime/viewportGutter";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
@@ -547,16 +548,20 @@ export default defineComponent({
       // The shared viewport gutter (--viewport-gutter: 8px mobile / 16px
       // desktop), read per positioning pass.
       const pad = viewportGutterPx();
+      // The popup viewport: the window minus the app-chrome band the host
+      // configured (popupBounds) — full-window when none, in which case
+      // every flip and clamp below is the raw-window math.
+      const frame = popupViewportRect();
       let side: "top" | "bottom" = props.placement.startsWith("top-") ? "top" : "bottom";
       let top =
         side === "top"
           ? r.top - props.offset - ph
           : r.bottom + props.offset;
       // Auto-flip when the chosen side cannot host the panel.
-      if (side === "bottom" && top + ph > window.innerHeight - pad) {
+      if (side === "bottom" && top + ph > frame.y + frame.height - pad) {
         side = "top";
         top = r.top - props.offset - ph;
-      } else if (side === "top" && top < pad) {
+      } else if (side === "top" && top < frame.y + pad) {
         side = "bottom";
         top = r.bottom + props.offset;
       }
@@ -571,7 +576,7 @@ export default defineComponent({
       // bottom→top into a negative top that was applied verbatim. Clamp so
       // the whole panel stays on-screen; when content exceeds the CSS cap
       // the panel's own internal scroll takes over.
-      top = clampWithGutter(top, ph, window.innerHeight, pad);
+      top = clampWithGutter(top - frame.y, ph, frame.height, pad) + frame.y;
       // -center balances the panel on the anchor's horizontal midpoint
       // (still clamped, so a half-off-screen anchor keeps the panel
       // readable instead of mirroring the overflow to both edges).
@@ -581,7 +586,7 @@ export default defineComponent({
           : props.placement.endsWith("-end")
             ? r.right - pw
             : r.left;
-      const clampedLeft = clampWithGutter(left, pw, window.innerWidth, pad);
+      const clampedLeft = clampWithGutter(left - frame.x, pw, frame.width, pad) + frame.x;
       coords.value = {
         top: `${Math.round(top / z)}px`,
         left: `${Math.round(clampedLeft / z)}px`,

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { configurePopupInsets } from "./popupBounds";
 import {
   TOOLTIP_GAP_PX,
   applyTooltipPosition,
@@ -38,6 +39,7 @@ function probePopup(rects: DOMRect[]): HTMLElement {
 const PREV_INNER = { width: window.innerWidth, height: window.innerHeight };
 
 afterEach(() => {
+  configurePopupInsets(null);
   window.innerWidth = PREV_INNER.width;
   window.innerHeight = PREV_INNER.height;
   vi.restoreAllMocks();
@@ -227,26 +229,118 @@ describe("applyTooltipPosition viewport clamping", () => {
 });
 
 describe("resolveTooltipFlip", () => {
-  const vw = 375;
-  const vh = 667;
+  const frame = { x: 0, y: 0, width: 375, height: 667 };
   const gutter = 8;
 
   it("keeps the placement when the preferred side fits", () => {
     const trigger = box(100, 100, 40, 40);
-    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 32 }, vw, vh, gutter)).toBe("top");
+    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 32 }, frame, gutter)).toBe("top");
   });
 
   it("flips to the opposite side when it has more room", () => {
     const trigger = box(100, 2, 40, 18);
-    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 32 }, vw, vh, gutter)).toBe("bottom");
+    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 32 }, frame, gutter)).toBe("bottom");
     const floorTrigger = box(100, 640, 40, 20);
-    expect(resolveTooltipFlip(floorTrigger, "bottom", { width: 200, height: 32 }, vw, vh, gutter)).toBe("top");
+    expect(resolveTooltipFlip(floorTrigger, "bottom", { width: 200, height: 32 }, frame, gutter)).toBe("top");
   });
 
   it("keeps the placement when the opposite side is no better (the clamp handles it)", () => {
     // Both sides starved, opposite NOT strictly larger → keep the author's
     // placement; the gutter clamp pins the popup on-screen.
     const trigger = box(100, 2, 40, 663); // spaceAbove -6, spaceBelow -6
-    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 400 }, vw, vh, gutter)).toBe("top");
+    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 400 }, frame, gutter)).toBe("top");
+  });
+});
+
+describe("resolveTooltipFlip against an app-chrome band", () => {
+  // A 40px desktop title bar configured as the popup bounds.
+  const frame = { x: 0, y: 40, width: 375, height: 627 };
+  const gutter = 8;
+
+  it("flips down when the popup would cross the band but fits the raw viewport above", () => {
+    // Trigger top 84: the RAW-viewport top space (84 - 8 = 76) would hold
+    // a 32px popup, but inside the frame only 84 - 40 - 8 = 36 remains —
+    // the caption strip wins, the tooltip pops below the trigger.
+    const trigger = box(100, 84, 40, 18);
+    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 32 }, frame, gutter)).toBe("bottom");
+  });
+
+  it("keeps top when the space below the band edge still holds the popup", () => {
+    const trigger = box(100, 300, 40, 40);
+    expect(resolveTooltipFlip(trigger, "top", { width: 200, height: 32 }, frame, gutter)).toBe("top");
+  });
+
+  it("measures the horizontal sides against the band, not the window", () => {
+    const docked = { x: 200, y: 0, width: 175, height: 667 };
+    const trigger = box(210, 300, 40, 40);
+    // Right space inside the frame 117 < 120 + 8 → checks the left
+    // alternate (2), which is not larger → keeps the author's side.
+    expect(resolveTooltipFlip(trigger, "right", { width: 120, height: 32 }, docked, gutter)).toBe("right");
+  });
+});
+
+describe("applyTooltipPosition against an app-chrome band", () => {
+  it("pops a first-row tooltip down instead of over the configured band", () => {
+    window.innerWidth = 375;
+    window.innerHeight = 667;
+    configurePopupInsets({ top: 40 });
+    // Raw-viewport top space is 84 - 8 = 76 ≥ 40 — the pre-bounds math
+    // kept this popup UP (visual box 44..76, across the 40px band); the
+    // band-aware flip sends it below the trigger instead.
+    const trigger = box(100, 84, 40, 18);
+    // Measures: the base-top box, then the flipped-bottom box the real
+    // DOM would report after the base rewrite.
+    const popup = probePopup([box(120, 44, 200, 32), box(120, 110, 200, 32)]);
+    applyTooltipPosition(popup, trigger, "top");
+    expect(popup.style.transform).toBe("translate(-50%, 0)");
+    expect(popup.style.top).toBe("110px"); // rect.bottom + 8
+    expect(popup.style.left).toBe("120px"); // hcenter, unshifted
+  });
+
+  it("lands inside the band under root zoom (band + zoom combined)", () => {
+    // chest's root-level DPI zoom AND a title-bar band together: style
+    // px are local (divided by zoom 2), the band and the viewport are
+    // visual — the flip must clear the band in VISUAL space and the
+    // shift must be divided back to local.
+    window.innerWidth = 1200;
+    window.innerHeight = 800;
+    configurePopupInsets({ top: 32 });
+    const original = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation(((el: Element) => {
+      const decl = original(el);
+      return new Proxy(decl, {
+        get(target, prop, recv) {
+          if (prop === "zoom") return el === document.documentElement ? "2" : undefined;
+          const v = Reflect.get(target, prop, recv);
+          return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+        },
+      });
+    }) as typeof window.getComputedStyle);
+    // Trigger top 100: frame space above is 100 - 32 - 8 = 60 < 48 + 16
+    // → flip below. Base-top visual box 136..184 crosses the band; the
+    // flipped-bottom box sits at 296..344, already inside the frame.
+    const trigger = box(600, 100, 40, 40);
+    const popup = probePopup([box(1120, 136, 240, 48), box(1120, 296, 240, 48)]);
+    applyTooltipPosition(popup, trigger, "top");
+    expect(popup.style.transform).toBe("translate(-50%, 0)");
+    expect(popup.style.top).toBe("74px"); // (140 + 8) visual, written /2
+    // Center 620 visual, written 310 local; visual box 1120..1360
+    // overruns the 1200-16 gutter by 176 visual → 88 local off:
+    // 310 - 88 = 222.
+    expect(popup.style.left).toBe("222px");
+  });
+
+  it("shifts a centered bubble inside the band's side gutter", () => {
+    window.innerWidth = 375;
+    window.innerHeight = 667;
+    configurePopupInsets({ left: 200 });
+    // A docked 200px sidebar: the centered 120px bubble spans 170..290,
+    // 38px into the band — the shift re-bases onto the frame origin and
+    // pins it at the frame's leading gutter (208).
+    const trigger = box(210, 300, 40, 40);
+    const popup = probePopup([box(170, 348, 120, 32)]);
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("268px");
+    expect(popup.style.top).toBe("348px");
   });
 });

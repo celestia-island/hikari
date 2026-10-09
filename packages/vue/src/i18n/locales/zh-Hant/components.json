@@ -266,5 +266,15 @@
   "hikari::mfaVerify.back": "返回重新登入",
   "hikari::mfaVerify.loading": "加載中...",
   "hikari::board3d.resetView": "重設視角",
-  "hikari::board3d.unavailable": "此裝置不支援 3D 顯示"
+  "hikari::board3d.unavailable": "此裝置不支援 3D 顯示",
+  "hikari::userPicker.title": "選擇使用者",
+  "hikari::userPicker.searchPlaceholder": "暱稱、使用者名稱或電子郵件",
+  "hikari::userPicker.searching": "搜尋中…",
+  "hikari::userPicker.emptyInitial": "輸入暱稱、使用者名稱或電子郵件開始搜尋。",
+  "hikari::userPicker.empty": "沒有符合搜尋的使用者。",
+  "hikari::userPicker.searchFailed": "搜尋失敗，請重試。",
+  "hikari::userPicker.add": "選擇使用者…",
+  "hikari::userPicker.remove": "移除",
+  "hikari::userPicker.confirm": "確認",
+  "hikari::userPicker.selectedCount": "已選 {count} 人"
 }

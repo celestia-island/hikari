@@ -262,5 +262,15 @@
   "hikari::mfaVerify.back": "العودة لتسجيل الدخول",
   "hikari::mfaVerify.loading": "جارٍ التحميل...",
   "hikari::board3d.resetView": "إعادة تعيين العرض",
-  "hikari::board3d.unavailable": "العرض ثلاثي الأبعاد غير متوفر على هذا الجهاز"
+  "hikari::board3d.unavailable": "العرض ثلاثي الأبعاد غير متوفر على هذا الجهاز",
+  "hikari::userPicker.title": "اختيار المستخدمين",
+  "hikari::userPicker.searchPlaceholder": "الاسم المستعار أو اسم المستخدم أو البريد الإلكتروني",
+  "hikari::userPicker.searching": "جارٍ البحث…",
+  "hikari::userPicker.emptyInitial": "اكتب اسمًا مستعارًا أو اسم مستخدم أو بريدًا إلكترونيًا للبحث.",
+  "hikari::userPicker.empty": "لا يوجد مستخدمون مطابقون لهذا البحث.",
+  "hikari::userPicker.searchFailed": "فشل البحث؛ حاول مرة أخرى.",
+  "hikari::userPicker.add": "اختيار المستخدمين…",
+  "hikari::userPicker.remove": "إزالة",
+  "hikari::userPicker.confirm": "تأكيد",
+  "hikari::userPicker.selectedCount": "تم اختيار {count}"
 }

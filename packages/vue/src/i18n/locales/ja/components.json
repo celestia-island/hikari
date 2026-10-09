@@ -262,5 +262,15 @@
   "hikari::mfaVerify.back": "ログインに戻る",
   "hikari::mfaVerify.loading": "読み込み中...",
   "hikari::board3d.resetView": "視点をリセット",
-  "hikari::board3d.unavailable": "このデバイスでは 3D を利用できません"
+  "hikari::board3d.unavailable": "このデバイスでは 3D を利用できません",
+  "hikari::userPicker.title": "ユーザーを選択",
+  "hikari::userPicker.searchPlaceholder": "ニックネーム、ユーザー名またはメールアドレス",
+  "hikari::userPicker.searching": "検索中…",
+  "hikari::userPicker.emptyInitial": "ニックネーム、ユーザー名またはメールアドレスを入力して検索してください。",
+  "hikari::userPicker.empty": "この検索に一致するユーザーはいません。",
+  "hikari::userPicker.searchFailed": "検索に失敗しました。もう一度お試しください。",
+  "hikari::userPicker.add": "ユーザーを選択…",
+  "hikari::userPicker.remove": "削除",
+  "hikari::userPicker.confirm": "確認",
+  "hikari::userPicker.selectedCount": "{count} 件選択中"
 }

@@ -262,5 +262,15 @@
   "hikari::mfaVerify.back": "Вернуться к входу",
   "hikari::mfaVerify.loading": "Загрузка...",
   "hikari::board3d.resetView": "Сбросить вид",
-  "hikari::board3d.unavailable": "3D недоступно на этом устройстве"
+  "hikari::board3d.unavailable": "3D недоступно на этом устройстве",
+  "hikari::userPicker.title": "Выбрать пользователей",
+  "hikari::userPicker.searchPlaceholder": "Ник, имя пользователя или эл. почта",
+  "hikari::userPicker.searching": "Поиск…",
+  "hikari::userPicker.emptyInitial": "Введите ник, имя пользователя или эл. почту для поиска.",
+  "hikari::userPicker.empty": "Нет пользователей, соответствующих этому запросу.",
+  "hikari::userPicker.searchFailed": "Поиск не удался; попробуйте ещё раз.",
+  "hikari::userPicker.add": "Выбрать пользователей…",
+  "hikari::userPicker.remove": "Убрать",
+  "hikari::userPicker.confirm": "Подтвердить",
+  "hikari::userPicker.selectedCount": "Выбрано: {count}"
 }

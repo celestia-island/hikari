@@ -715,6 +715,7 @@ export { default as HkNavItem } from "./components/HkNavItem";
 export { default as HkNumberInput } from "./components/HkNumberInput";
 export { default as HkPhoneInput } from "./components/HkPhoneInput";
 export { default as HkAffixPicker } from "./components/HkAffixPicker";
+export { default as HkUserPicker, type HkUserOption } from "./components/HkUserPicker";
 export { default as HkPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HkGaugeRing } from "./components/HkGaugeRing";
 export { default as HkProgressRing } from "./components/HkProgressRing";

@@ -24,6 +24,7 @@
 
 import { computed, defineComponent, provide, ref, shallowRef } from "vue";
 
+import { popupViewportRect } from "../runtime/popupBounds";
 import HkMenu from "./HkMenu";
 import {
   CONTEXT_MENU_KEY,
@@ -33,10 +34,15 @@ import {
 
 /** Pick the HkMenu placement that grows away from the pointer's nearest
  * edges: `bottom-*` when there is more room below, `*-start` when there
- * is more room to the right. */
-function quadrantPlacement(x: number, y: number): "bottom-start" | "bottom-end" | "top-start" | "top-end" {
-  const below = y <= (typeof window !== "undefined" ? window.innerHeight : 0) / 2;
-  const right = x <= (typeof window !== "undefined" ? window.innerWidth : 0) / 2;
+ * is more room to the right. The halves split the POPUP viewport (the
+ * window minus the app-chrome band the host configured — popupBounds),
+ * so a menu opened over a desktop shell's reserved strip grows into the
+ * usable space like every other popup. */
+export function quadrantPlacement(x: number, y: number): "bottom-start" | "bottom-end" | "top-start" | "top-end" {
+  if (typeof window === "undefined") return "bottom-start";
+  const frame = popupViewportRect();
+  const below = y <= frame.y + frame.height / 2;
+  const right = x <= frame.x + frame.width / 2;
   if (below && right) return "bottom-start";
   if (below) return "bottom-end";
   return right ? "top-start" : "top-end";

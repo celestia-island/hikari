@@ -4,6 +4,7 @@
 // positions it through this helper so the two surfaces can never drift.
 import type { CSSProperties } from "vue";
 import { ancestorZoom } from "./cssZoom";
+import { popupViewportRect, type PopupViewportRect } from "./popupBounds";
 import { clampWithGutter, viewportGutterPx } from "./viewportGutter";
 
 export type TooltipPlacement = "top" | "bottom" | "left" | "right";
@@ -70,22 +71,22 @@ export function tooltipPositionStyle(
   return style;
 }
 
-/** Space left on each side of the trigger rect, minus the trigger gap. */
+/** Space left on the given side of the trigger rect, inside the popup
+ *  viewport, minus the trigger gap. */
 function sideSpace(
   rect: DOMRect,
   side: TooltipPlacement,
-  vw: number,
-  vh: number,
+  frame: PopupViewportRect,
 ): number {
   switch (side) {
     case "top":
-      return rect.top - TOOLTIP_GAP_PX;
+      return rect.top - frame.y - TOOLTIP_GAP_PX;
     case "bottom":
-      return vh - rect.bottom - TOOLTIP_GAP_PX;
+      return frame.y + frame.height - rect.bottom - TOOLTIP_GAP_PX;
     case "left":
-      return rect.left - TOOLTIP_GAP_PX;
+      return rect.left - frame.x - TOOLTIP_GAP_PX;
     case "right":
-      return vw - rect.right - TOOLTIP_GAP_PX;
+      return frame.x + frame.width - rect.right - TOOLTIP_GAP_PX;
   }
 }
 
@@ -105,23 +106,26 @@ function oppositeSide(placement: TooltipPlacement): TooltipPlacement {
 
 /**
  * Flip a top↔bottom / left↔right preference when the requested side
- * cannot hold the measured popup inside the viewport gutter but the
- * opposite side can — same criterion as HkPopover's autoFlip, so the
- * surfaces rule their geometry identically. Returns the placement to use.
+ * cannot hold the measured popup inside the popup viewport's gutter but
+ * the opposite side can — same criterion as HkPopover's autoFlip, so the
+ * surfaces rule their geometry identically. The popup viewport is the
+ * full window minus the app-chrome band the host configured
+ * (popupBounds), so a tooltip anchored on the first row under a custom
+ * title bar flips below its trigger instead of pinning over the strip.
+ * Returns the placement to use.
  */
 export function resolveTooltipFlip(
   rect: DOMRect,
   placement: TooltipPlacement,
   popup: { width: number; height: number },
-  vw: number,
-  vh: number,
+  frame: PopupViewportRect,
   gutter: number,
 ): TooltipPlacement {
-  const preferred = sideSpace(rect, placement, vw, vh);
+  const preferred = sideSpace(rect, placement, frame);
   const need = (placement === "top" || placement === "bottom" ? popup.height : popup.width) + gutter;
   if (preferred >= need) return placement;
   const alternate = oppositeSide(placement);
-  const alternateSpace = sideSpace(rect, alternate, vw, vh);
+  const alternateSpace = sideSpace(rect, alternate, frame);
   return alternateSpace > preferred ? alternate : placement;
 }
 
@@ -156,8 +160,10 @@ export function applyTooltipPosition(
   const box = popup.getBoundingClientRect();
   if (!(box.width > 0 && box.height > 0)) return; // no layout — pure base stands
 
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // The popup viewport: the window minus the app-chrome band the host
+  // configured (a frameless shell's title bar), full-window when none —
+  // in which case every number below is exactly the raw-window math.
+  const frame = popupViewportRect();
   const gutter = viewportGutterPx();
   const z = ancestorZoom(popup);
 
@@ -171,8 +177,11 @@ export function applyTooltipPosition(
   let capW = "";
   let capH = "";
   let clip = false;
-  const maxW = vw - 2 * gutter;
-  const maxH = vh - 2 * gutter;
+  // Floor at 0: a band so tight the gutters overrun the frame must not
+  // write negative (invalid) inline lengths — the cap degrades to 0 and
+  // collapses the bubble, the honest reading of an impossible frame.
+  const maxW = Math.max(0, frame.width - 2 * gutter);
+  const maxH = Math.max(0, frame.height - 2 * gutter);
   if (box.width > maxW) {
     capW = `${maxW / z}px`;
   }
@@ -194,7 +203,7 @@ export function applyTooltipPosition(
     measured = popup.getBoundingClientRect();
   }
 
-  const side = resolveTooltipFlip(rect, placement, measured, vw, vh, gutter);
+  const side = resolveTooltipFlip(rect, placement, measured, frame, gutter);
   let final = measured;
   if (side !== placement) {
     applyBase(side);
@@ -203,14 +212,20 @@ export function applyTooltipPosition(
   }
 
   // Shift whatever is left over (centered under a near-edge trigger, the
-  // flipped side, a cap) so both edges sit inside the gutter. The delta
-  // is measured in root visual px but the written coordinates are local
-  // (divided by the cumulative zoom) AND offset from the box edge by the
-  // placement transform (translate(-50%) makes style.left the box
-  // CENTER) — so the shift adds onto the current written value instead
-  // of the measured edge.
-  const dx = clampWithGutter(final.left, final.width, vw, gutter) - final.left;
-  const dy = clampWithGutter(final.top, final.height, vh, gutter) - final.top;
+  // flipped side, a cap) so both edges sit inside the gutter — measured
+  // against the popup viewport, so the gutter rides just inside the
+  // app-chrome band rather than inside the raw window edge. The clamp is
+  // computed frame-relative and re-based onto the frame origin (with no
+  // band configured the origin is 0 and this is the plain gutter clamp).
+  // The delta is measured in root visual px but the written coordinates
+  // are local (divided by the cumulative zoom) AND offset from the box
+  // edge by the placement transform (translate(-50%) makes style.left
+  // the box CENTER) — so the shift adds onto the current written value
+  // instead of the measured edge.
+  const dx =
+    clampWithGutter(final.left - frame.x, final.width, frame.width, gutter) - (final.left - frame.x);
+  const dy =
+    clampWithGutter(final.top - frame.y, final.height, frame.height, gutter) - (final.top - frame.y);
   if (dx !== 0 || dy !== 0) {
     const curLeft = Number.parseFloat(popup.style.left) || 0;
     const curTop = Number.parseFloat(popup.style.top) || 0;

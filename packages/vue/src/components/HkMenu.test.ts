@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref, type ComponentPublicInstance } from "vue";
 
+import { configurePopupInsets } from "../runtime/popupBounds";
 import HkMenu, { type HkMenuItem } from "./HkMenu";
 
 /** Regional-indicator flag pair for an ISO 3166-1 alpha-2 code, built
@@ -186,6 +187,7 @@ afterEach(async () => {
     .querySelectorAll(".hk-select-popout, .hk-select-sheet-panel, .hk-select-sheet-scrim")
     .forEach((el) => el.remove());
   while (containers.length) containers.pop()?.remove();
+  configurePopupInsets(null);
   window.innerWidth = 1024;
 });
 
@@ -1079,5 +1081,47 @@ describe("HkMenu close linger (leave-transition window)", () => {
     // After the leave window the level is swept for real.
     await until(() => popouts().length === 1, 800);
     expect(popouts().length).toBe(1);
+  });
+});
+
+describe("HkMenu cascade against an app-chrome band", () => {
+  it("opens a right-start cascade on the side the band leaves room for", async () => {
+    // An 850px right-docked band on a 1200px window leaves the popup
+    // frame 0..350. The anchor's right edge sits at 130: the RAW window
+    // would host the 224px cascade beside it (130 + 6 + 224 = 360 ≤
+    // 1184), but the frame's gutter line is 350 - 16 = 334 — so the
+    // cascade flips to the anchor's left, pinned at the frame's leading
+    // gutter instead of the window's.
+    const rect = (x: number, y: number, w: number, h: number): DOMRect =>
+      ({ x, y, width: w, height: h, top: y, left: x, right: x + w, bottom: y + h, toJSON: () => ({}) }) as DOMRect;
+
+    window.innerWidth = 1200;
+    const openRef = ref(false);
+    const first = mountMenu(openRef, items, {}, { props: { placement: "right-start" } });
+    vi.spyOn(first.anchor, "getBoundingClientRect").mockReturnValue(rect(50, 100, 80, 40));
+    openRef.value = true;
+    await settle();
+    expect(popoutHosts()[0].style.left).toBe("136px"); // r.right + gap
+    first.unmount();
+
+    configurePopupInsets({ right: 850 });
+    const openRef2 = ref(false);
+    const second = mountMenu(openRef2, items, {}, { props: { placement: "right-start" } });
+    vi.spyOn(second.anchor, "getBoundingClientRect").mockReturnValue(rect(50, 100, 80, 40));
+    openRef2.value = true;
+    await settle();
+    expect(popoutHosts()[0]?.style.left).toBe("16px"); // frame.x + gutter
+    second.unmount();
+
+    // A LEFT band pins the flipped cascade at the frame's leading edge —
+    // max(frame.x + pad, …), not max(pad, …): a swapped origin would land
+    // this at 820 (16 would fail the frame's own leading gutter).
+    configurePopupInsets({ left: 1000 });
+    const openRef3 = ref(false);
+    const third = mountMenu(openRef3, items, {}, { props: { placement: "right-start" } });
+    vi.spyOn(third.anchor, "getBoundingClientRect").mockReturnValue(rect(1050, 100, 80, 40));
+    openRef3.value = true;
+    await settle();
+    expect(popoutHosts()[0]?.style.left).toBe("1016px"); // frame.x + gutter
   });
 });

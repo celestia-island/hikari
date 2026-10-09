@@ -15,6 +15,7 @@ import {
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { ancestorZoom } from "../runtime/cssZoom";
+import { popupViewportRect } from "../runtime/popupBounds";
 import { clampWithGutter, viewportGutterPx } from "../runtime/viewportGutter";
 import { useI18n } from "../i18n/context";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
@@ -342,6 +343,12 @@ export default defineComponent({
       }
       const vw = window.innerWidth;
       const vh = window.innerHeight;
+      // The popup viewport: the window minus the app-chrome band the host
+      // configured (popupBounds) — full-window when none, in which case
+      // every space check and clamp below is the raw-window math. vw/vh
+      // stay for the CSS-coordinate writes (`bottom`/`right` are measured
+      // from the VIEWPORT edges regardless of the band).
+      const frame = popupViewportRect();
       // The shared viewport gutter (--viewport-gutter: 8px mobile / 16px
       // desktop) — read per reposition so a viewport crossing the
       // breakpoint re-clamps with the right value on the next pass.
@@ -352,26 +359,26 @@ export default defineComponent({
 
       if (props.autoFlip) {
         if (side === "bottom") {
-          const spaceBelow = vh - anchorRect.bottom;
-          const spaceAbove = anchorRect.top;
+          const spaceBelow = frame.y + frame.height - anchorRect.bottom;
+          const spaceAbove = anchorRect.top - frame.y;
           if (spaceBelow < panelRect.height + pad && spaceAbove > spaceBelow) {
             side = "top";
           }
         } else if (side === "top") {
-          const spaceAbove = anchorRect.top;
-          const spaceBelow = vh - anchorRect.bottom;
+          const spaceAbove = anchorRect.top - frame.y;
+          const spaceBelow = frame.y + frame.height - anchorRect.bottom;
           if (spaceAbove < panelRect.height + pad && spaceBelow > spaceAbove) {
             side = "bottom";
           }
         } else if (side === "right") {
-          const spaceRight = vw - anchorRect.right;
-          const spaceLeft = anchorRect.left;
+          const spaceRight = frame.x + frame.width - anchorRect.right;
+          const spaceLeft = anchorRect.left - frame.x;
           if (spaceRight < panelRect.width + pad && spaceLeft > spaceRight) {
             side = "left";
           }
         } else if (side === "left") {
-          const spaceLeft = anchorRect.left;
-          const spaceRight = vw - anchorRect.right;
+          const spaceLeft = anchorRect.left - frame.x;
+          const spaceRight = frame.x + frame.width - anchorRect.right;
           if (spaceLeft < panelRect.width + pad && spaceRight > spaceLeft) {
             side = "right";
           }
@@ -387,7 +394,8 @@ export default defineComponent({
       const anchorStart = isVertical ? anchorRect.left : anchorRect.top;
       const anchorEnd = isVertical ? anchorRect.right : anchorRect.bottom;
       const anchorSize = isVertical ? anchorRect.width : anchorRect.height;
-      const viewportSize = isVertical ? vw : vh;
+      const frameSize = isVertical ? frame.width : frame.height;
+      const frameOrigin = isVertical ? frame.x : frame.y;
 
       let crossPos: number;
       if (align === "start") {
@@ -397,7 +405,10 @@ export default defineComponent({
       } else {
         crossPos = anchorStart + (anchorSize - panelSize) / 2;
       }
-      crossPos = clampWithGutter(crossPos, panelSize, viewportSize, pad);
+      // Clamps run against the popup viewport, frame-relative and re-based
+      // onto the frame origin — with no band configured the origin is 0
+      // and every clamp is the plain viewport-gutter clamp.
+      crossPos = clampWithGutter(crossPos - frameOrigin, panelSize, frameSize, pad) + frameOrigin;
 
       if (side === "bottom") {
         c.top = anchorRect.bottom + off;
@@ -414,13 +425,21 @@ export default defineComponent({
       }
 
       if (side === "bottom") {
-        c.top = clampWithGutter(c.top!, panelRect.height, vh, pad);
+        c.top = clampWithGutter(c.top! - frame.y, panelRect.height, frame.height, pad) + frame.y;
       } else if (side === "top") {
-        c.bottom = clampWithGutter(c.bottom ?? 0, panelRect.height, vh, pad);
+        // `bottom` counts from the viewport's bottom edge — shift it into
+        // frame-relative space (0 when no band is configured) and back.
+        const fromFrameBottom = vh - (frame.y + frame.height);
+        c.bottom =
+          clampWithGutter((c.bottom ?? 0) - fromFrameBottom, panelRect.height, frame.height, pad) +
+          fromFrameBottom;
       } else if (side === "right") {
-        c.left = clampWithGutter(c.left!, panelRect.width, vw, pad);
+        c.left = clampWithGutter(c.left! - frame.x, panelRect.width, frame.width, pad) + frame.x;
       } else {
-        c.right = clampWithGutter(c.right ?? 0, panelRect.width, vw, pad);
+        const fromFrameRight = vw - (frame.x + frame.width);
+        c.right =
+          clampWithGutter((c.right ?? 0) - fromFrameRight, panelRect.width, frame.width, pad) +
+          fromFrameRight;
       }
 
       coords.value = c;

@@ -11,6 +11,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
+import { configurePopupInsets } from "../runtime/popupBounds";
 import HkPopover from "./HkPopover";
 
 const mounts: ReturnType<typeof createApp>[] = [];
@@ -64,7 +65,7 @@ async function flushFrames() {
   }
 }
 
-function mountPopover(anchor: HTMLElement, placement: "bottom" | "top-start" = "bottom") {
+function mountPopover(anchor: HTMLElement, placement: "bottom" | "top-start" | "bottom-start" = "bottom") {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);
@@ -150,5 +151,74 @@ describe("HkPopover anchoring under root CSS zoom", () => {
     // ×3 paint scale.
     expect(parseFloat(host.style.bottom)).toBeCloseTo(64 / 3, 2);
     expect(parseFloat(host.style.left)).toBeCloseTo(20 / 3, 2);
+  });
+});
+
+describe("HkPopover anchoring against an app-chrome band", () => {
+  const PREV_HEIGHT = window.innerHeight;
+
+  afterEach(() => {
+    configurePopupInsets(null);
+    window.innerHeight = PREV_HEIGHT;
+  });
+
+  it("clamps the panel inside the band's frame, not the raw window", async () => {
+    // The band reserves the BOTTOM 700px of the window — the popup frame
+    // is the top 100px strip. The anchor sits inside the band's territory
+    // (y=700): both sides are starved inside the frame, the flip picks
+    // top (more room), and the main-axis clamp pins the panel bottom at
+    // the FRAME's lower gutter (y=84) instead of the window's.
+    window.innerWidth = 1200;
+    window.innerHeight = 800;
+    patchRootZoom("1");
+
+    // Control, no band: the same anchor clamps against the WINDOW bottom
+    // edge — panel bottom 104px above it.
+    const anchor = document.createElement("button");
+    patchRects(anchor, rect(100, 700, 80, 32), rect(0, 0, 200, 60));
+    const open = mountPopover(anchor, "bottom");
+    open.value = true;
+    await flushFrames();
+    const panels = document.body.querySelectorAll<HTMLElement>(".hk-popover-panel");
+    const host = panels[panels.length - 1]!.parentElement!;
+    expect(host.style.bottom).toBe("104px");
+    open.value = false;
+    await flushFrames();
+
+    configurePopupInsets({ bottom: 700 });
+    const anchor2 = document.createElement("button");
+    patchRects(anchor2, rect(100, 700, 80, 32), rect(0, 0, 200, 60));
+    const open2 = mountPopover(anchor2, "bottom");
+    open2.value = true;
+    await flushFrames();
+    // happy-dom never fires transitionend, so the control panel may
+    // linger — the freshly positioned one is the LAST in the body.
+    const panels2 = document.body.querySelectorAll<HTMLElement>(".hk-popover-panel");
+    const host2 = panels2[panels2.length - 1]!.parentElement!;
+    // Panel bottom pinned at frame.y + frame.height - gutter = 100 - 16,
+    // written as the viewport-bottom distance 800 - 84 = 716.
+    expect(host2.style.bottom).toBe("716px");
+    // Cross axis stays HORIZONTAL: centered at 40, inside the frame's
+    // x-gutter as-is (an axis-swapped frame would pin it to 16).
+    expect(host2.style.left).toBe("40px");
+  });
+
+  it("keeps the no-band cross clamp on the horizontal axis of a landscape window", async () => {
+    // Regression pin for the cross-axis frame mapping: on a non-square
+    // window the cross clamp of a vertically-stacked panel must measure
+    // against the WIDTH (1440), not the height (900) — the swapped
+    // mapping clamped this start-aligned panel to 634px.
+    window.innerWidth = 1440;
+    window.innerHeight = 900;
+    patchRootZoom("1");
+    const anchor = document.createElement("button");
+    patchRects(anchor, rect(1300, 500, 40, 40), rect(0, 0, 250, 90));
+    const open = mountPopover(anchor, "bottom-start");
+    open.value = true;
+    await flushFrames();
+    const panels = document.body.querySelectorAll<HTMLElement>(".hk-popover-panel");
+    const host = panels[panels.length - 1]!.parentElement!;
+    expect(host.style.left).toBe("1174px"); // 1440 - 250 - 16
+    expect(host.style.top).toBe("544px"); // anchor bottom 540 + offset 4
   });
 });

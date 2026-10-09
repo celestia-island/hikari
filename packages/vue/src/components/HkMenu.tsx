@@ -14,6 +14,7 @@ import { Check, ChevronRight } from "lucide-vue-next";
 
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { ancestorZoom } from "../runtime/cssZoom";
+import { popupViewportRect } from "../runtime/popupBounds";
 import { viewportGutterPx } from "../runtime/viewportGutter";
 import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
 import "./HkMenu.scss";
@@ -426,8 +427,9 @@ export default defineComponent({
             const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
             // Shared viewport gutter (--viewport-gutter: 8 mobile / 16 desktop).
             const pad = viewportGutterPx();
-            const openRight = r.right + cascadeW <= window.innerWidth - pad;
-            const left = openRight ? r.right : Math.max(pad, r.left - cascadeW);
+            const frame = popupViewportRect();
+            const openRight = r.right + cascadeW <= frame.x + frame.width - pad;
+            const left = openRight ? r.right : Math.max(frame.x + pad, r.left - cascadeW);
             return pointRect(left, r.top);
           },
           contains: (node) => !!rowRefs.value[id]?.contains(node),
@@ -451,11 +453,12 @@ export default defineComponent({
           const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
           // Shared viewport gutter (--viewport-gutter: 8 mobile / 16 desktop).
           const pad = viewportGutterPx();
-          const openRight = r.right + gap + cascadeW <= window.innerWidth - pad;
+          const frame = popupViewportRect();
+          const openRight = r.right + gap + cascadeW <= frame.x + frame.width - pad;
           const left =
             side === "right" && openRight
               ? r.right + gap
-              : Math.max(pad, r.left - cascadeW - gap);
+              : Math.max(frame.x + pad, r.left - cascadeW - gap);
           return pointRect(left, r.top);
         },
         contains: (node) => !!props.anchorRef?.contains(node),

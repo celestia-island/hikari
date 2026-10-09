@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import type { ComponentPublicInstance } from "vue";
 
+import { configurePopupInsets } from "../runtime/popupBounds";
 import HkSelectPanel from "./HkSelectPanel";
 
 const mounts: ReturnType<typeof createApp>[] = [];
@@ -121,5 +122,36 @@ describe("HkSelectPanel popout under root CSS zoom", () => {
     // Same visual target, written in the host's local space: 96/2, 200/2.
     expect(host.style.top).toBe("48px");
     expect(host.style.left).toBe("100px");
+  });
+});
+
+describe("HkSelectPanel popout against an app-chrome band", () => {
+  const PREV_HEIGHT = window.innerHeight;
+
+  afterEach(() => {
+    configurePopupInsets(null);
+    window.innerHeight = PREV_HEIGHT;
+  });
+
+  it("flips a top-placed panel below its anchor when the band eats the space", async () => {
+    // A 260px band (a docked header stack) leaves frame 260..800. The
+    // anchor at y=300 with a top placement: the RAW-viewport top space
+    // (300 - 16) holds the 200px panel — the pre-bounds math pinned it
+    // at top 96, across the band. Inside the frame only 300 - 260 - 16 =
+    // 24 remains → flip below; the clamp keeps the flipped panel inside
+    // the frame (344 + 200 = 544 ≤ 800 - 16).
+    window.innerWidth = 1200;
+    window.innerHeight = 800;
+    patchRootZoom("1");
+    configurePopupInsets({ top: 260 });
+    const { button } = mountPanel();
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue(rect(200, 300, 100, 40));
+
+    button.click();
+    await flush();
+
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host.style.top).toBe("344px"); // anchor bottom 340 + offset 4
+    expect(host.style.left).toBe("200px"); // start, inside the frame as-is
   });
 });

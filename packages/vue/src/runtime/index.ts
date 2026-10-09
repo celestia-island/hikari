@@ -20,6 +20,15 @@ export {
   type TooltipPlacement,
 } from "./tooltipPosition";
 export {
+  configurePopupInsets,
+  popupInsets,
+  popupViewportRect,
+  POPUP_INSET_VARS,
+  type PopupInsets,
+  type ResolvedPopupInsets,
+  type PopupViewportRect,
+} from "./popupBounds";
+export {
   viewportGutterPx,
   clampWithGutter,
   VIEWPORT_GUTTER_VAR,

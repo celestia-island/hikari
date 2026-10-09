@@ -1,0 +1,184 @@
+// HkUserPicker (components/HkUserPicker.tsx) — the tag field + search
+// dialog pair. Tokens follow the house scale (--space-*, --radius-*,
+// rgb(var(--color-*)) — the HkKeywordSearchModal.scss conventions).
+
+.hk-user-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+
+  &.is-disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.hk-user-picker-label {
+  font-size: 0.75rem;
+  color: rgb(var(--color-text) / 70%);
+}
+
+.hk-user-picker-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  min-height: 2.5rem;
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+  background: var(--hi-color-surface, rgba(240, 244, 248, 0.95));
+  border: 1px solid var(--hk-kw-border, rgb(var(--color-border) / 8%));
+  border-radius: var(--radius-lg, 0.75rem);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--hi-color-primary, #7aa2f7);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 12%, transparent);
+  }
+}
+
+.hk-user-picker-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  max-width: 100%;
+  padding: var(--space-4, 0.25rem) var(--space-8, 0.5rem);
+  border-radius: var(--radius-md, 0.5rem);
+  background: rgb(var(--color-primary) / 12%);
+  border: 1px solid rgb(var(--color-primary) / 20%);
+}
+
+.hk-user-picker-tag-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hk-user-picker-tag-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-user-picker-tag-email {
+  font-size: 0.625rem;
+  color: rgb(var(--color-text) / 60%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-user-picker-tag-x {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(var(--color-text) / 60%);
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(var(--color-text) / 10%);
+    color: rgb(var(--color-text));
+  }
+}
+
+.hk-user-picker-add {
+  font-size: 0.75rem;
+  color: rgb(var(--color-text) / 60%);
+
+  &.is-placeholder {
+    color: rgb(var(--color-text) / 45%);
+  }
+}
+
+.hk-user-picker-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 0.75rem);
+  padding: var(--space-4, 0.25rem) 0;
+}
+
+.hk-user-picker-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-height: 6rem;
+}
+
+.hk-user-picker-note {
+  margin: 0;
+  padding: var(--space-12, 0.75rem) 0;
+  font-size: 0.75rem;
+  color: rgb(var(--color-text) / 55%);
+  text-align: center;
+}
+
+.hk-user-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8, 0.5rem);
+  width: 100%;
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 0.5rem);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(var(--color-text) / 6%);
+  }
+
+  &.is-selected {
+    background: rgb(var(--color-primary) / 12%);
+    border-color: rgb(var(--color-primary) / 25%);
+  }
+}
+
+.hk-user-picker-row-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hk-user-picker-row-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-user-picker-row-email {
+  font-size: 0.6875rem;
+  color: rgb(var(--color-text) / 60%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-user-picker-row-check {
+  flex: none;
+  color: var(--hi-color-primary, #7aa2f7);
+  font-weight: 700;
+}
+
+.hk-user-picker-count {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: rgb(var(--color-text) / 55%);
+  text-align: right;
+}

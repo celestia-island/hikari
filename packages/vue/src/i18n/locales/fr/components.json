@@ -262,5 +262,15 @@
   "hikari::mfaVerify.back": "Retour à la connexion",
   "hikari::mfaVerify.loading": "Chargement...",
   "hikari::board3d.resetView": "Réinitialiser la vue",
-  "hikari::board3d.unavailable": "La 3D n'est pas disponible sur cet appareil"
+  "hikari::board3d.unavailable": "La 3D n'est pas disponible sur cet appareil",
+  "hikari::userPicker.title": "Sélectionner des utilisateurs",
+  "hikari::userPicker.searchPlaceholder": "Pseudo, nom d'utilisateur ou e-mail",
+  "hikari::userPicker.searching": "Recherche…",
+  "hikari::userPicker.emptyInitial": "Saisissez un pseudo, un nom d'utilisateur ou un e-mail pour rechercher.",
+  "hikari::userPicker.empty": "Aucun utilisateur ne correspond à cette recherche.",
+  "hikari::userPicker.searchFailed": "La recherche a échoué ; réessayez.",
+  "hikari::userPicker.add": "Sélectionner des utilisateurs…",
+  "hikari::userPicker.remove": "Retirer",
+  "hikari::userPicker.confirm": "Confirmer",
+  "hikari::userPicker.selectedCount": "{count} sélectionnés"
 }

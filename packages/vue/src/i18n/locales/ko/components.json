@@ -262,5 +262,15 @@
   "hikari::mfaVerify.back": "로그인으로 돌아가기",
   "hikari::mfaVerify.loading": "로딩 중...",
   "hikari::board3d.resetView": "시점 재설정",
-  "hikari::board3d.unavailable": "이 기기에서는 3D를 사용할 수 없습니다"
+  "hikari::board3d.unavailable": "이 기기에서는 3D를 사용할 수 없습니다",
+  "hikari::userPicker.title": "사용자 선택",
+  "hikari::userPicker.searchPlaceholder": "닉네임, 사용자 이름 또는 이메일",
+  "hikari::userPicker.searching": "검색 중…",
+  "hikari::userPicker.emptyInitial": "닉네임, 사용자 이름 또는 이메일을 입력해 검색하세요.",
+  "hikari::userPicker.empty": "이 검색과 일치하는 사용자가 없습니다.",
+  "hikari::userPicker.searchFailed": "검색에 실패했습니다. 다시 시도하세요.",
+  "hikari::userPicker.add": "사용자 선택…",
+  "hikari::userPicker.remove": "제거",
+  "hikari::userPicker.confirm": "확인",
+  "hikari::userPicker.selectedCount": "{count}명 선택됨"
 }

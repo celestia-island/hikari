@@ -266,5 +266,15 @@
   "hikari::mfaVerify.back": "返回重新登录",
   "hikari::mfaVerify.loading": "加载中...",
   "hikari::board3d.resetView": "重置视角",
-  "hikari::board3d.unavailable": "此设备不支持 3D 显示"
+  "hikari::board3d.unavailable": "此设备不支持 3D 显示",
+  "hikari::userPicker.title": "选择用户",
+  "hikari::userPicker.searchPlaceholder": "昵称、用户名或邮箱",
+  "hikari::userPicker.searching": "搜索中…",
+  "hikari::userPicker.emptyInitial": "输入昵称、用户名或邮箱开始搜索。",
+  "hikari::userPicker.empty": "没有符合搜索的用户。",
+  "hikari::userPicker.searchFailed": "搜索失败，请重试。",
+  "hikari::userPicker.add": "选择用户…",
+  "hikari::userPicker.remove": "移除",
+  "hikari::userPicker.confirm": "确认",
+  "hikari::userPicker.selectedCount": "已选 {count} 人"
 }

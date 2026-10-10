@@ -59,12 +59,14 @@ function isSubsequence(query: string, text: string): boolean {
  * the styled form of the exact template it serializes to — Gutenberg
  * style, without any block chrome:
  *
- * - typing `{{` opens the vocabulary panel (desktop: anchored under the
- *   caret's field; phone: the standard bottom sheet) and picking a row
- *   inserts the chip; typing a full `{{ name }}` by hand converts it
- *   just the same;
- * - clicking a chip opens the chip editor (desktop: a popover beside
- *   the chip; phone: a bottom sheet) whose form owns the concrete
+ * - typing `{{` opens the vocabulary panel (desktop: anchored DIRECTLY
+ *   BELOW the field — below-first by user direction 2026-10-10, the
+ *   viewport clamp absorbs a short viewport instead of a flip; phone:
+ *   the standard bottom sheet) and picking a row inserts the chip;
+ *   typing a full `{{ name }}` by hand converts it just the same;
+ * - clicking a chip opens the chip editor (desktop: a popover directly
+ *   below the chip, same below-first rule; phone: a bottom sheet) whose
+ *   form owns the concrete
  *   editing — swap the placeholder for another vocabulary entry, read
  *   what it fills from, or remove it — and FOCUS MOVES INTO the form so
  *   the next keystroke lands there;
@@ -1015,9 +1017,13 @@ export const HkTemplateField = defineComponent({
         {props.hint && !props.error && <p class="hk-template-field-hint">{props.hint}</p>}
         {props.error && <p class="hk-template-field-error">{props.error}</p>}
 
-        {/* Vocabulary panel — anchored under the field on desktop, the
-            standard bottom sheet on phone. The editable keeps focus;
-            rows click through, arrows/Enter ride the editable keydown. */}
+        {/* Vocabulary panel — anchored DIRECTLY BELOW the field on
+            desktop (autoFlip off, user direction 2026-10-10: the panel
+            opens in the flow under the input it completes; when the
+            viewport below is too short the clamp slides it up only as
+            far as full visibility requires), the standard bottom sheet
+            on phone. The editable keeps focus; rows click through,
+            arrows/Enter ride the editable keydown. */}
         <HkMenu
           variant="popup"
           items={[]}
@@ -1029,6 +1035,7 @@ export const HkTemplateField = defineComponent({
           placement="bottom-start"
           matchAnchorWidth
           maxHeight="min(18rem, 45dvh)"
+          autoFlip={false}
           title={t("hikari::templateField.suggestTitle", "Placeholders")}
         >
           {filteredTokens.value.length > 0 ? (
@@ -1053,8 +1060,10 @@ export const HkTemplateField = defineComponent({
           )}
         </HkMenu>
 
-        {/* Chip editor — a popover beside the chip on desktop, a bottom
-            sheet on phone; the form inside owns the concrete editing. */}
+        {/* Chip editor — a popover directly below the chip on desktop
+            (autoFlip off, same below-first rule as the vocabulary panel:
+            user direction 2026-10-10), a bottom sheet on phone; the form
+            inside owns the concrete editing. */}
         <HPopover
           modelValue={editorOpen.value}
           onUpdate:modelValue={(v: boolean) => {
@@ -1073,6 +1082,7 @@ export const HkTemplateField = defineComponent({
           anchorRef={editorChip.value}
           sheetOnMobile
           placement="bottom-start"
+          autoFlip={false}
           title={t("hikari::templateField.chipEditorTitle", "Edit placeholder")}
         >
           <div class="hk-tpl-editor" onFocusin={() => { editorHoldsFocus.value = true; }}>

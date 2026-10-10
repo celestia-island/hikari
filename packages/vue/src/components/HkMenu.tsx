@@ -158,6 +158,17 @@ export default defineComponent({
      */
     maxHeight: { type: String, default: undefined },
     /**
+     * Forwarded to the desktop popout panels' `autoFlip` (HkSelectPanel):
+     * whether a panel whose placed side cannot host it migrates to the
+     * opposite vertical side. Default true — every existing consumer
+     * keeps the flip. Hosts that must keep the popup on its placed side
+     * (the fill-template field's vocabulary panel anchors DIRECTLY BELOW
+     * its field, user direction 2026-10-10) pass `false`; the viewport
+     * clamp then absorbs the overflow instead. Mobile sheets have no
+     * flip to make — the prop never reaches them.
+     */
+    autoFlip: { type: Boolean, default: true },
+    /**
      * Sidebar variant only: every collapsible group renders EXPANDED
      * until the user collapses it — nav sidebars that read as a table of
      * contents instead of an accordion. Default false keeps the accordion
@@ -606,6 +617,7 @@ export default defineComponent({
           offset={cfg.offset}
           matchAnchorWidth={cfg.match}
           maxHeight={props.maxHeight}
+          autoFlip={props.autoFlip}
           onUpdate:open={(v: boolean) => {
             if (!v) onRootCloseRequest();
           }}
@@ -634,6 +646,7 @@ export default defineComponent({
               placement="bottom-start"
               offset={0}
               maxHeight={props.maxHeight}
+              autoFlip={props.autoFlip}
               onUpdate:open={(v: boolean) => {
                 if (!v) onSubCloseRequest(level);
               }}

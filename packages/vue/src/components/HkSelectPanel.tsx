@@ -91,6 +91,19 @@ export default defineComponent({
       type: String as PropType<SelectPanelPlacement>,
       default: "bottom-start",
     },
+    /**
+     * Auto-flip to the opposite vertical side when the placed side cannot
+     * host the panel. Default true — plain dropdowns read better flipped
+     * than clamped over their trigger. Surfaces whose popup must stay
+     * anchored BELOW their field regardless of how the viewport happens
+     * to be filled (the fill-template field's vocabulary panel: user
+     * direction 2026-10-10 — it opens in the flow under the input, never
+     * migrating above it) pass `false`: the panel keeps the placed side
+     * and the viewport clamp absorbs the overflow instead (an oversized
+     * panel slides up over the anchor only as far as full visibility
+     * requires).
+     */
+    autoFlip: { type: Boolean, default: true },
     /** Gap between anchor and popout, in px. */
     offset: { type: Number, default: 4 },
     /** Popout min-width follows the anchor width (select parity). */
@@ -557,13 +570,17 @@ export default defineComponent({
         side === "top"
           ? r.top - props.offset - ph
           : r.bottom + props.offset;
-      // Auto-flip when the chosen side cannot host the panel.
-      if (side === "bottom" && top + ph > frame.y + frame.height - pad) {
-        side = "top";
-        top = r.top - props.offset - ph;
-      } else if (side === "top" && top < frame.y + pad) {
-        side = "bottom";
-        top = r.bottom + props.offset;
+      // Auto-flip when the chosen side cannot host the panel (opt-out
+      // via autoFlip: false keeps the placed side; the clamp below then
+      // absorbs an overflow instead of migrating the panel).
+      if (props.autoFlip) {
+        if (side === "bottom" && top + ph > frame.y + frame.height - pad) {
+          side = "top";
+          top = r.top - props.offset - ph;
+        } else if (side === "top" && top < frame.y + pad) {
+          side = "bottom";
+          top = r.bottom + props.offset;
+        }
       }
       const align = props.placement.endsWith("-center")
         ? "center"

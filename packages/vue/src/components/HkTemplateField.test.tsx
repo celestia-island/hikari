@@ -774,3 +774,85 @@ describe("HkTemplateField vocabulary semantics guards", () => {
     expect(active[0]!.textContent).toContain("username");
   });
 });
+
+describe("HkTemplateField popup direction (below-first)", () => {
+  /** Fixed visual rect (the rootzoom rig's shape). */
+  function rect(x: number, y: number, w: number, h: number): DOMRect {
+    return {
+      x, y, width: w, height: h, top: y, left: x, right: x + w, bottom: y + h,
+      toJSON: () => ({}),
+    } as DOMRect;
+  }
+
+  async function flushFrames() {
+    await nextTick();
+    for (let i = 0; i < 3; i++) {
+      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+    }
+  }
+
+  it("the vocabulary panel stays below a field anchored near the viewport bottom", async () => {
+    // Below-first (user direction 2026-10-10): a low field with room only
+    // ABOVE must not migrate the panel above the field — the panel keeps
+    // the placed bottom side (data-side drives the pop motion's origin)
+    // and the viewport clamp absorbs the overflow. The default-flip
+    // behavior for plain panels is pinned over in HkSelectPanel's own
+    // suite; this pins the field's opt-out through the HkMenu wiring.
+    const prevHeight = window.innerHeight;
+    window.innerHeight = 800;
+    try {
+      const el = mount({ modelValue: "" });
+      await nextTick();
+      const edit = editable(el);
+      edit.getBoundingClientRect = () => rect(40, 760, 300, 20);
+      await openTrigger(el, "{{ us");
+
+      const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+      expect(host).toBeTruthy();
+      expect(host.dataset.side).toBe("bottom");
+      // Raw top 780 + menu offset 6 = 786 overflows the 800px viewport
+      // (the panel measures at the 200px happy-dom fallback): clamped to
+      // 800 - 200 - 16 = 584 instead of flipping.
+      expect(Number.parseInt(host.style.top, 10)).toBe(584);
+    } finally {
+      window.innerHeight = prevHeight;
+    }
+  });
+
+  it("the chip editor popover stays below a chip anchored near the viewport bottom", async () => {
+    // Same below-first rule for the chip editor (autoFlip off on the
+    // HPopover): without it, a 300px-tall panel beside a chip with 20px
+    // of room below flips top-side — exactly the overlap the user
+    // reported. The panel's rect is faked at the prototype (the
+    // rootzoom rig's approach) so the flip comparison has real numbers.
+    const prevHeight = window.innerHeight;
+    window.innerHeight = 800;
+    const gBCR = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        if (this.classList.contains("hk-tpl-chip")) return rect(40, 760, 120, 20);
+        if (this.classList.contains("hk-popover-panel")) return rect(0, 0, 220, 300);
+        return rect(0, 0, 0, 0);
+      },
+    );
+    try {
+      const el = mount({ modelValue: "https://g.com/{{username}}.png" });
+      await nextTick();
+      editable(el).querySelector<HTMLElement>(".hk-tpl-chip")!.click();
+      await flushFrames();
+
+      const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+      expect(panel).toBeTruthy();
+      // No flip: the resolved placement keeps the bottom side.
+      expect(panel.className).toContain("hk-popover-bottom-start");
+      expect(panel.className).not.toContain("hk-popover-top-start");
+      // And the position: raw top 780 + offset 4 = 784, clamped to
+      // 800 - 300 - 16 = 484 (full visibility beats the anchor gap).
+      const host = panel.parentElement!;
+      expect(host.style.top).toBe("484px");
+    } finally {
+      gBCR.mockRestore();
+      window.innerHeight = prevHeight;
+    }
+  });
+});

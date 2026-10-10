@@ -431,6 +431,38 @@ describe("HkSelectPanel custom invocation", () => {
       window.innerHeight = prevHeight;
     }
   });
+
+  it("autoFlip: false keeps a starved bottom popout below its anchor (clamped)", async () => {
+    // The below-first rule (HkTemplateField's vocabulary panel): an
+    // anchor near the viewport bottom with room only ABOVE must not
+    // migrate the panel above — with autoFlip off the placed side holds
+    // (data-side stays "bottom", so the pop motion still grows the panel
+    // out of the anchor's bottom edge) and the clamp slides the panel up
+    // only as far as full visibility requires. The default flips the
+    // same rig top-side — that direction is pinned by the tall-popout
+    // clamp test above.
+    const prevHeight = window.innerHeight;
+    window.innerHeight = 800;
+    try {
+      const { container, open } = mountPanel({ placement: "bottom-start", autoFlip: false });
+      await nextTick();
+
+      const anchor = container.querySelector<HTMLButtonElement>("button")!;
+      anchor.getBoundingClientRect = () =>
+        ({ top: 760, bottom: 780, left: 40, right: 140, width: 100, height: 20 }) as DOMRect;
+      open.value = true;
+      await nextTick();
+
+      const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+      expect(host.dataset.side).toBe("bottom");
+      // Raw top 780 + offset 4 = 784 overflows on an 800px viewport
+      // (happy-dom measures the panel at the 200px fallback): the clamp
+      // pins it to 800 - 200 - 16 = 584 instead of flipping.
+      expect(Number.parseInt(host.style.top, 10)).toBe(584);
+    } finally {
+      window.innerHeight = prevHeight;
+    }
+  });
 });
 
 describe("HkSelectPanel back-guard (window-first back priority)", () => {

@@ -17,7 +17,12 @@ import { describe, expect, it } from "vitest";
  *      mobile sheet must keep the panel as the ONE scroll region;
  *   2. the scroll host is a positioning context (`position: relative`)
  *      for the overlay rails;
- *   3. a curated class list checks TSX→CSS (no unstyled element) and a
+ *   3. the edit's children align on the shared text BASELINE
+ *      (`align-items: baseline` + `align-content: center`) and no chip
+ *      rule carries a manual vertical nudge — the flex alignment IS the
+ *      fix for the chip-rides-high report, a pixel hack would be a
+ *      regression;
+ *   4. a curated class list checks TSX→CSS (no unstyled element) and a
  *      reverse scan flags any `hk-tpl-*`/`hk-template-*` selector in the
  *      sheet that no source file renders (no dead rule).
  */
@@ -107,6 +112,41 @@ describe("HkTemplateField stylesheet contract", () => {
 
   it("gives the scroll host a positioning context for the overlay rails", () => {
     expect(css).toMatch(/\.hk-tpl-editor-scroll\s*\{[^}]*position:\s*relative/s);
+  });
+
+  it("aligns the edit's children on the shared text baseline, never box centers", () => {
+    // The chip's smaller monospace text must share the literal text's
+    // BASELINE (flex-native `align-items: baseline`), not the box
+    // midpoint — centering the box floats the chip's baseline a fraction
+    // above the surrounding text's and reads as the chip riding high
+    // (user report 2026-10-10). Restoring `center` must fail here.
+    expect(css).toMatch(/\.hk-template-field-edit\s*\{[^}]*align-items:\s*baseline/s);
+    expect(css).not.toMatch(/\.hk-template-field-edit\s*\{[^}]*align-items:\s*center/s);
+    // The single-line read stays vertically centered in the min-height
+    // box via the LINE centering (align-content) — plain baseline alone
+    // would top-align it in the stretched line.
+    expect(css).toMatch(/\.hk-template-field-edit\s*\{[^}]*align-content:\s*center/s);
+    // The chip editor's current-token line (static chip + description)
+    // has been baseline-aligned since introduction — it predates the
+    // edit-container fix and stays that way (an R1 review round caught
+    // a mutation-recovery slip that had silently flipped it).
+    expect(css).toMatch(/\.hk-tpl-editor-current\s*\{[^}]*align-items:\s*baseline/s);
+  });
+
+  it("aligns chips by flex baseline, never by pixel nudges", () => {
+    // The baseline contract is the alignment layout itself: no manual
+    // vertical offsets on the chip inside the edit (a margin/translate
+    // hack would re-introduce the drift the alignment fixes, tuned to
+    // one font size). The dark-mode and unknown variants ride the same
+    // box, so the whole chip block must stay offset-free.
+    const chipRules = [...css.matchAll(/([^{}]*\.hk-tpl-chip[^{}]*)\{([^}]*)\}/g)];
+    // Extraction sanity (never trust a 0-hit scan): the chip is styled.
+    expect(chipRules.length).toBeGreaterThan(0);
+    for (const [, selector, body] of chipRules) {
+      expect(body, `chip rule ${(selector ?? "").trim()} must not nudge vertically`).not.toMatch(
+        /margin-(top|bottom)|translate[XY]|\btop:|\bbottom:|vertical-align/,
+      );
+    }
   });
 
   it("styles every editor class the TSX renders", () => {

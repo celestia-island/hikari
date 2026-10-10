@@ -75,7 +75,19 @@
   min-height: calc(1.5rem + var(--space-4, 4px));
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  // Baseline alignment (user direction 2026-10-10): the chip's smaller
+  // monospace text must share the literal text's BASELINE, not its box
+  // midpoint — `center` centered the chip's box, which floats the chip's
+  // baseline a fraction above the surrounding text's (smaller font,
+  // same-height line) and read as the chip riding high. Baseline is the
+  // flex-native fix: text runs and chips (inline-flex, whose baseline
+  // is its content text's) align on one shared baseline with no pixel
+  // nudges. `align-content: center` keeps the single-line read
+  // vertically centered inside the min-height box — the line sizes to
+  // its content and the LINE centers, where plain `baseline` alone
+  // would top-align it in the stretched line.
+  align-items: baseline;
+  align-content: center;
   gap: 2px 3px;
   font-size: var(--text-base, 0.875rem);
   line-height: 1.5;

@@ -63,6 +63,40 @@ afterEach(() => {
 });
 
 describe("HkStatusBar", () => {
+  it("suppresses a build hash the version line already shows, keeps drift visible", async () => {
+    // Display-layer dedup (2026-10-10): the family version line ends with
+    // `::<hash7>`, so appending the SAME commit — bare hash7 or a
+    // `<branch>::<hash7>` stamp — printed the commit twice (the engine-row
+    // bug). A DIFFERENT commit stays visible: that IS the drift signal.
+    const cases: Array<{ version: string; hash: string; expect: string }> = [
+      { version: "0.1 master::d423747", hash: "d423747", expect: "0.1 master::d423747" },
+      { version: "0.1 master::d423747", hash: "master::d423747", expect: "0.1 master::d423747" },
+      { version: "0.1 master::d423747", hash: "badd902", expect: "0.1 master::d423747 badd902" },
+      { version: "0.1 master::d423747", hash: "feat/x::badd902", expect: "0.1 master::d423747 feat/x::badd902" },
+      { version: "0.1.284", hash: "d423747", expect: "0.1.284 d423747" },
+      { version: "0.1.52", hash: "EDW62Q", expect: "0.1.52 EDW62Q" },
+    ];
+    for (const { version, hash, expect: expected } of cases) {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      const app = createApp({
+        render: () =>
+          h(HkStatusBar, {
+            version,
+            panelBuildHash: hash,
+            connectionStatus: "connected",
+            connectionInfo: INFO,
+          }),
+      });
+      app.mount(container);
+      await nextTick();
+      const row = container.querySelector<HTMLElement>(".s-status-bar-version")!;
+      expect(row.textContent, `${version} + ${hash}`).toBe(expected);
+      app.unmount();
+      container.remove();
+    }
+  });
+
   it("renders extraDetails rows capped at 400px with an ellipsized, title-backed value", async () => {
     const container = mountBar({
       version: "1.2.3",

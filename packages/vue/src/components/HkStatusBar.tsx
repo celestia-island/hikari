@@ -65,8 +65,35 @@ function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: 
   return <WifiOff size={size} />;
 }
 
+/**
+ * The commit a family version line ends with (`0.1 master::d423747`),
+ * when it carries one. Lowercased for comparison.
+ */
+function versionLineCommit(v: string): string | undefined {
+  return v.match(/::([0-9a-f]{7,40})$/i)?.[1]?.toLowerCase();
+}
+
+/** The commit a build stamp carries — a bare hash7 or a `<branch>::<hash7>`
+ * stamp. Non-git stamps (retired Crockford tokens) carry none and always
+ * stay visible; they can never be shown "already". */
+function stampCommit(hash: string): string | undefined {
+  const stamped = hash.match(/^(\S+)::([0-9a-f]{7,40})$/i)?.[2];
+  return stamped?.toLowerCase() ?? (/^[0-9a-f]{7,40}$/i.test(hash) ? hash.toLowerCase() : undefined);
+}
+
 function fmtVer(v: string, hash?: string): string {
-  if (hash) return `${v} ${hash}`;
+  // Display-layer dedup (2026-10-10 family direction): a hash whose commit
+  // the version line already names says nothing new — printing it twice was
+  // the status-bar engine-row bug. Drift (a different commit) stays visible:
+  // that IS the stale-embed signal.
+  if (hash) {
+    const shown = versionLineCommit(v);
+    const stamp = stampCommit(hash);
+    if (shown === undefined || stamp === undefined || shown !== stamp) {
+      return `${v} ${hash}`;
+    }
+    return v;
+  }
   return v;
 }
 

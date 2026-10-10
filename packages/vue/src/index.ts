@@ -114,6 +114,8 @@ export {
   acceptExtensions,
 } from "./components/filePicker";
 export { default as HToast } from "./components/HkToast";
+export { default as HPersistentToast } from "./components/HkPersistentToast";
+export { default as HPersistentToastGroup } from "./components/HkPersistentToastGroup";
 export { default as HTooltip } from "./components/HkTooltip";
 export { default as HTree } from "./components/HkTree";
 export { default as HWindowedItem } from "./components/HkWindowedItem";
@@ -754,6 +756,8 @@ export { default as HkFileField } from "./components/HkFileField";
 export { default as HkFileBrowserDialog } from "./components/HkFileBrowserDialog";
 export { default as HkFilePickerField } from "./components/HkFilePickerField";
 export { default as HkToast } from "./components/HkToast";
+export { default as HkPersistentToast, type PersistentToastTone } from "./components/HkPersistentToast";
+export { default as HkPersistentToastGroup } from "./components/HkPersistentToastGroup";
 export { default as HkTooltip } from "./components/HkTooltip";
 export { type HkTooltipSlotProps } from "./components/HkTooltip";
 export { default as HkTree } from "./components/HkTree";

@@ -128,6 +128,7 @@
     "hikari::passwordInput.strengthLabel": "Passwortstärke",
     "hikari::passwordInput.strengthStrong": "Stark",
     "hikari::passwordInput.strengthWeak": "Schwach",
+    "hikari::persistentToast.dismiss": "Ausblenden",
     "hikari::phoneInput.chooseCountry": "Ländercode wählen",
     "hikari::phoneInput.dialCode": "Code",
     "hikari::phoneInput.noMatches": "Kein passendes Land",

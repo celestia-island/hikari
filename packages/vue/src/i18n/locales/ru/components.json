@@ -128,6 +128,7 @@
     "hikari::passwordInput.strengthLabel": "Надёжность пароля",
     "hikari::passwordInput.strengthStrong": "Сильный",
     "hikari::passwordInput.strengthWeak": "Слабый",
+    "hikari::persistentToast.dismiss": "Скрыть",
     "hikari::phoneInput.chooseCountry": "Выберите код страны",
     "hikari::phoneInput.dialCode": "Код",
     "hikari::phoneInput.noMatches": "Подходящей страны не найдено",

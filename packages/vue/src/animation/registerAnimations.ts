@@ -119,6 +119,12 @@ registerCssAnimation("hk-placeholder-marquee-scroll", { infinite: true });
 registerCssAnimation("s-admin-header-emergency-pulse", { infinite: true });
 registerCssAnimation("hk-loading-veil-in");
 registerCssAnimation("hk-loading-veil-spin", { infinite: true });
+// components/HkPersistentToast.scss — chrome-bar chip spinner (loops
+// forever while the loading tone shows).
+registerCssAnimation("hk-persistent-toast-spin", { infinite: true });
+// components/HkPersistentToast.scss — hover detail card entrance (plays
+// once; hides instantly on close, so no leave keyframe).
+registerCssAnimation("hk-persistent-toast-card-in");
 // The styles/theme/mixins.scss ambient/glow/entrance keyframes were
 // retired with the legacy Gen-1 sheet vendoring (hikari #476) — their
 // registrar entries went with them.

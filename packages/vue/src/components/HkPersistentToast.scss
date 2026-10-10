@@ -1,0 +1,143 @@
+// Chrome-bar persistent status chip — proportions match a title-bar
+// loading pill (HkStatusPill's compactness at toast-family semantics).
+// All colors ride the RGB-channel theme tokens so light/dark and the
+// glass/opacity pipelines apply without component-side branching.
+
+.hk-persistent-toast-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  // The wrap owns the live-region semantics; the chip inside may be a
+  // button (chrome no-drag regions only exempt buttons from window
+  // dragging — see the wowsp title bar's interactive() gate).
+  font-size: var(--text-2xs, 0.6875rem);
+  line-height: 1.4;
+}
+
+.hk-persistent-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6, 0.375rem);
+  padding: 2px var(--space-8, 0.5rem);
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  background: rgb(var(--color-surface) / 60%);
+  color: rgb(var(--color-text) / 72%);
+  font: inherit;
+  max-width: 220px;
+  min-width: 0;
+}
+
+// Interactive variant (detail slot provided): a real button — reset the
+// browser chrome, tighten the start padding so the icon optically
+// balances, and give the hover a faint lift like HkTag's interactive
+// cousins.
+button.hk-persistent-toast {
+  cursor: pointer;
+  appearance: none;
+  padding-inline-start: var(--space-6, 0.375rem);
+
+  &:hover {
+    background: rgb(var(--color-surface) / 85%);
+    color: rgb(var(--color-text) / 90%);
+  }
+
+  &:focus-visible {
+    outline: 1px solid rgb(var(--color-primary) / 70%);
+    outline-offset: 1px;
+  }
+}
+
+.hk-persistent-toast__icon {
+  flex-shrink: 0;
+}
+
+.hk-persistent-toast--warning .hk-persistent-toast__icon {
+  color: rgb(var(--color-warning));
+}
+
+.hk-persistent-toast--error .hk-persistent-toast__icon {
+  color: rgb(var(--color-error));
+}
+
+.hk-persistent-toast--info .hk-persistent-toast__icon {
+  color: rgb(var(--color-muted));
+}
+
+.hk-persistent-toast__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Same grammar as HkToast's spinner, sized for the chip and themed via
+// currentColor so the tone classes stay in one place.
+.hk-persistent-toast__spinner {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border: 2px solid rgb(var(--color-text) / 25%);
+  border-top-color: rgb(var(--color-text) / 80%);
+  border-radius: 50%;
+  box-sizing: border-box;
+  animation: hk-persistent-toast-spin 0.7s linear infinite;
+}
+
+@keyframes hk-persistent-toast-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hk-persistent-toast__dismiss {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgb(var(--color-text) / 45%);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-full, 999px);
+
+  &:hover {
+    color: rgb(var(--color-text));
+    background: rgb(var(--color-text) / 8%);
+  }
+
+  &:focus-visible {
+    outline: 1px solid rgb(var(--color-primary) / 70%);
+  }
+}
+
+// The detail card: a fixed-position rich surface teleported to body,
+// positioned by the component (below the chip, end-aligned, viewport-
+// clamped). Glass surface rides the shared hii-dropdown-content class;
+// only geometry and motion live here.
+.hk-persistent-toast-card {
+  position: fixed;
+  min-width: 200px;
+  max-width: 340px;
+  padding: var(--space-8, 0.5rem) var(--space-10, 0.75rem);
+  border-radius: var(--radius-lg, 0.5rem);
+  font-size: var(--text-2xs, 0.6875rem);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  font-family: inherit;
+  animation: hk-persistent-toast-card-in 120ms ease-out;
+}
+
+@keyframes hk-persistent-toast-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-persistent-toast__spinner,
+  .hk-persistent-toast-card {
+    animation: none;
+  }
+}

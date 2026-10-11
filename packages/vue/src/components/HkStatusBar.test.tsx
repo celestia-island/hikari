@@ -668,5 +668,14 @@ describe("HkStatusBar", () => {
     const popoverRule = /\.s-status-bar-popover-value\s*\{[^}]*\}/.exec(scss)?.[0] ?? "";
     expect(popoverRule, "popover value cell bound exists").toContain("max-width: min(16rem, 60vw)");
     expect(scss).toMatch(/\.s-status-bar-popover-value \.s-status-bar-version\s*\{[^}]*max-width:\s*100%/s);
+    // Dead-overlay guard: if the marquee's measurement never fires, a
+    // capped cell degrades to an ellipsis cut, never a silent hard clip.
+    expect(scss).toMatch(
+      /\.s-status-bar-version__static\s*\{[^}]*text-overflow:\s*ellipsis/s,
+    );
+    // The stale combined selector list (`.s-status-bar-version,
+    // .s-status-bar-version-sep { nowrap }`) is gone — the dedicated
+    // block owns the version cell's rules (2026-10-11 R1 cleanup).
+    expect(scss).not.toMatch(/\.s-status-bar-version,\s*\n\s*\.s-status-bar-version-sep\s*\{/);
   });
 });

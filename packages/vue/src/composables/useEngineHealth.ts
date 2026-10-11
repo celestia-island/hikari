@@ -1,4 +1,6 @@
-import { onMounted, ref, type Ref } from "vue";
+import { onMounted, onUnmounted, ref, type Ref } from "vue";
+
+import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 
 /** Inlined subset of the `/api/health` network payload — kept local so
  *  hikari stays dependency-free of protocol packages. */
@@ -24,9 +26,18 @@ export interface EngineHealth {
   network: NetworkInfo | null;
 }
 
+/** Mounted refresh cadence (visibility-aware via the interval bus — a
+ * hidden tab parks instead of burning radio). 30s: engine identity is
+ * not latency-critical, but a transient mount-time failure must not
+ * blank the engine row for the page's whole life (2026-10-11
+ * auth-surface report — the one-shot fetch left a dead row forever). */
+const REFRESH_MS = 30_000;
+
 /**
- * Fetch `/api/health` once on mount and expose the engine/network subset.
- * Replaces per-app hand-rolled health fetches. Call `refresh()` to re-poll.
+ * Fetch `/api/health` on mount and keep it fresh on a visibility-aware
+ * 30s loop; expose the engine/network subset. Replaces per-app
+ * hand-rolled health fetches. Call `refresh()` to force an immediate
+ * re-poll outside the cadence.
  *
  * @param baseUrl Optional API origin (defaults to same-origin "").
  */
@@ -39,6 +50,7 @@ export function useEngineHealth(baseUrl?: string): {
   const health = ref<EngineHealth | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  let tickHandle: IntervalHandle | null = null;
 
   async function refresh(): Promise<void> {
     loading.value = true;
@@ -63,7 +75,19 @@ export function useEngineHealth(baseUrl?: string): {
     }
   }
 
-  onMounted(() => { void refresh(); });
+  onMounted(() => {
+    void refresh();
+    tickHandle = scheduleInterval(() => {
+      // Never stack requests on a slow endpoint — skip the beat while a
+      // refresh is still in flight.
+      if (!loading.value) void refresh();
+    }, REFRESH_MS);
+  });
+
+  onUnmounted(() => {
+    tickHandle?.disconnect();
+    tickHandle = null;
+  });
 
   return { health, loading, error, refresh };
 }

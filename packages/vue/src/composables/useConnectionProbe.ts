@@ -78,23 +78,38 @@ export function useConnectionProbe(): {
   let tickHandle: IntervalHandle | null = null;
   let nextAttemptAt = 0;
   let consecutiveFailures = 0;
+  // Set at unmount, read by schedulePoll: an in-flight probe resolving
+  // AFTER unmount must not arm a fresh slot — that race resurrected a
+  // 15s zombie loop polling forever on a dead component (R2 catch,
+  // 2026-10-11). Late state writes into the dead ref are harmless;
+  // late ARMING is not.
+  let disposed = false;
 
   function applyCountdown(): void {
     const seconds = Math.max(0, Math.ceil((nextAttemptAt - Date.now()) / 1000));
     result.value = { ...result.value, countdown: seconds };
   }
 
-  async function probeOnce(): Promise<void> {
+  async function probeOnce(opts?: { quiet?: boolean }): Promise<void> {
     pollHandle?.disconnect();
     pollHandle = null;
+    const wasConnected = result.value.connected;
+    // Quiet re-checks (the scheduled poll while healthy) keep the light
+    // GREEN through the fetch: flipping every healthy re-check through
+    // "reconnecting" would blink the pill and re-fire the recovery flash
+    // once per interval. A quiet re-check that FAILS falls through to
+    // the ladder below — that transition is real and must show.
+    const quiet = opts?.quiet === true && wasConnected;
     const attempt = result.value.attemptNumber + 1;
-    result.value = {
-      ...result.value,
-      state: result.value.connected ? "reconnecting" : "connecting",
-      attemptNumber: attempt,
-      retryCount: attempt,
-      countdown: 0,
-    };
+    if (!quiet) {
+      result.value = {
+        ...result.value,
+        state: wasConnected ? "reconnecting" : "connecting",
+        attemptNumber: attempt,
+        retryCount: attempt,
+        countdown: 0,
+      };
+    }
     const started = Date.now();
     try {
       const resp = await fetch(endpointUrl(), {
@@ -104,12 +119,26 @@ export function useConnectionProbe(): {
       const latencyMs = Date.now() - started;
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       consecutiveFailures = 0;
+      nextAttemptAt = 0;
       result.value = {
         ...result.value,
         connected: true,
         state: "connected",
         latencyMs,
+        // The attempt counter is LADDER state, not a lifetime odometer:
+        // a healthy probe zeroes it so the next outage's ladder reads
+        // "Retrying 1/3" instead of an ever-growing number. Continuous
+        // polling made this matter — the counter used to stop moving
+        // once connected, so the creep was invisible.
+        attemptNumber: 0,
+        retryCount: 0,
+        countdown: 0,
       };
+      // Continuous observation (2026-10-11 auth-surface report): the
+      // light must FOLLOW the backend, not just record the initial
+      // verdict. Parked-forever-on-success meant a backend dying later
+      // left a permanently green light on sessionless surfaces.
+      schedulePoll(true);
     } catch {
       consecutiveFailures += 1;
       const failed = consecutiveFailures >= result.value.retryTotal;
@@ -118,6 +147,8 @@ export function useConnectionProbe(): {
         connected: false,
         state: failed ? "failed" : "disconnected",
         latencyMs: null,
+        attemptNumber: attempt,
+        retryCount: attempt,
       };
       nextAttemptAt = Date.now() + DEFAULT_POLL_MS;
       applyCountdown();
@@ -125,15 +156,21 @@ export function useConnectionProbe(): {
     }
   }
 
-  function schedulePoll(): void {
-    // Visibility-aware one-shot: the 15s retry window holds while the
-    // page is hidden instead of burning down on a throttled background
-    // timer (intervalBus — this is its designed case: data polling, not
-    // animation).
+  function schedulePoll(quiet = false): void {
+    // The zombie guard: an in-flight probe settling after unmount lands
+    // here with nothing left to serve — arming would loop forever on a
+    // dead component. Both call sites (success re-check AND the failure
+    // ladder) route through this single gate.
+    if (disposed) return;
+    // Visibility-aware one-shot: the 15s window holds while the page is
+    // hidden instead of burning down on a throttled background timer
+    // (intervalBus — this is its designed case: data polling, not
+    // animation). Retry-ladder hops stay loud; the success-path
+    // re-check passes `quiet` so a healthy poll never blinks the light.
     pollHandle?.disconnect();
     pollHandle = scheduleIntervalAfter(() => {
       pollHandle = null;
-      void probeOnce();
+      void probeOnce({ quiet });
     }, DEFAULT_POLL_MS);
   }
 
@@ -151,6 +188,9 @@ export function useConnectionProbe(): {
   onUnmounted(() => {
     liveProbes = Math.max(0, liveProbes - 1);
     probeRuntime?.pulse({ liveProbes });
+    // Disarm FIRST: an in-flight probe's late success must find the
+    // guard already up when it reaches schedulePoll.
+    disposed = true;
     pollHandle?.disconnect();
     pollHandle = null;
     tickHandle?.disconnect();

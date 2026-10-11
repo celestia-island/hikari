@@ -8,6 +8,7 @@ import HPopover from "./HkPopover";
 import HkButton from "./HkButton";
 import type { HkConnectionInfo } from "./HkConnectionInfo";
 import { HkCountdownDigit } from "./HkCountdownDigit";
+import { HkPlaceholderMarquee } from "./HkPlaceholderMarquee";
 
 /**
  * HkStatusBar — connection + version status pill for app footers.
@@ -27,6 +28,13 @@ import { HkCountdownDigit } from "./HkCountdownDigit";
  * Styling rides the shared `s-status-bar*` classes from
  * `styles/admin-tokens.scss` (the `[data-compact]` rules hide the inline
  * version block); everything else is inline.
+ *
+ * The two version values (panel row, engine row) are merged ONCE from
+ * the raw facts via hkMergeVersionDisplay — the single set-based,
+ * duplicate-free-by-construction rule for the whole family — and each
+ * renders in an HkVersionValue cell: static text that hands its paint
+ * over to the shared HkPlaceholderMarquee scrolling window when a long
+ * branch identity outgrows the cell (2026-10-11 user direction).
  */
 /** Locale-aware region name: the political-name i18n keys first (they
  * carry the deliberate political naming per language, e.g. zh-Hans
@@ -66,36 +74,104 @@ function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: 
 }
 
 /**
- * The commit a family version line ends with (`0.1 master::d423747`),
- * when it carries one. Lowercased for comparison.
+ * One git identity atom: a commit, optionally labeled by its branch.
+ * `feat/x:770f625`, the legacy `feat/x::770f625`, and a bare `770f625`
+ * all carry the SAME commit — the commit IS the identity (2026-10-08
+ * family direction); branch labels are names for it.
  */
-function versionLineCommit(v: string): string | undefined {
-  return v.match(/::([0-9a-f]{7,40})$/i)?.[1]?.toLowerCase();
+export interface HkVersionIdentity {
+  branch?: string;
+  commit: string;
 }
 
-/** The commit a build stamp carries — a bare hash7 or a `<branch>::<hash7>`
- * stamp. Non-git stamps (retired Crockford tokens) carry none and always
- * stay visible; they can never be shown "already". */
-function stampCommit(hash: string): string | undefined {
-  const stamped = hash.match(/^(\S+)::([0-9a-f]{7,40})$/i)?.[2];
-  return stamped?.toLowerCase() ?? (/^[0-9a-f]{7,40}$/i.test(hash) ? hash.toLowerCase() : undefined);
+/** `<branch>:<hash7..40>` / legacy `<branch>::<hash>` / bare `<hash>`.
+ * Both separators count: the family narrowed `::` → `:` on 2026-10-11
+ * and transition-window binaries still speak either shape. Non-git
+ * tokens (retired Crockford chunk stamps like `EDW62Q`) carry no commit
+ * and return undefined — they can never be "already shown". */
+const STAMP_RE = /^(\S+?):+([0-9a-f]{7,40})$/i;
+const BARE_COMMIT_RE = /^[0-9a-f]{7,40}$/i;
+
+export function hkParseIdentity(token: string | undefined): HkVersionIdentity | undefined {
+  if (!token) return undefined;
+  const labeled = token.match(STAMP_RE);
+  if (labeled) return { branch: labeled[1], commit: labeled[2].toLowerCase() };
+  if (BARE_COMMIT_RE.test(token)) return { commit: token.toLowerCase() };
+  return undefined;
 }
 
-function fmtVer(v: string, hash?: string): string {
-  // Display-layer dedup (2026-10-10 family direction): a hash whose commit
-  // the version line already names says nothing new — printing it twice was
-  // the status-bar engine-row bug. Drift (a different commit) stays visible:
-  // that IS the stale-embed signal.
-  if (hash) {
-    const shown = versionLineCommit(v);
-    const stamp = stampCommit(hash);
-    if (shown === undefined || stamp === undefined || shown !== stamp) {
-      return `${v} ${hash}`;
-    }
-    return v;
+/**
+ * Canonical display merge for a `<version line> + <build stamp>` pair —
+ * the ONE rule every identity surface consumes (status bar rows, the
+ * hosts' About dialogs; import this instead of re-deriving it). The two
+ * inputs are independent facts (the served version line and the
+ * client/stamp), so a plain concatenation can print the same commit
+ * twice.
+ *
+ * The merge is SET-BASED and therefore duplicate-free BY CONSTRUCTION:
+ * every whitespace token of the version line, then the stamp, is keyed —
+ * git tokens by their commit (case-folded, separator-agnostic), non-git
+ * tokens by their raw text — and a key already in the set is dropped.
+ * No pair of inputs, in either separator generation, can render one
+ * identity twice. A stamp whose commit the version line already names
+ * adds nothing (the 2026-10-11 seam: single-colon line against legacy
+ * `::` stamp and vice versa); a DIFFERENT commit always stays visible,
+ * because that drift IS the stale-embed signal.
+ */
+export function hkMergeVersionDisplay(version: string, hash?: string): string {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const keyOf = (token: string): string => {
+    const id = hkParseIdentity(token);
+    return id ? `c:${id.commit}` : `t:${token.toLowerCase()}`;
+  };
+  for (const token of version.trim().split(/\s+/)) {
+    if (!token) continue;
+    const key = keyOf(token);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(token);
   }
-  return v;
+  const stamp = hash?.trim();
+  if (stamp) {
+    const key = keyOf(stamp);
+    if (!seen.has(key)) out.push(stamp);
+  }
+  return out.join(" ");
 }
+
+/**
+ * One version value cell: the static text plus the shared
+ * HkPlaceholderMarquee layered over it (the upstream overflow strategy,
+ * consumed as-is — nothing is re-invented here). While the text fits,
+ * the static layer shows and the marquee stays a hidden measuring
+ * probe; once it overflows the window (long branch names), the static
+ * layer turns into a transparent layout ghost (opacity, so the text
+ * stays in the a11y tree; `title` keeps the hover copy) and the marquee
+ * scrolls the text like a storefront sign. Pure-CSS compositor motion;
+ * reduced-motion users get a parked first copy (the component's own
+ * media handling).
+ */
+const HkVersionValue = defineComponent({
+  name: "HkVersionValue",
+  props: { text: { type: String, required: true } },
+  setup(props) {
+    const overflowing = ref(false);
+    return () => (
+      <span
+        class="s-status-bar-version"
+        data-overflowing={overflowing.value || undefined}
+        title={props.text}
+      >
+        <span class="s-status-bar-version__static">{props.text}</span>
+        <HkPlaceholderMarquee
+          text={props.text}
+          onOverflowChange={(v: boolean) => { overflowing.value = v; }}
+        />
+      </span>
+    );
+  },
+});
 
 export const HkStatusBar = defineComponent({
   name: "HkStatusBar",
@@ -323,12 +399,15 @@ export const HkStatusBar = defineComponent({
         : Boolean(actionVnodes);
       const hasActionsRow = showRetryButton || hasHostActions;
 
-      const pv = fmtVer(props.version, props.panelBuildHash);
+      const pv = hkMergeVersionDisplay(props.version, props.panelBuildHash);
       const ev = props.engineVersion;
       // Version block: panel version on the first row, engine version on
       // the second. The value container is a two-column grid (label column
       // + value column), so both rows share one true left edge — no
-      // separator, no mid-token wrapping, at any footer width.
+      // separator, no mid-token wrapping, at any footer width. Each value
+      // cell is an HkVersionValue: merged ONCE above (set semantics — see
+      // hkMergeVersionDisplay), rendered once, marquee-scrolled only when
+      // the identity outgrows the window.
 
       const tagClass = [
         "s-status-bar-tag",
@@ -345,7 +424,7 @@ export const HkStatusBar = defineComponent({
             role="button"
             tabindex={0}
             aria-label={props.compact
-              ? `${statusText} · ${pv}${ev ? ` · ${fmtVer(ev, props.engineBuildHash)}` : ""}`
+              ? `${statusText} · ${pv}${ev ? ` · ${hkMergeVersionDisplay(ev, props.engineBuildHash)}` : ""}`
               : undefined}
             onMouseenter={onTagEnter}
             onMouseleave={onTagLeave}
@@ -365,11 +444,11 @@ export const HkStatusBar = defineComponent({
             }} />
             <span class="s-status-bar-tag-value">
               <span class="s-status-bar-tag-label">{t("hikari::statusBar.panel", "Panel")}</span>
-              <span class="s-status-bar-version">{pv}</span>
+              <HkVersionValue text={pv} />
               {ev && (
                 <>
                   <span class="s-status-bar-tag-label">{t("hikari::statusBar.engine", "Engine")}</span>
-                  <span class="s-status-bar-version">{fmtVer(ev, props.engineBuildHash)}</span>
+                  <HkVersionValue text={hkMergeVersionDisplay(ev, props.engineBuildHash)} />
                 </>
               )}
             </span>
@@ -389,10 +468,16 @@ export const HkStatusBar = defineComponent({
             title={t("hikari::statusBar.panel")}
           >
             <div
+              data-status-bar-card
               onMouseenter={onPopupEnter}
               onMouseleave={onPopupLeave}
               style={{
-                minWidth: "220px", padding: "10px 14px",
+                // 300px default floor (2026-10-11 user direction: the
+                // version/protocol rows read cramped at the old 220px),
+                // clamped to the popover's own viewport budget so a
+                // 320px-class phone never spills past the glass.
+                minWidth: "min(300px, calc(100vw - 2 * var(--viewport-gutter, 16px)))",
+                padding: "10px 14px",
                 fontSize: "0.75rem", lineHeight: 1.6,
                 color: "rgb(var(--color-text))",
               }}
@@ -434,13 +519,23 @@ export const HkStatusBar = defineComponent({
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <Monitor size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                         <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.panel", "Panel")}</span>
-                        <span style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}>{pv}</span>
+                        <span
+                          class="s-status-bar-popover-value"
+                          style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}
+                        >
+                          <HkVersionValue text={pv} />
+                        </span>
                       </div>
                       {ev && (
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <Cog size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                           <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.engine", "Engine")}</span>
-                          <span style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}>{fmtVer(ev, props.engineBuildHash)}</span>
+                          <span
+                            class="s-status-bar-popover-value"
+                            style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}
+                          >
+                            <HkVersionValue text={hkMergeVersionDisplay(ev, props.engineBuildHash)} />
+                          </span>
                         </div>
                       )}
                     </>

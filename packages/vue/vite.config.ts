@@ -12,6 +12,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@celestia-island/hikari': resolve(__dirname, 'src'),
+      // Cross-package contract tests import packages/default_theme sources,
+      // whose peer deps (lucide-vue-next) resolve against THIS package's
+      // install — the alias pins them to the same physical copy the vue
+      // package itself uses, so module identity stays one instance.
+      'lucide-vue-next': resolve(__dirname, 'node_modules/lucide-vue-next'),
       'vue': 'vue/dist/vue.esm-bundler.js',
     },
   },

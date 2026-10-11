@@ -22,6 +22,15 @@
       ],
       "@celestia-island/hikari/styles": [
         "./src/styles/index.scss"
+      ],
+      "vue": [
+        "./node_modules/vue/dist/vue.d.ts"
+      ],
+      "vue/jsx-runtime": [
+        "./node_modules/vue/jsx-runtime/index.d.ts"
+      ],
+      "lucide-vue-next": [
+        "./node_modules/lucide-vue-next/dist/lucide-vue-next.d.ts"
       ]
     },
     "types": [

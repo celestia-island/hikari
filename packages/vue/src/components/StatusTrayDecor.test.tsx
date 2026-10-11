@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import { readHkRuntime } from "../runtime/registry";
-import HkStatusTray from "./HkStatusTray";
+import HkStatusTray from "../../../default_theme/src/StatusTrayDecor";
 
 /**
  * HkStatusTray behaviour: the gamepad cluster + clock surface, its size and
@@ -10,7 +10,8 @@ import HkStatusTray from "./HkStatusTray";
  * teardown of both intervals.
  *
  * The "md equals the shipped CSS" contract lives next door in
- * `HkStatusTray.size.test.ts` (it reads the sheets, not the DOM).
+ * `StatusTrayDecor.size.test.ts` (it reads the sheets, not the DOM —
+ * the decor itself lives in packages/default_theme).
  */
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];

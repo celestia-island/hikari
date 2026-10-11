@@ -63,7 +63,8 @@ const backendStateColor: Record<HkBackendStatus["state"], string> = {
  * Composes useConnectionProbe + useEngineHealth + useConnectionInfo +
  * HkStatusBar. The probe source is injectable: when a parent provides
  * HK_CONNECTION_PROBE, that probe (and its retryNow) is used verbatim;
- * otherwise hikari's own fetch-poll useConnectionProbe() runs. Slots:
+ * without an injection the shell renders an inert unknown state and
+ * NEVER touches the network (pinned). Slots:
  * - `left`  — extras after the status tags (e.g. a mock badge)
  * - `right` — extras on the far right (e.g. an engine version tag)
  */
@@ -72,8 +73,6 @@ export const HkConnectionStatus = defineComponent({
   props: {
     version: { type: String, default: "0.1.0" },
     panelBuildHash: { type: String as PropType<string | undefined>, default: undefined },
-    /** API origin for the /api/health probe (defaults to same-origin ""). */
-    baseUrl: { type: String as PropType<string | undefined>, default: undefined },
     backendStatus: { type: Object as PropType<HkBackendStatus | undefined>, default: undefined },
     standalone: { type: Boolean, default: true },
     /** Forwarded to HkStatusBar — collapse to the traffic-light dot. */

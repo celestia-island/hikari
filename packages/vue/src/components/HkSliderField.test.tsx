@@ -73,10 +73,16 @@ describe("HkSliderField", () => {
     expect(c.querySelectorAll(".hk-slider-tick").length).toBe(9);
     expect(c.querySelector(".hk-slider-field-slot[data-side='leading'] .lead")).toBeTruthy();
     expect(c.querySelector(".hk-slider-field-slot[data-side='trailing'] .trail")).toBeTruthy();
-    // Source contract: the box chrome stays generic (no token words).
+    // Source contract: the box chrome stays generic — no token/budget
+    // words in EITHER file, and the scss still carries its structure
+    // (an emptied file must not pass vacuously).
     const here = dirname(fileURLToPath(import.meta.url));
     const scss = readFileSync(join(here, "HkSliderField.scss"), "utf-8");
+    const tsx = readFileSync(join(here, "HkSliderField.tsx"), "utf-8");
     expect(scss).not.toMatch(/token|budget/i);
+    expect(tsx).not.toMatch(/token|budget/i);
+    expect(scss).toContain(".hk-slider-field");
+    expect(scss).toContain(".hk-slider-field-slot");
   });
 
   it("commits drags and honors disabled", async () => {
@@ -97,13 +103,24 @@ describe("HkSliderField", () => {
     pinRect(slider);
     slider.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 144, pointerId: 1, buttons: 1 }));
     expect(seen.at(-1)).toBe(4);
-    // Disabled: no commits, both chrome layers flag it.
+    // Disabled: no commits, and BOTH chrome layers flag it — the
+    // inner slider's own is-disabled proves the pass-through (a broken
+    // one would let the slider commit while the box looks disabled).
+    const seen2: number[] = [];
     const c2 = mountNode(() =>
-      h(HkSliderField, { modelValue: 0, min: 0, max: 8, disabled: true }),
+      h(HkSliderField, {
+        modelValue: 0,
+        min: 0,
+        max: 8,
+        disabled: true,
+        "onUpdate:modelValue": (n: number) => seen2.push(n),
+      }),
     );
     const s2 = c2.querySelector(".hk-slider") as HTMLElement;
     pinRect(s2);
     s2.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 144, pointerId: 1, buttons: 1 }));
+    expect(seen2).toEqual([]);
+    expect(s2.classList.contains("is-disabled")).toBe(true);
     expect((c2.querySelector(".hk-slider-field") as HTMLElement).classList.contains("is-disabled")).toBe(true);
   });
 
@@ -208,6 +225,17 @@ describe("HkTokenInput", () => {
     // K-seeded: 1e3 = 1000 in-unit = 1,000,000 tokens.
     expect(a.emitted.at(-1)).toBe(1_000_000);
     expect(input.value).toBe("1e3");
+  });
+
+  it("deliberately emptying the input unsets (text-cleared, not button)", async () => {
+    const a = mountInput({ modelValue: 128000 });
+    (a.container.querySelector(".hk-token-input-value") as HTMLButtonElement).click();
+    await nextTick();
+    const input = document.querySelector<HTMLInputElement>(".hk-modal-content input")!;
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(a.emitted.at(-1)).toBe(null);
   });
 
   it("select-all + typing 0 keeps the keystroke (no transient null)", async () => {

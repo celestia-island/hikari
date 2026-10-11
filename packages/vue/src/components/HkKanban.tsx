@@ -99,7 +99,11 @@ export default defineComponent({
     /** Forwarded to the strip's HkScrollContainer: spend the shell-
      *  published --hk-scroll-tail-bottom as an in-flow tail spacer so a
      *  dock floating over the board never covers its last row at the
-     *  scroll end (see HkScrollContainer's dockTailClearance). */
+     *  scroll end (see HkScrollContainer's dockTailClearance). Only
+     *  effective on axis="vertical"/"both" boards: the default
+     *  horizontal axis carries its tail on the cross axis, where the
+     *  contract generates no spacer and the shrink pin is inert in the
+     *  block viewport — a horizontal board gets a no-op by design. */
     dockTailClearance: { type: Boolean, default: false },
   },
   emits: ["move"],

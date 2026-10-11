@@ -125,7 +125,11 @@ export default defineComponent({
      *  content up behind overflow-y:hidden) — while the shrink pin still
      *  applies. A higher-specificity consumer ::after recipe on the
      *  viewport overrides this spacer's height: adopting the prop means
-     *  deleting the hand-rolled recipe, not stacking it. */
+     *  deleting the hand-rolled recipe, not stacking it. The shrink pin's
+     *  accepted cost: a child that legitimately needs main-axis shrink
+     *  inside an opted-in container (a nested pane meant to fit the
+     *  viewport and scroll internally) cannot shrink; consumers escape
+     *  with a >=(0,2,0) override loaded after the library CSS. */
     dockTailClearance: { type: Boolean, default: false },
     /** Back-to-top signal (scroll parameter every scrollable template
      *  can hand to a floating quick-action pad): while set, the

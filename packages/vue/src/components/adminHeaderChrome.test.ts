@@ -27,6 +27,9 @@ function ruleDeclarations(source: string, selector: string): Array<[string, stri
     let boundary = at - 1;
     while (boundary >= 0 && !"}{;".includes(code[boundary])) boundary -= 1;
     if (code.slice(boundary + 1, at).replace(/\s+/g, " ").trim() !== "") continue;
+    // Top-level rules only: a nested occurrence (the ≤767px phone band)
+    // must not satisfy the desktop pins.
+    if (braceDepthAt(code, at) !== 0) continue;
     const body = code.slice(open + 1, code.indexOf("}", open));
     const out: Array<[string, string]> = [];
     for (const part of body.split(";")) {
@@ -38,9 +41,49 @@ function ruleDeclarations(source: string, selector: string): Array<[string, stri
   return null;
 }
 
+
+/** Brace depth of `code` at character index `at` — 0 = top level, ≥1 =
+ *  nested inside an at-block (e.g. the ≤767px phone band's @media). */
+function braceDepthAt(code: string, at: number): number {
+  let depth = 0;
+  for (let i = 0; i < at; i += 1) {
+    if (code[i] === "{") depth += 1;
+    else if (code[i] === "}") depth -= 1;
+  }
+  return depth;
+}
+
 const adminTokens = readFileSync(join(here, "..", "styles", "admin-tokens.scss"), "utf8");
 const iconButtonVars = readFileSync(join(here, "HkIconButtonVars.scss"), "utf8");
 const iconButton = readFileSync(join(here, "HkIconButton.tsx"), "utf8");
+
+/** Every rule whose prelude IS `selector` (whole-prelude match, comments
+ *  stripped) — used for the phone band, where the same prelude appears
+ *  both at top level (desktop) and inside the ≤767px media block. */
+function allRuleDeclarations(
+  source: string,
+  selector: string,
+): Array<{ nested: boolean; decls: Array<[string, string]> }> {
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, "");
+  const out: Array<{ nested: boolean; decls: Array<[string, string]> }> = [];
+  for (let at = code.indexOf(selector); at >= 0; at = code.indexOf(selector, at + 1)) {
+    const open = code.indexOf("{", at + selector.length);
+    if (open < 0) continue;
+    if (code.slice(at + selector.length, open).trim() !== "") continue;
+    let boundary = at - 1;
+    while (boundary >= 0 && !"}{;".includes(code[boundary])) boundary -= 1;
+    if (code.slice(boundary + 1, at).replace(/\s+/g, " ").trim() !== "") continue;
+    const nested = braceDepthAt(code, at) > 0;
+    const body = code.slice(open + 1, code.indexOf("}", open));
+    const decls: Array<[string, string]> = [];
+    for (const part of body.split(";")) {
+      const m = /^\s*([-a-zA-Z]+)\s*:\s*([\s\S]+?)\s*$/.exec(part);
+      if (m) decls.push([m[1], m[2].replace(/\s+/g, " ")]);
+    }
+    out.push({ nested, decls });
+  }
+  return out;
+}
 
 describe("admin header chrome geometry (the two user-requested fixes)", () => {
   it("keeps the console title at the panel's visual distance from the avatar (16px wing gap)", () => {
@@ -75,5 +118,27 @@ describe("admin header chrome geometry (the two user-requested fixes)", () => {
     expect(rule).toContainEqual(["--hi-icon-button-size", "28px"]);
     // The component accepts the step.
     expect(iconButton).toMatch(/PropType<16 \| 24 \| 28 \| 32 \| 36 \| 40>/);
+  });
+
+  it("pins the phone band: wings keep their floors, the centre strip owns the overflow", () => {
+    // User report 2026-10-12: on phones the balanced wings (flex 1 1 0 +
+    // min-width 0) were squeezed BELOW the avatar's 28px floor by a wide
+    // centre tab strip, and the strip painted straight over the avatar.
+    // The ≤767px band must pin both wings and hand the leftover to the
+    // centre (mirroring ChatLayout's own phone band) so the strip slides
+    // inside its own box instead of over the avatar.
+    const userRules = allRuleDeclarations(adminTokens, ".s-admin-header-user");
+    const centreRules = allRuleDeclarations(adminTokens, ".s-admin-header-center");
+    const actionsRules = allRuleDeclarations(adminTokens, ".s-admin-header-actions");
+    // Exactly one NESTED occurrence (the phone band) per prelude.
+    const phone = (rules: typeof userRules) => rules.filter((r) => r.nested).map((r) => r.decls);
+    expect(phone(userRules)).toHaveLength(1);
+    expect(phone(centreRules)).toHaveLength(1);
+    expect(phone(actionsRules)).toHaveLength(1);
+    expect(phone(userRules)[0]).toContainEqual(["flex", "0 0 auto"]);
+    expect(phone(actionsRules)[0]).toContainEqual(["flex", "0 0 auto"]);
+    expect(phone(centreRules)[0]).toContainEqual(["flex", "1 1 auto"]);
+    expect(phone(centreRules)[0]).toContainEqual(["min-width", "0"]);
+    expect(phone(centreRules)[0]).toContainEqual(["overflow", "hidden"]);
   });
 });

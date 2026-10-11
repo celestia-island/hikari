@@ -46,7 +46,6 @@ export const HkTokenValueEditor = defineComponent({
     /** Entry unit for the numeric input (K = the input reads
      * thousands). Hosts may preselect; defaults from the value. */
     unit: { type: String as () => TokenUnit, default: "K" },
-    stops: { type: Array as () => number[], required: true },
   },
   emits: {
     "update:modelValue": (_value: number | null) => true,
@@ -86,6 +85,10 @@ export const HkTokenValueEditor = defineComponent({
           // re-express our own text — switchUnit already did.
           return;
         }
+        // An external change: whatever we last emitted is stale as an
+        // echo marker (a later external set back to that same value
+        // must still rescale, not be skipped).
+        lastEmitted = null;
         rescale(value, unit);
       },
       { immediate: true },
@@ -333,7 +336,6 @@ export default defineComponent({
                       <HkTokenValueEditor
                         modelValue={props.modelValue}
                         unit={editorUnit.value}
-                        stops={stops.value}
                         onUpdate:modelValue={(v: number | null) => emit("update:modelValue", v)}
                         onUpdate:unit={(u: TokenUnit) => (editorUnit.value = u)}
                       />

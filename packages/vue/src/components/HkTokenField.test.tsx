@@ -256,7 +256,6 @@ describe("HkTokenValueEditor (standalone)", () => {
         h(HkTokenValueEditor, {
           modelValue: 128_000,
           unit: "K",
-          stops: [...DEFAULT_TOKEN_STOPS],
           "onUpdate:modelValue": (v: number | null) => seen.push(v),
         }),
     });
@@ -316,6 +315,9 @@ describe("HkTokenField — typing survives round-trips (R1 P2 pins)", () => {
     input.dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
     expect(h.emitted.at(-1)).toBe(1_000_000);
+    // The echo round-trip must NOT clobber non-canonical text: the
+    // field still reads "1e3" (the echo guard holds).
+    expect(input.value).toBe("1e3");
   });
 
   it("a unit flip with unparseable text clears rather than skewing the scale", async () => {
@@ -360,6 +362,25 @@ describe("HkModal draggable (R1 pins)", () => {
     await nextTick();
     return { container, open };
   }
+
+  it("a close mid-drag never ghosts into the next open", async () => {
+    const { container, open } = await mountDraggableModal();
+    const frame = document.querySelector<HTMLElement>(".hk-modal-content")!;
+    const header = frame.querySelector<HTMLElement>(".hk-modal-header")!;
+    const d = (t: string, x: number, opts: Partial<PointerEventInit> = {}) =>
+      new PointerEvent(t, { bubbles: true, clientX: x, pointerId: 7, buttons: 1, ...opts });
+    // Press, then close while captured (no pointerup ever fires).
+    header.dispatchEvent(d("pointerdown", 100));
+    open.value = false;
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    const frame2 = document.querySelector<HTMLElement>(".hk-modal-content")!;
+    const header2 = frame2.querySelector<HTMLElement>(".hk-modal-header")!;
+    // A button-held move WITHOUT a fresh press must be inert.
+    header2.dispatchEvent(d("pointermove", 300));
+    expect(frame2.style.getPropertyValue("--hk-modal-shift-x")).toBe("");
+  });
 
   it("drags via pointer and writes the shift vars; hover alone never moves the frame", async () => {
     const { container } = await mountDraggableModal();

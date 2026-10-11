@@ -450,6 +450,35 @@
   min-width: 0;
 }
 
+
+/* Phone band (≤767px) — mirrors ChatLayout's own ≤767px header band
+ * (the console face of the same balanced-wing header). On phones the
+ * desktop balanced wings (`flex: 1 1 0` + `min-width: 0`) let a wide
+ * centre tab strip squeeze BOTH side wings below their content floors:
+ * the avatar wing shrank under its 28px trigger and the strip painted
+ * straight over the avatar (user report 2026-10-12, L2 firewall tabs).
+ * The frontend's answer — pin both wings, hand the leftover to the
+ * centre and let its HTabs scroller own the overflow — is reproduced
+ * here in substance: the strip keeps every pixel the avatar and the action
+ * buttons don't need, and slides INSIDE its own box (edge fades + scroll
+ * limits intact) without ever covering the avatar.
+ * Desktop (>767px) keeps the balanced-wing centring untouched. */
+@media (max-width: 767px) {
+  .s-admin-header-user {
+    flex: 0 0 auto;
+  }
+
+  .s-admin-header-actions {
+    flex: 0 0 auto;
+  }
+
+  .s-admin-header-center {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
 .s-admin-header-avatar {
   position: relative;
   width: var(--space-28);

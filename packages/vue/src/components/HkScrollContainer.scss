@@ -95,23 +95,32 @@
    Two halves, both load-bearing (root-caused 2026-10-12 in a real
    layout engine after three consumer-side padding rounds "never
    entered the flow"):
-   1. the spacer is a `flex: none` ::after — a column-flex viewport
-      cannot compress it, and in a block viewport it is an ordinary
-      trailing block;
+   1. the spacer is a `flex: none` ::after WITH `display: block` — a
+      column-flex viewport cannot compress it (and blockifies it
+      anyway), while in the DEFAULT block viewport the explicit
+      display is what makes its height apply at all: a bare ::after
+      there is a non-replaced INLINE box and `height` is inert on it
+      (measured: block viewport, 300px child, 50px spacer ->
+      scrollHeight 300 without the display, 350 with);
    2. every direct child of the viewport is pinned against main-axis
-      SHRINKING — a shrinking child (`.hk-kanban-lanes` ships
-      `flex: 0 1 auto; min-height: 100%`) collapses to the viewport
+      SHRINKING while the prop is on — a child that behaves as a
+      shrinkable flex item once the viewport is flex-ified
+      (`.hk-kanban-lanes` ships only `min-height: 100%`, so the
+      flex-item initial `0 1 auto` applies) collapses to the viewport
       height and overflows its rows VISIBLY, painting them over a
       spacer that trails the box: zero reachable clearance on any
       content taller than the viewport, while short content (demo
       boards, empty-ish pages) measures green and hides the defect.
-   Inert while the var is unset/0px. */
+   The spacer is inert while the var is unset/0px; the shrink pin is
+   active whenever the prop is on (at S=0 it changes only box extent,
+   not scroll range). */
 .hk-scroll-container[data-dock-tail="true"] > .hk-scroll-container-viewport > * {
   flex-shrink: 0;
 }
 
 .hk-scroll-container[data-dock-tail="true"] > .hk-scroll-container-viewport::after {
   content: "";
+  display: block;
   flex: none;
   height: var(--hk-scroll-tail-bottom, 0px);
 }

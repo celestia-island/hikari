@@ -98,20 +98,28 @@ export default defineComponent({
      *  whole tail room the publisher wants spent (dock occupancy plus
      *  whatever breathing room its design rules add).
      *
-     *  The spacer is a `flex: none` ::after, and every direct child of the
-     *  viewport is pinned against main-axis SHRINKING while the prop is
-     *  on: a shrinking child (hikari's own `.hk-kanban-lanes` ships
-     *  `flex: 0 1 auto; min-height: 100%`) overflows its own box visibly
-     *  and paints OVER a spacer that trails the box — the exact defect
-     *  that kept a consumer board's tail under its dock through three
-     *  rounds of padding adjustments that "never entered the flow"
+     *  The spacer is a `flex: none; display: block` ::after, and every
+     *  direct child of the viewport is pinned against main-axis SHRINKING
+     *  while the prop is on. Both halves are load-bearing: a child that
+     *  behaves as a shrinkable flex item once the viewport is flex-ified
+     *  (hikari's own `.hk-kanban-lanes` ships only `min-height: 100%`, so
+     *  the flex-item initial `0 1 auto` applies) overflows its own box
+     *  visibly and paints OVER a spacer that trails the box — the exact
+     *  defect that kept a consumer board's tail under its dock through
+     *  three rounds of padding adjustments that "never entered the flow"
      *  (chest follow-up to #1538/#1542, root-caused and measured in a real
-     *  layout engine, 2026-10-12). In a block viewport the shrink pin is
-     *  inert and the spacer is an ordinary trailing block. Inert while
-     *  the var is unset/0px, so dockless pages keep their full centering
-     *  box. Unlike the dockTop/dockBottom slots (layout-space docks that
-     *  shrink the viewport permanently), this contract is for docks that
-     *  float OVER the scroll area by design. */
+     *  layout engine, 2026-10-12); and the explicit `display: block` is
+     *  what makes the spacer's height apply in the DEFAULT block viewport
+     *  at all (a bare ::after there is an inline box and `height` is inert
+     *  on it — measured: zero clearance without, content+spacer with).
+     *  The spacer is inert while the var is unset/0px, so dockless pages
+     *  keep their full centering box; the shrink pin is active whenever
+     *  the prop is on. Unlike the dockTop/dockBottom slots (layout-space
+     *  docks that shrink the viewport permanently), this contract is for
+     *  docks that float OVER the scroll area by design. Do not combine it
+     *  with a `--hk-scroll-dock-bottom` end-padding recipe for the SAME
+     *  dock (double clearance), and note it spends nothing on
+     *  axis="horizontal" containers (the tail is cross-axis there). */
     dockTailClearance: { type: Boolean, default: false },
     /** Back-to-top signal (scroll parameter every scrollable template
      *  can hand to a floating quick-action pad): while set, the

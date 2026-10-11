@@ -48,6 +48,25 @@
   border-radius: var(--radius-sm, 4px);
 }
 
+// Rate segment (the model-group capsule's `×N` tail, 2026-10-11): takes
+// the inline-end rounding and provides the seam's divider from its own
+// inline-start border; a success tint keeps it readable as a modifier,
+// not a second name. With a rate present the NAME segment becomes a
+// middle segment — square inline-end edge too (the join geometry below).
+.s-model-tag-group[data-rate] .hk-badge.s-model-tag-name {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.s-model-tag-group .hk-badge.s-model-tag-rate {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: var(--radius-sm, 4px);
+  border-end-end-radius: var(--radius-sm, 4px);
+  border-inline-start-color: rgb(var(--color-muted) / 35%);
+  flex-shrink: 0;
+}
+
 .s-model-tag-name-text {
   display: block;
   overflow: hidden;

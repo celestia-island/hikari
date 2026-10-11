@@ -194,7 +194,7 @@ describe("HkDatePicker", () => {
   });
 
   it("disables days outside the inclusive min/max bounds", async () => {
-    const p = mountPicker({ modelValue: "2026-08-16", min: "2026-08-10", max: "2026-08-20" });
+    const p = mountPicker({ modelValue: "2026-08-16", min: "2026-08-10", max: "2026-08-20", nativeOnMobile: true });
     openViaEnter(p);
     await nextTick();
     const byDay = new Map(
@@ -453,22 +453,12 @@ describe("HkDatePicker", () => {
     expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell:not([data-variant])").length).toBe(42);
   });
 
-  // ── Mobile pass-through to the native OS control ────────────────
+  // ── Mobile: the CALENDAR is the default; the native input is the
+  // ── explicit opt-out (2026-10-11 direction: no native controls) ──
 
-  it("renders a native date input instead of the calendar on mobile", () => {
+  it("keeps the calendar on mobile by default (no native input)", async () => {
     useMobileViewport();
     const p = mountPicker({ modelValue: "2026-08-16" });
-    const input = nativeInput(p.container);
-    expect(input).not.toBeNull();
-    expect(input?.type).toBe("date");
-    expect(input?.value).toBe("2026-08-16");
-    expect(p.container.querySelector(".hk-dp-trigger")).toBeNull();
-    expect(p.container.querySelector(".hk-dp-panel")).toBeNull();
-  });
-
-  it("keeps the custom calendar on mobile when nativeOnMobile is false", async () => {
-    useMobileViewport();
-    const p = mountPicker({ modelValue: "2026-08-16", nativeOnMobile: false });
     expect(p.container.querySelector(".hk-dp-trigger")).not.toBeNull();
     expect(nativeInput(p.container)).toBeNull();
     openViaEnter(p);
@@ -479,17 +469,28 @@ describe("HkDatePicker", () => {
     expect(panel()?.classList.contains("is-touch")).toBe(true);
   });
 
-  it("passes min/max through to the native input", () => {
+  it("renders a native date input on mobile only when nativeOnMobile opts in", () => {
     useMobileViewport();
-    const p = mountPicker({ modelValue: "2026-08-16", min: "2026-08-10", max: "2026-08-20" });
+    const p = mountPicker({ modelValue: "2026-08-16", nativeOnMobile: true });
+    const input = nativeInput(p.container);
+    expect(input).not.toBeNull();
+    expect(input?.type).toBe("date");
+    expect(input?.value).toBe("2026-08-16");
+    expect(p.container.querySelector(".hk-dp-trigger")).toBeNull();
+    expect(p.container.querySelector(".hk-dp-panel")).toBeNull();
+  });
+
+  it("passes min/max through to the native input (explicit opt-in)", () => {
+    useMobileViewport();
+    const p = mountPicker({ modelValue: "2026-08-16", min: "2026-08-10", max: "2026-08-20", nativeOnMobile: true });
     const input = nativeInput(p.container);
     expect(input?.min).toBe("2026-08-10");
     expect(input?.max).toBe("2026-08-20");
   });
 
-  it("native input edits emit the ISO date and clearing emits null", async () => {
+  it("native input edits emit the ISO date and clearing emits null (explicit opt-in)", async () => {
     useMobileViewport();
-    const p = mountPicker({ modelValue: "2026-08-16" });
+    const p = mountPicker({ modelValue: "2026-08-16", nativeOnMobile: true });
     const input = nativeInput(p.container);
     input!.value = "2026-08-20";
     input!.dispatchEvent(new Event("input", { bubbles: true }));
@@ -503,9 +504,9 @@ describe("HkDatePicker", () => {
     expect(p.emitted).toEqual(["2026-08-20", null]);
   });
 
-  it("native input edits outside the bounds are rejected and re-synced", async () => {
+  it("native input edits outside the bounds are rejected and re-synced (explicit opt-in)", async () => {
     useMobileViewport();
-    const p = mountPicker({ modelValue: "2026-08-16", max: "2026-08-20" });
+    const p = mountPicker({ modelValue: "2026-08-16", max: "2026-08-20", nativeOnMobile: true });
     const input = nativeInput(p.container);
     input!.value = "2026-09-01";
     input!.dispatchEvent(new Event("input", { bubbles: true }));

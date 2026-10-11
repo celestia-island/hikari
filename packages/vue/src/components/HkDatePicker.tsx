@@ -73,8 +73,12 @@ export default defineComponent({
     min: { type: String as PropType<string | undefined>, default: undefined },
     /** Inclusive upper bound as an ISO date; later days render disabled. */
     max: { type: String as PropType<string | undefined>, default: undefined },
-    /** Render the OS native `<input type="date">` on touch-sized viewports. */
-    nativeOnMobile: { type: Boolean, default: true },
+    /** Render the OS native `<input type="date">` on touch-sized viewports.
+     *  DEFAULTS FALSE since 2026-10-11 (user direction: no native controls
+     *  anywhere) — the calendar serves phones as a bottom sheet with the
+     *  enlarged touch chrome. The prop stays for one-off hosts that truly
+     *  want the OS picker; new callers should not set it. */
+    nativeOnMobile: { type: Boolean, default: false },
   },
   emits: {
     "update:modelValue": (_value: string | null) => true,

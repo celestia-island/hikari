@@ -96,6 +96,15 @@ export default defineComponent({
     /** Whether cards can be dragged between lanes. */
     draggable: { type: Boolean, default: false },
     ariaLabel: { type: String, default: undefined },
+    /** Forwarded to the strip's HkScrollContainer: spend the shell-
+     *  published --hk-scroll-tail-bottom as an in-flow tail spacer so a
+     *  dock floating over the board never covers its last row at the
+     *  scroll end (see HkScrollContainer's dockTailClearance). Only
+     *  effective on axis="vertical"/"both" boards: the default
+     *  horizontal axis carries its tail on the cross axis, where the
+     *  contract generates no spacer and the shrink pin is inert in the
+     *  block viewport — a horizontal board gets a no-op by design. */
+    dockTailClearance: { type: Boolean, default: false },
   },
   emits: ["move"],
   setup(props, { slots, emit, expose }) {
@@ -191,6 +200,7 @@ export default defineComponent({
               class="hk-kanban-strip"
               axis={stripAxis.value}
               overscanScreens={1}
+              dockTailClearance={props.dockTailClearance}
             >
               <div
                 class="hk-kanban-lanes"

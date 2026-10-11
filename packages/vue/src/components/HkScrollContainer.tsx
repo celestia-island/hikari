@@ -85,6 +85,52 @@ export default defineComponent({
      *  scroll content dissolving at the dock's edge reads as
      *  intentional instead of a hard clip. */
     dockFade: { type: Boolean, default: true },
+    /** Opt-in tail clearance for FLOATING docks (2026-10-12): a dock that
+     *  lives OUTSIDE this container (a shell-level fixed plane — a page's
+     *  bottom-center dock bar, e.g. chest's DockBar) covers the bottom of
+     *  whatever scroll area it hovers over. The shell publishes the dock's
+     *  live measured occupancy as `--hk-scroll-tail-bottom` (on any
+     *  ancestor, typically :root); with this prop the container spends
+     *  that var as an IN-FLOW tail spacer on the viewport's own content,
+     *  so the room becomes reachable scroll range that only appears once
+     *  the scroll end is reached — mid-scroll content keeps flowing under
+     *  the dock across the full viewport. The published value is the
+     *  whole tail room the publisher wants spent (dock occupancy plus
+     *  whatever breathing room its design rules add).
+     *
+     *  The spacer is a `flex: none; display: block` ::after, and every
+     *  direct child of the viewport is pinned against main-axis SHRINKING
+     *  while the prop is on. Both halves are load-bearing: a child that
+     *  behaves as a shrinkable flex item once the viewport is flex-ified
+     *  (hikari's own `.hk-kanban-lanes` ships only `min-height: 100%`, so
+     *  the flex-item initial `0 1 auto` applies) overflows its own box
+     *  visibly and paints OVER a spacer that trails the box — the exact
+     *  defect that kept a consumer board's tail under its dock through
+     *  three rounds of padding adjustments that "never entered the flow"
+     *  (chest follow-up to #1538/#1542, root-caused and measured in a real
+     *  layout engine, 2026-10-12); and the explicit `display: block` is
+     *  what makes the spacer's height apply in the DEFAULT block viewport
+     *  at all (a bare ::after there is an inline box and `height` is inert
+     *  on it — measured: zero clearance without, content+spacer with).
+     *  The spacer is inert while the var is unset/0px, so dockless pages
+     *  keep their full centering box; the shrink pin is active whenever
+     *  the prop is on. Unlike the dockTop/dockBottom slots (layout-space
+     *  docks that shrink the viewport permanently), this contract is for
+     *  docks that float OVER the scroll area by design. Do not combine it
+     *  with a `--hk-scroll-dock-bottom` end-padding recipe for the SAME
+     *  dock (double clearance). The spacer is not generated on
+     *  axis="horizontal" containers — the tail is the cross axis there,
+     *  and an ungated block spacer leaks onto the hidden vertical axis
+     *  (measured: scrollHeight grows and a programmatic scrollTop shifts
+     *  content up behind overflow-y:hidden) — while the shrink pin still
+     *  applies. A higher-specificity consumer ::after recipe on the
+     *  viewport overrides this spacer's height: adopting the prop means
+     *  deleting the hand-rolled recipe, not stacking it. The shrink pin's
+     *  accepted cost: a child that legitimately needs main-axis shrink
+     *  inside an opted-in container (a nested pane meant to fit the
+     *  viewport and scroll internally) cannot shrink; consumers escape
+     *  with a >=(0,2,0) override loaded after the library CSS. */
+    dockTailClearance: { type: Boolean, default: false },
     /** Back-to-top signal (scroll parameter every scrollable template
      *  can hand to a floating quick-action pad): while set, the
      *  container derives a visibility signal from its own throttled
@@ -539,6 +585,7 @@ export default defineComponent({
           data-axis={props.axis}
           data-align={alignCenter() ? "center" : undefined}
           data-fade={props.fade ? "true" : undefined}
+          data-dock-tail={props.dockTailClearance ? "true" : undefined}
           data-dock-fade={
             props.dockFade && dockBottomSlot
               ? "bottom"

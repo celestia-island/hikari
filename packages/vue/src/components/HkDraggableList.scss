@@ -71,6 +71,18 @@
   }
 }
 
+/* A list where every row is locked can never reorder, so the handle lane
+ * has nothing to offer — collapse it instead of reserving an empty gutter
+ * that reads as "missing grips" (user report 2026-10-11: chest's 2FA
+ * factors list). Mixed lists are unaffected: they keep the lane on every
+ * row (locked ones render it hidden via [data-hidden]) so the grip column
+ * stays aligned. */
+.hk-draggable-list[data-all-locked] {
+  .hk-draggable-list-handle {
+    display: none;
+  }
+}
+
 .hk-draggable-list-content {
   flex: 1;
   min-width: 0;

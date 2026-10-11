@@ -1,0 +1,29 @@
+.hk-slider-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  min-width: 0;
+  padding: var(--space-4, 4px) var(--space-8, 8px);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface));
+}
+
+.hk-slider-field.is-disabled {
+  opacity: 0.55;
+}
+
+.hk-slider-field-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The flanking slots keep their content width; the slider takes
+ * whatever the row can spare. */
+.hk-slider-field-slot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  min-width: 0;
+}

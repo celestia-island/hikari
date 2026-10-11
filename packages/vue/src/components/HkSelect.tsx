@@ -30,6 +30,15 @@ export default defineComponent({
   props: {
     modelValue: { type: String, default: "" },
     label: { type: String, default: undefined },
+    /**
+     * Title for the OPENED surface only (mobile sheet header, desktop
+     * popout's a11y name, popup-manager breadcrumb layer) — without
+     * rendering the visible field `label`. Consumers whose visible label
+     * lives elsewhere (a titled row around the field) pass this so the
+     * surface is not registered untitled; resolution order is
+     * panelTitle, then `label`, then empty (the historic behaviour).
+     */
+    panelTitle: { type: String, default: undefined },
     placeholder: { type: String, default: "" },
     error: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
@@ -100,6 +109,18 @@ export default defineComponent({
             normalizedOptions.value.length;
         }
       } else if (e.key === "Escape") {
+        // Consume the key ONLY when it actually closed something: the
+        // trigger commonly renders inside a dialog surface (HkModal and
+        // HkDrawer close on bubbled Escape), and one press must mean one
+        // thing — close the dropdown, not the dropdown AND the hosting
+        // dialog. The panel surface itself stops propagation for the
+        // same reason (HkSelectPanel's onSurfaceEscape); with the panel
+        // closed the key bubbles on as before, so the hosting dialog's
+        // own Escape semantics are untouched.
+        if (isOpen.value) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         isOpen.value = false;
       }
     }
@@ -182,7 +203,7 @@ export default defineComponent({
           open={isOpen.value}
           onUpdate:open={(v: boolean) => { isOpen.value = v; }}
           anchorRef={triggerRef.value ?? null}
-          title={props.label ?? ""}
+          title={props.panelTitle ?? props.label ?? ""}
           placement="bottom-start"
           offset={4}
           onKeydown={onPopoutKeydown}

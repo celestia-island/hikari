@@ -97,16 +97,22 @@
   top: 4px;
   bottom: 4px;
   /* Vertical track: right 2px + width 6px → occupies 2–8px; a 2px gutter
-     puts the rail at 10px. */
+     puts the rail at 10px. The contract test pins this non-overlap. */
   right: 10px;
   width: 8px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 18%, transparent);
-  cursor: pointer;
   overflow: hidden;
   transition: background var(--hi-duration-fast, 0.15s) ease;
 
-  &:hover,
+  /* Pointer-transparent, exactly like the track above and for the same
+     reason: an overlay hugging the region's edge must never steal a press
+     meant for the content beneath it — and this rail spans the WHOLE host,
+     docks included, so it sits over right-aligned dock controls too. Only
+     the MARKS take input (see below): they are the targets that mean
+     something, and they are the rail's entire content. */
+  pointer-events: none;
+
   &.is-dragging {
     background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 32%, transparent);
   }
@@ -116,14 +122,23 @@
    diff kinds get the diff palette, anything else the neutral muted one.
    The fallbacks mirror the thumb's: a themeless standalone render must
    still show marks rather than an invalid-at-computed-value-time
-   transparent. */
+   transparent. Height is set entirely by the engine (which floors a
+   hairline mark itself) — a CSS `min-height` here would silently win over
+   the engine's end-of-rail inset on a short rail and push the last mark
+   past the clip. */
 .hk-scrollbar-marker {
   position: absolute;
   left: 0;
   width: 100%;
-  min-height: 2px;
   border-radius: 1px;
   background: var(--hi-color-muted, rgb(118 122 128));
+  /* The rail is pointer-transparent; the marks are the hit area. */
+  pointer-events: auto;
+  cursor: pointer;
+
+  &:hover {
+    outline: 1px solid color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 60%, transparent);
+  }
 
   &[data-kind="added"] {
     background: var(--hi-color-success, #0eb840);

@@ -449,11 +449,46 @@ describe("change-mark rail", () => {
     expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
   });
 
-  it("jumps to a mark when the rail is pressed", () => {
+  it("ignores non-finite mark bounds instead of parking them at NaN%", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([
+      { start: Number.NaN, end: Number.NaN, kind: "added" },
+      { start: Number.POSITIVE_INFINITY, end: 0.9, kind: "modified" },
+    ]);
+    const marks = m.rail()!.querySelectorAll<HTMLElement>(".hk-scrollbar-marker");
+    // "NaN%" is rejected by CSSOM: the element keeps no inline top/height,
+    // collapses to zero height and the mark silently does not exist.
+    expect(marks[0].style.top).toBe("0%");
+    expect(marks[0].style.height).toBe("0.5%");
+    // Infinity is not "the end of the file" — non-finite clamps to 0.
+    expect(marks[1].style.top).toBe("0%");
+  });
+
+  it("keeps a mark press from escaping to the page and shows the drag", () => {
     const m = mountRailed();
     m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
     const rail = m.rail()!;
-    rail.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 50 }));
+    const mark = rail.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    // The rail rides inside modals/drawers that dismiss on an outside
+    // press; scrubbing it must not double as that press.
+    let escaped = 0;
+    const spy = () => { escaped += 1; };
+    document.body.addEventListener("mousedown", spy);
+    const down = new MouseEvent("mousedown", { bubbles: true, cancelable: true, clientY: 0 });
+    mark.dispatchEvent(down);
+    expect(down.defaultPrevented, "the press is consumed").toBe(true);
+    expect(escaped, "the press never reaches the page").toBe(0);
+    expect(rail.classList.contains("is-dragging"), "the rail shows the drag").toBe(true);
+    document.dispatchEvent(new MouseEvent("mouseup"));
+    expect(rail.classList.contains("is-dragging"), "and clears it on release").toBe(false);
+    document.body.removeEventListener("mousedown", spy);
+  });
+
+  it("jumps to a mark when the mark is pressed", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
+    const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    mark.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 50 }));
     // Halfway down a 100px rail over a 900px scroll range.
     expect(m.viewport.scrollTop).toBe(450);
     document.dispatchEvent(new MouseEvent("mouseup"));
@@ -462,8 +497,8 @@ describe("change-mark rail", () => {
   it("scrubs while the rail is dragged and stops on mouseup", () => {
     const m = mountRailed();
     m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
-    const rail = m.rail()!;
-    rail.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
+    const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    mark.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
     expect(m.viewport.scrollTop).toBe(0);
     document.dispatchEvent(new MouseEvent("mousemove", { clientY: 100 }));
     expect(m.viewport.scrollTop, "dragged to the bottom").toBe(900);
@@ -477,8 +512,8 @@ describe("change-mark rail", () => {
   it("detach removes the rail and its document listeners", () => {
     const m = mountRailed();
     m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
-    const rail = m.rail()!;
-    rail.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
+    const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    mark.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
     m.handle.detach();
     handles.splice(handles.indexOf(m.handle), 1);
     expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();

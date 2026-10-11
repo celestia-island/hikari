@@ -101,9 +101,12 @@ export function parseUnifiedDiff(diff: string): ParsedDiff {
   }
 
   const last = hunks[hunks.length - 1];
-  // A whole-file deletion (newStart 0 + newCount 0) yields −1; the field
-  // documents a 1-based line number, so the floor is 0 (nothing covered).
-  const endCovered = last ? Math.max(last.newStart + last.newCount - 1, 0) : 0;
+  // Same zero-count anchor rule as computeGaps (R2): a deletion hunk
+  // `@@ -5,2 +4,0 @@` positions after new line 4, so it covers 1..4 —
+  // and a whole-file deletion still floors at 0 (nothing covered).
+  const endCovered = last
+    ? Math.max(last.newStart + (last.newCount === 0 ? 1 : 0) + last.newCount - 1, 0)
+    : 0;
   return { hunks, endCovered };
 }
 
@@ -137,29 +140,38 @@ export function computeGaps(parsed: ParsedDiff, totalLines?: number | null): Unc
   const gaps: UnchangedGap[] = [];
   let prevEnd = 0; // highest new-side line covered so far
   parsed.hunks.forEach((hunk, i) => {
+    // Zero-count ranges anchor one line into the existing side — the SAME
+    // adjustment the parser applies to line numbering (R2 finding: a
+    // `@@ -4,0 +5,2 @@` insertion sits after old line 4, so the leading
+    // gap is new 1..4 with shift 0, not 1..4-with-shift-1; using the raw
+    // starts rendered an "old 0" and mislabelled expanded context).
+    const oldAnchor = hunk.oldStart + (hunk.oldCount === 0 ? 1 : 0);
+    const newAnchor = hunk.newStart + (hunk.newCount === 0 ? 1 : 0);
     const gapStart = prevEnd + 1;
-    const gapEnd = hunk.newStart - 1;
+    const gapEnd = newAnchor - 1;
     if (gapEnd >= gapStart) {
       gaps.push({
         start: gapStart,
         count: gapEnd - gapStart + 1,
-        shift: hunk.newStart - hunk.oldStart,
+        shift: newAnchor - oldAnchor,
         anchor: i === 0 && prevEnd === 0 ? "end" : "start",
         beforeHunk: i,
       });
     }
-    prevEnd = hunk.newStart + hunk.newCount - 1;
+    prevEnd = newAnchor + hunk.newCount - 1;
   });
-  // A whole-file deletion ends at new-side −1 (newStart 0 + newCount 0);
-  // clamp before sizing anything so the trailing region can never invent
+  // A whole-file deletion ends at new-side 0 under the anchor rule; clamp
+  // before sizing anything so the trailing region can never invent
   // line 0 (R1 finding: loadContext(0, …) is off the 1-based contract).
   const covered = Math.max(prevEnd, 0);
   if (totalLines != null && totalLines > covered) {
     const last = parsed.hunks[parsed.hunks.length - 1];
+    const lastOldAnchor = last.oldStart + (last.oldCount === 0 ? 1 : 0);
+    const lastNewAnchor = last.newStart + (last.newCount === 0 ? 1 : 0);
     gaps.push({
       start: covered + 1,
       count: totalLines - covered,
-      shift: last ? last.newStart + last.newCount - (last.oldStart + last.oldCount) : 0,
+      shift: last ? lastNewAnchor + last.newCount - (lastOldAnchor + last.oldCount) : 0,
       anchor: "start",
       beforeHunk: parsed.hunks.length,
     });

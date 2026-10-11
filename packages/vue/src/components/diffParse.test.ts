@@ -56,7 +56,32 @@ describe("parseUnifiedDiff", () => {
 
     const del = parseUnifiedDiff("@@ -5 +4,0 @@\n-gone\n");
     expect(del.hunks[0].lines).toEqual([{ kind: "del", oldNo: 5, newNo: null, text: "gone" }]);
-    expect(del.endCovered).toBe(3); // newStart 4 + newCount 0 − 1
+    // A deletion positions after new line 4 (the zero-count anchor rule),
+    // so the covered new-side range is 1..4 — NOT 1..3 (R2: the raw-start
+    // formula baked an off-by-one into this pin once).
+    expect(del.endCovered).toBe(4);
+  });
+
+  it("computes gaps for a pure insertion hunk like git -U0 (R2)", () => {
+    // `@@ -4,0 +5,2 @@` = insertion AFTER old line 4: the leading gap is
+    // new 1..4 with shift 0, and the trailing side resumes at old 5.
+    const parsed = parseUnifiedDiff("@@ -4,0 +5,2 @@\n+a\n+b\n");
+    expect(computeGaps(parsed, 8)).toEqual([
+      { start: 1, count: 4, shift: 0, anchor: "end", beforeHunk: 0 },
+      { start: 7, count: 2, shift: 2, anchor: "start", beforeHunk: 1 },
+    ]);
+  });
+
+  it("computes gaps for a pure deletion hunk like git -U0 (R2)", () => {
+    // `@@ -5,2 +4,0 @@` = old 5..6 deleted, positioned after new line 4:
+    // the unchanged new line 5 must expand ABOVE as part of no gap and
+    // resume numbering at old 7 after the hunk (shift −2).
+    const parsed = parseUnifiedDiff("@@ -5,2 +4,0 @@\n-gone-a\n-gone-b\n");
+    expect(parsed.endCovered).toBe(4);
+    expect(computeGaps(parsed, 6)).toEqual([
+      { start: 1, count: 4, shift: 0, anchor: "end", beforeHunk: 0 },
+      { start: 5, count: 2, shift: -2, anchor: "start", beforeHunk: 1 },
+    ]);
   });
 
   it("skips file headers and \\-markers, and tolerates stripped blank context lines", () => {

@@ -111,4 +111,67 @@ describe("HkPillToggleGroup", () => {
     expect(pills[2].querySelector(".hk-pill-group-icon")).toBeNull();
     expect(pills[2].textContent?.trim()).toBe("Jk");
   });
+
+  it("strip wiring: a drag pans and swallows its trailing click — a plain click still toggles", async () => {
+    const toggled: string[] = [];
+    const c = mount(
+      h(HkPillToggleGroup, {
+        label: "P",
+        options: OPTIONS,
+        selected: new Set<string>(),
+        onToggle: (v: string) => toggled.push(v),
+      }),
+    );
+    const group = c.querySelector(".hk-pill-group")!;
+    const pill = c.querySelectorAll<HTMLButtonElement>(".hk-pill-group-pill")[0];
+
+    // Press on a pill, stray past the 5px threshold, release: the strip
+    // flags the pan and the trailing click is swallowed exactly once.
+    pill.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true, pointerType: "mouse", button: 0, clientX: 100, clientY: 50 }),
+    );
+    window.dispatchEvent(
+      new PointerEvent("pointermove", { pointerType: "mouse", clientX: 120, clientY: 52 }),
+    );
+    await Promise.resolve();
+    expect(group.hasAttribute("data-panning")).toBe(true);
+    window.dispatchEvent(new PointerEvent("pointerup", { pointerType: "mouse" }));
+    await Promise.resolve();
+    expect(group.hasAttribute("data-panning")).toBe(false);
+    pill.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    expect(toggled, "the pan's trailing click must not toggle").toEqual([]);
+
+    // The NEXT plain click toggles normally — the swallow is one-shot.
+    pill.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    expect(toggled).toEqual([OPTIONS[0].value]);
+  });
+
+  it("strip wiring: a sub-threshold press never pans and its click toggles", async () => {
+    const toggled: string[] = [];
+    const c = mount(
+      h(HkPillToggleGroup, {
+        label: "P",
+        options: OPTIONS,
+        selected: new Set<string>(),
+        onToggle: (v: string) => toggled.push(v),
+      }),
+    );
+    const group = c.querySelector(".hk-pill-group")!;
+    const pill = c.querySelectorAll<HTMLButtonElement>(".hk-pill-group-pill")[1];
+
+    pill.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true, pointerType: "mouse", button: 0, clientX: 100, clientY: 50 }),
+    );
+    window.dispatchEvent(
+      new PointerEvent("pointermove", { pointerType: "mouse", clientX: 103, clientY: 51 }),
+    );
+    await Promise.resolve();
+    expect(group.hasAttribute("data-panning"), "3px stays a click").toBe(false);
+    window.dispatchEvent(new PointerEvent("pointerup", { pointerType: "mouse" }));
+    pill.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    expect(toggled).toEqual([OPTIONS[1].value]);
+  });
 });

@@ -109,7 +109,7 @@ describe("HkScrollContainer floating-dock tail clearance", () => {
       setup() {
         return () => h(HkKanban, {
           lanes: [{ id: "a" }, { id: "b" }],
-          laneKeyOf: (lane: { id: string }) => lane.id,
+          laneKeyOf: (lane: unknown) => (lane as { id: string }).id,
           cardsOf: () => [{ id: "c" }],
           axis: "vertical",
           ...props,

@@ -1,6 +1,8 @@
 /**
  * HkPillToggleGroup chrome — the segmented pill track. Ported from the
- * wowsp 水表查询 filter bar's option group, token for token: shared
+ * wowsp 水表查询 filter bar's option group (strip chrome and fade
+ * masks token-for-token; the pills keep their pointer cursor — the
+ * strip root carries the grab affordance): shared
  * chrome around per-option buttons, the active option carrying the
  * indicator tint directly (multi-select cannot use HkTabs — its sliding
  * indicator is radio semantics). The track is the ONE-LINE PANNABLE

@@ -47,6 +47,11 @@ export interface UseBoardCameraOptions {
   maxK?: number;
   /** Master animation switch; reduced-motion forces snapping regardless. */
   animated?: boolean;
+  /** Optional ceiling for fit()'s scale: boards whose content is smaller
+   *  than the viewport may want to fill it instead of parking at the
+   *  library's default cap (BOARD_FIT_CAP). Unset keeps the default; the
+   *  camera clamp still honours maxK. */
+  fitCap?: number;
 }
 
 export interface UseBoardCameraReturn {
@@ -81,6 +86,10 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
     minK = BOARD_K_MIN,
     maxK = BOARD_K_MAX,
     animated = true,
+    /** Ceiling for fit()'s scale: boards whose content is smaller than the
+     *  viewport may want to fill it instead of parking at the library's
+     *  default cap (BOARD_FIT_CAP). Unset keeps the default. */
+    fitCap = undefined,
   } = options;
 
   const camera = ref<BoardCamera>({ x: 0, y: 0, k: 1 });
@@ -195,7 +204,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   }
 
   function fit(): void {
-    const target = boardFit(contentRect(), viewport());
+    const target = boardFit(contentRect(), viewport(), fitCap !== undefined ? { cap: fitCap } : {});
     kFloor = Math.min(minK, target.k);
     animateTo(target);
   }

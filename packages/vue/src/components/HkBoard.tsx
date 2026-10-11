@@ -117,6 +117,11 @@ export default defineComponent({
     minimap: { type: Boolean, default: true },
     minK: { type: Number, default: 0.2 },
     maxK: { type: Number, default: 4 },
+    /** Ceiling for the fit zoom (reset button, fitOnMount). The library
+     *  default caps a fit at 1.25 so a small board never fills a huge
+     *  viewport; a host that wants fill-the-stage framing passes a higher
+     *  cap (the camera clamp still honours maxK). */
+    fitCap: { type: Number, default: undefined },
     animated: { type: Boolean, default: true },
     fitOnMount: { type: Boolean, default: true },
   },
@@ -141,6 +146,7 @@ export default defineComponent({
       minK: props.minK,
       maxK: props.maxK,
       animated: props.animated,
+      fitCap: props.fitCap,
     });
     const camera = cam.camera as Ref<BoardCamera>;
 

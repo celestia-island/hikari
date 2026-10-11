@@ -118,8 +118,14 @@ export default defineComponent({
      *  docks that shrink the viewport permanently), this contract is for
      *  docks that float OVER the scroll area by design. Do not combine it
      *  with a `--hk-scroll-dock-bottom` end-padding recipe for the SAME
-     *  dock (double clearance), and note it spends nothing on
-     *  axis="horizontal" containers (the tail is cross-axis there). */
+     *  dock (double clearance). The spacer is not generated on
+     *  axis="horizontal" containers — the tail is the cross axis there,
+     *  and an ungated block spacer leaks onto the hidden vertical axis
+     *  (measured: scrollHeight grows and a programmatic scrollTop shifts
+     *  content up behind overflow-y:hidden) — while the shrink pin still
+     *  applies. A higher-specificity consumer ::after recipe on the
+     *  viewport overrides this spacer's height: adopting the prop means
+     *  deleting the hand-rolled recipe, not stacking it. */
     dockTailClearance: { type: Boolean, default: false },
     /** Back-to-top signal (scroll parameter every scrollable template
      *  can hand to a floating quick-action pad): while set, the

@@ -113,12 +113,21 @@
       boards, empty-ish pages) measures green and hides the defect.
    The spacer is inert while the var is unset/0px; the shrink pin is
    active whenever the prop is on (at S=0 it changes only box extent,
-   not scroll range). */
+   not scroll range). The spacer is NOT generated on axis="horizontal"
+   containers: there the tail is the cross axis, and an ungated block
+   spacer stacks below the full-height content on the HIDDEN vertical
+   axis (measured: scrollHeight +50, and a programmatic scrollTop
+   shifts the content up behind overflow-y:hidden with no wheel path
+   back). The pin stays ungated (flex-shrink is inert on block children
+   and a no-op on the align-center aligner, which is already
+   flex:none). Consumer note: a higher-specificity consumer ::after
+   recipe on the viewport overrides this spacer's height — adopting
+   the prop means deleting the hand-rolled recipe, not stacking it. */
 .hk-scroll-container[data-dock-tail="true"] > .hk-scroll-container-viewport > * {
   flex-shrink: 0;
 }
 
-.hk-scroll-container[data-dock-tail="true"] > .hk-scroll-container-viewport::after {
+.hk-scroll-container[data-dock-tail="true"]:not([data-axis="horizontal"]) > .hk-scroll-container-viewport::after {
   content: "";
   display: block;
   flex: none;

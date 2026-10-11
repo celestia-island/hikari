@@ -154,13 +154,18 @@ describe("HkScrollContainer floating-dock tail clearance", () => {
     // reachable clearance on any content taller than the viewport while
     // short content measures green (the defect that kept a consumer
     // board's tail under its dock through three padding rounds,
-    // root-caused in a real layout engine 2026-10-12).
+    // root-caused in a real layout engine 2026-10-12). The spacer is
+    // additionally gated OFF axis="horizontal" containers: the tail is
+    // the cross axis there, and an ungated block spacer leaks onto the
+    // hidden vertical axis (measured: scrollHeight +spacer, and a
+    // programmatic scrollTop shifts content up behind
+    // overflow-y:hidden with no wheel path back).
     const scss = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), "HkScrollContainer.scss"),
       "utf8",
     );
     const spacer = scss.match(
-      /\.hk-scroll-container\[data-dock-tail="true"\] > \.hk-scroll-container-viewport::after\s*\{[^}]*\}/,
+      /\.hk-scroll-container\[data-dock-tail="true"\]:not\(\[data-axis="horizontal"\]\) > \.hk-scroll-container-viewport::after\s*\{[^}]*\}/,
     );
     expect(spacer, "tail spacer rule must exist").not.toBeNull();
     expect(spacer![0]).toMatch(/content:\s*""/);

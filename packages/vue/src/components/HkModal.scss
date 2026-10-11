@@ -59,7 +59,10 @@
   // The centering translate is part of EVERY transform state — the
   // enter/leave choreography scales on top of it and must never re-seat
   // the frame.
-  transform: translate(-50%, -50%);
+  transform: translate(
+        calc(-50% + var(--hk-modal-shift-x, 0px)),
+        calc(-50% + var(--hk-modal-shift-y, 0px))
+      );
   width: 100%;
   // Size changes animate instead of snapping: `height: auto` growth
   // cannot fire a CSS transition (verified in Chromium — neither auto
@@ -147,21 +150,31 @@
 
   .hk-modal-content-enter-from {
     opacity: 0;
-    transform: translate(-50%, -50%) translateY(5%);
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        )
+        translateY(5%);
     clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
                                  var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
 
   .hk-modal-content-enter-to {
     opacity: 1;
-    transform: translate(-50%, -50%);
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        );
     clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
                               var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
 
   .hk-modal-content-leave-from {
     opacity: 1;
-    transform: translate(-50%, -50%);
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        );
     // The pinned identity clip: identical to enter-to so the leave's
     // clip interpolates (never jumps) — see the close note above.
     clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
@@ -173,7 +186,11 @@
     // Mirror of enter-from: shifted +5% with the bottom 10% clipped, the
     // visible box is 90% and centered — both edges ease toward the
     // center line, exactly reversing the unveil.
-    transform: translate(-50%, -50%) translateY(5%);
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        )
+        translateY(5%);
     clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
                                  var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
@@ -645,5 +662,17 @@
 @media (prefers-reduced-motion: reduce) {
   .hk-modal-content {
     transition: none;
+  }
+}
+
+/* ── Draggable desktop windows (opt-in `draggable` prop) ──────────── */
+@media (min-width: 768px) {
+  .hk-modal-content[data-draggable] .hk-modal-header {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  .hk-modal-content[data-draggable] .hk-modal-header:active {
+    cursor: grabbing;
   }
 }

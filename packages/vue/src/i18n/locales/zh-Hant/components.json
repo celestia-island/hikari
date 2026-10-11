@@ -276,5 +276,7 @@
   "hikari::userPicker.add": "選擇使用者…",
   "hikari::userPicker.remove": "移除",
   "hikari::userPicker.confirm": "確認",
-  "hikari::userPicker.selectedCount": "已選 {count} 人"
+  "hikari::userPicker.selectedCount": "已選 {count} 人",
+  "hikari::tokenField.editValue": "編輯數值",
+  "hikari::tokenField.clear": "清除"
 }

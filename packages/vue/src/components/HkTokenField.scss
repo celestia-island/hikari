@@ -1,0 +1,105 @@
+/* HkTokenField — one box: slider ladder (major) + value + unit suffix.
+ * The track flexes; the value and the unit keep their content width so
+ * the slider takes whatever the row can spare (the "left bigger part"
+ * layout the model editor specified). */
+.hk-token-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  min-width: 0;
+  padding: var(--space-4, 4px) var(--space-8, 8px);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface));
+}
+
+.hk-token-field.is-disabled {
+  opacity: 0.55;
+}
+
+.hk-token-field-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hk-token-field-value {
+  flex: 0 0 auto;
+  min-width: 3.25rem;
+  padding: 2px var(--space-8, 8px);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-muted) / 12%);
+  color: rgb(var(--color-text));
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hk-token-field-value:hover:not(:disabled) {
+  background: rgb(var(--color-muted) / 20%);
+}
+
+.hk-token-field-value:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-primary) / 40%);
+}
+
+/* An off-ladder (typed) value gets the primary tint — the thumb rests
+ * at the nearest stop, the exact budget is what stands. */
+.hk-token-field[data-off-ladder] .hk-token-field-value {
+  background: rgb(var(--color-primary) / 14%);
+  color: var(--c-primary-strong, rgb(var(--color-primary)));
+}
+
+.hk-token-field-unit {
+  flex: 0 0 auto;
+  width: 4.25rem;
+}
+
+/* The precision editor body: value input (major) + unit (minor). */
+.hk-token-field-editor-body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8, 8px);
+  padding: var(--space-8, 8px) 0;
+}
+
+.hk-token-editor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hk-token-editor-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hk-token-editor-unit {
+  flex: 0 0 auto;
+  width: 5rem;
+}
+
+.hk-token-field-clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-4, 4px);
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+}
+
+.hk-token-field-clear:hover {
+  background: rgb(var(--color-error) / 10%);
+  color: rgb(var(--color-error));
+}

@@ -272,5 +272,7 @@
   "hikari::userPicker.add": "사용자 선택…",
   "hikari::userPicker.remove": "제거",
   "hikari::userPicker.confirm": "확인",
-  "hikari::userPicker.selectedCount": "{count}명 선택됨"
+  "hikari::userPicker.selectedCount": "{count}명 선택됨",
+  "hikari::tokenField.editValue": "값 편집",
+  "hikari::tokenField.clear": "지우기"
 }

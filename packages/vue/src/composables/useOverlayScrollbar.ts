@@ -58,6 +58,14 @@ export interface OverlayScrollbarMarker {
  *  sub-pixel sliver, i.e. invisible exactly when the reader needs it. */
 const MARKER_MIN_FRACTION = 0.005;
 
+/** …and the same floor in CSS pixels, which is what actually decides
+ *  whether a mark can be SEEN and HIT on a short rail: at 1000px tall the
+ *  fraction floor is 5px, at 100px it is 0.5px. It lives here rather than
+ *  as a stylesheet `min-height` because the end-of-rail inset below must
+ *  account for the mark's real rendered size — a CSS floor silently wins
+ *  over that inset and pushes a last-line mark past the clip. */
+const MARKER_MIN_PX = 2;
+
 /** Clamp to [0, 1]; non-finite input is the caller's bug, but the rail
  *  must never render a mark at a meaningless position, so it becomes 0. */
 function clamp01(n: number): number {
@@ -214,6 +222,9 @@ export function attachOverlayScrollbars(
   let rail: HTMLElement | null = null;
   let markers: OverlayScrollbarMarker[] = [];
   let railDragging = false;
+  /** Rail height the marks were last sized against — the pixel floor is a
+   *  function of it, so a resize has to re-render them. */
+  let renderedRailHeight = 0;
 
   /** Scroll so the rail position under `clientY` lands in the viewport —
    *  the same fraction → scrollTop mapping the track's own click uses, so
@@ -251,10 +262,17 @@ export function attachOverlayScrollbars(
   function renderMarkers() {
     if (!rail) return;
     rail.replaceChildren();
+    // Measured, not assumed: happy-dom and a `display:none` rail both
+    // report 0, and the fraction floor is the honest answer there.
+    const railH = rail.clientHeight;
+    renderedRailHeight = railH;
+    const floor = railH > 0
+      ? Math.max(MARKER_MIN_FRACTION, MARKER_MIN_PX / railH)
+      : MARKER_MIN_FRACTION;
     for (const m of markers) {
       const size = Math.max(
         Math.abs(clamp01(m.end) - clamp01(m.start)),
-        MARKER_MIN_FRACTION,
+        floor,
       );
       // Keep the whole mark inside the rail: a mark at the very end would
       // otherwise overflow the bottom, get clipped, and read as absent.
@@ -336,6 +354,14 @@ export function attachOverlayScrollbars(
   function update() {
     if (detached) return;
     for (const s of states) updateAxis(s, s.horizontal);
+    // The marks' pixel floor is a fraction OF the rail, so a resize that
+    // changes its height invalidates the sizes they were rendered with.
+    // (A hidden rail reports 0 and is left alone: `renderMarkers` runs
+    // again when it comes back, via the same path.)
+    const railH = rail?.clientHeight ?? 0;
+    if (rail && markers.length > 0 && railH > 0 && railH !== renderedRailHeight) {
+      renderMarkers();
+    }
   }
 
   function scheduleUpdate() {

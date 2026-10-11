@@ -114,10 +114,13 @@
    diff kinds get the diff palette, anything else the neutral muted one.
    The fallbacks mirror the thumb's: a themeless standalone render must
    still show marks rather than an invalid-at-computed-value-time
-   transparent. Height is set entirely by the engine (which floors a
-   hairline mark itself) — a CSS `min-height` here would silently win over
-   the engine's end-of-rail inset on a short rail and push the last mark
-   past the clip. */
+   transparent.
+
+   Height comes ENTIRELY from the engine, which floors a hairline mark in
+   both fractions and pixels and sizes the end-of-rail inset against that
+   same number. A CSS `min-height` here would silently win over the inset
+   (it cannot know the engine's model) and, since the rail clips, push the
+   extra pixels of a last-line mark outside the rail. */
 .hk-scrollbar-marker {
   position: absolute;
   left: 0;
@@ -129,7 +132,11 @@
   cursor: pointer;
 
   &:hover {
+    /* Negative offset: the rail clips its children, and a plain outline
+       lost both side strokes to that clip (only the top/bottom lines
+       survived) — drawn inside, the ring stays whole. */
     outline: 1px solid color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 60%, transparent);
+    outline-offset: -1px;
   }
 
   &[data-kind="added"] {

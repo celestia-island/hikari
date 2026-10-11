@@ -73,6 +73,16 @@ function stubGeometry(
   Object.defineProperties(el, desc);
 }
 
+/** Give the rail a measured height before applying the marks under test.
+ *  The pixel floor is derived from `clientHeight` AT RENDER TIME, so the
+ *  stub has to exist before the marks are rendered. */
+function railOfHeight(m: ReturnType<typeof mountRailed>, height: number): HTMLElement {
+  m.handle.setMarkers([{ start: 0, end: 0 }]);
+  const rail = m.rail()!;
+  Object.defineProperty(rail, "clientHeight", { configurable: true, get: () => height });
+  return rail;
+}
+
 afterEach(() => {
   for (const h of handles.splice(0)) h.detach();
   for (const el of containers.splice(0)) el.remove();
@@ -391,9 +401,33 @@ describe("change-mark rail", () => {
     expect(top + height, "a mark at the end stays inside the rail").toBeLessThanOrEqual(100);
   });
 
-  it("clamps a reversed or out-of-range span instead of rendering it outside", () => {
+  it("floors a hairline mark in PIXELS on a short rail, not just as a fraction", () => {
     const m = mountRailed();
-    m.handle.setMarkers([{ start: 0.8, end: 0.2, kind: "added" }]);
+    railOfHeight(m, 100);
+    m.handle.setMarkers([{ start: 0.4, end: 0.401, kind: "modified" }]);
+    // 2px of a 100px rail = 2%. The fraction floor alone (0.5%) is a
+    // half-pixel target — and since the rail is pointer-transparent the
+    // marks ARE the hit area, so a half-pixel mark is a half-pixel button.
+    expect(
+      parseFloat(m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!.style.height),
+    ).toBeCloseTo(2, 5);
+  });
+
+  it("re-sizes the marks when the rail is resized", () => {
+    const m = mountRailed();
+    const rail = railOfHeight(m, 100);
+    m.handle.setMarkers([{ start: 0.4, end: 0.401, kind: "modified" }]);
+    const height = () =>
+      parseFloat(m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!.style.height);
+    expect(height()).toBeCloseTo(2, 5);
+    // A taller rail makes the same 2px a smaller share of it.
+    Object.defineProperty(rail, "clientHeight", { configurable: true, get: () => 400 });
+    m.handle.update();
+    expect(height(), "2px of a 400px rail").toBeCloseTo(0.5, 5);
+  });
+
+  it("clamps a reversed or out-of-range span instead of rendering it outside", () => {
+    const m = mountRailed();    m.handle.setMarkers([{ start: 0.8, end: 0.2, kind: "added" }]);
     const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
     expect(mark.style.top).toBe("20%");
     expect(mark.style.height).toBe("60%");

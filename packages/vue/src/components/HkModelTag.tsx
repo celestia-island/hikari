@@ -38,8 +38,10 @@ const ModelPill = defineComponent({
       const { base, tag } = splitModelId(props.model);
       // ×1.5 / ×2 / ×0.1 — trailing zeros trimmed, one decimal at most
       // (the editor offers tenths; hundredths would crowd the pill).
+      // Number.isFinite guards the catalog edge: a NaN/Infinity leaking
+      // in would otherwise render "×NaN" (R1 F3).
       const rateText =
-        props.rate != null
+        props.rate != null && Number.isFinite(props.rate)
           ? `×${Number(props.rate.toFixed(1)).toString()}`
           : null;
       return (

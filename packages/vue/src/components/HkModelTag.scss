@@ -56,6 +56,18 @@
 .s-model-tag-group[data-rate] .hk-badge.s-model-tag-name {
   border-start-end-radius: 0;
   border-end-end-radius: 0;
+  // The rate badge provides the seam's divider from its own
+  // inline-start border — the name's inline-end border must drop or
+  // the seam stacks ~2px (the num/name seam is 1px).
+  border-inline-end: none;
+}
+
+// Tagless + rate (the pill starts bare before the roster refines the
+// id): the name is the FIRST child — its leading corners keep the
+// capsule's rounding (only the :only-child escape covered it before).
+.s-model-tag-group[data-rate] .hk-badge.s-model-tag-name:first-child {
+  border-start-start-radius: var(--radius-sm, 4px);
+  border-end-start-radius: var(--radius-sm, 4px);
 }
 
 .s-model-tag-group .hk-badge.s-model-tag-rate {

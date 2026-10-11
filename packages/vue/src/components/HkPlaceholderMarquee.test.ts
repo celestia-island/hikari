@@ -139,6 +139,26 @@ describe("HkPlaceholderMarquee", () => {
     expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(false);
   });
 
+  it("keeps a sub-pixel-exact fit static instead of flipping to scroll", async () => {
+    // A shrink-wrapped host (window == text width, e.g. the status-bar
+    // version cells) compares a fractional copy width against the
+    // INTEGER clientWidth: without the epsilon, every fractional part
+    // < 0.5 made the predicate true and permanently scrolled a FITTING
+    // text (2026-10-11 R1 finding, reproduced in Chromium). The epsilon
+    // lets exact fits keep the hidden probe while real overflow (≥0.5px
+    // past the edge) still flips.
+    const { container } = mountMarquee({ text: "0.1.0 feat/model-usage-selfhosted:770f625" });
+    // Copy (incl. 24px spacing) lands 0.3px past the window: fits.
+    await forceGeometry(container, /* copy */ 224.3, /* window */ 200);
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    expect(host.classList.contains("hk-placeholder-marquee--hidden"), "0.3px past → still fits").toBe(true);
+    expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(1);
+    // 2px past the edge: real overflow, the strip takes over.
+    await forceGeometry(container, /* copy */ 226, /* window */ 200);
+    expect(host.classList.contains("hk-placeholder-marquee--hidden"), "2px past → scrolls").toBe(false);
+    expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(3);
+  });
+
   it("drives the sweep with CSS custom properties instead of per-frame JS", async () => {
     const { container } = mountMarquee({ text: "advent calendar of placeholders" });
     await forceGeometry(container, 500, 200);

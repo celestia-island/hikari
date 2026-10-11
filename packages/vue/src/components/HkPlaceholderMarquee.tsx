@@ -79,7 +79,16 @@ export const HkPlaceholderMarquee = defineComponent({
       const factor = space.x > 0 ? space.x : 1;
       const copyWidth = copy.getBoundingClientRect().width / factor;
       loopWidth.value = copyWidth;
-      overflowing.value = copyWidth - COPY_SPACING > host.clientWidth;
+      // Sub-pixel boundary (2026-10-11): the copy width is deliberately
+      // fractional while clientWidth is an integer. A shrink-wrapped
+      // host — window == text width, e.g. the status-bar version cells —
+      // degenerates the predicate to `textW > round(textW)`, which is
+      // TRUE for every fractional part < 0.5 and would permanently flip
+      // a FITTING text into scrolling (no size change → the
+      // ResizeObserver never re-fires; reproduced in Chromium). The
+      // epsilon keeps exact fits static; real overflow (≥0.5px past the
+      // edge) still flips.
+      overflowing.value = copyWidth - COPY_SPACING > host.clientWidth + 0.5;
       emit("overflowChange", overflowing.value);
     };
 

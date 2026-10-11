@@ -182,6 +182,57 @@
 
 .s-status-bar-version {
   white-space: nowrap;
+  /* Version cell = marquee window (2026-10-11 user direction): long
+     branch identities scroll inside the cell (HkPlaceholderMarquee
+     layered by HkStatusBar's HkVersionValue) instead of stretching the
+     footer or wrapping. inline-flex (not block) so the static text
+     layer keeps contributing a text baseline to the parent grid's
+     align-items: baseline — an overflow:hidden block would synthesize
+     its baseline from the bottom edge and visibly sink the row. */
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  max-width: min(40vw, 24rem);
+}
+
+.s-status-bar-version__static {
+  /* Dead-overlay guard: if the marquee's measurement never fires (RO
+     unavailable, zero-width probe), a capped cell must degrade to an
+     ellipsis cut, not a silent hard clip. Invisible while the marquee
+     owns the window (the ghost is opacity-0 by then). */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.s-status-bar-version[data-overflowing] .s-status-bar-version__static {
+  opacity: 0;
+}
+
+/* The marquee overlay must measure and draw in the cell's own
+   typography — the placeholder defaults (base size, muted color, 1.5
+   line box) are input-context styling, overridden here. */
+.s-status-bar-version .hk-placeholder-marquee {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Compact-popover value cell: bounded so a long branch identity scrolls
+   inside the ~300px card instead of stretching it; the label keeps its
+   natural width on the left (marginRight:auto on the row). */
+.s-status-bar-popover-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  max-width: min(16rem, 60vw);
+}
+
+.s-status-bar-popover-value .s-status-bar-version {
+  max-width: 100%;
 }
 
 /* Compact traffic light (logged-in mobile footers): drop the version
@@ -211,12 +262,8 @@
   }
 }
 
-.s-status-bar-version,
 .s-status-bar-version-sep {
   white-space: nowrap;
-}
-
-.s-status-bar-version-sep {
   opacity: 0.5;
 }
 

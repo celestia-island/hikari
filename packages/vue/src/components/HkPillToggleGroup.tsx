@@ -1,5 +1,6 @@
 import { defineComponent, h, type PropType, type VNode } from "vue";
 
+import { useOptionStrip } from "../composables/useOptionStrip";
 import "./HkPillToggleGroup.scss";
 
 /** One toggleable pill of the group. */
@@ -30,9 +31,13 @@ function resolveIcon(icon: unknown): VNode | null {
  * chrome around per-option toggle buttons, the active option carrying
  * the indicator tint directly (multi-select cannot use HkTabs — its
  * sliding indicator is radio semantics). Grammar ported from the wowsp
- * 水表查询 filter bar's option strip (2026-10-11), wrapping instead of
- * panning: hikari ships page-sized groups, and hosts with strip-scale
- * sets host their own panning track.
+ * 水表查询 filter bar's option strip (2026-10-11); the track is the
+ * ONE-LINE PANNABLE STRIP (same-day follow-up direction): overflow
+ * hides under edge fades and pans by wheel / mouse drag / native touch,
+ * exactly the 水表 popups' behavior — a wrapping track always measured
+ * ONE long line inside HkPopover's max-content panel and ran off-screen
+ * (wowsp #667). Phones relax back into a wrapping group (the sheet
+ * carries full width; nothing pans there) via the SCSS media query.
  *
  * Deliberately THIN (the host owns the set): `toggle(value)` reports one
  * pill toggled; the optional leading all-pill reports `all()` and the
@@ -60,8 +65,17 @@ export default defineComponent({
     all: () => true,
   },
   setup(props, { emit }) {
+    const { stripEl, panning, onPointerDown } = useOptionStrip();
+
     return () => (
-      <div class="hk-pill-group" role="group" aria-label={props.label}>
+      <div
+        ref={stripEl}
+        class="hk-pill-group"
+        role="group"
+        aria-label={props.label}
+        data-panning={panning.value || undefined}
+        onPointerdown={onPointerDown}
+      >
         {props.allLabel != null && (
           <button
             type="button"

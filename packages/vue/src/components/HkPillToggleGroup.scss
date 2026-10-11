@@ -1,15 +1,69 @@
 /**
  * HkPillToggleGroup chrome — the segmented pill track. Ported from the
- * wowsp 水表查询 filter bar's option group, token for token: shared
+ * wowsp 水表查询 filter bar's option group (strip chrome and fade
+ * masks token-for-token; the pills keep their pointer cursor — the
+ * strip root carries the grab affordance): shared
  * chrome around per-option buttons, the active option carrying the
  * indicator tint directly (multi-select cannot use HkTabs — its sliding
- * indicator is radio semantics).
+ * indicator is radio semantics). The track is the ONE-LINE PANNABLE
+ * STRIP: overflow hides under edge fades (data-h-overflow masks, the
+ * HkScrollContainer contract) and pans by wheel / mouse drag / native
+ * touch (the machinery lives in useOptionStrip); phones relax back into
+ * a wrapping group (media query below — the sheet carries full width).
  */
 
 .hk-pill-group {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  max-width: 100%;
   gap: var(--space-4, 4px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  --hk-scroll-fade-size: var(--space-24);
+
+  &[data-h-overflow="end"] {
+    -webkit-mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
+    mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
+  }
+
+  &[data-h-overflow="start"] {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
+  }
+
+  &[data-h-overflow="both"] {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--hk-scroll-fade-size),
+      #000 calc(100% - var(--hk-scroll-fade-size)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--hk-scroll-fade-size),
+      #000 calc(100% - var(--hk-scroll-fade-size)),
+      transparent 100%
+    );
+  }
+
+  /* The whole strip drags; clicks still toggle — the 5px pan threshold
+   * keeps plain clicks click-shaped. */
+  cursor: grab;
+
+  &[data-panning] {
+    cursor: grabbing;
+    user-select: none;
+  }
   padding: 2px;
   border-radius: var(--radius-sm);
   border: 1px solid rgb(var(--color-border) / 25%);
@@ -59,4 +113,17 @@
    * contribute nothing to a button's min-content width, so shrink
    * pressure would collapse them before the label felt it. */
   flex: 0 0 auto;
+}
+
+/* Phones: the sheet carries the full width, nothing pans there — the
+ * strip relaxes back into the wrapping group (the wowsp filter bar's
+ * rule; the fade masks and the grab affordance name interactions the
+ * track no longer has). */
+@media (max-width: 767px) {
+  .hk-pill-group {
+    flex-wrap: wrap;
+    overflow: visible;
+    touch-action: auto;
+    cursor: default;
+  }
 }

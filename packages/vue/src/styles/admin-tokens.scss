@@ -199,9 +199,13 @@
 }
 
 .s-status-bar-version__static {
-  /* The ghost state (marquee owns the window): opacity keeps the text
-     in the layout and the a11y tree; only the paint is handed over. */
+  /* Dead-overlay guard: if the marquee's measurement never fires (RO
+     unavailable, zero-width probe), a capped cell must degrade to an
+     ellipsis cut, not a silent hard clip. Invisible while the marquee
+     owns the window (the ghost is opacity-0 by then). */
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .s-status-bar-version[data-overflowing] .s-status-bar-version__static {
@@ -258,12 +262,8 @@
   }
 }
 
-.s-status-bar-version,
 .s-status-bar-version-sep {
   white-space: nowrap;
-}
-
-.s-status-bar-version-sep {
   opacity: 0.5;
 }
 

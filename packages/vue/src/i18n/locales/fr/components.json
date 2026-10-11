@@ -278,5 +278,8 @@
   "hikari::tokenField.editValue": "Modifier la valeur",
   "hikari::tokenField.clear": "Effacer",
   "hikari::diff.unchangedLines": "{count} lignes inchangées",
-  "hikari::diff.loadFailed": "Échec du chargement, cliquez pour réessayer"
+  "hikari::diff.loadFailed": "Échec du chargement, cliquez pour réessayer",
+  "hikari::search.trigger": "Rechercher",
+  "hikari::search.clear": "Effacer la recherche",
+  "hikari::search.apply": "Appliquer"
 }

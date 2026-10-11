@@ -282,5 +282,8 @@
   "hikari::tokenField.editValue": "编辑数值",
   "hikari::tokenField.clear": "清除",
   "hikari::diff.unchangedLines": "{count} 行未修改",
-  "hikari::diff.loadFailed": "加载失败，点击重试"
+  "hikari::diff.loadFailed": "加载失败，点击重试",
+  "hikari::search.trigger": "搜索",
+  "hikari::search.clear": "清除搜索",
+  "hikari::search.apply": "应用"
 }

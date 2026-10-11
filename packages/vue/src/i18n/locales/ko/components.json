@@ -278,5 +278,8 @@
   "hikari::tokenField.editValue": "값 편집",
   "hikari::tokenField.clear": "지우기",
   "hikari::diff.unchangedLines": "변경되지 않은 {count}줄",
-  "hikari::diff.loadFailed": "불러오기 실패, 클릭하여 재시도"
+  "hikari::diff.loadFailed": "불러오기 실패, 클릭하여 재시도",
+  "hikari::search.trigger": "검색",
+  "hikari::search.clear": "검색 지우기",
+  "hikari::search.apply": "적용"
 }

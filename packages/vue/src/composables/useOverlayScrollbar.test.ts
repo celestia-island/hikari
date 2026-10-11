@@ -1,13 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "./useOverlayScrollbar";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle, type OverlayScrollbarOptions } from "./useOverlayScrollbar";
 
 const handles: OverlayScrollbarHandle[] = [];
 const containers: HTMLElement[] = [];
 
 /** Mount a viewport (the scrolling element) inside a wrapper inside a
  *  fresh container: wrapper ← viewport. The wrapper is the track host. */
-function mountViewport(axis: "vertical" | "horizontal" | "both" = "vertical") {
+function mountViewport(
+  axis: "vertical" | "horizontal" | "both" = "vertical",
+  extra: Omit<OverlayScrollbarOptions, "axis"> = {},
+) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);
@@ -15,9 +18,35 @@ function mountViewport(axis: "vertical" | "horizontal" | "both" = "vertical") {
   const viewport = document.createElement("div");
   wrapper.appendChild(viewport);
   container.appendChild(wrapper);
-  const handle = attachOverlayScrollbars(viewport, { axis });
+  const handle = attachOverlayScrollbars(viewport, { axis, ...extra });
   handles.push(handle);
   return { container, wrapper, viewport, handle };
+}
+
+/** A scrollable vertical viewport with a deterministic 100px rail box:
+ *  happy-dom performs no layout, so both the geometry and the rail's
+ *  bounding box are stubbed. `height` of the rail is what maps a mark's
+ *  fraction to a pixel position. */
+function mountRailed(railHeight = 100) {
+  const mounted = mountViewport("vertical");
+  stubGeometry(mounted.viewport, {
+    scrollHeight: 1000, clientHeight: 100, scrollTop: 0,
+    scrollWidth: 100, clientWidth: 100, scrollLeft: 0,
+  });
+  mounted.handle.update();
+  return {
+    ...mounted,
+    rail: () => {
+      const el = mounted.wrapper.querySelector<HTMLElement>(".hk-scrollbar-markers");
+      if (el) {
+        vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
+          top: 0, left: 0, width: 8, height: railHeight,
+          bottom: railHeight, right: 8, x: 0, y: 0, toJSON: () => ({}),
+        } as DOMRect);
+      }
+      return el;
+    },
+  };
 }
 
 /** happy-dom performs no layout, so scroll geometry is stubbed on the
@@ -42,6 +71,16 @@ function stubGeometry(
     }
   }
   Object.defineProperties(el, desc);
+}
+
+/** Give the rail a measured height before applying the marks under test.
+ *  The pixel floor is derived from `clientHeight` AT RENDER TIME, so the
+ *  stub has to exist before the marks are rendered. */
+function railOfHeight(m: ReturnType<typeof mountRailed>, height: number): HTMLElement {
+  m.handle.setMarkers([{ start: 0, end: 0 }]);
+  const rail = m.rail()!;
+  Object.defineProperty(rail, "clientHeight", { configurable: true, get: () => height });
+  return rail;
 }
 
 afterEach(() => {
@@ -308,7 +347,227 @@ describe("attachOverlayScrollbars", () => {
     handles.push(handle);
     expect(() => {
       handle.update();
+      handle.setMarkers([{ start: 0, end: 0.5 }]);
       handle.detach();
     }).not.toThrow();
+  });
+});
+
+describe("change-mark rail", () => {
+  it("renders no rail at all when the consumer passes no markers", () => {
+    const { wrapper } = mountViewport("vertical");
+    expect(wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+  });
+
+  it("creates the rail and one mark per entry, tagged by kind", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([
+      { start: 0.1, end: 0.2, kind: "added" },
+      { start: 0.5, end: 0.6, kind: "deleted" },
+    ]);
+    const rail = m.rail();
+    expect(rail).not.toBeNull();
+    const marks = rail!.querySelectorAll<HTMLElement>(".hk-scrollbar-marker");
+    expect(marks.length).toBe(2);
+    expect(marks[0].getAttribute("data-kind")).toBe("added");
+    expect(marks[1].getAttribute("data-kind")).toBe("deleted");
+    expect(marks[0].style.top).toBe("10%");
+    expect(marks[0].style.height).toBe("10%");
+    expect(marks[1].style.top).toBe("50%");
+  });
+
+  it("accepts markers through the attach options", () => {
+    const m = mountViewport("vertical", { markers: [{ start: 0, end: 0.25, kind: "added" }] });
+    stubGeometry(m.viewport, {
+      scrollHeight: 1000, clientHeight: 100, scrollTop: 0,
+      scrollWidth: 100, clientWidth: 100, scrollLeft: 0,
+    });
+    m.handle.update();
+    expect(m.wrapper.querySelectorAll(".hk-scrollbar-marker").length).toBe(1);
+  });
+
+  it("floors a hairline mark and keeps an end-of-file mark inside the rail", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([
+      // One line of a 1000-line file: 0.1% — under the floor.
+      { start: 0.4, end: 0.401, kind: "modified" },
+      // The very last line: top + height must not overflow the rail.
+      { start: 1, end: 1, kind: "added" },
+    ]);
+    const marks = m.rail()!.querySelectorAll<HTMLElement>(".hk-scrollbar-marker");
+    expect(parseFloat(marks[0].style.height), "floored to the minimum").toBeCloseTo(0.5, 5);
+    const top = parseFloat(marks[1].style.top);
+    const height = parseFloat(marks[1].style.height);
+    expect(top + height, "a mark at the end stays inside the rail").toBeLessThanOrEqual(100);
+  });
+
+  it("floors a hairline mark in PIXELS on a short rail, not just as a fraction", () => {
+    const m = mountRailed();
+    railOfHeight(m, 100);
+    m.handle.setMarkers([{ start: 0.4, end: 0.401, kind: "modified" }]);
+    // `update()` is the path that re-renders marks laid out before a height
+    // existed (a no-layout DOM reports 0, which leaves the "never sized"
+    // sentinel behind) — without it this test silently asserted the
+    // FRACTION floor and would have stayed green with no pixel floor at all.
+    m.handle.update();
+    // 2px of a 100px rail = 2%. The fraction floor alone (0.5%) is a
+    // half-pixel target — and since the rail is pointer-transparent the
+    // marks ARE the hit area, so a half-pixel mark is a half-pixel button.
+    expect(
+      parseFloat(m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!.style.height),
+    ).toBeCloseTo(2, 5);
+  });
+
+  it("re-sizes the marks when the rail is resized", () => {
+    const m = mountRailed();
+    const rail = railOfHeight(m, 100);
+    m.handle.setMarkers([{ start: 0.4, end: 0.401, kind: "modified" }]);
+    const height = () =>
+      parseFloat(m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!.style.height);
+    expect(height()).toBeCloseTo(2, 5);
+    // A taller rail makes the same 2px a smaller share of it.
+    Object.defineProperty(rail, "clientHeight", { configurable: true, get: () => 400 });
+    m.handle.update();
+    expect(height(), "2px of a 400px rail").toBeCloseTo(0.5, 5);
+  });
+
+  it("clamps a reversed or out-of-range span instead of rendering it outside", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.8, end: 0.2, kind: "added" }]);
+    const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    expect(mark.style.top).toBe("20%");
+    expect(mark.style.height).toBe("60%");
+  });
+
+  it("positions marks against the content, so scrolling does not move them", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.25, end: 0.3, kind: "added" }]);
+    const top = () => m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!.style.top;
+    expect(top()).toBe("25%");
+    stubGeometry(m.viewport, {
+      scrollHeight: 1000, clientHeight: 100, scrollTop: 500,
+      scrollWidth: 100, clientWidth: 100, scrollLeft: 0,
+    });
+    m.viewport.dispatchEvent(new Event("scroll"));
+    m.handle.update();
+    expect(top(), "the rail maps the whole document, not the window").toBe("25%");
+  });
+
+  it("removes the rail again when the marks are cleared", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.1, end: 0.2, kind: "added" }]);
+    expect(m.rail()).not.toBeNull();
+    m.handle.setMarkers([]);
+    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+  });
+
+  it("hides the rail while the content fits, and shows it again when it scrolls", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.1, end: 0.2, kind: "added" }]);
+    stubGeometry(m.viewport, {
+      scrollHeight: 100, clientHeight: 100, scrollTop: 0,
+      scrollWidth: 100, clientWidth: 100, scrollLeft: 0,
+    });
+    m.handle.update();
+    expect(m.rail()!.style.display).toBe("none");
+    stubGeometry(m.viewport, {
+      scrollHeight: 1000, clientHeight: 100, scrollTop: 0,
+      scrollWidth: 100, clientWidth: 100, scrollLeft: 0,
+    });
+    m.handle.update();
+    expect(m.rail()!.style.display).toBe("");
+  });
+
+  it("never renders a rail on a horizontal-only scroll region", () => {
+    const m = mountViewport("horizontal");
+    stubGeometry(m.viewport, {
+      scrollHeight: 100, clientHeight: 100, scrollTop: 0,
+      scrollWidth: 1000, clientWidth: 100, scrollLeft: 0,
+    });
+    m.handle.update();
+    m.handle.setMarkers([{ start: 0.1, end: 0.2, kind: "added" }]);
+    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+  });
+
+  it("ignores non-finite mark bounds instead of parking them at NaN%", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([
+      { start: Number.NaN, end: Number.NaN, kind: "added" },
+      { start: Number.POSITIVE_INFINITY, end: 0.9, kind: "modified" },
+    ]);
+    const marks = m.rail()!.querySelectorAll<HTMLElement>(".hk-scrollbar-marker");
+    // "NaN%" is rejected by CSSOM: the element keeps no inline top/height,
+    // collapses to zero height and the mark silently does not exist.
+    expect(marks[0].style.top).toBe("0%");
+    expect(marks[0].style.height).toBe("0.5%");
+    // Infinity is not "the end of the file" — non-finite clamps to 0.
+    expect(marks[1].style.top).toBe("0%");
+  });
+
+  it("keeps a mark press from escaping to the page and shows the drag", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
+    const rail = m.rail()!;
+    const mark = rail.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    // The rail rides inside modals/drawers that dismiss on an outside
+    // press; scrubbing it must not double as that press.
+    let escaped = 0;
+    const spy = () => { escaped += 1; };
+    document.body.addEventListener("mousedown", spy);
+    const down = new MouseEvent("mousedown", { bubbles: true, cancelable: true, clientY: 0 });
+    mark.dispatchEvent(down);
+    expect(down.defaultPrevented, "the press is consumed").toBe(true);
+    expect(escaped, "the press never reaches the page").toBe(0);
+    expect(rail.classList.contains("is-dragging"), "the rail shows the drag").toBe(true);
+    document.dispatchEvent(new MouseEvent("mouseup"));
+    expect(rail.classList.contains("is-dragging"), "and clears it on release").toBe(false);
+    document.body.removeEventListener("mousedown", spy);
+  });
+
+  it("jumps to a mark when the mark is pressed", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
+    const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    mark.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 50 }));
+    // Halfway down a 100px rail over a 900px scroll range.
+    expect(m.viewport.scrollTop).toBe(450);
+    document.dispatchEvent(new MouseEvent("mouseup"));
+  });
+
+  it("scrubs while the rail is dragged and stops on mouseup", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
+    const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    mark.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
+    expect(m.viewport.scrollTop).toBe(0);
+    document.dispatchEvent(new MouseEvent("mousemove", { clientY: 100 }));
+    expect(m.viewport.scrollTop, "dragged to the bottom").toBe(900);
+    document.dispatchEvent(new MouseEvent("mouseup"));
+    // The document listeners are gone: a later move must not scroll.
+    m.viewport.scrollTop = 0;
+    document.dispatchEvent(new MouseEvent("mousemove", { clientY: 50 }));
+    expect(m.viewport.scrollTop, "no scrub after mouseup").toBe(0);
+  });
+
+  it("detach removes the rail and its document listeners", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
+    const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
+    mark.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
+    m.handle.detach();
+    handles.splice(handles.indexOf(m.handle), 1);
+    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+    m.viewport.scrollTop = 0;
+    document.dispatchEvent(new MouseEvent("mousemove", { clientY: 100 }));
+    expect(m.viewport.scrollTop, "detach dropped the drag listener").toBe(0);
+    document.dispatchEvent(new MouseEvent("mouseup"));
+  });
+
+  it("ignores setMarkers after detach", () => {
+    const m = mountRailed();
+    m.handle.detach();
+    handles.splice(handles.indexOf(m.handle), 1);
+    expect(() => m.handle.setMarkers([{ start: 0, end: 1, kind: "added" }])).not.toThrow();
+    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
   });
 });

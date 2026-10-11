@@ -70,4 +70,45 @@ describe("overlay scrollbar chrome contract", () => {
     expect(chrome).toMatch(/\.hk-scrollbar-track\s*\{[^}]*pointer-events:\s*none/);
     expect(chrome).toMatch(/&?\.is-scrolling,\s*&?\.is-hovering\s*\{[^}]*pointer-events:\s*auto/);
   });
+
+  it("keeps the change-mark rail clear of the track and out of the click path", () => {
+    // The rail is a SECOND overlay in the same corner. Two facts have to
+    // survive any future restyle:
+    //
+    //  1. It must not overlap the track (right 2px + width 6px), or marks
+    //     would draw across the thumb;
+    //  2. it must not take pointer input — it spans the WHOLE host, docks
+    //     included, so a live hot zone there eats presses meant for
+    //     right-aligned dock controls. Only the marks accept input, and
+    //     that exemption is exactly why the rail itself must stay `none`.
+    // The vertical geometry lives in the track's own nested
+    // `&:not([data-axis="horizontal"])` block, not a top-level selector.
+    const track = /&:not\(\[data-axis="horizontal"\]\)\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
+    expect(track, "positive control: the vertical track rule was found").not.toBe("");
+    const trackRight = Number(/right:\s*(\d+)px/.exec(track)?.[1]);
+    const trackWidth = Number(/width:\s*(\d+)px/.exec(track)?.[1]);
+
+    const rail = /\.hk-scrollbar-markers\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
+    expect(rail, "positive control: the rail rule was found").not.toBe("");
+    const railRight = Number(/right:\s*(\d+)px/.exec(rail)?.[1]);
+    const railWidth = Number(/width:\s*(\d+)px/.exec(rail)?.[1]);
+
+    expect(
+      railRight,
+      "the rail starts outboard of the track's inner edge",
+    ).toBeGreaterThanOrEqual(trackRight + trackWidth);
+    expect(railRight + railWidth, "and stays inside the host").toBeLessThanOrEqual(24);
+
+    expect(rail, "the rail itself takes no pointer input").toMatch(/pointer-events:\s*none/);
+    const marker = /\.hk-scrollbar-marker\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
+    expect(marker, "positive control: the mark rule was found").not.toBe("");
+    expect(marker, "the marks are the hit area").toMatch(/pointer-events:\s*auto/);
+    // The hover ring must be drawn INSIDE the mark: the rail clips its
+    // children, and a plain outline loses both side strokes to that clip,
+    // leaving a two-line "ring" that reads as a stray rule rather than a
+    // hover cue. Nothing else would notice that regression.
+    expect(marker, "the hover ring is drawn inside the mark").toMatch(
+      /outline-offset:\s*-1px/,
+    );
+  });
 });

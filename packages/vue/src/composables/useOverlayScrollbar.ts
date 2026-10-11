@@ -30,6 +30,49 @@ import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 /** Which axes get an overlay track. Defaults to "vertical". */
 export type OverlayScrollbarAxis = "vertical" | "horizontal" | "both";
 
+/**
+ * One change mark on the vertical rail beside the track — the "where in
+ * the document is the interesting part" affordance a diff, a search
+ * result set or a lint run wants next to its scrollbar (VS Code's
+ * overview ruler).
+ *
+ * Positions are fractions of the FULL content extent, never of the
+ * visible window: line 500 of a 1000-line file sits at 0.5 while the
+ * user scrolls, and the rail keeps representing the whole document while
+ * the thumb represents the window. The engine stays domain-agnostic —
+ * the consumer divides its own line numbers, byte offsets or match
+ * indices by its own total.
+ */
+export interface OverlayScrollbarMarker {
+  /** Mark start in [0, 1] along the content. */
+  start: number;
+  /** Mark end in [0, 1]; clamped to at least `start`. */
+  end: number;
+  /** Semantic tag mirrored onto `data-kind`, so the consumer's theme owns
+   *  the palette (this engine ships no colours of its own). */
+  kind?: string;
+}
+
+/** Shortest a mark may render, as a fraction of the rail. A one-line edit
+ *  in a long file is ~0.1% of the content — without a floor it would be a
+ *  sub-pixel sliver, i.e. invisible exactly when the reader needs it. */
+const MARKER_MIN_FRACTION = 0.005;
+
+/** Clamp to [0, 1]; non-finite input is the caller's bug, but the rail
+ *  must never render a mark at a meaningless position, so it becomes 0. */
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return n < 0 ? 0 : n > 1 ? 1 : n;
+}
+
+/** A rail offset as a CSS percentage with the float noise trimmed: the
+ *  span `0.8 − 0.2` is 0.6000000000000001, and a position is not a
+ *  measurement — "60.00000000000001%" is noise in the DOM, in snapshots
+ *  and in any consumer assertion. */
+function pct(fraction: number): string {
+  return `${Number((fraction * 100).toFixed(4))}%`;
+}
+
 export interface OverlayScrollbarOptions {
   axis?: OverlayScrollbarAxis;
   /** Element the tracks are appended to — their positioning context.
@@ -42,11 +85,19 @@ export interface OverlayScrollbarOptions {
    *  (see HkDrawer/HkSidebar/HkTable for the pattern). Never rely on
    *  the guard to promote `body`. */
   host?: HTMLElement;
+  /** Change marks drawn on a rail immediately inboard of the vertical
+   *  track. Vertical axis only — a horizontal rail has no meaningful
+   *  "position in the document". Omitted or empty creates no rail at all,
+   *  so consumers that never pass markers keep the exact chrome they had. */
+  markers?: OverlayScrollbarMarker[];
 }
 
 export interface OverlayScrollbarHandle {
   /** Re-read the viewport's scroll geometry and reposition the thumbs. */
   update(): void;
+  /** Replace the rail's marks. Passing an empty list removes the rail
+   *  again. No-op when the handle was attached against no host. */
+  setMarkers(markers: OverlayScrollbarMarker[]): void;
   /** Remove the tracks and every listener/observer; restore any
    *  inline positioning the guard applied. Safe to call twice. */
   detach(): void;
@@ -117,7 +168,7 @@ export function attachOverlayScrollbars(
   const axis = opts.axis ?? "vertical";
   const parent = opts.host ?? viewport.parentElement;
   if (!parent) {
-    return { update() {}, detach() {} };
+    return { update() {}, setMarkers() {}, detach() {} };
   }
 
   const wantV = axis !== "horizontal";
@@ -156,14 +207,111 @@ export function attachOverlayScrollbars(
   let ro: ResizeObserver | null = null;
   let detached = false;
 
+  // ── Change-mark rail (vertical only) ─────────────────────────────────
+  // Created lazily on the first non-empty marker list: consumers that
+  // never pass markers keep byte-identical chrome, and the rail's own
+  // listeners exist only while the rail does.
+  let rail: HTMLElement | null = null;
+  let markers: OverlayScrollbarMarker[] = [];
+  let railDragging = false;
+
+  /** Scroll so the rail position under `clientY` lands in the viewport —
+   *  the same fraction → scrollTop mapping the track's own click uses, so
+   *  a mark and the track at the same height agree. */
+  function railScrollTo(clientY: number) {
+    if (!rail) return;
+    const rect = rail.getBoundingClientRect();
+    if (rect.height <= 0) return;
+    const ratio = clamp01((clientY - rect.top) / rect.height);
+    const { scrollSize, clientSize } = axisMetrics(viewport, false);
+    viewport.scrollTop = ratio * Math.max(scrollSize - clientSize, 0);
+  }
+
+  function onRailMove(e: MouseEvent) {
+    if (railDragging) railScrollTo(e.clientY);
+  }
+  function onRailUp() {
+    railDragging = false;
+    rail?.classList.remove("is-dragging");
+    document.removeEventListener("mousemove", onRailMove);
+    document.removeEventListener("mouseup", onRailUp);
+  }
+  function onRailDown(e: MouseEvent) {
+    e.preventDefault();
+    // The rail sits inside a modal/panel that may itself dismiss on an
+    // outside press — scrubbing the rail must not double as that press.
+    e.stopPropagation();
+    railDragging = true;
+    rail?.classList.add("is-dragging");
+    railScrollTo(e.clientY);
+    document.addEventListener("mousemove", onRailMove);
+    document.addEventListener("mouseup", onRailUp);
+  }
+
+  function renderMarkers() {
+    if (!rail) return;
+    rail.replaceChildren();
+    for (const m of markers) {
+      const size = Math.max(
+        Math.abs(clamp01(m.end) - clamp01(m.start)),
+        MARKER_MIN_FRACTION,
+      );
+      // Keep the whole mark inside the rail: a mark at the very end would
+      // otherwise overflow the bottom, get clipped, and read as absent.
+      const top = Math.max(
+        Math.min(clamp01(m.start), clamp01(m.end), 1 - size),
+        0,
+      );
+      const el = document.createElement("div");
+      el.className = "hk-scrollbar-marker";
+      if (m.kind) el.setAttribute("data-kind", m.kind);
+      el.style.top = pct(top);
+      el.style.height = pct(size);
+      rail.appendChild(el);
+    }
+  }
+
+  // An arrow const, not a function declaration: the guard above narrows
+  // `parent` to non-null, and only a closure created AFTER that narrowing
+  // keeps it (a hoisted declaration may run at any time, so TS widens the
+  // capture back to `HTMLElement | null`).
+  const setMarkers = (next: OverlayScrollbarMarker[]) => {
+    if (detached) return;
+    markers = Array.isArray(next) ? next : [];
+    if (markers.length === 0) {
+      // No marks = no rail, i.e. exactly the pre-marker chrome.
+      if (rail) {
+        rail.removeEventListener("mousedown", onRailDown);
+        rail.remove();
+        rail = null;
+      }
+      onRailUp();
+      return;
+    }
+    if (!wantV) return;
+    if (!rail) {
+      rail = document.createElement("div");
+      rail.className = "hk-scrollbar-markers";
+      rail.addEventListener("mousedown", onRailDown);
+      parent.appendChild(rail);
+    }
+    renderMarkers();
+    // The rail's visibility follows the track's fit test.
+    update();
+  };
+
   function updateAxis(s: AxisState, horizontal: boolean) {
     const { scrollSize, clientSize, scrollPos } = axisMetrics(viewport, horizontal);
     if (scrollSize <= clientSize) {
-      // Content fits — no bar at all.
+      // Content fits — no bar at all. The rail follows the track: marks on
+      // a region that cannot scroll would claim changes the reader can
+      // never reach.
       s.track.style.display = "none";
+      if (!horizontal && rail) rail.style.display = "none";
       return;
     }
     s.track.style.display = "";
+    if (!horizontal && rail) rail.style.display = "";
     const trackSize = horizontal ? s.track.clientWidth : s.track.clientHeight;
     const ratio = clientSize / scrollSize;
     const thumbSize = Math.max(ratio * trackSize, 20);
@@ -292,9 +440,11 @@ export function attachOverlayScrollbars(
   ro = new ResizeObserver(scheduleUpdate);
   ro.observe(viewport);
   update();
+  if (opts.markers?.length) setMarkers(opts.markers);
 
   return {
     update,
+    setMarkers,
     detach() {
       if (detached) return;
       detached = true;
@@ -303,6 +453,12 @@ export function attachOverlayScrollbars(
       ro = null;
       scheduled?.disconnect();
       scheduled = null;
+      if (rail) {
+        rail.removeEventListener("mousedown", onRailDown);
+        rail.remove();
+        rail = null;
+      }
+      onRailUp();
       for (const { state, handlers } of axisBindings) {
         state.thumb.removeEventListener("mousedown", handlers.onDown);
         state.track.removeEventListener("click", handlers.onTrackClick);

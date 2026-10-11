@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive, ref } from "vue";
 
 import HkScrollContainer from "./HkScrollContainer";
+import type { OverlayScrollbarMarker } from "../composables/useOverlayScrollbar";
 
 interface Mounted {
   app: ReturnType<typeof createApp>;
@@ -399,5 +400,46 @@ describe("HkScrollContainer back-to-top signal", () => {
     await flushFrames();
     expect(emitted).toEqual([]);
     app.unmount();
+  });
+});
+
+describe("HkScrollContainer change-mark rail", () => {
+  it("renders the marks prop, and re-applies new marks without rebuilding the chrome", async () => {
+    const markers = ref<OverlayScrollbarMarker[]>([{ start: 0.1, end: 0.2, kind: "added" }]);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { markers: markers.value }, { default: () => h("span", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    const rail = () => container.querySelector<HTMLElement>(".hk-scrollbar-markers");
+    const firstRail = rail();
+    expect(firstRail, "the rail exists once marks arrive").not.toBeNull();
+    expect(firstRail!.querySelectorAll(".hk-scrollbar-marker").length).toBe(1);
+
+    markers.value = [
+      { start: 0.5, end: 0.6, kind: "deleted" },
+      { start: 0.7, end: 0.8, kind: "modified" },
+    ];
+    await nextTick();
+    const marks = rail()!.querySelectorAll<HTMLElement>(".hk-scrollbar-marker");
+    expect(marks.length).toBe(2);
+    expect(marks[0].getAttribute("data-kind")).toBe("deleted");
+    // Same element: a marks update must not detach/reattach the overlay
+    // (that would drop the scroll flash and re-run the position guard).
+    expect(rail()).toBe(firstRail);
+    app.unmount();
+  });
+
+  it("keeps the rail out of the DOM when no marks are passed", () => {
+    const m = mountScroller({});
+    expect(m.container.querySelector(".hk-scrollbar-markers")).toBeNull();
   });
 });

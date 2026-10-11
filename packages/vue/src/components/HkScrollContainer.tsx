@@ -12,7 +12,7 @@ import {
 import { useI18n } from "../i18n/context";
 import { laidOffsetWithin } from "../composables/layoutGeometry";
 import "./HkScrollContainer.scss";
-import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle, type OverlayScrollbarMarker } from "../composables/useOverlayScrollbar";
 import { useApproachEnd, type ApproachEndHandle } from "../composables/useApproachEnd";
 import { provideScrollWindow } from "../composables/useScrollWindow";
 import { SCROLL_HOST_CLASS } from "./HkScrollPin";
@@ -46,6 +46,12 @@ export default defineComponent({
     axis: { type: String as PropType<ScrollAxis>, default: "vertical" },
     mode: { type: String as PropType<ScrollMode>, default: "traditional" },
     scrollbar: { type: Boolean, default: true },
+    /** Change marks for the overlay's right-hand rail (VS Code's overview
+     *  ruler): fractions of the FULL content extent, so a mark stays put
+     *  while the user scrolls. Vertical axis only, and additive — leaving
+     *  it out renders exactly the chrome this container had before the
+     *  rail existed. */
+    markers: { type: Array as PropType<OverlayScrollbarMarker[]>, default: () => [] },
     autoFollow: { type: Boolean, default: false },
     overscanScreens: { type: Number, default: 1 },
     /** Inline-axis alignment of the content when it fits the viewport.
@@ -265,8 +271,15 @@ export default defineComponent({
       const vp = viewportRef.value;
       if (!vp) return;
       overlay?.detach();
-      overlay = attachOverlayScrollbars(vp, { axis: props.axis });
+      overlay = attachOverlayScrollbars(vp, { axis: props.axis, markers: props.markers });
     }
+
+    /** Re-apply marks without rebuilding the chrome: a diff re-renders its
+     *  marks on every tick, and detaching/reattaching would drop the
+     *  scroll flash and re-run the positioning guard each time. */
+    watch(() => props.markers, (next) => {
+      overlay?.setMarkers(next ?? []);
+    }, { deep: true, flush: "post" });
 
     /** Tear down and rebuild the overlay tracks when the `scrollbar`
      *  opt-in flips at runtime (HkTabs passes the prop through). */

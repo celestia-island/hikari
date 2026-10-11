@@ -653,6 +653,7 @@ export { default as HkProgressBar } from "./components/HkProgressBar";
 export { default as HkProgressDialog } from "./components/HkProgressDialog";
 export { default as HkRadio } from "./components/HkRadio";
 export { default as HkScrollContainer } from "./components/HkScrollContainer";
+export { type OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
 export { default as HkSearchInput } from "./components/HkSearchInput";
 export { default as HkSplash } from "./components/HkSplash";
 export { default as HkSelect } from "./components/HkSelect";

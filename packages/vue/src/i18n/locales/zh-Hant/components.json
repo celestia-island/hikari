@@ -278,5 +278,7 @@
   "hikari::userPicker.confirm": "確認",
   "hikari::userPicker.selectedCount": "已選 {count} 人",
   "hikari::tokenField.editValue": "編輯數值",
-  "hikari::tokenField.clear": "清除"
+  "hikari::tokenField.clear": "清除",
+  "hikari::diff.unchangedLines": "{count} 行未修改",
+  "hikari::diff.loadFailed": "載入失敗，點擊重試"
 }

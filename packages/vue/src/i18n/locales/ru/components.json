@@ -274,5 +274,7 @@
   "hikari::userPicker.confirm": "Подтвердить",
   "hikari::userPicker.selectedCount": "Выбрано: {count}",
   "hikari::tokenField.editValue": "Изменить значение",
-  "hikari::tokenField.clear": "Очистить"
+  "hikari::tokenField.clear": "Очистить",
+  "hikari::diff.unchangedLines": "{count} строк без изменений",
+  "hikari::diff.loadFailed": "Не удалось загрузить, нажмите для повтора"
 }

@@ -1,0 +1,204 @@
+// HkDiffViewer — grouped, collapsible unified-diff rendering.
+// Sibling of the markdown code-block chrome: same subtle surface, same
+// mono stack, same hidden native scrollbars (overlay rails are attached
+// by the consumer's scroll container).
+
+@use "./hikari-vars" as vars;
+
+.hk-diff-viewer {
+  border: 1px solid var(--hi-color-border, #646464);
+  border-radius: var(--radius-sm);
+  background: var(--hi-color-bg-subtle, #21262d);
+  overflow: hidden; // clip hunk/gap bands to the rounded corners
+}
+
+.hk-diff-viewer__body {
+  overflow-x: auto;
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// One diff row: old number | new number | sign | content. The row is at
+// least the container width (so tints span edge to edge) and grows with
+// the longest content (so the container can scroll horizontally).
+.hk-diff-viewer__line {
+  display: grid;
+  grid-template-columns: 4.2ch 4.2ch 2ch 1fr;
+  width: 100%;
+  min-width: max-content;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  white-space: pre;
+  color: var(--hi-color-text-primary, #1e1e1e);
+
+  &[data-kind="add"] {
+    background: rgb(var(--color-success) / 12%);
+
+    .hk-diff-viewer__sign {
+      color: rgb(var(--color-success));
+    }
+  }
+
+  &[data-kind="del"] {
+    background: rgb(var(--color-error) / 12%);
+
+    .hk-diff-viewer__sign {
+      color: rgb(var(--color-error));
+    }
+  }
+}
+
+.hk-diff-viewer__no {
+  padding: 0 0.8ch;
+  text-align: end;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  opacity: 0.75;
+  user-select: none;
+}
+
+.hk-diff-viewer__sign {
+  user-select: none;
+  text-align: center;
+  font-weight: 600;
+}
+
+.hk-diff-viewer__code {
+  padding-inline-end: 1ch;
+  min-width: 0;
+}
+
+// ── hunk groups ────────────────────────────────────────────────────────────
+.hk-diff-viewer__hunk + .hk-diff-viewer__hunk,
+.hk-diff-viewer__hunk-body {
+  border-top: 1px solid var(--hi-color-border, #646464);
+}
+
+.hk-diff-viewer__hunk-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  width: 100%;
+  padding: 0.3em 0.8em;
+  border: 0;
+  background: var(--hi-color-bg-subtle, #21262d);
+  color: var(--hi-color-text-secondary, #666666);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--hi-color-text-primary, #1e1e1e);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #7aa2f7);
+    outline-offset: -2px;
+  }
+}
+
+.hk-diff-viewer__hunk-range {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.hk-diff-viewer__hunk-section {
+  color: var(--hi-color-text-tertiary, #8b949e);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.hk-diff-viewer__hunk-stats {
+  display: inline-flex;
+  gap: 0.6em;
+  margin-inline-start: auto;
+  font-style: normal;
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  em[data-kind="add"] {
+    color: rgb(var(--color-success));
+  }
+
+  em[data-kind="del"] {
+    color: rgb(var(--color-error));
+  }
+}
+
+// ── collapsed unchanged regions ────────────────────────────────────────────
+.hk-diff-viewer__gap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  width: 100%;
+  padding: 0.35em 0.8em;
+  border: 0;
+  border-top: 1px dashed var(--hi-color-border, #646464);
+  background: rgb(var(--color-primary) / 5%);
+  color: var(--hi-color-text-tertiary, #8b949e);
+  font: inherit;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover:not(:disabled) {
+    background: rgb(var(--color-primary) / 10%);
+    color: var(--hi-color-text-primary, #1e1e1e);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #7aa2f7);
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    cursor: progress;
+  }
+
+  &[data-state="failed"] {
+    background: rgb(var(--color-error) / 8%);
+    color: rgb(var(--color-error));
+  }
+
+  // Without a loadContext fetcher the row is a passive divider.
+  &[data-state="static"] {
+    cursor: default;
+
+    &:hover {
+      background: rgb(var(--color-primary) / 5%);
+      color: var(--hi-color-text-tertiary, #8b949e);
+    }
+  }
+}
+
+.hk-diff-viewer__gap-label {
+  font-size: 0.95em;
+}
+
+// A gap directly after the last hunk still gets its dashed separator.
+.hk-diff-viewer__hunk + .hk-diff-viewer__gap,
+.hk-diff-viewer__gap + .hk-diff-viewer__hunk .hk-diff-viewer__hunk-head {
+  border-top: 1px dashed var(--hi-color-border, #646464);
+}
+
+// ── raw fallback (unparseable input) ───────────────────────────────────────
+.hk-diff-viewer__raw {
+  margin: 0;
+  padding: 0.6em 0.8em;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--hi-color-text-primary, #1e1e1e);
+}

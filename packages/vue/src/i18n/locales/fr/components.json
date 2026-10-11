@@ -274,5 +274,7 @@
   "hikari::userPicker.confirm": "Confirmer",
   "hikari::userPicker.selectedCount": "{count} sélectionnés",
   "hikari::tokenField.editValue": "Modifier la valeur",
-  "hikari::tokenField.clear": "Effacer"
+  "hikari::tokenField.clear": "Effacer",
+  "hikari::diff.unchangedLines": "{count} lignes inchangées",
+  "hikari::diff.loadFailed": "Échec du chargement, cliquez pour réessayer"
 }

@@ -103,5 +103,12 @@ describe("overlay scrollbar chrome contract", () => {
     const marker = /\.hk-scrollbar-marker\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
     expect(marker, "positive control: the mark rule was found").not.toBe("");
     expect(marker, "the marks are the hit area").toMatch(/pointer-events:\s*auto/);
+    // The hover ring must be drawn INSIDE the mark: the rail clips its
+    // children, and a plain outline loses both side strokes to that clip,
+    // leaving a two-line "ring" that reads as a stray rule rather than a
+    // hover cue. Nothing else would notice that regression.
+    expect(marker, "the hover ring is drawn inside the mark").toMatch(
+      /outline-offset:\s*-1px/,
+    );
   });
 });

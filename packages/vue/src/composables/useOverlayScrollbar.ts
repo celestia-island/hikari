@@ -60,10 +60,10 @@ const MARKER_MIN_FRACTION = 0.005;
 
 /** …and the same floor in CSS pixels, which is what actually decides
  *  whether a mark can be SEEN and HIT on a short rail: at 1000px tall the
- *  fraction floor is 5px, at 100px it is 0.5px. It lives here rather than
- *  as a stylesheet `min-height` because the end-of-rail inset below must
- *  account for the mark's real rendered size — a CSS floor silently wins
- *  over that inset and pushes a last-line mark past the clip. */
+ *  fraction floor is 5px, at 100px it is 0.5px. It lives in the engine —
+ *  not as a stylesheet `min-height` — for two reasons: the floor has to
+ *  scale with the rail, and the end-of-rail inset below has to be computed
+ *  from the SAME number, which CSS cannot express. */
 const MARKER_MIN_PX = 2;
 
 /** Clamp to [0, 1]; non-finite input is the caller's bug, but the rail
@@ -354,10 +354,11 @@ export function attachOverlayScrollbars(
   function update() {
     if (detached) return;
     for (const s of states) updateAxis(s, s.horizontal);
-    // The marks' pixel floor is a fraction OF the rail, so a resize that
-    // changes its height invalidates the sizes they were rendered with.
-    // (A hidden rail reports 0 and is left alone: `renderMarkers` runs
-    // again when it comes back, via the same path.)
+    // The marks' pixel floor is a fraction OF the rail, so a height change
+    // invalidates the sizes they were rendered with. A hidden rail reports
+    // 0 and is skipped here; `renderMarkers` leaves that 0 behind as its
+    // "never sized against a real height" sentinel, so the first visible
+    // update re-renders even when the height matches the last one used.
     const railH = rail?.clientHeight ?? 0;
     if (rail && markers.length > 0 && railH > 0 && railH !== renderedRailHeight) {
       renderMarkers();

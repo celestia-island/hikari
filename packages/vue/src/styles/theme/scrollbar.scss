@@ -126,9 +126,9 @@
 
    Height comes ENTIRELY from the engine, which floors a hairline mark in
    both fractions and pixels and sizes the end-of-rail inset against that
-   same number. A CSS `min-height` here would silently win over the inset
-   (it cannot know the engine's model) and, since the rail clips, push the
-   extra pixels of a last-line mark outside the rail. */
+   same number. A `min-height` here is therefore redundant — the engine
+   already guarantees 2px — and, because the rail clips, would win over
+   the inset on the occasions it did bite. */
 .hk-scrollbar-marker {
   position: absolute;
   left: 0;

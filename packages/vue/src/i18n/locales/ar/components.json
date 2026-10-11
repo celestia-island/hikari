@@ -200,6 +200,8 @@
     "hikari::filterBar.trigger": "عوامل التصفية",
     "hikari::filterBar.apply": "تطبيق",
     "hikari::filterPanel.all": "الكل",
+    "hikari::filterPanel.addCondition": "إضافة شرط",
+    "hikari::filterPanel.removeCondition": "إزالة الشرط",
     "hikari::filterBar.reset": "إعادة تعيين",
     "hikari::filterPanel.op.eq": "يساوي",
     "hikari::filterPanel.op.ne": "لا يساوي",

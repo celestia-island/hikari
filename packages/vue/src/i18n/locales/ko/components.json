@@ -200,6 +200,8 @@
     "hikari::filterBar.trigger": "필터",
     "hikari::filterBar.apply": "적용",
     "hikari::filterPanel.all": "전체",
+    "hikari::filterPanel.addCondition": "조건 추가",
+    "hikari::filterPanel.removeCondition": "조건 삭제",
     "hikari::filterBar.reset": "초기화",
     "hikari::filterPanel.op.eq": "같음",
     "hikari::filterPanel.op.ne": "같지 않음",

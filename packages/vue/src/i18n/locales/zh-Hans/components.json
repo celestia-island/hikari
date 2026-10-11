@@ -151,7 +151,6 @@
     "hikari::statusBar.backend.unknown": "未知",
     "hikari::statusBar.backend.warn": "降级",
     "hikari::statusBar.clickReconnect": "点击以尝试重连",
-    "hikari::statusBar.retryNow": "立即重连",
     "hikari::statusBar.connected": "已连接",
     "hikari::statusBar.connecting": "连接中...",
     "hikari::statusBar.disconnected": "断开",

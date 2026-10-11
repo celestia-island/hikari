@@ -124,30 +124,7 @@ export { default as HWaterfall } from "./components/HkWaterfall";
 export { default as HBlankCanvas } from "./components/HkBlankCanvas";
 export type { BlankCanvasSize } from "./components/HkBlankCanvas";
 export { default as HKanban } from "./components/HkKanban";
-export type {
-  KanbanAxis,
-  KanbanCardSlotProps,
-  KanbanHeaderSlotProps,
-  KanbanMove,
-} from "./components/HkKanban";
 export { default as HNodeCanvas, NODE_CANVAS_DEFAULTS } from "./components/HkNodeCanvas";
-export type {
-  NodeCanvasCamera,
-  NodeCanvasBounds,
-  NodeCanvasSlotProps,
-  MinimapPlacement,
-  NodeCanvasEdge,
-  EdgeRouting,
-  EdgeSide,
-  EdgeSubpath,
-  EdgePointerEvent,
-} from "./components/HkNodeCanvas";
-export type {
-  WaterfallBucket,
-  WaterfallCardSlotProps,
-  WaterfallHeaderSlotProps,
-  WaterfallRailSlotProps,
-} from "./components/HkWaterfall";
 export { default as HDateTimePicker } from "./components/HkDateTimePicker";
 export { default as HDatePicker } from "./components/HkDatePicker";
 export { default as HTimeline } from "./components/HkTimeline";
@@ -251,7 +228,6 @@ export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./componen
 
 // ── Theme decor (theme-provided decorative widgets, host-placed) ──────────
 export { default as HkThemeDecor, type HkThemeDecorSize } from "./components/HkThemeDecor";
-export { default as HkStatusTray, type HkStatusTraySize } from "./components/HkStatusTray";
 
 // Theme system
 export {
@@ -446,10 +422,6 @@ export { useApproachEnd } from "./composables/useApproachEnd";
 export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useSurfaceTransition } from "./composables/useSurfaceTransition";
-export type {
-  SurfaceTransition,
-  SurfaceTransitionHooks,
-} from "./composables/useSurfaceTransition";
 export { useSizeMorph } from "./composables/useSizeMorph";
 export type { SizeMorph } from "./composables/useSizeMorph";
 export { useImage } from "./composables/useImage";
@@ -470,11 +442,6 @@ export {
   layoutRect,
   nearestLaidAncestor,
   placePoint,
-} from "./composables/layoutGeometry";
-export type {
-  FrameMetrics,
-  LayoutOffset,
-  LayoutRect,
 } from "./composables/layoutGeometry";
 export { useMeasuredHighlight } from "./composables/useMeasuredHighlight";
 export type { UseMeasuredHighlightOptions, MeasuredHighlight } from "./composables/useMeasuredHighlight";
@@ -532,10 +499,6 @@ export {
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
 export { provideActionBar, useActionBar } from "./composables/useActionBar";
 export type { ActionBarRenderer } from "./composables/useActionBar";
-export { setProbeEndpoint, useConnectionProbe } from "./composables/useConnectionProbe";
-export type { ProbeResult } from "./composables/useConnectionProbe";
-export { useEngineHealth } from "./composables/useEngineHealth";
-export type { EngineHealth, EngineNetworkInfo } from "./composables/useEngineHealth";
 export { leadingZeroBits, sha256, solvePow, solvePowSync, verifyPow } from "./utils/pow";
 export type { PowChallenge, PowSolution } from "./utils/pow";
 export { HkLocalePicker as HLocalePicker } from "./components/HkLocalePicker";
@@ -570,13 +533,6 @@ export {
 } from "./components/HkSettingsDialog";
 
 export { HkCookieConsent as HCookieConsent } from "./components/HkCookieConsent";
-export {
-  HkAttachmentModal as HAttachmentModal,
-  previewKindFor,
-  type HAttachmentDetail,
-  type HAttachmentItem,
-  type HAttachmentPreviewType,
-} from "./components/HkAttachmentModal";
 export { HkStatusBar as HStatusBar } from "./components/HkStatusBar";
 export { useConnectionInfo } from "./components/HkConnectionInfo";
 export type { ConnectionStateInput, HkConnectionInfo } from "./components/HkConnectionInfo";
@@ -587,67 +543,22 @@ export {
   type HkBackendStatus,
   type HkConnectionProbeSource,
 } from "./components/HkConnectionStatus";
+export { HK_ENGINE_HEALTH } from "./components/HkConnectionStatus";
+export type { ProbeResult, EngineHealth, EngineNetworkInfo } from "./composables/engineHealthTypes";
 
 // ── Chat kit (upstreamed from shittim-chest's plana-legacy layer) ──────────
-export { HkRichInput as HRichInput } from "./components/HkRichInput";
-export { HkVoiceInputPopup as HVoiceInputPopup } from "./components/HkVoiceInputPopup";
-export {
-  HkToolBlock as HToolBlock,
-  parseToolCallText,
-  extractExecCode,
-  buildHighlightedLines,
-  type HParsedToolCall,
-  type HToolBlockVariant,
-  type HHighlightedLine,
-} from "./components/HkToolBlock";
 export {
   HkJsonTree as HJsonTree,
   buildJsonTree,
   type HJsonNode,
 } from "./components/HkJsonTree";
-export { HkTokenUsageBadge as HTokenUsageBadge } from "./components/HkTokenUsageBadge";
-export { HkTokenUsagePanel as HTokenUsagePanel } from "./components/HkTokenUsagePanel";
-export { HkModelTag as HModelTag } from "./components/HkModelTag";
-export { HkContextRing as HContextRing, HkContextRing, type HkContextSegment } from "./components/HkContextRing";
-export {
-  getModelMeta,
-  registerModelCatalog,
-  splitModelId,
-  type HModelPricing,
-  type HModelMeta,
-  type HModelCatalog,
-} from "./components/HkModelCatalog";
-export type {
-  HChatRole,
-  HToolCall,
-  HToolCallStatus,
-  HVoicePopupMode,
-  HVoiceState,
-  HModelUsageEntry,
-  HModelCosts,
-} from "./components/HkChatTypes";
 // Canonical Hk* names for the directly-exported types above (2026-09-24
 // unification follow-up, second batch — caught by the third-scan reverse
 // validation). These types are defined with their H* names at the source.
-export type {
-  HChatRole as HkChatRole,
-  HToolCall as HkToolCall,
-  HToolCallStatus as HkToolCallStatus,
-  HVoicePopupMode as HkVoicePopupMode,
-  HVoiceState as HkVoiceState,
-  HModelUsageEntry as HkModelUsageEntry,
-  HModelCosts as HkModelCosts,
-} from "./components/HkChatTypes";
-export { useSendShortcut } from "./composables/useSendShortcut";
-export type { SendShortcutMode } from "./composables/useSendShortcut";
-export { useAttachments } from "./composables/useAttachments";
-export type { HkUploadedFile } from "./composables/useAttachments";
 
 export {
-  formatTokenCount,
   formatNumber,
   formatBytes,
-  formatPriceUsd,
   formatRelativeTime,
   formatDateTime,
   formatDate,
@@ -861,27 +772,16 @@ export { HkSettingsGroup as HkSettingsGroup } from "./components/HkSettingsDialo
 export { HkSettingsSub as HkSettingsSub } from "./components/HkSettingsDialog";
 export { HkSettingsHint as HkSettingsHint } from "./components/HkSettingsDialog";
 export { HkCookieConsent as HkCookieConsent } from "./components/HkCookieConsent";
-export { HkAttachmentModal as HkAttachmentModal } from "./components/HkAttachmentModal";
 export { HkStatusBar as HkStatusBar, hkMergeVersionDisplay, hkParseIdentity } from "./components/HkStatusBar";
 export type { HkVersionIdentity } from "./components/HkStatusBar";
 export { HkCountdownDigit as HkCountdownDigit } from "./components/HkCountdownDigit";
 export { HkConnectionStatus as HkConnectionStatus } from "./components/HkConnectionStatus";
-export { HkRichInput as HkRichInput } from "./components/HkRichInput";
-export { HkVoiceInputPopup as HkVoiceInputPopup } from "./components/HkVoiceInputPopup";
-export { HkToolBlock as HkToolBlock } from "./components/HkToolBlock";
 export { HkJsonTree as HkJsonTree } from "./components/HkJsonTree";
-export { HkTokenUsageBadge as HkTokenUsageBadge } from "./components/HkTokenUsageBadge";
-export { HkTokenUsagePanel as HkTokenUsagePanel } from "./components/HkTokenUsagePanel";
-export { HkModelTag as HkModelTag } from "./components/HkModelTag";
 
 // Canonical Hk* names for directly-exported types (2026-09-24
 // unification follow-up). These types were defined with their H*
 // names at the source and exported directly — not aliased from an Hk*
 // identifier — so the canonical Hk* form is an alias export here.
-export { type HAttachmentItem as HkAttachmentItem } from "./components/HkAttachmentModal";
-export { type HAttachmentDetail as HkAttachmentDetail } from "./components/HkAttachmentModal";
-export { type HModelMeta as HkModelMeta } from "./components/HkModelCatalog";
-export { type HModelPricing as HkModelPricing } from "./components/HkModelCatalog";
 export { type HAboutCredit as HkAboutCredit } from "./components/HkAboutModal";
 export { type HAboutLink as HkAboutLink } from "./components/HkAboutModal";
 export { type HAboutLinkFace as HkAboutLinkFace } from "./components/HkAboutModal";

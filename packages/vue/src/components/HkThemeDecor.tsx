@@ -50,7 +50,7 @@ import { useTheme } from "../theme/useTheme";
  * that wants numeric sizing declares its own prop and receives it through
  * `decorProps`.
  *
- * The ladder is the CONTRACT's, not any one decor's: `HkStatusTray`
+ * The ladder is the CONTRACT's, not any one decor's: the default theme's tray
  * implements `sm | md | lg` only, so asking it for `xs` publishes no
  * `--hk-tray-*` var at all and the sheet's `var(--hk-tray-glyph, 9px)`
  * fallbacks render the shipped (md) geometry. That degradation is pinned by

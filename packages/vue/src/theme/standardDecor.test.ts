@@ -5,7 +5,6 @@ import HkDivider from "../components/HkDivider";
 import HkEmptyState from "../components/HkEmptyState";
 import HkSkeleton from "../components/HkSkeleton";
 import HkSplash from "../components/HkSplash";
-import HkStatusTray from "../components/HkStatusTray";
 import { registerStandardThemeDecor, STANDARD_THEME_DECOR_SLOTS } from "./standardDecor";
 import {
   getThemeDecor,
@@ -24,7 +23,7 @@ import {
  */
 
 describe("registerStandardThemeDecor", () => {
-  it("registers nothing at import, then fills the five standard slots", async () => {
+  it("registers nothing at import, then fills the four in-tree standard slots", async () => {
     // A fresh module graph, so this proves the registration happens in the
     // call and not in an earlier case of this file. The component is
     // imported from the SAME fresh graph: module identity is per graph, so
@@ -32,7 +31,8 @@ describe("registerStandardThemeDecor", () => {
     vi.resetModules();
     const themeDecor = await import("./themeDecor");
     const standardDecor = await import("./standardDecor");
-    const freshTray = (await import("../components/HkStatusTray")).default;
+    // The tray moved to @celestia-island/default-theme; the builtin
+    // floor for status.tray is now EMPTY (pinned below).
 
     // Importing this module is not a side effect (same contract as
     // standardGroups): only the call populates the registry.
@@ -43,15 +43,14 @@ describe("registerStandardThemeDecor", () => {
     expect([...themeDecor.themeDecorSlots()].sort()).toEqual(
       [...STANDARD_THEME_DECOR_SLOTS].sort(),
     );
-    expect(themeDecor.getThemeDecor("status.tray", "any-theme")?.component).toBe(freshTray);
+    expect(themeDecor.getThemeDecor("status.tray", "any-theme")).toBeUndefined();
   });
 
   it("resolves every built-in for any theme id (floor level, and the declared list matches)", () => {
     registerStandardThemeDecor();
 
     const expected: [string, unknown][] = [
-      ["status.tray", HkStatusTray],
-      ["placeholder.screen", HkSplash],
+            ["placeholder.screen", HkSplash],
       ["placeholder.section", HkSkeleton],
       ["empty", HkEmptyState],
       ["divider", HkDivider],
@@ -93,28 +92,30 @@ describe("registerStandardThemeDecor", () => {
 
     // A theme's own implementation wins over the built-in …
     const themed = defineComponent({ name: "ThemedTray", setup: () => () => h("i") });
-    registerThemeDecor({ themeId: "endfield", slot: "status.tray", component: themed });
+    registerThemeDecor({ themeId: "endfield", slot: "placeholder.screen", component: themed });
     registerStandardThemeDecor();
-    expect(getThemeDecor("status.tray", "endfield")?.component).toBe(themed);
-    expect(getThemeDecor("status.tray", "other")?.component).toBe(HkStatusTray);
+    expect(getThemeDecor("placeholder.screen", "endfield")?.component).toBe(themed);
+    // A slot with no theme registration keeps the builtin floor.
+    expect(getThemeDecor("placeholder.screen", "other")?.component).toBe(HkSplash);
 
     // … and so does a host-wide `"*"` registration.
     const hostWide = defineComponent({ name: "HostTray", setup: () => () => h("i") });
-    registerThemeDecor({ themeId: "*", slot: "status.tray", component: hostWide });
+    registerThemeDecor({ themeId: "*", slot: "empty", component: hostWide });
     registerStandardThemeDecor();
-    expect(getThemeDecor("status.tray", "other")?.component).toBe(hostWide);
+    expect(getThemeDecor("empty", "other")?.component).toBe(hostWide);
   });
 
   it("lands in the registry via initTheme() (and not before)", async () => {
     vi.resetModules();
     const themeDecor = await import("./themeDecor");
-    const freshTray = (await import("../components/HkStatusTray")).default;
+    // The tray moved to @celestia-island/default-theme; the builtin
+    // floor for status.tray is now EMPTY (pinned below).
     const useTheme = await import("./useTheme");
     expect(themeDecor.getThemeDecor("status.tray", "default")).toBeUndefined();
 
     useTheme.initTheme();
 
-    expect(themeDecor.getThemeDecor("status.tray", "default")?.component).toBe(freshTray);
+    expect(themeDecor.getThemeDecor("status.tray", "default")).toBeUndefined();
     // initTheme starts the solar theme clock; stop it so this file leaves no
     // timer behind.
     useTheme.stopThemeClock();

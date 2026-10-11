@@ -56,11 +56,13 @@ describe("theme decor public surface", () => {
     expect(typeof themeBarrel.getThemeDecor).toBe("function");
     expect(typeof themeBarrel.registerStandardThemeDecor).toBe("function");
     expect(themeBarrel.themeDecorVersion.value).toBeTypeOf("number");
-    expect(themeBarrel.STANDARD_THEME_DECOR_SLOTS).toContain("status.tray");
+    // status.tray moved to @celestia-island/default-theme (the
+    // demotion wave) — the builtin floor no longer carries it.
+    expect(themeBarrel.STANDARD_THEME_DECOR_SLOTS).not.toContain("status.tray");
 
     // The components ride the root barrel, where every other component lives.
     expect((barrel.HkThemeDecor as { name?: string }).name).toBe("HkThemeDecor");
-    expect((barrel.HkStatusTray as { name?: string }).name).toBe("HkStatusTray");
+    expect((barrel.HkSplash as { name?: string }).name).toBe("HkSplash");
   });
 
   it("registers nothing just because the surface was imported", () => {
@@ -77,6 +79,6 @@ describe("theme decor public surface", () => {
 
     // …and the extractor does detect a component import where one exists.
     const seamImports = importSpecifiers("standardDecor.ts");
-    expect(seamImports.filter((s) => s.includes("components/")).length).toBeGreaterThanOrEqual(5);
+    expect(seamImports.filter((s) => s.includes("components/")).length).toBeGreaterThanOrEqual(4);
   });
 });

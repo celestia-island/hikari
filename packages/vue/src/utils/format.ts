@@ -15,11 +15,6 @@
 import { activeLocale } from "../i18n/context";
 
 /** "1234" -> "1.2k", "2500000" -> "2.5M". */
-export function formatTokenCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
-}
 
 /** "1234" -> "1.2k". */
 export function formatNumber(n: number): string {
@@ -37,12 +32,6 @@ export function formatBytes(bytes: number): string {
 }
 
 /** USD amount -> "$0.10" / "$1.5" / "$120". Negative/NaN clamp to 0. */
-export function formatPriceUsd(n: number, currency = "$"): string {
-  if (!Number.isFinite(n) || n < 0) n = 0;
-  if (n >= 100) return `${currency}${Math.round(n)}`;
-  if (n >= 1) return `${currency}${n.toFixed(1)}`;
-  return `${currency}${n.toFixed(2)}`;
-}
 
 /** Timestamp -> "Just now" / "5m ago" / "3h ago" / "2d ago" / "2w ago" /
  *  locale date. */

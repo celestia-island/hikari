@@ -6,7 +6,7 @@ import { compile } from "sass";
 import { describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
 
-import HkStatusTray, { HK_TRAY_SIZE_VARS, type HkStatusTraySize } from "./HkStatusTray";
+import HkStatusTray, { HK_TRAY_SIZE_VARS, type HkStatusTraySize } from "../../../default_theme/src/StatusTrayDecor";
 
 /**
  * The "md is pixel-identical to what already ships" contract.
@@ -18,7 +18,7 @@ import HkStatusTray, { HK_TRAY_SIZE_VARS, type HkStatusTraySize } from "./HkStat
  *
  *   1. the shipped admin-tokens rules (the source of truth),
  *   2. the component's `md` row in HK_TRAY_SIZE_VARS,
- *   3. the fallbacks in HkStatusTray.scss.
+ *   3. the fallbacks in StatusTrayDecor.scss (packages/default_theme).
  *
  * This guard reads (1) out of the COMPILED sheet — not a hand-copied list —
  * and holds (2) and (3) to it, so moving any one of them alone fails here
@@ -67,7 +67,11 @@ function specificity(selector: string): number {
 }
 
 const adminCss = compileSheet(resolve(stylesDir, "admin-tokens.scss"));
-const trayCss = compileSheet(resolve(componentDir, "HkStatusTray.scss"));
+// The tray decor itself lives in packages/default_theme now; the shared
+// sheets it is held against (admin-tokens.scss, scale.scss) stayed here.
+const trayCss = compileSheet(
+  resolve(componentDir, "../../../default_theme/src/StatusTrayDecor.scss"),
+);
 const scaleVars: Record<string, string> = {};
 for (const m of readFileSync(resolve(srcDir, "scale.scss"), "utf8")
   .replace(/\/\*[\s\S]*?\*\//g, "")

@@ -2,7 +2,6 @@ import HkDivider from "../components/HkDivider";
 import HkEmptyState from "../components/HkEmptyState";
 import HkSkeleton from "../components/HkSkeleton";
 import HkSplash from "../components/HkSplash";
-import HkStatusTray from "../components/HkStatusTray";
 import { registerThemeDecorBuiltin, type ThemeDecorSlot } from "./themeDecor";
 
 /**
@@ -14,6 +13,13 @@ import { registerThemeDecorBuiltin, type ThemeDecorSlot } from "./themeDecor";
  * `registerStandardThemeGroups()` and before its first `applyTheme()`, so a
  * consumer that never calls `initTheme()` (tests, SSR, a host with its own
  * theme engine) gets an untouched registry.
+ *
+ * The status.tray slot is deliberately UNREGISTERED here since the
+ * chat-kit demotion wave: hikari's former brand tray moved to the
+ * @celestia-island/default-theme package (the reference precompiled
+ * theme), which registers it on the "*" wildcard — the same override
+ * path any custom theme takes. A host that mounts nothing gets an
+ * empty tray slot (the documented "no backdrop" pattern).
  *
  * These land on the BUILT-IN floor of the decor registry, below both an
  * exact theme id and the `"*"` wildcard: a theme (or a host) that registers
@@ -36,7 +42,6 @@ import { registerThemeDecorBuiltin, type ThemeDecorSlot } from "./themeDecor";
  * gap is a decision on record, not an oversight.
  */
 export const STANDARD_THEME_DECOR_SLOTS: readonly ThemeDecorSlot[] = [
-  "status.tray",
   "placeholder.screen",
   "placeholder.section",
   "empty",
@@ -56,7 +61,6 @@ let registered = false;
 export function registerStandardThemeDecor(): void {
   if (registered) return;
   registered = true;
-  registerThemeDecorBuiltin({ slot: "status.tray", component: HkStatusTray });
   registerThemeDecorBuiltin({ slot: "placeholder.screen", component: HkSplash });
   registerThemeDecorBuiltin({ slot: "placeholder.section", component: HkSkeleton });
   registerThemeDecorBuiltin({ slot: "empty", component: HkEmptyState });

@@ -1,8 +1,7 @@
-import { computed, defineComponent, inject, type InjectionKey, type PropType, type Ref } from "vue";
+import { computed, defineComponent, inject, ref, type InjectionKey, type PropType, type Ref } from "vue";
 
 import { useI18n } from "../i18n/context";
-import { useConnectionProbe, type ProbeResult } from "../composables/useConnectionProbe";
-import { useEngineHealth } from "../composables/useEngineHealth";
+import type { EngineHealth, EngineNetworkInfo, ProbeResult } from "../composables/engineHealthTypes";
 
 import { HkStatusBar } from "./HkStatusBar";
 import {
@@ -28,6 +27,25 @@ export interface HkConnectionProbeSource {
 }
 
 /** Injection key for the connection-probe overload (see above). */
+/** Engine-health source a host provides (the demoted fetch's
+ * replacement): a ref of the /api/health envelope, or null. */
+export const HK_ENGINE_HEALTH: InjectionKey<Ref<EngineHealth | null>> = Symbol(
+  "HK_ENGINE_HEALTH",
+);
+
+/** The shell's inert probe — no network, no timers: "unknown". */
+const INERT_PROBE: ProbeResult = {
+  connected: false,
+  state: "disconnected",
+  transportTier: "unknown",
+  tier: "unknown",
+  latencyMs: null,
+  attemptNumber: 0,
+  retryCount: 0,
+  retryTotal: 0,
+  countdown: 0,
+};
+
 export const HK_CONNECTION_PROBE: InjectionKey<HkConnectionProbeSource> =
   Symbol("HkConnectionProbe");
 
@@ -45,7 +63,8 @@ const backendStateColor: Record<HkBackendStatus["state"], string> = {
  * Composes useConnectionProbe + useEngineHealth + useConnectionInfo +
  * HkStatusBar. The probe source is injectable: when a parent provides
  * HK_CONNECTION_PROBE, that probe (and its retryNow) is used verbatim;
- * otherwise hikari's own fetch-poll useConnectionProbe() runs. Slots:
+ * without an injection the shell renders an inert unknown state and
+ * NEVER touches the network (pinned). Slots:
  * - `left`  — extras after the status tags (e.g. a mock badge)
  * - `right` — extras on the far right (e.g. an engine version tag)
  */
@@ -54,19 +73,21 @@ export const HkConnectionStatus = defineComponent({
   props: {
     version: { type: String, default: "0.1.0" },
     panelBuildHash: { type: String as PropType<string | undefined>, default: undefined },
-    /** API origin for the /api/health probe (defaults to same-origin ""). */
-    baseUrl: { type: String as PropType<string | undefined>, default: undefined },
     backendStatus: { type: Object as PropType<HkBackendStatus | undefined>, default: undefined },
     standalone: { type: Boolean, default: true },
     /** Forwarded to HkStatusBar — collapse to the traffic-light dot. */
     compact: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
-    // Probe-source overload: a host app (chest) provides its own
-    // RpcClient-driven probe; everyone else gets hikari's fetch-poll.
+    // SHELL-ONLY: the network side (WHO polls /api/health and HOW)
+    // lives in the host — injected via HK_CONNECTION_PROBE /
+    // HK_ENGINE_HEALTH. Without an injection the shell renders an
+    // inert unknown state and never touches the network (the
+    // fetch-poll defaults were demoted with the chat kit wave).
     const injectedProbe = inject(HK_CONNECTION_PROBE, null);
-    const { result: probe, retryNow } = injectedProbe ?? useConnectionProbe();
-    const { health } = useEngineHealth(props.baseUrl);
+    const probe = injectedProbe?.result ?? ref(INERT_PROBE);
+    const retryNow = injectedProbe?.retryNow ?? (() => {});
+    const health = inject(HK_ENGINE_HEALTH, ref<EngineHealth | null>(null));
 
     const connectionState = computed<ConnectionStateInput>(() => probe.value.state);
     const transportTier = computed(() => probe.value.transportTier);

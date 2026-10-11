@@ -126,8 +126,9 @@ export const HkConnectionStatus = defineComponent({
               compact={props.compact}
             >
               {/* Host-appended popover actions (e.g. a manual page
-                  refresh) ride the same actions row as the built-in
-                  retry button. */}
+                  refresh) ride the status row's right edge — the only
+                  recovery button in the popover since the built-in
+                  labelled retry retired (2026-10-11). */}
               {{ actions: () => slots.actions?.() }}
             </HkStatusBar>
             {bs && (

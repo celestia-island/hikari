@@ -750,6 +750,16 @@ export { default as HkFilterBar } from "./components/HkFilterBar";
 export { default as HkFilterPanel, sanitizeNumberInput } from "./components/HkFilterPanel";
 export type { HkFilterOperator, HkFilterFieldDef, HkFilterCondition, HkFilterState } from "./components/HkFilterPanel";
 export { default as HkFilterTrigger } from "./components/HkFilterTrigger";
+export { default as HkSearchTrigger } from "./components/HkSearchTrigger";
+export { HkInfiniteTail } from "./components/HkInfiniteTail";
+export { useInfinitePages } from "./composables/useInfinitePages";
+export type {
+  HkPageQuery,
+  HkPageResult,
+  HkPageResultLike,
+  InfinitePagesOptions,
+  InfinitePagesHandle,
+} from "./composables/useInfinitePages";
 export { default as HkFilterChip } from "./components/HkFilterChip";
 export { default as HkPillToggleGroup } from "./components/HkPillToggleGroup";
 export type { HkPillToggleGroupOption } from "./components/HkPillToggleGroup";

@@ -1,0 +1,17 @@
+.hk-infinite-tail-sentinel {
+  // The sentinel is a zero-visibility geometry probe: it must occupy a
+  // stable sliver of layout (height 1px) so the IntersectionObserver
+  // has a rect to intersect, while staying invisible in every theme.
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.hk-infinite-tail-loading {
+  // The skeleton tail rides the list's own rhythm — padding only, no
+  // border/background of its own, so the placeholders read as rows of
+  // the list that are about to exist rather than a separate block.
+  padding: var(--space-8, 0.5rem) 0 var(--space-12, 0.75rem);
+}

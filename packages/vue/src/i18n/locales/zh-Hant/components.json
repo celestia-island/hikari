@@ -282,5 +282,8 @@
   "hikari::tokenField.editValue": "編輯數值",
   "hikari::tokenField.clear": "清除",
   "hikari::diff.unchangedLines": "{count} 行未修改",
-  "hikari::diff.loadFailed": "載入失敗，點擊重試"
+  "hikari::diff.loadFailed": "載入失敗，點擊重試",
+  "hikari::search.trigger": "搜尋",
+  "hikari::search.clear": "清除搜尋",
+  "hikari::search.apply": "套用"
 }

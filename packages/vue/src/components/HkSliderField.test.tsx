@@ -238,6 +238,41 @@ describe("HkTokenInput", () => {
     expect(a.emitted.at(-1)).toBe(null);
   });
 
+  it("an external change back to the last-emitted value still rescales", async () => {
+    // The echo marker must be CLEARED on external changes: a stale
+    // marker would swallow a later external set back to exactly the
+    // value we last typed (R2 mutation M3's survivor).
+    const value = ref<number | null>(128000);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      setup: () => () =>
+        h(HkTokenInput, {
+          modelValue: value.value,
+          unit: "auto",
+          "onUpdate:modelValue": (v: number | null) => {
+            value.value = v;
+          },
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    (container.querySelector(".hk-token-input-value") as HTMLButtonElement).click();
+    await nextTick();
+    const input = document.querySelector<HTMLInputElement>(".hk-modal-content input")!;
+    expect(input.value).toBe("128");
+    input.value = "2";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(input.value).toBe("2");
+    value.value = 500; // external preset
+    await nextTick();
+    expect(input.value).toBe("0.5");
+    value.value = 2000; // external flip back to the last-typed budget
+    await nextTick();
+    expect(input.value).toBe("2");
+  });
+
   it("select-all + typing 0 keeps the keystroke (no transient null)", async () => {
     const a = mountInput({ modelValue: 128000 });
     (a.container.querySelector(".hk-token-input-value") as HTMLButtonElement).click();

@@ -357,7 +357,7 @@ describe("HkStatusBar", () => {
     }
   });
 
-  it("shows a working reconnect button in the popover while disconnected (hint text retired)", async () => {
+  it("retires the built-in reconnect button; the hint text carries the retry", async () => {
     const onRetry = vi.fn();
     const container = mountBar({
       version: "1.2.3",
@@ -371,20 +371,62 @@ describe("HkStatusBar", () => {
       .dispatchEvent(new MouseEvent("mouseenter"));
     await nextTick();
     const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
-    // The popover body teleports to <body>: the old italic "click to
-    // retry" hint pointed at an element whose clicks never reached the
-    // tag handler. The actions row carries a REAL button instead, and
-    // the misleading hint is gone whenever a retry is wired.
-    const row = panel.querySelector<HTMLElement>("[data-status-actions]")!;
-    expect(row, "actions row renders").toBeTruthy();
-    const button = row.querySelector<HTMLButtonElement>("button")!;
-    expect(button.textContent).toContain("Reconnect now");
-    // 2026-10-02 user direction: small buttons with a leading glyph.
-    expect(button.className).toContain("hk-btn-xs");
-    expect(button.querySelector(".hk-btn-icon svg"), "leading glyph renders").toBeTruthy();
-    expect(panel.textContent).not.toContain("Click to retry");
-    button.click();
-    expect(onRetry, "popover button click retries").toHaveBeenCalledTimes(1);
+    // 2026-10-11 user direction: the popover must not stack a built-in
+    // "Reconnect now" beside the host's own refresh — the light itself
+    // retries on click/tap, so the popover keeps ONE recovery action
+    // (the host's, via the slot).
+    expect(panel.querySelector("[data-status-actions]")).toBeNull();
+    expect(panel.textContent).not.toContain("Reconnect now");
+    // The fallback hint is back for hosts without a slot action — but it
+    // is a REAL control now: the original hint was retired because its
+    // clicks went nowhere, so the text carries the retry itself.
+    const hint = panel.querySelector<HTMLElement>("[role='button']")!;
+    expect(hint.textContent).toContain("Click to retry");
+    hint.click();
+    expect(onRetry, "hint click retries").toHaveBeenCalledTimes(1);
+    // Keyboard parity: the hint is a role=button control, so Enter (and
+    // Space) carry the same retry.
+    hint.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect(onRetry, "Enter on the hint retries").toHaveBeenCalledTimes(2);
+    hint.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    expect(onRetry, "Space on the hint retries").toHaveBeenCalledTimes(2 + 1);
+    hint.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(onRetry, "other keys are inert").toHaveBeenCalledTimes(3);
+  });
+
+  it("hosts the actions cluster on the status row's right side, not a bottom hairline row", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkStatusBar, {
+          version: "1.2.3",
+          connectionStatus: "disconnected",
+          connectionInfo: INFO,
+          onRetry: () => {},
+        }, {
+          actions: () => h("button", { class: "host-refresh" }, "Refresh page"),
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    const clusters = panel.querySelectorAll("[data-status-actions]");
+    expect(clusters.length, "exactly one actions cluster").toBe(1);
+    // The cluster lives INSIDE the row that carries the status text —
+    // status left, actions right, no extra vertical row.
+    const statusRow = clusters[0]!.closest("div")!;
+    expect(statusRow.textContent).toContain("Disconnected");
+    // The old bottom row announced itself with a hairline top border;
+    // nothing in the panel may carry it anymore.
+    const bordered = [...panel.querySelectorAll<HTMLElement>("*[style*='border']")]
+      .filter((el) => el.style.borderTop.includes("solid"));
+    expect(bordered, "no hairline actions row remains").toEqual([]);
   });
 
   it("keeps the fallback hint when no onRetry is wired", async () => {
@@ -452,27 +494,38 @@ describe("HkStatusBar", () => {
     expect(panel!.querySelector("[data-status-actions]")).toBeNull();
   });
 
-  it("keeps the actions row available while connection info is still fetching", async () => {
-    const onRetry = vi.fn();
-    const container = mountBar({
-      version: "1.2.3",
-      connectionStatus: "disconnected",
-      connectionInfo: null,
-      onRetry,
+  it("keeps host actions available while connection info is still fetching", async () => {
+    const onRefresh = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkStatusBar, {
+          version: "1.2.3",
+          connectionStatus: "disconnected",
+          connectionInfo: null,
+        }, {
+          actions: () => h("button", { class: "host-refresh", onClick: onRefresh }, "Refresh page"),
+        }),
     });
+    app.mount(container);
+    mounts.push({ app, container });
     await nextTick();
     container
       .querySelector<HTMLElement>(".s-status-bar-tag")!
       .dispatchEvent(new MouseEvent("mouseenter"));
     await nextTick();
     const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
-    // The row must live OUTSIDE the info/fetching ternary: an outage that
-    // drops connectionInfo to null is exactly when the retry button is
-    // most needed.
-    const button = panel.querySelector<HTMLButtonElement>("[data-status-actions] button");
-    expect(button, "retry button renders without info").toBeTruthy();
-    button!.click();
-    expect(onRetry).toHaveBeenCalledTimes(1);
+    // The cluster must live OUTSIDE the info/fetching ternary: an outage
+    // that drops connectionInfo to null is exactly when the recovery
+    // action is most needed. It rides the fetching line's right edge.
+    const cluster = panel.querySelector<HTMLElement>("[data-status-actions]");
+    expect(cluster, "actions cluster renders without info").toBeTruthy();
+    // Same line as the fetching text: label left, actions right.
+    expect(cluster!.closest("div")!.textContent).toContain("Fetching connection info");
+    const button = cluster!.querySelector<HTMLButtonElement>("button")!;
+    button.click();
+    expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 
   it("no actions row when the slot renders nothing (wrapper forwards an empty slot)", async () => {

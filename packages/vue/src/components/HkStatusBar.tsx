@@ -5,7 +5,6 @@ import { useI18n } from "../i18n/context";
 import { HIKARI_FONT_MONO } from "../theme/fontContext";
 
 import HPopover from "./HkPopover";
-import HkButton from "./HkButton";
 import type { HkConnectionInfo } from "./HkConnectionInfo";
 import { HkCountdownDigit } from "./HkCountdownDigit";
 
@@ -306,22 +305,24 @@ export const HkStatusBar = defineComponent({
         : t("hikari::statusBar.disconnected", "Disconnected");
 
       const connecting = mode === "reconnecting" || mode === "connecting";
-      // Actions row: the popover body teleports to <body>, so a click on
-      // the "click to reconnect" hint text inside it never reached the
-      // tag's own click handler — the popover now carries REAL buttons.
-      // The built-in one retriggers the reconnect for any non-green
-      // light; hosts append their own (e.g. a full manual refresh)
-      // through the `actions` slot.
-      const showRetryButton = mode !== "connected" && typeof props.onRetry === "function";
-      // Gate the row on RENDERED content, not on the slot function's
+      // Recovery actions (2026-10-11 user direction): the old bottom
+      // hairline row stacked a built-in "Reconnect now" button beside the
+      // host's own refresh icon — on an outage the popover read as TWO
+      // buttons doing one job. The built-in labelled button is RETIRED:
+      // the traffic light itself already retries on click/tap, and hosts
+      // append their single recovery action (e.g. a manual page refresh)
+      // through the `actions` slot. The cluster now rides the FIRST
+      // popover row's right side — status text left, actions right — so
+      // no extra row of vertical space is spent on it.
+      // Gate the cluster on RENDERED content, not on the slot function's
       // existence: HkConnectionStatus forwards `actions` unconditionally,
-      // so a function-existence gate would paint an empty hairline row in
-      // the connected state for every host that passed no #actions.
+      // so a function-existence gate would paint an empty cluster in the
+      // connected state for every host that passed no #actions.
       const actionVnodes = slots.actions?.();
       const hasHostActions = Array.isArray(actionVnodes)
         ? actionVnodes.length > 0
         : Boolean(actionVnodes);
-      const hasActionsRow = showRetryButton || hasHostActions;
+      const hasActionsRow = hasHostActions;
 
       const pv = fmtVer(props.version, props.panelBuildHash);
       const ev = props.engineVersion;
@@ -409,6 +410,21 @@ export const HkStatusBar = defineComponent({
                         {latency} ms
                       </span>
                     )}
+                    {hasActionsRow && (
+                      <span
+                        data-status-actions
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          // No latency chip to push against: the cluster
+                          // still lands on the row's right edge.
+                          marginLeft: latency !== null ? undefined : "auto",
+                        }}
+                      >
+                        {actionVnodes}
+                      </span>
+                    )}
                   </div>
                   {connecting && attempt > 0 && (
                     <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
@@ -424,8 +440,21 @@ export const HkStatusBar = defineComponent({
                       )}
                     </div>
                   )}
-                  {mode === "disconnected" && !showRetryButton && (
-                    <div style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7 }}>
+                  {mode === "disconnected" && !hasActionsRow && (
+                    // Fallback for hosts without a slot action — and a REAL
+                    // control this time: the original hint was retired
+                    // because its clicks went nowhere (the popover body
+                    // teleports to <body>), so the text now carries the
+                    // retry itself, echo guard included.
+                    <div
+                      role="button"
+                      tabindex={0}
+                      onClick={onRetryButtonClick}
+                      onKeydown={(e: KeyboardEvent) => {
+                        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRetryButtonClick(); }
+                      }}
+                      style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7, cursor: "pointer" }}
+                    >
                       {t("hikari::statusBar.clickReconnect", "Click to retry")}
                     </div>
                   )}
@@ -470,31 +499,16 @@ export const HkStatusBar = defineComponent({
                   ))}
                 </>
               ) : (
-                <div style={{ opacity: 0.5 }}>{t("hikari::statusBar.fetching", "Fetching connection info...")}</div>
-              )}
-              {hasActionsRow && (
-                <div
-                  data-status-actions
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginTop: "8px",
-                    paddingTop: "8px",
-                    borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
-                  }}
-                >
-                  {showRetryButton && (
-                    <HkButton
-                      size="xs"
-                      variant="secondary"
-                      icon="RotateCw"
-                      onClick={onRetryButtonClick}
-                    >
-                      {t("hikari::statusBar.retryNow", "Reconnect now")}
-                    </HkButton>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                  <span style={{ opacity: 0.5 }}>{t("hikari::statusBar.fetching", "Fetching connection info...")}</span>
+                  {hasActionsRow && (
+                    // An outage that drops connectionInfo to null is exactly
+                    // when the recovery action is most needed — the cluster
+                    // rides the fetching line's right edge.
+                    <span data-status-actions style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
+                      {actionVnodes}
+                    </span>
                   )}
-                  {hasHostActions ? actionVnodes : null}
                 </div>
               )}
             </div>

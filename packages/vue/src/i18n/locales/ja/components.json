@@ -274,5 +274,7 @@
   "hikari::userPicker.confirm": "確認",
   "hikari::userPicker.selectedCount": "{count} 件選択中",
   "hikari::tokenField.editValue": "値を編集",
-  "hikari::tokenField.clear": "クリア"
+  "hikari::tokenField.clear": "クリア",
+  "hikari::diff.unchangedLines": "未変更の {count} 行",
+  "hikari::diff.loadFailed": "読み込みに失敗しました。クリックで再試行"
 }

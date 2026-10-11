@@ -6,15 +6,26 @@
  * narrows to roughly TWO visible symbols and scrolls horizontally
  * instead.
  *
- * Row anatomy: [field label | operator symbol group | value control].
- * Edits commit LIVE (the desktop panel has no confirm button); the
- * mobile sheet's single confirm merely closes — the standard HkPopover
- * sheetOnMobile split renders the same panel in both shapes.
+ * Row anatomy: [field label | operator symbol group | value control +
+ * remove]. Rows are the page's ACTIVE conditions; the trailing add row
+ * (button parked in the operator column, user direction 2026-10-12)
+ * materializes the next latent field. Edits commit LIVE (the desktop
+ * panel has no confirm button); the mobile sheet's single confirm merely
+ * closes — the standard HkPopover sheetOnMobile split renders the same
+ * panel in both shapes.
+ *
+ * ONE GRID, ONE AXIS (user direction 2026-10-12): the panel itself is
+ * the grid and each row contributes `display: contents` cells, so the
+ * three columns track ONE set of widths across every row and the add
+ * row lines up with the operator column exactly. `align-items: center`
+ * puts every cell of every row on the same vertical axis — label,
+ * symbol group, control, and remove button all share it.
  */
 
 .hk-filter-panel {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) minmax(4.5rem, auto) minmax(6rem, 1fr);
+  align-items: center;
   gap: var(--space-8, 0.5rem);
   /* Bounded width: wide enough for the operator group, narrow enough to
    * read as a header dropdown (the popover host clamps to the viewport
@@ -25,14 +36,16 @@
    * a field-rich page must not grow an unbounded dropdown. */
   max-height: min(26rem, 60vh);
   overflow-y: auto;
-  padding: var(--space-4, 0.25rem);
+  /* Minimum outer margins for every column (user direction
+   * 2026-10-12): the rows never touch the panel edge. */
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
 }
 
-.hk-filter-panel-row {
-  display: grid;
-  grid-template-columns: minmax(4.5rem, auto) minmax(0, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-8, 0.5rem);
+/* A row is not a box — it donates its three cells to the panel grid so
+ * column widths stay shared across all rows (and the add row). */
+.hk-filter-panel-row,
+.hk-filter-panel-addrow {
+  display: contents;
 }
 
 .hk-filter-panel-field {
@@ -93,23 +106,90 @@
   cursor: not-allowed;
 }
 
+/* Value cell: the control takes what is left (min-width guarded, never
+ * hard-coded — it shrinks with the panel, user direction 2026-10-12);
+ * the remove verb rides at the row's end on the same axis. */
 .hk-filter-panel-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
   min-width: 0;
 }
 
-/* Phones: the operator column narrows hard (about two symbols visible)
- * and the row lets the value control take the remaining width. The
- * group itself scrolls — same interaction, smaller footprint. */
+.hk-filter-panel-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hk-filter-panel-remove {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: rgb(var(--color-muted, var(--color-text-secondary)));
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hk-filter-panel-remove:hover {
+  background: rgb(var(--color-error) / 12%);
+  color: rgb(var(--color-error));
+}
+
+.hk-filter-panel-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The growth verb: parked in the OPERATOR COLUMN (grid-column 2), so it
+ * reads as part of the aligned axis — not a stray footer link. Ghost
+ * face; it appends the next latent field. */
+.hk-filter-panel-add {
+  grid-column: 2 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  min-height: 2rem;
+  padding: 0 var(--space-8, 0.5rem);
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: rgb(var(--color-muted, var(--color-text-secondary)));
+  font-family: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hk-filter-panel-add:hover {
+  background: rgb(var(--color-primary) / 12%);
+  color: rgb(var(--color-primary));
+}
+
+.hk-filter-panel-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Phones: the operator column widens a touch (user direction
+ * 2026-10-12 — the old 4.25rem cap cramped the symbol group) and the
+ * row lets the value control take the remaining width. The group itself
+ * scrolls — same interaction, smaller footprint. */
 @media (max-width: 767px) {
   .hk-filter-panel {
     width: 100%;
-  }
-
-  .hk-filter-panel-row {
-    grid-template-columns: minmax(3.75rem, auto) minmax(3.9rem, auto) minmax(0, 1fr);
+    grid-template-columns: minmax(3.75rem, auto) minmax(4.75rem, auto) minmax(5rem, 1fr);
   }
 
   .hk-filter-panel-ops {
-    max-width: 4.25rem;
+    max-width: 5.25rem;
   }
 }

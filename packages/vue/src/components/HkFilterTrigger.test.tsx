@@ -47,7 +47,10 @@ describe("HkFilterTrigger", () => {
     const c = mount(
       h(HkFilterTrigger, {
         fields: FIELDS,
-        modelValue: {},
+        // Seed one condition so the panel opens with its row (an empty
+        // state renders only the add row — conditions are added, not
+        // all rendered at once).
+        modelValue: { tool: { op: "eq", value: "" } },
         "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
       }),
     );

@@ -45,6 +45,15 @@ export default defineComponent({
     autoGrow: { type: Boolean, default: false },
     size: { type: String as () => "sm" | "md" | "lg", default: "md" },
     /**
+     * Suppress the caption above the control while keeping `label`
+     * semantic: the field element gets `aria-label={label}` instead
+     * (every variant — the password surface forwards it to its input).
+     * For rows that already name the field next to the control
+     * (HkFilterPanel's [field | ops | value] grid) — a second caption
+     * above the control reads as duplication there.
+     */
+    hideLabel: { type: Boolean, default: false },
+    /**
      * Input variant. `password` renders the hikari password surface:
      * the canvas dot matrix with input ripples, the centered breathing
      * placeholder, caps-lock / full-width hints, and a selectable
@@ -349,7 +358,7 @@ export default defineComponent({
 
     return () => (
       <div class="hk-input-wrapper">
-        {props.label && (
+        {props.label && !props.hideLabel && (
           <label class="hk-input-label" for={fieldId.value}>
             {props.label}
             {props.required && <span class="hk-input-required">*</span>}
@@ -357,6 +366,12 @@ export default defineComponent({
         )}
         {isPassword.value ? (
           <HkPasswordSurface
+            // Derived name FIRST: an explicit caller aria-label (via the
+            // attrs spread after it) must win — mergeProps lets a later
+            // undefined clobber an earlier value, so the order here IS
+            // the caller-precedence contract (same as the input/textarea
+            // branches below).
+            aria-label={props.hideLabel ? props.label : undefined}
             {...filteredAttrs.value}
             modelValue={props.modelValue}
             onUpdate:modelValue={(v: string) => emit("update:modelValue", v)}
@@ -436,6 +451,7 @@ export default defineComponent({
               data-1p-ignore
               data-lpignore="true"
               class="hk-input-element"
+              aria-label={props.hideLabel ? props.label : undefined}
               {...filteredAttrs.value}
               onInput={onInput}
               onFocus={(e) => { forwardFocus(true); emit("focus", e); }}
@@ -476,6 +492,7 @@ export default defineComponent({
                 "hk-input-textarea",
                 isAutoGrow.value ? "hk-input-textarea-autogrow" : "",
               ]}
+              aria-label={props.hideLabel ? props.label : undefined}
               {...filteredAttrs.value}
               onInput={onInput}
               onFocus={(e) => { forwardFocus(true); emit("focus", e); }}

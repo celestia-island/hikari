@@ -200,6 +200,8 @@
     "hikari::filterBar.trigger": "絞り込み",
     "hikari::filterBar.apply": "適用",
     "hikari::filterPanel.all": "すべて",
+    "hikari::filterPanel.addCondition": "条件を追加",
+    "hikari::filterPanel.removeCondition": "条件を削除",
     "hikari::filterBar.reset": "リセット",
     "hikari::filterPanel.op.eq": "等しい",
     "hikari::filterPanel.op.ne": "等しくない",

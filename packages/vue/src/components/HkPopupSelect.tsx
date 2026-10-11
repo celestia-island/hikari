@@ -36,6 +36,17 @@ export default defineComponent({
     error: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
     required: { type: Boolean, default: false },
+    /** Control density: "md" is the form-field stock (2.5rem), "sm" the
+     *  compact variant (2rem) for dense rows — filter condition rows,
+     *  toolbars (HkDatePicker/HkInput carry the same split). */
+    size: { type: String as PropType<"sm" | "md">, default: "md" },
+    /** Suppress the caption above the control while keeping `label`
+     *  semantic: the trigger gets `aria-label={label}` and the mobile
+     *  sheet still takes `label` as its breadcrumb title. For rows that
+     *  already name the field next to the control (HkFilterPanel's
+     *  [field | ops | value] grid) — a second caption above the control
+     *  reads as duplication there. */
+    hideLabel: { type: Boolean, default: false },
     options: {
       type: Array as PropType<HkPopupSelectOption[]>,
       default: undefined,
@@ -159,7 +170,7 @@ export default defineComponent({
 
     return () => (
       <div class="hk-popup-select-wrapper">
-        {props.label ? (
+        {props.label && !props.hideLabel ? (
           <label class="hk-popup-select-label">
             {props.label}
             {props.required && <span class="hk-popup-select-required">*</span>}
@@ -168,7 +179,11 @@ export default defineComponent({
         <button
           ref={triggerRef}
           type="button"
-          class="hk-popup-select-trigger"
+          class={[
+            "hk-popup-select-trigger",
+            props.size === "sm" ? "hk-popup-select-trigger-sm" : "",
+          ]}
+          aria-label={props.hideLabel ? props.label : undefined}
           data-error={props.error || undefined}
           data-disabled={props.disabled || undefined}
           disabled={props.disabled}
@@ -179,7 +194,7 @@ export default defineComponent({
           <span class="hk-popup-select-value">
             {displayLabel.value || props.placeholder}
           </span>
-          <ChevronDown size={16} class="hk-popup-select-arrow" />
+          <ChevronDown size={props.size === "sm" ? 14 : 16} class="hk-popup-select-arrow" />
         </button>
         <HkPopover
           modelValue={isOpen.value}

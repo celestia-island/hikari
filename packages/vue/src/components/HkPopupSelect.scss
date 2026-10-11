@@ -85,6 +85,20 @@
   cursor: not-allowed;
 }
 
+/* Compact variant (size="sm"): the dense-row stock — filter condition
+ * rows, toolbars — where the 2.5rem form-field stock reads oversized.
+ * Mirrors HkDatePicker's .hk-dp-trigger-sm geometry. */
+.hk-popup-select-trigger-sm {
+  min-height: 2rem;
+  padding: var(--space-4) var(--space-8);
+  padding-inline-end: var(--space-28);
+  font-size: var(--text-sm);
+}
+
+.hk-popup-select-trigger-sm .hk-popup-select-arrow {
+  inset-inline-end: var(--space-8);
+}
+
 .hk-popup-select-value {
   flex: 1;
   white-space: nowrap;

@@ -1,4 +1,5 @@
 import { computed, defineComponent, type PropType } from "vue";
+import { Plus, X } from "lucide-vue-next";
 
 import HkDatePicker from "./HkDatePicker";
 import HkInput from "./HkInput";
@@ -30,17 +31,20 @@ export interface HkFilterFieldDef {
 }
 
 /** One condition: the operator and the (string) value. An EMPTY value
- *  means the field filters nothing — this is also how a condition is
- *  cleared (re-open the panel, empty the value; there is no separate
- *  reset verb in the header affordance). */
+ *  means the field filters nothing — pages map absent/empty onto "no
+ *  filter" at the RPC boundary; the row's own remove button is the UI
+ *  verb that drops the condition entirely. */
 export interface HkFilterCondition {
   op: HkFilterOperator;
   value: string;
 }
 
-/** Per-field condition state, keyed by the field def's key. Fields the
- *  record does not mention render with their kind's default operator and
- *  an empty value. */
+/** Per-field condition state, keyed by the field def's key. The record
+ *  IS the list of visible condition rows: a declared field the record
+ *  does not mention is latent — it only materializes when the user adds
+ *  it from the panel's add row (user direction 2026-10-12: conditions
+ *  are ADDED, not all rendered at once), and a row the user removes
+ *  leaves the record. */
 export type HkFilterState = Record<string, HkFilterCondition>;
 
 const OPERATOR_SYMBOL: Record<HkFilterOperator, string> = {
@@ -136,9 +140,13 @@ export default defineComponent({
 
     return () => {
       const label = props.label ?? t("hikari::filterBar.trigger", "Filters");
+      // The visible rows ARE the state record's declared fields, in
+      // declaration order; the rest stay latent behind the add row.
+      const rows = props.fields.filter((f) => props.modelValue[f.key] !== undefined);
+      const addable = props.fields.filter((f) => props.modelValue[f.key] === undefined);
       return (
         <div class="hk-filter-panel" data-testid="hk-filter-panel" data-active={activeCount.value > 0 || undefined} aria-label={label}>
-          {props.fields.map((field) => {
+          {rows.map((field) => {
             const condition = conditionFor(field);
             const ops = operatorsFor(field);
             return (
@@ -161,48 +169,97 @@ export default defineComponent({
                   ))}
                 </div>
                 <div class="hk-filter-panel-value">
-                  {field.kind === "select" ? (
-                    <HkPopupSelect
-                      modelValue={condition.value}
-                      onUpdate:modelValue={(v: string) => emitCondition(field, { value: v })}
-                      label={field.label}
-                      disabled={props.disabled}
-                      options={selectOptions(field)}
-                    />
-                  ) : field.kind === "date" ? (
-                    // The calendar picker — never the OS native input
-                    // (2026-10-11 direction); the wire format is the same
-                    // ISO YYYY-MM-DD the native input spoke.
-                    <HkDatePicker
-                      modelValue={condition.value || null}
-                      onUpdate:modelValue={(v: string | null) =>
-                        emitCondition(field, { value: v ?? "" })
-                      }
-                      disabled={props.disabled}
-                    />
-                  ) : (
-                    <HkInput
-                      type="text"
-                      variant={field.kind === "number" ? "number" : "text"}
-                      modelValue={condition.value}
-                      onUpdate:modelValue={(v: string) =>
-                        emitCondition(field, {
-                          // Belt over the browser's native number filtering:
-                          // the stored model keeps a clean number SHAPE only
-                          // (sign, digits, one dot), so pages can hand it to
-                          // RPC params verbatim.
-                          value: field.kind === "number" ? sanitizeNumberInput(v) : v,
-                        })
-                      }
-                      label={field.label}
-                      placeholder={field.placeholder ?? ""}
-                      disabled={props.disabled}
-                    />
-                  )}
+                  <div class="hk-filter-panel-control">
+                    {field.kind === "select" ? (
+                      <HkPopupSelect
+                        modelValue={condition.value}
+                        onUpdate:modelValue={(v: string) => emitCondition(field, { value: v })}
+                        label={field.label}
+                        // The row's left cell already names the field —
+                        // the control's own caption above it reads as
+                        // duplication (user direction 2026-10-12), and
+                        // the compact variant keeps the dense row stock.
+                        hideLabel
+                        size="sm"
+                        disabled={props.disabled}
+                        options={selectOptions(field)}
+                      />
+                    ) : field.kind === "date" ? (
+                      // The calendar picker — never the OS native input
+                      // (2026-10-11 direction); the wire format is the same
+                      // ISO YYYY-MM-DD the native input spoke.
+                      <HkDatePicker
+                        modelValue={condition.value || null}
+                        onUpdate:modelValue={(v: string | null) =>
+                          emitCondition(field, { value: v ?? "" })
+                        }
+                        size="sm"
+                        disabled={props.disabled}
+                      />
+                    ) : (
+                      <HkInput
+                        type="text"
+                        variant={field.kind === "number" ? "number" : "text"}
+                        modelValue={condition.value}
+                        onUpdate:modelValue={(v: string) =>
+                          emitCondition(field, {
+                            // Belt over the browser's native number filtering:
+                            // the stored model keeps a clean number SHAPE only
+                            // (sign, digits, one dot), so pages can hand it to
+                            // RPC params verbatim.
+                            value: field.kind === "number" ? sanitizeNumberInput(v) : v,
+                          })
+                        }
+                        label={field.label}
+                        hideLabel
+                        size="sm"
+                        placeholder={field.placeholder ?? ""}
+                        disabled={props.disabled}
+                      />
+                    )}
+                  </div>
+                  {/* Drop the condition entirely (the row leaves the
+                   * panel; the page refetches unfiltered). Clearing the
+                   * VALUE still means "filters nothing" for the wire —
+                   * removal is just the tidy-up verb on top. */}
+                  <button
+                    type="button"
+                    class="hk-filter-panel-remove"
+                    aria-label={t("hikari::filterPanel.removeCondition", "Remove condition")}
+                    title={t("hikari::filterPanel.removeCondition", "Remove condition")}
+                    disabled={props.disabled}
+                    onClick={() => {
+                      const next: HkFilterState = { ...props.modelValue };
+                      delete next[field.key];
+                      emit("update:modelValue", next);
+                    }}
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
                 </div>
               </div>
             );
           })}
+          {addable.length > 0 && (
+            <div class="hk-filter-panel-addrow">
+              {/* The ONE growth verb, parked in the operator column so
+               * the row grid reads as one aligned axis (user direction
+               * 2026-10-12). Appends the next unused field with its
+               * kind's default operator and an empty value. */}
+              <button
+                type="button"
+                class="hk-filter-panel-add"
+                disabled={props.disabled}
+                onClick={() => {
+                  const field = addable[0]!;
+                  emitCondition(field, { op: operatorsFor(field)[0]!, value: "" });
+                }}
+              >
+                <Plus size={14} aria-hidden="true" />
+                <span>{t("hikari::filterPanel.addCondition", "Add condition")}</span>
+              </button>
+            </div>
+          )}
         </div>
       );
     };

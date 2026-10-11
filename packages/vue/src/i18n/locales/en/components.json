@@ -200,6 +200,8 @@
     "hikari::filterBar.trigger": "Filters",
     "hikari::filterBar.apply": "Apply",
     "hikari::filterPanel.all": "All",
+    "hikari::filterPanel.addCondition": "Add condition",
+    "hikari::filterPanel.removeCondition": "Remove condition",
     "hikari::filterBar.reset": "Reset",
     "hikari::filterPanel.op.eq": "equals",
     "hikari::filterPanel.op.ne": "not equals",

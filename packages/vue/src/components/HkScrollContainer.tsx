@@ -85,6 +85,34 @@ export default defineComponent({
      *  scroll content dissolving at the dock's edge reads as
      *  intentional instead of a hard clip. */
     dockFade: { type: Boolean, default: true },
+    /** Opt-in tail clearance for FLOATING docks (2026-10-12): a dock that
+     *  lives OUTSIDE this container (a shell-level fixed plane — a page's
+     *  bottom-center dock bar, e.g. chest's DockBar) covers the bottom of
+     *  whatever scroll area it hovers over. The shell publishes the dock's
+     *  live measured occupancy as `--hk-scroll-tail-bottom` (on any
+     *  ancestor, typically :root); with this prop the container spends
+     *  that var as an IN-FLOW tail spacer on the viewport's own content,
+     *  so the room becomes reachable scroll range that only appears once
+     *  the scroll end is reached — mid-scroll content keeps flowing under
+     *  the dock across the full viewport. The published value is the
+     *  whole tail room the publisher wants spent (dock occupancy plus
+     *  whatever breathing room its design rules add).
+     *
+     *  The spacer is a `flex: none` ::after, and every direct child of the
+     *  viewport is pinned against main-axis SHRINKING while the prop is
+     *  on: a shrinking child (hikari's own `.hk-kanban-lanes` ships
+     *  `flex: 0 1 auto; min-height: 100%`) overflows its own box visibly
+     *  and paints OVER a spacer that trails the box — the exact defect
+     *  that kept a consumer board's tail under its dock through three
+     *  rounds of padding adjustments that "never entered the flow"
+     *  (chest follow-up to #1538/#1542, root-caused and measured in a real
+     *  layout engine, 2026-10-12). In a block viewport the shrink pin is
+     *  inert and the spacer is an ordinary trailing block. Inert while
+     *  the var is unset/0px, so dockless pages keep their full centering
+     *  box. Unlike the dockTop/dockBottom slots (layout-space docks that
+     *  shrink the viewport permanently), this contract is for docks that
+     *  float OVER the scroll area by design. */
+    dockTailClearance: { type: Boolean, default: false },
     /** Back-to-top signal (scroll parameter every scrollable template
      *  can hand to a floating quick-action pad): while set, the
      *  container derives a visibility signal from its own throttled
@@ -539,6 +567,7 @@ export default defineComponent({
           data-axis={props.axis}
           data-align={alignCenter() ? "center" : undefined}
           data-fade={props.fade ? "true" : undefined}
+          data-dock-tail={props.dockTailClearance ? "true" : undefined}
           data-dock-fade={
             props.dockFade && dockBottomSlot
               ? "bottom"

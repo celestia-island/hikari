@@ -151,7 +151,6 @@
     "hikari::statusBar.backend.unknown": "Неизвестно",
     "hikari::statusBar.backend.warn": "Деградация",
     "hikari::statusBar.clickReconnect": "Нажмите, чтобы повторить",
-    "hikari::statusBar.retryNow": "Переподключиться сейчас",
     "hikari::statusBar.connected": "Подключено",
     "hikari::statusBar.connecting": "Подключение...",
     "hikari::statusBar.disconnected": "Отключено",

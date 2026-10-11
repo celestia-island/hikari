@@ -405,6 +405,11 @@ describe("change-mark rail", () => {
     const m = mountRailed();
     railOfHeight(m, 100);
     m.handle.setMarkers([{ start: 0.4, end: 0.401, kind: "modified" }]);
+    // `update()` is the path that re-renders marks laid out before a height
+    // existed (a no-layout DOM reports 0, which leaves the "never sized"
+    // sentinel behind) — without it this test silently asserted the
+    // FRACTION floor and would have stayed green with no pixel floor at all.
+    m.handle.update();
     // 2px of a 100px rail = 2%. The fraction floor alone (0.5%) is a
     // half-pixel target — and since the rail is pointer-transparent the
     // marks ARE the hit area, so a half-pixel mark is a half-pixel button.
@@ -427,7 +432,8 @@ describe("change-mark rail", () => {
   });
 
   it("clamps a reversed or out-of-range span instead of rendering it outside", () => {
-    const m = mountRailed();    m.handle.setMarkers([{ start: 0.8, end: 0.2, kind: "added" }]);
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.8, end: 0.2, kind: "added" }]);
     const mark = m.rail()!.querySelector<HTMLElement>(".hk-scrollbar-marker")!;
     expect(mark.style.top).toBe("20%");
     expect(mark.style.height).toBe("60%");

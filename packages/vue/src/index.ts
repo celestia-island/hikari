@@ -420,6 +420,9 @@ export type { PasswordValidationResult, PasswordLevel, PasswordStrengthEvaluator
 export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
 export { useApproachEnd } from "./composables/useApproachEnd";
 export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";
+// The change-mark rail's public vocabulary: HkScrollContainer's `markers`
+// prop is typed with it, so consumers can name what they pass.
+export type { OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useSurfaceTransition } from "./composables/useSurfaceTransition";
 export { useSizeMorph } from "./composables/useSizeMorph";
@@ -653,7 +656,6 @@ export { default as HkProgressBar } from "./components/HkProgressBar";
 export { default as HkProgressDialog } from "./components/HkProgressDialog";
 export { default as HkRadio } from "./components/HkRadio";
 export { default as HkScrollContainer } from "./components/HkScrollContainer";
-export { type OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
 export { default as HkSearchInput } from "./components/HkSearchInput";
 export { default as HkSplash } from "./components/HkSplash";
 export { default as HkSelect } from "./components/HkSelect";

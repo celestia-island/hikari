@@ -1,0 +1,16 @@
+{
+  "name": "@celestia-island/default-theme",
+  "version": "0.1.0",
+  "description": "The reference precompiled default theme (brand tray decor) for hikari hosts — the working example for custom theme packages.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": true,
+  "peerDependencies": {
+    "@celestia-island/hikari": "^0.55",
+    "lucide-vue-next": "^*",
+    "vue": "^3"
+  }
+}

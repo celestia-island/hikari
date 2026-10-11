@@ -175,29 +175,18 @@ describe("HkThemeDecor", () => {
     expect(seen.at(-1)).toMatchObject({ variant: "host", kept: 1 });
   });
 
-  it("lets a theme replace the built-in tray end to end (the TRAY_DECORS replacement path)", async () => {
-    // The per-theme decoration table chest kept inside its tray component is
-    // gone: a theme ships its own tray by registering a component for this
-    // slot under its own id, and hikari's built-in tray answers for every
-    // other theme.
-    registerStandardThemeDecor();
-    const { setTheme } = useTheme();
-    const themedTray = defineComponent({
-      name: "ThemedTray",
-      setup: () => () => h("i", { "data-decor": "themed-tray" }),
+  it("renders a theme tray over the now-empty builtin floor", async () => {
+    // The builtin status.tray floor is EMPTY since the demotion wave —
+    // the default theme package fills it via the "*" wildcard, and any
+    // exact-theme registration wins over that. Here: only the themed
+    // tray renders.
+    const ThemedTray = defineComponent({
+      setup: () => () => h("div", { "data-decor": "themed-tray" }),
     });
-    registerThemeDecor({ themeId: "endfield", slot: "status.tray", component: themedTray });
-
-    const container = mount(h(HkThemeDecor, { slot: "status.tray" }));
-
-    setTheme("endfield");
+    registerThemeDecor({ themeId: "t", slot: "status.tray", component: ThemedTray });
+    useTheme().setTheme("t");
+    const host = mount(h(HkThemeDecor, { slot: "status.tray" }));
     await nextTick();
-    expect(container.querySelector('[data-decor="themed-tray"]')).not.toBeNull();
-    expect(container.querySelector(".s-status-bar-system-tray")).toBeNull();
-
-    setTheme("default");
-    await nextTick();
-    expect(container.querySelector('[data-decor="themed-tray"]')).toBeNull();
-    expect(container.querySelector(".s-status-bar-system-tray")).not.toBeNull();
+    expect(host.querySelector('[data-decor="themed-tray"]')).not.toBeNull();
   });
 });

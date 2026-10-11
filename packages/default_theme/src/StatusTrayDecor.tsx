@@ -1,9 +1,9 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
 import { Circle, Square, Triangle, X } from "lucide-vue-next";
 
-import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
-import { formatTime } from "../utils/format";
-import "./HkStatusTray.scss";
+import { scheduleInterval, type IntervalHandle } from "@celestia-island/hikari";
+import { formatTime } from "@celestia-island/hikari";
+import "./StatusTrayDecor.scss";
 
 /**
  * HkStatusTray — the gamepad cluster + wall clock, upstreamed from

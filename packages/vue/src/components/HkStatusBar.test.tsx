@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
-import { HkStatusBar } from "./HkStatusBar";
+import { HkStatusBar, hkMergeVersionDisplay, hkParseIdentity } from "./HkStatusBar";
 import type { HkConnectionInfo } from "./HkConnectionInfo";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -55,6 +57,7 @@ const INFO: HkConnectionInfo = {
 };
 
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
     container.remove();
@@ -64,17 +67,32 @@ afterEach(() => {
 
 describe("HkStatusBar", () => {
   it("suppresses a build hash the version line already shows, keeps drift visible", async () => {
-    // Display-layer dedup (2026-10-10): the family version line ends with
-    // `::<hash7>`, so appending the SAME commit — bare hash7 or a
-    // `<branch>::<hash7>` stamp — printed the commit twice (the engine-row
-    // bug). A DIFFERENT commit stays visible: that IS the drift signal.
+    // Display-layer dedup, set-based since 2026-10-11: the version line
+    // and the build stamp are two INDEPENDENT facts, and the merge keys
+    // every token by its commit (separator- and case-agnostic) through a
+    // set — a token whose key is already shown cannot render again, BY
+    // CONSTRUCTION, in either separator generation. A DIFFERENT commit
+    // stays visible: that IS the drift signal. The last case is the
+    // live 2026-10-11 production pair (single-colon health line against
+    // the legacy `::` webui stamp) that printed the panel identity
+    // twice on demo.dev.cw.
     const cases: Array<{ version: string; hash: string; expect: string }> = [
+      { version: "0.1.0 master:d423747", hash: "d423747", expect: "0.1.0 master:d423747" },
+      { version: "0.1.0 master:d423747", hash: "master:d423747", expect: "0.1.0 master:d423747" },
+      { version: "0.1.0 master:d423747", hash: "master::d423747", expect: "0.1.0 master:d423747" },
       { version: "0.1 master::d423747", hash: "d423747", expect: "0.1 master::d423747" },
       { version: "0.1 master::d423747", hash: "master::d423747", expect: "0.1 master::d423747" },
+      { version: "0.1 master::d423747", hash: "master:d423747", expect: "0.1 master::d423747" },
       { version: "0.1 master::d423747", hash: "badd902", expect: "0.1 master::d423747 badd902" },
       { version: "0.1 master::d423747", hash: "feat/x::badd902", expect: "0.1 master::d423747 feat/x::badd902" },
+      { version: "0.1.0 master:d423747", hash: "master:badd902", expect: "0.1.0 master:d423747 master:badd902" },
       { version: "0.1.284", hash: "d423747", expect: "0.1.284 d423747" },
       { version: "0.1.52", hash: "EDW62Q", expect: "0.1.52 EDW62Q" },
+      {
+        version: "0.1.0 feat/model-usage-selfhosted:770f625",
+        hash: "feat/model-usage-selfhosted::770f625",
+        expect: "0.1.0 feat/model-usage-selfhosted:770f625",
+      },
     ];
     for (const { version, hash, expect: expected } of cases) {
       const container = document.createElement("div");
@@ -90,11 +108,49 @@ describe("HkStatusBar", () => {
       });
       app.mount(container);
       await nextTick();
-      const row = container.querySelector<HTMLElement>(".s-status-bar-version")!;
+      // The static layer carries the merged text exactly once; the
+      // marquee overlay copies are the scrolling mechanism, not content.
+      const row = container.querySelector<HTMLElement>(".s-status-bar-version__static")!;
       expect(row.textContent, `${version} + ${hash}`).toBe(expected);
       app.unmount();
       container.remove();
     }
+  });
+
+  it("merges version identities duplicate-free by construction (hkMergeVersionDisplay)", () => {
+    // The set guarantee, exercised at the unit level: whatever the
+    // inputs look like — repeated tokens inside one line, mixed
+    // separators, case drift — a key already seen never renders again.
+    expect(hkMergeVersionDisplay("0.1.0 master:abc1234", undefined)).toBe("0.1.0 master:abc1234");
+    expect(hkMergeVersionDisplay("0.1.0", "master:abc1234")).toBe("0.1.0 master:abc1234");
+    // The same commit twice inside ONE line (defensive: a chatty server
+    // concatenating its own stamp).
+    expect(hkMergeVersionDisplay("0.1.0 master:abc1234 master:abc1234", undefined))
+      .toBe("0.1.0 master:abc1234");
+    // Cross-separator + case-folded: same commit, either generation.
+    expect(hkMergeVersionDisplay("0.1.0 a:1b2c3d4", "a::1B2C3D4")).toBe("0.1.0 a:1b2c3d4");
+    // Same commit under a different branch label: the commit IS the
+    // identity — the second label names the same atom and adds nothing.
+    expect(hkMergeVersionDisplay("0.1.0 feat/x:1b2c3d4", "master::1b2c3d4"))
+      .toBe("0.1.0 feat/x:1b2c3d4");
+    // Non-git tokens key by raw text and still cannot duplicate.
+    expect(hkMergeVersionDisplay("0.1.52 EDW62Q", "EDW62Q")).toBe("0.1.52 EDW62Q");
+    expect(hkMergeVersionDisplay("0.1.52", "EDW62Q")).toBe("0.1.52 EDW62Q");
+    // Drift stays visible (the stale-embed signal).
+    expect(hkMergeVersionDisplay("0.1.0 master:1b2c3d4", "badd902"))
+      .toBe("0.1.0 master:1b2c3d4 badd902");
+    // Blank stamps never append a phantom token.
+    expect(hkMergeVersionDisplay("0.1.0", "  ")).toBe("0.1.0");
+    expect(hkMergeVersionDisplay(" 0.1.0 ", "")).toBe("0.1.0");
+  });
+
+  it("parses identity atoms in either separator generation (hkParseIdentity)", () => {
+    expect(hkParseIdentity("feat/x:770f625")).toEqual({ branch: "feat/x", commit: "770f625" });
+    expect(hkParseIdentity("feat/x::770f625")).toEqual({ branch: "feat/x", commit: "770f625" });
+    expect(hkParseIdentity("770F625")).toEqual({ commit: "770f625" });
+    expect(hkParseIdentity("0.1.0")).toBeUndefined();
+    expect(hkParseIdentity("EDW62Q")).toBeUndefined();
+    expect(hkParseIdentity(undefined)).toBeUndefined();
   });
 
   it("renders extraDetails rows capped at 400px with an ellipsized, title-backed value", async () => {
@@ -170,6 +226,15 @@ describe("HkStatusBar", () => {
     expect(panel, "popover opens on hover").toBeTruthy();
     expect(panel!.textContent).toContain("Protocol");
     expect(panel!.textContent).toContain("HTTP poll");
+    // The card's DEFAULT width is a deliberate 300px (2026-10-11 user
+    // direction: the version/protocol rows read cramped at the old 220px
+    // floor), clamped to the popover viewport budget on narrow phones.
+    // Hooked via data-status-bar-card — firstElementChild would couple
+    // the test to HkPopover's internal panel structure.
+    const card = panel!.querySelector<HTMLElement>("[data-status-bar-card]")!;
+    expect(card.style.minWidth).toBe(
+      "min(300px, calc(100vw - 2 * var(--viewport-gutter, 16px)))",
+    );
   });
 
   it("compact mode collapses the tag to the bare dot with no inline status text", async () => {
@@ -499,5 +564,109 @@ describe("HkStatusBar", () => {
     await nextTick();
     const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
     expect(panel!.querySelector("[data-status-actions]")).toBeNull();
+  });
+
+  it("version value cells scroll like a marquee only when the identity overflows", async () => {
+    // 2026-10-11 user direction: long branch identities must not wrap or
+    // stretch the footer — the two version positions become marquee
+    // windows riding the SHARED HkPlaceholderMarquee (the input
+    // placeholder's overflow strategy, consumed as-is). Static layer
+    // while the text fits; ghost + scrolling strip once it overflows.
+    const LONG = "0.1.0 feat/model-usage-selfhosted:770f625";
+    const container = mountBar({
+      version: LONG,
+      engineVersion: "9.8.7",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+    });
+    await nextTick();
+    // Fitting state (jsdom lays out nothing): the static layer shows the
+    // merged text, the marquee stays a hidden single-copy probe, no
+    // overflow flag, and the title keeps the hover copy.
+    const cell = container.querySelector<HTMLElement>(".s-status-bar-version")!;
+    expect(cell.querySelector(".s-status-bar-version__static")!.textContent).toBe(LONG);
+    expect(cell.querySelector(".hk-placeholder-marquee--hidden"), "hidden probe").toBeTruthy();
+    expect(cell.hasAttribute("data-overflowing")).toBe(false);
+    expect(cell.title).toBe(LONG);
+
+    // Overflow: the copy (500px) outgrows the window (200px) — the cell
+    // flips to the marquee: overflow flag on, strip scrolls with the
+    // measured loop geometry, three copies for the seamless wrap.
+    const host = cell.querySelector<HTMLElement>(".hk-placeholder-marquee")!;
+    const copy = cell.querySelector<HTMLElement>(".hk-placeholder-marquee__copy")!;
+    Object.defineProperty(host, "clientWidth", { configurable: true, get: () => 200 });
+    vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: 500 } as DOMRect);
+    (host as HTMLElement & {
+      __vueParentComponent?: { exposed?: { measure?(): void } };
+    }).__vueParentComponent?.exposed?.measure?.();
+    await nextTick();
+    expect(cell.hasAttribute("data-overflowing")).toBe(true);
+    const strip = cell.querySelector<HTMLElement>(".hk-placeholder-marquee__strip")!;
+    expect(strip.className).toContain("hk-placeholder-marquee__strip--scroll");
+    expect(strip.style.getPropertyValue("--hk-marquee-shift")).toBe("-500px");
+    expect(cell.querySelectorAll(".hk-placeholder-marquee__copy").length).toBe(3);
+
+    // Fit again (a shorter identity arrives from the server): the cell
+    // flips back — overflow flag off, probe hidden again.
+    vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);
+    (host as HTMLElement & {
+      __vueParentComponent?: { exposed?: { measure?(): void } };
+    }).__vueParentComponent?.exposed?.measure?.();
+    await nextTick();
+    expect(cell.hasAttribute("data-overflowing")).toBe(false);
+    expect(cell.querySelector(".hk-placeholder-marquee--hidden")).toBeTruthy();
+  });
+
+  it("compact popover version rows are bounded marquee cells with merged-once text", async () => {
+    const container = mountBar({
+      version: "0.1.0 feat/model-usage-selfhosted:770f625",
+      panelBuildHash: "feat/model-usage-selfhosted::770f625",
+      engineVersion: "0.1.0 feat/model-usage-selfhosted:770f625",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+      compact: true,
+    });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    // Both the panel and the engine row ride the bounded popover value
+    // cell; the panel pair is the live duplicate fixture — the merged
+    // text renders the identity exactly once in each row.
+    const cells = panel.querySelectorAll<HTMLElement>(".s-status-bar-popover-value .s-status-bar-version");
+    expect(cells.length).toBe(2);
+    for (const c of cells) {
+      expect(c.querySelector(".s-status-bar-version__static")!.textContent)
+        .toBe("0.1.0 feat/model-usage-selfhosted:770f625");
+      expect(c.querySelector(".hk-placeholder-marquee"), "marquee overlay wired").toBeTruthy();
+    }
+  });
+
+  it("pins the status-bar marquee window contract in admin-tokens.scss", () => {
+    // Extraction self-check: the selector list form
+    // (`.s-status-bar-version, .s-status-bar-version-sep {`) must NOT be
+    // the match — the rule asserted here is the dedicated block.
+    const scss = readFileSync(resolve(__dirname, "../styles/admin-tokens.scss"), "utf8");
+    const versionRule = /\.s-status-bar-version\s*\{[^}]*\}/.exec(scss)?.[0] ?? "";
+    expect(versionRule, "dedicated .s-status-bar-version rule exists").toContain("max-width: min(40vw, 24rem)");
+    // inline-flex keeps a text baseline for the grid's align-items:
+    // baseline — an overflow:hidden block would sink the row.
+    expect(versionRule).toContain("display: inline-flex");
+    expect(versionRule).toContain("overflow: hidden");
+    // Ghost handover: the static layer keeps layout + a11y, only the
+    // paint moves to the scrolling overlay.
+    expect(scss).toContain(".s-status-bar-version[data-overflowing] .s-status-bar-version__static");
+    expect(scss).toMatch(/\.s-status-bar-version\[data-overflowing\][^{]*\{[^}]*opacity:\s*0/s);
+    // Measurement parity: the overlay must draw in the cell's own
+    // typography, or the overflow flip fires at the wrong width.
+    expect(scss).toContain(".s-status-bar-version .hk-placeholder-marquee");
+    expect(scss).toMatch(/\.s-status-bar-version \.hk-placeholder-marquee\s*\{[^}]*font-size:\s*inherit/s);
+    // Popover bound: a long identity scrolls inside the ~300px card
+    // instead of stretching it.
+    const popoverRule = /\.s-status-bar-popover-value\s*\{[^}]*\}/.exec(scss)?.[0] ?? "";
+    expect(popoverRule, "popover value cell bound exists").toContain("max-width: min(16rem, 60vw)");
+    expect(scss).toMatch(/\.s-status-bar-popover-value \.s-status-bar-version\s*\{[^}]*max-width:\s*100%/s);
   });
 });

@@ -1,0 +1,79 @@
+/**
+ * HkFilterChip chrome — the facet filter chip (trigger) and its popup
+ * body. The pill group itself is HkPillToggleGroup's. Ported from the
+ * wowsp 水表查询 filter bar's grammar: a solid-surface chip (never a
+ * bare alpha tint — a lone chip over wallpaper reads as a hole).
+ */
+
+.hk-filter-chip-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hk-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  /* Vertical padding = trigger padding + one track step: the chip shares
+   * its row with segmented HkTabs-style chrome, whose track adds
+   * var(--space-2) around its triggers (the wowsp filter bar's alignment
+   * rule — a bare var(--space-4) chip lands two steps short of the row). */
+  padding: calc(var(--space-4) + var(--space-2)) var(--space-12);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-muted));
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid rgb(var(--color-border) / 25%);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface));
+  transition:
+    color var(--duration-short) ease,
+    background var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard);
+
+  &:hover {
+    color: rgb(var(--color-text));
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 1px;
+  }
+
+  /* Concrete selection — the active trigger's primary ink mixed into the
+   * solid surface (a bare alpha tint would go translucent). */
+  &--on {
+    color: rgb(var(--color-primary));
+    background: color-mix(in srgb, rgb(var(--color-primary)) 12%, rgb(var(--color-surface)));
+    border-color: rgb(var(--color-primary) / 25%);
+
+    &:hover {
+      color: rgb(var(--color-primary));
+    }
+  }
+}
+
+.hk-filter-chip-caret {
+  opacity: 0.6;
+  flex: 0 0 auto;
+}
+
+.hk-filter-chip-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+  max-width: min(92vw, 40rem);
+}
+
+.hk-filter-chip-hint {
+  color: rgb(var(--color-muted));
+  font-size: var(--text-2xs);
+  line-height: 1.4;
+}

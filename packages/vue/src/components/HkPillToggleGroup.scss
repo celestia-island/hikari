@@ -1,0 +1,62 @@
+/**
+ * HkPillToggleGroup chrome — the segmented pill track. Ported from the
+ * wowsp 水表查询 filter bar's option group, token for token: shared
+ * chrome around per-option buttons, the active option carrying the
+ * indicator tint directly (multi-select cannot use HkTabs — its sliding
+ * indicator is radio semantics).
+ */
+
+.hk-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4, 4px);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgb(var(--color-border) / 25%);
+  background: rgb(var(--color-surface) / 60%);
+}
+
+.hk-pill-group-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  padding: var(--space-4) var(--space-12);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-muted));
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: color var(--duration-short) ease, transform var(--duration-short) ease;
+
+  &:hover {
+    color: rgb(var(--color-text));
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &[data-active] {
+    color: rgb(var(--color-primary));
+    background: rgb(var(--color-primary) / 12%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+}
+
+.hk-pill-group-icon {
+  display: inline-flex;
+  align-items: center;
+  /* An icon never widens the hit floor: replaced-element glyphs
+   * contribute nothing to a button's min-content width, so shrink
+   * pressure would collapse them before the label felt it. */
+  flex: 0 0 auto;
+}

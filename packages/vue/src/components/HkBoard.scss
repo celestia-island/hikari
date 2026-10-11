@@ -44,6 +44,21 @@
   position: absolute;
   box-sizing: border-box;
 
+  // Per-node action dock (the `nodeActions` slot): consumer-injected
+  // controls ride the node's bottom-end corner above the body, so hosts
+  // stop hand-drawing their own buttons into the node slot. The dock owns
+  // its own capture-safety (see HkBoard.tsx) — a press that starts here
+  // never becomes a node drag.
+  &-actions {
+    position: absolute;
+    inset-inline-end: var(--hk-board-node-action-inset, 4px);
+    bottom: var(--hk-board-node-action-inset, 4px);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   &--draggable {
     cursor: grab;
 

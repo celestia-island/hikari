@@ -453,6 +453,26 @@ export default defineComponent({
               {slots.node
                 ? slots.node({ node: n })
                 : <div class="hk-board-node-shell">{n.label ?? ""}</div>}
+              {slots.nodeActions
+                ? (
+                  <div
+                    class="hk-board-node-actions"
+                    // A press that starts on an action belongs to that
+                    // action: this component captures the pointer on its own
+                    // root for every draggable node, and a captured press
+                    // retargets the following events to the ancestor — an
+                    // action button's own click would never fire. Stopping
+                    // the bubble here is the same guard HkMinimap puts on
+                    // its zoom chrome. The keydown twin keeps a focused
+                    // action's Enter/Space from reaching the node's own key
+                    // handling.
+                    onPointerdown={(e: PointerEvent) => e.stopPropagation()}
+                    onKeydown={(e: KeyboardEvent) => e.stopPropagation()}
+                  >
+                    {slots.nodeActions({ node: n })}
+                  </div>
+                )
+                : null}
             </div>
           ))}
         </div>

@@ -23,6 +23,10 @@ const ModelPill = defineComponent({
     model: { type: String, required: true },
     /** Render the name without truncation (used inside the hover card). */
     expanded: { type: Boolean, default: false },
+    /** Optional third segment — the billing rate tail (`×1.5`), as the
+     *  model-group capsule's multiplier (2026-10-11 direction). Absent
+     *  keeps the classic two-part pill untouched. */
+    rate: { type: Number, default: undefined },
   },
   setup(props) {
     // Split inside the render closure: capturing `splitModelId(props.model)`
@@ -32,10 +36,19 @@ const ModelPill = defineComponent({
     // stale, untagged pill.
     return () => {
       const { base, tag } = splitModelId(props.model);
+      // ×1.5 / ×2 / ×0.1 — trailing zeros trimmed, one decimal at most
+      // (the editor offers tenths; hundredths would crowd the pill).
+      // Number.isFinite guards the catalog edge: a NaN/Infinity leaking
+      // in would otherwise render "×NaN" (R1 F3).
+      const rateText =
+        props.rate != null && Number.isFinite(props.rate)
+          ? `×${Number(props.rate.toFixed(1)).toString()}`
+          : null;
       return (
         <span
           class="s-model-tag-group"
           data-expanded={props.expanded || undefined}
+          data-rate={rateText != null || undefined}
         >
           {tag && (
             <HBadge variant="primary" size="sm" mono pill={false} class="s-model-tag-num">
@@ -45,6 +58,11 @@ const ModelPill = defineComponent({
           <HBadge variant="muted" size="sm" mono pill={false} class="s-model-tag-name">
             <span class="s-model-tag-name-text">{base}</span>
           </HBadge>
+          {rateText != null && (
+            <HBadge variant="success" size="sm" mono pill={false} class="s-model-tag-rate">
+              {rateText}
+            </HBadge>
+          )}
         </span>
       );
     };
@@ -57,6 +75,8 @@ const ModelCard = defineComponent({
   props: {
     model: { type: String, required: true },
     meta: { type: Object as PropType<HModelMeta | undefined>, default: undefined },
+    /** Billing-rate tail passthrough (see ModelPill). */
+    rate: { type: Number, default: undefined },
     currency: { type: String, default: "$" },
   },
   setup(props) {
@@ -99,7 +119,7 @@ const ModelCard = defineComponent({
       return (
         <div class="s-model-card">
           <div class="s-model-card-title">
-            <ModelPill model={props.model} expanded />
+            <ModelPill model={props.model} expanded rate={props.rate} />
           </div>
           {rows.length > 0 && (
             <div class="s-model-card-stats">
@@ -149,6 +169,8 @@ export const HkModelTag = defineComponent({
     /** Per-instance catalog override. */
     catalog: { type: Object as PropType<HModelCatalog | undefined>, default: undefined },
     currency: { type: String, default: "$" },
+    /** Optional billing-rate tail on the pill (`×1.5`); see ModelPill. */
+    rate: { type: Number, default: undefined },
   },
   setup(props) {
     const anchorRef = ref<HTMLElement | null>(null);
@@ -175,7 +197,7 @@ export const HkModelTag = defineComponent({
         onMouseenter={onEnter}
         onMouseleave={onLeave}
       >
-        <ModelPill model={props.model} />
+        <ModelPill model={props.model} rate={props.rate} />
         <HPopover
           modelValue={open.value}
           onUpdate:modelValue={(v: boolean) => { open.value = v; }}

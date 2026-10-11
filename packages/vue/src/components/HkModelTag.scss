@@ -48,6 +48,37 @@
   border-radius: var(--radius-sm, 4px);
 }
 
+// Rate segment (the model-group capsule's `×N` tail, 2026-10-11): takes
+// the inline-end rounding and provides the seam's divider from its own
+// inline-start border; a success tint keeps it readable as a modifier,
+// not a second name. With a rate present the NAME segment becomes a
+// middle segment — square inline-end edge too (the join geometry below).
+.s-model-tag-group[data-rate] .hk-badge.s-model-tag-name {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+  // The rate badge provides the seam's divider from its own
+  // inline-start border — the name's inline-end border must drop or
+  // the seam stacks ~2px (the num/name seam is 1px).
+  border-inline-end: none;
+}
+
+// Tagless + rate (the pill starts bare before the roster refines the
+// id): the name is the FIRST child — its leading corners keep the
+// capsule's rounding (only the :only-child escape covered it before).
+.s-model-tag-group[data-rate] .hk-badge.s-model-tag-name:first-child {
+  border-start-start-radius: var(--radius-sm, 4px);
+  border-end-start-radius: var(--radius-sm, 4px);
+}
+
+.s-model-tag-group .hk-badge.s-model-tag-rate {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: var(--radius-sm, 4px);
+  border-end-end-radius: var(--radius-sm, 4px);
+  border-inline-start-color: rgb(var(--color-muted) / 35%);
+  flex-shrink: 0;
+}
+
 .s-model-tag-name-text {
   display: block;
   overflow: hidden;

@@ -126,4 +126,30 @@ describe("HkModelTag", () => {
       c.querySelector(".s-model-tag-group")?.getAttribute("data-expanded"),
     ).toBeNull();
   });
+
+  it("renders the optional rate tail as the third joined segment", () => {
+    const c = mount(tagNode({ model: "gpt-5.5#2", rate: 1.5 }));
+    const group = c.querySelector(".s-model-tag-group");
+    expect(group?.hasAttribute("data-rate")).toBe(true);
+    expect(group?.querySelector(".s-model-tag-rate")?.textContent?.trim()).toBe("×1.5");
+    // The segments read in order: #2, name, rate.
+    expect(group?.textContent?.trim()).toBe("#2gpt-5.5×1.5");
+
+    // Trailing zeros trimmed, one decimal at most.
+    const whole = mount(tagNode({ model: "gpt-5.5#2", rate: 2 }));
+    expect(
+      whole.querySelector(".s-model-tag-rate")?.textContent?.trim(),
+    ).toBe("×2");
+    const tenth = mount(tagNode({ model: "gpt-5.5#2", rate: 0.1 }));
+    expect(
+      tenth.querySelector(".s-model-tag-rate")?.textContent?.trim(),
+    ).toBe("×0.1");
+  });
+
+  it("keeps the classic two-part pill untouched without a rate", () => {
+    const c = mount(tagNode({ model: "gpt-5.5#2" }));
+    const group = c.querySelector(".s-model-tag-group");
+    expect(group?.getAttribute("data-rate")).toBeNull();
+    expect(group?.querySelector(".s-model-tag-rate")).toBeNull();
+  });
 });

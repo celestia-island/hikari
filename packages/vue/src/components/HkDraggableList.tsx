@@ -22,6 +22,10 @@ export default defineComponent({
   name: "HkDraggableList",
   props: {
     items: { type: Array as PropType<DragListItem[]>, required: true },
+    /** Row keys that may not be dragged. A locked row hides its grip but
+     *  keeps the handle lane reserved ([data-hidden]); when EVERY row is
+     *  locked the root carries data-all-locked and the sheet collapses
+     *  the lane entirely — the list cannot reorder at all. */
     lockedKeys: { type: Array as PropType<string[]>, default: () => [] },
   },
   emits: {
@@ -198,8 +202,19 @@ export default defineComponent({
     return () => {
       void tick.value;
       const s = drag.value;
+      // A list whose every row is locked can never reorder (chest's 2FA
+      // factor list is the all-locked case), and an all-hidden lane reads
+      // as "missing grips" rather than "locked" (user report 2026-10-11).
+      // Mark the root so the sheet can collapse the lane outright; mixed
+      // lists keep it on every row for grip-column alignment.
+      const allLocked =
+        props.items.length > 0 && props.items.every((item) => isLocked(item.key));
       return (
-        <div class="hk-draggable-list" data-dragging={s ? "" : undefined}>
+        <div
+          class="hk-draggable-list"
+          data-dragging={s ? "" : undefined}
+          data-all-locked={allLocked || undefined}
+        >
           {props.items.map((item, index) => {
             const locked = isLocked(item.key);
             const isSource = s != null && s.fromIndex === index;

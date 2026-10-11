@@ -108,5 +108,29 @@ describe("HkFilterChip", () => {
     const text = chipButton(c).querySelector(".hk-filter-chip-text")!.textContent;
     expect(text).toBe("DeepSeek, OpenAI, Anthropic +1");
     expect(chipButton(c).className).toContain("hk-filter-chip--on");
+    // The accessible name carries the SAME selection the eye sees — an
+    // aria-label of just the category would mask the mirror (R1 P2).
+    expect(chipButton(c).getAttribute("aria-label")).toContain("DeepSeek, OpenAI, Anthropic +1");
+  });
+
+  it("re-renders when the host's selected set changes post-mount", async () => {
+    const selected = ref(new Set<string>());
+    const c = mountRendered(
+      () =>
+        h(HkFilterChip, {
+          label: "Providers",
+          allLabel: "All providers",
+          options: OPTIONS,
+          selected: selected.value,
+          open: false,
+        }),
+    );
+    expect(chipButton(c).querySelector(".hk-filter-chip-text")!.textContent).toBe("All providers");
+    selected.value = new Set(["openai"]);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(chipButton(c).querySelector(".hk-filter-chip-text")!.textContent).toBe("OpenAI");
+    expect(chipButton(c).className).toContain("hk-filter-chip--on");
+    expect(chipButton(c).getAttribute("aria-label")).toContain("OpenAI");
   });
 });

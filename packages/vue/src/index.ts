@@ -832,7 +832,7 @@ export type { HkFilterOperator, HkFilterFieldDef, HkFilterCondition, HkFilterSta
 export { default as HkFilterTrigger } from "./components/HkFilterTrigger";
 export { default as HkFilterChip } from "./components/HkFilterChip";
 export { default as HkPillToggleGroup } from "./components/HkPillToggleGroup";
-export type { HkPillOption } from "./components/HkPillToggleGroup";
+export type { HkPillToggleGroupOption } from "./components/HkPillToggleGroup";
 export { HkIconChip as HkIconChip } from "./components/HkIconChip";
 export { HkIconChip as HIconChip } from "./components/HkIconChip";
 export { HkCardList, HkListRow } from "./components/HkCardList";

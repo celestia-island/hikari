@@ -14,7 +14,6 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgb(var(--color-border) / 25%);
   background: rgb(var(--color-surface) / 60%);
-  background: rgb(var(--color-surface) / min(100%, calc(60% * var(--ui-opacity, 1))));
 }
 
 .hk-pill-group-pill {

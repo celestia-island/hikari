@@ -2,7 +2,7 @@ import { computed, defineComponent, ref, type PropType } from "vue";
 import { ChevronDown } from "lucide-vue-next";
 
 import HkPopover, { type PopupPlacement } from "./HkPopover";
-import HkPillToggleGroup, { type HkPillOption } from "./HkPillToggleGroup";
+import HkPillToggleGroup, { type HkPillToggleGroupOption } from "./HkPillToggleGroup";
 import "./HkFilterChip.scss";
 
 /**
@@ -31,7 +31,7 @@ export default defineComponent({
     /** Facet values in canonical display order (also the chip-label
      * order — picked labels mirror it, not the Set's insertion order). */
     options: {
-      type: Array as PropType<HkPillOption[]>,
+      type: Array as PropType<HkPillToggleGroupOption[]>,
       default: () => [],
     },
     /** The picked values — single source of truth, never mutated here. */
@@ -69,7 +69,9 @@ export default defineComponent({
           class={["hk-filter-chip", props.selected.size > 0 && "hk-filter-chip--on"]}
           aria-haspopup="dialog"
           aria-expanded={props.open ? "true" : "false"}
-          aria-label={props.label}
+          aria-label={
+            picked.value.length > 0 ? `${props.label}: ${chipText.value}` : props.label
+          }
           title={props.label}
           onClick={() => emit("update:open", !props.open)}
         >

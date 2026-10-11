@@ -1,17 +1,28 @@
-import { defineComponent, type PropType } from "vue";
+import { defineComponent, h, type PropType, type VNode } from "vue";
 
 import "./HkPillToggleGroup.scss";
 
 /** One toggleable pill of the group. */
-export interface HkPillOption {
+export interface HkPillToggleGroupOption {
   /** Stable identity — the value emitted back through `toggle`. */
   value: string;
   label: string;
-  /** Optional leading glyph (lucide component or any renderable). Typed
-   * loose on purpose (same as HkIconButtonGroup entries): hosts mount
-   * hikari against their own vue minor and a hard VNode type breaks
-   * typecheck whenever the host's vue differs. */
+  /** Optional leading glyph. Accepts EITHER a component (a lucide icon
+   * function, a defineComponent options object) or a prebuilt vnode —
+   * both normalize to a rendered element; anything else is skipped
+   * (never stringified: a raw function child renders as source text,
+   * which is exactly the landmine this normalization defuses). */
   icon?: unknown;
+}
+
+/** Normalize an option icon to a renderable vnode. A component (function
+ * or options object) is instantiated with `h`; a prebuilt vnode passes
+ * through; anything else (string, number, null) renders nothing. */
+function resolveIcon(icon: unknown): VNode | null {
+  if (icon == null) return null;
+  if (typeof icon === "object") return icon as VNode;
+  if (typeof icon === "function") return h(icon as Parameters<typeof h>[0]);
+  return null;
 }
 
 /**
@@ -35,7 +46,7 @@ export default defineComponent({
     /** Accessible name of the group (role=group aria-label). */
     label: { type: String, required: true },
     options: {
-      type: Array as PropType<HkPillOption[]>,
+      type: Array as PropType<HkPillToggleGroupOption[]>,
       default: () => [],
     },
     /** The picked values — single source of truth, never mutated here. */
@@ -62,19 +73,22 @@ export default defineComponent({
             {props.allLabel}
           </button>
         )}
-        {props.options.map((o) => (
-          <button
-            type="button"
-            key={o.value}
-            class="hk-pill-group-pill"
-            data-active={props.selected.has(o.value) || undefined}
-            aria-pressed={props.selected.has(o.value) ? "true" : "false"}
-            onClick={() => emit("toggle", o.value)}
-          >
-            {o.icon != null && <span class="hk-pill-group-icon">{o.icon}</span>}
-            {o.label}
-          </button>
-        ))}
+        {props.options.map((o) => {
+          const icon = resolveIcon(o.icon);
+          return (
+            <button
+              type="button"
+              key={o.value}
+              class="hk-pill-group-pill"
+              data-active={props.selected.has(o.value) || undefined}
+              aria-pressed={props.selected.has(o.value) ? "true" : "false"}
+              onClick={() => emit("toggle", o.value)}
+            >
+              {icon != null && <span class="hk-pill-group-icon">{icon}</span>}
+              {o.label}
+            </button>
+          );
+        })}
       </div>
     );
   },

@@ -14,8 +14,12 @@
 .hk-filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-6, 6px);
-  padding: var(--space-4) var(--space-12);
+  gap: var(--space-6);
+  /* Vertical padding = trigger padding + one track step: the chip shares
+   * its row with segmented HkTabs-style chrome, whose track adds
+   * var(--space-2) around its triggers (the wowsp filter bar's alignment
+   * rule — a bare var(--space-4) chip lands two steps short of the row). */
+  padding: calc(var(--space-4) + var(--space-2)) var(--space-12);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;

@@ -324,11 +324,12 @@ describe("HkDateTimePicker", () => {
     expect(document.querySelectorAll(".hk-dtp-popup .hk-dtp-cell").length).toBe(42);
   });
 
-  // ── Mobile pass-through to the native OS control ────────────────
+  // ── Mobile: the calendar is the default; native is the explicit ──
+  // ── opt-out (2026-10-11 direction: no native controls) ───────────
 
-  it("renders a native datetime-local input instead of the calendar on mobile", () => {
+  it("renders a native datetime-local input on mobile only when nativeOnMobile opts in", () => {
     useMobileViewport();
-    const p = mountPicker();
+    const p = mountPicker({ nativeOnMobile: true });
     const input = nativeInput(p.container);
     expect(input).not.toBeNull();
     expect(input?.type).toBe("datetime-local");
@@ -337,9 +338,9 @@ describe("HkDateTimePicker", () => {
     expect(p.container.querySelector(".hk-dtp-grid")).toBeNull();
   });
 
-  it("uses a native date input when showTime is false", () => {
+  it("uses a native date input when showTime is false (explicit opt-in)", () => {
     useMobileViewport();
-    const p = mountPicker({ showTime: false });
+    const p = mountPicker({ showTime: false, nativeOnMobile: true });
     const input = nativeInput(p.container);
     expect(input?.type).toBe("date");
     expect(input?.value).toBe(isoDay(BASE));
@@ -347,15 +348,15 @@ describe("HkDateTimePicker", () => {
 
   it("passes min/max through to the native input in its wire format", () => {
     useMobileViewport();
-    const p = mountPicker({ min: dayOf(10, 8, 0), max: dayOf(20, 18, 30) });
+    const p = mountPicker({ min: dayOf(10, 8, 0), max: dayOf(20, 18, 30), nativeOnMobile: true });
     const input = nativeInput(p.container);
     expect(input?.min).toBe(isoMinute(dayOf(10, 8, 0)));
     expect(input?.max).toBe(isoMinute(dayOf(20, 18, 30)));
   });
 
-  it("keeps the custom calendar on mobile when nativeOnMobile is false", () => {
+  it("keeps the custom calendar on mobile by default", () => {
     useMobileViewport();
-    const p = mountPicker({ nativeOnMobile: false });
+    const p = mountPicker();
     expect(p.container.querySelector(".hk-dtp")).not.toBeNull();
     expect(dayCells().length).toBe(42);
     expect(nativeInput(p.container)).toBeNull();
@@ -365,7 +366,7 @@ describe("HkDateTimePicker", () => {
 
   it("native input edits update the model as a local-time Date", async () => {
     useMobileViewport();
-    const p = mountPicker();
+    const p = mountPicker({ nativeOnMobile: true });
     const input = nativeInput(p.container);
     input!.value = isoMinute(dayOf(20, 14, 5));
     input!.dispatchEvent(new Event("input", { bubbles: true }));
@@ -377,7 +378,7 @@ describe("HkDateTimePicker", () => {
 
   it("native date edits preserve the clock time when showTime is false", async () => {
     useMobileViewport();
-    const p = mountPicker({ showTime: false });
+    const p = mountPicker({ showTime: false, nativeOnMobile: true });
     const input = nativeInput(p.container);
     input!.value = isoDay(dayOf(20));
     input!.dispatchEvent(new Event("input", { bubbles: true }));
@@ -387,7 +388,7 @@ describe("HkDateTimePicker", () => {
 
   it("native input edits outside the bounds are rejected and re-synced", async () => {
     useMobileViewport();
-    const p = mountPicker({ max: dayOf(20, 23, 59) });
+    const p = mountPicker({ max: dayOf(20, 23, 59), nativeOnMobile: true });
     const input = nativeInput(p.container);
     // Next month, past the max bound.
     input!.value = isoMinute(new Date(BASE.getFullYear(), BASE.getMonth() + 1, 1, 10, 0));
@@ -399,7 +400,7 @@ describe("HkDateTimePicker", () => {
 
   it("clearing the native input falls back to the model value", async () => {
     useMobileViewport();
-    const p = mountPicker();
+    const p = mountPicker({ nativeOnMobile: true });
     const input = nativeInput(p.container);
     input!.value = "";
     input!.dispatchEvent(new Event("input", { bubbles: true }));
@@ -408,9 +409,9 @@ describe("HkDateTimePicker", () => {
     expect(input?.value).toBe(isoMinute(BASE));
   });
 
-  it("native input replaces even the popup chrome on mobile", () => {
+  it("native input replaces even the popup chrome on mobile (explicit opt-in)", () => {
     useMobileViewport();
-    const p = mountPicker({ mode: "popup", confirmLabel: "Confirm" });
+    const p = mountPicker({ mode: "popup", confirmLabel: "Confirm", nativeOnMobile: true });
     expect(nativeInput(p.container)).not.toBeNull();
     expect(p.container.querySelector(".hk-dtp-trigger")).toBeNull();
   });

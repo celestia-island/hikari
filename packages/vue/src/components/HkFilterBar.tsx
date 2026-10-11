@@ -99,6 +99,7 @@ export default defineComponent({
               anchorRef={anchorRef.value}
               placement={props.placement}
               offset={6}
+              sheetOnMobile
               title={label}
             >
               <div class="hk-filter-bar-panel" data-testid="hk-filter-bar-panel">

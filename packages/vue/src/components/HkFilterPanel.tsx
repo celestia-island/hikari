@@ -1,5 +1,6 @@
 import { computed, defineComponent, type PropType } from "vue";
 
+import HkDatePicker from "./HkDatePicker";
 import HkInput from "./HkInput";
 import HkPopupSelect, { type HkPopupSelectOption } from "./HkPopupSelect";
 import { useI18n } from "../i18n/context";
@@ -168,9 +169,20 @@ export default defineComponent({
                       disabled={props.disabled}
                       options={selectOptions(field)}
                     />
+                  ) : field.kind === "date" ? (
+                    // The calendar picker — never the OS native input
+                    // (2026-10-11 direction); the wire format is the same
+                    // ISO YYYY-MM-DD the native input spoke.
+                    <HkDatePicker
+                      modelValue={condition.value || null}
+                      onUpdate:modelValue={(v: string | null) =>
+                        emitCondition(field, { value: v ?? "" })
+                      }
+                      disabled={props.disabled}
+                    />
                   ) : (
                     <HkInput
-                      type={field.kind === "date" ? "date" : "text"}
+                      type="text"
                       variant={field.kind === "number" ? "number" : "text"}
                       modelValue={condition.value}
                       onUpdate:modelValue={(v: string) =>

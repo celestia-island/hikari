@@ -95,7 +95,7 @@ export default defineComponent({
     confirmLabel: { type: String, default: undefined },
     showTime: { type: Boolean, default: true },
     /** Render the OS native `<input type="datetime-local">` on touch-sized viewports. */
-    nativeOnMobile: { type: Boolean, default: true },
+    nativeOnMobile: { type: Boolean, default: false }, // 2026-10-11: no native controls — the picker sheet serves phones
   },
   emits: {
     "update:modelValue": (_d: Date) => true,

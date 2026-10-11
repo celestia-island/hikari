@@ -115,7 +115,14 @@ export default defineComponent({
           st.failed = true;
           return;
         }
-        lines.forEach((text, i) => st.lines.set(fetchStart + i, text));
+        // A host may answer a SHORT window (clipped at EOF). For
+        // anchor="end" the render window is bottom-anchored, so the
+        // arrived lines must bottom-align too — treating them as the
+        // lines nearest the hunk (R1 finding: top-aligning them here
+        // permanently hides the lines closest to the first hunk).
+        const firstLine =
+          gap.anchor === "end" ? fetchStart + (take - lines.length) : fetchStart;
+        lines.forEach((text, i) => st.lines.set(firstLine + i, text));
         st.revealed += lines.length;
         if (lines.length === 0) st.revealed = gap.count; // nothing there — done
       } catch {
@@ -175,6 +182,7 @@ export default defineComponent({
       const divider = interactive ? (
         <button
           type="button"
+          key={`gap-${gap.start}`}
           class="hk-diff-viewer__gap"
           data-state={st.loading ? "loading" : st.failed ? "failed" : "idle"}
           disabled={st.loading}
@@ -190,7 +198,7 @@ export default defineComponent({
           <span class="hk-diff-viewer__gap-label">{label}</span>
         </button>
       ) : remaining > 0 ? (
-        <div class="hk-diff-viewer__gap" data-state="static">
+        <div class="hk-diff-viewer__gap" data-state="static" key={`gap-${gap.start}`}>
           <UnfoldVertical size={13} />
           <span class="hk-diff-viewer__gap-label">{label}</span>
         </div>

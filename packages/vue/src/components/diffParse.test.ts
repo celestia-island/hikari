@@ -81,6 +81,33 @@ describe("parseUnifiedDiff", () => {
     expect(parseUnifiedDiff("hello\nworld").hunks).toEqual([]);
     expect(parseUnifiedDiff("").endCovered).toBe(0);
   });
+
+  it("never invents line 0 for a whole-file deletion (R1)", () => {
+    const parsed = parseUnifiedDiff("@@ -1,3 +0,0 @@\n-a\n-b\n-c\n");
+    expect(parsed.endCovered).toBe(0);
+    expect(computeGaps(parsed, 0)).toEqual([]);
+    expect(computeGaps(parsed, null)).toEqual([]);
+  });
+
+  it("lands a stray context line on line 1 inside a zero-count old range (R1)", () => {
+    // Malformed body (a context line where the old side is empty): the
+    // defensive +1 on zero-count ranges is the only thing keeping this
+    // line on the 1-based contract. Pins the behavior Mutation A broke.
+    const { hunks } = parseUnifiedDiff("@@ -0,0 +1,2 @@\n ctx\n+a\n");
+    expect(hunks[0].lines).toEqual([
+      { kind: "context", oldNo: 1, newNo: 1, text: "ctx" },
+      { kind: "add", oldNo: null, newNo: 2, text: "a" },
+    ]);
+  });
+
+  it("tolerates CRLF line endings without leaking \\r into text", () => {
+    const { hunks } = parseUnifiedDiff("@@ -1,2 +1,2 @@\r\n-old\r\n+new\r\n ctx\r\n");
+    expect(hunks[0].lines).toEqual([
+      { kind: "del", oldNo: 1, newNo: null, text: "old" },
+      { kind: "add", oldNo: null, newNo: 1, text: "new" },
+      { kind: "context", oldNo: 2, newNo: 2, text: "ctx" },
+    ]);
+  });
 });
 
 describe("computeGaps", () => {

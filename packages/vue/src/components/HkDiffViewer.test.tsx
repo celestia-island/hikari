@@ -157,6 +157,32 @@ describe("HkDiffViewer", () => {
     expect(root.textContent).toContain("recovered");
   });
 
+  it("bottom-aligns a SHORT response in the leading gap (R1)", async () => {
+    // A clipping host answers fewer lines than requested: for the
+    // bottom-anchored leading gap the arrived lines are the ones NEAREST
+    // the hunk — storing them top-aligned would permanently hide those.
+    const seen: Array<[number, number]> = [];
+    const loadContext = vi.fn(async (start: number, count: number) => {
+      seen.push([start, count]);
+      // Clips to 2 lines regardless of the requested window.
+      return ["L8", "L9"].slice(0, Math.min(2, count));
+    });
+    const root = mount({ diff: DIFF, totalLines: 19, loadContext, contextChunk: 4 });
+    await nextTick();
+    const leading = root.querySelectorAll(".hk-diff-viewer__gap")[0] as HTMLButtonElement;
+    leading.click();
+    await tick();
+    await nextTick();
+    expect(seen).toEqual([[6, 4]]); // bottom 4 of the 9-line gap requested…
+    const text = root.textContent!;
+    expect(text).toContain("L8"); // …but the 2 that arrived render…
+    expect(text).toContain("L9"); //   …nearest the hunk (bottom-aligned)
+    expect(text).not.toContain("L6");
+    // 7 lines remain hidden; the expander persists with the new count.
+    const after = root.querySelectorAll(".hk-diff-viewer__gap")[0] as HTMLButtonElement;
+    expect(after.textContent).toContain("7");
+  });
+
   it("collapses and re-expands a hunk via its header", async () => {
     const root = mount({ diff: DIFF, totalLines: 19 });
     await nextTick();

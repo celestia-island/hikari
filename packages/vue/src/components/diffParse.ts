@@ -58,7 +58,9 @@ export function parseUnifiedDiff(diff: string): ParsedDiff {
 
   // A trailing newline is the last line's terminator, not an extra line.
   const text = diff.endsWith("\n") ? diff.slice(0, -1) : diff;
-  for (const raw of text.split("\n")) {
+  for (const rawLine of text.split("\n")) {
+    // Tolerate CRLF streams: a stray \r must not leak into line text.
+    const raw = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
     const h = HUNK_RE.exec(raw);
     if (h) {
       cur = {
@@ -99,7 +101,9 @@ export function parseUnifiedDiff(diff: string): ParsedDiff {
   }
 
   const last = hunks[hunks.length - 1];
-  const endCovered = last ? last.newStart + last.newCount - 1 : 0;
+  // A whole-file deletion (newStart 0 + newCount 0) yields −1; the field
+  // documents a 1-based line number, so the floor is 0 (nothing covered).
+  const endCovered = last ? Math.max(last.newStart + last.newCount - 1, 0) : 0;
   return { hunks, endCovered };
 }
 
@@ -146,11 +150,15 @@ export function computeGaps(parsed: ParsedDiff, totalLines?: number | null): Unc
     }
     prevEnd = hunk.newStart + hunk.newCount - 1;
   });
-  if (totalLines != null && totalLines > prevEnd) {
+  // A whole-file deletion ends at new-side −1 (newStart 0 + newCount 0);
+  // clamp before sizing anything so the trailing region can never invent
+  // line 0 (R1 finding: loadContext(0, …) is off the 1-based contract).
+  const covered = Math.max(prevEnd, 0);
+  if (totalLines != null && totalLines > covered) {
     const last = parsed.hunks[parsed.hunks.length - 1];
     gaps.push({
-      start: prevEnd + 1,
-      count: totalLines - prevEnd,
+      start: covered + 1,
+      count: totalLines - covered,
       shift: last ? last.newStart + last.newCount - (last.oldStart + last.oldCount) : 0,
       anchor: "start",
       beforeHunk: parsed.hunks.length,

@@ -173,6 +173,14 @@ export default defineComponent({
      * own history entries.
      */
     backGuard: { type: Boolean, default: true },
+    /**
+     * Desktop-only drag: the header becomes a grab handle that moves
+     * the centered frame (composited into the transform via the
+     * --hk-modal-shift-x/y vars, so the enter/leave choreography is
+     * untouched). The mobile bottom sheet never drags. Reopening
+     * resets the shift.
+     */
+    draggable: { type: Boolean, default: false },
   },
   emits: {
     "update:modelValue": (_value: boolean) => true,
@@ -197,6 +205,72 @@ export default defineComponent({
     const handle = ref<{ id: string; zIndex: number } | null>(null);
     const bodyRef = ref<HTMLElement>();
     const contentRef = ref<HTMLElement>();
+    /** Live drag shift in px (null = not dragged); mirrored onto the
+     * frame as CSS vars so the class-driven transforms stay intact. */
+    const dragShift = ref<{ x: number; y: number } | null>(null);
+    let dragStart: { px: number; py: number; x: number; y: number } | null = null;
+
+    function applyShift() {
+      const el = contentRef.value;
+      if (!el) return;
+      if (dragShift.value) {
+        el.style.setProperty("--hk-modal-shift-x", `${dragShift.value.x}px`);
+        el.style.setProperty("--hk-modal-shift-y", `${dragShift.value.y}px`);
+      } else {
+        el.style.removeProperty("--hk-modal-shift-x");
+        el.style.removeProperty("--hk-modal-shift-y");
+      }
+    }
+
+    function onHeaderPointerDown(e: PointerEvent) {
+      // Desktop handle only: the sheet branch (<768px) never consumes
+      // the vars, and touch drag would fight the sheet's own gestures.
+      if (!props.draggable || e.button !== 0) return;
+      if (window.matchMedia("(max-width: 767px)").matches) return;
+      // Interactive chrome inside the header (the close button) keeps
+      // its own pointer semantics.
+      if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return;
+      const el = contentRef.value;
+      if (!el) return;
+      e.preventDefault();
+      const base = dragShift.value ?? { x: 0, y: 0 };
+      dragStart = { px: e.clientX, py: e.clientY, x: base.x, y: base.y };
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    }
+
+    function onHeaderPointerMove(e: PointerEvent) {
+      if (!dragStart) return;
+      // Re-check the guards: `draggable` may have been toggled off
+      // mid-drag, and a hover with no button pressed must never move
+      // the frame (a stale dragStart after a mid-drag close would
+      // otherwise ghost-drag on the next open).
+      if (!props.draggable || e.buttons === 0) {
+        dragStart = null;
+        return;
+      }
+      dragShift.value = {
+        x: dragStart.x + (e.clientX - dragStart.px),
+        y: dragStart.y + (e.clientY - dragStart.py),
+      };
+      applyShift();
+    }
+
+    function onHeaderPointerUp() {
+      dragStart = null;
+    }
+
+    // Reopening reseats the frame at center — and drops any stale
+    // dragStart (a close mid-capture never fires pointerup).
+    watch(
+      () => props.modelValue,
+      (open) => {
+        if (open) {
+          dragStart = null;
+          dragShift.value = null;
+          applyShift();
+        }
+      },
+    );
     /** Natural-height probe inside the scroll container: the body's
      *  content wrapper, whose height is the content's intrinsic height
      *  regardless of scroll — the size morph measures this (see
@@ -972,6 +1046,7 @@ export default defineComponent({
                   role="dialog"
                   aria-modal="true"
                   aria-label={resolvedSurfaceName.value}
+                  data-draggable={props.draggable || undefined}
                   style={{
                     maxWidth: resolvedWidth.value,
                     zIndex: contentZ.value,
@@ -991,6 +1066,10 @@ export default defineComponent({
                           "hk-modal-header",
                           slots.headerLead ? "hk-modal-header--lead" : "",
                         ]}
+                        onPointerdown={onHeaderPointerDown}
+                        onPointermove={onHeaderPointerMove}
+                        onPointerup={onHeaderPointerUp}
+                        onPointercancel={onHeaderPointerUp}
                       >
                         {slots.headerLead && (
                           <div class="hk-modal-header-lead">{slots.headerLead()}</div>

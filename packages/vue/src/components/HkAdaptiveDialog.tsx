@@ -48,6 +48,9 @@ export default defineComponent({
     closable: { type: Boolean, default: true },
     /** Desktop modal width (HkModal `width`). */
     width: { type: String as PropType<ModalWidth>, default: "32rem" },
+    /** Desktop-only: the modal header becomes a drag handle (see
+     * HkModal `draggable`); the mobile sheet never drags. */
+    draggable: { type: Boolean, default: false },
     /** Mobile drawer height (HkDrawer `size`). HkDrawer's bottom-side CSS
      *  clamps panels at maxHeight 70vh, so the default equals the cap;
      *  pass `panelClass` with a custom max-height for taller sheets. */
@@ -153,6 +156,7 @@ export default defineComponent({
           title={props.title}
           closable={props.closable}
           width={props.width}
+          draggable={props.draggable}
           footerActions={props.footerActions}
         >
           {{

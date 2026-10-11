@@ -272,5 +272,7 @@
   "hikari::userPicker.add": "ユーザーを選択…",
   "hikari::userPicker.remove": "削除",
   "hikari::userPicker.confirm": "確認",
-  "hikari::userPicker.selectedCount": "{count} 件選択中"
+  "hikari::userPicker.selectedCount": "{count} 件選択中",
+  "hikari::tokenField.editValue": "値を編集",
+  "hikari::tokenField.clear": "クリア"
 }

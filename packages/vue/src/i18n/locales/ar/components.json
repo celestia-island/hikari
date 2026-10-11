@@ -272,5 +272,7 @@
   "hikari::userPicker.add": "اختيار المستخدمين…",
   "hikari::userPicker.remove": "إزالة",
   "hikari::userPicker.confirm": "تأكيد",
-  "hikari::userPicker.selectedCount": "تم اختيار {count}"
+  "hikari::userPicker.selectedCount": "تم اختيار {count}",
+  "hikari::tokenField.editValue": "تحرير القيمة",
+  "hikari::tokenField.clear": "مسح"
 }

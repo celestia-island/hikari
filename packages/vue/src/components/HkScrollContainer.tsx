@@ -52,6 +52,9 @@ export default defineComponent({
      *  it out renders exactly the chrome this container had before the
      *  rail existed. */
     markers: { type: Array as PropType<OverlayScrollbarMarker[]>, default: () => [] },
+    /** Width the vertical track widens to while marks show, in px. Omitted
+     *  = the library default (14). Only read when `markers` is non-empty. */
+    markersWidth: { type: Number, default: undefined },
     autoFollow: { type: Boolean, default: false },
     overscanScreens: { type: Number, default: 1 },
     /** Inline-axis alignment of the content when it fits the viewport.
@@ -271,7 +274,7 @@ export default defineComponent({
       const vp = viewportRef.value;
       if (!vp) return;
       overlay?.detach();
-      overlay = attachOverlayScrollbars(vp, { axis: props.axis, markers: props.markers });
+      overlay = attachOverlayScrollbars(vp, { axis: props.axis, markers: props.markers, markersWidth: props.markersWidth });
     }
 
     /** Re-apply marks without rebuilding the chrome: a diff re-renders its

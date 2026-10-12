@@ -23,10 +23,11 @@ function mountViewport(
   return { container, wrapper, viewport, handle };
 }
 
-/** A scrollable vertical viewport with a deterministic 100px rail box:
- *  happy-dom performs no layout, so both the geometry and the rail's
- *  bounding box are stubbed. `height` of the rail is what maps a mark's
- *  fraction to a pixel position. */
+/** A scrollable vertical viewport with a deterministic band box: happy-dom
+ *  performs no layout, so both the geometry and the track's bounding box
+ *  are stubbed. `height` of the band is what maps a mark's fraction to a
+ *  pixel position. The marks live INSIDE the vertical track (the widened
+ *  scrollbar is the ruler), so "the rail" below IS the track. */
 function mountRailed(railHeight = 100) {
   const mounted = mountViewport("vertical");
   stubGeometry(mounted.viewport, {
@@ -37,12 +38,13 @@ function mountRailed(railHeight = 100) {
   return {
     ...mounted,
     rail: () => {
-      const el = mounted.wrapper.querySelector<HTMLElement>(".hk-scrollbar-markers");
+      const el = mounted.wrapper.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])");
       if (el) {
         vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
-          top: 0, left: 0, width: 8, height: railHeight,
-          bottom: railHeight, right: 8, x: 0, y: 0, toJSON: () => ({}),
+          top: 0, left: 0, width: 14, height: railHeight,
+          bottom: railHeight, right: 14, x: 0, y: 0, toJSON: () => ({}),
         } as DOMRect);
+        Object.defineProperty(el, "clientHeight", { configurable: true, get: () => railHeight });
       }
       return el;
     },

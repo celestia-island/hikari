@@ -51,6 +51,19 @@
     opacity: 1;
     pointer-events: auto;
   }
+
+  /* ── The widened band (marks showing) ───────────────────────────────
+     VS Code's overview ruler is the scrollbar's own strip WIDENED, not a
+     second strip beside it. Selective: only a track carrying marks gets
+     the width, the faint ground and the rounding.
+     The ground is a translucent mid-grey — over a light page it reads as
+     a faint grey, over a dark one as slightly lighter than the page, so
+     one declaration serves both modes (the muted token does not flip). */
+  &.has-markers:not([data-axis="horizontal"]) {
+    width: 14px; /* the engine overrides this inline with markersWidth */
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 12%, transparent);
+  }
 }
 
 .hk-scrollbar-thumb {
@@ -84,63 +97,46 @@
   min-height: 20px;
 }
 
-/* ── Change-mark rail (VS Code's overview ruler) ──────────────────────
-   Rendered only when a consumer passes `markers` to
-   attachOverlayScrollbars (HkScrollContainer's `markers` prop), so every
-   existing consumer's chrome above is unchanged. It sits immediately
-   inboard of the vertical track — the two together read as one thick
-   marked scrollbar — and carries no chrome of its own beyond a faint
-   groove: the marks are the content. */
-.hk-scrollbar-markers {
-  position: absolute;
-  z-index: 11;
-  top: 4px;
-  bottom: 4px;
-  /* Vertical track: right 2px + width 6px → occupies 2–8px; a 2px gutter
-     puts the rail at 10px. The contract test pins this non-overlap. */
-  right: 10px;
-  width: 8px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 18%, transparent);
-  overflow: hidden;
-  transition: background var(--hi-duration-fast, 0.15s) ease;
-
-  /* Pointer-transparent, exactly like the track above and for the same
-     reason: an overlay hugging the region's edge must never steal a press
-     meant for the content beneath it — and this rail spans the WHOLE host,
-     docks included, so it sits over right-aligned dock controls too. Only
-     the MARKS take input (see below): they are the targets that mean
-     something, and they are the rail's entire content. */
-  pointer-events: none;
-
-  &.is-dragging {
-    background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 32%, transparent);
-  }
-}
-
-/* One mark. `data-kind` is whatever tag the consumer passed; the three
-   diff kinds get the diff palette, anything else the neutral muted one.
-   The fallbacks mirror the thumb's: a themeless standalone render must
-   still show marks rather than an invalid-at-computed-value-time
-   transparent.
+/* ── Change marks (VS Code's overview ruler) ──────────────────────────
+   The marks live INSIDE the widened track (`.hk-scrollbar-track.has-markers`
+   above), so the scrollbar itself is the ruler — one band, not two. The
+   thumb slides OVER them (its z-index is higher and it is translucent, as
+   in VS Code). Only a track carrying marks changes: every other consumer's
+   chrome above is unchanged.
 
    Height comes ENTIRELY from the engine, which floors a hairline mark in
-   both fractions and pixels and sizes the end-of-rail inset against that
+   both fractions and pixels and sizes the end-of-band inset against that
    same number. A `min-height` here is therefore redundant — the engine
-   already guarantees 2px — and, because the rail clips, would win over
+   already guarantees 2px — and, because the track clips, would win over
    the inset on the occasions it did bite. */
 .hk-scrollbar-marker {
   position: absolute;
+  z-index: 1;
   left: 0;
   width: 100%;
-  border-radius: 1px;
+  border-radius: 2px;
   background: var(--hi-color-muted, rgb(118 122 128));
-  /* The rail is pointer-transparent; the marks are the hit area. */
+  /* The track is pointer-transparent at rest; the marks are the hit area. */
   pointer-events: auto;
   cursor: pointer;
 
+  /* VS Code's two lanes: REMOVED content hugs the band's start edge,
+     ADDED content its end edge, so one vertical position can carry both.
+     No `side` = the mark spans the full band. */
+  &[data-side="start"] {
+    left: 0;
+    right: auto;
+    width: 34%;
+  }
+
+  &[data-side="end"] {
+    left: auto;
+    right: 0;
+    width: 34%;
+  }
+
   &:hover {
-    /* Negative offset: the rail clips its children, and a plain outline
+    /* Negative offset: the track clips its children, and a plain outline
        lost both side strokes to that clip (only the top/bottom lines
        survived) — drawn inside, the ring stays whole. */
     outline: 1px solid color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 60%, transparent);

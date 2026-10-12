@@ -1,7 +1,7 @@
 {
   "name": "@celestia-island/default-theme",
   "version": "0.1.0",
-  "description": "The reference precompiled default theme (brand tray decor) for hikari hosts — the working example for custom theme packages.",
+  "description": "The build-time built-in standard theme plugin (brand tray decor) — the reference implementation for custom theme plugins. Follows the akivili plugin conventions; compiled into the host at build time and never distributed on npm.",
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
@@ -13,18 +13,5 @@
     "lucide-vue-next": "^*",
     "vue": "^3"
   },
-  "files": [
-    "src/",
-    "package.json",
-    "README.md"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/celestia-island/hikari",
-    "directory": "packages/default_theme"
-  },
-  "license": "SEE LICENSE IN LICENSE"
+  "private": true
 }

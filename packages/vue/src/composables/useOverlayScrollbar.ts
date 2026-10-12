@@ -51,6 +51,13 @@ export interface OverlayScrollbarMarker {
   /** Semantic tag mirrored onto `data-kind`, so the consumer's theme owns
    *  the palette (this engine ships no colours of its own). */
   kind?: string;
+  /**
+   * Which third of the band the mark hugs — VS Code's diff overview ruler
+   * draws REMOVED content against the band's start edge and ADDED content
+   * against its end edge, so one vertical position can carry both. Omitted
+   * = the mark spans the full band width.
+   */
+  side?: "start" | "end";
 }
 
 /** Shortest a mark may render, as a fraction of the rail. A one-line edit
@@ -65,6 +72,11 @@ const MARKER_MIN_FRACTION = 0.005;
  *  scale with the rail, and the end-of-rail inset below has to be computed
  *  from the SAME number, which CSS cannot express. */
 const MARKER_MIN_PX = 2;
+
+/** Width the vertical track widens to when marks arrive, unless the
+ *  consumer passes its own. VS Code's scrollbar strip is ~14px; the
+ *  default keeps the marks' two lanes readable at a glance. */
+const DEFAULT_MARKERS_WIDTH = 14;
 
 /** Clamp to [0, 1]; non-finite input is the caller's bug, but the rail
  *  must never render a mark at a meaningless position, so it becomes 0. */
@@ -98,6 +110,10 @@ export interface OverlayScrollbarOptions {
    *  "position in the document". Omitted or empty creates no rail at all,
    *  so consumers that never pass markers keep the exact chrome they had. */
   markers?: OverlayScrollbarMarker[];
+  /** Width the vertical track widens to while marks are showing, in CSS
+   *  pixels. Selective: consumers without marks keep the narrow track.
+   *  Clamped to a sane range (the thumb and marks share the band). */
+  markersWidth?: number;
 }
 
 export interface OverlayScrollbarHandle {
@@ -216,22 +232,27 @@ export function attachOverlayScrollbars(
   let detached = false;
 
   // ── Change-mark rail (vertical only) ─────────────────────────────────
-  // Created lazily on the first non-empty marker list: consumers that
-  // never pass markers keep byte-identical chrome, and the rail's own
-  // listeners exist only while the rail does.
-  let rail: HTMLElement | null = null;
+  // The marks live INSIDE the vertical track, which widens to
+  // `markersWidth` for as long as marks are showing (VS Code's overview
+  // ruler is a widening of the same strip, not a second one). Consumers
+  // that never pass markers keep byte-identical chrome.
+  let track: HTMLElement | null = null;
   let markers: OverlayScrollbarMarker[] = [];
   let railDragging = false;
   /** Rail height the marks were last sized against — the pixel floor is a
    *  function of it, so a resize has to re-render them. */
   let renderedRailHeight = 0;
 
+  /** The vertical track, found once and reused. */
+  const verticalTrack = (): HTMLElement | null =>
+    states.find((s) => !s.horizontal)?.track ?? null;
+
   /** Scroll so the rail position under `clientY` lands in the viewport —
    *  the same fraction → scrollTop mapping the track's own click uses, so
    *  a mark and the track at the same height agree. */
   function railScrollTo(clientY: number) {
-    if (!rail) return;
-    const rect = rail.getBoundingClientRect();
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
     if (rect.height <= 0) return;
     const ratio = clamp01((clientY - rect.top) / rect.height);
     const { scrollSize, clientSize } = axisMetrics(viewport, false);
@@ -243,28 +264,34 @@ export function attachOverlayScrollbars(
   }
   function onRailUp() {
     railDragging = false;
-    rail?.classList.remove("is-dragging");
+    track?.classList.remove("is-dragging");
     document.removeEventListener("mousemove", onRailMove);
     document.removeEventListener("mouseup", onRailUp);
   }
   function onRailDown(e: MouseEvent) {
+    // Only a press ON a mark scrubs: the rest of the band keeps the
+    // track's own click-to-page behaviour.
+    const mark = (e.target as Element | null)?.closest?.(".hk-scrollbar-marker");
+    if (!mark) return;
     e.preventDefault();
-    // The rail sits inside a modal/panel that may itself dismiss on an
-    // outside press — scrubbing the rail must not double as that press.
+    // The band rides inside modals/panels that may dismiss on an outside
+    // press — scrubbing a mark must not double as that press.
     e.stopPropagation();
     railDragging = true;
-    rail?.classList.add("is-dragging");
+    track?.classList.add("is-dragging");
     railScrollTo(e.clientY);
     document.addEventListener("mousemove", onRailMove);
     document.addEventListener("mouseup", onRailUp);
   }
 
   function renderMarkers() {
-    if (!rail) return;
-    rail.replaceChildren();
+    if (!track) return;
+    // The thumb is a sibling that must stay on top of the marks (it slides
+    // over them, VS Code's semi-transparent thumb over the ruler).
+    track.querySelectorAll(":scope > .hk-scrollbar-marker").forEach((m) => m.remove());
     // Measured, not assumed: happy-dom and a `display:none` rail both
     // report 0, and the fraction floor is the honest answer there.
-    const railH = rail.clientHeight;
+    const railH = track.clientHeight;
     renderedRailHeight = railH;
     const floor = railH > 0
       ? Math.max(MARKER_MIN_FRACTION, MARKER_MIN_PX / railH)
@@ -283,10 +310,26 @@ export function attachOverlayScrollbars(
       const el = document.createElement("div");
       el.className = "hk-scrollbar-marker";
       if (m.kind) el.setAttribute("data-kind", m.kind);
+      if (m.side) el.setAttribute("data-side", m.side);
       el.style.top = pct(top);
       el.style.height = pct(size);
-      rail.appendChild(el);
+      track.appendChild(el);
     }
+  }
+
+  /** Widen the track to the markers width (and back when they go away). */
+  function applyBandWidth() {
+    if (!track) return;
+    if (markers.length === 0) {
+      track.classList.remove("has-markers");
+      track.style.width = "";
+      return;
+    }
+    track.classList.add("has-markers");
+    const w = Math.round(
+      Math.min(Math.max(opts.markersWidth ?? DEFAULT_MARKERS_WIDTH, 8), 40),
+    );
+    track.style.width = `${w}px`;
   }
 
   // An arrow const, not a function declaration: the guard above narrows
@@ -296,40 +339,35 @@ export function attachOverlayScrollbars(
   const setMarkers = (next: OverlayScrollbarMarker[]) => {
     if (detached) return;
     markers = Array.isArray(next) ? next : [];
+    track = verticalTrack();
     if (markers.length === 0) {
-      // No marks = no rail, i.e. exactly the pre-marker chrome.
-      if (rail) {
-        rail.removeEventListener("mousedown", onRailDown);
-        rail.remove();
-        rail = null;
-      }
+      // No marks = exactly the pre-marker chrome.
+      track?.querySelectorAll(":scope > .hk-scrollbar-marker").forEach((m) => m.remove());
+      applyBandWidth();
       onRailUp();
       return;
     }
-    if (!wantV) return;
-    if (!rail) {
-      rail = document.createElement("div");
-      rail.className = "hk-scrollbar-markers";
-      rail.addEventListener("mousedown", onRailDown);
-      parent.appendChild(rail);
+    if (!wantV || !track) return;
+    if (!track.dataset.markersWired) {
+      track.dataset.markersWired = "true";
+      track.addEventListener("mousedown", onRailDown);
     }
+    applyBandWidth();
     renderMarkers();
-    // The rail's visibility follows the track's fit test.
+    // The marks' visibility follows the track's own fit test.
     update();
   };
 
   function updateAxis(s: AxisState, horizontal: boolean) {
     const { scrollSize, clientSize, scrollPos } = axisMetrics(viewport, horizontal);
     if (scrollSize <= clientSize) {
-      // Content fits — no bar at all. The rail follows the track: marks on
-      // a region that cannot scroll would claim changes the reader can
-      // never reach.
+      // Content fits — no bar at all. The marks live inside the track, so
+      // hiding it hides them too: marks on a region that cannot scroll
+      // would claim changes the reader can never reach.
       s.track.style.display = "none";
-      if (!horizontal && rail) rail.style.display = "none";
       return;
     }
     s.track.style.display = "";
-    if (!horizontal && rail) rail.style.display = "";
     const trackSize = horizontal ? s.track.clientWidth : s.track.clientHeight;
     const ratio = clientSize / scrollSize;
     const thumbSize = Math.max(ratio * trackSize, 20);
@@ -354,13 +392,14 @@ export function attachOverlayScrollbars(
   function update() {
     if (detached) return;
     for (const s of states) updateAxis(s, s.horizontal);
-    // The marks' pixel floor is a fraction OF the rail, so a height change
-    // invalidates the sizes they were rendered with. A hidden rail reports
+    // The marks' pixel floor is a fraction OF the band, so a height change
+    // invalidates the sizes they were rendered with. A hidden band reports
     // 0 and is skipped here; `renderMarkers` leaves that 0 behind as its
     // "never sized against a real height" sentinel, so the first visible
     // update re-renders even when the height matches the last one used.
-    const railH = rail?.clientHeight ?? 0;
-    if (rail && markers.length > 0 && railH > 0 && railH !== renderedRailHeight) {
+    const band = verticalTrack();
+    const railH = band?.clientHeight ?? 0;
+    if (band && markers.length > 0 && railH > 0 && railH !== renderedRailHeight) {
       renderMarkers();
     }
   }
@@ -480,17 +519,14 @@ export function attachOverlayScrollbars(
       ro = null;
       scheduled?.disconnect();
       scheduled = null;
-      if (rail) {
-        rail.removeEventListener("mousedown", onRailDown);
-        rail.remove();
-        rail = null;
-      }
       onRailUp();
       for (const { state, handlers } of axisBindings) {
         state.thumb.removeEventListener("mousedown", handlers.onDown);
         state.track.removeEventListener("click", handlers.onTrackClick);
         state.track.removeEventListener("mouseenter", handlers.onEnter);
         state.track.removeEventListener("mouseleave", handlers.onLeave);
+        state.track.removeEventListener("mousedown", onRailDown);
+        delete state.track.dataset.markersWired;
         document.removeEventListener("mousemove", handlers.onMove);
         document.removeEventListener("mouseup", handlers.onUp);
         state.hideTimer?.disconnect();

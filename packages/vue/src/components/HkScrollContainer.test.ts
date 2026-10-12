@@ -404,7 +404,7 @@ describe("HkScrollContainer back-to-top signal", () => {
 });
 
 describe("HkScrollContainer change-mark rail", () => {
-  it("renders the marks prop, and re-applies new marks without rebuilding the chrome", async () => {
+  it("widens the track, renders the marks prop, and re-applies them without rebuilding", async () => {
     const markers = ref<OverlayScrollbarMarker[]>([{ start: 0.1, end: 0.2, kind: "added" }]);
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -419,9 +419,11 @@ describe("HkScrollContainer change-mark rail", () => {
     mounts.push(app);
     app.mount(container);
 
-    const rail = () => container.querySelector<HTMLElement>(".hk-scrollbar-markers");
+    // The marks live INSIDE the vertical track: the rail IS the track.
+    const rail = () => container.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])");
     const firstRail = rail();
-    expect(firstRail, "the rail exists once marks arrive").not.toBeNull();
+    expect(firstRail, "the track exists once marks arrive").not.toBeNull();
+    expect(firstRail!.classList.contains("has-markers"), "the track widens for marks").toBe(true);
     expect(firstRail!.querySelectorAll(".hk-scrollbar-marker").length).toBe(1);
 
     markers.value = [
@@ -438,8 +440,10 @@ describe("HkScrollContainer change-mark rail", () => {
     app.unmount();
   });
 
-  it("keeps the rail out of the DOM when no marks are passed", () => {
+  it("keeps the narrow track and no marks when none are passed", () => {
     const m = mountScroller({});
-    expect(m.container.querySelector(".hk-scrollbar-markers")).toBeNull();
+    const track = m.container.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])");
+    expect(track?.classList.contains("has-markers") ?? false, "no widening").toBe(false);
+    expect(track?.querySelectorAll(".hk-scrollbar-marker").length ?? 0).toBe(0);
   });
 });

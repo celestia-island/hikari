@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { attachOverlayScrollbars, type OverlayScrollbarHandle, type OverlayScrollbarOptions } from "./useOverlayScrollbar";
@@ -23,10 +26,11 @@ function mountViewport(
   return { container, wrapper, viewport, handle };
 }
 
-/** A scrollable vertical viewport with a deterministic 100px rail box:
- *  happy-dom performs no layout, so both the geometry and the rail's
- *  bounding box are stubbed. `height` of the rail is what maps a mark's
- *  fraction to a pixel position. */
+/** A scrollable vertical viewport with a deterministic band box: happy-dom
+ *  performs no layout, so both the geometry and the track's bounding box
+ *  are stubbed. `height` of the band is what maps a mark's fraction to a
+ *  pixel position. The marks live INSIDE the vertical track (the widened
+ *  scrollbar is the ruler), so "the rail" below IS the track. */
 function mountRailed(railHeight = 100) {
   const mounted = mountViewport("vertical");
   stubGeometry(mounted.viewport, {
@@ -37,12 +41,13 @@ function mountRailed(railHeight = 100) {
   return {
     ...mounted,
     rail: () => {
-      const el = mounted.wrapper.querySelector<HTMLElement>(".hk-scrollbar-markers");
+      const el = mounted.wrapper.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])");
       if (el) {
         vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
-          top: 0, left: 0, width: 8, height: railHeight,
-          bottom: railHeight, right: 8, x: 0, y: 0, toJSON: () => ({}),
+          top: 0, left: 0, width: 14, height: railHeight,
+          bottom: railHeight, right: 14, x: 0, y: 0, toJSON: () => ({}),
         } as DOMRect);
+        Object.defineProperty(el, "clientHeight", { configurable: true, get: () => railHeight });
       }
       return el;
     },
@@ -354,9 +359,11 @@ describe("attachOverlayScrollbars", () => {
 });
 
 describe("change-mark rail", () => {
-  it("renders no rail at all when the consumer passes no markers", () => {
+  it("keeps the narrow track, unmarked, when the consumer passes no markers", () => {
     const { wrapper } = mountViewport("vertical");
-    expect(wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+    const track = wrapper.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])");
+    expect(track?.classList.contains("has-markers") ?? false, "no widening").toBe(false);
+    expect(track?.querySelectorAll(".hk-scrollbar-marker").length ?? 0).toBe(0);
   });
 
   it("creates the rail and one mark per entry, tagged by kind", () => {
@@ -439,6 +446,79 @@ describe("change-mark rail", () => {
     expect(mark.style.height).toBe("60%");
   });
 
+  it("honours the consumer's markersWidth, clamped to a sane band", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.1, end: 0.2, kind: "added" }]);
+    const width = () => m.rail()!.style.width;
+    // The default band, then the consumer's own, then the clamps.
+    expect(width()).toBe("14px");
+    m.handle.detach();
+    handles.splice(handles.indexOf(m.handle), 1);
+
+    const custom = mountViewport("vertical", { markers: [{ start: 0.1, end: 0.2, kind: "added" }], markersWidth: 22 });
+    custom.handle.update();
+    expect(
+      custom.wrapper.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])")!.style.width,
+    ).toBe("22px");
+    custom.handle.detach();
+    handles.splice(handles.indexOf(custom.handle), 1);
+
+    const clamped = mountViewport("vertical", { markers: [{ start: 0.1, end: 0.2, kind: "added" }], markersWidth: 999 });
+    clamped.handle.update();
+    expect(
+      clamped.wrapper.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])")!.style.width,
+      "above the 40px ceiling it clamps").toBe("40px");
+  });
+
+  it("mirrors side onto data-side so the lanes can be styled", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([
+      { start: 0.1, end: 0.2, kind: "deleted", side: "start" },
+      { start: 0.1, end: 0.2, kind: "added", side: "end" },
+      { start: 0.5, end: 0.6, kind: "modified" },
+    ]);
+    const marks = m.rail()!.querySelectorAll<HTMLElement>(".hk-scrollbar-marker");
+    expect(marks[0].getAttribute("data-side")).toBe("start");
+    expect(marks[1].getAttribute("data-side")).toBe("end");
+    expect(marks[2].getAttribute("data-side"), "no side = full band").toBeNull();
+  });
+
+  it("does not scrub on a press on the band's empty ground", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.3, end: 0.35, kind: "added" }]);
+    stubGeometry(m.viewport, {
+      scrollHeight: 1000, clientHeight: 100, scrollTop: 0,
+      scrollWidth: 100, clientWidth: 100, scrollLeft: 0,
+    });
+    // A press on the TRACK (not on a mark) keeps the track's own
+    // click-to-page behaviour: no scrub, no drag state.
+    const track = m.rail()!;
+    track.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true, clientY: 0 }));
+    expect(track.classList.contains("is-dragging"), "no drag state").toBe(false);
+    document.dispatchEvent(new MouseEvent("mousemove", { clientY: 100 }));
+    expect(m.viewport.scrollTop, "no scrub followed the pointer").toBe(0);
+    document.dispatchEvent(new MouseEvent("mouseup"));
+  });
+
+  it("keeps the band and its marks visible at rest (an overview ruler is a glance)", () => {
+    const m = mountRailed();
+    m.handle.setMarkers([{ start: 0.1, end: 0.2, kind: "added" }]);
+    // The track is pointer-transparent at rest, but the widened band and
+    // its marks must still SHOW: hiding them made the ruler a hover-only
+    // affordance, which is exactly what an overview ruler is not.
+    // happy-dom does not apply stylesheets to computed styles, so this
+    // pins the rule in the shipped chrome (the vendored copy) instead.
+    const chrome = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../styles/theme/scrollbar.scss"),
+      "utf-8",
+    );
+    const widened = /&\.has-markers:not\(\[data-axis="horizontal"\]\)\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
+    expect(widened, "positive control: the widened rule was found").not.toBe("");
+    expect(widened, "the band is visible at rest").toMatch(/opacity:\s*1/);
+    // …and the thumb rides above it.
+    expect(chrome).toMatch(/\.hk-scrollbar-thumb\s*\{[^}]*z-index:\s*2/);
+  });
+
   it("positions marks against the content, so scrolling does not move them", () => {
     const m = mountRailed();
     m.handle.setMarkers([{ start: 0.25, end: 0.3, kind: "added" }]);
@@ -458,7 +538,9 @@ describe("change-mark rail", () => {
     m.handle.setMarkers([{ start: 0.1, end: 0.2, kind: "added" }]);
     expect(m.rail()).not.toBeNull();
     m.handle.setMarkers([]);
-    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+    const track = m.wrapper.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])");
+    expect(track?.classList.contains("has-markers") ?? false, "the widening is undone").toBe(false);
+    expect(track?.querySelectorAll(".hk-scrollbar-marker").length ?? 0).toBe(0);
   });
 
   it("hides the rail while the content fits, and shows it again when it scrolls", () => {
@@ -486,7 +568,9 @@ describe("change-mark rail", () => {
     });
     m.handle.update();
     m.handle.setMarkers([{ start: 0.1, end: 0.2, kind: "added" }]);
-    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+    const hTrack = m.wrapper.querySelector<HTMLElement>('.hk-scrollbar-track[data-axis="horizontal"]');
+    expect(hTrack?.classList.contains("has-markers") ?? false, "no band on a horizontal track").toBe(false);
+    expect(hTrack?.querySelectorAll(".hk-scrollbar-marker").length ?? 0).toBe(0);
   });
 
   it("ignores non-finite mark bounds instead of parking them at NaN%", () => {
@@ -556,7 +640,7 @@ describe("change-mark rail", () => {
     mark.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
     m.handle.detach();
     handles.splice(handles.indexOf(m.handle), 1);
-    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+    expect(m.wrapper.querySelectorAll(".hk-scrollbar-marker").length).toBe(0);
     m.viewport.scrollTop = 0;
     document.dispatchEvent(new MouseEvent("mousemove", { clientY: 100 }));
     expect(m.viewport.scrollTop, "detach dropped the drag listener").toBe(0);
@@ -568,6 +652,6 @@ describe("change-mark rail", () => {
     m.handle.detach();
     handles.splice(handles.indexOf(m.handle), 1);
     expect(() => m.handle.setMarkers([{ start: 0, end: 1, kind: "added" }])).not.toThrow();
-    expect(m.wrapper.querySelector(".hk-scrollbar-markers")).toBeNull();
+    expect(m.wrapper.querySelectorAll(".hk-scrollbar-marker").length).toBe(0);
   });
 });

@@ -71,43 +71,58 @@ describe("overlay scrollbar chrome contract", () => {
     expect(chrome).toMatch(/&?\.is-scrolling,\s*&?\.is-hovering\s*\{[^}]*pointer-events:\s*auto/);
   });
 
-  it("keeps the change-mark rail clear of the track and out of the click path", () => {
-    // The rail is a SECOND overlay in the same corner. Two facts have to
-    // survive any future restyle:
+  it("widens the track into the ruler and keeps the click rules straight", () => {
+    // The marks live INSIDE the track, which widens only when it carries
+    // them (`.has-markers`) — VS Code's overview ruler is the scrollbar's
+    // own strip widened, not a second strip. Three facts must survive any
+    // future restyle:
     //
-    //  1. It must not overlap the track (right 2px + width 6px), or marks
-    //     would draw across the thumb;
-    //  2. it must not take pointer input — it spans the WHOLE host, docks
-    //     included, so a live hot zone there eats presses meant for
-    //     right-aligned dock controls. Only the marks accept input, and
-    //     that exemption is exactly why the rail itself must stay `none`.
-    // The vertical geometry lives in the track's own nested
-    // `&:not([data-axis="horizontal"])` block, not a top-level selector.
-    const track = /&:not\(\[data-axis="horizontal"\]\)\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
-    expect(track, "positive control: the vertical track rule was found").not.toBe("");
-    const trackRight = Number(/right:\s*(\d+)px/.exec(track)?.[1]);
-    const trackWidth = Number(/width:\s*(\d+)px/.exec(track)?.[1]);
+    //  1. The widened ground is FAINT and theme-adaptive (a translucent
+    //     mid-grey: grey over a light page, slightly lighter over a dark
+    //     one), with the 2px rounding the band promised;
+    //  2. it stays pointer-transparent AT REST — the widened band spans
+    //     the whole host, docks included, and a live hot zone there would
+    //     eat presses meant for right-aligned dock controls;
+    //  3. the MARKS are the hit area and hug the band's edges: removed
+    //     content at the start, added at the end (VS Code's two lanes),
+    //     so one vertical position can carry both.
+    expect(chrome, "no second strip — the separate rail is gone").not.toContain(".hk-scrollbar-markers");
 
-    const rail = /\.hk-scrollbar-markers\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
-    expect(rail, "positive control: the rail rule was found").not.toBe("");
-    const railRight = Number(/right:\s*(\d+)px/.exec(rail)?.[1]);
-    const railWidth = Number(/width:\s*(\d+)px/.exec(rail)?.[1]);
+    const widened = /&\.has-markers:not\(\[data-axis="horizontal"\]\)\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
+    expect(widened, "positive control: the widened-band rule was found").not.toBe("");
+    expect(widened, "the ground is faint (translucent grey)").toMatch(
+      /color-mix\(in srgb,\s*var\(--hi-color-muted,\s*rgb\(118 122 128\)\)\s*\d+%,\s*transparent\)/,
+    );
+    expect(widened, "the band keeps its 2px rounding").toMatch(/border-radius:\s*2px/);
+    expect(widened, "and a parameterised width the engine overrides").toMatch(/width:\s*\d+px/);
+    // The base track's own pointer contract (pinned above) is untouched;
+    // the widened rule must not sneak a `pointer-events: auto` in.
+    expect(widened).not.toMatch(/pointer-events:\s*auto/);
 
-    expect(
-      railRight,
-      "the rail starts outboard of the track's inner edge",
-    ).toBeGreaterThanOrEqual(trackRight + trackWidth);
-    expect(railRight + railWidth, "and stays inside the host").toBeLessThanOrEqual(24);
-
-    expect(rail, "the rail itself takes no pointer input").toMatch(/pointer-events:\s*none/);
-    const marker = /\.hk-scrollbar-marker\s*\{[^}]*\}/.exec(chrome)?.[0] ?? "";
-    expect(marker, "positive control: the mark rule was found").not.toBe("");
-    expect(marker, "the marks are the hit area").toMatch(/pointer-events:\s*auto/);
-    // The hover ring must be drawn INSIDE the mark: the rail clips its
+    // The mark's whole rule (it is the file's last block, and its nested
+    // lanes/hover/kind blocks make a single-block regex fragile).
+    const markerBlock = chrome.slice(chrome.indexOf(".hk-scrollbar-marker {"));
+    expect(markerBlock, "positive control: the mark rule was found").not.toBe("");
+    expect(markerBlock, "the marks are the hit area").toMatch(/pointer-events:\s*auto/);
+    expect(markerBlock, "the band's 2px rounding reaches the marks").toMatch(/border-radius:\s*2px/);
+    // The two lanes, at the band's edges (the rules nest inside the mark
+    // selector, so they are written `&[data-side=…]`).
+    expect(markerBlock).toMatch(/&\[data-side="start"\]\s*\{[^}]*left:\s*0/);
+    expect(markerBlock).toMatch(/&\[data-side="end"\]\s*\{[^}]*right:\s*0/);
+    // …and their WIDTH: a restyle that silently stretched a lane across
+    // the whole band would collapse the two-lane reading into one strip
+    // (caught only by the vendored-sync byte comparison before this pin).
+    expect(markerBlock, "the start lane hugs a third of the band").toMatch(
+      /&\[data-side="start"\]\s*\{[^}]*width:\s*34%/,
+    );
+    expect(markerBlock, "and the end lane the other third").toMatch(
+      /&\[data-side="end"\]\s*\{[^}]*width:\s*34%/,
+    );
+    // The hover ring must be drawn INSIDE the mark: the track clips its
     // children, and a plain outline loses both side strokes to that clip,
     // leaving a two-line "ring" that reads as a stray rule rather than a
     // hover cue. Nothing else would notice that regression.
-    expect(marker, "the hover ring is drawn inside the mark").toMatch(
+    expect(markerBlock, "the hover ring is drawn inside the mark").toMatch(
       /outline-offset:\s*-1px/,
     );
   });

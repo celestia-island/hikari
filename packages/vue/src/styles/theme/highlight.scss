@@ -30,8 +30,9 @@
 //   type     ← .hljs-type / class titles
 //   variable ← .hljs-variable / .hljs-template-variable
 // The remaining highlight.js classes are bucketed to the nearest of the
-// same eight (noted inline), following One Dark's own groupings so the
-// standalone render matches the theme it falls back to.
+// same eight by judgement (the canonical pairs above are exact); the
+// goal is that every span lands in the family, not that each bucket
+// matches One Dark's own file class-for-class.
 //
 // Deliberately NOT set: `.hljs` base colour/background and the
 // `.hljs-addition` / `.hljs-deletion` diff classes — containers (diff
@@ -67,6 +68,7 @@
 .hljs-number,
 .hljs-literal,
 .hljs-attr,
+.hljs-property,
 .hljs-selector-class,
 .hljs-selector-attr,
 .hljs-selector-pseudo {
@@ -92,8 +94,7 @@
 // type — yellow in dark, green in light
 .hljs-type,
 .hljs-title.class_,
-.hljs-class .hljs-title,
-.hljs-built_in.TypeErr {
+.hljs-class .hljs-title {
   color: var(--code-type, #e5c07b);
 }
 

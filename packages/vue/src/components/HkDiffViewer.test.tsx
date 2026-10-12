@@ -288,6 +288,55 @@ describe("HkDiffViewer scroll map", () => {
     expect(total(emitted[emitted.length - 1])).toBe(100);
   });
 
+  it("keeps an empty-batched gap's rung at zero dom while the document keeps its lines", async () => {
+    // A host answering [] marks the gap done with NO rows fetched: the
+    // rung must not claim dom extent for lines that never rendered (R2's
+    // N2 caught +1957px of phantom dom) while the document side keeps
+    // the gap's full extent.
+    const { root, emitted } = mountViewer({
+      loadContext: async () => [],
+    });
+    await nextTick();
+    // MAPPED_DIFF has no leading gap (hunk 1 starts at line 1); the first
+    // divider is the 46-line middle gap (lines 5..50, anchor=start).
+    const divider = root.querySelector<HTMLButtonElement>(".hk-diff-viewer__gap")!;
+    divider.click();
+    await tick();
+    await nextTick();
+    const segs = emitted[emitted.length - 1];
+    // The gap is DONE via the empty batch: its document extent survives
+    // as a zero-dom rung — no phantom rows for lines that never rendered.
+    expect(segs).toContainEqual({ dom: 0, map: 46 });
+    expect(segs).not.toContainEqual({ dom: 46, map: 46 });
+    // …and the document total is still the whole file.
+    expect(segs.reduce((a, x) => a + x.map, 0)).toBe(100);
+  });
+
+  it("orders an expanded anchor=start gap's revealed rung BEFORE its divider rung", async () => {
+    // R2's N3: swapping the rung order moved the remaining-divider's
+    // document start by ~727px. The render puts revealed rows above the
+    // remaining divider for anchor=start, and the map must mirror it.
+    const lines: string[] = [];
+    for (let i = 0; i < 40; i += 1) lines.push(` fetched-${i}`);
+    const { root, emitted } = mountViewer({
+      loadContext: async () => lines,
+    });
+    await nextTick();
+    // The trailing gap (anchor=start, after the last hunk).
+    const dividers = [...root.querySelectorAll<HTMLButtonElement>(".hk-diff-viewer__gap")];
+    const trailing = dividers[dividers.length - 1];
+    trailing.click();
+    await tick();
+    await nextTick();
+    const segs = emitted[emitted.length - 1];
+    // Find the trailing gap's rungs: revealed (dom>0, map=40) directly
+    // before the remaining divider (map = 100 - docBefore - 40).
+    const idx = segs.findIndex((x, i) => x.map === 40 && segs[i + 1] && segs[i + 1].map > 0 && segs[i + 1].dom >= 0 && x.dom > 0 && i > segs.length - 6);
+    expect(idx).toBeGreaterThan(-1);
+    expect(segs[idx].dom).toBeGreaterThan(0);
+    expect(segs[idx + 1].map).toBeGreaterThan(0);
+  });
+
   it("counts deleted rows as rendered-but-not-in-the-document", async () => {
     const { emitted } = mountViewer();
     await nextTick();

@@ -104,7 +104,7 @@ export const HkStatCard = defineComponent({
         tabindex: props.clickable ? 0 : undefined,
         onClick: props.clickable ? (e: MouseEvent) => emit("click", e) : undefined,
         // role="button" promises keyboard activation (Enter/Space) — the
-        // same contract HkContextRing's clickable ring honors. Key events
+        // same contract the house clickable-ring convention honors. Key events
         // bubbling from a focusable INSIDE the card (an aside button) are
         // left alone so they don't double-fire the card's click.
         onKeydown: props.clickable

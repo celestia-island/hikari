@@ -72,3 +72,13 @@ jobs:
         run: |
           cd packages/vue
           npm publish --access public
+
+      # The reference default-theme package rides the same release tag;
+      # its own version stays 0.x (it tracks hikari's peer range, not
+      # the tag number). No-op failure (already-published) is tolerated
+      # so the vue line stays the gate.
+      - name: Publish default-theme
+        continue-on-error: true
+        run: |
+          cd packages/default_theme
+          npm publish --access public

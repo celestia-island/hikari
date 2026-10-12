@@ -42,7 +42,18 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         }
     }
 
-    // Fetch from server
+    // Fetch from server. Audit hikari-R1-2: the icon name goes into a
+    // query string — reject anything outside kebab-case and encode what
+    // remains so `&`/`#` cannot inject extra parameters.
+    if icon_name.is_empty()
+        || icon_name.len() > 100
+        || !icon_name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+    {
+        web_sys::console::warn_1(&format!("invalid icon name: {icon_name}").into());
+        return None;
+    }
     let url = format!("{}?name={}", ICON_ROUTE, icon_name);
     web_sys::console::log_1(&format!("Fetching icon '{}' from: {}", icon_name, url).into());
 
@@ -172,8 +183,15 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
     for (_i, path) in data.paths.iter().enumerate() {
         // Validate d attribute (SVG path data)
         if let Some(ref d) = path.d {
-            // Basic validation: only allow SVG path commands
-            let allowed_commands = [
+            // Audit hikari-R1-1: the old check only validated ASCII
+            // ALPHABETIC characters against the command set — quotes,
+            // angle brackets, equals signs, and whitespace passed
+            // straight through into the `d="{}"` interpolation, so a
+            // payload like `M0 0" onload="alert(1)` escaped the
+            // attribute. The whitelist now covers EVERY character:
+            // path commands, coordinate digits, separators, and
+            // exponent markers only.
+            const ALLOWED_COMMANDS: &[char] = &[
                 'M', 'm', 'L', 'l', 'H', 'h', 'V', 'v', 'C', 'c', 'S', 's', 'Q', 'q', 'T', 't',
                 'A', 'a', 'Z', 'z',
             ];
@@ -182,13 +200,14 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
                 if j > 1000 {
                     return Err(format!("Path too long: {} characters", j));
                 }
-                if c.is_ascii_alphabetic() {
-                    if !allowed_commands.contains(&c) {
-                        return Err(format!(
-                            "Invalid SVG path command '{}' at position {}",
-                            c, j
-                        ));
-                    }
+                let ok = ALLOWED_COMMANDS.contains(&c)
+                    || c.is_ascii_digit()
+                    || matches!(c, ' ' | ',' | '.' | '+' | '-' | 'e' | 'E');
+                if !ok {
+                    return Err(format!(
+                        "Invalid SVG path character '{}' at position {}",
+                        c, j
+                    ));
                 }
             }
         }
@@ -214,6 +233,28 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
         }
     }
 
+    // Audit hikari-R1-1: the root-level geometry/color attributes were
+    // previously interpolated into the SVG unvalidated — validate them
+    // here so reconstruct_svg can only ever see clean values.
+    if let Some(ref w) = data.width {
+        w.parse::<f32>()
+            .map_err(|_| format!("Invalid width: {}", w))?;
+    }
+    if let Some(ref h) = data.height {
+        h.parse::<f32>()
+            .map_err(|_| format!("Invalid height: {}", h))?;
+    }
+    if let Some(ref fill) = data.fill {
+        if !is_safe_color(fill) {
+            return Err(format!("Invalid fill color: {}", fill));
+        }
+    }
+    if let Some(ref stroke) = data.stroke {
+        if !is_safe_color(stroke) {
+            return Err(format!("Invalid stroke color: {}", stroke));
+        }
+    }
+
     Ok(())
 }
 
@@ -224,9 +265,23 @@ fn is_safe_color(color: &str) -> bool {
         "none" | "currentColor" => true,
         c if c.starts_with("#") && c.len() == 4 => c[1..].chars().all(|c| c.is_ascii_hexdigit()),
         c if c.starts_with("#") && c.len() == 7 => c[1..].chars().all(|c| c.is_ascii_hexdigit()),
-        c if c.starts_with("rgb(") && c.ends_with(')') => c[4..c.len() - 1].split(',').count() == 3,
+        // Audit hikari-R1-1: the rgb/rgba arms previously only COUNTED
+        // commas — `rgb(" onload="x ,y,z)` has exactly 3 commas and
+        // passed, escaping the fill="…" interpolation. Every inner
+        // segment must now be a plain number.
+        c if c.starts_with("rgb(") && c.ends_with(')') => {
+            c[4..c.len() - 1]
+                .split(',')
+                .filter_map(|s| s.trim().parse::<f32>().ok())
+                .count()
+                == 3
+        }
         c if c.starts_with("rgba(") && c.ends_with(')') => {
-            c[5..c.len() - 1].split(',').count() == 4
+            c[5..c.len() - 1]
+                .split(',')
+                .filter_map(|s| s.trim().parse::<f32>().ok())
+                .count()
+                == 4
         }
         _ => false,
     }

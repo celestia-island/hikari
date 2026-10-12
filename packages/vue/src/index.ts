@@ -549,15 +549,12 @@ export {
 export { HK_ENGINE_HEALTH } from "./components/HkConnectionStatus";
 export type { ProbeResult, EngineHealth, EngineNetworkInfo } from "./composables/engineHealthTypes";
 
-// ── Chat kit (upstreamed from shittim-chest's plana-legacy layer) ──────────
+// ── JSON viewer & shared formatters ──
 export {
   HkJsonTree as HJsonTree,
   buildJsonTree,
   type HJsonNode,
 } from "./components/HkJsonTree";
-// Canonical Hk* names for the directly-exported types above (2026-09-24
-// unification follow-up, second batch — caught by the third-scan reverse
-// validation). These types are defined with their H* names at the source.
 
 export {
   formatNumber,

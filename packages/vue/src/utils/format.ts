@@ -14,7 +14,6 @@
  * under a zh-Hans app on an en browser). */
 import { activeLocale } from "../i18n/context";
 
-/** "1234" -> "1.2k", "2500000" -> "2.5M". */
 
 /** "1234" -> "1.2k". */
 export function formatNumber(n: number): string {
@@ -31,10 +30,7 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}GB`;
 }
 
-/** USD amount -> "$0.10" / "$1.5" / "$120". Negative/NaN clamp to 0. */
 
-/** Timestamp -> "Just now" / "5m ago" / "3h ago" / "2d ago" / "2w ago" /
- *  locale date. */
 export type RelativeTimeT = (
   key: string,
   fallback: string,

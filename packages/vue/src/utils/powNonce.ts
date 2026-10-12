@@ -11,7 +11,7 @@ export type ChallengeDescriptor =
  * undefined/missed config value would otherwise fetch `undefined/health`
  * — a relative URL resolving to `<origin>/undefined/health` — and fail
  * with a 404 that looks like a backend problem. Same pattern as
- * useEngineHealth's baseUrl guard.
+ * the consuming app's health-probe guard.
  */
 function normalizeBase(baseUrl: string): string {
   return (baseUrl ?? "").replace(/\/+$/, "");

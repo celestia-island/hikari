@@ -51,7 +51,7 @@
   opacity: 1;
 }
 
-/* Keyboard focus indicator (house HkContextRing pattern). */
+/* Keyboard focus indicator (house focus-ring pattern). */
 .hk-tag-close:focus-visible {
   outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;

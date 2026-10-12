@@ -416,7 +416,7 @@
   cursor: pointer;
 
   // Keyboard parity: the tsx gives completed steps role="button" +
-  // tabindex 0 (HkContextRing outer-ring pattern).
+  // tabindex 0 (house outer-ring pattern).
   &:focus-visible {
     outline: 2px solid var(--hi-color-primary);
     outline-offset: 2px;

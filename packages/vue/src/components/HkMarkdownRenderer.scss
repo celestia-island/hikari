@@ -137,7 +137,7 @@
 }
 
 /* Rendered GFM links are real anchors — keyboard-focusable, so they need
-   the house :focus-visible ring (HkFab/HkContextRing pattern). Ring uses
+   the house :focus-visible ring (HkFab house pattern). Ring uses
    the same contract var as the link ink so it matches in every theme. */
 .hk-markdown a:focus-visible {
   outline: 2px solid var(--hi-color-primary, #7aa2f7);

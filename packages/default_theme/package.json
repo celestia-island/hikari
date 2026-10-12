@@ -12,5 +12,19 @@
     "@celestia-island/hikari": "^0.55",
     "lucide-vue-next": "^*",
     "vue": "^3"
-  }
+  },
+  "files": [
+    "src/",
+    "package.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/celestia-island/hikari",
+    "directory": "packages/default_theme"
+  },
+  "license": "SEE LICENSE IN LICENSE"
 }

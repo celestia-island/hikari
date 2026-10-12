@@ -25,11 +25,14 @@ import "./HkInfiniteTail.scss";
  * - `"idle"` — more exists, nothing in flight. With `auto` (default)
  *   the invisible sentinel watches the viewport and emits `loadMore`
  *   as it approaches; with `auto={false}` the explicit load-more
- *   button (HkLoadMore) renders instead. NOTE: with `auto`, a tail
- *   page failure retries in place every time the sentinel re-enters
- *   view (the machine's error guard paces it to one attempt per
- *   emission, no backoff) — hosts that want backoff map the error
- *   state away from `"idle"` themselves.
+ *   button (HkLoadMore) renders instead. NOTE: a failed page
+ *   terminalizes the machine's walk — the tail keeps emitting
+ *   `loadMore` as the sentinel re-enters view, but each emission is a
+ *   no-op until the host calls `reload()` (the retry verb; the
+ *   delivered rows stay on screen under the host's stale banner).
+ *   Auto-retrying from the tail is deliberately not supported: the
+ *   sentinel would re-fire on a fixed geometry with no backoff, one
+ *   RPC per round trip, which locks a shared rate budget.
  *
  * The sentinel observes the BROWSER viewport (IntersectionObserver,
  * `rootMargin` lookahead), so it works inside any nested scroll

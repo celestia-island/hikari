@@ -63,7 +63,19 @@
     width: 14px; /* the engine overrides this inline with markersWidth */
     border-radius: 2px;
     background: color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 12%, transparent);
+    /* The band and its marks are ALWAYS visible — the whole point of an
+       overview ruler is a glance, not a hover. The track itself stays
+       `pointer-events: none` (below), so the ground still never steals a
+       press; only the marks accept input. */
+    opacity: 1;
   }
+}
+
+/* The thumb rides OVER the marks (VS Code's translucent thumb over the
+   ruler): without a z-index of its own it would paint UNDER the opaque
+   marks, which are appended after it in the same stacking context. */
+.hk-scrollbar-thumb {
+  z-index: 2;
 }
 
 .hk-scrollbar-thumb {
@@ -136,9 +148,9 @@
   }
 
   &:hover {
-    /* Negative offset: the track clips its children, and a plain outline
-       lost both side strokes to that clip (only the top/bottom lines
-       survived) — drawn inside, the ring stays whole. */
+    /* Negative offset: an outset ring would draw past the mark's own box
+       and read as a stray rule floating beside it — drawn inside, the cue
+       stays attached to the mark it belongs to. */
     outline: 1px solid color-mix(in srgb, var(--hi-color-muted, rgb(118 122 128)) 60%, transparent);
     outline-offset: -1px;
   }

@@ -1,9 +1,10 @@
-import { computed, defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
 import { AlertTriangle, ChevronDown, ChevronRight, UnfoldVertical } from "lucide-vue-next";
 import HkSpinner from "./HkSpinner";
 import { useI18n } from "../i18n/context";
 import { highlight } from "../composables/useHighlight";
 import { computeGaps, parseUnifiedDiff, type DiffLine, type UnchangedGap } from "./diffParse";
+import type { OverlayScrollMapSegment } from "../composables/useOverlayScrollbar";
 import "./HkDiffViewer.scss";
 
 /**
@@ -57,14 +58,132 @@ export default defineComponent({
      */
     loadContext: { type: Function, default: null },
   },
-  setup(props) {
+  emits: {
+    /**
+     * The fold-aware scroll map (see `OverlayScrollMapSegment`): document
+     * units are NEW-SIDE file lines (deleted rows carry none — they do
+     * not exist in the current file), dom units are MEASURED PIXELS of
+     * the rows that render (row-count fallback where nothing lays out; a
+     * hunk heading is chrome and carries no document extent). The total
+     * is FOLD-INVARIANT — expanding a region moves its extent from the
+     * divider's rung onto real rows without changing the document — so
+     * the scrollbar stays a map of the WHOLE file whatever is folded.
+     * Bind it to a HkScrollContainer's `mapSegments`.
+     */
+    "scroll-map": null as OverlayScrollMapSegment[] | null,
+  },
+  setup(props, { emit }) {
+    const host = ref<HTMLElement | null>(null);
     const { t } = useI18n();
 
     const parsed = computed(() => parseUnifiedDiff(props.diff));
     const gaps = computed(() => computeGaps(parsed.value, props.totalLines ?? null));
     const collapsedHunks = ref<Set<number>>(new Set());
+
+    /**
+     * Measured pixel heights of the three row kinds, so the map's dom
+     * side can be honest in px instead of row counts — a hunk heading is
+     * ~1.7 lines tall and a divider ~1.35, and count-units drift the
+     * rung boundaries one to two rows off the real geometry (R1's pin
+     * plateau sat 17px past the divider). Zero = not measured yet
+     * (no-layout environments), and the map falls back to counts.
+     */
+    const rowKinds = ref({ line: 0, head: 0, gap: 0 });
+
+    function measureRowKinds() {
+      const root = host.value;
+      if (!root) return;
+      const line = root.querySelector<HTMLElement>(".hk-diff-viewer__line");
+      const head = root.querySelector<HTMLElement>(".hk-diff-viewer__hunk-head");
+      const gap = root.querySelector<HTMLElement>(".hk-diff-viewer__gap");
+      const next = {
+        line: line?.offsetHeight ?? 0,
+        head: head?.offsetHeight ?? 0,
+        gap: gap?.offsetHeight ?? 0,
+      };
+      // Write only on a real change: `rowKinds` feeds the scrollMap
+      // computed, and this runs from a watcher on that computed — an
+      // unconditional assign (a fresh object with equal values) would
+      // re-trigger it and recurse forever.
+      const prev = rowKinds.value;
+      if (
+        next.line !== prev.line || next.head !== prev.head || next.gap !== prev.gap
+      ) {
+        rowKinds.value = next;
+      }
+    }
+
+    /** The fold-aware scroll map, in RENDER order (mirrors the tree the
+     *  render function interleaves below, rung for rung). */
+    const scrollMap = computed<OverlayScrollMapSegment[]>(() => {
+      const segs: OverlayScrollMapSegment[] = [];
+      const mapOfGap = (gap: UnchangedGap) => {
+        const st = gapStates.value.get(gap.start);
+        const revealed = st?.revealed ?? 0;
+        const remaining = Math.max(gap.count - revealed, 0);
+        // Dom side counts the rows that actually RENDER (the same window
+        // walk the render does): a host answering an empty batch marks
+        // the gap done with zero rows shown, and the map must not claim
+        // dom extent for them — the DOCUMENT side keeps the lines.
+        const first =
+          gap.anchor === "end" ? gap.start + gap.count - revealed : gap.start;
+        let rendered = 0;
+        for (let no = first; no < first + revealed; no += 1) {
+          if (st?.lines.has(no)) rendered += 1;
+        }
+        const px = rowKinds.value.line > 0 ? rowKinds.value.line : 1;
+        const dividerPx =
+          rowKinds.value.gap > 0 ? rowKinds.value.gap : rowKinds.value.line > 0 ? rowKinds.value.line : 1;
+        const revealedRung = { dom: rendered * px, map: revealed };
+        const dividerRung = { dom: remaining > 0 ? dividerPx : 0, map: remaining };
+        // Mirror renderGap's order: anchor=end puts the divider ABOVE the
+        // revealed rows, anchor=start below them.
+        if (gap.anchor === "end") segs.push(dividerRung, revealedRung);
+        else segs.push(revealedRung, dividerRung);
+      };
+      const mapOfHunk = (idx: number) => {
+        const hunk = parsed.value.hunks[idx];
+        const linePx = rowKinds.value.line > 0 ? rowKinds.value.line : 1;
+        const headPx = rowKinds.value.head > 0 ? rowKinds.value.head : 1;
+        // The heading is chrome: it occupies a row and no document line.
+        segs.push({ dom: headPx, map: 0 });
+        const live = hunk.lines.filter((l) => l.kind !== "del").length;
+        if (collapsedHunks.value.has(idx)) {
+          // Body hidden: the whole new-side extent rides the heading rung.
+          segs.push({ dom: 0, map: live });
+        } else {
+          for (const line of hunk.lines) {
+            // Deleted rows render but exist only in the old file.
+            segs.push({ dom: linePx, map: line.kind === "del" ? 0 : 1 });
+          }
+        }
+      };
+      const gapsByHunk = new Map<number, UnchangedGap>();
+      for (const gap of gaps.value) gapsByHunk.set(gap.beforeHunk, gap);
+      for (let i = 0; i < parsed.value.hunks.length; i += 1) {
+        const gap = gapsByHunk.get(i);
+        if (gap) mapOfGap(gap);
+        mapOfHunk(i);
+      }
+      const trailing = gapsByHunk.get(parsed.value.hunks.length);
+      if (trailing) mapOfGap(trailing);
+      return segs;
+    });
+
     /** Gap states keyed by the gap's new-side start line (stable identity). */
     const gapStates = ref<Map<number, GapState>>(new Map());
+
+    // Emit on every fold change (and once up front) — the consumer feeds
+    // it straight into its HkScrollContainer's `mapSegments`. Declared
+    // AFTER gapStates: the immediate evaluation reads it, and a watch
+    // above the declaration would hit the temporal dead zone.
+    watch(scrollMap, (segs) => emit("scroll-map", segs), { immediate: true, flush: "post" });
+    // Re-measure after the DOM catches up (mount + every fold change:
+    // a first-ever divider/heading may have appeared).
+    onMounted(() => measureRowKinds());
+    watch([() => props.diff, () => props.totalLines, scrollMap], () => {
+      measureRowKinds();
+    }, { flush: "post" });
 
     // A fresh diff invalidates every cached context line and fold state.
     watch(
@@ -267,7 +386,7 @@ export default defineComponent({
       const trailing = gapsByHunk.get(hunks.length);
       if (trailing) blocks.push(renderGap(trailing));
       return (
-        <div class="hk-diff-viewer">
+        <div class="hk-diff-viewer" ref={host}>
           <div class="hk-diff-viewer__body">{blocks}</div>
         </div>
       );

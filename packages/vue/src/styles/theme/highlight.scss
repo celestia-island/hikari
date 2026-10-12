@@ -1,0 +1,117 @@
+// Vendored from packages/theme/styles/_highlight.scss so npm registry
+// installs can resolve it — the exports map only exposes ./styles/*.
+// This sheet is what COLOURS the `.hljs-*` spans that useHighlight() and
+// any other highlight.js driver emit; without it the grammars load and
+// the code still renders monochrome (infra without a palette).
+// Edit the upstream file, then re-copy; do not hand-edit here.
+
+// _highlight.scss — the syntax palette for highlight.js output.
+//
+// `useHighlight()` (and anything else driving highlight.js) emits
+// `.hljs-*` spans; this sheet is what actually COLOURS them. Without it
+// the grammars load, the spans land in the DOM, and the code stays
+// monochrome — infra without a palette.
+//
+// Every colour rides the `--code-*` family documented in channels.scss
+// (the family the host theme owns; extend it only by adding a token with
+// a fallback equal to the current visual). The fallbacks here are the
+// canonical One Dark values, so a standalone/themeless consumer renders
+// like One Dark and a themed host (which defines `--code-*` in both
+// modes) flips light/dark automatically — no `.hljs-*` rule anywhere in
+// this sheet hardcodes a palette colour outside a var() fallback.
+//
+// The explicit pairs from the channels.scss doc block are canonical:
+//   keyword  ← .hljs-keyword / .hljs-selector-tag
+//   builtin  ← .hljs-built_in
+//   string   ← .hljs-string
+//   number   ← .hljs-number / .hljs-literal / .hljs-attr
+//   comment  ← .hljs-comment / .hljs-doctag          (grey, italic)
+//   function ← .hljs-title.function_
+//   type     ← .hljs-type / class titles
+//   variable ← .hljs-variable / .hljs-template-variable
+// The remaining highlight.js classes are bucketed to the nearest of the
+// same eight by judgement (the canonical pairs above are exact); the
+// goal is that every span lands in the family, not that each bucket
+// matches One Dark's own file class-for-class.
+//
+// Deliberately NOT set: `.hljs` base colour/background and the
+// `.hljs-addition` / `.hljs-deletion` diff classes — containers (diff
+// panes, markdown fences) own their surfaces, and a palette layer that
+// painted backgrounds would fight them.
+
+// keyword — purple
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-formula {
+  color: var(--code-keyword, #c678dd);
+}
+
+// builtin — purple in dark, blue in light
+.hljs-built_in,
+.hljs-selector-id,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-meta {
+  color: var(--code-builtin, #c678dd);
+}
+
+// string — green
+.hljs-string,
+.hljs-regexp,
+.hljs-attribute,
+.hljs-meta .hljs-string {
+  color: var(--code-string, #98c379);
+}
+
+// number — orange in dark, blue in light
+.hljs-number,
+.hljs-literal,
+.hljs-attr,
+.hljs-property,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--code-number, #d19a66);
+}
+
+// comment — grey, italic
+.hljs-comment,
+.hljs-quote,
+.hljs-doctag {
+  color: var(--code-comment, #5c6370);
+  font-style: italic;
+}
+
+// function — blue
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.function_.invoke__,
+.hljs-section {
+  color: var(--code-function, #61afef);
+}
+
+// type — yellow in dark, green in light
+.hljs-type,
+.hljs-title.class_,
+.hljs-class .hljs-title {
+  color: var(--code-type, #e5c07b);
+}
+
+// variable — red in dark, orange in light
+.hljs-variable,
+.hljs-template-variable,
+.hljs-subst,
+.hljs-name,
+.hljs-tag {
+  color: var(--code-variable, #e06c75);
+}
+
+// Non-colour emphasis classes: keep the shapes highlight.js intends.
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}

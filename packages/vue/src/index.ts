@@ -460,7 +460,7 @@ export type { OriginProbe } from "./utils/connectivity";
 export { probeHealthEndpoint } from "./utils/healthProbe";
 export type { HealthProbeBody, HealthProbeResult } from "./utils/healthProbe";
 
-export { highlight, useHighlight } from "./composables/useHighlight";
+export { highlight, languageForPath, useHighlight } from "./composables/useHighlight";
 export { LANGUAGE_LOADERS } from "./composables/highlightLanguages";
 export {
   iconByName,

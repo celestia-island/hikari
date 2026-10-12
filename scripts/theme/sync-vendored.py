@@ -4,6 +4,7 @@
   packages/vue/src/tokens.scss  -> packages/vue/src/styles/theme/channels.scss
   packages/vue/src/scale.scss   -> packages/vue/src/styles/theme/scale.scss
   packages/theme/styles/_scrollbar.scss -> packages/vue/src/styles/theme/scrollbar.scss
+  packages/theme/styles/_highlight.scss -> packages/vue/src/styles/theme/highlight.scss
 
 Each vendored file keeps its existing provenance header (everything up to
 and including the "do not hand-edit here." marker line); only the body is
@@ -75,6 +76,10 @@ def main() -> int:
     sync(
         vue_styles / "theme" / "scrollbar.scss",
         root / "packages" / "theme" / "styles" / "_scrollbar.scss",
+    )
+    sync(
+        vue_styles / "theme" / "highlight.scss",
+        root / "packages" / "theme" / "styles" / "_highlight.scss",
     )
 
     print("vendored stylesheets are in sync")

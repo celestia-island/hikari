@@ -183,8 +183,15 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
     for (_i, path) in data.paths.iter().enumerate() {
         // Validate d attribute (SVG path data)
         if let Some(ref d) = path.d {
-            // Basic validation: only allow SVG path commands
-            let allowed_commands = [
+            // Audit hikari-R1-1: the old check only validated ASCII
+            // ALPHABETIC characters against the command set — quotes,
+            // angle brackets, equals signs, and whitespace passed
+            // straight through into the `d="{}"` interpolation, so a
+            // payload like `M0 0" onload="alert(1)` escaped the
+            // attribute. The whitelist now covers EVERY character:
+            // path commands, coordinate digits, separators, and
+            // exponent markers only.
+            const ALLOWED_COMMANDS: &[char] = &[
                 'M', 'm', 'L', 'l', 'H', 'h', 'V', 'v', 'C', 'c', 'S', 's', 'Q', 'q', 'T', 't',
                 'A', 'a', 'Z', 'z',
             ];
@@ -193,13 +200,14 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
                 if j > 1000 {
                     return Err(format!("Path too long: {} characters", j));
                 }
-                if c.is_ascii_alphabetic() {
-                    if !allowed_commands.contains(&c) {
-                        return Err(format!(
-                            "Invalid SVG path command '{}' at position {}",
-                            c, j
-                        ));
-                    }
+                let ok = ALLOWED_COMMANDS.contains(&c)
+                    || c.is_ascii_digit()
+                    || matches!(c, ' ' | ',' | '.' | '+' | '-' | 'e' | 'E');
+                if !ok {
+                    return Err(format!(
+                        "Invalid SVG path character '{}' at position {}",
+                        c, j
+                    ));
                 }
             }
         }
@@ -257,9 +265,23 @@ fn is_safe_color(color: &str) -> bool {
         "none" | "currentColor" => true,
         c if c.starts_with("#") && c.len() == 4 => c[1..].chars().all(|c| c.is_ascii_hexdigit()),
         c if c.starts_with("#") && c.len() == 7 => c[1..].chars().all(|c| c.is_ascii_hexdigit()),
-        c if c.starts_with("rgb(") && c.ends_with(')') => c[4..c.len() - 1].split(',').count() == 3,
+        // Audit hikari-R1-1: the rgb/rgba arms previously only COUNTED
+        // commas — `rgb(" onload="x ,y,z)` has exactly 3 commas and
+        // passed, escaping the fill="…" interpolation. Every inner
+        // segment must now be a plain number.
+        c if c.starts_with("rgb(") && c.ends_with(')') => {
+            c[4..c.len() - 1]
+                .split(',')
+                .filter_map(|s| s.trim().parse::<f32>().ok())
+                .count()
+                == 3
+        }
         c if c.starts_with("rgba(") && c.ends_with(')') => {
-            c[5..c.len() - 1].split(',').count() == 4
+            c[5..c.len() - 1]
+                .split(',')
+                .filter_map(|s| s.trim().parse::<f32>().ok())
+                .count()
+                == 4
         }
         _ => false,
     }

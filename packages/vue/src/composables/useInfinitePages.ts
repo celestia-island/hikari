@@ -83,9 +83,9 @@ export interface InfinitePagesHandle<T> {
   error: Ref<string | null>;
   /** One-based index of the next page to fetch. */
   nextPage: Ref<number>;
-  /** Fetch the next page (guarded: no-op while busy or exhausted).
-   * A TAIL-page failure stays retriable in place — the next `loadMore`
-   * refetches the same page; only a page-one failure needs `reload`. */
+  /** Fetch the next page (guarded: no-op while busy, exhausted, or
+   * after ANY failure — `reload` is the retry verb for both the
+   * first-page and the tail-page error dialects). */
   loadMore: () => Promise<void>;
   /** Reset to page one and fetch (also the error-clearing retry). */
   reload: () => Promise<void>;
@@ -101,7 +101,11 @@ export interface InfinitePagesHandle<T> {
  *
  * Error dialect: a failed page keeps everything already delivered (the
  * consumer renders it as a stale banner — one failed fetch must never
- * hide rows the user was reading); `reload` is the retry verb.
+ * hide rows the user was reading) and terminalizes the walk; `reload`
+ * is the retry verb for every failure. Auto-retrying a tail failure is
+ * deliberately NOT done: the tail's sentinel would re-fire on a fixed
+ * geometry with no backoff, turning one flaky page into an RPC storm
+ * that locks a shared rate budget.
  */
 export function useInfinitePages<T, P extends Record<string, unknown> = Record<string, unknown>>(
   options: InfinitePagesOptions<T, P>,
@@ -123,9 +127,6 @@ export function useInfinitePages<T, P extends Record<string, unknown> = Record<s
   let seq = 0;
   let reloadTimer: ReturnType<typeof setTimeout> | null = null;
   let disposed = false;
-  /** Which phase the current `error` came from — a tail-page failure
-   * retried by `loadMore` in place, a first-page failure by `reload`. */
-  let errorPhase: "load" | "more" = "load";
 
   function normalize(result: HkPageResultLike<T>): HkPageResult<T> {
     const loose = result as {
@@ -196,14 +197,20 @@ export function useInfinitePages<T, P extends Record<string, unknown> = Record<s
   }
 
   async function loadMore(): Promise<void> {
-    // A failure from a LATER page is retriable in place (the delivered
-    // rows stay, the cursor stays); a failure from page one needs a
-    // full reload (the retry verb for the hard-error state).
+    // ANY failure terminalizes the walk until `reload()` — including a
+    // tail-page failure. The in-place retry this used to allow read
+    // fine in isolation but stormed in the field: a failed tail leaves
+    // the state machine "idle", the tail's sentinel stays in view, and
+    // its idle-entry re-check fires loadMore again with no geometry
+    // change — one RPC per round trip, no backoff, forever. On a shared
+    // per-user rate budget that loop locks the bucket and denies every
+    // OTHER paged page, so the retry verb is `reload()` (the delivered
+    // rows stay on screen under the stale banner; the header refresh is
+    // the user's affordance).
     if (loading.value || loadingMore.value || exhausted.value) return;
-    if (error.value && errorPhase !== "more") return;
+    if (error.value) return;
     if (nextPage.value > 1 && items.value.length === 0) return;
     loadingMore.value = true;
-    errorPhase = "more";
     const mine = ++seq;
     try {
       await fetchPage(nextPage.value, mine);
@@ -225,7 +232,6 @@ export function useInfinitePages<T, P extends Record<string, unknown> = Record<s
       reloadTimer = null;
     }
     loading.value = true;
-    errorPhase = "load";
     error.value = null;
     if (!options.keepDuringReload) {
       // Invalidate the cursor BEFORE the fetch so a straggler from the

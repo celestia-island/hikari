@@ -114,7 +114,7 @@ describe("useInfinitePages", () => {
     expect(handle.exhausted.value).toBe(true);
   });
 
-  it("a failed later page keeps the delivered rows and retries in place", async () => {
+  it("a failed later page keeps the delivered rows and terminalizes the walk", async () => {
     const fetcher = vi
       .fn(async (): Promise<HkPageResultLike<Row>> => page([], 0, false))
       .mockImplementationOnce(async () => page([{ id: "a" }], 3, true))
@@ -127,10 +127,36 @@ describe("useInfinitePages", () => {
     await handle.loadMore();
     expect(handle.error.value).toBe("boom");
     expect(handle.items.value.map((r) => r.id)).toEqual(["a"]);
-    // The tail failure is retriable without a full reload.
+    // A tail failure does NOT auto-retry: the sentinel's idle re-check
+    // would re-fire loadMore on a fixed geometry with no backoff — one
+    // RPC per round trip forever, locking any shared rate budget. The
+    // failure is terminal until `reload`.
     await handle.loadMore();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(handle.items.value.map((r) => r.id)).toEqual(["a"]);
+    // `reload` is the retry verb: it clears the failure and refetches
+    // from page one.
+    await handle.reload();
     expect(handle.error.value).toBeNull();
-    expect(handle.items.value.map((r) => r.id)).toEqual(["a", "b", "c"]);
+    expect(handle.items.value.map((r) => r.id)).toEqual(["b", "c"]);
+  });
+
+  it("a tail failure cannot storm: repeated loadMore stays a no-op", async () => {
+    const fetcher = vi
+      .fn(async (): Promise<HkPageResultLike<Row>> => page([], 0, false))
+      .mockImplementationOnce(async () => page([{ id: "a" }], 5, true))
+      .mockImplementation(async () => {
+        throw new Error("tail down");
+      });
+    const { handle } = withHandle(() => useInfinitePages<Row>({ fetcher, pageSize: 1 }));
+    await vi.waitFor(() => expect(handle.loading.value).toBe(false));
+    await handle.loadMore();
+    expect(handle.error.value).toBe("tail down");
+    // Ten idle-entry re-checks (the tail sentinel's emission pattern)
+    // spend ZERO further RPCs.
+    for (let i = 0; i < 10; i++) await handle.loadMore();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(handle.items.value.map((r) => r.id)).toEqual(["a"]);
   });
 
   it("a param change triggers a debounced reload from page one", async () => {

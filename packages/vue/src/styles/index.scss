@@ -12,7 +12,10 @@
 //   3. theme/scrollbar.scss — the shared overlay-scrollbar chrome
 //      (.hk-scrollbar-track/thumb) that attachOverlayScrollbars() attaches
 //      to every scroll region (vendored from packages/theme/styles).
-//   4. admin-tokens.scss — the plana-ui shared surface: layout tokens,
+//   4. theme/highlight.scss — the syntax palette: colours the .hljs-*
+//      spans useHighlight() emits, riding the --code-* family the host
+//      theme owns (vendored from packages/theme/styles).
+//   5. admin-tokens.scss — the plana-ui shared surface: layout tokens,
 //      brand-color aliases and the shared admin component classes.
 //
 // initTheme() (runtime) writes only deltas against this base into a
@@ -28,4 +31,5 @@
 @use "./theme/channels.scss";
 @use "./theme/scale.scss";
 @use "./theme/scrollbar.scss";
+@use "./theme/highlight.scss";
 @use "./admin-tokens.scss";

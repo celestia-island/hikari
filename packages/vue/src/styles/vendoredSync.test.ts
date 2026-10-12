@@ -52,6 +52,8 @@ const VENDORED_FROM_VUE: Array<[string, string]> = [
   // (packages/theme/styles) and is vendored here so npm consumers can
   // resolve it — the exports map only exposes ./styles/*.
   ["theme/scrollbar.scss", "../../theme/styles/_scrollbar.scss"],
+  // The syntax palette for .hljs-* spans lives there for the same reason.
+  ["theme/highlight.scss", "../../theme/styles/_highlight.scss"],
 ];
 
 

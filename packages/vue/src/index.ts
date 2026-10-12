@@ -422,7 +422,7 @@ export { useApproachEnd } from "./composables/useApproachEnd";
 export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";
 // The change-mark rail's public vocabulary: HkScrollContainer's `markers`
 // prop is typed with it, so consumers can name what they pass.
-export type { OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
+export type { OverlayScrollMapSegment, OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useSurfaceTransition } from "./composables/useSurfaceTransition";
 export { useSizeMorph } from "./composables/useSizeMorph";

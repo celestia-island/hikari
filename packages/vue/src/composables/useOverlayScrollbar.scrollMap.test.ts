@@ -24,7 +24,7 @@ import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "./useOverl
  *
  *    rung 1: dom 300, map 600   (rendered rows, 1:1)
  *    rung 2: dom   1, map 1100  (the collapsed divider)
- *    rung 3: dom 599, map 300   (hmm — see fixture below)
+ *    rung 3: dom 599, map 300
  */
 const GEOM = { scrollHeight: 900, clientHeight: 300, scrollTop: 0 };
 
@@ -151,6 +151,20 @@ describe("overlay scrollbar scroll map", () => {
     m.handle.setMapSegments([]);
     m.handle.update();
     expect(m.height(m.thumb())).toBeCloseTo((300 / 1999) * 200, 1);
+    t.mockRestore();
+  });
+
+  it("falls back to the dom-native bar when the map carries no document", () => {
+    const t = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(200);
+    // A pure-deletion diff folds to zero document extent: Σmap = 0 must
+    // read as "no usable map", not as a zero-total map (whose thumb would
+    // be Infinity-tall and the dom-native fallback dead).
+    const m = mount([
+      { dom: 300, map: 0 },
+      { dom: 1, map: 0 },
+      { dom: 599, map: 0 },
+    ]);
+    expect(m.height(m.thumb())).toBeCloseTo((300 / 900) * 200, 1);
     t.mockRestore();
   });
 

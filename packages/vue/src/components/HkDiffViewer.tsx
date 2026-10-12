@@ -62,7 +62,8 @@ export default defineComponent({
     /**
      * The fold-aware scroll map (see `OverlayScrollMapSegment`): document
      * units are NEW-SIDE file lines (deleted rows carry none — they do
-     * not exist in the current file), dom units are rendered rows (a
+     * not exist in the current file), dom units are MEASURED PIXELS of
+     * the rows that render (row-count fallback where nothing lays out; a
      * hunk heading is chrome and carries no document extent). The total
      * is FOLD-INVARIANT — expanding a region moves its extent from the
      * divider's rung onto real rows without changing the document — so

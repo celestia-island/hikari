@@ -42,7 +42,18 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         }
     }
 
-    // Fetch from server
+    // Fetch from server. Audit hikari-R1-2: the icon name goes into a
+    // query string — reject anything outside kebab-case and encode what
+    // remains so `&`/`#` cannot inject extra parameters.
+    if icon_name.is_empty()
+        || icon_name.len() > 100
+        || !icon_name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+    {
+        web_sys::console::warn_1(&format!("invalid icon name: {icon_name}").into());
+        return None;
+    }
     let url = format!("{}?name={}", ICON_ROUTE, icon_name);
     web_sys::console::log_1(&format!("Fetching icon '{}' from: {}", icon_name, url).into());
 
@@ -211,6 +222,28 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
         if let Some(ref sw) = path.stroke_width {
             sw.parse::<f32>()
                 .map_err(|_| format!("Invalid stroke_width: {}", sw))?;
+        }
+    }
+
+    // Audit hikari-R1-1: the root-level geometry/color attributes were
+    // previously interpolated into the SVG unvalidated — validate them
+    // here so reconstruct_svg can only ever see clean values.
+    if let Some(ref w) = data.width {
+        w.parse::<f32>()
+            .map_err(|_| format!("Invalid width: {}", w))?;
+    }
+    if let Some(ref h) = data.height {
+        h.parse::<f32>()
+            .map_err(|_| format!("Invalid height: {}", h))?;
+    }
+    if let Some(ref fill) = data.fill {
+        if !is_safe_color(fill) {
+            return Err(format!("Invalid fill color: {}", fill));
+        }
+    }
+    if let Some(ref stroke) = data.stroke {
+        if !is_safe_color(stroke) {
+            return Err(format!("Invalid stroke color: {}", stroke));
         }
     }
 

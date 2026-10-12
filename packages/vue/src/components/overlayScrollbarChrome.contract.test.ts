@@ -109,6 +109,15 @@ describe("overlay scrollbar chrome contract", () => {
     // selector, so they are written `&[data-side=…]`).
     expect(markerBlock).toMatch(/&\[data-side="start"\]\s*\{[^}]*left:\s*0/);
     expect(markerBlock).toMatch(/&\[data-side="end"\]\s*\{[^}]*right:\s*0/);
+    // …and their WIDTH: a restyle that silently stretched a lane across
+    // the whole band would collapse the two-lane reading into one strip
+    // (caught only by the vendored-sync byte comparison before this pin).
+    expect(markerBlock, "the start lane hugs a third of the band").toMatch(
+      /&\[data-side="start"\]\s*\{[^}]*width:\s*34%/,
+    );
+    expect(markerBlock, "and the end lane the other third").toMatch(
+      /&\[data-side="end"\]\s*\{[^}]*width:\s*34%/,
+    );
     // The hover ring must be drawn INSIDE the mark: the track clips its
     // children, and a plain outline loses both side strokes to that clip,
     // leaving a two-line "ring" that reads as a stray rule rather than a

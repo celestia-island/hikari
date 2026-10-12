@@ -12,7 +12,7 @@ import {
 import { useI18n } from "../i18n/context";
 import { laidOffsetWithin } from "../composables/layoutGeometry";
 import "./HkScrollContainer.scss";
-import { attachOverlayScrollbars, type OverlayScrollbarHandle, type OverlayScrollbarMarker } from "../composables/useOverlayScrollbar";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle, type OverlayScrollMapSegment, type OverlayScrollbarMarker } from "../composables/useOverlayScrollbar";
 import { useApproachEnd, type ApproachEndHandle } from "../composables/useApproachEnd";
 import { provideScrollWindow } from "../composables/useScrollWindow";
 import { SCROLL_HOST_CLASS } from "./HkScrollPin";
@@ -55,6 +55,13 @@ export default defineComponent({
     /** Width the vertical track widens to while marks show, in px. Omitted
      *  = the library default (14). Only read when `markers` is non-empty. */
     markersWidth: { type: Number, default: undefined },
+    /**
+     * Asymmetric scroll map (vertical): the scrollbar represents the
+     * DOCUMENT while the viewport holds only rendered rows — collapsed
+     * regions sweep the thumb quickly and pin the content while dragging
+     * (see `OverlayScrollMapSegment`). Omitted = the dom-native bar.
+     */
+    mapSegments: { type: Array as PropType<OverlayScrollMapSegment[]>, default: undefined },
     autoFollow: { type: Boolean, default: false },
     overscanScreens: { type: Number, default: 1 },
     /** Inline-axis alignment of the content when it fits the viewport.
@@ -274,8 +281,15 @@ export default defineComponent({
       const vp = viewportRef.value;
       if (!vp) return;
       overlay?.detach();
-      overlay = attachOverlayScrollbars(vp, { axis: props.axis, markers: props.markers, markersWidth: props.markersWidth });
+      overlay = attachOverlayScrollbars(vp, { axis: props.axis, markers: props.markers, markersWidth: props.markersWidth, mapSegments: props.mapSegments });
     }
+
+    /** Swap the fold state's map without rebuilding the chrome: expanding
+     *  or collapsing a region only re-derives the thumb from the new
+     *  rungs. */
+    watch(() => props.mapSegments, (next) => {
+      overlay?.setMapSegments(next ?? []);
+    }, { deep: true, flush: "post" });
 
     /** Re-apply marks without rebuilding the chrome: a diff re-renders its
      *  marks on every tick, and detaching/reattaching would drop the

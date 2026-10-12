@@ -78,6 +78,86 @@ const MARKER_MIN_PX = 2;
  *  default keeps the marks' two lanes readable at a glance. */
 const DEFAULT_MARKERS_WIDTH = 14;
 
+/**
+ * One rung of an ASYMMETRIC scroll map: `dom` units of rendered scroll
+ * space that carry `map` units of document space. The scrollbar then
+ * represents the DOCUMENT (the fully-expanded whole) while the scroller
+ * holds only what is rendered — collapsed regions ("40 unchanged
+ * lines…") occupy real map extent and (near-)zero dom extent, so:
+ *
+ *  - scrolling the CONTENT sweeps the thumb quickly across a collapsed
+ *    region's map range (a one-row divider stands for N document lines);
+ *  - DRAGGING the thumb through that range leaves the content pinned
+ *    (the divider is all the DOM there is to show) until the range ends;
+ *  - markers, which consumers express as fractions of the FULL document,
+ *    align with the thumb's map position — with a dom-native bar they
+ *    clump against a mostly-collapsed scroller instead.
+ *
+ * Both sides may use any consistent unit (rows, px, lines); the engine
+ * normalises Σdom onto the scroller's real extent, so approximations are
+ * fine as long as proportions are honest. `map: 0` rungs are chrome
+ * (a hunk heading) and `dom: 0` rungs are fully-collapsed content — both
+ * are honoured. Vertical axis only.
+ */
+export interface OverlayScrollMapSegment {
+  /** Rendered scroll-space extent of this rung (>0 unless collapsed). */
+  dom: number;
+  /** Document-space extent it stands for (0 = pure chrome). */
+  map: number;
+}
+
+/** Nothing has been mapped: run the dom-native math unchanged. */
+interface ScrollMap {
+  total: number;
+  fracToMap(frac: number): number;
+  mapToFrac(map: number): number;
+}
+
+/** Build the piecewise-linear tables; null unless the map is usable. */
+function buildScrollMap(
+  segments: OverlayScrollMapSegment[] | null | undefined,
+): ScrollMap | null {
+  if (!segments || segments.length === 0) return null;
+  let domTotal = 0;
+  let mapTotal = 0;
+  const domCum: number[] = [0];
+  const mapCum: number[] = [0];
+  for (const seg of segments) {
+    const dom = Number.isFinite(seg.dom) ? Math.max(seg.dom, 0) : 0;
+    const map = Number.isFinite(seg.map) ? Math.max(seg.map, 0) : 0;
+    domTotal += dom;
+    mapTotal += map;
+    domCum.push(domTotal);
+    mapCum.push(mapTotal);
+  }
+  if (domTotal <= 0 || mapTotal <= 0) return null;
+  return {
+    total: mapTotal,
+    fracToMap(frac: number): number {
+      const f = Math.min(Math.max(frac, 0), 1) * domTotal;
+      for (let i = 0; i < segments.length; i += 1) {
+        if (f <= domCum[i + 1] || i === segments.length - 1) {
+          const span = domCum[i + 1] - domCum[i];
+          const local = span > 0 ? (f - domCum[i]) / span : 1;
+          return mapCum[i] + local * (mapCum[i + 1] - mapCum[i]);
+        }
+      }
+      return mapTotal;
+    },
+    mapToFrac(map: number): number {
+      const m = Math.min(Math.max(map, 0), mapTotal);
+      for (let i = 0; i < segments.length; i += 1) {
+        if (m <= mapCum[i + 1] || i === segments.length - 1) {
+          const span = mapCum[i + 1] - mapCum[i];
+          const local = span > 0 ? (m - mapCum[i]) / span : 1;
+          return (domCum[i] + local * (domCum[i + 1] - domCum[i])) / domTotal;
+        }
+      }
+      return 1;
+    },
+  };
+}
+
 /** Clamp to [0, 1]; non-finite input is the caller's bug, but the rail
  *  must never render a mark at a meaningless position, so it becomes 0. */
 function clamp01(n: number): number {
@@ -114,11 +194,23 @@ export interface OverlayScrollbarOptions {
    *  pixels. Selective: consumers without marks keep the narrow track.
    *  Clamped to a sane range (the thumb and marks share the band). */
   markersWidth?: number;
+  /**
+   * Asymmetric scroll map for the vertical axis (see
+   * `OverlayScrollMapSegment`): the scrollbar represents the DOCUMENT
+   * while the scroller holds only the rendered rows. Omitted or empty =
+   * the dom-native bar every consumer had before. Update it any time the
+   * layout folds or unfolds — the thumb, drag, click and marker-scrub
+   * paths all re-derive from it.
+   */
+  mapSegments?: OverlayScrollMapSegment[];
 }
 
 export interface OverlayScrollbarHandle {
   /** Re-read the viewport's scroll geometry and reposition the thumbs. */
   update(): void;
+  /** Swap the asymmetric scroll map (empty clears it back to dom-native).
+   *  Call whenever the layout folds or unfolds. */
+  setMapSegments(segments: OverlayScrollMapSegment[]): void;
   /** Replace the rail's marks. Passing an empty list removes the rail
    *  again. No-op when the handle was attached against no host. */
   setMarkers(markers: OverlayScrollbarMarker[]): void;
@@ -192,7 +284,7 @@ export function attachOverlayScrollbars(
   const axis = opts.axis ?? "vertical";
   const parent = opts.host ?? viewport.parentElement;
   if (!parent) {
-    return { update() {}, setMarkers() {}, detach() {} };
+    return { update() {}, setMapSegments() {}, setMarkers() {}, detach() {} };
   }
 
   const wantV = axis !== "horizontal";
@@ -238,6 +330,8 @@ export function attachOverlayScrollbars(
   // that never pass markers keep byte-identical chrome.
   let track: HTMLElement | null = null;
   let markers: OverlayScrollbarMarker[] = [];
+  /** The asymmetric document map, when the consumer provides one. */
+  let scrollMap: ScrollMap | null = buildScrollMap(opts.mapSegments);
   let railDragging = false;
   /** Rail height the marks were last sized against — the pixel floor is a
    *  function of it, so a resize has to re-render them. */
@@ -256,6 +350,16 @@ export function attachOverlayScrollbars(
     if (rect.height <= 0) return;
     const ratio = clamp01((clientY - rect.top) / rect.height);
     const { scrollSize, clientSize } = axisMetrics(viewport, false);
+    if (scrollMap) {
+      // The band is the DOCUMENT: a scrub walks map space and collapses
+      // onto whatever dom position can present it.
+      const mapStart = scrollMap.fracToMap(viewport.scrollTop / scrollSize);
+      const mapEnd = scrollMap.fracToMap((viewport.scrollTop + clientSize) / scrollSize);
+      const viewportMap = Math.max(mapEnd - mapStart, 1e-6);
+      const mapPos = ratio * Math.max(scrollMap.total - viewportMap, 0);
+      viewport.scrollTop = scrollMap.mapToFrac(mapPos) * scrollSize;
+      return;
+    }
     viewport.scrollTop = ratio * Math.max(scrollSize - clientSize, 0);
   }
 
@@ -336,6 +440,13 @@ export function attachOverlayScrollbars(
   // `parent` to non-null, and only a closure created AFTER that narrowing
   // keeps it (a hoisted declaration may run at any time, so TS widens the
   // capture back to `HTMLElement | null`).
+  /** Swap in a new fold state; the thumb re-derives on the next update. */
+  const setMapSegments = (next: OverlayScrollMapSegment[]) => {
+    if (detached) return;
+    scrollMap = buildScrollMap(next);
+    update();
+  };
+
   const setMarkers = (next: OverlayScrollbarMarker[]) => {
     if (detached) return;
     markers = Array.isArray(next) ? next : [];
@@ -369,16 +480,30 @@ export function attachOverlayScrollbars(
     }
     s.track.style.display = "";
     const trackSize = horizontal ? s.track.clientWidth : s.track.clientHeight;
-    const ratio = clientSize / scrollSize;
+    // Asymmetric map (vertical): the thumb's SIZE and POSITION are
+    // document-space quantities — how much of the FILE the viewport shows
+    // and where in the FILE it sits — while every input stays the real
+    // DOM scroll the browser reports. A collapsed rung therefore shows as
+    // the thumb sweeping its map range with (almost) no dom travel.
+    let viewportMap = clientSize;
+    let maxScroll = scrollSize - clientSize;
+    let progressBase = scrollPos;
+    if (!horizontal && scrollMap) {
+      const mapStart = scrollMap.fracToMap(scrollPos / scrollSize);
+      const mapEnd = scrollMap.fracToMap((scrollPos + clientSize) / scrollSize);
+      viewportMap = Math.max(mapEnd - mapStart, 1e-6);
+      maxScroll = Math.max(scrollMap.total - viewportMap, 0);
+      progressBase = mapStart;
+    }
+    const ratio = viewportMap / (scrollMap && !horizontal ? scrollMap.total : scrollSize);
     const thumbSize = Math.max(ratio * trackSize, 20);
-    const maxScroll = scrollSize - clientSize;
     const maxTrack = trackSize - thumbSize;
     // A right-to-left scroller starts with `scrollLeft` at 0 (showing the
     // content's right end) and counts DOWN to -maxScroll, so its progress is
     // the magnitude — and the thumb rests at the track's right end and
     // travels left, mirrored against the left-to-right bar.
     const rtl = isRtlAxis(viewport, horizontal);
-    const progress = maxScroll > 0 ? Math.abs(scrollPos) / maxScroll : 0;
+    const progress = maxScroll > 0 ? Math.abs(progressBase) / maxScroll : 0;
     const offset = (rtl ? 1 - progress : progress) * maxTrack;
     if (horizontal) {
       s.thumb.style.width = `${thumbSize}px`;
@@ -443,12 +568,30 @@ export function attachOverlayScrollbars(
       // and falls back to the viewport box.
       const trackSize = horizontal ? s.track.clientWidth : s.track.clientHeight;
       const measured = trackSize > 0 ? trackSize : clientSize;
-      const thumbSize = Math.max((clientSize / scrollSize) * measured, 20);
+      const { scrollSize: sizeNow, clientSize: clientNow } = axisMetrics(viewport, horizontal);
+      if (horizontal || !scrollMap) {
+        // Dom-native drag (and every horizontal axis).
+        const thumbSize = Math.max((clientNow / sizeNow) * measured, 20);
+        const trackRange = measured - thumbSize;
+        if (trackRange <= 0) return;
+        const target = s.dragStartScroll + (delta / trackRange) * (sizeNow - clientNow);
+        if (horizontal) viewport.scrollLeft = target;
+        else viewport.scrollTop = target;
+        return;
+      }
+      // Mapped drag: the pointer walks the thumb through DOCUMENT space;
+      // `mapToFrac` collapses a rung the DOM cannot render into (almost)
+      // one scrollTop — dragging across a collapsed region leaves the
+      // content pinned at its divider until the range ends.
+      const f0 = s.dragStartScroll / sizeNow;
+      const mapStart = scrollMap.fracToMap(f0);
+      const mapEnd = scrollMap.fracToMap((s.dragStartScroll + clientNow) / sizeNow);
+      const viewportMap = Math.max(mapEnd - mapStart, 1e-6);
+      const thumbSize = Math.max((viewportMap / scrollMap.total) * measured, 20);
       const trackRange = measured - thumbSize;
       if (trackRange <= 0) return;
-      const target = s.dragStartScroll + (delta / trackRange) * (scrollSize - clientSize);
-      if (horizontal) viewport.scrollLeft = target;
-      else viewport.scrollTop = target;
+      const mapPos = mapStart + (delta / trackRange) * (scrollMap.total - viewportMap);
+      viewport.scrollTop = scrollMap.mapToFrac(mapPos) * sizeNow;
     };
     const onUp = () => {
       s.dragging = false;
@@ -480,6 +623,16 @@ export function attachOverlayScrollbars(
         : (e.clientY - rect.top) / rect.height;
       const { scrollSize, clientSize } = axisMetrics(viewport, horizontal);
       const max = scrollSize - clientSize;
+      if (!horizontal && scrollMap) {
+        // Clicking the band jumps the DOCUMENT to the clicked rung — the
+        // same space the thumb lives in.
+        const mapStart = scrollMap.fracToMap(viewport.scrollTop / scrollSize);
+        const mapEnd = scrollMap.fracToMap((viewport.scrollTop + clientSize) / scrollSize);
+        const viewportMap = Math.max(mapEnd - mapStart, 1e-6);
+        const mapPos = ratio * Math.max(scrollMap.total - viewportMap, 0);
+        viewport.scrollTop = scrollMap.mapToFrac(mapPos) * scrollSize;
+        return;
+      }
       if (horizontal) {
         // RTL: the track's left end is the content's END, and `scrollLeft`
         // runs 0 → −max (see the thumb mirroring in `update`), so a click at
@@ -510,6 +663,7 @@ export function attachOverlayScrollbars(
 
   return {
     update,
+    setMapSegments,
     setMarkers,
     detach() {
       if (detached) return;

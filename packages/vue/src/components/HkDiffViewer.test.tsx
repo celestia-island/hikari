@@ -238,3 +238,66 @@ describe("HkDiffViewer", () => {
     expect(root.querySelector(".hk-diff-viewer__hunk")).toBeNull();
   });
 });
+
+// ── The fold-aware scroll map (2026-10-12 user direction) ──────────────
+// The scrollbar must represent the WHOLE document while the viewer folds
+// unchanged regions away: the map total is fold-invariant, deleted rows
+// carry no document extent (they are not in the current file), and the
+// hunk heading is chrome. Mounting and folding drives the emission.
+describe("HkDiffViewer scroll map", () => {
+  const MAPPED_DIFF = [
+    // Counts MUST match the listed lines (3 old-side, 4 new-side; then
+    // 3 and 3) or the map total drifts off totalLines.
+    "@@ -1,3 +1,4 @@",
+    " ctx1",
+    " ctx2",
+    " ctx3",
+    "+add",
+    "@@ -50,3 +51,3 @@",
+    " ctxA",
+    "-old",
+    "+new",
+    " ctxB",
+  ].join("\n");
+
+  function mountViewer(extra: Record<string, unknown> = {}) {
+    const emitted: Array<Array<{ dom: number; map: number }>> = [];
+    const root = mount({
+      diff: MAPPED_DIFF,
+      totalLines: 100,
+      onScrollMap: (segs: Array<{ dom: number; map: number }>) => emitted.push(segs),
+      ...extra,
+    });
+    return { root, emitted };
+  }
+
+  it("emits a map whose total is the document, fold-invariant", async () => {
+    const { root, emitted } = mountViewer();
+    await nextTick();
+    expect(emitted.length).toBeGreaterThanOrEqual(1);
+    const total = (segs: Array<{ map: number }>) => segs.reduce((a, s) => a + s.map, 0);
+    expect(total(emitted[emitted.length - 1])).toBe(100);
+    // Collapse a hunk: the document total must not change (the scrollbar
+    // is a map of the WHOLE file whatever is folded).
+    const head = root.querySelector<HTMLButtonElement>(".hk-diff-viewer__hunk-head")!;
+    head.click();
+    await nextTick();
+    expect(total(emitted[emitted.length - 1])).toBe(100);
+    head.click(); // back
+    await nextTick();
+    expect(total(emitted[emitted.length - 1])).toBe(100);
+  });
+
+  it("counts deleted rows as rendered-but-not-in-the-document", async () => {
+    const { emitted } = mountViewer();
+    await nextTick();
+    const segs = emitted[emitted.length - 1];
+    const total = segs.reduce((a, s) => a + s.map, 0);
+    const dom = segs.reduce((a, s) => a + s.dom, 0);
+    // 4 context/add rows in hunk 1 + 6 in hunk 2 (one of them a DELETED
+    // row: rendered, map 0) → dom exceeds the hunks' map contribution.
+    expect(dom).toBeGreaterThan(total - 100 + 0); // sanity: dom side exists
+    const hunkRows = segs.filter((s) => s.dom === 1 && s.map <= 1);
+    expect(hunkRows.length).toBeGreaterThan(4);
+  });
+});

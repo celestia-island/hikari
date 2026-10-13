@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-vue-next";
+import { safeHref } from "../utils/safeHref";
 import { defineComponent, computed, ref, type PropType } from "vue";
 import type { Component } from "vue";
 
@@ -131,7 +132,7 @@ export default defineComponent({
       if (props.href) {
         return (
           <a
-            href={props.href}
+            href={safeHref(props.href)}
             class={cls}
             {...dataAttrs.value}
             aria-disabled={props.disabled}

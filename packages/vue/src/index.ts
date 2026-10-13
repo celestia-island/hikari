@@ -173,6 +173,7 @@ export { default as HLogo } from "./components/HkLogo";
 // Component types
 export { type BadgeVariant } from "./components/HkBadge";
 export { type BoardNodeInput, type BoardEdgeInput } from "./components/HkBoard";
+export { isSafeHref, safeHref } from "./utils/safeHref";
 export { type BoardAnchorMode, type BoardEdgeStyle, type BoardPoint } from "./utils/boardEdges";
 export { type BoardCamera, type BoardRect, type BoardViewport } from "./utils/boardCamera";
 export { type ModalAction } from "./components/HkModal";

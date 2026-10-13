@@ -1,4 +1,5 @@
 import { computed, defineComponent, type PropType } from "vue";
+import { safeHref } from "../utils/safeHref";
 import { useI18n } from "../i18n/context";
 import "./HkBreadcrumb.scss";
 
@@ -19,7 +20,7 @@ export default defineComponent({
           {props.items.map((item, index) => (
             <li key={index} class="hk-breadcrumb-item">
               {item.to ? (
-                <a href={item.to} class="hk-breadcrumb-link">{item.label}</a>
+                <a href={safeHref(item.to)} class="hk-breadcrumb-link">{item.label}</a>
               ) : (
                 <span class="hk-breadcrumb-link">{item.label}</span>
               )}

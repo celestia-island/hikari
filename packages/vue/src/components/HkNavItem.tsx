@@ -117,7 +117,7 @@ export default defineComponent({
       if (props.to) {
         return (
           <a
-            href={props.to}
+            href={safeHref(props.to)}
             class={cls}
             {...dataAttrs.value}
             aria-disabled={props.disabled}

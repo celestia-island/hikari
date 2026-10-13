@@ -1,5 +1,6 @@
 import { defineComponent, type PropType } from "vue";
 import { useI18n } from "../i18n/context";
+import { safeHref } from "../utils/safeHref";
 import "./HkLogo.scss";
 
 const sizeMap: Record<string, string> = {
@@ -71,7 +72,7 @@ export default defineComponent({
       return () => (
         <a
           class="hk-logo"
-          href={props.href}
+          href={safeHref(props.href)}
           onClick={(e: MouseEvent) => emit("click", e)}
           style={{ lineHeight: 0 }}
         >

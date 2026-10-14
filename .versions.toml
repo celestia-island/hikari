@@ -1,0 +1,11 @@
+# Version-gate overrides and exemptions (celestia-devtools verify-versions).
+# The npm baseline stays the @celestia-island/hikari line (packages/vue).
+
+[exempt.npm]
+# The reference BUILT-IN standard theme plugin (akivili conventions):
+# compiled into the host at build time, private, never distributed on
+# npm (#780) — it tracks hikari's peer range, not the version line, so
+# its 0.x leaf is exempt from the npm baseline comparison. Without this
+# the gate has been red on master since #780 (private packages still
+# must agree with the baseline).
+"packages/default_theme" = "build-time built-in, never distributed on npm"

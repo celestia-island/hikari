@@ -80,4 +80,82 @@ describe("HkFilterTrigger", () => {
     const empty = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: {} }));
     expect(empty.querySelector(".hk-filter-trigger-dot")).toBeNull();
   });
+
+  // ── Nested-popout regression (2026-10-14) ──────────────────────────
+  // A popout opened from INSIDE the panel teleports to <body>, so the
+  // panel popover's outside-click shield cannot see the nesting by DOM
+  // containment — until the shield learned data-hk-popout-layer, picking
+  // from the add-condition chooser (or a select row's popup) slammed the
+  // whole panel shut and swallowed the pick. Both paths pinned here.
+
+  it("keeps the panel open when a field is picked from the add-condition chooser", async () => {
+    let seen: Record<string, unknown> | null = null;
+    const c = mount(
+      h(HkFilterTrigger, {
+        fields: FIELDS,
+        modelValue: {},
+        "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
+      }),
+    );
+    c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    document.body
+      .querySelector<HTMLButtonElement>(".hk-filter-panel .hk-filter-panel-add")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    const item = document.body.querySelector<HTMLElement>(".hk-filter-add-item")!;
+    expect(item, "chooser mounted").toBeTruthy();
+    item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 60));
+    // The pick landed…
+    expect(seen).not.toBeNull();
+    expect(Object.keys(seen!)).toContain("tool");
+    // …and the PANEL is still open — the chooser's click is not a
+    // backdrop dismissal for it.
+    expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
+  });
+
+  it("keeps the panel open when an option is picked from a select condition row", async () => {
+    const selectFields = [
+      { key: "tool", label: "Tool", kind: "text" as const },
+      { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
+    ];
+    let seen: Record<string, unknown> | null = null;
+    const c = mount(
+      h(HkFilterTrigger, {
+        fields: selectFields,
+        modelValue: { agent: { op: "eq", value: "" } },
+        "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
+      }),
+    );
+    c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    document.body
+      .querySelector<HTMLButtonElement>(".hk-filter-panel .hk-popup-select-trigger")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    // The popout's FIRST item is the prepended "All" clear row — pick
+    // the real option by its label.
+    const option = [...document.body.querySelectorAll<HTMLElement>(".hk-popup-select-item")].find(
+      (el) => el.textContent?.trim() === "Agent One",
+    )!;
+    expect(option, "select popout mounted").toBeTruthy();
+    option.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 60));
+    // The option landed on the condition…
+    expect((seen! as { agent: { value: string } }).agent.value).toBe("a1");
+    // …and the panel survived the nested pick.
+    expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
+    document.body.querySelectorAll(".hk-popup-select-item, .hk-popover-panel").forEach((el) => el.remove());
+  });
 });

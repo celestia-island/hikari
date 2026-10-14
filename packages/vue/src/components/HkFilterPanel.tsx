@@ -1,9 +1,11 @@
-import { computed, defineComponent, type PropType } from "vue";
+import { computed, defineComponent, nextTick, ref, watch, type PropType } from "vue";
 import { Plus, X } from "lucide-vue-next";
 
 import HkDatePicker from "./HkDatePicker";
 import HkInput from "./HkInput";
+import HkPopover from "./HkPopover";
 import HkPopupSelect, { type HkPopupSelectOption } from "./HkPopupSelect";
+import HkScrollContainer from "./HkScrollContainer";
 import { useI18n } from "../i18n/context";
 import "./HkFilterPanel.scss";
 
@@ -138,15 +140,91 @@ export default defineComponent({
       () => props.fields.filter((f) => conditionFor(f).value !== "").length,
     );
 
+    // The visible rows ARE the state record's declared fields, in
+    // declaration order; the rest stay latent behind the add row.
+    const rows = computed(() => props.fields.filter((f) => props.modelValue[f.key] !== undefined));
+    const addable = computed(() => props.fields.filter((f) => props.modelValue[f.key] === undefined));
+
+    // ── The add-condition field chooser (user direction 2026-10-14) ──
+    // "Add condition" NEVER appends by declaration order — it opens a
+    // menu of the latent fields and the user picks WHO joins the panel.
+    // The menu is a popover anchored to the add button (a bottom sheet
+    // on mobile, same split as every other panel popout); the keyboard
+    // model mirrors HkPopupSelect: focus stays on the trigger, arrows
+    // move a highlight, Enter confirms it.
+    const addMenuOpen = ref(false);
+    const addBtnRef = ref<HTMLElement | null>(null);
+    const addHighlight = ref(-1);
+
+    function openAddMenu() {
+      addMenuOpen.value = true;
+      // First item pre-highlighted: arrows and Enter work immediately.
+      addHighlight.value = addable.value.length > 0 ? 0 : -1;
+    }
+
+    function closeAddMenu() {
+      addMenuOpen.value = false;
+      addHighlight.value = -1;
+    }
+
+    function pickAddable(field: HkFilterFieldDef) {
+      // Materialize the row: the kind's default operator, empty value.
+      emitCondition(field, { op: operatorsFor(field)[0]!, value: "" });
+      closeAddMenu();
+    }
+
+    // The latent list can change under an open menu (a row removed while
+    // the menu is open grows it; the last latent field picked empties
+    // it) — keep the highlight in range and close on an empty menu.
+    watch(addable, (list) => {
+      if (!addMenuOpen.value) return;
+      if (list.length === 0) {
+        closeAddMenu();
+        return;
+      }
+      if (addHighlight.value >= list.length) addHighlight.value = list.length - 1;
+    });
+
+    watch(addHighlight, (i) => {
+      if (i < 0) return;
+      nextTick(() => {
+        document
+          .querySelector(`[data-add-index="${i}"]`)
+          ?.scrollIntoView({ block: "nearest" });
+      });
+    });
+
+    function onAddTriggerKeydown(e: KeyboardEvent) {
+      if (props.disabled) return;
+      const count = addable.value.length;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!addMenuOpen.value) openAddMenu();
+        else addHighlight.value = (addHighlight.value + 1) % count;
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!addMenuOpen.value) openAddMenu();
+        else addHighlight.value = (addHighlight.value - 1 + count) % count;
+      } else if ((e.key === "Enter" || e.key === " ") && addMenuOpen.value) {
+        // With the menu open, Enter/Space CONFIRM the highlighted field;
+        // the native button activation (a toggle click) is suppressed.
+        e.preventDefault();
+        const field = addable.value[addHighlight.value];
+        if (field) pickAddable(field);
+      } else if (e.key === "Escape" && addMenuOpen.value) {
+        // Escape closes ONE layer — the menu, not the host panel: stop
+        // the bubble before the host popover's own Escape handler.
+        e.preventDefault();
+        e.stopPropagation();
+        closeAddMenu();
+      }
+    }
+
     return () => {
       const label = props.label ?? t("hikari::filterBar.trigger", "Filters");
-      // The visible rows ARE the state record's declared fields, in
-      // declaration order; the rest stay latent behind the add row.
-      const rows = props.fields.filter((f) => props.modelValue[f.key] !== undefined);
-      const addable = props.fields.filter((f) => props.modelValue[f.key] === undefined);
       return (
         <div class="hk-filter-panel" data-testid="hk-filter-panel" data-active={activeCount.value > 0 || undefined} aria-label={label}>
-          {rows.map((field) => {
+          {rows.value.map((field) => {
             const condition = conditionFor(field);
             const ops = operatorsFor(field);
             return (
@@ -240,24 +318,72 @@ export default defineComponent({
               </div>
             );
           })}
-          {addable.length > 0 && (
+          {addable.value.length > 0 && (
             <div class="hk-filter-panel-addrow">
               {/* The ONE growth verb, parked in the operator column so
                * the row grid reads as one aligned axis (user direction
-               * 2026-10-12). Appends the next unused field with its
+               * 2026-10-12). It no longer appends by declaration order
+               * (user direction 2026-10-14): the click opens the field
+               * chooser and the picked field materializes with its
                * kind's default operator and an empty value. */}
               <button
+                ref={addBtnRef}
                 type="button"
                 class="hk-filter-panel-add"
                 disabled={props.disabled}
-                onClick={() => {
-                  const field = addable[0]!;
-                  emitCondition(field, { op: operatorsFor(field)[0]!, value: "" });
-                }}
+                aria-haspopup="menu"
+                aria-expanded={addMenuOpen.value ? "true" : "false"}
+                data-state={addMenuOpen.value ? "open" : "closed"}
+                onClick={() => (addMenuOpen.value ? closeAddMenu() : openAddMenu())}
+                onKeydown={onAddTriggerKeydown}
               >
                 <Plus size={14} aria-hidden="true" />
                 <span>{t("hikari::filterPanel.addCondition", "Add condition")}</span>
               </button>
+              {/* The chooser itself: a popover anchored to the add button
+               * (top-start — the button sits at the panel's bottom edge,
+               * so the list opens over the panel's own rows; autoFlip
+               * drops it below when the viewport says otherwise), a
+               * bottom sheet on mobile — the same split as every other
+               * popout this panel hosts. */}
+              <HkPopover
+                modelValue={addMenuOpen.value}
+                onUpdate:modelValue={(v: boolean) => (v ? openAddMenu() : closeAddMenu())}
+                anchorRef={addBtnRef.value}
+                placement="top-start"
+                offset={4}
+                backdrop={false}
+                sheetOnMobile
+                title={t("hikari::filterPanel.addCondition", "Add condition")}
+                class="hk-filter-add-content"
+              >
+                <HkScrollContainer class="hk-filter-add-viewport">
+                  {/* role=menu lives on the inner list (HkScrollContainer
+                   * owns its root's attr surface); items carry menuitem. */}
+                  <div
+                    class="hk-filter-add-list"
+                    role="menu"
+                    aria-label={t("hikari::filterPanel.chooseField", "Choose a field to add")}
+                  >
+                    {addable.value.map((field, i) => (
+                      <button
+                        key={field.key}
+                        type="button"
+                        class="hk-filter-add-item"
+                        role="menuitem"
+                        data-kind={field.kind}
+                        data-highlighted={addHighlight.value === i || undefined}
+                        data-add-index={i}
+                        disabled={props.disabled}
+                        onClick={() => pickAddable(field)}
+                        onPointerenter={() => { addHighlight.value = i; }}
+                      >
+                        <span class="hk-filter-add-item-label">{field.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </HkScrollContainer>
+              </HkPopover>
             </div>
           )}
         </div>

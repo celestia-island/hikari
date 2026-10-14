@@ -201,6 +201,7 @@
     "hikari::filterBar.apply": "تطبيق",
     "hikari::filterPanel.all": "الكل",
     "hikari::filterPanel.addCondition": "إضافة شرط",
+    "hikari::filterPanel.chooseField": "اختر حقلًا لإضافته",
     "hikari::filterPanel.removeCondition": "إزالة الشرط",
     "hikari::filterBar.reset": "إعادة تعيين",
     "hikari::filterPanel.op.eq": "يساوي",

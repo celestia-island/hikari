@@ -201,6 +201,7 @@
     "hikari::filterBar.apply": "Применить",
     "hikari::filterPanel.all": "Все",
     "hikari::filterPanel.addCondition": "Добавить условие",
+    "hikari::filterPanel.chooseField": "Выберите поле для добавления",
     "hikari::filterPanel.removeCondition": "Удалить условие",
     "hikari::filterBar.reset": "Сбросить",
     "hikari::filterPanel.op.eq": "равно",

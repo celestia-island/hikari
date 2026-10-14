@@ -201,6 +201,7 @@
     "hikari::filterBar.apply": "適用",
     "hikari::filterPanel.all": "すべて",
     "hikari::filterPanel.addCondition": "条件を追加",
+    "hikari::filterPanel.chooseField": "追加するフィールドを選択",
     "hikari::filterPanel.removeCondition": "条件を削除",
     "hikari::filterBar.reset": "リセット",
     "hikari::filterPanel.op.eq": "等しい",

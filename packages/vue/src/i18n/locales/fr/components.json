@@ -201,6 +201,7 @@
     "hikari::filterBar.apply": "Appliquer",
     "hikari::filterPanel.all": "Tous",
     "hikari::filterPanel.addCondition": "Ajouter une condition",
+    "hikari::filterPanel.chooseField": "Choisir un champ à ajouter",
     "hikari::filterPanel.removeCondition": "Supprimer la condition",
     "hikari::filterBar.reset": "Réinitialiser",
     "hikari::filterPanel.op.eq": "égal à",

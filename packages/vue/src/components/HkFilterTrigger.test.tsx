@@ -158,4 +158,65 @@ describe("HkFilterTrigger", () => {
     expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
     document.body.querySelectorAll(".hk-popup-select-item, .hk-popover-panel").forEach((el) => el.remove());
   });
+
+  // ── Escape closes ONE layer (2026-10-14) ──────────────────────────
+  // An open nested popout absorbs the Escape itself (stopPropagation
+  // before the host popover's panel keydown); a closed one lets it
+  // bubble so the host panel closes. Both nested popout kinds pinned —
+  // HkPopupSelect used to close BOTH layers on one Escape.
+
+  it("Escape with the chooser open closes the chooser but keeps the panel", async () => {
+    const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: {} }));
+    c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    const add = document.body.querySelector<HTMLButtonElement>(
+      ".hk-filter-panel .hk-filter-panel-add",
+    )!;
+    add.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeTruthy();
+    add.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await new Promise((r) => setTimeout(r, 60));
+    // The chooser left…
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeNull();
+    // …the panel stayed.
+    expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
+    // A second Escape (nothing nested open) bubbles on to close the panel.
+    add.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.body.querySelector(".hk-filter-panel")).toBeNull();
+  });
+
+  it("Escape with a select popout open closes the popout but keeps the panel", async () => {
+    const selectFields = [
+      { key: "tool", label: "Tool", kind: "text" as const },
+      { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
+    ];
+    const c = mount(
+      h(HkFilterTrigger, { fields: selectFields, modelValue: { agent: { op: "eq", value: "" } } }),
+    );
+    c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    const selectTrigger = document.body.querySelector<HTMLButtonElement>(
+      ".hk-filter-panel .hk-popup-select-trigger",
+    )!;
+    selectTrigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.body.querySelector(".hk-popup-select-item")).toBeTruthy();
+    selectTrigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await new Promise((r) => setTimeout(r, 60));
+    // The popout left…
+    expect(document.body.querySelector(".hk-popup-select-item")).toBeNull();
+    // …the panel stayed.
+    expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
+    document.body.querySelectorAll(".hk-popover-panel").forEach((el) => el.remove());
+  });
 });

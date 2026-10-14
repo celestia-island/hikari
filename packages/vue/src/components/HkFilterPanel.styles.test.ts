@@ -79,4 +79,15 @@ describe("HkFilterPanel stylesheet contract", () => {
     expect(media).toMatch(/max-width:\s*5\.25rem/);
     expect(media).toMatch(/minmax\(4\.75rem,\s*auto\)/);
   });
+
+  it("registers the chooser rows in the sheet-context token swap (44px touch rows)", () => {
+    // The add-condition chooser docks as a bottom sheet on mobile; its
+    // items must ride the unified menu-item SHEET geometry. The swap
+    // lives in _menu-item.scss's adopter list (pulled in via the
+    // @use chain) — an unregistered class silently keeps the 34px
+    // desktop rows (R1 2026-10-14 finding: exactly that happened).
+    expect(css).toMatch(
+      /\.hk-popover-panel\.hk-is-sheet[^{]*\.hk-filter-add-item[^{]*\{[^}]*--hk-menu-item-min-h:\s*44px/,
+    );
+  });
 });

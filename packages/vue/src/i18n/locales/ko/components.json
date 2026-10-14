@@ -201,6 +201,7 @@
     "hikari::filterBar.apply": "적용",
     "hikari::filterPanel.all": "전체",
     "hikari::filterPanel.addCondition": "조건 추가",
+    "hikari::filterPanel.chooseField": "추가할 필드 선택",
     "hikari::filterPanel.removeCondition": "조건 삭제",
     "hikari::filterBar.reset": "초기화",
     "hikari::filterPanel.op.eq": "같음",

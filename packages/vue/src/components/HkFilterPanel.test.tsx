@@ -19,6 +19,11 @@ afterEach(() => {
     app.unmount();
     container.remove();
   }
+  // The field chooser (and any popout it opened) teleports to <body>
+  // (HkPopover) — sweep the leftovers so the next test starts clean.
+  document.body
+    .querySelectorAll(".hk-filter-add-item, .hk-popover-panel, .hk-select-popout-host")
+    .forEach((el) => el.remove());
 });
 
 const FIELDS = [
@@ -59,7 +64,34 @@ describe("HkFilterPanel", () => {
     expect(c.querySelectorAll(".hk-filter-panel-row")).toHaveLength(FIELDS.length);
   });
 
-  it("adds the next latent field with its kind's default operator and an empty value", () => {
+  it("opens a field chooser on the add verb instead of appending anything", async () => {
+    let seen: HkFilterState | null = null;
+    const c = mount(
+      h(HkFilterPanel, {
+        fields: FIELDS,
+        modelValue: { tool: { op: "eq", value: "web" } },
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
+      }),
+    );
+    const add = c.querySelector<HTMLButtonElement>(".hk-filter-panel-add")!;
+    expect(add.getAttribute("aria-haspopup")).toBe("menu");
+    expect(add.getAttribute("aria-expanded")).toBe("false");
+    add.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    // The click itself appends NOTHING (user direction 2026-10-14: add
+    // means pick WHO — never the next field in declaration order)…
+    expect(seen).toBeNull();
+    // …and the chooser lists ONLY the latent fields, in declaration
+    // order, labeled by the field defs.
+    const items = [...document.body.querySelectorAll(".hk-filter-add-item")].map(
+      (el) => el.textContent,
+    );
+    expect(items).toEqual(["Calls", "Agent", "Since"]);
+    expect(add.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("materializes the picked field with its kind's default operator and closes the chooser", async () => {
     let seen: HkFilterState | null = null;
     const c = mount(
       h(HkFilterPanel, {
@@ -69,9 +101,48 @@ describe("HkFilterPanel", () => {
       }),
     );
     c.querySelector(".hk-filter-panel-add")!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    const item = [...document.body.querySelectorAll(".hk-filter-add-item")].find(
+      (el) => el.textContent === "Agent",
+    )!;
+    expect(item, "chooser lists the latent Agent field").toBeTruthy();
+    item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
     expect(seen).not.toBeNull();
-    // "count" is the next unused field in declaration order; its kind's
-    // first operator (lt) and an empty value.
+    // The picked field joins with its kind's first operator (select →
+    // eq) and an empty value; the existing condition is untouched.
+    expect(seen!["agent"]).toEqual({ op: "eq", value: "" });
+    expect(seen!["tool"]).toEqual({ op: "eq", value: "web" });
+    // The chooser leaves with the pick (after the leave settle).
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeNull();
+  });
+
+  it("drives the chooser from the add button — arrows highlight, Enter picks", async () => {
+    let seen: HkFilterState | null = null;
+    const c = mount(
+      h(HkFilterPanel, {
+        fields: FIELDS,
+        modelValue: {},
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
+      }),
+    );
+    const add = c.querySelector<HTMLButtonElement>(".hk-filter-panel-add")!;
+    // ArrowDown opens the chooser with the first item highlighted.
+    add.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    const items = [...document.body.querySelectorAll(".hk-filter-add-item")];
+    expect(items).toHaveLength(4);
+    expect(items[0]!.getAttribute("data-highlighted")).toBe("true");
+    // ArrowDown again moves the highlight to the second item.
+    add.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    await Promise.resolve();
+    expect(items[1]!.getAttribute("data-highlighted")).toBe("true");
+    // Enter confirms the highlighted field — "Calls" (number kind → lt).
+    add.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    await Promise.resolve();
     expect(seen!["count"]).toEqual({ op: "lt", value: "" });
   });
 

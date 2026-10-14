@@ -205,6 +205,7 @@
     "hikari::filterBar.apply": "应用",
     "hikari::filterPanel.all": "全部",
     "hikari::filterPanel.addCondition": "添加条件",
+    "hikari::filterPanel.chooseField": "选择要添加的字段",
     "hikari::filterPanel.removeCondition": "移除条件",
     "hikari::filterBar.reset": "重置",
     "hikari::filterPanel.op.eq": "等于",

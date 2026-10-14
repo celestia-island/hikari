@@ -205,6 +205,7 @@
     "hikari::filterBar.apply": "套用",
     "hikari::filterPanel.all": "全部",
     "hikari::filterPanel.addCondition": "新增條件",
+    "hikari::filterPanel.chooseField": "選擇要新增的欄位",
     "hikari::filterPanel.removeCondition": "移除條件",
     "hikari::filterBar.reset": "重設",
     "hikari::filterPanel.op.eq": "等於",

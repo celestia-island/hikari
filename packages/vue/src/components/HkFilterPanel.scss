@@ -9,10 +9,12 @@
  * Row anatomy: [field label | operator symbol group | value control +
  * remove]. Rows are the page's ACTIVE conditions; the trailing add row
  * (button parked in the operator column, user direction 2026-10-12)
- * materializes the next latent field. Edits commit LIVE (the desktop
- * panel has no confirm button); the mobile sheet's single confirm merely
- * closes — the standard HkPopover sheetOnMobile split renders the same
- * panel in both shapes.
+ * opens the FIELD CHOOSER — a popover of the latent fields (user
+ * direction 2026-10-14: add means pick WHO, never append by declaration
+ * order) and the picked field materializes as a row. Edits commit LIVE
+ * (the desktop panel has no confirm button); the mobile sheet's single
+ * confirm merely closes — the standard HkPopover sheetOnMobile split
+ * renders the same panel in both shapes.
  *
  * ONE GRID, ONE AXIS (user direction 2026-10-12): the panel itself is
  * the grid and each row contributes `display: contents` cells, so the
@@ -21,6 +23,7 @@
  * puts every cell of every row on the same vertical axis — label,
  * symbol group, control, and remove button all share it.
  */
+@use "./menu-item" as mi;
 
 .hk-filter-panel {
   display: grid;
@@ -176,6 +179,64 @@
 
 .hk-filter-panel-add:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The trigger's open face while the chooser is up (the popup-select
+ * trigger's [data-state="open"] grammar — the user must see the button
+ * and its menu as one surface). */
+.hk-filter-panel-add[data-state="open"] {
+  background: rgb(var(--color-primary) / 12%);
+  color: rgb(var(--color-primary));
+}
+
+/* ── The add-condition field chooser ───────────────────────────────
+ * A popover of the LATENT fields (user direction 2026-10-14): the
+ * add button opens it, the picked field materializes as a row. Same
+ * popout geometry as the panel's popup selects (min-width floor, one
+ * 240px content cap, then viewport scroll); item rows speak the
+ * unified menu-item spec, so the list reads as one family with select
+ * options and menu rows around it. The mobile sheet form flows from
+ * the shared `.hk-is-sheet` token context — touch geometry comes
+ * free, no per-component media query. */
+.hk-filter-add-content {
+  min-width: 180px;
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.hk-filter-add-viewport .hk-scroll-container-viewport {
+  display: flex;
+  flex-direction: column;
+}
+
+.hk-filter-add-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.hk-filter-add-item {
+  @include mi.item;
+  width: 100%;
+  justify-content: flex-start;
+  text-align: start;
+}
+
+/* Keyboard highlight face — identical values to the popup-select item's
+ * [data-highlighted]; hover comes from mi.item's own guarded :hover. */
+.hk-filter-add-item[data-highlighted] {
+  background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+  border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
+  color: rgb(var(--color-text));
+}
+
+.hk-filter-add-item:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 

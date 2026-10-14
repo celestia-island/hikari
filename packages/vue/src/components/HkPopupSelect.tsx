@@ -142,6 +142,16 @@ export default defineComponent({
             normalizedOptions.value.length;
         }
       } else if (e.key === "Escape") {
+        if (isOpen.value) {
+          // Escape closes ONE layer — the popout only, not the host
+          // surface it rides in (a select inside a filter panel row must
+          // not take the whole panel with it; same contract as the
+          // filter panel's own add-condition chooser). A closed popout
+          // keeps bubbling: that Escape was meant for whatever hosts
+          // this control.
+          e.preventDefault();
+          e.stopPropagation();
+        }
         isOpen.value = false;
       }
     }

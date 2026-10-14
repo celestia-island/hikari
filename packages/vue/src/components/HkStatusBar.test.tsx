@@ -732,3 +732,29 @@ describe("HkStatusBar", () => {
     expect(scss).not.toMatch(/\.s-status-bar-version,\s*\n\s*\.s-status-bar-version-sep\s*\{/);
   });
 });
+
+// ── tier "none": a local panel has no transport facts to show ────────────
+describe("HkStatusBar tier none", () => {
+  it("hides the protocol and network rows for the local sentinel", async () => {
+    const container = mountBar({
+      connectionStatus: "connected",
+      connectionInfo: { ...INFO, tier: "none", region: "CN", latencyMs: 3 },
+      latencyMs: 3,
+      version: "0.1.0",
+    });
+    await nextTick();
+    const tag = tagOf(container);
+    tag.dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel, "popover opens on hover").toBeTruthy();
+    const text = panel?.textContent ?? "";
+    // Vacuity guard first: the connected status text renders in the panel.
+    expect(text).toContain("Connected");
+    // A local panel has no transport protocol nor a network region —
+    // those rows must not render at all for the sentinel tier.
+    expect(text).not.toContain("Protocol");
+    expect(text).not.toContain("Network");
+    expect(text).not.toContain("HTTP");
+  });
+});

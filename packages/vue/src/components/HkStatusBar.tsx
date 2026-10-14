@@ -196,6 +196,10 @@ export const HkStatusBar = defineComponent({
     compact: { type: Boolean, default: false },
     onRetry: { type: Function as PropType<() => void>, default: undefined },
     latencyMs: { type: Number, default: null },
+    // The sentinel tier "none" suppresses BOTH the protocol and the
+    // network rows — for hosts whose panel is local (the desktop shell:
+    // "connected" there only means the local face is up, so neither a
+    // transport protocol nor a network region is a fact about the link).
     transportTier: { type: String as PropType<string>, default: undefined },
     attemptNumber: { type: Number, default: undefined },
     countdown: { type: Number, default: undefined },
@@ -569,6 +573,8 @@ export const HkStatusBar = defineComponent({
                       )}
                     </>
                   )}
+                  {tier !== "none" && (
+                    <>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Plug size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.protocol", "Protocol")}</span>
@@ -585,6 +591,8 @@ export const HkStatusBar = defineComponent({
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.network", "Network")}</span>
                     <span>{regionDisplayName(info.region, locale, t)}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("hikari::statusBar.local", "Local") : ""}</span>
                   </div>
+                    </>
+                  )}
                   {(props.extraDetails ?? []).map((row) => (
                     <div key={row.key} data-extra-detail={row.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", maxWidth: "400px" }}>
                       <span style={{ opacity: 0.5, flexShrink: 0, display: "inline-flex" }}>{row.icon}</span>

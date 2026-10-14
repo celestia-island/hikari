@@ -25,7 +25,7 @@
   height: var(--hk-tb-height);
   display: flex;
   align-items: center;
-  z-index: var(--z-titlebar, 100001);
+  z-index: var(--hk-z-titlebar);
   user-select: none;
   -webkit-user-select: none;
   background: var(--hk-tb-bg);

@@ -110,7 +110,7 @@
   /* Drag ghost: above page chrome (--z-sidebar 900) but below every
      popup band (overlay 1000 < dropdown 2000 < tooltip 3000 < toast 4000)
      so a drag never buries toasts or open panels. */
-  z-index: var(--hk-z-drag, 950);
+  z-index: var(--hk-z-drag);
   will-change: transform;
 
   > .hk-draggable-list-item {

@@ -66,10 +66,29 @@
   --hi-duration-fast: 0.15s;
   --hi-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Z-index bands */
-  --z-base: 0;
-  --z-header: 100;
-  --z-sidebar: 900;
+  /* Z-index bands — ONE definition per name; every component that needs
+   * a stacking layer consumes these variables. The bands are ordered from
+   * base content (0) to the window titlebar (100001); a higher band
+   * always paints above a lower one. Tooltips sit above toasts AND
+   * modals so their text stays readable and copyable while any overlay
+   * is showing (user direction 2026-10-15). */
+  --hk-z-base: 0;            /* base content stacking context */
+  --hk-z-above: 1;           /* local bump: checkbox marks, switch thumbs */
+  --hk-z-scrollbar: 10;      /* scrollbar tracks and corner rulers */
+  --hk-z-fab: 40;            /* floating action button */
+  --hk-z-toolbar: 50;        /* zoom toolbar / local overlay strips */
+  --hk-z-header: 100;        /* sticky header */
+  --hk-z-sidebar: 900;       /* sidebar drawer */
+  --hk-z-drag: 950;          /* element being dragged floats above its row */
+  --hk-z-breadcrumb: 2500;   /* modal breadcrumb bar */
+  --hk-z-float: 3000;        /* floating panels: select popout, popover, anchored layer */
+  --hk-z-toast: 4000;        /* toast notifications */
+  --hk-z-veil: 4100;         /* full-screen loading veil (above toast) */
+  --hk-z-modal: 5000;        /* modal backdrop + frame */
+  --hk-z-tooltip: 6000;      /* tooltip — above toasts and modals so its text
+                                 is always readable and copyable */
+  --hk-z-error: 95000;       /* error landing overlay (covers everything) */
+  --hk-z-titlebar: 100001;   /* window titlebar (Tauri shell) */
 
   /* Viewport gutter — the minimum distance every floating layer (tooltip,
    * popover, menu, select popout, modal frame, toasts) keeps from the

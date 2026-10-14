@@ -86,7 +86,7 @@
   background: rgb(var(--color-surface));
   backdrop-filter: blur(var(--blur-md));
   border-top: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
-  z-index: var(--z-footer, 110);
+  z-index: var(--hk-z-toolbar);
   flex-shrink: 0;
 }
 
@@ -391,7 +391,7 @@
 /* ── Glass header ─ */
 .s-glass-header {
   position: relative;
-  z-index: var(--z-header);
+  z-index: var(--hk-z-header);
   display: flex;
   align-items: center;
   /* Horizontal rhythm + gap live in the class (not in host utilities):

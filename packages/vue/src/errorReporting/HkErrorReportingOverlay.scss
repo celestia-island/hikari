@@ -5,5 +5,5 @@
 .hk-error-reporting-overlay {
   position: fixed;
   inset: 0;
-  z-index: 5000;
+  z-index: var(--hk-z-modal);
 }

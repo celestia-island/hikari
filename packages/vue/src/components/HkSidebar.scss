@@ -98,7 +98,7 @@
 .hk-sidebar[data-mobile] {
   position: fixed;
   inset: 0;
-  z-index: var(--hk-sidebar-z, 900);
+  z-index: var(--hk-z-sidebar);
   background-color: var(--hk-drawer-overlay-bg, rgba(0, 0, 0, 0.45));
   width: 100%;
 

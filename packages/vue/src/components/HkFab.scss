@@ -4,7 +4,7 @@
 // safe-area-aware base per instance (set from offsetX / offsetY).
 .hk-fab {
   position: absolute;
-  z-index: var(--hk-fab-z, 40);
+  z-index: var(--hk-z-fab);
   display: flex;
   align-items: center;
   gap: var(--space-8, 0.5rem);

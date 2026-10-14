@@ -763,7 +763,7 @@ describe("HkTable grip CSS (source contract)", () => {
     expect(scss).toMatch(/\.hk-table-drag-ghost\s*\{/);
     expect(scss).toMatch(/position: fixed;/);
     expect(scss).toMatch(/border-radius: var\(--radius-md/);
-    expect(scss).toMatch(/z-index: var\(--hk-z-drag, 950\)/);
+    expect(scss).toMatch(/z-index: var\(--hk-z-drag\)/);
     // The settle is a fade, driven by data-fading.
     expect(scss).toMatch(/&\[data-fading]\s*\{/);
   });

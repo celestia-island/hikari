@@ -7,7 +7,7 @@
 // POPUP_Z_BANDS.tooltip in runtime/usePopupManager.ts.
 .hk-floating-layer {
   position: fixed;
-  z-index: var(--hk-float-z, 3000);
+  z-index: var(--hk-z-float);
   display: flex;
   flex-direction: column;
   gap: var(--space-8, 0.5rem);

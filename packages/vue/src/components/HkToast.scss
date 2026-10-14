@@ -6,7 +6,7 @@
   inset-inline-end: var(--viewport-gutter, 16px);
   /* Toast band — the topmost popup z band (POPUP_Z_BANDS.toast; mirror in
      theme.scss). The live value arrives inline from the popup manager. */
-  z-index: var(--hk-z-toast, 4000);
+  z-index: var(--hk-z-toast);
   max-width: 24rem;
   pointer-events: none;
 }

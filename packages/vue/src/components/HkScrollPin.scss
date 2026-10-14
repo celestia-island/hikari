@@ -17,7 +17,7 @@
 
 .hk-scroll-pin {
   position: sticky;
-  z-index: var(--hk-scroll-pin-z, 10);
+  z-index: var(--hk-scroll-pin-z, var(--hk-z-scrollbar));
   // Floating-chrome surface: near-opaque surface tint + blur so scrolled
   // content never bleeds through the pinned row (same look the step-flow
   // sticky header introduced; hosts retune through --hk-scroll-pin-bg).

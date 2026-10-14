@@ -65,8 +65,12 @@ async function renderMarkdown(content: string): Promise<string> {
 
   (renderer as Record<string, unknown>).code = function (tok: { text: string; lang?: string }) {
     const highlighted = tryHighlight(tok.text, tok.lang);
-    const langAttr = tok.lang ? ` language-${tok.lang}` : "";
-    const langLabel = tok.lang ? `<span class="hk-md-code-lang">${tok.lang}</span>` : "";
+    // Audit hikari-R1-5: whitelist the language tag before interpolation
+    // (depth-in-defence — the final DOMPurify pass remains the primary
+    // guard, but this keeps the raw template injection safe on its own).
+    const lang = tok.lang && /^[a-zA-Z0-9+#._-]{1,32}$/.test(tok.lang) ? tok.lang : "";
+    const langAttr = lang ? ` language-${lang}` : "";
+    const langLabel = lang ? `<span class="hk-md-code-lang">${lang}</span>` : "";
     return `<div class="hk-md-code-wrap"><div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div></div>`;
   };
 

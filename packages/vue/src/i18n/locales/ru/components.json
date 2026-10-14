@@ -207,6 +207,7 @@
     "hikari::filterPanel.op.eq": "равно",
     "hikari::filterPanel.op.ne": "не равно",
     "hikari::filterPanel.op.approx": "приблизительно",
+    "hikari::filterPanel.op.napprox": "не содержит",
     "hikari::filterPanel.op.lt": "меньше",
     "hikari::filterPanel.op.lte": "не более",
     "hikari::filterPanel.op.gte": "не менее",

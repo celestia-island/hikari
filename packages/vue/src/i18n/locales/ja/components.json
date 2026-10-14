@@ -207,6 +207,7 @@
     "hikari::filterPanel.op.eq": "等しい",
     "hikari::filterPanel.op.ne": "等しくない",
     "hikari::filterPanel.op.approx": "部分一致",
+    "hikari::filterPanel.op.napprox": "含まない",
     "hikari::filterPanel.op.lt": "未満",
     "hikari::filterPanel.op.lte": "以下",
     "hikari::filterPanel.op.gte": "以上",

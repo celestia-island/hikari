@@ -1,27 +1,16 @@
 /**
- * HkSearchTrigger chrome: the header icon button, its active-keyword
- * dot and the panel body. Deliberately the SAME grammar as
- * HkFilterTrigger.scss — filter and search are the two header
- * affordances of every list page and must read as one family.
+ * HkSearchTrigger chrome: the header icon button and the panel body.
+ * Deliberately the SAME grammar as HkFilterTrigger.scss — filter and
+ * search are the two header affordances of every list page and must
+ * read as one family. The active-keyword marker is the generic
+ * HkCornerBadge wrapped around the button (the filter trigger's green
+ * bottom-right dot, shared — see HkCornerBadge.scss).
  */
 
 .hk-search-trigger {
   position: relative;
   display: inline-flex;
   align-items: center;
-}
-
-/* Active-keyword marker: the filter trigger's dot, verbatim — "this
- * page is searched" reads exactly like "this page is filtered". */
-.hk-search-trigger-dot {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgb(var(--color-primary));
-  pointer-events: none;
 }
 
 .hk-search-trigger-body {

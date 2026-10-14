@@ -2,6 +2,7 @@ import { computed, defineComponent, ref, type PropType } from "vue";
 import { SlidersHorizontal } from "lucide-vue-next";
 
 import HkButton from "./HkButton";
+import HkCornerBadge from "./HkCornerBadge";
 import HkFilterPanel, {
   type HkFilterCondition,
   type HkFilterFieldDef,
@@ -27,14 +28,17 @@ import { useI18n } from "../i18n/context";
  *   deliberately no cancel; clearing a condition is done by re-opening
  *   the panel and emptying the value, never by a header reset verb.
  *
- * A small dot on the button marks a panel with at least one non-empty
- * value, so a filtered page is recognizable with the panel closed.
+ * While any condition carries a value, a GREEN dot sits at the button's
+ * bottom-right corner (user direction 2026-10-15 — it was a primary
+ * dot at the top-right before): the generic HkCornerBadge in its dot
+ * form, so this mark is the same component every other corner
+ * indicator in the family uses.
  */
 export default defineComponent({
   name: "HkFilterTrigger",
   props: {
     fields: { type: Array as PropType<HkFilterFieldDef[]>, required: true },
-    modelValue: { type: Object as PropType<HkFilterState>, default: () => ({}) },
+    modelValue: { type: Array as PropType<HkFilterState>, default: () => [] },
     disabled: { type: Boolean, default: false },
     /** Accessible name / sheet title. Defaults to the localized "Filters". */
     label: { type: String, default: undefined },
@@ -50,30 +54,29 @@ export default defineComponent({
     const anchorRef = ref<HTMLElement | null>(null);
 
     const active = computed(() =>
-      Object.values(props.modelValue as Record<string, HkFilterCondition>).some(
-        (c) => c && c.value !== "",
-      ),
+      (props.modelValue as HkFilterCondition[]).some((c) => c && c.value !== ""),
     );
 
     return () => {
       const label = props.label ?? t("hikari::filterBar.trigger", "Filters");
       return (
         <span ref={anchorRef} class="hk-filter-trigger">
-          <HkIconButton
-            size={28}
-            variant="ghost"
-            aria-label={label}
-            aria-haspopup="dialog"
-            aria-expanded={open.value ? "true" : "false"}
-            disabled={props.disabled}
-            data-active={active.value || undefined}
-            onClick={() => {
-              open.value = !open.value;
-            }}
-          >
-            {{ icon: () => <SlidersHorizontal size={16} /> }}
-          </HkIconButton>
-          {active.value && <span class="hk-filter-trigger-dot" aria-hidden="true" />}
+          <HkCornerBadge dot={active.value} variant="success" corner="bottom-right" offset={1}>
+            <HkIconButton
+              size={28}
+              variant="ghost"
+              aria-label={label}
+              aria-haspopup="dialog"
+              aria-expanded={open.value ? "true" : "false"}
+              disabled={props.disabled}
+              data-active={active.value || undefined}
+              onClick={() => {
+                open.value = !open.value;
+              }}
+            >
+              {{ icon: () => <SlidersHorizontal size={16} /> }}
+            </HkIconButton>
+          </HkCornerBadge>
           <HkPopover
             modelValue={open.value}
             onUpdate:modelValue={(v: boolean) => (open.value = v)}

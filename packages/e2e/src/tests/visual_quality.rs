@@ -535,76 +535,6 @@ impl VisualQualityTests {
 
         Ok(test)
     }
-    /// Currently uncalled: its demo page (/components/extra/collapsible) was
-    /// removed together with the extra-components crate in M3.5.
-    #[allow(dead_code)]
-    pub async fn test_extra_components_quality(driver: &WebDriver) -> Result<VisualQualityTest> {
-        let mut test = VisualQualityTest::new("Extra Components", "/components/extra/collapsible");
-        let base_url = std::env::var("WEBSITE_BASE_URL")
-            .unwrap_or_else(|_| "http://localhost:3000".to_string());
-
-        info!("Testing extra components quality...");
-
-        driver
-            .goto(&format!("{}/components/extra/collapsible", base_url))
-            .await?;
-        tokio::time::sleep(Duration::from_millis(15000)).await;
-
-        test.add_check(VisualCheck {
-            check_name: "Page Loaded".to_string(),
-            check_type: VisualCheckType::Visibility,
-            description: "Collapsible page loaded".to_string(),
-            passed: true,
-            details: "Collapsible page navigated successfully".to_string(),
-            screenshot_before: None,
-            screenshot_after: None,
-        });
-
-        match driver
-            .find_all(By::Css(
-                "div, button, h1, h2, h3, span, a, input, select, textarea",
-            ))
-            .await
-        {
-            Ok(elements) => {
-                if !elements.is_empty() {
-                    test.add_check(VisualCheck {
-                        check_name: "Collapsible Component Visible".to_string(),
-                        check_type: VisualCheckType::Visibility,
-                        description: format!("Found {} interactive elements", elements.len()),
-                        passed: !elements.is_empty(),
-                        details: format!("Page has {} interactive elements", elements.len()),
-                        screenshot_before: None,
-                        screenshot_after: None,
-                    });
-                } else {
-                    test.add_check(VisualCheck {
-                        check_name: "Collapsible Component Visible".to_string(),
-                        check_type: VisualCheckType::Visibility,
-                        description: "Collapsible component is visible".to_string(),
-                        passed: false,
-                        details: "No collapsible components found".to_string(),
-                        screenshot_before: None,
-                        screenshot_after: None,
-                    });
-                }
-            }
-            Err(e) => {
-                test.add_check(VisualCheck {
-                    check_name: "Collapsible Component Find".to_string(),
-                    check_type: VisualCheckType::Visibility,
-                    description: "Collapsible component can be found".to_string(),
-                    passed: false,
-                    details: format!("Failed to find collapsible: {}", e),
-                    screenshot_before: None,
-                    screenshot_after: None,
-                });
-            }
-        }
-
-        Ok(test)
-    }
-
     /// Test layer 3 components
     pub async fn test_layer3_components_quality(driver: &WebDriver) -> Result<VisualQualityTest> {
         let mut test = VisualQualityTest::new("Layer 3 Components", "/components/layer3/overview");
@@ -866,10 +796,6 @@ impl VisualQualityTests {
             }
         }
 
-        // Extra Components (Collapsible) demo page was removed with the
-        // extra-components crate (M3.5); re-point test_extra_components_quality
-        // against the surviving pages before calling it again.
-
         info!("Testing Layer 3 Components...");
         match Self::test_layer3_components_quality(driver).await {
             Ok(test) => {
@@ -1023,11 +949,6 @@ impl VisualQualityTests {
             ("/components/layer3/media", "layer3_media"),
             ("/components/layer3/editor", "layer3_editor"),
             ("/components/layer3/visualization", "layer3_visualization"),
-            // Extra Components (4)
-            ("/components/extra/collapsible", "extra_collapsible"),
-            ("/components/extra/timeline", "extra_timeline"),
-            ("/components/extra/user_guide", "extra_user_guide"),
-            ("/components/extra/zoom_controls", "extra_zoom_controls"),
             // System Pages (5)
             ("/system", "system"),
             ("/system/css", "system_css"),

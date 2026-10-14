@@ -23,7 +23,6 @@ Hikari est un framework UI moderne conçu pour l'écosystème Rust, combinant l'
 - **Composants de Navigation**: Menu, Tabs, Breadcrumb
 - **Composants de Données**: Table, Tree, Pagination
 - **Composants de Layout**: Layout, Header, Aside, Content, Footer
-- **Composants Supplémentaires**: Collapsible, DragLayer, ZoomControls
 
 ### Puissant Système d'Animation
 - **Animations Déclaratives**: API fluent de type CSS

@@ -40,7 +40,6 @@
 
 # Composants — Couche 2
 - [Cascader](./components/layer2/cascader.md)
-- [Collapsible](./components/layer2/collapsible.md)
 - [Data](./components/layer2/data.md)
 - [Feedback](./components/layer2/feedback.md)
 - [Form](./components/layer2/form.md)

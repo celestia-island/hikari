@@ -57,7 +57,7 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
         }
     }
 
-    // Layer 3: Advanced Components (6 tests)
+    // Layer 3: Advanced Components (4 tests)
     match tests::Test::run_with_driver(&tests::advanced_components::AdvancedComponentsTests, driver)
         .await
     {
@@ -86,10 +86,10 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     info!("Layer 2 (Form): Form, Select, Checkbox, Radio, Switch, Stepper (6 components)");
     info!("Layer 2 (Data): Table, Tree, Pagination, Dropdown (4 components)");
     info!(
-        "Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls, UserGuide, Timeline (10 components)"
+        "Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer (4 components)"
     );
     info!("------");
-    info!("Total: 24 components tested");
+    info!("Total: 18 components tested");
 
     Ok(results)
 }
@@ -125,15 +125,15 @@ pub async fn run_interactive_tests(
     info!("=== End of Interactive Test Results ===\n");
 
     println!("\n=== Interactive Test Coverage ===");
-    info!("Layer 1 (Basic): Button, Input, Card, Alert (4 components)");
+    info!("Layer 1 (Basic): Button, Input, Scroll, Card, Alert (5 components)");
     info!("Layer 2 (Navigation): Tabs, Menu, Breadcrumb, Stepper (4 components)");
     info!("Layer 2 (Data): Table, Tree, Pagination (3 components)");
     info!("Layer 2 (Feedback): Modal, Dropdown, Drawer (3 components)");
     info!(
-        "Layer 3 (Extra): Timeline, UserGuide, ZoomControls, Collapsible, VideoPlayer, RichTextEditor, CodeHighlighter, DragLayer (8 components)"
+        "Layer 3 (Advanced): VideoPlayer, RichTextEditor, CodeHighlighter, DragLayer (4 components)"
     );
     info!("------");
-    info!("Total: 22 components with multi-step interactive tests");
+    info!("Total: 19 components with multi-step interactive tests");
 
     Ok(results)
 }

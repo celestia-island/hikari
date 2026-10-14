@@ -23,7 +23,6 @@ Hikari — это современный UI-фреймворк, разработ
 - **Навигационные компоненты**: Menu, Tabs, Breadcrumb
 - **Компоненты данных**: Table, Tree, Pagination
 - **Компоненты раскладки**: Layout, Header, Aside, Content, Footer
-- **Дополнительные компоненты**: Collapsible, DragLayer, ZoomControls
 
 ### Мощная система анимаций
 - **Декларативные анимации**: Fluent API в стиле CSS

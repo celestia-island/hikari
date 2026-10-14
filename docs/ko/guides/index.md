@@ -23,7 +23,6 @@ Hikari는 Rust 생태계를 위해 설계된 현대적인 UI 프레임워크로,
 - **내비게이션 컴포넌트**: Menu, Tabs, Breadcrumb
 - **데이터 컴포넌트**: Table, Tree, Pagination
 - **레이아웃 컴포넌트**: Layout, Header, Aside, Content, Footer
-- **추가 컴포넌트**: Collapsible, DragLayer, ZoomControls
 
 ### 강력한 애니메이션 시스템
 - **선언적 애니메이션**: CSS 스타일의 유창한 API

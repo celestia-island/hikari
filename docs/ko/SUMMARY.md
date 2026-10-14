@@ -40,7 +40,6 @@
 
 # 컴포넌트 — 레이어 2
 - [Cascader](./components/layer2/cascader.md)
-- [Collapsible](./components/layer2/collapsible.md)
 - [Data 컴포넌트](./components/layer2/data.md)
 - [Feedback 컴포넌트](./components/layer2/feedback.md)
 - [Form 컴포넌트](./components/layer2/form.md)

@@ -23,7 +23,6 @@ Hikariは、Rustエコシステム向けに設計されたモダンなUIフレ�
 - **ナビゲーションコンポーネント**: Menu, Tabs, Breadcrumb
 - **データコンポーネント**: Table, Tree, Pagination
 - **レイアウトコンポーネント**: Layout, Header, Aside, Content, Footer
-- **拡張コンポーネント**: Collapsible, DragLayer, ZoomControls
 
 ### 強力なアニメーションシステム
 - **宣言的アニメーション**: CSSライクなfluent API

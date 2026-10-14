@@ -40,7 +40,6 @@
 
 # 元件 — 第 2 層
 - [Cascader 級聯選擇](./components/layer2/cascader.md)
-- [Collapsible 可折疊面板](./components/layer2/collapsible.md)
 - [Data 資料元件](./components/layer2/data.md)
 - [Feedback 回饋元件](./components/layer2/feedback.md)
 - [Form 表單元件](./components/layer2/form.md)

@@ -23,7 +23,6 @@ Hikari 是一個為 Rust 生態系統設計的現代化 UI 框架，結合了傳
 - **導航元件**: Menu、Tabs、Breadcrumb
 - **資料元件**: Table、Tree、Pagination
 - **佈局元件**: Layout、Header、Aside、Content、Footer
-- **進階元件**: Collapsible、DragLayer、ZoomControls
 
 ### 強大的動畫系統
 - **宣告式動畫**: 類似 CSS 的流暢 API

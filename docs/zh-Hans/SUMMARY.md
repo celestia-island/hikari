@@ -40,7 +40,6 @@
 
 # 组件 — 第 2 层
 - [Cascader 级联选择](./components/layer2/cascader.md)
-- [Collapsible 可折叠面板](./components/layer2/collapsible.md)
 - [Data 数据组件](./components/layer2/data.md)
 - [Feedback 反馈组件](./components/layer2/feedback.md)
 - [Form 表单组件](./components/layer2/form.md)

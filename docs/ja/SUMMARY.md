@@ -40,7 +40,6 @@
 
 # コンポーネント — レイヤー 2
 - [カスケード](./components/layer2/cascader.md)
-- [折りたたみ](./components/layer2/collapsible.md)
 - [データコンポーネント](./components/layer2/data.md)
 - [フィードバックコンポーネント](./components/layer2/feedback.md)
 - [フォームコンポーネント](./components/layer2/form.md)

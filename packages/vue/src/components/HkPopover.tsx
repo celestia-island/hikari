@@ -568,21 +568,29 @@ export default defineComponent({
       if (panelHostRef.value?.contains(target)) return;
       if (panelRef.value?.contains(target)) return;
       if (props.anchorRef?.contains(target)) return;
-      // A click inside ANOTHER live popout layer — a popover opened from
-      // inside this one (the filter panel's popup selects, its add-
-      // condition field menu) teleports to <body>, so DOM containment
-      // cannot see the nesting. Every popover host marks its layer with
-      // data-hk-popout-layer; a click landing in one is a click in a
-      // layer stacked above, governed by that layer's own dismissal
-      // rules — never a backdrop dismissal for THIS popover (2026-10-14:
-      // picking a select option inside a filter panel used to slam the
-      // whole panel shut and, in engines that detach mid-dispatch,
-      // swallow the pick itself).
-      if (
-        target instanceof Element &&
-        target.closest("[data-hk-popout-layer]") !== null
-      ) {
-        return;
+      // A click inside another popout LAYER stacked ABOVE this one — a
+      // popover opened from inside this surface (the filter panel's
+      // popup selects, its add-condition field menu) teleports to
+      // <body>, so DOM containment cannot see the nesting. Every host
+      // marks its layer (data-hk-popout-layer) with its popup-manager
+      // id; a HIGHER live layer governs its own clicks, never a
+      // backdrop dismissal for THIS popover (2026-10-14: picking a
+      // select option inside a filter panel used to slam the whole
+      // panel shut and, in engines that detach mid-dispatch, swallow
+      // the pick itself). Layers NOT above — the HOST panel a nested
+      // surface rides in, or a sibling below — are "the page" for this
+      // popover: clicks there dismiss it (R2 2026-10-14: matching any
+      // layer left the chooser and a select popout open at once and
+      // made an open chooser ignore every in-panel click).
+      if (target instanceof Element) {
+        const layerEl = target.closest("[data-hk-popout-layer]");
+        if (layerEl) {
+          const layerId = layerEl.getAttribute("data-hk-popout-id");
+          const mine = handle.value;
+          if (mine && layerId === mine.id) return;
+          const above = mine && layerId ? manager.registry.value.get(layerId) : null;
+          if (above && above.zIndex > mine!.zIndex) return;
+        }
       }
       close();
     }
@@ -679,8 +687,15 @@ export default defineComponent({
         {/* data-hk-popout-layer marks this host as a live popup layer so
             ANCESTOR popovers' outside-click shields can tell a click
             inside a nested layer (never a backdrop dismissal — see
-            onDocumentClick) from a true outside click. */}
-        <div ref={panelHostRef} data-hk-popout-layer="" style={panelStyle.value}>
+            onDocumentClick) from a true outside click. The -id pairing
+            with the popup-manager registration lets those shields tell
+            ABOVE layers (ignore) from the host/siblings (dismiss). */}
+        <div
+          ref={panelHostRef}
+          data-hk-popout-layer=""
+          data-hk-popout-id={handle.value?.id}
+          style={panelStyle.value}
+        >
               <div
                 ref={panelRef}
                 class={[

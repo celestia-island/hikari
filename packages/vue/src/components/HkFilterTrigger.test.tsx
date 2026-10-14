@@ -219,4 +219,113 @@ describe("HkFilterTrigger", () => {
     expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
     document.body.querySelectorAll(".hk-popover-panel").forEach((el) => el.remove());
   });
+
+  // ── One popout at a time (R2 2026-10-14 finding) ──────────────────
+  // The chooser and a select popout are SIBLINGS riding the same host
+  // panel. The shield must not treat the shared HOST layer as "above":
+  // opening one closes the other, in both directions — never both at
+  // once, and an open chooser must not swallow in-panel clicks.
+
+  it("opening a select popout closes an open chooser (never both at once)", async () => {
+    const selectFields = [
+      { key: "tool", label: "Tool", kind: "text" as const },
+      { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
+    ];
+    const c = mount(
+      h(HkFilterTrigger, { fields: selectFields, modelValue: { agent: { op: "eq", value: "" } } }),
+    );
+    c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    document.body
+      .querySelector<HTMLButtonElement>(".hk-filter-panel .hk-filter-panel-add")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeTruthy();
+    // Now open a select row's popout from inside the host panel…
+    document.body
+      .querySelector<HTMLButtonElement>(".hk-filter-panel .hk-popup-select-trigger")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 60));
+    // …the chooser left…
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeNull();
+    // …the select popout is the one live surface…
+    expect(document.body.querySelector(".hk-popup-select-item")).toBeTruthy();
+    // …and the panel stayed open through the swap.
+    expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
+    document.body.querySelectorAll(".hk-popover-panel").forEach((el) => el.remove());
+  });
+
+  it("opening the chooser closes an open select popout (the reverse swap)", async () => {
+    const selectFields = [
+      { key: "tool", label: "Tool", kind: "text" as const },
+      { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
+    ];
+    const c = mount(
+      h(HkFilterTrigger, { fields: selectFields, modelValue: { agent: { op: "eq", value: "" } } }),
+    );
+    c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    document.body
+      .querySelector<HTMLButtonElement>(".hk-filter-panel .hk-popup-select-trigger")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.body.querySelector(".hk-popup-select-item")).toBeTruthy();
+    // Now click the add verb from inside the host panel…
+    document.body
+      .querySelector<HTMLButtonElement>(".hk-filter-panel .hk-filter-panel-add")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 60));
+    // …the select popout left…
+    expect(document.body.querySelector(".hk-popup-select-item")).toBeNull();
+    // …the chooser is the one live surface…
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeTruthy();
+    // …and the panel stayed open through the swap.
+    expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
+    document.body.querySelectorAll(".hk-popover-panel").forEach((el) => el.remove());
+  });
+
+  it("an in-panel click while the chooser is open dismisses the chooser", async () => {
+    let seen: Record<string, unknown> | null = null;
+    const c = mount(
+      h(HkFilterTrigger, {
+        fields: FIELDS,
+        modelValue: { tool: { op: "eq", value: "" } },
+        "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
+      }),
+    );
+    c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    document.body
+      .querySelector<HTMLButtonElement>(".hk-filter-panel .hk-filter-panel-add")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeTruthy();
+    // A row's operator toggle is an in-panel click — the chooser must
+    // stand down for it, not swallow it. (Pick the ≈ toggle; the first
+    // op button is the already-pressed =.)
+    const op = [...document.body.querySelectorAll<HTMLButtonElement>(".hk-filter-panel .hk-filter-panel-op")].find(
+      (b) => b.textContent === "≈",
+    )!;
+    op.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.body.querySelector(".hk-filter-add-item")).toBeNull();
+    expect((seen! as { tool: { op: string } }).tool.op).toBe("approx");
+    expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
+    document.body.querySelectorAll(".hk-popover-panel").forEach((el) => el.remove());
+  });
 });

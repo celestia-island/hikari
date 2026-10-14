@@ -22,7 +22,7 @@ describe("HkFloatingLayer stylesheet contract", () => {
   it("compiles the fixed, gesture-transparent top-layer shell", () => {
     expect(css).toContain(".hk-floating-layer {");
     expect(css).toContain("position: fixed;");
-    expect(css).toContain("z-index: var(--hk-float-z, 3000);");
+    expect(css).toContain("z-index: var(--hk-z-float);");
     // The layer never eats gestures; the widgets inside do.
     expect(css).toContain("pointer-events: none;");
     expect(css).toContain(".hk-floating-layer > * {");

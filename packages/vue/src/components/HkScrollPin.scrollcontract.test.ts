@@ -58,7 +58,7 @@ describe("scroll-pin whitespace contract", () => {
   it("the pin base is sticky with a floating-chrome surface", () => {
     const base = cssBlock(pinScss, ".hk-scroll-pin {");
     expect(base).toMatch(/position: sticky/);
-    expect(base).toMatch(/z-index: var\(--hk-scroll-pin-z/);
+    expect(base).toMatch(/z-index: var\(--hk-scroll-pin-z, var\(--hk-z-scrollbar/);
     expect(base).toMatch(/background: var\(\s*--hk-scroll-pin-bg/);
   });
 

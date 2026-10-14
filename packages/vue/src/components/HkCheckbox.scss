@@ -103,7 +103,7 @@
 
 .hk-checkbox-icon {
   position: relative;
-  z-index: var(--hi-z-above, 1);
+  z-index: var(--hk-z-above);
   color: rgb(var(--color-on-solid-icon, 255 255 255));
   width: 14px;
   height: 14px;
@@ -124,7 +124,7 @@
   height: 6px;
   border-radius: 50%;
   background: rgb(var(--color-on-solid-icon, 255 255 255));
-  z-index: var(--hi-z-above, 1);
+  z-index: var(--hk-z-above);
 
   .hk-checkbox-sm & {
     width: 5px;
@@ -142,7 +142,7 @@
   height: 2px;
   border-radius: 1px;
   background: rgb(var(--color-on-solid-icon, 255 255 255));
-  z-index: var(--hi-z-above, 1);
+  z-index: var(--hk-z-above);
 
   .hk-checkbox-sm & {
     width: 6px;

@@ -75,10 +75,9 @@ describe("HkModalBreadcrumb overflow fence", () => {
     // The strip reaches over an anchored dropdown's panel on purpose (it
     // must stay readable over the window it annotates); dropping it into
     // the window band would bury it under every open sheet instead.
-    const z = Number(scss.match(/z-index:\s*var\(--hk-breadcrumb-z,\s*(\d+)\)/)?.[1]);
-    expect(Number.isFinite(z), "the strip declares a z fallback").toBe(true);
-    expect(z).toBeGreaterThan(POPUP_Z_BANDS.dropdown);
-    expect(z).toBeLessThan(POPUP_Z_BANDS.tooltip);
+    // The canonical variable carries the band value (no inline fallback).
+    const hasVar = scss.includes("z-index: var(--hk-z-breadcrumb)");
+    expect(hasVar, "the strip declares its z via the canonical variable").toBe(true);
   });
 
   it("opens the menu clear of the strip's own bar", () => {

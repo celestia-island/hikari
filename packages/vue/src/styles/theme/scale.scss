@@ -71,7 +71,11 @@
    * base content (0) to the window titlebar (100001); a higher band
    * always paints above a lower one. Tooltips sit above toasts AND
    * modals so their text stays readable and copyable while any overlay
-   * is showing (user direction 2026-10-15). */
+   * is showing (user direction 2026-10-15). --hk-z-overlay-root is the
+   * ONE band consumed by the fenced floating-layer root itself rather
+   * than by a component: it lifts #hk-overlay-root above every
+   * content-chrome band while keeping the pre-isolation order (floating
+   * layers < error landing < window titlebar). */
   --hk-z-base: 0;            /* base content stacking context */
   --hk-z-above: 1;           /* local bump: checkbox marks, switch thumbs */
   --hk-z-scrollbar: 10;      /* scrollbar tracks and corner rulers */
@@ -87,6 +91,9 @@
   --hk-z-modal: 5000;        /* modal backdrop + frame */
   --hk-z-tooltip: 6000;      /* tooltip — above toasts and modals so its text
                                  is always readable and copyable */
+  --hk-z-overlay-root: 90000; /* #hk-overlay-root — every floating layer's
+                                 document-space elevation (overlay/overlayRoot.ts);
+                                 above all content chrome, below error + titlebar */
   --hk-z-error: 95000;       /* error landing overlay (covers everything) */
   --hk-z-titlebar: 100001;   /* window titlebar (Tauri shell) */
 

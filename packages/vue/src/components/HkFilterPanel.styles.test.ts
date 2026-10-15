@@ -73,6 +73,12 @@ describe("HkFilterPanel stylesheet contract", () => {
     expect(rule).toContain("justify-self: start");
   });
 
+  it("the empty panel collapses to the add verb's own width", () => {
+    // 2026-10-15: no rows = nothing to align columns against — the
+    // desktop popover hugs the 添加条件 button (data-empty marker).
+    expect(css).toMatch(/\.hk-filter-panel\[data-empty\]\s*\{[^}]*width:\s*max-content/);
+  });
+
   it("the phone operator column keeps its widened cap (≥ the old 4.25rem)", () => {
     expect(css).toContain("@media (max-width: 767px)");
     const media = css.slice(css.indexOf("@media (max-width: 767px)"));

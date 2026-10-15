@@ -45,6 +45,9 @@ describe("HkFilterPanel (array state, 2026-10-15)", () => {
     expect(c.querySelectorAll(".hk-filter-panel-row")).toHaveLength(0);
     expect(c.querySelector(".hk-filter-panel-add")).toBeTruthy();
     expect(c.querySelectorAll(".hk-filter-panel-field")).toHaveLength(0);
+    // The empty panel carries the collapse marker (width hugs the add
+    // verb on desktop — pinned in the styles contract test).
+    expect(c.querySelector(".hk-filter-panel")!.getAttribute("data-empty")).toBe("true");
 
     const state: HkFilterState = [
       { key: "tool", op: "approx", value: "web" },
@@ -188,13 +191,15 @@ describe("HkFilterPanel (array state, 2026-10-15)", () => {
     );
     const rows = [...c.querySelectorAll(".hk-filter-panel-row")];
     const opsOf = (row: Element) =>
-      [...row.querySelectorAll(".hk-filter-panel-op")].map((b) => b.textContent);
+      [...row.querySelectorAll(".hk-filter-panel-op")].map((b) => b.getAttribute("title"));
     // Text speaks ONLY the fuzzy pair (2026-10-15: 等于其实是模糊匹配 —
     // label it ≈, and the exclusion ≉).
-    expect(opsOf(rows[0]!)).toEqual(["≈", "≉"]);
-    expect(opsOf(rows[1]!)).toEqual(["<", "≤", "=", "≥", ">"]);
-    expect(opsOf(rows[2]!)).toEqual(["=", "≠"]);
-    expect(opsOf(rows[3]!)).toEqual(["≥", "≤"]);
+    expect(opsOf(rows[0]!)).toEqual(["fuzzy match", "fuzzy non-match"]);
+    expect(opsOf(rows[1]!)).toEqual(["less than", "at most", "equals", "at least", "greater than"]);
+    // Select speaks ONLY the eq/ne pair — rendered as the fuzzy pair
+    // glyphs (2026-10-15 follow-up: 等于/不等于 换成 ≈/≉).
+    expect(opsOf(rows[2]!)).toEqual(["fuzzy match", "fuzzy non-match"]);
+    expect(opsOf(rows[3]!)).toEqual(["at least", "at most"]);
   });
 
   it("emits a new state when an operator is picked (live, no confirm)", async () => {
@@ -207,7 +212,7 @@ describe("HkFilterPanel (array state, 2026-10-15)", () => {
       }),
     );
     const notMatch = [...c.querySelectorAll(".hk-filter-panel-row")[0]!.querySelectorAll(".hk-filter-panel-op")]
-      .find((b) => b.textContent === "≉")!;
+      .find((b) => b.getAttribute("title") === "fuzzy non-match")!;
     notMatch.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await Promise.resolve();
     expect(seen).toEqual([{ key: "tool", op: "napprox", value: "web" }]);

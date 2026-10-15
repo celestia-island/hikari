@@ -5,6 +5,7 @@ import HkDatePicker from "./HkDatePicker";
 import HkInput from "./HkInput";
 import HkPopover from "./HkPopover";
 import HkPopupSelect, { type HkPopupSelectOption } from "./HkPopupSelect";
+import HkFilterOperatorIcon from "./HkFilterOperatorIcon";
 import HkScrollContainer from "./HkScrollContainer";
 import { useI18n } from "../i18n/context";
 import "./HkFilterPanel.scss";
@@ -53,16 +54,15 @@ export interface HkFilterCondition {
  * field chooser. */
 export type HkFilterState = HkFilterCondition[];
 
-const OPERATOR_SYMBOL: Record<HkFilterOperator, string> = {
-  eq: "=",
-  ne: "≠",
-  approx: "≈",
-  napprox: "≉",
-  lt: "<",
-  lte: "≤",
-  gte: "≥",
-  gt: ">",
-};
+/** Which ICON the operator renders as: fields that speak ONLY the
+ * eq/ne pair (select) render the fuzzy pair ≈/≉ (2026-10-15 — 等于
+ * 其实是模糊匹配 applies to them too); number's exact = keeps the
+ * plain equals icon inside the ordered five. */
+function glyphOpFor(kind: HkFilterFieldDef["kind"], op: HkFilterOperator): HkFilterOperator {
+  if (kind === "select" && op === "eq") return "approx";
+  if (kind === "select" && op === "ne") return "napprox";
+  return op;
+}
 
 const OPERATOR_LABEL: Record<HkFilterOperator, { key: string; fallback: string }> = {
   eq: { key: "hikari::filterPanel.op.eq", fallback: "equals" },
@@ -309,7 +309,7 @@ export default defineComponent({
     return () => {
       const label = props.label ?? t("hikari::filterBar.trigger", "Filters");
       return (
-        <div class="hk-filter-panel" data-testid="hk-filter-panel" data-active={activeCount.value > 0 || undefined} aria-label={label}>
+        <div class="hk-filter-panel" data-testid="hk-filter-panel" data-active={activeCount.value > 0 || undefined} data-empty={rows.value.length === 0 || undefined} aria-label={label}>
           {rows.value.map((cond, index) => {
             const field = fieldByKey(cond.key);
             // An undeclared key (the page renamed a field under live
@@ -322,20 +322,23 @@ export default defineComponent({
               <div key={index} class="hk-filter-panel-row" data-kind={kind}>
                 <span class="hk-filter-panel-field">{labelText}</span>
                 <div class="hk-filter-panel-ops" role="group" aria-label={`${labelText} — ${label}`}>
-                  {ops.map((op) => (
+                  {ops.map((op) => {
+                    const glyph = glyphOpFor(kind, op);
+                    return (
                     <button
                       key={op}
                       type="button"
                       class="hk-filter-panel-op"
                       aria-pressed={cond.op === op}
-                      aria-label={t(OPERATOR_LABEL[op].key, OPERATOR_LABEL[op].fallback)}
-                      title={t(OPERATOR_LABEL[op].key, OPERATOR_LABEL[op].fallback)}
+                      aria-label={t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback)}
+                      title={t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback)}
                       disabled={props.disabled || !field}
                       onClick={() => emitCondition(index, { op })}
                     >
-                      {OPERATOR_SYMBOL[op]}
+                      <HkFilterOperatorIcon op={glyph} />
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div class="hk-filter-panel-value">
                   <div class="hk-filter-panel-control">

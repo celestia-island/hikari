@@ -42,6 +42,14 @@
   /* Minimum outer margins for every column (user direction
    * 2026-10-12): the rows never touch the panel edge. */
   padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+  /* Empty panel collapses to the add verb's own width (user direction
+   * 2026-10-15): no rows means nothing to align columns against, so the
+   * popover hugs the 添加条件 button instead of holding the full-row
+   * width. Desktop only — the phone branch below re-widens to 100%. */
+  &[data-empty] {
+    width: max-content;
+    min-width: 0;
+  }
 }
 
 /* A row is not a box — it donates its three cells to the panel grid so

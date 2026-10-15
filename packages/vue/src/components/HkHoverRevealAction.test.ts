@@ -66,3 +66,35 @@ describe("HHoverRevealAction touch reveal modes", () => {
     expect(el.className).not.toContain("is-revealed");
   });
 });
+
+describe("HHoverRevealAction bare-click robustness", () => {
+  it("reveals on mousedown even without a preceding hover (synthetic clicks)", async () => {
+    // Test drivers dispatch a click straight at the extension's coordinates
+    // with no mouseenter; without the mousedown reveal the extension stays
+    // pointer-events:none and the click passes through to the page below.
+    const { el } = await mountHost();
+    expect(el.className).not.toContain("is-revealed");
+    el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    await Promise.resolve();
+    expect(el.className).toContain("is-revealed");
+  });
+
+  it("keeps the touch suppress window authoritative over mousedown", async () => {
+    // Touch interactions fire an emulated mousedown after the tap; during
+    // the touch linger the touch path owns the state and a stray emulated
+    // mousedown must not re-reveal (which would clear the hide timer).
+    vi.useFakeTimers();
+    const { el } = await mountHost();
+    el.dispatchEvent(new Event("touchstart", { bubbles: true }));
+    el.dispatchEvent(new Event("touchend", { bubbles: true }));
+    await Promise.resolve();
+    expect(el.className).toContain("is-revealed");
+    // Emulated mousedown while the touch linger owns the reveal.
+    el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    // After the linger expires the extension hides — the mousedown must
+    // not have reset the hide timer (i.e. must have been suppressed).
+    vi.advanceTimersByTime(3100);
+    await Promise.resolve();
+    expect(el.className).not.toContain("is-revealed");
+  });
+});

@@ -107,6 +107,17 @@ export default defineComponent({
       reveal();
     }
 
+    function onMouseDown() {
+      // Bare synthetic clicks (test drivers dispatching a click at the
+      // extension's coordinates without a preceding hover move) land while
+      // the extension is still pointer-events:none — the click passes
+      // through to whatever sits underneath and the action never fires.
+      // A mousedown anywhere on the host reveals the extension first; the
+      // click that follows in the same interaction then finds it live.
+      if (Date.now() < suppressMouseUntil) return;
+      reveal();
+    }
+
     function onMouseLeave() {
       if (Date.now() < suppressMouseUntil) return;
       scheduleHide(props.hideDelay);
@@ -133,6 +144,7 @@ export default defineComponent({
           "data-placement": props.placement,
           onMouseenter: onMouseEnter,
           onMouseleave: onMouseLeave,
+          onMousedown: onMouseDown,
           onTouchstart: onTouchStart,
           onTouchend: onTouchEnd,
           onTouchcancel: onTouchEnd,

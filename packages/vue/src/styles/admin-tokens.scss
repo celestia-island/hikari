@@ -413,6 +413,63 @@
   padding: 0 var(--space-16);
 }
 
+/* ── Balanced header columns (the ONE three-zone header layout) ─────────
+ * The shared geometry behind every top bar that owns a header-centre
+ * group: the frontend chat header (chest ChatLayout's .s-header-bar-*)
+ * and the console header (HkAdminHeader's .s-admin-header-*) both hang
+ * these classes next to their own chrome classes, so the two faces can
+ * never drift apart again (user report 2026-10-15: the console's
+ * header-centre tab strip sat LEFT of centre on phones while the
+ * frontend's strip read centred — two per-band flex dialects had grown
+ * from the same idea).
+ *
+ * Grid, not flex: two EQUAL 1fr side tracks pin the middle column to the
+ * true viewport middle no matter how lopsided the wings' CONTENT is
+ * (avatar-only left vs three icon buttons right — exactly the console's
+ * phone case, where the drawer mode hides the title and the left wing is
+ * just the 28px trigger). Flex wings grow from flex-basis 0, so equal
+ * growth centred the group only while spare space lasted; each band then
+ * grew its own ad-hoc override and each override skewed in SOME band.
+ * `minmax(min-content, 1fr)` gives each wing a hard content floor, so an
+ * overflowing centre column (a wide tab strip) can never squeeze the
+ * avatar/action wings out of existence — the 2026-10-12 phone incident
+ * class — and the centre column is `minmax(0, auto)`, so IT soaks the
+ * squeeze instead: the strip narrows while STAYING centred, and its
+ * internal HkTabs scroller takes over (edge fades + swipe, the frontend
+ * over-wide-strip behavior) without ever covering a wing. */
+.s-balanced-header {
+  display: grid;
+  grid-template-columns: minmax(min-content, 1fr) minmax(0, auto) minmax(min-content, 1fr);
+  align-items: center;
+}
+
+.s-header-wing-start {
+  justify-self: start;
+  min-width: 0;
+  /* A wing whose content floors exceed its track must not PAINT past the
+   * wing box underneath the centre group (popup surfaces teleport to
+   * body, so clipping here never cuts a menu). */
+  overflow: hidden;
+}
+
+.s-header-wing-center {
+  /* Default stretch, deliberately: the strip must inherit the COLUMN's
+   * shrunken width when the middle track soaks a squeeze, so the HTabs
+   * scroller inside it takes over (edge fades + swipe). justify-self:
+   * center here would size the item by fit-content, whose min-content
+   * floor (= the full strip width) punches the item past the shrunken
+   * track and the strip paints over the wings instead of scrolling.
+   * Centring itself is the tracks' job (equal 1fr sides), not the
+   * item's. */
+  min-width: 0;
+}
+
+.s-header-wing-end {
+  justify-self: end;
+  min-width: 0;
+  overflow: hidden;
+}
+
 /* ── Admin header chrome (HkAdminHeader) ────────────────────────────────
  * The header's own layout. Every declaration below replaces a utility
  * class the markup used to depend on (`w-7 h-7`, `rounded-full`,
@@ -420,7 +477,10 @@
  * atomic layer rendered the header without them, and a host with one
  * (chest/UnoCSS) owned values the design system could not fix. Values are
  * the verified computed ones (audit 2026-09-15 against chest's generated
- * CSS), so no host's rendering changes. */
+ * CSS), so no host's rendering changes.
+ * The three-zone GEOMETRY itself lives in the shared .s-balanced-header
+ * contract above — the classes below keep only their wing-INTERNAL
+ * layout (row direction, gaps, alignment) and appearance. */
 
 .s-admin-header-user {
   display: flex;
@@ -433,50 +493,15 @@
    * The wing gap here carries the whole distance so the title text
    * lands on the same rhythm as the panel's button content. */
   gap: var(--space-16);
-  /* Balanced left wing (same grammar as ChatLayout's .s-header-bar-left):
-   * grows from the same flex basis as the actions wing so a centre
-   * group, when a page renders one, stays pinned to the true middle. */
-  flex: 1 1 0;
-  min-width: 0;
 }
 
 /* The page-owned centre group (filter tab strips): keeps its natural
- * width and hands overflow to the HTabs scroller inside it. */
+ * width and hands overflow to the HTabs scroller inside it. Column
+ * placement/shrinkage is the shared grid contract's job. */
 .s-admin-header-center {
-  flex: 0 1 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
-}
-
-
-/* Phone band (≤767px) — mirrors ChatLayout's own ≤767px header band
- * (the console face of the same balanced-wing header). On phones the
- * desktop balanced wings (`flex: 1 1 0` + `min-width: 0`) let a wide
- * centre tab strip squeeze BOTH side wings below their content floors:
- * the avatar wing shrank under its 28px trigger and the strip painted
- * straight over the avatar (user report 2026-10-12, L2 firewall tabs).
- * The frontend's answer — pin both wings, hand the leftover to the
- * centre and let its HTabs scroller own the overflow — is reproduced
- * here in substance: the strip keeps every pixel the avatar and the action
- * buttons don't need, and slides INSIDE its own box (edge fades + scroll
- * limits intact) without ever covering the avatar.
- * Desktop (>767px) keeps the balanced-wing centring untouched. */
-@media (max-width: 767px) {
-  .s-admin-header-user {
-    flex: 0 0 auto;
-  }
-
-  .s-admin-header-actions {
-    flex: 0 0 auto;
-  }
-
-  .s-admin-header-center {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-  }
 }
 
 .s-admin-header-avatar {
@@ -527,13 +552,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  /* Balanced right wing: with the user wing at flex 1 1 0 the pair
-   * grows symmetrically, so the centre group stays centred and the
-   * actions still hug the right edge (justify-end replaces the old
-   * margin-left:auto push, which would fight the centre wing). The
-   * automatic min-content floor keeps the icon buttons from being
-   * squeezed below their own width on narrow viewports. */
-  flex: 1 1 0;
+  /* The actions hug the right edge of their grid column (the old
+   * margin-left:auto push fought the centre wing for the middle; the
+   * flex-balanced `1 1 0` era before that skewed whenever the wings'
+   * contents disagreed — the shared grid contract ends both). */
   justify-content: flex-end;
 }
 

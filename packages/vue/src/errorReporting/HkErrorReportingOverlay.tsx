@@ -80,6 +80,17 @@ export const HkErrorReportingOverlay = defineComponent({
       if (!err) return null;
       const options = getErrorReportingOptions();
 
+      // Host-owned card: everything inside the takeover is the host's —
+      // content, actions, dismissal. The host keeps the capture channels
+      // and the crash-surviving mount; only the card is swapped.
+      if (options.landing) {
+        return (
+          <div class="hk-error-reporting-overlay" role="alertdialog" aria-live="assertive" aria-modal="true">
+            {options.landing(err)}
+          </div>
+        );
+      }
+
       const description = options.describe
         ? options.describe(err)
         : err.message || t("hikari::errors.unexpectedDesc", "An unhandled error occurred");

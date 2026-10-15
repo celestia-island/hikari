@@ -207,4 +207,75 @@ describe("createErrorReporting", () => {
     clearGlobalError();
     expect(overlayHost()).toBeNull();
   });
+
+  it("renders the host landing card instead of the built-in one", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    installPlugin({
+      landing: (err) =>
+        h("div", { class: "host-card", "data-code": err.name }, [
+          h("p", { class: "host-card__msg" }, err.message),
+          h(
+            "button",
+            { class: "host-card__dismiss", onClick: () => clearGlobalError() },
+            "Dismiss",
+          ),
+        ]),
+    });
+    reportGlobalError(new TypeError("host boom"));
+    await nextTick();
+
+    const host = overlayHost();
+    expect(host).not.toBeNull();
+    // The built-in card is fully replaced by the host's.
+    expect(host!.querySelector(".hk-error-landing")).toBeNull();
+    expect(host!.querySelector(".host-card")).not.toBeNull();
+    expect(host!.querySelector(".host-card")!.getAttribute("data-code")).toBe("TypeError");
+    expect(host!.querySelector(".host-card__msg")!.textContent).toBe("host boom");
+    // The host owns the actions: the built-in Home/Retry pair is gone.
+    expect(host!.textContent).not.toContain("Back to home");
+    expect(host!.textContent).not.toContain("Retry");
+    // The takeover shell stays (fixed, alert-dialog semantics).
+    expect(host!.querySelector(".hk-error-reporting-overlay")!.getAttribute("role")).toBe(
+      "alertdialog",
+    );
+    // The host card rides INSIDE the takeover shell (same fixed z-band), not
+    // beside it: a sibling placement would float outside --hk-z-error. The
+    // quadrant of these assertions that pins "same shell" is the ancestor
+    // relationship — descendants of the shell, not just of the data node.
+    expect(host!.querySelector(".hk-error-reporting-overlay .host-card")).not.toBeNull();
+    // The host's own dismissal tears the takeover down.
+    (host!.querySelector(".host-card__dismiss") as HTMLButtonElement).click();
+    await nextTick();
+    expect(overlayHost()).toBeNull();
+  });
+
+  it("lets landing step over title/describe and the built-in actions", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    installPlugin({
+      title: "ignored headline",
+      describe: () => "ignored description",
+      homeHref: "/should-not-be-used",
+      onHome: vi.fn(),
+      onRetry: vi.fn(),
+      landing: (err) =>
+        h("div", { class: "host-card", "data-msg": err.message }, [
+          h("p", { class: "host-card__msg" }, err.message),
+        ]),
+    });
+    reportGlobalError(new TypeError("own content"));
+    await nextTick();
+
+    const host = overlayHost()!;
+    // The host's card won outright; the built-in card (and its translated
+    // headline / description) never mounted.
+    expect(host.querySelector(".hk-error-landing")).toBeNull();
+    expect(host.querySelector(".host-card__msg")!.textContent).toBe("own content");
+    expect(host.textContent).not.toContain("ignored headline");
+    expect(host.textContent).not.toContain("ignored description");
+    expect(host.textContent).not.toContain("Back to home");
+    expect(host.textContent).not.toContain("Retry");
+    // The host card still receives the raw accepted record, not a
+    // title/describe-shaped one — the overrides never leak in.
+    expect(host.querySelector(".host-card")!.getAttribute("data-msg")).toBe("own content");
+  });
 });

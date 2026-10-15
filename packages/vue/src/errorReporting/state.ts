@@ -1,4 +1,4 @@
-import { ref, type Ref } from "vue";
+import { ref, type Ref, type VNodeChild } from "vue";
 
 import { reportHkRuntime, type HkRuntimeHandle } from "../runtime/registry";
 
@@ -17,11 +17,23 @@ export interface HkReportedError {
 }
 
 export interface HkErrorReportingOptions {
-  /** Headline override; defaults to `hikari::errors.defaultTitle`. */
+  /** Headline override; defaults to `hikari::errors.defaultTitle`.
+   * Ignored when `landing` is set (the host owns the whole card). */
   title?: string;
   /** Description builder; defaults to the error's message, falling back to
-   * `hikari::errors.unexpectedDesc` when the error carries none. */
+   * `hikari::errors.unexpectedDesc` when the error carries none.
+   * Ignored when `landing` is set. */
   describe?: (err: HkReportedError) => string;
+  /** Host-provided takeover card — the unification hatch for hosts whose
+   * error landing carries app-specific semantics (localized per-code
+   * headlines, raw wire payloads, a Dismiss action). When set, the overlay
+   * renders `landing(err)` INSTEAD of the built-in HkErrorLanding, inside
+   * the same crash-surviving host (dedicated body app, --hk-z-error): the
+   * host keeps every capture channel and the takeover guarantee and owns
+   * the card's content and actions outright — `title`, `describe`,
+   * `homeHref`, `onHome` and `onRetry` are all ignored. Resolve app-shaped
+   * payloads from `err.error` (e.g. an Error subclass carrying them). */
+  landing?: (err: HkReportedError) => VNodeChild;
   /** Target of the "back to home" action. `false` hides the button.
    * Ignored when `onHome` is set. Default `/`. */
   homeHref?: string | false;

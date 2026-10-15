@@ -660,6 +660,7 @@ export { default as HkScrollContainer } from "./components/HkScrollContainer";
 export { default as HkSearchInput } from "./components/HkSearchInput";
 export { default as HkSplash } from "./components/HkSplash";
 export { default as HkSelect } from "./components/HkSelect";
+export { default as HkHeaderPicker, type HkPickerOption } from "./components/HkHeaderPicker";
 export { default as HkSelectPanel } from "./components/HkSelectPanel";
 export { default as HkSidebar } from "./components/HkSidebar";
 export { default as HkSkeleton } from "./components/HkSkeleton";

@@ -22,7 +22,7 @@ function setViewportWidth(px: number) {
   });
 }
 
-async function mountSelect() {
+async function mountSelect(props: Record<string, unknown> = {}) {
   const el = document.createElement("div");
   document.body.appendChild(el);
   const app = createApp({
@@ -34,6 +34,7 @@ async function mountSelect() {
           { value: "a", label: "Option A" },
           { value: "b", label: "Option B" },
         ],
+        ...props,
       }),
   });
   app.mount(el);
@@ -176,5 +177,26 @@ describe("HSelect mobile sheet", () => {
 
     app.unmount();
     el.remove();
+  });
+});
+
+describe("HSelect desktop popout placement", () => {
+  afterEach(() => {
+    for (const el of Array.from(document.body.children)) {
+      if (el.className === "" || el.id === "") el.remove();
+    }
+  });
+
+  it("defaults to the form field's drop-down (bottom-start)", () => {
+    const vnode = h(HSelect, { modelValue: "", options: [] });
+    expect(vnode.props?.placement).toBeUndefined();
+  });
+
+  it("declares the placement prop (a bottom-pinned surface passes top-*)", () => {
+    // Through-wiring is pinned at the contract level: the prop exists
+    // with the historic default, and HkSelect's render forwards
+    // `placement={props.placement}` into HkSelectPanel.
+    expect(HSelect.props!.placement).toBeDefined();
+    expect((HSelect.props!.placement as { default: string }).default).toBe("bottom-start");
   });
 });

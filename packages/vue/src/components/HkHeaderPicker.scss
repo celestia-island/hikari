@@ -1,0 +1,56 @@
+/* HkHeaderPicker — the header-centre selector. The trigger reuses the
+ * family's dropdown chrome (.hk-select-trigger) but adapts to the
+ * header band: self-sized (the centre slot hugs its content, unlike a
+ * form field that fills its row) and band-height compact. The panel
+ * geometry/behaviour is HkSelectPanel's, unchanged. */
+
+.hk-header-picker {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.hk-header-picker-trigger {
+  width: auto;
+  /* Header-band compact: the button group beside it runs ~28px; the
+   * trigger stays a touch taller for its label but must not drive the
+   * header's own height. */
+  min-height: var(--space-32);
+  padding-block: var(--space-4);
+  padding-inline: var(--space-12) var(--space-28);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  max-width: 16rem;
+}
+
+.hk-header-picker-trigger .hk-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-header-picker-trigger .hk-select-arrow {
+  position: absolute;
+  inset-inline-end: var(--space-8);
+}
+
+/* ── Standardized rows (label + row verbs) ────────────────────────── */
+
+.hk-header-picker-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  justify-content: space-between;
+}
+
+.hk-header-picker-option-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-header-picker-option-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}

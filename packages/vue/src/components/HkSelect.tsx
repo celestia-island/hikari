@@ -10,7 +10,7 @@ import {
 
 import { ChevronDown } from "lucide-vue-next";
 import { useBreakpoint } from "../runtime/useBreakpoint";
-import HkSelectPanel from "./HkSelectPanel";
+import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
 import "./HkSelect.scss";
 
 export interface HkSelectOption {
@@ -46,6 +46,19 @@ export default defineComponent({
     options: {
       type: Array as PropType<HkSelectOption[]>,
       default: () => [] as HkSelectOption[],
+    },
+    /**
+     * Desktop-popout side relative to the trigger (auto-flips when the
+     * viewport edge would clip it). The historic default — the form
+     * field's drop-DOWN — stays "bottom-start"; a surface pinned to the
+     * viewport's bottom band (a dock or a bar) passes "top-*" so the
+     * list grows UPWARD, the mirror image of a top-pinned surface
+     * growing downward. The mobile sheet always slides from the bottom
+     * edge regardless (it is an edge gesture, not an anchored popup).
+     */
+    placement: {
+      type: String as PropType<SelectPanelPlacement>,
+      default: "bottom-start",
     },
   },
   emits: {
@@ -204,7 +217,7 @@ export default defineComponent({
           onUpdate:open={(v: boolean) => { isOpen.value = v; }}
           anchorRef={triggerRef.value ?? null}
           title={props.panelTitle ?? props.label ?? ""}
-          placement="bottom-start"
+          placement={props.placement}
           offset={4}
           onKeydown={onPopoutKeydown}
         >

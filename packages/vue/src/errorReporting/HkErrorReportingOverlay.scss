@@ -1,9 +1,12 @@
 // HkErrorReportingOverlay — fixed full-viewport host for the error landing.
-// Sits above every popup band (modal 1000 / dropdown 2000 / tooltip 3000 /
-// toast 4000): an uncaught-error takeover must never be covered.
+// Mounts on document.body (NOT the overlay root — the takeover must survive
+// even a broken floating tree) and sits on --hk-z-error, ABOVE the fenced
+// overlay root (--hk-z-overlay-root): an uncaught-error takeover must never
+// be covered — not by app chrome, not by any floating layer. Only the
+// window titlebar (--hk-z-titlebar) stays above it in the Tauri shell.
 
 .hk-error-reporting-overlay {
   position: fixed;
   inset: 0;
-  z-index: var(--hk-z-modal);
+  z-index: var(--hk-z-error);
 }

@@ -9,8 +9,20 @@
  */
 #hk-overlay-root {
   /* Fences the root's z-index space from the global stacking order —
-   * the entire reason this container exists. */
+   * the entire reason this container exists. The fence disciplines the
+   * root's INTERNALS only; the elevation below is what lifts the root
+   * itself above app chrome. */
   isolation: isolate;
+
+  /* Document-space elevation — without it, any fixed/sticky chrome with
+   * a positive z-index (the admin status bar sits at
+   * --hk-z-toolbar: 50) painted over EVERY floating layer: the
+   * connection popover rendered behind the panel footer (2026-10-15
+   * defect report). The band lives in scale.scss between the old
+   * floating bands and --hk-z-error, preserving the pre-isolation
+   * order: content chrome < floating layers < error landing < titlebar.
+   * The fallback must match overlayRoot.ts's OVERLAY_ROOT_DOCUMENT_Z. */
+  z-index: var(--hk-z-overlay-root, 90000);
 
   /* The root itself doesn't intercept pointer events; each teleported
    * child restores its own pointer-events. */

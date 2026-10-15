@@ -116,6 +116,8 @@
  * anchors narrower than 180px (the floor must lose to the inline style,
  * which can only happen on the same element). */
 .hk-select-popout-host {
+  /* Overlay-root contract: restore pointer events (see HkDrawer). */
+  pointer-events: auto;
   position: fixed;
   min-width: 180px;
 
@@ -280,6 +282,7 @@
 // popover/modal mobile dockings.
 // ------
 .hk-select-sheet-scrim {
+  pointer-events: auto;
   position: fixed;
   inset: 0;
   pointer-events: auto;
@@ -287,6 +290,7 @@
 }
 
 .hk-select-sheet-panel {
+  pointer-events: auto;
   position: fixed;
   left: 0;
   right: 0;
@@ -491,3 +495,7 @@
     transition: none;
   }
 }
+
+/* ── Overlay-root pointer-events contract ──────────────────────────
+ * See HkDrawer.scss's guard note. The popout host, the sheet scrim
+ * and the sheet panel all live inside #hk-overlay-root. */

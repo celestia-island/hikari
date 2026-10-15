@@ -11,12 +11,14 @@ import "./HkFilterPanel.scss";
 
 /**
  * Filter condition operators. The symbol IS the button (one glyph, one
- * toggle — compact by design): the regular kinds get three (equals /
- * not-equals / fuzzy), numeric fields get the ordered five (no
- * not-equals), select fields narrow to equals / not-equals, and date
- * fields bound with the ordered pair.
+ * toggle — compact by design). Kind sets (user direction 2026-10-15):
+ * TEXT fields speak the FUZZY pair only — ≈ (contains) and ≉ (does not
+ * contain); the old exact =/≠ for text is gone ("等于其实是模糊匹配，
+ * 干脆就标成约等于/约不等于"). Numeric fields keep the ordered five
+ * (exact = among them), select fields keep equals / not-equals, and
+ * date fields the ordered pair.
  */
-export type HkFilterOperator = "eq" | "ne" | "approx" | "lt" | "lte" | "gte" | "gt";
+export type HkFilterOperator = "eq" | "ne" | "approx" | "napprox" | "lt" | "lte" | "gte" | "gt";
 
 /** One filterable field a page declares for the panel. */
 export interface HkFilterFieldDef {
@@ -32,27 +34,30 @@ export interface HkFilterFieldDef {
   placeholder?: string;
 }
 
-/** One condition: the operator and the (string) value. An EMPTY value
- *  means the field filters nothing — pages map absent/empty onto "no
- *  filter" at the RPC boundary; the row's own remove button is the UI
- *  verb that drops the condition entirely. */
+/** One condition: WHICH field, the operator and the (string) value. An
+ * EMPTY value means the condition filters nothing — pages map absent/
+ * empty onto "no filter" at the RPC boundary; the row's own remove
+ * button is the UI verb that drops the condition entirely. */
 export interface HkFilterCondition {
+  key: string;
   op: HkFilterOperator;
   value: string;
 }
 
-/** Per-field condition state, keyed by the field def's key. The record
- *  IS the list of visible condition rows: a declared field the record
- *  does not mention is latent — it only materializes when the user adds
- *  it from the panel's add row (user direction 2026-10-12: conditions
- *  are ADDED, not all rendered at once), and a row the user removes
- *  leaves the record. */
-export type HkFilterState = Record<string, HkFilterCondition>;
+/** The panel's state IS the visible row list (user direction
+ * 2026-10-15): an ORDERED ARRAY so the SAME field may carry MANY
+ * conditions — filter a text column by ≈香蕉 and ≈苹果 at once, or pin
+ * a value band with several ordered comparisons on one numeric column.
+ * A page starts with NO conditions ([] — the default list is always
+ * empty) and every visible row was deliberately added through the
+ * field chooser. */
+export type HkFilterState = HkFilterCondition[];
 
 const OPERATOR_SYMBOL: Record<HkFilterOperator, string> = {
   eq: "=",
   ne: "≠",
   approx: "≈",
+  napprox: "≉",
   lt: "<",
   lte: "≤",
   gte: "≥",
@@ -63,6 +68,7 @@ const OPERATOR_LABEL: Record<HkFilterOperator, { key: string; fallback: string }
   eq: { key: "hikari::filterPanel.op.eq", fallback: "equals" },
   ne: { key: "hikari::filterPanel.op.ne", fallback: "not equals" },
   approx: { key: "hikari::filterPanel.op.approx", fallback: "fuzzy match" },
+  napprox: { key: "hikari::filterPanel.op.napprox", fallback: "fuzzy non-match" },
   lt: { key: "hikari::filterPanel.op.lt", fallback: "less than" },
   lte: { key: "hikari::filterPanel.op.lte", fallback: "at most" },
   gte: { key: "hikari::filterPanel.op.gte", fallback: "at least" },
@@ -70,26 +76,23 @@ const OPERATOR_LABEL: Record<HkFilterOperator, { key: string; fallback: string }
 };
 
 const DEFAULT_OPERATORS: Record<HkFilterFieldDef["kind"], HkFilterOperator[]> = {
-  text: ["eq", "ne", "approx"],
+  text: ["approx", "napprox"],
   number: ["lt", "lte", "eq", "gte", "gt"],
   select: ["eq", "ne"],
   date: ["gte", "lte"],
 };
 
 /** Keep only a legal number shape: optional leading minus, digits, one
- *  decimal point ("只允许输入合法数字" — the input filters the keystrokes
- *  rather than clamping afterwards). The intermediate fragments "-",
- *  "." and "-." survive deliberately: rejecting them mid-keystroke would
- *  make typing a negative or a decimal impossible; no chest page ships a
- *  number field yet, and one will want Number()-validation at the wire
- *  boundary when the first does. */
+ * decimal point ("只允许输入合法数字" — the input filters the keystrokes
+ * rather than clamping afterwards). The intermediate fragments "-",
+ * "." and "-." survive deliberately: rejecting them mid-keystroke would
+ * make typing a negative or a decimal impossible; pages hand the model
+ * to RPC boundaries that want Number()-validation anyway. */
 export function sanitizeNumberInput(raw: string): string {
   let out = raw.replace(/[^-0-9.]/g, "");
-  // One minus, and only leading.
   const hasMinus = out.startsWith("-");
   out = out.replace(/-/g, "");
   if (hasMinus) out = `-${out}`;
-  // One decimal point.
   const firstDot = out.indexOf(".");
   if (firstDot >= 0) {
     out = out.slice(0, firstDot + 1) + out.slice(firstDot + 1).replace(/\./g, "");
@@ -97,11 +100,90 @@ export function sanitizeNumberInput(raw: string): string {
   return out;
 }
 
+/** Operators whose multiple conditions on ONE field combine with OR
+ * (user direction 2026-10-15): a fuzzy ≈香蕉 plus ≈苹果 matches rows
+ * containing EITHER — 香蕉牛奶、苹果牛奶、苹果醋 all pass; the second
+ * condition is never shadowed by the first. Select-kind equals joins
+ * the OR class (match ANY of the picked options); a NUMBER's exact =
+ * does not — it stays in the ALL-must-hold band of hkFieldMatches. */
+function matchOpsFor(kind: HkFilterFieldDef["kind"]): HkFilterOperator[] {
+  return kind === "select" ? ["eq", "approx"] : ["approx"];
+}
+
+/** Does ONE non-empty condition hold against a concrete raw value?
+ * (String forms compare case-insensitively for the fuzzy pair —
+ * "contains" reads better caseless; numeric comparisons coerce and are
+ * false on non-numbers.) */
+export function hkConditionMatches(
+  cond: HkFilterCondition,
+  kind: HkFilterFieldDef["kind"],
+  raw: unknown,
+): boolean {
+  const value = String(raw ?? "");
+  const needle = cond.value.toLowerCase();
+  const hay = value.toLowerCase();
+  switch (cond.op) {
+    case "approx":
+      return hay.includes(needle);
+    case "napprox":
+      return !hay.includes(needle);
+    case "eq":
+      if (kind === "number") {
+        const a = Number(value);
+        const b = Number(cond.value);
+        return Number.isFinite(a) && Number.isFinite(b) && a === b;
+      }
+      return hay === needle;
+    case "ne":
+      return !hkConditionMatches({ ...cond, op: "eq" }, kind, raw);
+    case "lt":
+    case "lte":
+    case "gt":
+    case "gte": {
+      const a = Number(value);
+      const b = Number(cond.value);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+      if (cond.op === "lt") return a < b;
+      if (cond.op === "lte") return a <= b;
+      if (cond.op === "gt") return a > b;
+      return a >= b;
+    }
+  }
+}
+
+/** Combine ALL of one field's conditions against a concrete raw value —
+ * the canonical semantics pages (and servers) must mirror (user
+ * direction 2026-10-15):
+ *   - the field's MATCH-class conditions (≈; select =) OR-combine: at
+ *     least one must hit;
+ *   - every other condition must hold INDIVIDUALLY (AND): each ≉/≠
+ *     exclusion (the value may match none of them) and each ordered
+ *     comparison (a band like ≥10 AND ≤50 restricts the range).
+ * Empty-valued conditions filter nothing and are skipped. An empty
+ * condition LIST matches everything. */
+export function hkFieldMatches(
+  kind: HkFilterFieldDef["kind"],
+  conditions: HkFilterCondition[],
+  raw: unknown,
+): boolean {
+  const live = conditions.filter((c) => c.value !== "");
+  const matchOps = matchOpsFor(kind);
+  const matchers = live.filter((c) => matchOps.includes(c.op));
+  if (matchers.length > 0 && !matchers.some((c) => hkConditionMatches(c, kind, raw))) {
+    return false;
+  }
+  for (const c of live) {
+    if (matchOps.includes(c.op)) continue;
+    if (!hkConditionMatches(c, kind, raw)) return false;
+  }
+  return true;
+}
+
 export default defineComponent({
   name: "HkFilterPanel",
   props: {
     fields: { type: Array as PropType<HkFilterFieldDef[]>, required: true },
-    modelValue: { type: Object as PropType<HkFilterState>, default: () => ({}) },
+    modelValue: { type: Array as PropType<HkFilterState>, default: () => [] },
     disabled: { type: Boolean, default: false },
     /** Panel aria-label / heading context (defaults to "Filters"). */
     label: { type: String, default: undefined },
@@ -112,15 +194,14 @@ export default defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
 
+    const fieldByKey = (key: string): HkFilterFieldDef | undefined =>
+      props.fields.find((f) => f.key === key);
+
     const operatorsFor = (field: HkFilterFieldDef): HkFilterOperator[] =>
       field.operators ?? DEFAULT_OPERATORS[field.kind];
 
-    const conditionFor = (field: HkFilterFieldDef): HkFilterCondition =>
-      props.modelValue[field.key] ?? { op: operatorsFor(field)[0]!, value: "" };
-
-    function emitCondition(field: HkFilterFieldDef, patch: Partial<HkFilterCondition>) {
-      const next: HkFilterState = { ...props.modelValue };
-      next[field.key] = { ...conditionFor(field), ...patch };
+    function emitCondition(index: number, patch: Partial<HkFilterCondition>) {
+      const next = props.modelValue.map((c, i) => (i === index ? { ...c, ...patch } : c));
       emit("update:modelValue", next);
     }
 
@@ -134,32 +215,29 @@ export default defineComponent({
       return [{ value: "", label: t("hikari::filterPanel.all", "All") }, ...options];
     };
 
-    /** Active-count signal for the trigger's dot (also exported via the
-     *  panel's own render for testing). */
+    /** Active-count signal for the trigger's corner badge (also exported
+     * via the panel's own render for testing). */
     const activeCount = computed(
-      () => props.fields.filter((f) => conditionFor(f).value !== "").length,
+      () => props.modelValue.filter((c) => c.value !== "").length,
     );
 
-    // The visible rows ARE the state record's declared fields, in
-    // declaration order; the rest stay latent behind the add row.
-    const rows = computed(() => props.fields.filter((f) => props.modelValue[f.key] !== undefined));
-    const addable = computed(() => props.fields.filter((f) => props.modelValue[f.key] === undefined));
+    // The visible rows ARE the state array, in order (2026-10-15); the
+    // chooser offers EVERY declared field — the same field may join
+    // many times over.
+    const rows = computed(() => props.modelValue);
 
     // ── The add-condition field chooser (user direction 2026-10-14) ──
     // "Add condition" NEVER appends by declaration order — it opens a
-    // menu of the latent fields and the user picks WHO joins the panel.
-    // The menu is a popover anchored to the add button (a bottom sheet
-    // on mobile, same split as every other panel popout); the keyboard
-    // model mirrors HkPopupSelect: focus stays on the trigger, arrows
-    // move a highlight, Enter confirms it.
+    // menu of the fields and the user picks WHO joins the panel. The
+    // keyboard model mirrors HkPopupSelect: focus stays on the trigger,
+    // arrows move a highlight, Enter confirms it.
     const addMenuOpen = ref(false);
     const addBtnRef = ref<HTMLElement | null>(null);
     const addHighlight = ref(-1);
 
     function openAddMenu() {
       addMenuOpen.value = true;
-      // First item pre-highlighted: arrows and Enter work immediately.
-      addHighlight.value = addable.value.length > 0 ? 0 : -1;
+      addHighlight.value = props.fields.length > 0 ? 0 : -1;
     }
 
     function closeAddMenu() {
@@ -168,22 +246,30 @@ export default defineComponent({
     }
 
     function pickAddable(field: HkFilterFieldDef) {
-      // Materialize the row: the kind's default operator, empty value.
-      emitCondition(field, { op: operatorsFor(field)[0]!, value: "" });
+      const candidate: HkFilterCondition = { key: field.key, op: operatorsFor(field)[0]!, value: "" };
+      // An IDENTICAL condition already sitting empty adds nothing — the
+      // user re-picking the same field gets a fresh row only when the
+      // existing ones carry values or a different operator would apply.
+      if (!props.modelValue.some((c) => c.key === candidate.key && c.op === candidate.op && c.value === "")) {
+        emit("update:modelValue", [...props.modelValue, candidate]);
+      }
       closeAddMenu();
     }
 
-    // The latent list can change under an open menu (a row removed while
-    // the menu is open grows it; the last latent field picked empties
-    // it) — keep the highlight in range and close on an empty menu.
-    watch(addable, (list) => {
-      if (!addMenuOpen.value) return;
-      if (list.length === 0) {
-        closeAddMenu();
-        return;
-      }
-      if (addHighlight.value >= list.length) addHighlight.value = list.length - 1;
-    });
+    // A declared-fields change under an open menu (a page swaps its
+    // field list reactively) must keep the highlight in range and close
+    // on an empty menu.
+    watch(
+      () => props.fields,
+      (list) => {
+        if (!addMenuOpen.value) return;
+        if (list.length === 0) {
+          closeAddMenu();
+          return;
+        }
+        if (addHighlight.value >= list.length) addHighlight.value = list.length - 1;
+      },
+    );
 
     watch(addHighlight, (i) => {
       if (i < 0) return;
@@ -196,7 +282,7 @@ export default defineComponent({
 
     function onAddTriggerKeydown(e: KeyboardEvent) {
       if (props.disabled) return;
-      const count = addable.value.length;
+      const count = props.fields.length;
       if (e.key === "ArrowDown") {
         e.preventDefault();
         if (!addMenuOpen.value) openAddMenu();
@@ -209,7 +295,7 @@ export default defineComponent({
         // With the menu open, Enter/Space CONFIRM the highlighted field;
         // the native button activation (a toggle click) is suppressed.
         e.preventDefault();
-        const field = addable.value[addHighlight.value];
+        const field = props.fields[addHighlight.value];
         if (field) pickAddable(field);
       } else if (e.key === "Escape" && addMenuOpen.value) {
         // Escape closes ONE layer — the menu, not the host panel: stop
@@ -224,23 +310,28 @@ export default defineComponent({
       const label = props.label ?? t("hikari::filterBar.trigger", "Filters");
       return (
         <div class="hk-filter-panel" data-testid="hk-filter-panel" data-active={activeCount.value > 0 || undefined} aria-label={label}>
-          {rows.value.map((field) => {
-            const condition = conditionFor(field);
-            const ops = operatorsFor(field);
+          {rows.value.map((cond, index) => {
+            const field = fieldByKey(cond.key);
+            // An undeclared key (the page renamed a field under live
+            // state) renders a bare inert row naming the key —
+            // removable, not editable.
+            const kind = field?.kind ?? "text";
+            const ops = field ? operatorsFor(field) : ([cond.op] as HkFilterOperator[]);
+            const labelText = field?.label ?? cond.key;
             return (
-              <div key={field.key} class="hk-filter-panel-row" data-kind={field.kind}>
-                <span class="hk-filter-panel-field">{field.label}</span>
-                <div class="hk-filter-panel-ops" role="group" aria-label={`${field.label} — ${label}`}>
+              <div key={index} class="hk-filter-panel-row" data-kind={kind}>
+                <span class="hk-filter-panel-field">{labelText}</span>
+                <div class="hk-filter-panel-ops" role="group" aria-label={`${labelText} — ${label}`}>
                   {ops.map((op) => (
                     <button
                       key={op}
                       type="button"
                       class="hk-filter-panel-op"
-                      aria-pressed={condition.op === op}
+                      aria-pressed={cond.op === op}
                       aria-label={t(OPERATOR_LABEL[op].key, OPERATOR_LABEL[op].fallback)}
                       title={t(OPERATOR_LABEL[op].key, OPERATOR_LABEL[op].fallback)}
-                      disabled={props.disabled}
-                      onClick={() => emitCondition(field, { op })}
+                      disabled={props.disabled || !field}
+                      onClick={() => emitCondition(index, { op })}
                     >
                       {OPERATOR_SYMBOL[op]}
                     </button>
@@ -248,11 +339,11 @@ export default defineComponent({
                 </div>
                 <div class="hk-filter-panel-value">
                   <div class="hk-filter-panel-control">
-                    {field.kind === "select" ? (
+                    {kind === "select" && field ? (
                       <HkPopupSelect
-                        modelValue={condition.value}
-                        onUpdate:modelValue={(v: string) => emitCondition(field, { value: v })}
-                        label={field.label}
+                        modelValue={cond.value}
+                        onUpdate:modelValue={(v: string) => emitCondition(index, { value: v })}
+                        label={labelText}
                         // The row's left cell already names the field —
                         // the control's own caption above it reads as
                         // duplication (user direction 2026-10-12), and
@@ -262,44 +353,44 @@ export default defineComponent({
                         disabled={props.disabled}
                         options={selectOptions(field)}
                       />
-                    ) : field.kind === "date" ? (
+                    ) : kind === "date" ? (
                       // The calendar picker — never the OS native input
-                      // (2026-10-11 direction); the wire format is the same
-                      // ISO YYYY-MM-DD the native input spoke.
+                      // (2026-10-11 direction); the wire format is the
+                      // same ISO YYYY-MM-DD the native input spoke.
                       <HkDatePicker
-                        modelValue={condition.value || null}
+                        modelValue={cond.value || null}
                         onUpdate:modelValue={(v: string | null) =>
-                          emitCondition(field, { value: v ?? "" })
+                          emitCondition(index, { value: v ?? "" })
                         }
                         size="sm"
-                        disabled={props.disabled}
+                        disabled={props.disabled || !field}
                       />
                     ) : (
                       <HkInput
                         type="text"
-                        variant={field.kind === "number" ? "number" : "text"}
-                        modelValue={condition.value}
+                        variant={kind === "number" ? "number" : "text"}
+                        modelValue={cond.value}
                         onUpdate:modelValue={(v: string) =>
-                          emitCondition(field, {
+                          emitCondition(index, {
                             // Belt over the browser's native number filtering:
                             // the stored model keeps a clean number SHAPE only
                             // (sign, digits, one dot), so pages can hand it to
                             // RPC params verbatim.
-                            value: field.kind === "number" ? sanitizeNumberInput(v) : v,
+                            value: kind === "number" ? sanitizeNumberInput(v) : v,
                           })
                         }
-                        label={field.label}
+                        label={labelText}
                         hideLabel
                         size="sm"
-                        placeholder={field.placeholder ?? ""}
-                        disabled={props.disabled}
+                        placeholder={field?.placeholder ?? ""}
+                        disabled={props.disabled || !field}
                       />
                     )}
                   </div>
-                  {/* Drop the condition entirely (the row leaves the
-                   * panel; the page refetches unfiltered). Clearing the
-                   * VALUE still means "filters nothing" for the wire —
-                   * removal is just the tidy-up verb on top. */}
+                  {/* Drop THIS condition (the row leaves the panel; the
+                   * page refetches without it). Sibling conditions on
+                   * the same field survive — index-targeted removal,
+                   * never key-targeted. */}
                   <button
                     type="button"
                     class="hk-filter-panel-remove"
@@ -307,8 +398,7 @@ export default defineComponent({
                     title={t("hikari::filterPanel.removeCondition", "Remove condition")}
                     disabled={props.disabled}
                     onClick={() => {
-                      const next: HkFilterState = { ...props.modelValue };
-                      delete next[field.key];
+                      const next = props.modelValue.filter((_, i) => i !== index);
                       emit("update:modelValue", next);
                     }}
                   >
@@ -318,14 +408,13 @@ export default defineComponent({
               </div>
             );
           })}
-          {addable.value.length > 0 && (
+          {props.fields.length > 0 && (
             <div class="hk-filter-panel-addrow">
               {/* The ONE growth verb, parked in the operator column so
                * the row grid reads as one aligned axis (user direction
-               * 2026-10-12). It no longer appends by declaration order
-               * (user direction 2026-10-14): the click opens the field
-               * chooser and the picked field materializes with its
-               * kind's default operator and an empty value. */}
+               * 2026-10-12). It opens the field chooser (2026-10-14) —
+               * and since 2026-10-15 the chooser offers EVERY declared
+               * field: the same column may join repeatedly. */}
               <button
                 ref={addBtnRef}
                 type="button"
@@ -365,7 +454,7 @@ export default defineComponent({
                     role="menu"
                     aria-label={t("hikari::filterPanel.chooseField", "Choose a field to add")}
                   >
-                    {addable.value.map((field, i) => (
+                    {props.fields.map((field, i) => (
                       <button
                         key={field.key}
                         type="button"

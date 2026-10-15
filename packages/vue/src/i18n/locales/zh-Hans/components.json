@@ -211,6 +211,7 @@
     "hikari::filterPanel.op.eq": "等于",
     "hikari::filterPanel.op.ne": "不等于",
     "hikari::filterPanel.op.approx": "模糊匹配",
+    "hikari::filterPanel.op.napprox": "不包含",
     "hikari::filterPanel.op.lt": "小于",
     "hikari::filterPanel.op.lte": "不超过",
     "hikari::filterPanel.op.gte": "不低于",

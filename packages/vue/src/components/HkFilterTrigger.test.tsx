@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
 
 import HkFilterTrigger from "./HkFilterTrigger";
+import type { HkFilterState } from "./HkFilterPanel";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -32,26 +33,26 @@ const triggerButton = (c: HTMLElement) =>
 
 describe("HkFilterTrigger", () => {
   it("renders the filter affordance as a ghost/28 icon button (the theme toggle's step)", () => {
-    const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: {} }));
+    const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: [] }));
     const btn = triggerButton(c);
     expect(btn).toBeTruthy();
     expect(btn.className).toContain("hk-icon-button-28");
     expect(btn.className).toContain("hk-icon-button-ghost");
     expect(btn.getAttribute("aria-haspopup")).toBe("dialog");
     // No active dot on an untouched state.
-    expect(c.querySelector(".hk-filter-trigger-dot")).toBeNull();
+    expect(c.querySelector(".hk-corner-badge--dot")).toBeNull();
   });
 
   it("opens the panel in a popover below the button and edits emit live", async () => {
-    let seen: Record<string, unknown> | null = null;
+    let seen: HkFilterState | null = null;
     const c = mount(
       h(HkFilterTrigger, {
         fields: FIELDS,
         // Seed one condition so the panel opens with its row (an empty
         // state renders only the add row — conditions are added, not
         // all rendered at once).
-        modelValue: { tool: { op: "eq", value: "" } },
-        "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
+        modelValue: [{ key: "tool", op: "approx", value: "" }],
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
       }),
     );
     expect(document.body.querySelector(".hk-filter-panel")).toBeNull();
@@ -69,16 +70,16 @@ describe("HkFilterTrigger", () => {
     input.dispatchEvent(new Event("input", { bubbles: true }));
     await Promise.resolve();
     expect(seen).not.toBeNull();
-    expect((seen! as { tool: { value: string } }).tool.value).toBe("web");
+    expect((seen! as Array<{ key: string; value: string }>)[0]).toMatchObject({ key: "tool", value: "web" });
   });
 
   it("shows the active dot only while a condition carries a value", () => {
     const c = mount(
-      h(HkFilterTrigger, { fields: FIELDS, modelValue: { count: { op: "gte", value: "3" } } }),
+      h(HkFilterTrigger, { fields: FIELDS, modelValue: [{ key: "count", op: "gte", value: "3" }] }),
     );
-    expect(c.querySelector(".hk-filter-trigger-dot")).toBeTruthy();
-    const empty = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: {} }));
-    expect(empty.querySelector(".hk-filter-trigger-dot")).toBeNull();
+    expect(c.querySelector(".hk-corner-badge--dot")).toBeTruthy();
+    const empty = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: [] }));
+    expect(empty.querySelector(".hk-corner-badge--dot")).toBeNull();
   });
 
   // ── Nested-popout regression (2026-10-14) ──────────────────────────
@@ -89,12 +90,12 @@ describe("HkFilterTrigger", () => {
   // whole panel shut and swallowed the pick. Both paths pinned here.
 
   it("keeps the panel open when a field is picked from the add-condition chooser", async () => {
-    let seen: Record<string, unknown> | null = null;
+    let seen: HkFilterState | null = null;
     const c = mount(
       h(HkFilterTrigger, {
         fields: FIELDS,
-        modelValue: {},
-        "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
+        modelValue: [],
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
       }),
     );
     c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
@@ -114,7 +115,7 @@ describe("HkFilterTrigger", () => {
     await new Promise((r) => setTimeout(r, 60));
     // The pick landed…
     expect(seen).not.toBeNull();
-    expect(Object.keys(seen!)).toContain("tool");
+    expect((seen! as Array<{ key: string }>)[0]?.key).toBe("tool");
     // …and the PANEL is still open — the chooser's click is not a
     // backdrop dismissal for it.
     expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
@@ -125,12 +126,12 @@ describe("HkFilterTrigger", () => {
       { key: "tool", label: "Tool", kind: "text" as const },
       { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
     ];
-    let seen: Record<string, unknown> | null = null;
+    let seen: HkFilterState | null = null;
     const c = mount(
       h(HkFilterTrigger, {
         fields: selectFields,
-        modelValue: { agent: { op: "eq", value: "" } },
-        "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
+        modelValue: [{ key: "agent", op: "eq", value: "" }],
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
       }),
     );
     c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
@@ -153,7 +154,7 @@ describe("HkFilterTrigger", () => {
     await Promise.resolve();
     await new Promise((r) => setTimeout(r, 60));
     // The option landed on the condition…
-    expect((seen! as { agent: { value: string } }).agent.value).toBe("a1");
+    expect((seen! as Array<{ key: string; value: string }>)[0]).toMatchObject({ key: "agent", value: "a1" });
     // …and the panel survived the nested pick.
     expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
     document.body.querySelectorAll(".hk-popup-select-item, .hk-popover-panel").forEach((el) => el.remove());
@@ -166,7 +167,7 @@ describe("HkFilterTrigger", () => {
   // HkPopupSelect used to close BOTH layers on one Escape.
 
   it("Escape with the chooser open closes the chooser but keeps the panel", async () => {
-    const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: {} }));
+    const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: [] }));
     c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
       new MouseEvent("click", { bubbles: true }),
     );
@@ -197,7 +198,7 @@ describe("HkFilterTrigger", () => {
       { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
     ];
     const c = mount(
-      h(HkFilterTrigger, { fields: selectFields, modelValue: { agent: { op: "eq", value: "" } } }),
+      h(HkFilterTrigger, { fields: selectFields, modelValue: [{ key: "agent", op: "eq", value: "" }] }),
     );
     c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
       new MouseEvent("click", { bubbles: true }),
@@ -232,7 +233,7 @@ describe("HkFilterTrigger", () => {
       { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
     ];
     const c = mount(
-      h(HkFilterTrigger, { fields: selectFields, modelValue: { agent: { op: "eq", value: "" } } }),
+      h(HkFilterTrigger, { fields: selectFields, modelValue: [{ key: "agent", op: "eq", value: "" }] }),
     );
     c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
       new MouseEvent("click", { bubbles: true }),
@@ -266,7 +267,7 @@ describe("HkFilterTrigger", () => {
       { key: "agent", label: "Agent", kind: "select" as const, options: [{ value: "a1", label: "Agent One" }] },
     ];
     const c = mount(
-      h(HkFilterTrigger, { fields: selectFields, modelValue: { agent: { op: "eq", value: "" } } }),
+      h(HkFilterTrigger, { fields: selectFields, modelValue: [{ key: "agent", op: "eq", value: "" }] }),
     );
     c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
       new MouseEvent("click", { bubbles: true }),
@@ -295,12 +296,12 @@ describe("HkFilterTrigger", () => {
   });
 
   it("an in-panel click while the chooser is open dismisses the chooser", async () => {
-    let seen: Record<string, unknown> | null = null;
+    let seen: HkFilterState | null = null;
     const c = mount(
       h(HkFilterTrigger, {
         fields: FIELDS,
-        modelValue: { tool: { op: "eq", value: "" } },
-        "onUpdate:modelValue": (s: Record<string, unknown>) => (seen = s),
+        modelValue: [{ key: "tool", op: "approx", value: "" }],
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
       }),
     );
     c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!.dispatchEvent(
@@ -324,7 +325,7 @@ describe("HkFilterTrigger", () => {
     await Promise.resolve();
     await new Promise((r) => setTimeout(r, 60));
     expect(document.body.querySelector(".hk-filter-add-item")).toBeNull();
-    expect((seen! as { tool: { op: string } }).tool.op).toBe("approx");
+    expect((seen! as Array<{ key: string; op: string }>)[0]).toMatchObject({ key: "tool", op: "approx" });
     expect(document.body.querySelector(".hk-filter-panel")).toBeTruthy();
     document.body.querySelectorAll(".hk-popover-panel").forEach((el) => el.remove());
   });

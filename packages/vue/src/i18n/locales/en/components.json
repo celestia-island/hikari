@@ -207,6 +207,7 @@
     "hikari::filterPanel.op.eq": "equals",
     "hikari::filterPanel.op.ne": "not equals",
     "hikari::filterPanel.op.approx": "fuzzy match",
+    "hikari::filterPanel.op.napprox": "fuzzy non-match",
     "hikari::filterPanel.op.lt": "less than",
     "hikari::filterPanel.op.lte": "at most",
     "hikari::filterPanel.op.gte": "at least",

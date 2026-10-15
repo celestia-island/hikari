@@ -1,0 +1,132 @@
+/**
+ * HkCornerBadge — the generic corner mark (dot / count / label) pinned
+ * to one corner of the default-slot anchor (see HkCornerBadge.tsx for
+ * the contract). Geometry follows the house pattern the trigger dots
+ * and the Rust family's .hk-badge-wrapper established: the anchor is a
+ * relative inline-flex wrapper (the badge escapes nothing — hosts wrap
+ * ANY child), the mark centers ON the corner via translate(50%,-50%)
+ * with an optional --hk-corner-badge-offset clearance.
+ */
+
+.hk-corner-badge-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.hk-corner-badge {
+  position: absolute;
+  /* Centered on the corner; the corner data-attribute flips the axes
+   * and the offset var adds clearance without re-deriving transforms. */
+  transform: translate(var(--hk-corner-badge-tx, 50%), var(--hk-corner-badge-ty, -50%));
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.hk-corner-badge[data-corner="top-right"] {
+  top: var(--hk-corner-badge-offset, 0px);
+  right: var(--hk-corner-badge-offset, 0px);
+  --hk-corner-badge-tx: 50%;
+  --hk-corner-badge-ty: -50%;
+}
+
+.hk-corner-badge[data-corner="top-left"] {
+  top: var(--hk-corner-badge-offset, 0px);
+  left: var(--hk-corner-badge-offset, 0px);
+  --hk-corner-badge-tx: -50%;
+  --hk-corner-badge-ty: -50%;
+}
+
+.hk-corner-badge[data-corner="bottom-right"] {
+  bottom: var(--hk-corner-badge-offset, 0px);
+  right: var(--hk-corner-badge-offset, 0px);
+  --hk-corner-badge-tx: 50%;
+  --hk-corner-badge-ty: 50%;
+}
+
+.hk-corner-badge[data-corner="bottom-left"] {
+  bottom: var(--hk-corner-badge-offset, 0px);
+  left: var(--hk-corner-badge-offset, 0px);
+  --hk-corner-badge-tx: -50%;
+  --hk-corner-badge-ty: 50%;
+}
+
+/* Dot form: a filled circle in the variant's tone (same token trio
+ * HkBadge uses — variant classes below set all three channels). */
+.hk-corner-badge--dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hk-badge-bg);
+  box-shadow: 0 0 0 1.5px rgb(var(--color-surface) / 85%);
+}
+
+/* Pill form: the compact count/label chip (18px min, text-4xs mono
+ * digits — notification-badge geometry across the family). */
+.hk-corner-badge--pill {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full, 999px);
+  background: var(--hk-badge-bg);
+  color: var(--hk-badge-text);
+  border: 1px solid var(--hk-badge-border);
+  font-size: var(--text-4xs, 0.625rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Variant tones — the same channel triplets HkBadge.scss ships; kept
+ * literal here so the corner badge owns its own (tiny) sheet. */
+.hk-corner-badge-default {
+  --hk-badge-bg: rgb(var(--color-primary) / 12%);
+  --hk-badge-text: rgb(var(--color-text));
+  --hk-badge-border: rgb(var(--color-primary) / 35%);
+}
+
+.hk-corner-badge-primary {
+  --hk-badge-bg: rgb(var(--color-primary));
+  --hk-badge-text: rgb(var(--color-on-primary, 255 255 255));
+  --hk-badge-border: transparent;
+}
+
+.hk-corner-badge-success {
+  --hk-badge-bg: rgb(var(--color-success));
+  --hk-badge-text: rgb(var(--color-on-primary, 255 255 255));
+  --hk-corner-badge-ring: rgb(var(--color-surface) / 85%);
+  --hk-badge-border: transparent;
+}
+
+.hk-corner-badge-error {
+  --hk-badge-bg: rgb(var(--color-error));
+  --hk-badge-text: rgb(var(--color-on-primary, 255 255 255));
+  --hk-badge-border: transparent;
+}
+
+.hk-corner-badge-warning {
+  --hk-badge-bg: rgb(var(--color-warning));
+  --hk-badge-text: rgb(var(--color-text));
+  --hk-badge-border: transparent;
+}
+
+.hk-corner-badge-info {
+  --hk-badge-bg: rgb(var(--color-info, var(--color-primary)));
+  --hk-badge-text: rgb(var(--color-on-primary, 255 255 255));
+  --hk-badge-border: transparent;
+}
+
+.hk-corner-badge-muted {
+  --hk-badge-bg: rgb(var(--color-text) / 55%);
+  --hk-badge-text: rgb(var(--color-surface));
+  --hk-badge-border: transparent;
+}
+
+/* The success dot's ring token feeds the dot form's surface cutout so
+ * the mark reads ON the anchor, not under it (the icon-group marker's
+ * trick, generalized). */
+.hk-corner-badge-success.hk-corner-badge--dot {
+  box-shadow: 0 0 0 1.5px var(--hk-corner-badge-ring, rgb(var(--color-surface) / 85%));
+}

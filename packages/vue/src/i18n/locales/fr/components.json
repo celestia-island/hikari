@@ -207,6 +207,7 @@
     "hikari::filterPanel.op.eq": "égal à",
     "hikari::filterPanel.op.ne": "différent de",
     "hikari::filterPanel.op.approx": "correspond à",
+    "hikari::filterPanel.op.napprox": "ne contient pas",
     "hikari::filterPanel.op.lt": "inférieur à",
     "hikari::filterPanel.op.lte": "au plus",
     "hikari::filterPanel.op.gte": "au moins",

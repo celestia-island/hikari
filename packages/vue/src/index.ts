@@ -4,6 +4,7 @@ export { default as HAlert } from "./components/HkAlert";
 export { default as HAltSignIn } from "./components/HkAltSignIn";
 export { default as HAvatar } from "./components/HkAvatar";
 export { default as HBadge } from "./components/HkBadge";
+export { default as HCornerBadge } from "./components/HkCornerBadge";
 export { default as HBoard } from "./components/HkBoard";
 export { default as HBlockingToast } from "./components/HkBlockingToast";
 export { default as HBreadcrumb } from "./components/HkBreadcrumb";
@@ -172,6 +173,7 @@ export { default as HLogo } from "./components/HkLogo";
 
 // Component types
 export { type BadgeVariant } from "./components/HkBadge";
+export { type CornerBadgeVariant } from "./components/HkCornerBadge";
 export { type BoardNodeInput, type BoardEdgeInput } from "./components/HkBoard";
 export { isSafeHref, safeHref } from "./utils/safeHref";
 export { type BoardAnchorMode, type BoardEdgeStyle, type BoardPoint } from "./utils/boardEdges";
@@ -744,8 +746,9 @@ export { HkPageHeader as HkPageHeader } from "./components/HkPageHeader";
 export { HkStatCard as HkStatCard } from "./components/HkStatCard";
 export { statToneColor, type StatTone as StatTone, type StatVariant as StatVariant } from "./components/HkStatCard";
 export { HkStatusPill as HkStatusPill } from "./components/HkStatusPill";
+export { default as HkCornerBadge } from "./components/HkCornerBadge";
 export { default as HkFilterBar } from "./components/HkFilterBar";
-export { default as HkFilterPanel, sanitizeNumberInput } from "./components/HkFilterPanel";
+export { default as HkFilterPanel, sanitizeNumberInput, hkConditionMatches, hkFieldMatches } from "./components/HkFilterPanel";
 export type { HkFilterOperator, HkFilterFieldDef, HkFilterCondition, HkFilterState } from "./components/HkFilterPanel";
 export { default as HkFilterTrigger } from "./components/HkFilterTrigger";
 export { default as HkSearchTrigger } from "./components/HkSearchTrigger";

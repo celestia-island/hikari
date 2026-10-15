@@ -2,6 +2,7 @@ import { computed, defineComponent, nextTick, ref, type PropType } from "vue";
 import { Search } from "lucide-vue-next";
 
 import HkButton from "./HkButton";
+import HkCornerBadge from "./HkCornerBadge";
 import HkIconButton from "./HkIconButton";
 import HkPopover, { type PopupPlacement } from "./HkPopover";
 import HkSearchInput from "./HkSearchInput";
@@ -90,6 +91,10 @@ const HkSearchTrigger = defineComponent({
       const label = props.label ?? t("hikari::search.trigger", "Search");
       return (
         <span ref={anchorRef} class="hk-search-trigger">
+          {/* The active-keyword marker rides the generic corner badge —
+           * the same green bottom-right dot the filter trigger wears
+           * (2026-10-15: was a hand-rolled primary dot, top-right). */}
+          <HkCornerBadge dot={active.value} variant="success" corner="bottom-right" offset={1}>
           <HkIconButton
             size={28}
             variant="ghost"
@@ -104,7 +109,7 @@ const HkSearchTrigger = defineComponent({
           >
             {{ icon: () => <Search size={16} /> }}
           </HkIconButton>
-          {active.value && <span class="hk-search-trigger-dot" aria-hidden="true" />}
+          </HkCornerBadge>
           <HkPopover
             modelValue={open.value}
             onUpdate:modelValue={(v: boolean) => onPanelOpen(v)}

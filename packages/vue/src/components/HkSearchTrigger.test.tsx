@@ -63,12 +63,12 @@ describe("HkSearchTrigger", () => {
     expect(btn.getAttribute("aria-label")).toBe("Search");
     expect(btn.getAttribute("aria-expanded")).toBe("false");
     // No keyword → no active dot.
-    expect(c.querySelector(".hk-search-trigger-dot")).toBeNull();
+    expect(c.querySelector(".hk-corner-badge--dot")).toBeNull();
   });
 
   it("an active keyword shows the dot", () => {
     const c = mount(h(HkSearchTrigger, { modelValue: "stale" }));
-    expect(c.querySelector(".hk-search-trigger-dot")).not.toBeNull();
+    expect(c.querySelector(".hk-corner-badge--dot")).not.toBeNull();
   });
 
   it("click opens the panel with the input focused", async () => {

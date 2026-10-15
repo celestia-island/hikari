@@ -1,28 +1,15 @@
 /**
- * HkFilterTrigger chrome: the header icon button, its active-filter dot
- * and the mobile confirm footer. The panel's own bounded sizing lives in
- * HkFilterPanel.scss.
+ * HkFilterTrigger chrome: the header icon button and the mobile confirm
+ * footer. The panel's own bounded sizing lives in HkFilterPanel.scss;
+ * the active-filter marker (a green bottom-right dot while any
+ * condition carries a value, user direction 2026-10-15) is the generic
+ * HkCornerBadge wrapped around the button — its sheet owns the mark.
  */
 
 .hk-filter-trigger {
   position: relative;
   display: inline-flex;
   align-items: center;
-}
-
-/* Active-filter marker: a small primary dot pinned to the button's
- * top-right corner — visible only while at least one condition carries a
- * value (the trigger's data-active drives it, so the empty-state panel
- * never shows the dot). */
-.hk-filter-trigger-dot {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgb(var(--color-primary));
-  pointer-events: none;
 }
 
 .hk-filter-trigger-footer {

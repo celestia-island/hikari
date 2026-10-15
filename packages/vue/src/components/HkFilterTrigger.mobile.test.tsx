@@ -32,7 +32,7 @@ const FIELDS = [{ key: "tool", label: "Tool", kind: "text" as const }];
 
 describe("HkFilterTrigger (mobile sheet)", () => {
   it("shows exactly ONE confirm button (no cancel) and closes on it", async () => {
-    const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: {} }));
+    const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: [] }));
     const btn = c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!;
     btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await Promise.resolve();

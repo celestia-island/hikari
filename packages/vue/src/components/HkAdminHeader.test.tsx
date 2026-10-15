@@ -255,15 +255,31 @@ describe("HkAdminHeader", () => {
     const centre = c.querySelector(".s-admin-header-center");
     expect(centre, "the centre wrapper must render when the slot is provided").not.toBeNull();
     expect(centre?.querySelector(".centre-stub")?.textContent).toBe("filter group");
-    // Wing order: identity (left) → centre → actions (right).
+    // Wing order: identity (left) → centre → actions (right). The wings
+    // carry their chrome class PLUS the shared balanced-grid wing class,
+    // so match per-class instead of whole-className equality.
     const header = c.querySelector("header")!;
     const kids = [...header.children].map((el) => el.className);
-    expect(kids.indexOf("s-admin-header-user")).toBeLessThan(kids.indexOf("s-admin-header-center"));
-    expect(kids.indexOf("s-admin-header-center")).toBeLessThan(kids.indexOf("s-admin-header-actions"));
+    const wingIdx = (cls: string) => kids.findIndex((c) => c.split(/\s+/).includes(cls));
+    expect(wingIdx("s-admin-header-user")).toBeLessThan(wingIdx("s-admin-header-center"));
+    expect(wingIdx("s-admin-header-center")).toBeLessThan(wingIdx("s-admin-header-actions"));
+    // The header hangs the shared balanced-grid contract — the same
+    // geometry the chat frontend's header uses (user report 2026-10-15:
+    // the console strip sat left of centre on phones).
+    expect(header.className).toContain("s-balanced-header");
+    expect(kids.find((c) => c.includes("s-admin-header-user"))).toContain("s-header-wing-start");
+    expect(kids.find((c) => c.includes("s-admin-header-center"))).toContain("s-header-wing-center");
+    expect(kids.find((c) => c.includes("s-admin-header-actions"))).toContain("s-header-wing-end");
   });
 
   it("renders no centre wrapper without the slot (DOM unchanged for hosts that skip it)", () => {
     const c = mount(headerNode({ title: "Providers" }));
     expect(c.querySelector(".s-admin-header-center")).toBeNull();
+    // Centre-less hosts are the MAJORITY of admin pages: the actions wing
+    // must still carry its explicit grid-column class, or auto-placement
+    // drops it into the empty middle track and it drifts to the viewport
+    // centre (R2, 2026-10-15 — the class IS the column).
+    const actions = c.querySelector(".s-admin-header-actions");
+    expect(actions?.className).toContain("s-header-wing-end");
   });
 });

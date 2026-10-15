@@ -93,20 +93,59 @@ describe("admin header chrome geometry (the two user-requested fixes)", () => {
     const rule = ruleDeclarations(adminTokens, ".s-admin-header-user");
     expect(rule, ".s-admin-header-user must be declared").not.toBeNull();
     expect(rule).toContainEqual(["gap", "var(--space-16)"]);
-    // Balanced left wing (the centre group stays viewport-centred).
-    expect(rule).toContainEqual(["flex", "1 1 0"]);
   });
 
-  it("keeps the actions wing balanced (no margin-left:auto push) and the centre wing shrinkable", () => {
-    const actions = ruleDeclarations(adminTokens, ".s-admin-header-actions");
-    expect(actions, ".s-admin-header-actions must be declared").not.toBeNull();
-    expect(actions).toContainEqual(["flex", "1 1 0"]);
-    expect(actions).toContainEqual(["justify-content", "flex-end"]);
+  it("hangs the shared balanced-header grid contract (the ONE header layout)", () => {
+    // User report 2026-10-15: the console's header-centre tab strip sat
+    // LEFT of centre on phones (drawer mode hides the title, so the left
+    // wing is just the avatar while three icon buttons sit right) while
+    // the frontend's strip read centred — two per-band flex dialects had
+    // drifted from the same idea. Both faces now hang the ONE grid
+    // contract: two EQUAL 1fr side tracks (true centring regardless of
+    // wing content) with min-content floors (wings can never be squeezed
+    // out of existence) around a shrinkable centre column (the strip
+    // slides inside its own box, edge fades + swipe).
+    const balanced = ruleDeclarations(adminTokens, ".s-balanced-header");
+    expect(balanced, ".s-balanced-header must be declared").not.toBeNull();
+    expect(balanced).toContainEqual([
+      "grid-template-columns",
+      "minmax(min-content, 1fr) minmax(0, auto) minmax(min-content, 1fr)",
+    ]);
+    const start = ruleDeclarations(adminTokens, ".s-header-wing-start");
+    expect(start, ".s-header-wing-start must be declared").not.toBeNull();
+    // Each wing names its column EXPLICITLY: with auto-placement a
+    // centre-less host (the vast majority of admin pages — most never
+    // register a centre group) renders only two in-flow children and the
+    // actions wing would fall into the MIDDLE track, drifting to the
+    // viewport centre instead of hugging the right edge (R2, 2026-10-15).
+    expect(start).toContainEqual(["grid-column", "1"]);
+    expect(start).toContainEqual(["justify-self", "start"]);
+    expect(start).toContainEqual(["overflow", "hidden"]);
+    const centre = ruleDeclarations(adminTokens, ".s-header-wing-center");
+    expect(centre, ".s-header-wing-center must be declared").not.toBeNull();
+    // Default stretch, NOT justify-self: center: a centered item sizes by
+    // fit-content, whose min-content floor (the full strip width) punches
+    // the item past a shrunken middle track — the strip would paint over
+    // the wings instead of scrolling inside its own box.
+    expect(centre).toContainEqual(["grid-column", "2"]);
+    expect(centre).toContainEqual(["min-width", "0"]);
+    expect(centre).not.toContainEqual(["justify-self", "center"]);
+    const end = ruleDeclarations(adminTokens, ".s-header-wing-end");
+    expect(end, ".s-header-wing-end must be declared").not.toBeNull();
+    expect(end).toContainEqual(["grid-column", "3"]);
+    expect(end).toContainEqual(["justify-self", "end"]);
+    expect(end).toContainEqual(["overflow", "hidden"]);
+  });
+
+  it("keeps the wings free of their own flex-geometry dialect (the grid owns it)", () => {
+    // The flex era's per-wing declarations must stay gone: any return of
+    // `flex` on a wing re-introduces a second geometry that drifts from
+    // the shared grid (the 2026-10-15 skew).
+    expect(ruleDeclarations(adminTokens, ".s-admin-header-user")).not.toContainEqual(["flex", "1 1 0"]);
+    expect(ruleDeclarations(adminTokens, ".s-admin-header-actions")).not.toContainEqual(["flex", "1 1 0"]);
+    expect(ruleDeclarations(adminTokens, ".s-admin-header-center")).not.toContainEqual(["flex", "0 1 auto"]);
     // The old push would fight the centre wing for the middle.
-    expect(actions).not.toContainEqual(["margin-left", "auto"]);
-    const centre = ruleDeclarations(adminTokens, ".s-admin-header-center");
-    expect(centre, ".s-admin-header-center must be declared").not.toBeNull();
-    expect(centre).toContainEqual(["flex", "0 1 auto"]);
+    expect(ruleDeclarations(adminTokens, ".s-admin-header-actions")).not.toContainEqual(["margin-left", "auto"]);
   });
 
   it("keeps the 28px icon-button step at the theme toggle's own box", () => {
@@ -120,25 +159,20 @@ describe("admin header chrome geometry (the two user-requested fixes)", () => {
     expect(iconButton).toMatch(/PropType<16 \| 24 \| 28 \| 32 \| 36 \| 40>/);
   });
 
-  it("pins the phone band: wings keep their floors, the centre strip owns the overflow", () => {
-    // User report 2026-10-12: on phones the balanced wings (flex 1 1 0 +
-    // min-width 0) were squeezed BELOW the avatar's 28px floor by a wide
-    // centre tab strip, and the strip painted straight over the avatar.
-    // The ≤767px band must pin both wings and hand the leftover to the
-    // centre (mirroring ChatLayout's own phone band) so the strip slides
-    // inside its own box instead of over the avatar.
+  it("keeps the phone band free of ad-hoc wing overrides (one geometry at every width)", () => {
+    // The 2026-10-12 band pinned the wings and handed the leftover to
+    // the centre; it fixed the avatar overlap but skewed the strip off
+    // the viewport middle (user report 2026-10-15). The shared grid's
+    // min-content floors + shrinkable centre column handle phones
+    // intrinsically, so no per-band flex override may come back.
     const userRules = allRuleDeclarations(adminTokens, ".s-admin-header-user");
     const centreRules = allRuleDeclarations(adminTokens, ".s-admin-header-center");
     const actionsRules = allRuleDeclarations(adminTokens, ".s-admin-header-actions");
-    // Exactly one NESTED occurrence (the phone band) per prelude.
-    const phone = (rules: typeof userRules) => rules.filter((r) => r.nested).map((r) => r.decls);
-    expect(phone(userRules)).toHaveLength(1);
-    expect(phone(centreRules)).toHaveLength(1);
-    expect(phone(actionsRules)).toHaveLength(1);
-    expect(phone(userRules)[0]).toContainEqual(["flex", "0 0 auto"]);
-    expect(phone(actionsRules)[0]).toContainEqual(["flex", "0 0 auto"]);
-    expect(phone(centreRules)[0]).toContainEqual(["flex", "1 1 auto"]);
-    expect(phone(centreRules)[0]).toContainEqual(["min-width", "0"]);
-    expect(phone(centreRules)[0]).toContainEqual(["overflow", "hidden"]);
+    for (const [name, rules] of [["user", userRules], ["centre", centreRules], ["actions", actionsRules]] as const) {
+      expect(rules.filter((r) => r.nested), `${name}: no band-nested rules may remain`).toHaveLength(0);
+      for (const r of rules) {
+        expect(r.decls.map((d) => d[0]), `${name}: no flex geometry may remain`).not.toContain("flex");
+      }
+    }
   });
 });

@@ -162,24 +162,36 @@ export const HkAdminHeader = defineComponent({
       }
     }
 
+    // The header hangs the shared three-zone geometry (grid: two equal
+    // side tracks around a shrinkable centre) — the same contract the
+    // chat frontend top bar uses, so a page header-centre group sits on
+    // the true viewport middle on BOTH faces at every width. (Comment
+    // lives OUTSIDE the class expression: the self-sufficiency audit
+    // reads that expression's literals, and prose apostrophes inside it
+    // parse as string boundaries.)
     return () => (
       <header
         class={[
           "s-glass-header",
+          "s-balanced-header",
           props.compact ? "s-glass-header--compact" : "",
         ]}
       >
-        {props.showHamburger && (
-          <HButton
-            variant="ghost"
-            size="sm"
-            onClick={() => emit("hamburger")}
-          >
-            <Menu size={20} class="s-admin-header-hamburger-icon" />
-          </HButton>
-        )}
-
-        <div ref={userTriggerRef} class="s-admin-header-user">
+        <div ref={userTriggerRef} class="s-admin-header-user s-header-wing-start">
+          {/* The hamburger rides INSIDE the left wing: the balanced grid
+           * above owns the header's columns, and a fourth in-flow child
+           * would fall into the left wing's track and skew every column
+           * after it. Inside the wing it keeps its place (leftmost, ahead
+           * of the avatar) at the wing's own 16px rhythm. */}
+          {props.showHamburger && (
+            <HButton
+              variant="ghost"
+              size="sm"
+              onClick={() => emit("hamburger")}
+            >
+              <Menu size={20} class="s-admin-header-hamburger-icon" />
+            </HButton>
+          )}
           <button
             class="s-admin-header-avatar"
             aria-label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
@@ -284,19 +296,19 @@ export const HkAdminHeader = defineComponent({
         </HkMenu>
 
         {/* Page-owned centre group (page filter tab strips, segmented
-         *  option pickers) — the console face of the balanced-wing
-         *  header the chat frontend's top bar already uses: the left
-         *  and right wings grow from the same flex basis so this group
-         *  stays pinned to the true viewport middle. Rendered only when
-         *  the host provides it, so headers without a centre keep the
-         *  exact DOM they always had. */}
+         *  option pickers) — the console face of the balanced header the
+         *  chat frontend's top bar already uses: the shared grid pins
+         *  this column to the true viewport middle and lets the strip
+         *  slide inside its own box when space runs short. Rendered only
+         *  when the host provides it, so headers without a centre keep
+         *  the exact DOM they always had. */}
         {slots.center && (
-          <div class="s-admin-header-center">
+          <div class="s-admin-header-center s-header-wing-center">
             {slots.center()}
           </div>
         )}
 
-        <div class="s-admin-header-actions">
+        <div class="s-admin-header-actions s-header-wing-end">
           {props.showEmergencyStop && (
             <button
               class={[

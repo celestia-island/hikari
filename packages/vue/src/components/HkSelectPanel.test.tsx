@@ -3,7 +3,7 @@ import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import type { ComponentPublicInstance } from "vue";
 
 import HkSelectPanel from "./HkSelectPanel";
-import { usePopupManager } from "../runtime/usePopupManager";
+import { usePopupManager, POPUP_Z_BANDS } from "../runtime/usePopupManager";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -274,7 +274,7 @@ describe("HkSelectPanel custom invocation", () => {
     const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
     expect(host).toBeTruthy();
     const z = Number.parseInt(host.style.zIndex, 10);
-    expect(z).toBeGreaterThanOrEqual(1000);
+    expect(z).toBeGreaterThanOrEqual(POPUP_Z_BANDS.dropdown);
   });
 
   it("places a top-start popout above the anchor and flips when cramped", async () => {

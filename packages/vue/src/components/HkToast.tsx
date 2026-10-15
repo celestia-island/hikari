@@ -10,6 +10,7 @@ import { useI18n } from "../i18n/context";
 import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import "./HkToast.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 const LONG_THRESHOLD = 50;
 
@@ -246,7 +247,7 @@ export default defineComponent({
     );
 
     return () => (
-      <Teleport to="body">
+      <Teleport to={ensureOverlayRoot()}>
         <div class="hk-toast-container" style={containerStyle.value}>
           <TransitionGroup
             ref={hostRef}

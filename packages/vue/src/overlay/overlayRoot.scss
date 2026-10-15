@@ -1,0 +1,35 @@
+/**
+ * Overlay root styles — the isolated stacking context and its internal
+ * ordinal z-index bands. These values NEVER compete with the document's
+ * global stacking space; the `isolation: isolate` fence guarantees it.
+ *
+ * The ordinal variables are defined on the root so every Teleported
+ * child inherits them — components use `var(--hk-overlay-z-toast)` etc.
+ * inside their sheets and never need to know the numeric value.
+ */
+#hk-overlay-root {
+  /* Fences the root's z-index space from the global stacking order —
+   * the entire reason this container exists. */
+  isolation: isolate;
+
+  /* The root itself doesn't intercept pointer events; each teleported
+   * child restores its own pointer-events. */
+  pointer-events: none;
+
+  /* Children are position: fixed overlays — the root itself is a
+   * zero-size anchor, not a visible surface. */
+  position: relative;
+  width: 0;
+  height: 0;
+  overflow: visible;
+
+  /* ── Internal ordinal bands (overlayRoot.ts is the source of truth) ── */
+  --hk-overlay-z-modal-backdrop: 5;
+  --hk-overlay-z-modal-frame: 10;
+  --hk-overlay-z-blocking-toast: 50;
+  --hk-overlay-z-toast: 100;
+  --hk-overlay-z-veil: 150;
+  --hk-overlay-z-popup: 200;
+  --hk-overlay-z-breadcrumb: 250;
+  --hk-overlay-z-tooltip: 300;
+}

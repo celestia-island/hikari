@@ -1,6 +1,8 @@
 import { computed, readonly, ref } from "vue";
 
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
+// Side effect: ensures #hk-overlay-root exists before any popup registers.
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 export type PopupKind = "dropdown" | "modal" | "drawer" | "tooltip" | "toast";
 
@@ -51,12 +53,20 @@ export type PopupKind = "dropdown" | "modal" | "drawer" | "tooltip" | "toast";
  * Keep the SCSS fallbacks (`--hi-z-*` / `--hk-z-*` in theme.scss and the
  * component sheets) in sync with these numbers.
  */
+/**
+ * The band each popup KIND stacks in. These are ORDINAL values inside
+ * the overlay root's `isolation: isolate` fence — they never compete
+ * with the document's global stacking space. The overlay root module
+ * (`overlay/overlayRoot.ts`) is the single source of truth; these
+ * constants mirror `OVERLAY_Z` so the popup manager's arithmetic
+ * (band + slot × step) stays local.
+ */
 export const POPUP_Z_BANDS: Record<PopupKind, number> = {
-  modal: 1000,
-  drawer: 1000,
-  dropdown: 2000,
-  tooltip: 3000,
-  toast: 4000,
+  modal: 10,      // window band (modals + drawers) — STEP=2 gives 45 stack slots
+  drawer: 10,     // drawers share the window band (same stacking semantics)
+  toast: 100,     // toast band — far above any conceivable window stack
+  dropdown: 200,  // anchored popup band — above toasts (user is interacting)
+  tooltip: 300,   // tooltip band — always on top
 };
 
 /**

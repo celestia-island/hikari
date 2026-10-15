@@ -20,6 +20,7 @@ import HkPopover from "./HkPopover";
 import HkMenuPanel from "./HkMenuPanel";
 import HkMenuActionItem from "./HkMenuActionItem";
 import "./HkModalBreadcrumb.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 /** Window kinds always participate in the stack: modals and drawers block
  *  the page on every form factor, desktop and mobile alike. */
@@ -609,7 +610,7 @@ export default defineComponent({
 
     return () =>
       visible.value ? (
-        <Teleport to="body">
+        <Teleport to={ensureOverlayRoot()}>
           <nav
             ref={navRef}
             class="hk-modal-breadcrumb"

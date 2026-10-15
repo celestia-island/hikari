@@ -26,6 +26,7 @@ import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
 import "./HkPopover.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 export type PopupPlacement =
   | "top" | "top-start" | "top-end"
@@ -664,7 +665,7 @@ export default defineComponent({
       const sheetBranch = activeBranch.value === "sheet";
       const panelPrefix = sheetBranch ? "hk-popover-sheet" : "hk-popover";
       return (
-      <Teleport to="body">
+      <Teleport to={ensureOverlayRoot()}>
         {/* Window-layer contract (./_scrim-fade.scss): the sheet scrim
             fades in place under its own transition name (machine output)
             — it never mounts bare, so the dim curtain never snaps on or

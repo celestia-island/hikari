@@ -5,7 +5,7 @@
 .hk-loading-veil {
   position: fixed;
   inset: 0;
-  z-index: var(--hk-z-veil);
+  z-index: var(--hk-overlay-z-veil, 150);
   display: flex;
   align-items: center;
   justify-content: center;

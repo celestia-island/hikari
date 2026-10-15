@@ -12,7 +12,7 @@
   /* Same viewport gutter the anchored popups clamp to (16px desktop /
    * 8px mobile) — the toast stack is a floating layer too. */
   inset-inline-end: var(--viewport-gutter, 16px);
-  z-index: var(--hk-z-toast);
+  z-index: var(--hk-overlay-z-blocking-toast, 50);
   max-width: 24rem;
   pointer-events: none;
 }

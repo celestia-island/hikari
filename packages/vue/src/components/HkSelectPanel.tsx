@@ -25,6 +25,7 @@ import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
 import "./HkSelect.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 /**
  * The dropdown panel of HkSelect, detached from the select's trigger so it
@@ -657,7 +658,7 @@ export default defineComponent({
       if (!machine.mounted.value) return null;
       if (activeBranch.value === "sheet") {
         return (
-          <Teleport to="body">
+          <Teleport to={ensureOverlayRoot()}>
             {/* Window-layer contract (./_scrim-fade.scss): the scrim fades
                 in place under its OWN transition name. It once shared the
                 panel's `hk-select-sheet` name, so the panel's
@@ -729,7 +730,7 @@ export default defineComponent({
       // pop grows out of the edge the panel actually sits on (including
       // after an auto-flip).
       return (
-        <Teleport to="body">
+        <Teleport to={ensureOverlayRoot()}>
           <div
                 ref={popoutHostRef}
                 class={["hk-select-popout-host", ...machine.classesFor("hk-select-popout")]}

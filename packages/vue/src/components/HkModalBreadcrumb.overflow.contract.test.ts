@@ -76,7 +76,7 @@ describe("HkModalBreadcrumb overflow fence", () => {
     // must stay readable over the window it annotates); dropping it into
     // the window band would bury it under every open sheet instead.
     // The canonical variable carries the band value (no inline fallback).
-    const hasVar = scss.includes("z-index: var(--hk-z-breadcrumb)");
+    const hasVar = scss.includes("z-index: var(--hk-overlay-z-breadcrumb");
     expect(hasVar, "the strip declares its z via the canonical variable").toBe(true);
   });
 

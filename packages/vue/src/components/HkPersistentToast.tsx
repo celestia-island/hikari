@@ -13,6 +13,7 @@ import {
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
 import "./HkPersistentToast.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 export type PersistentToastTone = "loading" | "info" | "warning" | "error";
 
@@ -266,7 +267,7 @@ export default defineComponent({
             </button>
           )}
           {slots.detail && open.value && (
-            <Teleport to="body">
+            <Teleport to={ensureOverlayRoot()}>
               <div
                 ref={cardRef}
                 id={popupId}

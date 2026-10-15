@@ -30,6 +30,7 @@ import HSpinner from "./HkSpinner";
 import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 export interface ModalAction {
   label: string;
@@ -1029,7 +1030,7 @@ export default defineComponent({
       const headerShown = props.title || props.closable || slots.header || slots.headerLead;
 
       const windowSurface = (
-        <Teleport to="body">
+        <Teleport to={ensureOverlayRoot()}>
           <div
             class="hk-modal-root"
             style={{ zIndex: overlayZ.value }}

@@ -275,5 +275,11 @@ describe("HkAdminHeader", () => {
   it("renders no centre wrapper without the slot (DOM unchanged for hosts that skip it)", () => {
     const c = mount(headerNode({ title: "Providers" }));
     expect(c.querySelector(".s-admin-header-center")).toBeNull();
+    // Centre-less hosts are the MAJORITY of admin pages: the actions wing
+    // must still carry its explicit grid-column class, or auto-placement
+    // drops it into the empty middle track and it drifts to the viewport
+    // centre (R2, 2026-10-15 — the class IS the column).
+    const actions = c.querySelector(".s-admin-header-actions");
+    expect(actions?.className).toContain("s-header-wing-end");
   });
 });

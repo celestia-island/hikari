@@ -443,7 +443,16 @@
   align-items: center;
 }
 
+/* Each wing names its column EXPLICITLY: the header's in-flow children are
+ * exactly these three zones (every other child teleports out), but a
+ * centre-less host renders only two of them — with auto-placement the
+ * actions wing would fall into the MIDDLE track and drift to the viewport
+ * centre (R2 finding, 2026-10-15), because the trailing 1fr track would
+ * sit empty. Naming the columns makes the contract positional by class,
+ * not by child order or count: a centre-less header lays out as
+ * [user | empty | actions] exactly like the old flex bar did. */
 .s-header-wing-start {
+  grid-column: 1;
   justify-self: start;
   min-width: 0;
   /* A wing whose content floors exceed its track must not PAINT past the
@@ -461,10 +470,12 @@
    * track and the strip paints over the wings instead of scrolling.
    * Centring itself is the tracks' job (equal 1fr sides), not the
    * item's. */
+  grid-column: 2;
   min-width: 0;
 }
 
 .s-header-wing-end {
+  grid-column: 3;
   justify-self: end;
   min-width: 0;
   overflow: hidden;

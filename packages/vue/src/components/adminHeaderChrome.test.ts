@@ -113,6 +113,12 @@ describe("admin header chrome geometry (the two user-requested fixes)", () => {
     ]);
     const start = ruleDeclarations(adminTokens, ".s-header-wing-start");
     expect(start, ".s-header-wing-start must be declared").not.toBeNull();
+    // Each wing names its column EXPLICITLY: with auto-placement a
+    // centre-less host (the vast majority of admin pages — most never
+    // register a centre group) renders only two in-flow children and the
+    // actions wing would fall into the MIDDLE track, drifting to the
+    // viewport centre instead of hugging the right edge (R2, 2026-10-15).
+    expect(start).toContainEqual(["grid-column", "1"]);
     expect(start).toContainEqual(["justify-self", "start"]);
     expect(start).toContainEqual(["overflow", "hidden"]);
     const centre = ruleDeclarations(adminTokens, ".s-header-wing-center");
@@ -121,10 +127,12 @@ describe("admin header chrome geometry (the two user-requested fixes)", () => {
     // fit-content, whose min-content floor (the full strip width) punches
     // the item past a shrunken middle track — the strip would paint over
     // the wings instead of scrolling inside its own box.
+    expect(centre).toContainEqual(["grid-column", "2"]);
     expect(centre).toContainEqual(["min-width", "0"]);
     expect(centre).not.toContainEqual(["justify-self", "center"]);
     const end = ruleDeclarations(adminTokens, ".s-header-wing-end");
     expect(end, ".s-header-wing-end must be declared").not.toBeNull();
+    expect(end).toContainEqual(["grid-column", "3"]);
     expect(end).toContainEqual(["justify-self", "end"]);
     expect(end).toContainEqual(["overflow", "hidden"]);
   });

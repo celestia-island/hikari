@@ -1,5 +1,5 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
-import { SlidersHorizontal } from "lucide-vue-next";
+import { Filter } from "lucide-vue-next";
 
 import HkButton from "./HkButton";
 import HkCornerBadge from "./HkCornerBadge";
@@ -74,7 +74,7 @@ export default defineComponent({
                 open.value = !open.value;
               }}
             >
-              {{ icon: () => <SlidersHorizontal size={16} /> }}
+              {{ icon: () => <Filter size={16} /> }}
             </HkIconButton>
           </HkCornerBadge>
           <HkPopover

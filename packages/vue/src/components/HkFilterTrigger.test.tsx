@@ -319,7 +319,7 @@ describe("HkFilterTrigger", () => {
     // stand down for it, not swallow it. (Pick the ≈ toggle; the first
     // op button is the already-pressed =.)
     const op = [...document.body.querySelectorAll<HTMLButtonElement>(".hk-filter-panel .hk-filter-panel-op")].find(
-      (b) => b.textContent === "≈",
+      (b) => b.getAttribute("title") === "fuzzy match",
     )!;
     op.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await Promise.resolve();

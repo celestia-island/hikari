@@ -24,7 +24,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const grammar = readFileSync(join(here, "_menu-item.scss"), "utf-8");
 const menuTsx = readFileSync(join(here, "HkMenu.tsx"), "utf-8");
-const themeTsx = readFileSync(join(here, "HkThemeToggle.tsx"), "utf-8");
+const themeTsx = readFileSync(join(here, "HkThemePanelContent.tsx"), "utf8");
 const adminTokens = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
 
 describe("menu-item grammar contract", () => {

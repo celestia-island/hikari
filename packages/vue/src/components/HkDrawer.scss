@@ -1,6 +1,10 @@
 @use "./scrim-fade" as sf;
 
 .hk-drawer-overlay {
+  /* Overlay-root contract: #hk-overlay-root fences pointer events
+   * (pointer-events: none) — restore them or the drawer's taps pass
+   * through to the page below (2026-10-15 defect). */
+  pointer-events: auto;
   position: fixed;
   inset: 0;
   background: var(--hk-drawer-overlay-bg, rgba(0, 0, 0, 0.45));
@@ -18,6 +22,7 @@
 );
 
 .hk-drawer-panel {
+  pointer-events: auto;
   position: fixed;
   display: flex;
   flex-direction: column;
@@ -264,3 +269,12 @@
     transition: none;
   }
 }
+
+/* ── Overlay-root pointer-events contract ──────────────────────────
+ * #hk-overlay-root fences pointer events (pointer-events: none) and
+ * every teleported layer MUST restore them. This compiled-css guard
+ * makes the restoration a test-visible invariant rather than an
+ * implementation detail (2026-10-15: the mobile drawer painted above
+ * the page but every tap passed through because neither the overlay
+ * nor the panel restored pointer events after the overlay-root
+ * isolation migration). */

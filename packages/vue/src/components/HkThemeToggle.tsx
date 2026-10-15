@@ -1,47 +1,20 @@
-import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
-import { Check, Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
-import {
-  HDivider,
-  HPopover,
-  solarAltitude,
-  themePresets,
-  useI18n,
-  useTheme,
-  type CustomThemePreset,
-  type PopupPlacement,
-  type ThemeId,
-  type ThemePreset,
-} from "@celestia-island/hikari";
+import { defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
+import { Palette } from "lucide-vue-next";
+import { HPopover, useI18n, type PopupPlacement } from "@celestia-island/hikari";
 
-import { HColorSchemeDialog, type HCustomTheme } from "./HkColorSchemeDialog";
 import HkIconButton from "./HkIconButton";
-import HTabs, { type TabItem } from "./HkTabs";
+import { HkThemePanelContent } from "./HkThemePanelContent";
+import type { HCustomTheme } from "./HkColorSchemeDialog";
 import "./HkThemeToggle.scss";
 
-/** The auto-mode merged run, hoisted: a fresh array literal per render
- *  would re-fire HTabs' mergeKeys watcher (one redundant geometry
- *  refresh) on every altitude tick. */
-const AUTO_MERGE_KEYS = ["light", "dark"];
-
-/** Scoped payload handed to the `item-leading` / `item-trailing` slots:
- *  one object per theme row, carrying enough identity for the host to
- *  render swatches or affordances without re-deriving the preset.
- *  `name` is the RAW stored string — it may be a message key (see
- *  `ThemePreset.name`); the row cell resolves it through the catalog. */
-export interface ThemeItemScope {
-  id: ThemeId;
-  name: string;
-  isCustom: boolean;
-  /** The row's full definition — the built-in preset table entry for
-   *  stock/registered themes, the user's stored scheme for customs. */
-  preset: ThemePreset | CustomThemePreset | undefined;
-}
+export { type ThemeItemScope } from "./HkThemePanelContent";
 
 /**
  * HkThemeToggle — light/dark/auto theme control over hikari's theme engine.
  *
- * Composes hikari's `useTheme()` (theme presets + custom themes + mode
- * persistence); it does NOT reimplement the theme engine. ONE trigger —
+ * Composes the shared HkThemePanelContent (the panel body both this
+ * popover and host settings surfaces render); it does NOT reimplement the
+ * theme engine. ONE trigger —
  * a standard HkIconButton ghost/28 with a palette glyph, chrome-identical
  * to the functional buttons hosts place beside it — opens the popover,
  * which offers the color-mode group and preset/custom theme selection
@@ -107,140 +80,28 @@ export const HkThemeToggle = defineComponent({
   },
   setup(props, { emit, slots, expose }) {
     const { t } = useI18n();
-    const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, allThemeList, addCustomTheme, removeCustomTheme, customThemes } = useTheme();
-
-    /** Resolve a row's full definition for the item slots: the user's
-     *  stored custom schemes first, then the live preset table — the SAME
-     *  precedence getAllThemePresets applies at apply time, so a row that
-     *  shadows a builtin id (in-place preset override) shows the anatomy
-     *  of the scheme that actually renders, not the shadowed factory. */
-    function presetOf(id: ThemeId): ThemePreset | CustomThemePreset | undefined {
-      const custom = customThemes.value.find((c) => c.id === id);
-      if (custom) return custom;
-      if (id in themePresets) return themePresets[id as keyof typeof themePresets];
-      return undefined;
-    }
-
     const menuOpen = ref(false);
     const triggerRef = ref<HTMLElement | null>(null);
-    const schemeDialogOpen = ref(false);
 
     /** Programmatic close for host content inside the menu (row slot
-     *  affordances): a host opening a delegated second-level window from
-     *  a theme row calls this to dismiss the menu. The menu is ONE state
-     *  in both its forms — desktop popover and mobile bottom sheet — so
+     *  affordances): a host opening a delegated second-level window from a
+     *  theme row calls this to dismiss the menu. The menu is ONE state in
+     *  both its forms — desktop popover and mobile bottom sheet — so
      *  this closes whichever is showing, with no breakpoint branching
-     *  here; a mobile-aware host decides whether to call it at all.
-     *  Same teardown as every internal close — the alt-timer cleanup
-     *  rides the menuOpen watcher. */
+     *  here; a mobile-aware host decides whether to call it at all. */
     function closeMenu() {
       menuOpen.value = false;
     }
     expose({ closeMenu });
 
-    // ── Solar-altitude readout (auto-mode merged cell) ──────────────
-    // `geo` comes from the theme clock (timezone estimate until the real
-    // fix lands) — the engine and this readout share one resolution.
-    const altTick = ref(0);
-
-    let altTimer: ReturnType<typeof setInterval> | null = null;
-    watch(menuOpen, (open) => {
-      if (open) {
-        if (!altTimer) altTimer = setInterval(() => { altTick.value += 1; }, 60000);
-      } else if (altTimer) {
-        clearInterval(altTimer);
-        altTimer = null;
-      }
-    });
-    onUnmounted(() => {
-      if (altTimer) clearInterval(altTimer);
-    });
-
-    /** Current sun altitude formatted like "+32.5°". */
-    const altitudeText = computed(() => {
-      void menuOpen.value;
-      void altTick.value;
-      void geo.value;
-      const alt = solarAltitude(geo.value.lat, geo.value.lng, new Date());
-      return `${alt >= 0 ? "+" : ""}${alt.toFixed(1)}°`;
-    });
-
-    /** Glyph hints which side a press will land on: sun while auto
-     *  resolves light, moon once dusk/night flip it to dark. */
-    const altitudeNight = computed(() => {
-      void menuOpen.value;
-      void altTick.value;
-      void geo.value;
-      return effectiveMode.value === "dark";
-    });
-
-    const isAutoMode = computed(() => currentMode.value === "system");
-
-    /**
-     * Fresh option objects (and fresh icon vnodes) on every call — never
-     * cache icon vnodes across renders, or closing/reopening the popover
-     * would re-mount the same vnode instances. In AUTO mode the Light/
-     * Dark options collapse into the group's merged cell (the altitude
-     * strip) via `mergeKeys`. They stay ENABLED (2026-10-01 user report:
-     * disabled Light/Dark read as the mode being locked to the sun): in
-     * the merged rendering they are not rendered at all, and on the
-     * degradation path (merge requested without the #merged slot) a
-     * click must drop OUT of auto onto the pressed side instead of
-     * doing nothing.
-     */
-    function modeOptions(): TabItem[] {
-      return [
-        { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={16} /> },
-        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={16} /> },
-        { key: "dark", label: t("hikari::theme.modeDark"), icon: <MoonStar size={16} /> },
-      ];
-    }
-
-    function onSelectMode(value: string) {
-      setMode(value as "light" | "dark" | "system");
-    }
-
-    /**
-     * Pressing the altitude strip in auto mode drops back to manual and
-     * selects whichever side auto currently resolves to (day → light,
-     * night → dark). Debounced: input synthesis may deliver both a
-     * pointer sequence and a click for one physical press.
-     */
-    let lastManualSwitchAt = 0;
-    function resolveAutoToManual() {
-      const now = Date.now();
-      if (now - lastManualSwitchAt < 700) return;
-      lastManualSwitchAt = now;
-      setMode(effectiveMode.value);
-    }
-
-    function onSelectTheme(id: ThemeId) {
-      setTheme(id);
-      closeMenu();
-    }
-
-    function onConfirmScheme(theme: HCustomTheme) {
-      addCustomTheme(theme);
-      setTheme(theme.id);
-      emit("update:scheme", theme);
-    }
-
     return () => (
       <div class="s-theme-toggle" ref={triggerRef}>
-        {/* ONE trigger (user direction 2026-09-30): the old main/arrow pair
-         * read as two separate header buttons whose hover washes disagreed
-         * (bespoke primary wash here vs the ghost gray beside them). The
-         * trigger is now a STANDARD HkIconButton ghost/28 with a palette
-         * glyph — identical chrome to the functional buttons it sits
-         * beside (transparent rest, ghost wash on hover/press, shared
-         * focus ring) at the SAME header chrome step (user report
-         * 2026-09-28: the cluster reads as one row only at ghost/28 with
-         * the sm 16px glyph, which the 28 step maps). And it only opens
-         * the menu; mode switching lives in the menu's color-mode strip
-         * (auto altitude strip resolves auto to a manual side), which
-         * loses nothing the old direct mode-cycle press offered. The
-         * `s-theme-toggle-btn` class stays as a stable consumer/test
-         * hook; it carries NO css of its own. */}
+        {/* ONE trigger (user direction 2026-09-30): a STANDARD HkIconButton
+         * ghost/28 with a palette glyph — identical chrome to the functional
+         * buttons it sits beside. It only opens the menu; mode switching
+         * lives in the menu's color-mode strip. The `s-theme-toggle-btn`
+         * class stays as a stable consumer/test hook; it carries NO css of
+         * its own. */}
         <HkIconButton
           class="s-theme-toggle-btn"
           size={28}
@@ -260,157 +121,27 @@ export const HkThemeToggle = defineComponent({
           placement={props.popoverPlacement}
           anchorRef={triggerRef.value ?? null}
           sheetOnMobile
-          // Names the breadcrumb layer / sheet heading when this menu
-          // blocks as a mobile bottom sheet.
           title={t("hikari::theme.themes")}
         >
-          <div class="s-theme-menu">
-            <div class="s-theme-menu-label">{t("hikari::theme.mode")}</div>
-            <div class="s-theme-mode-row">
-              <HTabs
-                variant="segmented"
-                block
-                tabs={modeOptions()}
-                modelValue={currentMode.value}
-                onUpdate:modelValue={onSelectMode}
-                mergeKeys={isAutoMode.value ? AUTO_MERGE_KEYS : undefined}
-              >
-                {{
-                  merged: () => (
-                    <button
-                      type="button"
-                      class="s-theme-mode-autoalt"
-                      title={t("hikari::theme.autoAltitudeTip")}
-                      aria-label={t("hikari::theme.autoAltitudeTip")}
-                      onClick={resolveAutoToManual}
-                    >
-                      {altitudeNight.value ? <MoonStar size={16} /> : <Sun size={16} />}
-                      <span class="s-theme-mode-autoalt-value">{altitudeText.value}</span>
-                    </button>
-                  ),
-                }}
-</HTabs>
-            </div>
-
-            {/* Host extension point directly under the mode group (P98: the
-                 chest DPI control lives here — mode-adjacent chrome, not a theme
-                 editor tab). Rendered only when the host provides the slot. */}
-            {slots["mode-extra"] ? (
-              <div class="s-theme-mode-extra">{slots["mode-extra"]()}</div>
-            ) : null}
-
-            <HDivider spacing="md" />
-
-            <div class="s-theme-menu-label">{t("hikari::theme.themes")}</div>
-            {allThemeList.value.map((th) => {
-              // Host-customizable row anatomy. `item-leading` replaces the
-              // selected-check cell and renders for EVERY row (fixed icon
-              // cell, so names stay aligned); `item-name-suffix` renders
-              // INSIDE the row button right after the name, so a host mark
-              // (e.g. a provenance/sync glyph) reads as part of the name
-              // instead of as an affordance; `item-trailing` reserves a
-              // real trailing column for every row and takes full
-              // ownership of the affordances there — the built-in custom
-              // delete overlay is suppressed in that mode, so the host
-              // renders delete (and anything else) itself. Without the
-              // slots the rows behave exactly as before: check only on
-              // the active row, delete overlaid on custom rows only.
-              const scope: ThemeItemScope = {
-                id: th.id,
-                name: th.name,
-                isCustom: th.isCustom,
-                preset: presetOf(th.id),
-              };
-              const leadingSlot = slots["item-leading"];
-              const nameSuffixSlot = slots["item-name-suffix"];
-              const trailingSlot = slots["item-trailing"];
-              // A preset/custom name may be a message key into hikari's own
-              // catalog (the documented ThemePreset.name convention — hosts
-              // ship localized built-ins like "hikari::theme.defaultThemeName").
-              // `t()` falls back to the raw string for anything that is not a
-              // key, so literal display names pass through unchanged, and the
-              // reactive message lookup re-renders rows on locale switches.
-              const displayName = t(th.name);
-              return (
-                <div
-                  key={th.id}
-                  class="s-theme-item-row"
-                  data-custom={th.isCustom || undefined}
-                  data-trailing={trailingSlot ? "slot" : undefined}
-                  data-name-suffix={nameSuffixSlot ? "slot" : undefined}
-                  // The ROW is the pill: the highlight state lives here so
-                  // the hover/active wash spans the full row width — a
-                  // trailing slot column must not shrink it (2026-10-01
-                  // user report: theme rows and the 自定义 row hovered at
-                  // different widths). The button keeps the click/focus
-                  // semantics; the stylesheet strips its own chrome.
-                  data-active={currentTheme.value === th.id || undefined}
-                >
-                  <button
-                    type="button"
-                    class="s-theme-item-btn"
-                    data-active={currentTheme.value === th.id || undefined}
-                    onClick={() => onSelectTheme(th.id)}
-                  >
-                    {leadingSlot ? (
-                      <span class="hk-menu-item-icon s-theme-item-lead">
-                        {leadingSlot(scope)}
-                      </span>
-                    ) : currentTheme.value === th.id ? (
-                      <span class="hk-menu-item-icon s-theme-item-check"><Check size={14} /></span>
-                    ) : null}
-                    <span class="s-theme-item-name">{displayName}</span>
-                    {nameSuffixSlot ? (
-                      <span class="s-theme-item-name-suffix">{nameSuffixSlot(scope)}</span>
-                    ) : null}
-                  </button>
-                  {trailingSlot ? (
-                    <span class="s-theme-item-trailing">{trailingSlot(scope)}</span>
-                  ) : th.isCustom ? (
-                    <button
-                      type="button"
-                      class="s-theme-item-delete"
-                      title={t("hikari::theme.deleteTheme")}
-                      onClick={() => removeCustomTheme(th.id)}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  ) : null}
-                </div>
-              );
-            })}
-
-            <button
-              type="button"
-              class="s-theme-item-btn s-theme-item-customize"
-              onClick={() => {
-                closeMenu();
-                if (props.externalCustomize) {
-                  emit("open-customize");
-                } else {
-                  schemeDialogOpen.value = true;
-                }
-              }}
-            >
-              <span class="hk-menu-item-icon"><Palette size={14} /></span>
-              <span class="s-theme-item-name">{t("hikari::theme.customize")}</span>
-            </button>
-          </div>
-          {(() => {
-            const extra = slots["menu-extra"]?.() ?? [];
-            return extra.length ? (
-              <div class="hk-menu-slot hk-menu-slot--extra">{extra}</div>
-            ) : null;
-          })()}
+          {/* The panel content is the SHARED HkThemePanelContent (2026-10-15
+           * extraction): hosts embed the same component in their own
+           * settings surfaces, so the popover and any inline host render
+           * one implementation. Slots and events pass straight through. */}
+          <HkThemePanelContent
+            externalCustomize={props.externalCustomize}
+            onRequest-close={closeMenu}
+            onOpen-customize={() => emit("open-customize")}
+            onUpdate:scheme={(theme: HCustomTheme) => emit("update:scheme", theme)}
+          >
+            {{
+              ...(slots["mode-extra"] ? { "mode-extra": slots["mode-extra"] } : {}),
+              ...(slots["item-leading"] ? { "item-leading": slots["item-leading"] } : {}),
+              ...(slots["item-name-suffix"] ? { "item-name-suffix": slots["item-name-suffix"] } : {}),
+              ...(slots["item-trailing"] ? { "item-trailing": slots["item-trailing"] } : {}),
+              ...(slots["menu-extra"] ? { "menu-extra": slots["menu-extra"] } : {}),
+            }}
+          </HkThemePanelContent>
         </HPopover>
-
-        {!props.externalCustomize && (
-          <HColorSchemeDialog
-            modelValue={schemeDialogOpen.value}
-            onUpdate:modelValue={(v: boolean) => { schemeDialogOpen.value = v; }}
-            onConfirm={onConfirmScheme}
-          />
-        )}
       </div>
     );
   },

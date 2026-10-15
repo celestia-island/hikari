@@ -16,12 +16,19 @@ export const TOOLTIP_GAP_PX = 8;
  * Build the inline style that pins a `position: fixed` popup to one side
  * of a trigger rect.
  *
- * The popup teleports to <body> — inside any root CSS zoom subtree —
- * while `rect` is already in the root visual space (standardized zoom
+ * The popup floats OUTSIDE the page's zoomed subtrees — the HkTooltip
+ * component teleports it into #hk-overlay-root and the bridge appends
+ * it there too, both mounted under unzoomed <body>, outside every
+ * zoomed subtree — while `rect`
+ * is already in the root visual space (standardized zoom
  * reports ancestor zoom applied). The browser scales the tooltip's local
  * px back up at paint, so the visual rect values must be written divided
  * by the cumulative zoom or the tooltip drifts zoom× off its trigger
- * (chest's root-level manual DPI scale).
+ * (chest's root-level manual DPI scale). This contract quietly assumes
+ * the overlay root itself never carries a CSS zoom: the anchor math here
+ * divides by ancestorZoom(document.body) only, while the clamp pass
+ * below divides by ancestorZoom(popup) — the two agree exactly because
+ * the root sits unzoomed between them.
  *
  * `width: max-content` is the position-independence contract (same rule
  * as .hk-popover-panel): a fixed element otherwise shrink-to-fits against

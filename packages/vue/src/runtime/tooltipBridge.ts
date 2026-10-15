@@ -25,9 +25,15 @@
 //   - empty / whitespace-only titles never engage
 //
 // The bridge holds one popup-manager handle (kind "tooltip"), so its
-// popups share the tooltip z band with component tooltips. Installing
-// twice on the same document is idempotent: the second install returns
-// the first install's uninstall.
+// popups share the tooltip z band with component tooltips — inside the
+// overlay root, which is where the popup MOUNTS (same home as the
+// HkTooltip component's teleported popup: the in-root ordinal z is
+// meaningless at body level once #hk-overlay-root carries its own
+// document-space elevation). Installing twice on the same document is
+// idempotent: the second install returns the first install's uninstall.
+// Side effect: ensures #hk-overlay-root exists before the install appends
+// the popup (the component tooltip's Teleport target is the same node).
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 import { applyTooltipPosition, type TooltipPlacement } from "./tooltipPosition";
 import { usePopupManager, type PopupHandle } from "./usePopupManager";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
@@ -206,7 +212,19 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
   const content = document.createElement("div");
   content.className = "hk-tooltip-content";
   popup.appendChild(content);
-  document.body.appendChild(popup);
+  // Mount into the overlay root, NOT <body> (2026-10-16 defect report):
+  // the manager's z here is the IN-ROOT ordinal band (tooltip 300, above
+  // anchored popups 200) — it only competes inside the root's
+  // `isolation: isolate` fence. At body level the same number is a
+  // near-bottom document z, far under `#hk-overlay-root`'s own elevation
+  // (--hk-z-overlay-root, 90000), so every tooltip the bridge showed over
+  // an overlay-hosted surface — the filter panel's operator `title=`s
+  // over its popover — painted UNDER the panel and was clipped by it.
+  // The component tooltips teleport into the root for exactly this
+  // reason; the bridge shares their popup classes AND must share their
+  // home. `pointer-events` stays none on both the root and the popup, so
+  // the hosting subtree changes nothing about hit-testing.
+  ensureOverlayRoot().appendChild(popup);
 
   const state: BridgeState = {
     root: document,

@@ -1,7 +1,7 @@
 import { defineComponent, h, type Component, type PropType } from "vue";
 
 import { HNavItem, HSidebar } from "@celestia-island/hikari";
-import { ChartBarBig as BarChart3, Bell, Bot, Box, Cable, Cpu, FileText, FolderOpen, Gauge, Key, Layers, LayoutDashboard, Mic, Monitor, Send, Settings, Share2, Shield, Webhook, Zap } from "lucide-vue-next";
+import { ChartBarBig as BarChart3, Bell, Bot, Box, Cable, Cloud, Cpu, FileText, FolderOpen, Gauge, Key, Layers, LayoutDashboard, Mic, Monitor, Send, Settings, Share2, Shield, Webhook, Zap } from "lucide-vue-next";
 
 interface NavItem {
   key: string;

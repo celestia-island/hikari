@@ -29,28 +29,31 @@ afterEach(() => {
 });
 
 describe("usePopupManager z bands", () => {
-  it("bands are ordered overlay < dropdown < tooltip < toast", () => {
+  it("bands are ordered modal < toast < dropdown < tooltip", () => {
+    // 2026-10-15 overlay-root ordinal bands: tooltips sit ABOVE toasts
+    // (user direction — tooltip text must be copyable while toasts show),
+    // and toasts sit above modals (notifications visible over dialogs).
     expect(POPUP_Z_BANDS.modal).toBe(POPUP_Z_BANDS.drawer);
-    expect(POPUP_Z_BANDS.modal).toBeLessThan(POPUP_Z_BANDS.dropdown);
+    expect(POPUP_Z_BANDS.modal).toBeLessThan(POPUP_Z_BANDS.toast);
+    expect(POPUP_Z_BANDS.toast).toBeLessThan(POPUP_Z_BANDS.dropdown);
     expect(POPUP_Z_BANDS.dropdown).toBeLessThan(POPUP_Z_BANDS.tooltip);
-    expect(POPUP_Z_BANDS.tooltip).toBeLessThan(POPUP_Z_BANDS.toast);
   });
 
   it("keeps a toast registered first above overlays opened later", () => {
     // The mobile regression: HkToast mounts once at shell level, so the
     // old registration-order ladder gave every later modal a higher z and
     // buried the toast under the phone bottom sheet. Bands must hold the
-    // toast on top regardless of registration order.
+    // toast on top of WINDOW kinds (modal/drawer) regardless of
+    // registration order. Anchored popups (dropdown) sit above toasts
+    // by design (2026-10-15: the user is interacting with them).
     const m = freshManager();
     const toast = m.register("toast", false);
     expect(toast.zIndex).toBe(POPUP_Z_BANDS.toast);
 
     const modal = m.register("modal", true);
     const drawer = m.register("drawer", true);
-    const dropdown = m.register("dropdown", false);
     expect(modal.zIndex).toBeLessThan(toast.zIndex);
     expect(drawer.zIndex).toBeLessThan(toast.zIndex);
-    expect(dropdown.zIndex).toBeLessThan(toast.zIndex);
   });
 
   it("stacks in open order within a band and reclaims freed slots", () => {
@@ -108,14 +111,15 @@ describe("usePopupManager z bands", () => {
     expect(modal2.zIndex).toBeLessThan(dropdown.zIndex);
   });
 
-  it("keeps tooltips above overlays and below toasts", () => {
+  it("keeps tooltips above overlays and toasts", () => {
     const m = freshManager();
     const modal = m.register("modal", true);
     const tooltip = m.register("tooltip", false);
     const toast = m.register("toast", false);
     expect(tooltip.zIndex).toBe(POPUP_Z_BANDS.tooltip);
     expect(tooltip.zIndex).toBeGreaterThan(modal.zIndex);
-    expect(toast.zIndex).toBeGreaterThan(tooltip.zIndex);
+    expect(tooltip.zIndex).toBeGreaterThan(toast.zIndex);
+    // Removed: toast is BELOW tooltip in the 2026-10-15 band layout.
   });
 
   it("keeps the scroll lock counter balanced across register/unregister", () => {

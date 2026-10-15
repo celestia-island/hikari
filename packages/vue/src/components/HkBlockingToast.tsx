@@ -45,6 +45,7 @@ import {
 } from "../runtime/useBlockingToast";
 import "./HkBlockingToast.scss";
 import HButton from "./HkButton";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 const ICON_SIZE = 18;
 
@@ -175,7 +176,7 @@ export default defineComponent({
     }
 
     return () => (
-      <Teleport to="body">
+      <Teleport to={ensureOverlayRoot()}>
         <div class="hk-blocking-toast-container">
           <TransitionGroup
             ref={hostRef}

@@ -29,7 +29,7 @@ const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement 
 
 function mount(props: Record<string, unknown> = {}) {
   const container = document.createElement("div");
-  document.body.appendChild(container);
+  (document.querySelector('#hk-overlay-root') ?? document.body).appendChild(container);
   const app = createApp({
     render: () =>
       h(HkTooltip, props as never, () => h("span", { class: "anchor-probe" }, "anchor")),
@@ -152,7 +152,7 @@ describe("HkTooltip show/hide", () => {
     await nextTick();
     const el = popup();
     expect(document.body.contains(el)).toBe(true);
-    expect(el.parentElement).toBe(document.body);
+    // The tooltip teleports into the overlay root (a child of body).
     expect(el.className).not.toContain("hk-tooltip-visible");
     expect(el.querySelector(".hk-tooltip-content")!.textContent).toBe("the tip");
     // The anchor slot renders inside the wrapper's trigger span.
@@ -175,7 +175,7 @@ describe("HkTooltip show/hide", () => {
 
   it("hands { popupId, visible } to the default slot for focus-target wiring", async () => {
     const container = document.createElement("div");
-    document.body.appendChild(container);
+    (document.querySelector('#hk-overlay-root') ?? document.body).appendChild(container);
     let seen: Partial<HkTooltipSlotProps> = {};
     const app = createApp({
       render: () =>

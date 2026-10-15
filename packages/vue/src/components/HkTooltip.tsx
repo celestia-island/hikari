@@ -2,6 +2,7 @@ import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProp
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
 import "./HkTooltip.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 /**
  * The default-slot payload, handed to every render of the trigger. An
@@ -183,7 +184,7 @@ export default defineComponent({
         <span class="hk-tooltip-trigger">
           {slots.default?.({ popupId, visible: visible.value })}
         </span>
-        <Teleport to="body">
+        <Teleport to={ensureOverlayRoot()}>
           {everShown.value && (
             <div
               ref={popupRef}

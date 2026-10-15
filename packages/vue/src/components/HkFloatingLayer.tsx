@@ -9,6 +9,7 @@ import {
 
 import { hasLiveWindow, usePopupManager } from "../runtime/usePopupManager";
 import "./HkFloatingLayer.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 type FloatCorner = "bottom-right" | "bottom-left" | "top-right" | "top-left";
 
@@ -99,7 +100,7 @@ export default defineComponent({
     return () => {
       if (!props.open || (props.yieldToWindows && hasLiveWindow.value)) return null;
       return (
-        <Teleport to="body">
+        <Teleport to={ensureOverlayRoot()}>
           <div
             class="hk-floating-layer"
             data-corner={props.corner}

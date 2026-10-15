@@ -23,6 +23,7 @@ import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 type DrawerSide = "left" | "right" | "top" | "bottom";
 
@@ -276,7 +277,7 @@ export default defineComponent({
       if (!machine.mounted.value) return null;
       const panelPrefix = `hk-drawer-${props.side}`;
       return (
-      <Teleport to="body">
+      <Teleport to={ensureOverlayRoot()}>
         {props.overlay ? (
           <div
             ref={overlayEl}

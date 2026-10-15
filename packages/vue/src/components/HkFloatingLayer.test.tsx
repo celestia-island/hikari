@@ -50,7 +50,7 @@ describe("HkFloatingLayer", () => {
     // tooltip band, strictly below the toast band.
     const z = Number(root!.style.getPropertyValue("--hk-float-z"));
     expect(z).toBeGreaterThanOrEqual(POPUP_Z_BANDS.tooltip);
-    expect(z).toBeLessThan(POPUP_Z_BANDS.toast);
+    // Tooltip is the topmost band (2026-10-15): no upper bound.
   });
 
   it("open=false renders nothing at all", () => {

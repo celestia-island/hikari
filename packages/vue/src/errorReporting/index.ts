@@ -32,6 +32,11 @@ export { HkErrorReportingOverlay } from "./HkErrorReportingOverlay";
  * with Home / Retry actions. Because the overlay lives on its own tiny app
  * instance, it still shows when the host tree itself is what crashed.
  *
+ * Hosts whose error landing carries app-specific semantics pass
+ * `options.landing(err)`: the takeover then renders the host's card inside
+ * the same crash-surviving shell — capture channels and the takeover
+ * guarantee stay, the built-in card and its actions step aside.
+ *
  * Any pre-existing `app.config.errorHandler` is chained, not discarded.
  * All capture channels are optional; `shouldReport` filters, `onError` is
  * the telemetry hook.

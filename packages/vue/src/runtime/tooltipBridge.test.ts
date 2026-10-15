@@ -15,6 +15,10 @@ import { usePopupManager } from "./usePopupManager";
  * - escape hatches: empty titles, [data-hk-tooltip-native], elements
  *   inside an HkTooltip wrapper — never engage
  * - pointerdown hides but stays engaged; scroll/resize and Esc disengage
+ * - the popup mounts inside #hk-overlay-root (same home as the component
+ *   tooltip's teleported popup) — at body level its in-root ordinal z
+ *   would land under the root's document-space elevation and every
+ *   overlay-hosted surface (the filter panel popover) clipped it
  * - idempotent install per document; uninstall tears everything down
  */
 
@@ -197,6 +201,13 @@ describe("installHkTooltipBridge", () => {
     hover(el);
     window.dispatchEvent(new Event("resize"));
     expect(el.getAttribute("title")).toBe("Scrolled");
+  });
+
+  it("mounts the popup inside the overlay root", () => {
+    install();
+    const root = document.querySelector("#hk-overlay-root");
+    expect(root).not.toBeNull();
+    expect(bridgePopup()?.parentElement).toBe(root);
   });
 
   it("is idempotent per document and uninstallable", () => {

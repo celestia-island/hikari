@@ -34,7 +34,8 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 Before contributing, ensure you have:
 
-- **Rust 1.82+**: Install from [rustup.rs](https://rustup.rs/)
+- **Rust 1.85+** (edition 2024, enforced by `rust-version` in `Cargo.toml`): Install from [rustup.rs](https://rustup.rs/)
+- **Node.js 22.13+ with pnpm 11**: Required for the Vue package (`packages/vue`); enable via `corepack enable`
 - **Python 3.11+**: For development tooling
 - **Just**: Install with `cargo install just`
 - **Git**: For version control
@@ -68,6 +69,11 @@ cargo install just
 
 # Install Python dependencies (for tooling)
 pip install -r requirements-dev.txt  # if available
+
+# Install Vue package dependencies (packages/vue is its own pnpm workspace)
+cd packages/vue
+corepack pnpm install --frozen-lockfile
+cd ../..
 ```
 
 ### Build the Project
@@ -229,26 +235,28 @@ Use descriptive branch names:
 
 ### Commit Messages
 
-Follow the emoji + one-liner format (as defined in PLAN.md):
+Follow the `<gitmoji> <Capitalized English sentence ending with a period.>` format — this is enforced by the repository's commit-lint CI:
 
 ```
-emoji one-sentence english description
+✨ Add a table component with pagination.
 ```
+
+The gitmoji carries the change type: **no `feat:` / `fix:` prefix, no colon before the summary**, and the summary is a single English sentence ending with a period.
 
 Examples:
-- `feat: Add table component with pagination`
-- `fix: Resolve button disabled state bug`
-- `docs: Update installation instructions`
-- `refactor: Improve theme provider performance`
+- `✨ Add a table component with pagination.`
+- `🐛 Resolve the button disabled-state regression.`
+- `📝 Update the installation instructions.`
+- `♻️ Improve the theme provider performance.`
 
 Common emojis:
-- `feat` - New feature
-- `fix` - Bug fix
-- `docs` - Documentation changes
-- `style` - Code style changes (formatting)
-- `refactor` - Code refactoring
-- `test` - Adding or updating tests
-- `chore` - Maintenance tasks
+- `✨` - New feature
+- `🐛` - Bug fix
+- `📝` - Documentation changes
+- `🎨` - Code style changes (formatting)
+- `♻️` - Code refactoring
+- `✅` - Adding or updating tests
+- `🔧` - Maintenance tasks
 
 ### Commit Workflow
 
@@ -262,7 +270,7 @@ git checkout -b feature/your-feature-name
 
 ```bash
 git add .
-git commit -m "feat: Add your feature description"
+git commit -m "✨ Add your feature description."
 ```
 
 3. **Push to your fork**:
@@ -307,7 +315,7 @@ mod tests {
 ### Run Tests
 
 ```bash
-# Run all tests
+# Run all Rust tests
 just test
 # or
 cargo test --workspace
@@ -317,6 +325,15 @@ cargo test -p hikari-components
 
 # Run tests with output
 cargo test --workspace -- --nocapture
+```
+
+The Vue package (`packages/vue`) has its own Vitest suite — colocated `*.test.ts(x)` files run in a `happy-dom` environment:
+
+```bash
+cd packages/vue
+pnpm test          # vitest run (single pass, CI mode)
+pnpm test:watch    # vitest in watch mode
+pnpm lint          # vue-tsc --noEmit type check
 ```
 
 ### Test Coverage
@@ -372,7 +389,7 @@ Examples should be:
 3. **Documentation**:
    - Update relevant README files
    - Add/update code documentation
-   - Update CHANGELOG if applicable
+   - Do not add changelog files — the merged pull request history is the changelog
 
 ### Creating a Pull Request
 

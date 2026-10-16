@@ -47,7 +47,9 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit",
     "build:docs": "vite build",
-    "lint": "echo ok",
+    "lint": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "vue-tsc --noEmit"
   },
   "peerDependencies": {

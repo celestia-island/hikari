@@ -283,5 +283,6 @@
   "hikari::diff.loadFailed": "Laden fehlgeschlagen, zum Wiederholen klicken",
   "hikari::search.trigger": "Suchen",
   "hikari::search.clear": "Suche löschen",
-  "hikari::search.apply": "Anwenden"
+  "hikari::search.apply": "Anwenden",
+  "hikari::statusBar.idle": "Bereit"
 }

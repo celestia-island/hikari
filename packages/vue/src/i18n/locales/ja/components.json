@@ -283,5 +283,6 @@
   "hikari::diff.loadFailed": "読み込みに失敗しました。クリックで再試行",
   "hikari::search.trigger": "検索",
   "hikari::search.clear": "検索をクリア",
-  "hikari::search.apply": "適用"
+  "hikari::search.apply": "適用",
+  "hikari::statusBar.idle": "準備完了"
 }

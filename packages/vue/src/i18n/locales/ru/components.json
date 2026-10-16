@@ -283,5 +283,6 @@
   "hikari::diff.loadFailed": "Не удалось загрузить, нажмите для повтора",
   "hikari::search.trigger": "Поиск",
   "hikari::search.clear": "Очистить поиск",
-  "hikari::search.apply": "Применить"
+  "hikari::search.apply": "Применить",
+  "hikari::statusBar.idle": "Готово"
 }

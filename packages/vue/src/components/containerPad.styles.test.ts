@@ -48,6 +48,29 @@ describe("container pad token — wired sheets", () => {
     );
   });
 
+  it("HkPopover sheet: the content band reads the token, chrome cancels it", () => {
+    // The sheet branch completes the #808 contract: a host that sets the
+    // `padding` prop gets the SAME step around its content docked as a
+    // bottom sheet (bottom = step + safe-area, block-start air under the
+    // header = step) instead of hand-padding a sheet-only wrapper — the
+    // gap chest's HkContextRing had to compensate for locally. Grabber
+    // and header are chrome: they cancel the panel's inline pad so the
+    // tap zone and title keep their own frame-relative insets.
+    const css = compileSheet("HkPopover.scss");
+    expect(css).toContain(
+      "padding-bottom: calc(var(--hk-pad, var(--space-12, 0.75rem)) + env(safe-area-inset-bottom, 0px))",
+    );
+    expect(ruleFor(css, ".hk-popover-sheet-header {")).toContain(
+      "margin-inline: calc(-1 * var(--hk-pad, 0px))",
+    );
+    expect(ruleFor(css, ".hk-popover-sheet-header {")).toContain(
+      "padding-block: 0 var(--hk-pad, var(--space-8, 0.5rem))",
+    );
+    expect(ruleFor(css, ".hk-popover-sheet-grabber {")).toContain(
+      "margin-inline: calc(-1 * var(--hk-pad, 0px))",
+    );
+  });
+
   it("HkCard: body 1rem, unpadded 0, the scrollable pad wrapper 1rem", () => {
     const css = compileSheet("HkCard.scss");
     expect(ruleFor(css, ".hk-card-body {")).toContain(

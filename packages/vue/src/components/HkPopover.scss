@@ -165,13 +165,17 @@
   /* The sheet's bottom-edge distance itself comes from the shared
    * --hk-sheet-bottom-gap (inline in HkPopover's sheet style); here the
    * content keeps the last row clear of the home bar: the safe-area
-   * inset stacked on a 12px family base, which also restores a bottom
-   * cushion over the glass dropdown chrome (equal specificity, earlier
+   * inset stacked on the shared container-pad token, whose legacy
+   * fallback is the 12px family base (which also restores a bottom
+   * cushion over the glass dropdown chrome — equal specificity, earlier
    * in source, whose own bottom padding the sheet rule would otherwise
-   * zero out). The modal sheet footer goes further (it adds
-   * --hk-sheet-footer-gap for its action buttons); this sheet has no
-   * footer, so this is the family baseline. */
-  padding-bottom: calc(var(--space-12, 0.75rem) + env(safe-area-inset-bottom, 0px));
+   * zero out). A host that sets the `padding` prop retunes the sheet's
+   * bottom inset with the SAME step its anchored panel uses (#808
+   * completion — hosts stop hand-padding the sheet branch); the safe-
+   * area term always rides on top. The modal sheet footer goes further
+   * (it adds --hk-sheet-footer-gap for its action buttons); this sheet
+   * has no footer, so this is the family baseline. */
+  padding-bottom: calc(var(--hk-pad, var(--space-12, 0.75rem)) + env(safe-area-inset-bottom, 0px));
 
   /* Overlay scrollbar (useOverlayScrollbar, sheet mode only) — the
      native chrome is hidden, never styled. */
@@ -184,9 +188,14 @@
 
 .hk-popover-sheet-grabber {
   flex-shrink: 0;
+  // Chrome, not content: cancel the panel's shared container pad inline
+  // (see the header twin above) so the grabber zone spans the full sheet
+  // width at any `padding` step — the centered bar never drifts inward.
+  // Longhand AFTER the shorthand or `margin: 0 auto` would win the cascade.
+  margin: 0 auto;
+  margin-inline: calc(-1 * var(--hk-pad, 0px));
   // Grabber zone: tap target tall enough for a thumb, bar visually small.
   padding: 14px 0 20px;
-  margin: 0 auto;
   width: 100%;
   cursor: pointer;
   display: flex;
@@ -212,15 +221,26 @@
  * The title aligns to the CONTENT edge: the leading inset defaults to
  * --space-12, matching the padded content blocks popover sheets host
  * (e.g. the house 0.75rem popover body). Hosts tune it via
- * --hk-sheet-title-inset; the trailing inset hugs the close button. */
+ * --hk-sheet-title-inset; the trailing inset hugs the close button.
+ *
+ * Shared container pad (#808 completion): the panel's `padding` prop
+ * insets the CONTENT band, so this chrome row cancels it inline
+ * (negative margin, the valid-CSS twin of a negative padding) and
+ * keeps its own title-inset from the panel frame — the title lands on
+ * the content edge whenever the pad step matches title-inset, at any
+ * step. The trailing block gap is the CONTENT's block-start air under
+ * the header: it reads the same pad step when the prop is set (legacy
+ * 8px otherwise), so a padded host gets one uniform inset around its
+ * sheet content too — no hand-padded wrapper branch downstream. */
 .hk-popover-sheet-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-8, 0.5rem);
+  margin-inline: calc(-1 * var(--hk-pad, 0px));
   // Logical longhand (was physical `0 x y title-inset`): the title inset is
   // the inline START edge so RTL mirrors it with the mirrored title/close.
-  padding-block: 0 var(--space-8, 0.5rem);
+  padding-block: 0 var(--hk-pad, var(--space-8, 0.5rem));
   padding-inline: var(--hk-sheet-title-inset, var(--space-12, 0.75rem))
     var(--space-8, 0.5rem);
 }

@@ -28,9 +28,12 @@ describe("HkPopover mobile sheet docking contract", () => {
 
   it("keeps sheet content clear of the home bar via the safe-area inset", () => {
     const block = scss.match(/\.hk-popover-panel\.hk-is-sheet\s*{[^}]*}/)?.[0] ?? "";
-    // Stacked on the family 12px base so the glass dropdown chrome's
-    // bottom padding survives on non-notched phones too.
-    expect(block).toContain("calc(var(--space-12");
+    // Stacked on the shared container-pad token whose legacy fallback is
+    // the family 12px base, so the glass dropdown chrome's bottom padding
+    // survives on non-notched phones too — and a host's `padding` prop
+    // retunes the base on the sheet face exactly like the anchored one
+    // (#808 completion; see containerPad.styles.test.ts for the pin).
+    expect(block).toContain("calc(var(--hk-pad, var(--space-12");
     expect(block).toContain("env(safe-area-inset-bottom");
   });
 });

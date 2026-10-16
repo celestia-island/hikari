@@ -169,6 +169,32 @@ describe("HkPopover sheetOnMobile", () => {
     expect(header.querySelector(".hk-popover-sheet-close")).toBeTruthy();
   });
 
+  // #808 completion: the sheet branch consumes the same shared container
+  // pad its anchored twin does — the inline --hk-pad the `padding` prop
+  // writes on the panel reaches the sheet's content band (the scss
+  // contract in containerPad.styles.test.ts pins the consuming rules),
+  // so a host retunes ONE prop and both faces follow. No more hand-padded
+  // sheet-only wrapper branches downstream (chest's HkContextRing used
+  // to need one).
+  it("carries the padding prop's inline token onto the sheet panel too", async () => {
+    setViewport(375);
+    mountPopover({ sheetOnMobile: true, title: "Sheet", padding: "md" });
+    await nextTick();
+
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel.classList.contains("hk-is-sheet")).toBe(true);
+    expect(panel.style.getPropertyValue("--hk-pad")).toBe("var(--space-12, 0.75rem)");
+  });
+
+  it("keeps the sheet panel token-free when no padding prop is set", async () => {
+    setViewport(375);
+    mountPopover({ sheetOnMobile: true, title: "Sheet" });
+    await nextTick();
+
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel.style.getPropertyValue("--hk-pad")).toBe("");
+  });
+
   it("keeps the heading row out of anchored desktop mode", async () => {
     setViewport(1200);
     mountPopover({ sheetOnMobile: true, title: "Context usage" });

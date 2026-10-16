@@ -1,5 +1,6 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
 import { useI18n } from "../i18n/context";
+import { hkPadStyle, type HkPad } from "../runtime/containerPad";
 import { AlertTriangle, CheckCircle, Info, X } from "lucide-vue-next";
 
 import "./HkAlert.scss";
@@ -23,6 +24,9 @@ export default defineComponent({
     closable: { type: Boolean, default: false },
     banner: { type: Boolean, default: false },
     size: { type: String as PropType<AlertSize>, default: "md" },
+    /** Shared container-padding override (see runtime/containerPad) —
+     *  unset keeps the size's own padding. */
+    padding: { type: String as PropType<HkPad>, default: undefined },
   },
   emits: {
     close: () => true,
@@ -50,7 +54,7 @@ export default defineComponent({
       const IconComp = VARIANT_ICONS[props.variant];
 
       return (
-        <div class={rootCls.value}>
+        <div class={rootCls.value} style={hkPadStyle(props.padding)}>
           <span class="hk-alert-icon">
             {slots.icon ? (
               slots.icon()

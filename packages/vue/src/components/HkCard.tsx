@@ -1,4 +1,6 @@
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
+
+import { hkPadStyle, type HkPad } from "../runtime/containerPad";
 
 import HkScrollContainer from "./HkScrollContainer";
 import "./HkCard.scss";
@@ -9,6 +11,12 @@ export default defineComponent({
     title: { type: String, default: undefined },
     hoverable: { type: Boolean, default: false },
     padded: { type: Boolean, default: true },
+    /** Shared container-padding override (see runtime/containerPad) for
+     *  the body (and the scrollable card's inner pad wrapper) — unset
+     *  keeps the body's historical inset; composes with `padded`
+     *  (unpadded still drops the inset unless an explicit padding is
+     *  given). */
+    padding: { type: String as PropType<HkPad>, default: undefined },
     /** Turn the card body into the library's standard scroll region
      *  (HkScrollContainer: overlay scrollbar, overflow sensing) instead
      *  of a plain static block. The card becomes a column flex box —
@@ -34,6 +42,7 @@ export default defineComponent({
           props.hoverable ? "hk-card-hoverable" : "",
           props.class,
         ]}
+        style={hkPadStyle(props.padding)}
         onClick={(e) => emit("click", e)}
       >
         {props.title || slots.header ? (

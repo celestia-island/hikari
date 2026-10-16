@@ -2,7 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
+  /* --hk-pad: the shared container-padding token (runtime/containerPad). */
+  padding: var(--hk-pad, var(--space-12, 0.75rem) var(--space-16, 1rem));
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   border-radius: var(--radius-md, 0.5rem);
   background: rgb(var(--color-surface));

@@ -162,7 +162,9 @@
   /* Consumers nesting a self-padded menu (HkMenuPanel) zero this via
      --hk-drawer-body-padding so nav rows and the footer menu share one
      left edge. */
-  padding: var(--hk-drawer-body-padding, var(--space-16, 1rem));
+  /* --hk-pad (runtime/containerPad, the `padding` prop) outranks the
+     per-component theme token, which outranks the historical default. */
+  padding: var(--hk-pad, var(--hk-drawer-body-padding, var(--space-16, 1rem)));
 
   /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
      hidden, never styled. */

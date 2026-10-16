@@ -2,7 +2,9 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-12, 12px);
-  padding: var(--space-12, 12px) var(--space-16, 16px);
+  /* --hk-pad: the shared container-padding token (runtime/containerPad) —
+     unset falls back to the historical values, set wins per instance. */
+  padding: var(--hk-pad, var(--space-12, 12px) var(--space-16, 16px));
   border-radius: var(--radius-md, 8px);
   border: 1px solid transparent;
   border-inline-start-width: 4px;
@@ -20,7 +22,7 @@
 /* ── Sizes ─────────────────────────────────────── */
 
 .hk-alert-sm {
-  padding: var(--space-8, 8px) var(--space-12, 12px);
+  padding: var(--hk-pad, var(--space-8, 8px) var(--space-12, 12px));
   font-size: var(--text-xs, 0.75rem);
 }
 
@@ -30,7 +32,7 @@
 }
 
 .hk-alert-lg {
-  padding: var(--space-16, 16px) var(--space-24, 24px);
+  padding: var(--hk-pad, var(--space-16, 16px) var(--space-24, 24px));
   font-size: var(--text-base, 0.875rem);
 }
 

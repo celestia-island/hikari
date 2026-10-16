@@ -15,6 +15,7 @@ import "./HkDrawer.scss";
 import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
+import { hkPadStyle, type HkPad } from "../runtime/containerPad";
 import { createBackGuard } from "../runtime/backStack";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
@@ -36,6 +37,10 @@ export default defineComponent({
     closable: { type: Boolean, default: true },
     overlay: { type: Boolean, default: true },
     size: { type: String, default: "320px" },
+    /** Shared container-padding override (see runtime/containerPad) for
+     *  the body — unset keeps --hk-drawer-body-padding / the 1rem
+     *  default. */
+    padding: { type: String as PropType<HkPad>, default: undefined },
     /** Extra classes for the floating panel — lets consumers scope
      *  body/footer padding overrides (attrs fallthrough cannot reach a
      *  Teleported panel). */
@@ -289,7 +294,7 @@ export default defineComponent({
         <div
               ref={panelRef}
               class={["hk-drawer-panel", `hk-drawer-${props.side}`, props.panelClass, ...machine.classesFor(panelPrefix)]}
-              style={panelStyle.value}
+              style={{ ...panelStyle.value, ...hkPadStyle(props.padding) }}
               role="dialog"
               aria-label={props.title}
               aria-modal={props.overlay}

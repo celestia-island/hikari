@@ -42,11 +42,13 @@
 }
 
 .hk-card-body {
-  padding: var(--space-16);
+  /* --hk-pad: the shared container-padding token (runtime/containerPad) —
+     the card root carries it when the `padding` prop is set. */
+  padding: var(--hk-pad, var(--space-16));
 }
 
 .hk-card-body-unpadded {
-  padding: 0;
+  padding: var(--hk-pad, 0);
 }
 
 .hk-card-footer {
@@ -85,6 +87,6 @@
   }
 
   .hk-card-body-pad {
-    padding: var(--space-16);
+    padding: var(--hk-pad, var(--space-16));
   }
 }

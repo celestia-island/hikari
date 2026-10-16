@@ -287,5 +287,6 @@
   "hikari::diff.loadFailed": "載入失敗，點擊重試",
   "hikari::search.trigger": "搜尋",
   "hikari::search.clear": "清除搜尋",
-  "hikari::search.apply": "套用"
+  "hikari::search.apply": "套用",
+  "hikari::statusBar.idle": "就緒"
 }

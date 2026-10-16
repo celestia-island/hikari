@@ -180,7 +180,7 @@ export const HkStatusBar = defineComponent({
     panelBuildHash: { type: String as PropType<string | undefined>, default: undefined },
     engineBuildHash: { type: String as PropType<string | undefined>, default: undefined },
     connectionStatus: {
-      type: String as PropType<"connected" | "reconnecting" | "disconnected" | "connecting">,
+      type: String as PropType<"connected" | "reconnecting" | "disconnected" | "connecting" | "idle">,
       default: "disconnected",
     },
     connectionInfo: {
@@ -238,6 +238,10 @@ export const HkStatusBar = defineComponent({
       connecting: "rgb(var(--color-warning))",
       reconnecting: "rgb(var(--color-warning))",
       disconnected: "rgb(var(--color-error))",
+      // Idle (2026-10-17 user direction): the shell is alive but has no
+      // session — the login page's resting light. Neutral gray, not red:
+      // red means FAULT, and "not yet logged in" is not a fault.
+      idle: "rgb(var(--color-text-tertiary, var(--color-text-secondary, 128 128 128)))",
     };
 
     // ── Recovery flash ─────────────────────────────────────────────
@@ -380,7 +384,8 @@ export const HkStatusBar = defineComponent({
       const countdown = props.countdown ?? info?.countdown ?? 0;
 
       const tierLabelKey = `hikari::statusBar.tier.${tier}`;
-      const statusText = mode === "connected" ? t("hikari::statusBar.connected", "Connected")
+      const statusText = mode === "idle" ? t("hikari::statusBar.idle", "Ready")
+        : mode === "connected" ? t("hikari::statusBar.connected", "Connected")
         : mode === "reconnecting" || mode === "connecting" ? t("hikari::statusBar.connecting", "Connecting...")
         : t("hikari::statusBar.disconnected", "Disconnected");
 

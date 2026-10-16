@@ -283,5 +283,6 @@
   "hikari::diff.loadFailed": "Échec du chargement, cliquez pour réessayer",
   "hikari::search.trigger": "Rechercher",
   "hikari::search.clear": "Effacer la recherche",
-  "hikari::search.apply": "Appliquer"
+  "hikari::search.apply": "Appliquer",
+  "hikari::statusBar.idle": "Prêt"
 }

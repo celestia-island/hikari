@@ -283,5 +283,6 @@
   "hikari::diff.loadFailed": "불러오기 실패, 클릭하여 재시도",
   "hikari::search.trigger": "검색",
   "hikari::search.clear": "검색 지우기",
-  "hikari::search.apply": "적용"
+  "hikari::search.apply": "적용",
+  "hikari::statusBar.idle": "준비됨"
 }

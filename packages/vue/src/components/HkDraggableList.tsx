@@ -27,6 +27,12 @@ export default defineComponent({
      *  locked the root carries data-all-locked and the sheet collapses
      *  the lane entirely — the list cannot reorder at all. */
     lockedKeys: { type: Array as PropType<string[]>, default: () => [] },
+    /** Accessible name for the list (aria-label on the role="list" root).
+     *  The list semantics themselves are unconditional — a reorderable
+     *  list is a list for AT users whether or not the host names it —
+     *  mirroring the menu/vocabulary a11y rulings (#736/#737): chrome
+     *  announces structure, the host supplies the name. */
+    label: { type: String, default: undefined },
   },
   emits: {
     reorder: (_fromIndex: number, _toIndex: number) => true,
@@ -212,6 +218,8 @@ export default defineComponent({
       return (
         <div
           class="hk-draggable-list"
+          role="list"
+          aria-label={props.label || undefined}
           data-dragging={s ? "" : undefined}
           data-all-locked={allLocked || undefined}
         >
@@ -227,6 +235,7 @@ export default defineComponent({
                 key={item.key}
                 ref={(el) => setRowEl(index, el as Element | null)}
                 class="hk-draggable-list-item"
+                role="listitem"
                 data-locked={locked || undefined}
                 data-dragging={isSource || undefined}
                 data-placeholder={placeholderDir || undefined}

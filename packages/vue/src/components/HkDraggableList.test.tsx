@@ -180,3 +180,45 @@ describe("HkDraggableList locked-lane contract", () => {
     expect(root.hasAttribute("data-all-locked")).toBe(false);
   });
 });
+
+describe("HkDraggableList list semantics", () => {
+  /** A reorderable list is a list for AT users whether or not the host
+   *  names it: the root always carries role="list" and every row
+   *  role="listitem" (the vocabulary a11y rulings #736/#737 applied to
+   *  the picker surfaces — the drag list adopts the same contract). The
+   *  accessible NAME stays the host's call: aria-label renders only when
+   *  the `label` prop is passed, so an unnamed list is still structural
+   *  and never announces an empty string. */
+
+  it("announces the root and rows as a list regardless of the label", () => {
+    const root = mountList(["a", "b"], []);
+
+    expect(root.getAttribute("role")).toBe("list");
+    expect(root.hasAttribute("aria-label")).toBe(false);
+    const rows = Array.from(root.querySelectorAll(".hk-draggable-list-item"));
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.getAttribute("role") === "listitem")).toBe(true);
+  });
+
+  it("names the list through the label prop", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(
+          HDraggableList,
+          { items: [{ key: "a" }], label: "Sortable accounts" },
+          {
+            item: ({ item }: { item: { key: string } }) =>
+              h("span", { class: "row-body" }, item.key),
+          },
+        ),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+
+    const root = container.querySelector(".hk-draggable-list") as HTMLElement;
+    expect(root.getAttribute("role")).toBe("list");
+    expect(root.getAttribute("aria-label")).toBe("Sortable accounts");
+  });
+});

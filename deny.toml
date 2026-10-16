@@ -63,6 +63,12 @@ expression = "LicenseRef-sysl-1.0"
 license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
 
 [bans]
+
+# TLS policy: rustls with the pure-Rust ring provider only. aws-lc-sys needs
+# NASM (and a C toolchain) installed to build at all — a build-host burden the
+# family removed by pinning every TLS path to ring. Keep it out permanently.
+[[bans.deny]]
+name = "aws-lc-sys"
 multiple-versions = "warn"
 wildcards = "deny"
 highlight = "all"

@@ -1,5 +1,7 @@
 import { defineComponent, h, type Component, type PropType } from "vue";
 
+import { hkPadStyle, type HkPad } from "../runtime/containerPad";
+
 import HkGaugeRing from "./HkGaugeRing";
 import HkProgressBar from "./HkProgressBar";
 import "./HkStatCard.scss";
@@ -78,6 +80,9 @@ export const HkStatCard = defineComponent({
   name: "HkStatCard",
   props: {
     variant: { type: String as PropType<StatVariant>, default: "plain" },
+    /** Shared container-padding override (see runtime/containerPad) —
+     *  unset keeps the card's historical inset. */
+    padding: { type: String as PropType<HkPad>, default: undefined },
     label: { type: String, required: true },
     value: { type: [String, Number], required: true },
     tone: { type: String as PropType<StatTone>, default: "muted" },
@@ -95,6 +100,7 @@ export const HkStatCard = defineComponent({
   setup(props, { emit, slots }) {
     return () => {
       const shared = {
+        style: hkPadStyle(props.padding),
         class: [
           "hk-stat-card",
           `hk-stat-card-${props.variant}`,

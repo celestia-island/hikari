@@ -106,12 +106,15 @@ describe("scroll-pin whitespace contract", () => {
     // Declared on the BODY — the covers are the body's own pseudo rules
     // and custom properties inherit downward only, so the scroller (a
     // child) could never feed them. The FULL literal is pinned (var name
-    // AND the 1.5rem fallback): a silently changed default would desync
+    // AND the fallback chain): a silently changed default would desync
     // the covers from the padding while every selector still matches.
+    // The chain reads the shared container-pad token (--hk-pad, the
+    // modal root's `padding` prop) over the per-component theme token
+    // over the historical 1.5rem.
     const body = cssBlock(modalScss, ".hk-modal-body {");
     for (const side of ["top", "right", "bottom", "left"]) {
       expect(body, `--hk-scroll-pad-${side}`).toContain(
-        `--hk-scroll-pad-${side}: var(--hk-modal-padding-body, 1.5rem);`,
+        `--hk-scroll-pad-${side}: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));`,
       );
     }
   });

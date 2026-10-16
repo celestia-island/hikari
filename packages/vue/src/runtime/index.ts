@@ -102,3 +102,8 @@ export {
   type HkRuntimeSnapshot,
   type HkRuntimeSnapshotEntry,
 } from "./registry";
+export {
+  HK_PAD_VAR,
+  hkPadStyle,
+  type HkPad,
+} from "./containerPad";

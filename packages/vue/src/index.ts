@@ -806,3 +806,4 @@ export { type HAboutLinkIcon as HkAboutLinkIcon } from "./components/HkAboutModa
 export { type HAboutComponentVersion as HkAboutComponentVersion } from "./components/HkAboutModal";
 export { type HCustomTheme as HkCustomTheme } from "./components/HkColorSchemeDialog";
 export { OVERLAY_ROOT_SELECTOR, OVERLAY_Z, ensureOverlayRoot } from "./overlay/overlayRoot";
+export { HK_PAD_VAR, hkPadStyle, type HkPad } from "./runtime/containerPad";

@@ -9,6 +9,10 @@
 
 .hk-popover-panel {
   min-width: 0;
+  /* --hk-pad: the shared container-padding token (runtime/containerPad) —
+     0 without glass (the bare panel never carried an inset), overridden
+     per instance via the `padding` prop. */
+  padding: var(--hk-pad, 0);
   max-height: min(70vh, calc(100vh - 2 * var(--viewport-gutter, 16px)));
   /* Width MUST be position-independent (max-content, viewport-capped).
    * The anchored panel is fixed-positioned with shrink-to-fit sizing,
@@ -69,7 +73,9 @@
   border: 1px solid rgb(var(--color-border) / 20%);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-dropdown);
-  padding: var(--space-4, 0.25rem);
+  /* The glass chrome's historical 4px menu inset — the shared token
+     (runtime/containerPad) retunes it per instance (`padding` prop). */
+  padding: var(--hk-pad, var(--space-4, 0.25rem));
 }
 
 /* Locale picker menu items — unified menu-item spec (./_menu-item.scss). */

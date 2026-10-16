@@ -296,10 +296,13 @@
   // parent): custom properties inherit downward, so the covers, the
   // scroller and the inner all resolve them. The mobile sheet block
   // retunes the vars only.
-  --hk-scroll-pad-top: var(--hk-modal-padding-body, 1.5rem);
-  --hk-scroll-pad-right: var(--hk-modal-padding-body, 1.5rem);
-  --hk-scroll-pad-bottom: var(--hk-modal-padding-body, 1.5rem);
-  --hk-scroll-pad-left: var(--hk-modal-padding-body, 1.5rem);
+  // The shared container-padding token (--hk-pad, runtime/containerPad;
+  // the modal root carries it via the `padding` prop) outranks the
+  // per-component theme token, which outranks the historical default.
+  --hk-scroll-pad-top: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
+  --hk-scroll-pad-right: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
+  --hk-scroll-pad-bottom: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
+  --hk-scroll-pad-left: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
 
   // Gutter covers (scroll-pin contract, 2026-09-14): the body's top and
   // bottom whitespace stays paintable OUTSIDE the scroll flow, so a

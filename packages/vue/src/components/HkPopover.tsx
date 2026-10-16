@@ -13,6 +13,7 @@ import {
 } from "vue";
 
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { hkPadStyle, type HkPad } from "../runtime/containerPad";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { ancestorZoom } from "../runtime/cssZoom";
 import { popupViewportRect } from "../runtime/popupBounds";
@@ -56,6 +57,12 @@ export default defineComponent({
     closeOnBackdrop: { type: Boolean, default: true },
     closeOnEscape: { type: Boolean, default: true },
     glass: { type: Boolean, default: true },
+    /** Shared container-padding override (see runtime/containerPad) for
+     *  the panel's content inset — unset keeps the glass chrome's 4px
+     *  (menu-voice) inset, or 0 without glass. Content panels (forms,
+     *  editors, filter groups) set e.g. "md" instead of hand-padding
+     *  their slot content. */
+    padding: { type: String as PropType<HkPad>, default: undefined },
     anchorRef: { type: Object as PropType<HTMLElement | null>, default: null },
     /**
      * Dock the panel as a bottom sheet on mobile-width viewports (<768px,
@@ -699,6 +706,7 @@ export default defineComponent({
         >
               <div
                 ref={panelRef}
+                style={hkPadStyle(props.padding)}
                 class={[
                   "hk-popover-panel",
                   ...(sheetBranch ? ["hk-is-sheet"] : [`hk-popover-${resolvedPlacement.value}`]),

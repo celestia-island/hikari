@@ -7,6 +7,7 @@ import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { topWindowZ, usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
+import { hkPadStyle, type HkPad } from "../runtime/containerPad";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
@@ -142,6 +143,10 @@ export default defineComponent({
     modelValue: { type: Boolean, required: true },
     title: { type: String, default: undefined },
     closable: { type: Boolean, default: true },
+    /** Shared container-padding override (see runtime/containerPad) for
+     *  the body — unset keeps --hk-modal-padding-body / the 1.5rem
+     *  default; the header and sub-header keep their own theme tokens. */
+    padding: { type: String as PropType<HkPad>, default: undefined },
     /** Named preset ("xs"…"xl") or any CSS max-width value (see ModalWidth). */
     width: { type: String as PropType<ModalWidth>, default: "32rem" },
     /**
@@ -1033,7 +1038,7 @@ export default defineComponent({
         <Teleport to={ensureOverlayRoot()}>
           <div
             class="hk-modal-root"
-            style={{ zIndex: overlayZ.value }}
+            style={{ zIndex: overlayZ.value, ...hkPadStyle(props.padding) }}
             onKeydown={onKeydown}
           >
             <div

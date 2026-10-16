@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
 
 import HDraggableList from "./HkDraggableList";
@@ -220,5 +220,125 @@ describe("HkDraggableList list semantics", () => {
     const root = container.querySelector(".hk-draggable-list") as HTMLElement;
     expect(root.getAttribute("role")).toBe("list");
     expect(root.getAttribute("aria-label")).toBe("Sortable accounts");
+  });
+});
+
+describe("HkDraggableList press ergonomics (clickable rows)", () => {
+  /** Two guards make a clickable row safe inside the list (ported from
+   *  wowsp's SortableList twin, which ran them in production):
+   *
+   *    1. ARM — a press under 5px of travel never publishes drag state
+   *       (no ghost flash on a jittered tap) and keeps the tap's native
+   *       semantics: no preventDefault until the arm.
+   *    2. SWALLOW — the release of an ARMED drag lands as a click on the
+   *       row the press started from; a capture-phase guard on the root
+   *       eats it, so dropping a row onto a clickable card never also
+   *       activates that card. Time-boxed at 300ms so it can never eat
+   *       a later keyboard activation, which has no pointerdown to
+   *       reset it. */
+
+  const PointerEventCtor: typeof MouseEvent =
+    (globalThis as { PointerEvent?: typeof MouseEvent }).PointerEvent ?? MouseEvent;
+
+  const pointerInit: MouseEventInit = { bubbles: true, cancelable: true };
+
+  function fire(el: Element, type: string, x = 0, y = 0) {
+    el.dispatchEvent(new PointerEventCtor(type, {
+      ...pointerInit,
+      button: 0,
+      clientX: x,
+      clientY: y,
+    }));
+  }
+
+  function fireWin(type: string, x = 0, y = 0) {
+    window.dispatchEvent(new PointerEventCtor(type, {
+      ...pointerInit,
+      clientX: x,
+      clientY: y,
+    }));
+  }
+
+  function mountClickable(): { root: HTMLElement; clicks: () => number } {
+    let clicked = 0;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(
+          HDraggableList,
+          { items: [{ key: "a" }, { key: "b" }] },
+          {
+            item: () =>
+              h(
+                "div",
+                { class: "row-body", onClick: () => { clicked++; } },
+                "row",
+              ),
+          },
+        ),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    const root = container.querySelector(".hk-draggable-list") as HTMLElement;
+    return { root, clicks: () => clicked };
+  }
+
+  it("keeps a plain tap a tap: no drag state, and the row's click fires", async () => {
+    const { root, clicks } = mountClickable();
+    const row = root.querySelectorAll(".hk-draggable-list-item")[0] as HTMLElement;
+
+    fire(row, "pointerdown", 10, 10);
+    // A 1px jitter stays under the arm threshold — no drag publishes.
+    fireWin("pointermove", 11, 10);
+    await nextTick();
+    expect(row.hasAttribute("data-dragging")).toBe(false);
+
+    fireWin("pointerup");
+    (row.querySelector(".row-body") as HTMLElement).dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    );
+    expect(clicks()).toBe(1);
+  });
+
+  it("arms past the threshold, drags, and swallows the release click", async () => {
+    const { root, clicks } = mountClickable();
+    const row = root.querySelectorAll(".hk-draggable-list-item")[0] as HTMLElement;
+
+    fire(row, "pointerdown", 10, 10);
+    fireWin("pointermove", 30, 40);
+    await nextTick();
+    expect(row.getAttribute("data-dragging")).not.toBeNull();
+
+    fireWin("pointerup");
+    (row.querySelector(".row-body") as HTMLElement).dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    );
+    expect(clicks()).toBe(0);
+  });
+
+  it("time-boxes the swallow — a click after the window passes through", async () => {
+    vi.useFakeTimers();
+    try {
+      const { root, clicks } = mountClickable();
+      const row = root.querySelectorAll(".hk-draggable-list-item")[0] as HTMLElement;
+
+      fire(row, "pointerdown", 10, 10);
+      fireWin("pointermove", 30, 40);
+      fireWin("pointerup");
+
+      (row.querySelector(".row-body") as HTMLElement).dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      );
+      expect(clicks()).toBe(0);
+
+      vi.advanceTimersByTime(301);
+      (row.querySelector(".row-body") as HTMLElement).dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      );
+      expect(clicks()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

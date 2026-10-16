@@ -1,4 +1,4 @@
-import { defineComponent, onBeforeUnmount, ref, shallowRef, type PropType } from "vue";
+import { defineComponent, onBeforeUnmount, onMounted, ref, shallowRef, type PropType } from "vue";
 import { onceFrame } from "../runtime/animationBus";
 import { useReportedTransition } from "../composables/useReportedTransition";
 import { ancestorZoom } from "../runtime/cssZoom";
@@ -14,9 +14,22 @@ interface DragState {
   fromIndex: number;
   placeholderIndex: number;
   originX: number;
+  originY: number;
   grabOffsetX: number;
   grabOffsetY: number;
 }
+
+/** Press-to-drag arm distance — a plain click on a row (or its handle)
+ *  never starts a drag: the ghost only rises once the pointer moves past
+ *  this many px, so a clickable row keeps its tap action and a jittered
+ *  tap never flashes a ghost. */
+const ARM_PX = 5;
+
+/** How long after a drop the release click is still recognized as the
+ *  drag's own click. Time-boxed (rather than a sticky flag) so a drag
+ *  released off-window can never eat a later keyboard activation,
+ *  which has no pointerdown to reset it. */
+const SWALLOW_CLICK_MS = 300;
 
 export default defineComponent({
   name: "HkDraggableList",
@@ -52,6 +65,38 @@ export default defineComponent({
 
     let ghostNode: HTMLElement | null = null;
 
+    /** Press bookkeeping — captured at pointerdown, never read during
+     *  render. `armed` flips only when the pointer crosses ARM_PX; until
+     *  then the press is a plain click-in-progress (no ghost, no drag
+     *  state, no preventDefault — the tap keeps its native semantics). */
+    let press: {
+      rect: DOMRect;
+      snapshot: string;
+      state: DragState;
+      armed: boolean;
+    } | null = null;
+    /** Timestamp of an armed drag's release — the capture-phase click
+     *  guard below eats the click a completed drag leaves behind (press
+     *  + release on the same element), so dropping a row onto a
+     *  clickable card never also activates that card. */
+    let swallowClickAt = 0;
+
+    const rootEl = ref<HTMLElement | null>(null);
+
+    /** Capture-phase click guard — runs before any row content's own
+     *  handlers (Vue's JSX typings have no onClickCapture attribute, so
+     *  the listener is wired imperatively in onMounted). */
+    function onRootClickCapture(e: MouseEvent) {
+      if (Date.now() - swallowClickAt > SWALLOW_CLICK_MS) return;
+      swallowClickAt = 0;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    onMounted(() => {
+      rootEl.value?.addEventListener("click", onRootClickCapture, true);
+    });
+
     const anim = useReportedTransition(250);
 
     function bump() { tick.value++; }
@@ -74,28 +119,29 @@ export default defineComponent({
       const row = rowEls.value[index];
       if (!row) return;
 
-      e.preventDefault();
       const rect = row.getBoundingClientRect();
 
       const snapshot = row.outerHTML
         .replace(/\sdraggable="[^"]*"/g, "")
         .replace(/\sdata-dragging="[^"]*"/g, "");
 
-      const state: DragState = {
-        fromIndex: index,
-        placeholderIndex: index,
-        originX: e.clientX,
-        grabOffsetX: e.clientX - rect.left,
-        grabOffsetY: e.clientY - rect.top,
+      // The press captures everything the arm needs. Nothing publishes
+      // yet — no preventDefault either: the handle lane carries its own
+      // touch-action:none and the rows are user-select:none, so a plain
+      // tap keeps its native click/scroll semantics untouched.
+      press = {
+        rect,
+        snapshot,
+        state: {
+          fromIndex: index,
+          placeholderIndex: index,
+          originX: e.clientX,
+          originY: e.clientY,
+          grabOffsetX: e.clientX - rect.left,
+          grabOffsetY: e.clientY - rect.top,
+        },
+        armed: false,
       };
-      drag.value = state;
-      bump();
-
-      onceFrame(() => {
-        if (!drag.value) return;
-        attachGhost(rect, snapshot);
-        anim.run();
-      });
 
       window.addEventListener("pointermove", onPointerMove, { passive: false });
       window.addEventListener("pointerup", onPointerUp, { once: true });
@@ -176,22 +222,45 @@ export default defineComponent({
     }
 
     function onPointerMove(e: PointerEvent) {
-      const s = drag.value;
-      if (!s) return;
+      const p = press;
+      if (!p) return;
+
+      if (!p.armed) {
+        // Arm past the threshold: only now does the drag publish, the
+        // ghost rise, and the gesture claim its defaults.
+        if (Math.hypot(e.clientX - p.state.originX, e.clientY - p.state.originY) <= ARM_PX) {
+          return;
+        }
+        p.armed = true;
+        drag.value = p.state;
+        bump();
+        const { rect, snapshot } = p;
+        onceFrame(() => {
+          if (!drag.value) return;
+          attachGhost(rect, snapshot);
+          anim.run();
+        });
+      }
+
       e.preventDefault();
       moveGhost(e.clientY);
       recomputePlaceholder(e.clientY);
     }
 
     function onPointerUp() {
-      const s = drag.value;
       window.removeEventListener("pointermove", onPointerMove);
 
+      const s = drag.value;
       if (s) {
+        // An armed drag's release lands as a click on the row the press
+        // started from — mark it for the capture guard or every drop
+        // onto a clickable card would also activate the card.
+        swallowClickAt = Date.now();
         if (s.placeholderIndex !== s.fromIndex) {
           emit("reorder", s.fromIndex, s.placeholderIndex);
         }
       }
+      press = null;
       anim.run();
       drag.value = null;
       bump();
@@ -199,6 +268,7 @@ export default defineComponent({
     }
 
     onBeforeUnmount(() => {
+      rootEl.value?.removeEventListener("click", onRootClickCapture, true);
       window.removeEventListener("pointermove", onPointerMove);
       detachGhost();
     });
@@ -217,6 +287,7 @@ export default defineComponent({
         props.items.length > 0 && props.items.every((item) => isLocked(item.key));
       return (
         <div
+          ref={rootEl}
           class="hk-draggable-list"
           role="list"
           aria-label={props.label || undefined}

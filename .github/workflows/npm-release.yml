@@ -36,6 +36,14 @@ jobs:
           cd packages/vue
           pnpm install --frozen-lockfile
 
+      # The Vue package ships as source; its Vitest suite (happy-dom) is the
+      # only automated behavioral gate for it, so a release must never go out
+      # with a red suite. Type check runs via prepublishOnly on `npm publish`.
+      - name: Run Vitest suite
+        run: |
+          cd packages/vue
+          pnpm test
+
       - name: Resolve version
         id: ver
         shell: bash

@@ -51,7 +51,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Unit tests (vitest)
         working-directory: packages/vue
-        run: pnpm exec vitest run
+        run: pnpm test
       - name: Type check (vue-tsc)
         working-directory: packages/vue
-        run: pnpm exec vue-tsc --noEmit
+        run: pnpm lint

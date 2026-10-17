@@ -3,7 +3,7 @@
   "version": "0.55.178",
   "private": false,
   "type": "module",
-  "description": "Hikari Vue 3 component library \u2014 production-grade UI components based on shittim-chest design system",
+  "description": "Hikari Vue 3 component library — production-grade UI components based on shittim-chest design system",
   "license": "SySL-1.0",
   "repository": {
     "type": "git",
@@ -58,7 +58,7 @@
     "vue": "^*"
   },
   "dependencies": {
-    "@celestia-island/tairitsu-transport": "^0.1",
+    "@celestia-island/tairitsu-transport": "^0.2.0",
     "@xterm/addon-fit": "^0.*",
     "@xterm/addon-image": "^0.10.0-beta.301",
     "@xterm/xterm": "^6.1.0-beta.304",
@@ -69,18 +69,18 @@
     "marked": "^*"
   },
   "devDependencies": {
+    "@types/node": "^*",
     "@types/three": "^*",
-    "three": "^0.185",
     "@vitejs/plugin-vue": "^*",
     "@vitejs/plugin-vue-jsx": "^*",
     "@vue/server-renderer": "^*",
     "happy-dom": "^*",
     "sass": "^*",
+    "three": "^0.185",
     "typescript": "^*",
     "vite": "^*",
-    "vue-tsc": "^*",
     "vitest": "^*",
-    "@types/node": "^*"
+    "vue-tsc": "^*"
   },
   "sideEffects": [
     "**/*.scss",

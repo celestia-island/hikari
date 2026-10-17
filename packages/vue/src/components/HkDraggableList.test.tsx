@@ -223,6 +223,54 @@ describe("HkDraggableList list semantics", () => {
   });
 });
 
+describe("HkDraggableList content-lane shape", () => {
+  /** The lane hands the slot content through verbatim, and the sheet
+   *  stretches a lane's ONLY element child across the row (the
+   *  `:only-child` fill — sheet twin:
+   *  HkDraggableList.styles.test.ts). That selector's semantics hinge on
+   *  this shape: a single-root slot must land as exactly one element
+   *  child, and a fragment slot as several siblings (which the fill
+   *  deliberately does not match). */
+
+  function mountWithSlot(slot: () => unknown): HTMLElement {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(
+          HDraggableList,
+          { items: [{ key: "a" }] },
+          { item: () => slot() },
+        ),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    return container.querySelector(".hk-draggable-list") as HTMLElement;
+  }
+
+  function laneOf(root: HTMLElement): HTMLElement {
+    return root.querySelector(".hk-draggable-list-content") as HTMLElement;
+  }
+
+  it("lands a single-root slot as the lane's only element child", () => {
+    const root = mountWithSlot(() => h("div", { class: "row-card" }, "body"));
+    const children = Array.from(laneOf(root).children);
+    expect(children).toHaveLength(1);
+    expect(children[0]!.classList.contains("row-card")).toBe(true);
+  });
+
+  it("lands a fragment slot as several lane siblings the fill ignores", () => {
+    const root = mountWithSlot(() => [
+      h("span", { class: "row-lead" }, "lead"),
+      h("span", { class: "row-tail" }, "tail"),
+    ]);
+    const children = Array.from(laneOf(root).children);
+    expect(children).toHaveLength(2);
+    expect(children[0]!.classList.contains("row-lead")).toBe(true);
+    expect(children[1]!.classList.contains("row-tail")).toBe(true);
+  });
+});
+
 describe("HkDraggableList press ergonomics (clickable rows)", () => {
   /** Two guards make a clickable row safe inside the list (ported from
    *  wowsp's SortableList twin, which ran them in production):

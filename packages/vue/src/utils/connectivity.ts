@@ -14,7 +14,10 @@ export async function probeOrigin(
   url: string,
   opts?: { fetchFn?: typeof fetch },
 ): Promise<OriginProbe> {
-  const fetchFn = opts?.fetchFn ?? fetch;
+  // Bare `?? fetch` detaches Window's fetch receiver — the default path
+  // throws "Illegal invocation" in a browser (2026-10-17 chest live
+  // report family). bind(globalThis) re-attaches it, re-resolved per call.
+  const fetchFn = opts?.fetchFn ?? fetch.bind(globalThis);
   try {
     // A successful credentialed fetch means reachable + CORS-whitelisted,
     // regardless of the HTTP status code (4xx/5xx still prove the origin).
@@ -41,7 +44,8 @@ export async function probeOriginWithBody(
   url: string,
   opts?: { fetchFn?: typeof fetch },
 ): Promise<{ ok: boolean; body?: string }> {
-  const fetchFn = opts?.fetchFn ?? fetch;
+  // Same receiver rule as probeOrigin: never capture Window's fetch bare.
+  const fetchFn = opts?.fetchFn ?? fetch.bind(globalThis);
   try {
     const resp = await fetchFn(url, { credentials: "include", mode: "cors" });
     return { ok: true, body: await resp.text().catch(() => undefined) };

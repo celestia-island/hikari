@@ -89,7 +89,11 @@ export default defineComponent({
       emit("open", openerEl() ?? (e.currentTarget as HTMLElement));
     }
 
-    function onSelect(item: HkMenuItem) {
+    function onSelect(key: string, item: HkMenuItem) {
+      // HkMenu's select emit is (key, item) — the key FIRST, matching the
+      // HkMenu contract; the consumer-facing select carries the item.
+      // The popup is already closed by HkMenu's leaf path (closeAll runs
+      // before the emit), so `open` only needs to follow on paper.
       open.value = false;
       emit("select", item);
     }

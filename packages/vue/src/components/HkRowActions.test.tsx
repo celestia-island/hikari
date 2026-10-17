@@ -69,6 +69,32 @@ describe("HkRowActions", () => {
     expect(btn.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("menu mode: a leaf row click emits select with the item and closes", async () => {
+    const items: HkMenuItem[] = [
+      { key: "edit", label: "Edit" },
+      { key: "delete", label: "Delete", danger: true },
+    ];
+    const selected: HkMenuItem[] = [];
+    const c = mount(h(HkRowActions, { items, onSelect: (item: HkMenuItem) => selected.push(item) }));
+    const btn = c.querySelector("button.hk-icon-button") as HTMLButtonElement;
+    btn.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    // The menu rows render through HkSelectPanel's teleported popout.
+    const row = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>("button.hk-menu-row"),
+    ).find((b) => b.textContent?.trim() === "Edit");
+    expect(row).toBeTruthy();
+    row!.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(selected).toHaveLength(1);
+    expect(selected[0]!.key).toBe("edit");
+    expect(selected[0]!.label).toBe("Edit");
+    // The leaf path closed the popup inside HkMenu; aria follows.
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("stops the click from reaching clickable ancestors", () => {
     const outer = vi.fn();
     const c = mount(

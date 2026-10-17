@@ -77,6 +77,15 @@ export const HkConnectionStatus = defineComponent({
     standalone: { type: Boolean, default: true },
     /** Forwarded to HkStatusBar — collapse to the traffic-light dot. */
     compact: { type: Boolean, default: false },
+    /** Resting override (2026-10-17 user direction): pins the light and
+     *  the status line to the neutral-gray idle state — "the shell is
+     *  alive, no session yet" — regardless of what the injected probe
+     *  reports. Sessionless auth surfaces set it; logged-in surfaces
+     *  never do. Everything else (versions, info rows, actions) keeps
+     *  the ONE wiring — idle hosts no longer hand-roll an HkStatusBar
+     *  copy (that fork is what left the auth popover stuck on its
+     *  fetching placeholder). */
+    idle: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
     // SHELL-ONLY: the network side (WHO polls /api/health and HOW)
@@ -119,7 +128,10 @@ export const HkConnectionStatus = defineComponent({
       };
     });
 
-    const connectionStatus = computed<"connected" | "reconnecting" | "disconnected">(() => {
+    const connectionStatus = computed<"connected" | "reconnecting" | "disconnected" | "idle">(() => {
+      // The idle override wins over the probe: the resting gray light is
+      // a definite statement about the SHELL, not a verdict on the link.
+      if (props.idle) return "idle";
       const s = probe.value.state;
       if (s === "connected") return "connected";
       if (s === "connecting" || s === "reconnecting") return "reconnecting";

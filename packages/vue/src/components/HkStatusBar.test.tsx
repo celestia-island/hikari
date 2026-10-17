@@ -173,7 +173,9 @@ describe("HkStatusBar", () => {
     const row = panel!.querySelector('[data-extra-detail="gateway"]');
     expect(row).not.toBeNull();
     expect((row as HTMLElement).style.maxWidth).toBe("400px");
-    const value = panel!.querySelector("span[title]") as HTMLElement;
+    // Scoped to the extra-detail row: the version cells (always in the
+    // popover since the 2026-10-17 wave) are title-bearing spans too.
+    const value = row!.querySelector("span[title]") as HTMLElement;
     expect(value.textContent).toBe("gateway.celestia.world");
     expect(value.title).toBe("gateway.celestia.world");
     expect(value.style.textOverflow).toBe("ellipsis");
@@ -559,7 +561,12 @@ describe("HkStatusBar", () => {
     expect(panel!.querySelector("[data-status-actions]")).toBeNull();
   });
 
-  it("keeps host actions available while connection info is still fetching", async () => {
+  it("without info the popover states a definite status with versions, never a fetching placeholder", async () => {
+    // 2026-10-17 user report: the idle auth pill's popover printed
+    // "Fetching connection info..." forever while its steady gray light
+    // meant a settled state. The info-null branch is RETIRED: the title
+    // row states the definite state and the known versions render up
+    // front; the recovery action stays on that title row.
     const onRefresh = vi.fn();
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -581,16 +588,71 @@ describe("HkStatusBar", () => {
       .dispatchEvent(new MouseEvent("mouseenter"));
     await nextTick();
     const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
-    // The cluster must live OUTSIDE the info/fetching ternary: an outage
-    // that drops connectionInfo to null is exactly when the recovery
-    // action is most needed. It rides the fetching line's right edge.
     const cluster = panel.querySelector<HTMLElement>("[data-status-actions]");
     expect(cluster, "actions cluster renders without info").toBeTruthy();
-    // Same line as the fetching text: label left, actions right.
-    expect(cluster!.closest("div")!.textContent).toContain("Fetching connection info");
+    // The title row is the DEFINITE state, not a fetching placeholder.
+    expect(cluster!.closest("div")!.textContent).toContain("Disconnected");
+    expect(panel.textContent).not.toContain("Fetching connection info");
+    // Versions are known facts — up front, info or not.
+    expect(panel.querySelectorAll(".s-status-bar-popover-value").length).toBeGreaterThanOrEqual(1);
+    expect(panel.textContent).toContain("1.2.3");
+    // Without probe facts the protocol/network rows stay honest (absent).
+    expect(panel.textContent).not.toContain("Protocol");
     const button = cluster!.querySelector<HTMLButtonElement>("button")!;
     button.click();
     expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the version rows in the popover regardless of compact", async () => {
+    // 2026-10-17 user direction: the popover is the details card — the
+    // versions (panel + engine, merged once) show there up front even in
+    // full (non-compact) mode, no longer gated behind `compact`.
+    const container = mountBar({
+      version: "1.2.3 master:49fe7ae",
+      panelBuildHash: "master:49fe7ae",
+      engineVersion: "9.8.7",
+      engineBuildHash: "engine:abcdef0",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+    });
+    await nextTick();
+    tagOf(container).dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    const cells = [...panel.querySelectorAll<HTMLElement>(".s-status-bar-popover-value .s-status-bar-version")]
+      .map((el) => el.querySelector(".s-status-bar-version__static")!.textContent ?? "");
+    // Set-merged once: the build hash the version line already names is
+    // not printed twice in the popover either.
+    expect(cells).toContain("1.2.3 master:49fe7ae");
+    expect(cells).toContain("9.8.7 engine:abcdef0");
+    expect(cells.filter((v) => v.includes("49fe7ae")).length).toBe(1);
+  });
+
+  it("idle renders the resting gray light, the Ready title row, and no reconnecting pulse", async () => {
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "idle",
+      connectionInfo: null,
+    });
+    await nextTick();
+    const tag = tagOf(container);
+    // Steady state: idle must NOT carry the in-flight warning pulse.
+    expect(tag.className).not.toContain("s-status-bar-tag-reconnecting");
+    // happy-dom drops inline styles whose value carries var() fallbacks,
+    // so the gray pin is a source-contract assertion: the idle entry in
+    // the dot color map must name the tertiary (resting gray) token —
+    // the same contract the 2026-10-17 user direction fixed (#815).
+    const source = readFileSync(resolve(__dirname, "./HkStatusBar.tsx"), "utf8");
+    expect(source).toMatch(/idle:\s*"rgb\(var\(--color-text-tertiary/);
+    // The popover states the definite Ready state (the hikari i18n
+    // fallback) with the version row, and offers no protocol/network
+    // facts the idle shell does not have.
+    tag.dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel.textContent).toContain("Ready");
+    expect(panel.textContent).toContain("1.2.3");
+    expect(panel.textContent).not.toContain("Protocol");
   });
 
   it("no actions row when the slot renders nothing (wrapper forwards an empty slot)", async () => {

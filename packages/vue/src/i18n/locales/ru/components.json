@@ -155,7 +155,6 @@
     "hikari::statusBar.connecting": "Подключение...",
     "hikari::statusBar.disconnected": "Отключено",
     "hikari::statusBar.engine": "Движок",
-    "hikari::statusBar.fetching": "Получение сведений о подключении...",
     "hikari::statusBar.latency": "Задержка",
     "hikari::statusBar.local": "Локально",
     "hikari::statusBar.network": "Сеть",

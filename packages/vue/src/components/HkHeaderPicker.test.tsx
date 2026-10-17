@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, ref } from "vue";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import HkHeaderPicker, { type HkPickerOption } from "./HkHeaderPicker";
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 /**
  * HkHeaderPicker — the header-centre selector (the button group's
@@ -122,13 +127,30 @@ describe("HkHeaderPicker", () => {
     expect(document.querySelectorAll('.hk-draggable-list-handle[data-hidden]').length).toBe(1);
   });
 
-  it("declares the placement prop with the top-down default (mirror-of-bottom contract)", () => {
+  it("declares the placement prop with the centered-down default (mirror-of-footer contract)", () => {
     // The panel is teleported to body, so the through-wiring is pinned at
     // the contract level: the prop exists, defaults to the header's
-    // downward growth, and the render passes it straight through
+    // downward growth CENTERED on the trigger (2026-10-18 user
+    // direction — the footer platform pill's symmetric pop, mirrored
+    // up top), and the render passes it straight through
     // (`placement={props.placement}` in HkHeaderPicker.tsx).
     expect(HkHeaderPicker.props!.placement).toBeDefined();
-    expect((HkHeaderPicker.props!.placement as { default: string }).default).toBe("bottom-start");
+    expect((HkHeaderPicker.props!.placement as { default: string }).default).toBe("bottom-center");
+  });
+
+  it("keeps the popout content-sized and the trigger chrome ghost", () => {
+    // 2026-10-18 user direction: the header-centre dropdown must read
+    // like the bottom-centre platform pill — no field border, hover
+    // tint only, and a compact centered menu (not a stretched field
+    // panel). Pinned at source level like the popout-width contract.
+    const tsx = readFileSync(join(here, "HkHeaderPicker.tsx"), "utf-8");
+    expect(tsx).toContain("matchAnchorWidth={false}");
+    const scss = readFileSync(join(here, "HkHeaderPicker.scss"), "utf-8");
+    // The ghost override must be double-classed to beat the base
+    // `.hk-select-trigger` chrome regardless of import order.
+    expect(scss).toContain(".hk-select-trigger.hk-header-picker-trigger");
+    expect(scss).toContain("border-color: transparent;");
+    expect(scss).toContain("background: var(--c-primary-light);");
   });
 
   it("disables the trigger when disabled", () => {

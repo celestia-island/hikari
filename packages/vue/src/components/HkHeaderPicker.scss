@@ -9,7 +9,10 @@
   min-width: 0;
 }
 
-.hk-header-picker-trigger {
+/* Double-class on purpose: the ghost chrome must beat the base
+ * `.hk-select-trigger` field chrome regardless of stylesheet import
+ * order (both would otherwise sit at one class of specificity). */
+.hk-select-trigger.hk-header-picker-trigger {
   width: auto;
   /* Header-band compact: the button group beside it runs ~28px; the
    * trigger stays a touch taller for its label but must not drive the
@@ -20,6 +23,28 @@
   font-size: var(--text-sm);
   font-weight: 600;
   max-width: 16rem;
+  /* Ghost chrome (2026-10-18 user direction: the top-centre dropdown
+   * must read like the bottom-centre platform pill — no field border,
+   * hover tint only). Mirrors HkButton's ghost variant. */
+  background: transparent;
+  border-color: transparent;
+}
+
+.hk-select-trigger.hk-header-picker-trigger:hover:not([data-disabled]) {
+  background: var(--c-primary-light);
+  border-color: transparent;
+}
+
+.hk-select-trigger.hk-header-picker-trigger:active:not([data-disabled]) {
+  filter: brightness(0.95);
+}
+
+/* Keyboard / open ring survives — the ring rides the existing
+ * --shadow-focus; only the field border stays gone. */
+.hk-select-trigger.hk-header-picker-trigger:focus-visible,
+.hk-select-trigger.hk-header-picker-trigger[data-state="open"] {
+  background: var(--c-primary-light);
+  border-color: rgb(var(--color-focused-border));
 }
 
 .hk-header-picker-trigger .hk-select-value {

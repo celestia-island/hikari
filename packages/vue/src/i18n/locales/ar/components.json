@@ -169,6 +169,7 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " مللي ثانية",
     "hikari::table.noData": "لا توجد بيانات",
+    "hikari::table.rowActions": "إجراءات الصف",
     "hikari::table.dragHandle": "اسحب لإعادة الترتيب",
     "hikari::table.dragHandleRow": "إعادة ترتيب {label}",
     "hikari::tablePage.emptyTitle": "لا توجد بيانات",

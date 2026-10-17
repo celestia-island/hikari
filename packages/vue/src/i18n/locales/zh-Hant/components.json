@@ -169,6 +169,7 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " 毫秒",
     "hikari::table.noData": "暫無數據",
+    "hikari::table.rowActions": "更多操作",
     "hikari::table.dragHandle": "拖曳以調整順序",
     "hikari::table.dragHandleRow": "調整「{label}」的順序",
     "hikari::tablePage.emptyTitle": "暫無資料",

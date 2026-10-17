@@ -10,6 +10,8 @@ export interface HTableColumn {
   width?: string;
   sortable?: boolean;
   align?: "left" | "center" | "right";
+  /** Opt one column out of the click-to-copy layer (see HkTable). */
+  copyable?: boolean;
 }
 
 /**
@@ -53,9 +55,14 @@ export const HkAdminTablePage = defineComponent({
     /** Left grip column with drag-to-reorder (forwarded to HTable; the
      *  `reorder` event is forwarded verbatim — indices into `rows`). */
     draggable: { type: Boolean, default: false },
+    /** Trailing row-actions column with the standard ⋯ trigger
+     *  (forwarded to HTable; see HkTable's `manageable`). The `manage`
+     *  event is forwarded verbatim — (row, opener button). */
+    manageable: { type: Boolean, default: false },
   },
   emits: {
     reorder: (_fromIndex: number, _toIndex: number) => true,
+    manage: (_row: Record<string, unknown>, _opener: HTMLElement) => true,
   },
   setup(props, { emit, slots }) {
 
@@ -107,7 +114,11 @@ export const HkAdminTablePage = defineComponent({
                 rows={props.rows}
                 rowKey={props.rowKey}
                 draggable={props.draggable}
+                manageable={props.manageable}
                 onReorder={(from: number, to: number) => emit("reorder", from, to)}
+                onManage={(row: Record<string, unknown>, opener: HTMLElement) =>
+                  emit("manage", row, opener)
+                }
               >
                 {slots}
               </HTable>

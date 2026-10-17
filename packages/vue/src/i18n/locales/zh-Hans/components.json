@@ -155,7 +155,6 @@
     "hikari::statusBar.connecting": "连接中...",
     "hikari::statusBar.disconnected": "断开",
     "hikari::statusBar.engine": "引擎",
-    "hikari::statusBar.fetching": "获取连接信息中...",
     "hikari::statusBar.latency": "延迟",
     "hikari::statusBar.local": "本地",
     "hikari::statusBar.network": "网络区域",

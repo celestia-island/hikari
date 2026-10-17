@@ -155,7 +155,6 @@
     "hikari::statusBar.connecting": "Verbinde...",
     "hikari::statusBar.disconnected": "Getrennt",
     "hikari::statusBar.engine": "Engine",
-    "hikari::statusBar.fetching": "Verbindungsinformationen werden geladen...",
     "hikari::statusBar.latency": "Latenz",
     "hikari::statusBar.local": "Lokal",
     "hikari::statusBar.network": "Netzwerk",

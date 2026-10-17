@@ -14,8 +14,13 @@ import { HkPlaceholderMarquee } from "./HkPlaceholderMarquee";
  * (Upstreamed from shittim-chest's plana-legacy layer.)
  *
  * A traffic-light dot plus a two-column-grid version block (panel row,
- * engine row). Hovering/tapping the pill opens an HPopover with the
- * quality icon, latency, retry countdown and protocol/network rows.
+ * engine row). Hovering/tapping the pill opens an HPopover whose title
+ * row is ALWAYS a definite state (Ready/Connected/Connecting/Disconnected)
+ * followed by the version rows — both render with or without probe facts
+ * (2026-10-17 user direction: the popover must never sit on a perpetual
+ * "fetching" placeholder, and the versions show up front). The quality
+ * icon, latency, retry countdown and protocol/network rows join once the
+ * probe supplies them.
  * With `compact` the pill collapses to the BARE DOT only (mobile
  * logged-in footers) — no inline status text next to the light; that
  * label is a standing user directive (asked to be removed repeatedly,
@@ -303,7 +308,10 @@ export const HkStatusBar = defineComponent({
     let touchEchoGuardUntil = 0;
     function onTagClick() {
       if (Date.now() < touchEchoGuardUntil) return;
-      if (props.connectionStatus !== "connected") {
+      // Idle is a SETTLED resting state ("shell alive, no session"), not
+      // a fault — clicking the gray light must not fire a silent retry
+      // (R3 catch: it looked like a dead control doing invisible work).
+      if (props.connectionStatus !== "connected" && props.connectionStatus !== "idle") {
         props.onRetry?.();
       }
     }
@@ -485,140 +493,139 @@ export const HkStatusBar = defineComponent({
                 // 300px default floor (2026-10-11 user direction: the
                 // version/protocol rows read cramped at the old 220px),
                 // clamped to the popover's own viewport budget so a
-                // 320px-class phone never spills past the glass.
+                // 320px-class phone never spills past the viewport (the
+                // glass chrome eats a few px of the card's inner width
+                // at the very narrow end — cosmetic, bounded, R3-note).
                 minWidth: "min(300px, calc(100vw - 2 * var(--viewport-gutter, 16px)))",
                 padding: "10px 14px",
                 fontSize: "0.75rem", lineHeight: 1.6,
                 color: "rgb(var(--color-text))",
               }}
             >
-              {info ? (
-                <>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", fontWeight: 600, fontSize: "0.8125rem" }}>
-                    {qualityIcon(info.quality || (mode === "connected" ? "good" : "unknown"), tier, info.isLocalhost, 14)}
-                    <span style={{ color: dotColorMap[mode] ?? dotColorMap.disconnected }}>
-                      {statusText}
-                    </span>
-                    {latency !== null && (
-                      <span style={{ marginLeft: "auto", color: latencyColor(latency), fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, fontWeight: 600, fontSize: "0.6875rem" }}>
-                        {latency} ms
-                      </span>
-                    )}
-                    {hasActionsRow && (
-                      <span
-                        data-status-actions
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          // No latency chip to push against: the cluster
-                          // still lands on the row's right edge.
-                          marginLeft: latency !== null ? undefined : "auto",
-                        }}
-                      >
-                        {actionVnodes}
-                      </span>
-                    )}
-                  </div>
-                  {connecting && attempt > 0 && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
-                      <span>
-                        {t("hikari::statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
-                          .replace("{retryCount}", String(attempt))
-                          .replace("{maxRetries}", String(info.maxRetries > 0 ? info.maxRetries : 3))}
-                      </span>
-                      {countdown > 0 && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, marginLeft: "8px" }}>
-                          <HkCountdownDigit value={countdown} />
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {mode === "disconnected" && !hasActionsRow && (
-                    // Fallback for hosts without a slot action — and a REAL
-                    // control this time: the original hint was retired
-                    // because its clicks went nowhere (the popover body
-                    // teleports to <body>), so the text now carries the
-                    // retry itself, echo guard included.
-                    <div
-                      role="button"
-                      tabindex={0}
-                      onClick={onRetryButtonClick}
-                      onKeydown={(e: KeyboardEvent) => {
-                        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRetryButtonClick(); }
-                      }}
-                      style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7, cursor: "pointer" }}
-                    >
-                      {t("hikari::statusBar.clickReconnect", "Click to retry")}
-                    </div>
-                  )}
-                  {props.compact && (
-                    <>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Monitor size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                        <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.panel", "Panel")}</span>
-                        <span
-                          class="s-status-bar-popover-value"
-                          style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}
-                        >
-                          <HkVersionValue text={pv} />
-                        </span>
-                      </div>
-                      {ev && (
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <Cog size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                          <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.engine", "Engine")}</span>
-                          <span
-                            class="s-status-bar-popover-value"
-                            style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}
-                          >
-                            <HkVersionValue text={hkMergeVersionDisplay(ev, props.engineBuildHash)} />
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {tier !== "none" && (
-                    <>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Plug size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.protocol", "Protocol")}</span>
-                    {connecting ? (
-                      <span style={{ color: "rgb(var(--color-warning))" }}>
-                        {t("hikari::statusBar.probing", "Probing...")}
-                      </span>
-                    ) : (
-                      <span>{t(tierLabelKey, tier)}</span>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.network", "Network")}</span>
-                    <span>{regionDisplayName(info.region, locale, t)}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("hikari::statusBar.local", "Local") : ""}</span>
-                  </div>
-                    </>
-                  )}
-                  {(props.extraDetails ?? []).map((row) => (
-                    <div key={row.key} data-extra-detail={row.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", maxWidth: "400px" }}>
-                      <span style={{ opacity: 0.5, flexShrink: 0, display: "inline-flex" }}>{row.icon}</span>
-                      <span style={{ opacity: 0.5, flexShrink: 0, minWidth: "72px", marginRight: "auto" }}>{row.label}</span>
-                      <span title={row.value} style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.value}</span>
-                    </div>
-                  ))}
-                </>
-              ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                  <span style={{ opacity: 0.5 }}>{t("hikari::statusBar.fetching", "Fetching connection info...")}</span>
-                  {hasActionsRow && (
-                    // An outage that drops connectionInfo to null is exactly
-                    // when the recovery action is most needed — the cluster
-                    // rides the fetching line's right edge.
-                    <span data-status-actions style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-                      {actionVnodes}
+              {/* The status heading is the popover's title row and it is
+                  ALWAYS a definite state (2026-10-17 user report: the idle
+                  auth pill's popover printed "Fetching connection info..."
+                  forever while its steady gray light meant a settled state —
+                  a genuinely in-flight light pulses the warning tint, it
+                  never rests gray). The old info-null fallback is RETIRED;
+                  the info-dependent rows below simply don't render until
+                  the probe has facts to show. */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", fontWeight: 600, fontSize: "0.8125rem" }}>
+                {qualityIcon(info?.quality || (mode === "connected" ? "good" : "unknown"), tier, info?.isLocalhost ?? false, 14)}
+                <span style={{ color: dotColorMap[mode] ?? dotColorMap.disconnected }}>
+                  {statusText}
+                </span>
+                {latency !== null && (
+                  <span style={{ marginLeft: "auto", color: latencyColor(latency), fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, fontWeight: 600, fontSize: "0.6875rem" }}>
+                    {latency} ms
+                  </span>
+                )}
+                {hasActionsRow && (
+                  <span
+                    data-status-actions
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      // No latency chip to push against: the cluster
+                      // still lands on the row's right edge.
+                      marginLeft: latency !== null ? undefined : "auto",
+                    }}
+                  >
+                    {actionVnodes}
+                  </span>
+                )}
+              </div>
+              {connecting && attempt > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
+                  <span>
+                    {t("hikari::statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
+                      .replace("{retryCount}", String(attempt))
+                      .replace("{maxRetries}", String(info?.maxRetries && info.maxRetries > 0 ? info.maxRetries : 3))}
+                  </span>
+                  {countdown > 0 && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, marginLeft: "8px" }}>
+                      <HkCountdownDigit value={countdown} />
                     </span>
                   )}
                 </div>
               )}
+              {mode === "disconnected" && !hasActionsRow && (
+                // Fallback for hosts without a slot action — and a REAL
+                // control this time: the original hint was retired
+                // because its clicks went nowhere (the popover body
+                // teleports to <body>), so the text now carries the
+                // retry itself, echo guard included.
+                <div
+                  role="button"
+                  tabindex={0}
+                  onClick={onRetryButtonClick}
+                  onKeydown={(e: KeyboardEvent) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRetryButtonClick(); }
+                  }}
+                  style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7, cursor: "pointer" }}
+                >
+                  {t("hikari::statusBar.clickReconnect", "Click to retry")}
+                </div>
+              )}
+              {/* Version rows: ALWAYS in the popover (2026-10-17 user
+                  direction — versions are known facts, show them up front
+                  independent of the probe state; the old gate hid them
+                  behind `compact` inside the info branch, which left the
+                  idle auth popover versionless). The inline tag keeps its
+                  own copy; this card is the details surface. */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Monitor size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.panel", "Panel")}</span>
+                <span
+                  class="s-status-bar-popover-value"
+                  style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}
+                >
+                  <HkVersionValue text={pv} />
+                </span>
+              </div>
+              {ev && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Cog size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                  <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.engine", "Engine")}</span>
+                  <span
+                    class="s-status-bar-popover-value"
+                    style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}
+                  >
+                    <HkVersionValue text={hkMergeVersionDisplay(ev, props.engineBuildHash)} />
+                  </span>
+                </div>
+              )}
+              {info && tier !== "none" && tier !== "unknown" && (
+                // "unknown" is the inert shell's sentinel tier — no probe
+                // is wired, so there are no transport facts to show and a
+                // bare "Protocol unknown" row would leak (R3 catch).
+                <>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Plug size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.protocol", "Protocol")}</span>
+                {connecting ? (
+                  <span style={{ color: "rgb(var(--color-warning))" }}>
+                    {t("hikari::statusBar.probing", "Probing...")}
+                  </span>
+                ) : (
+                  <span>{t(tierLabelKey, tier)}</span>
+                )}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.network", "Network")}</span>
+                <span>{regionDisplayName(info.region, locale, t)}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("hikari::statusBar.local", "Local") : ""}</span>
+              </div>
+                </>
+              )}
+              {info && (props.extraDetails ?? []).map((row) => (
+                <div key={row.key} data-extra-detail={row.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", maxWidth: "400px" }}>
+                  <span style={{ opacity: 0.5, flexShrink: 0, display: "inline-flex" }}>{row.icon}</span>
+                  <span style={{ opacity: 0.5, flexShrink: 0, minWidth: "72px", marginRight: "auto" }}>{row.label}</span>
+                  <span title={row.value} style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.value}</span>
+                </div>
+              ))}
             </div>
           </HPopover>
         </>

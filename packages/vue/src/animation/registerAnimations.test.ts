@@ -61,6 +61,7 @@ describe("registerAnimations", () => {
     expect(byName.get("hk-status-pill-pulse")?.infinite).toBe(true);
     expect(byName.get("hk-pwd-breathe")?.infinite).toBe(true);
     expect(byName.get("s-nav-item-badge-pulse")?.infinite).toBe(true);
+    expect(byName.get("s-status-bar-reconnecting-breathe")?.infinite).toBe(true);
     expect(byName.get("s-auth-card-in")?.infinite).toBe(false);
     expect(byName.get("hk-rolling-number-up")?.infinite).toBe(false);
     expect(byName.get("hk-modal-breadcrumb-in")?.infinite).toBe(false);

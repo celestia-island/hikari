@@ -155,7 +155,6 @@
     "hikari::statusBar.connecting": "接続中...",
     "hikari::statusBar.disconnected": "切断",
     "hikari::statusBar.engine": "エンジン",
-    "hikari::statusBar.fetching": "接続情報を取得中...",
     "hikari::statusBar.latency": "レイテンシ",
     "hikari::statusBar.local": "ローカル",
     "hikari::statusBar.network": "ネットワーク地域",

@@ -70,6 +70,11 @@ registerCssAnimation("s-auth-card-in");
 // the traffic light's green background blink when a dropped connection
 // comes back.
 registerCssAnimation("s-status-bar-recover-flash");
+// styles/admin-tokens.scss — status-bar in-flight breathe (loops
+// forever): the connecting/reconnecting light's warning tint pulse —
+// a fixed background means a settled state (the gray idle), an
+// in-flight one visibly breathes (2026-10-17 user direction).
+registerCssAnimation("s-status-bar-reconnecting-breathe", { infinite: true });
 // components/HkStatusPill.scss — live-dot pulse (loops forever).
 registerCssAnimation("hk-status-pill-pulse", { infinite: true });
 // components/HkRollingNumber.scss — digit roll-up (plays once, forwards).

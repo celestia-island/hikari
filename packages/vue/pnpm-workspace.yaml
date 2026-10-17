@@ -11,6 +11,10 @@ minimumReleaseAgeExclude:
   - '@vue/language-core@3.3.9'
   - vue-tsc@3.3.9
   - '@celestia-island/tairitsu-transport@0.1.0'
+  # 0.2.0 same-day unification: the SSE open edge — one transport
+  # instance tree-wide (chest already rides ^0.2; hikari joining kills
+  # the 0.1/0.2 dual install).
+  - '@celestia-island/tairitsu-transport@0.2.0'
 overrides:
   typescript: ~6.0
   vue-tsc: ~3.3.9

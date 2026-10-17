@@ -334,6 +334,19 @@ export default defineComponent({
                 <div class="hk-draggable-list-content">
                   {slots.item?.({ item, index, locked })}
                 </div>
+                {/* The standard row-actions lane: when the host provides
+                 * an `actions` slot, every row renders this right-pinned
+                 * lane (the content lane keeps flex: 1, so the buttons
+                 * land on the row's far edge structurally — hosts stop
+                 * hand-rolling ml-auto/flex-1 spacers). The lane is
+                 * host-decided content: locked rows may still carry
+                 * actions (chest's pricing ladder), so locked-ness is
+                 * only reported through the slot scope. */}
+                {slots.actions ? (
+                  <div class="hk-draggable-list-actions">
+                    {slots.actions({ item, index, locked })}
+                  </div>
+                ) : null}
               </div>
             );
           })}

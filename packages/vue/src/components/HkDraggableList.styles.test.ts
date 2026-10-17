@@ -81,3 +81,30 @@ describe("HkDraggableList content-lane fill sheet", () => {
     expect(fillRules[0]).toContain(":only-child");
   });
 });
+
+describe("HkDraggableList actions-lane sheet", () => {
+  const css = listCss();
+
+  it("keeps the actions lane fixed at its natural width", () => {
+    const body = ruleBody(css, ".hk-draggable-list-actions");
+    expect(body, "the actions-lane rule must exist").not.toBeNull();
+    expect(body).toContain("display: flex");
+    expect(body).toContain("align-items: center");
+    expect(body).toContain("flex-shrink: 0");
+    // Multiple host buttons in one lane need the lane's own gap so they
+    // never fuse into one cluster against the row edge.
+    expect(body).toContain("gap:");
+  });
+
+  // The right-edge pinning is STRUCTURAL, not a margin patch: the item
+  // row is a flex row and the content lane keeps flex: 1, so the lane
+  // needs nothing beyond shrink-resistance. A margin-left: auto here
+  // would paper over a future content-lane regression instead of
+  // letting the fill sheet fail loudly — pin by ownership, not by patch.
+  it("pins by the content lane's flex: 1, not a margin patch", () => {
+    const body = ruleBody(css, ".hk-draggable-list-actions");
+    expect(body).not.toContain("margin-left: auto");
+    const content = ruleBody(css, ".hk-draggable-list-content");
+    expect(content).toContain("flex: 1");
+  });
+});

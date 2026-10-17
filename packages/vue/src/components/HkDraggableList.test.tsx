@@ -390,3 +390,138 @@ describe("HkDraggableList press ergonomics (clickable rows)", () => {
     }
   });
 });
+
+describe("HkDraggableList actions lane", () => {
+  /** The standard row-actions contract: hosts inject trailing buttons
+   *  through the scoped `actions` slot instead of hand-rolling
+   *  ml-auto/flex-1 spacers inside the row content (chest's pricing
+   *  ladder shipped exactly such a hand-rolled group and its buttons
+   *  hugged the row's text mid-card). The lane renders as a SIBLING of
+   *  the content lane — never inside it — so the content sheet's
+   *  `> :only-child` fill keeps matching single-root rows even when
+   *  actions ride along (sheet twin: HkDraggableList.styles.test.ts). */
+
+  function mountWithActions(items: { key: string }[], opts?: { lockedKeys?: string[] }): HTMLElement {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(
+          HDraggableList,
+          { items, lockedKeys: opts?.lockedKeys ?? [] },
+          {
+            item: ({ item }: { item: { key: string } }) =>
+              h("span", { class: "row-body" }, item.key),
+            actions: ({
+              item,
+              index,
+              locked,
+            }: {
+              item: { key: string };
+              index: number;
+              locked: boolean;
+            }) =>
+              h("span", {
+                class: "row-actions",
+                "data-key": item.key,
+                "data-index": index,
+                "data-locked": locked,
+              }),
+          },
+        ),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    return container.querySelector(".hk-draggable-list") as HTMLElement;
+  }
+
+  it("renders a right-lane sibling per row only when the slot is provided", () => {
+    const root = mountWithActions([{ key: "a" }, { key: "b" }]);
+
+    const lanes = Array.from(root.querySelectorAll(".hk-draggable-list-actions"));
+    expect(lanes).toHaveLength(2);
+    for (const lane of lanes) {
+      // Sibling of the content lane, not a child of it — the :only-child
+      // fill contract above must keep matching the row body.
+      expect(lane.closest(".hk-draggable-list-content")).toBeNull();
+      expect(lane.previousElementSibling?.classList.contains("hk-draggable-list-content")).toBe(
+        true,
+      );
+    }
+  });
+
+  it("keeps the content lane's :only-child fill intact alongside the lane", () => {
+    const root = mountWithActions([{ key: "a" }]);
+
+    const content = root.querySelector(".hk-draggable-list-content") as HTMLElement;
+    const elementChildren = Array.from(content.children);
+    expect(elementChildren).toHaveLength(1);
+    expect(elementChildren[0]!.classList.contains("row-body")).toBe(true);
+  });
+
+  it("scopes the slot with item, index, and locked-ness", () => {
+    const root = mountWithActions([{ key: "a" }, { key: "b" }], { lockedKeys: ["b"] });
+
+    const marks = Array.from(root.querySelectorAll(".row-actions")) as HTMLElement[];
+    expect(marks).toHaveLength(2);
+    expect(marks.map((m) => `${m.dataset.key}:${m.dataset.index}:${m.dataset.locked}`).join(",")).toBe(
+      "a:0:false,b:1:true",
+    );
+  });
+
+  it("renders no lane for hosts that do not adopt the slot", () => {
+    const root = mountList(["a"], []);
+
+    expect(root.querySelectorAll(".hk-draggable-list-actions")).toHaveLength(0);
+  });
+
+  it("keeps a press on a lane button from arming a drag — the handle still drags", async () => {
+    /** The lane exists to host buttons, so the row's interactive-content
+     *  exclusion (button, a, input, textarea, select, [contenteditable])
+     *  must own every press that starts on one — and a lane FULL of
+     *  buttons must leave the handle's drag path untouched. */
+    const PointerEventCtor: typeof MouseEvent =
+      (globalThis as { PointerEvent?: typeof MouseEvent }).PointerEvent ?? MouseEvent;
+    const fire = (el: Element, type: string, x = 0, y = 0) =>
+      el.dispatchEvent(
+        new PointerEventCtor(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y }),
+      );
+    const fireWin = (type: string, x = 0, y = 0) =>
+      window.dispatchEvent(new PointerEventCtor(type, { bubbles: true, cancelable: true, clientX: x, clientY: y }));
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HDraggableList, { items: [{ key: "a" }] }, {
+          item: ({ item }: { item: { key: string } }) => h("span", { class: "row-body" }, item.key),
+          actions: () => [
+            h("button", { class: "lane-button", type: "button" }, "✏"),
+            h("button", { class: "lane-button", type: "button" }, "⋯"),
+          ],
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    const root = container.querySelector(".hk-draggable-list") as HTMLElement;
+    const row = root.querySelector(".hk-draggable-list-item") as HTMLElement;
+    const button = row.querySelector(".lane-button") as HTMLElement;
+    const handle = row.querySelector(".hk-draggable-list-handle") as HTMLElement;
+
+    // Press ON the button (target = button, bubbling to the row) and
+    // travel far past the arm threshold: no drag may publish.
+    fire(button, "pointerdown", 10, 10);
+    fireWin("pointermove", 30, 40);
+    await nextTick();
+    expect(row.hasAttribute("data-dragging")).toBe(false);
+
+    // The same gesture on the handle still arms — a button-filled lane
+    // never breaks the drag path.
+    fire(handle, "pointerdown", 10, 10);
+    fireWin("pointermove", 30, 40);
+    await nextTick();
+    expect(row.getAttribute("data-dragging")).not.toBeNull();
+
+    fireWin("pointerup");
+  });
+});

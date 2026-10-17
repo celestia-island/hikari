@@ -108,6 +108,23 @@
   }
 }
 
+/* The per-row actions lane: renders only when the host supplies the
+ * `actions` slot (render-side guard), as a SIBLING of the content lane
+ * inside the row's flex layout — never a child of it, so the content
+ * lane's `> :only-child` fill above keeps stretching single-root rows
+ * even when actions ride along. Pinning is structural: the content lane
+ * keeps flex: 1 and this lane only refuses to shrink, so the actions
+ * land on the row's far edge — no margin-left:auto patch (it would
+ * paper over a content-lane regression instead of letting the fill rule
+ * fail loudly) and no directional property, so the lane follows the
+ * row's inline direction under RTL too. */
+.hk-draggable-list-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  flex-shrink: 0;
+}
+
 .hk-draggable-list-ghost {
   position: fixed;
   top: 0;

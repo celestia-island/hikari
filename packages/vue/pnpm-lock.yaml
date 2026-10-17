@@ -12,6 +12,9 @@ importers:
 
   .:
     dependencies:
+      '@celestia-island/tairitsu-transport':
+        specifier: ^0.1
+        version: 0.1.0
       '@xterm/addon-fit':
         specifier: ^0.*
         version: 0.11.0
@@ -195,6 +198,9 @@ packages:
   '@babel/types@7.29.7':
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
+
+  '@celestia-island/tairitsu-transport@0.1.0':
+    resolution: {integrity: sha512-Wba1+h3iyKheU2YZan1LIOCvYdVUZBpMz28NpdewmbrMRy/OUSELey3CQOZmvgMYJrhQtfxL3BWClRUtCP2ptQ==}
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
@@ -1197,6 +1203,8 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@celestia-island/tairitsu-transport@0.1.0': {}
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 

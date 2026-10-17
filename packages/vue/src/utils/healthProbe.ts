@@ -9,6 +9,8 @@
  * Pure function, no app config — callers bring the URL.
  */
 
+import { bindHostFetch } from "@celestia-island/tairitsu-transport/contract";
+
 /** Minimal subset shared by all `/api/health` consumers. */
 export interface HealthProbeBody {
   status: string;
@@ -43,8 +45,9 @@ export async function probeHealthEndpoint(
   // Bare `?? fetch` captures Window's fetch detached — every default
   // call throws "Illegal invocation" in a browser (2026-10-17 chest live
   // report; the probe then silently reported every panel unreachable).
-  // bind(globalThis) re-attaches the receiver and re-resolves per call.
-  const fetchFn = opts.fetchFn ?? fetch.bind(globalThis);
+  // The shared bindHostFetch() from tairitsu-transport re-attaches the
+  // receiver and re-resolves per call.
+  const fetchFn = opts.fetchFn ?? bindHostFetch();
   const started = performance.now();
   try {
     const resp = await fetchFn(url, {

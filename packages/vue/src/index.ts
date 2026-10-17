@@ -96,6 +96,7 @@ export { default as HSlider } from "./components/HkSlider";
 export { default as HSpinner } from "./components/HkSpinner";
 export { default as HSliderField } from "./components/HkSliderField";
 export { default as HSwitch } from "./components/HkSwitch";
+export { default as HRowActions } from "./components/HkRowActions";
 export { default as HTable } from "./components/HkTable";
 export { default as HTabs } from "./components/HkTabs";
 export { default as HTag } from "./components/HkTag";
@@ -655,6 +656,7 @@ export { default as HkContextMenuProvider } from "./components/HkContextMenuProv
 export { default as HkMenuPanel } from "./components/HkMenuPanel";
 export { default as HkMenuActionItem } from "./components/HkMenuActionItem";
 export { default as HkMenuIdentityItem } from "./components/HkMenuIdentityItem";
+export { default as HkRowActions } from "./components/HkRowActions";
 export { default as HkPopupSelect } from "./components/HkPopupSelect";
 export { default as HkProgressBar } from "./components/HkProgressBar";
 export { default as HkProgressDialog } from "./components/HkProgressDialog";
@@ -673,7 +675,7 @@ export { default as HkTokenInput, compactTokenCount, type TokenUnit } from "./co
 export { default as HkSliderField } from "./components/HkSliderField";
 export { default as HkSpinner } from "./components/HkSpinner";
 export { default as HkSwitch } from "./components/HkSwitch";
-export { default as HkTable } from "./components/HkTable";
+export { default as HkTable, type HkRowManageGate } from "./components/HkTable";
 export { default as HkTabs } from "./components/HkTabs";
 export { default as HkTag } from "./components/HkTag";
 export { default as HkTextarea } from "./components/HkTextarea";

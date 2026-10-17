@@ -169,6 +169,7 @@
     "hikari::statusBar.tier.ws": "WebSocket",
     "hikari::statusPill.ms": " ms",
     "hikari::table.noData": "Sem dados",
+    "hikari::table.rowActions": "Ações de linha",
     "hikari::table.dragHandle": "Arraste para reordenar",
     "hikari::table.dragHandleRow": "Reordenar «{label}»",
     "hikari::tablePage.emptyTitle": "Sem dados",

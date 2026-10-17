@@ -399,3 +399,31 @@
     transition: none;
   }
 }
+
+/* ── Table interaction contract (2026-10-18 user direction) ───────────
+   Table content is not prose. While the copy layer is enabled
+   (`copy-cells`, the default), body cells kill drag mass-selection
+   (user-select: none) and advertise the click-to-copy affordance with
+   the `copy` cursor — text clicks run the shared clipboard-with-toast
+   path (HkTable.tsx). Both halves scope under `data-copy-cells`, so a
+   consumer that opts out gets plain selectable text back wholesale. */
+.hk-table[data-copy-cells] {
+  .hk-table-cell {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: copy;
+  }
+
+  /* The row-actions column is a control, not text — no copy cursor. */
+  .hk-table-manage-cell {
+    cursor: default;
+  }
+}
+
+/* The standard trailing row-actions column (HkRowActions trigger):
+   fixed narrow track, centered, never wrapping. */
+.hk-table-manage-cell {
+  width: 36px;
+  text-align: center;
+  white-space: nowrap;
+}

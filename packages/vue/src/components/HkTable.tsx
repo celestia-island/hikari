@@ -7,6 +7,9 @@ import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composa
 import { onceFrame } from "../runtime/animationBus";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { ancestorZoom } from "../runtime/cssZoom";
+import { useClipboardWithToast } from "../runtime/useClipboard";
+import { useToast } from "../runtime/useToast";
+import HkRowActions from "./HkRowActions";
 import "./HkTable.scss";
 
 interface Column {
@@ -15,7 +18,30 @@ interface Column {
   width?: string;
   sortable?: boolean;
   align?: "left" | "center" | "right";
+  /** 2026-10-18 table-interaction contract: cells are not prose — a
+   *  click on a cell's plain text copies it (shared clipboard-with-toast
+   *  path). Set `copyable: false` to opt one column out (controls-only
+   *  columns, editable previews); the copy click layer never fires
+   *  there. Default true. */
+  copyable?: boolean;
 }
+
+/** Per-row gate for the manage column: `true` renders the trigger;
+ *  `false` renders an empty cell (permission gates, rows without
+ *  actions — the roster convention is no ⋯ at all, not a dead button);
+ *  `"disabled"` keeps the affordance but refuses activation (read-only
+ *  rows that must still show where actions would live). */
+export type HkRowManageGate =
+  | boolean
+  | ((row: Record<string, unknown>) => boolean | "disabled");
+
+/** Elements whose clicks mean their own action — the cell copy layer
+ *  must never swallow them. Matches the HkCopyBadge interactive guard:
+ *  real controls, button-role elements, popup owners, and the explicit
+ *  `[data-no-copy]` escape hatch for slot content that wants its own
+ *  click semantics without becoming a control. */
+const INTERACTIVE_SELECTOR =
+  'button, a, input, select, textarea, label, [role="button"], [aria-haspopup], [data-no-copy]';
 
 /** Duration of every drag motion this component paints: the arrangement
  *  shift (placeholder onto the resolved slot, neighbours gliding across)
@@ -44,17 +70,108 @@ export default defineComponent({
      *  faithfully encode the visual move: reordering is INERT until the
      *  sort is cleared (the handles render dimmed and refuse presses). */
     draggable: { type: Boolean, default: false },
+    /** 2026-10-18 table-interaction contract: table content is not
+     *  prose. When on (the default for every roster/admin table), plain
+     *  text in a cell copies on click through the shared
+     *  clipboard-with-toast path, drag mass-selection is dead
+     *  (user-select: none, scoped by `data-copy-cells`), and per-column
+     *  opt-out rides `Column.copyable`. Turn off only for exotic embeds
+     *  that genuinely need selectable text. */
+    copyCells: { type: Boolean, default: true },
+    /** Render the trailing row-actions column (HkRowActions trigger).
+     *  This is the 2026-10-12 row-manage ruling's ⋯ button, promoted
+     *  into the table so call sites stop hand-rolling it: enable the
+     *  column, handle `manage`, done. The button — not cell bodies —
+     *  remains the ONLY row-action affordance (2026-10-18 ruling).
+     *  Pass a gate function (HkRowManageGate) to hide the trigger per
+     *  row (no permission, no actions for that row) or render it
+     *  disabled (read-only rows that keep the affordance). */
+    manageable: {
+      type: [Boolean, Function] as PropType<HkRowManageGate>,
+      default: false,
+    },
     emptyText: { type: String, default: "" },
   },
   emits: {
     "update:selectedRows": (_rows: Record<string, unknown>[]) => true,
     reorder: (_fromIndex: number, _toIndex: number) => true,
+    /** `manageable`: the row's ⋯ trigger was pressed. The opener is the
+     *  trigger button (focus-restore anchor for a manage window). */
+    manage: (_row: Record<string, unknown>, _opener: HTMLElement) => true,
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
     const sortKey = ref<string | null>(null);
     const sortDirection = ref<"asc" | "desc">("asc");
     const selectedRowKeys = ref<Set<string>>(new Set());
+
+    // The cell copy layer shares the house clipboard-with-toast path
+    // (same runtime HkCopyBadge uses), so the confirmation toast —
+    // top-right band, localized defaults — is identical everywhere.
+    const clipboard = useClipboardWithToast(useToast());
+    const copyHint = computed(() => t("hikari::clipboard.clickToCopy", "Click to copy"));
+
+    /** Copy the text of a TEXT LEAF — an element with no element
+     *  children. Layout wrappers (rows of chips, badges beside prose)
+     *  never become a copy payload: a click there copies nothing rather
+     *  than sweeping up every descendant's text into one string. */
+    function copyLeafText(el: HTMLElement): void {
+      if (el.firstElementChild) return;
+      const text = (el.textContent ?? "").trim();
+      if (text) void clipboard.copy(text);
+    }
+
+    /** The td's copy click layer. Partition, in order:
+     *  1. Interactive descendants own their clicks outright (toggles,
+     *     badges, the ⋯ trigger) — return.
+     *  2. A click on the td itself is a text click ONLY when the cell
+     *     is pure text (no element children); a click on the padding
+     *     AROUND slot content does nothing — per the 2026-10-18 ruling,
+     *     cell bodies do NOT open row actions.
+     *  3. Otherwise the target must be a text leaf; layout containers
+     *     (gaps between chips) do nothing. */
+    function onCellClick(e: MouseEvent, col: Column, cellEl: HTMLElement): void {
+      if (!props.copyCells || col.copyable === false) return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target !== cellEl) {
+        if (target.closest(INTERACTIVE_SELECTOR)) return;
+        copyLeafText(target);
+        return;
+      }
+      if (cellEl.firstElementChild) return;
+      copyLeafText(cellEl);
+    }
+
+    /** Resolve the row's manage mode from the gate: the column renders
+     *  whenever `manageable` is set, but the TRIGGER obeys the per-row
+     *  verdict — off (empty cell, roster convention: no permission, no
+     *  ⋯), disabled (read-only rows keep the affordance), or on. */
+    function rowManageMode(row: Record<string, unknown>): "off" | "disabled" | "on" {
+      const gate = props.manageable;
+      if (!gate) return "off";
+      if (typeof gate === "function") {
+        const verdict = gate(row);
+        if (verdict === "disabled") return "disabled";
+        return verdict ? "on" : "off";
+      }
+      return "on";
+    }
+
+    function renderManageCell(row: Record<string, unknown>) {
+      const mode = rowManageMode(row);
+      return (
+        <td class="hk-table-cell hk-table-manage-cell">
+          {mode !== "off" ? (
+            <HkRowActions
+              size={28}
+              disabled={mode === "disabled"}
+              onOpen={(opener: HTMLElement) => emit("manage", row, opener)}
+            />
+          ) : null}
+        </td>
+      );
+    }
 
     // Wide tables scroll horizontally in the wrapper — attach the shared
     // overlay scrollbar (horizontal track) once on mount.
@@ -587,14 +704,22 @@ export default defineComponent({
     }));
 
     const totalCols = computed(
-      () => props.columns.length + (props.selectable ? 1 : 0) + (props.draggable ? 1 : 0)
+      () =>
+        props.columns.length +
+        (props.selectable ? 1 : 0) +
+        (props.draggable ? 1 : 0) +
+        (props.manageable ? 1 : 0)
     );
 
     return () => {
       return (
       <div ref={wrapperHostRef} class="hk-table-host">
         <div ref={wrapperRef} class="hk-table-wrapper">
-        <table class={tableCls.value} {...dragScope.value}>
+        <table
+          class={tableCls.value}
+          {...dragScope.value}
+          data-copy-cells={props.copyCells ? "" : undefined}
+        >
           {props.caption && <caption class="hk-table-sr-only">{props.caption}</caption>}
           <thead>
             <tr class="hk-table-header-row">
@@ -668,6 +793,11 @@ export default defineComponent({
                   </th>
                 );
               })}
+              {props.manageable && (
+                <th class="hk-table-header-cell hk-table-manage-head" style={{ width: "36px" }}>
+                  <span class="hk-table-sr-only">{t("hikari::table.rowActions", "Row actions")}</span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody class="hk-table-body">
@@ -761,16 +891,32 @@ export default defineComponent({
                         </label>
                       </td>
                     )}
-                    {props.columns.map((col) => (
-                      <td
-                        key={col.key}
-                        class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
-                      >
-                        {slots[`cell-${col.key}`]
-                          ? slots[`cell-${col.key}`]!({ row, value: row[col.key], index })
-                          : row[col.key]}
-                      </td>
-                    ))}
+                    {props.columns.map((col) => {
+                      const isSlotCell = Boolean(slots[`cell-${col.key}`]);
+                      const cellCopyable =
+                        props.copyCells && col.copyable !== false;
+                      return (
+                        <td
+                          key={col.key}
+                          class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
+                          // The hover affordance rides only on
+                          // default-rendered text cells — slot cells own
+                          // their hints (HkCopyBadge carries the house
+                          // tooltip already).
+                          title={
+                            cellCopyable && !isSlotCell ? copyHint.value : undefined
+                          }
+                          onClick={(e: MouseEvent) =>
+                            onCellClick(e, col, e.currentTarget as HTMLElement)
+                          }
+                        >
+                          {isSlotCell
+                            ? slots[`cell-${col.key}`]!({ row, value: row[col.key], index })
+                            : row[col.key]}
+                        </td>
+                      );
+                    })}
+                    {props.manageable && renderManageCell(row)}
                   </tr>
                 );
               })

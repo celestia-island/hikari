@@ -115,4 +115,27 @@ describe("HkAdminTablePage", () => {
     expect(c.querySelector(".hk-spinner-wrapper")).toBeTruthy();
     expect(c.querySelector("table")).toBeNull();
   });
+
+  it("manageable renders the ⋯ column and forwards manage(row, opener)", () => {
+    const got: Array<[Record<string, unknown>, HTMLElement]> = [];
+    const rows = [{ id: "r1", name: "alpha" }];
+    const c = mount(
+      h(HkAdminTablePage, {
+        title: "T",
+        rows,
+        columns: COLS,
+        rowKey: "id",
+        manageable: true,
+        onManage: (row: Record<string, unknown>, opener: HTMLElement) =>
+          got.push([row, opener]),
+      }),
+    );
+    expect(c.querySelectorAll("thead th")).toHaveLength(COLS.length + 1);
+    const btn = c.querySelector(".hk-table-manage-cell button") as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    btn.click();
+    expect(got).toHaveLength(1);
+    expect(got[0]![0]).toBe(rows[0]);
+    expect(got[0]![1]).toBe(btn);
+  });
 });

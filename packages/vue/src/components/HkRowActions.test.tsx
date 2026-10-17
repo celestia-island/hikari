@@ -61,6 +61,12 @@ describe("HkRowActions", () => {
     await Promise.resolve();
     expect(onOpen).not.toHaveBeenCalled();
     expect(btn.getAttribute("aria-expanded")).toBe("true");
+    // A second press toggles the menu shut (the hand-rolled kebab+menu
+    // pairs this component replaces closed on re-click).
+    btn.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("stops the click from reaching clickable ancestors", () => {

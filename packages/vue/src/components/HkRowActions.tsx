@@ -79,7 +79,11 @@ export default defineComponent({
       e.stopPropagation();
       if (props.disabled) return;
       if (props.items) {
-        open.value = true;
+        // A second press on the ⋯ toggles the menu shut — the hand-rolled
+        // kebab+menu pairs this component replaces closed on re-click
+        // (rowMenu.toggle), and that habit carries over. The anchor hit
+        // containment in HkSelectPanel would otherwise swallow the press.
+        open.value = !open.value;
         return;
       }
       emit("open", openerEl() ?? (e.currentTarget as HTMLElement));

@@ -1,3 +1,4 @@
+import { bindHostFetch } from "@celestia-island/tairitsu-transport/contract";
 import { solvePow, type PowChallenge } from "./pow";
 
 export type ChallengeDescriptor =
@@ -31,9 +32,10 @@ export async function fetchChallenge(
   baseUrl: string,
   // Bare `= fetch` captures Window's fetch detached — the default throws
   // "Illegal invocation" in a browser (2026-10-17 chest live report
-  // family). bind(globalThis) re-attaches the receiver, re-resolved per
-  // call so vi.stubGlobal stubs stay visible.
-  fetchFn: typeof fetch = fetch.bind(globalThis),
+  // family). The shared bindHostFetch() from tairitsu-transport
+  // re-attaches the receiver, re-resolved per call so vi.stubGlobal
+  // stubs stay visible.
+  fetchFn: typeof fetch = bindHostFetch(),
 ): Promise<ChallengeDescriptor | undefined> {
   let resp: Response;
   try {
@@ -64,7 +66,7 @@ export async function negotiateNonce(
 ): Promise<string | undefined> {
   try {
     // Same receiver rule as fetchChallenge's default: never bare `?? fetch`.
-    const fetchFn = opts?.fetchFn ?? fetch.bind(globalThis);
+    const fetchFn = opts?.fetchFn ?? bindHostFetch();
     let body: Record<string, unknown> | undefined;
     if (opts?.captchaToken) {
       body = { type: "captcha", token: opts.captchaToken };

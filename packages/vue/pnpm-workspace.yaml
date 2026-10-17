@@ -6,6 +6,7 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@vue/language-core@3.3.9'
   - vue-tsc@3.3.9
+  - '@celestia-island/tairitsu-transport@0.1.0'
 overrides:
   typescript: ~6.0
   vue-tsc: ~3.3.9

@@ -308,7 +308,10 @@ export const HkStatusBar = defineComponent({
     let touchEchoGuardUntil = 0;
     function onTagClick() {
       if (Date.now() < touchEchoGuardUntil) return;
-      if (props.connectionStatus !== "connected") {
+      // Idle is a SETTLED resting state ("shell alive, no session"), not
+      // a fault — clicking the gray light must not fire a silent retry
+      // (R3 catch: it looked like a dead control doing invisible work).
+      if (props.connectionStatus !== "connected" && props.connectionStatus !== "idle") {
         props.onRetry?.();
       }
     }
@@ -490,7 +493,9 @@ export const HkStatusBar = defineComponent({
                 // 300px default floor (2026-10-11 user direction: the
                 // version/protocol rows read cramped at the old 220px),
                 // clamped to the popover's own viewport budget so a
-                // 320px-class phone never spills past the glass.
+                // 320px-class phone never spills past the viewport (the
+                // glass chrome eats a few px of the card's inner width
+                // at the very narrow end — cosmetic, bounded, R3-note).
                 minWidth: "min(300px, calc(100vw - 2 * var(--viewport-gutter, 16px)))",
                 padding: "10px 14px",
                 fontSize: "0.75rem", lineHeight: 1.6,
@@ -591,7 +596,10 @@ export const HkStatusBar = defineComponent({
                   </span>
                 </div>
               )}
-              {info && tier !== "none" && (
+              {info && tier !== "none" && tier !== "unknown" && (
+                // "unknown" is the inert shell's sentinel tier — no probe
+                // is wired, so there are no transport facts to show and a
+                // bare "Protocol unknown" row would leak (R3 catch).
                 <>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <Plug size={12} style={{ opacity: 0.5, flexShrink: 0 }} />

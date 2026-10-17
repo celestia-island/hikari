@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, ref } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 import { HkConnectionStatus, HK_CONNECTION_PROBE } from "./HkConnectionStatus";
 
@@ -68,5 +68,33 @@ describe("HkConnectionStatus (shell)", () => {
     // turns a faulting probe into "Ready", never "Disconnected".
     expect(container.querySelector<HTMLElement>(".s-status-bar-tag")!.getAttribute("aria-label"))
       .toBe("Ready · 1.2.3");
+    // Idle is a settled resting state — clicking the gray light must not
+    // fire a silent probe retry (R3 catch).
+    container.querySelector<HTMLElement>(".s-status-bar-tag")!.click();
+    expect(probe.retryNow).not.toHaveBeenCalled();
+  });
+
+  it("the inert shell shows a definite status with versions but no probe rows", async () => {
+    // No injection: INERT_PROBE's sentinel transportTier is "unknown" —
+    // it must not leak a bare "Protocol unknown" row (which has no
+    // locale key in ANY language) into the popover (R3 catch). The card
+    // keeps the definite status heading + the known versions only.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () => h(HkConnectionStatus, { standalone: false, version: "1.2.3" }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel.textContent).toContain("Disconnected");
+    expect(panel.textContent).toContain("1.2.3");
+    expect(panel.textContent).not.toContain("Protocol");
+    expect(panel.textContent).not.toContain("unknown");
   });
 });

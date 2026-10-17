@@ -65,8 +65,10 @@ const backendStateColor: Record<HkBackendStatus["state"], string> = {
  * HK_CONNECTION_PROBE, that probe (and its retryNow) is used verbatim;
  * without an injection the shell renders an inert unknown state and
  * NEVER touches the network (pinned). Slots:
- * - `left`  — extras after the status tags (e.g. a mock badge)
- * - `right` — extras on the far right (e.g. an engine version tag)
+ * - `left`    — extras after the status tags (e.g. a mock badge)
+ * - `right`   — extras on the far right (e.g. an engine version tag)
+ * - `actions` — forwarded to HkStatusBar's status-row cluster (e.g. the
+ *               hosts' single manual page refresh, 2026-10-11 direction)
  */
 export const HkConnectionStatus = defineComponent({
   name: "HkConnectionStatus",

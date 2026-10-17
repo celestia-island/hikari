@@ -1,0 +1,98 @@
+/* HkQuote — the Markdown-blockquote-style info block.
+ *
+ * Two layers: the OUTER box (`.hk-quote`) only positions the block
+ * (centered in its host for fit="fill", a capped centered column for
+ * fit="page"); the INNER mark (`.hk-quote-mark`) is the blockquote
+ * itself — the 3px accent bar on the inline-start edge plus quiet
+ * prose, sized to its content like a real Markdown `>` quote. No
+ * surface of its own (no background, no radius, no shadow): the bar IS
+ * the visual. The tone class only selects the bar color; text colors
+ * stay in the standard primary/secondary text slots for every tone. */
+
+.hk-quote {
+  --hk-quote-bar: var(--hi-color-primary, #7aa2f7);
+
+  display: flex;
+  box-sizing: border-box;
+}
+
+.hk-quote--neutral {
+  --hk-quote-bar: var(--hi-color-text-tertiary, #8b949e);
+}
+
+.hk-quote--danger {
+  --hk-quote-bar: var(--hi-color-danger, #f7768e);
+}
+
+.hk-quote--warning {
+  --hk-quote-bar: var(--hi-color-warning, #eed677);
+}
+
+.hk-quote--success {
+  --hk-quote-bar: var(--hi-color-success, #0eb840);
+}
+
+/* fit="fill": the quote block centers itself inside its host (an empty
+ * panel body, a split view) — the host keeps its own size, the quote
+ * floats mid-host as an info block. */
+.hk-quote--fill {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+/* fit="page": a standalone block on a page — capped width, centered
+ * horizontally, never spanning the whole column. */
+.hk-quote--page {
+  width: 100%;
+  margin-inline: auto;
+  justify-content: center;
+}
+
+@media (min-width: 48rem) {
+  .hk-quote--page {
+    max-width: clamp(20rem, 30vw, 35rem);
+  }
+}
+
+.hk-quote-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8, 0.5rem);
+  padding: 0.5rem 0.875rem;
+  border-inline-start: 3px solid var(--hk-quote-bar);
+  text-align: start;
+  max-width: 100%;
+}
+
+.hk-quote-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  max-width: 100%;
+}
+
+.hk-quote-title {
+  margin: 0;
+  font-size: var(--text-base, 0.875rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--hi-color-text-primary, #1e1e1e);
+}
+
+.hk-quote-desc {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.55;
+  color: var(--hi-color-text-secondary, #666666);
+  max-width: 36rem;
+}
+
+.hk-quote-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+}

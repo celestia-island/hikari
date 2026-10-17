@@ -75,10 +75,15 @@ export default defineComponent({
     /** Desktop-popout side relative to the trigger. The header sits at
      *  the viewport's top, so the popout grows DOWNWARD (bottom-*) —
      *  the mirror of bottom-pinned pickers; auto-flip still rescues a
-     *  viewport that cannot fit it. */
+     *  viewport that cannot fit it. CENTERED on the trigger by default
+     *  (2026-10-18 user direction): the header pill mirrors the
+     *  footer's platform pill, whose menu pops symmetrically on the
+     *  trigger's midpoint — a start-anchored menu reads lopsided off a
+     *  narrow pill. Callers with edge-pinned triggers may still pin a
+     *  side explicitly. */
     placement: {
       type: String as PropType<SelectPanelPlacement>,
-      default: "bottom-start",
+      default: "bottom-center",
     },
     /** Accessible name of the trigger itself. */
     ariaLabel: { type: String, default: undefined },
@@ -302,6 +307,10 @@ export default defineComponent({
           title={props.panelTitle ?? ""}
           placement={props.placement}
           offset={4}
+          // The popout hugs its rows (not the trigger's width): the
+          // header pill is narrow, and the mirror-of-the-footer look
+          // means a compact centered menu, not a stretched field panel.
+          matchAnchorWidth={false}
           sheetOnMobile
           onKeydown={onPopoutKeydown}
         >

@@ -3,6 +3,10 @@ packages:
 allowBuilds:
   '@parcel/watcher': false
   esbuild: false
+# Explicit base is required: pnpm 11's built-in release-age cutoff ignores
+# this exclude list unless minimumReleaseAge itself is set (one day,
+# matching the built-in default's intent — the shittim-chest convention).
+minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@vue/language-core@3.3.9'
   - vue-tsc@3.3.9

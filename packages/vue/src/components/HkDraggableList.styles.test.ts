@@ -62,3 +62,22 @@ describe("HkDraggableList handle-lane sheet", () => {
     expect(body).toContain("display: none");
   });
 });
+
+describe("HkDraggableList content-lane fill sheet", () => {
+  const css = listCss();
+
+  it("stretches a single-root row across the lane", () => {
+    const body = ruleBody(css, ".hk-draggable-list-content > :only-child");
+    expect(body, "the :only-child fill rule must exist").not.toBeNull();
+    expect(body).toContain("flex: 1");
+    expect(body).toContain("min-width: 0");
+  });
+
+  // The fill must stay keyed on :only-child: fragment rows (several
+  // siblings sharing the lane) are host-owned layout and must not match.
+  it("never stretches fragment rows — the rule keys on :only-child alone", () => {
+    const fillRules = css.match(/\.hk-draggable-list-content\s*>\s*[^{]+\{/g) ?? [];
+    expect(fillRules.length).toBe(1);
+    expect(fillRules[0]).toContain(":only-child");
+  });
+});

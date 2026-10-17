@@ -89,6 +89,23 @@
   display: flex;
   align-items: center;
   gap: var(--space-8, 0.5rem);
+
+  /* A vertical list's row content owns the lane's width: when the host
+     renders ONE root element per row (the card shapes — wowsp's install
+     and account cards), stretch it across the lane so every row fills
+     the list instead of hugging its own text (wowsp report 2026-10-18:
+     the settings card lists shrank to content width after adopting this
+     component — the retired SortableList rows were plain blocks that
+     filled). min-width: 0 keeps ellipsis chains inside the card working.
+     Fragment rows — several sibling elements sharing the lane (chest's
+     tab/subview manager rows) — keep host-owned layout: the selector
+     deliberately does not match them. The drag ghost reuses the row
+     markup, so a single-root ghost fills its frame exactly like its
+     live row. */
+  > :only-child {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .hk-draggable-list-ghost {

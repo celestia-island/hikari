@@ -26,6 +26,15 @@ interface Column {
   copyable?: boolean;
 }
 
+/** Per-row gate for the manage column: `true` renders the trigger;
+ *  `false` renders an empty cell (permission gates, rows without
+ *  actions — the roster convention is no ⋯ at all, not a dead button);
+ *  `"disabled"` keeps the affordance but refuses activation (read-only
+ *  rows that must still show where actions would live). */
+export type HkRowManageGate =
+  | boolean
+  | ((row: Record<string, unknown>) => boolean | "disabled");
+
 /** Elements whose clicks mean their own action — the cell copy layer
  *  must never swallow them. Matches the HkCopyBadge interactive guard:
  *  real controls, button-role elements, popup owners, and the explicit
@@ -73,8 +82,14 @@ export default defineComponent({
      *  This is the 2026-10-12 row-manage ruling's ⋯ button, promoted
      *  into the table so call sites stop hand-rolling it: enable the
      *  column, handle `manage`, done. The button — not cell bodies —
-     *  remains the ONLY row-action affordance (2026-10-18 ruling). */
-    manageable: { type: Boolean, default: false },
+     *  remains the ONLY row-action affordance (2026-10-18 ruling).
+     *  Pass a gate function (HkRowManageGate) to hide the trigger per
+     *  row (no permission, no actions for that row) or render it
+     *  disabled (read-only rows that keep the affordance). */
+    manageable: {
+      type: [Boolean, Function] as PropType<HkRowManageGate>,
+      default: false,
+    },
     emptyText: { type: String, default: "" },
   },
   emits: {
@@ -126,6 +141,36 @@ export default defineComponent({
       }
       if (cellEl.firstElementChild) return;
       copyLeafText(cellEl);
+    }
+
+    /** Resolve the row's manage mode from the gate: the column renders
+     *  whenever `manageable` is set, but the TRIGGER obeys the per-row
+     *  verdict — off (empty cell, roster convention: no permission, no
+     *  ⋯), disabled (read-only rows keep the affordance), or on. */
+    function rowManageMode(row: Record<string, unknown>): "off" | "disabled" | "on" {
+      const gate = props.manageable;
+      if (!gate) return "off";
+      if (typeof gate === "function") {
+        const verdict = gate(row);
+        if (verdict === "disabled") return "disabled";
+        return verdict ? "on" : "off";
+      }
+      return "on";
+    }
+
+    function renderManageCell(row: Record<string, unknown>) {
+      const mode = rowManageMode(row);
+      return (
+        <td class="hk-table-cell hk-table-manage-cell">
+          {mode !== "off" ? (
+            <HkRowActions
+              size={28}
+              disabled={mode === "disabled"}
+              onOpen={(opener: HTMLElement) => emit("manage", row, opener)}
+            />
+          ) : null}
+        </td>
+      );
     }
 
     // Wide tables scroll horizontally in the wrapper — attach the shared
@@ -871,14 +916,7 @@ export default defineComponent({
                         </td>
                       );
                     })}
-                    {props.manageable && (
-                      <td class="hk-table-cell hk-table-manage-cell">
-                        <HkRowActions
-                          size={28}
-                          onOpen={(opener: HTMLElement) => emit("manage", row, opener)}
-                        />
-                      </td>
-                    )}
+                    {props.manageable && renderManageCell(row)}
                   </tr>
                 );
               })

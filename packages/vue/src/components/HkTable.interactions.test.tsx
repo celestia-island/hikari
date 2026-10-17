@@ -248,6 +248,43 @@ describe("HkTable manageable column", () => {
     expect(c.querySelector(".hk-table-manage-cell")).toBeNull();
     expect(c.querySelectorAll("thead th")).toHaveLength(COLS.length);
   });
+
+  it("manage gate: rows hide the trigger or render it disabled", async () => {
+    const rows = [
+      { name: "alpha", endpoint: "", state: "on" },
+      { name: "beta", endpoint: "", state: "no-perm" },
+      { name: "gamma", endpoint: "", state: "readonly" },
+    ];
+    const emitted: Array<[Record<string, unknown>, HTMLElement]> = [];
+    const c = mount(
+      h(HTable, {
+        columns: COLS,
+        rows,
+        rowKey: "name",
+        manageable: (row: Record<string, unknown>) =>
+          row.state === "readonly" ? "disabled" : row.state === "on",
+        onManage: (row: Record<string, unknown>, opener: HTMLElement) =>
+          emitted.push([row, opener]),
+      }),
+    );
+    const cells = Array.from(c.querySelectorAll<HTMLElement>(".hk-table-manage-cell"));
+    expect(cells).toHaveLength(3);
+    // A gated-off row renders an EMPTY cell — no ⋯ at all, not a dead
+    // button (roster convention: permission gates hide the affordance).
+    expect(cells[1]!.querySelector("button")).toBeNull();
+    // A read-only row keeps the affordance but refuses activation.
+    const readonlyBtn = cells[2]!.querySelector("button") as HTMLButtonElement;
+    expect(readonlyBtn.disabled).toBe(true);
+    readonlyBtn.click();
+    await settle();
+    expect(emitted).toHaveLength(0);
+    // The on row runs the normal path.
+    const onBtn = cells[0]!.querySelector("button") as HTMLButtonElement;
+    onBtn.click();
+    await settle();
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0]![0]).toBe(rows[0]);
+  });
 });
 
 describe("HkTable interaction stylesheet", () => {

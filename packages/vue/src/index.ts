@@ -675,7 +675,7 @@ export { default as HkTokenInput, compactTokenCount, type TokenUnit } from "./co
 export { default as HkSliderField } from "./components/HkSliderField";
 export { default as HkSpinner } from "./components/HkSpinner";
 export { default as HkSwitch } from "./components/HkSwitch";
-export { default as HkTable } from "./components/HkTable";
+export { default as HkTable, type HkRowManageGate } from "./components/HkTable";
 export { default as HkTabs } from "./components/HkTabs";
 export { default as HkTag } from "./components/HkTag";
 export { default as HkTextarea } from "./components/HkTextarea";

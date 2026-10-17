@@ -1,6 +1,7 @@
 import { defineComponent, type Component, type PropType } from "vue";
 import { HAlert, HCard, HEmptyState, HSpinner, HTable, useI18n } from "@celestia-island/hikari";
 import { HkPageHeader } from "./HkPageHeader";
+import type { HkRowManageGate } from "./HkTable";
 
 
 /** Column definition passed through to HTable. */
@@ -56,9 +57,13 @@ export const HkAdminTablePage = defineComponent({
      *  `reorder` event is forwarded verbatim — indices into `rows`). */
     draggable: { type: Boolean, default: false },
     /** Trailing row-actions column with the standard ⋯ trigger
-     *  (forwarded to HTable; see HkTable's `manageable`). The `manage`
-     *  event is forwarded verbatim — (row, opener button). */
-    manageable: { type: Boolean, default: false },
+     *  (forwarded to HTable; see HkTable's `manageable` — pass a
+     *  HkRowManageGate to hide/disable the trigger per row). The
+     *  `manage` event is forwarded verbatim — (row, opener button). */
+    manageable: {
+      type: [Boolean, Function] as PropType<HkRowManageGate>,
+      default: false,
+    },
   },
   emits: {
     reorder: (_fromIndex: number, _toIndex: number) => true,

@@ -29,7 +29,11 @@ function normalizeBase(baseUrl: string): string {
  */
 export async function fetchChallenge(
   baseUrl: string,
-  fetchFn: typeof fetch = fetch,
+  // Bare `= fetch` captures Window's fetch detached — the default throws
+  // "Illegal invocation" in a browser (2026-10-17 chest live report
+  // family). bind(globalThis) re-attaches the receiver, re-resolved per
+  // call so vi.stubGlobal stubs stay visible.
+  fetchFn: typeof fetch = fetch.bind(globalThis),
 ): Promise<ChallengeDescriptor | undefined> {
   let resp: Response;
   try {
@@ -59,7 +63,8 @@ export async function negotiateNonce(
   },
 ): Promise<string | undefined> {
   try {
-    const fetchFn = opts?.fetchFn ?? fetch;
+    // Same receiver rule as fetchChallenge's default: never bare `?? fetch`.
+    const fetchFn = opts?.fetchFn ?? fetch.bind(globalThis);
     let body: Record<string, unknown> | undefined;
     if (opts?.captchaToken) {
       body = { type: "captcha", token: opts.captchaToken };

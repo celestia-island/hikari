@@ -653,6 +653,41 @@ describe("HkStatusBar", () => {
     expect(panel.textContent).toContain("Ready");
     expect(panel.textContent).toContain("1.2.3");
     expect(panel.textContent).not.toContain("Protocol");
+    // Idle is a SETTLED state — it must not offer the disconnected-only
+    // "Click to retry" hint (R1 mutation catch: the gate survived, the
+    // pin was missing).
+    expect(panel.textContent).not.toContain("Click to retry");
+  });
+
+  it("pins the in-flight breathe pulse contract in admin-tokens.scss", () => {
+    // 2026-10-17 user direction: a genuinely in-flight (connecting/
+    // reconnecting) light must visibly breathe — a FIXED background
+    // means a settled state, which is the gray idle's job now.
+    // Reduced-motion users keep the steady tint.
+    const scss = readFileSync(resolve(__dirname, "../styles/admin-tokens.scss"), "utf8");
+    const rule = /\.s-status-bar-tag-reconnecting\s*\{[^}]*\}/.exec(scss)?.[0] ?? "";
+    expect(rule, "reconnecting rule carries the breathe animation").toContain("animation:");
+    expect(scss).toContain("@keyframes s-status-bar-reconnecting-breathe");
+    expect(scss).toMatch(
+      /@media[^{]*prefers-reduced-motion[^{]*\{[^@]*?\.s-status-bar-tag-reconnecting\s*\{[^}]*animation:\s*none/s,
+    );
+  });
+
+  it("connecting carries the in-flight pulse class; idle does not", async () => {
+    const connecting = mountBar({
+      version: "1.2.3",
+      connectionStatus: "connecting",
+      connectionInfo: null,
+    });
+    await nextTick();
+    expect(tagOf(connecting).className).toContain("s-status-bar-tag-reconnecting");
+    const idle = mountBar({
+      version: "1.2.3",
+      connectionStatus: "idle",
+      connectionInfo: null,
+    });
+    await nextTick();
+    expect(tagOf(idle).className).not.toContain("s-status-bar-tag-reconnecting");
   });
 
   it("no actions row when the slot renders nothing (wrapper forwards an empty slot)", async () => {

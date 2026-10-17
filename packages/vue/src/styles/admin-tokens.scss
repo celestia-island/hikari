@@ -267,9 +267,33 @@
   opacity: 0.5;
 }
 
+/* In-flight (connecting/reconnecting): the warning tint BREATHES —
+   2026-10-17 user direction, a fixed background must mean a SETTLED
+   state (that is the gray idle's job now), so a genuinely in-flight
+   light visibly pulses between a faint and a stronger tint. Pure-CSS
+   compositor motion; reduced-motion users keep the steady resting
+   tint (the class's original value). */
 .s-status-bar-tag-reconnecting {
   background: rgb(var(--color-warning) / 14%);
   transition: background var(--duration-short), width var(--duration-short) var(--ease-standard);
+  animation: s-status-bar-reconnecting-breathe 1.8s var(--ease-standard) infinite;
+}
+
+@keyframes s-status-bar-reconnecting-breathe {
+  0%,
+  100% {
+    background: rgb(var(--color-warning) / 8%);
+  }
+
+  50% {
+    background: rgb(var(--color-warning) / 22%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-status-bar-tag-reconnecting {
+    animation: none;
+  }
 }
 
 /* One soft green blink when the light recovers: the pill background

@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as sass from "sass";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -55,6 +56,32 @@ describe("HkDrawer side motion (opaque slide)", () => {
     ]) {
       expect(lastRule(sel, side), sel).toContain("opacity: 1");
     }
+  });
+
+  it("keeps the opaque side overrides after the generic fade rules (compiled order)", () => {
+    // The source slices above are anchored on a comment marker; this
+    // compiled assertion pins the cascade itself: the side override must
+    // come AFTER the generic four-direction block in the emitted CSS.
+    const fullCss = sass.compile(resolve(here, "HkDrawer.scss")).css;
+    // The reduced-motion block repeats the active selectors with
+    // `transition: none`; exclude it so the last occurrence is the side
+    // override under test.
+    const reduceAt = fullCss.lastIndexOf(
+      "@media (prefers-reduced-motion: reduce)",
+    );
+    const css = fullCss.slice(0, reduceAt > 0 ? reduceAt : fullCss.length);
+    const genericAt = css.indexOf(".hk-drawer-left-enter-active");
+    const overrideAt = css.lastIndexOf(".hk-drawer-left-enter-active");
+    expect(overrideAt).toBeGreaterThan(genericAt);
+    const overrideBody = css.slice(overrideAt, css.indexOf("}", overrideAt));
+    expect(overrideBody).toContain("transform");
+    expect(overrideBody).not.toContain("opacity");
+
+    const genericFromAt = css.indexOf(".hk-drawer-left-enter-from");
+    const sideFromAt = css.lastIndexOf(".hk-drawer-left-enter-from");
+    expect(sideFromAt).toBeGreaterThan(genericFromAt);
+    const sideFromBody = css.slice(sideFromAt, css.indexOf("}", sideFromAt));
+    expect(sideFromBody).toContain("opacity: 1");
   });
 
   it("keeps the fade for top/bottom sheets", () => {

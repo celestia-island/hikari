@@ -123,6 +123,30 @@
   transform: translateY(100%);
 }
 
+/* Side drawers slide as an OPAQUE surface. The panel used to share the
+ * scrim's fade (opacity: 0 in the enter/leave states); on a phone the
+ * drawer was still partly on screen when its right half went transparent
+ * — the page behind showed through and the right rounded corners
+ * dissolved, which reads as a width shrink (screen recording
+ * 2026-10-19). The scrim keeps its own fade; the panel only translates.
+ * Top/bottom sheets keep the fade above. */
+.hk-drawer-left-enter-active,
+.hk-drawer-right-enter-active {
+  transition: transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-drawer-left-leave-active,
+.hk-drawer-right-leave-active {
+  transition: transform var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-drawer-left-enter-from,
+.hk-drawer-left-leave-to,
+.hk-drawer-right-enter-from,
+.hk-drawer-right-leave-to {
+  opacity: 1;
+}
+
 .hk-drawer-header {
   display: flex;
   align-items: center;

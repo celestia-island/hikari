@@ -84,6 +84,16 @@ describe("HkDrawer side motion (opaque slide)", () => {
     expect(sideFromBody).toContain("opacity: 1");
   });
 
+  it("keeps the off-screen side transforms", () => {
+    // The side override only resets opacity to 1; the generic from/to
+    // blocks must keep the translateX(±100%) that carries the panel in
+    // and out of the screen.
+    const left = src.slice(src.indexOf(".hk-drawer-left-enter-from"));
+    expect(left.slice(0, left.indexOf("}") + 1)).toContain("translateX(-100%)");
+    const right = src.slice(src.indexOf(".hk-drawer-right-enter-from"));
+    expect(right.slice(0, right.indexOf("}") + 1)).toContain("translateX(100%)");
+  });
+
   it("keeps the fade for top/bottom sheets", () => {
     expect(lastRule(".hk-drawer-top-enter-from")).toContain("opacity: 0");
     expect(lastRule(".hk-drawer-bottom-enter-from")).toContain("opacity: 0");

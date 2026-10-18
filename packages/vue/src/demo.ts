@@ -3,8 +3,9 @@ import { createApp } from 'vue'
 import { initTheme } from './theme/useTheme'
 import * as hikari from './index'
 
-// Mobile UX contract (viewport zoom never refused; tap-highlight lives in
-// foundation.scss). Applied at bootstrap before mount, per the hook contract.
+// Mobile UX contract (viewport zoom never refused; the tap-highlight reset
+// lives in the canonical host reset, styles/reset.scss). Applied at
+// bootstrap before mount, per the hook contract.
 hikari.applyViewportPolicy({ allowZoomOut: true })
 
 localStorage.setItem('hikari-theme', 'default')

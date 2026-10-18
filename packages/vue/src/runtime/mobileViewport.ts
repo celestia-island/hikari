@@ -84,9 +84,11 @@ function clampOutScale(scale: number): string {
  * Normalize the document's viewport meta so mobile browsers never refuse
  * user zoom. Idempotent; safe to call during app bootstrap before mount.
  *
- * The tap-highlight half of the mobile UX contract lives in the stylesheet
- * foundation (`foundation.scss` clears `-webkit-tap-highlight-color`
- * globally) and needs no JS.
+ * The tap-highlight half of the mobile UX contract lives in the canonical
+ * host reset (`styles/reset.scss`, composed first by `styles/index.scss`):
+ * it clears `-webkit-tap-highlight-color` at the root, and
+ * `installHkTapHighlight()` is the runtime policy layer for hosts that
+ * need a themed tint or the iOS :active enabler.
  */
 export function applyViewportPolicy(
   options: ApplyViewportPolicyOptions = {},

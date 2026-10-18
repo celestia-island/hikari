@@ -13,6 +13,11 @@ export {
   type HkImageFallbackOptions,
 } from "./imageFallback";
 export {
+  installHkTapHighlight,
+  type HkTapHighlightOptions,
+  type HkTapHighlightColor,
+} from "./tapHighlight";
+export {
   tooltipPositionStyle,
   applyTooltipPosition,
   resolveTooltipFlip,

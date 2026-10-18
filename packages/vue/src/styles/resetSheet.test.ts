@@ -31,6 +31,20 @@ describe("host reset sheet", () => {
     expect(first).toBe("./reset.scss");
   });
 
+  it("clears the UA tap highlight at the root (mobile parity)", () => {
+    // Regression guard for the #325 contract: #480 retired the Gen-1
+    // foundation sheet, and #523/#861 composed this reset without the
+    // tap rule, so chest/hydro silently re-gained the Android blue
+    // overlay. Removing either half of this contract must fail here.
+    const reset = read("reset.scss");
+    expect(reset).toMatch(
+      /html\s*\{[\s\S]*?-webkit-tap-highlight-color:\s*var\(--hk-tap-highlight-color,\s*transparent\)/,
+    );
+    expect(reset).toMatch(
+      /html\[data-hk-tap-highlight=['"]native['"]\][\s\S]*?-webkit-tap-highlight-color:\s*revert/,
+    );
+  });
+
   it("normalizes the native control typography chain", () => {
     const reset = read("reset.scss");
     for (const selector of ["button,", "input,", "textarea"]) {

@@ -240,7 +240,7 @@
   "hikari::tagInput.remove": "Entfernen",
   "hikari::tagInput.addCustom": "„{q}“ verwenden",
   "hikari::tagInput.reorder": "Neu anordnen — {label}",
-  "hikari::modal.hiddenLayers": "Verdeckte Ebenen",
+  "hikari::modal.allLayers": "Alle Ebenen",
   "hikari::theme.modeTabHint": "Diese Reiter wählen die zu bearbeitende Palette; die appweite Hell/Dunkel-Umschaltung liegt im Modusstreifen des Themen-Popups",
   "hikari::theme.defaultThemeName": "Standard",
   "hikari::emptyState.loading": "Wird geladen",

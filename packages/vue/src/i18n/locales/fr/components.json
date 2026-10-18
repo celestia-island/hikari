@@ -240,7 +240,7 @@
   "hikari::tagInput.remove": "Retirer",
   "hikari::tagInput.addCustom": "Utiliser « {q} »",
   "hikari::tagInput.reorder": "Réorganiser — {label}",
-  "hikari::modal.hiddenLayers": "Couches masquées",
+  "hikari::modal.allLayers": "Toutes les couches",
   "hikari::theme.modeTabHint": "Ces onglets choisissent la palette éditée ; pour basculer clair/sombre dans toute l’app, utilisez la barre de mode du menu de thème",
   "hikari::theme.defaultThemeName": "Par défaut",
   "hikari::emptyState.loading": "Chargement",

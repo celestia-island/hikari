@@ -240,7 +240,7 @@
   "hikari::tagInput.remove": "إزالة",
   "hikari::tagInput.addCustom": "استخدام \"{q}\"",
   "hikari::tagInput.reorder": "إعادة الترتيب — {label}",
-  "hikari::modal.hiddenLayers": "الطبقات المخفية",
+  "hikari::modal.allLayers": "جميع الطبقات",
   "hikari::theme.modeTabHint": "هذه التبويبات تختار لوحة الألوان التي تحرّرها؛ لتبديل الوضع الفاتح/الداكن للتطبيق كله استخدم شريط الأوضاع أعلى نافذة السمة",
   "hikari::theme.defaultThemeName": "افتراضي",
   "hikari::emptyState.loading": "جارٍ التحميل",

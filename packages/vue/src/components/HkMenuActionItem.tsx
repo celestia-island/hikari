@@ -21,6 +21,11 @@ export default defineComponent({
     /** Destructive styling (logout, delete…). */
     danger: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
+    /** Selected/current row — the unified menu-item grammar's [data-active]
+     *  face (primary wash + strong border + primary text; see
+     *  _menu-item.scss). For lists that mark "you are here", e.g. the
+     *  modal-breadcrumb layer picker highlighting the current layer. */
+    active: { type: Boolean, default: false },
   },
   emits: {
     click: (_e: MouseEvent) => true,
@@ -31,6 +36,7 @@ export default defineComponent({
         type="button"
         class={["hk-menu-action-item", props.danger ? "hk-menu-action-item--danger" : ""]}
         data-danger={props.danger || undefined}
+        data-active={props.active || undefined}
         disabled={props.disabled}
         role="menuitem"
         onClick={(e: MouseEvent) => emit("click", e)}

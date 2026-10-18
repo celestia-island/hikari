@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * The `hikari::modal.*` family is the window chrome's own vocabulary
- * (stack label, unnamed-window/sheet fallbacks, the hidden-layers menu),
+ * (stack label, unnamed-window/sheet fallbacks, the all-layers menu),
  * referenced from source by literal key with an English fallback.
  *
  * flatKeyParity.test.ts proves the locales AGREE with en — but it takes
@@ -23,7 +23,7 @@ const REQUIRED_KEYS = [
   "hikari::modal.stackLabel",
   "hikari::modal.unnamedSheet",
   "hikari::modal.unnamedWindow",
-  "hikari::modal.hiddenLayers",
+  "hikari::modal.allLayers",
 ];
 
 describe("hikari::modal locale keys", () => {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { getHkRuntimeEntry, readHkRuntime } from "./registry";
 import { installHkTapHighlight } from "./tapHighlight";
 
 /**
@@ -98,6 +99,30 @@ describe("installHkTapHighlight", () => {
     install({ color: "red" });
     install({ color: "blue" });
     expect(root().style.getPropertyValue(TOKEN)).toBe("red");
+  });
+
+  it("treats an uninstaller from a replaced install as a no-op", () => {
+    const first = install({ color: "red" });
+    first();
+    install({ color: "blue" });
+    first();
+    expect(root().style.getPropertyValue(TOKEN)).toBe("blue");
+  });
+
+  it("reports the effective colour and disposes the registry entry", () => {
+    vi.stubGlobal("CSS", { supports: () => false });
+    const uninstall = install({
+      color: "not-a-colour",
+      enableActiveState: false,
+    });
+    expect(readHkRuntime("tapHighlight")).toMatchObject({
+      color: "none",
+      requestedColor: "not-a-colour",
+    });
+    expect(getHkRuntimeEntry("tapHighlight")?.status).toBe("active");
+    uninstall();
+    expect(getHkRuntimeEntry("tapHighlight")?.status).toBe("disposed");
+    expect(readHkRuntime("tapHighlight")).toBeUndefined();
   });
 
   it("no-ops without a DOM", () => {

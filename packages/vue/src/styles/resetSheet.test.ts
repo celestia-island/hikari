@@ -37,11 +37,14 @@ describe("host reset sheet", () => {
     // tap rule, so chest/hydro silently re-gained the Android blue
     // overlay. Removing either half of this contract must fail here.
     const reset = read("reset.scss");
-    expect(reset).toMatch(
-      /html\s*\{[\s\S]*?-webkit-tap-highlight-color:\s*var\(--hk-tap-highlight-color,\s*transparent\)/,
+    // Strip block comments first: a commented-out rule must not satisfy
+    // the guard (raw-text matching would otherwise pass on the comment).
+    const effective = reset.replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(effective).toMatch(
+      /html\s*\{[^}]*?-webkit-tap-highlight-color:\s*var\(--hk-tap-highlight-color,\s*transparent\)/,
     );
-    expect(reset).toMatch(
-      /html\[data-hk-tap-highlight=['"]native['"]\][\s\S]*?-webkit-tap-highlight-color:\s*revert/,
+    expect(effective).toMatch(
+      /html\[data-hk-tap-highlight=['"]native['"]\]\s*\{[^}]*?-webkit-tap-highlight-color:\s*revert/,
     );
   });
 

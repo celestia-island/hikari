@@ -51,6 +51,7 @@ interface TapHighlightState {
   enableActiveState: boolean;
   onTouchStart: EventListener;
   installedColor: HkTapHighlightColor;
+  requestedColor: HkTapHighlightColor;
   runtime?: HkRuntimeHandle;
 }
 
@@ -61,12 +62,13 @@ function noop(): void {}
 function normalizeColor(color: HkTapHighlightColor | undefined): {
   token: string | null;
   native: boolean;
+  effective: HkTapHighlightColor;
 } {
   if (color === undefined || color === "none") {
-    return { token: TRANSPARENT, native: false };
+    return { token: TRANSPARENT, native: false, effective: "none" };
   }
   if (color === "native") {
-    return { token: null, native: true };
+    return { token: null, native: true, effective: "native" };
   }
   // Validate against the property so a bad host value cannot become an
   // "invalid at computed-value time" flash of the UA default colour.
@@ -74,11 +76,16 @@ function normalizeColor(color: HkTapHighlightColor | undefined): {
     typeof CSS === "undefined" ||
     typeof CSS.supports !== "function" ||
     CSS.supports("-webkit-tap-highlight-color", color);
-  return { token: supported ? color : TRANSPARENT, native: false };
+  return supported
+    ? { token: color, native: false, effective: color }
+    : { token: TRANSPARENT, native: false, effective: "none" };
 }
 
 function uninstall(state: TapHighlightState): void {
-  if (INSTALLS.get(state.doc) === state) INSTALLS.delete(state.doc);
+  // A teardown from a previous install must not clear the policy that
+  // replaced it (uninstall → reinstall → call the old uninstaller).
+  if (INSTALLS.get(state.doc) !== state) return;
+  INSTALLS.delete(state.doc);
   if (state.enableActiveState) {
     state.doc.removeEventListener("touchstart", state.onTouchStart);
   }
@@ -109,8 +116,9 @@ export function installHkTapHighlight(
   if (existing) return () => uninstall(existing);
 
   const root = doc.documentElement;
-  const { token, native } = normalizeColor(options.color);
+  const { token, native, effective } = normalizeColor(options.color);
   const enableActiveState = options.enableActiveState ?? true;
+  const requestedColor = options.color ?? "none";
   const state: TapHighlightState = {
     doc,
     root,
@@ -118,7 +126,8 @@ export function installHkTapHighlight(
     previousNative: root.getAttribute(NATIVE_ATTR),
     enableActiveState,
     onTouchStart: noop,
-    installedColor: options.color ?? "none",
+    installedColor: effective,
+    requestedColor,
   };
 
   if (token === null) {
@@ -142,12 +151,14 @@ export function installHkTapHighlight(
       "Document-level mobile tap-highlight policy: clears or tints the UA overlay and enables :active on iOS.",
     meta: {
       color: state.installedColor,
+      requestedColor: state.requestedColor,
       activeState: enableActiveState,
       native,
     },
     read: () => ({
       installed: true,
       color: state.installedColor,
+      requestedColor: state.requestedColor,
       activeState: enableActiveState,
       native,
     }),

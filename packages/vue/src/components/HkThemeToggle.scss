@@ -96,7 +96,12 @@
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  /* Same policy as the canonical reset; keeps standalone component styles
+     working and lets the document-level native escape hatch through. */
+  -webkit-tap-highlight-color: var(--hk-tap-highlight-color, transparent);
+  html[data-hk-tap-highlight='native'] & {
+    -webkit-tap-highlight-color: revert;
+  }
   appearance: none;
   transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease;
 }

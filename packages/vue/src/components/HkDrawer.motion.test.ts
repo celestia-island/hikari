@@ -84,6 +84,16 @@ describe("HkDrawer side motion (opaque slide)", () => {
     expect(sideFromBody).toContain("opacity: 1");
   });
 
+  it("keeps the sheet active opacity transition", () => {
+    // R3 mutation: deleting the generic active opacity transition kept the
+    // suite green. Guard that top/bottom sheets still animate opacity.
+    const generic = src.slice(0, sideStart);
+    expect(lastRule(".hk-drawer-top-enter-active", generic)).toContain("opacity");
+    expect(lastRule(".hk-drawer-bottom-leave-active", generic)).toContain(
+      "opacity",
+    );
+  });
+
   it("keeps the off-screen side transforms", () => {
     // The side override only resets opacity to 1; the generic from/to
     // blocks must keep the translateX(±100%) that carries the panel in

@@ -376,14 +376,14 @@ impl StyledComponent for CodeHighlightComponent {
     background-color: var(--hi-color-primary, #3b82f6);
     color: var(--hi-color-text-on-solid, #ffffff);
     border-color: var(--hi-color-primary, #3b82f6);
-    box-shadow: 0 0 8px var(--hi-color-primary-glow, rgba(59, 130, 246, 0.35));
+    box-shadow: 0 0 8px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
 }
 
 .hk-code-highlight-copy.hk-code-highlight-copy-copied,
 .hk-code-highlight-copy.copied {
     background-color: var(--hi-color-primary, #3b82f6);
     color: var(--hi-color-text-on-solid, #ffffff);
-    box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(59, 130, 246, 0.35));
+    box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
     opacity: 1;
 }
 

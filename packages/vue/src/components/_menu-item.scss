@@ -168,14 +168,14 @@
   }
 
   &[data-danger] {
-    color: rgb(var(--color-danger, 240 70 80) / 90%);
+    color: rgb(var(--color-error, 247 118 142) / 90%);
 
     /* Same checked-row guard as the base hover above: a checked danger
      * row keeps its checked face instead of flashing the hover wash. */
     &:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]) {
-      background: rgb(var(--color-danger, 240 70 80) / 10%);
-      border-color: rgb(var(--color-danger, 240 70 80) / 25%);
-      color: rgb(var(--color-danger, 240 70 80));
+      background: rgb(var(--color-error, 247 118 142) / 10%);
+      border-color: rgb(var(--color-error, 247 118 142) / 25%);
+      color: rgb(var(--color-error, 247 118 142));
     }
   }
 }

@@ -1179,7 +1179,7 @@
 
 /* ── Arona app utility classes ── */
 .a-text-primary {
-  color: var(--color-text-primary);
+  color: var(--color-text);
 }
 
 .a-text-secondary {
@@ -1207,11 +1207,11 @@
 }
 
 .a-bg-secondary {
-  background: var(--color-bg-secondary, #18181b);
+  background: rgb(var(--color-background, 214 236 240));
 }
 
 .a-bg-tertiary {
-  background: var(--color-bg-tertiary, #27272a);
+  background: rgb(var(--color-surface, 240 244 248));
 }
 
 .a-latency-text {

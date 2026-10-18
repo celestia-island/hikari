@@ -78,7 +78,7 @@
   background: linear-gradient(
     90deg,
     var(--hi-surface) 0%,
-    var(--hi-surface-hover) 50%,
+    var(--hi-surface-hover, rgba(127, 127, 127, 0.16)) 50%,
     var(--hi-surface) 100%
   );
   background-size: 200% 100%;

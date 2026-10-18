@@ -132,7 +132,7 @@
   padding: 0 var(--space-4, 4px);
   border-radius: var(--radius-full, 9999px);
   background: rgb(var(--color-error, 247 118 142));
-  color: #fff;
+  color: var(--hi-color-text-on-danger, #fff);
   font-size: var(--text-2xs, 10px);
   font-weight: 700;
   line-height: 1;

@@ -33,18 +33,20 @@ import { describe, expect, it } from "vitest";
  * is still the regression this guard exists to catch.
  *
  * Slots with no seed are listed in UNSEEDED rather than skipped silently:
- * `--color-bg-secondary` / `--color-bg-tertiary` are retired spellings
- * (their `#18181b` / `#27272a` fallbacks always win) and `--color-danger` is
- * defined nowhere, so there is no seed value to compare against — recorded
- * debt, not a passing check.
+ * The retired spellings that used to live in UNSEEDED —
+ * `--color-bg-secondary` / `--color-bg-tertiary` / `--color-danger` — were
+ * paid on 2026-10-19 (their last usages re-pointed to the seeded channels;
+ * see ghostChannels.contract.test.ts, which now forbids them outright).
  */
 
 const stylesDir = resolve(dirname(fileURLToPath(import.meta.url)));
 const packageDir = resolve(stylesDir, "..", "..");
 const legacyDir = resolve(packageDir, "..", "theme", "styles");
 
-/** Slots this guard cannot hold to the seed, with the reason above. */
-const UNSEEDED = ["--color-bg-secondary", "--color-bg-tertiary", "--color-danger"];
+/** Slots this guard cannot hold to the seed. The 2026-10-19 re-pointing
+ *  paid the debt this list used to record; it stays as an empty-seeded
+ *  invariant — a NEW unseeded slot must be justified here, not smuggled in. */
+const UNSEEDED: string[] = [];
 
 function read(path: string): string {
   return readFileSync(path, "utf8");

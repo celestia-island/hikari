@@ -331,7 +331,7 @@ impl StyledComponent for CalendarComponent {
     background-color: var(--hi-color-primary);
     color: var(--hi-color-icon-on-solid, #ffffff);
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-color-primary-glow);
+    box-shadow: 0 0 8px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
 }
 
 .hk-calendar-nav-button:disabled {
@@ -388,14 +388,14 @@ impl StyledComponent for CalendarComponent {
 }
 
 .hk-calendar-day:hover {
-    background-color: var(--hi-color-primary-bg);
+    background-color: var(--hi-color-primary-bg, rgba(59, 130, 246, 0.12));
     color: var(--hi-color-primary);
 }
 
 .hk-calendar-day.hk-calendar-day-selected {
     background-color: var(--hi-color-primary);
     color: var(--hi-color-text-on-solid, #ffffff);
-    box-shadow: 0 0 12px var(--hi-color-primary-glow);
+    box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
 }
 
 .hk-calendar-day-today {

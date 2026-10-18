@@ -300,7 +300,7 @@ impl StyledComponent for DrawerComponent {
 }
 
 .hk-drawer-close:hover {
-  background: var(--hi-color-hover);
+  background: var(--hi-color-hover, rgba(127, 127, 127, 0.08));
   color: var(--hi-text-primary);
 }
 

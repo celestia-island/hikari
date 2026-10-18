@@ -25,7 +25,7 @@
     transform: translateY(-50%);
     background-color: var(--hi-color-border, #e8e8e8);
     border-radius: 2px;
-    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: background-color 0.2s ease;
 }
 
 .hk-slider-track {
@@ -35,8 +35,8 @@
     transform: translateY(-50%);
     background-color: var(--hi-color-primary, #1890ff);
     border-radius: 2px;
-    transition: width var(--hikari-duration-fast, 0.1s) linear,
-                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: width 0.1s linear,
+                background-color 0.2s ease;
 }
 
 .hk-slider-handle {
@@ -49,9 +49,9 @@
     border: 2px solid #fff;
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform var(--hikari-duration-fast, 0.15s) var(--hikari-ease-smooth, ease),
-                box-shadow var(--hikari-duration-fast, 0.15s) var(--hikari-ease-smooth, ease),
-                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: transform 0.15s ease,
+                box-shadow 0.15s ease,
+                background-color 0.2s ease;
     z-index: 1;
 }
 
@@ -123,5 +123,5 @@
 
 // Focus state for accessibility
 .hk-slider:focus-within .hk-slider-handle {
-    box-shadow: 0 0 0 3px var(--hi-color-primary-glow, rgba(24, 144, 255, 0.2));
+    box-shadow: 0 0 0 3px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.2));
 }

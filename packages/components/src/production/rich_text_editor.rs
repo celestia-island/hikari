@@ -102,7 +102,7 @@ impl StyledComponent for RichTextEditorComponent {
 
 .hk-rich-text-editor:focus-within {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 2px var(--hi-color-primary-glow);
+    box-shadow: 0 0 2px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
 }
 
 .hk-rich-text-editor-toolbar {
@@ -130,7 +130,7 @@ impl StyledComponent for RichTextEditorComponent {
 }
 
 .hk-rich-text-editor-toolbar-button:hover {
-    background-color: var(--hi-color-primary-bg);
+    background-color: var(--hi-color-primary-bg, rgba(59, 130, 246, 0.12));
     color: var(--hi-color-primary);
 }
 

@@ -211,6 +211,36 @@ pub struct ThemePalette {
     pub focus_brightness_danger: String,
     pub focus_brightness_warning: String,
     pub focus_brightness_info: String,
+
+    /// Interaction-state aliases the component stylesheets consume. The
+    /// 2026-10-19 color audit found every one of these names referenced —
+    /// many with NO fallback — while nothing emitted them, so hover washes,
+    /// glow rings and status pulses silently resolved to nothing. They are
+    /// emitted here mode-aware, under exactly the names the stylesheets
+    /// already spell; do not rename without sweeping the scss/rs consumers.
+    pub color_hover: String,
+    pub surface_hover: String,
+    pub surface_light: String,
+    pub color_background_light: String,
+    pub color_primary_hover: String,
+    pub color_primary_bg: String,
+    pub color_primary_light: String,
+    pub color_primary_glow: String,
+    pub color_success_10: String,
+    pub color_success_30: String,
+    pub color_success_50: String,
+    pub color_danger_40: String,
+    pub color_error_rgb: String,
+    pub color_success_rgb: String,
+    pub color_black_15: String,
+    pub color_text_placeholder: String,
+    pub color_text_tertiary: String,
+    pub color_gray_200: String,
+    pub color_gray_600: String,
+    pub dropdown_bg: String,
+    pub dropdown_border: String,
+    pub panel_header_bg: String,
+    pub input_border_hover: String,
 }
 
 impl ThemePalette {
@@ -331,6 +361,76 @@ impl ThemePalette {
             focus_brightness_success: palette.focus_brightness_filter(&palette.success),
             focus_brightness_warning: palette.focus_brightness_filter(&palette.warning),
             focus_brightness_info: palette.focus_brightness_filter(&palette.accent),
+
+            color_hover: if palette.mode == ThemeMode::Light {
+                "rgba(0, 0, 0, 0.05)".to_string()
+            } else {
+                "rgba(255, 255, 255, 0.08)".to_string()
+            },
+            surface_hover: if palette.mode == ThemeMode::Light {
+                "rgba(0, 0, 0, 0.08)".to_string()
+            } else {
+                "rgba(255, 255, 255, 0.10)".to_string()
+            },
+            surface_light: if palette.mode == ThemeMode::Light {
+                "rgba(255, 255, 255, 0.65)".to_string()
+            } else {
+                "rgba(255, 255, 255, 0.06)".to_string()
+            },
+            color_background_light: if palette.mode == ThemeMode::Light {
+                "rgba(0, 0, 0, 0.04)".to_string()
+            } else {
+                "rgba(255, 255, 255, 0.05)".to_string()
+            },
+            color_primary_hover: palette.primary.rgba(0.85),
+            color_primary_bg: palette.primary.rgba(0.12),
+            color_primary_light: palette.primary.rgba(0.10),
+            color_primary_glow: palette.button_glow_color(&palette.primary),
+            color_success_10: palette.success.rgba(0.10),
+            color_success_30: palette.success.rgba(0.30),
+            color_success_50: palette.success.rgba(0.50),
+            color_danger_40: palette.danger.rgba(0.40),
+            color_error_rgb: format!(
+                "{}, {}, {}",
+                palette.danger.r(),
+                palette.danger.g(),
+                palette.danger.b()
+            ),
+            color_success_rgb: format!(
+                "{}, {}, {}",
+                palette.success.r(),
+                palette.success.g(),
+                palette.success.b()
+            ),
+            color_black_15: "rgba(0, 0, 0, 0.15)".to_string(),
+            color_text_placeholder: palette.text_secondary.rgba(0.75),
+            color_text_tertiary: palette.text_secondary.rgba(0.70),
+            color_gray_200: if palette.mode == ThemeMode::Light {
+                "#E5E7EB".to_string()
+            } else {
+                "rgba(255, 255, 255, 0.12)".to_string()
+            },
+            color_gray_600: if palette.mode == ThemeMode::Light {
+                "#4B5563".to_string()
+            } else {
+                "rgba(255, 255, 255, 0.65)".to_string()
+            },
+            dropdown_bg: if palette.mode == ThemeMode::Light {
+                "rgba(255, 255, 255, 0.95)".to_string()
+            } else {
+                "rgba(30, 30, 30, 0.95)".to_string()
+            },
+            dropdown_border: if palette.mode == ThemeMode::Light {
+                "rgba(0, 0, 0, 0.10)".to_string()
+            } else {
+                "rgba(255, 255, 255, 0.10)".to_string()
+            },
+            panel_header_bg: if palette.mode == ThemeMode::Light {
+                "rgba(255, 255, 255, 0.90)".to_string()
+            } else {
+                "rgba(55, 55, 55, 0.90)".to_string()
+            },
+            input_border_hover: palette.primary.rgba(0.50),
         }
     }
 
@@ -501,7 +601,148 @@ impl ThemePalette {
             format!("--hi-aside-bg: {};", self.aside_bg),
             format!("--hi-header-bg: {};", self.header_bg),
             format!("--hi-menu-hover-glow: {};", self.menu_hover_glow),
+            // Interaction-state aliases — see the struct field docs.
+            format!("--hi-color-hover: {};", self.color_hover),
+            format!("--hi-surface-hover: {};", self.surface_hover),
+            format!("--hi-surface-light: {};", self.surface_light),
+            format!(
+                "--hi-color-background-light: {};",
+                self.color_background_light
+            ),
+            format!("--hi-color-primary-hover: {};", self.color_primary_hover),
+            format!("--hi-color-primary-bg: {};", self.color_primary_bg),
+            format!("--hi-color-primary-light: {};", self.color_primary_light),
+            format!("--hi-color-primary-glow: {};", self.color_primary_glow),
+            format!("--hi-color-success-10: {};", self.color_success_10),
+            format!("--hi-color-success-30: {};", self.color_success_30),
+            format!("--hi-color-success-50: {};", self.color_success_50),
+            format!("--hi-color-danger-40: {};", self.color_danger_40),
+            format!("--hi-color-error-rgb: {};", self.color_error_rgb),
+            format!("--hi-color-success-rgb: {};", self.color_success_rgb),
+            format!("--hi-color-black-15: {};", self.color_black_15),
+            format!(
+                "--hi-color-text-placeholder: {};",
+                self.color_text_placeholder
+            ),
+            format!("--hi-color-text-tertiary: {};", self.color_text_tertiary),
+            format!("--hi-color-gray-200: {};", self.color_gray_200),
+            format!("--hi-color-gray-600: {};", self.color_gray_600),
+            format!("--hi-dropdown-bg: {};", self.dropdown_bg),
+            format!("--hi-dropdown-border: {};", self.dropdown_border),
+            format!("--hi-panel-header-bg: {};", self.panel_header_bg),
+            format!("--hi-input-border-hover: {};", self.input_border_hover),
         ]
         .join(" ")
+    }
+}
+
+#[cfg(test)]
+mod interaction_alias_tests {
+    use super::*;
+
+    /// Source contract for the interaction-alias block (2026-10-19 color
+    /// audit): every alias below was ALREADY referenced by the crate
+    /// stylesheets — many with no fallback — before this block started
+    /// emitting it. Removing an emission line silently re-kills those
+    /// faces (hover washes → transparent, glows → none), so each name is
+    /// pinned here by its exact consumer spelling.
+    #[test]
+    fn emits_every_interaction_alias_the_stylesheets_consume() {
+        let palette = ThemePalette::from_palette(&default_theme());
+        let css = palette.css_variables();
+        for name in [
+            "--hi-color-hover:",
+            "--hi-surface-hover:",
+            "--hi-surface-light:",
+            "--hi-color-background-light:",
+            "--hi-color-primary-hover:",
+            "--hi-color-primary-bg:",
+            "--hi-color-primary-light:",
+            "--hi-color-primary-glow:",
+            "--hi-color-success-10:",
+            "--hi-color-success-30:",
+            "--hi-color-success-50:",
+            "--hi-color-danger-40:",
+            "--hi-color-error-rgb:",
+            "--hi-color-success-rgb:",
+            "--hi-color-black-15:",
+            "--hi-color-text-placeholder:",
+            "--hi-color-text-tertiary:",
+            "--hi-color-gray-200:",
+            "--hi-color-gray-600:",
+            "--hi-dropdown-bg:",
+            "--hi-dropdown-border:",
+            "--hi-panel-header-bg:",
+            "--hi-input-border-hover:",
+        ] {
+            assert!(
+                css.contains(name),
+                "css_variables() stopped emitting {name} — its scss/rs consumers resolve to nothing again"
+            );
+        }
+    }
+
+    /// Value pin (R2 adversarial round): the name-only contract above stays
+    /// green if a mode branch is swapped (light wash on dark ink) or if a
+    /// name is emitted twice with disagreeing values (cascade order would
+    /// silently pick the loser). Pin direction, palette derivation and
+    /// single-emission instead.
+    #[test]
+    fn interaction_alias_values_are_mode_correct_and_emitted_once() {
+        let light = ThemePalette::from_palette(&default_theme());
+        let dark = ThemePalette::from_palette(&dark_theme());
+
+        // 1. every mode-branched alias must differ across modes…
+        for (l, d) in [
+            (&light.color_hover, &dark.color_hover),
+            (&light.surface_hover, &dark.surface_hover),
+            (&light.surface_light, &dark.surface_light),
+            (&light.color_background_light, &dark.color_background_light),
+            (&light.color_gray_200, &dark.color_gray_200),
+            (&light.color_gray_600, &dark.color_gray_600),
+            (&light.dropdown_bg, &dark.dropdown_bg),
+            (&light.dropdown_border, &dark.dropdown_border),
+            (&light.panel_header_bg, &dark.panel_header_bg),
+        ] {
+            assert_ne!(l, d, "mode-branched alias collapsed to one value");
+        }
+
+        // 2. …in the right direction (a swapped branch would emit the dark
+        //    wash under the light palette and vice versa).
+        assert_eq!(light.color_hover, "rgba(0, 0, 0, 0.05)");
+        assert_eq!(dark.color_hover, "rgba(255, 255, 255, 0.08)");
+        assert_eq!(light.dropdown_bg, "rgba(255, 255, 255, 0.95)");
+        assert_eq!(dark.dropdown_bg, "rgba(30, 30, 30, 0.95)");
+
+        // 3. palette-derived aliases must carry the palette's own channels.
+        let lp = default_theme();
+        assert_eq!(
+            light.color_error_rgb,
+            format!("{}, {}, {}", lp.danger.r(), lp.danger.g(), lp.danger.b())
+        );
+        assert_eq!(light.input_border_hover, lp.primary.rgba(0.50));
+
+        // 4. each pinned alias is emitted exactly once, and the emitted
+        //    string is the field value (catches disagreeing duplicates).
+        let css = light.css_variables();
+        for (name, value) in [
+            ("--hi-color-hover:", &light.color_hover),
+            ("--hi-surface-hover:", &light.surface_hover),
+            ("--hi-dropdown-bg:", &light.dropdown_bg),
+            ("--hi-panel-header-bg:", &light.panel_header_bg),
+        ] {
+            assert_eq!(
+                css.matches(name).count(),
+                1,
+                "{name} emitted more than once — cascade order decides, not the palette"
+            );
+            let emitted = css
+                .split(name)
+                .nth(1)
+                .and_then(|rest| rest.split(';').next())
+                .unwrap_or_default()
+                .trim();
+            assert_eq!(emitted, value, "emitted {name} disagrees with the field");
+        }
     }
 }

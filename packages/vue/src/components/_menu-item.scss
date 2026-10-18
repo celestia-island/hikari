@@ -133,7 +133,13 @@
   appearance: none;
   user-select: none;
   -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  /* Ride the canonical reset policy: this component sheet is also exported
+     standalone, so it keeps the token fallback (transparent) and honours the
+     document-level native escape hatch. */
+  -webkit-tap-highlight-color: var(--hk-tap-highlight-color, transparent);
+  html[data-hk-tap-highlight='native'] & {
+    -webkit-tap-highlight-color: revert;
+  }
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 
   &:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]) {

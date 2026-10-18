@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as sass from "sass";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -29,6 +30,25 @@ describe("host reset sheet", () => {
     const index = read("index.scss");
     const first = index.match(/^@use "([^"]+)";/m)?.[1];
     expect(first).toBe("./reset.scss");
+  });
+
+  it("clears the UA tap highlight at the root (mobile parity)", () => {
+    // Regression guard for the #325 contract: #480 retired the Gen-1
+    // foundation sheet, and #523/#861 composed this reset without the
+    // tap rule, so chest/hydro silently re-gained the Android blue
+    // overlay. Removing either half of this contract must fail here.
+    //
+    // Assert on the COMPILED sheet (compressed drops both comment
+    // styles): raw-text matching would pass on a commented-out rule.
+    const { css } = sass.compile(resolve(stylesDir, "reset.scss"), {
+      style: "compressed",
+    });
+    expect(css).toMatch(
+      /html\s*\{[^}]*?-webkit-tap-highlight-color:\s*var\(--hk-tap-highlight-color,\s*transparent\)/,
+    );
+    expect(css).toMatch(
+      /html\[data-hk-tap-highlight=(?:"|')?native(?:"|')?\]\s*\{[^}]*?-webkit-tap-highlight-color:\s*revert/,
+    );
   });
 
   it("normalizes the native control typography chain", () => {

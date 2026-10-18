@@ -25,6 +25,25 @@
 
 html {
   line-height: 1.5;
+
+  /* Mobile tap highlight (UA-owned): Blink/WebKit paint a translucent
+   * overlay over the tapped node — Android Chrome measures
+   * rgba(51, 181, 229, 0.4) in mobile emulation. The property is
+   * inherited, so this root declaration covers every element (including
+   * shadow trees). Hosts opt into a themed tint with
+   * --hk-tap-highlight-color, or restore the UA default with
+   * data-hk-tap-highlight="native".
+   *
+   * This is the canonical home of the #325 tap-highlight contract. It
+   * first lived in the Gen-1 foundation sheet; #480 retired that sheet
+   * and #523/#861 replaced it with this reset, which then missed the
+   * rule — every host composing the canonical entry silently regained
+   * the blue flash. Keep it here, not in a host stylesheet. */
+  -webkit-tap-highlight-color: var(--hk-tap-highlight-color, transparent);
+}
+
+html[data-hk-tap-highlight='native'] {
+  -webkit-tap-highlight-color: revert;
 }
 
 body {

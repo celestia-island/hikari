@@ -483,7 +483,7 @@ describe("HkModalBreadcrumb label budget", () => {
     expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeNull();
   });
 
-  it("opens the reveal instead of the hidden-layers menu", async () => {
+  it("opens the reveal instead of the all-layers menu", async () => {
     // The two surfaces are never open together: tapping a crumb closes the
     // menu it was opened from (its leave plays out, so the logical state is
     // what the assertion reads).
@@ -905,34 +905,52 @@ describe("HkModalBreadcrumb overflow fold", () => {
   });
 });
 
-describe("HkModalBreadcrumb hidden-layers menu", () => {
+describe("HkModalBreadcrumb all-layers menu", () => {
   function registerStack(extraTitle: string): void {
     STACK_TITLES.forEach((title) => manager.register("modal", true, title));
     manager.register("modal", true, extraTitle);
   }
 
-  it("lists the folded layers with their full names", async () => {
+  it("lists every layer reversed, full names, current row selected", async () => {
     setViewport(360);
     registerStack("细节");
     await mountStrip();
     const allTitles = [...STACK_TITLES, "细节"];
-    // The tail that stays on the strip before the menu opens: the menu
-    // snapshots exactly the layers this run folds away.
-    const tailBefore = labels();
     expect(more()).not.toBeNull();
-    expect(tailBefore.length).toBeGreaterThan(0);
-    expect(tailBefore.length).toBeLessThan(allTitles.length);
 
     more()!.click();
     await nextTick();
     await nextTick();
     const rows = menuRows();
-    // Full names, in stack order — the strip's clamp never reaches here.
+    // EVERY layer, topmost first (reverse stack order) — not just the
+    // folded prefix — with full names: the strip's clamp never reaches
+    // here.
     expect(rows.map((row) => row.textContent)).toEqual(
-      allTitles.slice(0, allTitles.length - tailBefore.length),
+      allTitles.slice().reverse(),
     );
-    expect(rows.map((row) => row.textContent)).not.toContain(LONG_TAIL);
     expect(rows.some((row) => row.textContent?.includes("…"))).toBe(false);
+    // The current layer is marked with the unified menu-item grammar's
+    // selected face (HkMenuActionItem `active` → [data-active]), and it
+    // is the ONLY selected row.
+    const selected = rows.filter((row) => row.hasAttribute("data-active"));
+    expect(selected).toHaveLength(1);
+    expect(selected[0].textContent).toBe("细节");
+  });
+
+  it("never lists the menu's own sheet among the layers", async () => {
+    setViewport(360);
+    registerStack("细节");
+    await mountStrip();
+    more()!.click();
+    await nextTick();
+    await nextTick();
+    // The sheet form registered as a blocking layer (the strip itself
+    // lists it as a crumb — see the docking test below), yet the menu's
+    // rows stay the WINDOWS only: selecting "the menu" is not a place
+    // to go.
+    const rows = menuRows();
+    expect(rows.map((row) => row.textContent)).not.toContain("All layers");
+    expect(rows).toHaveLength(STACK_TITLES.length + 1);
   });
 
   it("docks the menu as a bottom-up sheet on mobile", async () => {
@@ -950,12 +968,12 @@ describe("HkModalBreadcrumb hidden-layers menu", () => {
     // window layer — it is named, and it counts as a layer of the stack it
     // was opened from.
     const blocking = [...manager.registry.value.values()].filter((entry) => entry.blocking);
-    expect(blocking.map((entry) => entry.title)).toContain("Hidden layers");
+    expect(blocking.map((entry) => entry.title)).toContain("All layers");
     // It is a window layer in every sense — including naming itself as the
     // current crumb of the very strip it was opened from.
     expect(
       strip()!.querySelector(".hk-modal-breadcrumb-item-current")!.textContent,
-    ).toBe("Hidden layers");
+    ).toBe("All layers");
   });
 
   it("drops the trigger and the menu once the stack stops folding", async () => {
@@ -971,8 +989,9 @@ describe("HkModalBreadcrumb hidden-layers menu", () => {
     expect(more()!.getAttribute("aria-expanded")).toBe("true");
 
     // Wide enough for the whole stack, still the same form factor (so the
-    // popover's own breakpoint rule is not what closes it): nothing is left
-    // to list, and the trigger the menu is anchored to must go with it.
+    // popover's own breakpoint rule is not what closes it): the strip now
+    // shows every layer itself, and the trigger the menu is anchored to
+    // goes with it.
     setViewport(760);
     await until(
       () =>
@@ -993,7 +1012,7 @@ describe("HkModalBreadcrumb hidden-layers menu", () => {
     const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
     expect(panel).toBeTruthy();
     expect(panel.classList.contains("hk-is-sheet")).toBe(false);
-    expect(panel.getAttribute("aria-label")).toBe("Hidden layers");
+    expect(panel.getAttribute("aria-label")).toBe("All layers");
     expect(document.body.querySelector(".hk-popover-scrim")).toBeNull();
     // Anchored = a hidden level: nothing new joins the window stack.
     expect([...manager.registry.value.values()].filter((entry) => entry.blocking)).toHaveLength(0);
@@ -1015,15 +1034,19 @@ describe("HkModalBreadcrumb hidden-layers menu", () => {
     await nextTick();
     const rows = menuRows();
     expect(rows.length).toBeGreaterThan(1);
-    expect(rows[0].textContent).toBe(LONG);
+    // Reversed order: the topmost layer (the no-close-channel one) leads.
+    expect(rows[0].textContent).toBe("没有关闭通道的层级占位文本");
 
-    // Pick the SECOND folded layer: everything above it closes, it and
+    // Rows are reverse stack order: past the no-channel topmost (row 0),
+    // rows[k] is STACK_TITLES[STACK_TITLES.length - k] — pick k = 3,
+    // i.e. STACK_TITLES[5]; everything above it closes, it and
     // everything below it stay.
-    rows[1].click();
+    rows[3].click();
     await nextTick();
-    expect(closes[0]).not.toHaveBeenCalled();
-    expect(closes[1]).not.toHaveBeenCalled();
-    for (let i = 2; i < closes.length; i++) {
+    for (let i = 0; i <= 5; i++) {
+      expect(closes[i]).not.toHaveBeenCalled();
+    }
+    for (let i = 6; i < closes.length; i++) {
       expect(closes[i]).toHaveBeenCalledTimes(1);
     }
     expect(manager.registry.value.has(noChannel.id)).toBe(true);

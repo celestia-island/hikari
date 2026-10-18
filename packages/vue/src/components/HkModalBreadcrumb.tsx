@@ -71,7 +71,7 @@ export default defineComponent({
      * both viewport edges (2026-09-16 report). The ellipsis counts inside the
      * budget: a 10-unit cap renders ten ideographs, or nine plus the
      * ellipsis. Full names stay in the DOM for assistive tech and in the
-     * hidden-layers menu.
+     * all-layers menu.
      */
     maxLabelUnits: { type: Number, default: 10 },
     /**
@@ -287,16 +287,40 @@ export default defineComponent({
     const tail = computed(() => crumbs.value.slice(hiddenCount.value));
     const folded = computed(() => hidden.value.length > 0);
 
-    // ── Hidden-layers menu ────────────────────────────────────────────
-    // The trigger lists the layers it folded away, in stack order, with
-    // their FULL names — the strip's clamp never reaches this menu.
-    // HkPopover owns the form-factor rules (anchored under the trigger on
-    // desktop, bottom-up sheet on mobile) and registers the surface with
-    // the popup manager, so the menu is a first-class layer of the very
-    // stack it lists.
+    // ── All-layers menu ──────────────────────────────────────────────
+    // The trigger lists EVERY layer of the stack, topmost first, with
+    // their FULL names — the strip's clamp never reaches this menu. The
+    // layer the user is currently on is marked with the menu row's own
+    // selected face (HkMenuActionItem `active` → the unified menu-item
+    // grammar's [data-active] box). HkPopover owns the form-factor rules
+    // (anchored under the trigger on desktop, bottom-up sheet on mobile)
+    // and registers the surface with the popup manager, so the menu is a
+    // first-class layer of the very stack it lists — and must not list
+    // ITSELF: the popover's `registered` handle tells this strip which
+    // layer to drop from the rows.
     const menuOpen = ref(false);
-    const menuItems = ref<{ id: string; label: string }[]>([]);
-    const menuLabel = computed(() => t("hikari::modal.hiddenLayers", "Hidden layers"));
+    const menuSheetId = ref<string | null>(null);
+    const menuLabel = computed(() => t("hikari::modal.allLayers", "All layers"));
+
+    /** Live rows: every stack layer but the menu's own surface, topmost
+     *  first (reverse stack order — the current layer leads the list).
+     *  Live, not a snapshot, so an anchored desktop menu keeps agreeing
+     *  with a stack that changed underneath it. */
+    const menuItems = computed<{ id: string; label: string; current: boolean }[]>(() => {
+      const layers = stackEntries.value.filter((entry) => entry.id !== menuSheetId.value);
+      return layers
+        .slice()
+        .reverse()
+        .map((entry, i) => ({
+          id: entry.id,
+          label:
+            entry.title ||
+            (entry.kind === "dropdown"
+              ? t("hikari::modal.unnamedSheet", "Menu")
+              : t("hikari::modal.unnamedWindow", "Window")),
+          current: i === 0,
+        }));
+    });
 
     /** The trigger must stay mounted while its menu is open (the popover
      *  anchors to it); a stack change that unfolds everything mid-menu
@@ -304,29 +328,37 @@ export default defineComponent({
     const triggerShown = computed(() => folded.value || menuOpen.value);
 
     function openMenu(): void {
-      if (!hidden.value.length) return;
+      if (!crumbs.value.length) return;
       // The two surfaces are never open together — and the symmetric close
       // matters on a phone: the strip paints above the sheet's scrim, so
       // its trigger stays tappable while a reveal is docked (review round
       // two), and a menu opening underneath it would leave the pair
       // fighting over one Escape.
       revealed.value = null;
-      menuItems.value = hidden.value.map(({ id, label }) => ({ id, label }));
       menuOpen.value = true;
     }
 
-    /** Jump back to a folded layer: the menu closes and everything stacked
+    /** Jump to a listed layer: the menu closes and everything stacked
      *  ABOVE the chosen level is asked to close, top-down. The close rides
      *  the popup manager's per-entry close channel, so a layer whose owner
      *  registered none simply stays — the strip never guesses at foreign
-     *  state. */
+     *  state. The CURRENT layer sits on top with nothing above it, so
+     *  picking it just dismisses the menu. */
     function selectLayer(id: string): void {
       menuOpen.value = false;
       manager.closeAbove(id);
     }
 
-    // Unfolding everything while the menu is open leaves nothing to list:
-    // drop the menu rather than keep a stale snapshot on screen.
+    // The menu's own sheet id is only meaningful while that surface lives;
+    // drop it when the surface goes so a FUTURE popover registration is
+    // never mistaken for "the menu".
+    function onMenuClosed(): void {
+      menuSheetId.value = null;
+    }
+
+    // Unfolding everything while the menu is open dissolves the trigger's
+    // reason to exist — the strip itself now shows every layer, so the
+    // anchored pair steps aside instead of duplicating it.
     watch(folded, (stillFolded) => {
       if (!stillFolded) menuOpen.value = false;
     });
@@ -702,12 +734,20 @@ export default defineComponent({
             sheetOnMobile
             title={menuLabel.value}
             class="hk-modal-breadcrumb-menu"
+            // The menu's own registry handle: while the sheet form blocks,
+            // it is a layer of the very stack this menu lists — the rows
+            // must skip it (selecting "the menu" is not a place to go).
+            onRegistered={(handle: { id: string }) => {
+              menuSheetId.value = handle.id;
+            }}
+            onClosed={onMenuClosed}
           >
             <HkMenuPanel label={menuLabel.value}>
               {menuItems.value.map((item) => (
                 <HkMenuActionItem
                   key={item.id}
                   label={item.label}
+                  active={item.current}
                   onClick={() => selectLayer(item.id)}
                 />
               ))}

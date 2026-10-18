@@ -95,7 +95,7 @@ describe("HkModalBreadcrumb overflow fence", () => {
     expect(offset).toBeGreaterThan(clearance);
   });
 
-  it("routes the hidden-layers menu through the shared form-factor rule", () => {
+  it("routes the all-layers menu through the shared form-factor rule", () => {
     // HkPopover owns "anchored under the trigger on desktop, bottom-up
     // sheet on mobile" and registers the surface with the popup manager;
     // a bespoke panel here would fork that behaviour.

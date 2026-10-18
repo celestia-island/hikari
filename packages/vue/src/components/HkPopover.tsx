@@ -85,6 +85,12 @@ export default defineComponent({
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
+    /** Fired when the surface joins the popup registry — the handle
+     *  (id + zIndex) is the surface's identity as a stack layer. Hosts
+     *  that reason about the WINDOW STACK (the modal breadcrumb listing
+     *  every layer but its own sheet) use this edge to tell the
+     *  popover's layer apart from the windows it floats above. */
+    registered: (_handle: PopupHandle) => true,
     /** Fired once the close has fully settled (the leave transition
      * completed and the panel left the DOM) — the moment focus that
      * lived inside the closing panel falls back to <body>. Hosts that
@@ -169,13 +175,15 @@ export default defineComponent({
           // they govern accidental DISMISSAL GESTURES, not closability, and
           // the sheet always renders its own ✕ (this popover has no
           // `closable` to mirror HkModal's).
-          handle.value = manager.register(
+          const registered = manager.register(
             "dropdown",
             false,
             props.title || undefined,
             sheetMode.value,
             close,
           );
+          handle.value = registered;
+          emit("registered", registered);
           if (sheetMode.value) {
             // Bottom sheet: nothing to anchor-measure; the scrim handles
             // dismissal (the outside-click shield is desktop-only).

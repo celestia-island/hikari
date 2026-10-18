@@ -104,7 +104,7 @@
         (var(--hk-icon-group-item-size) + var(--hk-icon-group-slider-gap))
     )
   );
-  transition: transform var(--duration, 0.18s) ease;
+  transition: transform var(--duration-short, 0.15s) ease;
   pointer-events: none;
 }
 

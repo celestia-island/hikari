@@ -80,17 +80,21 @@
 // dark-on-amber warning text for contrast).
 .hk-blocking-toast-info {
   background: var(--hi-color-info, #6abed6);
-  color: #fff;
+  /* On-solid content: ride the canonical slot (HkToast family), keep the
+   * #fff fallback so themeless hosts render as before. */
+  color: var(--hi-color-text-on-solid, #fff);
 }
 
 .hk-blocking-toast-warning {
   background: var(--hi-color-warning, #eed677);
+  /* Deliberate DARK-on-amber: the warning band is light by design, and
+   * the on-solid slot is white — a white glyph here would be unreadable. */
   color: #1c1c1e;
 }
 
 .hk-blocking-toast-danger {
   background: var(--hi-color-danger, #f85149);
-  color: #fff;
+  color: var(--hi-color-text-on-danger, #fff);
 }
 
 // ── Actions on a tinted surface ─────────────────────────────────────

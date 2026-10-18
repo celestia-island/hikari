@@ -196,8 +196,8 @@
 
   &:hover,
   &:focus-visible {
-    color: rgb(var(--color-danger, 240 70 80));
-    background: rgb(var(--color-danger, 240 70 80) / 12%);
+    color: rgb(var(--color-error, 247 118 142));
+    background: rgb(var(--color-error, 247 118 142) / 12%);
   }
 }
 

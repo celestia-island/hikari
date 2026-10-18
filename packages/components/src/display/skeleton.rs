@@ -392,7 +392,7 @@ impl StyledComponent for SkeletonComponent {
     background: linear-gradient(
         90deg,
         var(--hi-surface) 25%,
-        var(--hi-surface-hover) 50%,
+        var(--hi-surface-hover, rgba(127, 127, 127, 0.16)) 50%,
         var(--hi-surface) 75%
     );
     background-size: 200% 100%;

@@ -115,8 +115,10 @@
 }
 
 .hk-toast-loading-spinner {
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  /* The spinner rides the toast's SOLID band, so its glyph is on-solid
+   * content: ride the on-solid slot (white by default, theme-following) */
+  border: 2px solid rgb(var(--color-on-solid-text, 255 255 255) / 30%);
+  border-top-color: rgb(var(--color-on-solid-text, 255 255 255));
   border-radius: 50%;
   animation: hk-toast-spin 0.7s linear infinite;
   box-sizing: border-box;

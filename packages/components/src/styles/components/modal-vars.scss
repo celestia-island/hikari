@@ -88,9 +88,9 @@
   // 6. Typography System
   // ------
 
-  --hi-modal-title-font-size: var(--hi-font-size-lg);
+  --hi-modal-title-font-size: var(--hi-font-size-lg, 1.125rem);
   --hi-modal-title-font-weight: 600;
-  --hi-modal-body-font-size: var(--hi-font-size-sm);
+  --hi-modal-body-font-size: var(--hi-font-size-sm, 0.8125rem);
   --hi-modal-body-line-height: 1.6;
 
   // ------

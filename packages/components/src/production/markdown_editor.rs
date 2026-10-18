@@ -436,7 +436,7 @@ impl StyledComponent for MarkdownEditorComponent {
 
 .hk-markdown-editor:focus-within {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 0 2px var(--hi-color-primary-glow);
+    box-shadow: 0 0 0 2px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
 }
 
 [data-theme="dark"] .hk-markdown-editor {
@@ -481,7 +481,7 @@ impl StyledComponent for MarkdownEditorComponent {
 }
 
 .hk-markdown-editor-toolbar-button:hover {
-    background-color: var(--hi-color-hover);
+    background-color: var(--hi-color-hover, rgba(127, 127, 127, 0.08));
     color: var(--hi-text-primary);
 }
 
@@ -518,7 +518,7 @@ impl StyledComponent for MarkdownEditorComponent {
 }
 
 .hk-markdown-editor-textarea::placeholder {
-    color: var(--hi-text-tertiary);
+    color: var(--hi-color-text-tertiary, rgba(127, 127, 127, 0.75));
 }
 
 .hk-markdown-editor-preview {

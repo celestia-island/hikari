@@ -21,7 +21,7 @@
   transition: background 0.2s ease;
 
   &:hover {
-    background: var(--hi-color-background-light, #f9fafb);
+    background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
   }
 
   &.hk-virtual-scroll-item-disabled {
@@ -44,7 +44,7 @@
   align-items: center;
   justify-content: center;
   padding: 64px;
-  color: var(--hi-color-text-placeholder, #999999);
+  color: var(--hi-color-text-placeholder, rgba(127, 127, 127, 0.75));
   font-size: 14px;
 }
 
@@ -55,6 +55,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--hi-color-text-placeholder, #999999);
+  color: var(--hi-color-text-placeholder, rgba(127, 127, 127, 0.75));
   font-size: 14px;
 }

@@ -353,7 +353,7 @@ impl StyledComponent for UserGuideComponent {
 }
 
 .hk-user-guide-skip-button:hover {
-    background-color: var(--hi-color-hover);
+    background-color: var(--hi-color-hover, rgba(127, 127, 127, 0.08));
     color: var(--hi-text-primary);
 }
 
@@ -379,7 +379,7 @@ impl StyledComponent for UserGuideComponent {
 }
 
 .hk-user-guide-nav-button:hover {
-    background-color: var(--hi-color-hover);
+    background-color: var(--hi-color-hover, rgba(127, 127, 127, 0.08));
 }
 
 .hk-user-guide-primary-button {
@@ -389,8 +389,8 @@ impl StyledComponent for UserGuideComponent {
 }
 
 .hk-user-guide-primary-button:hover {
-    background-color: var(--hi-color-primary-hover);
-    border-color: var(--hi-color-primary-hover);
+    background-color: var(--hi-color-primary-hover, rgba(59, 130, 246, 0.85));
+    border-color: var(--hi-color-primary-hover, rgba(59, 130, 246, 0.85));
 }
 
 .hk-user-guide-progress {

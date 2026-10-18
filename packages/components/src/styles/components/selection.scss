@@ -16,12 +16,12 @@
 }
 
 .hk-selection-cell:hover {
-  background: var(--hi-color-background-light, #f9fafb);
+  background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
 }
 
 .hk-selection-header-cell {
   padding: 8px 12px;
-  background: var(--hi-color-background-light, #f9fafb);
+  background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
   font-weight: 500;
 }
 
@@ -33,5 +33,5 @@
 
 .hk-select-all-label {
   font-size: 14px;
-  color: var(--hi-color-text, #333333);
+  color: var(--hi-color-text-primary, #333333);
 }

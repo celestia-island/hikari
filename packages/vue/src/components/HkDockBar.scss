@@ -117,8 +117,14 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   /* Reverse soft light — dark mode: white halo; light mode: soft black
-   * shadow. Strength scales with --glow-scale (Style → Shadow). */
-  box-shadow: var(--glow-dock);
+   * shadow. Strength scales with --glow-scale (Style → Shadow). The
+   * default derives the halo from the theme's own ink channel, which IS
+   * mode-reversed — before 2026-10-19 the bare var(--glow-dock) had no
+   * publisher and no fallback, so the dock halo silently never rendered. */
+  box-shadow: var(
+    --glow-dock,
+    0 8px 32px rgb(var(--color-text, 30 30 30) / calc(8% * var(--glow-scale, 1)))
+  );
 }
 
 /* Vertical side docks (west / east edges) stack along the viewport's

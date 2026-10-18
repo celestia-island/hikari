@@ -19,18 +19,18 @@
   border: 1px solid var(--hi-color-border, #e5e7eb);
   border-radius: 4px;
   background: var(--hi-color-background, #ffffff);
-  color: var(--hi-color-text, #333333);
+  color: var(--hi-color-text-primary, #333333);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: var(--hi-color-background-light, #f9fafb);
+    background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
     border-color: var(--hi-color-primary, #00a0e9);
   }
 
   &.hk-filter-trigger-active {
-    background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
+    background: var(--hi-color-primary-light, rgba(127, 127, 127, 0.12));
     border-color: var(--hi-color-primary, #00a0e9);
   }
 }
@@ -85,13 +85,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px;
-  border-bottom: 1px solid var(--hi-color-border-light, #f3f4f6);
+  border-bottom: 1px solid var(--hi-border-light, rgba(127, 127, 127, 0.18));
 }
 
 .hk-filter-title {
   font-size: 14px;
   font-weight: 500;
-  color: var(--hi-color-text, #333333);
+  color: var(--hi-color-text-primary, #333333);
 }
 
 .hk-filter-clear-btn {
@@ -104,7 +104,7 @@
   border-radius: 2px;
 
   &:hover {
-    background: var(--hi-color-background-light, #f9fafb);
+    background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
     color: var(--hi-color-primary, #00a0e9);
   }
 }
@@ -124,7 +124,7 @@
   transition: background 0.2s ease;
 
   &:hover {
-    background: var(--hi-color-background-light, #f9fafb);
+    background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
   }
 }
 
@@ -137,6 +137,6 @@
 .hk-filter-label {
   flex: 1;
   font-size: 14px;
-  color: var(--hi-color-text, #333333);
+  color: var(--hi-color-text-primary, #333333);
   line-height: 1.5;
 }

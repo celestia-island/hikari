@@ -35,7 +35,7 @@
   padding: 8px 12px;
   border: none;
   background: transparent;
-  color: var(--hi-color-text, #333333);
+  color: var(--hi-color-text-primary, #333333);
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -44,7 +44,7 @@
   white-space: nowrap;
 
   &:hover {
-    background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
+    background: var(--hi-color-primary-light, rgba(127, 127, 127, 0.12));
     color: var(--hi-color-primary, #00a0e9);
   }
 
@@ -54,7 +54,7 @@
   }
 
   &:active {
-    background: var(--hi-color-primary-dark, rgba(0, 160, 233, 0.2));
+    background: var(--hi-color-primary-dark, rgba(127, 127, 127, 0.2));
   }
 }
 

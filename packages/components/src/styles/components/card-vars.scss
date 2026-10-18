@@ -69,10 +69,10 @@
   // 6. Typography System
   // ------
 
-  --hi-card-title-font-size: var(--hi-font-size-lg);
+  --hi-card-title-font-size: var(--hi-font-size-lg, 1.125rem);
   --hi-card-title-font-weight: 600;
-  --hi-card-subtitle-font-size: var(--hi-font-size-sm);
-  --hi-card-body-font-size: var(--hi-font-size-sm);
+  --hi-card-subtitle-font-size: var(--hi-font-size-sm, 0.8125rem);
+  --hi-card-body-font-size: var(--hi-font-size-sm, 0.8125rem);
   --hi-card-body-line-height: 1.6;
 
   // ------
@@ -92,7 +92,7 @@
   --hi-card-padding-header: 0.75rem 1rem;
   --hi-card-padding-body: 0.75rem 1rem;
   --hi-card-padding-footer: 0.75rem 1rem;
-  --hi-card-title-font-size: var(--hi-font-size-base);
+  --hi-card-title-font-size: var(--hi-font-size-base, 0.875rem);
 }
 
 .hk-card-md {
@@ -101,7 +101,7 @@
   --hi-card-padding-header: 1rem 1.25rem;
   --hi-card-padding-body: 1rem 1.25rem;
   --hi-card-padding-footer: 1rem 1.25rem;
-  --hi-card-title-font-size: var(--hi-font-size-lg);
+  --hi-card-title-font-size: var(--hi-font-size-lg, 1.125rem);
 }
 
 .hk-card-lg {
@@ -110,7 +110,7 @@
   --hi-card-padding-header: 1.5rem 1.75rem;
   --hi-card-padding-body: 1.5rem 1.75rem;
   --hi-card-padding-footer: 1.5rem 1.75rem;
-  --hi-card-title-font-size: var(--hi-font-size-xl);
+  --hi-card-title-font-size: var(--hi-font-size-xl, 1.25rem);
 }
 
 // ------

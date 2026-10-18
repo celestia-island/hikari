@@ -47,12 +47,12 @@
 
   &.hk-drag-node-dragging {
     opacity: 0.5;
-    background: var(--hi-color-background-light, #f9fafb);
+    background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   &.hk-drag-node-drag-over {
-    background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
+    background: var(--hi-color-primary-light, rgba(127, 127, 127, 0.12));
     border: 1px dashed var(--hi-color-primary, #00a0e9);
   }
 

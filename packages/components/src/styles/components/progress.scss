@@ -27,7 +27,7 @@
     height: 100%;
     border-radius: 100px;
     background-color: var(--hi-color-primary, #1890ff);
-    transition: width var(--hikari-duration-normal, 0.3s) var(--hikari-ease-smooth, ease);
+    transition: width 0.3s ease;
 }
 
 .hk-progress-text {
@@ -95,13 +95,13 @@
 
 .hk-progress-circle-trail {
     stroke: var(--hi-color-background, #f5f5f5);
-    transition: stroke var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: stroke 0.2s ease;
 }
 
 .hk-progress-circle-path {
     stroke: var(--hi-color-primary, #1890ff);
-    transition: stroke-dashoffset var(--hikari-duration-normal, 0.3s) var(--hikari-ease-smooth, ease),
-                stroke var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: stroke-dashoffset 0.3s ease,
+                stroke 0.2s ease;
     stroke-linecap: round;
 }
 
@@ -130,12 +130,12 @@
 // Dark theme adjustments
 [data-theme="dark"] .hk-progress-inner,
 [data-theme="tairitsu"] .hk-progress-inner {
-    background-color: var(--hi-surface-hover, #252525);
+    background-color: var(--hi-surface-hover, rgba(127, 127, 127, 0.16));
 }
 
 [data-theme="dark"] .hk-progress-circle-trail,
 [data-theme="tairitsu"] .hk-progress-circle-trail {
-    stroke: var(--hi-surface-hover, #252525);
+    stroke: var(--hi-surface-hover, rgba(127, 127, 127, 0.16));
 }
 
 [data-theme="dark"] .hk-progress-text,

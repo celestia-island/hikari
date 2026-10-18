@@ -88,10 +88,10 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 // Focus Pulse - Subtle pulse animation when focused
 @keyframes focus-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 3px var(--hi-color-success-30);
+    box-shadow: 0 0 0 3px var(--hi-color-success-30, rgba(14, 184, 64, 0.3));
   }
   50% {
-    box-shadow: 0 0 0 5px var(--hi-color-success-10);
+    box-shadow: 0 0 0 5px var(--hi-color-success-10, rgba(14, 184, 64, 0.1));
   }
 }
 
@@ -106,7 +106,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   transition: box-shadow $animation-duration-normal $animation-easing-default;
 
   &:focus {
-    box-shadow: 0 0 0 3px var(--hi-color-success-50);
+    box-shadow: 0 0 0 3px var(--hi-color-success-50, rgba(14, 184, 64, 0.5));
     outline: none;
   }
 }
@@ -127,7 +127,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   &:focus::after {
-    border-color: var(--hi-color-success-50);
+    border-color: var(--hi-color-success-50, rgba(14, 184, 64, 0.5));
   }
 }
 
@@ -148,7 +148,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   transition: box-shadow $animation-duration-fast $animation-easing-default;
 
   &:active {
-    box-shadow: 0 0 20px var(--hi-color-danger-40);
+    box-shadow: 0 0 20px var(--hi-color-danger-40, rgba(255, 76, 0, 0.4));
   }
 }
 
@@ -197,6 +197,12 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // ── Neon Effect Animations ──────────────────────────────────────────────────────
+
+// The neon family's colors are HOST-TUNABLE knobs: set
+// --hi-anim-neon-{flicker,buzz,scanline}-color on any ancestor to recolor
+// the effect; the in-rule fallbacks are the neon signature colors. These
+// are decorative-only utilities — the knobs are intentionally NOT emitted
+// by the theme provider (css.rs).
 
 // Neon Flicker - Random opacity flicker
 @keyframes neon-flicker {

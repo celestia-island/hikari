@@ -15,6 +15,10 @@ import "./HkImageViewer.scss";
  * double-click zoom (cursor-anchored), drag pans, and a two-finger touch
  * pinch zooms (midpoint-anchored, clamped to fit..MAX_ZOOM). The minimap
  * reuses the generic HMinimap (rendered with the image as its background).
+ *
+ * The transform glide (CSS `transition` under `.is-animatable`) stays
+ * DISARMED until each load-driven positioning has committed — see
+ * `armMotion`.
  */
 export default defineComponent({
   name: "HkImageViewer",
@@ -33,6 +37,10 @@ export default defineComponent({
     const imgW = ref(0);
     const imgH = ref(0);
     const loaded = ref(false);
+    /** Whether the `.is-animatable` transform glide is armed. False until
+     *  each load-driven reposition has committed (see armMotion), so the
+     *  initial fit/center placement never animates. */
+    const animatable = ref(false);
 
     const dragging = ref(false);
     const lastPt = ref({ x: 0, y: 0 });
@@ -125,6 +133,30 @@ export default defineComponent({
       center();
     }
 
+    /** Pending armMotion chain (outer frame, then inner); 0 when idle.
+     *  Tracked so a src change or unmount can retract the arming. */
+    let armFrame = 0;
+
+    /** Arm the transform glide two committed frames after a load-driven
+     *  reposition. The <img> mounts parked at translate(0, 0) scale(1) —
+     *  natural size, anchored top-left — and only the load handler knows
+     *  the centered fit layout; with the transition armed from the first
+     *  paint, that reposition animated and the freshly-visible image flew
+     *  in from the top-left corner (the lightbox fly-in report). ONE
+     *  frame is not enough: rAF callbacks run before that frame's style
+     *  recalc, so a single hop would commit the new transform and the
+     *  .is-animatable class in the same recalc and the move would still
+     *  transition. Frame 1 commits the transform unarmed; frame 2 arms
+     *  the glide for wheel / pinch / minimap moves. */
+    function armMotion() {
+      cancelAnimationFrame(armFrame);
+      armFrame = requestAnimationFrame(() => {
+        armFrame = requestAnimationFrame(() => {
+          animatable.value = true;
+        });
+      });
+    }
+
     function onImgLoad() {
       const img = imgRef.value;
       if (!img) return;
@@ -132,6 +164,7 @@ export default defineComponent({
       imgH.value = img.naturalHeight;
       loaded.value = true;
       resetView();
+      armMotion();
     }
 
     function onWheel(e: WheelEvent) {
@@ -297,6 +330,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       const c = containerRef.value;
+      cancelAnimationFrame(armFrame);
       if (!c) return;
       ro?.disconnect();
       ro = null;
@@ -319,6 +353,10 @@ export default defineComponent({
         fit.value = 1;
         panX.value = 0;
         panY.value = 0;
+        // Retract any in-flight arming: the swap's own reposition must
+        // land unarmed too, and the next load re-arms on its own.
+        cancelAnimationFrame(armFrame);
+        animatable.value = false;
       },
     );
 
@@ -337,7 +375,13 @@ export default defineComponent({
           ref={imgRef}
           src={props.src}
           alt={props.alt}
-          class={["hk-image-viewer-img", !loaded.value && "is-loading"].filter(Boolean).join(" ")}
+          class={[
+            "hk-image-viewer-img",
+            !loaded.value && "is-loading",
+            animatable.value && "is-animatable",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           style={imgStyle.value}
           draggable={false}
           onLoad={onImgLoad}

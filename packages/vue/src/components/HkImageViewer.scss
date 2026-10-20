@@ -10,6 +10,11 @@
   user-select: none;
 }
 
+// The transform glide sits behind the .is-animatable gate the component
+// arms two frames after each load-driven reposition: an unconditional
+// transition also animated the very FIRST positioning, so the freshly
+// visible image flew in from its top-left natural-size origin to the
+// center every time a lightbox opened (2026-10-20 fly-in report).
 .hk-image-viewer-img {
   position: absolute;
   top: 0;
@@ -17,7 +22,10 @@
   max-width: none;
   max-height: none;
   will-change: transform;
-  transition: transform 0.12s ease-out;
+
+  &.is-animatable {
+    transition: transform 0.12s ease-out;
+  }
 
   &.is-loading {
     opacity: 0;
@@ -33,9 +41,11 @@
 }
 
 // Reduced motion: pan/zoom keeps working, the transform just stops
-// gliding (house pattern — HkExpansionPanel / HkAffixPicker).
+// gliding (house pattern — HkExpansionPanel / HkAffixPicker). The armed
+// gate selector is repeated at (0,2,0) so this still outranks the
+// .is-animatable rule above.
 @media (prefers-reduced-motion: reduce) {
-  .hk-image-viewer-img {
+  .hk-image-viewer-img.is-animatable {
     transition: none;
   }
 }

@@ -6,7 +6,7 @@ Hikari 프레임워크는 모듈식 디자인을 채택하며, Tairitsu 런타�
 
 | 패키지 | 설명 |
 |---|---|
-| hikari-palette | 전통 중국 색채 시스템 (660+ 색상), 테마 팔레트 관리 |
+| hikari-palette | 엄선된 컬러 카탈로그 (660+ 색상, 역사적 컬렉션 포함), 테마 팔레트 관리 |
 | hikari-animation | 선언적 애니메이션 시스템, 이징 함수, 보간, 타임라인 제어 |
 | hikari-icons | Material Design Icons (7000+) 통합, SVG 생성 |
 | hikari-theme | 테마 컨텍스트, CSS 변수 생성, 테마 전환 |
@@ -50,10 +50,10 @@ graph BT
 
 ### 1. 팔레트 시스템 (hikari-palette)
 
-전통 중국 색채 시스템의 Rust 구현입니다.
+디자인 시스템을 위한 컬러 카탈로그 및 테마 팔레트 기반입니다.
 
 **담당 역할**:
-- 660개 이상의 전통 중국 색상 정의 제공
+- 660개 이상의 엄선된 색상 정의 제공(여러 컬렉션)
 - 테마 팔레트 관리
 - 유틸리티 클래스 생성기
 - 불투명도 및 색상 혼합
@@ -62,7 +62,7 @@ graph BT
 ```rust
 use hikari_palette::{Color, opacity};
 
-// 전통 색상 사용
+// 팔레트 색상 사용
 let red = Color::Cinnabar;
 let blue = Color::Azurite;
 
@@ -75,7 +75,7 @@ println!("Primary: {}", theme.primary.hex());
 ```
 
 **설계 철학**:
-- **문화적 자신감**: 전통 색상 이름 사용
+- **풍부한 메타데이터**: 역사적 맥락을 담은 명명 색상
 - **타입 안전성**: 컴파일 타임 색상 값 검사
 - **고성능**: 제로 비용 추상화
 

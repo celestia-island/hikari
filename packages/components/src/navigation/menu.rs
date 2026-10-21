@@ -1,5 +1,5 @@
 // hi-components/src/navigation/menu.rs
-// Menu component with Arknights + FUI styling
+// Menu component
 
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 

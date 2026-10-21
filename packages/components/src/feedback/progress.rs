@@ -1,5 +1,5 @@
 // packages/components/src/feedback/progress.rs
-// Progress component with Arknights + FUI styling
+// Progress component
 
 use hikari_palette::classes::{ClassesBuilder, ProgressClass};
 

@@ -58,25 +58,26 @@
 
 <br/>
 
-> A modern UI component library blending traditional Chinese aesthetics with futuristic sci-fi design
+> One design system, two runtimes — production-grade UI components for Vue 3 and Rust/WASM
 
-**Hikari** (光 - "Light") is a component library built on the [tairitsu](https://github.com/celestia-island/tairitsu) framework (`tairitsu-vdom`, `tairitsu-hooks`, `tairitsu-macros`, `tairitsu-style` ^0.5.18), sharing SCSS styles across a Rust/WASM implementation and a Vue 3 port. The design system draws from Arknights' clean aesthetics, FUI (Futuristic User Interface) elements, and a rich palette of traditional Chinese colors. The name "Hikari" comes from the rhythm game [Arcaea](https://arcaea.lowiro.com/).
+**Hikari** (光, "light") is a next-generation UI library built around a single design system that ships to two first-class runtimes: the `hikari-*` crates for Rust/WASM (on the [tairitsu](https://github.com/celestia-island/tairitsu) framework — `tairitsu-vdom`, `tairitsu-hooks`, `tairitsu-macros`, `tairitsu-style` ^0.5.18) and `@celestia-island/hikari` for Vue 3. Both runtimes share the same SCSS design core, theming model, and motion vocabulary, so a product keeps one visual language whether it renders in a Vue application or a Rust/WASM target. The same core is designed to grow further — toward powering standalone applications beyond the browser.
 
 ## Vision
 
-Hikari embodies three core design philosophies:
+Hikari is built for the next generation of application interfaces:
 
-- **Arknights Flat Design** - Clean lines, clear information hierarchy, high contrast, and refined simplicity
-- **FUI Sci-Fi Aesthetics** - Subtle glow effects, dynamic indicators, precise borders, and geometric patterns
-- **Chinese Traditional Colors** - 500+ authentic historical colors for cultural depth and visual richness
+- **One design system, two runtimes** - The same components, tokens, and themes render in Vue 3 (TypeScript) and Rust/WASM alike, driven by a shared SCSS core
+- **Production-grade components** - Layout, forms, data-heavy tables and trees, feedback, navigation, i18n, and iconography — themable at runtime through CSS variables, with light/dark and custom presets
+- **Type-safe and fast end to end** - Compile-time stylesheets and checked color tokens on the Rust side, first-class TypeScript on the Vue side
+- **Beyond the browser** - Optional SSR via Axum today, and a design core intended to extend to standalone application UIs
 
-The result is a UI framework that feels both ancient and futuristic, professional yet approachable, with a distinctive visual identity that stands out from conventional component libraries.
+The result is a UI library that scales with your architecture: start in either ecosystem, and carry the same visual language everywhere the product goes next.
 
 ## Packages
 
 | Package | Description |
 | --- | --- |
-| `hikari-palette` | 500+ traditional Chinese colors with rich metadata and type-safe constants |
+| `hikari-palette` | Color catalog: curated collections and themed palettes with rich metadata and type-safe constants |
 | `hikari-theme` | Theme context/provider, CSS variables, built-in themes, SCSS mixins |
 | `hikari-animation` | Animation engine (Tween, Motion, States) used by components |
 | `hikari-components` | Core UI components: layout, buttons, inputs, table, tree, feedback, navigation |
@@ -270,17 +271,10 @@ Hikari is licensed under the [Synthetic Source License (SySL), Version 1.0](./LI
 
 Inspired by and built upon:
 
-- [Tairitsu](https://github.com/celestia-island/tairitsu) - The full-stack framework Hikari is built on
-- [Arknights](https://www.arknights.global/) - Design language inspiration
-- [ChineseColors](https://github.com/zhaoolee/ChineseColors) - Traditional color palette
+- [Tairitsu](https://github.com/celestia-island/tairitsu) - The full-stack Rust framework the native runtime is built on
+- [ChineseColors](https://github.com/zhaoolee/ChineseColors) - Color data source for one palette collection
 - [akasha](https://github.com/TairitsuMC/akasha) - Node graph system reference
 
 ## Name
 
-"Hikari" (光) means "light" in Japanese, representing:
-
-- Illumination through knowledge and culture
-- The fusion of tradition (ancient wisdom) and technology (future innovation)
-- Bringing clarity and beauty to user interfaces
-
-Let Hikari illuminate your applications with the perfect blend of tradition and technology.
+"Hikari" (光) means "light" in Japanese. The name comes from the rhythm game [Arcaea](https://arcaea.lowiro.com/). It stands for clarity and precision in interface design — one visual language that follows your product across every runtime it runs on.

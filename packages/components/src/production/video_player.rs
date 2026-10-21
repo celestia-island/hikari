@@ -1,8 +1,8 @@
 // packages/components/src/production/video_player.rs
-// Video player component with Arknights + FUI styling
+// Video player component
 //
 // NOTE: This component wraps the native HTML5 video element with
-// Arknights-style container styling. It uses browser native controls.
+// a flat, minimal container. It uses browser native controls.
 // For custom video controls, consider extending this component or
 // using libraries like Video.js or Plyr.
 

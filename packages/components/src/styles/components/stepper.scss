@@ -1,5 +1,5 @@
 // styles/components/stepper.scss
-// Stepper component with Arknights + FUI styling
+// Stepper component
 
 .hk-stepper {
   display: flex;
@@ -113,7 +113,7 @@
   padding-bottom: 0;
 }
 
-// FUI effects
+// Accent effects
 .hk-step-active .hk-step-number {
   animation: hi-stepper-pulse 2s ease-in-out infinite;
 }

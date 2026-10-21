@@ -1,6 +1,6 @@
 # hikari-theme
 
-Theme system for Hikari UI applications with Arknights-inspired aesthetics and FUI design principles.
+Theme system for Hikari UI applications — theme context, CSS-variable theming, built-in palettes, and SCSS mixins for the Hikari design system.
 
 ## Installation
 

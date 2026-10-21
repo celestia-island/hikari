@@ -1,12 +1,12 @@
 # 系統架構概覽
 
-Hikari 框架採用模組化設計，基於 Tairitsu 執行時期構建，由 6 個獨立套件組成。
+Hikari 採用模組化設計，基於 Tairitsu 執行時期構建，由 6 個獨立套件組成。
 
 ## 套件概覽
 
 | 套件 | 說明 |
 |---|---|
-| hikari-palette | 中國傳統色彩系統（660+ 顏色），主題色板管理 |
+| hikari-palette | 精選色彩目錄（660+ 顏色，含歷史色彩集合），主題色板管理 |
 | hikari-animation | 宣告式動畫系統，緩動函數、插值、時間線控制 |
 | hikari-icons | Material Design Icons（7000+）整合，SVG 生成 |
 | hikari-theme | 主題上下文、CSS 變數生成、主題切換 |
@@ -50,10 +50,10 @@ graph BT
 
 ### 1. 色彩系統 (hikari-palette)
 
-中國傳統色彩系統的 Rust 實作。
+設計系統的色彩目錄與主題色板基礎。
 
 **職責**：
-- 提供 660+ 傳統中國色彩定義
+- 提供 660+ 種精選色彩定義（跨多個集合）
 - 主題色板管理
 - 工具類別生成器
 - 透明度與色彩混合
@@ -62,7 +62,7 @@ graph BT
 ```rust
 use hikari_palette::{Color, opacity};
 
-// 使用傳統色彩
+// 使用調色板顏色
 let red = Color::Cinnabar;
 let blue = Color::Azurite;
 
@@ -75,7 +75,7 @@ println!("Primary: {}", theme.primary.hex());
 ```
 
 **設計理念**：
-- **文化自信**：使用傳統色彩名稱
+- **豐富元資料**：帶歷史背景的命名顏色
 - **型別安全**：編譯時期色彩值檢查
 - **高效能**：零成本抽象
 

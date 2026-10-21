@@ -1,5 +1,5 @@
 // hi-components/src/basic/select.rs
-// Custom Select component with Portal-based dropdown and FUI styling
+// Custom Select component with Portal-based dropdown
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 

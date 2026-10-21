@@ -6,7 +6,7 @@ El framework Hikari adopta un diseño modular, construido sobre el runtime Tairi
 
 | Paquete | Descripción |
 |---|---|
-| hikari-palette | Sistema de colores tradicionales chinos (660+), gestión de paletas de tema |
+| hikari-palette | Catálogo de colores curados (660+, incluye colección histórica), gestión de paletas de tema |
 | hikari-animation | Sistema de animación declarativa, funciones de easing, interpolación, control de línea de tiempo |
 | hikari-icons | Integración de Material Design Icons (7000+), generación SVG |
 | hikari-theme | Contexto de tema, generación de variables CSS, cambio de tema |
@@ -50,10 +50,10 @@ Todos los paquetes se basan en el framework **Tairitsu** (tairitsu-vdom, tairits
 
 ### 1. Sistema de Paleta (hikari-palette)
 
-Implementación en Rust del sistema de colores tradicionales chinos.
+Catálogo de colores y base de paletas de temas para el sistema de diseño.
 
 **Responsabilidades**:
-- Proporciona más de 660 definiciones de colores tradicionales chinos
+- Proporciona más de 660 definiciones de colores curados (varias colecciones)
 - Gestión de paletas de tema
 - Generador de clases utilitarias
 - Opacidad y mezcla de colores
@@ -75,7 +75,7 @@ println!("Primary: {}", theme.primary.hex());
 ```
 
 **Filosofía de Diseño**:
-- **Confianza Cultural**: Uso de nombres de colores tradicionales
+- **Metadatos ricos**: Colores nombrados con contexto histórico
 - **Seguridad de Tipos**: Verificación de valores de color en tiempo de compilación
 - **Alto Rendimiento**: Abstracciones de costo cero
 

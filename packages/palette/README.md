@@ -1,6 +1,6 @@
 # hikari-palette
 
-500+ traditional Chinese colors with type-safe Rust constants and rich historical context.
+Type-safe color catalog for the Hikari design system: curated collections (including a large historical palette) and themed palettes with rich metadata.
 
 ## Installation
 
@@ -30,7 +30,7 @@ For complete API documentation and examples, see [docs.rs](https://docs.rs/hikar
 
 ## Features
 
-- **500+ Traditional Chinese Colors** - Authentic historical colors
+- **Curated Collections** - Historical and modern color sets with rich metadata
 - **Rich Metadata** - Hex, RGB, CMYK values, and historical notes
 - **Type-Safe Constants** - Chinese identifiers in Rust code
 - **Pre-defined Palettes** - Ready-to-use theme color schemes

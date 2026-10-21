@@ -1,5 +1,5 @@
 // packages/components/src/display/skeleton.rs
-// Skeleton component with Arknights + FUI styling
+// Skeleton component
 
 use hikari_palette::classes::{
     ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,

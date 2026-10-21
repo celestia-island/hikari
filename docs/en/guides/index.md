@@ -1,20 +1,18 @@
-# Hikari UI Framework
+# Hikari UI Library
 
-> A modern Rust UI framework built on Tairitsu + Grass + Axum
+> A next-generation UI library built on Tairitsu + Grass + Axum
 >
-> **Design Style**:  flat design +  sci-fi aesthetics + Traditional Chinese colors
->
-> **Name Origin**: "Hikari" (Light) from the rhythm game Arcaea
+> **Positioning**: one design system, two runtimes — Vue 3 and Rust/WASM
 
 ## What is Hikari?
 
-Hikari is a modern UI framework designed for the Rust ecosystem, combining traditional Chinese color aesthetics with sci-fi interface design. The framework adopts a modular design, providing a complete component library, theme system, and animation system.
+Hikari is a next-generation UI library. A single design system ships to two first-class runtimes: the `hikari-*` crates for Rust/WASM (built on the Tairitsu framework) and `@celestia-island/hikari` for Vue 3. The library adopts a modular design, providing a complete component library, theme system, and animation system; the same design core is also on the path toward standalone application UIs.
 
 ## Core Features
 
-### Traditional Chinese Color System
-- **660+ Traditional Colors**: Complete traditional Chinese color palette
-- **Theme System**: Built-in Hikari (light) and Tairitsu (dark) themes
+### Palette & Theming
+- **660+ Curated Colors**: historical and modern collections with type-safe constants
+- **Theme System**: Built-in light/dark themes plus custom presets
 - **Type-Safe**: Compile-time checked color values
 
 ### Rich Component Library
@@ -85,20 +83,18 @@ trunk build --release
 
 ## Design Philosophy
 
-###  Flat Design
-- Clean lines and clear information hierarchy
+###  One Design System, Two Runtimes
+- Identical components and tokens across the Vue 3 and Rust/WASM implementations
+- A shared SCSS core keeps both sides visually in lockstep
+
+###  Precision & Clarity
+- Flat surfaces with a clear information hierarchy
 - High contrast for readability
-- Minimalist yet refined design
+- Restrained, purposeful accents and motion
 
-###  Sci-Fi Aesthetics
-- Subtle glow effects
-- Dynamic indicators (breathing lights, pulse animations)
-- Fine borders and geometric patterns
-
-### Traditional Chinese Colors
-- Primary: 石青 (Cyan/Blue), 朱砂 (Vermilion/Red), 藤黄 (Gamboge/Yellow)
-- Neutral: 精白 (Pure White), 墨色 (Ink Black), 缟色 (Light Gray)
-- Functional: 葱倩 (Success), 杏黄 (Warning), 朱红 (Danger)
+### Built to Scale Further
+- Server-side rendering on the Rust side today
+- The same design core is intended to grow into standalone application UIs
 
 ## Project Structure
 
@@ -189,4 +185,4 @@ Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for 
 
 ---
 
-**Hikari** - Minimalism, Technology, Cultural Confidence
+**Hikari** - One design system, every runtime

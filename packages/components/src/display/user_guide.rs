@@ -1,5 +1,5 @@
 // packages/components/src/display/user_guide.rs
-// UserGuide component with Arknights + FUI styling
+// UserGuide component
 
 use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};

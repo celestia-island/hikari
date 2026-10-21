@@ -166,9 +166,9 @@ examples/
 
 All examples use the Hikari design system:
 
-- **Arknights-inspired** clean, flat design
-- **FUI elements** with subtle glows and futuristic touches
-- **Chinese traditional colors** from the Hikari palette
+- **Clean, flat design** with a clear information hierarchy
+- **Restrained glow accents** and precise borders where they aid usability
+- **Curated palette colors** from the Hikari color catalog
 - **Responsive layouts** that work on all screen sizes
 
 ## Development Tips
@@ -221,5 +221,4 @@ All examples are licensed under the same terms as the Hikari project — the [Sy
 ## Acknowledgments
 
 - Built with [Tairitsu](https://github.com/celestia-island/tairitsu)
-- Design inspired by [Arknights](https://www.arknights.global/)
 - Colors from [ChineseColors](https://github.com/zhaoolee/ChineseColors)

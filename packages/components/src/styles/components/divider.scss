@@ -1,5 +1,5 @@
 // hi-components/src/styles/components/divider.scss
-// Divider component styles with Arknights + FUI styling
+// Divider component styles
 
 .hk-divider {
   display: flex;
@@ -74,7 +74,7 @@
   }
 }
 
-// FUI effect - subtle glow
+// Accent effect - subtle glow
 .hk-divider-with-text {
   .hk-divider-text {
     text-shadow: 0 0 10px rgba(0, 160, 233, 0.1);

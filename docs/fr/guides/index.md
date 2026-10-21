@@ -1,20 +1,18 @@
-# Framework UI Hikari
+# Bibliothèque UI Hikari
 
-> Un framework UI moderne en Rust basé sur Tairitsu + Grass + Axum
+> Une bibliothèque UI de nouvelle génération basée sur Tairitsu + Grass + Axum
 >
-> **Style de Design**: Design plat  + esthétique  sci-fi + couleurs traditionnelles chinoises
->
-> **Origine du Nom**: "Hikari" (Lumière) du jeu de rythme Arcaea
+> **Positionnement**: un seul design system, deux runtimes — Vue 3 et Rust/WASM
 
 ## Qu'est-ce que Hikari ?
 
-Hikari est un framework UI moderne conçu pour l'écosystème Rust, combinant l'esthétique des couleurs traditionnelles chinoises avec le design d'interface sci-fi. Le framework adopte une conception modulaire, fournissant une bibliothèque de composants complète, un système de thèmes et un système d'animation.
+Hikari est une bibliothèque UI de nouvelle génération. Un seul design system est livré sur deux runtimes de premier plan : les crates `hikari-*` pour Rust/WASM (sur le framework Tairitsu) et `@celestia-island/hikari` pour Vue 3. La bibliothèque adopte une conception modulaire, fournissant une bibliothèque de composants complète, un système de thèmes et un système d'animation ; ce même cœur de design évolue également vers les UI d'applications autonomes.
 
 ## Fonctionnalités Principales
 
-### Système de Couleurs Traditionnelles Chinoises
-- **Plus de 500 Couleurs Traditionnelles**: Palette complète des couleurs traditionnelles chinoises
-- **Système de Thèmes**: Thèmes intégrés Hikari (clair) et Tairitsu (sombre)
+### Palette & Thèmes
+- **660+ Couleurs Curées**: collections historiques et modernes, constantes type-safe
+- **Système de Thèmes**: thèmes clair/sombre intégrés et préréglages personnalisés
 - **Type-Safe**: Vérification des valeurs de couleur à la compilation
 
 ### Riche Bibliothèque de Composants
@@ -85,20 +83,18 @@ trunk build --release
 
 ## Philosophie de Design
 
-### Design Plat
-- Lignes épurées et hiérarchie d'information claire
+### Un Design System, Deux Runtimes
+- Composants et tokens identiques pour les implémentations Vue 3 et Rust/WASM
+- Un cœur SCSS partagé garantit une cohérence visuelle parfaite des deux côtés
+
+### Précision et Clarté
+- Surfaces plates et hiérarchie d'information claire
 - Contraste élevé pour la lisibilité
-- Design minimaliste mais raffiné
+- Accents et animations retenus et volontaires
 
-### Esthétique  Sci-Fi
-- Effets de lueur subtils
-- Indicateurs dynamiques (lumières respirantes, animations pulsées)
-- Bordures fines et motifs géométriques
-
-### Couleurs Traditionnelles Chinoises
-- Primaire: 石青 (Cyan/Bleu), 朱砂 (Vermillon/Rouge), 藤黄 (Gamboge/Jaune)
-- Neutre: 月白 (Blanc Clair), 墨色 (Noir Encre), 缟色 (Gris Clair)
-- Fonctionnel: 葱倩 (Succès), 鹅黄 (Avertissement), 朱砂 (Danger)
+### Conçu pour Aller Plus Loin
+- Rendu côté serveur disponible dès aujourd'hui côté Rust
+- Ce même cœur de design est destiné à s'étendre aux UI d'applications autonomes
 
 ## Structure du Projet
 
@@ -189,4 +185,4 @@ Les contributions sont les bienvenues ! Veuillez lire [CONTRIBUTING.md](../../en
 
 ---
 
-**Hikari** - Minimalisme, Technologie, Confiance Culturelle
+**Hikari** - Un design system, tous les runtimes

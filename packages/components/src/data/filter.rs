@@ -1,5 +1,5 @@
 // hi-components/src/data/filter.rs
-// Filter component with Arknights + FUI styling
+// Filter component
 
 use hikari_palette::classes::{ClassesBuilder, FilterClass, UtilityClass};
 

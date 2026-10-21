@@ -1,5 +1,5 @@
 // packages/components/src/entry/number_input.rs
-// NumberInput component with Arknights + FUI styling
+// NumberInput component
 // Uses InputWrapper for consistent layout
 
 use hikari_icons::MdiIcon;

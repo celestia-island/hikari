@@ -1,12 +1,12 @@
 # 系统架构概览
 
-Hikari 框架采用模块化设计，基于 Tairitsu 运行时构建，由 6 个独立包组成。
+Hikari 采用模块化设计，基于 Tairitsu 运行时构建，由 6 个独立包组成。
 
 ## 包概览
 
 | 包 | 说明 |
 |---|---|
-| hikari-palette | 中国传统色彩系统（660+ 颜色），主题色板管理 |
+| hikari-palette | 精选色彩目录（660+ 颜色，含历史色彩集合），主题色板管理 |
 | hikari-animation | 声明式动画系统，缓动函数、插值、时间线控制 |
 | hikari-icons | Material Design Icons（7000+）集成，SVG 生成 |
 | hikari-theme | 主题上下文、CSS 变量生成、主题切换 |
@@ -50,10 +50,10 @@ graph BT
 
 ### 1. 色彩系统（hikari-palette）
 
-中国传统色彩系统的 Rust 实现。
+设计系统的色彩目录与主题色板基础。
 
 **职责**：
-- 提供 660+ 种中国传统色彩定义
+- 提供 660+ 种精选色彩定义（跨多个集合）
 - 主题色板管理
 - 工具类生成器
 - 透明度与颜色混合
@@ -62,7 +62,7 @@ graph BT
 ```rust
 use hikari_palette::{Color, opacity};
 
-// 使用传统色彩
+// 使用调色板颜色
 let red = Color::Cinnabar;
 let blue = Color::Azurite;
 
@@ -75,7 +75,7 @@ println!("Primary: {}", theme.primary.hex());
 ```
 
 **设计理念**：
-- **文化自信**：使用传统色彩名称
+- **丰富元数据**：带历史背景的命名颜色
 - **类型安全**：编译期色彩值检查
 - **高性能**：零成本抽象
 

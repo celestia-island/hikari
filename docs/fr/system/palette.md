@@ -1,6 +1,6 @@
 # Système de palette
 
-Implémentation du système de couleurs traditionnelles chinoises avec plus de 660 couleurs historiques.
+Catalogue de couleurs et système de palettes de thèmes avec plus de 660 couleurs curées.
 
 ## Table des matières
 
@@ -15,7 +15,7 @@ Implémentation du système de couleurs traditionnelles chinoises avec plus de 6
 
 `hikari-palette` fournit :
 
-- **660+ Couleurs** - Définitions complètes des couleurs traditionnelles chinoises
+- **660+ Couleurs** - Définitions de couleurs issues de collections curées
 - **Sécurité de type** - Vérification des valeurs de couleur à la compilation
 - **Classes utilitaires** - Générateur de classes utilitaires de type Tailwind avec sécurité de type
 - **Palettes de thèmes** - Schémas de couleurs de thèmes préconfigurés
@@ -23,7 +23,7 @@ Implémentation du système de couleurs traditionnelles chinoises avec plus de 6
 
 Toutes les définitions de couleurs comportent :
 
-- **Patrimoine culturel** - Noms de couleurs traditionnelles chinoises
+- **Couleurs nommées** - Noms historiques et modernes accompagnés de métadonnées
 - **Sécurité de type** - Définitions de couleurs basées sur des énumérations
 - **Valeurs Hex** - Codes de couleurs hexadécimaux standard
 - **Catégories** - Organisées par familles de couleurs
@@ -516,9 +516,9 @@ pub fn darken(color: Color, amount: f64) -> String;
 
 ## Philosophie de design
 
-### Signification culturelle
+### Contexte historique
 
-Chaque couleur traditionnelle chinoise porte une signification culturelle et historique :
+Chaque couleur de la collection historique porte une signification culturelle et historique :
 
 - **Cinnabar (朱砂)** : Utilisé dans les sceaux impériaux, représente le pouvoir et l'autorité
 - **Azurite (石青)** : Utilisé dans la peinture traditionnelle, représente l'élégance
@@ -528,7 +528,7 @@ Chaque couleur traditionnelle chinoise porte une signification culturelle et his
 
 ### Harmonie des couleurs
 
-Les combinaisons de couleurs traditionnelles chinoises suivent des règles d'harmonie spécifiques :
+Les combinaisons de couleurs classiques suivent des règles d'harmonie spécifiques :
 
 - **Complémentaire** : Rouge + Vert (朱砂 + 竹青)
 - **Analogue** : Bleu + Cyan (石青 + 青色)

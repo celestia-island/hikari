@@ -1,6 +1,6 @@
 # Sistema de Paleta
 
-Implementación del sistema de colores tradicionales chinos con más de 660 colores históricos.
+Catálogo de colores y sistema de paletas de temas con más de 660 colores curados.
 
 ## Tabla de Contenidos
 
@@ -15,7 +15,7 @@ Implementación del sistema de colores tradicionales chinos con más de 660 colo
 
 `hikari-palette` proporciona:
 
-- **660+ Colores** - Definiciones completas de colores tradicionales chinos
+- **660+ Colores** - Definiciones de colores de colecciones curadas
 - **Seguridad de Tipos** - Verificación de valores de color en tiempo de compilación
 - **Clases de Utilidad** - Generador de clases de utilidad estilo Tailwind con seguridad de tipos
 - **Paletas de Temas** - Esquemas de colores de temas preconfigurados
@@ -23,7 +23,7 @@ Implementación del sistema de colores tradicionales chinos con más de 660 colo
 
 Todas las definiciones de colores cuentan con:
 
-- **Patrimonio Cultural** - Nombres de colores tradicionales chinos
+- **Colores con Nombre** - Nombres históricos y modernos con metadatos
 - **Seguridad de Tipos** - Definiciones de colores basadas en enum
 - **Valores Hex** - Códigos de color hex estándar
 - **Categorías** - Organizados por familias de colores
@@ -516,9 +516,9 @@ pub fn darken(color: Color, amount: f64) -> String;
 
 ## Filosofía de Diseño
 
-### Significado Cultural
+### Contexto Histórico
 
-Cada color tradicional chino tiene un significado cultural e histórico:
+Cada color de la colección histórica tiene un significado cultural e histórico:
 
 - **Cinabrio (朱砂)**: Usado en sellos imperiales, representa poder y autoridad
 - **Azurita (石青)**: Usado en pintura tradicional, representa elegancia
@@ -528,7 +528,7 @@ Cada color tradicional chino tiene un significado cultural e histórico:
 
 ### Armonía de Colores
 
-Las combinaciones de colores tradicionales chinos siguen reglas específicas de armonía:
+Las combinaciones de colores clásicas siguen reglas específicas de armonía:
 
 - **Complementaria**: Rojo + Verde (朱砂 + 竹青)
 - **Análoga**: Azul + Cian (石青 + 青色)

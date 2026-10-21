@@ -1,7 +1,6 @@
 // Display components module
 //!
-//! Provides data display components with Arknights-style design
-//! and FUI aesthetics.
+//! Provides data display components for the Hikari design system.
 //!
 //! ## Components
 //!

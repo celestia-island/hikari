@@ -1,5 +1,5 @@
 // hi-components/src/navigation/tabs.rs
-// Tabs component with Arknights + FUI styling
+// Tabs component
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;

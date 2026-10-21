@@ -1,7 +1,7 @@
 //! # Hikari Theme System
 //!
-//! Theme system for Hikari UI applications with Arknights-inspired aesthetics
-//! and FUI (Future User Interface) design principles.
+//! Theme system for Hikari UI applications — theme context, CSS-variable
+//! theming, built-in palettes, and SCSS mixins for the Hikari design system.
 //!
 //! ## Architecture
 //!
@@ -150,21 +150,21 @@
 //!
 //! The Hikari theme system follows these design principles:
 //!
-//! 1. **Arknights Aesthetics**
+//! 1. **Precision & Clarity**
 //!    - Clean lines and clear information hierarchy
 //!    - High contrast for readability
 //!    - Minimalist yet refined design
 //!
-//! 2. **FUI (Future User Interface)**
+//! 2. **Purposeful Accents**
 //!    - Subtle glow effects (box-shadow, text-shadow)
 //!    - Dynamic indicators (breathing lights, pulse animations)
 //!    - Fine borders (1px semi-transparent)
 //!    - Geometric patterns (hexagons, grids)
 //!
-//! 3. **Traditional Chinese Colors**
-//!    - Authentic color names and values
-//!    - Culturally significant color combinations
-//!    - Harmony between traditional and modern design
+//! 3. **Portability Across Runtimes**
+//!    - One token vocabulary for Vue 3 and Rust/WASM
+//!    - Theme palettes are self-contained hex definitions
+//!    - Custom palettes integrate without touching components
 //!
 //! ## Integration with Components
 //!

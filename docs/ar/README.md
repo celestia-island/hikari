@@ -1,7 +1,7 @@
 # Hikari
 
-A modern Rust UI framework blending traditional Chinese aesthetics with
-futuristic sci-fi design. Built on the Tairitsu framework.
+مكتبة واجهة مستخدم للجيل التالي: نظام تصميم واحد، بيئتا تشغيل —
+Vue 3 و Rust/WASM (البيئة الأصلية مبنية على إطار عمل Tairitsu).
 
 ## Quick Links
 

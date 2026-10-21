@@ -1,5 +1,5 @@
 // hi-components/src/feedback/spin.rs
-// Spin component with Arknights + FUI styling
+// Spin component
 
 use hikari_palette::classes::{ClassesBuilder, SpinClass, UtilityClass};
 

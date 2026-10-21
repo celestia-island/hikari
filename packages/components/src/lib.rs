@@ -1,9 +1,10 @@
 //! # Hikari Components Library
 //!
-//! Comprehensive UI component library with Arknights-style design
-//! and FUI (Future User Interface) aesthetics.
+//! Core UI components for the Hikari design system — layout, forms, data
+//! display, feedback, and navigation.
 //!
-//! Built on Tairitsu framework.
+//! Built on the Tairitsu framework; the same design system also ships as the
+//! Vue 3 package `@celestia-island/hikari`.
 
 // Core modules
 pub mod basic;

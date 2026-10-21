@@ -1,5 +1,5 @@
 // packages/components/src/display/drag_layer.rs
-// DragLayer component with Arknights + FUI styling
+// DragLayer component
 
 use hikari_palette::classes::{ClassesBuilder, DragLayerClass, UtilityClass};
 

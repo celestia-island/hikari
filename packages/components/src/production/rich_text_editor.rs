@@ -1,5 +1,5 @@
 // packages/components/src/production/rich_text_editor.rs
-// Rich text editor component with Arknights + FUI styling
+// Rich text editor component
 //
 // NOTE: This is a basic implementation that provides a styled container
 // with toolbar UI. For full rich text editing functionality with

@@ -1,5 +1,5 @@
 // hi-components/src/entry/cascader.rs
-// Cascader component with Arknights + FUI styling
+// Cascader component
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};

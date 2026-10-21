@@ -1,5 +1,5 @@
 // hi-components/src/entry/transfer.rs
-// Transfer component with Arknights + FUI styling
+// Transfer component
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TransferClass, UtilityClass};

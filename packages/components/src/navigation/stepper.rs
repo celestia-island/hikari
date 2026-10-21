@@ -1,4 +1,4 @@
-//! Stepper — the crate's step bar, with Arknights + FUI styling.
+//! Stepper — the crate's step bar.
 //!
 //! This is the single step-bar implementation in the crate. The former
 //! `Steps` component was collapsed into it (its `#[deprecated]` thin alias now

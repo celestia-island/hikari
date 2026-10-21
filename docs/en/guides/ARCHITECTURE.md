@@ -97,7 +97,7 @@ graph BT
 
 **Responsibilities**:
 - Define color data structures
-- Provide 660+ traditional Chinese colors
+- Provide a 660+ color catalog across curated collections
 - Generate pre-defined palettes
 - Serialize/deserialize colors
 
@@ -701,4 +701,4 @@ Hikari's architecture is designed to be:
 - **Maintainable**: Clean code organization
 - **Extensible**: Easy to add features
 
-The architecture supports the project's goals of providing a modern, type-safe UI framework that blends traditional Chinese aesthetics with futuristic design elements.
+The architecture supports the project's goals of providing a modern, type-safe UI library whose single design system serves Vue 3 and Rust/WASM alike.

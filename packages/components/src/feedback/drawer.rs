@@ -1,5 +1,5 @@
 // hi-components/src/feedback/drawer.rs
-// Drawer component with Arknights + FUI styling
+// Drawer component
 
 use hikari_palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
 

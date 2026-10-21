@@ -1,6 +1,6 @@
 # hikari-components
 
-Comprehensive UI component library with Arknights-style design and FUI (Future User Interface) aesthetics.
+Core UI components for the Hikari design system — layout, forms, data display, feedback, and navigation on Rust/WASM (tairitsu).
 
 ## Installation
 
@@ -21,7 +21,7 @@ use hikari_theme::ThemeProvider;
 
 fn app() -> Element {
     rsx! {
-        ThemeProvider { palette: "arknights".to_string(),
+        ThemeProvider { palette: "hikari".to_string(),
             div { class: "container",
                 Button { variant: ButtonVariant::Primary, "Click Me" }
                 Card {

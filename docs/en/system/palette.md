@@ -1,6 +1,6 @@
 # Palette System
 
-Traditional Chinese color system implementation with 660+ historical colors.
+Color catalog and themed-palette system with 660+ curated colors.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ Traditional Chinese color system implementation with 660+ historical colors.
 
 `hikari-palette` provides:
 
-- **660+ Colors** - Complete traditional Chinese color definitions
+- **660+ Colors** - Curated collections of color definitions
 - **Type-Safe** - Compile-time color value checking
 - **Utility Classes** - Type-safe Tailwind-style utility class builder
 - **Theme Palettes** - Pre-configured theme color schemes
@@ -23,7 +23,7 @@ Traditional Chinese color system implementation with 660+ historical colors.
 
 All color definitions feature:
 
-- **Cultural Heritage** - Traditional Chinese color names
+- **Named Colors** - Historical and modern names with metadata
 - **Type Safety** - Enum-based color definitions
 - **Hex Values** - Standard hex color codes
 - **Categories** - Organized by color families
@@ -516,9 +516,9 @@ pub fn darken(color: Color, amount: f64) -> String;
 
 ## Design Philosophy
 
-### Cultural Significance
+### Historical Context
 
-Each traditional Chinese color carries cultural and historical meaning:
+Each color in the historical collection carries cultural and historical meaning:
 
 - **Cinnabar (朱砂)**: Used in imperial seals, represents power and authority
 - **Azurite (石青)**: Used in traditional painting, represents elegance
@@ -528,7 +528,7 @@ Each traditional Chinese color carries cultural and historical meaning:
 
 ### Color Harmony
 
-Traditional Chinese color combinations follow specific harmony rules:
+Classical color combinations follow specific harmony rules:
 
 - **Complementary**: Red + Green (朱砂 + 竹青)
 - **Analogous**: Blue + Cyan (石青 + 青色)

@@ -6,10 +6,10 @@ Le framework Hikari adopte une conception modulaire, composé de plusieurs packa
 
 ### 1. Système de Palette (hikari-palette)
 
-Implémentation Rust du système de couleurs traditionnelles chinoises.
+Catalogue de couleurs et socle de palettes de thèmes pour le design system.
 
 **Responsabilités**:
-- Fournit plus de 660 définitions de couleurs traditionnelles chinoises
+- Fournit plus de 660 définitions de couleurs curées (plusieurs collections)
 - Gestion des palettes de thèmes
 - Générateur de classes utilitaires
 - Opacité et mélange de couleurs
@@ -18,7 +18,7 @@ Implémentation Rust du système de couleurs traditionnelles chinoises.
 ```rust
 use hikari_palette::{Color, opacity};
 
-// Utiliser des couleurs traditionnelles
+// Utiliser les couleurs de la palette
 let red = Color::Cinnabar;
 let blue = Color::Azurite;
 
@@ -31,7 +31,7 @@ println!("Primaire: {}", theme.primary.hex());
 ```
 
 **Philosophie de Design**:
-- **Confiance Culturelle**: Utilisation de noms de couleurs traditionnels
+- **Métadonnées riches**: Couleurs nommées avec contexte historique
 - **Sécurité de Type**: Vérification des valeurs de couleur à la compilation
 - **Haute Performance**: Abstractions à coût nul
 

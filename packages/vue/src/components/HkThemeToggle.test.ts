@@ -280,9 +280,12 @@ describe("HkThemeToggle color-mode group", () => {
     }
     expect(customRows).toBe(1);
 
-    // Active check glyph sits inside the pill, leading the name.
+    // The active row's selection indicator is the data-active wash alone:
+    // the check glyph retired with the leading-icon cell (2026-10-21 user
+    // direction). No leading mark renders without an item-leading slot.
     const activeBtn = document.body.querySelector<HTMLButtonElement>(".s-theme-item-btn[data-active]");
-    expect(activeBtn?.querySelector(".s-theme-item-check")).toBeTruthy();
+    expect(activeBtn).toBeTruthy();
+    expect(activeBtn?.querySelector(".s-theme-item-check")).toBeNull();
 
     // The ROW is the pill (2026-10-01): the active state surfaces on the
     // row element too, so the highlight spans the full row width instead

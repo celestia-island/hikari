@@ -1,5 +1,5 @@
 import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
-import { Check, Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
+import { Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
 import {
   HDivider,
   solarAltitude,
@@ -274,12 +274,15 @@ export const HkThemePanelContent = defineComponent({
                   data-active={currentTheme.value === th.id || undefined}
                   onClick={() => onSelectTheme(th.id)}
                 >
+                  {/* The selected-check fallback is RETIRED (2026-10-21
+                      user direction): selection is conveyed by the row's
+                      data-active wash alone — with the leading icon cell
+                      gone across hosts, the leftover check read as a
+                      stray icon. No leading slot = no leading mark. */}
                   {leadingSlot ? (
                     <span class="hk-menu-item-icon s-theme-item-lead">
                       {leadingSlot(scope)}
                     </span>
-                  ) : currentTheme.value === th.id ? (
-                    <span class="hk-menu-item-icon s-theme-item-check"><Check size={14} /></span>
                   ) : null}
                   <span class="s-theme-item-name">{displayName}</span>
                   {nameSuffixSlot ? (

@@ -329,10 +329,9 @@
   margin-inline-end: 2rem;
 }
 
-.s-theme-item-check {
-  flex-shrink: 0;
-  color: rgb(var(--color-primary));
-}
+/* The selected-check cell retired with its render branch (2026-10-21
+ * user direction): the active row's data-active wash is the sole
+ * selection indicator. */
 
 /* Hover/active states come verbatim from the unified mi.item spec included
  * on .s-theme-item-btn above — former local copies deleted (R3 sweep). */

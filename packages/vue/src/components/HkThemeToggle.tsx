@@ -25,7 +25,7 @@ export { type ThemeItemScope } from "./HkThemePanelContent";
  *
  * Theme rows are host-customizable through three scoped slots (all render
  * in the popover AND the mobile bottom sheet — same DOM):
- *  · `item-leading` — replaces the selected-check cell; renders for
+ *  · `item-leading` — renders for
  *    every row in the fixed icon cell so names align regardless of the
  *    active row. Scope: `ThemeItemScope` (id/name/isCustom/preset).
  *  · `item-name-suffix` — an inline cell rendered INSIDE the row button,

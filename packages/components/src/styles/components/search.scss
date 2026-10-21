@@ -108,7 +108,7 @@
   overflow-y: auto;
   background-color: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fui-lg;
+  border-radius: vars.$hikari-radius-fine-lg;
   box-shadow: 0 6px 16px var(--hi-color-black-10);
   padding: 4px;
   min-width: 200px;
@@ -119,7 +119,7 @@
   align-items: center;
   gap: vars.$hikari-spacing-xs;
   padding: vars.$hikari-spacing-xs vars.$hikari-spacing-sm;
-  border-radius: vars.$hikari-radius-fui-md;
+  border-radius: vars.$hikari-radius-fine-md;
   cursor: pointer;
   transition: all vars.$hikari-transition-fast;
   font-size: vars.$hikari-font-size-sm;

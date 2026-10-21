@@ -29,7 +29,7 @@
     height: 300px;
     background: var(--hi-card-bg);
     border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
-    border-radius: vars.$hikari-radius-fui-md;
+    border-radius: vars.$hikari-radius-fine-md;
     overflow: hidden;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 }
@@ -66,7 +66,7 @@
     color: var(--hi-color-text-secondary);
     padding: 0.125rem 0.375rem;
     background: var(--hi-primary);
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
 }
 
 // ------
@@ -86,7 +86,7 @@
     color: var(--hi-input-text, #F8FAFC);
     background: var(--hi-input-bg);
     border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &::placeholder {
@@ -131,7 +131,7 @@
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     margin: 0 0.5rem;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-primary);
@@ -211,7 +211,7 @@
     padding: 0;
     background: var(--hi-button-bg, rgba(55, 55, 55, 0.9));
     border: 1px solid var(--hi-button-border, rgba(255, 255, 255, 0.1));
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     color: var(--hi-color-text-primary);
     cursor: pointer;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;

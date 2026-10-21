@@ -146,37 +146,6 @@ impl Default for Tairitsu {
     }
 }
 
-// === Arknights — Dark industrial (cyan + gold on deep navy) ==================
-
-/// Arknights-inspired dark industrial theme.
-pub struct Arknights;
-
-impl Arknights {
-    #[must_use]
-    pub const fn palette() -> Palette {
-        Palette {
-            mode: ThemeMode::Dark,
-            primary: Color::from_rgb_hex(0x00, 0xb4, 0xd8),
-            secondary: Color::from_rgb_hex(0xff, 0xd7, 0x00),
-            accent: Color::from_rgb_hex(0xff, 0xd7, 0x00),
-            success: Color::from_rgb_hex(0x3f, 0xb9, 0x50),
-            warning: Color::from_rgb_hex(0xd2, 0x99, 0x22),
-            danger: Color::from_rgb_hex(0xf8, 0x51, 0x49),
-            background: Color::from_rgb_hex(0x0d, 0x11, 0x17),
-            surface: Color::from_rgb_hex(0x16, 0x1b, 0x22),
-            border: Color::from_rgb_hex(0x30, 0x36, 0x3d),
-            text_primary: Color::from_rgb_hex(0xe6, 0xed, 0xf3),
-            text_secondary: Color::from_rgb_hex(0x8b, 0x94, 0x9e),
-        }
-    }
-}
-
-impl Default for Arknights {
-    fn default() -> Self {
-        Self
-    }
-}
-
 /// Runtime registry for named palettes (built-ins + user-registered).
 pub struct ThemeRegistry {
     palettes: RwLock<HashMap<String, Palette>>,
@@ -188,7 +157,6 @@ impl ThemeRegistry {
         let mut palettes = HashMap::new();
         palettes.insert("hikari".to_string(), Hikari::palette());
         palettes.insert("tairitsu".to_string(), Tairitsu::palette());
-        palettes.insert("arknights".to_string(), Arknights::palette());
         Self {
             palettes: RwLock::new(palettes),
         }
@@ -301,13 +269,6 @@ mod tests {
     }
 
     #[test]
-    fn test_arknights_theme_is_dark() {
-        let palette = Arknights::palette();
-        assert_eq!(palette.mode, ThemeMode::Dark);
-        assert!(palette.background.is_dark());
-    }
-
-    #[test]
     fn test_default_is_hikari() {
         let palette = default_theme();
         assert_eq!(palette.mode, ThemeMode::Light);
@@ -318,12 +279,11 @@ mod tests {
         let registry = ThemeRegistry::new();
         assert_eq!(registry.get("hikari").unwrap().mode, ThemeMode::Light);
         assert_eq!(registry.get("tairitsu").unwrap().mode, ThemeMode::Dark);
-        assert_eq!(registry.get("arknights").unwrap().mode, ThemeMode::Dark);
 
         let names = registry.list();
+        assert_eq!(names.len(), 2, "only the two documented built-ins ship");
         assert!(names.contains(&"hikari".to_string()));
         assert!(names.contains(&"tairitsu".to_string()));
-        assert!(names.contains(&"arknights".to_string()));
     }
 
     #[test]

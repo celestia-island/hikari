@@ -129,7 +129,7 @@
     justify-content: center;
 
     // Glow effect
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     background: linear-gradient(135deg, var(--hi-primary), rgba(59, 130, 246, 0.2));
     --hi-glow-transparent: false;
     --hi-glow-bg-color: var(--hi-primary);
@@ -236,7 +236,7 @@
     font-weight: 500;
     color: var(--hi-color-text-secondary);
     text-decoration: none;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     // DISABLED - migrated to JS animation
 
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -297,7 +297,7 @@
   height: 2.25rem;
 
   // Appearance
-  border-radius: vars.$hikari-radius-fui-sm;
+  border-radius: vars.$hikari-radius-fine-sm;
   border: 1px solid transparent;
   background: transparent;
   color: var(--hi-color-text-secondary);
@@ -409,7 +409,7 @@
     color: var(--hi-color-text-primary);
     background: rgba(214, 236, 240, 0.5);
     border: 1px solid var(--hi-primary);
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     outline: none;
     // DISABLED - migrated to JS animation
 
@@ -470,7 +470,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.375rem 0.75rem;
-  border-radius: vars.$hikari-radius-fui-sm;
+  border-radius: vars.$hikari-radius-fine-sm;
   cursor: pointer;
   // DISABLED - migrated to JS animation
 
@@ -482,7 +482,7 @@
   .hk-header-user-avatar {
     width: 2rem;
     height: 2rem;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     object-fit: cover;
     border: 2px solid var(--hi-primary);
     --hi-glow-transparent: false;

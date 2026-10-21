@@ -134,7 +134,7 @@
       justify-content: center;
 
       // Glow effect
-      border-radius: vars.$hikari-radius-fui-sm;
+      border-radius: vars.$hikari-radius-fine-sm;
       background: linear-gradient(135deg, var(--hi-primary), rgba(59, 130, 246, 0.2));
       --hi-glow-transparent: false;
       --hi-glow-bg-color: var(--hi-primary);
@@ -185,7 +185,7 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     border: 1px solid transparent;
     background: transparent;
     color: var(--hi-color-text-secondary);
@@ -350,7 +350,7 @@
   white-space: nowrap;
 
   // Appearance
-  border-radius: vars.$hikari-radius-fui-sm;
+  border-radius: vars.$hikari-radius-fine-sm;
   border: 1px solid var(--hi-color-border); // Default border (like buttons)
 
   // Cursor
@@ -373,7 +373,7 @@
     inset: 0;
     pointer-events: none;
     z-index: -1;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
 
@@ -418,7 +418,7 @@
     font-weight: 500;
     color: var(--hi-color-text-primary);
     background: var(--hi-primary);
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     border: 1px solid var(--hi-primary);
     --hi-glow-transparent: false;
     --hi-glow-bg-color: var(--hi-primary);
@@ -506,7 +506,7 @@
       justify-content: space-between;
       cursor: pointer;
       user-select: none;
-      border-radius: vars.$hikari-radius-fui-sm;
+      border-radius: vars.$hikari-radius-fine-sm;
       // DISABLED - migrated to JS animation
 
       // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -649,7 +649,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     cursor: pointer;
     // DISABLED - migrated to JS animation
 
@@ -659,7 +659,7 @@
     .hk-aside-user-avatar {
       width: 2rem;
       height: 2rem;
-      border-radius: vars.$hikari-radius-fui-sm;
+      border-radius: vars.$hikari-radius-fine-sm;
       object-fit: cover;
       border: 2px solid var(--hi-primary);
       --hi-glow-transparent: false;

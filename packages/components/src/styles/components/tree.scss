@@ -39,7 +39,7 @@
   &.hk-tree-card {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid var(--hi-color-border);
-    border-radius: vars.$hikari-radius-fui-md;
+    border-radius: vars.$hikari-radius-fine-md;
     padding: 0.5rem;
     box-shadow:
       0 4px 8px rgba(214, 236, 240, 0.5),
@@ -124,7 +124,7 @@
   // Appearance
   background: transparent;
   border: 1px solid transparent;
-  border-radius: vars.$hikari-radius-fui-sm;
+  border-radius: vars.$hikari-radius-fine-sm;
 
   // Typography
   font-family: vars.$hikari-font-family-sans;
@@ -532,7 +532,7 @@
       var(--hi-primary) 100%
     );
     background-size: 200% 100%;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     // DISABLED - migrated to JS animation
 
     // animation: tree-skeleton-loading 1.5s ease-in-out infinite;

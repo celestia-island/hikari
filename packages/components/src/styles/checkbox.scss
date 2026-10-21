@@ -50,7 +50,7 @@
     flex-shrink: 0;
     border: 1.5px solid var(--hi-color-border, rgba(0, 0, 0, 0.2));
     background: var(--hi-color-surface, #F0F4F8);
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     box-sizing: border-box;
 }

@@ -277,4 +277,4 @@ Inspired by and built upon:
 
 ## Name
 
-"Hikari" (光) means "light" in Japanese. The name stands for clarity and precision in interface design — one visual language that follows your product across every runtime it runs on.
+"Hikari" (光) means "light" in Japanese. The name comes from the rhythm game [Arcaea](https://arcaea.lowiro.com/). It stands for clarity and precision in interface design — one visual language that follows your product across every runtime it runs on.

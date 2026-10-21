@@ -38,18 +38,3 @@ surface = "#202336"
 border = "#303448"
 text_primary = "#f0f0f4"
 text_secondary = "#b3b4c7"
-
-# === Arknights — Dark industrial (cyan + gold on deep navy) ===
-[palettes.arknights]
-mode = "dark"
-primary = "#00b4d8"
-secondary = "#ffd700"
-accent = "#ffd700"
-success = "#3fb950"
-warning = "#d29922"
-danger = "#f85149"
-background = "#0d1117"
-surface = "#161b22"
-border = "#30363d"
-text_primary = "#e6edf3"
-text_secondary = "#8b949e"

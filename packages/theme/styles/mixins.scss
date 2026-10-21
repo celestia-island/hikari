@@ -202,11 +202,11 @@
 // 平面设计 Mixins
 // ------
 
-@mixin arknights-border {
+@mixin flat-border {
     border: 1px solid var(--hi-color-white-10);
 }
 
-@mixin arknights-glow {
+@mixin flat-glow {
     box-shadow: 0 0 20px var(--hi-color-secondary);
 }
 
@@ -214,11 +214,11 @@
 // 视觉强调 Mixins
 // ------
 
-@mixin fui-glow {
+@mixin accent-glow {
     box-shadow: 0 0 10px var(--hi-color-purple-50);
 }
 
-@mixin fui-pulse {
+@mixin accent-pulse {
     animation: pulse 2s ease-in-out infinite;
 }
 
@@ -231,7 +231,7 @@
     }
 }
 
-@mixin fui-hexagon {
+@mixin accent-hexagon {
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 
@@ -698,21 +698,21 @@
 // ------
 
 /// 卡片基础
-@mixin fui-card-base {
+@mixin accent-card-base {
     @include acrylic-material;
     @include hover-lift(2px);
-    border-radius: $hikari-radius-fui-md;
+    border-radius: $hikari-radius-fine-md;
     padding: $hikari-spacing-lg;
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /// 按钮基础
-@mixin fui-button-base {
+@mixin accent-button-base {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: $hikari-spacing-sm $hikari-spacing-md;
-    border-radius: $hikari-radius-fui-sm;
+    border-radius: $hikari-radius-fine-sm;
     font-weight: 500;
     font-size: $hikari-font-size-sm;
     transition: all $hikari-duration-fast $hikari-ease-smooth;
@@ -745,9 +745,9 @@
 }
 
 /// 输入框基础
-@mixin fui-input-base {
+@mixin accent-input-base {
     @include acrylic-focus;
-    border-radius: $hikari-radius-fui-sm;
+    border-radius: $hikari-radius-fine-sm;
     padding: $hikari-spacing-sm $hikari-spacing-md;
     font-size: $hikari-font-size-sm;
     color: var(--hi-color-text-primary);

@@ -21,7 +21,7 @@
   padding: 1rem 1.25rem;
 
   // Appearance - Subtle rounded corners, NO static border
-  border-radius: vars.$hikari-radius-fui-md;
+  border-radius: vars.$hikari-radius-fine-md;
   border: none;
 
   // Acrylic background effect (light) - same as Card
@@ -87,7 +87,7 @@
     border: none;
     color: var(--hi-color-text-secondary);
     cursor: pointer;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
 
     &:hover {
       color: var(--hi-color-danger);

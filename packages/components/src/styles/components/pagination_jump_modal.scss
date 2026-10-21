@@ -36,7 +36,7 @@
 .hk-pagination-jump-modal-content {
   background: var(--hi-card-bg, #ffffff);
   border: 1px solid var(--hi-color-border, #e5e7eb);
-  border-radius: var(--hi-radius-fui-md, 8px);
+  border-radius: var(--hi-radius-fine-md, 8px);
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -89,7 +89,7 @@
   color: var(--hi-color-text-primary, #1f2937);
   background: var(--hi-card-bg, #ffffff);
   border: 1px solid var(--hi-color-border, #e5e7eb);
-  border-radius: var(--hi-radius-fui-sm, 4px);
+  border-radius: var(--hi-radius-fine-sm, 4px);
   outline: none;
   transition:
     border-color 0.2s ease-out,
@@ -121,7 +121,7 @@
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--hi-radius-fui-sm, 4px);
+  border-radius: var(--hi-radius-fine-sm, 4px);
   cursor: pointer;
   user-select: none;
   transition:

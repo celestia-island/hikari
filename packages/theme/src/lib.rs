@@ -26,8 +26,6 @@
 //!   - Secondary: #FFC773 (warm yellow)
 //!   - Background: #50616D
 //!
-//! - **Arknights** — Dark industrial (cyan + gold on deep navy)
-//!
 //! Palettes are self-contained hex definitions and do not depend on any
 //! optional color collection.
 //!

@@ -4,9 +4,9 @@ use crate::core::{
     AnimationEngine, AnimationOptions, EasingFunction, PlaybackMode, PropertyTarget, Tween, TweenId,
 };
 
-/// Color configuration for FUI animations
+/// Color configuration for effect animations
 #[derive(Debug, Clone)]
-pub struct FUIColors {
+pub struct EffectColors {
     /// Primary color (RGB)
     pub primary: (f64, f64, f64),
     /// Accent color (RGB)
@@ -15,7 +15,7 @@ pub struct FUIColors {
     pub glow: (f64, f64, f64),
 }
 
-impl Default for FUIColors {
+impl Default for EffectColors {
     fn default() -> Self {
         Self {
             primary: (0.0, 0.8, 1.0),
@@ -25,14 +25,14 @@ impl Default for FUIColors {
     }
 }
 
-/// FUI glow effect animations
+/// Glow effect animations
 ///
 /// Provides glowing, breathing, and shimmer effects suitable for
 /// futuristic interfaces and status indicators.
 #[derive(Clone)]
 pub struct GlowAnimation {
     engine: AnimationEngine,
-    colors: FUIColors,
+    colors: EffectColors,
 }
 
 impl Default for GlowAnimation {
@@ -46,7 +46,7 @@ impl GlowAnimation {
     pub fn new() -> Self {
         Self {
             engine: AnimationEngine::new(),
-            colors: FUIColors::default(),
+            colors: EffectColors::default(),
         }
     }
 
@@ -54,7 +54,7 @@ impl GlowAnimation {
     ///
     /// # Arguments
     /// * `colors` - Color configuration
-    pub fn with_colors(mut self, colors: FUIColors) -> Self {
+    pub fn with_colors(mut self, colors: EffectColors) -> Self {
         self.colors = colors;
         self
     }
@@ -167,14 +167,14 @@ impl GlowAnimation {
     }
 }
 
-/// FUI neon effect animations
+/// Neon effect animations
 ///
 /// Provides neon-style glowing, flickering, and scanline effects
 /// for retro-futuristic interfaces.
 #[derive(Clone)]
 pub struct NeonAnimation {
     engine: AnimationEngine,
-    colors: FUIColors,
+    colors: EffectColors,
 }
 
 impl Default for NeonAnimation {
@@ -188,7 +188,7 @@ impl NeonAnimation {
     pub fn new() -> Self {
         Self {
             engine: AnimationEngine::new(),
-            colors: FUIColors::default(),
+            colors: EffectColors::default(),
         }
     }
 
@@ -196,7 +196,7 @@ impl NeonAnimation {
     ///
     /// # Arguments
     /// * `colors` - Color configuration
-    pub fn with_colors(mut self, colors: FUIColors) -> Self {
+    pub fn with_colors(mut self, colors: EffectColors) -> Self {
         self.colors = colors;
         self
     }
@@ -305,7 +305,7 @@ impl NeonAnimation {
     }
 }
 
-/// FUI technology effect animations
+/// Technology effect animations
 ///
 /// Provides glitch, typing, data flow, and HUD scan effects
 /// for technology-themed interfaces.

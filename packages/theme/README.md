@@ -36,7 +36,7 @@ For complete API documentation, theme customization, and nested theming, see [do
 
 - **ThemeProvider Component** - Context-based theme management for Dioxus apps
 - **CSS Variables System** - Dynamic theming via CSS custom properties
-- **Multiple Built-in Themes** - Hikari (light), Tairitsu (dark), Arknights, Fresh
+- **Multiple Built-in Themes** - Hikari (light) and Tairitsu (dark), plus runtime-registered custom palettes
 - **SCSS Mixins & Utilities** - Reusable styling helpers
 - **Nested Theme Support** - Local theme override capability
 
@@ -46,8 +46,6 @@ For complete API documentation, theme customization, and nested theming, see [do
 |-------|------|---------------|-----------------|
 | `hikari` | Light | 石青 (Cyan/Blue) | 朱砂 (Vermilion/Red) |
 | `tairitsu` | Dark | 靛蓝 (Indigo) | 朱砂 (Vermilion) |
-| `arknights` | Light | 石青 (Cyan/Blue) | 朱砂 (Vermilion) |
-| `fresh` | Light | 月白 (Light White) | 葱倩 (Green) |
 
 ## License
 

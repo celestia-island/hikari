@@ -41,7 +41,7 @@
   color: var(--hi-color-text-primary);
 
   // Appearance - Card-like styling (same as Card component)
-  border-radius: vars.$hikari-radius-fui-sm;
+  border-radius: vars.$hikari-radius-fine-sm;
   border: 1px solid rgba(226, 232, 240, 0.8);
 
   // Use theme surface background (not dark)
@@ -155,13 +155,13 @@
 .hk-tooltip-md {
   padding: 0.5rem 0.75rem;
   font-size: vars.$hikari-font-size-sm;
-  border-radius: vars.$hikari-radius-fui-sm;
+  border-radius: vars.$hikari-radius-fine-sm;
 }
 
 .hk-tooltip-lg {
   padding: 0.625rem 1rem;
   font-size: 0.9375rem;
-  border-radius: vars.$hikari-radius-fui-md;
+  border-radius: vars.$hikari-radius-fine-md;
 
   &::before {
     border-width: 6px;

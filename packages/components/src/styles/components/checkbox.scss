@@ -52,7 +52,7 @@
     flex-shrink: 0;
     border: 1.5px solid var(--hi-component-selection-border);
     background: var(--hi-component-selection-surface);
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     box-sizing: border-box;
 }

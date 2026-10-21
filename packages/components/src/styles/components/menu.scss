@@ -20,7 +20,7 @@
   gap: 0.5rem;
 
   // Appearance - subtle rounded corners
-  border-radius: vars.$hikari-radius-fui-md;
+  border-radius: vars.$hikari-radius-fine-md;
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect
@@ -122,7 +122,7 @@ aside .hk-menu {
     gap: 1rem;
     margin: 0;
     width: 100%;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
     line-height: 1;
 
     // Ensure entire inner area is clickable
@@ -889,7 +889,7 @@ aside .hk-menu {
       gap: 1rem;
       margin: 0.25rem 0;
       width: 100%;
-      border-radius: vars.$hikari-radius-fui-sm;
+      border-radius: vars.$hikari-radius-fine-sm;
       line-height: 1;
 
       // Height, padding, and level-based padding are controlled by height classes:

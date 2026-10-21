@@ -10,7 +10,7 @@
   padding: 0.35rem 0.45rem;
   background: rgb(var(--color-background, 20 22 26));
   border: 1px solid rgb(var(--color-border, 128 128 128) / 15%);
-  border-radius: vars.$hikari-radius-fui-md;
+  border-radius: vars.$hikari-radius-fine-md;
   box-sizing: border-box;
   overflow: hidden;
 
@@ -22,6 +22,6 @@
 
   /* The viewport scrollbar inherits the shared chrome shape. */
   .xterm-viewport {
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: vars.$hikari-radius-fine-sm;
   }
 }

@@ -9,6 +9,7 @@ import {
 } from "vue";
 
 import HModal from "./HkModal";
+import HkScrollContainer from "./HkScrollContainer";
 import "./HkSettingsDialog.scss";
 
 /** One rail entry of the settings dialog. */
@@ -37,12 +38,29 @@ export interface HkSettingsSection {
  * specific section; leaving it unbound keeps the state internal
  * (first section active).
  *
- * Scroll ownership: the pane is the only scroller — switching sections
- * restarts it from the top (arriving on a half-scrolled pane reads as a
- * broken page). Inside the dialog the modal body's own scroller is made
- * mathematically idle by the host height rule (see the SCSS); on a page
- * the host manages its own layout.
+ * Scroll ownership: both scrollers are hikari HkScrollContainers (the
+ * app-wide overlay-scrollbar contract) — the rail and pane HOSTS keep
+ * the shell geometry while their VIEWPORTS scroll, with the native thin
+ * bars hidden and the auto-hiding overlay chrome drawn by the library.
+ * The rail opts into the container's selection edge hint
+ * (`selectionHint`): an active entry scrolled out of the rail's band
+ * lights a primary-color gradient at the offending edge, so a long
+ * section list never hides "where did the selection go". Switching
+ * sections still restarts the pane from the top (arriving on a
+ * half-scrolled pane reads as a broken page). Inside the dialog the
+ * modal body's own scroller is made mathematically idle by the host
+ * height rule (see the SCSS); on a page the host manages its own
+ * layout.
  */
+
+/** Consumed slice of HkScrollContainer's exposed component ref — the
+ *  pane's ref yields the exposed scroll HANDLE, not an element (the
+ *  viewport owns the scrolling), so the section-switch reset goes
+ *  through scrollTo. */
+interface PaneScrollHandle {
+  scrollTo(top: number, behavior?: ScrollBehavior): void;
+}
+
 export const HkSettingsBody = defineComponent({
   name: "HkSettingsBody",
   props: {
@@ -82,12 +100,11 @@ export const HkSettingsBody = defineComponent({
         ? internal.value
         : (props.sections[0]?.key ?? "");
 
-    const paneRef = ref<HTMLElement | null>(null);
-    // Section switches restart the pane from the top.
+    const paneRef = ref<PaneScrollHandle | null>(null);
+    // Section switches restart the pane from the top — through the
+    // container's exposed handle (the viewport owns the scrolling now).
     watch(active, () => {
-      void nextTick(() => {
-        if (paneRef.value) paneRef.value.scrollTop = 0;
-      });
+      void nextTick(() => paneRef.value?.scrollTo(0));
     });
 
     function pick(key: string) {
@@ -99,7 +116,7 @@ export const HkSettingsBody = defineComponent({
 
     return () => (
       <div class="hk-settings">
-        <nav class="hk-settings__rail" aria-label={props.navLabel}>
+        <HkScrollContainer as="nav" class="hk-settings__rail" selectionHint aria-label={props.navLabel}>
           {props.sections.map((s) => {
             const Icon = s.icon;
             const on = active() === s.key && !s.disabled;
@@ -122,10 +139,10 @@ export const HkSettingsBody = defineComponent({
               </button>
             );
           })}
-        </nav>
-        <div class="hk-settings__pane" ref={paneRef}>
+        </HkScrollContainer>
+        <HkScrollContainer class="hk-settings__pane" ref={paneRef}>
           {slots[active()]?.()}
-        </div>
+        </HkScrollContainer>
       </div>
     );
   },

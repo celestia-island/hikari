@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { compile } from "sass";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import { Languages, Globe } from "lucide-vue-next";
 import {
@@ -78,7 +79,6 @@ describe("HSettingsBody", () => {
   });
 
   it("restarts the pane scroll on section switch", async () => {
-    const scrolled = ref(false);
     const Probe = defineComponent({
       setup() {
         const section = ref("language");
@@ -97,14 +97,39 @@ describe("HSettingsBody", () => {
       },
     });
     const { container, unmount } = mount(Probe);
+    // The pane HOST is the scroll container; its viewport is the
+    // scroller — the reset goes through the container's exposed
+    // scrollTo handle, landing on the viewport.
     const pane = container.querySelector<HTMLElement>(".hk-settings__pane")!;
-    pane.scrollTop = 500;
+    const viewport = pane.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    viewport.scrollTop = 500;
     const items = container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item");
     items[1].click();
     await nextTick();
     await nextTick();
-    scrolled.value = pane.scrollTop === 0;
-    expect(scrolled.value).toBe(true);
+    expect(viewport.scrollTop).toBe(0);
+    unmount();
+  });
+
+  it("renders the rail and pane as HkScrollContainers, the rail with the selection hint", async () => {
+    // Scroll ownership (2026-10-21): both shell scrollers are hikari
+    // HkScrollContainers (overlay-scrollbar contract) — the hosts keep
+    // the shell BEM classes, their viewports scroll. The rail opts into
+    // the selection edge hint, so its root mirrors the sensed
+    // data-selection-beyond state (happy-dom's zero rects read as
+    // "beyond both" — the pin is that the attribute exists at all).
+    const { container, unmount } = mount(Host);
+    const rail = container.querySelector<HTMLElement>(".hk-settings__rail")!;
+    expect(rail.tagName).toBe("NAV");
+    expect(rail.classList.contains("hk-scroll-container")).toBe(true);
+    expect(rail.hasAttribute("data-selection-beyond")).toBe(true);
+    // Rail entries sit INSIDE the rail's viewport (the scroller).
+    expect(rail.querySelector(".hk-scroll-container-viewport .hk-settings__rail-item")).toBeTruthy();
+    const pane = container.querySelector<HTMLElement>(".hk-settings__pane")!;
+    expect(pane.classList.contains("hk-scroll-container")).toBe(true);
+    expect(pane.querySelector(".hk-scroll-container-viewport")).toBeTruthy();
+    // The pane never senses selection (the hint is rail-only).
+    expect(pane.hasAttribute("data-selection-beyond")).toBe(false);
     unmount();
   });
 
@@ -220,6 +245,48 @@ describe("settings dialog SCSS host contract (source-level)", () => {
     expect(scss).toContain(".hk-settings-host .hk-modal-body-inner {");
     expect(scss).toContain("height: var(--hk-settings-height, calc(70vh - 6.5rem));");
     expect(scss).toContain("margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));");
+  });
+
+  it("anchors the scroll anatomy on the viewports, not the hosts (compiled)", () => {
+    // Scroll ownership (2026-10-21): the rail/pane hosts became
+    // HkScrollContainer hosts — the hosts stopped being their own
+    // scrollers (no overflow-y, no gap/padding on the host rules) while
+    // the viewport children took the column layout, the gaps and the
+    // paddings whose home moved inside them, and the modal host's
+    // canceled content inset sits on the viewport so the overlay track
+    // still hugs the window edge. Pinned on the COMPILED sheet so SCSS
+    // nesting cannot hide a regression.
+    const css = compile("src/components/HkSettingsDialog.scss", { style: "expanded" }).css
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+
+    const rail = css.match(/\.hk-settings__rail\s*\{([^}]*)\}/)![0];
+    expect(rail).toContain("width: 10.5rem");
+    expect(rail).toContain("border-right");
+    expect(rail).not.toMatch(/overflow|gap:|padding/);
+
+    const railVp = css.match(/\.hk-settings__rail > \.hk-scroll-container-viewport\s*\{([^}]*)\}/)![0];
+    expect(railVp).toContain("display: flex");
+    expect(railVp).toContain("flex-direction: column");
+    expect(railVp).toContain("gap: var(--space-2)");
+    expect(railVp).toContain("padding: var(--space-4) var(--space-12) var(--space-4) 0");
+
+    const pane = css.match(/\.hk-settings__pane\s*\{([^}]*)\}/)![0];
+    expect(pane).not.toMatch(/overflow|gap:|padding/);
+    const paneVp = css.match(/\.hk-settings__pane > \.hk-scroll-container-viewport\s*\{([^}]*)\}/)![0];
+    expect(paneVp).toContain("display: flex");
+    expect(paneVp).toContain("gap: var(--space-16)");
+
+    // Modal host: the negative margin stays on the host; the content
+    // inset it cancels lives INSIDE the viewport (desktop var plus the
+    // <768px fallback, each exactly once).
+    const hostPane = css.match(/\.hk-settings-host \.hk-settings__pane\s*\{([^}]*)\}/)![0];
+    expect(hostPane).toContain("margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem))");
+    // No padding DECLARATION on the host (the var name above carries
+    // the substring "padding" — the pin is about declarations).
+    expect(hostPane).not.toMatch(/padding(-[a-z]+)?\s*:/);
+    expect(css).toContain(".hk-settings-host .hk-settings__pane > .hk-scroll-container-viewport");
+    expect(css.match(/padding-right:\s*var\(--space-28\)/g)).toHaveLength(1);
+    expect(css.match(/padding-right:\s*var\(--space-20\)/g)).toHaveLength(1);
   });
 
   it("never activates a disabled section through a deep-linked prop", async () => {

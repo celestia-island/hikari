@@ -26,7 +26,7 @@
   position: fixed;
   display: flex;
   flex-direction: column;
-  background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
+  background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
   // Token-gated (was a hard blur(12px)): the drawer resizes through
   // animated width/height, and a backdrop-filter on a resizing fixed
   // layer re-rasters the blurred region every frame — on phones that

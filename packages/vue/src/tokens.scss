@@ -86,8 +86,14 @@
   --color-muted: 108 108 108;
   --color-border: 100 100 100;
   --color-focused-border: 122 162 247;
-  --color-background: 214 236 240;
-  --color-surface: 240 244 248;
+  /* Static seed floor (2026-10-22 user direction): pure white — the
+   * pale-cyan paper default retired. These seeds are the PRE-ENGINE
+   * paint (and the engine-failure floor); the runtime theme overrides
+   * them on :root once JS applies a preset (dark mode included — the
+   * engine owns scheme switching, the seeds are the light default). */
+  --color-background: 255 255 255;
+  --color-surface: 255 255 255;
+
   /* Derived seed defaults for the runtime-selected channels: a primary
    * wash over the background (selected) and the surface tint (status
    * bar), matching what presets derive at runtime. */

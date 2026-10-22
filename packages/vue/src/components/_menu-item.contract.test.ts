@@ -111,4 +111,19 @@ describe("menu-item grammar contract", () => {
       /\.s-user-header \{[^}]*padding: var\(--space-10\) var\(--space-14\) var\(--space-12\)/,
     );
   });
+
+  it("spends the italic overhang cushion in the label mixin only", () => {
+    // Italic final strokes lean past the last glyph's advance and the
+    // label's overflow:hidden clips at the padding edge — an italic row
+    // label (host-styled sentinel rows) loses its trailing stroke
+    // (reported from the field: wowsp's all-clients sentinel row). The
+    // cushion is declared once with the grammar tokens and spent by the
+    // label mixin only — it is clipping room for the truncation box, not
+    // row spacing, so the item/icon mixins must stay cushion-free.
+    expect(grammar).toMatch(/--hk-menu-item-label-cushion: 0\.2em/);
+    expect(grammar).toMatch(
+      /@mixin label[^}]*padding-inline-end: var\(--hk-menu-item-label-cushion\)/,
+    );
+    expect(grammar.match(/var\(--hk-menu-item-label-cushion\)/g)?.length).toBe(1);
+  });
 });

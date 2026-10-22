@@ -104,6 +104,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Italic overhang cushion (menu-item label rule): the value truncates
+   * at the padding edge and an italicized value's trailing stroke leans
+   * past the last advance. Symmetric because the trigger centers its
+   * value — one-sided room would read as a 0.1em optical shift. The
+   * token is declared on menu-item rows, and the trigger sits outside
+   * that grammar — hence the fallback. */
+  padding-inline: var(--hk-menu-item-label-cushion, 0.2em);
 }
 
 .hk-popup-select-arrow {

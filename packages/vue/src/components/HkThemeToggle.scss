@@ -248,6 +248,11 @@
 .s-theme-item-row[data-name-suffix="slot"] .s-theme-item-name {
   flex: 0 1 auto;
   white-space: normal;
+  /* The suffix mark is pinned DIRECTLY against the name's trailing edge
+   * (the variant's whole point), and this variant wraps instead of
+   * truncating — the label mixin's italic overhang cushion would open a
+   * dead 0.2em gap ahead of the mark for no clipping room in return. */
+  padding-inline-end: 0;
 }
 
 .s-theme-item-name-suffix {

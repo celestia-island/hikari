@@ -235,3 +235,135 @@ describe("stylesheet descender-clipping contract", () => {
     expect(unmatched).toEqual([]);
   });
 });
+
+/**
+ * Horizontal twin: the italic-overhang contract.
+ *
+ * The same `overflow: hidden` that clips descenders vertically also clips
+ * ITALIC ink horizontally: synthetic-oblique strokes lean past the last
+ * glyph's advance, the truncation box ends at the padding edge, and the
+ * trailing stroke is shaved flat (reported from the field: wowsp's italic
+ * all-clients sentinel row lost the right edge of its last glyph). The fix
+ * is an inline-end cushion — clipping room INSIDE the padding box, which
+ * never triggers the ellipsis for fitting text (HkAffixPicker's
+ * `data-unset` rule is the in-tree precedent).
+ *
+ * The scan flags a truncation box (`overflow` clip + `text-overflow:
+ * ellipsis` + `white-space: nowrap`, all three in one block) whose element
+ * resolves to `font-style: italic` somewhere in the same sheet, unless an
+ * inline-end cushion of >= 0.2em also resolves for it. The pinned list
+ * below covers the boxes NO in-tree rule italicizes but hosts do — their
+ * cushion must be unconditional, because host CSS is invisible here.
+ */
+
+/** Italic overhang floor: HkAffixPicker's shipped cushion, in em. */
+const SAFE_ITALIC_CUSHION_EM = 0.2;
+
+function truncates(body: string): boolean {
+  return (
+    clipsOverflow(body) &&
+    declaration(body, "text-overflow") !== null &&
+    /nowrap/i.test(declaration(body, "white-space") ?? "")
+  );
+}
+
+/** The em figure inside a padding value, var() fallback included. */
+function emCushion(value: string | null): number | null {
+  if (value === null) return null;
+  // The grammar label's compiled shape is a bare var() with no literal em
+  // — its 0.2em value is pinned at the source level by
+  // _menu-item.contract.test.ts, so the token counts as the floor it
+  // contracts to.
+  if (/--hk-menu-item-label-cushion/i.test(value)) return SAFE_ITALIC_CUSHION_EM;
+  const match = value.match(/([\d.]+)em/i);
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * Winning declaration for one element across the sheet, resolving the
+ * cascade exactly like `effectiveRatio` does (same-subject blocks, highest
+ * specificity then latest order).
+ */
+function effectiveDecl(clip: Block, blocks: Block[], property: string): string | null {
+  const element = subject(clip.selector);
+  const candidates = blocks
+    .filter((block) => block.selector === clip.selector || subject(block.selector) === element)
+    .map((block) => ({ block, value: declaration(block.body, property) }))
+    .filter((entry): entry is { block: Block; value: string } => entry.value !== null);
+  if (!candidates.length) return null;
+  candidates.sort(
+    (a, b) => specificity(b.block.selector) - specificity(a.block.selector) || b.block.order - a.block.order,
+  );
+  return candidates[0]!.value;
+}
+
+describe("stylesheet italic-overhang contract", () => {
+  it("never truncates an italic line without the overhang cushion", { timeout: 60_000 }, () => {
+    const findings: string[] = [];
+    for (const file of sheets()) {
+      const name = file.slice(file.indexOf("/src/") + 1);
+      const css = compile(file, { style: "expanded", loadPaths: [componentDir, stylesDir] }).css.replace(
+        /\/\*[\s\S]*?\*\//g,
+        "",
+      );
+      const blocks = [...blocksOf(css, name)];
+      for (const block of blocks) {
+        if (!truncates(block.body)) continue;
+        if (!/^italic$/i.test(effectiveDecl(block, blocks, "font-style") ?? "")) continue;
+        // Either longhand satisfies the contract — centered boxes ship the
+        // symmetric `padding-inline` shorthand instead.
+        const cushion =
+          emCushion(effectiveDecl(block, blocks, "padding-inline-end")) ??
+          emCushion(effectiveDecl(block, blocks, "padding-inline"));
+        if (cushion !== null && cushion >= SAFE_ITALIC_CUSHION_EM) continue;
+        findings.push(
+          `${block.file} — ${block.selector} — truncates a line that resolves to italic without a >= ${SAFE_ITALIC_CUSHION_EM}em inline-end cushion: the trailing stroke is shaved`,
+        );
+      }
+    }
+    expect(findings.sort(), "italic truncation boxes missing the overhang cushion").toEqual([]);
+  });
+
+  it("keeps the host-italic-exposed truncation boxes cushioned", { timeout: 60_000 }, () => {
+    // Host CSS italicizes trigger values from OUTSIDE any hikari block,
+    // so no in-tree italic backs these — the scan above cannot see the
+    // risk and the cushion must be pinned unconditionally instead.
+    const pinned: ReadonlyArray<{ file: string; selector: string; property: string }> = [
+      { file: "HkSelect.scss", selector: ".hk-select-value", property: "padding-inline" },
+      { file: "HkPopupSelect.scss", selector: ".hk-popup-select-value", property: "padding-inline" },
+      // The original precedent this contract generalizes: its italic lives
+      // on the [data-unset] subject while the truncation trio sits on the
+      // base rule — a shape the scan's subject pairing cannot see, so the
+      // shipped cushion is pinned instead.
+      { file: "HkAffixPicker.scss", selector: ".hk-affix-tag-text[data-unset]", property: "padding-inline-end" },
+    ];
+    const compiled = new Map<string, ReturnType<typeof compile>["css"]>();
+    const found: string[] = [];
+    for (const pin of pinned) {
+      const file = resolve(componentDir, pin.file);
+      if (!compiled.has(file)) {
+        compiled.set(
+          file,
+          compile(file, { style: "expanded", loadPaths: [componentDir, stylesDir] }).css.replace(
+            /\/\*[\s\S]*?\*\//g,
+            "",
+          ),
+        );
+      }
+      const block = [...blocksOf(compiled.get(file)!, pin.file)].find(
+        (entry) => entry.selector === pin.selector,
+      );
+      if (!block) {
+        found.push(`${pin.file} — ${pin.selector} — the pinned rule no longer exists`);
+        continue;
+      }
+      const cushion = emCushion(declaration(block.body, pin.property));
+      if (cushion === null || cushion < SAFE_ITALIC_CUSHION_EM) {
+        found.push(
+          `${pin.file} — ${pin.selector} — lost its ${SAFE_ITALIC_CUSHION_EM}em italic overhang cushion`,
+        );
+      }
+    }
+    expect(found.sort(), "pinned italic-cushioned truncation boxes regressed").toEqual([]);
+  });
+});

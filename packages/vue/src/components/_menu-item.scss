@@ -50,6 +50,10 @@
   --hk-menu-item-icon-box: 16px;
   /* Label optical shift — see header comment. */
   --hk-menu-item-optical: 0.5px;
+  /* Italic overhang cushion — the inline-end clipping room the label
+   * spends (see @mixin label). em-based, so it scales with the sheet's
+   * larger item font without a sheet-token override. */
+  --hk-menu-item-label-cushion: 0.2em;
 }
 
 /* Mobile bottom-sheet geometry. */
@@ -207,6 +211,15 @@
   white-space: nowrap;
   position: relative;
   top: var(--hk-menu-item-optical);
+  /* Italic final strokes lean past the last glyph's advance, and the
+   * overflow:hidden pair above clips at the padding edge — an italic
+   * label (host-styled sentinel rows, emphasized picks) loses its
+   * trailing stroke (reported from the field: wowsp's all-clients
+   * sentinel row). The cushion is clipping room INSIDE the padding box
+   * (HkAffixPicker's `data-unset` fix, generalized to the one row
+   * spec): fitting text never gains an ellipsis, overflowing text
+   * truncates one cushion earlier. */
+  padding-inline-end: var(--hk-menu-item-label-cushion);
 }
 
 /* ── Divider row ──────────────────────────────────────────────────────

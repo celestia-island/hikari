@@ -24,7 +24,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--hk-sidebar-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
+  background: var(--hk-sidebar-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
   backdrop-filter: blur(var(--blur-sm, 8px));
   /* Logical edge: the border rides the content-facing side in either
    * direction (LTR sidebar docks left, RTL docks right). */

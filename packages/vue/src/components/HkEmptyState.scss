@@ -12,7 +12,7 @@
    panel — usually already provides a surface, and an always-on box turned
    every in-card empty state into a nested placeholder layer. */
 .hk-empty-state--boxed {
-  background: var(--hk-empty-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
+  background: var(--hk-empty-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
   backdrop-filter: blur(var(--blur-sm, 8px));
   border: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
   border-radius: var(--radius-md, 0.5rem);

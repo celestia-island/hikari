@@ -116,7 +116,7 @@
   transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
 
   &:hover {
-    background: var(--hi-color-surface, #f0f4f8);
+    background: var(--hi-color-surface, #ffffff);
     color: var(--hi-color-text-primary, #1e1e1e);
   }
 

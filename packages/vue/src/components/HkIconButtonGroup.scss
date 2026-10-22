@@ -22,7 +22,7 @@
   padding: var(--space-2, 0.125rem);
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-md, 8px);
-  background: rgb(var(--color-surface, 240 244 248) / 60%);
+  background: rgb(var(--color-surface, 255 255 255) / 60%);
 }
 
 .hk-icon-group-sm {
@@ -196,7 +196,7 @@
 
 .hk-icon-group-item-marker-success {
   background: rgb(var(--color-success, 14 184 64));
-  box-shadow: 0 0 0 0.125rem rgb(var(--color-surface, 240 244 248));
+  box-shadow: 0 0 0 0.125rem rgb(var(--color-surface, 255 255 255));
 }
 
 /* Slider items already establish position:relative for the thumb stack —

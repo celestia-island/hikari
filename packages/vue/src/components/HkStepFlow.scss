@@ -30,7 +30,7 @@
   --hk-scroll-pin-z: var(--hk-stepflow-sticky-z, 10);
   --hk-scroll-pin-bg: var(
     --hk-stepflow-sticky-bg,
-    color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 95%, transparent)
+    color-mix(in srgb, var(--hi-color-surface, #ffffff) 95%, transparent)
   );
   // The HOST's declared gutter owns the resting offset, not this rule. The
   // pin contract's offset rule is (0,3,0) and parks a top pin at

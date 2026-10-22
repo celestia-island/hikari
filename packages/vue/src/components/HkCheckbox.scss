@@ -33,7 +33,7 @@
    * --hi-color-border is the faint divider channel (15% alpha) and melts
    * into white/dark surfaces. */
   border: 1px solid rgb(var(--color-border, 100 100 100));
-  background: var(--hi-color-surface, rgba(240,244,248,0.95));
+  background: var(--hi-color-surface, rgba(255,255,255,0.95));
   transition:
     border-color var(--duration-normal, 0.3s) ease,
     background var(--duration-normal, 0.3s) ease,
@@ -95,7 +95,7 @@
    :focus-visible keeps mouse toggles ring-free. */
 .hk-checkbox-box:has(.hk-checkbox-input:focus-visible) {
   box-shadow:
-    0 0 0 2px var(--hi-color-surface, rgba(240,244,248,0.95)),
+    0 0 0 2px var(--hi-color-surface, rgba(255,255,255,0.95)),
     0 0 0 4px var(--hi-color-primary, #7aa2f7);
 }
 

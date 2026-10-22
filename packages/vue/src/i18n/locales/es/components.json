@@ -284,5 +284,9 @@
   "hikari::search.trigger": "Buscar",
   "hikari::search.clear": "Borrar búsqueda",
   "hikari::search.apply": "Aplicar",
-  "hikari::statusBar.idle": "Listo"
+  "hikari::statusBar.idle": "Listo",
+  "hikari::titleBar.minimize": "Minimizar",
+  "hikari::titleBar.maximize": "Maximizar",
+  "hikari::titleBar.restore": "Restaurar",
+  "hikari::titleBar.close": "Cerrar"
 }

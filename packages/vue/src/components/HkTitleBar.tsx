@@ -1,4 +1,5 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
+import { useI18n } from "../i18n/context";
 
 import "./HkTitleBar.scss";
 
@@ -26,6 +27,12 @@ import "./HkTitleBar.scss";
  * component swaps the maximize/restore glyph and squares the close button's
  * window corner radius (a maximized frame has no rounded corner to follow)
  * — no shell probing inside.
+ *
+ * The caption tooltips (minimize / maximize / restore / close) resolve
+ * through the preset i18n keys (`hikari::titleBar.*`): the bar is window
+ * chrome, so it follows the host's `setLocale` instead of receiving copy
+ * through props — with the English strings as the t() fallback for hosts
+ * that never set a locale.
  */
 export default defineComponent({
   name: "HkTitleBar",
@@ -52,6 +59,7 @@ export default defineComponent({
     action: (_id: string) => true,
   },
   setup(props, { emit, slots }) {
+    const { t } = useI18n();
     return () => (
       <div
         class="hk-titlebar"
@@ -89,8 +97,8 @@ export default defineComponent({
             <button
               type="button"
               class="hk-titlebar-btn"
-              title="Minimize"
-              aria-label="Minimize"
+              title={t("hikari::titleBar.minimize", "Minimize")}
+              aria-label={t("hikari::titleBar.minimize", "Minimize")}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("minimize");
@@ -103,8 +111,8 @@ export default defineComponent({
             <button
               type="button"
               class="hk-titlebar-btn"
-              title={props.maximized ? "Restore" : "Maximize"}
-              aria-label={props.maximized ? "Restore" : "Maximize"}
+              title={props.maximized ? t("hikari::titleBar.restore", "Restore") : t("hikari::titleBar.maximize", "Maximize")}
+              aria-label={props.maximized ? t("hikari::titleBar.restore", "Restore") : t("hikari::titleBar.maximize", "Maximize")}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("toggle-maximize");
@@ -121,8 +129,8 @@ export default defineComponent({
             <button
               type="button"
               class="hk-titlebar-btn hk-titlebar-btn-close"
-              title="Close"
-              aria-label="Close"
+              title={t("hikari::titleBar.close", "Close")}
+              aria-label={t("hikari::titleBar.close", "Close")}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("close");

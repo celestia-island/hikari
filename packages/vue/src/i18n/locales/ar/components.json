@@ -284,5 +284,9 @@
   "hikari::search.trigger": "بحث",
   "hikari::search.clear": "مسح البحث",
   "hikari::search.apply": "تطبيق",
-  "hikari::statusBar.idle": "جاهز"
+  "hikari::statusBar.idle": "جاهز",
+  "hikari::titleBar.minimize": "تصغير",
+  "hikari::titleBar.maximize": "تكبير",
+  "hikari::titleBar.restore": "استعادة",
+  "hikari::titleBar.close": "إغلاق"
 }

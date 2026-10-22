@@ -284,5 +284,9 @@
   "hikari::search.trigger": "Поиск",
   "hikari::search.clear": "Очистить поиск",
   "hikari::search.apply": "Применить",
-  "hikari::statusBar.idle": "Готово"
+  "hikari::statusBar.idle": "Готово",
+  "hikari::titleBar.minimize": "Свернуть",
+  "hikari::titleBar.maximize": "Развернуть",
+  "hikari::titleBar.restore": "Восстановить",
+  "hikari::titleBar.close": "Закрыть"
 }

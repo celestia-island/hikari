@@ -7,7 +7,7 @@
 
 .hk-titlebar {
   --hk-tb-height: 32px;
-  --hk-tb-bg: color-mix(in srgb, rgb(var(--color-surface, 240 244 248)) 80%, transparent);
+  --hk-tb-bg: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 80%, transparent);
   --hk-tb-border: rgb(var(--color-border, 100 100 100) / 0.25);
   --hk-tb-fg: rgb(var(--color-text-secondary, 102 102 102));
   --hk-tb-fg-strong: rgb(var(--color-text, 30 30 30));

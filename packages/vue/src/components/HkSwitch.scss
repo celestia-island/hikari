@@ -29,7 +29,7 @@
    the label; house pattern: HkButton double ring). */
 .hk-switch-input:focus-visible ~ .hk-switch-track {
   box-shadow:
-    0 0 0 2px var(--hi-color-surface, rgba(240, 244, 248, 0.95)),
+    0 0 0 2px var(--hi-color-surface, rgba(255, 255, 255, 0.95)),
     0 0 0 4px var(--hi-color-primary, #7aa2f7);
 }
 

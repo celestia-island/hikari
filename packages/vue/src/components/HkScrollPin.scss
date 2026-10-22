@@ -23,7 +23,7 @@
   // sticky header introduced; hosts retune through --hk-scroll-pin-bg).
   background: var(
     --hk-scroll-pin-bg,
-    color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 95%, transparent)
+    color-mix(in srgb, var(--hi-color-surface, #ffffff) 95%, transparent)
   );
   backdrop-filter: var(--hk-scroll-pin-blur, blur(6px));
 }

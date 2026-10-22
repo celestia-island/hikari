@@ -11,7 +11,7 @@
   justify-content: center;
   // Semi-transparent backdrop with a slight blur: the page beneath
   // stays readable (orientation) but clearly inactive.
-  background: rgb(var(--color-background, 214 236 240) / 0.55);
+  background: rgb(var(--color-background, 255 255 255) / 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   pointer-events: all;
@@ -27,7 +27,7 @@
   gap: 12px;
   padding: 24px 32px;
   border-radius: 12px;
-  background: rgb(var(--color-surface, 240 244 248) / 0.85);
+  background: rgb(var(--color-surface, 255 255 255) / 0.85);
   box-shadow: 0 8px 32px rgb(0 0 0 / 0.12);
 }
 

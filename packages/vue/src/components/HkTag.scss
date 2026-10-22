@@ -58,7 +58,7 @@
 }
 
 .hk-tag-default {
-  background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 60%, transparent);
+  background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 60%, transparent);
   color: var(--hi-color-text-primary, #1e1e1e);
   border-color: var(--hi-color-border, #646464);
 }

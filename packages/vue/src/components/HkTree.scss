@@ -114,7 +114,7 @@
   cursor: pointer;
 
   &:hover {
-    background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 40%, transparent);
+    background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 40%, transparent);
     color: var(--hi-color-text-primary, #1e1e1e);
   }
 }

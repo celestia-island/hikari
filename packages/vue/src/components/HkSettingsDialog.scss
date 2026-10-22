@@ -4,14 +4,30 @@
 // are the L2 scale tokens wowsp already used, so existing surfaces
 // migrate without repainting.
 //
-// Scroll ownership: inside the dialog (host class `hk-settings-host`)
-// the shell gets a STABLE height sized under the modal body scroller's
-// inner padding, so HkModal's floating overlay scrollbar stays idle and
-// the pane's own edge bar is the only scrollbar. The negative-margin
-// trick puts that edge — and its scrollbar — flush with the modal
-// window's right edge; the padding re-applies the content inset between
-// the scrollbar and the cards. A page-embedded body (no host class)
-// skips both: plain scroll container, host-managed layout.
+// Scroll ownership (2026-10-21): the rail and pane hosts are hikari
+// HkScrollContainers (upstreaming the conversion wowsp proved in
+// production on 2026-10-18) — the native thin bars are gone, the
+// auto-hiding overlay chrome draws instead. The hosts keep every shell
+// geometry rule (rail width, border, pane flex, the modal host's
+// flush-edge negative margin) while the VIEWPORTS scroll and carry the
+// paddings/gaps whose home moved inside them (the rail entries and
+// section cards are the viewport's children now); the hosts' own
+// overflow comes from the container base class (`.hk-scroll-container`,
+// overflow: hidden). The rail opts into the container's selection edge
+// hint: a selected entry scrolled out of the rail's band lights a
+// primary-color gradient at the offending edge (see
+// HkScrollContainer.scss).
+//
+// Inside the dialog (host class `hk-settings-host`) the shell gets a
+// STABLE height sized under the modal body scroller's inner padding,
+// so HkModal's floating overlay scrollbar stays idle and the pane's
+// edge bar is the only scrollbar. The negative-margin trick stays on
+// the pane HOST and puts that edge — and its scrollbar — flush with
+// the modal window's right edge; the canceled content inset is
+// re-applied INSIDE the viewport, or the overlay track (hugging the
+// viewport's edge) would land short of the window edge. A
+// page-embedded body (no host class) skips the modal rules: plain
+// scroll container, host-managed layout.
 
 .hk-settings {
   display: flex;
@@ -22,12 +38,14 @@
   &__rail {
     flex: none;
     width: 10.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4) var(--space-12) var(--space-4) 0;
     border-right: 1px solid rgb(var(--color-border) / 15%);
-    overflow-y: auto;
+
+    & > .hk-scroll-container-viewport {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-4) var(--space-12) var(--space-4) 0;
+    }
   }
 
   &__rail-item {
@@ -96,14 +114,16 @@
     white-space: nowrap;
   }
 
-  /* ── content pane: one section at a time, this is the scroller ── */
+  /* ── content pane: one section at a time, the viewport scrolls ── */
   &__pane {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-16);
-    overflow-y: auto;
+
+    & > .hk-scroll-container-viewport {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-16);
+    }
   }
 }
 
@@ -120,16 +140,24 @@
 }
 
 /* Cancel the modal body's fixed right padding so the pane's scrollbar
-   sits flush at the window edge; re-apply the inset between the bar and
-   the cards. HkModal retunes the body padding to 1rem under 768px —
-   follow it or the pane overshoots the edge. */
+   sits flush at the window edge; the canceled inset is re-applied on
+   the VIEWPORT — between the bar and the cards — so the overlay track
+   still hugs the window edge where the native bar sat. HkModal retunes
+   the body padding to 1rem under 768px — follow it or the pane
+   overshoots the edge. */
 .hk-settings-host .hk-settings__pane {
   margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));
-  padding-right: var(--space-28);
+
+  & > .hk-scroll-container-viewport {
+    padding-right: var(--space-28);
+  }
 
   @media (max-width: 767px) {
     margin-right: -1rem;
-    padding-right: var(--space-20);
+
+    & > .hk-scroll-container-viewport {
+      padding-right: var(--space-20);
+    }
   }
 }
 

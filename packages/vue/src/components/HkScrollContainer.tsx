@@ -23,6 +23,7 @@ type ScrollAxis = "vertical" | "horizontal" | "both";
 type ScrollMode = "traditional" | "windowed";
 type ScrollAlign = "start" | "center";
 type OverflowSense = "none" | "start" | "end" | "both";
+type SelectionBeyond = "none" | "top" | "bottom" | "both";
 
 /** Which edges of an axis still hide content, derived from live scroll
  *  geometry. "end" = content continues past the end edge (can scroll
@@ -162,6 +163,36 @@ export default defineComponent({
      *  backTopShow` degrades the same way (the show test wins first),
      *  so the band only widens, never inverts. */
     backTopHide: { type: Number, default: undefined },
+    /** Opt-in selection edge hint (2026-10-21): a list taller than its
+     *  viewport (a settings rail, a long nav) hides its SELECTED row as
+     *  soon as it scrolls out of the visible band, and nothing on the
+     *  screen says which way to scroll for it. While this prop is on,
+     *  every sensing pass additionally checks whether any "selected"
+     *  descendant (which ones count is `selectionSelector`) lies fully
+     *  outside the viewport's visible vertical band, and mirrors the
+     *  verdict on the root as `data-selection-beyond="top" | "bottom" |
+     *  "both" | "none"` so consumers can paint an edge hint in pure CSS
+     *  (the shipped SCSS draws a primary-color gradient at each
+     *  offending edge). VERTICAL only by design: horizontal carousels
+     *  keep their own affordances (edge fades, snap alignment) and no
+     *  horizontal consumer has proven the need yet. Sensing rides the
+     *  same rAF-coalesced update pass as the overflow mirror, so
+     *  scroll, resize and `refresh()` re-sense for free; while the prop
+     *  is on, a MutationObserver on the viewport funnels selection and
+     *  content changes into the same pass — the `.is-active` class
+     *  moving between rows fires neither a scroll nor a resize. */
+    selectionHint: { type: Boolean, default: false },
+    /** Which descendants count as "selected" for `selectionHint`. The
+     *  default matches the library's own selection grammar — aria-current
+     *  with any non-false value (nav rails), aria-selected="true"
+     *  (option lists) and .is-active (class-driven surfaces) — so the
+     *  settings rail lights the hint with zero configuration. Only read
+     *  while `selectionHint` is on; a runtime change re-senses on the
+     *  next pass. */
+    selectionSelector: {
+      type: String,
+      default: '[aria-current]:not([aria-current="false"]), [aria-selected="true"], .is-active',
+    },
   },
   emits: { approachEnd: () => true, "update:backTopVisible": (_v: boolean) => true },
   setup(props, { slots, expose, emit }) {
@@ -183,6 +214,19 @@ export default defineComponent({
     // CSS. Attributes are only touched on change to avoid DOM churn.
     let lastHOverflow: OverflowSense | null = null;
     let lastVOverflow: OverflowSense | null = null;
+
+    // Sensed selection edge hint (see the selectionHint prop doc),
+    // mirrored onto the root as data-selection-beyond — the same
+    // write-only-on-change discipline as the overflow mirror.
+    let lastSelectionBeyond: SelectionBeyond | null = null;
+    // Selection/content liveness for the hint: a scroll or resize
+    // listener cannot see the .is-active class moving between rows (no
+    // scroll happens, no box changes), so while selectionHint is on a
+    // MutationObserver on the viewport funnels the mutations that can
+    // move a selection into the same rAF-coalesced sensing pass.
+    // Attached lazily on mount when the prop is already on; the prop
+    // watcher swaps it at runtime.
+    let selectionMO: MutationObserver | null = null;
 
     const alignerRef = shallowRef<HTMLElement | null>(null);
     let alignRO: ResizeObserver | null = null;
@@ -366,6 +410,7 @@ export default defineComponent({
       if (!vp) return;
       senseOverflow(vp);
       senseBackTop(vp);
+      senseSelectionBeyond(vp);
     }
 
     /** Back-to-top hysteresis, derived on the same throttled pass as the
@@ -408,6 +453,76 @@ export default defineComponent({
         root.setAttribute("data-v-overflow", v);
       }
     }
+
+    /** Selection edge hint (see the selectionHint prop doc): does any
+     *  "selected" descendant lie fully outside the viewport's visible
+     *  vertical band? Both rects are read in DRAWN space, so a zoomed
+     *  or scaled root applies the same factor to both sides and the
+     *  comparison cancels it out. A match that is not rendered
+     *  (getClientRects() empty — a display:none selected row) must not
+     *  light the hint. Vertical only; the attribute lands on the same
+     *  host as data-v-overflow and is only touched on change. */
+    function senseSelectionBeyond(vp: HTMLElement) {
+      if (!props.selectionHint) return;
+      const root = vp.parentElement;
+      if (!root) return;
+      const band = vp.getBoundingClientRect();
+      let above = false;
+      let below = false;
+      for (const el of Array.from(vp.querySelectorAll<HTMLElement>(props.selectionSelector))) {
+        if (el.getClientRects().length === 0) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom <= band.top) above = true;
+        else if (rect.top >= band.bottom) below = true;
+      }
+      const next: SelectionBeyond = above && below ? "both" : above ? "top" : below ? "bottom" : "none";
+      if (next !== lastSelectionBeyond) {
+        lastSelectionBeyond = next;
+        root.setAttribute("data-selection-beyond", next);
+      }
+    }
+
+    /** Attach the selection/content mutation sensor (selectionHint on).
+     *  The attribute filter is the closed set of mutations that can
+     *  move or create a selected row: the three selection spellings the
+     *  default selector matches plus the class channel custom selectors
+     *  ride on. childList+subtree covers rows being added/removed. */
+    function startSelectionSensing() {
+      const vp = viewportRef.value;
+      if (!vp || selectionMO) return;
+      selectionMO = new MutationObserver(scheduleUpdate);
+      selectionMO.observe(vp, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "aria-current", "aria-selected"],
+      });
+    }
+
+    /** Drop the mutation sensor and clear the mirrored state when the
+     *  opt-in turns off — a stale data-selection-beyond must not
+     *  outlive the feature that wrote it. */
+    function stopSelectionSensing() {
+      selectionMO?.disconnect();
+      selectionMO = null;
+      if (lastSelectionBeyond !== null) {
+        lastSelectionBeyond = null;
+        viewportRef.value?.parentElement?.removeAttribute("data-selection-beyond");
+      }
+    }
+
+    // Runtime prop swaps: attach/detach the mutation sensor, and
+    // re-sense immediately either way (turning the hint on with a
+    // selection already beyond the band must not wait for a scroll;
+    // a different selector grammar changes the match set without any
+    // DOM mutation).
+    watch(() => props.selectionHint, (on) => {
+      if (on) startSelectionSensing();
+      else stopSelectionSensing();
+      scheduleUpdate();
+    }, { flush: "post" });
+
+    watch(() => props.selectionSelector, () => scheduleUpdate());
 
     function onScroll() {
       if (!viewportRef.value) return;
@@ -469,6 +584,8 @@ export default defineComponent({
 
       if (props.approachEnd) startApproach();
 
+      if (props.selectionHint) startSelectionSensing();
+
       vp.addEventListener("scroll", onScroll, { passive: true });
       vp.addEventListener("wheel", onWheel, { passive: false });
 
@@ -502,6 +619,8 @@ export default defineComponent({
       overlay?.detach();
       overlay = null;
       stopApproach();
+      selectionMO?.disconnect();
+      selectionMO = null;
       scheduled?.disconnect();
       settleHandle?.disconnect();
       settleHandle = null;

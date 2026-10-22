@@ -6,6 +6,8 @@ import { compile } from "sass";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
 
+import { setLocale } from "../i18n/context";
+
 import HkTitleBar from "./HkTitleBar";
 
 /**
@@ -82,6 +84,28 @@ describe("HkTitleBar", () => {
 
     const maximized = mount(h(HkTitleBar, { title: "App", maximized: true }));
     expect(maximized.querySelector('[title="Restore"]')).toBeTruthy();
+  });
+
+  it("localizes the caption tooltips through the preset i18n keys", async () => {
+    // The bar is window chrome: its captions must follow the host's
+    // setLocale (the strings live in the preset locale bundles, not in
+    // props). en is the fallback locale a host that never calls
+    // setLocale gets — pinned here because the assertions above rely on
+    // the literals.
+    const windowed = mount(h(HkTitleBar, { title: "App", maximized: false }));
+    expect(windowed.querySelector('[title="Close"]')).toBeTruthy();
+    expect(windowed.querySelector('[title="Minimize"]')).toBeTruthy();
+
+    await setLocale("zh-Hans");
+    await nextTick();
+    expect(windowed.querySelector('[title="最小化"]')).toBeTruthy();
+    expect(windowed.querySelector('[title="最大化"]')).toBeTruthy();
+    expect(windowed.querySelector('[title="关闭"]')).toBeTruthy();
+
+    await setLocale("en");
+    await nextTick();
+    expect(windowed.querySelector('[title="Maximize"]')).toBeTruthy();
+    expect(windowed.querySelector('[title="关闭"]')).toBeNull();
   });
 });
 

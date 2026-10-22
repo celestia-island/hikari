@@ -284,5 +284,9 @@
   "hikari::search.trigger": "검색",
   "hikari::search.clear": "검색 지우기",
   "hikari::search.apply": "적용",
-  "hikari::statusBar.idle": "준비됨"
+  "hikari::statusBar.idle": "준비됨",
+  "hikari::titleBar.minimize": "최소화",
+  "hikari::titleBar.maximize": "최대화",
+  "hikari::titleBar.restore": "복원",
+  "hikari::titleBar.close": "닫기"
 }

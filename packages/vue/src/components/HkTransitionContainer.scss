@@ -1,0 +1,13 @@
+// HkTransitionContainer — the state-keyed morph container. The host
+// carries the inline size (transitioned by the component); the stage
+// is the measured content. Overflow hides DURING the morph only (the
+// host is `overflow: clip` while a pinned size is active — applied via
+// the inline width/height, the clip rides along) so shortened content
+// never spills past the animating box.
+.hk-tc {
+  overflow: clip;
+}
+
+.hk-tc-stage {
+  width: 100%;
+}

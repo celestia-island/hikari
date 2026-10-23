@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { configurePopupInsets } from "./popupBounds";
 import {
@@ -33,6 +33,23 @@ function probePopup(rects: DOMRect[]): HTMLElement {
   document.body.appendChild(el);
   let i = 0;
   el.getBoundingClientRect = () => rects[Math.min(i++, rects.length - 1)]!;
+  return el;
+}
+
+/** A fellow tooltip popup the collision pass should treat as an obstacle
+ *  (or ignore, when not visible / exempt). */
+function obstacle(
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  opts: { visible?: boolean; exempt?: boolean } = {},
+): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "hk-tooltip-popup" + (opts.visible === false ? "" : " hk-tooltip-visible");
+  if (opts.exempt) el.setAttribute("data-hk-tooltip-overlap", "");
+  document.body.appendChild(el);
+  el.getBoundingClientRect = () => box(left, top, width, height);
   return el;
 }
 
@@ -341,6 +358,138 @@ describe("applyTooltipPosition against an app-chrome band", () => {
     const popup = probePopup([box(170, 348, 120, 32)]);
     applyTooltipPosition(popup, trigger, "bottom");
     expect(popup.style.left).toBe("268px");
+    expect(popup.style.top).toBe("348px");
+  });
+});
+
+describe("applyTooltipPosition tooltip collisions", () => {
+  // Mobile viewport (375×667 → 8px gutter). The mover is a bottom
+  // bubble; a second queued rect answers the alternate-side measure the
+  // collision pass realizes ONLY when the anchored side cannot be made
+  // clear — the gBCR call count pins that short-circuit.
+  beforeEach(() => {
+    window.innerWidth = 375;
+    window.innerHeight = 667;
+  });
+
+  /** probePopup plus a gBCR call counter — the alternate-side realize
+   *  is one extra measure, so the count tells skip from run. */
+  function countingProbePopup(rects: DOMRect[]): { el: HTMLElement; calls: () => number } {
+    const el = probePopup(rects);
+    let calls = 0;
+    const inner = el.getBoundingClientRect.bind(el);
+    el.getBoundingClientRect = () => {
+      calls += 1;
+      return inner();
+    };
+    return { el, calls: () => calls };
+  }
+
+  it("slides a blocked bubble along the cross axis to the nearest clear slot", () => {
+    // The centered 120px bubble [60..180] sits on the obstacle
+    // [60..180]; the only clear slot in the clamp range [8..247] starts
+    // at 188 (obstacle right + clearance) — a 128px slide.
+    const trigger = box(100, 300, 40, 40);
+    const { el: popup, calls } = countingProbePopup([box(60, 348, 120, 32)]);
+    obstacle(60, 340, 120, 40);
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.transform).toBe("translate(-50%, 0)"); // side kept
+    expect(popup.style.left).toBe("248px"); // 120 + 128
+    expect(popup.style.top).toBe("348px"); // main axis untouched
+    // The zero-overlap dodge ends the ladder: no alternate-side measure.
+    expect(calls()).toBe(1);
+  });
+
+  it("dodges to the far side when the obstacle reaches over the gutter", () => {
+    // The obstacle [240..368] sits under the clamped bubble [247..367]
+    // and its clearance shadow [112..376] covers the right half of the
+    // dodge range — the bubble lands in the only gap [8..112], pinned
+    // to the shadow's near edge (a walk without the gap clamp would
+    // leave the box at the preferred 247 and keep the overlap).
+    const trigger = box(300, 300, 40, 40);
+    const popup = probePopup([box(260, 348, 120, 32)]);
+    obstacle(240, 340, 128, 48);
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("172px"); // 320 - 13 clamp - 135 dodge
+    expect(popup.style.top).toBe("348px");
+  });
+
+  it("flips to the alternate side when no cross slot can clear the obstacle", () => {
+    // A 300px bubble on a 375px viewport: the clamp range [8..67] is
+    // wholly inside the obstacle's forbidden span, so the ladder falls
+    // through to the top side, which is clear.
+    const trigger = box(160, 200, 40, 40);
+    const { el: popup, calls } = countingProbePopup([box(30, 248, 300, 32), box(30, 160, 300, 32)]);
+    obstacle(10, 240, 355, 48);
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.transform).toBe("translate(-50%, -100%)");
+    expect(popup.style.top).toBe("192px"); // rect.top - 8
+    expect(popup.style.left).toBe("180px"); // hcenter, unshifted
+    expect(calls()).toBe(2); // the flip measure ran
+  });
+
+  it("stays put when nothing is clear, keeping the least-overlap anchor", () => {
+    // A full-screen obstacle blocks every candidate; the anchored side
+    // (first, least-overlapping) wins and the plain result stands.
+    const trigger = box(100, 300, 40, 40);
+    const { el: popup, calls } = countingProbePopup([box(60, 348, 120, 32), box(60, 60, 120, 32)]);
+    obstacle(0, 0, 375, 667);
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("120px");
+    expect(popup.style.top).toBe("348px");
+    expect(calls()).toBe(2); // the alternate was realized and rewound
+  });
+
+  it("clamps the dodge inside the viewport gutter", () => {
+    // The obstacle hugs the left edge; the dodge lands on its right at
+    // 158, and the written box [158..358] stays inside the 367 gutter.
+    const trigger = box(110, 300, 40, 40);
+    const popup = probePopup([box(30, 348, 200, 32), box(30, 60, 200, 32)]);
+    obstacle(0, 340, 150, 48);
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("258px"); // 130 + 128
+    expect(popup.style.top).toBe("348px");
+  });
+
+  it("ignores an obstacle that opted out with data-hk-tooltip-overlap", () => {
+    const trigger = box(100, 300, 40, 40);
+    const { el: popup, calls } = countingProbePopup([box(60, 348, 120, 32)]);
+    obstacle(60, 340, 120, 40, { exempt: true });
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("120px"); // no dodge
+    expect(popup.style.top).toBe("348px");
+    expect(calls()).toBe(1); // no collision pass at all
+  });
+
+  it("never dodges when the mover itself opted out", () => {
+    const trigger = box(100, 300, 40, 40);
+    const { el: popup, calls } = countingProbePopup([box(60, 348, 120, 32)]);
+    popup.setAttribute("data-hk-tooltip-overlap", "");
+    obstacle(60, 340, 120, 40);
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("120px");
+    expect(popup.style.top).toBe("348px");
+    expect(calls()).toBe(1); // no collision pass at all
+  });
+
+  it("ignores siblings that are not currently visible", () => {
+    const trigger = box(100, 300, 40, 40);
+    const { el: popup, calls } = countingProbePopup([box(60, 348, 120, 32)]);
+    obstacle(60, 340, 120, 40, { visible: false });
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("120px");
+    expect(popup.style.top).toBe("348px");
+    expect(calls()).toBe(1);
+  });
+
+  it("never treats the mover as its own obstacle", () => {
+    // The mover carries the real popup classes (component tooltips are
+    // hk-tooltip-visible while positioned) — it must not dodge itself.
+    const trigger = box(100, 300, 40, 40);
+    const popup = probePopup([box(60, 348, 120, 32)]);
+    popup.className = "hk-tooltip-popup hk-tooltip-visible";
+    applyTooltipPosition(popup, trigger, "bottom");
+    expect(popup.style.left).toBe("120px");
     expect(popup.style.top).toBe("348px");
   });
 });

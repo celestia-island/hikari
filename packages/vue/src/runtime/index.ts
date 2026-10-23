@@ -24,6 +24,7 @@ export {
   TOOLTIP_GAP_PX,
   type TooltipPlacement,
 } from "./tooltipPosition";
+export { TOOLTIP_OVERLAP_ATTR } from "./tooltipCollision";
 export {
   configurePopupInsets,
   popupInsets,

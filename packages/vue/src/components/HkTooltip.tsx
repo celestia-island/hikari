@@ -1,6 +1,7 @@
 import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType, type SlotsType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
+import { TOOLTIP_OVERLAP_ATTR } from "../runtime/tooltipCollision";
 import "./HkTooltip.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
@@ -25,6 +26,12 @@ export default defineComponent({
     placement: { type: String as PropType<TooltipPlacement>, default: "top" },
     delay: { type: Number, default: 300 },
     maxWidth: { type: String, default: undefined },
+    /**
+     * Deliberate-overlap opt-out (runtime/tooltipCollision.ts): the
+     * popup never dodges other visible tooltips and they never dodge
+     * it — the author owns the stacking. Default is auto-spread.
+     */
+    overlap: { type: Boolean, default: false },
   },
   slots: Object as SlotsType<{
     default?: (props: HkTooltipSlotProps) => unknown;
@@ -192,6 +199,7 @@ export default defineComponent({
               role="tooltip"
               class={tooltipCls.value}
               style={popupStyle.value}
+              {...(props.overlap ? { [TOOLTIP_OVERLAP_ATTR]: "" } : {})}
             >
               <div class="hk-tooltip-content">{props.text}</div>
             </div>

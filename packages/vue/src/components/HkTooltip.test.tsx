@@ -333,6 +333,18 @@ describe("HkTooltip anchoring", () => {
     expect(el.style.top).toBe("-8px");
     expect(el.style.left).toBe("0px");
     expect(el.style.transform).toBe("translate(-50%, -100%)");
+
+    // The deliberate-overlap opt-out rides the popup as an attribute so
+    // the collision pass (runtime/tooltipCollision.ts) skips this popup
+    // entirely; the default mounts WITHOUT it.
+    expect(el.hasAttribute("data-hk-tooltip-overlap")).toBe(false);
+  });
+
+  it("carries the overlap opt-out onto the popup when the prop is set", async () => {
+    const { container } = mount({ text: "stacked", delay: 0, overlap: true });
+    enter(container);
+    await settle();
+    expect(popup().hasAttribute("data-hk-tooltip-overlap")).toBe(true);
   });
 
   it("places the popup beside the anchor with the right placement", async () => {

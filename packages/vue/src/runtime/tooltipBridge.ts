@@ -35,6 +35,7 @@
 // the popup (the component tooltip's Teleport target is the same node).
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
 import { applyTooltipPosition, type TooltipPlacement } from "./tooltipPosition";
+import { TOOLTIP_OVERLAP_ATTR } from "./tooltipCollision";
 import { usePopupManager, type PopupHandle } from "./usePopupManager";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 // The popup reuses HkTooltip's popup classes — carry the sheet so a host
@@ -47,6 +48,12 @@ export interface HkTooltipBridgeOptions {
   delay?: number;
   /** Popup side relative to the trigger. */
   placement?: TooltipPlacement;
+  /**
+   * Deliberate-overlap opt-out (runtime/tooltipCollision.ts): the
+   * bridge's popup never dodges other visible tooltips and they never
+   * dodge it — the author owns the stacking. Default is auto-spread.
+   */
+  overlap?: boolean;
   /** Popup max-width (the shared SCSS caps at 280px by default). */
   maxWidth?: string;
   /** Which elements carry tooltip text. Default: `[title]`. */
@@ -209,6 +216,7 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
 
   const popup = document.createElement("div");
   popup.className = "hk-tooltip-popup hk-tooltip-bridge";
+  if (options.overlap) popup.setAttribute(TOOLTIP_OVERLAP_ATTR, "");
   const content = document.createElement("div");
   content.className = "hk-tooltip-content";
   popup.appendChild(content);
@@ -251,6 +259,7 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
       delay: state.delay,
       placement: state.placement,
       selector: state.selector,
+      overlap: popup.hasAttribute(TOOLTIP_OVERLAP_ATTR),
       shown: 0,
     },
     read: () => ({ installed: true, engaged: state.active !== null, shown: state.shown }),

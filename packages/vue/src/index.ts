@@ -615,6 +615,8 @@ export { default as HkConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HkCrossfade } from "./components/HkCrossfade";
 export { default as HkTransitionContainer } from "./components/HkTransitionContainer";
 export { default as HkWindowControls, isApplePlatform } from "./components/HkWindowControls";
+export { default as HkStatusRow } from "./components/HkStatusRow";
+export type { HkStatusRowTone } from "./components/HkStatusRow";
 export type { WindowControlsVariant } from "./components/HkWindowControls";
 export { default as HkDivider } from "./components/HkDivider";
 export { default as HkDiffViewer } from "./components/HkDiffViewer";

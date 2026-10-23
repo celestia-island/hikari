@@ -1,0 +1,103 @@
+// HkStatusRow — the standard status-card anatomy (rail + chip + body +
+// action). Tones map the palette channels; the absent variant is the
+// quiet dashed edge for missing entries.
+
+.hk-status-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem 0.875rem 1.125rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgb(var(--color-border, 60 60 60) / 18%);
+  background: rgb(var(--color-surface, 255 255 255) / 70%);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: 0.625rem;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background: rgb(var(--color-muted, 108 108 108) / 45%);
+  }
+
+  &--info {
+    border-color: rgb(var(--color-primary, 0 107 255) / 35%);
+    &::before { background: rgb(var(--color-primary, 0 107 255)); }
+    &:hover { border-color: rgb(var(--color-primary, 0 107 255) / 60%); }
+  }
+  &--success {
+    border-color: rgb(var(--color-success, 0 128 68) / 30%);
+    &::before { background: rgb(var(--color-success, 0 128 68)); }
+  }
+  &--warning {
+    border-color: rgb(var(--color-warning, 200 140 30) / 35%);
+    &::before { background: rgb(var(--color-warning, 200 140 30)); }
+  }
+  &--error {
+    border-color: rgb(var(--color-error, 226 58 69) / 35%);
+    &::before { background: rgb(var(--color-error, 226 58 69)); }
+  }
+
+  &--absent {
+    border-style: dashed;
+    opacity: 0.75;
+  }
+}
+
+.hk-status-row__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  background: rgb(var(--color-muted, 108 108 108) / 10%);
+  color: rgb(var(--color-muted, 108 108 108));
+}
+
+.hk-status-row--info .hk-status-row__chip {
+  background: rgb(var(--color-primary, 0 107 255) / 12%);
+  color: rgb(var(--color-primary, 0 107 255));
+}
+.hk-status-row--success .hk-status-row__chip {
+  background: rgb(var(--color-success, 0 128 68) / 12%);
+  color: rgb(var(--color-success, 0 128 68));
+}
+.hk-status-row--warning .hk-status-row__chip {
+  background: rgb(var(--color-warning, 200 140 30) / 14%);
+  color: rgb(var(--color-warning, 200 140 30));
+}
+.hk-status-row--error .hk-status-row__chip {
+  background: rgb(var(--color-error, 226 58 69) / 12%);
+  color: rgb(var(--color-error, 226 58 69));
+}
+
+.hk-status-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.hk-status-row__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.hk-status-row__status {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--hk-text-muted, rgb(var(--color-muted, 108 108 108)));
+}
+
+.hk-status-row__action {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}

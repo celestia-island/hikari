@@ -1,10 +1,12 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkTabs from "./HkTabs";
+import { CROSSFADE_WATCHDOG_MS } from "./HkCrossfade";
+import { DEFAULT_ANIMATION_DURATION_MS } from "../composables/useAnimationLoop";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -513,5 +515,111 @@ describe("HkTabs segmented variant", () => {
       "grid-column: span var(--hk-tabs-span, 1)",
     );
     expect(itemRule![1]).not.toMatch(/\bflex:/);
+  });
+});
+
+describe("HkTabs panel morph (HkTransitionContainer consumption)", () => {
+  /** Pill mode with panels ON (renderPanels defaults true) and a slot
+   *  per tab — the surface the morph container plugs into. */
+  function mountWithPanels(
+    extra: Record<string, unknown> = {},
+    slots?: Record<string, () => unknown>,
+  ): { container: HTMLElement; active: { value: string } } {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const active = ref("a");
+    const panelSlots = slots ?? {
+      a: () => h("p", { class: "body" }, "panel-alpha"),
+      b: () => h("p", { class: "body" }, "panel-beta"),
+      c: () => h("p", { class: "body" }, "panel-gamma"),
+    };
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTabs, {
+            tabs: [
+              { key: "a", label: "Alpha" },
+              { key: "b", label: "Beta" },
+              { key: "c", label: "Gamma" },
+            ],
+            ...extra,
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+          }, panelSlots);
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { container, active };
+  }
+
+  function freezeRaf(): void {
+    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("renders the active panel inside the height-morph container and swaps it on tab change", async () => {
+    vi.useFakeTimers();
+    const { container, active } = mountWithPanels();
+    // ONE morph host (`.hk-tabs-panels` aliasing `.hk-tc`) below the
+    // strip, carrying the family height-morph transition contract.
+    const host = container.querySelector<HTMLElement>(".hk-tabs-panels.hk-tc");
+    expect(host).not.toBeNull();
+    expect(host?.style.transitionProperty).toBe("height");
+    expect(host?.style.transitionDuration).toBe(`${DEFAULT_ANIMATION_DURATION_MS}ms`);
+    // It owns exactly ONE panel — the active tab's.
+    const panels = container.querySelectorAll<HTMLElement>(".hk-tabs-panel");
+    expect(panels).toHaveLength(1);
+    expect(panels[0].hasAttribute("data-active")).toBe(true);
+    expect(panels[0].getAttribute("role")).toBe("tabpanel");
+    expect(container.textContent).toContain("panel-alpha");
+
+    active.value = "b";
+    await nextTick();
+    // Past the watchdog budget: the dissolve settled on Beta's panel —
+    // content, crossfade key and single item all moved with the tab.
+    await vi.advanceTimersByTimeAsync(CROSSFADE_WATCHDOG_MS + 100);
+    const settled = container.querySelectorAll<HTMLElement>(".hk-tabs-panel");
+    expect(settled).toHaveLength(1);
+    expect(settled[0].textContent).toContain("panel-beta");
+    const item = container.querySelector<HTMLElement>(".hk-crossfade-item");
+    expect(item?.dataset.crossfadeKey).toBe("b");
+  });
+
+  it("keeps both panel generations data-active mid-dissolve (no display:none pop)", async () => {
+    vi.useFakeTimers();
+    freezeRaf();
+    const { container, active } = mountWithPanels();
+    active.value = "b";
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(100); // inside the dissolve window
+    // Both generations on stage and BOTH marked active: the leaving
+    // panel keeps its last-rendered data-active, so the stylesheet's
+    // `:not([data-active])` hide never fires mid-dissolve — the swap
+    // is HkCrossfade's stacked-grid dissolve, not an instant toggle.
+    const mid = container.querySelectorAll<HTMLElement>(".hk-tabs-panel");
+    expect(mid).toHaveLength(2);
+    expect(mid[0].hasAttribute("data-active")).toBe(true);
+    expect(mid[1].hasAttribute("data-active")).toBe(true);
+    expect(mid[0].textContent).toContain("panel-alpha");
+    expect(mid[1].textContent).toContain("panel-beta");
+  });
+
+  it("drops the panel area entirely while the active option is merged away", () => {
+    const { container } = mountWithPanels(
+      { mergeKeys: ["a"] },
+      { a: () => h("p", "panel-alpha"), merged: () => h("span", "m") },
+    );
+    // Pill-mode merged contract: merged options' panels are not
+    // rendered while merged — no host, no panel.
+    expect(container.querySelector(".hk-tabs-panels")).toBeNull();
+    expect(container.querySelector(".hk-tabs-panel")).toBeNull();
   });
 });

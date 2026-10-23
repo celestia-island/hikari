@@ -166,6 +166,13 @@
 
 /* === Panel (pill / tablist mode) === */
 
+/* The panel area is ONE HkTransitionContainer (`.hk-tabs-panels`,
+   aliasing `.hk-tc`) keyed on the active tab: HkCrossfade dissolves the
+   outgoing panel in a shared grid cell while the container's inline
+   height transition morphs to the incoming panel's natural size. Both
+   generations carry data-active through the dissolve, so the :not rule
+   below only ever hides a genuinely inactive render, never a
+   dissolving one. */
 .hk-tabs-panel {
   /* No outline suppression: the panel div carries no tabindex and can
      never take focus, so there is nothing to suppress. */

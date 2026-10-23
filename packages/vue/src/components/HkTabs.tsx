@@ -4,6 +4,7 @@ import "./HkTabs.scss";
 import HkScrollContainer from "./HkScrollContainer";
 import HkHoverRevealAction from "./HkHoverRevealAction";
 import HkIconButton from "./HkIconButton";
+import HkTransitionContainer from "./HkTransitionContainer";
 import { iconByName } from "../composables/iconRegistry";
 import { useI18n } from "../i18n/context";
 import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
@@ -88,6 +89,12 @@ interface ScrollerExpose {
  *   the row is then divided into one equal `1fr` grid track per unit,
  *   so merging Light+Dark into the altitude strip swaps TWO one-unit
  *   slots for ONE two-unit cell and nothing else on the strip moves;
+ * - morphing tab panels (pill mode, `renderPanels`): the panel area is
+ *   ONE HkTransitionContainer keyed on the active tab — switching tabs
+ *   dissolves the outgoing panel through HkCrossfade while the
+ *   container height-morphs to the incoming panel's natural size
+ *   (panels never had switch CSS before — inactive ones were simply
+ *   display:none'd, so nothing visual is layered away);
  * - full arrow-key navigation (arrows/Home/End, wrapping, disabled tabs
  *   skipped, selection follows focus) and roving tabindex.
  */
@@ -435,6 +442,13 @@ export default defineComponent({
 
     return () => {
       const mergedHead = mergedRun.value[0];
+      /** The ONE panel on stage: the active tab's, when panels render
+       *  (pill mode only) and the tab is not collapsed into the merged
+       *  cell — merged options' panels are not rendered while merged
+       *  (unchanged contract; the whole container drops out instead). */
+      const panelTab = props.renderPanels && !isSegmented.value
+        ? props.tabs.find((tb) => tb.key === props.modelValue && !isMergedTab(tb))
+        : undefined;
       const listChildren = [
         <div
           key="$indicator"
@@ -553,16 +567,20 @@ export default defineComponent({
             </HkScrollContainer>
           ) : list}
 
-          {props.renderPanels && !isSegmented.value && props.tabs.filter((tab) => !isMergedTab(tab)).map((tab) => (
-            <div
-              key={tab.key}
-              role="tabpanel"
-              class="hk-tabs-panel"
-              data-active={(tab.key === props.modelValue) || undefined}
-            >
-              {tab.key === props.modelValue && slots[tab.key]?.()}
-            </div>
-          ))}
+          {/* Panel area (pill mode, renderPanels): ONE morph container
+              keyed on the active tab (2026-10-22 animation direction) —
+              HkCrossfade dissolves the outgoing panel in the shared grid
+              cell while the container's inline-height transition rides the
+              incoming panel's natural size. The strip's own hk-tabs-swap
+              transitions are untouched; a merged-active strip renders no
+              panel at all, exactly as before. */}
+          {panelTab && (
+            <HkTransitionContainer swapKey={panelTab.key} class="hk-tabs-panels">
+              <div role="tabpanel" class="hk-tabs-panel" data-active>
+                {slots[panelTab.key]?.()}
+              </div>
+            </HkTransitionContainer>
+          )}
         </div>
       );
 

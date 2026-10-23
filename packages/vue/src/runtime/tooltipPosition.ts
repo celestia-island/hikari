@@ -6,6 +6,14 @@ import type { CSSProperties } from "vue";
 import { ancestorZoom } from "./cssZoom";
 import { popupViewportRect, type PopupViewportRect } from "./popupBounds";
 import { clampWithGutter, viewportGutterPx } from "./viewportGutter";
+import {
+  TOOLTIP_COLLIDE_CLEARANCE_PX,
+  TOOLTIP_OVERLAP_ATTR,
+  clearCrossShift,
+  collectTooltipObstacles,
+  tooltipOverlapArea,
+  type TooltipRect,
+} from "./tooltipCollision";
 
 export type TooltipPlacement = "top" | "bottom" | "left" | "right";
 
@@ -142,6 +150,9 @@ export function resolveTooltipFlip(
  * viewport gutter — capping an oversized bubble, flipping the side when
  * the preferred one is starved, and shifting the remainder so no edge
  * ever crosses the gutter (the mobile/desktop --viewport-gutter token).
+ * Fellow visible tooltips in the popup's home are dodged too: the box
+ * shifts along the cross axis, flips to the alternate side, or both —
+ * never leaving the gutter (runtime/tooltipCollision.ts).
  *
  * Without layout (happy-dom/jsdom, hidden popups) measurement reports a
  * zero rect and the call degrades to exactly the pure
@@ -218,8 +229,117 @@ export function applyTooltipPosition(
     final = popup.getBoundingClientRect();
   }
 
+  // The viewport gutter for a measured box, as visual-px deltas onto the
+  // written anchor.
+  const gutterShift = (box: DOMRect) => ({
+    dx: clampWithGutter(box.left - frame.x, box.width, frame.width, gutter) - (box.left - frame.x),
+    dy: clampWithGutter(box.top - frame.y, box.height, frame.height, gutter) - (box.top - frame.y),
+  });
+  let shift = gutterShift(final);
+
+  // ── tooltip-vs-tooltip collision (runtime/tooltipCollision.ts) ──────
+  // Fellow visible tooltips sharing the popup's home are obstacles: the
+  // newcomer yields (first shown keeps its anchored spot) along a
+  // preference ladder — keep the side (cross-axis dodge), else flip and
+  // dodge there; the first candidate with ZERO overlap wins, else the
+  // least-overlapping one does (the dodge enforces the 8px clearance,
+  // scoring only asks zero raw overlap — a 3px graze scores 0 and needs
+  // no move). Every candidate is gutter-clamped FIRST, so a dodge can
+  // never trade a tooltip overlap for an off-screen bubble. An author
+  // stacking popups on purpose opts a tooltip out with
+  // data-hk-tooltip-overlap and none of this runs for it — an exempt
+  // mover keeps its anchored spot and an exempt sibling never blocks.
+  const obstacles = popup.hasAttribute(TOOLTIP_OVERLAP_ATTR)
+    ? []
+    : collectTooltipObstacles(popup);
+  if (obstacles.length > 0) {
+    const horizontal = side === "top" || side === "bottom";
+    const placed: TooltipRect = {
+      left: final.left + shift.dx,
+      top: final.top + shift.dy,
+      width: final.width,
+      height: final.height,
+    };
+    // Nearest cross-axis offset that parks the box the clearance away
+    // from every obstacle, inside the gutter-clamped range.
+    const dodge = (box: TooltipRect): number | null => {
+      const p = horizontal ? box.left : box.top;
+      const size = horizontal ? box.width : box.height;
+      const lo = horizontal ? frame.x + gutter : frame.y + gutter;
+      const hi = (horizontal ? frame.x + frame.width : frame.y + frame.height) - size - gutter;
+      return clearCrossShift(
+        p,
+        size,
+        obstacles.map((o) => ({
+          lo: (horizontal ? o.left : o.top) - TOOLTIP_COLLIDE_CLEARANCE_PX,
+          hi: (horizontal ? o.left + o.width : o.top + o.height) + TOOLTIP_COLLIDE_CLEARANCE_PX,
+        })),
+        lo,
+        hi,
+      );
+    };
+    type Candidate = { rect: TooltipRect; side: TooltipPlacement; dx: number; dy: number };
+    let best: Candidate = { rect: placed, side, dx: shift.dx, dy: shift.dy };
+    let bestScore = tooltipOverlapArea(best.rect, obstacles);
+    const move = dodge(placed);
+    if (move !== null && move !== 0) {
+      const dodged: Candidate = horizontal
+        ? { rect: { ...placed, left: placed.left + move }, side, dx: shift.dx + move, dy: shift.dy }
+        : { rect: { ...placed, top: placed.top + move }, side, dx: shift.dx, dy: shift.dy + move };
+      const score = tooltipOverlapArea(dodged.rect, obstacles);
+      if (score < bestScore) {
+        best = dodged;
+        bestScore = score;
+      }
+    }
+    // The alternate side only enters the ladder when the anchored one
+    // cannot be made clear — realizing it costs two style rewrites and
+    // a forced layout, all wasted when the dodge already scored zero.
+    let realized: TooltipPlacement | null = null;
+    if (bestScore > 0) {
+      const alternate = oppositeSide(side);
+      applyBase(alternate);
+      applyCaps();
+      realized = alternate;
+      const altBox = popup.getBoundingClientRect();
+      const alt = gutterShift(altBox);
+      const altPlaced: TooltipRect = {
+        left: altBox.left + alt.dx,
+        top: altBox.top + alt.dy,
+        width: altBox.width,
+        height: altBox.height,
+      };
+      const altCandidate: Candidate = { rect: altPlaced, side: alternate, dx: alt.dx, dy: alt.dy };
+      const altScore = tooltipOverlapArea(altPlaced, obstacles);
+      if (altScore < bestScore) {
+        best = altCandidate;
+        bestScore = altScore;
+      }
+      const altMove = dodge(altPlaced);
+      if (altMove !== null && altMove !== 0) {
+        const altDodged: Candidate = horizontal
+          ? { rect: { ...altPlaced, left: altPlaced.left + altMove }, side: alternate, dx: alt.dx + altMove, dy: alt.dy }
+          : { rect: { ...altPlaced, top: altPlaced.top + altMove }, side: alternate, dx: alt.dx, dy: alt.dy + altMove };
+        const altDodgedScore = tooltipOverlapArea(altDodged.rect, obstacles);
+        if (altDodgedScore < bestScore) {
+          best = altDodged;
+          bestScore = altDodgedScore;
+        }
+      }
+    }
+    // The alternate realize above left ITS base in the inline style;
+    // rewind when the winner is the original side. The rewrite must
+    // carry the caps — they belong to the box, not the side.
+    if (realized !== null && best.side !== realized) {
+      applyBase(side);
+      applyCaps();
+    }
+    shift = { dx: best.dx, dy: best.dy };
+  }
+
   // Shift whatever is left over (centered under a near-edge trigger, the
-  // flipped side, a cap) so both edges sit inside the gutter — measured
+  // flipped side, a cap, a collision dodge) so both edges sit inside the
+  // gutter — measured
   // against the popup viewport, so the gutter rides just inside the
   // app-chrome band rather than inside the raw window edge. The clamp is
   // computed frame-relative and re-based onto the frame origin (with no
@@ -229,10 +349,8 @@ export function applyTooltipPosition(
   // edge by the placement transform (translate(-50%) makes style.left
   // the box CENTER) — so the shift adds onto the current written value
   // instead of the measured edge.
-  const dx =
-    clampWithGutter(final.left - frame.x, final.width, frame.width, gutter) - (final.left - frame.x);
-  const dy =
-    clampWithGutter(final.top - frame.y, final.height, frame.height, gutter) - (final.top - frame.y);
+  const dx = shift.dx;
+  const dy = shift.dy;
   if (dx !== 0 || dy !== 0) {
     const curLeft = Number.parseFloat(popup.style.left) || 0;
     const curTop = Number.parseFloat(popup.style.top) || 0;

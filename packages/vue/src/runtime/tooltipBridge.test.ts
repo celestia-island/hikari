@@ -64,6 +64,18 @@ afterEach(() => {
   });
 });
 
+describe("installHkTooltipBridge overlap opt-out", () => {
+  it("defaults to auto-spread: no overlap attribute on the popup", () => {
+    install();
+    expect(bridgePopup()?.hasAttribute("data-hk-tooltip-overlap")).toBe(false);
+  });
+
+  it("carries the overlap option onto the popup as the opt-out attribute", () => {
+    install({ overlap: true });
+    expect(bridgePopup()?.hasAttribute("data-hk-tooltip-overlap")).toBe(true);
+  });
+});
+
 describe("installHkTooltipBridge", () => {
   it("engages on hover: removes the title, shows the popup after the delay", () => {
     vi.useFakeTimers();

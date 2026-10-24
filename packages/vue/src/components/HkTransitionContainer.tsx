@@ -102,8 +102,12 @@ export default defineComponent({
           pendingKey = null;
           if (key !== null) {
             emit("swap", { key, previous: previousKey, durationMs: props.duration });
+            // The handoff consumer reads `previous` to scroll the pane back;
+            // it must be the key we just left, not the one we mounted with
+            // (audit 2026-10-23: it was never reassigned).
+            previousKey = key;
           }
-        }, props.duration + 40);
+        }, motionDuration() + 40);
       });
       observer.observe(stageRef.value);
     }
@@ -119,6 +123,26 @@ export default defineComponent({
       void nextTick(() => observe());
     });
 
+    /**
+     * Reduced motion: the morph runs on an INLINE `transitionDuration`,
+     * which no stylesheet `@media (prefers-reduced-motion)` can override
+     * (inline beats non-important rules) and which the host's
+     * `html[data-css-animations="0"]` pin only covers if the host wired
+     * useReducedMotion() at boot. So the gate lives HERE (audit
+     * 2026-10-23): zero the morph when the OS asks for reduced motion or
+     * the host turned the animation switch off. The dissolve side is
+     * already handled by HkCrossfade's own media query.
+     */
+    function motionDuration(): number {
+      if (typeof window === "undefined") return props.duration;
+      const reduced =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const switchedOff =
+        document.documentElement.dataset.cssAnimations === "0";
+      return reduced || switchedOff ? 0 : props.duration;
+    }
+
     onBeforeUnmount(() => {
       observer?.disconnect();
       observer = null;
@@ -127,7 +151,7 @@ export default defineComponent({
 
     return () => {
       const Tag = props.tag as "div" | "section" | "main" | "aside";
-      const d = `${props.duration}ms`;
+      const d = `${motionDuration()}ms`;
       return (
         <Tag
           ref={hostRef}

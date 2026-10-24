@@ -8,6 +8,7 @@ import {
   type PropType,
 } from "vue";
 
+import HkTransitionContainer from "./HkTransitionContainer";
 import HModal from "./HkModal";
 import "./HkSettingsDialog.scss";
 
@@ -124,7 +125,14 @@ export const HkSettingsBody = defineComponent({
           })}
         </nav>
         <div class="hk-settings__pane" ref={paneRef}>
-          {slots[active()]?.()}
+          {/* The section swap runs through the family's standard morph
+              container (audit 2026-10-23): the pane's frame follows the
+              incoming section's height and the contents dissolve, the
+              same mechanism HkTabs panels use. A settings pane is a page
+              slot — it must not hard-cut. */}
+          <HkTransitionContainer swapKey={active()} axis="height">
+            {slots[active()]?.()}
+          </HkTransitionContainer>
         </div>
       </div>
     );

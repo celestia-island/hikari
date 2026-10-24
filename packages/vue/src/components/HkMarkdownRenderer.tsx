@@ -61,7 +61,8 @@ async function renderMarkdown(content: string): Promise<string> {
     return renderPlain(content);
   }
 
-  const renderer = new (marked as unknown as { Renderer: new () => Record<string, unknown> }).Renderer();
+  const RendererCtor = (marked as unknown as { Renderer: new () => Record<string, unknown> }).Renderer;
+  const renderer = new RendererCtor();
 
   (renderer as Record<string, unknown>).code = function (tok: { text: string; lang?: string }) {
     const highlighted = tryHighlight(tok.text, tok.lang);
@@ -72,6 +73,21 @@ async function renderMarkdown(content: string): Promise<string> {
     const langAttr = lang ? ` language-${lang}` : "";
     const langLabel = lang ? `<span class="hk-md-code-lang">${lang}</span>` : "";
     return `<div class="hk-md-code-wrap"><div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div></div>`;
+  };
+
+  (renderer as Record<string, unknown>).table = function (token: unknown) {
+    // Tables size to their content: a wide one (many columns, or a single
+    // unbreakable cell) pushes every ancestor's min-content width past its
+    // box, and clipping hosts (modal reading region, chat bubbles, report
+    // cards) leave the far columns unreachable. Same two-level shape as the
+    // code override above: `.hk-md-table-wrap` is the rail HOST (a plain
+    // positioned box wrapping only the scroller — the engine anchors the
+    // track in the viewport's parent), `.hk-md-table-scroll` is the
+    // viewport that actually rails. Rail the TABLE itself — normal tables
+    // keep their full-width layout; only a genuinely overflowing one grows
+    // the horizontal scroll (see .hk-md-table-scroll).
+    const inner = (RendererCtor.prototype as { table: (t: unknown) => string }).table.call(this, token);
+    return `<div class="hk-md-table-wrap"><div class="hk-md-table-scroll">${inner}</div></div>`;
   };
 
   const raw = marked.parse(content, { renderer, async: false });
@@ -114,33 +130,34 @@ export default defineComponent({
       { immediate: true },
     );
 
-    // Overlay scrollbars (shared chrome) on markdown code blocks. The
-    // body is innerHTML-rendered and fully replaced on every parse, so
-    // the attachment set is reconciled after each render pass: handles
-    // whose block left the DOM detach, fresh blocks attach.
+    // Overlay scrollbars (shared chrome) on the markdown blocks that can
+    // rail horizontally: code blocks and table scrollers. The body is
+    // innerHTML-rendered and fully replaced on every parse, so the
+    // attachment set is reconciled after each render pass: handles whose
+    // block left the DOM detach, fresh blocks attach.
     const bodyRef = ref<HTMLElement>();
-    const codeScrollbars: Array<{ el: HTMLElement; handle: OverlayScrollbarHandle }> = [];
+    const overlayScrollbars: Array<{ el: HTMLElement; handle: OverlayScrollbarHandle }> = [];
 
-    function syncCodeScrollbars() {
-      for (let i = codeScrollbars.length - 1; i >= 0; i--) {
-        if (!codeScrollbars[i].el.isConnected) {
-          codeScrollbars[i].handle.detach();
-          codeScrollbars.splice(i, 1);
+    function syncOverlayScrollbars() {
+      for (let i = overlayScrollbars.length - 1; i >= 0; i--) {
+        if (!overlayScrollbars[i].el.isConnected) {
+          overlayScrollbars[i].handle.detach();
+          overlayScrollbars.splice(i, 1);
         }
       }
-      for (const el of bodyRef.value?.querySelectorAll<HTMLElement>(".hk-md-code") ?? []) {
-        if (codeScrollbars.some((c) => c.el === el)) continue;
-        codeScrollbars.push({ el, handle: attachOverlayScrollbars(el, { axis: "horizontal" }) });
+      for (const el of bodyRef.value?.querySelectorAll<HTMLElement>(".hk-md-code, .hk-md-table-scroll") ?? []) {
+        if (overlayScrollbars.some((c) => c.el === el)) continue;
+        overlayScrollbars.push({ el, handle: attachOverlayScrollbars(el, { axis: "horizontal" }) });
       }
     }
 
     watch(renderedHtml, () => {
-      void nextTick(syncCodeScrollbars);
+      void nextTick(syncOverlayScrollbars);
     });
 
     onBeforeUnmount(() => {
-      for (const c of codeScrollbars) c.handle.detach();
-      codeScrollbars.length = 0;
+      for (const c of overlayScrollbars) c.handle.detach();
+      overlayScrollbars.length = 0;
     });
 
     return () => (

@@ -82,17 +82,37 @@
    a single unbreakable cell) pushes every ancestor's min-content width
    past its box — clipping hosts (the modal reading region, chat bubbles,
    report cards) then leave the far columns unreachable. The renderer wraps
-   every table in this rail: normal tables keep their full-width layout and
-   the wrapper is inert; only a genuinely overflowing table grows the
-   horizontal scroll. Same hidden-native-chrome + overlay rail contract as
-   .hk-md-code above (the 2026-10-01 native-bar regression rule). */
+   every table in the same two-level shape as code above: this wrap is the
+   rail HOST (track host for the scroller below — it contains ONLY the
+   scrolling box, so the rail hugs the table instead of spanning the whole
+   markdown body, useOverlayScrollbar's host contract) and carries the
+   table's vertical margin, because a scroll container never collapses
+   margins with its children and the margin must keep collapsing with the
+   surrounding flow exactly as the bare table's did. */
 .hk-md-table-wrap {
+  position: relative;
+  margin: 0.75em 0;
+}
+
+/* The horizontal rail itself — the viewport the overlay scrollbar attaches
+   to. Only a genuinely overflowing table grows the scroll; normal tables
+   keep their full-width layout. Same hidden-native-chrome contract as
+   .hk-md-code (the 2026-10-01 native-bar regression rule). */
+.hk-md-table-scroll {
   overflow-x: auto;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* The railed table renders flush inside its scroller — its old vertical
+   margin lives on the host wrap above. Outranks `.hk-markdown table`
+   (two classes + one type vs one class + one type); GFM tables cannot
+   nest, so no other table is ever matched. */
+.hk-markdown .hk-md-table-wrap table {
+  margin: 0;
 }
 
 .hk-md-code-lang {

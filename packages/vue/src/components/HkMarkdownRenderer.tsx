@@ -79,11 +79,15 @@ async function renderMarkdown(content: string): Promise<string> {
     // Tables size to their content: a wide one (many columns, or a single
     // unbreakable cell) pushes every ancestor's min-content width past its
     // box, and clipping hosts (modal reading region, chat bubbles, report
-    // cards) leave the far columns unreachable. Rail the TABLE itself —
-    // normal tables keep their full-width layout; only a genuinely
-    // overflowing one grows the horizontal scroll (see .hk-md-table-wrap).
+    // cards) leave the far columns unreachable. Same two-level shape as the
+    // code override above: `.hk-md-table-wrap` is the rail HOST (a plain
+    // positioned box wrapping only the scroller — the engine anchors the
+    // track in the viewport's parent), `.hk-md-table-scroll` is the
+    // viewport that actually rails. Rail the TABLE itself — normal tables
+    // keep their full-width layout; only a genuinely overflowing one grows
+    // the horizontal scroll (see .hk-md-table-scroll).
     const inner = (RendererCtor.prototype as { table: (t: unknown) => string }).table.call(this, token);
-    return `<div class="hk-md-table-wrap">${inner}</div>`;
+    return `<div class="hk-md-table-wrap"><div class="hk-md-table-scroll">${inner}</div></div>`;
   };
 
   const raw = marked.parse(content, { renderer, async: false });
@@ -127,7 +131,7 @@ export default defineComponent({
     );
 
     // Overlay scrollbars (shared chrome) on the markdown blocks that can
-    // rail horizontally: code blocks and table wraps. The body is
+    // rail horizontally: code blocks and table scrollers. The body is
     // innerHTML-rendered and fully replaced on every parse, so the
     // attachment set is reconciled after each render pass: handles whose
     // block left the DOM detach, fresh blocks attach.
@@ -141,7 +145,7 @@ export default defineComponent({
           overlayScrollbars.splice(i, 1);
         }
       }
-      for (const el of bodyRef.value?.querySelectorAll<HTMLElement>(".hk-md-code, .hk-md-table-wrap") ?? []) {
+      for (const el of bodyRef.value?.querySelectorAll<HTMLElement>(".hk-md-code, .hk-md-table-scroll") ?? []) {
         if (overlayScrollbars.some((c) => c.el === el)) continue;
         overlayScrollbars.push({ el, handle: attachOverlayScrollbars(el, { axis: "horizontal" }) });
       }

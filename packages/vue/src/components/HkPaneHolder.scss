@@ -1,0 +1,33 @@
+// HkPaneHolder — the keep-mounted pane slot (see the TSX doc for when to
+// choose it over the dissolve primitives).
+
+.hk-pane-holder {
+  display: none;
+
+  // Active: back in the layout with the family dissolve's own language —
+  // a one-shot opacity reveal. No transform: a pane sliding in would
+  // disagree with every crossfade around it.
+  &[data-active] {
+    display: block;
+    animation: hk-pane-holder-in var(--duration-normal, 0.3s) ease-out;
+  }
+}
+
+@keyframes hk-pane-holder-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Opt-outs: the global animation switch is the host's, reduced motion is
+// the OS's — the holder obeys both (an inline-less rule; the animation is
+// declared here in the sheet, so unlike HkTransitionContainer's inline
+// duration a media query CAN reach it).
+html[data-css-animations="0"] .hk-pane-holder[data-active] {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-pane-holder[data-active] {
+    animation-duration: var(--duration-fast, 0.15s);
+  }
+}

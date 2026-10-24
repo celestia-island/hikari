@@ -129,6 +129,28 @@ describe("HkAdminHeader", () => {
     expect(withoutTitle.querySelector("header > div")?.textContent).not.toContain("Dashboard");
   });
 
+  it("renders no avatar trigger when no identity is injected", () => {
+    // 2026-10-24 regression: the trigger rendered unconditionally, so a
+    // host with no identity props got a stray "?" button opening an
+    // empty "Signing in…" menu with a lone sign-out row. The identity
+    // cluster is injection-driven now — no identity, no trigger.
+    const anonymous = mount(headerNode({ username: "", title: "Anywhere" }));
+    expect(avatarButton(anonymous)).toBeNull();
+    // The page title still rides the left wing without the avatar.
+    expect(anonymous.querySelector("header > div")?.textContent).toContain("Anywhere");
+
+    // The pending identity flow is EXPLICIT injection: signingInLabel /
+    // onForceSignOut keep the "?" trigger alive so the force-sign-out
+    // escape stays reachable during a wedged session restore.
+    const pending = mount(headerNode({
+      username: "",
+      signingInLabel: "Signing in…",
+      onForceSignOut: () => {},
+    }));
+    const btn = avatarButton(pending) as HTMLButtonElement;
+    expect(btn.querySelector(".s-user-avatar")?.textContent).toBe("?");
+  });
+
   it("toggles the user dropdown with the profile identity header in menu mode", async () => {
     const c = mount(headerNode({
       userEmail: "alice@example.com",

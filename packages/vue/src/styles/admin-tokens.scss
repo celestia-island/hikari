@@ -1228,8 +1228,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+// Full-viewport by default: the page does NOT assume a fixed status bar
+// is mounted under it (2026-10-24 — the old calc() subtracted
+// --s-footer-height unconditionally, stopping the background 3rem short
+// of the bottom on pages with no status bar). Hosts that DO pair the
+// auth page with a status bar subtract it themselves.
 .a-auth-page {
-  min-height: calc(100vh - var(--s-footer-height, 3rem));
+  min-height: 100vh;
 }
 
 // ── adjacent-button spacing (the button-row grammar) ──────────────────────

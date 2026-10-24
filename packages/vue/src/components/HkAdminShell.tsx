@@ -140,7 +140,17 @@ export const HkAdminShell = defineComponent({
      *  1024px "lg" breakpoint; lower it (e.g. 768) for tablet-friendly
      *  admins that keep the sidebar at md widths. */
     mobileBreakpoint: { type: Number, default: 1024 },
-    footerHeight: { type: String, default: "var(--s-footer-height)" },
+    /** Height reserved under the scroll body for a fixed status-bar
+     *  band. INJECTION-DRIVEN (2026-10-24): the reservation tracks
+     *  whether the shell actually renders a status bar — a filled
+     *  `footer` slot (the shell's own fixed `.s-status-bar`) reserves
+     *  `var(--s-footer-height)` by default, and with NO footer slot
+     *  nothing is reserved (`0px`). The old unconditional default
+     *  reserved the band on every host, leaving a dead 3rem blank under
+     *  consoles that never mount a status bar. Hosts that pin their OWN
+     *  fixed bar outside the shell opt back in by passing an explicit
+     *  value (e.g. `"var(--s-footer-height)"`). */
+    footerHeight: { type: String, default: undefined },
     navTitle: { type: String, default: undefined },
     /** Extra class for the mobile nav drawer's panel — lets consumers zero
      *  nested paddings so drawer nav rows and a `userPanel` footer share
@@ -186,6 +196,19 @@ export const HkAdminShell = defineComponent({
 
     const actionBar = provideActionBar();
 
+    // The status-bar band exists only when the shell renders one (the
+    // footer slot) or the host pins its own bar and says so via the prop
+    // — an unreserved shell carries no dead clearance (2026-10-24: the
+    // unconditional default used to blank 3rem under every console that
+    // never mounted a status bar). Computed INSIDE the render (not a
+    // `computed()`): slot PRESENCE is what it reads, and a cached
+    // computed is not reliably invalidated by a slot appearing or
+    // disappearing, while every re-render re-evaluates this line.
+    function footerPad(): string {
+      if (props.footerHeight !== undefined) return props.footerHeight;
+      return slots.footer ? "var(--s-footer-height)" : "0px";
+    }
+
     const toggleHamburger = () => {
       sidebarOpen.value = !sidebarOpen.value;
     };
@@ -215,7 +238,7 @@ export const HkAdminShell = defineComponent({
           </div>
         )}
 
-        <div class="s-admin-shell-body" style={{ paddingBottom: props.footerHeight }}>
+        <div class="s-admin-shell-body" style={{ paddingBottom: footerPad() }}>
           {isDesktop.value && !props.sidebarCollapsed && slots.sidebar && (
             <aside
               style={{

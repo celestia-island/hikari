@@ -87,6 +87,23 @@ export const HkAdminHeader = defineComponent({
     const avatarModalOpen = ref(false);
     const avatarFailed = ref(false);
 
+    // The identity cluster is INJECTED, not assumed (2026-10-24): the
+    // trigger renders only when the host actually supplied an identity
+    // (username / email / avatar) or explicitly opted into the pending
+    // identity flow (signingInLabel / onForceSignOut — the fetchUser
+    // race machinery whose "?" trigger opens the force-sign-out escape).
+    // A host that passes none of those has no account surface, and the
+    // old unconditional render left it a stray "?" button opening an
+    // empty "Signing in…" menu.
+    const identityMounted = computed(
+      () =>
+        !!props.username ||
+        !!props.userEmail ||
+        !!props.avatarUrl ||
+        props.signingInLabel !== undefined ||
+        props.onForceSignOut !== undefined,
+    );
+
     function onAvatarClick(e: MouseEvent) {
       e.stopPropagation();
       if (props.avatarAction === "drawer") {
@@ -192,35 +209,37 @@ export const HkAdminHeader = defineComponent({
               <Menu size={20} class="s-admin-header-hamburger-icon" />
             </HButton>
           )}
-          <button
-            class="s-admin-header-avatar"
-            aria-label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
-            aria-haspopup={props.avatarAction === "drawer" ? "dialog" : "menu"}
-            aria-expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
-            onClick={onAvatarClick}
-          >
-            {/* Deliberately NO hover veil here: the trigger opens the user
-             *  MENU (the avatar edit lives one row down as the Camera
-             *  item), so a camera overlay would promise click-to-change
-             *  and lie (user report 2026-09-16). */}
-            {props.avatarUrl && !avatarFailed.value ? (
-              <img
-                src={props.avatarUrl}
-                alt={props.username}
-                class="s-admin-header-avatar-img"
-                onError={() => { avatarFailed.value = true; }}
-              />
-            ) : (
-              // Letter fallback on the shared avatar primitive — the
-              // same filled-circle grammar as the chat frontend's
-              // trigger. The old border-2 ring made the console's
-              // avatar read as a different control (user report
-              // 2026-09-12: 前后台头像不一致).
-              <span class="s-user-avatar">
-                {props.username?.charAt(0).toUpperCase() || "?"}
-              </span>
-            )}
-          </button>
+          {identityMounted.value && (
+            <button
+              class="s-admin-header-avatar"
+              aria-label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
+              aria-haspopup={props.avatarAction === "drawer" ? "dialog" : "menu"}
+              aria-expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
+              onClick={onAvatarClick}
+            >
+              {/* Deliberately NO hover veil here: the trigger opens the user
+               *  MENU (the avatar edit lives one row down as the Camera
+               *  item), so a camera overlay would promise click-to-change
+               *  and lie (user report 2026-09-16). */}
+              {props.avatarUrl && !avatarFailed.value ? (
+                <img
+                  src={props.avatarUrl}
+                  alt={props.username}
+                  class="s-admin-header-avatar-img"
+                  onError={() => { avatarFailed.value = true; }}
+                />
+              ) : (
+                // Letter fallback on the shared avatar primitive — the
+                // same filled-circle grammar as the chat frontend's
+                // trigger. The old border-2 ring made the console's
+                // avatar read as a different control (user report
+                // 2026-09-12: 前后台头像不一致).
+                <span class="s-user-avatar">
+                  {props.username?.charAt(0).toUpperCase() || "?"}
+                </span>
+              )}
+            </button>
+          )}
           {/* WHERE am I — the open view's title, not the nickname. The
               1.5 line-height (in the class) keeps descenders (g, y, p)
               inside the truncate clip box: the default text-sm box is

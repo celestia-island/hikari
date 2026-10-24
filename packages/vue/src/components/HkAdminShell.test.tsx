@@ -538,4 +538,74 @@ describe("HkAdminShell", () => {
     expect(tripleInner?.style.paddingLeft).toBe("2rem");
     expect(tripleInner?.style.paddingRight).toBe("2rem");
   });
+
+  it("reserves the footer band only when a status bar is actually injected", () => {
+    // 2026-10-24 regression: the body carried
+    // paddingBottom: var(--s-footer-height) unconditionally — a dead 3rem
+    // blank under every console that never mounts a status bar. The
+    // reservation is injection-driven now: the shell's own footer slot
+    // brings it, an explicit prop overrides it, nothing else reserves.
+    setWidth(1024);
+
+    // No footer slot, no prop: NO band.
+    const plain = mount(shellNode(
+      { navTitle: "Navigation" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    const plainBody = plain.querySelector(".s-admin-shell-body") as HTMLElement;
+    expect(plainBody.style.paddingBottom).toBe("0px");
+    expect(plain.querySelector("footer.s-status-bar")).toBeNull();
+
+    // A filled footer slot renders the fixed .s-status-bar and reserves
+    // its band by default.
+    const withBar = mount(shellNode(
+      { navTitle: "Navigation" },
+      {
+        header: () => null,
+        sidebar: NAV,
+        content: CONTENT,
+        footer: () => h("div", { class: "bar-mock" }, "STATUS"),
+      },
+    ));
+    const barBody = withBar.querySelector(".s-admin-shell-body") as HTMLElement;
+    // A fallback-less var() survives as the direct longhand here — the
+    // shorthand round-trip failures happy-dom shows elsewhere in this
+    // file do not apply to a single-track longhand read.
+    expect(barBody.style.paddingBottom).toBe("var(--s-footer-height)");
+    expect(withBar.querySelector("footer.s-status-bar .bar-mock")).toBeTruthy();
+
+    // An explicit prop overrides BOTH branches: the opt-in for hosts that
+    // pin their own fixed bar outside the shell…
+    const external = mount(shellNode(
+      { navTitle: "Navigation", footerHeight: "3.5rem" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    expect((external.querySelector(".s-admin-shell-body") as HTMLElement).style.paddingBottom)
+      .toBe("3.5rem");
+    // …and a custom band for hosts that fill the slot anyway. "0px"
+    // explicitly re-kills it.
+    const explicitZero = mount(shellNode(
+      { navTitle: "Navigation", footerHeight: "0px" },
+      {
+        header: () => null,
+        sidebar: NAV,
+        content: CONTENT,
+        footer: () => h("div", { class: "bar-mock" }, "STATUS"),
+      },
+    ));
+    expect((explicitZero.querySelector(".s-admin-shell-body") as HTMLElement).style.paddingBottom)
+      .toBe("0px");
+
+    // The empty string is an EXPLICIT value, not an absent one: `!==`
+    // undefined (not truthiness) is the gate, so "" passes through
+    // verbatim exactly as the old code passed it — same contract the
+    // contentPadding longhand pins below. A truthiness mutant would
+    // reroute "" into the slot branch; this mount catches it.
+    const explicitEmpty = mount(shellNode(
+      { navTitle: "Navigation", footerHeight: "" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    expect((explicitEmpty.querySelector(".s-admin-shell-body") as HTMLElement).style.paddingBottom)
+      .toBe("");
+  });
 });

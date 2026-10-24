@@ -78,6 +78,23 @@
   margin: 0;
 }
 
+/* Markdown tables size to their content, so a wide one (many columns, or
+   a single unbreakable cell) pushes every ancestor's min-content width
+   past its box — clipping hosts (the modal reading region, chat bubbles,
+   report cards) then leave the far columns unreachable. The renderer wraps
+   every table in this rail: normal tables keep their full-width layout and
+   the wrapper is inert; only a genuinely overflowing table grows the
+   horizontal scroll. Same hidden-native-chrome + overlay rail contract as
+   .hk-md-code above (the 2026-10-01 native-bar regression rule). */
+.hk-md-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .hk-md-code-lang {
   position: absolute;
   top: 0.25em;

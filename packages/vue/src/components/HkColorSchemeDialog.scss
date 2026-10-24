@@ -7,15 +7,12 @@
 .s-scheme-mode-switch {
   align-self: center;
 
-  /* The strip needs a track of its own: pill-on-dialog-surface is
-     same-on-same in dark mode and read as bare text links (user report
-     2026-09-16), hiding that it is a segmented control — and that it
-     picks the EDITING target, not the applied app mode. */
-  .hk-tabs-list {
-    background: color-mix(in srgb, var(--hi-color-text-primary, rgb(var(--color-text))) 8%, transparent);
-    padding: var(--space-2, 2px);
-    border-radius: var(--hi-radius-sm, 4px);
-  }
+  /* The editor renders variant="segmented" — the DEFAULT segmented
+     chrome (hikari's own track) is exactly what the user asked for
+     (2026-10-23: the bespoke tinted track read as a different button
+     family from every other segmented group). The 2026-09-16 custom
+     track predates the editor's move to the segmented variant and is
+     retired with it. */
 }
 
 /* Why-this-strip note: the tabs switch which palette you are EDITING;

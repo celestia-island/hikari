@@ -387,7 +387,10 @@ graph TD
   CS --> VO["Visual Output"]
 ```
 
-### SSR Data Flow (examples/website)
+### SSR Data Flow (moved to the tairitsu packager)
+
+Hikari ships no HTTP/SSR entry point of its own: the flow below now lives in the
+tairitsu packager (`tairitsu-packager` / `tairitsu-ssr`), which hosts `hikari-components`.
 
 ```mermaid
 graph TD

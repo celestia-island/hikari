@@ -13,7 +13,6 @@ resolver = "2"
 
 exclude = [
     "examples/*",
-    "examples/demo",
     "packages/vue",
 ]
 

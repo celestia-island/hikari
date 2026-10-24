@@ -263,35 +263,13 @@ fn main() {
 **생성 파일**:
 - `public/styles/bundle.css` - 컴파일된 CSS
 
-### 7. 렌더 서비스 (tairitsu-packager)
+### 7. Render Service (moved to the tairitsu packager)
 
-서버 사이드 렌더링 및 정적 자산 서빙입니다.
-
-**담당 역할**:
-- HTML 템플릿 렌더링
-- 스타일 레지스트리
-- 라우터 빌더
-- 정적 자산 서비스
-- Axum 통합
-
-**핵심 기능**:
-```rust
-use hikari_render_service::HikariRenderServicePlugin;
-
-let app = HikariRenderServicePlugin::new()
-    .component_style_registry(registry)
-    .static_assets("./dist", "/static")
-    .add_route("/api/health", get(health_check))
-    .build()?;
-```
-
-**아키텍처 모듈**:
-- **html** - HTML 서비스
-- **registry** - 스타일 레지스트리
-- **router** - 라우터 빌더
-- **static_files** - 정적 파일 서비스
-- **styles_service** - 스타일 주입
-- **plugin** - 플러그인 시스템
+The `hikari-render-service` crate has been retired. HTML template rendering, the style
+registry, the Axum router builder and static-asset mounting moved to the tairitsu framework
+(`tairitsu-packager` / `tairitsu-ssr`), which hosts `hikari-components`; see
+<https://github.com/celestia-island/tairitsu> for the current API. Nothing in this repository
+depends on a `hikari_render_service` crate any more.
 
 ### 8. 확장 컴포넌트 데이터 모델 (폐기)
 

@@ -590,13 +590,13 @@ Use `just build` to build the entire project.
 just build
 
 # Build all packages (Debug mode)
-just build-debug
+just build-dev
 
 # Run development server
 just dev
 
-# Build Website
-cd examples/website && cargo build --release
+# Build the documentation site (lagrange SSG)
+just build-website
 ```
 
 ## Summary

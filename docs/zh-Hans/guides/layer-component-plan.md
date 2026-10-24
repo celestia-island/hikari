@@ -590,13 +590,13 @@ pub enum Route {
 just build
 
 # 构建所有包（Debug 模式）
-just build-debug
+just build-dev
 
 # 运行开发服务器
 just dev
 
 # 构建网站
-cd examples/website && cargo build --release
+just build-website
 ```
 
 ## 总结

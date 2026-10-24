@@ -11,6 +11,22 @@ const componentsDir = here;
  * Pane-swap contract — the enforcement half of the family's transition
  * primitives (user audit 2026-10-23).
  *
+ * THE DECISION TABLE (which surface for which class of slot):
+ *
+ *   ┌──────────────────────────────┬───────────────────────────────┐
+ *   │ the content can UNMOUNT      │ HkTransitionContainer (frame │
+ *   │ when it leaves the stage     │ must morph) / HkCrossfade    │
+ *   │                              │ (same-box dissolve)          │
+ *   ├──────────────────────────────┼───────────────────────────────┤
+ *   │ the instance must SURVIVE    │ HkPaneHolder (draft stores,  │
+ *   │ (draft store, canvas, sock)  │ canvases, sockets)           │
+ *   ├──────────────────────────────┼───────────────────────────────┤
+ *   │ a WIZARD STEPPER inside a    │ HkStepFlow — see its exception│
+ *   │ modal sheet                  │ below; it is a sibling with a │
+ *   │                              │ different contract, not a    │
+ *   │                              │ rogue pane slot              │
+ *   └──────────────────────────────┴───────────────────────────────┘
+ *
  * THE RULE. A "pane slot" is a container whose visible content is selected
  * by a state key while the container stays put: tabs, settings sections,
  * step bodies, view areas. Every such slot must swap through the standard
@@ -113,7 +129,34 @@ describe("pane-swap contract", () => {
       // wrapped by the standard above or justified here.
       "HkTabs.tsx", // wrapped by HkTransitionContainer (pinned above)
       "HkSettingsDialog.tsx", // wrapped by HkTransitionContainer (pinned above)
-      "HkStepFlow.tsx", // justified: frozen-sheet two-window protocol + direction axis
+      // HkStepFlow is NOT a rogue pane slot — it is a sibling mechanism
+      // with a contract the generic primitives deliberately do not
+      // offer (2026-10-24 deep-dive ruling; do not re-litigate without
+      // reading this):
+      //  1. SEQUENTIAL two-window choreography (slide with the hosting
+      //     sheet's height FROZEN, then the morph plays ALONE) — the
+      //     inversion of HkTransitionContainer's concurrent morph, born
+      //     from the 2026-09-23 round-16 user directive after the
+      //     concurrent form overloaded phone GPU raster threads
+      //     (whole-region black flashes no layering fix absorbed).
+      //  2. A direction axis (translateX travel + RTL mirroring) that
+      //     HkCrossfade's contract forbids — its tests pin
+      //     opacity-only, no transform, ever.
+      //  3. The hk-stepflow-swap sheet protocol: HkModal freezes its
+      //     height pin on "swap", safety-unfreezes (ms+650), and
+      //     height-morphs alone on "morph".
+      //  4. Six round-numbered field incidents live in its logic:
+      //     r16 align-self:start (grid stretch zeroed every shrink's
+      //     delta), r17 near-instant clip sweep (moving clip edges
+      //     re-raster per frame), r18 announce-AFTER-patch (a shrink
+      //     read the leaving body's geometry and no-opped), r22
+      //     Android-autofill strobe (dropFlowFocus before the swap),
+      //     r24 sticky-pin vs modal gutter-cover layering, and
+      //     preemptSwap keeping whichever body is actually visible
+      //     (opacity > 0.05) when interrupted mid-slide.
+      // Merging any of this into the generic container would change its
+      // semantics for every existing call site. Permanent exception.
+      "HkStepFlow.tsx",
       "HkAdminShell.tsx", // content slot is host-owned; hosts key it (chest wraps HkCrossfade)
       "HkThemePanelContent.tsx", // forwards to HTabs (HkTabs), inherits the mechanism
       "HkMenuPanel.tsx", // menu items, not a pane swap

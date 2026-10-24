@@ -1,5 +1,6 @@
-import { defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "../i18n/context";
+import { chromeGuard } from "../runtime/chromeGuard";
 
 import "./HkTitleBar.scss";
 
@@ -33,6 +34,22 @@ import "./HkTitleBar.scss";
  * chrome, so it follows the host's `setLocale` instead of receiving copy
  * through props — with the English strings as the t() fallback for hosts
  * that never set a locale.
+ *
+ * ## Modal-open guard (runtime/chromeGuard)
+ *
+ * While any HkModal-kind window is open, the bar flips into its GUARDED
+ * rendering (`data-chrome-guarded`): the drag surface and the caption
+ * buttons (minimize / maximize / close, tagged `data-window-control`)
+ * stay alive, every other interactive element in the bar goes dead —
+ * custom actions get a real `disabled` unless the window listed their id
+ * in `keepCaptionActions`, and slotted controls (host hamburgers, view
+ * switches) lose pointer events to the stylesheet's guard sweep. Bar
+ * VISIBILITY never changes: the bar keeps painting above any overlay
+ * (z contract: `--hk-z-titlebar` 100001 > `--hk-z-overlay-root` 90000 —
+ * a host that traps the bar inside a stacking context below the overlay
+ * root, e.g. `#app { z-index: 1 }`, breaks this contract in ITS css and
+ * must un-trap it; the overlay root mounts to `<body>` and cannot reach
+ * into host css).
  */
 export default defineComponent({
   name: "HkTitleBar",
@@ -60,11 +77,32 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
+    // Window-chrome guard (runtime/chromeGuard): while a modal-kind
+    // window is open, everything in the bar except the drag surface and
+    // the caption buttons goes dead. `keepCaptionActions` ids listed by
+    // the live windows stay clickable and carry `data-keep-when-guarded`
+    // so the stylesheet's pointer-events sweep exempts them too.
+    const guarded = computed(() => chromeGuard.active.value);
+    const keptIds = computed(() => chromeGuard.keep.value);
+    const customActionState = (
+      id: string,
+    ): {
+      disabled?: boolean;
+      "aria-disabled"?: "true";
+      "data-keep-when-guarded"?: true;
+    } => {
+      if (!guarded.value) return {};
+      const kept = keptIds.value.has(id);
+      return kept
+        ? { "data-keep-when-guarded": true }
+        : { disabled: true, "aria-disabled": "true" };
+    };
     return () => (
       <div
         class="hk-titlebar"
         data-drag-region
         data-maximized={props.maximized || undefined}
+        data-chrome-guarded={guarded.value || undefined}
       >
         {slots.left?.() ?? (
           <span class="hk-titlebar-title">
@@ -85,6 +123,7 @@ export default defineComponent({
               class="hk-titlebar-btn"
               title={a.label}
               aria-label={a.label}
+              {...customActionState(a.id)}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("action", a.id);
@@ -97,6 +136,7 @@ export default defineComponent({
             <button
               type="button"
               class="hk-titlebar-btn"
+              data-window-control
               title={t("hikari::titleBar.minimize", "Minimize")}
               aria-label={t("hikari::titleBar.minimize", "Minimize")}
               onClick={(e: MouseEvent) => {
@@ -111,6 +151,7 @@ export default defineComponent({
             <button
               type="button"
               class="hk-titlebar-btn"
+              data-window-control
               title={props.maximized ? t("hikari::titleBar.restore", "Restore") : t("hikari::titleBar.maximize", "Maximize")}
               aria-label={props.maximized ? t("hikari::titleBar.restore", "Restore") : t("hikari::titleBar.maximize", "Maximize")}
               onClick={(e: MouseEvent) => {
@@ -129,6 +170,7 @@ export default defineComponent({
             <button
               type="button"
               class="hk-titlebar-btn hk-titlebar-btn-close"
+              data-window-control
               title={t("hikari::titleBar.close", "Close")}
               aria-label={t("hikari::titleBar.close", "Close")}
               onClick={(e: MouseEvent) => {

@@ -7,6 +7,7 @@ import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { topWindowZ, usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
+import { popChromeGuard, pushChromeGuard } from "../runtime/chromeGuard";
 import { hkPadStyle, type HkPad } from "../runtime/containerPad";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
@@ -187,6 +188,17 @@ export default defineComponent({
      * resets the shift.
      */
     draggable: { type: Boolean, default: false },
+    /**
+     * Window-chrome guard exemption (see runtime/chromeGuard): while
+     * this window is open the host's HkTitleBar drops into its guarded
+     * rendering — drag surface and caption buttons alive, every other
+     * control in the bar dead. ids listed here (matching HkTitleBar
+     * `customActions` ids) stay clickable for this window's lifetime;
+     * stacked windows publish the union of their lists. Default: an
+     * empty list — the strict "title + three caption buttons only"
+     * policy is the point, not an oversight.
+     */
+    keepCaptionActions: { type: Array as PropType<string[]>, default: () => [] },
   },
   emits: {
     "update:modelValue": (_value: boolean) => true,
@@ -979,11 +991,70 @@ export default defineComponent({
       teardownWindowed();
       teardownAutoFollow();
       backGuard.destroy();
+      // Chrome-guard safety pop: Vue stops setup watchers WITHOUT
+      // running their callbacks on teardown, so a window torn down
+      // mid-open (host v-if flip) would otherwise leak its guard push
+      // and keep the bar guarded forever.
+      if (guardPushed) {
+        popChromeGuard(guardPushed);
+        guardPushed = null;
+      }
       if (handle.value) {
         manager.unregister(handle.value.id);
         handle.value = null;
       }
     });
+
+    // --- Window-chrome guard (runtime/chromeGuard) ---
+    //
+    // The guard tracks the SURFACE, not the component: machine.mounted
+    // flips true as the enter starts and false when the leave lands, so
+    // the bar un-guards exactly when the veil stops painting (a
+    // mid-close unmount is covered by the safety pop in
+    // onBeforeUnmount below — Vue stops watchers without running their
+    // callbacks on teardown).
+    let guardPushed: string[] | null = null;
+    // `immediate` covers the mount-open path: the modelValue watcher
+    // carries the same flag, so a modal mounted with modelValue:true
+    // (HkMessageBox's imperative boxes) flips machine.mounted during
+    // setup — before this watcher exists — and only the immediate arm
+    // sees that already-true value.
+    watch(
+      machine.mounted,
+      (mounted) => {
+        if (mounted) {
+          guardPushed = [...props.keepCaptionActions];
+          pushChromeGuard(guardPushed);
+        } else if (guardPushed) {
+          popChromeGuard(guardPushed);
+          guardPushed = null;
+        }
+      },
+      { immediate: true },
+    );
+    // A list swap while open re-publishes in place (pop matches by
+    // content, so it must see the exact list that was pushed). Hosts
+    // commonly pass an inline literal, so an identical-content swap is
+    // a re-render, not a policy change — skip the registry churn. The
+    // watch is reference-keyed (Vue convention): a store mutating the
+    // SAME array in place must replace it (`keep = [...list]`) for the
+    // re-publish to fire.
+    watch(
+      () => props.keepCaptionActions,
+      (list) => {
+        if (!guardPushed) return;
+        const next = [...(list ?? [])];
+        if (
+          next.length === guardPushed.length &&
+          next.every((id, index) => id === guardPushed![index])
+        ) {
+          return;
+        }
+        popChromeGuard(guardPushed);
+        guardPushed = next;
+        pushChromeGuard(guardPushed);
+      },
+    );
 
     // --- Render helpers ---
 

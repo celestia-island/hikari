@@ -44,7 +44,6 @@ py := if os_family() == "windows" { "python" } else { "python3" }
 
 # External packager from sibling repository (tairitsu)
 tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
-website_manifest := "examples/website/Cargo.toml"
 # Lagrange SSG binary — resolved via celestia-devtools locate (checks env
 # vars, cargo [patch] config, sibling dir, git clone). Falls back to the
 # standard sibling layout ../lagrange if devtools isn't installed.
@@ -172,26 +171,38 @@ clippy:
 clean:
     @echo "  →  Cleaning..."
     @cargo clean 2>/dev/null || true
-    @rm -rf examples/website/dist packages/builder/src/generated public 2>/dev/null || true
+    @rm -rf packages/builder/src/generated public 2>/dev/null || true
     @echo "  ✓  Clean completed"
 
 [windows]
 clean:
-    @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
+    @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
 
 # ------
-# E2E Testing
+# E2E Testing (Python framework — needs a running tairitsu-debug server)
 # ------
 
-# Run E2E screenshots in parallel
-e2e-parallel:
-    @echo "  →  Running E2E tests..."
-    @{{py}} scripts/run_parallel_screenshots.py
+# Check the tairitsu-debug server the capture commands talk to
+e2e-health:
+    @{{py}} scripts/e2e/cli.py health
+
+# Capture screenshots for every known route
+e2e-batch url="http://localhost:3000":
+    @echo "  →  Capturing every route..."
+    @{{py}} scripts/e2e/cli.py batch --url "{{url}}" --output target/e2e_screenshots
     @echo "  ✓  Screenshots saved to: target/e2e_screenshots/"
 
-# Test specific route
-e2e-test route="":
-    @docker run --rm --network host -v "{{justfile_directory()}}/target/e2e_screenshots:/tmp/e2e_screenshots" -v "{{justfile_directory()}}/public:/public:ro" hikari/screenshot:selenium /usr/local/bin/hikari-screenshot --start "{{route}}" --end "{{route}}"
+# Capture a single route
+e2e-test route="/":
+    @{{py}} scripts/e2e/cli.py capture --route "{{route}}" --output "target/e2e_screenshots/route.png"
+
+# Inspect one route (layout, console errors) and print the JSON report
+e2e-inspect route="/":
+    @{{py}} scripts/e2e/cli.py inspect --route "{{route}}" --json
+
+# Replay a recorded command sequence from a JSON file
+e2e-interactive input:
+    @{{py}} scripts/e2e/cli.py interactive --input "{{input}}" --output-dir target/e2e_screenshots
 
 # ------
 # Unit Testing
@@ -218,36 +229,3 @@ update:
 # Generate SCSS bundle manually
 generate-scss:
     @cargo build --manifest-path packages/builder/Cargo.toml
-
-# ------
-# Browser Debug (for AI agents)
-# ------
-
-build-debug:
-    @cargo build --release --package hikari-e2e --bin hikari-browser-debug
-
-debug-screenshot url="http://localhost:3000" output="screenshot.png" wait="10" inject="":
-    @{{py}} scripts/dev/browser_debug.py screenshot --url "{{url}}" --output "{{output}}" --wait {{wait}} {{if inject != "" { "--inject " + inject } else { "" } }}
-
-debug-check url="http://localhost:3000" wait="10":
-    @{{py}} scripts/dev/browser_debug.py check --url "{{url}}" --wait {{wait}}
-
-debug-script url="http://localhost:3000" script="return document.title;" wait="10":
-    @{{py}} scripts/dev/browser_debug.py script --url "{{url}}" --script '{{script}}' --wait {{wait}}
-
-debug-interactive input="scripts/dev/commands/example_commands.json":
-    @{{py}} scripts/dev/browser_debug.py interactive --input "{{input}}" --output-dir scripts/dev/screenshots
-
-debug-visual-check:
-    @{{py}} scripts/dev/browser_debug.py interactive --input "scripts/dev/commands/example_commands.json" --output-dir scripts/dev/screenshots
-
-debug-session route="/":
-    @{{py}} scripts/dev/browser_debug.py screenshot --url "http://localhost:3000{{route}}" --output "debug.png" --wait 10
-
-debug-chrome-up:
-    @docker compose -f docker/docker-compose.debug.yml up -d chrome-debug
-    @echo "  - VNC: vnc://localhost:5900"
-    @echo "  - noVNC: http://localhost:7900"
-
-debug-chrome-down:
-    @docker compose -f docker/docker-compose.debug.yml down

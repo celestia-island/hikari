@@ -219,35 +219,13 @@ fn main() {
 **Fichiers Générés**:
 - `public/styles/bundle.css` - CSS compilé
 
-### 7. Service de Rendu (tairitsu-packager)
+### 7. Render Service (moved to the tairitsu packager)
 
-Rendu côté serveur et service d'assets statiques.
-
-**Responsabilités**:
-- Rendu de template HTML
-- Registre de styles
-- Constructeur de routeur
-- Service d'assets statiques
-- Intégration Axum
-
-**Fonctionnalités Principales**:
-```rust
-use hikari_render_service::HikariRenderServicePlugin;
-
-let app = HikariRenderServicePlugin::new()
-    .component_style_registry(registry)
-    .static_assets("./dist", "/static")
-    .add_route("/api/health", get(health_check))
-    .build()?;
-```
-
-**Modules d'Architecture**:
-- **html** - Service HTML
-- **registry** - Registre de styles
-- **router** - Constructeur de routeur
-- **static_files** - Service de fichiers statiques
-- **styles_service** - Injection de styles
-- **plugin** - Système de plugins
+The `hikari-render-service` crate has been retired. HTML template rendering, the style
+registry, the Axum router builder and static-asset mounting moved to the tairitsu framework
+(`tairitsu-packager` / `tairitsu-ssr`), which hosts `hikari-components`; see
+<https://github.com/celestia-island/tairitsu> for the current API. Nothing in this repository
+depends on a `hikari_render_service` crate any more.
 
 ### 8. Modèles de données des composants supplémentaires (retirés)
 

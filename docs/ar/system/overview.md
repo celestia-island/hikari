@@ -219,35 +219,13 @@ fn main() {
 **الملفات المولدة**:
 - `public/styles/bundle.css` - CSS المجمّع
 
-### 7. خدمة العرض (tairitsu-packager)
+### 7. Render Service (moved to the tairitsu packager)
 
-العرض من جانب الخادم وخدمة الأصول الثابتة.
-
-**المسؤوليات**:
-- عرض قوالب HTML
-- سجل الأنماط
-- باني المسارات
-- خدمة الأصول الثابتة
-- تكامل Axum
-
-**الميزات الأساسية**:
-```rust
-use hikari_render_service::HikariRenderServicePlugin;
-
-let app = HikariRenderServicePlugin::new()
-    .component_style_registry(registry)
-    .static_assets("./dist", "/static")
-    .add_route("/api/health", get(health_check))
-    .build()?;
-```
-
-**وحدات البنية**:
-- **html** - خدمة HTML
-- **registry** - سجل الأنماط
-- **router** - باني المسارات
-- **static_files** - خدمة الملفات الثابتة
-- **styles_service** - حقن الأنماط
-- **plugin** - نظام الإضافات
+The `hikari-render-service` crate has been retired. HTML template rendering, the style
+registry, the Axum router builder and static-asset mounting moved to the tairitsu framework
+(`tairitsu-packager` / `tairitsu-ssr`), which hosts `hikari-components`; see
+<https://github.com/celestia-island/tairitsu> for the current API. Nothing in this repository
+depends on a `hikari_render_service` crate any more.
 
 ### 8. نماذج بيانات المكوّنات الإضافية (أُزيلت)
 

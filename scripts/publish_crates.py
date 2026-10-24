@@ -11,7 +11,7 @@ import urllib.error
 PUBLISHABLE_PREFIX = "hikari"
 MAX_WAIT_SECONDS = 300
 POLL_INTERVAL = 5
-EXCLUDE_PACKAGES = {"hikari-e2e"}
+EXCLUDE_PACKAGES: set[str] = set()  # every current workspace crate is publishable
 
 
 def run_captured(cmd):

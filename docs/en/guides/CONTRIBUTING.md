@@ -88,15 +88,9 @@ cargo build --workspace
 
 ### Run Examples
 
-```bash
-# Run the website
-cd examples/website
-cargo run
-
-# Run SSR demo
-cd examples/ssr-demo
-cargo run
-```
+The in-repo Rust demo applications were retired with the Rust E2E crate. The rendered
+component gallery lives in the tairitsu website example (`../tairitsu/examples/website`);
+visual checks run through the Python framework — `just e2e-health`, then `just e2e-batch`.
 
 ### Development Mode
 

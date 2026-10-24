@@ -104,6 +104,12 @@ export const HkWindowControls = defineComponent({
       if (!win) return null;
 
       const flush = props.variant === "flush";
+      // Window-chrome guard exemption (runtime/chromeGuard): a cluster
+      // hosted inside HkTitleBar's slots is caption chrome — its BUTTONS
+      // carry `data-window-control` themselves, because the guard's
+      // pointer-events sweep targets control elements and attribute
+      // selectors do not inherit from an ancestor (a wrapper marker
+      // alone would leave the three buttons swept dead under the guard).
       return (
         <div
           class={{ "hk-window-controls": true, "hk-window-controls--flush": flush }}
@@ -112,6 +118,7 @@ export const HkWindowControls = defineComponent({
           <button
             type="button"
             class="hk-window-controls__btn"
+            data-window-control
             aria-label="Minimize"
             onClick={() => void win.minimize()}
           >
@@ -120,6 +127,7 @@ export const HkWindowControls = defineComponent({
           <button
             type="button"
             class="hk-window-controls__btn"
+            data-window-control
             aria-label={maximized.value ? "Restore" : "Maximize"}
             onClick={() => void win.toggleMaximize()}
           >
@@ -130,6 +138,7 @@ export const HkWindowControls = defineComponent({
           <button
             type="button"
             class="hk-window-controls__btn hk-window-controls__btn--close"
+            data-window-control
             aria-label="Close"
             onClick={() => void win.close()}
           >

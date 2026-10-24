@@ -489,6 +489,11 @@ export { HK_AUTH_CARD_MAX_WIDTH, HK_AUTH_CARD_MAX_WIDTH_VAR } from "./theme/auth
 
 export { isTauri } from "./runtime/env";
 
+// Window-chrome guard: the modal-open interaction policy for HkTitleBar
+// (push/pop ride HkModal automatically; exported for hosts that roll
+// their own window surfaces).
+export { chromeGuard, popChromeGuard, pushChromeGuard } from "./runtime/chromeGuard";
+
 export { deepMerge, isPlainObject, getPath, setPath, delPath } from "./utils/objectPath";
 
 // ── Admin panel pieces (ported from plana-ui) ────────────────────────────

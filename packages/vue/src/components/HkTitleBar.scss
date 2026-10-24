@@ -139,6 +139,56 @@
   outline-offset: -2px;
 }
 
+/* ── Window-chrome guard (modal-open policy) ─────────────────────────
+   While a modal-kind window is open (runtime/chromeGuard), the bar
+   carries data-chrome-guarded and the stylesheet sweeps interactivity
+   off everything except the caption buttons and the drag surface:
+
+   - `[data-window-control]` (minimize / maximize / close) and a
+     `keepCaptionActions`-kept custom action (`data-keep-when-guarded`)
+     stay fully live.
+   - Every other button / form control / link / tab in the bar — the
+     host's own slotted hamburgers and view switches included — loses
+     pointer events. The retargeted hit lands on the control's nearest
+     non-swept ancestor, so dragging over a dead control behaves
+     differently by zone: over slotted LEFT-area content the bar's drag
+     region takes the pointerdown (and hosts driving the JS drag path,
+     like WebView2, see a non-button target and start dragging), while
+     the no-drag actions cluster and a host's own stopPropagation
+     wrappers simply swallow it — dead zones, which is the point.
+   - custom actions not kept additionally carry a real `disabled` from
+     the TSX — dimmed below so the dead state reads as chrome, not as a
+     broken button.
+
+   Bar VISIBILITY is untouched by design: the guard is a click policy,
+   not a dim-the-chrome mode (loading/fault chips must stay readable). */
+.hk-titlebar[data-chrome-guarded] {
+  button:not([data-window-control]):not([data-keep-when-guarded]):not([disabled]),
+  input:not([disabled]),
+  select:not([disabled]),
+  textarea:not([disabled]),
+  a[href],
+  [role="tab"]:not([aria-disabled="true"]),
+  [tabindex="0"]:not([data-window-control]):not([data-keep-when-guarded]) {
+    pointer-events: none;
+    cursor: default;
+  }
+}
+
+/* Guarded-off custom actions (the TSX sets `disabled`): mute toward the
+   caption-button rest state so the policy is visible at a glance. */
+.hk-titlebar-btn:disabled {
+  color: var(--hk-tb-fg);
+  opacity: 0.45;
+  cursor: default;
+}
+
+.hk-titlebar-btn:disabled:hover,
+.hk-titlebar-btn:disabled:active {
+  background: transparent;
+  color: var(--hk-tb-fg);
+}
+
 /* Host apps offset their own root container below the bar. The var is
    declared on .hk-titlebar and does not inherit to the host root, so
    hosts re-declare it first:

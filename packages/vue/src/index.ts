@@ -614,6 +614,7 @@ export { default as HkCopyBadge } from "./components/HkCopyBadge";
 export { default as HkConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HkCrossfade } from "./components/HkCrossfade";
 export { default as HkTransitionContainer } from "./components/HkTransitionContainer";
+export { default as HkPaneHolder } from "./components/HkPaneHolder";
 export { default as HkWindowControls, isApplePlatform } from "./components/HkWindowControls";
 export { default as HkStatusRow } from "./components/HkStatusRow";
 export type { HkStatusRowTone } from "./components/HkStatusRow";

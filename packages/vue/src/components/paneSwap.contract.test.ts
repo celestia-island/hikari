@@ -51,6 +51,11 @@ const STANDARD_PANE_HOSTS: Array<{ file: string; marker: string; why: string }> 
     marker: "<HkTransitionContainer",
     why: "settings sections are a page-scale pane slot (migrated 2026-10-23)",
   },
+  {
+    file: "HkAdminTablePage.tsx",
+    marker: "<HkCrossfade",
+    why: "the error/placeholder/content body is a page slot every admin table page inherits (2026-10-24)",
+  },
 ];
 
 /** Justified bespoke mechanisms: "<scss file>: <animation identifier>" → reason. */
@@ -65,6 +70,14 @@ const SANCTIONED_SWAP_KEYFRAMES: Record<string, string> = {
 /** Swap-vocabulary keyframe names: anything that reads as a pane-swap
  *  animation must be argued, decorative pulses and spinners do not. */
 const SWAP_VOCABULARY = /(pane|swap|crossfade|morph|sheet)/;
+
+/** The primitives' own stylesheets ARE the sanctioned mechanism — their
+ *  keyframes are the family language itself, not bespoke swaps. */
+const PRIMITIVE_SHEETS = new Set([
+  "HkCrossfade.scss",
+  "HkTransitionContainer.scss",
+  "HkPaneHolder.scss",
+]);
 
 function readComponent(file: string): string {
   return readFileSync(join(componentsDir, file), "utf-8");
@@ -124,6 +137,7 @@ describe("pane-swap contract", () => {
       for (const match of text.matchAll(/@keyframes\s+([\w-]+)/g)) {
         const name = match[1];
         if (!SWAP_VOCABULARY.test(name)) continue;
+        if (PRIMITIVE_SHEETS.has(file)) continue;
         const key = `${file}: ${name}`;
         if (!SANCTIONED_SWAP_KEYFRAMES[key]) offenders.push(`@keyframes ${key}`);
       }

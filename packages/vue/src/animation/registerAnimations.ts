@@ -66,6 +66,9 @@ export function isCssAnimationsEnabled(): boolean {
 registerCssAnimation("s-nav-item-badge-pulse", { infinite: true });
 // styles/admin-tokens.scss — auth card entrance (plays once).
 registerCssAnimation("s-auth-card-in");
+// HkPaneHolder's reveal (opacity-only, one shot) — the keep-mounted pane
+// slot's entry, the dissolve-family language for persistent panes.
+registerCssAnimation("hk-pane-holder-in");
 // styles/admin-tokens.scss — status-bar recovery flash (plays once):
 // the traffic light's green background blink when a dropped connection
 // comes back.

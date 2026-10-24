@@ -1,5 +1,6 @@
 import { defineComponent, type Component, type PropType } from "vue";
 import { HAlert, HCard, HEmptyState, HSpinner, HTable, useI18n } from "@celestia-island/hikari";
+import HkCrossfade from "./HkCrossfade";
 import { HkPageHeader } from "./HkPageHeader";
 import type { HkRowManageGate } from "./HkTable";
 
@@ -98,37 +99,53 @@ export const HkAdminTablePage = defineComponent({
            *  render alongside the error branch (its precondition — rows on
            *  screen — is exactly what the error branch removes). */}
           {props.staleError && !props.error ? <HAlert message={props.staleError} /> : null}
-          {props.error ? (
-            <HAlert message={props.error} />
-          ) : props.loading && !props.rows.length ? (
-            <HSpinner center />
-          ) : !props.rows.length ? (
-            <HEmptyState
-              boxed
-              title={emptyTitle}
-              description={props.emptyDescription}
-            >
-              {emptySlots}
-            </HEmptyState>
-          ) : slots.body ? (
-            <div class="hk-admin-table-page-body">{slots.body()}</div>
-          ) : (
-            <HCard padded={false}>
-              <HTable
-                columns={props.columns}
-                rows={props.rows}
-                rowKey={props.rowKey}
-                draggable={props.draggable}
-                manageable={props.manageable}
-                onReorder={(from: number, to: number) => emit("reorder", from, to)}
-                onManage={(row: Record<string, unknown>, opener: HTMLElement) =>
-                  emit("manage", row, opener)
-                }
+          {/* The body is a page slot with three generations — error,
+              loading/empty, content (task-4, 2026-10-24): the family
+              crossfade owns the exchange, so every admin table page in
+              every host dissolves between them instead of popping. The
+              key collapses loading-vs-empty into one "placeholder"
+              generation: spinner → empty is a data arrival, not a slot
+              identity change worth animating. */}
+          <HkCrossfade
+            swapKey={
+              props.error ? "error"
+                : props.loading && !props.rows.length ? "placeholder"
+                  : !props.rows.length ? "placeholder"
+                    : "content"
+            }
+          >
+            {props.error ? (
+              <HAlert message={props.error} />
+            ) : props.loading && !props.rows.length ? (
+              <HSpinner center />
+            ) : !props.rows.length ? (
+              <HEmptyState
+                boxed
+                title={emptyTitle}
+                description={props.emptyDescription}
               >
-                {slots}
-              </HTable>
-            </HCard>
-          )}
+                {emptySlots}
+              </HEmptyState>
+            ) : slots.body ? (
+              <div class="hk-admin-table-page-body">{slots.body()}</div>
+            ) : (
+              <HCard padded={false}>
+                <HTable
+                  columns={props.columns}
+                  rows={props.rows}
+                  rowKey={props.rowKey}
+                  draggable={props.draggable}
+                  manageable={props.manageable}
+                  onReorder={(from: number, to: number) => emit("reorder", from, to)}
+                  onManage={(row: Record<string, unknown>, opener: HTMLElement) =>
+                    emit("manage", row, opener)
+                  }
+                >
+                  {slots}
+                </HTable>
+              </HCard>
+            )}
+          </HkCrossfade>
           {slots["create-modal"]?.()}
           {slots["edit-modal"]?.()}
         </div>

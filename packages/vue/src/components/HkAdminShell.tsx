@@ -1,5 +1,5 @@
-import { computed, defineComponent, ref } from "vue";
-import { HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
+import { computed, defineComponent, ref, type PropType } from "vue";
+import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { provideActionBar } from "../composables/useActionBar";
 import { useI18n } from "../i18n/context";
 
@@ -162,6 +162,13 @@ export const HkAdminShell = defineComponent({
      *  verbatim at every width unless the page opts into
      *  `contentBleedOnMobile`. */
     contentPadding: { type: String, default: "1.5rem" },
+    /** Identity of the content page on stage (task-4, 2026-10-24):
+     *  pass the current view/route key and the content area swaps pages
+     *  through the family crossfade — the library owns the page-slot
+     *  mechanism instead of every host hand-wrapping it. Omitted (or
+     *  null) renders the slot bare: canvas-like hosts that mount one
+     *  persistent stage opt out. */
+    contentKey: { type: [String, Number] as PropType<string | number | null>, default: null },
     /** Whether the content on screen is a CANVAS — a 2D board or the 3D
      *  scene — that must span the full phone width. OPT-IN, declared by
      *  the page that renders the canvas (2026-10-04 user direction: the
@@ -257,7 +264,15 @@ export const HkAdminShell = defineComponent({
               {/* Padding lives INSIDE the scroll viewport (an inner
                   wrapper) so card box-shadows are not clipped at the
                   viewport edges. */}
-              <div style={contentStyle.value}>{slots.content?.()}</div>
+              <div style={contentStyle.value}>
+                {props.contentKey != null ? (
+                  <HkCrossfade swapKey={props.contentKey} class="s-admin-shell-swap">
+                    {slots.content?.()}
+                  </HkCrossfade>
+                ) : (
+                  slots.content?.()
+                )}
+              </div>
             </HScrollContainer>
           </main>
 

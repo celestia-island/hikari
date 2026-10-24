@@ -67,7 +67,10 @@ describe("markdown table rail contract", () => {
       /\.hk-md-table-wrap\s*\{[^}]*margin:\s*0\.75em\s+0/,
     );
     expect(scss).toMatch(
-      /\.hk-markdown \.hk-md-table-wrap table\s*\{[^}]*margin:\s*0/,
+      // `0\s*;` — a bare `margin:\s*0` would also prefix-match the
+      // bare-table `margin: 0.75em 0` and false-pass the very double-margin
+      // regression this reset exists to prevent.
+      /\.hk-markdown \.hk-md-table-wrap table\s*\{[^}]*margin:\s*0\s*;/,
     );
   });
 

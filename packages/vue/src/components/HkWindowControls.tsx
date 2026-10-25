@@ -15,6 +15,17 @@ import "./HkWindowControls.scss";
  *   with comfortable gaps. The whole top-right reads as one family of
  *   identical buttons; the close hover is a small rounded red wash.
  *   THE mode for content-height headers (3rem-class bars).
+ *   HOST CONTRACT: this mode never rides the window edge (that is the
+ *   flush variant's job) — the host keeps the canonical inset
+ *   `var(--hk-window-controls-edge-inset)` (≤1023px:
+ *   `--hk-window-controls-edge-inset-compact`) between the cluster
+ *   and the frame — token values live once in styles/admin-tokens,
+ *   not restated here. A standard cluster glued to the frame corner
+ *   is the wrong mode's look (field report 2026-10-25: the chest
+ *   login strip rendered with no end padding at all);
+ *   `.s-glass-header--chrome` is the in-library implementation of the
+ *   contract for admin headers, and the chat face sources its
+ *   `--chrome` padding from the same tokens.
  *
  * - `flush` — edge-riding squares that fill the host's height (the
  *   host must zero its own right padding so the close button rides

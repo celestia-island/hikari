@@ -18,7 +18,27 @@ jobs:
     name: Publish @celestia-island/hikari to npm
     runs-on: ubuntu-latest
     steps:
+      # Full history: the tag-provenance guard below compares the tagged commit
+      # against origin/master, and a shallow clone cannot answer that question.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # S2-1 guard (2026-10-25, structural audit SR-15): the v* npm line has 303
+      # tags, 16 of them not ancestors of master — tags were pushed on PR
+      # branches before the squash merge. Such a tag names a commit that is not
+      # on the release branch, so the artifact cannot be reproduced from master.
+      # Dispatch remains the escape hatch for a deliberate back-fill.
+      - name: Ensure the release tag is on master
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch --no-tags --prune origin +refs/heads/master:refs/remotes/origin/master
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::tag $GITHUB_REF_NAME points at $GITHUB_SHA, which is not an ancestor of origin/master — release tags must point at a squash-merged master commit (AGENTS [[change]])"
+            exit 1
+          fi
+          echo "tag $GITHUB_REF_NAME ($GITHUB_SHA) is on master"
 
       - name: Set up Node
         uses: actions/setup-node@v7

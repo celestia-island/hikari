@@ -30,15 +30,8 @@ set allow-duplicate-variables
 # Shared celestia-devtools recipes — NOT in git. `import?` silently skips when
 # absent, so this justfile parses pre-fetch. Bootstrap once: celestia-devtools
 # init (or `just fetch` if already staged). Refresh after upgrades.
-import? "./.just/git-bash-interop.just"
 import? "./.just/celestia-devtools.just"
 
-# Stage shared celestia-devtools recipes into .just/ (gitignored).
-# Source order: explicit URL arg → local pip bundle (offline) → GitHub raw.
-# curl honors HTTP_PROXY/HTTPS_PROXY/ALL_PROXY env vars automatically.
-fetch URL='':
-    {{ if os_family() == "windows" { "python" } else { "python3" } }} -c "import os; os.makedirs('.just', exist_ok=True)"
-    {{ if URL != "" { "curl -fsSL " + URL + " -o .just/celestia-devtools.just" } else if which("celestia-devtools") != "" { "celestia-devtools fetch-just" } else { "curl -fsSL https://raw.githubusercontent.com/celestia-island/celestia-devtools/dev/src/celestia_devtools/common.just -o .just/celestia-devtools.just" } }}
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
 
@@ -53,7 +46,6 @@ lagrange_bin := lagrange_root + if os_family() == "windows" { "/target/release/l
 # ------
 # Core tasks
 # ------
-
 
 default:
     @just --list

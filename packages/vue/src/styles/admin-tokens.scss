@@ -9,6 +9,19 @@
   /* ── Layout tokens ─ */
   --s-footer-height: 3rem;
   --s-header-height: 3rem;
+
+  /* ── Window-control chrome insets ─
+   * The right padding a host title-bar header keeps between the standard
+   * HkWindowControls cluster and the window edge (canonical home since
+   * the chest login strip shipped the cluster glued to the frame corner —
+   * field report 2026-10-25). The standard cluster NEVER rides the edge
+   * (that is the flush variant's job), so every chrome face sources its
+   * padding from here instead of restating half-of-the-header-inset per
+   * face — the faces had drifted three ways (chat 12px/8px, console a
+   * full 24px of dead air, auth 0px). Values are the 2026-10-23 ruling's
+   * halvings of the base/compact header insets, promoted to tokens. */
+  --hk-window-controls-edge-inset: 0.75rem; /* desktop: half of the 24px base header inset */
+  --hk-window-controls-edge-inset-compact: 0.5rem; /* ≤1023px: half of the 16px compact header inset */
   /* Layout/type/motion scale tokens (--space-*, --text-*, --blur-*, --z-*,
    * --duration-*, --ease-*) used to be mirrored here ("keep both in sync")
    * — they now live once in styles/theme/scale.scss, which every entry
@@ -435,6 +448,27 @@
 .s-glass-header--compact {
   gap: var(--space-8);
   padding: 0 var(--space-16);
+}
+
+/* Chrome variant (HkAdminHeader `chrome` prop — the desktop face whose
+ * header IS the window title bar): the inline-end inset follows the
+ * window-controls contract token, not the content inset — the default
+ * 24px reads as dead air next to the standard HkWindowControls cluster
+ * (the same 2026-10-23 user direction that halved the chat face's gap).
+ * LOGICAL property, like the RTL-mirrored titlebar close button (the
+ * [dir="rtl"] .hk-titlebar-btn-close rule in components/HkTitleBar.scss):
+ * in a dir="rtl" host the caption row flips to the visual left and the
+ * inset must flip with it, not stay on the physical right. (0,2,0)
+ * outranks the base rule and the compact band alike, so the chrome
+ * inset wins regardless of load order. */
+.s-glass-header.s-glass-header--chrome {
+  padding-inline-end: var(--hk-window-controls-edge-inset, 0.75rem);
+}
+
+@media (max-width: 1023px) {
+  .s-glass-header.s-glass-header--chrome {
+    padding-inline-end: var(--hk-window-controls-edge-inset-compact, 0.5rem);
+  }
 }
 
 /* ── Balanced header columns (the ONE three-zone header layout) ─────────

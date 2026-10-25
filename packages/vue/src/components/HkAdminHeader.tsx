@@ -20,6 +20,14 @@ export const HkAdminHeader = defineComponent({
     title: { type: String, default: "" },
     showHamburger: { type: Boolean, default: false },
     compact: { type: Boolean, default: false },
+    /** Desktop shell face whose header IS the window title bar (Tauri
+     *  decorations:false): pass true iff the header renders the
+     *  HkWindowControls cluster, so the right inset follows the
+     *  window-controls chrome contract (.s-glass-header--chrome /
+     *  --hk-window-controls-edge-inset) instead of the content inset —
+     *  a standard-mode cluster glued to the frame corner is the flush
+     *  variant's look worn by the wrong mode (field report 2026-10-25). */
+    chrome: { type: Boolean, default: false },
     actions: { type: Array as PropType<VNode[]>, default: () => [] },
     /** Signed-in identity. Drives the avatar fallback letter, the
      *  dropdown identity block and the pending-state branch — it is
@@ -192,6 +200,7 @@ export const HkAdminHeader = defineComponent({
           "s-glass-header",
           "s-balanced-header",
           props.compact ? "s-glass-header--compact" : "",
+          props.chrome ? "s-glass-header--chrome" : "",
         ]}
       >
         <div ref={userTriggerRef} class="s-admin-header-user s-header-wing-start">

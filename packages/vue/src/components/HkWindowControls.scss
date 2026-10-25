@@ -3,7 +3,12 @@
 // standard: borderless ghost buttons at the header chrome's own size
 // step (2rem boxes, 16px glyphs, 0.375rem gaps) — no borders, no
 // dividers, no container chrome; the close hover is a small rounded
-// red wash. Reads as one family with gear/search icon buttons.
+// red wash. Reads as one family with gear/search icon buttons. The
+// HOST keeps the canonical right edge inset
+// (--hk-window-controls-edge-inset, declared in styles/admin-tokens)
+// — a standard cluster never rides the frame; gluing it to the corner
+// is the flush mode's look worn by the wrong mode (field report
+// 2026-10-25: the chest login strip had no right padding at all).
 //
 // flush: edge-riding squares for thin captions — the host zeroes its
 // own right padding (the s-header-bar--chrome contract pattern); the

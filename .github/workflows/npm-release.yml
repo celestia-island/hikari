@@ -35,7 +35,7 @@ jobs:
         run: |
           git fetch --no-tags --prune origin +refs/heads/master:refs/remotes/origin/master
           if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
-            echo "::error::tag $GITHUB_REF_NAME points at $GITHUB_SHA, which is not an ancestor of origin/master — release tags must point at a squash-merged master commit (AGENTS §4)"
+            echo "::error::tag $GITHUB_REF_NAME points at $GITHUB_SHA, which is not an ancestor of origin/master — release tags must point at a squash-merged master commit (AGENTS [[change]])"
             exit 1
           fi
           echo "tag $GITHUB_REF_NAME ($GITHUB_SHA) is on master"

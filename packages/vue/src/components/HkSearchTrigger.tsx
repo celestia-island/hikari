@@ -8,6 +8,7 @@ import HkPopover, { type PopupPlacement } from "./HkPopover";
 import HkSearchInput from "./HkSearchInput";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { useI18n } from "../i18n/context";
+import { useChromeActionSize } from "../composables/useChromeActionSize";
 import "./HkSearchTrigger.scss";
 
 /**
@@ -56,6 +57,7 @@ const HkSearchTrigger = defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
+    const chromeSize = useChromeActionSize();
     const { isMobile } = useBreakpoint();
     const open = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
@@ -96,7 +98,7 @@ const HkSearchTrigger = defineComponent({
            * (2026-10-15: was a hand-rolled primary dot, top-right). */}
           <HkCornerBadge dot={active.value} variant="success" corner="bottom-right" offset={1}>
           <HkIconButton
-            size={28}
+            size={chromeSize.value}
             variant="ghost"
             aria-label={label}
             aria-haspopup="dialog"

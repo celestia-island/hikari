@@ -113,13 +113,18 @@ describe("HkThemeToggle trigger", () => {
     // single button (user direction 2026-09-30) must be chrome-identical
     // to the functional HkIconButtons hosts place beside it — the ghost
     // variant's shared rest/hover/press paint, not a bespoke block. The
-    // 28 step is the header chrome step (user report 2026-09-28: the
-    // cluster reads as one row only at ghost/28, sm 16px glyph).
+    // size step is the chrome action ladder (2026-10-24 ruling via
+    // useChromeActionSize): ghost/32 wide, ghost/28 narrow — the rung is
+    // viewport-driven, so the test pins "the ladder's class", never one
+    // hard-coded step.
     const triggers = container.querySelectorAll(".s-theme-toggle-btn");
     expect(triggers).toHaveLength(1);
     const trigger = triggers[0] as HTMLElement;
     expect(trigger.classList.contains("hk-icon-button")).toBe(true);
-    expect(trigger.classList.contains("hk-icon-button-28")).toBe(true);
+    expect(
+      trigger.classList.contains("hk-icon-button-28")
+      || trigger.classList.contains("hk-icon-button-32"),
+    ).toBe(true);
     expect(trigger.classList.contains("hk-icon-button-ghost")).toBe(true);
     // The retired main/arrow data hooks must never come back.
     expect(trigger.hasAttribute("data-variant")).toBe(false);

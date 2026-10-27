@@ -1,0 +1,60 @@
+/**
+ * HkSegmentedRadio chrome — the single-choice joined strip. One chrome
+ * for every filter-popover option group: the two chest popovers this
+ * component converges styled their borders, paddings and hover tints
+ * independently and drifted apart within one release week. Tokens only
+ * (hikari vars with px fallbacks), per the component SCSS convention.
+ */
+
+.hk-segmented-radio {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: var(--radius-sm, 6px);
+
+  &[data-disabled] {
+    opacity: 0.5;
+  }
+}
+
+.hk-segmented-radio-option {
+  flex: 1 1 0;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  border-inline-end: 1px solid rgb(var(--color-border));
+  padding: var(--space-5, 5px) var(--space-10, 10px);
+  background: transparent;
+  color: rgb(var(--color-text) / 78%);
+  font-size: var(--text-xs, 12px);
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--duration-short, 120ms),
+    color var(--duration-short, 120ms);
+
+  &:last-child {
+    border-inline-end: 0;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &[data-on] {
+    background: rgb(var(--color-primary) / 14%);
+    color: rgb(var(--color-primary));
+    font-weight: 600;
+  }
+
+  &:not([data-on]):not(:disabled):hover {
+    background: rgb(var(--color-primary) / 6%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 60%);
+    outline-offset: -2px;
+  }
+}

@@ -12,12 +12,14 @@ import HkIconButton from "./HkIconButton";
 import HkPopover, { type PopupPlacement } from "./HkPopover";
 import "./HkFilterTrigger.scss";
 import { useBreakpoint } from "../runtime/useBreakpoint";
+import { useChromeActionSize } from "../composables/useChromeActionSize";
 import { useI18n } from "../i18n/context";
 
 /**
- * HkFilterTrigger — the header filter affordance: a ghost/28 icon button
- * (the same step as the theme toggle and the page refresh — the whole
- * top-right cluster reads as one row of chrome) anchoring the
+ * HkFilterTrigger — the header filter affordance: a ghost icon button on
+ * the chrome action ladder (useChromeActionSize: ghost/32 wide, ghost/28
+ * narrow — the same step as the global search and settings buttons, so
+ * the whole top-right cluster reads as one row of chrome) anchoring the
  * HkFilterPanel in a popover on desktop and a bottom sheet on mobile
  * (HkPopover sheetOnMobile).
  *
@@ -50,6 +52,11 @@ export default defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
     const { isMobile } = useBreakpoint();
+    // The chrome ladder (2026-10-24 ruling, one source): wide screens
+    // wear ghost/32 like the header's search and settings buttons — a
+    // flat 28 here read as a different button family from its own
+    // neighbors on desktop (2026-10-27 report).
+    const chromeSize = useChromeActionSize();
     const open = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
 
@@ -63,7 +70,7 @@ export default defineComponent({
         <span ref={anchorRef} class="hk-filter-trigger">
           <HkCornerBadge dot={active.value} variant="success" corner="bottom-right" offset={1}>
             <HkIconButton
-              size={28}
+              size={chromeSize.value}
               variant="ghost"
               aria-label={label}
               aria-haspopup="dialog"

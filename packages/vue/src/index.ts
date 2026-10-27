@@ -511,6 +511,7 @@ export {
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
 export { provideActionBar, useActionBar } from "./composables/useActionBar";
 export type { ActionBarRenderer } from "./composables/useActionBar";
+export { useChromeActionSize } from "./composables/useChromeActionSize";
 export { leadingZeroBits, sha256, solvePow, solvePowSync, verifyPow } from "./utils/pow";
 export type { PowChallenge, PowSolution } from "./utils/pow";
 export { HkLocalePicker as HLocalePicker } from "./components/HkLocalePicker";
@@ -670,6 +671,8 @@ export { default as HkPopupSelect } from "./components/HkPopupSelect";
 export { default as HkProgressBar } from "./components/HkProgressBar";
 export { default as HkProgressDialog } from "./components/HkProgressDialog";
 export { default as HkRadio } from "./components/HkRadio";
+export { default as HkSegmentedRadio } from "./components/HkSegmentedRadio";
+export type { HkSegmentedRadioOption } from "./components/HkSegmentedRadio";
 export { default as HkScrollContainer } from "./components/HkScrollContainer";
 export { default as HkSearchInput } from "./components/HkSearchInput";
 export { default as HkSplash } from "./components/HkSplash";

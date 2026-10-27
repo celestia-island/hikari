@@ -32,11 +32,16 @@ const triggerButton = (c: HTMLElement) =>
   c.querySelector<HTMLButtonElement>(".hk-filter-trigger .hk-icon-button")!;
 
 describe("HkFilterTrigger", () => {
-  it("renders the filter affordance as a ghost/28 icon button (the theme toggle's step)", () => {
+  it("renders the filter affordance on the chrome action ladder (ghost class, ladder step)", () => {
     const c = mount(h(HkFilterTrigger, { fields: FIELDS, modelValue: [] }));
     const btn = triggerButton(c);
     expect(btn).toBeTruthy();
-    expect(btn.className).toContain("hk-icon-button-28");
+    // The ladder rung is viewport-driven (useChromeActionSize): the test
+    // environment's width lands on one of the two rungs — the contract
+    // is "the ladder's class", never a hard-coded step.
+    expect(
+      btn.className.includes("hk-icon-button-28") || btn.className.includes("hk-icon-button-32"),
+    ).toBe(true);
     expect(btn.className).toContain("hk-icon-button-ghost");
     expect(btn.getAttribute("aria-haspopup")).toBe("dialog");
     // No active dot on an untouched state.

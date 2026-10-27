@@ -125,7 +125,13 @@ export default defineComponent({
       props.collapsed !== undefined ? props.collapsed : internalCollapsed.value);
     function toggleCollapsed(next: boolean): void {
       internalCollapsed.value = next;
-      if (next) sliderOpen.value = false;
+      if (next) {
+        sliderOpen.value = false;
+        // A mid-drag collapse swaps the element: no pointerup can reach
+        // the new root, so end the drag HERE or unpressed hovers would
+        // keep panning (delta S3 F4).
+        dragging.value = false;
+      }
       emit("update:collapsed", next);
     }
     const dragging = ref(false);
@@ -184,6 +190,11 @@ export default defineComponent({
     }
 
     function onDown(e: PointerEvent) {
+      // The collapsed glyph is a plain button, never a drag surface: its
+      // only svg is the 16px lucide icon, which onMove's unit conversion
+      // would measure as a ~10x-amplified map (delta S2 F2 — a sloppy
+      // press-move on the default-state control jolted the camera).
+      if (isCollapsed.value) return;
       const target = e.target as HTMLElement;
       // Zoom chrome (bar + slider pop) must never start a map drag — the
       // root's setPointerCapture would swallow the slider's gestures.

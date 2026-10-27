@@ -125,6 +125,22 @@ describe("HkMinimap collapse (user direction 2026-10-27)", () => {
     expect(card2.getAttribute("data-dragging")).toBeNull();
   });
 
+  it("the collapsed glyph is a button, never a drag surface (delta F2)", async () => {
+    const c = mount({ boxes: BOXES, collapsible: true, collapsed: true });
+    const glyph = c.querySelector(".hk-minimap--collapsed") as HTMLElement;
+    glyph.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 5, clientY: 5 }));
+    glyph.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: 25, clientY: 20 }));
+    await nextTick();
+    // The drag machinery never engaged: the swap element carries no
+    // data-dragging and a later expand starts clean.
+    expect(glyph.getAttribute("data-dragging")).toBeNull();
+    glyph.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    glyph.click();
+    await nextTick();
+    const card = c.querySelector(".hk-minimap") as HTMLElement;
+    expect(card.getAttribute("data-dragging")).toBeNull();
+  });
+
   it("a controlled `collapsed: true` starts collapsed even without a click", () => {
     const c = mount({ boxes: BOXES, collapsible: true, collapsed: true });
     expect(c.querySelector(".hk-minimap--collapsed")).toBeTruthy();

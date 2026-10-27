@@ -148,10 +148,11 @@ export default defineComponent({
     }
 
     // A changed LAYOUT invalidates the drill stack. Watching the layout
-    // (not the array identity) covers both the in-place mutation a
-    // consumer can make (the computed recomputes off contents) and stays
-    // reference-stable against inline `:nodes="[...]"` literals that
-    // would otherwise reset the camera on every parent re-render (R2).
+    // (not the array identity) catches the in-place mutation a consumer
+    // can make (the computed recomputes off contents). Inline
+    // `:nodes="[...]"` literals still reset on every parent re-render —
+    // the layout allocates a fresh tree per recompute — so pass a stable
+    // reference from hot parents (known limitation, delta review F3).
     watch(layout, () => {
       drill.value = [];
       resetCamera();

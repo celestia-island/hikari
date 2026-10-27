@@ -199,6 +199,41 @@ describe("HkSegmentedRadio", () => {
     expect(fromRight).toEqual(["active"]);
   });
 
+  it("keyboard nav over duplicate-bearing options walks the DEDUPED list", async () => {
+    // Delta-review S2 pin: the onGroupKeydown index math must run over
+    // dedupedOptions (raw options with duplicates make the honest-edge
+    // math land on a NON-rendered occurrence — ArrowLeft-from-unpicked
+    // over [A, A2, B] would emit "A" (hidden), not "B" (visually last)).
+    const emitted: string[] = [];
+    const c = mount(
+      h({
+        setup() {
+          const value = ref("");
+          return () =>
+            h(HkSegmentedRadio, {
+              label: "Node status",
+              options: [
+                { value: "active", label: "Active only" },
+                { value: "active", label: "Active again (dup)" },
+                { value: "all", label: "Show all" },
+              ],
+              modelValue: value.value,
+              "onUpdate:modelValue": (v: string) => {
+                emitted.push(v);
+                value.value = v;
+              },
+            });
+        },
+      }),
+    );
+    const group = c.querySelector<HTMLElement>(".hk-segmented-radio")!;
+    group.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }),
+    );
+    await nextTick();
+    expect(emitted).toEqual(["all"], "the last RENDERED segment, not the hidden duplicate");
+  });
+
   it("duplicate option values collapse to one radio (first wins, one tabbable)", () => {
     // R3 pin: the dedupe filter had no coverage — without it a
     // duplicated value renders two aria-checked radios for one value.
@@ -221,4 +256,3 @@ describe("HkSegmentedRadio", () => {
     expect(radios.filter((r) => r.getAttribute("tabindex") === "0")).toHaveLength(1);
   });
 });
-

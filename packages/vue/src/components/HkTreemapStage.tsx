@@ -88,12 +88,21 @@ export default defineComponent({
 
     function applyZoom(target: number): void {
       const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(target)));
+      // Capture the PREVIOUS rung before writing the new one — reading
+      // zoomPct after the write always yields `next` and turns the pan
+      // rescale below into a silent no-op (R2 finding).
+      const prev = zoomPct.value;
       internalZoom.value = next;
       emit("update:zoomPercent", next);
-      // Zooming re-anchors toward the viewport centre so the view tracks
-      // the rung instead of drifting off-canvas.
-      panX.value = panX.value * (next / zoomPct.value || 1);
-      panY.value = panY.value * (next / zoomPct.value || 1);
+      // The camera anchors the ORIGIN (transform-origin: 0 0), so a rung
+      // change rescales any accumulated pan by the same ratio to keep the
+      // content under the cursor tracking — an origin-anchored re-scale,
+      // not a centre-anchored one.
+      if (prev > 0 && next !== prev) {
+        const ratio = next / prev;
+        panX.value *= ratio;
+        panY.value *= ratio;
+      }
     }
 
     function applyPanDelta(dx: number, dy: number): void {
@@ -138,8 +147,12 @@ export default defineComponent({
       panY.value = 0;
     }
 
-    // Drilling into a different data tree invalidates the stack.
-    watch(() => props.nodes, () => {
+    // A changed LAYOUT invalidates the drill stack. Watching the layout
+    // (not the array identity) covers both the in-place mutation a
+    // consumer can make (the computed recomputes off contents) and stays
+    // reference-stable against inline `:nodes="[...]"` literals that
+    // would otherwise reset the camera on every parent re-render (R2).
+    watch(layout, () => {
       drill.value = [];
       resetCamera();
     });
@@ -293,12 +306,14 @@ export default defineComponent({
                             background: node.color,
                             "--hk-treemap-fg": contrastTextColor(node.color),
                           }}
-                          role={isGroup ? "button" : "img"}
-                          tabindex={isGroup ? 0 : -1}
+                          // Every cell is an activatable button (groups
+                          // drill, leaves select) — keyboard parity with
+                          // the mouse path (R2).
+                          role="button"
+                          tabindex={0}
                           aria-label={cellText(node)}
                           onClick={() => pushDrill(node)}
                           onKeydown={(e: KeyboardEvent) => {
-                            if (!isGroup) return;
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               pushDrill(node);

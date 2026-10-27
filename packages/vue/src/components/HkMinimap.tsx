@@ -1,5 +1,5 @@
 import { Map as MapIcon, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-vue-next";
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import HSlider from "./HkSlider";
 
@@ -120,15 +120,16 @@ export default defineComponent({
     const svgH = 110;
     const rootRef = ref<HTMLElement | null>(null);
     const internalCollapsed = ref(false);
+    const sliderOpen = ref(false);
     const isCollapsed = computed(() =>
       props.collapsed !== undefined ? props.collapsed : internalCollapsed.value);
     function toggleCollapsed(next: boolean): void {
       internalCollapsed.value = next;
+      if (next) sliderOpen.value = false;
       emit("update:collapsed", next);
     }
     const dragging = ref(false);
     const dragStart = ref({ x: 0, y: 0 });
-    const sliderOpen = ref(false);
 
     const cb = computed(() => props.contentBounds);
     const overpanW = computed(() => Math.max(props.contentBounds.w * 0.5, props.viewportWidth * 0.3));
@@ -246,22 +247,7 @@ export default defineComponent({
       }
     });
 
-    onMounted(() => {
-      const el = rootRef.value;
-      if (!el) return;
-      el.addEventListener("pointerdown", onDown);
-      el.addEventListener("pointermove", onMove);
-      el.addEventListener("pointerup", onUp);
-      el.addEventListener("pointercancel", onUp);
-    });
     onBeforeUnmount(() => {
-      const el = rootRef.value;
-      if (el) {
-        el.removeEventListener("pointerdown", onDown);
-        el.removeEventListener("pointermove", onMove);
-        el.removeEventListener("pointerup", onUp);
-        el.removeEventListener("pointercancel", onUp);
-      }
       document.removeEventListener("pointerdown", onDocPointerDown, true);
       document.removeEventListener("keydown", onDocKeydown, true);
     });
@@ -308,6 +294,10 @@ export default defineComponent({
             aria-label={t("hikari::zoomToolbar.expandMap", "Show minimap")}
             title={t("hikari::zoomToolbar.expandMap", "Show minimap")}
             onClick={() => toggleCollapsed(false)}
+            onPointerdown={onDown}
+            onPointermove={onMove}
+            onPointerup={onUp}
+            onPointercancel={onUp}
           >
             <MapIcon size={16} />
           </button>
@@ -321,6 +311,10 @@ export default defineComponent({
           data-dragging={dragging.value ? "" : undefined}
           data-toolbar-only={props.toolbarOnly ? "" : undefined}
           data-collapsible={props.collapsible ? "" : undefined}
+          onPointerdown={onDown}
+          onPointermove={onMove}
+          onPointerup={onUp}
+          onPointercancel={onUp}
         >
           {!props.toolbarOnly && (
             <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} class="hk-minimap-svg">

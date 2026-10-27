@@ -178,8 +178,8 @@
   }
 }
 
-/* The minimize button rides the zoom bar's right end; the spacer keeps
- * it visually grouped with the zoom rungs without joining their pair. */
+/* The minimize button rides the zoom bar's far end — visually set
+ * apart from the zoom pair it does not belong to. */
 .hk-mm-collapse-btn {
   margin-inline-start: auto;
 }

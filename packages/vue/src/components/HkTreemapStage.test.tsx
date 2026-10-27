@@ -251,6 +251,28 @@ describe("HkTreemapStage — the camera + minimap", () => {
     expect(after).toBeGreaterThan(before);
   });
 
+  it("minimap drag-to-pan works in the DEFAULT collapsed→expanded flow (the R2/R3 S1)", async () => {
+    const mounted = mountStage({ nodes: NODES });
+    await setSize(mounted);
+    // Expand from the default-collapsed glyph.
+    (mounted.container.querySelector(".hk-minimap--collapsed") as HTMLElement).click();
+    await nextTick();
+    const card = mounted.container.querySelector(".hk-minimap") as HTMLElement;
+    expect(card).toBeTruthy();
+    // The old imperative binding missed the FIRST-render-null minimap
+    // entirely; with vnode-bound handlers the gesture must reach the
+    // camera: a drag on the map moves the surface transform.
+    card.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 80, clientY: 55 }));
+    await nextTick();
+    expect(card.getAttribute("data-dragging")).toBe("");
+    card.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: 100, clientY: 65 }));
+    card.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    await nextTick();
+    const surface = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__surface")!;
+    expect(surface.style.transform).not.toBe("translate(0px, 0px) scale(1)");
+    expect(surface.style.transform).toMatch(/translate\(-?\d+/);
+  });
+
   it("an empty tree shows the empty state and no minimap", async () => {
     const mounted = mountStage({ nodes: [], emptyText: "Nothing" });
     await setSize(mounted);

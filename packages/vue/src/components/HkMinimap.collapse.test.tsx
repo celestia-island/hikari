@@ -94,6 +94,37 @@ describe("HkMinimap collapse (user direction 2026-10-27)", () => {
     expect(container.querySelector("svg.hk-minimap-svg")).toBeTruthy();
   });
 
+  it("drag-to-pan SURVIVES a collapse→expand cycle (the R2/R3 S1)", async () => {
+    // The old imperative listeners bound once at mount to the mount-time
+    // element; the collapsed swap replaced the node and the re-expanded
+    // card never got them back. The handlers now ride the vnodes, so the
+    // gesture works on whatever element renders.
+    const c = mount({ boxes: BOXES, collapsible: true });
+    const card = c.querySelector(".hk-minimap") as HTMLElement;
+    const before = c.querySelector("svg.hk-minimap-svg")!;
+    card.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
+    card.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: 20, clientY: 14 }));
+    card.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    expect(c.querySelector(".hk-minimap")).toBeTruthy(); // gesture ran
+    void before;
+    // Round-trip: collapse then expand.
+    (c.querySelector(".hk-mm-collapse-btn") as HTMLElement).click();
+    await nextTick();
+    (c.querySelector(".hk-minimap--collapsed") as HTMLElement).click();
+    await nextTick();
+    // The re-expanded card is a NEW element — the drag handlers must be
+    // on IT. A pointer sequence must reach the pan machinery: assert via
+    // the dragging data flag, which only onDown sets.
+    const card2 = c.querySelector(".hk-minimap") as HTMLElement;
+    expect(card2).not.toBe(card); // the node really was replaced
+    card2.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 5, clientY: 5 }));
+    await nextTick(); // the data flag renders on the next patch
+    expect(card2.getAttribute("data-dragging")).toBe("");
+    card2.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    await nextTick();
+    expect(card2.getAttribute("data-dragging")).toBeNull();
+  });
+
   it("a controlled `collapsed: true` starts collapsed even without a click", () => {
     const c = mount({ boxes: BOXES, collapsible: true, collapsed: true });
     expect(c.querySelector(".hk-minimap--collapsed")).toBeTruthy();

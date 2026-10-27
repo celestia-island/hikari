@@ -111,6 +111,12 @@ export default defineComponent({
     block: { type: Boolean, default: false },
     /** Disable the whole strip (every trigger). */
     disabled: { type: Boolean, default: false },
+    /** Accessible name of the track (the tablist's / radiogroup's
+     *  aria-label). A segmented strip is a form control — its filter
+     *  hosts label the DIMENSION ("Running state", "Node status"), and
+     *  an unnamed radiogroup inside a named popover is what the former
+     *  HkSegmentedRadio's `label` prop existed to prevent. */
+    ariaLabel: { type: String, default: undefined },
     /** Render tab panel slots below the strip. Segmented mode pickers
      *  have no panels — panels are skipped for that variant. */
     renderPanels: { type: Boolean, default: true },
@@ -172,15 +178,41 @@ export default defineComponent({
     const isSegmented = computed(() => props.variant === "segmented");
     const isBlock = computed(() => isSegmented.value && props.block);
     const mergeSet = computed(() => new Set(props.mergeKeys ?? []));
+    /** First-wins collapse of duplicate keys plus a DEV alarm. The
+     *  contract says keys are unique; a duplicate renders TWO
+     *  aria-checked controls for one value with roving tabindex broken,
+     *  and Vue's own keyed-patch warning never fires for identical
+     *  ORDERED keys (they sync 1:1), so the alarm lives here. Ported
+     *  from the deleted HkSegmentedRadio with its pin tests when the
+     *  duplicate component was removed (R2, 2026-10-28). Every index —
+     *  merged runs, slot units, refs map, keyboard nav, the indicator —
+     *  derives from THIS list, so the collapse keeps them all
+     *  consistent. */
+    const tabs = computed(() => {
+      const seen = new Set<string>();
+      const list = props.tabs.filter((tb) => {
+        if (seen.has(tb.key)) return false;
+        seen.add(tb.key);
+        return true;
+      });
+      if (import.meta.env.DEV && list.length !== props.tabs.length) {
+        // eslint-disable-next-line no-console -- dev-only drift alarm
+        console.warn(
+          "[HkTabs] duplicate tab keys dropped:",
+          props.tabs.map((tb) => tb.key).join(", "),
+        );
+      }
+      return list;
+    });
     /** Merged keys actually present in `tabs`, in tab order. */
     const mergedRun = computed(() =>
-      props.tabs.filter((tb) => mergeSet.value.has(tb.key)).map((tb) => tb.key),
+      tabs.value.filter((tb) => mergeSet.value.has(tb.key)).map((tb) => tb.key),
     );
     /** The contract is ONE contiguous run; a scattered selection would
      *  silently swallow the middle options, so degrade to plain
      *  triggers instead. */
     const mergedContiguous = computed(() => {
-      const idxs = props.tabs
+      const idxs = tabs.value
         .map((tb, i) => (mergeSet.value.has(tb.key) ? i : -1))
         .filter((i) => i >= 0);
       return idxs.length <= 1 || idxs[idxs.length - 1] - idxs[0] === idxs.length - 1;
@@ -213,7 +245,7 @@ export default defineComponent({
     const slotMode = computed(
       () =>
         hasMergedCell.value ||
-        props.tabs.some((tb) => slotSpan(tb) !== 1),
+        tabs.value.some((tb) => slotSpan(tb) !== 1),
     );
     /** Total slot units the strip is divided into while in slot mode:
      *  every rendered option contributes its clamped span, and the
@@ -221,7 +253,7 @@ export default defineComponent({
      *  those triggers). Matches the grid track count in HkTabs.scss. */
     const slotUnits = computed(() => {
       let units = 0;
-      for (const tb of props.tabs) {
+      for (const tb of tabs.value) {
         if (isMergedTab(tb)) continue;
         units += slotSpan(tb);
       }
@@ -236,11 +268,11 @@ export default defineComponent({
     // merged): keep the first enabled trigger tabbable so the group
     // stays reachable — otherwise every trigger would be tabindex=-1.
     const fallbackTabbableIdx = computed(() => {
-      const hasActive = props.tabs.some(
+      const hasActive = tabs.value.some(
         (tb) => tb.key === props.modelValue && isNavigable(tb),
       );
       if (hasActive) return -1;
-      return props.tabs.findIndex((tb) => isNavigable(tb));
+      return tabs.value.findIndex((tb) => isNavigable(tb));
     });
 
     function resolvedActionLabel(action: TabsEndAction): string {
@@ -264,9 +296,9 @@ export default defineComponent({
      *  (falling back to the first option's render — trigger OR cell —
      *  while no geometry exists). */
     function activeFrameEl(): HTMLElement | undefined {
-      const idx = props.tabs.findIndex((tb) => tb.key === props.modelValue);
+      const idx = tabs.value.findIndex((tb) => tb.key === props.modelValue);
       const i = idx >= 0 ? idx : 0;
-      const tab = props.tabs[i];
+      const tab = tabs.value[i];
       if (tab && isMergedTab(tab)) {
         return mergedCellRef.value ?? undefined;
       }
@@ -387,18 +419,18 @@ export default defineComponent({
       void nextTick(() => triggerRefs.value.get(idx)?.focus());
     }
     function selectIndex(idx: number) {
-      const tb = props.tabs[idx];
+      const tb = tabs.value[idx];
       if (!tb || !isNavigable(tb) || props.disabled || tb.key === props.modelValue) return;
       emit("update:modelValue", tb.key);
       focusTrigger(idx);
     }
     function moveSelection(from: number, delta: number) {
-      const n = props.tabs.length;
+      const n = tabs.value.length;
       if (n === 0) return;
       let idx = from;
       for (let step = 0; step < n; step += 1) {
         idx = (idx + delta + n) % n;
-        if (isNavigable(props.tabs[idx])) {
+        if (isNavigable(tabs.value[idx])) {
           selectIndex(idx);
           return;
         }
@@ -410,7 +442,7 @@ export default defineComponent({
       // its keys.
       const target = e.target as HTMLElement | null;
       if (!target || !target.closest(".hk-tabs-trigger")) return;
-      const current = Math.max(0, props.tabs.findIndex((tb) => tb.key === props.modelValue));
+      const current = Math.max(0, tabs.value.findIndex((tb) => tb.key === props.modelValue));
       switch (e.key) {
         case "ArrowRight":
         case "ArrowDown":
@@ -421,13 +453,13 @@ export default defineComponent({
           moveSelection(current, -1);
           break;
         case "Home": {
-          const first = props.tabs.findIndex((tb) => isNavigable(tb));
+          const first = tabs.value.findIndex((tb) => isNavigable(tb));
           if (first >= 0) selectIndex(first);
           break;
         }
         case "End": {
-          for (let i = props.tabs.length - 1; i >= 0; i -= 1) {
-            if (isNavigable(props.tabs[i])) {
+          for (let i = tabs.value.length - 1; i >= 0; i -= 1) {
+            if (isNavigable(tabs.value[i])) {
               selectIndex(i);
               break;
             }
@@ -447,7 +479,7 @@ export default defineComponent({
        *  cell — merged options' panels are not rendered while merged
        *  (unchanged contract; the whole container drops out instead). */
       const panelTab = props.renderPanels && !isSegmented.value
-        ? props.tabs.find((tb) => tb.key === props.modelValue && !isMergedTab(tb))
+        ? tabs.value.find((tb) => tb.key === props.modelValue && !isMergedTab(tb))
         : undefined;
       const listChildren = [
         <div
@@ -457,7 +489,7 @@ export default defineComponent({
           data-ready={indicatorReady.value || undefined}
         />,
       ];
-      props.tabs.forEach((tab, idx) => {
+      tabs.value.forEach((tab, idx) => {
         if (isMergedTab(tab)) {
           // The merged run renders as ONE combined cell at its first
           // option's position — a real in-flow child of the track (joins
@@ -530,6 +562,7 @@ export default defineComponent({
               : undefined
           }
           role={isSegmented.value ? "radiogroup" : "tablist"}
+          aria-label={props.ariaLabel || undefined}
           onKeydown={onKeydown}
         >
           {/* Tagless group: the track stays a plain element (ref/CSS/

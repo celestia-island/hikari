@@ -255,6 +255,44 @@ describe("HkTabs segmented variant", () => {
     expect(container.querySelector(".hk-tabs-panel")).toBeNull();
   });
 
+  it("names the track for assistive tech (ariaLabel rides the group)", () => {
+    // The former HkSegmentedRadio carried its hosts' dimension names on
+    // the radiogroup; the converged control must not lose that.
+    const { container } = mountLive({ variant: "segmented", ariaLabel: "Node status" });
+    const list = container.querySelector(".hk-tabs-list")!;
+    expect(list.getAttribute("aria-label")).toBe("Node status");
+    // Pill mode names its tablist the same way.
+    const pill = mountLive({ ariaLabel: "Views" });
+    expect(pill.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBe("Views");
+    // Negative pin: no ariaLabel → the attribute is absent everywhere; an
+    // EMPTY string must not sneak in as a fake name either (R3 M4).
+    const bare = mountLive({ variant: "segmented" });
+    expect(bare.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBeNull();
+    expect(bare.container.querySelector("[aria-label]")).toBeNull();
+    const empty = mountLive({ variant: "segmented", ariaLabel: "" });
+    expect(empty.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBeNull();
+  });
+
+  it("collapses duplicate tab keys to the first occurrence (one control per value)", () => {
+    // Ported from the deleted HkSegmentedRadio's guard (R2 2026-10-28):
+    // identical ORDERED keys never trip Vue's own duplicate-key warning,
+    // so without the collapse a duplicated key renders two aria-checked
+    // radios with roving tabindex broken — silently, even in DEV.
+    const { container } = mountLive({
+      variant: "segmented",
+      tabs: [
+        { key: "a", label: "Alpha" },
+        { key: "a", label: "Alpha again (dup)" },
+        { key: "b", label: "Beta" },
+      ],
+    });
+    const triggers = [...container.querySelectorAll<HTMLButtonElement>(".hk-tabs-trigger")];
+    expect(triggers.map((t) => t.textContent?.trim())).toEqual(["Alpha", "Beta"]);
+    expect(container.querySelectorAll('[role="radio"][aria-checked="true"]')).toHaveLength(1);
+    // Roving tabindex stays single.
+    expect(triggers.filter((t) => t.getAttribute("tabindex") !== "-1")).toHaveLength(1);
+  });
+
   it("keeps tab semantics for pill (the default)", () => {
     const { container } = mountLive({});
     const list = container.querySelector(".hk-tabs-list")!;

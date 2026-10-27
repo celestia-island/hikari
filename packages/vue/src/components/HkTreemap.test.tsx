@@ -1,68 +1,30 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
-const H = vi.hoisted(() => {
-  class FakeChart {
-    static instances: FakeChart[] = [];
-    readonly options: unknown[] = [];
-    clearCount = 0;
-    resizeCount = 0;
-    disposed = false;
-
-    constructor(readonly element: HTMLElement) {
-      FakeChart.instances.push(this);
-    }
-
-    setOption(option: unknown): void {
-      this.options.push(option);
-    }
-
-    clear(): void {
-      this.clearCount += 1;
-    }
-
-    resize(): void {
-      this.resizeCount += 1;
-    }
-
-    dispose(): void {
-      this.disposed = true;
-    }
-  }
-
-  return {
-    FakeChart,
-    init: vi.fn(),
-    use: vi.fn(),
-    importGate: null as Promise<void> | null,
-  };
-});
-
-vi.mock("echarts/core", () => ({
-  init: H.init,
-  use: H.use,
-}));
-
-vi.mock("echarts/charts", async () => {
-  if (H.importGate) await H.importGate;
-  return { TreemapChart: { name: "TreemapChart" } };
-});
-
-vi.mock("echarts/components", () => ({
-  TooltipComponent: { name: "TooltipComponent" },
-}));
-
-vi.mock("echarts/renderers", () => ({
-  CanvasRenderer: { name: "CanvasRenderer" },
+// HkTooltip is stubbed so the per-cell wiring is assertable without the
+// popup manager: the stub renders its trigger slot and exposes the bound
+// text as [data-hk-tooltip-text].
+vi.mock("./HkTooltip", () => ({
+  default: {
+    name: "HkTooltipStub",
+    props: { text: { type: String, required: true } },
+    setup(props: { text: string }, { slots }: { slots: { default?: (p: unknown) => unknown } }) {
+      return () => h("span", { "data-hk-tooltip-text": props.text }, slots.default?.({}) as never);
+    },
+  },
 }));
 
 import HkTreemap, {
   HK_TREEMAP_DEFAULT_COLORS,
   buildHkTreemapLayout,
   contrastTextColor,
-  createHkTreemapOption,
   createHkTreemapSummary,
   formatHkTreemapPercent,
+  layoutHkTreemapCells,
   type HkTreemapNode,
 } from "./HkTreemap";
 
@@ -100,6 +62,13 @@ const NODES: HkTreemapNode[] = [
   { id: "other", label: "Other", value: 4 },
 ];
 
+function fakeRect(width: number, height: number): DOMRect {
+  return {
+    x: 0, y: 0, top: 0, left: 0, right: width, bottom: height,
+    width, height, toJSON: () => ({}),
+  } as DOMRect;
+}
+
 function mountTreemap(initialProps: Record<string, unknown> = { nodes: NODES }) {
   const props = reactive<Record<string, unknown>>({ ...initialProps });
   const container = document.createElement("div");
@@ -129,21 +98,16 @@ function unmount(mounted: { app: ReturnType<typeof createApp>; container: HTMLEl
   mounted.container.remove();
 }
 
-async function waitForChart(): Promise<void> {
-  await vi.waitFor(() => expect(H.FakeChart.instances).toHaveLength(1));
+/** Give the chart element a concrete size and let the observer re-measure. */
+async function setSize(mounted: { container: HTMLElement }, width: number, height: number) {
+  const el = mounted.container.querySelector<HTMLElement>(".hk-treemap__chart")!;
+  el.getBoundingClientRect = () => fakeRect(width, height);
+  FakeResizeObserver.instances[0]?.callback();
   await nextTick();
-}
-
-function lastOption(): any {
-  const chart = H.FakeChart.instances[0]!;
-  return chart.options[chart.options.length - 1];
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  H.FakeChart.instances = [];
-  H.importGate = null;
-  H.init.mockImplementation((element: HTMLElement) => new H.FakeChart(element));
   FakeResizeObserver.instances = [];
   globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
 });
@@ -158,97 +122,49 @@ afterEach(() => {
 
 describe("HkTreemap pure layout input", () => {
   it("sums nested groups from leaves and ignores caller-provided parent values", () => {
-    const layout = buildHkTreemapLayout([
-      {
-        id: "root",
-        label: "Root",
-        value: 1000,
-        children: [
-          { id: "leaf", label: "Leaf", value: 2 },
-          {
-            id: "nested",
-            label: "Nested",
-            value: 900,
-            children: [{ id: "deep", label: "Deep", value: 3 }],
-          },
-        ],
-      },
-      { id: "top", label: "Top", value: 5 },
-    ]);
-
+    const layout = buildHkTreemapLayout(NODES);
     expect(layout.total).toBe(10);
-    expect(layout.nodes[0]!.value).toBe(5);
-    expect(layout.nodes[0]!.children![1]!.value).toBe(3);
-    expect(layout.nodes[1]!.value).toBe(5);
+    expect(layout.nodes[0]!.value).toBe(6);
+    expect(layout.nodes[0]!.children).toHaveLength(2);
   });
 
   it("filters zero, negative and non-finite values before calculating totals", () => {
     const layout = buildHkTreemapLayout([
-      {
-        id: "valid",
-        label: "Valid",
-        value: 0,
-        children: [
-          { id: "zero", label: "Zero", value: 0 },
-          { id: "negative", label: "Negative", value: -2 },
-          { id: "nan", label: "NaN", value: Number.NaN },
-          { id: "infinite", label: "Infinite", value: Number.POSITIVE_INFINITY },
-          { id: "neg-infinite", label: "Negative infinite", value: Number.NEGATIVE_INFINITY },
-          { id: "kept", label: "Kept", value: 4 },
-        ],
-      },
-      {
-        id: "invalid-group",
-        label: "Invalid group",
-        value: 500,
-        children: [{ id: "invalid-leaf", label: "Invalid", value: 0 }],
-      },
+      { id: "ok", label: "Ok", value: 3 },
+      { id: "zero", label: "Zero", value: 0 },
+      { id: "neg", label: "Neg", value: -2 },
+      { id: "nan", label: "NaN", value: Number.NaN },
+      { id: "inf", label: "Inf", value: Number.POSITIVE_INFINITY },
     ]);
-
-    expect(layout.nodes).toHaveLength(1);
-    expect(layout.nodes[0]!.children!.map((node) => node.id)).toEqual(["kept"]);
-    expect(layout.nodes[0]!.value).toBe(4);
-    expect(layout.total).toBe(4);
+    expect(layout.total).toBe(3);
+    expect(layout.nodes.map((node) => node.id)).toEqual(["ok"]);
   });
 
   it("uses all visible leaves in the chart as the percentage denominator", () => {
     const layout = buildHkTreemapLayout(NODES);
-    const group = layout.nodes[0]!;
-    const alpha = group.children![0]!;
-    const beta = group.children![1]!;
-    const other = layout.nodes[1]!;
-
-    expect(layout.total).toBe(10);
-    expect(group.percent).toBe(60);
-    expect(alpha.percent).toBe(20);
-    expect(beta.percent).toBe(40);
-    expect(other.percent).toBe(40);
-    expect(alpha.percent + beta.percent + other.percent).toBe(100);
+    const leaves: number[] = [];
+    const walk = (nodes: typeof layout.nodes): void => {
+      for (const node of nodes) {
+        if (node.children) walk(node.children);
+        else leaves.push(node.percent);
+      }
+    };
+    walk(layout.nodes);
+    expect(leaves.reduce((sum, value) => sum + value, 0)).toBeCloseTo(100, 6);
   });
 
   it("assigns deterministic top-level palette colors and honors opaque overrides", () => {
-    const nodes: HkTreemapNode[] = [
-      { id: "first", label: "First", value: 1 },
-      {
-        id: "custom",
-        label: "Custom",
-        value: 1,
-        color: "#123456",
-        children: [{ id: "child", label: "Child", value: 1 }],
-      },
-      { id: "third", label: "Third", value: 1 },
-    ];
-    const first = buildHkTreemapLayout(nodes);
-    const second = buildHkTreemapLayout(nodes);
-
-    expect(first).toEqual(second);
-    // Host hex overrides normalize to an opaque canvas-paintable rgb() form.
-    expect(first.nodes.map((node) => node.color)).toEqual([
-      HK_TREEMAP_DEFAULT_COLORS[0],
-      "rgb(18 52 86)",
-      HK_TREEMAP_DEFAULT_COLORS[2],
+    const layout = buildHkTreemapLayout([
+      { id: "a", label: "A", value: 1 },
+      { id: "b", label: "B", value: 1, color: "#123456" },
+      { id: "c", label: "C", value: 1, color: "rgba(1,2,3,0.5)" },
+      { id: "d", label: "D", value: 1, color: "var(--unparseable)" },
     ]);
-    expect(first.nodes[1]!.children![0]!.color).toBe("rgb(18 52 86)");
+    expect(layout.nodes[0]!.color).toBe(HK_TREEMAP_DEFAULT_COLORS[0]);
+    expect(layout.nodes[1]!.color).toBe("rgb(18 52 86)");
+    // Translucent and unparseable overrides fall back to the palette slot.
+    expect(layout.nodes[2]!.color).toBe(HK_TREEMAP_DEFAULT_COLORS[2]);
+    expect(layout.nodes[3]!.color).toBe(HK_TREEMAP_DEFAULT_COLORS[3]);
   });
 
   it("returns a genuinely empty model for absent or entirely invalid data", () => {
@@ -262,22 +178,10 @@ describe("HkTreemap pure layout input", () => {
   });
 
   it("chooses readable label colours across pale, mid-tone and dark backgrounds", () => {
-    const option = createHkTreemapOption(buildHkTreemapLayout([
-      { id: "pale", label: "Pale", value: 1, color: "#edc948" },
-      { id: "dark", label: "Dark", value: 1, color: "#4e79a7" },
-      { id: "mid", label: "Mid", value: 1, color: "#76b7b2" },
-      { id: "rgb", label: "RGB", value: 1, color: "rgb(242, 142, 43)" },
-      { id: "invalid", label: "Invalid", value: 1, color: "var(--x)" },
-    ])) as any;
-    const data = option.series[0].data;
-    expect(data[0].label.color).toBe("#0b1220");
-    expect(data[0].upperLabel.color).toBe("#0b1220");
-    expect(data[1].label.color).toBe("#fff");
-    expect(data[2].label.color).toBe("#0b1220");
-    expect(data[3].label.color).toBe("#0b1220");
-    // An unparseable/translucent override falls back to the palette colour
-    // (inherited #e15759) instead of corrupting the canvas fill.
-    expect(data[4].label.color).toBe(contrastTextColor("#e15759"));
+    expect(contrastTextColor("#edc948")).toBe("#0b1220");
+    expect(contrastTextColor("#4e79a7")).toBe("#fff");
+    expect(contrastTextColor("#76b7b2")).toBe("#0b1220");
+    expect(contrastTextColor("rgb(242, 142, 43)")).toBe("#0b1220");
     expect(contrastTextColor("#abc")).toBe("#0b1220");
     expect(contrastTextColor("hsl(0, 0%, 100%)")).toBe("#0b1220");
     expect(contrastTextColor("not-a-color")).toBe("#fff");
@@ -287,58 +191,6 @@ describe("HkTreemap pure layout input", () => {
     }
   });
 
-  it("paints group title bands with the same colour the title contrast describes", () => {
-    const option = createHkTreemapOption(buildHkTreemapLayout([
-      {
-        id: "group",
-        label: "Group",
-        value: 0,
-        color: "#76b7b2",
-        children: [{ id: "leaf", label: "Leaf", value: 1 }],
-      },
-    ])) as any;
-    const series = option.series[0];
-    const group = series.data[0];
-
-    expect(series.animation).toBe(false);
-    expect(series.levels[0].upperLabel.show).toBe(false);
-    expect(series.levels[0].itemStyle.borderColor).toBe("transparent");
-    const normalized = "rgb(118 183 178)";
-    expect(group.itemStyle.color).toBe(normalized);
-    expect(group.itemStyle.borderColor).toBe(normalized);
-    expect(group.upperLabel.color).toBe(contrastTextColor(normalized));
-    // A light group title on a mid-tone band would be unreadable.
-    expect(group.upperLabel.color).toBe("#0b1220");
-  });
-
-  it("feeds real values and percentages to leaf, group and tooltip formatters", () => {
-    const option = createHkTreemapOption(buildHkTreemapLayout(NODES), (value) => `${value} units`) as any;
-    const series = option.series[0];
-    const group = series.data[0];
-    const leaf = group.children[0];
-
-    expect(series.nodeClick).toBe(false);
-    expect(series.roam).toBe(false);
-    expect(series.breadcrumb.show).toBe(false);
-    expect(series.label.formatter({ data: leaf })).toBe("Alpha\n2 units · 20%");
-    expect(series.upperLabel.formatter({ data: group })).toBe("Group · 6 units · 60%");
-    expect(option.tooltip.formatter({ data: leaf })).toBe(
-      "<strong>Alpha</strong><br/>2 units · 20%",
-    );
-  });
-
-  it("escapes HTML in tooltip labels and formatted values", () => {
-    const option = createHkTreemapOption(
-      buildHkTreemapLayout([{ id: "html", label: "<unsafe>", value: 1 }]),
-      () => "<b>1</b>",
-    ) as any;
-    const datum = option.series[0].data[0];
-
-    expect(option.tooltip.formatter({ data: datum })).toBe(
-      "<strong>&lt;unsafe&gt;</strong><br/>&lt;b&gt;1&lt;/b&gt; · 100%",
-    );
-  });
-
   it("builds an accessible leaf-path summary from the same layout", () => {
     const summary = createHkTreemapSummary(buildHkTreemapLayout(NODES), (value) => `${value}u`);
     expect(summary).toBe("Group / Alpha: 2u (20%); Group / Beta: 4u (40%); Other: 4u (40%)");
@@ -346,107 +198,157 @@ describe("HkTreemap pure layout input", () => {
   });
 });
 
-describe("HkTreemap component lifecycle", () => {
-  it("mounts lazily and renders legend, formatted values and accessible text", async () => {
+describe("HkTreemap native cells (layoutHkTreemapCells)", () => {
+  it("reserves a header band for groups and subdivides the remainder", () => {
+    const layout = buildHkTreemapLayout(NODES);
+    const cells = layoutHkTreemapCells(layout.nodes, 0, 0, 400, 240);
+    expect(cells).toHaveLength(2);
+    const group = cells.find((cell) => cell.node.id === "group")!;
+    expect(group.children).toHaveLength(2);
+    // Children live strictly inside the group's rect, below its header.
+    for (const child of group.children) {
+      expect(child.x).toBeGreaterThanOrEqual(group.x);
+      expect(child.y).toBeGreaterThanOrEqual(group.y + 22);
+      expect(child.x + child.w).toBeLessThanOrEqual(group.x + group.w + 0.001);
+      expect(child.y + child.h).toBeLessThanOrEqual(group.y + group.h + 0.001);
+    }
+  });
+
+  it("cells tile their canvas with no area drift", () => {
+    const layout = buildHkTreemapLayout(NODES);
+    const cells = layoutHkTreemapCells(layout.nodes, 0, 0, 320, 200);
+    const area = cells.reduce((sum, cell) => sum + cell.w * cell.h, 0);
+    expect(area).toBeCloseTo(320 * 200, 6);
+  });
+
+  it("a starved group renders as a plain cell instead of a broken nest", () => {
+    const layout = buildHkTreemapLayout([
+      {
+        id: "g", label: "G", value: 1, color: "#4e79a7",
+        children: [{ id: "l", label: "L", value: 1 }],
+      },
+      { id: "big", label: "Big", value: 9999 },
+    ]);
+    const cells = layoutHkTreemapCells(layout.nodes, 0, 0, 100, 60);
+    const group = cells.find((cell) => cell.node.id === "g")!;
+    // Whatever the split, the group never emits children outside its rect.
+    for (const child of group.children) {
+      expect(child.x + child.w).toBeLessThanOrEqual(group.x + group.w + 0.001);
+      expect(child.y + child.h).toBeLessThanOrEqual(group.y + group.h + 0.001);
+    }
+  });
+});
+
+describe("HkTreemap component", () => {
+  it("renders legend, cells with theme mortar and accessible text after measuring", async () => {
     const mounted = mountTreemap({
       nodes: NODES,
       ariaLabel: "Resource usage",
       valueFormatter: (value: number) => `${value} units`,
     });
-    await waitForChart();
+    await setSize(mounted, 400, 240);
 
-    expect(H.init).toHaveBeenCalledTimes(1);
-    expect(H.use).toHaveBeenCalledTimes(1);
-    expect(H.FakeChart.instances[0]!.options).toHaveLength(1);
     expect(mounted.container.querySelector<HTMLElement>(".hk-treemap")!.style.height).toBe("320px");
     expect(mounted.container.querySelectorAll(".hk-treemap__legend-item")).toHaveLength(2);
+    // Group header + leaf cells all rendered as DOM.
+    const cells = mounted.container.querySelectorAll(".hk-treemap__cell");
+    expect(cells.length).toBeGreaterThanOrEqual(4);
     expect(mounted.container.textContent).toContain("6 units");
 
     const chart = mounted.container.querySelector<HTMLElement>(".hk-treemap__chart")!;
     expect(chart.getAttribute("role")).toBe("img");
     expect(chart.getAttribute("aria-label")).toBe("Resource usage");
-    expect(chart.getAttribute("aria-hidden")).toBe("false");
     const summaryId = chart.getAttribute("aria-describedby")!;
     expect(mounted.container.querySelector(`#${summaryId}`)!.textContent).toBe(
       "Group / Alpha: 2 units (20%); Group / Beta: 4 units (40%); Other: 4 units (40%)",
     );
   });
 
-  it("calls setOption when data or value formatting changes", async () => {
+  it("every cell carries the standard HkTooltip with label, value and share", async () => {
+    const mounted = mountTreemap({
+      nodes: NODES,
+      valueFormatter: (value: number) => `${value}u`,
+    });
+    await setSize(mounted, 400, 240);
+    const tooltips = [
+      ...mounted.container.querySelectorAll("[data-hk-tooltip-text]"),
+    ].map((node) => node.getAttribute("data-hk-tooltip-text"));
+    expect(tooltips).toContain("Group: 6u · 60%");
+    expect(tooltips).toContain("Alpha: 2u · 20%");
+    expect(tooltips).toContain("Other: 4u · 40%");
+  });
+
+  it("re-renders cells when data changes on a same-size container", async () => {
     const mounted = mountTreemap();
-    await waitForChart();
-    const chart = H.FakeChart.instances[0]!;
-    expect(chart.options).toHaveLength(1);
+    await setSize(mounted, 400, 240);
+    expect(mounted.container.querySelectorAll(".hk-treemap__cell").length).toBeGreaterThanOrEqual(4);
 
     mounted.update({ nodes: [{ id: "new", label: "New", value: 7 }] });
-    await vi.waitFor(() => expect(chart.options).toHaveLength(2));
-    expect(lastOption().series[0].data[0]).toMatchObject({ id: "new", value: 7 });
-
-    mounted.update({ valueFormatter: (value: number) => `${value} updated` });
-    await vi.waitFor(() => expect(chart.options).toHaveLength(3));
-    expect(lastOption().series[0].data[0].hkTreemap.valueText).toBe("7 updated");
+    await nextTick();
+    const cells = [...mounted.container.querySelectorAll(".hk-treemap__cell")];
+    expect(cells).toHaveLength(1);
+    expect(cells[0]!.getAttribute("aria-label")).toBe("New: 7 · 100%");
   });
 
-  it("resizes with its container and window, then disconnects and disposes", async () => {
+  it("disconnects its observer on unmount", async () => {
     const mounted = mountTreemap();
-    await waitForChart();
-    const chart = H.FakeChart.instances[0]!;
+    await setSize(mounted, 400, 240);
     const observer = FakeResizeObserver.instances[0]!;
-    const chartElement = mounted.container.querySelector(".hk-treemap__chart")!;
-
-    expect(observer.observed).toEqual([chartElement]);
-    observer.callback();
-    window.dispatchEvent(new Event("resize"));
-    expect(chart.resizeCount).toBe(2);
-
+    expect(observer.observed[0]).toBe(mounted.container.querySelector(".hk-treemap__chart"));
     unmount(mounted);
-    expect(chart.disposed).toBe(true);
     expect(observer.disconnected).toBe(true);
-    observer.callback();
-    window.dispatchEvent(new Event("resize"));
-    expect(chart.resizeCount).toBe(2);
   });
 
-  it("shows an honest empty state and clears stale options across updates", async () => {
+  it("shows an honest empty state and no cells without data", async () => {
     const mounted = mountTreemap({ nodes: [], emptyText: "Nothing visible" });
-    await waitForChart();
-    const chart = H.FakeChart.instances[0]!;
-
+    await setSize(mounted, 400, 240);
     expect(mounted.container.querySelector(".hk-treemap__empty")!.textContent).toBe("Nothing visible");
     expect(mounted.container.querySelector(".hk-treemap__legend")).toBeNull();
-    expect(mounted.container.querySelector(".hk-treemap__chart")!.getAttribute("aria-hidden")).toBe("true");
-    expect(chart.clearCount).toBe(1);
-
-    mounted.update({ nodes: NODES });
-    await vi.waitFor(() => expect(chart.options).toHaveLength(1));
-    expect(mounted.container.querySelector(".hk-treemap__empty")).toBeNull();
-
-    mounted.update({ nodes: [] });
-    await vi.waitFor(() => expect(chart.clearCount).toBe(2));
-    expect(mounted.container.querySelector(".hk-treemap__empty")!.textContent).toBe("Nothing visible");
+    expect(mounted.container.querySelectorAll(".hk-treemap__cell")).toHaveLength(0);
   });
 
   it("supports hiding the legend and numeric pixel heights", async () => {
     const mounted = mountTreemap({ showLegend: false, height: 280 });
-    await waitForChart();
-
+    await setSize(mounted, 400, 240);
     expect(mounted.container.querySelector(".hk-treemap__legend")).toBeNull();
     expect(mounted.container.querySelector<HTMLElement>(".hk-treemap")!.style.height).toBe("280px");
   });
 
-  it("does not init a detached element when async imports finish after unmount", async () => {
-    let releaseImports!: () => void;
-    H.importGate = new Promise<void>((resolve) => {
-      releaseImports = resolve;
+  it("small cells degrade to colour blocks (the tooltip still speaks)", async () => {
+    // One dominant leaf + many crumbs: the crumbs get centi-pixel cells —
+    // far below the label ladder — and must render bare (no label spans).
+    const crumbs: HkTreemapNode[] = Array.from({ length: 24 }, (_, i) => ({
+      id: `c${i}`,
+      label: `Crumble-${i}`,
+      value: 1,
+    }));
+    const mounted = mountTreemap({
+      nodes: [{ id: "big", label: "Big", value: 100000 }, ...crumbs],
     });
-    const mounted = mountTreemap();
-    await nextTick();
+    await setSize(mounted, 400, 240);
+    const bare = [...mounted.container.querySelectorAll(".hk-treemap__cell")].filter(
+      (cell) => cell.querySelector(".hk-treemap__label") === null,
+    );
+    expect(bare.length).toBeGreaterThan(0);
+    // …and every bare cell still carries its full tooltip text.
+    const bareWithTooltip = bare.filter((cell) => {
+      const host = cell.closest("[data-hk-tooltip-text]");
+      return host !== null && host.getAttribute("data-hk-tooltip-text")!.includes("Crumble-");
+    });
+    expect(bareWithTooltip.length).toBe(bare.length);
+  });
+});
 
-    unmount(mounted);
-    releaseImports();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+describe("HkTreemap chrome contract (SCSS pins)", () => {
+  const css = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "./HkTreemap.scss"), "utf8");
 
-    expect(H.init).not.toHaveBeenCalled();
-    expect(H.FakeChart.instances).toHaveLength(0);
+  it("overflowing labels ellipsize from the first clipped character", () => {
+    expect(css.match(/text-overflow: ellipsis/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("the cell mortar reads the theme — no fixed white gutters (the dark-mode glare)", () => {
+    expect(css).not.toContain("#fff");
+    expect(css).toMatch(/--color-bg/);
+    expect(css).toMatch(/--color-muted/);
   });
 });

@@ -1,17 +1,16 @@
 import {
   computed,
   defineComponent,
+  onBeforeUnmount,
   onMounted,
-  onUnmounted,
   ref,
   useId,
   watch,
   type PropType,
 } from "vue";
 
-// Keep echarts out of the initial bundle. Only the type imports are static;
-// the renderer and the treemap implementation are loaded after mount.
-import type { ECharts, EChartsCoreOption } from "echarts/core";
+import HkTooltip from "./HkTooltip";
+import { squarify } from "./treemapSquarify";
 
 import "./HkTreemap.scss";
 
@@ -20,9 +19,10 @@ export interface HkTreemapNode {
   label: string;
   value: number;
   /** Optional opaque sRGB colour: #rgb/#rrggbb/#rrggbbaa, rgb()/rgba() or
-   *  hsl()/hsla(). Canvas cannot resolve CSS custom properties or named
-   *  colours reliably; unsupported/translucent values fall back to the
-   *  inherited palette colour instead of corrupting the next cell. */
+   *  hsl()/hsla(). Cells are DOM-painted, so any CSS colour would work at
+   *  render time — but the label's contrast text and the legend still need
+   *  a parseable concrete value; unparseable/translucent values fall back
+   *  to the inherited palette colour. */
   color?: string;
   children?: HkTreemapNode[];
 }
@@ -220,9 +220,10 @@ function visitLeaves(nodes: NumericLayoutNode[], visit: (leaf: NumericLayoutNode
 }
 
 /**
- * Converts caller input into the only numeric model used by the chart, legend,
- * tooltip and accessible summary. Invalid leaves are removed before any sums
- * or percentages are calculated; caller-provided parent values are ignored.
+ * Converts caller input into the only numeric model used by the chart,
+ * legend, tooltip and accessible summary. Invalid leaves are removed before
+ * any sums or percentages are calculated; caller-provided parent values are
+ * ignored.
  */
 export function buildHkTreemapLayout(nodes: readonly HkTreemapNode[]): HkTreemapLayout {
   const normalized = nodes
@@ -258,160 +259,64 @@ export function formatHkTreemapPercent(percent: number): string {
   return `${Number(percent.toFixed(1))}%`;
 }
 
-interface HkTreemapChartMeta {
-  label: string;
-  valueText: string;
-  percentText: string;
+// ── the native layout: squarified rects in canvas space ────────────────
+
+/** Group header band height (px) and the group's inner padding (px). */
+export const HK_TREEMAP_GROUP_HEADER_PX = 22;
+export const HK_TREEMAP_GROUP_PAD_PX = 2;
+
+export interface HkTreemapCell {
+  node: HkTreemapLayoutNode;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Laid-out children (groups only). Empty when the group's inner box is
+   *  too small to subdivide (the group then renders as a plain cell). */
+  children: HkTreemapCell[];
 }
 
-interface HkTreemapChartDatum {
-  id: string;
-  name: string;
-  value: number;
-  itemStyle: { color: string; borderColor?: string };
-  label: { color: string; textBorderColor: string };
-  upperLabel: { color: string; textBorderColor: string };
-  hkTreemap: HkTreemapChartMeta;
-  children?: HkTreemapChartDatum[];
-}
-
-function toChartData(
-  node: HkTreemapLayoutNode,
-  formatValue: HkTreemapValueFormatter,
-): HkTreemapChartDatum {
-  const labelColor = contrastTextColor(node.color);
-  const textBorderColor = labelColor === "#0b1220"
-    ? "rgba(255, 255, 255, 0.6)"
-    : "rgba(0, 0, 0, 0.45)";
-  const isGroup = Boolean(node.children?.length);
-  return {
-    id: node.id,
-    name: node.label,
-    value: node.value,
-    // ECharts paints a group's upperLabel band with the group's BORDER
-    // colour. Keep that band the group's own colour so the contrast choice
-    // above describes the pixels under the title (the series default is
-    // white, which would produce white-on-white titles).
-    itemStyle: isGroup
-      ? { color: node.color, borderColor: node.color }
-      : { color: node.color },
-    label: { color: labelColor, textBorderColor },
-    upperLabel: { color: labelColor, textBorderColor },
-    hkTreemap: {
-      label: node.label,
-      valueText: formatValue(node.value),
-      percentText: formatHkTreemapPercent(node.percent),
-    },
-    children: node.children?.map((child) => toChartData(child, formatValue)),
-  };
-}
-
-function chartMeta(params: unknown): HkTreemapChartMeta | null {
-  const data = (params as { data?: Partial<HkTreemapChartDatum> } | null)?.data;
-  return data?.hkTreemap ?? null;
-}
-
-function leafLabelFormatter(params: unknown): string {
-  const meta = chartMeta(params);
-  return meta ? `${meta.label}\n${meta.valueText} · ${meta.percentText}` : "";
-}
-
-function groupLabelFormatter(params: unknown): string {
-  const meta = chartMeta(params);
-  return meta ? `${meta.label} · ${meta.valueText} · ${meta.percentText}` : "";
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case "&": return "&amp;";
-      case "<": return "&lt;";
-      case ">": return "&gt;";
-      case '"': return "&quot;";
-      default: return "&#39;";
+/**
+ * Recursively squarify a normalized layout into canvas-space cells.
+ * Groups reserve a header band; their children subdivide the remainder.
+ * Pure — pinned by the layout tests.
+ */
+export function layoutHkTreemapCells(
+  nodes: readonly HkTreemapLayoutNode[],
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): HkTreemapCell[] {
+  if (w <= 0 || h <= 0 || nodes.length === 0) return [];
+  const byId = new Map(nodes.map((node) => [node.id, node] as const));
+  return squarify(
+    nodes.map((node) => ({ id: node.id, value: node.value })),
+    x,
+    y,
+    w,
+    h,
+  ).map((rect) => {
+    const node = byId.get(rect.id)!;
+    if (node.children && node.children.length > 0) {
+      const innerW = rect.w - HK_TREEMAP_GROUP_PAD_PX * 2;
+      const innerH = rect.h - HK_TREEMAP_GROUP_HEADER_PX - HK_TREEMAP_GROUP_PAD_PX * 2;
+      const children = innerW > 8 && innerH > 8
+        ? layoutHkTreemapCells(
+            node.children,
+            rect.x + HK_TREEMAP_GROUP_PAD_PX,
+            rect.y + HK_TREEMAP_GROUP_HEADER_PX + HK_TREEMAP_GROUP_PAD_PX,
+            innerW,
+            innerH,
+          )
+        : [];
+      return { node, x: rect.x, y: rect.y, w: rect.w, h: rect.h, children };
     }
+    return { node, x: rect.x, y: rect.y, w: rect.w, h: rect.h, children: [] };
   });
 }
 
-function tooltipFormatter(params: unknown): string {
-  const meta = chartMeta(params);
-  if (!meta) return "";
-  return `<strong>${escapeHtml(meta.label)}</strong><br/>${escapeHtml(meta.valueText)} · ${escapeHtml(meta.percentText)}`;
-}
-
-/** Pure echarts option construction, exported for focused contract tests. */
-export function createHkTreemapOption(
-  layout: HkTreemapLayout,
-  formatValue: HkTreemapValueFormatter = defaultValueFormatter,
-): EChartsCoreOption {
-  return {
-    animation: false,
-    tooltip: {
-      trigger: "item",
-      confine: true,
-      formatter: tooltipFormatter,
-    },
-    series: [
-      {
-        type: "treemap",
-        // TreemapView reads SERIES animation, not the top-level option.
-        animation: false,
-        data: layout.nodes.map((node) => toChartData(node, formatValue)),
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: "100%",
-        height: "100%",
-        roam: false,
-        nodeClick: false,
-        // ECharts defaults to hiding cells below 10px²; our legend and
-        // accessible summary describe every leaf, so the chart must too.
-        visibleMin: 0,
-        breadcrumb: { show: false },
-        label: {
-          show: true,
-          formatter: leafLabelFormatter,
-          color: "#fff",
-          fontSize: 12,
-          lineHeight: 17,
-          overflow: "truncate",
-          textBorderColor: "rgba(0, 0, 0, 0.35)",
-          textBorderWidth: 2,
-        },
-        upperLabel: {
-          show: true,
-          formatter: groupLabelFormatter,
-          color: "#fff",
-          fontSize: 12,
-          fontWeight: 600,
-          height: 24,
-          overflow: "truncate",
-          textBorderColor: "rgba(0, 0, 0, 0.35)",
-          textBorderWidth: 2,
-        },
-        itemStyle: {
-          borderColor: "#fff",
-          borderWidth: 1,
-          gapWidth: 1,
-        },
-        levels: [
-          {
-            // The virtual root is not a visible group: without this, ECharts
-            // reserves a 24px white upperLabel band above the whole chart.
-            upperLabel: { show: false },
-            itemStyle: { borderWidth: 0, gapWidth: 0, borderColor: "transparent" },
-          },
-          { itemStyle: { borderWidth: 2, gapWidth: 3 } },
-          { itemStyle: { borderWidth: 1, gapWidth: 2 } },
-          { itemStyle: { borderWidth: 1, gapWidth: 1 } },
-        ],
-      },
-    ],
-  };
-}
-
-/** Flattened leaf-path text exposes nested data that a canvas cannot announce. */
+/** Flattened leaf-path text exposes nested data for screen readers. */
 export function createHkTreemapSummary(
   layout: HkTreemapLayout,
   formatValue: HkTreemapValueFormatter = defaultValueFormatter,
@@ -432,6 +337,25 @@ export function createHkTreemapSummary(
   return entries.join("; ");
 }
 
+/**
+ * HkTreemap — the family's native squarified treemap.
+ *
+ * DOM-rendered (no chart library): cell mortar reads the theme background,
+ * so light/dark follows the workspace automatically — the old canvas
+ * renderer painted fixed light chrome (white mortar, white-bordered
+ * labels) that read blinding in dark mode. Every cell carries the
+ * standard HkTooltip (hover AND focus, the same component the rest of the
+ * family uses — the old renderer shipped the chart library's own foreign
+ * tooltip). Overflowing labels ellipsize via CSS from the first clipped
+ * character — a tiny cell degrades to its ellipsized label rather than
+ * reading as a hard cut, and cells too small for any text stay silent
+ * colour blocks with the tooltip carrying the full description.
+ *
+ * The visible detail ladders with cell size: a tall cell shows label +
+ * value + share, a shorter one label only, a tiny one nothing but colour.
+ * The a11y summary and the tooltip always describe every leaf regardless
+ * of what fits on screen.
+ */
 export default defineComponent({
   name: "HkTreemap",
   props: {
@@ -443,13 +367,13 @@ export default defineComponent({
     ariaLabel: { type: String, default: "Treemap" },
   },
   setup(props) {
-    const chartEl = ref<HTMLElement>();
+    const chartEl = ref<HTMLElement | null>(null);
     // useId is SSR-safe and unique per component instance; a module counter
     // drifts between server and client hydration.
     const summaryId = `hk-treemap-summary-${useId()}`;
-    let chart: ECharts | null = null;
+    const size = ref<{ w: number; h: number } | null>(null);
+    let observer: ResizeObserver | undefined;
     let resizeCleanup: (() => void) | undefined;
-    let unmounted = false;
 
     const layout = computed(() => buildHkTreemapLayout(props.nodes));
     const hasData = computed(() => layout.value.nodes.length > 0);
@@ -460,63 +384,151 @@ export default defineComponent({
       width: "100%",
       height: typeof props.height === "number" ? `${props.height}px` : props.height,
     }));
+    const cells = computed(() => {
+      const dims = size.value;
+      if (!dims || !hasData.value) return [];
+      return layoutHkTreemapCells(layout.value.nodes, 0, 0, dims.w, dims.h);
+    });
 
-    function renderChart() {
-      if (!chart) return;
-      if (!hasData.value) {
-        // Data can become empty during a streaming update. Remove the previous
-        // option so a later reveal can never expose stale rectangles.
-        chart.clear();
-        return;
-      }
-      chart.setOption(createHkTreemapOption(layout.value, formatValue), { notMerge: true });
-    }
-
-    function onResize() {
-      chart?.resize();
-    }
-
-    onMounted(async () => {
+    function measure() {
       const el = chartEl.value;
       if (!el) return;
-
-      const [echarts, { TreemapChart }, { TooltipComponent }, { CanvasRenderer }] =
-        await Promise.all([
-          import("echarts/core"),
-          import("echarts/charts"),
-          import("echarts/components"),
-          import("echarts/renderers"),
-        ]);
-
-      // Dynamic imports may resolve after the host has unmounted. Never init
-      // against a detached (or subsequently replaced) element.
-      if (unmounted || chartEl.value !== el) return;
-
-      echarts.use([TreemapChart, TooltipComponent, CanvasRenderer]);
-      chart = echarts.init(el);
-      renderChart();
-
-      window.addEventListener("resize", onResize);
-      let observer: ResizeObserver | undefined;
-      if (typeof ResizeObserver !== "undefined") {
-        observer = new ResizeObserver(onResize);
-        observer.observe(el);
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        size.value = { w: rect.width, h: rect.height };
       }
-      resizeCleanup = () => {
-        window.removeEventListener("resize", onResize);
-        observer?.disconnect();
-      };
-    });
+    }
 
-    onUnmounted(() => {
-      unmounted = true;
+    onMounted(() => {
+      const el = chartEl.value;
+      if (!el) return;
+      measure();
+      if (typeof ResizeObserver !== "undefined") {
+        observer = new ResizeObserver(measure);
+        observer.observe(el);
+      } else {
+        window.addEventListener("resize", measure);
+        resizeCleanup = () => window.removeEventListener("resize", measure);
+      }
+    });
+    onBeforeUnmount(() => {
+      observer?.disconnect();
+      observer = undefined;
       resizeCleanup?.();
       resizeCleanup = undefined;
-      chart?.dispose();
-      chart = null;
     });
 
-    watch([layout, () => props.valueFormatter], renderChart);
+    // A same-size container whose DATA changed needs no resize event to
+    // invalidate the memoized cells — re-measure on input changes too.
+    watch([layout, () => props.valueFormatter], measure);
+
+    function cellText(node: HkTreemapLayoutNode): string {
+      return `${node.label}: ${formatValue(node.value)} · ${formatHkTreemapPercent(node.percent)}`;
+    }
+
+    // The render model is a FLAT list in one canvas coordinate space:
+    // groups contribute a colour plate + a header band, leaves a cell.
+    // Depth order is the paint order — children ride above their group's
+    // plate without any z-index bookkeeping.
+    interface RenderEntry {
+      key: string;
+      kind: "plate" | "head" | "leaf";
+      cell: HkTreemapCell;
+    }
+    const renderEntries = computed<RenderEntry[]>(() => {
+      const out: RenderEntry[] = [];
+      function walk(cells: HkTreemapCell[], depth: number, prefix: string): void {
+        for (const cell of cells) {
+          const key = `${prefix}/${cell.node.id}`;
+          const isGroup = cell.children.length > 0;
+          if (isGroup) {
+            out.push({ key, kind: "plate", cell });
+            out.push({ key: `${key}#head`, kind: "head", cell });
+            walk(cell.children, depth + 1, key);
+          } else {
+            out.push({ key, kind: "leaf", cell });
+          }
+        }
+      }
+      walk(cells.value, 0, "root");
+      return out;
+    });
+
+    function renderEntry(entry: RenderEntry) {
+      const { node, x, y, w, h } = entry.cell;
+      // The detail ladder: label+value needs ~36px, label alone ~18px;
+      // below that the cell is a pure colour block (the tooltip speaks).
+      const showValue = h >= 36 && w >= 56;
+      const showLabel = h >= 18 && w >= 24;
+      if (entry.kind === "plate") {
+        return (
+          <div
+            key={entry.key}
+            class="hk-treemap__cell hk-treemap__cell--plate"
+            aria-hidden="true"
+            style={{
+              left: `${x}px`,
+              top: `${y}px`,
+              width: `${w}px`,
+              height: `${h}px`,
+              background: node.color,
+            }}
+          />
+        );
+      }
+      const head = entry.kind === "head";
+      const bandH = Math.min(22, Math.max(0, h));
+      const style = head
+        ? {
+            left: `${x}px`,
+            top: `${y}px`,
+            width: `${w}px`,
+            height: `${bandH}px`,
+            background: node.color,
+            "--hk-treemap-fg": contrastTextColor(node.color),
+          }
+        : {
+            left: `${x}px`,
+            top: `${y}px`,
+            width: `${w}px`,
+            height: `${h}px`,
+            background: node.color,
+            "--hk-treemap-fg": contrastTextColor(node.color),
+          };
+      const label = showLabel || head ? node.label : null;
+      const meta = showValue
+        ? `${formatValue(node.value)} · ${formatHkTreemapPercent(node.percent)}`
+        : null;
+      return (
+        <HkTooltip key={entry.key} text={cellText(node)} placement="top">
+          {() => (
+            <div
+              class={{
+                "hk-treemap__cell": true,
+                "hk-treemap__cell--group": head,
+              }}
+              style={style}
+              role="img"
+              aria-label={cellText(node)}
+            >
+              {head ? (
+                <span class="hk-treemap__group-head">
+                  <span class="hk-treemap__label hk-treemap__label--group">{label}</span>
+                  {meta && <span class="hk-treemap__meta">{meta}</span>}
+                </span>
+              ) : (
+                label && (
+                  <span class="hk-treemap__leaf-body">
+                    <span class="hk-treemap__label">{label}</span>
+                    {meta && <span class="hk-treemap__meta">{meta}</span>}
+                  </span>
+                )
+              )}
+            </div>
+          )}
+        </HkTooltip>
+      );
+    }
 
     return () => (
       <div class="hk-treemap" style={rootStyle.value}>
@@ -529,7 +541,6 @@ export default defineComponent({
                 <li
                   class="hk-treemap__legend-item"
                   key={node.id}
-                  title={`${node.label}: ${valueText} (${percentText})`}
                 >
                   <span
                     class="hk-treemap__legend-swatch"
@@ -551,9 +562,9 @@ export default defineComponent({
             role="img"
             aria-label={props.ariaLabel}
             aria-describedby={hasData.value ? summaryId : undefined}
-            aria-hidden={!hasData.value}
-            style={{ visibility: hasData.value ? "visible" : "hidden" }}
-          />
+          >
+            {renderEntries.value.map((entry) => renderEntry(entry))}
+          </div>
           {!hasData.value && <div class="hk-treemap__empty">{props.emptyText}</div>}
         </div>
         {hasData.value && (

@@ -98,10 +98,21 @@ function unmount(mounted: { app: ReturnType<typeof createApp>; container: HTMLEl
   mounted.container.remove();
 }
 
-/** Give the chart element a concrete size and let the observer re-measure. */
-async function setSize(mounted: { container: HTMLElement }, width: number, height: number) {
+/** Give the chart element a concrete size and let the observer re-measure.
+ *
+ * `zoom` simulates the app's root CSS zoom (dpiPrefs writes 100–300% on
+ * <html>): getBoundingClientRect answers in DRAWN px (zoom×), while
+ * clientWidth/Height and the cells' inline px live in LOCAL px. */
+async function setSize(
+  mounted: { container: HTMLElement },
+  width: number,
+  height: number,
+  zoom = 1,
+) {
   const el = mounted.container.querySelector<HTMLElement>(".hk-treemap__chart")!;
-  el.getBoundingClientRect = () => fakeRect(width, height);
+  el.getBoundingClientRect = () => fakeRect(width * zoom, height * zoom);
+  Object.defineProperty(el, "clientWidth", { value: width, configurable: true });
+  Object.defineProperty(el, "clientHeight", { value: height, configurable: true });
   FakeResizeObserver.instances[0]?.callback();
   await nextTick();
 }
@@ -165,6 +176,41 @@ describe("HkTreemap pure layout input", () => {
     // Translucent and unparseable overrides fall back to the palette slot.
     expect(layout.nodes[2]!.color).toBe(HK_TREEMAP_DEFAULT_COLORS[2]);
     expect(layout.nodes[3]!.color).toBe(HK_TREEMAP_DEFAULT_COLORS[3]);
+  });
+
+  it("sums three levels deep and prunes groups with no valid descendants", () => {
+    const layout = buildHkTreemapLayout([
+      {
+        id: "mid", label: "Mid", value: 0,
+        children: [
+          {
+            id: "deep", label: "Deep", value: 0,
+            children: [
+              { id: "leaf", label: "Leaf", value: 4 },
+              { id: "dead", label: "Dead", value: 0 },
+            ],
+          },
+          { id: "deadgroup", label: "DeadGroup", value: 1, children: [{ id: "x", label: "X", value: -1 }] },
+        ],
+      },
+    ]);
+    expect(layout.total).toBe(4);
+    const mid = layout.nodes[0]!;
+    expect(mid.children!).toHaveLength(1);
+    expect(mid.children![0]!.children!).toHaveLength(1);
+    expect(mid.children![0]!.children![0]!.id).toBe("leaf");
+  });
+
+  it("is deterministic and never mutates the caller's node objects", () => {
+    const input: HkTreemapNode[] = [
+      { id: "a", label: "A", value: 3 },
+      { id: "b", label: "B", value: 2 },
+    ];
+    const snapshot = JSON.stringify(input);
+    const first = buildHkTreemapLayout(input);
+    const second = buildHkTreemapLayout(input);
+    expect(second).toEqual(first);
+    expect(JSON.stringify(input)).toBe(snapshot);
   });
 
   it("returns a genuinely empty model for absent or entirely invalid data", () => {
@@ -262,6 +308,16 @@ describe("HkTreemap component", () => {
     expect(mounted.container.querySelector(`#${summaryId}`)!.textContent).toBe(
       "Group / Alpha: 2 units (20%); Group / Beta: 4 units (40%); Other: 4 units (40%)",
     );
+  });
+
+  it("lays out in LOCAL px under a root zoom — never zoom× oversized (R2 S1)", async () => {
+    const mounted = mountTreemap({ nodes: [{ id: "solo", label: "Solo", value: 5 }] });
+    // 2× root: gBCR reports 800×480 drawn; the layout must still tile the
+    // 400×240 LOCAL space (the old gBCR-based measure painted 2× cells).
+    await setSize(mounted, 400, 240, 2);
+    const cell = mounted.container.querySelector<HTMLElement>(".hk-treemap__cell")!;
+    expect(cell.style.width).toBe("400px");
+    expect(cell.style.height).toBe("240px");
   });
 
   it("every cell carries the standard HkTooltip with label, value and share", async () => {

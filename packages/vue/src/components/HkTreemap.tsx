@@ -393,9 +393,18 @@ export default defineComponent({
     function measure() {
       const el = chartEl.value;
       if (!el) return;
-      const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        size.value = { w: rect.width, h: rect.height };
+      // LOCAL layout px (clientWidth/Height), NOT getBoundingClientRect:
+      // gBCR answers in DRAWN pixels — under the app's root CSS zoom
+      // (dpiPrefs writes `html { zoom: 100–300% }`) a 2× root reports a
+      // 2× box while the cells' inline px render in LOCAL space, so a
+      // gBCR-measured layout paints zoom× oversized and clips (R2 S1;
+      // the old canvas renderer sized from clientWidth for the same
+      // reason — see hikari runtime/tooltipPosition's ancestor-zoom
+      // division for the same lesson).
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w > 0 && h > 0) {
+        size.value = { w, h };
       }
     }
 
@@ -437,28 +446,29 @@ export default defineComponent({
     }
     const renderEntries = computed<RenderEntry[]>(() => {
       const out: RenderEntry[] = [];
-      function walk(cells: HkTreemapCell[], depth: number, prefix: string): void {
+      function walk(cells: HkTreemapCell[], prefix: string): void {
         for (const cell of cells) {
           const key = `${prefix}/${cell.node.id}`;
           const isGroup = cell.children.length > 0;
           if (isGroup) {
             out.push({ key, kind: "plate", cell });
             out.push({ key: `${key}#head`, kind: "head", cell });
-            walk(cell.children, depth + 1, key);
+            walk(cell.children, key);
           } else {
             out.push({ key, kind: "leaf", cell });
           }
         }
       }
-      walk(cells.value, 0, "root");
+      walk(cells.value, "root");
       return out;
     });
 
     function renderEntry(entry: RenderEntry) {
       const { node, x, y, w, h } = entry.cell;
-      // The detail ladder: label+value needs ~36px, label alone ~18px;
-      // below that the cell is a pure colour block (the tooltip speaks).
-      const showValue = h >= 36 && w >= 56;
+      // The detail ladder: the label+meta stack (2 lines × 12px ×1.3
+      // + gap + padding) needs ~40px, the label alone ~18px; below that
+      // the cell is a pure colour block (the tooltip speaks).
+      const showValue = h >= 40 && w >= 56;
       const showLabel = h >= 18 && w >= 24;
       if (entry.kind === "plate") {
         return (
@@ -541,6 +551,7 @@ export default defineComponent({
                 <li
                   class="hk-treemap__legend-item"
                   key={node.id}
+                  title={`${node.label}: ${valueText} (${percentText})`}
                 >
                   <span
                     class="hk-treemap__legend-swatch"

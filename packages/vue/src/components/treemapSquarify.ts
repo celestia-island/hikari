@@ -81,7 +81,12 @@ export function squarify(values: readonly SquarifyInput[], x: number, y: number,
   // instead of the canvas's own area).
   const totalValue = items.reduce((sum, item) => sum + item.value, 0);
   const areaScale = (w * h) / totalValue;
-  for (const item of items) item.value *= areaScale;
+  // Copy before scaling: the caller's objects are never mutated (the
+  // "pure" contract on the module — the old in-place scaling wrote
+  // through shared refs, R3 S2-1).
+  for (let i = 0; i < items.length; i += 1) {
+    items[i] = { id: items[i]!.id, value: items[i]!.value * areaScale };
+  }
 
   let cx = x;
   let cy = y;

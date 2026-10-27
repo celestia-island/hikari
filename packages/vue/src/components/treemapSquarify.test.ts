@@ -54,8 +54,13 @@ describe("squarify — the pure layout core", () => {
     expect(squarify(IN([["a", 1]]), 0, 0, 100, 0)).toEqual([]);
   });
 
-  it("is deterministic: the same input lays out identically twice", () => {
+  it("is deterministic AND never mutates the caller's objects", () => {
     const input = IN([["a", 3], ["b", 2], ["c", 2], ["d", 1]]);
+    const snapshot = JSON.stringify(input);
     expect(squarify(input, 0, 0, 180, 90)).toEqual(squarify(input, 0, 0, 180, 90));
+    // The purity pin (R3 S2-1 regression): the in-place area scaling once
+    // wrote through these refs — reverting the copy-before-scale must go
+    // red HERE, not only in some distant consumer's test.
+    expect(JSON.stringify(input)).toBe(snapshot);
   });
 });

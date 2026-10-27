@@ -39,12 +39,20 @@
  * the composite never dips toward the background (the classic
  * double-exposure artifact of symmetric linear fades). The leaving item
  * also drops pointer events: it is dead content and must not intercept
- * clicks while it dissolves under the incoming one. */
+ * clicks while it dissolves under the incoming one.
+ *
+ * The enter side additionally honours --hk-crossfade-enter-delay (default
+ * 0): the sequencing hook HkTransitionContainer sets per swap (2026-10-27
+ * user direction — a height-changing swap holds the new content at
+ * opacity 0 until the box is ready, so nothing is clipped by the morph).
+ * Declared as a LONGHAND after the shorthand: the `transition` shorthand
+ * resets transition-delay to 0, so the order here is load-bearing. */
 .hk-crossfade-enter-active {
   transition:
     opacity
     var(--duration-normal, 0.3s)
     var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+  transition-delay: var(--hk-crossfade-enter-delay, 0ms);
 }
 
 .hk-crossfade-leave-active {

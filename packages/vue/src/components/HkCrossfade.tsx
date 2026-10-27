@@ -62,7 +62,20 @@ const REPORT_MS = CROSSFADE_WATCHDOG_MS;
  *   the sweep fires into an already-settled DOM and is a no-op. After a
  *   real stall it strips the frozen transition classes, removes the stale
  *   item Vue can no longer unmount, and degrades to synchronous rendering
- *   until the next `swapKey` change re-arms the Transition fresh.
+ *   until the next `swapKey` change re-arms the Transition fresh. The
+ *   budget scales by `enterDelay` (below) so a choreographed swap whose
+ *   enter starts late never looks stalled.
+ * - `enterDelay` (ms, default 0) holds the ENTER side at opacity 0 for a
+ *   beat before its fade runs — the sequencing hook HkTransitionContainer
+ *   drives (2026-10-27 user direction: a height-changing swap fades the
+ *   old content out first; the new content only fades in once the box is
+ *   ready, so nothing is ever clipped by the animating size). The delay
+ *   itself travels as the `--hk-crossfade-enter-delay` custom property on
+ *   an ancestor (consumed by the enter-active rule), so it can be set per
+ *   swap after the incoming content is measured; the prop exists so the
+ *   watchdog and animation-bus windows KNOW the worst case and arm wide
+ *   enough. Direct consumers who never touch the property keep the
+ *   byte-identical concurrent dissolve.
  */
 export default defineComponent({
   name: "HkCrossfade",
@@ -71,6 +84,10 @@ export default defineComponent({
     tag: { type: String, default: "div" },
     appear: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
+    /** Enter-side hold (ms) the watchdog/report budgets must cover; the
+     *  applied delay is the CSS custom property, this only widens the
+     *  budgets. Keep it at the worst case the host can set. */
+    enterDelay: { type: Number, default: 0 },
   },
   setup(props, { slots }) {
     const hostRef = ref<HTMLElement | null>(null);
@@ -83,8 +100,11 @@ export default defineComponent({
     // ── Animation-bus participation ──────────────────────────────────
     // One swap runs an enter AND a leave concurrently; refcount them so
     // the shared track stays armed until BOTH settle (HkListTransition
-    // pattern).
-    const report = useReportedTransition(REPORT_MS);
+    // pattern). The window widens by the choreographed enter hold — read
+    // per arm, so a host that raises `enterDelay` mid-life is covered
+    // without a re-setup.
+    const reportWindow = () => REPORT_MS + Math.max(props.enterDelay, 0);
+    const report = useReportedTransition(reportWindow);
     let pending = 0;
     const armReport = () => {
       pending++;
@@ -96,13 +116,20 @@ export default defineComponent({
     };
 
     // ── Swap-stall watchdog ──────────────────────────────────────────
+    /** Budget for one arm: the base sweep window plus the choreographed
+     *  enter hold — a delayed enter is mid-flight, not stalled, when the
+     *  base budget expires. */
+    function budget(): number {
+      return CROSSFADE_WATCHDOG_MS + Math.max(props.enterDelay, 0);
+    }
+
     let watchdog: ReturnType<typeof setTimeout> | null = null;
 
     function armWatchdog(): void {
       // Re-arm per swap event (enter or leave start); a healthy swap lets
       // the timer fire into a settled DOM, where the sweep is a no-op.
       if (watchdog !== null) clearTimeout(watchdog);
-      watchdog = setTimeout(onWatchdog, CROSSFADE_WATCHDOG_MS);
+      watchdog = setTimeout(onWatchdog, budget());
     }
 
     function sweepFrozenClasses(el: Element): boolean {

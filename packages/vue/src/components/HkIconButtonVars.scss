@@ -81,7 +81,7 @@
    * beside them (user report 2026-09-29: 不像一个尺寸的图标按钮) — the
    * `.svg` rule in HkIconButton.scss forces ANY slotted glyph to this
    * var, so the slot's size-16 attribute never reached the screen. The
-   * wide-rung sibling is `.hk-icon-button-32` (the 2026-10-24 chrome
+   * wide-rung sibling is the 32px block below (the 2026-10-24 chrome
    * ladder; useChromeActionSize picks the rung). */
   --hi-icon-button-icon-size: var(--hi-icon-size-sm);
 }

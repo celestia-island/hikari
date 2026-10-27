@@ -28,32 +28,37 @@ describe("useChromeActionSize", () => {
     container.remove();
   });
 
-  it("stays reactive through a width flip (the ladder is computed, not frozen)", () => {
-    // The composable derives from useBreakpoint's isDesktop (a computed);
-    // the returned object must BE a computed ref so consumers' renders
-    // re-run on a rung change. Assert the ref shape via a mirror render
-    // updating in the same tick the breakpoint would notify.
+  it("maps the viewport onto the ladder rungs (wide→32, narrow→28) and follows a flip", async () => {
+    // R3 S2 pin: nothing else pins WHICH rung a width maps to — a
+    // regression to a frozen constant passed the whole suite. Drive the
+    // REAL useBreakpoint (it listens to resize; no mock split needed).
     const container = document.createElement("div");
     document.body.appendChild(container);
-    let renderCount = 0;
     const app = createApp({
       setup() {
         const size = useChromeActionSize();
-        return () => {
-          renderCount += 1;
-          return h("span", { "data-size": String(size.value) });
-        };
+        return () => h("span", { "data-size": String(size.value) });
       },
     });
     app.mount(container);
-    const before = renderCount;
-    // Touch the computed: re-reading through a render must not throw and
-    // must keep returning a ladder rung.
-    container.querySelector("span")!.dataset.size;
-    expect(renderCount).toBeGreaterThanOrEqual(before);
-    expect(["28", "32"]).toContain(
-      container.querySelector("span")!.dataset.size!,
-    );
+    const read = () => container.querySelector("span")!.dataset.size!;
+
+    window.innerWidth = 1280;
+    window.dispatchEvent(new Event("resize"));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(read()).toBe("32");
+
+    window.innerWidth = 800;
+    window.dispatchEvent(new Event("resize"));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(read()).toBe("28");
+
+    // And back: the flip is followed, not frozen at first read.
+    window.innerWidth = 1280;
+    window.dispatchEvent(new Event("resize"));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(read()).toBe("32");
+
     app.unmount();
     container.remove();
   });

@@ -71,7 +71,9 @@ export default defineComponent({
     }
 
     function onGroupKeydown(event: KeyboardEvent): void {
-      const items = props.options;
+      // Walk the DEDUPED list: index math over raw options counts
+      // non-rendered duplicates and can land on a hidden occurrence.
+      const items = dedupedOptions.value;
       if (items.length === 0) return;
       const index = items.findIndex((item) => item.value === props.modelValue);
       let next: number;

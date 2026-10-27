@@ -158,4 +158,67 @@ describe("HkSegmentedRadio", () => {
     expect(radios[0].getAttribute("tabindex")).toBe("0");
     expect(radios[1].getAttribute("tabindex")).toBe("-1");
   });
+
+  it("an unpicked model reads honest edges (ArrowLeft → LAST, ArrowRight → FIRST)", async () => {
+    // R3 pin: the index === -1 branches had no coverage — a plain modulo
+    // wrap would send ArrowLeft-from-unpicked to the MIDDLE option
+    // ((-1 - 1 + 3) % 3 === 1), not the honest last edge.
+    const press = (root: HTMLElement, key: string) =>
+      root
+        .querySelector<HTMLElement>(".hk-segmented-radio")!
+        .dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    const host = (push: (v: string) => void) =>
+      h({
+        setup() {
+          const value = ref("");
+          return () =>
+            h(HkSegmentedRadio, {
+              label: "Node status",
+              options: OPTIONS,
+              modelValue: value.value,
+              "onUpdate:modelValue": (v: string) => {
+                push(v);
+                value.value = v;
+              },
+            });
+        },
+      });
+
+    // ArrowLeft from unpicked lands on the LAST option.
+    const fromLeft: string[] = [];
+    const leftRoot = mount(h(host((v) => fromLeft.push(v))));
+    press(leftRoot, "ArrowLeft");
+    await nextTick();
+    expect(fromLeft).toEqual(["all"]);
+
+    // ArrowRight from unpicked lands on the FIRST option.
+    const fromRight: string[] = [];
+    const rightRoot = mount(h(host((v) => fromRight.push(v))));
+    press(rightRoot, "ArrowRight");
+    await nextTick();
+    expect(fromRight).toEqual(["active"]);
+  });
+
+  it("duplicate option values collapse to one radio (first wins, one tabbable)", () => {
+    // R3 pin: the dedupe filter had no coverage — without it a
+    // duplicated value renders two aria-checked radios for one value.
+    const c = mount(
+      h(HkSegmentedRadio, {
+        label: "Node status",
+        options: [
+          { value: "active", label: "Active only" },
+          { value: "ended", label: "Ended only" },
+          { value: "active", label: "Active again (dup)" },
+        ],
+        modelValue: "",
+      }),
+    );
+    const radios = [...c.querySelectorAll<HTMLButtonElement>(".hk-segmented-radio-option")];
+    // Exactly two segments render — the duplicate "active" is dropped.
+    expect(radios.map((r) => r.textContent?.trim())).toEqual(["Active only", "Ended only"]);
+    expect(c.querySelectorAll('[data-option="active"]')).toHaveLength(1);
+    // And the roving tabindex stays single (unpicked → first segment only).
+    expect(radios.filter((r) => r.getAttribute("tabindex") === "0")).toHaveLength(1);
+  });
 });
+

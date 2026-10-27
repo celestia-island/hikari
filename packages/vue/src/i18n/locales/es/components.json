@@ -197,6 +197,8 @@
     "hikari::zoomToolbar.zoomIn": "Acercar",
     "hikari::zoomToolbar.zoomOut": "Alejar",
     "hikari::zoomToolbar.zoomSlider": "Nivel de zoom",
+    "hikari::zoomToolbar.expandMap": "Mostrar minimapa",
+    "hikari::zoomToolbar.collapseMap": "Ocultar minimapa",
     "hikari::filterBar.trigger": "Filtros",
     "hikari::filterBar.apply": "Aplicar",
     "hikari::filterPanel.all": "Todos",

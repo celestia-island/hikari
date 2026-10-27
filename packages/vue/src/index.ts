@@ -151,6 +151,7 @@ export { default as HMinimap } from "./components/HkMinimap";
 // Charts
 export { default as HTrendChart } from "./components/HkTrendChart";
 export { default as HTreemap } from "./components/HkTreemap";
+export { default as HTreemapStage } from "./components/HkTreemapStage";
 
 export { default as HErrorBoundary } from "./components/HkErrorBoundary";
 export {

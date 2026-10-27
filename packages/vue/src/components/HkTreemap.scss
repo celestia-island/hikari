@@ -79,7 +79,7 @@
   border-radius: var(--radius-xs, 0.1875rem);
   color: var(--hk-treemap-fg, white);
   /* The 1px gutter between cells is the theme mortar showing through. */
-  outline: 1px solid rgb(var(--color-bg, 255 255 255) / 55%);
+  outline: 1px solid rgb(var(--color-background, 255 255 255) / 55%);
   outline-offset: -1px;
 }
 

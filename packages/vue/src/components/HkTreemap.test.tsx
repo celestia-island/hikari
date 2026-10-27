@@ -404,7 +404,7 @@ describe("HkTreemap chrome contract (SCSS pins)", () => {
 
   it("the cell mortar reads the theme — no fixed white gutters (the dark-mode glare)", () => {
     expect(css).not.toContain("#fff");
-    expect(css).toMatch(/--color-bg/);
+    expect(css).toMatch(/--color-background/);
     expect(css).toMatch(/--color-muted/);
   });
 });

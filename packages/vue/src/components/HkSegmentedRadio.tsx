@@ -47,6 +47,24 @@ export default defineComponent({
     const picked = computed(() =>
       props.options.find((item) => item.value === props.modelValue),
     );
+    // Duplicate values would render two aria-checked radios (two
+    // tabbable segments) and hazard the keyed patch — keep the first
+    // occurrence and say so in dev.
+    const dedupedOptions = computed(() => {
+      const seen = new Set<string>();
+      return props.options.filter((item) => {
+        if (seen.has(item.value)) return false;
+        seen.add(item.value);
+        return true;
+      });
+    });
+    if (import.meta.env.DEV && dedupedOptions.value.length !== props.options.length) {
+      // eslint-disable-next-line no-console -- dev-only drift alarm
+      console.warn(
+        "[HkSegmentedRadio] duplicate option values dropped:",
+        props.options.map((o) => o.value).join(", "),
+      );
+    }
 
     function choose(value: string): void {
       if (value !== props.modelValue) emit("update:modelValue", value);
@@ -58,9 +76,13 @@ export default defineComponent({
       const index = items.findIndex((item) => item.value === props.modelValue);
       let next: number;
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-        next = (index - 1 + items.length) % items.length;
+        // Nothing picked yet: the edges are honest neighbors (last /
+        // first), not the element at the wrap of index -1.
+        next = index === -1
+          ? items.length - 1
+          : (index - 1 + items.length) % items.length;
       } else if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-        next = (index + 1) % items.length;
+        next = index === -1 ? 0 : (index + 1) % items.length;
       } else if (event.key === "Home") {
         next = 0;
       } else if (event.key === "End") {
@@ -72,9 +94,14 @@ export default defineComponent({
       const value = items[next]!.value;
       choose(value);
       void nextTick(() => {
-        groupRef.value
-          ?.querySelector<HTMLElement>(`[data-option="${CSS.escape(value)}"]`)
-          ?.focus();
+        // Walk the rendered buttons comparing dataset — a quoted
+        // attribute selector with CSS.escape throws on quote-bearing
+        // values in happy-dom and misses NUL-bearing ones, which would
+        // kill the refocus as an unhandled rejection.
+        const target = Array.from(
+          groupRef.value?.querySelectorAll<HTMLElement>("[data-option]") ?? [],
+        ).find((el) => el.dataset.option === value);
+        target?.focus();
       });
     }
 
@@ -87,7 +114,7 @@ export default defineComponent({
         data-disabled={props.disabled || undefined}
         onKeydown={onGroupKeydown}
       >
-        {props.options.map((item) => {
+        {dedupedOptions.value.map((item) => {
           const active = item.value === props.modelValue;
           return (
             <button

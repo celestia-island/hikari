@@ -6,6 +6,7 @@ import HkIconButton from "./HkIconButton";
 import { HkThemePanelContent } from "./HkThemePanelContent";
 import type { HCustomTheme } from "./HkColorSchemeDialog";
 import "./HkThemeToggle.scss";
+import { useChromeActionSize } from "../composables/useChromeActionSize";
 
 export { type ThemeItemScope } from "./HkThemePanelContent";
 
@@ -80,6 +81,7 @@ export const HkThemeToggle = defineComponent({
   },
   setup(props, { emit, slots, expose }) {
     const { t } = useI18n();
+    const chromeSize = useChromeActionSize();
     const menuOpen = ref(false);
     const triggerRef = ref<HTMLElement | null>(null);
 
@@ -104,7 +106,7 @@ export const HkThemeToggle = defineComponent({
          * its own. */}
         <HkIconButton
           class="s-theme-toggle-btn"
-          size={28}
+          size={chromeSize.value}
           variant="ghost"
           aria-haspopup="menu"
           aria-expanded={menuOpen.value ? "true" : "false"}

@@ -150,6 +150,7 @@ export { default as HMinimap } from "./components/HkMinimap";
 
 // Charts
 export { default as HTrendChart } from "./components/HkTrendChart";
+export { default as HTreemap } from "./components/HkTreemap";
 
 export { default as HErrorBoundary } from "./components/HkErrorBoundary";
 export {
@@ -230,6 +231,7 @@ export {
   type LightingRigOptions,
 } from "./scene3d/lighting";
 export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./components/HkTrendChart";
+export { type HkTreemapNode, type HkTreemapValueFormatter } from "./components/HkTreemap";
 
 // ── Theme decor (theme-provided decorative widgets, host-placed) ──────────
 export { default as HkThemeDecor, type HkThemeDecorSize } from "./components/HkThemeDecor";
@@ -725,6 +727,7 @@ export {
 } from "./components/HkBoard3D";
 export { default as HkMinimap3D } from "./components/HkMinimap3D";
 export { default as HkTrendChart } from "./components/HkTrendChart";
+export { default as HkTreemap } from "./components/HkTreemap";
 export { default as HkErrorBoundary } from "./components/HkErrorBoundary";
 export { default as HkDraggableList } from "./components/HkDraggableList";
 export { default as HkDraggableGrid } from "./components/HkDraggableGrid";

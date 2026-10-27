@@ -255,6 +255,17 @@ describe("HkTabs segmented variant", () => {
     expect(container.querySelector(".hk-tabs-panel")).toBeNull();
   });
 
+  it("names the track for assistive tech (ariaLabel rides the group)", () => {
+    // The former HkSegmentedRadio carried its hosts' dimension names on
+    // the radiogroup; the converged control must not lose that.
+    const { container } = mountLive({ variant: "segmented", ariaLabel: "Node status" });
+    const list = container.querySelector(".hk-tabs-list")!;
+    expect(list.getAttribute("aria-label")).toBe("Node status");
+    // Pill mode names its tablist the same way.
+    const pill = mountLive({ ariaLabel: "Views" });
+    expect(pill.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBe("Views");
+  });
+
   it("keeps tab semantics for pill (the default)", () => {
     const { container } = mountLive({});
     const list = container.querySelector(".hk-tabs-list")!;

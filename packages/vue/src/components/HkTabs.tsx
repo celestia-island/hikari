@@ -111,6 +111,12 @@ export default defineComponent({
     block: { type: Boolean, default: false },
     /** Disable the whole strip (every trigger). */
     disabled: { type: Boolean, default: false },
+    /** Accessible name of the track (the tablist's / radiogroup's
+     *  aria-label). A segmented strip is a form control — its filter
+     *  hosts label the DIMENSION ("Running state", "Node status"), and
+     *  an unnamed radiogroup inside a named popover is what the former
+     *  HkSegmentedRadio's `label` prop existed to prevent. */
+    ariaLabel: { type: String, default: undefined },
     /** Render tab panel slots below the strip. Segmented mode pickers
      *  have no panels — panels are skipped for that variant. */
     renderPanels: { type: Boolean, default: true },
@@ -530,6 +536,7 @@ export default defineComponent({
               : undefined
           }
           role={isSegmented.value ? "radiogroup" : "tablist"}
+          aria-label={props.ariaLabel}
           onKeydown={onKeydown}
         >
           {/* Tagless group: the track stays a plain element (ref/CSS/

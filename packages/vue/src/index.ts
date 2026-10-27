@@ -673,8 +673,6 @@ export { default as HkPopupSelect } from "./components/HkPopupSelect";
 export { default as HkProgressBar } from "./components/HkProgressBar";
 export { default as HkProgressDialog } from "./components/HkProgressDialog";
 export { default as HkRadio } from "./components/HkRadio";
-export { default as HkSegmentedRadio } from "./components/HkSegmentedRadio";
-export type { HkSegmentedRadioOption } from "./components/HkSegmentedRadio";
 export { default as HkScrollContainer } from "./components/HkScrollContainer";
 export { default as HkSearchInput } from "./components/HkSearchInput";
 export { default as HkSplash } from "./components/HkSplash";

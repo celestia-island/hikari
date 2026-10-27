@@ -11,7 +11,12 @@ export interface ReportedTransition extends ReportedTransitionTrack {
   track(key: string): ReportedTransitionTrack;
 }
 
-export function useReportedTransition(durationMs: number): ReportedTransition {
+export function useReportedTransition(durationMs: number | (() => number)): ReportedTransition {
+  /** The live window: a static value, or a per-run provider — callers
+   *  whose CSS work can outgrow the setup-time estimate (a choreographed
+   *  swap whose enter side starts late) re-read the window on every
+   *  arm, so one composable serves both without a re-setup. */
+  const windowMs = () => (typeof durationMs === "function" ? durationMs() : durationMs);
   interface TrackState {
     handle: AnimationHandle | null;
     timer: CronHandle | null;
@@ -39,15 +44,16 @@ export function useReportedTransition(durationMs: number): ReportedTransition {
 
   function runTrack(key: string) {
     const t = getTrack(key);
+    const ms = windowMs();
     t.timer?.disconnect();
     t.timer = null;
     t.handle?.disconnect();
-    t.handle = reportTransition(durationMs);
+    t.handle = reportTransition(ms);
     t.timer = scheduleCronAfter(() => {
       t.timer = null;
       t.handle?.disconnect();
       t.handle = null;
-    }, durationMs);
+    }, ms);
   }
 
   function cancelAll() {

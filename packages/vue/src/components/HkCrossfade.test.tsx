@@ -30,6 +30,7 @@ function mountCrossfade(opts: {
   initial?: string;
   appear?: boolean;
   disabled?: boolean;
+  enterDelay?: number;
 } = {}): Harness {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -45,6 +46,7 @@ function mountCrossfade(opts: {
             swapKey: current.value,
             appear: opts.appear ?? false,
             disabled: opts.disabled ?? false,
+            enterDelay: opts.enterDelay ?? 0,
           },
           {
             default: () => h("p", { class: "body" }, `body-${current.value}`),
@@ -181,6 +183,27 @@ describe("HkCrossfade — DOM contract", () => {
     assertNoFrozenClasses(settled[0]!);
   });
 
+  it("enterDelay widens the watchdog budget: a delayed enter mid-flight is not 'stalled'", async () => {
+    vi.useFakeTimers();
+    freezeRaf();
+    // 300ms choreographed hold: the enter fade starts at 300 and runs to
+    // 600, so the BASE budget (450) expires mid-enter — the sweep must
+    // NOT fire there, or it would strip a live transition's classes.
+    const DELAY = 300;
+    const { container, set } = mountCrossfade({ enterDelay: DELAY });
+    await set("b");
+    await vi.advanceTimersByTimeAsync(CROSSFADE_WATCHDOG_MS + 100); // past the base, inside the extended
+    // Both generations still held by the (rAF-frozen) engine: no sweep
+    // has stripped anything.
+    expect(keys(container)).toEqual(["a", "b"]);
+    // Past the extended budget the stall sweep bites as usual.
+    await vi.advanceTimersByTimeAsync(DELAY + 200);
+    const list = items(container);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.dataset.crossfadeKey).toBe("b");
+    assertNoFrozenClasses(list[0]!);
+  });
+
   it("appear dissolves the first item in; the watchdog un-freezes it under rAF starvation", async () => {
     vi.useFakeTimers();
     freezeRaf();
@@ -235,6 +258,15 @@ describe("HkCrossfade — stylesheet contract", () => {
     const enter = css.match(/\.hk-crossfade-enter-active[^{]*\{[^}]*\}/)?.[0] ?? "";
     expect(enter).toContain("transition: opacity");
     expect(enter).toContain("var(--duration-normal, 0.3s)");
+    // The choreography hook (2026-10-27): the enter side honours the
+    // per-swap delay property — as a LONGHAND declared after the
+    // shorthand (the `transition` shorthand resets transition-delay, so
+    // the order in the rule is load-bearing).
+    const enterIdx = css.indexOf(".hk-crossfade-enter-active");
+    const delayIdx = css.indexOf("transition-delay: var(--hk-crossfade-enter-delay", enterIdx);
+    const shorthandIdx = css.indexOf("transition:", enterIdx);
+    expect(delayIdx).toBeGreaterThan(-1);
+    expect(delayIdx).toBeGreaterThan(shorthandIdx);
     for (const phase of ["enter-from", "leave-to"]) {
       const block = css.match(new RegExp(`\\.hk-crossfade-${phase}[^{]*\\{[^}]*\\}`))?.[0] ?? "";
       expect(block, `hk-crossfade-${phase} rule missing`).toContain("opacity: 0");
@@ -267,7 +299,9 @@ describe("HkCrossfade — wiring contract", () => {
     expect(src).toContain("export const CROSSFADE_WATCHDOG_MS = 450;");
     expect(src).toContain("suppress.value = true;");
     expect(src).toContain("el.remove();");
-    expect(src).toContain("useReportedTransition(REPORT_MS)");
+    // The report window is a per-arm provider so a choreographed enter
+    // (delayed by the host) re-reads the window wide enough each arm.
+    expect(src).toContain("const report = useReportedTransition(reportWindow);");
     expect(src).toContain("armReport(); armWatchdog();");
   });
 });

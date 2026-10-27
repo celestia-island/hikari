@@ -264,6 +264,31 @@ describe("HkTabs segmented variant", () => {
     // Pill mode names its tablist the same way.
     const pill = mountLive({ ariaLabel: "Views" });
     expect(pill.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBe("Views");
+    // Negative pin: no ariaLabel → the attribute is absent everywhere, so
+    // an empty string can never sneak in as a fake name either.
+    const bare = mountLive({ variant: "segmented" });
+    expect(bare.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBeNull();
+    expect(bare.container.querySelector("[aria-label]")).toBeNull();
+  });
+
+  it("collapses duplicate tab keys to the first occurrence (one control per value)", () => {
+    // Ported from the deleted HkSegmentedRadio's guard (R2 2026-10-28):
+    // identical ORDERED keys never trip Vue's own duplicate-key warning,
+    // so without the collapse a duplicated key renders two aria-checked
+    // radios with roving tabindex broken — silently, even in DEV.
+    const { container } = mountLive({
+      variant: "segmented",
+      tabs: [
+        { key: "a", label: "Alpha" },
+        { key: "a", label: "Alpha again (dup)" },
+        { key: "b", label: "Beta" },
+      ],
+    });
+    const triggers = [...container.querySelectorAll<HTMLButtonElement>(".hk-tabs-trigger")];
+    expect(triggers.map((t) => t.textContent?.trim())).toEqual(["Alpha", "Beta"]);
+    expect(container.querySelectorAll('[role="radio"][aria-checked="true"]')).toHaveLength(1);
+    // Roving tabindex stays single.
+    expect(triggers.filter((t) => t.getAttribute("tabindex") !== "-1")).toHaveLength(1);
   });
 
   it("keeps tab semantics for pill (the default)", () => {

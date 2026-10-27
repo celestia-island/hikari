@@ -226,7 +226,7 @@ describe("HkTreemap pure layout input", () => {
     expect(alpha.percent + beta.percent + other.percent).toBe(100);
   });
 
-  it("assigns deterministic top-level palette colors and honors overrides", () => {
+  it("assigns deterministic top-level palette colors and honors opaque overrides", () => {
     const nodes: HkTreemapNode[] = [
       { id: "first", label: "First", value: 1 },
       {
@@ -242,12 +242,13 @@ describe("HkTreemap pure layout input", () => {
     const second = buildHkTreemapLayout(nodes);
 
     expect(first).toEqual(second);
+    // Host hex overrides normalize to an opaque canvas-paintable rgb() form.
     expect(first.nodes.map((node) => node.color)).toEqual([
       HK_TREEMAP_DEFAULT_COLORS[0],
-      "#123456",
+      "rgb(18 52 86)",
       HK_TREEMAP_DEFAULT_COLORS[2],
     ]);
-    expect(first.nodes[1]!.children![0]!.color).toBe("#123456");
+    expect(first.nodes[1]!.children![0]!.color).toBe("rgb(18 52 86)");
   });
 
   it("returns a genuinely empty model for absent or entirely invalid data", () => {
@@ -269,15 +270,21 @@ describe("HkTreemap pure layout input", () => {
       { id: "invalid", label: "Invalid", value: 1, color: "var(--x)" },
     ])) as any;
     const data = option.series[0].data;
-    expect(data[0].label.color).toBe("#111827");
-    expect(data[0].upperLabel.color).toBe("#111827");
+    expect(data[0].label.color).toBe("#0b1220");
+    expect(data[0].upperLabel.color).toBe("#0b1220");
     expect(data[1].label.color).toBe("#fff");
-    expect(data[2].label.color).toBe("#111827");
-    expect(data[3].label.color).toBe("#111827");
-    expect(data[4].label.color).toBe("#fff");
-    expect(contrastTextColor("#abc")).toBe("#111827");
-    expect(contrastTextColor("hsl(0, 0%, 100%)")).toBe("#111827");
+    expect(data[2].label.color).toBe("#0b1220");
+    expect(data[3].label.color).toBe("#0b1220");
+    // An unparseable/translucent override falls back to the palette colour
+    // (inherited #e15759) instead of corrupting the canvas fill.
+    expect(data[4].label.color).toBe(contrastTextColor("#e15759"));
+    expect(contrastTextColor("#abc")).toBe("#0b1220");
+    expect(contrastTextColor("hsl(0, 0%, 100%)")).toBe("#0b1220");
     expect(contrastTextColor("not-a-color")).toBe("#fff");
+    // Every default palette member must clear WCAG AA with its chosen text.
+    for (const color of HK_TREEMAP_DEFAULT_COLORS) {
+      expect(["#fff", "#0b1220"]).toContain(contrastTextColor(color));
+    }
   });
 
   it("paints group title bands with the same colour the title contrast describes", () => {
@@ -296,11 +303,12 @@ describe("HkTreemap pure layout input", () => {
     expect(series.animation).toBe(false);
     expect(series.levels[0].upperLabel.show).toBe(false);
     expect(series.levels[0].itemStyle.borderColor).toBe("transparent");
-    expect(group.itemStyle.color).toBe("#76b7b2");
-    expect(group.itemStyle.borderColor).toBe("#76b7b2");
-    expect(group.upperLabel.color).toBe(contrastTextColor("#76b7b2"));
-    // A light group title on a white series border would be unreadable.
-    expect(group.upperLabel.color).toBe("#111827");
+    const normalized = "rgb(118 183 178)";
+    expect(group.itemStyle.color).toBe(normalized);
+    expect(group.itemStyle.borderColor).toBe(normalized);
+    expect(group.upperLabel.color).toBe(contrastTextColor(normalized));
+    // A light group title on a mid-tone band would be unreadable.
+    expect(group.upperLabel.color).toBe("#0b1220");
   });
 
   it("feeds real values and percentages to leaf, group and tooltip formatters", () => {

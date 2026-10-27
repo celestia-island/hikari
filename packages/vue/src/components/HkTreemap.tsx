@@ -4,6 +4,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  useId,
   watch,
   type PropType,
 } from "vue";
@@ -18,6 +19,10 @@ export interface HkTreemapNode {
   id: string;
   label: string;
   value: number;
+  /** Optional opaque sRGB colour: #rgb/#rrggbb/#rrggbbaa, rgb()/rgba() or
+   *  hsl()/hsla(). Canvas cannot resolve CSS custom properties or named
+   *  colours reliably; unsupported/translucent values fall back to the
+   *  inherited palette colour instead of corrupting the next cell. */
   color?: string;
   children?: HkTreemapNode[];
 }
@@ -39,16 +44,19 @@ export interface HkTreemapLayout {
   total: number;
 }
 
-function parseHexColor(raw: string): [number, number, number] | null {
+type RgbaChannels = [number, number, number, number];
+
+function parseHexColor(raw: string): RgbaChannels | null {
   const value = raw.slice(1);
   if (![3, 6, 8].includes(value.length) || !/^[0-9a-f]+$/i.test(value)) return null;
   const expanded = value.length === 3
     ? value.split("").map((char) => char + char).join("")
-    : value.slice(0, 6);
+    : value;
   return [
     Number.parseInt(expanded.slice(0, 2), 16),
     Number.parseInt(expanded.slice(2, 4), 16),
     Number.parseInt(expanded.slice(4, 6), 16),
+    value.length === 8 ? Number.parseInt(expanded.slice(6, 8), 16) / 255 : 1,
   ];
 }
 
@@ -80,7 +88,17 @@ function hueToRgb(hue: number, saturation: number, lightness: number): [number, 
   return [(red + match) * 255, (green + match) * 255, (blue + match) * 255];
 }
 
-function parseCssColor(raw: string): [number, number, number] | null {
+function alphaComponent(raw: string | undefined): number | null {
+  if (raw == null || raw === "") return 1;
+  if (raw.endsWith("%")) {
+    const percent = Number.parseFloat(raw.slice(0, -1));
+    return Number.isFinite(percent) ? Math.min(1, Math.max(0, percent / 100)) : null;
+  }
+  const value = Number.parseFloat(raw);
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
+}
+
+function parseCssColor(raw: string): RgbaChannels | null {
   const value = raw.trim();
   if (value.startsWith("#")) return parseHexColor(value);
   const rgb = /^rgba?\((.*)\)$/i.exec(value);
@@ -89,7 +107,9 @@ function parseCssColor(raw: string): [number, number, number] | null {
     if (parts.length < 3) return null;
     const channels = parts.slice(0, 3).map(numericChannel);
     if (channels.some((channel) => channel === null)) return null;
-    return channels as [number, number, number];
+    const alpha = alphaComponent(parts[3]);
+    if (alpha === null) return null;
+    return [...(channels as [number, number, number]), alpha];
   }
   const hsl = /^hsla?\((.*)\)$/i.exec(value);
   if (hsl) {
@@ -99,18 +119,32 @@ function parseCssColor(raw: string): [number, number, number] | null {
     const saturation = Number.parseFloat(parts[1]!);
     const lightness = Number.parseFloat(parts[2]!);
     if (![hue, saturation, lightness].every(Number.isFinite)) return null;
-    return hueToRgb(hue, Math.min(1, Math.max(0, saturation / 100)), Math.min(1, Math.max(0, lightness / 100)));
+    const alpha = alphaComponent(parts[3]);
+    if (alpha === null) return null;
+    return [
+      ...hueToRgb(
+        hue,
+        Math.min(1, Math.max(0, saturation / 100)),
+        Math.min(1, Math.max(0, lightness / 100)),
+      ),
+      alpha,
+    ];
   }
   return null;
 }
 
-/** Pick a readable label colour for a hex/rgb/hsl host-supplied background. */
+function resolveOpaqueColor(raw: string, fallback: string): string {
+  const channels = parseCssColor(raw);
+  if (!channels || channels[3] < 0.999) return fallback;
+  return `rgb(${Math.round(channels[0])} ${Math.round(channels[1])} ${Math.round(channels[2])})`;
+}
+
+/** Pick the higher-contrast label colour for an opaque CSS background. */
 export function contrastTextColor(background: string): string {
   const channels = parseCssColor(background);
-  if (!channels) return "#fff";
-  // sRGB relative luminance, with the standard gamma expansion. Pick the
-  // candidate with the greater contrast; the two options' ratio crosses at
-  // luminance ~= 0.199 (not at a raw-average midpoint).
+  if (!channels || channels[3] < 0.999) return "#fff";
+  // sRGB relative luminance, with the standard gamma expansion. The two
+  // candidate text colours (#fff / #0b1220) cross at luminance ~= 0.193.
   const linear = (channel: number) => {
     const value = channel / 255;
     return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
@@ -119,7 +153,7 @@ export function contrastTextColor(background: string): string {
     0.2126 * linear(channels[0]) +
     0.7152 * linear(channels[1]) +
     0.0722 * linear(channels[2]);
-  return luminance > 0.199 ? "#111827" : "#fff";
+  return luminance > 0.193 ? "#0b1220" : "#fff";
 }
 
 export const HK_TREEMAP_DEFAULT_COLORS = [
@@ -136,7 +170,6 @@ export const HK_TREEMAP_DEFAULT_COLORS = [
 ] as const;
 
 const defaultValueFormatter: HkTreemapValueFormatter = (value) => String(value);
-let nextSummaryId = 0;
 
 interface NumericLayoutNode {
   id: string;
@@ -159,7 +192,9 @@ function normalizeNode(
   node: HkTreemapNode,
   inheritedColor: string,
 ): NumericLayoutNode | null {
-  const color = node.color || inheritedColor;
+  const color = node.color
+    ? resolveOpaqueColor(node.color, inheritedColor)
+    : inheritedColor;
   if (node.children && node.children.length > 0) {
     const children = node.children
       .map((child) => normalizeNode(child, color))
@@ -234,8 +269,8 @@ interface HkTreemapChartDatum {
   name: string;
   value: number;
   itemStyle: { color: string; borderColor?: string };
-  label: { color: string };
-  upperLabel: { color: string };
+  label: { color: string; textBorderColor: string };
+  upperLabel: { color: string; textBorderColor: string };
   hkTreemap: HkTreemapChartMeta;
   children?: HkTreemapChartDatum[];
 }
@@ -245,6 +280,9 @@ function toChartData(
   formatValue: HkTreemapValueFormatter,
 ): HkTreemapChartDatum {
   const labelColor = contrastTextColor(node.color);
+  const textBorderColor = labelColor === "#0b1220"
+    ? "rgba(255, 255, 255, 0.6)"
+    : "rgba(0, 0, 0, 0.45)";
   const isGroup = Boolean(node.children?.length);
   return {
     id: node.id,
@@ -257,8 +295,8 @@ function toChartData(
     itemStyle: isGroup
       ? { color: node.color, borderColor: node.color }
       : { color: node.color },
-    label: { color: labelColor },
-    upperLabel: { color: labelColor },
+    label: { color: labelColor, textBorderColor },
+    upperLabel: { color: labelColor, textBorderColor },
     hkTreemap: {
       label: node.label,
       valueText: formatValue(node.value),
@@ -327,6 +365,9 @@ export function createHkTreemapOption(
         height: "100%",
         roam: false,
         nodeClick: false,
+        // ECharts defaults to hiding cells below 10px²; our legend and
+        // accessible summary describe every leaf, so the chart must too.
+        visibleMin: 0,
         breadcrumb: { show: false },
         label: {
           show: true,
@@ -403,7 +444,9 @@ export default defineComponent({
   },
   setup(props) {
     const chartEl = ref<HTMLElement>();
-    const summaryId = `hk-treemap-summary-${++nextSummaryId}`;
+    // useId is SSR-safe and unique per component instance; a module counter
+    // drifts between server and client hydration.
+    const summaryId = `hk-treemap-summary-${useId()}`;
     let chart: ECharts | null = null;
     let resizeCleanup: (() => void) | undefined;
     let unmounted = false;

@@ -264,11 +264,13 @@ describe("HkTabs segmented variant", () => {
     // Pill mode names its tablist the same way.
     const pill = mountLive({ ariaLabel: "Views" });
     expect(pill.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBe("Views");
-    // Negative pin: no ariaLabel → the attribute is absent everywhere, so
-    // an empty string can never sneak in as a fake name either.
+    // Negative pin: no ariaLabel → the attribute is absent everywhere; an
+    // EMPTY string must not sneak in as a fake name either (R3 M4).
     const bare = mountLive({ variant: "segmented" });
     expect(bare.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBeNull();
     expect(bare.container.querySelector("[aria-label]")).toBeNull();
+    const empty = mountLive({ variant: "segmented", ariaLabel: "" });
+    expect(empty.container.querySelector(".hk-tabs-list")!.getAttribute("aria-label")).toBeNull();
   });
 
   it("collapses duplicate tab keys to the first occurrence (one control per value)", () => {

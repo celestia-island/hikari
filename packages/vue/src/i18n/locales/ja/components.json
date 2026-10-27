@@ -197,6 +197,8 @@
     "hikari::zoomToolbar.zoomIn": "拡大",
     "hikari::zoomToolbar.zoomOut": "縮小",
     "hikari::zoomToolbar.zoomSlider": "ズーム倍率",
+    "hikari::zoomToolbar.expandMap": "ミニマップを表示",
+    "hikari::zoomToolbar.collapseMap": "ミニマップを隠す",
     "hikari::filterBar.trigger": "絞り込み",
     "hikari::filterBar.apply": "適用",
     "hikari::filterPanel.all": "すべて",

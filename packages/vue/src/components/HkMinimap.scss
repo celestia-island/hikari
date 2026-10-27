@@ -149,3 +149,37 @@
   font-variant-numeric: tabular-nums;
   color: rgb(var(--color-muted));
 }
+
+/* ── The collapsed affordance (user direction 2026-10-27) ─────────────
+ * The card folds down to a small map-icon button pinned where the card
+ * sat. It is deliberately SEMI-TRANSPARENT at rest — collapsed means
+ * "out of the way" and it must not compete with the content underneath —
+ * and only reaches full opacity on hover. */
+.hk-minimap--collapsed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  cursor: pointer;
+  color: rgb(var(--color-text) / 70%);
+  background: rgb(var(--color-surface) / 0.55);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-sm);
+  opacity: 0.55;
+  transition: opacity var(--duration-short, 0.15s), background var(--duration-short, 0.15s);
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    background: rgb(var(--color-surface) / 0.9);
+    color: rgb(var(--color-text));
+  }
+}
+
+/* The minimize button rides the zoom bar's far end — visually set
+ * apart from the zoom pair it does not belong to. */
+.hk-mm-collapse-btn {
+  margin-inline-start: auto;
+}

@@ -197,6 +197,8 @@
     "hikari::zoomToolbar.zoomIn": "放大",
     "hikari::zoomToolbar.zoomOut": "缩小",
     "hikari::zoomToolbar.zoomSlider": "缩放级别",
+    "hikari::zoomToolbar.expandMap": "显示小地图",
+    "hikari::zoomToolbar.collapseMap": "隐藏小地图",
     "hikari::statusBar.region.CN": "中国大陆",
     "hikari::statusBar.region.HK": "中国香港",
     "hikari::statusBar.region.MO": "中国澳门",

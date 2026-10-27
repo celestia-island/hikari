@@ -1,5 +1,5 @@
-import { Maximize2, ZoomIn, ZoomOut } from "lucide-vue-next";
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
+import { Map as MapIcon, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-vue-next";
+import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import HSlider from "./HkSlider";
 
@@ -88,6 +88,14 @@ export default defineComponent({
      *  visible; the map is expected to reappear once it has something to
      *  say (the viewer switches this off when zoomed past fit). */
     toolbarOnly: { type: Boolean, default: false },
+    /** Enable the collapse affordance (user direction 2026-10-27): the
+     *  card grows a minimize button in its zoom bar, and the collapsed
+     *  state renders as the small semi-transparent map-icon button
+     *  (fully opaque on hover). */
+    collapsible: { type: Boolean, default: false },
+    /** The collapsed state (v-model:collapsed). `undefined` = uncontrolled
+     *  (the component starts expanded and owns the flag). */
+    collapsed: { type: Boolean, default: undefined },
     /** Optional prop-callback surface (alternative to the emits). */
     onZoomTo: {
       type: Function as PropType<(percent: number, source?: "slider" | "step") => void>,
@@ -97,6 +105,8 @@ export default defineComponent({
     onPanDelta: { type: Function as PropType<(dx: number, dy: number) => void>, default: undefined },
   },
   emits: {
+    /** Collapse toggle (only emitted when `collapsible`). */
+    "update:collapsed": (_collapsed: boolean) => true,
     /** Zoom request carrying the clamped target percent plus the gesture
      *  source — `"step"` (± buttons, relative one-rung request) vs
      *  `"slider"` (dropdown slider, ABSOLUTE target rung). */
@@ -109,9 +119,23 @@ export default defineComponent({
     const svgW = 160;
     const svgH = 110;
     const rootRef = ref<HTMLElement | null>(null);
+    const internalCollapsed = ref(false);
+    const sliderOpen = ref(false);
+    const isCollapsed = computed(() =>
+      props.collapsed !== undefined ? props.collapsed : internalCollapsed.value);
+    function toggleCollapsed(next: boolean): void {
+      internalCollapsed.value = next;
+      if (next) {
+        sliderOpen.value = false;
+        // A mid-drag collapse swaps the element: no pointerup can reach
+        // the new root, so end the drag HERE or unpressed hovers would
+        // keep panning (delta S3 F4).
+        dragging.value = false;
+      }
+      emit("update:collapsed", next);
+    }
     const dragging = ref(false);
     const dragStart = ref({ x: 0, y: 0 });
-    const sliderOpen = ref(false);
 
     const cb = computed(() => props.contentBounds);
     const overpanW = computed(() => Math.max(props.contentBounds.w * 0.5, props.viewportWidth * 0.3));
@@ -166,6 +190,11 @@ export default defineComponent({
     }
 
     function onDown(e: PointerEvent) {
+      // The collapsed glyph is a plain button, never a drag surface: its
+      // only svg is the 16px lucide icon, which onMove's unit conversion
+      // would measure as a ~10x-amplified map (delta S2 F2 — a sloppy
+      // press-move on the default-state control jolted the camera).
+      if (isCollapsed.value) return;
       const target = e.target as HTMLElement;
       // Zoom chrome (bar + slider pop) must never start a map drag — the
       // root's setPointerCapture would swallow the slider's gestures.
@@ -229,22 +258,7 @@ export default defineComponent({
       }
     });
 
-    onMounted(() => {
-      const el = rootRef.value;
-      if (!el) return;
-      el.addEventListener("pointerdown", onDown);
-      el.addEventListener("pointermove", onMove);
-      el.addEventListener("pointerup", onUp);
-      el.addEventListener("pointercancel", onUp);
-    });
     onBeforeUnmount(() => {
-      const el = rootRef.value;
-      if (el) {
-        el.removeEventListener("pointerdown", onDown);
-        el.removeEventListener("pointermove", onMove);
-        el.removeEventListener("pointerup", onUp);
-        el.removeEventListener("pointercancel", onUp);
-      }
       document.removeEventListener("pointerdown", onDocPointerDown, true);
       document.removeEventListener("keydown", onDocKeydown, true);
     });
@@ -279,12 +293,39 @@ export default defineComponent({
 
       const hubP = props.hubPos ? toMap(props.hubPos.x, props.hubPos.y) : null;
 
+      if (isCollapsed.value) {
+        // The collapsed affordance: a small map-icon button pinned where
+        // the card sits — semi-transparent until hovered (it must not
+        // compete with the content underneath), fully opaque on hover.
+        return (
+          <button
+            ref={rootRef}
+            type="button"
+            class="hk-minimap hk-minimap--collapsed"
+            aria-label={t("hikari::zoomToolbar.expandMap", "Show minimap")}
+            title={t("hikari::zoomToolbar.expandMap", "Show minimap")}
+            onClick={() => toggleCollapsed(false)}
+            onPointerdown={onDown}
+            onPointermove={onMove}
+            onPointerup={onUp}
+            onPointercancel={onUp}
+          >
+            <MapIcon size={16} />
+          </button>
+        );
+      }
+
       return (
         <div
           ref={rootRef}
           class="hk-minimap"
           data-dragging={dragging.value ? "" : undefined}
           data-toolbar-only={props.toolbarOnly ? "" : undefined}
+          data-collapsible={props.collapsible ? "" : undefined}
+          onPointerdown={onDown}
+          onPointermove={onMove}
+          onPointerup={onUp}
+          onPointercancel={onUp}
         >
           {!props.toolbarOnly && (
             <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} class="hk-minimap-svg">
@@ -367,6 +408,17 @@ export default defineComponent({
                 title={t("hikari::zoomToolbar.reset", "Reset zoom")}
               >
                 <Maximize2 size={11} />
+              </button>
+            )}
+            {props.collapsible && (
+              <button
+                class="hk-mm-zoom-btn hk-mm-collapse-btn"
+                type="button"
+                onClick={() => toggleCollapsed(true)}
+                aria-label={t("hikari::zoomToolbar.collapseMap", "Hide minimap")}
+                title={t("hikari::zoomToolbar.collapseMap", "Hide minimap")}
+              >
+                <Minimize2 size={11} />
               </button>
             )}
           </div>

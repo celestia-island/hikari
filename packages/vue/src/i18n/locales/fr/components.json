@@ -197,6 +197,8 @@
     "hikari::zoomToolbar.zoomIn": "Agrandir",
     "hikari::zoomToolbar.zoomOut": "Réduire",
     "hikari::zoomToolbar.zoomSlider": "Niveau de zoom",
+    "hikari::zoomToolbar.expandMap": "Afficher la mini-carte",
+    "hikari::zoomToolbar.collapseMap": "Masquer la mini-carte",
     "hikari::filterBar.trigger": "Filtres",
     "hikari::filterBar.apply": "Appliquer",
     "hikari::filterPanel.all": "Tous",

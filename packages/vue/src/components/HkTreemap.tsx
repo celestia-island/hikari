@@ -39,25 +39,87 @@ export interface HkTreemapLayout {
   total: number;
 }
 
-/** Pick a readable label colour for an arbitrary host-supplied background. */
+function parseHexColor(raw: string): [number, number, number] | null {
+  const value = raw.slice(1);
+  if (![3, 6, 8].includes(value.length) || !/^[0-9a-f]+$/i.test(value)) return null;
+  const expanded = value.length === 3
+    ? value.split("").map((char) => char + char).join("")
+    : value.slice(0, 6);
+  return [
+    Number.parseInt(expanded.slice(0, 2), 16),
+    Number.parseInt(expanded.slice(2, 4), 16),
+    Number.parseInt(expanded.slice(4, 6), 16),
+  ];
+}
+
+function numericChannel(raw: string): number | null {
+  if (raw.endsWith("%")) {
+    const percent = Number.parseFloat(raw.slice(0, -1));
+    return Number.isFinite(percent) ? Math.min(255, Math.max(0, (percent / 100) * 255)) : null;
+  }
+  const value = Number.parseFloat(raw);
+  return Number.isFinite(value) ? Math.min(255, Math.max(0, value)) : null;
+}
+
+function hueToRgb(hue: number, saturation: number, lightness: number): [number, number, number] {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const sector = ((hue % 360) + 360) % 360 / 60;
+  const x = chroma * (1 - Math.abs((sector % 2) - 1));
+  const [red, green, blue] = sector < 1
+    ? [chroma, x, 0]
+    : sector < 2
+      ? [x, chroma, 0]
+      : sector < 3
+        ? [0, chroma, x]
+        : sector < 4
+          ? [0, x, chroma]
+          : sector < 5
+            ? [x, 0, chroma]
+            : [chroma, 0, x];
+  const match = lightness - chroma / 2;
+  return [(red + match) * 255, (green + match) * 255, (blue + match) * 255];
+}
+
+function parseCssColor(raw: string): [number, number, number] | null {
+  const value = raw.trim();
+  if (value.startsWith("#")) return parseHexColor(value);
+  const rgb = /^rgba?\((.*)\)$/i.exec(value);
+  if (rgb) {
+    const parts = rgb[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
+    if (parts.length < 3) return null;
+    const channels = parts.slice(0, 3).map(numericChannel);
+    if (channels.some((channel) => channel === null)) return null;
+    return channels as [number, number, number];
+  }
+  const hsl = /^hsla?\((.*)\)$/i.exec(value);
+  if (hsl) {
+    const parts = hsl[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
+    if (parts.length < 3) return null;
+    const hue = Number.parseFloat(parts[0]!);
+    const saturation = Number.parseFloat(parts[1]!);
+    const lightness = Number.parseFloat(parts[2]!);
+    if (![hue, saturation, lightness].every(Number.isFinite)) return null;
+    return hueToRgb(hue, Math.min(1, Math.max(0, saturation / 100)), Math.min(1, Math.max(0, lightness / 100)));
+  }
+  return null;
+}
+
+/** Pick a readable label colour for a hex/rgb/hsl host-supplied background. */
 export function contrastTextColor(background: string): string {
-  const match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(background.trim());
-  if (!match) return "#fff";
-  const raw = match[1]!.length === 3
-    ? match[1]!.split("").map((char) => char + char).join("")
-    : match[1]!;
-  const red = Number.parseInt(raw.slice(0, 2), 16);
-  const green = Number.parseInt(raw.slice(2, 4), 16);
-  const blue = Number.parseInt(raw.slice(4, 6), 16);
-  // sRGB relative luminance, with the standard gamma expansion. The
-  // threshold favours dark text earlier than a raw YIQ average would; the
-  // pale members of the default palette are otherwise the worst offenders.
+  const channels = parseCssColor(background);
+  if (!channels) return "#fff";
+  // sRGB relative luminance, with the standard gamma expansion. Pick the
+  // candidate with the greater contrast; the two options' ratio crosses at
+  // luminance ~= 0.199 (not at a raw-average midpoint).
   const linear = (channel: number) => {
     const value = channel / 255;
     return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
   };
-  const luminance = 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
-  return luminance > 0.42 ? "#111827" : "#fff";
+  const luminance =
+    0.2126 * linear(channels[0]) +
+    0.7152 * linear(channels[1]) +
+    0.0722 * linear(channels[2]);
+  return luminance > 0.199 ? "#111827" : "#fff";
 }
 
 export const HK_TREEMAP_DEFAULT_COLORS = [
@@ -171,7 +233,7 @@ interface HkTreemapChartDatum {
   id: string;
   name: string;
   value: number;
-  itemStyle: { color: string };
+  itemStyle: { color: string; borderColor?: string };
   label: { color: string };
   upperLabel: { color: string };
   hkTreemap: HkTreemapChartMeta;
@@ -183,11 +245,18 @@ function toChartData(
   formatValue: HkTreemapValueFormatter,
 ): HkTreemapChartDatum {
   const labelColor = contrastTextColor(node.color);
+  const isGroup = Boolean(node.children?.length);
   return {
     id: node.id,
     name: node.label,
     value: node.value,
-    itemStyle: { color: node.color },
+    // ECharts paints a group's upperLabel band with the group's BORDER
+    // colour. Keep that band the group's own colour so the contrast choice
+    // above describes the pixels under the title (the series default is
+    // white, which would produce white-on-white titles).
+    itemStyle: isGroup
+      ? { color: node.color, borderColor: node.color }
+      : { color: node.color },
     label: { color: labelColor },
     upperLabel: { color: labelColor },
     hkTreemap: {
@@ -247,6 +316,8 @@ export function createHkTreemapOption(
     series: [
       {
         type: "treemap",
+        // TreemapView reads SERIES animation, not the top-level option.
+        animation: false,
         data: layout.nodes.map((node) => toChartData(node, formatValue)),
         left: 0,
         right: 0,
@@ -284,7 +355,12 @@ export function createHkTreemapOption(
           gapWidth: 1,
         },
         levels: [
-          { itemStyle: { borderWidth: 0, gapWidth: 0 } },
+          {
+            // The virtual root is not a visible group: without this, ECharts
+            // reserves a 24px white upperLabel band above the whole chart.
+            upperLabel: { show: false },
+            itemStyle: { borderWidth: 0, gapWidth: 0, borderColor: "transparent" },
+          },
           { itemStyle: { borderWidth: 2, gapWidth: 3 } },
           { itemStyle: { borderWidth: 1, gapWidth: 2 } },
           { itemStyle: { borderWidth: 1, gapWidth: 1 } },

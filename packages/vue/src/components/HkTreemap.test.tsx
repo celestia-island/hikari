@@ -260,19 +260,47 @@ describe("HkTreemap pure layout input", () => {
     ).toEqual({ nodes: [], total: 0 });
   });
 
-  it("chooses readable label colours for pale and dark backgrounds", () => {
+  it("chooses readable label colours across pale, mid-tone and dark backgrounds", () => {
     const option = createHkTreemapOption(buildHkTreemapLayout([
       { id: "pale", label: "Pale", value: 1, color: "#edc948" },
       { id: "dark", label: "Dark", value: 1, color: "#4e79a7" },
+      { id: "mid", label: "Mid", value: 1, color: "#76b7b2" },
+      { id: "rgb", label: "RGB", value: 1, color: "rgb(242, 142, 43)" },
       { id: "invalid", label: "Invalid", value: 1, color: "var(--x)" },
     ])) as any;
     const data = option.series[0].data;
     expect(data[0].label.color).toBe("#111827");
     expect(data[0].upperLabel.color).toBe("#111827");
     expect(data[1].label.color).toBe("#fff");
-    expect(data[2].label.color).toBe("#fff");
+    expect(data[2].label.color).toBe("#111827");
+    expect(data[3].label.color).toBe("#111827");
+    expect(data[4].label.color).toBe("#fff");
     expect(contrastTextColor("#abc")).toBe("#111827");
+    expect(contrastTextColor("hsl(0, 0%, 100%)")).toBe("#111827");
     expect(contrastTextColor("not-a-color")).toBe("#fff");
+  });
+
+  it("paints group title bands with the same colour the title contrast describes", () => {
+    const option = createHkTreemapOption(buildHkTreemapLayout([
+      {
+        id: "group",
+        label: "Group",
+        value: 0,
+        color: "#76b7b2",
+        children: [{ id: "leaf", label: "Leaf", value: 1 }],
+      },
+    ])) as any;
+    const series = option.series[0];
+    const group = series.data[0];
+
+    expect(series.animation).toBe(false);
+    expect(series.levels[0].upperLabel.show).toBe(false);
+    expect(series.levels[0].itemStyle.borderColor).toBe("transparent");
+    expect(group.itemStyle.color).toBe("#76b7b2");
+    expect(group.itemStyle.borderColor).toBe("#76b7b2");
+    expect(group.upperLabel.color).toBe(contrastTextColor("#76b7b2"));
+    // A light group title on a white series border would be unreadable.
+    expect(group.upperLabel.color).toBe("#111827");
   });
 
   it("feeds real values and percentages to leaf, group and tooltip formatters", () => {

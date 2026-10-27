@@ -4,13 +4,21 @@
 // are the L2 scale tokens wowsp already used, so existing surfaces
 // migrate without repainting.
 //
-// Scroll ownership: inside the dialog (host class `hk-settings-host`)
-// the shell gets a STABLE height sized under the modal body scroller's
-// inner padding, so HkModal's floating overlay scrollbar stays idle and
-// the pane's own edge bar is the only scrollbar. The negative-margin
-// trick puts that edge — and its scrollbar — flush with the modal
-// window's right edge; the padding re-applies the content inset between
-// the scrollbar and the cards. A page-embedded body (no host class)
+// Scroll ownership (2026-10-27, wowsp contract upstreamed): BOTH shell
+// scrollers are HkScrollContainers — the native thin bars are gone, the
+// shared auto-hiding overlay chrome draws instead. The component
+// templates render the rail and the pane with the container class, and
+// the paired-class rules below re-anchor the shell geometry whose home
+// moved: the regions' own overflow-y is replaced by the container's
+// overflow: hidden, and the paddings/gaps now live on the VIEWPORT
+// (the slot content and rail entries are its children), so each overlay
+// track hugs its region's border edge. Inside the dialog (host class
+// `hk-settings-host`) the shell gets a STABLE height sized under the
+// modal body scroller's inner padding, so HkModal's floating overlay
+// scrollbar stays idle and the pane's track is the only scrollbar; the
+// negative-margin trick puts that track flush with the modal window's
+// right edge and the viewport padding re-applies the content inset
+// between the track and the cards. A page-embedded body (no host class)
 // skips both: plain scroll container, host-managed layout.
 
 .hk-settings {
@@ -22,12 +30,17 @@
   &__rail {
     flex: none;
     width: 10.5rem;
+    border-right: 1px solid rgb(var(--color-border) / 15%);
+  }
+
+  /* The rail's own vocabulary lives in the scroll container's viewport
+     now (scroll ownership above) — the overlay track hugs the rail's
+     border edge, flush like the native bar it replaces. */
+  &__rail.hk-scroll-container > .hk-scroll-container-viewport {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     padding: var(--space-4) var(--space-12) var(--space-4) 0;
-    border-right: 1px solid rgb(var(--color-border) / 15%);
-    overflow-y: auto;
   }
 
   &__rail-item {
@@ -100,10 +113,14 @@
   &__pane {
     flex: 1;
     min-width: 0;
+  }
+
+  /* Same re-anchoring for the pane: the sections are viewport children,
+     so the column flow and the section gap live there. */
+  &__pane.hk-scroll-container > .hk-scroll-container-viewport {
     display: flex;
     flex-direction: column;
     gap: var(--space-16);
-    overflow-y: auto;
   }
 }
 
@@ -119,17 +136,27 @@
   height: var(--hk-settings-height, calc(70vh - 6.5rem));
 }
 
-/* Cancel the modal body's fixed right padding so the pane's scrollbar
-   sits flush at the window edge; re-apply the inset between the bar and
-   the cards. HkModal retunes the body padding to 1rem under 768px —
-   follow it or the pane overshoots the edge. */
+/* Cancel the modal body's fixed right padding so the pane's overlay
+   track sits flush at the window edge; the content inset between the
+   track and the cards is re-applied INSIDE the viewport (the scroller).
+   HkModal retunes the body padding to 1rem under 768px WITHOUT going
+   through the --hk-modal-padding-body var (a hard-coded 1rem there), so
+   the var-based margin would over-cancel by 8px and push the whole
+   track past the body's overflow clip — follow the hard-coded value or
+   the phone sheet loses its scrollbar entirely (R2 2026-10-27). */
 .hk-settings-host .hk-settings__pane {
   margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));
-  padding-right: var(--space-28);
 
   @media (max-width: 767px) {
     margin-right: -1rem;
-    padding-right: var(--space-20);
+  }
+
+  & > .hk-scroll-container-viewport {
+    padding-right: var(--space-28);
+
+    @media (max-width: 767px) {
+      padding-right: var(--space-20);
+    }
   }
 }
 

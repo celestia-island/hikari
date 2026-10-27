@@ -9,6 +9,7 @@ import {
 } from "vue";
 
 import HkTransitionContainer from "./HkTransitionContainer";
+import HkScrollContainer from "./HkScrollContainer";
 import HModal from "./HkModal";
 import "./HkSettingsDialog.scss";
 
@@ -40,9 +41,13 @@ export interface HkSettingsSection {
  *
  * Scroll ownership: the pane is the only scroller — switching sections
  * restarts it from the top (arriving on a half-scrolled pane reads as a
- * broken page). Inside the dialog the modal body's own scroller is made
- * mathematically idle by the host height rule (see the SCSS); on a page
- * the host manages its own layout.
+ * broken page). Both scrollers are HkScrollContainers (2026-10-27: the
+ * wowsp-proven contract upstreamed here — the native thin bars are gone
+ * and the shared auto-hiding overlay chrome draws instead; wowsp used to
+ * re-anchor this from outside through paired-class rules in its own
+ * SettingsShell.scss). Inside the dialog the modal body's own scroller is
+ * made mathematically idle by the host height rule (see the SCSS); on a
+ * page the host manages its own layout.
  */
 export const HkSettingsBody = defineComponent({
   name: "HkSettingsBody",
@@ -83,11 +88,17 @@ export const HkSettingsBody = defineComponent({
         ? internal.value
         : (props.sections[0]?.key ?? "");
 
-    const paneRef = ref<HTMLElement | null>(null);
-    // Section switches restart the pane from the top.
+    // The pane is an HkScrollContainer; only its consumed ref slice is
+    // typed here — the scroll reset needs the live viewport element and
+    // nothing else.
+    const paneRef = ref<{ getScrollElement(): HTMLElement | undefined } | null>(null);
+    // Section switches restart the pane from the top. Written through the
+    // public ref slice (the viewport element) rather than scrollTo so the
+    // reset stays synchronous and testable in no-layout environments.
     watch(active, () => {
       void nextTick(() => {
-        if (paneRef.value) paneRef.value.scrollTop = 0;
+        const viewport = paneRef.value?.getScrollElement();
+        if (viewport) viewport.scrollTop = 0;
       });
     });
 
@@ -100,7 +111,11 @@ export const HkSettingsBody = defineComponent({
 
     return () => (
       <div class="hk-settings">
-        <nav class="hk-settings__rail" aria-label={props.navLabel}>
+        {/* Scroll ownership (see the docblock): both scrollers are
+            HkScrollContainers — the overlay chrome replaces the native
+            bars, and the paired-class rules in the SCSS carry each
+            region's padding/gap vocabulary into its viewport. */}
+        <HkScrollContainer as="nav" class="hk-settings__rail" aria-label={props.navLabel}>
           {props.sections.map((s) => {
             const Icon = s.icon;
             const on = active() === s.key && !s.disabled;
@@ -123,8 +138,8 @@ export const HkSettingsBody = defineComponent({
               </button>
             );
           })}
-        </nav>
-        <div class="hk-settings__pane" ref={paneRef}>
+        </HkScrollContainer>
+        <HkScrollContainer class="hk-settings__pane" ref={paneRef}>
           {/* The section swap runs through the family's standard morph
               container (audit 2026-10-23): the pane's frame follows the
               incoming section's height and the contents dissolve, the
@@ -133,7 +148,7 @@ export const HkSettingsBody = defineComponent({
           <HkTransitionContainer swapKey={active()} axis="height">
             {slots[active()]?.()}
           </HkTransitionContainer>
-        </div>
+        </HkScrollContainer>
       </div>
     );
   },
@@ -142,8 +157,9 @@ export const HkSettingsBody = defineComponent({
 /**
  * HkSettingsDialog — the settings window: an HModal carrying the
  * {@link HSettingsBody} shell with a stable frame height, so the modal
- * body's floating scrollbar stays idle and the pane's edge bar is the
- * only scrollbar (the wowsp-proven contract). Width defaults to the
+ * body's floating scrollbar stays idle and the pane's own overlay
+ * scrollbar (an HkScrollContainer) is the only scrollbar (the
+ * wowsp-proven contract, upstreamed 2026-10-27). Width defaults to the
  * settings-standard 58rem; `height` styles the shell (the 70vh default
  * fits a modal with title and paddings).
  *

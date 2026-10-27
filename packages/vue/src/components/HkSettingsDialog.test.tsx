@@ -97,14 +97,60 @@ describe("HSettingsBody", () => {
       },
     });
     const { container, unmount } = mount(Probe);
+    // The pane is an HkScrollContainer: the scroller is its viewport
+    // (the root only clips), so the reset contract is read there.
     const pane = container.querySelector<HTMLElement>(".hk-settings__pane")!;
-    pane.scrollTop = 500;
+    const viewport = pane.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    expect(viewport).toBeTruthy();
+    viewport.scrollTop = 500;
     const items = container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item");
     items[1].click();
     await nextTick();
     await nextTick();
-    scrolled.value = pane.scrollTop === 0;
+    scrolled.value = viewport.scrollTop === 0;
     expect(scrolled.value).toBe(true);
+    unmount();
+  });
+
+  it("renders the rail and the pane as HkScrollContainers (overlay scrollbar contract)", () => {
+    const { container, unmount } = mount(Host);
+    // Scroll ownership (2026-10-27): the native thin bars are gone and the
+    // shared overlay chrome draws instead — pinned at the source because
+    // happy-dom cannot exercise the cascade that hides the native bar.
+    const rail = container.querySelector(".hk-settings__rail")!;
+    const pane = container.querySelector(".hk-settings__pane")!;
+    expect(rail.classList.contains("hk-scroll-container")).toBe(true);
+    expect(pane.classList.contains("hk-scroll-container")).toBe(true);
+    expect(rail.querySelector(".hk-scroll-container-viewport")).toBeTruthy();
+    expect(pane.querySelector(".hk-scroll-container-viewport")).toBeTruthy();
+    // The rail stays a navigation landmark through the `as` prop. Without
+    // a navLabel the landmark is unnamed (the fixture passes none) — the
+    // positive naming contract is its own case below.
+    expect(rail.tagName).toBe("NAV");
+    expect(rail.getAttribute("aria-label")).toBeNull();
+    unmount();
+  });
+
+  it("lands a provided navLabel on the rail landmark (attr fallthrough)", () => {
+    // The rail is an HkScrollContainer rendered `as="nav"`: the accessible
+    // name travels through the component's attribute fallthrough onto the
+    // container root — the machinery this refactor introduced, so pin it.
+    const Named = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody sections={SECTIONS.slice(0, 2)} navLabel="Settings sections">
+            {{
+              language: () => <div data-test="pane-language" />,
+              network: () => <div data-test="pane-network" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    const { container, unmount } = mount(Named);
+    const rail = container.querySelector(".hk-settings__rail")!;
+    expect(rail.tagName).toBe("NAV");
+    expect(rail.getAttribute("aria-label")).toBe("Settings sections");
     unmount();
   });
 
@@ -220,6 +266,35 @@ describe("settings dialog SCSS host contract (source-level)", () => {
     expect(scss).toContain(".hk-settings-host .hk-modal-body-inner {");
     expect(scss).toContain("height: var(--hk-settings-height, calc(70vh - 6.5rem));");
     expect(scss).toContain("margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));");
+  });
+
+  it("re-anchors the shell vocabulary into the viewports (scroll ownership)", () => {
+    // Scroll ownership (2026-10-27): the paddings/gaps moved into the
+    // scroll containers' viewports so the overlay tracks hug the regions'
+    // border edges — the paired-class rules are the contract's home.
+    expect(scss).toContain("&__rail.hk-scroll-container > .hk-scroll-container-viewport {");
+    expect(scss).toContain("&__pane.hk-scroll-container > .hk-scroll-container-viewport {");
+    // The regions themselves must NOT scroll natively any more — scoped
+    // to their own blocks, not the whole file (a future rule elsewhere
+    // may legitimately want overflow-y: auto).
+    for (const region of ["&__rail {", "&__pane {"]) {
+      const start = scss.indexOf(region);
+      expect(start, `${region} block located`).toBeGreaterThan(-1);
+      const block = scss.slice(start, scss.indexOf("}", start));
+      expect(block, `${region} must not scroll natively`).not.toContain("overflow-y");
+    }
+    // The dialog inset lives inside the pane's viewport, not on the root.
+    expect(scss).toContain("& > .hk-scroll-container-viewport {\n    padding-right: var(--space-28);");
+  });
+
+  it("keeps the flush-edge margin width-correct (desktop var, mobile hard-coded)", () => {
+    // The desktop margin cancels the var-chained body padding; the mobile
+    // arm must exist because HkModal hard-codes 1rem under 768px without
+    // the var — dropping it over-cancels by 8px and clips the whole
+    // overlay track out of the phone sheet (R2 2026-10-27).
+    expect(scss).toContain("margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));");
+    const hostBlock = scss.slice(scss.indexOf(".hk-settings-host .hk-settings__pane {"));
+    expect(hostBlock).toContain("@media (max-width: 767px) {\n    margin-right: -1rem;\n  }");
   });
 
   it("never activates a disabled section through a deep-linked prop", async () => {

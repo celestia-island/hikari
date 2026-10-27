@@ -231,7 +231,8 @@ describe("HkSegmentedRadio", () => {
       new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }),
     );
     await nextTick();
-    expect(emitted).toEqual(["all"], "the last RENDERED segment, not the hidden duplicate");
+    // The last RENDERED segment, not the hidden duplicate.
+    expect(emitted).toEqual(["all"]);
   });
 
   it("duplicate option values collapse to one radio (first wins, one tabbable)", () => {

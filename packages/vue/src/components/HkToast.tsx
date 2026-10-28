@@ -100,6 +100,24 @@ const HkToastItem = defineComponent({
       emit("remove", props.toast.id);
     }
 
+    /** The inline action (e.g. Undo) dismisses the toast and runs the
+     *  host's handler; a thrown handler must not keep the toast alive.
+     *  Single-shot: the leaving item stays clickable for the leave
+     *  transition, and a double-click must not run an undo twice. */
+    let actionFired = false;
+    function handleAction() {
+      if (actionFired) return;
+      actionFired = true;
+      const action = props.toast.action;
+      emit("remove", props.toast.id);
+      try {
+        action?.onClick?.();
+      } catch {
+        // A throwing undo handler must not resurrect a dismissed toast
+        // (or break the toast stack's render for every other slot).
+      }
+    }
+
     return () => {
       const msg = displayedMessage.value;
       const text = msg?.text ?? "";
@@ -138,6 +156,18 @@ const HkToastItem = defineComponent({
               <span class="hk-toast-count">{renderCountLabel(count, t("hikari::toast.msgs", "msgs"))}</span>
             )}
           </div>
+          {props.toast.action && (
+            <button
+              class="hk-toast-action"
+              title={props.toast.action.label}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                handleAction();
+              }}
+            >
+              {props.toast.action.label}
+            </button>
+          )}
           {props.toast.copyable && (
             <button
               class="hk-toast-copy-btn"

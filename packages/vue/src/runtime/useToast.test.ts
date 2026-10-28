@@ -88,3 +88,47 @@ describe("useToast stacking and dedupe", () => {
     expect(toast.toasts.some((t) => t.type === "info")).toBe(true);
   });
 });
+
+describe("useToast inline actions", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    clearAll();
+  });
+  afterEach(() => {
+    clearAll();
+    vi.useRealTimers();
+  });
+
+  it("carries the action on the slot", () => {
+    const toast = useToast();
+    const run = vi.fn();
+    toast.show("Player removed", {
+      type: "success",
+      duration: 8000,
+      action: { label: "Undo", onClick: run },
+    });
+    const slot = toast.toasts.find((t) => t.type === "success")!;
+    expect(slot.action?.label).toBe("Undo");
+    expect(slot.action?.onClick).toBe(run);
+  });
+
+  it("the latest push owns the action (a plain message clears it)", () => {
+    const toast = useToast();
+    toast.show("Player removed", {
+      type: "success",
+      action: { label: "Undo", onClick: () => {} },
+    });
+    toast.success("Saved");
+    expect(toast.toasts.find((t) => t.type === "success")!.action).toBeUndefined();
+  });
+
+  it("re-passing the action keeps it on the shared slot", () => {
+    const toast = useToast();
+    const first = { label: "Undo", onClick: () => {} };
+    const second = { label: "Retry", onClick: () => {} };
+    toast.show("Player removed", { type: "success", action: first });
+    toast.show("Player removed again", { type: "success", action: second });
+    // Reactive slots wrap the object — compare by value, not identity.
+    expect(toast.toasts.find((t) => t.type === "success")!.action).toEqual(second);
+  });
+});

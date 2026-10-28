@@ -26,12 +26,27 @@ export interface ToastMessage {
   text: string;
 }
 
+/** One inline action button on a toast (e.g. "Undo" after a delete).
+ *  The action belongs to the CURRENT slot state: every push sets or
+ *  clears it, so the latest message decides what the button offers. */
+export interface ToastAction {
+  /** Button label (the caller i18n's it). */
+  label: string;
+  /** Runs when the button is clicked. The toast dismisses FIRST, then
+   *  this handler runs — a throwing handler can never keep the toast
+   *  alive. The button itself is single-shot: a second click during the
+   *  leave transition is ignored. */
+  onClick?: () => void;
+}
+
 export interface ToastItem {
   id: number;
   type: ToastType;
   messages: ToastMessage[];
   duration?: number;
   copyable?: boolean;
+  /** Inline action button — see ToastAction. */
+  action?: ToastAction;
 }
 
 /** Hard cap on stacked messages per toast slot. Beyond it the oldest
@@ -96,7 +111,7 @@ function findSlot(type: ToastType): ToastItem | undefined {
 function push(
   type: ToastType,
   text: string,
-  options: { duration?: number; copyable?: boolean } = {},
+  options: { duration?: number; copyable?: boolean; action?: ToastAction } = {},
 ): number {
   let slot = findSlot(type);
   if (!slot) {
@@ -106,10 +121,16 @@ function push(
       messages: [],
       duration: options.duration ?? TOAST_DURATION[type],
       copyable: options.copyable ?? defaultCopyable(type),
+      action: options.action,
     };
     state.toasts.push(slot);
-  } else if (options.copyable === true && !slot.copyable) {
-    slot.copyable = true;
+  } else {
+    if (options.copyable === true && !slot.copyable) {
+      slot.copyable = true;
+    }
+    // Latest push owns the action: re-passing it keeps the button, a
+    // plain message (no action) clears it off the shared slot.
+    slot.action = options.action;
   }
   let msgId: number;
   const last = slot.messages[slot.messages.length - 1];
@@ -141,6 +162,7 @@ export function useToast() {
     return push(type, message, {
       duration: options.duration,
       copyable: options.copyable,
+      action: options.action,
     });
   }
 

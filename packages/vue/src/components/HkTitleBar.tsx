@@ -1,5 +1,6 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "../i18n/context";
+import { claimWindowChrome } from "../runtime/windowChrome";
 
 import "./HkTitleBar.scss";
 
@@ -60,6 +61,16 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
+    // The bar IS the app's window chrome, so mounting it means the boot chrome
+    // (boot-chrome.js, drawn before the bundle exists) must hand the window
+    // over: dispatch `hk:chrome-claim` once per mount, never revoked. See
+    // runtime/windowChrome for the contract; hydration/SSR never reaches here.
+    let claimed = false;
+    onMounted(() => {
+      if (claimed) return;
+      claimed = true;
+      claimWindowChrome("HkTitleBar");
+    });
     return () => (
       <div
         class="hk-titlebar"

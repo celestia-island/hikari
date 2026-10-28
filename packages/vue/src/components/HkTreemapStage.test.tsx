@@ -6,9 +6,15 @@ import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 vi.mock("./HkTooltip", () => ({
   default: {
     name: "HkTooltipStub",
-    props: { text: { type: String, required: true } },
-    setup(props: { text: string }, { slots }: { slots: { default?: (p: unknown) => unknown } }) {
-      return () => h("span", { "data-hk-tooltip-text": props.text }, slots.default?.({}) as never);
+    props: {
+      text: { type: String, required: true },
+      placement: { type: String, default: "top" },
+    },
+    setup(props: { text: string; placement: string }, { slots }: { slots: { default?: (p: unknown) => unknown } }) {
+      return () => h("span", {
+        "data-hk-tooltip-text": props.text,
+        "data-hk-tooltip-placement": props.placement,
+      }, slots.default?.({}) as never);
     },
   },
 }));
@@ -76,11 +82,13 @@ function mountStage(initialProps: Record<string, unknown> = { nodes: NODES }) {
   };
 }
 
-async function setSize(mounted: { container: HTMLElement }, width = 400, height = 240) {
+async function setSize(mounted: { container: HTMLElement }, width = 400, height = 240, zoom = 1) {
   const el = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__canvas")!;
-  el.getBoundingClientRect = () => fakeRect(width, height);
+  el.getBoundingClientRect = () => fakeRect(width * zoom, height * zoom);
   Object.defineProperty(el, "clientWidth", { value: width, configurable: true });
   Object.defineProperty(el, "clientHeight", { value: height, configurable: true });
+  Object.defineProperty(el, "offsetWidth", { value: width, configurable: true });
+  Object.defineProperty(el, "offsetHeight", { value: height, configurable: true });
   FakeResizeObserver.instances[0]?.callback();
   await nextTick();
 }
@@ -112,7 +120,32 @@ describe("HkTreemapStage — the drill path", () => {
       (n) => n.getAttribute("data-hk-tooltip-text"),
     );
     expect(tooltips.some((t) => t!.startsWith("Group:"))).toBe(true);
+    const placements = [...mounted.container.querySelectorAll("[data-hk-tooltip-placement]")]
+      .map((node) => node.getAttribute("data-hk-tooltip-placement"));
+    expect(new Set(placements)).toEqual(new Set(["bottom"]));
     expect(mounted.container.textContent).toContain("Usage"); // the root crumb
+  });
+
+  it("keeps the tooltip-owned cell frames inside a small canvas at 2×/3× DPI", async () => {
+    const mounted = mountStage({ nodes: NODES });
+    for (const zoom of [2, 3]) {
+      await setSize(mounted, 220, 120, zoom);
+      const cells = [...mounted.container.querySelectorAll<HTMLElement>(".hk-treemap-stage__cell")];
+      expect(cells).toHaveLength(2);
+      for (const cell of cells) {
+        const frame = cell.closest<HTMLElement>("[data-hk-tooltip-text]")!;
+        expect(frame.style.position).toBe("absolute");
+        const x = Number.parseFloat(frame.style.left);
+        const y = Number.parseFloat(frame.style.top);
+        const w = Number.parseFloat(frame.style.width);
+        const h = Number.parseFloat(frame.style.height);
+        expect(x).toBeGreaterThanOrEqual(0);
+        expect(y).toBeGreaterThanOrEqual(0);
+        expect(x + w).toBeLessThanOrEqual(220.001);
+        expect(y + h).toBeLessThanOrEqual(120.001);
+        expect(cell.style.inset).toBe("0px");
+      }
+    }
   });
 
   it("clicking a GROUP cell drills in: children fill the canvas, back button appears", async () => {
@@ -221,6 +254,106 @@ describe("HkTreemapStage — the camera + minimap", () => {
     expect(surface.style.transform).toContain("scale(1.1)");
     // The zoom label reads the new rung.
     expect(mounted.container.querySelector(".hk-mm-zoom-label")!.textContent).toContain("110");
+  });
+
+  it("wheel gestures zoom the canvas and never scroll the host page", async () => {
+    const mounted = mountStage({ nodes: NODES });
+    await setSize(mounted);
+    const canvas = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__canvas")!;
+    const surface = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__surface")!;
+    const inEvent = new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true });
+    canvas.dispatchEvent(inEvent);
+    await nextTick();
+    expect(inEvent.defaultPrevented).toBe(true);
+    expect(surface.style.transform).toContain("scale(1.1)");
+    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(surface.style.transform).toContain("scale(1)");
+  });
+
+  it("clamps wheel zoom at 50–200% and ignores zero-delta motion", async () => {
+    const mounted = mountStage({ nodes: NODES });
+    await setSize(mounted);
+    const canvas = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__canvas")!;
+    const surface = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__surface")!;
+    const zero = new WheelEvent("wheel", { deltaY: 0, bubbles: true, cancelable: true });
+    canvas.dispatchEvent(zero);
+    await nextTick();
+    expect(zero.defaultPrevented).toBe(true);
+    expect(surface.style.transform).toContain("scale(1)");
+    for (let i = 0; i < 8; i += 1) {
+      canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    }
+    await nextTick();
+    expect(surface.style.transform).toContain("scale(0.5)");
+    for (let i = 0; i < 20; i += 1) {
+      canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    }
+    await nextTick();
+    expect(surface.style.transform).toContain("scale(2)");
+  });
+
+  it("keeps wheel zoom anchored under the pointer at 2× root DPI", async () => {
+    const mounted = mountStage({ nodes: [{ id: "leaf", label: "Leaf", value: 1 }] });
+    await setSize(mounted, 400, 240, 2);
+    const canvas = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__canvas")!;
+    canvas.getBoundingClientRect = () => ({
+      x: 100, y: 50, left: 100, top: 50, right: 900, bottom: 530,
+      width: 800, height: 480, toJSON: () => ({}),
+    }) as DOMRect;
+    const surface = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__surface")!;
+    const wheel = new WheelEvent("wheel", {
+      deltaY: -100, bubbles: true, cancelable: true,
+    });
+    // happy-dom does not apply MouseEventInit's client coords to WheelEvent;
+    // pin them explicitly (same convention as HkBoard.scale.test.ts).
+    Object.defineProperty(wheel, "clientX", { value: 500 });
+    Object.defineProperty(wheel, "clientY", { value: 290 });
+    // (500,290) drawn = (200,120) local. At 100→110%, pan must become
+    // (-20,-12) so -20 + 200×1.1 = 200 (and likewise on y).
+    canvas.dispatchEvent(wheel);
+    await nextTick();
+    const match = /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([\d.]+)\)/.exec(
+      surface.style.transform,
+    );
+    expect(match).not.toBeNull();
+    expect(Number(match![1])).toBeCloseTo(-20, 8);
+    expect(Number(match![2])).toBeCloseTo(-12, 8);
+    expect(Number(match![3])).toBeCloseTo(1.1, 8);
+    // The world point under the pointer is invariant, not merely "zoomed".
+    expect(Number(match![1]) + 200 * Number(match![3])).toBeCloseTo(200, 8);
+    expect(Number(match![2]) + 120 * Number(match![3])).toBeCloseTo(120, 8);
+  });
+
+  it("controlled zoom changes pan only when the parent actually applies the request", async () => {
+    const mounted = mountStage({
+      nodes: [{ id: "leaf", label: "Leaf", value: 1 }],
+      zoomPercent: 100,
+    });
+    await setSize(mounted, 400, 240, 2);
+    const canvas = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__canvas")!;
+    canvas.getBoundingClientRect = () => ({
+      x: 100, y: 50, left: 100, top: 50, right: 900, bottom: 530,
+      width: 800, height: 480, toJSON: () => ({}),
+    }) as DOMRect;
+    const surface = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__surface")!;
+    const wheel = new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true });
+    Object.defineProperty(wheel, "clientX", { value: 500 });
+    Object.defineProperty(wheel, "clientY", { value: 290 });
+    canvas.dispatchEvent(wheel);
+    await nextTick();
+    // Parent rejected/omitted the update: neither scale nor pan may move.
+    expect(surface.style.transform).toBe("translate(0px, 0px) scale(1)");
+
+    mounted.update({ zoomPercent: 110 });
+    await nextTick();
+    const match = /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([\d.]+)\)/.exec(
+      surface.style.transform,
+    );
+    expect(match).not.toBeNull();
+    expect(Number(match![1])).toBeCloseTo(-20, 8);
+    expect(Number(match![2])).toBeCloseTo(-12, 8);
+    expect(Number(match![3])).toBeCloseTo(1.1, 8);
   });
 
   it("zoom reveals detail: a small cell's label appears at a higher rung", async () => {

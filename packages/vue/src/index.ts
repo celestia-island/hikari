@@ -730,6 +730,7 @@ export {
 export { default as HkMinimap3D } from "./components/HkMinimap3D";
 export { default as HkTrendChart } from "./components/HkTrendChart";
 export { default as HkTreemap } from "./components/HkTreemap";
+export { default as HkTreemapStage } from "./components/HkTreemapStage";
 export { default as HkErrorBoundary } from "./components/HkErrorBoundary";
 export { default as HkDraggableList } from "./components/HkDraggableList";
 export { default as HkDraggableGrid } from "./components/HkDraggableGrid";

@@ -488,36 +488,36 @@ export default defineComponent({
       }
       const head = entry.kind === "head";
       const bandH = Math.min(22, Math.max(0, h));
-      const style = head
-        ? {
-            left: `${x}px`,
-            top: `${y}px`,
-            width: `${w}px`,
-            height: `${bandH}px`,
-            background: node.color,
-            "--hk-treemap-fg": contrastTextColor(node.color),
-          }
-        : {
-            left: `${x}px`,
-            top: `${y}px`,
-            width: `${w}px`,
-            height: `${h}px`,
-            background: node.color,
-            "--hk-treemap-fg": contrastTextColor(node.color),
-          };
+      // The tooltip wrapper IS the absolute cell frame. Its trigger fills
+      // that frame, so the wrapper both establishes the correct containing
+      // block and reports the visible cell's rect to tooltipPosition. The
+      // old shape positioned the trigger inside a zero-sized inline wrapper
+      // (wrong origin + chart-edge clipping + every tooltip at the top-left).
+      const frameStyle = {
+        position: "absolute" as const,
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${w}px`,
+        height: `${head ? bandH : h}px`,
+      };
+      const cellStyle = {
+        inset: "0px",
+        background: node.color,
+        "--hk-treemap-fg": contrastTextColor(node.color),
+      };
       const label = showLabel || head ? node.label : null;
       const meta = showValue
         ? `${formatValue(node.value)} · ${formatHkTreemapPercent(node.percent)}`
         : null;
       return (
-        <HkTooltip key={entry.key} text={cellText(node)} placement="top">
+        <HkTooltip key={entry.key} text={cellText(node)} placement="bottom" style={frameStyle}>
           {() => (
             <div
               class={{
                 "hk-treemap__cell": true,
                 "hk-treemap__cell--group": head,
               }}
-              style={style}
+              style={cellStyle}
               role="img"
               aria-label={cellText(node)}
             >

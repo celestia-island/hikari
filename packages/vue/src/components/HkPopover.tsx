@@ -103,6 +103,12 @@ export default defineComponent({
      *  emits on unmounted instances) — a host that itself is going away
      *  has nothing to reclaim anyway. */
     closed: () => true,
+    /** Hover intent for anchor↔popover safe travel. These fire on the WHOLE
+     *  panel (padding and chrome included), not only its slot content; a
+     *  consumer can track anchor/panel hover independently without the
+     *  overlap open→leave→close→enter loop. */
+    mouseenter: (_event: MouseEvent) => true,
+    mouseleave: (_event: MouseEvent) => true,
   },
   setup(props, { emit, slots }) {
     const attrs = useAttrs();
@@ -732,6 +738,8 @@ export default defineComponent({
                 aria-label={props.title || undefined}
                 tabindex={sheetBranch ? "-1" : undefined}
                 onKeydown={onPanelKeydown}
+                onMouseenter={(event: MouseEvent) => emit("mouseenter", event)}
+                onMouseleave={(event: MouseEvent) => emit("mouseleave", event)}
               >
                 {sheetBranch && (
                   <div class="hk-popover-sheet-grabber" aria-hidden="true" onClick={() => close()} />

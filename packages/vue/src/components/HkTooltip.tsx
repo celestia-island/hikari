@@ -38,6 +38,7 @@ export default defineComponent({
     const wrapperRef = ref<HTMLElement | null>(null);
     const popupRef = ref<HTMLElement | null>(null);
     let showTimer: ReturnType<typeof setTimeout> | null = null;
+    let positionFrame: number | null = null;
 
     // The band handle and the popup DOM are both LAZY (dense-list contract,
     // 2026-10-05): a tooltip that is never engaged — the overwhelming
@@ -74,12 +75,31 @@ export default defineComponent({
       applyTooltipPosition(popupRef.value, rect, props.placement, props.maxWidth);
     }
 
+    function stopPositionTracking() {
+      if (positionFrame !== null) cancelAnimationFrame(positionFrame);
+      positionFrame = null;
+    }
+
+    function trackPositionWhileVisible() {
+      if (positionFrame !== null) return;
+      const tick = () => {
+        positionFrame = null;
+        if (!visible.value) return;
+        // A visible trigger can move without a pointer event (treemap wheel
+        // zoom, minimap pan, layout animation). Re-read its rect per frame
+        // until hide/unmount; each visible tooltip owns one such loop.
+        updatePosition();
+        positionFrame = requestAnimationFrame(tick);
+      };
+      positionFrame = requestAnimationFrame(tick);
+    }
+
     function show() {
       clearShowTimer();
       ensureEngaged();
       showTimer = setTimeout(() => {
         visible.value = true;
-        requestAnimationFrame(updatePosition);
+        trackPositionWhileVisible();
       }, props.delay);
     }
 
@@ -87,12 +107,13 @@ export default defineComponent({
       clearShowTimer();
       ensureEngaged();
       visible.value = true;
-      requestAnimationFrame(updatePosition);
+      trackPositionWhileVisible();
     }
 
     function hide() {
       clearShowTimer();
       visible.value = false;
+      stopPositionTracking();
       dismissTouchListener();
     }
 
@@ -144,6 +165,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       clearShowTimer();
+      stopPositionTracking();
       dismissTouchListener();
       if (popupHandle) {
         manager.unregister(popupHandle.id);

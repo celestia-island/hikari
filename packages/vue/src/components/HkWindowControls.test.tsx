@@ -207,6 +207,60 @@ describe("HkWindowControls window-chrome claim", () => {
     }
   });
 
+  it("swallows a rejected is_maximized (no unhandled rejection during boot)", async () => {
+    // S2-6: the family's res/fatal-fallback.js raises the full-screen
+    // "Application failed to load" landing on `unhandledrejection` — during
+    // boot that is worse than a missing glyph, and the internals path polls,
+    // so an unhandled rejection would repeat every 500ms.
+    const invoke = vi.fn((command: string) =>
+      command === WINDOW_IPC.isMaximized
+        ? Promise.reject(new Error("window.is_maximized not allowed"))
+        : Promise.resolve(false),
+    );
+    vi.stubGlobal("__TAURI_INTERNALS__", { invoke });
+
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => void unhandled.push(reason);
+    process.on("unhandledRejection", onUnhandled);
+    const t = mountControls({ variant: "standard" });
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      // The cluster still renders and the rejection never escaped.
+      expect(
+        t.container.querySelectorAll(".hk-window-controls__btn"),
+      ).toHaveLength(3);
+      expect(unhandled).toHaveLength(0);
+    } finally {
+      t.app.unmount();
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
+
+  it("stops the maximized poll when unmounted before onResized resolves (S2-7)", async () => {
+    vi.useFakeTimers();
+    try {
+      const invoke = vi.fn((_command: string) => Promise.resolve(false));
+      vi.stubGlobal("__TAURI_INTERNALS__", { invoke });
+
+      const t = mountControls({ variant: "standard" });
+      // Unmount while the awaited onResized() promise is still unresolved.
+      t.app.unmount();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const isMaximizedCalls = () =>
+        invoke.mock.calls.filter((call) => call[0] === WINDOW_IPC.isMaximized)
+          .length;
+      const afterUnmount = isMaximizedCalls();
+      vi.advanceTimersByTime(5000);
+      // An orphaned 500ms interval would keep polling a dead component.
+      expect(isMaximizedCalls()).toBe(afterUnmount);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("claims once, not once per render", async () => {
     // The maximized glyph re-renders the cluster; the takeover already happened.
     vi.stubGlobal("__TAURI__", {

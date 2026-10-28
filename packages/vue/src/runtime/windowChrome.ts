@@ -18,6 +18,13 @@
  *      rendered NO controls — and the boot bar never got claimed, leaving two
  *      competing caption strips.
  *
+ *      RECORDED, NOT FIXED (PR notes): (a) the internals-only cluster polls
+ *      `is_maximized` every `RESIZE_POLL_MS` while mounted — one small IPC
+ *      round-trip per interval, the acceptable price of the resize-event
+ *      targeting problem above; (b) a PARTIAL `__TAURI__` (some methods
+ *      missing) is treated as "not usable" and falls through to the IPC path
+ *      rather than rendering buttons that cannot all work.
+ *
  *      `boot-chrome.js` (src/res/boot-chrome.js) mirrors this exact order and
  *      these exact commands. It is a classic script and cannot import this
  *      module, so the two files are kept in sync by convention — and by the
@@ -170,23 +177,19 @@ function globalWindowApi(): WindowApiLike | null {
 }
 
 /**
- * Resize subscription for the internals path: the host's event API when it is
- * around (`listen("tauri://resize")`), otherwise a light poll of the maximized
- * flag. Losing the event surface must never cost the three buttons, which is
- * why this degrades instead of failing.
+ * Resize subscription for the internals path.
+ *
+ * The internals-only case polls the maximized flag instead of listening to
+ * `tauri://resize`: Tauri 2 emits window resize events targeted at
+ * `Window{label}` / `WebviewWindow{label}`, so a listener registered with the
+ * default (Any) target never receives them — the glyph silently stops
+ * following the window. A 500 ms `is_maximized` poll always works and is
+ * stopped by the returned handle. (Accepted cost, recorded for the PR: one
+ * small IPC round-trip per interval while an internals-only cluster is
+ * mounted.) Losing the maximized state must never cost the three buttons,
+ * which is why this degrades instead of failing.
  */
 function internalsResize(handler: () => void): Promise<() => void> {
-  const scope = window as unknown as {
-    __TAURI__?: { event?: { listen?: unknown } };
-  };
-  const eventApi = scope.__TAURI__?.event;
-  const listen = eventApi?.listen;
-  if (eventApi && typeof listen === "function") {
-    const subscribe = listen as (event: string, cb: () => void) => unknown;
-    return call(() => subscribe.call(eventApi, "tauri://resize", handler))
-      .then((off) => (typeof off === "function" ? (off as () => void) : noUnlisten))
-      .catch(() => noUnlisten);
-  }
   if (typeof setInterval !== "function") return Promise.resolve(noUnlisten);
   const timer = setInterval(handler, RESIZE_POLL_MS);
   return Promise.resolve(() => clearInterval(timer));

@@ -290,15 +290,37 @@ describe("boot-chrome.js window wiring", () => {
     expect(control("minimize").disabled).toBe(false);
 
     control("minimize").click();
-    expect(invoke).toHaveBeenCalledWith("plugin:window|minimize", {});
+    expect(invoke).toHaveBeenCalledWith(WINDOW_IPC.minimize, {});
 
     control("maximize").click();
-    expect(invoke).toHaveBeenCalledWith("plugin:window|toggle_maximize", {});
+    expect(invoke).toHaveBeenCalledWith(WINDOW_IPC.toggleMaximize, {});
     await flush();
-    expect(invoke).toHaveBeenCalledWith("plugin:window|is_maximized", {});
+    expect(invoke).toHaveBeenCalledWith(WINDOW_IPC.isMaximized, {});
 
     control("close").click();
-    expect(invoke).toHaveBeenCalledWith("plugin:window|close", {});
+    expect(invoke).toHaveBeenCalledWith(WINDOW_IPC.close, {});
+  });
+
+  it("maps each caption button to its WINDOW_IPC entry, one to one", () => {
+    const invoke = vi.fn((_command: string) => Promise.resolve(false));
+    setGlobal("__TAURI_INTERNALS__", { invoke });
+    runBootChrome();
+    invoke.mockClear();
+
+    const expected: Array<[act: "minimize" | "maximize" | "close", command: string]> = [
+      ["minimize", WINDOW_IPC.minimize],
+      ["maximize", WINDOW_IPC.toggleMaximize],
+      ["close", WINDOW_IPC.close],
+    ];
+    for (const [act, command] of expected) {
+      invoke.mockClear();
+      control(act).click();
+      const sent = invoke.mock.calls.map((call) => call[0]);
+      expect(sent, `${act} must send ${command}`).toContain(command);
+      // No cross-wiring: the button sends its own command (plus the read-only
+      // state probe that follows a maximize toggle).
+      expect(sent.filter((name) => name !== WINDOW_IPC.isMaximized)).toEqual([command]);
+    }
   });
 
   it("retries for up to 5s before wiring a late shell API", () => {
@@ -359,6 +381,8 @@ describe("boot-chrome.js handoff and watchdog", () => {
     expect(
       document.documentElement.style.getPropertyValue("--hk-boot-chrome-h"),
     ).toBe("");
+    // The injected stylesheet leaves with the bar (no orphan <style> in <head>).
+    expect(document.getElementById("hk-boot-chrome-style")).toBeNull();
     expect(bootChromeHandle().isActive()).toBe(false);
   });
 
@@ -422,6 +446,128 @@ describe("boot-chrome.js handoff and watchdog", () => {
     expect(statusText()).toBe("\u7a97\u53e3\u63a7\u5236\u4e0d\u53ef\u7528");
     expect(control("minimize").getAttribute("aria-label")).toBe("\u6700\u5c0f\u5316");
     expect(control("close").getAttribute("aria-label")).toBe("\u5173\u95ed");
+  });
+});
+
+describe("boot-chrome.js shell failures (S2-5)", () => {
+  it("degrades visibly when the shell refuses minimize (missing ACL grant)", async () => {
+    const invoke = vi.fn((command: string) =>
+      command === WINDOW_IPC.isMaximized
+        ? Promise.resolve(false)
+        : Promise.reject(
+            new Error(
+              "window.minimize not allowed. Permissions associated with this command: core:window:allow-minimize",
+            ),
+          ),
+    );
+    setGlobal("__TAURI_INTERNALS__", { invoke });
+    runBootChrome();
+
+    expect(bar()!.getAttribute("data-hk-available")).toBe("1");
+    control("minimize").click();
+    await flush();
+
+    // The button must not keep pretending to work.
+    expect(bar()!.getAttribute("data-hk-available")).toBe("0");
+    expect(bar()!.getAttribute("data-hk-degraded")).toBe("1");
+    expect(statusText()).toBe("Window controls unavailable");
+    expect(control("minimize").disabled).toBe(true);
+    expect(control("maximize").disabled).toBe(true);
+    // ...while closing stays possible: it is the way out and the retry.
+    expect(control("close").disabled).toBe(false);
+
+    const handle = bootChromeHandle() as { lastError?: string | null };
+    expect(String(handle.lastError)).toContain("minimize");
+    expect(String(handle.lastError)).toContain("allow-minimize");
+  });
+
+  it("degrades when maximize is refused (separate handler branch)", async () => {
+    const invoke = vi.fn((command: string) =>
+      command === WINDOW_IPC.isMaximized
+        ? Promise.resolve(false)
+        : Promise.reject(new Error("window.toggle_maximize denied")),
+    );
+    setGlobal("__TAURI_INTERNALS__", { invoke });
+    runBootChrome();
+
+    control("maximize").click();
+    await flush();
+
+    expect(bar()!.getAttribute("data-hk-available")).toBe("0");
+    expect(control("maximize").disabled).toBe(true);
+    expect(control("close").disabled).toBe(false);
+    expect(statusText()).toBe("Window controls unavailable");
+    const handle = bootChromeHandle() as { lastError?: string | null };
+    expect(String(handle.lastError)).toContain("maximize");
+  });
+
+  it("keeps close usable even when close itself is refused", async () => {
+    const invoke = vi.fn((command: string) =>
+      command === WINDOW_IPC.isMaximized
+        ? Promise.resolve(false)
+        : Promise.reject(new Error("denied")),
+    );
+    setGlobal("__TAURI_INTERNALS__", { invoke });
+    runBootChrome();
+
+    control("close").click();
+    await flush();
+
+    expect(bar()!.getAttribute("data-hk-available")).toBe("0");
+    expect(control("close").disabled).toBe(false);
+    expect(statusText()).toBe("Window controls unavailable");
+    const handle = bootChromeHandle() as { lastError?: string | null };
+    expect(String(handle.lastError)).toContain("close");
+  });
+
+  it("does not let the boot watchdog mask the controls failure (S3-2)", () => {
+    // No driver at all: the retry budget expires and the bar says so.
+    setGlobal("__TAURI_INTERNALS__", {});
+    runBootChrome({ hangMs: 6000 });
+
+    vi.advanceTimersByTime(5000);
+    expect(statusText()).toBe("Window controls unavailable");
+
+    vi.advanceTimersByTime(1000);
+    // The reload affordance still appears, but the actionable copy stays.
+    expect(control("reload")).not.toBeNull();
+    expect(statusText()).toBe("Window controls unavailable");
+  });
+
+  it("keeps the degraded copy when a refused command precedes the watchdog", async () => {
+    const invoke = vi.fn((command: string) =>
+      command === WINDOW_IPC.isMaximized
+        ? Promise.resolve(false)
+        : Promise.reject(new Error("denied")),
+    );
+    setGlobal("__TAURI_INTERNALS__", { invoke });
+    runBootChrome({ hangMs: 1000 });
+
+    control("minimize").click();
+    await flush();
+    vi.advanceTimersByTime(1000);
+
+    expect(document.querySelector('button[data-act="reload"]')).not.toBeNull();
+    expect(statusText()).toBe("Window controls unavailable");
+  });
+});
+
+describe("boot-chrome.js teardown (S3-1)", () => {
+  it("dismiss() marks the handoff and drops the injected stylesheet", () => {
+    useWindowApi(fakeWindowApi());
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn() });
+    runBootChrome();
+
+    expect(document.getElementById("hk-boot-chrome-style")).not.toBeNull();
+    bootChromeHandle().dismiss();
+
+    expect(
+      document.documentElement.getAttribute("data-hk-boot-chrome"),
+    ).toBe("claimed");
+
+    vi.advanceTimersByTime(200);
+    expect(bar()).toBeNull();
+    expect(document.getElementById("hk-boot-chrome-style")).toBeNull();
   });
 });
 

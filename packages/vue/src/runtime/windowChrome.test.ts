@@ -185,9 +185,13 @@ describe("resolveWindowApi", () => {
     expect(resolveWindowApi()).toBeNull();
   });
 
-  it("subscribes through the host event API when the internals path has one", async () => {
-    const off = vi.fn();
-    const listen = vi.fn(() => Promise.resolve(off));
+  it("polls instead of listening (Any-target listeners never see window resize)", async () => {
+    // S2-4: Tauri 2 delivers window resize events to Window{label} /
+    // WebviewWindow{label} targets, so a `listen("tauri://resize")` with the
+    // default target receives nothing. The internals path polls instead, even
+    // when an event API happens to be around.
+    vi.useFakeTimers();
+    const listen = vi.fn(() => Promise.resolve(() => {}));
     vi.stubGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
     vi.stubGlobal("__TAURI__", { event: { listen } });
 
@@ -196,8 +200,14 @@ describe("resolveWindowApi", () => {
 
     const handler = vi.fn();
     const unlisten = await api!.onResized(handler);
-    expect(listen).toHaveBeenCalledWith("tauri://resize", handler);
-    expect(unlisten).toBe(off);
+    expect(listen).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(RESIZE_POLL_MS);
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    unlisten();
+    vi.advanceTimersByTime(RESIZE_POLL_MS * 2);
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 
   it("polls the maximized flag when the internals path has no event API", async () => {

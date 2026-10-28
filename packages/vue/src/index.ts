@@ -840,12 +840,15 @@ export {
   RESIZE_POLL_MS,
   type WindowApiLike,
 } from "./runtime/windowChrome";
-// Pre-boot caption bar (`bootChromePlugin`) ships from the `./plugins` entry —
-// `@celestia-island/hikari/plugins` — exactly like bootScriptsPlugin, and for a
-// measured reason: this entry is what browser bundles import. Re-exporting the
-// plugin here makes every consumer's build pull the Node-side module, and Vite
-// then emits `boot-chrome.js` as a duplicate 28.8 kB asset AND warns
-// "node:fs has been externalized for browser compatibility" (verified with a
-// Vite 8 build; tree-shaking does not remove a statically-referenced asset).
-// Hosts put `bootChromePlugin` in vite.config.ts, where importing from the
-// `/plugins` entry is the natural thing to do, so nothing is lost.
+// Pre-boot caption bar (`bootChromePlugin`) is NOT exported here. It ships from
+// its own published subpath — `@celestia-island/hikari/plugins/boot-chrome` —
+// resolved to a self-contained ESM module, and that is what a host imports in
+// vite.config.ts:
+//   1. this entry is what BROWSER bundles import; re-exporting the Node-side
+//      plugin from it makes every consumer's build pull the module, and Vite
+//      then emits `boot-chrome.js` as a duplicate 28.8 kB asset AND warns
+//      "node:fs has been externalized for browser compatibility" (measured with
+//      Vite 8; tree-shaking does not remove a statically-referenced asset), and
+//   2. the `/plugins` barrel is TypeScript, which Node cannot load from inside
+//      node_modules (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) — the
+//      dedicated subpath exists precisely to avoid that.

@@ -31,12 +31,19 @@
  *
  * HOST API — `window.HkBootChrome`:
  *   setStatus(text)  replace the status text (e.g. "connecting…")
- *   dismiss()        remove the bar now (host takes over without claiming)
+ *   dismiss()        remove the bar now (host takes over without claiming);
+ *                    writes `data-hk-boot-chrome="claimed"` like a real claim
  *   isActive()       is the bar still mounted / still owning the top edge?
  *   ready            Promise<boolean> — true once a window driver is wired,
  *                    false when the shell API never showed up (or the bar was
  *                    dismissed first). Await it to know whether the three
  *                    buttons actually work.
+ *   lastError        string | null — the last shell refusal, e.g.
+ *                    "minimize: window.minimize not allowed. Permissions…".
+ *                    Most often a missing ACL grant
+ *                    (`core:window:allow-minimize` / `-toggle-maximize` /
+ *                    `-close`). Surfaced for host diagnostics and shown as the
+ *                    status tooltip.
  *
  * LIFECYCLE — `document.documentElement[data-hk-boot-chrome]`:
  *   "active"   bar mounted, waiting for the app to claim the window
@@ -45,6 +52,17 @@
  *              bar keeps the close button and grows a reload button
  * `document.documentElement.style["--hk-boot-chrome-h"]` publishes the bar
  * height so the host can offset its own content; it is removed with the bar.
+ * `data-hk-degraded="1"` marks a visible failure state (no usable shell API, or
+ * the shell refused a command).
+ *
+ * KNOWN PRECONDITIONS (host side):
+ *   - This script injects its own <style>, so the CSP needs
+ *     `style-src 'unsafe-inline'`. The family's Tauri shells allow it; a host
+ *     that forbids inline styles gets an unstyled strip, not a missing one.
+ *   - macOS: hikari's HkWindowControls renders nothing on Apple platforms (the
+ *     OS owns the traffic lights), so it never dispatches `hk:chrome-claim` —
+ *     an Apple host that uses that component must call
+ *     `claimWindowChrome()` itself. Windows targets are unaffected.
  *
  * BUTTON WIRING (fault tolerant, retried — this is the point of the file):
  *   1. `__TAURI__.window.getCurrentWindow()` (the documented JS API; present
@@ -558,6 +576,51 @@
 
   var retryTimer = 0;
   var retryAttempts = 0;
+  // Set when the shell refused a command (typically a missing ACL grant such as
+  // `core:window:allow-minimize`) or when no driver ever appeared. It keeps the
+  // bar's copy honest: "window controls unavailable" must not be overwritten by
+  // the boot watchdog's "still loading…".
+  var degraded = false;
+  var lastError = null;
+
+  /** Stringify a shell failure for `HkBootChrome.lastError` (and the tooltip). */
+  function describeError(error) {
+    if (error === null || error === undefined) return "";
+    var text = safe(function () {
+      return typeof error === "string" ? error : String(error.message || error);
+    }, "");
+    return text || "unknown error";
+  }
+
+  /**
+   * A command was refused by the shell. The controls stop pretending to work
+   * (that is the FAILURE RULE at the top of this file), the error becomes
+   * readable for the host, and CLOSE stays enabled so the user can still retry
+   * getting out of a broken window.
+   */
+  function commandFailed(command, error) {
+    lastError = command + ": " + describeError(error);
+    setStatusText(t().unavailable);
+    safe(function () {
+      statusEl.setAttribute("title", lastError);
+    }, undefined);
+    degradeButtons();
+  }
+
+  /** Visible failure state shared by the "no driver" and "command refused" paths. */
+  function degradeButtons() {
+    degraded = true;
+    bar.setAttribute("data-hk-available", "0");
+    bar.setAttribute("data-hk-degraded", "1");
+    minimizeBtn.disabled = true;
+    minimizeBtn.setAttribute("aria-disabled", "true");
+    maximizeBtn.disabled = true;
+    maximizeBtn.setAttribute("aria-disabled", "true");
+    // Closing must always remain possible: it is the only way out of a window
+    // whose chrome is broken, and it doubles as the retry affordance.
+    closeBtn.disabled = false;
+    closeBtn.removeAttribute("aria-disabled");
+  }
 
   function setMaximized(next) {
     var maximized = !!next;
@@ -597,6 +660,7 @@
     if (!found) return false;
     driver = found;
     bar.setAttribute("data-hk-driver", found.kind);
+    bar.removeAttribute("data-hk-degraded");
     setControlsEnabled(true);
     settleReady.settle(true);
     refreshMaximized();
@@ -607,8 +671,11 @@
     driver = null;
     bar.setAttribute("data-hk-driver", "none");
     setControlsEnabled(false);
-    // Visible failure, not silence: the text is what tells the user (and the
-    // next developer) that the shell API never arrived.
+    // No shell at all: nothing can work, close included (there is no command to
+    // send). Visible failure, not silence — the text is what tells the user (and
+    // the next developer) that the shell API never arrived.
+    degraded = true;
+    bar.setAttribute("data-hk-degraded", "1");
     setStatusText(t().unavailable);
     settleReady.settle(false);
   }
@@ -657,6 +724,15 @@
     }, undefined);
   }
 
+  /** Run one shell command; a refusal becomes a visible degradation (S2-5). */
+  function runCommand(command, promise) {
+    ignore(
+      promise.then(undefined, function (error) {
+        commandFailed(command, error);
+      })
+    );
+  }
+
   safe(function () {
     actions.addEventListener("click", function (event) {
       var target = event && event.target;
@@ -673,20 +749,22 @@
       // Buttons are only enabled once a driver exists, so this is defensive.
       if (!driver) return;
       if (act === "minimize") {
-        ignore(driver.minimize());
+        runCommand("minimize", driver.minimize());
       } else if (act === "maximize") {
-        ignore(
+        runCommand(
+          "maximize",
           driver.toggleMaximize().then(
             function () {
               refreshMaximized();
             },
-            function () {
+            function (error) {
+              commandFailed("maximize", error);
               refreshMaximized();
             }
           )
         );
       } else if (act === "close") {
-        ignore(driver.close());
+        runCommand("close", driver.close());
       }
     });
   }, undefined);
@@ -735,6 +813,12 @@
   function remove() {
     if (destroyed) return;
     destroyed = true;
+    // Both exits (claim and dismiss) mean "the app owns the window now": the
+    // lifecycle marker is written here so a host calling dismiss() is not left
+    // with a stale "active".
+    safe(function () {
+      root.setAttribute("data-hk-boot-chrome", "claimed");
+    }, undefined);
     teardown();
     // Fade out; pointer-events drop immediately so the app underneath is
     // clickable during the fade, and the node is gone well inside 200ms.
@@ -745,6 +829,11 @@
     setTimeout(function () {
       safe(function () {
         if (bar.parentNode) bar.parentNode.removeChild(bar);
+      }, undefined);
+      // Take the injected stylesheet with it — removed AFTER the fade so the
+      // bar never flashes unstyled on its way out.
+      safe(function () {
+        if (style.parentNode) style.parentNode.removeChild(style);
       }, undefined);
     }, FADE_MS);
   }
@@ -767,7 +856,9 @@
     hangTimer = 0;
     if (destroyed) return;
     root.setAttribute("data-hk-boot-chrome", "hung");
-    setStatusText(t().longLoading);
+    // A degraded bar keeps its actionable copy: "window controls unavailable"
+    // says something the user can act on, "still loading…" would erase it.
+    if (!degraded) setStatusText(t().longLoading);
     ensureReloadButton();
   }, hangMs);
 
@@ -784,6 +875,11 @@
       return !destroyed;
     },
     ready: settleReady.promise,
+    // A getter, so late failures (a click after a revoked ACL grant) are
+    // readable without the host re-reading a snapshot.
+    get lastError() {
+      return lastError;
+    },
   };
 
   safe(function () {

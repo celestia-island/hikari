@@ -75,11 +75,17 @@ export const HkWindowControls = defineComponent({
   setup(props) {
     const maximized = ref(false);
     let unlisten: (() => void) | null = null;
+    // Set on unmount: the mount path awaits `onResized()`, and an unmount that
+    // lands before that promise resolves would otherwise arm a poll interval
+    // (and keep writing `maximized`) for a component that no longer exists.
+    let disposed = false;
     // Only a mount that actually paints the cluster takes the window chrome
     // over from the boot bar (boot-chrome.js): the SAME gates the render
     // function applies, replayed once on mount. A component that renders
     // nothing must not claim — the boot bar would vanish and leave the window
-    // with no controls at all.
+    // with no controls at all. On Apple platforms nothing is painted (the OS
+    // owns the traffic lights), so a host that ships only this component on
+    // macOS must dispatch `claimWindowChrome()` itself.
     let claimed = false;
 
     onMounted(async () => {
@@ -91,10 +97,26 @@ export const HkWindowControls = defineComponent({
         claimed = true;
         claimWindowChrome("HkWindowControls");
       }
+      // Every shell read is failure-tolerant AND handled: an unhandled
+      // rejection during boot is treated as fatal by the family's
+      // `res/fatal-fallback.js` (it raises the full-screen "Application failed
+      // to load" landing on `unhandledrejection`), and the internals path would
+      // reproduce it every poll interval.
+      const refresh = () => {
+        void win.isMaximized().then(
+          (value) => {
+            if (!disposed) maximized.value = value;
+          },
+          () => {},
+        );
+      };
       try {
-        const refresh = () => void win.isMaximized().then((m) => (maximized.value = m));
         refresh();
         const off = await win.onResized(refresh);
+        if (disposed) {
+          off();
+          return;
+        }
         unlisten = off;
       } catch {
         /* the window API is optional furniture */
@@ -102,7 +124,9 @@ export const HkWindowControls = defineComponent({
     });
 
     onUnmounted(() => {
+      disposed = true;
       unlisten?.();
+      unlisten = null;
     });
 
     return () => {

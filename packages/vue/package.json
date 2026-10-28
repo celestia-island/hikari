@@ -37,6 +37,10 @@
     "./plugins": {
       "import": "./src/plugins/index.ts",
       "types": "./src/plugins/index.ts"
+    },
+    "./plugins/boot-chrome": {
+      "import": "./src/plugins/boot-chrome.mjs",
+      "types": "./src/plugins/boot-chrome.d.mts"
     }
   },
   "files": [

@@ -122,6 +122,39 @@
     flex-direction: column;
     gap: var(--space-16);
   }
+
+  /* ── phone: the rail becomes a top tab strip ────────────────────────
+     Under the family's mobile breakpoint the left rail moves to the
+     window's top edge as the shared pill strip (HTabs), horizontally
+     scrollable with edge fades — every section fits, the window never
+     grows a second nav column. The DOM branch and this layout share ONE
+     breakpoint through the data-phone attribute (useBreakpoint), so
+     neither half can drift. Desktop never sees these rules. */
+  &[data-phone] {
+    flex-direction: column;
+    /* A small breath between the strip and the pane (2026-10-28 user
+       direction) — tighter than the desktop rail gutter. */
+    gap: var(--space-12);
+
+    > .hk-settings__topnav {
+      flex: none;
+      /* Center the strip while it fits (the pill-strip family look);
+         once it overflows the scroller caps at 100% and the fades take
+         over, so centering never clips the overflowing start. */
+      display: flex;
+      justify-content: center;
+
+      /* One notch UP from the regular strips (text-sm, 4/12 padding,
+         16px icons): the phone nav is the window's primary switcher
+         (2026-10-28 user direction). Icons scale through the strip's
+         own trigger icon cell (the shell renders them at 18). */
+      .hk-tabs-trigger {
+        gap: var(--space-8);
+        padding: var(--space-6) var(--space-14);
+        font-size: var(--text-base);
+      }
+    }
+  }
 }
 
 /* ── Dialog host: stable frame + flush scrollbar edge ────────────────── */

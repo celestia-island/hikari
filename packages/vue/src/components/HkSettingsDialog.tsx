@@ -10,6 +10,8 @@ import {
 
 import HkTransitionContainer from "./HkTransitionContainer";
 import HkScrollContainer from "./HkScrollContainer";
+import HTabs from "./HkTabs";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import HModal from "./HkModal";
 import "./HkSettingsDialog.scss";
 
@@ -48,6 +50,15 @@ export interface HkSettingsSection {
  * SettingsShell.scss). Inside the dialog the modal body's own scroller is
  * made mathematically idle by the host height rule (see the SCSS); on a
  * page the host manages its own layout.
+ *
+ * Phone anatomy (2026-10-28 user direction): under the family's mobile
+ * breakpoint the left rail moves to the TOP of the window as the shared
+ * pill strip (HTabs) — horizontally scrollable with edge fades, so every
+ * section fits no matter how many entries a host offers — one notch
+ * larger than the regular strips, with a small gap before the pane.
+ * Desktop keeps the rail exactly as it was; the flip is live on resize
+ * and shared by every consumer of this shell (page-embedded bodies
+ * included).
  */
 export const HkSettingsBody = defineComponent({
   name: "HkSettingsBody",
@@ -63,7 +74,14 @@ export const HkSettingsBody = defineComponent({
     "update:section": (key: string) => typeof key === "string",
   },
   setup(props, { emit, slots }) {
-    const internal = ref(props.sections[0]?.key ?? "");
+    // The landing default is the FIRST USABLE section, never a disabled
+    // one: a disabled entry "renders but cannot be activated", so it must
+    // not win the default (R2 2026-10-28 — the old first-entry fallback
+    // let a disabled-first host open on a dead section, and the phone
+    // strip went further and FRAMED it as selected).
+    const firstUsable = () =>
+      props.sections.find((s) => !s.disabled)?.key ?? "";
+    const internal = ref(firstUsable());
     // Controlled while a section prop is bound: external changes flow in,
     // clicks flow out. Unbound: the internal ref alone decides. Immediate
     // so an opener that mounts ALREADY on a deep-linked section
@@ -86,7 +104,7 @@ export const HkSettingsBody = defineComponent({
     const active = () =>
       props.sections.some((s) => s.key === internal.value)
         ? internal.value
-        : (props.sections[0]?.key ?? "");
+        : firstUsable();
 
     // The pane is an HkScrollContainer; only its consumed ref slice is
     // typed here — the scroll reset needs the live viewport element and
@@ -103,42 +121,83 @@ export const HkSettingsBody = defineComponent({
     });
 
     function pick(key: string) {
+      // Belt-and-braces: every caller already refuses disabled entries
+      // upstream (rail: natively disabled buttons; strip: HTabs' disabled
+      // triggers + its keyboard guard; deep links: the section watch), so
+      // deleting this guard is provably behavior-neutral today (R3
+      // mutation M6, 2026-10-28). It stays so a future caller cannot
+      // bypass the contract by accident.
       const entry = props.sections.find((s) => s.key === key);
       if (!entry || entry.disabled) return;
       internal.value = key;
       emit("update:section", key);
     }
 
+    // Phone flips the nav to the top strip; desktop keeps the rail. One
+    // breakpoint source (useBreakpoint) drives BOTH the DOM branch and
+    // the data-phone attribute the SCSS keys the column layout on, so
+    // the two halves cannot drift (see the SCSS block for the layout).
+    const { isMobile } = useBreakpoint();
+
     return () => (
-      <div class="hk-settings">
+      <div class="hk-settings" data-phone={isMobile.value || undefined}>
         {/* Scroll ownership (see the docblock): both scrollers are
             HkScrollContainers — the overlay chrome replaces the native
             bars, and the paired-class rules in the SCSS carry each
             region's padding/gap vocabulary into its viewport. */}
-        <HkScrollContainer as="nav" class="hk-settings__rail" aria-label={props.navLabel}>
-          {props.sections.map((s) => {
-            const Icon = s.icon;
-            const on = active() === s.key && !s.disabled;
-            return (
-              <button
-                key={s.key}
-                type="button"
-                class={["hk-settings__rail-item", on ? "is-active" : ""]}
-                aria-current={on ? "true" : undefined}
-                aria-disabled={s.disabled || undefined}
-                disabled={s.disabled}
-                onClick={() => pick(s.key)}
-              >
-                {typeof Icon === "function" ? (
-                  <span class="hk-settings__rail-icon" aria-hidden="true">
-                    <Icon size={16} />
-                  </span>
-                ) : null}
-                <span class="hk-settings__rail-label">{s.label}</span>
-              </button>
-            );
-          })}
-        </HkScrollContainer>
+        {isMobile.value ? (
+          <div class="hk-settings__topnav">
+            {/* The shared pill strip IS the button-group primitive: it
+                scrolls horizontally with edge fades, keeps the active
+                tab scrolled into view, and carries the tablist
+                semantics the rail had as a nav landmark. Panels stay
+                with the shell's own pane (renderPanels off). Icons ride
+                one notch up with the strip (18px vs the rail's 16). */}
+            <HTabs
+              modelValue={active()}
+              tabs={props.sections.map((s) => {
+                const Icon = s.icon;
+                return {
+                  key: s.key,
+                  label: s.label,
+                  // Same functional-component guard the rail applies —
+                  // Component covers object-form components too, which
+                  // JSX cannot invoke directly.
+                  icon: typeof Icon === "function" ? <Icon size={18} /> : undefined,
+                  disabled: s.disabled,
+                };
+              })}
+              renderPanels={false}
+              ariaLabel={props.navLabel}
+              onUpdate:modelValue={(key: string) => pick(key)}
+            />
+          </div>
+        ) : (
+          <HkScrollContainer as="nav" class="hk-settings__rail" aria-label={props.navLabel}>
+            {props.sections.map((s) => {
+              const Icon = s.icon;
+              const on = active() === s.key && !s.disabled;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  class={["hk-settings__rail-item", on ? "is-active" : ""]}
+                  aria-current={on ? "true" : undefined}
+                  aria-disabled={s.disabled || undefined}
+                  disabled={s.disabled}
+                  onClick={() => pick(s.key)}
+                >
+                  {typeof Icon === "function" ? (
+                    <span class="hk-settings__rail-icon" aria-hidden="true">
+                      <Icon size={16} />
+                    </span>
+                  ) : null}
+                  <span class="hk-settings__rail-label">{s.label}</span>
+                </button>
+              );
+            })}
+          </HkScrollContainer>
+        )}
         <HkScrollContainer class="hk-settings__pane" ref={paneRef}>
           {/* The section swap runs through the family's standard morph
               container (audit 2026-10-23): the pane's frame follows the

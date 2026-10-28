@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import { Languages, Globe } from "lucide-vue-next";
@@ -320,5 +320,198 @@ describe("settings dialog SCSS host contract (source-level)", () => {
     const items = container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item");
     expect(items[2].classList.contains("is-active")).toBe(false);
     unmount();
+  });
+});
+
+describe("phone shell (rail → top tab strip, 2026-10-28 user direction)", () => {
+  const originalWidth = window.innerWidth;
+
+  const setWidth = (w: number) => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: w,
+    });
+    window.dispatchEvent(new Event("resize"));
+  };
+
+  afterEach(() => setWidth(originalWidth));
+
+  it("renders the top strip instead of the rail under the mobile breakpoint", () => {
+    setWidth(390);
+    const { container, unmount } = mount(Host);
+    // The rail is gone; the strip carries every section as a trigger and
+    // the shell marks the column layout for the SCSS.
+    expect(container.querySelector(".hk-settings__rail")).toBeNull();
+    expect(container.querySelector(".hk-settings")!.hasAttribute("data-phone")).toBe(true);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    expect(triggers).toHaveLength(3);
+    expect(triggers[0].textContent).toContain("Language");
+    // Icons ride one notch up with the strip (18 vs the rail's 16).
+    expect(triggers[0].querySelector(".hk-tabs-trigger-icon svg")).toBeTruthy();
+    expect(container.querySelector('[data-test="pane-language"]')).toBeTruthy();
+    unmount();
+  });
+
+  it("switches sections from the strip and reports selection", async () => {
+    setWidth(390);
+    const { container, unmount } = mount(Host);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    triggers[1].click();
+    await nextTick();
+    expect(container.querySelector('[data-test="pane-network"]')).toBeTruthy();
+    expect(triggers[1].getAttribute("aria-selected")).toBe("true");
+    // The strip's pill semantics: inactive triggers carry "false", not
+    // the attribute's absence.
+    expect(triggers[0].getAttribute("aria-selected")).toBe("false");
+    unmount();
+  });
+
+  it("never activates a disabled section from the strip", async () => {
+    setWidth(390);
+    const { container, unmount } = mount(Host);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    expect(triggers[2].disabled).toBe(true);
+    triggers[2].click();
+    await nextTick();
+    expect(container.querySelector('[data-test="pane-language"]')).toBeTruthy();
+    expect(triggers[2].getAttribute("aria-selected")).toBe("false");
+    unmount();
+  });
+
+  it("flips live when the viewport crosses the breakpoint", async () => {
+    // Start desktop: the rail is the nav.
+    const { container, unmount } = mount(Host);
+    expect(container.querySelector(".hk-settings__rail")).toBeTruthy();
+    expect(container.querySelector(".hk-settings__topnav")).toBeNull();
+    setWidth(390);
+    await nextTick();
+    expect(container.querySelector(".hk-settings__topnav")).toBeTruthy();
+    expect(container.querySelector(".hk-settings__rail")).toBeNull();
+    // …and back.
+    setWidth(1024);
+    await nextTick();
+    expect(container.querySelector(".hk-settings__rail")).toBeTruthy();
+    expect(container.querySelector(".hk-settings__topnav")).toBeNull();
+    unmount();
+  });
+
+  it("lands navLabel on the strip's tablist", () => {
+    setWidth(390);
+    const Named = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody sections={SECTIONS.slice(0, 2)} navLabel="Settings sections">
+            {{
+              language: () => <div data-test="pane-language" />,
+              network: () => <div data-test="pane-network" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    const { container, unmount } = mount(Named);
+    const list = container.querySelector(".hk-settings__topnav .hk-tabs-list");
+    expect(list).toBeTruthy();
+    expect(list!.getAttribute("role")).toBe("tablist");
+    expect(list!.getAttribute("aria-label")).toBe("Settings sections");
+    unmount();
+  });
+
+  it("never shows a disabled-first section as selected (either nav)", async () => {
+    // R2 2026-10-28: the landing default is the first USABLE key — a
+    // disabled-first host must not open on the dead entry, and the phone
+    // strip must not frame it aria-selected while the desktop rail
+    // highlights nothing.
+    const LockedFirst = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody
+            sections={[
+              { key: "locked", label: "Locked", disabled: true },
+              { key: "network", label: "Network", icon: Globe },
+            ]}
+          >
+            {{
+              locked: () => <div data-test="pane-locked" />,
+              network: () => <div data-test="pane-network" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    // Desktop: the rail never marks the dead entry active.
+    const desktop = mount(LockedFirst);
+    const railItems = desktop.container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item");
+    expect(railItems[0].classList.contains("is-active")).toBe(false);
+    expect(railItems[1].classList.contains("is-active")).toBe(true);
+    desktop.unmount();
+    // Phone: the strip's dead trigger stays unselected; the usable one
+    // carries the selection and its pane renders.
+    setWidth(390);
+    const phone = mount(LockedFirst);
+    const triggers = phone.container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    expect(triggers[0].getAttribute("aria-selected")).toBe("false");
+    expect(triggers[1].getAttribute("aria-selected")).toBe("true");
+    expect(phone.container.querySelector('[data-test="pane-network"]')).toBeTruthy();
+    phone.unmount();
+  });
+
+  it("round-trips strip picks to a bound section prop (controlled contract)", async () => {
+    // The pane follows internal state, so a deleted update:section emit
+    // would be invisible to an unbound host — pin the controlled half.
+    setWidth(390);
+    const section = ref("language");
+    const Controlled = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody
+            sections={SECTIONS.slice(0, 2)}
+            section={section.value}
+            onUpdate:section={(v: string) => (section.value = v)}
+          >
+            {{
+              language: () => <div data-test="pane-language" />,
+              network: () => <div data-test="pane-network" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    const { container, unmount } = mount(Controlled);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    triggers[1].click();
+    await nextTick();
+    expect(section.value).toBe("network");
+    unmount();
+  });
+
+  it("pins the phone layout contract in the SCSS source", () => {
+    // happy-dom cannot exercise the cascade: pin the column flip, the
+    // gap, the centering and the one-notch-up sizing at the source. The
+    // assertions read INSIDE the &[data-phone] block — several of these
+    // declarations also exist elsewhere in the sheet, and a bare
+    // toContain would keep passing after the phone rule dies (R2).
+    const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8");
+    const phoneBlock = scss.slice(
+      scss.indexOf("&[data-phone] {"),
+      scss.indexOf("Dialog host"),
+    );
+    expect(phoneBlock).toContain("flex-direction: column;");
+    expect(phoneBlock).toContain("gap: var(--space-12);");
+    expect(phoneBlock).toContain("> .hk-settings__topnav {");
+    expect(phoneBlock).toContain("justify-content: center;");
+    expect(phoneBlock).toContain("padding: var(--space-6) var(--space-14);");
+    expect(phoneBlock).toContain("font-size: var(--text-base);");
   });
 });

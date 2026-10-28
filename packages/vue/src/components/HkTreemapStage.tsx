@@ -328,8 +328,8 @@ export default defineComponent({
       const zw = w * zoom;
       const zh = h * zoom;
       const isGroup = cell.children.length > 0;
-      const showLabel = zh >= 16 && zw >= 26;
-      const showValue = zh >= 36 && zw >= 64;
+      const showLabel = zh >= 18 && zw >= 24;
+      const showValue = zh >= 40 && zw >= 56;
       const meta = showValue
         ? `${formatValue(node.value)} · ${formatHkTreemapPercent(node.percent)}`
         : null;
@@ -381,8 +381,8 @@ export default defineComponent({
       if (
         isGroup
         && depth < NESTED_MAX_DEPTH
-        && w >= NESTED_RECURSE_W
-        && h >= NESTED_RECURSE_H
+        && w * zoom >= NESTED_RECURSE_W
+        && h * zoom >= NESTED_RECURSE_H
       ) {
         for (const child of cell.children) {
           // The returned VNodes are FLAT siblings under the top-level group

@@ -133,11 +133,18 @@
 .hk-treemap-stage__nested-meta {
   flex: 0 0 auto;
   min-width: 0;
+  /* In the horizontal group-head row the meta MUST yield to the label so
+   * its own ellipsis pair can engage; the leaf body is a column and keeps
+   * its intrinsic height. */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   opacity: 0.85;
   font-variant-numeric: tabular-nums;
+}
+
+.hk-treemap-stage__nested-head .hk-treemap-stage__nested-meta {
+  flex: 0 1 auto;
 }
 
 .hk-treemap-stage__empty {

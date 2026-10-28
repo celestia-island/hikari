@@ -199,6 +199,8 @@
     "hikari::zoomToolbar.zoomSlider": "Niveau de zoom",
     "hikari::zoomToolbar.expandMap": "Afficher la mini-carte",
     "hikari::zoomToolbar.collapseMap": "Masquer la mini-carte",
+    "hikari::treemap.back": "Retour",
+    "hikari::treemap.drillPath": "Chemin d’exploration",
     "hikari::filterBar.trigger": "Filtres",
     "hikari::filterBar.apply": "Appliquer",
     "hikari::filterPanel.all": "Tous",

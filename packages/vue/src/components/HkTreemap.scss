@@ -124,6 +124,17 @@
   font-weight: 600;
 }
 
+/* An UNKNOWN / unattributed component is not a named category; the slant
+ * keeps it visibly distinct from every localized source label. */
+.hk-treemap__label--unknown {
+  font-style: italic;
+  opacity: 0.9;
+  /* Synthetic oblique ink leans past the last advance; the same 0.2em
+   * cushion as the family's reviewed italic-truncation rules keeps the
+   * trailing stroke inside the ellipsis box. */
+  padding-inline-end: 0.2em;
+}
+
 .hk-treemap__meta {
   opacity: 0.85;
   font-variant-numeric: tabular-nums;

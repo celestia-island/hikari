@@ -199,6 +199,8 @@
     "hikari::zoomToolbar.zoomSlider": "ズーム倍率",
     "hikari::zoomToolbar.expandMap": "ミニマップを表示",
     "hikari::zoomToolbar.collapseMap": "ミニマップを隠す",
+    "hikari::treemap.back": "戻る",
+    "hikari::treemap.drillPath": "ドリルパス",
     "hikari::filterBar.trigger": "絞り込み",
     "hikari::filterBar.apply": "適用",
     "hikari::filterPanel.all": "すべて",

@@ -199,6 +199,8 @@
     "hikari::zoomToolbar.zoomSlider": "縮放級別",
     "hikari::zoomToolbar.expandMap": "顯示小地圖",
     "hikari::zoomToolbar.collapseMap": "隱藏小地圖",
+    "hikari::treemap.back": "返回",
+    "hikari::treemap.drillPath": "下鑽路徑",
     "hikari::statusBar.region.CN": "中國大陸",
     "hikari::statusBar.region.HK": "中國香港",
     "hikari::statusBar.region.MO": "中國澳門",

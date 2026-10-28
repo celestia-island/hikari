@@ -1,11 +1,12 @@
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch,
-  type PropType } from "vue";
+  type PropType, type VNode } from "vue";
 import { ChevronLeft } from "lucide-vue-next";
 
 import HkIconButton from "./HkIconButton";
 import HkMinimap, { type MinimapBox } from "./HkMinimap";
 import HkTooltip from "./HkTooltip";
 import { drawnScale } from "../composables/layoutGeometry";
+import { useI18n } from "../i18n/context";
 import {
   buildHkTreemapLayout,
   contrastTextColor,
@@ -21,13 +22,13 @@ import "./HkTreemapStage.scss";
 
 const defaultValueFormatter: HkTreemapValueFormatter = (value) => String(value);
 
-/** One step of the drill path: the node plus its layout at that level. */
-interface DrillStep {
-  /** The node id at this level ("root" for the top). */
-  id: string;
-  label: string;
-  /** The layout nodes visible at this step (root's children, or the drilled
-   *  group's children). */
+/** The live resolution of the drill path against the CURRENT layout. */
+interface ResolvedDrill {
+  /** Valid ids (a refresh that removed a hop truncates here). */
+  ids: string[];
+  /** The nodes along the path, for the breadcrumb. */
+  nodes: HkTreemapLayoutNode[];
+  /** The children shown on the canvas at this level. */
   siblings: HkTreemapLayoutNode[];
 }
 
@@ -37,9 +38,13 @@ interface DrillStep {
  *
  *  - DRILL: clicking a GROUP cell zooms into it — its children re-lay out
  *    at the full canvas, so cells that were slivers reveal their labels,
- *    meta and nested structure ("部分方块在放大的时候才会显示更多的细
- *    节"). The header carries a BACK button (ChevronLeft, the family icon
- *    chrome) plus the drill path; clicking an earlier hop pops back to it.
+ *    meta and nested structure. The drill path survives live data refreshes
+ *    (ids, not snapshots); at root there is NO header/title, and a drilled
+ *    level shows the breadcrumb plus a floating return button in the
+ *    bottom-right control cluster beside the minimap.
+ *  - PREVIEW: a group large enough to subdivide paints its child cells in
+ *    place (non-interactive) — the operator sees some of the composition
+ *    before choosing to drill.
  *  - PAN/ZOOM: the camera scales/translates the cell layer; the ±/slider
  *    zoom bar (via the collapsible HkMinimap pinned bottom-right) steps
  *    50–200%, and dragging the minimap pans. Larger zoom rungs enlarge
@@ -73,6 +78,7 @@ export default defineComponent({
     select: (_id: string) => true,
   },
   setup(props, { emit }) {
+    const { t } = useI18n();
     const hostRef = ref<HTMLElement | null>(null);
     const size = ref<{ w: number; h: number } | null>(null);
     let observer: ResizeObserver | undefined;
@@ -161,13 +167,33 @@ export default defineComponent({
       panY.value = 0;
     }
 
-    // ── the drill stack ───────────────────────────────────────────────
+    // ── the drill path ────────────────────────────────────────────────
+    // Store IDS, never a children snapshot. Live parent refreshes allocate
+    // a new tree (same ids, updated tokens) on every poll; resolving the
+    // path against the current layout keeps the operator's drill/camera
+    // instead of silently snapping back to root (the reported regression).
     const layout = computed(() => buildHkTreemapLayout(props.nodes));
-    const drill = ref<DrillStep[]>([]);
-    const current = computed<DrillStep>(() => {
-      const step = drill.value[drill.value.length - 1];
-      if (step) return step;
-      return { id: "root", label: "", siblings: layout.value.nodes };
+    const drillPath = ref<string[]>([]);
+    const resolvedDrill = computed<ResolvedDrill>(() => {
+      let siblings = layout.value.nodes;
+      const nodes: HkTreemapLayoutNode[] = [];
+      let valid = 0;
+      for (const id of drillPath.value) {
+        const next = siblings.find((node) => node.id === id);
+        if (!next) break;
+        nodes.push(next);
+        siblings = next.children ?? [];
+        valid += 1;
+      }
+      return { ids: drillPath.value.slice(0, valid), nodes, siblings };
+    });
+
+    // Only an actually invalidated hop changes the path. A same-shape data
+    // refresh does not touch state at all.
+    watch(resolvedDrill, (resolved) => {
+      if (resolved.ids.length === drillPath.value.length) return;
+      drillPath.value = resolved.ids;
+      resetCamera();
     });
 
     function pushDrill(node: HkTreemapLayoutNode): void {
@@ -175,10 +201,7 @@ export default defineComponent({
         emit("select", node.id);
         return;
       }
-      drill.value = [
-        ...drill.value,
-        { id: node.id, label: node.label, siblings: node.children },
-    ];
+      drillPath.value = [...drillPath.value, node.id];
       // Drilling is itself a zoom: reset the pan so the new level starts
       // framed; the zoom rung stays (the user picked it).
       panX.value = 0;
@@ -186,21 +209,10 @@ export default defineComponent({
     }
 
     function popTo(index: number): void {
-      drill.value = drill.value.slice(0, index);
+      drillPath.value = drillPath.value.slice(0, index);
       panX.value = 0;
       panY.value = 0;
     }
-
-    // A changed LAYOUT invalidates the drill stack. Watching the layout
-    // (not the array identity) catches the in-place mutation a consumer
-    // can make (the computed recomputes off contents). Inline
-    // `:nodes="[...]"` literals still reset on every parent re-render —
-    // the layout allocates a fresh tree per recompute — so pass a stable
-    // reference from hot parents (known limitation, delta review F3).
-    watch(layout, () => {
-      drill.value = [];
-      resetCamera();
-    });
 
     // ── measurement (LOCAL px — the dpiPrefs root-zoom lesson) ────────
     function measure() {
@@ -228,14 +240,20 @@ export default defineComponent({
       resizeCleanup?.();
       resizeCleanup = undefined;
     });
-    watch([layout, current], measure);
+    watch([layout, resolvedDrill], measure);
 
     // ── cells at the current level ────────────────────────────────────
     const cells = computed<HkTreemapCell[]>(() => {
       const dims = size.value;
       if (!dims || layout.value.nodes.length === 0) return [];
-      return layoutHkTreemapCells(current.value.siblings, 0, 0, dims.w, dims.h);
+      return layoutHkTreemapCells(resolvedDrill.value.siblings, 0, 0, dims.w, dims.h);
     });
+    /** A drilled node can be refreshed into a leaf with no visible
+     *  children. Keep the level (and its return control) instead of
+     *  silently bouncing home, but explain the empty canvas. */
+    const levelEmpty = computed(() =>
+      hasData.value && resolvedDrill.value.nodes.length > 0 && cells.value.length === 0,
+    );
 
     const formatValue = (value: number) =>
       (props.valueFormatter ?? defaultValueFormatter)(value);
@@ -266,6 +284,13 @@ export default defineComponent({
       internalMinimapCollapsed.value = v;
       emit("update:minimapCollapsed", v);
     }
+    /** Park the floating return button beside the minimap, whether folded
+     *  (30px) or expanded (160px), so the control stays in the same corner
+     *  cluster instead of jumping to the top header. */
+    const backInsetEnd = computed(() => {
+      const minimapWidth = minimapIsCollapsed.value ? 30 : 160;
+      return `${12 + minimapWidth + 8}px`;
+    });
 
     // ── render ────────────────────────────────────────────────────────
     function cellText(node: HkTreemapLayoutNode): string {
@@ -278,23 +303,113 @@ export default defineComponent({
       transformOrigin: "0 0",
     }));
 
+    // ── nested preview ────────────────────────────────────────────────
+    // A big group already contains a laid-out child tree. Paint it in
+    // place (labels/meta allowed to degrade, exact like the standalone
+    // treemap) so the operator sees WHICH parts make up the block before
+    // drilling. Purely visual: pointer-events:none keeps the whole group
+    // one click target.
+    const NESTED_MIN_W = 120;
+    const NESTED_MIN_H = 90;
+    const NESTED_RECURSE_W = 90;
+    const NESTED_RECURSE_H = 70;
+    const NESTED_MAX_DEPTH = 3;
+
+    function renderNestedCell(
+      cell: HkTreemapCell,
+      key: string,
+      depth: number,
+      originX: number,
+      originY: number,
+    ): VNode[] {
+      const { node, x, y, w, h } = cell;
+      if (w < 2 || h < 2) return [];
+      const zoom = zoomPct.value / 100;
+      const zw = w * zoom;
+      const zh = h * zoom;
+      const isGroup = cell.children.length > 0;
+      const showLabel = zh >= 16 && zw >= 26;
+      const showValue = zh >= 36 && zw >= 64;
+      const meta = showValue
+        ? `${formatValue(node.value)} · ${formatHkTreemapPercent(node.percent)}`
+        : null;
+      const label = (
+        <span
+          class={{
+            "hk-treemap-stage__nested-label": true,
+            "hk-treemap__label--group": isGroup,
+            "hk-treemap__label--unknown": node.labelItalic,
+          }}
+        >{node.label}</span>
+      );
+      const out: VNode[] = [
+        <div
+          key={key}
+          class={{
+            "hk-treemap__cell": true,
+            "hk-treemap-stage__nested-cell": true,
+          }}
+          style={{
+            position: "absolute",
+            left: `${x - originX}px`,
+            top: `${y - originY}px`,
+            width: `${w}px`,
+            height: `${h}px`,
+            background: node.color,
+            "--hk-treemap-fg": contrastTextColor(node.color),
+          }}
+          data-depth={depth}
+          aria-hidden="true"
+        >
+          {isGroup ? (
+            showLabel && (
+              <span class="hk-treemap-stage__nested-head">
+                {label}
+                {meta && <span class="hk-treemap-stage__nested-meta">{meta}</span>}
+              </span>
+            )
+          ) : (
+            showLabel && (
+              <span class="hk-treemap-stage__nested-leaf">
+                {label}
+                {meta && <span class="hk-treemap-stage__nested-meta">{meta}</span>}
+              </span>
+            )
+          )}
+        </div>,
+      ];
+      if (
+        isGroup
+        && depth < NESTED_MAX_DEPTH
+        && w >= NESTED_RECURSE_W
+        && h >= NESTED_RECURSE_H
+      ) {
+        for (const child of cell.children) {
+          out.push(...renderNestedCell(child, `${key}/${child.node.id}`, depth + 1, x, y));
+        }
+      }
+      return out;
+    }
+
+    /** Child previews rendered INSIDE the top-level group cell, so the
+     *  cell's hover/focus ring and click surface stay above them without a
+     *  second stacking layer. */
+    function renderNestedPreview(cell: HkTreemapCell): VNode[] {
+      if (cell.children.length === 0) return [];
+      // The same zoom-aware ladder as the labels: a group that becomes
+      // visually large at a higher rung reveals its inside too.
+      const zoom = zoomPct.value / 100;
+      if (cell.w * zoom < NESTED_MIN_W || cell.h * zoom < NESTED_MIN_H) return [];
+      return cell.children.flatMap((child) =>
+        renderNestedCell(child, `nested:${cell.node.id}/${child.node.id}`, 0, cell.x, cell.y),
+      );
+    }
+
     return () => (
       <div class="hk-treemap-stage">
-        {hasData.value && (
+        {hasData.value && resolvedDrill.value.nodes.length > 0 && (
           <header class="hk-treemap-stage__head">
-            {drill.value.length > 0 ? (
-              <HkIconButton
-                size={24}
-                variant="ghost"
-                aria-label="Back"
-                onClick={() => popTo(drill.value.length - 1)}
-              >
-                {{ icon: () => <ChevronLeft size={15} /> }}
-              </HkIconButton>
-            ) : (
-              <span class="hk-treemap-stage__head-pad" aria-hidden="true" />
-            )}
-            <nav class="hk-treemap-stage__path" aria-label="Drill path">
+            <nav class="hk-treemap-stage__path" aria-label={t("hikari::treemap.drillPath", "Drill path")}>
               <button
                 type="button"
                 class="hk-treemap-stage__crumb"
@@ -303,13 +418,14 @@ export default defineComponent({
               >
                 {props.ariaLabel}
               </button>
-              {drill.value.map((step, i) => (
+              {resolvedDrill.value.nodes.map((step, i) => (
                 <span key={step.id} class="hk-treemap-stage__crumb-seg">
                   <span class="hk-treemap-stage__crumb-sep" aria-hidden="true">/</span>
                   <button
                     type="button"
                     class="hk-treemap-stage__crumb"
-                    data-last={i === drill.value.length - 1 || undefined}
+                    data-last={i === resolvedDrill.value.nodes.length - 1 || undefined}
+                    aria-current={i === resolvedDrill.value.nodes.length - 1 ? "page" : undefined}
                     onClick={() => popTo(i + 1)}
                   >
                     {step.label}
@@ -377,7 +493,13 @@ export default defineComponent({
                         >
                           {isGroup ? (
                             <span class="hk-treemap__group-head">
-                              <span class="hk-treemap__label hk-treemap__label--group">
+                              <span
+                                class={{
+                                  "hk-treemap__label": true,
+                                  "hk-treemap__label--group": true,
+                                  "hk-treemap__label--unknown": node.labelItalic,
+                                }}
+                              >
                                 {node.label}
                               </span>
                               {showValue && (
@@ -389,7 +511,12 @@ export default defineComponent({
                           ) : (
                             showLabel && (
                               <span class="hk-treemap__leaf-body">
-                                <span class="hk-treemap__label">{node.label}</span>
+                                <span
+                                  class={{
+                                    "hk-treemap__label": true,
+                                    "hk-treemap__label--unknown": node.labelItalic,
+                                  }}
+                                >{node.label}</span>
                                 {showValue && (
                                   <span class="hk-treemap__meta">
                                     {formatValue(node.value)} · {formatHkTreemapPercent(node.percent)}
@@ -398,6 +525,7 @@ export default defineComponent({
                               </span>
                             )
                           )}
+                          {isGroup && renderNestedPreview(cell)}
                         </div>
                       )}
                     </HkTooltip>
@@ -409,6 +537,9 @@ export default defineComponent({
               <div class="hk-treemap__empty">{props.emptyText}</div>
             )}
           </div>
+          {levelEmpty.value && (
+            <div class="hk-treemap-stage__empty">{props.emptyText}</div>
+          )}
           {hasData.value && (
             <HkMinimap
               collapsible
@@ -428,6 +559,18 @@ export default defineComponent({
               onZoomTo={(pct: number) => applyZoom(pct)}
               onPanDelta={(dx: number, dy: number) => applyPanDelta(dx, dy)}
             />
+          )}
+          {hasData.value && resolvedDrill.value.nodes.length > 0 && (
+            <HkIconButton
+              class="hk-treemap-stage__back-float"
+              style={{ insetInlineEnd: backInsetEnd.value }}
+              size={32}
+              variant="ghost"
+              aria-label={t("hikari::treemap.back", "Back")}
+              onClick={() => popTo(resolvedDrill.value.nodes.length - 1)}
+            >
+              {{ icon: () => <ChevronLeft size={16} /> }}
+            </HkIconButton>
           )}
         </div>
       </div>

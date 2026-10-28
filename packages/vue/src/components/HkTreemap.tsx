@@ -17,6 +17,10 @@ import "./HkTreemap.scss";
 export interface HkTreemapNode {
   id: string;
   label: string;
+  /** Render the label in italics — used for an explicitly UNKNOWN /
+   *  unattributed composition bucket, which must not read as a normal
+   *  named category. Inherited by descendants. */
+  labelItalic?: boolean;
   value: number;
   /** Optional opaque sRGB colour: #rgb/#rrggbb/#rrggbbaa, rgb()/rgba() or
    *  hsl()/hsla(). Cells are DOM-painted, so any CSS colour would work at
@@ -33,6 +37,7 @@ export type HkTreemapValueFormatter = (value: number) => string;
 export interface HkTreemapLayoutNode {
   id: string;
   label: string;
+  labelItalic?: boolean;
   value: number;
   color: string;
   percent: number;
@@ -174,6 +179,7 @@ const defaultValueFormatter: HkTreemapValueFormatter = (value) => String(value);
 interface NumericLayoutNode {
   id: string;
   label: string;
+  labelItalic?: boolean;
   value: number;
   color: string;
   children?: NumericLayoutNode[];
@@ -191,13 +197,15 @@ function isVisibleValue(value: number): boolean {
 function normalizeNode(
   node: HkTreemapNode,
   inheritedColor: string,
+  inheritedItalic = false,
 ): NumericLayoutNode | null {
   const color = node.color
     ? resolveOpaqueColor(node.color, inheritedColor)
     : inheritedColor;
+  const labelItalic = node.labelItalic ?? inheritedItalic;
   if (node.children && node.children.length > 0) {
     const children = node.children
-      .map((child) => normalizeNode(child, color))
+      .map((child) => normalizeNode(child, color, labelItalic))
       .filter((child): child is NumericLayoutNode => child !== null);
     if (children.length === 0) return null;
 
@@ -205,11 +213,24 @@ function normalizeNode(
     // Finite inputs can still overflow when summed. Such a group cannot be
     // represented truthfully, so omit it rather than emitting Infinity/NaN.
     if (!isVisibleValue(value)) return null;
-    return { id: node.id, label: node.label, value, color, children };
+    return {
+      id: node.id,
+      label: node.label,
+      ...(labelItalic ? { labelItalic: true } : {}),
+      value,
+      color,
+      children,
+    };
   }
 
   if (!isVisibleValue(node.value)) return null;
-  return { id: node.id, label: node.label, value: node.value, color };
+  return {
+    id: node.id,
+    label: node.label,
+    ...(labelItalic ? { labelItalic: true } : {}),
+    value: node.value,
+    color,
+  };
 }
 
 function visitLeaves(nodes: NumericLayoutNode[], visit: (leaf: NumericLayoutNode) => void): void {
@@ -523,13 +544,24 @@ export default defineComponent({
             >
               {head ? (
                 <span class="hk-treemap__group-head">
-                  <span class="hk-treemap__label hk-treemap__label--group">{label}</span>
+                  <span
+                    class={{
+                      "hk-treemap__label": true,
+                      "hk-treemap__label--group": true,
+                      "hk-treemap__label--unknown": node.labelItalic,
+                    }}
+                  >{label}</span>
                   {meta && <span class="hk-treemap__meta">{meta}</span>}
                 </span>
               ) : (
                 label && (
                   <span class="hk-treemap__leaf-body">
-                    <span class="hk-treemap__label">{label}</span>
+                    <span
+                      class={{
+                        "hk-treemap__label": true,
+                        "hk-treemap__label--unknown": node.labelItalic,
+                      }}
+                    >{label}</span>
                     {meta && <span class="hk-treemap__meta">{meta}</span>}
                   </span>
                 )
@@ -558,7 +590,12 @@ export default defineComponent({
                     style={{ backgroundColor: node.color }}
                     aria-hidden="true"
                   />
-                  <span class="hk-treemap__legend-label">{node.label}</span>
+                  <span
+                    class={{
+                      "hk-treemap__legend-label": true,
+                      "hk-treemap__label--unknown": node.labelItalic,
+                    }}
+                  >{node.label}</span>
                   <span class="hk-treemap__legend-value">{valueText}</span>
                   <span class="hk-treemap__legend-percent">{percentText}</span>
                 </li>

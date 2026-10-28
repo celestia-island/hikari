@@ -199,6 +199,8 @@
     "hikari::zoomToolbar.zoomSlider": "مستوى التكبير",
     "hikari::zoomToolbar.expandMap": "إظهار الخريطة المصغّرة",
     "hikari::zoomToolbar.collapseMap": "إخفاء الخريطة المصغّرة",
+    "hikari::treemap.back": "رجوع",
+    "hikari::treemap.drillPath": "مسار التفصيل",
     "hikari::filterBar.trigger": "عوامل التصفية",
     "hikari::filterBar.apply": "تطبيق",
     "hikari::filterPanel.all": "الكل",

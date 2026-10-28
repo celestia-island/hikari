@@ -396,6 +396,23 @@ describe("boot-chrome.js handoff and watchdog", () => {
     expect(control("close").disabled).toBe(false);
   });
 
+  it("puts the reload affordance at the right edge, next to close (S3-5)", () => {
+    useWindowApi(fakeWindowApi());
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn() });
+    runBootChrome({ hangMs: 1000 });
+
+    vi.advanceTimersByTime(1000);
+
+    // Right-hand cluster, immediately left of close: closing keeps the frame
+    // corner, so a mis-aimed click on a hung window cannot reload it.
+    expect(controls().map((button) => button.getAttribute("data-act"))).toEqual([
+      "minimize",
+      "maximize",
+      "reload",
+      "close",
+    ]);
+  });
+
   it("says so and offers reload after the hang watchdog fires", () => {
     useWindowApi(fakeWindowApi());
     setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn() });
@@ -532,6 +549,35 @@ describe("boot-chrome.js shell failures (S2-5)", () => {
     // The reload affordance still appears, but the actionable copy stays.
     expect(control("reload")).not.toBeNull();
     expect(statusText()).toBe("Window controls unavailable");
+  });
+
+  it("clears the stale refusal tooltip once a command succeeds (S3-6)", async () => {
+    let closeAttempts = 0;
+    const invoke = vi.fn((command: string) => {
+      if (command === WINDOW_IPC.isMaximized) return Promise.resolve(false);
+      if (command === WINDOW_IPC.close) {
+        closeAttempts += 1;
+        return closeAttempts === 1
+          ? Promise.reject(new Error("window.close not allowed"))
+          : Promise.resolve();
+      }
+      return Promise.resolve();
+    });
+    setGlobal("__TAURI_INTERNALS__", { invoke });
+    runBootChrome();
+
+    const status = document.getElementById("hk-boot-chrome-status")!;
+    control("close").click();
+    await flush();
+    expect(status.getAttribute("title")).toContain("close");
+
+    // Close stays enabled after the refusal, so the retry can succeed.
+    control("close").click();
+    await flush();
+    expect(status.hasAttribute("title")).toBe(false);
+    // The historical refusal remains readable for diagnostics.
+    const handle = bootChromeHandle() as { lastError?: string | null };
+    expect(String(handle.lastError)).toContain("close");
   });
 
   it("keeps the degraded copy when a refused command precedes the watchdog", async () => {

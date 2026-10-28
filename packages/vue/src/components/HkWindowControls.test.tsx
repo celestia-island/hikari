@@ -236,6 +236,39 @@ describe("HkWindowControls window-chrome claim", () => {
     }
   });
 
+  it("swallows rejected minimize/close (no unhandled rejection, no fake state)", async () => {
+    // S2-1 (R3): `void win.minimize()` without a rejection handler meant an
+    // ACL refusal became an unhandledrejection — which the family's
+    // res/fatal-fallback.js turns into the full-screen boot-failure landing —
+    // while the button kept looking perfectly usable.
+    const invoke = vi.fn((command: string) =>
+      command === WINDOW_IPC.isMaximized
+        ? Promise.resolve(false)
+        : Promise.reject(new Error(`${command} not allowed`)),
+    );
+    vi.stubGlobal("__TAURI_INTERNALS__", { invoke });
+
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => void unhandled.push(reason);
+    process.on("unhandledRejection", onUnhandled);
+    const t = mountControls({ variant: "standard" });
+    try {
+      const buttons = t.container.querySelectorAll<HTMLButtonElement>(
+        ".hk-window-controls__btn",
+      );
+      buttons[0]!.click(); // minimize
+      buttons[2]!.click(); // close
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(invoke).toHaveBeenCalledWith(WINDOW_IPC.minimize, {});
+      expect(invoke).toHaveBeenCalledWith(WINDOW_IPC.close, {});
+      expect(unhandled).toHaveLength(0);
+    } finally {
+      t.app.unmount();
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
+
   it("stops the maximized poll when unmounted before onResized resolves (S2-7)", async () => {
     vi.useFakeTimers();
     try {

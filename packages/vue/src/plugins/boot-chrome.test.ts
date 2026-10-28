@@ -144,6 +144,31 @@ describe("boot-chrome plugin multi-entry filter (S1-2)", () => {
     expect(tags(plugin, "/repo/overlay-app.html")).toHaveLength(0);
   });
 
+  it("warns once per skipped entry so forgetting htmlFiles is visible", () => {
+    // R3 S3-1: a multi-window host that never configured htmlFiles would ship
+    // a window with no caption bar and nothing in the build log.
+    const warnings: string[] = [];
+    const context = {
+      warn: (message: string) => void warnings.push(message),
+    };
+    const hook = bootChromePlugin().transformIndexHtml as unknown as (
+      html: string,
+      ctx: { filename: string },
+    ) => HtmlTagDescriptor[];
+    const run = (filename: string) => hook.call(context, "", { filename });
+
+    run("/app/overlay.html");
+    run("/app/overlay.html"); // dev re-requests the same page: no repeat
+    run("/app/index.html"); // instrumented: silent
+    run("/app/settings.html");
+    run("/app/settings.html");
+
+    expect(warnings).toHaveLength(2);
+    expect(warnings[0]).toContain("overlay.html");
+    expect(warnings[0]).toContain("htmlFiles");
+    expect(warnings[1]).toContain("settings.html");
+  });
+
   it("treats an unknown filename as the main entry (never silently skip)", () => {
     const injected = (
       bootChromePlugin().transformIndexHtml as unknown as (

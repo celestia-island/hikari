@@ -149,6 +149,13 @@ export const HkWindowControls = defineComponent({
           .catch(() => {});
       };
 
+      // A refused shell call must never surface as an unhandled rejection (the
+      // family's res/fatal-fallback.js turns one into a full-screen boot
+      // failure) and must never look like a working button. The boot bar shows
+      // the degraded state when it is the one drawing the controls; here the
+      // host's own footer simply keeps the glyph it had.
+      const ignore = (pending: Promise<unknown>) => void pending.catch(() => {});
+
       const flush = props.variant === "flush";
       return (
         <div
@@ -159,7 +166,7 @@ export const HkWindowControls = defineComponent({
             type="button"
             class="hk-window-controls__btn"
             aria-label="Minimize"
-            onClick={() => void win.minimize()}
+            onClick={() => ignore(win.minimize())}
           >
             <Minus size={flush ? 14 : 16} />
           </button>
@@ -177,7 +184,7 @@ export const HkWindowControls = defineComponent({
             type="button"
             class="hk-window-controls__btn hk-window-controls__btn--close"
             aria-label="Close"
-            onClick={() => void win.close()}
+            onClick={() => ignore(win.close())}
           >
             <X size={flush ? 14 : 16} />
           </button>

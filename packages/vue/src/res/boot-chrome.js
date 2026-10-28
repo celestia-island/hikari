@@ -33,7 +33,10 @@
  *   setStatus(text)  replace the status text (e.g. "connecting…")
  *   dismiss()        remove the bar now (host takes over without claiming);
  *                    writes `data-hk-boot-chrome="claimed"` like a real claim
- *   isActive()       is the bar still mounted / still owning the top edge?
+ *   isActive()       false as soon as the handoff starts: the bar fades for
+ *                    160 ms and stops taking clicks before its node leaves the
+ *                    DOM, so "active" means "still owning the top edge", not
+ *                    "still in the document".
  *   ready            Promise<boolean> — true once a window driver is wired,
  *                    false when the shell API never showed up (or the bar was
  *                    dismissed first). Await it to know whether the three
@@ -54,6 +57,10 @@
  * height so the host can offset its own content; it is removed with the bar.
  * `data-hk-degraded="1"` marks a visible failure state (no usable shell API, or
  * the shell refused a command).
+ * `data-hk-driver` on the bar is the wiring that actually answered — "window"
+ * (the documented `__TAURI__` API), "invoke" (the IPC fallback) or "none"
+ * (nothing usable was found, buttons disabled). It is the first thing to read
+ * when triaging "the bar is there but the buttons do nothing".
  *
  * KNOWN PRECONDITIONS (host side):
  *   - This script injects its own <style>, so the CSP needs
@@ -713,7 +720,10 @@
     // stays enabled even when the window controls degraded.
     button.disabled = false;
     button.removeAttribute("aria-disabled");
-    actions.insertBefore(button, actions.firstChild);
+    // Right-hand cluster, immediately LEFT of close: closing keeps the frame
+    // corner (the familiar target), so a user reaching for it on a hung window
+    // cannot hit reload by mistake.
+    actions.insertBefore(button, closeBtn);
     reloadBtn = button;
     return button;
   }
@@ -727,9 +737,18 @@
   /** Run one shell command; a refusal becomes a visible degradation (S2-5). */
   function runCommand(command, promise) {
     ignore(
-      promise.then(undefined, function (error) {
-        commandFailed(command, error);
-      })
+      promise.then(
+        function () {
+          // The command worked: any earlier refusal is stale, so the tooltip
+          // that carried it must not keep claiming the shell is refusing us.
+          safe(function () {
+            statusEl.removeAttribute("title");
+          }, undefined);
+        },
+        function (error) {
+          commandFailed(command, error);
+        }
+      )
     );
   }
 

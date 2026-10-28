@@ -38,6 +38,9 @@ import { fileURLToPath } from "node:url";
  *      `htmlFiles: /^index\.html$/`. Injecting into an overlay page paints a
  *      caption bar inside a transparent window.
  *
+ *      Every skipped entry is reported ONCE in the build log (`this.warn`), so
+ *      forgetting the list cannot silently ship a window without controls.
+ *
  *   2. `buildStart` / `generateBundle` — reads `../res/boot-chrome.js` and
  *      emits it as an asset at the output root, so the injected URL resolves in
  *      the built app. A missing source fails the build loudly: a 404 boot bar
@@ -132,6 +135,23 @@ export function bootChromePlugin(options = {}) {
   const opts = options && typeof options === "object" ? options : {};
   let cached = null;
   let base = "/";
+  // Entries we deliberately left alone. Warned once each: a multi-window host
+  // that forgot `htmlFiles` would otherwise ship a window whose caption bar
+  // never appears, with nothing in the build log to explain it.
+  const skipped = new Set();
+
+  /** Tell the host (once per entry) why this page got no bar. */
+  function warnSkipped(context, filename) {
+    const key = filename || "<unknown entry>";
+    if (skipped.has(key)) return;
+    skipped.add(key);
+    const message =
+      `[hikari boot-chrome] skipped "${basename(key)}": the pre-boot window bar ` +
+      `is only injected into entries listed by htmlFiles (default: index.html). ` +
+      `Add this entry to htmlFiles if it is an app window.`;
+    if (context && typeof context.warn === "function") context.warn(message);
+    else console.warn(message);
+  }
 
   /** Read the boot script (once per process — a package is not edited at runtime). */
   function source() {
@@ -193,7 +213,10 @@ export function bootChromePlugin(options = {}) {
     transformIndexHtml(_html, ctx) {
       const filename =
         ctx && typeof ctx.filename === "string" ? ctx.filename : "";
-      if (!htmlFileMatches(filename, opts.htmlFiles)) return [];
+      if (!htmlFileMatches(filename, opts.htmlFiles)) {
+        warnSkipped(this, filename);
+        return [];
+      }
       return [
         {
           tag: "script",

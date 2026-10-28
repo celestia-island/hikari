@@ -2,8 +2,8 @@
  *
  * Every selectable list row the library renders — cascade menu rows,
  * action rows, select options, popup-select items, theme pills, admin
- * header rows, nav rows, breadcrumb dropdown items — shares this exact
- * grammar. Desktop (anchored popouts) and mobile (bottom sheets) are
+ * header rows, nav rows, breadcrumb dropdown items, tag strips —
+ * shares this exact grammar. Desktop (anchored popouts) and mobile (bottom sheets) are
  * the same spec at two token sets; a sheet context merely swaps the
  * tokens, so every row inside ANY sheet gets the touch geometry
  * without per-component media queries.
@@ -89,7 +89,9 @@
   .s-popup-menu-item,
   .hk-popup-menu-item,
   .hk-breadcrumb-dropdown-item,
-  .hk-menu-divider {
+  .hk-menu-divider,
+  .hk-tag-dot-row,
+  .hk-tag-dot {
     @include item-sheet-tokens;
   }
 }
@@ -108,7 +110,9 @@
     .s-theme-item-btn,
     .s-popup-menu-item,
     .hk-popup-menu-item,
-    .hk-menu-divider {
+    .hk-menu-divider,
+    .hk-tag-dot-row,
+    .hk-tag-dot {
       @include item-sheet-tokens;
     }
   }

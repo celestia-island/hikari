@@ -79,6 +79,7 @@ export { HkLocalizedInput as HLocalizedInput, type HkLocaleOption } from "./comp
 export { default as HMenuPanel } from "./components/HkMenuPanel";
 export { default as HMenuActionItem } from "./components/HkMenuActionItem";
 export { default as HMenuIdentityItem } from "./components/HkMenuIdentityItem";
+export { default as HTagDotRow, type HkTagDot } from "./components/HkTagDotRow";
 export { default as HPopupSelect, isAnyPopupOpen, closeAllPopups, type HkPopupSelectOption } from "./components/HkPopupSelect";
 export { default as HProgressBar } from "./components/HkProgressBar";
 export { default as HProgressDialog } from "./components/HkProgressDialog";
@@ -669,6 +670,7 @@ export { default as HkContextMenuProvider } from "./components/HkContextMenuProv
 export { default as HkMenuPanel } from "./components/HkMenuPanel";
 export { default as HkMenuActionItem } from "./components/HkMenuActionItem";
 export { default as HkMenuIdentityItem } from "./components/HkMenuIdentityItem";
+export { default as HkTagDotRow } from "./components/HkTagDotRow";
 export { default as HkRowActions } from "./components/HkRowActions";
 export { default as HkPopupSelect } from "./components/HkPopupSelect";
 export { default as HkProgressBar } from "./components/HkProgressBar";

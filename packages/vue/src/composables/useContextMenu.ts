@@ -24,7 +24,14 @@
  * after a long touch do not open the menu twice.
  */
 
-import { inject, onBeforeUnmount, watch, type InjectionKey, type Ref } from "vue";
+import {
+  inject,
+  onBeforeUnmount,
+  watch,
+  type InjectionKey,
+  type Ref,
+  type VNodeChild,
+} from "vue";
 
 import type { HkMenuItem } from "../components/HkMenu";
 
@@ -36,6 +43,21 @@ export interface ContextMenuRequest {
   items: HkMenuItem[];
   /** Sheet header on mobile / popout a11y label on desktop. */
   title?: string;
+  /** Custom region pinned ABOVE the item rows (the root level only,
+   *  exactly like HkMenu's header slot, which this forwards to). The
+   *  menu chrome — popout/sheet, flipping, z-stack, outside-click,
+   *  Escape — stays the panel's; the region is a normal interactive
+   *  island inside it: clicks on it do NOT close the menu, so several
+   *  toggles can happen in one visit. State must live in the HOST'S
+   *  scope (the menu remounts on every open — see the provider's
+   *  menuEpoch); the render function reading reactive sources keeps
+   *  the region live while the menu is open. Conditionally render
+   *  NOTHING by returning an empty array ([]) — a null/undefined
+   *  return still mounts the slot wrapper and its flex gap. */
+  header?: () => VNodeChild;
+  /** Custom region pinned BELOW the item rows — the footer twin of
+   *  the header field (HkMenu's footer slot). */
+  footer?: () => VNodeChild;
   /** Called with the picked item's key. The menu closes itself. */
   onSelect?: (key: string, item: HkMenuItem) => void;
   /** Called when the menu closes without a selection (outside click,
@@ -83,6 +105,14 @@ export interface ContextTriggerPoint {
   kind: "pointer" | "longpress" | "keyboard";
   /** The element the trigger landed on (event.target). */
   target: EventTarget | null;
+  /** True when the underlying native event was already consumed
+   *  (preventDefault) by an INNER binding's handler before this one
+   *  ran — listeners fire innermost-first, so a DELEGATING (outer)
+   *  binding sees it only after an inner binding opened its menu. An
+   *  outer binding must defer: return null so the inner menu stands.
+   *  Absent for long-press opens (no native context event rides the
+   *  timer; an outer binding resolves by target instead). */
+  defaultPrevented?: boolean;
 }
 
 /**
@@ -149,6 +179,7 @@ export function bindContextMenu(
       y: event.clientY,
       kind: "pointer",
       target: event.target,
+      defaultPrevented: event.defaultPrevented,
     });
     if (opened) event.preventDefault();
     // Not opened: let it bubble to an outer binding untouched.
@@ -184,6 +215,7 @@ export function bindContextMenu(
       y: rect.bottom,
       kind: "keyboard",
       target: event.target,
+      defaultPrevented: event.defaultPrevented,
     });
     if (opened) event.preventDefault();
   };

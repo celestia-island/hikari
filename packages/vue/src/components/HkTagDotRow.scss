@@ -1,0 +1,64 @@
+/* ── HkTagDotRow — the Finder-style tag strip ────────────────────
+ * A horizontal row of toggleable colored dots with captions beneath
+ * (the macOS file-tag picker pattern): one dot per tag, a click
+ * toggles, several tags flip in one visit. Metrics and states come
+ * from the unified menu-item spec (see ./_menu-item.scss), so the
+ * strip keeps menu rhythm inside HkMenu header/footer slots,
+ * HkMenuPanel or any popover, and grows with the sheet tokens inside
+ * mobile sheets (registered in the spec's sheet-context list). This
+ * sheet owns only what is the strip's own: the even column layout,
+ * the dot itself, and the caption rhythm. */
+
+@use "./menu-item" as mi;
+
+.hk-tag-dot-row {
+  @include mi.item-tokens;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--hk-menu-item-gap);
+  /* A band of its own inside the slot wrapper: rows above and below
+   * keep their rhythm, the strip reads as one control. */
+  padding-block: var(--hk-menu-item-pad-y);
+}
+
+.hk-tag-dot {
+  @include mi.item;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: calc(var(--hk-menu-item-gap) / 2);
+  min-width: 0;
+  text-align: center;
+}
+
+.hk-tag-dot__dot {
+  flex: none;
+  width: calc(var(--hk-menu-item-icon-box) * 0.65);
+  height: calc(var(--hk-menu-item-icon-box) * 0.65);
+  border-radius: var(--radius-full, 9999px);
+  background: var(--hk-tag-color, rgb(var(--color-primary)));
+  transition: box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+/* Unapplied tags recede; the applied dot carries a soft ring of its
+ * own ink so the COLOR — not just the button wash — reads as on. */
+.hk-tag-dot:not([data-active]) .hk-tag-dot__dot {
+  opacity: 0.4;
+}
+
+.hk-tag-dot[data-active] .hk-tag-dot__dot {
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--hk-tag-color, rgb(var(--color-primary))) 30%, transparent);
+}
+
+/* The caption is secondary to the dot: the row grammar above sets
+ * size/weight; captions only keep their own line rhythm and may wrap
+ * (three short columns, never a wide table). */
+.hk-tag-dot__label {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  line-height: var(--hk-menu-item-lh);
+}

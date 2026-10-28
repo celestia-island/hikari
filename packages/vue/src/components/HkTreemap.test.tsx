@@ -11,9 +11,15 @@ import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 vi.mock("./HkTooltip", () => ({
   default: {
     name: "HkTooltipStub",
-    props: { text: { type: String, required: true } },
-    setup(props: { text: string }, { slots }: { slots: { default?: (p: unknown) => unknown } }) {
-      return () => h("span", { "data-hk-tooltip-text": props.text }, slots.default?.({}) as never);
+    props: {
+      text: { type: String, required: true },
+      placement: { type: String, default: "top" },
+    },
+    setup(props: { text: string; placement: string }, { slots }: { slots: { default?: (p: unknown) => unknown } }) {
+      return () => h("span", {
+        "data-hk-tooltip-text": props.text,
+        "data-hk-tooltip-placement": props.placement,
+      }, slots.default?.({}) as never);
     },
   },
 }));
@@ -316,8 +322,35 @@ describe("HkTreemap component", () => {
     // 400×240 LOCAL space (the old gBCR-based measure painted 2× cells).
     await setSize(mounted, 400, 240, 2);
     const cell = mounted.container.querySelector<HTMLElement>(".hk-treemap__cell")!;
-    expect(cell.style.width).toBe("400px");
-    expect(cell.style.height).toBe("240px");
+    const frame = cell.closest<HTMLElement>("[data-hk-tooltip-text]")!;
+    expect(frame.style.width).toBe("400px");
+    expect(frame.style.height).toBe("240px");
+    expect(cell.style.inset).toBe("0px");
+  });
+
+  it("keeps every small-canvas cell frame inside the chart at 1×/2×/3× DPI", async () => {
+    const mounted = mountTreemap({ nodes: NODES });
+    for (const zoom of [1, 2, 3]) {
+      await setSize(mounted, 220, 120, zoom);
+      const cells = [...mounted.container.querySelectorAll<HTMLElement>(".hk-treemap__cell")];
+      expect(cells.length).toBeGreaterThanOrEqual(4);
+      for (const cell of cells) {
+        const frame = cell.classList.contains("hk-treemap__cell--plate")
+          ? cell
+          : cell.closest<HTMLElement>("[data-hk-tooltip-text]")!;
+        if (frame !== cell) expect(frame.style.position).toBe("absolute");
+        const x = Number.parseFloat(frame.style.left);
+        const y = Number.parseFloat(frame.style.top);
+        const w = Number.parseFloat(frame.style.width);
+        const h = Number.parseFloat(frame.style.height);
+        expect([x, y, w, h].every(Number.isFinite)).toBe(true);
+        expect(x).toBeGreaterThanOrEqual(0);
+        expect(y).toBeGreaterThanOrEqual(0);
+        expect(x + w).toBeLessThanOrEqual(220.001);
+        expect(y + h).toBeLessThanOrEqual(120.001);
+        if (frame !== cell) expect(cell.style.inset).toBe("0px");
+      }
+    }
   });
 
   it("every cell carries the standard HkTooltip with label, value and share", async () => {
@@ -332,6 +365,10 @@ describe("HkTreemap component", () => {
     expect(tooltips).toContain("Group: 6u · 60%");
     expect(tooltips).toContain("Alpha: 2u · 20%");
     expect(tooltips).toContain("Other: 4u · 40%");
+    const placements = [...mounted.container.querySelectorAll("[data-hk-tooltip-placement]")]
+      .map((node) => node.getAttribute("data-hk-tooltip-placement"));
+    expect(placements).toHaveLength(tooltips.length);
+    expect(new Set(placements)).toEqual(new Set(["bottom"]));
   });
 
   it("re-renders cells when data changes on a same-size container", async () => {

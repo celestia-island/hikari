@@ -57,6 +57,10 @@ function wrapper(c: HTMLElement): HTMLElement {
 async function settle() {
   await new Promise((r) => setTimeout(r, 20));
   await nextTick();
+  // Wait for the show-time rAF position pass itself; a wall-clock sleep is
+  // not a frame barrier under a loaded test host.
+  await new Promise<void>((resolve) => { requestAnimationFrame(() => resolve()); });
+  await nextTick();
 }
 
 function enter(c: HTMLElement) {
@@ -266,6 +270,24 @@ describe("HkTooltip touch taps", () => {
     expect(popup().className).toContain("hk-tooltip-visible");
   });
 
+  it("follows a moving anchor on the touch-opened path too", async () => {
+    const { container } = mount({ text: "touch moving", delay: 3000, placement: "bottom" });
+    let top = 100;
+    wrapper(container).getBoundingClientRect = () => ({
+      x: 200, y: top, left: 200, top, right: 280, bottom: top + 40,
+      width: 80, height: 40, toJSON: () => ({}),
+    }) as DOMRect;
+    tap(wrapper(container));
+    await settle();
+    expect(popup().style.top).toBe("148px");
+    top = 120;
+    await settle();
+    expect(popup().style.top).toBe("168px");
+    tap(wrapper(container)); // close also stops the tracking loop
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
   it("toggles closed when the trigger is tapped again", async () => {
     const { container } = mount({ text: "toggle", delay: 3000 });
     tap(wrapper(container));
@@ -321,6 +343,44 @@ describe("HkTooltip touch taps", () => {
 });
 
 describe("HkTooltip anchoring", () => {
+  it("uses an explicitly-sized absolute wrapper as the visible cell anchor", async () => {
+    const { container } = mount({
+      text: "cell", delay: 0, placement: "bottom",
+      style: { position: "absolute", left: "200px", top: "100px", width: "400px", height: "240px" },
+    });
+    const anchor = wrapper(container);
+    expect(anchor.style.position).toBe("absolute");
+    expect(anchor.style.width).toBe("400px");
+    anchor.getBoundingClientRect = () => ({
+      x: 200, y: 100, left: 200, top: 100, right: 600, bottom: 340,
+      width: 400, height: 240, toJSON: () => ({}),
+    }) as DOMRect;
+    enter(container);
+    await settle();
+    expect(popup().style.top).toBe("348px"); // cell.bottom 340 + 8px gap
+    expect(popup().style.left).toBe("400px"); // visible frame's centre
+    expect(popup().style.transform).toBe("translate(-50%, 0)");
+  });
+
+  it("follows a moving anchor while visible (wheel zoom / minimap pan)", async () => {
+    const { container } = mount({ text: "moving", delay: 0, placement: "bottom" });
+    let top = 100;
+    wrapper(container).getBoundingClientRect = () => ({
+      x: 200, y: top, left: 200, top, right: 280, bottom: top + 40,
+      width: 80, height: 40, toJSON: () => ({}),
+    }) as DOMRect;
+    enter(container);
+    await settle();
+    expect(popup().style.top).toBe("148px");
+
+    top = 120; // the same hovered cell moves with the camera; no new enter
+    await settle();
+    expect(popup().style.top).toBe("168px");
+    leave(container);
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
   it("places the popup above the anchor with the top placement (gap + transform)", async () => {
     const { container } = mount({ text: "up", delay: 0, placement: "top" });
     enter(container);

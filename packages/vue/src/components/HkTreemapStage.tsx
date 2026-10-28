@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-vue-next";
 import HkIconButton from "./HkIconButton";
 import HkMinimap, { type MinimapBox } from "./HkMinimap";
 import HkTooltip from "./HkTooltip";
+import { drawnScale } from "../composables/layoutGeometry";
 import {
   buildHkTreemapLayout,
   contrastTextColor,
@@ -86,28 +87,71 @@ export default defineComponent({
     const panX = ref(0);
     const panY = ref(0);
 
-    function applyZoom(target: number): void {
-      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(target)));
-      // Capture the PREVIOUS rung before writing the new one — reading
-      // zoomPct after the write always yields `next` and turns the pan
-      // rescale below into a silent no-op (R2 finding).
-      const prev = zoomPct.value;
-      internalZoom.value = next;
-      emit("update:zoomPercent", next);
-      // The camera anchors the ORIGIN (transform-origin: 0 0), so a rung
-      // change rescales any accumulated pan by the same ratio to keep the
-      // content under the cursor tracking — an origin-anchored re-scale,
-      // not a centre-anchored one.
-      if (prev > 0 && next !== prev) {
-        const ratio = next / prev;
-        panX.value *= ratio;
-        panY.value *= ratio;
-      }
+    interface ZoomAnchor { x: number; y: number }
+    let pendingControlledZoom: { percent: number; anchor: ZoomAnchor } | null = null;
+
+    function rescalePan(prev: number, next: number, anchor: ZoomAnchor): void {
+      // transform = translate(pan) scale(k): keep the WORLD point under
+      // `anchor` stationary. Minimap buttons keep the historical origin
+      // anchor; wheel passes the pointer's LOCAL canvas point (DPI-safe).
+      if (prev <= 0 || next === prev) return;
+      const ratio = next / prev;
+      panX.value = anchor.x - (anchor.x - panX.value) * ratio;
+      panY.value = anchor.y - (anchor.y - panY.value) * ratio;
     }
+
+    function applyZoom(target: number, anchor = { x: 0, y: 0 }): void {
+      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(target)));
+      const prev = zoomPct.value;
+      if (props.zoomPercent === undefined) {
+        internalZoom.value = next;
+        rescalePan(prev, next, anchor);
+      } else {
+        // Controlled mode is a REQUEST until the parent applies it. If the
+        // parent rejects/omits the update, scale AND pan must both stay put.
+        pendingControlledZoom = { percent: next, anchor };
+      }
+      emit("update:zoomPercent", next);
+    }
+
+    watch(() => props.zoomPercent, (next, prev) => {
+      if (next == null || prev == null || next === prev) return;
+      const pending = pendingControlledZoom;
+      pendingControlledZoom = null;
+      rescalePan(prev, next, pending?.percent === next ? pending.anchor : { x: 0, y: 0 });
+    });
 
     function applyPanDelta(dx: number, dy: number): void {
       panX.value += dx;
       panY.value += dy;
+    }
+
+    function localPoint(event: WheelEvent): { x: number; y: number } {
+      const el = hostRef.value;
+      const rect = el?.getBoundingClientRect();
+      if (!el) return { x: 0, y: 0 };
+      // Pointer coordinates and gBCR are DRAWN px; the camera lives in the
+      // canvas's LOCAL CSS px. Follow HkBoard's root-zoom conversion rather
+      // than letting a 200%/300% root move the zoom anchor off the pointer.
+      const scale = drawnScale(el);
+      const factor = el.offsetWidth > 0 ? scale.x : el.offsetHeight > 0 ? scale.y : 1;
+      const k = factor > 0 ? factor : 1;
+      return {
+        x: (event.clientX - (rect?.left ?? 0)) / k,
+        y: (event.clientY - (rect?.top ?? 0)) / k,
+      };
+    }
+
+    function onWheel(event: WheelEvent): void {
+      // The stage is a map canvas: wheel gestures belong to its camera, not
+      // to the popover/page behind it. Prevent the scroll even at a zoom
+      // limit so reaching 50%/200% never unexpectedly scrolls the host.
+      event.preventDefault();
+      if (event.deltaY === 0) return;
+      applyZoom(
+        zoomPct.value + (event.deltaY < 0 ? STEP_ZOOM : -STEP_ZOOM),
+        localPoint(event),
+      );
     }
 
     function resetCamera(): void {
@@ -276,7 +320,13 @@ export default defineComponent({
           </header>
         )}
         <div class="hk-treemap-stage__body">
-          <div ref={hostRef} class="hk-treemap-stage__canvas" role="application" aria-label={props.ariaLabel}>
+          <div
+            ref={hostRef}
+            class="hk-treemap-stage__canvas"
+            role="application"
+            aria-label={props.ariaLabel}
+            onWheel={onWheel}
+          >
             {hasData.value && (
               <div class="hk-treemap-stage__surface" style={surfaceStyle.value}>
                 {cells.value.map((cell) => {
@@ -289,8 +339,15 @@ export default defineComponent({
                   const zh = h * (zoomPct.value / 100);
                   const showValue = zh >= 40 && zw >= 56;
                   const showLabel = zh >= 18 && zw >= 24;
+                  const frameStyle = {
+                    position: "absolute" as const,
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    width: `${w}px`,
+                    height: `${h}px`,
+                  };
                   return (
-                    <HkTooltip key={node.id} text={cellText(node)} placement="top">
+                    <HkTooltip key={node.id} text={cellText(node)} placement="bottom" style={frameStyle}>
                       {() => (
                         <div
                           class={{
@@ -300,10 +357,7 @@ export default defineComponent({
                             "hk-treemap-stage__cell--drillable": isGroup,
                           }}
                           style={{
-                            left: `${x}px`,
-                            top: `${y}px`,
-                            width: `${w}px`,
-                            height: `${h}px`,
+                            inset: "0px",
                             background: node.color,
                             "--hk-treemap-fg": contrastTextColor(node.color),
                           }}

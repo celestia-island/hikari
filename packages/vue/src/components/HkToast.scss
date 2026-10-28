@@ -128,6 +128,39 @@
   to { transform: rotate(360deg); }
 }
 
+/* Inline action (e.g. Undo): a compact text pill in the toast chrome,
+ *  between the body and the icon buttons. Sits in the same ghost-button
+ *  family as copy/close, but reads as an affordance. */
+.hk-toast-action {
+  flex: none;
+  align-self: center;
+  margin-inline-start: var(--space-4, 4px);
+  padding: var(--space-2, 2px) var(--space-8, 8px);
+  border: 1px solid rgb(var(--color-border, 100 100 100) / 30%);
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0.92;
+  transition: opacity var(--duration-fast, 0.15s) ease,
+    border-color var(--duration-fast, 0.15s) ease;
+}
+
+.hk-toast-action:hover {
+  opacity: 1;
+  border-color: rgb(var(--color-border, 100 100 100) / 55%);
+}
+
+.hk-toast-action:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
 .hk-toast-copy-btn,
 .hk-toast-close {
   display: flex;

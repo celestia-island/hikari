@@ -80,7 +80,7 @@ export {
   type PopupHandle,
   type PopupKind,
 } from "./usePopupManager";
-export { useToast, TOAST_DURATION, type ToastItem, type ToastMessage, type ToastType } from "./useToast";
+export { useToast, TOAST_DURATION, type ToastAction, type ToastItem, type ToastMessage, type ToastType } from "./useToast";
 export { useConfirm } from "./useConfirm";
 export { useBlockingToast, showBlockingToast, resolveBlockingToast, clearBlockingToasts, type BlockingToastItem, type BlockingToastOptions, type BlockingToastVariant } from "./useBlockingToast";
 export { useBreakpoint } from "./useBreakpoint";

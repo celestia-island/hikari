@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkToast from "./HkToast";
@@ -261,5 +261,76 @@ describe("HkToast live-region semantics", () => {
       expect(el.getAttribute("role"), type).toBe("status");
       expect(el.getAttribute("aria-live"), type).toBe("polite");
     }
+  });
+
+  it("renders an inline action button that dismisses first, then runs", async () => {
+    mountHost();
+    const toast = useToast();
+    let slotGoneAtClick = false;
+    toast.show("Player removed", {
+      type: "success",
+      duration: 8000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          // The dismissal is synchronous and precedes the handler.
+          slotGoneAtClick = !toast.toasts.some((t) => t.type === "success");
+        },
+      },
+    });
+    await settle();
+
+    const item = items()[0];
+    const button = item.querySelector<HTMLButtonElement>(".hk-toast-action");
+    expect(button).not.toBeNull();
+    expect(button!.textContent).toBe("Undo");
+
+    button!.click();
+    await settle();
+    expect(slotGoneAtClick).toBe(true);
+    expect(items().length).toBe(0); // the action dismisses the toast
+  });
+
+  it("runs the action at most once (the leaving item stays clickable)", async () => {
+    mountHost();
+    const toast = useToast();
+    const undone = vi.fn();
+    toast.show("Player removed", {
+      type: "success",
+      duration: 8000,
+      action: { label: "Undo", onClick: undone },
+    });
+    await settle();
+    const button = items()[0].querySelector<HTMLButtonElement>(".hk-toast-action")!;
+    button.click();
+    button.click(); // the leave transition keeps the node clickable briefly
+    await settle();
+    expect(undone).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders no action button for plain toasts", async () => {
+    mountHost();
+    const toast = useToast();
+    toast.success("Saved");
+    await settle();
+    expect(items()[0].querySelector(".hk-toast-action")).toBeNull();
+  });
+
+  it("keeps the toast dismissed even when the action handler throws", async () => {
+    mountHost();
+    const toast = useToast();
+    toast.show("Player removed", {
+      type: "success",
+      action: {
+        label: "Undo",
+        onClick: () => {
+          throw new Error("undo failed");
+        },
+      },
+    });
+    await settle();
+    items()[0].querySelector<HTMLButtonElement>(".hk-toast-action")!.click();
+    await settle();
+    expect(items().length).toBe(0);
   });
 });

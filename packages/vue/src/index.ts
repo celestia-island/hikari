@@ -383,6 +383,7 @@ export {
   type OverlayHandle,
   type PopupHandle,
   type PopupKind,
+  type ToastAction,
   type ToastItem,
   type ToastMessage,
   type ToastType,

@@ -199,6 +199,8 @@
     "hikari::zoomToolbar.zoomSlider": "Уровень масштаба",
     "hikari::zoomToolbar.expandMap": "Показать мини-карту",
     "hikari::zoomToolbar.collapseMap": "Скрыть мини-карту",
+    "hikari::treemap.back": "Назад",
+    "hikari::treemap.drillPath": "Путь детализации",
     "hikari::filterBar.trigger": "Фильтры",
     "hikari::filterBar.apply": "Применить",
     "hikari::filterPanel.all": "Все",

@@ -199,6 +199,8 @@
     "hikari::zoomToolbar.zoomSlider": "Zoom level",
     "hikari::zoomToolbar.expandMap": "Show minimap",
     "hikari::zoomToolbar.collapseMap": "Hide minimap",
+    "hikari::treemap.back": "Back",
+    "hikari::treemap.drillPath": "Drill path",
     "hikari::filterBar.trigger": "Filters",
     "hikari::filterBar.apply": "Apply",
     "hikari::filterPanel.all": "All",

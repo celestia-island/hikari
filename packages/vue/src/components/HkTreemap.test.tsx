@@ -316,6 +316,41 @@ describe("HkTreemap component", () => {
     );
   });
 
+  it("marks an explicitly unknown label with the italic label class", async () => {
+    const mounted = mountTreemap({
+      nodes: [{ id: "unknown", label: "Unknown", value: 5, labelItalic: true }],
+    });
+    await setSize(mounted, 400, 240);
+    const label = mounted.container.querySelector(".hk-treemap__cell .hk-treemap__label--unknown");
+    expect(label).not.toBeNull();
+    expect(label!.textContent).toBe("Unknown");
+    expect(label!.closest("[data-hk-tooltip-text]")?.getAttribute("data-hk-tooltip-text"))
+      .toContain("Unknown");
+    // The default-on legend must not restore an upright reading.
+    expect(mounted.container.querySelector(".hk-treemap__legend-label.hk-treemap__label--unknown"))
+      .not.toBeNull();
+  });
+
+  it("inherits labelItalic from an unknown group to its descendants", async () => {
+    const nodes: HkTreemapNode[] = [{
+      id: "unknown-group",
+      label: "Unknown group",
+      value: 0,
+      labelItalic: true,
+      children: [{ id: "child", label: "Child", value: 5 }],
+    }];
+    const layout = buildHkTreemapLayout(nodes);
+    expect(layout.nodes[0]!.labelItalic).toBe(true);
+    expect(layout.nodes[0]!.children![0]!.labelItalic).toBe(true);
+    const mounted = mountTreemap({ nodes });
+    await setSize(mounted, 400, 240);
+    const labels = [...mounted.container.querySelectorAll(".hk-treemap__label")];
+    expect(labels.length).toBeGreaterThanOrEqual(2);
+    for (const label of labels) {
+      expect(label.classList.contains("hk-treemap__label--unknown")).toBe(true);
+    }
+  });
+
   it("lays out in LOCAL px under a root zoom — never zoom× oversized (R2 S1)", async () => {
     const mounted = mountTreemap({ nodes: [{ id: "solo", label: "Solo", value: 5 }] });
     // 2× root: gBCR reports 800×480 drawn; the layout must still tile the
@@ -443,5 +478,13 @@ describe("HkTreemap chrome contract (SCSS pins)", () => {
     expect(css).not.toContain("#fff");
     expect(css).toMatch(/--color-background/);
     expect(css).toMatch(/--color-muted/);
+  });
+
+  it("italic unknown labels carry the reviewed horizontal overhang cushion", () => {
+    const block = css.match(/\.hk-treemap__label--unknown\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    expect(block).toContain("font-style: italic");
+    // The italic scan cannot resolve a modifier class on top of the base
+    // truncation box; pin the cushion at the source level instead.
+    expect(block).toMatch(/padding-inline-end:\s*0\.2em/);
   });
 });

@@ -123,7 +123,22 @@ describe("HkTreemapStage — the drill path", () => {
     const placements = [...mounted.container.querySelectorAll("[data-hk-tooltip-placement]")]
       .map((node) => node.getAttribute("data-hk-tooltip-placement"));
     expect(new Set(placements)).toEqual(new Set(["bottom"]));
-    expect(mounted.container.textContent).toContain("Usage"); // the root crumb
+    // No redundant root-level title/header; the canvas aria-label still
+    // names the surface for assistive tech.
+    expect(mounted.container.querySelector(".hk-treemap-stage__head")).toBeNull();
+    expect(mounted.container.querySelector('[aria-label="Back"]')).toBeNull();
+    // Big groups preview their children immediately (no click required).
+    const nested = [...mounted.container.querySelectorAll(".hk-treemap-stage__nested-cell")];
+    expect(nested.length).toBeGreaterThanOrEqual(2);
+    const nestedLabels = [...mounted.container.querySelectorAll(".hk-treemap-stage__nested-label")]
+      .map((node) => node.textContent);
+    expect(nestedLabels).toContain("Alpha");
+    expect(nestedLabels).toContain("Beta");
+    // Previews live INSIDE the drillable cell: parent hover/focus chrome
+    // and the click surface stay above them without a second z-layer.
+    for (const preview of nested) {
+      expect(preview.closest(".hk-treemap-stage__cell--drillable")).not.toBeNull();
+    }
   });
 
   it("keeps the tooltip-owned cell frames inside a small canvas at 2×/3× DPI", async () => {
@@ -216,7 +231,69 @@ describe("HkTreemapStage — the drill path", () => {
     expect(container.querySelector('[aria-label="Back"]')).toBeNull();
   });
 
-  it("changing the data resets the drill stack and the camera", async () => {
+  it("a same-shape live refresh preserves the drill path and camera", async () => {
+    const mounted = mountStage({ nodes: NODES });
+    await setSize(mounted);
+    const group = [...mounted.container.querySelectorAll(".hk-treemap-stage__cell--drillable")]
+      .find((c) => (c.getAttribute("aria-label") ?? "").startsWith("Group:")) as HTMLElement;
+    group.click();
+    await nextTick();
+    expect(mounted.container.querySelector('[aria-label="Back"]')).toBeTruthy();
+    const back = mounted.container.querySelector<HTMLElement>('[aria-label="Back"]')!;
+    expect(back.classList.contains("hk-treemap-stage__back-float")).toBe(true);
+
+    // A camera change made at this level must survive the refresh too.
+    const canvas = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__canvas")!;
+    canvas.dispatchEvent(new WheelEvent("wheel", {
+      deltaY: -100, bubbles: true, cancelable: true,
+    }));
+    await nextTick();
+    const surface = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__surface")!;
+    const camera = surface.style.transform;
+    expect(camera).toContain("scale(1.1)");
+
+    // Live polling hands the stage a NEW array with the same ids (updated
+    // weights). The user's drill must survive; only the values move.
+    mounted.update({
+      nodes: [
+        {
+          id: "group",
+          label: "Group",
+          value: 0,
+          children: [
+            { id: "a", label: "Alpha updated", value: 5 },
+            { id: "b", label: "Beta", value: 7 },
+          ],
+        },
+        { id: "other", label: "Other", value: 4 },
+      ],
+    });
+    await nextTick();
+    expect(mounted.container.querySelector('[aria-label="Back"]')).toBeTruthy();
+    expect(mounted.container.textContent).toContain("Alpha updated");
+    expect(mounted.container.textContent).toContain("Beta");
+    expect(mounted.container.querySelector(".hk-treemap-stage__head")).toBeTruthy();
+    expect(mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__surface")!.style.transform)
+      .toBe(camera);
+  });
+
+  it("keeps a drilled level with a localized empty message when its children vanish", async () => {
+    const mounted = mountStage({ nodes: NODES, emptyText: "Nothing inside" });
+    await setSize(mounted);
+    const group = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__cell--drillable")!;
+    group.click();
+    await nextTick();
+
+    // Same group id, refreshed into a leaf: no auto-return, no blank canvas.
+    mounted.update({ nodes: [{ id: "group", label: "Group", value: 5 }] });
+    await nextTick();
+    expect(mounted.container.querySelector('[aria-label="Back"]')).toBeTruthy();
+    expect(mounted.container.querySelector(".hk-treemap-stage__head")).toBeTruthy();
+    expect(mounted.container.querySelector(".hk-treemap-stage__empty")?.textContent)
+      .toBe("Nothing inside");
+  });
+
+  it("removing the drilled group falls back to root and clears the back control", async () => {
     const mounted = mountStage({ nodes: NODES });
     await setSize(mounted);
     const group = [...mounted.container.querySelectorAll(".hk-treemap-stage__cell--drillable")]
@@ -228,7 +305,115 @@ describe("HkTreemapStage — the drill path", () => {
     mounted.update({ nodes: [{ id: "fresh", label: "Fresh", value: 3 }] });
     await nextTick();
     expect(mounted.container.querySelector('[aria-label="Back"]')).toBeNull();
+    expect(mounted.container.querySelector(".hk-treemap-stage__head")).toBeNull();
     expect(mounted.container.textContent).toContain("Fresh");
+  });
+
+  it("reveals the nested preview only when zoom makes the group large enough", async () => {
+    const nestedNodes: HkTreemapNode[] = [
+      {
+        id: "outer",
+        label: "Outer",
+        value: 0,
+        children: [{
+          id: "inner",
+          label: "Inner",
+          value: 0,
+          children: [
+            { id: "inner-a", label: "Inner A", value: 1 },
+            { id: "inner-b", label: "Inner B", value: 1 },
+          ],
+        }],
+      },
+      { id: "other", label: "Other", value: 1 },
+    ];
+    const mounted = mountStage({ nodes: nestedNodes, zoomPercent: 100 });
+    await setSize(mounted, 100, 240);
+    // The group cell is 100px wide at 100% — below the 120×90 preview
+    // gate, even though it is tall.
+    expect(mounted.container.querySelectorAll(".hk-treemap-stage__nested-cell")).toHaveLength(0);
+
+    mounted.update({ zoomPercent: 150 });
+    await nextTick();
+    const previews = [...mounted.container.querySelectorAll<HTMLElement>(".hk-treemap-stage__nested-cell")];
+    expect(previews.length).toBeGreaterThan(0);
+    // Recursion reaches the grandchild level (outer → inner → leaves) and
+    // the nested group's own label passes the zoomed label ladder.
+    expect(previews.some((cell) => cell.dataset.depth === "1")).toBe(true);
+    expect(previews.every((cell) => cell.getAttribute("aria-hidden") === "true")).toBe(true);
+    // Flat VNodes all live under the top-level cell: the grandchild must sit
+    // below/right of its nested parent by the header/pad inset. Re-basing on
+    // the nested cell's own x/y would collapse this delta to zero.
+    const depth0 = previews.find((cell) => cell.dataset.depth === "0")!;
+    const depth1 = previews.find((cell) => cell.dataset.depth === "1")!;
+    expect(Number.parseFloat(depth1.style.top) - Number.parseFloat(depth0.style.top))
+      .toBeGreaterThanOrEqual(22);
+    expect(Number.parseFloat(depth1.style.left) - Number.parseFloat(depth0.style.left))
+      .toBeGreaterThanOrEqual(2);
+    expect(mounted.container.textContent).toContain("Inner");
+    // Previews are descendants of the group button, not siblings.
+    for (const preview of previews) {
+      expect(preview.closest(".hk-treemap-stage__cell--drillable")).not.toBeNull();
+    }
+  });
+
+  it("also gates the preview on the zoomed HEIGHT, not width alone", async () => {
+    const wideShort = mountStage({
+      nodes: [{
+        id: "wide",
+        label: "Wide",
+        value: 0,
+        children: [
+          { id: "wide-a", label: "Wide A", value: 1 },
+          { id: "wide-b", label: "Wide B", value: 1 },
+        ],
+      }],
+      zoomPercent: 100,
+    });
+    await setSize(wideShort, 200, 80);
+    // Full-canvas group: 200×80 at 100% — wide enough, too short.
+    expect(wideShort.container.querySelectorAll(".hk-treemap-stage__nested-cell")).toHaveLength(0);
+    wideShort.update({ zoomPercent: 150 });
+    await nextTick();
+    expect(wideShort.container.querySelectorAll(".hk-treemap-stage__nested-cell").length)
+      .toBeGreaterThan(0);
+  });
+
+  it("parks the floating return control beside the minimap when it expands", async () => {
+    const mounted = mountStage({ nodes: NODES });
+    await setSize(mounted);
+    const group = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__cell--drillable")!;
+    group.click();
+    await nextTick();
+    const back = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__back-float")!;
+    const endOf = () => back.style.getPropertyValue("inset-inline-end");
+    expect(endOf()).toBe("50px"); // 12px gutter + 30px collapsed map + 8px gap
+
+    (mounted.container.querySelector(".hk-minimap--collapsed") as HTMLElement).click();
+    await nextTick();
+    expect(endOf()).toBe("180px"); // expanded map is 160px wide
+  });
+
+  it("renders an unknown child label in italics", async () => {
+    const mounted = mountStage({
+      nodes: [{
+        id: "group",
+        label: "Group",
+        value: 0,
+        children: [
+          { id: "known", label: "Known", value: 3 },
+          { id: "unknown", label: "Unknown", value: 9, labelItalic: true },
+        ],
+      }],
+    });
+    await setSize(mounted);
+    // A large unknown leaf also gets a top-level italic label when drilled.
+    const group = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__cell--drillable")!;
+    group.click();
+    await nextTick();
+    const unknown = mounted.container.querySelector(".hk-treemap__label--unknown");
+    expect(unknown).not.toBeNull();
+    expect(unknown!.textContent).toBe("Unknown");
   });
 });
 

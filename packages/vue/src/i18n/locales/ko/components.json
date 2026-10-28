@@ -199,6 +199,8 @@
     "hikari::zoomToolbar.zoomSlider": "확대 수준",
     "hikari::zoomToolbar.expandMap": "미니맵 표시",
     "hikari::zoomToolbar.collapseMap": "미니맵 숨기기",
+    "hikari::treemap.back": "뒤로",
+    "hikari::treemap.drillPath": "드릴 경로",
     "hikari::filterBar.trigger": "필터",
     "hikari::filterBar.apply": "적용",
     "hikari::filterPanel.all": "전체",

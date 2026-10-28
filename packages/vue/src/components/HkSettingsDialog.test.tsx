@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import { Languages, Globe } from "lucide-vue-next";
@@ -320,5 +320,119 @@ describe("settings dialog SCSS host contract (source-level)", () => {
     const items = container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item");
     expect(items[2].classList.contains("is-active")).toBe(false);
     unmount();
+  });
+});
+
+describe("phone shell (rail → top tab strip, 2026-10-28 user direction)", () => {
+  const originalWidth = window.innerWidth;
+
+  const setWidth = (w: number) => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: w,
+    });
+    window.dispatchEvent(new Event("resize"));
+  };
+
+  afterEach(() => setWidth(originalWidth));
+
+  it("renders the top strip instead of the rail under the mobile breakpoint", () => {
+    setWidth(390);
+    const { container, unmount } = mount(Host);
+    // The rail is gone; the strip carries every section as a trigger and
+    // the shell marks the column layout for the SCSS.
+    expect(container.querySelector(".hk-settings__rail")).toBeNull();
+    expect(container.querySelector(".hk-settings")!.hasAttribute("data-phone")).toBe(true);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    expect(triggers).toHaveLength(3);
+    expect(triggers[0].textContent).toContain("Language");
+    // Icons ride one notch up with the strip (18 vs the rail's 16).
+    expect(triggers[0].querySelector(".hk-tabs-trigger-icon svg")).toBeTruthy();
+    expect(container.querySelector('[data-test="pane-language"]')).toBeTruthy();
+    unmount();
+  });
+
+  it("switches sections from the strip and reports selection", async () => {
+    setWidth(390);
+    const { container, unmount } = mount(Host);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    triggers[1].click();
+    await nextTick();
+    expect(container.querySelector('[data-test="pane-network"]')).toBeTruthy();
+    expect(triggers[1].getAttribute("aria-selected")).toBe("true");
+    // The strip's pill semantics: inactive triggers carry "false", not
+    // the attribute's absence.
+    expect(triggers[0].getAttribute("aria-selected")).toBe("false");
+    unmount();
+  });
+
+  it("never activates a disabled section from the strip", async () => {
+    setWidth(390);
+    const { container, unmount } = mount(Host);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    expect(triggers[2].disabled).toBe(true);
+    triggers[2].click();
+    await nextTick();
+    expect(container.querySelector('[data-test="pane-language"]')).toBeTruthy();
+    expect(triggers[2].getAttribute("aria-selected")).toBe("false");
+    unmount();
+  });
+
+  it("flips live when the viewport crosses the breakpoint", async () => {
+    // Start desktop: the rail is the nav.
+    const { container, unmount } = mount(Host);
+    expect(container.querySelector(".hk-settings__rail")).toBeTruthy();
+    expect(container.querySelector(".hk-settings__topnav")).toBeNull();
+    setWidth(390);
+    await nextTick();
+    expect(container.querySelector(".hk-settings__topnav")).toBeTruthy();
+    expect(container.querySelector(".hk-settings__rail")).toBeNull();
+    // …and back.
+    setWidth(1024);
+    await nextTick();
+    expect(container.querySelector(".hk-settings__rail")).toBeTruthy();
+    expect(container.querySelector(".hk-settings__topnav")).toBeNull();
+    unmount();
+  });
+
+  it("lands navLabel on the strip's tablist", () => {
+    setWidth(390);
+    const Named = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody sections={SECTIONS.slice(0, 2)} navLabel="Settings sections">
+            {{
+              language: () => <div data-test="pane-language" />,
+              network: () => <div data-test="pane-network" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    const { container, unmount } = mount(Named);
+    const list = container.querySelector(".hk-settings__topnav .hk-tabs-list");
+    expect(list).toBeTruthy();
+    expect(list!.getAttribute("role")).toBe("tablist");
+    expect(list!.getAttribute("aria-label")).toBe("Settings sections");
+    unmount();
+  });
+
+  it("pins the phone layout contract in the SCSS source", () => {
+    // happy-dom cannot exercise the cascade: pin the column flip, the
+    // gap, the centering and the one-notch-up sizing at the source.
+    const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8");
+    expect(scss).toContain("&[data-phone] {\n    flex-direction: column;");
+    expect(scss).toContain("gap: var(--space-12);");
+    expect(scss).toContain("> .hk-settings__topnav {");
+    expect(scss).toContain("justify-content: center;");
+    expect(scss).toContain("padding: var(--space-6) var(--space-14);");
+    expect(scss).toContain("font-size: var(--text-base);");
   });
 });

@@ -110,6 +110,22 @@ export default defineComponent({
       quadrantPlacement(request.value?.x ?? 0, request.value?.y ?? 0),
     );
 
+    /** The request's custom regions become HkMenu's level-0 header/
+     *  footer slots (object children = slots in Vue JSX). Only the
+     *  keys that exist are handed over, so a request without custom
+     *  content renders exactly as before. The slot closures re-read
+     *  the CURRENT request through the shallowRef, and each open
+     *  bumps menuEpoch — a fresh HkMenu mounts with fresh slots, and
+     *  the region's own reactive reads (host state) keep it live
+     *  while the menu stays open. */
+    const menuSlots = () => {
+      const req = request.value;
+      return {
+        ...(req?.header ? { header: () => req.header!() } : {}),
+        ...(req?.footer ? { footer: () => req.footer!() } : {}),
+      };
+    };
+
     return () => (
       <>
         {slots.default?.()}
@@ -136,7 +152,9 @@ export default defineComponent({
           anchorRef={anchor.value}
           placement={placement.value}
           title={request.value?.title ?? ""}
-        />
+        >
+          {menuSlots()}
+        </HkMenu>
       </>
     );
   },

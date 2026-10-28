@@ -550,3 +550,89 @@ describe("useContextMenu + HkContextMenuProvider", () => {
     expect(which).toEqual([el1, el2]); // el1 unbound, el2 bound
   });
 });
+
+describe("bindContextMenu layering — a delegating outer binding defers to inner ones", () => {
+  it("suppresses the outer open when an inner binding already claimed the event", () => {
+    const inner = mockApi();
+    const outer = mockApi();
+    const outerEl = document.createElement("div");
+    outerEl.setAttribute("data-bind-target", "");
+    const innerEl = document.createElement("div");
+    innerEl.setAttribute("data-bind-target", "");
+    outerEl.appendChild(innerEl);
+    document.body.appendChild(outerEl);
+
+    const unbindOuter = bindContextMenu(outerEl, outer.api, (point) =>
+      // The delegating contract: an inner binding consumed the native
+      // event, so its menu stands — this one steps aside.
+      point.defaultPrevented
+        ? null
+        : { x: point.x, y: point.y, items: [{ key: "outer", label: "Outer" }] },
+    );
+    const unbindInner = bindContextMenu(innerEl, inner.api, () => ({
+      x: 1,
+      y: 2,
+      items: [{ key: "inner", label: "Inner" }],
+    }));
+
+    innerEl.dispatchEvent(
+      new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 5, clientY: 6 }),
+    );
+    expect(inner.opens).toHaveLength(1);
+    expect(outer.opens).toHaveLength(0);
+
+    unbindOuter();
+    unbindInner();
+    outerEl.remove();
+  });
+
+  it("still opens the outer menu for events the inner binding never sees", () => {
+    const inner = mockApi();
+    const outer = mockApi();
+    const outerEl = document.createElement("div");
+    outerEl.setAttribute("data-bind-target", "");
+    const innerEl = document.createElement("div");
+    innerEl.setAttribute("data-bind-target", "");
+    outerEl.appendChild(innerEl);
+    document.body.appendChild(outerEl);
+
+    const unbindOuter = bindContextMenu(outerEl, outer.api, (point) =>
+      point.defaultPrevented
+        ? null
+        : { x: point.x, y: point.y, items: [{ key: "outer", label: "Outer" }] },
+    );
+    const unbindInner = bindContextMenu(innerEl, inner.api, () => ({
+      x: 1,
+      y: 2,
+      items: [{ key: "inner", label: "Inner" }],
+    }));
+
+    outerEl.dispatchEvent(
+      new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 7, clientY: 8 }),
+    );
+    expect(inner.opens).toHaveLength(0);
+    expect(outer.opens).toHaveLength(1);
+
+    unbindOuter();
+    unbindInner();
+    outerEl.remove();
+  });
+
+  it("reports defaultPrevented on the trigger point (false before this binding acts)", () => {
+    const target = document.createElement("div");
+    target.setAttribute("data-bind-target", "");
+    document.body.appendChild(target);
+    const { api } = mockApi();
+    const seen: (boolean | undefined)[] = [];
+    const unbind = bindContextMenu(target, api, (point) => {
+      seen.push(point.defaultPrevented);
+      return { x: point.x, y: point.y, items: [{ key: "a", label: "A" }] };
+    });
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    target.dispatchEvent(event);
+    // Read BEFORE this binding's own preventDefault runs.
+    expect(seen).toEqual([false]);
+    expect(event.defaultPrevented).toBe(true);
+    unbind();
+  });
+});

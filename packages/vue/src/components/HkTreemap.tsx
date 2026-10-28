@@ -144,21 +144,18 @@ function resolveOpaqueColor(raw: string, fallback: string): string {
   return `rgb(${Math.round(channels[0])} ${Math.round(channels[1])} ${Math.round(channels[2])})`;
 }
 
-/** Pick the higher-contrast label colour for an opaque CSS background. */
-export function contrastTextColor(background: string): string {
-  const channels = parseCssColor(background);
-  if (!channels || channels[3] < 0.999) return "#fff";
-  // sRGB relative luminance, with the standard gamma expansion. The two
-  // candidate text colours (#fff / #0b1220) cross at luminance ~= 0.193.
-  const linear = (channel: number) => {
-    const value = channel / 255;
-    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  };
-  const luminance =
-    0.2126 * linear(channels[0]) +
-    0.7152 * linear(channels[1]) +
-    0.0722 * linear(channels[2]);
-  return luminance > 0.193 ? "#0b1220" : "#fff";
+/**
+ * Cell label colour — user direction 2026-10-28: the text inside the colour
+ * blocks should read like the family's icon glyphs (WHITE on the dark
+ * theme), not a per-block black/white flip that made mid-tone cells carry
+ * dark text. So the foreground simply follows the theme's icon/text token
+ * (`--hi-icon-color` resolves to `rgb(var(--color-text))`), the same
+ * vocabulary HkIconButton uses; the light theme keeps dark ink via the same
+ * token. The background argument is kept for signature compatibility and
+ * intentionally unused.
+ */
+export function contrastTextColor(_background: string): string {
+  return "rgb(var(--color-text, 30 30 30))";
 }
 
 export const HK_TREEMAP_DEFAULT_COLORS = [

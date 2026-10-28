@@ -229,18 +229,13 @@ describe("HkTreemap pure layout input", () => {
     ).toEqual({ nodes: [], total: 0 });
   });
 
-  it("chooses readable label colours across pale, mid-tone and dark backgrounds", () => {
-    expect(contrastTextColor("#edc948")).toBe("#0b1220");
-    expect(contrastTextColor("#4e79a7")).toBe("#fff");
-    expect(contrastTextColor("#76b7b2")).toBe("#0b1220");
-    expect(contrastTextColor("rgb(242, 142, 43)")).toBe("#0b1220");
-    expect(contrastTextColor("#abc")).toBe("#0b1220");
-    expect(contrastTextColor("hsl(0, 0%, 100%)")).toBe("#0b1220");
-    expect(contrastTextColor("not-a-color")).toBe("#fff");
-    // Every default palette member must clear WCAG AA with its chosen text.
-    for (const color of HK_TREEMAP_DEFAULT_COLORS) {
-      expect(["#fff", "#0b1220"]).toContain(contrastTextColor(color));
-    }
+  it("cell labels follow the theme icon/text token, not a per-block flip", () => {
+    // User direction 2026-10-28: cells read like icon glyphs — white on the
+    // dark theme via rgb(var(--color-text)), the same vocabulary as
+    // HkIconButton; the token flips the ink in the light theme.
+    expect(contrastTextColor("#edc948")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("#4e79a7")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("not-a-color")).toBe("rgb(var(--color-text, 30 30 30))");
   });
 
   it("builds an accessible leaf-path summary from the same layout", () => {

@@ -357,6 +357,28 @@ describe("HkTreemapStage — the drill path", () => {
     }
   });
 
+  it("also gates the preview on the zoomed HEIGHT, not width alone", async () => {
+    const wideShort = mountStage({
+      nodes: [{
+        id: "wide",
+        label: "Wide",
+        value: 0,
+        children: [
+          { id: "wide-a", label: "Wide A", value: 1 },
+          { id: "wide-b", label: "Wide B", value: 1 },
+        ],
+      }],
+      zoomPercent: 100,
+    });
+    await setSize(wideShort, 200, 80);
+    // Full-canvas group: 200×80 at 100% — wide enough, too short.
+    expect(wideShort.container.querySelectorAll(".hk-treemap-stage__nested-cell")).toHaveLength(0);
+    wideShort.update({ zoomPercent: 150 });
+    await nextTick();
+    expect(wideShort.container.querySelectorAll(".hk-treemap-stage__nested-cell").length)
+      .toBeGreaterThan(0);
+  });
+
   it("parks the floating return control beside the minimap when it expands", async () => {
     const mounted = mountStage({ nodes: NODES });
     await setSize(mounted);

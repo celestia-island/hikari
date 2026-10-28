@@ -27,7 +27,9 @@ export default defineComponent({
      *  the box edge), which on a borderless ghost trigger inside a
      *  centered flex row reads as a stray mark floating below the glyph.
      *  This dot is laid out INSIDE the button's own box (bottom-right
-     *  inset), so the mark and the control are one silhouette. */
+     *  inset), so the mark and the control are one silhouette. Intended
+     *  for the ≥24 chrome steps — at 16 the 8px dot would crowd the
+     *  glyph (R2 note; no such consumer today). */
     dot: { type: Boolean, default: false },
     /** Tone of the status dot (same variant names as HkCornerBadge). */
     dotVariant: { type: String as PropType<CornerBadgeVariant>, default: "success" },

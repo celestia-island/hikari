@@ -221,5 +221,8 @@ describe("HkIconButton status dot stylesheet contract", () => {
     expect(rule).toContain("pointer-events: none");
     expect(rule).toContain("border-radius: 50%");
     expect(rule).toContain("box-shadow: 0 0 0 1.5px");
+    // Tone rides HkCornerBadge's variant classes; the declaration (not
+    // just the class) is pinned so a tone swap cannot slip silently.
+    expect(rule).toContain("background: var(--hk-badge-bg");
   });
 });

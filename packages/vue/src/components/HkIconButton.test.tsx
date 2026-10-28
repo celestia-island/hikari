@@ -151,3 +151,75 @@ describe("HkIconButton glyph step", () => {
     expect(block24).toContain("var(--hi-icon-size-xs)");
   });
 });
+
+describe("HkIconButton status dot", () => {
+  it("renders no dot by default", () => {
+    const c = mountComp(() =>
+      h(HkIconButton, { "aria-label": "Filter" }, { icon: () => h("span", "x") }),
+    );
+    expect(c.querySelector(".hk-icon-button-dot")).toBeNull();
+  });
+
+  it("dot renders inside the button with the tone class and stays decorative", () => {
+    const c = mountComp(() =>
+      h(HkIconButton, { dot: true, "aria-label": "Filter" }, { icon: () => h("span", "x") }),
+    );
+    const dot = c.querySelector(".hk-icon-button-dot")!;
+    expect(dot).not.toBeNull();
+    // Tone channels ride HkCornerBadge's variant classes (one grammar).
+    expect(dot.classList.contains("hk-corner-badge-success")).toBe(true);
+    // Decorative by default: the button's own label carries the state.
+    expect(dot.getAttribute("aria-hidden")).toBe("true");
+    expect(dot.getAttribute("role")).toBeNull();
+    // Inside the button's own silhouette — never a detached wrapper mark.
+    expect(dot.closest("button")).not.toBeNull();
+    expect(dot.closest(".hk-corner-badge-anchor")).toBeNull();
+  });
+
+  it("dotVariant switches the tone class", () => {
+    const c = mountComp(() =>
+      h(HkIconButton, { dot: true, dotVariant: "error", "aria-label": "Fail" }, { icon: () => h("span", "x") }),
+    );
+    expect(c.querySelector(".hk-icon-button-dot")!.classList.contains("hk-corner-badge-error")).toBe(true);
+  });
+
+  it("dotLabel promotes the dot to a named mark", () => {
+    const c = mountComp(() =>
+      h(HkIconButton, { dot: true, dotLabel: "Filter engaged", "aria-label": "Filter" }, { icon: () => h("span", "x") }),
+    );
+    const dot = c.querySelector(".hk-icon-button-dot")!;
+    expect(dot.getAttribute("aria-hidden")).toBeNull();
+    expect(dot.getAttribute("role")).toBe("img");
+    expect(dot.getAttribute("aria-label")).toBe("Filter engaged");
+  });
+});
+
+/**
+ * Compiled-stylesheet guard for the button-owned status dot (R3-style
+ * contract, HkCornerBadge.styles.test.ts pattern): the button is the
+ * anchor layer (position: relative) and the dot is an absolutely
+ * positioned INSET mark with pointer-events off — the declarations are
+ * the contract where happy-dom has no cascade.
+ */
+describe("HkIconButton status dot stylesheet contract", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const scss = readFileSync(join(here, "HkIconButton.scss"), "utf8");
+
+  it("the button is the dot's anchor layer (position: relative)", () => {
+    const start = scss.indexOf(".hk-icon-button {");
+    const close = scss.indexOf("}", start);
+    expect(scss.slice(start, close + 1)).toContain("position: relative");
+  });
+
+  it("the dot is an absolute inset mark with pointer-events off and a round cutout ring", () => {
+    const start = scss.indexOf(".hk-icon-button-dot {");
+    const close = scss.indexOf("}", start);
+    const rule = scss.slice(start, close + 1);
+    expect(rule).toContain("position: absolute");
+    expect(rule).toContain("right: var(--hk-icon-button-dot-inset");
+    expect(rule).toContain("bottom: var(--hk-icon-button-dot-inset");
+    expect(rule).toContain("pointer-events: none");
+    expect(rule).toContain("border-radius: 50%");
+    expect(rule).toContain("box-shadow: 0 0 0 1.5px");
+  });
+});

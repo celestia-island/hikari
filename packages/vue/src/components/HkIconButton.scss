@@ -21,6 +21,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  // The status dot's anchor layer (.hk-icon-button-dot below) — a
+  // relative button keeps the mark INSIDE the control's own silhouette
+  // no matter what wrappers or flex rows do around it.
+  position: relative;
   padding: 0;
   line-height: 0;
 
@@ -140,4 +144,26 @@
   .hk-icon-button {
     transition: none;
   }
+}
+
+// ------
+// Button-owned status dot (dot prop)
+// ------
+
+/* The mark lives INSIDE the button's own box (bottom-right inset), not
+ * straddling a wrapper corner: on a borderless ghost trigger inside a
+ * centered flex row, the corner-straddling badge read as a stray dot
+ * floating below the glyph (2026-10-28 user report). Tone channels come
+ * from HkCornerBadge's variant classes (one badge grammar); the surface
+ * ring keeps the dot legible on any button fill. */
+.hk-icon-button-dot {
+  position: absolute;
+  right: var(--hk-icon-button-dot-inset, 2px);
+  bottom: var(--hk-icon-button-dot-inset, 2px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hk-badge-bg, rgb(var(--color-success)));
+  box-shadow: 0 0 0 1.5px rgb(var(--color-surface) / 85%);
+  pointer-events: none;
 }

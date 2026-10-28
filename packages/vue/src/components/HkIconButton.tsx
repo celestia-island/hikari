@@ -1,7 +1,12 @@
 import { computed, defineComponent, type PropType } from "vue";
 import "./HkIconButton.scss";
 import "./HkIconButtonVars.scss";
+// The status dot borrows HkCornerBadge's tone channels (--hk-badge-bg)
+// so the mark on the button and the badge family stay one grammar; the
+// bundler dedupes the sheet (single source of tones).
+import "./HkCornerBadge.scss";
 import HIcon from "./HkIcon";
+import type { CornerBadgeVariant } from "./HkCornerBadge";
 
 export default defineComponent({
   name: "HkIconButton",
@@ -16,6 +21,19 @@ export default defineComponent({
     // (user report 2026-09-28: 前台全局搜索与主题切换按钮不同尺寸).
     size: { type: Number as PropType<16 | 24 | 28 | 32 | 36 | 40>, default: 32 },
     disabled: { type: Boolean, default: false },
+    /** Button-owned status dot (2026-10-28 user direction: 改进图标按钮
+     *  本身). The former pattern — HkCornerBadge wrapped AROUND the
+     *  trigger — anchors to the WRAPPER's corner (translate 50% straddles
+     *  the box edge), which on a borderless ghost trigger inside a
+     *  centered flex row reads as a stray mark floating below the glyph.
+     *  This dot is laid out INSIDE the button's own box (bottom-right
+     *  inset), so the mark and the control are one silhouette. */
+    dot: { type: Boolean, default: false },
+    /** Tone of the status dot (same variant names as HkCornerBadge). */
+    dotVariant: { type: String as PropType<CornerBadgeVariant>, default: "success" },
+    /** Accessible name for the dot (without it the dot is aria-hidden
+     *  decoration for state the button already announces). */
+    dotLabel: { type: String, default: undefined },
   },
   emits: {
     click: (_e: MouseEvent) => true,
@@ -59,6 +77,14 @@ export default defineComponent({
                   </svg>
                 )}
         </span>
+        {props.dot && (
+          <span
+            class={["hk-icon-button-dot", `hk-corner-badge-${props.dotVariant}`]}
+            aria-hidden={props.dotLabel ? undefined : "true"}
+            role={props.dotLabel ? "img" : undefined}
+            aria-label={props.dotLabel}
+          />
+        )}
       </button>
     );
   },

@@ -341,6 +341,15 @@ describe("HkTreemapStage — the drill path", () => {
     // the nested group's own label passes the zoomed label ladder.
     expect(previews.some((cell) => cell.dataset.depth === "1")).toBe(true);
     expect(previews.every((cell) => cell.getAttribute("aria-hidden") === "true")).toBe(true);
+    // Flat VNodes all live under the top-level cell: the grandchild must sit
+    // below/right of its nested parent by the header/pad inset. Re-basing on
+    // the nested cell's own x/y would collapse this delta to zero.
+    const depth0 = previews.find((cell) => cell.dataset.depth === "0")!;
+    const depth1 = previews.find((cell) => cell.dataset.depth === "1")!;
+    expect(Number.parseFloat(depth1.style.top) - Number.parseFloat(depth0.style.top))
+      .toBeGreaterThanOrEqual(22);
+    expect(Number.parseFloat(depth1.style.left) - Number.parseFloat(depth0.style.left))
+      .toBeGreaterThanOrEqual(2);
     expect(mounted.container.textContent).toContain("Inner");
     // Previews are descendants of the group button, not siblings.
     for (const preview of previews) {

@@ -385,7 +385,11 @@ export default defineComponent({
         && h >= NESTED_RECURSE_H
       ) {
         for (const child of cell.children) {
-          out.push(...renderNestedCell(child, `${key}/${child.node.id}`, depth + 1, x, y));
+          // The returned VNodes are FLAT siblings under the top-level group
+          // cell (not DOM children of this nested cell), so every depth keeps
+          // the entry origin. Passing this cell's x/y shifts grandchildren up
+          // and left by the accumulated padding/header inset.
+          out.push(...renderNestedCell(child, `${key}/${child.node.id}`, depth + 1, originX, originY));
         }
       }
       return out;

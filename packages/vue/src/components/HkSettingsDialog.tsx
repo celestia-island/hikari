@@ -121,6 +121,12 @@ export const HkSettingsBody = defineComponent({
     });
 
     function pick(key: string) {
+      // Belt-and-braces: every caller already refuses disabled entries
+      // upstream (rail: natively disabled buttons; strip: HTabs' disabled
+      // triggers + its keyboard guard; deep links: the section watch), so
+      // deleting this guard is provably behavior-neutral today (R3
+      // mutation M6, 2026-10-28). It stays so a future caller cannot
+      // bypass the contract by accident.
       const entry = props.sections.find((s) => s.key === key);
       if (!entry || entry.disabled) return;
       internal.value = key;

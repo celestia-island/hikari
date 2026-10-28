@@ -10,7 +10,7 @@
     return "celestia-";
   }
   // src/scripts/os-prefs.ts
-  function isTauri() {
+  function isNative() {
     return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   }
   function getOsPrefs() {
@@ -19,7 +19,7 @@
     return prefs;
   }
   (function applyOsPrefs() {
-    if (!isTauri()) return;
+    if (!isNative()) return;
     const prefs = getOsPrefs();
     if (!prefs) return;
     if (prefs.locale) {

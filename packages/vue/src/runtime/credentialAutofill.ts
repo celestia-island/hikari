@@ -1,4 +1,4 @@
-import { isTauri } from "./env";
+import { isNative } from "./env";
 
 /**
  * Credential-field autocomplete policy (user direction 2026-09-14): no
@@ -31,7 +31,7 @@ export function credentialAutocomplete(
   kind: "username" | "password",
   browserDefault: string,
 ): string {
-  if (isTauri()) {
+  if (isNative()) {
     return kind === "password" ? "new-password" : "off";
   }
   return browserDefault;

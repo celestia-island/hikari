@@ -492,7 +492,7 @@ export { bytesToBase64, utf8ToBase64, base64ToBytes, blobToBase64 } from "./util
 export { THEME_MODE_STORAGE_KEY } from "./theme/useTheme";
 export { HK_AUTH_CARD_MAX_WIDTH, HK_AUTH_CARD_MAX_WIDTH_VAR } from "./theme/authCard";
 
-export { isTauri } from "./runtime/env";
+export { isNative } from "./runtime/env";
 
 export { deepMerge, isPlainObject, getPath, setPath, delPath } from "./utils/objectPath";
 

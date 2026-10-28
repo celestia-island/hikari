@@ -74,7 +74,14 @@ export const HkSettingsBody = defineComponent({
     "update:section": (key: string) => typeof key === "string",
   },
   setup(props, { emit, slots }) {
-    const internal = ref(props.sections[0]?.key ?? "");
+    // The landing default is the FIRST USABLE section, never a disabled
+    // one: a disabled entry "renders but cannot be activated", so it must
+    // not win the default (R2 2026-10-28 — the old first-entry fallback
+    // let a disabled-first host open on a dead section, and the phone
+    // strip went further and FRAMED it as selected).
+    const firstUsable = () =>
+      props.sections.find((s) => !s.disabled)?.key ?? "";
+    const internal = ref(firstUsable());
     // Controlled while a section prop is bound: external changes flow in,
     // clicks flow out. Unbound: the internal ref alone decides. Immediate
     // so an opener that mounts ALREADY on a deep-linked section
@@ -97,7 +104,7 @@ export const HkSettingsBody = defineComponent({
     const active = () =>
       props.sections.some((s) => s.key === internal.value)
         ? internal.value
-        : (props.sections[0]?.key ?? "");
+        : firstUsable();
 
     // The pane is an HkScrollContainer; only its consumed ref slice is
     // typed here — the scroll reset needs the live viewport element and

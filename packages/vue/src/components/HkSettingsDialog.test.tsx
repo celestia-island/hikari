@@ -424,15 +424,94 @@ describe("phone shell (rail → top tab strip, 2026-10-28 user direction)", () =
     unmount();
   });
 
+  it("never shows a disabled-first section as selected (either nav)", async () => {
+    // R2 2026-10-28: the landing default is the first USABLE key — a
+    // disabled-first host must not open on the dead entry, and the phone
+    // strip must not frame it aria-selected while the desktop rail
+    // highlights nothing.
+    const LockedFirst = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody
+            sections={[
+              { key: "locked", label: "Locked", disabled: true },
+              { key: "network", label: "Network", icon: Globe },
+            ]}
+          >
+            {{
+              locked: () => <div data-test="pane-locked" />,
+              network: () => <div data-test="pane-network" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    // Desktop: the rail never marks the dead entry active.
+    const desktop = mount(LockedFirst);
+    const railItems = desktop.container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item");
+    expect(railItems[0].classList.contains("is-active")).toBe(false);
+    expect(railItems[1].classList.contains("is-active")).toBe(true);
+    desktop.unmount();
+    // Phone: the strip's dead trigger stays unselected; the usable one
+    // carries the selection and its pane renders.
+    setWidth(390);
+    const phone = mount(LockedFirst);
+    const triggers = phone.container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    expect(triggers[0].getAttribute("aria-selected")).toBe("false");
+    expect(triggers[1].getAttribute("aria-selected")).toBe("true");
+    expect(phone.container.querySelector('[data-test="pane-network"]')).toBeTruthy();
+    phone.unmount();
+  });
+
+  it("round-trips strip picks to a bound section prop (controlled contract)", async () => {
+    // The pane follows internal state, so a deleted update:section emit
+    // would be invisible to an unbound host — pin the controlled half.
+    setWidth(390);
+    const section = ref("language");
+    const Controlled = defineComponent({
+      setup() {
+        return () => (
+          <HSettingsBody
+            sections={SECTIONS.slice(0, 2)}
+            section={section.value}
+            onUpdate:section={(v: string) => (section.value = v)}
+          >
+            {{
+              language: () => <div data-test="pane-language" />,
+              network: () => <div data-test="pane-network" />,
+            }}
+          </HSettingsBody>
+        );
+      },
+    });
+    const { container, unmount } = mount(Controlled);
+    const triggers = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-settings__topnav .hk-tabs-trigger",
+    );
+    triggers[1].click();
+    await nextTick();
+    expect(section.value).toBe("network");
+    unmount();
+  });
+
   it("pins the phone layout contract in the SCSS source", () => {
     // happy-dom cannot exercise the cascade: pin the column flip, the
-    // gap, the centering and the one-notch-up sizing at the source.
+    // gap, the centering and the one-notch-up sizing at the source. The
+    // assertions read INSIDE the &[data-phone] block — several of these
+    // declarations also exist elsewhere in the sheet, and a bare
+    // toContain would keep passing after the phone rule dies (R2).
     const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8");
-    expect(scss).toContain("&[data-phone] {\n    flex-direction: column;");
-    expect(scss).toContain("gap: var(--space-12);");
-    expect(scss).toContain("> .hk-settings__topnav {");
-    expect(scss).toContain("justify-content: center;");
-    expect(scss).toContain("padding: var(--space-6) var(--space-14);");
-    expect(scss).toContain("font-size: var(--text-base);");
+    const phoneBlock = scss.slice(
+      scss.indexOf("&[data-phone] {"),
+      scss.indexOf("Dialog host"),
+    );
+    expect(phoneBlock).toContain("flex-direction: column;");
+    expect(phoneBlock).toContain("gap: var(--space-12);");
+    expect(phoneBlock).toContain("> .hk-settings__topnav {");
+    expect(phoneBlock).toContain("justify-content: center;");
+    expect(phoneBlock).toContain("padding: var(--space-6) var(--space-14);");
+    expect(phoneBlock).toContain("font-size: var(--text-base);");
   });
 });

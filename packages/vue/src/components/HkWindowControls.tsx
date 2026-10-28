@@ -2,6 +2,8 @@ import { defineComponent, onMounted, onUnmounted, ref, type PropType } from "vue
 
 import { Minus, Square, X, Copy } from "lucide-vue-next";
 
+import { claimWindowChrome, resolveWindowApi } from "../runtime/windowChrome";
+
 import "./HkWindowControls.scss";
 
 /**
@@ -41,27 +43,14 @@ import "./HkWindowControls.scss";
  * renders nothing on Apple platforms and the header degrades to its
  * browser-face look automatically.
  *
- * The window API rides `__TAURI__.window.getCurrentWindow()` when
- * present; on a non-Tauri host (browser preview) the buttons render
- * but the calls no-op, keeping visual parity for storybook/tests.
+ * The window API comes from `resolveWindowApi()` (runtime/windowChrome):
+ * `__TAURI__.window.getCurrentWindow()` when the host exposes it, otherwise the
+ * `__TAURI_INTERNALS__` IPC surface. That fallback matters: the field report
+ * (2026-10-28) was a boot where `__TAURI__` was missing/late, this component
+ * rendered NOTHING, the boot bar never got claimed, and two caption strips
+ * fought over the top edge. The three gates below are unchanged; only the
+ * "is there a shell?" probe is shared now. No shell at all → nothing renders.
  */
-
-interface TauriWindowLike {
-  minimize(): Promise<void>;
-  toggleMaximize(): Promise<void>;
-  close(): Promise<void>;
-  isMaximized(): Promise<boolean>;
-  onResized(cb: () => void): Promise<() => void>;
-}
-
-function currentWindow(): TauriWindowLike | null {
-  const w = (
-    window as unknown as {
-      __TAURI__?: { window?: { getCurrentWindow?: () => TauriWindowLike } };
-    }
-  ).__TAURI__?.window;
-  return w?.getCurrentWindow?.() ?? null;
-}
 
 /** Apple platforms own their traffic lights — we never render there. */
 export function isApplePlatform(): boolean {
@@ -86,14 +75,48 @@ export const HkWindowControls = defineComponent({
   setup(props) {
     const maximized = ref(false);
     let unlisten: (() => void) | null = null;
+    // Set on unmount: the mount path awaits `onResized()`, and an unmount that
+    // lands before that promise resolves would otherwise arm a poll interval
+    // (and keep writing `maximized`) for a component that no longer exists.
+    let disposed = false;
+    // Only a mount that actually paints the cluster takes the window chrome
+    // over from the boot bar (boot-chrome.js): the SAME gates the render
+    // function applies, replayed once on mount. A component that renders
+    // nothing must not claim — the boot bar would vanish and leave the window
+    // with no controls at all. On Apple platforms nothing is painted (the OS
+    // owns the traffic lights), so a host that ships only this component on
+    // macOS must dispatch `claimWindowChrome()` itself.
+    let claimed = false;
 
     onMounted(async () => {
-      const win = currentWindow();
+      if (isApplePlatform()) return;
+      if (props.variant !== "standard" && props.variant !== "flush") return;
+      const win = resolveWindowApi();
       if (!win) return;
+      if (!claimed) {
+        claimed = true;
+        claimWindowChrome("HkWindowControls");
+      }
+      // Every shell read is failure-tolerant AND handled: an unhandled
+      // rejection during boot is treated as fatal by the family's
+      // `res/fatal-fallback.js` (it raises the full-screen "Application failed
+      // to load" landing on `unhandledrejection`), and the internals path would
+      // reproduce it every poll interval.
+      const refresh = () => {
+        void win.isMaximized().then(
+          (value) => {
+            if (!disposed) maximized.value = value;
+          },
+          () => {},
+        );
+      };
       try {
-        const refresh = () => void win.isMaximized().then((m) => (maximized.value = m));
         refresh();
         const off = await win.onResized(refresh);
+        if (disposed) {
+          off();
+          return;
+        }
         unlisten = off;
       } catch {
         /* the window API is optional furniture */
@@ -101,7 +124,9 @@ export const HkWindowControls = defineComponent({
     });
 
     onUnmounted(() => {
+      disposed = true;
       unlisten?.();
+      unlisten = null;
     });
 
     return () => {
@@ -111,8 +136,25 @@ export const HkWindowControls = defineComponent({
       // enforce the required prop).
       if (isApplePlatform()) return null;
       if (props.variant !== "standard" && props.variant !== "flush") return null;
-      const win = currentWindow();
+      const win = resolveWindowApi();
       if (!win) return null;
+
+      // Toggle, then re-read the shell state: the glyph must follow the real
+      // window, not a local guess (the internals path may have no resize event).
+      const toggleMaximize = () => {
+        void win
+          .toggleMaximize()
+          .then(() => win.isMaximized())
+          .then((value) => (maximized.value = value))
+          .catch(() => {});
+      };
+
+      // A refused shell call must never surface as an unhandled rejection (the
+      // family's res/fatal-fallback.js turns one into a full-screen boot
+      // failure) and must never look like a working button. The boot bar shows
+      // the degraded state when it is the one drawing the controls; here the
+      // host's own footer simply keeps the glyph it had.
+      const ignore = (pending: Promise<unknown>) => void pending.catch(() => {});
 
       const flush = props.variant === "flush";
       return (
@@ -124,7 +166,7 @@ export const HkWindowControls = defineComponent({
             type="button"
             class="hk-window-controls__btn"
             aria-label="Minimize"
-            onClick={() => void win.minimize()}
+            onClick={() => ignore(win.minimize())}
           >
             <Minus size={flush ? 14 : 16} />
           </button>
@@ -132,7 +174,7 @@ export const HkWindowControls = defineComponent({
             type="button"
             class="hk-window-controls__btn"
             aria-label={maximized.value ? "Restore" : "Maximize"}
-            onClick={() => void win.toggleMaximize()}
+            onClick={toggleMaximize}
           >
             {maximized.value
               ? <Copy size={flush ? 12 : 14} style={{ transform: "rotate(180deg)" }} />
@@ -142,7 +184,7 @@ export const HkWindowControls = defineComponent({
             type="button"
             class="hk-window-controls__btn hk-window-controls__btn--close"
             aria-label="Close"
-            onClick={() => void win.close()}
+            onClick={() => ignore(win.close())}
           >
             <X size={flush ? 14 : 16} />
           </button>

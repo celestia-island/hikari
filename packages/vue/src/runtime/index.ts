@@ -112,3 +112,12 @@ export {
   hkPadStyle,
   type HkPad,
 } from "./containerPad";
+export {
+  claimWindowChrome,
+  resolveWindowApi,
+  CHROME_CLAIM_EVENT,
+  CHROME_OWNER_ATTR,
+  WINDOW_IPC,
+  RESIZE_POLL_MS,
+  type WindowApiLike,
+} from "./windowChrome";

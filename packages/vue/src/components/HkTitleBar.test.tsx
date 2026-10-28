@@ -109,6 +109,74 @@ describe("HkTitleBar", () => {
   });
 });
 
+describe("HkTitleBar window-chrome claim", () => {
+  // The bar IS the app's title bar, so mounting it must stand hikari's boot bar
+  // (boot-chrome.js) down — otherwise two caption bars overlap for the rest of
+  // the session. Tests use a raw window listener: that is the whole contract.
+  function collect(): { claims: Array<{ by?: string }>; stop: () => void } {
+    const claims: Array<{ by?: string }> = [];
+    const listener = (event: Event) => {
+      claims.push((event as CustomEvent<{ by?: string }>).detail ?? {});
+    };
+    window.addEventListener("hk:chrome-claim", listener);
+    return {
+      claims,
+      stop: () => window.removeEventListener("hk:chrome-claim", listener),
+    };
+  }
+
+  function cleanup(): void {
+    document.documentElement.removeAttribute("data-hk-chrome");
+  }
+
+  it("claims the window on mount and marks the app as the chrome owner", () => {
+    const { claims, stop } = collect();
+    try {
+      mount(h(HkTitleBar, { title: "App" }));
+
+      expect(claims).toHaveLength(1);
+      expect(claims[0]?.by).toBe("HkTitleBar");
+      expect(document.documentElement.getAttribute("data-hk-chrome")).toBe("app");
+    } finally {
+      stop();
+      cleanup();
+    }
+  });
+
+  it("never claims twice for one mount (a re-render is not a new takeover)", async () => {
+    const { claims, stop } = collect();
+    try {
+      const maximized = ref(false);
+      mount(h(() => h(HkTitleBar, { title: "App", maximized: maximized.value })));
+      expect(claims).toHaveLength(1);
+
+      maximized.value = true;
+      await nextTick();
+      maximized.value = false;
+      await nextTick();
+
+      expect(claims).toHaveLength(1);
+    } finally {
+      stop();
+      cleanup();
+    }
+  });
+
+  it("leaves the existing props/emits contract untouched", () => {
+    const emitted: string[] = [];
+    const host = mount(
+      h(HkTitleBar, {
+        title: "App",
+        onMinimize: () => emitted.push("minimize"),
+        onClose: () => emitted.push("close"),
+      }),
+    );
+    host.querySelector<HTMLButtonElement>('[title="Minimize"]')!.click();
+    host.querySelector<HTMLButtonElement>('[title="Close"]')!.click();
+    expect(emitted).toEqual(["minimize", "close"]);
+  });
+});
+
 describe("HkTitleBar stylesheet contract", () => {
   const css = compile(resolve(componentDir, "HkTitleBar.scss"), {
     style: "expanded",

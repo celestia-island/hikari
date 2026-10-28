@@ -826,3 +826,29 @@ export { type HAboutComponentVersion as HkAboutComponentVersion } from "./compon
 export { type HCustomTheme as HkCustomTheme } from "./components/HkColorSchemeDialog";
 export { OVERLAY_ROOT_SELECTOR, OVERLAY_Z, ensureOverlayRoot } from "./overlay/overlayRoot";
 export { HK_PAD_VAR, hkPadStyle, type HkPad } from "./runtime/containerPad";
+
+// Window-chrome handoff (2026-10-28): the boot bar hikari's Vite plugin draws
+// before the app bundle exists hands the window over on `hk:chrome-claim`.
+// `claimWindowChrome` is for hosts that paint their OWN title bar instead of
+// HkTitleBar/HkWindowControls (both claim automatically).
+export {
+  claimWindowChrome,
+  resolveWindowApi,
+  CHROME_CLAIM_EVENT,
+  CHROME_OWNER_ATTR,
+  WINDOW_IPC,
+  RESIZE_POLL_MS,
+  type WindowApiLike,
+} from "./runtime/windowChrome";
+// Pre-boot caption bar (`bootChromePlugin`) is NOT exported here. It ships from
+// its own published subpath — `@celestia-island/hikari/plugins/boot-chrome` —
+// resolved to a self-contained ESM module, and that is what a host imports in
+// vite.config.ts:
+//   1. this entry is what BROWSER bundles import; re-exporting the Node-side
+//      plugin from it makes every consumer's build pull the module, and Vite
+//      then emits `boot-chrome.js` as a duplicate 28.8 kB asset AND warns
+//      "node:fs has been externalized for browser compatibility" (measured with
+//      Vite 8; tree-shaking does not remove a statically-referenced asset), and
+//   2. the `/plugins` barrel is TypeScript, which Node cannot load from inside
+//      node_modules (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) — the
+//      dedicated subpath exists precisely to avoid that.

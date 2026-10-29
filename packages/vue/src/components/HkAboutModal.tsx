@@ -82,24 +82,27 @@ export interface HAboutComponentVersion {
 }
 
 /**
- * HkAboutModal — version / about dialog.
- * (Upstreamed from shittim-chest's plana-legacy layer.)
+ * HkAboutBody — the About dialog's body, mountable OUTSIDE a modal.
  *
- * Layout (2026-09 redesign): a centered identity hero (haloed logo, name,
- * then version + tagline on one compact line), an optional credits block
- * (a sentence built from text runs and linked names, plus the
- * organization blurb), a
- * bordered spec card holding the software-component versions, and the
- * link rows — licenses, external links and legal filings. Every link opens
- * in a new tab and renders in the face its entry asks for: the ghost chip,
- * or bare text (`plain` / tinted `accent`) for names / URLs / filings that
- * should read as ordinary sentence text. Every branding prop is optional — the modal
- * degrades to the plain identity card when none are given.
+ * Extracted verbatim from HkAboutModal (2026-10-29): the desktop settings'
+ * About section renders this same body inside its own pane, so every
+ * surface shares one implementation of the identity hero, the credits
+ * sentence, the spec card and the link rows — the hand-copied second body
+ * is exactly how the credits links drifted (both names pointing at the
+ * organization's URL, the trailing role word lost).
+ *
+ * Two body-level knobs exist for hosts that are not a modal:
+ *  - `filingsAsChips` renders the legal filings as a chip group
+ *    (`data-slot="filings"`) instead of the bare footer-text row — the
+ *    desktop surface's standing direction (2026-10-23: no bare text
+ *    hyperlinks on that surface) while the modal keeps the plain row
+ *    (2026-09-14).
+ *  - the default slot appends host content after the copyright footer
+ *    (the desktop's update-check row), still inside the body's flow.
  */
-export const HkAboutModal = defineComponent({
-  name: "HkAboutModal",
+export const HkAboutBody = defineComponent({
+  name: "HkAboutBody",
   props: {
-    modelValue: { type: Boolean, default: false },
     /** Application display name. */
     appName: { type: String, required: true },
     /** Application version (e.g. "0.1.4"). */
@@ -134,18 +137,17 @@ export const HkAboutModal = defineComponent({
     links: { type: Array as PropType<HAboutLink[]>, default: () => [] },
     /** Optional centered legal links above the copyright (ICP filings). */
     footerLinks: { type: Array as PropType<HAboutLink[]>, default: () => [] },
+    /** Render the legal filings as a chip group instead of the bare
+     *  footer-text row (the desktop surface's standing direction). */
+    filingsAsChips: { type: Boolean, default: false },
     /**
      * Optional decorative backdrop factory, rendered behind the content
-     * inside a clipped, pointer-inert layer. The modal owns only the layer —
+     * inside a clipped, pointer-inert layer. The body owns only the layer —
      * sizing, theming and the render loop belong to the returned subtree.
      */
     backdrop: { type: Function as PropType<() => unknown>, default: undefined },
-    title: { type: String, default: undefined },
   },
-  emits: {
-    "update:modelValue": (_v: boolean) => true,
-  },
-  setup(props, { emit }) {
+  setup(props, { slots }) {
     const { t } = useI18n();
 
     // One link renderer for every link in the dialog: credits names,
@@ -233,102 +235,195 @@ export const HkAboutModal = defineComponent({
     };
 
     return () => (
+      <div class="s-about-modal">
+        {props.backdrop && (
+          <div class="s-about-modal-backdrop" aria-hidden="true">
+            {props.backdrop()}
+          </div>
+        )}
+        <div class="s-about-modal-body">
+          <header class="s-about-modal-header">
+            <div class="s-about-modal-logo-frame">
+              {props.logoSrc ? (
+                <img
+                  class="s-about-modal-logo-img"
+                  src={props.logoSrc}
+                  alt=""
+                  draggable={false}
+                />
+              ) : (
+                <div class="s-about-modal-logo">{props.appName.slice(0, 1).toUpperCase()}</div>
+              )}
+            </div>
+            <div class="s-about-modal-identity">
+              <h2 class="s-about-modal-name">{props.appName}</h2>
+              <p class="s-about-modal-subtitle">
+                <span class="s-about-modal-version">
+                  {t("hikari::about.version", "Version")} {props.version}
+                </span>
+                {props.tagline && (
+                  <>
+                    <span class="s-about-modal-subtitle-sep" aria-hidden="true">
+                      ·
+                    </span>
+                    <span class="s-about-modal-tagline">{props.tagline}</span>
+                  </>
+                )}
+              </p>
+            </div>
+          </header>
+
+          {(props.credits.length > 0 || props.description) && (
+            <div class="s-about-modal-credits">
+              {renderCredits()}
+              {props.description && (
+                <p class="s-about-modal-description">{props.description}</p>
+              )}
+            </div>
+          )}
+
+          {props.componentVersions.length > 0 && (
+            <div class="s-about-modal-rows">
+              {props.componentVersions.map((component) => (
+                <div class="s-about-modal-row" key={component.label}>
+                  <span class="s-about-modal-row-label">{component.label}</span>
+                  <span class="s-about-modal-row-value">
+                    <span class="s-about-modal-row-number">{component.value}</span>
+                    {component.meta && (
+                      <span
+                        class="s-about-modal-row-meta"
+                        data-tone={component.metaTone ?? "neutral"}
+                      >
+                        {component.meta}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {(props.licenses.length > 0 || props.links.length > 0) && (
+            <div class="s-about-modal-chips">
+              {renderLinks(props.licenses, "licenses")}
+              {renderLinks(props.links, "links")}
+            </div>
+          )}
+
+          {props.filingsAsChips
+            ? // The desktop surface's filings: chips in their own group,
+              // in the body flow (2026-10-23 direction).
+              renderLinks(props.footerLinks, "filings")
+            : visibleLinks(props.footerLinks).length > 0 && (
+                <div class="s-about-modal-footer-links">
+                  {visibleLinks(props.footerLinks).map((link, index) =>
+                    renderLink(link, "s-about-modal-footer-link", `legal:${index}`),
+                  )}
+                </div>
+              )}
+
+          <footer class="s-about-modal-footer">
+            <HBadge variant="muted">
+              © {new Date().getFullYear()} {props.copyright ?? props.appName}
+            </HBadge>
+          </footer>
+
+          {slots.default?.()}
+        </div>
+      </div>
+    );
+  },
+});
+
+/**
+ * HkAboutModal — version / about dialog.
+ * (Upstreamed from shittim-chest's plana-legacy layer.)
+ *
+ * A centered HModal wrapping {@link HkAboutBody} — the body carries the
+ * whole layout (identity hero, credits block, spec card, link rows) and is
+ * the piece other surfaces mount directly, so the modal and the settings
+ * pane cannot drift. Every link opens in a new tab and renders in the face
+ * its entry asks for: the ghost chip, or bare text (`plain` / tinted
+ * `accent`) for names / URLs / filings that should read as ordinary
+ * sentence text. Every branding prop is optional — the modal degrades to
+ * the plain identity card when none are given.
+ */
+export const HkAboutModal = defineComponent({
+  name: "HkAboutModal",
+  props: {
+    modelValue: { type: Boolean, default: false },
+    /** Application display name. */
+    appName: { type: String, required: true },
+    /** Application version (e.g. "0.1.4"). */
+    version: { type: String, required: true },
+    /** Optional logo image URL — replaces the first-letter tile. */
+    logoSrc: { type: String, default: undefined },
+    /** Optional one-liner shown beside the version (e.g. the app tagline). */
+    tagline: { type: String, default: undefined },
+    /** Optional centered small line under the credits (organization blurb). */
+    description: { type: String, default: undefined },
+    /**
+     * Credits sentence, assembled from text runs and linked names
+     * (e.g. 来自 <Celestia Island>，由 <伊欧> 主创). Each name renders in the
+     * face its entry asks for — `chip`, bare text with `plain`, or bare
+     * text tinted in the primary colour with `accent`.
+     */
+    credits: { type: Array as PropType<HAboutCredit[]>, default: () => [] },
+    /** License links (e.g. SySL-1.0 / BUSL-1.1), rendered centered. */
+    licenses: { type: Array as PropType<HAboutLink[]>, default: () => [] },
+    /** Software-component version rows (WebUI / engines), label + value. */
+    componentVersions: {
+      type: Array as PropType<HAboutComponentVersion[]>,
+      default: () => [],
+    },
+    /** Optional copyright holder in the footer (defaults to the app name). */
+    copyright: { type: String, default: undefined },
+    /**
+     * Optional external links (e.g. the site domains, the project's GitHub
+     * home). An entry may carry an `icon` instead of a `label` — that is how
+     * the GitHub mark rides at the end of the domain row.
+     */
+    links: { type: Array as PropType<HAboutLink[]>, default: () => [] },
+    /** Optional centered legal links above the copyright (ICP filings). */
+    footerLinks: { type: Array as PropType<HAboutLink[]>, default: () => [] },
+    /** Render the legal filings as a chip group (see {@link HkAboutBody}). */
+    filingsAsChips: { type: Boolean, default: false },
+    /**
+     * Optional decorative backdrop factory, rendered behind the content
+     * inside a clipped, pointer-inert layer. The modal owns only the layer —
+     * sizing, theming and the render loop belong to the returned subtree.
+     */
+    backdrop: { type: Function as PropType<() => unknown>, default: undefined },
+    title: { type: String, default: undefined },
+  },
+  emits: {
+    "update:modelValue": (_v: boolean) => true,
+  },
+  setup(props, { emit }) {
+    const { t } = useI18n();
+
+    return () => (
       <HModal
         modelValue={props.modelValue}
         onUpdate:modelValue={(v: boolean) => emit("update:modelValue", v)}
         title={props.title ?? t("hikari::about.title", "About")}
         width="30rem"
       >
-        <div class="s-about-modal">
-          {props.backdrop && (
-            <div class="s-about-modal-backdrop" aria-hidden="true">
-              {props.backdrop()}
-            </div>
-          )}
-          <div class="s-about-modal-body">
-            <header class="s-about-modal-header">
-              <div class="s-about-modal-logo-frame">
-                {props.logoSrc ? (
-                  <img
-                    class="s-about-modal-logo-img"
-                    src={props.logoSrc}
-                    alt=""
-                    draggable={false}
-                  />
-                ) : (
-                  <div class="s-about-modal-logo">{props.appName.slice(0, 1).toUpperCase()}</div>
-                )}
-              </div>
-              <div class="s-about-modal-identity">
-                <h2 class="s-about-modal-name">{props.appName}</h2>
-                <p class="s-about-modal-subtitle">
-                  <span class="s-about-modal-version">
-                    {t("hikari::about.version", "Version")} {props.version}
-                  </span>
-                  {props.tagline && (
-                    <>
-                      <span class="s-about-modal-subtitle-sep" aria-hidden="true">
-                        ·
-                      </span>
-                      <span class="s-about-modal-tagline">{props.tagline}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </header>
-
-            {(props.credits.length > 0 || props.description) && (
-              <div class="s-about-modal-credits">
-                {renderCredits()}
-                {props.description && (
-                  <p class="s-about-modal-description">{props.description}</p>
-                )}
-              </div>
-            )}
-
-            {props.componentVersions.length > 0 && (
-              <div class="s-about-modal-rows">
-                {props.componentVersions.map((component) => (
-                  <div class="s-about-modal-row" key={component.label}>
-                    <span class="s-about-modal-row-label">{component.label}</span>
-                    <span class="s-about-modal-row-value">
-                      <span class="s-about-modal-row-number">{component.value}</span>
-                      {component.meta && (
-                        <span
-                          class="s-about-modal-row-meta"
-                          data-tone={component.metaTone ?? "neutral"}
-                        >
-                          {component.meta}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {(props.licenses.length > 0 || props.links.length > 0) && (
-              <div class="s-about-modal-chips">
-                {renderLinks(props.licenses, "licenses")}
-                {renderLinks(props.links, "links")}
-              </div>
-            )}
-
-            {visibleLinks(props.footerLinks).length > 0 && (
-              <div class="s-about-modal-footer-links">
-                {visibleLinks(props.footerLinks).map((link, index) =>
-                  renderLink(link, "s-about-modal-footer-link", `legal:${index}`),
-                )}
-              </div>
-            )}
-
-            <footer class="s-about-modal-footer">
-              <HBadge variant="muted">
-                © {new Date().getFullYear()} {props.copyright ?? props.appName}
-              </HBadge>
-            </footer>
-          </div>
-        </div>
+        <HkAboutBody
+          appName={props.appName}
+          version={props.version}
+          logoSrc={props.logoSrc}
+          tagline={props.tagline}
+          description={props.description}
+          credits={props.credits}
+          licenses={props.licenses}
+          componentVersions={props.componentVersions}
+          copyright={props.copyright}
+          links={props.links}
+          footerLinks={props.footerLinks}
+          filingsAsChips={props.filingsAsChips}
+          backdrop={props.backdrop}
+        />
       </HModal>
     );
   },

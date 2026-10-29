@@ -757,6 +757,7 @@ export {
 export { HkErrorLanding as HkErrorLanding } from "./components/HkErrorLanding";
 export { HkErrorReportingOverlay as HkErrorReportingOverlay } from "./errorReporting";
 export { HkAdminShell as HkAdminShell } from "./components/HkAdminShell";
+export { HkFaceShell as HkFaceShell } from "./components/HkFaceShell";
 export { HkAdminHeader as HkAdminHeader } from "./components/HkAdminHeader";
 export { HkNavSidebar as HkNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HkThemeToggle } from "./components/HkThemeToggle";

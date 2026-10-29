@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import { HkAvatarButton } from "./HkAvatarButton";
 import { HkAdminHeader } from "./HkAdminHeader";
@@ -62,18 +62,26 @@ describe("HkAvatarButton", () => {
     expect(img.getAttribute("alt")).toBe("yuzu");
   });
 
-  it("falls back to the letter when the image fails, and retries when the URL changes", async () => {
-    const c = mount(h(HkAvatarButton, { username: "yuzu", avatarUrl: "/a.png" }));
-    const img = trigger(c).querySelector("img") as HTMLImageElement;
-    img.dispatchEvent(new Event("error"));
+  it("falls back to the letter when the image fails, and a URL change on the SAME instance retries", async () => {
+    // Same-instance reactive update (R3 M1 on #909): remounting proves
+    // nothing (a fresh instance starts unlatched), so the host re-renders
+    // the button with a new URL while it stays mounted — the reset watch
+    // is what must bring the image back.
+    const url = ref("/a.png");
+    const Host = defineComponent({
+      setup: () => () => h(HkAvatarButton, { username: "yuzu", avatarUrl: url.value }),
+    });
+    const c = mount(h(Host));
+    const firstImg = trigger(c).querySelector("img") as HTMLImageElement;
+    firstImg.dispatchEvent(new Event("error"));
     await nextTick();
     expect(trigger(c).querySelector(".s-user-avatar")?.textContent).toBe("Y");
-    // A NEW URL resets the latch: the image gets a fresh attempt.
-    const app = mounts[mounts.length - 1].app;
-    app.unmount();
-    mounts.pop();
-    const c2 = mount(h(HkAvatarButton, { username: "yuzu", avatarUrl: "/b.png" }));
-    expect(trigger(c2).querySelector("img")).toBeTruthy();
+    url.value = "/b.png";
+    await nextTick();
+    await nextTick();
+    const retryImg = trigger(c).querySelector("img") as HTMLImageElement | null;
+    expect(retryImg, "the latch reset — the new URL gets a fresh attempt").toBeTruthy();
+    expect(retryImg!.getAttribute("src")).toBe("/b.png");
   });
 
   it("forwards extra attrs onto the button (host data-* keys keep working)", () => {

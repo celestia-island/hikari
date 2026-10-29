@@ -39,18 +39,104 @@
   margin-inline: auto;
 }
 
-/* ── Optional edge fades (fade=true) ──────────────────────────────
-   Pure CSS driven by the sensed overflow state the component mirrors
-   onto the root (data-h-overflow). Only the sides with hidden
-   content fade. The fade size custom property is declared on the
-   root so consumers can override it from the container element. */
+/* ── Optional edge fades (fade=true / dock fades) ─────────────────
+   FOUR-EDGE composition (2026-10 revision): each edge owns a CSS var, and
+   the viewport's mask INTERSECTS a vertical and a horizontal gradient, so
+   the fade reaches zero on every side that hides content and the corners
+   fall off naturally in all four directions. The previous per-axis rules
+   overwrote one `mask-image` property, so a two-axis container only faded
+   one axis AND the band ended in a hard cut at the other axis's edges
+   (user report: the light effect is clipped at the two sides). Vertical
+   fades were missing entirely. Dock fades ride the same vars, which also
+   removes their old mask-override conflict. */
+.hk-scroll-container:is([data-fade="true"], [data-dock-fade]) > .hk-scroll-container-viewport {
+  --hk-scroll-fade-top: 0px;
+  --hk-scroll-fade-right: 0px;
+  --hk-scroll-fade-bottom: 0px;
+  --hk-scroll-fade-left: 0px;
+  -webkit-mask-image:
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--hk-scroll-fade-top),
+      #000 calc(100% - var(--hk-scroll-fade-bottom)),
+      transparent 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--hk-scroll-fade-left),
+      #000 calc(100% - var(--hk-scroll-fade-right)),
+      transparent 100%
+    );
+  -webkit-mask-composite: source-in;
+  -webkit-mask-repeat: no-repeat;
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--hk-scroll-fade-top),
+      #000 calc(100% - var(--hk-scroll-fade-bottom)),
+      transparent 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--hk-scroll-fade-left),
+      #000 calc(100% - var(--hk-scroll-fade-right)),
+      transparent 100%
+    );
+  mask-composite: intersect;
+  mask-repeat: no-repeat;
+}
+
 .hk-scroll-container[data-fade="true"] {
   --hk-scroll-fade-size: var(--space-24);
 }
 
-.hk-scroll-container[data-fade="true"][data-h-overflow="end"] > .hk-scroll-container-viewport {
-  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
-  mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
+/* Vertical axis — the half the old implementation never had. */
+.hk-scroll-container[data-fade="true"][data-v-overflow="start"] {
+  --hk-scroll-fade-top: var(--hk-scroll-fade-size);
+}
+
+.hk-scroll-container[data-fade="true"][data-v-overflow="end"] {
+  --hk-scroll-fade-bottom: var(--hk-scroll-fade-size);
+}
+
+.hk-scroll-container[data-fade="true"][data-v-overflow="both"] {
+  --hk-scroll-fade-top: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-bottom: var(--hk-scroll-fade-size);
+}
+
+/* Horizontal axis (LTR: inline start = left). */
+.hk-scroll-container[data-fade="true"][data-h-overflow="start"] {
+  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
+}
+
+.hk-scroll-container[data-fade="true"][data-h-overflow="end"] {
+  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
+}
+
+.hk-scroll-container[data-fade="true"][data-h-overflow="both"] {
+  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
+}
+
+/* RTL: the inline start edge is the right side, so the horizontal vars
+   swap instead of the mask (the mask itself is direction-neutral). */
+[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="start"] {
+  --hk-scroll-fade-left: 0px;
+  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
+}
+
+[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="end"] {
+  --hk-scroll-fade-right: 0px;
+  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
+}
+
+[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="both"] {
+  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
 }
 
 /* ── Anchored docks (dockTop / dockBottom slots) ─────────────────
@@ -74,14 +160,12 @@
    instead of a hard clip against the dock's top edge. Content never
    sits under the dock, so this fades the viewport's last few pixels,
    not the dock itself. */
-.hk-scroll-container[data-dock-fade="bottom"] > .hk-scroll-container-viewport {
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--hk-scroll-dock-fade, 2rem)), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--hk-scroll-dock-fade, 2rem)), transparent);
+.hk-scroll-container[data-dock-fade="bottom"] {
+  --hk-scroll-fade-bottom: var(--hk-scroll-dock-fade, 2rem);
 }
 
-.hk-scroll-container[data-dock-fade="top"] > .hk-scroll-container-viewport {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--hk-scroll-dock-fade, 2rem));
-  mask-image: linear-gradient(to bottom, transparent, #000 var(--hk-scroll-dock-fade, 2rem));
+.hk-scroll-container[data-dock-fade="top"] {
+  --hk-scroll-fade-top: var(--hk-scroll-dock-fade, 2rem);
 }
 
 /* ── Floating-dock tail clearance (dockTailClearance opt-in) ──────
@@ -135,39 +219,7 @@
 }
 
 
-.hk-scroll-container[data-fade="true"][data-h-overflow="start"] > .hk-scroll-container-viewport {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
-  mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
-}
 
-/* RTL: the horizontal scroll start/end edges swap sides, so the
- * directional fades flip (the "both" mask is end-symmetric — no flip). */
-[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="end"] > .hk-scroll-container-viewport {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
-  mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
-}
-
-[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="start"] > .hk-scroll-container-viewport {
-  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
-  mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
-}
-
-.hk-scroll-container[data-fade="true"][data-h-overflow="both"] > .hk-scroll-container-viewport {
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 var(--hk-scroll-fade-size),
-    #000 calc(100% - var(--hk-scroll-fade-size)),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 var(--hk-scroll-fade-size),
-    #000 calc(100% - var(--hk-scroll-fade-size)),
-    transparent 100%
-  );
-}
 
 /* autoFollow content is bottom-anchored while it fits the viewport: the
    newest row hugs the bottom edge (a tail-following console, e.g. the

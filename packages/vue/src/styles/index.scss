@@ -8,8 +8,7 @@
 //      the icon-button bridge (vendored from src/tokens.scss).
 //   1b. selection.scss — the selection policy: deny-by-default at the
 //      root (chrome text never takes a drag selection), whitelisted back
-//      for editable controls, the .hk-selectable content hook and the
-//      pre/code content conventions.
+//      for editable controls and the .hk-selectable content hook.
 //   2. theme/scale.scss — the L2 scale tokens: spacing, type, radius,
 //      blur, opacity, durations, easings, z bands, fonts (vendored from
 //      src/scale.scss).

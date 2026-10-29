@@ -597,6 +597,23 @@
   object-fit: cover;
 }
 
+/* The reserved workspace-switcher slot (HkAdminHeader, drawer face).
+ * The chat header's left wing is avatar + ws-trigger (8px flex gap +
+ * 28px button box), and that wing's min-content floor is what keeps the
+ * balanced grid's centre strip off the space on a phone: the strip can
+ * only shrink into its own column, never into a wing. The console's
+ * drawer face hides both the title and the workspace concept, so
+ * without a stand-in the wing's floor is just the 28px avatar — a wide
+ * strip (the firewall page's three sections on a 412px phone) slides
+ * left until it hugs the avatar (2026-10-29 user report). The blank
+ * span carries the trigger's 28px box; the wing's 16px gap already
+ * covers the button's 8px inline padding (the 2026-09-28 title-distance
+ * pin), so the floor lands within one padding-step of the frontend's. */
+.s-admin-header-ws-slot {
+  width: var(--space-28);
+  flex-shrink: 0;
+}
+
 /* The old hover camera veil ("change avatar" affordance) is gone: the
  * avatar trigger opens the account MENU — the avatar edit is the Camera
  * item inside it — so the veil promised an action the click never

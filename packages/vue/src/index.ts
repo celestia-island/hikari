@@ -534,6 +534,7 @@ export { HkCaptchaModal as HCaptchaModal } from "./components/HkCaptchaModal";
 export { HkProtocolModal as HProtocolModal } from "./components/HkProtocolModal";
 export {
   HkAboutModal as HAboutModal,
+  HkAboutBody as HAboutBody,
   type HAboutComponentVersion,
   type HAboutCredit,
   type HAboutLink,
@@ -806,6 +807,7 @@ export { HkCaptchaWidget as HkCaptchaWidget } from "./components/HkCaptchaWidget
 export { HkCaptchaModal as HkCaptchaModal } from "./components/HkCaptchaModal";
 export { HkProtocolModal as HkProtocolModal } from "./components/HkProtocolModal";
 export { HkAboutModal as HkAboutModal } from "./components/HkAboutModal";
+export { HkAboutBody as HkAboutBody } from "./components/HkAboutModal";
 export { HkLogWindow as HkLogWindow } from "./components/HkLogWindow";
 export { HkSettingsBody as HkSettingsBody } from "./components/HkSettingsDialog";
 export { HkSettingsDialog as HkSettingsDialog } from "./components/HkSettingsDialog";

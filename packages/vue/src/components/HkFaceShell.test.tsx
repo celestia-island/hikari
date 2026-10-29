@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createApp, h } from "vue";
 
 // HDrawer teleports and animates; replace it with an inline passthrough
@@ -198,5 +201,42 @@ describe("the extraction boundary: the action-bar channel", () => {
       expect("actions" in params).toBe(true);
       expect(Array.isArray(params.actions)).toBe(true);
     }
+  });
+});
+
+describe("the contentMode attrs leak (R2 S2)", () => {
+  it("HkAdminShell declares and forwards contentMode — a passed stage value reaches the host honestly", () => {
+    const staged = mount(h(HkAdminShell, {
+      contentMode: "stage",
+      navTitle: "Navigation",
+    }, {
+      header: () => null,
+      content: CONTENT,
+    }));
+    expect(staged.querySelector(".s-admin-shell-main")!.getAttribute("data-content-mode"))
+      .toBe("stage");
+    expect(staged.querySelector(".hk-scroll-container")).toBeNull();
+
+    const defaulted = mount(h(HkAdminShell, { navTitle: "Navigation" }, {
+      header: () => null,
+      content: CONTENT,
+    }));
+    expect(defaulted.querySelector(".s-admin-shell-main")!.getAttribute("data-content-mode"))
+      .toBe("document");
+    expect(defaulted.querySelector(".hk-scroll-container")).toBeTruthy();
+  });
+
+  it("the wrapper keeps the DECLARATION (the half the behavior test cannot see)", () => {
+    // Without the declared prop, a stray `content-mode` from a template
+    // or a v-bind="$attrs" relay falls through to the inner shell, where
+    // fallthrough attrs OVERRIDE explicit props — the leak R2 proved
+    // with a repro. The behavior test above cannot distinguish honest
+    // forwarding from the leak (both render stage for a passed value),
+    // so the declaration itself is pinned at source.
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkAdminShell.tsx"), "utf-8");
+    expect(src, "the prop must be declared on the wrapper").toContain(
+      'contentMode: { type: String as PropType<"document" | "stage">, default: "document" }',
+    );
+    expect(src, "and forwarded honestly").toContain("contentMode: props.contentMode,");
   });
 });

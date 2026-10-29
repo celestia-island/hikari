@@ -157,7 +157,11 @@ describe("pane-swap contract", () => {
       // Merging any of this into the generic container would change its
       // semantics for every existing call site. Permanent exception.
       "HkStepFlow.tsx",
-      "HkAdminShell.tsx", // content slot is host-owned; hosts key it (chest wraps HkCrossfade)
+      // The content host lives in HkFaceShell since the 2026-10-29
+      // extraction (HkAdminShell composes it); both render the slot in
+      // dot form — host-owned, hosts key it (chest wraps HkCrossfade).
+      "HkAdminShell.tsx",
+      "HkFaceShell.tsx",
       "HkThemePanelContent.tsx", // forwards to HTabs (HkTabs), inherits the mechanism
       "HkMenuPanel.tsx", // menu items, not a pane swap
       // Named slots that are not pane swaps at all: a header action strip

@@ -88,6 +88,16 @@ export const HkAdminShell = defineComponent({
      *  of risking a declaration a browser would drop whole.
      *  Default false: the padding reads the same at every width. */
     contentBleedOnMobile: { type: Boolean, default: false },
+    /** The content host mode, forwarded to HkFaceShell. DECLARED on
+     *  this wrapper on purpose (R2 S2, 2026-10-29): an undeclared input
+     *  would fall through `$attrs` onto the inner shell, where it IS a
+     *  declared prop — and fallthrough attrs override explicit props,
+     *  so a stray `content-mode="stage"` from a template or a
+     *  `v-bind="$attrs"` relay would silently flip the admin shell into
+     *  the stage host. Declared here, the input is a real prop of this
+     *  component and forwards honestly; the default stays `document`,
+     *  which is what the admin face is. */
+    contentMode: { type: String as PropType<"document" | "stage">, default: "document" },
   },
   setup(props, { slots }) {
     const actionBar = provideActionBar();
@@ -100,9 +110,11 @@ export const HkAdminShell = defineComponent({
         footerHeight: props.footerHeight,
         navTitle: props.navTitle,
         drawerPanelClass: props.drawerPanelClass,
-        // The admin face IS the document mode — that is the extraction's
-        // boundary: stage faces consume HkFaceShell directly.
-        contentMode: "document" as const,
+        // The admin face IS the document mode by default — stage faces
+        // normally consume HkFaceShell directly; the forward keeps an
+        // explicit opt-in honest (and the declared prop above keeps a
+        // stray attr from ever reaching the inner shell on its own).
+        contentMode: props.contentMode,
         contentPadding: props.contentPadding,
         contentKey: props.contentKey,
         contentBleedOnMobile: props.contentBleedOnMobile,

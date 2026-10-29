@@ -57,26 +57,27 @@ describe("selection policy sheet", () => {
     expect(css).toMatch(/html\s*\{[^}]*?user-select:\s*none/);
   });
 
-  it("whitelists the editable controls, the content hook and code conventions", () => {
+  it("whitelists exactly the editable controls and the content hook", () => {
     const css = compile("selection.scss");
-    // One grouped rule re-enables every tier; each selector must be in it.
-    expect(css).toMatch(/input[^{]*textarea[^{]*select[^{]*\{[^}]*?-webkit-user-select:\s*text/);
-    for (const selector of [
+    // Exact, comma-anchored selector list — substring matching would pass
+    // vacuously ("select" occurs inside every user-select declaration).
+    // Compressed output drops unnecessary attribute-quote characters.
+    const group = css.match(
+      /((?:input|textarea|select|\[[^\]]+\]|\.hk-selectable)[^{}]*)\{-webkit-user-select:\s*text;user-select:\s*text\}/,
+    );
+    expect(group).toBeTruthy();
+    expect(group![1].split(",").map((s) => s.trim())).toEqual([
       "input",
       "textarea",
       "select",
-      // Compressed output drops unnecessary attribute-quote characters.
-      "contenteditable=false",
+      "[contenteditable]:not([contenteditable=false i])",
       ".hk-selectable",
-      "pre",
-      "code",
-      "kbd",
-      "samp",
-    ]) {
-      expect(css, `whitelist misses ${selector}`).toContain(selector);
-    }
-    expect(css).toMatch(/-webkit-user-select:\s*text/);
-    expect(css).toMatch(/[^-]user-select:\s*text/);
+    ]);
+    // Element-type content conventions (pre/code/kbd/samp) stay OUT: a
+    // concrete value beats ancestor chrome denies, so a bare kbd/code
+    // whitelist punched through HkButton's denied shortcut chip and
+    // click-to-copy table cells (2026-10-29 review, S1).
+    expect(css).not.toMatch(/(^|[,\s])(pre|code|kbd|samp)([,\s]*\{|,)/);
   });
 
   it("re-enables the toast family message text (content, not chrome)", () => {
@@ -104,6 +105,20 @@ describe("selection policy sheet", () => {
     const css = compile("../components/HkJsonTree.scss");
     expect(css).toMatch(/\.s-jt-row[^{]*\{[^}]*?user-select:\s*text/);
     expect(css).toMatch(/\.s-tool-json-tree[^{]*\{[^}]*?user-select:\s*none/);
+  });
+
+  it("re-enables the alert body and the confirm-dialog message", () => {
+    // Same copy-this-error-detail content class as the toast/message-box
+    // surfaces (2026-10-29 review, S2: the parallel surfaces were missed
+    // in the first cut).
+    const cssAlert = compile("../components/HkAlert.scss");
+    expect(cssAlert).toMatch(/\.hk-alert-text[^{]*\{[^}]*?user-select:\s*text/);
+    const cssConfirm = compile("../components/HkConfirmDialog.scss");
+    expect(cssConfirm).toMatch(
+      /\.hk-confirm-dialog-message[^{]*\{[^}]*?user-select:\s*text/,
+    );
+    const cssLog = compile("../components/HkLogWindow.scss");
+    expect(cssLog).toMatch(/\.s-log-entry[^{]*\{[^}]*?user-select:\s*text/);
   });
 
   it("keeps the table contract two-sided under the deny-by-default root", () => {

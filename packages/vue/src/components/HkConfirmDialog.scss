@@ -15,6 +15,10 @@
 }
 
 .hk-confirm-dialog-message {
+  /* Dialog message = copy-worthy content, same class as the message-box
+   * text (L2 selection policy re-enables, 2026-10-29). */
+  -webkit-user-select: text;
+  user-select: text;
   margin: 0;
   color: color-mix(in srgb, var(--hi-color-text-secondary) 85%, transparent);
   font-size: var(--text-sm, 0.8125rem);

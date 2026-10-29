@@ -14,19 +14,26 @@
  * `*` sweep, and component/host rules keep winning by specificity or
  * order wherever they speak.
  *
- * The whitelist, in three tiers:
+ * The whitelist:
  *   1. Editable controls — input, textarea, select, contenteditable:
  *      the user authored this text; selecting it is the point.
  *   2. `.hk-selectable` — the opt-in utility for hosts and components:
  *      put it on any subtree whose text is CONTENT (chat bodies, logs,
- *      error details, IDs, prose) rather than chrome. This is the
- *      contract that replaces the old per-component blacklist.
- *   3. Content conventions — pre / code / kbd / samp: code and keyboard
- *      text are content by definition, wherever they render.
+ *      error details, IDs, prose, standalone code blocks) rather than
+ *      chrome. This is the contract that replaces the old per-component
+ *      blacklist.
  *
- * Hikari's own components with copy-worthy internals self-declare the
- * tier-2 hook in their sheets (toast message, markdown body, diff code,
- * json-tree rows, …), so vendored copies carry their own contract.
+ * Deliberately NOT whitelisted: bare `pre` / `code` / `kbd` / `samp`.
+ * A concrete value on an element BEATS the ancestor's none-propagation,
+ * so an element-type whitelist would punch through chrome that embeds
+ * those elements — HkButton's HkKbd shortcut chip (denied `.hk-btn` on
+ * the button itself), or a `<code>` slotted into a click-to-copy table
+ * cell (the 2026-10-18 copy-cells contract). Content containers own
+ * their re-enables instead: hikari's prose/code components (markdown
+ * body, diff code, json-tree rows, log entries) self-declare
+ * `user-select: text` in their sheets, so vendored copies carry their
+ * own contract, and hosts mark standalone code/log surfaces with
+ * `.hk-selectable`.
  *
  * Order: SECOND in the canonical composition (index.scss), right after
  * the reset — the same "only lowers defaults; component sheets and host
@@ -43,12 +50,10 @@ html {
 input,
 textarea,
 select,
-[contenteditable]:not([contenteditable='false']),
-.hk-selectable,
-pre,
-code,
-kbd,
-samp {
+/* `i` flag: HTML enumerated attribute values are ASCII case-insensitive,
+ * so contenteditable="FALSE" (valid, means false) must be excluded too. */
+[contenteditable]:not([contenteditable='false' i]),
+.hk-selectable {
   -webkit-user-select: text;
   user-select: text;
 }

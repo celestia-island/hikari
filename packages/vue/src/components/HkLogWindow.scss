@@ -117,6 +117,12 @@
 }
 
 .s-log-entry {
+  /* Log lines are the canonical copy-me content (diagnostics users
+   * select per-fragment, not just via the toolbar copy-all) — re-enable
+   * under the L2 selection policy (2026-10-29); the toolbar chrome
+   * around them stays denied. */
+  -webkit-user-select: text;
+  user-select: text;
   padding: var(--space-2, 0.125rem) var(--space-4, 0.25rem);
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-size: var(--text-xs, 0.75rem);

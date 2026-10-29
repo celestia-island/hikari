@@ -420,6 +420,17 @@
   }
 }
 
+/* Opt-out consumers get plain selectable cells back — explicit because
+ * the L2 selection policy (2026-10-29) denies at the root now: absence
+ * of the copy-cells deny rule no longer means selectable. Same shape as
+ * the copy layer, so "wholesale" is a per-cell mirror of the default. */
+.hk-table:not([data-copy-cells]) {
+  .hk-table-cell {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
 /* The standard trailing row-actions column (HkRowActions trigger):
    fixed narrow track, centered, never wrapping. */
 .hk-table-manage-cell {

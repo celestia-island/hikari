@@ -396,19 +396,20 @@ describe("boot-chrome.js handoff and watchdog", () => {
     expect(control("close").disabled).toBe(false);
   });
 
-  it("puts the reload affordance at the right edge, next to close (S3-5)", () => {
+  it("puts the reload affordance ahead of the window controls (2026-10-29 user direction)", () => {
     useWindowApi(fakeWindowApi());
     setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn() });
     runBootChrome({ hangMs: 1000 });
 
     vi.advanceTimersByTime(1000);
 
-    // Right-hand cluster, immediately left of close: closing keeps the frame
-    // corner, so a mis-aimed click on a hung window cannot reload it.
+    // Reload LEADS the cluster — [reload][min][max][close] — so the three
+    // caption buttons (and the close frame corner) keep their familiar
+    // trailing positions instead of the reload splitting max from close.
     expect(controls().map((button) => button.getAttribute("data-act"))).toEqual([
+      "reload",
       "minimize",
       "maximize",
-      "reload",
       "close",
     ]);
   });

@@ -1,0 +1,59 @@
+/* ── Selection policy (L2) — deny by default, whitelist back ───────────
+ * 2026-10-29 user direction: UI chrome text (workspace menus, buttons,
+ * tabs, labels, rails, caption bars) must not take a drag selection.
+ * The old model was a blacklist — every component sheet opted out
+ * piecemeal, and any surface a sheet forgot shipped selectable until a
+ * screenshot complained. This sheet flips the default: the root denies,
+ * and only whitelisted subtrees select again.
+ *
+ * How one rule covers everything: `user-select` is not inherited, but
+ * its initial value `auto` RESOLVES against the parent's used value.
+ * A single `none` on `html` therefore determines every descendant
+ * (shadow trees included), and a whitelisted subtree declaring a
+ * concrete value re-enables its own descendants the same way — no
+ * `*` sweep, and component/host rules keep winning by specificity or
+ * order wherever they speak.
+ *
+ * The whitelist:
+ *   1. Editable controls — input, textarea, select, contenteditable:
+ *      the user authored this text; selecting it is the point.
+ *   2. `.hk-selectable` — the opt-in utility for hosts and components:
+ *      put it on any subtree whose text is CONTENT (chat bodies, logs,
+ *      error details, IDs, prose, standalone code blocks) rather than
+ *      chrome. This is the contract that replaces the old per-component
+ *      blacklist.
+ *
+ * Deliberately NOT whitelisted: bare `pre` / `code` / `kbd` / `samp`.
+ * A concrete value on an element BEATS the ancestor's none-propagation,
+ * so an element-type whitelist would punch through chrome that embeds
+ * those elements — HkButton's HkKbd shortcut chip (denied `.hk-btn` on
+ * the button itself), or a `<code>` slotted into a click-to-copy table
+ * cell (the 2026-10-18 copy-cells contract). Content containers own
+ * their re-enables instead: hikari's prose/code components (markdown
+ * body, diff code, json-tree rows, log entries) self-declare
+ * `user-select: text` in their sheets, so vendored copies carry their
+ * own contract, and hosts mark standalone code/log surfaces with
+ * `.hk-selectable`.
+ *
+ * Order: SECOND in the canonical composition (index.scss), right after
+ * the reset — the same "only lowers defaults; component sheets and host
+ * styles override by specificity/order" discipline applies. A host that
+ * truly wants select-everything back sets `user-select: text` on its own
+ * root; marking content with `.hk-selectable` is the supported route.
+ */
+
+html {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+/* `i` flag: HTML enumerated attribute values are ASCII case-insensitive,
+ * so contenteditable="FALSE" (valid, means false) must be excluded too. */
+[contenteditable]:not([contenteditable='false' i]),
+.hk-selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}

@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, type PropType, type VNode } from "vue";
+import { computed, defineComponent, ref, watch, type PropType, type VNode } from "vue";
 import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
@@ -94,11 +94,16 @@ export const HkAdminHeader = defineComponent({
     const userMenuOpen = ref(false);
     const userTriggerRef = ref<HTMLElement>();
     const avatarModalOpen = ref(false);
-    // The DROPDOWN identity image's own failed-load latch. The trigger
-    // button's latch lives inside HkAvatarButton now (each instance
-    // self-heals on a URL change); both load the same URL, so they flip
-    // and reset together in practice.
+    // The DROPDOWN identity image's own failed-load latch, with the same
+    // URL-change reset the trigger's latch has inside HkAvatarButton —
+    // an avatar re-upload or account switch must heal BOTH faces (R2's
+    // S2 on #909: without the reset, the trigger showed the new image
+    // while the chip stayed on its letter fallback forever).
     const menuAvatarFailed = ref(false);
+    watch(
+      () => props.avatarUrl,
+      () => { menuAvatarFailed.value = false; },
+    );
 
     // The identity cluster is INJECTED, not assumed (2026-10-24): the
     // trigger renders only when the host actually supplied an identity

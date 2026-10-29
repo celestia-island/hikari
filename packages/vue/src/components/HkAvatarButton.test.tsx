@@ -108,6 +108,13 @@ describe("HkAvatarButton", () => {
 });
 
 describe("HkAdminHeader × HkAvatarButton / identity slot", () => {
+  it("never renders aria-expanded when no expanded prop is given (drawer-mode contract)", () => {
+    // R2 S3-2: menu engines read this pair; a drawer-mode trigger has no
+    // open state, so the attribute must be ABSENT (not "false").
+    const c = mount(h(HkAvatarButton, { username: "y", label: "Open drawer", popup: "dialog" }));
+    expect(trigger(c).hasAttribute("aria-expanded")).toBe(false);
+  });
+
   it("renders the shared trigger internally (behavior parity with the inline past)", () => {
     const c = mount(h(HkAdminHeader, { username: "yuzu", title: "Dashboard" }));
     const btn = trigger(c);

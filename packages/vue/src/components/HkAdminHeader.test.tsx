@@ -193,6 +193,21 @@ describe("HkAdminHeader", () => {
     expect(c.textContent).not.toContain("alice");
   });
 
+  it("reserves the workspace-switcher slot in drawer mode only", () => {
+    // 2026-10-29 user direction: the frontend header's left wing is
+    // avatar + ws-trigger; the console drawer face keeps the SLOT as a
+    // deliberate blank so the centre strip can never slide into the
+    // space — menu mode carries the page title in that position instead.
+    const drawer = mount(headerNode({ avatarAction: "drawer", userEmail: "alice@example.com" }));
+    const slot = drawer.querySelector(".s-admin-header-ws-slot");
+    expect(slot, "drawer face must render the reserved ws slot").toBeTruthy();
+    expect(slot?.getAttribute("aria-hidden")).toBe("true");
+
+    const menu = mount(headerNode({ title: "Providers", logoutLabel: "Log out" }));
+    expect(menu.querySelector(".s-admin-header-ws-slot")).toBeNull();
+    expect(menu.querySelector(".s-admin-header-title")).toBeTruthy();
+  });
+
   it("renders the signing-in placeholder with the force-sign-out escape when the identity is empty", async () => {
     const onForceSignOut = vi.fn();
     const c = mount(headerNode({

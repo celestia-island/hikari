@@ -249,6 +249,20 @@ export const HkAdminHeader = defineComponent({
               )}
             </button>
           )}
+          {/* The reserved workspace-switcher slot (drawer face only).
+              The chat header's left wing is avatar + ws-trigger button,
+              and that wing's min-content floor is what keeps the
+              header-centre strip off the space on a phone. The console
+              has no workspace concept, but the drawer face hides the
+              title too — without a stand-in the wing's floor is just
+              the 28px avatar and a wide centre strip slides left into
+              the slot and reads as hugging the avatar (2026-10-29 user
+              direction: 头像右侧留白，前后台布局统一). An aria-hidden
+              blank of the trigger's own footprint keeps both faces'
+              left wings at the same floor. */}
+          {props.avatarAction === "drawer" && (
+            <span class="s-admin-header-ws-slot" aria-hidden="true" />
+          )}
           {/* WHERE am I — the open view's title, not the nickname. The
               1.5 line-height (in the class) keeps descenders (g, y, p)
               inside the truncate clip box: the default text-sm box is

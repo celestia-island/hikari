@@ -95,6 +95,20 @@ describe("admin header chrome geometry (the two user-requested fixes)", () => {
     expect(rule).toContainEqual(["gap", "var(--space-16)"]);
   });
 
+  it("reserves the drawer face's workspace-switcher slot at the trigger's own footprint", () => {
+    // 2026-10-29 user direction: the chat header's left wing is avatar +
+    // ws-trigger, and that wing's min-content floor is what stops the
+    // balanced grid's centre strip from sliding into the space on a
+    // phone. The console drawer face (no title, no workspace concept)
+    // must keep the slot as a blank of the trigger's own 28px box —
+    // dropping the rule would drop the floor and the strip would hug
+    // the avatar again.
+    const rule = ruleDeclarations(adminTokens, ".s-admin-header-ws-slot");
+    expect(rule, ".s-admin-header-ws-slot must be declared").not.toBeNull();
+    expect(rule).toContainEqual(["width", "var(--space-28)"]);
+    expect(rule).toContainEqual(["flex-shrink", "0"]);
+  });
+
   it("hangs the shared balanced-header grid contract (the ONE header layout)", () => {
     // User report 2026-10-15: the console's header-centre tab strip sat
     // LEFT of centre on phones (drawer mode hides the title, so the left

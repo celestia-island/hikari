@@ -9,6 +9,15 @@ import "./HkPopupSelect.scss";
 export interface HkPopupSelectOption {
   value: string;
   label: string;
+  /** Secondary line under the label, inside the same option row — a
+   * muted, single-line ellipsis strip for meta text (a row's owner,
+   * address, type) that must stay visible without leaking into the
+   * collapsed trigger, which keeps showing `label` alone. Absent → the
+   * row renders the EXACT stock DOM (bare label span, wrap allowed, no
+   * optical shift): the two-line anatomy exists only when there is a
+   * second line to show (R2: the mi.label ellipsis + 0.5px spec is a
+   * behavior change stock rows must not inherit silently). */
+  description?: string;
 }
 
 const activePopupId = ref<string | null>(null);
@@ -232,7 +241,16 @@ export default defineComponent({
                     onClick={() => select(opt.value)}
                     onPointerenter={() => { highlightedIndex.value = i; }}
                   >
-                    <span>{opt.label}</span>
+                    {opt.description ? (
+                      <span class="hk-popup-select-item-body">
+                        <span class="hk-popup-select-item-label">{opt.label}</span>
+                        <span class="hk-popup-select-item-desc">{opt.description}</span>
+                      </span>
+                    ) : (
+                      // Stock rows keep the exact pre-description DOM: no
+                      // body wrapper, no mi.label spec — the R2 contract.
+                      <span>{opt.label}</span>
+                    )}
                   </div>
                 ))}
           </HkScrollContainer>

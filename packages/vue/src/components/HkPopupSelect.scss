@@ -149,6 +149,38 @@
   @include mi.item;
 }
 
+/* Two-line option rows, rendered ONLY for options that carry a
+ * description — a stock row keeps the bare label span (wrap allowed, no
+ * optical shift) so existing consumers see byte-identical geometry (R2).
+ * The body owns the row's flex growth so both lines ellipsis against the
+ * same edge. */
+.hk-popup-select-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hk-popup-select-item-label {
+  @include mi.label;
+}
+
+/* The secondary line inherits the row color (hover/checked tints flow
+ * through) and steps down via opacity + the caption size, so it stays
+ * clearly meta against both the plain and the primary checked face. */
+.hk-popup-select-item-desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: inherit;
+  opacity: 0.62;
+  /* Same italic-overhang clipping room the label mixin reserves. */
+  padding-inline-end: var(--hk-menu-item-label-cushion);
+}
+
 /* Keyboard highlight face yields to checked/active; the hover face comes
  * from mi.item's own guarded :hover (identical values, higher specificity). */
 .hk-popup-select-item[data-highlighted]:not([data-checked]):not([data-active]) {

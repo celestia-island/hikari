@@ -31,6 +31,10 @@ afterEach(() => {
 
 const OPTIONS = [{ value: "a1", label: "Agent One" }];
 
+const DESCRIBED_OPTIONS = [
+  { value: "a1", label: "Agent One", description: "Personal · /srv/one" },
+];
+
 describe("HkPopupSelect (mobile sheet)", () => {
   it("hideLabel keeps the sheet's breadcrumb title on the field's name", async () => {
     // hideLabel only suppresses the INLINE caption; the sheet header
@@ -46,5 +50,19 @@ describe("HkPopupSelect (mobile sheet)", () => {
     const title = document.body.querySelector(".hk-popover-sheet-title");
     expect(title, "the sheet renders a title band").toBeTruthy();
     expect(title!.textContent).toBe("Agent");
+  });
+
+  it("described options keep their second line inside the sheet", async () => {
+    const c = mount(
+      h(HkPopupSelect, { modelValue: "", options: DESCRIBED_OPTIONS }),
+    );
+    const trigger = c.querySelector<HTMLButtonElement>(".hk-popup-select-trigger")!;
+    trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    const desc = document.body.querySelector(
+      ".hk-popover-panel .hk-popup-select-item-desc",
+    );
+    expect(desc?.textContent).toBe("Personal · /srv/one");
   });
 });

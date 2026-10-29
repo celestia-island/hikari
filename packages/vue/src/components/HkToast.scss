@@ -134,17 +134,21 @@
   to { transform: rotate(360deg); }
 }
 
-/* Inline action (e.g. Undo): a compact text pill in the toast chrome,
- *  between the body and the icon buttons. Sits in the same ghost-button
- *  family as copy/close, but reads as an affordance. */
+/* Inline action (e.g. Undo / open analysis): a GLASS PILL on the toast's
+ *  solid band. The old ghost outline sat flat on the accent fill — "a grey
+ *  outlined transparent button", user report 2026-10 — because it borrowed
+ *  the page-surface border tokens on a filled surface. A currentColor tint
+ *  follows every variant (white on the coloured bands, near-black on the
+ *  amber warning band) and reads as a real affordance without introducing
+ *  a second accent colour. */
 .hk-toast-action {
   flex: none;
   align-self: center;
   margin-inline-start: var(--space-4, 4px);
-  padding: var(--space-2, 2px) var(--space-8, 8px);
-  border: 1px solid rgb(var(--color-border, 100 100 100) / 30%);
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  background: color-mix(in srgb, currentColor 14%, transparent);
   color: inherit;
   font: inherit;
   font-size: var(--text-sm, 0.8125rem);
@@ -152,14 +156,18 @@
   line-height: 1.4;
   cursor: pointer;
   white-space: nowrap;
-  opacity: 0.92;
-  transition: opacity var(--duration-fast, 0.15s) ease,
+  transition:
+    background var(--duration-fast, 0.15s) ease,
     border-color var(--duration-fast, 0.15s) ease;
 }
 
 .hk-toast-action:hover {
-  opacity: 1;
-  border-color: rgb(var(--color-border, 100 100 100) / 55%);
+  background: color-mix(in srgb, currentColor 24%, transparent);
+  border-color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.hk-toast-action:active {
+  background: color-mix(in srgb, currentColor 32%, transparent);
 }
 
 .hk-toast-action:focus-visible {

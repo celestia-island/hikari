@@ -3,6 +3,7 @@ import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import HkMenu, { type HkMenuItem } from "./HkMenu";
+import { HkAvatarButton } from "./HkAvatarButton";
 
 export interface LocaleOption {
   code: string;
@@ -93,7 +94,11 @@ export const HkAdminHeader = defineComponent({
     const userMenuOpen = ref(false);
     const userTriggerRef = ref<HTMLElement>();
     const avatarModalOpen = ref(false);
-    const avatarFailed = ref(false);
+    // The DROPDOWN identity image's own failed-load latch. The trigger
+    // button's latch lives inside HkAvatarButton now (each instance
+    // self-heals on a URL change); both load the same URL, so they flip
+    // and reset together in practice.
+    const menuAvatarFailed = ref(false);
 
     // The identity cluster is INJECTED, not assumed (2026-10-24): the
     // trigger renders only when the host actually supplied an identity
@@ -219,35 +224,14 @@ export const HkAdminHeader = defineComponent({
             </HButton>
           )}
           {identityMounted.value && (
-            <button
-              class="s-admin-header-avatar"
-              aria-label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
-              aria-haspopup={props.avatarAction === "drawer" ? "dialog" : "menu"}
-              aria-expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
+            <HkAvatarButton
+              avatarUrl={props.avatarUrl}
+              username={props.username}
+              label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
+              popup={props.avatarAction === "drawer" ? "dialog" : "menu"}
+              expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
               onClick={onAvatarClick}
-            >
-              {/* Deliberately NO hover veil here: the trigger opens the user
-               *  MENU (the avatar edit lives one row down as the Camera
-               *  item), so a camera overlay would promise click-to-change
-               *  and lie (user report 2026-09-16). */}
-              {props.avatarUrl && !avatarFailed.value ? (
-                <img
-                  src={props.avatarUrl}
-                  alt={props.username}
-                  class="s-admin-header-avatar-img"
-                  onError={() => { avatarFailed.value = true; }}
-                />
-              ) : (
-                // Letter fallback on the shared avatar primitive — the
-                // same filled-circle grammar as the chat frontend's
-                // trigger. The old border-2 ring made the console's
-                // avatar read as a different control (user report
-                // 2026-09-12: 前后台头像不一致).
-                <span class="s-user-avatar">
-                  {props.username?.charAt(0).toUpperCase() || "?"}
-                </span>
-              )}
-            </button>
+            />
           )}
           {/* The reserved workspace-switcher slot (drawer face only).
               The chat header's left wing is avatar + ws-trigger button,
@@ -292,6 +276,13 @@ export const HkAdminHeader = defineComponent({
                   <HSpinner size="sm" />
                   <div class="s-user-header-email">{props.signingInLabel ?? t("hikari::adminHeader.signingIn", "Signing in…")}</div>
                 </div>
+              ) : slots.identity ? (
+                // Host-owned identity block (shell-unify wave 7): hosts
+                // with a richer identity vocabulary (localized group
+                // names, account-type badges, copy badges) inject their
+                // ONE component here; the built-in block below stays for
+                // hosts without one.
+                slots.identity()
               ) : (
                 // Identity block FIRST — avatar, nickname, login email,
                 // permission badges — the same grammar the chat
@@ -299,12 +290,12 @@ export const HkAdminHeader = defineComponent({
                 // s-user-header profile variant).
                 <div class="s-user-header s-user-header--profile">
                   <span class="s-user-avatar-chip" aria-hidden="true">
-                    {props.avatarUrl && !avatarFailed.value ? (
+                    {props.avatarUrl && !menuAvatarFailed.value ? (
                       <img
                         src={props.avatarUrl}
                         alt=""
                         class="s-user-avatar-img"
-                        onError={() => { avatarFailed.value = true; }}
+                        onError={() => { menuAvatarFailed.value = true; }}
                       />
                     ) : (
                       <span class="s-user-avatar">

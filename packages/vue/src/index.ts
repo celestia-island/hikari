@@ -760,6 +760,7 @@ export { HkErrorReportingOverlay as HkErrorReportingOverlay } from "./errorRepor
 export { HkAdminShell as HkAdminShell } from "./components/HkAdminShell";
 export { HkFaceShell as HkFaceShell } from "./components/HkFaceShell";
 export { HkAdminHeader as HkAdminHeader } from "./components/HkAdminHeader";
+export { HkAvatarButton as HkAvatarButton } from "./components/HkAvatarButton";
 export { HkNavSidebar as HkNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HkThemeToggle } from "./components/HkThemeToggle";
 export { HkThemePanelContent as HkThemePanelContent } from "./components/HkThemePanelContent";

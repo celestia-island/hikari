@@ -151,7 +151,8 @@
 
 /* Two-line option rows. The body owns the row's flex growth so the label
  * and the optional description ellipsis against the same edge; without a
- * description the column holds one child and the geometry is unchanged. */
+ * description the column holds one child — the label picks up the house
+ * mi.label spec (ellipsis + optical shift) and nothing else moves. */
 .hk-popup-select-item-body {
   flex: 1;
   min-width: 0;

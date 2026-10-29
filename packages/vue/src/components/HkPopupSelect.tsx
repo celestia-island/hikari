@@ -13,7 +13,9 @@ export interface HkPopupSelectOption {
    * muted, single-line ellipsis strip for meta text (a row's owner,
    * address, type) that must stay visible without leaking into the
    * collapsed trigger, which keeps showing `label` alone. Absent → the
-   * row keeps the single-line stock exactly as before. */
+   * row stays single-line: the label gains the house `mi.label` spec
+   * (ellipsis + the 0.5px optical shift every other menu row carries),
+   * nothing else moves. */
   description?: string;
 }
 

@@ -149,10 +149,11 @@
   @include mi.item;
 }
 
-/* Two-line option rows. The body owns the row's flex growth so the label
- * and the optional description ellipsis against the same edge; without a
- * description the column holds one child — the label picks up the house
- * mi.label spec (ellipsis + optical shift) and nothing else moves. */
+/* Two-line option rows, rendered ONLY for options that carry a
+ * description — a stock row keeps the bare label span (wrap allowed, no
+ * optical shift) so existing consumers see byte-identical geometry (R2).
+ * The body owns the row's flex growth so both lines ellipsis against the
+ * same edge. */
 .hk-popup-select-item-body {
   flex: 1;
   min-width: 0;

@@ -13,9 +13,10 @@ export interface HkPopupSelectOption {
    * muted, single-line ellipsis strip for meta text (a row's owner,
    * address, type) that must stay visible without leaking into the
    * collapsed trigger, which keeps showing `label` alone. Absent → the
-   * row stays single-line: the label gains the house `mi.label` spec
-   * (ellipsis + the 0.5px optical shift every other menu row carries),
-   * nothing else moves. */
+   * row renders the EXACT stock DOM (bare label span, wrap allowed, no
+   * optical shift): the two-line anatomy exists only when there is a
+   * second line to show (R2: the mi.label ellipsis + 0.5px spec is a
+   * behavior change stock rows must not inherit silently). */
   description?: string;
 }
 
@@ -240,12 +241,16 @@ export default defineComponent({
                     onClick={() => select(opt.value)}
                     onPointerenter={() => { highlightedIndex.value = i; }}
                   >
-                    <span class="hk-popup-select-item-body">
-                      <span class="hk-popup-select-item-label">{opt.label}</span>
-                      {opt.description ? (
+                    {opt.description ? (
+                      <span class="hk-popup-select-item-body">
+                        <span class="hk-popup-select-item-label">{opt.label}</span>
                         <span class="hk-popup-select-item-desc">{opt.description}</span>
-                      ) : null}
-                    </span>
+                      </span>
+                    ) : (
+                      // Stock rows keep the exact pre-description DOM: no
+                      // body wrapper, no mi.label spec — the R2 contract.
+                      <span>{opt.label}</span>
+                    )}
                   </div>
                 ))}
           </HkScrollContainer>

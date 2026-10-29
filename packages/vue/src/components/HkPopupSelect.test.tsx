@@ -103,15 +103,18 @@ describe("HkPopupSelect", () => {
     expect(item.querySelector(".hk-popup-select-item-label")?.textContent).toBe("Agent One");
   });
 
-  it("no description node renders when options carry none — single-line stock", async () => {
+  it("no description → the exact stock DOM: bare label span, no body wrapper", async () => {
     const c = mount(h(HkPopupSelect, { modelValue: "", options: OPTIONS }));
     c.querySelector<HTMLButtonElement>(".hk-popup-select-trigger")!
       .dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await Promise.resolve();
     await Promise.resolve();
     const item = document.body.querySelector(".hk-popup-select-item")!;
-    expect(item.querySelector(".hk-popup-select-item-desc")).toBeNull();
-    expect(item.querySelector(".hk-popup-select-item-label")?.textContent).toBe("Agent One");
+    // R2 contract: description-less rows render the pre-description DOM —
+    // no two-line anatomy, so no mi.label ellipsis/optical spec applies.
+    expect(item.querySelector(".hk-popup-select-item-body")).toBeNull();
+    expect(item.querySelector(".hk-popup-select-item-label")).toBeNull();
+    expect(item.querySelector("span")?.textContent).toBe("Agent One");
   });
 
   it("the collapsed trigger shows the label only, never the description", () => {

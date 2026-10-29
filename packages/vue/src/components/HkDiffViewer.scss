@@ -67,6 +67,10 @@
 }
 
 .hk-diff-viewer__code {
+  /* The diff body is content (review text users copy into replies);
+   * the line-number gutter above and the sign column stay denied. */
+  -webkit-user-select: text;
+  user-select: text;
   padding-inline-end: 1ch;
   min-width: 0;
 }

@@ -45,6 +45,11 @@
 }
 
 .s-jt-row {
+  /* Tree rows are content — values users copy out of a payload — while
+   * the pane chrome above stays denied (L2 selection policy, 2026-10-29;
+   * the copy-tree affordance remains the bulk path). */
+  -webkit-user-select: text;
+  user-select: text;
   /* Baseline alignment keeps the small type hints (boolean/number/string)
      on the value's text baseline instead of floating above it. */
   display: flex;

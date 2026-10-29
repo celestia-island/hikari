@@ -6,6 +6,10 @@
 //   1. theme/channels.scss — the static seed: --color-* channel palette,
 //      --hi-color-* derivations, --c-*/--shadow-*/--border-* aliases and
 //      the icon-button bridge (vendored from src/tokens.scss).
+//   1b. selection.scss — the selection policy: deny-by-default at the
+//      root (chrome text never takes a drag selection), whitelisted back
+//      for editable controls, the .hk-selectable content hook and the
+//      pre/code content conventions.
 //   2. theme/scale.scss — the L2 scale tokens: spacing, type, radius,
 //      blur, opacity, durations, easings, z bands, fonts (vendored from
 //      src/scale.scss).
@@ -28,6 +32,7 @@
 // version of this file re-exported packages/theme + packages/components
 // through paths that escape the npm package and did not compile.
 @use "./reset.scss";
+@use "./selection.scss";
 @use "./theme/channels.scss";
 @use "./theme/scale.scss";
 @use "../overlay/overlayRoot.scss";

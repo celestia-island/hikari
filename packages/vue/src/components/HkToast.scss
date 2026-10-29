@@ -55,6 +55,12 @@
 }
 
 .hk-toast-message {
+  /* The message text is content — error detail a user copies out of a
+   * failing app — not chrome. Re-enable inside the denied toast shell
+   * (L2 selection policy, 2026-10-29): the shell keeps its none, the
+   * message subtree selects again. */
+  -webkit-user-select: text;
+  user-select: text;
   flex: 1;
   min-width: 0;
   display: -webkit-box;

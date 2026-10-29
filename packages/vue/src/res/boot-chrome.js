@@ -720,10 +720,11 @@
     // stays enabled even when the window controls degraded.
     button.disabled = false;
     button.removeAttribute("aria-disabled");
-    // Right-hand cluster, immediately LEFT of close: closing keeps the frame
-    // corner (the familiar target), so a user reaching for it on a hung window
-    // cannot hit reload by mistake.
-    actions.insertBefore(button, closeBtn);
+    // Reload LEADS the cluster (2026-10-29 user direction): the affordance
+    // sits ahead of the window controls — [reload][minimize][maximize][close]
+    // — so the three caption buttons (and the close frame corner) keep their
+    // familiar trailing positions.
+    actions.insertBefore(button, minimizeBtn);
     reloadBtn = button;
     return button;
   }

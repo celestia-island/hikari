@@ -9,6 +9,12 @@ import "./HkPopupSelect.scss";
 export interface HkPopupSelectOption {
   value: string;
   label: string;
+  /** Secondary line under the label, inside the same option row — a
+   * muted, single-line ellipsis strip for meta text (a row's owner,
+   * address, type) that must stay visible without leaking into the
+   * collapsed trigger, which keeps showing `label` alone. Absent → the
+   * row keeps the single-line stock exactly as before. */
+  description?: string;
 }
 
 const activePopupId = ref<string | null>(null);
@@ -232,7 +238,12 @@ export default defineComponent({
                     onClick={() => select(opt.value)}
                     onPointerenter={() => { highlightedIndex.value = i; }}
                   >
-                    <span>{opt.label}</span>
+                    <span class="hk-popup-select-item-body">
+                      <span class="hk-popup-select-item-label">{opt.label}</span>
+                      {opt.description ? (
+                        <span class="hk-popup-select-item-desc">{opt.description}</span>
+                      ) : null}
+                    </span>
                   </div>
                 ))}
           </HkScrollContainer>

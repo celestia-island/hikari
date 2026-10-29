@@ -81,4 +81,48 @@ describe("HkPopupSelect", () => {
     const c = mount(h(HkPopupSelect, { modelValue: "a1", label: "Agent", options: OPTIONS }));
     expect(c.querySelector(".hk-popup-select-trigger")!.getAttribute("aria-label")).toBeNull();
   });
+
+  it("an option description renders its own muted line under the label", async () => {
+    const c = mount(
+      h(HkPopupSelect, {
+        modelValue: "",
+        options: [{ value: "a1", label: "Agent One", description: "Personal · /srv/one" }],
+      }),
+    );
+    // Open the popout — option rows live in the anchored panel, which
+    // mounts across a microtask (the mobile sheet tests await the same).
+    c.querySelector<HTMLButtonElement>(".hk-popup-select-trigger")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    const item = document.body.querySelector(".hk-popup-select-item")!;
+    expect(item.textContent).toContain("Agent One");
+    const desc = item.querySelector(".hk-popup-select-item-desc");
+    expect(desc?.textContent).toBe("Personal · /srv/one");
+    // The label sits in its own span so the two lines never merge.
+    expect(item.querySelector(".hk-popup-select-item-label")?.textContent).toBe("Agent One");
+  });
+
+  it("no description node renders when options carry none — single-line stock", async () => {
+    const c = mount(h(HkPopupSelect, { modelValue: "", options: OPTIONS }));
+    c.querySelector<HTMLButtonElement>(".hk-popup-select-trigger")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    const item = document.body.querySelector(".hk-popup-select-item")!;
+    expect(item.querySelector(".hk-popup-select-item-desc")).toBeNull();
+    expect(item.querySelector(".hk-popup-select-item-label")?.textContent).toBe("Agent One");
+  });
+
+  it("the collapsed trigger shows the label only, never the description", () => {
+    const c = mount(
+      h(HkPopupSelect, {
+        modelValue: "a1",
+        options: [{ value: "a1", label: "Agent One", description: "secret-meta" }],
+      }),
+    );
+    const value = c.querySelector(".hk-popup-select-value")!;
+    expect(value.textContent).toBe("Agent One");
+    expect(value.textContent).not.toContain("secret-meta");
+  });
 });

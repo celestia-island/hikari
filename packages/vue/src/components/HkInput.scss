@@ -186,6 +186,38 @@
   margin-inline-start: auto;
 }
 
+/* ── Number fields (type="number" / variant="number") ───────────────
+ * The browser's native spin buttons are retired: the shared lucide
+ * stepper column (HkNumberSteppers) takes the trailing edge instead, so
+ * every hikari number field draws the same up/down affordance regardless
+ * of host platform. The field itself keeps type="number" — keyboard
+ * arrows and min/max validation stay native. */
+.hk-input-box-number .hk-input-element {
+  -moz-appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+/* The stepper column is an in-flow sibling riding ABOVE the absolutely
+ * positioned element (z-index 1, exactly like the affixes) and it owns the
+ * trailing auto margin — the slot the suffix's auto margin occupies when no
+ * steppers render. */
+.hk-input-box .hk-number-input-steppers {
+  position: relative;
+  z-index: 1;
+  margin-inline-start: auto;
+}
+
+/* With the steppers present the suffix parks NEXT to them: two auto margins
+ * would split the free space and float the suffix mid-gap. */
+.hk-input-box[data-number-steppers] .hk-input-affix.hk-input-suffix {
+  margin-inline-start: 0;
+}
+
 /* The placeholder-marquee window shares the element's content box: inset
  * by the same base padding plus the affix clearance, so the scrolling
  * strip never slides underneath the affixes either. Like the element,

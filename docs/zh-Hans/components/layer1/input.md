@@ -32,6 +32,14 @@ rsx! {
 }
 ```
 
+## 数字输入
+
+`type="number"`（Vue 运行时也可用 `variant="number"`）会用共享的 lucide 上下箭头列——与 [Number Input](./number_input.md) 相同的控件——替换浏览器原生的步进按钮：单击按 `step` 步进，长按连续步进，`min` / `max` / `step` 属性对指针步进的约束与对原生键盘步进的约束完全一致。字段本身仍是原生 `type="number"` 输入框——方向键与表单校验不受影响。
+
+```hikari
+<HInput type="number" modelValue={value} onUpdate:modelValue={(v: string) => (value = v)} min={60} max={240} step={10} placeholder="Hang" />
+```
+
 ## 自定义颜色
 
 通过 Custom 层属性可以动态覆盖输入框颜色。

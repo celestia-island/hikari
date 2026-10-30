@@ -128,6 +128,12 @@ describe("HSettingsBody", () => {
     // positive naming contract is its own case below.
     expect(rail.tagName).toBe("NAV");
     expect(rail.getAttribute("aria-label")).toBeNull();
+    // The rail opts into the selection edge hint, so its root mirrors the
+    // sensed data-selection-beyond state (happy-dom's zero rects read as
+    // beyond-band — the pin is that the attribute exists at all). The
+    // pane never senses selection: the hint is rail-only by design.
+    expect(rail.hasAttribute("data-selection-beyond")).toBe(true);
+    expect(pane.hasAttribute("data-selection-beyond")).toBe(false);
     unmount();
   });
 

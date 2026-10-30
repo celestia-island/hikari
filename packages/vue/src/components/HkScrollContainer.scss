@@ -219,7 +219,86 @@
 }
 
 
+/* ── Selection edge hint (selectionHint opt-in) ────────────────────
+   A list taller than its viewport hides its SELECTED row as soon as it
+   scrolls out of the band; these gradients light the offending edge so
+   the user can see at a glance that a selected item lies beyond it
+   (the settings rail's "why is nothing highlighted?" question). Pure
+   CSS driven by data-selection-beyond, mirrored by the component's
+   sensing pass — no extra DOM, "none" matches nothing.
 
+   Painted on the CONTAINER ROOT's pseudo-elements, not the viewport's:
+   viewport pseudos live in SCROLLED space and would scroll away with
+   the content, while the root is the fixed non-scrolled box (position:
+   relative; overflow: hidden). Absolutely-positioned pseudos are also
+   never flex items of the column root, so the hint costs no layout.
+
+   The band's INLINE ENDS dissolve over --hk-scroll-selection-hint-feather
+   so its corners fall off naturally (user report 2026-10-30: the lit
+   band's ends cut as hard vertical edges) — the same natural-falloff
+   treatment the overflow fades below received. The vertical decay stays
+   in the background gradient; the horizontal feather is a single-axis
+   mask layered on top of it, so no mask-composite is needed and the
+   symmetric stops are direction-neutral (no RTL swap).
+
+   Both knobs are declared on the root state rule (not the pseudos) so a
+   consumer override ON the container wins — a directly declared custom
+   property beats any inherited value, so an ancestor's cannot reach the
+   painters (same contract shape as --hk-scroll-fade-size). */
+.hk-scroll-container[data-selection-beyond] {
+  --hk-scroll-selection-hint-size: var(--space-24);
+  --hk-scroll-selection-hint-feather: var(--space-24);
+}
+
+.hk-scroll-container[data-selection-beyond="top"]::before,
+.hk-scroll-container[data-selection-beyond="both"]::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: var(--hk-scroll-selection-hint-size);
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgb(var(--color-primary) / 32%), transparent);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--hk-scroll-selection-hint-feather),
+    #000 calc(100% - var(--hk-scroll-selection-hint-feather)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--hk-scroll-selection-hint-feather),
+    #000 calc(100% - var(--hk-scroll-selection-hint-feather)),
+    transparent 100%
+  );
+}
+
+.hk-scroll-container[data-selection-beyond="bottom"]::after,
+.hk-scroll-container[data-selection-beyond="both"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: var(--hk-scroll-selection-hint-size);
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(var(--color-primary) / 32%), transparent);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--hk-scroll-selection-hint-feather),
+    #000 calc(100% - var(--hk-scroll-selection-hint-feather)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--hk-scroll-selection-hint-feather),
+    #000 calc(100% - var(--hk-scroll-selection-hint-feather)),
+    transparent 100%
+  );
+}
 
 /* autoFollow content is bottom-anchored while it fits the viewport: the
    newest row hugs the bottom edge (a tail-following console, e.g. the

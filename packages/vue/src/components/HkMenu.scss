@@ -140,10 +140,14 @@
 
 /* ── sidebar variant, ICON-RAIL mode (collapsed, 2026-10-30) ──────
  * Rows are icon-only squares: label and pill badge hide (the label
- * travels in an HkTooltip, the badge degrades to the corner dot), rows
- * center their glyph, and groups flatten to separators. The tooltip
- * wrappers must lay out as blocks or the rows would shrink to the
- * wrapper's inline width. */
+ * travels in an HkTooltip, the badge degrades to the corner dot) and
+ * rows center their glyph. GROUPS stay navigable: a group header is a
+ * centered row whose glyph is the group icon (or a placeholder caret)
+ * plus a state caret, and its open children recurse in the SAME
+ * one-column rail — no indentation step, no separator fallback
+ * (2026-10-30 follow-up: flattening groups to separators stranded every
+ * grouped destination in the rail). The tooltip wrappers must lay out
+ * as blocks or the rows would shrink to the wrapper's inline width. */
 .hk-menu-sidebar[data-collapsed] {
   .hk-tooltip-wrapper,
   .hk-tooltip-trigger {
@@ -169,6 +173,45 @@
     font-size: var(--text-sm, 0.8125rem);
     font-weight: 600;
   }
+
+  /* Rail groups keep the rail rhythm at every depth: the children
+   * wrapper spends the rail's own row gap, with no margin step above
+   * the first child and never an indent. */
+  .hk-menu-sidebar-rail-group,
+  .hk-menu-sidebar-rail-children {
+    width: 100%;
+  }
+
+  .hk-menu-sidebar-rail-children {
+    margin-top: 0;
+  }
+
+  /* Disclosure ink, at the same secondary weight as the expanded
+   * sidebar's .hk-menu-more. The placeholder form lives in the glyph
+   * cell and centers like every other row icon. */
+  .hk-menu-rail-caret {
+    flex: none;
+    opacity: 0.55;
+  }
+
+  /* Groups that DO carry an icon: the state caret parks in the
+   * inline-end corner (opposite the badge dot, which sits at the block
+   * start) so the icon glyph keeps its rail-centered column. */
+  .hk-menu-rail-caret-corner {
+    position: absolute;
+    inset-block-end: var(--space-2, 2px);
+    inset-inline-end: var(--space-4, 4px);
+    display: inline-flex;
+    pointer-events: none;
+  }
+}
+
+/* RTL mirrors the rail caret — the same paint-only convention as
+ * .hk-menu-more above: the tsx always ships the LTR glyph and scaleX
+ * mirrors it. A down chevron is horizontally symmetric, so an OPEN
+ * group reads identically in both directions. */
+[dir="rtl"] .hk-menu-rail-caret {
+  transform: scaleX(-1);
 }
 
 /* Corner dot — the rail form of a badge: count info moves into the row's
@@ -182,15 +225,6 @@
   width: 6px;
   height: 6px;
   padding: 0;
-}
-
-/* A group flattened to a separator while in the rail. */
-.hk-menu-sidebar-divider {
-  height: 1px;
-  flex-shrink: 0;
-  margin-block: var(--space-4, 4px);
-  margin-inline: var(--space-8, 8px);
-  background: var(--hi-color-border, rgba(100, 100, 100, 0.08));
 }
 
 /* Reduced motion resets live AFTER the rules they guard so `transition: none`

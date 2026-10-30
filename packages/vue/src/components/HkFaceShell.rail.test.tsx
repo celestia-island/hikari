@@ -368,3 +368,211 @@ describe("HkAdminShell forwarding (source pin)", () => {
     expect(container.querySelector(".hk-sidebar-rail-toggle button")).toBeTruthy();
   });
 });
+/** A pointermove with explicit viewport coordinates (the suppression
+ *  wiring is purely geometric — see HkSidebarRailToggle's helper). */
+function pointerMove(x: number, y: number): MouseEvent {
+  const e = new MouseEvent("pointermove", { bubbles: true });
+  Object.defineProperty(e, "clientX", { value: x });
+  Object.defineProperty(e, "clientY", { value: y });
+  return e;
+}
+
+/** A pointerenter carrying viewport coordinates — the host evaluates the
+ *  toggle containment on ENTER, before it arms the dwell. */
+function pointerEnterAt(x: number, y: number): MouseEvent {
+  const e = new MouseEvent("pointerenter", { bubbles: true });
+  Object.defineProperty(e, "clientX", { value: x });
+  Object.defineProperty(e, "clientY", { value: y });
+  return e;
+}
+
+/** A transitionend carrying the property name (happy-dom has no
+ *  TransitionEvent; the host handler filters on `width`). */
+function widthTransitionEnd(): Event {
+  const e = new Event("transitionend");
+  Object.defineProperty(e, "propertyName", { value: "width" });
+  return e;
+}
+
+/** Pin the toggle wrapper's box — happy-dom lays nothing out. */
+function stubToggleRect(container: HTMLElement, left: number, top: number, size = 24) {
+  const el = container.querySelector(".hk-sidebar-rail-toggle") as HTMLElement;
+  el.getBoundingClientRect = () =>
+    ({
+      left,
+      top,
+      right: left + size,
+      bottom: top + size,
+      width: size,
+      height: size,
+      x: left,
+      y: top,
+      toJSON: () => ({}),
+    }) as DOMRect;
+}
+
+describe("HkFaceShell rail chrome: toggle placement and the clip wrapper", () => {
+  it("keeps the toggle a DIRECT child of the panel and the slot inside the clip", () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    const panel = c.panel();
+    const clip = panel.querySelector(":scope > .hk-sidebar-rail-clip") as HTMLElement | null;
+    const toggle = panel.querySelector(":scope > .hk-sidebar-rail-toggle") as HTMLElement | null;
+
+    expect(clip, "the slot's content clips inside the wrapper").toBeTruthy();
+    expect(toggle, "the toggle is a direct child of the panel").toBeTruthy();
+    expect(clip!.contains(toggle!), "the toggle is never inside the clip").toBe(false);
+    expect(clip!.querySelector(".sidebar-mock"), "the sidebar slot renders in the clip").toBeTruthy();
+  });
+
+  it("does not touch the legacy sidebar path (no clip wrapper, no rail classes)", () => {
+    const c = mountShell();
+    expect(c.container.querySelector(".hk-sidebar-rail-clip")).toBeFalsy();
+    expect(c.container.querySelector(".hk-sidebar-rail-panel")).toBeFalsy();
+    expect(c.container.querySelector(".sidebar-mock")).toBeTruthy();
+  });
+});
+
+describe("HkFaceShell pin window: expand must not replay the slide", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("pins on a rail -> expanded flip and clears on the host width transition", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-pinning"), "collapsing never pins").toBe(false);
+
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-pinning"), "the expand window is pinned").toBe(true);
+    // The panel is already at its final width — only the host animates.
+    expect(c.panel().style.width).toBe("224px");
+    expect(c.aside().style.width).toBe("224px");
+
+    c.aside().dispatchEvent(widthTransitionEnd());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-pinning")).toBe(false);
+  });
+
+  it("clears the pin window by the fallback when no transition fires", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-pinning")).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(400);
+    expect(c.aside().hasAttribute("data-pinning")).toBe(false);
+  });
+
+  it("collapsing closes an open pin window immediately", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-pinning")).toBe(true);
+
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-pinning")).toBe(false);
+    expect(c.aside().style.width).toBe("56px");
+  });
+
+  it("a child transitionend never ends the window (filtered to the host's width)", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+
+    c.panel().dispatchEvent(widthTransitionEnd());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-pinning")).toBe(true);
+  });
+});
+
+describe("HkFaceShell hover suppression: a pointer on the toggle never peeks", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("suppresses the dwell while the pointer rests on the toggle, re-arms when it moves off", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    stubToggleRect(c.container, 100, 200);
+
+    c.aside().dispatchEvent(POINTER_ENTER());
+    c.aside().dispatchEvent(pointerMove(110, 210));
+    await vi.advanceTimersByTimeAsync(400 * 4);
+    expect(c.aside().hasAttribute("data-peeking"), "parked on the toggle: no peek").toBe(false);
+    expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
+
+    c.aside().dispatchEvent(pointerMove(400, 500));
+    await vi.advanceTimersByTimeAsync(400);
+    expect(c.aside().hasAttribute("data-peeking"), "off the toggle the peek arms normally").toBe(true);
+    expect(c.slotParams[c.slotParams.length - 1]!.peeking).toBe(true);
+  });
+
+  it("evaluates suppression on ENTER: crossing the boundary onto the toggle arms nothing", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    stubToggleRect(c.container, 100, 200);
+
+    c.aside().dispatchEvent(pointerEnterAt(110, 210));
+    await vi.advanceTimersByTimeAsync(400 * 4);
+    expect(c.aside().hasAttribute("data-peeking"), "enter on the toggle arms nothing").toBe(false);
+    expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
+  });
+
+  it("evaluates suppression on ENTER: entering elsewhere on the rail still peeks", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    stubToggleRect(c.container, 100, 200);
+
+    c.aside().dispatchEvent(pointerEnterAt(400, 500));
+    await vi.advanceTimersByTimeAsync(399);
+    expect(c.aside().hasAttribute("data-peeking"), "one tick before the dwell").toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(c.aside().hasAttribute("data-peeking"), "off the toggle the enter arms the dwell").toBe(true);
+  });
+
+  it("ignores a pointerleave whose relatedTarget is still inside the host", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    c.aside().dispatchEvent(POINTER_ENTER());
+    await vi.advanceTimersByTimeAsync(400);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(true);
+
+    const churn = POINTER_LEAVE();
+    Object.defineProperty(churn, "relatedTarget", { value: c.container.querySelector(".sidebar-mock") });
+    c.aside().dispatchEvent(churn);
+    await vi.advanceTimersByTimeAsync(150 * 4);
+    expect(c.aside().hasAttribute("data-peeking"), "DOM churn is not a leave").toBe(true);
+
+    c.aside().dispatchEvent(POINTER_LEAVE());
+    await vi.advanceTimersByTimeAsync(150);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(false);
+  });
+
+  it("clicking the toggle during an open peek still pins the sidebar expanded", async () => {
+    const c = mountShell({ sidebarCollapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    c.aside().dispatchEvent(POINTER_ENTER());
+    await vi.advanceTimersByTimeAsync(400);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(true);
+
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(false);
+    expect(c.aside().style.width).toBe("224px");
+    expect(c.aside().hasAttribute("data-pinning"), "the peek pin is a rail -> expanded flip").toBe(true);
+  });
+});

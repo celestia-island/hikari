@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, ref, type Ref } from "vue";
 
+import { __teardownMediaQueries } from "../runtime/useMediaQuery";
 import {
   useSidebarRail,
   SIDEBAR_RAIL_PEEK_DELAY,
   SIDEBAR_RAIL_PEEK_GRACE,
+  SIDEBAR_RAIL_PIN_FALLBACK,
   type SidebarRailHandle,
 } from "./useSidebarRail";
 
@@ -22,8 +24,18 @@ import {
  * 3. Escape closes an open peek immediately (and says it consumed the
  *    key; other keys pass through).
  * 4. Expanding — by toggle or by an external collapsed flip — absorbs
- *    any open peek.
- * 5. Unmount clears pending timers.
+ *    any open peek, and opens a PIN window (the rail -> expanded
+ *    transition) that clears on the host's transitionend, on the
+ *    fallback timer, or on a collapse.
+ * 5. Suppression (2026-10-30, the reported hover twitch): while the
+ *    pointer rests on the toggle the dwell may not arm — a pending arm is
+ *    dropped and fresh arms are refused — while an OPEN peek is never
+ *    closed by it. Releasing suppression with the pointer still on the
+ *    rail re-arms a FULL dwell.
+ * 6. A pointerleave whose relatedTarget is still inside the host region
+ *    is DOM churn, not a leave: it neither starts the grace close nor
+ *    kills the arm.
+ * 7. Unmount clears pending timers.
  *
  * Fake timers drive every delay; happy-dom supplies matchMedia (the
  * reduced-motion subscription reads false, which the machine does not
@@ -245,5 +257,230 @@ describe("useSidebarRail — the peek state machine", () => {
     expect(vi.getTimerCount(), "unmount clears the dwell arm").toBe(0);
     vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
     expect(rail.peeking.value).toBe(false);
+  });
+});
+
+describe("useSidebarRail — peek suppression (the hover-twitch fix)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("drops a pending arm and refuses to arm while suppressed", () => {
+    const rail = mountRail();
+    rail.collapse();
+    // The pointer entered the rail (normal arm) and THEN landed on the
+    // toggle: the host's first pointermove suppresses, which must kill
+    // the dwell already counting down.
+    rail.onPointerEnter();
+    expect(vi.getTimerCount()).toBe(1);
+    rail.setPeekSuppressed(true);
+    expect(rail.peekSuppressed.value).toBe(true);
+    expect(vi.getTimerCount(), "suppression clears the pending arm").toBe(0);
+
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY * 4);
+    expect(rail.peeking.value, "the drawer never opens under a resting cursor").toBe(false);
+
+    // A fresh pointerenter while suppressed must not arm either.
+    rail.onPointerEnter();
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY * 4);
+    expect(rail.peeking.value).toBe(false);
+  });
+
+  it("re-arms a FULL dwell when suppression is released with the pointer still on the rail", () => {
+    const rail = mountRail();
+    rail.collapse();
+    rail.onPointerEnter();
+    rail.setPeekSuppressed(true);
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY * 2);
+    expect(rail.peeking.value).toBe(false);
+
+    // The pointer moved OFF the toggle but stayed inside the rail.
+    rail.setPeekSuppressed(false);
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY - 1);
+    expect(rail.peeking.value, "a full fresh dwell, not a stale remainder").toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(rail.peeking.value, "off the toggle the peek arms normally").toBe(true);
+  });
+
+  it("never closes an OPEN peek", () => {
+    const rail = mountRail();
+    rail.collapse();
+    rail.onPointerEnter();
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
+    expect(rail.peeking.value).toBe(true);
+
+    rail.setPeekSuppressed(true);
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY * 4);
+    expect(rail.peeking.value, "suppression is about ARMING, never closing").toBe(true);
+  });
+
+  it("arms nothing while expanded, suppressed or not", () => {
+    const rail = mountRail();
+    rail.setPeekSuppressed(true);
+    rail.onPointerEnter();
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY * 4);
+    expect(rail.peeking.value).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("leaves no arm timer behind once the peek opens", () => {
+    const rail = mountRail();
+    rail.collapse();
+    rail.onPointerEnter();
+    expect(vi.getTimerCount()).toBe(1);
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
+    expect(rail.peeking.value).toBe(true);
+    expect(vi.getTimerCount(), "the fired arm owns no timer").toBe(0);
+  });
+});
+
+describe("useSidebarRail — leave hardening (DOM churn is not a leave)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  /** A host region with a child inside it, plus a sibling OUTSIDE it. */
+  function region() {
+    const host = document.createElement("div");
+    const inner = document.createElement("button");
+    host.appendChild(inner);
+    const outside = document.createElement("div");
+    document.body.append(host, outside);
+    return {
+      host,
+      inner,
+      outside,
+      cleanup: () => {
+        host.remove();
+        outside.remove();
+      },
+    };
+  }
+
+  it("ignores a leave whose relatedTarget is still inside the host region", () => {
+    const r = region();
+    try {
+      const rail = mountRail({ host: () => r.host });
+      rail.collapse();
+      rail.onPointerEnter();
+      vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
+      expect(rail.peeking.value).toBe(true);
+
+      rail.onPointerLeave({ relatedTarget: r.inner });
+      vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_GRACE * 4);
+      expect(rail.peeking.value, "churn must not start a grace close").toBe(true);
+
+      // …while a REAL leave (relatedTarget outside) still closes it.
+      rail.onPointerLeave({ relatedTarget: r.outside });
+      vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_GRACE);
+      expect(rail.peeking.value).toBe(false);
+    } finally {
+      r.cleanup();
+    }
+  });
+
+  it("keeps a pending arm alive across churn inside the region", () => {
+    const r = region();
+    try {
+      const rail = mountRail({ host: () => r.host });
+      rail.collapse();
+      rail.onPointerEnter();
+      vi.advanceTimersByTime(120);
+      rail.onPointerLeave({ relatedTarget: r.inner });
+      vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
+      expect(rail.peeking.value, "the arm survives the churn").toBe(true);
+    } finally {
+      r.cleanup();
+    }
+  });
+
+  it("treats a leave with no event / no relatedTarget as a real leave", () => {
+    const rail = mountRail();
+    rail.collapse();
+    rail.onPointerEnter();
+    rail.onPointerLeave();
+    rail.onPointerLeave(null);
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY * 2);
+    expect(rail.peeking.value).toBe(false);
+  });
+});
+
+describe("useSidebarRail — pin window (expand must not replay the slide)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("opens on a rail -> expanded flip and clears on the fallback", () => {
+    const rail = mountRail();
+    rail.collapse();
+    expect(rail.pinning.value).toBe(false);
+    rail.expand();
+    expect(rail.pinning.value, "the rail -> expanded window is pinned").toBe(true);
+
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PIN_FALLBACK - 1);
+    expect(rail.pinning.value).toBe(true);
+    vi.advanceTimersByTime(1);
+    expect(rail.pinning.value, "the fallback closes the window").toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("clears early on the host's width transition (endPinning) and drops the fallback", () => {
+    const rail = mountRail();
+    rail.collapse();
+    rail.expand();
+    expect(vi.getTimerCount()).toBe(1);
+    rail.endPinning();
+    expect(rail.pinning.value).toBe(false);
+    expect(vi.getTimerCount(), "the fallback timer is dropped with the window").toBe(0);
+  });
+
+  it("pins the peek-pin path too (toggle during an open peek)", () => {
+    const rail = mountRail();
+    rail.collapse();
+    rail.onPointerEnter();
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
+    expect(rail.peeking.value).toBe(true);
+
+    rail.toggle();
+    expect(rail.collapsed.value).toBe(false);
+    expect(rail.peeking.value).toBe(false);
+    expect(rail.pinning.value, "a peek pin is still a rail -> expanded flip").toBe(true);
+  });
+
+  it("never pins a collapse, and a collapse closes an open window", () => {
+    const rail = mountRail();
+    rail.expand(); // already expanded: no rail -> expanded transition
+    expect(rail.pinning.value).toBe(false);
+
+    rail.collapse();
+    expect(rail.pinning.value).toBe(false);
+
+    rail.expand();
+    expect(rail.pinning.value).toBe(true);
+    rail.collapse();
+    expect(rail.pinning.value, "collapsing ends the window immediately").toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("skips the window under reduced motion — nothing is animating to mask", () => {
+    // The shared subscription caches per query string: clear it so this
+    // mount reads the stubbed reduce state instead of a cached false.
+    __teardownMediaQueries();
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as unknown as MediaQueryList);
+    try {
+      const rail = mountRail();
+      expect(rail.reducedMotion.value).toBe(true);
+      rail.collapse();
+      rail.expand();
+      expect(rail.pinning.value).toBe(false);
+      expect(vi.getTimerCount(), "no fallback timer either").toBe(0);
+    } finally {
+      vi.mocked(window.matchMedia).mockRestore();
+      __teardownMediaQueries();
+    }
   });
 });

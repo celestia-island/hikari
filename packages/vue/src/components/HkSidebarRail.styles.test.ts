@@ -16,18 +16,30 @@ import { describe, expect, it } from "vitest";
  *
  * What is pinned:
  *
- * 1. The host is the LAYOUT box and clips by default; [data-peeking]
- *    un-clips and rises to the sidebar z band — that pair IS the
- *    "overlay, never reflow" contract.
- * 2. The panel is absolutely positioned off the INLINE-START edge
- *    (logical property — the drawer slides the right way in RTL).
- * 3. The peek casts a shadow toward the content side, mirrored in RTL.
- * 4. The toggle is hidden until the REGION is engaged — both :hover and
+ * 1. NOBODY CLIPS the toggle: the host is never overflow:hidden and the
+ *    panel is unclipped too, because the circle straddles the panel's
+ *    content-facing border and its outer half lives outside the border
+ *    box. The panel's base class in HkSidebar.scss still clips, so a
+ *    higher-specificity guard keeps the rail panel unclipped regardless
+ *    of stylesheet order.
+ * 2. The CONTENT clip moved inside the panel (.hk-sidebar-rail-clip):
+ *    flex column, min-height 0, overflow hidden — that is what keeps
+ *    full rows inside a 56px rail while widths animate.
+ * 3. The toggle's center rides the border LINE: negative half-size inset
+ *    (plus half the border), vertical centering, size token on the host.
+ * 4. The host stays the LAYOUT box (position relative, width transition)
+ *    and [data-peeking] only raises it to the sidebar z band now.
+ * 5. Pinning: [data-pinning] kills the panel's and any nested sidebar's
+ *    width transitions (the expand must not replay the slide) while the
+ *    HOST width transition stays — and the pinned panel keeps the peek
+ *    shadow (documented decision: it is still an overlay until the host
+ *    finishes growing).
+ * 6. The toggle is hidden until the REGION is engaged — both :hover and
  *    :focus-within reveals must exist (keyboard parity).
- * 5. The circle: the icon button's radius channel is overridden to a
+ * 7. The circle: the icon button's radius channel is overridden to a
  *    full circle inside the toggle.
- * 6. Reduced motion: no transitions anywhere in the kit.
- * 7. The granular style entry (styles/sidebar-rail.scss) compiles and
+ * 8. Reduced motion: no transitions anywhere in the kit.
+ * 9. The granular style entry (styles/sidebar-rail.scss) compiles and
  *    carries the SAME rules — the wowsp consumption surface.
  */
 
@@ -40,7 +52,7 @@ function sheetCss(file: string): string {
     .replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
-/** Body of the first rule whose selector line matches exactly. */
+/** Body of the first rule whose selector text starts at `selector`. */
 function ruleBody(css: string, selector: string): string | null {
   const at = css.indexOf(selector);
   if (at < 0) return null;
@@ -57,34 +69,80 @@ describe("HkSidebarRail geometry contract", () => {
     for (const anchor of [
       ".hk-sidebar-rail-host",
       ".hk-sidebar-rail-host[data-peeking]",
+      ".hk-sidebar-rail-host[data-pinning]",
       ".hk-sidebar-rail-panel",
+      ".hk-sidebar-rail-clip",
       ".hk-sidebar-rail-toggle",
     ]) {
       expect(css).toContain(anchor);
     }
   });
 
-  it("the host clips by default and stops clipping while peeking, rising to the sidebar z band", () => {
+  it("the host is the layout box and NEVER clips (the toggle straddles the panel border)", () => {
     const host = ruleBody(css, ".hk-sidebar-rail-host {") ?? ruleBody(css, ".hk-sidebar-rail-host");
     expect(host, "the host rule exists").not.toBeNull();
-    expect(host).toContain("overflow: hidden");
     expect(host).toContain("position: relative");
-
-    const peeking = ruleBody(css, ".hk-sidebar-rail-host[data-peeking]");
-    expect(peeking, "the peeking rule exists").not.toBeNull();
-    expect(peeking).toContain("overflow: visible");
-    expect(peeking).toContain("z-index: var(--hk-z-sidebar, 900)");
+    expect(host, "the toggle's outer half must paint outside the panel").toContain("overflow: visible");
+    expect(host, "nothing in the kit may clip the circle").not.toContain("overflow: hidden");
+    expect(host, "the host width transition IS the intended motion").toContain("transition: width");
   });
 
-  it("the panel is an absolutely positioned overlay anchored to the inline-start edge", () => {
+  it("a peek only raises the host to the sidebar z band now (no clip flip)", () => {
+    const peeking = ruleBody(css, ".hk-sidebar-rail-host[data-peeking]");
+    expect(peeking, "the peeking rule exists").not.toBeNull();
+    expect(peeking).toContain("z-index: var(--hk-z-sidebar, 900)");
+    // The host no longer toggles overflow here — it never clips.
+    expect(peeking).not.toContain("overflow");
+  });
+
+  it("the panel overlays from the inline-start edge, unclipped, and animates its width", () => {
     const panel = ruleBody(css, ".hk-sidebar-rail-panel");
     expect(panel, "the panel rule exists").not.toBeNull();
     expect(panel).toContain("position: absolute");
     // Logical anchor — RTL docks the panel on the other side for free.
     expect(panel).toContain("inset-inline-start: 0");
-    // The slide lever: the panel animates its WIDTH (the host's layout
-    // width is never touched by a peek).
-    expect(panel).toContain("transition: width");
+    // The slide lever: the panel animates its WIDTH, and the peek shadow
+    // fades on its own (the shadow clears at the grace, the retract still
+    // has the width transition to play — see the sheet's comment).
+    expect(panel).toContain("transition:");
+    expect(panel).toContain("width var(--duration-normal, 0.3s) ease");
+    expect(panel).toContain("box-shadow var(--duration-fast, 0.15s) ease");
+    // Unclipped: the toggle's outer half lives outside this border box.
+    expect(panel).toContain("overflow: visible");
+  });
+
+  it("out-specifies HkSidebar's clipping .hk-sidebar-panel for the rail panel", () => {
+    // HkSidebar.scss (shared, not part of this sheet) still declares
+    // overflow: hidden on .hk-sidebar-panel, which the rail panel also
+    // carries in HkSidebar's rail mode. Without this guard the circle
+    // loses its outside half whenever that sheet loads later.
+    const guard = ruleBody(css, ".hk-sidebar-rail-host .hk-sidebar-rail-panel");
+    expect(guard, "the specificity guard exists").not.toBeNull();
+    expect(guard).toContain("overflow: visible");
+  });
+
+  it("keeps the content clip INSIDE the panel (header/body/footer stay in the footprint)", () => {
+    const clip = ruleBody(css, ".hk-sidebar-rail-clip");
+    expect(clip, "the clip wrapper rule exists").not.toBeNull();
+    expect(clip).toContain("flex: 1");
+    expect(clip).toContain("min-height: 0");
+    expect(clip).toContain("overflow: hidden");
+    expect(clip).toContain("display: flex");
+    expect(clip).toContain("flex-direction: column");
+  });
+
+  it("straddles the panel border: half the toggle outside, center on the border line", () => {
+    const toggle = ruleBody(css, ".hk-sidebar-rail-toggle");
+    expect(toggle, "the toggle rule exists").not.toBeNull();
+    // The negative half-size inset is the straddle: the circle's center
+    // lands ON the panel's inline-end border (half of it outside).
+    expect(toggle).toContain("inset-inline-end: calc(var(--hk-sidebar-rail-toggle-size, 24px) / -2");
+    expect(toggle).toContain("--hk-sidebar-rail-border-width, 1px) / 2");
+    // Vertical centering on the edge.
+    expect(toggle).toContain("inset-block-start: 50%");
+    expect(toggle).toContain("translate: 0 -50%");
+    // Above the panel + content.
+    expect(toggle).toContain("z-index: 2");
   });
 
   it("the peek casts its shadow toward the content side, mirrored in RTL", () => {
@@ -94,6 +152,28 @@ describe("HkSidebarRail geometry contract", () => {
     const rtl = css.match(/\[dir[=]["']?rtl["']?\][^{]*\{[^}]*\}/);
     expect(rtl, "an RTL peeking shadow rule exists").toBeTruthy();
     expect(rtl![0]).toContain("box-shadow: -8px 0 24px rgba(0, 0, 0, 0.22)");
+  });
+
+  it("pin window: panel + nested sidebars snap, the HOST width transition stays", () => {
+    const pinned = ruleBody(css, ".hk-sidebar-rail-host[data-pinning] .hk-sidebar-rail-panel");
+    expect(pinned, "the pin rule exists").not.toBeNull();
+    expect(pinned).toContain("transition: none");
+
+    // The same kill list must cover a nested HkSidebar, whose own width
+    // transitions would otherwise replay the slide the user reported.
+    const pinGroup = css.slice(css.indexOf(".hk-sidebar-rail-host[data-pinning] .hk-sidebar-rail-panel"));
+    expect(pinGroup).toContain(".hk-sidebar-rail-host[data-pinning] .hk-sidebar,");
+    expect(pinGroup).toContain(".hk-sidebar-rail-host[data-pinning] .hk-sidebar-panel {");
+
+    // …and the documented decision: the pinned panel still reads as the
+    // elevated overlay while the host grows into it.
+    const shadowRule = ruleBody(css, ".hk-sidebar-rail-host[data-pinning] .hk-sidebar-rail-panel {");
+    expect(shadowRule, "the pinned panel rule exists").not.toBeNull();
+    expect(shadowRule).toContain("box-shadow: 8px 0 24px rgba(0, 0, 0, 0.22)");
+
+    // The HOST's own rule never joins the kill list.
+    const hostRule = ruleBody(css, ".hk-sidebar-rail-host {") ?? ruleBody(css, ".hk-sidebar-rail-host");
+    expect(hostRule, "the host keeps its width transition").toContain("transition: width");
   });
 
   it("the toggle hides until the region is engaged — by hover AND focus-within", () => {
@@ -135,10 +215,20 @@ describe("HkSidebarRail geometry contract", () => {
     expect(block).toContain("transition: none");
   });
 
-  it("declares the toggle inset token exactly once, with its fallback, in the source", () => {
+  it("declares its geometry tokens exactly once, on the host, in the source", () => {
     const source = readFileSync(resolve(componentDir, "HkSidebarRail.scss"), "utf8").replace(/\r\n/g, "\n");
-    expect(source).toContain("--hk-sidebar-rail-toggle-inset: 4px;");
-    expect((source.match(/--hk-sidebar-rail-toggle-inset\s*:/g) ?? []).length, "the token is declared exactly once").toBe(1);
+    expect(source).toContain("--hk-sidebar-rail-toggle-size: 24px;");
+    expect(source).toContain("--hk-sidebar-rail-border-width: 1px;");
+    for (const token of ["--hk-sidebar-rail-toggle-size", "--hk-sidebar-rail-border-width"]) {
+      expect(
+        (source.match(new RegExp(token + "\\s*:", "g")) ?? []).length,
+        token + " is declared exactly once",
+      ).toBe(1);
+    }
+    // The declaration lives INSIDE the host rule (a host-level token beats
+    // anything an ancestor declares — the custom-property trap).
+    const hostRule = source.slice(source.indexOf(".hk-sidebar-rail-host {"));
+    expect(hostRule.slice(0, hostRule.indexOf("}"))).toContain("--hk-sidebar-rail-toggle-size: 24px;");
   });
 });
 
@@ -148,8 +238,10 @@ describe("the granular style entry (styles/sidebar-rail.scss)", () => {
     for (const anchor of [
       ".hk-sidebar-rail-host",
       ".hk-sidebar-rail-panel",
+      ".hk-sidebar-rail-clip",
       ".hk-sidebar-rail-toggle .hk-icon-button",
       ".hk-sidebar-rail-host[data-peeking]",
+      ".hk-sidebar-rail-host[data-pinning]",
     ]) {
       expect(css, anchor + " ships through the subpath").toContain(anchor);
     }

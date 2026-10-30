@@ -39,8 +39,10 @@ export const HkAdminShell = defineComponent({
     sidebarWidth: { type: String, default: "224px" },
     /** Desktop icon-rail capability, forwarded to HkFaceShell (see its
      *  prop doc): opt in here and the admin sidebar gains the circular
-     *  hover-reveal toggle, the one-icon rail and the overlay peek
-     *  drawer. Declared on the wrapper on purpose — the same
+     *  hover-reveal toggle STRADDLING the sidebar's content-facing border,
+     *  the one-icon rail and the overlay peek drawer (with the peek
+     *  suppressed while the pointer rests on the toggle, and a pinned
+     *  panel on expand). Declared on the wrapper on purpose — the same
      *  honest-forwarding rule as contentMode (a stray attr must not
      *  reach the inner shell's declared prop through fallthrough). */
     sidebarCollapsible: { type: Boolean, default: false },

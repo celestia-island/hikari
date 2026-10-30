@@ -126,8 +126,27 @@ describe("HkCalendarHeatmap", () => {
     );
     const cell = c.querySelector('[data-level]:not([data-level="0"])') as HTMLElement;
     expect(cell).toBeTruthy();
+    // The UTC zone is explicit (R2: a negative-offset host must not
+    // land the tooltip a day off) — the date is TZ-deterministic.
+    expect(cell.getAttribute("title")).toContain("Dec 1, 2025");
     expect(cell.getAttribute("title")).toContain("5");
     expect(cell.getAttribute("title")).toContain("度");
+  });
+
+  it("wires the max prop into the cell buckets, not just data-max", () => {
+    const c = mount(
+      h(HkCalendarHeatmap, {
+        // Peak 10 in-window; the pinned max 100 flattens both days to
+        // level 1 (R2 S1: the prop was a dead wire to data-max).
+        days: [{ date: CLEAN_HEAD_MON, value: 10 }, { date: "2025-12-02", value: 1 }],
+        first: null,
+        max: 100,
+      }),
+    );
+    const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+    expect(grid.getAttribute("data-max")).toBe("100");
+    expect(grid.querySelectorAll('[data-level="1"]')).toHaveLength(2);
+    expect(grid.querySelectorAll('[data-level="4"]')).toHaveLength(0);
   });
 
   it("tooltips day cells without a dangling separator when unitless", () => {

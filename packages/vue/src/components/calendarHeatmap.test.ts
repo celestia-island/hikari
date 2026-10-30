@@ -51,6 +51,28 @@ describe("bucketLevel", () => {
   });
 });
 
+describe("calendarGrid maxOverride — the max prop's wire to the buckets", () => {
+  it("pins the intensity scale against the override, not the window's own peak", () => {
+    const days = [{ date: MON, value: 10 }, { date: "2025-12-02", value: 1 }];
+    // Without an override the levels ride the window's own peak (10).
+    expect(calendarGrid(days, "2025-12-03", null).map((c) =>
+      c.kind === "day" ? c.level : -1,
+    )).toEqual([4, 1, 0, ...Array(4).fill(-1)]);
+    // With maxOverride=100 the same days flatten — the caller's pinned
+    // scale reaches the buckets (R2 S1: the prop was a dead wire).
+    expect(calendarGrid(days, "2025-12-03", null, 100).map((c) =>
+      c.kind === "day" ? c.level : -1,
+    )).toEqual([1, 1, 0, ...Array(4).fill(-1)]);
+  });
+
+  it("derives from the days when the override is null or omitted", () => {
+    const days = [{ date: MON, value: 5 }];
+    expect(calendarGrid(days, "2025-12-03", null, null)[0]).toMatchObject({
+      level: 4,
+    });
+  });
+});
+
 describe("calendarGrid", () => {
   it("pads a one-row series into a full week with real dates", () => {
     const cells = calendarGrid(

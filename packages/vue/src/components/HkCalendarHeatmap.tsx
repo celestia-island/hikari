@@ -61,7 +61,8 @@ export default defineComponent({
     first: { type: String as PropType<string | null>, default: null },
     /** The unit the legend/tooltip names ("" = unitless values). */
     unit: { type: String, default: "" },
-    /** Peak day of the window; null = derive from `days`. */
+    /** Peak day pinned across windows (reaches the cell buckets, not
+     * just the data-max attribute); null = derive from `days`. */
     max: { type: Number as PropType<number | null>, default: null },
     /** Square-cell scale (GitHub-scale: a 53-week grid stays compact). */
     cellSize: { type: Number, default: 14 },
@@ -70,8 +71,15 @@ export default defineComponent({
   setup(props, { slots }) {
     const { t } = useI18n();
 
-    const today = todayIso();
-    const cells = computed(() => calendarGrid(props.days, today, props.first));
+    // The rendered calendar follows the selected range; `today` is
+    // taken per recompute (R2: frozen at setup, a long-mounted
+    // component crossing UTC midnight rendered its today cell as an
+    // "after" gap until the next remount), and the `max` prop pins the
+    // intensity scale — it must reach the buckets, not just the
+    // data-max attribute.
+    const cells = computed(() =>
+      calendarGrid(props.days, todayIso(), props.first, props.max),
+    );
     const markers = computed(() => monthMarkers(cells.value));
     const weeks = computed(() => Math.ceil(cells.value.length / 7));
     const max = computed(() =>
@@ -84,23 +92,31 @@ export default defineComponent({
 
     // Locale-reactive (the HkDateTimePicker convention): a computed
     // over the context's locale so a locale switch re-renders the
-    // calendar's Intl-formatted labels.
+    // calendar's Intl-formatted labels. All formatters format the UTC
+    // midnight instant WITH an explicit UTC zone (R2: on a negative-
+    // offset host the weekday rail shifted a full row and tooltips
+    // landed a day off — the series' day boundary is UTC).
     const locale = computed(() => useI18n().locale);
     const weekdayLabel = (idx: number) =>
-      new Intl.DateTimeFormat(locale.value, { weekday: "short" }).format(
+      new Intl.DateTimeFormat(locale.value, {
+        weekday: "short",
+        timeZone: "UTC",
+      }).format(
         // Any Monday-first week works — take 2024-01-01 (a Monday).
         new Date(Date.UTC(2024, 0, 1 + idx)),
       );
     const monthLabel = (m: string) => {
       if (!m) return "";
-      return new Intl.DateTimeFormat(locale.value, { month: "short" }).format(
-        new Date(Date.UTC(2024, Number(m) - 1, 1)),
-      );
+      return new Intl.DateTimeFormat(locale.value, {
+        month: "short",
+        timeZone: "UTC",
+      }).format(new Date(Date.UTC(2024, Number(m) - 1, 1)));
     };
     const dateLabel = (iso: string) =>
-      new Intl.DateTimeFormat(locale.value, { dateStyle: "medium" }).format(
-        new Date(`${iso}T00:00:00Z`),
-      );
+      new Intl.DateTimeFormat(locale.value, {
+        dateStyle: "medium",
+        timeZone: "UTC",
+      }).format(new Date(`${iso}T00:00:00Z`));
 
     const cellTitle = (d: Extract<CalendarCell, { kind: "day" }>) =>
       fill(

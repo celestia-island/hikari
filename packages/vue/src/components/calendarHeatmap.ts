@@ -56,18 +56,24 @@ export type CalendarCell =
  * trailing-year window ALWAYS lands on a full-year-wide grid, however
  * young the account is. Every cell carries its real calendar date;
  * cells outside [first … today] become gaps (hatched, inert).
+ *
+ * `maxOverride` pins the intensity scale (R2: the component's `max`
+ * prop must reach the buckets, not just the data-max attribute — a
+ * caller pinning the scale across windows would otherwise get levels
+ * computed against each window's own peak). null = derive from `days`.
  */
 export function calendarGrid(
   days: HkCalendarHeatmapDay[],
   today: string,
   first: string | null,
+  maxOverride?: number | null,
 ): CalendarCell[] {
   if (days.length === 0) return [];
   const lead = weekdayIndex(days[0].date);
   const gridStart = shiftIso(days[0].date, -lead);
   const total = lead + days.length;
   const span = total + ((7 - (total % 7)) % 7);
-  const max = days.reduce((m, d) => Math.max(m, d.value), 0);
+  const max = maxOverride ?? days.reduce((m, d) => Math.max(m, d.value), 0);
   const valueByDate = new Map(days.map((d) => [d.date, d.value]));
   // A malformed `first` from the future hatches nothing (the clamp
   // keeps the before-check honest).

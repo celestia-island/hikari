@@ -3,6 +3,7 @@ import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } fro
 import "./HkSidebar.scss";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSidebarRail } from "../composables/useSidebarRail";
+import { provideMenuGroupState, useMenuGroupState } from "../composables/useMenuGroupState";
 import HkSidebarRailSwap from "./HkSidebarRailSwap";
 import HkSidebarRailToggle, { isPointerOverRailToggle } from "./HkSidebarRailToggle";
 
@@ -40,6 +41,20 @@ export default defineComponent({
     "update:collapsed": (v: boolean) => true,
   },
   setup(props, { emit, slots }) {
+    // ── menu GROUP fold, stable across THIS sidebar's own rail swap ───
+    // The rail chrome can be held by a SHELL (HkFaceShell provides the
+    // shared fold store above its swap) or by this component itself
+    // (standalone `HkSidebar collapsible`). Both assemble the same swap,
+    // and the swap mounts each density as a FRESH generation — so an
+    // instance-local fold inside a grouped HkMenu would be lost on every
+    // flip here too (known-live-issues #43). Inheriting when a shell is
+    // above keeps ONE fold for the one nav (a sidebar nested in a shell is
+    // the same nav in another frame); providing otherwise gives the
+    // standalone sidebar the same guarantee without any host change.
+    // inject-then-provide is legal: we read the ancestor's value, and
+    // descendants resolve ours.
+    if (useMenuGroupState() === null) provideMenuGroupState();
+
     // ── rail state (collapsible only; see useSidebarRail for the
     //    timing semantics — dwell, grace, Escape, session-only default) ──
     // Semi-controlled `collapsed`: the composable holds a local ref the

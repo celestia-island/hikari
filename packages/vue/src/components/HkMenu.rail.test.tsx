@@ -250,6 +250,35 @@ describe("HkMenu sidebar icon rail", () => {
     expect(groupRows(c)[0]!.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("keeps the fold INSTANCE-LOCAL when no shell provides one (standalone menus)", async () => {
+    // The other half of the #43 contract. HkFaceShell provides the fold
+    // store above its rail crossfade so a swap's fresh generations share
+    // it; a standalone menu has no shell above it and must keep the
+    // instance-local sets it has always had. A module-level singleton
+    // store would silently make two menus on one page share fold keys —
+    // that regression is what this pin catches.
+    const a = mountMenu(ITEMS, { collapsed: true });
+    const b = mountMenu(ITEMS, { collapsed: true });
+    expect(groupRows(a)[0]!.getAttribute("aria-expanded")).toBe("false");
+    expect(groupRows(b)[0]!.getAttribute("aria-expanded")).toBe("false");
+
+    groupRows(a)[0]!.click();
+    await nextTick();
+    expect(groupRows(a)[0]!.getAttribute("aria-expanded"), "menu A opens its group").toBe("true");
+    expect(
+      groupRows(b)[0]!.getAttribute("aria-expanded"),
+      "menu B keeps its own fold — nothing is shared without a provider",
+    ).toBe("false");
+
+    // And the standalone flip-in-place contract still holds: the rail and
+    // the expanded sidebar are the SAME instance here, so the fold carries
+    // exactly as it did before the shared store existed.
+    groupRows(b)[0]!.click();
+    await nextTick();
+    expect(groupRows(b)[0]!.getAttribute("aria-expanded")).toBe("true");
+    expect(groupRows(a)[0]!.getAttribute("aria-expanded"), "A is still open, B now open").toBe("true");
+  });
+
   it("recurses into nested groups — 2nd/3rd-level destinations stay reachable", async () => {
     const nested: HkMenuItem[] = [
       {

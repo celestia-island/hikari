@@ -16,6 +16,7 @@ import { useBreakpoint } from "../runtime/useBreakpoint";
 import { ancestorZoom } from "../runtime/cssZoom";
 import { popupViewportRect } from "../runtime/popupBounds";
 import { viewportGutterPx } from "../runtime/viewportGutter";
+import { useMenuGroupState } from "../composables/useMenuGroupState";
 import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
 import HkTooltip from "./HkTooltip";
 import "./HkMenu.scss";
@@ -191,7 +192,19 @@ export default defineComponent({
      * rows at every depth. The open/closed state is the same
      * isGroupExpanded/toggleGroup state the expanded sidebar uses, so a
      * group collapsed in the rail is still collapsed after a peek/expand
-     * (and vice versa). The active/checked/danger/disabled row states
+     * (and vice versa) — and, because a rail flip mounts each density
+     * generation FRESH, that promise holds ACROSS generations too: the
+     * two rail-chrome holders each provide the fold store above their
+     * swap (HkFaceShell always; a standalone `HkSidebar collapsible`
+     * when no shell is above it — known-live-issues #43), every
+     * generation injects the same one, and a menu with no holder above
+     * it keeps the fold instance-local. The guarantee is tied to those
+     * holders: a host that assembles its OWN rail swap around HkMenu has
+     * no store above it (the composable is deliberately not public API),
+     * so the fold is instance-local there. Within one holder all grouped
+     * menus share ONE group-key space — prefix custom item keys (chest's
+     * `group:`-style prefix is the precedent) when two menus could
+     * collide. The active/checked/danger/disabled row states
      * carry over unchanged. A leaf with no icon falls back to its
      * label's first character so every destination stays one click
      * away. No-op in the popup variant. Shells drive this from the
@@ -725,9 +738,22 @@ export default defineComponent({
     }
 
     // ── sidebar variant ──────────────────────────────────────────────
-    /** Group keys the USER has expanded or collapsed (their word wins). */
+    // THE FOLD'S SOURCE OF TRUTH. A shell (HkFaceShell) provides one
+    // store from ITS setup, above the rail crossfade, so every density
+    // generation reads and writes the SAME instance — the swap mounts the
+    // entering generation FRESH, so an instance-local set alone would
+    // lose the user's word on every flip (known-live-issues #43: a group
+    // collapsed in the rail came back expanded in the peek). A standalone
+    // menu injects nothing and keeps the instance-local sets it has
+    // always had.
+    const providedGroups = useMenuGroupState();
+    /** Group keys the USER has expanded or collapsed (their word wins) —
+     *  the standalone fallback for {@link providedGroups}. */
     const userGroups = ref<Set<string>>(new Set());
-    /** Groups auto-expanded at mount because they contain the active row. */
+    /** Groups auto-expanded at THIS mount because they contain the active
+     *  row. Deliberately instance-local even under a shell store: it is a
+     *  default, and a shared default would resurrect what the user closed
+     *  in another generation. */
     const autoGroups = ref<Set<string>>(new Set());
 
     function isGroup(item: HkMenuItem): boolean {
@@ -742,13 +768,39 @@ export default defineComponent({
     /** Keys the user explicitly collapsed (overrides the auto set). */
     const userCollapsed = ref<Set<string>>(new Set());
 
+    /** The user's word on a group, from whichever source is authoritative:
+     *  `true` opened, `false` collapsed, `undefined` untouched. */
+    function userGroupChoice(key: string): boolean | undefined {
+      if (providedGroups) return providedGroups.get(key);
+      if (userGroups.value.has(key)) return true;
+      if (userCollapsed.value.has(key)) return false;
+      return undefined;
+    }
+
+    /** Move a group fully into the user's word — auto defaults then stop
+     *  applying. Lands in the shell's store when there is one. */
+    function recordGroupChoice(key: string, expanded: boolean): void {
+      if (providedGroups) {
+        providedGroups.set(key, expanded);
+        return;
+      }
+      if (expanded) {
+        userCollapsed.value.delete(key);
+        userGroups.value.add(key);
+      } else {
+        userGroups.value.delete(key);
+        userCollapsed.value.add(key);
+      }
+    }
+
     function isGroupExpanded(key: string): boolean {
+      const choice = userGroupChoice(key);
       // Table-of-contents mode (defaultExpandGroups): open IS the default
       // state — only an explicit user collapse closes a group, and it
       // stays closed (no auto-resurrection on activeKey/items changes).
-      if (props.defaultExpandGroups) return !userCollapsed.value.has(key);
-      if (userGroups.value.has(key)) return true;
-      if (autoGroups.value.has(key)) return !userCollapsed.value.has(key);
+      if (props.defaultExpandGroups) return choice !== false;
+      if (choice === true) return true;
+      if (autoGroups.value.has(key)) return choice !== false;
       return false;
     }
 
@@ -756,7 +808,8 @@ export default defineComponent({
      *  the user has not touched yet default open when they contain the
      *  active row (a fresh sidebar shows where you are); touched groups
      *  keep the user's word — auto-expand is a default, never a
-     *  resurrection. */
+     *  resurrection. "Touched" includes the keys in the shell's store, so
+     *  a collapsed group stays collapsed in the next generation's mount. */
     watch(
       () => [props.activeKey, props.items] as const,
       () => {
@@ -766,9 +819,7 @@ export default defineComponent({
             .map((it) => it.key),
         );
         autoGroups.value = new Set(
-          [...actives].filter(
-            (k) => !userGroups.value.has(k) && !userCollapsed.value.has(k),
-          ),
+          [...actives].filter((k) => userGroupChoice(k) === undefined),
         );
       },
       { immediate: true },
@@ -778,13 +829,7 @@ export default defineComponent({
       const wasExpanded = isGroupExpanded(key);
       // Move the key fully into the user set — auto defaults stop applying.
       autoGroups.value.delete(key);
-      if (wasExpanded) {
-        userGroups.value.delete(key);
-        userCollapsed.value.add(key);
-      } else {
-        userCollapsed.value.delete(key);
-        userGroups.value.add(key);
-      }
+      recordGroupChoice(key, !wasExpanded);
     }
 
     function renderSidebarRow(item: HkMenuItem, depth: number) {

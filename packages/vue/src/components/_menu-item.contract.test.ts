@@ -489,10 +489,30 @@ describe("menu-item grammar contract", () => {
         scoped,
         `grammar section rule "${selector}" must be sheet-scoped, not unconditional`,
       ).toBeTruthy();
+      const context = scoped![1]!;
       expect(
         [...sheetContexts],
-        `grammar section rule "${selector}" is scoped by "${scoped?.[1]}", which is not a registered sheet context`,
-      ).toContain(scoped![1]);
+        `grammar section rule "${selector}" is scoped by "${context}", which is not a registered sheet context`,
+      ).toContain(context);
+      if (context === ".hk-modal-content") {
+        // .hk-modal-content exists at EVERY viewport (HkModal docks via a
+        // media query — the element itself is always there): a sheet swap
+        // scoped by it OUTSIDE the narrow band puts touch geometry on
+        // DESKTOP modals. The legitimate rule is nested in the band, and
+        // resolvedSelectors drops at-rule preludes, so walk the parent
+        // chain for the @media (max-width: 767px) ancestor explicitly.
+        let mobileBand = false;
+        for (let ancestor = block.parent; ancestor; ancestor = ancestor.parent) {
+          if (/^@media\s*\(max-width:\s*767px\)$/.test(ancestor.prelude.trim())) {
+            mobileBand = true;
+            break;
+          }
+        }
+        expect(
+          mobileBand,
+          `grammar section rule "${selector}" scopes .hk-modal-content OUTSIDE the @media (max-width: 767px) band — its sheet geometry would land on desktop modals`,
+        ).toBe(true);
+      }
       for (const statement of block.statements) {
         const normalized = statement.replace(/\s+/g, " ").trim();
         expect(
@@ -521,6 +541,26 @@ describe("menu-item grammar contract", () => {
     const declarations = flattenBlocks([sectionMixin!]).flatMap((block) =>
       block.statements.map((statement) => statement.replace(/\s+/g, " ").trim()),
     );
+    expect(
+      declarations,
+      "the wrapper must be a flex box (the gap is inert otherwise)",
+    ).toContain("display: flex");
+    expect(
+      declarations,
+      "the wrapper's children must stack vertically, never in a row",
+    ).toContain("flex-direction: column");
+    // The 6px stack margin belongs to the SIBLING rule (`& + &`), so only
+    // the SECOND and later sections are separated. Moving it into the mixin
+    // body would push 6px above the very first section too.
+    const stackOwners = flattenBlocks([sectionMixin!]).filter((block) =>
+      block.statements.some((statement) =>
+        statement.replace(/\s+/g, " ").trim().startsWith("margin-block-start:"),
+      ),
+    );
+    expect(
+      stackOwners.map((block) => block.prelude),
+      "the stack margin must live in the `& + &` block only",
+    ).toEqual(["& + &"]);
     const spacingDecls = declarations.filter((declaration) =>
       /^(?:gap|margin[\w-]*)\s*:/.test(declaration),
     );

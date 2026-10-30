@@ -55,11 +55,15 @@ const MENU_GROUP_STATE_KEY: InjectionKey<MenuGroupState> = Symbol("hk-menu-group
 /** Provide the shell's shared fold store (HkFaceShell calls this once per
  *  shell, from setup, ABOVE the sidebar slot). */
 export function provideMenuGroupState(): MenuGroupState {
-  // shallowRef + a fresh Map per write: Set/Map mutations through a
-  // `ref` are only reactive when the collection itself is the reactive
-  // probe; replacing the map makes the update unambiguous for every
-  // consumer (render reads, watchers) and keeps the previous snapshot
-  // immutable while a leaving generation still renders against it.
+  // shallowRef + a fresh Map per write: an in-place Set/Map mutation is a
+  // reactive collection write only through Vue's collection handlers, and
+  // it makes every consumer read a collection that is being changed under
+  // it. Replacing the map gives exactly one unambiguous change per user
+  // action and no partially updated fold. NOTE, measured (the mid-dissolve
+  // case in HkFaceShell.rail.test.tsx): this is about the LIVE consumers —
+  // a crossfade's leaving copy is out of the parent's patch path and is
+  // NOT re-rendered by a store write, so it keeps the DOM of its last
+  // render either way.
   const choices = shallowRef<ReadonlyMap<string, boolean>>(new Map());
   const state: MenuGroupState = {
     get: (key) => choices.value.get(key),

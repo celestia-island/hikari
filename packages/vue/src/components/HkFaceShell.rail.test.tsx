@@ -76,6 +76,10 @@ interface RailMount {
   main(): HTMLElement;
   toggle(): HTMLButtonElement;
   slotParams: SlotParams[];
+  headerParams: Array<Record<string, unknown>>;
+  /** Open the mobile nav drawer through the header's onOpenDrawer (the
+   *  sanctioned host channel — the hamburger lives in the header slot). */
+  openDrawer(): void;
   emitted: string[];
 }
 
@@ -84,6 +88,7 @@ function mountShell(
   sidebarSlot?: (params: SlotParams) => VNode,
 ): RailMount {
   const slotParams: SlotParams[] = [];
+  const headerParams: Array<Record<string, unknown>> = [];
   const emitted: string[] = [];
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -104,7 +109,10 @@ function mountShell(
             railStyle.value = v as "expanded" | "rail";
           },
         }, {
-          header: () => null,
+          header: (params: Record<string, unknown>) => {
+            headerParams.push(params);
+            return null;
+          },
           sidebar: (params: SlotParams) => {
             slotParams.push(params);
             return sidebarSlot?.(params) ?? h("div", { class: "sidebar-mock" }, "NAV");
@@ -125,6 +133,8 @@ function mountShell(
     toggle: () =>
       container.querySelector(".hk-sidebar-rail-toggle button") as HTMLButtonElement,
     slotParams,
+    headerParams,
+    openDrawer: () => (headerParams[headerParams.length - 1]!.onOpenDrawer as () => void)(),
     emitted,
   };
 }
@@ -136,6 +146,9 @@ afterEach(() => {
   }
   // HkMenu's rail rows ride HkTooltip (teleported to the overlay root).
   document.querySelectorAll("#hk-overlay-root, .hk-tooltip-popup").forEach((n) => n.remove());
+  // The drawer-path tests below resize the window to the mobile side;
+  // every other case here assumes the desktop width.
+  window.innerWidth = 1024;
   vi.useRealTimers();
 });
 
@@ -761,5 +774,121 @@ describe("rail group fold survives the crossfade generations (#43)", () => {
       groupToggle(peekGen).getAttribute("aria-expanded"),
       "the fresh generation re-seeds its auto set but keeps the user's word",
     ).toBe("false");
+  });
+
+  it("shows NO expanded flash mid-dissolve, and never patches the leaving copy", async () => {
+    // MEASURED contract, not an inference. happy-dom completes a CSS
+    // transition with no duration instantly, so the leaving copy would be
+    // gone before it could be inspected; freezing rAF holds the leave open
+    // exactly the way a real browser holds it for --duration-normal (the
+    // same technique the swap test above uses).
+    const c = mountShell({ sidebarCollapsible: true }, () =>
+      h(HkMenu, {
+        variant: "sidebar",
+        items: GROUP_ITEMS,
+        open: false,
+        defaultExpandGroups: true,
+      }),
+    );
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    const railGen = await settle(c.container, "rail");
+    groupToggle(railGen).click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(groupToggle(railGen).getAttribute("aria-expanded")).toBe("false");
+
+    vi.stubGlobal("requestAnimationFrame", () => 0);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    c.aside().dispatchEvent(POINTER_ENTER());
+    await vi.advanceTimersByTimeAsync(400);
+
+    const copiesNow = () => Array.from(c.container.querySelectorAll<HTMLElement>(".hk-crossfade-item"));
+    expect(
+      copiesNow().map((el) => el.dataset.crossfadeKey),
+      "both generations share the swap cell during the dissolve",
+    ).toEqual(["rail", "full"]);
+    expect(
+      copiesNow().map((el) => groupToggle(el).getAttribute("aria-expanded")),
+      "neither copy shows the group re-opened",
+    ).toEqual(["false", "false"]);
+
+    // Now write the shared store DURING the dissolve (a toggle in the live
+    // copy). The live copy re-renders; the leaving one keeps the DOM of its
+    // last render — the frozen copy is out of the patch path, which is what
+    // makes the dissolve safe. Reading the frozen copy after the write is
+    // the measurement of that claim.
+    const live = copiesNow()[1]!;
+    groupToggle(live).click();
+    await vi.advanceTimersByTimeAsync(0);
+    const afterWrite = copiesNow().map((el) => ({
+      key: el.dataset.crossfadeKey,
+      expanded: groupToggle(el).getAttribute("aria-expanded"),
+    }));
+    expect(afterWrite).toEqual([
+      { key: "rail", expanded: "false" },
+      { key: "full", expanded: "true" },
+    ]);
+    vi.unstubAllGlobals();
+
+    // The open group is the shared word: the next rail generation after the
+    // peek closes shows it open (nothing was silently reverted mid-swap).
+    c.aside().dispatchEvent(POINTER_LEAVE());
+    await vi.advanceTimersByTimeAsync(150);
+    const backGen = await settle(c.container, "rail");
+    expect(groupToggle(backGen).getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("shares the fold with the mobile drawer's menu (the provide sits above BOTH slots)", async () => {
+    // The rail is not the only slot consumer: under the breakpoint the same
+    // sidebar slot renders inside the drawer. The store is provided from
+    // HkFaceShell's own setup, so the drawer's fresh HkMenu instance must
+    // read the desktop rail's fold too — otherwise the rail would be fixed
+    // while mobile silently loses it. (provide/inject follows the component
+    // tree, so the real HDrawer's teleport does not change the provider —
+    // this stub renders inline and still pins the channel.)
+    const c = mountShell({ sidebarCollapsible: true }, () =>
+      h(HkMenu, {
+        variant: "sidebar",
+        items: GROUP_ITEMS,
+        open: false,
+        defaultExpandGroups: true,
+      }),
+    );
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    const railGen = await settle(c.container, "rail");
+    groupToggle(railGen).click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(groupToggle(railGen).getAttribute("aria-expanded"), "collapsed in the rail").toBe("false");
+
+    // Phone width: the desktop sidebar unmounts, the drawer becomes the nav.
+    window.innerWidth = 800;
+    window.dispatchEvent(new Event("resize"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside(), "no desktop rail under the breakpoint").toBeFalsy();
+
+    c.openDrawer();
+    await vi.advanceTimersByTimeAsync(0);
+    const drawerBody = c.container.querySelector(".drawer-stub-body") as HTMLElement;
+    expect(drawerBody, "the drawer renders the sidebar slot").toBeTruthy();
+    expect(
+      groupToggle(drawerBody).getAttribute("aria-expanded"),
+      "the drawer's menu reads the SAME fold",
+    ).toBe("false");
+
+    // And the other direction: opening it in the drawer is what the desktop
+    // sidebar shows when the window grows back.
+    groupToggle(drawerBody).click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(groupToggle(drawerBody).getAttribute("aria-expanded")).toBe("true");
+
+    window.innerWidth = 1024;
+    window.dispatchEvent(new Event("resize"));
+    await vi.advanceTimersByTimeAsync(0);
+    const desktopGen = await settle(c.container, "rail");
+    expect(
+      groupToggle(desktopGen).getAttribute("aria-expanded"),
+      "the rail inherits the drawer's word",
+    ).toBe("true");
   });
 });

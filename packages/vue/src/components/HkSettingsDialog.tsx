@@ -49,7 +49,11 @@ export interface HkSettingsSection {
  * re-anchor this from outside through paired-class rules in its own
  * SettingsShell.scss). Inside the dialog the modal body's own scroller is
  * made mathematically idle by the host height rule (see the SCSS); on a
- * page the host manages its own layout.
+ * page the host manages its own layout. The rail additionally opts into
+ * the container's selectionHint: an active section scrolled out of the
+ * rail's band lights a feathered primary gradient at the offending edge
+ * (phone's strip keeps the active tab scrolled into view instead — the
+ * hint is rail-only by design).
  *
  * Phone anatomy (2026-10-28 user direction): under the family's mobile
  * breakpoint the left rail moves to the TOP of the window as the shared
@@ -173,7 +177,18 @@ export const HkSettingsBody = defineComponent({
             />
           </div>
         ) : (
-          <HkScrollContainer as="nav" class="hk-settings__rail" aria-label={props.navLabel}>
+          /* The rail opts into the selection edge hint: an active
+             section scrolled out of the rail's band lights a primary
+             gradient at the offending edge, so a long section list
+             never hides "where did the selection go". Phone flips to
+             the strip above, which keeps the active tab scrolled into
+             view instead — the hint is rail-only by design. */
+          <HkScrollContainer
+            as="nav"
+            class="hk-settings__rail"
+            selectionHint
+            aria-label={props.navLabel}
+          >
             {props.sections.map((s) => {
               const Icon = s.icon;
               const on = active() === s.key && !s.disabled;

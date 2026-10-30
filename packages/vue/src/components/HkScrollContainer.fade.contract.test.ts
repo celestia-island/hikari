@@ -25,8 +25,11 @@ const sheet = readFileSync(join(here, "HkScrollContainer.scss"), "utf-8");
 describe("scroll fade composition contract", () => {
   it("declares one composed mask on the viewport (no per-axis overrides)", () => {
     const declarations = sheet.match(/^\s*-?(?:webkit-)?mask-image:/gm) ?? [];
-    // The composed block owns exactly one pair: -webkit-mask-image + mask-image.
-    expect(declarations.length).toBe(2);
+    // Exactly THREE pairs live in the sheet, all accounted for: the
+    // composed two-axis block on the viewport, and one feather pair per
+    // selection-hint painter (the 2026-10-30 inline falloff). Anything
+    // else is per-axis mask drift.
+    expect(declarations.length).toBe(6);
     expect(sheet).toContain("mask-composite: intersect");
     expect(sheet).toContain("-webkit-mask-composite: source-in");
   });

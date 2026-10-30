@@ -27,6 +27,11 @@ import HkNumberInput from "./HkNumberInput";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const scss = readFileSync(join(here, "HkNumberInput.scss"), "utf-8");
+/* The stepper column's rules moved to the shared HkNumberSteppers
+   stylesheet (2026-10-30) — the same affordance now renders inside
+   HkInput's number variant, so its geometry contract ships with the
+   component that draws it. */
+const steppersScss = readFileSync(join(here, "HkNumberSteppers.scss"), "utf-8");
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -65,9 +70,9 @@ describe("HkNumberInput affix contract", () => {
   });
 
   it("stretches the stepper column so height:50% steps and the divider span the box", () => {
-    const rule = scss.match(/\.hk-number-input-steppers\s*{[^}]*}/)?.[0] ?? "";
+    const rule = steppersScss.match(/\.hk-number-input-steppers\s*{[^}]*}/)?.[0] ?? "";
     expect(rule, "steppers rule must exist").toContain("align-self: stretch");
-    const steps = scss.match(/\.hk-number-input-step\s*{[^}]*}/)?.[0] ?? "";
+    const steps = steppersScss.match(/\.hk-number-input-step\s*{[^}]*}/)?.[0] ?? "";
     expect(steps).toContain("height: 50%");
   });
 
@@ -101,10 +106,13 @@ describe("HkNumberInput affix contract", () => {
 
     const inner = query(container, ".hk-number-input-inner");
     const children = Array.from(inner?.children ?? []).map((el) => el.className);
+    // The stepper column carries its size class on the stack root (the
+    // shared HkNumberSteppers sizes from it — HkNumberInput.scss no longer
+    // holds per-size step rules).
     expect(children).toEqual([
       "hk-number-input-field",
       "hk-number-input-suffix",
-      "hk-number-input-steppers",
+      "hk-number-input-steppers hk-number-input-steppers-md",
     ]);
   });
 

@@ -38,6 +38,14 @@ rsx! {
 <HInput placeholder="Type something..." style="width:280px" />
 ```
 
+## Number Fields
+
+`type="number"` (or `variant="number"` in the Vue runtime) replaces the browser's native spin buttons with the shared lucide stepper column — the same affordance [Number Input](./number_input.md) draws: a click steps by `step`, press-and-hold repeats, and the `min` / `max` / `step` attributes constrain pointer stepping exactly as they constrain the native keyboard stepping. The field itself stays a native `type="number"` input — arrow keys and form validation are untouched.
+
+```hikari:tsx
+<HInput type="number" modelValue={value} onUpdate:modelValue={(v: string) => (value = v)} min={60} max={240} step={10} placeholder="Hang" />
+```
+
 ## Custom Colors
 
 Input colors can be dynamically overridden through Custom layer properties.

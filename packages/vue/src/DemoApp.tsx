@@ -360,12 +360,15 @@ export default defineComponent({
         </section>
 
         <section>
-          <h2>HInput (text / password) / HSearchInput / HNumberInput / HTextarea</h2>
+          <h2>HInput (text / password / number) / HSearchInput / HNumberInput / HTextarea</h2>
           <div class="form-grid">
             <HInput modelValue={form.value.text} onUpdate:modelValue={(v: string) => (form.value.text = v)} placeholder="Text input" />
             <HInput modelValue={form.value.text} onUpdate:modelValue={(v: string) => (form.value.text = v)} placeholder="Disabled" disabled />
             <HSearchInput modelValue={form.value.search} onUpdate:modelValue={(v: string | number) => (form.value.search = String(v))} placeholder="Search..." />
             <HNumberInput modelValue={form.value.number} onUpdate:modelValue={(v: number) => (form.value.number = v)} placeholder="Number" />
+            {/* The plain input's number variant — same shared lucide stepper
+                column, no browser-native spin buttons. */}
+            <HInput type="number" modelValue={String(form.value.number)} onUpdate:modelValue={(v: string) => (form.value.number = v === "" ? 0 : Number(v))} placeholder="Number (steppers)" />
             <HInput variant="password" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (filter reveal — default)" />
             <HInput variant="password" revealStrategy="sweep" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (sweep reveal — readable band)" />
             <HInput variant="password" revealStrategy="noise" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (noise reveal — screenshot-safe)" />

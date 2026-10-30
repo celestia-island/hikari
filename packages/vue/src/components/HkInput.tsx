@@ -1,9 +1,10 @@
-import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch, type PropType } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch, type PropType, type Ref } from "vue";
 
 import type { PasswordStrengthEvaluator } from "../utils/password";
 
 import { HkPlaceholderMarquee } from "./HkPlaceholderMarquee";
 import HkPasswordSurface from "./HkPasswordSurface";
+import HkNumberSteppers from "./HkNumberSteppers";
 import "./HkInput.scss";
 
 export default defineComponent({
@@ -210,6 +211,13 @@ export default defineComponent({
       return props.type;
     });
 
+    /* A number field (type="number" or variant="number") carries the shared
+       lucide stepper column (HkNumberSteppers) INSTEAD of the browser's
+       native spin buttons — the field keeps its native semantics (arrow
+       keys step, min/max validation), the column is the pointer
+       affordance riding the trailing edge. */
+    const isNumberField = computed(() => resolvedType.value === "number");
+
     const filteredAttrs = computed(() => {
       const { class: _, style: __, ...rest } = attrs as Record<string, unknown>;
       return rest;
@@ -237,12 +245,17 @@ export default defineComponent({
     // / "end" pads each side only by its own affix.
     const prefixEl = ref<HTMLElement | null>(null);
     const suffixEl = ref<HTMLElement | null>(null);
+    /* The number steppers' column — measured INTO the end-side clearance
+       (summed with the suffix span) so centered text and the marquee
+       window always end short of the buttons. */
+    const steppersEl = ref<HTMLElement | null>(null);
     const affixStartW = ref(0);
     const affixEndW = ref(0);
 
     function measureAffixes() {
       affixStartW.value = prefixEl.value?.offsetWidth ?? 0;
-      affixEndW.value = suffixEl.value?.offsetWidth ?? 0;
+      affixEndW.value =
+        (suffixEl.value?.offsetWidth ?? 0) + (steppersEl.value?.offsetWidth ?? 0);
     }
 
     const affixRO: ResizeObserver | null =
@@ -251,14 +264,13 @@ export default defineComponent({
       affixRO?.disconnect();
     });
 
-    /** Stable ref callback for one affix slot — observes the live span
-     *  so width changes (a longer chip label, a swapped icon) re-publish
-     *  the custom properties without any consumer involvement. */
-    function bindAffix(which: "start" | "end") {
-      const slot = () => (which === "start" ? prefixEl : suffixEl);
+    /** Stable ref callback factory for one measured slot — observes the
+     *  live element so width changes (a longer chip label, a swapped
+     *  icon, a steppers size flip) re-publish the custom properties
+     *  without any consumer involvement. */
+    function bindMeasured(slot: () => Ref<HTMLElement | null>) {
       const set = (node: HTMLElement | null) => {
-        if (which === "start") prefixEl.value = node;
-        else suffixEl.value = node;
+        slot().value = node;
       };
       return (el: unknown) => {
         const node = (el as HTMLElement | null) ?? null;
@@ -288,8 +300,9 @@ export default defineComponent({
         measureAffixes();
       };
     }
-    const prefixAffixRef = bindAffix("start");
-    const suffixAffixRef = bindAffix("end");
+    const prefixAffixRef = bindMeasured(() => prefixEl);
+    const suffixAffixRef = bindMeasured(() => suffixEl);
+    const steppersRootRef = bindMeasured(() => steppersEl);
 
     const boxVars = computed(
       () =>
@@ -298,6 +311,60 @@ export default defineComponent({
           "--hk-input-affix-end-w": `${affixEndW.value}px`,
         }) as Record<string, string>,
     );
+
+    /* ── number steppers (type="number" / variant="number") ──
+       min/max/step reach the DOM input as undeclared attrs through the
+       spread; the steppers read the SAME numbers so pointer stepping
+       agrees with the native keyboard stepping and validation. */
+    function attrNumber(key: string): number | undefined {
+      const raw = attrs[key];
+      if (raw == null || raw === "") return undefined;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : undefined;
+    }
+
+    const numberBounds = computed(() => ({
+      min: attrNumber("min"),
+      max: attrNumber("max"),
+      step: attrNumber("step") ?? 1,
+    }));
+
+    const currentNumber = computed(() =>
+      Number.parseFloat(String(props.modelValue ?? "")),
+    );
+
+    const canStepUp = computed(() => {
+      const { max } = numberBounds.value;
+      if (max == null) return true;
+      const current = currentNumber.value;
+      // An unparsable draft leaves the end open — the value itself picks
+      // the restart bound in stepNumberValue.
+      return !Number.isFinite(current) || current < max;
+    });
+
+    const canStepDown = computed(() => {
+      const { min } = numberBounds.value;
+      if (min == null) return true;
+      const current = currentNumber.value;
+      return !Number.isFinite(current) || current > min;
+    });
+
+    function stepNumberValue(dir: "up" | "down") {
+      if (props.disabled || props.readonly) return;
+      const { min, max, step } = numberBounds.value;
+      const current = currentNumber.value;
+      // An unparsable draft lands ON the bound (native number-input
+      // behavior): up restarts at min (else 0), down at max (else 0).
+      if (!Number.isFinite(current)) {
+        emit("update:modelValue", String(dir === "up" ? (min ?? 0) : (max ?? 0)));
+        return;
+      }
+      let next = dir === "up" ? current + step : current - step;
+      if (min != null && next < min) next = min;
+      if (max != null && next > max) next = max;
+      // Kill float dust (0.1 + 0.2 must not surface as 0.30000000000000004).
+      emit("update:modelValue", String(Number.parseFloat(next.toFixed(10))));
+    }
 
     function onInput(e: Event) {
       const target = e.target as HTMLInputElement | HTMLTextAreaElement;
@@ -348,6 +415,7 @@ export default defineComponent({
       `hk-input-box-${props.size}`,
       props.error ? "hk-input-box-error" : "",
       props.disabled ? "hk-input-box-disabled" : "",
+      isNumberField.value ? "hk-input-box-number" : "",
     ]);
 
     const isText = !isTextarea.value;
@@ -419,6 +487,10 @@ export default defineComponent({
           class={boxClass.value}
           style={boxVars.value}
           data-autogrow={isAutoGrow.value || undefined}
+          // Number boxes carry the marker so the SCSS can hide the native
+          // spin buttons and park the suffix next to the steppers (the
+          // column owns the trailing auto margin).
+          data-number-steppers={isNumberField.value || undefined}
           // Textarea boxes never carry the marker: their element is
           // excluded by :not() anyway, and keeping it off also spares
           // a textarea-scoped marquee from the per-side window insets.
@@ -544,6 +616,16 @@ export default defineComponent({
             <span ref={suffixAffixRef} class="hk-input-affix hk-input-suffix">
               {slots.suffixIcon()}
             </span>
+          )}
+          {isNumberField.value && (
+            <HkNumberSteppers
+              rootRef={steppersRootRef}
+              size={props.size}
+              canUp={canStepUp.value}
+              canDown={canStepDown.value}
+              disabled={props.disabled || props.readonly}
+              onStep={stepNumberValue}
+            />
           )}
         </div>
         )}

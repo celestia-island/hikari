@@ -1,5 +1,5 @@
-import { computed, defineComponent, onUnmounted, ref, type PropType } from "vue";
-import { scheduleAfter, scheduleEvery, type AnimationHandle } from "../runtime/animationBus";
+import { computed, defineComponent, ref, type PropType } from "vue";
+import HkNumberSteppers from "./HkNumberSteppers";
 import "./HkNumberInput.scss";
 
 export default defineComponent({
@@ -29,8 +29,6 @@ export default defineComponent({
     "update:modelValue": (_value: number) => true,
   },
   setup(props, { emit, slots }) {
-    let holdDelay: AnimationHandle | null = null;
-    let holdRepeat: AnimationHandle | null = null;
     const inputRef = ref<HTMLInputElement | null>(null);
 
     const canIncrement = computed(() =>
@@ -61,29 +59,6 @@ export default defineComponent({
       if (!canDecrement.value) return;
       emitValue(props.modelValue - props.step);
     }
-
-    function startHold(dir: "up" | "down") {
-      stopHold();
-      // 300ms press threshold, then a 50ms repeat — both on the shared
-      // animation bus so the hold cadence parks with the reduced-motion
-      // switch like every other JS-driven animation.
-      holdDelay = scheduleAfter(() => {
-        holdDelay = null;
-        holdRepeat = scheduleEvery(() => {
-          if (dir === "up") increment();
-          else decrement();
-        }, 50);
-      }, 300);
-    }
-
-    function stopHold() {
-      holdDelay?.disconnect();
-      holdDelay = null;
-      holdRepeat?.disconnect();
-      holdRepeat = null;
-    }
-
-    onUnmounted(stopHold);
 
     const wrapperClass = computed(() => [
       "hk-number-input",
@@ -119,60 +94,16 @@ export default defineComponent({
               {slots.suffix ? slots.suffix() : props.suffix}
             </span>
           ) : null}
-          <div class="hk-number-input-steppers">
-            <button
-              type="button"
-              class="hk-number-input-step hk-number-input-step-up"
-              disabled={!canIncrement.value || props.disabled}
-              onMousedown={(e: MouseEvent) => {
-                e.preventDefault();
-                startHold("up");
-              }}
-              onMouseup={(e: MouseEvent) => {
-                e.preventDefault();
-                stopHold();
-              }}
-              onMouseleave={(e: MouseEvent) => {
-                e.preventDefault();
-                stopHold();
-              }}
-              onClick={(e: MouseEvent) => {
-                e.preventDefault();
-                increment();
-              }}
-              tabindex={-1}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
-                <polyline points="18 15 12 9 6 15" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              class="hk-number-input-step hk-number-input-step-down"
-              disabled={!canDecrement.value || props.disabled}
-              onMousedown={(e: MouseEvent) => {
-                e.preventDefault();
-                startHold("down");
-              }}
-              onMouseup={(e: MouseEvent) => {
-                e.preventDefault();
-                stopHold();
-              }}
-              onMouseleave={(e: MouseEvent) => {
-                e.preventDefault();
-                stopHold();
-              }}
-              onClick={(e: MouseEvent) => {
-                e.preventDefault();
-                decrement();
-              }}
-              tabindex={-1}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-          </div>
+          {/* The shared stepper column (lucide ChevronUp/Down) — it owns
+              the hold-to-repeat cadence on the animation bus; the bounds
+              mirror this field's min/max so dead ends render greyed. */}
+          <HkNumberSteppers
+            canUp={canIncrement.value}
+            canDown={canDecrement.value}
+            disabled={props.disabled}
+            size={props.size}
+            onStep={(dir: "up" | "down") => (dir === "up" ? increment() : decrement())}
+          />
         </div>
       </div>
     );

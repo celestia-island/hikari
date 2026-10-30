@@ -40,7 +40,16 @@ const REPORT_MS = CROSSFADE_WATCHDOG_MS;
  *   opacity ahead of the outgoing one's decay and stops the composite from
  *   dipping toward the background mid-swap.
  * - The leaving item drops pointer events: it is dead content and must not
- *   intercept clicks while it dissolves under the incoming one.
+ *   intercept clicks while it dissolves under the incoming one. It is also
+ *   marked `inert` + `aria-hidden` for the dissolve (2026-10-31): a frozen
+ *   copy must leave the TAB ORDER and the accessibility tree too, or a
+ *   screen reader walks a stale duplicate (in the rail swap it is a whole
+ *   second sidebar). TRADE-OFF: a control focused in the leaving item is
+ *   blurred by the browser the moment the attribute lands, `--duration`
+ *   earlier than the unmount would have; hosts that care move focus FIRST
+ *   (the rail kit's closePeek does exactly that). happy-dom applies no
+ *   inert focus fixup, so that browser behavior is intentionally not
+ *   covered by this suite.
  * - `appear` dissolves the initially rendered item in; off by default —
  *   first paint should never animate (view shells, restored state).
  * - `disabled` renders the active item bare (synchronous swap, no watchdog):
@@ -114,6 +123,25 @@ export default defineComponent({
       pending = Math.max(0, pending - 1);
       if (pending === 0) report.cancel();
     };
+
+    /** Mark a leaving item inert (out of the tab order and the a11y tree)
+     *  for the dissolve. Attribute-based (not the `inert` IDL property) so
+     *  the DOM contract is observable in tests and SSR-less hosts alike.
+     *  The restore is defence: on a keyed flip-back Vue removes the
+     *  leaving node and re-enters a FRESH element (its internal
+     *  cancel-callback runs with no argument and routes to afterLeave), so
+     *  nothing live is ever left inert by that route — but any shape that
+     *  DOES cancel a leave must not keep a live copy inert. */
+    function setLeavingInert(el: Element | null | undefined, on: boolean): void {
+      if (!el) return;
+      if (on) {
+        el.setAttribute("inert", "");
+        el.setAttribute("aria-hidden", "true");
+        return;
+      }
+      el.removeAttribute("inert");
+      el.removeAttribute("aria-hidden");
+    }
 
     // ── Swap-stall watchdog ──────────────────────────────────────────
     /** Budget for one arm: the base sweep window plus the choreographed
@@ -211,9 +239,23 @@ export default defineComponent({
             onBeforeEnter={() => { armReport(); armWatchdog(); }}
             onAfterEnter={settleReport}
             onEnterCancelled={settleReport}
-            onBeforeLeave={() => { armReport(); armWatchdog(); }}
+            onBeforeLeave={(el: Element) => {
+              // DEAD CONTENT for the dissolve: drop it from the tab order
+              // AND the accessibility tree. pointer-events: none (the
+              // leave rule) only stops the mouse — a frozen copy otherwise
+              // stays reachable by Tab and by a screen reader's virtual
+              // cursor for the whole dissolve, and in the rail swap it is
+              // a second full sidebar (duplicate landmark/roles, stale
+              // controls) while the live one dissolves in.
+              setLeavingInert(el, true);
+              armReport();
+              armWatchdog();
+            }}
             onAfterLeave={settleReport}
-            onLeaveCancelled={settleReport}
+            onLeaveCancelled={(el: Element) => {
+              setLeavingInert(el, false);
+              settleReport();
+            }}
           >
             {item()}
           </Transition>

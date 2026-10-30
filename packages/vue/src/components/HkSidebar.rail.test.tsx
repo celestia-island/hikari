@@ -242,6 +242,11 @@ describe("HkSidebar rail chrome: toggle placement and the clip wrapper", () => {
     expect(entering!.style.width).toBe("64px");
     // The band content lives inside the entering generation.
     expect(entering!.querySelector(".hk-sidebar-body")).toBeTruthy();
+    // The leaving generation's ITEM is inert for the dissolve (dead
+    // content leaves the tab order and the a11y tree); the live one is not.
+    expect(leaving!.parentElement!.hasAttribute("inert"), "the dying copy is inert").toBe(true);
+    expect(leaving!.parentElement!.getAttribute("aria-hidden")).toBe("true");
+    expect(entering!.parentElement!.hasAttribute("inert")).toBe(false);
     vi.unstubAllGlobals();
   });
 
@@ -315,6 +320,37 @@ describe("HkSidebar pin window: expand must not replay the slide", () => {
     c.panel().dispatchEvent(widthTransitionEnd());
     await vi.advanceTimersByTimeAsync(0);
     expect(c.aside().hasAttribute("data-pinning")).toBe(true);
+  });
+});
+
+describe("HkSidebar peek close: focus is handed back to the toggle", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("Escape from a focused row inside the swapped clip lands focus on the toggle", async () => {
+    // The peek close flips the density, which MOUNTS the entering
+    // generation fresh — the focused row is unmounted a dissolve later.
+    // Without the handoff (useSidebarRail.closePeek) focus would fall to
+    // <body> and take the host's :focus-within reveal with it.
+    const c = mountSidebar({ collapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+
+    // The slot's faux nav row lives INSIDE the swapped clip.
+    const row = c.container.querySelector<HTMLButtonElement>("nav button")!;
+    row.focus();
+    expect(document.activeElement).toBe(row);
+
+    c.aside().dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(400);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(true);
+
+    c.aside().dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(false);
+    expect(document.activeElement, "focus moved to the toggle").toBe(c.toggle());
   });
 });
 

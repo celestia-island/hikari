@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, ref, type Ref } from "vue";
+import { createApp, defineComponent, h, nextTick, ref, type Ref } from "vue";
 
 import { __teardownMediaQueries } from "../runtime/useMediaQuery";
 import {
   useSidebarRail,
+  SIDEBAR_RAIL_CLIP_SELECTOR,
   SIDEBAR_RAIL_PEEK_DELAY,
   SIDEBAR_RAIL_PEEK_GRACE,
   SIDEBAR_RAIL_PIN_FALLBACK,
+  SIDEBAR_RAIL_TOGGLE_BUTTON_SELECTOR,
   type SidebarRailHandle,
 } from "./useSidebarRail";
 
@@ -484,3 +486,158 @@ describe("useSidebarRail — pin window (expand must not replay the slide)", () 
     }
   });
 });
+describe("useSidebarRail — peek-close focus handoff (2026-10-31)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  /** The rail host DOM the handoff reasons about: the swapped content
+   *  window (the clip) with a focused row inside, the straddling toggle
+   *  OUTSIDE it (the handoff target), and panel chrome that is neither.
+   *  Built from the EXPORTED selectors, so a drifted constant fails here
+   *  (it would look for a target the real markup never renders). */
+  function focusFixture() {
+    // "…-toggle button" -> the wrapper's class name (drop the leading ".").
+    const toggleClass = SIDEBAR_RAIL_TOGGLE_BUTTON_SELECTOR.split(" ")[0]!.slice(1);
+    const host = document.createElement("div");
+    host.innerHTML = [
+      `<div class="${SIDEBAR_RAIL_CLIP_SELECTOR.slice(1)}"><button class="nav-row">nav</button></div>`,
+      `<div class="${toggleClass}"><button class="toggle-btn">toggle</button></div>`,
+      '<button class="panel-chrome">chrome</button>',
+    ].join("");
+    document.body.appendChild(host);
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    return {
+      host,
+      row: host.querySelector<HTMLButtonElement>(".nav-row")!,
+      toggle: host.querySelector<HTMLButtonElement>(SIDEBAR_RAIL_TOGGLE_BUTTON_SELECTOR)!,
+      chrome: host.querySelector<HTMLButtonElement>(".panel-chrome")!,
+      outside,
+      cleanup: () => {
+        host.remove();
+        outside.remove();
+      },
+    };
+  }
+
+  /** Open a peek on the fixture's host. */
+  function openPeek(f: ReturnType<typeof focusFixture>): SidebarRailHandle {
+    const rail = mountRail({ host: () => f.host });
+    rail.collapse();
+    rail.onPointerEnter();
+    vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
+    expect(rail.peeking.value).toBe(true);
+    return rail;
+  }
+
+  it("hands focus to the toggle when the focused row is inside the swapped clip", async () => {
+    const f = focusFixture();
+    try {
+      const rail = openPeek(f);
+      f.row.focus();
+      expect(document.activeElement).toBe(f.row);
+
+      rail.closePeek();
+      await nextTick();
+      expect(
+        document.activeElement,
+        "the focused row is unmounted by the flip — focus must land on the toggle",
+      ).toBe(f.toggle);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("Escape closes through the same handoff (the keyboard path)", async () => {
+    const f = focusFixture();
+    try {
+      const rail = openPeek(f);
+      f.row.focus();
+      const consumed = rail.onKeydown(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(consumed).toBe(true);
+      await nextTick();
+      expect(document.activeElement).toBe(f.toggle);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("leaves focus alone when it lives OUTSIDE the swapped clip", async () => {
+    const f = focusFixture();
+    try {
+      const rail = openPeek(f);
+
+      // Panel chrome inside the host but outside the clip survives the
+      // flip — it keeps the focus it had.
+      f.chrome.focus();
+      rail.closePeek();
+      await nextTick();
+      expect(document.activeElement).toBe(f.chrome);
+
+      // Focus outside the host entirely is never touched either.
+      const rail2 = openPeek(f);
+      f.outside.focus();
+      rail2.closePeek();
+      await nextTick();
+      expect(document.activeElement).toBe(f.outside);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("a NO-OP closePeek (no open peek) never steals focus", async () => {
+    const f = focusFixture();
+    try {
+      const rail = mountRail({ host: () => f.host });
+      f.row.focus();
+      rail.closePeek(); // expanded, nothing to close — a nav-click path
+      await nextTick();
+      expect(document.activeElement, "navigation focus stays where the user put it").toBe(f.row);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("the pointerleave GRACE close hands off too (the most common close)", async () => {
+    // Regression pin for the 2026-10-31 review finding: the grace timer
+    // and the grace<=0 branch used to write `peeking` directly, bypassing
+    // the handoff — hover-peek, focus a header inside it, move the
+    // pointer away, and focus died with the leaving generation.
+    const f = focusFixture();
+    try {
+      const rail = openPeek(f);
+      f.row.focus();
+
+      rail.onPointerLeave();
+      vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_GRACE - 1);
+      expect(rail.peeking.value, "still inside the grace").toBe(true);
+      expect(document.activeElement, "focus untouched before the close").toBe(f.row);
+
+      vi.advanceTimersByTime(1);
+      expect(rail.peeking.value).toBe(false);
+      expect(document.activeElement, "the grace close hands focus to the toggle").toBe(f.toggle);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("the grace<=0 branch (no grace configured) hands off as well", async () => {
+    const f = focusFixture();
+    try {
+      const rail = mountRail({ host: () => f.host, peekGrace: 0 });
+      rail.collapse();
+      rail.onPointerEnter();
+      vi.advanceTimersByTime(SIDEBAR_RAIL_PEEK_DELAY);
+      expect(rail.peeking.value).toBe(true);
+      f.row.focus();
+
+      rail.onPointerLeave();
+      expect(rail.peeking.value).toBe(false);
+      expect(document.activeElement).toBe(f.toggle);
+    } finally {
+      f.cleanup();
+    }
+  });
+});
+

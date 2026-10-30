@@ -139,6 +139,54 @@ describe("HkCrossfade — DOM contract", () => {
     expect(list[1]!.classList.contains("hk-crossfade-enter-from")).toBe(true);
   });
 
+  it("marks the leaving copy INERT for the dissolve (a11y: dead content)", async () => {
+    // pointer-events: none only stops the mouse — the frozen copy must
+    // also leave the tab order and the accessibility tree, or a screen
+    // reader walks a second, stale copy (duplicate landmarks/roles; in
+    // the rail swap it is a whole second sidebar). A cancelled leave has
+    // to restore the item (see the next case).
+    vi.useFakeTimers();
+    freezeRaf();
+    const { container, set } = mountCrossfade();
+    await set("b");
+    await vi.advanceTimersByTimeAsync(200);
+
+    const list = items(container);
+    expect(list[0]!.hasAttribute("inert"), "the leaving copy is inert").toBe(true);
+    expect(list[0]!.getAttribute("aria-hidden")).toBe("true");
+    expect(list[1]!.hasAttribute("inert"), "the live copy stays interactive").toBe(false);
+    expect(list[1]!.hasAttribute("aria-hidden")).toBe(false);
+  });
+
+  it("a flip-back never leaves a LIVE copy inert (Vue removes the leaving node)", async () => {
+    // Pins the behavior the inert contract relies on: on a keyed
+    // flip-back Vue cancels the in-flight leave of the old element
+    // through its internal callback (no element argument -> routed to
+    // afterLeave, which REMOVES it) and re-enters the key as a FRESH
+    // element. So no live copy can carry inert; if Vue ever changed that
+    // shape (a reused, re-entered element), this test is the tripwire.
+    vi.useFakeTimers();
+    freezeRaf();
+    const { container, set } = mountCrossfade();
+    await set("b");
+    await vi.advanceTimersByTimeAsync(100);
+    const oldA = items(container).find((el) => el.dataset.crossfadeKey === "a")!;
+    expect(oldA.hasAttribute("inert")).toBe(true);
+
+    await set("a");
+    await vi.advanceTimersByTimeAsync(100);
+
+    // The inert old node is gone (not left mounted), and every live node
+    // for the key renders un-inert.
+    expect(oldA.isConnected, "the inert leaving node is removed").toBe(false);
+    const live = items(container).filter((el) => el.dataset.crossfadeKey === "a");
+    expect(live.length).toBeGreaterThan(0);
+    for (const el of live) {
+      expect(el.hasAttribute("inert"), "a live copy must never be inert").toBe(false);
+      expect(el.getAttribute("aria-hidden")).toBeNull();
+    }
+  });
+
   it("watchdog completes a stalled swap: sweeps frozen classes, drops the stale item", async () => {
     vi.useFakeTimers();
     freezeRaf();

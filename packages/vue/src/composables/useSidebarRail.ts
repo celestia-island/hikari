@@ -115,7 +115,12 @@ export interface SidebarRailHandle {
    *  it would otherwise start a spurious grace close. Cancels a pending
    *  peek arm; arms the grace close while peeking. */
   onPointerLeave(e?: { relatedTarget?: EventTarget | null } | null): void;
-  /** Close an open peek immediately (Escape, nav click, mode change). */
+  /** Close an open peek immediately (Escape, nav click, mode change).
+   *  A REAL close hands focus to the straddling toggle when the focused
+   *  node lived inside the swapped content window (the rail/full handoff
+   *  unmounts it and marks it inert; otherwise focus would fall to <body>
+   *  and take the host's :focus-within reveal with it). A no-op close (no
+   *  peek open) never touches focus. */
   closePeek(): void;
   /** Clear the pin window early — bind the host's width `transitionend`
    *  here (filter it to the host's own `width` transition first). */
@@ -130,6 +135,14 @@ export interface SidebarRailHandle {
 export const SIDEBAR_RAIL_PEEK_DELAY = 400;
 /** Default grace after pointerleave before the peek drawer closes. */
 export const SIDEBAR_RAIL_PEEK_GRACE = 150;
+/** Selector of the panel's content window — the clip the rail handoff
+ *  (HkSidebarRailSwap) swaps its generations inside. Focus living here
+ *  cannot survive a peek close: the density flip mounts the entering
+ *  generation fresh and unmounts the focused copy a dissolve later. */
+export const SIDEBAR_RAIL_CLIP_SELECTOR = ".hk-sidebar-rail-clip";
+/** Selector of the straddling toggle's <button> — the focus target a
+ *  peek close hands off to (the one control OUTSIDE the swap). */
+export const SIDEBAR_RAIL_TOGGLE_BUTTON_SELECTOR = ".hk-sidebar-rail-toggle button";
 /** Safety net for the pin window: hosts clear it on their width
  *  `transitionend`, but a transition that never fires (equal widths, a
  *  host without a width animation) must not strand `data-pinning`. */
@@ -234,10 +247,65 @@ export function useSidebarRail(options: SidebarRailOptions = {}): SidebarRailHan
     arm();
   }
 
-  function closePeek(): void {
+  /**
+   * A peek close swaps the panel's content (the rail/full handoff), so a
+   * control focused inside the clip is unmounted with the leaving
+   * generation — and the leaving generation is marked `inert` for the
+   * dissolve, which blurs a focused descendant. Focus would fall to
+   * <body>, taking the host's :focus-within reveal (the toggle's
+   * keyboard affordance) with it. Hand focus to the toggle: it is the one
+   * control outside the swap and stays mounted through the flip.
+   *
+   * Runs SYNCHRONOUSLY, before the flip lands — the focused node still
+   * exists at this moment, and "move focus before hiding" is the ARIA
+   * guidance. A host that renders the toggle conditionally on `peeking`
+   * would lose the target; no shipped host does that, and the panel
+   * chrome around the clip is exactly where the toggle lives.
+   *
+   * Guarded three ways: SSR (no document), focus outside the host (the
+   * caller's own control keeps it), and focus outside the CLIP (the
+   * panel chrome survives — nothing is being unmounted).
+   */
+  function handoffFocusFromClip(): void {
+    if (typeof document === "undefined") return;
+    const host = hostEl();
+    const active = document.activeElement;
+    if (!host || !(active instanceof HTMLElement) || !host.contains(active)) return;
+    const clip = active.closest<HTMLElement>(SIDEBAR_RAIL_CLIP_SELECTOR);
+    if (!clip) return;
+    // The toggle is the clip's SIBLING inside the panel. Scope the lookup
+    // to that panel and skip toggles nested INSIDE a clip: a nested
+    // collapsible sidebar renders its own clip+toggle before the outer
+    // toggle in document order, and focusing that one would land inside
+    // the leaving (soon inert) generation — a silent no-op.
+    const panel = clip.parentElement ?? host;
+    for (const btn of panel.querySelectorAll<HTMLButtonElement>(
+      SIDEBAR_RAIL_TOGGLE_BUTTON_SELECTOR,
+    )) {
+      if (btn.closest(SIDEBAR_RAIL_CLIP_SELECTOR)) continue;
+      btn.focus();
+      return;
+    }
+  }
+
+  /**
+   * THE one writer that closes the peek. Every close path — Escape, a nav
+   * click, the pin path, the grace timer after pointerleave — funnels
+   * through here so the focus handoff can never be bypassed (the
+   * pointerleave close used to write `peeking` directly and dropped
+   * focus; 2026-10-31 review finding). Focus is handed off FIRST, while
+   * the focused node still exists.
+   */
+  function closePeekNow(): void {
     clearArm();
     clearClose();
+    if (!peeking.value) return;
+    handoffFocusFromClip();
     peeking.value = false;
+  }
+
+  function closePeek(): void {
+    closePeekNow();
   }
 
   function endPinning(): void {
@@ -321,12 +389,12 @@ export function useSidebarRail(options: SidebarRailOptions = {}): SidebarRailHan
       clearClose();
       const grace = peekGrace();
       if (grace <= 0) {
-        peeking.value = false;
+        closePeekNow();
         return;
       }
       closeTimer = setTimeout(() => {
         closeTimer = null;
-        peeking.value = false;
+        closePeekNow();
       }, grace);
     },
     closePeek,

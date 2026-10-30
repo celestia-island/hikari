@@ -2,15 +2,21 @@ import { computed, defineComponent, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 import {
-  bucketLevel,
   calendarGrid,
-  HEATMAP_LEVEL_OPACITY,
+  heatmapCellFill,
+  heatmapCellOpacity,
   monthMarkers,
   todayIso,
   type CalendarCell,
   type HkCalendarHeatmapDay,
 } from "./calendarHeatmap";
 import "./HkCalendarHeatmap.scss";
+
+/** The legend's five levels, empty first — the same ladder the cells
+ * ride, so the swatches come from the one fill/opacity decision
+ * (`heatmapCellFill` / `heatmapCellOpacity`) rather than a second,
+ * hand-written copy of the colors. */
+const LEGEND_LEVELS = [0, 1, 2, 3, 4] as const;
 
 /** The no-data cell (before the account's first activity / after
  * today): muted diagonal hatch over the surface — the wowsp-style
@@ -36,11 +42,10 @@ function fill(template: string, vars: Record<string, string | number>): string {
  * rail, month markers, and hatched no-data gap cells that never claim
  * a fake zero.
  *
- * The leading month is suppressed when the window starts mid-month:
- * the first column shows only the tail of its month, so the marker is
- * rendered only when the grid's first column actually opens its month
- * (Monday = the 1st) — a label over a partial head would claim a
- * month start that is not visible.
+ * The leading month is never mislabeled: a month is labeled on the
+ * column that carries its 1st, so a window starting mid-month has no
+ * label over its partial head (that month's 1st is not on the axis),
+ * and no month lands one column late.
  *
  * Dumb by design: the caller owns the fetch lifecycle and passes the
  * settled dense series in (`days`, oldest → newest, zero-filled,
@@ -90,33 +95,35 @@ export default defineComponent({
       () => `repeat(${weeks.value}, ${props.cellSize}px)`,
     );
 
-    // Locale-reactive (the HkDateTimePicker convention): a computed
-    // over the context's locale so a locale switch re-renders the
-    // calendar's Intl-formatted labels. All formatters format the UTC
-    // midnight instant WITH an explicit UTC zone (R2: on a negative-
-    // offset host the weekday rail shifted a full row and tooltips
-    // landed a day off — the series' day boundary is UTC).
+    // Locale-reactive formatter cache (the HkDateTimePicker convention):
+    // ONE Intl.DateTimeFormat per shape per locale, held in a computed
+    // over the context's locale — not one per rendered cell, which a
+    // full-year grid would pay ~370 times over. All formatters format
+    // the UTC midnight instant WITH an explicit UTC zone (R2: on a
+    // negative-offset host the weekday rail shifted a full row and
+    // tooltips landed a day off — the series' day boundary is UTC).
     const locale = computed(() => useI18n().locale);
+    const formatters = computed(() => {
+      const loc = locale.value;
+      return {
+        weekday: new Intl.DateTimeFormat(loc, { weekday: "short", timeZone: "UTC" }),
+        month: new Intl.DateTimeFormat(loc, { month: "short", timeZone: "UTC" }),
+        date: new Intl.DateTimeFormat(loc, { dateStyle: "medium", timeZone: "UTC" }),
+      };
+    });
     const weekdayLabel = (idx: number) =>
-      new Intl.DateTimeFormat(locale.value, {
-        weekday: "short",
-        timeZone: "UTC",
-      }).format(
+      formatters.value.weekday.format(
         // Any Monday-first week works — take 2024-01-01 (a Monday).
         new Date(Date.UTC(2024, 0, 1 + idx)),
       );
     const monthLabel = (m: string) => {
       if (!m) return "";
-      return new Intl.DateTimeFormat(locale.value, {
-        month: "short",
-        timeZone: "UTC",
-      }).format(new Date(Date.UTC(2024, Number(m) - 1, 1)));
+      return formatters.value.month.format(
+        new Date(Date.UTC(2024, Number(m) - 1, 1)),
+      );
     };
     const dateLabel = (iso: string) =>
-      new Intl.DateTimeFormat(locale.value, {
-        dateStyle: "medium",
-        timeZone: "UTC",
-      }).format(new Date(`${iso}T00:00:00Z`));
+      formatters.value.date.format(new Date(`${iso}T00:00:00Z`));
 
     const cellTitle = (d: Extract<CalendarCell, { kind: "day" }>) =>
       fill(
@@ -135,12 +142,23 @@ export default defineComponent({
           }
         : {
             borderRadius: "3px",
-            background:
-              cell.level === 0
-                ? "color-mix(in srgb, var(--hi-color-muted) 40%, transparent)"
-                : "var(--hi-color-primary)",
-            opacity: cell.level === 0 ? undefined : HEATMAP_LEVEL_OPACITY[cell.level],
+            background: heatmapCellFill(cell.level),
+            opacity: heatmapCellOpacity(cell.level),
           };
+
+    // A marker may overflow its 14px column into the empty columns
+    // ahead (the GitHub convention — a month label is always followed
+    // by unmarked columns). A marker on the LAST column has nothing
+    // ahead: its ink would be clipped by the scroll container, so that
+    // one case reserves inline-end room for it. The logical property
+    // matters: hikari ships RTL hosts (HkMenu reads
+    // documentElement.dir), and there the label runs the other way.
+    const markersTrailingPad = computed(() => {
+      const m = markers.value;
+      return m.length > 0 && m[m.length - 1] !== ""
+        ? `${props.cellSize * 2 + props.cellGap}px`
+        : undefined;
+    });
 
     return () => (
       <div class="hk-calendar-heatmap">
@@ -154,19 +172,16 @@ export default defineComponent({
             data-testid="hk-calendar-heatmap-legend"
           >
             {t("hikari::calendarHeatmap.less", "Less")}
-            {HEATMAP_LEVEL_OPACITY.map((o, i) => (
+            {LEGEND_LEVELS.map((level) => (
               <span
-                key={i}
-                data-legend-level={i}
+                key={level}
+                data-legend-level={level}
                 style={{
                   width: "10px",
                   height: "10px",
                   borderRadius: "2px",
-                  background:
-                    i === 0
-                      ? "color-mix(in srgb, var(--hi-color-muted) 40%, transparent)"
-                      : "var(--hi-color-primary)",
-                  opacity: i === 0 ? undefined : o,
+                  background: heatmapCellFill(level),
+                  opacity: heatmapCellOpacity(level),
                   display: "inline-block",
                 }}
               />
@@ -199,14 +214,16 @@ export default defineComponent({
             </div>
 
             <div class="hk-calendar-heatmap-cells">
-              {/* Month markers, one slot per week column. A leading
-               * partial month renders its empty slot (see
+              {/* Month markers, one slot per week column. A month is
+               * labeled on the column carrying its 1st; a partial head
+               * month therefore renders an empty slot (see
                * monthMarkers). */}
               <div
                 class="hk-calendar-heatmap-markers"
                 style={{
                   gridTemplateColumns: columns.value,
                   columnGap: `${props.cellGap}px`,
+                  paddingInlineEnd: markersTrailingPad.value,
                 }}
               >
                 {markers.value.map((m, i) => (

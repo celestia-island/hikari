@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
 import HkCalendarHeatmap from "./HkCalendarHeatmap";
-import { HEATMAP_LEVEL_OPACITY, todayIso } from "./calendarHeatmap";
+import { HEATMAP_LEVEL_OPACITY, shiftIso } from "./calendarHeatmap";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -16,6 +16,9 @@ function mount(node: ReturnType<typeof h>) {
 }
 
 afterEach(() => {
+  // A failed assertion inside a fake-clock test must not leak the frozen
+  // clock into the rest of the file.
+  vi.useRealTimers();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
     container.remove();
@@ -35,7 +38,7 @@ const daysFrom = (start: string, count: number, value = 0) =>
   });
 
 describe("HkCalendarHeatmap", () => {
-  it("renders the legend (less → more, five swatches) and the grid anatomy", () => {
+  it("renders the legend (less → more, the empty swatch + one per level) and the grid anatomy", () => {
     const c = mount(
       h(HkCalendarHeatmap, {
         days: daysFrom(CLEAN_HEAD_MON, 7),
@@ -51,18 +54,35 @@ describe("HkCalendarHeatmap", () => {
     const legend = c.querySelector('[data-testid="hk-calendar-heatmap-legend"]');
     expect(legend?.textContent).toContain("Less");
     expect(legend?.textContent).toContain("More");
+    // The empty swatch plus one per CONSUMING level.
     expect(c.querySelectorAll("[data-legend-level]")).toHaveLength(
-      HEATMAP_LEVEL_OPACITY.length,
+      1 + HEATMAP_LEVEL_OPACITY.length,
     );
+    const swatches = c.querySelectorAll("[data-legend-level]") as NodeListOf<HTMLElement>;
+    // The empty swatch carries NO opacity step (its wash lives in the
+    // fill, HEATMAP_EMPTY_FILL — happy-dom drops color-mix() values, so
+    // the ladder is asserted through the opacity channel it does keep).
+    expect(swatches[0].style.opacity).toBe("");
+    // The swatch levels run 0..4 in order, empty first.
+    expect(
+      Array.from(swatches, (s) => s.getAttribute("data-legend-level")),
+    ).toEqual(["0", "1", "2", "3", "4"]);
+    // Consuming levels index the table by level - 1: 1 -> [0] … 4 -> [3].
+    expect(swatches[1].style.opacity).toBe(HEATMAP_LEVEL_OPACITY[0]);
+    expect(swatches[2].style.opacity).toBe(HEATMAP_LEVEL_OPACITY[1]);
+    expect(swatches[3].style.opacity).toBe(HEATMAP_LEVEL_OPACITY[2]);
+    expect(swatches[4].style.opacity).toBe(HEATMAP_LEVEL_OPACITY[3]);
     // One week of days, all level 0 (no consumption): plain muted cells.
     expect(grid.querySelectorAll('[data-level="0"]')).toHaveLength(7);
   });
 
-  it("suppresses the leading month marker when the window starts mid-month", async () => {
+  it("labels the next month on the column carrying its 1st, never the partial head month", async () => {
     const c = mount(
       h(HkCalendarHeatmap, {
-        // Trailing-October tail + November: the partial October head is
-        // unlabeled, November's Monday carries the only marker.
+        // Trailing-October tail + November. October's 1st is not on the
+        // axis, so no slot may carry October; November's 1st (Nov 1, a
+        // Saturday) sits in the HEAD column, which is where its marker
+        // goes.
         days: daysFrom(MID_MONTH_MON, 10),
         first: null,
       }),
@@ -72,8 +92,63 @@ describe("HkCalendarHeatmap", () => {
       ".hk-calendar-heatmap-markers > span",
     ) as NodeListOf<HTMLElement>;
     expect(markers.length).toBeGreaterThanOrEqual(2);
-    expect(markers[0].textContent).toBe(""); // partial October — suppressed
-    expect(markers[1].textContent).not.toBe(""); // November — labeled
+    const texts = Array.from(markers, (m) => m.textContent);
+    // The head month (its 1st is off-axis) is never labeled.
+    expect(texts.some((t) => t?.startsWith("Oct"))).toBe(false);
+    expect(texts[0]).not.toBe(""); // November's 1st is in this column
+    expect(texts[1]).toBe("");
+  });
+
+  it("labels a month on the column carrying its 1st, not one column late", async () => {
+    // Grid opens Mon Sep 29: Oct 1 (a Wednesday) is in the head column.
+    const c = mount(
+      h(HkCalendarHeatmap, {
+        days: Array.from({ length: 14 }, (_, i) => ({
+          date: shiftIso("2025-09-29", i),
+          value: 0,
+        })),
+        first: null,
+      }),
+    );
+    await nextTick();
+    const markers = c.querySelectorAll(
+      ".hk-calendar-heatmap-markers > span",
+    ) as NodeListOf<HTMLElement>;
+    expect(markers[0].textContent).not.toBe(""); // October, mid-column
+    expect(markers[1].textContent).toBe("");
+  });
+
+  it("reserves trailing room exactly when the last column carries a marker", async () => {
+    const padOf = async (days: { date: string; value: number }[]) => {
+      const c = mount(h(HkCalendarHeatmap, { days, first: null }));
+      await nextTick();
+      const markersEl = c.querySelector(
+        ".hk-calendar-heatmap-markers",
+      ) as HTMLElement;
+      const texts = Array.from(
+        markersEl.querySelectorAll(":scope > span"),
+        (m) => m.textContent,
+      );
+      return {
+        // Logical property: hikari ships RTL hosts (HkMenu reads
+        // documentElement.dir), so the reserved room rides inline-end
+        // rather than a physical side.
+        pad: markersEl.style.paddingInlineEnd,
+        lastSet: texts.length > 0 && texts[texts.length - 1] !== "",
+      };
+    };
+
+    // Positive branch: a single week opening on Dec 1 leaves the marker
+    // on the LAST column — its ink needs the reserved room.
+    const marked = await padOf(daysFrom(CLEAN_HEAD_MON, 7));
+    expect(marked.lastSet).toBe(true);
+    expect(marked.pad).not.toBe("");
+
+    // Negative branch: ending on Nov 7 (a Friday) pads the axis to
+    // Nov 3–9, so the November marker sits one column in, not last.
+    const unmarked = await padOf(daysFrom("2025-10-27", 12));
+    expect(unmarked.lastSet).toBe(false);
+    expect(unmarked.pad).toBe("");
   });
 
   it("shows the leading month marker when the grid's first column opens its month", async () => {
@@ -90,29 +165,97 @@ describe("HkCalendarHeatmap", () => {
     expect(markers[0].textContent).not.toBe(""); // Dec 1 — labeled
   });
 
-  it("renders gap cells hatched and inert (no tooltip, no level claim)", () => {
-    // A one-day series AT today, anchored at first = today: the head
-    // padding hatches as "before", the tail as "after" — both phases in
-    // one grid, all deterministic against the real clock.
-    const today = todayIso();
+  it("fills the cells through the shared ladder: consuming levels primary, level 0 not", () => {
+    // happy-dom drops color-mix() but keeps var(), so the
+    // empty-vs-primary distinction IS observable here — a hardcoded
+    // primary for level 0 (or a hardcoded fill that ignores the
+    // helper) turns this red (R3: the call sites had no pin).
     const c = mount(
       h(HkCalendarHeatmap, {
-        days: [{ date: today, value: 5 }],
-        first: today,
+        days: [
+          { date: CLEAN_HEAD_MON, value: 10 },
+          { date: "2025-12-02", value: 0 },
+        ],
+        first: null,
       }),
     );
     const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
-    const gaps = grid.querySelectorAll("[data-gap]") as NodeListOf<HTMLElement>;
-    expect(gaps.length).toBeGreaterThan(0);
-    const phases = new Set(
-      Array.from(gaps, (gap) => gap.getAttribute("data-gap")),
+    const styleOf = (level: string) =>
+      (grid.querySelector(`[data-level="${level}"]`) as HTMLElement).getAttribute(
+        "style",
+      ) ?? "";
+    expect(styleOf("4")).toContain("var(--hi-color-primary)");
+    expect(styleOf("0")).not.toContain("--hi-color-primary");
+    // The legend rides the same decision: its empty swatch is not
+    // primary, every consuming swatch is.
+    const swatches = c.querySelectorAll(
+      "[data-legend-level]",
+    ) as NodeListOf<HTMLElement>;
+    expect(swatches[0].getAttribute("style") ?? "").not.toContain(
+      "--hi-color-primary",
     );
-    expect(phases.has("before")).toBe(true);
-    expect(phases.has("after")).toBe(true);
-    for (const gap of gaps) {
-      expect(gap.getAttribute("aria-hidden")).toBe("true");
-      expect(gap.getAttribute("title")).toBeNull();
-      expect(gap.style.pointerEvents).toBe("none");
+    for (const level of [1, 2, 3, 4]) {
+      expect(swatches[level].getAttribute("style") ?? "").toContain(
+        "var(--hi-color-primary)",
+      );
+    }
+  });
+
+  it("applies the opacity ladder by level - 1, leaving level 0 without an opacity step", () => {
+    // The empty cell's wash lives in its FILL, never in the opacity
+    // table (the old table's index 0 was dead weight) — level 0 must
+    // carry no opacity while every consuming level maps to [level - 1].
+    const c = mount(
+      h(HkCalendarHeatmap, {
+        days: [
+          { date: CLEAN_HEAD_MON, value: 10 },
+          { date: "2025-12-02", value: 5 },
+          { date: "2025-12-03", value: 0 },
+        ],
+        first: null,
+      }),
+    );
+    const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+    const cellAt = (level: string) =>
+      grid.querySelector(`[data-level="${level}"]`) as HTMLElement;
+    expect(cellAt("4").style.opacity).toBe(HEATMAP_LEVEL_OPACITY[3]);
+    expect(cellAt("2").style.opacity).toBe(HEATMAP_LEVEL_OPACITY[1]);
+    expect(cellAt("0").style.opacity).toBe("");
+  });
+
+  it("renders gap cells hatched and inert (no tooltip, no level claim)", () => {
+    // A one-day series AT today, anchored at first = today: the head
+    // padding hatches as "before", the tail as "after". The clock is
+    // PINNED to a Wednesday: with the real clock this test carried
+    // both-phase expectations into a Monday (no head padding) or a
+    // Sunday (no tail), so it went red two days out of seven
+    // (R3 2026-10-30, proven with a mocked clock).
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2025-12-03T10:00:00Z")); // a Wednesday
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: [{ date: "2025-12-03", value: 5 }],
+          first: "2025-12-03",
+        }),
+      );
+      const grid = c.querySelector(
+        '[data-testid="hk-calendar-heatmap"]',
+      ) as HTMLElement;
+      const gaps = grid.querySelectorAll("[data-gap]") as NodeListOf<HTMLElement>;
+      expect(gaps.length).toBeGreaterThan(0);
+      const phases = new Set(
+        Array.from(gaps, (gap) => gap.getAttribute("data-gap")),
+      );
+      expect(phases.has("before")).toBe(true);
+      expect(phases.has("after")).toBe(true);
+      for (const gap of gaps) {
+        expect(gap.getAttribute("aria-hidden")).toBe("true");
+        expect(gap.getAttribute("title")).toBeNull();
+        expect(gap.style.pointerEvents).toBe("none");
+      }
+    } finally {
+      vi.useRealTimers();
     }
   });
 

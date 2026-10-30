@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { HkAvatarButton } from "./HkAvatarButton";
 import { HkAdminHeader } from "./HkAdminHeader";
@@ -104,6 +107,61 @@ describe("HkAvatarButton", () => {
     btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await nextTick();
     expect(fired).toBe(1);
+  });
+});
+
+describe("HkAvatarButton sheet contract", () => {
+  // happy-dom has no layout engine, so the geometry is pinned at the
+  // source level — the same approach the downstream chest tripwire
+  // (headerAvatarGeometry.test.ts) takes against the INSTALLED sheet.
+  const sheet = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "..", "styles", "admin-tokens.scss"),
+    "utf8",
+  );
+
+  /** Declarations of the rule whose whole prelude IS `selector`
+   *  (a compound/descendant spelling is a different rule and does not
+   *  match), comments stripped; null when no such rule exists — every
+   *  assertion treats null as a failure, never as "no objection". */
+  function ruleDeclarations(selector: string): Array<[string, string]> | null {
+    const code = sheet
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/[^\n]*/gm, "$1");
+    for (let at = code.indexOf(selector); at >= 0; at = code.indexOf(selector, at + 1)) {
+      const open = code.indexOf("{", at + selector.length);
+      if (open < 0) continue;
+      if (code.slice(at + selector.length, open).trim() !== "") continue;
+      let boundary = at - 1;
+      while (boundary >= 0 && !"}{;".includes(code[boundary])) boundary -= 1;
+      if (code.slice(boundary + 1, at).replace(/\s+/g, " ").trim() !== "") continue;
+      const body = code.slice(open + 1, code.indexOf("}", open));
+      const out: Array<[string, string]> = [];
+      for (const part of body.split(";")) {
+        const m = /^\s*([-a-zA-Z]+)\s*:\s*([\s\S]+?)\s*$/.exec(part);
+        if (m) out.push([m[1], m[2].replace(/\s+/g, " ")]);
+      }
+      return out;
+    }
+    return null;
+  }
+
+  it("the trigger is a BLOCK — hosts may nest it in a plain wrapper div", () => {
+    // The chat face wraps HeaderLeft's trigger in a menu-anchor <div>:
+    // an inline-block button there joins a line box and the strut's
+    // descender space lands BELOW it, riding the avatar ~4px high inside
+    // a perfectly centred wrapper (2026-10-30 user report). Removing
+    // this declaration is the mutation this test must catch.
+    const rule = ruleDeclarations(".s-admin-header-avatar");
+    expect(rule, "admin-tokens must declare .s-admin-header-avatar").not.toBeNull();
+    // Positive control for the extractor itself: the geometry pair the
+    // downstream tripwire also reads. If these stop matching, the parser
+    // above is broken — fix it, not the assertion below.
+    expect(rule).toContainEqual(["width", "var(--space-28)"]);
+    expect(rule).toContainEqual(["height", "var(--space-28)"]);
+    expect(rule, "the trigger must not re-enter inline formatting").toContainEqual([
+      "display",
+      "block",
+    ]);
   });
 });
 

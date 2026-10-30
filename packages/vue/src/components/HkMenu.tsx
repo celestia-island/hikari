@@ -861,12 +861,21 @@ export default defineComponent({
     /** One rail row: icon-only, centered, label in a tooltip. The
      *  accessible name carries the badge too (the visible dot does not),
      *  and aria-current marks the active destination for good measure —
-     *  the visible active state stays data-active. */
+     *  the visible active state stays data-active. The tooltip opens
+     *  toward the CONTENT side: right of the rail in LTR, left in RTL
+     *  (HkTooltip clamps at the viewport, but the opening side should
+     *  be authored, not rescued). */
     function renderSidebarRailRow(item: HkMenuItem) {
       const active = item.key === props.activeKey;
       const text = item.badge ? `${item.label} (${item.badge})` : item.label;
+      // Render-time read: document dir changes re-render through the
+      // host's locale flow; the fallback is LTR (the common docking).
+      const railTooltipSide =
+        typeof document !== "undefined" && document.documentElement.dir === "rtl"
+          ? ("left" as const)
+          : ("right" as const);
       return (
-        <HkTooltip key={item.key} text={text} placement="right" delay={0}>
+        <HkTooltip key={item.key} text={text} placement={railTooltipSide} delay={0}>
           <button
             type="button"
             class="hk-menu-sidebar-row"

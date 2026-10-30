@@ -139,7 +139,7 @@ describe("HkMenu sidebar icon rail", () => {
     app.mount(container);
     mounts.push({ app, container });
 
-    const rows = [...container.querySelectorAll("button.hk-menu-sidebar-row")];
+    const rows = [...container.querySelectorAll("button.hk-menu-sidebar-row")] as HTMLButtonElement[];
     rows[0]!.click();
     rows[1]!.click();
     expect(selected, "the disabled row never selects").toEqual(["go"]);

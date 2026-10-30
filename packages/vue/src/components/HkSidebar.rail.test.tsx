@@ -15,7 +15,14 @@ import HSidebar from "./HkSidebar";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
+interface SidebarSlotParams {
+  collapsed: boolean;
+  peeking: boolean;
+  closePeek: () => void;
+}
+
 function mountSidebar(props: Record<string, unknown> = {}) {
+  const slotParams: SidebarSlotParams[] = [];
   const container = document.createElement("div");
   document.body.appendChild(container);
   const Harness = defineComponent({
@@ -29,7 +36,12 @@ function mountSidebar(props: Record<string, unknown> = {}) {
           "onUpdate:collapsed": (v: boolean) => {
             collapsed.value = v;
           },
-        }, { default: () => h("nav", {}, "NAV") });
+        }, {
+          default: (params: SidebarSlotParams) => {
+            slotParams.push(params);
+            return h("nav", {}, "NAV");
+          },
+        });
     },
   });
   const app = createApp(Harness);
@@ -37,6 +49,7 @@ function mountSidebar(props: Record<string, unknown> = {}) {
   mounts.push({ app, container });
   return {
     container,
+    slotParams,
     aside: () => container.querySelector("aside.hk-sidebar") as HTMLElement,
     panel: () => container.querySelector("nav.hk-sidebar-panel") as HTMLElement,
     toggle: () => container.querySelector(".hk-sidebar-rail-toggle button") as HTMLButtonElement,
@@ -96,6 +109,27 @@ describe("HkSidebar rail capability", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(c.aside().hasAttribute("data-peeking")).toBe(false);
     expect(c.panel().style.width).toBe("56px");
+  });
+
+  it("scopes the slot params live and drops data-collapsed during a peek", async () => {
+    const c = mountSidebar({ width: "240px", collapsible: true });
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
+    expect(c.slotParams[c.slotParams.length - 1]!.peeking).toBe(false);
+    expect(c.aside().hasAttribute("data-collapsed"), "rail density while collapsed").toBe(true);
+
+    c.aside().dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(400);
+    expect(c.slotParams[c.slotParams.length - 1]!.collapsed, "full rows during the peek").toBe(false);
+    expect(c.slotParams[c.slotParams.length - 1]!.peeking).toBe(true);
+    expect(c.aside().hasAttribute("data-collapsed"), "no rail density on the peek panel").toBe(false);
+
+    // closePeek (the nav-row hook) closes the drawer.
+    c.slotParams[c.slotParams.length - 1]!.closePeek();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(false);
+    expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
   });
 
   it("keeps the mobile drawer shape untouched (no rail chrome when mobile)", () => {

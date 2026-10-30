@@ -87,7 +87,9 @@ function mountShell(props: Record<string, unknown> = {}): RailMount {
   const Wrapper = defineComponent({
     name: "RailShellHarness",
     setup() {
-      const railStyle = ref<string>((props.sidebarRailStyle as string) ?? "expanded");
+      const railStyle = ref<"expanded" | "rail">(
+        (props.sidebarRailStyle as "expanded" | "rail") ?? "expanded",
+      );
       return () =>
         h(HkFaceShell, {
           navTitle: "Navigation",
@@ -173,6 +175,37 @@ describe("HkFaceShell rail mode", () => {
     expect(c.aside().hasAttribute("data-rail")).toBe(true);
     expect(c.toggle().getAttribute("aria-expanded")).toBe("false");
     expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
+  });
+
+  it("collapses with NO channel bound — the session-only default (R1 defect pin)", async () => {
+    // Semi-controlled state: a host that never binds
+    // v-model:sidebar-rail-style still gets a working toggle; the emit
+    // just lands unheard. (The pure-delegate version left the click
+    // inert — found by the R1 verifier.)
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkFaceShell, { navTitle: "Navigation", sidebarCollapsible: true }, {
+          header: () => null,
+          sidebar: () => h("div", "NAV"),
+          content: () => h("div", "CONTENT"),
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+
+    const aside = container.querySelector(".hk-sidebar-rail-host") as HTMLElement;
+    const toggle = container.querySelector(".hk-sidebar-rail-toggle button") as HTMLButtonElement;
+    expect(aside.style.width).toBe("224px");
+
+    toggle.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(aside.style.width, "the unbound toggle still collapses").toBe("56px");
+
+    toggle.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(aside.style.width, "and expands again").toBe("224px");
   });
 
   it("honors a configured rail width", async () => {

@@ -271,11 +271,25 @@ export const HkFaceShell = defineComponent({
     const sidebarOpen = ref(false);
 
     // ── desktop icon rail + hover peek (sidebarCollapsible) ──────────
-    // The rail channel bridges the sidebarRailStyle v-model into the
-    // shared state machine; the machine owns dwell/grace/Escape timing.
+    // SEMI-CONTROLLED rail state: a local session-only ref is the live
+    // state, so the toggle works with NO channel bound at all (the
+    // session-only default); a host that binds v-model:sidebar-rail-style
+    // hears every flip through update:sidebarRailStyle and its prop then
+    // wins on the way back in (the watch below). Same shape as
+    // HkSidebar's collapsed handling.
+    const railCollapsedLocal = ref(props.sidebarRailStyle === "rail");
+    watch(
+      () => props.sidebarRailStyle,
+      (v) => {
+        railCollapsedLocal.value = v === "rail";
+      },
+    );
     const railCollapsed = computed({
-      get: () => props.sidebarRailStyle === "rail",
-      set: (v: boolean) => emit("update:sidebarRailStyle", v ? "rail" : "expanded"),
+      get: () => railCollapsedLocal.value,
+      set: (v: boolean) => {
+        railCollapsedLocal.value = v;
+        emit("update:sidebarRailStyle", v ? "rail" : "expanded");
+      },
     });
     const rail = useSidebarRail({
       collapsed: railCollapsed,

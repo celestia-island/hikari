@@ -27,8 +27,11 @@
  */
 
 /* Toggle reveal inset — half in from the content-facing edge, enough air
- * for the circle to clear the panel border. Hosts retune on any ancestor
- * (declared here once, nearest-ancestor declaration wins). */
+ * for the circle to clear the panel border. Declared ON the host, so a
+ * retune must land on the host itself (or anything between host and
+ * toggle): a declaration on an ancestor ABOVE the host always loses to
+ * the host's own (the custom-property trap HkSidebar's scroll-tail
+ * comment documents). */
 .hk-sidebar-rail-host {
   --hk-sidebar-rail-toggle-inset: 4px;
 

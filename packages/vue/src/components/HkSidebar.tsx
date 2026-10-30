@@ -98,19 +98,24 @@ export default defineComponent({
       bodyScrollbar = null;
     });
 
-    const railChrome = props.collapsible && !props.mobile;
+    // Reactive (a setup-time snapshot would strand the toggle/handlers
+    // on the mobile drawer after a runtime mobile/collapsible flip).
+    const railChrome = computed(() => props.collapsible && !props.mobile);
 
     return () => (
       <aside
-        class={railChrome ? "hk-sidebar hk-sidebar-rail-host" : "hk-sidebar"}
+        class={railChrome.value ? "hk-sidebar hk-sidebar-rail-host" : "hk-sidebar"}
         data-mobile={props.mobile || undefined}
-        data-collapsed={layoutCollapsed.value || undefined}
+        // NOT during a peek: [data-collapsed] carries the rail density
+        // (centered header, tight paddings) and the peek renders FULL
+        // rows at full width — the collapsed dress would mis-style it.
+        data-collapsed={layoutCollapsed.value && !peeking.value || undefined}
         data-peeking={peeking.value || undefined}
         style={props.mobile ? undefined : { width: hostWidth.value }}
-        onPointerenter={railChrome ? rail.onPointerEnter : undefined}
-        onPointerleave={railChrome ? rail.onPointerLeave : undefined}
+        onPointerenter={railChrome.value ? rail.onPointerEnter : undefined}
+        onPointerleave={railChrome.value ? rail.onPointerLeave : undefined}
         onKeydown={
-          railChrome
+          railChrome.value
             ? (e: KeyboardEvent) => {
                 if (rail.onKeydown(e)) e.stopPropagation();
               }
@@ -123,19 +128,30 @@ export default defineComponent({
         }}
       >
         <nav
-          class={railChrome ? "hk-sidebar-panel hk-sidebar-rail-panel" : "hk-sidebar-panel"}
+          class={railChrome.value ? "hk-sidebar-panel hk-sidebar-rail-panel" : "hk-sidebar-panel"}
           style={{ width: props.mobile ? undefined : panelWidth.value }}
         >
           {slots.header ? (
             <header class="hk-sidebar-header">{slots.header()}</header>
           ) : null}
           <div ref={bodyWrapRef} class="hk-sidebar-body-wrap">
-            <div ref={bodyRef} class="hk-sidebar-body">{slots.default?.()}</div>
+            <div ref={bodyRef} class="hk-sidebar-body">
+              {/* Scoped params (ignored by plain slots): the LIVE rail
+                  state so a host renders icon-only rows while collapsed
+                  and full rows during a peek, plus the peek closer — a
+                  nav row click should dismiss the peek like the shell's
+                  onNavigate does. */}
+              {slots.default?.({
+                collapsed: layoutCollapsed.value && !peeking.value,
+                peeking: peeking.value,
+                closePeek: rail.closePeek,
+              })}
+            </div>
           </div>
           {slots.footer ? (
             <footer class="hk-sidebar-footer">{slots.footer()}</footer>
           ) : null}
-          {railChrome && (
+          {railChrome.value && (
             <HkSidebarRailToggle
               expanded={!layoutCollapsed.value}
               onToggle={rail.toggle}

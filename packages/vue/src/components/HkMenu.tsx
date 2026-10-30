@@ -10,7 +10,7 @@ import {
   type VNode,
 } from "vue";
 
-import { Check, ChevronRight } from "lucide-vue-next";
+import { Check, ChevronDown, ChevronRight } from "lucide-vue-next";
 
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { ancestorZoom } from "../runtime/cssZoom";
@@ -182,15 +182,21 @@ export default defineComponent({
     /**
      * Sidebar variant only — ICON-RAIL mode (2026-10-30): rows render as
      * centered icon buttons carrying their label in a tooltip (the
-     * existing HkTooltip infra), badges degrade to a corner dot, group
-     * headers become separators (their children are only reachable
-     * expanded or inside a peek drawer — never in the rail), and the
-     * active/checked/danger/disabled row states carry over unchanged.
-     * A row with no icon falls back to its label's first character so
-     * every destination stays one click away. No-op in the popup
-     * variant. Shells drive this from the sidebar slot's `collapsed`
-     * param (HkFaceShell passes it live — false again while a peek is
-     * open, so the peek renders full rows).
+     * existing HkTooltip infra) and badges degrade to a corner dot.
+     * GROUPS stay navigable instead of flattening to separators: a group
+     * header is a centered toggle row whose glyph is the group icon (a
+     * placeholder caret when it carries none) plus a state caret —
+     * ChevronDown while open, ChevronRight while closed, mirrored in
+     * RTL — and an open group renders its children recursively as rail
+     * rows at every depth. The open/closed state is the same
+     * isGroupExpanded/toggleGroup state the expanded sidebar uses, so a
+     * group collapsed in the rail is still collapsed after a peek/expand
+     * (and vice versa). The active/checked/danger/disabled row states
+     * carry over unchanged. A leaf with no icon falls back to its
+     * label's first character so every destination stays one click
+     * away. No-op in the popup variant. Shells drive this from the
+     * sidebar slot's `collapsed` param (HkFaceShell passes it live —
+     * false again while a peek is open, so the peek renders full rows).
      */
     collapsed: { type: Boolean, default: false },
   },
@@ -858,24 +864,40 @@ export default defineComponent({
       );
     }
 
-    /** One rail row: icon-only, centered, label in a tooltip. The
+    /** Tooltip side for a rail row: the bubble opens toward the CONTENT
+     *  side — right of the rail in LTR, left in RTL (HkTooltip clamps at
+     *  the viewport, but the opening side should be authored, not
+     *  rescued). Render-time read: document dir changes re-render through
+     *  the host's locale flow; the fallback is LTR (the common docking). */
+    function railTooltipSide(): "left" | "right" {
+      return typeof document !== "undefined" && document.documentElement.dir === "rtl"
+        ? "left"
+        : "right";
+    }
+
+    /** The state caret of a rail group header. A DEDICATED class, not
+     *  .hk-menu-more: the rail uses two distinct glyphs — ChevronDown
+     *  while the group is open, ChevronRight while closed — instead of
+     *  the expanded sidebar's single chevron turned by [data-open]; RTL
+     *  mirrors it with the same scaleX paint-only convention, and a down
+     *  chevron is horizontally symmetric, so the open state needs no
+     *  exception. */
+    function railCaret(expanded: boolean, size: number): VNode {
+      return h(expanded ? ChevronDown : ChevronRight, {
+        size,
+        class: "hk-menu-rail-caret",
+      });
+    }
+
+    /** One rail LEAF row: icon-only, centered, label in a tooltip. The
      *  accessible name carries the badge too (the visible dot does not),
      *  and aria-current marks the active destination for good measure —
-     *  the visible active state stays data-active. The tooltip opens
-     *  toward the CONTENT side: right of the rail in LTR, left in RTL
-     *  (HkTooltip clamps at the viewport, but the opening side should
-     *  be authored, not rescued). */
-    function renderSidebarRailRow(item: HkMenuItem) {
+     *  the visible active state stays data-active. */
+    function renderSidebarRailRow(item: HkMenuItem): VNode {
       const active = item.key === props.activeKey;
       const text = item.badge ? `${item.label} (${item.badge})` : item.label;
-      // Render-time read: document dir changes re-render through the
-      // host's locale flow; the fallback is LTR (the common docking).
-      const railTooltipSide =
-        typeof document !== "undefined" && document.documentElement.dir === "rtl"
-          ? ("left" as const)
-          : ("right" as const);
       return (
-        <HkTooltip key={item.key} text={text} placement={railTooltipSide} delay={0}>
+        <HkTooltip key={item.key} text={text} placement={railTooltipSide()} delay={0}>
           <button
             type="button"
             class="hk-menu-sidebar-row"
@@ -904,20 +926,75 @@ export default defineComponent({
       );
     }
 
+    /** One rail GROUP header: a centered row, NEVER a separator (that
+     *  flattening stranded every grouped destination in the rail —
+     *  2026-10-30 follow-up). The glyph is the group icon, or the
+     *  placeholder caret when the group carries none; with an icon in the
+     *  glyph cell the state caret parks in the inline-end corner so the
+     *  icon column stays rail-centered. Open/closed is isGroupExpanded/
+     *  toggleGroup — the SAME state the expanded sidebar reads, so a
+     *  group collapsed here is still collapsed after a peek/expand and
+     *  vice versa. Open children recurse as rail rows at every depth
+     *  (2nd/3rd-level groups included); the rail never indents, it stays
+     *  one centered column. */
+    function renderSidebarRailGroup(item: HkMenuItem): VNode {
+      const expanded = isGroupExpanded(item.key);
+      const text = item.badge ? `${item.label} (${item.badge})` : item.label;
+      return (
+        <div
+          key={item.key}
+          class="hk-menu-sidebar-group hk-menu-sidebar-rail-group"
+          data-open={expanded || undefined}
+        >
+          <HkTooltip text={text} placement={railTooltipSide()} delay={0}>
+            <button
+              type="button"
+              class="hk-menu-sidebar-row hk-menu-sidebar-group-toggle hk-menu-sidebar-rail-group-toggle"
+              data-rail
+              data-disabled={item.disabled || undefined}
+              aria-expanded={expanded}
+              aria-haspopup="true"
+              aria-label={text}
+              onClick={() => {
+                if (item.disabled) return;
+                toggleGroup(item.key);
+              }}
+            >
+              <span class="hk-menu-item-icon" data-fallback={item.icon ? undefined : true}>
+                {item.icon ? h(item.icon, { size: 16 }) : railCaret(expanded, 16)}
+              </span>
+              {item.icon && (
+                <span class="hk-menu-rail-caret-corner">{railCaret(expanded, 10)}</span>
+              )}
+              {item.badge && (
+                <span
+                  class="hk-menu-sidebar-badge hk-menu-sidebar-badge--dot"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </HkTooltip>
+          {expanded && (
+            <div class="hk-menu-sidebar-children hk-menu-sidebar-rail-children">
+              {item.children!.map((child) => renderSidebarRailItem(child))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /** Rail dispatch at every depth: groups keep their children reachable
+     *  recursively, leaves stay one-click destinations. */
+    function renderSidebarRailItem(item: HkMenuItem): VNode {
+      return isGroup(item) ? renderSidebarRailGroup(item) : renderSidebarRailRow(item);
+    }
+
     function renderSidebar() {
       if (props.collapsed) {
         return (
           <nav class="hk-menu-sidebar" data-collapsed aria-label={props.title || "menu"}>
             {slotWrapper("head", slots.header?.() ?? [])}
-            {props.items.map((it) =>
-              isGroup(it) ? (
-                // Groups flatten to separators in the rail — their
-                // children are only reachable expanded / in a peek.
-                <div key={it.key} class="hk-menu-sidebar-divider" role="separator" aria-label={it.label} />
-              ) : (
-                renderSidebarRailRow(it)
-              ),
-            )}
+            {props.items.map((it) => renderSidebarRailItem(it))}
           </nav>
         );
       }

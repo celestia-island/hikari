@@ -94,8 +94,16 @@ export { default as HSidebar } from "./components/HkSidebar";
 // Sidebar rail kit: the hover-reveal circular toggle. The rail/peek
 // geometry classes ship through the components' own scss imports and the
 // granular style entry @celestia-island/hikari/styles/sidebar-rail.scss;
-// the state machine is the useSidebarRail export below.
-export { HkSidebarRailToggle } from "./components/HkSidebarRailToggle";
+// the state machine is the useSidebarRail export below. The geometric
+// pointer hit-test is exported too: bespoke hosts (wowsp's own Sidebar)
+// feed it into useSidebarRail.setPeekSuppressed so a pointer parked on
+// the straddling toggle cannot arm the peek dwell.
+export {
+  HkSidebarRailToggle,
+  isPointerOverRailToggle,
+  RAIL_TOGGLE_SELECTOR,
+  RAIL_TOGGLE_SUPPRESS_PAD,
+} from "./components/HkSidebarRailToggle";
 export { default as HSkeleton } from "./components/HkSkeleton";
 export { default as HSkeletonList } from "./components/HkSkeletonList";
 export { default as HSlider } from "./components/HkSlider";
@@ -460,6 +468,7 @@ export {
   useSidebarRail,
   SIDEBAR_RAIL_PEEK_DELAY,
   SIDEBAR_RAIL_PEEK_GRACE,
+  SIDEBAR_RAIL_PIN_FALLBACK,
 } from "./composables/useSidebarRail";
 export type { SidebarRailOptions, SidebarRailHandle } from "./composables/useSidebarRail";
 export {

@@ -2,7 +2,7 @@ import { computed, defineComponent, ref, watch, type PropType } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import { useSidebarRail } from "../composables/useSidebarRail";
-import HkSidebarRailToggle from "./HkSidebarRailToggle";
+import HkSidebarRailToggle, { isPointerOverRailToggle } from "./HkSidebarRailToggle";
 
 /** CSS-wide keywords. A shorthand rebuilt from one of them is NOT a
  * padding (`inherit 0 inherit` is rejected by every engine, measured in
@@ -171,13 +171,22 @@ export const HkFaceShell = defineComponent({
     sidebarCollapsed: { type: Boolean, default: false },
     sidebarWidth: { type: String, default: "224px" },
     /** OPT-IN icon-rail capability for the desktop sidebar (2026-10-30):
-     *  mounts the hover-reveal circular chevron toggle on the sidebar's
-     *  content-facing edge, lets a click collapse the sidebar to a one-
-     *  icon rail, and — while collapsed — opens a hover-peek drawer that
-     *  slides the full sidebar OVER the content as an overlay (the
-     *  layout keeps the rail width; the content area never shifts).
-     *  Timing lives in useSidebarRail (dwell, grace, Escape); geometry in
-     *  HkSidebarRail.scss (.hk-sidebar-rail-host/-panel/-toggle).
+     *  mounts the hover-reveal circular chevron toggle STRADDLING the
+     *  sidebar's content-facing border (its center on the border line,
+     *  half the circle over the content), lets a click collapse the
+     *  sidebar to a one-icon rail, and — while collapsed — opens a
+     *  hover-peek drawer that slides the full sidebar OVER the content as
+     *  an overlay (the layout keeps the rail width; the content area never
+     *  shifts).
+     *
+     *  Two behaviors ride the same opt-in: a pointer resting on the toggle
+     *  SUPPRESSES the peek dwell (it sits on the rail's hover surface and
+     *  would otherwise open the drawer out from under the cursor), and a
+     *  rail -> expanded flip PINNS the panel at its final width for the
+     *  transition window, so only the content area animates instead of the
+     *  sidebar re-sliding. Timing lives in useSidebarRail (dwell, grace,
+     *  suppression, Escape, pinning); geometry in HkSidebarRail.scss
+     *  (.hk-sidebar-rail-host/-panel/-clip/-toggle).
      *  False (default) renders the sidebar exactly as before. Below
      *  mobileBreakpoint nothing changes — the mobile drawer stays the
      *  only nav surface. */
@@ -291,10 +300,15 @@ export const HkFaceShell = defineComponent({
         emit("update:sidebarRailStyle", v ? "rail" : "expanded");
       },
     });
+    // The host REGION element (the rail <aside>) — the machine uses it to
+    // tell a real pointerleave from DOM churn during the peek/width
+    // transitions.
+    const railHostRef = ref<HTMLElement>();
     const rail = useSidebarRail({
       collapsed: railCollapsed,
       peekDelay: () => props.sidebarPeekDelay,
       peekGrace: () => props.sidebarPeekGrace,
+      host: () => railHostRef.value,
     });
     const railActive = computed(() => props.sidebarCollapsible && railCollapsed.value);
     // The LAYOUT width — the core contract of the peek: rail width while
@@ -325,6 +339,33 @@ export const HkFaceShell = defineComponent({
 
     const onSidebarHostKeydown = (e: KeyboardEvent) => {
       if (rail.onKeydown(e)) e.stopPropagation();
+    };
+
+    /** A pointer parked on the toggle must NOT arm the peek dwell — the
+     *  toggle straddles the rail's hover surface, so the drawer would open
+     *  under the resting cursor and jump the button away from it (the
+     *  reported twitch). Containment is GEOMETRIC: before the reveal the
+     *  toggle is opacity:0 / pointer-events:none, so event.target cannot
+     *  report it.
+     *
+     *  ENTER evaluates it too, and BEFORE the arm: a pointer that crosses
+     *  the boundary and stops exactly on the toggle (or a synthetic enter
+     *  with no following move) must not arm the dwell. */
+    const onSidebarHostPointerEnter = (e: PointerEvent) => {
+      rail.setPeekSuppressed(isPointerOverRailToggle(railHostRef.value, e.clientX, e.clientY));
+      rail.onPointerEnter();
+    };
+    const onSidebarHostPointerMove = (e: PointerEvent) => {
+      rail.setPeekSuppressed(isPointerOverRailToggle(railHostRef.value, e.clientX, e.clientY));
+    };
+
+    /** The pin window ends with the HOST's own width transition; child
+     *  transitionend events (the panel, a nested HkSidebar) bubble here
+     *  too, so filter to this element's width. */
+    const onSidebarHostTransitionEnd = (e: TransitionEvent) => {
+      if (e.target !== e.currentTarget) return;
+      if (e.propertyName !== "width") return;
+      rail.endPinning();
     };
 
     const contentStyle = computed(() => ({
@@ -392,12 +433,20 @@ export const HkFaceShell = defineComponent({
           {isDesktop.value && !props.sidebarCollapsed && slots.sidebar && (
             props.sidebarCollapsible ? (
               <aside
+                ref={railHostRef}
                 class="hk-sidebar-rail-host"
                 data-rail={railActive.value || undefined}
                 data-peeking={rail.peeking.value || undefined}
+                // Transient rail -> expanded window (useSidebarRail.pinning):
+                // the panel and any nested sidebar snap to their final width
+                // while THIS host's width transition plays — expanding must
+                // not replay the sidebar slide.
+                data-pinning={rail.pinning.value || undefined}
                 style={{ width: hostSidebarWidth.value, flexShrink: 0 }}
-                onPointerenter={rail.onPointerEnter}
+                onPointerenter={onSidebarHostPointerEnter}
                 onPointerleave={rail.onPointerLeave}
+                onPointermove={onSidebarHostPointerMove}
+                onTransitionend={onSidebarHostTransitionEnd}
                 onKeydown={onSidebarHostKeydown}
               >
                 {/* The visual panel — absolutely positioned over the host
@@ -413,11 +462,18 @@ export const HkFaceShell = defineComponent({
                     background: "rgb(var(--color-surface))",
                   }}
                 >
-                  {slots.sidebar({
-                    collapsed: railActive.value && !rail.peeking.value,
-                    onNavigate: onSidebarNavigate,
-                    peeking: rail.peeking.value,
-                  })}
+                  {/* The panel no longer clips (the toggle straddles its
+                      border), so the slot's content clips inside this
+                      wrapper — full rows stay inside rail width while the
+                      panel width animates. The toggle stays a DIRECT child
+                      of the panel: it must never be clipped. */}
+                  <div class="hk-sidebar-rail-clip">
+                    {slots.sidebar({
+                      collapsed: railActive.value && !rail.peeking.value,
+                      onNavigate: onSidebarNavigate,
+                      peeking: rail.peeking.value,
+                    })}
+                  </div>
                   <HkSidebarRailToggle expanded={!railActive.value} onToggle={rail.toggle} />
                 </div>
               </aside>

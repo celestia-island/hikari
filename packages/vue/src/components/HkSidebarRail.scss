@@ -15,39 +15,76 @@
  *                           the host. Its inline `width` animates
  *                           rail↔full, so a peek slides out over the
  *                           content instead of reflowing it.
+ *   .hk-sidebar-rail-clip   the panel's CONTENT clip (header + body +
+ *                           footer / the shell's sidebar slot). The panel
+ *                           itself cannot clip any more (see below), so
+ *                           this wrapper preserves the rail-width clip
+ *                           during the width transitions.
  *   .hk-sidebar-rail-toggle the hover-reveal circular chevron button
- *                           (HkSidebarRailToggle) riding the panel's
- *                           content-facing edge — during a peek it sits
+ *                           (HkSidebarRailToggle) STRADDLING the panel's
+ *                           content-facing border — its center ON the
+ *                           border line, half inside the panel and half
+ *                           hanging over the content (user-confirmed
+ *                           2026-10-30 direction). During a peek it sits
  *                           on the OVERLAY's edge, so one click pins the
  *                           expanded state.
  *
- * Timing (dwell before peek, grace after leave) is NOT here — that is
- * useSidebarRail's state machine. Reduced motion kills the slides via
- * the media query at the bottom, matching HkSidebar/HkDrawer practice.
+ * Why nobody clips at the host/panel anymore: the toggle's outer half is
+ * OUTSIDE the panel's border box, so a clipping ancestor would amputate
+ * half the circle. The host therefore never clips (the panel may paint
+ * over the content even between peeks — its content is clipped by the
+ * wrapper) and the panel's own `overflow` is visible for the same reason.
+ * The clip wrapper is what keeps full rows from spilling out of a 56px
+ * rail while the panel's width animates.
+ *
+ * Pinning (`data-pinning`): a rail -> expanded flip must NOT replay the
+ * panel's slide — the sidebar should appear at full width instantly while
+ * only the HOST width animates (the "content area shrinks" motion, user
+ * report 2026-10-30). While the attribute is on the host, the panel and
+ * every nested sidebar snap their widths (transition: none), and the panel
+ * carries the peek shadow for the window: it is still an overlay over the
+ * content until the host finishes growing into it, so it must read as one.
+ * The attribute itself is useSidebarRail's `pinning` ref (cleared on the
+ * host's width transitionend / a 400ms fallback / any collapse).
+ *
+ * Timing (dwell before peek, grace after leave, pending-arms) is NOT
+ * here — that is useSidebarRail's state machine. Its suppression state
+ * keeps a pointer parked on the toggle from arming the dwell (the
+ * reported hover twitch); it has no CSS side. Reduced motion kills the
+ * slides via the media query at the bottom, matching HkSidebar/HkDrawer
+ * practice.
  */
 
-/* Toggle reveal inset — half in from the content-facing edge, enough air
- * for the circle to clear the panel border. Declared ON the host, so a
+/* The straddling toggle's geometry tokens. Declared ON the host, so a
  * retune must land on the host itself (or anything between host and
  * toggle): a declaration on an ancestor ABOVE the host always loses to
  * the host's own (the custom-property trap HkSidebar's scroll-tail
- * comment documents). */
+ * comment documents).
+ *
+ * - toggle-size mirrors HkIconButton's `size={24}` — the circle's box.
+ * - border-width is the panel's content-facing hairline (HkSidebar.scss
+ *   and HkFaceShell's inline panel border are both 1px). The toggle's
+ *   inset subtracts HALF of it so the circle's center lands on the
+ *   border LINE rather than its inner edge; the shell-side clamp stays
+ *   within a pixel either way. */
 .hk-sidebar-rail-host {
-  --hk-sidebar-rail-toggle-inset: 4px;
+  --hk-sidebar-rail-toggle-size: 24px;
+  --hk-sidebar-rail-border-width: 1px;
 
   position: relative;
-  /* Clips the panel at the layout footprint — the panel only escapes
-   * while a peek is open (overflow flips below), where it must paint
-   * over the content. */
-  overflow: hidden;
+  /* Never clips: the toggle straddles the panel's border, so its outside
+   * half must be able to paint. Content clipping lives in
+   * .hk-sidebar-rail-clip (inside the panel). */
+  overflow: visible;
+  /* The layout animation the PIN window deliberately keeps. */
   transition: width var(--duration-normal, 0.3s) ease;
 }
 
-/* A peek is an OVERLAY: the host stops clipping and rises to the sidebar
- * z band (900 — above content, below floating panels) so the full-width
- * panel paints over the content it temporarily covers. */
+/* A peek is an OVERLAY: the host rises to the sidebar z band (900 — above
+ * content, below floating panels) so the full-width panel paints over the
+ * content it temporarily covers. (The host no longer needs to toggle
+ * `overflow` here: it never clips.) */
 .hk-sidebar-rail-host[data-peeking] {
-  overflow: visible;
   z-index: var(--hk-z-sidebar, 900);
 }
 
@@ -60,8 +97,36 @@
   inset-inline-start: 0;
   display: flex;
   flex-direction: column;
+  /* The toggle's containing block (position: absolute) — and NOT a clip:
+   * its outer half lives outside this border box. */
+  overflow: visible;
+  /* Width is the slide lever. The shadow FADES on its own: [data-peeking]
+   * clears at the peek's grace, but the retract still has the width
+   * transition to play — a shadow that vanished on the same frame would
+   * pop the elevation off a drawer that is visibly still open. */
+  transition:
+    width var(--duration-normal, 0.3s) ease,
+    box-shadow var(--duration-fast, 0.15s) ease;
+}
+
+/* HkSidebar's shared .hk-sidebar-panel sheet ALSO clips (it is the panel's
+ * base class in HkSidebar's rail mode). Out-specify it here, so the
+ * unclipped rail panel does not depend on which sheet happens to load
+ * last — the toggle must never lose its outside half to import order. */
+.hk-sidebar-rail-host .hk-sidebar-rail-panel {
+  overflow: visible;
+}
+
+/* The panel's content clip: header/footer bands and the scrolling body
+ * (or the shell's whole sidebar slot) stay inside the rail footprint
+ * while the panel's width animates. It is a flex column so the body band
+ * keeps hugging the space between the two bands. */
+.hk-sidebar-rail-clip {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  transition: width var(--duration-normal, 0.3s) ease;
 }
 
 /* The peek's only shadow: cast toward the content side. Offsets cannot
@@ -75,13 +140,45 @@
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.22);
 }
 
+/* ── pin window: panel at final width, host animating ─────────────────
+ * Documented decision: the pinned panel KEEPS the peek shadow for the
+ * window — while the host grows into it the panel still overlays the
+ * content (the host width is not final yet), so it must read as the same
+ * elevated drawer the peek was, not as a card sitting on the page.
+ *
+ * The transition kill list covers both hosts: HkFaceShell's rail panel
+ * plus any nested HkSidebar (its own .hk-sidebar / .hk-sidebar-panel
+ * widths animate otherwise, which is exactly the replayed slide the user
+ * reported). The HOST width transition is deliberately absent — that one
+ * is the intended motion. */
+.hk-sidebar-rail-host[data-pinning] .hk-sidebar-rail-panel,
+.hk-sidebar-rail-host[data-pinning] .hk-sidebar,
+.hk-sidebar-rail-host[data-pinning] .hk-sidebar-panel {
+  transition: none;
+}
+
+.hk-sidebar-rail-host[data-pinning] .hk-sidebar-rail-panel {
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.22);
+}
+
+[dir="rtl"] .hk-sidebar-rail-host[data-pinning] .hk-sidebar-rail-panel {
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.22);
+}
+
 /* ── the toggle ──────────────────────────────────────────────────────
- * Vertically centered on the panel's content-facing edge; invisible and
- * unclickable until the REGION is engaged — hover for a pointer,
- * :focus-within for the keyboard (Tab into the sidebar reveals it). */
+ * A 24px circle whose CENTER rides the panel's content-facing border:
+ * `inset-inline-end` is negative by half the circle (plus half the
+ * border, so the center is the border LINE, not its inner edge) — half
+ * the button hangs over the content, as confirmed with the user. Logical
+ * property throughout, so RTL needs no override (the chevron pair is
+ * mirror-symmetric anyway).
+ *
+ * Invisible and unclickable until the REGION is engaged — hover for a
+ * pointer, :focus-within for the keyboard (Tab into the sidebar reveals
+ * it). */
 .hk-sidebar-rail-toggle {
   position: absolute;
-  inset-inline-end: var(--hk-sidebar-rail-toggle-inset, 4px);
+  inset-inline-end: calc(var(--hk-sidebar-rail-toggle-size, 24px) / -2 - var(--hk-sidebar-rail-border-width, 1px) / 2);
   inset-block-start: 50%;
   translate: 0 -50%;
   z-index: 2;
@@ -106,7 +203,9 @@
 }
 
 /* Reduced motion: no slide, no fade — state changes land instantly (the
- * house convention; HkSidebar/HkDrawer do the same). */
+ * house convention; HkSidebar/HkDrawer do the same). The pin window is
+ * skipped entirely by the state machine, so `data-pinning` never lands
+ * here. */
 @media (prefers-reduced-motion: reduce) {
   .hk-sidebar-rail-host,
   .hk-sidebar-rail-panel,

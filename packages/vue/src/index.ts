@@ -644,6 +644,17 @@ export { default as HkDivider } from "./components/HkDivider";
 export { default as HkDiffViewer } from "./components/HkDiffViewer";
 export { parseUnifiedDiff, computeGaps } from "./components/diffParse";
 export type { DiffLine, DiffHunk, ParsedDiff, UnchangedGap } from "./components/diffParse";
+export { default as HkCalendarHeatmap } from "./components/HkCalendarHeatmap";
+export {
+  bucketLevel,
+  calendarGrid,
+  HEATMAP_LEVEL_OPACITY,
+  monthMarkers,
+  todayIso,
+  weekdayIndex,
+  shiftIso,
+} from "./components/calendarHeatmap";
+export type { CalendarCell, HkCalendarHeatmapDay } from "./components/calendarHeatmap";
 export { default as HkDockBar } from "./components/HkDockBar";
 export { default as HkDrawer } from "./components/HkDrawer";
 export { default as HkEmptyState } from "./components/HkEmptyState";

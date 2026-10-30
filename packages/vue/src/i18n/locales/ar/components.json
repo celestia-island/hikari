@@ -217,7 +217,12 @@
     "hikari::filterPanel.op.lt": "أقل من",
     "hikari::filterPanel.op.lte": "كحد أقصى",
     "hikari::filterPanel.op.gte": "على الأقل",
-    "hikari::filterPanel.op.gt": "أكبر من"
+    "hikari::filterPanel.op.gt": "أكبر من",
+    "hikari::calendarHeatmap.less": "أقل",
+    "hikari::calendarHeatmap.more": "أكثر",
+    "hikari::calendarHeatmap.cellTitle": "{date} · {n} {unit}",
+    "hikari::calendarHeatmap.cellTitleNoUnit": "{date} · {n}",
+    "hikari::calendarHeatmap.summary": "الاستخدام اليومي على مدى {weeks} أسبوعًا"
   },
   "hikari::affixPicker.unset": "غير محدد",
   "hikari::affixPicker.title": "الخيارات",

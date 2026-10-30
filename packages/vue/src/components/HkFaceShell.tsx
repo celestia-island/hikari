@@ -1,6 +1,8 @@
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, ref, watch, type PropType } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
+import { useSidebarRail } from "../composables/useSidebarRail";
+import HkSidebarRailToggle from "./HkSidebarRailToggle";
 
 /** CSS-wide keywords. A shorthand rebuilt from one of them is NOT a
  * padding (`inherit 0 inherit` is rejected by every engine, measured in
@@ -168,6 +170,35 @@ export const HkFaceShell = defineComponent({
   props: {
     sidebarCollapsed: { type: Boolean, default: false },
     sidebarWidth: { type: String, default: "224px" },
+    /** OPT-IN icon-rail capability for the desktop sidebar (2026-10-30):
+     *  mounts the hover-reveal circular chevron toggle on the sidebar's
+     *  content-facing edge, lets a click collapse the sidebar to a one-
+     *  icon rail, and — while collapsed — opens a hover-peek drawer that
+     *  slides the full sidebar OVER the content as an overlay (the
+     *  layout keeps the rail width; the content area never shifts).
+     *  Timing lives in useSidebarRail (dwell, grace, Escape); geometry in
+     *  HkSidebarRail.scss (.hk-sidebar-rail-host/-panel/-toggle).
+     *  False (default) renders the sidebar exactly as before. Below
+     *  mobileBreakpoint nothing changes — the mobile drawer stays the
+     *  only nav surface. */
+    sidebarCollapsible: { type: Boolean, default: false },
+    /** Layout width of the icon rail (the one-icon column). Default 56px,
+     *  the rail width HkSidebar's collapsed mode has always used. */
+    sidebarCollapsedWidth: { type: String, default: "56px" },
+    /** Rail state channel, `v-model:sidebar-rail-style`: "expanded" (the
+     *  default) or "rail". The library itself NEVER persists this — the
+     *  collapse is session-only by design; a host that wants persistence
+     *  (or a shared store) binds the channel and stores the value
+     *  itself. */
+    sidebarRailStyle: {
+      type: String as PropType<"expanded" | "rail">,
+      default: "expanded",
+    },
+    /** Hover dwell on the rail before the peek drawer opens, ms. */
+    sidebarPeekDelay: { type: Number, default: 400 },
+    /** Grace after pointerleave before the peek drawer closes, ms — a
+     *  diagonal pointer move within the window does not flicker it shut. */
+    sidebarPeekGrace: { type: Number, default: 150 },
     /** Viewport width at which the desktop layout takes over (below it
      *  the nav collapses into the mobile drawer). Defaults to the shared
      *  1024px "lg" breakpoint; lower it (e.g. 768) for tablet-friendly
@@ -230,11 +261,71 @@ export const HkFaceShell = defineComponent({
      *  Default false: the padding reads the same at every width. */
     contentBleedOnMobile: { type: Boolean, default: false },
   },
-  setup(props, { slots }) {
+  emits: {
+    "update:sidebarRailStyle": (v: string) => true,
+  },
+  setup(props, { slots, emit }) {
     const { t } = useI18n();
     const { width: viewportWidth } = useBreakpoint();
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
+
+    // ── desktop icon rail + hover peek (sidebarCollapsible) ──────────
+    // SEMI-CONTROLLED rail state: a local session-only ref is the live
+    // state, so the toggle works with NO channel bound at all (the
+    // session-only default); a host that binds v-model:sidebar-rail-style
+    // hears every flip through update:sidebarRailStyle and its prop then
+    // wins on the way back in (the watch below). Same shape as
+    // HkSidebar's collapsed handling.
+    const railCollapsedLocal = ref(props.sidebarRailStyle === "rail");
+    watch(
+      () => props.sidebarRailStyle,
+      (v) => {
+        railCollapsedLocal.value = v === "rail";
+      },
+    );
+    const railCollapsed = computed({
+      get: () => railCollapsedLocal.value,
+      set: (v: boolean) => {
+        railCollapsedLocal.value = v;
+        emit("update:sidebarRailStyle", v ? "rail" : "expanded");
+      },
+    });
+    const rail = useSidebarRail({
+      collapsed: railCollapsed,
+      peekDelay: () => props.sidebarPeekDelay,
+      peekGrace: () => props.sidebarPeekGrace,
+    });
+    const railActive = computed(() => props.sidebarCollapsible && railCollapsed.value);
+    // The LAYOUT width — the core contract of the peek: rail width while
+    // collapsed OR peeking (the peek overlays; it never reflows content),
+    // full width while expanded.
+    const hostSidebarWidth = computed(() =>
+      railActive.value ? props.sidebarCollapsedWidth : props.sidebarWidth,
+    );
+    // The PANEL width — full while expanded or peeking (the slide-out
+    // lever), rail width otherwise.
+    const peekPanelWidth = computed(() =>
+      railActive.value && !rail.peeking.value ? props.sidebarCollapsedWidth : props.sidebarWidth,
+    );
+    // Crossing under the breakpoint unmounts the desktop sidebar — the
+    // peek must not survive into the mobile drawer era (or reappear when
+    // the viewport grows back).
+    watch(isDesktop, (desktop) => {
+      if (!desktop) rail.closePeek();
+    });
+
+    /** Nav rows close the mobile drawer (their existing onNavigate
+     *  contract) AND an open peek — mirroring the drawer's
+     *  navigate-and-dismiss behavior on desktop hover. */
+    const onSidebarNavigate = () => {
+      rail.closePeek();
+      closeSidebar();
+    };
+
+    const onSidebarHostKeydown = (e: KeyboardEvent) => {
+      if (rail.onKeydown(e)) e.stopPropagation();
+    };
 
     const contentStyle = computed(() => ({
       padding: isDesktop.value || !props.contentBleedOnMobile
@@ -299,17 +390,50 @@ export const HkFaceShell = defineComponent({
 
         <div class="s-admin-shell-body" style={{ paddingBottom: footerPad() }}>
           {isDesktop.value && !props.sidebarCollapsed && slots.sidebar && (
-            <aside
-              style={{
-                width: props.sidebarWidth,
-                flexShrink: 0,
-                borderRight: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
-                background: "rgb(var(--color-surface))",
-                overflow: "hidden",
-              }}
-            >
-              {slots.sidebar({ collapsed: false, onNavigate: closeSidebar })}
-            </aside>
+            props.sidebarCollapsible ? (
+              <aside
+                class="hk-sidebar-rail-host"
+                data-rail={railActive.value || undefined}
+                data-peeking={rail.peeking.value || undefined}
+                style={{ width: hostSidebarWidth.value, flexShrink: 0 }}
+                onPointerenter={rail.onPointerEnter}
+                onPointerleave={rail.onPointerLeave}
+                onKeydown={onSidebarHostKeydown}
+              >
+                {/* The visual panel — absolutely positioned over the host
+                    (HkSidebarRail.scss). Its width is the peek's slide-out
+                    lever; the host width above is the layout footprint and
+                    NEVER grows during a peek, so the <main> sibling keeps
+                    its exact width while the drawer covers it. */}
+                <div
+                  class="hk-sidebar-rail-panel"
+                  style={{
+                    width: peekPanelWidth.value,
+                    borderInlineEnd: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
+                    background: "rgb(var(--color-surface))",
+                  }}
+                >
+                  {slots.sidebar({
+                    collapsed: railActive.value && !rail.peeking.value,
+                    onNavigate: onSidebarNavigate,
+                    peeking: rail.peeking.value,
+                  })}
+                  <HkSidebarRailToggle expanded={!railActive.value} onToggle={rail.toggle} />
+                </div>
+              </aside>
+            ) : (
+              <aside
+                style={{
+                  width: props.sidebarWidth,
+                  flexShrink: 0,
+                  borderRight: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
+                  background: "rgb(var(--color-surface))",
+                  overflow: "hidden",
+                }}
+              >
+                {slots.sidebar({ collapsed: false, onNavigate: closeSidebar })}
+              </aside>
+            )
           )}
           <main class="s-admin-shell-main" data-content-mode={props.contentMode}>
             {props.contentMode === "stage" ? (

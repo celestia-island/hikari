@@ -143,6 +143,8 @@
     "hikari::secret.copy": "복사",
     "hikari::secret.notice": "한 번만 표시됩니다",
     "hikari::secret.title": "비밀 키",
+    "hikari::sidebar.collapse": "사이드바 접기",
+    "hikari::sidebar.expand": "사이드바 펼치기",
     "hikari::signIn.passwordPlaceholder": "비밀번호",
     "hikari::signIn.submit": "로그인",
     "hikari::signIn.usernamePlaceholder": "사용자 이름",

@@ -138,6 +138,61 @@
   line-height: 1;
 }
 
+/* ── sidebar variant, ICON-RAIL mode (collapsed, 2026-10-30) ──────
+ * Rows are icon-only squares: label and pill badge hide (the label
+ * travels in an HkTooltip, the badge degrades to the corner dot), rows
+ * center their glyph, and groups flatten to separators. The tooltip
+ * wrappers must lay out as blocks or the rows would shrink to the
+ * wrapper's inline width. */
+.hk-menu-sidebar[data-collapsed] {
+  .hk-tooltip-wrapper,
+  .hk-tooltip-trigger {
+    display: block;
+    width: 100%;
+  }
+
+  .hk-menu-sidebar-row {
+    justify-content: center;
+    position: relative;
+  }
+
+  .hk-menu-label {
+    display: none;
+  }
+
+  .hk-menu-sidebar-badge:not(.hk-menu-sidebar-badge--dot) {
+    display: none;
+  }
+
+  /* The label-initial fallback glyph (rows without an icon). */
+  .hk-menu-item-icon[data-fallback] {
+    font-size: var(--text-sm, 0.8125rem);
+    font-weight: 600;
+  }
+}
+
+/* Corner dot — the rail form of a badge: count info moves into the row's
+ * accessible name + tooltip, the visible mark only says "something
+ * pending". */
+.hk-menu-sidebar-badge--dot {
+  position: absolute;
+  inset-block-start: var(--space-4, 4px);
+  inset-inline-end: var(--space-8, 8px);
+  min-width: 6px;
+  width: 6px;
+  height: 6px;
+  padding: 0;
+}
+
+/* A group flattened to a separator while in the rail. */
+.hk-menu-sidebar-divider {
+  height: 1px;
+  flex-shrink: 0;
+  margin-block: var(--space-4, 4px);
+  margin-inline: var(--space-8, 8px);
+  background: var(--hi-color-border, rgba(100, 100, 100, 0.08));
+}
+
 /* Reduced motion resets live AFTER the rules they guard so `transition: none`
  * wins the cascade (the chevron's (0,2,0) transform transition used to be
  * declared later in source order, leaving this guard dead for it). Sidebar

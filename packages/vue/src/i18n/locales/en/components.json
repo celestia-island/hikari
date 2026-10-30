@@ -143,6 +143,8 @@
     "hikari::secret.copy": "Copy",
     "hikari::secret.notice": "Shown only once",
     "hikari::secret.title": "Secret",
+    "hikari::sidebar.collapse": "Collapse sidebar",
+    "hikari::sidebar.expand": "Expand sidebar",
     "hikari::signIn.passwordPlaceholder": "Password",
     "hikari::signIn.submit": "Sign in",
     "hikari::signIn.usernamePlaceholder": "Username",

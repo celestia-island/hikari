@@ -143,6 +143,8 @@
     "hikari::secret.copy": "コピー",
     "hikari::secret.notice": "一度だけ表示されます",
     "hikari::secret.title": "シークレット",
+    "hikari::sidebar.collapse": "サイドバーを折りたたむ",
+    "hikari::sidebar.expand": "サイドバーを展開する",
     "hikari::signIn.passwordPlaceholder": "パスワード",
     "hikari::signIn.submit": "ログイン",
     "hikari::signIn.usernamePlaceholder": "ユーザー名",

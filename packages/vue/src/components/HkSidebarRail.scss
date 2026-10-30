@@ -1,0 +1,116 @@
+/* ── Sidebar rail + peek drawer (shared geometry, 2026-10-30) ────────
+ *
+ * The ONE stylesheet behind the collapsible icon-rail capability. Three
+ * surfaces compose these classes — HkFaceShell/HkAdminShell's desktop
+ * sidebar, the standalone HkSidebar panel, and bespoke hosts (wowsp's
+ * own Sidebar) — so no surface re-declares this geometry:
+ *
+ *   .hk-sidebar-rail-host   the LAYOUT box. Its inline `width` IS the
+ *                           sidebar's layout footprint — collapsedWidth
+ *                           while rail/peeking, the full width while
+ *                           expanded — and it NEVER changes while a peek
+ *                           is open (the core contract: the content area
+ *                           must not shift; the peek is an overlay).
+ *   .hk-sidebar-rail-panel  the VISUAL panel, absolutely positioned over
+ *                           the host. Its inline `width` animates
+ *                           rail↔full, so a peek slides out over the
+ *                           content instead of reflowing it.
+ *   .hk-sidebar-rail-toggle the hover-reveal circular chevron button
+ *                           (HkSidebarRailToggle) riding the panel's
+ *                           content-facing edge — during a peek it sits
+ *                           on the OVERLAY's edge, so one click pins the
+ *                           expanded state.
+ *
+ * Timing (dwell before peek, grace after leave) is NOT here — that is
+ * useSidebarRail's state machine. Reduced motion kills the slides via
+ * the media query at the bottom, matching HkSidebar/HkDrawer practice.
+ */
+
+/* Toggle reveal inset — half in from the content-facing edge, enough air
+ * for the circle to clear the panel border. Declared ON the host, so a
+ * retune must land on the host itself (or anything between host and
+ * toggle): a declaration on an ancestor ABOVE the host always loses to
+ * the host's own (the custom-property trap HkSidebar's scroll-tail
+ * comment documents). */
+.hk-sidebar-rail-host {
+  --hk-sidebar-rail-toggle-inset: 4px;
+
+  position: relative;
+  /* Clips the panel at the layout footprint — the panel only escapes
+   * while a peek is open (overflow flips below), where it must paint
+   * over the content. */
+  overflow: hidden;
+  transition: width var(--duration-normal, 0.3s) ease;
+}
+
+/* A peek is an OVERLAY: the host stops clipping and rises to the sidebar
+ * z band (900 — above content, below floating panels) so the full-width
+ * panel paints over the content it temporarily covers. */
+.hk-sidebar-rail-host[data-peeking] {
+  overflow: visible;
+  z-index: var(--hk-z-sidebar, 900);
+}
+
+.hk-sidebar-rail-panel {
+  position: absolute;
+  /* Logical: the panel docks the INLINE-START edge in either direction —
+   * LTR sidebar docks left, RTL docks right — and slides toward
+   * inline-end when the peek opens. */
+  inset-block: 0;
+  inset-inline-start: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width var(--duration-normal, 0.3s) ease;
+}
+
+/* The peek's only shadow: cast toward the content side. Offsets cannot
+ * flip via logical properties — mirror the cast in RTL (the house
+ * [dir="rtl"] override HkSidebar's mobile panel uses). */
+.hk-sidebar-rail-host[data-peeking] .hk-sidebar-rail-panel {
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.22);
+}
+
+[dir="rtl"] .hk-sidebar-rail-host[data-peeking] .hk-sidebar-rail-panel {
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.22);
+}
+
+/* ── the toggle ──────────────────────────────────────────────────────
+ * Vertically centered on the panel's content-facing edge; invisible and
+ * unclickable until the REGION is engaged — hover for a pointer,
+ * :focus-within for the keyboard (Tab into the sidebar reveals it). */
+.hk-sidebar-rail-toggle {
+  position: absolute;
+  inset-inline-end: var(--hk-sidebar-rail-toggle-inset, 4px);
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast, 0.15s) ease;
+}
+
+.hk-sidebar-rail-host:hover .hk-sidebar-rail-toggle,
+.hk-sidebar-rail-host:focus-within .hk-sidebar-rail-toggle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* The circle: HkIconButton's radius channel overridden locally (its
+ * global default is the 4px --radius-sm), with the sidebar surface + a
+ * hairline shadow so the circle reads on any panel tone. */
+.hk-sidebar-rail-toggle .hk-icon-button {
+  --hi-icon-button-radius: 9999px;
+  background: var(--hk-sidebar-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* Reduced motion: no slide, no fade — state changes land instantly (the
+ * house convention; HkSidebar/HkDrawer do the same). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-sidebar-rail-host,
+  .hk-sidebar-rail-panel,
+  .hk-sidebar-rail-toggle {
+    transition: none;
+  }
+}

@@ -91,6 +91,11 @@ export { default as HkLoadingVeil } from "./components/HkLoadingVeil";
 export { default as HSelect } from "./components/HkSelect";
 export { default as HSelectPanel, type SelectPanelPlacement } from "./components/HkSelectPanel";
 export { default as HSidebar } from "./components/HkSidebar";
+// Sidebar rail kit: the hover-reveal circular toggle. The rail/peek
+// geometry classes ship through the components' own scss imports and the
+// granular style entry @celestia-island/hikari/styles/sidebar-rail.scss;
+// the state machine is the useSidebarRail export below.
+export { HkSidebarRailToggle } from "./components/HkSidebarRailToggle";
 export { default as HSkeleton } from "./components/HkSkeleton";
 export { default as HSkeletonList } from "./components/HkSkeletonList";
 export { default as HSlider } from "./components/HkSlider";
@@ -448,6 +453,15 @@ export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";
 export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, isTextFile, fileIcon, mediaKindOf } from "./utils/fileType";
 
 export { useReducedMotion } from "./composables/useReducedMotion";
+// Sidebar rail state machine (hover-dwell peek, leave-grace, Escape) —
+// the composable behind HkFaceShell/HkSidebar/HkAdminShell rail mode and
+// bespoke hosts with their own sidebar markup (wowsp).
+export {
+  useSidebarRail,
+  SIDEBAR_RAIL_PEEK_DELAY,
+  SIDEBAR_RAIL_PEEK_GRACE,
+} from "./composables/useSidebarRail";
+export type { SidebarRailOptions, SidebarRailHandle } from "./composables/useSidebarRail";
 export {
   drawnScale,
   frameMetrics,

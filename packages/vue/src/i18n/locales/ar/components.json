@@ -143,6 +143,8 @@
     "hikari::secret.copy": "نسخ",
     "hikari::secret.notice": "يُعرض مرة واحدة فقط",
     "hikari::secret.title": "السر",
+    "hikari::sidebar.collapse": "طي الشريط الجانبي",
+    "hikari::sidebar.expand": "توسيع الشريط الجانبي",
     "hikari::signIn.passwordPlaceholder": "كلمة المرور",
     "hikari::signIn.submit": "تسجيل الدخول",
     "hikari::signIn.usernamePlaceholder": "اسم المستخدم",

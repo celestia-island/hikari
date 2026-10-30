@@ -213,7 +213,9 @@ describe("solar location strategy", () => {
 
     localStorage.setItem(mod.SOLAR_LOCATION_STRATEGY_STORAGE_KEY, "pigeon-post");
     vi.resetModules();
+    // Imports stay storage-silent; hydration performs the heal.
     const reloaded: SolarModule = await import("./useSolarTime");
+    reloaded.hydrateSolarLocationState();
     expect(reloaded.solarLocationStrategy.value).toBe("timezone");
     expect(localStorage.getItem(mod.SOLAR_LOCATION_STRATEGY_STORAGE_KEY)).toBeNull();
   });
@@ -308,13 +310,17 @@ describe("manual solar location", () => {
     });
   });
 
-  it("persists a manual config, reads it back on import, and clears it", async () => {
+  it("persists a manual config, reads it back on hydration, and clears it", async () => {
     mod.setSolarManualLocation({ timeZone: "Australia/Sydney", hemisphere: "south" });
     expect(JSON.parse(localStorage.getItem(mod.SOLAR_MANUAL_LOCATION_STORAGE_KEY) ?? ""))
       .toEqual({ timeZone: "Australia/Sydney", hemisphere: "south" });
 
+    // Imports are storage-silent (wallpaperSsr contract): the reloaded
+    // module reflects storage only once something hydrates it.
     vi.resetModules();
     const reloaded: SolarModule = await import("./useSolarTime");
+    expect(reloaded.solarManualLocation.value).toBeNull();
+    reloaded.hydrateSolarLocationState();
     expect(reloaded.solarManualLocation.value)
       .toEqual({ timeZone: "Australia/Sydney", hemisphere: "south" });
 
@@ -329,17 +335,22 @@ describe("manual solar location", () => {
     // Corrupt JSON.
     localStorage.setItem(key, "{not json");
     vi.resetModules();
-    expect((await import("./useSolarTime") as SolarModule).solarManualLocation.value).toBeNull();
+    const rot1: SolarModule = await import("./useSolarTime");
+    rot1.hydrateSolarLocationState();
+    expect(rot1.solarManualLocation.value).toBeNull();
 
     // Valid JSON, wrong shape.
     localStorage.setItem(key, JSON.stringify({ timeZone: "Europe/Berlin", hemisphere: "east" }));
     vi.resetModules();
-    expect((await import("./useSolarTime") as SolarModule).solarManualLocation.value).toBeNull();
+    const rot2: SolarModule = await import("./useSolarTime");
+    rot2.hydrateSolarLocationState();
+    expect(rot2.solarManualLocation.value).toBeNull();
 
     // Valid shape, nonexistent zone.
     localStorage.setItem(key, JSON.stringify({ timeZone: "Mars/Olympus", hemisphere: "north" }));
     vi.resetModules();
     const healed: SolarModule = await import("./useSolarTime");
+    healed.hydrateSolarLocationState();
     expect(healed.solarManualLocation.value).toBeNull();
     expect(localStorage.getItem(key)).toBeNull();
   });

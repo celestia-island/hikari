@@ -8,7 +8,7 @@ import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from 
 import { registerStandardThemeDecor } from "./standardDecor";
 import { registerStandardThemeGroups } from "./standardGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
-import { getGeolocation, getTimePeriod, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
+import { getGeolocation, getTimePeriod, hydrateSolarLocationState, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
 
 const DEFAULT_THEME = "default";
 const STORAGE_THEME_KEY = "hikari-theme";
@@ -284,6 +284,9 @@ function getAllThemePresets(): Record<string, ThemePreset> {
 export function initTheme() {
   if (initialized) return;
   initialized = true;
+  // Solar-location state hydrates HERE, never at module import — the theme
+  // module graph must stay storage-silent at import (wallpaperSsr contract).
+  hydrateSolarLocationState();
   // hikari's own groups (shape/radius) land BEFORE the first applyTheme so
   // their cssvars ride the very first emission. Registration is keyed by
   // group id, so a host that wants its own `shape` has three viable orders:

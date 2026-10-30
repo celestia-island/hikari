@@ -277,6 +277,7 @@ export {
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
   timezoneFallback, setGeolocationProvider, refreshThemeClock, stopThemeClock,
   SOLAR_LOCATION_STRATEGY_STORAGE_KEY, SOLAR_MANUAL_LOCATION_STORAGE_KEY,
+  hydrateSolarLocationState,
   solarLocationStrategy, setSolarLocationStrategy,
   solarManualLocation, setSolarManualLocation, manualLocationOf,
   listTimeZones, systemTimeZoneId,

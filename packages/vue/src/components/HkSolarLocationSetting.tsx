@@ -5,6 +5,7 @@ import { Clock, Globe2, MapPin } from "lucide-vue-next";
 import { useI18n } from "../i18n/context";
 import { refreshThemeClock } from "../theme/useTheme";
 import {
+  hydrateSolarLocationState,
   listTimeZones,
   manualLocationOf,
   setSolarLocationStrategy,
@@ -64,6 +65,9 @@ export const HkSolarLocationSetting = defineComponent({
   },
   setup(_props, { emit }) {
     const { t } = useI18n();
+    // The engine hydrates lazily (storage-silent imports): a host that
+    // mounts this row before initTheme() still sees the stored strategy.
+    hydrateSolarLocationState();
     const open = ref(false);
 
     // ── Draft state (seeded from the engine on every open) ───────────

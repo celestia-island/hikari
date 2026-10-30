@@ -372,6 +372,8 @@ describe("HkSolarLocationSetting i18n", () => {
     const catalog = listTimeZones();
     expect(rendered.length).toBe(catalog.length);
     expect(rendered).toContain("Asia/Shanghai");
-    expect(rendered).toContain(systemTimeZoneId() === "UTC" ? "UTC" : "Australia/Sydney");
+    // A catalog-present zone on every ICU: "UTC" itself is NOT part of
+    // Intl.supportedValuesOf("timeZone") on some ICU builds.
+    expect(rendered).toContain("Australia/Sydney");
   });
 });

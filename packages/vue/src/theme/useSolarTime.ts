@@ -189,10 +189,29 @@ function readStoredManualLocation(): SolarManualLocation | null {
   return null;
 }
 
-export const solarLocationStrategy = ref<SolarLocationStrategy>(readStoredStrategy());
-export const solarManualLocation = ref<SolarManualLocation | null>(readStoredManualLocation());
+/** Module state starts at the offline defaults and hydrates from storage
+ *  LAZILY (hydrateSolarLocationState): importing this module must touch no
+ *  storage key at all — the wallpaper layer's SSR import contract
+ *  (wallpaperSsr.test.ts) walks this module in its import graph and fails
+ *  the whole layer on any eager read. */
+export const solarLocationStrategy = ref<SolarLocationStrategy>("timezone");
+export const solarManualLocation = ref<SolarManualLocation | null>(null);
+
+let solarStateHydrated = false;
+
+/** Apply the stored strategy / manual config onto the module refs.
+ *  Idempotent; the heal-on-read semantics live in the readers below. Called
+ *  from initTheme(), getGeolocation() and both setters, so every host path
+ *  observes the stored state without any import-time storage access. */
+export function hydrateSolarLocationState(): void {
+  if (solarStateHydrated) return;
+  solarStateHydrated = true;
+  solarLocationStrategy.value = readStoredStrategy();
+  solarManualLocation.value = readStoredManualLocation();
+}
 
 export function setSolarLocationStrategy(s: SolarLocationStrategy): void {
+  hydrateSolarLocationState();
   if (s !== "timezone" && s !== "ip" && s !== "manual") {
     // Untyped callers never sneak an unknown id into the ref or storage.
     return;
@@ -203,6 +222,7 @@ export function setSolarLocationStrategy(s: SolarLocationStrategy): void {
 }
 
 export function setSolarManualLocation(cfg: SolarManualLocation | null): void {
+  hydrateSolarLocationState();
   if (cfg === null) {
     solarManualLocation.value = null;
     removeStorageItem(SOLAR_MANUAL_LOCATION_STORAGE_KEY);
@@ -384,6 +404,7 @@ async function resolveGeoLocation(): Promise<{ geo: GeoLocation; pinned: boolean
 }
 
 export function getGeolocation(): Promise<GeoLocation> {
+  hydrateSolarLocationState();
   geoMemo ??= resolveGeoLocation().then(({ geo, pinned }) => {
     if (!pinned) {
       // Don't pin the estimate for the whole session — drop the memo so

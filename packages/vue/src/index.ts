@@ -645,6 +645,9 @@ export { default as HkDiffViewer } from "./components/HkDiffViewer";
 export { parseUnifiedDiff, computeGaps } from "./components/diffParse";
 export type { DiffLine, DiffHunk, ParsedDiff, UnchangedGap } from "./components/diffParse";
 export { default as HkCalendarHeatmap } from "./components/HkCalendarHeatmap";
+// The H- alias rides the HCard/HkCard family convention: consumers
+// import either name, one component underneath.
+export { default as HCalendarHeatmap } from "./components/HkCalendarHeatmap";
 export {
   bucketLevel,
   calendarGrid,

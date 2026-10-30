@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { createApp, defineComponent, h, nextTick } from "vue";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
 import HkCalendarHeatmap from "./HkCalendarHeatmap";
 import { HEATMAP_LEVEL_OPACITY, todayIso } from "./calendarHeatmap";
@@ -192,5 +192,49 @@ describe("HkCalendarHeatmap", () => {
     expect(grid).toBeTruthy();
     expect(grid.querySelectorAll("[data-level]")).toHaveLength(0);
     expect(c.querySelectorAll(".hk-calendar-heatmap-markers > span")).toHaveLength(0);
+  });
+
+  it("re-takes today per recompute — a refetch across UTC midnight un-gaps the new today cell", async () => {
+    // R2 S2 + R3 变异留证: today frozen at setup rendered the next
+    // day as an "after" gap even after the caller refetched a series
+    // that includes it. A recompute (the refetch's new `days`) must
+    // re-evaluate todayIso() — the crossed-midnight day becomes a day.
+    // (A rerender with NO dep change legitimately keeps the cached
+    // cells — computed semantics, nothing changed.)
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2025-12-01T10:00:00Z"));
+      // Dense series through the mount-time today: Fri 11-28 .. Mon 12-01.
+      const days = daysFrom("2025-11-28", 4);
+      const state = reactive({ days });
+      // The vnode is built INSIDE the render so the reactive `days`
+      // re-renders — the shared eager mount helper would capture one
+      // static vnode.
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      const app = createApp({
+        render: () => h(HkCalendarHeatmap, { days: state.days, first: null, unit: "度" }),
+      });
+      app.mount(container);
+      mounts.push({ app, container });
+      const grid = container.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+      const tomorrowAtMount = grid.querySelector('[data-date="2025-12-02"]') as HTMLElement;
+      expect(tomorrowAtMount.getAttribute("data-gap")).toBe("after");
+
+      // Cross UTC midnight; the refetched series now includes the new
+      // today (12-02, 3 度) — a new array instance, so the cells
+      // computed recomputes and re-takes today.
+      vi.setSystemTime(new Date("2025-12-02T10:00:00Z"));
+      state.days = [...days, { date: "2025-12-02", value: 3 }];
+      // Two ticks: the parent's render → the child's props update → the
+      // child's re-render land in sequence.
+      await nextTick();
+      await nextTick();
+      const nowToday = grid.querySelector('[data-date="2025-12-02"]') as HTMLElement;
+      expect(nowToday.getAttribute("data-gap")).toBeNull();
+      expect(nowToday.getAttribute("data-level")).toBe("4");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

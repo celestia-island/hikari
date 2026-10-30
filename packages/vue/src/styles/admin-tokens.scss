@@ -574,6 +574,16 @@
 }
 
 .s-admin-header-avatar {
+  /* Block, never the UA's inline-block: hosts may nest the trigger in a
+   * plain block wrapper (the chat face's menu-anchor <div> around
+   * HeaderLeft's HkAvatarButton), and an inline-block button there joins
+   * a line box — its baseline (the bottom margin edge, because of
+   * `overflow: hidden`) sits on the strut's baseline, so the strut's
+   * descender space lands BELOW the avatar and the button rides ~4px
+   * high inside a perfectly centred wrapper (2026-10-30 user report:
+   * 前台头像略微偏上，后台正中). A direct flex/grid parent blockifies
+   * this away, so the console face is unaffected either way. */
+  display: block;
   position: relative;
   width: var(--space-28);
   height: var(--space-28);

@@ -104,6 +104,12 @@ export {
   RAIL_TOGGLE_SELECTOR,
   RAIL_TOGGLE_SUPPRESS_PAD,
 } from "./components/HkSidebarRailToggle";
+// The rail/full content handoff: two width-pinned generations exchanged
+// through HkCrossfade's opacity dissolve (the tab-panel mechanism), so
+// sidebar content never re-lays-out at the panel's transient width while
+// it collapses or expands. Bespoke hosts (wowsp's own Sidebar) mount it
+// inside their .hk-sidebar-rail-clip exactly like HkSidebar/HkFaceShell.
+export { default as HkSidebarRailSwap } from "./components/HkSidebarRailSwap";
 export { default as HSkeleton } from "./components/HkSkeleton";
 export { default as HSkeletonList } from "./components/HkSkeletonList";
 export { default as HSlider } from "./components/HkSlider";

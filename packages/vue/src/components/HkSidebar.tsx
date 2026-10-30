@@ -3,6 +3,7 @@ import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } fro
 import "./HkSidebar.scss";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSidebarRail } from "../composables/useSidebarRail";
+import HkSidebarRailSwap from "./HkSidebarRailSwap";
 import HkSidebarRailToggle, { isPointerOverRailToggle } from "./HkSidebarRailToggle";
 
 export default defineComponent({
@@ -76,6 +77,11 @@ export default defineComponent({
           : props.collapsed,
     );
     const peeking = computed(() => props.collapsible && !props.mobile && rail.peeking.value);
+    // The rail DENSITY (icon-only dress): collapsed layout, not peeking.
+    // In rail mode this is the swap key — the density rides the swapped
+    // GENERATION (frozen on the leaving copy for the dissolve), never the
+    // host root, so nothing re-lays-out at the panel's transient width.
+    const railDensity = computed(() => layoutCollapsed.value && !peeking.value);
     // The host's inline width IS the layout footprint — rail width while
     // collapsed OR peeking (the peek is an overlay; the layout must not
     // shift), full width while expanded.
@@ -88,21 +94,39 @@ export default defineComponent({
       props.mobile ? undefined : layoutCollapsed.value && !peeking.value ? props.collapsedWidth : props.width,
     );
 
-    // Persistent layout surface — attach the overlay scrollbar (shared
-    // chrome) once and detach on unmount.
+    // Persistent layout surface — the overlay scrollbar (shared chrome)
+    // attaches to the scrolling body band. The rail swap mounts each
+    // generation's body FRESH (the leaving copy is frozen and unmounts
+    // with the dissolve), so the attach is a re-attach. Mechanism
+    // notes (probed against Vue 3.5): a flip patches the refs
+    // old -> null -> new in sequence — the unmount of the leaving copy
+    // nulls the shared ref before the entering copy's mount re-points
+    // it — so the guard below swallows the transient null and the FINAL
+    // state always lands on the entering body. The element tracker keeps
+    // a same-element watcher fire a no-op (no track churn on plain
+    // re-renders); a flip hands the single handle to the new body, which
+    // leaves the fading copy without a track for the dissolve — it is
+    // pointer-dead and dissolving, so that is cosmetic.
     const bodyRef = ref<HTMLElement>();
     // Positioned wrapper containing ONLY the body — the rail host (the
     // panel also contains the header/footer bands).
     const bodyWrapRef = ref<HTMLElement>();
     let bodyScrollbar: OverlayScrollbarHandle | null = null;
+    let bodyScrollbarEl: HTMLElement | null = null;
 
-    onMounted(() => {
+    const attachBodyScrollbar = () => {
       if (!bodyRef.value) return;
+      if (bodyScrollbar && bodyScrollbarEl === bodyRef.value) return;
+      bodyScrollbar?.detach();
+      bodyScrollbarEl = bodyRef.value;
       bodyScrollbar = attachOverlayScrollbars(bodyRef.value, {
         axis: "vertical",
         host: bodyWrapRef.value,
       });
-    });
+    };
+
+    onMounted(attachBodyScrollbar);
+    watch([bodyRef, bodyWrapRef], attachBodyScrollbar);
 
     onBeforeUnmount(() => {
       bodyScrollbar?.detach();
@@ -142,27 +166,32 @@ export default defineComponent({
       rail.endPinning();
     };
 
-    /** The panel's inner bands. In rail mode they live inside
-     *  .hk-sidebar-rail-clip — the rail panel no longer clips (the toggle
-     *  straddles its content-facing border), so the wrapper is what keeps
-     *  full-width rows inside the 56px footprint while widths animate.
-     *  Without rail chrome they stay direct children of the panel, exactly
-     *  as before (and the toggle is a direct child of the panel in both
-     *  cases where it exists, so it can never be clipped). */
-    const renderBands = () => (
+    /** The panel's inner bands, parameterized by the density so the
+     *  rail swap can render each generation at its OWN dress: the swap
+     *  invokes this with the entering generation's flag while the leaving
+     *  copy stays frozen at its last render (per-generation density by
+     *  construction). In rail mode the bands live inside the swap, which
+     *  lives inside .hk-sidebar-rail-clip — the rail panel no longer
+     *  clips (the toggle straddles its content-facing border), so the
+     *  wrapper is what keeps full-width rows inside the 56px footprint
+     *  while widths animate. Without rail chrome they stay direct
+     *  children of the panel, exactly as before (and the toggle is a
+     *  direct child of the panel in both cases where it exists, so it
+     *  can never be clipped). */
+    const renderBands = (collapsed: boolean) => (
       <>
         {slots.header ? (
           <header class="hk-sidebar-header">{slots.header()}</header>
         ) : null}
         <div ref={bodyWrapRef} class="hk-sidebar-body-wrap">
           <div ref={bodyRef} class="hk-sidebar-body">
-            {/* Scoped params (ignored by plain slots): the LIVE rail
-                state so a host renders icon-only rows while collapsed
-                and full rows during a peek, plus the peek closer — a
-                nav row click should dismiss the peek like the shell's
-                onNavigate does. */}
+            {/* Scoped params (ignored by plain slots): the density that
+                owns THIS generation so a host renders icon-only rows
+                while collapsed and full rows during a peek, plus the
+                peek closer — a nav row click should dismiss the peek
+                like the shell's onNavigate does. */}
             {slots.default?.({
-              collapsed: layoutCollapsed.value && !peeking.value,
+              collapsed,
               peeking: peeking.value,
               closePeek: rail.closePeek,
             })}
@@ -179,10 +208,13 @@ export default defineComponent({
         ref={hostRef}
         class={railChrome.value ? "hk-sidebar hk-sidebar-rail-host" : "hk-sidebar"}
         data-mobile={props.mobile || undefined}
-        // NOT during a peek: [data-collapsed] carries the rail density
-        // (centered header, tight paddings) and the peek renders FULL
-        // rows at full width — the collapsed dress would mis-style it.
-        data-collapsed={layoutCollapsed.value && !peeking.value || undefined}
+        // LEGACY density carrier only (no rail chrome): [data-collapsed]
+        // styles the presentational 56px rail exactly as before. In rail
+        // mode the density moves onto the swap's GENERATION — a root-level
+        // attribute flips with the state and would restyle the frozen
+        // leaving generation mid-dissolve (the squeeze this wave fixes),
+        // and a peek renders full rows at full width anyway.
+        data-collapsed={!railChrome.value && railDensity.value || undefined}
         data-peeking={peeking.value || undefined}
         // Transient rail -> expanded window (useSidebarRail.pinning): the
         // panel and the panel's inner widths snap while THIS host's width
@@ -211,9 +243,23 @@ export default defineComponent({
           style={{ width: props.mobile ? undefined : panelWidth.value }}
         >
           {railChrome.value ? (
-            <div class="hk-sidebar-rail-clip">{renderBands()}</div>
+            /* The crossfade handoff (HkSidebarRailSwap): each generation
+             * renders the bands at its OWN dress and width while the clip
+             * windows the panel's animating width — no reflow, no wrap,
+             * a pure opacity exchange (the tab-panel dissolve). */
+            <div class="hk-sidebar-rail-clip">
+              <HkSidebarRailSwap
+                rail={railDensity.value}
+                railWidth={props.collapsedWidth}
+                expandedWidth={props.width}
+              >
+                {/* NOT `rail` — the scoped param would shadow the
+                    useSidebarRail handle the outer bindings read. */}
+                {({ rail: density }: { rail: boolean }) => renderBands(density)}
+              </HkSidebarRailSwap>
+            </div>
           ) : (
-            renderBands()
+            renderBands(railDensity.value)
           )}
           {railChrome.value && (
             <HkSidebarRailToggle

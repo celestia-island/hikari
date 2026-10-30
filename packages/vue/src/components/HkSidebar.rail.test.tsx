@@ -53,6 +53,11 @@ function mountSidebar(props: Record<string, unknown> = {}) {
     aside: () => container.querySelector("aside.hk-sidebar") as HTMLElement,
     panel: () => container.querySelector("nav.hk-sidebar-panel") as HTMLElement,
     toggle: () => container.querySelector(".hk-sidebar-rail-toggle button") as HTMLButtonElement,
+    // The ACTIVE (entering/settled) generation of the rail swap — the
+    // last-mounted one; during a dissolve there are two.
+    generation: () =>
+      container.querySelectorAll<HTMLElement>(".hk-sidebar-rail-generation"),
+    swap: () => container.querySelector(".hk-sidebar-rail-swap") as HTMLElement,
   };
 }
 
@@ -91,7 +96,13 @@ describe("HkSidebar rail capability", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(c.aside().style.width).toBe("64px");
     expect(c.panel().style.width).toBe("64px");
-    expect(c.aside().hasAttribute("data-collapsed")).toBe(true);
+    // The density moved OFF the root onto the swap's generation: a root
+    // attribute flips with the state and would restyle the frozen
+    // leaving generation mid-dissolve (the squeeze this wave fixes).
+    expect(c.aside().hasAttribute("data-collapsed"), "the rail-mode root never carries the density").toBe(false);
+    expect(c.generation().length).toBeGreaterThan(0);
+    expect(c.generation()[c.generation().length - 1]!.hasAttribute("data-rail"), "the generation carries the rail density").toBe(true);
+    expect(c.generation()[c.generation().length - 1]!.style.width).toBe("64px");
   });
 
   it("peeks as an overlay: the host width never moves", async () => {
@@ -117,13 +128,13 @@ describe("HkSidebar rail capability", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
     expect(c.slotParams[c.slotParams.length - 1]!.peeking).toBe(false);
-    expect(c.aside().hasAttribute("data-collapsed"), "rail density while collapsed").toBe(true);
+    expect(c.generation()[c.generation().length - 1]!.hasAttribute("data-rail"), "rail density while collapsed").toBe(true);
 
     c.aside().dispatchEvent(new Event("pointerenter"));
     await vi.advanceTimersByTimeAsync(400);
     expect(c.slotParams[c.slotParams.length - 1]!.collapsed, "full rows during the peek").toBe(false);
     expect(c.slotParams[c.slotParams.length - 1]!.peeking).toBe(true);
-    expect(c.aside().hasAttribute("data-collapsed"), "no rail density on the peek panel").toBe(false);
+    expect(c.generation()[c.generation().length - 1]!.hasAttribute("data-rail"), "no rail density on the peek generation").toBe(false);
 
     // closePeek (the nav-row hook) closes the drawer.
     c.slotParams[c.slotParams.length - 1]!.closePeek();
@@ -198,9 +209,36 @@ describe("HkSidebar rail chrome: toggle placement and the clip wrapper", () => {
     expect(clip, "the content clip lives inside the panel").toBeTruthy();
     expect(toggle, "the toggle is a direct child of the panel").toBeTruthy();
     expect(clip!.contains(toggle!), "the toggle is NOT clipped by the wrapper").toBe(false);
-    // The bands (header/body/footer) are inside the clip.
+    // The bands (header/body/footer) are inside the clip — now inside the
+    // swap's generation, one per density.
     expect(clip!.querySelector(".hk-sidebar-body")).toBeTruthy();
+    expect(clip!.querySelector(".hk-sidebar-rail-swap")).toBeTruthy();
     expect(clip!.contains(c.aside())).toBe(false);
+  });
+
+  it("collapses through the SWAP: both densities coexist, each pinned at its own width", async () => {
+    // Freeze rAF to hold the dissolve mid-flight (HkCrossfade.test's
+    // timing model): the leaving FULL generation stays frozen at its
+    // dress and width while the entering RAIL generation takes over —
+    // no generation ever renders at the panel's transient width.
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const c = mountSidebar({ width: "240px", collapsible: true, collapsedWidth: "64px" });
+
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(100);
+
+    const gens = c.generation();
+    expect(gens.length, "both generations share the swap's cell mid-dissolve").toBe(2);
+    const [leaving, entering] = gens;
+    expect(leaving!.hasAttribute("data-rail"), "the leaving copy keeps the full dress").toBe(false);
+    expect(leaving!.style.width).toBe("240px");
+    expect(entering!.hasAttribute("data-rail"), "the entering copy takes the rail dress").toBe(true);
+    expect(entering!.style.width).toBe("64px");
+    // The band content lives inside the entering generation.
+    expect(entering!.querySelector(".hk-sidebar-body")).toBeTruthy();
+    vi.unstubAllGlobals();
   });
 
   it("renders the legacy panel with NO clip wrapper (byte-identical non-rail path)", () => {
@@ -293,7 +331,7 @@ describe("HkSidebar hover suppression: a pointer on the toggle never peeks", () 
     c.aside().dispatchEvent(pointerMove(110, 210));
     await vi.advanceTimersByTimeAsync(400 * 4);
     expect(c.aside().hasAttribute("data-peeking"), "parked on the toggle: no peek").toBe(false);
-    expect(c.aside().hasAttribute("data-collapsed")).toBe(true);
+    expect(c.generation()[c.generation().length - 1]!.hasAttribute("data-rail")).toBe(true);
 
     // Moving off the toggle (still on the rail) re-arms the normal dwell.
     c.aside().dispatchEvent(pointerMove(400, 500));
@@ -314,7 +352,7 @@ describe("HkSidebar hover suppression: a pointer on the toggle never peeks", () 
     c.aside().dispatchEvent(pointerEnterAt(110, 210));
     await vi.advanceTimersByTimeAsync(400 * 4);
     expect(c.aside().hasAttribute("data-peeking"), "enter on the toggle arms nothing").toBe(false);
-    expect(c.aside().hasAttribute("data-collapsed")).toBe(true);
+    expect(c.generation()[c.generation().length - 1]!.hasAttribute("data-rail")).toBe(true);
   });
 
   it("evaluates suppression on ENTER: entering elsewhere on the rail still peeks", async () => {

@@ -77,7 +77,15 @@
   flex-shrink: 0;
 }
 
-.hk-sidebar[data-collapsed] {
+/* The rail density dress, keyed off EITHER density carrier: the legacy
+ * presentational rail (no collapsible prop — the attr rides the root,
+ * instant, no animation to mask) or the swapped GENERATION of the rail
+ * kit (HkSidebarRailSwap) — the generation's [data-rail] flips with the
+ * swap key, so the leaving generation keeps its dress for the dissolve
+ * while the entering one takes the new one. A root-level attr cannot do
+ * that: it would restyle the frozen leaving copy mid-dissolve. */
+.hk-sidebar[data-collapsed],
+.hk-sidebar-rail-generation[data-rail] {
   .hk-sidebar-header {
     justify-content: center;
     padding: var(--space-12) var(--space-8);

@@ -75,8 +75,14 @@ describe("HkSidebar scroll end-cap", () => {
   });
 
   it("keeps the same tail on the collapsed body", () => {
-    const body = ruleBody(css, ".hk-sidebar[data-collapsed] .hk-sidebar-body");
-    expect(body, "the collapsed body rule exists").not.toBeNull();
+    // The density dress is keyed off EITHER carrier — the legacy root's
+    // [data-collapsed] or the rail swap generation's [data-rail] (the
+    // generation attr freezes on the leaving copy for the dissolve, a
+    // root attr cannot). ruleBody needs the arm its brace follows, so the
+    // legacy arm is asserted as text and the body read from the group.
+    expect(css).toContain(".hk-sidebar[data-collapsed] .hk-sidebar-body");
+    const body = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-body");
+    expect(body, "the collapsed body rule exists (grouped density carriers)").not.toBeNull();
     expect(body).toContain("padding-block: var(--space-12) var(--hk-sidebar-scroll-tail)");
   });
 

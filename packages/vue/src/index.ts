@@ -660,6 +660,9 @@ export { default as HCalendarHeatmap } from "./components/HkCalendarHeatmap";
 export {
   bucketLevel,
   calendarGrid,
+  heatmapCellFill,
+  heatmapCellOpacity,
+  HEATMAP_EMPTY_FILL,
   HEATMAP_LEVEL_OPACITY,
   monthMarkers,
   todayIso,

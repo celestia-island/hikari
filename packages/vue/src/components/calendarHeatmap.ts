@@ -11,11 +11,39 @@
  * derivation is unit-testable without a component mount.
  */
 
-/** Opacity per bucket (0–4) over the primary token; bucket 0 is the
- * muted empty cell. Five steps so "no consumption" stays visually
- * distinct from "the smallest consumption on record". Exported for the
- * component and its tests — the scale is part of the contract. */
-export const HEATMAP_LEVEL_OPACITY = ["0.12", "0.22", "0.42", "0.66", "0.95"] as const;
+/** The empty cell (level 0) and the legend's first swatch fill: the
+ * muted token washed out so "no consumption" stays visually distinct
+ * from "the smallest consumption on record". Level 0 has no opacity
+ * step of its own — it may not be re-tinted by the primary token at
+ * all. */
+export const HEATMAP_EMPTY_FILL =
+  "color-mix(in srgb, var(--hi-color-muted) 40%, transparent)";
+
+/** Opacity per CONSUMING bucket (levels 1–4) over the primary token,
+ * four steps low → peak. The array is indexed by `level - 1` (level 0
+ * is `HEATMAP_EMPTY_FILL`, never an opacity step); the legend renders
+ * the empty swatch plus these four. Exported for the component and its
+ * tests — the scale is part of the contract. */
+export const HEATMAP_LEVEL_OPACITY = ["0.22", "0.42", "0.66", "0.95"] as const;
+
+/** The fill for one cell: level 0 carries the empty wash, every
+ * consuming level rides the primary token. The empty cell is never
+ * re-tinted primary and never takes an opacity step (the reference
+ * calendar this upstreaming followed draws it the same way), so the
+ * two channels stay independent — pinned as a helper because happy-dom
+ * drops `color-mix()` out of a parsed `background`. */
+export function heatmapCellFill(level: 0 | 1 | 2 | 3 | 4): string {
+  return level === 0 ? HEATMAP_EMPTY_FILL : "var(--hi-color-primary)";
+}
+
+/** The opacity step for one cell: level 0 has none (its wash is the
+ * fill), consuming levels index [`HEATMAP_LEVEL_OPACITY`] by
+ * `level - 1`. */
+export function heatmapCellOpacity(
+  level: 0 | 1 | 2 | 3 | 4,
+): string | undefined {
+  return level === 0 ? undefined : HEATMAP_LEVEL_OPACITY[level - 1];
+}
 
 /** One input day of the dense series. `value` may be negative or zero
  * (a "no consumption" day) — it still buckets to level 0. */
@@ -81,7 +109,15 @@ export function calendarGrid(
   const cells: CalendarCell[] = [];
   for (let i = 0; i < span; i++) {
     const date = shiftIso(gridStart, i);
-    if (date > today) {
+    // Never hatch a date the server actually shipped: a series whose
+    // last row runs past `today` (a skewed server clock, out of
+    // contract) would otherwise render EVERY one of its days as a
+    // future gap — the data would vanish behind the hatch. (The
+    // before-first hatch below deliberately does NOT consult the map:
+    // the server fills the pre-anchor stretch with dense zeros as
+    // filler, and the account's first-activity anchor is what decides
+    // that no data existed, however many filler rows arrive.)
+    if (date > today && !valueByDate.has(date)) {
       cells.push({ kind: "gap", date, phase: "after" });
       continue;
     }
@@ -108,32 +144,51 @@ export function bucketLevel(value: number, max: number): 0 | 1 | 2 | 3 | 4 {
 }
 
 /**
- * Month markers for the week columns: a short label on each column
- * whose Monday opens a month, "" otherwise.
+ * Month markers for the week columns: a short label over the column
+ * that CONTAINS a month's first day (the 1st), "" otherwise.
  *
- * The leading month is the 2026-10 refinement this extraction carries:
- * a trailing-year window (or any window) usually starts MID-month, so
- * the first column shows only the tail of its month. A label there
- * would claim a month whose start is not visible on the chart — the
- * GitHub convention is to suppress it. The first marker is therefore
- * shown ONLY when the grid's first column actually opens its month
- * (its Monday is the 1st); every later marker keeps the previous
- * rule (this column's Monday opens a month the previous column's
- * Monday did not). Every grid cell carries a real calendar date, so
- * the marker can never lie about padding.
+ * The leading-month rule (2026-10 user direction) falls out of this
+ * anchor instead of being a special case: a trailing-year window
+ * usually starts MID-month, so the head column carries only that
+ * month's tail — the head month's 1st is not in the grid, so it is
+ * never labeled. A month whose 1st IS on the axis is labeled on the
+ * column showing it (which may be mid-column rather than the next
+ * Monday), so no label lands one column late.
+ *
+ * The one suppression is the unarrived tail: the padded axis may reach
+ * into next month's first days as "after" cells, and a 1st the chart
+ * itself renders as unarrived carries no label — a label there would
+ * announce a month the chart does not draw yet. The test rides the
+ * cell's PHASE, not its data: a 1st the server shipped is a real day
+ * and labels normally (only a server whose clock leads the client's,
+ * out of contract, can ship one), and a past month the account has no
+ * data for at all is still an axis the chart draws, so it keeps its
+ * label. Every grid cell carries a real calendar date, so the marker
+ * can never lie about padding.
  */
 export function monthMarkers(cells: CalendarCell[]): string[] {
   const weeks = Math.ceil(cells.length / 7);
   const markers: string[] = [];
-  let prevMonth = -1;
+  // `lastFirstMonth` is belt-and-braces for callers that hand this helper
+  // a sparse or hand-built cell list: a contiguous axis never carries a
+  // month's 1st twice (a 7-day column holds at most one "01"), so on
+  // calendarGrid output the guard never fires. It mirrors the reference
+  // grid's own `labeledMonth` dedup.
+  let lastFirstMonth = -1;
   for (let w = 0; w < weeks; w++) {
-    const monday = cells[w * 7];
-    if (!monday) break;
-    const month = Number(monday.date.slice(5, 7));
-    const opensMonth =
-      w === 0 ? monday.date.slice(8, 10) === "01" : month !== prevMonth;
-    markers.push(opensMonth ? String(month) : "");
-    prevMonth = month;
+    let month = -1;
+    for (let d = 0; d < 7; d++) {
+      const cell = cells[w * 7 + d];
+      if (!cell) break;
+      const isMonthStart = cell.date.slice(8, 10) === "01";
+      const isFuture = cell.kind === "gap" && cell.phase === "after";
+      if (isMonthStart && !isFuture) {
+        month = Number(cell.date.slice(5, 7));
+        break;
+      }
+    }
+    markers.push(month !== -1 && month !== lastFirstMonth ? String(month) : "");
+    if (month !== -1) lastFirstMonth = month;
   }
   return markers;
 }

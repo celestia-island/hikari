@@ -191,7 +191,17 @@
   // @mixin section-label), same as HkMenuSection's
   // .hk-menu-section-label — the four different hand-rolled vertical
   // bands across the product collapsed into this one grammar.
+  // This adopter inherits the grammar's shift too, it is not a band-only
+  // change: vertical rhythm 6/8/2 → 4/6/8 (up, bottom-heavy) AND the
+  // inline inset 8 → 6px, i.e. the caption steps 2px LEFT toward
+  // .hk-tpl-row's content edge — the requested 偏左 direction.
   @include mi.section-label;
+  // The local alias is this adopter's default: hosts scope
+  // --hi-color-muted for this panel and the rest of this sheet sources
+  // muted through the same alias. The grammar's
+  // --hk-menu-section-label-color still overrides it for a host that
+  // themes captions as a family.
+  color: var(--hk-menu-section-label-color, var(--hi-color-muted));
   // No text-transform: labels arrive from the host (usually i18n
   // strings) and the translator owns the casing.
 }

@@ -27,24 +27,104 @@ const menuTsx = readFileSync(join(here, "HkMenu.tsx"), "utf-8");
 const themeTsx = readFileSync(join(here, "HkThemePanelContent.tsx"), "utf8");
 const adminTokens = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
 
-/** Every TOP-LEVEL block of a stylesheet, slice starting after the
- *  previous block's closing brace (comments are stripped by the caller). */
-function topLevelBlocks(source: string): string[] {
-  const blocks: string[] = [];
-  let depth = 0;
-  let start = 0;
-  for (let i = 0; i < source.length; i += 1) {
-    const ch = source[i];
-    if (ch === "{") depth += 1;
-    else if (ch === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        blocks.push(source.slice(start, i + 1));
-        start = i + 1;
-      }
+/** One node of a parsed SCSS tree: a rule/at-rule block, the
+ *  statements directly in its body, and its nested blocks. */
+interface ScssBlock {
+  prelude: string;
+  statements: string[];
+  children: ScssBlock[];
+  parent: ScssBlock | null;
+}
+
+/** Remove comments so the block parser only sees code. */
+function stripScssComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^[ \t]*\/\/.*$/gm, "");
+}
+
+/** Parse an SCSS sheet into its block tree. At-rules are blocks like any
+ *  other (their prelude starts with "@" and is not a selector). */
+function parseScss(source: string): ScssBlock[] {
+  const root: ScssBlock = { prelude: "", statements: [], children: [], parent: null };
+  const stack: ScssBlock[] = [root];
+  let buf = "";
+  for (const ch of source) {
+    if (ch === "{") {
+      const parent = stack[stack.length - 1]!;
+      const block: ScssBlock = { prelude: buf.trim(), statements: [], children: [], parent };
+      parent.children.push(block);
+      stack.push(block);
+      buf = "";
+    } else if (ch === "}") {
+      const block = stack.pop()!;
+      if (buf.trim()) block.statements.push(buf.trim());
+      buf = "";
+    } else if (ch === ";") {
+      if (buf.trim()) stack[stack.length - 1]!.statements.push(buf.trim());
+      buf = "";
+    } else {
+      buf += ch;
     }
   }
-  return blocks;
+  return root.children;
+}
+
+/** Split a selector list on the commas that are NOT inside parentheses. */
+function splitSelectors(prelude: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of prelude) {
+    if (ch === "(") depth += 1;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    if (ch === "," && depth === 0) {
+      out.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  out.push(current.trim());
+  return out.filter(Boolean);
+}
+
+/** Resolved selector list of a block: its ancestor chain joined with
+ *  spaces, comma lists expanded (at-rules are not selectors). */
+function resolvedSelectors(block: ScssBlock): string[] {
+  const groups: string[][] = [];
+  for (let cur: ScssBlock | null = block; cur; cur = cur.parent) {
+    if (!cur.prelude || cur.prelude.startsWith("@")) continue;
+    groups.unshift(splitSelectors(cur.prelude));
+  }
+  let resolved = [""];
+  for (const group of groups) {
+    resolved = resolved.flatMap((prefix) =>
+      group.map((sel) => (prefix ? `${prefix} ${sel}` : sel)),
+    );
+  }
+  return resolved;
+}
+
+/** Resolved PARENT-selector prefixes of a block (ancestors only). */
+function parentPrefixes(block: ScssBlock): string[] {
+  const groups: string[][] = [];
+  for (let cur = block.parent; cur; cur = cur.parent) {
+    if (!cur.prelude || cur.prelude.startsWith("@")) continue;
+    groups.unshift(splitSelectors(cur.prelude));
+  }
+  let resolved = [""];
+  for (const group of groups) {
+    resolved = resolved.flatMap((prefix) =>
+      group.map((sel) => (prefix ? `${prefix} ${sel}` : sel)),
+    );
+  }
+  return resolved;
+}
+
+/** Depth-first flatten of a block tree. */
+function flattenBlocks(blocks: ScssBlock[]): ScssBlock[] {
+  return blocks.flatMap((block) => [block, ...flattenBlocks(block.children)]);
 }
 
 /** The px fallback a grammar custom property carries through the shared
@@ -170,26 +250,59 @@ describe("menu-item grammar contract", () => {
   it("gives the section caption a bottom-heavy band (never glued to the first row)", () => {
     // Field report: the caption above a run of rows sat almost flush
     // against the first row (four hand-rolled bands, 2/4/6/8px, no shared
-    // token). The invariant is the RHYTHM: the bottom band must be
-    // strictly LARGER than the top band, because the panel already insets
-    // the surface above the caption while the bottom band is the
-    // separation that says "these are the rows below". Reverting either
-    // fallback (top back up, bottom back down) must fail here.
+    // token). The rhythm is pinned EXACTLY, not merely ordered: a bare
+    // `bottom > top` check lets a top revert (4px → 6px) pass — and the
+    // top band moving back down is the "move UP" half of the user
+    // direction. Pin both numbers, then pin the order.
     const body = mixinBody("section-label");
     const top = pxFallback(body, "--hk-menu-section-label-pad-top");
     const bottom = pxFallback(body, "--hk-menu-section-label-pad-bottom");
-    expect(top, "caption top band parsed as px").toBeGreaterThan(0);
+    expect(
+      top,
+      `caption top band is ${top}px; the shipped value is 4px (the band must sit tight/UP under the panel inset)`,
+    ).toBe(4);
+    expect(
+      bottom,
+      `caption bottom band is ${bottom}px; the shipped value is 8px (the clear gap under the caption)`,
+    ).toBe(8);
     expect(
       bottom,
       `caption bottom band (${bottom}px) must be strictly larger than its top band (${top}px) — bottom-heavy rhythm`,
     ).toBeGreaterThan(top);
   });
 
+  it("declares the caption's bands as exactly three token declarations", () => {
+    // Presence-based pins survive a LATER override (R3 P7: appending
+    // `padding-inline: 16px; padding-block-end: 2px;` after the tokens
+    // re-created the field defect 4/16/2 while every value pin stayed
+    // green). The padding set must be EXACTLY the three grammar
+    // declarations — a fourth declaration, a bare shorthand or a literal
+    // added later fails here.
+    const body = mixinBody("section-label");
+    const paddingDecls = [...body.matchAll(/\bpadding[\w-]*\s*:[^;]+;/g)].map((match) =>
+      match[0].replace(/\s+/g, " ").trim(),
+    );
+    expect(paddingDecls, "exactly the three grammar padding declarations").toEqual([
+      "padding-block-start: var(--hk-menu-section-label-pad-top, var(--space-4, 4px));",
+      "padding-inline: var(--hk-menu-section-label-pad-x, var(--space-6, 6px));",
+      "padding-block-end: var(--hk-menu-section-label-pad-bottom, var(--space-8, 8px));",
+    ]);
+    expect(
+      body,
+      "no bare padding shorthand (it would override the token bands)",
+    ).not.toMatch(/(^|[;{\s])padding\s*:/);
+    expect(body, "capitalization stays the translator's").not.toContain("text-transform");
+  });
+
   it("hangs the caption's inline inset just left of the row content edge", () => {
     // The caption must NOT read as an indented row: its inline inset is a
-    // hair smaller than the row grammar's --hk-menu-item-pad-x (plus the
-    // rows' reserved 1px border), so it hugs the section edge slightly
-    // left of the leading icon column.
+    // hair smaller than the row grammar's --hk-menu-item-pad-x, so it
+    // hugs the section edge slightly left of the leading icon column.
+    // SCOPE of that guarantee: the menu row grammar and HkMenuSection —
+    // a one-off adopter with its own smaller padding (HkTemplateField's
+    // .hk-tpl-row is 4px 8px) lands only a couple of px left, so the
+    // shared token keeps the two bands related, not pixel-identical
+    // everywhere.
     const body = mixinBody("section-label");
     expect(
       body,
@@ -207,25 +320,58 @@ describe("menu-item grammar contract", () => {
   });
 
   it("registers the caption in every sheet-context list that registers the row band", () => {
-    // The caption is a sibling band: the rows' token swap never reaches
-    // it, so it needs its own entry in EVERY list that registers
-    // .hk-menu-divider (the three sheet-panel surfaces and the narrow
-    // mobile modal band). A new sheet-context list that widens the rows
-    // without widening their caption fails here.
-    const blocks = topLevelBlocks(grammar.replace(/\/\*[\s\S]*?\*\//g, "")).filter(
-      (block) => block.includes(".hk-menu-divider"),
+    // Resolved-selector scan, not a top-level block count: for every block
+    // that swaps the ROW sheet tokens we resolve its parent selector
+    // prefix and require an exactly matching caption block that swaps the
+    // CAPTION sheet tokens. A sheet-context list nested inside an existing
+    // block (a third context added under the panel list) therefore fails
+    // even though a depth-0 scan would never see it.
+    const blocks = flattenBlocks(parseScss(stripScssComments(grammar)));
+    const ruleIndex = blocks.flatMap((block) =>
+      resolvedSelectors(block).map((selector) => ({ selector, block })),
     );
-    expect(blocks.length, "top-level blocks registering .hk-menu-divider").toBe(2);
-    for (const block of blocks) {
-      const listName = block.trim().split("\n")[0]!.trim();
+    const rowSwaps = blocks.filter((block) =>
+      block.statements.some((stmt) => stmt.includes("@include item-sheet-tokens")),
+    );
+    // Extraction sanity (never trust a 0-hit scan): the shipped sheet
+    // lists do swap row tokens somewhere.
+    expect(rowSwaps.length, "row sheet-token swaps found").toBeGreaterThan(0);
+
+    const contexts = new Set<string>();
+    for (const rowSwap of rowSwaps) {
+      const prefixes = parentPrefixes(rowSwap);
+      expect(prefixes.length, "a row token swap has a selector ancestor").toBeGreaterThan(0);
+      for (const prefix of prefixes) {
+        contexts.add(prefix);
+        const captionSelector = `${prefix} .hk-menu-section-label`;
+        const captionBlock = ruleIndex.find(
+          (entry) => entry.selector === captionSelector,
+        )?.block;
+        expect(
+          captionBlock,
+          `sheet context "${prefix}" widens the rows but has no "${captionSelector}" caption block`,
+        ).toBeTruthy();
+        expect(
+          captionBlock!.statements.some((stmt) =>
+            stmt.includes("@include section-label-sheet-tokens"),
+          ),
+          `sheet context "${prefix}" must swap the caption's sheet tokens`,
+        ).toBe(true);
+      }
+    }
+
+    // The shipped sheet surfaces are all covered (dropping one from a
+    // context list fails here, not just for the panel-shaped ones).
+    for (const context of [
+      ".hk-select-sheet-panel",
+      ".hk-popover-panel.hk-is-sheet",
+      ".hk-drawer-panel",
+      ".hk-modal-content",
+    ]) {
       expect(
-        block,
-        `sheet-context list "${listName}" registers .hk-menu-divider but not .hk-menu-section-label`,
-      ).toContain(".hk-menu-section-label");
-      expect(
-        block,
-        `sheet-context list "${listName}" must swap the caption's sheet tokens`,
-      ).toContain("section-label-sheet-tokens");
+        [...contexts],
+        `sheet surface ${context} must widen the rows (and therefore be checked for a caption)`,
+      ).toContain(context);
     }
   });
 
@@ -246,16 +392,50 @@ describe("menu-item grammar contract", () => {
     expect(mixinBody("section-label")).not.toContain("text-transform");
   });
 
-  it("publishes the section caption globally for host apps via admin-tokens", () => {
+  it("publishes the section caption globally and only binds it to the grammar", () => {
     // Hosts render .hk-menu-section / .hk-menu-section-label by hand (the
     // workspace picker does) and cannot import the scss partial, so the
-    // global sheet binds the classes to the grammar mixins.
-    expect(adminTokens).toMatch(/\.hk-menu-section \{[^}]*@include mi\.section;/);
-    expect(adminTokens).toMatch(/\.hk-menu-section-label \{[^}]*@include mi\.section-label;/);
-    // The caption's sheet geometry lives in the grammar's sheet-context
-    // lists only; re-declaring it in admin-tokens is the drift this
-    // grammar exists to prevent.
-    const adopterRules = adminTokens.match(/(?:^|\n)\s*\.hk-menu-section-label\s*\{/g) ?? [];
-    expect(adopterRules.length, "exactly one global .hk-menu-section-label rule").toBe(1);
+    // global sheet binds the classes to the grammar mixins. EVERY rule
+    // whose selector mentions the section classes may contain NOTHING but
+    // that binding: an adopter that adds a later padding declaration
+    // (R3 P5) or a scoped duplicate that restates the band (R3 P8) must
+    // fail — a "one global rule" count missed both.
+    const blocks = flattenBlocks(parseScss(stripScssComments(adminTokens)));
+    const sectionRules = blocks.flatMap((block) =>
+      resolvedSelectors(block)
+        .filter((selector) => selector.includes("hk-menu-section"))
+        .map((selector) => ({ selector, block })),
+    );
+    // Extraction sanity (never trust a 0-hit scan): the two global
+    // adopters are found.
+    expect(
+      sectionRules.map((entry) => entry.selector),
+      "the two global section adopters",
+    ).toEqual(expect.arrayContaining([".hk-menu-section", ".hk-menu-section-label"]));
+
+    for (const { selector, block } of sectionRules) {
+      const statements = block.statements.map((stmt) => stmt.replace(/\s+/g, " ").trim());
+      expect(
+        statements,
+        `section rule "${selector}" must bind the grammar only, got: ${statements.join("; ")}`,
+      ).toHaveLength(1);
+      expect(
+        statements[0],
+        `section rule "${selector}" must be an @include of the grammar mixin`,
+      ).toMatch(/^@include mi\.(?:section|section-label)$/);
+      expect(
+        statements.join("; "),
+        `section rule "${selector}" must not declare padding`,
+      ).not.toMatch(/\bpadding/);
+    }
+
+    // The exact binding per class (nothing else, no later override).
+    const statementsFor = (selector: string) => {
+      const block = sectionRules.find((entry) => entry.selector === selector)?.block;
+      expect(block, `the global ${selector} adopter rule`).toBeTruthy();
+      return block!.statements.map((stmt) => stmt.replace(/\s+/g, " ").trim());
+    };
+    expect(statementsFor(".hk-menu-section")).toEqual(["@include mi.section"]);
+    expect(statementsFor(".hk-menu-section-label")).toEqual(["@include mi.section-label"]);
   });
 });

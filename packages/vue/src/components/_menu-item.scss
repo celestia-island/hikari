@@ -34,7 +34,10 @@
  *   8px below, sheets 6/12): the panel already insets the surface above
  *   the caption, so the caption's own top band stays tight, while the
  *   bottom band is the separation that must read as "this caption heads
- *   the rows below, it is not one of them". Its inline inset is a hair
+ *   the rows below, it is not one of them". The section wrapper itself
+ *   adds NO default gap (--hk-menu-section-gap defaults to 0): a host
+ *   whose row rhythm IS a flex gap on the immediate parent sets that
+ *   token to the same value. Its inline inset is a hair
  *   SMALLER than the row's --hk-menu-item-pad-x, so the caption hangs
  *   just left of the rows' leading icon column and reads as a section
  *   title hugging the edge rather than as an indented row. No
@@ -305,15 +308,23 @@
 
 /* ── Section wrapper ─────────────────────────────────────────────────
  * The role="group" box HkMenuSection renders: one caption plus its rows.
- * The 2px gap keeps the first row off the caption's bottom band (the
- * band's own 8px is the intra-section separation); stacked sections take
- * a 6px stack margin so two captioned runs read as two groups, not one
- * long list. The wrapper stays chrome-free — the caption owns the band
- * (HkTemplateField's contract: no padding on the group wrapper). */
+ * The caption's own bottom band is what separates it from the first row,
+ * so the wrapper adds NO default gap: --hk-menu-section-gap defaults to
+ * 0. A host whose row rhythm IS a flex gap on the immediate parent sets
+ * the token to that value (the grammar must not impose a gap of its own —
+ * a captioned run would then be tighter than the ungrouped rows beside
+ * it); row margins keep working inside the wrapper either way. Stacked
+ * sections take a 6px stack margin so two captioned runs read as two
+ * groups, not one long list. The wrapper stays chrome-free — the caption
+ * owns the band.
+ *
+ * MUST be included at a TOP-LEVEL (0,1,0) rule, like @mixin item: the
+ * `& + &` stack rule compiles to a broken descendant selector when the
+ * mixin is nested inside a parent menu selector. */
 @mixin section {
   display: flex;
   flex-direction: column;
-  gap: var(--hk-menu-section-gap, var(--space-2, 2px));
+  gap: var(--hk-menu-section-gap, 0);
 
   & + & {
     margin-block-start: var(--hk-menu-section-stack, var(--space-6, 6px));

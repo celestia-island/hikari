@@ -1,4 +1,4 @@
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
 
 /**
  * HkMenuSection — a captioned run of menu rows.
@@ -23,7 +23,11 @@ import { defineComponent } from "vue";
  * `label` is both the accessible group name and the default visible
  * caption text; the optional `label` slot supplies richer visible content
  * (a badge, a count) while `aria-label` keeps the prop's plain string.
- * The default slot is the rows.
+ * The slot must be NON-INTERACTIVE content: it renders inside the
+ * aria-hidden band, so a focusable node there would be an axe
+ * `aria-hidden-focus` violation, and its visible text must not contradict
+ * the accessible name (keep the prop as the plain group name). The
+ * default slot is the rows.
  *
  * Metrics come from the global adopter rules in styles/admin-tokens
  * (`@include mi.section` / `@include mi.section-label`), loaded by the
@@ -38,10 +42,17 @@ export default defineComponent({
     label: { type: String, required: true },
   },
   setup(props, { slots }) {
+    // An EMPTY slot result is not nullish: `slots.label?.() ?? props.label`
+    // left a padded, empty aria-hidden band when the slot rendered nothing.
+    // Treat empty content as absent and fall back to the prop text.
+    const caption = computed(() => {
+      const content = slots.label?.();
+      return content && content.length > 0 ? content : props.label;
+    });
     return () => (
       <div class="hk-menu-section" role="group" aria-label={props.label}>
         <div class="hk-menu-section-label" aria-hidden="true">
-          {slots.label?.() ?? props.label}
+          {caption.value}
         </div>
         {slots.default?.()}
       </div>

@@ -14,7 +14,8 @@ import HkMenuSection from "./HkMenuSection";
  *   class names — the global adopter rules in styles/admin-tokens style
  *   them, the component imports no scss.
  * - SLOT OVERRIDE: the `label` slot replaces the visible text while the
- *   accessible name stays the `label` prop.
+ *   accessible name stays the `label` prop; an EMPTY slot result falls
+ *   back to the prop text (never an empty padded band).
  * - ROWS: the default slot renders inside the group, after the caption.
  */
 
@@ -75,6 +76,18 @@ describe("HkMenuSection", () => {
     const caption = group.querySelector<HTMLElement>(".hk-menu-section-label")!;
     expect(caption.textContent).toBe("3");
     expect(caption.querySelector(".section-count")).toBeTruthy();
+    expect(caption.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("falls back to the label prop when the label slot renders nothing", () => {
+    // `[]` is not nullish: a naive `slots.label?.() ?? props.label` keeps
+    // the empty band (padded dead space above the rows).
+    const c = mount(() =>
+      h(HkMenuSection, { label: "Temp spaces" }, { label: () => [] }),
+    );
+
+    const caption = c.querySelector<HTMLElement>(".hk-menu-section-label")!;
+    expect(caption.textContent).toBe("Temp spaces");
     expect(caption.getAttribute("aria-hidden")).toBe("true");
   });
 

@@ -41,6 +41,7 @@ describe("HkTemplateField stylesheet contract", () => {
   const tsx = readFileSync(resolve(componentDir, "HkTemplateField.tsx"), "utf8");
   const rendererTsx = readFileSync(resolve(componentDir, "HkTemplateText.tsx"), "utf8");
   const grammars = readFileSync(resolve(componentDir, "templateGrammar.ts"), "utf8");
+  const scss = readFileSync(resolve(componentDir, "HkTemplateField.scss"), "utf8");
   const css = compile(resolve(componentDir, "HkTemplateField.scss"), {
     style: "expanded",
   }).css;
@@ -99,15 +100,28 @@ describe("HkTemplateField stylesheet contract", () => {
 
   it("keeps the heading band on the label class, not the group wrapper", () => {
     // The wrapper is a bare layout box; carrying the band's chrome
-    // (padding/font-weight) there would pad every row run. The weight
-    // now arrives through the shared menu grammar's section-caption
-    // mixin (@include mi.section-label), so the pin follows the token
-    // form with 600 as its FALLBACK — plain `600` here would mean the
-    // adopter dropped the grammar again, and a different fallback would
-    // change the band's weight.
-    expect(css).toMatch(
-      /\.hk-tpl-group-label\s*\{[^}]*font-weight:\s*(?:var\(--hk-menu-section-label-weight,\s*)?600\b/s,
+    // (padding/font-weight) there would pad every row run. The band is an
+    // ADOPTER of the menu grammar's section-caption mixin, and the pins
+    // below are satisfied ONLY by the grammar's token form: a restored
+    // hand-rolled band (literal padding / a bare `font-weight: 600` /
+    // `@include` removed) must fail. R2 proved an optional-group regex
+    // matched both spellings, so the previous pin was vacuous.
+    expect(
+      css,
+      ".hk-tpl-group-label must take its bottom band from the grammar's token",
+    ).toMatch(
+      /\.hk-tpl-group-label\s*\{[^}]*padding-block-end:\s*var\(--hk-menu-section-label-pad-bottom,/s,
     );
+    expect(
+      css,
+      ".hk-tpl-group-label must take its weight from the grammar's token with 600 as the fallback",
+    ).toMatch(
+      /\.hk-tpl-group-label\s*\{[^}]*font-weight:\s*var\(--hk-menu-section-label-weight,\s*600\)/s,
+    );
+    expect(
+      scss,
+      "the source must ADOPT the grammar (@include mi.section-label), not restate its values",
+    ).toMatch(/\.hk-tpl-group-label\s*\{[^}]*@include mi\.section-label;/s);
     expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*font-weight/s);
     expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*padding/s);
   });

@@ -131,6 +131,31 @@ describe("HkSidebarRail geometry contract", () => {
     expect(clip).toContain("flex-direction: column");
   });
 
+  it("the swap holds every generation at its OWN width (the no-reflow pin)", () => {
+    // The crossfade handoff (HkSidebarRailSwap): the generations carry
+    // their widths INLINE and HkCrossfade's auto track never shrinks
+    // below the widest mounted generation, so neither generation is ever
+    // laid out at the panel's transient width while it animates — the
+    // structural guarantee behind "content is never squeezed". The swap
+    // host itself only needs to not STRETCH with the animating clip
+    // (align-self): the host box is not the layout reference for the
+    // generations inside it.
+    const swap = ruleBody(css, ".hk-sidebar-rail-clip > .hk-sidebar-rail-swap");
+    expect(swap, "the swap sizing rule exists").not.toBeNull();
+    expect(swap).toContain("flex: 1");
+    expect(swap).toContain("min-height: 0");
+    expect(swap).toContain("align-self: flex-start");
+
+    // Each generation is the flex column the bands expect, filling the
+    // swap's height (spacer + footer-at-bottom behave as they did as
+    // direct children of the clip).
+    const gen = ruleBody(css, ".hk-sidebar-rail-swap .hk-sidebar-rail-generation");
+    expect(gen, "the generation rule exists").not.toBeNull();
+    expect(gen).toContain("height: 100%");
+    expect(gen).toContain("display: flex");
+    expect(gen).toContain("flex-direction: column");
+  });
+
   it("straddles the panel border: half the toggle outside, center on the border line", () => {
     const toggle = ruleBody(css, ".hk-sidebar-rail-toggle");
     expect(toggle, "the toggle rule exists").not.toBeNull();

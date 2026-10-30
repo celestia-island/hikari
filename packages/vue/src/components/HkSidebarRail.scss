@@ -20,6 +20,16 @@
  *                           itself cannot clip any more (see below), so
  *                           this wrapper preserves the rail-width clip
  *                           during the width transitions.
+ *   .hk-sidebar-rail-swap   the rail/full handoff inside the clip
+ *                           (HkSidebarRailSwap): two width-pinned
+ *                           generations exchanged through HkCrossfade's
+ *                           opacity dissolve, so no content ever reflows
+ *                           at the panel's transient width.
+ *   .hk-sidebar-rail-generation  ONE density's content (rail or full),
+ *                           width-pinned inline by the component; the
+ *                           active density carries [data-rail] HERE (never
+ *                           on the host root — a root attr would restyle
+ *                           the frozen leaving generation mid-dissolve).
  *   .hk-sidebar-rail-toggle the hover-reveal circular chevron button
  *                           (HkSidebarRailToggle) STRADDLING the panel's
  *                           content-facing border — its center ON the
@@ -127,6 +137,40 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* ── the swap: crossfade handoff between rail and full generations ────
+ * (HkSidebarRailSwap, user direction 2026-10-30.) The clip windows; the
+ * swap keeps every generation at its ORIGINAL width so nothing reflows
+ * while the panel's width animates; HkCrossfade (the tab-panel dissolve)
+ * exchanges the two generations through pure opacity. The leaving
+ * generation is frozen at its last render and drops pointer events for
+ * the dissolve (HkCrossfade's leave rule).
+ *
+ * The no-reflow pin, precisely: the generations carry their widths
+ * INLINE (the component), and the grid inside (HkCrossfade's one-cell
+ * stack) sizes its auto track to max-content — a track that NEVER
+ * shrinks below the widest mounted generation when the container runs
+ * narrower — so both generations lay out at their OWN widths however
+ * wide the clip currently is. (The swap host itself DOES track the
+ * animating clip width — a non-stretched flex child's fit-content is
+ * clamped by the available space — which is fine: the host box is not
+ * the layout reference for anything inside it. align-self simply keeps
+ * the host from STRETCHING, which would clip nothing but would invite
+ * percentage-width content to follow the animation.) The generations
+ * fill the swap's height so the bands' flex column (spacer, footer at
+ * the bottom) behaves exactly as it did as a direct child of the clip. */
+.hk-sidebar-rail-clip > .hk-sidebar-rail-swap {
+  flex: 1;
+  min-height: 0;
+  align-self: flex-start;
+}
+
+.hk-sidebar-rail-swap .hk-sidebar-rail-generation {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* The peek's only shadow: cast toward the content side. Offsets cannot

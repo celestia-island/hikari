@@ -2,6 +2,7 @@ import { computed, defineComponent, ref, watch, type PropType } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import { useSidebarRail } from "../composables/useSidebarRail";
+import HkSidebarRailSwap from "./HkSidebarRailSwap";
 import HkSidebarRailToggle, { isPointerOverRailToggle } from "./HkSidebarRailToggle";
 
 /** CSS-wide keywords. A shorthand rebuilt from one of them is NOT a
@@ -435,6 +436,10 @@ export const HkFaceShell = defineComponent({
               <aside
                 ref={railHostRef}
                 class="hk-sidebar-rail-host"
+                // STATE marker only (hosts/tests read "the rail layout is
+                // active"): the rail DENSITY dress itself rides the swap's
+                // generation inside the clip, so it can freeze on the
+                // leaving generation during the dissolve.
                 data-rail={railActive.value || undefined}
                 data-peeking={rail.peeking.value || undefined}
                 // Transient rail -> expanded window (useSidebarRail.pinning):
@@ -466,13 +471,29 @@ export const HkFaceShell = defineComponent({
                       border), so the slot's content clips inside this
                       wrapper — full rows stay inside rail width while the
                       panel width animates. The toggle stays a DIRECT child
-                      of the panel: it must never be clipped. */}
+                      of the panel: it must never be clipped. Inside the
+                      clip, the crossfade handoff (HkSidebarRailSwap)
+                      exchanges the rail and full generations through the
+                      tab-panel dissolve at width-pinned boxes, so the
+                      slot's content never re-lays-out at the panel's
+                      transient width — each generation sees its own
+                      `collapsed` dress, and the leaving copy stays
+                      frozen (and unclickable) while it dissolves. */}
                   <div class="hk-sidebar-rail-clip">
-                    {slots.sidebar({
-                      collapsed: railActive.value && !rail.peeking.value,
-                      onNavigate: onSidebarNavigate,
-                      peeking: rail.peeking.value,
-                    })}
+                    <HkSidebarRailSwap
+                      rail={railActive.value && !rail.peeking.value}
+                      railWidth={props.sidebarCollapsedWidth}
+                      expandedWidth={props.sidebarWidth}
+                    >
+                      {/* NOT `rail` — the scoped param would shadow the
+                          useSidebarRail handle the outer bindings read. */}
+                      {({ rail: density }: { rail: boolean }) =>
+                        slots.sidebar?.({
+                          collapsed: density,
+                          onNavigate: onSidebarNavigate,
+                          peeking: rail.peeking.value,
+                        })}
+                    </HkSidebarRailSwap>
                   </div>
                   <HkSidebarRailToggle expanded={!railActive.value} onToggle={rail.toggle} />
                 </div>

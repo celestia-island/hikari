@@ -424,6 +424,41 @@ describe("HkFaceShell rail chrome: toggle placement and the clip wrapper", () =>
     expect(clip!.querySelector(".sidebar-mock"), "the sidebar slot renders in the clip").toBeTruthy();
   });
 
+  it("hands the sidebar slot to the rail/full generations through the SWAP", async () => {
+    // The density dress rides the swap's GENERATION, never the host root:
+    // a root-level data-rail would restyle the frozen leaving generation
+    // mid-dissolve and reintroduce the squeeze this wave fixes. The root
+    // keeps data-rail as a STATE MARKER only (hosts/tests read it).
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const c = mountShell({ sidebarCollapsible: true });
+    const clip = () =>
+      c.panel().querySelector(":scope > .hk-sidebar-rail-clip") as HTMLElement;
+    const gens = () =>
+      Array.from(clip().querySelectorAll<HTMLElement>(".hk-sidebar-rail-generation"));
+
+    expect(clip().querySelector(".hk-sidebar-rail-swap"), "the swap mounts inside the clip").toBeTruthy();
+    expect(gens()).toHaveLength(1);
+    expect(gens()[0]!.hasAttribute("data-rail"), "expanded carries no rail density").toBe(false);
+    expect(gens()[0]!.style.width, "the generation pins the shell's sidebar width").toBe("224px");
+    expect(c.aside().hasAttribute("data-rail")).toBe(false);
+
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(100); // mid-dissolve
+    const mid = gens();
+    expect(mid.length, "both generations share the swap's cell").toBe(2);
+    expect(mid[0]!.hasAttribute("data-rail"), "the leaving copy keeps the full dress").toBe(false);
+    expect(mid[0]!.style.width).toBe("224px");
+    expect(mid[1]!.hasAttribute("data-rail"), "the entering copy takes the rail dress").toBe(true);
+    expect(mid[1]!.style.width, "the rail generation pins the collapsed width").toBe("56px");
+    // The slot ran for the entering generation at its density; the root
+    // marker reads rail while the DENSITY lives on the generation.
+    expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
+    expect(c.aside().hasAttribute("data-rail"), "the root keeps the state marker").toBe(true);
+    vi.unstubAllGlobals();
+  });
+
   it("does not touch the legacy sidebar path (no clip wrapper, no rail classes)", () => {
     const c = mountShell();
     expect(c.container.querySelector(".hk-sidebar-rail-clip")).toBeFalsy();

@@ -1,9 +1,10 @@
-import { Comment, Fragment, defineComponent } from "vue";
+import { Comment, Fragment, Text, defineComponent } from "vue";
 
 /** True when slot content carries something visible. A compiled `v-if`
- *  root is a COMMENT vnode (not an empty array), a fragment may wrap only
- *  comments, and whitespace-only strings are not a caption — none of them
- *  may leave a padded, empty aria-hidden band. */
+ *  root is a COMMENT vnode (not an empty array), a text slot child may be
+ *  normalized into a TEXT vnode, a fragment may wrap only comments/blank
+ *  text, and whitespace-only strings are not a caption — none of them may
+ *  leave a padded, empty aria-hidden band. */
 function hasVisibleContent(nodes: readonly unknown[]): boolean {
   for (const node of nodes) {
     if (typeof node === "string") {
@@ -14,11 +15,15 @@ function hasVisibleContent(nodes: readonly unknown[]): boolean {
     if (node && typeof node === "object") {
       const vnode = node as { type?: unknown; children?: unknown };
       if (vnode.type === Comment) continue;
+      if (vnode.type === Text) {
+        if (typeof vnode.children === "string" && vnode.children.trim() !== "") return true;
+        continue;
+      }
       if (vnode.type === Fragment) {
-        if (Array.isArray(vnode.children)) {
+        if (typeof vnode.children === "string") {
+          if (vnode.children.trim() !== "") return true;
+        } else if (Array.isArray(vnode.children)) {
           if (hasVisibleContent(vnode.children)) return true;
-        } else if (typeof vnode.children === "string" && vnode.children.trim() !== "") {
-          return true;
         }
         continue;
       }

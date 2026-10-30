@@ -128,21 +128,29 @@ describe("HkTemplateField stylesheet contract", () => {
 
   it("keeps the label band's declarations to the grammar binding plus the colour hook", () => {
     // R4 appended `padding: 2px 16px;` after the @include and all five
-    // shipped pins stayed green. The adopter's declaration set must be
-    // EXACTLY the grammar binding plus the one colour line — any later
-    // padding / font-size / font-weight / letter-spacing / text-transform
-    // added to this rule fails.
-    const rule = scss.match(/\.hk-tpl-group-label\s*\{([^}]*)\}/)?.[1];
-    expect(rule, "the .hk-tpl-group-label rule").toBeTruthy();
-    const declarations = rule!
-      .replace(/^[ \t]*\/\/.*$/gm, "")
-      .split(";")
-      .map((statement) => statement.replace(/\s+/g, " ").trim())
-      .filter(Boolean);
-    expect(declarations, "the adopter's exact declarations").toEqual([
-      "@include mi.section-label",
-      "color: var(--hk-menu-section-label-color, var(--hi-color-muted))",
-    ]);
+    // shipped pins stayed green. EVERY rule whose selector mentions the band
+    // must be EXACTLY the grammar binding plus the one colour line — any
+    // later padding / font-size / font-weight / letter-spacing /
+    // text-transform, and any SECOND .hk-tpl-group-label rule (R5: the old
+    // pin read only the first match), fails.
+    const code = scss
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^[ \t]*\/\/.*$/gm, "");
+    const rules = [...code.matchAll(/([^{}]*\.hk-tpl-group-label[^{}]*)\{([^{}]*)\}/g)];
+    expect(rules.length, ".hk-tpl-group-label rule(s) found").toBeGreaterThan(0);
+    for (const [, selector, body] of rules) {
+      const declarations = (body ?? "")
+        .split(";")
+        .map((statement) => statement.replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+      expect(
+        declarations,
+        `every .hk-tpl-group-label rule must stay the grammar binding + colour hook (${(selector ?? "").trim()})`,
+      ).toEqual([
+        "@include mi.section-label",
+        "color: var(--hk-menu-section-label-color, var(--hi-color-muted))",
+      ]);
+    }
   });
 
   it("keeps group headings free of text-transform (the host owns casing)", () => {

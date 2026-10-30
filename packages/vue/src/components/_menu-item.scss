@@ -293,9 +293,12 @@
  * restyle one surface without forking the band. The bottom band is the
  * separation from the first row (bottom-heavy on purpose — see the
  * header comment); the inline inset hangs just left of the rows' icon
- * column. Sheet geometry arrives through the sheet-context lists above,
- * never through a per-component media query. NO text-transform:
- * translators own casing (the HkTemplateField rule). */
+ * column. The 8px band is NOT the whole caption→row gap: the wrapper's
+ * own gap adds 2px on the level default (4px in .hk-menu-list), so the
+ * rendered separation is 10/12px on desktop and 14px in sheets. Sheet
+ * geometry arrives through the sheet-context lists above, never through
+ * a per-component media query. NO text-transform: translators own
+ * casing (the HkTemplateField rule). */
 @mixin section-label {
   padding-block-start: var(--hk-menu-section-label-pad-top, var(--space-4, 4px));
   padding-inline: var(--hk-menu-section-label-pad-x, var(--space-6, 6px));

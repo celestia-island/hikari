@@ -295,6 +295,17 @@ describe("menu-item grammar contract", () => {
     expect(body, "capitalization stays the translator's").not.toContain("text-transform");
   });
 
+  it("keeps the caption's desktop typography on the grammar tokens", () => {
+    const body = mixinBody("section-label");
+    expect(body).toMatch(
+      /font-size:\s*var\(--hk-menu-section-label-font,\s*var\(--text-2xs,\s*0\.625rem\)\)/,
+    );
+    expect(body).toMatch(
+      /letter-spacing:\s*var\(--hk-menu-section-label-tracking,\s*0\.02em\)/,
+    );
+    expect(body).toMatch(/user-select:\s*none/);
+  });
+
   it("hangs the caption's inline inset just left of the row content edge", () => {
     // The caption must NOT read as an indented row: its inline inset is a
     // hair smaller than the row grammar's --hk-menu-item-pad-x, so it
@@ -450,6 +461,16 @@ describe("menu-item grammar contract", () => {
     //   .hk-menu-section-label { padding-block-end: 2px; }
     // and every pin stayed green.
     const blocks = flattenBlocks(parseScss(stripScssComments(grammar)));
+    // Derive the allowlist from the registration lists themselves: only a
+    // context that swaps the ROW sheet tokens may scope a caption rule
+    // (.hk-select-sheet-panel / .hk-popover-panel.hk-is-sheet /
+    // .hk-drawer-panel, plus the narrow mobile .hk-modal-content band).
+    const rowSwaps = blocks.filter((block) =>
+      block.statements.some((stmt) => stmt.includes("@include item-sheet-tokens")),
+    );
+    expect(rowSwaps.length, "row sheet-token swaps found").toBeGreaterThan(0);
+    const sheetContexts = new Set(rowSwaps.flatMap((rowSwap) => parentPrefixes(rowSwap)));
+
     const sectionBlocks = blocks.flatMap((block) =>
       resolvedSelectors(block)
         .filter((selector) => selector.includes(".hk-menu-section"))
@@ -459,13 +480,19 @@ describe("menu-item grammar contract", () => {
     // entries are found.
     expect(sectionBlocks.length, "grammar caption sheet-token entries found").toBeGreaterThan(0);
     for (const { selector, block } of sectionBlocks) {
-      // An unconditional caption rule would put the sheet geometry on
-      // desktop; every grammar rule for the band must be scoped under a
-      // sheet-context ancestor.
+      // A grammar rule for the band may only be scoped by a REGISTERED
+      // sheet context: an unconditional rule puts the sheet geometry on
+      // desktop, and any other ancestor (.hk-menu-level, .hk-menu-list)
+      // would be a stray desktop restyle.
+      const scoped = selector.match(/^(.+) \.hk-menu-section-label$/);
       expect(
-        selector,
+        scoped,
         `grammar section rule "${selector}" must be sheet-scoped, not unconditional`,
-      ).toMatch(/^.+ \.hk-menu-section-label$/);
+      ).toBeTruthy();
+      expect(
+        [...sheetContexts],
+        `grammar section rule "${selector}" is scoped by "${scoped?.[1]}", which is not a registered sheet context`,
+      ).toContain(scoped![1]);
       for (const statement of block.statements) {
         const normalized = statement.replace(/\s+/g, " ").trim();
         expect(
@@ -482,20 +509,24 @@ describe("menu-item grammar contract", () => {
     // Rows declare no margins: the inter-row rhythm IS the parent's flex
     // gap (.hk-menu-level 2px, .hk-menu-list 4px). A group box therefore
     // takes over that rhythm, its default must mirror the level's 2px,
-    // and .hk-menu-list must publish its own 4px.
-    const body = mixinBody("section");
-    expect(body, "wrapper gap default mirrors the level rhythm").toMatch(
-      /gap:\s*var\(--hk-menu-section-gap,\s*var\(--space-2,\s*2px\)\)/,
+    // and .hk-menu-list must publish its own 4px. The declarations are
+    // collected through the block parser (including the nested `& + &`
+    // block): a regex over the raw mixin text stopped at the first `}`,
+    // so a later `gap: 0;` after the stack rule re-introduced the S1
+    // defect with every pin green (R5 mutation A).
+    const sectionMixin = flattenBlocks(parseScss(stripScssComments(grammar))).find(
+      (block) => block.prelude === "@mixin section",
     );
-    expect(body, "stacked sections keep the 6px stack margin").toMatch(
-      /margin-block-start:\s*var\(--hk-menu-section-stack,\s*var\(--space-6,\s*6px\)\)/,
+    expect(sectionMixin, "@mixin section must exist").toBeTruthy();
+    const declarations = flattenBlocks([sectionMixin!]).flatMap((block) =>
+      block.statements.map((statement) => statement.replace(/\s+/g, " ").trim()),
     );
-    const spacingDecls = [...body.matchAll(/\b(?:gap|margin[\w-]*)\s*:[^;]+;/g)].map((match) =>
-      match[0].replace(/\s+/g, " ").trim(),
+    const spacingDecls = declarations.filter((declaration) =>
+      /^(?:gap|margin[\w-]*)\s*:/.test(declaration),
     );
     expect(spacingDecls, "exactly the wrapper's two spacing declarations").toEqual([
-      "gap: var(--hk-menu-section-gap, var(--space-2, 2px));",
-      "margin-block-start: var(--hk-menu-section-stack, var(--space-6, 6px));",
+      "gap: var(--hk-menu-section-gap, var(--space-2, 2px))",
+      "margin-block-start: var(--hk-menu-section-stack, var(--space-6, 6px))",
     ]);
     // The one shipped surface with a different row rhythm publishes it.
     expect(

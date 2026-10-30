@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { Fragment, createApp, createCommentVNode, h } from "vue";
+import {
+  Fragment,
+  createApp,
+  createCommentVNode,
+  createTextVNode,
+  h,
+  nextTick,
+  ref,
+} from "vue";
 
 import HkMenuSection from "./HkMenuSection";
 
@@ -15,8 +23,8 @@ import HkMenuSection from "./HkMenuSection";
  *   them, the component imports no scss.
  * - SLOT OVERRIDE: the `label` slot replaces the visible text while the
  *   accessible name stays the `label` prop; an EMPTY slot result (an empty
- *   array, a comment vnode from a compiled `v-if`, blank strings) falls
- *   back to the prop text (never an empty padded band).
+ *   array, a comment vnode from a compiled `v-if`, blank strings / TEXT
+ *   vnodes) falls back to the prop text (never an empty padded band).
  * - ROWS: the default slot renders inside the group, after the caption.
  */
 
@@ -118,6 +126,44 @@ describe("HkMenuSection", () => {
 
     const caption = c.querySelector<HTMLElement>(".hk-menu-section-label")!;
     expect(caption.textContent).toBe("Temp spaces");
+  });
+
+  it("falls back for top-level blank and empty slot strings", () => {
+    for (const blank of ["   ", ""]) {
+      const c = mount(() =>
+        h(HkMenuSection, { label: "Temp spaces" }, { label: () => [blank] }),
+      );
+      const caption = c.querySelector<HTMLElement>(".hk-menu-section-label")!;
+      expect(caption.textContent, `slot ${JSON.stringify(blank)}`).toBe("Temp spaces");
+    }
+  });
+
+  it("falls back for a TEXT vnode inside a fragment", () => {
+    // Vue normalizes text children into TEXT vnodes (and a compiled slot's
+    // whitespace root becomes one directly) — blank text must be absent.
+    const c = mount(() =>
+      h(HkMenuSection, { label: "Temp spaces" }, {
+        label: () => [h(Fragment, null, [createTextVNode("   "), createTextVNode("")])],
+      }),
+    );
+
+    const caption = c.querySelector<HTMLElement>(".hk-menu-section-label")!;
+    expect(caption.textContent).toBe("Temp spaces");
+  });
+
+  it("updates the visible caption when the label prop changes", async () => {
+    // Fences the render-function caption resolution: a cached computed
+    // would keep the first nodes.
+    const label = ref("Temp spaces");
+    const c = mount(() => h(HkMenuSection, { label: label.value }));
+    expect(c.querySelector(".hk-menu-section-label")!.textContent).toBe("Temp spaces");
+
+    label.value = "Permanent spaces";
+    await nextTick();
+    expect(c.querySelector(".hk-menu-section-label")!.textContent).toBe("Permanent spaces");
+    expect(c.querySelector(".hk-menu-section")!.getAttribute("aria-label")).toBe(
+      "Permanent spaces",
+    );
   });
 
   it("renders the default slot's rows inside the group, after the caption", () => {

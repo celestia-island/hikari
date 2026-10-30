@@ -239,22 +239,44 @@ describe("HkAboutModal stylesheet contract", () => {
   describe("row meta tones", () => {
     const TONE = (tone: string) => `.s-about-modal-row-meta[data-tone=${tone}]`;
 
-    it("paints the danger tone in the theme's error colour", () => {
-      const danger = ruleBody(css, TONE("danger"));
-      expect(danger, "the danger-tone rule must survive compilation").not.toBe("");
-      expect({
-        borderColor: declaration(danger, "border-color"),
-        background: declaration(danger, "background"),
-        color: declaration(danger, "color"),
-      }).toEqual({
-        // Same geometry as the positive / caution tones, only the channel
-        // differs — `--color-error` is the theme's existing danger token.
-        // (Dart Sass compiles the seed-relative form without spaces around
-        // the slash.)
-        borderColor: "rgb(var(--color-error)/32%)",
-        background: "rgb(var(--color-error)/10%)",
-        color: "rgb(var(--color-error))",
-      });
+    // Channel behind each coloured tone, and the WCAG-AA ink derived from it.
+    // The pill text is `--text-2xs` (10px) — small text, 4.5:1 — and the raw
+    // channel misses that on both shipped palettes (stock light warning sits
+    // at ~1.9:1, chest dark red at ~3.3:1). The ink is therefore an OKLCH
+    // derivation from the live channel: hue and chroma pass through, only
+    // lightness moves — capped at 0.5 in light mode, floored at 0.72 in dark
+    // (bounds solved so the worst stock AND chest entry clears 4.5:1 against
+    // the pill's real backdrop: the 10% channel tint over the 3%-primary
+    // card on `--color-surface`). Reverting any arm to the raw channel — or
+    // dropping one `light-dark()` side — must turn this red.
+    const AA_INK = (channel: string) =>
+      `light-dark(` +
+      `oklch(from rgb(var(--color-${channel})) min(l, 0.5) c h), ` +
+      `oklch(from rgb(var(--color-${channel})) max(l, 0.72) c h))`;
+    const TONES: Record<string, string> = {
+      positive: "success",
+      caution: "warning",
+      danger: "error",
+    };
+
+    it("paints every tone in the theme channel with its AA-derived ink", () => {
+      for (const [tone, channel] of Object.entries(TONES)) {
+        const rule = ruleBody(css, TONE(tone));
+        expect(rule, `the ${tone}-tone rule must survive compilation`).not.toBe("");
+        expect({
+          borderColor: declaration(rule, "border-color"),
+          background: declaration(rule, "background"),
+          color: declaration(rule, "color"),
+        }).toEqual({
+          // Same geometry across the tones, only the channel differs; the
+          // border and tint keep the RAW channel (decorative identity),
+          // while the glyphs get the derived ink. (Dart Sass compiles the
+          // seed-relative form without spaces around the slash.)
+          borderColor: `rgb(var(--color-${channel})/32%)`,
+          background: `rgb(var(--color-${channel})/10%)`,
+          color: AA_INK(channel),
+        });
+      }
     });
   });
 });

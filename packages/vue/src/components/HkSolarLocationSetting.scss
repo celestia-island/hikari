@@ -1,0 +1,91 @@
+/* HkSolarLocationSetting — the solar-clock location strategy row and
+ * its editor modal body (see the component docblock for the strategy
+ * ladder). AI-generated: developed with the ZCode agent (model
+ * GLM-5.3); human-directed. */
+
+/* ── The settings-page row: live summary + Edit button ────────────────── */
+.hk-solar-setting {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  min-width: 0;
+}
+
+.hk-solar-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6, 0.375rem);
+  min-width: 0;
+  flex: 1 1 auto;
+  color: rgb(var(--color-text-secondary, var(--color-muted)));
+  font-size: var(--text-sm);
+}
+
+.hk-solar-summary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgb(var(--color-muted));
+}
+
+/* Zone ids ("America/Argentina/Buenos_Aires") can outrun narrow side
+ * columns — the summary clips at the ellipsis, never pushes the Edit
+ * button off the row. */
+.hk-solar-summary-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-solar-edit {
+  flex-shrink: 0;
+}
+
+/* ── Editor body (inside the modal) ───────────────────────────────────── */
+.hk-solar-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 0.75rem);
+}
+
+/* Per-strategy explanation under the segmented strip — muted caption
+ * prose, same tier as the select's field label. */
+.hk-solar-hint {
+  margin: 0;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.hk-solar-manual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 0.75rem);
+}
+
+.hk-solar-hemisphere {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Field label for the hemisphere group — the SAME metrics as
+ * .hk-select-label so the two manual fields read as one form. */
+.hk-solar-field-label {
+  display: block;
+  margin-bottom: var(--space-4, 0.25rem);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+/* Resolved-coordinates readout (manual pane only) — a quiet trace of
+ * what the engine will actually feed the sun clock. */
+.hk-solar-resolved {
+  margin: 0;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}

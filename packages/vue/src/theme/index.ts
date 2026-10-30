@@ -27,8 +27,18 @@ export type {
   ThemeDecorSlot, ThemeDecorRegistration, ThemeDecorBuiltinRegistration,
 } from "./themeDecor";
 export { registerStandardThemeDecor, STANDARD_THEME_DECOR_SLOTS } from "./standardDecor";
-export { getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION, timezoneFallback, setGeolocationProvider } from "./useSolarTime";
-export type { GeoLocation, GeoLocationProvider } from "./useSolarTime";
+export {
+  getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION, timezoneFallback, setGeolocationProvider,
+  SOLAR_LOCATION_STRATEGY_STORAGE_KEY, SOLAR_MANUAL_LOCATION_STORAGE_KEY,
+  hydrateSolarLocationState,
+  solarLocationStrategy, setSolarLocationStrategy,
+  solarManualLocation, setSolarManualLocation, manualLocationOf,
+  listTimeZones, systemTimeZoneId,
+} from "./useSolarTime";
+export type {
+  GeoLocation, GeoLocationProvider,
+  SolarLocationStrategy, SolarHemisphere, SolarManualLocation,
+} from "./useSolarTime";
 export { refreshThemeClock, stopThemeClock } from "./useTheme";
 export {
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,

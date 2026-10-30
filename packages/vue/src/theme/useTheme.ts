@@ -8,7 +8,7 @@ import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from 
 import { registerStandardThemeDecor } from "./standardDecor";
 import { registerStandardThemeGroups } from "./standardGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
-import { getGeolocation, getTimePeriod, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
+import { getGeolocation, getTimePeriod, hydrateSolarLocationState, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
 
 const DEFAULT_THEME = "default";
 const STORAGE_THEME_KEY = "hikari-theme";
@@ -120,11 +120,22 @@ function startThemeClock() {
   }, THEME_CLOCK_TICK_MS);
 }
 
+/** Refresh sequence token — LAST WRITE WINS. Every refresh applies whatever
+ *  it resolved, and the ip strategy can stay in flight for seconds (the
+ *  browser-permission probe, then the ipapi lookup). Without the guard, a
+ *  slow refresh started BEFORE a strategy switch would land AFTER it and
+ *  overwrite the clock with the stale basis. Each call bumps the token and
+ *  applies only while it is still the newest; the returned promise keeps
+ *  its own resolution either way. */
+let refreshSeq = 0;
+
 /** Re-run the geolocation resolution (and re-apply in system mode). For
  *  hosts that registered a geolocation provider after initTheme(), or that
  *  want a manual refresh (network reconnect, wake-from-sleep). */
 export function refreshThemeClock(): Promise<GeoLocation> {
+  const seq = ++refreshSeq;
   return getGeolocation().then((geo) => {
+    if (seq !== refreshSeq) return geo;
     themeGeo.value = geo;
     updatePeriod();
     if (currentMode.value === "system") applyTheme();
@@ -284,6 +295,9 @@ function getAllThemePresets(): Record<string, ThemePreset> {
 export function initTheme() {
   if (initialized) return;
   initialized = true;
+  // Solar-location state hydrates HERE, never at module import — the theme
+  // module graph must stay storage-silent at import (wallpaperSsr contract).
+  hydrateSolarLocationState();
   // hikari's own groups (shape/radius) land BEFORE the first applyTheme so
   // their cssvars ride the very first emission. Registration is keyed by
   // group id, so a host that wants its own `shape` has three viable orders:

@@ -8,4 +8,6 @@ jobs:
   release-notes:
     permissions:
       contents: write
-    uses: celestia-island/celestia-devtools/.github/workflows/release-notes.yml@master
+    uses: celestia-island/celestia-devtools/.github/workflows/release-notes.yml@v2026.10
+    with:
+      devtools-ref: v2026.10

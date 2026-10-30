@@ -84,7 +84,13 @@ describe("HkErrorLanding inline contract", () => {
     // silently disabled the base align/justify centering and glued the
     // card to the container's top edge.
     expect(inline).toContain("min-height: 100%");
-    expect(inline).not.toContain("min-height: 0");
+    // The ONLY zero min-height allowed in this variant is the fill
+    // seating's own — nested under &.is-fill, flex-context-only, never
+    // the default inline (which must keep the percentage fill above).
+    const fillAt = inline.indexOf("&.is-fill");
+    expect(fillAt, "&.is-fill seating present").toBeGreaterThanOrEqual(0);
+    const zeroAt = inline.indexOf("min-height: 0");
+    expect(zeroAt, "zero min-height only inside the fill seating").toBeGreaterThan(fillAt);
   });
 
   it("drops the block-axis padding entirely and keeps only the horizontal inset", () => {
@@ -109,6 +115,65 @@ describe("HkErrorLanding inline contract", () => {
     // page-grade 2.25rem (desktop) / 1.75rem (≤480px media) top.
     expect(card).toContain("padding: var(--space-16, 1rem) ");
     expect(card).not.toContain("2.25rem");
+  });
+});
+
+describe("HkErrorLanding inline fill-seating contract", () => {
+  const css = readFileSync(join(here, "HkErrorLanding.scss"), "utf-8");
+  const inline = ruleBody(css, ".hk-error-landing.is-inline");
+  const fill = ruleBody(inline, "&.is-fill");
+
+  it("grows and shrinks with the host flex pane", () => {
+    expect(fill).toContain("flex: 1 1 auto");
+    expect(fill).toContain("min-height: 0");
+  });
+
+  it("lays the card out as one capped column so the frame can yield", () => {
+    const card = ruleBody(inline, ".hk-error-landing__card");
+    expect(card).toContain("display: flex");
+    expect(card).toContain("flex-direction: column");
+    expect(card).toContain("max-height: 100%");
+    expect(card).toContain("margin: auto");
+  });
+
+  it("passes a squeeze through the details region to the frame", () => {
+    const details = ruleBody(inline, ".hk-error-landing__details");
+    expect(details).toContain("min-height: 0");
+  });
+
+  it("makes the standing frame compressible with a usable floor", () => {
+    const pane = ruleBody(inline, ".hk-error-landing__details-pane");
+    // Basis = the page-grade standing height (unconstrained cards render
+    // exactly the fixed frame), shrink unlocked, floor keeps a usable
+    // scroll window.
+    expect(pane).toContain("flex-shrink: 1");
+    expect(pane).toContain("flex-basis: max(9rem, 20vh)");
+    expect(pane).toContain("flex-basis: max(9rem, 20dvh)");
+    expect(pane).toContain("min-height: 6rem");
+  });
+});
+
+describe("HkErrorLanding nested-tree chrome guard contract", () => {
+  const css = readFileSync(join(here, "HkErrorLanding.scss"), "utf-8");
+
+  it("keeps the pane-owned resets at a :root-dial-beating weight", () => {
+    // Hosts restyle the shared tree class as `:root .s-tool-json-tree`
+    // ((0,2,0), wowsp's glass dial) — at equal weight the later-bundled
+    // dial won the cascade and repainted the nested tree's content band
+    // over the pane's uniform fill in both themes. The guard selector
+    // carries the extra landing class ((0,3,0)) so no :root-prefixed
+    // dial reaches it, whatever the bundle order.
+    const guardSel = ".hk-error-landing .hk-error-landing__details-body .s-tool-json-tree {";
+    expect(css).toContain(guardSel);
+    // And the old two-class form must not survive anywhere.
+    const regressed = css
+      .split("\n")
+      .some((l) => l.trimStart().startsWith(".hk-error-landing__details-body .s-tool-json-tree"));
+    expect(regressed).toBe(false);
+    const guard = ruleBody(css, ".hk-error-landing .hk-error-landing__details-body .s-tool-json-tree");
+    expect(guard).toContain("background: transparent");
+    expect(guard).toContain("max-height: none");
+    expect(guard).toContain("overflow: visible");
   });
 });
 

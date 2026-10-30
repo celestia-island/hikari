@@ -28,7 +28,12 @@ export type HErrorTone = "error" | "warning" | "info";
  * - `inline`: drops the backdrop and fills its host region's height
  *   instead of the viewport, so the same card centers inside whatever
  *   pane captured it (HkErrorBoundary) or whatever content region a host
- *   view hands it.
+ *   view hands it. The `fill` prop re-seats it as the shrinking region
+ *   of a definite-height flex pane: grow to the remaining space and let
+ *   the card compress its details frame down to its floor so the error
+ *   card FITS the pane instead of scrolling it (2026-10-30 wowsp report:
+ *   a settings error card taller than its pane pushed the whole page
+ *   into a scroll).
  */
 export type HErrorLandingVariant = "page" | "inline";
 
@@ -92,6 +97,12 @@ export const HkErrorLanding = defineComponent({
     tone: { type: String as PropType<HErrorTone>, default: "error" },
     /** Layout variant: `page` (viewport backdrop) or `inline` (in-flow card). */
     variant: { type: String as PropType<HErrorLandingVariant>, default: "page" },
+    /** Fill seating (inline variant only): the host lays the landing out as
+     *  the shrinking region of a definite-height flex pane — grow to the
+     *  remaining space and let the card compress its details frame down to
+     *  its floor so an error card fits its pane instead of scrolling it.
+     *  Default keeps the inline centering fill (min-height contract). */
+    fill: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
     const { t } = useI18n();
@@ -173,7 +184,7 @@ export const HkErrorLanding = defineComponent({
     });
 
     return () => (
-      <div class={`hk-error-landing is-${props.tone}${props.variant === "inline" ? " is-inline" : ""}`}>
+      <div class={`hk-error-landing is-${props.tone}${props.variant === "inline" ? " is-inline" : ""}${props.fill && props.variant === "inline" ? " is-fill" : ""}`}>
         <div class="hk-error-landing__card">
           {slots.brand?.()}
 

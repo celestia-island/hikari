@@ -58,6 +58,25 @@ describe("useTheme theme clock", () => {
     expect(theme.useTheme().geo.value).toEqual({ lat: -33.87, lng: 151.21 });
   });
 
+  it("refreshThemeClock is last-write-wins: a stale slow fix cannot overwrite a newer refresh", async () => {
+    theme.initTheme();
+    // Two controllable providers: the FIRST refresh hangs on #1, the second
+    // switch re-registers #2 and refreshes again. Resolving #2 first must
+    // apply; the late #1 landing afterwards must NOT overwrite it.
+    const gates: Array<(geo: { lat: number; lng: number }) => void> = [];
+    solar.setGeolocationProvider(() => new Promise((resolve) => { gates.push(resolve as never); }));
+    const stale = theme.refreshThemeClock();
+    solar.setGeolocationProvider(async () => ({ lat: -33.87, lng: 151.21 }));
+    const fresh = await theme.refreshThemeClock();
+    expect(fresh).toEqual({ lat: -33.87, lng: 151.21 });
+    expect(theme.useTheme().geo.value).toEqual({ lat: -33.87, lng: 151.21 });
+
+    gates[0]({ lat: 1, lng: 2 }); // the stale basis lands last — must lose.
+    await stale;
+    await Promise.resolve();
+    expect(theme.useTheme().geo.value).toEqual({ lat: -33.87, lng: 151.21 });
+  });
+
   it("stopThemeClock allows initTheme to restart the clock", async () => {
     solar.setGeolocationProvider(async () => ({ lat: 1, lng: 2 }));
     theme.initTheme();

@@ -33,6 +33,7 @@ vi.mock("@celestia-island/hikari", async (importOriginal) => {
 
 import { HkFaceShell } from "./HkFaceShell";
 import { HkAdminShell } from "./HkAdminShell";
+import { provideMenuGroupState } from "../composables/useMenuGroupState";
 import HkMenu, { type HkMenuItem } from "./HkMenu";
 
 /**
@@ -721,6 +722,73 @@ async function settle(container: HTMLElement, key: "rail" | "full"): Promise<HTM
   await vi.advanceTimersByTimeAsync(600);
   return generation(container, key);
 }
+
+describe("rail group fold — a host that OWNS the slot provides the store", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("carries the fold through a rail -> peek flip (chest's AdminLayout shape)", async () => {
+    // chest defines the shell's sidebar slot from AdminLayout, so the slot
+    // content's component PARENT is AdminLayout — not the shell. A provide
+    // inside HkFaceShell therefore cannot reach it (measured on chest:
+    // 0.55.240 lost the fold there while the shell's own slot kept it).
+    // The fix for that shape is the host starting the chain itself:
+    // provideMenuGroupState() in ITS setup, above the swap. This test is
+    // that shape, and it goes red if the export stops reaching slot
+    // content or if HkMenu stops injecting.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const Wrapper = defineComponent({
+      name: "SlotOwnerHarness",
+      setup() {
+        provideMenuGroupState();
+        const railStyle = ref<"expanded" | "rail">("rail");
+        return () =>
+          h(HkFaceShell, {
+            navTitle: "Navigation",
+            sidebarCollapsible: true,
+            sidebarRailStyle: railStyle.value,
+            "onUpdate:sidebarRailStyle": (v: string) => {
+              railStyle.value = v as "expanded" | "rail";
+            },
+          }, {
+            header: () => null,
+            sidebar: (params: { collapsed: boolean }) =>
+              h(HkMenu, {
+                variant: "sidebar",
+                items: GROUP_ITEMS,
+                open: false,
+                defaultExpandGroups: true,
+                collapsed: params.collapsed,
+              }),
+            content: () => h("div", { class: "content-mock" }, "CONTENT"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    mounts.push({ app, container });
+
+    const railGen = await settle(container, "rail");
+    expect(groupToggle(railGen).getAttribute("aria-expanded")).toBe("true");
+    groupToggle(railGen).click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(groupToggle(railGen).getAttribute("aria-expanded")).toBe("false");
+
+    // Peek: the slot is handed full rows — a brand-new HkMenu instance.
+    container
+      .querySelector<HTMLElement>(".hk-sidebar-rail-host")!
+      .dispatchEvent(POINTER_ENTER());
+    await vi.advanceTimersByTimeAsync(400);
+    const peekGen = await settle(container, "full");
+    expect(
+      groupToggle(peekGen).getAttribute("aria-expanded"),
+      "the host-provided store crosses into the peek's fresh generation",
+    ).toBe("false");
+    expect(peekGen.textContent, "and the peek lists no children").not.toContain("Audit log");
+  });
+});
 
 describe("rail group fold survives the crossfade generations (#43)", () => {
   beforeEach(() => {

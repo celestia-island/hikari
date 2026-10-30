@@ -481,8 +481,25 @@ export {
   SIDEBAR_RAIL_PEEK_DELAY,
   SIDEBAR_RAIL_PEEK_GRACE,
   SIDEBAR_RAIL_PIN_FALLBACK,
+  SIDEBAR_RAIL_CLIP_SELECTOR,
+  SIDEBAR_RAIL_TOGGLE_BUTTON_SELECTOR,
 } from "./composables/useSidebarRail";
 export type { SidebarRailOptions, SidebarRailHandle } from "./composables/useSidebarRail";
+// The sidebar GROUP FOLD store (known-live-issues #43). HkFaceShell and
+// HkSidebar provide one above their rail swap, so slot content THEY own
+// shares the fold across density generations. A host that defines the
+// shell's sidebar slot ITSELF (chest's AdminLayout) owns the slot's
+// component parent — a provide from inside the shell cannot reach it —
+// and must start the chain at its own setup level:
+//
+//   setup() { provideMenuGroupState(); return () => h(HkFaceShell, …) }
+//
+// Call it ABOVE the swap (i.e. in the component that survives a flip).
+export {
+  provideMenuGroupState,
+  useMenuGroupState,
+} from "./composables/useMenuGroupState";
+export type { MenuGroupState } from "./composables/useMenuGroupState";
 export {
   drawnScale,
   frameMetrics,

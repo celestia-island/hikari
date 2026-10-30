@@ -158,6 +158,22 @@ describe("HkMenu sidebar icon rail", () => {
     expect(popup!.textContent).toBe("Home");
   });
 
+  it("opens the rail tooltip toward the CONTENT side in RTL (R2 pin)", async () => {
+    vi.useFakeTimers();
+    document.documentElement.dir = "rtl";
+    try {
+      const c = mountMenu(ITEMS, { collapsed: true });
+      const wrap = c.querySelector(".hk-tooltip-wrapper")!;
+      wrap.dispatchEvent(new Event("mouseenter"));
+      await vi.advanceTimersByTimeAsync(10);
+      const popup = document.querySelector(".hk-tooltip-popup");
+      expect(popup, "the teleported tooltip popup renders").toBeTruthy();
+      expect(popup!.className, "RTL opens LEFT, toward the content").toContain("hk-tooltip-left");
+    } finally {
+      document.documentElement.dir = "";
+    }
+  });
+
   it("renders the FULL list when not collapsed (the rail is opt-in)", () => {
     const c = mountMenu(ITEMS, { activeKey: "home" });
     expect(c.querySelector(".hk-menu-sidebar")!.hasAttribute("data-collapsed")).toBe(false);

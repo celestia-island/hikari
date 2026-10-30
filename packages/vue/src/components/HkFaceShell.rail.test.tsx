@@ -208,6 +208,41 @@ describe("HkFaceShell rail mode", () => {
     expect(aside.style.width, "and expands again").toBe("224px");
   });
 
+  it("the bound prop WINS on the way back in — external channel drives both directions", async () => {
+    // The other half of the semi-controlled contract (R2 pin): a host
+    // that treats sidebarRailStyle as ITS state (store-driven, no echo)
+    // must see the sidebar follow. Deleting the prop-sync watch leaves
+    // every other test green — this is the one that goes red.
+    const railStyle = ref<"expanded" | "rail">("expanded");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      setup: () => () =>
+        h(HkFaceShell, {
+          navTitle: "Navigation",
+          sidebarCollapsible: true,
+          // Deliberately NO onUpdate:sidebarRailStyle echo — the prop is
+          // the external authority here.
+          sidebarRailStyle: railStyle.value,
+        }, {
+          header: () => null,
+          sidebar: () => h("div", "NAV"),
+          content: () => h("div", "CONTENT"),
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    const aside = () => container.querySelector(".hk-sidebar-rail-host") as HTMLElement;
+
+    railStyle.value = "rail";
+    await vi.advanceTimersByTimeAsync(0);
+    expect(aside().style.width, "an external rail value collapses").toBe("56px");
+
+    railStyle.value = "expanded";
+    await vi.advanceTimersByTimeAsync(0);
+    expect(aside().style.width, "and an external expanded value restores").toBe("224px");
+  });
+
   it("honors a configured rail width", async () => {
     const c = mountShell({ sidebarCollapsible: true, sidebarCollapsedWidth: "72px" });
     c.toggle().click();

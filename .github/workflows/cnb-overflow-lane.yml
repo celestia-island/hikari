@@ -25,9 +25,9 @@ concurrency:
 
 jobs:
   lane:
-    uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@v2026.10
+    uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@v2026.11
     with:
-      devtools-ref: v2026.10
+      devtools-ref: v2026.11
       target_repo: hikari
       target_sha: ${{ inputs.target_sha || github.event.pull_request.head.sha || github.sha }}
       task: cargo-check

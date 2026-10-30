@@ -475,7 +475,44 @@ describe("HkFaceShell rail chrome: toggle placement and the clip wrapper", () =>
     // marker reads rail while the DENSITY lives on the generation.
     expect(c.slotParams[c.slotParams.length - 1]!.collapsed).toBe(true);
     expect(c.aside().hasAttribute("data-rail"), "the root keeps the state marker").toBe(true);
+    // The leaving generation's ITEM is inert for the dissolve (dead
+    // content leaves the tab order and the a11y tree); the live one is
+    // not.
+    const leavingItem = mid[0]!.parentElement!;
+    const enteringItem = mid[1]!.parentElement!;
+    expect(leavingItem.hasAttribute("inert"), "the dying copy is inert").toBe(true);
+    expect(leavingItem.getAttribute("aria-hidden")).toBe("true");
+    expect(enteringItem.hasAttribute("inert"), "the live copy stays interactive").toBe(false);
     vi.unstubAllGlobals();
+  });
+
+  it("hands focus to the toggle when a peek close unmounts the focused row", async () => {
+    // The rail/full swap mounts the entering generation fresh and marks
+    // the leaving one inert, so a focused row inside the clip dies with
+    // it. useSidebarRail's close paths hand focus to the toggle — this is
+    // the SHELL half of that contract (the HkSidebar suite pins the other
+    // host; different host ref, different toggle placement).
+    vi.useFakeTimers();
+    const c = mountShell({ sidebarCollapsible: true }, () =>
+      h("div", { class: "sidebar-mock" }, h("button", { class: "nav-btn" }, "NAV")),
+    );
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    c.aside().dispatchEvent(POINTER_ENTER());
+    await vi.advanceTimersByTimeAsync(400);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(true);
+
+    // The ACTIVE (entering) generation's row: the leaving copy is inert
+    // and (correctly) refuses focus.
+    const gens = c.panel().querySelectorAll<HTMLElement>(".hk-sidebar-rail-generation");
+    const row = gens[gens.length - 1]!.querySelector<HTMLButtonElement>("button.nav-btn")!;
+    row.focus();
+    expect(document.activeElement).toBe(row);
+
+    c.aside().dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside().hasAttribute("data-peeking")).toBe(false);
+    expect(document.activeElement, "focus moved to the toggle").toBe(c.toggle());
   });
 
   it("does not touch the legacy sidebar path (no clip wrapper, no rail classes)", () => {

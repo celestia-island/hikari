@@ -65,11 +65,17 @@ import "./HkSidebarRail.scss";
  *   inside the slot. A peek OPEN also hands hover to the full row under
  *   the resting pointer without user intent — inherent to any dissolve.
  * - FOCUS: when the leaving generation unmounts at the end of the
- *   dissolve, focus inside it (a nav row focused in an open peek)
- *   drops to <body> — the sharpest edge is Escape-closing a peek from
- *   a focused row, which also drops the host's :focus-within (the
- *   toggle's keyboard reveal) until the next Tab. Hosts that need a
- *   softer landing can refocus the toggle from the peek-closer path.
+ *   dissolve (and the leaving item is marked inert, which blurs a
+ *   focused descendant), focus inside it would drop to <body> — taking
+ *   the host's :focus-within (the toggle's keyboard reveal) with it. The
+ *   KIT closes this for rail hosts: useSidebarRail.closePeek (and every
+ *   path that funnels through it, including the pointerleave grace close)
+ *   hands focus to the toggle when the focused node lived inside the
+ *   swapped window (2026-10-31). A bespoke host that drives its own
+ *   close paths still owns the handoff.
+ * - The leaving generation also carries `inert` + `aria-hidden` for the
+ *   dissolve (HkCrossfade), so the frozen copy is neither tabbable nor
+ *   announced while the live one fades in.
  *
  * Reduced motion: HkCrossfade keeps a short opacity exchange (a fade
  * carries no movement) while the kit's sheets kill the width slides —

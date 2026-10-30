@@ -41,6 +41,17 @@ import { inject, provide, shallowRef, type InjectionKey } from "vue";
  * menus mounted in the same shell share one key space — name their group
  * keys distinctly (they already name destinations, so this is the
  * natural convention).
+ *
+ * HOSTS THAT OWN THE SLOT THEMSELVES (chest's console, 2026-10-31): a
+ * slot's component parent is the component that DEFINED it, so a
+ * provide inside HkFaceShell does NOT reach content the host writes for
+ * the shell's sidebar slot — the host is that content's parent and the
+ * shell is only its DOM/CSS host (measured: chest's grouped nav lost the
+ * fold on 0.55.240 while the shell's own slot content kept it). Such a
+ * host starts the chain at its own setup level with
+ * provideMenuGroupState (one call, ABOVE the swap — the page component
+ * survives a density flip). HkMenu's inject then finds it through the
+ * host, and every generation the swap mounts shares it.
  */
 
 /** The fold store a shell provides above its sidebar swap. */

@@ -228,6 +228,14 @@
   color: rgb(var(--color-warning));
 }
 
+// Red state: the component is not wired up / unreachable. The row then
+// carries no version at all, so this pill is the whole value cell.
+.s-about-modal-row-meta[data-tone="danger"] {
+  border-color: rgb(var(--color-error) / 32%);
+  background: rgb(var(--color-error) / 10%);
+  color: rgb(var(--color-error));
+}
+
 /* ── Links: licenses, external links, credits names and filings ───────── */
 
 .s-about-modal-chips {

@@ -73,12 +73,19 @@ export interface HAboutCredit {
  * rendered as a separate muted pill so it never melts into the version
  * string. `metaTone` tints that pill when the tag carries a status
  * meaning (e.g. a production environment).
+ *
+ * `danger` is the red "not wired up / unreachable" state: a host whose
+ * component (e.g. an edge master node engine) has no version to report
+ * passes an EMPTY `value` and names the state in `meta` with
+ * `metaTone: "danger"`. The empty value then renders the pill alone —
+ * the mono number cell is dropped rather than leaving a blank tabular
+ * slot — so the row reads as one red label instead of `unknown`.
  */
 export interface HAboutComponentVersion {
   label: string;
   value: string;
   meta?: string;
-  metaTone?: "neutral" | "positive" | "caution";
+  metaTone?: "neutral" | "positive" | "caution" | "danger";
 }
 
 /**
@@ -288,7 +295,14 @@ export const HkAboutBody = defineComponent({
                 <div class="s-about-modal-row" key={component.label}>
                   <span class="s-about-modal-row-label">{component.label}</span>
                   <span class="s-about-modal-row-value">
-                    <span class="s-about-modal-row-number">{component.value}</span>
+                    {/* An empty value means the host has no version to
+                        report (e.g. the component is not wired up) and
+                        carries the state in `meta` instead — skip the mono
+                        cell so the row does not open with a blank tabular
+                        slot and a stray gap. */}
+                    {component.value && (
+                      <span class="s-about-modal-row-number">{component.value}</span>
+                    )}
                     {component.meta && (
                       <span
                         class="s-about-modal-row-meta"

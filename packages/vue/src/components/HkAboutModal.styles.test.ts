@@ -29,6 +29,36 @@ function classesFrom(source: string): Set<string> {
   return found;
 }
 
+/**
+ * Body of one compiled rule, by exact selector (Sass drops the quotes around
+ * an attribute value: `[data-face=plain]`).
+ *
+ * The selector must compile exactly once: a second copy — say inside a media
+ * query, or a later override — would otherwise stay invisible here while
+ * still winning the cascade.
+ */
+function ruleBody(sheet: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const matches = [...sheet.matchAll(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`, "g"))];
+  expect(matches, `${selector} compiles exactly once`).toHaveLength(1);
+  return matches[0]?.[1] ?? "";
+}
+
+/**
+ * One declaration's value inside a rule body.
+ *
+ * A property declared twice is a failure rather than a coincidence: CSS
+ * resolves a repeat last-wins, so a first-match reader would report the stale
+ * value and happily accept the override.
+ */
+function declaration(body: string, property: string): string {
+  const values = [
+    ...body.matchAll(new RegExp(`(?:^|;)\\s*${property}\\s*:([^;]*)`, "g")),
+  ].map((match) => match[1]!.trim());
+  expect(values.length, `${property} is declared at most once`).toBeLessThanOrEqual(1);
+  return values[0] ?? "";
+}
+
 describe("HkAboutModal stylesheet contract", () => {
   const tsx = readFileSync(resolve(componentDir, "HkAboutModal.tsx"), "utf8");
   const scss = readFileSync(resolve(componentDir, "HkAboutModal.scss"), "utf8");
@@ -67,36 +97,6 @@ describe("HkAboutModal stylesheet contract", () => {
    * into chips. These assertions read the compiled declarations instead.
    */
   describe("link faces", () => {
-    /**
-     * Body of one compiled rule, by exact selector (Sass drops the quotes
-     * around an attribute value: `[data-face=plain]`).
-     *
-     * The selector must compile exactly once: a second copy — say inside a
-     * media query, or a later override — would otherwise stay invisible here
-     * while still winning the cascade.
-     */
-    function ruleBody(sheet: string, selector: string): string {
-      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const matches = [...sheet.matchAll(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`, "g"))];
-      expect(matches, `${selector} compiles exactly once`).toHaveLength(1);
-      return matches[0]?.[1] ?? "";
-    }
-
-    /**
-     * One declaration's value inside a rule body.
-     *
-     * A property declared twice is a failure rather than a coincidence: CSS
-     * resolves a repeat last-wins, so a first-match reader would report the
-     * stale value and happily accept the override.
-     */
-    function declaration(body: string, property: string): string {
-      const values = [
-        ...body.matchAll(new RegExp(`(?:^|;)\\s*${property}\\s*:([^;]*)`, "g")),
-      ].map((match) => match[1]!.trim());
-      expect(values.length, `${property} is declared at most once`).toBeLessThanOrEqual(1);
-      return values[0] ?? "";
-    }
-
     const PLAIN = ".s-about-modal-link[data-face=plain]";
 
     it("keeps the plain face a bare text link", () => {
@@ -227,6 +227,34 @@ describe("HkAboutModal stylesheet contract", () => {
       const iconAt = css.indexOf(".s-about-modal-link.s-about-modal-link-has-icon {");
       expect(plainAt).toBeGreaterThanOrEqual(0);
       expect(iconAt).toBeGreaterThan(plainAt);
+    });
+  });
+
+  /**
+   * Row-meta tones are self-contained rules, so the class-name checks above
+   * cannot see them: reverting a tone to `neutral` (or dropping its rule)
+   * leaves the `data-tone` attribute intact and the runtime suite green while
+   * the pill silently loses its colour — the whole point of the tone.
+   */
+  describe("row meta tones", () => {
+    const TONE = (tone: string) => `.s-about-modal-row-meta[data-tone=${tone}]`;
+
+    it("paints the danger tone in the theme's error colour", () => {
+      const danger = ruleBody(css, TONE("danger"));
+      expect(danger, "the danger-tone rule must survive compilation").not.toBe("");
+      expect({
+        borderColor: declaration(danger, "border-color"),
+        background: declaration(danger, "background"),
+        color: declaration(danger, "color"),
+      }).toEqual({
+        // Same geometry as the positive / caution tones, only the channel
+        // differs — `--color-error` is the theme's existing danger token.
+        // (Dart Sass compiles the seed-relative form without spaces around
+        // the slash.)
+        borderColor: "rgb(var(--color-error)/32%)",
+        background: "rgb(var(--color-error)/10%)",
+        color: "rgb(var(--color-error))",
+      });
     });
   });
 });

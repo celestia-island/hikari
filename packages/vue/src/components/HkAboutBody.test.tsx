@@ -16,6 +16,9 @@ import { HkAboutBody } from "./HkAboutModal";
  * - the default slot appends host content after the copyright footer
  * - without a backdrop factory no backdrop layer renders (a body host may
  *   not want the decorative canvas at all)
+ * - a version row's `metaTone: "danger"` reaches the pill as
+ *   `data-tone="danger"`, and an EMPTY `value` drops the mono number cell
+ *   entirely (the "component not wired up" row shows only its red label)
  *
  * (Repo test convention: raw createApp + document queries, no
  * @vue/test-utils dependency.)
@@ -120,5 +123,37 @@ describe("HkAboutBody extraction", () => {
     await flush();
 
     expect(document.body.querySelector(".s-about-modal-backdrop")).toBeNull();
+  });
+
+  it("tints a version row's meta pill with the danger tone", async () => {
+    mountBody({
+      componentVersions: [
+        { label: "Edge engine", value: "1.4.0", meta: "Not connected", metaTone: "danger" },
+      ],
+    });
+    await flush();
+
+    const pill = query(".s-about-modal-row-meta");
+    expect(pill.getAttribute("data-tone")).toBe("danger");
+    expect(pill.textContent).toBe("Not connected");
+  });
+
+  it("drops the mono number cell when a row's value is empty", async () => {
+    mountBody({
+      componentVersions: [
+        // A host with nothing to report names the state in `meta` and leaves
+        // `value` empty (the "not wired up" row).
+        { label: "Edge engine", value: "", meta: "Not connected", metaTone: "danger" },
+      ],
+    });
+    await flush();
+
+    // No blank tabular slot: the mono cell is absent, not just empty.
+    expect(document.body.querySelector(".s-about-modal-row-number")).toBeNull();
+    // The label and the pill still carry the row.
+    expect(query(".s-about-modal-row-label").textContent).toContain("Edge engine");
+    const pill = query(".s-about-modal-row-meta");
+    expect(pill.textContent).toBe("Not connected");
+    expect(pill.getAttribute("data-tone")).toBe("danger");
   });
 });

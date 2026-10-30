@@ -189,8 +189,11 @@
 .hk-tpl-group-label {
   // The menu grammar's shared section-caption band (_menu-item.scss
   // @mixin section-label), same as HkMenuSection's
-  // .hk-menu-section-label — the four different hand-rolled vertical
-  // bands across the product collapsed into this one grammar.
+  // .hk-menu-section-label — the hand-rolled bands across this library
+  // and its consumer's popup menus (0–6px vertical insets) converge here.
+  // hikari's theme-menu caption (.s-theme-menu-label) stays hand-rolled
+  // on purpose: its 4/6/4 band sits ~8px clear of its rows, so it never
+  // exhibited the glued-to-the-first-row defect this grammar fixes.
   // This adopter inherits the grammar's shift too, it is not a band-only
   // change: vertical rhythm 6/8/2 → 4/6/8 (up, bottom-heavy) AND the
   // inline inset 8 → 6px, i.e. the caption steps 2px LEFT toward

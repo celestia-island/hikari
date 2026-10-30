@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h } from "vue";
+import { Fragment, createApp, createCommentVNode, h } from "vue";
 
 import HkMenuSection from "./HkMenuSection";
 
@@ -14,7 +14,8 @@ import HkMenuSection from "./HkMenuSection";
  *   class names — the global adopter rules in styles/admin-tokens style
  *   them, the component imports no scss.
  * - SLOT OVERRIDE: the `label` slot replaces the visible text while the
- *   accessible name stays the `label` prop; an EMPTY slot result falls
+ *   accessible name stays the `label` prop; an EMPTY slot result (an empty
+ *   array, a comment vnode from a compiled `v-if`, blank strings) falls
  *   back to the prop text (never an empty padded band).
  * - ROWS: the default slot renders inside the group, after the caption.
  */
@@ -89,6 +90,34 @@ describe("HkMenuSection", () => {
     const caption = c.querySelector<HTMLElement>(".hk-menu-section-label")!;
     expect(caption.textContent).toBe("Temp spaces");
     expect(caption.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("falls back to the label prop when the label slot renders only a comment vnode", () => {
+    // A compiled `v-if` slot root is a COMMENT vnode (length 1, not nullish):
+    // it must count as no caption or the aria-hidden band stays padded and
+    // empty.
+    const c = mount(() =>
+      h(HkMenuSection, { label: "Temp spaces" }, {
+        label: () => [createCommentVNode("v-if", true)],
+      }),
+    );
+
+    const caption = c.querySelector<HTMLElement>(".hk-menu-section-label")!;
+    expect(caption.textContent).toBe("Temp spaces");
+    expect(caption.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("looks through a fragment that wraps only comments and blank strings", () => {
+    const c = mount(() =>
+      h(HkMenuSection, { label: "Temp spaces" }, {
+        label: () => [
+          h(Fragment, null, [createCommentVNode("v-if", true), "   "]),
+        ],
+      }),
+    );
+
+    const caption = c.querySelector<HTMLElement>(".hk-menu-section-label")!;
+    expect(caption.textContent).toBe("Temp spaces");
   });
 
   it("renders the default slot's rows inside the group, after the caption", () => {

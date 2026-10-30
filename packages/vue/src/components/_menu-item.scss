@@ -34,13 +34,14 @@
  *   8px below, sheets 6/12): the panel already insets the surface above
  *   the caption, so the caption's own top band stays tight, while the
  *   bottom band is the separation that must read as "this caption heads
- *   the rows below, it is not one of them". The section wrapper itself
- *   adds NO default gap (--hk-menu-section-gap defaults to 0): a host
- *   whose row rhythm IS a flex gap on the immediate parent sets that
- *   token to the same value. Its inline inset is a hair
- *   SMALLER than the row's --hk-menu-item-pad-x, so the caption hangs
- *   just left of the rows' leading icon column and reads as a section
- *   title hugging the edge rather than as an indented row. No
+ *   the rows below, it is not one of them". The section wrapper is where
+ *   the parent's row rhythm moves when rows go behind a group box, so its
+ *   default gap MIRRORS the level rhythm (2px, --hk-menu-section-gap);
+ *   a surface whose rhythm differs publishes that token (HkMenuPanel's
+ *   4px list; a margin-separated consumer list sets 0). Its inline inset
+ *   is a hair SMALLER than the row's --hk-menu-item-pad-x, so the caption
+ *   hangs just left of the rows' leading icon column and reads as a
+ *   section title hugging the edge rather than as an indented row. No
  *   text-transform: translators own casing (the HkTemplateField rule).
  *
  * Adoption: `@use "./menu-item" as mi;` then
@@ -308,15 +309,16 @@
 
 /* ── Section wrapper ─────────────────────────────────────────────────
  * The role="group" box HkMenuSection renders: one caption plus its rows.
- * The caption's own bottom band is what separates it from the first row,
- * so the wrapper adds NO default gap: --hk-menu-section-gap defaults to
- * 0. A host whose row rhythm IS a flex gap on the immediate parent sets
- * the token to that value (the grammar must not impose a gap of its own —
- * a captioned run would then be tighter than the ungrouped rows beside
- * it); row margins keep working inside the wrapper either way. Stacked
- * sections take a 6px stack margin so two captioned runs read as two
- * groups, not one long list. The wrapper stays chrome-free — the caption
- * owns the band.
+ * Rows declare no margins — the inter-row rhythm is the parent's flex gap
+ * (.hk-menu-level 2px, .hk-menu-list 4px) — so a group box is where that
+ * rhythm must move. The default --hk-menu-section-gap therefore MIRRORS
+ * the level rhythm (2px), which keeps an unconfigured surface correct;
+ * every surface whose rhythm differs publishes the token: .hk-menu-list
+ * sets 4px, and a consumer list that separates rows with margins instead
+ * sets 0 and keeps its margins (those still apply inside the wrapper).
+ * Stacked sections take a 6px stack margin so two captioned runs read as
+ * two groups, not one long list. The wrapper stays chrome-free — the
+ * caption owns the band.
  *
  * MUST be included at a TOP-LEVEL (0,1,0) rule, like @mixin item: the
  * `& + &` stack rule compiles to a broken descendant selector when the
@@ -324,7 +326,7 @@
 @mixin section {
   display: flex;
   flex-direction: column;
-  gap: var(--hk-menu-section-gap, 0);
+  gap: var(--hk-menu-section-gap, var(--space-2, 2px));
 
   & + & {
     margin-block-start: var(--hk-menu-section-stack, var(--space-6, 6px));

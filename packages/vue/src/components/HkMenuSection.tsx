@@ -1,12 +1,40 @@
-import { computed, defineComponent } from "vue";
+import { Comment, Fragment, defineComponent } from "vue";
+
+/** True when slot content carries something visible. A compiled `v-if`
+ *  root is a COMMENT vnode (not an empty array), a fragment may wrap only
+ *  comments, and whitespace-only strings are not a caption — none of them
+ *  may leave a padded, empty aria-hidden band. */
+function hasVisibleContent(nodes: readonly unknown[]): boolean {
+  for (const node of nodes) {
+    if (typeof node === "string") {
+      if (node.trim() !== "") return true;
+      continue;
+    }
+    if (typeof node === "number") return true;
+    if (node && typeof node === "object") {
+      const vnode = node as { type?: unknown; children?: unknown };
+      if (vnode.type === Comment) continue;
+      if (vnode.type === Fragment) {
+        if (Array.isArray(vnode.children)) {
+          if (hasVisibleContent(vnode.children)) return true;
+        } else if (typeof vnode.children === "string" && vnode.children.trim() !== "") {
+          return true;
+        }
+        continue;
+      }
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * HkMenuSection — a captioned run of menu rows.
  *
  * The small caption ABOVE a run of rows is part of the menu-item grammar
  * (see _menu-item.scss, @mixin section / @mixin section-label), but it is
- * hand-rolled at 9+ call sites (six in the product's workspace picker
- * alone) with four different vertical bands and no shared token. This
+ * hand-rolled at call sites across this library and its consumer's popup
+ * menus, with vertical insets from 0 to 6px and no shared token. This
  * component is the ONE markup for it:
  *
  *   <HkMenuSection label="Temp spaces">
@@ -42,20 +70,21 @@ export default defineComponent({
     label: { type: String, required: true },
   },
   setup(props, { slots }) {
-    // An EMPTY slot result is not nullish: `slots.label?.() ?? props.label`
-    // left a padded, empty aria-hidden band when the slot rendered nothing.
-    // Treat empty content as absent and fall back to the prop text.
-    const caption = computed(() => {
-      const content = slots.label?.();
-      return content && content.length > 0 ? content : props.label;
-    });
-    return () => (
-      <div class="hk-menu-section" role="group" aria-label={props.label}>
-        <div class="hk-menu-section-label" aria-hidden="true">
-          {caption.value}
+    // Resolve the caption INSIDE the render function: a computed caches
+    // the slot's vnodes and a pre-built-node slot goes stale when the
+    // parent re-renders. An empty result ([] / comment vnodes / blank
+    // strings) falls back to the prop text instead of leaving a padded,
+    // empty aria-hidden band.
+    return () => {
+      const caption = slots.label?.();
+      return (
+        <div class="hk-menu-section" role="group" aria-label={props.label}>
+          <div class="hk-menu-section-label" aria-hidden="true">
+            {caption && hasVisibleContent(caption) ? caption : props.label}
+          </div>
+          {slots.default?.()}
         </div>
-        {slots.default?.()}
-      </div>
-    );
+      );
+    };
   },
 });

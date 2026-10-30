@@ -1,0 +1,13 @@
+name: Verify Versions
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  merge_group:
+    types: [checks_requested]
+
+jobs:
+  verify-versions:
+    uses: celestia-island/celestia-devtools/.github/workflows/verify-versions.yml@v2026.10
+    with:
+      devtools-ref: v2026.10

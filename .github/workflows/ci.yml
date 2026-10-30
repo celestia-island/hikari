@@ -15,11 +15,15 @@ concurrency:
 jobs:
   verify-versions:
     name: Verify version consistency
-    uses: celestia-island/celestia-devtools/.github/workflows/verify-versions.yml@master
+    uses: celestia-island/celestia-devtools/.github/workflows/verify-versions.yml@v2026.10
+    with:
+      devtools-ref: v2026.10
 
   family-versions:
     name: Family dependency identity
-    uses: celestia-island/celestia-devtools/.github/workflows/family-versions.yml@master
+    uses: celestia-island/celestia-devtools/.github/workflows/family-versions.yml@v2026.10
+    with:
+      devtools-ref: v2026.10
 
   rustfmt:
     # Fork pull requests pay for their own CI: this job is heavy (it compiles,

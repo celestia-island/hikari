@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, ref } from "vue";
+import { createApp, defineComponent, h, ref, type VNode } from "vue";
 
 // Same stub shape as HkFaceShell.test.tsx: HDrawer teleports and
 // animates; the desktop rail contract is testable without the overlay
@@ -33,6 +33,7 @@ vi.mock("@celestia-island/hikari", async (importOriginal) => {
 
 import { HkFaceShell } from "./HkFaceShell";
 import { HkAdminShell } from "./HkAdminShell";
+import HkMenu, { type HkMenuItem } from "./HkMenu";
 
 /**
  * HkFaceShell desktop rail + peek integration (2026-10-30). What this
@@ -78,7 +79,10 @@ interface RailMount {
   emitted: string[];
 }
 
-function mountShell(props: Record<string, unknown> = {}): RailMount {
+function mountShell(
+  props: Record<string, unknown> = {},
+  sidebarSlot?: (params: SlotParams) => VNode,
+): RailMount {
   const slotParams: SlotParams[] = [];
   const emitted: string[] = [];
   const container = document.createElement("div");
@@ -103,7 +107,7 @@ function mountShell(props: Record<string, unknown> = {}): RailMount {
           header: () => null,
           sidebar: (params: SlotParams) => {
             slotParams.push(params);
-            return h("div", { class: "sidebar-mock" }, "NAV");
+            return sidebarSlot?.(params) ?? h("div", { class: "sidebar-mock" }, "NAV");
           },
           content: () => h("div", { class: "content-mock" }, "CONTENT"),
         });
@@ -130,6 +134,8 @@ afterEach(() => {
     app.unmount();
     container.remove();
   }
+  // HkMenu's rail rows ride HkTooltip (teleported to the overlay root).
+  document.querySelectorAll("#hk-overlay-root, .hk-tooltip-popup").forEach((n) => n.remove());
   vi.useRealTimers();
 });
 
@@ -609,5 +615,151 @@ describe("HkFaceShell hover suppression: a pointer on the toggle never peeks", (
     expect(c.aside().hasAttribute("data-peeking")).toBe(false);
     expect(c.aside().style.width).toBe("224px");
     expect(c.aside().hasAttribute("data-pinning"), "the peek pin is a rail -> expanded flip").toBe(true);
+  });
+});
+
+/**
+ * The menu group fold vs the swap's GENERATIONS (#43, known-live-issues).
+ *
+ * HkSidebarRailSwap mounts each density as a FRESH generation — the
+ * tab-panel contract — so an HkMenu inside the sidebar slot is a NEW
+ * component instance in every generation. HkMenu's own docs still promise
+ * "a group collapsed in the rail is still collapsed after a peek/expand
+ * (and vice versa)"; 0.55.239 broke that promise by keeping the fold in
+ * instance-local refs, measured on chest (same chest source: 2 rows /
+ * aria-expanded=false on 0.55.236, 5 rows / true on 0.55.239).
+ *
+ * The fix is a stable fold store provided ABOVE the swap: every
+ * generation injects the same instance, so the user's word survives an
+ * arbitrary number of remounts. These are the tests that go red when the
+ * store stops being provided above the swap (or HkMenu stops reading it).
+ */
+const GROUP_ITEMS: HkMenuItem[] = [
+  { key: "home", label: "Home" },
+  {
+    key: "admin",
+    label: "Administration",
+    children: [
+      { key: "users", label: "Users" },
+      { key: "audit", label: "Audit log" },
+    ],
+  },
+];
+
+/** The ACTIVE generation, selected by the key it renders under: the
+ *  leaving copy is frozen at its last render (it still shows the OLD
+ *  fold), so asserting against it would pass for the wrong reason. */
+function generation(container: HTMLElement, key: "rail" | "full"): HTMLElement {
+  const gen = container.querySelector<HTMLElement>(
+    `.hk-crossfade-item[data-crossfade-key="${key}"]`,
+  );
+  expect(gen, `the ${key} generation renders`).toBeTruthy();
+  return gen!;
+}
+
+/** The group header inside a generation — the rail and full forms share
+ *  the same class + aria-expanded contract. */
+function groupToggle(root: HTMLElement): HTMLButtonElement {
+  const row = root.querySelector<HTMLButtonElement>("button.hk-menu-sidebar-group-toggle");
+  expect(row, "the menu's group header renders").toBeTruthy();
+  return row!;
+}
+
+/** Let a dissolve settle (past HkCrossfade's 450ms watchdog), then hand
+ *  back the generation that should now be the only live one. */
+async function settle(container: HTMLElement, key: "rail" | "full"): Promise<HTMLElement> {
+  await vi.advanceTimersByTimeAsync(600);
+  return generation(container, key);
+}
+
+describe("rail group fold survives the crossfade generations (#43)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("keeps a group collapsed in the rail through a peek AND a full expand", async () => {
+    const c = mountShell({ sidebarCollapsible: true }, () =>
+      h(HkMenu, {
+        variant: "sidebar",
+        items: GROUP_ITEMS,
+        open: false,
+        defaultExpandGroups: true,
+      }),
+    );
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+
+    const railGen = await settle(c.container, "rail");
+    expect(
+      groupToggle(railGen).getAttribute("aria-expanded"),
+      "table-of-contents default: every group starts open",
+    ).toBe("true");
+    groupToggle(railGen).click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(groupToggle(railGen).getAttribute("aria-expanded")).toBe("false");
+    expect(railGen.textContent, "the closed group lists no children").not.toContain("Audit log");
+
+    // Peek: the slot is handed FULL rows again — a brand-new HkMenu.
+    c.aside().dispatchEvent(POINTER_ENTER());
+    await vi.advanceTimersByTimeAsync(400);
+    const peekGen = await settle(c.container, "full");
+    expect(c.aside().hasAttribute("data-peeking"), "the peek is open").toBe(true);
+    expect(
+      groupToggle(peekGen).getAttribute("aria-expanded"),
+      "the fold crosses into the peek's fresh generation",
+    ).toBe("false");
+    expect(peekGen.textContent, "and the peek lists no children either").not.toContain("Audit log");
+
+    // Leave -> grace -> the rail generation mounts a THIRD time, closed.
+    c.aside().dispatchEvent(POINTER_LEAVE());
+    await vi.advanceTimersByTimeAsync(150);
+    const backGen = await settle(c.container, "rail");
+    expect(c.aside().hasAttribute("data-peeking")).toBe(false);
+    expect(
+      groupToggle(backGen).getAttribute("aria-expanded"),
+      "the fold survives the return leg too",
+    ).toBe("false");
+
+    // A full EXPAND (not a peek) reads the same fold.
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+    const expandedGen = await settle(c.container, "full");
+    expect(
+      groupToggle(expandedGen).getAttribute("aria-expanded"),
+      "and the expanded sidebar inherits it",
+    ).toBe("false");
+  });
+
+  it("does not let the active row's auto-expansion resurrect a rail-collapsed group", async () => {
+    // The chest shape: the group holding the active row auto-opens on every
+    // FRESH mount (the auto seed), which is exactly what brought the
+    // collapsed group back. The user's word must outrank the re-seed.
+    const c = mountShell({ sidebarCollapsible: true }, () =>
+      h(HkMenu, {
+        variant: "sidebar",
+        items: GROUP_ITEMS,
+        open: false,
+        activeKey: "users",
+      }),
+    );
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(0);
+
+    const railGen = await settle(c.container, "rail");
+    expect(
+      groupToggle(railGen).getAttribute("aria-expanded"),
+      "the active row auto-opens its group",
+    ).toBe("true");
+    groupToggle(railGen).click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(groupToggle(railGen).getAttribute("aria-expanded")).toBe("false");
+
+    c.aside().dispatchEvent(POINTER_ENTER());
+    await vi.advanceTimersByTimeAsync(400);
+    const peekGen = await settle(c.container, "full");
+    expect(
+      groupToggle(peekGen).getAttribute("aria-expanded"),
+      "the fresh generation re-seeds its auto set but keeps the user's word",
+    ).toBe("false");
   });
 });

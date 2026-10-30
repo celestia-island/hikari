@@ -52,12 +52,18 @@ import "./HkSidebarRail.scss";
  * Trade-offs (documented, accepted): each flip MOUNTS the entering
  * generation fresh, exactly like a tab-panel swap —
  * - a scrolled sidebar body starts the entering copy at the top, and
- *   uncontrolled state inside the slot (an expanded nav group, hover)
+ *   uncontrolled state inside the slot (hover, DOM-local widget state)
  *   does not carry over. Same-family precedent (HkTabs panels, admin
  *   views); rail flips are rare, and preserving scroll across a width
  *   change whose row heights differ would map positions, not restore
- *   them. A peek OPEN also hands hover to the full row under the
- *   resting pointer without user intent — inherent to any dissolve.
+ *   them. A MENU FOLD is the documented exception, and it is not this
+ *   component's doing: HkFaceShell provides the group-fold store ABOVE
+ *   it (known-live-issues #43), so HkMenu's user-toggled groups are read
+ *   by every generation instead of remounting back to their defaults. A
+ *   host with slot-local state that must survive a flip lifts it the same
+ *   way — a provide/inject store above the swap, never an instance ref
+ *   inside the slot. A peek OPEN also hands hover to the full row under
+ *   the resting pointer without user intent — inherent to any dissolve.
  * - FOCUS: when the leaving generation unmounts at the end of the
  *   dissolve, focus inside it (a nav row focused in an open peek)
  *   drops to <body> — the sharpest edge is Escape-closing a peek from

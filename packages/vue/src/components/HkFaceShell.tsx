@@ -2,6 +2,7 @@ import { computed, defineComponent, ref, watch, type PropType } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import { useSidebarRail } from "../composables/useSidebarRail";
+import { provideMenuGroupState } from "../composables/useMenuGroupState";
 import HkSidebarRailSwap from "./HkSidebarRailSwap";
 import HkSidebarRailToggle, { isPointerOverRailToggle } from "./HkSidebarRailToggle";
 
@@ -279,6 +280,19 @@ export const HkFaceShell = defineComponent({
     const { width: viewportWidth } = useBreakpoint();
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
+
+    // ── sidebar menu GROUP fold, stable across the rail crossfade ─────
+    // The rail swap mounts each density as a FRESH generation, so an
+    // HkMenu in the sidebar slot is a new instance per generation and its
+    // instance-local group fold would be lost on every flip (a group
+    // collapsed in the rail came back expanded after a peek/expand —
+    // known-live-issues #43). Providing the fold store HERE — one level
+    // above the swap — makes every generation inject the SAME instance,
+    // so the user's word survives the remounts without a new prop and
+    // without any host-side change. Unconditional: the store is inert
+    // until an HkMenu reads it, and the mobile drawer's slot must see the
+    // same one as the desktop sidebar.
+    provideMenuGroupState();
 
     // ── desktop icon rail + hover peek (sidebarCollapsible) ──────────
     // SEMI-CONTROLLED rail state: a local session-only ref is the live

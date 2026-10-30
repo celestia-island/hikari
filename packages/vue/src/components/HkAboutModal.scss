@@ -238,31 +238,38 @@
 // solved against the pill's real backdrop —
 // the 10% channel tint composited over the 3%-primary card on
 // `--color-surface` — for the WORST entry of the stock AND chest palettes:
-// every tone lands ≥4.6:1. `light-dark()` resolves through the same
-// color-scheme the theme engine already drives (`[data-mode] body` in
-// theme.scss sets it alongside the channel swap), and an engine without
-// relative-colour support drops the declaration, falling back to the
-// neutral muted ink above — still AA everywhere: ≥4.87:1 even under the
-// coloured pills' own tinted backdrop (4.87–7.20 across both palettes and
-// modes; 5.98–8.06 on the plain neutral pill) — rather than shipping an
-// unreadable tone colour. The border and background keep the raw channel:
-// only the glyphs owe contrast, the tint is decorative.
+// every tone lands ≥4.6:1.
+//
+// The two arms are expressed as THEME-MODE rules — the light one in the base
+// rule, the dark one re-inking under `[data-mode="dark"]` (the HkTooltip
+// precedent) — rather than as one `light-dark()` value. Reason, shipped and
+// paid for once on 2026-10-30 (chest #2027): when the consumer's build floor
+// predates `light-dark()`, the CSS minifier LOWERS it into
+// `var(--lightningcss-light, …) var(--lightningcss-dark, …)` WITHOUT emitting
+// the companion custom-property definitions, so the declaration becomes
+// invalid at computed-value time and the glyphs fall back to the INHERITED
+// colour — worse than the muted ink. Mode rules need no such function, so no
+// build floor can rewrite them, and `[data-mode]` is the very attribute the
+// theme engine drives (`theme.scss` sets `color-scheme` from it alongside the
+// channel swap), so the arms cannot desynchronise from the palette.
+//
+// Degradation is by PARSE-TIME drop: an engine without relative-colour
+// support discards the tone rule's `color` outright, which leaves the neutral
+// muted ink of `.s-about-modal-row-meta` above in force — still AA everywhere
+// (≥4.87:1 even under the coloured pills' own tinted backdrop; 4.87–7.20
+// across both palettes and modes) rather than shipping an unreadable tone
+// colour. The border and background keep the raw channel: only the glyphs owe
+// contrast, the tint is decorative.
 .s-about-modal-row-meta[data-tone="positive"] {
   border-color: rgb(var(--color-success) / 32%);
   background: rgb(var(--color-success) / 10%);
-  color: light-dark(
-    oklch(from rgb(var(--color-success)) min(l, 0.5) c h),
-    oklch(from rgb(var(--color-success)) max(l, 0.72) c h)
-  );
+  color: oklch(from rgb(var(--color-success)) min(l, 0.5) c h);
 }
 
 .s-about-modal-row-meta[data-tone="caution"] {
   border-color: rgb(var(--color-warning) / 32%);
   background: rgb(var(--color-warning) / 10%);
-  color: light-dark(
-    oklch(from rgb(var(--color-warning)) min(l, 0.5) c h),
-    oklch(from rgb(var(--color-warning)) max(l, 0.72) c h)
-  );
+  color: oklch(from rgb(var(--color-warning)) min(l, 0.5) c h);
 }
 
 // Red state: the component is not wired up / unreachable. The row then
@@ -270,10 +277,21 @@
 .s-about-modal-row-meta[data-tone="danger"] {
   border-color: rgb(var(--color-error) / 32%);
   background: rgb(var(--color-error) / 10%);
-  color: light-dark(
-    oklch(from rgb(var(--color-error)) min(l, 0.5) c h),
-    oklch(from rgb(var(--color-error)) max(l, 0.72) c h)
-  );
+  color: oklch(from rgb(var(--color-error)) min(l, 0.5) c h);
+}
+
+// Dark arm: floor the lightness instead of capping it (rationale above). Only
+// the glyphs re-ink — the border and tint already ride the live channel.
+[data-mode="dark"] .s-about-modal-row-meta[data-tone="positive"] {
+  color: oklch(from rgb(var(--color-success)) max(l, 0.72) c h);
+}
+
+[data-mode="dark"] .s-about-modal-row-meta[data-tone="caution"] {
+  color: oklch(from rgb(var(--color-warning)) max(l, 0.72) c h);
+}
+
+[data-mode="dark"] .s-about-modal-row-meta[data-tone="danger"] {
+  color: oklch(from rgb(var(--color-error)) max(l, 0.72) c h);
 }
 
 /* ── Links: licenses, external links, credits names and filings ───────── */

@@ -2,6 +2,8 @@
 // The renderer owns the pixels; this file only styles the layers (canvas,
 // CSS2D labels, overlay slot, fallback note, minimap dock).
 
+@use "../styles/polyfill" as *;
+
 .hk-board3d {
   position: relative;
   width: 100%;
@@ -12,7 +14,7 @@
   // Gestures own the surface: no native scroll/selection interference
   // (HkBoard precedent).
   touch-action: none;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-board3d-canvas {

@@ -1,11 +1,14 @@
 /* HkSpinner — pure-CSS infinite spinner. */
+
+@use "../styles/polyfill" as *;
+
 .hk-spinner-wrapper {
   display: flex;
   align-items: center;
   gap: var(--space-8);
   /* Transient loading status, not content: selecting it mid-drag
      produces accidental clipboard noise. Covers circle and text. */
-  user-select: none;
+  @include user-select(none);
 }
 
 /* center — the shared loading-state placement contract: the spinner is
@@ -90,7 +93,7 @@
   color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
   /* Transient status, not content: selecting it mid-drag produces
      accidental clipboard noise. (The wrapper already covers the circle.) */
-  user-select: none;
+  @include user-select(none);
 }
 
 @keyframes hk-spinner-rotate {

@@ -1,4 +1,5 @@
 @use "../tokens";
+@use "../styles/polyfill" as *;
 
 /* HkButton */
 .hk-btn {
@@ -22,7 +23,7 @@
   transition-duration: var(--duration-normal);
   transition-timing-function: var(--ease-standard);
   white-space: nowrap;
-  user-select: none;
+  @include user-select(none);
   outline: none;
   position: relative;
 }
@@ -328,7 +329,7 @@
   background: rgb(var(--color-surface));
   color: rgb(var(--color-text));
   border-color: rgb(var(--color-border) / 20%);
-  backdrop-filter: blur(var(--blur-sm));
+  @include backdrop-filter(blur(var(--blur-sm)));
 }
 
 /* background stays the base surface — the hover declaration only restated

@@ -6,6 +6,7 @@
  * interaction palette deliberately does not switch to --c-*. */
 
 @use "./menu-item" as mi;
+@use "../styles/polyfill" as *;
 
 .hk-nav-item {
   @include mi.item-tokens;
@@ -29,7 +30,7 @@
   transition:
     background-color var(--duration-fast, 0.15s) ease,
     color var(--duration-fast, 0.15s) ease;
-  user-select: none;
+  @include user-select(none);
 
   /* Interaction-state precedence: ACTIVE > HOVER > NONE.
      - none: muted text, transparent background

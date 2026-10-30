@@ -2256,17 +2256,18 @@ describe("HkTagInput drag feedback and text selection", () => {
 
   it("restores text selection on a disabled field's chips only", () => {
     const disabled = styleBlock(".hk-tag-input-box[data-disabled] .hk-tag-input-tag");
-    expect(disabled).toContain("user-select: text");
-    expect(disabled).toContain("-webkit-user-select: text");
+    // Selection values are authored through styles/polyfill.scss, whose
+    // mixin owns the -webkit-/standard pair (see its contract test).
+    expect(disabled).toContain("@include user-select(text)");
     expect(disabled).toContain("cursor: default");
     // The editable chip keeps the gesture reservation: its press is the
     // reorder gesture, so it stays non-selectable (the documented trade-off).
     const chip = styleBlock(".hk-tag-input-tag {");
-    expect(chip).toContain("user-select: none");
+    expect(chip).toContain("@include user-select(none)");
     expect(chip).toContain("cursor: grab");
     // The panel rows' LABELS are never selection-blocked — only the grip,
     // which is the drag handle, reserves the gesture.
-    expect(styleBlock(".hk-tag-input-grip {")).toContain("user-select: none");
+    expect(styleBlock(".hk-tag-input-grip {")).toContain("@include user-select(none)");
     const row = styleBlock(".hk-tag-input-row {");
     expect(row).not.toMatch(/user-select/);
   });

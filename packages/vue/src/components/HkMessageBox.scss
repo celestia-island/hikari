@@ -3,6 +3,8 @@
  * layout (icon + text + the one prompt field) and the action row are
  * styled here. */
 
+@use "../styles/polyfill" as *;
+
 .hk-message-box {
   display: flex;
   flex-direction: column;
@@ -28,8 +30,7 @@
   /* Dialog message = content the user may need to copy (error detail),
    * not chrome — whitelisted under the L2 selection policy (2026-10-29).
    * The prompt's field below is covered by the editable-controls tier. */
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   margin: 0;
   color: rgb(var(--color-text));
   font-size: var(--text-base, 15px);

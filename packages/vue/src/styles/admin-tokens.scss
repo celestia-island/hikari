@@ -4,6 +4,7 @@
    Color tokens are provided by hikari's initTheme(). */
 
 @use "../components/menu-item" as mi;
+@use "./polyfill" as *;
 
 :root {
   /* ── Layout tokens ─ */
@@ -97,7 +98,7 @@
   align-items: center;
   padding: 0 var(--space-16);
   background: rgb(var(--color-surface));
-  backdrop-filter: blur(var(--blur-md));
+  @include backdrop-filter(blur(var(--blur-md)));
   border-top: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   z-index: var(--hk-z-toolbar);
   flex-shrink: 0;
@@ -149,7 +150,7 @@
   line-height: 1;
   background: rgb(var(--color-surface));
   color: rgb(var(--color-muted));
-  user-select: none;
+  @include user-select(none);
   cursor: pointer;
   transition: background var(--duration-short);
 }
@@ -440,7 +441,7 @@
   padding: 0 var(--space-24);
   height: var(--s-header-height);
   background: rgb(var(--color-surface) / var(--opacity-half));
-  backdrop-filter: blur(var(--blur-md));
+  @include backdrop-filter(blur(var(--blur-md)));
   border-bottom: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   flex-shrink: 0;
 }

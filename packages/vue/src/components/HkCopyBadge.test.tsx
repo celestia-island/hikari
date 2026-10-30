@@ -201,7 +201,7 @@ describe("HkCopyBadge", () => {
     // inherits the no-selection rule, copyable or not.
     const here = dirname(fileURLToPath(import.meta.url));
     const scss = readFileSync(join(here, "HkBadge.scss"), "utf-8");
-    expect(scss).toMatch(/user-select:\s*none/);
+    expect(scss).toMatch(/@include user-select\(\s*none\s*\)/);
   });
 
   it("lands consumer class on the badge element, not the tooltip wrapper", () => {

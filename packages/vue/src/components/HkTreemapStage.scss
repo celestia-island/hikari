@@ -3,6 +3,8 @@
  * reuse HkTreemap's chrome — theme mortar, ellipsis labels), a bottom-right
  * return button, and the collapsible HkMinimap. */
 
+@use "../styles/polyfill" as *;
+
 .hk-treemap-stage {
   position: relative;
   display: flex;
@@ -170,7 +172,7 @@
   background: rgb(var(--color-surface) / 0.82);
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-sm);
-  backdrop-filter: blur(var(--blur-md));
+  @include backdrop-filter(blur(var(--blur-md)));
   box-shadow: var(--shadow-dropdown);
 }
 

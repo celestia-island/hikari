@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-progress-ring {
   display: inline-flex;
   align-items: center;
@@ -42,7 +44,7 @@
   justify-content: center;
   font-weight: 600;
   color: var(--hi-color-text-primary, #1e1e1e);
-  user-select: none;
+  @include user-select(none);
   pointer-events: none;
 }
 

@@ -198,6 +198,6 @@ describe("HkDockBar anchor geometry contract", () => {
       /\.hk-dock-bar\[data-surface="solid"\] \.hk-dock-bar-surface\s*\{[^}]*\}/,
     )?.[0];
     expect(solid, "solid surface rule must exist").toBeTruthy();
-    expect(solid).toContain("backdrop-filter: none");
+    expect(solid).toContain("@include backdrop-filter(none)");
   });
 });

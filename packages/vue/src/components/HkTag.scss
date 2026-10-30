@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-tag {
   display: inline-flex;
   align-items: center;
@@ -9,7 +11,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm, 4px);
   padding: var(--space-2, 2px) var(--space-8, 8px);
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-tag-sm {

@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-selection-waterfall {
   margin-bottom: var(--space-16, 1rem);
 }
@@ -31,7 +33,7 @@
     border-color 200ms ease,
     background 200ms ease,
     box-shadow 200ms ease;
-  user-select: none;
+  @include user-select(none);
   white-space: nowrap;
 
   &:hover {

@@ -200,6 +200,25 @@ const { currentTheme, currentMode, setTheme, setMode, toggleMode } = useTheme();
 
 **Mode is carried by the `data-mode` attribute** (`"light"` / `"dark"`) on `<html>`: `applyTheme()` writes it in the same pass that injects the channel variables, and `theme.scss` derives `color-scheme` from it. Components that need a mode-specific value key off that attribute (`[data-mode="dark"] .my-rule`) rather than `light-dark()` — a stylesheet using that CSS function cannot be safely minified down to older engine floors (the minifier rewrites it into an undeclared custom-property pair), which is why the library's own SCSS avoids it. A host that replaces the preset table wholesale must still set `html[data-mode]` (booting through `initTheme()` does that for you) or the dark arms will not engage.
 
+### Cross-engine prefixes
+
+Older engines need the `-webkit-` spelling of `backdrop-filter`, `user-select` and `mask-image`. hikari authors those prefixes itself, in `styles/polyfill.scss`, instead of leaving them to whichever CSS minifier a consumer runs. A minifier only emits a prefix when its target matrix asks for one, so narrowing a target (pinning `cssTarget` to a support gate, raising a baseline) silently drops a prefix the library still needs — no build error, no diff in the consumer's own dev browser, only a broken old engine in the field. A library ships to hosts it cannot enumerate, so the prefixes belong next to the sheets.
+
+Every hikari sheet that sets one of those properties goes through the partial's mixins:
+
+```scss
+@use "@celestia-island/hikari/styles/polyfill" as *;
+
+.hk-chip {
+  @include backdrop-filter(blur(8px));
+  @include mask-image(linear-gradient(to left, transparent 0, #000 10px));
+}
+```
+
+The mixins are variadic, so the value is emitted verbatim — `blur(4px) saturate(1.2)`, or a comma-separated list of mask layers — and `$important: true` marks both sides. The property list is the partial's `$polyfilled-properties`; `styles/polyfill.contract.test.ts` expands its scans from that list, so a raw declaration in a hikari sheet (including after a nested block's `}`, and matched case-insensitively), an `@include` without the matching `@use`, or a mixin that stopped emitting the `-webkit-`/standard pair fails the suite. Adding a prefix takes three coordinated edits — an entry in that list, a mixin, and a sample value in the guard's `PROBE_VALUES` table (it asserts its keys equal the list, so forgetting either half reds) — and never a hand-written pair at a call site.
+
+Consumers are not required to adopt it. An application owns its build configuration, `cssTarget` included, so its own sheets may keep letting its minifier add the prefixes; importing this partial is allowed (it is a normal `styles/*` entry) but never mandatory. What the partial guarantees is that hikari's shipped sheets carry their prefixes on their own.
+
 ## Documentation
 
 The full documentation lives under `docs/` in 9 languages:

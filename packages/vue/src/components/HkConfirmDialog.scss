@@ -6,6 +6,8 @@
 // buttons share the row equally (no right-clustering of tiny sm buttons),
 // and on touch-width viewports they grow to the 44px thumb standard.
 
+@use "../styles/polyfill" as *;
+
 .hk-confirm-dialog {
   display: flex;
   flex-direction: column;
@@ -17,8 +19,7 @@
 .hk-confirm-dialog-message {
   /* Dialog message = copy-worthy content, same class as the message-box
    * text (L2 selection policy re-enables, 2026-10-29). */
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   margin: 0;
   color: color-mix(in srgb, var(--hi-color-text-secondary) 85%, transparent);
   font-size: var(--text-sm, 0.8125rem);

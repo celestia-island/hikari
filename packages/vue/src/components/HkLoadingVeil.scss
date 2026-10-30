@@ -2,6 +2,9 @@
 // The z-index sits above the toast band (--hk-z-toast) so the veil is
 // the topmost painted surface while active; pointer-events: all on the
 // root swallows every interaction beneath (the blocking contract).
+
+@use "../styles/polyfill" as *;
+
 .hk-loading-veil {
   position: fixed;
   inset: 0;
@@ -12,8 +15,7 @@
   // Semi-transparent backdrop with a slight blur: the page beneath
   // stays readable (orientation) but clearly inactive.
   background: rgb(var(--color-background, 255 255 255) / 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  @include backdrop-filter(blur(6px));
   pointer-events: all;
   animation: hk-loading-veil-in 150ms ease-out;
 

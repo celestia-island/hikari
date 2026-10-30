@@ -303,7 +303,9 @@ describe("menu-item grammar contract", () => {
     expect(body).toMatch(
       /letter-spacing:\s*var\(--hk-menu-section-label-tracking,\s*0\.02em\)/,
     );
-    expect(body).toMatch(/user-select:\s*none/);
+    // Authored through styles/polyfill.scss (its mixin owns the
+    // -webkit-/standard pair).
+    expect(body).toMatch(/@include user-select\(\s*none\s*\)/);
   });
 
   it("hangs the caption's inline inset just left of the row content edge", () => {

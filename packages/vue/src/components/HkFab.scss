@@ -2,6 +2,9 @@
 // Attribute-driven positioning: data-positioning (absolute|fixed) +
 // data-corner select the anchored insets; --hk-fab-offset-* extends the
 // safe-area-aware base per instance (set from offsetX / offsetY).
+
+@use "../styles/polyfill" as *;
+
 .hk-fab {
   position: absolute;
   z-index: var(--hk-z-fab);
@@ -87,7 +90,7 @@ $sizes: (sm: 34px, md: 42px, lg: 50px);
   color: var(--hi-color-text-secondary, #666666);
   background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 78%, transparent);
   border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100,100,100,0.12)) 25%, transparent);
-  backdrop-filter: blur(var(--blur-xs, 4px)); // chip language shared with autotag pills
+  @include backdrop-filter(blur(var(--blur-xs, 4px))); // chip language shared with autotag pills
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
 
   &:hover:not(:disabled) { background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 92%, transparent); }
@@ -134,7 +137,7 @@ $sizes: (sm: 34px, md: 42px, lg: 50px);
   border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100,100,100,0.12)) 25%, transparent);
   border-radius: var(--radius-full, 9999px);
   cursor: pointer;
-  backdrop-filter: blur(var(--blur-xs, 4px));
+  @include backdrop-filter(blur(var(--blur-xs, 4px)));
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   opacity: 0;
   transform: scale(0.4);

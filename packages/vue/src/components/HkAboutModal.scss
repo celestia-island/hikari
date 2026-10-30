@@ -1,5 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
 @use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
 
 .s-about-modal {
   position: relative;
@@ -64,7 +65,7 @@
   width: 3.75rem;
   height: 3.75rem;
   object-fit: contain;
-  user-select: none;
+  @include user-select(none);
 }
 
 .s-about-modal-logo {

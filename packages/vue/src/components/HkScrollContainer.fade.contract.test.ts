@@ -24,12 +24,17 @@ const sheet = readFileSync(join(here, "HkScrollContainer.scss"), "utf-8");
 
 describe("scroll fade composition contract", () => {
   it("declares one composed mask on the viewport (no per-axis overrides)", () => {
-    const declarations = sheet.match(/^\s*-?(?:webkit-)?mask-image:/gm) ?? [];
+    // Feature 2026-10-31: a `mask-image` is authored as
+    // `@include mask-image(...)` (styles/polyfill.scss), so the include —
+    // not the raw declaration — is what a sheet may carry. The mixin
+    // itself owns the -webkit-/standard pair.
+    const declarations = sheet.match(/^\s*@include mask-image\(/gm) ?? [];
     // Exactly THREE pairs live in the sheet, all accounted for: the
     // composed two-axis block on the viewport, and one feather pair per
     // selection-hint painter (the 2026-10-30 inline falloff). Anything
     // else is per-axis mask drift.
-    expect(declarations.length).toBe(6);
+    expect(declarations.length, "one include per mask pair, no per-axis drift").toBe(3);
+    expect(sheet).not.toMatch(/^\s*-webkit-mask-image:/m);
     expect(sheet).toContain("mask-composite: intersect");
     expect(sheet).toContain("-webkit-mask-composite: source-in");
   });

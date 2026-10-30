@@ -74,11 +74,13 @@ describe("sheet family morph-performance contract", () => {
   });
 
   it("never backdrop-filters the docked modal sheet or its scrim", () => {
+    // Prefix pairs are authored through styles/polyfill.scss, so the
+    // sheet carries the include (the mixin emits both spellings).
     expect(mobileModal).toMatch(
-      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-modal-blur-mobile, none\);$/m,
+      /^[ \t]*@include backdrop-filter\(var\(--hk-modal-blur-mobile, none\)\);$/m,
     );
     expect(mobileModal).toMatch(
-      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-modal-overlay-blur-mobile, none\);$/m,
+      /^[ \t]*@include backdrop-filter\(var\(--hk-modal-overlay-blur-mobile, none\)\);$/m,
     );
   });
 
@@ -103,16 +105,16 @@ describe("sheet family morph-performance contract", () => {
     // must not return (it escaped the mobile guard entirely).
     const panel = drawer.match(/\.hk-drawer-panel\s*{[^}]*}/)?.[0] ?? "";
     expect(panel).toMatch(
-      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-drawer-blur, blur\(12px\)\);$/m,
+      /^[ \t]*@include backdrop-filter\(var\(--hk-drawer-blur, blur\(12px\)\)\);$/m,
     );
     expect(panel).toMatch(/^[ \t]*contain:[ \t]*layout style;$/m);
 
     const mobile = drawer.slice(drawer.indexOf("@media (max-width: 767px)"));
     expect(mobile).toMatch(
-      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-drawer-blur-mobile, none\);$/m,
+      /^[ \t]*@include backdrop-filter\(var\(--hk-drawer-blur-mobile, none\)\);$/m,
     );
     expect(mobile).toMatch(
-      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-drawer-overlay-blur-mobile, none\);$/m,
+      /^[ \t]*@include backdrop-filter\(var\(--hk-drawer-overlay-blur-mobile, none\)\);$/m,
     );
   });
 
@@ -130,7 +132,7 @@ describe("sheet family morph-performance contract", () => {
   it("guards the popover sheet variant the same way", () => {
     const sheet = popover.match(/\.hk-popover-panel\.hk-is-sheet\s*{[\s\S]*?^}/m)?.[0] ?? "";
     expect(sheet).toMatch(
-      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-popover-blur-mobile, none\);$/m,
+      /^[ \t]*@include backdrop-filter\(var\(--hk-popover-blur-mobile, none\)\);$/m,
     );
     expect(sheet).toMatch(/^[ \t]*contain:[ \t]*layout style;$/m);
   });

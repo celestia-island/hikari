@@ -1,5 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
 @use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
 
 .hk-zoom-toolbar {
   display: flex;
@@ -13,7 +14,7 @@
   background: rgb(var(--color-surface) / 85%);
   border: 1px solid rgb(var(--color-border) / 8%);
   padding: var(--space-2) var(--space-4);
-  backdrop-filter: blur(var(--blur-sm));
+  @include backdrop-filter(blur(var(--blur-sm)));
 }
 
 .hk-zoom-btn.hk-btn {
@@ -28,7 +29,7 @@
   color: rgb(var(--color-muted));
   min-width: var(--space-32);
   text-align: center;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-zoom-reset-btn {

@@ -12,6 +12,9 @@
    retunes (or zeroes) it on ANY ancestor up to the rail — or straight
    on the body for a one-off. Keep the fallback in step with the token
    it mirrors. */
+
+@use "../styles/polyfill" as *;
+
 .hk-sidebar {
   --hk-sidebar-scroll-tail: var(--space-24, 1.5rem);
 
@@ -25,7 +28,7 @@
   flex-direction: column;
   height: 100%;
   background: var(--hk-sidebar-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
-  backdrop-filter: blur(var(--blur-sm, 8px));
+  @include backdrop-filter(blur(var(--blur-sm, 8px)));
   /* Logical edge: the border rides the content-facing side in either
    * direction (LTR sidebar docks left, RTL docks right). */
   border-inline-end: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));

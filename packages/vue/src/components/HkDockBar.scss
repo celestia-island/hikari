@@ -5,6 +5,8 @@
  * together.
  */
 
+@use "../styles/polyfill" as *;
+
 .hk-dock-bar {
   /* Transparent anchor box — never intercepts canvas gestures around
    * the docked surface. */
@@ -137,12 +139,12 @@
 
 /* Glass surface (default) — blur the page canvas behind the dock. */
 .hk-dock-bar[data-surface="glass"] .hk-dock-bar-surface {
-  backdrop-filter: blur(var(--blur-lg));
+  @include backdrop-filter(blur(var(--blur-lg)));
 }
 
 /* Solid surface — no blur, for moving 3D canvases (per-frame backdrop
  * re-sampling over a live WebGL scene is expensive; the surface must
  * stay opaque anyway for contrast over the scene). */
 .hk-dock-bar[data-surface="solid"] .hk-dock-bar-surface {
-  backdrop-filter: none;
+  @include backdrop-filter(none);
 }

@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-media-slider {
   position: relative;
   height: 6px;
@@ -5,7 +7,7 @@
   background: rgb(var(--color-muted) / 22%);
   cursor: pointer;
   touch-action: none;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-media-slider[data-size="sm"] {

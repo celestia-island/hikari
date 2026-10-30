@@ -1,12 +1,12 @@
 // Use theme variables with namespace to avoid conflicts
 @use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
 
 .hk-markdown {
   /* Rendered prose is content by definition — the whole subtree selects
    * again under the L2 selection policy (2026-10-29); its code blocks
    * are covered twice over (whitelist tier 3). */
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   font-size: var(--text-base);
   line-height: 1.7;
   color: var(--hi-color-text-primary, #1e1e1e);
@@ -204,6 +204,6 @@
   align-items: center;
   justify-content: center;
   background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 70%, transparent);
-  backdrop-filter: blur(4px);
+  @include backdrop-filter(blur(4px));
   z-index: 10;
 }

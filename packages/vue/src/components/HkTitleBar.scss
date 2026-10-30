@@ -5,6 +5,8 @@
 // Electron both honor it); interactive children opt out with no-drag.
 // Text selection is chrome-disabled across the whole bar.
 
+@use "../styles/polyfill" as *;
+
 .hk-titlebar {
   --hk-tb-height: 32px;
   --hk-tb-bg: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 80%, transparent);
@@ -26,10 +28,9 @@
   display: flex;
   align-items: center;
   z-index: var(--hk-z-titlebar);
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
   background: var(--hk-tb-bg);
-  backdrop-filter: blur(var(--blur-md, 16px));
+  @include backdrop-filter(blur(var(--blur-md, 16px)));
   border-bottom: 1px solid var(--hk-tb-border);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-app-region: drag;

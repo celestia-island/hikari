@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-toast-container {
   position: fixed;
   top: 4rem;
@@ -34,8 +36,8 @@
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
-  backdrop-filter: blur(12px);
-  user-select: none;
+  @include backdrop-filter(blur(12px));
+  @include user-select(none);
 }
 
 .hk-toast-body {
@@ -59,8 +61,7 @@
    * failing app — not chrome. Re-enable inside the denied toast shell
    * (L2 selection policy, 2026-10-29): the shell keeps its none, the
    * message subtree selects again. */
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   flex: 1;
   min-width: 0;
   display: -webkit-box;

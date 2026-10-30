@@ -44,10 +44,10 @@ describe("HkModalBreadcrumb blur contract", () => {
   it("keeps the base blur host-tunable through the family knob", () => {
     const rule = src.match(/\.hk-modal-breadcrumb\s*\{[^}]*\}/)![0]!;
     expect(rule).toContain(
-      "backdrop-filter: var(--hk-modal-breadcrumb-blur, blur(var(--blur-md)));",
+      "@include backdrop-filter(var(--hk-modal-breadcrumb-blur, blur(var(--blur-md))));",
     );
     // No naked blur declaration left on the strip itself.
-    expect(rule).not.toMatch(/backdrop-filter:\s*blur\(/);
+    expect(rule).not.toMatch(/(?:@include backdrop-filter\(|backdrop-filter:\s*)blur\(/);
   });
 
   it("stands the blur down on ≤767px by default", () => {
@@ -55,7 +55,7 @@ describe("HkModalBreadcrumb blur contract", () => {
     expect(blocks.length).toBe(1);
     expect(blocks[0]).toContain(".hk-modal-breadcrumb");
     expect(blocks[0]).toContain(
-      "backdrop-filter: var(--hk-modal-breadcrumb-blur-mobile, none);",
+      "@include backdrop-filter(var(--hk-modal-breadcrumb-blur-mobile, none));",
     );
   });
 });

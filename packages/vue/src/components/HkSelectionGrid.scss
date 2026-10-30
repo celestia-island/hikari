@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-selection-grid {
   margin-bottom: var(--space-16, 1rem);
 }
@@ -63,7 +65,7 @@
     border-color 200ms ease,
     background 200ms ease,
     box-shadow 200ms ease;
-  user-select: none;
+  @include user-select(none);
 
   &:hover {
     border-color: var(--hi-color-primary, #7aa2f7);

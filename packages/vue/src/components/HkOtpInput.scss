@@ -1,4 +1,5 @@
 @use "../tokens";
+@use "../styles/polyfill" as *;
 
 /* ── HkOtpInput — one cell per character ─────────────────────────────
  * A thin row of `.hk-otp-cell` inputs, styled from the same shell
@@ -124,7 +125,7 @@
   /* `text` (not `none`): a drag inside a cell still selects its glyph for
    * the keyboard-replace path, while a stray triple-click selection never
    * bleeds across the visual gaps the cells do not actually have. */
-  user-select: text;
+  @include user-select(text);
 
   /* `:not(:focus)` is load-bearing, not decoration: the hover selector
    * weighs (0,4,0) against `:focus`'s (0,2,0), so without the exclusion a

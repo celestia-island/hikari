@@ -1,4 +1,5 @@
 @use "../tokens";
+@use "../styles/polyfill" as *;
 
 /* HkCard — canonical surface card. Hover emphasis is border-color only
    (the base elevation shadow is already at its resting value). No
@@ -7,7 +8,7 @@
   display: block;
   overflow: hidden;
   background: color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent);
-  backdrop-filter: blur(var(--blur-md));
+  @include backdrop-filter(blur(var(--blur-md)));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-elevated);

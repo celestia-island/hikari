@@ -1,6 +1,9 @@
 /* Track host for the wrapper's horizontal overlay rail — the wrapper is
    the component root, so its DOM parent is consumer markup the rail
    must never span. */
+
+@use "../styles/polyfill" as *;
+
 .hk-table-host {
   position: relative;
 }
@@ -44,7 +47,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-table-header-sortable {
@@ -253,8 +256,7 @@
 /* Text under a live drag must not select (the press starts on the grip,
    but a move across cells can start a native selection). */
 .hk-table-draggable .hk-table-row[data-dragging] .hk-table-cell {
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
 }
 
 /* The lifted row the pointer carries: a detached, semi-transparent clone
@@ -333,7 +335,7 @@
   display: inline-flex;
   align-items: center;
   cursor: pointer;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-table-checkbox-input {
@@ -409,8 +411,7 @@
    consumer that opts out gets plain selectable text back wholesale. */
 .hk-table[data-copy-cells] {
   .hk-table-cell {
-    user-select: none;
-    -webkit-user-select: none;
+    @include user-select(none);
     cursor: copy;
   }
 
@@ -426,8 +427,7 @@
  * the copy layer, so "wholesale" is a per-cell mirror of the default. */
 .hk-table:not([data-copy-cells]) {
   .hk-table-cell {
-    -webkit-user-select: text;
-    user-select: text;
+    @include user-select(text);
   }
 }
 

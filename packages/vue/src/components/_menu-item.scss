@@ -56,6 +56,8 @@
 
 /* ── Tokens ─────────────────────────────────────────────────────────── */
 
+@use "../styles/polyfill" as *;
+
 @mixin item-tokens {
   --hk-menu-item-min-h: 34px;
   --hk-menu-item-pad-x: 12px;
@@ -182,8 +184,7 @@
   text-align: start;
   cursor: pointer;
   appearance: none;
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
   /* Ride the canonical reset policy: this component sheet is also exported
      standalone, so it keeps the token fallback (transparent) and honours the
      document-level native escape hatch. */
@@ -307,7 +308,7 @@
   font-weight: var(--hk-menu-section-label-weight, 600);
   letter-spacing: var(--hk-menu-section-label-tracking, 0.02em);
   color: var(--hk-menu-section-label-color, rgb(var(--color-muted)));
-  user-select: none;
+  @include user-select(none);
 }
 
 /* ── Section wrapper ─────────────────────────────────────────────────

@@ -4,6 +4,7 @@
 // by the consumer's scroll container).
 
 @use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
 
 .hk-diff-viewer {
   border: 1px solid var(--hi-color-border, #646464);
@@ -57,11 +58,11 @@
   text-align: end;
   color: var(--hi-color-text-tertiary, #8b949e);
   opacity: 0.75;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-diff-viewer__sign {
-  user-select: none;
+  @include user-select(none);
   text-align: center;
   font-weight: 600;
 }
@@ -69,8 +70,7 @@
 .hk-diff-viewer__code {
   /* The diff body is content (review text users copy into replies);
    * the line-number gutter above and the sign column stay denied. */
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   padding-inline-end: 1ch;
   min-width: 0;
 }
@@ -93,7 +93,7 @@
   font: inherit;
   text-align: start;
   cursor: pointer;
-  user-select: none;
+  @include user-select(none);
 
   &:hover {
     color: var(--hi-color-text-primary, #1e1e1e);
@@ -153,7 +153,7 @@
   color: var(--hi-color-text-tertiary, #8b949e);
   font: inherit;
   cursor: pointer;
-  user-select: none;
+  @include user-select(none);
 
   &:hover:not(:disabled) {
     background: rgb(var(--color-primary) / 10%);

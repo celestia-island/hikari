@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-minimap {
   position: absolute;
   bottom: var(--space-12);
@@ -9,7 +11,7 @@
   background: rgb(var(--color-surface) / 0.82);
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-sm);
-  backdrop-filter: blur(var(--blur-md));
+  @include backdrop-filter(blur(var(--blur-md)));
   // The root is a drag-to-pan surface (no click action): grab cursor, and
   // the drag state tints the border like hover escalates it (HkBoard's
   // draggable grab/grabbing precedent).
@@ -111,7 +113,7 @@
   color: rgb(var(--color-muted));
   min-width: 30px;
   text-align: center;
-  user-select: none;
+  @include user-select(none);
   transition: color 0.1s ease;
 
   &:hover {
@@ -132,7 +134,7 @@
   width: 132px;
   padding: 8px 10px 6px;
   background: rgb(var(--color-surface));
-  backdrop-filter: blur(var(--blur-lg)) saturate(1.2);
+  @include backdrop-filter(blur(var(--blur-lg)) saturate(1.2));
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-dropdown);

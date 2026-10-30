@@ -29,9 +29,11 @@
 // stroke theme (Endfield) publishes a transparent background, a snap
 // duration and an accent glyph color instead.
 // ------
+
+@use "../styles/polyfill" as *;
+
 .hk-icon-button.hk-window-close {
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
   transition:
     background
       var(--hk-func-icon-hover-duration, 0.15s)

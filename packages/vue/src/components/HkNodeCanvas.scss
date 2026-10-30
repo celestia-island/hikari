@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-node-canvas {
   position: relative;
   width: 100%;
@@ -102,6 +104,6 @@
    properties on those elements — see bindContextMenu's doc note. */
 .hk-node-canvas-edge-hit {
   cursor: pointer;
-  user-select: none;
+  @include user-select(none);
   -webkit-touch-callout: none;
 }

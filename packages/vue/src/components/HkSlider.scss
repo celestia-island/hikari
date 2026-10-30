@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-slider {
   position: relative;
   // Comfortable pointer/touch hit area; the visual track is drawn inside
@@ -5,7 +7,7 @@
   height: 18px;
   cursor: pointer;
   touch-action: none;
-  user-select: none;
+  @include user-select(none);
   outline: none;
 }
 

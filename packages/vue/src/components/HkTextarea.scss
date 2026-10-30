@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-textarea {
   display: block;
   width: 100%;
@@ -65,7 +67,7 @@
   margin-top: var(--space-4, 0.25rem);
   font-size: var(--text-xs, 0.75rem);
   color: var(--hi-color-muted);
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-textarea-count-over {

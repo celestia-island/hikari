@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-switch {
   display: inline-flex;
   align-items: center;
@@ -8,7 +10,7 @@
   vertical-align: middle;
   gap: var(--space-8, 0.5rem);
   cursor: pointer;
-  user-select: none;
+  @include user-select(none);
 
   &[data-disabled] {
     opacity: 0.5;

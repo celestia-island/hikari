@@ -17,6 +17,8 @@
 // every wheel/pointer gesture dead because their surface had no area).
 // ------
 
+@use "../styles/polyfill" as *;
+
 .hk-modal-content.hk-image-lightbox {
   width: min(96vw, 80rem);
   height: min(90vh, 56rem);
@@ -101,7 +103,7 @@
   top: var(--space-12, 0.75rem);
   right: var(--space-12, 0.75rem);
   z-index: 2;
-  backdrop-filter: blur(6px);
+  @include backdrop-filter(blur(6px));
 
   &:hover,
   &:focus-visible {

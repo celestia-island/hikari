@@ -8,6 +8,8 @@
  * stretching the panel). Chips and selected rows are reorderable; the
  * drag states (`data-dragging` / `data-drop`) live at the bottom. */
 
+@use "../styles/polyfill" as *;
+
 .hk-tag-input-wrapper {
   display: block;
   width: 100%;
@@ -87,8 +89,7 @@
    * touch that starts scrolling vertically belongs to the page (the
    * browser takes the gesture back with a pointercancel; a horizontal
    * drag is ours — see usePointerReorder). */
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
   touch-action: pan-y;
 }
 
@@ -107,8 +108,7 @@
 .hk-tag-input-box[data-disabled] .hk-tag-input-tag {
   cursor: default;
   touch-action: auto;
-  user-select: text;
-  -webkit-user-select: text;
+  @include user-select(text);
 }
 
 /* ── inline typing input / placeholder ────────────────────────────── */
@@ -404,8 +404,7 @@
   opacity: 0.6;
   cursor: grab;
   touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
   transition: opacity 0.12s ease, color 0.12s ease;
 
   &:active {

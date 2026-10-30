@@ -3,12 +3,13 @@
  * stage and the direction-aware view transition live in HkPickerPane.scss. */
 
 @use "./HkPickerPane" as picker-pane;
+@use "../styles/polyfill" as *;
 
 .hk-dtp {
   display: flex;
   flex-direction: column;
   gap: var(--space-8, 8px);
-  user-select: none;
+  @include user-select(none);
   /* Fill the host (inline sheets/dialogs) instead of collapsing to the
    * grid's min-content width — a bottom-sheet calendar should use the
    * space it is given, not shrink to a cramped block. */

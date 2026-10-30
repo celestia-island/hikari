@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-color-picker {
   display: inline-flex;
   min-width: 0;
@@ -88,7 +90,7 @@
 .hk-color-picker-panel {
   padding: var(--space-12);
   background: rgb(var(--color-surface));
-  backdrop-filter: blur(var(--blur-lg));
+  @include backdrop-filter(blur(var(--blur-lg)));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-modal);
@@ -134,7 +136,7 @@
   flex: 1;
   height: 14px;
   touch-action: none;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-color-picker-slider-track {
@@ -245,7 +247,7 @@
   font-size: var(--text-xs);
   font-weight: 600;
   color: rgb(var(--color-muted));
-  user-select: none;
+  @include user-select(none);
   pointer-events: none;
   line-height: 1;
 }

@@ -14,9 +14,12 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
+// `backdrop-filter` is matched without its colon because the blur is
+// authored as `@include backdrop-filter(...)` (styles/polyfill.scss) —
+// the marker must see both the include and any raw declaration.
 const SURFACE_PROPERTIES = [
   "background:",
-  "backdrop-filter:",
+  "backdrop-filter",
   "border:",
   "border-radius:",
 ] as const;
@@ -56,7 +59,7 @@ describe("HkEmptyState surface contract", () => {
       "",
     );
     expect(withoutBoxed).not.toContain("background:");
-    expect(withoutBoxed).not.toContain("backdrop-filter:");
+    expect(withoutBoxed).not.toContain("backdrop-filter");
     expect(withoutBoxed).not.toContain("border: 1px");
     expect(withoutBoxed).not.toContain("border-radius:");
   });

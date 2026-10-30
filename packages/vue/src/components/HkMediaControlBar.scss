@@ -1,10 +1,12 @@
+@use "../styles/polyfill" as *;
+
 .hk-media-controls {
   display: flex;
   align-items: center;
   gap: var(--space-8);
   padding: var(--space-6) var(--space-10);
   background: rgb(var(--color-surface) / 0.85);
-  backdrop-filter: blur(var(--blur-sm));
+  @include backdrop-filter(blur(var(--blur-sm)));
   border-top: 1px solid var(--border-faint);
   color: rgb(var(--color-text));
 }
@@ -34,7 +36,7 @@
   font-variant-numeric: tabular-nums;
   color: rgb(var(--color-muted));
   white-space: nowrap;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-media-volume {

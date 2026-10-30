@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-image-viewer {
   position: relative;
   width: 100%;
@@ -7,7 +9,7 @@
   background: rgb(0 0 0 / 45%);
   border-radius: var(--radius-sm);
   touch-action: none;
-  user-select: none;
+  @include user-select(none);
 }
 
 // The transform glide sits behind the .is-animatable gate the component

@@ -6,6 +6,8 @@
 // with a button row appended. Pointer events pass through the column
 // and re-enable on the per-card slot, exactly like toasts.
 
+@use "../styles/polyfill" as *;
+
 .hk-blocking-toast-container {
   position: fixed;
   top: 4rem;
@@ -38,7 +40,7 @@
   font-size: var(--text-base, 0.875rem);
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(12px);
+  @include backdrop-filter(blur(12px));
 }
 
 .hk-blocking-toast-icon {
@@ -61,14 +63,12 @@
   /* Content, not chrome — copy-worthy detail under the L2 selection
    * policy (2026-10-29): the card shell denies, these two text blocks
    * select again. */
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   font-weight: 700;
 }
 
 .hk-blocking-toast-message {
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 5;
@@ -163,7 +163,7 @@
 .hk-blocking-toast-actions .hk-btn-secondary {
   background: transparent;
   border-color: color-mix(in srgb, currentColor 45%, transparent);
-  backdrop-filter: none;
+  @include backdrop-filter(none);
   color: inherit;
 }
 

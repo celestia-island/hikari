@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-draggable-grid {
   display: flex;
   flex-direction: column;
@@ -33,8 +35,7 @@
     border-color 150ms ease,
     background 150ms ease,
     box-shadow 150ms ease;
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
   transform-origin: center;
 
   &:hover {
@@ -131,7 +132,7 @@
     0 2px 6px rgb(0 0 0 / 18%);
   border-radius: var(--radius-sm, 4px);
   background: var(--hi-color-bg-elevated, #161b22);
-  backdrop-filter: blur(2px);
+  @include backdrop-filter(blur(2px));
   pointer-events: none;
   /* Drag ghost: above page chrome (--z-sidebar 900) but below every
      popup band (overlay 1000 < dropdown 2000 < tooltip 3000 < toast 4000)

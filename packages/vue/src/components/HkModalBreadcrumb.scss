@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-modal-breadcrumb {
   position: fixed;
   left: 50%;
@@ -23,9 +25,9 @@
      behind it resizes or swaps content. On the phone GPU that re-filter
      read as a one-shot flash on every wizard step change (2026-09-21
      chest report, round 5). */
-  backdrop-filter: var(--hk-modal-breadcrumb-blur, blur(var(--blur-md)));
+  @include backdrop-filter(var(--hk-modal-breadcrumb-blur, blur(var(--blur-md))));
   pointer-events: none;
-  user-select: none;
+  @include user-select(none);
   animation: hk-modal-breadcrumb-in var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
   /* Never wider than the viewport (minus the shared gutter): the strip is
      centred on the app header, so a stack whose labels outgrow the screen
@@ -201,7 +203,7 @@
   line-height: 1.5;
   color: var(--hi-color-text-primary, rgb(var(--color-text, 30 30 30)));
   overflow-wrap: anywhere;
-  user-select: text;
+  @include user-select(text);
 }
 
 /* The strip's own ruler: every layer laid out at its natural width so the
@@ -262,6 +264,6 @@
  * drawer and popover sheets already expose). */
 @media (max-width: 767px) {
   .hk-modal-breadcrumb {
-    backdrop-filter: var(--hk-modal-breadcrumb-blur-mobile, none);
+    @include backdrop-filter(var(--hk-modal-breadcrumb-blur-mobile, none));
   }
 }

@@ -42,9 +42,10 @@
  * root; marking content with `.hk-selectable` is the supported route.
  */
 
+@use "./polyfill" as *;
+
 html {
-  -webkit-user-select: none;
-  user-select: none;
+  @include user-select(none);
 }
 
 input,
@@ -54,6 +55,5 @@ select,
  * so contenteditable="FALSE" (valid, means false) must be excluded too. */
 [contenteditable]:not([contenteditable='false' i]),
 .hk-selectable {
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
 }

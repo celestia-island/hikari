@@ -1,5 +1,6 @@
 @use "./menu-item" as mi;
 @use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
 
 .hk-popover-backdrop {
   position: fixed;
@@ -69,7 +70,7 @@
 .hii-dropdown-content,
 .hk-popover-panel.hii-dropdown-content {
   background: var(--hk-popover-bg, rgb(var(--color-surface)));
-  backdrop-filter: var(--hk-popover-blur, blur(var(--blur-lg)) saturate(1.2));
+  @include backdrop-filter(var(--hk-popover-blur, blur(var(--blur-lg)) saturate(1.2)));
   border: 1px solid rgb(var(--color-border) / 20%);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-dropdown);
@@ -119,7 +120,7 @@
    * family guard as the modal/select sheets, 2026-09-15). Hosts
    * restore a finish with --hk-popover-blur-mobile. Containment
    * scopes the sheet's layout/style invalidations away from the page. */
-  backdrop-filter: var(--hk-popover-blur-mobile, none);
+  @include backdrop-filter(var(--hk-popover-blur-mobile, none));
   contain: layout style;
   /* The base .hk-popover-panel max-width clamp (calc(100vw - 16px), the
    * anchored panel's ratchet guard) must NOT leak into the sheet: with
@@ -202,8 +203,7 @@
   justify-content: center;
   // Window chrome, not content — a long-press must never start a text
   // selection over the drag handle.
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
 
   &::before {
     content: "";
@@ -259,8 +259,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   color: rgb(var(--color-muted, 108 108 108));
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
 }
 
 .hk-popover-sheet-close {

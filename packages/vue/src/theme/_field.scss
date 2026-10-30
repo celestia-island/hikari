@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 @mixin field-wrapper {
   display: block;
   width: 100%;
@@ -64,7 +66,7 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  user-select: none;
+  @include user-select(none);
   font-size: var(--text-base);
   padding: var(--space-8) var(--space-12);
   color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));

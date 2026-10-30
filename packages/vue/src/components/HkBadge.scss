@@ -9,6 +9,7 @@
 
 // Use theme variables with namespace to avoid conflicts
 @use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
 
 .hk-badge {
   --hk-badge-text: inherit;
@@ -30,8 +31,7 @@
   /* Tags are labels, not prose: dragging across a row of pills must never
      start a text selection (the workspace tag contract makes HkCopyBadge
      the copy path instead). */
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
 }
 
 /* ---------- size ---------- */

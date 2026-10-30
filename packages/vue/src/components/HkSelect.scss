@@ -1,6 +1,7 @@
 @use "../tokens";
 @use "./menu-item" as mi;
 @use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
 
 /* HkSelect — popup select component */
 
@@ -239,7 +240,7 @@
   border-radius: var(--radius-md);
   overflow-y: auto;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
-  backdrop-filter: blur(var(--blur-md));
+  @include backdrop-filter(blur(var(--blur-md)));
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-dropdown);
 
@@ -363,8 +364,7 @@
   justify-content: center;
   /* Window chrome — never a text-selection start (matches the popover
    * sheet grabber). */
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
 
   &::before {
     content: "";
@@ -414,8 +414,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   color: rgb(var(--color-muted));
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
 }
 
 /* Track host for the sheet list's overlay scrollbar — owns the flex

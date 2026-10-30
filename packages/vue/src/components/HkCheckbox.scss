@@ -2,6 +2,8 @@
  * HkCheckbox / HkRadio — unified selection control.
  */
 
+@use "../styles/polyfill" as *;
+
 .hk-checkbox {
   display: inline-flex;
   align-items: center;
@@ -12,7 +14,7 @@
   vertical-align: middle;
   gap: var(--space-8, 0.5rem);
   cursor: pointer;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-checkbox[data-disabled] {

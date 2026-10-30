@@ -1,4 +1,5 @@
 @use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
 
 .hk-drawer-overlay {
   /* Overlay-root contract: #hk-overlay-root fences pointer events
@@ -8,7 +9,7 @@
   position: fixed;
   inset: 0;
   background: var(--hk-drawer-overlay-bg, rgba(0, 0, 0, 0.45));
-  backdrop-filter: var(--hk-drawer-overlay-blur, blur(6px));
+  @include backdrop-filter(var(--hk-drawer-overlay-blur, blur(6px)));
 }
 
 // Overlay enter/leave — fade-only classes from the shared window-layer
@@ -33,7 +34,7 @@
   // lag shows as patchy flicker along the moving edge. The mobile
   // guard below turns it off ≤767px; hosts restore a finish per
   // surface with --hk-drawer-blur / --hk-drawer-blur-mobile.
-  backdrop-filter: var(--hk-drawer-blur, blur(12px));
+  @include backdrop-filter(var(--hk-drawer-blur, blur(12px)));
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
   outline: none;
   // Scope layout/style invalidation to the drawer subtree — the page
@@ -226,11 +227,11 @@
   // family guard as the modal/select sheets, 2026-09-15 chest report).
   // The scrim's dim alone reads correctly there.
   .hk-drawer-overlay {
-    backdrop-filter: var(--hk-drawer-overlay-blur-mobile, none);
+    @include backdrop-filter(var(--hk-drawer-overlay-blur-mobile, none));
   }
 
   .hk-drawer-panel {
-    backdrop-filter: var(--hk-drawer-blur-mobile, none);
+    @include backdrop-filter(var(--hk-drawer-blur-mobile, none));
   }
 
   .hk-drawer-bottom {

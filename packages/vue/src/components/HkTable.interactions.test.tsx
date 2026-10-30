@@ -294,8 +294,10 @@ describe("HkTable interaction stylesheet", () => {
   it("scopes the selection kill + copy cursor under data-copy-cells", () => {
     expect(scss).toContain(".hk-table[data-copy-cells]");
     const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));
-    expect(block).toContain("user-select: none");
-    expect(block).toContain("-webkit-user-select: none");
+    expect(block).toContain("@include user-select(none)");
+    // The -webkit-/standard pair comes from styles/polyfill.scss (guarded
+    // by its contract test) — a hand-written pair here would be drift.
+    expect(block).not.toMatch(/(?:^|\n)\s*-webkit-user-select:/);
     expect(block).toContain("cursor: copy");
   });
 

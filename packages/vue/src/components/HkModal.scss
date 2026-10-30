@@ -7,6 +7,7 @@
 // use the --hk-modal-* namespace.
 
 @use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
 
 // ------
 // Root wrapper — positioned via popup-manager z-index
@@ -31,7 +32,7 @@
   // handle hasn't resolved yet — zIndex briefly starts at 0).
   z-index: 0;
   background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
-  backdrop-filter: var(--hk-modal-overlay-blur, blur(3px));
+  @include backdrop-filter(var(--hk-modal-overlay-blur, blur(3px)));
   pointer-events: auto;
 }
 
@@ -80,7 +81,7 @@
     max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
     clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
-  backdrop-filter: var(--hk-modal-blur, none);
+  @include backdrop-filter(var(--hk-modal-blur, none));
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(100,100,100,0.08)));
   border-radius: var(--hk-modal-radius, var(--radius-lg, 12px));
   box-shadow:
@@ -238,8 +239,7 @@
   text-overflow: ellipsis;
   // Window chrome, not content — titles never participate in text
   // selection (2026-09-04 user report alongside the sheet chrome pass).
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
 }
 
 // Legacy placement hook — the chrome (box, radius, colors, hover tint,
@@ -385,8 +385,7 @@
   bottom: var(--space-10);
   z-index: 6;
   pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
+  @include user-select(none);
   padding: var(--space-2) var(--space-8);
   font-size: var(--text-2xs);
   letter-spacing: 0.04em;
@@ -394,7 +393,7 @@
   background: color-mix(in srgb, var(--hi-color-surface, rgba(255,255,255,0.95)) 78%, transparent);
   border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100,100,100,0.08)) 12%, transparent);
   border-radius: var(--radius-full, 9999px);
-  backdrop-filter: blur(4px);
+  @include backdrop-filter(blur(4px));
   opacity: 0.85;
 }
 
@@ -471,7 +470,7 @@
   // the finish per surface with --hk-modal-blur-mobile /
   // --hk-modal-bg-mobile.
   .hk-modal-overlay {
-    backdrop-filter: var(--hk-modal-overlay-blur-mobile, none);
+    @include backdrop-filter(var(--hk-modal-overlay-blur-mobile, none));
   }
 
   // Height-morph window (round 20): while the sheet's height animates
@@ -483,7 +482,7 @@
   // the window (its 95%-opaque background keeps it visually
   // indistinguishable).
   .hk-modal-content[data-hk-morphing] .hk-scroll-pin {
-    backdrop-filter: none;
+    @include backdrop-filter(none);
   }
 
   .hk-modal-content {
@@ -544,7 +543,7 @@
     // containment keeps those invalidations — and the sheet's own —
     // from cascading into each other.
     contain: layout style;
-    backdrop-filter: var(--hk-modal-blur-mobile, none);
+    @include backdrop-filter(var(--hk-modal-blur-mobile, none));
     background: var(
       --hk-modal-bg-mobile,
       var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)))
@@ -673,7 +672,7 @@
   .hk-modal-content[data-draggable] .hk-modal-header {
     cursor: grab;
     touch-action: none;
-    user-select: none;
+    @include user-select(none);
   }
   .hk-modal-content[data-draggable] .hk-modal-header:active {
     cursor: grabbing;

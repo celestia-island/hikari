@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 .hk-alert {
   display: flex;
   align-items: flex-start;
@@ -96,8 +98,7 @@
   /* Alert body = the same copy-this-error-detail content class as the
    * toast message and message-box text (L2 selection policy re-enables,
    * 2026-10-29); the title above stays chrome. */
-  -webkit-user-select: text;
-  user-select: text;
+  @include user-select(text);
   margin: 0;
   line-height: 1.5;
   color: color-mix(in srgb, var(--hi-color-text-secondary, #666666) 85%, transparent);

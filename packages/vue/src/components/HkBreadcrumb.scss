@@ -1,6 +1,7 @@
 @use "./menu-item" as mi;
 // Use theme variables with namespace to avoid conflicts
 @use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
 
 // ------
 // Hikari Breadcrumb Component
@@ -218,7 +219,7 @@
     border-radius: vars.$hikari-radius-fine-md;
     border: 1px solid var(--hi-color-border);
     background: var(--hi-surface);
-    backdrop-filter: blur(4px);
+    @include backdrop-filter(blur(4px));
     box-shadow:
       0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
       0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;

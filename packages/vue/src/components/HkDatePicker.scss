@@ -3,6 +3,7 @@
  * Uses the shared --hi-* design tokens. */
 
 @use "./HkPickerPane" as picker-pane;
+@use "../styles/polyfill" as *;
 
 .hk-dp {
   display: block;
@@ -40,7 +41,7 @@
   align-items: center;
   gap: var(--space-6, 6px);
   cursor: pointer;
-  user-select: none;
+  @include user-select(none);
 }
 
 .hk-dp:not(.is-disabled) .hk-dp-trigger:hover,
@@ -139,7 +140,7 @@
   flex-direction: column;
   gap: var(--space-8, 8px);
   min-width: 17.5rem;
-  user-select: none;
+  @include user-select(none);
   color: var(--hi-color-text-primary);
 }
 

@@ -17,11 +17,15 @@ import { inject, provide, shallowRef, type InjectionKey } from "vue";
  * and only the hikari version swapped: 0.55.236 kept the fold (2 rows,
  * `aria-expanded="false"`), 0.55.239 lost it (5 rows, `true`).
  *
- * THE FIX: HkFaceShell provides ONE stable fold store from ITS setup —
- * above the swap, hence identical for every generation the swap mounts —
- * and HkMenu injects it optionally. Whichever generation is live reads
- * and writes the same instance, so the user's word survives an arbitrary
- * number of remounts with no host-side change and no new prop.
+ * THE FIX: whoever holds the rail chrome provides ONE stable fold store
+ * from ITS setup, ABOVE the swap — hence identical for every generation
+ * the swap mounts — and HkMenu injects it optionally. Both holders do it:
+ * HkFaceShell unconditionally, and a standalone `HkSidebar collapsible`
+ * when it finds no store above it (inject-then-provide; a sidebar nested
+ * in a shell inherits the shell's, so one nav keeps ONE fold). Whichever
+ * generation is live reads and writes the same instance, so the user's
+ * word survives an arbitrary number of remounts with no host-side change
+ * and no new prop.
  *
  * The store holds the USER'S word only (`true` = they opened the group,
  * `false` = they closed it; absent = untouched). HkMenu's per-instance
@@ -52,18 +56,20 @@ export interface MenuGroupState {
 
 const MENU_GROUP_STATE_KEY: InjectionKey<MenuGroupState> = Symbol("hk-menu-group-state");
 
-/** Provide the shell's shared fold store (HkFaceShell calls this once per
- *  shell, from setup, ABOVE the sidebar slot). */
+/** Provide a rail-chrome holder's fold store (HkFaceShell calls this
+ *  unconditionally; HkSidebar calls it when no store is above it). Call it
+ *  from setup, ABOVE the sidebar swap. */
 export function provideMenuGroupState(): MenuGroupState {
   // shallowRef + a fresh Map per write: an in-place Set/Map mutation is a
   // reactive collection write only through Vue's collection handlers, and
   // it makes every consumer read a collection that is being changed under
   // it. Replacing the map gives exactly one unambiguous change per user
-  // action and no partially updated fold. NOTE, measured (the mid-dissolve
-  // case in HkFaceShell.rail.test.tsx): this is about the LIVE consumers —
-  // a crossfade's leaving copy is out of the parent's patch path and is
-  // NOT re-rendered by a store write, so it keeps the DOM of its last
-  // render either way.
+  // action and no partially updated fold. NOTE, measured (mount/unmount
+  // counters plus the mid-dissolve case in HkFaceShell.rail.test.tsx): a
+  // crossfade's LEAVING generation is unmounted at the flip moment itself —
+  // only the DOM it rendered is kept for the dissolve — so a store write
+  // cannot reach it at all. The immutability is about the LIVE consumers;
+  // it is not a snapshot held on the dead copy's behalf.
   const choices = shallowRef<ReadonlyMap<string, boolean>>(new Map());
   const state: MenuGroupState = {
     get: (key) => choices.value.get(key),

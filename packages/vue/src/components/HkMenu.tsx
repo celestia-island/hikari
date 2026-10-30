@@ -192,12 +192,19 @@ export default defineComponent({
      * rows at every depth. The open/closed state is the same
      * isGroupExpanded/toggleGroup state the expanded sidebar uses, so a
      * group collapsed in the rail is still collapsed after a peek/expand
-     * (and vice versa) — and, because a shell that swaps densities
-     * mounts each generation FRESH, that promise holds ACROSS
-     * generations too: HkFaceShell provides the fold store above its
-     * rail crossfade (known-live-issues #43) and every generation
-     * injects the same one, while a standalone menu keeps the fold
-     * instance-local. The active/checked/danger/disabled row states
+     * (and vice versa) — and, because a rail flip mounts each density
+     * generation FRESH, that promise holds ACROSS generations too: the
+     * two rail-chrome holders each provide the fold store above their
+     * swap (HkFaceShell always; a standalone `HkSidebar collapsible`
+     * when no shell is above it — known-live-issues #43), every
+     * generation injects the same one, and a menu with no holder above
+     * it keeps the fold instance-local. The guarantee is tied to those
+     * holders: a host that assembles its OWN rail swap around HkMenu has
+     * no store above it (the composable is deliberately not public API),
+     * so the fold is instance-local there. Within one holder all grouped
+     * menus share ONE group-key space — prefix custom item keys (chest's
+     * `group:`-style prefix is the precedent) when two menus could
+     * collide. The active/checked/danger/disabled row states
      * carry over unchanged. A leaf with no icon falls back to its
      * label's first character so every destination stays one click
      * away. No-op in the popup variant. Shells drive this from the

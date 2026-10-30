@@ -33,13 +33,24 @@ function classesFrom(source: string): Set<string> {
  * Body of one compiled rule, by exact selector (Sass drops the quotes around
  * an attribute value: `[data-face=plain]`).
  *
- * The selector must compile exactly once: a second copy — say inside a media
- * query, or a later override — would otherwise stay invisible here while
- * still winning the cascade.
+ * The selector must compile exactly once: a second copy — a later override, or
+ * one hidden inside a media/supports block — would otherwise stay invisible
+ * here while still winning the cascade.
+ *
+ * The match is anchored to a rule boundary — start of sheet, `}` (the previous
+ * rule ended) or `{` (an at-rule body opens) — because a descendant rule such
+ * as `[data-mode=dark] .s-about-modal-row-meta` CONTAINS the base selector as a
+ * suffix; an unanchored search would read the dark arm as a duplicate of the
+ * light one. The boundary is a LOOKBEHIND so it is not consumed: with a
+ * consuming `}` the match of one rule would swallow the character the next
+ * adjacent rule needs as its boundary, which hid exactly the duplicates this
+ * guard exists to catch.
  */
 function ruleBody(sheet: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const matches = [...sheet.matchAll(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`, "g"))];
+  const matches = [
+    ...sheet.matchAll(new RegExp(`(?:(?<=^)|(?<=[}{]))\\s*${escaped}\\s*\\{([^}]*)\\}`, "g")),
+  ];
   expect(matches, `${selector} compiles exactly once`).toHaveLength(1);
   return matches[0]?.[1] ?? "";
 }
@@ -238,6 +249,7 @@ describe("HkAboutModal stylesheet contract", () => {
    */
   describe("row meta tones", () => {
     const TONE = (tone: string) => `.s-about-modal-row-meta[data-tone=${tone}]`;
+    const DARK_TONE = (tone: string) => `[data-mode=dark] ${TONE(tone)}`;
 
     // Channel behind each coloured tone, and the WCAG-AA ink derived from it.
     // The pill text is `--text-2xs` (10px) — small text, 4.5:1 — and the raw
@@ -247,12 +259,18 @@ describe("HkAboutModal stylesheet contract", () => {
     // lightness moves — capped at 0.5 in light mode, floored at 0.72 in dark
     // (bounds solved so the worst stock AND chest entry clears 4.5:1 against
     // the pill's real backdrop: the 10% channel tint over the 3%-primary
-    // card on `--color-surface`). Reverting any arm to the raw channel — or
-    // dropping one `light-dark()` side — must turn this red.
-    const AA_INK = (channel: string) =>
-      `light-dark(` +
-      `oklch(from rgb(var(--color-${channel})) min(l, 0.5) c h), ` +
-      `oklch(from rgb(var(--color-${channel})) max(l, 0.72) c h))`;
+    // card on `--color-surface`).
+    //
+    // The arms are THEME-MODE rules rather than one `light-dark()` value: the
+    // CSS minifier lowers `light-dark()` into an undeclared
+    // `--lightningcss-*` var pair on any build floor that predates it, which
+    // turns the glyph colour into an IACVT fallback to the INHERITED colour
+    // (shipped once — chest #2027). Reverting an arm to the raw channel, or
+    // dropping either mode arm, must turn this red.
+    const AA_INK_LIGHT = (channel: string) =>
+      `oklch(from rgb(var(--color-${channel})) min(l, 0.5) c h)`;
+    const AA_INK_DARK = (channel: string) =>
+      `oklch(from rgb(var(--color-${channel})) max(l, 0.72) c h)`;
     const TONES: Record<string, string> = {
       positive: "success",
       caution: "warning",
@@ -274,9 +292,38 @@ describe("HkAboutModal stylesheet contract", () => {
           // seed-relative form without spaces around the slash.)
           borderColor: `rgb(var(--color-${channel})/32%)`,
           background: `rgb(var(--color-${channel})/10%)`,
-          color: AA_INK(channel),
+          color: AA_INK_LIGHT(channel),
         });
       }
+    });
+
+    it("re-inks only the glyphs in dark mode, with the floored arm", () => {
+      for (const [tone, channel] of Object.entries(TONES)) {
+        const dark = ruleBody(css, DARK_TONE(tone));
+        expect(dark, `the ${tone}-tone dark arm must survive compilation`).not.toBe("");
+        // Exactly one declaration: the dark arm owns the glyph colour alone.
+        // Border and background stay on the base rule (same live channel), so
+        // a second copy here would be a cascade surprise.
+        const declarations = dark
+          .split(";")
+          .map((chunk) => chunk.trim())
+          .filter(Boolean);
+        expect(declarations, "the dark arm declares the glyph colour only").toHaveLength(1);
+        expect(declaration(dark, "color")).toBe(AA_INK_DARK(channel));
+      }
+    });
+
+    it("never reintroduces the minifier-mangled light-dark()", () => {
+      // The exact shape that shipped broken: lightningcss rewrites the
+      // function into an UNDECLARED var pair on older build floors, so the
+      // glyphs silently inherit their parent's colour. Mode rules carry the
+      // same two arms without any function a minifier can lower.
+      //
+      // Case-insensitive (CSS function names are), and anchored to a
+      // DECLARATION rather than a bare mention: the rationale comments name
+      // the function on purpose, and `expanded` output keeps `/* */` blocks.
+      expect(css).not.toMatch(/[:]\s*[^;{}]*light-dark\(/i);
+      expect(scss).not.toMatch(/:\s*light-dark\(/i);
     });
   });
 });

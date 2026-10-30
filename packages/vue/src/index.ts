@@ -718,6 +718,7 @@ export { default as HkContextMenuProvider } from "./components/HkContextMenuProv
 export { default as HkMenuPanel } from "./components/HkMenuPanel";
 export { default as HkMenuActionItem } from "./components/HkMenuActionItem";
 export { default as HkMenuIdentityItem } from "./components/HkMenuIdentityItem";
+export { default as HkMenuSection } from "./components/HkMenuSection";
 export { default as HkTagDotRow } from "./components/HkTagDotRow";
 export { default as HkRowActions } from "./components/HkRowActions";
 export { default as HkPopupSelect } from "./components/HkPopupSelect";

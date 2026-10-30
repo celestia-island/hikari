@@ -41,6 +41,7 @@ describe("HkTemplateField stylesheet contract", () => {
   const tsx = readFileSync(resolve(componentDir, "HkTemplateField.tsx"), "utf8");
   const rendererTsx = readFileSync(resolve(componentDir, "HkTemplateText.tsx"), "utf8");
   const grammars = readFileSync(resolve(componentDir, "templateGrammar.ts"), "utf8");
+  const scss = readFileSync(resolve(componentDir, "HkTemplateField.scss"), "utf8");
   const css = compile(resolve(componentDir, "HkTemplateField.scss"), {
     style: "expanded",
   }).css;
@@ -99,10 +100,57 @@ describe("HkTemplateField stylesheet contract", () => {
 
   it("keeps the heading band on the label class, not the group wrapper", () => {
     // The wrapper is a bare layout box; carrying the band's chrome
-    // (padding/font-weight) there would pad every row run.
-    expect(css).toMatch(/\.hk-tpl-group-label\s*\{[^}]*font-weight:\s*600/s);
+    // (padding/font-weight) there would pad every row run. The band is an
+    // ADOPTER of the menu grammar's section-caption mixin, and the pins
+    // below are satisfied ONLY by the grammar's token form: a restored
+    // hand-rolled band (literal padding / a bare `font-weight: 600` /
+    // `@include` removed) must fail. R2 proved an optional-group regex
+    // matched both spellings, so the previous pin was vacuous.
+    expect(
+      css,
+      ".hk-tpl-group-label must take its bottom band from the grammar's token",
+    ).toMatch(
+      /\.hk-tpl-group-label\s*\{[^}]*padding-block-end:\s*var\(--hk-menu-section-label-pad-bottom,/s,
+    );
+    expect(
+      css,
+      ".hk-tpl-group-label must take its weight from the grammar's token with 600 as the fallback",
+    ).toMatch(
+      /\.hk-tpl-group-label\s*\{[^}]*font-weight:\s*var\(--hk-menu-section-label-weight,\s*600\)/s,
+    );
+    expect(
+      scss,
+      "the source must ADOPT the grammar (@include mi.section-label), not restate its values",
+    ).toMatch(/\.hk-tpl-group-label\s*\{[^}]*@include mi\.section-label;/s);
     expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*font-weight/s);
     expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*padding/s);
+  });
+
+  it("keeps the label band's declarations to the grammar binding plus the colour hook", () => {
+    // R4 appended `padding: 2px 16px;` after the @include and all five
+    // shipped pins stayed green. EVERY rule whose selector mentions the band
+    // must be EXACTLY the grammar binding plus the one colour line — any
+    // later padding / font-size / font-weight / letter-spacing /
+    // text-transform, and any SECOND .hk-tpl-group-label rule (R5: the old
+    // pin read only the first match), fails.
+    const code = scss
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^[ \t]*\/\/.*$/gm, "");
+    const rules = [...code.matchAll(/([^{}]*\.hk-tpl-group-label[^{}]*)\{([^{}]*)\}/g)];
+    expect(rules.length, ".hk-tpl-group-label rule(s) found").toBeGreaterThan(0);
+    for (const [, selector, body] of rules) {
+      const declarations = (body ?? "")
+        .split(";")
+        .map((statement) => statement.replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+      expect(
+        declarations,
+        `every .hk-tpl-group-label rule must stay the grammar binding + colour hook (${(selector ?? "").trim()})`,
+      ).toEqual([
+        "@include mi.section-label",
+        "color: var(--hk-menu-section-label-color, var(--hi-color-muted))",
+      ]);
+    }
   });
 
   it("keeps group headings free of text-transform (the host owns casing)", () => {

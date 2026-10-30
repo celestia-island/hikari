@@ -1,3 +1,5 @@
+@use "./menu-item" as mi;
+
 // HkTemplateField / HkTemplateText — the fill-template surfaces.
 // Self-sufficient styling (house rule): the field box, label, hint and
 // error rows live here rather than borrowing HkInput's sheet, and the
@@ -185,14 +187,26 @@
 }
 
 .hk-tpl-group-label {
-  padding: var(--space-6, 6px) var(--space-8, 8px) var(--space-2, 2px);
-  font-size: var(--text-2xs, 0.625rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  // The menu grammar's shared section-caption band (_menu-item.scss
+  // @mixin section-label), same as HkMenuSection's
+  // .hk-menu-section-label — the hand-rolled bands across this library
+  // and its consumer's popup menus (0–6px vertical insets) converge here.
+  // hikari's theme-menu caption (.s-theme-menu-label) stays hand-rolled
+  // on purpose: its 4/6/4 band sits ~8px clear of its rows, so it never
+  // exhibited the glued-to-the-first-row defect this grammar fixes.
+  // This adopter inherits the grammar's shift too, it is not a band-only
+  // change: vertical rhythm 6/8/2 → 4/6/8 (up, bottom-heavy) AND the
+  // inline inset 8 → 6px, i.e. the caption steps 2px LEFT toward
+  // .hk-tpl-row's content edge — the requested 偏左 direction.
+  @include mi.section-label;
+  // The local alias is this adopter's default: hosts scope
+  // --hi-color-muted for this panel and the rest of this sheet sources
+  // muted through the same alias. The grammar's
+  // --hk-menu-section-label-color still overrides it for a host that
+  // themes captions as a family.
+  color: var(--hk-menu-section-label-color, var(--hi-color-muted));
   // No text-transform: labels arrive from the host (usually i18n
   // strings) and the translator owns the casing.
-  color: var(--hi-color-muted);
-  user-select: none;
 }
 
 .hk-tpl-row {

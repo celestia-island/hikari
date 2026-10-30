@@ -790,6 +790,23 @@
   }
 }
 
+/* The section caption and its group wrapper (hikari _menu-item.scss
+ * @mixin section / @mixin section-label): the small band above a run of
+ * rows, e.g. 「临时空间」 in the workspace picker, plus the role="group"
+ * wrapper HkMenuSection renders. Declared globally here because host apps
+ * render these classes by HAND (the workspace picker's own markup) and
+ * cannot import the scss partial — the grammar (and every metric
+ * fallback) lives in _menu-item.scss. The caption's SHEET geometry rides
+ * the grammar's sheet-context lists, so it must NOT be re-declared here;
+ * this file only binds the class names to the grammar. */
+.hk-menu-section {
+  @include mi.section;
+}
+
+.hk-menu-section-label {
+  @include mi.section-label;
+}
+
 /* ── User identity header (shared) ─ */
 /* One identity block for every account surface — the admin user
    dropdown's header, a mobile drawer's user panel footer — so all

@@ -37,6 +37,25 @@ export const HkAdminShell = defineComponent({
   props: {
     sidebarCollapsed: { type: Boolean, default: false },
     sidebarWidth: { type: String, default: "224px" },
+    /** Desktop icon-rail capability, forwarded to HkFaceShell (see its
+     *  prop doc): opt in here and the admin sidebar gains the circular
+     *  hover-reveal toggle, the one-icon rail and the overlay peek
+     *  drawer. Declared on the wrapper on purpose — the same
+     *  honest-forwarding rule as contentMode (a stray attr must not
+     *  reach the inner shell's declared prop through fallthrough). */
+    sidebarCollapsible: { type: Boolean, default: false },
+    /** Layout width of the icon rail (default 56px), forwarded. */
+    sidebarCollapsedWidth: { type: String, default: "56px" },
+    /** Rail state channel, `v-model:sidebar-rail-style` ("expanded" |
+     *  "rail"), forwarded — session-only unless the host persists it. */
+    sidebarRailStyle: {
+      type: String as PropType<"expanded" | "rail">,
+      default: "expanded",
+    },
+    /** Hover dwell before the peek opens, ms, forwarded. */
+    sidebarPeekDelay: { type: Number, default: 400 },
+    /** Grace after pointerleave before the peek closes, ms, forwarded. */
+    sidebarPeekGrace: { type: Number, default: 150 },
     /** Viewport width at which the desktop layout takes over (below it
      *  the nav collapses into the mobile drawer). Defaults to the shared
      *  1024px "lg" breakpoint; lower it (e.g. 768) for tablet-friendly
@@ -106,6 +125,15 @@ export const HkAdminShell = defineComponent({
       h(HkFaceShell, {
         sidebarCollapsed: props.sidebarCollapsed,
         sidebarWidth: props.sidebarWidth,
+        sidebarCollapsible: props.sidebarCollapsible,
+        sidebarCollapsedWidth: props.sidebarCollapsedWidth,
+        sidebarRailStyle: props.sidebarRailStyle,
+        sidebarPeekDelay: props.sidebarPeekDelay,
+        sidebarPeekGrace: props.sidebarPeekGrace,
+        // The v-model channel rides the inner shell's event straight
+        // through this wrapper's listeners (attrs fallthrough carries
+        // onUpdate:sidebarRailStyle to HkFaceShell — inheritAttrs stays
+        // on, the default), so the host binding is one wire end-to-end.
         mobileBreakpoint: props.mobileBreakpoint,
         footerHeight: props.footerHeight,
         navTitle: props.navTitle,

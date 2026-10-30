@@ -143,6 +143,8 @@
     "hikari::secret.copy": "Копировать",
     "hikari::secret.notice": "Показывается только один раз",
     "hikari::secret.title": "Секрет",
+    "hikari::sidebar.collapse": "Свернуть боковую панель",
+    "hikari::sidebar.expand": "Развернуть боковую панель",
     "hikari::signIn.passwordPlaceholder": "Пароль",
     "hikari::signIn.submit": "Войти",
     "hikari::signIn.usernamePlaceholder": "Имя пользователя",

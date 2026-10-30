@@ -1,0 +1,11 @@
+// Granular style entry for the sidebar rail kit (2026-10-30).
+//
+// Hosts that do NOT mount the components (a bespoke sidebar reusing the
+// geometry, e.g. wowsp) import the rail/peek/toggle classes directly:
+//   @use "@celestia-island/hikari/styles/sidebar-rail.scss";
+// The sheet is a pure re-export of the component stylesheet — ONE
+// implementation, no duplicated CSS. Hosts that DO mount
+// HkSidebarRailToggle / HkSidebar / HkFaceShell get these rules through
+// the components' own imports; this entry exists for the style-subpath
+// consumption surface only.
+@use "../components/HkSidebarRail.scss";

@@ -17,6 +17,7 @@ import { ancestorZoom } from "../runtime/cssZoom";
 import { popupViewportRect } from "../runtime/popupBounds";
 import { viewportGutterPx } from "../runtime/viewportGutter";
 import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
+import HkTooltip from "./HkTooltip";
 import "./HkMenu.scss";
 
 /**
@@ -178,6 +179,20 @@ export default defineComponent({
      * popup variant (sub-levels there are cascades, not inline groups).
      */
     defaultExpandGroups: { type: Boolean, default: false },
+    /**
+     * Sidebar variant only — ICON-RAIL mode (2026-10-30): rows render as
+     * centered icon buttons carrying their label in a tooltip (the
+     * existing HkTooltip infra), badges degrade to a corner dot, group
+     * headers become separators (their children are only reachable
+     * expanded or inside a peek drawer — never in the rail), and the
+     * active/checked/danger/disabled row states carry over unchanged.
+     * A row with no icon falls back to its label's first character so
+     * every destination stays one click away. No-op in the popup
+     * variant. Shells drive this from the sidebar slot's `collapsed`
+     * param (HkFaceShell passes it live — false again while a peek is
+     * open, so the peek renders full rows).
+     */
+    collapsed: { type: Boolean, default: false },
   },
   emits: ["update:open", "select"],
   setup(props, { emit, slots }) {
@@ -843,7 +858,60 @@ export default defineComponent({
       );
     }
 
+    /** One rail row: icon-only, centered, label in a tooltip. The
+     *  accessible name carries the badge too (the visible dot does not),
+     *  and aria-current marks the active destination for good measure —
+     *  the visible active state stays data-active. */
+    function renderSidebarRailRow(item: HkMenuItem) {
+      const active = item.key === props.activeKey;
+      const text = item.badge ? `${item.label} (${item.badge})` : item.label;
+      return (
+        <HkTooltip key={item.key} text={text} placement="right" delay={0}>
+          <button
+            type="button"
+            class="hk-menu-sidebar-row"
+            data-rail
+            data-active={active || undefined}
+            data-checked={item.checked || undefined}
+            data-danger={item.danger || undefined}
+            data-disabled={item.disabled || undefined}
+            aria-label={text}
+            aria-current={active ? "page" : undefined}
+            onClick={() => {
+              if (item.disabled) return;
+              emit("select", item.key, item);
+            }}
+          >
+            {/* Icon-less rows fall back to the label's initial — the rail
+                must never strand a destination behind a missing glyph. */}
+            <span class="hk-menu-item-icon" data-fallback={item.icon ? undefined : true}>
+              {item.icon ? h(item.icon, { size: 16 }) : item.label.trim().charAt(0).toUpperCase()}
+            </span>
+            {item.badge && (
+              <span class="hk-menu-sidebar-badge hk-menu-sidebar-badge--dot" aria-hidden="true" />
+            )}
+          </button>
+        </HkTooltip>
+      );
+    }
+
     function renderSidebar() {
+      if (props.collapsed) {
+        return (
+          <nav class="hk-menu-sidebar" data-collapsed aria-label={props.title || "menu"}>
+            {slotWrapper("head", slots.header?.() ?? [])}
+            {props.items.map((it) =>
+              isGroup(it) ? (
+                // Groups flatten to separators in the rail — their
+                // children are only reachable expanded / in a peek.
+                <div key={it.key} class="hk-menu-sidebar-divider" role="separator" aria-label={it.label} />
+              ) : (
+                renderSidebarRailRow(it)
+              ),
+            )}
+          </nav>
+        );
+      }
       return (
         <nav class="hk-menu-sidebar" aria-label={props.title || "menu"}>
           {/* Header slot (identity block, section label, …) above the

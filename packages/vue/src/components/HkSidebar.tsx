@@ -1,7 +1,9 @@
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import "./HkSidebar.scss";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { useSidebarRail } from "../composables/useSidebarRail";
+import HkSidebarRailToggle from "./HkSidebarRailToggle";
 
 export default defineComponent({
   name: "HkSidebar",
@@ -9,12 +11,71 @@ export default defineComponent({
     collapsed: { type: Boolean, default: false },
     mobile: { type: Boolean, default: false },
     width: { type: String, default: "280px" },
+    /** OPT-IN rail capability (2026-10-30): mounts the hover-reveal
+     *  circular toggle on the panel's content-facing edge and arms the
+     *  hover-peek drawer while collapsed. `collapsed` then becomes a
+     *  v-model channel (`update:collapsed`) driven by the toggle; a
+     *  host that persists the flag may keep passing it back in. Without
+     *  this prop the panel renders exactly as before — no toggle, no
+     *  peek, `collapsed` stays the plain presentational 56px rail. */
+    collapsible: { type: Boolean, default: false },
+    /** Layout width of the icon rail (the one-icon column). Mirrors the
+     *  56px this component always used for its collapsed mode. */
+    collapsedWidth: { type: String, default: "56px" },
+    /** Hover dwell on the rail before the peek drawer opens, ms. */
+    peekDelay: { type: Number, default: 400 },
+    /** Grace after pointerleave before the peek drawer closes, ms. */
+    peekGrace: { type: Number, default: 150 },
   },
   emits: {
     close: () => true,
+    "update:collapsed": (v: boolean) => true,
   },
   setup(props, { emit, slots }) {
-    const panelWidth = computed(() => (props.collapsed ? "56px" : props.width));
+    // ── rail state (collapsible only; see useSidebarRail for the
+    //    timing semantics — dwell, grace, Escape, session-only default) ──
+    // Semi-controlled `collapsed`: the composable holds a local ref the
+    // prop keeps in sync (external change wins), and every internal flip
+    // (the toggle) emits update:collapsed for a v-model host.
+    const railCollapsed = ref(props.collapsed);
+    watch(
+      () => props.collapsed,
+      (v) => {
+        railCollapsed.value = v;
+      },
+    );
+    const rail = useSidebarRail({
+      collapsed: railCollapsed,
+      peekDelay: () => props.peekDelay,
+      peekGrace: () => props.peekGrace,
+    });
+    watch(rail.collapsed, (v) => {
+      if (v !== props.collapsed) emit("update:collapsed", v);
+    });
+
+    // Collapsed-for-LAYOUT: the toggle's state when collapsible, the
+    // plain prop otherwise (the legacy presentational 56px rail mode
+    // renders exactly as before). Mobile never lays out collapsed — the
+    // drawer overlay is the mobile shape.
+    const layoutCollapsed = computed(() =>
+      props.mobile
+        ? false
+        : props.collapsible
+          ? rail.collapsed.value
+          : props.collapsed,
+    );
+    const peeking = computed(() => props.collapsible && !props.mobile && rail.peeking.value);
+    // The host's inline width IS the layout footprint — rail width while
+    // collapsed OR peeking (the peek is an overlay; the layout must not
+    // shift), full width while expanded.
+    const hostWidth = computed(() =>
+      props.mobile ? undefined : layoutCollapsed.value ? props.collapsedWidth : props.width,
+    );
+    // The panel's inline width: full while expanded OR peeking, rail
+    // width otherwise — this is the lever that slides the peek out.
+    const panelWidth = computed(() =>
+      props.mobile ? undefined : layoutCollapsed.value && !peeking.value ? props.collapsedWidth : props.width,
+    );
 
     // Persistent layout surface — attach the overlay scrollbar (shared
     // chrome) once and detach on unmount.
@@ -37,12 +98,24 @@ export default defineComponent({
       bodyScrollbar = null;
     });
 
+    const railChrome = props.collapsible && !props.mobile;
+
     return () => (
       <aside
-        class="hk-sidebar"
+        class={railChrome ? "hk-sidebar hk-sidebar-rail-host" : "hk-sidebar"}
         data-mobile={props.mobile || undefined}
-        data-collapsed={props.collapsed || undefined}
-        style={props.mobile ? undefined : { width: panelWidth.value }}
+        data-collapsed={layoutCollapsed.value || undefined}
+        data-peeking={peeking.value || undefined}
+        style={props.mobile ? undefined : { width: hostWidth.value }}
+        onPointerenter={railChrome ? rail.onPointerEnter : undefined}
+        onPointerleave={railChrome ? rail.onPointerLeave : undefined}
+        onKeydown={
+          railChrome
+            ? (e: KeyboardEvent) => {
+                if (rail.onKeydown(e)) e.stopPropagation();
+              }
+            : undefined
+        }
         onClick={(e) => {
           if (e.target === e.currentTarget && props.mobile) {
             emit("close");
@@ -50,7 +123,7 @@ export default defineComponent({
         }}
       >
         <nav
-          class="hk-sidebar-panel"
+          class={railChrome ? "hk-sidebar-panel hk-sidebar-rail-panel" : "hk-sidebar-panel"}
           style={{ width: props.mobile ? undefined : panelWidth.value }}
         >
           {slots.header ? (
@@ -62,6 +135,12 @@ export default defineComponent({
           {slots.footer ? (
             <footer class="hk-sidebar-footer">{slots.footer()}</footer>
           ) : null}
+          {railChrome && (
+            <HkSidebarRailToggle
+              expanded={!layoutCollapsed.value}
+              onToggle={rail.toggle}
+            />
+          )}
         </nav>
       </aside>
     );

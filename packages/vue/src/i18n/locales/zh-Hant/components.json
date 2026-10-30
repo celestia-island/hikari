@@ -143,6 +143,8 @@
     "hikari::secret.copy": "複製",
     "hikari::secret.notice": "僅顯示一次",
     "hikari::secret.title": "密鑰",
+    "hikari::sidebar.collapse": "收合側邊欄",
+    "hikari::sidebar.expand": "展開側邊欄",
     "hikari::signIn.passwordPlaceholder": "密碼",
     "hikari::signIn.submit": "登入",
     "hikari::signIn.usernamePlaceholder": "使用者名稱",

@@ -27,6 +27,46 @@ const menuTsx = readFileSync(join(here, "HkMenu.tsx"), "utf-8");
 const themeTsx = readFileSync(join(here, "HkThemePanelContent.tsx"), "utf8");
 const adminTokens = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
 
+/** Every TOP-LEVEL block of a stylesheet, slice starting after the
+ *  previous block's closing brace (comments are stripped by the caller). */
+function topLevelBlocks(source: string): string[] {
+  const blocks: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < source.length; i += 1) {
+    const ch = source[i];
+    if (ch === "{") depth += 1;
+    else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        blocks.push(source.slice(start, i + 1));
+        start = i + 1;
+      }
+    }
+  }
+  return blocks;
+}
+
+/** The px fallback a grammar custom property carries through the shared
+ *  scale: the `4px` in `var(--token, var(--space-4, 4px))`. */
+function pxFallback(body: string, token: string): number {
+  const match = body.match(
+    new RegExp(`var\\(${token},\\s*var\\(--space-\\d+,\\s*(\\d+)px\\)\\)`),
+  );
+  expect(
+    match,
+    `${token} must fall back through a shared --space-* token to px`,
+  ).toBeTruthy();
+  return Number(match![1]);
+}
+
+/** The body of `@mixin <name> { ... }` (single level, mixes are flat). */
+function mixinBody(name: string): string {
+  const match = grammar.match(new RegExp(`@mixin ${name} \\{([^}]*)\\}`));
+  expect(match, `@mixin ${name} must exist in _menu-item.scss`).toBeTruthy();
+  return match![1]!;
+}
+
 describe("menu-item grammar contract", () => {
   it("declares the divider row as a mixin reading the grammar tokens", () => {
     expect(grammar).toContain("@mixin divider");
@@ -125,5 +165,97 @@ describe("menu-item grammar contract", () => {
       /@mixin label[^}]*padding-inline-end: var\(--hk-menu-item-label-cushion\)/,
     );
     expect(grammar.match(/var\(--hk-menu-item-label-cushion\)/g)?.length).toBe(1);
+  });
+
+  it("gives the section caption a bottom-heavy band (never glued to the first row)", () => {
+    // Field report: the caption above a run of rows sat almost flush
+    // against the first row (four hand-rolled bands, 2/4/6/8px, no shared
+    // token). The invariant is the RHYTHM: the bottom band must be
+    // strictly LARGER than the top band, because the panel already insets
+    // the surface above the caption while the bottom band is the
+    // separation that says "these are the rows below". Reverting either
+    // fallback (top back up, bottom back down) must fail here.
+    const body = mixinBody("section-label");
+    const top = pxFallback(body, "--hk-menu-section-label-pad-top");
+    const bottom = pxFallback(body, "--hk-menu-section-label-pad-bottom");
+    expect(top, "caption top band parsed as px").toBeGreaterThan(0);
+    expect(
+      bottom,
+      `caption bottom band (${bottom}px) must be strictly larger than its top band (${top}px) — bottom-heavy rhythm`,
+    ).toBeGreaterThan(top);
+  });
+
+  it("hangs the caption's inline inset just left of the row content edge", () => {
+    // The caption must NOT read as an indented row: its inline inset is a
+    // hair smaller than the row grammar's --hk-menu-item-pad-x (plus the
+    // rows' reserved 1px border), so it hugs the section edge slightly
+    // left of the leading icon column.
+    const body = mixinBody("section-label");
+    expect(
+      body,
+      "caption inline inset must follow the shared --space-6 scale token",
+    ).toMatch(/var\(--hk-menu-section-label-pad-x,\s*var\(--space-6,\s*6px\)\)/);
+    const inline = pxFallback(body, "--hk-menu-section-label-pad-x");
+    const rowPadX = Number(
+      grammar.match(/@mixin item-tokens[\s\S]*?--hk-menu-item-pad-x:\s*(\d+)px/)?.[1],
+    );
+    expect(rowPadX, "row grammar pad-x parsed from item-tokens").toBeGreaterThan(0);
+    expect(
+      inline,
+      `caption inline inset (${inline}px) must stay smaller than the row pad-x (${rowPadX}px)`,
+    ).toBeLessThan(rowPadX);
+  });
+
+  it("registers the caption in every sheet-context list that registers the row band", () => {
+    // The caption is a sibling band: the rows' token swap never reaches
+    // it, so it needs its own entry in EVERY list that registers
+    // .hk-menu-divider (the three sheet-panel surfaces and the narrow
+    // mobile modal band). A new sheet-context list that widens the rows
+    // without widening their caption fails here.
+    const blocks = topLevelBlocks(grammar.replace(/\/\*[\s\S]*?\*\//g, "")).filter(
+      (block) => block.includes(".hk-menu-divider"),
+    );
+    expect(blocks.length, "top-level blocks registering .hk-menu-divider").toBe(2);
+    for (const block of blocks) {
+      const listName = block.trim().split("\n")[0]!.trim();
+      expect(
+        block,
+        `sheet-context list "${listName}" registers .hk-menu-divider but not .hk-menu-section-label`,
+      ).toContain(".hk-menu-section-label");
+      expect(
+        block,
+        `sheet-context list "${listName}" must swap the caption's sheet tokens`,
+      ).toContain("section-label-sheet-tokens");
+    }
+  });
+
+  it("widens the caption to the touch geometry inside sheets", () => {
+    // Sheet values are the touch band: 6px top / 8px inline / 12px bottom
+    // and the 12px caption font. A drifted sheet entry would leave the
+    // caption at desktop rhythm inside a bottom sheet.
+    const body = mixinBody("section-label-sheet-tokens");
+    expect(body).toMatch(/--hk-menu-section-label-pad-top:\s*var\(--space-6,\s*6px\)/);
+    expect(body).toMatch(/--hk-menu-section-label-pad-x:\s*var\(--space-8,\s*8px\)/);
+    expect(body).toMatch(/--hk-menu-section-label-pad-bottom:\s*var\(--space-12,\s*12px\)/);
+    expect(body).toMatch(/--hk-menu-section-label-font:\s*var\(--text-xs,\s*0\.75rem\)/);
+  });
+
+  it("never uppercases the caption (translators own casing)", () => {
+    // The HkTemplateField rule: caption strings are host i18n strings;
+    // text-transform would fight locales whose casing rules differ.
+    expect(mixinBody("section-label")).not.toContain("text-transform");
+  });
+
+  it("publishes the section caption globally for host apps via admin-tokens", () => {
+    // Hosts render .hk-menu-section / .hk-menu-section-label by hand (the
+    // workspace picker does) and cannot import the scss partial, so the
+    // global sheet binds the classes to the grammar mixins.
+    expect(adminTokens).toMatch(/\.hk-menu-section \{[^}]*@include mi\.section;/);
+    expect(adminTokens).toMatch(/\.hk-menu-section-label \{[^}]*@include mi\.section-label;/);
+    // The caption's sheet geometry lives in the grammar's sheet-context
+    // lists only; re-declaring it in admin-tokens is the drift this
+    // grammar exists to prevent.
+    const adopterRules = adminTokens.match(/(?:^|\n)\s*\.hk-menu-section-label\s*\{/g) ?? [];
+    expect(adopterRules.length, "exactly one global .hk-menu-section-label rule").toBe(1);
   });
 });

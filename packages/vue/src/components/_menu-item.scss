@@ -28,10 +28,24 @@
  *     glyph ink high against box-centered icons; a half-pixel down
  *     nudge re-centers the perceived mass (tunable per host).
  *
+ * Section caption (a captioned run of rows):
+ *   The caption band ABOVE a run of rows is its own band, never a row.
+ *   Its block rhythm is deliberately BOTTOM-HEAVY (desktop 4px above /
+ *   8px below, sheets 6/12): the panel already insets the surface above
+ *   the caption, so the caption's own top band stays tight, while the
+ *   bottom band is the separation that must read as "this caption heads
+ *   the rows below, it is not one of them". Its inline inset is a hair
+ *   SMALLER than the row's --hk-menu-item-pad-x, so the caption hangs
+ *   just left of the rows' leading icon column and reads as a section
+ *   title hugging the edge rather than as an indented row. No
+ *   text-transform: translators own casing (the HkTemplateField rule).
+ *
  * Adoption: `@use "./menu-item" as mi;` then
  *   .your-row { @include mi.item; }
  *   .your-row .your-icon { @include mi.icon; }   // wrap TSX side!
  *   .your-row .your-label { @include mi.label; }
+ *   .your-section { @include mi.section; }
+ *   .your-section-label { @include mi.section-label; }
  * Keep the component's own class names — this file owns metrics and
  * states only, never selectors of the adopting rows.
  */
@@ -65,6 +79,18 @@
   --hk-menu-item-icon-box: 20px;
 }
 
+/* Mobile bottom-sheet geometry for the section caption. The caption is a
+ * sibling BAND, not a row, so it carries its own token names: the
+ * sheet-context lists below register .hk-menu-section-label separately
+ * (rows pick up item-sheet-tokens; a caption inside the same panel must
+ * not be widened by the row mixin's token names). */
+@mixin section-label-sheet-tokens {
+  --hk-menu-section-label-pad-top: var(--space-6, 6px);
+  --hk-menu-section-label-pad-x: var(--space-8, 8px);
+  --hk-menu-section-label-pad-bottom: var(--space-12, 12px);
+  --hk-menu-section-label-font: var(--text-xs, 0.75rem);
+}
+
 /* Sheet context. The tokens are re-declared ON each adopting row, not
  * merely on the panel: a custom property declared on an element always
  * beats an inherited value, and @mixin item declares the desktop set at
@@ -73,8 +99,9 @@
  * Therefore every adopter MUST @include mi.item at a TOP-LEVEL (0,1,0)
  * rule — a nested include (e.g. inside its parent menu selector)
  * compiles to a higher specificity and silently defeats this binding
- * (HkBreadcrumb was caught exactly this way). New row families must
- * also register their class in this list. */
+ * (HkBreadcrumb was caught exactly this way). New row families and band
+ * elements (the divider, the section caption) must also register their
+ * class in this list. */
 .hk-select-sheet-panel,
 .hk-popover-panel.hk-is-sheet,
 .hk-drawer-panel {
@@ -93,6 +120,12 @@
   .hk-tag-dot-row,
   .hk-tag-dot {
     @include item-sheet-tokens;
+  }
+
+  /* The caption band's own sheet entry — same parent list, so every sheet
+   * surface that widens its rows widens their caption too. */
+  .hk-menu-section-label {
+    @include section-label-sheet-tokens;
   }
 }
 
@@ -114,6 +147,12 @@
     .hk-tag-dot-row,
     .hk-tag-dot {
       @include item-sheet-tokens;
+    }
+
+    /* Same registration rule as the panel list above: the caption rides
+     * the modal's sheet geometry without its own media query. */
+    .hk-menu-section-label {
+      @include section-label-sheet-tokens;
     }
   }
 }
@@ -241,4 +280,42 @@
   width: calc(100% - 2 * var(--hk-menu-item-pad-x, 12px));
   background: rgb(var(--color-border, 100 100 100) / 18%);
   border: none;
+}
+
+/* ── Section caption band ────────────────────────────────────────────
+ * The small caption ABOVE a run of rows (the workspace picker's
+ * 「临时空间」 band is the field case). Every value is a custom property
+ * with a grammar fallback, exactly like the row tokens, so a host can
+ * restyle one surface without forking the band. The bottom band is the
+ * separation from the first row (bottom-heavy on purpose — see the
+ * header comment); the inline inset hangs just left of the rows' icon
+ * column. Sheet geometry arrives through the sheet-context lists above,
+ * never through a per-component media query. NO text-transform:
+ * translators own casing (the HkTemplateField rule). */
+@mixin section-label {
+  padding-block-start: var(--hk-menu-section-label-pad-top, var(--space-4, 4px));
+  padding-inline: var(--hk-menu-section-label-pad-x, var(--space-6, 6px));
+  padding-block-end: var(--hk-menu-section-label-pad-bottom, var(--space-8, 8px));
+  font-size: var(--hk-menu-section-label-font, var(--text-2xs, 0.625rem));
+  font-weight: var(--hk-menu-section-label-weight, 600);
+  letter-spacing: var(--hk-menu-section-label-tracking, 0.02em);
+  color: var(--hk-menu-section-label-color, rgb(var(--color-muted)));
+  user-select: none;
+}
+
+/* ── Section wrapper ─────────────────────────────────────────────────
+ * The role="group" box HkMenuSection renders: one caption plus its rows.
+ * The 2px gap keeps the first row off the caption's bottom band (the
+ * band's own 8px is the intra-section separation); stacked sections take
+ * a 6px stack margin so two captioned runs read as two groups, not one
+ * long list. The wrapper stays chrome-free — the caption owns the band
+ * (HkTemplateField's contract: no padding on the group wrapper). */
+@mixin section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hk-menu-section-gap, var(--space-2, 2px));
+
+  & + & {
+    margin-block-start: var(--hk-menu-section-stack, var(--space-6, 6px));
+  }
 }

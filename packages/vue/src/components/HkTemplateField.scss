@@ -1,3 +1,5 @@
+@use "./menu-item" as mi;
+
 // HkTemplateField / HkTemplateText — the fill-template surfaces.
 // Self-sufficient styling (house rule): the field box, label, hint and
 // error rows live here rather than borrowing HkInput's sheet, and the
@@ -185,14 +187,13 @@
 }
 
 .hk-tpl-group-label {
-  padding: var(--space-6, 6px) var(--space-8, 8px) var(--space-2, 2px);
-  font-size: var(--text-2xs, 0.625rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  // The menu grammar's shared section-caption band (_menu-item.scss
+  // @mixin section-label), same as HkMenuSection's
+  // .hk-menu-section-label — the four different hand-rolled vertical
+  // bands across the product collapsed into this one grammar.
+  @include mi.section-label;
   // No text-transform: labels arrive from the host (usually i18n
   // strings) and the translator owns the casing.
-  color: var(--hi-color-muted);
-  user-select: none;
 }
 
 .hk-tpl-row {

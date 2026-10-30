@@ -99,8 +99,15 @@ describe("HkTemplateField stylesheet contract", () => {
 
   it("keeps the heading band on the label class, not the group wrapper", () => {
     // The wrapper is a bare layout box; carrying the band's chrome
-    // (padding/font-weight) there would pad every row run.
-    expect(css).toMatch(/\.hk-tpl-group-label\s*\{[^}]*font-weight:\s*600/s);
+    // (padding/font-weight) there would pad every row run. The weight
+    // now arrives through the shared menu grammar's section-caption
+    // mixin (@include mi.section-label), so the pin follows the token
+    // form with 600 as its FALLBACK — plain `600` here would mean the
+    // adopter dropped the grammar again, and a different fallback would
+    // change the band's weight.
+    expect(css).toMatch(
+      /\.hk-tpl-group-label\s*\{[^}]*font-weight:\s*(?:var\(--hk-menu-section-label-weight,\s*)?600\b/s,
+    );
     expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*font-weight/s);
     expect(css).not.toMatch(/\.hk-tpl-group\s*\{[^}]*padding/s);
   });

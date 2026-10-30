@@ -216,16 +216,48 @@
   color: rgb(var(--color-muted));
 }
 
+// Tone-pill ink, WCAG AA (2026-10-30 record-level leftover; PR #920 R2 S3-⑤).
+//
+// The pill text sits at `--text-2xs` (10px) — WCAG small text — so it owes
+// 4.5:1, and the raw channel colour does not clear that on every palette:
+// hosts swap the preset table wholesale (chest clears every stock key at
+// boot and registers only its brand line), so no palette's value may be
+// hardcoded here. The ink is therefore DERIVED from the live channel in
+// OKLCH, whose perceptual uniformness lets the derivation touch lightness
+// only — hue and chroma pass through, so each tone keeps its identity:
+//
+//   light: L capped at 0.5  — darkens only colours too light for the white
+//                            modal surface (stock amber would sit at 1.9:1);
+//   dark:  L floored at 0.72 — lifts only colours too dark for the navy one
+//                            (chest red would sit at 3.3:1).
+//
+// Colours already inside the band pass through untouched (chest light red
+// barely moves). Both bounds were solved against the pill's real backdrop —
+// the 10% channel tint composited over the 3%-primary card on
+// `--color-surface` — for the WORST entry of the stock AND chest palettes:
+// every tone lands ≥4.6:1. `light-dark()` resolves through the same
+// color-scheme the theme engine already drives (`[data-mode] body` in
+// theme.scss sets it alongside the channel swap), and an engine without
+// relative-colour support drops the declaration, falling back to the
+// neutral muted ink above (which passes on both palettes) rather than an
+// unreadable tone colour. The border and background keep the raw channel:
+// only the glyphs owe contrast, the tint is decorative.
 .s-about-modal-row-meta[data-tone="positive"] {
   border-color: rgb(var(--color-success) / 32%);
   background: rgb(var(--color-success) / 10%);
-  color: rgb(var(--color-success));
+  color: light-dark(
+    oklch(from rgb(var(--color-success)) min(l, 0.5) c h),
+    oklch(from rgb(var(--color-success)) max(l, 0.72) c h)
+  );
 }
 
 .s-about-modal-row-meta[data-tone="caution"] {
   border-color: rgb(var(--color-warning) / 32%);
   background: rgb(var(--color-warning) / 10%);
-  color: rgb(var(--color-warning));
+  color: light-dark(
+    oklch(from rgb(var(--color-warning)) min(l, 0.5) c h),
+    oklch(from rgb(var(--color-warning)) max(l, 0.72) c h)
+  );
 }
 
 // Red state: the component is not wired up / unreachable. The row then
@@ -233,7 +265,10 @@
 .s-about-modal-row-meta[data-tone="danger"] {
   border-color: rgb(var(--color-error) / 32%);
   background: rgb(var(--color-error) / 10%);
-  color: rgb(var(--color-error));
+  color: light-dark(
+    oklch(from rgb(var(--color-error)) min(l, 0.5) c h),
+    oklch(from rgb(var(--color-error)) max(l, 0.72) c h)
+  );
 }
 
 /* ── Links: licenses, external links, credits names and filings ───────── */

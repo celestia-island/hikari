@@ -217,7 +217,12 @@
     "hikari::filterPanel.op.lt": "未満",
     "hikari::filterPanel.op.lte": "以下",
     "hikari::filterPanel.op.gte": "以上",
-    "hikari::filterPanel.op.gt": "より大きい"
+    "hikari::filterPanel.op.gt": "より大きい",
+    "hikari::calendarHeatmap.less": "少",
+    "hikari::calendarHeatmap.more": "多",
+    "hikari::calendarHeatmap.cellTitle": "{date} · {n} {unit}",
+    "hikari::calendarHeatmap.cellTitleNoUnit": "{date} · {n}",
+    "hikari::calendarHeatmap.summary": "直近 {weeks} 週間の毎日の使用量"
   },
   "hikari::affixPicker.unset": "未設定",
   "hikari::affixPicker.title": "オプション",

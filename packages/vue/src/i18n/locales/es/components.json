@@ -217,7 +217,12 @@
     "hikari::filterPanel.op.lt": "menor que",
     "hikari::filterPanel.op.lte": "como máximo",
     "hikari::filterPanel.op.gte": "al menos",
-    "hikari::filterPanel.op.gt": "mayor que"
+    "hikari::filterPanel.op.gt": "mayor que",
+    "hikari::calendarHeatmap.less": "Menos",
+    "hikari::calendarHeatmap.more": "Más",
+    "hikari::calendarHeatmap.cellTitle": "{date} · {n} {unit}",
+    "hikari::calendarHeatmap.cellTitleNoUnit": "{date} · {n}",
+    "hikari::calendarHeatmap.summary": "Uso diario durante {weeks} semanas"
   },
   "hikari::affixPicker.unset": "Sin establecer",
   "hikari::affixPicker.title": "Opciones",

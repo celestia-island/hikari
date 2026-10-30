@@ -221,7 +221,12 @@
     "hikari::filterPanel.op.lt": "小於",
     "hikari::filterPanel.op.lte": "不超過",
     "hikari::filterPanel.op.gte": "不低於",
-    "hikari::filterPanel.op.gt": "大於"
+    "hikari::filterPanel.op.gt": "大於",
+    "hikari::calendarHeatmap.less": "少",
+    "hikari::calendarHeatmap.more": "多",
+    "hikari::calendarHeatmap.cellTitle": "{date} · {n} {unit}",
+    "hikari::calendarHeatmap.cellTitleNoUnit": "{date} · {n}",
+    "hikari::calendarHeatmap.summary": "近 {weeks} 週的每日用量"
   },
   "hikari::affixPicker.title": "選項",
   "hikari::affixPicker.search": "搜尋",

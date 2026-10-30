@@ -217,7 +217,12 @@
     "hikari::filterPanel.op.lt": "меньше",
     "hikari::filterPanel.op.lte": "не более",
     "hikari::filterPanel.op.gte": "не менее",
-    "hikari::filterPanel.op.gt": "больше"
+    "hikari::filterPanel.op.gt": "больше",
+    "hikari::calendarHeatmap.less": "Меньше",
+    "hikari::calendarHeatmap.more": "Больше",
+    "hikari::calendarHeatmap.cellTitle": "{date} · {n} {unit}",
+    "hikari::calendarHeatmap.cellTitleNoUnit": "{date} · {n}",
+    "hikari::calendarHeatmap.summary": "Ежедневное использование за {weeks} недель"
   },
   "hikari::affixPicker.unset": "Не задано",
   "hikari::affixPicker.title": "Параметры",

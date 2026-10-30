@@ -217,7 +217,12 @@
     "hikari::filterPanel.op.lt": "미만",
     "hikari::filterPanel.op.lte": "이하",
     "hikari::filterPanel.op.gte": "이상",
-    "hikari::filterPanel.op.gt": "초과"
+    "hikari::filterPanel.op.gt": "초과",
+    "hikari::calendarHeatmap.less": "적음",
+    "hikari::calendarHeatmap.more": "많음",
+    "hikari::calendarHeatmap.cellTitle": "{date} · {n} {unit}",
+    "hikari::calendarHeatmap.cellTitleNoUnit": "{date} · {n}",
+    "hikari::calendarHeatmap.summary": "최근 {weeks}주간의 일일 사용량"
   },
   "hikari::affixPicker.unset": "미설정",
   "hikari::affixPicker.title": "옵션",

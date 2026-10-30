@@ -250,8 +250,9 @@
 // invalid at computed-value time and the glyphs fall back to the INHERITED
 // colour — worse than the muted ink. Mode rules need no such function, so no
 // build floor can rewrite them, and `[data-mode]` is the very attribute the
-// theme engine drives (`theme.scss` sets `color-scheme` from it alongside the
-// channel swap), so the arms cannot desynchronise from the palette.
+// theme engine writes (`applyTheme` sets it on `<html>` in the same pass that
+// injects the channel variables; `theme.scss` derives `color-scheme` from it),
+// so the arms cannot desynchronise from the palette.
 //
 // Degradation is by PARSE-TIME drop: an engine without relative-colour
 // support discards the tone rule's `color` outright, which leaves the neutral

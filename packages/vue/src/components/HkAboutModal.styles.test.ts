@@ -33,19 +33,23 @@ function classesFrom(source: string): Set<string> {
  * Body of one compiled rule, by exact selector (Sass drops the quotes around
  * an attribute value: `[data-face=plain]`).
  *
- * The selector must compile exactly once: a second copy — say inside a media
- * query, or a later override — would otherwise stay invisible here while
- * still winning the cascade.
+ * The selector must compile exactly once: a second copy — a later override, or
+ * one hidden inside a media/supports block — would otherwise stay invisible
+ * here while still winning the cascade.
  *
- * The match is anchored to a rule boundary (`}`, or the start of the sheet),
- * because a descendant rule such as `[data-mode=dark] .s-about-modal-row-meta`
- * CONTAINS the base selector as a suffix; an unanchored search would read the
- * dark arm as a duplicate of the light one and report the wrong winner.
+ * The match is anchored to a rule boundary — start of sheet, `}` (the previous
+ * rule ended) or `{` (an at-rule body opens) — because a descendant rule such
+ * as `[data-mode=dark] .s-about-modal-row-meta` CONTAINS the base selector as a
+ * suffix; an unanchored search would read the dark arm as a duplicate of the
+ * light one. The boundary is a LOOKBEHIND so it is not consumed: with a
+ * consuming `}` the match of one rule would swallow the character the next
+ * adjacent rule needs as its boundary, which hid exactly the duplicates this
+ * guard exists to catch.
  */
 function ruleBody(sheet: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const matches = [
-    ...sheet.matchAll(new RegExp(`(?:^|[}])\\s*${escaped}\\s*\\{([^}]*)\\}`, "g")),
+    ...sheet.matchAll(new RegExp(`(?:(?<=^)|(?<=[}{]))\\s*${escaped}\\s*\\{([^}]*)\\}`, "g")),
   ];
   expect(matches, `${selector} compiles exactly once`).toHaveLength(1);
   return matches[0]?.[1] ?? "";
@@ -300,7 +304,12 @@ describe("HkAboutModal stylesheet contract", () => {
         // Exactly one declaration: the dark arm owns the glyph colour alone.
         // Border and background stay on the base rule (same live channel), so
         // a second copy here would be a cascade surprise.
-        expect(dark.trim()).toBe(`color: ${AA_INK_DARK(channel)};`);
+        const declarations = dark
+          .split(";")
+          .map((chunk) => chunk.trim())
+          .filter(Boolean);
+        expect(declarations, "the dark arm declares the glyph colour only").toHaveLength(1);
+        expect(declaration(dark, "color")).toBe(AA_INK_DARK(channel));
       }
     });
 
@@ -310,10 +319,11 @@ describe("HkAboutModal stylesheet contract", () => {
       // glyphs silently inherit their parent's colour. Mode rules carry the
       // same two arms without any function a minifier can lower.
       //
-      // The source check matches a DECLARATION (`: light-dark(`), not the
-      // prose above it: the rationale deliberately names the function.
-      expect(css).not.toContain("light-dark(");
-      expect(scss).not.toMatch(/:\s*light-dark\(/);
+      // Case-insensitive (CSS function names are), and anchored to a
+      // DECLARATION rather than a bare mention: the rationale comments name
+      // the function on purpose, and `expanded` output keeps `/* */` blocks.
+      expect(css).not.toMatch(/[:]\s*[^;{}]*light-dark\(/i);
+      expect(scss).not.toMatch(/:\s*light-dark\(/i);
     });
   });
 });

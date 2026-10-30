@@ -198,6 +198,8 @@ import { useTheme } from "@celestia-island/hikari";
 const { currentTheme, currentMode, setTheme, setMode, toggleMode } = useTheme();
 ```
 
+**Mode is carried by the `data-mode` attribute** (`"light"` / `"dark"`) on `<html>`: `applyTheme()` writes it in the same pass that injects the channel variables, and `theme.scss` derives `color-scheme` from it. Components that need a mode-specific value key off that attribute (`[data-mode="dark"] .my-rule`) rather than `light-dark()` — a stylesheet using that CSS function cannot be safely minified down to older engine floors (the minifier rewrites it into an undeclared custom-property pair), which is why the library's own SCSS avoids it. A host that replaces the preset table wholesale must still set `html[data-mode]` (booting through `initTheme()` does that for you) or the dark arms will not engage.
+
 ## Documentation
 
 The full documentation lives under `docs/` in 9 languages:

@@ -276,11 +276,16 @@ export {
   type WallpaperSurfaceKind, type WallpaperSurfaceSources,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
   timezoneFallback, setGeolocationProvider, refreshThemeClock, stopThemeClock,
+  SOLAR_LOCATION_STRATEGY_STORAGE_KEY, SOLAR_MANUAL_LOCATION_STORAGE_KEY,
+  solarLocationStrategy, setSolarLocationStrategy,
+  solarManualLocation, setSolarManualLocation, manualLocationOf,
+  listTimeZones, systemTimeZoneId,
   initFontContext, applyFontContext, resetFontContext, useFontContext,
   HIKARI_FONT_SANS, HIKARI_FONT_MONO, HIKARI_FONT_READING,
   type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode,
   type ThemeId, type ThemeTokens, type CustomThemePreset, type TimePeriod,
   type GeoLocation, type GeoLocationProvider,
+  type SolarLocationStrategy, type SolarHemisphere, type SolarManualLocation,
   type ThemeTokenGroupValues, type ThemeTokenGroupModes, type ThemeTokenValue,
   type TokenGroupDefinition, type TokenGroupSlot, type TokenGroupSection, type HueClamp,
   type TokenGroupSlotKind, type TokenColorSlot, type TokenNumberSlot, type TokenEnumSlot,
@@ -531,6 +536,7 @@ export { HkAdminHeader as HAdminHeader } from "./components/HkAdminHeader";
 export { HkNavSidebar as HNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HThemeToggle, type ThemeItemScope } from "./components/HkThemeToggle";
 export { HkThemePanelContent as HThemePanelContent } from "./components/HkThemePanelContent";
+export { HkSolarLocationSetting as HSolarLocationSetting } from "./components/HkSolarLocationSetting";
 export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
 export { default as HAuthMethodList } from "./components/HkAuthMethodList";
 export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";
@@ -811,6 +817,7 @@ export { HkAvatarButton as HkAvatarButton } from "./components/HkAvatarButton";
 export { HkNavSidebar as HkNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HkThemeToggle } from "./components/HkThemeToggle";
 export { HkThemePanelContent as HkThemePanelContent } from "./components/HkThemePanelContent";
+export { HkSolarLocationSetting as HkSolarLocationSetting } from "./components/HkSolarLocationSetting";
 export { HkAuthCard as HkAuthCard } from "./components/HkAuthCard";
 export { HkSignInCard as HkSignInCard } from "./components/HkSignInCard";
 export { HkThirdPartySignInCard as HkThirdPartySignInCard } from "./components/HkThirdPartySignInCard";

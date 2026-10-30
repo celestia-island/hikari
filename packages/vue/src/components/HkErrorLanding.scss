@@ -249,8 +249,17 @@
 
 // A nested HkJsonTree fills the pane instead of stacking its own frame
 // and 320px cap — the pane above owns the chrome now (overflow included:
-// the tree must never engage its own scroller).
-.hk-error-landing__details-body .s-tool-json-tree {
+// the tree must never engage its own scroller). The leading landing class
+// is load-bearing SPECIFICITY, not decoration: hosts blanket-restyle the
+// shared tree class from :root (wowsp's glass dial, `:root
+// .s-tool-json-tree`) at the same (0,2,0) weight the two-class selector
+// below used to carry, and the later-bundled dial won the cascade — the
+// nested tree repainted its content band over the pane's uniform fill,
+// splitting the standing frame into a tinted text block above an untinted
+// void in BOTH themes (2026-10-30 wowsp report). Three classes put the
+// landing's pane chrome out of every :root-prefixed host dial's reach,
+// whatever the bundle order.
+.hk-error-landing .hk-error-landing__details-body .s-tool-json-tree {
   max-height: none;
   height: auto;
   overflow: visible;
@@ -306,13 +315,67 @@
   align-items: flex-start;
   background: transparent;
 
+  // Fill seating: the host lays the landing out as the shrinking region of
+  // a definite-height flex pane (a settings card whose header sits above
+  // and the landing owns the rest). flex takes the remaining space and the
+  // lifted min-height lets the CARD compress to it instead of pushing the
+  // host pane into a scroll for chrome alone; once even the compressed
+  // floor cannot fit, the overflow anchor above still seats the card
+  // top-first and reachable. Every declaration is flex-context-only: a
+  // non-flex host (or a flex pane with auto height) ignores the fill
+  // entirely and keeps the default min-height centering contract, so a
+  // wrong host degrades to the flow landing, never to a collapsed one.
+  &.is-fill {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   // Safe centering: auto margins center the card on both axes while free
   // space exists and collapse to 0 when it doesn't (the overflow case
   // anchored by align-items above). Specificity (0,3,0) also keeps the
-  // slim padding below outranking the ≤480px media rule (0,1,0).
+  // slim padding below outranking the ≤480px media rule (0,1,0). The
+  // column layout plus the landing-box cap make the card COMPRESSIBLE:
+  // its only flexible part (the details frame below) yields height before
+  // the card pushes the host pane into a scroll. Flow rendering is
+  // unchanged — every child margin in this card is one-directional, so
+  // dropping block-margin collapsing moves no spacing.
   .hk-error-landing__card {
     margin: auto;
     padding: var(--space-16, 1rem) var(--space-28, 1.75rem) var(--space-24, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    // Never smaller than the card's own content minimum (the details
+    // frame's floor included): min-height beats max-height per spec, so a
+    // pane tighter than floor + chrome spills the card into the host's
+    // scroller (top-anchored, reachable) instead of clipping the actions
+    // row inside the card's own overflow: hidden.
+    min-height: min-content;
+  }
+
+  // The details region passes a squeeze THROUGH to the frame instead of
+  // stopping it at its own content box.
+  .hk-error-landing__details {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  // The standing frame yields under a squeeze instead of stretching the
+  // card past its pane: the flex-basis IS the page-grade standing height,
+  // so an unconstrained card renders exactly the fixed frame, the floor
+  // keeps a usable scroll window when the host is tight, and the frame's
+  // own overlay scrollbar takes over below the basis. The stable-frame
+  // contract is intact — folding tree nodes still never resizes the frame;
+  // only a HOST constraint (pane resize, fill seating) moves it, and a
+  // resize reflecting the host's real geometry is feedback, not a jump.
+  .hk-error-landing__details-pane {
+    height: auto;
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-basis: max(9rem, 20vh);
+    flex-basis: max(9rem, 20dvh);
+    min-height: 6rem;
   }
 }
 

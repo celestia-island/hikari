@@ -11,6 +11,7 @@ interface MountOptions {
   status?: number;
   tone?: "error" | "warning" | "info";
   variant?: "page" | "inline";
+  fill?: boolean;
   copyText?: string;
   copyLabel?: string;
   details?: () => ReturnType<typeof h>;
@@ -30,6 +31,7 @@ function mountLanding(opts: MountOptions = {}) {
         status: opts.status,
         tone: opts.tone ?? "error",
         variant: opts.variant ?? "page",
+        fill: opts.fill ?? false,
         copyText: opts.copyText ?? "",
         copyLabel: opts.copyLabel ?? "",
       }, {
@@ -173,6 +175,21 @@ describe("HkErrorLanding", () => {
     const el = mountLanding({ variant: "inline", title: "Boom" });
     const root = el.querySelector(".hk-error-landing")!;
     expect(root.classList.contains("is-inline")).toBe(true);
+    expect(root.classList.contains("is-fill")).toBe(false);
+  });
+
+  it("applies the fill seating class in the inline variant", () => {
+    const el = mountLanding({ variant: "inline", fill: true, title: "Boom" });
+    const root = el.querySelector(".hk-error-landing")!;
+    expect(root.classList.contains("is-inline")).toBe(true);
+    expect(root.classList.contains("is-fill")).toBe(true);
+  });
+
+  it("never applies the fill seating to the page variant", () => {
+    const el = mountLanding({ fill: true, title: "Boom" });
+    const root = el.querySelector(".hk-error-landing")!;
+    expect(root.classList.contains("is-inline")).toBe(false);
+    expect(root.classList.contains("is-fill")).toBe(false);
   });
 
   it("seats the built-in copy action FIRST, left of the host actions", () => {

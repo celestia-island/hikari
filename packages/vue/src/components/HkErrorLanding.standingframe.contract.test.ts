@@ -5,14 +5,24 @@ import { fileURLToPath } from "node:url";
 
 /**
  * Source contract: the error landing's raw-details pane is a STANDING
- * frame — the larger of 9rem and ~20vh, fixed. The frame must never
- * breathe with its content: the 2026-10-01 content-hugging experiment
- * (max-height cap + inheriting body) shipped and was reverted the same
- * day after mobile review — folding the tree shrank the whole error card
- * and the jumping height read as broken. These pins keep BOTH regression
- * classes out: the breathing class (max-height instead of height on the
- * pane, an inheriting/max-capped body) and the late-re-declaration class
- * (a later same-file override re-pinning either box).
+ * frame — the larger of 9rem and ~20vh. The frame must never breathe
+ * with its content: the 2026-10-01 content-hugging experiment (max-height
+ * cap + inheriting body) shipped and was reverted the same day after
+ * mobile review — folding the tree shrank the whole error card and the
+ * jumping height read as broken. These pins keep BOTH regression classes
+ * out: the breathing class (max-height instead of height on the pane, an
+ * inheriting/max-capped body) and the late-re-declaration class (a later
+ * same-file override re-pinning either box).
+ *
+ * 2026-10-30 evolution: the base rule keeps the FIXED frame (the page
+ * variant owns a viewport; unconstrained hosts render the standing
+ * height verbatim), while the INLINE variant re-expresses the SAME
+ * standing pair as a flex-basis with a shrink floor — under a real host
+ * constraint (fill seating in a definite-height flex pane) the frame
+ * yields before the card scrolls the pane. A host-resize squeeze is
+ * feedback, not a fold; folding still never moves the frame. The inline
+ * side of that contract lives in HkErrorLanding.inline.contract.test.ts;
+ * this file pins the base rule and counts the declaration sites.
  */
 const here = dirname(fileURLToPath(import.meta.url));
 const scss = readFileSync(join(here, "HkErrorLanding.scss"), "utf-8");
@@ -21,17 +31,19 @@ describe("HkErrorLanding standing frame contract", () => {
   const paneAt = scss.indexOf(".hk-error-landing__details-pane {");
   const bodyAt = scss.indexOf(".hk-error-landing__details-body {");
 
-  it("declares the pane and body exactly once — no late re-declaration", () => {
-    // Whole-file site count: the slice-scoped sweeps below read only up
-    // to the nested tree rule, so a LATER `.hk-error-landing__details-
-    // body { height: ... }` in this file would cascade over the frame
-    // while every slice pin stays green (the R3-M4 mutation class).
-    // Pristine file has exactly two sites (pane + body); the descendant
+  it("declares the pane and body sites exactly — no late re-declaration", () => {
+    // Whole-file site count: the slice-scoped sweeps below read only the
+    // base rules, so a LATER `.hk-error-landing__details-body { height:
+    // ... }` in this file would cascade over the frame while every slice
+    // pin stays green (the R3-M4 mutation class). Exactly three sites are
+    // sanctioned: the base pane, the base body, and the inline variant's
+    // compressible pane re-expression (flex-basis standing pair + floor;
+    // pinned separately by the inline contract). The descendant
     // `.s-tool-json-tree` rule and the label/toggle selectors don't match.
     // Keep this pin at strict equality — softening it to >= silently
     // reopens the late-re-declaration class.
     const sites = scss.match(/\.hk-error-landing__details-(?:pane|body)\s*[,{]/g) ?? [];
-    expect(sites.length, `details pane/body selector sites = ${sites.join(" | ")}`).toBe(2);
+    expect(sites.length, `details pane/body selector sites = ${sites.join(" | ")}`).toBe(3);
   });
 
   it("fixes the pane at the standing frame, never a content-driven cap", () => {
@@ -53,11 +65,15 @@ describe("HkErrorLanding standing frame contract", () => {
 
   it("fills the fixed frame instead of hugging the payload", () => {
     expect(bodyAt, "body rule present").toBeGreaterThanOrEqual(0);
-    const nextAt = scss.indexOf(".hk-error-landing__details-body .s-tool-json-tree");
-    // The slice boundary is load-bearing: the sweeps below must never
-    // silently extend to EOF (where unrelated rules would trip them).
-    expect(nextAt, "tree-neutering rule present").toBeGreaterThanOrEqual(0);
-    const body = scss.slice(bodyAt, nextAt);
+    // The boundary is the body rule's OWN closing brace, not the next
+    // selector: the sweep must never silently extend into later rules
+    // (the nested tree's neutering rule carries a height: auto of its
+    // own, and an EOF-reaching slice would trip on unrelated boxes).
+    const openAt = scss.indexOf("{", bodyAt);
+    const closeAt = scss.indexOf("}", openAt);
+    expect(openAt, "body rule opens").toBeGreaterThan(bodyAt);
+    expect(closeAt, "body rule closes").toBeGreaterThan(openAt);
+    const body = scss.slice(bodyAt, closeAt + 1);
     // The body fills the fixed frame — its ONLY height declaration is
     // the 100% fill; any other height (auto/inherit/max cap) is the
     // reverted content-hugging regression (the R2-M-D mutation class).

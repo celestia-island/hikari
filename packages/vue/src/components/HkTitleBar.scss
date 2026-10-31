@@ -18,16 +18,17 @@
   --hk-tb-focus: rgb(var(--color-primary, 122 162 247) / 0.6);
   --hk-tb-close-hover: #e81123;
   --hk-tb-close-active: #f1707a;
-  /* The close fill is a FIXED danger red, so its ink is fixed too. Deriving
-     it from the theme's on-solid choice (the default dark preset picks
-     polar-night ink for its pale primary fills) painted a dark X on dark
-     red at roughly 1:1 - the host-visible bug both wowsp and momoi filed.
-     Hosts may override the token as a pair with --hk-tb-close-hover. */
-  --hk-tb-close-ink: #ffffff;
+  /* --hk-tb-close-ink and --hk-tb-icon-size are HOST-CONFIGURABLE, so they
+     are read with fallbacks at their use sites instead of being declared
+     here: a declaration on .hk-titlebar itself would out-rank a value the
+     host sets on :root (local declarations beat inherited ones), which
+     made the tokens look configurable while only the component could win.
+     The close fill is a FIXED danger red, so its ink default is fixed too:
+     deriving it from the theme's on-solid choice (the default dark preset
+     picks polar-night ink for its pale primary fills) painted a dark X on
+     dark red at roughly 1:1 - the host-visible bug both wowsp and momoi
+     filed. */
   --hk-tb-radius-close: 0 8px 0 0;
-  /* Caption glyph size; hosts that want a larger brand mark set the token
-     instead of overriding the icon rule. */
-  --hk-tb-icon-size: 16px;
 
   position: fixed;
   top: 0;
@@ -56,8 +57,8 @@
 }
 
 .hk-titlebar-icon {
-  width: var(--hk-tb-icon-size);
-  height: var(--hk-tb-icon-size);
+  width: var(--hk-tb-icon-size, 16px);
+  height: var(--hk-tb-icon-size, 16px);
   display: block;
   pointer-events: none;
 }
@@ -142,12 +143,12 @@
 
 .hk-titlebar .hk-titlebar-btn-close:hover {
   background: var(--hk-tb-close-hover);
-  color: var(--hk-tb-close-ink);
+  color: var(--hk-tb-close-ink, #ffffff);
 }
 
 .hk-titlebar .hk-titlebar-btn-close:active {
   background: var(--hk-tb-close-active);
-  color: var(--hk-tb-close-ink);
+  color: var(--hk-tb-close-ink, #ffffff);
 }
 
 .hk-titlebar .hk-titlebar-btn:focus-visible {

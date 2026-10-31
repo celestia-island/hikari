@@ -7,7 +7,6 @@ import { setLocale } from "../i18n/context";
 import {
   SOLAR_LOCATION_STRATEGY_STORAGE_KEY,
   SOLAR_MANUAL_LOCATION_STORAGE_KEY,
-  listTimeZones,
   manualLocationOf,
   setSolarLocationStrategy,
   setSolarManualLocation,
@@ -21,7 +20,7 @@ import {
  * HkSolarLocationSetting — the solar clock's location-strategy row.
  * The strategy engine (theme/useSolarTime.ts) has its own suite; these
  * cases pin the COMPONENT contract: the live summary row, the secondary
- * HkModal editor (strategy tabs / IANA zone select / explicit
+ * HkModal editor (strategy tabs / time-zone globe / explicit
  * hemisphere), OK applying through setSolarManualLocation →
  * setSolarLocationStrategy → refreshThemeClock with storage evidence,
  * and cancel leaving the engine untouched.
@@ -127,15 +126,18 @@ function clickStrategy(key: "timezone" | "ip" | "manual"): void {
   clickStrategyTab({ timezone: "Time zone", ip: "IP location", manual: "Manual" }[key]);
 }
 
-/** Opens the manual pane's IANA zone select and picks a zone. */
+/** Picks a zone on the manual pane's globe (the fallback sector list in
+ * the test DOM — happy-dom has no WebGL). */
 async function pickTimeZone(zone: string): Promise<void> {
-  const trigger = document.body.querySelector<HTMLButtonElement>(".hk-select-trigger");
-  expect(trigger, "zone select trigger renders").toBeTruthy();
-  trigger!.click();
-  await settle();
-  const option = [...document.body.querySelectorAll<HTMLElement>(".hk-select-option")]
-    .find((el) => el.textContent?.trim() === zone);
-  expect(option, `zone option "${zone}" renders`).toBeTruthy();
+  // The picker is a defineAsyncComponent chunk — wait it in.
+  let option: HTMLButtonElement | undefined;
+  for (let i = 0; i < 20 && !option; i++) {
+    option = document.body.querySelector<HTMLButtonElement>(
+      '[data-test="hk-timezone-globe-option"][data-zone="' + zone + '"]',
+    ) ?? undefined;
+    if (!option) await settle();
+  }
+  expect(option, `globe sector for "${zone}" renders`).toBeTruthy();
   option!.click();
   await settle();
 }
@@ -239,7 +241,13 @@ describe("HkSolarLocationSetting editor", () => {
     const editor = document.body.querySelector<HTMLElement>(".hk-solar-editor")!;
     expect(editor.getAttribute("data-strategy")).toBe("manual");
     expect(document.body.querySelector(".hk-solar-manual")).toBeTruthy();
-    expect(document.body.querySelector<HTMLButtonElement>(".hk-select-trigger")).toBeTruthy();
+    // The globe is a defineAsyncComponent chunk — wait it in.
+    let globe: HTMLElement | null = null;
+    for (let i = 0; i < 20 && !globe; i++) {
+      globe = document.body.querySelector<HTMLElement>('[data-test="hk-timezone-globe"]');
+      if (!globe) await settle();
+    }
+    expect(globe, "globe picker renders in the manual pane").toBeTruthy();
     const hemi = hemisphereTriggers();
     expect(hemi.map((b) => b.textContent?.trim())).toEqual(["Northern", "Southern"]);
     // Draft default: the system zone, northern hemisphere (explicit
@@ -357,23 +365,25 @@ describe("HkSolarLocationSetting i18n", () => {
     ]);
   });
 
-  it("seeds the zone list from the engine's listTimeZones catalog", async () => {
+  it("picks from the globe's 24-sector wheel, not the raw IANA catalog", async () => {
     const container = mountSetting();
     await openEditor(container);
     clickStrategy("manual");
     await settle();
 
-    const trigger = document.body.querySelector<HTMLButtonElement>(".hk-select-trigger");
-    trigger!.click();
-    await settle();
+    await pickTimeZone("Australia/Sydney");
 
-    const rendered = [...document.body.querySelectorAll<HTMLElement>(".hk-select-option")]
-      .map((el) => el.textContent?.trim());
-    const catalog = listTimeZones();
-    expect(rendered.length).toBe(catalog.length);
+    const rendered = [...document.body.querySelectorAll<HTMLButtonElement>('[data-test="hk-timezone-globe-option"]')]
+      .map((el) => el.dataset.zone);
+    // 24 representative zones — NOT the hundreds-of-ids IANA catalog
+    // the picker replaced.
+    expect(rendered).toHaveLength(24);
+    expect(new Set(rendered).size).toBe(24);
     expect(rendered).toContain("Asia/Shanghai");
-    // A catalog-present zone on every ICU: "UTC" itself is NOT part of
-    // Intl.supportedValuesOf("timeZone") on some ICU builds.
     expect(rendered).toContain("Australia/Sydney");
+    // The draft (and its resolved readout) carries the picked zone id.
+    const resolved = document.body.querySelector<HTMLElement>('[data-test="hk-solar-resolved"]');
+    const geo = manualLocationOf({ timeZone: "Australia/Sydney", hemisphere: "north" });
+    expect(resolved!.textContent).toContain(geo.lng.toFixed(1));
   });
 });

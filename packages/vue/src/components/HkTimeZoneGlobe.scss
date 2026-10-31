@@ -1,0 +1,125 @@
+/* HkTimeZoneGlobe — the manual zone picker's globe stage, tooltip and
+ * no-WebGL fallback list. AI-generated: developed with the ZCode agent
+ * (model GLM-5.3); human-directed. */
+
+.hk-timezone-globe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 0.375rem);
+  min-width: 0;
+}
+
+/* The 3D stage: a fixed-height viewport (the board's canvas and its
+ * bottom-right minimap both fill this box). */
+.hk-timezone-globe__stage {
+  position: relative;
+  height: 15rem;
+  min-height: 12rem;
+  border-radius: var(--radius-sm, 0.375rem);
+  overflow: hidden;
+  /* A whisper of surface so the transparent-background board reads as
+   * a framed instrument, not a hole in the modal. */
+  background: rgb(var(--color-muted) / 0.06);
+  touch-action: none;
+}
+
+.hk-timezone-globe__tooltip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  max-width: 15rem;
+  padding: var(--space-8, 0.5rem) var(--space-10, 0.625rem);
+  border: 1px solid rgb(var(--color-muted) / 0.35);
+  border-radius: var(--radius-sm, 0.375rem);
+  background: rgb(var(--color-background, 22 24 30) / 0.92);
+  color: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.45;
+}
+
+.hk-timezone-globe__tooltip-offset {
+  color: rgb(var(--color-text-secondary, var(--color-muted)));
+  font-weight: 600;
+}
+
+.hk-timezone-globe__tooltip-zone {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.hk-timezone-globe__tooltip-cities {
+  color: rgb(var(--color-text-secondary, var(--color-muted)));
+}
+
+.hk-timezone-globe__hint {
+  margin: 0;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.5;
+}
+
+/* ── No-WebGL fallback: the same 24 sectors as a flat list ─────────────── */
+.hk-timezone-globe__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 17rem;
+  overflow-y: auto;
+  border: 1px solid rgb(var(--color-muted) / 0.25);
+  border-radius: var(--radius-sm, 0.375rem);
+}
+
+.hk-timezone-globe__option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "offset name"
+    "zone   zone"
+    "cities cities";
+  gap: 0 var(--space-6, 0.375rem);
+  padding: var(--space-6, 0.375rem) var(--space-8, 0.5rem);
+  border: 0;
+  border-bottom: 1px solid rgb(var(--color-muted) / 0.12);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hk-timezone-globe__option:last-child {
+  border-bottom: 0;
+}
+
+.hk-timezone-globe__option:hover {
+  background: rgb(var(--color-muted) / 0.08);
+}
+
+.hk-timezone-globe__option--selected {
+  background: rgb(var(--color-primary) / 0.12);
+}
+
+.hk-timezone-globe__option-offset {
+  grid-area: offset;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hk-timezone-globe__option-name {
+  grid-area: name;
+  color: rgb(var(--color-text-secondary, var(--color-muted)));
+}
+
+.hk-timezone-globe__option-zone {
+  grid-area: zone;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.hk-timezone-globe__option-cities {
+  grid-area: cities;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs, 0.75rem);
+}

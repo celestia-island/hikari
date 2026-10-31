@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkTimeZoneGlobe from "./HkTimeZoneGlobe";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { setLocale } from "../i18n/context";
 
 /**
@@ -124,5 +126,18 @@ describe("HkTimeZoneGlobe fallback list", () => {
     const p8 = options().find((o) => o.dataset.zone === "Asia/Shanghai")!;
     expect(p8.textContent).toContain("东八区");
     expect(p8.textContent).toContain("上海、台北、香港、新加坡");
+  });
+});
+
+describe("HkTimeZoneGlobe look contract (source-level)", () => {
+  it("renders the base sphere TRANSPARENT (the white-alpha map must read as holo, not a solid ball)", () => {
+    const src = readFileSync(join(import.meta.dirname, "HkTimeZoneGlobe.tsx"), "utf8");
+    expect(src).toMatch(/MeshBasicMaterial\(\{ color: 0x8899aa, transparent: true \}\)/);
+  });
+
+  it("mounts its minimap collapsible AND folded by default (user direction 2026-10-31)", () => {
+    const src = readFileSync(join(import.meta.dirname, "HkTimeZoneGlobe.tsx"), "utf8");
+    expect(src).toContain("minimapCollapsible");
+    expect(src).toContain("minimapDefaultCollapsed");
   });
 });

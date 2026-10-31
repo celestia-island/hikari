@@ -169,7 +169,12 @@ export default defineComponent({
     function buildScene(eng: Board3DEngine): void {
       // Base sphere — the board-tinted borderless world map.
       const geometry = new THREE.SphereGeometry(GLOBE_RADIUS, 96, 64);
-      baseMaterial = new THREE.MeshBasicMaterial({ color: 0x8899aa });
+      // transparent is the WHOLE LOOK: the base map is white-alpha (the
+      // ocean carries alpha 0), so without the flag three ignores the
+      // texture alpha and renders the sphere as an opaque dark ball.
+      // With it the globe reads as a holo: continents and plate lines
+      // floating over the theme surface, nothing solid behind them.
+      baseMaterial = new THREE.MeshBasicMaterial({ color: 0x8899aa, transparent: true });
       const sphere = new THREE.Mesh(geometry, baseMaterial);
       eng.setObject("globe-base", {
         object: sphere, pickable: false, content: true, marker: "none",
@@ -346,6 +351,8 @@ export default defineComponent({
             <HkBoard3D
               interactive
               minimap
+              minimapCollapsible
+              minimapDefaultCollapsed
               hoverBox={false}
               transparentBackground
               enablePan={false}

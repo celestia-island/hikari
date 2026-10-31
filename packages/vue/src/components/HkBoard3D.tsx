@@ -33,7 +33,9 @@
  *    anchors, pointer-events opt-in per chip so drags still orbit;
  *  - MINIMAP: HkMinimap3D pinned bottom-right — a second, stereoscopic
  *    renderer onto the SAME scene with the main camera glyph, its view
- *    plane and content markers layered in;
+ *    plane and content markers layered in; minimapCollapsible lets the
+ *    user fold it into the small map-icon button and
+ *    minimapDefaultCollapsed mounts it folded;
  *  - THEME: scene background follows --color-background, re-read on
  *    data-mode / data-theme / style mutations; `engine.onTheme` lets the
  *    page re-tone its materials on the same signal. With the
@@ -331,6 +333,12 @@ export default defineComponent({
     interactive: { type: Boolean, default: true },
     /** Pin the stereoscopic minimap bottom-right. */
     minimap: { type: Boolean, default: true },
+    /** Give the minimap the collapse affordance (minimize button in its
+     *  zoom bar; folded state = the small map-icon button). */
+    minimapCollapsible: { type: Boolean, default: false },
+    /** Mount the minimap already folded (with minimapCollapsible the
+     *  user can bring it back; the renderer then inits on first expand). */
+    minimapDefaultCollapsed: { type: Boolean, default: false },
     /** Vertical field of view in degrees. STATIC after mount (the
      *  camera is built in init; remount to change it). */
     fov: { type: Number, default: 45 },
@@ -1156,7 +1164,11 @@ export default defineComponent({
           )
         ) : null}
         {props.minimap && engineRef.value && !failed.value ? (
-          <HkMinimap3D engine={engineRef.value} />
+          <HkMinimap3D
+            engine={engineRef.value}
+            collapsible={props.minimapCollapsible}
+            defaultCollapsed={props.minimapDefaultCollapsed}
+          />
         ) : null}
         {slots.default ? <div class="hk-board3d-overlay">{slots.default()}</div> : null}
       </div>

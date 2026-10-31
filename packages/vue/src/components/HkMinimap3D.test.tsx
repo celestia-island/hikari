@@ -82,13 +82,13 @@ function fakeEngine(opts: FakeEngineOpts = {}): {
   };
 }
 
-function mountMap(engine: Board3DEngine) {
+function mountMap(engine: Board3DEngine, extra: Record<string, unknown> = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const app = createApp(
     defineComponent({
       setup() {
-        return () => h(HkMinimap3D, { engine });
+        return () => h(HkMinimap3D, { engine, ...extra });
       },
     }),
   );
@@ -358,5 +358,70 @@ describe("HkMinimap3D", () => {
     m.app.unmount();
     m.container.remove();
     for (const spy of spies) expect(spy).toHaveBeenCalled();
+  });
+});
+
+describe("HkMinimap3D collapse affordance (ported from the 2D minimap)", () => {
+  it("mounts folded with defaultCollapsed: map-icon button, no GL surface", async () => {
+    const { engine, firePostRender } = fakeEngine();
+    const { container } = mountMap(engine, { collapsible: true, defaultCollapsed: true });
+    await nextTick();
+    firePostRender();
+
+    expect(container.querySelector(".hk-minimap--collapsed"), "folded button renders").toBeTruthy();
+    expect(container.querySelector(".hk-minimap3d-canvas"), "no canvas while folded").toBeNull();
+    // No GL surface was ever built for a folded-at-mount map.
+    expect(H.FakeWebGLRenderer.instances).toHaveLength(0);
+  });
+
+  it("expands on the folded button and lazily inits the renderer", async () => {
+    const { engine, firePostRender } = fakeEngine();
+    const { container } = mountMap(engine, { collapsible: true, defaultCollapsed: true });
+    await nextTick();
+
+    const fold = container.querySelector<HTMLButtonElement>(".hk-minimap--collapsed");
+    expect(fold).toBeTruthy();
+    fold!.click();
+    await nextTick();
+    await nextTick();
+
+    expect(container.querySelector(".hk-minimap3d-canvas"), "canvas mounts on expand").toBeTruthy();
+    expect(container.querySelector(".hk-minimap--collapsed")).toBeNull();
+    // The lazy init built the renderer; frames flow again.
+    expect(H.FakeWebGLRenderer.instances).toHaveLength(1);
+    firePostRender();
+    expect(H.FakeWebGLRenderer.instances[0].renders.length).toBe(1);
+    // The zoom bar carries the minimize affordance once expanded.
+    expect(container.querySelector(".hk-mm-collapse-btn")).toBeTruthy();
+  });
+
+  it("collapsible adds the minimize button; clicking folds the card", async () => {
+    const { engine, firePostRender } = fakeEngine();
+    const { container } = mountMap(engine, { collapsible: true });
+    await nextTick();
+
+    expect(container.querySelector(".hk-minimap3d-canvas")).toBeTruthy();
+    const minimize = container.querySelector<HTMLButtonElement>(".hk-mm-collapse-btn");
+    expect(minimize, "minimize button rides the zoom bar").toBeTruthy();
+    minimize!.click();
+    await nextTick();
+
+    expect(container.querySelector(".hk-minimap--collapsed")).toBeTruthy();
+    expect(container.querySelector(".hk-minimap3d-canvas")).toBeNull();
+    // A folded map renders no frames even though the board keeps ticking.
+    const renderer = H.FakeWebGLRenderer.instances[0];
+    const before = renderer.renders.length;
+    firePostRender();
+    firePostRender();
+    expect(renderer.renders.length).toBe(before);
+  });
+
+  it("stays expanded by default (board pages keep the standing card)", async () => {
+    const { engine } = fakeEngine();
+    const { container } = mountMap(engine);
+    await nextTick();
+    expect(container.querySelector(".hk-minimap3d-canvas")).toBeTruthy();
+    expect(container.querySelector(".hk-mm-collapse-btn")).toBeNull();
+    expect(container.querySelector(".hk-minimap--collapsed")).toBeNull();
   });
 });

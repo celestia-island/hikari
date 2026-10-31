@@ -822,6 +822,12 @@ export {
   BOARD3D_HELPERS_LAYER,
   BOARD3D_MAIN_LAYER,
 } from "./components/HkBoard3D";
+export { default as HkStarSystem } from "./components/HkStarSystem";
+export { default as HStarSystem } from "./components/HkStarSystem";
+export type {
+  StarSystemBodyInput as HkStarSystemBodyInput,
+  FleetBodySpec as HkStarSystemBodySpec,
+} from "./scene3d/holographicFleetSpec";
 export { default as HkMinimap3D } from "./components/HkMinimap3D";
 export { default as HkTrendChart } from "./components/HkTrendChart";
 export { default as HkTreemap } from "./components/HkTreemap";

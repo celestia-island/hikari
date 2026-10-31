@@ -24,6 +24,8 @@ type ModelOpts = barrel.Board3DModelOptions;
 type CameraCfg = barrel.Board3DCameraConfig;
 type FocusOpts = barrel.Board3DFocusOptions;
 type ViewModeT = barrel.Board3DViewMode;
+type StarBody = barrel.HkStarSystemBodyInput;
+type StarSpec = barrel.HkStarSystemBodySpec;
 
 // Type-only probes: these lines exist so the checker resolves the three
 // exported types through the barrel itself.
@@ -34,6 +36,12 @@ const modelProbe: ModelOpts | null = null;
 const cameraProbe: CameraCfg = { fov: 45 };
 const focusProbe: FocusOpts = { padding: 1.6, lateralBias: 0 };
 const viewModeProbe: ViewModeT = "orbit";
+const starBodyProbe: StarBody = {
+  id: "node-1", label: "Node One", role: "planet", status: "Online", online: true,
+};
+const starSpecProbe: StarSpec | null = null;
+void starBodyProbe;
+void starSpecProbe;
 void engineProbe;
 void defProbe;
 void vecProbe;
@@ -43,9 +51,11 @@ void focusProbe;
 void viewModeProbe;
 
 describe("hikari barrel — 3D board surface", () => {
-  it("exports both 3D components", () => {
+  it("exports the board, minimap and star-system business component", () => {
     expect(barrel.HkBoard3D).toBeTruthy();
     expect(barrel.HkMinimap3D).toBeTruthy();
+    expect(barrel.HkStarSystem).toBeTruthy();
+    expect(barrel.HStarSystem).toBe(barrel.HkStarSystem);
   });
 
   it("exports the helper-layer constant consumers need for own decoration", () => {

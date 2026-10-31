@@ -1,4 +1,4 @@
-import { Maximize2, ZoomIn, ZoomOut } from "lucide-vue-next";
+import { RotateCcw, ZoomIn, ZoomOut } from "lucide-vue-next";
 import { defineComponent } from "vue";
 
 
@@ -62,7 +62,7 @@ export default defineComponent({
               ariaLabel={t("hikari::zoomToolbar.reset", "Reset zoom")}
               onClick={() => emit("reset")}
             >
-              <Maximize2 size={14} />
+              <RotateCcw size={14} />
             </HButton>
           )}
         </div>

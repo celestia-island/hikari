@@ -24,7 +24,7 @@
  *    mount.
  */
 
-import { Map as MapIcon, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-vue-next";
+import { Map as MapIcon, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-vue-next";
 import {
   computed,
   defineComponent,
@@ -381,11 +381,36 @@ export default defineComponent({
       }
     });
 
-    /** Idempotent GL-surface init. Called from onMounted (expanded
-     *  mounts) and from the expand transition (a defaultCollapsed map
-     *  has no canvas at mount — the renderer builds on first expand). */
+    /** GL-surface init, safe to call repeatedly. Called from onMounted
+     *  (expanded mounts) and from the expand transition (a
+     *  defaultCollapsed map has no canvas at mount; a fold/unfold cycle
+     *  REBUILDS the canvas element, so a surviving renderer would keep
+     *  painting into the detached element and the reopened map would
+     *  stay empty — detect the swap and rebuild against the live canvas,
+     *  helpers and post-render hook included). */
     function initRenderer(): void {
-      if (renderer) return;
+      if (renderer && renderer.domElement === canvasRef.value) return;
+      removePostRender?.();
+      removePostRender = null;
+      if (renderer) {
+        renderer.dispose();
+        renderer.forceContextLoss?.();
+        renderer = null;
+      }
+      const s = scene.value;
+      if (s) {
+        if (glyph) {
+          s.remove(glyph);
+          disposeNode(glyph);
+          glyph = null;
+        }
+        if (planeFrame) {
+          s.remove(planeFrame);
+          planeFrame.geometry.dispose();
+          (planeFrame.material as THREE.Material).dispose();
+          planeFrame = null;
+        }
+      }
       const canvas = canvasRef.value;
       const el = rootRef.value;
       if (!canvas || !el) return;
@@ -519,7 +544,7 @@ export default defineComponent({
             aria-label={t("hikari::board3d.resetView", "Reset view")}
             title={t("hikari::board3d.resetView", "Reset view")}
           >
-            <Maximize2 size={11} />
+            <RotateCcw size={11} />
           </button>
           {props.collapsible && (
             <button

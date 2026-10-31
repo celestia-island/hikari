@@ -12,12 +12,15 @@ const H = vi.hoisted(() => {
     static instances: FakeWebGLRenderer[] = [];
     renders: Array<{ scene: unknown; camera: THREE.PerspectiveCamera }> = [];
     disposed = false;
-    constructor(_opts: { canvas: HTMLCanvasElement }) {
+    readonly domElement: HTMLCanvasElement;
+    constructor(opts: { canvas: HTMLCanvasElement }) {
+      this.domElement = opts.canvas;
       FakeWebGLRenderer.instances.push(this);
     }
     setPixelRatio(): void {}
     setSize(): void {}
     setClearColor(): void {}
+    forceContextLoss(): void { this.disposed = true; }
     render(scene: unknown, camera: THREE.PerspectiveCamera): void {
       // A real renderer maintains world matrices every pass.
       (scene as THREE.Scene).updateMatrixWorld(true);
@@ -423,5 +426,44 @@ describe("HkMinimap3D collapse affordance (ported from the 2D minimap)", () => {
     expect(container.querySelector(".hk-minimap3d-canvas")).toBeTruthy();
     expect(container.querySelector(".hk-mm-collapse-btn")).toBeNull();
     expect(container.querySelector(".hk-minimap--collapsed")).toBeNull();
+  });
+});
+describe("HkMinimap3D reopen cycle (the canvas element is rebuilt by v-if)", () => {
+  it("re-binds the renderer to the LIVE canvas; helpers never duplicate", async () => {
+    const { engine, scene, firePostRender } = fakeEngine();
+    const { container } = mountMap(engine, { collapsible: true });
+    await nextTick();
+    firePostRender();
+    expect(H.FakeWebGLRenderer.instances).toHaveLength(1);
+
+    const helpersOnLayer = () =>
+      scene.children.filter((c) => (c.layers.mask & (1 << BOARD3D_HELPERS_LAYER)) !== 0).length;
+    expect(helpersOnLayer()).toBe(2); // glyph group + view-plane frame
+
+    // fold -> unfold: Vue rebuilds the canvas element; the renderer must
+    // follow it or the reopened map paints into the detached element.
+    container.querySelector<HTMLButtonElement>(".hk-mm-collapse-btn")!.click();
+    await nextTick();
+    container.querySelector<HTMLButtonElement>(".hk-minimap--collapsed")!.click();
+    await nextTick();
+    await nextTick();
+
+    const canvasNow = container.querySelector<HTMLCanvasElement>(".hk-minimap3d-canvas");
+    expect(canvasNow, "canvas is back").toBeTruthy();
+    const latest = H.FakeWebGLRenderer.instances.at(-1)!;
+    expect(latest.domElement).toBe(canvasNow);
+    expect(helpersOnLayer()).toBe(2); // rebuilt, NOT duplicated
+    firePostRender();
+    expect(latest.renders.length).toBe(1);
+
+    // a second cycle stays correct
+    container.querySelector<HTMLButtonElement>(".hk-mm-collapse-btn")!.click();
+    await nextTick();
+    container.querySelector<HTMLButtonElement>(".hk-minimap--collapsed")!.click();
+    await nextTick();
+    await nextTick();
+    const canvas2 = container.querySelector<HTMLCanvasElement>(".hk-minimap3d-canvas");
+    expect(H.FakeWebGLRenderer.instances.at(-1)!.domElement).toBe(canvas2);
+    expect(helpersOnLayer()).toBe(2);
   });
 });

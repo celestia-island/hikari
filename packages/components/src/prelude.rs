@@ -98,8 +98,11 @@ pub use crate::entry::{
 };
 // Feedback component Props
 pub use crate::feedback::{
-    AlertProps, DrawerProps, GlowProps, LoadingVeilProps, PhaseTransitionProps, PopoverProps,
-    ProgressBarProps, ProgressRingProps, SpinnerProps, ToastProps, TooltipProps,
+    AlertProps, BlockingToastCardProps, BlockingToastProps, ConfirmDialogProps, DrawerProps,
+    GlowProps, LoadingVeilProps, MessageBoxProps, ModalAction, ModalActionVariant, ModalProps,
+    PersistentToastGroupProps, PersistentToastProps, PhaseTransitionProps, PopoverProps,
+    ProgressBarProps, ProgressRingProps, SpinnerProps, ToastItemViewProps, ToastProps,
+    TooltipProps,
 };
 // Layout component Props
 pub use crate::layout::{

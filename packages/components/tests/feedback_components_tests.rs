@@ -1,6 +1,7 @@
 mod tests {
 
     use hikari_components::prelude::*;
+    use hikari_icons::MdiIcon;
 
     #[test]
     fn test_alert_props_default() {
@@ -92,40 +93,43 @@ mod tests {
 
     #[test]
     fn test_toast_props_default() {
+        // The mirror replaces the legacy variant/position props: the host
+        // reads the module store and takes only the clipboard sink + class.
         let props = ToastProps::default();
-        assert_eq!(
-            props.variant,
-            hikari_components::feedback::ToastVariant::Info
-        );
-        assert_eq!(
-            props.position,
-            hikari_components::feedback::ToastPosition::TopRight
-        );
-        assert!(props.closable);
+        assert!(props.on_copy.is_none());
+        assert_eq!(props.class, "");
     }
 
     #[test]
-    fn test_toast_props_with_variant() {
-        let props = ToastProps {
-            variant: hikari_components::feedback::ToastVariant::Success,
-            ..Default::default()
-        };
+    fn test_toast_type_tokens() {
+        use hikari_components::feedback::ToastType;
+        assert_eq!(ToastType::Info.class_name(), "hk-toast-info");
+        assert_eq!(ToastType::Error.class_name(), "hk-toast-error");
         assert_eq!(
-            props.variant,
-            hikari_components::feedback::ToastVariant::Success
+            ToastType::Info.default_icon(),
+            Some(hikari_icons::MdiIcon::Information)
         );
     }
 
     #[test]
-    fn test_toast_props_with_position() {
-        let props = ToastProps {
-            position: hikari_components::feedback::ToastPosition::BottomLeft,
-            ..Default::default()
-        };
-        assert_eq!(
-            props.position,
-            hikari_components::feedback::ToastPosition::BottomLeft
-        );
+    fn test_toast_copy_text_joins_with_blank_line() {
+        use hikari_components::feedback::{ToastMessage, toast_copy_text};
+        let messages = vec![
+            ToastMessage {
+                id: 1,
+                text: "first".to_string(),
+            },
+            ToastMessage {
+                id: 2,
+                text: "second".to_string(),
+            },
+        ];
+        assert_eq!(toast_copy_text(&messages), "first\n\nsecond");
+    }
+
+    #[test]
+    fn test_toast_aggregation_cap_matches_vue() {
+        assert_eq!(hikari_components::feedback::MAX_TOASTS_PER_SLOT, 5);
     }
 
     #[test]
@@ -144,8 +148,12 @@ mod tests {
             props.placement,
             hikari_components::feedback::TooltipPlacement::Top
         );
-        assert!(props.arrow);
-        assert!(props.delay.is_none());
+        assert_eq!(
+            props.delay,
+            hikari_components::feedback::TOOLTIP_DEFAULT_DELAY_MS
+        );
+        assert!(props.max_width.is_none());
+        assert_eq!(props.text, "");
     }
 
     #[test]
@@ -161,494 +169,103 @@ mod tests {
     }
 
     #[test]
-    fn test_tooltip_props_with_delay() {
-        let props = TooltipProps {
-            delay: Some(500),
-            ..Default::default()
-        };
-        assert_eq!(props.delay, Some(500));
+    fn test_tooltip_position_geometry() {
+        // The mirrored helper takes the trigger rect (Vue: DOMRect) and
+        // reproduces runtime/tooltipPosition.ts placement numbers.
+        use hikari_components::feedback::{TooltipPlacement, tooltip_position_style};
+        let rect = (200.0, 100.0, 100.0, 40.0);
+        let top = tooltip_position_style(rect, TooltipPlacement::Top, None);
+        assert!(top.contains("top:92px"), "top placement: {top}");
+        assert!(top.contains("left:250px"), "top placement: {top}");
+        assert!(
+            top.contains("translate(-50%, -100%)"),
+            "top placement: {top}"
+        );
+        let right = tooltip_position_style(rect, TooltipPlacement::Right, Some("200px"));
+        assert!(right.contains("left:308px"), "right placement: {right}");
+        assert!(
+            right.contains("max-width:200px"),
+            "right placement: {right}"
+        );
     }
 
     #[test]
-    fn test_tooltip_props_with_custom_classes() {
-        let props = TooltipProps {
-            class: "custom-tooltip".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-tooltip");
-    }
-
-    #[test]
-    fn test_modal_config_default() {
-        let config = hikari_components::feedback::ModalConfig::default();
+    fn test_modal_width_presets_via_public_api() {
+        use hikari_components::feedback::{modal_frame_max_width, resolve_modal_width};
+        assert_eq!(resolve_modal_width("md"), "40rem");
+        assert_eq!(resolve_modal_width("560px"), "560px");
         assert_eq!(
-            config.position,
-            hikari_components::feedback::ModalPosition::Center
-        );
-        assert_eq!(
-            config.mask_mode,
-            hikari_components::feedback::MaskMode::Opaque
-        );
-        assert!(config.closable);
-        assert!(config.mask_closable);
-        assert_eq!(config.size, hikari_components::feedback::ModalSize::Md);
-    }
-
-    #[test]
-    fn test_modal_config_custom() {
-        let config = hikari_components::feedback::ModalConfig {
-            position: hikari_components::feedback::ModalPosition::Top,
-            mask_mode: hikari_components::feedback::MaskMode::Transparent,
-            closable: false,
-            mask_closable: false,
-            class: "custom-modal".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(
-            config.position,
-            hikari_components::feedback::ModalPosition::Top
-        );
-        assert_eq!(
-            config.mask_mode,
-            hikari_components::feedback::MaskMode::Transparent
-        );
-        assert!(!config.closable);
-        assert!(!config.mask_closable);
-    }
-
-    #[test]
-    fn test_modal_position_variants() {
-        use hikari_components::feedback::ModalPosition;
-        let positions = [
-            ModalPosition::Center,
-            ModalPosition::TopLeft,
-            ModalPosition::Top,
-            ModalPosition::TopRight,
-            ModalPosition::Right,
-            ModalPosition::BottomRight,
-            ModalPosition::Bottom,
-            ModalPosition::BottomLeft,
-            ModalPosition::Left,
-        ];
-        for pos in positions {
-            let config = hikari_components::feedback::ModalConfig {
-                position: pos,
-                ..Default::default()
-            };
-            assert_eq!(config.position, pos);
-        }
-    }
-
-    #[test]
-    fn test_modal_mask_mode_opaque() {
-        let config = hikari_components::feedback::ModalConfig {
-            mask_mode: hikari_components::feedback::MaskMode::Opaque,
-            ..Default::default()
-        };
-        assert_eq!(
-            config.mask_mode,
-            hikari_components::feedback::MaskMode::Opaque
+            modal_frame_max_width("40rem"),
+            "min(40rem, calc(100% - 2 * var(--viewport-gutter, 16px)))"
         );
     }
 
     #[test]
-    fn test_modal_mask_mode_transparent() {
-        let config = hikari_components::feedback::ModalConfig {
-            mask_mode: hikari_components::feedback::MaskMode::Transparent,
-            ..Default::default()
-        };
-        assert_eq!(
-            config.mask_mode,
-            hikari_components::feedback::MaskMode::Transparent
-        );
-    }
-
-    #[test]
-    fn test_modal_with_custom_class() {
-        let config = hikari_components::feedback::ModalConfig {
-            class: "my-custom-modal-class".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(config.class, "my-custom-modal-class");
-    }
-
-    #[test]
-    fn test_modal_calculate_position_center() {
-        use hikari_components::feedback::{ModalPosition, calculate_position};
-        let (x, y) = calculate_position(
-            ModalPosition::Center,
-            None,
-            None,
-            400.0,
-            300.0,
-            1200.0,
-            800.0,
-        );
-        assert_eq!(x, 400.0);
-        assert_eq!(y, 250.0);
-    }
-
-    #[test]
-    fn test_modal_calculate_position_top_left() {
-        use hikari_components::feedback::{ModalPosition, calculate_position};
-        let (x, y) = calculate_position(
-            ModalPosition::TopLeft,
-            Some(100.0),
-            Some(100.0),
-            400.0,
-            300.0,
-            1200.0,
-            800.0,
-        );
-        assert!(x < 100.0);
-        assert!(y < 100.0);
-    }
-
-    #[test]
-    fn test_modal_escape_closes_when_mask_closable() {
-        use hikari_components::feedback::ModalConfig;
-        let config = ModalConfig {
-            mask_closable: true,
-            ..Default::default()
-        };
-        assert!(config.mask_closable);
-        // mask_closable enables both overlay click and Escape key to close
-    }
-
-    #[test]
-    fn test_modal_escape_does_not_close_when_not_mask_closable() {
-        use hikari_components::feedback::ModalConfig;
-        let config = ModalConfig {
-            mask_closable: false,
-            ..Default::default()
-        };
-        assert!(!config.mask_closable);
-    }
-
-    #[test]
-    fn test_modal_mask_mode_affects_close_behavior() {
-        use hikari_components::feedback::{MaskMode, ModalConfig};
-        for mask_mode in [MaskMode::Opaque, MaskMode::Transparent] {
-            let config = ModalConfig {
-                mask_mode,
-                mask_closable: true,
-                ..Default::default()
-            };
-            assert!(config.mask_closable);
-        }
-    }
-
-    #[test]
-    fn test_modal_calculate_position_clamped() {
-        use hikari_components::feedback::{ModalPosition, calculate_position};
-        let (x, y) = calculate_position(
-            ModalPosition::TopLeft,
-            Some(10.0),
-            Some(10.0),
-            1100.0,
-            700.0,
-            1200.0,
-            800.0,
-        );
-        assert!(x >= 16.0);
-        assert!(y >= 16.0);
-    }
-
-    #[test]
-    fn test_progress_bar_props_default() {
-        let props = ProgressBarProps::default();
-        assert_eq!(props.value, None);
-        assert_eq!(props.secondary, None);
-        assert_eq!(props.max, 100.0);
-        assert_eq!(
-            props.status,
-            hikari_components::feedback::ProgressBarStatus::Loading
-        );
-        assert_eq!(
-            props.size,
-            hikari_components::feedback::ProgressBarSize::Sm
-        );
-        assert!(!props.show_label);
-        assert_eq!(props.label, None);
-        assert_eq!(props.segments, None);
-    }
-
-    #[test]
-    fn test_progress_bar_props_with_value() {
-        let props = ProgressBarProps {
-            value: Some(75.0),
-            ..Default::default()
-        };
-        assert_eq!(props.value, Some(75.0));
-    }
-
-    #[test]
-    fn test_progress_bar_segments_mode() {
-        let props = ProgressBarProps {
-            segments: Some(vec![hikari_components::feedback::ProgressBarSegment {
-                value: 40.0,
-                color: Some("rgb(var(--color-primary) / 50%)".to_string()),
-                class: "seg-a".to_string(),
-            }]),
-            ..Default::default()
-        };
-        assert!(props.segments.is_some());
-    }
-
-    #[test]
-    fn test_progress_ring_props_default() {
-        let props = ProgressRingProps::default();
-        assert_eq!(props.value, 0.0);
-        assert_eq!(props.pct, None);
-        assert_eq!(props.size, 120.0);
-        assert_eq!(props.stroke_width, 8.0);
-        assert_eq!(
-            props.variant,
-            hikari_components::feedback::ProgressRingVariant::Normal
-        );
-        assert!(!props.show_label);
-        assert!(props.show_track);
-        assert_eq!(props.segments, None);
-    }
-
-    #[test]
-    fn test_progress_ring_pct_wins_over_value() {
-        let props = ProgressRingProps {
-            value: 10.0,
-            pct: Some(80.0),
-            ..Default::default()
-        };
-        assert_eq!(props.pct, Some(80.0));
-    }
-
-    #[test]
-    fn test_spinner_props_default() {
-        let props = SpinnerProps::default();
-        assert_eq!(props.size, hikari_components::feedback::SpinnerSize::Md);
-        assert_eq!(props.size_px, None);
-        assert!(props.text.is_none());
-        assert!(!props.center);
-        assert_eq!(props.tone, hikari_components::feedback::SpinnerTone::Primary);
-        assert!(props.min_height.is_none());
-    }
-
-    #[test]
-    fn test_spinner_props_center() {
-        let props = SpinnerProps {
-            center: true,
-            ..Default::default()
-        };
-        assert!(props.center);
-    }
-
-    #[test]
-    fn test_spinner_size_named_classes_match_vue() {
-        assert_eq!(
-            hikari_components::feedback::SpinnerSize::Xs.class_name(),
-            "hk-spinner-xs"
-        );
-        assert_eq!(
-            hikari_components::feedback::SpinnerSize::Lg.class_name(),
-            "hk-spinner-lg"
-        );
-    }
-
-    #[test]
-    fn test_spinner_with_numeric_size() {
-        let props = SpinnerProps {
-            size_px: Some(32.0),
-            ..Default::default()
-        };
-        assert_eq!(props.size_px, Some(32.0));
-    }
-
-    #[test]
-    fn test_spinner_with_text() {
-        let props = SpinnerProps {
-            text: Some("Loading...".to_string()),
-            ..Default::default()
-        };
-        assert_eq!(props.text, Some("Loading...".to_string()));
-    }
-
-    #[test]
-    fn test_spinner_with_custom_classes() {
-        let props = SpinnerProps {
-            class: "custom-spin".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-spin");
-    }
-
-    #[test]
-    fn test_drawer_props_default() {
-        let props = DrawerProps::default();
+    fn test_modal_props_default() {
+        let props = ModalProps::default();
         assert!(!props.open);
+        assert!(props.closable);
+        assert_eq!(props.width, "32rem");
+        assert!(props.footer_actions.is_none());
+    }
+
+    #[test]
+    fn test_modal_action_defaults() {
+        let action = hikari_components::feedback::ModalAction::default();
         assert_eq!(
-            props.placement,
-            hikari_components::feedback::DrawerPlacement::Right
+            action.variant,
+            hikari_components::feedback::ModalActionVariant::Secondary
         );
-        assert_eq!(props.size, hikari_components::feedback::DrawerSize::Medium);
-        assert!(!props.mask_closable);
-        assert!(props.title.is_none());
-        assert!(props.footer.is_none());
-        assert!(props.on_close.is_none());
-    }
-
-    #[test]
-    fn test_drawer_open() {
-        let props = DrawerProps {
-            open: true,
-            ..Default::default()
-        };
-        assert!(props.open);
-    }
-
-    #[test]
-    fn test_drawer_placement_variants() {
-        use hikari_components::feedback::DrawerPlacement;
-        let placements = [
-            DrawerPlacement::Right,
-            DrawerPlacement::Left,
-            DrawerPlacement::Top,
-            DrawerPlacement::Bottom,
-        ];
-        for p in placements {
-            let props = DrawerProps {
-                placement: p,
-                ..Default::default()
-            };
-            assert_eq!(props.placement, p);
-        }
-    }
-
-    #[test]
-    fn test_drawer_size_variants() {
-        use hikari_components::feedback::DrawerSize;
-        let sizes = [DrawerSize::Small, DrawerSize::Medium, DrawerSize::Large];
-        for s in sizes {
-            let props = DrawerProps {
-                size: s,
-                ..Default::default()
-            };
-            assert_eq!(props.size, s);
-        }
-    }
-
-    #[test]
-    fn test_drawer_mask_closable() {
-        let props = DrawerProps {
-            mask_closable: false,
-            ..Default::default()
-        };
-        assert!(!props.mask_closable);
-    }
-
-    #[test]
-    fn test_drawer_with_title() {
-        let props = DrawerProps {
-            title: Some("Settings".to_string()),
-            ..Default::default()
-        };
-        assert_eq!(props.title, Some("Settings".to_string()));
-    }
-
-    #[test]
-    fn test_drawer_with_custom_class() {
-        let props = DrawerProps {
-            class: "custom-drawer".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-drawer");
+        assert!(!action.loading);
+        assert!(!action.disabled);
     }
 
     #[test]
     fn test_popover_props_default() {
         let props = PopoverProps::default();
         assert!(!props.open);
-        assert!(props.close_on_click_outside);
-        assert!(props.close_on_select);
-        assert!(props.title.is_none());
-        assert!(props.width.is_none());
-        assert!(props.on_open_change.is_none());
-        assert_eq!(props.offset, 8.0);
-    }
-
-    #[test]
-    fn test_popover_positioning_default() {
-        let positioning = hikari_components::feedback::PopoverPositioning::default();
-        match positioning {
-            hikari_components::feedback::PopoverPositioning::Relative { preferred } => {
-                assert_eq!(preferred.len(), 4);
-            }
-            _ => panic!("expected Relative positioning"),
-        }
-    }
-
-    #[test]
-    fn test_popover_positioning_absolute() {
-        let positioning = hikari_components::feedback::PopoverPositioning::Absolute(
-            hikari_components::feedback::PopoverAbsolutePosition::Fixed { x: 100.0, y: 200.0 },
+        assert_eq!(
+            props.placement,
+            hikari_components::feedback::PopoverPlacement::Bottom
         );
-        match positioning {
-            hikari_components::feedback::PopoverPositioning::Absolute(
-                hikari_components::feedback::PopoverAbsolutePosition::Fixed { x, y },
-            ) => {
-                assert_eq!(x, 100.0);
-                assert_eq!(y, 200.0);
-            }
-            _ => panic!("expected Absolute positioning"),
-        }
+        assert_eq!(props.offset, 4.0);
+        assert!(props.backdrop);
+        assert!(props.close_on_backdrop);
+        assert!(props.close_on_escape);
+        assert!(props.glass);
+        assert!(props.anchor.is_none());
+        assert!(!props.sheet_on_mobile);
+        assert!(props.on_open_change.is_none());
     }
 
     #[test]
-    fn test_popover_placement_variants() {
+    fn test_popover_placement_class_names() {
         use hikari_components::feedback::PopoverPlacement;
-        let placements = [
-            PopoverPlacement::Bottom,
-            PopoverPlacement::Top,
-            PopoverPlacement::Left,
-            PopoverPlacement::Right,
-        ];
-        for p in placements {
-            let props = PopoverProps {
-                positioning: hikari_components::feedback::PopoverPositioning::Relative {
-                    preferred: vec![p],
-                },
-                ..Default::default()
-            };
-            if let hikari_components::feedback::PopoverPositioning::Relative { preferred } =
-                props.positioning
-            {
-                assert_eq!(preferred[0], p);
-            }
-        }
+        assert_eq!(PopoverPlacement::Top.class_name(), "hk-popover-top");
+        assert_eq!(
+            PopoverPlacement::BottomStart.class_name(),
+            "hk-popover-bottom-start"
+        );
+        assert_eq!(
+            PopoverPlacement::RightEnd.class_name(),
+            "hk-popover-right-end"
+        );
     }
 
     #[test]
-    fn test_popover_with_title() {
-        let props = PopoverProps {
-            title: Some("My Popover".to_string()),
-            ..Default::default()
+    fn test_popover_geometry_bottom_center() {
+        use hikari_components::feedback::{
+            PopoverAnchorRect, PopoverPlacement, popover_position_style,
         };
-        assert_eq!(props.title, Some("My Popover".to_string()));
-    }
-
-    #[test]
-    fn test_popover_with_width() {
-        let props = PopoverProps {
-            width: Some("300px".to_string()),
-            ..Default::default()
+        let anchor = PopoverAnchorRect {
+            x: 100.0,
+            y: 50.0,
+            width: 40.0,
+            height: 20.0,
         };
-        assert_eq!(props.width, Some("300px".to_string()));
-    }
-
-    #[test]
-    fn test_popover_with_custom_class() {
-        let props = PopoverProps {
-            class: "custom-popover".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-popover");
+        assert_eq!(
+            popover_position_style(PopoverPlacement::Bottom, anchor, 4.0),
+            "left:120px;top:74px;transform:translate(-50%, 0)"
+        );
     }
 }

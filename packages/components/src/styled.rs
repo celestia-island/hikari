@@ -120,20 +120,32 @@ impl StyleRegistry {
     #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::alert::AlertComponent;
+        use crate::feedback::blocking_toast::BlockingToastComponent;
+        use crate::feedback::confirm_dialog::ConfirmDialogComponent;
         use crate::feedback::drawer::DrawerComponent;
         use crate::feedback::loading_veil::LoadingVeilComponent;
+        use crate::feedback::message_box::MessageBoxComponent;
         use crate::feedback::modal::ModalComponent;
+        use crate::feedback::persistent_toast::PersistentToastComponent;
+        use crate::feedback::persistent_toast_group::PersistentToastGroupComponent;
         use crate::feedback::phase_transition::PhaseTransitionComponent;
         use crate::feedback::popover::PopoverComponent;
         use crate::feedback::progress_bar::ProgressBarComponent;
+        use crate::feedback::progress_dialog::ProgressDialogComponent;
         use crate::feedback::progress_ring::ProgressRingComponent;
         use crate::feedback::spinner::SpinnerComponent;
         use crate::feedback::toast::ToastComponent;
         use crate::feedback::tooltip::TooltipComponent;
         AlertComponent::register(self);
+        BlockingToastComponent::register(self);
+        ConfirmDialogComponent::register(self);
         LoadingVeilComponent::register(self);
+        MessageBoxComponent::register(self);
         PhaseTransitionComponent::register(self);
+        PersistentToastComponent::register(self);
+        PersistentToastGroupComponent::register(self);
         ProgressBarComponent::register(self);
+        ProgressDialogComponent::register(self);
         ProgressRingComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);

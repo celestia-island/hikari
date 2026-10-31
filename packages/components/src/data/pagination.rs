@@ -6,12 +6,33 @@ use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize};
 use crate::feedback::{
-    Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
+    Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverAnchorRect, PopoverPlacement,
+    anchor_rect_from_element_id,
 };
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::HkPad;
 
 pub struct PaginationComponent;
+
+/// The shared jump-panel state (see the component note). `Signal` lives in
+/// a thread-local so writes survive renders.
+#[derive(Clone, Debug, Default)]
+pub struct PaginationJumpState {
+    pub open: bool,
+    pub which: u8,
+    pub anchor_1: Option<PopoverAnchorRect>,
+    pub anchor_2: Option<PopoverAnchorRect>,
+}
+
+thread_local! {
+    static JUMP_STATE: Signal<PaginationJumpState> =
+        Signal::new(PaginationJumpState::default());
+}
+
+fn pagination_jump_state() -> Signal<PaginationJumpState> {
+    JUMP_STATE.with(|state| state.clone())
+}
 
 #[define_props]
 pub struct PaginationProps {
@@ -53,11 +74,31 @@ pub fn Pagination(props: PaginationProps) -> Element {
     let on_change = props.on_change.clone();
     let on_size_change = props.on_size_change.clone();
 
-    // Handle modal close
+    // Mirrored Popover wiring: the jump panel is a controlled, anchored
+    // popover (the legacy portal entry owned the trigger + positioning).
+    // `which_jump` gates the two ellipsis anchors so only the clicked one
+    // renders; both still share the jump state below.
+    // Jump-panel state lives in a module registry: tairitsu 0.5.22
+    // component-body state is render-scoped, so hook-backed signals cannot
+    // hold it. Delta vs the retired portal entry: the panel is one shared
+    // jump layer per page (the legacy component shared one open flag too).
+    let jump_state = pagination_jump_state();
+
     let show_jump_modal_for_close = show_jump_modal.clone();
     let handle_modal_close = Callback::new(move |is_open: bool| {
         show_jump_modal_for_close.set(is_open);
     });
+    let handle_modal_open = {
+        let jump_state = jump_state.clone();
+        EventHandler::new(move |is_open: bool| {
+            let mut current = jump_state.get();
+            current.open = is_open;
+            if !is_open {
+                current.which = 0;
+            }
+            jump_state.set(current);
+        })
+    };
 
     let total_pages = if total_items == 0 {
         1
@@ -463,30 +504,44 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                     // Ellipsis if needed - clickable with icon
                     if current_page.get() > 4 {
-                        Popover {
-                            positioning: PopoverPositioning::Relative {
-                                preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
-                            },
-                            close_on_click_outside: true,
-                            on_open_change: Some(handle_modal_close.clone()),
-                            trigger: rsx! {
-                                Glow {
-                                    blur: GlowBlur::Medium,
-                                    color: GlowColor::Primary,
-                                    intensity: GlowIntensity::Dim,
-                                    button {
-                                        class: ClassesBuilder::new()
-                                            .add(PaginationClass::PaginationItem)
-                                            .build(),
-                                        Icon {
-                                            icon: MdiIcon::DotsHorizontal,
-                                            size: 16,
-                                            color: "var(--hi-color-text-secondary)".to_string(),
+                        div {
+                            style: "position: relative; display: inline-flex;",
+                            Glow {
+                                blur: GlowBlur::Medium,
+                                color: GlowColor::Primary,
+                                intensity: GlowIntensity::Dim,
+                                button {
+                                    id: "hk-pagination-jump-1",
+                                    class: ClassesBuilder::new()
+                                        .add(PaginationClass::PaginationItem)
+                                        .build(),
+                                    onclick: {
+                                        let jump_state = jump_state.clone();
+                                        move |_| {
+                                            let mut current = jump_state.get();
+                                            current.anchor_1 = anchor_rect_from_element_id(
+                                                "hk-pagination-jump-1",
+                                            );
+                                            current.which = 1;
+                                            current.open = true;
+                                            jump_state.set(current);
                                         }
+                                    },
+                                    Icon {
+                                        icon: MdiIcon::DotsHorizontal,
+                                        size: 16,
+                                        color: "var(--hi-color-text-secondary)".to_string(),
                                     }
                                 }
-                            },
-                            {create_jump_modal_content_1()}
+                            }
+                            Popover {
+                                open: jump_state.get().open && jump_state.get().which == 1,
+                                placement: PopoverPlacement::Bottom,
+                                anchor: jump_state.get().anchor_1,
+                                padding: Some(HkPad::None),
+                                on_open_change: Some(handle_modal_open.clone()),
+                                children: create_jump_modal_content_1(),
+                            }
                         }
                     }
 
@@ -495,30 +550,44 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                     // Ellipsis if needed - clickable with icon
                     if current_page.get() < total_pages - 3 {
-                        Popover {
-                            positioning: PopoverPositioning::Relative {
-                                preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
-                            },
-                            close_on_click_outside: true,
-                            on_open_change: Some(handle_modal_close.clone()),
-                            trigger: rsx! {
-                                Glow {
-                                    blur: GlowBlur::Medium,
-                                    color: GlowColor::Primary,
-                                    intensity: GlowIntensity::Dim,
-                                    button {
-                                        class: ClassesBuilder::new()
-                                            .add(PaginationClass::PaginationItem)
-                                            .build(),
-                                        Icon {
-                                            icon: MdiIcon::DotsHorizontal,
-                                            size: 16,
-                                            color: "var(--hi-color-text-secondary)".to_string(),
+                        div {
+                            style: "position: relative; display: inline-flex;",
+                            Glow {
+                                blur: GlowBlur::Medium,
+                                color: GlowColor::Primary,
+                                intensity: GlowIntensity::Dim,
+                                button {
+                                    id: "hk-pagination-jump-2",
+                                    class: ClassesBuilder::new()
+                                        .add(PaginationClass::PaginationItem)
+                                        .build(),
+                                    onclick: {
+                                        let jump_state = jump_state.clone();
+                                        move |_| {
+                                            let mut current = jump_state.get();
+                                            current.anchor_2 = anchor_rect_from_element_id(
+                                                "hk-pagination-jump-2",
+                                            );
+                                            current.which = 2;
+                                            current.open = true;
+                                            jump_state.set(current);
                                         }
+                                    },
+                                    Icon {
+                                        icon: MdiIcon::DotsHorizontal,
+                                        size: 16,
+                                        color: "var(--hi-color-text-secondary)".to_string(),
                                     }
                                 }
-                            },
-                            {create_jump_modal_content_2()}
+                            }
+                            Popover {
+                                open: jump_state.get().open && jump_state.get().which == 2,
+                                placement: PopoverPlacement::Bottom,
+                                anchor: jump_state.get().anchor_2,
+                                padding: Some(HkPad::None),
+                                on_open_change: Some(handle_modal_open.clone()),
+                                children: create_jump_modal_content_2(),
+                            }
                         }
                     }
 

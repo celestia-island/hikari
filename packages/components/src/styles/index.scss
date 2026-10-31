@@ -576,13 +576,9 @@
 
 @import './components/glow.scss';
 @import './components/alert.scss';
-@import './components/toast.scss';
-@import './components/tooltip.scss';
 @import './components/skeleton.scss';
-@import './components/drawer.scss';
 @import './components/popover.scss';
 
-@import './components/modal.scss';
 
 // ------
 // Mirrored Vue family sheets (canonical: packages/vue/src/components/;
@@ -590,10 +586,20 @@
 // sheet so the docs bundle carries the same CSS the components compile.
 // ------
 @import './vue-mirror/components/HkAlert.scss';
+@import './vue-mirror/components/HkBlockingToast.scss';
+@import './vue-mirror/components/HkDrawer.scss';
+@import './vue-mirror/components/HkConfirmDialog.scss';
 @import './vue-mirror/components/HkLoadingVeil.scss';
+@import './vue-mirror/components/HkMessageBox.scss';
+@import './vue-mirror/components/HkPersistentToast.scss';
+@import './vue-mirror/components/HkPersistentToastGroup.scss';
+@import './vue-mirror/components/HkModal.scss';
 @import './vue-mirror/components/HkPhaseTransition.scss';
 @import './vue-mirror/components/HkProgressBar.scss';
+@import './vue-mirror/components/HkProgressDialog.scss';
 @import './vue-mirror/components/HkProgressRing.scss';
+@import './vue-mirror/components/HkToast.scss';
+@import './vue-mirror/components/HkTooltip.scss';
 @import './vue-mirror/components/HkSpinner.scss';
 
 // ------

@@ -25,7 +25,7 @@ use hikari_icons::{Icon, MdiIcon};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-use crate::utils::{hk_pad_style, HkPad};
+use crate::utils::{HkPad, hk_pad_style};
 
 pub struct AlertComponent;
 
@@ -118,7 +118,12 @@ pub struct AlertProps {
     /// `message` text.
     pub body: Option<Element>,
 
-    /// Fired when the ✕ button is clicked (after the local dismissal).
+    /// Keep rendering the alert (Vue: the uncontrolled local dismissal flag;
+    /// see the file-header delta — the host owns this on the Rust side).
+    #[default(true)]
+    pub visible: bool,
+
+    /// Fired when the ✕ button is clicked; the host flips `visible`.
     pub on_close: Option<EventHandler<MouseEvent>>,
 
     #[default]
@@ -127,9 +132,12 @@ pub struct AlertProps {
 
 #[component]
 pub fn Alert(props: AlertProps) -> Element {
-    // Uncontrolled dismissal, exactly as Vue: a local flag hides the
-    // instance; the parent learns via `on_close`.
-    let mut dismissed = use_signal(|| false);
+    // Delta vs Vue (documented): tairitsu 0.5.22 has no per-instance
+    // component state (`use_signal` allocates per render; `use_state` shares
+    // ONE slot per component type), so the uncontrolled local dismissal flag
+    // becomes a CONTROLLED `visible` prop: the ✕ still fires `on_close` and
+    // the host flips `visible` (or unmounts the alert).
+    let dismissed = !props.visible;
 
     let root_classes = {
         let mut classes = String::from("hk-alert");
@@ -174,7 +182,7 @@ pub fn Alert(props: AlertProps) -> Element {
     let on_close_handler = props.on_close.clone();
 
     rsx! {
-        if !dismissed.read() {
+        if !dismissed {
             div {
                 class: root_classes,
                 style: root_style,
@@ -199,7 +207,6 @@ pub fn Alert(props: AlertProps) -> Element {
                         "type": "button",
                         "aria-label": t("hikari::alert.close", "Close"),
                         onclick: move |_| {
-                            dismissed.set(true);
                             if let Some(handler) = on_close_handler.as_ref() {
                                 handler.call(MouseEvent::default());
                             }

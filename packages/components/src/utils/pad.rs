@@ -56,10 +56,22 @@ mod tests {
     #[test]
     fn hk_pad_style_maps_each_named_step() {
         assert_eq!(hk_pad_style(Some(HkPad::None)), "--hk-pad:0");
-        assert_eq!(hk_pad_style(Some(HkPad::Xs)), "--hk-pad:var(--space-4, 0.25rem)");
-        assert_eq!(hk_pad_style(Some(HkPad::Sm)), "--hk-pad:var(--space-8, 0.5rem)");
-        assert_eq!(hk_pad_style(Some(HkPad::Md)), "--hk-pad:var(--space-12, 0.75rem)");
-        assert_eq!(hk_pad_style(Some(HkPad::Lg)), "--hk-pad:var(--space-16, 1rem)");
+        assert_eq!(
+            hk_pad_style(Some(HkPad::Xs)),
+            "--hk-pad:var(--space-4, 0.25rem)"
+        );
+        assert_eq!(
+            hk_pad_style(Some(HkPad::Sm)),
+            "--hk-pad:var(--space-8, 0.5rem)"
+        );
+        assert_eq!(
+            hk_pad_style(Some(HkPad::Md)),
+            "--hk-pad:var(--space-12, 0.75rem)"
+        );
+        assert_eq!(
+            hk_pad_style(Some(HkPad::Lg)),
+            "--hk-pad:var(--space-16, 1rem)"
+        );
     }
 
     #[test]

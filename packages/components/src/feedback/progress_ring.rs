@@ -319,7 +319,10 @@ mod tests {
 
     #[test]
     fn ring_segments_total_rounds_to_one_decimal() {
-        assert_eq!(progress_ring_segments_total(&[seg(33.33), seg(33.33)]), 66.7);
+        assert_eq!(
+            progress_ring_segments_total(&[seg(33.33), seg(33.33)]),
+            66.7
+        );
     }
 
     #[test]

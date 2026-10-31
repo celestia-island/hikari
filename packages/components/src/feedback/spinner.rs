@@ -159,7 +159,8 @@ impl StyledComponent for SpinnerComponent {
     fn styles() -> &'static str {
         // The canonical Vue sheet, compiled verbatim (no_hash keeps the
         // `.hk-spinner*` names literal so this CSS matches the Vue build).
-        tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkSpinner.scss", no_hash }.0
+        tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkSpinner.scss", no_hash }
+            .0
     }
 
     fn name() -> &'static str {

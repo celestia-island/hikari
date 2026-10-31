@@ -39,9 +39,9 @@ fn read_manifest() -> Vec<MirrorRow> {
         if line.trim().is_empty() || line.trim_start().starts_with('#') {
             continue;
         }
-        let (mirror_rel, upstream_rel) = line.split_once('\t').unwrap_or_else(|| {
-            panic!("manifest row is not <mirror>\\t<upstream>: {line:?}")
-        });
+        let (mirror_rel, upstream_rel) = line
+            .split_once('\t')
+            .unwrap_or_else(|| panic!("manifest row is not <mirror>\\t<upstream>: {line:?}"));
         rows.push(MirrorRow {
             mirror_rel: mirror_rel.trim().to_string(),
             upstream_rel: upstream_rel.trim().to_string(),
@@ -135,9 +135,8 @@ fn mirror_bodies_match_their_upstream_sheets() {
     for row in read_manifest() {
         let mirror_path = mirror_root().join(&row.mirror_rel);
         let upstream_path = upstream_root.join(&row.upstream_rel);
-        let upstream = std::fs::read_to_string(&upstream_path).unwrap_or_else(|e| {
-            panic!("read upstream {}: {e}", upstream_path.display())
-        });
+        let upstream = std::fs::read_to_string(&upstream_path)
+            .unwrap_or_else(|e| panic!("read upstream {}: {e}", upstream_path.display()));
         let mirror = std::fs::read_to_string(&mirror_path)
             .unwrap_or_else(|e| panic!("read {}: {e}", mirror_path.display()));
         let mirror_body = strip_provenance_header(&mirror);
@@ -151,9 +150,8 @@ fn mirror_bodies_match_their_upstream_sheets() {
 }
 
 fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) {
-    let entries = std::fs::read_dir(dir).unwrap_or_else(|e| {
-        panic!("read_dir {}: {e}", dir.display())
-    });
+    let entries =
+        std::fs::read_dir(dir).unwrap_or_else(|e| panic!("read_dir {}: {e}", dir.display()));
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {

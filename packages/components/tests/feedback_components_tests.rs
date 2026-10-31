@@ -401,54 +401,58 @@ mod tests {
     }
 
     #[test]
-    fn test_spin_props_default() {
-        let props = SpinProps::default();
-        assert!(!props.spinning);
-        assert_eq!(props.size, hikari_components::feedback::SpinSize::Medium);
-        assert_eq!(props.tip, hikari_components::feedback::SpinTip::None);
-        assert!(props.custom_tip.is_none());
-        assert!(props.delay.is_none());
+    fn test_spinner_props_default() {
+        let props = SpinnerProps::default();
+        assert_eq!(props.size, hikari_components::feedback::SpinnerSize::Md);
+        assert_eq!(props.size_px, None);
+        assert!(props.text.is_none());
+        assert!(!props.center);
+        assert_eq!(props.tone, hikari_components::feedback::SpinnerTone::Primary);
+        assert!(props.min_height.is_none());
     }
 
     #[test]
-    fn test_spin_props_spinning() {
-        let props = SpinProps {
-            spinning: true,
+    fn test_spinner_props_center() {
+        let props = SpinnerProps {
+            center: true,
             ..Default::default()
         };
-        assert!(props.spinning);
+        assert!(props.center);
     }
 
     #[test]
-    fn test_spin_size_small() {
-        let props = SpinProps {
-            size: hikari_components::feedback::SpinSize::Small,
+    fn test_spinner_size_named_classes_match_vue() {
+        assert_eq!(
+            hikari_components::feedback::SpinnerSize::Xs.class_name(),
+            "hk-spinner-xs"
+        );
+        assert_eq!(
+            hikari_components::feedback::SpinnerSize::Lg.class_name(),
+            "hk-spinner-lg"
+        );
+    }
+
+    #[test]
+    fn test_spinner_with_numeric_size() {
+        let props = SpinnerProps {
+            size_px: Some(32.0),
             ..Default::default()
         };
-        assert_eq!(props.size, hikari_components::feedback::SpinSize::Small);
+        assert_eq!(props.size_px, Some(32.0));
     }
 
     #[test]
-    fn test_spin_size_large() {
-        let props = SpinProps {
-            size: hikari_components::feedback::SpinSize::Large,
+    fn test_spinner_with_text() {
+        let props = SpinnerProps {
+            text: Some("Loading...".to_string()),
             ..Default::default()
         };
-        assert_eq!(props.size, hikari_components::feedback::SpinSize::Large);
+        assert_eq!(props.text, Some("Loading...".to_string()));
     }
 
     #[test]
-    fn test_spin_with_custom_tip() {
-        let props = SpinProps {
-            custom_tip: Some("Loading...".to_string()),
-            ..Default::default()
-        };
-        assert_eq!(props.custom_tip, Some("Loading...".to_string()));
-    }
-
-    #[test]
-    fn test_spin_with_custom_classes() {
-        let props = SpinProps {
+    fn test_spinner_with_custom_classes() {
+        let props = SpinnerProps {
             class: "custom-spin".to_string(),
             ..Default::default()
         };

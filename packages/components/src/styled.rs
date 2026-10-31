@@ -18,6 +18,16 @@ impl StyleRegistry {
         self.styles.insert(name, css);
     }
 
+    /// Registers the canonical Vue token fallbacks (`:root` custom
+    /// properties) mirrored from `packages/vue/src/tokens.scss` +
+    /// `scale.scss`. The mirrored component sheets reference this runtime
+    /// vocabulary (`--color-*`, `--space-*`, `--radius-*`, ...); without
+    /// these fallbacks their `var()` uses are invalid at computed-value
+    /// time for a host that only assembles the registry bundle.
+    pub fn register_vue_token_fallbacks(&mut self) {
+        self.register("vue-token-fallbacks", vue_token_fallbacks_css());
+    }
+
     /// Returns all registered CSS as a single bundled string
     pub fn css_bundle(&self) -> String {
         self.styles.values().copied().collect::<Vec<_>>().join("\n")
@@ -114,7 +124,7 @@ impl StyleRegistry {
         use crate::feedback::modal::ModalComponent;
         use crate::feedback::popover::PopoverComponent;
         use crate::feedback::progress::ProgressComponent;
-        use crate::feedback::spin::SpinComponent;
+        use crate::feedback::spinner::SpinnerComponent;
         use crate::feedback::toast::ToastComponent;
         use crate::feedback::tooltip::TooltipComponent;
         AlertComponent::register(self);
@@ -124,7 +134,7 @@ impl StyleRegistry {
         DrawerComponent::register(self);
         PopoverComponent::register(self);
         ProgressComponent::register(self);
-        SpinComponent::register(self);
+        SpinnerComponent::register(self);
     }
 
     #[cfg(not(feature = "feedback"))]
@@ -188,6 +198,8 @@ impl StyleRegistry {
 
     /// Registers all available components based on feature flags
     pub fn register_available(&mut self) {
+        self.register_vue_token_fallbacks();
+
         #[cfg(feature = "basic")]
         self.register_basic_components();
 
@@ -209,6 +221,7 @@ impl StyleRegistry {
 
     /// Registers all components regardless of feature flags
     pub fn register_all(&mut self) {
+        self.register_vue_token_fallbacks();
         self.register_basic_components();
         self.register_data_components();
         self.register_feedback_components();
@@ -216,6 +229,16 @@ impl StyleRegistry {
         self.register_display_components();
         self.register_entry_components();
     }
+}
+
+/// CSS custom-property fallbacks mirrored from the canonical Vue token
+/// sheets (`packages/vue/src/tokens.scss` + `scale.scss`; vendored copies
+/// under `src/styles/vue-mirror/`, kept in sync by
+/// `scripts/sync-vue-mirror.py` with the drift test in
+/// `tests/vue_mirror_drift_tests.rs`). Register once per registry via
+/// [`StyleRegistry::register_vue_token_fallbacks`].
+pub fn vue_token_fallbacks_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/tokens.scss", no_hash }.0
 }
 
 /// Trait for components that provide their own CSS styles

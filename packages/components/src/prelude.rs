@@ -98,7 +98,7 @@ pub use crate::entry::{
 };
 // Feedback component Props
 pub use crate::feedback::{
-    AlertProps, DrawerProps, GlowProps, PopoverProps, ProgressProps, SpinProps, ToastProps,
+    AlertProps, DrawerProps, GlowProps, PopoverProps, ProgressProps, SpinnerProps, ToastProps,
     TooltipProps,
 };
 // Layout component Props

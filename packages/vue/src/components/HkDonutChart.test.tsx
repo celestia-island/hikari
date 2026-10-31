@@ -80,6 +80,25 @@ describe("HkDonutChart", () => {
     expect(empty.querySelector(".hk-donut--empty")).toBeTruthy();
   });
 
+  it("renders the legendIcon slot's glyph in place of the text label", () => {
+    const el = mount(
+      <HkDonutChart
+        entries={ENTRIES}
+        v-slots={{
+          legendIcon: (slice: { key: string }) => <b data-flag={slice.key}>flag</b>,
+        }}
+      />,
+    );
+    const rows = [...el.querySelectorAll(".hk-donut__legend-row")];
+    expect(rows.map((r) => r.querySelector("[data-flag]")?.getAttribute("data-flag"))).toEqual([
+      "dd",
+      "ca",
+      "bb",
+    ]);
+    // the plain-text labels are gone; the color dots stay
+    expect(rows.every((r) => r.querySelector(".hk-donut__legend-dot"))).toBe(true);
+  });
+
   it("carries the chart-level aria label", () => {
     const el = mount(<HkDonutChart entries={ENTRIES} ariaLabel="ship mix" />);
     expect(el.querySelector(".hk-donut")?.getAttribute("aria-label")).toBe("ship mix");

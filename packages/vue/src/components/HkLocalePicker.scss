@@ -25,4 +25,10 @@
     outline: 2px solid rgb(var(--color-primary) / 70%);
     outline-offset: 1px;
   }
+
+  /* The caret is furniture, not copy — half-strength ink, as the
+     pre-rewrite trigger drew it. */
+  svg {
+    opacity: 0.5;
+  }
 }

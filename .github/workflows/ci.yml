@@ -19,6 +19,12 @@ jobs:
     with:
       devtools-ref: 2e76d373762dc6b36c1ab7625c1c34842c28ad4a
 
+
+  type-escapes:
+    name: Type escape hatches
+    uses: celestia-island/celestia-devtools/.github/workflows/type-escapes.yml@46e95519848940ebbaae60023dc03bb7a114c5ec
+    with:
+      devtools-ref: 46e95519848940ebbaae60023dc03bb7a114c5ec
   family-versions:
     name: Family dependency identity
     uses: celestia-island/celestia-devtools/.github/workflows/family-versions.yml@2e76d373762dc6b36c1ab7625c1c34842c28ad4a

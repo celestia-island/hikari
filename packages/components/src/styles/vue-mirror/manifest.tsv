@@ -1,0 +1,24 @@
+# mirror-path	upstream-path (relative to packages/vue/src)
+tokens.scss	tokens.scss
+scale.scss	scale.scss
+styles/_polyfill.scss	styles/polyfill.scss
+components/_scrim-fade.scss	components/_scrim-fade.scss
+components/_menu-item.scss	components/_menu-item.scss
+components/_hikari-vars.scss	components/_hikari-vars.scss
+components/HkAlert.scss	components/HkAlert.scss
+components/HkBlockingToast.scss	components/HkBlockingToast.scss
+components/HkConfirmDialog.scss	components/HkConfirmDialog.scss
+components/HkDrawer.scss	components/HkDrawer.scss
+components/HkLoadingVeil.scss	components/HkLoadingVeil.scss
+components/HkMessageBox.scss	components/HkMessageBox.scss
+components/HkModal.scss	components/HkModal.scss
+components/HkPersistentToast.scss	components/HkPersistentToast.scss
+components/HkPersistentToastGroup.scss	components/HkPersistentToastGroup.scss
+components/HkPhaseTransition.scss	components/HkPhaseTransition.scss
+components/HkPopover.scss	components/HkPopover.scss
+components/HkProgressBar.scss	components/HkProgressBar.scss
+components/HkProgressDialog.scss	components/HkProgressDialog.scss
+components/HkProgressRing.scss	components/HkProgressRing.scss
+components/HkSpinner.scss	components/HkSpinner.scss
+components/HkToast.scss	components/HkToast.scss
+components/HkTooltip.scss	components/HkTooltip.scss

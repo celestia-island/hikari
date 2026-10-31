@@ -1,0 +1,143 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12, 12px);
+  /* --hk-pad: the shared container-padding token (runtime/containerPad) —
+     unset falls back to the historical values, set wins per instance. */
+  padding: var(--hk-pad, var(--space-12, 12px) var(--space-16, 16px));
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid transparent;
+  border-inline-start-width: 4px;
+  color: var(--hi-color-text-primary, #1e1e1e);
+}
+
+.hk-alert-banner {
+  border-radius: 0;
+}
+
+.hk-alert-no-title {
+  align-items: center;
+}
+
+/* ── Sizes ─────────────────────────────────────── */
+
+.hk-alert-sm {
+  padding: var(--hk-pad, var(--space-8, 8px) var(--space-12, 12px));
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.hk-alert-md {
+  /* md padding == the .hk-alert base values; only the type size differs. */
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.hk-alert-lg {
+  padding: var(--hk-pad, var(--space-16, 16px) var(--space-24, 24px));
+  font-size: var(--text-base, 0.875rem);
+}
+
+/* ── Variants ──────────────────────────────────── */
+
+.hk-alert-error {
+  background: color-mix(in srgb, var(--hi-color-danger, #f85149) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-danger, #f85149) 15%, transparent);
+  border-inline-start-color: var(--hi-color-danger, #f85149);
+
+  .hk-alert-icon { color: var(--hi-color-danger, #f85149); }
+}
+
+.hk-alert-warning {
+  background: color-mix(in srgb, var(--hi-color-warning, #eed677) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-warning, #eed677) 15%, transparent);
+  border-inline-start-color: var(--hi-color-warning, #eed677);
+
+  .hk-alert-icon { color: var(--hi-color-warning, #eed677); }
+}
+
+.hk-alert-info {
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 15%, transparent);
+  border-inline-start-color: var(--hi-color-primary, #7aa2f7);
+
+  .hk-alert-icon { color: var(--hi-color-primary, #7aa2f7); }
+}
+
+.hk-alert-success {
+  background: color-mix(in srgb, var(--hi-color-success, #0eb840) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-success, #0eb840) 15%, transparent);
+  border-inline-start-color: var(--hi-color-success, #0eb840);
+
+  .hk-alert-icon { color: var(--hi-color-success, #0eb840); }
+}
+
+/* ── Icon ──────────────────────────────────────── */
+
+.hk-alert-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+/* ── Body ──────────────────────────────────────── */
+
+.hk-alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.hk-alert-title {
+  margin: 0 0 2px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.hk-alert-text {
+  /* Alert body = the same copy-this-error-detail content class as the
+   * toast message and message-box text (L2 selection policy re-enables,
+   * 2026-10-29); the title above stays chrome. */
+  @include user-select(text);
+  margin: 0;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--hi-color-text-secondary, #666666) 85%, transparent);
+}
+
+/* ── Close button ──────────────────────────────── */
+
+.hk-alert-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-sm, 4px);
+  color: var(--hi-color-muted, #6c6c6c);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    background: var(--hi-color-surface, #ffffff);
+    color: var(--hi-color-text-primary, #1e1e1e);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #7aa2f7);
+    outline-offset: 2px;
+  }
+}

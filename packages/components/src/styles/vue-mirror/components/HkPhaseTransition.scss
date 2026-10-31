@@ -1,0 +1,51 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-phase-enter-active {
+  transition:
+    opacity var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-phase-leave-active {
+  transition:
+    opacity var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
+    transform var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0);
+}
+
+.hk-phase-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.hk-phase-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Reduced motion: keep the opacity cross-fade, drop the translateY
+ * slide. The global animation switch (`html[data-css-animations="0"]`)
+ * disables these transitions too when the host wired it; the media
+ * block covers hosts that never did. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-phase-enter-active,
+  .hk-phase-leave-active {
+    transition: opacity var(--duration-fast, 0.15s) ease;
+  }
+
+  .hk-phase-enter-from,
+  .hk-phase-leave-to {
+    transform: none;
+  }
+}
+
+.hk-phase-content {
+  width: 100%;
+}

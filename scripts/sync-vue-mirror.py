@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""Sync the Rust-side vendored mirrors of the canonical Vue component sheets.
+
+The Hikari design system ships two forms of the same components: the Vue 3
+library (`packages/vue`, canonical) and the Rust/WASM crate
+(`packages/components`, built on tairitsu). Both must render from the SAME
+stylesheet source, so the Rust crate carries byte-identical vendored copies
+of the Vue sheets under `packages/components/src/styles/vue-mirror/`:
+
+    packages/vue/src/tokens.scss
+        -> packages/components/src/styles/vue-mirror/tokens.scss
+    packages/vue/src/styles/polyfill.scss
+        -> packages/components/src/styles/vue-mirror/styles/_polyfill.scss
+    packages/vue/src/components/<Sheet>.scss
+        -> packages/components/src/styles/vue-mirror/components/<Sheet>.scss
+
+Each mirror keeps one provenance header (everything up to and including the
+"do not hand-edit here." marker line); the body must match the upstream
+byte-for-byte. Edit the UPSTREAM Vue sheet, then run this script — never
+hand-edit a mirror.
+
+Guards:
+  * Rust:  packages/components/tests/vue_mirror_drift_tests.rs (cargo test)
+  * this script's --check mode exits 1 on any drift (CI-friendly)
+
+Usage:
+  python3 scripts/sync-vue-mirror.py            # refresh/create mirrors
+  python3 scripts/sync-vue-mirror.py --check    # exit 1 if any drift
+"""
+
+import sys
+from pathlib import Path
+
+root = Path(__file__).resolve().parent.parent
+vue_src = root / "packages" / "vue" / "src"
+mirror_root = root / "packages" / "components" / "src" / "styles" / "vue-mirror"
+
+# (mirror path relative to vue-mirror/, upstream path relative to vue/src/)
+# Partials first: the sibling @use targets every mirrored family sheet
+# resolves against (`./scrim-fade`, `./menu-item`, `./hikari-vars`) plus the
+# shared polyfill partial (`../styles/polyfill`) and the token fallbacks.
+SHARED_PARTIALS: list[tuple[str, str]] = [
+    ("tokens.scss", "tokens.scss"),
+    ("scale.scss", "scale.scss"),
+    ("styles/_polyfill.scss", "styles/polyfill.scss"),
+    ("components/_scrim-fade.scss", "components/_scrim-fade.scss"),
+    ("components/_menu-item.scss", "components/_menu-item.scss"),
+    ("components/_hikari-vars.scss", "components/_hikari-vars.scss"),
+]
+
+# The feedback family sheets mirrored by the wasm-mirror-feedback wave
+# (2026-11). Append later families here as their mirrors land; the drift
+# test walks this table, so an upstream rename fails loudly here.
+FAMILY_SHEETS: list[str] = [
+    "HkAlert.scss",
+    "HkBlockingToast.scss",
+    "HkConfirmDialog.scss",
+    "HkDrawer.scss",
+    "HkLoadingVeil.scss",
+    "HkMessageBox.scss",
+    "HkModal.scss",
+    "HkPersistentToast.scss",
+    "HkPersistentToastGroup.scss",
+    "HkPhaseTransition.scss",
+    "HkPopover.scss",
+    "HkProgressBar.scss",
+    "HkProgressDialog.scss",
+    "HkProgressRing.scss",
+    "HkSpinner.scss",
+    "HkToast.scss",
+    "HkTooltip.scss",
+]
+
+HEADER_LINES = [
+    "// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet",
+    "// under packages/vue/src (the Vue library is the design-system source of",
+    "// truth; the Rust crate compiles this copy so both forms ship the same",
+    "// CSS, and so the crates.io sdist — which cannot reach ../vue — stays",
+    "// self-contained).",
+    "//",
+    "// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py",
+    "// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs",
+    "// VENDORED MIRROR — do not hand-edit here.",
+]
+
+MARKER = "do not hand-edit here."
+
+# Written on every sync so the Rust drift test walks the same table without
+# duplicating it (tests/vue_mirror_drift_tests.rs). Committed alongside the
+# mirrors; the test also fails on any mirror file absent from the manifest.
+MANIFEST_NAME = "manifest.tsv"
+
+
+def build_pairs() -> list[tuple[Path, Path]]:
+    pairs: list[tuple[Path, Path]] = []
+    for mirror_rel, upstream_rel in SHARED_PARTIALS:
+        pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
+    for sheet in FAMILY_SHEETS:
+        pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
+    return pairs
+
+
+def write_manifest() -> None:
+    lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
+    for mirror_rel, upstream_rel in SHARED_PARTIALS:
+        lines.append(f"{mirror_rel}\t{upstream_rel}")
+    for sheet in FAMILY_SHEETS:
+        lines.append(f"components/{sheet}\tcomponents/{sheet}")
+    (mirror_root / MANIFEST_NAME).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def expected_bytes(upstream: Path) -> bytes:
+    header = ("\n".join(HEADER_LINES) + "\n\n").encode("utf-8")
+    return header + upstream.read_bytes()
+
+
+def sync(vendored: Path, upstream: Path, check_only: bool) -> str:
+    if not upstream.is_file():
+        print(f"upstream file missing: {upstream}", file=sys.stderr)
+        sys.exit(1)
+
+    want = expected_bytes(upstream)
+    if not vendored.is_file():
+        if check_only:
+            return f"MISSING {vendored.relative_to(root)}"
+        vendored.parent.mkdir(parents=True, exist_ok=True)
+        vendored.write_bytes(want)
+        return f"created {vendored.relative_to(root)}"
+    if vendored.read_bytes() == want:
+        return ""
+    if check_only:
+        return f"DRIFT   {vendored.relative_to(root)}"
+    vendored.write_bytes(want)
+    return f"synced  {vendored.relative_to(root)}"
+
+
+def main() -> int:
+    check_only = "--check" in sys.argv[1:]
+    mirror_root.mkdir(parents=True, exist_ok=True)
+    write_manifest()
+    problems = 0
+    for vendored, upstream in build_pairs():
+        result = sync(vendored, upstream, check_only)
+        if result:
+            print(result)
+            if result.startswith(("DRIFT", "MISSING")):
+                problems += 1
+    if check_only:
+        if problems:
+            print(f"{problems} mirror file(s) out of sync — run scripts/sync-vue-mirror.py",
+                  file=sys.stderr)
+            return 1
+        print("vue-mirror stylesheets are in sync")
+        return 0
+    print("vue-mirror stylesheets are in sync")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

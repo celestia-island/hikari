@@ -1,0 +1,690 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkModal.scss
+// Full-featured modal component with overlay, transitions,
+// header / body / footer slots, windowed mode, and auto-follow.
+//
+// Uses hikari's --hi- design-token CSS custom properties for
+// colors, spacing, and typography. Component-specific overrides
+// use the --hk-modal-* namespace.
+
+@use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
+
+// ------
+// Root wrapper — positioned via popup-manager z-index
+// ------
+
+.hk-modal-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+// ------
+// Overlay (backdrop)
+// ------
+
+.hk-modal-overlay {
+  position: fixed;
+  inset: 0;
+  // Explicit stacking inside the root: the content sibling is ALWAYS above
+  // the overlay regardless of the popup-manager base handed to the root
+  // (fixes the blurred overlay painting over the sheet when the manager
+  // handle hasn't resolved yet — zIndex briefly starts at 0).
+  z-index: 0;
+  background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
+  @include backdrop-filter(var(--hk-modal-overlay-blur, blur(3px)));
+  pointer-events: auto;
+}
+
+// Overlay enter/leave — fade-only classes emitted from the shared
+// window-layer contract (./_scrim-fade.scss): the curtain dims the whole
+// viewport in place, never sliding or scaling with the content frame.
+@include sf.scrim-fade(
+  "hk-modal-overlay",
+  $enter-duration: var(--hk-modal-duration, 0.42s),
+  $enter-ease: var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+  $leave-duration: var(--hk-modal-duration, 0.42s),
+  $leave-ease: var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))
+);
+
+// ------
+// Content frame
+// ------
+
+.hk-modal-content {
+  position: fixed;
+  // Always above the overlay sibling (see overlay note).
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  // The centering translate is part of EVERY transform state — the
+  // enter/leave choreography scales on top of it and must never re-seat
+  // the frame.
+  transform: translate(
+        calc(-50% + var(--hk-modal-shift-x, 0px)),
+        calc(-50% + var(--hk-modal-shift-y, 0px))
+      );
+  width: 100%;
+  // Size changes animate instead of snapping: `height: auto` growth
+  // cannot fire a CSS transition (verified in Chromium — neither auto
+  // nor calc-size(auto, size) changes its computed value on content
+  // growth), so HkModal's useSizeMorph measures the frame's natural
+  // (capped) height and pins it as px on every content change — the
+  // transition below animates old→new px. Both pinned values are
+  // explicit px, so this needs no interpolate-size keyword support.
+  // clip-path rides the same token pair for the mobile sheet's reveal
+  // morph (--hk-sheet-morph: clip below): the pin lands instantly and
+  // the top edge sweeps up paint-only — no per-frame layout, no
+  // per-frame backdrop re-raster over the resizing fixed layer.
+  transition:
+    height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
+  @include backdrop-filter(var(--hk-modal-blur, none));
+  border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(100,100,100,0.08)));
+  border-radius: var(--hk-modal-radius, var(--radius-lg, 12px));
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  outline: none;
+  pointer-events: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+// ------
+// Content enter/leave transitions (desktop ≥768px)
+//
+// Height-style unveil WITHOUT layout: the visible box starts at 90% of
+// its height and grows to 100% while the frame settles from a +5% offset
+// back to rest (user spec 2026-09-14). Numbers line up so the character
+// of the old height-grow reveal is preserved exactly:
+//   t=0  box [center−0.45h, center+0.45h] shifted +0.05h, bottom 10%
+//        clipped → visible [center−0.40h, center+0.40h] (the old 80%
+//        centered start);
+//   t=1  clip 0, offset 0 → visible [center−0.50h, center+0.50h];
+//   the bottom edge is pinned at its final line the whole time and the
+//   top edge sweeps up 0.1h — content rides rigidly (never squashed).
+// Implemented with transform (translate) + clip-path (inset) + opacity:
+// all compositor/paint-level, zero layout per frame — the previous
+// height-keyword reveal re-laid-out the entire modal subtree every frame
+// and re-filtered the frame's own backdrop blur per frame (visible frame
+// drops on content-heavy modals, chest history topic detail). Scoped to
+// ≥768px; ≤767px keeps the sheet's translateY choreography below.
+// ------
+
+@media (min-width: 768px) {
+  .hk-modal-content-enter-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+      transform var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+      clip-path var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+    will-change: transform, opacity, clip-path;
+  }
+
+  // Close: the unveil's TRUE reverse — the visible box collapses back
+  // toward the center (top edge sweeps down, bottom edge sweeps up,
+  // content rides rigidly — never squashed) while the frame fades
+  // (user report 2026-09-15: the fade+drift close read as the box
+  // shrinking straight down instead of folding back into its center).
+  // The earlier re-clip attempt (#508) broke because leave-from had no
+  // clip at all: interpolating `none → inset()` is DISCRETE, so the
+  // bottom band (the footer) vanished at the first frame. Pinning the
+  // identity clip in leave-from — byte-identical to enter-to — makes
+  // the same-shape insets interpolate continuously, which structurally
+  // rules that jump out while restoring the symmetric collapse.
+  .hk-modal-content-leave-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
+      transform var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
+      clip-path var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
+    will-change: transform, opacity, clip-path;
+  }
+
+  .hk-modal-content-enter-from {
+    opacity: 0;
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        )
+        translateY(5%);
+    clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                                 var(--hk-modal-radius, var(--radius-lg, 12px)));
+  }
+
+  .hk-modal-content-enter-to {
+    opacity: 1;
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        );
+    clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                              var(--hk-modal-radius, var(--radius-lg, 12px)));
+  }
+
+  .hk-modal-content-leave-from {
+    opacity: 1;
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        );
+    // The pinned identity clip: identical to enter-to so the leave's
+    // clip interpolates (never jumps) — see the close note above.
+    clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                              var(--hk-modal-radius, var(--radius-lg, 12px)));
+  }
+
+  .hk-modal-content-leave-to {
+    opacity: 0;
+    // Mirror of enter-from: shifted +5% with the bottom 10% clipped, the
+    // visible box is 90% and centered — both edges ease toward the
+    // center line, exactly reversing the unveil.
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        )
+        translateY(5%);
+    clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                                 var(--hk-modal-radius, var(--radius-lg, 12px)));
+  }
+}
+
+// ------
+// Header
+// ------
+
+.hk-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--hk-modal-padding-header, 1rem 1.5rem);
+  border-bottom: 1px solid
+    var(--hk-modal-divider-color, var(--hi-color-border, rgba(100,100,100,0.06)));
+  flex-shrink: 0;
+}
+
+// Compact lead content (e.g. a context ring) rendered before the title.
+// The title's auto inline-end margin overrides the space-between
+// distribution, so the lead + title cluster sits at inline-start and the
+// close button stays pinned at inline-end (mirrors correctly in RTL).
+.hk-modal-header-lead {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.hk-modal-header--lead {
+  gap: var(--hk-modal-header-lead-gap, 0.75rem);
+
+  .hk-modal-title {
+    margin-inline-end: auto;
+  }
+}
+
+.hk-modal-title {
+  font-size: var(--hk-modal-title-font-size, 1.125rem);
+  font-weight: var(--hk-modal-title-font-weight, 700);
+  margin: 0;
+  color: var(--hk-modal-title-color, var(--hi-color-text-primary, #1e1e1e));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  // Window chrome, not content — titles never participate in text
+  // selection (2026-09-04 user report alongside the sheet chrome pass).
+  @include user-select(none);
+}
+
+// Legacy placement hook — the chrome (box, radius, colors, hover tint,
+// selection) lives on the shared .hk-icon-button / .hk-window-close rules
+// (window-close.scss) since the unified-close wave; only placement stays
+// here so the header flex keeps the button pinned right.
+.hk-modal-close {
+  flex-shrink: 0;
+}
+
+// Caller's header actions (HkModal's headerActions slot): a gap-separated
+// row of icon buttons / pills sitting at inline-end, one beat before the
+// close button (which keeps its own flex-shrink: 0 and glyph).
+.hk-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 4px);
+  /* Pin to inline-end: the header is space-between, so without this the
+     actions cell becomes the middle child and floats to the center
+     (user report 2026-09-16 — the login sheet's gear landed mid-header). */
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+// ------
+// Sub-header (caller-provided slot)
+// ------
+
+.hk-modal-subheader {
+  padding: var(--hk-modal-padding-subheader, 0.75rem 1.5rem 0.75rem);
+  border-bottom: 1px solid
+    var(--hk-modal-divider-color, var(--hi-color-border, rgba(100,100,100,0.06)));
+  flex-shrink: 0;
+}
+
+// ------
+// Body (scroll region)
+// ------
+
+.hk-modal-body {
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  color: var(--hk-modal-body-color, var(--hi-color-text-primary, #1e1e1e));
+  flex: 1;
+  min-height: 0;
+
+  // Scroll-pin host contract: the body padding physically lives on
+  // .hk-modal-body-inner (a child of the scroller), where sticky can
+  // never hold it in place — pins read these instead, and the gutter
+  // covers below consume the same vars. Declared HERE (the scroller's
+  // parent): custom properties inherit downward, so the covers, the
+  // scroller and the inner all resolve them. The mobile sheet block
+  // retunes the vars only.
+  // The shared container-padding token (--hk-pad, runtime/containerPad;
+  // the modal root carries it via the `padding` prop) outranks the
+  // per-component theme token, which outranks the historical default.
+  --hk-scroll-pad-top: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
+  --hk-scroll-pad-right: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
+  --hk-scroll-pad-bottom: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
+  --hk-scroll-pad-left: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
+
+  // Gutter covers (scroll-pin contract, 2026-09-14): the body's top and
+  // bottom whitespace stays paintable OUTSIDE the scroll flow, so a
+  // pinned child (HkScrollPin strategy="offset") stops below the gutter
+  // with the whitespace intact, and scrolled content vanishes under the
+  // cover instead of sliding through a see-through gap. At rest the
+  // covers sit over empty padding — same surface color, invisible.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    pointer-events: none;
+    // Same paint source as the content frame by default; a host that
+    // re-themes the body itself overrides --hk-scroll-pin-cover-bg so the
+    // covers never surface as foreign bands over the padding.
+    background: var(
+      --hk-scroll-pin-cover-bg,
+      var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)))
+    );
+  }
+
+  &::before {
+    top: 0;
+    height: var(--hk-scroll-pad-top, 0px);
+  }
+
+  &::after {
+    bottom: 0;
+    height: var(--hk-scroll-pad-bottom, 0px);
+  }
+}
+
+.hk-modal-body-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hk-modal-body-inner {
+  padding: var(--hk-scroll-pad-top, 1.5rem) var(--hk-scroll-pad-right, 1.5rem)
+    var(--hk-scroll-pad-bottom, 1.5rem) var(--hk-scroll-pad-left, 1.5rem);
+
+  // Default vertical rhythm between bare stacked children (user direction
+  // 2026-09-08: window bodies keep a little distance between their elements
+  // without every consumer hand-rolling a gap). Block layout collapses
+  // adjacent vertical margins, so this composes with — never doubles — a
+  // consumer's own sibling margins; windows that manage their own rhythm
+  // through a single root wrapper are unaffected, and hosts can flatten it
+  // per window with `--hk-modal-body-gap: 0`.
+  & > * + * {
+    margin-top: var(--hk-modal-body-gap, 0.75rem);
+  }
+}
+
+// ------
+// Auto-follow indicator chip + jump-to-latest affordance
+// ------
+
+// Muted "Auto" pill — visible only while follow is actively pinned at
+// the bottom AND the body actually scrolls. Same visual language as
+// .hk-scroll-container-autotag.
+.hk-modal-autofollow-tag {
+  position: absolute;
+  /* Physical right on purpose: this tag and .hk-scroll-container-autotag
+     are visual twins pinned beside the physical corner FAB model — both
+     must anchor the same side in every direction. */
+  right: var(--space-12, 0.75rem);
+  bottom: var(--space-10);
+  z-index: 6;
+  pointer-events: none;
+  @include user-select(none);
+  padding: var(--space-2) var(--space-8);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.04em;
+  color: var(--hi-color-muted, #6c6c6c);
+  background: color-mix(in srgb, var(--hi-color-surface, rgba(255,255,255,0.95)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100,100,100,0.08)) 12%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  @include backdrop-filter(blur(4px));
+  opacity: 0.85;
+}
+
+// Jump-back FAB (HkFab root) — floats above scroll content while follow
+// is cancelled. The .hk-fab anchor is .hk-modal-body (position:relative);
+// the child selector lifts specificity above the generic .hk-fab
+// z-index default so ordering stays deterministic.
+.hk-modal-body > .hk-modal-jump {
+  z-index: 12;
+}
+
+// ------
+// Footer
+// ------
+
+.hk-modal-footer {
+  padding: var(--hk-modal-padding-footer, 0.75rem 1.5rem);
+  border-top: 1px solid
+    var(--hk-modal-divider-color, var(--hi-color-border, rgba(100,100,100,0.06)));
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  flex-shrink: 0;
+
+  // Conditional footer slots (phases without actions, close transitions)
+  // render nothing — never leave a bare bordered strip behind.
+  &:empty {
+    display: none;
+  }
+}
+
+// Lead content (e.g. a ghost jump link into the admin console) rendered at
+// the footer's inline-start with the action buttons still pinned at
+// inline-end — the footer counterpart of .hk-modal-header-lead. The lead's
+// auto inline-end margin absorbs the slack (same distribution trick the
+// header uses), so the layout mirrors correctly in RTL without a
+// space-between override.
+.hk-modal-footer--lead {
+  .hk-modal-footer-lead {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-inline-end: auto;
+  }
+}
+
+// ------
+// Responsive — full-screen on narrow viewports
+// ------
+
+// ------
+// Mobile (≤767px, matches useBreakpoint().isMobile) — EVERY modal docks as a
+// bottom sheet. One unified form factor for all popups on phones:
+//   - rises from the bottom edge (translateY reveal, not height-clip)
+//   - hugs its content: docked at the bottom edge, growing upward, and only
+//     stretching when the content actually needs the room (a three-row
+//     detail sheet never carries a screenful of dead body)
+//   - never grows past the top band reserved for the secondary-window
+//     breadcrumb strip (--hk-sheet-top-inset; default 4.25rem keeps the
+//     floating breadcrumb visible above a full-height sheet, and the
+//     strip itself PUBLISHES this property on <body> while it is up —
+//     its live "own height + one gap above + one gap below" — so the
+//     band tracks the real chrome instead of a static guess)
+//   - rounded top corners only, full width
+// ------
+@media (max-width: 767px) {
+  // Docked sheets never re-filter their backdrop per frame: the sheet
+  // is a fixed, full-width layer whose geometry changes with every
+  // content morph, and a backdrop-filter on a resizing layer re-rasters
+  // the blurred region each frame — on a phone GPU that lag shows as
+  // patchy flicker along the moving edge (2026-09-15 chest report:
+  // model dialog etc. while content streamed). The scrim already dims
+  // the page, so an opaque-ish sheet reads identically. Hosts restore
+  // the finish per surface with --hk-modal-blur-mobile /
+  // --hk-modal-bg-mobile.
+  .hk-modal-overlay {
+    @include backdrop-filter(var(--hk-modal-overlay-blur-mobile, none));
+  }
+
+  // Height-morph window (round 20): while the sheet's height animates
+  // every frame, a backdrop-filter anywhere in the resizing subtree has
+  // to re-render its backdrop surface every frame — the same per-frame
+  // surface churn that made promoted layers flash through on phone
+  // GPUs, and the 2026-09-15 report's patchy-flicker source. The morph
+  // flags the frame, and the sticky step indicator drops its blur for
+  // the window (its 95%-opaque background keeps it visually
+  // indistinguishable).
+  .hk-modal-content[data-hk-morphing] .hk-scroll-pin {
+    @include backdrop-filter(none);
+  }
+
+  .hk-modal-content {
+    // Phone-sheet transition = clip-path ONLY (2026-09-21, two Xiaomi
+    // WebView chest reports same day):
+    //
+    // ① IME cap-chase: on adjustResize engines the keyboard animation
+    //   steps the layout viewport — and the 100dvh term of the
+    //   max-height cap — every frame. With max-height in the transition
+    //   list each step RETARGETS a 150ms transition, so a cap-bound
+    //   sheet (tall content: wizards, model pickers) stays permanently
+    //   mid-transition chasing its own viewport. The cap now follows
+    //   the viewport INSTANTLY — exactly how native sheets track the
+    //   keyboard.
+    //
+    // ② Step-change shrink flicker: useSizeMorph's clip mode pins
+    //   growth instantly and sweeps the top edge paint-only, but
+    //   SHRINKS still route through this height transition — 150ms of
+    //   per-frame layout on a fixed full-width layer, re-rastering the
+    //   moving edge every frame (wizard Prev/Next between
+    //   different-height steps showed black blocks along the top).
+    //   Shrinks now SNAP: one layout, one paint — the native-sheet
+    //   direction change. Growth keeps its animated reveal via the
+    //   clip-path sweep (the only transition left on phones).
+    //
+    // Desktop keeps the full base list (height + max-height + clip-path).
+    // 0.3s = the stepflow crossfade's family standard (2026-09-21 user
+    // spec, round 7): the clip sweep, the riding body and the fade must
+    // land together. Keyboard-driven height changes never animate
+    // through this list (height/max-height are not transitioned), so
+    // only content morphs ride this duration.
+    transition:
+      clip-path var(--hk-modal-morph-duration, 0.3s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+    // !important beats the inline maxWidth (width prop); base width: 100%
+    // already applies at every viewport, so only the cap is re-asserted.
+    max-width: 100% !important;
+    // Bottom-docked, content-hugging: `top: auto` lets the sheet size
+    // itself from its content instead of stretching from the top inset
+    // down to the bottom gap (2026-08-30 user report: the node-detail
+    // modal rendered ~60vh of blank body under three rows). The top inset
+    // now only bounds the sheet via the max-height cap below.
+    top: auto;
+    // --hk-sheet-bottom-gap: hosts may lift the docked sheet off the very
+    // bottom edge; the family default sits flush on it (2026-09-04 user
+    // report: even the tightened 0.375rem default still read as a seam).
+    bottom: var(--hk-sheet-bottom-gap, 0px);
+    left: 0;
+    right: 0;
+    transform: none;
+    // Content morphs reveal by clip instead of animating height (see
+    // useSizeMorph): the pin lands instantly and the top edge sweeps up
+    // as a paint-only clip with the box's own corner radii — the same
+    // "content rides rigidly" grammar as the desktop unveil, and the
+    // CSS flag keeps the media query the single owner of the behavior.
+    --hk-sheet-morph: clip;
+    // Scope layout/style invalidation to the sheet subtree: the page
+    // behind a phone sheet is usually streaming (chat updates), and
+    // containment keeps those invalidations — and the sheet's own —
+    // from cascading into each other.
+    contain: layout style;
+    @include backdrop-filter(var(--hk-modal-blur-mobile, none));
+    background: var(
+      --hk-modal-bg-mobile,
+      var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)))
+    );
+    border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                   var(--hk-modal-radius, var(--radius-lg, 12px))
+                   0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    // The top band + bottom gap only BOUND the sheet now (content scrolls
+    // inside once the cap is hit); they no longer stretch it.
+    // Plain-vh fallback first: dvh-less engines (older Android WebView /
+    // Tauri) would drop the whole dvh calc and leave the sheet uncapped.
+    // !important on BOTH: an inline max-height (a host's `style` pass, a
+    // size prop's own cap) must lose to the family band — the strip's
+    // daylight is a guarantee, not a default (HkDrawer parity, 2026-10-05
+    // mobile report: a tall sheet covered the strip's band).
+    max-height: calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+    ) !important;
+    max-height: calc(
+      100dvh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+    ) !important;
+  }
+
+  // Sheet slide reveal replaces the height-clip reveal on mobile.
+  .hk-modal-content-enter-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.42s) ease-out,
+      transform var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+    will-change: transform, opacity;
+  }
+
+  .hk-modal-content-leave-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.32s) ease-in,
+      transform var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
+    will-change: transform, opacity;
+  }
+
+  .hk-modal-content-enter-from,
+  .hk-modal-content-leave-to {
+    opacity: 0;
+    height: auto;
+    transform: translateY(100%);
+  }
+
+  .hk-modal-header {
+    padding: 0.875rem 1rem;
+  }
+
+  .hk-modal-subheader {
+    padding: 0.625rem 1rem 0.625rem;
+  }
+
+  .hk-modal-body-inner {
+    padding: 1rem;
+  }
+
+  // Lift the desktop 70vh body cap on phones: with a docked sheet the cap
+  // used to strand the height it refused INSIDE the sheet, below the last
+  // flex item — a phantom empty band under the footer (report reply bar) or
+  // under the log tail when the modal has no footer at all. The sheet's own
+  // max-height above is the only clamp now: the body fills the sheet and
+  // scrolls, and the footer always sits on the sheet's bottom edge.
+  .hk-modal-body {
+    max-height: none;
+
+    // The gutter contract retunes here too — the covers and the inner's
+    // padding both consume the vars, so one override moves both.
+    --hk-scroll-pad-top: 1rem;
+    --hk-scroll-pad-right: 1rem;
+    --hk-scroll-pad-bottom: 1rem;
+    --hk-scroll-pad-left: 1rem;
+  }
+
+  .hk-modal-footer {
+    // --hk-sheet-footer-gap lets a host app tune how far the docked sheet
+    // sits off the very bottom edge (chest asked for a visibly narrower
+    // gap than body bottom + safe area on phones). Safe area is added ON
+    // TOP of the gap so home-bar devices never lose tappable chrome.
+    // --hk-modal-footer-padding-mobile is the host-tunable mobile footer
+    // inset: a host with edge-to-edge footer content (chest's report
+    // reply bar) sets it to 0 instead of repainting the rule and
+    // duplicating the formula — desktop keeps --hk-modal-padding-footer.
+    padding: var(
+      --hk-modal-footer-padding-mobile,
+      0.625rem 1rem
+        calc(0.375rem + var(--hk-sheet-footer-gap, 0.5rem) + env(safe-area-inset-bottom, 0px))
+    );
+
+    // Footer actions are the sheet's primary touch targets: lift sm/md
+    // buttons one size up to the 44px class regardless of the caller's
+    // size prop (2026-08-30 user report: the docked sheet's bottom-corner
+    // buttons were too small to tap reliably). lg already clears 44px and
+    // keeps its own sizing; the doubled class selector deliberately wins
+    // the cascade over the bare .hk-btn-sm/.hk-btn-md component rules.
+    // The lift is padding/min-height only — font-size stays at the regular
+    // --text-base (Material-Design convention, same wave as HkButton lg),
+    // so a lifted sm footer button reads like every other button instead
+    // of jumping to 16px display text.
+    .hk-btn-sm,
+    .hk-btn-md {
+      min-height: 2.75rem;
+      padding: var(--space-8) var(--space-16);
+      font-size: var(--text-base);
+    }
+  }
+}
+
+/* Reduced motion: no size morphing — the frame swaps instantly (the
+ * open/close choreography above is flattened by the same media query in
+ * the transition classes). The global animation switch
+ * (`html[data-css-animations="0"]`) disables transitions wholesale. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-modal-content {
+    transition: none;
+  }
+}
+
+/* ── Draggable desktop windows (opt-in `draggable` prop) ──────────── */
+@media (min-width: 768px) {
+  .hk-modal-content[data-draggable] .hk-modal-header {
+    cursor: grab;
+    touch-action: none;
+    @include user-select(none);
+  }
+  .hk-modal-content[data-draggable] .hk-modal-header:active {
+    cursor: grabbing;
+  }
+}

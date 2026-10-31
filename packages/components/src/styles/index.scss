@@ -20,6 +20,19 @@
 @import '../../../theme/styles/base';
 
 // ------
+// Vue canonical token fallbacks (vendored mirrors; scripts/sync-vue-mirror.py)
+// ------
+// The mirrored component sheets are compiled from the SAME sheets the Vue
+// library ships, so the runtime custom properties they reference
+// (--color-*, --space-*, --radius-*, --duration-*, ...) must exist here too.
+// These two :root layers are the canonical Vue fallbacks; imported AFTER the
+// theme base so that, where the two vocabularies overlap (34 same-name
+// --hi-*/--c-* properties), the canonical Vue value wins at equal
+// specificity — matching what a Vue host renders.
+@import './vue-mirror/tokens.scss';
+@import './vue-mirror/scale.scss';
+
+// ------
 // Utility Classes (Tailwind-compatible)
 // ------
 // Basic utility classes for the Hikari UI framework
@@ -567,11 +580,17 @@
 @import './components/tooltip.scss';
 @import './components/progress.scss';
 @import './components/skeleton.scss';
-@import './components/spin.scss';
 @import './components/drawer.scss';
 @import './components/popover.scss';
 
 @import './components/modal.scss';
+
+// ------
+// Mirrored Vue family sheets (canonical: packages/vue/src/components/;
+// vendored by scripts/sync-vue-mirror.py). One entry per mirrored family
+// sheet so the docs bundle carries the same CSS the components compile.
+// ------
+@import './vue-mirror/components/HkSpinner.scss';
 
 // ------
 // Navigation Components

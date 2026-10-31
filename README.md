@@ -28,7 +28,7 @@
   </a>
   <!-- crates.io -->
   <a href="https://crates.io/crates/hikari-components">
-    <img src="https://img.shields.io/badge/crates.io-0.4-orange.svg" alt="crates.io">
+    <img src="https://img.shields.io/badge/crates.io-0.5-orange.svg" alt="crates.io">
   </a>
   <!-- docs.rs -->
   <a href="https://docs.rs/hikari-components">
@@ -86,7 +86,7 @@ The result is a UI library that scales with your architecture: start in either e
 | `hikari-i18n` | Locale resources |
 | `@celestia-island/hikari` | Vue 3 port (`packages/vue`), sharing the same SCSS design system |
 
-The Rust crates are published to [crates.io](https://crates.io/search?q=hikari) (current 0.4.x) with docs on [docs.rs](https://docs.rs/hikari-components).
+The Rust crates are published to [crates.io](https://crates.io/search?q=hikari) (current 0.5.x) with docs on [docs.rs](https://docs.rs/hikari-components).
 
 ## Tech Stack
 
@@ -108,20 +108,20 @@ Add the crates to your `Cargo.toml`:
 tairitsu-vdom = "^0.5.18"
 tairitsu-hooks = "^0.5.18"
 tairitsu-macros = "^0.5.18"
-hikari-palette = "^0.4"
-hikari-theme = "^0.4"
-hikari-animation = "^0.4"
-hikari-icons = "^0.4"
-hikari-i18n = "^0.4"
-hikari-components = { version = "^0.4", features = ["basic", "feedback", "navigation", "layout", "data"] }
+hikari-palette = "^0.5"
+hikari-theme = "^0.5"
+hikari-animation = "^0.5"
+hikari-icons = "^0.5"
+hikari-i18n = "^0.5"
+hikari-components = { version = "^0.5", features = ["basic", "feedback", "navigation", "layout", "data"] }
 ```
 
 or with `cargo add`:
 
 ```bash
 cargo add tairitsu-vdom@^0.5.18 tairitsu-hooks@^0.5.18 tairitsu-macros@^0.5.18
-cargo add hikari-palette@^0.4 hikari-theme@^0.4 hikari-animation@^0.4 hikari-icons@^0.4 hikari-i18n@^0.4
-cargo add hikari-components@^0.4
+cargo add hikari-palette@^0.5 hikari-theme@^0.5 hikari-animation@^0.5 hikari-icons@^0.5 hikari-i18n@^0.5
+cargo add hikari-components@^0.5
 ```
 
 Component features are organized in groups — `basic`, `feedback`, `navigation`, `layout`, `data`, `display`, `entry`, `production` — each enabling a set of individual component features (e.g. `button`, `table`, `tree`, `toast`). The default feature set covers all groups.

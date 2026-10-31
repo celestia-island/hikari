@@ -11,7 +11,7 @@ doctest = false
 
 [dependencies]
 # Hikari palette
-hikari-palette = { version = "^0.4", path = "../palette" }
+hikari-palette = { version = "^0.5", path = "../palette" }
 
 # Tairitsu framework (for theme context)
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].

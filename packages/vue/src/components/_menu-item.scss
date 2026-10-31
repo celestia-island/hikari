@@ -44,12 +44,34 @@
  *   section title hugging the edge rather than as an indented row. No
  *   text-transform: translators own casing (the HkTemplateField rule).
  *
+ * Band taxonomy and the WIDTH invariant (2026-10-31):
+ *   A menu level holds two kinds of children. ROWS — selectable items,
+ *   custom rich rows, action buttons — all speak @mixin item: each spans
+ *   the level's content box edge to edge, so its hover/active wash is
+ *   that full box and every highlight in one panel reads the same width.
+ *   BANDS — the wrappers around runs of rows — must stay GEOMETRY-NEUTRAL:
+ *   zero padding of their own. The surface's inset (the popout's 8px, the
+ *   sheet list's 16px, HkMenuPanel's --hk-menu-panel-inset) is the ONE
+ *   horizontal inset a row ever receives. A band that pads itself insets
+ *   only ITS rows, and they stop lining up with the rows outside it: the
+ *   foot action band's highlight then reads wider than the selection rows
+ *   above it (2026-10-31 field report: the workspace picker's
+ *   「添加工作区」 ran ~12px wider than the 「个人空间」 row because the
+ *   consumer body wrapper carried a 6px hand pad the foot slot did not).
+ *   The band homes are: .hk-menu-slot--head/--foot/--extra (HkMenu's slot
+ *   bands), .hk-menu-section (a captioned run), .hk-menu-body (a
+ *   consumer-rendered run — @mixin body). Vertical rhythm BETWEEN bands
+ *   is band-owned, never wrapper-padding-owned: the foot band carries its
+ *   divider-grade top separation in HkMenu.scss, the section grammar owns
+ *   its caption bands here.
+ *
  * Adoption: `@use "./menu-item" as mi;` then
  *   .your-row { @include mi.item; }
  *   .your-row .your-icon { @include mi.icon; }   // wrap TSX side!
  *   .your-row .your-label { @include mi.label; }
  *   .your-section { @include mi.section; }
  *   .your-section-label { @include mi.section-label; }
+ *   .your-body { @include mi.body; }             // custom row-run band
  * Keep the component's own class names — this file owns metrics and
  * states only, never selectors of the adopting rows.
  */
@@ -335,4 +357,25 @@
   & + & {
     margin-block-start: var(--hk-menu-section-stack, var(--space-6, 6px));
   }
+}
+
+/* ── Consumer body band ──────────────────────────────────────────────
+ * The wrapper for a consumer-rendered run of rows inside a menu level —
+ * the workspace picker's custom two-line rows, a menu body of rich rows
+ * the flat HkMenuItem model cannot express. The WIDTH invariant (see the
+ * header's band taxonomy) makes this band GEOMETRY-NEUTRAL: exactly two
+ * declarations, no padding, ever. The surface's inset is the one inset
+ * the rows inside receive, so they line up edge-for-edge with the foot
+ * action band and every other row family in the same panel (the
+ * 2026-10-31 field report shipped as a padded consumer wrapper whose
+ * rows ran ~12px wider than the foot band's highlight). A host keeps its
+ * own class beside .hk-menu-body for tokens and width floors (e.g. the
+ * picker's min-width + caption tokens) — those are content decisions;
+ * horizontal insets are not.
+ *
+ * Not a row: it carries no row tokens, so it needs NO entry in the
+ * sheet-context lists — the rows INSIDE it register themselves. */
+@mixin body {
+  display: block;
+  min-width: 0;
 }

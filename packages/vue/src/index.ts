@@ -684,6 +684,17 @@ export { default as HkDivider } from "./components/HkDivider";
 export { default as HkDiffViewer } from "./components/HkDiffViewer";
 export { parseUnifiedDiff, computeGaps } from "./components/diffParse";
 export type { DiffLine, DiffHunk, ParsedDiff, UnchangedGap } from "./components/diffParse";
+export { default as HkBarChart } from "./components/HkBarChart";
+// The H- alias rides the HCard/HkCard family convention: consumers
+// import either name, one component underneath.
+export { default as HBarChart } from "./components/HkBarChart";
+export {
+  barLayout,
+  fmtBar,
+  niceMax,
+  BAR_FRAME,
+} from "./components/barChart";
+export type { BarLayout, BarSlot } from "./components/barChart";
 export { default as HkCalendarHeatmap } from "./components/HkCalendarHeatmap";
 // The H- alias rides the HCard/HkCard family convention: consumers
 // import either name, one component underneath.
@@ -701,6 +712,17 @@ export {
   shiftIso,
 } from "./components/calendarHeatmap";
 export type { CalendarCell, HkCalendarHeatmapDay } from "./components/calendarHeatmap";
+export { default as HkDonutChart } from "./components/HkDonutChart";
+// The H- alias rides the HCard/HkCard family convention: consumers
+// import either name, one component underneath.
+export { default as HDonutChart } from "./components/HkDonutChart";
+export {
+  chunkLegendItems,
+  donutSlices,
+  focusState,
+  fmtDonut,
+} from "./components/donutGeometry";
+export type { HkDonutEntry, HkDonutSlice } from "./components/donutGeometry";
 export { default as HkDockBar } from "./components/HkDockBar";
 export { default as HkDrawer } from "./components/HkDrawer";
 export { default as HkEmptyState } from "./components/HkEmptyState";

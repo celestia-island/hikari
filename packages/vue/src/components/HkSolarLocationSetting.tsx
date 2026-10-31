@@ -233,9 +233,9 @@ export const HkSolarLocationSetting = defineComponent({
               <div class="hk-solar-manual">
                 {/* The globe picker (2026-10-31): 24 equal time-sector
                     wedges on a spinning, borderless world-plates sphere,
-                    translated tooltip included — the IANA dropdown it
-                    replaced listed hundreds of raw zone ids. Still
-                    writes the same draftTimeZone the engine applies. */}
+                    an always-on top-center readout included — the IANA
+                    dropdown it replaced listed hundreds of raw zone ids.
+                    Still writes the same draftTimeZone the engine applies. */}
                 <HkTimeZoneGlobe
                   modelValue={draftTimeZone.value}
                   onUpdate:modelValue={onSelectTimeZone}

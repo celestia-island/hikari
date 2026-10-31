@@ -612,10 +612,11 @@ export default defineComponent({
      *  Band geometry lives in HkMenu.scss, never in consumers: the foot
      *  band carries the divider-grade top separation there (`.hk-menu-slot--foot`),
      *  so a consumer adds rows, not padding. A custom default-slot row
-     *  run wraps in the geometry-neutral `.hk-menu-body` band
-     *  (_menu-item.scss @mixin body — the WIDTH invariant: wrapper
-     *  padding insets only its own rows and breaks highlight parity
-     *  with the foot action band). */
+     *  run CARRIES the geometry-neutral `.hk-menu-body` band class in the
+     *  HOST's own markup (this component does not wrap the slot — the
+     *  global rule lives in admin-tokens, _menu-item.scss @mixin body —
+     *  the WIDTH invariant: wrapper padding insets only its own rows and
+     *  breaks highlight parity with the foot action band). */
     function slotWrapper(kind: "head" | "foot" | "extra", nodes: VNode[]): VNode | null {
       return nodes.length ? (
         <div class={`hk-menu-slot hk-menu-slot--${kind}`}>{nodes}</div>

@@ -623,6 +623,16 @@ describe("menu-item grammar contract", () => {
       "the one global body adopter",
     ).toContain(".hk-menu-body");
     for (const { selector, block } of bodyRules) {
+      // The binding must be TOP-LEVEL: resolvedSelectors drops at-rule
+      // preludes, so a media-scoped duplicate would resolve to the same
+      // selector string here — walk the parent chain explicitly and fail
+      // on any at-rule ancestor (the modal-sheet test sets the precedent).
+      for (let cur = block.parent; cur; cur = cur.parent) {
+        expect(
+          cur.prelude.startsWith("@"),
+          `the body binding for "${selector}" must be a top-level rule, found inside at-rule "${cur.prelude}" (a scoped binding is not the global contract)`,
+        ).toBe(false);
+      }
       const statements = block.statements.map((stmt) => stmt.replace(/\s+/g, " ").trim());
       expect(statements, `body rule "${selector}" binds the grammar only`).toEqual([
         "@include mi.body",
@@ -631,12 +641,15 @@ describe("menu-item grammar contract", () => {
   });
 
   it("keeps every band wrapper geometry-neutral (rows own the level width)", () => {
-    // Every rule hikari ships for a BAND class — the slot hooks, the
-    // consumer body band, the section wrapper — must declare NO padding.
-    // The surface's inset is the one horizontal inset a row receives; a
-    // band that pads itself re-creates the field defect with its own rows
-    // reading wider than the neighbours. Comments stripped, block-parsed,
-    // resolved selectors (a context-scoped band rule fails here too).
+    // Every rule in the sheets that style band classes today — the
+    // grammar, HkMenu.scss and admin-tokens (a repo-wide grep is the
+    // reviewer's periodic check that this list is still the whole world) —
+    // must declare NO padding for a BAND class: the slot hooks, the
+    // consumer body band, the section wrapper. The surface's inset is the
+    // one horizontal inset a row receives; a band that pads itself
+    // re-creates the field defect with its own rows reading wider than
+    // the neighbours. Comments stripped, block-parsed, resolved selectors
+    // (a context-scoped band rule fails here too).
     const blocks = [
       ...flattenBlocks(parseScss(stripScssComments(grammar))),
       ...flattenBlocks(parseScss(stripScssComments(menuScss))),
@@ -682,12 +695,20 @@ describe("menu-item grammar contract", () => {
     expect(decls, "the foot band carries exactly its top separation").toEqual([
       "margin-block-start: var(--hk-menu-foot-gap, var(--space-6, 6px))",
     ]);
+    // Head/extra stay BARE DOM hooks — no rhythm rules may exist for them
+    // at all (not merely margin-free ones): the identity blocks own their
+    // rhythm through the .s-user-header pins, and the theme menu's extra
+    // slot rides the plain row rhythm. A rule appearing here at all is
+    // the symmetric-creep attempt, so its EXISTENCE fails — a
+    // margin-free-but-present rule would still be a forked band.
     for (const kind of ["--head", "--extra"]) {
-      const band = blocks.find((block) => block.prelude.trim() === `.hk-menu-slot${kind}`);
-      if (band) {
-        const margins = band.statements.filter((stmt) => /\bmargin/.test(stmt));
-        expect(margins, `the ${kind} band stays rhythm-neutral`).toEqual([]);
-      }
+      const band = blocks.find((block) =>
+        resolvedSelectors(block).includes(`.hk-menu-slot${kind}`),
+      );
+      expect(
+        band,
+        `the ${kind} band must stay a bare DOM hook with no rule of its own (its rhythm is owned elsewhere by design)`,
+      ).toBeUndefined();
     }
   });
 });

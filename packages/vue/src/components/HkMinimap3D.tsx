@@ -15,13 +15,20 @@
  *  - ZOOM is an auto-fit radius (content ∪ view plane) with a ± ladder
  *    on top: 100% = everything fits, higher = closer;
  *  - the helper layer never leaks into the main render (helpers sit on
- *    BOARD3D_HELPERS_LAYER, which only the minimap camera enables).
+ *    BOARD3D_HELPERS_LAYER, which only the minimap camera enables);
+ *  - COLLAPSE (the 2D HkMinimap's 2026-10-27 affordance, ported): with
+ *    a "collapsible" prop the zoom bar grows a minimize button and the
+ *    card folds into the small semi-transparent map-icon button; the
+ *    render hook skips frames while collapsed and the renderer re-inits
+ *    lazily on first expand, so "defaultCollapsed" costs nothing at
+ *    mount.
  */
 
-import { Maximize2, ZoomIn, ZoomOut } from "lucide-vue-next";
+import { Map as MapIcon, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-vue-next";
 import {
   computed,
   defineComponent,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -62,6 +69,13 @@ export default defineComponent({
   name: "HkMinimap3D",
   props: {
     engine: { type: Object as PropType<Board3DEngine>, required: true },
+    /** Grow the minimize button in the zoom bar (2026-10-31: ported
+     *  from the 2D HkMinimap's collapse affordance). */
+    collapsible: { type: Boolean, default: false },
+    /** Mount straight into the collapsed map-icon state — the renderer
+     *  then inits lazily on first expand, so a collapsed-at-mount map
+     *  never builds a GL surface at all. */
+    defaultCollapsed: { type: Boolean, default: false },
   },
   setup(props) {
     const { t } = useI18n();
@@ -70,6 +84,7 @@ export default defineComponent({
     const dragging = ref(false);
     const sliderOpen = ref(false);
     const zoomPercent = ref(100);
+    const collapsed = ref(props.defaultCollapsed);
 
     let renderer: THREE.WebGLRenderer | null = null;
     let mapCamera: THREE.PerspectiveCamera | null = null;
@@ -287,6 +302,7 @@ export default defineComponent({
     }
 
     function onFrame(): void {
+      if (collapsed.value) return; // folded away: no map frames at all
       if (!renderer || !mapCamera || !scene.value) return;
       const now = performance.now();
       if (now - lastRefit >= REFIT_MS) {
@@ -343,6 +359,10 @@ export default defineComponent({
       zoomPercent.value = 100;
       sliderOpen.value = false;
     }
+    function toggleCollapsed(next: boolean): void {
+      collapsed.value = next;
+      if (next) sliderOpen.value = false;
+    }
 
     // Slider pop dismissal (same shield as the 2D minimap).
     function onDocPointerDown(e: PointerEvent): void {
@@ -361,7 +381,11 @@ export default defineComponent({
       }
     });
 
-    onMounted(() => {
+    /** Idempotent GL-surface init. Called from onMounted (expanded
+     *  mounts) and from the expand transition (a defaultCollapsed map
+     *  has no canvas at mount — the renderer builds on first expand). */
+    function initRenderer(): void {
+      if (renderer) return;
       const canvas = canvasRef.value;
       const el = rootRef.value;
       if (!canvas || !el) return;
@@ -387,6 +411,12 @@ export default defineComponent({
       el.addEventListener("pointerup", onUp);
       el.addEventListener("pointercancel", onUp);
       el.addEventListener("wheel", onWheel, { passive: false });
+    }
+    onMounted(() => {
+      if (!collapsed.value) initRenderer();
+    });
+    watch(collapsed, (folded) => {
+      if (!folded) void nextTick(() => initRenderer());
     });
 
     onBeforeUnmount(() => {
@@ -425,7 +455,24 @@ export default defineComponent({
       renderer?.forceContextLoss?.();
     });
 
-    return () => (
+    return () => {
+      if (collapsed.value) {
+        // The folded affordance, mirroring the 2D HkMinimap: a small
+        // semi-transparent map-icon button pinned where the card sat.
+        return (
+          <button
+            ref={rootRef}
+            type="button"
+            class="hk-minimap hk-minimap3d hk-minimap--collapsed"
+            aria-label={t("hikari::zoomToolbar.expandMap", "Show minimap")}
+            title={t("hikari::zoomToolbar.expandMap", "Show minimap")}
+            onClick={() => toggleCollapsed(false)}
+          >
+            <MapIcon size={16} />
+          </button>
+        );
+      }
+      return (
       <div
         ref={rootRef}
         class="hk-minimap hk-minimap3d"
@@ -474,6 +521,17 @@ export default defineComponent({
           >
             <Maximize2 size={11} />
           </button>
+          {props.collapsible && (
+            <button
+              class="hk-mm-zoom-btn hk-mm-collapse-btn"
+              type="button"
+              onClick={() => toggleCollapsed(true)}
+              aria-label={t("hikari::zoomToolbar.collapseMap", "Hide minimap")}
+              title={t("hikari::zoomToolbar.collapseMap", "Hide minimap")}
+            >
+              <Minimize2 size={11} />
+            </button>
+          )}
         </div>
         {sliderOpen.value && (
           <div class="hk-mm-zoom-pop">
@@ -497,5 +555,5 @@ export default defineComponent({
         )}
       </div>
     );
-  },
+    };  },
 });

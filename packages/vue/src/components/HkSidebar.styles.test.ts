@@ -74,16 +74,61 @@ describe("HkSidebar scroll end-cap", () => {
     expect(body).not.toMatch(/padding-block:[^;]*--space-4/);
   });
 
-  it("keeps the same tail on the collapsed body", () => {
-    // The density dress is keyed off EITHER carrier — the legacy root's
-    // [data-collapsed] or the rail swap generation's [data-rail] (the
-    // generation attr freezes on the leaving copy for the dissolve, a
-    // root attr cannot). ruleBody needs the arm its brace follows, so the
-    // legacy arm is asserted as text and the body read from the group.
-    expect(css).toContain(".hk-sidebar[data-collapsed] .hk-sidebar-body");
-    const body = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-body");
-    expect(body, "the collapsed body rule exists (grouped density carriers)").not.toBeNull();
-    expect(body).toContain("padding-block: var(--space-12) var(--hk-sidebar-scroll-tail)");
+  it("the density dress keeps every vertical metric at the expanded value", () => {
+    // Vertical rhythm is density-invariant (2026-10-31 user direction:
+    // the collapse toggle must not move rows). The body therefore has no
+    // density rule AT ALL — the leading air AND the scroll tail ride the
+    // single base rule in both densities — and the header/footer dress
+    // rules keep the expanded BLOCK padding, narrowing only the inline
+    // track for the rail column.
+    expect(css).not.toContain(".hk-sidebar[data-collapsed] .hk-sidebar-body");
+    expect(css).not.toContain(".hk-sidebar-rail-generation[data-rail] .hk-sidebar-body");
+    // The two carrier literals above are the compiled spellings; a brand
+    // NEW carrier (a third density hook) is a new dress and must re-run
+    // this contract — not mechanically foreseeable here.
+    // ruleBody needs the arm its brace follows; the dress compiles to one
+    // comma-grouped rule per band, so the generation arm is the one the
+    // helper can read (the legacy arm shares its body).
+    const header = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-header");
+    expect(header, "the collapsed header rule exists (grouped density carriers)").not.toBeNull();
+    expect(header).toContain("padding: var(--space-16) var(--space-8)");
+    const footer = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-footer");
+    expect(footer, "the collapsed footer rule exists (grouped density carriers)").not.toBeNull();
+    expect(footer).toContain("padding: var(--space-16) var(--space-8)");
+    // The stronger, spelling-proof form (whole-dress scan): EVERY
+    // padding declaration in ANY dress rule must be EXACTLY the expanded
+    // two-track shorthand — exact, not a prefix: a three-track spelling
+    // (`padding: var(--space-16) var(--space-8) var(--space-12)`) drifts
+    // the block END past a block-start-only check, and a longhand
+    // (`padding-block-start:`) hides from a shorthand-only one; both
+    // green-holed earlier rounds. Physical `bottom` longhands are banned
+    // beside the logical ones. Horizontal-only tracks (padding-inline*)
+    // cannot match the value pin and are rejected the same way; a band
+    // that truly needs different block metrics must move the BASE rule
+    // for BOTH densities. Margins are banned outright — the bands
+    // separate by their paddings alone — and so are the block-FLOW
+    // metrics that move rows just the same (gap/row-gap/height/
+    // min-height/max-height).
+    const dressRules = css
+      .split("}")
+      .filter((rule) => rule.includes("[data-collapsed]") || rule.includes("[data-rail]"));
+    expect(dressRules.length, "the density dress rules exist").toBeGreaterThan(1);
+    for (const rule of dressRules) {
+      for (const decl of rule.matchAll(
+        /\bpadding(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:[^;}]*/g,
+      )) {
+        expect(
+          decl[0].trim(),
+          `a dress padding is not the expanded two-track shorthand: ${decl[0]}`,
+        ).toBe("padding: var(--space-16) var(--space-8)");
+      }
+      expect(rule, `a margin crept into the dress: ${rule}`).not.toMatch(
+        /\bmargin(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,
+      );
+      expect(rule, `block-flow metric in the dress: ${rule}`).not.toMatch(
+        /\b(?:gap|row-gap|height|min-height|max-height)\s*:/,
+      );
+    }
   });
 
   it("reads the tail fallback from the scss source, not a drifted literal", () => {

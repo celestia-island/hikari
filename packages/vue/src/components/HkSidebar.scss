@@ -86,23 +86,27 @@
  * kit (HkSidebarRailSwap) — the generation's [data-rail] flips with the
  * swap key, so the leaving generation keeps its dress for the dissolve
  * while the entering one takes the new one. A root-level attr cannot do
- * that: it would restyle the frozen leaving copy mid-dissolve. */
+ * that: it would restyle the frozen leaving copy mid-dissolve.
+ *
+ * VERTICAL RHYTHM IS DENSITY-INVARIANT (2026-10-31 user direction: the
+ * collapse toggle must not move rows). The dress authors INLINE geometry
+ * only — the header/footer rules below narrow the horizontal padding for
+ * the rail column and recentre the header, while every BLOCK metric (the
+ * header's 16px band, the body's 20px leading air + scroll tail, the
+ * footer's 16px band) stays with the base rules alone. Shrinking the
+ * collapsed paddings used to lift the whole nav by up to two paddings'
+ * worth on every flip; a band that needs a different vertical dress in
+ * rail mode would have to move the base values for BOTH densities, never
+ * add a per-density block padding. */
 .hk-sidebar[data-collapsed],
 .hk-sidebar-rail-generation[data-rail] {
   .hk-sidebar-header {
     justify-content: center;
-    padding: var(--space-12) var(--space-8);
-  }
-
-  .hk-sidebar-body {
-    /* Same end-cap as the expanded body — collapsed rows are icon-only
-     * but the tail's job (announcing the end of the scroll range) is
-     * identical, so only the leading air shrinks here. */
-    padding-block: var(--space-12) var(--hk-sidebar-scroll-tail);
+    padding: var(--space-16) var(--space-8);
   }
 
   .hk-sidebar-footer {
-    padding: var(--space-12) var(--space-8);
+    padding: var(--space-16) var(--space-8);
   }
 }
 

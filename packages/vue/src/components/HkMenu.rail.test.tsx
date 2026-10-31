@@ -200,6 +200,11 @@ describe("HkMenu sidebar icon rail", () => {
 
     const children = c.querySelector(".hk-menu-sidebar-rail-children");
     expect(children, "the open group lists its children in the rail").toBeTruthy();
+    // The rail wrapper wears the SHARED children class too: the expanded
+    // sidebar's 2px margin step reaches the rail through it — that class
+    // union IS the vertical-invariance carrier (2026-10-31). A rail-only
+    // wrapper would re-introduce the per-density step.
+    expect(children!.classList.contains("hk-menu-sidebar-children")).toBe(true);
     const childRows = railRows(children!);
     expect(childRows.map((row) => row.getAttribute("aria-label"))).toEqual(["Users", "Audit log"]);
     for (const row of childRows) {
@@ -238,6 +243,15 @@ describe("HkMenu sidebar icon rail", () => {
     expect(c.querySelector(".hk-menu-sidebar-group[data-open]"), "the group is still open").toBeTruthy();
     expect(groupRows(c)[0]!.getAttribute("aria-expanded")).toBe("true");
     expect(c.textContent).toContain("Users");
+    // TWO-SIDED class-union pin: the EXPANDED wrapper must wear the
+    // shared class too. Dropping it there removes the 2px step from the
+    // expanded sidebar — rows below an open group would move on every
+    // flip, the exact drift this contract kills (a rail-only pin let
+    // that through).
+    expect(
+      c.querySelector(".hk-menu-sidebar-group[data-open] > .hk-menu-sidebar-children"),
+      "the expanded children wrapper keeps the shared step class",
+    ).toBeTruthy();
 
     // Reverse direction: collapse it from the expanded sidebar, flip
     // back into the rail — it must stay collapsed (no resurrection).
@@ -508,10 +522,65 @@ describe("HkMenu rail styles (compiled sheet contracts)", () => {
     expect(row).toContain("justify-content: center");
   });
 
-  it("keeps open group children in the same one-column rhythm (no indent step)", () => {
+  it("keeps open group children at the EXPANDED vertical step (no rail re-step)", () => {
+    // Vertical rhythm is density-invariant (2026-10-31 user direction:
+    // the collapse toggle must not move rows). The rail children wrapper
+    // therefore carries NO margin rule of its own — the expanded
+    // sidebar's 2px step from the shared .hk-menu-sidebar-children rule
+    // applies in the rail too, and the wrapper stays width-only (its
+    // selector survives only inside the comma-grouped width rule, which
+    // the exact-line ruleBody skips — the null here asserts no
+    // STANDALONE rail-children rule came back).
     const children = ruleBody(".hk-menu-sidebar[data-collapsed] .hk-menu-sidebar-rail-children");
-    expect(children, "the rail children rule exists").not.toBeNull();
-    expect(children).toContain("margin-top: 0");
+    expect(children, "a standalone rail-children rule re-stepped the margin").toBeNull();
+    const shared = ruleBody(".hk-menu-sidebar-children");
+    expect(shared, "the shared children rule exists").not.toBeNull();
+    expect(shared).toContain("margin-top: var(--space-2, 2px)");
+    // A rule whose selector is EXACTLY a rail wrapper class — top-level,
+    // outside any density dress — would restyle the rail children while
+    // evading every dress-keyed scan below (the compiled chunk then
+    // carries no carrier text). The wrappers' geometry must come from
+    // the shared rules alone.
+    expect(css.match(/^\s*\.hk-menu-sidebar-rail-(?:children|group)\s*\{/gm)).toBeNull();
+  });
+
+  it("the rail dress authors no vertical rhythm in any spelling", () => {
+    // The stronger form of the contract above, so a re-step cannot hide
+    // inside a comma-grouped selector the per-selector ruleBody skips
+    // AND cannot return through alternate spellings or sister metrics:
+    // every rule of the density dress is scanned and banned for ANY
+    // margin/padding spelling that reaches a block edge — the shorthand
+    // (it sets the block side too: the historical `margin-top: 0`
+    // regression spelled `margin: 0` evaded a longhand-only scan) and
+    // every vertical longhand, top AND bottom — plus the block-FLOW
+    // metrics that move rows just the same (gap/row-gap/height/
+    // min-height/max-height: a `gap:` inside the comma-grouped width
+    // rule once passed a margin/padding-only scan). Horizontal-only
+    // tracks (margin-inline*, padding-inline*) stay legal; absolute
+    // INSETS (the caret corner's inset-block-end) are flow-neutral
+    // decoration and stay legal. A rail band that truly needs a
+    // different block metric must move the BASE rule for BOTH densities.
+    // Keyed to BOTH carrier spellings so a future [data-rail]-keyed
+    // carrier in this sheet cannot slip the scan.
+    const dressRules = css
+      .split("}")
+      .filter(
+        (rule) =>
+          rule.includes(".hk-menu-sidebar[data-collapsed]") ||
+          rule.includes(".hk-menu-sidebar[data-rail]"),
+      );
+    expect(dressRules.length, "the rail dress rules exist").toBeGreaterThan(3);
+    for (const rule of dressRules) {
+      expect(rule, `vertical margin in the rail dress: ${rule}`).not.toMatch(
+        /\bmargin(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,
+      );
+      expect(rule, `vertical padding in the rail dress: ${rule}`).not.toMatch(
+        /\bpadding(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,
+      );
+      expect(rule, `block-flow metric in the rail dress: ${rule}`).not.toMatch(
+        /\b(?:gap|row-gap|height|min-height|max-height)\s*:/,
+      );
+    }
   });
 
   it("mirrors the rail caret in RTL with the scaleX convention, never a rotate", () => {

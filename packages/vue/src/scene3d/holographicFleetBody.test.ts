@@ -86,4 +86,41 @@ describe("makeFleetHologram", () => {
     expect(hub.mesh.geometry).toBeInstanceOf(THREE.IcosahedronGeometry);
     expect(planet.mesh.geometry).toBeInstanceOf(THREE.DodecahedronGeometry);
   });
+
+  it("gives every face its own detached inset ring, with no shared vertices", () => {
+    mockCanvas();
+    for (const [role, expectedFaces] of [["star", 20], ["planet", 12]] as const) {
+      const hologram = makeFleetHologram(
+        { ...INPUT, role },
+        new THREE.Color(),
+        false,
+      );
+      const rings = hologram.mesh.getObjectsByProperty(
+        "name",
+        "fleet-hologram-face-ring",
+      );
+      expect(rings, `${role} face rings`).toHaveLength(expectedFaces);
+      expect(
+        hologram.mesh.getObjectsByProperty("name", "fleet-hologram-polyhedron-edges"),
+        `${role} shared wireframe`,
+      ).toHaveLength(0);
+
+      const vertexKeys = new Set<string>();
+      let vertices = 0;
+      for (const ring of rings) {
+        expect(ring).toBeInstanceOf(THREE.LineLoop);
+        const positions = (ring as THREE.LineLoop).geometry.getAttribute("position");
+        expect(positions.count).toBe(32);
+        for (let i = 0; i < positions.count; i += 1) {
+          vertexKeys.add(
+            `${positions.getX(i).toFixed(5)}:${positions.getY(i).toFixed(5)}:${positions.getZ(i).toFixed(5)}`,
+          );
+          vertices += 1;
+        }
+      }
+      // Every ring has its own circumference; no ring shares an edge or
+      // vertex with a neighbour, so the old connected cage cannot reappear.
+      expect(vertexKeys.size).toBe(vertices);
+    }
+  });
 });

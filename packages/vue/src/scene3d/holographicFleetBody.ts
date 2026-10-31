@@ -3,10 +3,11 @@
  * data-bound cylindrical HUD band.
  *
  * The visual language is deliberately restrained: a coarse translucent
- * polyhedron, two rings for a standard node (three for a hub), one bright
- * arc per ring, and a slow ticker made ONLY from real caller-supplied
- * fields. Decorative lines and the band never join raycast picking; the
- * centre mesh remains the node's pointer and selection target.
+ * polyhedron whose FACES each carry an independent in-plane ring (no shared
+ * wireframe edges), two orbit rings for a standard node (three for a hub),
+ * one bright arc per orbit ring, and a slow ticker made ONLY from real
+ * caller-supplied fields. Decorative lines and the band never join raycast
+ * picking; the centre mesh remains the node's pointer and selection target.
  */
 
 import * as THREE from "three";
@@ -74,6 +75,123 @@ function arcGeometry(radius: number): THREE.BufferGeometry {
 function unpickable<T extends THREE.Object3D>(object: T): T {
   object.raycast = () => undefined;
   return object;
+}
+
+/** One flat polygon face recovered from the polyhedron's triangles. */
+interface HologramFace {
+  center: THREE.Vector3;
+  normal: THREE.Vector3;
+  vertices: THREE.Vector3[];
+}
+
+/** Recover the polyhedron's true faces (a dodecahedron face is three
+ *  coplanar triangles; a pentagon must become ONE ring, not three). Group by
+ *  normal direction with a dot threshold: Three.js' projected pentagon
+ *  fragments are several milliradians apart, while adjacent dodecahedron
+ *  faces differ by tens of degrees. */
+function extractHologramFaces(geometry: THREE.BufferGeometry): HologramFace[] {
+  const position = geometry.getAttribute("position");
+  const groups: Array<{ normal: THREE.Vector3; vertices: Map<string, THREE.Vector3> }> = [];
+  for (let i = 0; i < position.count; i += 3) {
+    const a = new THREE.Vector3(position.getX(i), position.getY(i), position.getZ(i));
+    const b = new THREE.Vector3(position.getX(i + 1), position.getY(i + 1), position.getZ(i + 1));
+    const c = new THREE.Vector3(position.getX(i + 2), position.getY(i + 2), position.getZ(i + 2));
+    const normal = b.clone().sub(a).cross(c.clone().sub(a)).normalize();
+    const triangleCenter = a.clone().add(b).add(c).multiplyScalar(1 / 3);
+    if (normal.dot(triangleCenter) < 0) normal.negate();
+    let group = groups.find((candidate) => candidate.normal.dot(normal) > 0.999);
+    if (!group) {
+      group = { normal, vertices: new Map() };
+      groups.push(group);
+    }
+    for (const vertex of [a, b, c]) {
+      const vertexKey = [vertex.x, vertex.y, vertex.z]
+        .map((value) => value.toFixed(5))
+        .join(":");
+      group.vertices.set(vertexKey, vertex);
+    }
+  }
+
+  return groups.map((group) => {
+    const vertices = [...group.vertices.values()];
+    const center = vertices
+      .reduce((sum, vertex) => sum.add(vertex), new THREE.Vector3())
+      .multiplyScalar(1 / vertices.length);
+    return {
+      center,
+      normal: group.normal.clone().dot(center) < 0
+        ? group.normal.clone().negate()
+        : group.normal.clone(),
+      vertices,
+    };
+  });
+}
+
+/** Inradius of the face polygon — the largest inset circle that still
+ *  leaves a visible gap between neighbouring face rings. */
+function faceInradius(face: HologramFace): number {
+  const u = face.vertices[0]!.clone().sub(face.center).normalize();
+  const v = face.normal.clone().cross(u).normalize();
+  const ordered = [...face.vertices].sort((a, b) => {
+    const angle = (point: THREE.Vector3): number => Math.atan2(
+      point.clone().sub(face.center).dot(v),
+      point.clone().sub(face.center).dot(u),
+    );
+    return angle(a) - angle(b);
+  });
+  let inradius = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < ordered.length; i += 1) {
+    const a = ordered[i]!;
+    const b = ordered[(i + 1) % ordered.length]!;
+    const edge = b.clone().sub(a);
+    const area2 = edge.clone().cross(face.center.clone().sub(a)).length();
+    if (edge.lengthSq() > 1e-10) inradius = Math.min(inradius, area2 / edge.length());
+  }
+  return Number.isFinite(inradius) ? inradius : 0;
+}
+
+/** Each face gets its own detached ring. No shared edges, no connected
+ *  wireframe cage — adjacent rings visibly stop short of every face border. */
+function makeFaceRings(
+  geometry: THREE.BufferGeometry,
+  bodyRadius: number,
+  color: THREE.Color,
+  offline: boolean,
+): THREE.LineLoop[] {
+  const lift = bodyRadius * 0.01;
+  const segments = 32;
+  const rings: THREE.LineLoop[] = [];
+  for (const face of extractHologramFaces(geometry)) {
+    const radius = Math.max(0.012, faceInradius(face) * 0.62);
+    const u = face.vertices[0]!.clone().sub(face.center).normalize();
+    const v = face.normal.clone().cross(u).normalize();
+    const points: number[] = [];
+    for (let i = 0; i < segments; i += 1) {
+      const angle = (i / segments) * Math.PI * 2;
+      const point = face.center
+        .clone()
+        .addScaledVector(face.normal, lift)
+        .addScaledVector(u, Math.cos(angle) * radius)
+        .addScaledVector(v, Math.sin(angle) * radius);
+      points.push(point.x, point.y, point.z);
+    }
+    const ring = unpickable(new THREE.LineLoop(
+      new THREE.BufferGeometry().setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(points, 3),
+      ),
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: offline ? 0.16 : 0.62,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    ));
+    ring.name = "fleet-hologram-face-ring";
+    rings.push(ring);
+  }
+  return rings;
 }
 
 function makeRing(
@@ -212,18 +330,9 @@ export function makeFleetHologram(
   mesh.name = "fleet-hologram-polyhedron";
   mesh.rotation.set(0.2, 0, 0.1);
 
-  const edges = unpickable(new THREE.LineSegments(
-    new THREE.EdgesGeometry(geometry, 1),
-    new THREE.LineBasicMaterial({
-      color: edgeColor,
-      transparent: true,
-      opacity: offline ? 0.26 : 0.78,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
-  ));
-  edges.name = "fleet-hologram-polyhedron-edges";
-  mesh.add(edges);
+  for (const ring of makeFaceRings(geometry, input.radius, edgeColor, offline)) {
+    mesh.add(ring);
+  }
   group.add(mesh);
 
   const rings = HOLOGRAM_RING_SCALES[input.role].map((scale, index) => {

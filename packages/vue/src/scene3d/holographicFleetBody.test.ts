@@ -3,10 +3,9 @@ import * as THREE from "three";
 
 import { fakeAs } from "../test-utils/fakes";
 import {
-  extractHologramFaces,
-  faceInradius,
   hologramHudText,
   makeFleetHologram,
+  makeSatelliteHologram,
   poseFleetHologram,
   type FleetHologramInput,
 } from "./holographicFleetBody";
@@ -49,116 +48,241 @@ describe("hologramHudText", () => {
 });
 
 describe("makeFleetHologram", () => {
-  it("draws the real data on the cylindrical band and animates each layer", () => {
+  it("pins the real-data ticker to the centre of the front dial", () => {
     const fillText = mockCanvas();
     const hologram = makeFleetHologram(INPUT, new THREE.Color(0x7fb8dd), false);
 
     expect(hologram.hudTexture).not.toBeNull();
-    const band = hologram.group.getObjectByName("fleet-hologram-hud-band");
-    expect(band).toBeInstanceOf(THREE.Mesh);
-    expect((band as THREE.Mesh).geometry).toBeInstanceOf(THREE.CylinderGeometry);
-    expect(fillText).toHaveBeenCalled();
+    expect(hologram.hudPanel).not.toBeNull();
+    expect(hologram.hudPanel!.geometry).toBeInstanceOf(THREE.PlaneGeometry);
+    // The ticker is a child of the camera-facing dial, AT its centre: the
+    // dial owns the plane, so facing the dial faces the text (user
+    // direction 2026-10-31 — no wrapping ribbon).
+    expect(hologram.frontDial.children).toContain(hologram.hudPanel);
+    expect(hologram.hudPanel!.position.x).toBe(0);
+    expect(hologram.hudPanel!.position.y).toBe(0);
+    // Not vacuous: a blank ticker must fail here, not just render wrong
+    // text when it renders anything at all.
+    expect(fillText.mock.calls.length).toBeGreaterThan(0);
     for (const call of fillText.mock.calls) {
       expect(call[0]).toBe("node-1 engine stack  ·  Online  ·  3 endpoints");
     }
 
-    // Decorative rings and the text band never widen the body's pointer
-    // target. Only the central polyhedron keeps the default raycaster.
-    const hits: THREE.Intersection[] = [];
-    band?.raycast(new THREE.Raycaster(), hits);
-    expect(hits).toHaveLength(0);
+    // The plane's aspect matches the texture's (1024×96): a mismatched
+    // aspect compresses the glyphs horizontally (R2 S3-1 regression).
+    const plane = hologram.hudPanel!.geometry as THREE.PlaneGeometry;
+    const params = plane.parameters as { width: number; height: number };
+    expect(params.width / params.height).toBeCloseTo(1024 / 96, 5);
 
-    const initialRingY = hologram.rings.map((ring) => ring.pivot.rotation.y);
-    poseFleetHologram(hologram, 5, 20);
-    expect(hologram.mesh.rotation.y).toBeCloseTo(Math.PI / 2, 6);
-    hologram.rings.forEach((ring, index) => {
-      expect(ring.pivot.rotation.y).not.toBe(initialRingY[index]);
-    });
-    expect(hologram.hudTexture?.offset.x).toBeCloseTo(0.09, 6);
-    poseFleetHologram(hologram, 10, 20);
-    expect(hologram.hudTexture?.offset.x).toBeCloseTo(0.18, 6);
+    // The text plane never widens the body's pointer target.
+    const hits: THREE.Intersection[] = [];
+    hologram.hudPanel!.raycast(new THREE.Raycaster(), hits);
+    expect(hits).toHaveLength(0);
   });
 
-  it("uses three rings for a hub and two for a standard node", () => {
+  it("gives main cores denser dial content than node cores", () => {
     mockCanvas();
     const hub = makeFleetHologram({ ...INPUT, role: "star" }, new THREE.Color(), false);
-    const planet = makeFleetHologram(INPUT, new THREE.Color(), false);
-    expect(hub.rings).toHaveLength(3);
-    expect(planet.rings).toHaveLength(2);
-    expect(hub.mesh.geometry).toBeInstanceOf(THREE.IcosahedronGeometry);
-    expect(planet.mesh.geometry).toBeInstanceOf(THREE.DodecahedronGeometry);
+    const node = makeFleetHologram(INPUT, new THREE.Color(), false);
+
+    const dialCounts = (hologram: ReturnType<typeof makeFleetHologram>) => ({
+      rings: hologram.frontDial.getObjectsByProperty("name", "fleet-hologram-face-dial-ring").length,
+      arcs: hologram.frontDial.getObjectsByProperty("name", "fleet-hologram-face-dial-arc").length,
+      core: hologram.frontDial.getObjectsByProperty("name", "fleet-hologram-face-dial-core").length,
+      ticks: (() => {
+        const ticks = hologram.frontDial.getObjectByName("fleet-hologram-face-dial-ticks");
+        if (!ticks) return 0;
+        return (ticks as THREE.LineSegments).geometry.getAttribute("position").count / 2;
+      })(),
+      spindle: hologram.shell.getObjectsByProperty(
+        "name",
+        "fleet-hologram-ring-spindle-circle",
+      ).length,
+    });
+
+    // User direction 2026-10-31: a main core's ball is bigger AND carries
+    // more content; a node core is smaller and sparser — never identical.
+    expect(dialCounts(hub)).toEqual({ rings: 3, ticks: 48, arcs: 2, core: 1, spindle: 9 });
+    expect(dialCounts(node)).toEqual({ rings: 2, ticks: 28, arcs: 1, core: 1, spindle: 6 });
   });
 
-  it("gives every face its own detached inset ring, with no shared vertices", () => {
+  it("builds the ball from circles only — no solid sphere, no wireframe cage", () => {
     mockCanvas();
-    for (const [role, expectedFaces] of [["star", 20], ["planet", 12]] as const) {
-      const hologram = makeFleetHologram(
-        { ...INPUT, role },
-        new THREE.Color(),
-        false,
-      );
-      const rings = hologram.mesh.getObjectsByProperty(
-        "name",
-        "fleet-hologram-face-ring",
-      );
-      expect(rings, `${role} face rings`).toHaveLength(expectedFaces);
+    for (const role of ["star", "planet"] as const) {
+      const hologram = makeFleetHologram({ ...INPUT, role }, new THREE.Color(), false);
+
+      // No SphereGeometry anywhere: the pick proxy is an invisible
+      // icosahedron, everything visible is a circle, a plane or a disc.
+      const spheres: THREE.Mesh[] = [];
+      hologram.group.traverse((obj) => {
+        if (obj instanceof THREE.Mesh && obj.geometry instanceof THREE.SphereGeometry) {
+          spheres.push(obj);
+        }
+      });
+      expect(spheres, `${role} solid spheres`).toHaveLength(0);
+
+      // The shell is six overlapping support dials whose rims merge into
+      // one rounded envelope — the fused structures must not leave a
+      // readable cube behind (no shared wireframe, no box edges).
+      const shellDials = hologram.shell.getObjectsByProperty("name", "fleet-hologram-face-dial");
+      expect(shellDials, `${role} shell dial count`).toHaveLength(6);
+      // The six dials sit on the principal axes at ±0.4r — the geometry
+      // of the merge, not just the count (collapse-to-origin stays RED).
+      const offsets = shellDials.map((dial) => dial.position.clone());
+      const expectedAxes: Array<[number, number, number]> = [
+        [0, 0, 0.4], [0, 0, -0.4], [0.4, 0, 0], [-0.4, 0, 0],
+        [0, 0.4, 0], [0, -0.4, 0],
+      ];
+      for (const axis of expectedAxes) {
+        const match = offsets.find((p) =>
+          Math.abs(p.x - axis[0]) < 1e-9
+          && Math.abs(p.y - axis[1]) < 1e-9
+          && Math.abs(p.z - axis[2]) < 1e-9);
+        expect(match, `${role} dial at ${axis.join(",")}`).toBeTruthy();
+      }
+      // Each support dial carries ONE outline ring only — content belongs
+      // to the front dial, so the sphere cannot re-clutter.
+      for (const dial of shellDials) {
+        expect(dial.getObjectsByProperty("name", "fleet-hologram-face-dial-ring"))
+          .toHaveLength(1);
+        expect(dial.getObjectsByProperty("name", "fleet-hologram-face-dial-ticks"))
+          .toHaveLength(0);
+      }
       expect(
-        hologram.mesh.getObjectsByProperty("name", "fleet-hologram-polyhedron-edges"),
-        `${role} shared wireframe`,
+        hologram.group.getObjectsByProperty("name", "fleet-hologram-polyhedron-edges"),
+        `${role} shared wireframe cage`,
       ).toHaveLength(0);
 
-      const vertexKeys = new Set<string>();
-      let vertices = 0;
-      for (const ring of rings) {
-        expect(ring).toBeInstanceOf(THREE.LineLoop);
-        const positions = (ring as THREE.LineLoop).geometry.getAttribute("position");
-        expect(positions.count).toBe(32);
-        for (let i = 0; i < positions.count; i += 1) {
-          vertexKeys.add(
-            `${positions.getX(i).toFixed(5)}:${positions.getY(i).toFixed(5)}:${positions.getZ(i).toFixed(5)}`,
-          );
-          vertices += 1;
-        }
+      // The spindle is FAT AT THE EQUATOR and tapers to the poles: the
+      // widest ring sits at z≈0 and the radius shrinks monotonically
+      // toward both ends (a flattened spindle stays RED).
+      const spindleRings = hologram.shell.getObjectsByProperty(
+        "name",
+        "fleet-hologram-ring-spindle-circle",
+      ) as THREE.LineLoop[];
+      expect(spindleRings.length).toBe(role === "star" ? 9 : 6);
+      const radiusOf = (ring: THREE.LineLoop) => {
+        const pos = ring.geometry.getAttribute("position");
+        return Math.hypot(pos.getX(0), pos.getY(0));
+      };
+      const widestRing = spindleRings.reduce(
+        (best, ring) => (radiusOf(ring) > radiusOf(best) ? ring : best),
+        spindleRings[0]!,
+      );
+      // Fat at the equator: ordered by |z|, radii never grow (an even
+      // count staggers a mirrored pair around z=0, hence non-strict)…
+      const byEquator = [...spindleRings].sort(
+        (a, b) => Math.abs(a.position.z) - Math.abs(b.position.z),
+      );
+      for (let i = 1; i < byEquator.length; i += 1) {
+        expect(
+          radiusOf(byEquator[i]!),
+          `${role} ring ${i} grows toward its pole`,
+        ).toBeLessThanOrEqual(radiusOf(byEquator[i - 1]!));
       }
-      // Every ring has its own circumference; no ring shares an edge or
-      // vertex with a neighbour, so the old connected cage cannot reappear.
-      expect(vertexKeys.size).toBe(vertices);
+      // …and the poles are STRICTLY thinner than the equator band, so a
+      // flattened (cylindrical) spindle cannot pass.
+      expect(radiusOf(byEquator[byEquator.length - 1]!)).toBeLessThan(
+        radiusOf(widestRing),
+      );
+      // Symmetric stack: every ring has a z-mirror.
+      for (const ring of byEquator) {
+        const mirror = byEquator.find((other) =>
+          Math.abs(other.position.z + ring.position.z) < 1e-9
+          && Math.abs(radiusOf(other) - radiusOf(ring)) < 1e-9);
+        expect(mirror, `${role} ring at z=${ring.position.z} mirrors`).toBeTruthy();
+      }
 
-      // Each ring must stay well INSIDE its own face: map it back to the
-      // recovered face polygon, then pin both the 62% radius ratio and the
-      // remaining margin. This makes an overflow regression impossible to
-      // hide behind the count/name assertions above.
-      const faces = extractHologramFaces(hologram.mesh.geometry);
-      expect(faces).toHaveLength(expectedFaces);
-      const usedFaces = new Set<number>();
-      for (const ring of rings) {
-        expect(ring.raycast).not.toBe(THREE.LineLoop.prototype.raycast);
-        const positions = (ring as THREE.LineLoop).geometry.getAttribute("position");
-        const ringCenter = new THREE.Vector3();
-        const points: THREE.Vector3[] = [];
-        for (let i = 0; i < positions.count; i += 1) {
-          const point = new THREE.Vector3(
-            positions.getX(i),
-            positions.getY(i),
-            positions.getZ(i),
-          );
-          points.push(point);
-          ringCenter.add(point);
-        }
-        ringCenter.multiplyScalar(1 / positions.count);
-        const faceIndex = faces.findIndex((face, index) =>
-          !usedFaces.has(index) && ringCenter.distanceTo(face.center) < 0.03);
-        expect(faceIndex, `${role} ring maps to one face`).toBeGreaterThanOrEqual(0);
-        usedFaces.add(faceIndex);
-        const face = faces[faceIndex]!;
-        const inradius = faceInradius(face);
-        const ringRadius = Math.max(...points.map((point) => point.distanceTo(ringCenter)));
-        expect(ringRadius / inradius).toBeCloseTo(0.62, 5);
-        for (const point of points) {
-          expect(point.distanceTo(face.center)).toBeLessThan(inradius);
-        }
-      }
-      expect(usedFaces.size).toBe(expectedFaces);
+      // The pick proxy keeps the old polyhedron's reach (82% of the body
+      // radius): most of the visible silhouette stays clickable.
+      hologram.mesh.geometry.computeBoundingSphere();
+      const proxyRadius = (hologram.mesh.geometry.boundingSphere as THREE.Sphere).radius;
+      expect(proxyRadius / INPUT.radius).toBeCloseTo(0.82, 5);
+
+      // Exactly ONE detailed dial exists and it faces the camera group.
+      const focus = hologram.frontDial.getObjectsByProperty(
+        "name",
+        "fleet-hologram-face-dial",
+      );
+      expect(focus).toHaveLength(1);
+
+      // Only the invisible centre proxy answers raycasts: every other
+      // line and plane has an instance-level raycast override.
+      const pickables: THREE.Object3D[] = [];
+      hologram.group.traverse((obj) => {
+        if (Object.prototype.hasOwnProperty.call(obj, "raycast")) return;
+        if (obj instanceof THREE.Mesh || obj instanceof THREE.Line) pickables.push(obj);
+      });
+      expect(pickables, `${role} pickable objects`).toHaveLength(1);
+      expect(pickables[0]).toBe(hologram.mesh);
+      const material = hologram.mesh.material as THREE.MeshBasicMaterial;
+      expect(material.opacity).toBe(0);
     }
+  });
+
+  it("hides the circular focus mark until the scene selects the body", () => {
+    mockCanvas();
+    const hologram = makeFleetHologram(INPUT, new THREE.Color(), false);
+    expect(hologram.selectionRing.visible).toBe(false);
+    // Not vacuous: the mark is exactly two concentric circular outlines
+    // just outside the body — an empty or shrunken ring stays RED.
+    const lines = hologram.selectionRing.children;
+    expect(lines).toHaveLength(2);
+    for (const line of lines) {
+      expect(line).toBeInstanceOf(THREE.LineLoop);
+      expect(line).not.toBeInstanceOf(THREE.LineSegments);
+      const pos = (line as THREE.LineLoop).geometry.getAttribute("position");
+      const radius = Math.hypot(pos.getX(0), pos.getY(0));
+      expect(radius).toBeGreaterThan(INPUT.radius);
+      expect(radius).toBeLessThan(INPUT.radius * 1.2);
+    }
+  });
+
+  it("animates each layer independently and faces the camera", () => {
+    mockCanvas();
+    const hologram = makeFleetHologram(INPUT, new THREE.Color(), false);
+
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(3, -2, 5);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+
+    poseFleetHologram(hologram, 5, 20, camera.quaternion);
+    // The shell turns as a ball of circles…
+    expect(hologram.shell.rotation.y).toBeCloseTo(Math.PI / 2, 6);
+    // …the front dial and the focus ring face the camera (component-wise:
+    // Quaternion instances never satisfy reference equality)…
+    expect(hologram.frontDial.quaternion.angleTo(camera.quaternion)).toBeCloseTo(0, 6);
+    expect(hologram.selectionRing.quaternion.angleTo(camera.quaternion)).toBeCloseTo(0, 6);
+    // …the dial's ticks sweep…
+    expect(hologram.frontSpinner.rotation.z).toBeCloseTo(0.55, 6);
+    // …and the real-data ticker scrolls across the dial's centre.
+    expect(hologram.hudTexture?.offset.x).toBeCloseTo(0.09, 6);
+    poseFleetHologram(hologram, 10, 20, camera.quaternion);
+    expect(hologram.hudTexture?.offset.x).toBeCloseTo(0.18, 6);
+  });
+});
+
+describe("makeSatelliteHologram", () => {
+  it("is a miniature crossed-dial shell with no text and no solid sphere", () => {
+    const satellite = makeSatelliteHologram(0.2, new THREE.Color(0x9fb8dd), false);
+
+    // Endpoint tier: three crossed support dials plus a three-ring
+    // spindle — the gateway's language, minimal content, no ticker.
+    expect(satellite.getObjectsByProperty("name", "fleet-hologram-face-dial"))
+      .toHaveLength(3);
+    expect(satellite.getObjectsByProperty("name", "fleet-hologram-ring-spindle-circle"))
+      .toHaveLength(3);
+    expect(satellite.getObjectsByProperty("name", "fleet-hologram-hud-panel"))
+      .toHaveLength(0);
+    let meshes = 0;
+    satellite.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) meshes += 1;
+    });
+    expect(meshes).toBe(0);
+
+    // Nothing in a satellite may answer raycasts.
+    const hits = new THREE.Raycaster().intersectObject(satellite, true);
+    expect(hits).toHaveLength(0);
   });
 });

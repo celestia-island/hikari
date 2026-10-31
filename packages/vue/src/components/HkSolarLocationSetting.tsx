@@ -1,12 +1,11 @@
 // AI-generated: developed with the ZCode agent (model GLM-5.3); human-directed.
-import { computed, defineComponent, ref } from "vue";
+import { computed, defineAsyncComponent, defineComponent, ref } from "vue";
 import { Clock, Globe2, MapPin } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
 import { refreshThemeClock } from "../theme/useTheme";
 import {
   hydrateSolarLocationState,
-  listTimeZones,
   manualLocationOf,
   setSolarLocationStrategy,
   setSolarManualLocation,
@@ -19,9 +18,14 @@ import {
 } from "../theme/useSolarTime";
 import HkButton from "./HkButton";
 import HkModal, { type ModalAction } from "./HkModal";
-import HkSelect, { type HkSelectOption } from "./HkSelect";
 import HTabs, { type TabItem } from "./HkTabs";
 import "./HkSolarLocationSetting.scss";
+
+// The globe picker loads lazily (defineAsyncComponent, module level —
+// the async wrapper is created once, import() is module-cached):
+// three.js and the board only enter the bundle graph when a host
+// actually opens the manual pane — the settings row stays weightless.
+const HkTimeZoneGlobe = defineAsyncComponent(() => import("./HkTimeZoneGlobe"));
 
 /**
  * HkSolarLocationSetting — the solar clock's location STRATEGY row
@@ -89,13 +93,6 @@ export const HkSolarLocationSetting = defineComponent({
       open.value = true;
     }
 
-    /** IANA zone list for the manual pane's select. Plain data (no
-     * vnodes), static for the process lifetime — cached once. */
-    let timeZoneOptionsCache: HkSelectOption[] | null = null;
-    function timeZoneOptions(): HkSelectOption[] {
-      timeZoneOptionsCache ??= listTimeZones().map((id) => ({ value: id, label: id }));
-      return timeZoneOptionsCache;
-    }
 
     // ── Live summary (the row's label) ────────────────────────────────
     const summaryText = computed(() => {
@@ -234,12 +231,14 @@ export const HkSolarLocationSetting = defineComponent({
             <p class="hk-solar-hint">{hintText.value}</p>
             {draftStrategy.value === "manual" && (
               <div class="hk-solar-manual">
-                <HkSelect
+                {/* The globe picker (2026-10-31): 24 equal time-sector
+                    wedges on a spinning, borderless world-plates sphere,
+                    translated tooltip included — the IANA dropdown it
+                    replaced listed hundreds of raw zone ids. Still
+                    writes the same draftTimeZone the engine applies. */}
+                <HkTimeZoneGlobe
                   modelValue={draftTimeZone.value}
                   onUpdate:modelValue={onSelectTimeZone}
-                  options={timeZoneOptions()}
-                  label={t("hikari::theme.solar.strategyTimezone")}
-                  panelTitle={t("hikari::theme.solar.strategyTimezone")}
                 />
                 <div class="hk-solar-hemisphere">
                   <label class="hk-solar-field-label">{t("hikari::theme.solar.hemisphere")}</label>

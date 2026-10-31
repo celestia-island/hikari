@@ -14,7 +14,14 @@
  *     max-width block (HkModal docks via media query, not a class);
  *   - HkMenu's header/footer slots and HkThemeToggle's menu-extra ride
  *     the .hk-menu-slot wrapper instead of splicing raw vnodes into the
- *     level (PlatformSwitcher-class drift lived exactly there).
+ *     level (PlatformSwitcher-class drift lived exactly there);
+ *   - BAND wrappers (slots, .hk-menu-body, .hk-menu-section) stay
+ *     geometry-neutral — the surface's inset is the one horizontal inset
+ *     a row receives, so every row family's highlight reads the same
+ *     width in one panel (2026-10-31: the workspace picker's padded body
+ *     wrapper made 「添加工作区」 run ~12px wider than the selected row);
+ *   - the foot action band owns its divider-grade top separation
+ *     (HkMenu.scss), consumers pad nothing.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -24,6 +31,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const grammar = readFileSync(join(here, "_menu-item.scss"), "utf-8");
 const menuTsx = readFileSync(join(here, "HkMenu.tsx"), "utf-8");
+const menuScss = readFileSync(join(here, "HkMenu.scss"), "utf-8");
 const themeTsx = readFileSync(join(here, "HkThemePanelContent.tsx"), "utf8");
 const adminTokens = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
 const panelScss = readFileSync(join(here, "HkMenuPanel.scss"), "utf-8");
@@ -575,5 +583,132 @@ describe("menu-item grammar contract", () => {
       panelScss,
       ".hk-menu-list must publish its 4px row rhythm for a captioned run",
     ).toMatch(/\.hk-menu-list\s*\{[^}]*--hk-menu-section-gap:\s*var\(--space-4,\s*4px\)/s);
+  });
+
+  it("declares the consumer body band as exactly two neutral declarations", () => {
+    // The WIDTH invariant (2026-10-31 field report): a padded band insets
+    // only ITS rows, so their highlight stops matching the foot action
+    // band's — the workspace picker's 「添加工作区」 ran ~12px wider than
+    // the 「个人空间」 row. @mixin body is therefore pinned to EXACTLY the
+    // two neutral declarations; a padding/margin/border sneaking in fails
+    // here even though every value pin elsewhere stays green.
+    const body = mixinBody("body");
+    const decls = body
+      .split(";")
+      .map((stmt) => stmt.replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+    expect(decls, "@mixin body is display:block + min-width:0, nothing else").toEqual([
+      "display: block",
+      "min-width: 0",
+    ]);
+    expect(body, "the body band never pads").not.toMatch(/\bpadding/);
+    expect(body, "the body band never margins").not.toMatch(/\bmargin/);
+    expect(body, "the body band never draws chrome").not.toMatch(/\bborder/);
+  });
+
+  it("publishes the body band globally and only binds it to the grammar", () => {
+    // Hosts render .hk-menu-body by hand beside their own class (the
+    // workspace picker does) and cannot import the scss partial — same
+    // rule shape as the section band above: the global sheet BINDS the
+    // class to @mixin body, every rule mentioning the class carries
+    // nothing but that binding.
+    const blocks = flattenBlocks(parseScss(stripScssComments(adminTokens)));
+    const bodyRules = blocks.flatMap((block) =>
+      resolvedSelectors(block)
+        .filter((selector) => selector.includes("hk-menu-body"))
+        .map((selector) => ({ selector, block })),
+    );
+    expect(
+      bodyRules.map((entry) => entry.selector),
+      "the one global body adopter",
+    ).toContain(".hk-menu-body");
+    for (const { selector, block } of bodyRules) {
+      // The binding must be TOP-LEVEL: resolvedSelectors drops at-rule
+      // preludes, so a media-scoped duplicate would resolve to the same
+      // selector string here — walk the parent chain explicitly and fail
+      // on any at-rule ancestor (the modal-sheet test sets the precedent).
+      for (let cur = block.parent; cur; cur = cur.parent) {
+        expect(
+          cur.prelude.startsWith("@"),
+          `the body binding for "${selector}" must be a top-level rule, found inside at-rule "${cur.prelude}" (a scoped binding is not the global contract)`,
+        ).toBe(false);
+      }
+      const statements = block.statements.map((stmt) => stmt.replace(/\s+/g, " ").trim());
+      expect(statements, `body rule "${selector}" binds the grammar only`).toEqual([
+        "@include mi.body",
+      ]);
+    }
+  });
+
+  it("keeps every band wrapper geometry-neutral (rows own the level width)", () => {
+    // Every rule in the sheets that style band classes today — the
+    // grammar, HkMenu.scss and admin-tokens (a repo-wide grep is the
+    // reviewer's periodic check that this list is still the whole world) —
+    // must declare NO padding for a BAND class: the slot hooks, the
+    // consumer body band, the section wrapper. The surface's inset is the
+    // one horizontal inset a row receives; a band that pads itself
+    // re-creates the field defect with its own rows reading wider than
+    // the neighbours. Comments stripped, block-parsed, resolved selectors
+    // (a context-scoped band rule fails here too).
+    const blocks = [
+      ...flattenBlocks(parseScss(stripScssComments(grammar))),
+      ...flattenBlocks(parseScss(stripScssComments(menuScss))),
+      ...flattenBlocks(parseScss(stripScssComments(adminTokens))),
+    ];
+    const isBandSelector = (selector: string) =>
+      selector.includes("hk-menu-slot") ||
+      selector.includes("hk-menu-body") ||
+      (/hk-menu-section(?!-label)/.test(selector));
+    const bandRules = blocks.flatMap((block) =>
+      resolvedSelectors(block)
+        .filter(isBandSelector)
+        .map((selector) => ({ selector, block })),
+    );
+    // Extraction sanity (never trust a 0-hit scan): the shipped bands are
+    // all found — slot hooks, the body band, the section wrapper.
+    const found = new Set(bandRules.map((entry) => entry.selector));
+    expect(found.has(".hk-menu-slot"), ".hk-menu-slot band found").toBe(true);
+    expect(found.has(".hk-menu-slot--foot"), ".hk-menu-slot--foot band found").toBe(true);
+    expect(found.has(".hk-menu-body"), ".hk-menu-body band found").toBe(true);
+    expect(found.has(".hk-menu-section"), ".hk-menu-section band found").toBe(true);
+    for (const { selector, block } of bandRules) {
+      const padding = block.statements.filter((stmt) =>
+        /(^|[\s;])padding/.test(stmt.replace(/\s+/g, " ").trim()),
+      );
+      expect(padding, `band rule "${selector}" must not pad itself`).toEqual([]);
+    }
+  });
+
+  it("separates the foot action band at the divider grade, band-owned", () => {
+    // The foot band is an ACTION band (the picker's "add workspace"), not
+    // a run of selectable rows — its separation from the list is the
+    // divider's 6px grade, owned by the band (consumers pad nothing).
+    // Pinned EXACTLY so a later restyle cannot silently retune it; head
+    // and extra stay geometry-neutral (no symmetric creep: identity
+    // blocks own their rhythm via the .s-user-header pins).
+    const blocks = flattenBlocks(parseScss(stripScssComments(menuScss)));
+    const foot = blocks.find((block) => block.prelude.trim() === ".hk-menu-slot--foot");
+    expect(foot, ".hk-menu-slot--foot rule lives in HkMenu.scss").toBeTruthy();
+    const decls = foot!.statements.map((stmt) =>
+      stmt.replace(/\s+/g, " ").trim().replace(/;$/, ""),
+    );
+    expect(decls, "the foot band carries exactly its top separation").toEqual([
+      "margin-block-start: var(--hk-menu-foot-gap, var(--space-6, 6px))",
+    ]);
+    // Head/extra stay BARE DOM hooks — no rhythm rules may exist for them
+    // at all (not merely margin-free ones): the identity blocks own their
+    // rhythm through the .s-user-header pins, and the theme menu's extra
+    // slot rides the plain row rhythm. A rule appearing here at all is
+    // the symmetric-creep attempt, so its EXISTENCE fails — a
+    // margin-free-but-present rule would still be a forked band.
+    for (const kind of ["--head", "--extra"]) {
+      const band = blocks.find((block) =>
+        resolvedSelectors(block).includes(`.hk-menu-slot${kind}`),
+      );
+      expect(
+        band,
+        `the ${kind} band must stay a bare DOM hook with no rule of its own (its rhythm is owned elsewhere by design)`,
+      ).toBeUndefined();
+    }
   });
 });

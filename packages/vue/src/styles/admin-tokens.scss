@@ -808,6 +808,19 @@
   @include mi.section-label;
 }
 
+/* The consumer body band (hikari _menu-item.scss @mixin body): the
+ * geometry-neutral wrapper for a host-rendered run of rows inside a menu
+ * level. Same hand-rendered-host reason as the section band above — the
+ * workspace picker wraps its custom rows in .hk-menu-body and cannot
+ * import the partial. The band is TWO neutral declarations by contract
+ * (the WIDTH invariant: the surface's inset is the only horizontal inset
+ * a row receives, so rows here line up edge-for-edge with the foot
+ * action band); a host's own class beside it carries the content
+ * decisions (min-width floors, caption tokens), never padding. */
+.hk-menu-body {
+  @include mi.body;
+}
+
 /* ── User identity header (shared) ─ */
 /* One identity block for every account surface — the admin user
    dropdown's header, a mobile drawer's user panel footer — so all

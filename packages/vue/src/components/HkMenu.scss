@@ -23,6 +23,25 @@
   display: block;
 }
 
+/* The FOOT band is an action band, not a run of selectable rows — the
+ * "add workspace" button under the picker's options, a context menu's
+ * custom tail. It reads as its own band only when it is SEPARATED at the
+ * divider's DESKTOP grade (6px; the divider itself widens to 10px inside
+ * sheets, but this band's separation is a layout rhythm BETWEEN bands,
+ * not row geometry, so it stays 6px in both token sets), never at the
+ * 2px row gap: consumers used to hand that separation themselves as
+ * wrapper padding, which is exactly the drift that padded the wrapper's
+ * rows to a WIDER highlight than the selection rows above (2026-10-31
+ * field report: the workspace picker's 「添加工作区」 ran ~12px wider
+ * than the 「个人空间」 row). The band owns the separation now —
+ * consumers must NOT pad the wrapper (see _menu-item.scss, the band
+ * width invariant). Head/extra stay bare DOM hooks: identity blocks own
+ * their rhythm (the .s-user-header pins), and the theme menu's extra
+ * slot rides the plain row rhythm. */
+.hk-menu-slot--foot {
+  margin-block-start: var(--hk-menu-foot-gap, var(--space-6, 6px));
+}
+
 .hk-menu-flag {
   flex-shrink: 0;
   font-size: var(--text-base);

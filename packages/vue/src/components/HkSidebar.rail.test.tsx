@@ -542,4 +542,36 @@ describe("HkSidebar standalone rail: the menu group fold survives its own swap",
       "the expanded sidebar inherits the closed group",
     ).toBe("false");
   });
+
+  it("keeps the scroll position across density flips (the #44 P3 audit finding)", async () => {
+    vi.useFakeTimers();
+    const c = mountSidebar({ width: "240px", collapsible: true, collapsedWidth: "64px" });
+
+    // Collapse to the rail and settle the dissolve.
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(500);
+    const bodies = () => c.container.querySelectorAll<HTMLElement>(".hk-sidebar-body");
+    const active = () => bodies()[bodies().length - 1]!;
+    expect(bodies().length, "one settled generation").toBe(1);
+
+    // The user scrolls the rail partway down…
+    active().scrollTop = 120;
+
+    // …then a peek flips the density (the shell keys the swap on
+    // `railActive && !peeking`, so every peek open/close is a flip).
+    c.aside().dispatchEvent(new Event("pointerenter"));
+    await vi.advanceTimersByTimeAsync(900);
+    expect(active().scrollTop, "the peek's full generation resumes the scroll").toBe(120);
+
+    // Leaving the peek flips back to the rail dress; the position must
+    // survive that remount too.
+    c.aside().dispatchEvent(new Event("pointerleave"));
+    await vi.advanceTimersByTimeAsync(900);
+    expect(active().scrollTop, "the rail generation resumes the scroll").toBe(120);
+
+    // And a full expand is the same crossing.
+    c.toggle().click();
+    await vi.advanceTimersByTimeAsync(900);
+    expect(active().scrollTop, "the expanded body resumes the scroll").toBe(120);
+  });
 });

@@ -669,10 +669,18 @@ describe("buildFleetScene body dressing", () => {
         expect(ring.getObjectByName("fleet-hologram-ring-base")).toBeDefined();
         expect(ring.getObjectByName("fleet-hologram-ring-arc")).toBeDefined();
       }
-      const edges = bodyMesh(engine, id).getObjectByName(
-        "fleet-hologram-polyhedron-edges",
+      const faceRings = root.getObjectsByProperty("name", "fleet-hologram-face-ring");
+      expect(faceRings, `${id} detached face-ring count`).toHaveLength(
+        id === "hub-a" ? 20 : 12,
       );
-      expect(edges, `${id} polyhedron edges`).toBeInstanceOf(THREE.LineSegments);
+      for (const faceRing of faceRings) {
+        expect(faceRing).toBeInstanceOf(THREE.LineLoop);
+        expect(faceRing).not.toBeInstanceOf(THREE.LineSegments);
+      }
+      expect(
+        root.getObjectsByProperty("name", "fleet-hologram-polyhedron-edges"),
+        "the shared wireframe cage is gone",
+      ).toHaveLength(0);
     }
     handle.dispose();
   });

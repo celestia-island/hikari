@@ -3,6 +3,8 @@ import * as THREE from "three";
 
 import { fakeAs } from "../test-utils/fakes";
 import {
+  extractHologramFaces,
+  faceInradius,
   hologramHudText,
   makeFleetHologram,
   poseFleetHologram,
@@ -85,5 +87,78 @@ describe("makeFleetHologram", () => {
     expect(planet.rings).toHaveLength(2);
     expect(hub.mesh.geometry).toBeInstanceOf(THREE.IcosahedronGeometry);
     expect(planet.mesh.geometry).toBeInstanceOf(THREE.DodecahedronGeometry);
+  });
+
+  it("gives every face its own detached inset ring, with no shared vertices", () => {
+    mockCanvas();
+    for (const [role, expectedFaces] of [["star", 20], ["planet", 12]] as const) {
+      const hologram = makeFleetHologram(
+        { ...INPUT, role },
+        new THREE.Color(),
+        false,
+      );
+      const rings = hologram.mesh.getObjectsByProperty(
+        "name",
+        "fleet-hologram-face-ring",
+      );
+      expect(rings, `${role} face rings`).toHaveLength(expectedFaces);
+      expect(
+        hologram.mesh.getObjectsByProperty("name", "fleet-hologram-polyhedron-edges"),
+        `${role} shared wireframe`,
+      ).toHaveLength(0);
+
+      const vertexKeys = new Set<string>();
+      let vertices = 0;
+      for (const ring of rings) {
+        expect(ring).toBeInstanceOf(THREE.LineLoop);
+        const positions = (ring as THREE.LineLoop).geometry.getAttribute("position");
+        expect(positions.count).toBe(32);
+        for (let i = 0; i < positions.count; i += 1) {
+          vertexKeys.add(
+            `${positions.getX(i).toFixed(5)}:${positions.getY(i).toFixed(5)}:${positions.getZ(i).toFixed(5)}`,
+          );
+          vertices += 1;
+        }
+      }
+      // Every ring has its own circumference; no ring shares an edge or
+      // vertex with a neighbour, so the old connected cage cannot reappear.
+      expect(vertexKeys.size).toBe(vertices);
+
+      // Each ring must stay well INSIDE its own face: map it back to the
+      // recovered face polygon, then pin both the 62% radius ratio and the
+      // remaining margin. This makes an overflow regression impossible to
+      // hide behind the count/name assertions above.
+      const faces = extractHologramFaces(hologram.mesh.geometry);
+      expect(faces).toHaveLength(expectedFaces);
+      const usedFaces = new Set<number>();
+      for (const ring of rings) {
+        expect(ring.raycast).not.toBe(THREE.LineLoop.prototype.raycast);
+        const positions = (ring as THREE.LineLoop).geometry.getAttribute("position");
+        const ringCenter = new THREE.Vector3();
+        const points: THREE.Vector3[] = [];
+        for (let i = 0; i < positions.count; i += 1) {
+          const point = new THREE.Vector3(
+            positions.getX(i),
+            positions.getY(i),
+            positions.getZ(i),
+          );
+          points.push(point);
+          ringCenter.add(point);
+        }
+        ringCenter.multiplyScalar(1 / positions.count);
+        const faceIndex = faces.findIndex((face, index) =>
+          !usedFaces.has(index) && ringCenter.distanceTo(face.center) < 0.03);
+        expect(faceIndex, `${role} ring maps to one face`).toBeGreaterThanOrEqual(0);
+        usedFaces.add(faceIndex);
+        const face = faces[faceIndex]!;
+        const inradius = faceInradius(face);
+        const ringRadius = Math.max(...points.map((point) => point.distanceTo(ringCenter)));
+        expect(ringRadius / inradius).toBeCloseTo(0.62, 5);
+        for (const point of points) {
+          expect(point.distanceTo(face.center)).toBeLessThan(inradius);
+        }
+      }
+      expect(usedFaces.size).toBe(expectedFaces);
+    }
   });
 });

@@ -312,12 +312,12 @@
   }
 }
 
-/* ── Bond cells (2026-10-31 user rule; 60 % share the same evening) ────
+/* ── Bond cells (2026-10-31 user rule; trimmed 80→60→50 % the same day) ─
    The horizontal row reads as one cell per step plus one cell per bond: the
    steps keep their content width, the leftover splits into EQUAL bond cells,
-   and each bond paints 60 % of its cell CENTERED, so both ends keep a 20 %
-   air gap. (The first cut painted 80 %/10 % — centred, but the completed
-   bond read as long as ever, so the share was trimmed the same evening.)
+   and each bond paints 50 % of its cell CENTERED, so both ends keep a 25 %
+   air gap. (80 %/10 % read as long as ever; 60 %/20 % still did; 50 %/25 %
+   is where the user asked it to land.)
    Three mechanics make that exact:
 
    1. The bond's box must span the WHOLE cell. Its cell begins where its own
@@ -329,8 +329,8 @@
       off the next node: the completed bond read as glued to the next circle.
    2. The painted share cannot be `padding-inline` — a percentage padding
       resolves against the CONTAINING block (the step), not the bond's own
-      box, which would inset it by a slice of the step instead of 20 % of the
-      cell. So the colour lives on a ::before pinned `inset-inline: 20%`,
+      box, which would inset it by a slice of the step instead of 25 % of the
+      cell. So the colour lives on a ::before pinned `inset-inline: 25%`,
       which does resolve against the bond. The status rules below therefore
       publish `--_bond-color`; the vertical rail keeps painting its own box
       (it is a rail hanging under the node, not a cell-wide bond).
@@ -368,7 +368,7 @@
     content: "";
     position: absolute;
     inset-block: 0;
-    inset-inline: 20%;
+    inset-inline: 25%;
     background: var(--_bond-color);
   }
 }
@@ -437,7 +437,7 @@
   }
 
   [data-el="connector"] {
-    // The bonds paint 60 % of their cell through a ::before (see the
+    // The bonds paint 50 % of their cell through a ::before (see the
     // full-mode cell rule); the token is the single source for both that
     // paint and the vertical rail's own box.
     --_bond-color: var(--hi-color-primary);
@@ -527,7 +527,7 @@
 
 // Status crossfade: the data-status driven colors (indicator fill/border,
 // label color, connector fill) transition instead of flipping. The
-// horizontal bond's paint lives on its ::before (the 60 % cell rule), so
+// horizontal bond's paint lives on its ::before (the 50 % cell rule), so
 // that box rides the crossfade too — without it a status flip snaps there
 // while the vertical rail keeps easing.
 .hk-timeline-step [data-el="indicator"],

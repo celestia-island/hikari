@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
 import {
   chunkLegendItems,
@@ -67,6 +67,20 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const hovered = ref<string | null>(null);
+    // A hover key lives on a DOM element; when the entries swap under a
+    // held pointer, the hovered element can unmount WITHOUT firing
+    // mouseleave (browsers skip removed nodes) — a dead key would dim
+    // the whole block until the pointer deliberately re-entered it.
+    // Resetting on every entries repaint costs nothing (a resting
+    // pointer only ever clears nulls) and can never stick. Lesson
+    // upstreamed from wowsp's ShipDistCharts, whose own test pins it.
+    watch(
+      () => props.entries,
+      () => {
+        hovered.value = null;
+      },
+      { deep: true },
+    );
 
     const slices = computed<HkDonutSlice[]>(() =>
       donutSlices(

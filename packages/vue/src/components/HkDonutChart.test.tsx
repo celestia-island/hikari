@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 import HkDonutChart from "./HkDonutChart";
 import type { HkDonutEntry } from "./donutGeometry";
@@ -78,6 +78,24 @@ describe("HkDonutChart", () => {
     expect(noLegend.querySelector(".hk-donut__legend")).toBeNull();
     const empty = mount(<HkDonutChart entries={[{ key: "a", label: "A", value: 0 }]} />);
     expect(empty.querySelector(".hk-donut--empty")).toBeTruthy();
+  });
+
+  it("clears a dead hover key when the entries swap under a held pointer", async () => {
+    // The wowsp lesson: the hovered element can unmount without firing
+    // mouseleave; without the reset every surviving slice would stay
+    // stuck at is-dim under the dead key.
+    const entriesRef = ref(ENTRIES);
+    const el = mount(h(() => <HkDonutChart entries={entriesRef.value} />));
+    const slices = [...el.querySelectorAll(".hk-donut__slice")];
+    slices[0]!.dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    expect(slices[1]!.className).toContain("is-dim");
+    entriesRef.value = ENTRIES.slice(0, 1);
+    await nextTick();
+    const after = [...el.querySelectorAll(".hk-donut__slice")];
+    expect(after).toHaveLength(1);
+    expect(after[0]!.className).not.toContain("is-dim");
+    expect(after[0]!.className).not.toContain("is-hot");
   });
 
   it("renders the legendIcon slot's glyph in place of the text label", () => {

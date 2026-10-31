@@ -43,6 +43,11 @@ expression = "LicenseRef-sysl-1.0"
 license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
 
 [[licenses.clarify]]
+name = "hikari-host"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
 name = "hikari-i18n"
 expression = "LicenseRef-sysl-1.0"
 license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]

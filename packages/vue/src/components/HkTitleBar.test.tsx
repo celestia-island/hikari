@@ -217,17 +217,20 @@ describe("HkTitleBar stylesheet contract", () => {
     expect(body).toContain("border-radius: var(--hk-tb-radius-close)");
   });
 
-  it("inks the close fill from its own token, never the theme's on-solid", () => {
-    // The fill is a fixed danger red; the ink must be fixed with it. The
+  it("inks the close fill from its own host-configurable token, never the theme's on-solid", () => {
+    // The fill is a fixed danger red; the ink is fixed with it. The
     // theme-derived --hi-color-text-on-danger painted a dark X on dark red
-    // under the default dark preset (the wowsp/momoi field report).
-    const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
-    expect(scss).toContain("--hk-tb-close-ink:");
+    // under the default dark preset (the wowsp/momoi field report). The
+    // token is read with its fallback at the use site rather than declared
+    // on .hk-titlebar, so a host's :root assignment actually wins - a local
+    // declaration would beat the inherited value (the momoi follow-up).
     const hover = ruleBody(css, ".hk-titlebar .hk-titlebar-btn-close:hover");
-    expect(hover).toContain("color: var(--hk-tb-close-ink)");
+    expect(hover).toContain("color: var(--hk-tb-close-ink, #ffffff)");
     expect(hover).not.toContain("--hi-color-text-on-danger");
     const active = ruleBody(css, ".hk-titlebar .hk-titlebar-btn-close:active");
-    expect(active).toContain("color: var(--hk-tb-close-ink)");
+    expect(active).toContain("color: var(--hk-tb-close-ink, #ffffff)");
+    const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
+    expect(scss).not.toMatch(/^\s*--hk-tb-close-ink:/m);
   });
 
   it("outranks host element rules with caption-scoped buttons", () => {
@@ -240,11 +243,11 @@ describe("HkTitleBar stylesheet contract", () => {
     expect(closeHoverAt).toBeGreaterThan(hoverAt);
   });
 
-  it("sizes the caption icon through its token", () => {
-    const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
-    expect(scss).toContain("--hk-tb-icon-size:");
+  it("sizes the caption icon through a host-configurable token", () => {
     const body = ruleBody(css, ".hk-titlebar-icon");
-    expect(body).toContain("width: var(--hk-tb-icon-size)");
-    expect(body).toContain("height: var(--hk-tb-icon-size)");
+    expect(body).toContain("width: var(--hk-tb-icon-size, 16px)");
+    expect(body).toContain("height: var(--hk-tb-icon-size, 16px)");
+    const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
+    expect(scss).not.toMatch(/^\s*--hk-tb-icon-size:/m);
   });
 });

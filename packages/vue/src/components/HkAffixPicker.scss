@@ -251,9 +251,10 @@
    * comes from the registration list, not from here. */
   @include mi.item;
 
-  &[data-disabled] {
-    cursor: default;
-  }
+  /* data-disabled rides the mixin's face whole (dim + not-allowed +
+     guarded hover/focus): the sibling tag-input catalog rows already
+     did, and a family-local cursor:default split the two choosers'
+     disabled language. */
 
   /* The "Use <query>" free-text row reads as an add affordance. Truncation
    * comes from the base .hk-affix-row-label — only the emphasis is new. */

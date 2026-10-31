@@ -1,37 +1,28 @@
-/* HkLocalePicker — the inline hand-rolled dropdown joins the pop motion
- * family (--hk-pop-* tokens in theme/theme.scss): it grows out of its
- * trigger (below-right) and retracts into it, matching the popover /
- * select-panel surfaces instead of appearing bare. */
-.hk-locale-picker-dropdown {
-  transform-origin: top right;
-}
+/* HkLocalePicker — only the TRIGGER is component-owned now; the dropdown
+ * is HkLocalePickerPopup (HkMenu) and inherits the menu grammar + pop
+ * motion from there. The hand-rolled dropdown sheet (and its pop-motion
+ * classes) was removed with the 2026-10-31 sweep rewrite. */
+.hk-locale-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
 
-.hk-locale-picker-enter-active {
-  transition:
-    opacity var(--hk-pop-in-duration, 0.2s)
-      var(--hk-pop-in-opacity-ease, cubic-bezier(0.16, 1, 0.3, 1)),
-    transform var(--hk-pop-in-duration, 0.2s)
-      var(--hk-pop-in-transform-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
-}
+  &:hover {
+    background: rgb(var(--color-primary) / 8%);
+  }
 
-.hk-locale-picker-leave-active {
-  transition:
-    opacity var(--hk-pop-out-duration, 0.15s)
-      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1)),
-    transform var(--hk-pop-out-duration, 0.15s)
-      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1));
-}
-
-.hk-locale-picker-enter-from,
-.hk-locale-picker-leave-to {
-  opacity: 0;
-  transform: translateY(calc(-1 * var(--hk-pop-offset, 4px)))
-    scale(var(--hk-pop-scale, 0.97));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hk-locale-picker-enter-active,
-  .hk-locale-picker-leave-active {
-    transition: none;
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 70%);
+    outline-offset: 1px;
   }
 }

@@ -74,7 +74,7 @@ describe("HkSidebar scroll end-cap", () => {
     expect(body).not.toMatch(/padding-block:[^;]*--space-4/);
   });
 
-  it("the density dress authors NO vertical geometry of its own", () => {
+  it("the density dress keeps every vertical metric at the expanded value", () => {
     // Vertical rhythm is density-invariant (2026-10-31 user direction:
     // the collapse toggle must not move rows). The body therefore has no
     // density rule AT ALL — the leading air AND the scroll tail ride the
@@ -83,6 +83,9 @@ describe("HkSidebar scroll end-cap", () => {
     // track for the rail column.
     expect(css).not.toContain(".hk-sidebar[data-collapsed] .hk-sidebar-body");
     expect(css).not.toContain(".hk-sidebar-rail-generation[data-rail] .hk-sidebar-body");
+    // The two carrier literals above are the compiled spellings; a brand
+    // NEW carrier (a third density hook) is a new dress and must re-run
+    // this contract — not mechanically foreseeable here.
     // ruleBody needs the arm its brace follows; the dress compiles to one
     // comma-grouped rule per band, so the generation arm is the one the
     // helper can read (the legacy arm shares its body).
@@ -92,8 +95,30 @@ describe("HkSidebar scroll end-cap", () => {
     const footer = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-footer");
     expect(footer, "the collapsed footer rule exists (grouped density carriers)").not.toBeNull();
     expect(footer).toContain("padding: var(--space-16) var(--space-8)");
-    // No spelling of a tighter collapsed block padding may return.
-    expect(css).not.toMatch(/\.hk-sidebar-(header|footer)[^{]*\{[^}]*padding:\s*var\(--space-12/);
+    // The stronger, spelling-proof form (whole-dress scan, shorthand and
+    // longhand alike): EVERY padding declaration in ANY dress rule must
+    // be the shorthand whose block track is the expanded 16px — so a
+    // tighter block value cannot return as `padding: 12px 8px` NOR as a
+    // `padding-block-start:` longhand hiding after the shorthand (a
+    // longhand-only scan let both through). Horizontal-only tracks
+    // (padding-inline*) stay legal; a band that truly needs different
+    // block metrics must move the BASE rule for BOTH densities. Margins
+    // are banned outright — the bands separate by their paddings alone.
+    const dressRules = css
+      .split("}")
+      .filter((rule) => rule.includes("[data-collapsed]") || rule.includes("[data-rail]"));
+    expect(dressRules.length, "the density dress rules exist").toBeGreaterThan(1);
+    for (const rule of dressRules) {
+      for (const decl of rule.matchAll(/\bpadding(?:-(?:top|block(?:-(?:start|end))?))?\s*:[^;}]*/g)) {
+        expect(
+          decl[0],
+          `a dress padding is not the expanded 16px shorthand: ${decl[0]}`,
+        ).toMatch(/^padding:\s*var\(--space-16\b/);
+      }
+      expect(rule, `a margin crept into the dress: ${rule}`).not.toMatch(
+        /\bmargin(?:-(?:top|block(?:-(?:start|end))?))?\s*:/,
+      );
+    }
   });
 
   it("reads the tail fallback from the scss source, not a drifted literal", () => {

@@ -529,23 +529,29 @@ describe("HkMenu rail styles (compiled sheet contracts)", () => {
     expect(shared).toContain("margin-top: var(--space-2, 2px)");
   });
 
-  it("the rail dress authors no vertical rhythm at all", () => {
+  it("the rail dress authors no vertical margin or padding in any spelling", () => {
     // The stronger form of the contract above, so a re-step cannot hide
-    // inside a comma-grouped selector the per-selector ruleBody skips:
-    // every rule of the [data-collapsed] dress is scanned, and no
-    // margin-top/margin-block/padding-top/padding-block declaration may
-    // appear in any of them. (Absolute INSETS — the caret corner's
-    // inset-block-end — are flow-neutral decoration and stay legal.)
+    // inside a comma-grouped selector the per-selector ruleBody skips
+    // AND cannot return through the SHORTHAND: every rule of the
+    // [data-collapsed] dress is scanned and ANY margin/padding spelling
+    // that reaches a block edge is banned — `margin:`/`padding:`
+    // (a shorthand sets the block side too: the historical
+    // `margin-top: 0` regression spelled `margin: 0` evaded a
+    // longhand-only scan) and every vertical longhand. Horizontal-only
+    // tracks (margin-inline*, padding-inline*) stay legal; absolute
+    // INSETS (the caret corner's inset-block-end) are flow-neutral
+    // decoration and stay legal. A rail band that truly needs a
+    // different block metric must move the BASE rule for BOTH densities.
     const dressRules = css
       .split("}")
       .filter((rule) => rule.includes(".hk-menu-sidebar[data-collapsed]"));
     expect(dressRules.length, "the rail dress rules exist").toBeGreaterThan(3);
     for (const rule of dressRules) {
       expect(rule, `vertical margin in the rail dress: ${rule}`).not.toMatch(
-        /\bmargin-(top|block)\s*:/,
+        /\bmargin(?:-(?:top|block(?:-(?:start|end))?))?\s*:/,
       );
       expect(rule, `vertical padding in the rail dress: ${rule}`).not.toMatch(
-        /\bpadding-(top|block)\s*:/,
+        /\bpadding(?:-(?:top|block(?:-(?:start|end))?))?\s*:/,
       );
     }
   });

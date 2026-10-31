@@ -1,10 +1,10 @@
 /**
  * Source contract for the bond CELLS of the horizontal stepper (2026-10-31
- * user rule; 60 % share since the same evening's second look).
+ * user rule; share trimmed 80→60→50 % over the same day's three looks).
  *
  * The row is read as one cell per step plus one cell per bond: the steps
  * keep their content width, the leftover splits into EQUAL bond cells, and
- * each bond paints 60 % of its own cell CENTERED, so both ends keep a 20 %
+ * each bond paints 50 % of its own cell CENTERED, so both ends keep a 25 %
  * air gap. Before that rule the bond filled whatever the step had left after
  * its label, minus two fixed 4px margins — measured on a real engine at the
  * provider wizard's 590px row that put the bond 12px off its own label but
@@ -95,7 +95,7 @@ describe("horizontal bond cell contract", () => {
     // while the bond→node air is margin alone — the 12/4 asymmetry that
     // made the bond look glued to the next circle.
     expect(cell).toContain(`margin-inline: calc(-1 * ${GAP}) 0;`);
-    // The box must not paint itself: the visible 60 % is the ::before.
+    // The box must not paint itself: the visible 50 % is the ::before.
     expect(cell).toContain("background: none;");
     // The ::before resolves percentage insets against this box.
     expect(cell).toContain("position: relative;");
@@ -106,7 +106,7 @@ describe("horizontal bond cell contract", () => {
     expect(blockFor(".hk-timeline-step")).toContain(`gap: ${GAP};`);
   });
 
-  it("paints 60 % of the cell centred with a 20 % inset on each end", () => {
+  it("paints 50 % of the cell centred with a 25 % inset on each end", () => {
     // The parser above only yields top-level rules; the paint lives in the
     // nested block, so lift it out of the cell rule's body.
     const paint = /&::before\s*\{([^}]*)\}/.exec(blockFor(BOND_CELL))?.[1] ?? "";
@@ -114,7 +114,7 @@ describe("horizontal bond cell contract", () => {
     expect(paint).toContain('content: "";');
     expect(paint).toContain("position: absolute;");
     expect(paint).toContain("inset-block: 0;");
-    expect(paint).toContain("inset-inline: 20%;");
+    expect(paint).toContain("inset-inline: 25%;");
     expect(paint).toContain("background: var(--_bond-color);");
     // Percentage PADDING would resolve against the step, not the bond —
     // ban the MECHANISM on both boxes, not one pinned value (a stray
@@ -187,6 +187,18 @@ describe("horizontal bond cell contract", () => {
         /background:\s*none/.test(r.body),
     );
     expect(unscoped, "no unscoped connector background reset").toHaveLength(0);
+  });
+
+  it("keeps the indicator numbers unselectable through the family policy", () => {
+    // Measured on a real engine: the indicator computes user-select: none
+    // via styles/selection.scss's html-level deny (chrome text is not
+    // content). The timeline must not opt back in, and must not mark its
+    // chrome with the .hk-selectable whitelist class.
+    expect(src).not.toMatch(/user-select:\s*text/);
+    expect(src).not.toContain("@include user-select");
+    const tsx = readFileSync(join(here, "HkTimeline.tsx"), "utf-8");
+    expect(tsx).not.toContain("hk-selectable");
+    expect(tsx).not.toContain("user-select");
   });
 
   it("rides the status crossfade on the painted box, not just the frame", () => {

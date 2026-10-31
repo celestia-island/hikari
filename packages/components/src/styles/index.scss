@@ -578,7 +578,6 @@
 @import './components/alert.scss';
 @import './components/toast.scss';
 @import './components/tooltip.scss';
-@import './components/progress.scss';
 @import './components/skeleton.scss';
 @import './components/drawer.scss';
 @import './components/popover.scss';
@@ -590,6 +589,11 @@
 // vendored by scripts/sync-vue-mirror.py). One entry per mirrored family
 // sheet so the docs bundle carries the same CSS the components compile.
 // ------
+@import './vue-mirror/components/HkAlert.scss';
+@import './vue-mirror/components/HkLoadingVeil.scss';
+@import './vue-mirror/components/HkPhaseTransition.scss';
+@import './vue-mirror/components/HkProgressBar.scss';
+@import './vue-mirror/components/HkProgressRing.scss';
 @import './vue-mirror/components/HkSpinner.scss';
 
 // ------

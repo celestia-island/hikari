@@ -121,19 +121,25 @@ impl StyleRegistry {
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::alert::AlertComponent;
         use crate::feedback::drawer::DrawerComponent;
+        use crate::feedback::loading_veil::LoadingVeilComponent;
         use crate::feedback::modal::ModalComponent;
+        use crate::feedback::phase_transition::PhaseTransitionComponent;
         use crate::feedback::popover::PopoverComponent;
-        use crate::feedback::progress::ProgressComponent;
+        use crate::feedback::progress_bar::ProgressBarComponent;
+        use crate::feedback::progress_ring::ProgressRingComponent;
         use crate::feedback::spinner::SpinnerComponent;
         use crate::feedback::toast::ToastComponent;
         use crate::feedback::tooltip::TooltipComponent;
         AlertComponent::register(self);
+        LoadingVeilComponent::register(self);
+        PhaseTransitionComponent::register(self);
+        ProgressBarComponent::register(self);
+        ProgressRingComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);
         ModalComponent::register(self);
         DrawerComponent::register(self);
         PopoverComponent::register(self);
-        ProgressComponent::register(self);
         SpinnerComponent::register(self);
     }
 

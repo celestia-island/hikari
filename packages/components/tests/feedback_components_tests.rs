@@ -5,15 +5,36 @@ mod tests {
     #[test]
     fn test_alert_props_default() {
         let props = AlertProps::default();
+        // Vue default variant is "error" (the legacy Rust default was "info").
         assert_eq!(
             props.variant,
-            hikari_components::feedback::AlertVariant::Info
+            hikari_components::feedback::AlertVariant::Error
         );
         assert!(!props.closable);
+        assert!(!props.banner);
+        assert_eq!(props.message, "");
         assert!(props.title.is_none());
-        assert!(props.description.is_none());
+        assert!(props.body.is_none());
         assert!(props.icon.is_none());
         assert!(props.on_close.is_none());
+    }
+
+    #[test]
+    fn test_alert_props_banner() {
+        let props = AlertProps {
+            banner: true,
+            ..Default::default()
+        };
+        assert!(props.banner);
+    }
+
+    #[test]
+    fn test_alert_props_body_slot() {
+        let props = AlertProps {
+            body: Some(hikari_components::prelude::empty_vnode()),
+            ..Default::default()
+        };
+        assert!(props.body.is_some());
     }
 
     #[test]
@@ -334,70 +355,70 @@ mod tests {
     }
 
     #[test]
-    fn test_progress_props_default() {
-        let props = ProgressProps::default();
-        assert_eq!(props.value, 0.0);
+    fn test_progress_bar_props_default() {
+        let props = ProgressBarProps::default();
+        assert_eq!(props.value, None);
+        assert_eq!(props.secondary, None);
         assert_eq!(props.max, 100.0);
         assert_eq!(
-            props.progress_type,
-            hikari_components::feedback::ProgressType::Linear
-        );
-        assert_eq!(
             props.status,
-            hikari_components::feedback::ProgressStatus::Normal
+            hikari_components::feedback::ProgressBarStatus::Loading
         );
-        assert!(!props.show_info);
-    }
-
-    #[test]
-    fn test_progress_props_with_value() {
-        let props = ProgressProps {
-            value: 75.0,
-            ..Default::default()
-        };
-        assert_eq!(props.value, 75.0);
-    }
-
-    #[test]
-    fn test_progress_type_circular() {
-        let props = ProgressProps {
-            progress_type: hikari_components::feedback::ProgressType::Circular,
-            ..Default::default()
-        };
         assert_eq!(
-            props.progress_type,
-            hikari_components::feedback::ProgressType::Circular
+            props.size,
+            hikari_components::feedback::ProgressBarSize::Sm
         );
+        assert!(!props.show_label);
+        assert_eq!(props.label, None);
+        assert_eq!(props.segments, None);
     }
 
     #[test]
-    fn test_progress_status_active() {
-        let props = ProgressProps {
-            status: hikari_components::feedback::ProgressStatus::Active,
+    fn test_progress_bar_props_with_value() {
+        let props = ProgressBarProps {
+            value: Some(75.0),
             ..Default::default()
         };
+        assert_eq!(props.value, Some(75.0));
+    }
+
+    #[test]
+    fn test_progress_bar_segments_mode() {
+        let props = ProgressBarProps {
+            segments: Some(vec![hikari_components::feedback::ProgressBarSegment {
+                value: 40.0,
+                color: Some("rgb(var(--color-primary) / 50%)".to_string()),
+                class: "seg-a".to_string(),
+            }]),
+            ..Default::default()
+        };
+        assert!(props.segments.is_some());
+    }
+
+    #[test]
+    fn test_progress_ring_props_default() {
+        let props = ProgressRingProps::default();
+        assert_eq!(props.value, 0.0);
+        assert_eq!(props.pct, None);
+        assert_eq!(props.size, 120.0);
+        assert_eq!(props.stroke_width, 8.0);
         assert_eq!(
-            props.status,
-            hikari_components::feedback::ProgressStatus::Active
+            props.variant,
+            hikari_components::feedback::ProgressRingVariant::Normal
         );
+        assert!(!props.show_label);
+        assert!(props.show_track);
+        assert_eq!(props.segments, None);
     }
 
     #[test]
-    fn test_progress_props_with_show_info() {
-        let props = ProgressProps {
-            show_info: true,
+    fn test_progress_ring_pct_wins_over_value() {
+        let props = ProgressRingProps {
+            value: 10.0,
+            pct: Some(80.0),
             ..Default::default()
         };
-        assert!(props.show_info);
-    }
-
-    #[test]
-    fn test_progress_props_with_custom_classes() {
-        let props = ProgressProps {
-            class: "custom-progress".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-progress");
+        assert_eq!(props.pct, Some(80.0));
     }
 
     #[test]

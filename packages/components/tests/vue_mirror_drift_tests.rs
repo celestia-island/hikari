@@ -149,6 +149,83 @@ fn mirror_bodies_match_their_upstream_sheets() {
     }
 }
 
+/// Every `var(--x)` WITHOUT a fallback in a mirrored component sheet must be
+/// defined by one of the bundled token base sheets (`tokens.scss` /
+/// `scale.scss`). A fallback-less reference to an undefined property is
+/// invalid at computed-value time — the same class of silent breakage the
+/// Vue host avoids because it always ships those two layers.
+#[test]
+fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
+    // Known-positive guard: both directions must find something, otherwise a
+    // broken pattern would silently pass this test (zero-output reads as
+    // "no problem").
+    // Definitions can live in a base sheet OR locally in any mirrored
+    // partial (a rule that sets the custom property and later reads it).
+    let mut definitions = std::collections::HashSet::new();
+    let mut base_definitions = 0usize;
+    for base in ["tokens.scss", "scale.scss"] {
+        let text = std::fs::read_to_string(mirror_root().join(base))
+            .unwrap_or_else(|e| panic!("read {base}: {e}"));
+        for line in text.lines() {
+            let trimmed = line.trim_start();
+            if let Some(rest) = trimmed.strip_prefix("--") {
+                if let Some(name) = rest.split(':').next() {
+                    definitions.insert(format!("--{}", name.trim()));
+                    base_definitions += 1;
+                }
+            }
+        }
+    }
+    assert!(
+        base_definitions > 50,
+        "token base sheets must define the runtime vocabulary (found {base_definitions})"
+    );
+
+    let mut referenced_without_fallback = 0usize;
+    let dir = mirror_root().join("components");
+    let mut sheets: Vec<std::path::PathBuf> = std::fs::read_dir(&dir)
+        .expect("read vue-mirror/components")
+        .flatten()
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "scss"))
+        .collect();
+    sheets.sort();
+    for path in sheets {
+        let text = std::fs::read_to_string(&path)
+            .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
+        // Local definitions inside the partial itself count as resolved.
+        for line in text.lines() {
+            let trimmed = line.trim_start();
+            if let Some(rest) = trimmed.strip_prefix("--") {
+                if let Some(name) = rest.split(':').next() {
+                    definitions.insert(format!("--{}", name.trim()));
+                }
+            }
+        }
+        let mut rest = text.as_str();
+        while let Some(start) = rest.find("var(--") {
+            rest = &rest[start + 4..];
+            let name_end = rest
+                .find(|c: char| c == ')' || c == ',')
+                .unwrap_or(rest.len());
+            let name = &rest[..name_end];
+            let has_fallback = rest[name_end..].starts_with(',');
+            if !has_fallback {
+                referenced_without_fallback += 1;
+                assert!(
+                    definitions.contains(name),
+                    "{} references {name} without a fallback, but neither tokens.scss nor scale.scss defines it",
+                    path.file_name().unwrap().to_string_lossy()
+                );
+            }
+        }
+    }
+    assert!(
+        referenced_without_fallback > 0,
+        "expected fallback-less token references in the mirrored sheets (pattern check)"
+    );
+}
+
 fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) {
     let entries =
         std::fs::read_dir(dir).unwrap_or_else(|e| panic!("read_dir {}: {e}", dir.display()));

@@ -29,7 +29,9 @@ function defaultFill(i: number): string {
  * o'clock start, clockwise), legend rows that stack in fixed-height
  * columns with percents shown inline, and paired hover focus —
  * hovering a slice or its legend row lifts the pair and dims the
- * block's siblings without rescaling any shape.
+ * block's siblings without rescaling any shape. A scoped `legendIcon`
+ * slot (slice => node) swaps a legend row's text label for a glyph —
+ * nation flags, tier marks — keeping the color dot and the row hint.
  *
  * Entries may carry an explicit `color`; absent entries ride the
  * default primary ladder above. Hints ride the consumer's tooltip
@@ -63,7 +65,7 @@ export default defineComponent({
   emits: {
     select: (key: string) => typeof key === "string",
   },
-  setup(props, { emit }) {
+  setup(props, { emit, slots }) {
     const hovered = ref<string | null>(null);
 
     const slices = computed<HkDonutSlice[]>(() =>
@@ -129,7 +131,14 @@ export default defineComponent({
                       onClick={() => emit("select", s.key)}
                     >
                       <span class="hk-donut__legend-dot" style={{ background: s.fill }} />
-                      <span class="hk-donut__legend-label">{s.label}</span>
+                      <span class="hk-donut__legend-label">
+                        {/* legendIcon slot: an optional per-slice glyph
+                         * (flags, tier marks) rendered IN PLACE of the
+                         * text label — the color dot stays, and the row's
+                         * data-hint carries the full slice hint either
+                         * way (wowsp's NationFlag contract). */}
+                        {slots.legendIcon?.(s) ?? s.label}
+                      </span>
                       <span class="hk-donut__legend-pct">{s.percentInt}%</span>
                     </div>
                   ))}

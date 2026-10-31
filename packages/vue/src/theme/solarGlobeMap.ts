@@ -5,7 +5,7 @@
  *
  * Deliberately a BORDERLESS world: the map carries continent silhouettes
  * and TECTONIC PLATE boundary lines only — never national borders, never
- * country labels (city names in the picker's tooltip are the only named
+ * country labels (city names in the picker's readout are the only named
  * places, and names of cities carry no border disputes). The 15°
  * meridian graticule doubles as the 24 time-sector edges the picker
  * selects between.

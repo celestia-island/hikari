@@ -116,6 +116,9 @@ describe("HkTimeZoneGlobe fallback list", () => {
     const root = document.body.querySelector<HTMLElement>('[data-test="hk-timezone-globe"]')!;
     expect(root.getAttribute("aria-label")).toBe("Time zone globe");
     expect(root.textContent).toContain("Drag to spin the globe");
+    // The pinned HUD is a canvas affordance: without WebGL the list IS the
+    // interface, so the chip must not cover its rows.
+    expect(document.body.querySelector('[data-test="hk-timezone-globe-readout"]')).toBeNull();
   });
 
   it("flows zh-Hans through the sector names and city lists", async () => {
@@ -139,6 +142,36 @@ describe("HkTimeZoneGlobe look contract (source-level)", () => {
     const src = readFileSync(join(import.meta.dirname, "HkTimeZoneGlobe.tsx"), "utf8");
     expect(src).toContain("minimapCollapsible");
     expect(src).toContain("minimapDefaultCollapsed");
+  });
+
+  it("pins the readout to the stage's TOP-CENTER, pointer-transparent (user direction 2026-11-01)", () => {
+    const scss = readFileSync(join(import.meta.dirname, "HkTimeZoneGlobe.scss"), "utf8");
+    const block = (selector: string): string => {
+      const start = scss.indexOf(selector + " {");
+      expect(start, selector + " exists").toBeGreaterThanOrEqual(0);
+      const end = scss.indexOf("\n}", start);
+      expect(end, selector + " closes").toBeGreaterThan(start);
+      return scss.slice(start, end);
+    };
+
+    // The readout is absolutely positioned, so its containing block must
+    // stay the stage.
+    expect(block(".hk-timezone-globe__stage")).toContain("position: relative");
+
+    const readout = block(".hk-timezone-globe__readout");
+    expect(readout, "a HUD layer over the canvas").toContain("position: absolute");
+    expect(readout, "top-anchored").toMatch(/top:\s*var\(--space-6/);
+    expect(readout, "horizontally centered").toContain("left: 50%");
+    expect(readout, "horizontally centered").toContain("transform: translateX(-50%)");
+    // The board paints an opaque surface later in the DOM, so the chip is
+    // only visible while it stacks above it.
+    expect(readout, "above the board surface").toMatch(/z-index:\s*[1-9]/);
+    // The chip sits over the very surface the user drags; a drag that
+    // begins on it must still reach the canvas.
+    expect(readout, "a passive layer").toContain("pointer-events: none");
+
+    // A long city row must ellipsize inside the chip, not escape it.
+    expect(block(".hk-timezone-globe__readout-cities")).toContain("text-overflow: ellipsis");
   });
 });
 describe("minimap reset icon contract (user direction 2026-10-31)", () => {

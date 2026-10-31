@@ -13,14 +13,26 @@
  *    white-alpha, the material tints it with the live theme accent, so
  *    one asset serves dark and light themes;
  *  - SECTORS: 24 pickable wedges of 15 deg longitude (theme/
- *    solarTimeZones.ts) — drag rotates (OrbitControls), settling snaps
- *    the wedge under the eye INTO the selection, clicking a wedge flies
- *    the camera to it; both write the wedge's REPRESENTATIVE IANA zone
+ *    solarTimeZones.ts) — drag spins the globe, settling snaps the wedge
+ *    under the eye INTO the selection, clicking a wedge flies the
+ *    camera to it; both write the wedge's REPRESENTATIVE IANA zone
  *    through update:modelValue (the engine stores exact ids, so a
  *    half-hour config survives until the user actually re-picks);
- *  - TOOLTIP: hovering a wedge surfaces its zone (translated sector
- *    name + the IANA id) and its representative cities — cities only,
- *    never countries (border disputes stay out of a theme picker);
+ *  - TURNTABLE: the board's orbit elevation window is pinned
+ *    (minPolarAngle === maxPolarAngle) to the eye's ring tilt, so the
+ *    sphere can only spin about its vertical axis. It never tips toward
+ *    a pole and never rolls — the north hemisphere keeps its 18° tilt
+ *    (user direction 2026-11-01: "the globe turns in front of you");
+ *  - READOUT: the SELECTED sector stays pinned to the TOP-CENTER of the
+ *    stage — always on, and hover never rewrites it (a drag re-selects
+ *    without moving the pointer, so a hover preview would be stale at
+ *    exactly the moment it is read). It replaced the pointer-following
+ *    tooltip, which on a touch screen landed under the very finger doing
+ *    the drag (user direction 2026-11-01). The head carries the IANA id
+ *    with the translated band name (dropped where the locale's band name
+ *    IS the offset label — English), the second line its representative
+ *    cities: cities only, never countries (border disputes stay out of a
+ *    theme picker);
  *  - MINIMAP: the board pins HkMinimap3D bottom-right — a second,
  *    stereoscopic render of the SAME scene, so the operator always sees
  *    where on the sphere the eye currently sits;
@@ -70,6 +82,11 @@ const DEG = Math.PI / 180;
 /** Eye distance and latitude tilt for the fixed-radius ring orbit. */
 const EYE_DISTANCE = 2.85;
 const EYE_TILT_DEG = 18;
+/** The locked orbit elevation (OrbitControls polar angle, degrees from
+ *  +Y) that pairs with EYE_TILT_DEG: equal min/max polar bounds keep the
+ *  eye on this one ring, so azimuth is the only orbit axis left — the
+ *  globe turns in place instead of tipping. */
+const ORBIT_POLAR_DEG = 90 - EYE_TILT_DEG;
 /** Sphere and wedge radii — the wedges ride slightly above the base to
  *  keep the highlight out of the texture's z-fight band. */
 const GLOBE_RADIUS = 1;
@@ -120,9 +137,12 @@ export default defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
     const engine = shallowRef<Board3DEngine | null>(null);
-    const stageRef = ref<HTMLElement | null>(null);
     const hoveredSector = ref<number | null>(null);
-    const tooltipPos = ref({ x: 0, y: 0 });
+    // The stage readout is a HUD for the CANVAS; without WebGL the board's
+    // fallback list is the whole interface (every sector already shows its
+    // zone there), so the HUD steps aside instead of covering its first
+    // rows.
+    const webglFailed = ref(false);
 
     // Per-mount three handles the board does NOT own (we created them,
     // we dispose them — the board never disposes consumer objects).
@@ -138,10 +158,13 @@ export default defineComponent({
 
     const selectedSector = computed(() => sectorIndexForZone(props.modelValue));
 
-    const selectedInfo = computed(() => {
-      const idx = hoveredSector.value ?? selectedSector.value;
-      return SOLAR_TIME_ZONE_SECTORS[idx] ?? null;
-    });
+    // The pinned readout reports the COMMITTED selection, never the
+    // hovered wedge. Hover already answers "what am I pointing at" on the
+    // globe itself (the wedge highlight); the always-on chip must keep
+    // answering "what is selected", because a drag that re-selects does
+    // not move the pointer — a hover preview there would go stale at
+    // exactly the moment the user is looking at it.
+    const selectedInfo = computed(() => SOLAR_TIME_ZONE_SECTORS[selectedSector.value] ?? null);
 
     function citiesLine(sector: { cities: readonly string[] }): string {
       const sep = t("hikari::theme.solar.citySeparator", ", ");
@@ -281,11 +304,8 @@ export default defineComponent({
       hoveredSector.value = m ? parseInt(m[1] ?? "", 10) : null;
     }
 
-    function onPointerMove(ev: PointerEvent): void {
-      const stage = stageRef.value;
-      if (!stage) return;
-      const rect = stage.getBoundingClientRect();
-      tooltipPos.value = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    function onBoardError(): void {
+      webglFailed.value = true;
     }
 
     onBeforeUnmount(() => {
@@ -337,6 +357,11 @@ export default defineComponent({
 
     return () => {
       const info = selectedInfo.value;
+      // In `en`, a band's translated name IS its offset label ("UTC+8"), so
+      // rendering both would read "UTC+8 UTC+8". Keep the name only where
+      // the locale actually names the band differently.
+      const infoOffset = info ? offsetLabel(info.offset) : "";
+      const infoName = info ? t(sectorNameKey(info.offset)) : "";
       const initialEye = ringPosition(sectorCenterLngDeg(
         SOLAR_TIME_ZONE_SECTORS[selectedSector.value]?.offset ?? 0,
       ));
@@ -347,7 +372,25 @@ export default defineComponent({
           aria-label={t("hikari::theme.solar.globeLabel")}
           data-test="hk-timezone-globe"
         >
-          <div class="hk-timezone-globe__stage" ref={stageRef} onPointermove={onPointerMove}>
+          <div class="hk-timezone-globe__stage">
+            {info && !webglFailed.value && (
+              <div
+                class="hk-timezone-globe__readout"
+                data-test="hk-timezone-globe-readout"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <span class="hk-timezone-globe__readout-head">
+                  <span class="hk-timezone-globe__readout-offset">{infoOffset}</span>
+                  {infoName !== infoOffset && (
+                    <span class="hk-timezone-globe__readout-name">{infoName}</span>
+                  )}
+                  <span class="hk-timezone-globe__readout-zone">{info.zone}</span>
+                </span>
+                <span class="hk-timezone-globe__readout-cities">{citiesLine(info)}</span>
+              </div>
+            )}
             <HkBoard3D
               interactive
               minimap
@@ -356,6 +399,10 @@ export default defineComponent({
               hoverBox={false}
               transparentBackground
               enablePan={false}
+              // Turntable: equal polar bounds pin the eye to its ring, so
+              // the globe spins about its vertical axis only.
+              minPolarAngle={ORBIT_POLAR_DEG}
+              maxPolarAngle={ORBIT_POLAR_DEG}
               fov={38}
               minDistance={2.15}
               maxDistance={3.6}
@@ -364,25 +411,10 @@ export default defineComponent({
               onReady={onReady}
               onObjectClick={onObjectClick}
               onObjectHover={onObjectHover}
+              onError={onBoardError}
             >
               {{ fallback: fallbackList }}
             </HkBoard3D>
-            {info && hoveredSector.value !== null && (
-              <div
-                class="hk-timezone-globe__tooltip"
-                data-test="hk-timezone-globe-tooltip"
-                style={{
-                  left: tooltipPos.value.x + 14 + "px",
-                  top: tooltipPos.value.y + 14 + "px",
-                }}
-              >
-                <span class="hk-timezone-globe__tooltip-offset">
-                  {offsetLabel(info.offset)} · {t(sectorNameKey(info.offset))}
-                </span>
-                <span class="hk-timezone-globe__tooltip-zone">{info.zone}</span>
-                <span class="hk-timezone-globe__tooltip-cities">{citiesLine(info)}</span>
-              </div>
-            )}
           </div>
           <p class="hk-timezone-globe__hint">{t("hikari::theme.solar.globeHint")}</p>
         </div>

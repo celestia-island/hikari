@@ -15,9 +15,9 @@
  *    offset (offset hours / 4 degrees... equivalently hours × 15°) — the
  *    picked wedge and the engine's derived fix AGREE by construction;
  *  - representative zones are the canonical IANA ids for each band;
- *  - representative CITIES are display-only examples (the tooltip lists
- *    them translated; deliberately never the countries — city names
- *    carry no border disputes);
+ *  - representative CITIES are display-only examples (the globe's pinned
+ *    readout lists them translated; deliberately never the countries —
+ *    city names carry no border disputes);
  *  - half-hour zones (Asia/Kolkata, Asia/Yangon, …) still SELECT fine:
  *    `sectorIndexForZone` rounds the zone's standard offset to the
  *    nearest whole-hour band, and the stored zone id keeps the exact
@@ -37,9 +37,9 @@ export interface SolarTimeZoneSector {
   offset: number;
   /** Representative IANA zone id — what selecting the wedge stores. */
   zone: string;
-  /** Representative city slugs for the hover tooltip (locale keys live
-   *  under `hikari::theme.solar.city.<slug>`, translated per language;
-   *  cities only, never countries). */
+  /** Representative city slugs for the globe's pinned readout (locale
+   *  keys live under `hikari::theme.solar.city.<slug>`, translated per
+   *  language; cities only, never countries). */
   cities: readonly string[];
 }
 

@@ -77,8 +77,9 @@ function unpickable<T extends THREE.Object3D>(object: T): T {
   return object;
 }
 
-/** One flat polygon face recovered from the polyhedron's triangles. */
-interface HologramFace {
+/** One flat polygon face recovered from the polyhedron's triangles.
+ *  Exported for the geometry contract test; not part of the public barrel. */
+export interface HologramFace {
   center: THREE.Vector3;
   normal: THREE.Vector3;
   vertices: THREE.Vector3[];
@@ -87,9 +88,9 @@ interface HologramFace {
 /** Recover the polyhedron's true faces (a dodecahedron face is three
  *  coplanar triangles; a pentagon must become ONE ring, not three). Group by
  *  normal direction with a dot threshold: Three.js' projected pentagon
- *  fragments are several milliradians apart, while adjacent dodecahedron
- *  faces differ by tens of degrees. */
-function extractHologramFaces(geometry: THREE.BufferGeometry): HologramFace[] {
+ *  fragments are nearly coplanar, while adjacent dodecahedron faces differ
+ *  by tens of degrees. */
+export function extractHologramFaces(geometry: THREE.BufferGeometry): HologramFace[] {
   const position = geometry.getAttribute("position");
   const groups: Array<{ normal: THREE.Vector3; vertices: Map<string, THREE.Vector3> }> = [];
   for (let i = 0; i < position.count; i += 3) {
@@ -128,8 +129,9 @@ function extractHologramFaces(geometry: THREE.BufferGeometry): HologramFace[] {
 }
 
 /** Inradius of the face polygon — the largest inset circle that still
- *  leaves a visible gap between neighbouring face rings. */
-function faceInradius(face: HologramFace): number {
+ *  leaves a visible gap between neighbouring face rings. Exported for the
+ *  geometry contract test; not part of the public barrel. */
+export function faceInradius(face: HologramFace): number {
   const u = face.vertices[0]!.clone().sub(face.center).normalize();
   const v = face.normal.clone().cross(u).normalize();
   const ordered = [...face.vertices].sort((a, b) => {

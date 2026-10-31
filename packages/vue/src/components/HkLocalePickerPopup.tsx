@@ -38,7 +38,9 @@ const HkLocalePickerPopup = defineComponent({
         open={props.open}
         anchorRef={anchor}
         placement={
-          props.placement === "left-start" || props.placement === "right-start"
+          props.placement === "left-start" ||
+          props.placement === "right-start" ||
+          props.placement === "bottom-end"
             ? props.placement
             : "right-start"
         }

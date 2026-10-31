@@ -35,6 +35,9 @@ const menuScss = readFileSync(join(here, "HkMenu.scss"), "utf-8");
 const affixScss = readFileSync(join(here, "HkAffixPicker.scss"), "utf-8");
 const tagInputScss = readFileSync(join(here, "HkTagInput.scss"), "utf-8");
 const tplScss = readFileSync(join(here, "HkTemplateField.scss"), "utf-8");
+const userPickerScss = readFileSync(join(here, "HkUserPicker.scss"), "utf-8");
+const tagInputTsx = readFileSync(join(here, "HkTagInput.tsx"), "utf-8");
+const userPickerTsx = readFileSync(join(here, "HkUserPicker.tsx"), "utf-8");
 const themeTsx = readFileSync(join(here, "HkThemePanelContent.tsx"), "utf8");
 const adminTokens = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
 const panelScss = readFileSync(join(here, "HkMenuPanel.scss"), "utf-8");
@@ -241,6 +244,13 @@ describe("menu-item grammar contract", () => {
     // Bare surfaces (no rows beside the block) keep the block's own value.
     expect(adminTokens).toMatch(
       /\.s-user-header \{[^}]*padding: var\(--space-10\) var\(--space-14\) var\(--space-12\)/,
+    );
+    // The drawer is the third hosting surface (.hk-drawer-panel is one of
+    // the grammar's sheet contexts) — its twin carries the SHEET pad-x.
+    // Without it a drawer identity block kept the bare 14px while the
+    // drawer rows around it rode 1px + 16px (2026-10-31 audit finding 9).
+    expect(adminTokens).toMatch(
+      /\.hk-drawer-panel \.s-user-header \{[^}]*padding-inline: calc\(1px \+ var\(--hk-menu-item-pad-x, 16px\)\)/,
     );
   });
 
@@ -776,5 +786,75 @@ describe("menu-item grammar contract", () => {
         `${selector} pads the block axis only (no shorthand, no padding-inline) — an inline term is a second horizontal inset on top of the surface's own`,
       ).toEqual([]);
     }
+  });
+
+  it("keeps the adopted row families on the mixin's geometry (no local padding/min-height)", () => {
+    // The 2026-10-31 adoption gave four hand-rolled row families
+    // @include mi.item — the mixin OWNS their padding and min-height
+    // (6×12 desktop / 10×16 sheet via the registration lists). A local
+    // padding or min-height declaration in the family's own rule
+    // overrides the mixin at the same specificity and silently forks
+    // that family off the grammar again (the pre-adoption stock was
+    // exactly such a fork). Layout-axis restatements (flex direction,
+    // justify, text-align, color) are content decisions and stay legal.
+    const sources: Array<[string, string]> = [
+      [".hk-affix-row", affixScss],
+      [".hk-tag-input-row", tagInputScss],
+      [".hk-tpl-row", tplScss],
+      [".hk-user-picker-row", userPickerScss],
+    ];
+    for (const [selector, sheet] of sources) {
+      const block = flattenBlocks(parseScss(stripScssComments(sheet))).find(
+        (candidate) =>
+          candidate.prelude
+            .trim()
+            .split(",")
+            .map((sel) => sel.trim())
+            .includes(selector),
+      );
+      expect(block, `${selector} rule exists`).toBeTruthy();
+      const offenders = block!.statements
+        .map((stmt) => stmt.replace(/\s+/g, " ").trim())
+        .filter((stmt) => /^(padding|min-height)\s*[:]/.test(stmt));
+      expect(
+        offenders,
+        `${selector} declares NO padding/min-height of its own — @mixin item owns the row box (a local declaration forks the family off the grammar)`,
+      ).toEqual([]);
+    }
+  });
+
+  it("keeps the grammar's data-checked emission beside the legacy state attrs", () => {
+    // The sharpest honest gap of the adoption R3: TagInput/UserPicker
+    // rows carry BOTH the legacy state (data-selected / .is-selected —
+    // tests and hosts key on those) and the grammar's data-checked (the
+    // face + the hover guard). A tsx-only revert of the emission keeps
+    // every test green while the checked face silently dies to the
+    // hover rule — so the emission itself is pinned at source level.
+    expect(
+      tagInputTsx,
+      "HkTagInput must emit data-checked beside its legacy data-selected (the grammar's checked face and hover guard key on it)",
+    ).toMatch(/data-checked=\{selected \|\| undefined\}/);
+    expect(
+      userPickerTsx,
+      "HkUserPicker must emit data-checked for the multi-mode draft pick beside the legacy .is-selected class",
+    ).toMatch(/data-checked=\{props\.mode === "multi" && inDraft\(user\.uid\) \|\| undefined\}/);
+  });
+
+  it("sizes the tag-input grip to the adopted row's content box", () => {
+    // The grip is fixed-size inside a flex-auto row: taller than the
+    // content box and every selected+reorderable row grows past the
+    // grammar min-height while siblings stay on it (the 2026-10-31 R2
+    // S1 — 28px grip in a 22px box). Pinned at source level: the grip
+    // height must equal 34px − 2×6px.
+    const grip = flattenBlocks(parseScss(stripScssComments(tagInputScss))).find(
+      (block) => block.prelude.trim() === ".hk-tag-input-grip",
+    );
+    expect(grip, ".hk-tag-input-grip rule exists").toBeTruthy();
+    const height = grip!.statements.find((stmt) => stmt.includes("height:"));
+    expect(height, "the grip declares a height").toBeTruthy();
+    expect(
+      height!.replace(/\s+/g, " ").trim(),
+      "grip height = 22px (the 34px row's content box: 34 − 2×6px)",
+    ).toBe("height: 1.375rem");
   });
 });

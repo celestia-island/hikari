@@ -68,7 +68,7 @@ pub fn Kbd(props: KbdProps) -> Element {
             span { class: "hk-kbd-key", "{key}" }
         });
         children.push(rsx! {
-            span { key: i, {VNode::Fragment(span_children)} }
+            span { {VNode::Fragment(span_children)} }
         });
     }
 

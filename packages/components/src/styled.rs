@@ -89,12 +89,16 @@ impl StyleRegistry {
         use crate::basic::{
             ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CanvasComponent,
             CardComponent, CheckboxComponent, DatePickerComponent, FileUploadComponent,
-            FormFieldComponent, IconButtonComponent, InputComponent, RadioGroupComponent,
-            SelectComponent, SliderComponent, SwitchComponent, TextareaComponent,
+            FormFieldComponent, IconButtonComponent, IconButtonGroupComponent, InputComponent,
+            KbdComponent, LabelComponent, RadioGroupComponent, SelectComponent, SliderComponent,
+            SwitchComponent, TextareaComponent,
         };
         ArrowComponent::register(self);
         BackgroundComponent::register(self);
         ButtonComponent::register(self);
+        IconButtonGroupComponent::register(self);
+        KbdComponent::register(self);
+        LabelComponent::register(self);
         CanvasComponent::register(self);
         InputComponent::register(self);
         CardComponent::register(self);

@@ -162,7 +162,7 @@ pub fn ConfirmDialog(props: ConfirmDialogProps) -> Element {
                     div { class: "hk-confirm-dialog-actions",
                         Button {
                             variant: confirm_variant,
-                            size: ButtonSize::Medium,
+                            size: ButtonSize::Md,
                             loading: props.loading,
                             class: "hk-confirm-dialog-btn".to_string(),
                             onclick: Some(EventHandler::new(confirm_click)),
@@ -170,7 +170,7 @@ pub fn ConfirmDialog(props: ConfirmDialogProps) -> Element {
                         }
                         Button {
                             variant: ButtonVariant::Secondary,
-                            size: ButtonSize::Medium,
+                            size: ButtonSize::Md,
                             disabled: props.loading,
                             class: "hk-confirm-dialog-btn".to_string(),
                             onclick: Some(EventHandler::new(cancel_click)),

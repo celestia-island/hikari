@@ -334,7 +334,7 @@ pub fn Modal(props: ModalProps) -> Element {
                                     rsx! {
                                         Button {
                                             variant,
-                                            size: ButtonSize::Small,
+                                            size: ButtonSize::Sm,
                                             disabled: action.disabled,
                                             loading: action.loading,
                                             class: "hk-modal-action".to_string(),

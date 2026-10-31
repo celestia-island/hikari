@@ -29,9 +29,9 @@ pub enum InputWrapperSize {
 impl InputWrapperSize {
     pub fn icon_button_size(&self) -> crate::basic::IconButtonSize {
         match self {
-            InputWrapperSize::Small => crate::basic::IconButtonSize::Small,
-            InputWrapperSize::Medium => crate::basic::IconButtonSize::Medium,
-            InputWrapperSize::Large => crate::basic::IconButtonSize::Large,
+            InputWrapperSize::Small => crate::basic::IconButtonSize::S24,
+            InputWrapperSize::Medium => crate::basic::IconButtonSize::S32,
+            InputWrapperSize::Large => crate::basic::IconButtonSize::S40,
         }
     }
 }
@@ -163,16 +163,11 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                 let onclick_handler = onclick.clone();
                 rsx! {
                     IconButton {
-                        icon: *icon,
+                        icon: Some(*icon),
                         size: icon_button_size,
                         variant: crate::basic::IconButtonVariant::Ghost,
                         disabled: is_disabled,
-                        glow: true,
-                        glow_intensity: GlowIntensity::Soft,
-                        glow_blur: GlowBlur::None,
-                        glow_color: GlowColor::Ghost,
                         onclick: Some(onclick_handler.clone()),
-                        icon_color: icon_color.clone(),
                     }
                 }
             }
@@ -180,14 +175,10 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                 // Pure icon display - always disabled with default glow
                 rsx! {
                     IconButton {
-                        icon: *icon,
+                        icon: Some(*icon),
                         size: icon_button_size,
                         variant: crate::basic::IconButtonVariant::Ghost,
                         disabled: true,
-                        glow: true,
-                        glow_intensity: GlowIntensity::Soft,
-                        glow_blur: GlowBlur::None,
-                        glow_color: GlowColor::Ghost,
                     }
                 }
             }

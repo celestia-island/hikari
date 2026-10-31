@@ -40,3 +40,4 @@ components/HkLabel.scss	components/HkLabel.scss
 components/HkBadge.scss	components/HkBadge.scss
 components/HkAvatar.scss	components/HkAvatar.scss
 components/HkCard.scss	components/HkCard.scss
+components/HkCornerBadge.scss	components/HkCornerBadge.scss

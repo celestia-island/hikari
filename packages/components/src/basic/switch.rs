@@ -1,376 +1,351 @@
 // hi-components/src/basic/switch.rs
-// Switch component with Glow effect and content variants
+// Switch — mirror of the canonical Vue `HkSwitch`.
+//
+// The stylesheet is the SAME sheet the Vue library ships
+// (`packages/vue/src/components/HkSwitch.scss`, vendored under
+// `src/styles/vue-mirror/` and guarded by `tests/vue_mirror_drift_tests.rs`),
+// compiled with `no_hash` so the `.hk-switch*` class names are literal and
+// identical in both forms. DOM contract (mirrors Vue one-to-one):
+//
+//   label.hk-switch.hk-switch-{size}.hk-switch-{color}
+//         [data-checked] [data-disabled] [class] [style]
+//     input.hk-switch-input  type=checkbox [checked] [disabled]  (onchange)
+//     span.hk-switch-track                                       (onclick)
+//       span.hk-switch-thumb
+//       span.hk-switch-content.hk-switch-content-off  {uncheckedContent}  (!checked)
+//       span.hk-switch-content.hk-switch-content-on   {checkedContent}    (checked)
+//     span.hk-label.hk-label-{size}                              (label / slot)
+//
+// Vue prop mapping: `modelValue` → [`SwitchProps::checked`]; `checkedContent` /
+// `uncheckedContent` → [`SwitchProps::checked_content`] /
+// [`SwitchProps::unchecked_content`] (plain strings in Vue — they ride INSIDE
+// the track, next to the thumb); `update:modelValue` →
+// [`SwitchProps::on_change`] with the toggled value. Both Vue toggle paths are
+// mirrored: the native input's `change`, and the track's `click` — which calls
+// `prevent_default()` first, exactly like Vue, so the label does not activate
+// the input a second time and one click emits one event.
+//
+// State is controlled-only (checked / disabled in, one callback out): the sheet
+// drives every visual from the root's `data-*` markers, so no tairitsu
+// `Signal`/`use_state` is involved.
+//
+// Deltas vs Vue (documented):
+// * Vue emits NO `aria-checked` (nor any `aria-*`) here: the wrapped native
+//   `<input type="checkbox">` owns the role and the state, and the track is
+//   decorative paint around it. The mirror therefore adds none — an
+//   `aria-checked` on the label would announce the state twice.
+// * The legacy Rust `Switch` is retired: its `variant`
+//   (`Default`/`Text`/`Icon`/`Custom`), `SwitchContent`
+//   (`Text`/`Icon`/`Image`) and `SwitchIcon` props have no Vue counterpart
+//   (Vue's content faces are plain `checkedContent`/`uncheckedContent`
+//   strings), and its hand-rolled inline sheet is replaced by the canonical
+//   HkSwitch sheet. `SwitchColor` keeps its name but now covers Vue's four
+//   inks (`primary` / `secondary` / `danger` / `warning`) instead of two.
 
-use hikari_palette::classes::{ClassesBuilder, SwitchClass};
-
+use crate::basic::label::{Label, LabelProps, LabelSize};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
-#[define_props]
-pub struct SwitchProps {
-    pub checked: bool,
+pub struct SwitchComponent;
 
-    pub on_change: Option<EventHandler<bool>>,
-
-    #[default(false)]
-    pub disabled: bool,
-
-    #[default(SwitchSize::Medium)]
-    pub size: SwitchSize,
-
-    #[default(String::new())]
-    pub class: String,
-
-    pub children: Element,
-
-    #[default(SwitchVariant::Default)]
-    pub variant: SwitchVariant,
-
-    pub checked_content: Option<SwitchContent>,
-
-    pub unchecked_content: Option<SwitchContent>,
-
-    #[default(SwitchColor::Primary)]
-    pub color: SwitchColor,
-}
-
+/// The three track sizes (Vue: `"sm" | "md" | "lg"`, default `md`).
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SwitchSize {
+    Sm,
     #[default]
-    Medium,
-    Small,
-    Large,
+    Md,
+    Lg,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum SwitchVariant {
-    #[default]
-    Default,
-    Text,
-    Icon,
-    Custom,
+impl SwitchSize {
+    /// The `hk-switch-<size>` modifier class exactly as Vue emits it.
+    pub fn class_name(self) -> &'static str {
+        match self {
+            SwitchSize::Sm => "hk-switch-sm",
+            SwitchSize::Md => "hk-switch-md",
+            SwitchSize::Lg => "hk-switch-lg",
+        }
+    }
+
+    /// The matching `HkLabel` size (Vue passes its `size` through to `HkLabel`).
+    pub fn label_size(self) -> LabelSize {
+        match self {
+            SwitchSize::Sm => LabelSize::Sm,
+            SwitchSize::Md => LabelSize::Md,
+            SwitchSize::Lg => LabelSize::Lg,
+        }
+    }
 }
 
+/// The four checked inks (Vue: `"primary" | "secondary" | "danger" | "warning"`,
+/// default `primary`). The sheet colors the checked track from this modifier only;
+/// the unchecked track is the shared neutral fill.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SwitchColor {
     #[default]
     Primary,
     Secondary,
+    Danger,
+    Warning,
 }
 
-#[derive(Clone, PartialEq, Debug)]
-pub enum SwitchContent {
-    Text(String),
-    Icon(SwitchIcon),
-    Image(String),
+impl SwitchColor {
+    /// The `hk-switch-<color>` modifier class exactly as Vue emits it.
+    pub fn class_name(self) -> &'static str {
+        match self {
+            SwitchColor::Primary => "hk-switch-primary",
+            SwitchColor::Secondary => "hk-switch-secondary",
+            SwitchColor::Danger => "hk-switch-danger",
+            SwitchColor::Warning => "hk-switch-warning",
+        }
+    }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum SwitchIcon {
+/// The `update:modelValue` payload (Vue `toggle()`): the flipped value.
+pub fn toggled(checked: bool) -> bool {
+    !checked
+}
+
+#[define_props]
+pub struct SwitchProps {
+    /// Controlled checked state (Vue: `modelValue`, default `false`).
     #[default]
-    Check,
-    Close,
-    Plus,
-    Minus,
-    Custom(&'static str),
+    pub checked: bool,
+
+    #[default]
+    pub disabled: bool,
+
+    #[default]
+    pub size: SwitchSize,
+
+    /// Checked ink (Vue: `color`).
+    #[default]
+    pub color: SwitchColor,
+
+    /// Label text; the default slot (`children`) wins over it when present.
+    pub label: Option<String>,
+
+    /// Text shown inside the track while checked (Vue: `checkedContent`).
+    pub checked_content: Option<String>,
+
+    /// Text shown inside the track while unchecked (Vue: `uncheckedContent`).
+    pub unchecked_content: Option<String>,
+
+    /// Emitted with the toggled value; a no-op while disabled.
+    pub on_change: Option<EventHandler<bool>>,
+
+    /// Rich label content (Vue: the default slot).
+    pub children: Element,
+
+    /// Vue attribute fallthrough onto the root `<label>`.
+    #[default]
+    pub class: String,
+
+    #[default]
+    pub style: String,
 }
 
 #[component]
 pub fn Switch(props: SwitchProps) -> Element {
-    let size_class = match props.size {
-        SwitchSize::Small => SwitchClass::Sm,
-        SwitchSize::Medium => SwitchClass::Md,
-        SwitchSize::Large => SwitchClass::Lg,
-    };
+    let checked = props.checked;
+    let disabled = props.disabled;
 
-    let variant_class = match props.variant {
-        SwitchVariant::Default => "",
-        SwitchVariant::Text => "hk-switch-text-variant",
-        SwitchVariant::Icon => "hk-switch-icon-variant",
-        SwitchVariant::Custom => "hk-switch-custom-variant",
-    };
+    let mut root_classes = String::from("hk-switch");
+    root_classes.push(' ');
+    root_classes.push_str(props.size.class_name());
+    root_classes.push(' ');
+    root_classes.push_str(props.color.class_name());
+    if !props.class.is_empty() {
+        root_classes.push(' ');
+        root_classes.push_str(&props.class);
+    }
 
-    let color_class = match props.color {
-        SwitchColor::Primary => "hk-switch-color-primary",
-        SwitchColor::Secondary => "hk-switch-color-secondary",
-    };
-
-    let switch_classes = ClassesBuilder::new()
-        .add(SwitchClass::Switch)
-        .add(size_class)
-        .add_if(SwitchClass::Checked, || props.checked)
-        .add_if(SwitchClass::Disabled, || props.disabled)
-        .add_raw(variant_class)
-        .add_raw(color_class)
-        .add_raw(&props.class)
-        .build();
-
-    let thumb_content = if props.checked {
-        props.checked_content.clone()
+    // Vue renders a content face only when it is non-empty AND on its side.
+    let off_content = if checked {
+        None
     } else {
-        props.unchecked_content.clone()
+        props
+            .unchecked_content
+            .clone()
+            .filter(|text| !text.is_empty())
+    };
+    let on_content = if checked {
+        props
+            .checked_content
+            .clone()
+            .filter(|text| !text.is_empty())
+    } else {
+        None
     };
 
-    let thumb_inner = match thumb_content {
-        Some(SwitchContent::Text(text)) => rsx! {
-            span { class: "hk-switch-thumb-text", "{text}" }
-        },
-        Some(SwitchContent::Icon(icon)) => {
-            let icon_svg = match icon {
-                SwitchIcon::Check => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round", stroke_linejoin: "round",
-                        path { d: "M20 6L9 17l-5-5" }
-                    }
-                },
-                SwitchIcon::Close => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
-                        path { d: "M18 6L6 18M6 6l12 12" }
-                    }
-                },
-                SwitchIcon::Plus => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
-                        path { d: "M12 5v14M5 12h14" }
-                    }
-                },
-                SwitchIcon::Minus => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
-                        path { d: "M5 12h14" }
-                    }
-                },
-                SwitchIcon::Custom(path) => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2", stroke_linecap: "round", stroke_linejoin: "round",
-                        path { d: "{path}" }
-                    }
-                },
-            };
-            rsx! { span { class: "hk-switch-thumb-icon", {icon_svg} } }
+    // Vue's two toggle paths: the input's `change`, and the track's `click`
+    // (which preventDefaults first so the label does not fire a second one).
+    let on_change = props.on_change.clone();
+    let handle_change = move |_: ChangeEvent| {
+        if disabled {
+            return;
         }
-        Some(SwitchContent::Image(src)) => rsx! {
-            img { class: "hk-switch-thumb-image", src: src, alt: "" }
-        },
-        None => rsx! { div { class: "hk-switch-thumb-dot" } },
+        if let Some(handler) = on_change.as_ref() {
+            handler.call(toggled(checked));
+        }
+    };
+
+    let on_change_click = props.on_change.clone();
+    let handle_track_click = move |event: MouseEvent| {
+        event.prevent_default();
+        if disabled {
+            return;
+        }
+        if let Some(handler) = on_change_click.as_ref() {
+            handler.call(toggled(checked));
+        }
     };
 
     rsx! {
         label {
-            class: "hk-switch-label",
-            onclick: move |e: MouseEvent| {
-                if !props.disabled {
-                    e.stop_propagation();
-                    if let Some(callback) = props.on_change.as_ref() {
-                        callback.call(!props.checked);
+            class: root_classes,
+            style: props.style.clone(),
+            "data-checked": if checked { Some("") } else { None },
+            "data-disabled": if disabled { Some("") } else { None },
+            input {
+                class: "hk-switch-input",
+                type: "checkbox",
+                checked: checked,
+                disabled: disabled,
+                onchange: handle_change,
+            }
+            span {
+                class: "hk-switch-track",
+                onclick: handle_track_click,
+                span { class: "hk-switch-thumb" }
+                if let Some(text) = off_content {
+                    span { class: "hk-switch-content hk-switch-content-off",
+                        "{text}"
                     }
                 }
-            },
-
-            div { class: switch_classes,
-                div { class: "hk-switch-track",
-                    div { class: "hk-switch-thumb", {thumb_inner} }
+                if let Some(text) = on_content {
+                    span { class: "hk-switch-content hk-switch-content-on",
+                        "{text}"
+                    }
                 }
             }
-
-            span { class: "hk-switch-text", {props.children} }
+            Label {
+                size: props.size.label_size(),
+                text: props.label.clone(),
+                children: props.children.clone(),
+            }
         }
     }
 }
 
-pub struct SwitchComponent;
-
 impl StyledComponent for SwitchComponent {
     fn styles() -> &'static str {
-        r#"
-.hk-switch-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.hk-switch-label:has(.hk-switch-disabled) {
-    cursor: not-allowed;
-}
-
-.hk-switch-glow {
-    border-radius: 100px;
-    overflow: hidden;
-}
-
-.hk-switch {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    background-color: var(--hi-component-selection-surface);
-    border: 1.5px solid var(--hi-component-selection-border);
-    border-radius: 100px;
-    transition: all 0.2s ease;
-    vertical-align: middle;
-    box-sizing: border-box;
-}
-
-.hk-switch:hover:not(.hk-switch-disabled) {
-    border-color: var(--hi-primary);
-    box-shadow: 0 0 8px var(--hi-component-selection-glow);
-}
-
-.hk-switch-track {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 2px;
-    box-sizing: border-box;
-}
-
-.hk-switch-sm { height: 20px; min-width: 36px; }
-.hk-switch-md { height: 26px; min-width: 48px; }
-.hk-switch-lg { height: 32px; min-width: 60px; }
-
-.hk-switch-text-variant.hk-switch-sm { min-width: 44px; }
-.hk-switch-text-variant.hk-switch-md { min-width: 56px; }
-.hk-switch-text-variant.hk-switch-lg { min-width: 72px; }
-
-.hk-switch-thumb {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* On-solid icon expression matching the vue HkSwitch thumb: immune to
-       stylesheet order when both copies land in the same bundle. */
-    background-color: rgb(var(--color-on-solid-icon, 255 255 255));
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease, background 0.2s ease;
-    flex-shrink: 0;
-    box-sizing: border-box;
-}
-
-.hk-switch-sm .hk-switch-thumb { width: 14px; height: 14px; }
-.hk-switch-md .hk-switch-thumb { width: 20px; height: 20px; }
-.hk-switch-lg .hk-switch-thumb { width: 26px; height: 26px; }
-
-.hk-switch-icon-variant .hk-switch-thumb,
-.hk-switch-text-variant .hk-switch-thumb {
-    border-radius: 50%;
-}
-
-.hk-switch-text-variant .hk-switch-thumb { padding: 0 4px; }
-.hk-switch-sm.hk-switch-text-variant .hk-switch-thumb { width: auto; min-width: 18px; }
-.hk-switch-md.hk-switch-text-variant .hk-switch-thumb { width: auto; min-width: 24px; }
-.hk-switch-lg.hk-switch-text-variant .hk-switch-thumb { width: auto; min-width: 30px; }
-
-.hk-switch-checked .hk-switch-track {
-    justify-content: flex-end;
-}
-
-.hk-switch-sm.hk-switch-checked .hk-switch-thumb { transform: translateX(16px); }
-.hk-switch-md.hk-switch-checked .hk-switch-thumb { transform: translateX(22px); }
-.hk-switch-lg.hk-switch-checked .hk-switch-thumb { transform: translateX(28px); }
-
-.hk-switch-text-variant.hk-switch-sm.hk-switch-checked .hk-switch-thumb { transform: translateX(0); }
-.hk-switch-text-variant.hk-switch-md.hk-switch-checked .hk-switch-thumb { transform: translateX(0); }
-.hk-switch-text-variant.hk-switch-lg.hk-switch-checked .hk-switch-thumb { transform: translateX(0); }
-
-/* Checked state - uses Layer 2 gradient background */
-.hk-switch-checked {
-    background: var(--hi-component-selection-bg);
-    border-color: var(--hi-primary);
-    box-shadow: 0 0 6px var(--hi-component-selection-glow), inset 0 0 3px rgba(255, 255, 255, 0.15);
-}
-
-.hk-switch-checked .hk-switch-thumb {
-    background-color: var(--hi-component-selection-surface);
-    box-shadow: 0 0 4px var(--hi-component-selection-glow);
-}
-
-.hk-switch-label:hover .hk-switch-checked:not(.hk-switch-disabled) {
-    box-shadow: 0 0 10px var(--hi-component-selection-glow), inset 0 0 4px rgba(255, 255, 255, 0.2);
-    transform: scale(1.02);
-}
-
-.hk-switch-disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    pointer-events: none;
-    background: var(--hi-component-selection-surface);
-    border-color: var(--hi-component-selection-border);
-}
-
-/* Thumb dot - uses Layer 2 icon color */
-.hk-switch-thumb-dot {
-    width: 6px;
-    height: 6px;
-    background-color: var(--hi-component-selection-border);
-    border-radius: 50%;
-    transition: background 0.2s ease;
-}
-
-.hk-switch-sm .hk-switch-thumb-dot { width: 4px; height: 4px; }
-.hk-switch-lg .hk-switch-thumb-dot { width: 8px; height: 8px; }
-
-.hk-switch-checked .hk-switch-thumb-dot {
-    background: var(--hi-component-selection-icon);
-}
-
-/* Thumb text - uses Layer 2 icon color */
-.hk-switch-thumb-text {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--hi-component-selection-border);
-    white-space: nowrap;
-    line-height: 1;
-    transition: color 0.2s ease;
-}
-
-.hk-switch-sm .hk-switch-thumb-text { font-size: 9px; }
-.hk-switch-lg .hk-switch-thumb-text { font-size: 12px; }
-
-.hk-switch-checked .hk-switch-thumb-text {
-    color: var(--hi-component-selection-icon);
-}
-
-/* Thumb icon - uses Layer 2 icon color */
-.hk-switch-thumb-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--hi-component-selection-border);
-    transition: color 0.2s ease;
-}
-
-.hk-switch-sm .hk-switch-thumb-icon svg { width: 8px; height: 8px; }
-.hk-switch-md .hk-switch-thumb-icon svg { width: 12px; height: 12px; }
-.hk-switch-lg .hk-switch-thumb-icon svg { width: 16px; height: 16px; }
-
-.hk-switch-checked .hk-switch-thumb-icon {
-    color: var(--hi-component-selection-icon);
-}
-
-.hk-switch-thumb-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.hk-switch-text {
-    font-size: 14px;
-    color: var(--hi-text-primary);
-    line-height: 1.5;
-}
-
-/* Primary/Secondary color variants */
-.hk-switch-color-primary.hk-switch-checked {
-    --hi-primary: var(--hi-primary);
-}
-
-.hk-switch-color-secondary.hk-switch-checked {
-    --hi-primary: var(--hi-secondary);
-}
-"#
+        // The canonical Vue sheet, compiled verbatim (no_hash keeps the
+        // `.hk-switch*` names literal so this CSS matches the Vue build).
+        tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkSwitch.scss", no_hash }.0
     }
 
     fn name() -> &'static str {
         "switch"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn switch_size_classes_match_the_vue_modifiers() {
+        assert_eq!(SwitchSize::Sm.class_name(), "hk-switch-sm");
+        assert_eq!(SwitchSize::Md.class_name(), "hk-switch-md");
+        assert_eq!(SwitchSize::Lg.class_name(), "hk-switch-lg");
+    }
+
+    #[test]
+    fn switch_color_classes_match_the_vue_modifiers() {
+        assert_eq!(SwitchColor::Primary.class_name(), "hk-switch-primary");
+        assert_eq!(SwitchColor::Secondary.class_name(), "hk-switch-secondary");
+        assert_eq!(SwitchColor::Danger.class_name(), "hk-switch-danger");
+        assert_eq!(SwitchColor::Warning.class_name(), "hk-switch-warning");
+    }
+
+    #[test]
+    fn switch_size_drives_the_label_shell() {
+        assert_eq!(SwitchSize::Sm.label_size(), LabelSize::Sm);
+        assert_eq!(SwitchSize::Md.label_size(), LabelSize::Md);
+        assert_eq!(SwitchSize::Lg.label_size(), LabelSize::Lg);
+    }
+
+    #[test]
+    fn switch_toggle_payload_is_the_flipped_value() {
+        assert!(toggled(false));
+        assert!(!toggled(true));
+    }
+
+    #[test]
+    fn switch_defaults_match_the_vue_props() {
+        let props = SwitchProps::default();
+        assert!(!props.checked);
+        assert!(!props.disabled);
+        assert_eq!(props.size, SwitchSize::Md);
+        assert_eq!(props.color, SwitchColor::Primary);
+        assert_eq!(props.label, None);
+        assert_eq!(props.checked_content, None);
+        assert_eq!(props.unchecked_content, None);
+        assert_eq!(props.on_change, None);
+        assert_eq!(props.class, "");
+        assert_eq!(props.style, "");
+    }
+
+    #[test]
+    fn switch_renders_the_vue_shell_for_every_prop_arm() {
+        let plain = Switch(SwitchProps::default());
+        assert!(
+            !matches!(plain, VNode::Text(_)),
+            "default render is an element"
+        );
+
+        let _ = Switch(SwitchProps {
+            checked: true,
+            color: SwitchColor::Danger,
+            size: SwitchSize::Lg,
+            checked_content: Some("ON".to_string()),
+            unchecked_content: Some("OFF".to_string()),
+            label: Some("Enabled".to_string()),
+            ..Default::default()
+        });
+        let _ = Switch(SwitchProps {
+            disabled: true,
+            size: SwitchSize::Sm,
+            on_change: Some(EventHandler::new(|_| {})),
+            class: "host".to_string(),
+            style: "margin-top:2px".to_string(),
+            children: VNode::Text(VText::new("rich label")),
+            ..Default::default()
+        });
+    }
+
+    #[test]
+    fn switch_styles_come_from_the_canonical_vue_sheet() {
+        let css = SwitchComponent::styles();
+        for needle in [
+            ".hk-switch",
+            ".hk-switch-track",
+            ".hk-switch-thumb",
+            ".hk-switch-content",
+            ".hk-switch-content-on",
+            ".hk-switch-content-off",
+            ".hk-switch-danger",
+            ".hk-switch-warning",
+        ] {
+            assert!(
+                css.contains(needle),
+                "switch css must carry the vue class {needle}"
+            );
+        }
+        assert!(
+            !css.contains("CSS generation failed"),
+            "scss compilation failed for the mirrored switch sheet"
+        );
     }
 }

@@ -85,6 +85,8 @@ BASIC_SHEETS: list[str] = [
     "HkBadge.scss",
     "HkAvatar.scss",
     "HkCard.scss",
+    # The dot tones HkIconButton references (vue: hk-corner-badge-<tone>).
+    "HkCornerBadge.scss",
 ]
 
 FAMILY_SHEETS: list[str] = [

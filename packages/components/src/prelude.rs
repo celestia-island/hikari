@@ -76,8 +76,7 @@ pub use crate::basic::ArrowProps;
 pub use crate::basic::{
     BackgroundProps, BadgeProps, ButtonProps, CardProps, CheckboxProps, DatePickerProps,
     FileUploadProps, FormFieldProps, IconButtonProps, IconChipProps, InputProps, InputWrapperProps,
-    KbdProps, LabelProps, RadioButtonProps, RadioGroupProps, SelectProps, SliderProps, SwitchProps,
-    TextareaProps,
+    KbdProps, LabelProps, RadioGroupProps, SelectProps, SliderProps, SwitchProps, TextareaProps,
 };
 // Data component Props
 pub use crate::data::{

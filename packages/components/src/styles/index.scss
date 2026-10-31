@@ -551,21 +551,10 @@
 // ------
 
 @import './components/background.scss';
-@import './components/avatar.scss';
-@import './components/button.scss';
-@import './components/icon_button.scss';
-@import './components/input.scss';
-@import './components/select.scss';
-@import './components/card.scss';
 @import './components/image.scss';
-@import './components/badge.scss';
-@import './components/checkbox.scss';
-@import './components/radio.scss';
 @import './components/divider.scss';
 @import './components/icon.scss';
 @import './components/arrow.scss';
-@import './components/switch.scss';
-@import './components/slider.scss';
 @import './components/number_input.scss';
 @import './components/search.scss';
 @import './components/input_wrapper.scss';
@@ -619,6 +608,7 @@
 @import './vue-mirror/components/HkBadge.scss';
 @import './vue-mirror/components/HkAvatar.scss';
 @import './vue-mirror/components/HkCard.scss';
+@import './vue-mirror/components/HkCornerBadge.scss';
 @import './vue-mirror/components/HkSpinner.scss';
 
 // ------

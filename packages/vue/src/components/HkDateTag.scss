@@ -1,33 +1,43 @@
 // AI-generated: developed with the DeepSeek Harness agent (model DeepSeek V4.1 Flash); human-directed.
 
-/* HkDateTag — the locale-aware stacked date capsule (see the component
- * docblock for the contract). Rows are calendar segments; the year and
- * the optional time row read as context (muted, a touch smaller), the
- * month/day figures carry the full text color. */
+/* HkDateTag — the locale-aware one-line date pill (see the component
+ * docblock for the contract). Segments are the calendar figures laid
+ * out on ONE horizontal line in the active locale's order; the year
+ * and the optional time segment read as context (muted ink). */
 
 .hk-date-tag {
   display: inline-flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: baseline;
   padding: var(--space-2, 2px) var(--space-10, 0.625rem);
   border-radius: var(--radius-full, 999px);
   background: rgb(var(--color-text) / 6%);
   white-space: nowrap;
+  /* One size for the whole pill: segments AND separators inherit it,
+   * so a large ambient host font cannot inflate the separators. */
+  font-size: var(--text-2xs, 0.625rem);
+  line-height: 1.4;
 }
 
-.hk-date-tag__row {
-  display: block;
-  text-align: center;
-  line-height: 1.25;
-  font-size: var(--text-2xs, 0.625rem);
+.hk-date-tag__seg {
   font-variant-numeric: tabular-nums;
   color: rgb(var(--color-text));
 }
 
-/* Context rows: the year (wherever the locale puts it) and the optional
- * time row — muted and a touch smaller than the month/day figures. */
-.hk-date-tag__row--year,
-.hk-date-tag__row--time {
+/* Context segments: the year (wherever the locale puts it) and the
+ * optional time segment — muted, same size so the one-line baseline
+ * stays even. */
+.hk-date-tag__seg--year,
+.hk-date-tag__seg--time {
   color: rgb(var(--color-text) / 55%);
-  font-size: calc(var(--text-2xs, 0.625rem) - 1px);
+}
+
+/* The locale's own separator literals (and the blank one ahead of the
+ * time segment) — muted like the context ink. `pre` keeps that blank
+ * separator's single space alive: a space-only flex item would
+ * otherwise trim it at line end under the pill's nowrap and glue the
+ * time segment to the date. */
+.hk-date-tag__sep {
+  color: rgb(var(--color-text) / 55%);
+  white-space: pre;
 }

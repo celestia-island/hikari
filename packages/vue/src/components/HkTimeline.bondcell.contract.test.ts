@@ -1,10 +1,10 @@
 /**
  * Source contract for the bond CELLS of the horizontal stepper (2026-10-31
- * user rule).
+ * user rule; 60 % share since the same evening's second look).
  *
  * The row is read as one cell per step plus one cell per bond: the steps
  * keep their content width, the leftover splits into EQUAL bond cells, and
- * each bond paints 80 % of its own cell CENTERED, so both ends keep a 10 %
+ * each bond paints 60 % of its own cell CENTERED, so both ends keep a 20 %
  * air gap. Before that rule the bond filled whatever the step had left after
  * its label, minus two fixed 4px margins — measured on a real engine at the
  * provider wizard's 590px row that put the bond 12px off its own label but
@@ -95,7 +95,7 @@ describe("horizontal bond cell contract", () => {
     // while the bond→node air is margin alone — the 12/4 asymmetry that
     // made the bond look glued to the next circle.
     expect(cell).toContain(`margin-inline: calc(-1 * ${GAP}) 0;`);
-    // The box must not paint itself: the visible 80 % is the ::before.
+    // The box must not paint itself: the visible 60 % is the ::before.
     expect(cell).toContain("background: none;");
     // The ::before resolves percentage insets against this box.
     expect(cell).toContain("position: relative;");
@@ -106,7 +106,7 @@ describe("horizontal bond cell contract", () => {
     expect(blockFor(".hk-timeline-step")).toContain(`gap: ${GAP};`);
   });
 
-  it("paints 80 % of the cell centred with a 10 % inset on each end", () => {
+  it("paints 60 % of the cell centred with a 20 % inset on each end", () => {
     // The parser above only yields top-level rules; the paint lives in the
     // nested block, so lift it out of the cell rule's body.
     const paint = /&::before\s*\{([^}]*)\}/.exec(blockFor(BOND_CELL))?.[1] ?? "";
@@ -114,18 +114,31 @@ describe("horizontal bond cell contract", () => {
     expect(paint).toContain('content: "";');
     expect(paint).toContain("position: absolute;");
     expect(paint).toContain("inset-block: 0;");
-    expect(paint).toContain("inset-inline: 10%;");
+    expect(paint).toContain("inset-inline: 20%;");
     expect(paint).toContain("background: var(--_bond-color);");
-    // Percentage PADDING would resolve against the step, not the bond.
-    expect(src).not.toMatch(/padding-inline:\s*10%/);
+    // Percentage PADDING would resolve against the step, not the bond —
+    // ban the MECHANISM on both boxes, not one pinned value (a stray
+    // `padding-inline: 10%` beside the correct inset would widen the paint
+    // through the padding box and slip past a value-pinned regex).
+    expect(blockFor(BOND_CELL)).not.toMatch(/padding-inline:/);
+    expect(paint).not.toMatch(/padding-inline:/);
   });
 
-  it("keeps a visible bond floor the collapse measurement can see", () => {
+  it("reserves the two-margin-era collapse threshold through its floor", () => {
     const cell = blockFor(BOND_CELL);
-    // A clamped row must still paint a bond, and the row's max-content
-    // width must keep reserving it — otherwise collapse="auto" measures the
-    // row narrower than it renders and swaps the window away too early.
-    expect(cell).toContain(`min-width: calc(0.5rem + ${GAP});`);
+    // The floor (half a rem plus two gaps, minus the cancelled gap) reserves
+    // the same sixteen outer pixels per bond the old two 4px margins
+    // carried, so collapse="auto" measures the row's max-content width at
+    // the two-margin-era threshold — never earlier, never later.
+    expect(cell).toContain(`min-width: calc(0.5rem + 2 * ${GAP});`);
+    // A definite flex-basis reserves NOTHING: engines size a flex item's
+    // intrinsic contribution at max(min-width, content) and ignore the
+    // basis (measured: a 100px basis on an empty item contributed its 8px
+    // floor). The basis must not creep back in place of the floor — nor as
+    // the shorthand `flex:`, whose basis component would be equally silent
+    // while the literal reads like a reservation.
+    expect(cell).not.toContain("flex-basis");
+    expect(cell).not.toMatch(/\bflex\s*:/);
   });
 
   it("publishes one bond colour token for every status", () => {

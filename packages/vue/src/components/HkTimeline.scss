@@ -312,11 +312,13 @@
   }
 }
 
-/* ── Bond cells (2026-10-31 user rule) ──────────────────────────────────
+/* ── Bond cells (2026-10-31 user rule; 60 % share the same evening) ────
    The horizontal row reads as one cell per step plus one cell per bond: the
    steps keep their content width, the leftover splits into EQUAL bond cells,
-   and each bond paints 80 % of its cell CENTERED, so both ends keep a 10 %
-   air gap. Two mechanics make that exact:
+   and each bond paints 60 % of its cell CENTERED, so both ends keep a 20 %
+   air gap. (The first cut painted 80 %/10 % — centred, but the completed
+   bond read as long as ever, so the share was trimmed the same evening.)
+   Three mechanics make that exact:
 
    1. The bond's box must span the WHOLE cell. Its cell begins where its own
       label ends, but the step's flex gap already sits in front of it (that
@@ -325,39 +327,48 @@
       SAME `--hk-timeline-step-gap` token the step's `gap` uses. Before this
       the gap counted twice and the bond ran 12px off its label but only 4px
       off the next node: the completed bond read as glued to the next circle.
-   2. The painted 80 % cannot be `padding-inline` — a percentage padding
+   2. The painted share cannot be `padding-inline` — a percentage padding
       resolves against the CONTAINING block (the step), not the bond's own
-      box, which would inset it by a slice of the step instead of 10 % of the
-      cell. So the colour moves to a ::before pinned `inset-inline: 10%`,
+      box, which would inset it by a slice of the step instead of 20 % of the
+      cell. So the colour lives on a ::before pinned `inset-inline: 20%`,
       which does resolve against the bond. The status rules below therefore
       publish `--_bond-color`; the vertical rail keeps painting its own box
       (it is a rail hanging under the node, not a cell-wide bond).
-
-   The floor keeps a squeezed row honest: the cell absorbs the gap on top of
-   a half-rem of bond, so the narrowest full row still paints a visible line.
-   Its outer size is that floor MINUS the cancelled gap, i.e. half a rem per
-   bond — eight of the sixteen pixels the old two 4px margins reserved, so
-   `collapse="auto"` (HkTimeline.tsx measures this max-content width) fires
-   about 32px earlier than before across a five-step row, never later.
-   Bounded cost, accepted: in a row squeezed past the floor (reachable through
-   `collapse="never"`, or the full-mode frame that a label change and a
-   hysteresis un-collapse render before re-measuring) the box keeps its floor
-   and overhangs the next step by a QUARTER of the row's shortfall — ~6px at a
-   430px host, ~14px at 400px — so the bond paints under that step's circle
-   until the overhang outgrows the 24px circle itself (host ≲ 362px), where a
-   visible stub sits beside it. Shrinking the floor to nothing would trade
-   this for a bond that vanishes on the narrowest hosts. */
+   3. The row-width RESERVATION is a min-width floor, sized to the two-margin
+      era at the stock 8px gap: half a rem plus two gaps, minus the cancelled
+      gap, reserves the same sixteen outer pixels per bond the old fixed
+      4px+4px margins carried, so `collapse="auto"` (HkTimeline.tsx measures
+      the row's max-content width) switches to the window at exactly the
+      threshold the two-margin era had — never earlier, never later. (A host
+      that retunes `--hk-timeline-step-gap` shifts the threshold by the
+      difference: the old margins were fixed 16px outer while this floor
+      reserves gap+8. And a definite `flex-basis` reserves NOTHING here:
+      engines size a flex item's intrinsic contribution at
+      max(min-width, content) and ignore the basis — measured, a 100px basis
+      on an empty item contributed only its 8px floor.) The floor only binds
+      when a row is squeezed below its natural width, which `collapse="auto"`
+      never lets happen for windowable rows (the window takes over; a ≤3-step
+      row stays full-mode at any width, but the floor then behaves exactly as
+      both prior eras' floors did); through `collapse="never"` — or the
+      full-mode frame a label change renders before re-measuring — the pinned
+      24px box paints 14.4px inset 4.8px, and that paint slides UNDER the
+      next step's 24px circle for as long as the overflow stays under 24px
+      (host ≳ 380px for the five-step wizard row). Below that a small stub
+      shows beside the circle (onset ~381px, ~5px by 360px) — marginally
+      tighter than the two-margin geometry's own stub in this manually-forced
+      mode (onset ~384px, ~6px by 360px), and bounded below by the width
+      where a label reaches the next circle (~400px for this row). */
 .hk-timeline[data-mode="full"][data-orientation="horizontal"] .hk-timeline-step [data-el="connector"] {
   position: relative;
   margin-inline: calc(-1 * var(--hk-timeline-step-gap, var(--space-8, 8px))) 0;
-  min-width: calc(0.5rem + var(--hk-timeline-step-gap, var(--space-8, 8px)));
+  min-width: calc(0.5rem + 2 * var(--hk-timeline-step-gap, var(--space-8, 8px)));
   background: none;
 
   &::before {
     content: "";
     position: absolute;
     inset-block: 0;
-    inset-inline: 10%;
+    inset-inline: 20%;
     background: var(--_bond-color);
   }
 }
@@ -426,7 +437,7 @@
   }
 
   [data-el="connector"] {
-    // The bonds paint 80 % of their cell through a ::before (see the
+    // The bonds paint 60 % of their cell through a ::before (see the
     // full-mode cell rule); the token is the single source for both that
     // paint and the vertical rail's own box.
     --_bond-color: var(--hi-color-primary);
@@ -516,7 +527,7 @@
 
 // Status crossfade: the data-status driven colors (indicator fill/border,
 // label color, connector fill) transition instead of flipping. The
-// horizontal bond's paint lives on its ::before (the 80 % cell rule), so
+// horizontal bond's paint lives on its ::before (the 60 % cell rule), so
 // that box rides the crossfade too — without it a status flip snaps there
 // while the vertical rail keeps easing.
 .hk-timeline-step [data-el="indicator"],

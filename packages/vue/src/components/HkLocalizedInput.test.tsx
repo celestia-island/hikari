@@ -558,13 +558,10 @@ describe("HkLocalizedInput", () => {
         });
       },
     });
-    app.mount(container);
+    const vm = app.mount(container);
     mounts.push({ app, container });
     // Simulate an app-level locale switch mid-edit.
-    const state = app._instance?.proxy as unknown as {
-      sourceLang: string;
-    };
-    state.sourceLang = "zh-Hans";
+    Object.assign(vm.$data, { sourceLang: "zh-Hans" });
     await nextTick();
     await nextTick();
     expect(events.at(-1)).toBe("zh-Hans");

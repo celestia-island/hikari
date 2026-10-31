@@ -468,11 +468,11 @@ describe("useSidebarRail — pin window (expand must not replay the slide)", () 
     // The shared subscription caches per query string: clear it so this
     // mount reads the stubbed reduce state instead of a cached false.
     __teardownMediaQueries();
-    vi.spyOn(window, "matchMedia").mockReturnValue({
-      matches: true,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    } as unknown as MediaQueryList);
+    // A REAL MediaQueryList with `matches` shadowed: `matches` is getter-only
+    // on the real object, and a literal cannot stand in for the interface.
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    Object.defineProperty(reduced, "matches", { configurable: true, value: true });
+    vi.spyOn(window, "matchMedia").mockReturnValue(reduced);
     try {
       const rail = mountRail();
       expect(rail.reducedMotion.value).toBe(true);

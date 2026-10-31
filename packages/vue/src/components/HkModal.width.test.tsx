@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkModal, { MODAL_WIDTH_PRESETS, resolveModalWidth } from "./HkModal";
+import { invalidInput } from "../test-utils/invalid";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -44,7 +45,7 @@ describe("resolveModalWidth", () => {
   });
 
   it("coerces a numeric width from JS consumers instead of throwing", () => {
-    expect(resolveModalWidth(560 as unknown as string)).toBe("560");
+    expect(resolveModalWidth(invalidInput<string>(560))).toBe("560");
   });
 
   it("does not inherit Object.prototype members as presets", () => {

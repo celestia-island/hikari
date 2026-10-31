@@ -4,28 +4,20 @@ import { createApp, h, nextTick, ref } from "vue";
 import { HkPlaceholderMarquee } from "./HkPlaceholderMarquee";
 import HkInput from "./HkInput";
 
-interface Mounted<T> {
+interface Mounted {
   app: ReturnType<typeof createApp>;
   container: HTMLElement;
-  vm: T;
 }
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
-function mountMarquee(props: Record<string, unknown> = {}): Mounted<InstanceType<typeof HkPlaceholderMarquee>> & { container: HTMLElement } {
+function mountMarquee(props: Record<string, unknown> = {}): Mounted {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const app = createApp({ render: () => h(HkPlaceholderMarquee, { ...props }) });
   app.mount(container);
   mounts.push({ app, container });
-  const root = app._container?.firstElementChild
-    ? (app as unknown as { _instance?: { proxy?: InstanceType<typeof HkPlaceholderMarquee> } })._instance?.proxy
-    : undefined;
-  void root;
-  // The component root instance: mount() renders a single root node owned by
-  // HkPlaceholderMarquee, so the app's root proxy IS the marquee instance.
-  const vm = (app._instance as unknown as { proxy: InstanceType<typeof HkPlaceholderMarquee> } | undefined)?.proxy;
-  return { app, container, vm: vm! };
+  return { app, container };
 }
 
 function mountInput(props: Record<string, unknown> = {}) {

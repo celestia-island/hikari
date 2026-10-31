@@ -4,6 +4,7 @@ const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 import { createHash } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import type { Plugin } from "vite";
 
 /** SHA-256(raw) → first 4 bytes → Crockford Base32 (6 chars). Deterministic. */
 function toReadableHash(raw: string): string {
@@ -18,18 +19,26 @@ function toReadableHash(raw: string): string {
   return result;
 }
 
-/** Vite plugin: after build, extract entry chunk hash → SHA-256 → Crockford Base32 → inject window.__PANEL_BUILD_HASH__. */
-export function buildHashPlugin() {
+/**
+ * Vite plugin: after build, extract entry chunk hash → SHA-256 → Crockford
+ * Base32 → inject window.__PANEL_BUILD_HASH__.
+ *
+ * Declaring the return type as `Plugin` is what types the hook parameters:
+ * `configResolved` receives Vite's real `ResolvedConfig`, `generateBundle`
+ * receives Rollup's real `OutputBundle`, and narrowing on `chunk.type`
+ * separates `OutputChunk` from `OutputAsset` without a cast.
+ */
+export function buildHashPlugin(): Plugin {
   let outDir = "";
   let panelHash = "";
 
   return {
     name: "build-hash",
-    configResolved(cfg: any) {
+    configResolved(cfg) {
       outDir = cfg.build.outDir;
     },
-    generateBundle(_: any, bundle: any) {
-      for (const chunk of Object.values(bundle) as any[]) {
+    generateBundle(_options, bundle) {
+      for (const chunk of Object.values(bundle)) {
         if (chunk.type === "chunk" && chunk.isEntry) {
           const fn = chunk.fileName.split("/").pop()?.replace(/\.js$/, "") ?? "";
           const parts = fn.split("-");

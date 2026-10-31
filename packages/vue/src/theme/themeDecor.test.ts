@@ -10,6 +10,7 @@ import {
   themeDecorVersion,
   THEME_DECOR_SLOT_PATTERN,
 } from "./themeDecor";
+import { invalidInput } from "../test-utils/invalid";
 
 /**
  * The decor registry contract.
@@ -127,7 +128,7 @@ describe("themeDecor registry", () => {
     expect(() => registerThemeDecor({ themeId: "", slot, component: stub("x") }))
       .toThrow(/theme id/);
     expect(() =>
-      registerThemeDecor({ themeId: "alpha", slot, component: undefined as unknown as Component }),
+      registerThemeDecor({ themeId: "alpha", slot, component: invalidInput(undefined) }),
     ).toThrow(/without a component/);
     expect(themeDecorSlots()).not.toContain(slot);
   });

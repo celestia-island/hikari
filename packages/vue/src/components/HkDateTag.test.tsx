@@ -130,6 +130,6 @@ describe("HkDateTag value normalization", () => {
 describe("HkDateTag module surface", () => {
   it("exports the same component as the default and named binding", () => {
     expect(HkDateTagDefault).toBe(HkDateTag);
-    expect((HkDateTag as unknown as { name: string }).name).toBe("HkDateTag");
+    expect(HkDateTag.name).toBe("HkDateTag");
   });
 });

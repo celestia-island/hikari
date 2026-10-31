@@ -17,7 +17,7 @@ import { ancestorZoom } from "../runtime/cssZoom";
 import { popupViewportRect } from "../runtime/popupBounds";
 import { viewportGutterPx } from "../runtime/viewportGutter";
 import { useMenuGroupState } from "../composables/useMenuGroupState";
-import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
+import HkSelectPanel, { type PanelAnchor, type SelectPanelPlacement } from "./HkSelectPanel";
 import HkTooltip from "./HkTooltip";
 import "./HkMenu.scss";
 
@@ -66,16 +66,6 @@ export interface HkMenuItem {
  *  panel box is measured by HkSelectPanel itself. */
 const CASCADE_PANEL_W = 224;
 
-/**
- * Minimal anchor contract HkSelectPanel actually relies on (rect + hit
- * containment). Cascade levels anchor to synthetic objects derived from
- * the parent row's live rect — the panel then does all real positioning.
- */
-interface PanelAnchor {
-  getBoundingClientRect(): DOMRect;
-  contains(node: Node): boolean;
-}
-
 /** Zero-size rect at a point (cascade anchors have no extent). */
 function pointRect(left: number, top: number): DOMRect {
   return {
@@ -115,7 +105,7 @@ export default defineComponent({
     items: { type: Array as PropType<HkMenuItem[]>, required: true },
     open: { type: Boolean, required: true },
     /** Anchor element for the desktop popout. */
-    anchorRef: { type: Object as PropType<HTMLElement | null>, default: null },
+    anchorRef: { type: Object as PropType<PanelAnchor | null>, default: null },
     /** Base placement of the desktop panel relative to the anchor. */
     placement: {
       type: String as PropType<
@@ -654,7 +644,7 @@ export default defineComponent({
       const panels: VNode[] = [
         <HkSelectPanel
           open={props.open}
-          anchorRef={cfg.anchor as unknown as HTMLElement | null}
+          anchorRef={cfg.anchor}
           title={props.title}
           placement={cfg.placement}
           offset={cfg.offset}
@@ -682,9 +672,7 @@ export default defineComponent({
           panels.push(
             <HkSelectPanel
               open={levelOpen}
-              anchorRef={
-                rowAnchor(level - 1, desktopPath.value[level - 1]) as unknown as HTMLElement
-              }
+              anchorRef={rowAnchor(level - 1, desktopPath.value[level - 1])}
               title={branch?.label ?? props.title}
               placement="bottom-start"
               offset={0}

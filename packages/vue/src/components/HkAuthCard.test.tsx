@@ -6,23 +6,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h } from "vue";
 
 import { HkAuthCard } from "./HkAuthCard";
+import { fakeAs } from "../test-utils/fakes";
 
 /** Injectable ResizeObserver: captures the callback so tests can fire
  *  content changes deterministically (happy-dom's own RO never fires —
  *  there is no layout engine). Same harness as useSizeMorph.test.ts. */
-class FakeResizeObserver {
+class FakeResizeObserver implements ResizeObserver {
   static instances: FakeResizeObserver[] = [];
   callback: () => void;
   observed: Element[] = [];
   disconnected = false;
 
-  constructor(callback: () => void) {
+  constructor(callback: (...args: never[]) => void) {
     this.callback = callback;
     FakeResizeObserver.instances.push(this);
   }
   observe(el: Element): void {
     this.observed.push(el);
   }
+  unobserve(): void {}
   disconnect(): void {
     this.disconnected = true;
   }
@@ -77,7 +79,7 @@ function fireTransitionEnd(el: HTMLElement, propertyName: string) {
 beforeEach(() => {
   FakeResizeObserver.instances = [];
   naturalHeight = 140;
-  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  globalThis.ResizeObserver = FakeResizeObserver;
   Object.defineProperty(offsetHeightOwner(), "offsetHeight", {
     configurable: true,
     get: () => naturalHeight,
@@ -194,7 +196,7 @@ describe("HkAuthCard", () => {
 
   it("snaps unclipped under prefers-reduced-motion without arming the backstop", () => {
     vi.useFakeTimers();
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as unknown as MediaQueryList);
+    vi.spyOn(window, "matchMedia").mockReturnValue(fakeAs<MediaQueryList>({ matches: true }));
     naturalHeight = 140;
     const c = mount(h(HkAuthCard, { title: "T" }));
     const wrapper = wrapperOf(c);

@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h } from "vue";
 
+/** The slice of HkMenu's item shape this stub renders. */
+interface MenuItemStub {
+  key: string;
+  label?: string;
+  checked?: boolean;
+  danger?: boolean;
+  children?: MenuItemStub[];
+}
+
 // HkMenu renders its levels through HkSelectPanel, which teleports to
 // body — replace just HkMenu (imported by the component from
 // ./HkMenu) with an inline passthrough that renders the header slot
@@ -10,18 +19,19 @@ import { createApp, h } from "vue";
 // re-declared as an emit, which would strip it from props).
 vi.mock("./HkMenu", async () => {
   const { defineComponent, h } = await import("vue");
+  const { asPropType } = await import("../utils/typing");
   const HMenuStub = defineComponent({
     name: "HMenu",
     props: {
       open: { type: Boolean, default: false },
-      items: { type: Array, default: () => [] },
+      items: { type: asPropType<MenuItemStub[]>(Array), default: () => [] },
       title: { type: String, default: "" },
     },
     setup(props, { slots, attrs }) {
       return () => {
         if (!props.open) return null;
         const rows: ReturnType<typeof h>[] = [];
-        const flatten = (items: any[]) => {
+        const flatten = (items: MenuItemStub[]) => {
           for (const item of items ?? []) {
             rows.push(
               h(
@@ -31,7 +41,10 @@ vi.mock("./HkMenu", async () => {
                   "data-key": item.key,
                   "data-checked": item.checked || undefined,
                   "data-danger": item.danger || undefined,
-                  onClick: () => (attrs as any).onSelect?.(item.key),
+                  onClick: () => {
+                    const onSelect = attrs.onSelect;
+                    if (typeof onSelect === "function") onSelect(item.key);
+                  },
                 },
                 item.label,
               ),
@@ -39,7 +52,7 @@ vi.mock("./HkMenu", async () => {
             if (item.children?.length) flatten(item.children);
           }
         };
-        flatten(props.items as any[]);
+        flatten(props.items);
         return h("div", { class: "menu-stub" }, [...(slots.header?.() ?? []), ...rows]);
       };
     },

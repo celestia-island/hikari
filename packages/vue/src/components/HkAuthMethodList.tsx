@@ -1,6 +1,22 @@
 import { defineComponent } from "vue";
 import HkTooltip from "./HkTooltip";
+import { asPropType } from "../utils/typing";
 import "./HkAuthMethodList.scss";
+
+/** One third-party sign-in provider tile. */
+export interface HkAuthMethodListEntry {
+  key: string;
+  /** Accessible name + tooltip text (the hover reveal). */
+  label: string;
+  /** Prebuilt icon vnode (brand SVG, <img>, …) rendered inside the
+   *  framed tile. Typed loose on purpose (same as HkIconButtonGroup
+   *  options): hosts materialize hikari against their own vue store,
+   *  and a hard VNode type breaks typecheck whenever the host's vue
+   *  minor differs. A missing icon falls back to the label's
+   *  initial. */
+  icon?: unknown;
+  disabled?: boolean;
+}
 
 /**
  * HkAuthMethodList — the auth card's third-party sign-in block (the
@@ -34,19 +50,7 @@ export default defineComponent({
     divider: { type: String, default: "" },
     /** Provider entries, in render order. */
     methods: {
-      type: Array as unknown as () => Array<{
-        key: string;
-        /** Accessible name + tooltip text (the hover reveal). */
-        label: string;
-        /** Prebuilt icon vnode (brand SVG, <img>, …) rendered inside the
-         *  framed tile. Typed loose on purpose (same as HkIconButtonGroup
-         *  options): hosts materialize hikari against their own vue store,
-         *  and a hard VNode type breaks typecheck whenever the host's vue
-         *  minor differs. A missing icon falls back to the label's
-         *  initial. */
-        icon?: unknown;
-        disabled?: boolean;
-      }>,
+      type: asPropType<HkAuthMethodListEntry[]>(Array),
       required: true,
     },
   },

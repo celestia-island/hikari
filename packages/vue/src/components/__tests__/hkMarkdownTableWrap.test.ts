@@ -41,7 +41,12 @@ describe("markdown table rail contract", () => {
       /return\s*`<div class="hk-md-table-wrap"><div class="hk-md-table-scroll">\$\{inner\}<\/div><\/div>`;/,
     );
     expect(tsx).toMatch(
-      /RendererCtor\.prototype as \{ table: \(t: unknown\) => string \}\)\.table\.call\(this, token\)/,
+      // Delegation shape: the override calls the BASE Renderer's `table` with
+      // the override's own `this`, so marked's table markup (alignments, head/
+      // body split) survives. The call moved from a hoisted constructor handle
+      // to `marked.Renderer.prototype` when the renderer wiring was retyped;
+      // the contract is the delegation itself, not the handle's spelling.
+      /marked\.Renderer\.prototype\.table\.call\(this, token\)/,
     );
   });
 

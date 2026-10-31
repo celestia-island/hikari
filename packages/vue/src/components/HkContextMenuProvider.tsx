@@ -26,6 +26,7 @@ import { computed, defineComponent, provide, ref, shallowRef } from "vue";
 
 import { popupViewportRect } from "../runtime/popupBounds";
 import HkMenu from "./HkMenu";
+import type { PanelAnchor } from "./HkSelectPanel";
 import {
   CONTEXT_MENU_KEY,
   type ContextMenuApi,
@@ -48,20 +49,19 @@ export function quadrantPlacement(x: number, y: number): "bottom-start" | "botto
   return right ? "top-start" : "top-end";
 }
 
-/** Zero-size client rect at the open point — the same synthetic-anchor
- * trick HkMenu's cascades use, so the shared panel positions a menu at a
- * POINTER exactly like it positions a submenu at a row. */
-function pointAnchor(x: number, y: number): HTMLElement {
+/** Zero-size anchor at the open point — the same synthetic-anchor trick
+ *  HkMenu's cascades use, so the shared panel positions a menu at a POINTER
+ *  exactly like it positions a submenu at a row.
+ *
+ *  `PanelAnchor` is the panel's own minimum (rect + hit containment), so a
+ *  plain object stands in for it with no assertion and no mounted element:
+ *  `contains` answers `false` for the panel, so an outside click closes the
+ *  menu — the same behavior a detached div with an overridden rect gave. */
+function pointAnchor(x: number, y: number): PanelAnchor {
   return {
-    getBoundingClientRect: () =>
-      ({
-        x, y,
-        left: x, top: y, right: x, bottom: y,
-        width: 0, height: 0,
-        toJSON: () => ({}),
-      }) as DOMRect,
+    getBoundingClientRect: () => new DOMRect(x, y, 0, 0),
     contains: () => false,
-  } as unknown as HTMLElement;
+  };
 }
 
 export default defineComponent({
@@ -103,8 +103,13 @@ export default defineComponent({
     };
     provide(CONTEXT_MENU_KEY, api);
 
-    const anchor = computed(() =>
-      pointAnchor(request.value?.x ?? 0, request.value?.y ?? 0),
+    /** A server render has no DOM to build the anchor from: pass `null`,
+     *  the same state as a consumer that gives HkMenu no anchor at all
+     *  (positioning only ever runs in the browser). */
+    const anchor = computed<PanelAnchor | null>(() =>
+      typeof document === "undefined"
+        ? null
+        : pointAnchor(request.value?.x ?? 0, request.value?.y ?? 0),
     );
     const placement = computed(() =>
       quadrantPlacement(request.value?.x ?? 0, request.value?.y ?? 0),

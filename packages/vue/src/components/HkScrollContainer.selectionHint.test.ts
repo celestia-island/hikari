@@ -34,6 +34,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive, ref } from "vue";
 
 import HkScrollContainer from "./HkScrollContainer";
+import { fakeAs } from "../test-utils/fakes";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -82,7 +83,10 @@ function stubBand(el: HTMLElement, top: number, bottom: number, rendered = true)
     x: 0, y: top, top, bottom, left: 0, right: 100, width: 100, height: bottom - top,
   } as DOMRect;
   vi.spyOn(el, "getBoundingClientRect").mockReturnValue(rect);
-  vi.spyOn(el, "getClientRects").mockReturnValue((rendered ? [rect] : []) as unknown as DOMRectList);
+  const band = rendered ? [rect] : [];
+  vi.spyOn(el, "getClientRects").mockReturnValue(
+    fakeAs<DOMRectList>(Object.assign(band, { item: (i: number) => band[i] ?? null })),
+  );
 }
 
 /** The viewport's visible band for these tests: drawn pixels 0..400. */

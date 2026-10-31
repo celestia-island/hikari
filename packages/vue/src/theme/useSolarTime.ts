@@ -167,6 +167,22 @@ function readStoredStrategy(): SolarLocationStrategy {
   return "timezone";
 }
 
+/** Shape guard for a parsed manual-location payload.
+ *
+ *  `in` narrows the unknown the parser hands back to an object carrying the
+ *  two keys, so no assertion is needed to read them — the stored blob is
+ *  untrusted (older build, hand-edited storage) and must be checked, not
+ *  declared. */
+function isSolarManualLocation(v: unknown): v is SolarManualLocation {
+  if (typeof v !== "object" || v === null) return false;
+  if (!("timeZone" in v) || !("hemisphere" in v)) return false;
+  return (
+    typeof v.timeZone === "string" &&
+    isSolarHemisphere(v.hemisphere) &&
+    isKnownTimeZone(v.timeZone)
+  );
+}
+
 function readStoredManualLocation(): SolarManualLocation | null {
   const raw = readStorageItem(SOLAR_MANUAL_LOCATION_STORAGE_KEY);
   if (!raw) return null;
@@ -176,15 +192,7 @@ function readStoredManualLocation(): SolarManualLocation | null {
   } catch {
     // Corrupt payload — healed away below.
   }
-  const cfg = parsed as { timeZone?: unknown; hemisphere?: unknown } | null;
-  if (
-    cfg &&
-    typeof cfg.timeZone === "string" &&
-    isSolarHemisphere(cfg.hemisphere) &&
-    isKnownTimeZone(cfg.timeZone)
-  ) {
-    return { timeZone: cfg.timeZone, hemisphere: cfg.hemisphere };
-  }
+  if (isSolarManualLocation(parsed)) return parsed;
   removeStorageItem(SOLAR_MANUAL_LOCATION_STORAGE_KEY);
   return null;
 }
@@ -351,16 +359,22 @@ async function browserGeolocation(): Promise<GeoLocation> {
 async function ipGeolocation(): Promise<GeoLocation> {
   const controller = new AbortController();
   const timer = scheduleCronAfter(() => controller.abort(), GEO_API_TIMEOUT_MS);
-  const d = await fetch(GEO_API_URL, { signal: controller.signal, cache: "no-store" })
+  const d: unknown = await fetch(GEO_API_URL, {
+    signal: controller.signal,
+    cache: "no-store",
+  })
     .then((r) => (r.ok ? r.json() : null))
-    .finally(() => timer.disconnect()) as { latitude?: number; longitude?: number } | null;
-  if (
-    d &&
-    typeof d.latitude === "number" &&
-    typeof d.longitude === "number" &&
-    (Math.abs(d.latitude) > 0.01 || Math.abs(d.longitude) > 0.01)
-  ) {
-    return { lat: d.latitude, lng: d.longitude };
+    .finally(() => timer.disconnect());
+  // The body is whatever the service sent: narrow it, never declare it.
+  if (d && typeof d === "object" && "latitude" in d && "longitude" in d) {
+    const { latitude, longitude } = d;
+    if (
+      typeof latitude === "number" &&
+      typeof longitude === "number" &&
+      (Math.abs(latitude) > 0.01 || Math.abs(longitude) > 0.01)
+    ) {
+      return { lat: latitude, lng: longitude };
+    }
   }
   throw new Error("ip geolocation unavailable");
 }

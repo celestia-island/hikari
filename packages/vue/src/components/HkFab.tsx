@@ -1,5 +1,6 @@
 import {
   defineComponent,
+  h,
   onBeforeUnmount,
   ref,
   type PropType,
@@ -128,15 +129,17 @@ export default defineComponent({
       const floated = props.layer === "top";
 
       // Icon precedence: slot > registry > inline chevron-down fallback.
-      // `as any` matches HkIcon — the registry returns a loose Component.
-      const RegistryIcon = props.icon ? (iconByName(props.icon) as any) : null;
+      // The registry returns `Component` (a union JSX cannot take as an
+      // element type), so the resolved glyph goes through `h()` — same
+      // typed path as HkIcon.
+      const RegistryIcon = props.icon ? iconByName(props.icon) : null;
 
       const mainIcon = (
         <span class="hk-fab-icon">
           {slots.icon
             ? slots.icon()
             : RegistryIcon
-              ? <RegistryIcon />
+              ? h(RegistryIcon)
               : (
                 // Inline chevron-down fallback (kept local to avoid
                 // pulling the lucide symbol through a non-registry path).
@@ -235,8 +238,8 @@ const RegistryGlyph = defineComponent({
   props: { name: { type: String, required: true } },
   setup(props) {
     return () => {
-      const Comp = iconByName(props.name) as any;
-      return <span class="hk-fab-mini-icon"><Comp /></span>;
+      const Comp = iconByName(props.name);
+      return <span class="hk-fab-mini-icon">{h(Comp)}</span>;
     };
   },
 });

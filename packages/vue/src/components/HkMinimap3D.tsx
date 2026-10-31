@@ -178,7 +178,7 @@ export default defineComponent({
       root.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
         mesh.geometry?.dispose();
-        const mat = (mesh as unknown as { material?: THREE.Material | THREE.Material[] }).material;
+        const mat = mesh.material;
         if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
         else mat?.dispose();
       });

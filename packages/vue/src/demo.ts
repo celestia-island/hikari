@@ -1,7 +1,14 @@
 import './demo.scss'
-import { createApp } from 'vue'
+import { createApp, type Component } from 'vue'
 import { initTheme } from './theme/useTheme'
+import { asIndexable, type HostWindow } from './utils/typing'
 import * as hikari from './index'
+
+/** The docs harness injects this global before the demo bundle runs (see the
+ *  demo html shell); a normal page never has it. */
+interface DemoGlobals {
+  __HIKARI_TPL__?: string
+}
 
 // Mobile UX contract (viewport zoom never refused; the tap-highlight reset
 // lives in the canonical host reset, styles/reset.scss). Applied at
@@ -11,12 +18,15 @@ hikari.applyViewportPolicy({ allowZoomOut: true })
 localStorage.setItem('hikari-theme', 'default')
 initTheme()
 
-const tpl = (window as any).__HIKARI_TPL__
+const tpl = (window as HostWindow<DemoGlobals>).__HIKARI_TPL__
 if (tpl) {
   const app = createApp({ template: tpl })
-  for (const [name, comp] of Object.entries(hikari)) {
-    if (name.startsWith('H') && typeof comp === 'object') {
-      app.component(name, comp as any)
+  for (const [name, value] of Object.entries(asIndexable(hikari))) {
+    // The namespace also carries utilities, constants and types; the
+    // H-prefixed object entries are the `defineComponent` results, which is
+    // the set a template-first demo needs registered globally.
+    if (name.startsWith('H') && typeof value === 'object' && value !== null) {
+      app.component(name, value as Component)
     }
   }
   app.mount('#app')

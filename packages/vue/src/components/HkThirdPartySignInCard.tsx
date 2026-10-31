@@ -1,7 +1,8 @@
 import { defineComponent } from "vue";
 
 import { HkAuthCard } from "./HkAuthCard";
-import HkAuthMethodList from "./HkAuthMethodList";
+import HkAuthMethodList, { type HkAuthMethodListEntry } from "./HkAuthMethodList";
+import { asPropType } from "../utils/typing";
 
 import "./HkThirdPartySignInCard.scss";
 
@@ -71,15 +72,9 @@ export const HkThirdPartySignInCard = defineComponent({
     /** Provider entries, in render order — same item shape as
      *  HkAuthMethodList's `methods`. */
     methods: {
-      type: Array as unknown as () => Array<{
-        key: string;
-        /** Accessible name + tooltip text (the hover reveal). */
-        label: string;
-        /** Prebuilt icon vnode rendered inside the framed tile; a
-         *  missing icon falls back to the label's initial. */
-        icon?: unknown;
-        disabled?: boolean;
-      }>,
+      /** Exactly HkAuthMethodList's entry contract — importing it keeps
+       *  the two cards' provider shapes from drifting apart. */
+      type: asPropType<HkAuthMethodListEntry[]>(Array),
       required: true,
     },
   },

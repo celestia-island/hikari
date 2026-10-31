@@ -71,7 +71,7 @@ export const HkPhoneInput = defineComponent({
     name: { type: String, default: undefined },
     /** Fired when Enter is pressed inside the number field (form
      *  submit). Forwarded to the inner HkInput. */
-    submitOnEnter: { type: Function, default: undefined },
+    submitOnEnter: { type: Function as PropType<() => void>, default: undefined },
   },
   emits: {
     "update:modelValue": (_value: string) => true,

@@ -22,16 +22,17 @@ vi.mock("./HkTooltip", () => ({
 import HkTreemapStage from "./HkTreemapStage";
 import type { HkTreemapNode } from "./HkTreemap";
 
-class FakeResizeObserver {
+class FakeResizeObserver implements ResizeObserver {
   static instances: FakeResizeObserver[] = [];
   readonly observed: Element[] = [];
   disconnected = false;
-  constructor(readonly callback: () => void) {
+  constructor(readonly callback: (...args: never[]) => void) {
     FakeResizeObserver.instances.push(this);
   }
   observe(element: Element): void {
     this.observed.push(element);
   }
+  unobserve(): void {}
   disconnect(): void {
     this.disconnected = true;
   }
@@ -96,7 +97,7 @@ async function setSize(mounted: { container: HTMLElement }, width = 400, height 
 beforeEach(() => {
   vi.clearAllMocks();
   FakeResizeObserver.instances = [];
-  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  globalThis.ResizeObserver = FakeResizeObserver;
 });
 
 afterEach(() => {

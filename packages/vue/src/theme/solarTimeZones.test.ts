@@ -15,6 +15,7 @@ import {
   textureLngToAzimuthDeg,
   wedgePhiStartDeg,
 } from "./solarTimeZones";
+import { invalidInput } from "../test-utils/invalid";
 
 /** The wheel geometry: 24 unique whole-hour bands, west to east. */
 describe("SOLAR_TIME_ZONE_SECTORS", () => {
@@ -99,8 +100,10 @@ describe("sectorIndexForZone", () => {
   it("degrades unknown or non-string ids to the UTC band", () => {
     expect(sectorIndexForZone("Mars/Olympus_Mons")).toBe(11);
     expect(sectorIndexForZone("")).toBe(11);
-    // @ts-expect-error defensive runtime contract
-    expect(sectorIndexForZone(null)).toBe(11);
+    // A JS consumer handing `null` to a string parameter is the defensive
+    // contract this case exists for; the invalid fixture goes through the
+    // shared helper instead of a suppression directive.
+    expect(sectorIndexForZone(invalidInput<string>(null))).toBe(11);
   });
 });
 

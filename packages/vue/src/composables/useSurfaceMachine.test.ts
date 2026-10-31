@@ -108,7 +108,7 @@ describe("useSurfaceMachine driver", () => {
 
   it("settles open under total rAF starvation (flip timer + deadline only)", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     const rig = mountRig();
     rig.send("OPEN");
@@ -174,7 +174,7 @@ describe("useSurfaceMachine driver", () => {
 
   it("honors a measured CSS duration: settles only after duration+slack", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     // Real-browser shape: computed transition-duration of 0.3s. The
     // probe tightens the deadline to flip(120)+300+slack(80)=500 for the
@@ -201,7 +201,7 @@ describe("useSurfaceMachine driver", () => {
 
   it("TEND: a matching transitionend completes the phase early", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     const realGCS = window.getComputedStyle.bind(window);
     vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {
@@ -242,7 +242,7 @@ describe("useSurfaceMachine driver", () => {
 
   it("transitionstart re-arms the deadline once so a late-latched transition completes", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     const realGCS = window.getComputedStyle.bind(window);
     vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {

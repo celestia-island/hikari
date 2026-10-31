@@ -204,6 +204,11 @@ function uninstall(state: BridgeState) {
  */
 export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): () => void {
   if (typeof document === "undefined") return () => undefined;
+  // The same SSR gate one level down: `ensureOverlayRoot` reports the
+  // truly-absent root instead of inventing one, so bail before building a
+  // popup that could never be attached.
+  const overlayRoot = ensureOverlayRoot();
+  if (!overlayRoot) return () => undefined;
   const existing = INSTALLS.get(document);
   if (existing) return () => uninstall(existing);
 
@@ -224,7 +229,7 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
   // reason; the bridge shares their popup classes AND must share their
   // home. `pointer-events` stays none on both the root and the popup, so
   // the hosting subtree changes nothing about hit-testing.
-  ensureOverlayRoot().appendChild(popup);
+  overlayRoot.appendChild(popup);
 
   const state: BridgeState = {
     root: document,

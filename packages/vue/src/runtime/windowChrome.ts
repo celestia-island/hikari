@@ -46,6 +46,8 @@
  *      HkWindowControls) call `claimWindowChrome(by)` directly.
  */
 
+import { type HostWindow } from "../utils/typing";
+
 /** The window event name — the contract between the boot bar and the app. */
 export const CHROME_CLAIM_EVENT = "hk:chrome-claim";
 
@@ -99,8 +101,17 @@ interface TauriGlobalWindowLike {
 }
 
 interface TauriInternalsLike {
-  invoke?: unknown;
+  invoke?: (command: string, args?: Record<string, unknown>) => unknown;
   metadata?: { currentWindow?: { label?: unknown } };
+}
+
+/** The host-injected globals this module reads, as `window` extensions. */
+interface TauriGlobalScope {
+  __TAURI__?: { window?: { getCurrentWindow?: unknown } };
+}
+
+interface TauriInternalsScope {
+  __TAURI_INTERNALS__?: TauriInternalsLike;
 }
 
 /** True only where a real document exists (never during SSR). */
@@ -128,9 +139,7 @@ function noUnlisten(): void {
 /** The documented `__TAURI__` window API, normalized. */
 function globalWindowApi(): WindowApiLike | null {
   if (!canUseDom()) return null;
-  const scope = window as unknown as {
-    __TAURI__?: { window?: { getCurrentWindow?: unknown } };
-  };
+  const scope = window as HostWindow<TauriGlobalScope>;
   const api = scope.__TAURI__?.window;
   const get = api?.getCurrentWindow;
   if (typeof get !== "function") return null;
@@ -198,18 +207,12 @@ function internalsResize(handler: () => void): Promise<() => void> {
 /** The `__TAURI_INTERNALS__` IPC path, normalized. */
 function internalsWindowApi(): WindowApiLike | null {
   if (!canUseDom()) return null;
-  const scope = window as unknown as { __TAURI_INTERNALS__?: TauriInternalsLike };
+  const scope = window as HostWindow<TauriInternalsScope>;
   const internals = scope.__TAURI_INTERNALS__;
   const invoke = internals?.invoke;
   if (!internals || typeof invoke !== "function") return null;
   const send = (command: string): Promise<unknown> =>
-    call(() =>
-      (invoke as (cmd: string, args: Record<string, unknown>) => unknown).call(
-        internals,
-        command,
-        {},
-      ),
-    );
+    call(() => invoke.call(internals, command, {}));
   const label = internals.metadata?.currentWindow?.label;
 
   return {

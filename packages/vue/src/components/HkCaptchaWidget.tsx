@@ -2,6 +2,7 @@ import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type
 import { ShieldAlert } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
+import { asIndexable } from "../utils/typing";
 
 import "./HkCaptchaWidget.scss";
 
@@ -65,7 +66,7 @@ type GrecaptchaApi = {
 };
 
 function getGlobal(name: string): unknown {
-  return (window as unknown as Record<string, unknown>)[name];
+  return asIndexable(window)[name];
 }
 
 export const HkCaptchaWidget = defineComponent({

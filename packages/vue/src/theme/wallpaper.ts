@@ -209,10 +209,25 @@ function writeStored(slot: WallpaperStorageSlot, value: string): void {
  * compatibility debt (2026-09-08 slimming).
  */
 export function isWallpaperSource(
-  source: WallpaperSource | Record<string, unknown>,
+  source: WallpaperSource | Record<string, unknown> | null | undefined,
 ): source is WallpaperSource {
-  const raw = source as { type?: unknown };
-  return raw?.type === "solid" || raw?.type === "image" || raw?.type === "video" || raw?.type === "pipeline";
+  // A guard over untrusted STORED JSON must survive the shapes JSON can
+  // actually produce: a missing entry (`undefined`), an explicit `null`, and
+  // a non-object scalar. Callers feed it `JSON.parse`d
+  // `Array<Partial<CustomWallpaper>>`, so `w.source` is regularly absent —
+  // dereferencing it here would throw, and the caller's `catch {}` would
+  // then drop EVERY stored custom wallpaper (the next add/remove/update
+  // saves that truncated list back).
+  if (source == null || typeof source !== "object") return false;
+  // `Record<string, unknown>` supplies `type` for the open member of the
+  // union, so the discriminant is readable without an assertion.
+  const type: unknown = source.type;
+  return (
+    type === "solid" ||
+    type === "image" ||
+    type === "video" ||
+    type === "pipeline"
+  );
 }
 
 export function isTimeAware(
@@ -221,11 +236,11 @@ export function isTimeAware(
   // A period map is time-aware when ANY of its slots is a real source
   // object: dusk/night-only art is still time-aware, while `day: null`
   // (typeof null === "object") is not a period at all.
-  const map = sources as TimeAwareWallpaper;
+  if (typeof sources !== "object" || sources === null) return false;
   return (
-    map != null &&
-    typeof map === "object" &&
-    (isSourceObject(map.day) || isSourceObject(map.dusk) || isSourceObject(map.night))
+    ("day" in sources && isSourceObject(sources.day)) ||
+    ("dusk" in sources && isSourceObject(sources.dusk)) ||
+    ("night" in sources && isSourceObject(sources.night))
   );
 }
 
@@ -250,7 +265,15 @@ export function loadCustomWallpapers(): CustomWallpaper[] {
   try {
     const raw = readStored("custom");
     if (!raw) return [];
-    const list = JSON.parse(raw) as Array<Partial<CustomWallpaper>>;
+    const parsed: unknown = JSON.parse(raw);
+    // The stored value is untrusted: a shared-origin key collision or a
+    // hand edit can leave anything here. `JSON.parse` yielding "null",
+    // `{"a":1}` or `123` used to throw at `.filter`, the `catch` below turned
+    // that into `[]`, and the next add/remove/update saved the emptied list
+    // back — the same total-loss path the source-shape guard closes for a
+    // single malformed ENTRY.
+    if (!Array.isArray(parsed)) return [];
+    const list = parsed as Partial<CustomWallpaper>[];
     // One choke point for stored-shape migration: retired types drop out,
     // renamed types map forward. Anything without a normalizable source
     // is not a wallpaper anymore.

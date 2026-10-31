@@ -19,7 +19,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, defineComponent } from "vue";
+import { createApp, h, defineComponent, type VNodeChild } from "vue";
 
 import HkKanban from "./HkKanban";
 import HkScrollContainer from "./HkScrollContainer";
@@ -27,7 +27,10 @@ import HkScrollContainer from "./HkScrollContainer";
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
 
-function mountDock(slots: Record<string, () => any>, props: Record<string, unknown> = {}) {
+function mountDock(
+  slots: Record<string, () => VNodeChild>,
+  props: Record<string, unknown> = {},
+) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);

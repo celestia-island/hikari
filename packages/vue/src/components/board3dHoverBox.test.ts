@@ -8,6 +8,7 @@ import {
   normalizeHoverBounds,
 } from "./board3dHoverBox";
 import { HOVER_BOX_MIN_EXTENT_RATIO, HOVER_BOX_PADDING } from "../utils/scene3d";
+import { asIndexable } from "../utils/typing";
 
 /** A body mesh plus the decoration a scene normally hangs off it: a glow
  *  sprite far larger than the body and a CSS2D label anchor. */
@@ -25,7 +26,8 @@ function fixture() {
   anchor.add(corona);
 
   const chip = new THREE.Mesh(new THREE.BoxGeometry(50, 50, 50), new THREE.MeshBasicMaterial());
-  (chip as unknown as { isCSS2DObject: boolean }).isCSS2DObject = true;
+  // CSS2DObject sets this flag on itself; the fixture fakes the flag alone.
+  asIndexable(chip).isCSS2DObject = true;
   anchor.add(chip);
 
   anchor.updateMatrixWorld(true);

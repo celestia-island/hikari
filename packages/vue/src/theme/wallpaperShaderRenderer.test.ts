@@ -20,32 +20,56 @@ registerShaderPresets({
   bare: { fragment: "// frag" },
 });
 
-/** Private members the render loop reads; reached structurally, no `any`. */
-type PipelineInternals = {
-  canvas: HTMLCanvasElement | null;
-  currentPreset: string;
-  computeScale(): number;
-};
+/**
+ * Reach a `WallpaperShaderPipeline` member the class keeps private.
+ *
+ * TypeScript refuses to relate a class with private members to any structural
+ * view in EITHER direction, so no honest single assertion exists for these.
+ * `Reflect` states exactly what the test does — read/write a key the type
+ * system does not expose — and every read is narrowed at runtime.
+ */
+function priv(target: object, key: string): unknown {
+  return Reflect.get(target, key);
+}
 
-const internals = (p: WallpaperShaderPipeline): PipelineInternals =>
-  p as unknown as PipelineInternals;
+function setPriv(target: object, key: string, value: unknown): void {
+  Reflect.set(target, key, value);
+}
+
+/** Call a private method of `target`. */
+function callPriv(target: object, key: string): unknown {
+  const fn = priv(target, key);
+  if (typeof fn !== "function") {
+    throw new Error(`private member "${key}" is not callable`);
+  }
+  return Reflect.apply(fn, target, []);
+}
 
 /** Bind a preset + canvas size, then read the scale the shader would get. */
 function scaleFor(presetId: string, width: number, height: number): number {
   const p = new WallpaperShaderPipeline();
-  const i = internals(p);
-  i.currentPreset = presetId;
+  setPriv(p, "currentPreset", presetId);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  i.canvas = canvas;
-  return i.computeScale();
+  setPriv(p, "canvas", canvas);
+  const scale = callPriv(p, "computeScale");
+  if (typeof scale !== "number") {
+    throw new Error("computeScale did not answer a number");
+  }
+  return scale;
 }
 
 /** Minimal gl stub for the failure paths: clearColor no-ops, the first
- *  createShader answers null so createProgram bails before any real GL. */
-const failingGl = () =>
-  ({ clearColor: () => {}, createShader: () => null }) as unknown as WebGL2RenderingContext;
+ *  createShader answers null so createProgram bails before any real GL.
+ *  Starting from the (legal) empty-object assertion and then ASSIGNING each
+ *  member keeps every stub signature type-checked against WebGL2. */
+function failingGl(): WebGL2RenderingContext {
+  const gl = {} as WebGL2RenderingContext;
+  gl.clearColor = () => {};
+  gl.createShader = () => null;
+  return gl;
+}
 
 const ctx = (overrides: Partial<HkWallpaperSurfaceContext> = {}): HkWallpaperSurfaceContext => ({
   canvas: document.createElement("canvas"),
@@ -128,10 +152,9 @@ describe("WallpaperShaderPipeline.computeScale (render-config selection)", () =>
 
   it("falls back to 1.0 without a canvas, a render config, or a preset", () => {
     const p = new WallpaperShaderPipeline();
-    const i = internals(p);
-    i.currentPreset = "configured";
-    i.canvas = null; // never attached / already destroyed
-    expect(i.computeScale()).toBe(1.0);
+    setPriv(p, "currentPreset", "configured");
+    setPriv(p, "canvas", null); // never attached / already destroyed
+    expect(callPriv(p, "computeScale")).toBe(1.0);
     // A preset without a render config keeps the neutral scale.
     expect(scaleFor("bare", 1080, 2400)).toBe(1.0);
     // An unknown preset id likewise.
@@ -147,12 +170,6 @@ describe("WallpaperShaderPipeline.computeScale (render-config selection)", () =>
 // visual viewport many times without moving the canvas' CSS box
 // (fixed, 100% of the ICB), and each intermediate realloc discarded the
 // GPU texture → black flash. These tests pin both halves.
-type PipelineResizeInternals = {
-  canvas: HTMLCanvasElement | null;
-  gl: WebGL2RenderingContext | null;
-  onResize: () => void;
-};
-
 describe("WallpaperShaderPipeline resize policy", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -187,13 +204,28 @@ describe("WallpaperShaderPipeline resize policy", () => {
     stubGetter(document.documentElement, "clientHeight", opts.icbHeight);
   }
 
-  /** Bind a canvas + truthy gl onto the pipeline (resize gates on both). */
-  function bind(): { p: PipelineResizeInternals; canvas: HTMLCanvasElement } {
-    const p = new WallpaperShaderPipeline() as unknown as PipelineResizeInternals;
+  /**
+   * Bind a canvas + truthy gl onto the pipeline (resize gates on both).
+   *
+   * `canvas` / `gl` / `onResize` are private, so they are reached through
+   * `priv` / `setPriv` (see the helpers at the top) and the returned `p` is
+   * only the one-method facade the tests drive. `pipeline` is handed back for
+   * the disposal test, which needs the public `destroy()`.
+   */
+  function bind(): {
+    p: { onResize(): void };
+    canvas: HTMLCanvasElement;
+    pipeline: WallpaperShaderPipeline;
+  } {
+    const pipeline = new WallpaperShaderPipeline();
     const canvas = document.createElement("canvas");
-    p.canvas = canvas;
-    p.gl = {} as WebGL2RenderingContext;
-    return { p, canvas };
+    setPriv(pipeline, "canvas", canvas);
+    setPriv(pipeline, "gl", {} as WebGL2RenderingContext);
+    return {
+      p: { onResize: () => void callPriv(pipeline, "onResize") },
+      canvas,
+      pipeline,
+    };
   }
 
   /** Count writes to the canvas backing-store width (realloc proxy). */
@@ -208,7 +240,7 @@ describe("WallpaperShaderPipeline resize policy", () => {
         desc.set!.call(canvas, v);
       },
     });
-    restoreFns.push(() => delete (canvas as unknown as Record<string, unknown>).width);
+    restoreFns.push(() => Reflect.deleteProperty(canvas, "width"));
     return () => n;
   }
 
@@ -273,14 +305,14 @@ describe("WallpaperShaderPipeline resize policy", () => {
 
   it("cancels a pending realloc when the surface is disposed", () => {
     stubViewport({ icbWidth: 390, icbHeight: 700, dpr: 2 });
-    const { p, canvas } = bind();
+    const { p, canvas, pipeline } = bind();
     canvas.width = 390;
     canvas.height = 844;
     const writes = countWidthWrites(canvas);
 
     p.onResize();
     expect(vi.getTimerCount()).toBe(1); // the settle timer is armed
-    (p as unknown as WallpaperShaderPipeline).destroy();
+    pipeline.destroy();
     // destroy must CLEAR the timer, not merely orphan it: a live timer
     // that no-ops against a nulled canvas still holds the event loop
     // hostage in embedders and reads as "cancelled" to a canvas-write

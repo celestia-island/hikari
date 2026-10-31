@@ -1,4 +1,4 @@
-import { defineComponent, type PropType } from "vue";
+import { defineComponent, h, type PropType } from "vue";
 import {
   functionalIconComponent,
   functionalIconSvg,
@@ -39,12 +39,15 @@ export default defineComponent({
             <span class={cls} v-html={svg} />
           );
         }
-        const FuncComp = functionalIconComponent(props.name) as any;
-        return <span class={cls}><FuncComp /></span>;
+        // The registry hands back `Component` (a union that JSX cannot
+        // take as an element type), so the resolved component is invoked
+        // through `h()` — the typed path for a dynamic component.
+        const FuncComp = functionalIconComponent(props.name);
+        return <span class={cls}>{h(FuncComp)}</span>;
       }
 
-      const IconComp = iconByName(props.name) as any;
-      return <span class={cls}><IconComp /></span>;
+      const IconComp = iconByName(props.name);
+      return <span class={cls}>{h(IconComp)}</span>;
     };
   },
 });

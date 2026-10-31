@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkCheckbox from "./HkCheckbox";
+import { invalidInput } from "../test-utils/invalid";
 
 /**
  * HkCheckbox contract tests:
@@ -89,7 +90,8 @@ describe("HkCheckbox model states", () => {
   });
 
   it("maps modelValue=null to the indeterminate dash without checking the input", () => {
-    const c = mount(h(HkCheckbox, { modelValue: null as unknown as boolean }));
+    // deliberately type-invalid: JS consumers pass null to the boolean prop
+    const c = mount(h(HkCheckbox, { modelValue: invalidInput<boolean>(null) }));
     const box = c.querySelector<HTMLElement>(".hk-checkbox-box")!;
     expect(box.getAttribute("data-indeterminate")).toBe("");
     expect(box.hasAttribute("data-checked")).toBe(false);
@@ -107,7 +109,9 @@ describe("HkCheckbox model states", () => {
     expect(checked.querySelector(".hk-checkbox-icon")).toBeNull();
 
     // null in radio mode: no dash — indeterminate is checkbox-only.
-    const unset = mount(h(HkCheckbox, { modelValue: null as unknown as boolean, type: "radio" }));
+    const unset = mount(
+      h(HkCheckbox, { modelValue: invalidInput<boolean>(null), type: "radio" }),
+    );
     expect(unset.querySelector(".hk-checkbox-indeterminate")).toBeNull();
     expect(unset.querySelector(".hk-checkbox-dot")).toBeNull();
   });

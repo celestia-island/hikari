@@ -36,8 +36,11 @@ export default defineComponent({
      */
     spellcheck: { type: Boolean, default: undefined },
     /** Submit intent on Enter (no modifiers) — shared by every variant
-     * (the password surface intercepts Enter the same way). */
-    submitOnEnter: { type: Function, default: undefined },
+     * (the password surface intercepts Enter the same way). Typed rather
+     * than left as a bare `Function`: calling an untyped `Function`
+     * yields `any`, which is how a mistyped handler signature used to
+     * slip through. */
+    submitOnEnter: { type: Function as PropType<() => void>, default: undefined },
     /** Undefined keeps the element attribute off in the browser for the
      * password variant (where the runtime credential policy resolves
      * it); every other variant falls back to "off". */

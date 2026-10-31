@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import * as THREE from "three";
+import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 
 const H = vi.hoisted(() => {
   class FakeWebGLRenderer {
@@ -186,7 +187,7 @@ describe("HkBoard3D", () => {
     expect(body.userData.board3dId).toBe("node-1");
     expect(label.classList.contains("hk-board3d-label")).toBe(true);
     // Label rides the object as a CSS2D child at the requested offset.
-    const tag = body.children.find((c) => (c as unknown as { element?: HTMLElement }).element === label);
+    const tag = body.children.find((c) => c instanceof CSS2DObject && c.element === label);
     expect(tag).toBeDefined();
     expect(tag!.position.y).toBe(2);
 
@@ -329,7 +330,7 @@ describe("HkBoard3D", () => {
     };
     engine!.setObject("node", { object: body, label: chip() });
     const labelChildren = () =>
-      body.children.filter((c) => (c as unknown as { isCSS2DObject?: boolean }).isCSS2DObject).length;
+      body.children.filter((c) => c instanceof CSS2DObject).length;
     expect(labelChildren()).toBe(1);
 
     // Re-registering the same id must REPLACE its chip, not stack a second.
@@ -414,9 +415,9 @@ describe("HkBoard3D", () => {
     const body = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial());
     engine!.setObject("node", { object: body });
 
-    // A consumer casting the view to a mutable Map must not be able to
-    // desynchronise the board from its own scene.
-    (engine!.objects() as unknown as Map<string, unknown>).clear();
+    // An untyped consumer reaching for the mutable Map API must not be able
+    // to desynchronise the board from its own scene.
+    Map.prototype.clear.call(engine!.objects());
     expect(engine!.objects().has("node")).toBe(true);
     engine!.setObject("node", null);
     expect(body.parent).toBeNull();
@@ -448,7 +449,7 @@ describe("HkBoard3D", () => {
     // radius to `max(min, min(max, r))`, so a reversed window pins the
     // eye at 600 and defeats every fit (the mocked controls in this
     // suite do not clamp, hence the direct assertion).
-    const controls = engine!.controls as unknown as { minDistance: number; maxDistance: number };
+    const controls = engine!.controls;
     expect(controls.minDistance).toBe(2);
     expect(controls.maxDistance).toBe(600);
 
@@ -615,10 +616,8 @@ describe("HkBoard3D", () => {
     engine!.applyLighting({ ambientIntensity: 0.9 });
     engine!.fitGround({ min: [0, 0, 0], max: [10, 0, 10] });
     engine!.setAmbientIntensity(0.3);
-    const ambient = engine!.scene.children.find(
-      (c) => c.constructor.name === "AmbientLight",
-    ) as unknown as { intensity: number };
-    expect(ambient.intensity).toBeCloseTo(0.3, 5);
+    const ambient = engine!.scene.children.find((c) => c instanceof THREE.AmbientLight);
+    expect(ambient!.intensity).toBeCloseTo(0.3, 5);
   });
 
   it("disposes the lighting rig (and its shadow map) on unmount", async () => {
@@ -632,11 +631,9 @@ describe("HkBoard3D", () => {
       ambientIntensity: 0.9,
       points: [{ color: [1, 0, 0], intensity: 2, range: 10, position: [0, 3, 0] }],
     });
-    const sun = engine!.scene.children.find(
-      (c) => c.constructor.name === "DirectionalLight",
-    ) as unknown as { dispose: () => void; shadow: { dispose: () => void } };
-    const sunSpy = vi.spyOn(sun, "dispose");
-    const shadowSpy = vi.spyOn(sun.shadow, "dispose");
+    const sun = engine!.scene.children.find((c) => c instanceof THREE.DirectionalLight);
+    const sunSpy = vi.spyOn(sun!, "dispose");
+    const shadowSpy = vi.spyOn(sun!.shadow, "dispose");
     const scene = engine!.scene;
 
     const m = mounts.splice(0)[0];

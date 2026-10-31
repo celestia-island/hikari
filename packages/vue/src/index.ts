@@ -89,7 +89,7 @@ export { default as HSearchInput } from "./components/HkSearchInput";
 export { default as HSplash } from "./components/HkSplash";
 export { default as HkLoadingVeil } from "./components/HkLoadingVeil";
 export { default as HSelect } from "./components/HkSelect";
-export { default as HSelectPanel, type SelectPanelPlacement } from "./components/HkSelectPanel";
+export { default as HSelectPanel, type PanelAnchor, type SelectPanelPlacement } from "./components/HkSelectPanel";
 export { default as HSidebar } from "./components/HkSidebar";
 // Sidebar rail kit: the hover-reveal circular toggle. The rail/peek
 // geometry classes ship through the components' own scss imports and the
@@ -661,7 +661,7 @@ export {
 export { default as HkActionBar } from "./components/HkActionBar";
 export { default as HkAdaptiveDialog } from "./components/HkAdaptiveDialog";
 export { default as HkAlert } from "./components/HkAlert";
-export { default as HkAltSignIn } from "./components/HkAltSignIn";
+export { default as HkAltSignIn, type HkAltSignInEntry } from "./components/HkAltSignIn";
 export { default as HkAvatar } from "./components/HkAvatar";
 export { default as HkBadge } from "./components/HkBadge";
 export { default as HkBoard } from "./components/HkBoard";
@@ -810,7 +810,7 @@ export { default as HkDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";
 export { default as HkLogo } from "./components/HkLogo";
-export { default as HkAuthMethodList } from "./components/HkAuthMethodList";
+export { default as HkAuthMethodList, type HkAuthMethodListEntry } from "./components/HkAuthMethodList";
 export { default as HkAuthSubmitButton } from "./components/HkAuthSubmitButton";
 export { type HkDockBarAnchor as HkDockBarAnchor } from "./components/HkDockBar";
 export { type HkDockBarSurface as HkDockBarSurface } from "./components/HkDockBar";

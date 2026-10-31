@@ -214,7 +214,7 @@ describe("HkTabs segmented variant", () => {
   /** Mount with a live v-model and per-test tabs/slots. */
   function mountLive(
     extra: Record<string, unknown>,
-    slots?: Record<string, (...args: any[]) => unknown>,
+    slots?: Record<string, (...args: never[]) => unknown>,
   ): { container: HTMLElement; active: ReturnType<typeof ref<string>> } {
     const active = ref("a");
     const container = document.createElement("div");
@@ -594,7 +594,7 @@ describe("HkTabs panel morph (HkTransitionContainer consumption)", () => {
   }
 
   function freezeRaf(): void {
-    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
   }
 

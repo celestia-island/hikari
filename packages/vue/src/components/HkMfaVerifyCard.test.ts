@@ -19,11 +19,10 @@ function mount(render: () => ReturnType<typeof h>) {
 
 /** The card instance's exposed handles (clearProof / focusPassword). */
 function exposedOf(app: ReturnType<typeof createApp>): { clearProof: () => void } {
-  const instance = app._instance?.subTree?.component as unknown as {
-    exposed: { clearProof: () => void } | null;
-  } | null;
+  const instance = app._instance?.subTree?.component;
   expect(instance?.exposed, "the card exposes its proof handles").toBeTruthy();
-  return instance!.exposed!;
+  const exposed = instance!.exposed!;
+  return { clearProof: exposed.clearProof };
 }
 
 afterEach(() => {

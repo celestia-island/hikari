@@ -18,7 +18,7 @@ describe("HkConnectionStatus (shell)", () => {
   it("renders an inert unknown state with zero network calls", () => {
     const fetchSpy = vi.fn();
     const holder = globalThis.fetch;
-    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
     try {
       const container = document.createElement("div");
       document.body.appendChild(container);

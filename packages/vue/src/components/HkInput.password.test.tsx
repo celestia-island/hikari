@@ -6,6 +6,18 @@ import HkPasswordSurface from "./HkPasswordSurface";
 import { FILTER_PEDESTAL_L, NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
 import { passwordLevel } from "../utils/password";
 import { setReducedMotion } from "../runtime/animationBus";
+import { fakeAs, fakeFn } from "../test-utils/fakes";
+
+/** Only `.width` is read off the measurement; a real `TextMetrics` carries
+ *  eleven more measured fields the reveal pass never touches. */
+const fakeMetrics = (width: number): TextMetrics => fakeAs<TextMetrics>({ width });
+
+/** `createImageData` is overloaded (size form + ImageData form) and the reveal
+ *  pass only reads the pixel buffer — not width/height/colorSpace. */
+const fakeCreateImageData = fakeFn<CanvasRenderingContext2D["createImageData"]>(
+  (w: number, h: number): ImageData =>
+    fakeAs<ImageData>({ data: new Uint8ClampedArray(w * h * 4) }),
+);
 
 /**
  * HkInput variant="password" contract tests (the unified password field —
@@ -259,8 +271,8 @@ describe("HkInput password surface identity", () => {
 
   it("draws astral-plane glyphs whole instead of lone surrogates", async () => {
     const calls: string[] = [];
-    const ctxStub = {
-      canvas: {},
+    const ctxStub = fakeAs<CanvasRenderingContext2D>({
+      canvas: fakeAs<HTMLCanvasElement>({}),
       clearRect: () => {},
       save: () => {},
       restore: () => {},
@@ -269,16 +281,17 @@ describe("HkInput password surface identity", () => {
       beginPath: () => {},
       arc: () => {},
       fill: () => {},
-      measureText: () => ({ width: 10 }),
+      measureText: () => fakeMetrics(10),
       fillText: (text: string) => calls.push(text),
       font: "",
       fillStyle: "",
-      textAlign: "",
-      textBaseline: "",
-    };
+      textAlign: "start",
+      textBaseline: "alphabetic",
+    });
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (() =>
-      ctxStub) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(() => ctxStub);
     try {
       const { container } = mountPasswordInput("😀ab");
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
@@ -648,28 +661,27 @@ describe("HkInput password reveal eye", () => {
     // lazily on the first draw) and every subsequent frame must hit it
     // — a wholesale cache removal would silently pass the suite
     // without this count.
-    const ctxStub = {
-      canvas: {},
+    const ctxStub = fakeAs<CanvasRenderingContext2D>({
+      canvas: fakeAs<HTMLCanvasElement>({}),
       clearRect: () => {},
       save: () => {}, restore: () => {}, translate: () => {}, rotate: () => {},
       beginPath: () => {}, arc: () => {}, fill: () => {},
       rect: () => {}, clip: () => {},
-      measureText: () => ({ width: 10 }),
+      measureText: () => fakeMetrics(10),
       fillText: () => {},
       fillRect: () => {},
       drawImage: () => {},
       createPattern: () => ({}) as CanvasPattern,
-      createImageData: (w: number, h: number) => ({
-        data: new Uint8ClampedArray(w * h * 4),
-      }),
+      createImageData: fakeCreateImageData,
       putImageData: () => {},
       imageSmoothingEnabled: false,
       globalCompositeOperation: "source-over",
-      font: "", fillStyle: "", textAlign: "", textBaseline: "",
-    };
+      font: "", fillStyle: "", textAlign: "start", textBaseline: "alphabetic",
+    });
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (() =>
-      ctxStub) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(() => ctxStub);
     const originalGCS = window.getComputedStyle;
     let monoReads = 0;
     window.getComputedStyle = ((el: Element, ...rest: unknown[]) => {
@@ -729,16 +741,16 @@ describe("HkInput password reveal eye", () => {
     }
     const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (function (
-      this: HTMLCanvasElement,
-    ): CanvasRenderingContext2D {
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
       let rec = byCanvas.get(this);
       if (!rec) {
         rec = { canvas: this, texts: [], translateXs: [], patternFills: 0, drawImages: 0 };
         byCanvas.set(this, rec);
       }
       const r = rec;
-      return {
+      return fakeAs<CanvasRenderingContext2D>({
         canvas: this,
         clearRect: () => {},
         save: () => {},
@@ -748,7 +760,7 @@ describe("HkInput password reveal eye", () => {
         beginPath: () => {},
         arc: () => {},
         fill: () => {},
-        measureText: () => ({ width: 10 }),
+        measureText: () => fakeMetrics(10),
         fillText: (text: string) => r.texts.push(String(text)),
         fillRect: () => {},
         drawImage: () => r.drawImages++,
@@ -756,18 +768,16 @@ describe("HkInput password reveal eye", () => {
           r.patternFills++;
           return {} as CanvasPattern;
         },
-        createImageData: (w: number, h: number) => ({
-          data: new Uint8ClampedArray(w * h * 4),
-        }),
+        createImageData: fakeCreateImageData,
         putImageData: () => {},
         imageSmoothingEnabled: false,
         globalCompositeOperation: "source-over",
         font: "",
         fillStyle: "",
-        textAlign: "",
-        textBaseline: "",
-      } as unknown as CanvasRenderingContext2D;
-    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        textAlign: "start",
+        textBaseline: "alphabetic",
+      });
+    });
     try {
       const { container, input } = mountPasswordInput("abc", {
         revealStrategy: "noise",
@@ -851,16 +861,16 @@ describe("HkInput password reveal eye", () => {
     setReducedMotion(true);
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
     const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
-    HTMLCanvasElement.prototype.getContext = (function (
-      this: HTMLCanvasElement,
-    ): CanvasRenderingContext2D {
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
       let texts = textsByCanvas.get(this);
       if (!texts) {
         texts = [];
         textsByCanvas.set(this, texts);
       }
       const t = texts;
-      return {
+      return fakeAs<CanvasRenderingContext2D>({
         canvas: this,
         clearRect: () => {},
         save: () => {},
@@ -870,23 +880,21 @@ describe("HkInput password reveal eye", () => {
         beginPath: () => {},
         arc: () => {},
         fill: () => {},
-        measureText: () => ({ width: 10 }),
+        measureText: () => fakeMetrics(10),
         fillText: (text: string) => t.push(String(text)),
         fillRect: () => {},
         drawImage: () => {},
         createPattern: () => ({}) as CanvasPattern,
-        createImageData: (w: number, h: number) => ({
-          data: new Uint8ClampedArray(w * h * 4),
-        }),
+        createImageData: fakeCreateImageData,
         putImageData: () => {},
         imageSmoothingEnabled: false,
         globalCompositeOperation: "source-over",
         font: "",
         fillStyle: "",
-        textAlign: "",
-        textBaseline: "",
-      } as unknown as CanvasRenderingContext2D;
-    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        textAlign: "start",
+        textBaseline: "alphabetic",
+      });
+    });
     try {
       const { container } = mountPasswordInput("abc", {
         revealStrategy: "noise",
@@ -921,16 +929,16 @@ describe("HkInput password reveal eye", () => {
     // leave this test red, or the guard has no teeth.
     const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (function (
-      this: HTMLCanvasElement,
-    ): CanvasRenderingContext2D {
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
       let texts = textsByCanvas.get(this);
       if (!texts) {
         texts = [];
         textsByCanvas.set(this, texts);
       }
       const t = texts;
-      return {
+      return fakeAs<CanvasRenderingContext2D>({
         canvas: this,
         clearRect: () => {},
         save: () => {},
@@ -941,22 +949,20 @@ describe("HkInput password reveal eye", () => {
         arc: () => {},
         fill: () => {},
         fillRect: () => {},
-        measureText: () => ({ width: 10 }),
+        measureText: () => fakeMetrics(10),
         fillText: (text: string) => t.push(String(text)),
         drawImage: () => {},
         createPattern: () => ({}) as CanvasPattern,
-        createImageData: (w: number, h: number) => ({
-          data: new Uint8ClampedArray(w * h * 4),
-        }),
+        createImageData: fakeCreateImageData,
         putImageData: () => {},
         imageSmoothingEnabled: false,
         globalCompositeOperation: "source-over",
         font: "",
         fillStyle: "",
-        textAlign: "",
-        textBaseline: "",
-      } as unknown as CanvasRenderingContext2D;
-    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        textAlign: "start",
+        textBaseline: "alphabetic",
+      });
+    });
     // Freeze the frame bus without parking it: rAF callbacks never run.
     vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
@@ -996,16 +1002,16 @@ describe("HkInput password reveal eye", () => {
     // clean white glyphs, i.e. exactly the leak this PR exists to kill.
     const seen: Array<{ canvas: HTMLCanvasElement; texts: string[]; drawImages: number }> = [];
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (function (
-      this: HTMLCanvasElement,
-    ): CanvasRenderingContext2D {
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
       let rec = seen.find((r) => r.canvas === this);
       if (!rec) {
         rec = { canvas: this, texts: [], drawImages: 0 };
         seen.push(rec);
       }
       const r = rec;
-      return {
+      return fakeAs<CanvasRenderingContext2D>({
         canvas: this,
         clearRect: () => {},
         save: () => {},
@@ -1016,7 +1022,7 @@ describe("HkInput password reveal eye", () => {
         arc: () => {},
         fill: () => {},
         fillRect: () => {},
-        measureText: () => ({ width: 10 }),
+        measureText: () => fakeMetrics(10),
         fillText: (text: string) => r.texts.push(String(text)),
         drawImage: () => r.drawImages++,
         // ASYMMETRIC pattern failure: only the OFFSCREEN mask canvas
@@ -1030,18 +1036,16 @@ describe("HkInput password reveal eye", () => {
           r.canvas === document.querySelector(".hk-pwd-dots")
             ? ({} as CanvasPattern)
             : null,
-        createImageData: (w: number, h: number) => ({
-          data: new Uint8ClampedArray(w * h * 4),
-        }),
+        createImageData: fakeCreateImageData,
         putImageData: () => {},
         imageSmoothingEnabled: false,
         globalCompositeOperation: "source-over",
         font: "",
         fillStyle: "",
-        textAlign: "",
-        textBaseline: "",
-      } as unknown as CanvasRenderingContext2D;
-    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        textAlign: "start",
+        textBaseline: "alphabetic",
+      });
+    });
     try {
       const { container, input } = mountPasswordInput("abc", {
         revealStrategy: "noise",
@@ -1076,16 +1080,16 @@ describe("HkInput password reveal eye", () => {
     // pattern guard is now pinned alone.
     const seen: Array<{ canvas: HTMLCanvasElement; texts: string[]; drawImages: number }> = [];
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (function (
-      this: HTMLCanvasElement,
-    ): CanvasRenderingContext2D {
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
       let rec = seen.find((r) => r.canvas === this);
       if (!rec) {
         rec = { canvas: this, texts: [], drawImages: 0 };
         seen.push(rec);
       }
       const r = rec;
-      return {
+      return fakeAs<CanvasRenderingContext2D>({
         canvas: this,
         clearRect: () => {},
         save: () => {},
@@ -1096,25 +1100,23 @@ describe("HkInput password reveal eye", () => {
         arc: () => {},
         fill: () => {},
         fillRect: () => {},
-        measureText: () => ({ width: 10 }),
+        measureText: () => fakeMetrics(10),
         fillText: (text: string) => r.texts.push(String(text)),
         drawImage: () => r.drawImages++,
         createPattern: () =>
           r.canvas === document.querySelector(".hk-pwd-dots")
             ? null
             : ({} as CanvasPattern),
-        createImageData: (w: number, h: number) => ({
-          data: new Uint8ClampedArray(w * h * 4),
-        }),
+        createImageData: fakeCreateImageData,
         putImageData: () => {},
         imageSmoothingEnabled: false,
         globalCompositeOperation: "source-over",
         font: "",
         fillStyle: "",
-        textAlign: "",
-        textBaseline: "",
-      } as unknown as CanvasRenderingContext2D;
-    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        textAlign: "start",
+        textBaseline: "alphabetic",
+      });
+    });
     try {
       const { container } = mountPasswordInput("abc", {
         revealStrategy: "noise",
@@ -1142,16 +1144,16 @@ describe("HkInput password reveal eye", () => {
     // branch of isAnimationParked() coverage.
     const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (function (
-      this: HTMLCanvasElement,
-    ): CanvasRenderingContext2D {
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
       let texts = textsByCanvas.get(this);
       if (!texts) {
         texts = [];
         textsByCanvas.set(this, texts);
       }
       const t = texts;
-      return {
+      return fakeAs<CanvasRenderingContext2D>({
         canvas: this,
         clearRect: () => {},
         save: () => {},
@@ -1162,22 +1164,20 @@ describe("HkInput password reveal eye", () => {
         arc: () => {},
         fill: () => {},
         fillRect: () => {},
-        measureText: () => ({ width: 10 }),
+        measureText: () => fakeMetrics(10),
         fillText: (text: string) => t.push(String(text)),
         drawImage: () => {},
         createPattern: () => ({}) as CanvasPattern,
-        createImageData: (w: number, h: number) => ({
-          data: new Uint8ClampedArray(w * h * 4),
-        }),
+        createImageData: fakeCreateImageData,
         putImageData: () => {},
         imageSmoothingEnabled: false,
         globalCompositeOperation: "source-over",
         font: "",
         fillStyle: "",
-        textAlign: "",
-        textBaseline: "",
-      } as unknown as CanvasRenderingContext2D;
-    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        textAlign: "start",
+        textBaseline: "alphabetic",
+      });
+    });
     try {
       const { container } = mountPasswordInput("abc", {
         revealStrategy: "noise",
@@ -1225,16 +1225,16 @@ describe("HkInput password reveal eye", () => {
     }
     const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (function (
-      this: HTMLCanvasElement,
-    ): CanvasRenderingContext2D {
+    HTMLCanvasElement.prototype.getContext = fakeAs<
+      typeof HTMLCanvasElement.prototype.getContext
+    >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
       let rec = byCanvas.get(this);
       if (!rec) {
         rec = { canvas: this, texts: [], translateXs: [] };
         byCanvas.set(this, rec);
       }
       const r = rec;
-      return {
+      return fakeAs<CanvasRenderingContext2D>({
         canvas: this,
         clearRect: () => {},
         save: () => {},
@@ -1245,22 +1245,20 @@ describe("HkInput password reveal eye", () => {
         arc: () => {},
         fill: () => {},
         fillRect: () => {},
-        measureText: () => ({ width: 10 }),
+        measureText: () => fakeMetrics(10),
         fillText: (text: string) => r.texts.push(String(text)),
         drawImage: () => {},
         createPattern: () => ({}) as CanvasPattern,
-        createImageData: (w: number, h: number) => ({
-          data: new Uint8ClampedArray(w * h * 4),
-        }),
+        createImageData: fakeCreateImageData,
         putImageData: () => {},
         imageSmoothingEnabled: false,
         globalCompositeOperation: "source-over",
         font: "",
         fillStyle: "",
-        textAlign: "",
-        textBaseline: "",
-      } as unknown as CanvasRenderingContext2D;
-    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+        textAlign: "start",
+        textBaseline: "alphabetic",
+      });
+    });
     try {
       const { container } = mountPasswordInput("abc", {
         revealStrategy: "noise",
@@ -1347,9 +1345,9 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
   }
   const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
   const original = HTMLCanvasElement.prototype.getContext;
-  HTMLCanvasElement.prototype.getContext = (function (
-    this: HTMLCanvasElement,
-  ): CanvasRenderingContext2D {
+  HTMLCanvasElement.prototype.getContext = fakeAs<
+    typeof HTMLCanvasElement.prototype.getContext
+  >(function (this: HTMLCanvasElement): CanvasRenderingContext2D {
     let rec = byCanvas.get(this);
     if (!rec) {
       rec = {
@@ -1375,7 +1373,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     let gradientArmed = false;
     let compositeOpBox: GlobalCompositeOperation = "source-over";
     let fontBox = "";
-    const stub: Record<string, unknown> = {
+    const stub: Partial<CanvasRenderingContext2D> = {
       canvas: this,
       clearRect: () => {},
       save: () => {},
@@ -1391,7 +1389,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
           gradientArmed = false;
         }
       },
-      measureText: () => ({ width: 10 }),
+      measureText: () => fakeMetrics(10),
       fillText: (text: string) => r.texts.push(String(text)),
       drawImage: () => r.drawImages++,
       createPattern: () => {
@@ -1400,14 +1398,12 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
       },
       createLinearGradient: () => {
         r.gradients++;
-        return {
+        return fakeAs<CanvasGradient & { __recGradient?: boolean }>({
           __recGradient: true,
           addColorStop: (_o: number, c: string) => r.gradientStops.push(String(c)),
-        } as unknown as CanvasGradient;
+        });
       },
-      createImageData: (w: number, h: number) => ({
-        data: new Uint8ClampedArray(w * h * 4),
-      }),
+      createImageData: fakeCreateImageData,
       putImageData: () => r.putImageDatas++,
       rect: (x: number, y: number, w: number, h: number) =>
         r.clips.push({ x, y, w, h }),
@@ -1438,12 +1434,12 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
           (v as { __recGradient?: boolean }).__recGradient === true;
         if (typeof v === "string") r.fillStyles.push(v);
       },
-      textAlign: "",
-      textBaseline: "",
+      textAlign: "start",
+      textBaseline: "alphabetic",
     };
     if (!linearGradients) delete stub.createLinearGradient;
-    return stub as unknown as CanvasRenderingContext2D;
-  }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    return fakeAs<CanvasRenderingContext2D>(stub);
+  });
   return {
     byCanvas,
     restore() {
@@ -2512,14 +2508,15 @@ describe("HkInput password reveal trigger", () => {
 
 /** happy-dom's own ResizeObserver never fires (no layout engine): this one
  * keeps the callbacks so a test can run the measurement deterministically. */
-class FakeResizeObserver {
+class FakeResizeObserver implements ResizeObserver {
   static instances: FakeResizeObserver[] = [];
   callback: () => void;
-  constructor(callback: () => void) {
+  constructor(callback: (...args: never[]) => void) {
     this.callback = callback;
     FakeResizeObserver.instances.push(this);
   }
   observe(): void {}
+  unobserve(): void {}
   disconnect(): void {}
 }
 
@@ -2527,7 +2524,7 @@ describe("HkInput password canvas sizing in a scaled root", () => {
   it("sizes the dot canvas in the box's own units", () => {
     const original = globalThis.ResizeObserver;
     FakeResizeObserver.instances = [];
-    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+    globalThis.ResizeObserver = FakeResizeObserver;
     try {
       const m = mountPasswordInput("hunter2");
       const box = m.container.querySelector<HTMLElement>(".hk-pwd-box")!;

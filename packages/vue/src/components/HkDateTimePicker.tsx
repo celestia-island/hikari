@@ -2,6 +2,7 @@ import { ArrowLeft, Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp 
 import { computed, defineComponent, ref, Transition, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
+import { asPropType } from "../utils/typing";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import "./HkDateTimePicker.scss";
 import HPopover, { type PopupPlacement } from "./HkPopover";
@@ -86,9 +87,9 @@ export default defineComponent({
   name: "HkDateTimePicker",
   props: {
     modelValue: { type: Date, required: true },
-    min: { type: [Date, null] as unknown as PropType<Date | null>, default: null },
-    max: { type: [Date, null] as unknown as PropType<Date | null>, default: null },
-    markedDays: { type: Set as unknown as PropType<Set<string>>, default: () => new Set<string>() },
+    min: { type: asPropType<Date | null>([Date, null]), default: null },
+    max: { type: asPropType<Date | null>([Date, null]), default: null },
+    markedDays: { type: asPropType<Set<string>>(Set), default: () => new Set<string>() },
     mode: { type: String as PropType<"inline" | "popup">, default: "inline" },
     placement: { type: String as PropType<PopupPlacement>, default: "bottom-start" },
     offset: { type: Number, default: 6 },

@@ -197,7 +197,10 @@ export default defineComponent({
   emits: { approachEnd: () => true, "update:backTopVisible": (_v: boolean) => true },
   setup(props, { slots, expose, emit }) {
     const { t } = useI18n();
-    const viewportRef = ref<HTMLElement>();
+    // `null`, not `undefined`: a template ref is reset to null on unmount
+    // and both consumers below declare `Ref<HTMLElement | null …>`, so the
+    // null form is the shared contract (no cast at either call site).
+    const viewportRef = ref<HTMLElement | null>(null);
     const hostRef = ref<HTMLElement>();
     const dockTopRef = ref<HTMLElement>();
     const dockBottomRef = ref<HTMLElement>();
@@ -252,7 +255,7 @@ export default defineComponent({
     function startApproach() {
       if (approachHandle.value) return;
       approachHandle.value = useApproachEnd(
-        viewportRef as unknown as import("vue").Ref<HTMLElement | null>,
+        viewportRef,
         () => emit("approachEnd"),
         { distance: () => props.approachDistance },
       );
@@ -269,7 +272,7 @@ export default defineComponent({
     }, { flush: "post" });
 
     if (props.mode === "windowed") {
-      provideScrollWindow(viewportRef as unknown as import("vue").Ref<HTMLElement | null>, props.overscanScreens);
+      provideScrollWindow(viewportRef, props.overscanScreens);
     }
 
     const hasV = () => props.axis !== "horizontal";
@@ -661,8 +664,12 @@ export default defineComponent({
       vp.scrollTo({ top: target, behavior });
     }
 
+    /** Public contract is `HTMLElement | undefined` (HkKanban, HkWaterfall,
+     *  HkTabs, HkSettingsDialog and HkLogWindow all declare it that way), so
+     *  the internal `null`-on-unmount ref is normalized here instead of
+     *  widening the contract for five consumers. */
     function getScrollElement(): HTMLElement | undefined {
-      return viewportRef.value;
+      return viewportRef.value ?? undefined;
     }
 
     function getScrollTop(): number {

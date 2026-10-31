@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { effectScope, type EffectScope } from "vue";
 
+import { asIndexable } from "../utils/typing";
+
 import { usePointerReorder, indexAt, type PointerReorder } from "./usePointerReorder";
 
 /** Items with PINNED rects — happy-dom ships no layout engine, so every
@@ -1728,7 +1730,7 @@ describe("usePointerReorder", () => {
       expect(drops).toEqual([]);
     } finally {
       if (hidden) Object.defineProperty(Document.prototype, "hidden", hidden);
-      else delete (document as unknown as Record<string, unknown>).hidden;
+      else Reflect.deleteProperty(document, "hidden");
     }
   });
 

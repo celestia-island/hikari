@@ -37,6 +37,7 @@ vi.mock("three", async (importOriginal) => {
 import HkMinimap3D from "./HkMinimap3D";
 import { BOARD3D_HELPERS_LAYER, type Board3DEngine } from "./HkBoard3D";
 import { orbitDelta, sphericalPosition } from "../utils/scene3d";
+import { fakeAs } from "../test-utils/fakes";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -59,7 +60,7 @@ function fakeEngine(opts: FakeEngineOpts = {}): {
   const engine = {
     scene,
     camera,
-    controls: { target } as unknown as Board3DEngine["controls"],
+    controls: fakeAs<Board3DEngine["controls"]>({ target }),
     renderer: {} as Board3DEngine["renderer"],
     addTick: () => () => {},
     addPostRender: (fn: () => void) => {
@@ -71,10 +72,10 @@ function fakeEngine(opts: FakeEngineOpts = {}): {
     flyTo: () => {},
     frameAll: () => {},
     projectToScreen: () => ({ x: 0, y: 0, visible: true }),
-    onTheme: () => {},
+    onTheme: () => () => {},
   };
   return {
-    engine: engine as unknown as Board3DEngine,
+    engine: fakeAs<Board3DEngine>(engine),
     scene,
     camera,
     firePostRender: () => postRender?.(),
@@ -341,9 +342,9 @@ describe("HkMinimap3D", () => {
         const mesh = obj as THREE.Mesh;
         if (mesh.geometry && !seenGeo.has(mesh.geometry)) {
           seenGeo.add(mesh.geometry);
-          built.push(mesh.geometry as unknown as { dispose: () => void });
+          built.push(mesh.geometry);
         }
-        const mat = (mesh as unknown as { material?: { dispose: () => void } }).material;
+        const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
         if (mat && !seenMat.has(mat)) {
           seenMat.add(mat);
           builtMats.push(mat);

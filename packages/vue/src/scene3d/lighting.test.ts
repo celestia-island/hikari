@@ -12,6 +12,21 @@ function lightCount(scene: THREE.Scene, ctor: Function): number {
   return n;
 }
 
+/** The one child `scene` holds for `ctor`.
+ *
+ *  `find` alone yields `Object3D | undefined`, and the old double assertion
+ *  turned "the rig never installed this light" into a value that only failed
+ *  later, at the assertion. `instanceof` is the honest narrowing, and a
+ *  missing light now fails loudly at the lookup. */
+function lightOf<T extends THREE.Object3D>(
+  scene: THREE.Scene,
+  ctor: new (...args: never[]) => T,
+): T {
+  const found = scene.children.find((child): child is T => child instanceof ctor);
+  if (!found) throw new Error("expected light missing from the scene graph");
+  return found;
+}
+
 describe("LightingRig", () => {
   it("installs ambient, directional (shadow-casting) and hemisphere lights", () => {
     const scene = new THREE.Scene();
@@ -19,7 +34,7 @@ describe("LightingRig", () => {
     expect(lightCount(scene, THREE.AmbientLight)).toBe(1);
     expect(lightCount(scene, THREE.DirectionalLight)).toBe(1);
     expect(lightCount(scene, THREE.HemisphereLight)).toBe(1);
-    const sun = scene.children.find((c) => c.constructor === THREE.DirectionalLight) as unknown as THREE.DirectionalLight;
+    const sun = lightOf(scene, THREE.DirectionalLight);
     expect(sun.castShadow).toBe(true);
     expect(scene.children).toContain(sun.target);
     rig.dispose();
@@ -40,8 +55,8 @@ describe("LightingRig", () => {
         { color: [0, 1, 0], intensity: 2, range: 8, position: [-1, 0, 0] },
       ],
     });
-    const ambient = scene.children.find((c) => c.constructor === THREE.AmbientLight) as unknown as THREE.AmbientLight;
-    const sun = scene.children.find((c) => c.constructor === THREE.DirectionalLight) as unknown as THREE.DirectionalLight;
+    const ambient = lightOf(scene, THREE.AmbientLight);
+    const sun = lightOf(scene, THREE.DirectionalLight);
     expect(ambient.intensity).toBeCloseTo(0.8, 6);
     expect(ambient.color.r).toBeCloseTo(0.2, 5);
     expect(sun.intensity).toBeCloseTo(1.5, 6);
@@ -59,15 +74,13 @@ describe("LightingRig", () => {
     const scene = new THREE.Scene();
     const floored = new LightingRig(scene, { minAmbientIntensity: 1.0 });
     floored.apply({ ambientIntensity: 0.2 });
-    const ambient = scene.children.find((c) => c.constructor === THREE.AmbientLight) as unknown as THREE.AmbientLight;
+    const ambient = lightOf(scene, THREE.AmbientLight);
     expect(ambient.intensity).toBeCloseTo(1.0, 6);
     floored.dispose();
 
     const honest = new LightingRig(new THREE.Scene());
     honest.apply({ ambientIntensity: 0.2 });
-    const a2 = honest["scene"].children.find(
-      (c) => c.constructor === THREE.AmbientLight,
-    ) as unknown as THREE.AmbientLight;
+    const a2 = lightOf(honest["scene"], THREE.AmbientLight);
     expect(a2.intensity).toBeCloseTo(0.2, 6);
     honest.dispose();
   });
@@ -76,12 +89,12 @@ describe("LightingRig", () => {
     const scene = new THREE.Scene();
     const rig = new LightingRig(scene);
     rig.setSun([5, 6, 7], [1, 0.5, 0.2], 2.2);
-    const sun = scene.children.find((c) => c.constructor === THREE.DirectionalLight) as unknown as THREE.DirectionalLight;
+    const sun = lightOf(scene, THREE.DirectionalLight);
     expect(sun.position.x).toBeCloseTo(5, 5);
     expect(sun.intensity).toBeCloseTo(2.2, 5);
 
-    const ambient = scene.children.find((c) => c.constructor === THREE.AmbientLight) as unknown as THREE.AmbientLight;
-    const hemi = scene.children.find((c) => c.constructor === THREE.HemisphereLight) as unknown as THREE.HemisphereLight;
+    const ambient = lightOf(scene, THREE.AmbientLight);
+    const hemi = lightOf(scene, THREE.HemisphereLight);
     rig.setNightFill(true);
     expect(ambient.intensity).toBeCloseTo(0.4, 5);
     expect(hemi.intensity).toBeCloseTo(0.2, 5);
@@ -94,7 +107,7 @@ describe("LightingRig", () => {
     const scene = new THREE.Scene();
     const rig = new LightingRig(scene);
     rig.setShadowBounds(30, 4, -6);
-    const sun = scene.children.find((c) => c.constructor === THREE.DirectionalLight) as unknown as THREE.DirectionalLight;
+    const sun = lightOf(scene, THREE.DirectionalLight);
     expect(sun.shadow.camera.left).toBe(-30);
     expect(sun.shadow.camera.right).toBe(30);
     expect(sun.target.position.x).toBeCloseTo(4, 5);
@@ -108,7 +121,7 @@ describe("LightingRig", () => {
   it("dispose frees the sun's shadow depth map", () => {
     const scene = new THREE.Scene();
     const rig = new LightingRig(scene);
-    const sun = scene.children.find((c) => c.constructor === THREE.DirectionalLight) as unknown as THREE.DirectionalLight;
+    const sun = lightOf(scene, THREE.DirectionalLight);
     const spy = vi.spyOn(sun.shadow, "dispose");
     rig.dispose();
     // scene.remove alone frees nothing on the GPU — a surviving renderer

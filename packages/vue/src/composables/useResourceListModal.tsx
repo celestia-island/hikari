@@ -1,8 +1,6 @@
 import { Search } from "lucide-vue-next";
-import { computed, ref, shallowRef, watch } from "vue";
+import { computed, ref, shallowRef, watch, type VNodeChild } from "vue";
 import { useI18n } from "../i18n/context";
-// @ts-ignore JSX namespace
-
 
 import { HEmptyState, HInput, HListTransition, HModal, HScrollContainer, HSpinner } from "../index";
 
@@ -22,7 +20,9 @@ export function useResourceListModal<
   fetchFn: () => Promise<T[]>;
   i18nKey: string;
   width?: string;
-  renderItem: (item: T, t: (key: string, fallback?: string) => string) => any;
+  /** Renders one row. Rendered straight into a JSX child slot, so its result
+   *  is exactly a `VNodeChild` — not `any`. */
+  renderItem: (item: T, t: (key: string, fallback?: string) => string) => VNodeChild;
 }) {
   const { props, emit, fetchFn, i18nKey, width = "56rem", renderItem } = opts;
   const { t } = useI18n();

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useToast } from "@celestia-island/hikari";
+
+import { asIndexable } from "../../utils/typing";
 import { registerNativeBridge, registerTransport, useMessaging } from "./index";
 import type { MessagePayload, MessageTransport } from "./types";
 
@@ -146,7 +148,7 @@ describe("useMessaging", () => {
 
   describe("registerNativeBridge", () => {
     it("no-ops when window.__nativeBridge is absent", () => {
-      const w = window as unknown as { __nativeBridge?: unknown };
+      const w = asIndexable(window);
       const original = w.__nativeBridge;
       delete w.__nativeBridge;
       try {
@@ -172,7 +174,7 @@ describe("useMessaging", () => {
         available: () => true,
         send: (p: MessagePayload) => calls.push(p),
       };
-      const w = window as unknown as { __nativeBridge?: unknown };
+      const w = asIndexable(window);
       const original = w.__nativeBridge;
       w.__nativeBridge = bridge;
       try {
@@ -192,7 +194,7 @@ describe("useMessaging", () => {
 
   describe("browser transport gating", () => {
     it("does not throw when Notification is unavailable (SSR-like)", () => {
-      const w = window as unknown as { Notification?: unknown };
+      const w: { Notification?: unknown } = window;
       const original = w.Notification;
       delete w.Notification;
       try {
@@ -208,9 +210,7 @@ describe("useMessaging", () => {
 
     it("defaults requireInteraction to true only for errors", async () => {
       const created: Array<{ title: string; requireInteraction: boolean }> = [];
-      const w = window as unknown as {
-        Notification?: typeof Notification;
-      };
+      const w: { Notification?: unknown } = window;
       const Original = w.Notification;
       class FakeNotification {
         static permission: NotificationPermission = "granted";
@@ -225,7 +225,7 @@ describe("useMessaging", () => {
           created.push({ title, requireInteraction: !!options?.requireInteraction });
         }
       }
-      w.Notification = FakeNotification as unknown as typeof Notification;
+      w.Notification = FakeNotification;
       try {
         // Exercise the browser transport's `send()` directly to assert the
         // severity-driven requireInteraction default (the public routing

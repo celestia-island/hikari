@@ -5,6 +5,7 @@ import { useI18n } from "../i18n/context";
 import "./HkKeywordSearchModal.scss";
 import HModal from "./HkModal";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
+import { asPropType } from "../utils/typing";
 
 interface FuzzyMatch {
   matched: boolean;
@@ -105,9 +106,9 @@ export default defineComponent({
     keyOf: { type: Function as PropType<(rec: unknown) => string>, default: () => "0" },
     emptyText: { type: String, default: undefined },
     semanticSearch: {
-      type: [Function, null] as unknown as PropType<
+      type: asPropType<
         ((query: string) => Promise<SemanticSearchItem[]>) | undefined
-      >,
+      >([Function, null]),
       default: undefined,
     },
     searchingText: { type: String, default: undefined },
@@ -179,7 +180,7 @@ export default defineComponent({
 
     const results = computed(() => {
       const q = debouncedQuery.value;
-      return fuzzySearch(q, props.records as unknown[], props.fieldsOf).map((r) => ({
+      return fuzzySearch(q, props.records, props.fieldsOf).map((r) => ({
         key: props.keyOf(r.record),
         record: r.record,
         score: r.score,

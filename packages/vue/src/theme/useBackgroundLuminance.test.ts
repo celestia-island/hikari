@@ -10,6 +10,7 @@ import {
   startLuminanceSampler,
   stopLuminanceSampler,
 } from "./useBackgroundLuminance";
+import { invalidInput } from "../test-utils/invalid";
 
 /**
  * The wallpaper-surface DOM contract.
@@ -37,25 +38,39 @@ import {
  *  spelled out here, because the point of case 2 is that they mean nothing. */
 const RETIRED_IDS = { canvas: "s-wallpaper-canvas", video: "s-wallpaper-video" } as const;
 
-/** A WebGL2 context stub just real enough for the PBO round trip. */
-function makeGl(pixel: [number, number, number, number]) {
-  return {
+/** A WebGL2 context stub just real enough for the PBO round trip.
+ *
+ *  Built from the (legal) empty-object assertion and then filled in with
+ *  type-checked assignments, so each stub signature is still verified against
+ *  `WebGL2RenderingContext` instead of being asserted wholesale. */
+function makeGl(pixel: [number, number, number, number]): WebGL2RenderingContext {
+  const gl = {} as WebGL2RenderingContext;
+  // The GL enum constants are declared `readonly` on the interface, so they go
+  // on as own properties; everything below is a normal checked assignment.
+  for (const [key, value] of Object.entries({
     PIXEL_PACK_BUFFER: 0x88eb,
     STREAM_READ: 0x88e1,
     RGBA: 0x1908,
     UNSIGNED_BYTE: 0x1401,
-    createBuffer: vi.fn(() => ({ id: "pbo" })),
-    bindBuffer: vi.fn(),
-    bufferData: vi.fn(),
-    deleteBuffer: vi.fn(),
-    readPixels: vi.fn(),
-    getBufferSubData: vi.fn((_target: number, _offset: number, data: Uint8Array) => {
-      data[0] = pixel[0];
-      data[1] = pixel[1];
-      data[2] = pixel[2];
-      data[3] = pixel[3];
-    }),
-  } as unknown as WebGL2RenderingContext;
+  })) {
+    Object.defineProperty(gl, key, { value, configurable: true, writable: true });
+  }
+  gl.createBuffer = vi.fn(() => ({ id: "pbo" }));
+  gl.bindBuffer = vi.fn();
+  gl.bufferData = vi.fn();
+  gl.deleteBuffer = vi.fn();
+  gl.readPixels = vi.fn();
+  gl.getBufferSubData = vi.fn(
+    (_target: number, _offset: number, data: ArrayBufferView) => {
+      if (data instanceof Uint8Array) {
+        data[0] = pixel[0];
+        data[1] = pixel[1];
+        data[2] = pixel[2];
+        data[3] = pixel[3];
+      }
+    },
+  );
+  return gl;
 }
 
 const DARK: [number, number, number, number] = [0, 0, 0, 255];
@@ -63,22 +78,29 @@ const BRIGHT: [number, number, number, number] = [250, 250, 250, 255];
 
 let probed: HTMLCanvasElement[] = [];
 
+/** The stub context each canvas should answer with. A WeakMap keeps the
+ *  association typed — an expando on the element would need a cast. */
+const glByCanvas = new WeakMap<HTMLCanvasElement, WebGL2RenderingContext | null>();
+
 /** Every canvas reports `pixels` (see makeGl) — the test distinguishes the
  *  sources by WHICH element was asked, not by the pixel value. */
 function stubCanvasContexts() {
   probed = [];
   const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext");
-  spy.mockImplementation(function (this: HTMLCanvasElement, kind: string) {
+  // One implementation cannot satisfy every `getContext` overload: the
+  // overloads differ only by return type, and TypeScript has no single
+  // signature that is assignable to all of them.
+  spy.mockImplementation(invalidInput(function (this: HTMLCanvasElement, kind: string) {
     probed.push(this);
-    return kind === "webgl2" ? ((this as unknown as { __gl?: WebGL2RenderingContext }).__gl ?? null) : null;
-  } as unknown as typeof HTMLCanvasElement.prototype.getContext);
+    return kind === "webgl2" ? glByCanvas.get(this) ?? null : null;
+  }));
   return spy;
 }
 
 function makeCanvas(id: string, gl: WebGL2RenderingContext | null, connected = true): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   if (id) canvas.id = id;
-  (canvas as unknown as { __gl: WebGL2RenderingContext | null }).__gl = gl;
+  glByCanvas.set(canvas, gl);
   if (connected) document.body.appendChild(canvas);
   return canvas;
 }
@@ -215,7 +237,7 @@ describe("wallpaper surface registry", () => {
     document.body.appendChild(bogus);
     disposers.push(
       registerWallpaperSurfaceSources({
-        canvas: () => bogus as unknown as HTMLCanvasElement,
+        canvas: () => invalidInput(bogus),
       }),
     );
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

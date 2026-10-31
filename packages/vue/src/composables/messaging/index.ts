@@ -1,5 +1,6 @@
 import { computed, readonly, ref } from "vue";
 
+import { type HostWindow } from "../../utils/typing";
 import { browserTransport, requestBrowserPermission } from "./browserTransport";
 import { toastTransport } from "./toastTransport";
 import { defaultCopyable, defaultDurationFor, type MessagePayload, type MessageSeverity, type MessageTransport, type NotifyOptions, type TransportName } from "./types";
@@ -77,12 +78,13 @@ export function registerTransport(transport: MessageTransport): () => void {
 export function registerNativeBridge(): () => void {
   const bridge =
     typeof window !== "undefined"
-      ? (window as unknown as { __nativeBridge?: MessageTransport }).__nativeBridge
+      ? (window as HostWindow<{ __nativeBridge?: MessageTransport }>)
+          .__nativeBridge
       : undefined;
   if (!bridge || typeof bridge.send !== "function") return () => {};
   if (bridge.name !== "native") {
     // Coerce the name so routing allow-lists resolve consistently.
-    (bridge as MessageTransport).name = "native";
+    bridge.name = "native";
   }
   return registerTransport(bridge);
 }

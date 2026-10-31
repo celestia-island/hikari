@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as barrel from "../index";
+import { asIndexable } from "../utils/typing";
 
 /**
  * The public barrel guard for HkFaceShell (R3 M6 on PR #900): deleting
@@ -18,12 +19,12 @@ describe("the public barrel", () => {
   it("exports HkFaceShell (deleting the line kept the suite green before this pin)", () => {
     // defineComponent's object syntax yields a plain object, so the
     // identity check is the component's own `name`, not typeof.
-    const face = barrel.HkFaceShell as unknown as { name?: string };
+    const face = asIndexable(barrel.HkFaceShell);
     expect(face, "HkFaceShell must be re-exported").toBeTruthy();
     expect(face.name).toBe("HkFaceShell");
     // The admin wrapper stays reachable too — the extraction must not
     // move the public surface.
-    const admin = barrel.HkAdminShell as unknown as { name?: string };
+    const admin = asIndexable(barrel.HkAdminShell);
     expect(admin, "HkAdminShell must stay exported").toBeTruthy();
     expect(admin.name).toBe("HkAdminShell");
   });

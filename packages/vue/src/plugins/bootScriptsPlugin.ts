@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import type { Plugin } from "vite";
 
 /** PlanA UI boot scripts copied verbatim from plana res into the build outDir. */
 export const BOOT_SCRIPTS = [
@@ -22,13 +23,17 @@ const RES_DIR = resolve(
  * fatal-fallback, browser-check, ...) from hikari res/ into the output dir so
  * index.html can reference them as first-class static assets. Keep in sync
  * with the hikari res/ directory — every file there is a copy target.
+ *
+ * Returning `Plugin` types `configResolved` as Vite's real `ResolvedConfig`,
+ * which also makes the `apply: "build"` literal an ordinary assignable value
+ * instead of needing `as const` to escape the object-literal widening.
  */
-export function bootScriptsPlugin() {
+export function bootScriptsPlugin(): Plugin {
   let outDir = "";
   return {
     name: "boot-scripts",
-    apply: "build" as const,
-    configResolved(cfg: any) {
+    apply: "build",
+    configResolved(cfg) {
       outDir = cfg.build.outDir;
     },
     closeBundle() {

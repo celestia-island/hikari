@@ -226,7 +226,10 @@ interface AxisState {
   dragging: boolean;
   dragStartClient: number;
   dragStartScroll: number;
-  hideTimer: CronHandle;
+  /** Pending "stop showing the scrolling state" timer. Absent until the
+   *  axis has scrolled once — `disconnect()` is always reached through
+   *  optional chaining, so "no timer" is the honest representation. */
+  hideTimer?: CronHandle;
 }
 
 /** Data attribute marking a parent whose inline `position: relative`
@@ -270,7 +273,6 @@ function makeAxisState(horizontal: boolean): AxisState {
     dragging: false,
     dragStartClient: 0,
     dragStartScroll: 0,
-    hideTimer: undefined as unknown as CronHandle,
   };
 }
 

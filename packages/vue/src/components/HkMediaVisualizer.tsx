@@ -1,6 +1,7 @@
 import { defineComponent, onBeforeUnmount, ref, watch, type PropType, type Ref } from "vue";
 
 import { onFrame, type AnimationHandle } from "../runtime/animationBus";
+import type { HostWindow } from "../utils/typing";
 import "./HkMediaVisualizer.scss";
 
 /**
@@ -35,8 +36,14 @@ export default defineComponent({
       if (!media || !canvas) return;
       try {
         if (!audioCtx) {
-          audioCtx = new (window.AudioContext ||
-            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+          // `webkitAudioContext` is the Safari-era alias for `AudioContext`
+          // and is not on the DOM lib's `Window`; the host surface is
+          // intersected on top of it rather than replaced.
+          const AudioCtor: typeof AudioContext | undefined =
+            window.AudioContext ??
+            (window as HostWindow<{ webkitAudioContext?: typeof AudioContext }>).webkitAudioContext;
+          if (!AudioCtor) return;
+          audioCtx = new AudioCtor();
           analyser = audioCtx.createAnalyser();
           analyser.fftSize = 128;
           source = audioCtx.createMediaElementSource(media);

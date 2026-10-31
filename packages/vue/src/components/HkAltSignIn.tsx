@@ -1,7 +1,16 @@
-import { defineComponent, ref } from "vue";
-import HkPopover from "./HkPopover";
+import { defineComponent, ref, type PropType } from "vue";
+import HkPopover, { type PopupPlacement } from "./HkPopover";
 import HkMenuActionItem from "./HkMenuActionItem";
+import { asPropType } from "../utils/typing";
 import "./HkAltSignIn.scss";
+
+/** One alternative sign-in entry offered in the popover. */
+export interface HkAltSignInEntry {
+  key: string;
+  label: string;
+  icon?: Record<string, unknown>;
+  danger?: boolean;
+}
 
 /**
  * Shared "alternative sign-in" entry for auth cards (P77).
@@ -23,18 +32,13 @@ export default defineComponent({
     label: { type: String, required: true },
     /** Alternative sign-in entries offered in the dropdown. */
     entries: {
-      type: Array as unknown as () => Array<{
-        key: string;
-        label: string;
-        icon?: Record<string, unknown>;
-        danger?: boolean;
-      }>,
+      type: asPropType<HkAltSignInEntry[]>(Array),
       required: true,
     },
     disabled: { type: Boolean, default: false },
     /** Popover placement around the trigger row. */
     placement: {
-      type: String,
+      type: String as PropType<PopupPlacement>,
       default: "top",
     } as const,
   },
@@ -71,7 +75,7 @@ export default defineComponent({
         <HkPopover
           modelValue={open.value}
           onUpdate:modelValue={(v: boolean) => (open.value = v)}
-          placement={props.placement as never}
+          placement={props.placement}
           anchorRef={anchor.value}
         >
           <div class="hk-alt-signin__panel" role="menu">

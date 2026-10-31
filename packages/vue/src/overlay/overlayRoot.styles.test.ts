@@ -75,6 +75,9 @@ describe("overlay root document-space elevation contract", () => {
 
   it("inlines a self-sufficient pre-stylesheet elevation", () => {
     const root = ensureOverlayRoot();
+    // A null root is a failure of the very contract under test, so say so
+    // instead of letting a TypeError stand in for it.
+    if (!root) throw new Error("overlay root was not created");
     expect(root.id).toBe("hk-overlay-root");
     expect(root.style.getPropertyValue("z-index")).toContain(
       "var(--hk-z-overlay-root",

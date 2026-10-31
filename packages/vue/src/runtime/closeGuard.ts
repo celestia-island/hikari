@@ -38,6 +38,8 @@
  * SSR, a test — everything here is a safe no-op.
  */
 
+import { type HostWindow } from "../utils/typing";
+
 /** The event a shell emits when the window close is intercepted. */
 export const CLOSE_REQUEST_EVENT = "hk:close-requested";
 
@@ -86,7 +88,9 @@ function canUseDom(): boolean {
 /** The Tauri global surface, or null outside a webview. */
 function tauriScope(): TauriScope | null {
   if (!canUseDom()) return null;
-  return window as unknown as TauriScope;
+  // A single legal assertion: every `TauriScope` member is optional, so the
+  // intersection only ADDS the host-injected names on top of `window`.
+  return window as HostWindow<TauriScope>;
 }
 
 /** Run a shell call that may throw, return a promise or return a scalar. */

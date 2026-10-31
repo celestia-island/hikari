@@ -38,8 +38,10 @@ export interface ApplyViewportPolicyOptions {
 
 /** Result of applying the viewport policy. */
 export interface ViewportPolicyResult {
-  /** The `<meta name="viewport">` element (created when absent). */
-  meta: HTMLMetaElement;
+  /** The `<meta name="viewport">` element (created when absent), or
+   *  `null` where there is no document (SSR, mini-program JS cores) —
+   *  the policy is a documented no-op there. */
+  meta: HTMLMetaElement | null;
   /** The content attribute after normalization. */
   content: string;
   /** Raw `key=value` pairs dropped by the policy, in original order. */
@@ -98,7 +100,7 @@ export function applyViewportPolicy(
   // Non-DOM environments (mini-program JS cores, SSR passes) have no
   // viewport meta to normalize — no-op instead of crashing the boot.
   if (typeof document === "undefined") {
-    return { meta: null as unknown as HTMLMetaElement, content: "", removed: [] };
+    return { meta: null, content: "", removed: [] };
   }
 
   let meta = document.head.querySelector<HTMLMetaElement>(

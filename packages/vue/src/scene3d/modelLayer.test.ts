@@ -272,14 +272,22 @@ describe("ModelLayer", () => {
     const gate = new Promise<void>((r) => {
       release = r;
     });
-    (layer["loader"] as unknown as { load: unknown }).load = (
-      _url: string,
-      onLoad: (g: unknown) => void,
-    ) => {
-      void realLoad;
-      void gate.then(() => onLoad({ scene: new THREE.Group() }));
-      return undefined;
-    };
+    // `load` is replaced as an INSTANCE property: GLTFLoader's real signature
+    // demands a fully-populated `GLTF`, while the layer only ever reads
+    // `.scene`. Declaring the stub's own callback shape states exactly that,
+    // instead of asserting a partial object into a `GLTF`.
+    Object.defineProperty(layer["loader"], "load", {
+      configurable: true,
+      writable: true,
+      value: (
+        _url: string,
+        onLoad: (g: { scene: THREE.Object3D }) => void,
+      ) => {
+        void realLoad;
+        void gate.then(() => onLoad({ scene: new THREE.Group() }));
+        return undefined;
+      },
+    });
     const pending = layer.loadModel("m-gone", { source: "https://x/m.glb" });
     // The id is cleared while the fetch is still in flight.
     layer.removeModel("m-gone");

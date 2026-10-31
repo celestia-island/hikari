@@ -25,14 +25,17 @@ afterEach(() => {
 /** Force the :root computed style to answer `value` for the gutter var. */
 function stubRootVar(value: string) {
   const original = window.getComputedStyle.bind(window);
-  vi.spyOn(window, "getComputedStyle").mockImplementation(((el: Element) => {
-    if (el === document.documentElement) {
-      return {
-        getPropertyValue: (name: string) => (name === VIEWPORT_GUTTER_VAR ? value : ""),
-      } as unknown as CSSStyleDeclaration;
-    }
-    return original(el);
-  }) as typeof window.getComputedStyle);
+  // A REAL declaration whose `getPropertyValue` is shadowed: the reader only
+  // calls that one method, and its declared signature is exactly the stub's,
+  // so nothing has to be asserted into a `CSSStyleDeclaration`.
+  const decl = document.createElement("div").style;
+  Object.defineProperty(decl, "getPropertyValue", {
+    configurable: true,
+    value: (name: string) => (name === VIEWPORT_GUTTER_VAR ? value : ""),
+  });
+  vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element) =>
+    el === document.documentElement ? decl : original(el),
+  );
 }
 
 describe("viewportGutterPx", () => {

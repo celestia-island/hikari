@@ -243,6 +243,15 @@ describe("HkMenu sidebar icon rail", () => {
     expect(c.querySelector(".hk-menu-sidebar-group[data-open]"), "the group is still open").toBeTruthy();
     expect(groupRows(c)[0]!.getAttribute("aria-expanded")).toBe("true");
     expect(c.textContent).toContain("Users");
+    // TWO-SIDED class-union pin: the EXPANDED wrapper must wear the
+    // shared class too. Dropping it there removes the 2px step from the
+    // expanded sidebar — rows below an open group would move on every
+    // flip, the exact drift this contract kills (a rail-only pin let
+    // that through).
+    expect(
+      c.querySelector(".hk-menu-sidebar-group[data-open] > .hk-menu-sidebar-children"),
+      "the expanded children wrapper keeps the shared step class",
+    ).toBeTruthy();
 
     // Reverse direction: collapse it from the expanded sidebar, flip
     // back into the rail — it must stay collapsed (no resurrection).
@@ -527,31 +536,49 @@ describe("HkMenu rail styles (compiled sheet contracts)", () => {
     const shared = ruleBody(".hk-menu-sidebar-children");
     expect(shared, "the shared children rule exists").not.toBeNull();
     expect(shared).toContain("margin-top: var(--space-2, 2px)");
+    // A rule whose selector is EXACTLY a rail wrapper class — top-level,
+    // outside any density dress — would restyle the rail children while
+    // evading every dress-keyed scan below (the compiled chunk then
+    // carries no carrier text). The wrappers' geometry must come from
+    // the shared rules alone.
+    expect(css.match(/^\s*\.hk-menu-sidebar-rail-(?:children|group)\s*\{/gm)).toBeNull();
   });
 
-  it("the rail dress authors no vertical margin or padding in any spelling", () => {
+  it("the rail dress authors no vertical rhythm in any spelling", () => {
     // The stronger form of the contract above, so a re-step cannot hide
     // inside a comma-grouped selector the per-selector ruleBody skips
-    // AND cannot return through the SHORTHAND: every rule of the
-    // [data-collapsed] dress is scanned and ANY margin/padding spelling
-    // that reaches a block edge is banned — `margin:`/`padding:`
-    // (a shorthand sets the block side too: the historical
-    // `margin-top: 0` regression spelled `margin: 0` evaded a
-    // longhand-only scan) and every vertical longhand. Horizontal-only
+    // AND cannot return through alternate spellings or sister metrics:
+    // every rule of the density dress is scanned and banned for ANY
+    // margin/padding spelling that reaches a block edge — the shorthand
+    // (it sets the block side too: the historical `margin-top: 0`
+    // regression spelled `margin: 0` evaded a longhand-only scan) and
+    // every vertical longhand, top AND bottom — plus the block-FLOW
+    // metrics that move rows just the same (gap/row-gap/height/
+    // min-height/max-height: a `gap:` inside the comma-grouped width
+    // rule once passed a margin/padding-only scan). Horizontal-only
     // tracks (margin-inline*, padding-inline*) stay legal; absolute
     // INSETS (the caret corner's inset-block-end) are flow-neutral
     // decoration and stay legal. A rail band that truly needs a
     // different block metric must move the BASE rule for BOTH densities.
+    // Keyed to BOTH carrier spellings so a future [data-rail]-keyed
+    // carrier in this sheet cannot slip the scan.
     const dressRules = css
       .split("}")
-      .filter((rule) => rule.includes(".hk-menu-sidebar[data-collapsed]"));
+      .filter(
+        (rule) =>
+          rule.includes(".hk-menu-sidebar[data-collapsed]") ||
+          rule.includes(".hk-menu-sidebar[data-rail]"),
+      );
     expect(dressRules.length, "the rail dress rules exist").toBeGreaterThan(3);
     for (const rule of dressRules) {
       expect(rule, `vertical margin in the rail dress: ${rule}`).not.toMatch(
-        /\bmargin(?:-(?:top|block(?:-(?:start|end))?))?\s*:/,
+        /\bmargin(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,
       );
       expect(rule, `vertical padding in the rail dress: ${rule}`).not.toMatch(
-        /\bpadding(?:-(?:top|block(?:-(?:start|end))?))?\s*:/,
+        /\bpadding(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,
+      );
+      expect(rule, `block-flow metric in the rail dress: ${rule}`).not.toMatch(
+        /\b(?:gap|row-gap|height|min-height|max-height)\s*:/,
       );
     }
   });

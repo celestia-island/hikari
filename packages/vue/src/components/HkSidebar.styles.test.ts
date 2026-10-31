@@ -95,28 +95,38 @@ describe("HkSidebar scroll end-cap", () => {
     const footer = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-footer");
     expect(footer, "the collapsed footer rule exists (grouped density carriers)").not.toBeNull();
     expect(footer).toContain("padding: var(--space-16) var(--space-8)");
-    // The stronger, spelling-proof form (whole-dress scan, shorthand and
-    // longhand alike): EVERY padding declaration in ANY dress rule must
-    // be the shorthand whose block track is the expanded 16px — so a
-    // tighter block value cannot return as `padding: 12px 8px` NOR as a
-    // `padding-block-start:` longhand hiding after the shorthand (a
-    // longhand-only scan let both through). Horizontal-only tracks
-    // (padding-inline*) stay legal; a band that truly needs different
-    // block metrics must move the BASE rule for BOTH densities. Margins
-    // are banned outright — the bands separate by their paddings alone.
+    // The stronger, spelling-proof form (whole-dress scan): EVERY
+    // padding declaration in ANY dress rule must be EXACTLY the expanded
+    // two-track shorthand — exact, not a prefix: a three-track spelling
+    // (`padding: var(--space-16) var(--space-8) var(--space-12)`) drifts
+    // the block END past a block-start-only check, and a longhand
+    // (`padding-block-start:`) hides from a shorthand-only one; both
+    // green-holed earlier rounds. Physical `bottom` longhands are banned
+    // beside the logical ones. Horizontal-only tracks (padding-inline*)
+    // cannot match the value pin and are rejected the same way; a band
+    // that truly needs different block metrics must move the BASE rule
+    // for BOTH densities. Margins are banned outright — the bands
+    // separate by their paddings alone — and so are the block-FLOW
+    // metrics that move rows just the same (gap/row-gap/height/
+    // min-height/max-height).
     const dressRules = css
       .split("}")
       .filter((rule) => rule.includes("[data-collapsed]") || rule.includes("[data-rail]"));
     expect(dressRules.length, "the density dress rules exist").toBeGreaterThan(1);
     for (const rule of dressRules) {
-      for (const decl of rule.matchAll(/\bpadding(?:-(?:top|block(?:-(?:start|end))?))?\s*:[^;}]*/g)) {
+      for (const decl of rule.matchAll(
+        /\bpadding(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:[^;}]*/g,
+      )) {
         expect(
-          decl[0],
-          `a dress padding is not the expanded 16px shorthand: ${decl[0]}`,
-        ).toMatch(/^padding:\s*var\(--space-16\b/);
+          decl[0].trim(),
+          `a dress padding is not the expanded two-track shorthand: ${decl[0]}`,
+        ).toBe("padding: var(--space-16) var(--space-8)");
       }
       expect(rule, `a margin crept into the dress: ${rule}`).not.toMatch(
-        /\bmargin(?:-(?:top|block(?:-(?:start|end))?))?\s*:/,
+        /\bmargin(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,
+      );
+      expect(rule, `block-flow metric in the dress: ${rule}`).not.toMatch(
+        /\b(?:gap|row-gap|height|min-height|max-height)\s*:/,
       );
     }
   });

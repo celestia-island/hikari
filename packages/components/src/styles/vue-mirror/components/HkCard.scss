@@ -1,0 +1,103 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../tokens";
+@use "../styles/polyfill" as *;
+
+/* HkCard — canonical surface card. Hover emphasis is border-color only
+   (the base elevation shadow is already at its resting value). No
+   transforms, so the card never displaces neighbors or reflows layout. */
+.hk-card {
+  display: block;
+  overflow: hidden;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent);
+  @include backdrop-filter(blur(var(--blur-md)));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-elevated);
+}
+
+.hk-card-hoverable {
+  cursor: pointer;
+  transition: border-color var(--duration-normal) ease;
+}
+
+.hk-card-hoverable:hover {
+  border-color: var(--c-primary-intense);
+}
+
+.hk-card-hoverable:active {
+  border-color: rgb(var(--color-primary) / 45%);
+}
+
+.hk-card-hoverable:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.hk-card-header {
+  padding: var(--space-12) var(--space-16);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.hk-card-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.hk-card-body {
+  /* --hk-pad: the shared container-padding token (runtime/containerPad) —
+     the card root carries it when the `padding` prop is set. */
+  padding: var(--hk-pad, var(--space-16));
+}
+
+.hk-card-body-unpadded {
+  padding: var(--hk-pad, 0);
+}
+
+.hk-card-footer {
+  padding: var(--space-12) var(--space-16);
+  border-top: 1px solid var(--border-faint);
+}
+
+/* Scrollable card: the body becomes the flex host of an embedded
+   HkScrollContainer, so the card carries the ONE library scrollbar
+   system instead of every consumer nesting its own scroll layer.
+   Header and footer stay natural-height; the body fills the remainder.
+   Content padding lives INSIDE the scroll region (the pad wrapper the
+   component renders when `padded` is set) so the overlay scrollbar
+   hugs the card edge while content keeps its inset while scrolling. */
+.hk-card-scrollable {
+  display: flex;
+  flex-direction: column;
+
+  > .hk-card-header,
+  > .hk-card-footer {
+    flex: none;
+  }
+
+  > .hk-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  > .hk-card-body > .hk-card-body-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .hk-card-body-pad {
+    padding: var(--hk-pad, var(--space-16));
+  }
+}

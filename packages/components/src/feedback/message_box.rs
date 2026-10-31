@@ -228,6 +228,15 @@ pub struct MessageBoxProps {
     pub on_resolve: Option<EventHandler<MessageBoxOutcome>>,
 }
 
+/// The one-shot settle gate: returns `true` exactly once per box request.
+fn claim_settle(settled: &Signal<bool>) -> bool {
+    if settled.get() {
+        return false;
+    }
+    settled.set(true);
+    true
+}
+
 #[component]
 pub fn MessageBox(props: MessageBoxProps) -> Element {
     // The box is a transient singleton in practice; `instance_key` lets a
@@ -278,10 +287,9 @@ pub fn MessageBox(props: MessageBoxProps) -> Element {
         let open_state = local.open.clone();
         let settled_state = local.settled.clone();
         move |outcome: MessageBoxOutcome| {
-            if settled_state.get() {
+            if !claim_settle(&settled_state) {
                 return;
             }
-            settled_state.set(true);
             open_state.set(false);
             if let Some(handler) = resolve.as_ref() {
                 handler.call(outcome);
@@ -480,6 +488,14 @@ mod tests {
         assert_eq!(MessageBoxTone::Danger.data_tone(), "danger");
         assert_eq!(MessageBoxTone::Info.icon(), MdiIcon::Information);
         assert_eq!(MessageBoxTone::Warning.icon(), MdiIcon::AlertTriangle);
+    }
+
+    #[test]
+    fn message_box_settles_exactly_once() {
+        let settled = Signal::new(false);
+        assert!(claim_settle(&settled), "first settle wins");
+        assert!(!claim_settle(&settled), "second settle is a no-op");
+        assert!(!claim_settle(&settled), "every later settle is a no-op");
     }
 
     #[test]

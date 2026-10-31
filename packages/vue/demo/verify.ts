@@ -1,4 +1,4 @@
-import { createSSRApp, h } from "vue";
+import { createSSRApp, h, type Component, type VNodeChild } from "vue";
 import { renderToString } from "@vue/server-renderer";
 import * as fs from "fs";
 
@@ -26,7 +26,6 @@ import HkListTransition from "../src/components/HkListTransition";
 import HkLogo from "../src/components/HkLogo";
 import HkMarkdownRenderer from "../src/components/HkMarkdownRenderer";
 import HkModal from "../src/components/HkModal";
-import HkMorphingTabs from "../src/components/HkMorphingTabs";
 import HkNavItem from "../src/components/HkNavItem";
 import HkNumberInput from "../src/components/HkNumberInput";
 import HkPhaseTransition from "../src/components/HkPhaseTransition";
@@ -62,14 +61,29 @@ import HkModalBreadcrumb from "../src/components/HkModalBreadcrumb";
 import HkProgressDialog from "../src/components/HkProgressDialog";
 import HkKeywordSearchModal from "../src/components/HkKeywordSearchModal";
 
-async function renderComponent(name: string, comp: any, props: Record<string, unknown>, slots?: Record<string, any>) {
+interface VerifyResult {
+  name: string;
+  ok: boolean;
+  html?: string;
+  error?: string;
+}
+
+async function renderComponent(
+  name: string,
+  comp: Component,
+  props: Record<string, unknown>,
+  slots?: Record<string, unknown>,
+): Promise<VerifyResult> {
   try {
     const app = createSSRApp({
       render() {
-        const slotFns: Record<string, () => any> = {};
+        const slotFns: Record<string, () => VNodeChild> = {};
         if (slots) {
           for (const [key, val] of Object.entries(slots)) {
-            slotFns[key] = typeof val === "function" ? val : () => val;
+            slotFns[key] =
+              typeof val === "function"
+                ? (val as () => VNodeChild)
+                : () => val as VNodeChild;
           }
         }
         return h(comp, props, slotFns);
@@ -77,13 +91,16 @@ async function renderComponent(name: string, comp: any, props: Record<string, un
     });
     const html = await renderToString(app);
     return { name, ok: true, html };
-  } catch (e: any) {
-    return { name, ok: false, error: e.message };
+  } catch (e) {
+    // Anything can be thrown (the component, the renderer, a plugin); the
+    // report wants its message, so narrow rather than assume an Error.
+    const message = e instanceof Error ? e.message : String(e);
+    return { name, ok: false, error: message };
   }
 }
 
 async function main() {
-  const results: any[] = [];
+  const results: VerifyResult[] = [];
 
   // HkButton
   results.push(await renderComponent("HkButton", HkButton,
@@ -246,14 +263,14 @@ async function main() {
   const count = { ok: 0, fail: 0 };
 
   for (const r of results) {
-    const preview = r.ok ? r.html.slice(0, 120).replace(/\n/g, " ") : `ERROR: ${r.error}`;
+    const preview = r.ok ? (r.html ?? "").slice(0, 120).replace(/\n/g, " ") : `ERROR: ${r.error}`;
     report += `| ${r.name} | ${r.ok ? "OK" : "FAIL"} | \`${preview}\` |\n`;
     if (r.ok) count.ok++;
     else count.fail++;
 
     // Write full HTML for each component
     const slug = r.name.replace(/[^a-zA-Z0-9]/g, "_").replace(/_{2,}/g, "_");
-    fs.writeFileSync(`${outDir}/${slug}.html`, r.ok ? r.html : `<!-- ERROR: ${r.error} -->`);
+    fs.writeFileSync(`${outDir}/${slug}.html`, r.ok ? (r.html ?? "") : `<!-- ERROR: ${r.error} -->`);
   }
 
   report += `\n## Summary\n\n- **Passed**: ${count.ok}\n- **Failed**: ${count.fail}\n- **Total**: ${count.ok + count.fail}\n`;

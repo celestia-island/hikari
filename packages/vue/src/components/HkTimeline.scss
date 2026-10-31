@@ -312,6 +312,56 @@
   }
 }
 
+/* ── Bond cells (2026-10-31 user rule) ──────────────────────────────────
+   The horizontal row reads as one cell per step plus one cell per bond: the
+   steps keep their content width, the leftover splits into EQUAL bond cells,
+   and each bond paints 80 % of its cell CENTERED, so both ends keep a 10 %
+   air gap. Two mechanics make that exact:
+
+   1. The bond's box must span the WHOLE cell. Its cell begins where its own
+      label ends, but the step's flex gap already sits in front of it (that
+      gap is part of the cell, not extra air), so the box starts one gap
+      earlier — hence the negated start margin, which must keep reading the
+      SAME `--hk-timeline-step-gap` token the step's `gap` uses. Before this
+      the gap counted twice and the bond ran 12px off its label but only 4px
+      off the next node: the completed bond read as glued to the next circle.
+   2. The painted 80 % cannot be `padding-inline` — a percentage padding
+      resolves against the CONTAINING block (the step), not the bond's own
+      box, which would inset it by a slice of the step instead of 10 % of the
+      cell. So the colour moves to a ::before pinned `inset-inline: 10%`,
+      which does resolve against the bond. The status rules below therefore
+      publish `--_bond-color`; the vertical rail keeps painting its own box
+      (it is a rail hanging under the node, not a cell-wide bond).
+
+   The floor keeps a squeezed row honest: the cell absorbs the gap on top of
+   a half-rem of bond, so the narrowest full row still paints a visible line.
+   Its outer size is that floor MINUS the cancelled gap, i.e. half a rem per
+   bond — eight of the sixteen pixels the old two 4px margins reserved, so
+   `collapse="auto"` (HkTimeline.tsx measures this max-content width) fires
+   about 32px earlier than before across a five-step row, never later.
+   Bounded cost, accepted: in a row squeezed past the floor (reachable through
+   `collapse="never"`, or the full-mode frame that a label change and a
+   hysteresis un-collapse render before re-measuring) the box keeps its floor
+   and overhangs the next step by a QUARTER of the row's shortfall — ~6px at a
+   430px host, ~14px at 400px — so the bond paints under that step's circle
+   until the overhang outgrows the 24px circle itself (host ≲ 362px), where a
+   visible stub sits beside it. Shrinking the floor to nothing would trade
+   this for a bond that vanishes on the narrowest hosts. */
+.hk-timeline[data-mode="full"][data-orientation="horizontal"] .hk-timeline-step [data-el="connector"] {
+  position: relative;
+  margin-inline: calc(-1 * var(--hk-timeline-step-gap, var(--space-8, 8px))) 0;
+  min-width: calc(0.5rem + var(--hk-timeline-step-gap, var(--space-8, 8px)));
+  background: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline: 10%;
+    background: var(--_bond-color);
+  }
+}
+
 .hk-timeline-step[data-last] {
   flex: 0 0 auto;
 }
@@ -376,7 +426,11 @@
   }
 
   [data-el="connector"] {
-    background: var(--hi-color-primary);
+    // The bonds paint 80 % of their cell through a ::before (see the
+    // full-mode cell rule); the token is the single source for both that
+    // paint and the vertical rail's own box.
+    --_bond-color: var(--hi-color-primary);
+    background: var(--_bond-color);
   }
 }
 
@@ -392,7 +446,12 @@
   }
 
   [data-el="connector"] {
-    background: color-mix(in srgb, var(--hi-color-border) 30%, transparent);
+    // Opaque-tone derivation, same fix the window-mode link carries:
+    // `--hi-color-border` already carries the theme's own alpha, so 30 % of
+    // IT computed to about 4.5 % and the bond was not a line on any real
+    // surface (measured: ~7/255 off a white background — a 248 grey).
+    --_bond-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 30%, transparent);
+    background: var(--_bond-color);
   }
 }
 
@@ -408,7 +467,12 @@
   }
 
   [data-el="connector"] {
-    background: color-mix(in srgb, var(--hi-color-border) 30%, transparent);
+    // Opaque-tone derivation, same fix the window-mode link carries:
+    // `--hi-color-border` already carries the theme's own alpha, so 30 % of
+    // IT computed to about 4.5 % and the bond was not a line on any real
+    // surface (measured: ~7/255 off a white background — a 248 grey).
+    --_bond-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 30%, transparent);
+    background: var(--_bond-color);
   }
 }
 
@@ -451,10 +515,14 @@
 }
 
 // Status crossfade: the data-status driven colors (indicator fill/border,
-// label color, connector fill) transition instead of flipping.
+// label color, connector fill) transition instead of flipping. The
+// horizontal bond's paint lives on its ::before (the 80 % cell rule), so
+// that box rides the crossfade too — without it a status flip snaps there
+// while the vertical rail keeps easing.
 .hk-timeline-step [data-el="indicator"],
 .hk-timeline-step [data-el="label"],
-.hk-timeline-step [data-el="connector"] {
+.hk-timeline-step [data-el="connector"],
+.hk-timeline[data-mode="full"][data-orientation="horizontal"] .hk-timeline-step [data-el="connector"]::before {
   transition:
     background-color var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
     color var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
@@ -530,7 +598,8 @@ html[data-css-animations="0"] .hk-timeline[data-mode="window"][data-dir] .hk-tim
 @media (prefers-reduced-motion: reduce) {
   .hk-timeline-step [data-el="indicator"],
   .hk-timeline-step [data-el="label"],
-  .hk-timeline-step [data-el="connector"] {
+  .hk-timeline-step [data-el="connector"],
+  .hk-timeline[data-mode="full"][data-orientation="horizontal"] .hk-timeline-step [data-el="connector"]::before {
     transition: none;
   }
 

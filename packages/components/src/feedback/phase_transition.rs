@@ -13,9 +13,11 @@
 //
 //   * named slots do not exist in tairitsu rsx — the caller passes the
 //     active phase's `content` Element directly;
-//   * the key derivation is preserved: `key = phase + ":" + detail`, where
-//     `detail` is the caller's digest of the state's remaining fields
-//     (the same string Vue would produce from `k:v` pairs joined by JSON);
+//   * the key derivation is adapted, not byte-identical: Vue computes
+//     `type + JSON.stringify(entries)` internally; tairitsu rsx has no
+//     runtime JSON reflection, so the caller passes `detail` — the digest of
+//     the same non-`type` fields — and the mirror keys on
+//     `phase + ":" + detail` (empty detail keys on `phase` alone);
 //   * tairitsu has no `<Transition>` hook machinery, so the sheet's
 //     `.hk-phase-enter-active/-leave-active` classes have no automatic
 //     driver: the wrapper remounts on key change and a host that wants the

@@ -42,6 +42,23 @@ fn build() -> anyhow::Result<()> {
         "packages/theme/styles",
     ];
 
+    // The vendored Vue mirrors feed the same bundle; re-run when they change
+    // even though the entry sheet itself did not.
+    let mirror_root = workspace_root.join("packages/components/src/styles/vue-mirror");
+    for mirror_dir in [mirror_root.clone(), mirror_root.join("components")] {
+        if mirror_dir.is_dir() {
+            println!("cargo:rerun-if-changed={}", mirror_dir.display());
+            if let Ok(entries) = fs::read_dir(&mirror_dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                        println!("cargo:rerun-if-changed={}", path.display());
+                    }
+                }
+            }
+        }
+    }
+
     for watch_path in &scss_watch_paths {
         let full_path = workspace_root.join(watch_path);
         if full_path.exists() {

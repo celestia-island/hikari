@@ -51,6 +51,15 @@ SHARED_PARTIALS: list[tuple[str, str]] = [
 # The feedback family sheets mirrored by the wasm-mirror-feedback wave
 # (2026-11). Append later families here as their mirrors land; the drift
 # test walks this table, so an upstream rename fails loudly here.
+# Chrome sheets the mirrored family surfaces render from but do not define:
+# the window close affordance (`.hk-window-close`) and the button voice
+# (`.hk-btn*`, used by BlockingToast / footer actions). Mirrored so both
+# forms ship the same chrome instead of falling back to unstyled buttons.
+CHROME_SHEETS: list[str] = [
+    "window-close.scss",
+    "HkButton.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -95,18 +104,18 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
 
-def write_manifest() -> None:
+def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
-    (mirror_root / MANIFEST_NAME).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
 
 
 def expected_bytes(upstream: Path) -> bytes:
@@ -136,8 +145,11 @@ def sync(vendored: Path, upstream: Path, check_only: bool) -> str:
 
 def main() -> int:
     check_only = "--check" in sys.argv[1:]
+    mutating = not check_only
     mirror_root.mkdir(parents=True, exist_ok=True)
-    write_manifest()
+    expected_manifest = manifest_text()
+    if mutating:
+        (mirror_root / MANIFEST_NAME).write_text(expected_manifest, encoding="utf-8")
     problems = 0
     for vendored, upstream in build_pairs():
         result = sync(vendored, upstream, check_only)
@@ -146,6 +158,11 @@ def main() -> int:
             if result.startswith(("DRIFT", "MISSING")):
                 problems += 1
     if check_only:
+        manifest_path = mirror_root / MANIFEST_NAME
+        actual = manifest_path.read_text(encoding="utf-8") if manifest_path.is_file() else ""
+        if actual != expected_manifest:
+            print(f"DRIFT   {MANIFEST_NAME} does not match the sync table", file=sys.stderr)
+            problems += 1
         if problems:
             print(f"{problems} mirror file(s) out of sync — run scripts/sync-vue-mirror.py",
                   file=sys.stderr)

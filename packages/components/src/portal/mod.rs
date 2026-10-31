@@ -12,7 +12,7 @@
 //! flowchart TB
 //!     subgraph "Application Layer"
 //!         A[Dropdown Component]
-//!//!         C[Toast Component]
+//!         C[Toast Component]
 //!     end
 
 //!     subgraph "Portal Context"
@@ -22,13 +22,13 @@
 //!
 //!     subgraph "Portal Entry Types"
 //!         F[PortalEntry]
-//!//!         F2[Dropdown]
+//!         F2[Dropdown]
 //!         F3[Toast]
 //!     end
 //!
 //!     subgraph "Portal Rendering"
 //!         G[PortalRender]
-//!//!         I[DropdownPortalEntry]
+//!         I[DropdownPortalEntry]
 //!         J[ToastPortalEntry]
 //!     end
 //!
@@ -141,10 +141,11 @@
 //!
 //! ### Modal surfaces
 //!
-//! The Modal family renders through its own declarative component (mirrored
-//! from the canonical Vue `HkModal`); the legacy `PortalEntry::Modal` layer
-//! was retired with that mirror. Portal entries remain for dropdown/popover/
-//! toast/tooltip layers.
+//! The Modal and Popover families render through their own declarative
+//! components (mirrored from the canonical Vue `HkModal` / `HkPopover`); the
+//! legacy `PortalEntry::Modal` and `PortalEntry::Popover` layers were retired
+//! with those mirrors. Portal entries remain for the dropdown, toast and
+//! tooltip layers.
 //!
 //! ## Features
 //!

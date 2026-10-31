@@ -15,8 +15,9 @@ use crate::utils::HkPad;
 
 pub struct PaginationComponent;
 
-/// The shared jump-panel state (see the component note). `Signal` lives in
-/// a thread-local so writes survive renders.
+/// The jump-panel state (see the component note). `Signal` lives in a
+/// thread-local so writes survive renders; entries are keyed by the
+/// pagination instance so two paginations on one page keep their own layer.
 #[derive(Clone, Debug, Default)]
 pub struct PaginationJumpState {
     pub open: bool,
@@ -26,16 +27,27 @@ pub struct PaginationJumpState {
 }
 
 thread_local! {
-    static JUMP_STATE: Signal<PaginationJumpState> =
-        Signal::new(PaginationJumpState::default());
+    static JUMP_STATES: std::cell::RefCell<
+        std::collections::HashMap<String, Signal<PaginationJumpState>>,
+    > = std::cell::RefCell::new(std::collections::HashMap::new());
 }
 
-fn pagination_jump_state() -> Signal<PaginationJumpState> {
-    JUMP_STATE.with(|state| state.clone())
+fn pagination_jump_state(instance_id: &str) -> Signal<PaginationJumpState> {
+    JUMP_STATES.with(|states| {
+        let mut states = states.borrow_mut();
+        states
+            .entry(instance_id.to_string())
+            .or_insert_with(|| Signal::new(PaginationJumpState::default()))
+            .clone()
+    })
 }
 
 #[define_props]
 pub struct PaginationProps {
+    /// Instance identity for the jump layer (ids + shared state). Two
+    /// paginations on one page must pass different ids.
+    pub instance_id: Option<String>,
+
     #[default(1)]
     pub current: u32,
 
@@ -82,7 +94,15 @@ pub fn Pagination(props: PaginationProps) -> Element {
     // component-body state is render-scoped, so hook-backed signals cannot
     // hold it. Delta vs the retired portal entry: the panel is one shared
     // jump layer per page (the legacy component shared one open flag too).
-    let jump_state = pagination_jump_state();
+    // Instance identity: two paginations on one page must not share the
+    // jump layer nor emit duplicate DOM ids. Hosts pass `instance_id`.
+    let instance_id = props
+        .instance_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
+    let jump_id_1 = format!("hk-pagination-jump-{instance_id}-1");
+    let jump_id_2 = format!("hk-pagination-jump-{instance_id}-2");
+    let jump_state = pagination_jump_state(&instance_id);
 
     let show_jump_modal_for_close = show_jump_modal.clone();
     let handle_modal_close = Callback::new(move |is_open: bool| {
@@ -309,21 +329,23 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     // Create jump modal content for first ellipsis
     let jump_to_for_modal1 = jump_to.clone();
-    let show_jump_modal_for_modal1 = show_jump_modal.clone();
+    let jump_state_for_modal1 = jump_state.clone();
     let current_page_for_modal1 = current_page.clone();
     let on_change_for_modal1 = on_change.clone();
     let create_jump_modal_content_1 = move || {
         let jump_to_for_input = jump_to_for_modal1.clone();
         let jump_to_for_button = jump_to_for_modal1.clone();
         let current_page_for_jump = current_page_for_modal1.clone();
-        let show_jump_modal_for_jump = show_jump_modal_for_modal1.clone();
+        let jump_state_for_jump = jump_state_for_modal1.clone();
         let on_change_for_jump = on_change_for_modal1.clone();
         let handle_modal_jump = move |page: u32| {
             current_page_for_jump.set(page);
             if let Some(h) = on_change_for_jump.as_ref() {
                 h.call(page);
             }
-            show_jump_modal_for_jump.set(false);
+            let mut current = jump_state_for_jump.get();
+            current.open = false;
+            jump_state_for_jump.set(current);
         };
         rsx! {
             div {
@@ -378,21 +400,23 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     // Create jump modal content for second ellipsis
     let jump_to_for_modal2 = jump_to.clone();
-    let show_jump_modal_for_modal2 = show_jump_modal.clone();
+    let jump_state_for_modal2 = jump_state.clone();
     let current_page_for_modal2 = current_page.clone();
     let on_change_for_modal2 = on_change.clone();
     let create_jump_modal_content_2 = move || {
         let jump_to_for_input = jump_to_for_modal2.clone();
         let jump_to_for_button = jump_to_for_modal2.clone();
         let current_page_for_jump = current_page_for_modal2.clone();
-        let show_jump_modal_for_jump = show_jump_modal_for_modal2.clone();
+        let jump_state_for_jump = jump_state_for_modal2.clone();
         let on_change_for_jump = on_change_for_modal2.clone();
         let handle_modal_jump = move |page: u32| {
             current_page_for_jump.set(page);
             if let Some(h) = on_change_for_jump.as_ref() {
                 h.call(page);
             }
-            show_jump_modal_for_jump.set(false);
+            let mut current = jump_state_for_jump.get();
+            current.open = false;
+            jump_state_for_jump.set(current);
         };
         rsx! {
             div {
@@ -511,7 +535,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 color: GlowColor::Primary,
                                 intensity: GlowIntensity::Dim,
                                 button {
-                                    id: "hk-pagination-jump-1",
+                                    id: jump_id_1.as_str(),
                                     class: ClassesBuilder::new()
                                         .add(PaginationClass::PaginationItem)
                                         .build(),
@@ -520,7 +544,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                         move |_| {
                                             let mut current = jump_state.get();
                                             current.anchor_1 = anchor_rect_from_element_id(
-                                                "hk-pagination-jump-1",
+                                                jump_id_1.as_str(),
                                             );
                                             current.which = 1;
                                             current.open = true;
@@ -557,7 +581,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 color: GlowColor::Primary,
                                 intensity: GlowIntensity::Dim,
                                 button {
-                                    id: "hk-pagination-jump-2",
+                                    id: jump_id_2.as_str(),
                                     class: ClassesBuilder::new()
                                         .add(PaginationClass::PaginationItem)
                                         .build(),
@@ -566,7 +590,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                         move |_| {
                                             let mut current = jump_state.get();
                                             current.anchor_2 = anchor_rect_from_element_id(
-                                                "hk-pagination-jump-2",
+                                                jump_id_2.as_str(),
                                             );
                                             current.which = 2;
                                             current.open = true;
@@ -729,6 +753,7 @@ mod tests {
     #[test]
     fn test_pagination_props_clone() {
         let props = PaginationProps {
+            instance_id: Some("test-a".to_string()),
             current: 5,
             page_size: 20,
             total: 100,
@@ -751,6 +776,7 @@ mod tests {
     #[test]
     fn test_pagination_props_partial_eq() {
         let props1 = PaginationProps {
+            instance_id: Some("test-a".to_string()),
             current: 5,
             page_size: 20,
             total: 100,
@@ -763,6 +789,7 @@ mod tests {
         };
 
         let props2 = PaginationProps {
+            instance_id: Some("test-a".to_string()),
             current: 5,
             page_size: 20,
             total: 100,

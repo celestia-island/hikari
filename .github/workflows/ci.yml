@@ -106,6 +106,12 @@ jobs:
           components: rustfmt, clippy
           targets: wasm32-wasip2
 
+      - name: Check the vendored Vue sheet mirrors
+        # The Rust crate compiles the same sheets the Vue library ships; a
+        # mirror that drifted from packages/vue/src is a styling divergence
+        # with no compile error of its own.
+        run: python3 scripts/sync-vue-mirror.py --check
+
       - name: Run cargo test
         run: cargo test --all-features --all
         env:

@@ -118,9 +118,9 @@ pub struct ProgressBarProps {
 }
 
 fn clamp_pct(value: f64, max: f64) -> f64 {
-    if max <= 0.0 {
-        return 0.0;
-    }
+    // Exactly Vue's expression: `Math.min(100, Math.max(0, value / max * 100))`.
+    // A zero max therefore follows IEEE/JOOC semantics like JS — a positive
+    // value becomes Infinity and clamps to 100, `0/0` stays NaN.
     ((value / max) * 100.0).clamp(0.0, 100.0)
 }
 
@@ -229,9 +229,10 @@ mod tests {
         assert_eq!(clamp_pct(-10.0, 100.0), 0.0);
         assert_eq!(clamp_pct(150.0, 100.0), 100.0);
         assert_eq!(clamp_pct(3.0, 4.0), 75.0);
-        // A zero/negative max cannot divide; Vue would produce NaN, the
-        // mirror pins 0 — documented in the PR.
-        assert_eq!(clamp_pct(10.0, 0.0), 0.0);
+        // Vue parity on the degenerate max: 10/0 → Infinity → clamp → 100.
+        assert_eq!(clamp_pct(10.0, 0.0), 100.0);
+        // 0/0 is NaN in both runtimes.
+        assert!(clamp_pct(0.0, 0.0).is_nan());
     }
 
     #[test]

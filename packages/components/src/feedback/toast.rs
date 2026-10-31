@@ -315,14 +315,14 @@ thread_local! {
         std::cell::RefCell::new(std::collections::HashSet::new());
 }
 
-fn fired_action_slots() -> &'static std::cell::RefCell<std::collections::HashSet<u64>> {
-    // Leak-free handle to the thread-local registry: the closure keeps the
-    // RefCell alive for the process (wasm is single-threaded).
-    FIRED_ACTION_SLOTS.with(|slot| unsafe {
-        // SAFETY: the thread-local outlives every caller on the single
-        // wasm thread; the reference is never used across threads.
-        &*(slot as *const _)
-    })
+fn action_already_fired(slot_id: u64) -> bool {
+    FIRED_ACTION_SLOTS.with(|slots| slots.borrow().contains(&slot_id))
+}
+
+fn mark_action_fired(slot_id: u64) {
+    FIRED_ACTION_SLOTS.with(|slots| {
+        slots.borrow_mut().insert(slot_id);
+    });
 }
 
 impl ToastStoreInner {
@@ -728,7 +728,7 @@ pub fn ToastItemView(props: ToastItemViewProps) -> Element {
     // tairitsu 0.5.22 has no per-instance component state (one hook slot per
     // component TYPE), so the fired flag lives in a module registry keyed by
     // the slot id (stable for the slot's lifetime).
-    let action_fired = fired_action_slots().borrow().contains(&props.slot.id);
+    let action_fired = action_already_fired(props.slot.id);
 
     let slot = props.slot;
     let slot_id = slot.id;
@@ -818,7 +818,7 @@ pub fn ToastItemView(props: ToastItemViewProps) -> Element {
                         if action_fired {
                             return;
                         }
-                        fired_action_slots().borrow_mut().insert(slot_id);
+                        mark_action_fired(slot_id);
                         // Remove FIRST, run the handler SECOND: a throwing
                         // handler can never keep a dismissed toast alive.
                         if let Some(handler) = on_remove_action.as_ref() {

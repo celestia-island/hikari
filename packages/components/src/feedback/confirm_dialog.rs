@@ -147,7 +147,11 @@ pub fn ConfirmDialog(props: ConfirmDialogProps) -> Element {
     rsx! {
         Modal {
             open: props.open,
-            title: Some(props.title.clone()),
+            title: if props.title.is_empty() {
+                None
+            } else {
+                Some(props.title.clone())
+            },
             closable: !props.loading,
             width: "24rem".to_string(),
             children: rsx! {

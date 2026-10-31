@@ -57,7 +57,27 @@ fn read_manifest() -> Vec<MirrorRow> {
 /// Strip the provenance header: everything through the
 /// "do not hand-edit here." marker line plus following blank lines.
 /// The remainder must equal the upstream byte-for-byte.
+/// The EXACT provenance header every mirror must carry (kept in sync with
+/// `scripts/sync-vue-mirror.py`). Requiring a byte-exact header — instead of
+/// just finding the marker line anywhere — stops junk above the marker from
+/// slipping into the comparison unnoticed.
+const EXPECTED_HEADER: &str =
+    "// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+";
+
 fn strip_provenance_header(source: &str) -> &str {
+    assert!(
+        source.starts_with(EXPECTED_HEADER),
+        "mirror provenance header changed — regenerate it with scripts/sync-vue-mirror.py"
+    );
     let marker = source
         .lines()
         .position(|line| line.contains("do not hand-edit here."))
@@ -168,11 +188,11 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
             .unwrap_or_else(|e| panic!("read {base}: {e}"));
         for line in text.lines() {
             let trimmed = line.trim_start();
-            if let Some(rest) = trimmed.strip_prefix("--") {
-                if let Some(name) = rest.split(':').next() {
-                    definitions.insert(format!("--{}", name.trim()));
-                    base_definitions += 1;
-                }
+            if let Some(rest) = trimmed.strip_prefix("--")
+                && let Some(name) = rest.split(':').next()
+            {
+                definitions.insert(format!("--{}", name.trim()));
+                base_definitions += 1;
             }
         }
     }
@@ -196,18 +216,16 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
         // Local definitions inside the partial itself count as resolved.
         for line in text.lines() {
             let trimmed = line.trim_start();
-            if let Some(rest) = trimmed.strip_prefix("--") {
-                if let Some(name) = rest.split(':').next() {
-                    definitions.insert(format!("--{}", name.trim()));
-                }
+            if let Some(rest) = trimmed.strip_prefix("--")
+                && let Some(name) = rest.split(':').next()
+            {
+                definitions.insert(format!("--{}", name.trim()));
             }
         }
         let mut rest = text.as_str();
         while let Some(start) = rest.find("var(--") {
             rest = &rest[start + 4..];
-            let name_end = rest
-                .find(|c: char| c == ')' || c == ',')
-                .unwrap_or(rest.len());
+            let name_end = rest.find([')', ',']).unwrap_or(rest.len());
             let name = &rest[..name_end];
             let has_fallback = rest[name_end..].starts_with(',');
             if !has_fallback {
@@ -224,6 +242,48 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
         referenced_without_fallback > 0,
         "expected fallback-less token references in the mirrored sheets (pattern check)"
     );
+}
+
+/// The registry-only CSS path must ship the same shared layers the builder
+/// bundle does: both canonical token sheets and the mirrored chrome the
+/// family surfaces render from. Without these a registry host silently
+/// renders unstyled buttons/closes and collapsed spacing.
+#[test]
+fn registry_bundle_ships_the_shared_tokens_and_chrome() {
+    use hikari_components::StyleRegistry;
+
+    let mut registry = StyleRegistry::default();
+    registry.register_all();
+    let bundle = registry.css_bundle();
+
+    // Canonical token layers (tokens.scss + scale.scss).
+    for needle in [
+        "--color-primary:",
+        "--space-4",
+        "--radius-sm",
+        "--text-base",
+    ] {
+        assert!(
+            bundle.contains(needle),
+            "registry bundle is missing the canonical token {needle}"
+        );
+    }
+    // Mirrored family sheets + the chrome they depend on.
+    for needle in [".hk-alert", ".hk-modal", ".hk-window-close", ".hk-btn"] {
+        assert!(
+            bundle.contains(needle),
+            "registry bundle is missing {needle}"
+        );
+    }
+    assert!(
+        !bundle.contains("CSS generation failed"),
+        "a mirrored sheet failed to compile into the registry bundle"
+    );
+
+    // Deterministic concatenation: the same registry renders the same bytes.
+    let mut second = StyleRegistry::default();
+    second.register_all();
+    assert_eq!(bundle, second.css_bundle());
 }
 
 fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) {

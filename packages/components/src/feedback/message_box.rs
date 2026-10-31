@@ -32,8 +32,11 @@
 //     call). The macro-task mount / 360 ms reclaim / 5-minute safety net
 //     are Vue host-mounting lifecycle details with no analogue here;
 //   * the prompt field renders the crate's Input until the HkInput
-//     mirror lands (label/error chrome kept, affixes accepted and
-//     rendered as prefix/suffix slots).
+//     mirror lands (affixes ride prefix/suffix slots); the label and the
+//     validation message use `hk-message-box-prompt-label` /
+//     `hk-message-box-prompt-error`, which the Vue sheet does not style —
+//     they render as plain rows until the HkInput family is mirrored.
+//     Enter confirms the prompt (Vue: Enter while not composing).
 
 use std::rc::Rc;
 
@@ -58,21 +61,32 @@ thread_local! {
 
 #[derive(Clone)]
 struct MessageBoxLocalState {
+    /// Which request this entry serves; a different request replaces the
+    /// entry, which is what keeps the box reusable (Vue mounts a fresh host
+    /// per `show()`).
+    request: String,
     open: Signal<bool>,
     value: Signal<String>,
     error: Signal<Option<String>>,
 }
 
-fn box_state(instance_key: &str, initial_value: &str) -> MessageBoxLocalState {
+fn box_state(instance_key: &str, request: &str, initial_value: &str) -> MessageBoxLocalState {
     BOX_STATE.with(|map| {
         let mut map = map.borrow_mut();
-        map.entry(instance_key.to_string())
-            .or_insert_with(|| MessageBoxLocalState {
-                open: Signal::new(true),
-                value: Signal::new(initial_value.to_string()),
-                error: Signal::new(None),
-            })
-            .clone()
+        let fresh = || MessageBoxLocalState {
+            request: request.to_string(),
+            open: Signal::new(true),
+            value: Signal::new(initial_value.to_string()),
+            error: Signal::new(None),
+        };
+        match map.get(instance_key) {
+            Some(existing) if existing.request == request => existing.clone(),
+            _ => {
+                let state = fresh();
+                map.insert(instance_key.to_string(), state.clone());
+                state
+            }
+        }
     })
 }
 
@@ -200,6 +214,12 @@ pub struct MessageBoxProps {
     #[default("message-box".to_string())]
     pub instance_key: String,
 
+    /// Request identity: when it changes, the box resets (open + field
+    /// value + error). Hosts that re-show a settled box MUST pass a new
+    /// `request_id` — the singleton registry keeps the settled state
+    /// otherwise (Vue mounts a fresh host per show()).
+    pub request_id: Option<String>,
+
     /// Fires once when the box settles.
     pub on_resolve: Option<EventHandler<MessageBoxOutcome>>,
 }
@@ -213,7 +233,10 @@ pub fn MessageBox(props: MessageBoxProps) -> Element {
         .as_ref()
         .map(|prompt| prompt.value.clone())
         .unwrap_or_default();
-    let local = box_state(&props.instance_key, &initial_value);
+    // A new `request_id` (or a fresh key) resets the box; re-rendering the
+    // same request keeps its value/error while it is open.
+    let request = props.request_id.clone().unwrap_or_default();
+    let local = box_state(&props.instance_key, &request, &initial_value);
 
     let confirm_label = props
         .confirm_text
@@ -303,6 +326,16 @@ pub fn MessageBox(props: MessageBoxProps) -> Element {
             }
         }
     };
+    // Vue: Enter (while not composing) confirms the prompt.
+    let on_keydown = {
+        let confirm = settle_confirm.clone();
+        move |e: KeyboardEvent| {
+            if e.key == "Enter" && !e.repeat {
+                e.prevent_default();
+                confirm(MouseEvent::default());
+            }
+        }
+    };
 
     let tone_icon = props.tone.icon();
     let danger_role = props.tone == MessageBoxTone::Danger;
@@ -336,6 +369,7 @@ pub fn MessageBox(props: MessageBoxProps) -> Element {
                     placeholder: prompt.placeholder.clone(),
                     size: InputSize::Medium,
                     oninput: Some(EventHandler::new(on_input.clone())),
+                    onkeydown: Some(EventHandler::new(on_keydown.clone())),
                     prefix_icon: prompt.prefix.clone(),
                     suffix_icon: prompt.suffix.clone(),
                 }

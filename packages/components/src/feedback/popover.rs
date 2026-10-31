@@ -344,41 +344,70 @@ pub fn Popover(props: PopoverProps) -> Element {
             div { class: "hk-popover-backdrop" }
         });
     }
-    layer_children.push(rsx! {
+    // Locals: the rsx macro consumes the expressions it is handed, so the
+    // shared props are cloned once per consumer instead of being read twice.
+    let children_sheet = props.children.clone();
+    let children_anchored = props.children.clone();
+    let panel_title = props.title.clone();
+    let sheet_title_text = props.title.clone();
+    // Vue marks ONLY the mobile sheet as `aria-modal` + focusable
+    // (`tabindex=-1`); the anchored popover is a non-blocking layer whose
+    // attributes are omitted. Two branches keep that difference exact.
+    let sheet_content = rsx! {
         div {
-            "data-hk-popout-layer": "",
+            class: "hk-popover-sheet-grabber",
+            "aria-hidden": "true",
+            onclick: grabber_close,
+        }
+        div { class: "hk-popover-sheet-header",
+            if !sheet_title_text.is_empty() {
+                div { class: "hk-popover-sheet-title", "{sheet_title_text}" }
+            }
+            button {
+                class: "hk-window-close hk-popover-sheet-close",
+                "type": "button",
+                "aria-label": hikari_i18n::t("hikari::modal.close", "Close"),
+                onclick: close_button,
+                Icon {
+                    icon: MdiIcon::Close,
+                    size: 16,
+                }
+            }
+        }
+        {children_sheet}
+    };
+    let anchored_content = rsx! {
+        {children_anchored}
+    };
+    let panel_keydown_for_anchored = panel_keydown.clone();
+    let panel = if sheet_branch {
+        rsx! {
             div {
                 class: panel_classes,
                 style: panel_style,
                 "role": "dialog",
-                "aria-modal": if sheet_branch { "true" } else { "" },
-                "aria-label": if props.title.is_empty() { "" } else { props.title.as_str() },
-                tabindex: if sheet_branch { -1 } else { 0 },
+                "aria-modal": "true",
+                "aria-label": panel_title,
+                tabindex: -1,
                 onkeydown: panel_keydown,
-                if sheet_branch {
-                    div {
-                        class: "hk-popover-sheet-grabber",
-                        "aria-hidden": "true",
-                        onclick: grabber_close,
-                    }
-                    div { class: "hk-popover-sheet-header",
-                        if !props.title.is_empty() {
-                            div { class: "hk-popover-sheet-title", "{props.title}" }
-                        }
-                        button {
-                            class: "hk-window-close hk-popover-sheet-close",
-                            "type": "button",
-                            "aria-label": hikari_i18n::t("hikari::modal.close", "Close"),
-                            onclick: close_button,
-                            Icon {
-                                icon: MdiIcon::Close,
-                                size: 16,
-                            }
-                        }
-                    }
-                }
-                {props.children.clone()}
+                {sheet_content}
             }
+        }
+    } else {
+        rsx! {
+            div {
+                class: panel_classes,
+                style: panel_style,
+                "role": "dialog",
+                onkeydown: panel_keydown_for_anchored,
+                {anchored_content}
+            }
+        }
+    };
+    layer_children.push(rsx! {
+        div {
+            "data-hk-popout-layer": "",
+            {panel}
         }
     });
 

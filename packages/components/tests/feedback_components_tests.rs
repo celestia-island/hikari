@@ -1,7 +1,6 @@
 mod tests {
 
     use hikari_components::prelude::*;
-    use hikari_icons::MdiIcon;
 
     #[test]
     fn test_alert_props_default() {

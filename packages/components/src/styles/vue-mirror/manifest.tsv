@@ -22,3 +22,5 @@ components/HkProgressRing.scss	components/HkProgressRing.scss
 components/HkSpinner.scss	components/HkSpinner.scss
 components/HkToast.scss	components/HkToast.scss
 components/HkTooltip.scss	components/HkTooltip.scss
+components/window-close.scss	components/window-close.scss
+components/HkButton.scss	components/HkButton.scss

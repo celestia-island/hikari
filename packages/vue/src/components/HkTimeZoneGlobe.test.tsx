@@ -141,3 +141,12 @@ describe("HkTimeZoneGlobe look contract (source-level)", () => {
     expect(src).toContain("minimapDefaultCollapsed");
   });
 });
+describe("minimap reset icon contract (user direction 2026-10-31)", () => {
+  it("reset buttons use RotateCcw, never the expand-looking Maximize2", () => {
+    for (const name of ["HkMinimap.tsx", "HkMinimap3D.tsx", "HkZoomToolbar.tsx"]) {
+      const src = readFileSync(join(import.meta.dirname, name), "utf8");
+      expect(src, name + " imports RotateCcw").toContain("RotateCcw");
+      expect(src, name + " dropped Maximize2").not.toContain("Maximize2");
+    }
+  });
+});

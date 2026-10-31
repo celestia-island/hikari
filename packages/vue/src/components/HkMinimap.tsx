@@ -1,4 +1,4 @@
-import { Map as MapIcon, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-vue-next";
+import { Map as MapIcon, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-vue-next";
 import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import HSlider from "./HkSlider";
@@ -407,7 +407,7 @@ export default defineComponent({
                 aria-label={t("hikari::zoomToolbar.reset", "Reset zoom")}
                 title={t("hikari::zoomToolbar.reset", "Reset zoom")}
               >
-                <Maximize2 size={11} />
+                <RotateCcw size={11} />
               </button>
             )}
             {props.collapsible && (

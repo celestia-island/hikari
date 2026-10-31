@@ -6,7 +6,7 @@ edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
 repository.workspace = true
-description = "Shell-lifecycle guards for hikari hosts: the close-request ack/force-close state machine"
+description = "Shell-lifecycle guards for hikari hosts: the close-request ack/force-close state machine and the window geometry memory"
 keywords = ["tauri", "desktop", "webview", "shutdown", "lifecycle"]
 categories = ["gui"]
 
@@ -14,15 +14,20 @@ categories = ["gui"]
 doctest = true
 
 [dependencies]
-# Empty by design: the guard state machine is the portable half of the crate
-# and must stay dependency-free (it has to compile for every target, including
-# the wasm32 workspace checks).
+# The default build stays dependency-free (the portable halves of the crate
+# must compile for every target, including the wasm32 workspace checks). The
+# optional persistence codec behind the `tauri` feature rides here: serde
+# compiles everywhere, so the feature's derives stay available to the wasm32
+# --all-features gates while tauri itself stays native-only below.
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 
 [features]
-# Optional Tauri 2 adapter: the "hikari-host" TauriPlugin (which owns the
+# Optional Tauri 2 adapters: the "hikari-host" TauriPlugin (which owns the
 # plugin:hikari-host|ack_close IPC command) plus the close-request helper a
-# host forwards its own window events into.
-tauri = ["dep:tauri"]
+# host forwards its own window events into, and the window-state plugin
+# ("hikari-host-window-state") that remembers and restores window geometry.
+tauri = ["dep:tauri", "dep:serde", "dep:serde_json"]
 
 # Target-gated dependency: a host's Tauri runtime is native-only. Keeping both
 # the dependency and the optional feature out of WebAssembly builds is what

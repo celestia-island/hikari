@@ -2,10 +2,12 @@
 //! # Hikari Host
 //!
 //! Shell-lifecycle guards shared by hikari's native hosts. Today the crate owns
-//! one facility: the **close-request acknowledgement / force-close state
+//! two facilities: the **close-request acknowledgement / force-close state
 //! machine** that keeps a frameless shell's window closable even when its
-//! webview renderer is dead — plus an optional Tauri 2 adapter behind the
-//! `tauri` feature.
+//! webview renderer is dead, and the **window geometry memory** that reopens a
+//! host's window where the player left it, validated against the desktop that
+//! greets it (a gone monitor or an off-screen close relocates somewhere fully
+//! visible). Both ship optional Tauri 2 adapters behind the `tauri` feature.
 //!
 //! ## Why this exists (the 2026-10-31 incident)
 //!
@@ -95,10 +97,13 @@
 //!
 //! ## Feature flags
 //!
-//! - `tauri` (off by default) — the Tauri 2 adapter, i.e. the `tauri_shell`
-//!   module. The dependency is target-gated to non-WebAssembly targets, so
-//!   workspace-wide `--all-features` checks for `wasm32-wasip2` neither pull
-//!   Tauri in nor compile the adapter.
+//! - `tauri` (off by default) — the Tauri 2 adapters: the close guard's
+//!   `tauri_shell` module and the geometry memory's
+//!   `window_state::tauri_shell` module. The tauri dependency is target-gated
+//!   to non-WebAssembly targets, so workspace-wide `--all-features` checks for
+//!   `wasm32-wasip2` neither pull Tauri in nor compile the adapters (the
+//!   window-state core and its serde derives do compile — serde is
+//!   target-agnostic).
 //!
 //! ## Threading
 //!
@@ -112,6 +117,11 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
+
+/// The window geometry memory: a pure, dependency-free restore policy plus
+/// (behind the `tauri` feature) a Tauri plugin that persists and reapplies
+/// window geometry; see the module docs for the validation contract.
+pub mod window_state;
 
 /// The event a host emits when it intercepts a close request.
 ///
@@ -353,6 +363,9 @@ pub mod tauri_shell {
     use crate::{CLOSE_REQUEST_EVENT, CloseGuard, DEFAULT_FORCE_CLOSE_AFTER};
 
     /// The Tauri plugin name; also the left half of [`crate::CLOSE_ACK_COMMAND`].
+    /// The window geometry memory registers under its own name
+    /// (`hikari-host-window-state`) — Tauri's plugin store REPLACES a
+    /// same-name registration, so the two facilities must never share one.
     pub const PLUGIN_NAME: &str = "hikari-host";
 
     /// The window label intercepted when a [`CloseGuardConfig`] does not say

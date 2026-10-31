@@ -18,7 +18,16 @@
   --hk-tb-focus: rgb(var(--color-primary, 122 162 247) / 0.6);
   --hk-tb-close-hover: #e81123;
   --hk-tb-close-active: #f1707a;
+  /* The close fill is a FIXED danger red, so its ink is fixed too. Deriving
+     it from the theme's on-solid choice (the default dark preset picks
+     polar-night ink for its pale primary fills) painted a dark X on dark
+     red at roughly 1:1 - the host-visible bug both wowsp and momoi filed.
+     Hosts may override the token as a pair with --hk-tb-close-hover. */
+  --hk-tb-close-ink: #ffffff;
   --hk-tb-radius-close: 0 8px 0 0;
+  /* Caption glyph size; hosts that want a larger brand mark set the token
+     instead of overriding the icon rule. */
+  --hk-tb-icon-size: 16px;
 
   position: fixed;
   top: 0;
@@ -47,8 +56,8 @@
 }
 
 .hk-titlebar-icon {
-  width: 16px;
-  height: 16px;
+  width: var(--hk-tb-icon-size);
+  height: var(--hk-tb-icon-size);
   display: block;
   pointer-events: none;
 }
@@ -80,7 +89,13 @@
   height: 100%;
 }
 
-.hk-titlebar-btn {
+/* Caption buttons are scoped under the bar on purpose: a host's element
+   rules (`button:hover:not(:disabled)` scores (0,2,1)) would otherwise
+   out-rank the component's class-level hover and repaint the caption -
+   the momoi field report. Scoped selectors sit at (0,3,0), one level
+   above any plausible element rule, while the close-specific rules stay
+   later in the sheet so they keep winning among themselves. */
+.hk-titlebar .hk-titlebar-btn {
   width: 46px;
   height: var(--hk-tb-height);
   border: none;
@@ -95,24 +110,24 @@
   padding: 0;
 }
 
-.hk-titlebar-btn:hover {
+.hk-titlebar .hk-titlebar-btn:hover {
   background: var(--hk-tb-hover);
   color: var(--hk-tb-fg-strong);
 }
 
-.hk-titlebar-btn:active {
+.hk-titlebar .hk-titlebar-btn:active {
   background: var(--hk-tb-active);
 }
 
 /* Only the rightmost (close) button carries the window's top-right
    corner radius; the other captions highlight as plain rectangles. */
-.hk-titlebar-btn-close {
+.hk-titlebar .hk-titlebar-btn-close {
   border-radius: var(--hk-tb-radius-close);
 }
 
 /* RTL mirrors the caption row, so the close button lands top-left and
    the window corner radius flips with it. */
-[dir="rtl"] .hk-titlebar-btn-close {
+[dir="rtl"] .hk-titlebar .hk-titlebar-btn-close {
   border-radius: 8px 0 0 0;
 }
 
@@ -125,17 +140,17 @@
   border-radius: 0;
 }
 
-.hk-titlebar-btn-close:hover {
+.hk-titlebar .hk-titlebar-btn-close:hover {
   background: var(--hk-tb-close-hover);
-  color: var(--hi-color-text-on-danger, #ffffff);
+  color: var(--hk-tb-close-ink);
 }
 
-.hk-titlebar-btn-close:active {
+.hk-titlebar .hk-titlebar-btn-close:active {
   background: var(--hk-tb-close-active);
-  color: var(--hi-color-text-on-danger, #ffffff);
+  color: var(--hk-tb-close-ink);
 }
 
-.hk-titlebar-btn:focus-visible {
+.hk-titlebar .hk-titlebar-btn:focus-visible {
   outline: 2px solid var(--hk-tb-focus);
   outline-offset: -2px;
 }

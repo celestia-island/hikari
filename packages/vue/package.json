@@ -41,6 +41,10 @@
     "./plugins/boot-chrome": {
       "import": "./src/plugins/boot-chrome.mjs",
       "types": "./src/plugins/boot-chrome.d.mts"
+    },
+    "./plugins/boot-recovery": {
+      "import": "./src/plugins/boot-recovery.mjs",
+      "types": "./src/plugins/boot-recovery.d.mts"
     }
   },
   "files": [

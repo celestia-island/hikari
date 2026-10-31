@@ -121,3 +121,10 @@ export {
   RESIZE_POLL_MS,
   type WindowApiLike,
 } from "./windowChrome";
+export {
+  ackCloseRequest,
+  useCloseRequest,
+  CLOSE_ACK_COMMAND,
+  CLOSE_REQUEST_EVENT,
+  DEFAULT_FORCE_CLOSE_AFTER_MS,
+} from "./closeGuard";

@@ -272,7 +272,10 @@ function makeHudTexture(input: FleetHologramInput): THREE.CanvasTexture | null {
 
   const line = hologramHudText(input);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "600 34px ui-monospace, SFMono-Regular, Consolas, monospace";
+  // 64px glyphs on the 96px strip: the plane's aspect is locked to the
+  // canvas's below, so on-disc text height is fontPx/canvasW × planeW —
+  // 64/1024 of the band, readable at fleet zoom.
+  ctx.font = "600 64px ui-monospace, SFMono-Regular, Consolas, monospace";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
 
@@ -294,15 +297,19 @@ function makeHudTexture(input: FleetHologramInput): THREE.CanvasTexture | null {
   return texture;
 }
 
-/** The real-data ticker plane, pinned to the front dial's centre. */
+/** The real-data ticker plane, pinned to the front dial's centre. The
+ *  plane's aspect is locked to the texture's (1024:96) — a mismatched
+ *  aspect would compress the glyphs horizontally. */
 function makeTickerPlane(
   bodyRadius: number,
   color: THREE.Color,
   offline: boolean,
   texture: THREE.CanvasTexture,
 ): THREE.Mesh {
+  const width = bodyRadius * 1.14;
+  const height = width * (96 / 1024);
   const mesh = unpickable(new THREE.Mesh(
-    new THREE.PlaneGeometry(bodyRadius * 1.14, bodyRadius * 0.3),
+    new THREE.PlaneGeometry(width, height),
     new THREE.MeshBasicMaterial({
       map: texture,
       color,
@@ -349,9 +356,11 @@ export function makeFleetHologram(
   if (offline) color.multiplyScalar(0.3);
 
   // The visible object is the disc shell plus its spindle; this invisible
-  // proxy is only the pointer target the board measures for picking.
+  // proxy is only the pointer target the board measures for picking. It
+  // reaches 82% of the body radius — the old polyhedron's pick reach —
+  // so most of the visible silhouette still answers a click.
   const mesh = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(input.radius * 0.55, 1),
+    new THREE.IcosahedronGeometry(input.radius * 0.82, 1),
     new THREE.MeshBasicMaterial({
       color,
       transparent: true,

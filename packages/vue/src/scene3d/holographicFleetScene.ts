@@ -109,8 +109,8 @@ export function buildFleetScene(
   callbacks: FleetSceneCallbacks,
 ): FleetSceneHandle {
   const bodies = new Map<string, BodyEntry>();
-  /** Non-registered decoration (lights, orbit rings, the core marker) —
-   *  tracked separately so dispose() can strip them from the scene. */
+  /** Non-registered decoration (orbit rings, the core marker) — tracked
+   *  separately so dispose() can strip them from the scene. */
   const decor: THREE.Object3D[] = [];
   /** The spec the current sky was built from (framing reads it). */
   let lastSpec: FleetSceneSpec | null = null;
@@ -143,8 +143,9 @@ export function buildFleetScene(
         return;
       }
       // Everything else this builder puts in the scene that owns GPU
-      // resources is a Mesh, a Line (orbit rings) or Points (star
-      // glows) — all three carry `geometry` + `material`.
+      // resources is a Mesh (pick proxies, dial cores, ticker planes),
+      // a Line (dial rings, spindle circles, orbit rings) or Points —
+      // all three carry `geometry` + `material`.
       if (
         obj instanceof THREE.Mesh ||
         obj instanceof THREE.Line ||

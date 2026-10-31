@@ -61,9 +61,18 @@ describe("makeFleetHologram", () => {
     expect(hologram.frontDial.children).toContain(hologram.hudPanel);
     expect(hologram.hudPanel!.position.x).toBe(0);
     expect(hologram.hudPanel!.position.y).toBe(0);
+    // Not vacuous: a blank ticker must fail here, not just render wrong
+    // text when it renders anything at all.
+    expect(fillText.mock.calls.length).toBeGreaterThan(0);
     for (const call of fillText.mock.calls) {
       expect(call[0]).toBe("node-1 engine stack  ·  Online  ·  3 endpoints");
     }
+
+    // The plane's aspect matches the texture's (1024×96): a mismatched
+    // aspect compresses the glyphs horizontally (R2 S3-1 regression).
+    const plane = hologram.hudPanel!.geometry as THREE.PlaneGeometry;
+    const params = plane.parameters as { width: number; height: number };
+    expect(params.width / params.height).toBeCloseTo(1024 / 96, 5);
 
     // The text plane never widens the body's pointer target.
     const hits: THREE.Intersection[] = [];
@@ -117,6 +126,20 @@ describe("makeFleetHologram", () => {
       // readable cube behind (no shared wireframe, no box edges).
       const shellDials = hologram.shell.getObjectsByProperty("name", "fleet-hologram-face-dial");
       expect(shellDials, `${role} shell dial count`).toHaveLength(6);
+      // The six dials sit on the principal axes at ±0.4r — the geometry
+      // of the merge, not just the count (collapse-to-origin stays RED).
+      const offsets = shellDials.map((dial) => dial.position.clone());
+      const expectedAxes: Array<[number, number, number]> = [
+        [0, 0, 0.4], [0, 0, -0.4], [0.4, 0, 0], [-0.4, 0, 0],
+        [0, 0.4, 0], [0, -0.4, 0],
+      ];
+      for (const axis of expectedAxes) {
+        const match = offsets.find((p) =>
+          Math.abs(p.x - axis[0]) < 1e-9
+          && Math.abs(p.y - axis[1]) < 1e-9
+          && Math.abs(p.z - axis[2]) < 1e-9);
+        expect(match, `${role} dial at ${axis.join(",")}`).toBeTruthy();
+      }
       // Each support dial carries ONE outline ring only — content belongs
       // to the front dial, so the sphere cannot re-clutter.
       for (const dial of shellDials) {
@@ -129,6 +152,52 @@ describe("makeFleetHologram", () => {
         hologram.group.getObjectsByProperty("name", "fleet-hologram-polyhedron-edges"),
         `${role} shared wireframe cage`,
       ).toHaveLength(0);
+
+      // The spindle is FAT AT THE EQUATOR and tapers to the poles: the
+      // widest ring sits at z≈0 and the radius shrinks monotonically
+      // toward both ends (a flattened spindle stays RED).
+      const spindleRings = hologram.shell.getObjectsByProperty(
+        "name",
+        "fleet-hologram-ring-spindle-circle",
+      ) as THREE.LineLoop[];
+      expect(spindleRings.length).toBe(role === "star" ? 9 : 6);
+      const radiusOf = (ring: THREE.LineLoop) => {
+        const pos = ring.geometry.getAttribute("position");
+        return Math.hypot(pos.getX(0), pos.getY(0));
+      };
+      const widestRing = spindleRings.reduce(
+        (best, ring) => (radiusOf(ring) > radiusOf(best) ? ring : best),
+        spindleRings[0]!,
+      );
+      // Fat at the equator: ordered by |z|, radii never grow (an even
+      // count staggers a mirrored pair around z=0, hence non-strict)…
+      const byEquator = [...spindleRings].sort(
+        (a, b) => Math.abs(a.position.z) - Math.abs(b.position.z),
+      );
+      for (let i = 1; i < byEquator.length; i += 1) {
+        expect(
+          radiusOf(byEquator[i]!),
+          `${role} ring ${i} grows toward its pole`,
+        ).toBeLessThanOrEqual(radiusOf(byEquator[i - 1]!));
+      }
+      // …and the poles are STRICTLY thinner than the equator band, so a
+      // flattened (cylindrical) spindle cannot pass.
+      expect(radiusOf(byEquator[byEquator.length - 1]!)).toBeLessThan(
+        radiusOf(widestRing),
+      );
+      // Symmetric stack: every ring has a z-mirror.
+      for (const ring of byEquator) {
+        const mirror = byEquator.find((other) =>
+          Math.abs(other.position.z + ring.position.z) < 1e-9
+          && Math.abs(radiusOf(other) - radiusOf(ring)) < 1e-9);
+        expect(mirror, `${role} ring at z=${ring.position.z} mirrors`).toBeTruthy();
+      }
+
+      // The pick proxy keeps the old polyhedron's reach (82% of the body
+      // radius): most of the visible silhouette stays clickable.
+      hologram.mesh.geometry.computeBoundingSphere();
+      const proxyRadius = (hologram.mesh.geometry.boundingSphere as THREE.Sphere).radius;
+      expect(proxyRadius / INPUT.radius).toBeCloseTo(0.82, 5);
 
       // Exactly ONE detailed dial exists and it faces the camera group.
       const focus = hologram.frontDial.getObjectsByProperty(
@@ -155,9 +224,17 @@ describe("makeFleetHologram", () => {
     mockCanvas();
     const hologram = makeFleetHologram(INPUT, new THREE.Color(), false);
     expect(hologram.selectionRing.visible).toBe(false);
-    for (const line of hologram.selectionRing.children) {
+    // Not vacuous: the mark is exactly two concentric circular outlines
+    // just outside the body — an empty or shrunken ring stays RED.
+    const lines = hologram.selectionRing.children;
+    expect(lines).toHaveLength(2);
+    for (const line of lines) {
       expect(line).toBeInstanceOf(THREE.LineLoop);
       expect(line).not.toBeInstanceOf(THREE.LineSegments);
+      const pos = (line as THREE.LineLoop).geometry.getAttribute("position");
+      const radius = Math.hypot(pos.getX(0), pos.getY(0));
+      expect(radius).toBeGreaterThan(INPUT.radius);
+      expect(radius).toBeLessThan(INPUT.radius * 1.2);
     }
   });
 

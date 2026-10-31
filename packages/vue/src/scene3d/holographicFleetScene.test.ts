@@ -770,14 +770,15 @@ describe("buildFleetScene body dressing", () => {
     handle.dispose();
   });
 
-  it("never resizes a body — the board's frame marks it instead", () => {
+  it("never resizes a body — the circular marks carry the affordances", () => {
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
 
     // The old hover affordance scaled the body the pointer was aiming at
     // (1.18×, lerped per frame). Nothing may write that scale any more —
-    // the hover mark belongs to hikari's corner frame.
+    // the front dial and the selection ring mark bodies without touching
+    // their transforms.
     for (const id of ["hub-a", "edge-1"]) {
       expect(bodyMesh(engine, id).scale.x).toBe(1);
     }

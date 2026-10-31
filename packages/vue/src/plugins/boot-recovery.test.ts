@@ -24,6 +24,7 @@ import {
   bootRecoveryScript,
   isMangledOrigin,
 } from "./boot-recovery.mjs";
+import { invalidInput } from "../test-utils/invalid";
 
 /**
  * Boot recovery is hikari's last line of defence for the MAIN WINDOW.
@@ -66,17 +67,67 @@ afterAll(() => {
   }
 });
 
+/** The handler behind a Vite hook, which may be an `ObjectHook`
+ *  (`{ handler, order?, filter? }`). Narrowed by `in`, never asserted. */
+function hookHandler(hook: unknown): Function {
+  let fn: unknown = hook;
+  if (typeof fn !== "function") {
+    fn =
+      typeof fn === "object" && fn !== null && "handler" in fn
+        ? fn.handler
+        : undefined;
+  }
+  if (typeof fn !== "function") throw new Error("plugin hook is missing");
+  return fn;
+}
+
+/**
+ * Invoke a plugin hook with a fake hook context.
+ *
+ * Vite types every hook's `this` as a full `PluginContext`; this plugin only
+ * reaches for `warn`, so the fake goes through `Reflect.apply` (whose
+ * `thisArgument` is deliberately unchecked) instead of being asserted into a
+ * `PluginContext`.
+ */
+function callHook(
+  hook: unknown,
+  context: object,
+  ...args: unknown[]
+): unknown {
+  return Reflect.apply(hookHandler(hook), context, args);
+}
+
+/** `transformIndexHtml` answered with tags (it may also return a document). */
+function tagResult(result: unknown): HtmlTagDescriptor[] {
+  if (result === undefined || result === null) return [];
+  if (!Array.isArray(result)) {
+    throw new Error("transformIndexHtml did not return a tag list");
+  }
+  // `HtmlTagDescriptor` REQUIRES a `tag` string: object-ness alone is not a
+  // narrowing, and `{}` (or a vite hook returning something tag-shaped but
+  // tagless) would have passed the old predicate and then been asserted as a
+  // descriptor. Check the member the type actually promises.
+  return result.filter(
+    (tag): tag is HtmlTagDescriptor =>
+      typeof tag === "object" &&
+      tag !== null &&
+      "tag" in tag &&
+      typeof (tag as { tag?: unknown }).tag === "string",
+  );
+}
+
 /** Invoke the plugin's transformIndexHtml hook with a fake file context. */
 function tags(
   plugin: ReturnType<typeof bootRecoveryPlugin>,
   filename = "/app/index.html",
   context: { warn?: (message: string) => void } = {},
 ): HtmlTagDescriptor[] {
-  const hook = plugin.transformIndexHtml as unknown as (
-    html: string,
-    ctx: { filename: string },
-  ) => HtmlTagDescriptor[] | undefined;
-  return hook.call(context, "<!doctype html><html><body></body></html>", { filename }) ?? [];
+  return tagResult(
+    callHook(plugin.transformIndexHtml, context, "<!doctype html><html><body></body></html>", {
+      path: filename,
+      filename,
+    }),
+  );
 }
 
 // ── fake page harness ──────────────────────────────────────────────────────
@@ -655,10 +706,7 @@ describe("the recovery script's runtime behaviour (executed against a fake page)
     // Defensive: an async/truthy predicate must not navigate the window into a
     // stale origin by accident.
     const truthy = bootRecoveryScript({
-      isMangledOrigin: (() => "yes") as unknown as (
-        protocol: string,
-        hostname: string,
-      ) => boolean,
+      isMangledOrigin: invalidInput(() => "yes"),
     });
     const run = runRecovery({ script: truthy, hostname: "tauri.localhostundefined" });
     expect(run.replaced).toEqual([]);
@@ -722,11 +770,17 @@ describe("bootRecoveryPlugin injection", () => {
   });
 
   it("treats an absent filename as the main entry (programmatic callers)", () => {
-    const hook = bootRecoveryPlugin().transformIndexHtml as unknown as (
-      html: string,
-      ctx: unknown,
-    ) => HtmlTagDescriptor[];
-    expect(hook("<!doctype html><body></body>", {})).toHaveLength(1);
+    // No `filename` at all — the hook must fall back to the main entry.
+    expect(
+      tagResult(
+        callHook(
+          bootRecoveryPlugin().transformIndexHtml,
+          {},
+          "<!doctype html><body></body>",
+          {},
+        ),
+      ),
+    ).toHaveLength(1);
   });
 
   it("accepts an explicit entry list (basename or path suffix)", () => {
@@ -765,9 +819,7 @@ describe("bootRecoveryPlugin injection", () => {
     expect(injected).toHaveLength(1);
     expect(injected[0].injectTo).toBe("head-prepend");
     // Nonsense falls back to the safe default.
-    const bogus = tags(
-      bootRecoveryPlugin({ injectTo: "body" as unknown as "head" }),
-    );
+    const bogus = tags(bootRecoveryPlugin({ injectTo: invalidInput("body") }));
     expect(bogus[0].injectTo).toBe("head");
   });
 
@@ -816,12 +868,7 @@ describe("bootRecoveryPlugin option validation", () => {
 
     // Native functions have no source text to inline.
     expect(() =>
-      bootRecoveryScript({
-        isMangledOrigin: Math.max as unknown as (
-          protocol: string,
-          hostname: string,
-        ) => boolean,
-      }),
+      bootRecoveryScript({ isMangledOrigin: invalidInput(Math.max) }),
     ).toThrow(/native or bound function/);
 
     // Non-ASCII source would break the ASCII-only contract.
@@ -839,10 +886,9 @@ describe("bootRecoveryPlugin option validation", () => {
     // SOURCE text; the runtime strict-boolean check is covered elsewhere.)
     // Built via new Function so the SOURCE TEXT literally contains the tag
     // terminator; a transpiled arrow would have it escaped/rewritten.
-    const tagBreaker = new Function('return () => "</script>"')() as unknown as (
-      protocol: string,
-      hostname: string,
-    ) => boolean;
+    const tagBreaker = invalidInput<(p: string, h: string) => boolean>(
+      new Function('return () => "</script>"')(),
+    );
     expect(() => bootRecoveryScript({ isMangledOrigin: tagBreaker })).toThrow(
       /must not contain/,
     );
@@ -850,12 +896,7 @@ describe("bootRecoveryPlugin option validation", () => {
 
   it("ignores a non-function isMangledOrigin and keeps the default predicate", () => {
     const injected = tags(
-      bootRecoveryPlugin({
-        isMangledOrigin: "nope" as unknown as (
-          protocol: string,
-          hostname: string,
-        ) => boolean,
-      }),
+      bootRecoveryPlugin({ isMangledOrigin: invalidInput("nope") }),
     );
     expect(injected[0].children).toContain("APP_HOSTNAME");
   });

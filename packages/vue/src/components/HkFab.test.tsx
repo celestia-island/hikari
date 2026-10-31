@@ -22,8 +22,10 @@ function mountFab(props: Record<string, unknown> = {}): Harness {
   containers.push(container);
 
   const harness: Harness = {
-    root: null as unknown as HTMLElement,
-    button: null as unknown as HTMLButtonElement,
+    // Real (detached) placeholders: the wrapper's render closure captures the
+    // harness before the shell exists, and both fields are set below.
+    root: document.createElement("div"),
+    button: document.createElement("button"),
     clicks: [],
     toggles: [],
   };

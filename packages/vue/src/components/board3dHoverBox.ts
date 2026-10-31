@@ -68,14 +68,20 @@ export function isVisibleInHierarchy(obj: THREE.Object3D): boolean {
   return true;
 }
 
+/** three.js tags special node kinds with boolean flags that live on the
+ *  subclasses (`Sprite`, `CSS2DObject`, `CSS3DObject`), not on the `Object3D`
+ *  base this walker receives. The flags are optional on the intersection, so
+ *  the widening is a single safe assertion — no `unknown` hop. */
+interface DecorationFlags {
+  isSprite?: boolean;
+  isCSS2DObject?: boolean;
+  isCSS3DObject?: boolean;
+}
+
 /** Sprites and CSS2D/CSS3D anchors are decoration, never the object's
  *  shape. */
 function isDecoration(obj: THREE.Object3D): boolean {
-  const probe = obj as unknown as {
-    isSprite?: boolean;
-    isCSS2DObject?: boolean;
-    isCSS3DObject?: boolean;
-  };
+  const probe = obj as THREE.Object3D & DecorationFlags;
   return (
     probe.isSprite === true || probe.isCSS2DObject === true || probe.isCSS3DObject === true
   );

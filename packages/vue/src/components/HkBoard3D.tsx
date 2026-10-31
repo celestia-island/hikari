@@ -86,6 +86,7 @@ import {
   type LightingRigOptions,
 } from "../scene3d/lighting";
 import { BOARD3D_HELPERS_LAYER, BOARD3D_MAIN_LAYER, fitDistance } from "../utils/scene3d";
+import { asPropType } from "../utils/typing";
 import {
   createHoverBox,
   isVisibleInHierarchy,
@@ -336,11 +337,11 @@ export default defineComponent({
     /** Starting eye / orbit target. STATIC after mount (a non-finite
      *  or short array falls back to the defaults). */
     initialPosition: {
-      type: Array as unknown as PropType<[number, number, number]>,
+      type: asPropType<[number, number, number]>(Array),
       default: () => [22, 16, 26],
     },
     initialTarget: {
-      type: Array as unknown as PropType<[number, number, number]>,
+      type: asPropType<[number, number, number]>(Array),
       default: () => [0, 0, 0],
     },
     /** Orbit distance window. STATIC after mount (applied to the

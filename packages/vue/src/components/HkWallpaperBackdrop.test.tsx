@@ -4,7 +4,10 @@ import { createApp, h, nextTick, type App } from "vue";
 import { __teardownMediaQueries } from "../runtime/useMediaQuery";
 import { luminanceSamplerRefCount, stopLuminanceSampler } from "../theme/useBackgroundLuminance";
 import { configureWallpaper, useWallpaper } from "../theme/useWallpaper";
-import HkWallpaperBackdrop, { WALLPAPER_REDUCED_MOTION_QUERY } from "./HkWallpaperBackdrop";
+import HkWallpaperBackdrop, {
+  WALLPAPER_REDUCED_MOTION_QUERY,
+  type HkWallpaperSurfaceContext,
+} from "./HkWallpaperBackdrop";
 
 /**
  * HkWallpaperBackdrop — the wallpaper stack's surface, and the three
@@ -334,7 +337,7 @@ describe("HkWallpaperBackdrop — pipeline degradation", () => {
     selectWallpaper("art-pipeline");
     const getContext = vi
       .spyOn(HTMLCanvasElement.prototype, "getContext")
-      .mockReturnValue(null as unknown as RenderingContext);
+      .mockReturnValue(null);
     const factory = vi.fn(() => ({ dispose: vi.fn() }));
 
     const container = mountBackdrop({ createSurface: factory });
@@ -385,18 +388,16 @@ describe("HkWallpaperBackdrop — pipeline degradation", () => {
     selectWallpaper("art-pipeline");
     const gl = {} as WebGL2RenderingContext;
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(gl);
-    const factory = vi.fn(() => ({ dispose: vi.fn() }));
+    // Declaring the driver's parameter type is what makes the recorded call
+    // readable: an untyped `vi.fn()` records an empty argument tuple, so
+    // reaching the context argument used to need a double assertion.
+    const factory = vi.fn((_ctx: HkWallpaperSurfaceContext) => ({ dispose: vi.fn() }));
 
     const container = mountBackdrop({ createSurface: factory });
     await settle();
 
     expect(factory).toHaveBeenCalledTimes(1);
-    const ctx = (factory.mock.calls[0] as unknown[])[0] as {
-      canvas: HTMLCanvasElement;
-      gl: WebGL2RenderingContext;
-      presetId: string;
-      powerPreference: string;
-    };
+    const ctx = factory.mock.calls[0][0];
     expect(ctx.canvas).toBe(container.querySelector("canvas"));
     expect(ctx.gl).toBe(gl);
     expect(ctx.presetId).toBe("aurora");

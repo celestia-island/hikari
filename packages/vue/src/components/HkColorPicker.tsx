@@ -2,6 +2,7 @@ import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType }
 import { clampRgbToBands, hueDelta, rgbToHsl, wrapHue, type HueClamp } from "../theme/tokenGroups";
 import { useOverlay } from "../runtime/useOverlay";
 import { useI18n } from "../i18n/context";
+import { asPropType } from "../utils/typing";
 import HInput from "./HkInput";
 import HPopover from "./HkPopover";
 import "./HkColorPicker.scss";
@@ -142,9 +143,9 @@ export default defineComponent({
     /** Optional physical-color clamp: hue locked to center±range (degrees, circular). */
     hueClamp: { type: Object as PropType<HueClamp>, default: undefined },
     /** Optional saturation safe band, 0–1. */
-    sRange: { type: Array as unknown as PropType<[number, number]>, default: undefined },
+    sRange: { type: asPropType<[number, number]>(Array), default: undefined },
     /** Optional lightness safe band, 0–1. */
-    lRange: { type: Array as unknown as PropType<[number, number]>, default: undefined },
+    lRange: { type: asPropType<[number, number]>(Array), default: undefined },
   },
   emits: {
     change: (_rgb: { r: number; g: number; b: number }) => true,

@@ -192,10 +192,7 @@ describe("HkFileBrowserDialog path bar", () => {
     await clickRow("reports");
     q<HTMLButtonElement>(".hk-file-browser-copy-path").click();
     await flush();
-    const writeText = (navigator.clipboard as unknown as {
-      writeText: ReturnType<typeof vi.fn>;
-    }).writeText;
-    expect(writeText).toHaveBeenCalledWith("/reports");
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith("/reports");
   });
 });
 

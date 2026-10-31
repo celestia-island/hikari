@@ -34,12 +34,12 @@ import HkTreemap, {
   type HkTreemapNode,
 } from "./HkTreemap";
 
-class FakeResizeObserver {
+class FakeResizeObserver implements ResizeObserver {
   static instances: FakeResizeObserver[] = [];
   readonly observed: Element[] = [];
   disconnected = false;
 
-  constructor(readonly callback: () => void) {
+  constructor(readonly callback: (...args: never[]) => void) {
     FakeResizeObserver.instances.push(this);
   }
 
@@ -47,6 +47,7 @@ class FakeResizeObserver {
     this.observed.push(element);
   }
 
+  unobserve(): void {}
   disconnect(): void {
     this.disconnected = true;
   }
@@ -126,7 +127,7 @@ async function setSize(
 beforeEach(() => {
   vi.clearAllMocks();
   FakeResizeObserver.instances = [];
-  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  globalThis.ResizeObserver = FakeResizeObserver;
 });
 
 afterEach(() => {

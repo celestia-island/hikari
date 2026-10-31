@@ -226,7 +226,7 @@ describe("HkSidebar rail chrome: toggle placement and the clip wrapper", () => {
     // dress and width while the entering RAIL generation takes over —
     // no generation ever renders at the panel's transient width.
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     const c = mountSidebar({ width: "240px", collapsible: true, collapsedWidth: "64px" });
 

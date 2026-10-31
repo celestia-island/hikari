@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import { readHkRuntime } from "../runtime/registry";
+import { fakeAs } from "../test-utils/fakes";
 import HkStatusTray from "../../../default_theme/src/StatusTrayDecor";
 
 /**
@@ -63,7 +64,7 @@ function liveIntervalSlots(): number {
  *  in `onMounted`). The minimal object on purpose: `.matches` only, so the
  *  component's optional `addEventListener` path is exercised as absent. */
 function stubReducedMotion(matches: boolean) {
-  vi.spyOn(window, "matchMedia").mockReturnValue({ matches } as unknown as MediaQueryList);
+  vi.spyOn(window, "matchMedia").mockReturnValue(fakeAs<MediaQueryList>({ matches }));
 }
 
 beforeEach(() => {

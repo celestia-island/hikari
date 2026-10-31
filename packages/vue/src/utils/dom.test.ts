@@ -26,8 +26,20 @@ interface StubElement {
   style: Record<string, string>;
 }
 
-function stubEl(parent: unknown, over: Partial<StubElement> = {}): StubElement {
-  return {
+/**
+ * A real element carrying stub layout metrics.
+ *
+ * `pinLeaveGeometry` / `clearLeaveGeometry` are declared against `Element`,
+ * so the fixture must BE one — but happy-dom reports zero geometry and no
+ * `offsetParent` for detached nodes, and exposes each of those fields as a
+ * getter-only accessor (a plain assignment throws). An OWN data property
+ * shadows the prototype accessor without invoking a setter, and a plain
+ * `style` bag replaces the `CSSStyleDeclaration`, which keeps this file's
+ * "empty string vs missing key" assertions meaningful. No assertion is
+ * involved: the result is an `Element` by construction.
+ */
+function stubEl(parent: unknown, over: Partial<StubElement> = {}): HTMLElement {
+  const metrics: StubElement = {
     offsetParent: parent,
     offsetTop: 0,
     offsetLeft: 0,
@@ -36,6 +48,15 @@ function stubEl(parent: unknown, over: Partial<StubElement> = {}): StubElement {
     style: {},
     ...over,
   };
+  const el = document.createElement("div");
+  for (const key of Object.keys(metrics) as (keyof StubElement)[]) {
+    Object.defineProperty(el, key, {
+      value: metrics[key],
+      configurable: true,
+      writable: true,
+    });
+  }
+  return el;
 }
 
 describe("pinLeaveGeometry", () => {
@@ -43,7 +64,7 @@ describe("pinLeaveGeometry", () => {
     const parent = { clientWidth: 384 };
     const el = stubEl(parent, { offsetTop: 0, offsetLeft: 0, offsetWidth: 384, offsetHeight: 83 });
 
-    pinLeaveGeometry(el as unknown as Element);
+    pinLeaveGeometry(el);
 
     expect(el.style).toEqual({
       right: "0px",
@@ -58,7 +79,7 @@ describe("pinLeaveGeometry", () => {
     const parent = { clientWidth: 400 };
     const el = stubEl(parent, { offsetTop: 60, offsetLeft: 100, offsetWidth: 200, offsetHeight: 48 });
 
-    pinLeaveGeometry(el as unknown as Element);
+    pinLeaveGeometry(el);
 
     // 400 - (100 + 200) = 100px from the containing block's right edge.
     expect(el.style.right).toBe("100px");
@@ -70,7 +91,7 @@ describe("pinLeaveGeometry", () => {
   it("is a no-op without layout information (offsetParent null)", () => {
     const el = stubEl(null, { offsetWidth: 384, offsetHeight: 83 });
 
-    pinLeaveGeometry(el as unknown as Element);
+    pinLeaveGeometry(el);
 
     expect(el.style).toEqual({});
   });
@@ -79,7 +100,7 @@ describe("pinLeaveGeometry", () => {
     const parent = { clientWidth: 400 };
     const el = stubEl(parent, { offsetTop: 2, offsetLeft: 96, offsetWidth: 84, offsetHeight: 28 });
 
-    pinLeaveGeometry(el as unknown as Element, { anchorX: "left" });
+    pinLeaveGeometry(el, { anchorX: "left" });
 
     // No right pin: a middle removal's ghost must sit at its in-flow
     // left offset, not re-anchored to the collapsing right edge.
@@ -98,7 +119,7 @@ describe("pinLeaveGeometry", () => {
     const parent = { clientWidth: 400 };
     const el = stubEl(parent, { offsetTop: 2, offsetLeft: 36, offsetWidth: 84, offsetHeight: 28 });
 
-    pinLeaveGeometry(el as unknown as Element, {
+    pinLeaveGeometry(el, {
       anchorX: "left",
       box: { top: 2, left: 96, width: 84, height: 28 },
     });
@@ -117,7 +138,7 @@ describe("pinLeaveGeometry", () => {
     const parent = { clientWidth: 138 };
     const el = stubEl(parent, { offsetTop: 95, offsetLeft: 0, offsetWidth: 384, offsetHeight: 48 });
 
-    pinLeaveGeometry(el as unknown as Element, {
+    pinLeaveGeometry(el, {
       box: { top: 95, left: 0, width: 384, height: 48, right: 0 },
     });
 
@@ -133,8 +154,8 @@ describe("pinLeaveGeometry", () => {
     const el = stubEl(parent, { offsetWidth: 384, offsetHeight: 83 });
     el.style.marginLeft = "4px"; // foreign style must survive the clear.
 
-    pinLeaveGeometry(el as unknown as Element, { anchorX: "left" });
-    clearLeaveGeometry(el as unknown as Element);
+    pinLeaveGeometry(el, { anchorX: "left" });
+    clearLeaveGeometry(el);
 
     // On a real CSSStyleDeclaration an empty string removes the
     // property; the stub keeps the keys, so assert emptiness.

@@ -67,6 +67,21 @@ import { ensureOverlayRoot } from "../overlay/overlayRoot";
  * with the same word. Desktop popouts draw no header and keep the heading.
  */
 
+/**
+ * The anchor contract this panel actually relies on: a viewport rect (for
+ * placement and width parity) and hit containment (for the outside-click
+ * close). A real `HTMLElement` satisfies it structurally, but so does a
+ * synthetic anchor derived from a parent row's live rect — that is how
+ * `HkMenu` cascades and `HkContextMenuProvider` open a menu at a pointer
+ * without mounting a placeholder element. Declaring the panel's own
+ * minimum keeps both call shapes honest instead of forcing callers to
+ * assert a ~320-member DOM interface onto a two-member object.
+ */
+export interface PanelAnchor {
+  getBoundingClientRect(): DOMRect;
+  contains(node: Node): boolean;
+}
+
 export type SelectPanelPlacement =
   | "bottom-start"
   | "bottom-center"
@@ -80,8 +95,10 @@ export default defineComponent({
   props: {
     /** Panel visibility — v-model:open. */
     open: { type: Boolean, required: true },
-    /** Anchor element for the desktop popout (usually the custom trigger). */
-    anchorRef: { type: Object as PropType<HTMLElement | null>, default: null },
+    /** Anchor for the desktop popout: the custom trigger element, or a
+     *  synthetic {@link PanelAnchor} supplied by cascade / context-menu
+     *  hosts. Only `getBoundingClientRect()` and `contains()` are consumed. */
+    anchorRef: { type: Object as PropType<PanelAnchor | null>, default: null },
     /** Sheet header on mobile / a11y name for the panel. */
     title: { type: String, default: "" },
     /** Base placement of the popout relative to the anchor (auto-flips).

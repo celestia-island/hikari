@@ -2,33 +2,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, ref, type App } from "vue";
 
 import { HkInfiniteTail } from "./HkInfiniteTail";
+import { fakeAs } from "../test-utils/fakes";
 
-type IOMock = {
-  observe: ReturnType<typeof vi.fn>;
-  disconnect: ReturnType<typeof vi.fn>;
-  callback: IntersectionObserverCallback;
-};
 
 const apps: App[] = [];
 const containers: HTMLElement[] = [];
 let originalIO: (typeof globalThis)["IntersectionObserver"];
 let originalRect: typeof HTMLElement.prototype.getBoundingClientRect;
-let ioInstances: IOMock[] = [];
+let ioInstances: IntersectionObserverStub[] = [];
 
-/** A capturing IntersectionObserver stub: records every instance so a
- * test can synthesize intersections against the real sentinel. */
-class IntersectionObserverStub {
-  constructor(callback: IntersectionObserverCallback) {
-    const mock: IOMock = {
-      observe: vi.fn(),
-      disconnect: vi.fn(),
-      callback,
-    };
-    ioInstances.push(mock);
-    return (mock as unknown) as IntersectionObserverStub;
+/** A capturing IntersectionObserver stub: records every instance so a test
+ * can synthesize intersections against the real sentinel.
+ *
+ * It implements the interface for real rather than returning a partial mock
+ * object from the constructor: `implements` keeps `observe`/`disconnect` as
+ * spies (so `toHaveBeenCalledTimes` still works), and the instance itself is
+ * a valid `IntersectionObserver`, which is what the observer callback's
+ * second argument needs — the old shape had to cast `null` into that slot. */
+class IntersectionObserverStub implements IntersectionObserver {
+  readonly root = null;
+  readonly rootMargin = "0px";
+  readonly scrollMargin = "0px";
+  readonly thresholds: readonly number[] = [];
+  readonly observe = vi.fn();
+  readonly unobserve = vi.fn();
+  readonly disconnect = vi.fn();
+  readonly takeRecords = vi.fn((): IntersectionObserverEntry[] => []);
+  constructor(readonly callback: IntersectionObserverCallback) {
+    ioInstances.push(this);
   }
-  observe(): void {}
-  disconnect(): void {}
 }
 
 function mount(node: ReturnType<typeof h>) {
@@ -92,12 +94,15 @@ describe("HkInfiniteTail", () => {
     mount(h(HkInfiniteTail, { state: "idle", onLoadMore: () => fired.push(1) }));
     await new Promise((r) => setTimeout(r, 10));
     const { callback } = ioInstances[0];
-    const entry = { isIntersecting: true, target: {} } as unknown as IntersectionObserverEntry;
-    callback([entry], (null as unknown) as IntersectionObserver);
+    const entry = fakeAs<IntersectionObserverEntry>({
+      isIntersecting: true,
+      target: fakeAs<Element>({}),
+    });
+    callback([entry], ioInstances[0]);
     expect(fired.length).toBe(1);
     // A second intersection (geometry changed) emits again — the tail
     // never throttles; the state machine's busy guard paces the loop.
-    callback([entry], (null as unknown) as IntersectionObserver);
+    callback([entry], ioInstances[0]);
     expect(fired.length).toBe(2);
   });
 

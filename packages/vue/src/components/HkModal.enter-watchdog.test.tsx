@@ -20,7 +20,7 @@ afterEach(async () => {
  *  layer, and only the enter watchdog can repair it. Mirror of the
  *  leave-completion test's freezeRaf. */
 function freezeRaf(): void {
-  vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+  vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0);
   vi.stubGlobal("cancelAnimationFrame", () => {});
 }
 

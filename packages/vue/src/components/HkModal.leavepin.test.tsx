@@ -29,7 +29,7 @@ afterEach(async () => {
 });
 
 function freezeRaf(): void {
-  vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+  vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0);
   vi.stubGlobal("cancelAnimationFrame", () => {});
 }
 

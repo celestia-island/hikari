@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick, ref } from "vue";
 
 import { useApproachEnd } from "./useApproachEnd";
@@ -93,8 +93,8 @@ function mountHarness(options?: Parameters<typeof useApproachEnd>[2]): Harness {
 beforeEach(() => {
   FakeResizeObserver.instances = [];
   FakeMutationObserver.instances = [];
-  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
-  globalThis.MutationObserver = FakeMutationObserver as unknown as typeof MutationObserver;
+  vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+  vi.stubGlobal("MutationObserver", FakeMutationObserver);
 });
 
 afterEach(() => {

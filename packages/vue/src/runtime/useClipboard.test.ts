@@ -52,7 +52,7 @@ describe("useClipboardWithToast", () => {
     writeText.mockRejectedValue(new Error("denied"));
     // The base composable falls back to a textarea + execCommand path;
     // force that fallback to fail too so the error toast fires.
-    document.execCommand = vi.fn(() => false) as unknown as typeof document.execCommand;
+    document.execCommand = vi.fn(() => false);
 
     const toast = { success: vi.fn(), error: vi.fn() };
     const { copy } = useClipboardWithToast(toast);

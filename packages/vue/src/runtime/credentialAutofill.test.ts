@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
 
+import { asIndexable } from "../utils/typing";
+
 import { credentialAutocomplete } from "./credentialAutofill";
 import HkInput from "../components/HkInput";
 import { HkSignInCard } from "../components/HkSignInCard";
@@ -21,11 +23,11 @@ afterEach(() => {
     app.unmount();
     container.remove();
   }
-  delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
+  delete asIndexable(window).__TAURI_INTERNALS__;
 });
 
 function setTauri(on: boolean) {
-  const w = window as unknown as Record<string, unknown>;
+  const w = asIndexable(window);
   if (on) w.__TAURI_INTERNALS__ = { invoke: () => {} };
   else delete w.__TAURI_INTERNALS__;
 }

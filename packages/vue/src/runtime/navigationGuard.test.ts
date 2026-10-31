@@ -5,6 +5,7 @@ import {
   installNavigationSafetyNet,
   type GuardRoute,
 } from "./navigationGuard";
+import { invalidInput } from "../test-utils/invalid";
 
 /** Minimal router double: records guards, lets tests drive them. */
 function makeRouter() {
@@ -72,7 +73,16 @@ describe("createPoisonedLocationGuard", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const r = makeRouter();
     createPoisonedLocationGuard(r.router);
-    expect(r.run({ path: undefined as unknown as string, fullPath: "x" })).toBe("/");
+    expect(r.run({ path: invalidInput(undefined), fullPath: "x" })).toBe("/");
+    // The redirect alone does NOT pin this case: ANY path that fails
+    // `startsWith("/")` redirects too, so a fixture that stopped being
+    // invalid (e.g. `invalidInput` returning "timezone") would still satisfy
+    // the assertion above while never exercising the missing-path coercion.
+    // The report names the coerced value, so assert THAT — `?? ""` renders
+    // the absent path as an empty string, which only the missing-path branch
+    // can produce.
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]?.[0])).toContain('Blocked poisoned navigation target ""');
     warn.mockRestore();
   });
 });

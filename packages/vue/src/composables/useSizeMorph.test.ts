@@ -108,7 +108,7 @@ function mountHarness(initialHeight: number, initialContentHeight = 0, options?:
 
 beforeEach(() => {
   FakeResizeObserver.instances = [];
-  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  vi.stubGlobal("ResizeObserver", FakeResizeObserver);
 });
 
 afterEach(() => {
@@ -1185,7 +1185,7 @@ describe("useSizeMorph heightMorph (round 18)", () => {
     expect(rider.style.willChange).toBe("transform");
 
     h.setNatural(400);
-    (h as unknown as { heightMorph: (ms: number) => void }).heightMorph(300);
+    h.heightMorph(300);
     // The inline transition landed and the pin moved.
     expect(h.frame.style.height).toBe("400px");
     expect(h.frame.style.transition).toContain("height");
@@ -1263,7 +1263,7 @@ describe("useSizeMorph heightMorph (round 18)", () => {
     h.start();
     expect(h.frame.style.height).toBe("300px");
     h.setNatural(301);
-    (h as unknown as { heightMorph: (ms: number) => void }).heightMorph(300);
+    h.heightMorph(300);
     expect(h.frame.style.height).toBe("301px");
     expect(h.frame.style.transition).toBe("");
     h.stop();

@@ -112,7 +112,7 @@ export default defineComponent({
     /** Label target — the invisible input still owns the field id. */
     id: { type: String, default: undefined },
     /** Submit intent on Enter (no modifiers) — see HkInput. */
-    submitOnEnter: { type: Function, default: undefined },
+    submitOnEnter: { type: Function as PropType<() => void>, default: undefined },
     /** Right-edge affordance — see the component docblock. */
     passwordTrailing: {
       type: String as () => "eye" | "strength" | "none",

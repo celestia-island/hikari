@@ -36,10 +36,14 @@ beforeEach(() => {
     }
     return originalRect.call(this);
   };
-  (globalThis as { IntersectionObserver?: unknown }).IntersectionObserver = class {
-    observe(): void {}
-    disconnect(): void {}
-  } as unknown as typeof IntersectionObserver;
+  Object.defineProperty(globalThis, "IntersectionObserver", {
+    configurable: true,
+    writable: true,
+    value: class {
+      observe(): void {}
+      disconnect(): void {}
+    },
+  });
 });
 
 afterEach(() => {

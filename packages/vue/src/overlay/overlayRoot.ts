@@ -72,9 +72,13 @@ export const OVERLAY_ROOT_DOCUMENT_Z = 90000;
  * Idempotently create and append the overlay root to `<body>`.
  * Called on module load — the first `import` of this module guarantees
  * the DOM node exists before any Teleport resolves its target.
+ *
+ * Returns `null` where there is no document at all (SSR, a mini-program
+ * JS core): there is no root to hand out, and inventing one would be a
+ * lie the first `.appendChild` would expose.
  */
-export function ensureOverlayRoot(): HTMLElement {
-  if (typeof document === "undefined") return null as unknown as HTMLElement;
+export function ensureOverlayRoot(): HTMLElement | null {
+  if (typeof document === "undefined") return null;
   let root = document.querySelector<HTMLElement>(OVERLAY_ROOT_SELECTOR);
   if (!root) {
     root = document.createElement("div");

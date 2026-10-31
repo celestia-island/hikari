@@ -608,7 +608,7 @@ describe("HkTemplateField editor focus ownership (R1 guards)", () => {
         super.disconnect();
       }
     }
-    (globalThis as unknown as Record<string, unknown>).ResizeObserver = TrackingRO;
+    globalThis.ResizeObserver = TrackingRO;
     try {
       const el = mount({ modelValue: "a {{ username }} b" });
       await nextTick();
@@ -626,7 +626,7 @@ describe("HkTemplateField editor focus ownership (R1 guards)", () => {
       await nextTick();
       expect(live.size, "close detached every observer it attached").toBe(base);
     } finally {
-      (globalThis as unknown as Record<string, unknown>).ResizeObserver = RealRO;
+      globalThis.ResizeObserver = RealRO;
     }
   });
 

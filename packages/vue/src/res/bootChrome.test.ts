@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WINDOW_IPC } from "../runtime/windowChrome";
+import { asIndexable } from "../utils/typing";
 
 /**
  * `res/boot-chrome.js` contract tests.
@@ -31,7 +32,7 @@ const BAR = "#hk-boot-chrome";
 type Global = Record<string, unknown>;
 
 function globalScope(): Global {
-  return window as unknown as Global;
+  return asIndexable(window);
 }
 
 function setGlobal(name: string, value: unknown): void {

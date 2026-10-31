@@ -9,6 +9,7 @@ import type {
   FileQuickLink,
   RemoteFsAdapter,
 } from "./filePicker";
+import type { HostWindow } from "../utils/typing";
 import "./HkFilePickerField.scss";
 
 /**
@@ -111,10 +112,10 @@ export default defineComponent({
       if (backend === "native") {
         // FS Access pickers resolve to opaque handles; only the leaf
         // name is readable. Hosts needing absolute paths use the hook.
-        const w = window as unknown as {
+        const w = window as HostWindow<{
           showDirectoryPicker?: () => Promise<{ name: string } | undefined>;
           showOpenFilePicker?: () => Promise<{ name: string }[] | undefined>;
-        };
+        }>;
         try {
           if (props.directory && w.showDirectoryPicker) {
             const handle = await w.showDirectoryPicker();

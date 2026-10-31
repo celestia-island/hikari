@@ -450,7 +450,7 @@ describe("HkFaceShell rail chrome: toggle placement and the clip wrapper", () =>
     // mid-dissolve and reintroduce the squeeze this wave fixes. The root
     // keeps data-rail as a STATE MARKER only (hosts/tests read it).
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     const c = mountShell({ sidebarCollapsible: true });
     const clip = () =>

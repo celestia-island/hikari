@@ -11,6 +11,7 @@ interface Mounted {
   viewport: HTMLElement;
   instance: {
     refresh: () => void;
+    scrollToElement: (el: HTMLElement | null) => void;
     getOverflow: () => { horizontal: string; vertical: string };
     isNearEnd?: () => boolean;
     recheck?: () => void;
@@ -108,7 +109,7 @@ describe("HkScrollContainer alignment", () => {
     Object.defineProperty(above, "offsetParent", { configurable: true, get: () => null });
     Object.defineProperty(above, "offsetTop", { configurable: true, get: () => 0 });
 
-    (m.instance as unknown as { scrollToElement: (el: HTMLElement) => void }).scrollToElement(target);
+    m.instance!.scrollToElement(target);
     expect(scrolled.at(-1), "150 of the viewport's own pixels, not the drawn 300 nor the page offset 460").toBe(150);
   });
   it("renders the slot bare without an align prop", () => {

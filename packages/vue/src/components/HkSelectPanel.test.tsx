@@ -801,7 +801,7 @@ describe("HkSelectPanel enter-class watchdog (frozen-rAF repair)", () => {
   // panel stays open.
   it("strips frozen enter classes on the sheet scrim and panel within the budget", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     setViewport(375);
     const { open } = mountPanel();
@@ -831,7 +831,7 @@ describe("HkSelectPanel enter-class watchdog (frozen-rAF repair)", () => {
 
   it("a repaired sheet still closes normally through its scrim click", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     setViewport(375);
     const { open } = mountPanel();

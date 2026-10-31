@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkDatePicker from "./HkDatePicker";
+import type { HostWindow } from "../utils/typing";
 import { setLocale } from "../i18n/context";
 
 const mounts: ReturnType<typeof createApp>[] = [];
@@ -107,7 +108,7 @@ function clickDay(day: number) {
 
 /** Pretend the viewport is touch-sized so `useBreakpoint` reports mobile. */
 function useMobileViewport() {
-  (window as unknown as { innerWidth: number }).innerWidth = 375;
+  (window as HostWindow<{ innerWidth: number }>).innerWidth = 375;
 }
 
 function nativeInput(root: ParentNode): HTMLInputElement | null {
@@ -118,7 +119,7 @@ afterEach(async () => {
   for (const app of mounts.splice(0)) app.unmount();
   for (const el of containers.splice(0)) el.remove();
   document.querySelectorAll(".hk-dp-panel, .hk-popover-backdrop").forEach((el) => el.remove());
-  (window as unknown as { innerWidth: number }).innerWidth = originalWidth;
+  (window as HostWindow<{ innerWidth: number }>).innerWidth = originalWidth;
   await setLocale("en");
 });
 

@@ -1,28 +1,38 @@
 import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import type { Renderer, Tokens } from "marked";
 import HSpinner from "./HkSpinner";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { asIndexable } from "../utils/typing";
 import "./HkMarkdownRenderer.scss";
 
-let _marked: any = null;
-let _DOMPurify: any = null;
+// `marked` and `dompurify` are loaded on first non-plain render so a bundle
+// that never shows markdown does not pay for two renderers. The lazy
+// singletons are typed from the modules themselves instead of `any`: the
+// `marked` namespace type carries `.parse`, `.Renderer` and `.setOptions`
+// alongside the callable signature, so the renderer wiring below needs no
+// assertion at all.
+type MarkedModule = typeof import("marked");
+type Marked = MarkedModule["marked"];
+type Purifier = (typeof import("dompurify"))["default"];
 
-async function ensureMarked(): Promise<any> {
+let _marked: Marked | null = null;
+let _DOMPurify: Purifier | null = null;
+
+async function ensureMarked(): Promise<Marked | null> {
   if (_marked) return _marked;
   try {
-    // @ts-ignore
-    const mod = await import("marked");
+    const mod: MarkedModule = await import("marked");
+    mod.marked.setOptions({ gfm: true, breaks: true });
     _marked = mod.marked;
-    _marked.setOptions({ gfm: true, breaks: true });
     return _marked;
   } catch {
-    return null as never;
+    return null;
   }
 }
 
-async function ensureDOMPurify() {
+async function ensureDOMPurify(): Promise<Purifier | null> {
   if (_DOMPurify) return _DOMPurify;
   try {
-    // @ts-ignore
     const mod = await import("dompurify");
     _DOMPurify = mod.default;
     return _DOMPurify;
@@ -33,7 +43,10 @@ async function ensureDOMPurify() {
 
 function tryHighlight(code: string, lang?: string): string {
   try {
-    const hljs = (globalThis as Record<string, unknown>).hljs as
+    // `hljs` is a host-installed global (the consumer may ship highlight.js
+    // or not), so it is read off `globalThis` through the indexable view
+    // rather than `window`, which does not declare it.
+    const hljs = asIndexable(globalThis).hljs as
       | { highlight: (code: string, opts: { language?: string }) => { value: string } }
       | undefined;
     if (hljs?.highlight) {
@@ -61,21 +74,25 @@ async function renderMarkdown(content: string): Promise<string> {
     return renderPlain(content);
   }
 
-  const RendererCtor = (marked as unknown as { Renderer: new () => Record<string, unknown> }).Renderer;
-  const renderer = new RendererCtor();
+  // `marked` drives its output by calling `renderer.code(token)` /
+  // `renderer.table(token)` with the renderer as `this`, so the overrides are
+  // plain instance methods carrying the upstream token types. Overriding the
+  // instance (not the prototype) keeps the shared `Renderer` class intact for
+  // every other instance in the page.
+  const renderer = new marked.Renderer();
 
-  (renderer as Record<string, unknown>).code = function (tok: { text: string; lang?: string }) {
-    const highlighted = tryHighlight(tok.text, tok.lang);
+  renderer.code = function ({ text, lang }: Tokens.Code): string {
+    const highlighted = tryHighlight(text, lang);
     // Audit hikari-R1-5: whitelist the language tag before interpolation
     // (depth-in-defence — the final DOMPurify pass remains the primary
     // guard, but this keeps the raw template injection safe on its own).
-    const lang = tok.lang && /^[a-zA-Z0-9+#._-]{1,32}$/.test(tok.lang) ? tok.lang : "";
-    const langAttr = lang ? ` language-${lang}` : "";
-    const langLabel = lang ? `<span class="hk-md-code-lang">${lang}</span>` : "";
+    const safeLang = lang && /^[a-zA-Z0-9+#._-]{1,32}$/.test(lang) ? lang : "";
+    const langAttr = safeLang ? ` language-${safeLang}` : "";
+    const langLabel = safeLang ? `<span class="hk-md-code-lang">${safeLang}</span>` : "";
     return `<div class="hk-md-code-wrap"><div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div></div>`;
   };
 
-  (renderer as Record<string, unknown>).table = function (token: unknown) {
+  renderer.table = function (this: Renderer, token: Tokens.Table): string {
     // Tables size to their content: a wide one (many columns, or a single
     // unbreakable cell) pushes every ancestor's min-content width past its
     // box, and clipping hosts (modal reading region, chat bubbles, report
@@ -86,7 +103,7 @@ async function renderMarkdown(content: string): Promise<string> {
     // viewport that actually rails. Rail the TABLE itself — normal tables
     // keep their full-width layout; only a genuinely overflowing one grows
     // the horizontal scroll (see .hk-md-table-scroll).
-    const inner = (RendererCtor.prototype as { table: (t: unknown) => string }).table.call(this, token);
+    const inner = marked.Renderer.prototype.table.call(this, token);
     return `<div class="hk-md-table-wrap"><div class="hk-md-table-scroll">${inner}</div></div>`;
   };
 

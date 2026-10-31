@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { asIndexable } from "../utils/typing";
+
 /**
  * SSR gate for the wallpaper logic layer.
  *
@@ -34,7 +36,7 @@ const installed: string[] = [];
 
 afterEach(() => {
   for (const key of installed) {
-    delete (globalThis as unknown as Record<string, unknown>)[key];
+    delete asIndexable(globalThis)[key];
   }
   installed.length = 0;
   vi.resetModules();
@@ -74,7 +76,7 @@ describe("wallpaper logic layer — SSR import contract", () => {
         key: () => null,
         length: 0,
       };
-      (globalThis as unknown as Record<string, unknown>).localStorage = shim;
+      asIndexable(globalThis).localStorage = shim;
       installed.push("localStorage");
 
       vi.resetModules();

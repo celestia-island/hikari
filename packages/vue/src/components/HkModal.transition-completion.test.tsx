@@ -24,7 +24,7 @@ const here = join(dirname(fileURLToPath(import.meta.url)));
  *  pathology exactly — the leave can NEVER complete on its own and only
  *  the component's watchdog can finalize it. */
 function freezeRaf(): void {
-  vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+  vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0);
   vi.stubGlobal("cancelAnimationFrame", () => {});
 }
 

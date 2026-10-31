@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { SolarHemisphere, SolarLocationStrategy } from "./useSolarTime";
+import { invalidInput } from "../test-utils/invalid";
 
 // The module memoizes the geo fix in singleton state AND reads its solar
 // strategy from localStorage at import, so every test gets a fresh module
@@ -76,7 +75,7 @@ describe("useSolarTime geolocation cascade (ip strategy)", () => {
           ok({ coords: { latitude: 51.5, longitude: -0.12 } }),
       },
       permissions: { query: async () => ({ state: "granted" }) },
-    } as unknown as Navigator);
+    });
 
     await expect(mod.getGeolocation()).resolves.toEqual({ lat: 51.5, lng: -0.12 });
     expect(globalThis.fetch).not.toHaveBeenCalled();
@@ -91,14 +90,14 @@ describe("useSolarTime geolocation cascade (ip strategy)", () => {
     vi.stubGlobal("navigator", {
       geolocation: { getCurrentPosition },
       permissions: { query: async () => ({ state: "prompt" }) },
-    } as unknown as Navigator);
+    });
 
     await expect(mod.getGeolocation()).resolves.toEqual({ lat: 1, lng: 2 });
     expect(getCurrentPosition).not.toHaveBeenCalled();
   });
 
   it("returns the timezone estimate on total failure without pinning it", async () => {
-    vi.stubGlobal("navigator", {} as unknown as Navigator);
+    vi.stubGlobal("navigator", {});
     const first = await mod.getGeolocation();
     expect(first.lat).toBeCloseTo(mod.DEFAULT_GEO_LOCATION.lat);
     expect(first.lng).toBeCloseTo(-new Date().getTimezoneOffset() / 4);
@@ -153,7 +152,7 @@ describe("solar location strategy", () => {
     vi.stubGlobal("navigator", {
       geolocation: { getCurrentPosition },
       permissions: { query: async () => ({ state: "granted" }) },
-    } as unknown as Navigator);
+    });
 
     const geo = await mod.getGeolocation();
     expect(geo.lat).toBe(mod.DEFAULT_GEO_LOCATION.lat);
@@ -164,7 +163,7 @@ describe("solar location strategy", () => {
 
   it("the ip strategy restores the legacy web cascade", async () => {
     mod.setSolarLocationStrategy("ip");
-    vi.stubGlobal("navigator", {} as unknown as Navigator);
+    vi.stubGlobal("navigator", {});
     vi.stubGlobal("fetch", vi.fn(async () => ({
       ok: true,
       json: async () => ({ latitude: 10.5, longitude: 20.25 }),
@@ -207,7 +206,7 @@ describe("solar location strategy", () => {
   });
 
   it("ignores unknown strategy values and heals stale storage to the default", async () => {
-    mod.setSolarLocationStrategy("pigeon-post" as unknown as SolarLocationStrategy);
+    mod.setSolarLocationStrategy(invalidInput("pigeon-post"));
     expect(mod.solarLocationStrategy.value).toBe("timezone");
     expect(localStorage.getItem(mod.SOLAR_LOCATION_STRATEGY_STORAGE_KEY)).toBeNull();
 
@@ -291,7 +290,7 @@ describe("manual solar location", () => {
     // Legal zone, illegal hemisphere:
     mod.setSolarManualLocation({
       timeZone: "Europe/Berlin",
-      hemisphere: "east" as unknown as SolarHemisphere,
+      hemisphere: invalidInput("east"),
     });
     expect(mod.solarManualLocation.value).toBeNull();
     expect(localStorage.getItem(mod.SOLAR_MANUAL_LOCATION_STORAGE_KEY)).toBeNull();

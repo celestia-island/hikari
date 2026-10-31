@@ -30,8 +30,20 @@ describe("panEngaged", () => {
 });
 
 describe("overflowSides", () => {
+  /**
+   * A real element carrying stub scroll geometry.
+   *
+   * `overflowSides` is declared against `Element`, so the fixture must BE one.
+   * A detached happy-dom element reports zero geometry and exposes these as
+   * getter-only accessors, so an own data property shadows them — no
+   * assertion involved.
+   */
   function fake(scrollWidth: number, clientWidth: number, scrollLeft: number): HTMLElement {
-    return { scrollWidth, clientWidth, scrollLeft } as unknown as HTMLElement;
+    const el = document.createElement("div");
+    for (const [key, value] of Object.entries({ scrollWidth, clientWidth, scrollLeft })) {
+      Object.defineProperty(el, key, { value, configurable: true, writable: true });
+    }
+    return el;
   }
   it("reports none when the strip fits", () => {
     expect(overflowSides(fake(100, 120, 0))).toBe("none");

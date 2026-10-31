@@ -244,7 +244,7 @@ describe("HkWaterfall", () => {
     await nextTick();
     const scroller = mounted.instance.value?.getScrollElement();
     const scrollTo = vi.fn();
-    (scroller as unknown as { scrollTo: typeof scrollTo }).scrollTo = scrollTo;
+    scroller!.scrollTo = scrollTo;
 
     mounted.instance.value?.jumpToBucket("b");
     expect(scrollTo).toHaveBeenCalledTimes(1);
@@ -313,7 +313,7 @@ describe("HkWaterfall", () => {
     const scroller = mounted.instance.value?.getScrollElement();
     expect(scroller).toBeTruthy();
     const scrollTo = vi.fn();
-    (scroller as unknown as { scrollTo: typeof scrollTo }).scrollTo = scrollTo;
+    scroller!.scrollTo = scrollTo;
 
     mounted.instance.value?.jumpToBucket("b");
     expect(scrollTo).toHaveBeenCalledTimes(1);

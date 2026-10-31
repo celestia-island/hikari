@@ -1,6 +1,7 @@
 import { computed, defineComponent, type PropType } from "vue";
 import HkTooltip from "./HkTooltip";
 import type { TooltipPlacement } from "../runtime/tooltipPosition";
+import { asPropType } from "../utils/typing";
 import "./HkIconButtonGroup.scss";
 
 /** One selectable icon in the group. */
@@ -76,7 +77,7 @@ export default defineComponent({
   name: "HkIconButtonGroup",
   inheritAttrs: false,
   props: {
-    options: { type: Array as unknown as () => HkIconButtonGroupOption[], required: true },
+    options: { type: asPropType<HkIconButtonGroupOption[]>(Array), required: true },
     /** Active key ("single") or keys ("multiple"); null when nothing is
      *  active — required/ignored by "buttons" mode. */
     modelValue: { type: [String, Array] as PropType<string | string[] | null>, default: null },

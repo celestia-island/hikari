@@ -193,7 +193,7 @@ describe("HkTimeline scale-aware collapse", () => {
     // fits is collapsed — and because the remembered full size is drawn too,
     // it never comes back. The measurement converts through the space it was
     // taken in.
-    const proto = Element.prototype as unknown as { getBoundingClientRect: () => DOMRect };
+    const proto = Element.prototype;
     const original = proto.getBoundingClientRect;
     const rect = (w: number, h: number): DOMRect =>
       ({ left: 0, top: 0, right: w, bottom: h, width: w, height: h, x: 0, y: 0 }) as DOMRect;

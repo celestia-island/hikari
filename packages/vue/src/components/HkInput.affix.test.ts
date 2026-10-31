@@ -226,12 +226,12 @@ describe("HkInput affix reservation contract", () => {
           );
         },
       });
-      app.mount(container);
+      const vm = app.mount(container);
       mounts.push({ app, container });
       await nextTick();
       const box = container.querySelector<HTMLElement>(".hk-input-box")!;
       expect(box.style.getPropertyValue("--hk-input-affix-end-w")).toBe("96px");
-      (app._instance?.proxy as unknown as { show: boolean }).show = false;
+      Object.assign(vm.$data, { show: false });
       // Three ticks: ① the unmounting patch (ref(null) fires), ② the
       // deferred detachment check clears the tracked width, ③ the box
       // re-renders with the reset custom property.
@@ -240,7 +240,7 @@ describe("HkInput affix reservation contract", () => {
       await nextTick();
       expect(box.style.getPropertyValue("--hk-input-affix-end-w")).toBe("0px");
       // The suffix comes back — the reservation must follow it again.
-      (app._instance?.proxy as unknown as { show: boolean }).show = true;
+      Object.assign(vm.$data, { show: true });
       await nextTick();
       await nextTick();
       expect(box.style.getPropertyValue("--hk-input-affix-end-w")).toBe("96px");

@@ -57,6 +57,9 @@ describe("applyViewportPolicy", () => {
 
   it("creates the meta when missing", () => {
     const res = applyViewportPolicy();
+    // A null meta is a failure of the very contract under test, so say so
+    // instead of letting a TypeError stand in for it.
+    if (!res.meta) throw new Error("viewport meta was not created");
     expect(res.meta.name).toBe("viewport");
     expect(res.content).toBe("width=device-width, user-scalable=yes");
     expect(res.removed).toEqual([]);

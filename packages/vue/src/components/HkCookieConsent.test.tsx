@@ -2,16 +2,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import { HkCookieConsent } from "./HkCookieConsent";
+import { fakeAs } from "../test-utils/fakes";
 
 const STORAGE_KEY = "hikari-cookies-accepted";
 
 /** Stub the runtime timezone the component's Europe check reads. */
 function stubTimezone(tz: string | undefined) {
-  vi.spyOn(Intl, "DateTimeFormat").mockImplementation(
-    () =>
-      ({
-        resolvedOptions: () => ({ timeZone: tz }),
-      }) as unknown as Intl.DateTimeFormat,
+  vi.spyOn(Intl, "DateTimeFormat").mockImplementation(() =>
+    fakeAs<Intl.DateTimeFormat>({
+      resolvedOptions: () => fakeAs<Intl.ResolvedDateTimeFormatOptions>({ timeZone: tz }),
+    }),
   );
 }
 

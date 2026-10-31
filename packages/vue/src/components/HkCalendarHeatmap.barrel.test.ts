@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as barrel from "../index";
+import { asIndexable } from "../utils/typing";
 
 /**
  * The public barrel guard for the calendar heatmap's exports (R3 on the
@@ -15,7 +16,7 @@ import * as barrel from "../index";
  */
 describe("the public barrel", () => {
   it("exports the heatmap component under both family names", () => {
-    const hk = barrel.HkCalendarHeatmap as unknown as { name?: string };
+    const hk = asIndexable(barrel.HkCalendarHeatmap);
     expect(hk, "HkCalendarHeatmap must be re-exported").toBeTruthy();
     expect(hk.name).toBe("HkCalendarHeatmap");
     // The H- alias rides the HCard/HkCard family convention.

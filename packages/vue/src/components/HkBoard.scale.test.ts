@@ -33,10 +33,7 @@ async function mountBoard() {
   // The board reads its viewport size at mount (clientWidth/Height, i.e. the
   // layout box): pin it on the prototype for the duration so the camera's
   // clamp has a real viewport to work with, the way a laid-out page would.
-  const proto = HTMLElement.prototype as unknown as {
-    clientWidth: number;
-    clientHeight: number;
-  };
+  const proto = HTMLElement.prototype;
   const beforeW = Object.getOwnPropertyDescriptor(proto, "clientWidth");
   const beforeH = Object.getOwnPropertyDescriptor(proto, "clientHeight");
   Object.defineProperty(proto, "clientWidth", {

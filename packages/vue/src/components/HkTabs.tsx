@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType } from "vue";
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType, type VNodeChild } from "vue";
 
 import "./HkTabs.scss";
 import HkScrollContainer from "./HkScrollContainer";
@@ -518,7 +518,10 @@ export default defineComponent({
         }
         const active = tab.key === props.modelValue;
         const disabled = tab.disabled;
-        const icon = slots[`icon-${tab.key}`]?.() ?? (tab.icon != null ? <span class="hk-tabs-trigger-icon">{tab.icon as any}</span> : null);
+        // `icon` is a deliberately loose `unknown` on the public item type
+        // (hosts may pass vnodes materialized against another vue store);
+        // at the render site its documented contract is a render child.
+        const icon = slots[`icon-${tab.key}`]?.() ?? (tab.icon != null ? <span class="hk-tabs-trigger-icon">{tab.icon as VNodeChild}</span> : null);
         listChildren.push(
           <button
             key={tab.key}
@@ -628,8 +631,10 @@ export default defineComponent({
         const action = side === "start" ? props.startAction : props.endAction;
         if (!action) return null;
         const label = resolvedActionLabel(action);
-        const PlusIcon = iconByName("Plus") as any;
-        const icon = action.icon != null ? action.icon : (PlusIcon ? h(PlusIcon, { size: 14 }) : null);
+        // `iconByName` never returns null (it falls back to `Info`), so the
+        // registry lookup is a straight `Component` — no assertion needed.
+        const PlusIcon = iconByName("Plus");
+        const icon = action.icon != null ? action.icon : h(PlusIcon, { size: 14 });
         return (
           <HkIconButton
             variant="ghost"

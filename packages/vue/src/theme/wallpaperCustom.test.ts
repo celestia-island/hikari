@@ -168,6 +168,48 @@ describe("stored-shape filtering (no legacy aliasing)", () => {
     expect(isWallpaperSource({})).toBe(false);
   });
 
+  it("rejects the shapes JSON actually produces for a missing source", () => {
+    // Regression (R2 S1): the guard dereferenced `source.type` directly, so
+    // an entry stored without `source` threw, `loadCustomWallpapers`'s
+    // `catch {}` swallowed it, and EVERY stored custom wallpaper vanished —
+    // the next add/remove/update then saved that truncated list back.
+    expect(isWallpaperSource(undefined)).toBe(false);
+    expect(isWallpaperSource(null)).toBe(false);
+    expect(isWallpaperSource("image" as never)).toBe(false);
+    expect(isWallpaperSource(42 as never)).toBe(false);
+  });
+
+  it("keeps the healthy entries when one stored entry has no source", () => {
+    const stored: Array<Record<string, unknown>> = [
+      { id: "custom-keep", name: "Keep me", addedAt: 1, source: { type: "image", url: "https://x/a.png" } },
+      { id: "custom-partial", name: "No source" },
+    ];
+    localStorage.setItem("shittim-custom-wallpapers", JSON.stringify(stored));
+    const loaded = loadCustomWallpapers();
+    expect(loaded.map((w) => w.id)).toEqual(["custom-keep"]);
+  });
+
+  it("treats a non-array stored payload as empty", () => {
+    // CONTRACT test, not a mutation-pinned one: `loadCustomWallpapers` wraps
+    // everything in `catch { return [] }`, so a non-array payload produced
+    // `[]` before this guard too — via a thrown TypeError. What the guard
+    // buys is that an unreadable payload is a *stated* case rather than
+    // control flow through an exception; anyone adding error reporting to
+    // that catch must keep this outcome.
+    for (const payload of ["null", '{"a":1}', "123", '"text"']) {
+      localStorage.setItem("shittim-custom-wallpapers", payload);
+      expect(loadCustomWallpapers()).toEqual([]);
+    }
+    // A genuine array of healthy entries still loads.
+    localStorage.setItem(
+      "shittim-custom-wallpapers",
+      JSON.stringify([
+        { id: "custom-keep", name: "Keep me", addedAt: 1, source: { type: "image", url: "https://x/a.png" } },
+      ]),
+    );
+    expect(loadCustomWallpapers().map((w) => w.id)).toEqual(["custom-keep"]);
+  });
+
   it("loadCustomWallpapers drops retired-shape entries instead of mapping them", () => {
     const stored: Array<Record<string, unknown>> = [
       { id: "custom-slang", name: "Slang era", addedAt: 1, source: { type: "slang", preset: "omphalos" } },

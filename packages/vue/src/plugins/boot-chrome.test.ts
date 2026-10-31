@@ -61,15 +61,65 @@ interface EmittedAsset {
   source: string;
 }
 
+
+/** The handler behind a Vite hook, which may be an `ObjectHook`
+ *  (`{ handler, order?, filter? }`). Narrowed by `in`, never asserted. */
+function hookHandler(hook: unknown): Function {
+  let fn: unknown = hook;
+  if (typeof fn !== "function") {
+    fn =
+      typeof fn === "object" && fn !== null && "handler" in fn
+        ? fn.handler
+        : undefined;
+  }
+  if (typeof fn !== "function") throw new Error("plugin hook is missing");
+  return fn;
+}
+
+/**
+ * Invoke a plugin hook with a fake hook context.
+ *
+ * Vite types every hook's `this` as a full `PluginContext`; these plugins only
+ * reach for `emitFile` / `warn`, so the fake goes through `Reflect.apply`
+ * (whose `thisArgument` is deliberately unchecked) instead of being asserted
+ * into a `PluginContext`.
+ */
+function callHook(
+  hook: unknown,
+  context: object,
+  ...args: unknown[]
+): unknown {
+  return Reflect.apply(hookHandler(hook), context, args);
+}
+
+/** `transformIndexHtml` answered with tags (it may also return a document). */
+function tagResult(result: unknown): HtmlTagDescriptor[] {
+  if (!Array.isArray(result)) {
+    throw new Error("transformIndexHtml did not return a tag list");
+  }
+  // `HtmlTagDescriptor` REQUIRES a `tag` string: object-ness alone is not a
+  // narrowing, and `{}` (or a vite hook returning something tag-shaped but
+  // tagless) would have passed the old predicate and then been asserted as a
+  // descriptor. Check the member the type actually promises.
+  return result.filter(
+    (tag): tag is HtmlTagDescriptor =>
+      typeof tag === "object" &&
+      tag !== null &&
+      "tag" in tag &&
+      typeof (tag as { tag?: unknown }).tag === "string",
+  );
+}
+
 function tags(
   plugin: ReturnType<typeof bootChromePlugin>,
   filename = "/app/index.html",
 ): HtmlTagDescriptor[] {
-  const hook = plugin.transformIndexHtml as unknown as (
-    html: string,
-    ctx: { filename: string },
-  ) => HtmlTagDescriptor[];
-  return hook("<!doctype html><html><body></body></html>", { filename });
+  return tagResult(
+    callHook(plugin.transformIndexHtml, {}, "<!doctype html><html><body></body></html>", {
+      path: filename,
+      filename,
+    }),
+  );
 }
 
 function emitContext(): {
@@ -151,11 +201,12 @@ describe("boot-chrome plugin multi-entry filter (S1-2)", () => {
     const context = {
       warn: (message: string) => void warnings.push(message),
     };
-    const hook = bootChromePlugin().transformIndexHtml as unknown as (
-      html: string,
-      ctx: { filename: string },
-    ) => HtmlTagDescriptor[];
-    const run = (filename: string) => hook.call(context, "", { filename });
+    const plugin = bootChromePlugin();
+    const run = (filename: string) =>
+      callHook(plugin.transformIndexHtml, context, "", {
+        path: filename,
+        filename,
+      });
 
     run("/app/overlay.html");
     run("/app/overlay.html"); // dev re-requests the same page: no repeat
@@ -170,12 +221,15 @@ describe("boot-chrome plugin multi-entry filter (S1-2)", () => {
   });
 
   it("treats an unknown filename as the main entry (never silently skip)", () => {
-    const injected = (
-      bootChromePlugin().transformIndexHtml as unknown as (
-        html: string,
-        ctx: unknown,
-      ) => HtmlTagDescriptor[]
-    )("<!doctype html><body></body>", {});
+    // No `filename` at all — the hook must fall back to the main entry.
+    const injected = tagResult(
+      callHook(
+        bootChromePlugin().transformIndexHtml,
+        {},
+        "<!doctype html><body></body>",
+        {},
+      ),
+    );
     expect(injected).toHaveLength(1);
   });
 });
@@ -183,11 +237,7 @@ describe("boot-chrome plugin multi-entry filter (S1-2)", () => {
 describe("boot-chrome plugin base handling (S2-3)", () => {
   function injectedSrc(base: string): unknown {
     const plugin = bootChromePlugin();
-    (
-      plugin.configResolved as unknown as (config: {
-        base: string;
-      }) => void
-    )({ base });
+    callHook(plugin.configResolved, {}, { base });
     return tags(plugin)[0].attrs?.src;
   }
 
@@ -205,8 +255,8 @@ describe("boot-chrome plugin asset emission", () => {
     const plugin = bootChromePlugin();
     const { ctx, emitted } = emitContext();
 
-    (plugin.buildStart as unknown as (...args: unknown[]) => void).call(ctx);
-    (plugin.generateBundle as unknown as (...args: unknown[]) => void).call(ctx, {}, {});
+    callHook(plugin.buildStart, ctx);
+    callHook(plugin.generateBundle, ctx, {}, {});
 
     expect(BOOT_CHROME_SCRIPT).toBe("hk-boot-chrome.js");
     expect(emitted).toHaveLength(1);
@@ -221,7 +271,7 @@ describe("boot-chrome plugin asset emission", () => {
     const plugin = bootChromePlugin();
     const { ctx, emitted } = emitContext();
 
-    (plugin.generateBundle as unknown as (...args: unknown[]) => void).call(ctx, {}, {});
+    callHook(plugin.generateBundle, ctx, {}, {});
 
     expect(emitted[0].source).toBe(RES_SCRIPT);
     // The emitted file must be the real bar, not a stub.
@@ -240,11 +290,7 @@ describe("boot-chrome plugin asset emission", () => {
       const isolated = (await import("./boot-chrome.mjs")) as typeof import("./boot-chrome.mjs");
       const { ctx } = emitContext();
       expect(() =>
-        (
-          isolated.bootChromePlugin().generateBundle as unknown as (
-            ...args: unknown[]
-          ) => void
-        ).call(ctx, {}, {}),
+        callHook(isolated.bootChromePlugin().generateBundle, ctx, {}, {}),
       ).toThrow(/cannot read .*boot-chrome\.js/i);
     } finally {
       vi.doUnmock("node:fs");
@@ -295,7 +341,7 @@ describe("boot-chrome plugin dev server", () => {
 
   it("serves the boot script with the file contents", () => {
     const { server, handlers } = fakeServer();
-    (bootChromePlugin().configureServer as unknown as (s: unknown) => void)(server);
+    callHook(bootChromePlugin().configureServer, {}, server);
     expect(handlers).toHaveLength(1);
 
     const { res, body } = fakeResponse();
@@ -310,7 +356,7 @@ describe("boot-chrome plugin dev server", () => {
 
   it("answers HEAD without a body and declines other requests", () => {
     const { server, handlers } = fakeServer();
-    (bootChromePlugin().configureServer as unknown as (s: unknown) => void)(server);
+    callHook(bootChromePlugin().configureServer, {}, server);
 
     const head = fakeResponse();
     handlers[0]({ url: "/hk-boot-chrome.js", method: "HEAD" }, head.res, vi.fn());
@@ -326,7 +372,7 @@ describe("boot-chrome plugin dev server", () => {
 
   it("serves the base-prefixed URL too", () => {
     const { server, handlers } = fakeServer("/panel/");
-    (bootChromePlugin().configureServer as unknown as (s: unknown) => void)(server);
+    callHook(bootChromePlugin().configureServer, {}, server);
 
     const prefixed = fakeResponse();
     handlers[0]({ url: "/panel/hk-boot-chrome.js", method: "GET" }, prefixed.res, vi.fn());

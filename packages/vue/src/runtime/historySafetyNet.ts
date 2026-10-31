@@ -22,6 +22,7 @@
  * next field occurrence can be attributed.
  */
 
+import { asIndexable } from "../utils/typing";
 import { reportHkRuntime } from "./registry";
 
 /** Bare literals that read as a producer bug, never a real target. */
@@ -82,6 +83,29 @@ export function sanitizeHistoryUrl(
  *  harness) is detected and re-patched. */
 const PATCH_MARKER = "__hikariHistoryNet";
 
+/** Call signature the two History prototype mutators are wrapped as.
+ *  lib.dom declares the state parameter as `any`; `unknown` is the honest
+ *  boundary — the net forwards it to the native method untouched and never
+ *  reads into it. Matching this signature is also what lets the native
+ *  call at the bottom of the install loop forward `state` and `url`
+ *  without a per-argument assertion. */
+type HistoryMutator = (
+  this: History,
+  state: unknown,
+  title: string,
+  url?: string | URL | null,
+) => void;
+
+/** True when `fn` still carries this net's patch marker. */
+function isHkPatched(fn: object): boolean {
+  return asIndexable(fn)[PATCH_MARKER] === true;
+}
+
+/** Stamp `fn` as this net's own so a later install leaves it alone. */
+function markHkPatched(fn: object): void {
+  asIndexable(fn)[PATCH_MARKER] = true;
+}
+
 // Runtime-registry reporting (the "context of contexts"): the net is
 // install-and-forget, so it reports itself on INSTALL (not at module
 // init — importing the module must not claim an installed hook) and
@@ -118,9 +142,9 @@ function ensureHistoryNetRuntime() {
 export function installHistorySafetyNet(options: HistorySafetyNetOptions = {}): void {
   const fallback = options.fallback ?? "/";
   const evidenceKey = options.evidenceKey === undefined ? DEFAULT_EVIDENCE_KEY : options.evidenceKey;
+  const proto = asIndexable(History.prototype);
   const alreadyPatched =
-    typeof (History.prototype as unknown as Record<string, unknown>).pushState === "function" &&
-    ((History.prototype as unknown as Record<string, unknown>).pushState as { [PATCH_MARKER]?: boolean })[PATCH_MARKER] === true;
+    typeof proto.pushState === "function" && isHkPatched(proto.pushState);
   if (!alreadyPatched) {
     // Only an install that actually patches may claim its options as
     // active; a no-op re-install keeps the first install's capture.
@@ -131,15 +155,15 @@ export function installHistorySafetyNet(options: HistorySafetyNetOptions = {}): 
   ensureHistoryNetRuntime().setMeta({ fallback: activeFallback, evidenceKey: activeEvidenceKey === false ? "off" : activeEvidenceKey });
   ensureHistoryNetRuntime().pulse();
   for (const method of ["pushState", "replaceState"] as const) {
-    const current: unknown = (History.prototype as unknown as Record<string, unknown>)[method];
-    if (
-      typeof current === "function" &&
-      (current as { [PATCH_MARKER]?: boolean })[PATCH_MARKER] === true
-    ) {
-      continue;
-    }
-    const native = current as (this: History, state: unknown, title: string, url?: string | URL | null) => unknown;
-    if (typeof native !== "function") continue;
+    const current: unknown = proto[method];
+    // A non-function override is not ours to wrap (locked-down polyfill,
+    // exotic proxy) — leave it be.
+    if (typeof current !== "function") continue;
+    if (isHkPatched(current)) continue;
+    // `current` is narrowed only to `Function`; the structural shape of a
+    // History mutator is what this net needs, and asserting it is the one
+    // unavoidable step — the function came off the live prototype.
+    const native = current as HistoryMutator;
     // The closure reads the ACTIVE capture, never this call's locals —
     // the half-overwrite path above re-patches a foreign method while
     // the first install's options stay in effect.
@@ -151,9 +175,9 @@ export function installHistorySafetyNet(options: HistorySafetyNetOptions = {}): 
         historyNetRuntime?.pulse({ coercions });
         reportCoercion(info, activeEvidenceKey, activeOptions);
       }
-      return native.call(this, state as never, title, safe as never);
+      return native.call(this, state, title, safe);
     };
-    (patched as { [PATCH_MARKER]?: boolean })[PATCH_MARKER] = true;
+    markHkPatched(patched);
     try {
       Object.defineProperty(History.prototype, method, {
         value: patched,

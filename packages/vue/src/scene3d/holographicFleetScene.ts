@@ -389,7 +389,7 @@ export function buildFleetScene(
         // the registered group also carries the moons (and the board
         // prunes the corona sprite as decoration, but the pivots are real
         // geometry and would widen the bracket to the moon system).
-        frameObject: entry.mesh,
+        frameObject: null,
         label: callbacks.makeLabel(star),
         labelOffset: [0, hologramOuterRadius(star) + 0.65, 0],
         marker: "dot",
@@ -408,7 +408,7 @@ export function buildFleetScene(
       engine.setObject(planet.id, {
         object: entry.group,
         // Same rule as the stars: the body, never its moon system.
-        frameObject: entry.mesh,
+        frameObject: null,
         label: callbacks.makeLabel(planet),
         labelOffset: [0, hologramOuterRadius(planet) + 0.55, 0],
         marker: "dot",
@@ -509,7 +509,7 @@ export function buildFleetScene(
       if (spec.orbitRadius > 0) {
         entry.group.position.set(...bodyPositionAt(spec, elapsed));
       }
-      poseFleetHologram(entry.hologram, elapsed, spec.spinPeriodSec);
+      poseFleetHologram(entry.hologram, elapsed, spec.spinPeriodSec, engine.camera.quaternion);
       for (const pivot of entry.satellites) {
         const orbit = pivot.userData.orbit as { periodSec: number; phase: number };
         pivot.rotation.y = orbit.phase + (elapsed / orbit.periodSec) * Math.PI * 2;
@@ -520,7 +520,9 @@ export function buildFleetScene(
         entry.glow.scale.setScalar(base * (1 + 0.06 * Math.sin(elapsed * 0.8 + spec.radius)));
       }
     }
-    if (coreHologram) poseFleetHologram(coreHologram, elapsed, 80);
+    if (coreHologram) {
+      poseFleetHologram(coreHologram, elapsed, 80, engine.camera.quaternion);
+    }
   }
 
   removeTick = engine.addTick((dt, elapsed) => {
@@ -592,12 +594,13 @@ export function buildFleetScene(
       reanchorFollow();
     },
     setSelected(id: string | null) {
-      // The cube cursor is the board's: hand the id over and the board
-      // measures, rides and re-measures the frame itself. Deselect ends
-      // the follow — the reframe owns the camera again. A re-selection
-      // WITHOUT a focus (the scene↔list restore path) leaves the camera
-      // alone; following resumes on an explicit focusBody.
-      engine.setSelection(id);
+      // These holograms carry their own circular focus mark. Suppress the
+      // board's cube cursor here; otherwise it wraps the sphere in six
+      // straight edges and fights the ring-shell silhouette.
+      for (const [bodyId, entry] of bodies) {
+        entry.hologram.selectionRing.visible = bodyId === id;
+      }
+      engine.setSelection(null);
       if (id === null) {
         followId = null;
         cancelFlight();

@@ -12,10 +12,7 @@
 
 import * as THREE from "three";
 
-import {
-  HOLOGRAM_RING_SCALES,
-  type FleetBodySpec,
-} from "./holographicFleetSpec";
+import type { FleetBodySpec } from "./holographicFleetSpec";
 
 export type FleetHologramInput = Pick<
   FleetBodySpec,
@@ -30,8 +27,18 @@ export interface FleetHologramRing {
 
 export interface FleetHologram {
   group: THREE.Group;
+  /** Invisible centre sphere; the pointer/frame target, not a visible body. */
   mesh: THREE.Mesh;
+  /** Nested circles at many orientations: the ring-ball shell itself. */
+  ringBall: THREE.Group;
   rings: FleetHologramRing[];
+  /** Inner circular interface retained as a stable extension point. */
+  innerScreen: THREE.Group;
+  innerScreenSpinner: THREE.Group;
+  /** The real-data ticker panel at the centre of the front-facing dial. */
+  hudPanel: THREE.Mesh | null;
+  /** Circular focus mark; replaces the board's cube cursor for these discs. */
+  selectionRing: THREE.Group;
   /** Null only when the host cannot create a 2D canvas (SSR/test DOM). */
   hudTexture: THREE.CanvasTexture | null;
 }
@@ -75,6 +82,185 @@ function arcGeometry(radius: number): THREE.BufferGeometry {
 function unpickable<T extends THREE.Object3D>(object: T): T {
   object.raycast = () => undefined;
   return object;
+}
+
+function xyCircleGeometry(radius: number, segments: number): THREE.BufferGeometry {
+  const points: number[] = [];
+  for (let i = 0; i < segments; i += 1) {
+    const angle = (i / segments) * Math.PI * 2;
+    points.push(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+  }
+  return new THREE.BufferGeometry().setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(points, 3),
+  );
+}
+
+function xyArcGeometry(
+  radius: number,
+  start: number,
+  span: number,
+  segments = 48,
+): THREE.BufferGeometry {
+  const points: number[] = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const angle = start + (i / segments) * span;
+    points.push(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+  }
+  return new THREE.BufferGeometry().setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(points, 3),
+  );
+}
+
+/** One face dial: a large circular readout centred on a cube face. */
+function makeFaceDial(
+  radius: number,
+  color: THREE.Color,
+  offline: boolean,
+  detailed = true,
+): THREE.Group {
+  const dial = new THREE.Group();
+  dial.name = "fleet-hologram-face-dial";
+  const ring = (r: number, opacity: number, name: string): void => {
+    const line = unpickable(new THREE.LineLoop(
+      xyCircleGeometry(r, 160),
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: offline ? opacity * 0.24 : opacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    ));
+    line.name = name;
+    dial.add(line);
+  };
+  ring(radius, detailed ? 0.72 : 0.28, "fleet-hologram-face-dial-outer");
+  if (detailed) {
+    ring(radius * 0.64, 0.3, "fleet-hologram-face-dial-middle");
+    ring(radius * 0.38, 0.22, "fleet-hologram-face-dial-inner");
+  }
+
+  if (detailed) {
+    const ticks: number[] = [];
+    const tickCount = 36;
+    for (let i = 0; i < tickCount; i += 1) {
+      const angle = (i / tickCount) * Math.PI * 2;
+      const major = i % 4 === 0;
+      const a = radius - radius * (major ? 0.13 : 0.06);
+      const b = radius + radius * (major ? 0.05 : 0.025);
+      ticks.push(Math.cos(angle) * a, Math.sin(angle) * a, 0);
+      ticks.push(Math.cos(angle) * b, Math.sin(angle) * b, 0);
+    }
+    const tickMarks = unpickable(new THREE.LineSegments(
+      new THREE.BufferGeometry().setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(ticks, 3),
+      ),
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: offline ? 0.12 : 0.58,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    ));
+    tickMarks.name = "fleet-hologram-face-dial-ticks";
+    dial.add(tickMarks);
+  }
+
+  const arc = unpickable(new THREE.Line(
+    xyArcGeometry(radius, -0.25, Math.PI * 0.62),
+    new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity: offline ? 0.16 : detailed ? 0.94 : 0.34,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  ));
+  arc.name = "fleet-hologram-face-dial-arc";
+  dial.add(arc);
+
+  if (detailed) {
+    const core = unpickable(new THREE.Mesh(
+      new THREE.CircleGeometry(radius * 0.16, 32),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: offline ? 0.1 : 0.3,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    ));
+    core.name = "fleet-hologram-face-dial-core";
+    dial.add(core);
+  }
+  return dial;
+}
+
+/** Six large dials on the cube's six faces. Each principal viewing
+ *  direction is answered by a disc that faces it directly. */
+function makeDiscCube(
+  bodyRadius: number,
+  color: THREE.Color,
+  offline: boolean,
+): THREE.Group {
+  const cube = new THREE.Group();
+  cube.name = "fleet-hologram-disc-shell";
+  // Overlap the six faces so their rims merge into one rounded envelope
+  // instead of reading as the edges of a box.
+  const faceOffset = bodyRadius * 0.4;
+  const dialRadius = bodyRadius * 0.8;
+  const faces: Array<{ position: [number, number, number]; rotation: [number, number, number] }> = [
+    { position: [0, 0, faceOffset], rotation: [0, 0, 0] },
+    { position: [0, 0, -faceOffset], rotation: [0, Math.PI, 0] },
+    { position: [faceOffset, 0, 0], rotation: [0, Math.PI / 2, 0] },
+    { position: [-faceOffset, 0, 0], rotation: [0, -Math.PI / 2, 0] },
+    { position: [0, faceOffset, 0], rotation: [-Math.PI / 2, 0, 0] },
+    { position: [0, -faceOffset, 0], rotation: [Math.PI / 2, 0, 0] },
+  ];
+  for (const face of faces) {
+    const dial = makeFaceDial(dialRadius, color, offline, false);
+    dial.position.set(...face.position);
+    dial.rotation.set(...face.rotation);
+    cube.add(dial);
+  }
+  return cube;
+}
+
+/** A barrel of concentric rings on the Z axis: fat at the equator and
+ *  tapering to thin rings at the poles. Side-on it rounds the six-face
+ *  cube into a ball; down the Z axis it reads as nested circles. */
+function makeRingSpindle(
+  bodyRadius: number,
+  color: THREE.Color,
+  offline: boolean,
+  count: number,
+): THREE.Group {
+  const spindle = new THREE.Group();
+  spindle.name = "fleet-hologram-ring-spindle";
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0 : -0.97 + (1.94 * i) / (count - 1);
+    const radius = bodyRadius * Math.sqrt(Math.max(0, 1 - t * t)) * 0.98;
+    const z = bodyRadius * t;
+    const loop = unpickable(new THREE.LineLoop(
+      xyCircleGeometry(radius, 160),
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: offline ? 0.04 : 0.08 + (1 - Math.abs(t)) * 0.12,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    ));
+    loop.name = "fleet-hologram-ring-spindle-circle";
+    loop.position.z = z;
+    spindle.add(loop);
+  }
+  return spindle;
 }
 
 /** One flat polygon face recovered from the polyhedron's triangles.
@@ -249,21 +435,21 @@ function makeRing(
 function makeHudTexture(input: FleetHologramInput): THREE.CanvasTexture | null {
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
-  canvas.height = 64;
+  canvas.height = 96;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
   const line = hologramHudText(input);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "600 28px ui-monospace, SFMono-Regular, Consolas, monospace";
+  ctx.font = "600 34px ui-monospace, SFMono-Regular, Consolas, monospace";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
 
-  // Repeat a real sentence around the cylinder. Long host labels are
-  // condensed by canvas rather than replaced with a fabricated identifier.
-  const maxItemWidth = 460;
+  // A clipped horizontal ticker for the centre of the dial. Long host
+  // labels are condensed by canvas rather than replaced with fabricated data.
+  const maxItemWidth = 610;
   const measured = ctx.measureText(line).width;
-  const itemWidth = Math.min(maxItemWidth, Math.max(220, measured + 48));
+  const itemWidth = Math.min(maxItemWidth, Math.max(360, measured + 64));
   for (let x = 24; x < canvas.width; x += itemWidth) {
     ctx.fillText(line, x, canvas.height / 2, maxItemWidth - 48);
   }
@@ -275,30 +461,27 @@ function makeHudTexture(input: FleetHologramInput): THREE.CanvasTexture | null {
   return texture;
 }
 
-function makeHudBand(
-  input: FleetHologramInput,
+function makeTickerPlane(
+  bodyRadius: number,
   color: THREE.Color,
   offline: boolean,
-): { mesh: THREE.Mesh; texture: THREE.CanvasTexture } | null {
-  const texture = makeHudTexture(input);
-  if (!texture) return null;
-  const radius = input.radius * 1.05;
-  const height = Math.max(0.18, input.radius * 0.23);
+  texture: THREE.CanvasTexture,
+): THREE.Mesh {
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     color,
     transparent: true,
-    opacity: offline ? 0.2 : 0.68,
+    opacity: offline ? 0.18 : 0.86,
     side: THREE.DoubleSide,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
   const mesh = unpickable(new THREE.Mesh(
-    new THREE.CylinderGeometry(radius, radius, height, 96, 1, true),
+    new THREE.PlaneGeometry(bodyRadius * 1.14, bodyRadius * 0.3),
     material,
   ));
-  mesh.name = "fleet-hologram-hud-band";
-  return { mesh, texture };
+  mesh.name = "fleet-hologram-hud-panel";
+  return mesh;
 }
 
 export function makeFleetHologram(
@@ -315,39 +498,84 @@ export function makeFleetHologram(
     edgeColor.multiplyScalar(0.3);
   }
 
-  const geometry = input.role === "star"
-    ? new THREE.IcosahedronGeometry(input.radius * 0.82, 0)
-    : new THREE.DodecahedronGeometry(input.radius * 0.82, 0);
+  // The visible object is the ring ball; this invisible sphere is only the
+  // pointer target and the frameObject the board measures for selection.
   const mesh = new THREE.Mesh(
-    geometry,
+    new THREE.SphereGeometry(input.radius * 0.55, 16, 12),
     new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity: offline ? 0.025 : 0.06,
-      side: THREE.DoubleSide,
+      opacity: 0,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
     }),
   );
-  mesh.name = "fleet-hologram-polyhedron";
-  mesh.rotation.set(0.2, 0, 0.1);
+  mesh.name = "fleet-hologram-core";
 
-  for (const ring of makeFaceRings(geometry, input.radius, edgeColor, offline)) {
-    mesh.add(ring);
-  }
+  const hudTexture = makeHudTexture(input);
+  const shell = new THREE.Group();
+  shell.name = "fleet-hologram-shell";
+  shell.add(makeDiscCube(input.radius, edgeColor, offline));
+  shell.add(makeRingSpindle(
+    input.radius,
+    edgeColor,
+    offline,
+    input.role === "star" ? 9 : 6,
+  ));
+  group.add(shell);
   group.add(mesh);
 
-  const rings = HOLOGRAM_RING_SCALES[input.role].map((scale, index) => {
-    const ring = makeRing(input.radius * scale, index, edgeColor, offline);
-    group.add(ring.pivot);
-    return ring;
-  });
+  // The six-face dial cube plus ring spindle replace the former orbit rings;
+  // only the scene's wide orbital paths remain as spatial context.
+  const rings: FleetHologramRing[] = [];
+  const innerScreen = new THREE.Group();
+  innerScreen.name = "fleet-hologram-inner-screen";
+  const spinner = new THREE.Group();
+  spinner.name = "fleet-hologram-inner-screen-spinner";
+  // One detailed camera-facing disc carries the hierarchy: full rings,
+  // ticks and centre ticker. The other five faces stay as faint support.
+  innerScreen.add(makeFaceDial(input.radius * 0.8, edgeColor, offline, true));
 
-  const hud = makeHudBand(input, edgeColor, offline);
-  if (hud) group.add(hud.mesh);
-  group.userData.fleetOwnedTextures = hud ? [hud.texture] : [];
+  const hudPanel = hudTexture
+    ? makeTickerPlane(input.radius, edgeColor, offline, hudTexture)
+    : null;
+  if (hudPanel) {
+    hudPanel.position.z = input.radius * 0.02;
+    innerScreen.add(hudPanel);
+  }
+  group.add(innerScreen);
 
-  return { group, mesh, rings, hudTexture: hud?.texture ?? null };
+  const selectionRing = new THREE.Group();
+  selectionRing.name = "fleet-hologram-selection-ring";
+  selectionRing.visible = false;
+  for (const [scale, opacity] of [[1.02, 0.8], [1.08, 0.24]] as const) {
+    const line = unpickable(new THREE.LineLoop(
+      xyCircleGeometry(input.radius * scale, 160),
+      new THREE.LineBasicMaterial({
+        color: edgeColor,
+        transparent: true,
+        opacity: offline ? opacity * 0.2 : opacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    ));
+    line.name = "fleet-hologram-selection-ring-line";
+    selectionRing.add(line);
+  }
+  group.add(selectionRing);
+
+  group.userData.fleetOwnedTextures = hudTexture ? [hudTexture] : [];
+
+  return {
+    group,
+    mesh,
+    ringBall: shell,
+    rings,
+    innerScreen,
+    innerScreenSpinner: spinner,
+    hudPanel,
+    selectionRing,
+    hudTexture,
+  };
 }
 
 /** Independent motion: the polyhedron spins, ring arcs precess, and the
@@ -356,8 +584,16 @@ export function poseFleetHologram(
   hologram: FleetHologram,
   elapsed: number,
   spinPeriodSec: number,
+  cameraQuaternion?: THREE.Quaternion,
 ): void {
   hologram.mesh.rotation.y = (elapsed / spinPeriodSec) * Math.PI * 2;
+  hologram.ringBall.rotation.y = elapsed * 0.05;
+  hologram.ringBall.rotation.x = Math.sin(elapsed * 0.08) * 0.06;
+  if (cameraQuaternion) {
+    hologram.innerScreen.quaternion.copy(cameraQuaternion);
+    hologram.selectionRing.quaternion.copy(cameraQuaternion);
+  }
+  hologram.innerScreenSpinner.rotation.z = elapsed * 0.11;
   for (const ring of hologram.rings) {
     ring.pivot.rotation.y = ring.baseY + elapsed * ring.speed;
   }

@@ -3,11 +3,12 @@
  * HkBoard3D engine.
  *
  * The spec (holographicFleetSpec.ts) is pure; this module is the three.js
- * side: holographic polyhedra, data-bound HUD bands, moons, lights, orbit
- * rings, label chips and the per-frame motion/camera tick. The selection mark is
- * NOT built here: the board's own 8-corner cube cursor is pinned onto the
- * selected body through `engine.setSelection` (user direction
- * 2026-10-01).
+ * side: disc-shell holograms with camera-facing dials, miniature
+ * satellite holograms, glow halos, orbit rings, label chips and the
+ * per-frame motion/camera tick. The selection mark is the scene's own
+ * CIRCULAR focus ring (user direction 2026-10-31): the board's 8-corner
+ * cube cursor is suppressed for these bodies because straight corners
+ * fight the ring silhouette.
  *
  * Ownership: everything the builder creates is disposed through its
  * handle — geometries, materials, the glow texture and every registered
@@ -21,6 +22,7 @@ import { fitDistance, lerpPalette } from "../utils/scene3d";
 
 import {
   makeFleetHologram,
+  makeSatelliteHologram,
   poseFleetHologram,
   type FleetHologram,
 } from "./holographicFleetBody";
@@ -119,20 +121,10 @@ export function buildFleetScene(
   let disposed = false;
   const glowTexture = createGlowTexture();
 
-  // Lights live for the builder's lifetime (never rebuilt with the spec).
-  const ambient = new THREE.AmbientLight(0xffffff, 0.5);
-  const key = new THREE.DirectionalLight(0xf2f5ff, 0.7);
-  key.position.set(30, 50, 20);
-  decor.push(ambient, key);
-  engine.scene.add(ambient, key);
-
-  // The selection mark is the BOARD's cube cursor (user direction
-  // 2026-10-01: no ring — the 8-corner frame, pinned for as long as the
-  // selection lasts). `setSelected` below hands the id straight to
-  // `engine.setSelection`; the board measures the frame once against the
-  // body (the same `frameObject` rule the hover frame uses, so coronas
-  // and moons stay outside the box), rides the body through its orbit,
-  // and re-measures on its own when a roster rebuild swaps the object.
+  // No scene lights: every material this builder puts in the scene is
+  // unlit (Line, MeshBasic, Sprite). The old lights existed for the
+  // solid moons, which are holograms now too (user direction
+  // 2026-10-31: replace EVERY solid sphere).
 
   function disposeObject(root: THREE.Object3D): void {
     root.traverse((obj) => {
@@ -217,10 +209,6 @@ export function buildFleetScene(
     glow.raycast = () => undefined;
     group.add(glow);
 
-    // The star lights its own system (an offline hub barely lights it).
-    const light = new THREE.PointLight(color, offline ? 25 : 70, 0, 1.8);
-    group.add(light);
-
     return { spec, group, mesh, hologram, glow, satellites: [] };
   }
 
@@ -236,20 +224,16 @@ export function buildFleetScene(
   function addSatellites(entry: BodyEntry, parentRadius: number, offline: boolean): void {
     for (let j = 0; j < entry.spec.satellites; j++) {
       const h = lerpPalette([...SATELLITE_PALETTE], (j + 1) / (entry.spec.satellites + 1));
-      // A moon rides its gateway: an offline gateway with bright moons is
-      // the same lie as an offline star burning at full brightness — the
-      // whole body dims, not just the sphere in the middle.
-      const color = toColor(h);
-      if (offline) color.multiplyScalar(0.3);
-      const moon = new THREE.Mesh(
-        new THREE.SphereGeometry(MOON_RADIUS, 10, 8),
-        new THREE.MeshStandardMaterial({ color, roughness: 0.9, metalness: 0.15 }),
-      );
-      moon.raycast = () => undefined;
+      // A satellite is a miniature hologram riding its gateway: an
+      // offline gateway with bright satellites would be the same lie as
+      // an offline star burning at full brightness — the hologram dims
+      // the WHOLE body from the raw palette colour (no double dimming:
+      // the base colour goes in undimmed, like makeFleetHologram).
+      const satellite = makeSatelliteHologram(MOON_RADIUS, toColor(h), offline);
       const pivot = new THREE.Group();
-      pivot.add(moon);
+      pivot.add(satellite);
       const orbit = satelliteOrbit(parentRadius, j);
-      moon.position.set(orbit.radius, 0, 0);
+      satellite.position.set(orbit.radius, 0, 0);
       pivot.rotation.x = orbit.tilt;
       pivot.userData.orbit = orbit;
       entry.group.add(pivot);
@@ -283,8 +267,6 @@ export function buildFleetScene(
     glow.scale.setScalar(7);
     glow.raycast = () => undefined;
     group.add(glow);
-    const light = new THREE.PointLight(0xffe9b8, 80, 0, 1.8);
-    group.add(light);
     engine.setObject("__star-system-core__", {
       object: group,
       pickable: false,
@@ -370,7 +352,6 @@ export function buildFleetScene(
     dropRegistryCore();
     for (let i = decor.length - 1; i >= 0; i--) {
       const obj = decor[i];
-      if (obj === ambient || obj === key) continue;
       engine.scene.remove(obj);
       disposeObject(obj);
       decor.splice(i, 1);
@@ -385,10 +366,9 @@ export function buildFleetScene(
       bodies.set(star.id, entry);
       engine.setObject(star.id, {
         object: entry.group,
-        // The hover frame wraps the SUN itself, not the system it lights:
-        // the registered group also carries the moons (and the board
-        // prunes the corona sprite as decoration, but the pivots are real
-        // geometry and would widen the bracket to the moon system).
+        // No board frame of any kind: the straight-edged hover bracket
+        // fights the ring silhouette, so the scene's own circular marks
+        // (front dial + selection ring) carry the affordances instead.
         frameObject: null,
         label: callbacks.makeLabel(star),
         labelOffset: [0, hologramOuterRadius(star) + 0.65, 0],
@@ -407,7 +387,7 @@ export function buildFleetScene(
       engine.scene.add(ring);
       engine.setObject(planet.id, {
         object: entry.group,
-        // Same rule as the stars: the body, never its moon system.
+        // Same rule as the stars: the circular marks, never a bracket.
         frameObject: null,
         label: callbacks.makeLabel(planet),
         labelOffset: [0, hologramOuterRadius(planet) + 0.55, 0],
@@ -575,14 +555,13 @@ export function buildFleetScene(
       followLast.set(p.x, p.y, p.z);
     }
 
-    // (The selection mark needs nothing here: the board's cube cursor
-    // rides the selected body's own world matrix every frame.)
+    // (The selection mark needs nothing here: the circular focus ring
+    // lives INSIDE each body's group, so it rides the body's own world
+    // matrix and faces the camera through poseFleetHologram.)
 
-    // Hover is the BOARD's business now: it wraps whatever the pointer is
-    // over in its corner frame without resizing it (the old hover lift
-    // scaled the target the user was aiming at). The frame is measured
-    // from `frameObject` below — the body mesh, so a hub's corona and a
-    // gateway's moons stay outside the box.
+    // (No hover mark either: `frameObject: null` opts every body out of
+    // the board's corner frame — the straight edges fight the ring
+    // silhouette, and the front dial already reads as the affordance.)
   });
 
   return {

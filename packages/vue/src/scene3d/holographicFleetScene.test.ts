@@ -66,14 +66,6 @@ function collectDisposables(root: THREE.Object3D): {
   return { geos, mats };
 }
 
-/** Every material this scene builds (the basic/standard Mesh, Line and
- *  Sprite materials) carries a `color`. */
-function hasColor(
-  material: THREE.Material,
-): material is THREE.Material & { color: THREE.Color } {
-  return "color" in material;
-}
-
 function stubEngine(): StubEngine {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 4000);
@@ -621,67 +613,102 @@ describe("buildFleetScene teardown", () => {
   });
 
   it("dims offline hubs as well as offline nodes", () => {
-    const engine = stubEngine();
-    const handle = buildFleetScene(engine, callbacks());
-    const spec = buildFleetSceneSpec([
-      { node_id: "hub-live", tier: 3, station_count: 0 },
-      { node_id: "hub-dark", tier: 3, station_count: 0 },
-    ]);
-    handle.update(spec, { "hub-dark": true });
+    // ONE hub in the fleet, built twice from the SAME spec: the palette
+    // assigns colours per roster position, so comparing two different
+    // bodies would compare two different base colours.
+    const spec = buildFleetSceneSpec([{ node_id: "hub-a", tier: 3, station_count: 0 }]);
+    const online = stubEngine();
+    buildFleetScene(online, callbacks()).update(spec, {});
+    const offline = stubEngine();
+    buildFleetScene(offline, callbacks()).update(spec, { "hub-a": true });
 
-    const colorOf = (id: string) => {
-      let r = -1;
-      engine.registered.get(id)!.object.traverse((o) => {
-        if (r >= 0 || !(o instanceof THREE.Mesh)) return;
-        const material = Array.isArray(o.material) ? o.material[0] : o.material;
-        if (hasColor(material)) r = material.color.r;
+    const colorsOf = (engine: StubEngine) => {
+      const out: number[] = [];
+      engine.registered.get("hub-a")!.object.traverse((o) => {
+        if (!(o instanceof THREE.Mesh || o instanceof THREE.Line)) return;
+        const material = o.material as THREE.Material & { color?: THREE.Color };
+        if (!("color" in material) || !material.color) return;
+        out.push(material.color.r);
       });
-      return r;
+      expect(out.length, "coloured materials").toBeGreaterThan(0);
+      return out;
     };
-    const live = spec.stars.find((s) => s.id === "hub-live")!;
-    const dark = spec.stars.find((s) => s.id === "hub-dark")!;
-    expect(colorOf("hub-live")).toBeCloseTo(live.color[0], 5);
-    expect(colorOf("hub-dark")).toBeCloseTo(dark.color[0] * 0.3, 5);
+    const live = colorsOf(online);
+    const dark = colorsOf(offline);
+    expect(dark.length).toBe(live.length);
+    for (let i = 0; i < live.length; i += 1) {
+      expect(dark[i], `material ${i} dimmed`).toBeCloseTo(live[i] * 0.3, 5);
+    }
   });
 });
 
 describe("buildFleetScene body dressing", () => {
-  /** The registered group's centre polyhedron (never a ring or HUD band). */
+  /** The registered group's invisible centre proxy (the pick target). */
   function bodyMesh(engine: StubEngine, id: string): THREE.Mesh {
     const group = engine.registered.get(id)!.object;
-    const mesh = group.getObjectByName("fleet-hologram-polyhedron");
+    const mesh = group.getObjectByName("fleet-hologram-core");
     expect(mesh, `${id} body mesh`).toBeDefined();
     return mesh as THREE.Mesh;
   }
 
-  it("builds coarse polyhedra with role-specific holographic rings", () => {
+  it("builds every body as a disc-shell hologram with no solid sphere left", () => {
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
 
-    expect(bodyMesh(engine, "hub-a").geometry).toBeInstanceOf(THREE.IcosahedronGeometry);
-    expect(bodyMesh(engine, "edge-1").geometry).toBeInstanceOf(THREE.DodecahedronGeometry);
-    for (const [id, ringCount] of [["hub-a", 3], ["edge-1", 2]] as const) {
+    for (const id of ["hub-a", "edge-1", "edge-2"]) {
       const root = engine.registered.get(id)!.object;
-      const rings = root.getObjectsByProperty("name", "fleet-hologram-ring");
-      expect(rings, `${id} holographic ring count`).toHaveLength(ringCount);
-      for (const ring of rings) {
-        expect(ring.getObjectByName("fleet-hologram-ring-base")).toBeDefined();
-        expect(ring.getObjectByName("fleet-hologram-ring-arc")).toBeDefined();
-      }
-      const faceRings = root.getObjectsByProperty("name", "fleet-hologram-face-ring");
-      expect(faceRings, `${id} detached face-ring count`).toHaveLength(
-        id === "hub-a" ? 20 : 12,
-      );
-      for (const faceRing of faceRings) {
-        expect(faceRing).toBeInstanceOf(THREE.LineLoop);
-        expect(faceRing).not.toBeInstanceOf(THREE.LineSegments);
-      }
+      // User direction 2026-10-31: EVERY solid sphere is replaced — no
+      // SphereGeometry anywhere in the scene graph, bodies included.
+      const spheres: THREE.Mesh[] = [];
+      root.traverse((o) => {
+        if (o instanceof THREE.Mesh && o.geometry instanceof THREE.SphereGeometry) {
+          spheres.push(o);
+        }
+      });
+      expect(spheres, `${id} solid spheres`).toHaveLength(0);
+
+      // The two fused structures: six overlapping shell dials and a
+      // fat-centre ring spindle, plus ONE detailed camera-facing dial.
+      // (Scoped to the body's own hologram — its satellite holograms
+      // carry spindles too.)
+      const holograms = root.getObjectsByProperty("name", "fleet-hologram");
+      expect(holograms, `${id} body hologram`).toHaveLength(1);
+      const hologram = holograms[0]!;
       expect(
-        root.getObjectsByProperty("name", "fleet-hologram-polyhedron-edges"),
-        "the shared wireframe cage is gone",
-      ).toHaveLength(0);
+        hologram.getObjectsByProperty("name", "fleet-hologram-disc-shell"),
+        `${id} disc shell`,
+      ).toHaveLength(1);
+      expect(
+        hologram.getObjectsByProperty("name", "fleet-hologram-ring-spindle"),
+        `${id} ring spindle`,
+      ).toHaveLength(1);
+      expect(
+        hologram.getObjectsByProperty("name", "fleet-hologram-front-dial"),
+        `${id} front dial`,
+      ).toHaveLength(1);
+      // The legacy polyhedron and its shared wireframe are gone.
+      expect(root.getObjectsByProperty("name", "fleet-hologram-polyhedron")).toHaveLength(0);
+      expect(root.getObjectsByProperty("name", "fleet-hologram-face-ring")).toHaveLength(0);
     }
+
+    // Main cores are denser than node cores (hub 9 spindle rings and a
+    // 48-tick dial; node 6 and 28) — measured on the body's own hologram,
+    // never its satellites'.
+    const hub = engine.registered.get("hub-a")!.object
+      .getObjectsByProperty("name", "fleet-hologram")[0]!;
+    const node = engine.registered.get("edge-1")!.object
+      .getObjectsByProperty("name", "fleet-hologram")[0]!;
+    const spindleOf = (root: THREE.Object3D) =>
+      root.getObjectsByProperty("name", "fleet-hologram-ring-spindle-circle").length;
+    const ticksOf = (root: THREE.Object3D) => {
+      const ticks = root.getObjectByName("fleet-hologram-face-dial-ticks");
+      return ticks ? (ticks as THREE.LineSegments).geometry.getAttribute("position").count / 2 : 0;
+    };
+    expect(spindleOf(hub)).toBe(9);
+    expect(spindleOf(node)).toBe(6);
+    expect(ticksOf(hub)).toBe(48);
+    expect(ticksOf(node)).toBe(28);
     handle.dispose();
   });
 
@@ -697,15 +724,15 @@ describe("buildFleetScene body dressing", () => {
     expect(mats.length).toBeGreaterThan(0);
     const spies = [...geos, ...mats].map((resource) => vi.spyOn(resource, "dispose"));
 
-    // A refresh rebuilds every body: the previous generation's polyhedron,
-    // rings, band geometry and materials must not survive as GPU garbage.
+    // A refresh rebuilds every body: the previous generation's shells,
+    // dials and materials must not survive as GPU garbage.
     handle.update(spec, {});
     for (const spy of spies) expect(spy).toHaveBeenCalledTimes(1);
     expect(engine.registered.get("edge-1")!.object).not.toBe(retired);
     handle.dispose();
   });
 
-  it("keeps coronas and moons out of recursive picking while the centre stays clickable", () => {
+  it("keeps coronas and satellites out of recursive picking while the centre stays clickable", () => {
     const starEngine = stubEngine();
     const starHandle = buildFleetScene(starEngine, callbacks());
     const starSpec = buildFleetSceneSpec([{ node_id: "hub-a", tier: 3, station_count: 0 }]);
@@ -730,18 +757,16 @@ describe("buildFleetScene body dressing", () => {
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
     const group = engine.registered.get("edge-1")!.object;
-    let moon: THREE.Mesh | null = null;
-    group.traverse((node) => {
-      if (!(node instanceof THREE.Mesh) || !(node.geometry instanceof THREE.SphereGeometry)) return;
-      if (node.geometry.parameters.radius === MOON_RADIUS) moon = node;
-    });
-    expect(moon).not.toBeNull();
-    const at = moon!.getWorldPosition(new THREE.Vector3());
-    const moonRay = new THREE.Raycaster(
+    // Satellites are holograms now (no solid moon mesh): find the first
+    // one and confirm it never joins recursive picking.
+    const satellites = group.getObjectsByProperty("name", "fleet-hologram-satellite");
+    expect(satellites.length).toBeGreaterThan(0);
+    const at = satellites[0]!.getWorldPosition(new THREE.Vector3());
+    const satelliteRay = new THREE.Raycaster(
       at.clone().add(new THREE.Vector3(0, 0, 10)),
       new THREE.Vector3(0, 0, -1),
     );
-    expect(moonRay.intersectObject(group, true)).toHaveLength(0);
+    expect(satelliteRay.intersectObject(group, true)).toHaveLength(0);
     handle.dispose();
   });
 
@@ -764,7 +789,7 @@ describe("buildFleetScene body dressing", () => {
     handle.dispose();
   });
 
-  it("dims a gateway's moons with the gateway itself", () => {
+  it("dims a gateway's satellite holograms with the gateway itself", () => {
     const online = stubEngine();
     buildFleetScene(online, callbacks()).update(buildFleetSceneSpec(ROWS), {});
     const offline = stubEngine();
@@ -776,45 +801,63 @@ describe("buildFleetScene body dressing", () => {
       "edge-1": true,
     });
 
-    /** Every body- and moon-mesh colour under a registered group. */
+    /** Every body- and satellite-material colour under a group (the
+     *  holograms are lines and planes now — Mesh AND Line both carry a
+     *  colour). */
     const colors = (engine: StubEngine, id: string) => {
       const out: number[] = [];
       engine.registered.get(id)!.object.traverse((o) => {
-        const mesh = o as THREE.Mesh;
-        if (mesh.isMesh && mesh.material) {
-          out.push((mesh.material as THREE.MeshStandardMaterial).color.r);
-        }
+        if (!(o instanceof THREE.Mesh || o instanceof THREE.Line)) return;
+        const material = o.material as THREE.Material & { color?: THREE.Color };
+        if (!("color" in material) || !material.color) return;
+        out.push(material.color.r);
       });
       return out;
     };
     for (const id of ["hub-a", "edge-1"]) {
       const live = colors(online, id);
       const dark = colors(offline, id);
-      expect(live.length, `${id} body + moons`).toBeGreaterThan(1);
+      expect(live.length, `${id} body + satellites`).toBeGreaterThan(1);
+      expect(dark.length, `${id} dark structure mirrors live`).toBe(live.length);
       for (let i = 0; i < live.length; i += 1) {
-        expect(dark[i], `${id} body/moon ${i} dimmed`).toBeCloseTo(live[i] * 0.3, 5);
+        expect(dark[i], `${id} body/satellite ${i} dimmed`).toBeCloseTo(live[i] * 0.3, 5);
       }
     }
   });
 
-  it("pins the board's cube cursor on the selected body — and nothing else", () => {
+  it("marks the selection with the scene's circular ring, never a corner frame", () => {
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
 
-    // The selection mark is the BOARD's persistent cube cursor, addressed
-    // by id — the builder's whole story is the ids it hands over: select,
-    // re-select, clear.
-    handle.setSelected("edge-1");
-    expect(engine.selections).toEqual(["edge-1"]);
-    handle.setSelected("hub-a");
-    expect(engine.selections.at(-1)).toBe("hub-a");
-    handle.setSelected(null);
-    expect(engine.selections.at(-1)).toBe(null);
+    const ringOf = (id: string) =>
+      engine.registered.get(id)!.object.getObjectByName("fleet-hologram-selection-ring");
+    for (const id of ROWS.map((r) => r.node_id)) {
+      expect(ringOf(id), `${id} focus ring`).toBeTruthy();
+      expect(ringOf(id)!.visible).toBe(false);
+    }
 
-    // No scene-owned mark of any kind: the ring is GONE. Every MESH the
-    // builder put in the scene lives under a registered body; the only
-    // scene-root children it owns are the two lights and the orbit lines.
+    // The board's cube cursor is suppressed for these bodies: the whole
+    // story is the per-body circular ring plus `setSelection(null)`.
+    handle.setSelected("edge-1");
+    expect(engine.selections.at(-1)).toBe(null);
+    expect(ringOf("edge-1")!.visible).toBe(true);
+    expect(ringOf("hub-a")!.visible).toBe(false);
+    handle.setSelected("hub-a");
+    expect(ringOf("edge-1")!.visible).toBe(false);
+    expect(ringOf("hub-a")!.visible).toBe(true);
+    handle.setSelected(null);
+    expect(ringOf("hub-a")!.visible).toBe(false);
+
+    // The mark survives a rebuild: the view re-plays setSelected after
+    // every update, so the new generation must be able to show it too.
+    handle.setSelected("edge-1");
+    handle.update(buildFleetSceneSpec(ROWS), {});
+    handle.setSelected("edge-1");
+    expect(ringOf("edge-1")!.visible).toBe(true);
+
+    // Every MESH the builder put in the scene lives under a registered
+    // body; the only scene-root children it owns are the orbit lines.
     const roots = new Set([...engine.registered.values()].map((d) => d.object));
     for (const child of engine.scene.children) {
       if ((child as THREE.Light).isLight || !(child as THREE.Mesh).isMesh) continue;
@@ -824,21 +867,20 @@ describe("buildFleetScene body dressing", () => {
     }
 
     handle.dispose();
-    // Dispose never leaves the cursor pinned on a dead scene.
+    // Dispose never leaves a mark pinned on a dead scene.
     expect(engine.selections.at(-1)).toBe(null);
   });
 
-  it("hands the hover frame the body mesh, never the whole system", () => {
+  it("opts every body out of the board's corner frames", () => {
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
 
-    // A hub's own subtree carries a corona sprite; a gateway's carries its
-    // moon pivots. The frame measures `frameObject`, so it must be the
-    // body mesh in both cases.
+    // Straight-edged brackets — hover AND selection — fight the ring
+    // silhouette, so the scene draws its own circular marks instead
+    // (user direction 2026-10-31).
     for (const id of ["hub-a", "edge-1"]) {
-      const def = engine.registered.get(id)!;
-      expect(def.frameObject, `${id} frame target`).toBe(bodyMesh(engine, id));
+      expect(engine.registered.get(id)!.frameObject, `${id} frame opt-out`).toBeNull();
     }
     handle.dispose();
   });
@@ -944,29 +986,36 @@ describe("buildFleetScene framing", () => {
     handle.dispose();
   });
 
-  it("builds its moons at the radius the enclosure measures", () => {
+  it("builds its satellites at the radius the enclosure measures", () => {
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     const spec = buildFleetSceneSpec(ROWS);
     handle.update(spec, {});
 
-    // One constant, two consumers: the drawn sphere and `bodyReach`. Two
-    // literals would let the enclosure under-measure what it frames.
-    const withMoons = spec.planets.find((p) => p.satellites > 0)!;
-    const group = engine.registered.get(withMoons.id)!.object;
-    const moons: THREE.Mesh[] = [];
-    group.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (mesh.isMesh && mesh.geometry?.type === "SphereGeometry") {
-        const params = (mesh.geometry as THREE.SphereGeometry).parameters;
-        if (params.radius === MOON_RADIUS) moons.push(mesh);
-      }
-    });
-    expect(moons.length).toBe(withMoons.satellites);
-    // …and the reach really accounts for them: the outermost moon's orbit
-    // plus its own radius is what the enclosure has to cover.
-    const outer = satelliteOrbit(withMoons.radius, withMoons.satellites - 1);
-    expect(bodyReach(withMoons)).toBeGreaterThanOrEqual(outer.radius + MOON_RADIUS);
+    // One constant, two consumers: the drawn satellite hologram and
+    // `bodyReach`. Two literals would let the enclosure under-measure
+    // what it frames.
+    const withSatellites = spec.planets.find((p) => p.satellites > 0)!;
+    const group = engine.registered.get(withSatellites.id)!.object;
+    const satellites = group.getObjectsByProperty("name", "fleet-hologram-satellite");
+    expect(satellites.length).toBe(withSatellites.satellites);
+    // Each miniature hologram sits on its pivot at the orbit radius the
+    // spec measures — and its own extent stays within the MOON_RADIUS
+    // constant. Precise mode: the default grows a flat disc's box by √2
+    // when its bounding-box corners pass through a 45° rotation.
+    group.updateMatrixWorld(true);
+    for (const satellite of satellites) {
+      const box = new THREE.Box3().setFromObject(satellite, true);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const at = satellite.getWorldPosition(new THREE.Vector3());
+      expect(center.distanceTo(at)).toBeLessThanOrEqual(1e-4);
+      expect(size.length() / 2).toBeLessThanOrEqual(MOON_RADIUS * Math.sqrt(3) + 1e-9);
+    }
+    // …and the reach really accounts for them: the outermost satellite's
+    // orbit plus its own radius is what the enclosure has to cover.
+    const outer = satelliteOrbit(withSatellites.radius, withSatellites.satellites - 1);
+    expect(bodyReach(withSatellites)).toBeGreaterThanOrEqual(outer.radius + MOON_RADIUS);
     handle.dispose();
   });
 

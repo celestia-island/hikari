@@ -155,11 +155,12 @@ export default defineComponent({
     // dissolve), which is where the position is read from — an event-only
     // save would miss programmatic scrolls (no `scroll` event fires for
     // them), so the read happens on the ref hand-off itself and the
-    // onScroll below merely keeps the value fresh between flips. Raw
-    // scrollTop is an approximation across dresses (rail rows and full
-    // rows have different heights) — an exact restore would need an
-    // item-keyed anchor, not worth it for a nav list; the browser clamps
-    // any overshoot.
+    // onScroll below merely keeps the value fresh between flips. For
+    // library-owned rows the raw restore is EXACT since the vertical
+    // rhythm became density-invariant (2026-10-31: both dresses render
+    // the same band paddings and row heights, so y offsets match); the
+    // browser clamps any overshoot a host's density-dependent content
+    // could still produce.
     const savedScrollTop = ref(0);
     const onBodyScroll = (e: Event): void => {
       savedScrollTop.value = (e.currentTarget as HTMLElement).scrollTop;

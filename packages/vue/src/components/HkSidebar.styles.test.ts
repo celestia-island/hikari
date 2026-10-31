@@ -74,16 +74,26 @@ describe("HkSidebar scroll end-cap", () => {
     expect(body).not.toMatch(/padding-block:[^;]*--space-4/);
   });
 
-  it("keeps the same tail on the collapsed body", () => {
-    // The density dress is keyed off EITHER carrier — the legacy root's
-    // [data-collapsed] or the rail swap generation's [data-rail] (the
-    // generation attr freezes on the leaving copy for the dissolve, a
-    // root attr cannot). ruleBody needs the arm its brace follows, so the
-    // legacy arm is asserted as text and the body read from the group.
-    expect(css).toContain(".hk-sidebar[data-collapsed] .hk-sidebar-body");
-    const body = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-body");
-    expect(body, "the collapsed body rule exists (grouped density carriers)").not.toBeNull();
-    expect(body).toContain("padding-block: var(--space-12) var(--hk-sidebar-scroll-tail)");
+  it("the density dress authors NO vertical geometry of its own", () => {
+    // Vertical rhythm is density-invariant (2026-10-31 user direction:
+    // the collapse toggle must not move rows). The body therefore has no
+    // density rule AT ALL — the leading air AND the scroll tail ride the
+    // single base rule in both densities — and the header/footer dress
+    // rules keep the expanded BLOCK padding, narrowing only the inline
+    // track for the rail column.
+    expect(css).not.toContain(".hk-sidebar[data-collapsed] .hk-sidebar-body");
+    expect(css).not.toContain(".hk-sidebar-rail-generation[data-rail] .hk-sidebar-body");
+    // ruleBody needs the arm its brace follows; the dress compiles to one
+    // comma-grouped rule per band, so the generation arm is the one the
+    // helper can read (the legacy arm shares its body).
+    const header = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-header");
+    expect(header, "the collapsed header rule exists (grouped density carriers)").not.toBeNull();
+    expect(header).toContain("padding: var(--space-16) var(--space-8)");
+    const footer = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-footer");
+    expect(footer, "the collapsed footer rule exists (grouped density carriers)").not.toBeNull();
+    expect(footer).toContain("padding: var(--space-16) var(--space-8)");
+    // No spelling of a tighter collapsed block padding may return.
+    expect(css).not.toMatch(/\.hk-sidebar-(header|footer)[^{]*\{[^}]*padding:\s*var\(--space-12/);
   });
 
   it("reads the tail fallback from the scss source, not a drifted literal", () => {

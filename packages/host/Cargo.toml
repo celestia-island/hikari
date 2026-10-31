@@ -1,0 +1,42 @@
+# AI-generated: developed with the DeepSeek Harness agent (model DeepSeek V4.1 Flash); human-directed.
+[package]
+name = "hikari-host"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license-file.workspace = true
+repository.workspace = true
+description = "Shell-lifecycle guards for hikari hosts: the close-request ack/force-close state machine"
+keywords = ["tauri", "desktop", "webview", "shutdown", "lifecycle"]
+categories = ["gui"]
+
+[lib]
+doctest = true
+
+[dependencies]
+# Empty by design: the guard state machine is the portable half of the crate
+# and must stay dependency-free (it has to compile for every target, including
+# the wasm32 workspace checks).
+
+[features]
+# Optional Tauri 2 adapter: the "hikari-host" TauriPlugin (which owns the
+# plugin:hikari-host|ack_close IPC command) plus the close-request helper a
+# host forwards its own window events into.
+tauri = ["dep:tauri"]
+
+# Target-gated dependency: a host's Tauri runtime is native-only. Keeping both
+# the dependency and the optional feature out of WebAssembly builds is what
+# keeps the workspace's `cargo clippy/check --all-features --target
+# wasm32-wasip2` gates green. default-features = false because the adapter
+# needs only the runtime-agnostic core (plugin/app/event/window types): the
+# default `wry` feature would drag GTK/WebKit dev packages onto every Linux
+# CI job that runs --all-features, while a real host's own tauri dependency
+# re-enables its backend through feature unification.
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tauri = { version = "2", default-features = false, optional = true }
+
+# Tests only, and native-only: tauri::test::MockRuntime stands in for a real
+# backend so the adapter's config/label tests never need Wry (keeping the
+# dev graph as slim as the runtime one — no GTK/WebKit anywhere).
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
+tauri = { version = "2", default-features = false, features = ["test"] }

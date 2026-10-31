@@ -8,6 +8,10 @@
   gap: var(--space-10, 10px);
   width: 100%;
   padding: var(--space-8, 8px) var(--space-12, 12px);
+  /* The 1px transparent border is RESERVED, not decorative: the
+     HkMenuActionItem rows beside this block draw their content edge at
+     1px + pad-x, so an unreserved block sat 1px left of them. */
+  border: 1px solid transparent;
   border-radius: var(--radius-sm, 4px);
   min-width: 0;
 }

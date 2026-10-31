@@ -242,6 +242,11 @@ export default defineComponent({
                   key={user.uid}
                   type="button"
                   class={{ "hk-user-picker-row": true, "is-selected": props.mode === "multi" && inDraft(user.uid) }}
+                  // Grammar face attribute (_menu-item.scss): mi.item's
+                  // checked face and its hover guard key on data-checked —
+                  // emitted beside the legacy .is-selected class so the
+                  // picked row's face survives hover.
+                  data-checked={props.mode === "multi" && inDraft(user.uid) || undefined}
                   onClick={() => pickRow(user)}
                 >
                   <span class="hk-user-picker-row-main">

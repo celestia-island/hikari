@@ -146,7 +146,13 @@
   .hk-breadcrumb-dropdown-item,
   .hk-menu-divider,
   .hk-tag-dot-row,
-  .hk-tag-dot {
+  .hk-tag-dot,
+  /* Catalog chooser rows (2026-10-31 grammar-adoption wave): each used to
+   * carry a hand-rolled 36px/4×8 stock and sat, unregistered, inside a
+   * sheet that widened every family around it. */
+  .hk-affix-row,
+  .hk-tag-input-row,
+  .hk-tpl-row {
     @include item-sheet-tokens;
   }
 
@@ -165,15 +171,26 @@
 @media (max-width: 767px) {
   .hk-modal-content {
     .hk-menu-row,
+    .hk-menu-sidebar-row,
     .hk-menu-action-item,
     .hk-select-option,
+    .hk-popup-select-item,
+    .hk-filter-add-item,
+    .hk-breadcrumb-dropdown-item,
     .s-theme-item-row,
     .s-theme-item-btn,
     .s-popup-menu-item,
     .hk-popup-menu-item,
     .hk-menu-divider,
     .hk-tag-dot-row,
-    .hk-tag-dot {
+    .hk-tag-dot,
+    /* Catalog chooser rows (see the panel list above) — the user picker's
+     * rows are modal-hosted, so they ride THIS list; the popover-hosted
+     * choosers ride the panel list. */
+    .hk-affix-row,
+    .hk-tag-input-row,
+    .hk-tpl-row,
+    .hk-user-picker-row {
       @include item-sheet-tokens;
     }
 

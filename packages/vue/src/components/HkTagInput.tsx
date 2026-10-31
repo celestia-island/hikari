@@ -1053,6 +1053,12 @@ export const HkTagInput = defineComponent({
                             aria-selected={selected}
                             aria-disabled={inert || undefined}
                             data-selected={selected || undefined}
+                            /* Grammar face attribute (_menu-item.scss):
+                             * mi.item's checked face AND its hover guard
+                             * key on data-checked — emitting it beside the
+                             * legacy data-selected keeps the selected row's
+                             * face from being flipped by the hover rule. */
+                            data-checked={selected || undefined}
                             data-disabled={inert || undefined}
                             data-active={activeId === stop.id || undefined}
                             data-reorder={reorderable ? "true" : undefined}

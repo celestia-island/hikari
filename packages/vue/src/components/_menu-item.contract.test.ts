@@ -32,6 +32,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const grammar = readFileSync(join(here, "_menu-item.scss"), "utf-8");
 const menuTsx = readFileSync(join(here, "HkMenu.tsx"), "utf-8");
 const menuScss = readFileSync(join(here, "HkMenu.scss"), "utf-8");
+const affixScss = readFileSync(join(here, "HkAffixPicker.scss"), "utf-8");
+const tagInputScss = readFileSync(join(here, "HkTagInput.scss"), "utf-8");
+const tplScss = readFileSync(join(here, "HkTemplateField.scss"), "utf-8");
 const themeTsx = readFileSync(join(here, "HkThemePanelContent.tsx"), "utf8");
 const adminTokens = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
 const panelScss = readFileSync(join(here, "HkMenuPanel.scss"), "utf-8");
@@ -709,6 +712,69 @@ describe("menu-item grammar contract", () => {
         band,
         `the ${kind} band must stay a bare DOM hook with no rule of its own (its rhythm is owned elsewhere by design)`,
       ).toBeUndefined();
+    }
+  });
+
+  it("keeps the modal list in parity with the panel sheet list (plus modal-hosted rows)", () => {
+    // The 2026-10-31 audit found the ≤767px .hk-modal-content list four
+    // classes behind the three-surface list — a row family registered in
+    // one but not the other keeps desktop geometry on whichever surface
+    // the audit missed, and nothing failed. The modal list must ALWAYS
+    // be a superset of the panel list (modal-hosted rows like
+    // .hk-user-picker-row add on top); a registration added to one list
+    // without the other fails here.
+    const grammarBlocks = flattenBlocks(parseScss(stripScssComments(grammar)));
+    const swapBlocks = grammarBlocks.filter((block) =>
+      block.statements.some((stmt) => stmt.includes("@include item-sheet-tokens")),
+    );
+    const rowsOf = (block: ScssBlock): string[] =>
+      block.prelude
+        .split(",")
+        .map((sel) => sel.trim())
+        .filter((sel) => sel.startsWith("."));
+    const lists = swapBlocks.map(rowsOf).filter((rows) => rows.length > 2);
+    // Extraction sanity: both shipped lists are found (the panel list and
+    // the modal list are the only >2-selector token-swap preludes).
+    expect(lists.length, "two registration lists found").toBe(2);
+    const missing = lists[0]!.filter((row) => !lists[1]!.includes(row));
+    expect(
+      missing,
+      "every row class registered in the panel sheet list must also be registered in the modal list",
+    ).toEqual([]);
+  });
+
+  it("keeps the catalog chooser bands block-axis-only (no second inline inset)", () => {
+    // The catalog list bands (affix / tag-input / tpl vocabulary) used to
+    // pad themselves 2-6px INLINE on top of the surface's own inset — the
+    // WIDTH-invariant anti-pattern one component family at a time. Each
+    // band may declare BLOCK-axis rhythm only: a padding shorthand or a
+    // padding-inline here re-stacks the second inset.
+    const sources: Array<[string, string]> = [
+      [".hk-affix-list", affixScss],
+      [".hk-tag-input-list", tagInputScss],
+      [".hk-tpl-rows", tplScss],
+      [".hk-tpl-editor-rows", tplScss],
+    ];
+    for (const [selector, sheet] of sources) {
+      // The tpl band shares ONE prelude with its sibling
+      // (`.hk-tpl-rows, .hk-tpl-editor-rows`), so match on the selector
+      // LIST, not on a prefix.
+      const block = flattenBlocks(parseScss(stripScssComments(sheet))).find(
+        (candidate) =>
+          candidate.prelude
+            .trim()
+            .split(",")
+            .map((sel) => sel.trim())
+            .includes(selector),
+      );
+      expect(block, `${selector} rule exists`).toBeTruthy();
+      const offenders = block!.statements
+        .map((stmt) => stmt.replace(/\s+/g, " ").trim())
+        .filter((stmt) => /^padding\s*:/.test(stmt) || /^padding-inline/.test(stmt));
+      expect(
+        offenders,
+        `${selector} pads the block axis only (no shorthand, no padding-inline) — an inline term is a second horizontal inset on top of the surface's own`,
+      ).toEqual([]);
     }
   });
 });

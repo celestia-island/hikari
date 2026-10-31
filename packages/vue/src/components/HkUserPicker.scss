@@ -2,6 +2,8 @@
 // dialog pair. Tokens follow the house scale (--space-*, --radius-*,
 // rgb(var(--color-*)) — the HkKeywordSearchModal.scss conventions).
 
+@use "./menu-item" as mi;
+
 .hk-user-picker {
   display: flex;
   flex-direction: column;
@@ -125,26 +127,17 @@
 }
 
 .hk-user-picker-row {
-  display: flex;
-  align-items: center;
+  /* Unified menu-item spec (_menu-item.scss): metrics, reserved border,
+   * guarded hover, checked face, focus ring; the sheet reach comes from
+   * the modal registration list (this picker lives in an HkModal, whose
+   * docked phone sheet is the .hk-modal-content media block). The tsx
+   * emits the grammar's `data-checked` for the multi-mode draft pick
+   * beside the legacy `.is-selected` class (tests/hosts key on it). */
+  @include mi.item;
+  /* The picker's row carries trailing state controls, so the content
+   * spreads edge-to-edge instead of hugging the start. */
   justify-content: space-between;
-  gap: var(--space-8, 0.5rem);
-  width: 100%;
-  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md, 0.5rem);
   text-align: left;
-  cursor: pointer;
-
-  &:hover {
-    background: rgb(var(--color-text) / 6%);
-  }
-
-  &.is-selected {
-    background: rgb(var(--color-primary) / 12%);
-    border-color: rgb(var(--color-primary) / 25%);
-  }
 }
 
 .hk-user-picker-row-main {

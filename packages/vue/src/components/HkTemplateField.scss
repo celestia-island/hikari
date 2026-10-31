@@ -173,7 +173,13 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--space-4, 4px);
+  /* GEOMETRY-NEUTRAL band (menu-item WIDTH invariant): the level's gap
+   * owns the rhythm and the hosting surface's inset is the one
+   * horizontal inset these rows get — the old 4px all-sides pad was the
+   * exact "band that pads itself" anti-pattern (a foot/head row in this
+   * level would have landed 8px offset from these rows). Flex stays:
+   * display is layout, not inset. */
+  padding-block: var(--space-4, 4px);
 }
 
 // The group is a role="group" WRAPPER carrying the accessible name in
@@ -211,21 +217,25 @@
 }
 
 .hk-tpl-row {
-  display: flex;
+  /* Unified menu-item spec (_menu-item.scss): metrics, reserved border,
+   * guarded hover, focus ring, sheet tokens via the shared registration
+   * list (this row renders in TWO sheet contexts — the vocabulary
+   * HkMenu sheet and the chip editor's sheetOnMobile popover). The
+   * stacked two-line shape restates the flex axis after the include. */
+  @include mi.item;
   flex-direction: column;
   align-items: flex-start;
   gap: 1px;
-  padding: var(--space-4, 4px) var(--space-8, 8px);
-  border: none;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
   color: var(--hi-color-text-primary);
-  text-align: start;
-  cursor: pointer;
 
-  &:hover,
+  /* `data-active` is this family's aria-activedescendant keyboard cursor
+   * (the grammar's HIGHLIGHT role, not its selected face — mi.item's
+   * hover guard already excludes data-active rows), restated after the
+   * include at hover-face values. */
   &[data-active] {
-    background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
+    background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+    border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
+    color: rgb(var(--color-text));
   }
 }
 

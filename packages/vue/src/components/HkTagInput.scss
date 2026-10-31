@@ -8,6 +8,7 @@
  * stretching the panel). Chips and selected rows are reorderable; the
  * drag states (`data-dragging` / `data-drop`) live at the bottom. */
 
+@use "./menu-item" as mi;
 @use "../styles/polyfill" as *;
 
 .hk-tag-input-wrapper {
@@ -231,54 +232,29 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: var(--space-4, 4px) var(--space-6, 6px) var(--space-8, 8px);
+  /* GEOMETRY-NEUTRAL band (menu-item WIDTH invariant): block-axis rhythm
+   * only — the hosting panel's inset is the one horizontal inset these
+   * rows get (the old 6px inline term stacked a second inset). */
+  padding-block: var(--space-4, 4px) var(--space-8, 8px);
 }
 
 .hk-tag-input-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8, 8px);
-  width: 100%;
-  min-height: 2.25rem;
-  padding: var(--space-4, 4px) var(--space-8, 8px);
-  border-radius: var(--radius-sm);
-  color: rgb(var(--color-text));
-  font-size: var(--text-sm);
-  text-align: start;
-  cursor: pointer;
-  transition: background 0.1s ease;
+  /* Unified menu-item spec (_menu-item.scss): one row grammar with the
+   * select options and menu rows around it — metrics, reserved border,
+   * guarded hover, checked face, focus ring; the sheet reach comes from
+   * the shared registration list. The tsx emits the grammar's
+   * `data-checked` for the selected face (so mi.item's hover guard
+   * protects it) ALONGSIDE this family's legacy `data-selected`
+   * (tests/hosts key on it). `data-active` is the field's
+   * aria-activedescendant keyboard cursor (focus itself stays in the
+   * field) — the grammar's HIGHLIGHT role, restated here because
+   * mi.item carries no cursor face; mi.item's hover guard already
+   * excludes data-active rows. */
+  @include mi.item;
 
-  &:hover,
-  &:focus-visible {
-    background: rgb(var(--color-primary) / 10%);
-    outline: none;
-  }
-
-  /* Selected = the tag is in use; the check glyph carries the state and
-   * the row stays clickable so it can be toggled back off. */
-  &[data-selected] {
-    font-weight: 600;
-
-    &:hover {
-      background: rgb(var(--color-primary) / 16%);
-    }
-  }
-
-  /* Keyboard cursor (`aria-activedescendant`): the field's own focus-ring
-   * language, inset so the highlight never shifts the row's metrics and
-   * never clips at the list edge. Focus itself stays in the field. */
   &[data-active] {
-    background: rgb(var(--color-primary) / 12%);
+    background: rgb(var(--color-primary) / 8%);
     box-shadow: inset 0 0 0 1px rgb(var(--color-focused-border));
-  }
-
-  &[data-disabled] {
-    opacity: 0.5;
-    cursor: default;
-
-    &:hover {
-      background: transparent;
-    }
   }
 
   /* The "Use “<query>”" free-text row reads as an add affordance. */

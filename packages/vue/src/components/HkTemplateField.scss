@@ -230,12 +230,16 @@
 
   /* `data-active` is this family's aria-activedescendant keyboard cursor
    * (the grammar's HIGHLIGHT role, not its selected face — mi.item's
-   * hover guard already excludes data-active rows), restated after the
-   * include at hover-face values. */
+   * hover guard already excludes data-active rows). mi.item has no
+   * cursor face and its SELECTED face would bleed through a partial
+   * restatement, so this face restates the full set at the grammar's
+   * hover values — INCLUDING the weight back to the row's resting 500
+   * (the selected face's 600 otherwise lands on the cursor row). */
   &[data-active] {
     background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
     border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
     color: rgb(var(--color-text));
+    font-weight: var(--hk-menu-item-weight);
   }
 }
 

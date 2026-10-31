@@ -213,7 +213,38 @@ describe("HkTitleBar stylesheet contract", () => {
   it("keeps the windowed radius var wired to the close button", () => {
     const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
     expect(scss).toContain("--hk-tb-radius-close:");
-    const body = ruleBody(css, ".hk-titlebar-btn-close");
+    const body = ruleBody(css, ".hk-titlebar .hk-titlebar-btn-close");
     expect(body).toContain("border-radius: var(--hk-tb-radius-close)");
+  });
+
+  it("inks the close fill from its own token, never the theme's on-solid", () => {
+    // The fill is a fixed danger red; the ink must be fixed with it. The
+    // theme-derived --hi-color-text-on-danger painted a dark X on dark red
+    // under the default dark preset (the wowsp/momoi field report).
+    const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
+    expect(scss).toContain("--hk-tb-close-ink:");
+    const hover = ruleBody(css, ".hk-titlebar .hk-titlebar-btn-close:hover");
+    expect(hover).toContain("color: var(--hk-tb-close-ink)");
+    expect(hover).not.toContain("--hi-color-text-on-danger");
+    const active = ruleBody(css, ".hk-titlebar .hk-titlebar-btn-close:active");
+    expect(active).toContain("color: var(--hk-tb-close-ink)");
+  });
+
+  it("outranks host element rules with caption-scoped buttons", () => {
+    // (0,3,0) beats a host's `button:hover:not(:disabled)` at (0,2,1);
+    // the close-specific rules stay later in the sheet, so they still win.
+    const hover = ruleBody(css, ".hk-titlebar .hk-titlebar-btn:hover");
+    expect(hover).toContain("background: var(--hk-tb-hover)");
+    const closeHoverAt = css.indexOf(".hk-titlebar .hk-titlebar-btn-close:hover");
+    const hoverAt = css.indexOf(".hk-titlebar .hk-titlebar-btn:hover");
+    expect(closeHoverAt).toBeGreaterThan(hoverAt);
+  });
+
+  it("sizes the caption icon through its token", () => {
+    const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
+    expect(scss).toContain("--hk-tb-icon-size:");
+    const body = ruleBody(css, ".hk-titlebar-icon");
+    expect(body).toContain("width: var(--hk-tb-icon-size)");
+    expect(body).toContain("height: var(--hk-tb-icon-size)");
   });
 });

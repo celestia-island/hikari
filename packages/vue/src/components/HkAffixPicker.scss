@@ -4,6 +4,8 @@
  * their own class on top via chipClass), while the popup — search,
  * selected tags, option rows, custom row — is fully standardized here. */
 
+@use "./menu-item" as mi;
+
 /* ── chip base ────────────────────────────────────────────────────────
  * Neutral clickable chip; hosts override visually via their own class
  * (HkPhoneInput's dial chip, HkLocalizedInput's badge chip, …). */
@@ -232,55 +234,25 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: var(--space-4, 4px) var(--space-6, 6px) var(--space-8, 8px);
+  /* GEOMETRY-NEUTRAL band (menu-item WIDTH invariant): block-axis rhythm
+   * only, NO inline term — the hosting panel's inset (popout 8px / sheet
+   * 16px) is the one horizontal inset these rows get. The old 6px inline
+   * term stacked a second inset and pulled the rows' wash 6px inside
+   * every sibling family's in the same sheet. */
+  padding-block: var(--space-4, 4px) var(--space-8, 8px);
 }
 
 .hk-affix-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8, 8px);
-  width: 100%;
-  min-height: 2.25rem;
-  padding: var(--space-4, 4px) var(--space-8, 8px);
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  background: transparent;
-  color: rgb(var(--color-text));
-  font-size: var(--text-sm, 0.8125rem);
-  text-align: start;
-  cursor: pointer;
-  appearance: none;
-  transition: background 0.1s ease;
-
-  &:hover {
-    background: rgb(var(--color-primary) / 10%);
-    outline: none;
-  }
-
-  /* Keyboard position is drawn INSIDE the row (HkSelectionGrid branch-fix
-   * pattern) and distinct from the hover tint, so overlapping popup/sheet
-   * chrome cannot shave a per-side outer ring and focus reads as focus. */
-  &:focus-visible {
-    background: rgb(var(--color-primary) / 10%);
-    outline: 2px solid rgb(var(--color-primary));
-    outline-offset: -2px;
-  }
-
-  &[data-active] {
-    background: rgb(var(--color-primary) / 16%);
-    font-weight: 600;
-  }
+  /* Unified menu-item spec (_menu-item.scss): one row grammar with the
+   * select options and menu rows around it — metrics (34px / 6×12,
+   * 44px / 10×16 inside sheets via the shared registration list),
+   * reserved 1px border, guarded hover, primary wash + strong border on
+   * [data-active], disabled dim, 2px inset focus ring. The sheet reach
+   * comes from the registration list, not from here. */
+  @include mi.item;
 
   &[data-disabled] {
-    opacity: 0.5;
     cursor: default;
-
-    /* The button stays keyboard-focusable (data-disabled only), so the
-     * unpickable row must not paint the pickable tint on focus either. */
-    &:hover,
-    &:focus-visible {
-      background: transparent;
-    }
   }
 
   /* The "Use <query>" free-text row reads as an add affordance. Truncation

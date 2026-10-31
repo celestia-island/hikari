@@ -862,6 +862,15 @@
   padding-inline: calc(1px + var(--hk-menu-item-pad-x, 16px));
 }
 
+/* Drawer-hosted blocks ride the drawer's sheet tokens too (the
+   .hk-drawer-panel context is one of the grammar's three sheet lists),
+   so the drawer twin carries the SHEET pad-x — a drawer identity block
+   without it kept the bare 14px while the drawer rows around it rode
+   1px + 16px, a 2-3px text-edge drift. */
+.hk-drawer-panel .s-user-header {
+  padding-inline: calc(1px + var(--hk-menu-item-pad-x, 16px));
+}
+
 /* Profile variant — avatar chip beside the identity column, the ONE
    identity grammar the chat frontend's user menu and the admin
    header's dropdown share (moved up from chest's ChatLayout so both

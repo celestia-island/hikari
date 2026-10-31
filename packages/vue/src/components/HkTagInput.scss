@@ -8,6 +8,7 @@
  * stretching the panel). Chips and selected rows are reorderable; the
  * drag states (`data-dragging` / `data-drop`) live at the bottom. */
 
+@use "./menu-item" as mi;
 @use "../styles/polyfill" as *;
 
 .hk-tag-input-wrapper {
@@ -231,54 +232,39 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: var(--space-4, 4px) var(--space-6, 6px) var(--space-8, 8px);
+  /* GEOMETRY-NEUTRAL band (menu-item WIDTH invariant): block-axis rhythm
+   * only — the hosting panel's inset is the one horizontal inset these
+   * rows get (the old 6px inline term stacked a second inset). */
+  padding-block: var(--space-4, 4px) var(--space-8, 8px);
 }
 
 .hk-tag-input-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8, 8px);
-  width: 100%;
-  min-height: 2.25rem;
-  padding: var(--space-4, 4px) var(--space-8, 8px);
-  border-radius: var(--radius-sm);
-  color: rgb(var(--color-text));
-  font-size: var(--text-sm);
-  text-align: start;
-  cursor: pointer;
-  transition: background 0.1s ease;
+  /* Unified menu-item spec (_menu-item.scss): one row grammar with the
+   * select options and menu rows around it — metrics, reserved border,
+   * guarded hover, checked face, focus ring; the sheet reach comes from
+   * the shared registration list. The tsx emits the grammar's
+   * `data-checked` for the selected face (so mi.item's hover guard
+   * protects it) ALONGSIDE this family's legacy `data-selected`
+   * (tests/hosts key on it). `data-active` is the field's
+   * aria-activedescendant keyboard cursor (focus itself stays in the
+   * field) — mi.item has no HIGHLIGHT face, and its SELECTED face
+   * would bleed through a partial restatement, so the cursor face is
+   * restated in full below; mi.item's hover guard already excludes
+   * data-active rows. */
+  @include mi.item;
 
-  &:hover,
-  &:focus-visible {
-    background: rgb(var(--color-primary) / 10%);
-    outline: none;
-  }
-
-  /* Selected = the tag is in use; the check glyph carries the state and
-   * the row stays clickable so it can be toggled back off. */
-  &[data-selected] {
-    font-weight: 600;
-
-    &:hover {
-      background: rgb(var(--color-primary) / 16%);
-    }
-  }
-
-  /* Keyboard cursor (`aria-activedescendant`): the field's own focus-ring
-   * language, inset so the highlight never shifts the row's metrics and
-   * never clips at the list edge. Focus itself stays in the field. */
+  /* [data-active] is the field's aria-activedescendant keyboard cursor —
+     the grammar's HIGHLIGHT role. mi.item has no cursor face, but its
+     [data-active]/[data-checked] SELECTED face would bleed through a
+     partial restatement, so the cursor face restates the full set back
+     to the row's resting values: wash + inset ring only, reserved
+     border transparent, normal text color and weight. */
   &[data-active] {
-    background: rgb(var(--color-primary) / 12%);
+    background: rgb(var(--color-primary) / 8%);
+    border-color: transparent;
+    color: rgb(var(--color-text) / 88%);
+    font-weight: var(--hk-menu-item-weight);
     box-shadow: inset 0 0 0 1px rgb(var(--color-focused-border));
-  }
-
-  &[data-disabled] {
-    opacity: 0.5;
-    cursor: default;
-
-    &:hover {
-      background: transparent;
-    }
   }
 
   /* The "Use “<query>”" free-text row reads as an add affordance. */
@@ -393,13 +379,17 @@
   align-items: center;
   justify-content: center;
   flex: none;
-  /* The largest target the row rhythm allows: the row's content box is the
-     2.25rem row minus its 4px block padding, so the handle grows to that
-     without changing the option rows' height (the 44px touch guidance
-     cannot fit in a list row — the sheet scrolls through them instead). */
+  /* The largest target the row rhythm allows: the row's content box is
+     the grammar row's min-height minus its block padding (34px − 2×6px =
+     22px; 44px − 2×10px = 24px inside sheets), so the handle grows to
+     that without changing the option rows' height — the 44px touch
+     guidance cannot fit in a list row, the sheet scrolls through them
+     instead. The grip was sized for the RETIRED 2.25rem/4px stock once:
+     at 28px it overflowed the 22px box and every selected+reorderable
+     row grew 6px taller than its neighbours. */
   width: 1.5rem;
-  height: 1.75rem;
-  margin-inline-end: -4px;
+  height: 1.375rem;
+  margin-inline-end: -6px;
   color: rgb(var(--color-muted));
   opacity: 0.6;
   cursor: grab;

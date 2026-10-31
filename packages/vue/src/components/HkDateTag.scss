@@ -1,0 +1,33 @@
+// AI-generated: developed with the DeepSeek Harness agent (model DeepSeek V4.1 Flash); human-directed.
+
+/* HkDateTag — the locale-aware stacked date capsule (see the component
+ * docblock for the contract). Rows are calendar segments; the year and
+ * the optional time row read as context (muted, a touch smaller), the
+ * month/day figures carry the full text color. */
+
+.hk-date-tag {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2, 2px) var(--space-10, 0.625rem);
+  border-radius: var(--radius-full, 999px);
+  background: rgb(var(--color-text) / 6%);
+  white-space: nowrap;
+}
+
+.hk-date-tag__row {
+  display: block;
+  text-align: center;
+  line-height: 1.25;
+  font-size: var(--text-2xs, 0.625rem);
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-text));
+}
+
+/* Context rows: the year (wherever the locale puts it) and the optional
+ * time row — muted and a touch smaller than the month/day figures. */
+.hk-date-tag__row--year,
+.hk-date-tag__row--time {
+  color: rgb(var(--color-text) / 55%);
+  font-size: calc(var(--text-2xs, 0.625rem) - 1px);
+}

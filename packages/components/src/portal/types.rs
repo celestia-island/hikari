@@ -1,8 +1,6 @@
 // hi-components/src/portal/types.rs
 // Type definitions for the portal system
 
-use crate::feedback::PopoverPlacement;
-use crate::modal::{MaskMode, ModalPosition, ModalSize};
 use crate::prelude::*;
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -40,8 +38,10 @@ pub enum TriggerPlacement {
     Center,
 }
 
+/// Animation phase of a portal layer (the legacy modal-flavoured name is
+/// kept on the wire for the dropdown/popover entries that share it).
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum ModalAnimationState {
+pub enum PortalAnimationState {
     #[default]
     Appearing,
     Visible,
@@ -50,17 +50,6 @@ pub enum ModalAnimationState {
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum PortalEntry {
-    Modal {
-        id: String,
-        title: Option<String>,
-        position: ModalPosition,
-        mask_mode: MaskMode,
-        closable: bool,
-        mask_closable: bool,
-        size: ModalSize,
-        children: Element,
-        animation_state: ModalAnimationState,
-    },
     Dropdown {
         id: String,
         strategy: PortalPositionStrategy,
@@ -72,19 +61,6 @@ pub enum PortalEntry {
     Toast {
         id: String,
         position: ToastPosition,
-        children: Element,
-    },
-    Popover {
-        id: String,
-        trigger_rect: Option<(f64, f64, f64, f64)>,
-        preferred_placements: Vec<PopoverPlacement>,
-        offset: f64,
-        width: Option<String>,
-        title: Option<String>,
-        close_on_click_outside: bool,
-        close_on_select: bool,
-        on_close: Option<Callback<()>>,
-        close_requested: Signal<bool>,
         children: Element,
     },
     Tooltip {

@@ -1,0 +1,121 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkSpinner — pure-CSS infinite spinner. */
+
+@use "../styles/polyfill" as *;
+
+.hk-spinner-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  /* Transient loading status, not content: selecting it mid-drag
+     produces accidental clipboard noise. Covers circle and text. */
+  @include user-select(none);
+}
+
+/* center — the shared loading-state placement contract: the spinner is
+   centered on BOTH axes relative to whatever panel/page/modal container
+   it is dropped into. The wrapper stretches to fill flexible parents and
+   carries a min-height floor, so even auto-height block parents place
+   the circle mid-panel instead of pinning it against the top edge (or,
+   uncentered, top-left). Column layout stacks spinner above optional
+   text; `gap` then spaces them vertically. Per-site geometry can be
+   tuned with --hk-loading-min-height (or the minHeight prop). */
+.hk-spinner-centered {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  /* Block-formatting parents have no flex distribution: height:100%
+     claims their definite height directly (flex parents instead satisfy
+     it via stretch/grow below), while auto-height parents treat it as
+     auto and fall back to the min-height floor. */
+  height: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+  /* grow + shrink: min-height floors the box, so shrinking cannot go
+     below the floor, and growing fills leftover space — avoiding a
+     rigid-sibling overflow trap in tight flex rows. */
+  flex: 1 1 auto;
+  /* Predictable mid-panel presence on every viewport: a fixed floor,
+     not fluid scaling (fluid values hit their cap on all realistic
+     heights and balloon compact drawer/modal loading strips). Sites
+     wanting more presence tune --hk-loading-min-height locally. */
+  min-height: var(--hk-loading-min-height, 8rem);
+  padding: var(--space-24) var(--space-16);
+}
+
+.hk-spinner {
+  border: 2px solid rgb(var(--color-border) / 20%);
+  border-top-color: rgb(var(--color-primary));
+  border-radius: 50%;
+  animation: hk-spinner-rotate 0.7s linear infinite;
+}
+
+/* tone="current" — same shape/duration as the default, but colored with
+   currentcolor so the spinner matches surrounding text (e.g. inside a
+   colored HkButton). Track = faded currentcolor, arc = full currentcolor. */
+.hk-spinner-current {
+  border-color: color-mix(in srgb, currentcolor 30%, transparent);
+  border-top-color: currentcolor;
+}
+
+.hk-spinner-xs {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+}
+
+.hk-spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.hk-spinner-md {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+}
+
+.hk-spinner-lg {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+}
+
+.hk-spinner-xl {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+.hk-spinner-text {
+  font-size: var(--text-base);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  /* Transient status, not content: selecting it mid-drag produces
+     accidental clipboard noise. (The wrapper already covers the circle.) */
+  @include user-select(none);
+}
+
+@keyframes hk-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Reduced motion: the wheel rests as a static track + primary arc,
+// still readable as a loading mark (house pattern: HkProgressBar.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-spinner {
+    animation: none;
+  }
+}

@@ -20,6 +20,19 @@
 @import '../../../theme/styles/base';
 
 // ------
+// Vue canonical token fallbacks (vendored mirrors; scripts/sync-vue-mirror.py)
+// ------
+// The mirrored component sheets are compiled from the SAME sheets the Vue
+// library ships, so the runtime custom properties they reference
+// (--color-*, --space-*, --radius-*, --duration-*, ...) must exist here too.
+// These two :root layers are the canonical Vue fallbacks; imported AFTER the
+// theme base so that, where the two vocabularies overlap (34 same-name
+// --hi-*/--c-* properties), the canonical Vue value wins at equal
+// specificity — matching what a Vue host renders.
+@import './vue-mirror/tokens.scss';
+@import './vue-mirror/scale.scss';
+
+// ------
 // Utility Classes (Tailwind-compatible)
 // ------
 // Basic utility classes for the Hikari UI framework
@@ -562,16 +575,33 @@
 // ------
 
 @import './components/glow.scss';
-@import './components/alert.scss';
-@import './components/toast.scss';
-@import './components/tooltip.scss';
-@import './components/progress.scss';
 @import './components/skeleton.scss';
-@import './components/spin.scss';
-@import './components/drawer.scss';
-@import './components/popover.scss';
 
-@import './components/modal.scss';
+
+// ------
+// Mirrored Vue family sheets (canonical: packages/vue/src/components/;
+// vendored by scripts/sync-vue-mirror.py). One entry per mirrored family
+// sheet so the docs bundle carries the same CSS the components compile.
+// ------
+@import './vue-mirror/components/HkAlert.scss';
+@import './vue-mirror/components/HkBlockingToast.scss';
+@import './vue-mirror/components/HkDrawer.scss';
+@import './vue-mirror/components/HkConfirmDialog.scss';
+@import './vue-mirror/components/HkLoadingVeil.scss';
+@import './vue-mirror/components/HkMessageBox.scss';
+@import './vue-mirror/components/HkPersistentToast.scss';
+@import './vue-mirror/components/HkPersistentToastGroup.scss';
+@import './vue-mirror/components/HkPopover.scss';
+@import './vue-mirror/components/HkModal.scss';
+@import './vue-mirror/components/HkPhaseTransition.scss';
+@import './vue-mirror/components/HkProgressBar.scss';
+@import './vue-mirror/components/HkProgressDialog.scss';
+@import './vue-mirror/components/HkProgressRing.scss';
+@import './vue-mirror/components/HkToast.scss';
+@import './vue-mirror/components/HkTooltip.scss';
+@import './vue-mirror/components/HkButton.scss';
+@import './vue-mirror/components/window-close.scss';
+@import './vue-mirror/components/HkSpinner.scss';
 
 // ------
 // Navigation Components

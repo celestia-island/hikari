@@ -6,15 +6,48 @@ use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize};
 use crate::feedback::{
-    Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
+    Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverAnchorRect, PopoverPlacement,
+    anchor_rect_from_element_id,
 };
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::HkPad;
 
 pub struct PaginationComponent;
 
+/// The jump-panel state (see the component note). `Signal` lives in a
+/// thread-local so writes survive renders; entries are keyed by the
+/// pagination instance so two paginations on one page keep their own layer.
+#[derive(Clone, Debug, Default)]
+pub struct PaginationJumpState {
+    pub open: bool,
+    pub which: u8,
+    pub anchor_1: Option<PopoverAnchorRect>,
+    pub anchor_2: Option<PopoverAnchorRect>,
+}
+
+thread_local! {
+    static JUMP_STATES: std::cell::RefCell<
+        std::collections::HashMap<String, Signal<PaginationJumpState>>,
+    > = std::cell::RefCell::new(std::collections::HashMap::new());
+}
+
+fn pagination_jump_state(instance_id: &str) -> Signal<PaginationJumpState> {
+    JUMP_STATES.with(|states| {
+        let mut states = states.borrow_mut();
+        states
+            .entry(instance_id.to_string())
+            .or_insert_with(|| Signal::new(PaginationJumpState::default()))
+            .clone()
+    })
+}
+
 #[define_props]
 pub struct PaginationProps {
+    /// Instance identity for the jump layer (ids + shared state). Two
+    /// paginations on one page must pass different ids.
+    pub instance_id: Option<String>,
+
     #[default(1)]
     pub current: u32,
 
@@ -53,11 +86,39 @@ pub fn Pagination(props: PaginationProps) -> Element {
     let on_change = props.on_change.clone();
     let on_size_change = props.on_size_change.clone();
 
-    // Handle modal close
+    // Mirrored Popover wiring: the jump panel is a controlled, anchored
+    // popover (the legacy portal entry owned the trigger + positioning).
+    // `which_jump` gates the two ellipsis anchors so only the clicked one
+    // renders; both still share the jump state below.
+    // Jump-panel state lives in a module registry: tairitsu 0.5.22
+    // component-body state is render-scoped, so hook-backed signals cannot
+    // hold it. Delta vs the retired portal entry: the panel is one shared
+    // jump layer per page (the legacy component shared one open flag too).
+    // Instance identity: two paginations on one page must not share the
+    // jump layer nor emit duplicate DOM ids. Hosts pass `instance_id`.
+    let instance_id = props
+        .instance_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
+    let jump_id_1 = format!("hk-pagination-jump-{instance_id}-1");
+    let jump_id_2 = format!("hk-pagination-jump-{instance_id}-2");
+    let jump_state = pagination_jump_state(&instance_id);
+
     let show_jump_modal_for_close = show_jump_modal.clone();
     let handle_modal_close = Callback::new(move |is_open: bool| {
         show_jump_modal_for_close.set(is_open);
     });
+    let handle_modal_open = {
+        let jump_state = jump_state.clone();
+        EventHandler::new(move |is_open: bool| {
+            let mut current = jump_state.get();
+            current.open = is_open;
+            if !is_open {
+                current.which = 0;
+            }
+            jump_state.set(current);
+        })
+    };
 
     let total_pages = if total_items == 0 {
         1
@@ -268,21 +329,23 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     // Create jump modal content for first ellipsis
     let jump_to_for_modal1 = jump_to.clone();
-    let show_jump_modal_for_modal1 = show_jump_modal.clone();
+    let jump_state_for_modal1 = jump_state.clone();
     let current_page_for_modal1 = current_page.clone();
     let on_change_for_modal1 = on_change.clone();
     let create_jump_modal_content_1 = move || {
         let jump_to_for_input = jump_to_for_modal1.clone();
         let jump_to_for_button = jump_to_for_modal1.clone();
         let current_page_for_jump = current_page_for_modal1.clone();
-        let show_jump_modal_for_jump = show_jump_modal_for_modal1.clone();
+        let jump_state_for_jump = jump_state_for_modal1.clone();
         let on_change_for_jump = on_change_for_modal1.clone();
         let handle_modal_jump = move |page: u32| {
             current_page_for_jump.set(page);
             if let Some(h) = on_change_for_jump.as_ref() {
                 h.call(page);
             }
-            show_jump_modal_for_jump.set(false);
+            let mut current = jump_state_for_jump.get();
+            current.open = false;
+            jump_state_for_jump.set(current);
         };
         rsx! {
             div {
@@ -337,21 +400,23 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     // Create jump modal content for second ellipsis
     let jump_to_for_modal2 = jump_to.clone();
-    let show_jump_modal_for_modal2 = show_jump_modal.clone();
+    let jump_state_for_modal2 = jump_state.clone();
     let current_page_for_modal2 = current_page.clone();
     let on_change_for_modal2 = on_change.clone();
     let create_jump_modal_content_2 = move || {
         let jump_to_for_input = jump_to_for_modal2.clone();
         let jump_to_for_button = jump_to_for_modal2.clone();
         let current_page_for_jump = current_page_for_modal2.clone();
-        let show_jump_modal_for_jump = show_jump_modal_for_modal2.clone();
+        let jump_state_for_jump = jump_state_for_modal2.clone();
         let on_change_for_jump = on_change_for_modal2.clone();
         let handle_modal_jump = move |page: u32| {
             current_page_for_jump.set(page);
             if let Some(h) = on_change_for_jump.as_ref() {
                 h.call(page);
             }
-            show_jump_modal_for_jump.set(false);
+            let mut current = jump_state_for_jump.get();
+            current.open = false;
+            jump_state_for_jump.set(current);
         };
         rsx! {
             div {
@@ -463,30 +528,44 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                     // Ellipsis if needed - clickable with icon
                     if current_page.get() > 4 {
-                        Popover {
-                            positioning: PopoverPositioning::Relative {
-                                preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
-                            },
-                            close_on_click_outside: true,
-                            on_open_change: Some(handle_modal_close.clone()),
-                            trigger: rsx! {
-                                Glow {
-                                    blur: GlowBlur::Medium,
-                                    color: GlowColor::Primary,
-                                    intensity: GlowIntensity::Dim,
-                                    button {
-                                        class: ClassesBuilder::new()
-                                            .add(PaginationClass::PaginationItem)
-                                            .build(),
-                                        Icon {
-                                            icon: MdiIcon::DotsHorizontal,
-                                            size: 16,
-                                            color: "var(--hi-color-text-secondary)".to_string(),
+                        div {
+                            style: "position: relative; display: inline-flex;",
+                            Glow {
+                                blur: GlowBlur::Medium,
+                                color: GlowColor::Primary,
+                                intensity: GlowIntensity::Dim,
+                                button {
+                                    id: jump_id_1.as_str(),
+                                    class: ClassesBuilder::new()
+                                        .add(PaginationClass::PaginationItem)
+                                        .build(),
+                                    onclick: {
+                                        let jump_state = jump_state.clone();
+                                        move |_| {
+                                            let mut current = jump_state.get();
+                                            current.anchor_1 = anchor_rect_from_element_id(
+                                                jump_id_1.as_str(),
+                                            );
+                                            current.which = 1;
+                                            current.open = true;
+                                            jump_state.set(current);
                                         }
+                                    },
+                                    Icon {
+                                        icon: MdiIcon::DotsHorizontal,
+                                        size: 16,
+                                        color: "var(--hi-color-text-secondary)".to_string(),
                                     }
                                 }
-                            },
-                            {create_jump_modal_content_1()}
+                            }
+                            Popover {
+                                open: jump_state.get().open && jump_state.get().which == 1,
+                                placement: PopoverPlacement::Bottom,
+                                anchor: jump_state.get().anchor_1,
+                                padding: Some(HkPad::None),
+                                on_open_change: Some(handle_modal_open.clone()),
+                                children: create_jump_modal_content_1(),
+                            }
                         }
                     }
 
@@ -495,30 +574,44 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                     // Ellipsis if needed - clickable with icon
                     if current_page.get() < total_pages - 3 {
-                        Popover {
-                            positioning: PopoverPositioning::Relative {
-                                preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
-                            },
-                            close_on_click_outside: true,
-                            on_open_change: Some(handle_modal_close.clone()),
-                            trigger: rsx! {
-                                Glow {
-                                    blur: GlowBlur::Medium,
-                                    color: GlowColor::Primary,
-                                    intensity: GlowIntensity::Dim,
-                                    button {
-                                        class: ClassesBuilder::new()
-                                            .add(PaginationClass::PaginationItem)
-                                            .build(),
-                                        Icon {
-                                            icon: MdiIcon::DotsHorizontal,
-                                            size: 16,
-                                            color: "var(--hi-color-text-secondary)".to_string(),
+                        div {
+                            style: "position: relative; display: inline-flex;",
+                            Glow {
+                                blur: GlowBlur::Medium,
+                                color: GlowColor::Primary,
+                                intensity: GlowIntensity::Dim,
+                                button {
+                                    id: jump_id_2.as_str(),
+                                    class: ClassesBuilder::new()
+                                        .add(PaginationClass::PaginationItem)
+                                        .build(),
+                                    onclick: {
+                                        let jump_state = jump_state.clone();
+                                        move |_| {
+                                            let mut current = jump_state.get();
+                                            current.anchor_2 = anchor_rect_from_element_id(
+                                                jump_id_2.as_str(),
+                                            );
+                                            current.which = 2;
+                                            current.open = true;
+                                            jump_state.set(current);
                                         }
+                                    },
+                                    Icon {
+                                        icon: MdiIcon::DotsHorizontal,
+                                        size: 16,
+                                        color: "var(--hi-color-text-secondary)".to_string(),
                                     }
                                 }
-                            },
-                            {create_jump_modal_content_2()}
+                            }
+                            Popover {
+                                open: jump_state.get().open && jump_state.get().which == 2,
+                                placement: PopoverPlacement::Bottom,
+                                anchor: jump_state.get().anchor_2,
+                                padding: Some(HkPad::None),
+                                on_open_change: Some(handle_modal_open.clone()),
+                                children: create_jump_modal_content_2(),
+                            }
                         }
                     }
 
@@ -658,8 +751,35 @@ mod tests {
     }
 
     #[test]
+    fn test_pagination_jump_state_is_per_instance() {
+        use super::pagination_jump_state;
+
+        let a = pagination_jump_state("instance-a");
+        let b = pagination_jump_state("instance-b");
+
+        // Independent signals: opening A must not open B.
+        let mut opened = a.get();
+        opened.open = true;
+        opened.which = 1;
+        a.set(opened);
+
+        assert!(a.get().open);
+        assert!(!b.get().open, "jump layers must not be shared");
+        assert_eq!(a.get().which, 1);
+
+        // Jumping to a page closes the layer it belongs to.
+        let mut closed = a.get();
+        closed.open = false;
+        a.set(closed);
+        let closed_state = a.get();
+        assert!(!closed_state.open, "jump closes its own layer");
+        assert_eq!(closed_state.which, 1, "closing keeps the anchor selection");
+    }
+
+    #[test]
     fn test_pagination_props_clone() {
         let props = PaginationProps {
+            instance_id: Some("test-a".to_string()),
             current: 5,
             page_size: 20,
             total: 100,
@@ -682,6 +802,7 @@ mod tests {
     #[test]
     fn test_pagination_props_partial_eq() {
         let props1 = PaginationProps {
+            instance_id: Some("test-a".to_string()),
             current: 5,
             page_size: 20,
             total: 100,
@@ -694,6 +815,7 @@ mod tests {
         };
 
         let props2 = PaginationProps {
+            instance_id: Some("test-a".to_string()),
             current: 5,
             page_size: 20,
             total: 100,

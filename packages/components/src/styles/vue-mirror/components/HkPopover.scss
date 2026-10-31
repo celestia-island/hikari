@@ -1,0 +1,317 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "./menu-item" as mi;
+@use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
+
+.hk-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hk-popover-panel {
+  min-width: 0;
+  /* --hk-pad: the shared container-padding token (runtime/containerPad) —
+     0 without glass (the bare panel never carried an inset), overridden
+     per instance via the `padding` prop. */
+  padding: var(--hk-pad, 0);
+  max-height: min(70vh, calc(100vh - 2 * var(--viewport-gutter, 16px)));
+  /* Width MUST be position-independent (max-content, viewport-capped).
+   * The anchored panel is fixed-positioned with shrink-to-fit sizing,
+   * and computePosition places it as `left = anchorEnd - panelWidth`
+   * (bottom-end). With shrink-to-fit the width itself derives from the
+   * available space (`viewport - left`) — so any elastically-wide
+   * content (percentage-width rows) creates a geometric feedback: every
+   * ResizeObserver → rAF reposition adds (viewport - anchorEnd) px of
+   * width until the clamp saturates, and the menu visibly ratchets
+   * wider frame by frame (demo.dev field report 2026-09-07). Pinning
+   * the width to max-content breaks the loop: the panel sizes to its
+   * content wherever it sits, and positioning converges in one pass.
+   * The script-side pad reads the same --viewport-gutter token
+   * (runtime/viewportGutter). */
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--viewport-gutter, 16px));
+}
+
+/* Pop motion family tokens (--hk-pop-* in theme.scss) — the reference
+ * consumer. HkSelectPanel's desktop popout and HkTooltip use the same
+ * set so every anchored surface pops with one curve. */
+.hk-popover-enter-active {
+  transition:
+    opacity var(--hk-pop-in-duration, 0.2s)
+      var(--hk-pop-in-opacity-ease, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform var(--hk-pop-in-duration, 0.2s)
+      var(--hk-pop-in-transform-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.hk-popover-leave-active {
+  transition:
+    opacity var(--hk-pop-out-duration, 0.15s)
+      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1)),
+    transform var(--hk-pop-out-duration, 0.15s)
+      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1));
+}
+
+.hk-popover-enter-from {
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--hk-pop-offset, 4px)))
+    scale(var(--hk-pop-scale, 0.97));
+}
+
+.hk-popover-leave-to {
+  opacity: 0;
+  transform: translateY(var(--hk-pop-offset, 4px))
+    scale(var(--hk-pop-scale, 0.97));
+}
+
+/* Glass dropdown content — used when `glass` prop is true.
+   --hk-popover-bg/--hk-popover-blur let a host app's surface-finish
+   preference (chest html[data-surface]) re-skin this layer; the defaults
+   keep the historical look. */
+.hii-dropdown-content,
+.hk-popover-panel.hii-dropdown-content {
+  background: var(--hk-popover-bg, rgb(var(--color-surface)));
+  @include backdrop-filter(var(--hk-popover-blur, blur(var(--blur-lg)) saturate(1.2)));
+  border: 1px solid rgb(var(--color-border) / 20%);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-dropdown);
+  /* The glass chrome's historical 4px menu inset — the shared token
+     (runtime/containerPad) retunes it per instance (`padding` prop). */
+  padding: var(--hk-pad, var(--space-4, 0.25rem));
+}
+
+/* Locale picker menu items — unified menu-item spec (./_menu-item.scss). */
+.hk-popup-menu-item {
+  @include mi.item;
+}
+
+.hk-locale-submenu {
+  min-width: 140px;
+  padding: var(--space-6);
+}
+
+.hk-locale-flag {
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
+// ------
+// Mobile bottom-sheet mode (`sheetOnMobile`) — the panel docks to the
+// bottom edge on <768px viewports instead of anchoring: a real scrim
+// (click closes), rounded top corners only, slide-up reveal. Same visual
+// contract as the modal mobile docking (top inset keeps the secondary-
+// window breadcrumb strip visible).
+// ------
+.hk-popover-scrim {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  background: rgb(0 0 0 / 40%);
+}
+
+.hk-popover-panel.hk-is-sheet {
+  /* The sheet spans the viewport via inline left/right — the anchored
+   * rule's max-content width would over-constrain it (left+right+width
+   * drops `right` in LTR) and dock it at content width instead. */
+  width: auto;
+  /* Docked popover sheets never backdrop-filter: the sheet is a fixed
+   * full-width layer over a usually-streaming page, and a
+   * backdrop-filter re-rasters the blurred region on every repaint
+   * behind it — on phones that lag shows as patchy flicker (same
+   * family guard as the modal/select sheets, 2026-09-15). Hosts
+   * restore a finish with --hk-popover-blur-mobile. Containment
+   * scopes the sheet's layout/style invalidations away from the page. */
+  @include backdrop-filter(var(--hk-popover-blur-mobile, none));
+  contain: layout style;
+  /* The base .hk-popover-panel max-width clamp (calc(100vw - 16px), the
+   * anchored panel's ratchet guard) must NOT leak into the sheet: with
+   * the inline left:0 + right:0 docking the clamp over-constrains the
+   * used width and LTR drops the `right` constraint — the sheet docks
+   * flush left but stops 16px short of the right viewport edge (2026-09-08
+   * user report: a mysterious right-hand gap on the secondary windows,
+   * present on every popover-family sheet and never on the HkModal /
+   * HkSelectPanel sheets, hence "some have it, some don't"). The inline
+   * left/right pair alone owns the sheet's horizontal geometry. */
+  max-width: none;
+  border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                 var(--hk-modal-radius, var(--radius-lg, 12px))
+                 0 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  // The panel is a programmatic focus surface (tabindex="-1", focused on
+  // sheet open) — suppress the UA focus ring like .hk-modal-content.
+  outline: none;
+  max-height: min(
+    72vh,
+    calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) -
+        var(--hk-sheet-bottom-gap, 0px)
+    )
+  );
+  /* Dynamic-viewport pairing (HkModal parity): the dvh twin follows the
+   * vh cap so a maxed sheet cannot extend under the URL bar on
+   * dynamic-toolbar browsers. */
+  max-height: min(
+    72vh,
+    calc(
+      100dvh - var(--hk-sheet-top-inset, 4.25rem) -
+        var(--hk-sheet-bottom-gap, 0px)
+    )
+  );
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: 0;
+  /* The sheet's bottom-edge distance itself comes from the shared
+   * --hk-sheet-bottom-gap (inline in HkPopover's sheet style); here the
+   * content keeps the last row clear of the home bar: the safe-area
+   * inset stacked on the shared container-pad token, whose legacy
+   * fallback is the 12px family base (which also restores a bottom
+   * cushion over the glass dropdown chrome — equal specificity, earlier
+   * in source, whose own bottom padding the sheet rule would otherwise
+   * zero out). A host that sets the `padding` prop retunes the sheet's
+   * bottom inset with the SAME step its anchored panel uses (#808
+   * completion — hosts stop hand-padding the sheet branch); the safe-
+   * area term always rides on top. The modal sheet footer goes further
+   * (it adds --hk-sheet-footer-gap for its action buttons); this sheet
+   * has no footer, so this is the family baseline. */
+  padding-bottom: calc(var(--hk-pad, var(--space-12, 0.75rem)) + env(safe-area-inset-bottom, 0px));
+
+  /* Overlay scrollbar (useOverlayScrollbar, sheet mode only) — the
+     native chrome is hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hk-popover-sheet-grabber {
+  flex-shrink: 0;
+  // Chrome, not content: cancel the panel's shared container pad inline
+  // (see the header twin above) so the grabber zone spans the full sheet
+  // width at any `padding` step — the centered bar never drifts inward.
+  // Longhand AFTER the shorthand or `margin: 0 auto` would win the cascade.
+  margin: 0 auto;
+  margin-inline: calc(-1 * var(--hk-pad, 0px));
+  // Grabber zone: tap target tall enough for a thumb, bar visually small.
+  padding: 14px 0 20px;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  // Window chrome, not content — a long-press must never start a text
+  // selection over the drag handle.
+  @include user-select(none);
+
+  &::before {
+    content: "";
+    width: 2.25rem;
+    height: 4px;
+    border-radius: 999px;
+    background: rgb(var(--color-border, 100 100 100) / 40%);
+  }
+}
+
+/* Sheet heading row — title on the left, explicit close on the right,
+ * one vertically-centered flex line (2026-09-04 user report: the bare
+ * title band read too small, hung right of the content it named, and
+ * long-press selected it; every other window in the app carries an ✕).
+ * The title aligns to the CONTENT edge: the leading inset defaults to
+ * --space-12, matching the padded content blocks popover sheets host
+ * (e.g. the house 0.75rem popover body). Hosts tune it via
+ * --hk-sheet-title-inset; the trailing inset hugs the close button.
+ *
+ * Shared container pad (#808 completion): the panel's `padding` prop
+ * insets the CONTENT band, so this chrome row cancels it inline
+ * (negative margin, the valid-CSS twin of a negative padding) and
+ * keeps its own title-inset from the panel frame — the title lands on
+ * the content edge whenever the pad step matches title-inset, at any
+ * step. The trailing block gap is the CONTENT's block-start air under
+ * the header: it reads the same pad step when the prop is set (legacy
+ * 8px otherwise), so a padded host gets one uniform inset around its
+ * sheet content too — no hand-padded wrapper branch downstream. */
+.hk-popover-sheet-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  margin-inline: calc(-1 * var(--hk-pad, 0px));
+  // Logical longhand (was physical `0 x y title-inset`): the title inset is
+  // the inline START edge so RTL mirrors it with the mirrored title/close.
+  padding-block: 0 var(--hk-pad, var(--space-8, 0.5rem));
+  padding-inline: var(--hk-sheet-title-inset, var(--space-12, 0.75rem))
+    var(--space-8, 0.5rem);
+}
+
+.hk-popover-sheet-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  // Same heading grammar as the select sheet title: semibold, slightly
+  // letterspaced — one step up from the old 0.75rem so the sheet names
+  // itself at body-text size, and window chrome never participates in
+  // text selection.
+  font-size: var(--text-base, 0.875rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-muted, 108 108 108));
+  @include user-select(none);
+}
+
+.hk-popover-sheet-close {
+  // Legacy placement hook — the chrome lives on the shared .hk-icon-button
+  // / .hk-window-close rules (window-close.scss) since the unified-close
+  // wave. Only the trailing-edge pinning stays here (logical, so the close
+  // mirrors to the left in RTL like HkInput/HkTagInput's auto inline start).
+  margin-inline-start: auto;
+}
+
+.hk-popover-sheet-enter-active {
+  transition:
+    opacity 0.25s ease-out,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-popover-sheet-leave-active {
+  transition:
+    opacity 0.2s ease-in,
+    transform 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-popover-sheet-enter-from,
+.hk-popover-sheet-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+/* Sheet scrim fade — shared window-layer contract (./_scrim-fade.scss):
+ * opacity-only, own transition name, in place. The scrim used to mount
+ * and unmount bare, snapping the dim curtain on and off around the
+ * sliding panel. */
+@include sf.scrim-fade("hk-popover-scrim");
+
+@media (prefers-reduced-motion: reduce) {
+  // Pop transitions included: the anchored panel's translateY+scale pop is
+  // the same non-trivial motion the sheet slide already silences here
+  // (house pattern: HkExpansionPanel.scss / HkAffixPicker.scss guards).
+  .hk-popover-enter-active,
+  .hk-popover-leave-active,
+  .hk-popover-sheet-enter-active,
+  .hk-popover-sheet-leave-active {
+    transition: none;
+  }
+}

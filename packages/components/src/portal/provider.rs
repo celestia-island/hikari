@@ -4,7 +4,7 @@
 use std::sync::atomic::Ordering;
 
 use super::render::{PortalRender, PortalRenderProps};
-use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
+use crate::portal::types::{PORTAL_ID_COUNTER, PortalEntry};
 use crate::prelude::*;
 
 #[derive(Clone)]
@@ -13,7 +13,6 @@ pub struct PortalContext {
     pub add_entry: Callback<PortalEntry>,
     pub remove_entry: Callback<String>,
     pub clear_all: Callback<()>,
-    pub start_close_animation: Callback<String>,
 }
 
 #[component]
@@ -30,10 +29,8 @@ pub fn PortalProvider(children: Element) -> Element {
     let remove_entry = Callback::new(move |id: String| {
         let mut e = entries_for_remove.write();
         e.retain(|entry| match entry {
-            PortalEntry::Modal { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Dropdown { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Toast { id: entry_id, .. } => entry_id != &id,
-            PortalEntry::Popover { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Tooltip { id: entry_id, .. } => entry_id != &id,
         });
     });
@@ -44,23 +41,6 @@ pub fn PortalProvider(children: Element) -> Element {
         e.clear();
     });
 
-    let entries_for_close_anim = entries.clone();
-    let start_close_animation = Callback::new(move |id: String| {
-        let mut e = entries_for_close_anim.write();
-        for entry in e.iter_mut() {
-            if let PortalEntry::Modal {
-                id: entry_id,
-                animation_state,
-                ..
-            } = entry
-                && entry_id == &id
-                && *animation_state == ModalAnimationState::Visible
-            {
-                *animation_state = ModalAnimationState::Disappearing;
-            }
-        }
-    });
-
     let entries_for_context = entries.clone();
     let entries_for_render = entries.clone();
 
@@ -69,7 +49,6 @@ pub fn PortalProvider(children: Element) -> Element {
         add_entry,
         remove_entry,
         clear_all,
-        start_close_animation,
     });
 
     rsx! {

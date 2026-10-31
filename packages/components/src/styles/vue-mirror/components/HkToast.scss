@@ -1,0 +1,289 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-toast-container {
+  position: fixed;
+  top: 4rem;
+  /* Same viewport gutter the anchored popups clamp to (16px desktop /
+   * 8px mobile) — the toast stack is a floating layer too. */
+  inset-inline-end: var(--viewport-gutter, 16px);
+  /* Toast band — the topmost popup z band (POPUP_Z_BANDS.toast; mirror in
+     theme.scss). The live value arrives inline from the popup manager. */
+  z-index: var(--hk-overlay-z-toast, 100);
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+.hk-toast-container > div {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 12px);
+}
+
+.hk-toast-item {
+  display: flex;
+  /* Center, not flex-start: the icon and close action boxes are 1.5rem
+     tall while a single text line is ~1.2rem — top alignment parked the
+     text high, stranded dead space under it (the "fat bottom" on
+     one-line toasts), and made the close glyph sit visibly lower than
+     the text. Centering aligns all three optical axes and distributes
+     the height symmetrically for single- and multi-line bodies alike. */
+  align-items: center;
+  gap: var(--space-8, 8px);
+  padding: var(--space-12, 12px) var(--space-16, 16px);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-base, 0.875rem);
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  @include backdrop-filter(blur(12px));
+  @include user-select(none);
+}
+
+.hk-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+}
+
+.hk-toast-icon {
+  display: flex;
+  align-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.hk-toast-message {
+  /* The message text is content — error detail a user copies out of a
+   * failing app — not chrome. Re-enable inside the denied toast shell
+   * (L2 selection policy, 2026-10-29): the shell keeps its none, the
+   * message subtree selects again. */
+  @include user-select(text);
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.hk-toast-count {
+  align-self: flex-start;
+  font-size: 0.78em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 20%);
+  white-space: nowrap;
+}
+
+.hk-toast-error {
+  background: var(--hi-color-danger, #f85149);
+  color: var(--hi-color-text-on-solid, #ffffff);
+}
+
+.hk-toast-success {
+  background: var(--hi-color-success, #0eb840);
+  color: var(--hi-color-text-on-solid, #ffffff);
+}
+
+/* Warning toasts use a light, saturated amber background where white text
+ * lands at ~2.6:1 contrast (unreadable). Dark text keeps >= 4.5:1 on the
+ * amber in BOTH color schemes; the copy/close buttons inherit it. */
+.hk-toast-warning {
+  background: var(--hi-color-warning, #eed677);
+  color: #1c1c1e;
+}
+
+.hk-toast-warning .hk-toast-copy-btn,
+.hk-toast-warning .hk-toast-close {
+  color: #1c1c1e;
+}
+
+.hk-toast-warning .hk-toast-copy-btn:hover,
+.hk-toast-warning .hk-toast-close:hover {
+  background: rgb(0 0 0 / 12%);
+}
+
+.hk-toast-info {
+  background: var(--hi-color-info, #6abed6);
+  color: var(--hi-color-text-on-solid, #ffffff);
+}
+
+.hk-toast-loading {
+  background: var(--hi-color-info, #6abed6);
+  color: var(--hi-color-text-on-solid, #ffffff);
+}
+
+.hk-toast-loading-spinner {
+  /* The spinner rides the toast's SOLID band, so its glyph is on-solid
+   * content: ride the on-solid slot (white by default, theme-following) */
+  border: 2px solid rgb(var(--color-on-solid-text, 255 255 255) / 30%);
+  border-top-color: rgb(var(--color-on-solid-text, 255 255 255));
+  border-radius: 50%;
+  animation: hk-toast-spin 0.7s linear infinite;
+  box-sizing: border-box;
+}
+
+@keyframes hk-toast-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Inline action (e.g. Undo / open analysis): a GLASS PILL on the toast's
+ *  solid band. The old ghost outline sat flat on the accent fill — "a grey
+ *  outlined transparent button", user report 2026-10 — because it borrowed
+ *  the page-surface border tokens on a filled surface. A currentColor tint
+ *  follows every variant (white on the coloured bands, near-black on the
+ *  amber warning band) and reads as a real affordance without introducing
+ *  a second accent colour. */
+.hk-toast-action {
+  flex: none;
+  align-self: center;
+  margin-inline-start: var(--space-4, 4px);
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast, 0.15s) ease,
+    border-color var(--duration-fast, 0.15s) ease;
+}
+
+.hk-toast-action:hover {
+  background: color-mix(in srgb, currentColor 24%, transparent);
+  border-color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.hk-toast-action:active {
+  background: color-mix(in srgb, currentColor 32%, transparent);
+}
+
+.hk-toast-action:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.hk-toast-copy-btn,
+.hk-toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm, 4px);
+  opacity: 0.7;
+  transition: opacity var(--duration-fast, 0.15s) ease;
+  padding: 0;
+}
+
+.hk-toast-copy-btn:hover,
+.hk-toast-close:hover {
+  opacity: 1;
+}
+
+.hk-toast-copy-btn:focus-visible,
+.hk-toast-close:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.hk-toast-enter-active {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--duration-normal, 0.3s);
+  /* Plain ease-out: the previous back-overshoot spring (1.56 y) is the
+     same family the drawer animation was corrected away from — toasts
+     slide in and settle, they do not bounce. */
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.hk-toast-leave-active {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--duration-normal, 0.3s);
+  transition-timing-function: cubic-bezier(0.36, 0, 0.66, 1);
+}
+
+.hk-toast-enter-from {
+  opacity: 0;
+  transform: translateX(1rem);
+}
+
+.hk-toast-leave-to {
+  opacity: 0;
+  transform: translateX(1rem);
+}
+
+/* RTL: the stack sits at inline-end (left), so the slide mirrors to
+   come from the left edge (HkBlockingToast [dir="rtl"] form). */
+[dir="rtl"] .hk-toast-enter-from,
+[dir="rtl"] .hk-toast-leave-to {
+  transform: translateX(-1rem);
+}
+
+/* The leaving toast only switches positioning here; its box is frozen
+   by HkToast's before-leave hook (pinLeaveGeometry writes right/top/
+   width/height inline). The fixed stack column is shrink-to-fit, so a
+   percentage width would resolve against the collapsed wrapper once
+   the toast leaves the flow — never size a leaving toast from its
+   parent. */
+.hk-toast-leave-active {
+  position: absolute;
+}
+
+.hk-toast-move {
+  transition: transform var(--duration-normal, 0.3s) ease;
+}
+
+.hk-toast-msg-enter-active,
+.hk-toast-msg-leave-active {
+  transition: opacity var(--duration-fast, 0.15s) ease;
+}
+
+.hk-toast-msg-enter-from,
+.hk-toast-msg-leave-to {
+  opacity: 0;
+}
+
+/* Reduced motion: kill the infinite spinner rotation and the
+   slide/fade transitions entirely (HkSpinner / HkExpansionPanel
+   pattern) — Vue resolves zero-duration transitions immediately. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-toast-loading-spinner {
+    animation: none;
+  }
+
+  .hk-toast-enter-active,
+  .hk-toast-leave-active,
+  .hk-toast-move,
+  .hk-toast-msg-enter-active,
+  .hk-toast-msg-leave-active {
+    transition: none;
+  }
+}

@@ -1,0 +1,73 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkTooltip — lightweight tooltip. Colours are intentionally decoupled from
+   theme tokens so the tooltip stays legible on any wallpaper. */
+.hk-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.hk-tooltip-trigger {
+  display: inline-flex;
+}
+
+.hk-tooltip-popup {
+  position: fixed;
+  z-index: var(--hk-overlay-z-tooltip, 300);
+  padding: var(--space-4) var(--space-8);
+  border: none;
+  border-radius: var(--radius-sm);
+  /* Width is position-independent (same contract as .hk-popover-panel):
+   * max-content sizes the bubble to its text wherever it sits — a fixed
+   * element otherwise shrink-to-fits against `viewport - left` and a
+   * trigger near the screen edge squeezes it into a one-glyph column.
+   * The inline style from runtime/tooltipPosition carries the same
+   * declaration; this sheet rule keeps the bridge/standalone faces
+   * covered even where the inline pass does not run. */
+  width: max-content;
+  /* Default cap lives on the popup so the inline maxWidth prop
+     legitimately overrides it (the content div would shadow the prop). */
+  max-width: 280px;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  pointer-events: none;
+  opacity: 0;
+  /* Fade-only on purpose: the popup positions itself with an INLINE
+   * transform (per-placement translate), which would override any SCSS
+   * scale and make a transform transition glide on the first show.
+   * Timing/easing join the pop motion family (--hk-pop-* in
+   * theme.scss) so hover hints keep the family cadence. */
+  transition: opacity var(--hk-pop-in-duration, 0.2s)
+    var(--hk-pop-in-opacity-ease, cubic-bezier(0.16, 1, 0.3, 1));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+  color: #000000;
+}
+
+.hk-tooltip-popup.hk-tooltip-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-tooltip-popup {
+    transition: none;
+  }
+}
+
+/* Light mode needs no override — the base rule above already is the
+   light palette; only dark re-inks the popup. */
+[data-mode="dark"] .hk-tooltip-popup {
+  background: #4b4b4b;
+  color: #ffffff;
+}

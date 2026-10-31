@@ -1,4 +1,4 @@
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 
 import "./HkSidebar.scss";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
@@ -143,6 +143,34 @@ export default defineComponent({
     onMounted(attachBodyScrollbar);
     watch([bodyRef, bodyWrapRef], attachBodyScrollbar);
 
+    // Density flips remount the body band (the rail swap renders each
+    // generation's body FRESH), which used to snap the scroll back to the
+    // top on every flip — including each hover-peek open/close, because
+    // the shell keys the swap on `railActive && !peeking` (the #44 P3
+    // audit finding; probed: scrollTop 120 -> peek -> 0 -> back -> 0).
+    // The sidebar's own instance SURVIVES the flip (the swap lives inside
+    // it), so the position only needs to cross the remount. A flip patches
+    // the shared ref old -> null -> new: the null step still sees the
+    // LEAVING element as the old value (its DOM is alive for the
+    // dissolve), which is where the position is read from — an event-only
+    // save would miss programmatic scrolls (no `scroll` event fires for
+    // them), so the read happens on the ref hand-off itself and the
+    // onScroll below merely keeps the value fresh between flips. Raw
+    // scrollTop is an approximation across dresses (rail rows and full
+    // rows have different heights) — an exact restore would need an
+    // item-keyed anchor, not worth it for a nav list; the browser clamps
+    // any overshoot.
+    const savedScrollTop = ref(0);
+    const onBodyScroll = (e: Event): void => {
+      savedScrollTop.value = (e.currentTarget as HTMLElement).scrollTop;
+    };
+    watch(bodyRef, async (body, leaving) => {
+      if (leaving) savedScrollTop.value = leaving.scrollTop;
+      if (!body) return;
+      await nextTick();
+      body.scrollTop = savedScrollTop.value;
+    });
+
     onBeforeUnmount(() => {
       bodyScrollbar?.detach();
       bodyScrollbar = null;
@@ -199,7 +227,7 @@ export default defineComponent({
           <header class="hk-sidebar-header">{slots.header()}</header>
         ) : null}
         <div ref={bodyWrapRef} class="hk-sidebar-body-wrap">
-          <div ref={bodyRef} class="hk-sidebar-body">
+          <div ref={bodyRef} class="hk-sidebar-body" onScroll={onBodyScroll}>
             {/* Scoped params (ignored by plain slots): the density that
                 owns THIS generation so a host renders icon-only rows
                 while collapsed and full rows during a peek, plus the

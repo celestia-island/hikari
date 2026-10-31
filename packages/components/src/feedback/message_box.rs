@@ -66,6 +66,9 @@ struct MessageBoxLocalState {
     /// per `show()`).
     request: String,
     open: Signal<bool>,
+    /// One-shot gate: the first settle reports, every later path is a no-op
+    /// (Vue's promise resolves once, no matter how many dismissals race).
+    settled: Signal<bool>,
     value: Signal<String>,
     error: Signal<Option<String>>,
 }
@@ -76,6 +79,7 @@ fn box_state(instance_key: &str, request: &str, initial_value: &str) -> MessageB
         let fresh = || MessageBoxLocalState {
             request: request.to_string(),
             open: Signal::new(true),
+            settled: Signal::new(false),
             value: Signal::new(initial_value.to_string()),
             error: Signal::new(None),
         };
@@ -266,11 +270,18 @@ pub fn MessageBox(props: MessageBoxProps) -> Element {
     let prompt_spec = props.prompt.clone();
     let hide_cancel = props.hide_cancel;
 
-    // Settle helper: close, then report the outcome exactly once.
+    // Settle helper: close, then report the outcome EXACTLY once. The
+    // settled flag is the idempotency gate (Vue's promise resolves once even
+    // if a confirm and a dismiss race in the same tick).
     let settle = {
         let resolve = resolve.clone();
         let open_state = local.open.clone();
+        let settled_state = local.settled.clone();
         move |outcome: MessageBoxOutcome| {
+            if settled_state.get() {
+                return;
+            }
+            settled_state.set(true);
             open_state.set(false);
             if let Some(handler) = resolve.as_ref() {
                 handler.call(outcome);

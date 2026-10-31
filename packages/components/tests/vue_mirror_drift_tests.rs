@@ -132,13 +132,16 @@ fn mirrors_are_absent_from_manifest_never() {
 
 #[test]
 fn manifest_rows_exist_and_carry_provenance_headers() {
+    // This runs in EVERY layout (including a crates.io sdist, where the
+    // upstream tree is absent): the header must be byte-exact, so tampering
+    // above the marker cannot hide behind a skipped byte comparison.
     for row in read_manifest() {
         let mirror_path = mirror_root().join(&row.mirror_rel);
         let text = std::fs::read_to_string(&mirror_path)
             .unwrap_or_else(|e| panic!("read {}: {e}", mirror_path.display()));
         assert!(
-            text.contains("do not hand-edit here."),
-            "mirror {} lost its provenance header",
+            text.starts_with(EXPECTED_HEADER),
+            "mirror {} does not carry the exact provenance header",
             row.mirror_rel
         );
     }
@@ -281,9 +284,20 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
     );
 
     // Deterministic concatenation: the same registry renders the same bytes.
+    // Compare digests so a failure prints hashes, not two 300 KB bundles.
     let mut second = StyleRegistry::default();
     second.register_all();
-    assert_eq!(bundle, second.css_bundle());
+    let digest = |text: &str| -> u64 {
+        use std::hash::{Hash, Hasher};
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        text.hash(&mut hasher);
+        hasher.finish()
+    };
+    assert_eq!(
+        (bundle.len(), digest(&bundle)),
+        (second.css_bundle().len(), digest(&second.css_bundle())),
+        "registry bundle concatenation must be deterministic"
+    );
 }
 
 fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) {

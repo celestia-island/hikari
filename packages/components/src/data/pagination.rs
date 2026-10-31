@@ -751,6 +751,32 @@ mod tests {
     }
 
     #[test]
+    fn test_pagination_jump_state_is_per_instance() {
+        use super::pagination_jump_state;
+
+        let a = pagination_jump_state("instance-a");
+        let b = pagination_jump_state("instance-b");
+
+        // Independent signals: opening A must not open B.
+        let mut opened = a.get();
+        opened.open = true;
+        opened.which = 1;
+        a.set(opened);
+
+        assert!(a.get().open);
+        assert!(!b.get().open, "jump layers must not be shared");
+        assert_eq!(a.get().which, 1);
+
+        // Jumping to a page closes the layer it belongs to.
+        let mut closed = a.get();
+        closed.open = false;
+        a.set(closed);
+        let closed_state = a.get();
+        assert!(!closed_state.open, "jump closes its own layer");
+        assert_eq!(closed_state.which, 1, "closing keeps the anchor selection");
+    }
+
+    #[test]
     fn test_pagination_props_clone() {
         let props = PaginationProps {
             instance_id: Some("test-a".to_string()),

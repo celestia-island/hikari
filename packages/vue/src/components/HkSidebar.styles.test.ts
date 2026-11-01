@@ -133,9 +133,16 @@ describe("HkSidebar scroll end-cap", () => {
       )) {
         const text = decl[0].trim();
         if (/^padding-inline/.test(text)) {
-          expect(rule, `a dress inline track outside the body rule: ${rule}`).toContain(
-            ".hk-sidebar-body",
-          );
+          // Chunk-anchored, not chunk-containment: the chunk carries the
+          // rule's own selector before its "{" — requiring THE SELECTOR
+          // to be the body's is what actually confines the inline track
+          // to the body rule (a raw chunk toContain would pass on a
+          // neighbor's selector too — 2026-11-02 review).
+          const selector = rule.slice(0, rule.indexOf("{"));
+          expect(
+            selector,
+            `a dress inline track outside the body rule: ${rule}`,
+          ).toContain(".hk-sidebar-body");
           expect(
             text,
             `a dress inline track drifted from the row square: ${text}`,
@@ -152,11 +159,14 @@ describe("HkSidebar scroll end-cap", () => {
       );
       // block-FLOW metrics that move rows just the same (line-height
       // already falls under the `height` alternative via the word
-      // boundary), plus the block-EDGE spellings a padding/margin scan
-      // cannot see (2026-11-02 review: border-block-start-width and
-      // inset-block drifted rows while every padding check stayed green).
+      // boundary; the logical `block-size` family spelled out
+      // separately — "min-block-size" carries no "height" substring,
+      // 2026-11-02 review), plus the block-EDGE spellings a
+      // padding/margin scan cannot see (border-block-start-width and
+      // inset-block drifted rows while every padding check stayed
+      // green).
       expect(rule, `block-flow metric in the dress: ${rule}`).not.toMatch(
-        /\b(?:gap|row-gap|height|min-height|max-height)\s*:/,
+        /\b(?:gap|row-gap|height|min-height|max-height|(?:min-|max-)?block-size)\s*:/,
       );
       expect(rule, `block-edge border in the dress: ${rule}`).not.toMatch(/\bborder-block/);
       expect(rule, `block-edge inset in the dress: ${rule}`).not.toMatch(/\binset-block/);

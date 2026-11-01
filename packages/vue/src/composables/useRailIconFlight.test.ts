@@ -235,11 +235,11 @@ describe("useRailIconFlight", () => {
 
     expect(h.swap().getAttribute(RAIL_FLIP_ACTIVE_ATTR), "the flight is armed").toBe("");
     const layer = flightLayer(h);
-    expect(layer, "the flight layer lives on the ENTERING item").toBeTruthy();
+    expect(layer, "the flight layer lives on the swap host").toBeTruthy();
     expect(
-      layer!.closest(`[${RAIL_FLIP_ITEM_ATTR}="rail"]`),
-      "the stage is the entering item (the stable inline-start box)",
-    ).toBeTruthy();
+      layer!.parentElement,
+      "the stage is the SWAP HOST — outside both dissolving items, so the clones never inherit the enter fade",
+    ).toBe(h.swap());
     // Two MATCHED keys fly; "rail-only"/"full-only" have no partner and
     // must dissolve instead of being invented a source.
     expect(layer!.querySelectorAll(".hk-sidebar-rail-flight-clone")).toHaveLength(2);

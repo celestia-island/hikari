@@ -159,29 +159,31 @@
  * the host from STRETCHING, which would clip nothing but would invite
  * percentage-width content to follow the animation.) The generations
  * fill the swap's height so the bands' flex column (spacer, footer at
- * the bottom) behaves exactly as it did as a direct child of the clip. */
+ * the bottom) behaves exactly as it did as a direct child of the clip.
+ *
+ * position: relative makes the host the containing block for the rail
+ * flip's FLIGHT LAYER (useRailIconFlight). The host is the right stage
+ * for two reasons, each the inverse of the other's failure mode
+ * (2026-11-02 review): its inline-START edge is the docked edge
+ * `align-self: flex-start` pins — stable while only the inline-END edge
+ * tracks the animating clip width, in LTR and RTL alike (a physical
+ * left anchor would drift by the whole width increment in RTL); and it
+ * sits OUTSIDE both dissolving items, so the clones never inherit an
+ * item's enter fade (enter-from holds opacity 0 for the flight's first
+ * frames — an item-anchored clone blinks out exactly when it should
+ * substitute). Clone insets are written as LOGICAL offsets from the
+ * stable edge; see the composable. */
 .hk-sidebar-rail-clip > .hk-sidebar-rail-swap {
   flex: 1;
   min-height: 0;
   align-self: flex-start;
-}
-
-/* The rail flip's flight stage (useRailIconFlight): the flight layer
- * mounts INSIDE the ENTERING item, which — like every generation — is
- * pinned at the docked inline-start edge and never moves while the
- * panel's width animates, in LTR or RTL alike. The swap HOST must NOT
- * be the containing block: it tracks the animating clip width, so a
- * host-anchored clone would drift with the very animation it mirrors
- * (2026-11-02 review). Scoped to the rail swap: HkCrossfade's other
- * consumers keep their static items. */
-.hk-sidebar-rail-swap .hk-crossfade-item {
   position: relative;
 }
 
 /* The flight layer + clones (see useRailIconFlight). The layer covers
- * the entering item — the widest generation's footprint — so a clone
- * never repositions relative to the animating panel; its own geometry
- * is inline (the measured rects, written as LOGICAL insets from the
+ * the host — the widest generation's footprint — so a clone never
+ * repositions relative to the animating panel; its own geometry is
+ * inline (the measured rects, written as LOGICAL insets from the
  * stable inline-start edge). pointer-events stay dead: the layer is
  * paint-only chrome above a pointer-dead dissolve. Clones keep
  * inline-flex centering so the svg sits in the cell exactly as the real

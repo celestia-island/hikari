@@ -151,13 +151,20 @@ describe("HkSidebarRail geometry contract", () => {
     expect(swap).toContain("flex: 1");
     expect(swap).toContain("min-height: 0");
     expect(swap).toContain("align-self: flex-start");
-    // The swap host deliberately is NOT the flight layer's containing
-    // block: it tracks the animating clip width and would drag a
-    // host-anchored clone along (the RTL review finding). The stage is
-    // the ENTERING item — pinned at the docked inline-start edge:
-    const stage = ruleBody(css, ".hk-sidebar-rail-swap .hk-crossfade-item");
-    expect(stage, "the flight stage rule exists").not.toBeNull();
-    expect(stage).toContain("position: relative");
+    // The swap host IS the flight layer's containing block: its
+    // inline-start edge is the docked edge (stable in LTR and RTL while
+    // only the inline-END edge tracks the animating clip width), and it
+    // sits OUTSIDE both dissolving items — clones must not inherit an
+    // item's enter fade (enter-from holds opacity 0 for the flight's
+    // first frames; an item-anchored clone blinks out at arm time).
+    expect(swap).toContain("position: relative");
+    // The dissolving items must NOT become containing blocks: a
+    // relative item would put the clones inside the very opacity group
+    // the flight exists to bypass.
+    expect(
+      ruleBody(css, ".hk-sidebar-rail-swap .hk-crossfade-item"),
+      "the dissolve item must not become the clone's containing block",
+    ).toBeNull();
 
     // Each generation is the flex column the bands expect, filling the
     // swap's height (spacer + footer-at-bottom behave as they did as

@@ -1,7 +1,7 @@
 import { onScopeDispose, watch } from "vue";
 
 import { drawnScale } from "./layoutGeometry";
-import { useMediaQuery } from "../runtime/useMediaQuery";
+import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
 
 /**
  * useRailIconFlight — the rail flip's icon continuity layer (2026-11-02).
@@ -32,19 +32,25 @@ import { useMediaQuery } from "../runtime/useMediaQuery";
  *    while a real browser's dissolve (a 300ms CSS transition) is still
  *    mid-flight. A watchdog-degraded synchronous swap has no leaving
  *    item at all, and the flight stays dormant.
- * 2. Each MATCHED icon is cloned into a flight layer on the ENTERING
- *    item and animated (WAAPI) from the leaving icon's rect to the
- *    entering one. The delta is signed, so expand/collapse is one code
- *    path; the layer rides the ENTERING item because that box — like
- *    every generation — is pinned at the docked inline-start edge and
- *    never moves while the panel's width animates, in LTR or RTL alike
- *    (the swap HOST tracks the animating clip width and would drag a
- *    host-anchored clone along with it — the 2026-11-02 review's RTL
- *    finding). Clone insets are therefore written as LOGICAL offsets
- *    from that stable inline-start edge, and divided by the ancestor
- *    draw scale (`drawnScale` — a root-level `html { zoom }` multiplies
- *    every measured viewport px by k; values written back in local px
- *    would render k times too far).
+ * 2. Each MATCHED icon is cloned into a flight layer on the SWAP HOST
+ *    and animated (WAAPI) from the leaving icon's rect to the entering
+ *    one. The delta is signed, so expand/collapse is one code path. The
+ *    host is the right stage for two reasons, each the inverse of the
+ *    other's failure mode (both from the 2026-11-02 review): its
+ *    inline-START edge is the docked edge `align-self: flex-start`
+ *    pins — stable while only the inline-END edge tracks the animating
+ *    clip width, in LTR and RTL alike (a PHYSICAL left anchor would
+ *    drift by the whole width increment in RTL); and the host sits
+ *    OUTSIDE both dissolving items, whose opacity the clones must not
+ *    inherit — an entering-item stage would multiply every clone by the
+ *    item's enter fade (`enter-from` holds opacity 0 until Vue's second
+ *    rAF, one frame AFTER this flight arms) and the substituted icons
+ *    would blink out for exactly the frames the flight exists to cure.
+ *    Clone insets are therefore written as LOGICAL offsets from the
+ *    stable inline-start edge, and divided by the ancestor draw scale
+ *    (`drawnScale` — a root-level `html { zoom }` multiplies every
+ *    measured viewport px by k; values written back in local px would
+ *    render k times too far).
  * 3. While the flight runs, the leaving generation's MATCHED icons hide
  *    (CSS keyed on the host's `data-flipping` + the leave item's
  *    dissolve class + the per-cell `data-flip-flying` mark this
@@ -117,12 +123,9 @@ interface FlightPair {
   template: HTMLElement;
 }
 
-/** What one flight needs from the swap: the paired icons and the stable
- *  box the flight layer mounts on (the ENTERING item — pinned at the
- *  docked inline-start edge, never moved by the panel's width animation). */
+/** What one flight needs from the swap: the paired icons. */
 interface FlightStage {
   pairs: FlightPair[];
-  stageEl: HTMLElement;
 }
 
 export function useRailIconFlight(
@@ -169,6 +172,7 @@ export function useRailIconFlight(
     swapEl()?.removeAttribute(RAIL_FLIP_ACTIVE_ATTR);
   };
   onScopeDispose(sweep);
+  onScopeDispose(() => releaseMediaQuery("(prefers-reduced-motion: reduce)"));
 
   /** A settle callback from flight `id`: sweep only when that flight is
    *  still the one on stage. */
@@ -226,7 +230,7 @@ export function useRailIconFlight(
         template: toEl,
       });
     }
-    return { pairs, stageEl: entering };
+    return { pairs };
   };
 
   const runFlight = (): void => {
@@ -238,7 +242,7 @@ export function useRailIconFlight(
     if (!host || !flightCapable()) return;
     const stage = collectStage(host);
     if (!stage || !stage.pairs.length) return;
-    const { pairs, stageEl } = stage;
+    const { pairs } = stage;
     // Identical positions (a host whose densities don't move the icon
     // column): the dissolve alone is already continuous — no layer.
     if (!pairs.some(({ from, to }) => from.left !== to.left || from.top !== to.top)) return;
@@ -251,6 +255,9 @@ export function useRailIconFlight(
     const flightMs = RAIL_FLIGHT_MS + delay;
 
     host.setAttribute(RAIL_FLIP_ACTIVE_ATTR, "");
+    // The fallback sweep arms BEFORE any clone animates: a throwing
+    // `animate` mid-loop must not strand the freshly hidden marks until
+    // the next flip (2026-11-02 review).
     // Stamp exactly the cells being substituted BEFORE any paint with the
     // layer up: the hide rule reads this mark, so an opted-in cell
     // without a clone partner keeps dissolving (2026-11-02 review S1-1).
@@ -261,13 +268,14 @@ export function useRailIconFlight(
     layer = document.createElement("div");
     layer.className = "hk-sidebar-rail-flight";
     layer.setAttribute("aria-hidden", "true");
-    // The stage (entering item) is pinned at the docked inline-start edge
-    // and does not move while the panel animates — a stable origin in
-    // both directions. Its draw scale converts measured viewport px into
-    // the local px the layer's own insets are painted at (root zoom).
-    const origin = stageEl.getBoundingClientRect();
-    const scale = drawnScale(stageEl);
-    const rtl = getComputedStyle(stageEl).direction === "rtl";
+    sweepTimer = setTimeout(() => sweepIfCurrent(flightId), RAIL_FLIGHT_SWEEP_MS + delay);
+    // The host's inline-start edge is the docked edge — a stable origin
+    // in both directions (see the mechanism note above). Its draw scale
+    // converts measured viewport px into the local px the layer's own
+    // insets are painted at (root zoom).
+    const origin = host.getBoundingClientRect();
+    const scale = drawnScale(host);
+    const rtl = getComputedStyle(host).direction === "rtl";
     for (const pair of pairs) {
       // Logical inline offset from the stage's stable inline-start edge;
       // physical top (the block axis is direction-free).
@@ -304,8 +312,7 @@ export function useRailIconFlight(
       anim.addEventListener("cancel", () => sweepIfCurrent(flightId));
       layer.appendChild(clone);
     }
-    stageEl.appendChild(layer);
-    sweepTimer = setTimeout(() => sweepIfCurrent(flightId), RAIL_FLIGHT_SWEEP_MS + delay);
+    host.appendChild(layer);
   };
 
   watch(

@@ -196,6 +196,26 @@ LAYOUT_SHEETS: list[str] = [
     "HkMenu.scss",
 ]
 
+# W6 — overlay + auth family. `HkSelectPanel` and `HkContextMenuProvider` ship no
+# sheet of their own (the panel composes HkSelect's surface; the provider renders
+# nothing), and the auth cards' geometry rides `admin-tokens.scss` (vendored).
+OVERLAY_SHEETS: list[str] = [
+    "HkAdaptiveDialog.scss",
+    "HkPopupSelect.scss",
+    "HkFloatingLayer.scss",
+    "HkAltSignIn.scss",
+    "HkMfaVerifyCard.scss",
+    "HkThirdPartySignInCard.scss",
+    "HkAuthMethodList.scss",
+    "HkAuthSubmitButton.scss",
+    "HkPasswordSurface.scss",
+    "HkCaptchaModal.scss",
+    "HkCaptchaWidget.scss",
+    "HkProtocolModal.scss",
+    "HkCookieConsent.scss",
+    "HkTemplateField.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -240,7 +260,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -249,7 +269,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

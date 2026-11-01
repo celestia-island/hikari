@@ -676,6 +676,22 @@
 @import './vue-mirror/components/HkNavItem.scss';
 @import './vue-mirror/components/HkMenu.scss';
 @import './vue-mirror/styles/admin-tokens.scss';
+
+// W6 overlay + auth family mirrors
+@import './vue-mirror/components/HkAdaptiveDialog.scss';
+@import './vue-mirror/components/HkPopupSelect.scss';
+@import './vue-mirror/components/HkFloatingLayer.scss';
+@import './vue-mirror/components/HkAltSignIn.scss';
+@import './vue-mirror/components/HkMfaVerifyCard.scss';
+@import './vue-mirror/components/HkThirdPartySignInCard.scss';
+@import './vue-mirror/components/HkAuthMethodList.scss';
+@import './vue-mirror/components/HkAuthSubmitButton.scss';
+@import './vue-mirror/components/HkPasswordSurface.scss';
+@import './vue-mirror/components/HkCaptchaModal.scss';
+@import './vue-mirror/components/HkCaptchaWidget.scss';
+@import './vue-mirror/components/HkProtocolModal.scss';
+@import './vue-mirror/components/HkCookieConsent.scss';
+@import './vue-mirror/components/HkTemplateField.scss';
 @import './vue-mirror/components/HkTemplateField.scss';
 @import './vue-mirror/components/HkTokenInput.scss';
 @import './vue-mirror/components/HkColorPicker.scss';

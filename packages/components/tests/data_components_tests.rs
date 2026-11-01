@@ -12,8 +12,10 @@
 #[cfg(test)]
 mod tests {
     use hikari_components::data::filter_panel::FilterOperator;
+    use hikari_components::data::node::{TreeNodeData, TreeNodeProps};
     use hikari_components::data::{
-        CellProps, ColumnAlign, ColumnDef, PaginationProps, SortConfig, SortDirection, SortProps,
+        CellProps, ColumnAlign, ColumnDef, DragDropTreeProps, DragTreeNodeData, PaginationProps,
+        RowSelectionProps, SelectionProps, SelectionType, SortConfig, SortDirection, SortProps,
         TableColumn, TableManageMode, TableProps, TableRow, TableSize, TreeItem, TreeProps,
         TreeSize,
     };
@@ -144,6 +146,102 @@ mod tests {
         let ops = [FilterOperator::Approx, FilterOperator::Napprox];
         assert_eq!(ops.len(), 2);
         assert_eq!(FilterOperator::default(), FilterOperator::Eq);
+    }
+
+    // ── Untouched legacy faces (coverage restored after the W3 rewrite) ──
+
+    #[test]
+    fn selection_props_default() {
+        let props = SelectionProps::default();
+        assert!(props.row_keys.is_empty());
+        assert_eq!(props.selection_type, SelectionType::Checkbox);
+        assert!(!props.fixed_column);
+        assert!(props.available_keys.is_empty());
+    }
+
+    #[test]
+    fn selection_radio_mode() {
+        let props = SelectionProps {
+            selection_type: SelectionType::Radio,
+            available_keys: vec!["a".to_string(), "b".to_string()],
+            row_keys: vec!["a".to_string()],
+            fixed_column: true,
+            ..Default::default()
+        };
+        assert_eq!(props.selection_type, SelectionType::Radio);
+        assert_eq!(props.available_keys.len(), 2);
+        assert!(props.fixed_column);
+    }
+
+    #[test]
+    fn row_selection_props_default() {
+        let props = RowSelectionProps {
+            row_key: "row1".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(props.row_key, "row1");
+        assert!(props.selected_keys.is_empty());
+        assert_eq!(props.selection_type, SelectionType::Checkbox);
+    }
+
+    #[test]
+    fn row_selection_selected_keys() {
+        let props = RowSelectionProps {
+            row_key: "row2".to_string(),
+            selected_keys: vec!["row1".to_string(), "row2".to_string()],
+            class: "selected-row".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(props.selected_keys.len(), 2);
+        assert_eq!(props.class, "selected-row");
+    }
+
+    #[test]
+    fn node_props_default() {
+        let props = TreeNodeProps::default();
+        assert!(props.node_key.is_empty());
+        assert!(props.label.is_empty());
+        assert!(!props.expanded);
+        assert!(!props.selected);
+        assert_eq!(props.level, 0);
+        assert!(!props.disabled);
+    }
+
+    #[test]
+    fn node_children_data() {
+        let data = [TreeNodeData {
+            key: "c1".to_string(),
+            label: "Child 1".to_string(),
+            children: None,
+            disabled: false,
+        }];
+        assert_eq!(data.len(), 1);
+        assert!(!data[0].disabled);
+    }
+
+    #[test]
+    fn drag_drop_props_default() {
+        let props = DragDropTreeProps::default();
+        assert!(props.data.is_empty());
+        assert!(props.draggable);
+        assert!(props.drop_allowed);
+    }
+
+    #[test]
+    fn drag_tree_data_nests() {
+        let data = [DragTreeNodeData {
+            item_key: "node1".to_string(),
+            title: "Node 1".to_string(),
+            node_children: vec![DragTreeNodeData {
+                item_key: "node1-1".to_string(),
+                title: "Child 1".to_string(),
+                node_children: vec![],
+                disabled: false,
+            }],
+            disabled: false,
+        }];
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0].node_children.len(), 1);
     }
 
     // ── Sort / cell / column (unchanged legacy primitives) ───────────

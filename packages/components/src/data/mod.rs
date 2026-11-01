@@ -20,7 +20,6 @@
 //! - [`Collapse`] - Animated collapse/expand for tree nodes
 //! - [`DragDropTree`] - Drag and drop for tree nodes
 //! - [`VirtualTree`] - Virtual scrolling for large trees
-//! - [`Filter`] - Column filter with multiple options
 //! - [`Selection`] - Row selection (checkbox/radio)
 //! - [`Sort`] - Column sort with direction indicator
 //!

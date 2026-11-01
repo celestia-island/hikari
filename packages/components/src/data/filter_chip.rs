@@ -48,11 +48,10 @@
 //     presentation Vue gets free from HkPopover; the mirror keeps the anchored
 //     layer and the HOST decides the form factor (the sheet geometry lives in
 //     `HkPopover.scss`, which is not this component's table).
-//   * CSS GAP, declared: the pill group's own sheet (`HkPillToggleGroup.scss`)
-//     is NOT in this wave's vendoring manifest and has no Rust mirror, so the
-//     emitted `.hk-pill-group*` classes currently resolve to no rule in the
-//     Rust bundle. The DOM stays faithful on purpose — the day that sheet is
-//     mirrored (or a host supplies it), the pills paint with no markup change.
+//   * The pill group's own sheet (`HkPillToggleGroup.scss`) IS vendored and
+//     registered as chrome (`vue-pill-toggle-group`), so the emitted
+//     `.hk-pill-group*` classes paint; this component's own `styles()` table
+//     stays separate (the group is a shared chrome sheet, like HkCornerBadge).
 //   * `selected` is a `Vec<String>` (Vue: a `Set`); membership is what the
 //     contract needs, and a Vec keeps the prop deterministic + comparable.
 //   * `icon` is an `Element` slot (Vue resolves a component/name through
@@ -499,10 +498,11 @@ mod tests {
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored filter-chip sheet"
         );
-        // The declared CSS gap: the pill group's sheet is not in this table.
+        // The pill group lives in the shared chrome registration, not in this
+        // component's own table.
         assert!(
             !css.contains(".hk-pill-group"),
-            "the pill group's sheet is not vendored in this wave — see the header"
+            "the pill group chrome belongs to `vue-pill-toggle-group`, not here"
         );
     }
 

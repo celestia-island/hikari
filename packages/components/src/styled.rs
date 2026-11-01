@@ -33,6 +33,7 @@ impl StyleRegistry {
         self.register("vue-window-close", vue_window_close_css());
         self.register("vue-button-chrome", vue_button_chrome_css());
         self.register("vue-corner-badge", vue_corner_badge_css());
+        self.register("vue-pill-toggle-group", vue_pill_toggle_group_css());
     }
 
     pub fn register_vue_token_fallbacks(&mut self) {
@@ -338,6 +339,12 @@ pub fn vue_token_fallbacks_css() -> &'static str {
 /// The mirrored window-close chrome (`packages/vue/src/components/window-close.scss`).
 pub fn vue_window_close_css() -> &'static str {
     tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/window-close.scss", no_hash }.0
+}
+
+/// The mirrored pill toggle group (`HkPillToggleGroup.scss`) — the filter
+/// chip's popover group rules live here.
+pub fn vue_pill_toggle_group_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkPillToggleGroup.scss", no_hash }.0
 }
 
 /// The mirrored corner-badge dots (`HkCornerBadge.scss`) — IconButton's

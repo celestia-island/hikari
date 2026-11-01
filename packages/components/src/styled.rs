@@ -89,10 +89,15 @@ impl StyleRegistry {
     pub fn register_basic_components(&mut self) {
         use crate::basic::{
             ArrowComponent, AvatarComponent, BackgroundComponent, BadgeComponent, ButtonComponent,
-            CanvasComponent, CardComponent, CheckboxComponent, DatePickerComponent,
+            CanvasComponent, CardComponent, CheckboxComponent, ColorPickerComponent,
+            DatePickerComponent, DateTagComponent, DateTimePickerComponent, FabComponent,
+            FileBrowserDialogComponent, FileFieldComponent, FilePickerFieldComponent,
             FileUploadComponent, FormFieldComponent, IconButtonComponent, IconButtonGroupComponent,
-            IconChipComponent, InputComponent, KbdComponent, LabelComponent, RadioGroupComponent,
-            SelectComponent, SliderComponent, SwitchComponent, TextareaComponent,
+            IconChipComponent, InputComponent, KbdComponent, LabelComponent, OtpInputComponent,
+            PhoneInputComponent, RadioGroupComponent, RollingNumberComponent, SearchInputComponent,
+            SelectComponent, SliderComponent, SliderFieldComponent, SwitchComponent,
+            TagInputComponent, TemplateTextComponent, TextareaComponent, TimeZoneGlobeComponent,
+            TokenInputComponent,
         };
         ArrowComponent::register(self);
         BackgroundComponent::register(self);
@@ -116,6 +121,22 @@ impl StyleRegistry {
         FileUploadComponent::register(self);
         FormFieldComponent::register(self);
         DatePickerComponent::register(self);
+        ColorPickerComponent::register(self);
+        DateTagComponent::register(self);
+        DateTimePickerComponent::register(self);
+        FabComponent::register(self);
+        FileBrowserDialogComponent::register(self);
+        FileFieldComponent::register(self);
+        FilePickerFieldComponent::register(self);
+        OtpInputComponent::register(self);
+        PhoneInputComponent::register(self);
+        RollingNumberComponent::register(self);
+        SearchInputComponent::register(self);
+        SliderFieldComponent::register(self);
+        TagInputComponent::register(self);
+        TemplateTextComponent::register(self);
+        TimeZoneGlobeComponent::register(self);
+        TokenInputComponent::register(self);
     }
 
     #[cfg(not(feature = "basic"))]
@@ -231,10 +252,11 @@ impl StyleRegistry {
     #[cfg(feature = "entry")]
     pub fn register_entry_components(&mut self) {
         use crate::entry::{
-            AutoCompleteComponent, CascaderComponent, NumberInputComponent, SearchComponent,
-            TransferComponent,
+            AutoCompleteComponent, CascaderComponent, NumberInputComponent,
+            NumberSteppersComponent, SearchComponent, TransferComponent,
         };
         NumberInputComponent::register(self);
+        NumberSteppersComponent::register(self);
         SearchComponent::register(self);
         AutoCompleteComponent::register(self);
         CascaderComponent::register(self);

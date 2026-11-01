@@ -1,0 +1,434 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* ── HkDateTimePicker ──────────────────────────────────────────────
+ * Inline/popup calendar with a time stepper row. The fixed-size view
+ * stage and the direction-aware view transition live in HkPickerPane.scss. */
+
+@use "./HkPickerPane" as picker-pane;
+@use "../styles/polyfill" as *;
+
+.hk-dtp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 8px);
+  @include user-select(none);
+  /* Fill the host (inline sheets/dialogs) instead of collapsing to the
+   * grid's min-content width — a bottom-sheet calendar should use the
+   * space it is given, not shrink to a cramped block. */
+  width: 100%;
+  min-width: 17.5rem;
+}
+
+.hk-dtp-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  /* Fixed height keeps the header row — and therefore the shared stage
+   * height — identical in every view and locale (enlarged on touch). */
+  height: var(--hk-picker-header);
+}
+
+.hk-dtp-header-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 2px);
+  min-width: 0;
+}
+
+.hk-dtp-header-side[data-side="right"] {
+  justify-content: flex-end;
+}
+
+.hk-dtp-title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 4px);
+}
+
+.hk-dtp-title-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: var(--space-2, 2px) var(--space-4, 4px);
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: var(--radius-sm, 4px);
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-dtp-nav,
+.hk-dtp-back {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm, 4px);
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-dtp-weekdays,
+.hk-dtp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-2, 2px);
+}
+
+.hk-dtp-wd {
+  text-align: center;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-muted);
+  height: var(--hk-picker-wd);
+  line-height: var(--hk-picker-wd);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.hk-dtp-cell {
+  position: relative;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  /* Fixed height keeps the six-row day grid — and therefore the shared
+   * stage height — independent of the picker width, so drilling between
+   * views never changes the picker's size (enlarged on touch). */
+  height: var(--hk-picker-cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
+  cursor: pointer;
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled):not(.is-selected) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: -1px;
+  }
+
+  &.is-out {
+    opacity: 0.32;
+  }
+
+  &.is-disabled {
+    cursor: default;
+    opacity: 0.25;
+    &:hover { background: transparent; }
+  }
+
+  &.is-today:not(.is-selected) {
+    font-weight: 700;
+    color: var(--hi-color-text-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+  }
+
+  &.is-selected {
+    background: var(--hi-color-primary);
+    color: rgb(var(--color-on-solid-text, 255 255 255));
+    font-weight: 600;
+    &:hover { background: var(--hi-color-primary); }
+  }
+}
+
+.hk-dtp-cell-num {
+  line-height: 1;
+}
+
+/* ── Month / year pick panes ─────────────────────
+ * The shared pane partial (HkPickerPane.scss) keeps these inside the
+ * fixed day-view stage and centers their three rows vertically. */
+
+.hk-dtp-grid[data-variant="pick"] {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.hk-dtp-cell[data-variant="pick"] {
+  height: var(--hk-picker-pick);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+}
+
+/* Dot under marked days */
+
+.hk-dtp-cell-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hi-color-primary) 70%, transparent);
+  pointer-events: none;
+}
+
+/* ── Time stepper + Today ──────────────────────── */
+
+.hk-dtp-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10, 10px);
+  /* Spacing comes from the .hk-dtp gap (the row sits under the fixed
+   * stage in every view); only the separator border remains. */
+  border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
+}
+
+.hk-dtp-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.hk-dtp-step-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 1.5rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm, 4px);
+  transition: color var(--duration-fast, 0.15s) ease, background var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    color: var(--hi-color-text-primary);
+    background: var(--hi-color-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-dtp-step-val {
+  font-size: var(--text-base, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.75rem;
+  text-align: center;
+  color: var(--hi-color-text-primary);
+  line-height: 1.1;
+}
+
+.hk-dtp-time-sep {
+  font-size: var(--text-base, 0.875rem);
+  color: var(--hi-color-muted);
+  padding-top: var(--space-10, 10px);
+}
+
+.hk-dtp-today {
+  margin-inline-start: var(--space-4, 4px);
+  appearance: none;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast, 0.15s) ease, border-color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    color: var(--hi-color-text-primary);
+    border-color: color-mix(in srgb, var(--hi-color-primary) 50%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+/* ── Popup mode ────────────────────────────────── */
+
+.hk-dtp-trigger-wrap {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.hk-dtp-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  background: var(--hi-color-surface);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
+  border-radius: var(--radius-sm, 4px);
+  color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover,
+  &[aria-expanded="true"] {
+    border-color: color-mix(in srgb, var(--hi-color-primary) 50%, transparent);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-dtp-trigger-icon {
+  color: var(--hi-color-muted);
+  flex-shrink: 0;
+}
+
+.hk-dtp-trigger-val {
+  white-space: nowrap;
+}
+
+.hk-dtp-trigger-chev {
+  color: var(--hi-color-muted);
+  transition: transform var(--duration-fast, 0.15s) ease;
+}
+
+.hk-dtp-trigger-chev.is-open {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-dtp-trigger-chev {
+    transition: none;
+  }
+}
+
+.hk-dtp-popup {
+  padding: var(--space-8, 8px);
+  min-width: 260px;
+}
+
+/* Mobile sheet context (#424 centered-cap pattern): the popup wrapper is
+ * the sheet's direct content child, so it takes the centered cap; the
+ * .hk-dtp body root already fills via width: 100% and only needs its
+ * 17.5rem floor lifted so narrow sheets never overflow. The stage pins
+ * height only (HkPickerPane.scss) and the grids use 1fr tracks, so
+ * stretching fights no fixed geometry. */
+.hk-popover-panel.hk-is-sheet .hk-dtp-popup {
+  min-width: 0;
+  max-width: min(22rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.hk-popover-panel.hk-is-sheet .hk-dtp {
+  min-width: 0;
+}
+
+.hk-dtp-popup-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-8, 8px) var(--space-2, 2px) var(--space-2, 2px);
+  margin-top: var(--space-8, 8px);
+  border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
+}
+
+.hk-dtp-popup-confirm {
+  appearance: none;
+  background: var(--hi-color-primary);
+  color: rgb(var(--color-on-solid-text, 255 255 255));
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--space-6, 6px) var(--space-14, 14px);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--duration-fast, 0.15s) ease;
+
+  &:hover { filter: brightness(1.08); }
+  &:focus-visible { outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent); outline-offset: 2px; }
+}
+
+/* ── Native mobile input ─────────────────────────────────────── */
+
+.hk-dtp-native {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  background: var(--hi-color-surface);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
+  border-radius: var(--radius-sm, 4px);
+  color: var(--hi-color-text-primary);
+  font-family: inherit;
+  font-size: var(--text-sm, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--hi-color-primary) 50%, transparent);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi-color-primary) 35%, transparent);
+  }
+}
+
+.hk-dtp-popup-root {
+  display: inline-flex;
+}

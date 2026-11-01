@@ -593,11 +593,9 @@
 
 // W2a basic-form family mirrors
 @import './vue-mirror/components/HkIconButton.scss';
-@import './vue-mirror/components/HkIconButtonVars.scss';
 @import './vue-mirror/components/HkIconButtonGroup.scss';
 @import './vue-mirror/components/HkIconChip.scss';
 @import './vue-mirror/components/HkInput.scss';
-@import './vue-mirror/components/HkPlaceholderMarquee.scss';
 @import './vue-mirror/components/HkTextarea.scss';
 @import './vue-mirror/components/HkSelect.scss';
 @import './vue-mirror/components/HkCheckbox.scss';
@@ -609,6 +607,28 @@
 @import './vue-mirror/components/HkAvatar.scss';
 @import './vue-mirror/components/HkCard.scss';
 @import './vue-mirror/components/HkCornerBadge.scss';
+
+// W2b advanced-input family mirrors
+@import './vue-mirror/components/HkNumberInput.scss';
+@import './vue-mirror/components/HkNumberSteppers.scss';
+@import './vue-mirror/components/HkOtpInput.scss';
+@import './vue-mirror/components/HkPhoneInput.scss';
+@import './vue-mirror/components/HkTag.scss';
+@import './vue-mirror/components/HkTagInput.scss';
+@import './vue-mirror/components/HkTemplateField.scss';
+@import './vue-mirror/components/HkTokenInput.scss';
+@import './vue-mirror/components/HkColorPicker.scss';
+@import './vue-mirror/components/HkDatePicker.scss';
+@import './vue-mirror/components/HkDateTimePicker.scss';
+@import './vue-mirror/components/HkDateTag.scss';
+@import './vue-mirror/components/HkSliderField.scss';
+@import './vue-mirror/components/HkSearchInput.scss';
+@import './vue-mirror/components/HkFileField.scss';
+@import './vue-mirror/components/HkFilePickerField.scss';
+@import './vue-mirror/components/HkFileBrowserDialog.scss';
+@import './vue-mirror/components/HkRollingNumber.scss';
+@import './vue-mirror/components/HkFab.scss';
+@import './vue-mirror/components/HkTimeZoneGlobe.scss';
 @import './vue-mirror/components/HkSpinner.scss';
 
 // ------

@@ -1,0 +1,599 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../tokens";
+
+// HkFileBrowserDialog.scss
+// Remote file-browser picker dialog body (rendered inside an HModal):
+// breadcrumb path bar, quick-link chips, clipboard/rename toolbar,
+// list/grid entries area and the footer form/actions stack.
+//
+// Token-driven like the rest of the library — rgb(var(--color-*)) +
+// the --c-*/--border-*/--space-*/--text-* aliases from tokens.scss — so
+// the surface follows light/dark themes without literal colors
+// (same tone as HkSelect.scss).
+
+// ------
+// Root — the HModal body content
+// ------
+
+.hk-file-browser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  font-size: var(--text-base);
+  color: rgb(var(--color-text));
+}
+
+// ------
+// Breadcrumb path bar + copy-path
+// ------
+
+.hk-file-browser-pathbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+}
+
+.hk-file-browser-crumbs {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  /* Overlay-scrollbar convention: native chrome hidden. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hk-file-browser-crumb {
+  flex-shrink: 0;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: var(--space-2) var(--space-6);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard);
+
+  /* "/" separators between segments (the root crumb renders its own). */
+  & + .hk-file-browser-crumb::before {
+    content: "/";
+    margin-inline-end: var(--space-4);
+    color: color-mix(in srgb, rgb(var(--color-muted)) 60%, transparent);
+  }
+
+  &:hover:not([data-current]) {
+    background: var(--c-primary-subtle);
+    color: rgb(var(--color-text));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-focused-border));
+    outline-offset: 1px;
+  }
+
+  &[data-current] {
+    color: rgb(var(--color-text));
+    font-weight: 600;
+    cursor: default;
+  }
+}
+
+.hk-file-browser-copy-path {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard);
+
+  &:hover {
+    background: var(--c-primary-subtle);
+    color: rgb(var(--color-text));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-focused-border));
+    outline-offset: 1px;
+  }
+}
+
+// ------
+// Quick-link chips
+// ------
+
+.hk-file-browser-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.hk-file-browser-chips-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-muted));
+}
+
+.hk-file-browser-chip {
+  padding: var(--space-2) var(--space-10);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard);
+
+  &:hover {
+    border-color: var(--c-primary-strong);
+    color: rgb(var(--color-text));
+  }
+
+  &:focus-visible {
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+    outline: none;
+  }
+
+  &[data-active] {
+    background: var(--c-primary-subtle);
+    border-color: var(--c-primary-medium);
+    color: rgb(var(--color-text));
+  }
+}
+
+// ------
+// Toolbar — clipboard/rename ops + type filter + layout toggle
+// ------
+
+.hk-file-browser-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.hk-file-browser-ops {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.hk-file-browser-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard),
+    opacity var(--duration-normal) var(--ease-standard);
+
+  &:hover:not(:disabled) {
+    border-color: var(--c-primary-strong);
+    color: rgb(var(--color-text));
+  }
+
+  &:focus-visible {
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+    outline: none;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.hk-file-browser-toolbar-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-inline-start: auto;
+}
+
+/* Compact type-filter select (HkSelect trigger inside). */
+.hk-file-browser-filter {
+  width: 9rem;
+  min-width: 9rem;
+}
+
+.hk-file-browser-layout {
+  display: flex;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.hk-file-browser-layout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard);
+
+  & + .hk-file-browser-layout-btn {
+    border-inline-start: 1px solid var(--border-subtle);
+  }
+
+  &:hover:not([data-active]) {
+    color: rgb(var(--color-text));
+  }
+
+  &:focus-visible {
+    box-shadow: var(--shadow-focus);
+    outline: none;
+  }
+
+  &[data-active] {
+    background: var(--c-primary-subtle);
+    color: rgb(var(--color-text));
+  }
+}
+
+// ------
+// Inline rename row (opens under the toolbar — never window.prompt)
+// ------
+
+.hk-file-browser-rename {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.hk-file-browser-rename-label {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: rgb(var(--color-muted));
+}
+
+.hk-file-browser-rename-input {
+  flex: 1;
+  min-width: 8rem;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  outline: none;
+  transition: border-color var(--duration-normal) var(--ease-standard);
+
+  &:focus {
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.hk-file-browser-rename-error {
+  flex-basis: 100%;
+  font-size: var(--text-xs);
+  color: rgb(var(--color-error));
+}
+
+// ------
+// Entries area — the list/grid body (state carries on data-layout)
+// ------
+
+/* ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the entries area is NOT a
+ * scroll region — its old 24rem cap + native bar was a second scrollbar
+ * nested inside the modal window. The listing grows with its content and
+ * the HkModal body scroller (the window's ONE scrollbar) scrolls it. */
+.hk-file-browser-entries {
+  display: flex;
+  flex-direction: column;
+  min-height: 12rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.hk-file-browser-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24);
+}
+
+.hk-file-browser-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24);
+  font-size: var(--text-sm);
+  color: rgb(var(--color-muted));
+}
+
+.hk-file-browser-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  margin: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--c-error-strong);
+  border-radius: var(--radius-md);
+  background: var(--c-error-dim);
+  color: rgb(var(--color-error));
+  font-size: var(--text-sm);
+}
+
+// List layout: table-like name/size/modified grid rows.
+
+.hk-file-browser-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.hk-file-browser-list-head,
+.hk-file-browser-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6rem 10rem;
+  gap: var(--space-8);
+  align-items: center;
+  padding: var(--space-6) var(--space-12);
+  text-align: start;
+}
+
+// The head is a scroll pin (class + data-side/data-strategy on the
+// element): positioning/z ride the shared .hk-scroll-pin rules, and the
+// doubled class keeps this explicit surface above the pin's default tint
+// regardless of stylesheet import order. Pinned under a gutter-cover
+// host (HkModal) it stops below the body's top whitespace instead of
+// jamming against the window chrome; the cover masks rows while they
+// pass under the gutter.
+.hk-file-browser-list-head.hk-scroll-pin {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: rgb(var(--color-muted));
+  background: rgb(var(--color-surface));
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.hk-file-browser-row {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border-faint);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  cursor: pointer;
+  transition: background-color var(--duration-normal) var(--ease-standard);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--c-primary-subtle);
+  }
+
+  // Keyboard focus is drawn INSIDE the border box (HkSelectionGrid model):
+  // rows scroll beneath the sticky list head (position: sticky + opaque
+  // surface bg), which shaves the top edge of an outer spread ring.
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  &[data-selected] {
+    background: var(--c-primary-dim);
+    box-shadow: inset 2px 0 0 rgb(var(--color-primary));
+  }
+
+  &[data-kind="dir"] .hk-file-browser-col-name {
+    font-weight: 600;
+  }
+}
+
+/* RTL mirrors the physical-left selection bar (house pattern:
+ * HkDraggableGrid.scss flips its inset insertion markers the same way). */
+[dir="rtl"] .hk-file-browser-row[data-selected] {
+  box-shadow: inset -2px 0 0 rgb(var(--color-primary));
+}
+
+.hk-file-browser-col-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hk-file-browser-col-size,
+.hk-file-browser-col-modified {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: end;
+  font-size: var(--text-xs);
+  color: rgb(var(--color-muted));
+}
+
+// Grid layout: tile cards (the area root flips data-layout="grid").
+
+.hk-file-browser-entries[data-layout="grid"] .hk-file-browser-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-8);
+  padding: var(--space-8);
+}
+
+.hk-file-browser-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard);
+
+  &:hover {
+    border-color: var(--c-primary-medium);
+  }
+
+  // Same inside-the-border-box focus ring as the list rows: grid tiles
+  // also scroll beneath the sticky list head in the modal scroller.
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  &[data-selected] {
+    background: var(--c-primary-dim);
+    border-color: var(--c-primary-medium);
+  }
+
+  &[data-kind="dir"] .hk-file-browser-tile-name {
+    font-weight: 600;
+  }
+}
+
+.hk-file-browser-tile-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--text-sm);
+  color: rgb(var(--color-text));
+}
+
+.hk-file-browser-tile-meta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--text-xs);
+  color: rgb(var(--color-muted));
+}
+
+// ------
+// Footer — footerForm slot content above the action buttons
+// ------
+
+.hk-file-browser-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+}
+
+.hk-file-browser-footer-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.hk-file-browser-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+// ------
+// Mobile (≤767px) — let the desktop internals breathe in the docked sheet
+// ------
+// 2026-09-08 scan wave 2 finding F5 (LOW, user-facing: chest's workspace
+// file-browser flow opens this dialog on phones). HkModal's docking is
+// correct (full-bleed bottom sheet); the squeeze is HERE, in internals
+// sized for the 56rem desktop frame. The scan's "sidebar/tree column"
+// label drifted: the 9rem pair at the flagged lines is the toolbar's type
+// filter, and the 8rem floor is the rename input — there is no sidebar.
+// Pure relaxation only (same grammar as HkModal's ≤767px block): no
+// stacking, no reordering, no JS — the existing rows/columns just stop
+// reserving desktop widths.
+@media (max-width: 767px) {
+  // Type filter: 9rem + min-width 9rem is a third of a 412px sheet for a
+  // select whose longest label is an extension (".csv"). Let the flex item
+  // size to its HkSelect trigger content instead of holding a fixed box —
+  // no floor needed: the trigger carries its own padding/min-height and
+  // the wrapping toolbar stacks it onto its own line when truly cramped.
+  .hk-file-browser-filter {
+    width: auto;
+    min-width: 0;
+  }
+
+  // Rename input: the 8rem floor decided the row's wrap point before the
+  // label and the two buttons got their share. min-width: 0 lets the
+  // flex-wrap row hand the input whatever line width is left.
+  .hk-file-browser-rename-input {
+    min-width: 0;
+  }
+
+  // List rows: desktop reserves fixed 6rem + 10rem (256px) for the
+  // size/modified tracks — about three quarters of a 412px sheet's content
+  // width, leaving the name column a sliver. Both cells already ellipsize,
+  // so cap them as compressible maxima (they still take the full cap on
+  // roomier sheets and shrink only under real pressure) and reclaim one
+  // spacing step of horizontal row padding for the name column.
+  .hk-file-browser-list-head,
+  .hk-file-browser-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 4.5rem) minmax(0, 6.5rem);
+    padding-inline: var(--space-8);
+  }
+}

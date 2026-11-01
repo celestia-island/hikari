@@ -28,7 +28,7 @@
 //
 // State is controlled-only (value / min / max / step / disabled in, one
 // callback out), so no tairitsu `Signal`/`use_state` is involved. The only
-// non-reactive bit is the drag flag, a plain `Rc<Cell<bool>>` (the house
+// non-reactive bit is the drag flag, a module-level `thread_local!` cell (the house
 // pattern from `feedback/tooltip.rs`) — it never drives rendering.
 //
 // Deltas vs Vue (documented):

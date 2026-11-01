@@ -48,10 +48,9 @@
 //     trusted static markup through `dangerous_inner_html` (tairitsu's element
 //     tree has no SVG-namespace creation path, so an `svg {}` rsx child would
 //     be an HTML element); the `<svg>` inside is byte-identical to Vue. The
-//     dot keeps Vue's `hk-corner-badge-{variant}` class, but that tone block
-//     lives in `HkCornerBadge.scss`, which is NOT part of this crate's mirror
-//     manifest — without that sheet every dot falls back to the compiled
-//     `var(--hk-badge-bg, rgb(var(--color-success)))` green.
+//     dot keeps Vue's `hk-corner-badge-{variant}` class; those tone rules live
+//     in `HkCornerBadge.scss`, which IS mirrored and registered through
+//     `StyleRegistry::register_vue_chrome` ("vue-corner-badge").
 
 use hikari_icons::{Icon, MdiIcon};
 

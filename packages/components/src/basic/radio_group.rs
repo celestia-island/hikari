@@ -32,9 +32,10 @@
 //   `name`) and takes its rows from the `options` array, so the context
 //   provider, `RadioButton`, the standalone-row composition and the `name`
 //   prop are all retired.
-// * [`RadioButtonProps`] survives only as a migration-window alias because
-//   `src/prelude.rs` still re-exports the legacy name (that file is outside
-//   this change). Delete the alias together with the prelude line.
+// * [`RadioButtonProps`] survives only as a migration-window alias for call
+//   sites that still spell the legacy type; the prelude re-export was retired
+//   in this same change, so nothing in the crate needs the alias — delete it
+//   with the next breaking window.
 // * Vue's `label` SCOPED slot (rich per-option content) has no Rust prop
 //   equivalent; each row renders its `label` string through the `HkLabel`
 //   mirror. Vue's `key={opt.value}` is a virtual-DOM hint with no `rsx!` slot

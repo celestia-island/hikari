@@ -50,6 +50,11 @@
 //     `usePopupManager`). The retired legacy `PortalEntry::Dropdown` layer is
 //     NOT reused — an inline fixed layer keeps the geometry in props instead of
 //     a portal registry entry.
+//   * no outside-click close: the desktop popout owns no document-level
+//     pointerdown watcher (Vue's `HkSelectPanel` closes on an outside press;
+//     the retired legacy layer had a full-screen mask). `open` closes through
+//     Escape, a row selection, or the mobile scrim — the HOST owns outside
+//     dismissal on desktop.
 //   * no auto-flip and no viewport clamp: both need the MEASURED panel box
 //     (Vue's `positionPanel` reads `offsetWidth`/`offsetHeight`) and tairitsu
 //     0.5.22 has no ref + measurement pairing. The placed side is used
@@ -374,8 +379,13 @@ impl SelectWiring {
                 if self.open {
                     self.set_highlight(step_highlight(self.highlighted, option_count, 1));
                 } else {
+                    // Vue's `isOpen` watcher overwrites the keydown's index 0
+                    // with the selected row, so its observable outcome is
+                    // "open + highlight the current selection". The controlled
+                    // mirror emits ONE open edge and leaves the highlight to
+                    // the host (it owns `highlighted_index`, which this handler
+                    // cannot read back); document it instead of guessing.
                     self.request_open(true);
-                    self.set_highlight(0);
                 }
             }
             "ArrowUp" => {

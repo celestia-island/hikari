@@ -355,9 +355,21 @@ mod tests {
         let html = Checkbox(CheckboxProps::default()).render_to_html();
         let box_start = html.find("hk-checkbox-box").expect("box span");
         let input_start = html.find("hk-checkbox-input").expect("input");
+        // Containment, not mere ordering: the sheet's `:has()` ring only sees
+        // a DESCENDANT input, and a naive `<` comparison would still pass an
+        // input placed after the box's closing tag (R3 mutation M5b).
+        let input_end = input_start + "hk-checkbox-input".len();
+        let open_tag_end = html[box_start..]
+            .find('>')
+            .map(|i| box_start + i + 1)
+            .expect("box open tag");
+        let box_close = html[box_start..]
+            .rfind("</span>")
+            .map(|i| box_start + i)
+            .expect("box close tag");
         assert!(
-            box_start < input_start,
-            "the input must follow the box opening tag: {html}"
+            input_start > open_tag_end && input_end < box_close,
+            "the input must be a DESCENDANT of span.hk-checkbox-box: {html}"
         );
     }
 

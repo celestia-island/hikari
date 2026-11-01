@@ -314,8 +314,40 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
             "registry bundle is missing the canonical token {needle}"
         );
     }
-    // Mirrored family sheets + the chrome they depend on.
-    for needle in [".hk-alert", ".hk-modal", ".hk-window-close", ".hk-btn"] {
+    // One stable class per mirrored family + the chrome they depend on. The
+    // list must grow with the sync table: a sheet that is vendored but never
+    // registered reds here (R3 found 17 unguarded sheets without it).
+    for needle in [
+        ".hk-alert",
+        ".hk-modal",
+        ".hk-window-close",
+        ".hk-btn",
+        ".hk-avatar",
+        ".hk-badge",
+        ".hk-card",
+        ".hk-checkbox",
+        ".hk-input",
+        ".hk-icon-button",
+        ".hk-icon-group",
+        ".hk-icon-chip",
+        ".hk-label",
+        ".hk-radio",
+        ".hk-select",
+        ".hk-slider",
+        ".hk-switch",
+        ".hk-textarea",
+        ".hk-corner-badge",
+        ".hk-spinner",
+        ".hk-progress-ring",
+        ".hk-toast",
+        ".hk-tooltip",
+        ".hk-drawer",
+        ".hk-popover",
+        ".hk-loading-veil",
+        ".hk-message-box",
+        ".hk-confirm-dialog",
+        ".hk-persistent-toast",
+    ] {
         assert!(
             bundle.contains(needle),
             "registry bundle is missing {needle}"

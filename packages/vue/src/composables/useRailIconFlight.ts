@@ -131,12 +131,16 @@ export const RAIL_FLIGHT_SWEEP_MARGIN_MS = 300;
 
 /** Parse a CSS time custom property (`"120ms"`, `"0.15s"`, `""`) into
  *  milliseconds. Anything unparsable or non-positive is 0 — the caller
- *  decides what 0 means (no hold, or the fallback window). */
+ *  decides what 0 means (no hold, or the fallback window). Units are
+ *  case-insensitive in CSS (`"0.3S"` is legal): the check lowercases
+ *  first, or an uppercase second would slip through as 0.3ms — 2026-11-02
+ *  review F3. */
 export function cssDurationMs(value: string): number {
   if (!value) return 0;
   const n = parseFloat(value);
   if (!Number.isFinite(n) || n <= 0) return 0;
-  return value.trim().endsWith("s") && !value.trim().endsWith("ms") ? n * 1000 : n;
+  const unit = value.trim().toLowerCase();
+  return unit.endsWith("s") && !unit.endsWith("ms") ? n * 1000 : n;
 }
 
 
@@ -177,6 +181,18 @@ export function useRailIconFlight(
   let flightSeq = 0;
   let currentFlightId = -1;
   let layer: HTMLElement | null = null;
+  /** The current flight's clone animations. The sweep CANCELS them: a
+   *  finished `fill: forwards` animation is auto-removed by the engine
+   *  only when a LATER animation replaces it on the same target+property
+   *  (the spec's replaceable-animations rule) — and every flight targets
+   *  a brand-new clone, so nothing ever replaces it. Without the cancel,
+   *  each flip strands Animation → effect → clone subtree on the document
+   *  timeline forever (the spec itself warns the pattern accumulates
+   *  "hundreds, even thousands"; hover-peeks arm flights constantly) —
+   *  2026-11-02 review S1. cancel() on an already-idle animation is a
+   *  no-op, and the cancel listener routes through the idempotent
+   *  sweepIfCurrent, so re-entrancy is harmless. */
+  let flightAnims: Animation[] = [];
   /** The leaving cells this flight hid — unmarked on every sweep so a
    *  cancelled/dissolve-less path never leaves a stale hide mark. */
   let hidden: HTMLElement[] = [];
@@ -193,6 +209,12 @@ export function useRailIconFlight(
       clearTimeout(sweepTimer);
       sweepTimer = null;
     }
+    // Detach the ledger BEFORE cancelling: a synchronous cancel event
+    // (test stubs fire them inline; the browser queues them) re-enters
+    // sweep via the listener, and the emptied ledger breaks the cycle.
+    const anims = flightAnims;
+    flightAnims = [];
+    for (const anim of anims) anim.cancel();
     layer?.remove();
     layer = null;
     for (const el of hidden) el.removeAttribute(RAIL_FLIP_FLYING_ATTR);
@@ -361,6 +383,7 @@ export function useRailIconFlight(
       // flight's late finish is a no-op, never its successor's sweeper).
       anim.addEventListener("finish", () => sweepIfCurrent(flightId));
       anim.addEventListener("cancel", () => sweepIfCurrent(flightId));
+      flightAnims.push(anim);
       layer.appendChild(clone);
     }
     host.appendChild(layer);

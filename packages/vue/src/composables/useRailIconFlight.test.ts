@@ -55,6 +55,7 @@ interface RecordedAnimation {
   keyframes: Keyframe[];
   options: KeyframeAnimationOptions;
   fire(type: "finish" | "cancel"): void;
+  cancelCount(): number;
 }
 let animations: RecordedAnimation[] = [];
 
@@ -183,16 +184,26 @@ beforeEach(() => {
     options?: KeyframeAnimationOptions,
   ) {
     const listeners = new Map<string, EventListener>();
+    let cancels = 0;
     const handle = {
       addEventListener: (type: string, listener: EventListener) => {
         listeners.set(type, listener);
       },
-      cancel: () => listeners.get("cancel")?.(new Event("cancel")),
+      cancel: () => {
+        cancels++;
+        listeners.get("cancel")?.(new Event("cancel"));
+      },
       fire(type: "finish" | "cancel") {
         listeners.get(type)?.(new Event(type));
       },
     };
-    animations.push({ el: this, keyframes, options: options ?? ({} as KeyframeAnimationOptions), fire: handle.fire });
+    animations.push({
+      el: this,
+      keyframes,
+      options: options ?? ({} as KeyframeAnimationOptions),
+      fire: handle.fire,
+      cancelCount: () => cancels,
+    });
     return handle as unknown as Animation;
   } as typeof animatable.animate;
 });
@@ -220,6 +231,8 @@ describe("cssDurationMs", () => {
     expect(cssDurationMs("150ms")).toBe(150);
     expect(cssDurationMs("0.2s")).toBe(200);
     expect(cssDurationMs("300ms")).toBe(300);
+    expect(cssDurationMs("0.3S"), "CSS units are case-insensitive").toBe(300);
+    expect(cssDurationMs("150MS")).toBe(150);
     expect(cssDurationMs("garbage")).toBe(0);
     expect(cssDurationMs("-5ms")).toBe(0);
   });
@@ -443,6 +456,14 @@ describe("useRailIconFlight", () => {
     expect(h.swap().hasAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe(false);
     expect(flightLayer(h)).toBeNull();
     expect(animations).toHaveLength(0);
+    // Skip paths never STAMP either: no cell anywhere may carry the hide
+    // mark (the skip tests used to assert only the host attribute and
+    // the layer — a future reorder stamping before a veto would have
+    // stayed green — 2026-11-02 review F5).
+    expect(
+      h.swap().querySelectorAll(`[${RAIL_FLIP_FLYING_ATTR}]`),
+      "a skipped flight marks nothing",
+    ).toHaveLength(0);
   });
 
   it("skips the flight when WAAPI is unavailable", async () => {
@@ -517,6 +538,16 @@ describe("useRailIconFlight", () => {
     animations[0]!.fire("finish");
     expect(flightLayer(h), "the finish listener sweeps immediately").toBeNull();
     expect(h.swap().hasAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe(false);
+    // LEAK PIN: the sweep CANCELS the clone animations, not just drops
+    // the layer — under the spec's replace-only auto-removal a finished
+    // fill:forwards animation on a never-again-animated element would
+    // strand Animation→effect→clone forever (2026-11-02 reviews: one
+    // reading says leak, a real-Chromium probe says element removal
+    // already clears getAnimations(); the cancel makes BOTH readings
+    // true and costs nothing).
+    for (const a of animations) {
+      expect(a.cancelCount(), "sweep cancels every clone animation").toBeGreaterThan(0);
+    }
     // The marks ride along: a swept flight unhides BOTH ends — the
     // leaving cell it substituted AND the entering cell it covered
     // (deleting the unmark loop once stayed green on this side; the pin

@@ -246,7 +246,7 @@ describe("HkSidebarRail geometry contract", () => {
     expect(btn).toContain("--hi-icon-button-radius: 9999px");
   });
 
-  it("hosts the rail flip's icon flight: paint-only layer, dead clones, triply-scoped hide", () => {
+  it("hosts the rail flip's icon flight: paint-only layer, dead clones, single-glyph hide", () => {
     // useRailIconFlight clones the flipping icons onto a layer ABOVE the
     // dissolve. The layer is chrome: it must never intercept a pointer
     // (the leaving generation is pointer-dead for the dissolve and the

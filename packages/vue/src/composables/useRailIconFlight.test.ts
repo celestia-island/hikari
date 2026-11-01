@@ -43,7 +43,8 @@ import HkSidebarRailSwap from "../components/HkSidebarRailSwap";
  *    motion, or a dissolved-away leaving generation → no flight.
  * 4. The lifecycle: the WAAPI `finish` sweeps the layer; the sweep timer
  *    backstops it; a fresh flip replaces (never stacks) the previous
- *    flight; unmount cleans up.
+ *    flight; scope disposal tears a live flight down (the afterEach
+ *    unmount walks the same path).
  */
 
 const mounts: App[] = [];

@@ -271,12 +271,18 @@ pub fn AdaptiveDialog(props: AdaptiveDialogProps) -> Element {
                             let mut buttons: Vec<VNode> = Vec::with_capacity(action_count);
                             for action in props.footer_actions.as_deref().unwrap_or_default() {
                                 let label = action.label.clone();
+                                let action_click = action.on_click.clone();
                                 buttons.push(rsx! {
                                     Button {
                                         variant: adaptive_dialog_action_variant(action.variant),
                                         size: ButtonSize::Sm,
                                         loading: action.loading,
                                         disabled: action.disabled,
+                                        onclick: action_click.map(|handler| {
+                                            EventHandler::new(move |_event: MouseEvent| {
+                                                handler.call(());
+                                            })
+                                        }),
                                         children: VNode::Text(VText::new(&label)),
                                     }
                                 });

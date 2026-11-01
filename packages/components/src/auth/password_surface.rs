@@ -2037,6 +2037,41 @@ mod tests {
     }
 
     #[test]
+    fn password_blur_path_clears_the_composition_flag() {
+        // The blur HANDLER (not just the helper) must reset the module flag: a
+        // dropped compositionend otherwise disables Enter everywhere.
+        set_password_composing(true);
+        let wiring = PasswordPublish {
+            on_value_change: None,
+            on_feedback_change: None,
+            on_visibility_change: None,
+            on_clear: None,
+            on_focus_request: None,
+            submit_on_enter: None,
+            on_keydown: None,
+            on_focus: None,
+            on_blur: None,
+            previous: String::new(),
+            feedback: PasswordFeedback::default(),
+            disabled: false,
+            readonly: false,
+            gate: PasswordRevealGate {
+                show_eye: false,
+                can_reveal: false,
+                toggle: false,
+                visible: false,
+                label_key: "components.hk.input.showPassword",
+                label_fallback: "Show password",
+            },
+        };
+        wiring.blur(FocusEvent::default());
+        assert!(
+            !password_is_composing(),
+            "the blur path must clear a stuck composition flag"
+        );
+    }
+
+    #[test]
     fn password_enter_gate_mirrors_the_vue_modifier_set() {
         let open = |key: &str| {
             password_enter_submits(key, false, false, false, false, false, false, false)

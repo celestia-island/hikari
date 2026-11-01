@@ -429,6 +429,68 @@ mod tests {
     }
 
     #[test]
+    fn modal_footer_action_wires_the_click_handler() {
+        let clicks = std::rc::Rc::new(std::cell::Cell::new(0usize));
+        let counter = std::rc::Rc::clone(&clicks);
+        let node = Modal(ModalProps {
+            open: true,
+            footer_actions: Some(vec![ModalAction {
+                label: "OK".to_string(),
+                on_click: Some(EventHandler::new(move |_: ()| {
+                    counter.set(counter.get() + 1);
+                })),
+                ..Default::default()
+            }]),
+            ..Default::default()
+        });
+        // Serialization drops handlers, so walk the tree and INVOKE the button's
+        // click listener: deleting the wiring leaves it a no-op.
+        fn click_action_button(node: &Element) -> bool {
+            match node {
+                VNode::Element(el) => {
+                    if el.class.to_string().contains("hk-modal-action")
+                        && let Some(handler) = el.event_handlers.get("click")
+                    {
+                        handler.borrow_mut()(
+                            Box::new(MouseEvent::default()) as Box<dyn tairitsu_vdom::EventData>
+                        );
+                        return true;
+                    }
+                    el.children.iter().any(click_action_button)
+                }
+                VNode::Fragment(children) => children.iter().any(click_action_button),
+                _ => false,
+            }
+        }
+        assert!(click_action_button(&node), "no action button found");
+        assert_eq!(clicks.get(), 1, "the wired handler must run");
+    }
+
+    #[test]
+    fn modal_footer_actions_keep_the_vue_variant_and_the_click_channel() {
+        let html = Modal(ModalProps {
+            open: true,
+            footer_actions: Some(vec![
+                ModalAction {
+                    label: "Cancel".to_string(),
+                    variant: ModalActionVariant::Outline,
+                    ..Default::default()
+                },
+                ModalAction {
+                    label: "OK".to_string(),
+                    variant: ModalActionVariant::Primary,
+                    ..Default::default()
+                },
+            ]),
+            ..Default::default()
+        })
+        .render_to_html();
+        // Outline must NOT be folded into secondary (Vue's map keeps it).
+        assert!(html.contains("hk-btn-outline"), "{html}");
+        assert!(html.contains("hk-btn-primary"), "{html}");
+    }
+
+    #[test]
     fn modal_styles_come_from_the_canonical_vue_sheet() {
         let css = ModalComponent::styles();
         assert!(

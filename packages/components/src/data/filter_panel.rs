@@ -138,14 +138,14 @@ impl FilterOperator {
     /// i18n key of the operator's accessible name (Vue: `OPERATOR_LABEL[op].key`).
     pub fn label_key(self) -> &'static str {
         match self {
-            FilterOperator::Eq => "hikari::filterPanel.op.eq",
-            FilterOperator::Ne => "hikari::filterPanel.op.ne",
-            FilterOperator::Approx => "hikari::filterPanel.op.approx",
-            FilterOperator::Napprox => "hikari::filterPanel.op.napprox",
-            FilterOperator::Lt => "hikari::filterPanel.op.lt",
-            FilterOperator::Lte => "hikari::filterPanel.op.lte",
-            FilterOperator::Gte => "hikari::filterPanel.op.gte",
-            FilterOperator::Gt => "hikari::filterPanel.op.gt",
+            FilterOperator::Eq => "components.hk.filterPanel.op.eq",
+            FilterOperator::Ne => "components.hk.filterPanel.op.ne",
+            FilterOperator::Approx => "components.hk.filterPanel.op.approx",
+            FilterOperator::Napprox => "components.hk.filterPanel.op.napprox",
+            FilterOperator::Lt => "components.hk.filterPanel.op.lt",
+            FilterOperator::Lte => "components.hk.filterPanel.op.lte",
+            FilterOperator::Gte => "components.hk.filterPanel.op.gte",
+            FilterOperator::Gt => "components.hk.filterPanel.op.gt",
         }
     }
 
@@ -403,7 +403,7 @@ pub fn select_options_for(field: &FilterFieldDef) -> Vec<FilterOption> {
     }
     let mut options = vec![FilterOption {
         value: String::new(),
-        label: t("hikari::filterPanel.all", "All"),
+        label: t("components.hk.filterPanel.all", "All"),
     }];
     options.extend(field.options.iter().cloned());
     options
@@ -718,7 +718,7 @@ pub fn FilterPanel(props: FilterPanelProps) -> Element {
     let label = props
         .label
         .clone()
-        .unwrap_or_else(|| t("hikari::filterBar.trigger", "Filters"));
+        .unwrap_or_else(|| t("components.hk.filterBar.trigger", "Filters"));
     let active = active_condition_count(&props.model_value);
     let empty = props.model_value.is_empty();
     let wiring = PanelWiring {
@@ -814,7 +814,10 @@ fn panel_row(
         ops_group = ops_group.child(VNode::Element(Box::new(button)));
     }
 
-    let remove_label = t("hikari::filterPanel.removeCondition", "Remove condition");
+    let remove_label = t(
+        "components.hk.filterPanel.removeCondition",
+        "Remove condition",
+    );
     let on_value_change = wiring.on_value_change.clone();
     let state = wiring.state.clone();
     let mut remove = VElement::new("button")
@@ -985,7 +988,7 @@ fn commit_field_pick(
 
 /// The trailing add row: the ONE growth verb, parked in the operator column.
 fn add_row(props: &FilterPanelProps) -> VNode {
-    let menu_label = t("hikari::filterPanel.addCondition", "Add condition");
+    let menu_label = t("components.hk.filterPanel.addCondition", "Add condition");
     let state = AddMenuState {
         open: props.add_menu_open,
         highlight: props.add_highlight,
@@ -1064,7 +1067,10 @@ fn add_row(props: &FilterPanelProps) -> VNode {
 /// The field chooser: an absolutely positioned layer listing EVERY declared
 /// field (the same column may join repeatedly).
 fn add_menu_layer(props: &FilterPanelProps) -> VNode {
-    let choose_label = t("hikari::filterPanel.chooseField", "Choose a field to add");
+    let choose_label = t(
+        "components.hk.filterPanel.chooseField",
+        "Choose a field to add",
+    );
     let mut list = VElement::new("div")
         .class("hk-filter-add-list")
         .attr("role", "menu")
@@ -1226,7 +1232,11 @@ mod tests {
         assert_eq!(FilterOperator::Gt.token(), "gt");
         for operator in FILTER_OPERATORS {
             assert_eq!(FilterOperator::from_token(operator.token()), Some(operator));
-            assert!(operator.label_key().starts_with("hikari::filterPanel.op."));
+            assert!(
+                operator
+                    .label_key()
+                    .starts_with("components.hk.filterPanel.op.")
+            );
             assert!(!operator.label_fallback().is_empty());
         }
         assert_eq!(FilterOperator::from_token("nope"), None);

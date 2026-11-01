@@ -21,9 +21,12 @@ hand-edit a mirror.
 
 Compile constraint: a mirrored sheet must stay parseable by the grass
 compiler (the Rust form compiles this very file). Modern CSS the parser lacks
-(for example `calc(infinity * 1s)`) therefore cannot live in a mirrored
-sheet — use an equivalent literally-compilable value in the canonical sheet
-and note it in the PR.
+therefore cannot live in a mirrored sheet — use an equivalent literally
+compilable value in the canonical sheet and note it in the PR. Known blockers:
+  * `calc(infinity * 1s)`            → a finite step-end duration;
+  * CSS relative colour `rgb(from C r g b / a)`
+                                     → `color-mix(in srgb, C <a*100>%, transparent)`
+                                       (identical in srgb).
 
 Guards:
   * Rust:  packages/components/tests/vue_mirror_drift_tests.rs (cargo test)
@@ -133,6 +136,7 @@ DATA_SHEETS: list[str] = [
     "HkFilterChip.scss",
     "HkFilterPanel.scss",
     "HkFilterTrigger.scss",
+    "HkPillToggleGroup.scss",
     "HkSelectionGrid.scss",
     "HkSelectionWaterfall.scss",
     "HkCardList.scss",

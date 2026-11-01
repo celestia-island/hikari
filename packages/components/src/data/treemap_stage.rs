@@ -670,8 +670,8 @@ pub fn TreemapStage(props: TreemapStageProps) -> Element {
         treemap_stage_transform(props.pan_x, props.pan_y, zoom)
     );
     let aria_label = props.aria_label.clone();
-    let path_label = hikari_i18n::t("hikari::treemap.drillPath", "Drill path");
-    let back_label = hikari_i18n::t("hikari::treemap.back", "Back");
+    let path_label = hikari_i18n::t("components.hk.treemap.drillPath", "Drill path");
+    let back_label = hikari_i18n::t("components.hk.treemap.back", "Back");
     let back_style = format!(
         "inset-inline-end:{}",
         treemap_stage_back_inset_end(props.minimap_collapsed)

@@ -490,6 +490,9 @@ fn no_vendored_sheet_is_pulled_in_twice() {
                     .to_string();
                 if name.ends_with(".scss") {
                     used_by.push(name);
+                } else {
+                    // Sass partials are written `@use "x"` for `_x.scss`.
+                    used_by.push(format!("{name}.scss"));
                 }
             }
         }

@@ -13,23 +13,9 @@
 mod tests {
     use hikari_components::data::filter_panel::FilterOperator;
     use hikari_components::data::{
-        CellProps,
-        ColumnAlign,
-        ColumnDef,
-        PaginationProps,
-        SortConfig,
-        SortDirection,
-        SortProps,
-        TableColumn,
-        TableManageMode,
-        TableProps,
-        TableRow,
-        TableSize,
-        TreeItem,
-        TreeProps,
+        CellProps, ColumnAlign, ColumnDef, PaginationProps, SortConfig, SortDirection, SortProps,
+        TableColumn, TableManageMode, TableProps, TableRow, TableSize, TreeItem, TreeProps,
         TreeSize,
-        // explicit: `FilterOption` exists in both `filter` and `filter_panel`
-        filter::FilterOption,
     };
 
     // ── Table (Vue `HkTable` mirror) ─────────────────────────────────
@@ -150,13 +136,6 @@ mod tests {
     }
 
     // ── Legacy filter (still used by the legacy filter surface) ──────
-
-    #[test]
-    fn legacy_filter_option_helper() {
-        let option = FilterOption::new("Active", "active");
-        assert_eq!(option.label, "Active");
-        assert_eq!(option.value, "active");
-    }
 
     #[test]
     fn filter_operator_names_match_the_vue_set() {

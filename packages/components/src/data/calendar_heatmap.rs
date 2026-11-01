@@ -520,9 +520,15 @@ pub fn heatmap_cell_title(locale: &DateLocale, unit: &str, date: &str, value: f6
     let date_text = heatmap_date_label(locale, date).unwrap_or_else(|| date.to_string());
     let number = heatmap_number_text(value);
     let template = if unit.is_empty() {
-        hikari_i18n::t("hikari::calendarHeatmap.cellTitleNoUnit", "{date} · {n}")
+        hikari_i18n::t(
+            "components.hk.calendarHeatmap.cellTitleNoUnit",
+            "{date} · {n}",
+        )
     } else {
-        hikari_i18n::t("hikari::calendarHeatmap.cellTitle", "{date} · {n} {unit}")
+        hikari_i18n::t(
+            "components.hk.calendarHeatmap.cellTitle",
+            "{date} · {n} {unit}",
+        )
     };
     heatmap_fill_template(
         &template,
@@ -533,7 +539,7 @@ pub fn heatmap_cell_title(locale: &DateLocale, unit: &str, date: &str, value: f6
 /// The grid's accessible summary (Vue: `hikari::calendarHeatmap.summary`).
 pub fn heatmap_summary(weeks: usize) -> String {
     let template = hikari_i18n::t(
-        "hikari::calendarHeatmap.summary",
+        "components.hk.calendarHeatmap.summary",
         "Daily usage across {weeks} weeks",
     );
     heatmap_fill_template(&template, &[("weeks", &weeks.to_string())])
@@ -666,11 +672,11 @@ pub fn CalendarHeatmap(props: CalendarHeatmapProps) -> Element {
     let cell_nodes = heatmap_cell_nodes(&cells, &locale, &props.unit);
     let legend_swatches = heatmap_legend_nodes();
     let legend_less = VNode::Text(VText::new(&hikari_i18n::t(
-        "hikari::calendarHeatmap.less",
+        "components.hk.calendarHeatmap.less",
         "Less",
     )));
     let legend_more = VNode::Text(VText::new(&hikari_i18n::t(
-        "hikari::calendarHeatmap.more",
+        "components.hk.calendarHeatmap.more",
         "More",
     )));
     let summary = heatmap_summary(weeks);

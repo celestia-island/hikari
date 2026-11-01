@@ -32,7 +32,6 @@ pub mod collapse;
 pub mod column;
 pub mod donut_chart;
 pub mod drag;
-pub mod filter;
 pub mod filter_bar;
 pub mod filter_chip;
 pub mod filter_operator_icon;
@@ -66,10 +65,6 @@ pub use collapse::*;
 pub use column::*;
 pub use donut_chart::*;
 pub use drag::*;
-pub use filter::{FilterComponent, FilterProps};
-// `FilterOption` lives in BOTH `filter` and `filter_panel`; the panel one is
-// the Vue mirror, so the ambiguous glob is replaced by explicit names.
-pub use filter::FilterOption as LegacyFilterOption;
 pub use filter_bar::*;
 pub use filter_chip::*;
 pub use filter_operator_icon::*;

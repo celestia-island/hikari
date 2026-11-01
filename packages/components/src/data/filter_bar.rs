@@ -134,7 +134,7 @@ pub fn filter_bar_shows_footer(mode: FilterBarMode, show_footer: bool) -> bool {
 pub fn filter_bar_label(label: Option<&str>) -> String {
     match label {
         Some(label) => label.to_string(),
-        None => t("hikari::filterBar.trigger", "Filters"),
+        None => t("components.hk.filterBar.trigger", "Filters"),
     }
 }
 
@@ -222,7 +222,7 @@ fn reset_button(props: &FilterBarProps, reset_label: String) -> VNode {
 #[component]
 pub fn FilterBar(props: FilterBarProps) -> Element {
     let label = filter_bar_label(props.label.as_deref());
-    let reset_label = t("hikari::filterBar.reset", "Reset");
+    let reset_label = t("components.hk.filterBar.reset", "Reset");
 
     if props.mode == FilterBarMode::Popover {
         return popover_shape(&props, &label, reset_label);
@@ -291,7 +291,7 @@ fn popover_shape(props: &FilterBarProps, label: &str, reset_label: String) -> El
             });
 
         if filter_bar_shows_footer(props.mode, props.show_footer) {
-            let apply_label = t("hikari::filterBar.apply", "Apply");
+            let apply_label = t("components.hk.filterBar.apply", "Apply");
             let on_apply = props.on_apply.clone();
             let close_handler = props.on_open_change.clone();
             let apply = Button(ButtonProps {

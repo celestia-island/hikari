@@ -150,12 +150,11 @@ impl StyleRegistry {
         use crate::data::{
             BarChartComponent, CalendarHeatmapComponent, CardListComponent, CollapseComponent,
             DonutChartComponent, DragComponent, FilterBarComponent, FilterChipComponent,
-            FilterComponent, FilterOperatorIconComponent, FilterPanelComponent,
-            FilterTriggerComponent, GaugeRingComponent, PaginationButtonComponent,
-            PaginationComponent, SelectionComponent, SelectionGridComponent,
-            SelectionWaterfallComponent, SortComponent, StatCardComponent, TableComponent,
-            TreeComponent, TreemapComponent, TreemapStageComponent, TrendChartComponent,
-            VirtualScrollComponent, WaterfallComponent,
+            FilterOperatorIconComponent, FilterPanelComponent, FilterTriggerComponent,
+            GaugeRingComponent, PaginationButtonComponent, PaginationComponent, SelectionComponent,
+            SelectionGridComponent, SelectionWaterfallComponent, SortComponent, StatCardComponent,
+            TableComponent, TreeComponent, TreemapComponent, TreemapStageComponent,
+            TrendChartComponent, VirtualScrollComponent, WaterfallComponent,
         };
         TableComponent::register(self);
         TreeComponent::register(self);
@@ -182,7 +181,6 @@ impl StyleRegistry {
         CollapseComponent::register(self);
         DragComponent::register(self);
         SortComponent::register(self);
-        FilterComponent::register(self);
         SelectionComponent::register(self);
     }
 

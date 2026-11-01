@@ -405,7 +405,17 @@ pub fn table_compare_cells(
                 (None, Some(_)) => Ordering::Greater,
                 (Some(_), None) => Ordering::Less,
                 (Some(a_value), Some(b_value)) => {
-                    let ordering = a_value.cmp(b_value);
+                    // Vue compares the RAW cell values, so two numbers order
+                    // numerically ("9" < "30"). Rows are strings here, so a
+                    // pair that both parse as numbers compares that way and
+                    // everything else falls back to lexicographic order.
+                    let ordering =
+                        match (a_value.trim().parse::<f64>(), b_value.trim().parse::<f64>()) {
+                            (Ok(a_num), Ok(b_num)) => a_num
+                                .partial_cmp(&b_num)
+                                .unwrap_or(std::cmp::Ordering::Equal),
+                            _ => a_value.cmp(b_value),
+                        };
                     if descending {
                         ordering.reverse()
                     } else {
@@ -534,9 +544,9 @@ pub fn table_drag_handle_label(row: &TableRow, columns: &[TableColumn]) -> Strin
             .unwrap_or_default()
     };
     if label.is_empty() {
-        return t("hikari::table.dragHandle", "Drag to reorder");
+        return t("components.hk.table.dragHandle", "Drag to reorder");
     }
-    let template = t("hikari::table.dragHandleRow", "Reorder {label}");
+    let template = t("components.hk.table.dragHandleRow", "Reorder {label}");
     match template.split_once("{label}") {
         Some((before, after)) => format!("{before}{label}{after}"),
         None => template,
@@ -772,7 +782,7 @@ pub fn Table(props: TableProps) -> Element {
                 class: "hk-table-header-cell hk-table-manage-head",
                 style: "width:36px",
                 span { class: "hk-table-sr-only",
-                    {t("hikari::table.rowActions", "Row actions")}
+                    {t("components.hk.table.rowActions", "Row actions")}
                 }
             }
         });
@@ -792,7 +802,7 @@ pub fn Table(props: TableProps) -> Element {
             Some(slot) => slot,
             None => {
                 let text = if props.empty_text.is_empty() {
-                    t("hikari::table.noData", "No data")
+                    t("components.hk.table.noData", "No data")
                 } else {
                     props.empty_text.clone()
                 };
@@ -897,7 +907,7 @@ pub fn Table(props: TableProps) -> Element {
                     cell_classes.push_str(align);
                 }
                 let copy_hint = if copy_cells && column.copyable {
-                    Some(t("hikari::clipboard.clickToCopy", "Click to copy"))
+                    Some(t("components.hk.clipboard.clickToCopy", "Click to copy"))
                 } else {
                     None
                 };
@@ -915,7 +925,7 @@ pub fn Table(props: TableProps) -> Element {
                 let trigger = if mode.renders_trigger() {
                     let manage_handler = on_manage.clone();
                     let manage_key = row_key.clone();
-                    let label = t("hikari::table.rowActions", "Row actions");
+                    let label = t("components.hk.table.rowActions", "Row actions");
                     Some(IconButton(IconButtonProps {
                         icon: Some(MdiIcon::DotsHorizontal),
                         variant: IconButtonVariant::Ghost,
@@ -1107,6 +1117,25 @@ mod tests {
         assert_eq!(bridged.width.as_deref(), Some("12rem"));
         assert!(bridged.sortable);
         assert!(bridged.copyable);
+    }
+
+    #[test]
+    fn table_compare_cells_sort_numbers_numerically_like_vue() {
+        use std::cmp::Ordering;
+        // Vue compares raw values: 9 < 30, never "9" > "30".
+        assert_eq!(
+            table_compare_cells(Some("9"), Some("30"), SortDirection::Ascending),
+            Ordering::Less
+        );
+        assert_eq!(
+            table_compare_cells(Some("9"), Some("30"), SortDirection::Descending),
+            Ordering::Greater
+        );
+        // Non-numeric pairs keep the lexicographic order.
+        assert_eq!(
+            table_compare_cells(Some("Ada"), Some("Grace"), SortDirection::Ascending),
+            Ordering::Less
+        );
     }
 
     #[test]

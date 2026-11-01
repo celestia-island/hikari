@@ -195,7 +195,7 @@ pub fn FilterTrigger(props: FilterTriggerProps) -> Element {
     let label = props
         .label
         .clone()
-        .unwrap_or_else(|| t("hikari::filterBar.trigger", "Filters"));
+        .unwrap_or_else(|| t("components.hk.filterBar.trigger", "Filters"));
     let active = filter_trigger_has_active(&props.model_value);
     let open = props.open;
 
@@ -261,7 +261,7 @@ pub fn FilterTrigger(props: FilterTriggerProps) -> Element {
             .child(panel);
 
         if filter_trigger_shows_footer(props.narrow) {
-            let apply_label = t("hikari::filterBar.apply", "Apply");
+            let apply_label = t("components.hk.filterBar.apply", "Apply");
             let close_handler = props.on_open_change.clone();
             let apply = Button(ButtonProps {
                 variant: ButtonVariant::Primary,

@@ -76,6 +76,7 @@ components/HkFilterBar.scss	components/HkFilterBar.scss
 components/HkFilterChip.scss	components/HkFilterChip.scss
 components/HkFilterPanel.scss	components/HkFilterPanel.scss
 components/HkFilterTrigger.scss	components/HkFilterTrigger.scss
+components/HkPillToggleGroup.scss	components/HkPillToggleGroup.scss
 components/HkSelectionGrid.scss	components/HkSelectionGrid.scss
 components/HkSelectionWaterfall.scss	components/HkSelectionWaterfall.scss
 components/HkCardList.scss	components/HkCardList.scss

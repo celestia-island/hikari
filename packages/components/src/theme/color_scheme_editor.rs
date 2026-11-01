@@ -271,11 +271,11 @@ impl SchemeEditKey {
             SchemeEditKey::Info => t("components.hk.colorSchemeEditor.token.info", "Info"),
             SchemeEditKey::OnSolidText => t(
                 "components.hk.colorSchemeEditor.token.onSolidText",
-                "Text on brand",
+                "Text on brand fill",
             ),
             SchemeEditKey::OnSolidIcon => t(
                 "components.hk.colorSchemeEditor.token.onSolidIcon",
-                "Icons on brand",
+                "Icons on brand fill",
             ),
         }
     }
@@ -747,7 +747,7 @@ pub fn ColorSchemeEditor(props: ColorSchemeEditorProps) -> Element {
             p { class: "s-scheme-mode-hint",
                 {t(
                     "components.hk.colorSchemeEditor.modeHint",
-                    "These tabs pick the palette you edit; the applied mode lives in the theme panel."
+                    "These tabs pick which palette you are EDITING; to switch the app-wide light/dark, use the mode strip at the top of the theme popup"
                 )}
             }
             div {

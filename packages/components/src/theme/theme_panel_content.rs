@@ -15,7 +15,7 @@
 // no wrapper element):
 //
 //   div.s-theme-menu
-//     div.s-theme-menu-label                    "Color mode"
+//     div.s-theme-menu-label                    "Mode"
 //     div.s-theme-mode-row
 //       div.hk-tabs [data-variant="segmented"]
 //         div.hk-tabs-list [role="radiogroup"] [data-block="true"]
@@ -241,7 +241,7 @@ pub fn theme_panel_mode_switch_label() -> String {
 pub fn theme_panel_auto_altitude_tip() -> String {
     t(
         "components.hk.themePanelContent.autoAltitudeTip",
-        "Switch to manual on the current side",
+        "Auto follows the sun altitude. Press to switch to manual",
     )
 }
 

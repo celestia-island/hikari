@@ -280,9 +280,19 @@ describe("HkSidebarRail geometry contract", () => {
     const hideSelector =
       `.hk-sidebar-rail-swap[${RAIL_FLIP_ACTIVE_ATTR}] ` +
       `.hk-menu-item-icon[${RAIL_FLIP_FLYING_ATTR}]`;
-    const hide = ruleBody(css, hideSelector);
-    expect(hide, "the single-glyph hide rule exists").not.toBeNull();
-    expect(hide).toContain("visibility: hidden");
+    // Rule-boundary anchored: ruleBody's plain match is a SUBSTRING
+    // lookup, so a longer selector that merely CONTAINS the welded form
+    // (a namespaced prefix, a malformed double selector) would pass.
+    // Demanding a rule edge (start of stylesheet or a closing brace)
+    // before the selector closes that hole.
+    const hide = css.match(
+      new RegExp(
+        "(^|})\\s*" + hideSelector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*\\{([^}]*)\\}",
+      ),
+    );
+    expect(hide, "the single-glyph hide rule exists as ITS OWN rule").not.toBeNull();
+    // Group 2 is the rule body (group 1 is the boundary anchor).
+    expect(hide![2]).toContain("visibility: hidden");
     // The sheet must not hide on the OPT-IN attribute alone — that
     // spelling would vanish unmatched fallbacks without a substitute.
     expect(

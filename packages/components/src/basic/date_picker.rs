@@ -550,6 +550,24 @@ impl DateLocale {
         }
     }
 
+    /// The MONTH + DAY medium text WITHOUT a year (Vue's `triggerDateTime`
+    /// formatter: `{month: "short", day: "numeric"}`).
+    pub fn short_text(&self, date: NaiveDate) -> String {
+        let month = self.month_short(date.month());
+        match self.language {
+            Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
+                format!("{}月{}日", date.month(), date.day())
+            }
+            Language::Korean => format!("{}월 {}일", date.month(), date.day()),
+            _ => match self.order {
+                DateOrder::MonthDayYear | DateOrder::YearMonthDay => {
+                    format!("{month} {}", date.day())
+                }
+                DateOrder::DayMonthYear => format!("{} {month}", date.day()),
+            },
+        }
+    }
+
     /// The day cell's `aria-label` (Vue: `dateStyle: "full"`).
     pub fn full_text(&self, date: NaiveDate) -> String {
         let weekday = self.weekday_long(date);

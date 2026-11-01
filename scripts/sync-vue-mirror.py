@@ -96,6 +96,7 @@ ADVANCED_SHEETS: list[str] = [
     "HkNumberSteppers.scss",
     "HkOtpInput.scss",
     "HkPhoneInput.scss",
+    "HkTag.scss",
     "HkTagInput.scss",
     "HkTemplateField.scss",
     "HkTokenInput.scss",

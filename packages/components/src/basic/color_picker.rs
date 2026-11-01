@@ -574,6 +574,15 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
                 if color_dragging() != Some(channel) {
                     return;
                 }
+                // Vue drags on window listeners; here the flag alone would
+                // stay set after a release outside the slider (the pointerup
+                // never reaches this element), so a later HOVER would write
+                // values. `buttons == 0` means "no button held" — the release
+                // edge Vue would have seen.
+                if event.buttons == 0 {
+                    set_color_dragging(None);
+                    return;
+                }
                 if let Some(ratio) = color_pointer_ratio(event.client_x, event.current_target) {
                     move_emit(color_with_channel(
                         rgb,

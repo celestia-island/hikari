@@ -45,6 +45,7 @@ components/HkNumberInput.scss	components/HkNumberInput.scss
 components/HkNumberSteppers.scss	components/HkNumberSteppers.scss
 components/HkOtpInput.scss	components/HkOtpInput.scss
 components/HkPhoneInput.scss	components/HkPhoneInput.scss
+components/HkTag.scss	components/HkTag.scss
 components/HkTagInput.scss	components/HkTagInput.scss
 components/HkTemplateField.scss	components/HkTemplateField.scss
 components/HkTokenInput.scss	components/HkTokenInput.scss

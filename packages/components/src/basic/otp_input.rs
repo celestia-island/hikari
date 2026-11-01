@@ -118,6 +118,18 @@ pub enum OtpSize {
 }
 
 impl OtpSize {
+    /// The glyph size Vue's ramp caps the fit at (`--hk-otp-font-max`:
+    /// sm = text-base 0.875rem, md = text-xl 1.25rem, lg = text-2xl 1.5rem).
+    /// Vue publishes the MEASURED fit per row; the mirror cannot measure, so it
+    /// publishes the cap (see the file header delta).
+    pub fn pinned_font(self) -> &'static str {
+        match self {
+            OtpSize::Sm => "0.875rem",
+            OtpSize::Md => "1.25rem",
+            OtpSize::Lg => "1.5rem",
+        }
+    }
+
     /// The `hk-otp-{size}` row class exactly as Vue emits it.
     pub fn modifier(self) -> &'static str {
         match self {
@@ -705,9 +717,15 @@ pub fn OtpInput(props: OtpInputProps) -> Element {
         }
     }
 
+    // `--hk-otp-fitted-font` is what the sheet's font-size chain reads; Vue
+    // measures one cell and publishes it per row. Without a publish every size
+    // renders the 1.25rem literal, so sm/lg would be visibly wrong.
+    let fitted_font = format!("--hk-otp-fitted-font:{}", props.size.pinned_font());
+
     rsx! {
         div {
             class: "hk-otp-wrapper",
+            style: fitted_font,
             if let Some(label) = label_text {
                 label {
                     class: "hk-otp-label",

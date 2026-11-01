@@ -312,7 +312,7 @@ pub fn Fab(props: FabProps) -> Element {
         .class("hk-fab-button")
         .attr("aria-label", props.aria_label.clone());
     if has_actions {
-        main = main.attr("aria-expanded", if open { "false" } else { "true" });
+        main = main.attr("aria-expanded", if open { "true" } else { "false" });
     }
     if props.disabled {
         main = main.attr("disabled", "disabled");
@@ -387,7 +387,7 @@ mod tests {
         assert!(html.contains("hk-fab-actions"), "{html}");
         assert!(html.contains("hk-fab-mini"), "{html}");
         assert!(html.contains("data-expanded=\"true\""), "{html}");
-        assert!(html.contains("aria-expanded=\"false\""), "{html}");
+        assert!(html.contains("aria-expanded=\"true\""), "{html}");
     }
 
     #[test]

@@ -419,11 +419,18 @@ pub fn dtp_popout_style(
 /// The trigger's display text (Vue's `triggerLabel`): the medium date with
 /// the 24-hour clock, or the plain medium date when the clock is hidden.
 pub fn dtp_trigger_label(value: NaiveDateTime, with_time: bool, locale: &DateLocale) -> String {
-    let date = locale.display_text(value.date());
     if with_time {
-        format!("{date}, {:02}:{:02}", value.hour(), value.minute())
+        // Vue's `triggerDateTime`: `{month: "short", day: "numeric", hour,
+        // minute, hourCycle: "h23"}` — NO year in this form.
+        format!(
+            "{}, {:02}:{:02}",
+            locale.short_text(value.date()),
+            value.hour(),
+            value.minute()
+        )
     } else {
-        date
+        // Vue's `triggerDate`: `{year, month: "short", day}`.
+        locale.display_text(value.date())
     }
 }
 
@@ -1401,16 +1408,13 @@ mod tests {
     fn date_time_picker_trigger_label_follows_the_locale() {
         let english = date_locale(Language::English);
         let value = moment(2024, 10, 6, 9, 5);
-        assert_eq!(
-            dtp_trigger_label(value, true, &english),
-            "Oct 6, 2024, 09:05"
-        );
+        // Vue: `triggerDateTime` = {month:"short", day, hour, minute} — NO
+        // year; `triggerDate` keeps the year.
+        assert_eq!(dtp_trigger_label(value, true, &english), "Oct 6, 09:05");
         assert_eq!(dtp_trigger_label(value, false, &english), "Oct 6, 2024");
         let chinese = date_locale(Language::ChineseSimplified);
-        assert_eq!(
-            dtp_trigger_label(value, true, &chinese),
-            "2024年10月6日, 09:05"
-        );
+        assert_eq!(dtp_trigger_label(value, true, &chinese), "10月6日, 09:05");
+        assert_eq!(dtp_trigger_label(value, false, &chinese), "2024年10月6日");
     }
 
     #[test]
@@ -1504,7 +1508,7 @@ mod tests {
         // The body still renders inside the popup.
         assert!(html.contains("hk-dtp-grid"), "{html}");
         // The trigger shows the locale date + 24-hour clock.
-        assert!(html.contains("Oct 6, 2024, 09:05"), "{html}");
+        assert!(html.contains("Oct 6, 09:05"), "{html}");
     }
 
     #[test]

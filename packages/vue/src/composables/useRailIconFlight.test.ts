@@ -516,9 +516,17 @@ describe("useRailIconFlight", () => {
     animations[0]!.fire("finish");
     expect(flightLayer(h), "the finish listener sweeps immediately").toBeNull();
     expect(h.swap().hasAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe(false);
-    // The marks ride along: a swept flight unhides its cells.
+    // The marks ride along: a swept flight unhides BOTH ends — the
+    // leaving cell it substituted AND the entering cell it covered
+    // (deleting the unmark loop once stayed green on this side; the pin
+    // closes that hole — 2026-11-02 review S3-1).
     expect(
       leaving.querySelector(`[${RAIL_FLIP_ICON_ATTR}="home"]`)!.hasAttribute(RAIL_FLIP_FLYING_ATTR),
+      "leaving mark cleared",
+    ).toBe(false);
+    expect(
+      entering.querySelector(`[${RAIL_FLIP_ICON_ATTR}="home"]`)!.hasAttribute(RAIL_FLIP_FLYING_ATTR),
+      "ENTERING mark cleared",
     ).toBe(false);
   });
 

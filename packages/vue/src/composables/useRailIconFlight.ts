@@ -109,9 +109,12 @@ export const RAIL_FLIP_ACTIVE_ATTR = "data-flipping";
 export const RAIL_FLIP_FLYING_ATTR = "data-flip-flying";
 /** HkCrossfade's per-item identity — the semantic pairing anchor. */
 export const RAIL_FLIP_ITEM_ATTR = "data-crossfade-key";
-/** Flight-window FALLBACK for environments where `--duration-normal`
- *  cannot be read (the test DOM resolves no custom properties). A real
- *  browser reads the theme token — see TIMING above. */
+/** Flight-window FALLBACK for when `--duration-normal` yields no
+ *  parsable time: environments that resolve no custom properties (the
+ *  test DOM), or a value cssDurationMs cannot read (`calc(…)`, `0s` —
+ *  a 0s theme means an instant dissolve; the fallback flight covers
+ *  the swap's settle frames and stays single-glyph). A real browser
+ *  reads the theme token — see TIMING above. */
 export const RAIL_FLIGHT_MS = 300;
 /** Sweep margin on top of the (token-derived) flight window: above any
  *  healthy completion (HkCrossfade watchdog parity) so a stalled clone

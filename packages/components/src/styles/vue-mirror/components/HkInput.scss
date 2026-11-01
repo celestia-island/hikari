@@ -1,0 +1,306 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../tokens";
+@use "./HkPlaceholderMarquee" as placeholder-marquee;
+
+.hk-input-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.hk-input-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  /* 72% keeps the caption hierarchy while surviving dark-theme tinted
+   * surfaces; override per-app with --hk-field-label-alpha. */
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+.hk-input-required {
+  margin-inline-start: var(--space-2);
+  color: rgb(var(--color-error));
+}
+
+.hk-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-12);
+  min-height: 2.5rem;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  /* Longhand on purpose: the comma shorthand attached the duration to the
+   * LAST property only, so hover border-color and the focus-within
+   * background/box-shadow snapped at 0s (HkButton F5, same disease). */
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+  color: rgb(var(--color-text));
+
+  &:hover:not(.hk-input-box-disabled) {
+    border-color: var(--c-primary-strong);
+  }
+}
+
+.hk-input-box:focus-within {
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-input-box-error {
+  border-color: var(--c-error-strong);
+}
+
+.hk-input-box-error:focus-within {
+  border-color: rgb(var(--color-error));
+  box-shadow: var(--shadow-focus-error);
+}
+
+.hk-input-box-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hk-input-box[data-autogrow] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.hk-input-element {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Self-declared so the symmetric-affix centering guarantee never
+   * depends on a host app's global reset: under content-box the
+   * width:100% + padding would push the content box off-axis by the
+   * full padding. Same precedent as HkTextarea/HkDatePicker. */
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  text-align: center;
+  /* Horizontal padding reserves affix clearance SYMMETRICALLY: both
+   * sides grow by the max of the two measured affix widths
+   * (--hk-input-affix-*-w, published by HkInput on the box), so the
+   * content box stays centered on the box axis — a lone prefix icon
+   * (the sign-in username's user glyph) no longer pushes the centered
+   * caret/text half an icon toward the far side — while the line
+   * still never runs underneath a prefix OR suffix affix (e.g. the
+   * localized input's language chip riding the right edge). */
+  padding-block: var(--space-8);
+  padding-inline: calc(
+    var(--space-12) +
+      max(var(--hk-input-affix-start-w, 0px), var(--hk-input-affix-end-w, 0px))
+  );
+
+  // The interactive states stay clean too: the shell (.hk-input-box) owns
+  // the focus affordance via :focus-within. Without these overrides any
+  // element-level `input { … :focus-visible { box-shadow } }` baseline
+  // outranks the plain-class `border: none` here and paints a second,
+  // inner ring on top of the shell's border (the double-border bug).
+  &:focus,
+  &:focus-visible {
+    border: none;
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+/* Explicit edge alignment (HkInput's `align` prop) opts out of the
+ * symmetric reservation: each side pads only by the affix actually
+ * sitting on it, so a start-aligned field with a lone suffix chip
+ * gains no phantom leading indent (and an end-aligned field with a
+ * lone prefix stays flush to its edge). The textarea variant keeps
+ * its plain padding either way — its affixes sit in flow BESIDE the
+ * element, not overlaid, so there is nothing to reserve against. */
+.hk-input-box[data-align="start"] .hk-input-element:not(.hk-input-textarea),
+.hk-input-box[data-align="end"] .hk-input-element:not(.hk-input-textarea) {
+  padding-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  padding-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px));
+}
+
+.hk-input-box[data-align="start"] .hk-input-element:not(.hk-input-textarea) {
+  text-align: start;
+}
+
+.hk-input-box[data-align="end"] .hk-input-element:not(.hk-input-textarea) {
+  text-align: end;
+}
+
+.hk-input-element.hk-input-textarea {
+  position: relative;
+  inset: unset;
+  height: auto;
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  padding: var(--space-8) var(--space-12);
+}
+
+.hk-input-textarea {
+  resize: vertical;
+  min-height: 2.5rem;
+}
+
+/* Auto-growing fields measure their own height from content (inline
+   height=scrollHeight), so a native resize grip would fight the growth
+   and let users drag the field into a state the next keystroke snaps
+   back. (The historical resize:none for this lived under a
+   .hk-input-textarea[data-autogrow] attribute selector that never
+   matched — data-autogrow is stamped on the box, not the textarea.) */
+.hk-input-textarea-autogrow {
+  resize: none;
+}
+
+.hk-input-affix {
+  display: flex;
+  align-items: center;
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* The trailing affix pins to the RIGHT edge of the field: the box's only
+ * in-flow children are the affixes (the input element is absolutely
+ * positioned), so without the auto margin a lone suffix would sit at the
+ * flex START — the localized input's language chip rendered on the left,
+ * on top of the placeholder. Row layout only; a textarea-type input puts
+ * affixes in flow BELOW the field (column autogrow), where no affix
+ * consumer exists today. */
+.hk-input-affix.hk-input-suffix {
+  margin-inline-start: auto;
+}
+
+/* ── Number fields (type="number" / variant="number") ───────────────
+ * The browser's native spin buttons are retired: the shared lucide
+ * stepper column (HkNumberSteppers) takes the trailing edge instead, so
+ * every hikari number field draws the same up/down affordance regardless
+ * of host platform. The field itself keeps type="number" — keyboard
+ * arrows and min/max validation stay native. */
+.hk-input-box-number .hk-input-element {
+  -moz-appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+/* The stepper column is an in-flow sibling riding ABOVE the absolutely
+ * positioned element (z-index 1, exactly like the affixes) and it owns the
+ * trailing auto margin — the slot the suffix's auto margin occupies when no
+ * steppers render. */
+.hk-input-box .hk-number-input-steppers {
+  position: relative;
+  z-index: 1;
+  margin-inline-start: auto;
+}
+
+/* With the steppers present the suffix parks NEXT to them: two auto margins
+ * would split the free space and float the suffix mid-gap. */
+.hk-input-box[data-number-steppers] .hk-input-affix.hk-input-suffix {
+  margin-inline-start: 0;
+}
+
+/* The placeholder-marquee window shares the element's content box: inset
+ * by the same base padding plus the affix clearance, so the scrolling
+ * strip never slides underneath the affixes either. Like the element,
+ * the centered default reserves the clearance symmetrically (max of
+ * both affix widths on each side) so the window stays co-centered with
+ * the centered text line. With no affixes this still insets by the base
+ * padding — the window then exactly matches the native placeholder's
+ * bounds, so marginal placeholders that "fit" the padded line stay
+ * native instead of scrolling. */
+.hk-input-box .hk-placeholder-marquee {
+  inset-block: 0;
+  inset-inline: calc(
+    var(--space-12) +
+      max(var(--hk-input-affix-start-w, 0px), var(--hk-input-affix-end-w, 0px))
+  );
+}
+
+/* Edge-aligned fields mirror their element's per-side reservation so
+ * the scrolling window tracks the (off-center) content box exactly. */
+.hk-input-box[data-align="start"] .hk-placeholder-marquee,
+.hk-input-box[data-align="end"] .hk-placeholder-marquee {
+  inset-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  inset-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px));
+}
+
+.hk-input-error-msg {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: rgb(var(--color-error));
+}
+
+.hk-input-hint {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+}
+
+/* Autofill overrides */
+/* The finite duration (instead of `calc(infinity * 1s)`) keeps this sheet
+   compilable by the grass compiler the Rust form shares it with. */
+.hk-input-box input,
+.hk-input-box textarea {
+  transition: color 100000000s step-end, background-color 100000000s step-end;
+}
+
+.hk-input-box input:-webkit-autofill,
+.hk-input-box input:-webkit-autofill:hover,
+.hk-input-box input:-webkit-autofill:focus,
+.hk-input-box input:-webkit-autofill:active,
+.hk-input-box textarea:-webkit-autofill,
+.hk-input-box textarea:-webkit-autofill:hover,
+.hk-input-box textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgb(var(--color-text)) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset !important;
+  caret-color: rgb(var(--color-text));
+}
+
+.hk-input-box input:-webkit-autofill::first-line,
+.hk-input-box textarea:-webkit-autofill::first-line {
+  font-size: inherit !important;
+  font-family: inherit !important;
+  color: rgb(var(--color-text));
+}
+
+.hk-input-box input:-internal-autofill-previewed,
+.hk-input-box input:-internal-autofill-selected {
+  -webkit-text-fill-color: rgb(var(--color-text)) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset !important;
+  caret-color: rgb(var(--color-text));
+}
+
+/* The password variant's right-edge affordance (hold-to-reveal eye /
+ * strength traffic light) lives in HkPasswordSurface.scss — the retired
+ * .hk-input-password-toggle click-toggle was removed with the
+ * unification. */
+

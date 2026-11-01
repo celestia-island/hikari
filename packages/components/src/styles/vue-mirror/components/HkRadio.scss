@@ -1,0 +1,146 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-radio-group {
+  display: flex;
+  gap: var(--space-16, 1rem);
+
+  &-horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  &-vertical {
+    flex-direction: column;
+  }
+
+  &-sm {
+    gap: var(--space-8, 0.5rem);
+  }
+
+  &-lg {
+    gap: var(--space-20, 1.25rem);
+  }
+}
+
+.hk-radio {
+  display: inline-flex;
+  align-items: center;
+  /* House parity (HkCheckbox/HkSwitch): keeps the box on the text's
+   * visual midline when a radio row is lifted out of the group into an
+   * inline text context. No-op inside the flex group. */
+  vertical-align: middle;
+  gap: var(--space-8, 0.5rem);
+  cursor: pointer;
+  @include user-select(none);
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* --- Box --- */
+
+.hk-radio-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  /* The resting outline is the palette border slot at FULL strength:
+   * --hi-color-border is the faint divider channel (15% alpha) and melts
+   * into white/dark surfaces. */
+  border: 1px solid rgb(var(--color-border, 100 100 100));
+  background: var(--hi-color-surface);
+  transition:
+    border-color var(--duration-normal, 0.3s) ease,
+    background var(--duration-normal, 0.3s) ease,
+    scale var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  flex-shrink: 0;
+  position: relative;
+
+  [data-size="sm"] & {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  [data-size="md"] & {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  [data-size="lg"] & {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+
+  &[data-checked] {
+    background: var(--hi-color-primary);
+    border-color: var(--hi-color-primary);
+  }
+}
+
+.hk-radio:not([data-disabled]):hover .hk-radio-box:not([data-checked]) {
+  border-color: var(--hi-color-primary);
+}
+
+/* Press feedback (house parity: HkCheckbox box / HkSwitch thumb). */
+.hk-radio:not([data-disabled]):active .hk-radio-box {
+  scale: 0.9;
+}
+
+/* --- Hidden input --- */
+
+.hk-radio-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Keyboard focus: the native input is visually hidden, so draw the house
+   double ring (HkButton/HkCheckbox pattern) on the box via :has();
+   :focus-visible keeps mouse clicks ring-free. */
+.hk-radio-box:has(.hk-radio-input:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--hi-color-surface, rgba(255,255,255,0.95)),
+    0 0 0 4px var(--hi-color-primary, #7aa2f7);
+}
+
+/* --- Dot --- */
+
+.hk-radio-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--color-on-solid-icon, 255 255 255));
+  z-index: 1;
+
+  [data-size="lg"] & {
+    width: 8px;
+    height: 8px;
+  }
+
+  [data-size="sm"] & {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+/* Reduced motion: the press squish snaps instead of tweening (house
+   pattern: HkSwitch.scss / HkSlider.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-radio-box {
+    transition: none;
+  }
+}

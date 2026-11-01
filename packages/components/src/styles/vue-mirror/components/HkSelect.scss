@@ -1,0 +1,517 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../tokens";
+@use "./menu-item" as mi;
+@use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
+
+/* HkSelect — popup select component */
+
+.hk-select-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.hk-select-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  /* 72% keeps the caption hierarchy while surviving dark-theme tinted
+   * surfaces; override per-app with --hk-field-label-alpha. */
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+.hk-select-required {
+  margin-inline-start: var(--space-2);
+  color: rgb(var(--color-error));
+}
+
+.hk-select-trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  /* Logical axes (HkAffixPicker rule): the wide side reserves arrow
+   * room at inline-end and flips with the host's direction. */
+  padding-block: var(--space-8);
+  padding-inline: var(--space-12) var(--space-32);
+  min-height: var(--space-40);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  /* Longhand on purpose (HkButton rule): the former comma shorthand
+   * bound the duration/easing to `filter` only — every other property
+   * animated at 0s and hover/focus snapped. */
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+  position: relative;
+}
+
+.hk-select-trigger:hover:not([data-disabled]) {
+  border-color: var(--c-primary-strong);
+}
+
+/* Press feedback (HkButton :active rule) — brightness, not background,
+ * so it never clobbers the focus/open ring below. */
+.hk-select-trigger:active:not([data-disabled]) {
+  filter: brightness(0.95);
+}
+
+.hk-select-trigger:focus-visible,
+.hk-select-trigger[data-state="open"] {
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-select-trigger[data-error] {
+  border-color: var(--c-error-strong);
+}
+
+.hk-select-trigger[data-error]:focus-visible,
+.hk-select-trigger[data-error][data-state="open"] {
+  border-color: rgb(var(--color-error));
+  box-shadow: var(--shadow-focus-error);
+}
+
+.hk-select-trigger[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hk-select-value {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Italic overhang cushion (menu-item label rule): the value truncates
+   * at the padding edge and an italicized value's trailing stroke leans
+   * past the last advance. Symmetric because the trigger centers its
+   * value — one-sided room would read as a 0.1em optical shift. The
+   * token is declared on menu-item rows, and the trigger sits outside
+   * that grammar — hence the fallback. */
+  padding-inline: var(--hk-menu-item-label-cushion, 0.2em);
+}
+
+.hk-select-arrow {
+  position: absolute;
+  inset-inline-end: var(--space-12);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  pointer-events: none;
+  transition: transform var(--duration-normal) ease;
+}
+
+.hk-select-trigger[data-state="open"] .hk-select-arrow {
+  transform: rotate(180deg);
+}
+
+/* Fixed positioning wrapper around the desktop popout (HkSelectPanel):
+ * carries the inline anchor coords + popup-manager z-index and is the
+ * track host for the overlay scrollbar (the popout teleports to body,
+ * whose box is no positioning context). Geometry-neutral: the popout
+ * shrink-wraps the host exactly as the popout shrink-wrapped itself
+ * when it was the fixed element. The 180px width floor lives HERE, not
+ * on the popout: matchAnchorWidth's inline `min-width` lands on the host,
+ * and a stylesheet floor on the CHILD would override that match for
+ * anchors narrower than 180px (the floor must lose to the inline style,
+ * which can only happen on the same element). */
+.hk-select-popout-host {
+  /* Overlay-root contract: restore pointer events (see HkDrawer). */
+  pointer-events: auto;
+  position: fixed;
+  min-width: 180px;
+
+  /* Width is position-independent (same contract as .hk-popover-panel):
+   * max-content sizes the popout to its rows wherever it sits, instead
+   * of shrink-to-fitting against `viewport - left` — an anchor near the
+   * right screen edge used to squeeze the panel down to the leftover
+   * space. The viewport cap (2 × the --viewport-gutter token, 16px
+   * desktop / 8px mobile) bounds it on both edges; the inline
+   * matchAnchorWidth min-width still wins over both, as documented
+   * above. */
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--viewport-gutter, 16px));
+
+  /* Pop motion family — the popout grows out of the anchor edge (or
+   * midpoint, for the -center placements) it sits on (data-side/data-align
+   * are set by HkSelectPanel from the RESOLVED placement, including after
+   * an auto-flip) and retracts back into it. Same tokens as
+   * HkPopover/HkTooltip so every anchored surface moves with one curve. */
+  &[data-side="bottom"] { transform-origin: top left; }
+  &[data-side="bottom"][data-align="center"] { transform-origin: top center; }
+  &[data-side="bottom"][data-align="end"] { transform-origin: top right; }
+  &[data-side="top"] { transform-origin: bottom left; }
+  &[data-side="top"][data-align="center"] { transform-origin: bottom center; }
+  &[data-side="top"][data-align="end"] { transform-origin: bottom right; }
+}
+
+.hk-select-popout-enter-active {
+  transition:
+    opacity var(--hk-pop-in-duration, 0.2s)
+      var(--hk-pop-in-opacity-ease, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform var(--hk-pop-in-duration, 0.2s)
+      var(--hk-pop-in-transform-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.hk-select-popout-leave-active {
+  transition:
+    opacity var(--hk-pop-out-duration, 0.15s)
+      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1)),
+    transform var(--hk-pop-out-duration, 0.15s)
+      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1));
+}
+
+.hk-select-popout-enter-from,
+.hk-select-popout-leave-to {
+  opacity: 0;
+}
+
+.hk-select-popout-host[data-side="bottom"] {
+  &.hk-select-popout-enter-from {
+    transform: translateY(calc(-1 * var(--hk-pop-offset, 4px)))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+  &.hk-select-popout-leave-to {
+    transform: translateY(var(--hk-pop-offset, 4px))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+}
+
+.hk-select-popout-host[data-side="top"] {
+  &.hk-select-popout-enter-from {
+    transform: translateY(var(--hk-pop-offset, 4px))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+  &.hk-select-popout-leave-to {
+    transform: translateY(calc(-1 * var(--hk-pop-offset, 4px)))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-select-popout-enter-active,
+  .hk-select-popout-leave-active,
+  /* The trigger chevron's 180° rotate is a transform animation too. */
+  .hk-select-arrow {
+    transition: none;
+  }
+}
+
+.hk-select-popout {
+  /* Positioning lives on the host wrapper above — the popout is its
+   * static, box-filling child (width resolves from the host, whose
+   * floor/match rule is documented there). */
+  position: static;
+  /* Menu/switcher panels overflow a bare 240px cap even on tall viewports
+     (user feedback 2026-08-30: identity header + rows ≈ 320px+). Keep 240px
+     as the floor for select lists on short viewports, otherwise let the
+     panel size to its content up to a viewport-relative ceiling — plain-vh
+     first, dvh second, so an engine without dvh drops the dvh twin at PARSE
+     time and keeps the vh cap (the HkModal/HkDrawer/HkImageLightbox rule).
+     A consumer that needs a tighter surface (HkTagInput's catalog) publishes
+     --hk-select-panel-max-height through HkSelectPanel's `maxHeight` prop;
+     that hook rides the dvh-capable branch below, because a dvh value
+     reaching a dvh-less engine through var() would not be parse-dropped but
+     invalid at COMPUTED-value time — which resolves to `max-height: none`,
+     losing the cap entirely. Such an engine keeps the plain-vh ceiling
+     instead, exactly as it does today. */
+  max-height: max(240px, min(36rem, calc(100vh - 32px)));
+  max-height: max(240px, min(36rem, calc(100dvh - 32px)));
+  @supports (height: 1dvh) {
+    max-height: var(
+      --hk-select-panel-max-height,
+      max(240px, min(36rem, calc(100dvh - 32px)))
+    );
+  }
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* 8px panel inset (was 4px): option hover blocks used to run almost
+     edge-to-edge, reading as a glued full-width strip on touch widths. */
+  padding: var(--space-8);
+  border-radius: var(--radius-md);
+  overflow-y: auto;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  @include backdrop-filter(blur(var(--blur-md)));
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-dropdown);
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     always hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Unified menu-item spec (see ./_menu-item.scss) — options, menu rows
+ * and theme pills share one grammar; sheet geometry flows from the
+ * shared sheet token context, so the old per-component sheet bump is
+ * gone. [data-highlighted] (keyboard/pointer highlight) maps to the
+ * spec's hover face. */
+.hk-select-option {
+  @include mi.item;
+}
+
+/* The highlight face never overrides the checked/active face — a
+ * keyboard-highlighted selected option keeps its dim wash + primary
+ * text (active > hover precedence, same as the spec mixin) — and it
+ * never paints disabled rows (keyboard highlight and pointerenter both
+ * land on them; HkSelect.tsx does not skip disabled options). */
+.hk-select-option:hover:not([data-disabled]):not([data-checked]):not([data-active]),
+.hk-select-option[data-highlighted]:not([data-disabled]):not([data-checked]):not([data-active]) {
+  background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+  border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
+}
+
+.hk-select-option[data-highlighted]:not(:hover):not([data-disabled]):not([data-checked]):not([data-active]) {
+  color: rgb(var(--color-text));
+}
+
+.hk-select-error {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: rgb(var(--color-error));
+}
+
+// ------
+// Mobile bottom sheet (useBreakpoint().isMobile) — the popout docks to the
+// bottom edge: scrim (click closes) + grabber + label + touch-sized option
+// rows. Desktop popout above is untouched. Same visual contract as the
+// popover/modal mobile dockings.
+// ------
+.hk-select-sheet-scrim {
+  pointer-events: auto;
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  background: rgb(0 0 0 / 40%);
+}
+
+.hk-select-sheet-panel {
+  pointer-events: auto;
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* Sit flush on the bottom edge; the host-tunable --hk-sheet-bottom-gap
+   * lift (shared with the HkModal mobile docking) stays available so
+   * every bottom-up window reads as one sheet family. Was glued to
+   * bottom: 0, then floated at the 0.375rem family default — both wrong
+   * for someone; the 2026-09-04 report settles the family on flush. */
+  bottom: var(--hk-sheet-bottom-gap, 0px);
+  display: flex;
+  flex-direction: column;
+  /* The panel height hugs its content (up to the cap below); the sheet
+   * morphs smoothly when content grows/shrinks — a language list gaining
+   * or losing rows, a select whose options filter. `height: auto` growth
+   * cannot fire a CSS transition, so HkSelectPanel's useSizeMorph pins
+   * the measured natural height as px (see useSizeMorph) and the
+   * transition below animates old→new px; `interpolate-size: allow-keywords`
+   * stays harmless for the enter/leave slide. Growth reveals through
+   * clip-path instead (--hk-sheet-morph: clip, see useSizeMorph): the
+   * pin lands instantly and the top edge sweeps up paint-only — the
+   * sheet is a fixed full-width layer, and an animated height relaid
+   * out + repainted it every frame (mobile patchy-flicker source,
+   * 2026-09-15). Same duration/ease tokens, same stretch look. */
+  interpolate-size: allow-keywords;
+  --hk-sheet-morph: clip;
+  contain: layout style;
+  transition:
+    height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  max-height: min(
+    72vh,
+    calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) -
+        var(--hk-sheet-bottom-gap, 0px)
+    )
+  );
+  /* Dynamic-viewport pairing (HkModal parity): the dvh twin follows the
+   * vh cap so a maxed sheet cannot extend under the URL bar on
+   * dynamic-toolbar browsers. */
+  max-height: min(
+    72vh,
+    calc(
+      100dvh - var(--hk-sheet-top-inset, 4.25rem) -
+        var(--hk-sheet-bottom-gap, 0px)
+    )
+  );
+  background: rgb(var(--color-surface));
+  border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                 var(--hk-modal-radius, var(--radius-lg, 12px))
+                 0 0;
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 20%);
+  outline: none;
+}
+
+.hk-select-sheet-grabber {
+  flex-shrink: 0;
+  padding: var(--space-14) 0 var(--space-20);
+  margin: 0 auto;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  /* Window chrome — never a text-selection start (matches the popover
+   * sheet grabber). */
+  @include user-select(none);
+
+  &::before {
+    content: "";
+    width: 2.25rem;
+    height: var(--space-4);
+    border-radius: 999px;
+    background: rgb(var(--color-border, 100 100 100) / 40%);
+  }
+}
+
+/* Sheet heading row — same unified grammar as the popover sheet header
+ * (title left, shared icon-button ✕ on the right edge, one vertically
+ * centered line). The select sheet previously had NO explicit close
+ * affordance at all: dismissal was grabber-tap/scrim only. */
+.hk-select-sheet-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-8) var(--space-8) 0;
+}
+
+.hk-select-sheet-close {
+  // Inline-end pinning with or without a title beside it (push-to-end
+  // via the logical auto margin — mirrors in RTL); the chrome lives
+  // on the shared .hk-icon-button / .hk-window-close rules
+  // (window-close.scss) since the unified-close wave.
+  margin-inline-start: auto;
+}
+
+.hk-select-sheet-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* Left inset tracks the sheet ENTRIES' text edge, not their card
+   * edge: the list pads option blocks in by --space-16 and rows carry
+   * roughly another --space-16 of leading padding inside, so the old
+   * single --space-16 left the title hanging left of every row it
+   * named instead of reading as the list's heading. Hosts tune it via
+   * --hk-sheet-title-inset. Size/weight match the popover sheet heading
+   * (--text-base, window chrome never text-selectable). The trailing
+   * inset doubles as the gap to the close button; the vertical rhythm
+   * moved to the header row. */
+  padding: 0 var(--space-16) 0 var(--hk-sheet-title-inset, calc(var(--space-16) * 2));
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-muted));
+  @include user-select(none);
+}
+
+/* Track host for the sheet list's overlay scrollbar — owns the flex
+   slot in the sheet column so the rail hugs the LIST band, not the
+   grabber/title bands above it. */
+.hk-select-sheet-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.hk-select-sheet-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* The same consumer-tunable cap the popout reads, applied to the band
+     that actually scrolls: the sheet header keeps its place and the
+     catalog scrolls inside it. `none` (the fallback) is exactly today's
+     behaviour, so an untouched consumer's sheet is unchanged.
+     DELIBERATELY not wrapped in the popout's `@supports (height: 1dvh)`
+     guard: this band's fallback already IS the property's initial value,
+     so a value the engine cannot use resolves to the same `none` the
+     guard would produce — the asymmetry is a no-op, not an oversight.
+     The sheet PANEL above keeps its own plain-vh/dvh family cap either
+     way, so a hidden cap can never leave the sheet unbounded. */
+  max-height: var(--hk-select-panel-max-height, none);
+  /* Side insets so the option blocks (full-row hover pills) read as
+     cards inside the sheet instead of an edge-to-edge strip glued to
+     both screen sides — matching the popover family's breathing room.
+     Bottom padding stacks the home-bar safe-area inset ON TOP of the
+     base row gap, so the last row never hides behind the gesture bar
+     on notched phones (the modal footer adds a --hk-sheet-footer-gap
+     on top of this family baseline for its action buttons). */
+  padding-inline: var(--space-16);
+  padding-bottom: calc(var(--space-16) + env(safe-area-inset-bottom, 0px));
+
+  /* Overlay scrollbar (useOverlayScrollbar) — native chrome hidden. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Leading in-content heading hidden by the sheet duplicate-title
+ * filter (HkSelectPanel) — must beat any consumer display rule, like
+ * the UA [hidden] contract. */
+.hk-select-sheet-list .hk-sheet-dup-title {
+  display: none !important;
+}
+
+.hk-select-sheet-enter-active {
+  transition:
+    opacity 0.25s ease-out,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-select-sheet-leave-active {
+  transition:
+    opacity 0.2s ease-in,
+    transform 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-select-sheet-enter-from,
+.hk-select-sheet-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+/* Scrim fade — the shared window-layer contract (./_scrim-fade.scss):
+ * the dim curtain fades in place under its OWN transition name while the
+ * panel above slides. It once shared this `hk-select-sheet` name, so the
+ * panel's translateY(100%) enter pair dragged the backdrop up from the
+ * bottom edge on phones (2026-09-06 report). */
+@include sf.scrim-fade("hk-select-sheet-scrim");
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-select-sheet-enter-active,
+  .hk-select-sheet-leave-active,
+  .hk-select-sheet-panel {
+    transition: none;
+  }
+}
+
+/* ── Overlay-root pointer-events contract ──────────────────────────
+ * See HkDrawer.scss's guard note. The popout host, the sheet scrim
+ * and the sheet panel all live inside #hk-overlay-root. */

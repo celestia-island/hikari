@@ -17,7 +17,7 @@
 //! - [`Select`] - Dropdown selection
 //! - [`Checkbox`] - Checkbox with animations
 //! - [`RadioGroup`] - Radio button group
-//! - [`RadioButton`] - Radio button for use with RadioGroup
+//! - [`RadioGroup`] - Radio option group (Vue HkRadio mirror)
 //! - [`Switch`] - Toggle switch
 //! - [`Slider`] - Range slider
 //! - [`Textarea`] - Multi-line text input
@@ -37,9 +37,13 @@ pub mod date_picker;
 pub mod file_upload;
 pub mod form_field;
 pub mod icon_button;
+pub mod icon_button_group;
+pub mod icon_chip;
 pub mod image;
 pub mod input;
 pub mod input_wrapper;
+pub mod kbd;
+pub mod label;
 pub mod link;
 pub mod radio_group;
 pub mod select;
@@ -60,9 +64,13 @@ pub use date_picker::*;
 pub use file_upload::*;
 pub use form_field::*;
 pub use icon_button::*;
+pub use icon_button_group::*;
+pub use icon_chip::*;
 pub use image::*;
 pub use input::*;
 pub use input_wrapper::*;
+pub use kbd::*;
+pub use label::*;
 pub use link::*;
 pub use radio_group::*;
 pub use select::*;

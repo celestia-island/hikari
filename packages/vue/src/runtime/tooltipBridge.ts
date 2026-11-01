@@ -5,7 +5,9 @@
 // existing `title=` call site in a host app upgrades to the house tooltip
 // look with zero per-component migration. The mechanics:
 //
-//   engage (pointerover / focusin, delegated)
+//   engage (pointerover / focusin, delegated; a pointerover with
+//     pointerType "touch" never engages — the touch hint bar owns
+//     touch pointers, and stripping the title would break its fallback)
 //     → the element's title is moved aside into `data-hk-title` and the
 //       attribute is REMOVED — the native tooltip can no longer appear
 //     → after the delay the shared `.hk-tooltip-popup` element is filled,
@@ -277,6 +279,13 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
   };
 
   on("pointerover", (e) => {
+    // Touch pointers never hover: a finger drag fires pointerover en
+    // route, but the touch half (runtime/touchHint.ts) owns those
+    // pointers — engaging here would strip the title attribute for an
+    // anchored popup the touch mode never shows, and break the touch
+    // bar's own title fallback. Pen keeps hover (stylus users hover).
+    // Focus (focusin below) is untouched: keyboard a11y still engages.
+    if ((e as PointerEvent).pointerType === "touch") return;
     const el = shouldEngage(state, e.target);
     if (el) engage(state, el);
   }, { capture: true, passive: true });

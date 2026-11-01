@@ -34,7 +34,8 @@ const fakeCreateImageData = fakeFn<CanvasRenderingContext2D["createImageData"]>(
  *   click-to-toggle with auto-hide (revealAutoHideMs)
  * - the strength dot classifies through the shared passwordLevel util
  *   unless strengthEvaluator overrides it, and carries a localized
- *   tooltip that opens on hover AND on touch tap
+ *   tooltip that opens on hover (desktop) / via the touch long-press
+ *   hint bar (the touch half is the top bar, never the anchored popup)
  * - the native input stays type="password" at all times — the reveal
  *   pass draws on the canvas, so the value is never DOM text
  */
@@ -108,10 +109,14 @@ function fireBeforeinput(input: HTMLInputElement, inputType: string) {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
     container.remove();
   }
+  // The touch hint bar is presenter-owned module state (runtime/
+  // touchHint.ts) — tear the node out so a case remounts it fresh.
+  document.querySelectorAll(".hk-touch-hint-bar").forEach((el) => el.remove());
 });
 
 describe("HkInput password surface identity", () => {
@@ -566,32 +571,42 @@ describe("HkInput password strength traffic light", () => {
     ).toBe(false);
   });
 
-  it("opens the tooltip immediately on a touch tap and closes on an outside tap", async () => {
+  it("hints the strength on touch through the long-press bar, never the anchored popup", async () => {
+    vi.useFakeTimers();
     const { container } = mountPasswordInput("Password1", {
       passwordTrailing: "strength",
     });
     const wrapper = container.querySelector<HTMLElement>(".hk-tooltip-wrapper")!;
 
+    // A quick tap shows NOTHING: neither the anchored popup (hover/focus
+    // only) nor the top hint bar (the hold never elapsed).
     wrapper.dispatchEvent(
-      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
+      new PointerEvent("pointerdown", { pointerType: "touch", pointerId: 1, bubbles: true }),
     );
-    await nextTick();
-
-    let popup = document.querySelector<HTMLElement>(".hk-tooltip-popup");
-    expect(popup?.classList.contains("hk-tooltip-visible")).toBe(true);
-    expect(popup?.textContent).toContain("Fair");
-
-    // Tap somewhere else: the capture-phase document listener hides it.
-    const outside = document.createElement("div");
-    document.body.appendChild(outside);
-    outside.dispatchEvent(
-      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
+    await vi.advanceTimersByTimeAsync(100);
+    document.dispatchEvent(
+      new PointerEvent("pointerup", { pointerType: "touch", pointerId: 1, bubbles: true }),
     );
-    await nextTick();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+    expect(document.querySelector(".hk-touch-hint-bar")).toBeNull();
 
-    popup = document.querySelector<HTMLElement>(".hk-tooltip-popup");
-    expect(popup?.classList.contains("hk-tooltip-visible")).toBe(false);
-    outside.remove();
+    // The long-press fires the top-docked bar with the strength text…
+    wrapper.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "touch", pointerId: 1, bubbles: true }),
+    );
+    await vi.advanceTimersByTimeAsync(450);
+    const bar = document.querySelector<HTMLElement>(".hk-touch-hint-bar");
+    expect(bar?.classList.contains("is-on")).toBe(true);
+    expect(bar?.textContent).toContain("Fair");
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+
+    // …the lift starts the linger window, and the bar retires after it.
+    document.dispatchEvent(
+      new PointerEvent("pointerup", { pointerType: "touch", pointerId: 1, bubbles: true }),
+    );
+    await vi.advanceTimersByTimeAsync(2200);
+    expect(bar?.classList.contains("is-on")).toBe(false);
   });
 });
 

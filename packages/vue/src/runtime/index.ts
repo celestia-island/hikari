@@ -8,6 +8,15 @@ export {
   installHkTooltipBridge,
   type HkTooltipBridgeOptions,
 } from "./tooltipBridge";
+// The touch half of the tooltip story: the top-docked long-press
+// hint bar (bridge installer, bare presenter, component arm hook).
+export {
+  installHkTouchHintBridge,
+  showHkTouchHintBar,
+  armTouchHint,
+  type HkTouchHintOptions,
+  type HkTouchHintArmOptions,
+} from "./touchHint";
 export {
   installHkImageFallback,
   type HkImageFallbackOptions,

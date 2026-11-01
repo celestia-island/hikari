@@ -29,7 +29,11 @@ export default defineComponent({
      *  no peek, `collapsed` stays the plain presentational 56px rail. */
     collapsible: { type: Boolean, default: false },
     /** Layout width of the icon rail (the one-icon column). Mirrors the
-     *  56px this component always used for its collapsed mode. */
+     *  56px this component always used for its collapsed mode.
+     *  COUPLING (2026-11-02): the rail row square in HkSidebar.scss
+     *  derives its body inline track from the DEFAULT — 56px rail − 34px
+     *  menu row = 11px a side. A non-56 rail re-flattens the selected
+     *  pill unless that track is retuned alongside. */
     collapsedWidth: { type: String, default: "56px" },
     /** Hover dwell on the rail before the peek drawer opens, ms. */
     peekDelay: { type: Number, default: 400 },

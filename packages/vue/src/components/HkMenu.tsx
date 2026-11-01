@@ -861,7 +861,12 @@ export default defineComponent({
             </span>
           )}
           {item.icon && (
-            <span class="hk-menu-item-icon">{h(item.icon, { size: 16 })}</span>
+            // data-flip-icon: the row key opts this cell into the rail
+            // flip's icon flight (useRailIconFlight) — the flight pairs
+            // the leaving and entering copies of ONE destination by it.
+            <span class="hk-menu-item-icon" data-flip-icon={item.key}>
+              {h(item.icon, { size: 16 })}
+            </span>
           )}
           {item.flag && <span class="hk-menu-flag">{item.flag}</span>}
           <span class="hk-menu-label">{item.label}</span>
@@ -890,8 +895,14 @@ export default defineComponent({
               toggleGroup(item.key);
             }}
           >
+            {/* The group toggle's glyph flies too — same key, same
+                pairing (the rail header centers the same group icon).
+                Still conditional: an icon-less group renders no cell
+                here, exactly as before. */}
             {item.icon && (
-              <span class="hk-menu-item-icon">{h(item.icon, { size: 16 })}</span>
+              <span class="hk-menu-item-icon" data-flip-icon={item.key}>
+                {h(item.icon, { size: 16 })}
+              </span>
             )}
             <span class="hk-menu-label">{item.label}</span>
             {item.badge && <span class="hk-menu-sidebar-badge">{item.badge}</span>}
@@ -956,8 +967,14 @@ export default defineComponent({
             }}
           >
             {/* Icon-less rows fall back to the label's initial — the rail
-                must never strand a destination behind a missing glyph. */}
-            <span class="hk-menu-item-icon" data-fallback={item.icon ? undefined : true}>
+                must never strand a destination behind a missing glyph.
+                data-flip-icon pairs this cell with the expanded row's
+                icon across the density flip (useRailIconFlight). */}
+            <span
+              class="hk-menu-item-icon"
+              data-flip-icon={item.key}
+              data-fallback={item.icon ? undefined : true}
+            >
               {item.icon ? h(item.icon, { size: 16 }) : item.label.trim().charAt(0).toUpperCase()}
             </span>
             {item.badge && (
@@ -1002,7 +1019,16 @@ export default defineComponent({
                 toggleGroup(item.key);
               }}
             >
-              <span class="hk-menu-item-icon" data-fallback={item.icon ? undefined : true}>
+              {/* The flight pairs the rail header's glyph with the
+                  expanded group toggle's icon by the group key. An
+                  icon-less group has no expanded cell to pair with, so
+                  its placeholder caret simply dissolves — pairing needs
+                  both ends, and the flight never invents one. */}
+              <span
+                class="hk-menu-item-icon"
+                data-flip-icon={item.key}
+                data-fallback={item.icon ? undefined : true}
+              >
                 {item.icon ? h(item.icon, { size: 16 }) : railCaret(expanded, 16)}
               </span>
               {item.icon && (

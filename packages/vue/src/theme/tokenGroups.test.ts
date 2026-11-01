@@ -400,10 +400,10 @@ describe("late registration", () => {
 
 describe("localized text and sections", () => {
   it("resolves LocalizedText by locale with en and first-value fallbacks", () => {
-    const map = { en: "Hydrogen", "zh-Hans": "氢气", ja: "水素" };
-    expect(resolveLocalizedText(map, "zh-Hans")).toBe("氢气");
-    expect(resolveLocalizedText(map, "fr")).toBe("Hydrogen");
-    expect(resolveLocalizedText({ de: "Wasserstoff" }, "fr")).toBe("Wasserstoff");
+    const map = { en: "Buffer", "zh-Hans": "缓冲", ja: "バッファ" };
+    expect(resolveLocalizedText(map, "zh-Hans")).toBe("缓冲");
+    expect(resolveLocalizedText(map, "fr")).toBe("Buffer");
+    expect(resolveLocalizedText({ de: "Puffer" }, "fr")).toBe("Puffer");
     expect(resolveLocalizedText("bare string", "zh-Hans")).toBe("bare string");
   });
 

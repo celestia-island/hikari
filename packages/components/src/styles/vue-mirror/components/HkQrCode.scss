@@ -1,0 +1,33 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hk-qr-canvas {
+  display: block;
+  border-radius: var(--radius-sm, 4px);
+  // Always a white backing so the QR stays scannable regardless of theme.
+  background: #ffffff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.08);
+}
+
+.hk-qr-label {
+  font-size: var(--text-2xs, 0.625rem);
+  line-height: 1.4;
+  color: rgb(var(--color-muted, 108 108 108));
+  text-align: center;
+}

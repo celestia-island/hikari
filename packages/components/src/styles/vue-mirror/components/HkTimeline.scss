@@ -1,0 +1,630 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-timeline {
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  // Shared node geometry — ONE source of truth for the 24px indicator
+  // circle and the rail thickness. Every connector math keys off these:
+  // window-mode links center on the node along the inline axis, the
+  // vertical rail hangs centered under it, so both stay glued to the
+  // circles even if the node size ever changes.
+  --hk-timeline-node-size: 24px;
+  --hk-timeline-link-thickness: 2px;
+  --hk-timeline-link-top: calc(
+    (var(--hk-timeline-node-size) - var(--hk-timeline-link-thickness)) / 2
+  );
+}
+
+.hk-timeline[data-orientation="vertical"] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+// ── Compact window mode ────────────────────────────────────────────────
+// Engaged automatically (collapse="auto") when the full row cannot fit the
+// host: three FIXED equal thirds keep the geometry stable even when an edge
+// cell is empty, each visible step stacks vertically (indicator circle on
+// top, single-line label below), and horizontal link segments join the
+// neighbouring node centers on an overlay — continuing past a side's edge
+// with a fading gradient where further hidden steps go on.
+//
+// The LAYOUT is unconditional: scoping this rule with :not(.hk-scroll-pin)
+// (as a round-16 sticky fix briefly did) deletes the whole three-column
+// grid from every sticky-header timeline — the windowed wizard collapsed
+// to a block stack (circles bunched left, links gone). Only the relative
+// ANCHOR needs the escape, and it gets its own rule below.
+.hk-timeline[data-mode="window"] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+
+  // Geometry contract with the stacked steps above: the node is the 24px
+  // indicator circle at the top of every stack, so its center sits half a
+  // node below the cell top in ALL columns — that is where link segments go.
+  // (Node size, thickness and link-top are the shared tokens on
+  // `.hk-timeline`.)
+  --hk-timeline-link-clearance: 20px;
+}
+
+// The relative anchor for the links overlay: a sticky step header (the
+// scroll-pin contract) is its own containing block and must keep
+// position: sticky — the escape keeps THIS property only from
+// out-specifying it (the same fight the full-mode halo rule lost).
+.hk-timeline[data-mode="window"]:not(.hk-scroll-pin) {
+  position: relative;
+}
+
+.hk-timeline[data-mode="window"] .hk-timeline-window {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+// The stacked step itself: node centered horizontally ON TOP, label BELOW as
+// normal horizontal text — one line, ellipsised when too long.
+.hk-timeline[data-mode="window"] .hk-timeline-step {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4, 4px);
+
+  [data-el="label"] {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+}
+
+// Neighbour dimming expresses "previous / upcoming step"; a clickable
+// neighbour brightens back up while pointed at (affordance to jump back).
+.hk-timeline[data-mode="window"] .hk-timeline-window[data-dimmed] {
+  opacity: var(--hk-timeline-neighbor-opacity, 0.55);
+  transition: opacity var(--duration-normal, 0.3s) ease;
+
+  &:has(.hk-timeline-step[data-clickable]):hover {
+    opacity: 1;
+  }
+}
+
+// Link segments overlay: invisible to pointers and assistive tech.
+.hk-timeline-links {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hk-timeline-link {
+  position: absolute;
+  top: var(--hk-timeline-link-top);
+  height: var(--hk-timeline-link-thickness);
+
+  // Fixed thirds put node centers at one-sixth / half / five-sixths ALONG
+  // THE INLINE AXIS; bonds span between adjacent centers minus a clearance
+  // on both ends so they never touch the circles themselves. Logical
+  // properties keep the overlay aligned when the host document flows RTL
+  // (the grid cells mirror with direction, so must the links).
+  &[data-segment="before-current"] {
+    inset-inline-start: calc(16.6667% + var(--hk-timeline-link-clearance));
+    width: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+  }
+
+  &[data-segment="current-after"] {
+    inset-inline-start: calc(50% + var(--hk-timeline-link-clearance));
+    width: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+  }
+
+  // Continuation hints run from a container edge toward that column's node,
+  // fading out INTO the edge ("more steps exist beyond this side").
+  &[data-segment="edge-before"] {
+    inset-inline-start: 0;
+    width: calc(16.6667% - var(--hk-timeline-link-clearance));
+  }
+
+  &[data-segment="edge-after"] {
+    inset-inline-end: 0;
+    width: calc(16.6667% - var(--hk-timeline-link-clearance));
+  }
+
+  // Bond colors follow the adjacent neighbour's status semantics.
+  &[data-status="completed"] {
+    --_link-color: var(--hi-color-primary);
+  }
+
+  // Links only ever carry a neighbour's status ("completed" / "pending");
+  // the current step is never a link endpoint (HkTimeline.tsx statusOf),
+  // so no "active" key here.
+  &[data-status="pending"] {
+    // 30 % of a SOLID muted tone. Deriving from --hi-color-border multiplied
+    // that token's own alpha: the shipped schemes define it as
+    // `rgb(128 128 128 / 15%)`, so the bond computed to 15 % × 30 % = 4.5 %
+    // — a 2px line at 4.5 % reads as no line at all, which is what the
+    // round-24 report saw on the right bond and on both edge continuations
+    // (左中右三段式的步骤左右没有横线). --hi-color-muted is an opaque text
+    // tone in the family's schemes, so the 30 % below is the strength it
+    // looks like; the intent ("a third as loud as the completed bond")
+    // survives whatever alpha a theme gives its border token.
+    --_link-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 30%, transparent);
+  }
+
+  background-color: var(--_link-color);
+
+  // ONE fade mechanism (gradient fill — no mask layering): solid near the
+  // node, transparent at the container edge. Gradients are physical, so the
+  // fade directions swap under RTL to keep dissolving into the outer edge.
+  &[data-fade-dir="left"] {
+    background-color: transparent;
+    background-image: linear-gradient(to left, var(--_link-color), transparent);
+  }
+
+  &[data-fade-dir="right"] {
+    background-color: transparent;
+    background-image: linear-gradient(to right, var(--_link-color), transparent);
+  }
+}
+
+/* RTL mirrors every bond: logical insets above already place each segment
+   correctly along the flipped axis; only the fade DIRECTION remains
+   physical and therefore swaps here. Non-fading bonds inherit nothing.
+   scaleX mirrors paint only — the box is symmetric around its own center. */
+[dir="rtl"] .hk-timeline[data-mode="window"] .hk-timeline-link[data-fade-dir] {
+  transform: scaleX(-1);
+}
+
+/* ── Vertical window mode ────────────────────────────────────────────────
+   The height-starved sibling of the compact horizontal window: when the
+   host cannot fit the full column, the timeline collapses to the same
+   three-cell window (previous / current / next) stacked as equal thirds,
+   the outer two dimmed exactly like their left/right counterparts, and
+   vertical rail segments joining the node centers on an overlay — with
+   fading continuations past the top/bottom edges where hidden steps go. */
+.hk-timeline[data-orientation="vertical"][data-mode="window"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+
+  // Each cell centers its step within its third, which puts every node
+  // center at the SAME fractions of the host height as the horizontal
+  // mode puts them across the width (1/6, 1/2, 5/6) — the link math
+  // below is the horizontal one rotated, nothing more.
+  .hk-timeline-window {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .hk-timeline-window .hk-timeline-step {
+    flex: 0 0 auto;
+    max-width: 100%;
+
+    [data-el="label"] {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  // Vertical rails: centered under the node column, spanning between the
+  // cells' node centers (at 1/6, 1/2, 5/6 of the height) minus the same
+  // clearance the horizontal bonds keep from the circles. This base rule
+  // ((0,4,0)) already outranks the horizontal segment rules ((0,2,0)) on
+  // width/inset-inline-start and re-asserts the top/height/bottom axes,
+  // so segments below only declare their own top/height/bottom.
+  .hk-timeline-link {
+    width: var(--hk-timeline-link-thickness);
+    height: auto;
+    inset-inline-start: var(--hk-timeline-link-top);
+    // Explicitly neutralize the horizontal edge-after rule's
+    // inset-inline-end: 0 leak (same guard as the full-mode rail below).
+    inset-inline-end: auto;
+    top: auto;
+    bottom: auto;
+
+    &[data-segment="before-current"] {
+      top: calc(16.6667% + var(--hk-timeline-link-clearance));
+      height: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+    }
+
+    &[data-segment="current-after"] {
+      top: calc(50% + var(--hk-timeline-link-clearance));
+      height: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+    }
+
+    // Continuation hints: from the container edge toward that cell's node,
+    // fading INTO the edge ("more steps exist beyond this side").
+    &[data-segment="edge-before"] {
+      top: 0;
+      height: calc(16.6667% - var(--hk-timeline-link-clearance));
+    }
+
+    &[data-segment="edge-after"] {
+      bottom: 0;
+      height: calc(16.6667% - var(--hk-timeline-link-clearance));
+    }
+
+    &[data-fade-dir="up"] {
+      background-color: transparent;
+      background-image: linear-gradient(to top, var(--_link-color), transparent);
+    }
+
+    &[data-fade-dir="down"] {
+      background-color: transparent;
+      background-image: linear-gradient(to bottom, var(--_link-color), transparent);
+    }
+  }
+}
+
+
+.hk-timeline-step {
+  display: flex;
+  align-items: center;
+  // Host-tunable rhythm: the node→label breathing room (a rail host with
+  // roomy rows raises it; the 8px stock keeps compact wizards tight).
+  gap: var(--hk-timeline-step-gap, var(--space-8, 8px));
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+
+  [data-el="indicator"] {
+    // Keyed off the shared node-size token above so the circle, the
+    // window-mode link math and the vertical rail offset stay in sync.
+    width: var(--hk-timeline-node-size);
+    height: var(--hk-timeline-node-size);
+    min-width: var(--hk-timeline-node-size);
+    min-height: var(--hk-timeline-node-size);
+    max-width: var(--hk-timeline-node-size);
+    max-height: var(--hk-timeline-node-size);
+    border-radius: 50%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  [data-el="num"] {
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
+    line-height: 1;
+    display: block;
+  }
+
+  [data-el="check"] {
+    display: block;
+  }
+
+  [data-el="label"] {
+    // Host-tunable: rails in side columns read better a notch up from
+    // the compact --text-xs wizard label.
+    font-size: var(--hk-timeline-label-size, var(--text-xs, 0.75rem));
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  [data-el="connector"] {
+    height: var(--hk-timeline-link-thickness);
+    flex: 1 1 0%;
+    min-width: 0.5rem;
+    margin: 0 var(--space-4, 4px);
+  }
+}
+
+/* ── Bond cells (2026-10-31 user rule; trimmed 80→60→50 % the same day) ─
+   The horizontal row reads as one cell per step plus one cell per bond: the
+   steps keep their content width, the leftover splits into EQUAL bond cells,
+   and each bond paints 50 % of its cell CENTERED, so both ends keep a 25 %
+   air gap. (80 %/10 % read as long as ever; 60 %/20 % still did; 50 %/25 %
+   is where the user asked it to land.)
+   Three mechanics make that exact:
+
+   1. The bond's box must span the WHOLE cell. Its cell begins where its own
+      label ends, but the step's flex gap already sits in front of it (that
+      gap is part of the cell, not extra air), so the box starts one gap
+      earlier — hence the negated start margin, which must keep reading the
+      SAME `--hk-timeline-step-gap` token the step's `gap` uses. Before this
+      the gap counted twice and the bond ran 12px off its label but only 4px
+      off the next node: the completed bond read as glued to the next circle.
+   2. The painted share cannot be `padding-inline` — a percentage padding
+      resolves against the CONTAINING block (the step), not the bond's own
+      box, which would inset it by a slice of the step instead of 25 % of the
+      cell. So the colour lives on a ::before pinned `inset-inline: 25%`,
+      which does resolve against the bond. The status rules below therefore
+      publish `--_bond-color`; the vertical rail keeps painting its own box
+      (it is a rail hanging under the node, not a cell-wide bond).
+   3. The row-width RESERVATION is a min-width floor, sized to the two-margin
+      era at the stock 8px gap: half a rem plus two gaps, minus the cancelled
+      gap, reserves the same sixteen outer pixels per bond the old fixed
+      4px+4px margins carried, so `collapse="auto"` (HkTimeline.tsx measures
+      the row's max-content width) switches to the window at exactly the
+      threshold the two-margin era had — never earlier, never later. (A host
+      that retunes `--hk-timeline-step-gap` shifts the threshold by the
+      difference: the old margins were fixed 16px outer while this floor
+      reserves gap+8. And a definite `flex-basis` reserves NOTHING here:
+      engines size a flex item's intrinsic contribution at
+      max(min-width, content) and ignore the basis — measured, a 100px basis
+      on an empty item contributed only its 8px floor.) The floor only binds
+      when a row is squeezed below its natural width, which `collapse="auto"`
+      never lets happen for windowable rows (the window takes over; a ≤3-step
+      row stays full-mode at any width, but the floor then behaves exactly as
+      both prior eras' floors did); through `collapse="never"` — or the
+      full-mode frame a label change renders before re-measuring — the pinned
+      24px box paints 14.4px inset 4.8px, and that paint slides UNDER the
+      next step's 24px circle for as long as the overflow stays under 24px
+      (host ≳ 380px for the five-step wizard row). Below that a small stub
+      shows beside the circle (onset ~381px, ~5px by 360px) — marginally
+      tighter than the two-margin geometry's own stub in this manually-forced
+      mode (onset ~384px, ~6px by 360px), and bounded below by the width
+      where a label reaches the next circle (~400px for this row). */
+.hk-timeline[data-mode="full"][data-orientation="horizontal"] .hk-timeline-step [data-el="connector"] {
+  position: relative;
+  margin-inline: calc(-1 * var(--hk-timeline-step-gap, var(--space-8, 8px))) 0;
+  min-width: calc(0.5rem + 2 * var(--hk-timeline-step-gap, var(--space-8, 8px)));
+  background: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline: 25%;
+    background: var(--_bond-color);
+  }
+}
+
+.hk-timeline-step[data-last] {
+  flex: 0 0 auto;
+}
+
+/* Disabled step: visible so the flow's shape reads, but dimmed and inert
+   (data-clickable is withheld upstream; cursor says so too). */
+.hk-timeline-step[data-disabled] {
+  cursor: default;
+
+  & [data-el="label"],
+  & [data-el="indicator"] {
+    opacity: 0.45;
+  }
+}
+
+.hk-timeline[data-orientation="vertical"][data-mode="full"] .hk-timeline-step {
+  flex-direction: row;
+  flex: 0 0 auto;
+
+  // The gap this step's rail must bridge: exactly the space between the
+  // bottom edge of this step's node circle and the top edge of the next
+  // step's node circle. Padding and rail height share the token, so the
+  // rail always lands flush on both circles — no floating dashes, no
+  // overlap, whatever the rhythm is tuned to.
+  --hk-timeline-vert-gap: var(--space-24, 24px);
+  padding-bottom: var(--hk-timeline-vert-gap);
+
+  [data-el="connector"] {
+    width: var(--hk-timeline-link-thickness);
+    // The horizontal base rule leaves `min-width: 0.5rem` behind; on an
+    // absolutely-positioned rail min-width beats width, which once fatted
+    // the rail to 8px and shoved it off the node center. Neutralize the
+    // leaked sizing constraints explicitly.
+    min-width: 0;
+    flex: 0 0 auto;
+    position: absolute;
+    height: var(--hk-timeline-vert-gap);
+    // Centered under the NODE, not the row: the circle occupies the first
+    // node-size square of the row, so the rail's inline offset is
+    // (node − thickness) / 2. Logical property mirrors it under RTL
+    // together with the flipped flex column.
+    inset-inline-start: calc(
+      (var(--hk-timeline-node-size) - var(--hk-timeline-link-thickness)) / 2
+    );
+    inset-inline-end: auto;
+    top: var(--hk-timeline-node-size);
+    bottom: auto;
+    margin: 0;
+    // Rounded caps keep the rail's ends from aliasing against the circles.
+    border-radius: calc(var(--hk-timeline-link-thickness) / 2);
+  }
+}
+
+.hk-timeline-step[data-status="completed"] {
+  [data-el="indicator"] {
+    background-color: var(--hi-color-primary);
+    color: rgb(var(--color-on-solid-icon, 255 255 255));
+  }
+
+  [data-el="label"] {
+    color: var(--hi-color-text-primary);
+  }
+
+  [data-el="connector"] {
+    // The bonds paint 50 % of their cell through a ::before (see the
+    // full-mode cell rule); the token is the single source for both that
+    // paint and the vertical rail's own box.
+    --_bond-color: var(--hi-color-primary);
+    background: var(--_bond-color);
+  }
+}
+
+.hk-timeline-step[data-status="active"] {
+  [data-el="indicator"] {
+    background-color: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
+    color: var(--hi-color-primary);
+    border: 2px solid var(--hi-color-primary);
+  }
+
+  [data-el="label"] {
+    color: var(--hi-color-text-primary);
+  }
+
+  [data-el="connector"] {
+    // Opaque-tone derivation, same fix the window-mode link carries:
+    // `--hi-color-border` already carries the theme's own alpha, so 30 % of
+    // IT computed to about 4.5 % and the bond was not a line on any real
+    // surface (measured: ~7/255 off a white background — a 248 grey).
+    --_bond-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 30%, transparent);
+    background: var(--_bond-color);
+  }
+}
+
+.hk-timeline-step[data-status="pending"] {
+  [data-el="indicator"] {
+    background-color: var(--hi-color-surface);
+    color: var(--hi-color-muted);
+    border: 2px solid color-mix(in srgb, var(--hi-color-border) 30%, transparent);
+  }
+
+  [data-el="label"] {
+    color: var(--hi-color-muted);
+  }
+
+  [data-el="connector"] {
+    // Opaque-tone derivation, same fix the window-mode link carries:
+    // `--hi-color-border` already carries the theme's own alpha, so 30 % of
+    // IT computed to about 4.5 % and the bond was not a line on any real
+    // surface (measured: ~7/255 off a white background — a 248 grey).
+    --_bond-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 30%, transparent);
+    background: var(--_bond-color);
+  }
+}
+
+.hk-timeline-step[data-clickable] {
+  cursor: pointer;
+
+  // Keyboard parity: the tsx gives completed steps role="button" +
+  // tabindex 0 (house outer-ring pattern).
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Highlight only — no scale pop: enlarging the node clipped it against
+     tight hosts (a top-of-rail circle poked out of its overflow box) and
+     read as jitter (user direction 2026-09-16). */
+  &:hover [data-el="indicator"] {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
+    transition: box-shadow var(--duration-normal, 0.3s) ease;
+  }
+}
+
+// The hover/press rules above drive the indicator scale; snap the
+// animation under reduced motion, keeping the state change itself
+// (house pattern: HkIconButton.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-timeline-step[data-clickable]:hover [data-el="indicator"] {
+    transition: none;
+  }
+}
+
+// ── Navigation motion (2026-09-23 user directive, round 16) ──────────
+// The stepper never hard-cuts: status colors crossfade and the window-mode
+// cells wipe in from the navigation side. All of it rides the family's
+// standard duration/ease and collapses under reduced motion.
+
+.hk-timeline {
+  --hk-timeline-motion: 0.3s;
+  --hk-timeline-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Status crossfade: the data-status driven colors (indicator fill/border,
+// label color, connector fill) transition instead of flipping. The
+// horizontal bond's paint lives on its ::before (the 50 % cell rule), so
+// that box rides the crossfade too — without it a status flip snaps there
+// while the vertical rail keeps easing.
+.hk-timeline-step [data-el="indicator"],
+.hk-timeline-step [data-el="label"],
+.hk-timeline-step [data-el="connector"],
+.hk-timeline[data-mode="full"][data-orientation="horizontal"] .hk-timeline-step [data-el="connector"]::before {
+  transition:
+    background-color var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
+    color var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
+    border-color var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
+}
+
+// The full-mode active halo was removed here (2026-09-24 user directive):
+// a measured pill behind the active step, sliding between nodes, which
+// read as an unexplained primary blob in every wide multi-step flow and
+// duplicated what the filled indicator and the label weight already say.
+// Window mode never had one. The containing-block rule below stays — it is
+// the timeline's anchor for any absolutely positioned consumer content, and
+// the vertical rail anchors to the step rather than to this box.
+.hk-timeline[data-mode="full"]:not(.hk-scroll-pin) {
+  position: relative;
+}
+
+// Window mode: each cell's step content is keyed by its step key, so a
+// navigation remounts it — wipe in from the navigation side. data-dir is
+// absent on the very first render, so opening does not animate.
+.hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
+  animation: hk-timeline-wipe var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
+}
+
+.hk-timeline[data-mode="window"][data-dir="back"] .hk-timeline-step {
+  animation-name: hk-timeline-wipe-back;
+}
+
+.hk-timeline[data-orientation="vertical"][data-mode="window"][data-dir] .hk-timeline-step {
+  animation-name: hk-timeline-wipe-v;
+}
+
+.hk-timeline[data-orientation="vertical"][data-mode="window"][data-dir="back"] .hk-timeline-step {
+  animation-name: hk-timeline-wipe-back-v;
+}
+
+@keyframes hk-timeline-wipe {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes hk-timeline-wipe-back {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes hk-timeline-wipe-v {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes hk-timeline-wipe-back-v {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+// The global animation switch pauses animations; a paused wipe freezes
+// the cell in its from-frame (invisible) for any navigation that lands
+// in the paused window — disable instead, like the family's other
+// enter animations (HkPickerPane/HkCrossfade precedent).
+html[data-css-animations="0"] .hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-timeline-step [data-el="indicator"],
+  .hk-timeline-step [data-el="label"],
+  .hk-timeline-step [data-el="connector"],
+  .hk-timeline[data-mode="full"][data-orientation="horizontal"] .hk-timeline-step [data-el="connector"]::before {
+    transition: none;
+  }
+
+  .hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
+    animation: none;
+  }
+}

@@ -1,0 +1,72 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/*
+ * HkLoadMore — the unified bottom indicator for dynamically loaded
+ * lists. Hairline rules flank the control so the indicator reads as
+ * "the list pauses here" rather than a stray button; everything is
+ * token-driven (no hardcoded colors) so themes restyle it for free.
+ */
+
+.hk-load-more {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) 0;
+  color: rgb(var(--color-text-tertiary));
+}
+
+/* Hairline rules: transparent at the outer edge, muted towards the
+ * control; the end rule mirrors the gradient. */
+.hk-load-more-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgb(var(--color-muted) / 35%));
+}
+
+.hk-load-more-rule-end {
+  background: linear-gradient(to left, transparent, rgb(var(--color-muted) / 35%));
+}
+
+/* The flex row flips in RTL, so the hairlines mirror too: transparent
+ * stays on the outer edge, muted towards the central control. */
+[dir="rtl"] .hk-load-more-rule {
+  background: linear-gradient(to left, transparent, rgb(var(--color-muted) / 35%));
+}
+
+[dir="rtl"] .hk-load-more-rule-end {
+  background: linear-gradient(to right, transparent, rgb(var(--color-muted) / 35%));
+}
+
+.hk-load-more-core {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+/* Delivery progress ("3 / 19"): mono, tabular so the digits don't
+ * shimmer while counting up. */
+.hk-load-more-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  transition: opacity 200ms ease;
+}
+
+.hk-load-more[data-state="loading"] .hk-load-more-count {
+  opacity: 0.6;
+}
+
+.hk-load-more-end {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+}

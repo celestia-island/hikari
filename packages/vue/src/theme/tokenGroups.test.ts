@@ -423,16 +423,16 @@ describe("localized text and sections", () => {
           key: "media",
           label: "Media",
           slots: [
-            { key: "h2", label: "H2", defaults: { dark: { r: 3, g: 3, b: 3 }, light: { r: 4, g: 4, b: 4 } } },
+            { key: "accent", label: "Accent", defaults: { dark: { r: 3, g: 3, b: 3 }, light: { r: 4, g: 4, b: 4 } } },
           ],
         },
       ],
     });
     const resolved = resolveGroupTokens("dark");
     expect(resolved.sectioned.l1).toEqual({ r: 1, g: 1, b: 1 });
-    expect(resolved.sectioned.h2).toEqual({ r: 3, g: 3, b: 3 });
+    expect(resolved.sectioned.accent).toEqual({ r: 3, g: 3, b: 3 });
     const group = getTokenGroups().find((g) => g.id === "sectioned")!;
-    expect(allGroupSlots(group).map((s) => s.key)).toEqual(["l1", "h2"]);
+    expect(allGroupSlots(group).map((s) => s.key)).toEqual(["l1", "accent"]);
   });
 });
 

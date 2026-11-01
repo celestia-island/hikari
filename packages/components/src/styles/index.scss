@@ -658,6 +658,24 @@
 @import './vue-mirror/components/HkJsonTree.scss';
 @import './vue-mirror/components/HkMarkdownRenderer.scss';
 @import './vue-mirror/components/HkDiffViewer.scss';
+
+// W5 layout + nav family mirrors
+@import './vue-mirror/components/HkPageHeader.scss';
+@import './vue-mirror/components/HkTitleBar.scss';
+@import './vue-mirror/components/HkWindowControls.scss';
+@import './vue-mirror/components/HkStatusRow.scss';
+@import './vue-mirror/components/HkStatusPill.scss';
+@import './vue-mirror/components/HkDockBar.scss';
+@import './vue-mirror/components/HkShareBar.scss';
+@import './vue-mirror/components/HkStepFlow.scss';
+@import './vue-mirror/components/HkPaneHolder.scss';
+@import './vue-mirror/components/HkSidebarRail.scss';
+@import './vue-mirror/components/HkAffixPicker.scss';
+@import './vue-mirror/components/HkHeaderPicker.scss';
+@import './vue-mirror/components/HkLocalePicker.scss';
+@import './vue-mirror/components/HkNavItem.scss';
+@import './vue-mirror/components/HkMenu.scss';
+@import './vue-mirror/styles/admin-tokens.scss';
 @import './vue-mirror/components/HkTemplateField.scss';
 @import './vue-mirror/components/HkTokenInput.scss';
 @import './vue-mirror/components/HkColorPicker.scss';

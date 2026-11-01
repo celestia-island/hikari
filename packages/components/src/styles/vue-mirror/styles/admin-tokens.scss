@@ -1,0 +1,1370 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* === Plana UI Shared Layout Tokens ===
+   Used by plana-ui components and consuming apps (arona, shittim-chest).
+   Defines layout variables needed by plana-ui + hikari components.
+   Color tokens are provided by hikari's initTheme(). */
+
+@use "../components/menu-item" as mi;
+@use "./polyfill" as *;
+
+:root {
+  /* ── Layout tokens ─ */
+  --s-footer-height: 3rem;
+  --s-header-height: 3rem;
+
+  /* ── Window-control chrome insets ─
+   * The right padding a host title-bar header keeps between the standard
+   * HkWindowControls cluster and the window edge (canonical home since
+   * the chest login strip shipped the cluster glued to the frame corner —
+   * field report 2026-10-25). The standard cluster NEVER rides the edge
+   * (that is the flush variant's job), so every chrome face sources its
+   * padding from here instead of restating half-of-the-header-inset per
+   * face — the faces had drifted three ways (chat 12px/8px, console a
+   * full 24px of dead air, auth 0px). Values are the 2026-10-23 ruling's
+   * halvings of the base/compact header insets, promoted to tokens. */
+  --hk-window-controls-edge-inset: 0.75rem; /* desktop: half of the 24px base header inset */
+  --hk-window-controls-edge-inset-compact: 0.5rem; /* ≤1023px: half of the 16px compact header inset */
+  /* Layout/type/motion scale tokens (--space-*, --text-*, --blur-*, --z-*,
+   * --duration-*, --ease-*) used to be mirrored here ("keep both in sync")
+   * — they now live once in styles/theme/scale.scss, which every entry
+   * loads before this sheet. Only plana-specific tokens remain below. */
+
+  /* ── Shared color aliases ─ */
+  --c-primary: rgb(var(--color-primary, 122 162 247));
+  --c-primary-light: rgb(var(--color-primary, 122 162 247) / 15%);
+  --c-primary-subtle: rgb(var(--color-primary, 122 162 247) / 8%);
+  --c-primary-overlay: rgb(var(--color-primary, 122 162 247) / 15%);
+
+  /* ── Hikari color bridge ─ */
+  --hi-color-primary: rgb(var(--color-primary, 122 162 247));
+  --hi-color-primary-rgb: var(--color-primary, 122 162 247);
+  --hi-color-surface: rgb(var(--color-surface, 255 255 255));
+  --hi-color-border: rgb(var(--color-border, 100 100 100) / 15%);
+  --hi-color-text-primary: rgb(var(--color-text, 30 30 30));
+  --hi-color-text-on-primary: rgb(var(--color-on-primary, 255 255 255)); /* deprecated in-tree: prefer the on-solid slots */
+  --color-on-solid: 255 255 255;
+  --color-on-solid-text: 255 255 255;
+  --color-on-solid-icon: 255 255 255;
+  --hi-color-text-on-solid: rgb(var(--color-on-solid-text, 255 255 255));
+  --hi-color-icon-on-solid: rgb(var(--color-on-solid-icon, 255 255 255));
+  --hi-color-text-secondary: color-mix(in srgb, rgb(var(--color-text, 30 30 30)) 60%, transparent);
+  --hi-color-muted: rgb(var(--color-muted, 108 108 108));
+  --hi-color-background: rgb(var(--color-background, 255 255 255));
+  --hi-color-bg-canvas: rgb(var(--color-background, 255 255 255));
+  --hi-color-bg-elevated: rgb(var(--color-surface, 255 255 255));
+  --hi-color-bg-subtle: rgb(var(--color-surface, 255 255 255) / 0.5);
+  --hi-secondary-bg: rgb(var(--color-surface, 255 255 255) / 0.5);
+  --hi-color-danger: rgb(var(--color-error, 247 118 142));
+  --hi-color-success: rgb(var(--color-success, 14 184 64));
+  --hi-color-warning: rgb(var(--color-warning, 238 214 119));
+  --hi-color-info: rgb(var(--color-info, 106 190 214));
+  --hi-color-black-10: rgb(0 0 0 / 0.1);
+  --hi-color-white-5: rgb(255 255 255 / 0.05);
+  --hi-color-white-10: rgb(255 255 255 / 0.1);
+  --hi-shadow-button: 0 4px 14px rgb(var(--color-primary) / 35%);
+  --hi-shadow-elevated: 0 2px 16px rgb(0 0 0 / 8%);
+
+  /* ── Hk component tokens (theme bridge) ─
+   * Chrome-level component styles read these RGB-triplet tokens.
+   * Without a definition they fall back to hardcoded light-theme values
+   * (white surfaces, near-black text, blue focus ring) inside dark
+   * themes. Bridging them to the runtime --color-* tokens keeps the
+   * controls on the active theme; consumer-local definitions still win
+   * by load order. (--hk-surface's only in-tree consumer — the retired
+   * HTabs tail overlay — is gone; the token stays published for
+   * external plana-ui readers.) */
+  --hk-surface: var(--color-surface, 255 255 255);
+  --hk-primary: var(--color-primary, 122 162 247);
+}
+
+/* Global reset (opt-in: import this explicitly) */
+.plana-global-reset {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* === Plana shared UI classes ===
+   Used by plana-ui components (PStatusBar, PFooter, PAdminShell).
+   Both arona and shittim-chest import this file. */
+
+/* ── Status bar (footer) ─ */
+.s-status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--s-footer-height);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-16);
+  background: rgb(var(--color-surface));
+  @include backdrop-filter(blur(var(--blur-md)));
+  border-top: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  z-index: var(--hk-z-toolbar);
+  flex-shrink: 0;
+}
+
+.s-status-bar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex: 1;
+  min-width: 0;
+}
+
+.s-status-bar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Shrinkable with a floor so a wide tab strip hands its overflow to
+     the HTabs scroller (scrollable mode) instead of pushing the footer
+     past the viewport. No effect while the strip fits. */
+  flex-shrink: 1;
+  min-width: 0;
+
+  .s-tabs,
+  .hk-tabs {
+    width: auto;
+  }
+}
+
+.s-status-bar-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.s-status-bar-tag {
+  display: inline-flex;
+  align-items: center;
+  /* min-height + auto so the pill can grow with the stacked two-row
+     version block instead of clipping/overlapping text. */
+  min-height: 24px;
+  height: auto;
+  /* The version block stacks two rows tall, so the small status dot
+     needs more than the old 5px to read as separated from the text. */
+  gap: 10px;
+  padding: 3px 8px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-2xs);
+  line-height: 1;
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-muted));
+  @include user-select(none);
+  cursor: pointer;
+  transition: background var(--duration-short);
+}
+
+.s-status-bar-tag:active {
+  background: var(--c-primary-overlay);
+}
+
+.s-status-bar-tag-label {
+  font-family: var(--font-mono);
+  /* Match the value's opacity: a faded label next to the version value
+     reads as a different typeface/weight, especially with CJK fallback. */
+  opacity: 0.85;
+  /* CJK flex/grid items have a one-character min-content — without nowrap
+     the label ("面板") stacks vertically when the status tag is squeezed.
+     Keep the label on one line. */
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.s-status-bar-tag-value {
+  font-family: var(--font-mono);
+  color: rgb(var(--color-text));
+  opacity: 0.85;
+  /* Version block as a two-column grid: row 1 = panel label + version,
+     row 2 = engine label + version. Labels form one left-aligned column
+     and values another, so the two rows share a true left edge — no
+     separator, no wrap-dependent layout. */
+  display: inline-grid;
+  grid-auto-flow: row;
+  grid-template-columns: auto auto;
+  column-gap: 5px;
+  row-gap: 2px;
+  align-items: baseline;
+  justify-items: start;
+  line-height: 1.25;
+}
+
+.s-status-bar-tag-value .s-status-bar-tag-label {
+  color: rgb(var(--color-muted));
+  opacity: 1;
+}
+
+.s-status-bar-version {
+  white-space: nowrap;
+  /* Version cell = marquee window (2026-10-11 user direction): long
+     branch identities scroll inside the cell (HkPlaceholderMarquee
+     layered by HkStatusBar's HkVersionValue) instead of stretching the
+     footer or wrapping. inline-flex (not block) so the static text
+     layer keeps contributing a text baseline to the parent grid's
+     align-items: baseline — an overflow:hidden block would synthesize
+     its baseline from the bottom edge and visibly sink the row. */
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  max-width: min(40vw, 24rem);
+}
+
+.s-status-bar-version__static {
+  /* Dead-overlay guard: if the marquee's measurement never fires (RO
+     unavailable, zero-width probe), a capped cell must degrade to an
+     ellipsis cut, not a silent hard clip. Invisible while the marquee
+     owns the window (the ghost is opacity-0 by then). */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.s-status-bar-version[data-overflowing] .s-status-bar-version__static {
+  opacity: 0;
+}
+
+/* The marquee overlay must measure and draw in the cell's own
+   typography — the placeholder defaults (base size, muted color, 1.5
+   line box) are input-context styling, overridden here. */
+.s-status-bar-version .hk-placeholder-marquee {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Compact-popover value cell: bounded so a long branch identity scrolls
+   inside the ~300px card instead of stretching it; the label keeps its
+   natural width on the left (marginRight:auto on the row). */
+.s-status-bar-popover-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  max-width: min(16rem, 60vw);
+}
+
+.s-status-bar-popover-value .s-status-bar-version {
+  max-width: 100%;
+}
+
+/* Compact traffic light (logged-in mobile footers): drop the version
+   rows, keep a finger-sized dot-only pill. Versions stay reachable
+   through the hover/tap popover and the aria label. */
+.s-status-bar-tag[data-compact] {
+  gap: 0;
+  padding: 8px;
+  min-height: 28px;
+
+  .s-status-bar-tag-value {
+    display: none;
+  }
+
+  /* Invisible touch slop around the pill: the visible light is
+     intentionally tiny, but its tap target must satisfy the same
+     thumb-reach standard as the mobile sheet/confirm controls (the
+     landed effective target is ~35x56px). The tag itself carries
+     position:relative inline, so this pseudo rides along with zero
+     layout shift; vertical slop dominates because corner taps land
+     off-axis, horizontal stays small so the sliver stolen from the
+     footer gap never covers the first tab. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -14px -6px;
+  }
+}
+
+.s-status-bar-version-sep {
+  white-space: nowrap;
+  opacity: 0.5;
+}
+
+/* In-flight (connecting/reconnecting): the warning tint BREATHES —
+   2026-10-17 user direction, a fixed background must mean a SETTLED
+   state (that is the gray idle's job now), so a genuinely in-flight
+   light visibly pulses between a faint and a stronger tint. Pure-CSS
+   compositor motion; reduced-motion users keep the steady resting
+   tint (the class's original value). */
+.s-status-bar-tag-reconnecting {
+  background: rgb(var(--color-warning) / 14%);
+  transition: background var(--duration-short), width var(--duration-short) var(--ease-standard);
+  animation: s-status-bar-reconnecting-breathe 1.8s var(--ease-standard) infinite;
+}
+
+@keyframes s-status-bar-reconnecting-breathe {
+  0%,
+  100% {
+    background: rgb(var(--color-warning) / 8%);
+  }
+
+  50% {
+    background: rgb(var(--color-warning) / 22%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-status-bar-tag-reconnecting {
+    animation: none;
+  }
+}
+
+/* One soft green blink when the light recovers: the pill background
+   pulses from a success tint down to the resting surface colour
+   exactly once, then hands the property back. The transient peak sits
+   slightly above the reconnecting tint's resting intensity so both
+   states read as one family; first connects never get it (see
+   HkStatusBar's seenConnected guard). Reduced-motion users get the
+   plain state switch instead. */
+.s-status-bar-tag-recovered {
+  animation: s-status-bar-recover-flash 1.1s var(--ease-standard) 1;
+}
+
+@keyframes s-status-bar-recover-flash {
+  0% {
+    background: rgb(var(--color-success) / 22%);
+  }
+
+  55% {
+    background: rgb(var(--color-success) / 10%);
+  }
+
+  100% {
+    background: rgb(var(--color-surface));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-status-bar-tag-recovered {
+    animation: none;
+  }
+}
+
+.s-status-bar-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: rgb(var(--color-warning));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.s-status-bar-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  --pulse: 0;
+  transform-origin: center;
+  box-shadow: 0 0 0 calc(var(--pulse) * 5px) rgb(var(--color-success) / calc(var(--pulse) * 0.55));
+  transform: scale(calc(1 + var(--pulse) * 0.25));
+}
+
+/* ── Status bar tabs (pill row) ── */
+.s-status-bar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.s-status-bar-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+
+  &:hover {
+    background: rgb(var(--color-surface));
+    color: rgb(var(--color-text));
+  }
+
+  &-active {
+    background: rgb(var(--color-primary) / 12%);
+    color: rgb(var(--color-primary));
+  }
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 767px) {
+  .s-status-bar {
+    /* Keep a visible margin at both ends on phones: 6px read as flush
+       against the screen edge, especially for the right-side tray. */
+    padding: 0 var(--space-12);
+  }
+
+  /* Shrink-flex layout: the center tab strip owns the flexible space and
+     hands its overflow via the HTabs scroller — no more 45% cap + raw
+     overflow-x on this wrapper. */
+  .s-status-bar-left {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .s-status-bar-center {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .s-status-bar-right {
+    flex: 0 0 auto;
+  }
+
+  .s-status-bar-gamepad {
+    display: none;
+  }
+}
+
+/* ── Glass header ─ */
+.s-glass-header {
+  position: relative;
+  z-index: var(--hk-z-header);
+  display: flex;
+  align-items: center;
+  /* Horizontal rhythm + gap live in the class (not in host utilities):
+   * the markup used to carry `px-6 gap-3` / `px-4 gap-2` utility classes,
+   * which a host WITHOUT an atomic layer simply did not have — the header
+   * silently fell back to this file's old `padding: 0 var(--space-12)`
+   * and no gap at all. */
+  gap: var(--space-12);
+  padding: 0 var(--space-24);
+  height: var(--s-header-height);
+  background: rgb(var(--color-surface) / var(--opacity-half));
+  @include backdrop-filter(blur(var(--blur-md)));
+  border-bottom: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  flex-shrink: 0;
+}
+
+.s-glass-header--compact {
+  gap: var(--space-8);
+  padding: 0 var(--space-16);
+}
+
+/* Chrome variant (HkAdminHeader `chrome` prop — the desktop face whose
+ * header IS the window title bar): the inline-end inset follows the
+ * window-controls contract token, not the content inset — the default
+ * 24px reads as dead air next to the standard HkWindowControls cluster
+ * (the same 2026-10-23 user direction that halved the chat face's gap).
+ * LOGICAL property, like the RTL-mirrored titlebar close button (the
+ * [dir="rtl"] .hk-titlebar-btn-close rule in components/HkTitleBar.scss):
+ * in a dir="rtl" host the caption row flips to the visual left and the
+ * inset must flip with it, not stay on the physical right. (0,2,0)
+ * outranks the base rule and the compact band alike, so the chrome
+ * inset wins regardless of load order. */
+.s-glass-header.s-glass-header--chrome {
+  padding-inline-end: var(--hk-window-controls-edge-inset, 0.75rem);
+}
+
+@media (max-width: 1023px) {
+  .s-glass-header.s-glass-header--chrome {
+    padding-inline-end: var(--hk-window-controls-edge-inset-compact, 0.5rem);
+  }
+}
+
+/* ── Balanced header columns (the ONE three-zone header layout) ─────────
+ * The shared geometry behind every top bar that owns a header-centre
+ * group: the frontend chat header (chest ChatLayout's .s-header-bar-*)
+ * and the console header (HkAdminHeader's .s-admin-header-*) both hang
+ * these classes next to their own chrome classes, so the two faces can
+ * never drift apart again (user report 2026-10-15: the console's
+ * header-centre tab strip sat LEFT of centre on phones while the
+ * frontend's strip read centred — two per-band flex dialects had grown
+ * from the same idea).
+ *
+ * Grid, not flex: two EQUAL 1fr side tracks pin the middle column to the
+ * true viewport middle no matter how lopsided the wings' CONTENT is
+ * (avatar-only left vs three icon buttons right — exactly the console's
+ * phone case, where the drawer mode hides the title and the left wing is
+ * just the 28px trigger). Flex wings grow from flex-basis 0, so equal
+ * growth centred the group only while spare space lasted; each band then
+ * grew its own ad-hoc override and each override skewed in SOME band.
+ * `minmax(min-content, 1fr)` gives each wing a hard content floor, so an
+ * overflowing centre column (a wide tab strip) can never squeeze the
+ * avatar/action wings out of existence — the 2026-10-12 phone incident
+ * class — and the centre column is `minmax(0, auto)`, so IT soaks the
+ * squeeze instead: the strip narrows while STAYING centred, and its
+ * internal HkTabs scroller takes over (edge fades + swipe, the frontend
+ * over-wide-strip behavior) without ever covering a wing. */
+.s-balanced-header {
+  display: grid;
+  grid-template-columns: minmax(min-content, 1fr) minmax(0, auto) minmax(min-content, 1fr);
+  align-items: center;
+}
+
+/* Each wing names its column EXPLICITLY: the header's in-flow children are
+ * exactly these three zones (every other child teleports out), but a
+ * centre-less host renders only two of them — with auto-placement the
+ * actions wing would fall into the MIDDLE track and drift to the viewport
+ * centre (R2 finding, 2026-10-15), because the trailing 1fr track would
+ * sit empty. Naming the columns makes the contract positional by class,
+ * not by child order or count: a centre-less header lays out as
+ * [user | empty | actions] exactly like the old flex bar did. */
+.s-header-wing-start {
+  grid-column: 1;
+  justify-self: start;
+  min-width: 0;
+  /* A wing whose content floors exceed its track must not PAINT past the
+   * wing box underneath the centre group (popup surfaces teleport to
+   * body, so clipping here never cuts a menu). */
+  overflow: hidden;
+}
+
+.s-header-wing-center {
+  /* Default stretch, deliberately: the strip must inherit the COLUMN's
+   * shrunken width when the middle track soaks a squeeze, so the HTabs
+   * scroller inside it takes over (edge fades + swipe). justify-self:
+   * center here would size the item by fit-content, whose min-content
+   * floor (= the full strip width) punches the item past the shrunken
+   * track and the strip paints over the wings instead of scrolling.
+   * Centring itself is the tracks' job (equal 1fr sides), not the
+   * item's. */
+  grid-column: 2;
+  min-width: 0;
+}
+
+.s-header-wing-end {
+  grid-column: 3;
+  justify-self: end;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Admin header chrome (HkAdminHeader) ────────────────────────────────
+ * The header's own layout. Every declaration below replaces a utility
+ * class the markup used to depend on (`w-7 h-7`, `rounded-full`,
+ * `object-cover`, `max-w-[8rem]`, `animate-pulse`, …) — a host without an
+ * atomic layer rendered the header without them, and a host with one
+ * (chest/UnoCSS) owned values the design system could not fix. Values are
+ * the verified computed ones (audit 2026-09-15 against chest's generated
+ * CSS), so no host's rendering changes.
+ * The three-zone GEOMETRY itself lives in the shared .s-balanced-header
+ * contract above — the classes below keep only their wing-INTERNAL
+ * layout (row direction, gaps, alignment) and appearance. */
+
+.s-admin-header-user {
+  display: flex;
+  align-items: center;
+  /* Avatar → title distance mirrors the chat frontend's header left
+   * wing: the panel's workspace button sits a flex gap PLUS its own
+   * 8px inline padding away from the avatar (16px visual), while the
+   * console title had only the flex gap — the console title visibly
+   * hugged the avatar (user report 2026-09-28: 后台标题离头像太近).
+   * The wing gap here carries the whole distance so the title text
+   * lands on the same rhythm as the panel's button content. */
+  gap: var(--space-16);
+}
+
+/* The page-owned centre group (filter tab strips): keeps its natural
+ * width and hands overflow to the HTabs scroller inside it. Column
+ * placement/shrinkage is the shared grid contract's job. */
+.s-admin-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s-admin-header-avatar {
+  /* Block, never the UA's inline-block: hosts may nest the trigger in a
+   * plain block wrapper (the chat face's menu-anchor <div> around
+   * HeaderLeft's HkAvatarButton), and an inline-block button there joins
+   * a line box — its baseline (the bottom margin edge, because of
+   * `overflow: hidden`) sits on the strut's baseline, so the strut's
+   * descender space lands BELOW the avatar and the button rides ~4px
+   * high inside a perfectly centred wrapper (2026-10-30 user report:
+   * 前台头像略微偏上，后台正中). A direct flex/grid parent blockifies
+   * this away, so the console face is unaffected either way. */
+  display: block;
+  position: relative;
+  width: var(--space-28);
+  height: var(--space-28);
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  cursor: pointer;
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The hamburger's leading icon (lucide `Menu`), sized in rem so it tracks
+ * a scaled root the way the utility it replaces did. */
+.s-admin-header-hamburger-icon {
+  width: var(--space-20);
+  height: var(--space-20);
+}
+
+.s-admin-header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The reserved workspace-switcher slot (HkAdminHeader, drawer face).
+ * The chat header's left wing is avatar + ws-trigger (8px flex gap +
+ * 28px button box), and that wing's min-content floor is what keeps the
+ * balanced grid's centre strip off the space on a phone: the strip can
+ * only shrink into its own column, never into a wing. The console's
+ * drawer face hides both the title and the workspace concept, so
+ * without a stand-in the wing's floor is just the 28px avatar — a wide
+ * strip (the firewall page's three sections on a 412px phone) slides
+ * left until it hugs the avatar (2026-10-29 user report). The blank
+ * span carries the trigger's 28px box; the wing's 16px gap already
+ * covers the button's 8px inline padding (the 2026-09-28 title-distance
+ * pin), so the floor lands within one padding-step of the frontend's. */
+.s-admin-header-ws-slot {
+  width: var(--space-28);
+  flex-shrink: 0;
+}
+
+/* The old hover camera veil ("change avatar" affordance) is gone: the
+ * avatar trigger opens the account MENU — the avatar edit is the Camera
+ * item inside it — so the veil promised an action the click never
+ * delivered (user report 2026-09-16). */
+
+/* The open view's title. The 1.5 line-height is load-bearing: the default
+ * text-sm box is exactly the em advance, so descenders (g, y, p) fall
+ * outside the truncate clip box under subpixel rounding (user report
+ * 2026-09-12: the "g" tail of the nickname was visibly cut). */
+.s-admin-header-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  line-height: 1.5;
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  /* The actions hug the right edge of their grid column (the old
+   * margin-left:auto push fought the centre wing for the middle; the
+   * flex-balanced `1 1 0` era before that skewed whenever the wings'
+   * contents disagreed — the shared grid contract ends both). */
+  justify-content: flex-end;
+}
+
+.s-admin-header-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Emergency stop chip: quiet destructive by default, solid red + pulse
+ * while engaged (`is-active`), dimmed + wait cursor while the request is
+ * in flight (`is-loading`). */
+.s-admin-header-emergency {
+  padding: var(--space-4) var(--space-12);
+  border-width: 1px;
+  border-radius: 0.375rem;
+  font-size: var(--text-xs);
+  /* Uno's font-size utilities also emit `line-height: 1`; the chip
+   * rendered that way in chest, so the class keeps it. */
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgb(220 38 38 / 10%);
+  color: #ef4444;
+  border-color: rgb(239 68 68 / 40%);
+}
+
+.s-admin-header-emergency:hover {
+  background: rgb(220 38 38 / 25%);
+}
+
+.s-admin-header-emergency.is-loading {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.s-admin-header-emergency.is-active {
+  background: #dc2626;
+  color: #fff;
+  border-color: #b91c1c;
+  animation: s-admin-header-emergency-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes s-admin-header-emergency-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-admin-header-emergency.is-active {
+    animation: none;
+  }
+}
+
+/* ── Admin shell layout (HkAdminShell) ──────────────────────────────────
+ * Replaces the `flex flex-col h-full w-full overflow-hidden` /
+ * `flex-1 min-h-0` utility chain the shell used to require. */
+.s-admin-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.s-admin-shell-body {
+  display: flex;
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.s-admin-shell-main {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.s-admin-shell-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+/* ── Nav sidebar labels (HkNavSidebar) ─ */
+.s-nav-item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Popup menu items ─ */
+/* Unified menu-item spec (packages/vue/src/components/_menu-item.scss):
+ * one row grammar across menus, selects, theme pills, admin header
+ * rows and nav. The tsx wraps leading icons in .hk-menu-item-icon so
+ * the column centers against the label. */
+.s-popup-menu-item {
+  @include mi.item;
+
+  /* Trailing carets keep parking at the far edge via their own
+     margin-left: auto. */
+}
+
+.s-popup-menu-item .hk-menu-item-icon {
+  @include mi.icon;
+}
+
+.s-popup-menu-item[data-active]:hover {
+  background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
+}
+
+/* The divider row of the menu-item grammar (hikari _menu-item.scss
+ * @mixin divider): one hairline inset by the row padding. Declared
+ * globally here so host apps can drop a .hk-menu-divider between rows
+ * without importing the scss partial — the sheet media block below
+ * mirrors the grammar's 44px/10×16 sheet geometry. */
+.hk-menu-divider {
+  flex: none;
+  height: 1px;
+  margin: var(--hk-menu-item-pad-y, 6px) auto;
+  width: calc(100% - 2 * var(--hk-menu-item-pad-x, 12px));
+  background: rgb(var(--color-border, 100 100 100) / 18%);
+  border: none;
+}
+
+@media (max-width: 767px) {
+  .hk-menu-divider {
+    margin: var(--hk-menu-item-pad-y, 10px) auto;
+    width: calc(100% - 2 * var(--hk-menu-item-pad-x, 16px));
+  }
+}
+
+/* The section caption and its group wrapper (hikari _menu-item.scss
+ * @mixin section / @mixin section-label): the small band above a run of
+ * rows, e.g. 「临时空间」 in the workspace picker, plus the role="group"
+ * wrapper HkMenuSection renders. Declared globally here because host apps
+ * render these classes by HAND (the workspace picker's own markup) and
+ * cannot import the scss partial — the grammar (and every metric
+ * fallback) lives in _menu-item.scss. The caption's SHEET geometry rides
+ * the grammar's sheet-context lists, so it must NOT be re-declared here;
+ * this file only binds the class names to the grammar. */
+.hk-menu-section {
+  @include mi.section;
+}
+
+.hk-menu-section-label {
+  @include mi.section-label;
+}
+
+/* The consumer body band (hikari _menu-item.scss @mixin body): the
+ * geometry-neutral wrapper for a host-rendered run of rows inside a menu
+ * level. Same hand-rendered-host reason as the section band above — the
+ * workspace picker wraps its custom rows in .hk-menu-body and cannot
+ * import the partial. The band is TWO neutral declarations by contract
+ * (the WIDTH invariant: the surface's inset is the only horizontal inset
+ * a row receives, so rows here line up edge-for-edge with the foot
+ * action band); a host's own class beside it carries the content
+ * decisions (min-width floors, caption tokens), never padding. */
+.hk-menu-body {
+  @include mi.body;
+}
+
+/* ── User identity header (shared) ─ */
+/* One identity block for every account surface — the admin user
+   dropdown's header, a mobile drawer's user panel footer — so all
+   account surfaces read identically: nickname, login email, then
+   permission badges. Consumers that nest it inside their own padded
+   container (a drawer footer) drop the padding via context
+   overrides. */
+.s-user-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  /* The 14px inline is the BARE-surface value (a wrapper with no menu rows
+     beside it). Inside HkMenu's surfaces the scoped rules below take over:
+     the unified menu-item grammar moved rows to a 12px pad plus a 1px
+     transparent border (sheets 16px), so a fixed 14px aligned with nothing
+     — 1px off at the default root, 4.5px at a 20px root, and 3px the other
+     way on sheets (measured 2026-09-17, chest account menus). The bottom
+     margin restores the separation the removed section divider used to
+     provide. */
+  padding: var(--space-10) var(--space-14) var(--space-12);
+  margin-bottom: var(--space-4);
+}
+
+/* Inside HkMenu's popout/sheet surfaces the block shares its container with
+   the menu rows, so its inline padding IS the rows' content edge — their
+   1px transparent border plus pad-x — expressed in the grammar's own units
+   (px formulas: the row paddings are px literals declared on the rows, so
+   a rem here drifts at any other root font-size; the fallback literals must
+   follow _menu-item.scss if the row padding ever moves). Scoped to the two
+   surfaces that host the block, so bare surfaces keep the 14px and plain
+   HkSelect / HkPopupSelect panels are untouched. Consumers that re-anchor
+   the block (a drawer footer) keep their own context overrides. */
+.hk-select-popout-host .s-user-header {
+  padding-inline: calc(1px + var(--hk-menu-item-pad-x, 12px));
+}
+
+.hk-select-sheet-panel .s-user-header {
+  padding-inline: calc(1px + var(--hk-menu-item-pad-x, 16px));
+}
+
+/* Drawer-hosted blocks ride the drawer's sheet tokens too (the
+   .hk-drawer-panel context is one of the grammar's three sheet lists),
+   so the drawer twin carries the SHEET pad-x — a drawer identity block
+   without it kept the bare 14px while the drawer rows around it rode
+   1px + 16px, a 2-3px text-edge drift. */
+.hk-drawer-panel .s-user-header {
+  padding-inline: calc(1px + var(--hk-menu-item-pad-x, 16px));
+}
+
+/* Profile variant — avatar chip beside the identity column, the ONE
+   identity grammar the chat frontend's user menu and the admin
+   header's dropdown share (moved up from chest's ChatLayout so both
+   surfaces render from the same sheet). */
+.s-user-header--profile {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+/* Avatar primitives shared by the trigger button and the identity
+   chip: the letter fallback fills its box, images cover. */
+.s-user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--c-primary-medium);
+  color: rgb(var(--color-primary));
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.s-user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.s-user-avatar-chip {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.s-user-header-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Pending variant (identity not yet hydrated): spinner beside the
+   label reads as "actively working", not a frozen panel. */
+.s-user-header--pending {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-8, 8px);
+}
+
+.s-user-header-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-user-header-email {
+  font-size: var(--text-2xs);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-user-header-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4, 4px);
+  margin-top: var(--space-4, 4px);
+}
+
+/* ── Nav sidebar ─ */
+.s-nav-item-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex: 1;
+  min-width: 0;
+}
+
+.s-nav-item-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-error));
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 1;
+  animation: s-nav-item-badge-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes s-nav-item-badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--color-error) / 0.6); }
+  50%      { box-shadow: 0 0 0 4px rgb(var(--color-error) / 0); }
+}
+
+/* ── System tray (gamepad + clock) ─ */
+.s-status-bar-system-tray {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 4px);
+}
+
+.s-status-bar-gamepad {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.s-status-bar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--color-muted));
+  opacity: 0.45;
+  transition:
+    color var(--duration-normal) ease,
+    opacity var(--duration-normal) ease;
+
+  svg {
+    width: 9px;
+    height: 9px;
+    display: block;
+    stroke-width: 2.5;
+  }
+}
+
+.s-status-bar-btn[data-shape="x"] svg {
+  width: 11px;
+  height: 11px;
+}
+
+.s-status-bar-btn[data-active] {
+  opacity: 1;
+}
+
+.s-status-bar-time {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  color: rgb(var(--color-muted));
+  opacity: 0.6;
+  line-height: 1;
+}
+
+/* ── Auth card (login/register pages) ─ */
+/* ONE width contract for every auth surface: the card and its measuring
+   wrapper resolve the same custom property, whose fallback is the same
+   literal `HK_AUTH_CARD_MAX_WIDTH` carries in theme/authCard.ts (SCSS cannot
+   read a TS constant; styles/authCardWidth.test.ts keeps the two equal — and
+   runs on the COMPILED sheet, so a width nested in @media cannot hide).
+   Host shells that cap their own slot to the card read the property (or the
+   constant) instead of copying the literal — a wider slot renders a
+   max-width card flush left. */
+.s-auth-card {
+  max-width: var(--hk-auth-card-max-width, 28rem);
+  width: 100%;
+  /* The measuring wrapper sets border-box explicitly; the card must not
+     depend on the host having loaded the reset sheet (without it a 1px
+     border pushes the box 2px past its max-width and off-centre). */
+  box-sizing: border-box;
+  background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 70%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text, 30 30 30)) 12%, transparent);
+  border-radius: var(--hi-radius-sm, 4px);
+  box-shadow: 0 2px 16px rgb(0 0 0 / 8%);
+  animation: s-auth-card-in 0.45s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)) both;
+}
+
+/* Field leading icon (HkSignInCard's inline user glyph) — sized in rem so
+ * it tracks a scaled root, the way the `w-4 h-4` utility it replaces did
+ * only in hosts that had an atomic layer. */
+.s-auth-card-field-icon {
+  width: var(--space-16);
+  height: var(--space-16);
+}
+
+@keyframes s-auth-card-in {
+  from { opacity: 0; transform: translateY(-16px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Measuring wrapper (HkAuthCard): owns an explicit height so content-
+   driven height changes (channel tabs swapping the methods list, error
+   banners, …) animate instead of snapping. The transition lives here,
+   always on; the `--measuring` clip below is applied by HkAuthCard only
+   for the duration of a height transition, so an idle card never clips
+   its shadow, focus rings or popovers. */
+.s-auth-card-height {
+  /* The wrapper is sized from the card's offsetHeight (border-box); an
+     explicit box-sizing keeps that mapping honest on hosts without a
+     global border-box reset. */
+  box-sizing: border-box;
+  /* Mirror the card's own sizing contract (.s-auth-card below:
+     `width: 100%; max-width: var(--hk-auth-card-max-width, …)`). The card's
+     percentage width now
+     resolves against THIS wrapper, and a bare wrapper inside a centered
+     flex/grid host shrink-wraps to the card's content — collapsing the
+     panel to its intrinsic width. Presenting the same definite sizing
+     context here restores the exact pre-wrapper geometry in every host
+     formatting context. Keep the two declarations in sync. */
+  width: 100%;
+  max-width: var(--hk-auth-card-max-width, 28rem);
+  transition: height 0.3s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+
+  &.s-auth-card--measuring {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-auth-card-height {
+    transition: none;
+  }
+}
+
+.s-auth-card input:not(.hk-otp-cell) {
+  transition: color 100000000s step-end, background-color 100000000s step-end;
+  appearance: none;
+  -webkit-appearance: none;
+  /* 0 radius here was always a visual no-op: the auth card's inputs are
+   * transparent linings inside their own rounded boxes (HkInput). The OTP
+   * cells are the first VISIBLE bare inputs on the card, and they follow
+   * --radius-md themselves — exempting them keeps the theme's radius
+   * levels (chest's html[data-radius]) in charge of their corners. */
+  border-radius: 0;
+}
+
+.s-auth-card input:-webkit-autofill,
+.s-auth-card input:-webkit-autofill:hover,
+.s-auth-card input:-webkit-autofill:focus,
+.s-auth-card input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--hi-color-text-primary, #333) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--hi-color-surface, #fff) inset !important;
+  caret-color: var(--hi-color-text-primary, #333);
+}
+
+.s-auth-card input:-webkit-autofill::first-line {
+  font-size: inherit !important;
+  font-family: inherit !important;
+  color: var(--hi-color-text-primary, #333);
+}
+
+.s-auth-header {
+  padding: var(--space-32, 2rem) var(--space-32, 2rem) 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+}
+
+.s-auth-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary, #333);
+  margin: 0 0 var(--space-4, 0.25rem);
+}
+
+.s-auth-subtitle {
+  font-size: var(--text-base, 0.875rem);
+  color: var(--hi-color-muted, #666);
+  margin: 0;
+}
+
+.s-auth-form {
+  padding: var(--space-24, 1.5rem) var(--space-32, 2rem) var(--space-32, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.s-auth-form > form,
+.s-auth-form > * {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.s-auth-form .s-tabs,
+.s-auth-form .hk-tabs {
+  margin-bottom: var(--space-12, 0.75rem);
+  display: flex;
+  justify-content: center;
+}
+
+.s-auth-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8, 0.5rem);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-danger, #f85149);
+  background: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
+  border-radius: 6px;
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+}
+
+.s-auth-footer {
+  /* Stack footer rows (remember-me, protocol consent, sign-in link…) the
+     same way the header stacks its children: one row per child at every
+     card width and locale (a plain block left the rows as inline-level
+     siblings sharing one text line-box, so two short rows fused onto one
+     line after the 8-23 de-customization dropped the per-row wrappers).
+     The rows share one LEFT edge and the group is centered as a whole:
+     fit-content sizes the block to the widest row and auto side margins
+     center it, so individually centering each row no longer scatters
+     their left edges when the labels differ in width. */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8, 0.5rem);
+  width: fit-content;
+  margin: var(--space-16, 1rem) auto 0;
+  text-align: start;
+  padding: 0 var(--space-32, 2rem) var(--space-24, 1.5rem);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-muted, #666);
+}
+
+/* When a footer follows the form, collapse the form's bottom padding so
+   the whitespace around the footer rows stays symmetric — last field →
+   first row (8px + the footer's 16px top margin = 24px) equals last row
+   → card edge (the footer's 24px bottom padding). Without this the form
+   padding stacks onto the footer margin and the rows sit visibly closer
+   to the card's bottom edge. Specificity (0,2,0) also beats the ≤480px
+   media-query re-declaration, keeping the rhythm symmetric at both
+   breakpoints. Browsers without :has keep the previous padding — a
+   graceful, spacing-only degradation. */
+.s-auth-form:has(+ .s-auth-footer) {
+  padding-bottom: var(--space-8, 0.5rem);
+}
+
+/* Full-width alternative sign-in methods block (HkAuthCard `methods`
+   slot, usually HkAuthMethodList). Same side padding as the form and the
+   footer so the buttons line up exactly with the inputs; the footer keeps
+   its fit-content centered-group behavior because the buttons live here,
+   not in the footer. The 8px top/bottom padding bands the divider row off
+   the submit button above and the tiles off the footer rows below — a bare
+   16px margin sat the divider on the button and the tiles on the footer
+   (2026-09-16 user feedback). */
+.s-auth-methods {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-8, 0.5rem) var(--space-32, 2rem);
+  margin-top: var(--space-24, 1.5rem);
+}
+
+/* Keep the vertical rhythm when the block sits between form and footer:
+   form → 40px → divider row (8px collapsed padding + 24px margin + 8px
+   padding), and buttons → 24px → footer rows (8px padding + the footer's
+   16px margin-top). */
+.s-auth-form:has(+ .s-auth-methods) {
+  padding-bottom: var(--space-8, 0.5rem);
+}
+
+.s-auth-link {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-text-secondary, #999);
+  text-decoration: none;
+  transition: color var(--duration-normal, 0.3s) ease;
+}
+
+.s-auth-link:hover {
+  color: var(--hi-color-primary, #58a6ff);
+}
+
+.s-auth-invite-banner {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-warning, #ffa500);
+  background: color-mix(in srgb, var(--hi-color-warning, #ffa500) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-warning, #ffa500) 20%, transparent);
+  border-radius: 6px;
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+  text-align: center;
+}
+
+.s-auth-invite-banner.expired {
+  color: var(--hi-color-danger, #f85149);
+  background: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 10%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
+}
+
+@media (max-width: 480px) {
+  .s-auth-header { padding-left: var(--space-16, 1rem); padding-right: var(--space-16, 1rem); }
+  .s-auth-form  { padding: var(--space-20, 1.25rem) var(--space-16, 1rem) var(--space-24, 1.5rem); }
+  .s-auth-footer { padding-left: var(--space-16, 1rem); padding-right: var(--space-16, 1rem); }
+  .s-auth-methods { padding-left: var(--space-16, 1rem); padding-right: var(--space-16, 1rem); }
+}
+
+/* ── Arona app utility classes ── */
+.a-text-primary {
+  color: var(--color-text);
+}
+
+.a-text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.a-text-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+.a-text-danger {
+  color: var(--hi-color-danger, rgb(247 118 142));
+}
+
+.a-icon-inline {
+  display: inline;
+}
+
+.a-icon-success {
+  color: var(--color-success, rgb(14 184 64));
+}
+
+.a-icon-warning {
+  color: var(--color-warning, rgb(238 214 119));
+}
+
+.a-bg-secondary {
+  background: rgb(var(--color-background, 255 255 255));
+}
+
+.a-bg-tertiary {
+  background: rgb(var(--color-surface, 255 255 255));
+}
+
+.a-latency-text {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+.a-error-banner {
+  background: var(--hi-color-danger, rgba(239, 68, 68, 0.1));
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
+}
+
+.a-tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+// Full-viewport by default: the page does NOT assume a fixed status bar
+// is mounted under it (2026-10-24 — the old calc() subtracted
+// --s-footer-height unconditionally, stopping the background 3rem short
+// of the bottom on pages with no status bar). Hosts that DO pair the
+// auth page with a status bar subtract it themselves.
+.a-auth-page {
+  min-height: 100vh;
+}
+
+// ── adjacent-button spacing (the button-row grammar) ──────────────────────
+// EVERY horizontal run of buttons keeps a visible gap between neighbours —
+// two buttons touching reads as one split control (user direction
+// 2026-09-25). Hosts wrap their button clusters in .hk-button-row and get
+// the house rhythm; modal footers and step docks already carry their own
+// gap on the same token, so everything agrees.
+.hk-button-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+
+  &[data-compact] {
+    gap: var(--space-8, 0.5rem);
+  }
+
+  &[data-end] {
+    justify-content: flex-end;
+  }
+}

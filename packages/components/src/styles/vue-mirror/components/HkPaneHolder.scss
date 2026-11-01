@@ -1,0 +1,43 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkPaneHolder — the keep-mounted pane slot (see the TSX doc for when to
+// choose it over the dissolve primitives).
+
+.hk-pane-holder {
+  display: none;
+
+  // Active: back in the layout with the family dissolve's own language —
+  // a one-shot opacity reveal. No transform: a pane sliding in would
+  // disagree with every crossfade around it.
+  &[data-active] {
+    display: block;
+    animation: hk-pane-holder-in var(--duration-normal, 0.3s) ease-out;
+  }
+}
+
+@keyframes hk-pane-holder-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Opt-outs: the global animation switch is the host's, reduced motion is
+// the OS's — the holder obeys both (an inline-less rule; the animation is
+// declared here in the sheet, so unlike HkTransitionContainer's inline
+// duration a media query CAN reach it).
+html[data-css-animations="0"] .hk-pane-holder[data-active] {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-pane-holder[data-active] {
+    animation-duration: var(--duration-fast, 0.15s);
+  }
+}

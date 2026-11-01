@@ -1,0 +1,123 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkNavItem — nav row. Speaks the unified menu-item spec's METRICS
+ * (min-height / padding / gap / font / radius / icon cell — see
+ * ./_menu-item.scss) so nav rows, menu rows, select options and theme
+ * pills share one box geometry. Colors stay on the --hi-* token family:
+ * nav rows are consumed by hosts that re-theme via --hi-*, so the
+ * interaction palette deliberately does not switch to --c-*. */
+
+@use "./menu-item" as mi;
+@use "../styles/polyfill" as *;
+
+.hk-nav-item {
+  @include mi.item-tokens;
+
+  display: flex;
+  align-items: center;
+  gap: var(--hk-menu-item-gap);
+  min-height: var(--hk-menu-item-min-h);
+  padding: var(--hk-menu-item-pad-y) var(--hk-menu-item-pad-x);
+  border-radius: var(--hk-menu-item-radius);
+  color: var(--hi-color-muted);
+  font-size: var(--hk-menu-item-font);
+  font-family: inherit;
+  line-height: var(--hk-menu-item-lh);
+  text-decoration: none;
+  background: none;
+  border: 1px solid transparent;
+  width: 100%;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+  @include user-select(none);
+
+  /* Interaction-state precedence: ACTIVE > HOVER > NONE.
+     - none: muted text, transparent background
+     - hover (non-active only): primary 10% background wash — the single
+       hover signal — text lifts to the neutral text color; hue and
+       font-weight never change on hover
+     - active: primary wash + primary text + weight 600; hovering an
+       active item changes NOTHING (selection is stable)
+     Hover selectors must exclude [data-active]: the previous
+     `:hover:not([data-disabled])` form outranked `[data-active]`
+     (0,3,0 vs 0,2,0), so hovering the selected item erased both its
+     background tint and its primary text color. */
+  &:hover:not([data-disabled]):not([data-active]) {
+    background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
+    color: var(--hi-color-text-primary);
+  }
+
+  &[data-active] {
+    background: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
+    color: var(--hi-color-primary);
+    font-weight: 600;
+  }
+
+  &[data-disabled] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* Focus ring drawn inside the border box (offset -2px, the
+     HkSelectionGrid precedent): child rows sit inside the
+     overflow:hidden .hk-nav-item-children container, whose edges shave
+     the top/bottom legs of an outer ring. Every row — button and link
+     variants alike — carries .hk-nav-item, so one (0,2,0) rule covers
+     them all. */
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: -2px;
+  }
+}
+
+.hk-nav-item-icon {
+  @include mi.icon;
+}
+
+.hk-nav-item-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Child-row badge (tsx emits it bare): a small push-to-end pill so it
+   never competes with the ellipsizing label for space. Auto inline-start
+   margin is the house push-to-end pattern and survives the RTL flip. */
+.hk-nav-item-badge {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  padding: 0 var(--space-6, 0.375rem);
+  border-radius: var(--radius-sm, 4px);
+  background: color-mix(in srgb, var(--hi-color-muted) 12%, transparent);
+  font-size: var(--text-2xs, 0.625rem);
+}
+
+.hk-nav-item-arrow {
+  transition: transform 0.2s;
+}
+
+.hk-nav-item-arrow-expanded {
+  transform: rotate(90deg);
+}
+
+.hk-nav-item-children {
+  padding-inline-start: var(--space-16, 1rem);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-nav-item-arrow {
+    transition: none;
+  }
+}

@@ -5,6 +5,7 @@ import {
   TOOLTIP_GAP_PX,
   applyTooltipPosition,
   resolveTooltipFlip,
+  snapToPixelGrid,
   tooltipPositionStyle,
 } from "./tooltipPosition";
 
@@ -37,11 +38,13 @@ function probePopup(rects: DOMRect[]): HTMLElement {
 }
 
 const PREV_INNER = { width: window.innerWidth, height: window.innerHeight };
+const PREV_DPR = window.devicePixelRatio;
 
 afterEach(() => {
   configurePopupInsets(null);
   window.innerWidth = PREV_INNER.width;
   window.innerHeight = PREV_INNER.height;
+  window.devicePixelRatio = PREV_DPR;
   vi.restoreAllMocks();
   document.querySelectorAll(".hk-tooltip-popup, [data-tooltip-probe]").forEach((el) => el.remove());
 });
@@ -342,5 +345,130 @@ describe("applyTooltipPosition against an app-chrome band", () => {
     applyTooltipPosition(popup, trigger, "bottom");
     expect(popup.style.left).toBe("268px");
     expect(popup.style.top).toBe("348px");
+  });
+});
+
+
+/** The zoom-2 computed-style mock the zoom tests share: documentElement
+ *  reports an inline zoom of 2, everything else stays real. */
+function mockRootZoom(zoom: string): void {
+  const original = window.getComputedStyle.bind(window);
+  vi.spyOn(window, "getComputedStyle").mockImplementation(((el: Element) => {
+    const decl = original(el);
+    return new Proxy(decl, {
+      get(target, prop, recv) {
+        if (prop === "zoom") return el === document.documentElement ? zoom : undefined;
+        const v = Reflect.get(target, prop, recv);
+        return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+      },
+    });
+  }) as typeof window.getComputedStyle);
+}
+
+describe("snapToPixelGrid", () => {
+  it("nudges a fractional box onto whole CSS px at DPR 1", () => {
+    window.devicePixelRatio = 1;
+    const popup = probePopup([box(30.6, 40.4, 100, 40)]);
+    popup.style.left = "70px";
+    popup.style.top = "92px";
+    snapToPixelGrid(popup);
+    expect(popup.style.left).toBe("70.4px"); // 70 + (31 − 30.6)
+    expect(popup.style.top).toBe("91.6px"); // 92 + (40 − 40.4)
+  });
+
+  it("snaps onto the half-px grid at DPR 2", () => {
+    window.devicePixelRatio = 2;
+    const popup = probePopup([box(30.6, 40.4, 100, 40)]);
+    popup.style.left = "70px";
+    popup.style.top = "92px";
+    snapToPixelGrid(popup);
+    // Step 0.5: 30.6 → 30.5 (−0.1), 40.4 → 40.5 (+0.1).
+    expect(popup.style.left).toBe("69.9px");
+    expect(popup.style.top).toBe("92.1px");
+  });
+
+  it("lands on the device grid at fractional DPRs (Windows 125%/150%)", () => {
+    // 125% scaling = DPR 1.25, step 0.8 — float grid rounding: 30.2 →
+    // 38·0.8 = 30.4 (+0.2), 40.4 → 50·0.8 = 40 (−0.4).
+    window.devicePixelRatio = 1.25;
+    const popup = probePopup([box(30.2, 40.4, 100, 40)]);
+    popup.style.left = "70px";
+    popup.style.top = "92px";
+    snapToPixelGrid(popup);
+    expect(Number.parseFloat(popup.style.left)).toBeCloseTo(70.2, 5);
+    expect(Number.parseFloat(popup.style.top)).toBeCloseTo(91.6, 5);
+
+    // 150% = DPR 1.5, step 1/1.5: 30.2 → 45·⅔ = 30 (−0.2), 40.4 →
+    // 61·⅔ ≈ 40.667 (+0.267).
+    window.devicePixelRatio = 1.5;
+    const popup2 = probePopup([box(30.2, 40.4, 100, 40)]);
+    popup2.style.left = "70px";
+    popup2.style.top = "92px";
+    snapToPixelGrid(popup2);
+    expect(Number.parseFloat(popup2.style.left)).toBeCloseTo(69.8, 5);
+    expect(Number.parseFloat(popup2.style.top)).toBeCloseTo(92.2666667, 5);
+  });
+
+  it("writes nothing when the box already sits on the grid", () => {
+    window.devicePixelRatio = 1;
+    const popup = probePopup([box(30, 40, 100, 40)]);
+    popup.style.left = "70px";
+    popup.style.top = "92px";
+    snapToPixelGrid(popup);
+    expect(popup.style.left).toBe("70px");
+    expect(popup.style.top).toBe("92px");
+  });
+
+  it("is a no-op without layout (zero box — hidden popup guard)", () => {
+    window.devicePixelRatio = 2;
+    const popup = probePopup([box(0, 0, 0, 0)]);
+    popup.style.left = "70px";
+    popup.style.top = "92px";
+    snapToPixelGrid(popup);
+    expect(popup.style.left).toBe("70px");
+    expect(popup.style.top).toBe("92px");
+  });
+
+  it("divides the visual delta by the cumulative root zoom", () => {
+    // chest's root-level DPI zoom: local px paint zoom× in visual space,
+    // so the +0.4 visual correction must write as +0.2 local — the same
+    // division the clamp shift applies to its own remainders.
+    window.devicePixelRatio = 1;
+    mockRootZoom("2");
+    const popup = probePopup([box(30.6, 40.4, 100, 40)]);
+    popup.style.left = "70px";
+    popup.style.top = "92px";
+    snapToPixelGrid(popup);
+    expect(popup.style.left).toBe("70.2px");
+    expect(popup.style.top).toBe("91.8px");
+  });
+});
+
+describe("applyTooltipPosition ends on the device-pixel grid", () => {
+  it("snaps the placed box after the clamp pass", () => {
+    // The "shifts a centered bubble" geometry with a FRACTIONAL final box:
+    // the clamp writes a fractional left (320 − 13.6 = 306.4) and the snap
+    // lands the box on the nearest whole px (306.8), the top taking the
+    // snap's own −0.4. Proves the snap runs after ALL of the clamp writes
+    // without disturbing them — and that a fractional clamp remainder no
+    // longer leaves the bubble smeared across two pixel columns.
+    window.devicePixelRatio = 1;
+    window.innerWidth = 375;
+    window.innerHeight = 667;
+    const trigger = box(300, 300, 40, 40);
+    const popup = probePopup([box(260.6, 348.4, 120, 32)]);
+    applyTooltipPosition(popup, trigger, "bottom");
+    // The left value sits one ulp below float(306.8) — assert the parsed
+    // number, not happy-dom's 6-significant-digit CSS re-serialization.
+    expect(Number.parseFloat(popup.style.left)).toBeCloseTo(306.8, 5); // clamp −13.6, snap +0.4
+    expect(popup.style.top).toBe("347.6px"); // base 348, snap −0.4
+  });
+
+  it("leaves the zero-layout degradation untouched (no snap on no layout)", () => {
+    window.devicePixelRatio = 2;
+    const popup = probePopup([box(0, 0, 0, 0)]);
+    applyTooltipPosition(popup, rect(), "top");
+    expect(popup.style.left).toBe("250px"); // pure base stands
+    expect(popup.style.top).toBe("92px");
   });
 });

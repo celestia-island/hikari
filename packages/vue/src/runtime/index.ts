@@ -21,6 +21,7 @@ export {
   tooltipPositionStyle,
   applyTooltipPosition,
   resolveTooltipFlip,
+  snapToPixelGrid,
   TOOLTIP_GAP_PX,
   type TooltipPlacement,
 } from "./tooltipPosition";

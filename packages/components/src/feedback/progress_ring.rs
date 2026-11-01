@@ -183,6 +183,48 @@ pub fn ProgressRing(props: ProgressRingProps) -> Element {
     let transform = format!("rotate(-90 {center} {center})");
     let stroke_width = format!("{}", props.stroke_width);
 
+    // The SVG subtree is authored as MARKUP and mounted through
+    // `dangerous_inner_html`: rsx `svg {}` maps to `document.createElement`
+    // (HTML namespace) in this host stack, so an element tree would never
+    // paint. innerHTML parsing puts the nodes in the SVG namespace.
+    let mut svg = String::new();
+    svg.push_str(&format!(
+        r#"<svg class="hk-progress-ring-svg" viewBox="{view_box}">"#
+    ));
+    if props.show_track {
+        svg.push_str(&format!(
+            r#"<circle class="hk-progress-ring-track" cx="{center}" cy="{center}" r="{radius}" fill="none" stroke="currentColor" stroke-width="{}" stroke-linecap="round"/>"#,
+            props.stroke_width
+        ));
+    }
+    if segmented {
+        for arc in &arcs {
+            let len_px = (arc.len / 100.0) * circumference;
+            let dash_array = format!("{len_px} {}", circumference - len_px);
+            let dash_offset = circumference * (1.0 - arc.start / 100.0);
+            let mut classes = String::from("hk-progress-ring-seg");
+            if !arc.class.is_empty() {
+                classes.push(' ');
+                classes.push_str(&arc.class);
+            }
+            let style = arc
+                .color
+                .as_ref()
+                .map(|color| format!(r#" style="stroke:{color}""#))
+                .unwrap_or_default();
+            svg.push_str(&format!(
+                r#"<circle class="{classes}" cx="{center}" cy="{center}" r="{radius}" fill="none" stroke-width="{}" stroke-dasharray="{dash_array}" stroke-dashoffset="{dash_offset}" stroke-linecap="butt" transform="{transform}"{style}/>"#,
+                props.stroke_width
+            ));
+        }
+    } else {
+        svg.push_str(&format!(
+            r#"<circle class="hk-progress-ring-fill" cx="{center}" cy="{center}" r="{radius}" fill="none" stroke-width="{}" stroke-dasharray="{circumference}" stroke-dashoffset="{dash_offset}" stroke-linecap="round" transform="{transform}"/>"#,
+            props.stroke_width
+        ));
+    }
+    svg.push_str("</svg>");
+
     rsx! {
         div {
             class: root_classes,
@@ -191,71 +233,7 @@ pub fn ProgressRing(props: ProgressRingProps) -> Element {
             "aria-valuenow": format!("{aria_value}"),
             "aria-valuemin": "0",
             "aria-valuemax": "100",
-            svg {
-                class: "hk-progress-ring-svg",
-                view_box: view_box,
-                if props.show_track {
-                    circle {
-                        class: "hk-progress-ring-track",
-                        cx: format!("{center}"),
-                        cy: format!("{center}"),
-                        r: format!("{radius}"),
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: stroke_width.clone(),
-                        stroke_linecap: "round",
-                    }
-                }
-                if segmented {
-                    for (i, arc) in arcs.iter().enumerate() {
-                        {
-                            let len_px = (arc.len / 100.0) * circumference;
-                            let dash_array = format!("{len_px} {}", circumference - len_px);
-                            let dash_offset = circumference * (1.0 - arc.start / 100.0);
-                            let mut classes = String::from("hk-progress-ring-seg");
-                            if !arc.class.is_empty() {
-                                classes.push(' ');
-                                classes.push_str(&arc.class);
-                            }
-                            let style = arc
-                                .color
-                                .as_ref()
-                                .map(|color| format!("stroke:{color}"))
-                                .unwrap_or_default();
-                            rsx! {
-                                circle {
-                                    key: i,
-                                    class: classes,
-                                    cx: format!("{center}"),
-                                    cy: format!("{center}"),
-                                    r: format!("{radius}"),
-                                    fill: "none",
-                                    stroke_width: stroke_width.clone(),
-                                    stroke_dasharray: dash_array,
-                                    stroke_dashoffset: format!("{dash_offset}"),
-                                    // Butt caps keep the carved gap visible.
-                                    stroke_linecap: "butt",
-                                    transform: transform.clone(),
-                                    style: style,
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    circle {
-                        class: "hk-progress-ring-fill",
-                        cx: format!("{center}"),
-                        cy: format!("{center}"),
-                        r: format!("{radius}"),
-                        fill: "none",
-                        stroke_width: stroke_width.clone(),
-                        stroke_dasharray: format!("{circumference}"),
-                        stroke_dashoffset: format!("{dash_offset}"),
-                        stroke_linecap: "round",
-                        transform: transform.clone(),
-                    }
-                }
-            }
+            dangerous_inner_html: svg,
             if props.show_label && props.overlay.is_none() {
                 span {
                     class: "hk-progress-ring-label",

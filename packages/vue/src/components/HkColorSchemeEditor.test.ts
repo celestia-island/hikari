@@ -50,8 +50,8 @@ const SECTIONED_GROUP: TokenGroupDefinition = {
       label: { en: "Process media", "zh-Hans": "工艺介质" },
       slots: [
         {
-          key: "h2",
-          label: { en: "Hydrogen", "zh-Hans": "氢气" },
+          key: "buffer",
+          label: { en: "Buffer", "zh-Hans": "缓冲" },
           defaults: { dark: { r: 20, g: 184, b: 166 }, light: { r: 15, g: 118, b: 110 } },
         },
       ],

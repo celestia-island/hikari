@@ -109,7 +109,7 @@ function menuRows(): HTMLElement[] {
   return [...document.body.querySelectorAll<HTMLElement>(".hk-menu-action-item")];
 }
 
-const LONG = "【e2e-w0-002310】自动化测试流水线冒烟：请巡检当前氢站电解槽压力与温度状态";
+const LONG = "【e2e-w0-002310】自动化测试流水线冒烟：请确认当前会话缓冲区与缓存状态正常";
 const LONG_TAIL = "【e2e-w0-002310】…";
 
 /** A stack that outgrows any viewport this suite uses: every label is cut to

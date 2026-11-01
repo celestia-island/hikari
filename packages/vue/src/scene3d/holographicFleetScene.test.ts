@@ -538,6 +538,36 @@ describe("buildFleetScene teardown", () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
+  it("burns the large bodies' halos brighter than the node baseline", () => {
+    const engine = stubEngine();
+    const handle = buildFleetScene(engine, callbacks());
+    // A hub (star tier) plus a gateway (planet tier, no halo at all).
+    handle.update(buildFleetSceneSpec(ROWS), { "hub-a": false });
+
+    // User direction 2026-10-31 follow-up: the LARGE ones were too dim —
+    // the star halo carries the "burning" read, so pin its level.
+    const starGlow = engine.registered.get("hub-a")!.object
+      .children.find((c): c is THREE.Sprite => c instanceof THREE.Sprite)!;
+    expect((starGlow.material as THREE.SpriteMaterial).opacity).toBeCloseTo(0.5, 5);
+    const planetSprites = engine.registered.get("edge-1")!.object
+      .children.filter((c) => c instanceof THREE.Sprite);
+    expect(planetSprites).toHaveLength(0);
+
+    // The registry core is the largest body on the page: its halo reads
+    // brightest of all.
+    handle.update(buildFleetSceneSpec([{ node_id: "edge-1", tier: 2, station_count: 0 }]), {});
+    const core = engine.registered.get("__star-system-core__")!.object;
+    const coreGlow = core.children.find((c): c is THREE.Sprite => c instanceof THREE.Sprite)!;
+    expect((coreGlow.material as THREE.SpriteMaterial).opacity).toBeCloseTo(0.55, 5);
+
+    // An offline hub dims its halo with it (0.24 = the offline twin).
+    handle.update(buildFleetSceneSpec(ROWS), { "hub-a": true });
+    const darkGlow = engine.registered.get("hub-a")!.object
+      .children.find((c): c is THREE.Sprite => c instanceof THREE.Sprite)!;
+    expect((darkGlow.material as THREE.SpriteMaterial).opacity).toBeCloseTo(0.24, 5);
+    handle.dispose();
+  });
+
   it("frees real HUD textures when a body generation is replaced", () => {
     const gradient = fakeAs<CanvasGradient>({ addColorStop: vi.fn() });
     const context = fakeAs<CanvasRenderingContext2D>({

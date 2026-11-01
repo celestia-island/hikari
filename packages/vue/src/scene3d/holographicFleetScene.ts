@@ -201,7 +201,9 @@ export function buildFleetScene(
         map: glowTexture,
         color,
         transparent: true,
-        opacity: offline ? 0.16 : 0.34,
+        // A hub's halo carries its "burning" read (2026-10-31 follow-up:
+        // the large ones were too dim next to their denser dials).
+        opacity: offline ? 0.24 : 0.5,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -260,7 +262,9 @@ export function buildFleetScene(
         map: glowTexture,
         color: 0xffe9b8,
         transparent: true,
-        opacity: 0.38,
+        // The registry core is the largest body on the page — its halo
+        // reads brightest (2026-10-31 follow-up).
+        opacity: 0.55,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),

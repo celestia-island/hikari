@@ -35,6 +35,8 @@ impl StyleRegistry {
         self.register("vue-corner-badge", vue_corner_badge_css());
         self.register("vue-pill-toggle-group", vue_pill_toggle_group_css());
         self.register("vue-sidebar-rail", vue_sidebar_rail_css());
+        // The `s-*` shell geometry (AdminShell / StatusBar / [data-compact]).
+        self.register("vue-admin-tokens", vue_admin_tokens_css());
     }
 
     pub fn register_vue_token_fallbacks(&mut self) {
@@ -409,6 +411,13 @@ pub fn vue_token_fallbacks_css() -> &'static str {
 /// The mirrored window-close chrome (`packages/vue/src/components/window-close.scss`).
 pub fn vue_window_close_css() -> &'static str {
     tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/window-close.scss", no_hash }.0
+}
+
+/// The shared `s-*` layout sheet (`styles/admin-tokens.scss`) — the five
+/// sheet-less shell mirrors have no table of their own; this one is their
+/// entire geometry (and the `[data-compact]` rules).
+pub fn vue_admin_tokens_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/styles/admin-tokens.scss", no_hash }.0
 }
 
 /// The mirrored sidebar rail (`HkSidebarRail.scss`) — the rail toggle/swap

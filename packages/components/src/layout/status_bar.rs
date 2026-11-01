@@ -465,6 +465,10 @@ fn version_cell(text: &str) -> Element {
 
 #[define_props]
 pub struct StatusBarProps {
+    /// Whether Vue's `connectionInfo` object exists (`None` derives it from the
+    /// flattened fields; see the header's flattening delta).
+    pub has_connection_info: Option<bool>,
+
     /// The served panel version line (Vue default `"0.1.0"`).
     #[default("0.1.0".to_string())]
     pub version: String,
@@ -573,8 +577,17 @@ pub fn StatusBar(props: StatusBarProps) -> Element {
     let countdown = props.countdown.unwrap_or(0.0);
     let has_actions = props.actions.is_some();
     let tier = status_bar_transport_tier(props.transport_tier.as_deref());
-    let shows_transport =
-        status_bar_shows_transport(props.transport_tier.as_deref()) && !props.is_localhost;
+    // Vue: `info && tier !== "none" && tier !== "unknown"`. `connectionInfo` is
+    // flattened here, so its PRESENCE is a controlled flag; when the host does
+    // not set it, any flattened field stands in for the object.
+    let has_info = props.has_connection_info.unwrap_or_else(|| {
+        props.transport_tier.is_some()
+            || props.quality.is_some()
+            || props.latency_ms.is_some()
+            || props.region.is_some()
+            || props.asn.is_some()
+    });
+    let shows_transport = has_info && status_bar_shows_transport(props.transport_tier.as_deref());
     let tag_classes = status_bar_tag_classes(mode, props.recovered);
     let aria_label = status_bar_aria_label(
         props.compact,
@@ -1146,6 +1159,28 @@ mod tests {
         assert!(!status_bar_shows_transport(Some("unknown")));
         assert!(status_bar_shows_transport(Some("ws")));
         assert!(status_bar_shows_transport(None));
+        // Vue also requires `connectionInfo` to exist: a flattened mirror with no
+        // info at all must render NEITHER the protocol nor the network row.
+        let html = StatusBar(StatusBarProps {
+            popup_open: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            !html.contains("Protocol") && !html.contains("Network"),
+            "no connection info means no transport rows: {html}"
+        );
+        let html = StatusBar(StatusBarProps {
+            has_connection_info: Some(true),
+            connection_status: StatusBarConnection::Connected,
+            popup_open: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains("Protocol") && html.contains("Network"),
+            "{html}"
+        );
 
         assert_eq!(status_bar_transport_tier(None), "ws");
         assert_eq!(status_bar_transport_tier(Some("")), "ws");

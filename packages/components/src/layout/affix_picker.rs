@@ -439,6 +439,7 @@ fn glyph_host(markup: String) -> Element {
 /// plus the local refs the mirror promotes to props).
 #[derive(Clone)]
 struct AffixPickerWiring {
+    confirm_remove: bool,
     mode: AffixMode,
     disabled: bool,
     open: bool,
@@ -493,8 +494,12 @@ impl AffixPickerWiring {
     /// owns); with it off — or with no request channel wired — `remove` fires
     /// directly, exactly what Vue's `confirmRemove={false}` delegates.
     fn request_remove(&self, key: &str) {
-        if let Some(handler) = self.on_remove_request.as_ref() {
-            handler.call(key.to_string());
+        if self.confirm_remove {
+            // The gate is on: the × only ASKS. A host that forgot the request
+            // channel gets no deletion rather than an unguarded one.
+            if let Some(handler) = self.on_remove_request.as_ref() {
+                handler.call(key.to_string());
+            }
             return;
         }
         if let Some(handler) = self.on_remove.as_ref() {
@@ -712,6 +717,7 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
     let aria_expanded = if is_open { "true" } else { "false" };
 
     let wiring = AffixPickerWiring {
+        confirm_remove: props.confirm_remove,
         mode,
         disabled,
         open: is_open,

@@ -1,4 +1,5 @@
 # mirror-path	upstream-path (relative to packages/vue/src)
+styles/admin-tokens.scss	styles/admin-tokens.scss
 tokens.scss	tokens.scss
 scale.scss	scale.scss
 styles/_polyfill.scss	styles/polyfill.scss
@@ -116,3 +117,4 @@ components/HkAffixPicker.scss	components/HkAffixPicker.scss
 components/HkHeaderPicker.scss	components/HkHeaderPicker.scss
 components/HkLocalePicker.scss	components/HkLocalePicker.scss
 components/HkNavItem.scss	components/HkNavItem.scss
+components/HkMenu.scss	components/HkMenu.scss

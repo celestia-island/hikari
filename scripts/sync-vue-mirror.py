@@ -51,6 +51,10 @@ mirror_root = root / "packages" / "components" / "src" / "styles" / "vue-mirror"
 # resolves against (`./scrim-fade`, `./menu-item`, `./hikari-vars`) plus the
 # shared polyfill partial (`../styles/polyfill`) and the token fallbacks.
 SHARED_PARTIALS: list[tuple[str, str]] = [
+    # The `s-*` layout sheet: the shell mirrors (AdminShell / AdminHeader /
+    # AdminTablePage / FaceShell / StatusBar) carry NO sheet of their own and
+    # this table is their entire geometry.
+    ("styles/admin-tokens.scss", "styles/admin-tokens.scss"),
     ("tokens.scss", "tokens.scss"),
     ("scale.scss", "scale.scss"),
     ("styles/_polyfill.scss", "styles/polyfill.scss"),
@@ -189,6 +193,7 @@ LAYOUT_SHEETS: list[str] = [
     "HkHeaderPicker.scss",
     "HkLocalePicker.scss",
     "HkNavItem.scss",
+    "HkMenu.scss",
 ]
 
 FAMILY_SHEETS: list[str] = [

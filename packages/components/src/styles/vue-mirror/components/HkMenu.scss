@@ -1,0 +1,270 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* ── HkMenu — generic cascading menu ─────────────────────────────────
+ * Presentation is powered by HkSelectPanel (the shared dropdown
+ * surface): desktop anchored popouts, mobile bottom sheets with
+ * scrim/grabber/title, popup-manager z-stacking, back-guard history.
+ * The panel/sheet geometry lives in HkSelect.scss — this file only
+ * owns what HkMenu itself brings to that surface: the row grammar
+ * (the unified menu-item spec — see ./_menu-item.scss), the leading
+ * check column, and the sidebar variant's inline nav. */
+
+@use "./menu-item" as mi;
+
+/* rows are shared by popout levels and mobile sheet layers; metrics
+ * and states come from the unified spec — inside a sheet the shared
+ * panel context swaps the tokens to the 44px touch geometry. */
+.hk-menu-row {
+  @include mi.item;
+}
+
+/* Header/footer/extra slot wrappers: geometry-neutral by contract (the
+ * panel's own inset applies), but they are the DOM hook that says rows
+ * in here speak the menu-item grammar. */
+.hk-menu-slot {
+  display: block;
+}
+
+/* The FOOT band is an action band, not a run of selectable rows — the
+ * "add workspace" button under the picker's options, a context menu's
+ * custom tail. It reads as its own band only when it is SEPARATED at the
+ * divider's DESKTOP grade (6px; the divider itself widens to 10px inside
+ * sheets, but this band's separation is a layout rhythm BETWEEN bands,
+ * not row geometry, so it stays 6px in both token sets), never at the
+ * 2px row gap: consumers used to hand that separation themselves as
+ * wrapper padding, which is exactly the drift that padded the wrapper's
+ * rows to a WIDER highlight than the selection rows above (2026-10-31
+ * field report: the workspace picker's 「添加工作区」 ran ~12px wider
+ * than the 「个人空间」 row). The band owns the separation now —
+ * consumers must NOT pad the wrapper (see _menu-item.scss, the band
+ * width invariant). Head/extra stay bare DOM hooks: identity blocks own
+ * their rhythm (the .s-user-header pins), and the theme menu's extra
+ * slot rides the plain row rhythm. */
+.hk-menu-slot--foot {
+  margin-block-start: var(--hk-menu-foot-gap, var(--space-6, 6px));
+}
+
+.hk-menu-flag {
+  flex-shrink: 0;
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
+.hk-menu-label {
+  @include mi.label;
+}
+
+/* Leading icon cell — every row icon renders inside the spec's fixed
+ * square, so mixed lucide sizes read as one column and the icon box
+ * (not the raw svg) centers against the label. */
+.hk-menu-item-icon {
+  @include mi.icon;
+}
+
+/* Leading check column (selectMode). The cell is reserved on EVERY row
+ * of a level while the column is on, so labels stay aligned; only
+ * checked === true shows the mark — an SVG check inside the same fixed
+ * cell grammar as leading icons (the old text glyph carried its own
+ * baseline rhythm and sat off-center against svg icons). */
+.hk-menu-check {
+  @include mi.icon;
+
+  color: rgb(var(--color-primary));
+}
+
+.hk-menu-more {
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+/* One level's surface inside the shared panel (popout body / sheet
+ * list): header slot → rows (or consumer default-slot rows) → footer
+ * slot. */
+.hk-menu-level {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 2px);
+  min-width: 0;
+}
+
+/* ── sidebar variant ────────────────────────────────────────────── */
+/* Inline vertical nav list — always rendered, no popover machinery.
+ * Rows share the unified menu-item spec's grammar (metrics + states),
+ * with nav-appropriate rhythm: a consistent 4px gap between rows so
+ * rounded hover pills never touch, deeper levels indenting under
+ * their group. */
+
+.hk-menu-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+  width: 100%;
+}
+
+.hk-menu-sidebar-row {
+  @include mi.item;
+}
+
+/* Label and icon grammar comes from the shared .hk-menu-label /
+ * .hk-menu-item-icon rules above — sidebar rows carry those classes, so
+ * no sidebar-scoped copies are needed. */
+
+.hk-menu-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+}
+
+.hk-menu-sidebar-group-toggle .hk-menu-more {
+  transition: transform var(--duration-fast, 0.15s) ease;
+}
+
+.hk-menu-sidebar-group[data-open] .hk-menu-sidebar-group-toggle .hk-menu-more {
+  transform: rotate(90deg);
+}
+
+/* RTL mirrors the expand chevron: the tsx always renders a right-pointing
+ * glyph, which reads backwards on the flipped axis (HkBreadcrumb
+ * precedent — scaleX mirrors paint only). An open group composes the
+ * same +90° turn after the mirror, so the open glyph points down in
+ * both directions. */
+[dir="rtl"] .hk-menu-more {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .hk-menu-sidebar-group[data-open] .hk-menu-sidebar-group-toggle .hk-menu-more {
+  transform: scaleX(-1) rotate(90deg);
+}
+
+.hk-menu-sidebar-children {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+  margin-top: var(--space-2, 2px);
+}
+
+.hk-menu-sidebar-badge {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-4, 4px);
+  border-radius: var(--radius-full, 9999px);
+  background: rgb(var(--color-error, 247 118 142));
+  color: var(--hi-color-text-on-danger, #fff);
+  font-size: var(--text-2xs, 10px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── sidebar variant, ICON-RAIL mode (collapsed, 2026-10-30) ──────
+ * Rows are icon-only squares: label and pill badge hide (the label
+ * travels in an HkTooltip, the badge degrades to the corner dot) and
+ * rows center their glyph. GROUPS stay navigable: a group header is a
+ * centered row whose glyph is the group icon (or a placeholder caret)
+ * plus a state caret, and its open children recurse in the SAME
+ * one-column rail — no indentation step, no separator fallback
+ * (2026-10-30 follow-up: flattening groups to separators stranded every
+ * grouped destination in the rail). The tooltip wrappers must lay out
+ * as blocks or the rows would shrink to the wrapper's inline width. */
+.hk-menu-sidebar[data-collapsed] {
+  .hk-tooltip-wrapper,
+  .hk-tooltip-trigger {
+    display: block;
+    width: 100%;
+  }
+
+  .hk-menu-sidebar-row {
+    justify-content: center;
+    position: relative;
+  }
+
+  .hk-menu-label {
+    display: none;
+  }
+
+  .hk-menu-sidebar-badge:not(.hk-menu-sidebar-badge--dot) {
+    display: none;
+  }
+
+  /* The label-initial fallback glyph (rows without an icon). */
+  .hk-menu-item-icon[data-fallback] {
+    font-size: var(--text-sm, 0.8125rem);
+    font-weight: 600;
+  }
+
+  /* Rail groups keep the rail rhythm at every depth: the children
+   * wrapper spends the rail's own row gap, with no margin step above
+   * the first child and never an indent. */
+  .hk-menu-sidebar-rail-group,
+  .hk-menu-sidebar-rail-children {
+    width: 100%;
+  }
+
+  .hk-menu-sidebar-rail-children {
+    margin-top: 0;
+  }
+
+  /* Disclosure ink, at the same secondary weight as the expanded
+   * sidebar's .hk-menu-more. The placeholder form lives in the glyph
+   * cell and centers like every other row icon. */
+  .hk-menu-rail-caret {
+    flex: none;
+    opacity: 0.55;
+  }
+
+  /* Groups that DO carry an icon: the state caret parks in the
+   * inline-end corner (opposite the badge dot, which sits at the block
+   * start) so the icon glyph keeps its rail-centered column. */
+  .hk-menu-rail-caret-corner {
+    position: absolute;
+    inset-block-end: var(--space-2, 2px);
+    inset-inline-end: var(--space-4, 4px);
+    display: inline-flex;
+    pointer-events: none;
+  }
+}
+
+/* RTL mirrors the rail caret — the same paint-only convention as
+ * .hk-menu-more above: the tsx always ships the LTR glyph and scaleX
+ * mirrors it. A down chevron is horizontally symmetric, so an OPEN
+ * group reads identically in both directions. */
+[dir="rtl"] .hk-menu-rail-caret {
+  transform: scaleX(-1);
+}
+
+/* Corner dot — the rail form of a badge: count info moves into the row's
+ * accessible name + tooltip, the visible mark only says "something
+ * pending". */
+.hk-menu-sidebar-badge--dot {
+  position: absolute;
+  inset-block-start: var(--space-4, 4px);
+  inset-inline-end: var(--space-8, 8px);
+  min-width: 6px;
+  width: 6px;
+  height: 6px;
+  padding: 0;
+}
+
+/* Reduced motion resets live AFTER the rules they guard so `transition: none`
+ * wins the cascade (the chevron's (0,2,0) transform transition used to be
+ * declared later in source order, leaving this guard dead for it). Sidebar
+ * rows carry the same mi.item color fades as .hk-menu-row, so they reset
+ * too. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-menu-row,
+  .hk-menu-sidebar-row,
+  .hk-menu-sidebar-group-toggle .hk-menu-more {
+    transition: none;
+  }
+}

@@ -418,6 +418,49 @@ describe("HkMenu sidebar icon rail", () => {
     expect(glyph.textContent).toBe("D");
   });
 
+  it("stamps every icon cell with data-flip-icon = the row key, in BOTH densities", () => {
+    // The rail flip's icon flight (useRailIconFlight) pairs the leaving
+    // and entering copies of ONE destination by this attribute; a cell
+    // missing it (or carrying the wrong key) silently drops that row out
+    // of the continuity choreography. All four render sites — expanded
+    // leaf + group toggle, rail leaf + rail group header — must stamp it.
+    const iconKeys = (root: ParentNode): string[] =>
+      [...root.querySelectorAll<HTMLElement>(".hk-menu-item-icon[data-flip-icon]")].map((el) =>
+        el.getAttribute("data-flip-icon") ?? "",
+      );
+
+    // An icon on the group exercises the group-toggle sites; the
+    // icon-less leaf exercises the asymmetry the flight tolerates: the
+    // rail renders a fallback cell for it (keyed!) while the expanded
+    // sidebar renders no cell at all — pairing needs BOTH ends, so that
+    // row dissolves instead of flying.
+    const FULL: HkMenuItem[] = [
+      { key: "home", label: "Home", icon: Home },
+      { key: "plain", label: "Docs" },
+      {
+        key: "admin",
+        label: "Administration",
+        icon: Settings,
+        children: [{ key: "users", label: "Users", icon: Home }],
+      },
+    ];
+
+    const expanded = mountMenu(FULL, { defaultExpandGroups: true });
+    expect(iconKeys(expanded), "expanded leaf + group toggle icons").toEqual([
+      "home",
+      "admin",
+      "users",
+    ]);
+
+    const collapsed = mountMenu(FULL, { collapsed: true, defaultExpandGroups: true });
+    expect(iconKeys(collapsed), "rail leaves + rail group header icons").toEqual([
+      "home",
+      "plain",
+      "admin",
+      "users",
+    ]);
+  });
+
   it("still selects from the rail (and stays disabled-aware)", () => {
     const selected: string[] = [];
     const container = document.createElement("div");

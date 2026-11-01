@@ -159,11 +159,56 @@
  * the host from STRETCHING, which would clip nothing but would invite
  * percentage-width content to follow the animation.) The generations
  * fill the swap's height so the bands' flex column (spacer, footer at
- * the bottom) behaves exactly as it did as a direct child of the clip. */
+ * the bottom) behaves exactly as it did as a direct child of the clip.
+ *
+ * position: relative makes the host the containing block for the rail
+ * flip's FLIGHT LAYER (useRailIconFlight): clones are absolutely
+ * positioned at leaving-icon rects relative to the host, so the layer
+ * needs no geometry of its own. */
 .hk-sidebar-rail-clip > .hk-sidebar-rail-swap {
   flex: 1;
   min-height: 0;
   align-self: flex-start;
+  position: relative;
+}
+
+/* The flight layer + clones (see useRailIconFlight). The layer covers
+ * the host — the widest generation's footprint — so a clone never
+ * repositions relative to the animating panel; its own geometry is
+ * inline (the measured rects). pointer-events stay dead: the layer is
+ * paint-only chrome above a pointer-dead dissolve. Clones keep
+ * inline-flex centering so the svg sits in the cell exactly as the real
+ * icon cell centers it. */
+.hk-sidebar-rail-flight {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  pointer-events: none;
+}
+
+.hk-sidebar-rail-flight-clone {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* During a flight the LEAVING generation's participating icons hide:
+ * the clone paints in their place at the same geometry, full opacity —
+ * a substitution, not a fade, so the icon reads as ONE object that
+ * travels. Scoped three ways on purpose: only while a flight runs
+ * ([data-flipping] on the swap host), only on the dissolving copy (the
+ * leave item class), and only on opted-in icons ([data-flip-icon]) —
+ * identity blocks, carets, badges and every non-participating icon keep
+ * the plain dissolve. */
+.hk-sidebar-rail-swap[data-flipping]
+  .hk-crossfade-item.hk-crossfade-leave-active
+  .hk-menu-item-icon[data-flip-icon] {
+  visibility: hidden;
 }
 
 .hk-sidebar-rail-swap .hk-sidebar-rail-generation {

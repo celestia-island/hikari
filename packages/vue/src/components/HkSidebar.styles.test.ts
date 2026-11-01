@@ -76,19 +76,25 @@ describe("HkSidebar scroll end-cap", () => {
 
   it("the density dress keeps every vertical metric at the expanded value", () => {
     // Vertical rhythm is density-invariant (2026-10-31 user direction:
-    // the collapse toggle must not move rows). The body therefore has no
-    // density rule AT ALL — the leading air AND the scroll tail ride the
-    // single base rule in both densities — and the header/footer dress
+    // the collapse toggle must not move rows). The body's ONLY density
+    // declaration is the rail row square's inline track (2026-11-02 user
+    // screenshot: the collapsed selected pill was a 32×34 oblong; the
+    // track narrows to 11px a side so the 100%-wide row fills exactly its
+    // 34px min-height square) — the leading air AND the scroll tail ride
+    // the single base rule in both densities, and the header/footer dress
     // rules keep the expanded BLOCK padding, narrowing only the inline
     // track for the rail column.
-    expect(css).not.toContain(".hk-sidebar[data-collapsed] .hk-sidebar-body");
-    expect(css).not.toContain(".hk-sidebar-rail-generation[data-rail] .hk-sidebar-body");
-    // The two carrier literals above are the compiled spellings; a brand
-    // NEW carrier (a third density hook) is a new dress and must re-run
-    // this contract — not mechanically foreseeable here.
     // ruleBody needs the arm its brace follows; the dress compiles to one
     // comma-grouped rule per band, so the generation arm is the one the
     // helper can read (the legacy arm shares its body).
+    const bodySquare = css.match(
+      /\.hk-sidebar\[data-collapsed\]\s*\.hk-sidebar-body[^{]*\{([^}]*)\}/,
+    );
+    expect(bodySquare, "the rail body inline-track rule exists").not.toBeNull();
+    expect(
+      bodySquare![1]!.trim(),
+      "the body dress is the row square's inline track ALONE — any block spelling here moves rows",
+    ).toBe("padding-inline: 11px;");
     const header = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-header");
     expect(header, "the collapsed header rule exists (grouped density carriers)").not.toBeNull();
     expect(header).toContain("padding: var(--space-16) var(--space-8)");
@@ -96,16 +102,17 @@ describe("HkSidebar scroll end-cap", () => {
     expect(footer, "the collapsed footer rule exists (grouped density carriers)").not.toBeNull();
     expect(footer).toContain("padding: var(--space-16) var(--space-8)");
     // The stronger, spelling-proof form (whole-dress scan): EVERY
-    // padding declaration in ANY dress rule must be EXACTLY the expanded
-    // two-track shorthand — exact, not a prefix: a three-track spelling
-    // (`padding: var(--space-16) var(--space-8) var(--space-12)`) drifts
-    // the block END past a block-start-only check, and a longhand
-    // (`padding-block-start:`) hides from a shorthand-only one; both
-    // green-holed earlier rounds. Physical `bottom` longhands are banned
-    // beside the logical ones. Horizontal-only tracks (padding-inline*)
-    // cannot match the value pin and are rejected the same way; a band
-    // that truly needs different block metrics must move the BASE rule
-    // for BOTH densities. Margins are banned outright — the bands
+    // padding declaration in ANY dress rule must be EXACTLY one of the
+    // two sanctioned values — the expanded two-track shorthand (header/
+    // footer bands) or the body's square track — exact, not a prefix: a
+    // three-track spelling (`padding: var(--space-16) var(--space-8)
+    // var(--space-12)`) drifts the block END past a block-start-only
+    // check, and a longhand (`padding-block-start:`) hides from a
+    // shorthand-only one; both green-holed earlier rounds. Physical
+    // `bottom` longhands are banned beside the logical ones; an
+    // `padding-inline` on any NON-body rule is rejected the same way (a
+    // band that truly needs different block metrics must move the BASE
+    // rule for BOTH densities). Margins are banned outright — the bands
     // separate by their paddings alone — and so are the block-FLOW
     // metrics that move rows just the same (gap/row-gap/height/
     // min-height/max-height).
@@ -115,12 +122,23 @@ describe("HkSidebar scroll end-cap", () => {
     expect(dressRules.length, "the density dress rules exist").toBeGreaterThan(1);
     for (const rule of dressRules) {
       for (const decl of rule.matchAll(
-        /\bpadding(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:[^;}]*/g,
+        /\bpadding(?:-(?:top|bottom|block(?:-(?:start|end))?|inline(?:-(?:start|end))?))?\s*:[^;}]*/g,
       )) {
-        expect(
-          decl[0].trim(),
-          `a dress padding is not the expanded two-track shorthand: ${decl[0]}`,
-        ).toBe("padding: var(--space-16) var(--space-8)");
+        const text = decl[0].trim();
+        if (/^padding-inline/.test(text)) {
+          expect(rule, `a dress inline track outside the body rule: ${rule}`).toContain(
+            ".hk-sidebar-body",
+          );
+          expect(
+            text,
+            `a dress inline track drifted from the row square: ${text}`,
+          ).toBe("padding-inline: 11px");
+        } else {
+          expect(
+            text,
+            `a dress padding is not the expanded two-track shorthand: ${text}`,
+          ).toBe("padding: var(--space-16) var(--space-8)");
+        }
       }
       expect(rule, `a margin crept into the dress: ${rule}`).not.toMatch(
         /\bmargin(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,

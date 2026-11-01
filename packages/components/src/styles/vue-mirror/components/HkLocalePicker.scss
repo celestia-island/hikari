@@ -1,0 +1,44 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkLocalePicker — only the TRIGGER is component-owned now; the dropdown
+ * is HkLocalePickerPopup (HkMenu) and inherits the menu grammar + pop
+ * motion from there. The hand-rolled dropdown sheet (and its pop-motion
+ * classes) was removed with the 2026-10-31 sweep rewrite. */
+.hk-locale-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgb(var(--color-primary) / 8%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 70%);
+    outline-offset: 1px;
+  }
+
+  /* The caret is furniture, not copy — half-strength ink, as the
+     pre-rewrite trigger drew it. */
+  svg {
+    opacity: 0.5;
+  }
+}

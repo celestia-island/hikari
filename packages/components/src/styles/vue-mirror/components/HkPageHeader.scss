@@ -1,0 +1,109 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-16, 1rem);
+  /* Breathing room to the page body below; the scroll container above
+     already pads the top. */
+  margin-block-end: var(--space-16, 1rem);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.hk-page-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}
+
+.hk-page-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  margin: 0;
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: rgb(var(--color-text));
+  min-width: 0;
+}
+
+.hk-page-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-28, 1.75rem);
+  height: var(--space-28, 1.75rem);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: rgb(var(--color-primary) / 10%);
+  color: rgb(var(--color-primary));
+}
+
+.hk-page-header-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-page-header-subtitle {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  line-height: 1.5;
+}
+
+.hk-page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  flex-shrink: 0;
+  /* Align the tool row with the title baseline; align-items: flex-end
+     applies per wrapped line too, and this 2px nudge optically matches
+     the title's descender space. */
+  padding-block-end: var(--space-2, 0.125rem);
+}
+
+/* Dense variant — tighter pages (tables that need every pixel). */
+.hk-page-header-dense {
+  margin-block-end: var(--space-12, 0.75rem);
+
+  .hk-page-header-title {
+    font-size: var(--text-md, 1rem);
+  }
+
+  .hk-page-header-icon {
+    width: var(--space-24, 1.5rem);
+    height: var(--space-24, 1.5rem);
+  }
+}
+
+/* lead — a back affordance (or any leading control) riding before the
+ * title inside the h1 box, keeping the heading semantics intact. */
+.hk-page-header-lead {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* titleExtra — inline chips (status badges, mono ids) after the title
+ * text; baseline-aligned with the title, wrapping with it. */
+.hk-page-header-title-extra {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 400;
+  min-width: 0;
+}

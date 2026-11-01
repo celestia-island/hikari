@@ -170,6 +170,27 @@ DISPLAY_SHEETS: list[str] = [
     "HkDiffViewer.scss",
 ]
 
+# W5 — layout + nav family. The shell compositions (AdminShell/AdminHeader/
+# AdminTablePage/FaceShell/StatusBar/LocalePickerPopup/NavSidebar) ship NO hikari
+# sheet upstream: they are host-utility layouts, so their mirrors document an empty
+# styles() table instead of inventing CSS.
+LAYOUT_SHEETS: list[str] = [
+    "HkPageHeader.scss",
+    "HkTitleBar.scss",
+    "HkWindowControls.scss",
+    "HkStatusRow.scss",
+    "HkStatusPill.scss",
+    "HkDockBar.scss",
+    "HkShareBar.scss",
+    "HkStepFlow.scss",
+    "HkPaneHolder.scss",
+    "HkSidebarRail.scss",
+    "HkAffixPicker.scss",
+    "HkHeaderPicker.scss",
+    "HkLocalePicker.scss",
+    "HkNavItem.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -214,7 +235,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -223,7 +244,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

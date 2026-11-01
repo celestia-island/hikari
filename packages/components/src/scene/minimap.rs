@@ -46,6 +46,20 @@
 // `transform-origin: 0 0`, the `HkImageViewer` model.
 //
 // Deltas vs Vue (documented, not accidental):
+//   * [D] MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
+//     tairitsu browser glue dispatches only the mouse family as typed
+//     `MouseEvent`s and routes `pointer*` through a data-less generic
+//     channel, so a typed `PointerEvent` handler never fires on the real
+//     target (ledger L67). The card, the zoom bar and the pop therefore bind
+//     `mousedown` / `mousemove` / `mouseup` (the abort still listens on the
+//     generic `pointercancel` channel, which is alive but data-less).
+//     Declared consequences: a touch screen produces no `mousemove`
+//     sequence, so TOUCH dragging is unavailable; the mouse has no implicit
+//     capture, so a drag that leaves the card stops emitting until the
+//     pointer returns (the card IS the root — its `mouseup` is the
+//     root-level fallback), and a press released OUTSIDE the card is caught
+//     by the `buttons == 0` guard on the next move/leave instead of panning
+//     the map on a bare hover.
 //   * [D] NO MEASUREMENT SEAM for the SVG. Vue reads
 //     `root.querySelector("svg").getBoundingClientRect()` to convert drawn
 //     pixels into viewBox units (the `HkMinimap.scale` contract). The crate
@@ -55,9 +69,10 @@
 //     its 1px borders, so the conversion differs by ~1.25% on a 160px card
 //     (and by exactly zero for a host that renders the map borderless); a
 //     host that needs Vue's number recomputes it from the same helper.
-//   * [D] NO POINTER CAPTURE. `setPointerCapture` is not exposed, so a drag
-//     that leaves the card stops emitting until the pointer returns; `up` /
-//     `cancel` on the card still end it. Same delta as the mirrored `Slider`.
+//   * [D] NO POINTER CAPTURE (also true in Vue's absence under the mouse
+//     family): `setPointerCapture` is not exposed, so a drag that leaves the
+//     card stops emitting until the pointer returns; `up` on the card and
+//     the `buttons == 0` guard still end it.
 //   * [D] NO DOCUMENT-LEVEL DISMISSAL for the slider pop. Vue installs
 //     capture-phase `pointerdown` / `keydown` listeners on `document` while
 //     the pop is open (outside click, Escape). This crate has no
@@ -75,7 +90,7 @@
 //     `target.closest(".hk-mm-zoom-bar") || target.closest(".hk-mm-zoom-pop")`
 //     on the pointerdown target. The crate has no `closest()` on an event
 //     target, so the bar and the pop mark the gesture in the same module
-//     registry from their own `pointerdown` (which runs FIRST — they are the
+//     registry from their own `mousedown` (which runs FIRST — they are the
 //     descendants) and the card consumes that mark before arming a drag. The
 //     observable rule is identical, and the event still bubbles to the host
 //     exactly like Vue's (the mark does not stop propagation).
@@ -116,7 +131,7 @@
 use std::cell::Cell;
 
 use hikari_i18n::t;
-use tairitsu_vdom::{DomHandle, PointerEvent, get_bounding_client_rect};
+use tairitsu_vdom::{DomHandle, get_bounding_client_rect};
 
 use crate::basic::slider::{Slider, SliderSize};
 use crate::prelude::*;
@@ -576,16 +591,20 @@ pub fn minimap_bar_item_disabled(
 
 /// A number as the SVG markup spells it: at most two decimals, no trailing
 /// zeros, never `-0` (Vue's SVG would carry the full JS float; two decimals
-/// are below a viewBox unit's visible resolution).
+/// are below a viewBox unit's visible resolution). The `-0` guard runs on
+/// the SNAPPED value, so a `-0.001` that rounds to negative zero prints `0`
+/// too — the same protection `board_num` / `windowed_item_number` carry.
 pub fn minimap_number(value: f64) -> String {
-    if !value.is_finite() {
+    let snapped = if value.is_finite() {
+        (value * 100.0).round() / 100.0
+    } else {
+        0.0
+    };
+    // Catches -0.0 (exact or produced by the snap) and any non-finite
+    // residue: the markup must never read `x="-0"`.
+    if !snapped.is_finite() || snapped == 0.0 {
         return "0".to_string();
     }
-    if value == 0.0 {
-        // Catches -0.0 as well: the markup must never read `x="-0"`.
-        return "0".to_string();
-    }
-    let snapped = (value * 100.0).round() / 100.0;
     let mut text = format!("{snapped:.2}");
     while text.ends_with('0') {
         text.pop();
@@ -714,8 +733,9 @@ thread_local! {
     /// client y)`. One pointer drags one surface, and the handle keeps two
     /// minimaps on one page from cross-talking.
     static MINIMAP_DRAG: Cell<Option<(u64, i32, i32)>> = const { Cell::new(None) };
-    /// Set by the zoom bar / pop on their own `pointerdown`, consumed by the
-    /// card in the same event (see the header's zoom-chrome delta).
+    /// Set by the zoom bar / pop on their own `mousedown` (the mouse family,
+    /// L67), consumed by the card in the same event (see the header's
+    /// zoom-chrome delta).
     static MINIMAP_CHROME_PRESS: Cell<bool> = const { Cell::new(false) };
 }
 
@@ -785,6 +805,24 @@ fn minimap_measured_width(handle: Option<u64>) -> f64 {
 /// rest.
 fn minimap_marker_attr(flag: bool) -> Option<&'static str> {
     if flag { Some("") } else { None }
+}
+
+/// Vue's `toggleCollapsed(true)` tail, in Vue's own order: the pop closes
+/// (`sliderOpen.value = false`), any mid-drag dies (a collapse swaps the
+/// element, so no release can reach the new root — Vue's own delta-S3-F4
+/// comment), then the `update:collapsed` intent fires. Extracted so the
+/// tests can pin the exact emit order.
+fn minimap_collapse_intent(
+    on_slider_open_change: &Option<EventHandler<bool>>,
+    on_collapsed_change: &Option<EventHandler<bool>>,
+) {
+    if let Some(handler) = on_slider_open_change.as_ref() {
+        handler.call(false);
+    }
+    minimap_drag_end();
+    if let Some(handler) = on_collapsed_change.as_ref() {
+        handler.call(true);
+    }
 }
 
 // ── render assembly ────────────────────────────────────────────────────
@@ -1060,12 +1098,11 @@ pub fn Minimap(props: MinimapProps) -> Element {
         }
     };
     let on_collapsed_change = props.on_collapsed_change.clone();
+    let collapse_slider = props.on_slider_open_change.clone();
+    let collapse_collapsed = on_collapsed_change;
     let collapse_handler = move |_event: MouseEvent| {
         // Vue: `toggleCollapsed(true)` also dismisses the pop and ends a drag.
-        minimap_drag_end();
-        if let Some(handler) = on_collapsed_change.as_ref() {
-            handler.call(true);
-        }
+        minimap_collapse_intent(&collapse_slider, &collapse_collapsed);
     };
     let on_slider_open_change = props.on_slider_open_change.clone();
     let label_handler = move |_event: MouseEvent| {
@@ -1128,8 +1165,9 @@ pub fn Minimap(props: MinimapProps) -> Element {
         div {
             class: "hk-mm-zoom-bar",
             // Vue: the zoom chrome never starts a map drag (the mark is read
-            // by the card's own pointerdown, which runs after this one).
-            onpointerdown: move |_event: PointerEvent| minimap_mark_chrome_press(),
+            // by the card's own mousedown, which runs after this one).
+            // Mouse family (L67) — same batch as the card's drag chain.
+            onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
             {VNode::Fragment(bar_nodes)}
         }
     };
@@ -1149,7 +1187,8 @@ pub fn Minimap(props: MinimapProps) -> Element {
         rsx! {
             div {
                 class: "hk-mm-zoom-pop",
-                onpointerdown: move |_event: PointerEvent| minimap_mark_chrome_press(),
+                // Same chrome mark as the bar, on the mouse channel (L67).
+                onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
                 Slider {
                     value: zoom_percent,
                     min: min_zoom,
@@ -1175,7 +1214,7 @@ pub fn Minimap(props: MinimapProps) -> Element {
     // ── the card ───────────────────────────────────────────────────────
     let on_pan_delta = props.on_pan_delta.clone();
     let on_slider_open_change = props.on_slider_open_change.clone();
-    let pointer_down = move |event: PointerEvent| {
+    let pointer_down = move |event: MouseEvent| {
         // Vue: a press in the zoom chrome leaves everything alone (it returns
         // BEFORE dismissing the pop and before arming the drag).
         if minimap_take_chrome_press() {
@@ -1191,7 +1230,13 @@ pub fn Minimap(props: MinimapProps) -> Element {
         event.prevent_default();
         minimap_drag_begin(event.current_target, event.client_x, event.client_y);
     };
-    let pointer_move = move |event: PointerEvent| {
+    let pointer_move = move |event: MouseEvent| {
+        // No implicit capture (L67): a press released outside the card never
+        // delivered its mouseup — an armed drag must not pan on a bare hover.
+        if event.buttons == 0 {
+            minimap_drag_end();
+            return;
+        }
         let Some((dx, dy)) =
             minimap_drag_delta(event.current_target, event.client_x, event.client_y)
         else {
@@ -1211,21 +1256,30 @@ pub fn Minimap(props: MinimapProps) -> Element {
         }
     };
 
-    rsx! {
-        div {
-            class: "hk-minimap",
-            "data-dragging": minimap_marker_attr(minimap_is_dragging()),
-            "data-toolbar-only": minimap_marker_attr(toolbar_only),
-            "data-collapsible": minimap_marker_attr(props.collapsible),
-            onpointerdown: pointer_down,
-            onpointermove: pointer_move,
-            onpointerup: move |_event: PointerEvent| minimap_drag_end(),
-            onpointercancel: move |_event: PointerEvent| minimap_drag_end(),
-            {map_node}
-            {bar_node}
-            {pop_node}
-        }
-    }
+    // The card IS the drag surface and the release root (mouse family, L67 —
+    // see the header's mouse delta): mousedown arms, mousemove pans, mouseup
+    // ends, the data-less `pointercancel` channel aborts, and a mouseleave
+    // with the button already up catches the outside release as well.
+    let card = VElement::new("div")
+        .class("hk-minimap")
+        .attr("data-dragging", minimap_marker_attr(minimap_is_dragging()))
+        .attr("data-toolbar-only", minimap_marker_attr(toolbar_only))
+        .attr("data-collapsible", minimap_marker_attr(props.collapsible))
+        .on_mousedown(pointer_down)
+        .on_mousemove(pointer_move)
+        .on_mouseup(move |_event: MouseEvent| minimap_drag_end())
+        .on_event("pointercancel", move |_event: Box<dyn EventData>| {
+            minimap_drag_end();
+        })
+        .on_mouseleave(move |event: MouseEvent| {
+            if event.buttons == 0 {
+                minimap_drag_end();
+            }
+        })
+        .child(map_node)
+        .child(bar_node)
+        .child(pop_node);
+    VNode::Element(Box::new(card))
 }
 
 impl StyledComponent for MinimapComponent {
@@ -1243,6 +1297,9 @@ impl StyledComponent for MinimapComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     fn boxed(id: &str) -> MinimapBox {
@@ -1553,6 +1610,12 @@ mod tests {
         assert_eq!(minimap_number(53.333333), "53.33");
         assert_eq!(minimap_number(-2.5), "-2.5");
         assert_eq!(minimap_number(f64::NAN), "0");
+        // The guard runs on the SNAPPED value: a value that rounds to
+        // negative zero prints `0`, never `-0`.
+        assert_eq!(minimap_number(-0.001), "0");
+        assert_eq!(minimap_number(-0.004), "0");
+        // ... while a value that snaps past zero keeps its sign.
+        assert_eq!(minimap_number(-0.005), "-0.01");
         // Vue interpolates `{zoomPercent}%` — JS spells 100 as "100".
         assert_eq!(minimap_format_percent(100.0), "100%");
         assert_eq!(minimap_format_percent(125.5), "125.5%");
@@ -1661,6 +1724,32 @@ mod tests {
     }
 
     #[test]
+    fn minimap_collapse_intent_closes_the_pop_and_ends_the_drag() {
+        let seen: Rc<RefCell<Vec<String>>> = Rc::new(RefCell::new(Vec::new()));
+        let slider_log = Rc::clone(&seen);
+        let on_slider_open_change = Some(EventHandler::new(move |open: bool| {
+            slider_log.borrow_mut().push(format!("slider:{open}"));
+        }));
+        let collapsed_log = Rc::clone(&seen);
+        let on_collapsed_change = Some(EventHandler::new(move |collapsed: bool| {
+            collapsed_log
+                .borrow_mut()
+                .push(format!("collapsed:{collapsed}"));
+        }));
+
+        // A mid-drag collapse (Vue's `toggleCollapsed(true)`): the pop
+        // closes, the drag dies, then the intent fires — in Vue's order.
+        minimap_drag_begin(Some(9), 4, 4);
+        assert!(minimap_is_dragging());
+        minimap_collapse_intent(&on_slider_open_change, &on_collapsed_change);
+        assert!(!minimap_is_dragging());
+        assert_eq!(
+            seen.borrow().clone(),
+            vec!["slider:false".to_string(), "collapsed:true".to_string(),]
+        );
+    }
+
+    #[test]
     fn minimap_renders_the_vue_dom_contract() {
         let html = Minimap(MinimapProps {
             boxes: vec![boxed("b1")],
@@ -1762,7 +1851,7 @@ mod tests {
         assert!(!html.contains("hk-minimap-svg"), "{html}");
         assert!(!html.contains("hk-mm-zoom-bar"), "{html}");
         assert!(
-            !html.contains("onpointerdown") && !html.contains("data-dragging"),
+            !html.contains("onmousedown") && !html.contains("data-dragging"),
             "{html}"
         );
     }

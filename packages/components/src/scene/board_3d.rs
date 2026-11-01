@@ -20,10 +20,13 @@
 //           [style="display:none"]          (anchor outside the frustum)
 //       …                                  (only while the board is alive)
 //     <fallback slot> | div.hk-board3d-fallback   (only when `failed`)
-//     div.hk-minimap.hk-minimap3d[.hk-minimap--collapsed][data-collapsed]
-//                                           (only when `minimap && ready
-//                                            && !failed`; Vue mounts HkMinimap3D
-//                                            here — see the delta list)
+//     div                                       (the plain minimap dock slot;
+//                                            only when `minimap && ready
+//                                            && !failed` — the host's
+//                                            `HkMinimap3D` content mounts
+//                                            here and carries its own
+//                                            `hk-minimap hk-minimap3d`
+//                                            root; see the delta list)
 //       <minimap slot>
 //     div.hk-board3d-overlay
 //       <default slot>                      (the page's own chrome; the sheet
@@ -59,6 +62,19 @@
 //     [`Board3DProps::on_pointer_leave`]) — with the press/release slop
 //     machine (`CLICK_SLOP_PX`, Manhattan metric) and the "a grab cancels any
 //     in-flight flight" rule already applied.
+//   * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
+//     tairitsu browser glue dispatches only the mouse family as typed
+//     `MouseEvent`s and routes `pointer*` through a data-less generic
+//     channel, so a typed `PointerEvent` handler never fires on the real
+//     target (ledger L67). The canvas binds `mousedown` / `mouseup` /
+//     `mousemove`, the root binds `mouseleave` for the hover report, and the
+//     press machine reads one constant mouse pointer id. Declared
+//     consequences: a touch screen produces no `mousemove` sequence, so
+//     TOUCH orbiting is unavailable; the mouse has no implicit capture, so a
+//     press that drags off the canvas loses its release — a `mouseup`
+//     anywhere else inside the board CANCELS the press at the root (the
+//     root-level fallback; Vue's pointer capture would have delivered the
+//     release to the canvas itself).
 //   * THE CAMERA IS A CONTROLLED POSE, not an internal one. Vue mutates
 //     `camera.position` / `controls.target` (OrbitControls, `flyTo`, `frameAll`)
 //     and exposes them through the engine. Here [`Board3DProps::camera_position`]
@@ -67,14 +83,22 @@
 //     engine would animate is exported as a pure pose function the host applies
 //     over its own clock: [`board3d_fly_pose`], [`board3d_focus_pose`],
 //     [`board3d_frame_pose`], [`board3d_topdown_pose`].
-//   * NO `HkMinimap3D`. That component (a second stereoscopic renderer, its
-//     zoom ladder, its collapse button) is not mirrored in this wave; the
-//     mirror renders its DOCK — `div.hk-minimap.hk-minimap3d` with Vue's
-//     collapsed modifier — so a host mounting its own minimap inherits the
-//     sheet's placement (`.hk-board3d .hk-minimap3d { z-index: 50 }`). The
-//     minimap's own geometry survives as pure functions
-//     ([`BOARD3D_MINIMAP_DRAG_RADIANS_PER_PX`], [`board3d_orbit_delta`],
-//     [`board3d_spherical_position`], [`board3d_view_plane_half_extents`]).
+//   * THE 3D MINIMAP IS A COMPOSITION, not a child mount. The card itself is
+//     mirrored in `scene::minimap_3d` (`Minimap3D`: zoom bar, slider pop,
+//     collapse affordance, orbit drag — mouse family there too, L67). Vue's
+//     `HkBoard3D` mounts `HkMinimap3D` DIRECTLY, so the card's root
+//     (`div.hk-minimap.hk-minimap3d`) is itself a child of the board root;
+//     the mirror therefore renders the dock as a PLAIN CONTAINER SLOT — a
+//     classless `div` that mounts [`Board3DProps::minimap_slot`] and adds
+//     nothing: the content (the mirrored `Minimap3D`) carries the
+//     `hk-minimap hk-minimap3d` classes and inherits the sheet's placement
+//     (`.hk-board3d .hk-minimap3d { z-index: 50 }`, resolved through the
+//     static wrapper). A dock that spelled those classes itself would nest
+//     `div.hk-minimap.hk-minimap3d` inside a same-named div — a DOM Vue
+//     never produces. `minimap_collapsible` / `minimap_default_collapsed`
+//     reach NO DOM attribute here: they are the configuration the host
+//     forwards to its own minimap content (the same no-attribute pattern
+//     `scene::board`'s `viewport` / `minK` / `maxK` props document).
 //   * `lighting` / `autoClipping` / `hoverBox` / `autoClipping`'s clipping
 //     calls / `setGround` / `applyLighting` / `applyEnvironment` / the GLB
 //     `ModelLayer` are ALL renderer state: a WASI host owns them. Only the
@@ -109,8 +133,6 @@
 #![allow(clippy::type_complexity)]
 use std::cell::RefCell;
 use std::collections::HashMap;
-
-use tairitsu_vdom::PointerEvent;
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -715,6 +737,11 @@ pub fn board3d_selection_frame_channel() -> &'static str {
 
 // ── the press machine (the one piece of pointer state) ───────────────────
 
+/// The pointer id the mouse family reads as: a mouse event carries no
+/// pointer identity and one page has one mouse, so a constant keeps the
+/// press/release bookkeeping consistent (L67, header delta).
+const BOARD3D_MOUSE_POINTER_ID: i32 = 0;
+
 /// A live press: Vue keeps this in a closure (`pressAt`).
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Board3dPress {
@@ -807,10 +834,14 @@ pub struct Board3DProps {
     pub minimap: bool,
 
     /// Give the minimap the collapse affordance (Vue: `minimapCollapsible`).
+    /// Reaches NO DOM attribute here — the host forwards it to its own
+    /// minimap content (header's composition delta).
     #[default(false)]
     pub minimap_collapsible: bool,
 
     /// Mount the minimap already folded (Vue: `minimapDefaultCollapsed`).
+    /// Reaches NO DOM attribute here — the host forwards it to its own
+    /// minimap content (header's composition delta).
     #[default(false)]
     pub minimap_default_collapsed: bool,
 
@@ -912,8 +943,9 @@ pub struct Board3DProps {
     /// Fallback slot (Vue: `slots.fallback`).
     pub fallback: Option<Element>,
 
-    /// Minimap slot: the mirror owns the DOCK, the host owns the map
-    /// (Vue mounts `HkMinimap3D` here).
+    /// Minimap slot: the mirror owns the DOCK (a plain classless container —
+    /// see the header's composition delta), the host owns the map (Vue mounts
+    /// `HkMinimap3D` here; the mirrored card is `scene::minimap_3d`).
     pub minimap_slot: Element,
 
     /// Default slot: the page's own chrome, laid over the canvas (Vue: the
@@ -921,14 +953,17 @@ pub struct Board3DProps {
     pub children: Element,
 
     /// A click landed on the board: Vue raycasts here and emits `objectClick`
-    /// with the registered id; the mirror hands the host the probe.
+    /// with the registered id; the mirror hands the host the probe. Fed by
+    /// the mouse family (L67, header delta).
     pub on_pick: Option<EventHandler<Board3dPointerPick>>,
 
     /// The pointer moved over the board (Vue: `hoverDirty` → next-frame pick).
+    /// Fed by the mouse family (L67, header delta).
     pub on_pointer_move: Option<EventHandler<Board3dPointerPick>>,
 
     /// The pointer left the BOARD (the container, not the canvas — so moving
-    /// onto a label chip does not drop the hover).
+    /// onto a label chip does not drop the hover). The root `mouseleave`
+    /// feeds it (L67, header delta).
     pub on_pointer_leave: Option<EventHandler<()>>,
 
     /// A label chip was activated (Vue: the chip's own `click` listener).
@@ -959,8 +994,12 @@ pub fn board3d_root_classes() -> &'static str {
     "hk-board3d"
 }
 
-/// The minimap dock's class string. Vue's `HkMinimap3D` root is
-/// `hk-minimap hk-minimap3d`, plus `hk-minimap--collapsed` when folded.
+/// The minimap CARD's root classes — what the host's `minimap_slot` content
+/// (the mirrored `Minimap3D`) carries onto the board. Vue's `HkMinimap3D`
+/// root is `hk-minimap hk-minimap3d`, plus `hk-minimap--collapsed` when
+/// folded; the board's DOCK itself is a plain classless container (see the
+/// header's composition delta). Kept as the drift guard the 3D card's tests
+/// pin their own root classes against.
 pub fn board3d_minimap_classes(collapsed: bool) -> String {
     if collapsed {
         "hk-minimap hk-minimap3d hk-minimap--collapsed".to_string()
@@ -1075,12 +1114,13 @@ pub fn Board3D(props: Board3DProps) -> Element {
 
     let on_pointer_down = {
         let key = press_key.clone();
-        move |event: PointerEvent| {
+        move |event: MouseEvent| {
             // A press on the canvas is a grab: it cancels any in-flight flight
-            // (Vue nulls its tween in `onPointerDown`).
+            // (Vue nulls its tween in `onPointerDown`). Mouse family (L67):
+            // the pointer id is the constant mouse id.
             board3d_begin_press(
                 &key,
-                event.pointer_id,
+                BOARD3D_MOUSE_POINTER_ID,
                 f64::from(event.client_x),
                 f64::from(event.client_y),
             );
@@ -1089,10 +1129,10 @@ pub fn Board3D(props: Board3DProps) -> Element {
     let on_pointer_up = {
         let key = press_key.clone();
         let on_pick = props.on_pick.clone();
-        move |event: PointerEvent| {
+        move |event: MouseEvent| {
             let x = f64::from(event.client_x);
             let y = f64::from(event.client_y);
-            let pick = board3d_finish_press(&key, event.pointer_id, x, y);
+            let pick = board3d_finish_press(&key, BOARD3D_MOUSE_POINTER_ID, x, y);
             if let (Some((px, py)), Some(handler)) = (pick, on_pick.as_ref()) {
                 handler.call(Board3dPointerPick {
                     client_x: px,
@@ -1104,7 +1144,7 @@ pub fn Board3D(props: Board3DProps) -> Element {
     };
     let on_pointer_move = {
         let on_move = props.on_pointer_move.clone();
-        move |event: PointerEvent| {
+        move |event: MouseEvent| {
             if let Some(handler) = on_move.as_ref() {
                 let x = f64::from(event.client_x);
                 let y = f64::from(event.client_y);
@@ -1118,7 +1158,7 @@ pub fn Board3D(props: Board3DProps) -> Element {
     };
     let on_pointer_leave = {
         let on_leave = props.on_pointer_leave.clone();
-        move |_event: PointerEvent| {
+        move |_event: MouseEvent| {
             if let Some(handler) = on_leave.as_ref() {
                 handler.call(());
             }
@@ -1126,17 +1166,6 @@ pub fn Board3D(props: Board3DProps) -> Element {
     };
 
     let minimap_ready = props.minimap && ready && !failed;
-    let minimap_classes = board3d_minimap_classes(props.minimap_default_collapsed);
-    let minimap_collapsed = if props.minimap_default_collapsed {
-        Some("")
-    } else {
-        None
-    };
-    let minimap_collapsible = if props.minimap_collapsible {
-        Some("")
-    } else {
-        None
-    };
 
     // The overlay layer exists only when the page brought chrome (Vue tests
     // `slots.default`).
@@ -1155,15 +1184,26 @@ pub fn Board3D(props: Board3DProps) -> Element {
 
     let mut root = VElement::new("div")
         .class(board3d_root_classes())
-        .on_pointerleave(on_pointer_leave);
+        .on_mouseleave(on_pointer_leave);
     if let Some(style) = root_style {
         root = root.style(style);
     }
+    // The root-level release fallback (mouse has no implicit capture, L67):
+    // a `mouseup` that did not come from the canvas — a press dragged off
+    // the canvas and released over the overlay, a chip or the dock — cancels
+    // the press instead of leaving it armed forever. A canvas release
+    // bubbles here too, AFTER `board3d_finish_press` already consumed it.
+    {
+        let key = press_key.clone();
+        root = root.on_mouseup(move |_event: MouseEvent| {
+            board3d_cancel_press(&key);
+        });
+    }
     let mut canvas = VElement::new("canvas")
         .class("hk-board3d-canvas")
-        .on_pointerdown(on_pointer_down)
-        .on_pointerup(on_pointer_up)
-        .on_pointermove(on_pointer_move);
+        .on_mousedown(on_pointer_down)
+        .on_mouseup(on_pointer_up)
+        .on_mousemove(on_pointer_move);
     if let Some(id) = canvas_id {
         canvas = canvas.attr("id", id);
     }
@@ -1180,14 +1220,15 @@ pub fn Board3D(props: Board3DProps) -> Element {
         root = root.child(fallback_node);
     }
     if minimap_ready {
-        let mut dock = VElement::new("div").class(minimap_classes);
-        if let Some(flag) = minimap_collapsed {
-            dock = dock.attr("data-collapsed", flag);
-        }
-        if let Some(flag) = minimap_collapsible {
-            dock = dock.attr("data-collapsible", flag);
-        }
-        root = root.child(VNode::Element(Box::new(dock.child(props.minimap_slot))));
+        // The dock is a PLAIN CONTAINER SLOT (header's composition delta): a
+        // classless div that mounts the host's minimap content — Vue mounts
+        // `HkMinimap3D` directly, so the `hk-minimap hk-minimap3d` root
+        // belongs to the CONTENT, never to a wrapper (a same-class wrapper
+        // would nest the card inside a DOM Vue never produces). The static
+        // wrapper is transparent to the card's absolute placement and to the
+        // sheet's `.hk-board3d .hk-minimap3d` descendant selector.
+        let dock = VElement::new("div").child(props.minimap_slot);
+        root = root.child(VNode::Element(Box::new(dock)));
     }
     if has_overlay {
         root = root.child(VNode::Element(Box::new(
@@ -1699,8 +1740,18 @@ mod tests {
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
-        // Vue's `minimap` prop defaults to TRUE: a ready board docks it.
-        assert!(html.contains("hk-minimap hk-minimap3d"), "{html}");
+        // Vue's `minimap` prop defaults to TRUE: a ready board docks the
+        // host's minimap — the CARD's classes arrive with the CONTENT, the
+        // dock itself is a classless container (header's composition delta).
+        let docked = Board3D(Board3DProps {
+            ready: true,
+            minimap_slot: rsx! {
+                div { class: "hk-minimap hk-minimap3d", "map" }
+            },
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(docked.contains("hk-minimap hk-minimap3d"), "{docked}");
         let no_dock = Board3D(Board3DProps {
             ready: true,
             minimap: false,
@@ -1708,6 +1759,14 @@ mod tests {
         })
         .render_to_html();
         assert!(!no_dock.contains("hk-minimap3d"), "{no_dock}");
+        // An EMPTY slot renders the classless dock with nothing in it: the
+        // board never spells the card's classes itself.
+        let bare = Board3D(Board3DProps {
+            ready: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(!bare.contains("hk-minimap"), "{bare}");
         assert!(!html.contains("hk-board3d-fallback"), "{html}");
     }
 
@@ -1728,23 +1787,31 @@ mod tests {
         // A failed board never docks the minimap and paints no chips.
         assert!(!html.contains("hk-minimap3d"), "{html}");
 
-        // A healthy board docks the host's minimap in Vue's own wrapper.
+        // A healthy board docks the host's minimap through the PLAIN
+        // container slot: the content carries the card's classes, the board
+        // contributes none of them (header's composition delta).
         let html = Board3D(Board3DProps {
             ready: true,
             minimap_default_collapsed: true,
             minimap_slot: rsx! {
-                canvas { class: "host-minimap", "x" }
+                div {
+                    class: "hk-minimap hk-minimap3d hk-minimap--collapsed",
+                    canvas { class: "host-minimap", "x" }
+                }
             },
             ..Default::default()
         })
         .render_to_html();
         for needle in [
             "hk-minimap hk-minimap3d hk-minimap--collapsed",
-            "data-collapsed=\"\"",
             "host-minimap",
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
+        // `minimap_default_collapsed` / `minimap_collapsible` reach NO DOM
+        // attribute here — the host forwards them to its own card.
+        assert!(!html.contains("data-collapsed"), "{html}");
+        assert!(!html.contains("data-collapsible"), "{html}");
     }
 
     #[test]

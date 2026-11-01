@@ -44,6 +44,28 @@
 //     unchanged (non-integer / negative / out-of-range -> append).
 //
 // Deltas vs Vue (documented, not accidental):
+//   * MOUSE-FAMILY BINDINGS, not native drag-and-drop. On wasm32-wasip2 the
+//     tairitsu browser glue dispatches only the mouse family as typed
+//     `MouseEvent`s and routes `drag*` (like `pointer*`) through a data-less
+//     generic channel, so a typed `DragEvent` handler never fires on the
+//     real target (ledger L67). The chain is re-based on the mouse family,
+//     the same paradigm `draggable_list` / `draggable_grid` use: the card's
+//     `dragstart` → its `mousedown` (the press is PUBLISHED, not claimed,
+//     and `preventDefault` suppresses the native drag-and-drop that would
+//     otherwise swallow the mouse events this chain rides on — Vue rides the
+//     native DnD, the mirror cannot); the lane's `dragover` → its
+//     `mouseenter` (the browser's own hit test, still gated on `draggable &&
+//     dragging` exactly like Vue's handler); the lane's `dragleave` → its
+//     `mouseleave`; the lane's `drop` → its `mouseup`; and `dragend` → a
+//     ROOT-level `mouseup` (a release inside the board but outside every
+//     lane still ends the gesture — Vue's `dragend` fires wherever the
+//     native drag died). The lane order matches Vue's drop → dragend. The
+//     `dragover`/`drop` `preventDefault` calls are NOT ported: they existed
+//     to admit a native drop, and there is no native gesture to admit.
+//     Declared consequences: a touch screen produces no `mousemove`
+//     sequence, so TOUCH dragging is unavailable (a tap still clicks); the
+//     mouse has no implicit capture, so a release outside the board never
+//     reaches it — the host ends its drag on its own page-level signal.
 //   * `draggable` / `laneSize` / `ariaLabel` / `dockTailClearance` keep their
 //     Vue prop names (snake_cased); `lanes` + `laneKeyOf` + `cardsOf` +
 //     `cardKeyOf` collapse into [`KanbanLane`] / [`KanbanCard`] structs,
@@ -71,12 +93,13 @@
 //     forwards the payload through [`KanbanDrag`] and the host may set the
 //     native payload from its own listener.
 //   * `onDragLeave`'s containment test (`lane.contains(event.relatedTarget)`)
-//     needs the DOM node, which a vnode mirror does not hold. The mirror
-//     forwards every leave ([`kanban_is_drop_target`] is the clearing rule for
-//     the controlled `over_lane`); the host, which owns the lane element,
-//     applies Vue's "a leave that stays inside the lane does not clear"
-//     guard. Vue relies on that guard so moving between two cards of the same
-//     lane does not blink the highlight off.
+//     needed the DOM node, which a vnode mirror does not hold — a bubbling
+//     `dragleave` fires for every child the pointer crosses. The mouse-family
+//     `mouseleave` the mirror binds instead does NOT bubble, so the lane only
+//     ever reports a leave that truly exits it: Vue's "a leave that stays
+//     inside the lane does not clear" guard is inherent in the event itself
+//     here, and [`kanban_is_drop_target`] remains the clearing rule for the
+//     controlled `over_lane`.
 //   * Vue clears `dragging`/`dropTarget` itself on drop and on drag end. Both
 //     are host state here: `on_move` tells the host a move landed and
 //     `on_drag_end` tells it the gesture is over — either is the clear signal.
@@ -402,7 +425,10 @@ pub struct KanbanProps {
     pub on_move: Option<EventHandler<KanbanMove>>,
 
     /// Fired when the drag gesture ends (Vue: `onDragEnd`, which clears both
-    /// internal refs — both are host state here).
+    /// internal refs — both are host state here). Only fires while a card is
+    /// in flight (the controlled `dragging` prop), exactly like Vue's
+    /// `dragend`; the root-level `mouseup` fallback reports a release that
+    /// landed outside every lane too (header delta).
     pub on_drag_end: Option<EventHandler<()>>,
 }
 
@@ -449,27 +475,23 @@ pub fn Kanban(props: KanbanProps) -> Element {
 
             // Vue: `onDragstart` arms `dragging` for every non-draggable board
             // too, but then early-returns; only a draggable board reports.
+            // Mouse family (L67): the press is PUBLISHED from `mousedown`,
+            // and `preventDefault` keeps the browser from starting the native
+            // drag-and-drop that would swallow the mouse events the rest of
+            // the chain rides on (Vue rides that native gesture instead).
             let start_handler = props.on_card_drag_start.clone();
             let start_payload = KanbanDrag {
                 lane_key: lane_key.clone(),
                 index: card_index,
                 card_key: card_key.clone(),
             };
-            card_el = card_el.on_dragstart(move |_e: DragEvent| {
+            card_el = card_el.on_mousedown(move |event: MouseEvent| {
                 if !draggable {
                     return;
                 }
+                event.prevent_default();
                 if let Some(handler) = start_handler.as_ref() {
                     handler.call(start_payload.clone());
-                }
-            });
-
-            // Vue: `onDragEnd` clears BOTH internal refs; here it is the host's
-            // clear signal (the drag can also end outside any lane).
-            let end_handler = props.on_drag_end.clone();
-            card_el = card_el.on_dragend(move |_e: DragEvent| {
-                if let Some(handler) = end_handler.as_ref() {
-                    handler.call(());
                 }
             });
 
@@ -500,39 +522,46 @@ pub fn Kanban(props: KanbanProps) -> Element {
             .child(VNode::Element(Box::new(cards_box)));
 
         // Vue: `onDragOver` is gated on `draggable && dragging` and calls
-        // `preventDefault()` — that is what makes the lane a legal target.
+        // `preventDefault()` — that is what makes the lane a legal target in
+        // NATIVE drag-and-drop. The mouse-family `mouseenter` (L67) needs no
+        // such admission (there is no native gesture to admit), so only the
+        // gate survives: the lane under the pointer becomes the target.
         let over_handler = props.on_lane_drag_over.clone();
         let over_key = lane_key.clone();
-        section = section.on_dragover(move |e: DragEvent| {
+        section = section.on_mouseenter(move |_event: MouseEvent| {
             if !draggable || !has_dragging {
                 return;
             }
-            e.prevent_default();
             if let Some(handler) = over_handler.as_ref() {
                 handler.call(over_key.clone());
             }
         });
 
         // Vue: `onDragLeave` clears the target unless the pointer merely moved
-        // into a child of the same lane (see the header delta).
+        // into a child of the same lane. `mouseleave` does not bubble, so the
+        // lane only reports a leave that truly exits it (see the header
+        // delta) — the containment guard is inherent in the event.
         let leave_handler = props.on_lane_drag_leave.clone();
         let leave_key = lane_key.clone();
-        section = section.on_dragleave(move |_e: DragEvent| {
+        section = section.on_mouseleave(move |_event: MouseEvent| {
             if let Some(handler) = leave_handler.as_ref() {
                 handler.call(leave_key.clone());
             }
         });
 
         // Vue: `onDrop` resolves the landing index, clears both refs and emits
-        // `move` unless the drop is a no-op.
+        // `move` unless the drop is a no-op. Mouse family (L67): the drop is
+        // the lane's `mouseup` (a release over the lane); the root-level
+        // `mouseup` below reports the gesture's end right after it, Vue's
+        // own drop → dragend order. Vue's `preventDefault` admitted a native
+        // drop — nothing native to admit here.
         let drop_dragging = dragging.clone();
         let drop_handler = on_move.clone();
         let drop_key = lane_key.clone();
-        section = section.on_drop(move |e: DragEvent| {
+        section = section.on_mouseup(move |_event: MouseEvent| {
             if !draggable || drop_dragging.is_none() {
                 return;
             }
-            e.prevent_default();
             let resolved =
                 kanban_resolve_move(drop_dragging.as_ref(), &drop_key, over_index, card_count);
             if let Some(resolved) = resolved {
@@ -571,6 +600,23 @@ pub fn Kanban(props: KanbanProps) -> Element {
         .child(VNode::Element(Box::new(lanes_box)));
 
     root = root.child(VNode::Element(Box::new(strip)));
+
+    // Vue: `onDragEnd` clears BOTH internal refs; here it is the host's clear
+    // signal (the drag can also end outside any lane). Bound as the
+    // ROOT-level `mouseup` fallback (L67): a lane's `mouseup` bubbles here
+    // right after its drop — Vue's own drop → dragend order — and a release
+    // inside the board but outside every lane still ends the gesture. Gated
+    // on the controlled `dragging` prop, like Vue's `dragend` only fires for
+    // an armed drag.
+    let end_handler = props.on_drag_end.clone();
+    root = root.on_mouseup(move |_event: MouseEvent| {
+        if !has_dragging {
+            return;
+        }
+        if let Some(handler) = end_handler.as_ref() {
+            handler.call(());
+        }
+    });
     VNode::Element(Box::new(root))
 }
 

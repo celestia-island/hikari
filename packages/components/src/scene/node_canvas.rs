@@ -86,16 +86,49 @@
 //     WASI host cannot. The vector payload is already in the DOM as injected
 //     markup, and [`NodeCanvasProps::print_mode`] + `print_paper` still pin the
 //     paper box through [`node_canvas_paper_size`].
-//   * POINTER-CAPTURE BOOKKEEPING BECOMES THE COMPONENT'S ONLY STATE. Vue keeps
-//     `panning` / `activePointers` / `pinchSnapshot` / `movedByHand` in closures
-//     and listens on `window` for the release. The mirror has no signals, no
-//     `window`, and no pointer capture, so the same machine lives in a
-//     module-level `thread_local` registry keyed by
-//     [`NodeCanvasProps::instance_key`] — [`node_canvas_begin_pointer`],
-//     [`node_canvas_move_pointer`], [`node_canvas_end_pointer`],
-//     [`node_canvas_blur`] — with Vue's `PAN_SLOP` still gating the first move.
-//     A release that lands outside the surface is the host's to report (it has
-//     the window); [`node_canvas_blur`] is the escape hatch Vue already has.
+//   * MOUSE-FAMILY BINDINGS + THE GESTURE REGISTRY. Vue keeps `panning` /
+//     `activePointers` / `pinchSnapshot` / `movedByHand` in closures and
+//     listens on `window` for the release. On wasm32-wasip2 the tairitsu
+//     browser glue dispatches only the mouse family as typed `MouseEvent`s
+//     and routes `pointer*` through a data-less generic channel, so a typed
+//     `PointerEvent` handler never fires on the real target (ledger L67).
+//     The surface therefore binds `mousedown` / `mousemove` / `mouseup`,
+//     and the same machine lives in a module-level `thread_local` registry
+//     keyed by [`NodeCanvasProps::instance_key`] —
+//     [`node_canvas_begin_pointer`], [`node_canvas_move_pointer`],
+//     [`node_canvas_end_pointer`], [`node_canvas_blur`],
+//     [`node_canvas_reset_gesture`] — with Vue's `PAN_SLOP` still gating the
+//     first move. Declared consequences: a touch screen produces no
+//     `mousemove` sequence, so TOUCH panning is unavailable; the mouse has
+//     no implicit capture, so a pan that leaves the surface stops tracking
+//     until the pointer returns — the root-level `mouseup` still ends a
+//     release inside the surface, and a release OUTSIDE it is the host's to
+//     report ([`node_canvas_blur`] is the escape hatch Vue already has).
+//     The mouse reads as ONE pointer id, so the TWO-POINTER PINCH is
+//     unreachable from the component's own bindings: the pure pinch machine
+//     stays exported for a host that tracks real pointer ids of its own.
+//   * THE WHEEL STEPS NOTHING. The glue delivers the DOM `wheel` as a
+//     `MouseEvent` with no `deltaY` (L67), so the sign test Vue's `onWheel`
+//     runs cannot. The mirror still listens through the generic channel and
+//     calls `preventDefault` on the live handle while `zoomable` (Vue's own
+//     gate, and its reason for the non-passive listener — the page must not
+//     scroll under the canvas), but the payload is never read and no zoom is
+//     emitted: the host drives the camera through the `camera` prop
+//     ([`node_canvas_zoom_by`] is the step, [`node_canvas_settle`] the
+//     edge).
+//   * `instance_key` must be NON-EMPTY for the gestures to register: an
+//     unset key would alias every default-keyed canvas into ONE shared
+//     registry slot, so the registry functions short-circuit on `""` (the
+//     same guard board_3d's press registry carries).
+//   * `moved_by_hand` (Vue's `movedByHand`) is a per-MOUNT latch: it is set
+//     by every non-automatic camera move and in Vue only a REMOUNT clears
+//     it (`let movedByHand = false` per setup, read by `autoFit`). The
+//     registry mirrors that split: [`node_canvas_reset_gesture`] clears the
+//     TRANSIENT gesture state (a fresh press starts from a clean slate —
+//     Vue gets the same from fresh per-gesture closures) but deliberately
+//     does NOT clear `moved_by_hand`, which would let a late
+//     `contentBounds` change re-fit a view the user had panned away; a
+//     re-keyed canvas gets a fresh entry (latch included) for free.
 //   * THE `data-hk-canvas-no-pan` / `data-hk-canvas-pan` / overlay / minimap
 //     press exclusions are DOM ancestry tests Vue can run (`closest`). A mirror
 //     cannot, so [`NodeCanvasProps::pannable`] is the only gate and the host
@@ -117,8 +150,6 @@
 #![allow(clippy::type_complexity)]
 use std::cell::RefCell;
 use std::collections::HashMap;
-
-use tairitsu_vdom::{PointerEvent, WheelEvent};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -211,8 +242,15 @@ fn node_canvas_round6(value: f64) -> f64 {
     (value * 1_000_000.0).round() / 1_000_000.0
 }
 
-/// A number as Vue's template interpolation would spell it (`String(n)`).
+/// A number as Vue's template interpolation would spell it (`String(n)`),
+/// with the `-0` / non-finite guard the sibling mirrors carry (`board_num`,
+/// `windowed_item_number`): `-0` prints `0` (JS spells it that way) and a
+/// non-finite value prints `0`, because no camera or markup property may
+/// read `NaN`/`-0`.
 pub fn node_canvas_num(value: f64) -> String {
+    if !value.is_finite() || value == 0.0 {
+        return "0".to_string();
+    }
     format!("{value}")
 }
 
@@ -1216,6 +1254,13 @@ impl MinimapPlacement {
 
 // ── the gesture machine (the component's only state) ─────────────────────
 
+/// The pointer id the mouse family reads as: a mouse event carries no
+/// pointer identity and one page has one mouse, so a constant keeps the
+/// press/release bookkeeping consistent — and is also why the two-pointer
+/// pinch is unreachable from the component's own bindings (L67, header
+/// delta).
+const NODE_CANVAS_MOUSE_POINTER_ID: i32 = 0;
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 struct NodeCanvasPan {
     pointer_id: i32,
@@ -1266,7 +1311,9 @@ fn node_canvas_with_instance<R>(key: &str, f: impl FnOnce(&mut NodeCanvasInstanc
 /// Vue's `trackPointer` + `onPointerDown`: register the pointer, freeze the
 /// pinch snapshot when a SECOND pointer lands, and arm a pan when the first one
 /// did. Returns `true` when a pinch is live (Vue cancels the single-pointer pan
-/// in exactly that case).
+/// in exactly that case). An EMPTY key registers nothing — an unset
+/// `instance_key` would alias every default-keyed canvas into one shared
+/// registry slot (the same guard board_3d's press registry carries).
 pub fn node_canvas_begin_pointer(
     key: &str,
     pointer_id: i32,
@@ -1276,6 +1323,9 @@ pub fn node_canvas_begin_pointer(
     pinchable: bool,
     print_mode: bool,
 ) -> bool {
+    if key.is_empty() {
+        return false;
+    }
     node_canvas_with_instance(key, |instance| {
         instance.pointers.retain(|(id, _, _)| *id != pointer_id);
         instance.pointers.push((pointer_id, x, y));
@@ -1314,13 +1364,17 @@ pub fn node_canvas_begin_pointer(
 /// Vue's `onPointerMove`: update the tracked pointer, then route to the pinch or
 /// the pan. The pan is only CAPTURED past the slop, and the first captured move
 /// applies the whole delta from the press point at once (Vue updates `panning.x`
-/// only after the capture).
+/// only after the capture). An EMPTY key reports `Idle` (see
+/// [`node_canvas_begin_pointer`]).
 pub fn node_canvas_move_pointer(
     key: &str,
     pointer_id: i32,
     x: f64,
     y: f64,
 ) -> NodeCanvasPointerMove {
+    if key.is_empty() {
+        return NodeCanvasPointerMove::Idle;
+    }
     node_canvas_with_instance(key, |instance| {
         if let Some(entry) = instance
             .pointers
@@ -1381,8 +1435,12 @@ pub fn node_canvas_move_pointer(
 }
 
 /// Vue's `endPan` + `endPointerTracking`. Returns the captured pointer id when a
-/// captured pan just ended (what Vue releases capture for).
+/// captured pan just ended (what Vue releases capture for). An EMPTY key ends
+/// nothing (see [`node_canvas_begin_pointer`]).
 pub fn node_canvas_end_pointer(key: &str, pointer_id: i32) -> Option<i32> {
+    if key.is_empty() {
+        return None;
+    }
     node_canvas_with_instance(key, |instance| {
         instance.pointers.retain(|(id, _, _)| *id != pointer_id);
         if instance.pointers.len() < 2 {
@@ -1401,8 +1459,12 @@ pub fn node_canvas_end_pointer(key: &str, pointer_id: i32) -> Option<i32> {
 }
 
 /// Vue's `loseFocus`: whatever was being dragged is over, and the pinch state is
-/// cleared — a stale snapshot would permanently suppress the pan.
+/// cleared — a stale snapshot would permanently suppress the pan. An EMPTY key
+/// clears nothing (see [`node_canvas_begin_pointer`]).
 pub fn node_canvas_blur(key: &str) {
+    if key.is_empty() {
+        return;
+    }
     node_canvas_with_instance(key, |instance| {
         instance.pointers.clear();
         instance.pinch = None;
@@ -1410,14 +1472,47 @@ pub fn node_canvas_blur(key: &str) {
     });
 }
 
-/// Whether the user has taken the view over (Vue: `movedByHand`).
+/// Reset one instance's TRANSIENT gesture state — the live pointers, the
+/// armed pan and the pinch snapshot — so a fresh press starts from a clean
+/// slate (Vue gets the same guarantee from fresh per-gesture closures: a
+/// release that landed outside the surface never leaks into the next
+/// press). The component calls this on its own mousedown.
+///
+/// `moved_by_hand` is DELIBERATELY untouched: it is not gesture state but
+/// the "the user has taken the view over" latch, which in Vue survives every
+/// gesture of a mount (`let movedByHand = false` per setup, set by
+/// `setCamera`, read by `autoFit`) — resetting it per press would let a late
+/// `contentBounds` change re-fit a view the user had panned away. A re-keyed
+/// canvas gets a fresh entry (latch included) for free. An EMPTY key resets
+/// nothing (see [`node_canvas_begin_pointer`]).
+pub fn node_canvas_reset_gesture(key: &str) {
+    if key.is_empty() {
+        return;
+    }
+    node_canvas_with_instance(key, |instance| {
+        instance.pointers.clear();
+        instance.pinch = None;
+        instance.pan = None;
+    });
+}
+
+/// Whether the user has taken the view over (Vue: `movedByHand`). An EMPTY
+/// key has no registry entry and reads `false` (see
+/// [`node_canvas_begin_pointer`]).
 pub fn node_canvas_moved_by_hand(key: &str) -> bool {
+    if key.is_empty() {
+        return false;
+    }
     node_canvas_with_instance(key, |instance| instance.moved_by_hand)
 }
 
 /// Record that a non-automatic camera move happened (a gesture, or an imperative
-/// `setCamera`).
+/// `setCamera`). An EMPTY key records nothing (see
+/// [`node_canvas_begin_pointer`]).
 pub fn node_canvas_mark_moved_by_hand(key: &str) {
+    if key.is_empty() {
+        return;
+    }
     node_canvas_with_instance(key, |instance| instance.moved_by_hand = true);
 }
 
@@ -1728,7 +1823,10 @@ pub struct NodeCanvasProps {
     pub hovered_edge_id: Option<String>,
 
     /// The gesture registry key (Vue's per-mount closures). Distinct keys keep
-    /// two canvases from sharing one pan.
+    /// two canvases from sharing one pan. Must be NON-EMPTY for the gestures
+    /// to register — an unset key would alias every default-keyed canvas into
+    /// one shared slot, so the registry short-circuits on `""` (header
+    /// delta).
     #[default]
     pub instance_key: String,
 
@@ -1833,10 +1931,6 @@ pub fn node_canvas_settle_camera(
 pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
     let camera = node_canvas_resolved_camera(&props);
     let policy = node_canvas_zoom_policy(&props);
-    let viewport = NodeCanvasViewport {
-        width: props.width,
-        height: props.height,
-    };
     let print_mode = props.print_mode;
     let instance_key = props.instance_key.clone();
 
@@ -1856,48 +1950,38 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
 
     let on_camera_change = props.on_camera_change.clone();
     let settle = node_canvas_settle(&props);
-    let wheel = {
-        let key = instance_key.clone();
-        let on_camera_change = on_camera_change.clone();
-        let origin = props.origin;
-        let zoomable = props.zoomable;
-        move |event: WheelEvent| {
-            if !zoomable {
-                return;
-            }
-            event.prevent_default();
-            let client_x = f64::from(event.client_x);
-            let client_y = f64::from(event.client_y);
-            // A wheel event's deltaY is device-dependent; only the sign matters,
-            // and the grid keeps the result reproducible.
-            let direction = if event.delta_y < 0.0 { 1 } else { -1 };
-            let at = node_canvas_pointer_at(origin, client_x, client_y)
-                .unwrap_or_else(|| node_canvas_viewport_centre(viewport));
-            // Every write settles: normalise, then clamp to the content hull.
-            if let Some(next) = node_canvas_zoom_by(camera, direction, at, policy)
-                .and_then(|next| settle.settle(next))
-            {
-                // A gesture is a non-automatic move: the automatic framing stops.
-                node_canvas_mark_moved_by_hand(&key);
-                if let Some(handler) = on_camera_change.as_ref() {
-                    handler.call(next);
-                }
-            }
+    let zoomable = props.zoomable;
+    // The wheel rides the GENERIC channel: the glue delivers the DOM `wheel`
+    // as a MouseEvent with no `deltaY` (L67), so the payload is never read —
+    // only the live handle is, to keep the page from scrolling under a
+    // zoomable canvas (Vue's own gate, and its reason for the non-passive
+    // listener). No zoom is emitted: the host drives the camera through the
+    // props (header delta).
+    let wheel = move |event: Box<dyn EventData>| {
+        if !zoomable {
+            return;
+        }
+        if let Some(mouse) = event.as_any().downcast_ref::<MouseEvent>() {
+            mouse.prevent_default();
         }
     };
     let pointer_down = {
         let key = instance_key.clone();
         let pannable = props.pannable;
         let pinchable = props.pinchable;
-        move |event: PointerEvent| {
+        move |event: MouseEvent| {
             // Only the primary (left) button pans; a pinch needs no button gate
             // beyond the pointer count.
             if !pannable || event.button != 0 {
                 return;
             }
+            // A fresh press starts from a clean gesture slate (an interrupted
+            // gesture — a release outside the surface — never leaks into the
+            // next press).
+            node_canvas_reset_gesture(&key);
             node_canvas_begin_pointer(
                 &key,
-                event.pointer_id,
+                NODE_CANVAS_MOUSE_POINTER_ID,
                 f64::from(event.client_x),
                 f64::from(event.client_y),
                 camera.k,
@@ -1911,10 +1995,17 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
         let on_camera_change = on_camera_change.clone();
         let origin = props.origin;
         let pointer_scale = props.pointer_scale;
-        move |event: PointerEvent| {
+        move |event: MouseEvent| {
+            // No implicit capture (L67): a press released outside the surface
+            // never delivered its mouseup — an armed pan must not drift the
+            // camera on a bare hover.
+            if event.buttons == 0 {
+                node_canvas_blur(&key);
+                return;
+            }
             let x = f64::from(event.client_x);
             let y = f64::from(event.client_y);
-            match node_canvas_move_pointer(&key, event.pointer_id, x, y) {
+            match node_canvas_move_pointer(&key, NODE_CANVAS_MOUSE_POINTER_ID, x, y) {
                 NodeCanvasPointerMove::Idle => {}
                 NodeCanvasPointerMove::Pan { dx, dy } => {
                     let next = NodeCanvasCamera {
@@ -1949,8 +2040,8 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
     };
     let pointer_up = {
         let key = instance_key.clone();
-        move |event: PointerEvent| {
-            node_canvas_end_pointer(&key, event.pointer_id);
+        move |_event: MouseEvent| {
+            node_canvas_end_pointer(&key, NODE_CANVAS_MOUSE_POINTER_ID);
         }
     };
 
@@ -1974,10 +2065,10 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
     }
     if !print_mode {
         root = root
-            .on_wheel(wheel)
-            .on_pointerdown(pointer_down)
-            .on_pointermove(pointer_move)
-            .on_pointerup(pointer_up);
+            .on_event("wheel", wheel)
+            .on_mousedown(pointer_down)
+            .on_mousemove(pointer_move)
+            .on_mouseup(pointer_up);
     }
 
     // The Canvas2D painter layer: a SLOT here — the host acquires the context
@@ -2893,6 +2984,51 @@ mod tests {
         assert!(!node_canvas_begin_pointer(
             key, 2, 10.0, 0.0, 1.0, true, true
         ));
+        node_canvas_blur(key);
+    }
+
+    #[test]
+    fn node_canvas_empty_keys_never_touch_the_registry() {
+        // An unset `instance_key` would alias every default-keyed canvas
+        // into ONE shared slot; every registry function short-circuits on
+        // `""` (the same guard board_3d's press registry carries).
+        assert!(!node_canvas_begin_pointer(
+            "", 1, 0.0, 0.0, 1.0, true, false
+        ));
+        assert_eq!(
+            node_canvas_move_pointer("", 1, 10.0, 10.0),
+            NodeCanvasPointerMove::Idle
+        );
+        assert_eq!(node_canvas_end_pointer("", 1), None);
+        assert!(!node_canvas_moved_by_hand(""));
+        node_canvas_mark_moved_by_hand("");
+        node_canvas_reset_gesture("");
+        node_canvas_blur("");
+        assert!(!node_canvas_moved_by_hand(""));
+    }
+
+    #[test]
+    fn node_canvas_reset_gesture_clears_the_transient_state_only() {
+        let key = "canvas-reset";
+        node_canvas_blur(key);
+        node_canvas_begin_pointer(key, 1, 100.0, 100.0, 1.0, true, false);
+        // Past the slop: the pan is captured and the view-ownership latch
+        // trips.
+        assert_eq!(
+            node_canvas_move_pointer(key, 1, 110.0, 100.0),
+            NodeCanvasPointerMove::Pan { dx: 10.0, dy: 0.0 }
+        );
+        assert!(node_canvas_moved_by_hand(key));
+
+        node_canvas_reset_gesture(key);
+        // The transient state is gone: no pan, no pointers, no pinch.
+        assert_eq!(
+            node_canvas_move_pointer(key, 1, 130.0, 100.0),
+            NodeCanvasPointerMove::Idle
+        );
+        // ... but the latch SURVIVES — Vue's `movedByHand` is a per-mount
+        // fact, not a per-gesture one (see the header delta).
+        assert!(node_canvas_moved_by_hand(key));
         node_canvas_blur(key);
     }
 

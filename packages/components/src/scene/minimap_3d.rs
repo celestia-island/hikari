@@ -41,6 +41,27 @@
 // `on_slider_open_change`.
 //
 // Deltas vs Vue (documented, one per deviation):
+//   * [D] MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
+//     tairitsu browser glue dispatches only the mouse family as typed
+//     `MouseEvent`s and routes `pointer*` through a data-less generic
+//     channel, so a typed `PointerEvent` handler never fires on the real
+//     target (ledger L67). The card, the zoom bar and the pop bind
+//     `mousedown` / `mousemove` / `mouseup`; the abort still listens on the
+//     generic `pointercancel` channel (alive but data-less). Declared
+//     consequences: a touch screen produces no `mousemove` sequence, so
+//     TOUCH orbiting is unavailable; the mouse has no implicit capture, so a
+//     drag that leaves the card stops emitting until the pointer returns
+//     (the card IS the root — its `mouseup` is the root-level fallback), and
+//     a press released OUTSIDE the card is caught by the `buttons == 0`
+//     guard on the next move/leave instead of orbiting on a bare hover.
+//   * [D] WHEEL STEPS NOTHING. The glue delivers the DOM `wheel` as a
+//     `MouseEvent` with no `deltaY` (L67), so Vue's `onWheel` rung — a sign
+//     test on `deltaY` — cannot run. The mirror still listens through the
+//     generic channel and stops the page scroll (`stopPropagation` +
+//     `preventDefault` on the live handle, Vue's own reason for binding it),
+//     but the payload is never read and the ladder is NOT stepped: the host
+//     drives the zoom through `zoom_percent` / `on_zoom_to` (the ± buttons
+//     and the slider still step it).
 //   * [D] THE CANVAS IS THE HOST'S. Vue builds a second `THREE.WebGLRenderer`
 //     against its own `<canvas>` (`MAP_W` × `MAP_H`, alpha, `setClearColor(0,
 //     0)`), and re-inits it whenever a fold/unfold cycle rebuilds the element.
@@ -74,7 +95,7 @@
 //     throttle ([`minimap_3d_refit_due`], Vue's `REFIT_MS = 300`).
 //   * [D] `theta` / `phi` ARE CONTROLLED and the drag still accumulates: the
 //     drag registry carries the running angles (seeded from the props on
-//     `pointerdown`), so a host that does not echo every `on_orbit` back still
+//     `mousedown`), so a host that does not echo every `on_orbit` back still
 //     gets Vue's continuous orbit; when the host DOES echo them back, each new
 //     press re-seeds from the props. Vue owns both angles in plain `let`s.
 //   * [D] `collapsed` is CONTROLLED (Vue: a local ref seeded by
@@ -86,15 +107,16 @@
 //     Escape / outside-click belong to the host through
 //     `on_slider_open_change` — the same degradation the 2D mirror and
 //     `feedback/persistent_toast.rs` document.
-//   * [D] NO POINTER CAPTURE, so a drag that leaves the card stops until the
-//     pointer returns; `up` / `cancel` on the card still end it.
+//   * [D] NO POINTER CAPTURE (also true in Vue's absence under the mouse
+//     family), so a drag that leaves the card stops until the pointer
+//     returns; `up` on the card and the `buttons == 0` guard still end it.
 //   * [D] the reset button reports THREE facts of Vue's `resetView`
 //     (`seeded = false`, `zoomPercent = 100`, `sliderOpen = false`) as
 //     `on_reset` + `on_zoom_to(100)` + `on_slider_open_change(false)`.
 //   * [D] the zoom chrome never arms an orbit: Vue tests
 //     `target.closest(".hk-mm-zoom-bar") || target.closest(".hk-mm-zoom-pop")`.
 //     The bar and the pop mark the gesture in `scene::minimap`'s registry from
-//     their own `pointerdown` (which runs first) and the card consumes the
+//     their own `mousedown` (which runs first) and the card consumes the
 //     mark — the shared card chrome's single mechanism, not a second one.
 //   * [D] `aria-label`s / `title`s read `components.hk.minimap3d.*` through
 //     `hikari_i18n::t` (Vue hard-codes `zoomToolbar.*` + `board3d.resetView`
@@ -127,7 +149,6 @@
 use std::cell::Cell;
 
 use hikari_i18n::t;
-use tairitsu_vdom::{PointerEvent, WheelEvent};
 
 use crate::basic::slider::{Slider, SliderSize};
 use crate::prelude::*;
@@ -661,6 +682,24 @@ fn minimap_3d_marker_attr(flag: bool) -> Option<&'static str> {
     if flag { Some("") } else { None }
 }
 
+/// Vue's `toggleCollapsed(true)` tail for this card: the pop closes
+/// (`if (next) sliderOpen.value = false`) and any mid-drag dies (a collapse
+/// swaps the element, so no release can reach the new root — the same
+/// hardening the 2D card's `toggleCollapsed` documents), then the collapse
+/// intent fires. Extracted so the tests can pin the exact emit order.
+fn minimap_3d_collapse_intent(
+    on_slider_open_change: &Option<EventHandler<bool>>,
+    on_collapsed_change: &Option<EventHandler<bool>>,
+) {
+    if let Some(handler) = on_slider_open_change.as_ref() {
+        handler.call(false);
+    }
+    minimap_3d_drag_end();
+    if let Some(handler) = on_collapsed_change.as_ref() {
+        handler.call(true);
+    }
+}
+
 // ── render assembly ────────────────────────────────────────────────────
 
 /// A glyph mounted through `dangerous_inner_html` on its own
@@ -832,12 +871,12 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         }
     };
     let on_collapsed_change = props.on_collapsed_change.clone();
+    let collapse_slider = props.on_slider_open_change.clone();
+    let collapse_collapsed = on_collapsed_change;
     let collapse_handler = move |_event: MouseEvent| {
-        // Vue: `toggleCollapsed(true)` also dismisses the pop.
-        minimap_3d_drag_end();
-        if let Some(handler) = on_collapsed_change.as_ref() {
-            handler.call(true);
-        }
+        // Vue: `toggleCollapsed(true)` also dismisses the pop (and any
+        // mid-drag dies with the swapped element).
+        minimap_3d_collapse_intent(&collapse_slider, &collapse_collapsed);
     };
     let on_slider_open_change = props.on_slider_open_change.clone();
     let label_handler = move |_event: MouseEvent| {
@@ -899,7 +938,8 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
     let bar_node = rsx! {
         div {
             class: "hk-mm-zoom-bar",
-            onpointerdown: move |_event: PointerEvent| minimap_mark_chrome_press(),
+            // Mouse family (L67) — same batch as the card's drag chain.
+            onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
             {VNode::Fragment(bar_nodes)}
         }
     };
@@ -916,7 +956,8 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         rsx! {
             div {
                 class: "hk-mm-zoom-pop",
-                onpointerdown: move |_event: PointerEvent| minimap_mark_chrome_press(),
+                // Same chrome mark as the bar, on the mouse channel (L67).
+                onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
                 Slider {
                     value: minimap_3d_clamp_zoom(zoom_percent),
                     min: MINIMAP_3D_MIN_ZOOM_PERCENT,
@@ -939,10 +980,10 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         empty_vnode()
     };
 
-    // ── gestures: drag orbits the eye, wheel steps the ladder ───────────
+    // ── gestures: drag orbits the eye, wheel steps nothing (L67) ────────
     let on_orbit = props.on_orbit.clone();
     let on_slider_open_change = props.on_slider_open_change.clone();
-    let pointer_down = move |event: PointerEvent| {
+    let pointer_down = move |event: MouseEvent| {
         // A press in the zoom chrome leaves everything alone (Vue's
         // `closest(".hk-mm-zoom-bar")` guard, shared with the 2D card).
         if minimap_take_chrome_press() {
@@ -963,7 +1004,14 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
             phi,
         );
     };
-    let pointer_move = move |event: PointerEvent| {
+    let pointer_move = move |event: MouseEvent| {
+        // No implicit capture (L67): a press released outside the card never
+        // delivered its mouseup — an armed drag must not orbit on a bare
+        // hover.
+        if event.buttons == 0 {
+            minimap_3d_drag_end();
+            return;
+        }
         let Some((next_theta, next_phi)) =
             minimap_3d_drag_orbit(event.current_target, event.client_x, event.client_y)
         else {
@@ -974,35 +1022,44 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
             handler.call((next_theta, next_phi));
         }
     };
-    // Vue's `onWheel`: `deltaY < 0` is one rung in, else one rung out.
-    let wheel_handler = {
-        let on_zoom_to = props.on_zoom_to.clone();
-        move |event: WheelEvent| {
-            event.stop_propagation();
-            event.prevent_default();
-            let direction = if event.delta_y < 0.0 { 1 } else { -1 };
-            if let Some(percent) = minimap_3d_step_zoom(zoom_percent, direction) {
-                if let Some(handler) = on_zoom_to.as_ref() {
-                    handler.call(minimap_3d_clamp_zoom(percent));
-                }
-            }
+    // The wheel rides the GENERIC channel: the glue delivers the DOM `wheel`
+    // as a MouseEvent with no `deltaY` (L67), so Vue's sign test cannot run
+    // and the ladder is NOT stepped here. Only the live handle is used, to
+    // stop the page scroll and keep the gesture from reaching the board
+    // under the card — Vue's own reason for binding `onWheel`.
+    let wheel_handler = move |event: Box<dyn EventData>| {
+        if let Some(mouse) = event.as_any().downcast_ref::<MouseEvent>() {
+            mouse.stop_propagation();
+            mouse.prevent_default();
         }
     };
 
-    rsx! {
-        div {
-            class: minimap_3d_root_classes(false),
-            "data-dragging": minimap_3d_marker_attr(minimap_3d_is_dragging()),
-            onpointerdown: pointer_down,
-            onpointermove: pointer_move,
-            onpointerup: move |_event: PointerEvent| minimap_3d_drag_end(),
-            onpointercancel: move |_event: PointerEvent| minimap_3d_drag_end(),
-            onwheel: wheel_handler,
-            {canvas_node}
-            {bar_node}
-            {pop_node}
-        }
-    }
+    // The card IS the drag surface and the release root (mouse family, L67 —
+    // see the header's mouse delta): mousedown arms, mousemove orbits,
+    // mouseup ends, the data-less `pointercancel` channel aborts, and a
+    // mouseleave with the button already up catches the outside release.
+    let card = VElement::new("div")
+        .class(minimap_3d_root_classes(false))
+        .attr(
+            "data-dragging",
+            minimap_3d_marker_attr(minimap_3d_is_dragging()),
+        )
+        .on_mousedown(pointer_down)
+        .on_mousemove(pointer_move)
+        .on_mouseup(move |_event: MouseEvent| minimap_3d_drag_end())
+        .on_event("pointercancel", move |_event: Box<dyn EventData>| {
+            minimap_3d_drag_end();
+        })
+        .on_event("wheel", wheel_handler)
+        .on_mouseleave(move |event: MouseEvent| {
+            if event.buttons == 0 {
+                minimap_3d_drag_end();
+            }
+        })
+        .child(canvas_node)
+        .child(bar_node)
+        .child(pop_node);
+    VNode::Element(Box::new(card))
 }
 
 impl StyledComponent for Minimap3DComponent {
@@ -1323,6 +1380,35 @@ mod tests {
         minimap_3d_drag_end();
         assert!(!minimap_3d_is_dragging());
         assert!(minimap_3d_drag_orbit(Some(3), 200, 100).is_none());
+    }
+
+    #[test]
+    fn minimap_3d_collapse_intent_closes_the_pop_and_ends_the_drag() {
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
+        let seen: Rc<RefCell<Vec<String>>> = Rc::new(RefCell::new(Vec::new()));
+        let slider_log = Rc::clone(&seen);
+        let on_slider_open_change = Some(EventHandler::new(move |open: bool| {
+            slider_log.borrow_mut().push(format!("slider:{open}"));
+        }));
+        let collapsed_log = Rc::clone(&seen);
+        let on_collapsed_change = Some(EventHandler::new(move |collapsed: bool| {
+            collapsed_log
+                .borrow_mut()
+                .push(format!("collapsed:{collapsed}"));
+        }));
+
+        // Vue's `toggleCollapsed(true)`: the pop closes, a mid-drag dies with
+        // the swapped element, then the collapse intent fires.
+        minimap_3d_drag_begin(Some(5), 8, 8, 0.0, 1.1);
+        assert!(minimap_3d_is_dragging());
+        minimap_3d_collapse_intent(&on_slider_open_change, &on_collapsed_change);
+        assert!(!minimap_3d_is_dragging());
+        assert_eq!(
+            seen.borrow().clone(),
+            vec!["slider:false".to_string(), "collapsed:true".to_string(),]
+        );
     }
 
     #[test]

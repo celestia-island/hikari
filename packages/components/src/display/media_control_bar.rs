@@ -277,7 +277,10 @@ pub fn MediaControlBar(props: MediaControlBarProps) -> Element {
         &props.on_toggle_play,
     );
 
+    // Distinct registry keys: the seek and the volume slider share a page, and a
+    // shared drag flag would let one drive the other (R2 S1).
     let seek = MediaSlider(MediaSliderProps {
+        instance_key: "hk-media-controls-seek".to_string(),
         class: "hk-media-controls-seek".to_string(),
         ratio: media_control_bar_seek_ratio(props.progress),
         buffered: media_control_bar_buffered_ratio(props.buffered_pct),
@@ -305,6 +308,7 @@ pub fn MediaControlBar(props: MediaControlBarProps) -> Element {
     );
 
     let volume_slider = MediaSlider(MediaSliderProps {
+        instance_key: "hk-media-controls-vol".to_string(),
         class: "hk-media-controls-vol".to_string(),
         ratio: media_control_bar_volume_ratio(props.muted, props.volume),
         aria_label: Some(media_control_bar_volume_label()),

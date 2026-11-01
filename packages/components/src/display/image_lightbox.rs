@@ -137,11 +137,8 @@ pub fn ImageLightbox(props: ImageLightboxProps) -> Element {
         return empty_vnode();
     }
 
-    let title = t("components.hk.imageLightbox.title", IMAGE_LIGHTBOX_TITLE);
-    let close_label = t(
-        "components.hk.imageLightbox.close",
-        IMAGE_LIGHTBOX_CLOSE_LABEL,
-    );
+    let title = t("components.hk.imageLightbox.title", "Image viewer");
+    let close_label = t("components.hk.imageLightbox.close", "Close");
 
     // Vue hard-codes `<HImageViewer src alt />`; the mirror mounts the same
     // viewer with the lightbox's image injected over the nested props.

@@ -82,7 +82,7 @@ pub fn load_more_count_text(shown: Option<u32>, total: Option<u32>) -> Option<St
 }
 
 /// The button label / end note for a state — the exact strings Vue passes to
-/// `useI18n().t` (same keys, same English fallbacks).
+/// `useI18n().t` (its own keys, same English fallbacks).
 pub fn load_more_label(state: LoadMoreState) -> String {
     match state {
         LoadMoreState::Idle => hikari_i18n::t("components.hk.loadMore.more", "Load more"),
@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn load_more_labels_match_the_vue_english_fallbacks() {
         // No locale is provided in unit tests, so these are the fallbacks Vue
-        // ships for the same keys.
+        // ships for the its own keys.
         assert_eq!(load_more_label(LoadMoreState::Idle), "Load more");
         assert_eq!(load_more_label(LoadMoreState::Loading), "Loading…");
         assert_eq!(

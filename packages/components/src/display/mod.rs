@@ -15,6 +15,22 @@
 //! - [`DragLayer`] - Drag and drop visualization layer
 //! - [`ZoomControls`] - Zoom in/out controls
 
+//! ## Migrated in the display wave
+//!
+//! The legacy display surfaces were REPLACED by the Vue mirrors:
+//!
+//! * `Empty` / `EmptyProps` → [`EmptyState`] / [`EmptyStateProps`] (`Empty`
+//!   was a centred placeholder; `HkEmptyState` adds `fit`, the loading state
+//!   region and an `action` slot).
+//! * `QRCode` / `QRCodeProps` → [`QrCode`] / [`QrCodeProps`] (Vue's
+//!   `errorCorrectionLevel` naming, `bg`/`fg` colors, `aria-label`).
+//! * `SkeletonCard` / `SkeletonTable` / `SkeletonVariant` / `SkeletonSize` →
+//!   the single [`Skeleton`] atom plus `rows` (see `skeleton.rs`).
+//! * `TimelineItem` / `TimelinePosition` → [`Timeline`]'s stepper surface
+//!   (`steps` / `current_key` / `clickable` / `collapse`; no `position`/`line`).
+//!
+//! Each retired type's replacement header carries the full prop mapping.
+
 pub mod calendar;
 pub mod carousel;
 pub mod comment;

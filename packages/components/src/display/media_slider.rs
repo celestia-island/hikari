@@ -44,8 +44,6 @@
 //     `ratio * 100`% verbatim and leaves clamping to the pointer path and the
 //     owning player (`media_player::media_player_progress_pct`).
 
-use std::cell::Cell;
-
 use tairitsu_vdom::{DomHandle, PointerEvent, get_bounding_client_rect};
 
 use crate::prelude::*;
@@ -112,16 +110,27 @@ pub fn media_slider_root_classes(disabled: bool, class: &str) -> String {
 }
 
 thread_local! {
-    /// Whether a pointer drag is in flight (single-pointer, wasm single-thread).
-    static MEDIA_SLIDER_DRAGGING: Cell<bool> = const { Cell::new(false) };
+    /// WHICH sliders are being dragged, keyed by [`MediaSliderProps::instance_key`].
+    /// A single global flag would make every slider on the page share the drag
+    /// (a seek drag sliding over the volume bar would emit volume ratios), and
+    /// an outside release could leave it stuck `true` forever.
+    static MEDIA_SLIDER_DRAGGING: std::cell::RefCell<std::collections::BTreeSet<String>> =
+        const { std::cell::RefCell::new(std::collections::BTreeSet::new()) };
 }
 
-fn media_slider_is_dragging() -> bool {
-    MEDIA_SLIDER_DRAGGING.with(|flag| flag.get())
+fn media_slider_is_dragging(instance_key: &str) -> bool {
+    MEDIA_SLIDER_DRAGGING.with(|set| set.borrow().contains(instance_key))
 }
 
-fn set_media_slider_dragging(value: bool) {
-    MEDIA_SLIDER_DRAGGING.with(|flag| flag.set(value));
+fn set_media_slider_dragging(instance_key: &str, value: bool) {
+    MEDIA_SLIDER_DRAGGING.with(|set| {
+        let mut set = set.borrow_mut();
+        if value {
+            set.insert(instance_key.to_string());
+        } else {
+            set.remove(instance_key);
+        }
+    });
 }
 
 /// The pointer's `0..1` ratio across the measured track, or `None` when the
@@ -141,6 +150,11 @@ fn media_slider_pointer_ratio(client_x: i32, current_target: Option<u64>) -> Opt
 
 #[define_props]
 pub struct MediaSliderProps {
+    /// Registry slot for the drag flag — one entry per slider instance (see
+    /// the module header's state contract).
+    #[default]
+    pub instance_key: String,
+
     /// Controlled position across the track, `0..1` (required upstream;
     /// `0.0` here because Rust props need a `Default`).
     #[default(0.0)]
@@ -181,20 +195,29 @@ pub fn MediaSlider(props: MediaSliderProps) -> Element {
         }
     };
 
+    let drag_key_down = props.instance_key.clone();
     let commit_down = commit.clone();
     let handle_pointer_down = move |event: PointerEvent| {
         if disabled {
             return;
         }
-        set_media_slider_dragging(true);
+        set_media_slider_dragging(&drag_key_down, true);
         if let Some(ratio) = media_slider_pointer_ratio(event.client_x, event.current_target) {
             commit_down(ratio);
         }
     };
 
+    let drag_key_move = props.instance_key.clone();
     let commit_move = commit.clone();
     let handle_pointer_move = move |event: PointerEvent| {
-        if disabled || !media_slider_is_dragging() {
+        if disabled || !media_slider_is_dragging(&drag_key_move) {
+            return;
+        }
+        // Vue's window `pointerup`: a move with no held button means the drag
+        // ended OUTSIDE this slider, so the flag must clear instead of staying
+        // stuck (which would keep emitting on later hovers).
+        if event.buttons == 0 {
+            set_media_slider_dragging(&drag_key_move, false);
             return;
         }
         if let Some(ratio) = media_slider_pointer_ratio(event.client_x, event.current_target) {
@@ -202,8 +225,11 @@ pub fn MediaSlider(props: MediaSliderProps) -> Element {
         }
     };
 
-    let handle_pointer_up = move |_: PointerEvent| set_media_slider_dragging(false);
-    let handle_pointer_cancel = move |_: PointerEvent| set_media_slider_dragging(false);
+    let drag_key_up = props.instance_key.clone();
+    let handle_pointer_up = move |_: PointerEvent| set_media_slider_dragging(&drag_key_up, false);
+    let drag_key_cancel = props.instance_key.clone();
+    let handle_pointer_cancel =
+        move |_: PointerEvent| set_media_slider_dragging(&drag_key_cancel, false);
 
     let fill_style = format!("width:{}", media_slider_css_pct(props.ratio));
     let thumb_style = format!("left:{}", media_slider_css_pct(props.ratio));

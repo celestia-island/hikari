@@ -94,9 +94,12 @@ pub use crate::data::{
 };
 // Display component Props
 pub use crate::display::{
-    CalendarProps, CarouselProps, CommentProps, DragLayerProps, EmptyProps, QRCodeProps,
-    SkeletonCardProps, SkeletonProps, SkeletonTableProps, TagProps, TimelineItemProps,
-    TimelineProps, UserGuideProps, ZoomControlsProps,
+    CalendarProps, CarouselProps, CommentProps, CountdownDigitProps, CrossfadeProps,
+    DiffViewerProps, DragLayerProps, EmptyStateProps, HoverRevealActionProps, ImageLightboxProps,
+    ImagePreviewProps, ImageViewerProps, InfiniteTailProps, JsonTreeProps, ListTransitionProps,
+    LoadMoreProps, LogWindowProps, MarkdownRendererProps, MediaControlBarProps, MediaPlayerProps,
+    MediaSliderProps, MediaVisualizerProps, QrCodeProps, SkeletonProps, TagProps, TerminalProps,
+    TimelineProps, TransitionContainerProps, UserGuideProps, ZoomControlsProps,
 };
 // Entry component Props
 pub use crate::entry::{

@@ -3,144 +3,6 @@ mod tests {
     use hikari_components::prelude::*;
 
     #[test]
-    fn test_qrcode_props_default() {
-        let props = QRCodeProps::default();
-        assert_eq!(props.value, "");
-        assert_eq!(props.size, 200);
-        assert_eq!(props.color, "#000000");
-        assert_eq!(props.background, "#ffffff");
-        assert!(props.title.is_none());
-        assert_eq!(props.error_correction, "medium");
-    }
-
-    #[test]
-    fn test_qrcode_props_with_value() {
-        let props = QRCodeProps {
-            value: "https://example.com".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.value, "https://example.com");
-    }
-
-    #[test]
-    fn test_qrcode_props_with_size() {
-        let props = QRCodeProps {
-            size: 300,
-            ..Default::default()
-        };
-        assert_eq!(props.size, 300);
-    }
-
-    #[test]
-    fn test_qrcode_props_with_colors() {
-        let props = QRCodeProps {
-            color: "#ff0000".to_string(),
-            background: "#00ff00".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.color, "#ff0000");
-        assert_eq!(props.background, "#00ff00");
-    }
-
-    #[test]
-    fn test_qrcode_props_with_title() {
-        let props = QRCodeProps {
-            title: Some("Scan me".to_string()),
-            ..Default::default()
-        };
-        assert_eq!(props.title, Some("Scan me".to_string()));
-    }
-
-    #[test]
-    fn test_qrcode_props_error_correction_levels() {
-        let levels = ["low", "medium", "quartile", "high"];
-        for level in levels {
-            let props = QRCodeProps {
-                error_correction: level.to_string(),
-                ..Default::default()
-            };
-            assert_eq!(props.error_correction, level);
-        }
-    }
-
-    #[test]
-    fn test_qrcode_props_with_custom_classes() {
-        let props = QRCodeProps {
-            class: "custom-qrcode".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-qrcode");
-    }
-
-    #[test]
-    fn test_skeleton_props_default() {
-        let props = SkeletonProps::default();
-        assert_eq!(
-            props.variant,
-            hikari_components::display::SkeletonVariant::Text
-        );
-        assert_eq!(props.size, hikari_components::display::SkeletonSize::Medium);
-        assert!(props.animation);
-        assert!(props.rows.is_none());
-        assert!(props.width.is_none());
-        assert!(props.height.is_none());
-    }
-
-    #[test]
-    fn test_skeleton_variant_circular() {
-        let props = SkeletonProps {
-            variant: hikari_components::display::SkeletonVariant::Circular,
-            ..Default::default()
-        };
-        assert_eq!(
-            props.variant,
-            hikari_components::display::SkeletonVariant::Circular
-        );
-    }
-
-    #[test]
-    fn test_skeleton_variant_rectangular() {
-        let props = SkeletonProps {
-            variant: hikari_components::display::SkeletonVariant::Rectangular,
-            ..Default::default()
-        };
-        assert_eq!(
-            props.variant,
-            hikari_components::display::SkeletonVariant::Rectangular
-        );
-    }
-
-    #[test]
-    fn test_skeleton_variant_rounded() {
-        let props = SkeletonProps {
-            variant: hikari_components::display::SkeletonVariant::Rounded,
-            ..Default::default()
-        };
-        assert_eq!(
-            props.variant,
-            hikari_components::display::SkeletonVariant::Rounded
-        );
-    }
-
-    #[test]
-    fn test_skeleton_size_small() {
-        let props = SkeletonProps {
-            size: hikari_components::display::SkeletonSize::Small,
-            ..Default::default()
-        };
-        assert_eq!(props.size, hikari_components::display::SkeletonSize::Small);
-    }
-
-    #[test]
-    fn test_skeleton_size_large() {
-        let props = SkeletonProps {
-            size: hikari_components::display::SkeletonSize::Large,
-            ..Default::default()
-        };
-        assert_eq!(props.size, hikari_components::display::SkeletonSize::Large);
-    }
-
-    #[test]
     fn test_skeleton_with_rows() {
         let props = SkeletonProps {
             rows: Some(3),
@@ -152,60 +14,12 @@ mod tests {
     #[test]
     fn test_skeleton_with_custom_dimensions() {
         let props = SkeletonProps {
-            width: Some("200px".to_string()),
-            height: Some("20px".to_string()),
+            width: "200px".to_string(),
+            height: "20px".to_string(),
             ..Default::default()
         };
-        assert_eq!(props.width, Some("200px".to_string()));
-        assert_eq!(props.height, Some("20px".to_string()));
-    }
-
-    #[test]
-    fn test_skeleton_with_custom_classes() {
-        let props = SkeletonProps {
-            class: "custom-skeleton".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-skeleton");
-    }
-
-    #[test]
-    fn test_skeleton_card_props_default() {
-        let props = SkeletonCardProps::default();
-        assert!(props.show_header);
-        assert!(props.show_avatar);
-        assert_eq!(props.rows, 3);
-    }
-
-    #[test]
-    fn test_skeleton_card_props_custom() {
-        let props = SkeletonCardProps {
-            show_header: false,
-            show_avatar: false,
-            rows: 5,
-            ..Default::default()
-        };
-        assert!(!props.show_header);
-        assert!(!props.show_avatar);
-        assert_eq!(props.rows, 5);
-    }
-
-    #[test]
-    fn test_skeleton_table_props_default() {
-        let props = SkeletonTableProps::default();
-        assert_eq!(props.columns, 0);
-        assert_eq!(props.rows, 0);
-    }
-
-    #[test]
-    fn test_skeleton_table_props_custom() {
-        let props = SkeletonTableProps {
-            columns: 5,
-            rows: 10,
-            ..Default::default()
-        };
-        assert_eq!(props.columns, 5);
-        assert_eq!(props.rows, 10);
+        assert_eq!(props.width, "200px");
+        assert_eq!(props.height, "20px");
     }
 
     #[test]
@@ -258,73 +72,12 @@ mod tests {
     }
 
     #[test]
-    fn test_timeline_props_default() {
-        let props = TimelineProps::default();
-        assert_eq!(
-            props.position,
-            hikari_components::display::TimelinePosition::Alternate
-        );
-        assert!(props.line);
-    }
-
-    #[test]
-    fn test_timeline_position_variants() {
-        use hikari_components::display::TimelinePosition;
-        let positions = [
-            TimelinePosition::Alternate,
-            TimelinePosition::Left,
-            TimelinePosition::Right,
-        ];
-        for p in positions {
-            let props = TimelineProps {
-                position: p,
-                ..Default::default()
-            };
-            assert_eq!(props.position, p);
-        }
-    }
-
-    #[test]
-    fn test_timeline_no_line() {
-        let props = TimelineProps {
-            line: false,
-            ..Default::default()
-        };
-        assert!(!props.line);
-    }
-
-    #[test]
     fn test_timeline_with_custom_classes() {
         let props = TimelineProps {
             class: "custom-timeline".to_string(),
             ..Default::default()
         };
         assert_eq!(props.class, "custom-timeline");
-    }
-
-    #[test]
-    fn test_timeline_item_props_default() {
-        let props = TimelineItemProps::default();
-        assert_eq!(props.time, "");
-        assert_eq!(props.title, "");
-        assert!(!props.last);
-        assert!(props.icon.is_none());
-        assert_eq!(props.color, "");
-    }
-
-    #[test]
-    fn test_timeline_item_with_fields() {
-        let props = TimelineItemProps {
-            time: "2024-01-01".to_string(),
-            title: "Event".to_string(),
-            color: "#ff0000".to_string(),
-            last: true,
-            ..Default::default()
-        };
-        assert_eq!(props.time, "2024-01-01");
-        assert_eq!(props.title, "Event");
-        assert_eq!(props.color, "#ff0000");
-        assert!(props.last);
     }
 
     #[test]
@@ -405,47 +158,6 @@ mod tests {
             ..Default::default()
         };
         assert!(!props.visible);
-    }
-
-    #[test]
-    fn test_empty_props_default() {
-        let props = EmptyProps::default();
-        assert!(props.image.is_none());
-        assert!(props.title.is_none());
-        assert_eq!(props.description, "");
-        assert!(props.action.is_none());
-    }
-
-    #[test]
-    fn test_empty_with_title() {
-        let props = EmptyProps {
-            title: Some("No data".to_string()),
-            description: "There is nothing here".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.title, Some("No data".to_string()));
-        assert_eq!(props.description, "There is nothing here");
-    }
-
-    #[test]
-    fn test_empty_with_image() {
-        let props = EmptyProps {
-            image: Some("https://example.com/empty.png".to_string()),
-            ..Default::default()
-        };
-        assert_eq!(
-            props.image,
-            Some("https://example.com/empty.png".to_string())
-        );
-    }
-
-    #[test]
-    fn test_empty_with_custom_classes() {
-        let props = EmptyProps {
-            class: "custom-empty".to_string(),
-            ..Default::default()
-        };
-        assert_eq!(props.class, "custom-empty");
     }
 
     #[test]

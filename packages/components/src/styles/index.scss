@@ -704,6 +704,19 @@
 @import './vue-mirror/components/HkMinimap3D.scss';
 @import './vue-mirror/components/HkZoomToolbar.scss';
 @import './vue-mirror/components/HkWindowedItem.scss';
+
+// W8 theme + misc family mirrors
+@import './vue-mirror/components/HkWallpaperBackdrop.scss';
+@import './vue-mirror/components/HkThemeToggle.scss';
+@import './vue-mirror/components/HkColorSchemeDialog.scss';
+@import './vue-mirror/components/HkSplash.scss';
+@import './vue-mirror/components/HkLogo.scss';
+@import './vue-mirror/components/HkAboutModal.scss';
+@import './vue-mirror/components/HkCopyBadge.scss';
+@import './vue-mirror/components/HkErrorLanding.scss';
+@import './vue-mirror/components/HkSettingsDialog.scss';
+@import './vue-mirror/components/HkSecretRevealModal.scss';
+@import './vue-mirror/components/HkDivider.scss';
 @import './vue-mirror/components/HkStarSystem.scss';
 @import './vue-mirror/components/HkBlankCanvas.scss';
 @import './vue-mirror/components/HkTokenInput.scss';

@@ -1,0 +1,250 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkSettingsDialog — the sectioned settings shell (rail + pane) and its
+// content vocabulary (group / sub / hint). Grammar extracted from the
+// wowsp settings window (the pattern this component upstreams): values
+// are the L2 scale tokens wowsp already used, so existing surfaces
+// migrate without repainting.
+//
+// Scroll ownership (2026-10-27, wowsp contract upstreamed): BOTH shell
+// scrollers are HkScrollContainers — the native thin bars are gone, the
+// shared auto-hiding overlay chrome draws instead. The component
+// templates render the rail and the pane with the container class, and
+// the paired-class rules below re-anchor the shell geometry whose home
+// moved: the regions' own overflow-y is replaced by the container's
+// overflow: hidden, and the paddings/gaps now live on the VIEWPORT
+// (the slot content and rail entries are its children), so each overlay
+// track hugs its region's border edge. Inside the dialog (host class
+// `hk-settings-host`) the shell gets a STABLE height sized under the
+// modal body scroller's inner padding, so HkModal's floating overlay
+// scrollbar stays idle and the pane's track is the only scrollbar; the
+// negative-margin trick puts that track flush with the modal window's
+// right edge and the viewport padding re-applies the content inset
+// between the track and the cards. A page-embedded body (no host class)
+// skips both: plain scroll container, host-managed layout.
+
+.hk-settings {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-20);
+
+  /* ── section rail (mirrors the main sidebar nav look) ── */
+  &__rail {
+    flex: none;
+    width: 10.5rem;
+    border-right: 1px solid rgb(var(--color-border) / 15%);
+  }
+
+  /* The rail's own vocabulary lives in the scroll container's viewport
+     now (scroll ownership above) — the overlay track hugs the rail's
+     border edge, flush like the native bar it replaces. */
+  &__rail.hk-scroll-container > .hk-scroll-container-viewport {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-12) var(--space-4) 0;
+  }
+
+  &__rail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    padding: var(--space-8) var(--space-12);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    text-align: left;
+    color: rgb(var(--color-muted));
+    font-size: var(--text-sm);
+    font-family: inherit;
+    cursor: pointer;
+    transition:
+      color var(--duration-short) var(--ease-standard),
+      background var(--duration-short) var(--ease-standard);
+
+    &:hover:not(:disabled) {
+      color: rgb(var(--color-text));
+      background: rgb(var(--color-primary) / 8%);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgb(var(--color-primary));
+      // Drawn INSIDE the box: the rail's items sit flush with the rail's
+      // own start edge (the rail carries no start padding) and the rail
+      // scrolls, so an outside ring gets shaved down its inline-start
+      // side — "the selected item's contour is cut on the left" (user
+      // report 2026-09-23). Same reasoning as HSelectionGrid's inset ring.
+      //
+      // HOUSE CONVENTION (this bug class, third occurrence): a focus ring
+      // on a row that sits flush with a scroll container's edge MUST be
+      // drawn inside — `outline-offset: -2px`, or the border + inset-ring
+      // pairing HkSelectionGrid uses. Outside rings belong only on
+      // floating surfaces (popovers, panels) where nothing clips them.
+      outline-offset: -2px;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    &.is-active {
+      color: rgb(var(--color-primary));
+      background: rgb(var(--color-primary) / 12%);
+      font-weight: 500;
+    }
+  }
+
+  &__rail-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-20);
+    height: var(--space-20);
+  }
+
+  &__rail-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── content pane: one section at a time, this is the scroller ── */
+  &__pane {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Same re-anchoring for the pane: the sections are viewport children,
+     so the column flow and the section gap live there. */
+  &__pane.hk-scroll-container > .hk-scroll-container-viewport {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+  }
+
+  /* ── phone: the rail becomes a top tab strip ────────────────────────
+     Under the family's mobile breakpoint the left rail moves to the
+     window's top edge as the shared pill strip (HTabs), horizontally
+     scrollable with edge fades — every section fits, the window never
+     grows a second nav column. The DOM branch and this layout share ONE
+     breakpoint through the data-phone attribute (useBreakpoint), so
+     neither half can drift. Desktop never sees these rules. */
+  &[data-phone] {
+    flex-direction: column;
+    /* A small breath between the strip and the pane (2026-10-28 user
+       direction) — tighter than the desktop rail gutter. */
+    gap: var(--space-12);
+
+    > .hk-settings__topnav {
+      flex: none;
+      /* Center the strip while it fits (the pill-strip family look);
+         once it overflows the scroller caps at 100% and the fades take
+         over, so centering never clips the overflowing start. */
+      display: flex;
+      justify-content: center;
+
+      /* One notch UP from the regular strips (text-sm, 4/12 padding,
+         16px icons): the phone nav is the window's primary switcher
+         (2026-10-28 user direction). Icons scale through the strip's
+         own trigger icon cell (the shell renders them at 18). */
+      .hk-tabs-trigger {
+        gap: var(--space-8);
+        padding: var(--space-6) var(--space-14);
+        font-size: var(--text-base);
+      }
+    }
+  }
+}
+
+/* ── Dialog host: stable frame + flush scrollbar edge ────────────────── */
+
+/* Give the body inner a definite height so the shell's fit is computed
+   against the real scroll area (wowsp's host rule, verbatim). */
+.hk-settings-host .hk-modal-body-inner {
+  height: 100%;
+}
+
+.hk-settings-host .hk-settings {
+  height: var(--hk-settings-height, calc(70vh - 6.5rem));
+}
+
+/* Cancel the modal body's fixed right padding so the pane's overlay
+   track sits flush at the window edge; the content inset between the
+   track and the cards is re-applied INSIDE the viewport (the scroller).
+   HkModal retunes the body padding to 1rem under 768px WITHOUT going
+   through the --hk-modal-padding-body var (a hard-coded 1rem there), so
+   the var-based margin would over-cancel by 8px and push the whole
+   track past the body's overflow clip — follow the hard-coded value or
+   the phone sheet loses its scrollbar entirely (R2 2026-10-27). */
+.hk-settings-host .hk-settings__pane {
+  margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));
+
+  @media (max-width: 767px) {
+    margin-right: -1rem;
+  }
+
+  & > .hk-scroll-container-viewport {
+    padding-right: var(--space-28);
+
+    @media (max-width: 767px) {
+      padding-right: var(--space-20);
+    }
+  }
+}
+
+/* ── Content vocabulary ───────────────────────────────────────────────── */
+
+/* One titled card per settings area. Slightly translucent so the cards
+   sit quietly on image wallpapers. */
+.hk-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16) var(--space-20);
+  background: rgb(var(--color-surface) / 55%);
+  border: 1px solid rgb(var(--color-border) / 15%);
+  border-radius: var(--radius-md);
+}
+
+.hk-settings-group-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+}
+
+/* Titled sub-block inside a group. */
+.hk-settings-sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+}
+
+.hk-settings-sub-title {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: rgb(var(--color-muted));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* The small muted explanation line under a control. */
+.hk-settings-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: rgb(var(--color-muted));
+}

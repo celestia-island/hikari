@@ -24,6 +24,9 @@ compiler (the Rust form compiles this very file). Modern CSS the parser lacks
 therefore cannot live in a mirrored sheet — use an equivalent literally
 compilable value in the canonical sheet and note it in the PR. Known blockers:
   * `calc(infinity * 1s)`            → a finite step-end duration;
+  * relative `oklch(from ... min/max(l, ...) c h)` - an oklab mix toward
+    black/white instead (an APPROXIMATE lightness cap/floor; exact channel
+    clamping needs syntax grass lacks);
   * CSS relative colour `rgb(from C r g b / a)`
                                      → `color-mix(in srgb, C <a*100>%, transparent)`
                                        (identical in srgb);
@@ -231,6 +234,25 @@ SCENE_SHEETS: list[str] = [
     "HkBlankCanvas.scss",
 ]
 
+# W8 — theme + misc family. `HkThemeDecor`/`HkThemePanelContent`/
+# `HkColorSchemeEditor`/`HkActionBar`/`HkConnectionStatus`/`HkErrorBoundary`/
+# `HkAvatarButton` ship no sheet of their own (they borrow a parent's or emit
+# host-utility classes only).
+MISC_SHEETS: list[str] = [
+    "HkWallpaperBackdrop.scss",
+    "HkThemeToggle.scss",
+    "HkColorSchemeDialog.scss",
+    "HkSplash.scss",
+    "HkLogo.scss",
+    "HkAboutModal.scss",
+    "HkCopyBadge.scss",
+    "HkCornerBadge.scss",
+    "HkErrorLanding.scss",
+    "HkSettingsDialog.scss",
+    "HkSecretRevealModal.scss",
+    "HkDivider.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -275,7 +297,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -284,7 +306,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

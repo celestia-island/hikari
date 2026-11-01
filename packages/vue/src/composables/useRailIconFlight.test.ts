@@ -185,7 +185,7 @@ describe("useRailIconFlight", () => {
     // Expanded geometry: icon cells at x=32 (the leading padding column).
     const { leaving, entering } = dissolvePair(h, true);
     stubRect(h.swap(), rect(0, 0, 240, 400));
-    stubIcons(leaving, (key) => rect(key === "home" ? 32 : 32, key === "home" ? 100 : 140));
+    stubIcons(leaving, (key) => rect(32, key === "home" ? 100 : 140));
     // Rail geometry: the same cells centered in the 56px column (x=20).
     stubIcons(entering, (key) =>
       rect(20, key === "home" ? 100 : key === "inbox" ? 140 : 180),

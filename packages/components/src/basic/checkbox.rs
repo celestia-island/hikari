@@ -348,6 +348,20 @@ mod tests {
     }
 
     #[test]
+    fn checkbox_input_nests_inside_the_box() {
+        // The sheet's only focus ring is
+        // `.hk-checkbox-box:has(.hk-checkbox-input:focus-visible)` — a sibling
+        // input never matches it.
+        let html = Checkbox(CheckboxProps::default()).render_to_html();
+        let box_start = html.find("hk-checkbox-box").expect("box span");
+        let input_start = html.find("hk-checkbox-input").expect("input");
+        assert!(
+            box_start < input_start,
+            "the input must follow the box opening tag: {html}"
+        );
+    }
+
+    #[test]
     fn checkbox_styles_come_from_the_canonical_vue_sheet() {
         let css = CheckboxComponent::styles();
         for needle in [

@@ -490,6 +490,33 @@ mod tests {
     }
 
     #[test]
+    fn slider_clamps_before_snapping_like_vue() {
+        // Vue: snap(clamp(value)) — an out-of-range value lands on the snap
+        // grid inside the range (10 → snap(10)=9 on a step-3 grid from 0..10),
+        // NOT at the clamped endpoint.
+        let html = Slider(SliderProps {
+            value: 100.0,
+            min: 0.0,
+            max: 10.0,
+            step: 3.0,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains(r#"aria-valuenow="9""#), "{html}");
+        assert!(html.contains("width:90%"), "{html}");
+    }
+
+    #[test]
+    fn slider_degenerate_range_does_not_panic() {
+        let _ = Slider(SliderProps {
+            value: 5.0,
+            min: 10.0,
+            max: 0.0,
+            ..Default::default()
+        });
+    }
+
+    #[test]
     fn slider_styles_come_from_the_canonical_vue_sheet() {
         let css = SliderComponent::styles();
         for needle in [

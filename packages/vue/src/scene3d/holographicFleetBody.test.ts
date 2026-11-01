@@ -133,8 +133,12 @@ describe("makeFleetHologram", () => {
     expect(outerRingOpacity(hub)).toBeGreaterThan(outerRingOpacity(node));
     expect(ticksOpacity(hub)).toBeGreaterThan(ticksOpacity(node));
     expect(equatorSpindleOpacity(hub)).toBeGreaterThan(equatorSpindleOpacity(node));
-    // The node tier keeps its OWN level: pinning it (not just "smaller
-    // than star") means a symmetric brightening of both tiers goes RED.
+    // Absolute pins for BOTH tiers (R3 S2 lesson: comparisons alone let a
+    // revert to the dim pre-fix star pass — the star must BURN at these
+    // levels, and the node must hold its own baseline).
+    expect(outerRingOpacity(hub)).toBeCloseTo(0.95, 5);
+    expect(ticksOpacity(hub)).toBeCloseTo(0.78, 5);
+    expect(equatorSpindleOpacity(hub)).toBeCloseTo(0.3, 5);
     expect(outerRingOpacity(node)).toBeCloseTo(0.66, 5);
     // And the star dial actually burns: the primary arc is fully lit.
     const arcs = hub.frontDial.getObjectsByProperty(

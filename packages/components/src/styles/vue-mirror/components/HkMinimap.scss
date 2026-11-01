@@ -1,0 +1,197 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-minimap {
+  position: absolute;
+  bottom: var(--space-12);
+  // Corner overlay anchor mirrors in RTL like the sibling HkZoomToolbar
+  // (inset-inline-end: 8px there).
+  inset-inline-end: var(--space-12);
+  z-index: 50;
+  width: 160px;
+  background: rgb(var(--color-surface) / 0.82);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-sm);
+  @include backdrop-filter(blur(var(--blur-md)));
+  // The root is a drag-to-pan surface (no click action): grab cursor, and
+  // the drag state tints the border like hover escalates it (HkBoard's
+  // draggable grab/grabbing precedent).
+  cursor: grab;
+  overflow: hidden;
+  pointer-events: auto;
+  /* The minimap owns its own drag gestures — the surrounding pannable
+     surface must never claim them (mobile browsers would otherwise fire
+     pointercancel and kill the drag). */
+  touch-action: none;
+
+  &:hover {
+    border-color: rgb(var(--color-primary) / 0.3);
+  }
+
+  &[data-dragging] {
+    cursor: grabbing;
+    border-color: rgb(var(--color-primary) / 0.5);
+  }
+}
+
+.hk-minimap-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hk-mm-zoom-bar {
+  display: flex;
+  align-items: center;
+  /* Right-aligned (user feedback: centered controls read as floating
+     clutter in the card's bottom strip; right edge aligns with the
+     card's own corner radius). */
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 3px 8px;
+  border-top: 1px solid var(--border-faint);
+}
+
+// Toolbar-only form (no overview map): shrink-wrap the card around the
+// zoom bar and drop the map's separator — the bar IS the whole surface.
+.hk-minimap[data-toolbar-only] {
+  width: auto;
+
+  .hk-mm-zoom-bar {
+    border-top: none;
+  }
+}
+
+.hk-mm-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(var(--color-text));
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: rgb(var(--color-primary) / 0.1);
+    color: rgb(var(--color-primary));
+  }
+
+  &:active:not(:disabled) {
+    background: rgb(var(--color-primary) / 0.18);
+  }
+
+  &:disabled {
+    color: rgb(var(--color-muted) / 40%);
+    cursor: not-allowed;
+  }
+
+  // Keyboard focus ring drawn INSIDE the border box: the card clips
+  // (overflow: hidden) and the bar pads only 3px vertically, so an outer
+  // ring would be shaved per-side (HkSelectionGrid precedent).
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+}
+
+.hk-mm-zoom-label {
+  /* The percent label is now a <button> (toggles the slider pop): strip
+     the user-agent chrome, keep the numeric look of the old span. */
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-muted));
+  min-width: 30px;
+  text-align: center;
+  @include user-select(none);
+  transition: color 0.1s ease;
+
+  &:hover {
+    color: rgb(var(--color-primary));
+  }
+}
+
+/* Slider dropdown, anchored inside the card above the zoom bar. Surface
+   vocabulary matches the HkPopover panel family (surface bg, faint
+   border, --shadow-dropdown elevation); the card is 160px wide with
+   overflow hidden, so 132px + right 6px keeps it inside, and bottom
+   34px clears the ~29px zoom bar so the panel opens upward. */
+.hk-mm-zoom-pop {
+  position: absolute;
+  right: 6px;
+  bottom: 34px;
+  z-index: 2;
+  width: 132px;
+  padding: 8px 10px 6px;
+  background: rgb(var(--color-surface));
+  @include backdrop-filter(blur(var(--blur-lg)) saturate(1.2));
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-dropdown);
+  pointer-events: auto;
+}
+
+/* Min/max captions under the slider. */
+.hk-mm-zoom-pop-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-muted));
+}
+
+/* ── The collapsed affordance (user direction 2026-10-27) ─────────────
+ * The card folds down to a small map-icon button pinned where the card
+ * sat. It is deliberately SEMI-TRANSPARENT at rest — collapsed means
+ * "out of the way" and it must not compete with the content underneath —
+ * and only reaches full opacity on hover. */
+.hk-minimap--collapsed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  cursor: pointer;
+  color: rgb(var(--color-text) / 70%);
+  background: rgb(var(--color-surface) / 0.55);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-sm);
+  opacity: 0.55;
+  transition: opacity var(--duration-short, 0.15s), background var(--duration-short, 0.15s);
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    background: rgb(var(--color-surface) / 0.9);
+    color: rgb(var(--color-text));
+  }
+}
+
+/* The minimize button rides the zoom bar's far end — visually set
+ * apart from the zoom pair it does not belong to. */
+.hk-mm-collapse-btn {
+  margin-inline-start: auto;
+}

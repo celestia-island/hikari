@@ -1,0 +1,51 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
+
+.hk-zoom-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  position: absolute;
+  top: var(--space-8);
+  inset-inline-end: var(--space-8);
+  z-index: 10;
+  border-radius: var(--radius-md);
+  background: rgb(var(--color-surface) / 85%);
+  border: 1px solid rgb(var(--color-border) / 8%);
+  padding: var(--space-2) var(--space-4);
+  @include backdrop-filter(blur(var(--blur-sm)));
+}
+
+.hk-zoom-btn.hk-btn {
+  width: var(--space-24);
+  height: var(--space-24);
+  padding: 0;
+}
+
+.hk-zoom-label {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  color: rgb(var(--color-muted));
+  min-width: var(--space-32);
+  text-align: center;
+  @include user-select(none);
+}
+
+.hk-zoom-reset-btn {
+  margin-inline-start: var(--space-2);
+  border-inline-start: 1px solid rgb(var(--color-border) / 8%);
+  /* Breathing room between the divider and the glyph (the zoom
+     buttons carry padding: 0). */
+  padding-inline-start: var(--space-4, 4px);
+}

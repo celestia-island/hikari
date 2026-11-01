@@ -131,3 +131,15 @@ components/HkCaptchaModal.scss	components/HkCaptchaModal.scss
 components/HkCaptchaWidget.scss	components/HkCaptchaWidget.scss
 components/HkProtocolModal.scss	components/HkProtocolModal.scss
 components/HkCookieConsent.scss	components/HkCookieConsent.scss
+components/HkBoard.scss	components/HkBoard.scss
+components/HkBoard3D.scss	components/HkBoard3D.scss
+components/HkNodeCanvas.scss	components/HkNodeCanvas.scss
+components/HkKanban.scss	components/HkKanban.scss
+components/HkDraggableGrid.scss	components/HkDraggableGrid.scss
+components/HkDraggableList.scss	components/HkDraggableList.scss
+components/HkMinimap.scss	components/HkMinimap.scss
+components/HkMinimap3D.scss	components/HkMinimap3D.scss
+components/HkZoomToolbar.scss	components/HkZoomToolbar.scss
+components/HkWindowedItem.scss	components/HkWindowedItem.scss
+components/HkStarSystem.scss	components/HkStarSystem.scss
+components/HkBlankCanvas.scss	components/HkBlankCanvas.scss

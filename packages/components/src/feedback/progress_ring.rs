@@ -225,6 +225,12 @@ pub fn ProgressRing(props: ProgressRingProps) -> Element {
     }
     svg.push_str("</svg>");
 
+    // The rounded percentage, interpolated as a plain variable: a nested
+    // `format!("{}%")` inside an rsx string slot is swallowed as literal text
+    // (the inner `{}` breaks the interpolation parser) — the regression test
+    // `ring_label_*` caught the rendered `{format!(..)}` text.
+    let label_text = format!("{}%", aria_value.round() as i64);
+
     rsx! {
         div {
             class: root_classes,
@@ -233,12 +239,19 @@ pub fn ProgressRing(props: ProgressRingProps) -> Element {
             "aria-valuenow": format!("{aria_value}"),
             "aria-valuemin": "0",
             "aria-valuemax": "100",
-            dangerous_inner_html: svg,
+            // `dangerous_inner_html` suppresses an element's CHILDREN
+            // (tairitsu-vdom drops them when inner_html is set), so the SVG
+            // markup lives on its own `display:contents` host and the label /
+            // overlay stay siblings of it.
+            div {
+                style: "display:contents",
+                dangerous_inner_html: svg,
+            }
             if props.show_label && props.overlay.is_none() {
                 span {
                     class: "hk-progress-ring-label",
                     style: format!("font-size:{text_size}px"),
-                    "{format!(\"{}%\", aria_value.round() as i64)}"
+                    "{label_text}"
                 }
             }
             if let Some(overlay) = props.overlay {
@@ -315,6 +328,31 @@ mod tests {
         assert!(props.show_track);
         assert_eq!(props.segments, None);
         assert!(props.overlay.is_none());
+    }
+
+    #[test]
+    fn ring_label_and_overlay_render_beside_the_inner_html_svg() {
+        // Regression guard (R2 S0): `dangerous_inner_html` suppresses an
+        // element's children in tairitsu-vdom, so the SVG host must be a
+        // separate node — the label/overlay are siblings of it.
+        let html = super::ProgressRing(super::ProgressRingProps {
+            value: 40.0,
+            show_label: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains("hk-progress-ring-svg"),
+            "svg markup must be mounted: {html}"
+        );
+        assert!(
+            html.contains("hk-progress-ring-label"),
+            "the label must survive the inner_html host: {html}"
+        );
+        assert!(
+            html.contains("40%"),
+            "the label must carry the rounded percentage: {html}"
+        );
     }
 
     #[test]

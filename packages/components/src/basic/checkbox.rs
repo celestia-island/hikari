@@ -201,17 +201,17 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
             style: props.style.clone(),
             "data-type": input_type.attr_value(),
             "data-disabled": if disabled { Some("") } else { None },
-            input {
-                class: "hk-checkbox-input",
-                type: input_type.attr_value(),
-                checked: checked,
-                disabled: disabled,
-                onchange: handle_change,
-            }
             span {
                 class: "hk-checkbox-box",
                 "data-checked": if checked { Some("") } else { None },
                 "data-indeterminate": if indeterminate { Some("") } else { None },
+                input {
+                    class: "hk-checkbox-input",
+                    type: input_type.attr_value(),
+                    checked: checked,
+                    disabled: disabled,
+                    onchange: handle_change,
+                },
                 if checked {
                     if input_type.is_radio() {
                         span { class: "hk-checkbox-dot" }

@@ -352,9 +352,9 @@ pub fn Button(props: ButtonProps) -> Element {
             "aria-busy": aria_busy,
             autofocus: autofocus,
             style: style_attr,
-            onclick: move |_e: MouseEvent| {
+            onclick: move |e: MouseEvent| {
                 if let Some(handler) = onclick.as_ref() {
-                    handler.call(MouseEvent::default());
+                    handler.call(e.clone());
                 }
             },
             if loading {

@@ -23,8 +23,8 @@ use crate::styled::StyledComponent;
 
 pub struct IconChipComponent;
 
-/// The tone palette shared with HkStatCard (Vue: `StatTone`, default
-/// `primary`).
+/// The tone palette shared with HkStatCard (Vue: `StatTone`, six tones,
+/// default `primary`).
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum IconChipTone {
     #[default]
@@ -32,17 +32,21 @@ pub enum IconChipTone {
     Info,
     Success,
     Warning,
-    Danger,
+    Error,
+    Muted,
 }
 
 impl IconChipTone {
+    /// The SIX tone classes the canonical sheet defines (verified against
+    /// `HkIconChip.scss`: primary/info/success/warning/error/muted).
     pub fn class_name(self) -> &'static str {
         match self {
             IconChipTone::Primary => "hk-icon-chip-tone-primary",
             IconChipTone::Info => "hk-icon-chip-tone-info",
             IconChipTone::Success => "hk-icon-chip-tone-success",
             IconChipTone::Warning => "hk-icon-chip-tone-warning",
-            IconChipTone::Danger => "hk-icon-chip-tone-danger",
+            IconChipTone::Error => "hk-icon-chip-tone-error",
+            IconChipTone::Muted => "hk-icon-chip-tone-muted",
         }
     }
 }
@@ -126,10 +130,8 @@ mod tests {
             IconChipTone::Primary.class_name(),
             "hk-icon-chip-tone-primary"
         );
-        assert_eq!(
-            IconChipTone::Danger.class_name(),
-            "hk-icon-chip-tone-danger"
-        );
+        assert_eq!(IconChipTone::Error.class_name(), "hk-icon-chip-tone-error");
+        assert_eq!(IconChipTone::Muted.class_name(), "hk-icon-chip-tone-muted");
     }
 
     #[test]

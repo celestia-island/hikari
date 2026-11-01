@@ -46,7 +46,8 @@ pub struct LabelProps {
     #[default]
     pub size: LabelSize,
 
-    /// Rich content (links/icons/emphasis) — wins over `text` when present.
+    /// Rich content (links/icons/emphasis) — wins over `text` when present
+    /// (Vue: `hasSlot ? slots.default!() : props.text`).
     pub children: Element,
 }
 
@@ -58,19 +59,30 @@ pub fn Label(props: LabelProps) -> Element {
         .map(|text| !text.is_empty())
         .unwrap_or(false);
     let children = props.children.clone();
+    // Same emptiness rule the Button mirror uses: an empty fragment AND a
+    // zero-length text node (`empty_vnode()`, the prelude helper callers pass
+    // for "no slot") both count as absent, so `text + empty_vnode()` keeps
+    // rendering the text.
+    let has_children = match &children {
+        VNode::Fragment(nodes) => !nodes.is_empty(),
+        VNode::Text(text) => !text.text.is_empty(),
+        VNode::DynamicText(_) => true,
+        VNode::Element(_) => true,
+    };
     // Vue renders null when neither the text prop nor the slot is present;
     // an rsx child is always present, so an empty fragment stands in.
-    if !has_text && matches!(children, VNode::Fragment(ref nodes) if nodes.is_empty()) {
+    if !has_text && !has_children {
         return empty_vnode();
     }
 
     rsx! {
         span {
             class: format!("hk-label {}", props.size.class_name()),
-            if has_text {
-                "{props.text.clone().unwrap_or_default()}"
-            } else {
+            // The SLOT wins when present (Vue precedence).
+            if has_children {
                 {children}
+            } else {
+                "{props.text.clone().unwrap_or_default()}"
             }
         }
     }
@@ -102,6 +114,28 @@ mod tests {
         let props = LabelProps::default();
         assert_eq!(props.size, LabelSize::Md);
         assert!(props.text.is_none());
+    }
+
+    #[test]
+    fn label_text_survives_an_empty_slot_and_the_slot_wins_when_real() {
+        // `text + empty_vnode()` must keep the text (empty_vnode is
+        // VNode::Text(""), not an empty fragment).
+        let html = Label(LabelProps {
+            text: Some("TEXT".to_string()),
+            children: empty_vnode(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("TEXT"), "{html}");
+
+        // A real slot wins over the text prop (Vue precedence).
+        let html = Label(LabelProps {
+            text: Some("TEXT".to_string()),
+            children: rsx! { span { "SLOT" } },
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("SLOT") && !html.contains("TEXT"), "{html}");
     }
 
     #[test]

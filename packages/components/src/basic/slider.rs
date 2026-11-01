@@ -53,7 +53,6 @@
 //   declares `modelValue` required).
 
 use std::cell::Cell;
-use std::rc::Rc;
 
 use tairitsu_vdom::{DomHandle, PointerEvent, get_bounding_client_rect};
 
@@ -96,6 +95,19 @@ fn js_round(value: f64) -> f64 {
 /// those keep the un-truncated value instead of panicking.
 fn js_to_fixed6(value: f64) -> f64 {
     format!("{value:.6}").parse::<f64>().unwrap_or(value)
+}
+
+thread_local! {
+    /// Whether a pointer drag is in flight (single-pointer, wasm single-thread).
+    static SLIDER_DRAGGING: Cell<bool> = const { Cell::new(false) };
+}
+
+fn slider_is_dragging() -> bool {
+    SLIDER_DRAGGING.with(|flag| flag.get())
+}
+
+fn set_slider_dragging(value: bool) {
+    SLIDER_DRAGGING.with(|flag| flag.set(value));
 }
 
 /// Vue: `Math.min(max, Math.max(min, value))`. A degenerate `min > max`
@@ -221,7 +233,8 @@ pub fn Slider(props: SliderProps) -> Element {
     let step = props.step;
     let disabled = props.disabled;
 
-    let value = slider_snap(props.value, min, max, step);
+    // Vue: value = snap(min(max(modelValue, min), max)) — clamp first, then snap.
+    let value = slider_snap(slider_clamp(props.value, min, max), min, max, step);
     let pct = slider_pct(value, min, max);
     let ticks = slider_tick_positions(min, max, step, props.show_ticks);
     let value_text = slider_value_text(value, props.format_value.as_ref());
@@ -235,9 +248,11 @@ pub fn Slider(props: SliderProps) -> Element {
         root_classes.push_str(&props.class);
     }
 
-    // Drag flag: plain non-reactive state (`Rc<Cell<bool>>`, house pattern from
-    // `feedback/tooltip.rs`) — it never drives rendering, so no Signal.
-    let dragging = Rc::new(Cell::new(false));
+    // Drag flag: NON-reactive by design (it never drives rendering). It lives
+    // in a module registry rather than a per-render `Rc<Cell<bool>>`: a value
+    // change re-renders this component mid-drag, and a fresh cell would read
+    // `false` forever after (while the stale closures kept flipping a dead
+    // cell). One pointer drags one slider at a time, so a singleton is exact.
 
     // Vue's `commit()`: emit only when the snapped value actually moves.
     let on_input = props.on_input.clone();
@@ -250,22 +265,20 @@ pub fn Slider(props: SliderProps) -> Element {
         }
     };
 
-    let drag_down = Rc::clone(&dragging);
     let commit_down = commit.clone();
     let handle_pointer_down = move |event: PointerEvent| {
         if disabled {
             return;
         }
-        drag_down.set(true);
+        set_slider_dragging(true);
         if let Some(ratio) = pointer_ratio(event.client_x, event.current_target) {
             commit_down(slider_value_from_ratio(ratio, min, max, step));
         }
     };
 
-    let drag_move = Rc::clone(&dragging);
     let commit_move = commit.clone();
     let handle_pointer_move = move |event: PointerEvent| {
-        if disabled || !drag_move.get() {
+        if disabled || !slider_is_dragging() {
             return;
         }
         if let Some(ratio) = pointer_ratio(event.client_x, event.current_target) {
@@ -273,11 +286,9 @@ pub fn Slider(props: SliderProps) -> Element {
         }
     };
 
-    let drag_up = Rc::clone(&dragging);
-    let handle_pointer_up = move |_: PointerEvent| drag_up.set(false);
+    let handle_pointer_up = move |_: PointerEvent| set_slider_dragging(false);
 
-    let drag_cancel = Rc::clone(&dragging);
-    let handle_pointer_cancel = move |_: PointerEvent| drag_cancel.set(false);
+    let handle_pointer_cancel = move |_: PointerEvent| set_slider_dragging(false);
 
     // Vue's keyboard map: arrows step once, PageUp/Down step 4×, Home/End jump.
     let commit_key = commit.clone();

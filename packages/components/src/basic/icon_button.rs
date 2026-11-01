@@ -321,9 +321,9 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             "aria-label": aria_label,
             autofocus: autofocus,
             style: style_attr,
-            onclick: move |_e: MouseEvent| {
+            onclick: move |e: MouseEvent| {
                 if let Some(handler) = onclick.as_ref() {
-                    handler.call(MouseEvent::default());
+                    handler.call(e.clone());
                 }
             },
             {icon_box}
@@ -341,6 +341,9 @@ pub fn IconButton(props: IconButtonProps) -> Element {
 
 impl StyledComponent for IconButtonComponent {
     fn styles() -> &'static str {
+        // The dot tones live in the mirrored HkCornerBadge sheet, which the
+        // registry path registers separately (`register_vue_chrome`); this
+        // component's own table covers the button chrome only.
         // The canonical Vue sheet, compiled verbatim (no_hash keeps the
         // `.hk-icon-button*` names literal so this CSS matches the Vue build;
         // the sheet `@use`s HkIconButtonVars.scss, so both land in one table).

@@ -15,6 +15,11 @@ import { POPUP_Z_BANDS, POPUP_Z_STEP, usePopupManager } from "../runtime/usePopu
  * - show/hide: anchor mouseenter shows after the delay (default 300ms),
  *   mouseleave hides and cancels a pending show; focusin/focusout ride
  *   the same path
+ * - the touch half: a touch/pen press ARMS the long-press recognizer of
+ *   runtime/touchHint.ts — the hint surfaces in the top-docked touch
+ *   hint bar, never in the anchored popup (which stays hover/focus
+ *   only); a quick tap shows nothing at all, and the tap's synthetic
+ *   mouseenter cannot flash the popup
  * - anchoring: placement drives the popup class, the wrapper
  *   data-position and the measured offset style (happy-dom reports a
  *   zero rect, so the numbers pin the 8px gap and per-placement
@@ -83,6 +88,9 @@ afterEach(() => {
     manager.unregister(entry.id);
   }
   document.querySelectorAll(".hk-tooltip-popup").forEach((el) => el.remove());
+  // The touch hint bar is presenter-owned module state — tear the node
+  // out so the next case remounts it fresh (it self-heals on show).
+  document.querySelectorAll(".hk-touch-hint-bar").forEach((el) => el.remove());
 });
 
 describe("HkTooltip popup-manager registration", () => {
@@ -255,62 +263,58 @@ describe("HkTooltip show/hide", () => {
   });
 });
 
-describe("HkTooltip touch taps", () => {
-  function tap(el: Element) {
-    el.dispatchEvent(
-      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
-    );
+describe("HkTooltip touch hint bar", () => {
+  // The touch half is the top-docked hint bar (runtime/touchHint.ts):
+  // a touch press ARMS a long-press recognizer against the wrapper, and
+  // the anchored popup stays a hover/focus (and pen-hover) surface.
+  function touchDown(el: Element) {
+    el.dispatchEvent(new PointerEvent("pointerdown", {
+      pointerType: "touch", pointerId: 1, clientX: 40, clientY: 40, bubbles: true,
+    }));
   }
 
-  it("shows immediately (no hover delay) on a touch tap", async () => {
-    const { container } = mount({ text: "tapped", delay: 3000 });
-    tap(wrapper(container));
-    await nextTick();
-    // The 3000ms hover delay must NOT gate the touch path.
-    expect(popup().className).toContain("hk-tooltip-visible");
+  function touchUp() {
+    document.dispatchEvent(new PointerEvent("pointerup", {
+      pointerType: "touch", pointerId: 1, bubbles: true,
+    }));
+  }
+
+  function hintBar(): HTMLElement | null {
+    return document.querySelector<HTMLElement>(".hk-touch-hint-bar");
+  }
+
+  it("long-press shows the top hint bar with the text, not the anchored popup", async () => {
+    vi.useFakeTimers();
+    const { container } = mount({ text: "hold me", delay: 3000 });
+    touchDown(wrapper(container));
+    await vi.advanceTimersByTimeAsync(449);
+    expect(hintBar()?.classList.contains("is-on")).toBeFalsy();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(hintBar()?.classList.contains("is-on")).toBe(true);
+    expect(hintBar()?.textContent).toBe("hold me");
+    // The anchored popup never enters the touch path: no teleported
+    // node at all — the lazy engage never ran.
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+    touchUp(); // end the fired hold (restores the wrapper guards)
   });
 
-  it("follows a moving anchor on the touch-opened path too", async () => {
-    const { container } = mount({ text: "touch moving", delay: 3000, placement: "bottom" });
-    let top = 100;
-    wrapper(container).getBoundingClientRect = () => ({
-      x: 200, y: top, left: 200, top, right: 280, bottom: top + 40,
-      width: 80, height: 40, toJSON: () => ({}),
-    }) as DOMRect;
-    tap(wrapper(container));
+  it("a quick tap shows neither the anchored popup nor the bar", async () => {
+    vi.useFakeTimers();
+    const { container } = mount({ text: "tap", delay: 3000 });
+    touchDown(wrapper(container));
+    await vi.advanceTimersByTimeAsync(100);
+    touchUp();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+    expect(hintBar()?.classList.contains("is-on")).toBeFalsy();
+  });
+
+  it("mouse hover still shows the anchored popup (desktop unchanged)", async () => {
+    const { container } = mount({ text: "mouse only", delay: 0 });
+    enter(container);
     await settle();
-    expect(popup().style.top).toBe("148px");
-    top = 120;
-    await settle();
-    expect(popup().style.top).toBe("168px");
-    tap(wrapper(container)); // close also stops the tracking loop
-    await nextTick();
-    expect(popup().className).not.toContain("hk-tooltip-visible");
-  });
-
-  it("toggles closed when the trigger is tapped again", async () => {
-    const { container } = mount({ text: "toggle", delay: 3000 });
-    tap(wrapper(container));
-    await nextTick();
     expect(popup().className).toContain("hk-tooltip-visible");
-
-    tap(wrapper(container));
-    await nextTick();
-    expect(popup().className).not.toContain("hk-tooltip-visible");
-  });
-
-  it("closes on a tap anywhere else (capture-phase document listener)", async () => {
-    const { container } = mount({ text: "outside", delay: 0 });
-    tap(wrapper(container));
-    await nextTick();
-    expect(popup().className).toContain("hk-tooltip-visible");
-
-    const elsewhere = document.createElement("div");
-    document.body.appendChild(elsewhere);
-    tap(elsewhere);
-    await nextTick();
-    expect(popup().className).not.toContain("hk-tooltip-visible");
-    elsewhere.remove();
+    expect(hintBar()?.classList.contains("is-on")).toBeFalsy();
   });
 
   it("ignores mouse pointerdown (the hover path owns mice)", async () => {
@@ -320,25 +324,21 @@ describe("HkTooltip touch taps", () => {
     );
     await nextTick();
     // A mouse press never engages the lazy tooltip at all — no popup
-    // node, no visible class.
+    // node, no touch hint bar.
     expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+    expect(hintBar()).toBeNull();
   });
 
-  it("does not re-open from the synthetic mouseenter right after a closing tap", async () => {
+  it("does not flash the anchored popup from the synthetic mouseenter after a tap", async () => {
     const { container } = mount({ text: "synthetic", delay: 0 });
-    tap(wrapper(container));
+    touchDown(wrapper(container));
+    touchUp();
     await nextTick();
-    expect(popup().className).toContain("hk-tooltip-visible");
-
-    tap(wrapper(container)); // close via toggle
-    await nextTick();
-    expect(popup().className).not.toContain("hk-tooltip-visible");
-
-    // The tap's synthetic mouseenter arrives synchronously after the
-    // pointerdown — it must not resurrect the bubble.
+    // The tap's synthetic mouseenter arrives right after the pointer
+    // events — it must not open the hover-only anchored popup.
     enter(container);
     await settle();
-    expect(popup().className).not.toContain("hk-tooltip-visible");
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
   });
 });
 

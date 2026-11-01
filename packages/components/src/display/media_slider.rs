@@ -412,6 +412,21 @@ mod tests {
     }
 
     #[test]
+    fn media_slider_drag_registry_is_per_instance() {
+        // R3 M5b restored the global-flag behaviour and every gate stayed green;
+        // this pins the per-key semantics (one slider never marks another).
+        set_media_slider_dragging("a", true);
+        assert!(media_slider_is_dragging("a"));
+        assert!(!media_slider_is_dragging("b"));
+        set_media_slider_dragging("b", true);
+        set_media_slider_dragging("a", false);
+        assert!(!media_slider_is_dragging("a"));
+        assert!(media_slider_is_dragging("b"));
+        set_media_slider_dragging("b", false);
+        assert!(!media_slider_is_dragging("b"));
+    }
+
+    #[test]
     fn media_slider_styles_come_from_the_canonical_vue_sheet() {
         let css = MediaSliderComponent::styles();
         // Selector spelling stays quote-agnostic here: the mirrored sheet is

@@ -1023,6 +1023,32 @@ mod tests {
     }
 
     #[test]
+    fn markdown_escapes_attribute_breaking_payloads() {
+        // R3 proved that removing `md_escape(src)` lets a quote break out of the
+        // attribute (`src="a"onerror=...`); this pins the escape and the scheme
+        // gate.
+        let html = MarkdownRenderer(MarkdownRendererProps {
+            content: "[x](a\"onerror=alert(1)) ![y](bad\"onerror=alert(2))".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            !html.contains("\"onerror"),
+            "a quote must not break out of the attribute: {html}"
+        );
+        assert!(html.contains("&quot;") || html.contains("%22"), "{html}");
+        let html = MarkdownRenderer(MarkdownRendererProps {
+            content: "[x](javascript:alert(1))".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        // A rejected scheme renders as LITERAL text — what must never appear is
+        // an attribute carrying it.
+        assert!(!html.contains("href=\"javascript:"), "{html}");
+        assert!(!html.contains("src=\"javascript:"), "{html}");
+    }
+
+    #[test]
     fn markdown_renderer_styles_come_from_the_canonical_vue_sheet() {
         let css = MarkdownRendererComponent::styles();
         assert!(

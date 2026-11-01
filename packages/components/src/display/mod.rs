@@ -23,7 +23,10 @@
 //!   was a centred placeholder; `HkEmptyState` adds `fit`, the loading state
 //!   region and an `action` slot).
 //! * `QRCode` / `QRCodeProps` → [`QrCode`] / [`QrCodeProps`] (Vue's
-//!   `errorCorrectionLevel` naming, `bg`/`fg` colors, `aria-label`).
+//!   `errorCorrectionLevel` naming, `bg`/`fg` colors, `aria-label`). SEMANTIC
+//!   difference: the legacy `size` was a pixel box (default 200) and
+//!   `error_correction` a `"low"|"medium"|"high"|"quartile"` string; the mirror
+//!   takes Vue's `size` (default 168) and `QrErrorCorrectionLevel::{L,M,Q,H}`.
 //! * `SkeletonCard` / `SkeletonTable` / `SkeletonVariant` / `SkeletonSize` →
 //!   the single [`Skeleton`] atom plus `rows` (see `skeleton.rs`).
 //! * `TimelineItem` / `TimelinePosition` → [`Timeline`]'s stepper surface

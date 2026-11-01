@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn load_more_labels_match_the_vue_english_fallbacks() {
         // No locale is provided in unit tests, so these are the fallbacks Vue
-        // ships for the its own keys.
+        // ships with its own keys.
         assert_eq!(load_more_label(LoadMoreState::Idle), "Load more");
         assert_eq!(load_more_label(LoadMoreState::Loading), "Loading…");
         assert_eq!(

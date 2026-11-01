@@ -3,9 +3,9 @@
 //! The W4 wave REPLACED the legacy `Empty` / `QRCode` / `Skeleton` /
 //! `Timeline` surfaces with the Vue mirrors (`HkEmptyState` / `HkQrCode` /
 //! `HkSkeleton` / `HkTimeline`), and the legacy `SkeletonCard` / `SkeletonTable`
-//! / `TimelineItem` / `TimelinePosition` types are gone — those files' headers
-//! carry the MIGRATION notes. What remains here covers the still-legacy display
-//! surfaces (`Carousel`, `Comment`, `UserGuide`, `ZoomControls`, `Calendar`,
+//! / `TimelineItem` / `TimelinePosition` types are gone — `src/display/mod.rs`
+//! carries the MIGRATION table. What remains here covers the still-legacy
+//! display surfaces (`Carousel`, `Comment`, `UserGuide`, `ZoomControls`, `Calendar`,
 //! `DragLayer`) plus the NEW mirrored props.
 
 #[cfg(test)]

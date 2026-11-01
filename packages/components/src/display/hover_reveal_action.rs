@@ -35,6 +35,10 @@
 //     falls back to `"span"`.
 //   * The extension slot gets no `{ revealed }` scope: the flag lives on the
 //     root's class list, which is what the sheet's selectors read.
+//   * the per-handle registry entry is never removed (no unmount hook); it holds
+//     a bool plus two timer ids and is reused by handle, so the footprint is
+//     bounded by the distinct hover hosts a page ever mounts. An entry outlives
+//     its element and is only re-touched if the host re-renders that handle.
 //   * Vue clears its timers in `onUnmounted`; tairitsu 0.5.22 has no unmount
 //     hook, so a timer armed right before a teardown still fires. It only
 //     re-touches a detached node's class list, so the visible result is

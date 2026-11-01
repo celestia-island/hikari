@@ -904,6 +904,12 @@ impl QrEncoder {
     }
 
     /// Vue's `getLostPoint` (the mask scoring function, penalty rules 1-4).
+    /// Test hook: exposes the mask scoring for the penalty-weight guard.
+    #[cfg(test)]
+    fn lost_point_for_test(&self, modules: &[Option<bool>]) -> f64 {
+        self.lost_point(modules)
+    }
+
     fn lost_point(&self, modules: &[Option<bool>]) -> f64 {
         let size = self.size;
         let mut lost = 0.0f64;
@@ -1560,6 +1566,29 @@ mod tests {
         assert!(!html.contains("<script>"), "{html}");
         assert!(!html.contains("<b>"), "{html}");
         assert!(html.contains("&lt;script&gt;"), "{html}");
+    }
+
+    #[test]
+    fn qr_lost_point_penalties_match_the_vendored_scoring() {
+        let encoder = QrEncoder::new(1, QrErrorCorrectionLevel::M);
+        let size = encoder.size;
+        // A checkerboard has no uniform 2x2 block and no same-colour runs, so
+        // the delta against it isolates rule 3's 40-point finder penalty.
+        let checkerboard: Vec<Option<bool>> = (0..size * size)
+            .map(|i| Some((i / size + i % size).is_multiple_of(2)))
+            .collect();
+        let base = encoder.lost_point_for_test(&checkerboard);
+
+        let pattern = [true, false, true, true, true, false, true];
+        let mut with_run = checkerboard.clone();
+        for (col, dark) in pattern.iter().enumerate() {
+            with_run[col] = Some(*dark);
+        }
+        let with_run = encoder.lost_point_for_test(&with_run);
+        assert!(
+            with_run - base >= 40.0,
+            "the 1:1:3:1:1 run must carry the rule-3 penalty: base={base}, with_run={with_run}"
+        );
     }
 
     #[test]

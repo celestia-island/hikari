@@ -1,0 +1,95 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* Shared stepper column for hikari's number fields — HkNumberInput and
+   HkInput's number variant (type="number" / variant="number"), rendered by
+   HkNumberSteppers.tsx. The rules moved here verbatim from HkNumberInput.scss
+   (2026-10-30) so both hosts load the affordance from one stylesheet; the
+   size class now lives on the STACK ROOT (hk-number-input-steppers-{sm,md,lg})
+   instead of the host wrapper, so the geometry follows each host's `size`
+   prop without needing the host's own size class anywhere up the tree. */
+
+.hk-number-input-steppers {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  /* Stretch to the host box so the step buttons' height:50% resolves
+     against the real box height and the divider spans it fully —
+     content-sized centering left a floating ~28px stack in a 36px box. */
+  align-self: stretch;
+  /* Inline-start so the divider faces the field/suffix side in both
+     LTR and RTL (the flex row flips under direction: rtl). */
+  border-inline-start: 1px solid var(--hi-color-border);
+}
+
+.hk-number-input-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Width comes from the per-size blocks below; height stays here as the
+     size-independent half. */
+  height: 50%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
+    color: var(--hi-color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+/* --- Size variants (size class on the stack root) --- */
+
+.hk-number-input-steppers-sm .hk-number-input-step {
+  width: var(--space-20, 1.25rem);
+}
+
+.hk-number-input-steppers-sm .hk-number-input-step svg {
+  width: 12px;
+  height: 12px;
+}
+
+.hk-number-input-steppers-md .hk-number-input-step {
+  width: var(--space-24, 1.5rem);
+}
+
+/* The md svg size is declared EXPLICITLY: the retired inline markup carried
+   width/height=14 attributes that md silently leaned on — the lucide
+   components render their own 24px attribute default, so CSS owns every
+   size now. */
+.hk-number-input-steppers-md .hk-number-input-step svg {
+  width: 14px;
+  height: 14px;
+}
+
+.hk-number-input-steppers-lg .hk-number-input-step {
+  width: var(--space-28, 1.75rem);
+}
+
+.hk-number-input-steppers-lg .hk-number-input-step svg {
+  width: 16px;
+  height: 16px;
+}

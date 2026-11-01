@@ -1,0 +1,144 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-search-input {
+  display: flex;
+  align-items: center;
+  background: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition:
+    background-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1));
+
+  &:hover {
+    border-color: var(--hi-color-primary);
+  }
+
+  &:focus-within {
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
+  }
+
+  &-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.hk-search-input-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-inline-start: var(--space-12);
+  color: var(--hi-color-muted);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.hk-search-input-field {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--hi-color-text-primary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  padding: 0 var(--space-8);
+
+  &::placeholder {
+    color: var(--hi-color-muted);
+    opacity: 0.6;
+  }
+
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+.hk-search-input-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-28);
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active {
+    background: color-mix(in srgb, var(--hi-color-surface) 80%, transparent);
+  }
+}
+
+/* --- Size variants --- */
+
+.hk-search-input-sm .hk-search-input-field {
+  font-size: var(--text-xs);
+  height: 1.75rem;
+}
+
+.hk-search-input-sm .hk-search-input-icon {
+  padding-inline-start: var(--space-8);
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hk-search-input-md .hk-search-input-field {
+  height: 2.25rem;
+}
+
+.hk-search-input-lg .hk-search-input-field {
+  font-size: var(--text-md);
+  height: 2.75rem;
+}
+
+.hk-search-input-lg .hk-search-input-icon {
+  padding-inline-start: var(--space-16);
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.hk-search-input-lg .hk-search-input-clear svg {
+  width: 16px;
+  height: 16px;
+}

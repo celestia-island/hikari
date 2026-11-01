@@ -1,0 +1,39 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-slider-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  min-width: 0;
+  padding: var(--space-4, 4px) var(--space-8, 8px);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface));
+}
+
+.hk-slider-field.is-disabled {
+  opacity: 0.55;
+}
+
+.hk-slider-field-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The flanking slots keep their content width; the slider takes
+ * whatever the row can spare. */
+.hk-slider-field-slot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  min-width: 0;
+}

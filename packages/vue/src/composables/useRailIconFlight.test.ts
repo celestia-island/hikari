@@ -32,7 +32,7 @@ import HkSidebarRailSwap from "../components/HkSidebarRailSwap";
  *
  * The assertions pin the choreography DECISIONS:
  * 1. A flip with moving keyed icons arms the flight: `data-flipping` on
- *    the swap host, a flight layer on the ENTERING item with one clone
+ *    the swap host, a flight layer ON THE HOST with one clone
  *    per PAIRED key, each clone painted at the leaving rect (logical
  *    insets relative to the stage) and animated by the signed delta.
  * 2. The pairing contract is visible: matched leaving cells carry the
@@ -202,6 +202,11 @@ afterEach(() => {
   for (const app of mounts.splice(0)) app.unmount();
   containers.splice(0).forEach((c) => c.remove());
   document.body.innerHTML = "";
+  // Restores every vi.spyOn (getComputedStyle / matchMedia / rect
+  // stubs) even when a test failed before its own inline restore —
+  // the probes recorded the leak as harmless, but the class is free
+  // to close.
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.useRealTimers();
   __teardownMediaQueries();
@@ -219,7 +224,7 @@ describe("enterDelayMs", () => {
 });
 
 describe("useRailIconFlight", () => {
-  it("arms a flight on collapse: matched cells marked, layer on the entering item, clones at the leaving rects", async () => {
+  it("arms a flight on collapse: matched cells marked, layer on the swap host, clones at the leaving rects", async () => {
     const h = mountSwap();
     await h.set(true);
     // Expanded geometry: icon cells at x=32 (the leading padding column).

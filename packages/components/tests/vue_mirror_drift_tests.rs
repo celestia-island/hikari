@@ -634,7 +634,7 @@ fn legacy_sheets_do_not_share_classes_with_the_mirrors() {
 
     // Known dual-source debt from earlier waves (each entry is retired with
     // the family that owns it). NEW overlaps must fail here.
-    const KNOWN_DUAL_SOURCES: [&str; 10] = [
+    const KNOWN_DUAL_SOURCES: [&str; 11] = [
         "hk-breadcrumb-dropdown-item",
         "hk-card",
         "hk-card-hoverable",
@@ -646,6 +646,8 @@ fn legacy_sheets_do_not_share_classes_with_the_mirrors() {
         // Retired later with the legacy tabs/menu sheets (W8 theme wave).
         "hk-menu-item-icon",
         "hk-tabs",
+        // Dead block inside the legacy image.scss (no Rust user); retires with it.
+        "hk-logo",
     ];
     let legacy = classes_in(&legacy_files);
     let mirrored = classes_in(&mirror_files);

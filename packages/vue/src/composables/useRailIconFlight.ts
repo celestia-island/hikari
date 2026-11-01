@@ -96,6 +96,14 @@ import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
  * sweep, and the single-glyph contract makes the alignment exact — the
  * clone covers the destination until the real icon is fully faded in.
  * No shipped rail host sets it today.
+ *
+ * KNOWN CEILING (2026-11-02 review, pre-existing): HkCrossfade's own
+ * stall watchdog is a fixed 450ms (CROSSFADE_WATCHDOG_MS). A theme that
+ * raises `--duration-normal` past it gets its healthy dissolve swept by
+ * the watchdog before the CSS completes — the flight follows the token
+ * faithfully, but the dissolve it mirrors is cut short. Tokenizing that
+ * watchdog is its own change; until then the practical retune ceiling
+ * is 450ms.
  */
 
 /** Row-key attribute on an icon cell that flies across a rail flip. */
@@ -131,8 +139,6 @@ export function cssDurationMs(value: string): number {
   return value.trim().endsWith("s") && !value.trim().endsWith("ms") ? n * 1000 : n;
 }
 
-/** Back-compat alias: HkCrossfade's enter hold parses like any duration. */
-export const enterDelayMs = cssDurationMs;
 
 /** One matched icon pair across the swap: live leaving geometry, entering
  *  geometry, the leaving icon's computed color (svg stroke = currentColor),

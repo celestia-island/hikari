@@ -84,9 +84,11 @@ import "./HkSidebarRail.scss";
  * icon slides slightly left as it collapses"). This component hands the
  * flip to the flight choreographer: icons opted in by HkMenu
  * (`data-flip-icon`) are cloned into a flight layer on THIS host and
- * animated from the leaving rect to the entering one, while the leaving
- * copies hide (`data-flipping` + the leave class) and the rest of the
- * content keeps the plain dissolve. Skipped under reduced motion / the
+ * animated from the leaving rect to the entering one, while BOTH ends
+ * of each matched pair hide (`data-flipping` + the per-cell
+ * `data-flip-flying` mark — the single-glyph contract: the clone is the
+ * one visible glyph from arm to landing) and the rest of the content
+ * keeps the plain dissolve. Skipped under reduced motion / the
  * animation switch / no WAAPI / no matching pair — every such case
  * degrades to today's dissolve.
  *

@@ -304,12 +304,12 @@ impl StyleRegistry {
     pub fn register_layout_components(&mut self) {
         use crate::layout::{
             AdminHeaderComponent, AdminShellComponent, AdminTablePageComponent,
-            AffixPickerComponent, DockBarComponent, FaceShellComponent, HeaderPickerComponent,
-            LocalePickerComponent, LocalePickerPopupComponent, NavItemComponent,
-            NavSidebarComponent, PageHeaderComponent, PaneHolderComponent, ShareBarComponent,
-            SidebarRailSwapComponent, SidebarRailToggleComponent, StatusBarComponent,
-            StatusPillComponent, StatusRowComponent, StepFlowComponent, TitleBarComponent,
-            WindowControlsComponent,
+            AffixPickerComponent, DividerComponent, DockBarComponent, FaceShellComponent,
+            HeaderPickerComponent, LocalePickerComponent, LocalePickerPopupComponent,
+            NavItemComponent, NavSidebarComponent, PageHeaderComponent, PaneHolderComponent,
+            ShareBarComponent, SidebarRailSwapComponent, SidebarRailToggleComponent,
+            StatusBarComponent, StatusPillComponent, StatusRowComponent, StepFlowComponent,
+            TitleBarComponent, WindowControlsComponent,
         };
         AdminShellComponent::register(self);
         AdminHeaderComponent::register(self);
@@ -333,6 +333,7 @@ impl StyleRegistry {
         HeaderPickerComponent::register(self);
         LocalePickerComponent::register(self);
         LocalePickerPopupComponent::register(self);
+        DividerComponent::register(self);
     }
 
     #[cfg(not(feature = "layout"))]
@@ -455,9 +456,10 @@ impl StyleRegistry {
     pub fn register_entry_components(&mut self) {
         use crate::entry::{
             AutoCompleteComponent, CascaderComponent, NumberInputComponent,
-            NumberSteppersComponent, SearchComponent, TransferComponent,
+            NumberSteppersComponent, SearchComponent, TemplateFieldComponent, TransferComponent,
         };
         NumberInputComponent::register(self);
+        TemplateFieldComponent::register(self);
         NumberSteppersComponent::register(self);
         SearchComponent::register(self);
         AutoCompleteComponent::register(self);

@@ -568,7 +568,7 @@ pub fn AboutBody(props: AboutBodyProps) -> Element {
     // ── copyright footer ────────────────────────────────────────────────
     let year = about_year_from_unix_ms(crate::platform::now_timestamp());
     let copyright_line = about_copyright_text(year, props.copyright.as_deref(), &props.app_name);
-    let footer = VElement::new("div")
+    let footer = VElement::new("footer")
         .class("s-about-modal-footer")
         .child(Badge(BadgeProps {
             variant: BadgeVariant::Muted,
@@ -980,6 +980,22 @@ mod tests {
         })
         .render_to_html();
         assert!(html.is_empty(), "a closed about mounts nothing: {html}");
+    }
+
+    #[test]
+    fn about_modal_footer_is_the_semantic_element() {
+        // Vue emits <footer class="s-about-modal-footer"> (HkAboutModal.tsx);
+        // R3 found a div slipped through with no test pinning the tag.
+        let html = AboutModal(AboutModalProps {
+            open: true,
+            app_name: "Panel".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains("<footer class=\"s-about-modal-footer\">"),
+            "the copyright row must be a <footer>: {html}"
+        );
     }
 
     #[test]

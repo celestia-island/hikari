@@ -388,7 +388,7 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         // The shared `s-*` shell sheet (the five sheet-less mirrors' geometry)
         ".s-admin-shell",
         ".s-status-bar",
-        ".hk-menu-row",
+        ".hk-menu-flag",
         // W5 layout + nav family
         ".hk-page-header",
         ".hk-titlebar",

@@ -37,6 +37,7 @@ impl StyleRegistry {
         self.register("vue-sidebar-rail", vue_sidebar_rail_css());
         // The `s-*` shell geometry (AdminShell / StatusBar / [data-compact]).
         self.register("vue-admin-tokens", vue_admin_tokens_css());
+        self.register("vue-hk-menu", vue_hk_menu_css());
     }
 
     pub fn register_vue_token_fallbacks(&mut self) {
@@ -411,6 +412,12 @@ pub fn vue_token_fallbacks_css() -> &'static str {
 /// The mirrored window-close chrome (`packages/vue/src/components/window-close.scss`).
 pub fn vue_window_close_css() -> &'static str {
     tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/window-close.scss", no_hash }.0
+}
+
+/// The mirrored menu rows (`HkMenu.scss`) — the AdminHeader / LocalePickerPopup
+/// row grammar (`.hk-menu-row` / `-check` / `-flag` / `-label`).
+pub fn vue_hk_menu_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkMenu.scss", no_hash }.0
 }
 
 /// The shared `s-*` layout sheet (`styles/admin-tokens.scss`) — the five

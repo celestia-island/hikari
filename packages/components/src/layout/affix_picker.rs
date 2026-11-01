@@ -1519,6 +1519,54 @@ mod tests {
     }
 
     #[test]
+    fn affix_confirm_gate_never_deletes_locally() {
+        // Pure-function view of the gate: the wiring's request_remove only
+        // reaches `on_remove` when the gate is OFF.
+        let removed = std::rc::Rc::new(std::cell::Cell::new(0usize));
+        let requested = std::rc::Rc::new(std::cell::Cell::new(0usize));
+        let removed_clone = std::rc::Rc::clone(&removed);
+        let wiring = AffixPickerWiring {
+            confirm_remove: true,
+            mode: AffixMode::Multi,
+            disabled: false,
+            open: true,
+            query: String::new(),
+            close_on_select: false,
+            on_open_change: None,
+            on_query_change: None,
+            on_select: None,
+            on_remove: Some(EventHandler::new(move |_key: String| {
+                removed_clone.set(removed_clone.get() + 1);
+            })),
+            on_remove_request: None,
+            on_custom: None,
+        };
+        wiring.request_remove("cn");
+        assert_eq!(
+            removed.get(),
+            0,
+            "the confirm gate must block the direct removal"
+        );
+        let _ = requested;
+
+        // With the request channel wired the edge goes there.
+        let removed_clone = std::rc::Rc::clone(&removed);
+        let requested_clone2 = std::rc::Rc::clone(&requested);
+        let wiring = AffixPickerWiring {
+            on_remove: Some(EventHandler::new(move |_key: String| {
+                removed_clone.set(removed_clone.get() + 1);
+            })),
+            on_remove_request: Some(EventHandler::new(move |_key: String| {
+                requested_clone2.set(requested_clone2.get() + 1);
+            })),
+            ..wiring
+        };
+        wiring.request_remove("cn");
+        assert_eq!(requested.get(), 1, "the request edge must fire");
+        assert_eq!(removed.get(), 0, "and still nothing may be deleted");
+    }
+
+    #[test]
     fn affix_picker_styles_come_from_the_canonical_vue_sheet() {
         let css = AffixPickerComponent::styles();
         assert!(

@@ -395,8 +395,9 @@ mod tests {
         assert!(rail.contains("hk-sidebar-rail-host"), "{rail}");
         assert!(rail.contains("hk-sidebar-rail-panel"), "{rail}");
         assert!(rail.contains("hk-sidebar-rail-clip"), "{rail}");
-        // The rail markers serialize as `data-rail="true"` (the presence form).
-        assert!(rail.contains("data-rail=\"true\""), "{rail}");
+        // The rail HOST carries its own marker; assert on the aside so the
+        // nested rail-swap generation cannot satisfy the check.
+        assert!(rail.contains("<aside data-rail=\"true\""), "{rail}");
 
         // Mobile: the nav drawer, titled by the forwarded `nav_title`.
         let drawer = AdminShell(AdminShellProps {

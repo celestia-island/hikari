@@ -11,7 +11,7 @@
 // popup surface is HkSelectPanel's (`.hk-select-popout*`, painted by
 // `HkSelect.scss`) and its rows are HkMenu's (`.hk-menu-level` /
 // `.hk-menu-row` / `.hk-menu-check` / `.hk-menu-item-icon` / `.hk-menu-label`
-// / `.hk-menu-more`). `HkMenu.scss` is NOT part of the vendored mirror set
+// / `.hk-menu-more`). `HkMenu.scss` IS vendored and registered as chrome (`vue-hk-menu`)
 // this wave (`manifest.tsv` lists `_menu-item.scss` only), so those row names
 // reach the Rust form as DOM hooks — the same deal `layout/locale_picker_popup.rs`
 // documents for the same grammar. Layout comes from the host's utility

@@ -165,10 +165,13 @@ pub fn context_menu_placement(
     }
 }
 
+/// Vue's HkMenu default anchor offset (its `offset = 6`).
+pub const CONTEXT_MENU_OFFSET_PX: f64 = 6.0;
+
 /// The inline geometry that pins the `position: fixed` popout host to the
-/// POINTER (Vue: `pointAnchor`, a zero-size rect at the open point). No offset
-/// and no width match: a context menu anchors at the cursor, not at a trigger
-/// box.
+/// POINTER (Vue: `pointAnchor`, a zero-size rect at the open point). No width
+/// match: a context menu anchors at the cursor, not at a trigger box — but it
+/// keeps Vue's 6px anchor offset, or the whole menu lands 6px off.
 pub fn context_menu_position_style(x: f64, y: f64, placement: ContextMenuPlacement) -> String {
     select_popout_style(
         placement.panel_placement(),
@@ -178,7 +181,7 @@ pub fn context_menu_position_style(x: f64, y: f64, placement: ContextMenuPlaceme
             width: 0.0,
             height: 0.0,
         },
-        0.0,
+        CONTEXT_MENU_OFFSET_PX,
         false,
     )
 }
@@ -378,23 +381,24 @@ mod tests {
 
     #[test]
     fn context_menu_coordinates_pin_the_pointer() {
-        // Downward quadrants put the panel's TOP edge on the pointer.
+        // Downward quadrants put the panel's top edge 6px below the pointer
+        // (Vue's HkMenu default anchor offset).
         assert_eq!(
             context_menu_position_style(100.0, 50.0, ContextMenuPlacement::BottomStart),
-            "left:100px;top:50px"
+            "left:100px;top:56px"
         );
         assert_eq!(
             context_menu_position_style(100.0, 50.0, ContextMenuPlacement::BottomEnd),
-            "left:100px;top:50px;transform:translateX(-100%)"
+            "left:100px;top:56px;transform:translateX(-100%)"
         );
         // Upward quadrants pin the BOTTOM edge, so no panel height is needed.
         assert_eq!(
             context_menu_position_style(100.0, 50.0, ContextMenuPlacement::TopStart),
-            "left:100px;bottom:calc(100vh - 50px)"
+            "left:100px;bottom:calc(100vh - 44px)"
         );
         assert_eq!(
             context_menu_position_style(100.0, 50.0, ContextMenuPlacement::TopEnd),
-            "left:100px;bottom:calc(100vh - 50px);transform:translateX(-100%)"
+            "left:100px;bottom:calc(100vh - 44px);transform:translateX(-100%)"
         );
         // A zero-size anchor never publishes a min-width.
         assert!(
@@ -451,7 +455,8 @@ mod tests {
         assert!(html.contains(r#"data-side="bottom""#), "{html}");
         assert!(html.contains(r#"data-align="start""#), "{html}");
         // … pinned to the pointer …
-        assert!(html.contains(r#"style="left:100px;top:50px""#), "{html}");
+        // Vue anchors with a 6px offset, so the pointer at 50 lands at 56.
+        assert!(html.contains(r#"style="left:100px;top:56px""#), "{html}");
         // … with the popout, its accessible name and the host's menu content.
         assert!(html.contains(r#"class="hk-select-popout""#), "{html}");
         assert!(html.contains(r#"aria-label="Actions""#), "{html}");

@@ -795,6 +795,13 @@ pub fn password_enter_submits(
     key == "Enter" && !composing && !ctrl && !meta && !alt && !shift && !disabled && !readonly
 }
 
+/// Vue clears `composing` via `compositionend`; a dropped event (blur, element
+/// removal, host teardown) would otherwise leave the flag stuck and disable
+/// Enter submission everywhere. The blur path calls this.
+pub fn password_reset_composing() {
+    set_password_composing(false);
+}
+
 thread_local! {
     /// Whether an IME composition is in flight on the field. tairitsu's
     /// `KeyboardEvent` has no `is_composing`, so the flag is maintained from
@@ -1078,6 +1085,9 @@ impl PasswordPublish {
     /// Vue's `onBlur`: every transient flag drops (its refocus / autofill
     /// polling has no analogue, see [D8]), then the `blur` emit.
     fn blur(&self, event: FocusEvent) {
+        // A dropped `compositionend` (blur mid-composition) must not leave the
+        // module-level flag set: it would disable Enter submission everywhere.
+        password_reset_composing();
         self.publish_feedback(PasswordFeedback::blurred());
         if let Some(handler) = self.on_blur.as_ref() {
             handler.call(event);
@@ -2003,6 +2013,27 @@ mod tests {
         // Blur clears every transient flag (Vue's onBlur reset).
         let blurred = PasswordFeedback::blurred();
         assert_eq!(blurred, PasswordFeedback::default());
+    }
+
+    #[test]
+    fn password_blur_clears_a_stuck_composition_flag() {
+        set_password_composing(true);
+        assert!(password_is_composing());
+        password_reset_composing();
+        assert!(
+            !password_is_composing(),
+            "a blur must clear the composition flag"
+        );
+        assert!(password_enter_submits(
+            "Enter",
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            password_is_composing()
+        ));
     }
 
     #[test]

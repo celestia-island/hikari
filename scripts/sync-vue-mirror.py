@@ -213,7 +213,6 @@ OVERLAY_SHEETS: list[str] = [
     "HkCaptchaWidget.scss",
     "HkProtocolModal.scss",
     "HkCookieConsent.scss",
-    "HkTemplateField.scss",
 ]
 
 FAMILY_SHEETS: list[str] = [

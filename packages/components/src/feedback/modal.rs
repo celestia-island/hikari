@@ -108,6 +108,8 @@ pub struct ModalAction {
     pub variant: ModalActionVariant,
     pub loading: bool,
     pub disabled: bool,
+    /// Fired on press (Vue's `ModalAction.onClick`).
+    pub on_click: Option<EventHandler<()>>,
 }
 
 #[define_props]
@@ -320,17 +322,18 @@ pub fn Modal(props: ModalProps) -> Element {
                         } else if let Some(actions) = &props.footer_actions {
                             for (i, action) in actions.iter().enumerate() {
                                 {
-                                    // Delta vs Vue (documented): footer actions
-                                    // render the crate's own Button until the
-                                    // HkButton (`.hk-btn`) mirror lands; the
-                                    // variant mapping is the Vue one.
+                                    // Footer actions render through the mirrored
+                                    // Button; the variant map is Vue's own, so
+                                    // `Outline` stays outline (it is NOT folded
+                                    // into secondary).
                                     let variant = match action.variant {
                                         ModalActionVariant::Primary => ButtonVariant::Primary,
                                         ModalActionVariant::Secondary => ButtonVariant::Secondary,
                                         ModalActionVariant::Danger => ButtonVariant::Danger,
                                         ModalActionVariant::Ghost => ButtonVariant::Ghost,
-                                        ModalActionVariant::Outline => ButtonVariant::Secondary,
+                                        ModalActionVariant::Outline => ButtonVariant::Outline,
                                     };
+                                    let action_click = action.on_click.clone();
                                     rsx! {
                                         Button {
                                             variant,
@@ -338,6 +341,11 @@ pub fn Modal(props: ModalProps) -> Element {
                                             disabled: action.disabled,
                                             loading: action.loading,
                                             class: "hk-modal-action".to_string(),
+                                            onclick: action_click.map(|handler| {
+                                                EventHandler::new(move |_event: MouseEvent| {
+                                                    handler.call(());
+                                                })
+                                            }),
                                             children: VNode::Text(VText::new(&action.label)),
                                         }
                                     }

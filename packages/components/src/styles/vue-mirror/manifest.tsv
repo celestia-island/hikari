@@ -131,4 +131,3 @@ components/HkCaptchaModal.scss	components/HkCaptchaModal.scss
 components/HkCaptchaWidget.scss	components/HkCaptchaWidget.scss
 components/HkProtocolModal.scss	components/HkProtocolModal.scss
 components/HkCookieConsent.scss	components/HkCookieConsent.scss
-components/HkTemplateField.scss	components/HkTemplateField.scss

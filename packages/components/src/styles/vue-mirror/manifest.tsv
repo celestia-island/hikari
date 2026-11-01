@@ -118,3 +118,16 @@ components/HkHeaderPicker.scss	components/HkHeaderPicker.scss
 components/HkLocalePicker.scss	components/HkLocalePicker.scss
 components/HkNavItem.scss	components/HkNavItem.scss
 components/HkMenu.scss	components/HkMenu.scss
+components/HkAdaptiveDialog.scss	components/HkAdaptiveDialog.scss
+components/HkPopupSelect.scss	components/HkPopupSelect.scss
+components/HkFloatingLayer.scss	components/HkFloatingLayer.scss
+components/HkAltSignIn.scss	components/HkAltSignIn.scss
+components/HkMfaVerifyCard.scss	components/HkMfaVerifyCard.scss
+components/HkThirdPartySignInCard.scss	components/HkThirdPartySignInCard.scss
+components/HkAuthMethodList.scss	components/HkAuthMethodList.scss
+components/HkAuthSubmitButton.scss	components/HkAuthSubmitButton.scss
+components/HkPasswordSurface.scss	components/HkPasswordSurface.scss
+components/HkCaptchaModal.scss	components/HkCaptchaModal.scss
+components/HkCaptchaWidget.scss	components/HkCaptchaWidget.scss
+components/HkProtocolModal.scss	components/HkProtocolModal.scss
+components/HkCookieConsent.scss	components/HkCookieConsent.scss

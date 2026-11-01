@@ -385,6 +385,20 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-selection-waterfall",
         ".hk-card-list",
         ".hk-pill-group-pill",
+        // W6 overlay + auth family
+        ".hk-adaptive-dialog-drawer-header",
+        ".hk-popup-select-wrapper",
+        ".hk-floating-layer",
+        ".hk-alt-signin",
+        ".s-auth-form",
+        ".s-auth-form",
+        ".s-auth-methods-divider",
+        ".s-auth-submit",
+        ".hk-pwd-box",
+        ".s-captcha-modal",
+        ".s-captcha-widget",
+        ".s-cookie-consent",
+        ".hk-template-field",
         // The shared `s-*` shell sheet (the five sheet-less mirrors' geometry)
         ".s-admin-shell",
         ".s-status-bar",
@@ -693,15 +707,16 @@ fn mirrored_i18n_keys_exist_in_the_english_bundle() {
         let Ok(source) = std::fs::read_to_string(&file) else {
             continue;
         };
-        for line in source.lines() {
-            let Some(at) = line.find("components.hk.") else {
-                continue;
-            };
-            let rest = &line[at + "components.hk.".len()..];
+        // Whole-source scan (rustfmt splits long `t(` calls across lines).
+        let mut cursor = 0usize;
+        while let Some(offset) = source[cursor..].find("components.hk.") {
+            let at = cursor + offset;
+            let rest = &source[at + "components.hk.".len()..];
             let key: String = rest
                 .chars()
                 .take_while(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-' || *c == '_')
                 .collect();
+            cursor = at + "components.hk.".len() + key.len();
             if key.is_empty() || key.ends_with('.') {
                 continue;
             }
@@ -715,7 +730,10 @@ fn mirrored_i18n_keys_exist_in_the_english_bundle() {
                 continue;
             }
             let literal: String = tail[1..].chars().take_while(|c| *c != '"').collect();
-            if literal.is_empty() || literal.contains('{') || !literal.is_ascii() {
+            let translated = literal
+                .chars()
+                .any(|c| ('\u{3000}'..='\u{9fff}').contains(&c));
+            if literal.is_empty() || literal.contains('{') || translated {
                 continue;
             }
             let needle = format!("hk.{key} = \"{literal}\"");

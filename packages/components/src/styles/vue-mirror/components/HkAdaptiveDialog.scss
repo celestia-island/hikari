@@ -1,0 +1,32 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkAdaptiveDialog — only the seams the two shells cannot provide
+// themselves: the composed drawer header (title + sub-header stacked in
+// HkDrawer's header slot, which otherwise replaces the title) and the
+// footerActions HButton row rendered inside HkDrawer's footer (HkModal
+// already renders that row itself; HkDrawer has no footerActions prop).
+// Everything visual (overlay, panel, transitions, footer padding and
+// divider) comes from HkModal.scss / HkDrawer.scss.
+
+.hk-adaptive-dialog-drawer-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4, 4px);
+  flex: 1;
+  min-width: 0;
+}
+
+.hk-adaptive-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8, 8px);
+}

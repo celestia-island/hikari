@@ -69,8 +69,9 @@
 //     DOM-measurement / history / animation-bus contracts without a tairitsu
 //     analogue in this wave.
 //   * row content comes from the `options` prop only — Vue's default slot
-//     (arbitrary row markup) belongs to `HkSelectPanel`, which is not mirrored
-//     as a standalone component here.
+//     (arbitrary row markup) belongs to `HkSelectPanel`, whose standalone mirror
+//     lives in `overlay/select_panel.rs`; this field keeps its own inline
+//     popout (same geometry helper, no second surface).
 //   * `pointerenter` highlighting is attached to every row and guarded by the
 //     form factor instead of being conditionally spread (same behaviour: the
 //     rows only exist while open, and master's sheet rows never highlight).

@@ -116,7 +116,12 @@ pub use crate::feedback::{
 };
 // Layout component Props
 pub use crate::layout::{
-    ContainerProps, DividerProps as LayoutDividerProps, FlexBoxProps, FooterProps, SpaceProps,
+    AdminHeaderProps, AdminShellProps, AdminTablePageProps, AffixPickerProps, ContainerProps,
+    DividerProps as LayoutDividerProps, DockBarProps, FaceShellProps, FlexBoxProps, FooterProps,
+    HeaderPickerProps, LocalePickerPopupProps, LocalePickerProps, NavItemProps, NavSidebarProps,
+    PageHeaderProps, PaneHolderProps, ShareBarProps, SidebarRailSwapProps, SidebarRailToggleProps,
+    SpaceProps, StatusBarProps, StatusPillProps, StatusRowProps, StepFlowProps, TitleBarProps,
+    WindowControlsProps,
 };
 // Navigation component Props
 // `StepsProps` is the deprecated shim of `StepperProps`; re-exported so the

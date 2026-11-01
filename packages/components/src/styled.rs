@@ -34,6 +34,7 @@ impl StyleRegistry {
         self.register("vue-button-chrome", vue_button_chrome_css());
         self.register("vue-corner-badge", vue_corner_badge_css());
         self.register("vue-pill-toggle-group", vue_pill_toggle_group_css());
+        self.register("vue-sidebar-rail", vue_sidebar_rail_css());
     }
 
     pub fn register_vue_token_fallbacks(&mut self) {
@@ -295,6 +296,47 @@ impl StyleRegistry {
         // No-op
     }
 
+    /// Registers the layout + nav family mirrors.
+    #[cfg(feature = "layout")]
+    pub fn register_layout_components(&mut self) {
+        use crate::layout::{
+            AdminHeaderComponent, AdminShellComponent, AdminTablePageComponent,
+            AffixPickerComponent, DockBarComponent, FaceShellComponent, HeaderPickerComponent,
+            LocalePickerComponent, LocalePickerPopupComponent, NavItemComponent,
+            NavSidebarComponent, PageHeaderComponent, PaneHolderComponent, ShareBarComponent,
+            SidebarRailSwapComponent, SidebarRailToggleComponent, StatusBarComponent,
+            StatusPillComponent, StatusRowComponent, StepFlowComponent, TitleBarComponent,
+            WindowControlsComponent,
+        };
+        AdminShellComponent::register(self);
+        AdminHeaderComponent::register(self);
+        AdminTablePageComponent::register(self);
+        FaceShellComponent::register(self);
+        StatusBarComponent::register(self);
+        NavItemComponent::register(self);
+        NavSidebarComponent::register(self);
+        SidebarRailToggleComponent::register(self);
+        SidebarRailSwapComponent::register(self);
+        PageHeaderComponent::register(self);
+        TitleBarComponent::register(self);
+        WindowControlsComponent::register(self);
+        DockBarComponent::register(self);
+        StatusRowComponent::register(self);
+        StatusPillComponent::register(self);
+        ShareBarComponent::register(self);
+        StepFlowComponent::register(self);
+        PaneHolderComponent::register(self);
+        AffixPickerComponent::register(self);
+        HeaderPickerComponent::register(self);
+        LocalePickerComponent::register(self);
+        LocalePickerPopupComponent::register(self);
+    }
+
+    #[cfg(not(feature = "layout"))]
+    pub fn register_layout_components(&mut self) {
+        // No-op
+    }
+
     /// Registers all entry components
     #[cfg(feature = "entry")]
     pub fn register_entry_components(&mut self) {
@@ -337,6 +379,7 @@ impl StyleRegistry {
 
         #[cfg(feature = "entry")]
         self.register_entry_components();
+        self.register_layout_components();
     }
 
     /// Registers all components regardless of feature flags
@@ -348,6 +391,7 @@ impl StyleRegistry {
         self.register_feedback_components();
         self.register_navigation_components();
         self.register_display_components();
+        self.register_layout_components();
         self.register_entry_components();
     }
 }
@@ -365,6 +409,13 @@ pub fn vue_token_fallbacks_css() -> &'static str {
 /// The mirrored window-close chrome (`packages/vue/src/components/window-close.scss`).
 pub fn vue_window_close_css() -> &'static str {
     tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/window-close.scss", no_hash }.0
+}
+
+/// The mirrored sidebar rail (`HkSidebarRail.scss`) — the rail toggle/swap
+/// geometry lives here; the components themselves only emit its classes.
+pub fn vue_sidebar_rail_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkSidebarRail.scss", no_hash }
+        .0
 }
 
 /// The mirrored pill toggle group (`HkPillToggleGroup.scss`) — the filter

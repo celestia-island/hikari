@@ -154,3 +154,12 @@ pub use crate::scene::{
     KanbanProps, Minimap3DProps, MinimapProps, NodeCanvasProps, StarSystemProps, WindowedItemProps,
     ZoomToolbarProps,
 };
+
+// Theme + misc family Props
+pub use crate::entry::TemplateFieldProps;
+pub use crate::theme::{
+    AboutModalProps, ActionBarProps, AvatarButtonProps, ColorSchemeDialogProps,
+    ColorSchemeEditorProps, ConnectionStatusProps, CopyBadgeProps, ErrorBoundaryProps,
+    ErrorLandingProps, LogoProps, SecretRevealModalProps, SettingsDialogProps, SplashProps,
+    ThemeDecorProps, ThemePanelContentProps, ThemeToggleProps, WallpaperBackdropProps,
+};

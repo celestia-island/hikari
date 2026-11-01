@@ -340,6 +340,42 @@ impl StyleRegistry {
         // No-op
     }
 
+    /// Registers the theme + misc family mirrors.
+    #[cfg(feature = "theme")]
+    pub fn register_misc_components(&mut self) {
+        use crate::theme::{
+            AboutModalComponent, ActionBarComponent, AvatarButtonComponent,
+            ColorSchemeDialogComponent, ColorSchemeEditorComponent, ConnectionStatusComponent,
+            CopyBadgeComponent, CornerBadgeComponent, ErrorBoundaryComponent,
+            ErrorLandingComponent, LogoComponent, SecretRevealModalComponent,
+            SettingsDialogComponent, SplashComponent, ThemeDecorComponent,
+            ThemePanelContentComponent, ThemeToggleComponent, WallpaperBackdropComponent,
+        };
+        AboutModalComponent::register(self);
+        ActionBarComponent::register(self);
+        AvatarButtonComponent::register(self);
+        ColorSchemeDialogComponent::register(self);
+        ColorSchemeEditorComponent::register(self);
+        ConnectionStatusComponent::register(self);
+        CopyBadgeComponent::register(self);
+        CornerBadgeComponent::register(self);
+        ErrorBoundaryComponent::register(self);
+        ErrorLandingComponent::register(self);
+        LogoComponent::register(self);
+        SecretRevealModalComponent::register(self);
+        SettingsDialogComponent::register(self);
+        SplashComponent::register(self);
+        ThemeDecorComponent::register(self);
+        ThemePanelContentComponent::register(self);
+        ThemeToggleComponent::register(self);
+        WallpaperBackdropComponent::register(self);
+    }
+
+    #[cfg(not(feature = "theme"))]
+    pub fn register_misc_components(&mut self) {
+        // No-op
+    }
+
     /// Registers the scene family mirrors.
     #[cfg(feature = "scene")]
     pub fn register_scene_components(&mut self) {
@@ -459,6 +495,7 @@ impl StyleRegistry {
         self.register_layout_components();
         self.register_overlay_components();
         self.register_scene_components();
+        self.register_misc_components();
         self.register_auth_components();
     }
 
@@ -474,6 +511,7 @@ impl StyleRegistry {
         self.register_layout_components();
         self.register_overlay_components();
         self.register_scene_components();
+        self.register_misc_components();
         self.register_auth_components();
         self.register_entry_components();
     }

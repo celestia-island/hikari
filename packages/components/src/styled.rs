@@ -340,6 +340,33 @@ impl StyleRegistry {
         // No-op
     }
 
+    /// Registers the scene family mirrors.
+    #[cfg(feature = "scene")]
+    pub fn register_scene_components(&mut self) {
+        use crate::scene::{
+            BlankCanvasComponent, Board3DComponent, BoardComponent, DraggableGridComponent,
+            DraggableListComponent, KanbanComponent, Minimap3DComponent, MinimapComponent,
+            NodeCanvasComponent, StarSystemComponent, WindowedItemComponent, ZoomToolbarComponent,
+        };
+        BoardComponent::register(self);
+        Board3DComponent::register(self);
+        BlankCanvasComponent::register(self);
+        DraggableGridComponent::register(self);
+        DraggableListComponent::register(self);
+        KanbanComponent::register(self);
+        MinimapComponent::register(self);
+        Minimap3DComponent::register(self);
+        NodeCanvasComponent::register(self);
+        StarSystemComponent::register(self);
+        WindowedItemComponent::register(self);
+        ZoomToolbarComponent::register(self);
+    }
+
+    #[cfg(not(feature = "scene"))]
+    pub fn register_scene_components(&mut self) {
+        // No-op
+    }
+
     /// Registers the overlay family mirrors.
     #[cfg(feature = "overlay")]
     pub fn register_overlay_components(&mut self) {
@@ -431,6 +458,7 @@ impl StyleRegistry {
         self.register_entry_components();
         self.register_layout_components();
         self.register_overlay_components();
+        self.register_scene_components();
         self.register_auth_components();
     }
 
@@ -445,6 +473,7 @@ impl StyleRegistry {
         self.register_display_components();
         self.register_layout_components();
         self.register_overlay_components();
+        self.register_scene_components();
         self.register_auth_components();
         self.register_entry_components();
     }

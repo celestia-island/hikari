@@ -7,6 +7,7 @@ import { createApp, h, nextTick, ref, type Ref } from "vue";
 import { Home, Settings } from "lucide-vue-next";
 
 import HkMenu, { type HkMenuItem } from "./HkMenu";
+import { RAIL_FLIP_ICON_ATTR } from "../composables/useRailIconFlight";
 
 /**
  * HkMenu sidebar-variant ICON-RAIL mode (collapsed prop, 2026-10-30):
@@ -424,10 +425,14 @@ describe("HkMenu sidebar icon rail", () => {
     // missing it (or carrying the wrong key) silently drops that row out
     // of the continuity choreography. All four render sites — expanded
     // leaf + group toggle, rail leaf + rail group header — must stamp it.
-    const iconKeys = (root: ParentNode): string[] =>
-      [...root.querySelectorAll<HTMLElement>(".hk-menu-item-icon[data-flip-icon]")].map((el) =>
-        el.getAttribute("data-flip-icon") ?? "",
-      );
+    // The selector is built from the composable's exported constant — the
+      // welding that turns a literal drift in HkMenu's JSX (or the JS
+      // pairing vocabulary) into a red test instead of a silently dead
+      // flight chain (2026-11-02 review).
+      const iconKeys = (root: ParentNode): string[] =>
+        [...root.querySelectorAll<HTMLElement>(`.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}]`)].map((el) =>
+          el.getAttribute(RAIL_FLIP_ICON_ATTR) ?? "",
+        );
 
     // An icon on the group exercises the group-toggle sites; the
     // icon-less leaf exercises the asymmetry the flight tolerates: the

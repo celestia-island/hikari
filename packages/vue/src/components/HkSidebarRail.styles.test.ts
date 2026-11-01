@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 import { compile } from "sass";
 import { describe, expect, it } from "vitest";
 
+import {
+  RAIL_FLIP_ACTIVE_ATTR,
+  RAIL_FLIP_FLYING_ATTR,
+  RAIL_FLIP_ICON_ATTR,
+} from "../composables/useRailIconFlight";
+
 /**
  * Sidebar rail + peek stylesheet contract (2026-10-30) — the shared
  * geometry behind HkFaceShell's sidebar, HkSidebar and bespoke hosts
@@ -145,10 +151,13 @@ describe("HkSidebarRail geometry contract", () => {
     expect(swap).toContain("flex: 1");
     expect(swap).toContain("min-height: 0");
     expect(swap).toContain("align-self: flex-start");
-    // The swap host is the containing block for the rail flip's flight
-    // layer (useRailIconFlight): clones are positioned at leaving-icon
-    // rects relative to it.
-    expect(swap).toContain("position: relative");
+    // The swap host deliberately is NOT the flight layer's containing
+    // block: it tracks the animating clip width and would drag a
+    // host-anchored clone along (the RTL review finding). The stage is
+    // the ENTERING item — pinned at the docked inline-start edge:
+    const stage = ruleBody(css, ".hk-sidebar-rail-swap .hk-crossfade-item");
+    expect(stage, "the flight stage rule exists").not.toBeNull();
+    expect(stage).toContain("position: relative");
 
     // Each generation is the flex column the bands expect, filling the
     // swap's height (spacer + footer-at-bottom behave as they did as
@@ -248,17 +257,34 @@ describe("HkSidebarRail geometry contract", () => {
     expect(clone).toContain("position: absolute");
     expect(clone).toContain("pointer-events: none");
 
-    // The hide rule is scoped THREE ways — only while a flight is armed
+    // The hide rule is scoped FOUR ways — only while a flight is armed
     // ([data-flipping] on the swap host), only on the DISSOLVING copy
-    // (the leave item class), and only on opted-in icons
-    // ([data-flip-icon]): identity blocks, carets, badges and every
-    // non-participating icon keep the plain dissolve. A looser scope
-    // would blank live UI; a tighter one would double-expose the glyph.
+    // (the leave item class), only on opted-in icons ([data-flip-icon]),
+    // and only on the cells the choreographer actually PAIRED AND CLONED
+    // ([data-flip-flying]): identity blocks, carets, badges, unmatched
+    // fallbacks and every other icon keep the plain dissolve. The
+    // selector is composed from the composable's EXPORTED CONSTANTS —
+    // the welding that keeps the JSX/SCSS literals and the JS pairings
+    // one vocabulary (a literal drift anywhere turns this red instead of
+    // silently double-exposing the glyph).
     const hideSelector =
-      ".hk-sidebar-rail-swap[data-flipping] .hk-crossfade-item.hk-crossfade-leave-active .hk-menu-item-icon[data-flip-icon]";
+      `.hk-sidebar-rail-swap[${RAIL_FLIP_ACTIVE_ATTR}] ` +
+      `.hk-crossfade-item.hk-crossfade-leave-active ` +
+      `.hk-menu-item-icon[${RAIL_FLIP_FLYING_ATTR}]`;
     const hide = ruleBody(css, hideSelector);
-    expect(hide, "the flight hide rule exists (all three scopes)").not.toBeNull();
+    expect(hide, "the flight hide rule exists (all four scopes)").not.toBeNull();
     expect(hide).toContain("visibility: hidden");
+    // …and the sheet must not hide on the OPT-IN attribute alone — that
+    // spelling would vanish unmatched fallbacks without a substitute.
+    expect(
+      ruleBody(
+        css,
+        `.hk-sidebar-rail-swap[${RAIL_FLIP_ACTIVE_ATTR}] ` +
+          `.hk-crossfade-item.hk-crossfade-leave-active ` +
+          `.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}]`,
+      ),
+      "hiding keyed to the opt-in attribute alone is the S1-1 regression",
+    ).toBeNull();
   });
 
   it("leaves no flight transition for reduced motion to kill (the flight is JS-driven)", () => {

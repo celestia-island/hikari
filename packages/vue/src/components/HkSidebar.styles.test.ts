@@ -116,9 +116,16 @@ describe("HkSidebar scroll end-cap", () => {
     // separate by their paddings alone — and so are the block-FLOW
     // metrics that move rows just the same (gap/row-gap/height/
     // min-height/max-height).
+    // Keyed on the carrier SUBSTRINGS, not their bracket spelling: a
+    // `[data-collapsed="true"]`-style variant of the same carrier must
+    // not slip the scan (2026-11-02 review: the exact-literal filter was
+    // a green hole). Boundary (restored): a brand-new carrier MECHANISM
+    // — a class-based hook or a third density attribute under a new
+    // name — is a new dress and must re-run this contract; not
+    // mechanically foreseeable here.
     const dressRules = css
       .split("}")
-      .filter((rule) => rule.includes("[data-collapsed]") || rule.includes("[data-rail]"));
+      .filter((rule) => rule.includes("data-collapsed") || rule.includes("data-rail"));
     expect(dressRules.length, "the density dress rules exist").toBeGreaterThan(1);
     for (const rule of dressRules) {
       for (const decl of rule.matchAll(
@@ -143,8 +150,18 @@ describe("HkSidebar scroll end-cap", () => {
       expect(rule, `a margin crept into the dress: ${rule}`).not.toMatch(
         /\bmargin(?:-(?:top|bottom|block(?:-(?:start|end))?))?\s*:/,
       );
+      // block-FLOW metrics that move rows just the same (line-height
+      // already falls under the `height` alternative via the word
+      // boundary), plus the block-EDGE spellings a padding/margin scan
+      // cannot see (2026-11-02 review: border-block-start-width and
+      // inset-block drifted rows while every padding check stayed green).
       expect(rule, `block-flow metric in the dress: ${rule}`).not.toMatch(
         /\b(?:gap|row-gap|height|min-height|max-height)\s*:/,
+      );
+      expect(rule, `block-edge border in the dress: ${rule}`).not.toMatch(/\bborder-block/);
+      expect(rule, `block-edge inset in the dress: ${rule}`).not.toMatch(/\binset-block/);
+      expect(rule, `physical block offset in the dress: ${rule}`).not.toMatch(
+        /(?<![-\w])(?:top|bottom)\s*:/,
       );
     }
   });

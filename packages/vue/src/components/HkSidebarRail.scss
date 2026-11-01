@@ -159,23 +159,30 @@
  * the host from STRETCHING, which would clip nothing but would invite
  * percentage-width content to follow the animation.) The generations
  * fill the swap's height so the bands' flex column (spacer, footer at
- * the bottom) behaves exactly as it did as a direct child of the clip.
- *
- * position: relative makes the host the containing block for the rail
- * flip's FLIGHT LAYER (useRailIconFlight): clones are absolutely
- * positioned at leaving-icon rects relative to the host, so the layer
- * needs no geometry of its own. */
+ * the bottom) behaves exactly as it did as a direct child of the clip. */
 .hk-sidebar-rail-clip > .hk-sidebar-rail-swap {
   flex: 1;
   min-height: 0;
   align-self: flex-start;
+}
+
+/* The rail flip's flight stage (useRailIconFlight): the flight layer
+ * mounts INSIDE the ENTERING item, which — like every generation — is
+ * pinned at the docked inline-start edge and never moves while the
+ * panel's width animates, in LTR or RTL alike. The swap HOST must NOT
+ * be the containing block: it tracks the animating clip width, so a
+ * host-anchored clone would drift with the very animation it mirrors
+ * (2026-11-02 review). Scoped to the rail swap: HkCrossfade's other
+ * consumers keep their static items. */
+.hk-sidebar-rail-swap .hk-crossfade-item {
   position: relative;
 }
 
 /* The flight layer + clones (see useRailIconFlight). The layer covers
- * the host — the widest generation's footprint — so a clone never
- * repositions relative to the animating panel; its own geometry is
- * inline (the measured rects). pointer-events stay dead: the layer is
+ * the entering item — the widest generation's footprint — so a clone
+ * never repositions relative to the animating panel; its own geometry
+ * is inline (the measured rects, written as LOGICAL insets from the
+ * stable inline-start edge). pointer-events stay dead: the layer is
  * paint-only chrome above a pointer-dead dissolve. Clones keep
  * inline-flex centering so the svg sits in the cell exactly as the real
  * icon cell centers it. */
@@ -197,17 +204,22 @@
   will-change: transform;
 }
 
-/* During a flight the LEAVING generation's participating icons hide:
- * the clone paints in their place at the same geometry, full opacity —
- * a substitution, not a fade, so the icon reads as ONE object that
- * travels. Scoped three ways on purpose: only while a flight runs
+/* During a flight the leaving generation's MATCHED icons hide: the clone
+ * paints in their place at the same geometry, full opacity — a
+ * substitution, not a fade, so the icon reads as ONE object that
+ * travels. Scoped four ways on purpose: only while a flight runs
  * ([data-flipping] on the swap host), only on the dissolving copy (the
- * leave item class), and only on opted-in icons ([data-flip-icon]) —
- * identity blocks, carets, badges and every non-participating icon keep
- * the plain dissolve. */
+ * leave item class), only on opted-in icons ([data-flip-icon]), and
+ * only on the cells the choreographer actually PAIRED AND CLONED
+ * ([data-flip-flying] — stamped per flight, swept after). That last
+ * scope is the pairing contract made visible: an opted-in cell without
+ * a partner (a rail fallback letter with no expanded counterpart) is
+ * never stamped, so it dissolves instead of vanishing without a
+ * substitute (2026-11-02 review). Identity blocks, carets, badges
+ * and every other icon keep the plain dissolve. */
 .hk-sidebar-rail-swap[data-flipping]
   .hk-crossfade-item.hk-crossfade-leave-active
-  .hk-menu-item-icon[data-flip-icon] {
+  .hk-menu-item-icon[data-flip-flying] {
   visibility: hidden;
 }
 

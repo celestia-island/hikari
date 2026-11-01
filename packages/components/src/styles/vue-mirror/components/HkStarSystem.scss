@@ -1,0 +1,39 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+/* HkStarSystem's optional built-in CSS2D chip. Host products can replace
+ * it through makeLabel without inheriting any product-specific styling. */
+.hk-star-system-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 240px;
+  padding: 3px 8px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-border, 100 116 139) / 0.38);
+  border-radius: 9999px;
+  background: rgb(var(--color-background, 11 16 32) / 0.8);
+  color: rgb(var(--color-text, 226 232 240));
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  @include user-select(none);
+  pointer-events: auto;
+  @include backdrop-filter(blur(6px));
+}
+
+.hk-star-system-chip.is-core {
+  border-style: dashed;
+  cursor: default;
+  pointer-events: none;
+}

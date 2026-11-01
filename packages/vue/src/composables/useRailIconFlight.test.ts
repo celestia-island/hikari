@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref, type App } from "vue";
 
 import {
-  enterDelayMs,
+  cssDurationMs,
   RAIL_FLIGHT_MS,
-  RAIL_FLIGHT_SWEEP_MS,
+  RAIL_FLIGHT_SWEEP_MARGIN_MS,
   RAIL_FLIP_ACTIVE_ATTR,
   RAIL_FLIP_FLYING_ATTR,
   RAIL_FLIP_ICON_ATTR,
@@ -212,14 +212,15 @@ afterEach(() => {
   __teardownMediaQueries();
 });
 
-describe("enterDelayMs", () => {
-  it("parses the enter-hold property shapes", () => {
-    expect(enterDelayMs("")).toBe(0);
-    expect(enterDelayMs("0ms")).toBe(0);
-    expect(enterDelayMs("150ms")).toBe(150);
-    expect(enterDelayMs("0.2s")).toBe(200);
-    expect(enterDelayMs("garbage")).toBe(0);
-    expect(enterDelayMs("-5ms")).toBe(0);
+describe("cssDurationMs", () => {
+  it("parses the CSS time property shapes", () => {
+    expect(cssDurationMs("")).toBe(0);
+    expect(cssDurationMs("0ms")).toBe(0);
+    expect(cssDurationMs("150ms")).toBe(150);
+    expect(cssDurationMs("0.2s")).toBe(200);
+    expect(cssDurationMs("300ms")).toBe(300);
+    expect(cssDurationMs("garbage")).toBe(0);
+    expect(cssDurationMs("-5ms")).toBe(0);
   });
 });
 
@@ -248,13 +249,23 @@ describe("useRailIconFlight", () => {
     // Two MATCHED keys fly; "rail-only"/"full-only" have no partner and
     // must dissolve instead of being invented a source.
     expect(layer!.querySelectorAll(".hk-sidebar-rail-flight-clone")).toHaveLength(2);
-    // Each clone animates by the SIGNED delta (collapse: 12px leftward).
+    // Each clone animates by the SIGNED delta (collapse: 12px leftward)
+    // at the FALLBACK window (the test DOM resolves no custom
+    // properties, so --duration-normal reads empty).
     const home = animations.find((a) => a.el.textContent === "H");
     expect(home, "the home clone animates").toBeTruthy();
     expect(home!.options.duration).toBe(RAIL_FLIGHT_MS);
     expect(home!.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px)");
     const inbox = animations.find((a) => a.el.textContent === "I");
     expect(inbox!.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px)");
+    // SINGLE GLYPH: pure travel — no opacity keyframe anywhere, the
+    // clone holds full opacity to the landing (the old end-fade is what
+    // double-exposed it against the dissolving-in entering icon).
+    for (const a of animations) {
+      expect(a.keyframes.some((f) => "opacity" in (f as PropertyIndexedKeyframes)), "no fade in the flight").toBe(false);
+    }
+    expect(home!.keyframes).toHaveLength(2);
+    expect(home!.options.fill, "a slipped frame parks the clone at the landing rect").toBe("forwards");
     // The clone is PAINTED at the leaving rect as a logical inset from
     // the stage's stable inline-start edge…
     const homeClone = layer!.querySelector<HTMLElement>(".hk-sidebar-rail-flight-clone")!;
@@ -262,14 +273,59 @@ describe("useRailIconFlight", () => {
     expect(homeClone.style.insetBlockStart).toBe("100px");
     // …and carries no flip identity of its own.
     expect(homeClone.getAttribute(RAIL_FLIP_ICON_ATTR)).toBeNull();
-    // The pairing contract, visible: matched leaving cells are stamped
-    // for the hide rule; the partnerless LEAVING cell ("full-only" has
-    // no rail counterpart) is NOT (it must dissolve, not vanish
-    // un-substituted).
+    expect(homeClone.hasAttribute(RAIL_FLIP_FLYING_ATTR), "the clone never hides itself").toBe(false);
+    // The pairing contract, visible: BOTH ends of a matched pair are
+    // stamped for the hide rule (the clone is the one glyph from arm to
+    // landing — the entering cell hides too); the partnerless cells on
+    // either side ("full-only" leaving, "rail-only" entering) are NOT
+    // (they must dissolve, not vanish un-substituted).
     const leavingHome = leaving.querySelector(`[${RAIL_FLIP_ICON_ATTR}="home"]`)!;
-    expect(leavingHome.hasAttribute(RAIL_FLIP_FLYING_ATTR), "matched cell marked").toBe(true);
+    expect(leavingHome.hasAttribute(RAIL_FLIP_FLYING_ATTR), "matched leaving cell marked").toBe(true);
+    const enteringHome = entering.querySelector(`[${RAIL_FLIP_ICON_ATTR}="home"]`)!;
+    expect(enteringHome.hasAttribute(RAIL_FLIP_FLYING_ATTR), "matched ENTERING cell marked too — single glyph").toBe(true);
     const solo = leaving.querySelector(`[${RAIL_FLIP_ICON_ATTR}="full-only"]`)!;
-    expect(solo.hasAttribute(RAIL_FLIP_FLYING_ATTR), "unmatched cell never marked").toBe(false);
+    expect(solo.hasAttribute(RAIL_FLIP_FLYING_ATTR), "unmatched leaving cell never marked").toBe(false);
+    const soloIn = entering.querySelector(`[${RAIL_FLIP_ICON_ATTR}="rail-only"]`)!;
+    expect(soloIn.hasAttribute(RAIL_FLIP_FLYING_ATTR), "unmatched entering cell never marked").toBe(false);
+  });
+
+  it("derives the flight window from the theme's --duration-normal (no hardcoded mirror)", async () => {
+    // The window must READ the token the dissolve consumes: a theme
+    // retuned to 600ms retunes the flight with it, and the sweep budget
+    // stretches past the longer window (arm at 600, sweep at 900).
+    const h = mountSwap();
+    const realGCS = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element) => {
+      const declared = realGCS(el as HTMLElement);
+      if (el !== h.swap()) return declared;
+      return new Proxy(declared, {
+        get(target, prop) {
+          if (prop === "getPropertyValue") {
+            return (name: string) =>
+              name === "--duration-normal" ? "600ms" : (target.getPropertyValue(name) ?? "");
+          }
+          const value = Reflect.get(target, prop, target);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      }) as CSSStyleDeclaration;
+    });
+    await h.set(true);
+    const { leaving, entering } = dissolvePair(h, true);
+    stubRect(h.swap(), rect(0, 0, 240, 400));
+    stubIcons(leaving, (key) => rect(32, key === "home" ? 100 : 140));
+    stubIcons(entering, (key) => rect(20, key === "home" ? 100 : 140));
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(h.swap().getAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe("");
+    const home = animations.find((a) => a.el.textContent === "H")!;
+    expect(home.options.duration, "the flight window follows the theme token").toBe(600);
+    // The sweep is the DERIVED window plus margin: at 700ms the flight
+    // is still on stage; past 900ms the fallback collects it.
+    await vi.advanceTimersByTimeAsync(700);
+    expect(flightLayer(h), "still flying inside the token-derived window").toBeTruthy();
+    await vi.advanceTimersByTimeAsync(RAIL_FLIGHT_SWEEP_MARGIN_MS + 20);
+    expect(flightLayer(h), "the sweep follows the stretched window").toBeNull();
+    vi.mocked(window.getComputedStyle).mockRestore();
   });
 
   it("divides the written geometry by the ancestor draw scale (root zoom)", async () => {
@@ -346,7 +402,7 @@ describe("useRailIconFlight", () => {
     await h.set(true);
     // Let the first flight arm AND settle (sweep budget), so the second
     // flip starts from a clean host.
-    await vi.advanceTimersByTimeAsync(RAIL_FLIGHT_SWEEP_MS + 50);
+    await vi.advanceTimersByTimeAsync(RAIL_FLIGHT_MS + RAIL_FLIGHT_SWEEP_MARGIN_MS + 50);
     expect(flightLayer(h)).toBeNull();
     animations.length = 0;
 
@@ -476,7 +532,7 @@ describe("useRailIconFlight", () => {
 
     await vi.advanceTimersByTimeAsync(0);
     expect(flightLayer(h)).toBeTruthy();
-    await vi.advanceTimersByTimeAsync(RAIL_FLIGHT_SWEEP_MS + 10);
+    await vi.advanceTimersByTimeAsync(RAIL_FLIGHT_MS + RAIL_FLIGHT_SWEEP_MARGIN_MS + 10);
     expect(flightLayer(h), "the sweep timer removes the layer").toBeNull();
     expect(h.swap().hasAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe(false);
   });

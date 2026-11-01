@@ -264,30 +264,31 @@ describe("HkSidebarRail geometry contract", () => {
     expect(clone).toContain("position: absolute");
     expect(clone).toContain("pointer-events: none");
 
-    // The hide rule is scoped FOUR ways — only while a flight is armed
-    // ([data-flipping] on the swap host), only on the DISSOLVING copy
-    // (the leave item class), only on opted-in icons ([data-flip-icon]),
-    // and only on the cells the choreographer actually PAIRED AND CLONED
-    // ([data-flip-flying]): identity blocks, carets, badges, unmatched
-    // fallbacks and every other icon keep the plain dissolve. The
-    // selector is composed from the composable's EXPORTED CONSTANTS —
-    // the welding that keeps the JSX/SCSS literals and the JS pairings
-    // one vocabulary (a literal drift anywhere turns this red instead of
-    // silently double-exposing the glyph).
+    // The hide rule enforces the SINGLE-GLYPH CONTRACT (2026-11-02 user
+    // direction: the clone and the dissolving-in entering icon used to
+    // double-expose mid-flight): while a flight is armed
+    // ([data-flipping] on the swap host), every cell the choreographer
+    // marked ([data-flip-flying] — stamped on BOTH ends of a matched
+    // pair, swept with the layer) hides, so the clone is the one
+    // visible glyph from arm to landing. Deliberately NOT scoped to the
+    // items' dissolve classes — those are transient engine state (the
+    // happy-dom lesson), and the mark alone already names exactly the
+    // substituted cells. The selector is composed from the composable's
+    // EXPORTED CONSTANTS — the welding that keeps the JSX/SCSS literals
+    // and the JS pairings one vocabulary (a literal drift anywhere turns
+    // this red instead of silently double-exposing the glyph).
     const hideSelector =
       `.hk-sidebar-rail-swap[${RAIL_FLIP_ACTIVE_ATTR}] ` +
-      `.hk-crossfade-item.hk-crossfade-leave-active ` +
       `.hk-menu-item-icon[${RAIL_FLIP_FLYING_ATTR}]`;
     const hide = ruleBody(css, hideSelector);
-    expect(hide, "the flight hide rule exists (all four scopes)").not.toBeNull();
+    expect(hide, "the single-glyph hide rule exists").not.toBeNull();
     expect(hide).toContain("visibility: hidden");
-    // …and the sheet must not hide on the OPT-IN attribute alone — that
+    // The sheet must not hide on the OPT-IN attribute alone — that
     // spelling would vanish unmatched fallbacks without a substitute.
     expect(
       ruleBody(
         css,
         `.hk-sidebar-rail-swap[${RAIL_FLIP_ACTIVE_ATTR}] ` +
-          `.hk-crossfade-item.hk-crossfade-leave-active ` +
           `.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}]`,
       ),
       "hiding keyed to the opt-in attribute alone is the S1-1 regression",

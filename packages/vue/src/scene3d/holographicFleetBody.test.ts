@@ -133,12 +133,28 @@ describe("makeFleetHologram", () => {
     expect(outerRingOpacity(hub)).toBeGreaterThan(outerRingOpacity(node));
     expect(ticksOpacity(hub)).toBeGreaterThan(ticksOpacity(node));
     expect(equatorSpindleOpacity(hub)).toBeGreaterThan(equatorSpindleOpacity(node));
+    // The node tier keeps its OWN level: pinning it (not just "smaller
+    // than star") means a symmetric brightening of both tiers goes RED.
+    expect(outerRingOpacity(node)).toBeCloseTo(0.66, 5);
     // And the star dial actually burns: the primary arc is fully lit.
     const arcs = hub.frontDial.getObjectsByProperty(
       "name",
       "fleet-hologram-face-dial-arc",
     ) as THREE.Line[];
     expect((arcs[0]!.material as THREE.LineBasicMaterial).opacity).toBe(1);
+
+    // Ceiling guard: every material opacity in EITHER hologram stays
+    // within [0, 1] — brightness tiers must never push past full lit.
+    for (const hologram of [hub, node]) {
+      hologram.group.traverse((obj) => {
+        const material = (obj as THREE.Mesh).material as
+          | (THREE.Material & { opacity?: number })
+          | undefined;
+        if (!material || !("opacity" in material) || material.opacity === undefined) return;
+        expect(material.opacity).toBeLessThanOrEqual(1);
+        expect(material.opacity).toBeGreaterThanOrEqual(0);
+      });
+    }
   });
 
   it("builds the ball from circles only — no solid sphere, no wireframe cage", () => {

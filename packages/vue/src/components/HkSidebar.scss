@@ -102,13 +102,17 @@
  * THE RAIL ROW SQUARE (2026-11-02 user screenshot: the collapsed
  * selected pill read as "not quite square — a bit squat"). The body's
  * inline track narrows so a rail row is EXACTLY its own min-height
- * square: the default 56px rail minus the menu-item grammar's 34px row
- * leaves 22px, 11px a side. The row spans its track (width: 100% in the
- * shared spec), so the hover/active pill fills 34×34 instead of the
- * 32×34 oblong a 12px track produced. INLINE ONLY: the block paddings —
- * the 20px leading air and the scroll tail — stay with the base rule, so
- * the vertical rhythm invariant above is untouched. The literal is
- * derived, not tunable: --hk-menu-item-min-h is declared ON each row (the
+ * square: the rail width minus the menu-item grammar's 34px row, half
+ * a side each. The row spans its track (width: 100% in the shared
+ * spec), so the hover/active pill fills 34×34 instead of the 32×34
+ * oblong a 12px track produced. INLINE ONLY: the block paddings — the
+ * 20px leading air and the scroll tail — stay with the base rule, so
+ * the vertical rhythm invariant above is untouched. The rail width
+ * travels as `--hk-sidebar-rail-w`, declared inline by both rail
+ * holders (HkSidebar's `collapsedWidth`, HkFaceShell's
+ * `sidebarCollapsedWidth`) — a host retuning the width keeps exact
+ * squares with no second edit. The 34px minuend stays a literal
+ * because --hk-menu-item-min-h is declared ON each row (the
  * custom-property trap), so this ancestor cannot compute from it. */
 .hk-sidebar[data-collapsed],
 .hk-sidebar-rail-generation[data-rail] {
@@ -122,7 +126,7 @@
   }
 
   .hk-sidebar-body {
-    padding-inline: 11px;
+    padding-inline: calc((var(--hk-sidebar-rail-w, 56px) - 34px) / 2);
   }
 }
 

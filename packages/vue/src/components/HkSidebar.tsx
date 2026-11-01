@@ -29,11 +29,10 @@ export default defineComponent({
      *  no peek, `collapsed` stays the plain presentational 56px rail. */
     collapsible: { type: Boolean, default: false },
     /** Layout width of the icon rail (the one-icon column). Mirrors the
-     *  56px this component always used for its collapsed mode.
-     *  COUPLING (2026-11-02): the rail row square in HkSidebar.scss
-     *  derives its body inline track from the DEFAULT — 56px rail − 34px
-     *  menu row = 11px a side. A non-56 rail re-flattens the selected
-     *  pill unless that track is retuned alongside. */
+     *  56px this component always used for its collapsed mode. Declared
+     *  to the sheet as `--hk-sidebar-rail-w` on this aside, so the rail
+     *  row square (HkSidebar.scss's body inline track) retunes with it —
+     *  any width yields exact 34px squares. */
     collapsedWidth: { type: String, default: "56px" },
     /** Hover dwell on the rail before the peek drawer opens, ms. */
     peekDelay: { type: Number, default: 400 },
@@ -268,7 +267,17 @@ export default defineComponent({
         // panel and the panel's inner widths snap while THIS host's width
         // transition plays — expanding must not replay the sidebar slide.
         data-pinning={rail.pinning.value || undefined}
-        style={props.mobile ? undefined : { width: hostWidth.value }}
+        style={
+          props.mobile
+            ? undefined
+            : {
+                width: hostWidth.value,
+                // The rail row square's inline track (HkSidebar.scss)
+                // derives from this token, so a non-default
+                // collapsedWidth keeps producing exact squares.
+                "--hk-sidebar-rail-w": props.collapsedWidth,
+              }
+        }
         onPointerenter={railChrome.value ? onHostPointerEnter : undefined}
         onPointerleave={railChrome.value ? rail.onPointerLeave : undefined}
         onPointermove={railChrome.value ? onHostPointerMove : undefined}

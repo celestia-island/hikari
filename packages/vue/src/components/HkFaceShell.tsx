@@ -461,7 +461,14 @@ export const HkFaceShell = defineComponent({
                 // while THIS host's width transition plays — expanding must
                 // not replay the sidebar slide.
                 data-pinning={rail.pinning.value || undefined}
-                style={{ width: hostSidebarWidth.value, flexShrink: 0 }}
+                style={{
+                  width: hostSidebarWidth.value,
+                  flexShrink: 0,
+                  // The rail row square's inline track (HkSidebar.scss)
+                  // derives from this token, so a non-default
+                  // sidebarCollapsedWidth keeps producing exact squares.
+                  "--hk-sidebar-rail-w": props.sidebarCollapsedWidth,
+                }}
                 onPointerenter={onSidebarHostPointerEnter}
                 onPointerleave={rail.onPointerLeave}
                 onPointermove={onSidebarHostPointerMove}

@@ -94,7 +94,7 @@ describe("HkSidebar scroll end-cap", () => {
     expect(
       bodySquare![1]!.trim(),
       "the body dress is the row square's inline track ALONE — any block spelling here moves rows",
-    ).toBe("padding-inline: 11px;");
+    ).toBe("padding-inline: calc((var(--hk-sidebar-rail-w, 56px) - 34px) / 2);");
     const header = ruleBody(css, ".hk-sidebar-rail-generation[data-rail] .hk-sidebar-header");
     expect(header, "the collapsed header rule exists (grouped density carriers)").not.toBeNull();
     expect(header).toContain("padding: var(--space-16) var(--space-8)");
@@ -104,7 +104,8 @@ describe("HkSidebar scroll end-cap", () => {
     // The stronger, spelling-proof form (whole-dress scan): EVERY
     // padding declaration in ANY dress rule must be EXACTLY one of the
     // two sanctioned values — the expanded two-track shorthand (header/
-    // footer bands) or the body's square track — exact, not a prefix: a
+    // footer bands) or the body's token-derived square track — exact,
+    // not a prefix: a
     // three-track spelling (`padding: var(--space-16) var(--space-8)
     // var(--space-12)`) drifts the block END past a block-start-only
     // check, and a longhand (`padding-block-start:`) hides from a
@@ -146,7 +147,7 @@ describe("HkSidebar scroll end-cap", () => {
           expect(
             text,
             `a dress inline track drifted from the row square: ${text}`,
-          ).toBe("padding-inline: 11px");
+          ).toBe("padding-inline: calc((var(--hk-sidebar-rail-w, 56px) - 34px) / 2)");
         } else {
           expect(
             text,

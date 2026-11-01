@@ -102,9 +102,10 @@ export default defineComponent({
     rail: { type: Boolean, default: false },
     /** Pinned width of the RAIL generation. The host's collapsed-width
      *  token (HkSidebar's `collapsedWidth`, the shell's
-     *  `sidebarCollapsedWidth`, wowsp's 56px). COUPLING (2026-11-02): the
-     *  rail row square in HkSidebar.scss derives from the 56px default —
-     *  a non-56 rail needs its body inline track retuned alongside. */
+     *  `sidebarCollapsedWidth`, wowsp's 56px). The rail row square's
+     *  body inline track reads the same width as
+     *  `--hk-sidebar-rail-w` — declared by the rail holder (HkSidebar /
+     *  HkFaceShell), so a non-default width keeps exact squares. */
     railWidth: { type: String, default: "56px" },
     /** Pinned width of the EXPANDED generation. The host's full sidebar
      *  width token — a CSS length or a var() reference. */

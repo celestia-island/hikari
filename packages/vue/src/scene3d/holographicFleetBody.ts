@@ -93,26 +93,31 @@ function lineMaterial(color: THREE.Color, opacity: number): THREE.LineBasicMater
 }
 
 /** How much content a dial tier draws (user direction: main cores carry
- *  MORE content than node cores — rings, ticks, arcs — never identical). */
+ *  MORE content than node cores — rings, ticks, arcs — never identical;
+ *  2026-10-31 follow-up: they are also BRIGHTER, not just denser). */
 interface DialTier {
   rings: ReadonlyArray<{ scale: number; opacity: number }>;
   tickCount: number;
+  tickOpacity: number;
   arcs: ReadonlyArray<{ scale: number; start: number; span: number; opacity: number }>;
   core: boolean;
+  coreOpacity: number;
 }
 
 const FOCUS_STAR: DialTier = {
   rings: [
-    { scale: 1, opacity: 0.72 },
-    { scale: 0.64, opacity: 0.3 },
-    { scale: 0.38, opacity: 0.22 },
+    { scale: 1, opacity: 0.95 },
+    { scale: 0.64, opacity: 0.45 },
+    { scale: 0.38, opacity: 0.32 },
   ],
   tickCount: 48,
+  tickOpacity: 0.78,
   arcs: [
-    { scale: 1, start: -0.25, span: Math.PI * 0.62, opacity: 0.94 },
-    { scale: 0.64, start: Math.PI * 0.85, span: Math.PI * 0.2, opacity: 0.62 },
+    { scale: 1, start: -0.25, span: Math.PI * 0.62, opacity: 1 },
+    { scale: 0.64, start: Math.PI * 0.85, span: Math.PI * 0.2, opacity: 0.82 },
   ],
   core: true,
+  coreOpacity: 0.42,
 };
 
 const FOCUS_PLANET: DialTier = {
@@ -121,10 +126,12 @@ const FOCUS_PLANET: DialTier = {
     { scale: 0.52, opacity: 0.26 },
   ],
   tickCount: 28,
+  tickOpacity: 0.58,
   arcs: [
     { scale: 1, start: -0.25, span: Math.PI * 0.5, opacity: 0.9 },
   ],
   core: true,
+  coreOpacity: 0.26,
 };
 
 /** The five non-facing shell faces: an outline and a faint arc only, so
@@ -132,8 +139,10 @@ const FOCUS_PLANET: DialTier = {
 const SUPPORT: DialTier = {
   rings: [{ scale: 1, opacity: 0.28 }],
   tickCount: 0,
+  tickOpacity: 0,
   arcs: [{ scale: 1, start: -0.25, span: Math.PI * 0.62, opacity: 0.34 }],
   core: false,
+  coreOpacity: 0,
 };
 
 function focusTierFor(role: "star" | "planet"): DialTier {
@@ -174,7 +183,7 @@ function makeFaceDial(
         "position",
         new THREE.Float32BufferAttribute(ticks, 3),
       ),
-      lineMaterial(color, offline ? 0.12 : 0.58),
+      lineMaterial(color, offline ? tier.tickOpacity * 0.2 : tier.tickOpacity),
     ));
     tickMarks.name = "fleet-hologram-face-dial-ticks";
     dial.add(tickMarks);
@@ -195,7 +204,7 @@ function makeFaceDial(
       new THREE.MeshBasicMaterial({
         color,
         transparent: true,
-        opacity: offline ? 0.08 : 0.26,
+        opacity: offline ? tier.coreOpacity * 0.3 : tier.coreOpacity,
         side: THREE.DoubleSide,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
@@ -240,21 +249,25 @@ function makeDiscShell(
 /** A stack of concentric circles along the Z axis: fat at the equator,
  *  tapering to thin rings at the poles (user direction 2026-10-31 — this
  *  is the second of the two fused structures; it rounds the shell into a
- *  ball and keeps every side view a set of nested circles). */
+ *  ball and keeps every side view a set of nested circles). `brightness`
+ *  scales the ring opacities so a main core's ball burns brighter than a
+ *  node's without adding clutter (2026-10-31 follow-up). */
 function makeRingSpindle(
   bodyRadius: number,
   color: THREE.Color,
   offline: boolean,
   count: number,
+  brightness = 1,
 ): THREE.Group {
   const spindle = new THREE.Group();
   spindle.name = "fleet-hologram-ring-spindle";
   for (let i = 0; i < count; i += 1) {
     const t = count === 1 ? 0 : -0.97 + (1.94 * i) / (count - 1);
     const radius = bodyRadius * Math.sqrt(Math.max(0, 1 - t * t)) * 0.98;
+    const lit = Math.min(1, (0.08 + (1 - Math.abs(t)) * 0.12) * brightness);
     const loop = unpickable(new THREE.LineLoop(
       xyCircleGeometry(radius, 160),
-      lineMaterial(color, offline ? 0.04 : 0.08 + (1 - Math.abs(t)) * 0.12),
+      lineMaterial(color, offline ? lit * 0.2 : lit),
     ));
     loop.name = "fleet-hologram-ring-spindle-circle";
     loop.position.z = bodyRadius * t;
@@ -371,11 +384,14 @@ export function makeFleetHologram(
   mesh.name = "fleet-hologram-core";
 
   const shell = makeDiscShell(input.radius, color, offline);
+  // A main core's ball BURNS brighter as well as denser (2026-10-31
+  // follow-up): 1.5× spindle brightness on top of the richer dial tier.
   shell.add(makeRingSpindle(
     input.radius,
     color,
     offline,
     input.role === "star" ? 9 : 6,
+    input.role === "star" ? 1.5 : 1,
   ));
   group.add(shell);
 

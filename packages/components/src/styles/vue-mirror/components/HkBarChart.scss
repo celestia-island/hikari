@@ -1,0 +1,64 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkBarChart anatomy — self-sufficient styling (the component
+// self-sufficiency guard): every class lives here, no host atomic or
+// utility layer. Ink comes from theme tokens so scheme flips repaint
+// with no re-render.
+//
+// Upstreamed from wowsp's PlaytimeTrendChart.scss.
+//
+// AI-generated (GLM-5.3 via ZCode), 2026-10-31 — SySL-1.0 §2.3.
+
+.hk-bar-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+
+  &--empty {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm, 13px);
+    color: var(--hi-color-muted);
+  }
+
+  &__grid {
+    stroke: rgb(var(--color-text) / 0.12);
+    stroke-width: 1;
+  }
+
+  &__axis {
+    fill: rgb(var(--color-text) / 0.55);
+    font-size: 10px;
+    text-anchor: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__x {
+    fill: rgb(var(--color-text) / 0.55);
+    font-size: 10px;
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__bar {
+    fill: rgb(var(--color-primary));
+    outline: none;
+    cursor: pointer;
+    transition: filter 0.16s ease;
+
+    &:hover,
+    &:focus-visible {
+      filter: brightness(1.08) saturate(1.15);
+    }
+  }
+}

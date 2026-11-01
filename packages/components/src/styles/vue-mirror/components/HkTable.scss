@@ -1,0 +1,450 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* Track host for the wrapper's horizontal overlay rail — the wrapper is
+   the component root, so its DOM parent is consumer markup the rail
+   must never span. */
+
+@use "../styles/polyfill" as *;
+
+.hk-table-host {
+  position: relative;
+}
+
+.hk-table-wrapper {
+  width: 100%;
+  /* Horizontal-only region: the wrapper's height grows with the table, so
+     vertical overflow (and a vertical bar) can never arise — keep it that
+     way if a max-height is ever introduced here, or the overlay's
+     vertical axis must be attached alongside. */
+  overflow-x: auto;
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hk-table {
+  width: 100%;
+  font-size: var(--text-base, 0.875rem);
+  border-collapse: collapse;
+  color: var(--hi-color-text-primary, #1e1e1e);
+}
+
+.hk-table-header-row {
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+}
+
+.hk-table-header-cell {
+  /* md values live here: the wrapper always carries `hk-table-${size}`
+     (default md), whose override used to mask these base paddings. */
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  text-align: start;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-text-secondary, #666666);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  @include user-select(none);
+}
+
+.hk-table-header-sortable {
+  cursor: pointer;
+  transition: color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+
+  &:hover {
+    color: var(--hi-color-primary, #7aa2f7);
+  }
+}
+
+.hk-table-header-sorted {
+  color: var(--hi-color-primary, #7aa2f7);
+}
+
+.hk-table-header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 4px);
+}
+
+.hk-table-sort-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.hk-table-sort-icon-desc {
+  transform: rotate(180deg);
+}
+
+.hk-table-body {
+  .hk-table-row {
+    border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.05));
+  }
+}
+
+.hk-table-hover .hk-table-row:hover {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.04));
+}
+
+.hk-table-striped .hk-table-row:nth-child(even) {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
+}
+
+.hk-table-bordered {
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.1));
+  border-radius: var(--radius-md, 8px);
+
+  .hk-table-header-cell,
+  .hk-table-cell {
+    border: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
+  }
+
+  .hk-table-header-cell {
+    border-bottom: 2px solid var(--hi-color-border, rgba(100,100,100,0.1));
+  }
+}
+
+.hk-table-cell {
+  /* md values (see .hk-table-header-cell). */
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  color: var(--hi-color-text-primary, #1e1e1e);
+  vertical-align: middle;
+}
+
+/* Size variants */
+.hk-table-sm {
+  .hk-table-header-cell,
+  .hk-table-cell {
+    padding: var(--space-4, 4px) var(--space-8, 8px);
+    font-size: var(--text-xs, 0.75rem);
+  }
+}
+
+.hk-table-lg {
+  .hk-table-header-cell,
+  .hk-table-cell {
+    padding: var(--space-16, 16px) var(--space-24, 24px);
+  }
+}
+
+/* Grip cells: tighter than a content cell and flush to the row's trailing
+   edge. Specificity 0,2,0 — equal to the size variants' `.hk-table-sm
+   .hk-table-cell` rules above but later in source order, which is what makes
+   the trim hold at EVERY size (a bare `.hk-table-drag-cell` is 0,1,0, so the
+   sm/lg padding silently won and the grip cell stayed wide). */
+.hk-table .hk-table-drag-col {
+  padding-right: 0;
+}
+
+.hk-table .hk-table-drag-cell {
+  padding-right: 0;
+  width: 36px;
+  white-space: nowrap;
+}
+
+.hk-table-empty {
+  padding: var(--space-32, 32px) var(--space-16, 16px);
+  text-align: center;
+  color: var(--hi-color-text-secondary, #666666);
+}
+
+/* ── Drag-to-reorder (draggable) ─────────────────────────────────────── */
+
+.hk-table-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-20, 20px);
+  height: var(--space-24, 24px);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  cursor: grab;
+  /* An explicit grip owns the gesture: the page must not pan under a
+     held drag (house pattern: HkDraggableList's handle). */
+  touch-action: none;
+
+  &:hover {
+    color: var(--hi-color-text-secondary, #666666);
+    background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.04));
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--hi-color-bg-canvas, #0d1117), 0 0 0 4px var(--hi-color-primary, #7aa2f7);
+  }
+
+  /* A sorted table refuses to reorder (the emitted index pair could not
+     reproduce the visual move against a derived arrangement) — the grip
+     must LOOK inert, not merely be inert. */
+  &[data-disabled] {
+    color: var(--hi-color-text-tertiary, #8b949e);
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* The pressed row becomes the PLACEHOLDER: the same element, so exactly
+   the size the strip laid out, dimmed and primary-tinted where it sits
+   (house pattern: HkDraggableList's source row). The paint lives on the
+   CELLS, not the <tr>: a row's cells are plain boxes in every engine,
+   while row-level decoration (a clip-path rounding a box-shadow ring)
+   rides the engine's table paint pass and is exactly the kind of <tr>
+   styling the predecessor's own warning ruled unreliable. The tint rounds
+   on the end cells' radii — the "selected border is square" fix, drawn
+   where rounding is guaranteed. */
+.hk-table-draggable .hk-table-row[data-dragging] {
+  opacity: 0.4;
+}
+
+.hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell {
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
+}
+
+.hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell:first-child {
+  border-top-left-radius: var(--radius-md, 8px);
+  border-bottom-left-radius: var(--radius-md, 8px);
+}
+
+.hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell:last-child {
+  border-top-right-radius: var(--radius-md, 8px);
+  border-bottom-right-radius: var(--radius-md, 8px);
+}
+
+/* The FLIP shift: the row NAMES the displacement (a custom property is
+   inert paint-wise) and its cells carry it — a <td> is a plain box, so
+   the transform is engine-proof where a <tr> transform is not (the
+   predecessor's own warning). Rows the arrangement leaves put carry no
+   [data-shift] and no property. */
+.hk-table-draggable[data-dragging] .hk-table-row[data-shift] > .hk-table-cell,
+.hk-table-draggable[data-shift-held] .hk-table-row[data-shift] > .hk-table-cell,
+.hk-table-draggable[data-releasing] .hk-table-row[data-shift] > .hk-table-cell {
+  transform: translateY(var(--hk-drag-shift, 0px));
+}
+
+/* Arrangement shifts (the placeholder onto the resolved slot, neighbours
+   gliding one slot across), the placeholder's un-dim on release and the
+   cancelled arrangement's return glide transition; they are armed only
+   while a gesture owns the strip (`data-dragging`), while a held drop
+   waits for the consumer's rows (`data-shift-held`), or for the one beat
+   a release needs to glide home (`data-releasing` — the arming attribute
+   must outlive the transform removal, since a CSS transition reads the
+   after-change style) — so the forced stale-transform clear at a NEW
+   drag's measure never glides, and idle cells never carry a transition. */
+.hk-table-draggable[data-dragging] .hk-table-row > .hk-table-cell,
+.hk-table-draggable[data-shift-held] .hk-table-row > .hk-table-cell,
+.hk-table-draggable[data-releasing] .hk-table-row > .hk-table-cell {
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-table-draggable[data-dragging] .hk-table-row,
+.hk-table-draggable[data-releasing] .hk-table-row {
+  transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Text under a live drag must not select (the press starts on the grip,
+   but a move across cells can start a native selection). */
+.hk-table-draggable .hk-table-row[data-dragging] .hk-table-cell {
+  @include user-select(none);
+}
+
+/* The lifted row the pointer carries: a detached, semi-transparent clone
+   of the pressed row (house pattern: HkDraggableList's ghost), appended
+   to <body> and positioned via the inline translate3d the tsx writes on
+   every pointer move — no class transform could win that cascade. It is
+   a plain positioned box, so THIS is where the lift gets the rounded
+   corners and the elevation shadow the <tr> placeholder cannot draw. */
+.hk-table-drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  opacity: 0.88;
+  border-radius: var(--radius-md, 8px);
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 28%),
+    0 2px 6px rgb(0 0 0 / 18%),
+    inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
+  background: var(--hi-color-bg-elevated, #161b22);
+  overflow: hidden;
+  pointer-events: none;
+  /* Drag ghost: above page chrome (--z-sidebar 900) but below every
+     popup band (overlay 1000 < dropdown 2000 < tooltip 3000 < toast 4000)
+     so a drag never buries toasts or open panels. */
+  z-index: var(--hk-z-drag);
+  will-change: transform;
+  transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &[data-fading] {
+    opacity: 0;
+  }
+
+  > .hk-table {
+    margin: 0;
+  }
+}
+
+/* Reduced motion: the arrangement glides snap instead of tweening, and
+   the ghost skips its fade (the row follows the pointer 1:1 — direct
+   manipulation, not autonomous motion — so IT is left alone; house
+   convention: HkDraggableList.scss / HkAffixPicker.scss guards). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-table-draggable[data-dragging] .hk-table-row > .hk-table-cell,
+  .hk-table-draggable[data-shift-held] .hk-table-row > .hk-table-cell,
+  .hk-table-draggable[data-releasing] .hk-table-row > .hk-table-cell {
+    transition: none;
+  }
+
+  .hk-table-draggable[data-dragging] .hk-table-row,
+  .hk-table-draggable[data-releasing] .hk-table-row {
+    transition: opacity 150ms ease;
+  }
+
+  .hk-table-drag-ghost {
+    transition: none;
+  }
+}
+
+/* Alignment helpers (start/end so aligned columns mirror in RTL; the
+   tsx keeps emitting the hk-text-* names) */
+.hk-text-left {
+  text-align: start;
+}
+
+.hk-text-center {
+  text-align: center;
+}
+
+.hk-text-right {
+  text-align: end;
+}
+
+/* Checkbox styles inline */
+.hk-table-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  @include user-select(none);
+}
+
+.hk-table-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.hk-table-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--hi-color-border, rgba(100,100,100,0.2));
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  transition:
+    background-color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+
+  &-md {
+    width: 16px;
+    height: 16px;
+  }
+
+  &-checked {
+    background: var(--hi-color-primary, #7aa2f7);
+    border-color: var(--hi-color-primary, #7aa2f7);
+  }
+
+  .hk-table-checkbox-input:focus-visible + & {
+    box-shadow:
+      0 0 0 2px var(--hi-color-bg-canvas, #0d1117),
+      0 0 0 4px var(--hi-color-primary, #7aa2f7);
+  }
+}
+
+.hk-table-checkbox-icon {
+  width: 12px;
+  height: 12px;
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
+}
+
+/* Visually hidden caption (kept in the a11y tree) */
+.hk-table-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduced motion: the sort icon snaps between asc/desc instead of
+   rotating (house pattern: HkExpansionPanel.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-table-sort-icon {
+    transition: none;
+  }
+}
+
+/* ── Table interaction contract (2026-10-18 user direction) ───────────
+   Table content is not prose. While the copy layer is enabled
+   (`copy-cells`, the default), body cells kill drag mass-selection
+   (user-select: none) and advertise the click-to-copy affordance with
+   the `copy` cursor — text clicks run the shared clipboard-with-toast
+   path (HkTable.tsx). Both halves scope under `data-copy-cells`, so a
+   consumer that opts out gets plain selectable text back wholesale. */
+.hk-table[data-copy-cells] {
+  .hk-table-cell {
+    @include user-select(none);
+    cursor: copy;
+  }
+
+  /* The row-actions column is a control, not text — no copy cursor. */
+  .hk-table-manage-cell {
+    cursor: default;
+  }
+}
+
+/* Opt-out consumers get plain selectable cells back — explicit because
+ * the L2 selection policy (2026-10-29) denies at the root now: absence
+ * of the copy-cells deny rule no longer means selectable. Same shape as
+ * the copy layer, so "wholesale" is a per-cell mirror of the default. */
+.hk-table:not([data-copy-cells]) {
+  .hk-table-cell {
+    @include user-select(text);
+  }
+}
+
+/* The standard trailing row-actions column (HkRowActions trigger):
+   fixed narrow track, centered, never wrapping. */
+.hk-table-manage-cell {
+  width: 36px;
+  text-align: center;
+  white-space: nowrap;
+}

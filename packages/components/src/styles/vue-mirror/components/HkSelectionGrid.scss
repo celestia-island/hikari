@@ -1,0 +1,323 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-selection-grid {
+  margin-bottom: var(--space-16, 1rem);
+}
+
+.hk-selection-grid-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin: 0 0 var(--space-8, 0.5rem);
+}
+
+/* Foot note under the grid — same register as .hk-input-hint so the
+   helper line reads identically wherever it appears in a form. */
+.hk-selection-grid-hint {
+  margin: var(--space-4, 0.25rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  text-align: start;
+}
+
+.hk-selection-grid-grid {
+  display: grid;
+  gap: var(--space-8, 0.5rem);
+
+  &[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+  &[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+  &[data-cols="4"] { grid-template-columns: repeat(4, 1fr); }
+
+  /* Adaptive floor mode (minItemWidth prop): the column count derives from
+   * the available width — every track is at least the floor, and hosts
+   * wide enough for one more column simply get it. The min(..., 100%)
+   * guard keeps a lone track capped at the container width, so nothing
+   * overflows below one floor of space. Fluid grids emit no data-cols, so
+   * the narrow-viewport overrides further down never fight this rule. */
+  &[data-fluid] {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(var(--hk-selection-grid-item-min, 240px), 100%), 1fr)
+    );
+  }
+
+  &[data-dense] {
+    gap: var(--space-6, 0.375rem);
+
+    .hk-selection-grid-item {
+      padding: var(--space-8, 0.5rem) var(--space-10, 0.625rem);
+    }
+  }
+}
+
+.hk-selection-grid-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-12, 0.75rem);
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--hi-color-border, #646464);
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease;
+  @include user-select(none);
+
+  &:hover {
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 4%, transparent);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent);
+  }
+
+  &:active {
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
+  }
+
+  // Keyboard focus indicator drawn inside the border box (negative outline
+  // offset) for the same overlap-immunity as the selected ring below.
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  // Selected emphasis is drawn INSIDE the border box (border + inset ring =
+  // 2px on every side). An outer ring (`0 0 0 1px`) lives outside the border
+  // box, where any overlapping chrome — frosted sticky headers, clipping
+  // ancestors, adjacent paint order — can shave individual sides and leave
+  // the frame visibly lopsided (observed as a 1px top vs 2px sides under
+  // HkStepFlow's sticky header).
+  &[data-selected] {
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
+    box-shadow: inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
+
+    &:hover {
+      background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 9%, transparent);
+      box-shadow:
+        inset 0 0 0 1px var(--hi-color-primary, #7aa2f7),
+        0 2px 12px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 14%, transparent);
+    }
+
+    .hk-selection-grid-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .hk-selection-grid-icon {
+      color: var(--hi-color-primary, #7aa2f7);
+    }
+
+    .hk-selection-grid-name {
+      color: var(--hi-color-primary, #7aa2f7);
+      font-weight: 600;
+    }
+  }
+}
+
+.hk-selection-grid-check {
+  position: absolute;
+  top: var(--space-6, 0.375rem);
+  inset-inline-end: var(--space-6, 0.375rem);
+  width: var(--space-20, 1.25rem);
+  height: var(--space-20, 1.25rem);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hi-color-primary, #7aa2f7);
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
+  font-size: var(--text-2xs, 0.625rem);
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.hk-selection-grid-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.hk-selection-grid-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6, 0.375rem);
+  flex-wrap: wrap;
+}
+
+.hk-selection-grid-icon {
+  flex-shrink: 0;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  transition: color 200ms ease;
+}
+
+.hk-selection-grid-name {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+  line-height: 1.4;
+  transition: color 200ms ease;
+}
+
+.hk-selection-grid-desc {
+  font-size: 0.6875rem;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin: var(--space-4, 0.25rem) 0 0;
+  line-height: 1.4;
+}
+
+.hk-selection-grid-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-6, 0.375rem);
+  height: 1rem;
+  font-size: var(--text-2xs, 0.625rem);
+  font-weight: 600;
+  border-radius: 9999px;
+  background: var(--hi-color-bg-subtle, #21262d);
+  color: var(--hi-color-text-tertiary, #8b949e);
+  letter-spacing: 0.02em;
+
+  &[data-variant="primary"] {
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 12%, transparent);
+    color: var(--hi-color-primary, #7aa2f7);
+  }
+
+  &[data-variant="success"] {
+    background: color-mix(in srgb, var(--hi-color-success, #0eb840) 12%, transparent);
+    color: var(--hi-color-success, #0eb840);
+  }
+
+  &[data-variant="info"] {
+    background: color-mix(in srgb, var(--hi-color-info, #6abed6) 12%, transparent);
+    color: var(--hi-color-info, #6abed6);
+  }
+}
+
+@media (max-width: 640px) {
+  .hk-selection-grid-grid[data-cols="3"],
+  .hk-selection-grid-grid[data-cols="4"] {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .hk-selection-grid-grid[data-cols="2"],
+  .hk-selection-grid-grid[data-cols="3"],
+  .hk-selection-grid-grid[data-cols="4"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-selection-grid-check,
+  .hk-selection-grid-item[data-selected] .hk-selection-grid-check {
+    transform: none;
+    transition: opacity 200ms ease;
+  }
+}
+
+/* ── List layout ─────────────────────────────────────────────────────────
+   The same option vocabulary as full-width rows in ONE column — the
+   picker-list dress (a credential, an image, a disk) rather than a card
+   grid. The check leaves the corner and sits centered on the row's
+   trailing edge, where a list's selection mark belongs. */
+.hk-selection-grid[data-layout="list"] {
+  .hk-selection-grid-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hk-selection-grid-item {
+    align-items: center;
+    padding-inline-end: var(--space-40, 2.5rem);
+  }
+
+  .hk-selection-grid-check {
+    top: 50%;
+    translate: 0 -50%;
+    inset-inline-end: var(--space-10, 0.625rem);
+  }
+}
+
+/* ── Trailing item actions ───────────────────────────────────────────────
+   Icon buttons on the row's right edge (remove / dismiss …). They never
+   select the item — the component stops their click propagation — and
+   they sit in the row's own trailing cell. */
+.hk-selection-grid-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.125rem);
+  margin-inline-start: auto;
+  align-self: center;
+  // Keep clear of the corner check in grid layout; the list layout already
+  // reserves that room on the item itself.
+  padding-inline-end: var(--space-16, 1rem);
+}
+
+.hk-selection-grid[data-layout="list"] .hk-selection-grid-actions {
+  padding-inline-end: 0;
+}
+
+.hk-selection-grid-action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background 200ms ease;
+
+  &:hover:not(:disabled) {
+    color: rgb(var(--color-text));
+    background: rgb(var(--color-text) / 8%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* ── Optional selected edge ──────────────────────────────────────────────
+   A thickened primary bar on the item's LEADING side, drawn inside the
+   border box (a pseudo element, so nothing shifts) — the "this is the
+   chosen one" cue some hosts want on top of the ring + check. */
+.hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-start-start-radius: var(--radius-sm, 4px);
+  border-end-start-radius: var(--radius-sm, 4px);
+  background: var(--hi-color-primary, #7aa2f7);
+}

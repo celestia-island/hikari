@@ -185,7 +185,13 @@ beforeEach(() => {
   ) {
     const listeners = new Map<string, EventListener>();
     let cancels = 0;
-    const handle = {
+    // Typed as a PARTIAL Animation (plus this suite's own fire()
+    // harness method, which the recorded animations read back) so the
+    // return below is a SINGLE cast — the type-escape gate rejects the
+    // double-cast this literal used to carry.
+    const handle: Partial<Animation> & {
+      fire(type: "finish" | "cancel"): void;
+    } = {
       addEventListener: (type: string, listener: EventListener) => {
         listeners.set(type, listener);
       },
@@ -204,7 +210,7 @@ beforeEach(() => {
       fire: handle.fire,
       cancelCount: () => cancels,
     });
-    return handle as unknown as Animation;
+    return handle as Animation;
   } as typeof animatable.animate;
 });
 
@@ -484,7 +490,7 @@ describe("useRailIconFlight", () => {
     // Minimal MediaQueryList fake — spread of a live list loses the
     // accessor. `matches: true` must be readable at SETUP time: the
     // composable subscribes once and reads its ref in flightCapable().
-    const fakeList = {
+    const fakeList: Partial<MediaQueryList> = {
       matches: true,
       media: "(prefers-reduced-motion: reduce)",
       onchange: null,
@@ -493,8 +499,10 @@ describe("useRailIconFlight", () => {
       addListener: () => {},
       removeListener: () => {},
       dispatchEvent: () => false,
-    } as unknown as MediaQueryList;
-    vi.spyOn(window, "matchMedia").mockReturnValue(fakeList);
+    };
+    // Single cast from the Partial (see the animate fake above): the
+    // gate owns the double-cast this file used to carry.
+    vi.spyOn(window, "matchMedia").mockReturnValue(fakeList as MediaQueryList);
     const h = mountSwap();
     await h.set(true);
     const { leaving, entering } = dissolvePair(h, true);

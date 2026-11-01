@@ -10,7 +10,12 @@
 // rsx children are written `{expr}` by grammar; the macro expands them into
 // call arguments, so rustc's `unused_braces` misfires on the source spans.
 #![allow(unused_braces)]
+// Rust
+// rsx component blocks spell `field: value` with the same binding name (they mirror
+// Vue's prop names); clippy flags each one after macro expansion.
+#![allow(clippy::redundant_field_names)]
 
+pub mod auth;
 pub mod basic;
 pub mod data;
 pub mod display;
@@ -19,6 +24,7 @@ pub mod feedback;
 pub mod hooks;
 pub mod layout;
 pub mod navigation;
+pub mod overlay;
 pub mod platform;
 pub mod portal;
 pub mod production;
@@ -33,6 +39,7 @@ pub mod prelude;
 
 // Re-export StyledComponent and StyleRegistry
 // Re-exports
+pub use auth::*;
 pub use basic::*;
 pub use data::*;
 pub use display::*;
@@ -40,6 +47,7 @@ pub use entry::*;
 pub use feedback::*;
 pub use layout::*;
 pub use navigation::*;
+pub use overlay::*;
 pub use production::*;
 pub use styled::{StyleRegistry, StyledComponent};
 

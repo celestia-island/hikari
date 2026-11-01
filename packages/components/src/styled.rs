@@ -340,6 +340,53 @@ impl StyleRegistry {
         // No-op
     }
 
+    /// Registers the overlay family mirrors.
+    #[cfg(feature = "overlay")]
+    pub fn register_overlay_components(&mut self) {
+        use crate::overlay::{
+            AdaptiveDialogComponent, ContextMenuProviderComponent, FloatingLayerComponent,
+            PopupSelectComponent, ProtocolModalComponent, SelectPanelComponent,
+        };
+        AdaptiveDialogComponent::register(self);
+        ContextMenuProviderComponent::register(self);
+        FloatingLayerComponent::register(self);
+        PopupSelectComponent::register(self);
+        ProtocolModalComponent::register(self);
+        SelectPanelComponent::register(self);
+    }
+
+    #[cfg(not(feature = "overlay"))]
+    pub fn register_overlay_components(&mut self) {
+        // No-op
+    }
+
+    /// Registers the auth family mirrors.
+    #[cfg(feature = "auth")]
+    pub fn register_auth_components(&mut self) {
+        use crate::auth::{
+            AltSignInComponent, AuthCardComponent, AuthMethodListComponent,
+            AuthSubmitButtonComponent, CaptchaModalComponent, CaptchaWidgetComponent,
+            CookieConsentComponent, MfaVerifyCardComponent, PasswordSurfaceComponent,
+            SignInCardComponent, ThirdPartySignInCardComponent,
+        };
+        AltSignInComponent::register(self);
+        AuthCardComponent::register(self);
+        AuthMethodListComponent::register(self);
+        AuthSubmitButtonComponent::register(self);
+        CaptchaModalComponent::register(self);
+        CaptchaWidgetComponent::register(self);
+        CookieConsentComponent::register(self);
+        MfaVerifyCardComponent::register(self);
+        PasswordSurfaceComponent::register(self);
+        SignInCardComponent::register(self);
+        ThirdPartySignInCardComponent::register(self);
+    }
+
+    #[cfg(not(feature = "auth"))]
+    pub fn register_auth_components(&mut self) {
+        // No-op
+    }
+
     /// Registers all entry components
     #[cfg(feature = "entry")]
     pub fn register_entry_components(&mut self) {
@@ -383,6 +430,8 @@ impl StyleRegistry {
         #[cfg(feature = "entry")]
         self.register_entry_components();
         self.register_layout_components();
+        self.register_overlay_components();
+        self.register_auth_components();
     }
 
     /// Registers all components regardless of feature flags
@@ -395,6 +444,8 @@ impl StyleRegistry {
         self.register_navigation_components();
         self.register_display_components();
         self.register_layout_components();
+        self.register_overlay_components();
+        self.register_auth_components();
         self.register_entry_components();
     }
 }

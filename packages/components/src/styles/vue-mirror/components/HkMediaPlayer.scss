@@ -1,0 +1,39 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-media-player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgb(0 0 0 / 0.2);
+}
+
+.hk-media-player.is-fullscreen {
+  width: 100%;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.hk-media-player-video {
+  width: 100%;
+  max-height: 60vh;
+  display: block;
+  background: #000;
+  cursor: pointer;
+}
+
+.hk-media-player.is-fullscreen .hk-media-player-video {
+  max-height: none;
+  height: 100%;
+  object-fit: contain;
+}

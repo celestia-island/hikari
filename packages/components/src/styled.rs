@@ -255,13 +255,39 @@ impl StyleRegistry {
     #[cfg(feature = "display")]
     pub fn register_display_components(&mut self) {
         use crate::display::{
-            CommentComponent, EmptyComponent, QRCodeComponent, SkeletonComponent, TagComponent,
+            CommentComponent, CountdownDigitComponent, CrossfadeComponent, DiffViewerComponent,
+            EmptyStateComponent, HoverRevealActionComponent, ImageLightboxComponent,
+            ImagePreviewComponent, ImageViewerComponent, InfiniteTailComponent, JsonTreeComponent,
+            ListTransitionComponent, LoadMoreComponent, LogWindowComponent,
+            MarkdownRendererComponent, MediaControlBarComponent, MediaPlayerComponent,
+            MediaSliderComponent, MediaVisualizerComponent, QrCodeComponent, SkeletonComponent,
+            TagComponent, TerminalComponent, TimelineComponent, TransitionContainerComponent,
         };
         TagComponent::register(self);
-        EmptyComponent::register(self);
         SkeletonComponent::register(self);
+        TimelineComponent::register(self);
+        EmptyStateComponent::register(self);
+        QrCodeComponent::register(self);
+        CountdownDigitComponent::register(self);
+        HoverRevealActionComponent::register(self);
+        LoadMoreComponent::register(self);
+        CrossfadeComponent::register(self);
+        ListTransitionComponent::register(self);
+        TransitionContainerComponent::register(self);
+        InfiniteTailComponent::register(self);
+        MediaPlayerComponent::register(self);
+        MediaSliderComponent::register(self);
+        MediaControlBarComponent::register(self);
+        MediaVisualizerComponent::register(self);
+        ImageLightboxComponent::register(self);
+        ImagePreviewComponent::register(self);
+        ImageViewerComponent::register(self);
+        TerminalComponent::register(self);
+        LogWindowComponent::register(self);
+        JsonTreeComponent::register(self);
+        MarkdownRendererComponent::register(self);
+        DiffViewerComponent::register(self);
         CommentComponent::register(self);
-        QRCodeComponent::register(self);
     }
 
     #[cfg(not(feature = "display"))]

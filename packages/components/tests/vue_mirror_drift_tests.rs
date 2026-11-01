@@ -385,6 +385,28 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-selection-waterfall",
         ".hk-card-list",
         ".hk-pill-group-pill",
+        // W4 display + media family
+        ".hk-empty-state",
+        ".hk-qr-card",
+        ".hk-skeleton",
+        ".hk-timeline",
+        ".hk-infinite-tail-sentinel",
+        ".hk-load-more",
+        ".hk-crossfade",
+        ".hk-list-pop-move",
+        ".hk-tc",
+        ".hk-hover-reveal",
+        ".hk-media-player",
+        ".hk-media-slider",
+        ".hk-media-controls",
+        ".hk-media-visualizer",
+        ".hk-modal-content.hk-image-lightbox",
+        ".hk-image-preview",
+        ".hk-image-viewer",
+        ".hk-terminal",
+        ".hk-modal-body-scroll",
+        ".hk-markdown",
+        ".hk-diff-viewer",
     ] {
         assert!(
             bundle.contains(needle),
@@ -605,11 +627,11 @@ fn mirrored_i18n_keys_exist_in_the_english_bundle() {
     let mut files = Vec::new();
     collect_files(&components_dir, &mut files);
     let mut missing: Vec<String> = Vec::new();
-    for file in files {
+    for file in &files {
         if file.extension().and_then(|e| e.to_str()) != Some("rs") {
             continue;
         }
-        let Ok(source) = std::fs::read_to_string(&file) else {
+        let Ok(source) = std::fs::read_to_string(file) else {
             continue;
         };
         for line in source.lines() {
@@ -636,5 +658,52 @@ fn mirrored_i18n_keys_exist_in_the_english_bundle() {
     assert!(
         missing.is_empty(),
         "these keys are not in the English bundle (typos fall back silently): {missing:#?}"
+    );
+
+    // Present keys must ALSO agree with the English literal the code falls back
+    // to — a same-key-different-text drift otherwise hides behind the fallback
+    // (R2 caught `hk.imageLightbox.title` that way).
+    let mut mismatched: Vec<String> = Vec::new();
+    for file in files {
+        if file.extension().and_then(|e| e.to_str()) != Some("rs") {
+            continue;
+        }
+        let Ok(source) = std::fs::read_to_string(&file) else {
+            continue;
+        };
+        for line in source.lines() {
+            let Some(at) = line.find("components.hk.") else {
+                continue;
+            };
+            let rest = &line[at + "components.hk.".len()..];
+            let key: String = rest
+                .chars()
+                .take_while(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-' || *c == '_')
+                .collect();
+            if key.is_empty() || key.ends_with('.') {
+                continue;
+            }
+            // The literal right after the key, when the call passes one.
+            let after = &rest[key.len()..];
+            let Some(comma) = after.find(',') else {
+                continue;
+            };
+            let tail = after[comma + 1..].trim_start();
+            if !tail.starts_with('"') {
+                continue;
+            }
+            let literal: String = tail[1..].chars().take_while(|c| *c != '"').collect();
+            if literal.is_empty() || literal.contains('{') || !literal.is_ascii() {
+                continue;
+            }
+            let needle = format!("hk.{key} = \"{literal}\"");
+            if !bundle.contains(&needle) {
+                mismatched.push(format!("{key}: code=\"{literal}\""));
+            }
+        }
+    }
+    assert!(
+        mismatched.is_empty(),
+        "bundle text disagrees with the code's English fallback: {mismatched:#?}"
     );
 }

@@ -1,0 +1,185 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// ------
+// HkImageLightbox
+// Immersive layout override for HModal (attached via the modal's
+// `contentClass` escape hatch). Selectors are doubled as
+// `.hk-modal-content.hk-image-lightbox` so the overrides win the cascade
+// over HkModal's own rules regardless of stylesheet import order.
+//
+// The frame is a fixed-size stage; the body chain (body → scroll →
+// inner) is flattened to pure flex so the HImageViewer fills it, and the
+// floating close button rides on top of the stage.
+//
+// The scroll link MUST become a flex container itself: the inner below it
+// only carries `flex: 1`, which does nothing inside a block parent —
+// without `display: flex` here the chain collapses to the stage's own
+// padding and the viewer renders 0px tall (the 2026-09-11 "white
+// lightbox" field report: full-size modal frame, invisible canvas, and
+// every wheel/pointer gesture dead because their surface had no area).
+// ------
+
+@use "../styles/polyfill" as *;
+
+.hk-modal-content.hk-image-lightbox {
+  width: min(96vw, 80rem);
+  height: min(90vh, 56rem);
+
+  // The body fills the frame; nothing scrolls here — the viewer pans
+  // internally, so the modal's scroll region is inert.
+  .hk-modal-body {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+
+    // Immersive override: the body is un-padded here, so the pin contract's
+    // gutters (and the covers with them) collapse to zero too. Declared on
+    // the body so its own covers read them (inheritance runs downward).
+    --hk-scroll-pad-top: 0px;
+    --hk-scroll-pad-right: 0px;
+    --hk-scroll-pad-bottom: 0px;
+    --hk-scroll-pad-left: 0px;
+  }
+
+  .hk-modal-body-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hk-modal-body-inner {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+}
+
+.hk-image-lightbox-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: var(--space-12, 0.75rem);
+
+  // The viewer fills the stage; its own overflow: hidden + rounded
+  // corners clip the panning image into an inset "canvas".
+  .hk-image-viewer {
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    border-radius: var(--radius-md, 8px);
+  }
+}
+
+// ------
+// Floating close button — legible on any image: translucent dark chip
+// with a blur, light glyph. Colors ride HIconButton's variable layer
+// (--hi-icon-button-*) so the icon span picks them up too.
+//
+// The hover/focus state must RE-ASSERT the real `background`/`color`
+// properties, not just the custom properties: the shared window-close
+// grammar (imported after this sheet, equal specificity on :hover) wins
+// the cascade tie and paints the near-transparent light-theme tint over
+// the dark chip, while the glyph span keeps its own
+// `color: var(--hi-icon-button-icon-color)` (white) — white glyph on the
+// white modal, the button visibly vanished (2026-09-11 field report).
+// The selectors carry the extra `.hk-window-close` class the lightbox
+// button always wears, so the pair here outranks window-close's
+// `&:hover` regardless of bundle order.
+// ------
+
+.hk-image-lightbox-close.hk-icon-button {
+  --hi-icon-button-bg: rgb(0 0 0 / 45%);
+  --hi-icon-button-bg-active: rgb(0 0 0 / 65%);
+  --hi-icon-button-icon-color: rgb(255 255 255 / 92%);
+  --hi-icon-button-icon-color-active: #fff;
+
+  position: absolute;
+  top: var(--space-12, 0.75rem);
+  right: var(--space-12, 0.75rem);
+  z-index: 2;
+  @include backdrop-filter(blur(6px));
+
+  &:hover,
+  &:focus-visible {
+    --hi-icon-button-bg: rgb(0 0 0 / 65%);
+    --hi-icon-button-icon-color: #fff;
+  }
+
+  // (0,4,0) with the pseudo-class counted — beats
+  // `.hk-icon-button.hk-window-close:hover` at (0,3,0).
+  &.hk-window-close:hover,
+  &.hk-window-close:focus-visible {
+    background: var(--hi-icon-button-bg);
+    color: var(--hi-icon-button-icon-color);
+
+    .hk-icon-button-icon {
+      color: var(--hi-icon-button-icon-color);
+    }
+  }
+
+  // Focus ring rides INSIDE the chip (negative offset, HkSelectionGrid
+  // precedent): an outward ring floats over raw imagery and vanishes on
+  // light photos.
+  &:focus-visible {
+    outline: 2px solid rgb(255 255 255 / 80%);
+    outline-offset: -2px;
+  }
+}
+
+// ------
+// Mobile (≤767px, matches HkModal's bottom-sheet breakpoint): the
+// lightbox has no header/footer chrome to dock, so the sheet form
+// (top inset + bottom gap + rounded corners) would only cost viewing
+// area — go true fullscreen instead. HkModal's own `max-width: 100%
+// !important` beats the inline max-width on phones, so plain width/height
+// finish the job without fighting that rule.
+// ------
+
+@media (max-width: 767px) {
+  .hk-modal-content.hk-image-lightbox {
+    top: 0;
+    bottom: auto;
+    left: 0;
+    // Full-bleed width from the containing block, NOT 100vw and NOT the
+    // desktop rule's inherited `min(96vw, 80rem)`: that unconditional
+    // same-specificity width would persist into mobile and, over-constrained
+    // against the inherited `left: 0; right: 0` pair, drop `right` under
+    // LTR — a persistent ~4vw dead strip on the right edge (the exact gap
+    // class this wave hunts). 100vw itself also measures the ICB including
+    // classic scrollbar gutters.
+    // Plain-vh fallback first for dvh-less engines (older Android
+    // WebView / Tauri), then the dynamic-viewport height.
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .hk-image-lightbox-stage {
+    padding: var(--space-8, 0.5rem);
+  }
+
+  .hk-image-lightbox-close.hk-icon-button {
+    // Keep the close button clear of notches / home-bar gesture areas.
+    top: calc(var(--space-8, 0.5rem) + env(safe-area-inset-top, 0px));
+    right: calc(var(--space-8, 0.5rem) + env(safe-area-inset-right, 0px));
+  }
+}

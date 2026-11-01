@@ -1,0 +1,219 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
+
+.hk-markdown {
+  /* Rendered prose is content by definition — the whole subtree selects
+   * again under the L2 selection policy (2026-10-29); its code blocks
+   * are covered twice over (whitelist tier 3). */
+  @include user-select(text);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--hi-color-text-primary, #1e1e1e);
+  position: relative;
+}
+
+.hk-markdown-body {
+  min-height: 120px;
+}
+
+.hk-markdown h1,
+.hk-markdown h2,
+.hk-markdown h3 {
+  font-weight: 700;
+  margin: 1.25em 0 0.5em;
+  color: var(--hi-color-text-primary, #1e1e1e);
+}
+
+.hk-markdown h1 { font-size: 1.5em; }
+.hk-markdown h2 { font-size: 1.25em; }
+.hk-markdown h3 { font-size: 1.1em; }
+
+.hk-markdown p {
+  margin: 0.5em 0;
+}
+
+.hk-markdown ul,
+.hk-markdown ol {
+  margin: 0.5em 0;
+  padding-inline-start: 1.5em;
+}
+
+.hk-markdown li {
+  margin: 0.25em 0;
+}
+
+.hk-markdown code {
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-size: 0.85em;
+  background: var(--hi-color-bg-subtle, #21262d);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+}
+
+/* Track host for the code block's horizontal overlay rail — emitted in
+   the generated markup (see renderMarkdown) so the rail hugs the BLOCK
+   instead of spanning the whole markdown body. Deliberately unstyled
+   beyond positioning: no padding/border/overflow means the block's own
+   vertical margins still collapse through it exactly as before. */
+.hk-md-code-wrap {
+  position: relative;
+}
+
+.hk-md-code {
+  position: relative;
+  margin: 0.75em 0;
+  padding: 1em;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  overflow-x: auto;
+  background: var(--hi-color-bg-subtle, #21262d);
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hk-md-code pre {
+  margin: 0;
+}
+
+/* Markdown tables size to their content, so a wide one (many columns, or
+   a single unbreakable cell) pushes every ancestor's min-content width
+   past its box — clipping hosts (the modal reading region, chat bubbles,
+   report cards) then leave the far columns unreachable. The renderer wraps
+   every table in the same two-level shape as code above: this wrap is the
+   rail HOST (track host for the scroller below — it contains ONLY the
+   scrolling box, so the rail hugs the table instead of spanning the whole
+   markdown body, useOverlayScrollbar's host contract) and carries the
+   table's vertical margin, because a scroll container never collapses
+   margins with its children and the margin must keep collapsing with the
+   surrounding flow exactly as the bare table's did. */
+.hk-md-table-wrap {
+  position: relative;
+  margin: 0.75em 0;
+}
+
+/* The horizontal rail itself — the viewport the overlay scrollbar attaches
+   to. Only a genuinely overflowing table grows the scroll; normal tables
+   keep their full-width layout. Same hidden-native-chrome contract as
+   .hk-md-code (the 2026-10-01 native-bar regression rule). */
+.hk-md-table-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* The railed table renders flush inside its scroller — its old vertical
+   margin lives on the host wrap above. Outranks `.hk-markdown table`
+   (two classes + one type vs one class + one type); GFM tables cannot
+   nest, so no other table is ever matched. */
+.hk-markdown .hk-md-table-wrap table {
+  margin: 0;
+}
+
+.hk-md-code-lang {
+  position: absolute;
+  top: 0.25em;
+  inset-inline-end: 0.5em;
+  font-size: 0.625em;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  opacity: 0.6;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+.hk-md-plain {
+  margin: 0;
+  padding: 0.5rem 0;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--hi-color-text-primary, #1e1e1e);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.hk-markdown blockquote {
+  margin: 0.75em 0;
+  padding: 0.5em 1em;
+  border-inline-start: 3px solid var(--hi-color-text-tertiary, #8b949e);
+  color: var(--hi-color-text-secondary, #666666);
+}
+
+.hk-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+}
+
+.hk-markdown th,
+.hk-markdown td {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--hi-color-border, #646464);
+  text-align: start;
+}
+
+.hk-markdown th {
+  font-weight: 600;
+  background: var(--hi-color-bg-subtle, #21262d);
+}
+
+.hk-markdown a {
+  color: var(--hi-color-primary, #7aa2f7);
+  text-decoration: none;
+}
+
+.hk-markdown a:hover {
+  text-decoration: underline;
+}
+
+/* Rendered GFM links are real anchors — keyboard-focusable, so they need
+   the house :focus-visible ring (HkFab house pattern). Ring uses
+   the same contract var as the link ink so it matches in every theme. */
+.hk-markdown a:focus-visible {
+  outline: 2px solid var(--hi-color-primary, #7aa2f7);
+  outline-offset: 2px;
+}
+
+.hk-markdown hr {
+  border: none;
+  border-top: 1px solid var(--hi-color-border, #646464);
+  margin: 1em 0;
+}
+
+.hk-markdown img {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.hk-markdown-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 70%, transparent);
+  @include backdrop-filter(blur(4px));
+  z-index: 10;
+}

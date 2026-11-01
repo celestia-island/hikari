@@ -178,6 +178,14 @@ pub struct ColorHueBand {
     pub pct: f64,
 }
 
+/// The release edge Vue gets from its window `pointerup`: a move event whose
+/// `buttons` is 0 means "no button held", i.e. the drag ended OUTSIDE the
+/// slider. Extracted so the rule is unit-testable without real pointer events
+/// (R3 found the inline version had no guard).
+pub fn color_pointer_released(buttons: u16) -> bool {
+    buttons == 0
+}
+
 thread_local! {
     /// Which channel a pointer drag is currently driving. Non-reactive by
     /// design (it never drives rendering) and a singleton because one pointer
@@ -579,7 +587,7 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
                 // never reaches this element), so a later HOVER would write
                 // values. `buttons == 0` means "no button held" — the release
                 // edge Vue would have seen.
-                if event.buttons == 0 {
+                if color_pointer_released(event.buttons) {
                     set_color_dragging(None);
                     return;
                 }
@@ -1158,6 +1166,14 @@ mod tests {
         })
         .render_to_html();
         assert!(!html.contains("hk-color-picker-band"), "{html}");
+    }
+
+    #[test]
+    fn color_pointer_release_rule_matches_the_window_pointerup_edge() {
+        // A move with no held button means the drag ended outside the slider.
+        assert!(color_pointer_released(0));
+        assert!(!color_pointer_released(1));
+        assert!(!color_pointer_released(2));
     }
 
     #[test]

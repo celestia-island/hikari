@@ -86,6 +86,12 @@
 // sheet). The `NumberInputSize` identifiers (`Small`/`Medium`/`Large`) survive
 // unchanged, only their emitted classes are Vue's now; the enum itself lives in
 // `entry/number_steppers.rs` next to the column that renders its size class.
+//
+// MIGRATION (this wave REPLACES the legacy Rust `NumberInput`): values are
+// `f64` (Vue numbers) instead of integers, `min`/`max` are `Option<f64>`, the
+// `glow*`/`GlowPreset` props are gone (no Vue counterpart), and the emit split
+// follows Vue: `oninput` fires for every accepted value, `onchange` only on a
+// commit (blur/Enter). Hosts comparing against a `props.value: i64` must widen.
 
 use crate::entry::number_steppers::{
     NumberInputSize, NumberStepperDirection, NumberSteppers, NumberSteppersProps,

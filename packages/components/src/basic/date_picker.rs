@@ -96,6 +96,14 @@
 // Replaces the retired legacy `DatePicker` (a bare `<input type="date">` with
 // an `hk-date-picker*` markup family, `format`/`readonly` props and no
 // calendar at all).
+//
+// MIGRATION (this wave REPLACES the legacy Rust `DatePicker`): the old surface
+// was `value/min/max/format/readonly/on_change/on_focus/on_blur`; the mirror is
+// Vue's `DatePickerProps` — `model_value: Option<String>` (ISO `YYYY-MM-DD`),
+// `placeholder`, `disabled`, `clearable`, `size`, `min`/`max` day keys,
+// `locale`, `anchor`, `view_state`, and the `on_*` callbacks. Anything the old
+// API exposed that Vue does not have is gone; hosts that need a formatter keep
+// it on their side.
 
 use chrono::{Datelike, Locale, NaiveDate};
 use hikari_i18n::{Language, t};

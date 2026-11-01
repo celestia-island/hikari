@@ -440,3 +440,64 @@ fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) {
         }
     }
 }
+
+/// A vendored sheet must be pulled into the bundle ONCE. The failure mode is a
+/// sheet that another sheet already `@use`s being imported again: Sass then
+/// emits its rules a second time (R3 measured HkPickerPane at 3×, +5.8 KB).
+#[test]
+fn no_vendored_sheet_is_pulled_in_twice() {
+    let mirror = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/styles/vue-mirror");
+    let index_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/styles/index.scss");
+    let index = std::fs::read_to_string(&index_path).expect("read index.scss");
+    let mut files = Vec::new();
+    collect_files(&mirror, &mut files);
+
+    // Sheets that some other vendored sheet `@use`s.
+    let mut used_by: Vec<String> = Vec::new();
+    for file in &files {
+        if file.extension().and_then(|e| e.to_str()) != Some("scss") {
+            continue;
+        }
+        let source = std::fs::read_to_string(file).expect("read sheet");
+        for line in source.lines() {
+            let trimmed = line.trim();
+            if let Some(rest) = trimmed.strip_prefix("@use") {
+                let name = rest
+                    .trim()
+                    .trim_start_matches("\"")
+                    .trim_start_matches("'")
+                    .split(['"', '\''])
+                    .next()
+                    .unwrap_or("")
+                    .to_string();
+                if name.ends_with(".scss") {
+                    used_by.push(name);
+                }
+            }
+        }
+    }
+
+    // No duplicate direct imports.
+    let direct: Vec<&str> = index
+        .lines()
+        .filter_map(|line| line.trim().strip_prefix("@import"))
+        .collect();
+    let mut seen = std::collections::BTreeSet::new();
+    for line in &direct {
+        assert!(
+            seen.insert(line.to_string()),
+            "duplicate @import in index.scss: {line}"
+        );
+    }
+
+    // A sheet loaded through @use must not ALSO be imported directly.
+    for name in used_by {
+        let basename = name.trim_start_matches("./");
+        let already_used = index.contains(&format!("vue-mirror/components/{basename}"));
+        assert!(
+            !already_used,
+            "{basename} is @use'd by another vendored sheet but also directly imported \
+             in index.scss — Sass would emit its rules twice"
+        );
+    }
+}

@@ -1,0 +1,31 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/**
+ * HkFilterTrigger chrome: the header icon button and the mobile confirm
+ * footer. The panel's own bounded sizing lives in HkFilterPanel.scss;
+ * the active-filter marker (a green bottom-right dot while any
+ * condition carries a value, user direction 2026-10-15) is the generic
+ * HkCornerBadge wrapped around the button — its sheet owns the mark.
+ */
+
+.hk-filter-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hk-filter-trigger-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-8, 0.5rem);
+  border-top: 1px solid rgb(var(--color-border) / 10%);
+  margin-top: var(--space-8, 0.5rem);
+}

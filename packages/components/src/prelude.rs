@@ -84,10 +84,13 @@ pub use crate::basic::{
 };
 // Data component Props
 pub use crate::data::{
-    CellProps, CollapseProps, ColumnProps, DragDropTreeProps, FilterProps, PaginationButtonProps,
-    PaginationProps, RenderDragNodeProps, RowSelectionProps, SelectionProps, SortProps, TableProps,
-    TreeNodeArrowProps, TreeNodeContentProps, TreeNodeLabelProps, TreeNodeProps, TreeProps,
-    VirtualTreeProps,
+    BarChartProps, CalendarHeatmapProps, CardListProps, CellProps, CollapseProps, ColumnProps,
+    DonutChartProps, DragDropTreeProps, FilterBarProps, FilterChipProps, FilterOperatorIconProps,
+    FilterPanelProps, FilterTriggerProps, GaugeRingProps, ListRowProps, PaginationButtonProps,
+    PaginationProps, RenderDragNodeProps, RowSelectionProps, SelectionGridProps, SelectionProps,
+    SelectionWaterfallProps, SortProps, StatCardProps, TableProps, TreeNodeArrowProps,
+    TreeNodeContentProps, TreeNodeLabelProps, TreeNodeProps, TreeProps, TreemapProps,
+    TreemapStageProps, TrendChartProps, VirtualTreeProps, WaterfallProps,
 };
 // Display component Props
 pub use crate::display::{

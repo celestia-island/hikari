@@ -33,6 +33,7 @@ impl StyleRegistry {
         self.register("vue-window-close", vue_window_close_css());
         self.register("vue-button-chrome", vue_button_chrome_css());
         self.register("vue-corner-badge", vue_corner_badge_css());
+        self.register("vue-pill-toggle-group", vue_pill_toggle_group_css());
     }
 
     pub fn register_vue_token_fallbacks(&mut self) {
@@ -148,19 +149,39 @@ impl StyleRegistry {
     #[cfg(feature = "data")]
     pub fn register_data_components(&mut self) {
         use crate::data::{
-            CollapseComponent, DragComponent, FilterComponent, PaginationButtonComponent,
-            PaginationComponent, SelectionComponent, SortComponent, TableComponent, TreeComponent,
-            VirtualScrollComponent,
+            BarChartComponent, CalendarHeatmapComponent, CardListComponent, CollapseComponent,
+            DonutChartComponent, DragComponent, FilterBarComponent, FilterChipComponent,
+            FilterOperatorIconComponent, FilterPanelComponent, FilterTriggerComponent,
+            GaugeRingComponent, PaginationButtonComponent, PaginationComponent, SelectionComponent,
+            SelectionGridComponent, SelectionWaterfallComponent, SortComponent, StatCardComponent,
+            TableComponent, TreeComponent, TreemapComponent, TreemapStageComponent,
+            TrendChartComponent, VirtualScrollComponent, WaterfallComponent,
         };
         TableComponent::register(self);
         TreeComponent::register(self);
         PaginationComponent::register(self);
+        BarChartComponent::register(self);
+        CardListComponent::register(self);
+        DonutChartComponent::register(self);
+        FilterBarComponent::register(self);
+        FilterChipComponent::register(self);
+        FilterOperatorIconComponent::register(self);
+        FilterPanelComponent::register(self);
+        FilterTriggerComponent::register(self);
+        GaugeRingComponent::register(self);
+        SelectionGridComponent::register(self);
+        SelectionWaterfallComponent::register(self);
+        StatCardComponent::register(self);
+        TrendChartComponent::register(self);
+        TreemapComponent::register(self);
+        TreemapStageComponent::register(self);
+        CalendarHeatmapComponent::register(self);
+        WaterfallComponent::register(self);
         PaginationButtonComponent::register(self);
         VirtualScrollComponent::register(self);
         CollapseComponent::register(self);
         DragComponent::register(self);
         SortComponent::register(self);
-        FilterComponent::register(self);
         SelectionComponent::register(self);
     }
 
@@ -318,6 +339,12 @@ pub fn vue_token_fallbacks_css() -> &'static str {
 /// The mirrored window-close chrome (`packages/vue/src/components/window-close.scss`).
 pub fn vue_window_close_css() -> &'static str {
     tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/window-close.scss", no_hash }.0
+}
+
+/// The mirrored pill toggle group (`HkPillToggleGroup.scss`) — the filter
+/// chip's popover group rules live here.
+pub fn vue_pill_toggle_group_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkPillToggleGroup.scss", no_hash }.0
 }
 
 /// The mirrored corner-badge dots (`HkCornerBadge.scss`) — IconButton's

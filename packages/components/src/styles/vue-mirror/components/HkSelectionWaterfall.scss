@@ -1,0 +1,117 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-selection-waterfall {
+  margin-bottom: var(--space-16, 1rem);
+}
+
+.hk-selection-waterfall-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin: 0 0 var(--space-8, 0.5rem);
+}
+
+.hk-selection-waterfall-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6, 0.375rem);
+}
+
+.hk-selection-waterfall-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  padding: var(--space-4, 0.25rem) var(--space-10, 0.625rem);
+  border-radius: 9999px;
+  border: 1px solid var(--hi-color-border, #646464);
+  font-size: 0.6875rem;
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease;
+  @include user-select(none);
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 4%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent);
+  }
+
+  // Keyboard focus drawn inside the border box (negative offset), matching
+  // the grid sibling and the inset-emphasis model — pills sit flush in
+  // wrapped flows where outer rings get clipped by adjacent chrome.
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  &:active {
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
+  }
+
+  &[data-selected] {
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent);
+    color: var(--hi-color-primary, #7aa2f7);
+    font-weight: 500;
+  }
+}
+
+.hk-selection-waterfall-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--hi-color-primary, #7aa2f7);
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
+}
+
+.hk-selection-waterfall-name {
+  line-height: 1.5;
+}
+
+.hk-selection-waterfall-tag {
+  font-size: var(--text-2xs, 0.625rem);
+  padding: 0 var(--space-4, 0.25rem);
+  border-radius: 9999px;
+  background: var(--hi-color-bg-subtle, #21262d);
+  color: var(--hi-color-text-tertiary, #8b949e);
+
+  &[data-variant="success"] {
+    background: color-mix(in srgb, var(--hi-color-success, #0eb840) 12%, transparent);
+    color: var(--hi-color-success, #0eb840);
+  }
+
+  &[data-variant="info"] {
+    background: color-mix(in srgb, var(--hi-color-info, #6abed6) 12%, transparent);
+    color: var(--hi-color-info, #6abed6);
+  }
+
+  &[data-variant="primary"] {
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 12%, transparent);
+    color: var(--hi-color-primary, #7aa2f7);
+  }
+}
+
+.hk-selection-waterfall-desc {
+  font-size: var(--text-2xs, 0.625rem);
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin-inline-start: var(--space-4, 0.25rem);
+}

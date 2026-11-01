@@ -1,0 +1,257 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  /* --hk-pad: the shared container-padding token (runtime/containerPad). */
+  padding: var(--hk-pad, var(--space-12, 0.75rem) var(--space-16, 1rem));
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-md, 0.5rem);
+  background: rgb(var(--color-surface));
+  min-width: 0;
+}
+
+.hk-stat-card-clickable {
+  cursor: pointer;
+  transition: border-color var(--duration-normal, 0.3s) ease;
+
+  &:hover {
+    border-color: rgb(var(--color-primary) / 35%);
+  }
+
+  &:active {
+    border-color: rgb(var(--color-primary) / 55%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+.hk-stat-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-stat-card-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tone lives on the dot ONLY — the value text stays neutral so tone
+   never reads as selection (interaction-state precedence). */
+.hk-stat-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hk-stat-card-dot-success { background: rgb(var(--color-success)); }
+.hk-stat-card-dot-warning { background: rgb(var(--color-warning)); }
+.hk-stat-card-dot-error { background: rgb(var(--color-error)); }
+.hk-stat-card-dot-info { background: rgb(var(--color-info, rgb(var(--color-primary)))); }
+.hk-stat-card-dot-primary { background: rgb(var(--color-primary)); }
+.hk-stat-card-dot-muted { background: rgb(var(--color-muted)); }
+
+.hk-stat-card-value {
+  font-size: var(--text-2xl, 1.5rem);
+  font-weight: 700;
+  /* `overflow: hidden` below hangs the ellipsis on the line box, so the line
+   * box has to cover the ink box: 1.2 (28.8px at the 24px token) cleared the
+   * shipped Latin stacks by only 0.6-1.1px and clipped 2.9-3.1px per edge as
+   * soon as a host swapped --font-sans for a CJK fallback (ascent+descent
+   * 1.34-1.45em, see theme/fontContext). 1.35 covers those metrics. */
+  line-height: 1.35;
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-stat-card-hint {
+  font-size: var(--text-2xs, 0.625rem);
+  color: rgb(var(--color-muted) / 70%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── chip variant ──────────────────────────────────────────────────────
+   Horizontal: tone-tinted icon chip, value over label, optional trailing
+   aside (tier badge / delta). The icon chip carries the tone color the
+   same way the plain variant's dot does — tint on the chip only. */
+.hk-stat-card-chip-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  min-width: 0;
+}
+
+.hk-stat-card-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-28, 1.75rem);
+  height: var(--space-28, 1.75rem);
+  border-radius: var(--radius-sm, 0.375rem);
+  flex-shrink: 0;
+}
+
+.hk-stat-card-chip-icon-success { background: rgb(var(--color-success) / 12%); color: rgb(var(--color-success)); }
+.hk-stat-card-chip-icon-warning { background: rgb(var(--color-warning) / 12%); color: rgb(var(--color-warning)); }
+.hk-stat-card-chip-icon-error { background: rgb(var(--color-error) / 12%); color: rgb(var(--color-error)); }
+.hk-stat-card-chip-icon-info { background: rgb(var(--color-info, rgb(var(--color-primary))) / 12%); color: rgb(var(--color-info, rgb(var(--color-primary)))); }
+.hk-stat-card-chip-icon-primary { background: rgb(var(--color-primary) / 12%); color: rgb(var(--color-primary)); }
+.hk-stat-card-chip-icon-muted { background: rgb(var(--color-muted) / 12%); color: rgb(var(--color-muted)); }
+
+.hk-stat-card-chip-main {
+  min-width: 0;
+}
+
+.hk-stat-card-chip-value {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: 700;
+  line-height: 1.35;
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-stat-card-chip-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-stat-card-aside {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── ring variant ──────────────────────────────────────────────────────
+   Centered utilization ring; the label (with the icon) sits under the
+   ring and the hint becomes the detail line. */
+.hk-stat-card-ring {
+  align-items: center;
+  text-align: center;
+  gap: 0.375rem;
+}
+
+.hk-stat-card-ring-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  max-width: 100%;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: rgb(var(--color-text));
+}
+
+.hk-stat-card-ring-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-stat-card-ring-detail {
+  max-width: 100%;
+}
+
+/* ── bar variant ───────────────────────────────────────────────────────
+   Label + value on one row over a tone-colored bar. */
+.hk-stat-card-bar-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-stat-card-bar-value {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-stat-card-bar-detail {
+  max-width: 100%;
+}
+
+/* footer slot — free-form content row under the value/hint (badge rows,
+ * deltas, sparklines). Wraps; does not collapse like the hint. */
+.hk-stat-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  max-width: 100%;
+}
+
+/* ── foot row — the `action` slot's corner anchor ──────────────────────
+   When a card hosts the `action` slot, the hint line is wrapped in a
+   relative foot row and the action content is pinned to the row's
+   trailing edge — the card's bottom-right corner (the per-card "⋯"
+   affordance). Clicks stop at the wrapper (the TSX stops propagation),
+   so an action button never double-fires a clickable card's click. */
+.hk-stat-card-foot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The ring variant centers its detail line — keep the hint visually
+   centered while the action hugs the trailing edge. The card centers
+   its children (align-items:center), which would leave the foot row
+   fit-content-wide and BOTH of those goals dead: the centering would
+   have nothing to center and the absolutely-positioned action would
+   anchor to the hint's edge instead of the card's corner — so the foot
+   explicitly stretches back to the full card width (R2). */
+.hk-stat-card-ring .hk-stat-card-foot {
+  align-self: stretch;
+  justify-content: center;
+}
+
+/* Reserve the corner: a min-height keeps an action-only foot (no hint)
+   from collapsing onto the content above, and the hint truncates before
+   it can slide under the affordance. */
+.hk-stat-card-foot[data-has-action] {
+  min-height: 1.5rem;
+}
+
+.hk-stat-card-foot[data-has-action] .hk-stat-card-hint {
+  padding-inline-end: 1.75rem;
+}
+
+.hk-stat-card-action {
+  position: absolute;
+  inset-inline-end: calc(-1 * var(--space-4, 0.25rem));
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}

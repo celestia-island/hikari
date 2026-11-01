@@ -69,12 +69,12 @@
 
   &:hover {
     border-color: var(--hi-color-primary, #7aa2f7);
-    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.04);
-    box-shadow: 0 2px 12px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.1);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 4%, transparent);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent);
   }
 
   &:active {
-    box-shadow: 0 1px 4px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
   }
 
   // Keyboard focus indicator drawn inside the border box (negative outline
@@ -92,14 +92,14 @@
   // HkStepFlow's sticky header).
   &[data-selected] {
     border-color: var(--hi-color-primary, #7aa2f7);
-    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
     box-shadow: inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
 
     &:hover {
-      background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.09);
+      background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 9%, transparent);
       box-shadow:
         inset 0 0 0 1px var(--hi-color-primary, #7aa2f7),
-        0 2px 12px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.14);
+        0 2px 12px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 14%, transparent);
     }
 
     .hk-selection-grid-check {
@@ -183,17 +183,17 @@
   letter-spacing: 0.02em;
 
   &[data-variant="primary"] {
-    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.12);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 12%, transparent);
     color: var(--hi-color-primary, #7aa2f7);
   }
 
   &[data-variant="success"] {
-    background: rgb(from var(--hi-color-success, #0eb840) r g b / 0.12);
+    background: color-mix(in srgb, var(--hi-color-success, #0eb840) 12%, transparent);
     color: var(--hi-color-success, #0eb840);
   }
 
   &[data-variant="info"] {
-    background: rgb(from var(--hi-color-info, #6abed6) r g b / 0.12);
+    background: color-mix(in srgb, var(--hi-color-info, #6abed6) 12%, transparent);
     color: var(--hi-color-info, #6abed6);
   }
 }

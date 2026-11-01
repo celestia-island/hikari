@@ -21,9 +21,12 @@ hand-edit a mirror.
 
 Compile constraint: a mirrored sheet must stay parseable by the grass
 compiler (the Rust form compiles this very file). Modern CSS the parser lacks
-(for example `calc(infinity * 1s)`) therefore cannot live in a mirrored
-sheet — use an equivalent literally-compilable value in the canonical sheet
-and note it in the PR.
+therefore cannot live in a mirrored sheet — use an equivalent literally
+compilable value in the canonical sheet and note it in the PR. Known blockers:
+  * `calc(infinity * 1s)`            → a finite step-end duration;
+  * CSS relative colour `rgb(from C r g b / a)`
+                                     → `color-mix(in srgb, C <a*100>%, transparent)`
+                                       (identical in srgb).
 
 Guards:
   * Rust:  packages/components/tests/vue_mirror_drift_tests.rs (cargo test)
@@ -115,6 +118,30 @@ ADVANCED_SHEETS: list[str] = [
     "HkTimeZoneGlobe.scss",
 ]
 
+# W3 — data-viz + data-table family. HkTrendChart and HkFilterOperatorIcon
+# have no sheet of their own (they compose chart/filter sheets already vendored
+# or imported by their parents).
+DATA_SHEETS: list[str] = [
+    "HkBarChart.scss",
+    "HkDonutChart.scss",
+    "HkTreemap.scss",
+    "HkTreemapStage.scss",
+    "HkCalendarHeatmap.scss",
+    "HkStatCard.scss",
+    "HkGaugeRing.scss",
+    "HkWaterfall.scss",
+    "HkTable.scss",
+    "HkTree.scss",
+    "HkFilterBar.scss",
+    "HkFilterChip.scss",
+    "HkFilterPanel.scss",
+    "HkFilterTrigger.scss",
+    "HkPillToggleGroup.scss",
+    "HkSelectionGrid.scss",
+    "HkSelectionWaterfall.scss",
+    "HkCardList.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -159,7 +186,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -168,7 +195,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

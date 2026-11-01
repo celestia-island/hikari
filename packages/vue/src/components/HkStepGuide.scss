@@ -52,7 +52,7 @@
   background: var(--hi-color-surface, #ffffff);
 
   &[data-done] {
-    box-shadow: inset 0 0 0 1px rgb(from var(--hi-color-success, #0eb840) r g b / 0.55);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi-color-success, #0eb840) 55%, transparent);
 
     .hk-step-guide-ordinal {
       background: var(--hi-color-success, #0eb840);

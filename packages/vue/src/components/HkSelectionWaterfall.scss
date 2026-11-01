@@ -38,8 +38,8 @@
 
   &:hover {
     border-color: var(--hi-color-primary, #7aa2f7);
-    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.04);
-    box-shadow: 0 2px 8px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.1);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 4%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent);
   }
 
   // Keyboard focus drawn inside the border box (negative offset), matching
@@ -51,12 +51,12 @@
   }
 
   &:active {
-    box-shadow: 0 1px 4px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
   }
 
   &[data-selected] {
     border-color: var(--hi-color-primary, #7aa2f7);
-    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.1);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent);
     color: var(--hi-color-primary, #7aa2f7);
     font-weight: 500;
   }
@@ -85,17 +85,17 @@
   color: var(--hi-color-text-tertiary, #8b949e);
 
   &[data-variant="success"] {
-    background: rgb(from var(--hi-color-success, #0eb840) r g b / 0.12);
+    background: color-mix(in srgb, var(--hi-color-success, #0eb840) 12%, transparent);
     color: var(--hi-color-success, #0eb840);
   }
 
   &[data-variant="info"] {
-    background: rgb(from var(--hi-color-info, #6abed6) r g b / 0.12);
+    background: color-mix(in srgb, var(--hi-color-info, #6abed6) 12%, transparent);
     color: var(--hi-color-info, #6abed6);
   }
 
   &[data-variant="primary"] {
-    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.12);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 12%, transparent);
     color: var(--hi-color-primary, #7aa2f7);
   }
 }

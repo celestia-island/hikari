@@ -170,6 +170,13 @@ describe("HkSidebar scroll end-cap", () => {
       );
       expect(rule, `block-edge border in the dress: ${rule}`).not.toMatch(/\bborder-block/);
       expect(rule, `block-edge inset in the dress: ${rule}`).not.toMatch(/\binset-block/);
+      // The PHYSICAL block-edge borders: the lookbehind above deliberately
+      // spares "-top"/"-bottom" INSIDE longer words, which let
+      // `border-top-width: 6px` push every row below it down while every
+      // logical check stayed green (2026-11-02 review).
+      expect(rule, `physical block-edge border in the dress: ${rule}`).not.toMatch(
+        /\bborder-(?:top|bottom)\b/,
+      );
       expect(rule, `physical block offset in the dress: ${rule}`).not.toMatch(
         /(?<![-\w])(?:top|bottom)\s*:/,
       );

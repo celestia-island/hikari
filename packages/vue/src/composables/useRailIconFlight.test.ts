@@ -267,6 +267,75 @@ describe("useRailIconFlight", () => {
     expect(solo.hasAttribute(RAIL_FLIP_FLYING_ATTR), "unmatched cell never marked").toBe(false);
   });
 
+  it("divides the written geometry by the ancestor draw scale (root zoom)", async () => {
+    // drawnScale = drawn rect / laid size: stubbing the stage's laid
+    // size to HALF its drawn box puts the flight at scale 2 — every
+    // written px (insets, size, travel) must halve, or a root-level
+    // `html { zoom }` renders the flight k times too far (the deletion
+    // mutation ran 91 tests green before this pin existed).
+    const h = mountSwap();
+    await h.set(true);
+    const { leaving, entering } = dissolvePair(h, true);
+    const host = h.swap();
+    stubRect(host, rect(0, 0, 240, 400));
+    // The stage reads the HOST's laid size: 240/120 = 400/200 = 2.
+    Object.defineProperty(host, "offsetWidth", { configurable: true, get: () => 120 });
+    Object.defineProperty(host, "offsetHeight", { configurable: true, get: () => 200 });
+    stubIcons(leaving, (key) => rect(32, key === "home" ? 100 : 140));
+    stubIcons(entering, (key) => rect(20, key === "home" ? 100 : 140));
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    const homeClone = flightLayer(h)!.querySelector<HTMLElement>(".hk-sidebar-rail-flight-clone")!;
+    expect(homeClone.style.insetInlineStart, "inset halves at zoom 2").toBe("16px");
+    expect(homeClone.style.insetBlockStart, "block inset halves at zoom 2").toBe("50px");
+    expect(homeClone.style.width).toBe("8px");
+    const home = animations.find((a) => a.el.textContent === "H")!;
+    expect(home.keyframes.at(-1)!.transform, "travel halves at zoom 2").toBe(
+      "translate(-6px, 0px)",
+    );
+  });
+
+  it("measures the RTL inline offset INWARD from the docked right edge", async () => {
+    // inset-inline-start in RTL maps to `right`, and a right inset grows
+    // INWARD (leftward): the value is the icon's right edge measured
+    // from the host's right edge. The sign the other way round wrote a
+    // NEGATIVE inset — every clone landed outside the docked edge and
+    // the clip ate the whole flight (the review's S1, RTL had zero
+    // coverage before this test).
+    const h = mountSwap();
+    const realGCS = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element) => {
+      const declared = realGCS(el as HTMLElement);
+      if (el !== h.swap()) return declared;
+      // The host reads direction: rtl; everything else passes through.
+      return new Proxy(declared, {
+        get(target, prop) {
+          if (prop === "direction") return "rtl";
+          const value = Reflect.get(target, prop, target);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      }) as CSSStyleDeclaration;
+    });
+    await h.set(true);
+    const { leaving, entering } = dissolvePair(h, true);
+    stubRect(h.swap(), rect(0, 0, 240, 400));
+    stubIcons(leaving, (key) => rect(32, key === "home" ? 100 : 140));
+    stubIcons(entering, (key) => rect(20, key === "home" ? 100 : 140));
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    const homeClone = flightLayer(h)!.querySelector<HTMLElement>(".hk-sidebar-rail-flight-clone")!;
+    // origin.right = 240, icon right = 48 → 192px inward from the right.
+    expect(homeClone.style.insetInlineStart, "RTL inset measured inward from right").toBe(
+      "192px",
+    );
+    // The travel stays PHYSICAL: the icon moves 12px left, same as LTR.
+    const home = animations.find((a) => a.el.textContent === "H")!;
+    expect(home.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px)");
+    vi.mocked(window.getComputedStyle).mockRestore();
+  });
+
   it("flies the opposite way on expand (the delta is signed, per key)", async () => {
     const h = mountSwap();
     await h.set(true);

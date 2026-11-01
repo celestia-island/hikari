@@ -279,7 +279,16 @@ export function useRailIconFlight(
     for (const pair of pairs) {
       // Logical inline offset from the stage's stable inline-start edge;
       // physical top (the block axis is direction-free).
-      const inlineOffset = rtl ? pair.from.right - origin.right : pair.from.left - origin.left;
+      // Logical inline offset from the stage's stable inline-start
+      // edge, measured INWARD (an inline-start inset grows toward the
+      // content: from the LEFT edge in LTR, from the RIGHT edge in RTL —
+      // the icon's right edge sits inside the host's, so the RTL value
+      // is origin.right − from.right; the sign the other way round
+      // pushed every clone outside the docked edge and the clip ate the
+      // whole flight — 2026-11-02 review).
+      const inlineOffset = rtl
+        ? origin.right - pair.from.right
+        : pair.from.left - origin.left;
       const dx = (pair.to.left - pair.from.left) / scale.x;
       const dy = (pair.to.top - pair.from.top) / scale.y;
       const clone = pair.template.cloneNode(true) as HTMLElement;

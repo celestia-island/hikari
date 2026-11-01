@@ -51,21 +51,37 @@ import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
  *    (`drawnScale` — a root-level `html { zoom }` multiplies every
  *    measured viewport px by k; values written back in local px would
  *    render k times too far).
- * 3. While the flight runs, the leaving generation's MATCHED icons hide
- *    (CSS keyed on the host's `data-flipping` + the leave item's
- *    dissolve class + the per-cell `data-flip-flying` mark this
- *    composable stamps on exactly the cells it cloned): the clone
- *    substitutes them at the same geometry, full opacity — nothing
- *    blinks. UNMATCHED keyed cells (a rail fallback letter with no
- *    expanded counterpart, say) are never marked, never hidden — they
- *    plain dissolve, exactly as the pairing contract promises. The
- *    ENTERING icons keep the normal dissolve, so by the time the clone
- *    lands and fades (last ~20% of the window) the real icon underneath
- *    is nearly fully dissolved in and occupies the identical rect — the
- *    handoff tax is a sub-frame dip well under the double-exposure
- *    artifact this replaces.
+ * 3. THE SINGLE-GLYPH CONTRACT (2026-11-02 user direction: the flight
+ *    used to double-expose — the flying clone crossed paths with the
+ *    entering icon dissolving in at the destination, two glyphs on
+ *    screen at once). Both ends of every matched pair are marked
+ *    `data-flip-flying` and hidden for the flight's whole window (the
+ *    rule keys on the host's `data-flipping` + the mark — item-local
+ *    dissolve classes are deliberately NOT part of the selector: they
+ *    are transient engine state, and the mark itself already names
+ *    exactly the substituted cells): the clone is therefore the ONE
+ *    visible glyph of that destination, from arm to landing. The clone
+ *    holds full opacity the entire way (no end fade — the fade was the
+ *    old handoff, and it is what showed two glyphs); it lands exactly
+ *    as the entering dissolve reaches 100%, because both windows read
+ *    the same theme duration. The sweep then removes the clone and
+ *    unmarks the entering icon in one task — one paint shows the real
+ *    icon alone. Even a slipped frame is benign: two identical opaque
+ *    glyphs at the SAME rect read as one (the old artifact was two
+ *    glyphs at DIFFERENT rects mid-crossing). UNMATCHED keyed cells (a
+ *    rail fallback letter with no expanded counterpart) are never
+ *    marked, never hidden — they plain dissolve, as the pairing
+ *    contract promises.
  * 4. Non-participating icons (identity blocks, group carets, badge
  *    dots), the pills, and the labels crossfade exactly as before.
+ *
+ * TIMING IS TOKEN-DERIVED, NOT HARDCODED (2026-11-02 user direction):
+ * the flight window reads the theme's `--duration-normal` off the swap
+ * host's computed style — the very variable HkCrossfade's dissolve
+ * consumes — so a retuned theme retunes the flight with it.
+ * `RAIL_FLIGHT_MS` survives only as the fallback for environments
+ * where custom properties cannot be read (the test DOM); the sweep
+ * budget is the derived window plus a fixed margin.
  *
  * GUARDS: skipped entirely under reduced motion, the global animation
  * switch (`html[data-css-animations="0"]`), a missing WAAPI, or when no
@@ -75,12 +91,11 @@ import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
  * even where `finish` never fires (rAF-starved tabs); a fresh flip
  * sweeps any previous flight first, so flip-flopping can't stack layers.
  *
- * KNOWN LIMIT (documented, accepted): the window constants assume the
- * dissolve runs at its default timing. A host that sets HkCrossfade's
- * `--hk-crossfade-enter-delay` holds the entering fade back; the flight
- * reads the property off the swap host and widens its window and sweep
- * by the same amount, so the handoff lands after the icon has actually
- * faded in. No shipped rail host sets it today.
+ * The same read covers HkCrossfade's `--hk-crossfade-enter-delay`: a
+ * host that holds the entering fade back gets a widened window and
+ * sweep, and the single-glyph contract makes the alignment exact — the
+ * clone covers the destination until the real icon is fully faded in.
+ * No shipped rail host sets it today.
  */
 
 /** Row-key attribute on an icon cell that flies across a rail flip. */
@@ -94,23 +109,30 @@ export const RAIL_FLIP_ACTIVE_ATTR = "data-flipping";
 export const RAIL_FLIP_FLYING_ATTR = "data-flip-flying";
 /** HkCrossfade's per-item identity — the semantic pairing anchor. */
 export const RAIL_FLIP_ITEM_ATTR = "data-crossfade-key";
-/** Total flight window — parity with the dissolve's --duration-normal. */
+/** Flight-window FALLBACK for when `--duration-normal` yields no
+ *  parsable time: environments that resolve no custom properties (the
+ *  test DOM), or a value cssDurationMs cannot read (`calc(…)`, `0s` —
+ *  a 0s theme means an instant dissolve; the fallback flight covers
+ *  the swap's settle frames and stays single-glyph). A real browser
+ *  reads the theme token — see TIMING above. */
 export const RAIL_FLIGHT_MS = 300;
-/** The clone holds full opacity until this fraction of the window, then
- *  fades over the rest — landing INTO the entering icon's own fade. */
-const FLIGHT_HANDOFF_RATIO = 0.78;
-/** Sweep fallback: above any healthy flight (HkCrossfade watchdog
- *  parity — 450ms budget + margin) so a stalled clone can never linger. */
-export const RAIL_FLIGHT_SWEEP_MS = 600;
+/** Sweep margin on top of the (token-derived) flight window: above any
+ *  healthy completion (HkCrossfade watchdog parity) so a stalled clone
+ *  can never linger, however long the theme draws the dissolve. */
+export const RAIL_FLIGHT_SWEEP_MARGIN_MS = 300;
 
-/** Parse HkCrossfade's enter-hold custom property (`"120ms"`, `"0.15s"`,
- *  `""`) into milliseconds. Anything unparsable is no hold at all. */
-export function enterDelayMs(value: string): number {
+/** Parse a CSS time custom property (`"120ms"`, `"0.15s"`, `""`) into
+ *  milliseconds. Anything unparsable or non-positive is 0 — the caller
+ *  decides what 0 means (no hold, or the fallback window). */
+export function cssDurationMs(value: string): number {
   if (!value) return 0;
   const n = parseFloat(value);
   if (!Number.isFinite(n) || n <= 0) return 0;
   return value.trim().endsWith("s") && !value.trim().endsWith("ms") ? n * 1000 : n;
 }
+
+/** Back-compat alias: HkCrossfade's enter hold parses like any duration. */
+export const enterDelayMs = cssDurationMs;
 
 /** One matched icon pair across the swap: live leaving geometry, entering
  *  geometry, the leaving icon's computed color (svg stroke = currentColor),
@@ -247,28 +269,39 @@ export function useRailIconFlight(
     // column): the dissolve alone is already continuous — no layer.
     if (!pairs.some(({ from, to }) => from.left !== to.left || from.top !== to.top)) return;
 
-    // Timing: the flight mirrors the dissolve's window, widened by any
-    // enter hold the host choreographed (see KNOWN LIMIT above).
-    const delay = enterDelayMs(
-      getComputedStyle(host).getPropertyValue("--hk-crossfade-enter-delay"),
-    );
-    const flightMs = RAIL_FLIGHT_MS + delay;
+    // Timing is TOKEN-DERIVED: the flight window reads the theme's
+    // --duration-normal (the very variable the dissolve consumes), plus
+    // any enter hold the host choreographed. Both ends of the window
+    // therefore align with the entering fade without a single
+    // hard-coded mirror of the theme's number.
+    const vars = getComputedStyle(host);
+    const delay = cssDurationMs(vars.getPropertyValue("--hk-crossfade-enter-delay"));
+    const dissolveMs =
+      cssDurationMs(vars.getPropertyValue("--duration-normal")) || RAIL_FLIGHT_MS;
+    const flightMs = dissolveMs + delay;
+    const sweepMs = flightMs + RAIL_FLIGHT_SWEEP_MARGIN_MS;
 
     host.setAttribute(RAIL_FLIP_ACTIVE_ATTR, "");
     // The fallback sweep arms BEFORE any clone animates: a throwing
     // `animate` mid-loop must not strand the freshly hidden marks until
     // the next flip (2026-11-02 review).
-    // Stamp exactly the cells being substituted BEFORE any paint with the
-    // layer up: the hide rule reads this mark, so an opted-in cell
-    // without a clone partner keeps dissolving (2026-11-02 review S1-1).
+    // Stamp BOTH ends of every matched pair BEFORE any paint with the
+    // layer up — the single-glyph contract: the leaving cell hides
+    // because the clone substitutes it, and the ENTERING cell hides
+    // because the clone IS it until landing; two glyphs of one
+    // destination must never share a frame. Unmatched opted-in cells
+    // stay unmarked and dissolve (2026-11-02 review S1-1). The clone
+    // strips the mark again right after cloneNode, so the layer never
+    // hides its own citizens.
     for (const pair of pairs) {
       pair.fromEl.setAttribute(RAIL_FLIP_FLYING_ATTR, "");
-      hidden.push(pair.fromEl);
+      pair.template.setAttribute(RAIL_FLIP_FLYING_ATTR, "");
+      hidden.push(pair.fromEl, pair.template);
     }
     layer = document.createElement("div");
     layer.className = "hk-sidebar-rail-flight";
     layer.setAttribute("aria-hidden", "true");
-    sweepTimer = setTimeout(() => sweepIfCurrent(flightId), RAIL_FLIGHT_SWEEP_MS + delay);
+    sweepTimer = setTimeout(() => sweepIfCurrent(flightId), sweepMs);
     // The host's inline-start edge is the docked edge — a stable origin
     // in both directions (see the mechanism note above). Its draw scale
     // converts measured viewport px into the local px the layer's own
@@ -302,17 +335,20 @@ export function useRailIconFlight(
       clone.style.width = `${pair.from.width / scale.x}px`;
       clone.style.height = `${pair.from.height / scale.y}px`;
       clone.style.color = pair.color;
+      // Pure travel: full opacity the whole way, `fill: forwards` so a
+      // frame that slips past finish still shows the clone AT the
+      // landing rect (same-geometry overlap with the real icon reads
+      // as one glyph) instead of snapping back to the origin.
       const anim = clone.animate(
         [
-          { transform: "translate(0, 0)", opacity: "1" },
-          {
-            transform: `translate(${dx}px, ${dy}px)`,
-            opacity: "1",
-            offset: FLIGHT_HANDOFF_RATIO,
-          },
-          { transform: `translate(${dx}px, ${dy}px)`, opacity: "0" },
+          { transform: "translate(0, 0)" },
+          { transform: `translate(${dx}px, ${dy}px)` },
         ],
-        { duration: flightMs, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+        {
+          duration: flightMs,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "forwards",
+        },
       );
       // Same duration on every clone: the first settle sweeps the
       // layer — but only while THIS flight is on stage (a replaced

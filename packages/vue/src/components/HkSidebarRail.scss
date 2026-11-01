@@ -206,22 +206,22 @@
   will-change: transform;
 }
 
-/* During a flight the leaving generation's MATCHED icons hide: the clone
- * paints in their place at the same geometry, full opacity — a
- * substitution, not a fade, so the icon reads as ONE object that
- * travels. Scoped four ways on purpose: only while a flight runs
- * ([data-flipping] on the swap host), only on the dissolving copy (the
- * leave item class), only on opted-in icons ([data-flip-icon]), and
- * only on the cells the choreographer actually PAIRED AND CLONED
- * ([data-flip-flying] — stamped per flight, swept after). That last
- * scope is the pairing contract made visible: an opted-in cell without
- * a partner (a rail fallback letter with no expanded counterpart) is
- * never stamped, so it dissolves instead of vanishing without a
- * substitute (2026-11-02 review). Identity blocks, carets, badges
- * and every other icon keep the plain dissolve. */
-.hk-sidebar-rail-swap[data-flipping]
-  .hk-crossfade-item.hk-crossfade-leave-active
-  .hk-menu-item-icon[data-flip-flying] {
+/* THE SINGLE-GLYPH CONTRACT (2026-11-02 user direction: the flight
+ * used to double-expose — the clone crossed paths with the entering
+ * icon dissolving in at the destination). While a flight runs, BOTH
+ * ends of every matched pair hide ([data-flip-flying], stamped on the
+ * leaving AND the entering cell by the choreographer, swept with the
+ * layer): the clone is the one visible glyph of that destination from
+ * arm to landing, and the entering icon only resurfaces — via the same
+ * sweep, in the same task — once the clone has landed on it. Scoped
+ * deliberately WITHOUT the items' dissolve classes: those are
+ * transient engine state, and the mark alone already names exactly the
+ * substituted cells. An opted-in cell without a partner (a rail
+ * fallback letter with no expanded counterpart) is never stamped, so
+ * it dissolves instead of vanishing without a substitute — the pairing
+ * contract. Identity blocks, carets, badges and every other icon keep
+ * the plain dissolve. */
+.hk-sidebar-rail-swap[data-flipping] .hk-menu-item-icon[data-flip-flying] {
   visibility: hidden;
 }
 

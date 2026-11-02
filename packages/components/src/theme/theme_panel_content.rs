@@ -47,8 +47,10 @@
 // theme tables, custom-theme store), the solar clock, the altitude timer
 // and the MutationObserver-driven engine all live outside. The mirror is
 // CONTROLLED — state arrives as props, every intent leaves through an
-// `on_*` channel bound to the MOUSE family (ledger L48/L88: zero
-// use_signal/use_state, typed pointer events never fire on wasip2).
+// `on_*` channel bound to the MOUSE family (ledger L48: zero
+// use_signal/use_state; the mouse family is a convention — the pointer
+// family is typed on this wire since tairitsu 0.5.24, ledger L88's
+// never-fires window is closed).
 //
 // Deltas vs Vue (documented, not accidental):
 //   * The mode strip is the HkTabs segmented DOM SUBSET (`hk-tabs*`

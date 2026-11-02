@@ -14,18 +14,16 @@
 //       div.hk-expansion-panel-action?         (stopPropagation wrapper)
 //         {action slot}
 //       span.hk-expansion-panel-chevron        (aria-hidden, inner HTML chevron)
-//     {children}                                (body; open only — Vue's
-//                                              v-show keeps it mounted, the
-//                                              mirror mounts it conditionally,
-//                                              see the delta below)
+//     div.hk-expansion-panel-body               (ALWAYS mounted; the sheet
+//       div.hk-expansion-panel-content            collapses it via 0fr when
+//         {children}                               closed, like Vue's v-show)
 //
 // Deltas vs Vue (documented, not accidental):
 //   * the panel is CONTROLLED-only (`open` + `on_open_change`): tairitsu has
 //     no per-instance component state (ledger L48), so Vue's uncontrolled
 //     `defaultOpen` seed is the host's job (pass the seed as `open`).
-//   * the body mounts only while open (Vue's `v-show` keeps it in the DOM,
-//     hidden); mounting-unmounting preserves the layout contract via the
-//     sheet's `[data-open]` rules and keeps heavy bodies out of the tree.
+//   * the body/content wrappers are ALWAYS mounted (like Vue's `v-show`);
+//     the sheet's 0fr->1fr grid animation and overflow clipping key off them.
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -152,9 +150,16 @@ pub fn ExpansionPanel(props: ExpansionPanelProps) -> Element {
         });
 
     root = root.child(VNode::Element(Box::new(header)));
-    if props.open {
-        root = root.child(props.children.clone());
-    }
+    // Vue ALWAYS renders the two-layer wrapper (body > content); the sheet's
+    // 0fr->1fr animation, overflow and visibility rules key off BOTH layers,
+    // so the body mounts (closed collapses it) rather than being absent.
+    root = root.child(rsx! {
+        div { class: "hk-expansion-panel-body",
+            div { class: "hk-expansion-panel-content",
+                {props.children.clone()}
+            }
+        }
+    });
     VNode::Element(Box::new(root))
 }
 
@@ -193,10 +198,9 @@ mod tests {
         assert!(html.contains("hk-expansion-panel-title"), "{html}");
         assert!(html.contains(r#"aria-expanded="false""#), "{html}");
         assert!(!html.contains("data-open"), "{html}");
-        assert!(
-            !html.contains("class=\"body\""),
-            "closed mounts no body: {html}"
-        );
+        // Wrappers always mount (Vue v-show); the sheet collapses the body
+        // visually when [data-open] is absent.
+        assert!(html.contains("hk-expansion-panel-body"), "{html}");
     }
 
     #[test]
@@ -211,6 +215,7 @@ mod tests {
         assert!(html.contains(r#"data-open="""#), "{html}");
         assert!(html.contains(r#"aria-expanded="true""#), "{html}");
         assert!(html.contains("class=\"body\""), "{html}");
+        assert!(html.contains("hk-expansion-panel-body"), "{html}");
     }
 
     #[test]

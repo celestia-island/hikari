@@ -5,11 +5,13 @@
 // L88 DELTA: THIS IS A MOUSE-DRIVEN REORDER, NOT A NATIVE HTML5 DRAG.
 // The rows used to carry `draggable="true"` plus `dragstart` / `dragend` /
 // `dragover` / `dragleave` / `drop` with `DragEvent` handlers. The tairitsu
-// browser glue type-dispatches only the mouse family (plus keyboard, focus and
-// `input`/`change`) and routes every `drag*`/`drop` event through
-// `onGenericEvent`, whose payload is the type string and a live handle with no
-// data, so the `DragEvent` downcast never matched and the whole reorder path
-// was inert on a real device (ledger L88).
+// browser glue type-dispatched only the mouse family (plus keyboard, focus
+// and `input`/`change`) and routed every `drag*`/`drop` event through
+// `onGenericEvent`, whose payload is the type string and a live handle with
+// no data, so the `DragEvent` downcast never matched and the whole reorder
+// path was inert on a real device (ledger L88). Tairitsu 0.5.24 typed the
+// pointer family, but `drag*`/`drop` remain data-less — the mouse-driven
+// reorder stays.
 //
 // The gesture never actually needed `DataTransfer`: the state lives in the
 // component's own signals (`dragged_key` / `drag_over_key` / `drop_target`), and

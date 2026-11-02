@@ -32,16 +32,14 @@
 // pattern from `feedback/tooltip.rs`) — it never drives rendering.
 //
 // Deltas vs Vue (documented):
-// * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the tairitsu
-//   browser glue typed-dispatches only the mouse family
-//   (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
-//   `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
-//   `pointer*` event through a data-less generic channel, so a typed
-//   `PointerEvent` handler never fires on the real target (ledger L88). The
-//   track therefore binds `mousedown` / `mousemove` / `mouseup` and every
-//   handler takes a `MouseEvent`. Consequences: a touch screen produces no
-//   `mousemove` sequence, so TOUCH dragging is unavailable (a tap still sets
-//   the value), and this channel has no `pointercancel`.
+// * MOUSE-FAMILY BINDINGS. The track binds `mousedown` / `mousemove` /
+//   `mouseup` and every handler takes a `MouseEvent`. Wire update: the
+//   pointer family is typed on this wire since tairitsu 0.5.24 (ledger
+//   L88's never-fires window is closed), so the mouse-only choice is a
+//   convention, not a platform necessity. Consequences unchanged: a touch
+//   screen produces no `mousemove` sequence, so TOUCH dragging is
+//   unavailable (a tap still sets the value), and this channel has no
+//   `pointercancel`.
 // * Vue attaches the drag's `pointermove` / `pointerup` / `pointercancel`
 //   listeners to `window` on mount so a drag keeps tracking outside the track.
 //   A component here cannot own window listeners — `tairitsu_vdom::DomOps` is

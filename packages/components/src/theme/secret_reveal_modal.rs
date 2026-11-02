@@ -31,12 +31,14 @@
 //     carries `data-revealed="false"` plus a "Hold to show" accessible name
 //     for host styling. No per-instance state exists to flip internally
 //     (ledger L48), so the whole channel is controlled props.
-//   * GESTURE BINDINGS ARE MOUSE-FAMILY ONLY (ledger L88: the host glue
-//     dispatches ONLY the mouse family as typed events — `pointer*`/`touch*`
-//     walk the generic channel and silently never fire). Press =
-//     `mousedown` (primary button only, like every hold in this crate);
-//     release = `mouseup` + `mouseleave`. A TOUCH PRESS therefore cannot
-//     drive the reveal — declared here, not accidental.
+//   * GESTURE BINDINGS ARE MOUSE-FAMILY (a convention: the pointer family
+//     is typed on this wire since tairitsu 0.5.24 — ledger L88's
+//     never-fires window is closed — while `touch*` still walks the generic
+//     channel). Press = `mousedown` (primary button only, like every hold
+//     in this crate); release = `mouseup` + `mouseleave`. A TOUCH PRESS
+//     cannot drive the reveal directly (no `touch*` binding exists), and a
+//     mouse-driven hold needs the compatibility-event behaviour of the
+//     host — declared here, not accidental.
 //   * NO DOCUMENT-LEVEL POINTERUP (no implicit capture, like
 //     auth/password_surface's [D2]): a release OUTSIDE the box after the
 //     cursor left would never arrive, so `mousemove` carries the fallback —

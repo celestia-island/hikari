@@ -518,8 +518,9 @@ pub fn Select(props: SelectProps) -> Element {
                     },
                     // Vue spreads this only for the desktop popout; the rows
                     // only exist while open, so the form-factor guard is the
-                    // whole rule. `mouseenter`, not `pointerenter`: the wasip2
-                    // glue types only the mouse family (ledger L88).
+                    // whole rule. `mouseenter`, not `pointerenter` — either
+                    // family is typed on this wire since tairitsu 0.5.24; this
+                    // one is kept (ledger L88's window is closed).
                     onmouseenter: move |_event: MouseEvent| {
                         if !sheet_branch_visible {
                             enter_wiring.set_highlight(index_i32);

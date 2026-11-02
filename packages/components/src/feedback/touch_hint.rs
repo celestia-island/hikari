@@ -34,10 +34,11 @@
 //     with `closest("[title]")`, reads `title` / `data-hk-title`, and guards
 //     the anchor's inline `user-select` / `-webkit-touch-callout` for the
 //     hold. The recognizer needs document-level capture listeners, and the
-//     two targets split on that: on the SHIPPED `wasm32-wasip2` artifact the
-//     press never arrives at all (tairitsu exposes no document-level listener
-//     registration, and typed `pointer*` events are not dispatched — ledger
-//     L88; the tooltip mirror documents the same ceiling), while on the
+//     two targets split on that: on the SHIPPED `wasm32-wasip2` artifact
+//     there is still no document-level listener registration (tairitsu
+//     exposes none), though the typed `pointer*` press itself arrives since
+//     tairitsu 0.5.24 (ledger L88's untyped-dispatch window is closed — the
+//     tooltip mirror's handover is live there); on the
 //     `wasm32-unknown-unknown` web target the listeners and `on_pointerdown`
 //     do work, but that target still has no runtime host (it type-checks
 //     again since the anchor/glow web-target fix).

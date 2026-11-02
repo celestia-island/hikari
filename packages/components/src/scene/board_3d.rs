@@ -62,19 +62,18 @@
 //     [`Board3DProps::on_pointer_leave`]) — with the press/release slop
 //     machine (`CLICK_SLOP_PX`, Manhattan metric) and the "a grab cancels any
 //     in-flight flight" rule already applied.
-//   * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
-//     tairitsu browser glue dispatches only the mouse family as typed
-//     `MouseEvent`s and routes `pointer*` through a data-less generic
-//     channel, so a typed `PointerEvent` handler never fires on the real
-//     target (ledger L88). The canvas binds `mousedown` / `mouseup` /
+//   * MOUSE-FAMILY BINDINGS. The canvas binds `mousedown` / `mouseup` /
 //     `mousemove`, the root binds `mouseleave` for the hover report, and the
-//     press machine reads one constant mouse pointer id. Declared
-//     consequences: a touch screen produces no `mousemove` sequence, so
-//     TOUCH orbiting is unavailable; the mouse has no implicit capture, so a
-//     press that drags off the canvas loses its release — a `mouseup`
-//     anywhere else inside the board CANCELS the press at the root (the
-//     root-level fallback; Vue's pointer capture would have delivered the
-//     release to the canvas itself).
+//     press machine reads one constant mouse pointer id. Wire update: the
+//     pointer family is typed on this wire since tairitsu 0.5.24 (ledger
+//     L88's never-fires window is closed), so the mouse-only surface is a
+//     convention, not a platform necessity. Declared consequences unchanged:
+//     a touch screen produces no `mousemove` sequence, so TOUCH orbiting is
+//     unavailable; the mouse has no implicit capture, so a press that drags
+//     off the canvas loses its release — a `mouseup` anywhere else inside
+//     the board CANCELS the press at the root (the root-level fallback;
+//     Vue's pointer capture would have delivered the release to the canvas
+//     itself).
 //   * THE CAMERA IS A CONTROLLED POSE, not an internal one. Vue mutates
 //     `camera.position` / `controls.target` (OrbitControls, `flyTo`, `frameAll`)
 //     and exposes them through the engine. Here [`Board3DProps::camera_position`]

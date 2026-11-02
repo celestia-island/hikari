@@ -45,11 +45,12 @@
 //     unchanged (same trade-off as `basic/rolling_number.rs`).
 //   * TOUCH REVEAL IS A HOST API, NOT A BINDING (ledger L88). Vue listens to
 //     `touchstart` / `touchend` / `touchcancel` / `touchmove`; the tairitsu
-//     browser glue type-dispatches only the mouse family (plus keyboard, focus
-//     and `input`/`change`) and routes every `touch*` event through
-//     `onGenericEvent`, whose payload carries the type string and a live handle
-//     but no data — so a `TouchEvent` handler never ran on a real device and the
-//     four bindings were inert. They are REMOVED rather than re-pointed at a
+//     browser glue routes every `touch*` event through `onGenericEvent`
+//     (tairitsu 0.5.24 typed the pointer family and the wheel, but `touch*`
+//     is still data-less there), whose payload carries the type string and a
+//     live handle but no data — so a `TouchEvent` handler never ran on a real
+//     device and the four bindings were inert. They are REMOVED rather than
+//     re-pointed at a
 //     mouse event, because a touch has no distinct mouse equivalent: the two
 //     reveal modes and the swipe rule are kept as the exported
 //     [`hover_reveal_on_touch_start`] / [`hover_reveal_on_touch_end`] /

@@ -4,12 +4,14 @@
 //
 // L88 DELTA: THE OS-FILE DROP PATH IS REMOVED ON wasm32-wasip2, DELIBERATELY.
 // The zone used to bind `dragover` / `dragleave` / `drop` with `DragEvent`
-// handlers. The tairitsu browser glue type-dispatches only the mouse family
-// (plus keyboard / focus / input+change) and routes every `drag*` event through
-// `onGenericEvent`; the host side (`packages/web/src/wit_platform.rs`) turns that
-// into a `GenericEvent` carrying the type string and a live handle but NO data,
-// so the `DragEvent` downcast never matches and those typed handlers never ran
-// (ledger L88).
+// handlers. At the time of the removal (tairitsu ≤0.5.23) the browser glue
+// type-dispatched only the mouse family (plus keyboard / focus / input+change)
+// and routed every `drag*` event through `onGenericEvent`; the host side
+// (`packages/web/src/wit_platform.rs`) turns that into a `GenericEvent`
+// carrying the type string and a live handle but NO data, so the `DragEvent`
+// downcast never matches and those typed handlers never ran (ledger L88).
+// Tairitsu 0.5.24 typed the pointer family, but `drag*` is still data-less —
+// this removal stands.
 //
 // TO BE PRECISE ABOUT WHAT WAS AND WAS NOT PRESERVABLE: the EVENT still arrives,
 // so the VISUAL half was preservable as a data-less generic register —

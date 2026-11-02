@@ -96,11 +96,13 @@
 //     keeps revealing until `document.pointerup`. It fails safe (never stuck,
 //     never visible longer than asked) and is the price of having no
 //     document-level release edge at all.
-//     Mouse family, not pointer: on wasm32-wasip2 the glue typed-dispatches
-//     only the mouse family and routes `pointer*` through a data-less generic
-//     channel, so a typed `PointerEvent` handler never fires on the real target
-//     (ledger L88). A touch screen therefore cannot press-and-hold the eye (a
-//     tap still toggles; the eye stays keyboard-operable). `contextmenu` (Vue's
+//     Mouse family, not pointer: the binding predates tairitsu 0.5.24 and
+//     stays — the hold-to-reveal semantics are written against mouse edges
+//     (ledger L88's never-fires window is closed; the pointer family is typed
+//     now, so a rebinding is optional). A touch screen cannot reliably
+//     press-and-hold the eye on mouse events (compatibility-event behaviour is
+//     host-dependent; a tap still toggles; the eye stays keyboard-operable).
+//     `contextmenu` (Vue's
 //     long-press callout guard) is not an rsx event and is dropped.
 //   [D3] ADDITIVE: a password GENERATOR. Vue ships no generator; its exported
 //     pure utils are `passwordLevel` + `validatePassword` only. The mirror
@@ -1144,8 +1146,9 @@ impl PasswordPublish {
         }
     }
 
-    /// Vue's `onPointerdown` on the eye: no focus steal. Mouse family, not
-    /// pointer: wasip2 has no typed pointer dispatch (ledger L88).
+    /// Vue's `onPointerdown` on the eye: no focus steal. Mouse family —
+    /// historical binding; the pointer family is typed on this wire since
+    /// tairitsu 0.5.24 (ledger L88's window is closed).
     fn eye_press(&self, event: MouseEvent) {
         event.prevent_default();
         self.reveal_press();

@@ -80,3 +80,4 @@ static/
 scripts/e2e/test_samples/
 # Demo render output (written by packages/vue/demo/verify.ts)
 packages/vue/demo/output/
+.wt-link-fingerprint.json

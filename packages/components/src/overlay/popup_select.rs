@@ -528,9 +528,11 @@ pub fn PopupSelect(props: PopupSelectProps) -> Element {
                     "data-select-index": index_i32,
                     "data-checked": marker_attr(is_checked),
                     onclick: move |_event: MouseEvent| click_wiring.commit(click_value.clone()),
-                    // `mouseenter`, not `pointerenter`: the wasip2 glue types
-                    // only the mouse family, so a pointer-typed hover channel
-                    // never fires on a real device (ledger L88).
+                    // Hover via the mouse family (`mouseenter`, not
+                    // `pointerenter`). The pointer family is typed
+                    // on this wire since tairitsu 0.5.24, so this binding is a
+                    // convention, not a platform necessity (ledger L88's
+                    // never-fires window is closed).
                     onmouseenter: move |_event: MouseEvent| {
                         enter_wiring.set_highlight(index_i32);
                     },

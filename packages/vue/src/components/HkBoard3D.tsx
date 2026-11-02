@@ -8,8 +8,12 @@
  * stereoscopic minimap; the page owns the content:
  *
  *  - CAMERA: perspective + OrbitControls (damped orbit / wheel zoom /
- *    right-or-two-finger pan), distance clamps, `frameAll` fit and
- *    animated `flyTo`;
+ *    right-or-two-finger pan), orbit distance AND elevation windows,
+ *    `frameAll` fit and animated `flyTo` — an equal
+ *    `minPolarAngle`/`maxPolarAngle` pair locks the eye's elevation, so
+ *    azimuth is the only ORBIT axis left; with panning off the scene
+ *    then spins about the vertical axis (the turntable behaviour a globe
+ *    picker needs);
  *  - CONTENT: `engine.setObject(id, def)` registers an Object3D as
  *    addressable content — it joins framing, minimap markers and (when
  *    `pickable`) raycast picking; `label` attaches a CSS2D chip that
@@ -326,6 +330,18 @@ function selectionFrameColor(): THREE.Color {
   return cssRgbToColor(readCssColor("--color-primary", "21 101 192"));
 }
 
+/** Orbit elevation window for the `minPolarAngle` / `maxPolarAngle` props:
+ *  degrees in, radians out, clamped to the sphere's 0…180° range. A
+ *  non-finite bound falls back to the OrbitControls default, and a
+ *  reversed window normalises (same rule as the distance window) instead
+ *  of leaving OrbitControls with min > max. */
+function polarWindow(minDeg: number, maxDeg: number): { min: number; max: number } {
+  const toRad = (deg: number) => (Math.min(180, Math.max(0, deg)) * Math.PI) / 180;
+  const min = Number.isFinite(minDeg) ? toRad(minDeg) : 0;
+  const max = Number.isFinite(maxDeg) ? toRad(maxDeg) : Math.PI;
+  return { min: Math.min(min, max), max: Math.max(min, max) };
+}
+
 export default defineComponent({
   name: "HkBoard3D",
   props: {
@@ -358,6 +374,19 @@ export default defineComponent({
     maxDistance: { type: Number, default: 600 },
     /** Wire two-finger / right-drag panning. STATIC after mount. */
     enablePan: { type: Boolean, default: true },
+    /** Orbit elevation window in DEGREES from the scene's +Y axis
+     *  (OrbitControls' polar angle). STATIC after mount (applied to the
+     *  controls once; at mount it is relaxed to 0…180° when the board
+     *  mounts non-interactive, because an externally driven camera is
+     *  never fought — the same rule as the distance window, and like that
+     *  window it is NOT re-applied on a runtime `interactive` flip). The
+     *  pair pins how far the eye
+     *  may climb toward either pole; EQUAL values lock the elevation
+     *  outright and leave azimuth as the only orbit axis — the turntable
+     *  behaviour a globe or instrument board needs. A reversed window
+     *  normalises; the default is the full 0…180° sphere. */
+    minPolarAngle: { type: Number, default: 0 },
+    maxPolarAngle: { type: Number, default: 180 },
     /** Options for the lighting rig created on first `applyLighting`
      *  (ambient floor, shadow map size). */
     lighting: {
@@ -756,15 +785,26 @@ export default defineComponent({
       // at min forever and defeating every frameAll. Normalise instead.
       controls.minDistance = Math.min(props.minDistance, props.maxDistance);
       controls.maxDistance = Math.max(props.minDistance, props.maxDistance);
+      // The elevation window: same normalisation discipline as the
+      // distance window above, in degrees at the prop boundary. Equal
+      // bounds pin the eye to one elevation (turntable/yaw-only orbit).
+      const polar = polarWindow(props.minPolarAngle, props.maxPolarAngle);
+      controls.minPolarAngle = polar.min;
+      controls.maxPolarAngle = polar.max;
       controls.enablePan = props.enablePan;
       controls.target.set(initTarget[0], initTarget[1], initTarget[2]);
       controls.enabled = props.interactive;
       if (!props.interactive) {
         // An externally-driven camera (the board is just its renderer)
-        // must not be fought by the orbit distance window — the panel
-        // flies to poses far beyond any interactive zoom range.
+        // must not be fought by the orbit windows — the panel flies to
+        // poses far beyond any interactive zoom range, from any
+        // elevation. OrbitControls' update() clamps BOTH bounds every
+        // frame regardless of `enabled`, so the elevation window has to
+        // be relaxed here too, not just the radius.
         controls.minDistance = 0;
         controls.maxDistance = Infinity;
+        controls.minPolarAngle = 0;
+        controls.maxPolarAngle = Math.PI;
       }
       controls.update();
 

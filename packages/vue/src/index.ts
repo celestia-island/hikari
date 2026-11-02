@@ -192,6 +192,7 @@ export { default as HDraggableList } from "./components/HkDraggableList";
 export { default as HDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HSelectionWaterfall } from "./components/HkSelectionWaterfall";
+export { default as HMasonry } from "./components/HkMasonry";
 
 export { default as HLogo } from "./components/HkLogo";
 
@@ -842,6 +843,7 @@ export { default as HkDraggableList } from "./components/HkDraggableList";
 export { default as HkDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";
+export { default as HkMasonry } from "./components/HkMasonry";
 export { default as HkLogo } from "./components/HkLogo";
 export { default as HkAuthMethodList, type HkAuthMethodListEntry } from "./components/HkAuthMethodList";
 export { default as HkAuthSubmitButton } from "./components/HkAuthSubmitButton";

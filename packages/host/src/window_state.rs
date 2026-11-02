@@ -1106,11 +1106,26 @@ pub mod tauri_shell {
                 window.set_position(tauri::PhysicalPosition::new(geometry.x, geometry.y))
             })
             .and_then(|()| {
-                if geometry.maximized {
-                    window.maximize()
-                } else {
-                    Ok(())
+                // Mobile tauri::Window has no maximize() and no maximized
+                // geometry to restore — the phone webview is always
+                // fullscreen. Gate on the TARGET, not cfg(mobile): that cfg
+                // is emitted by tauri-build for the APP crate only and is
+                // never defined for a dependency like this one, so an
+                // ungated maximize() breaks every downstream Android/iOS
+                // build (wowsp 2026-10-31).
+                if !geometry.maximized {
+                    return Ok(());
                 }
+                #[cfg(any(target_os = "android", target_os = "ios"))]
+                {
+                    return Ok(());
+                }
+                #[cfg(not(any(target_os = "android", target_os = "ios")))]
+                {
+                    return window.maximize();
+                }
+                #[allow(unreachable_code)]
+                Ok(())
             });
         match applied {
             Ok(()) => debug_line(format_args!(

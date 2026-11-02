@@ -1,6 +1,7 @@
 import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType, type SlotsType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
+import { armTouchHint } from "../runtime/touchHint";
 import "./HkTooltip.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
@@ -103,18 +104,13 @@ export default defineComponent({
       }, props.delay);
     }
 
-    function showNow() {
-      clearShowTimer();
-      ensureEngaged();
-      visible.value = true;
-      trackPositionWhileVisible();
-    }
-
     function hide() {
       clearShowTimer();
       visible.value = false;
       stopPositionTracking();
-      dismissTouchListener();
+      // A hide means the hover/focus gesture is over — a touch hint
+      // armed in parallel (pen press while hovering) retires with it.
+      cancelTouchHint();
     }
 
     function clearShowTimer() {
@@ -124,49 +120,51 @@ export default defineComponent({
       }
     }
 
-    // ── touch taps ──────────────────────────────────────────────────
-    // Touch has no hover: a finger tap must open the bubble immediately
-    // (no delay) and the NEXT tap — anywhere else — must close it.
+    // ── touch long-press ────────────────────────────────────────────
+    // Touch has no hover, and the "what is this?" gesture on a phone is
+    // the LONG-PRESS — owned by the touch hint bar docked at the top of
+    // the viewport (runtime/touchHint.ts), never by this anchored popup
+    // (the finger would occlude the very element being inspected). A
+    // quick tap shows nothing at all: neither the popup nor the bar.
+    // Pen joins touch for the press (a stylus hold is the same
+    // deliberate ask) while KEEPING hover — stylus users float this
+    // popup, and a pen long-press may surface the bar beside it.
     // Tap-derived synthetic mouseenter/mouseleave events are ignored for
-    // a short window after a touch so they cannot re-open what the tap
-    // just closed.
+    // a short window after a touch so they cannot flash the anchored
+    // popup the touch mode never shows.
     // -Infinity sentinel: a plain 0 would suppress hover during the
     // first 600ms of page life (performance.now() starts near 0) and
     // under test fake timers (frozen at 0).
     let lastTouchAt = -Infinity;
-    let touchDismiss: ((e: PointerEvent) => void) | null = null;
+    let touchHintCancel: (() => void) | null = null;
 
-    function dismissTouchListener() {
-      if (touchDismiss) {
-        document.removeEventListener("pointerdown", touchDismiss, true);
-        touchDismiss = null;
+    function cancelTouchHint() {
+      if (touchHintCancel) {
+        touchHintCancel();
+        touchHintCancel = null;
       }
     }
 
     function onPointerdown(e: PointerEvent) {
-      if (e.pointerType !== "touch") return;
+      if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+      if (!props.text.trim()) return; // nothing to hint
       lastTouchAt = performance.now();
-      if (visible.value) {
-        hide();
-        return;
-      }
-      showNow();
-      touchDismiss = (ev: PointerEvent) => {
-        const node = wrapperRef.value;
-        if (node && ev.target instanceof Node && node.contains(ev.target)) {
-          // A re-tap on the trigger itself is the toggle case — handled
-          // by the branch above on its own pointerdown.
-          return;
-        }
-        hide();
-      };
-      document.addEventListener("pointerdown", touchDismiss, true);
+      // One hold at a time: a fresh press re-arms from scratch.
+      cancelTouchHint();
+      const node = wrapperRef.value;
+      if (!node) return;
+      touchHintCancel = armTouchHint(node, props.text, {
+        pointerId: e.pointerId,
+        // The exact contact point keeps the recognizer's slop math
+        // honest (the arm hook cannot see this event itself).
+        origin: { x: e.clientX, y: e.clientY },
+      });
     }
 
     onBeforeUnmount(() => {
       clearShowTimer();
       stopPositionTracking();
-      dismissTouchListener();
+      cancelTouchHint();
       if (popupHandle) {
         manager.unregister(popupHandle.id);
         popupHandle = null;
@@ -194,8 +192,9 @@ export default defineComponent({
         aria-describedby={visible.value ? popupId : undefined}
         onPointerdown={onPointerdown}
         onMouseenter={() => {
-          // Synthetic mouseenter right after a touch tap must not
-          // re-open the bubble the tap just toggled closed.
+          // Synthetic mouseenter right after a touch press must not
+          // flash the anchored popup the touch mode never shows — the
+          // top hint bar owns touch.
           if (performance.now() - lastTouchAt < 600) return;
           show();
         }}

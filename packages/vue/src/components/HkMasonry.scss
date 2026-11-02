@@ -1,0 +1,53 @@
+// AI-generated: developed with a DeepSeek Harness agent (model GLM-5.3-flash); human-directed.
+
+/* HkMasonry — the column geometry (see the component docblock for the
+ * contract). Independent flex columns, NOT CSS columns: a card is placed
+ * whole into one column, so nothing can fragment it and no balancer can
+ * go stale under it.
+ *
+ * Column spacing rides SIBLING MARGINS, never a container `gap` — the
+ * same lesson HkWaterfall's sheet records: a gap is spent between every
+ * adjacent pair of rendered flex items, including a (live, collapsed)
+ * pair, so a trailing empty column would shave the survivor narrower than
+ * the host's other full-width children. A sibling margin is only spent
+ * where two width-carrying columns actually sit, and an empty column
+ * cancels it on both edges.
+ *
+ * Hosts tune the density with --hk-masonry-gap (vertical card gap inside a
+ * column AND the horizontal sibling margin); it defaults to --space-12. */
+
+.hk-masonry {
+  display: flex;
+  align-items: flex-start;
+}
+
+.hk-masonry-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hk-masonry-gap, var(--space-12));
+}
+
+.hk-masonry-col + .hk-masonry-col {
+  margin-inline-start: var(--hk-masonry-gap, var(--space-12));
+}
+
+/* Fewer cards than columns: the empty column must not keep its flex share
+   (the survivor would render half width beside a ghost), and with the
+   sibling-margin spacing above its collapse costs no gap on either edge. */
+.hk-masonry-col[data-empty] {
+  flex: 0 0 0;
+  margin-inline-start: 0;
+}
+
+.hk-masonry-col[data-empty] + .hk-masonry-col {
+  margin-inline-start: 0;
+}
+
+/* The card wrapper is layout-transparent: the slot content owns its own
+   chrome, and the wrapper exists so the observer measures ONE stable box
+   per key regardless of what the card renders. */
+.hk-masonry-card {
+  min-width: 0;
+}

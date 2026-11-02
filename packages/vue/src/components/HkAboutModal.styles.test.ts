@@ -251,6 +251,14 @@ describe("HkAboutModal stylesheet contract", () => {
     const TONE = (tone: string) => `.s-about-modal-row-meta[data-tone=${tone}]`;
     const DARK_TONE = (tone: string) => `[data-mode=dark] ${TONE(tone)}`;
 
+    // GRASS CONSTRAINT (2026-11): the Rust mirror compiles these sheets
+    // through `grass`, which cannot parse relative colour syntax — so the
+    // seed-relative `oklch(from … min/max(l, …) c h)` arms this contract used
+    // to pin are now an oklab MIX toward black/white (an approximation of the
+    // lightness cap/floor, not channel math). See HkAboutModal.scss's NOTE and
+    // scripts/sync-vue-mirror.py; the approximation is tuned to the same
+    // contrast bound.
+    //
     // Channel behind each coloured tone, and the WCAG-AA ink derived from it.
     // The pill text is `--text-2xs` (10px) — small text, 4.5:1 — and the raw
     // channel misses that on both shipped palettes (stock light warning sits
@@ -268,9 +276,9 @@ describe("HkAboutModal stylesheet contract", () => {
     // (shipped once — chest #2027). Reverting an arm to the raw channel, or
     // dropping either mode arm, must turn this red.
     const AA_INK_LIGHT = (channel: string) =>
-      `oklch(from rgb(var(--color-${channel})) min(l, 0.5) c h)`;
+      `color-mix(in oklab, rgb(var(--color-${channel})) 60%, black)`;
     const AA_INK_DARK = (channel: string) =>
-      `oklch(from rgb(var(--color-${channel})) max(l, 0.72) c h)`;
+      `color-mix(in oklab, rgb(var(--color-${channel})) 30%, white)`;
     const TONES: Record<string, string> = {
       positive: "success",
       caution: "warning",

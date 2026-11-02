@@ -84,7 +84,7 @@ export interface NodeCanvasSlotProps {
 export type MinimapPlacement = "bottom-right" | "bottom-left" | "top-right" | "top-left";
 
 /** The defaults the chat views already ship (they were constants in the
- *  scada camera module; a base view has to publish them instead). */
+ *  consumer camera module; a base view has to publish them instead). */
 export const NODE_CANVAS_DEFAULTS = {
   zoomFactor: 1.05,
   minZoom: 0.2,
@@ -532,7 +532,7 @@ export default defineComponent({
     const camera = computed<NodeCanvasCamera>(() => props.camera ?? inner.value);
 
     /** Snap a zoom factor onto the grid, then into range. `quantizeScaleStep`
-     *  in the scada module does the same thing; the base view carries the
+     *  in the consumer module does the same thing; the base view carries the
      *  rule rather than the consumer. */
     function normalizeZoom(k: number): number {
       const step = props.zoomGridStep;

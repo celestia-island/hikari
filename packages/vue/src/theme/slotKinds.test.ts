@@ -68,7 +68,7 @@ const KIND_GROUP: TokenGroupDefinition = {
       ],
     },
     {
-      // The legacy form: no `kind` at all — this is what every SCADA
+      // The legacy form: no `kind` at all — this is what every legacy
       // palette in the wild is written as.
       key: "wire",
       label: "Wire",

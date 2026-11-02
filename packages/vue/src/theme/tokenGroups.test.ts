@@ -37,22 +37,22 @@ const TEST_GROUP: TokenGroupDefinition = {
   label: "Test wires",
   slots: [
     {
-      key: "power-l1",
-      label: "Power L1",
+      key: "power-feed-a",
+      label: "Power feed A",
       defaults: { dark: { r: 220, g: 60, b: 60 }, light: { r: 180, g: 40, b: 40 } },
       hueClamp: { center: 0, range: 20 },
     },
     {
-      key: "pipe-h2",
-      label: "Pipe H2",
+      key: "pipe-a",
+      label: "Pipe A",
       defaults: { dark: { r: 60, g: 200, b: 120 }, light: { r: 40, g: 160, b: 90 } },
       hueClamp: { center: 140, range: 30 },
       sRange: [0.3, 0.9],
       lRange: [0.25, 0.7],
     },
     {
-      key: "bus-n",
-      label: "Bus N",
+      key: "bus-a",
+      label: "Bus A",
       defaults: { dark: { r: 200, g: 83, b: 60 }, light: { r: 160, g: 63, b: 40 } },
       hueClamp: { center: 350, range: 20 },
     },
@@ -88,19 +88,19 @@ beforeEach(() => {
 describe("token group registry", () => {
   it("resolves registry defaults per mode and lets overrides win", () => {
     const dark = resolveGroupTokens("dark");
-    expect(dark["test-wires"]["power-l1"]).toEqual({ r: 220, g: 60, b: 60 });
+    expect(dark["test-wires"]["power-feed-a"]).toEqual({ r: 220, g: 60, b: 60 });
 
     const light = resolveGroupTokens("light");
-    expect(light["test-wires"]["power-l1"]).toEqual({ r: 180, g: 40, b: 40 });
-    expect(light["test-wires"]["power-l1"]).not.toEqual(dark["test-wires"]["power-l1"]);
+    expect(light["test-wires"]["power-feed-a"]).toEqual({ r: 180, g: 40, b: 40 });
+    expect(light["test-wires"]["power-feed-a"]).not.toEqual(dark["test-wires"]["power-feed-a"]);
 
     const overridden = resolveGroupTokens("dark", {
-      "test-wires": { "power-l1": { r: 1, g: 2, b: 3 } },
+      "test-wires": { "power-feed-a": { r: 1, g: 2, b: 3 } },
       "not-registered": { anything: { r: 9, g: 9, b: 9 } },
     });
-    expect(overridden["test-wires"]["power-l1"]).toEqual({ r: 1, g: 2, b: 3 });
+    expect(overridden["test-wires"]["power-feed-a"]).toEqual({ r: 1, g: 2, b: 3 });
     // Slots without an override keep their defaults.
-    expect(overridden["test-wires"]["pipe-h2"]).toEqual({ r: 60, g: 200, b: 120 });
+    expect(overridden["test-wires"]["pipe-a"]).toEqual({ r: 60, g: 200, b: 120 });
     // Unregistered groups never appear in the resolution.
     expect(overridden["not-registered"]).toBeUndefined();
   });
@@ -110,7 +110,7 @@ describe("token group registry", () => {
     registerTokenGroup({
       id: "test-wires",
       label: "Test wires v2",
-      slots: [slot("power-l1")],
+      slots: [slot("power-feed-a")],
     });
     const groups = getTokenGroups().filter((g) => g.id === "test-wires");
     expect(groups).toHaveLength(1);
@@ -120,8 +120,8 @@ describe("token group registry", () => {
 
   it("returns resolved values as fresh copies", () => {
     const resolved = asRgbGroups(resolveGroupTokens("dark"));
-    resolved["test-wires"]["power-l1"].r = 0;
-    expect(asRgbGroups(resolveGroupTokens("dark"))["test-wires"]["power-l1"].r).toBe(220);
+    resolved["test-wires"]["power-feed-a"].r = 0;
+    expect(asRgbGroups(resolveGroupTokens("dark"))["test-wires"]["power-feed-a"].r).toBe(220);
   });
 
   it("returns registry definitions as copies callers cannot mutate", () => {
@@ -142,14 +142,14 @@ describe("token group registry", () => {
 
 describe("clampToSlot", () => {
   it("keeps a hue inside the band unchanged", () => {
-    // rgb(200, 60, 60) → hsl(0, 0.56, 0.51); power-l1 allows 0 ± 20°.
-    expect(clampToSlot(slot("power-l1"), { r: 200, g: 60, b: 60 })).toEqual({
+    // rgb(200, 60, 60) → hsl(0, 0.56, 0.51); power-feed-a allows 0 ± 20°.
+    expect(clampToSlot(slot("power-feed-a"), { r: 200, g: 60, b: 60 })).toEqual({
       r: 200,
       g: 60,
       b: 60,
     });
-    // rgb(60, 200, 90) → hue ≈ 132.9°; pipe-h2 allows 140 ± 30°.
-    expect(clampToSlot(slot("pipe-h2"), { r: 60, g: 200, b: 90 })).toEqual({
+    // rgb(60, 200, 90) → hue ≈ 132.9°; pipe-a allows 140 ± 30°.
+    expect(clampToSlot(slot("pipe-a"), { r: 60, g: 200, b: 90 })).toEqual({
       r: 60,
       g: 200,
       b: 90,
@@ -157,20 +157,20 @@ describe("clampToSlot", () => {
   });
 
   it("clamps an out-of-band hue to the nearest bound", () => {
-    // rgb(60, 60, 200) → hue 240°; power-l1 (0 ± 20°) clamps to 340°.
-    const clamped = clampToSlot(slot("power-l1"), { r: 60, g: 60, b: 200 });
+    // rgb(60, 60, 200) → hue 240°; power-feed-a (0 ± 20°) clamps to 340°.
+    const clamped = clampToSlot(slot("power-feed-a"), { r: 60, g: 60, b: 200 });
     expect(rgbToHsl(clamped).h).toBeCloseTo(340, 0);
   });
 
   it("allows hues across the 0° wrap and clamps the far side", () => {
-    // bus-n: center 350° ± 20° → [330°, 10°]. Hue 10° (rgb 200, 83, 60) is allowed.
-    expect(clampToSlot(slot("bus-n"), { r: 200, g: 83, b: 60 })).toEqual({
+    // bus-a: center 350° ± 20° → [330°, 10°]. Hue 10° (rgb 200, 83, 60) is allowed.
+    expect(clampToSlot(slot("bus-a"), { r: 200, g: 83, b: 60 })).toEqual({
       r: 200,
       g: 83,
       b: 60,
     });
     // Hue 30° is outside; nearest bound is 10° → same color as above.
-    expect(clampToSlot(slot("bus-n"), { r: 200, g: 130, b: 60 })).toEqual({
+    expect(clampToSlot(slot("bus-a"), { r: 200, g: 130, b: 60 })).toEqual({
       r: 200,
       g: 83,
       b: 60,
@@ -192,9 +192,9 @@ describe("clampToSlot", () => {
   });
 
   it("clamps both hue and bands together", () => {
-    // Blue (hue 240°, s 0.56, l 0.51) under pipe-h2 (140 ± 30°, s ≤ 0.9, l ∈ [0.25, 0.7]):
+    // Blue (hue 240°, s 0.56, l 0.51) under pipe-a (140 ± 30°, s ≤ 0.9, l ∈ [0.25, 0.7]):
     // hue snaps to 170°, s/l already inside their bands.
-    const clamped = clampToSlot(slot("pipe-h2"), { r: 60, g: 60, b: 200 });
+    const clamped = clampToSlot(slot("pipe-a"), { r: 60, g: 60, b: 200 });
     const hsl = rgbToHsl(clamped);
     expect(hsl.h).toBeCloseTo(170, 0);
     expect(hsl.s).toBeCloseTo(0.56, 2);
@@ -215,8 +215,8 @@ describe("group cssvars", () => {
       groupTokensToCSSVars(resolveGroupTokens("dark")),
     );
     expect(vars["--color-primary"]).toBe("136 192 208");
-    expect(vars["--test-wires-power-l1"]).toBe("220 60 60");
-    expect(vars["--test-wires-pipe-h2"]).toBe("60 200 120");
+    expect(vars["--test-wires-power-feed-a"]).toBe("220 60 60");
+    expect(vars["--test-wires-pipe-a"]).toBe("60 200 120");
     expect(vars["--test-wires-panel"]).toBe("90 90 110");
   });
 
@@ -224,17 +224,17 @@ describe("group cssvars", () => {
     const vars = tokensToCSSVars(
       themePresets.default.dark,
       groupTokensToCSSVars(
-        resolveGroupTokens("dark", { "test-wires": { "power-l1": { r: 7, g: 8, b: 9 } } }),
+        resolveGroupTokens("dark", { "test-wires": { "power-feed-a": { r: 7, g: 8, b: 9 } } }),
       ),
     );
-    expect(vars["--test-wires-power-l1"]).toBe("7 8 9");
+    expect(vars["--test-wires-power-feed-a"]).toBe("7 8 9");
     // Non-overridden slots still fall back to defaults.
-    expect(vars["--test-wires-pipe-h2"]).toBe("60 200 120");
+    expect(vars["--test-wires-pipe-a"]).toBe("60 200 120");
   });
 
   it("keeps tokensToCSSVars backward compatible without groups", () => {
     const vars = tokensToCSSVars(themePresets.default.dark);
-    expect(vars["--test-wires-power-l1"]).toBeUndefined();
+    expect(vars["--test-wires-power-feed-a"]).toBeUndefined();
     expect(Object.keys(vars).every((k) => k.startsWith("--color-") || k.startsWith("--hi-"))).toBe(true);
   });
 });
@@ -288,8 +288,8 @@ describe("custom theme storage with groups", () => {
     dark: scheme,
     light: themePresets.default.light,
     groups: {
-      dark: { "test-wires": { "power-l1": { r: 210, g: 50, b: 50 } } },
-      light: { "test-wires": { "power-l1": { r: 170, g: 30, b: 30 } } },
+      dark: { "test-wires": { "power-feed-a": { r: 210, g: 50, b: 50 } } },
+      light: { "test-wires": { "power-feed-a": { r: 170, g: 30, b: 30 } } },
     },
   };
 
@@ -313,10 +313,10 @@ describe("custom theme storage with groups", () => {
 
   it("replaces and persists groups via addCustomTheme", () => {
     addCustomTheme(themeWithGroups);
-    addCustomTheme({ ...themeWithGroups, groups: { dark: { "test-wires": { "power-l1": { r: 1, g: 2, b: 3 } } } } });
+    addCustomTheme({ ...themeWithGroups, groups: { dark: { "test-wires": { "power-feed-a": { r: 1, g: 2, b: 3 } } } } });
     const loaded = loadCustomThemes();
     expect(loaded).toHaveLength(1);
-    expect(loaded[0].groups?.dark?.["test-wires"]?.["power-l1"]).toEqual({ r: 1, g: 2, b: 3 });
+    expect(loaded[0].groups?.dark?.["test-wires"]?.["power-feed-a"]).toEqual({ r: 1, g: 2, b: 3 });
   });
 });
 
@@ -438,16 +438,16 @@ describe("localized text and sections", () => {
 
 describe("parseTokenGroupConfig", () => {
   const VALID = {
-    id: "scada",
-    label: { en: "SCADA industrial colors", "zh-Hans": "SCADA 工业配色" },
+    id: "ops",
+    label: { en: "Operations palette", "zh-Hans": "运营配色" },
     sections: [
       {
         key: "power",
         label: { en: "Electrical power", "zh-Hans": "电力" },
         slots: [
           {
-            key: "power-l1",
-            label: { en: "Phase L1 (yellow)", "zh-Hans": "L1 相（黄）" },
+            key: "power-feed-a",
+            label: { en: "Feed A (yellow)", "zh-Hans": "馈线 A（黄）" },
             defaults: { dark: [234, 179, 8], light: [161, 98, 7] },
             hueClamp: { center: 45, range: 20 },
             sRange: [0.35, 0.95],
@@ -474,7 +474,7 @@ describe("parseTokenGroupConfig", () => {
     const result = parseTokenGroupConfig(VALID);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.group.id).toBe("scada");
+    expect(result.group.id).toBe("ops");
     expect(result.group.sections).toHaveLength(1);
     const slot = result.group.sections![0].slots[0] as TokenColorSlot;
     expect(slot.defaults.dark).toEqual({ r: 234, g: 179, b: 8 });
@@ -543,6 +543,6 @@ describe("parseTokenGroupConfig", () => {
 
     const good = registerTokenGroupConfig(VALID);
     expect(good.ok).toBe(true);
-    expect(getTokenGroups().some((g) => g.id === "scada")).toBe(true);
+    expect(getTokenGroups().some((g) => g.id === "ops")).toBe(true);
   });
 });

@@ -626,6 +626,9 @@ pub fn date_locale(language: Language) -> DateLocale {
         Language::Portuguese => (Locale::pt_BR, 0, DateOrder::DayMonthYear),
         Language::Russian => (Locale::ru_RU, 1, DateOrder::DayMonthYear),
         Language::Arabic => (Locale::ar_SA, 0, DateOrder::DayMonthYear),
+        // `Language` is `#[non_exhaustive]`: a future variant compiles through
+        // here and keeps the English snapshot until its own row is added.
+        _ => (Locale::en_US, 0, DateOrder::MonthDayYear),
     };
     DateLocale {
         language,

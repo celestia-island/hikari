@@ -148,6 +148,12 @@ pub fn date_tag_layout(language: Language) -> DateTagLayout {
             order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
             separators: ["/", "/"],
         },
+        // `Language` is `#[non_exhaustive]`: a future variant compiles through
+        // here and keeps the English layout until its own row is added.
+        _ => DateTagLayout {
+            order: [DateTagField::Month, DateTagField::Day, DateTagField::Year],
+            separators: ["/", "/"],
+        },
     }
 }
 

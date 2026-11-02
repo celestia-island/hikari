@@ -40,9 +40,16 @@ pub enum TextDirection {
 ///
 /// The variants line up with the single directory name used per language across
 /// the celestia-island documentation sites (see [`Language::code`]).
+///
+/// `#[non_exhaustive]`: adding a variant is a breaking change for downstream
+/// exhaustive `match`es, so matches outside this crate must keep a wildcard
+/// arm. That does not undo the German/Portuguese addition — it only prevents
+/// the next one from breaking consumers — and it makes a new language's
+/// fallback explicit instead of a compile error.
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize,
 )]
+#[non_exhaustive]
 pub enum Language {
     #[default]
     English,

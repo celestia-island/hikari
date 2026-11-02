@@ -1257,8 +1257,9 @@ pub fn Minimap(props: MinimapProps) -> Element {
 
     // The card IS the drag surface and the release root (mouse family, L88 —
     // see the header's mouse delta): mousedown arms, mousemove pans, mouseup
-    // ends, the data-less `pointercancel` channel aborts, and a mouseleave
-    // with the button already up catches the outside release as well.
+    // ends, the `pointercancel` channel aborts (typed payload since tairitsu
+    // 0.5.24 — the handler reads none of it), and a mouseleave with the
+    // button already up catches the outside release as well.
     let card = VElement::new("div")
         .class("hk-minimap")
         .attr("data-dragging", minimap_marker_attr(minimap_is_dragging()))

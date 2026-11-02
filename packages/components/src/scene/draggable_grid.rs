@@ -62,13 +62,10 @@
 //     guard needs DOM introspection, so a press on interactive cell content
 //     reaches the host as well: a host that must keep those clicks simply does
 //     not publish `dragging_key`.
-//   * MOUSE events, not pointer events. On wasm32-wasip2 the tairitsu browser
-//     glue gives only the mouse family a typed `MouseEvent` payload and routes
-//     `pointer*` (with touch/transition/animation) through the generic event
-//     channel, so a `PointerEvent` handler never fires on the real target
-//     (evidence: `tairitsu/packages/browser-glue/dist/runtime/eventTarget.js`
-//     vs `packages/web/src/wit_platform.rs`). VElement's typed mouse bindings
-//     are the ones that work, so touch/pen presses are the host's to observe.
+//   * MOUSE events. The pointer family is typed on this wire since
+//     tairitsu 0.5.24 (the old never-fires window — ledger L88 — is closed),
+//     so the mouse-only surface is a convention, not a platform necessity.
+//     Touch/pen presses are the host's to observe either way.
 //   * `on_drag_over` is the cell's `mouseenter` — the browser's own hit test —
 //     instead of a window pointermove plus rect midpoints. The hit test itself
 //     stays available as pure arithmetic ([`draggable_grid_row_for`],

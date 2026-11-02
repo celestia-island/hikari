@@ -117,9 +117,9 @@
 //     (ledger L49).
 //   * length math counts CHARS where JavaScript counts UTF-16 code units
 //     (`q.length`, `value.length`) — identical for every BMP query.
-//   * interactions bind the MOUSE family (`onclick`), per ledger L88: on
-//     wasm32-wasip2 the browser glue dispatches only the mouse family as
-//     typed events.
+//   * interactions bind the MOUSE family (`onclick`) — a convention; the
+//     pointer family is typed on this wire since tairitsu 0.5.24 (ledger
+//     L88's never-fires window is closed).
 
 // These kernels are line-for-line ports of the upstream JS math: the negated
 // comparisons, manual clamps and inline tuple types keep the port auditable

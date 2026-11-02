@@ -78,15 +78,15 @@
 //     `runtime/touchHint.ts` (`armTouchHint(wrapper, text, { pointerId,
 //     origin })`): a long-press shows the top-docked hint bar, a quick tap
 //     shows nothing, and the press's synthetic mouse events are suppressed
-//     for 600 ms. The mirror cannot run that recognizer on the SHIPPED target:
-//     on `wasm32-wasip2` the press never arrives at all (no document-level
-//     listener API, and typed pointer events are not dispatched — ledger L88;
-//     see `feedback/touch_hint.rs`); on the `wasm32-unknown-unknown` web
-//     target `on_pointerdown` does fire and the handover compiles, but that
-//     target still has no runtime host. So the mirror
-//     exposes the HANDOVER on every target: [`TooltipProps::on_touch_hint`]
-//     fires with the text and the contact point, and the host arms its own
-//     long-press and presents the mirrored
+//     for 600 ms. The mirror cannot run that recognizer itself on any target:
+//     the recognizer needs document-level capture listeners, and
+//     `tairitsu_vdom::DomOps` is element-scoped (no document/window
+//     registration seam). Wire update (tairitsu 0.5.24): the typed pointer
+//     press arrives on `wasm32-wasip2` too, so the HANDOVER is live there —
+//     [`TooltipProps::on_touch_hint`] fires with the text and the contact
+//     point; on the `wasm32-unknown-unknown` web target the same path
+//     type-checks, but that target still has no runtime host. In both cases
+//     the HOST arms its own long-press and presents the mirrored
 //     [`crate::feedback::TouchHintBar`]. A host that wires nothing gets no
 //     touch hint — the tap does not fall back to the anchored bubble, exactly
 //     like Vue.

@@ -91,8 +91,8 @@
 //     listens on `window` for the release. The surface binds `mousedown` /
 //     `mousemove` / `mouseup` — the pointer family is typed on this wire
 //     since tairitsu 0.5.24 (ledger L88's never-fires window is closed), so
-//     the mouse-only choice is a convention, not a platform necessity.
-//     and the same machine lives in a module-level `thread_local` registry
+//     the mouse-only choice is a convention, not a platform necessity, and
+//     the same machine lives in a module-level `thread_local` registry
 //     keyed by [`NodeCanvasProps::instance_key`] —
 //     [`node_canvas_begin_pointer`], [`node_canvas_move_pointer`],
 //     [`node_canvas_end_pointer`], [`node_canvas_blur`],

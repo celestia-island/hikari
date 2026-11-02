@@ -1035,8 +1035,9 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
 
     // The card IS the drag surface and the release root (mouse family, L88 —
     // see the header's mouse delta): mousedown arms, mousemove orbits,
-    // mouseup ends, the data-less `pointercancel` channel aborts, and a
-    // mouseleave with the button already up catches the outside release.
+    // mouseup ends, the `pointercancel` channel aborts (typed payload since
+    // tairitsu 0.5.24 — the handler reads none of it), and a mouseleave with
+    // the button already up catches the outside release.
     let card = VElement::new("div")
         .class(minimap_3d_root_classes(false))
         .attr(

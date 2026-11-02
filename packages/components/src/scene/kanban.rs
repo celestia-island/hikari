@@ -44,11 +44,9 @@
 //     unchanged (non-integer / negative / out-of-range -> append).
 //
 // Deltas vs Vue (documented, not accidental):
-//   * MOUSE-FAMILY BINDINGS, not native drag-and-drop. On wasm32-wasip2 the
-//     tairitsu browser glue dispatches only the mouse family as typed
-//     `MouseEvent`s and routes `drag*` (like `pointer*`) through a data-less
-//     generic channel, so a typed `DragEvent` handler never fires on the
-//     real target (ledger L88). The chain is re-based on the mouse family,
+//   * MOUSE-FAMILY BINDINGS, not native drag-and-drop. `drag*` events route
+//     through a data-less generic channel, so a typed `DragEvent` handler
+//     never fires on the real target (ledger L88). The chain is re-based on the mouse family,
 //     the same paradigm `draggable_list` / `draggable_grid` use: the card's
 //     `dragstart` → its `mousedown` (the press is PUBLISHED, not claimed,
 //     and `preventDefault` suppresses the native drag-and-drop that would

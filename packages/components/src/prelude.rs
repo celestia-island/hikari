@@ -129,10 +129,10 @@ pub use crate::layout::{
 // migration window keeps existing prelude users compiling.
 #[allow(deprecated)]
 pub use crate::navigation::{
-    BreadcrumbItemProps, BreadcrumbProps, KeywordSearchModalProps, LocalizedInputProps,
-    MenuIdentityItemProps, MenuItemProps, MenuPanelProps, MenuProps, MenuSectionProps,
-    ModalBreadcrumbProps, SearchTriggerProps, SidebarItemProps, SidebarLeafProps, SidebarProps,
-    SidebarSectionProps, StepsProps, SubMenuProps, TabPaneProps, TabsProps,
+    BreadcrumbItemProps, BreadcrumbProps, ExpansionPanelProps, KeywordSearchModalProps,
+    LocalizedInputProps, MenuIdentityItemProps, MenuItemProps, MenuPanelProps, MenuProps,
+    MenuSectionProps, ModalBreadcrumbProps, SearchTriggerProps, SidebarItemProps, SidebarLeafProps,
+    SidebarProps, SidebarSectionProps, StepsProps, SubMenuProps, TabPaneProps, TabsProps,
 };
 // Production component Props
 pub use crate::production::{

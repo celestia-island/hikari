@@ -267,6 +267,7 @@ GAP_SHEETS: list[str] = [
     "HkStepGuide.scss",
     "HkTagDotRow.scss",
     "HkUserPicker.scss",
+    "HkExpansionPanel.scss",
 ]
 
 FAMILY_SHEETS: list[str] = [

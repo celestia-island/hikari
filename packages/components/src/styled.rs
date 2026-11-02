@@ -245,11 +245,13 @@ impl StyleRegistry {
     #[cfg(feature = "navigation")]
     pub fn register_navigation_components(&mut self) {
         use crate::navigation::{
-            BreadcrumbComponent, KeywordSearchModalComponent, LocalizedInputComponent,
-            MenuComponent, MenuIdentityItemComponent, MenuPanelComponent, MenuSectionComponent,
-            ModalBreadcrumbComponent, SearchTriggerComponent, SidebarComponent, TabsComponent,
+            BreadcrumbComponent, ExpansionPanelComponent, KeywordSearchModalComponent,
+            LocalizedInputComponent, MenuComponent, MenuIdentityItemComponent, MenuPanelComponent,
+            MenuSectionComponent, ModalBreadcrumbComponent, SearchTriggerComponent,
+            SidebarComponent, TabsComponent,
         };
         MenuComponent::register(self);
+        ExpansionPanelComponent::register(self);
         MenuIdentityItemComponent::register(self);
         MenuPanelComponent::register(self);
         MenuSectionComponent::register(self);

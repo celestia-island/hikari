@@ -7,6 +7,7 @@
 
 pub mod anchor;
 pub mod breadcrumb;
+pub mod expansion_panel;
 pub mod keyword_search_modal;
 pub mod localized_input;
 pub mod menu;
@@ -48,3 +49,5 @@ pub use search_trigger::*;
 #[allow(deprecated)]
 pub use steps::{StepData, StepStatus, Steps, StepsDirection, StepsProps};
 pub use tabs::{TabPane, TabPaneProps, TabPosition, Tabs, TabsComponent, TabsProps};
+
+pub use expansion_panel::*;

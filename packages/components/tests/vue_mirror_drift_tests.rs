@@ -417,6 +417,7 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".s-status-bar",
         ".hk-menu-flag",
         // W9 final gap family
+        ".hk-expansion-panel",
         ".hk-kw-search",
         ".hk-localized-input",
         ".hk-menu-identity-item",

@@ -12,7 +12,7 @@
 //   div.hk-slider[.is-disabled]  data-size={sm|md} role="slider"
 //         tabindex={0|-1} aria-label aria-valuemin aria-valuemax
 //         aria-valuenow aria-valuetext [aria-disabled]
-//         (pointerdown/move/up/cancel, keydown)
+//         (mousedown/move/up, keydown — see the L86 delta below)
 //     span.hk-slider-tick [data-active] style="left:{x}%" aria-hidden="true"
 //     div.hk-slider-fill   style="width:{pct}%"
 //     div.hk-slider-thumb  style="left:{pct}%"
@@ -32,12 +32,32 @@
 // pattern from `feedback/tooltip.rs`) — it never drives rendering.
 //
 // Deltas vs Vue (documented):
+// * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the tairitsu
+//   browser glue typed-dispatches only the mouse family
+//   (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
+//   `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
+//   `pointer*` event through a data-less generic channel, so a typed
+//   `PointerEvent` handler never fires on the real target (ledger L86). The
+//   track therefore binds `mousedown` / `mousemove` / `mouseup` and every
+//   handler takes a `MouseEvent`. Consequences: a touch screen produces no
+//   `mousemove` sequence, so TOUCH dragging is unavailable (a tap still sets
+//   the value), and this channel has no `pointercancel`.
 // * Vue attaches the drag's `pointermove` / `pointerup` / `pointercancel`
 //   listeners to `window` on mount so a drag keeps tracking outside the track.
-//   A component here cannot own window listeners and `setPointerCapture` is not
-//   exposed, so tracking rides the root element's own pointer events: a drag
-//   that leaves the track stops emitting until the pointer returns. `up` /
-//   `cancel` on the root still end the drag.
+//   A component here cannot own window listeners — `tairitsu_vdom::DomOps` is
+//   element-scoped, with no document/window registration seam — and
+//   `setPointerCapture` is not exposed, so tracking rides the root element's
+//   own mouse events: a drag that leaves the track stops emitting until the
+//   pointer returns.
+// * A RELEASE OUTSIDE THE TRACK IS NOT LOST, it is recovered from the button
+//   state: the root `mouseup` ends a release inside the track, and a
+//   `mousemove` reporting `buttons == 0` ends a drag whose release happened
+//   elsewhere (Vue's window `pointerup` edge). Without that guard the drag flag
+//   would stay armed and a later HOVER would write values. This is the same
+//   `buttons == 0` fallback `display/media_slider.rs`, `scene/minimap.rs` and
+//   `basic/color_picker.rs` carry. A gesture the browser ABORTS (a touch-scroll
+//   takeover) has no mouse-channel edge of its own, but the flag is never
+//   permanently stuck: both edges above clear it.
 // * Vue measures its `trackRef` with `getBoundingClientRect()`. The mirror uses
 //   the host-provided measurement for the event's `currentTarget` handle
 //   (`tairitsu_vdom::get_bounding_client_rect`); when the host cannot measure
@@ -54,7 +74,7 @@
 
 use std::cell::Cell;
 
-use tairitsu_vdom::{DomHandle, PointerEvent, get_bounding_client_rect};
+use tairitsu_vdom::{DomHandle, get_bounding_client_rect};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -266,7 +286,7 @@ pub fn Slider(props: SliderProps) -> Element {
     };
 
     let commit_down = commit.clone();
-    let handle_pointer_down = move |event: PointerEvent| {
+    let handle_mouse_down = move |event: MouseEvent| {
         if disabled {
             return;
         }
@@ -277,8 +297,15 @@ pub fn Slider(props: SliderProps) -> Element {
     };
 
     let commit_move = commit.clone();
-    let handle_pointer_move = move |event: PointerEvent| {
+    let handle_mouse_move = move |event: MouseEvent| {
         if disabled || !slider_is_dragging() {
+            return;
+        }
+        // Vue's window `pointerup`: a move with no button held means the drag
+        // ended OUTSIDE this track, so the flag must clear instead of staying
+        // armed (which would keep writing values on later hovers).
+        if event.buttons == 0 {
+            set_slider_dragging(false);
             return;
         }
         if let Some(ratio) = pointer_ratio(event.client_x, event.current_target) {
@@ -286,9 +313,7 @@ pub fn Slider(props: SliderProps) -> Element {
         }
     };
 
-    let handle_pointer_up = move |_: PointerEvent| set_slider_dragging(false);
-
-    let handle_pointer_cancel = move |_: PointerEvent| set_slider_dragging(false);
+    let handle_mouse_up = move |_: MouseEvent| set_slider_dragging(false);
 
     // Vue's keyboard map: arrows step once, PageUp/Down step 4×, Home/End jump.
     let commit_key = commit.clone();
@@ -341,10 +366,9 @@ pub fn Slider(props: SliderProps) -> Element {
             "aria-valuenow": value,
             "aria-valuetext": value_text,
             "aria-disabled": if disabled { Some("true") } else { None },
-            onpointerdown: handle_pointer_down,
-            onpointermove: handle_pointer_move,
-            onpointerup: handle_pointer_up,
-            onpointercancel: handle_pointer_cancel,
+            onmousedown: handle_mouse_down,
+            onmousemove: handle_mouse_move,
+            onmouseup: handle_mouse_up,
             onkeydown: handle_keydown,
             {VNode::Fragment(tick_nodes)}
             div {

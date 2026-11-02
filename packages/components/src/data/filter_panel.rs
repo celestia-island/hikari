@@ -69,10 +69,6 @@
 //     watcher.
 
 use hikari_i18n::t;
-// The prelude curates the tairitsu event set; `PointerEvent` (the hover
-// highlight channel) is not part of it — the same crate-level import
-// `basic/select.rs` uses.
-use tairitsu_vdom::PointerEvent;
 
 use crate::basic::date_picker::{DatePicker, DatePickerProps, DatePickerSize};
 use crate::basic::input::{Input, InputProps, InputSize, InputVariant};
@@ -1089,7 +1085,10 @@ fn add_menu_layer(props: &FilterPanelProps) -> VNode {
             .on_click(move |_event: MouseEvent| {
                 commit_field_pick(&values, &picked, &click_value, &click_menu);
             })
-            .on_pointerenter(move |_event: PointerEvent| {
+            // `mouseenter`, not `pointerenter`: the wasip2 glue types only the
+            // mouse family, so a pointer-typed hover channel never fires on a
+            // real device (ledger L86).
+            .on_mouseenter(move |_event: MouseEvent| {
                 if let Some(handler) = hover_menu.as_ref() {
                     handler.call(AddMenuState {
                         open: true,

@@ -76,14 +76,35 @@
 //     the window (rect measurement, placeholder math, auto-scroll). The mirror
 //     keeps the SAME lanes and markers (`role="list"` / `listitem`,
 //     `.hk-draggable-list-handle`, `data-locked` / `data-hidden` /
-//     `data-all-locked`) and drives a MINIMAL pointer path through a
-//     thread-local registry: `pointerdown` on a draggable row arms it,
-//     `pointerup` on another row commits `on_reorder` (via
-//     [`header_reorder_indices`]), and leaving the list abandons the arm.
+//     `data-all-locked`) and drives a MINIMAL reorder path through a
+//     thread-local registry: `mousedown` on a draggable row arms it, `mouseup`
+//     on another row commits `on_reorder` (via [`header_reorder_indices`]).
 //     `data-dragging` / `data-placeholder` are never emitted (no re-render
 //     source for a live drag), so the lift/placeholder visuals of Vue's sheet
 //     stay dormant.
-//   * `pointerenter` highlighting is attached unconditionally. Vue spreads it
+//   * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
+//     tairitsu browser glue typed-dispatches only the mouse family and routes
+//     every `pointer*` event through a data-less generic channel, so a typed
+//     `PointerEvent` handler never fires on the real target (ledger L86); the
+//     rows bind `mousedown` / `mouseup` / `mouseenter` / `mouseleave` and take
+//     `MouseEvent`. Consequences: a touch screen cannot reorder (a tap still
+//     selects), and a drag released on the window is an abandon, not a reorder.
+//   * END OF DRAG when the release lands OUTSIDE the row that was armed — Vue's
+//     window `pointerup`/`pointercancel`. `tairitsu_vdom::DomOps` is
+//     element-scoped (no document/window registration seam), so the arm is
+//     retired by the two edges the surface actually owns: `mouseleave` on the
+//     list abandons a drag that left it (a release elsewhere must cross that
+//     boundary), and `mouseup` on the list abandons an arm whose release landed
+//     on list padding instead of another row.
+//     The `mouseup` edge is the one that fixes a real misfire: only a row's own
+//     `mouseup` used to call `header_take_drag`, so a release on the list padding
+//     (or anywhere off the rows) left the arm ARMED. The next release that
+//     reached a row then committed that stale arm — e.g. press on padding, move
+//     across a row, release: the row's `mouseup` fires and reorders onto a row
+//     the user never dragged from. Retiring the arm on any release that reaches
+//     the list closes that path, and a release that never reaches the list is
+//     covered by the `mouseleave` edge above.
+//   * `mouseenter` highlighting is attached unconditionally. Vue spreads it
 //     only for the desktop popout because its sheet branch has no hover; the
 //     mirror has no sheet branch, so the form-factor guard has nothing to
 //     guard.
@@ -102,9 +123,6 @@
 use std::cell::Cell;
 
 use hikari_i18n::t;
-// The prelude curates the tairitsu event set; `PointerEvent` (the drag and
-// hover-highlight channel) is not part of it (same import as `basic/select.rs`).
-use tairitsu_vdom::PointerEvent;
 
 use crate::basic::select::{
     SelectPanelPlacement, SelectPopoutAlign, SelectPopoutSide, select_popout_style,
@@ -638,7 +656,9 @@ pub fn HeaderPicker(props: HeaderPickerProps) -> Element {
                 },
                 // Vue spreads this only for the desktop popout; the mirror has
                 // no sheet branch, so the guard has nothing to guard.
-                onpointerenter: move |_event: PointerEvent| {
+                // `mouseenter`, not `pointerenter`: the wasip2 glue types only
+                // the mouse family (ledger L86).
+                onmouseenter: move |_event: MouseEvent| {
                     enter_wiring.set_highlight(index_i32);
                 },
                 span { class: "hk-header-picker-option-label", {row_label} }
@@ -658,12 +678,12 @@ pub fn HeaderPicker(props: HeaderPickerProps) -> Element {
                     class: "hk-draggable-list-item",
                     "role": "listitem",
                     "data-locked": marker_attr(row_locked),
-                    onpointerdown: move |_event: PointerEvent| {
+                    onmousedown: move |_event: MouseEvent| {
                         if !row_locked && !row_disabled {
                             header_arm_drag(index);
                         }
                     },
-                    onpointerup: move |_event: PointerEvent| {
+                    onmouseup: move |_event: MouseEvent| {
                         if let Some(from) = header_take_drag() {
                             drop_wiring.request_reorder(from, index, option_count);
                         }
@@ -671,7 +691,7 @@ pub fn HeaderPicker(props: HeaderPickerProps) -> Element {
                     span {
                         class: "hk-draggable-list-handle",
                         "data-hidden": marker_attr(row_locked),
-                        onpointerdown: move |event: PointerEvent| {
+                        onmousedown: move |event: MouseEvent| {
                             event.stop_propagation();
                             if !row_locked && !row_disabled {
                                 header_arm_drag(index);
@@ -706,7 +726,15 @@ pub fn HeaderPicker(props: HeaderPickerProps) -> Element {
                     class: "hk-draggable-list",
                     "role": "list",
                     "data-all-locked": marker_attr(all_locked),
-                    onpointerleave: move |_event: PointerEvent| header_clear_drag(),
+                    // The two end-of-drag edges this surface owns (Vue's window
+                    // `pointerup` / `pointercancel`; see the header delta):
+                    // leaving the list abandons a drag released outside it, and
+                    // a release on list padding — not on another row — abandons
+                    // the arm too, so it cannot turn a later click on a row into
+                    // a reorder. A row's own `mouseup` runs first and consumes
+                    // the arm, so the bubbling clear is a no-op after a commit.
+                    onmouseleave: move |_event: MouseEvent| header_clear_drag(),
+                    onmouseup: move |_event: MouseEvent| header_clear_drag(),
                     {row_nodes}
                 }
             }

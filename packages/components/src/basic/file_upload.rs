@@ -1,5 +1,45 @@
 // packages/components/src/basic/file_upload.rs
-// FileUpload component
+// FileUpload component — the dashed drop box around a transparent native
+// `<input type="file">`.
+//
+// L86 DELTA: THE OS-FILE DROP PATH IS REMOVED ON wasm32-wasip2, DELIBERATELY.
+// The zone used to bind `dragover` / `dragleave` / `drop` with `DragEvent`
+// handlers. The tairitsu browser glue type-dispatches only the mouse family
+// (plus keyboard / focus / input+change) and routes every `drag*` event through
+// `onGenericEvent`; the host side (`packages/web/src/wit_platform.rs`) turns that
+// into a `GenericEvent` carrying the type string and a live handle but NO data,
+// so the `DragEvent` downcast never matches and those typed handlers never ran
+// (ledger L86).
+//
+// TO BE PRECISE ABOUT WHAT WAS AND WAS NOT PRESERVABLE: the EVENT still arrives,
+// so the VISUAL half was preservable as a data-less generic register —
+// `.on_event("dragover", |_: Box<dyn EventData>| set(FileUploadStatus::Dragging))`
+// would light the zone today, exactly the "edge fires, payload missing" reasoning
+// that keeps the `pointercancel` registers in `basic/color_picker.rs` and
+// `scene/board.rs`. It is removed anyway, for three reasons:
+//   1. a highlight that invites a drop which cannot be honoured is a half-feature
+//      — it advertises an affordance the component cannot satisfy;
+//   2. ACCEPTING the drop would need `preventDefault` on `dragover` (a browser
+//      only reports `drop` for a zone that cancels the drag default), and then
+//      `drop`'s own default — navigating to the dropped file — would have to be
+//      swallowed too, so the user's file would be silently discarded. That is
+//      worse than the browser default;
+//   3. the part that MATTERS is genuinely unpreservable: only
+//      `DataTransfer.files` can name the dropped files, and the generic channel
+//      carries no `DataTransfer`, so an `on_files` report could never be built.
+// What that leaves (this is the same grammar as a plain HTML file input):
+//   * picking files still works — the native `input`'s `change` event is a typed
+//     channel, so click-to-browse uploads are unaffected;
+//   * `FileUploadStatus::Dragging` and the `.hk-file-upload-dragging` sheet rule
+//     are UNREACHABLE (the enum variant and the CSS stay: public/stylesheet
+//     surface, not behaviour);
+//   * `upload_text`'s default still says "Click or drag file to upload". That
+//     string lives in THIS crate (`FileUploadProps::upload_text`, the `#[default]`
+//     below), not in the Vue library — there is no such Vue canonical string, so
+//     it is this file's own copy to change and is left alone here.
+// Reinstating the drop path requires the upstream tairitsu glue to type the
+// `drag*` family (or expose the `DataTransfer` behind the event handle); when it
+// does, restore the three handlers and point them back at `ondrag*`.
 
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
@@ -77,59 +117,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     }
     let drag_classes = drag_builder.build();
 
-    let on_files_for_drop = props.on_files.clone();
     let on_files_for_change = props.on_files.clone();
-    let on_error_for_drop = props.on_error.clone();
-
-    let upload_status_for_drag_over = upload_status.clone();
-    let on_drag_over = move |e: DragEvent| {
-        e.prevent_default();
-        upload_status_for_drag_over.set(FileUploadStatus::Dragging);
-    };
-
-    let upload_status_for_drag_leave = upload_status.clone();
-    let on_drag_leave = move |_: DragEvent| {
-        upload_status_for_drag_leave.set(FileUploadStatus::Idle);
-    };
-
-    let upload_status_for_drop = upload_status.clone();
-    let files_for_drop = files.clone();
-    let on_drop = move |e: DragEvent| {
-        e.prevent_default();
-        upload_status_for_drop.set(FileUploadStatus::Idle);
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            if let Some(data_transfer) = &e.data_transfer {
-                let file_list = &data_transfer.files;
-
-                let mut selected_files = Vec::new();
-                let mut errors = Vec::new();
-
-                for file_name in file_list {
-                    selected_files.push(file_name.clone());
-                }
-
-                if !errors.is_empty() && on_error_for_drop.is_some() {
-                    for error in errors {
-                        if let Some(handler) = on_error_for_drop.as_ref() {
-                            handler.call(error);
-                        }
-                    }
-                }
-
-                if !selected_files.is_empty() {
-                    files_for_drop.set(selected_files.clone());
-
-                    if let Some(handler) = on_files_for_drop.as_ref() {
-                        handler.call(selected_files);
-                    }
-
-                    upload_status_for_drop.set(FileUploadStatus::Success);
-                }
-            }
-        }
-    };
 
     let upload_status_for_change = upload_status.clone();
     let files_for_change = files.clone();
@@ -169,10 +157,6 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
             div {
                 class: drag_classes,
-                ondragover: on_drag_over,
-                ondragleave: on_drag_leave,
-                ondrop: on_drop,
-
                 // File input (positioned over div)
                 input {
                     r#type: "file",

@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 import { compile } from "sass";
 import { describe, expect, it } from "vitest";
 
+import {
+  RAIL_FLIP_ACTIVE_ATTR,
+  RAIL_FLIP_FLYING_ATTR,
+  RAIL_FLIP_ICON_ATTR,
+} from "../composables/useRailIconFlight";
+
 /**
  * Sidebar rail + peek stylesheet contract (2026-10-30) — the shared
  * geometry behind HkFaceShell's sidebar, HkSidebar and bespoke hosts
@@ -145,6 +151,20 @@ describe("HkSidebarRail geometry contract", () => {
     expect(swap).toContain("flex: 1");
     expect(swap).toContain("min-height: 0");
     expect(swap).toContain("align-self: flex-start");
+    // The swap host IS the flight layer's containing block: its
+    // inline-start edge is the docked edge (stable in LTR and RTL while
+    // only the inline-END edge tracks the animating clip width), and it
+    // sits OUTSIDE both dissolving items — clones must not inherit an
+    // item's enter fade (enter-from holds opacity 0 for the flight's
+    // first frames; an item-anchored clone blinks out at arm time).
+    expect(swap).toContain("position: relative");
+    // The dissolving items must NOT become containing blocks: a
+    // relative item would put the clones inside the very opacity group
+    // the flight exists to bypass.
+    expect(
+      ruleBody(css, ".hk-sidebar-rail-swap .hk-crossfade-item"),
+      "the dissolve item must not become the clone's containing block",
+    ).toBeNull();
 
     // Each generation is the flex column the bands expect, filling the
     // swap's height (spacer + footer-at-bottom behave as they did as
@@ -224,6 +244,76 @@ describe("HkSidebarRail geometry contract", () => {
     const btn = ruleBody(css, ".hk-sidebar-rail-toggle .hk-icon-button");
     expect(btn, "the icon-button override exists").not.toBeNull();
     expect(btn).toContain("--hi-icon-button-radius: 9999px");
+  });
+
+  it("hosts the rail flip's icon flight: paint-only layer, dead clones, single-glyph hide", () => {
+    // useRailIconFlight clones the flipping icons onto a layer ABOVE the
+    // dissolve. The layer is chrome: it must never intercept a pointer
+    // (the leaving generation is pointer-dead for the dissolve and the
+    // layer rides above it) and it lives INSIDE the swap host, so the
+    // nobody-clips contract above is untouched.
+    const layer = ruleBody(css, ".hk-sidebar-rail-flight");
+    expect(layer, "the flight layer rule exists").not.toBeNull();
+    expect(layer).toContain("position: absolute");
+    expect(layer).toContain("inset: 0");
+    expect(layer).toContain("z-index: 2");
+    expect(layer).toContain("pointer-events: none");
+
+    const clone = ruleBody(css, ".hk-sidebar-rail-flight-clone");
+    expect(clone, "the clone rule exists").not.toBeNull();
+    expect(clone).toContain("position: absolute");
+    expect(clone).toContain("pointer-events: none");
+
+    // The hide rule enforces the SINGLE-GLYPH CONTRACT (2026-11-02 user
+    // direction: the clone and the dissolving-in entering icon used to
+    // double-expose mid-flight): while a flight is armed
+    // ([data-flipping] on the swap host), every cell the choreographer
+    // marked ([data-flip-flying] — stamped on BOTH ends of a matched
+    // pair, swept with the layer) hides, so the clone is the one
+    // visible glyph from arm to landing. Deliberately NOT scoped to the
+    // items' dissolve classes — those are transient engine state (the
+    // happy-dom lesson), and the mark alone already names exactly the
+    // substituted cells. The selector is composed from the composable's
+    // EXPORTED CONSTANTS — the welding that keeps the JSX/SCSS literals
+    // and the JS pairings one vocabulary (a literal drift anywhere turns
+    // this red instead of silently double-exposing the glyph).
+    const hideSelector =
+      `.hk-sidebar-rail-swap[${RAIL_FLIP_ACTIVE_ATTR}] ` +
+      `.hk-menu-item-icon[${RAIL_FLIP_FLYING_ATTR}]`;
+    // Rule-boundary anchored: ruleBody's plain match is a SUBSTRING
+    // lookup, so a longer selector that merely CONTAINS the welded form
+    // (a namespaced prefix, a malformed double selector) would pass.
+    // Demanding a rule edge (start of stylesheet or a closing brace)
+    // before the selector closes that hole.
+    const hide = css.match(
+      new RegExp(
+        "(^|})\\s*" + hideSelector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*\\{([^}]*)\\}",
+      ),
+    );
+    expect(hide, "the single-glyph hide rule exists as ITS OWN rule").not.toBeNull();
+    // Group 2 is the rule body (group 1 is the boundary anchor).
+    expect(hide![2]).toContain("visibility: hidden");
+    // The sheet must not hide on the OPT-IN attribute alone — that
+    // spelling would vanish unmatched fallbacks without a substitute.
+    expect(
+      ruleBody(
+        css,
+        `.hk-sidebar-rail-swap[${RAIL_FLIP_ACTIVE_ATTR}] ` +
+          `.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}]`,
+      ),
+      "hiding keyed to the opt-in attribute alone is the S1-1 regression",
+    ).toBeNull();
+  });
+
+  it("leaves no flight transition for reduced motion to kill (the flight is JS-driven)", () => {
+    // useRailIconFlight skips itself under prefers-reduced-motion, so the
+    // sheet must not grow CSS transitions for the layer/clone that the
+    // kit's reduced-motion block would then have to enumerate — a
+    // transition here would mean the choreography drifted into CSS.
+    const layer = ruleBody(css, ".hk-sidebar-rail-flight");
+    expect(layer).not.toContain("transition");
+    const clone = ruleBody(css, ".hk-sidebar-rail-flight-clone");
+    expect(clone).not.toContain("transition");
   });
 
   it("kills every transition under reduced motion", () => {

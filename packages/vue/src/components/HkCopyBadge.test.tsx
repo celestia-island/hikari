@@ -21,6 +21,7 @@ function mount(renderNode: () => ReturnType<typeof h>) {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
     container.remove();
@@ -128,33 +129,36 @@ describe("HkCopyBadge", () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
-  /** Engage the lazy tooltip without hovering: a touch tap mounts the
-   *  popup immediately (showNow), no fake timers needed. */
-  function engageTooltip(c: HTMLElement) {
-    c.querySelector(".hk-tooltip-wrapper")!.dispatchEvent(
-      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
-    );
+  /** Engage the lazy tooltip the way a mouse user does: hover the
+   *  wrapper through the 300ms show delay. (A touch press no longer
+   *  mounts the popup — the touch half is the long-press hint bar, so
+   *  the tap vehicle this helper replaced is gone for good.) */
+  async function engageTooltip(c: HTMLElement) {
+    c.querySelector(".hk-tooltip-wrapper")!.dispatchEvent(new MouseEvent("mouseenter"));
+    await vi.advanceTimersByTimeAsync(300);
+    await nextTick();
   }
 
   it("renders the custom tooltip text", async () => {
+    vi.useFakeTimers();
     const c = mount(() => h(HkCopyBadge, { tooltip: "Open details" }, () => "#d.132"));
     // The popup mounts lazily on first engage (dense-list contract).
     expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
-    engageTooltip(c);
-    await nextTick();
+    await engageTooltip(c);
     const content = document.body.querySelector(".hk-tooltip-popup .hk-tooltip-content");
     expect(content?.textContent).toBe("Open details");
   });
 
   it("shows the localized click-to-copy tooltip by default", async () => {
+    vi.useFakeTimers();
     const c = mount(() => h(HkCopyBadge, null, () => "#d.132"));
-    engageTooltip(c);
-    await nextTick();
+    await engageTooltip(c);
     const content = document.body.querySelector(".hk-tooltip-popup .hk-tooltip-content");
     expect(content?.textContent).toBe("Click to copy");
   });
 
   it("links the badge to the popup via aria-describedby across the whole lifecycle", async () => {
+    vi.useFakeTimers();
     const c = mount(() => h(HkCopyBadge, { tooltip: "Open details" }, () => "#d.132"));
     const badge = c.querySelector(".hk-badge")!;
 
@@ -163,8 +167,7 @@ describe("HkCopyBadge", () => {
     expect(document.body.querySelector(".hk-tooltip-popup")).toBeNull();
 
     // Engage: describedby == the popup id.
-    engageTooltip(c);
-    await nextTick();
+    await engageTooltip(c);
     const popup = document.body.querySelector(".hk-tooltip-popup")!;
     expect(badge.getAttribute("aria-describedby")).toBe(popup.getAttribute("id"));
     expect(popup.querySelector(".hk-tooltip-content")!.textContent).toBe("Open details");
@@ -175,8 +178,7 @@ describe("HkCopyBadge", () => {
     expect(badge.getAttribute("aria-describedby")).toBeNull();
 
     // Re-engage: returns, reusing the same popup element.
-    engageTooltip(c);
-    await nextTick();
+    await engageTooltip(c);
     expect(badge.getAttribute("aria-describedby")).toBe(
       document.body.querySelector(".hk-tooltip-popup")!.getAttribute("id"),
     );

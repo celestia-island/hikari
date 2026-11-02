@@ -138,3 +138,102 @@ describe("HkBoard3D × real OrbitControls", () => {
     expect(engine!.controls.maxDistance).toBe(80);
   });
 });
+
+/* The orbit ELEVATION window: the solar globe pins min === max to become a
+ * turntable (user direction 2026-11-01: the sphere must only spin about
+ * its vertical axis, never tip / roll). The distance-window suite above
+ * pins the same normalisation discipline for the other orbit axis. */
+const DEG = Math.PI / 180;
+const RING_TILT_DEG = 72;
+
+describe("HkBoard3D orbit elevation window", () => {
+  it("pins the controls' polar angle from the equal prop pair", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      { interactive: true, minPolarAngle: RING_TILT_DEG, maxPolarAngle: RING_TILT_DEG },
+      (e) => (engine = e),
+    );
+    await nextTick();
+    await tickFrames();
+
+    expect(engine!.controls.minPolarAngle).toBeCloseTo(RING_TILT_DEG * DEG, 6);
+    expect(engine!.controls.maxPolarAngle).toBeCloseTo(RING_TILT_DEG * DEG, 6);
+  });
+
+  it("normalises a reversed, out-of-range or non-finite window", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      // 120 > -30 (reversed) and both bounds are outside the sphere.
+      { interactive: true, minPolarAngle: 120, maxPolarAngle: -30 },
+      (e) => (engine = e),
+    );
+    await nextTick();
+    await tickFrames();
+
+    expect(engine!.controls.minPolarAngle).toBe(0);
+    expect(engine!.controls.maxPolarAngle).toBe(120 * DEG);
+
+    mountBoard(
+      { interactive: true, minPolarAngle: Number.NaN, maxPolarAngle: 999 },
+      (e) => (engine = e),
+    );
+    await nextTick();
+    await tickFrames();
+    expect(engine!.controls.minPolarAngle).toBe(0);
+    expect(engine!.controls.maxPolarAngle).toBeCloseTo(Math.PI, 6);
+  });
+
+  it("relaxes the elevation window when the board is not interactive", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      { interactive: false, minPolarAngle: RING_TILT_DEG, maxPolarAngle: RING_TILT_DEG },
+      (e) => (engine = e),
+    );
+    await nextTick();
+    await tickFrames();
+
+    // Same contract as the distance window: an externally driven camera
+    // is never fought, so a locked elevation must not survive here.
+    expect(engine!.controls.minPolarAngle).toBe(0);
+    expect(engine!.controls.maxPolarAngle).toBeCloseTo(Math.PI, 6);
+    engine!.camera.position.set(0, 6, 0);
+    engine!.controls.target.set(0, 0, 0);
+    engine!.controls.update();
+    expect(engine!.camera.position.y).toBeCloseTo(6, 5);
+  });
+
+  it("keeps the elevation fixed while azimuth alone can orbit (turntable)", async () => {
+    let engine: Board3DEngine | null = null;
+    mountBoard(
+      { interactive: true, minPolarAngle: RING_TILT_DEG, maxPolarAngle: RING_TILT_DEG },
+      (e) => (engine = e),
+    );
+    await nextTick();
+    await tickFrames();
+
+    const controls = engine!.controls;
+    const camera = engine!.camera;
+    controls.enableDamping = false;
+
+    // An external pose far above the ring snaps down onto it: the eye
+    // cannot climb toward the pole.
+    camera.position.set(0, 6, 0);
+    controls.target.set(0, 0, 0);
+    controls.update();
+    const ringRadius = camera.position.length();
+    const fixedY = ringRadius * Math.cos(RING_TILT_DEG * DEG);
+    expect(camera.position.y).toBeCloseTo(fixedY, 5);
+
+    // A vertical orbit input is absorbed; a horizontal one still turns.
+    controls.rotateUp(0.8);
+    controls.update();
+    expect(camera.position.y).toBeCloseTo(fixedY, 5);
+    const azimuthBefore = Math.atan2(camera.position.x, camera.position.z);
+    controls.rotateLeft(0.6);
+    controls.update();
+    expect(camera.position.y).toBeCloseTo(fixedY, 5);
+    expect(
+      Math.abs(Math.atan2(camera.position.x, camera.position.z) - azimuthBefore),
+    ).toBeGreaterThan(0.3);
+  });
+});

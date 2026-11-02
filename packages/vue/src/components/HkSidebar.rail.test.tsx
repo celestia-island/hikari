@@ -95,6 +95,12 @@ describe("HkSidebar rail capability", () => {
     const c = mountSidebar({ width: "240px", collapsible: true, collapsedWidth: "64px" });
     expect(c.aside().className).toContain("hk-sidebar-rail-host");
     expect(c.aside().style.width).toBe("240px");
+    // The rail width travels to the sheet as a token: the rail row
+    // square's inline track (HkSidebar.scss) computes from it, so a
+    // non-default collapsedWidth keeps exact squares without a second
+    // edit. Deleting the declaration regresses non-56 hosts silently
+    // (the 56px fallback renders identically at the default).
+    expect(c.aside().style.getPropertyValue("--hk-sidebar-rail-w")).toBe("64px");
 
     c.toggle().click();
     await vi.advanceTimersByTimeAsync(0);

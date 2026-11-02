@@ -185,6 +185,10 @@ describe("HkFaceShell rail mode", () => {
 
     expect(c.aside().style.width).toBe("224px");
     expect(c.aside().getAttribute("data-rail")).toBeNull();
+    // The shell declares the rail width token for the rail row square's
+    // inline track (same contract as HkSidebar's collapsedWidth); the
+    // default rides the 56px fallback.
+    expect(c.aside().style.getPropertyValue("--hk-sidebar-rail-w")).toBe("56px");
     expect(c.toggle().getAttribute("aria-expanded")).toBe("true");
 
     c.toggle().click();
@@ -265,6 +269,10 @@ describe("HkFaceShell rail mode", () => {
 
   it("honors a configured rail width", async () => {
     const c = mountShell({ sidebarCollapsible: true, sidebarCollapsedWidth: "72px" });
+    expect(
+      c.aside().style.getPropertyValue("--hk-sidebar-rail-w"),
+      "a non-default collapsed width retunes the square track via the token",
+    ).toBe("72px");
     c.toggle().click();
     await vi.advanceTimersByTimeAsync(0);
     expect(c.aside().style.width).toBe("72px");

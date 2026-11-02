@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkAuthMethodList from "./HkAuthMethodList";
@@ -15,6 +15,7 @@ function mount(node: ReturnType<typeof h>) {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
     container.remove();
@@ -61,17 +62,19 @@ describe("HkAuthMethodList", () => {
   });
 
   it("wraps every tile in a tooltip carrying the provider label", async () => {
+    vi.useFakeTimers();
     const c = mount(
       h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })),
     );
     const wrappers = c.querySelectorAll(".hk-tooltip-wrapper");
     expect(wrappers.length).toBe(2);
-    // Popups mount lazily on first engage — a touch tap mounts each one
-    // immediately — and then carry the label text.
+    // Popups mount lazily on first engage — hover each tile through the
+    // 300ms show delay (a touch press no longer mounts the popup: the
+    // touch half is the long-press hint bar, never the anchored popup).
     for (const w of wrappers) {
-      w.dispatchEvent(new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }));
+      w.dispatchEvent(new MouseEvent("mouseenter"));
     }
-    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(300);
     const popups = [...document.querySelectorAll(".hk-tooltip-popup .hk-tooltip-content")]
       .map((el) => el.textContent);
     expect(popups).toContain("GitHub");

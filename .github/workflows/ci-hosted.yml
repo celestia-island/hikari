@@ -1,10 +1,19 @@
-name: Web Tests (hosted)
+name: Web Tests
 
 # Sole CI coverage for packages/vue (vitest + vue-tsc) — the farm's cargo
 # lanes (Format / Clippy / Run Tests) and the CNB overflow lane cover the Rust
 # half, so the former all-in-one "CI (GitHub-hosted fallback)" lint-test job
 # was pure duplication and was removed on 2026-09-23 (user-approved narrowing).
 # Paths are restricted to the web subtree: Rust-only changes never touch it.
+#
+# 2026-11-01: this job used to run on `ubuntu-latest`. GitHub-hosted capacity has
+# been dead org-wide since 2026-09-24 (billing), so the library's 730 TypeScript
+# files had no pull-request-time type check and its Vitest suite no
+# pull-request-time run for five weeks — the release lane's `prepublishOnly`
+# was the only remaining gate, which turns a type error into a blocked release
+# instead of a red PR. It now runs on the same self-hosted farm as every other
+# lane. The job label dropped the "(hosted)" suffix because the only required
+# check on master is `lint-commits`, so nothing depends on this name.
 
 on:
   workflow_dispatch:
@@ -34,8 +43,9 @@ jobs:
     # deliberate exception: they are sub-minute, execute no pull request code, and
     # hold no secrets.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    name: "web: vitest + vue-tsc (hosted)"
-    runs-on: ubuntu-latest
+    name: "web: vitest + vue-tsc"
+    runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -46,12 +56,15 @@ jobs:
           node-version: "24"
           cache: pnpm
           cache-dependency-path: packages/vue/pnpm-lock.yaml
+      # pnpm/action-setup exports PNPM_HOME but its PATH entry does not survive
+      # into every step on this runner — resolve the binary from PNPM_HOME so
+      # each step is independent of PATH mangling (same convention as chest).
       - name: Install dependencies
         working-directory: packages/vue
-        run: pnpm install --frozen-lockfile
+        run: $PNPM_HOME/pnpm install --frozen-lockfile
       - name: Unit tests (vitest)
         working-directory: packages/vue
-        run: pnpm test
+        run: $PNPM_HOME/pnpm test
       - name: Type check (vue-tsc)
         working-directory: packages/vue
-        run: pnpm lint
+        run: $PNPM_HOME/pnpm lint

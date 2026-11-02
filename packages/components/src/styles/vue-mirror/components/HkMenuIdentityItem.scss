@@ -1,0 +1,84 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* ── Standard menu identity row (HkMenuIdentityItem) ────────────
+ * Avatar beside name/subtitle/badges, aligned with HkMenuActionItem
+ * rows: same padding and left edge, so a menu panel reads as one list. */
+
+.hk-menu-identity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10, 10px);
+  width: 100%;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  /* The 1px transparent border is RESERVED, not decorative: the
+     HkMenuActionItem rows beside this block draw their content edge at
+     1px + pad-x, so an unreserved block sat 1px left of them. */
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 4px);
+  min-width: 0;
+}
+
+.hk-menu-identity-item__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full, 9999px);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(var(--color-primary) / 10%);
+  border: 2px solid rgb(var(--color-primary) / 15%);
+}
+
+.hk-menu-identity-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hk-menu-identity-item__fallback {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: rgb(var(--color-primary) / 70%);
+}
+
+.hk-menu-identity-item__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-2, 2px);
+}
+
+.hk-menu-identity-item__name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-menu-identity-item__subtitle {
+  font-size: var(--text-xs);
+  color: rgb(var(--color-text) / 55%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-menu-identity-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 2px);
+  margin-top: var(--space-2, 2px);
+}

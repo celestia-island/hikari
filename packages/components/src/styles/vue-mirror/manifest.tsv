@@ -155,3 +155,14 @@ components/HkErrorLanding.scss	components/HkErrorLanding.scss
 components/HkSettingsDialog.scss	components/HkSettingsDialog.scss
 components/HkSecretRevealModal.scss	components/HkSecretRevealModal.scss
 components/HkDivider.scss	components/HkDivider.scss
+components/HkKeywordSearchModal.scss	components/HkKeywordSearchModal.scss
+components/HkLocalizedInput.scss	components/HkLocalizedInput.scss
+components/HkMenuIdentityItem.scss	components/HkMenuIdentityItem.scss
+components/HkMenuPanel.scss	components/HkMenuPanel.scss
+components/HkModalBreadcrumb.scss	components/HkModalBreadcrumb.scss
+components/HkSearchTrigger.scss	components/HkSearchTrigger.scss
+components/HkSectionCard.scss	components/HkSectionCard.scss
+components/HkSolarLocationSetting.scss	components/HkSolarLocationSetting.scss
+components/HkStepGuide.scss	components/HkStepGuide.scss
+components/HkTagDotRow.scss	components/HkTagDotRow.scss
+components/HkUserPicker.scss	components/HkUserPicker.scss

@@ -1,0 +1,279 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-modal-breadcrumb {
+  position: fixed;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Above every popup band's scrim (modal 1000+, dropdown 2000+; in-band
+     steps of 2 keep real stacks far below this) so multi-layer windows
+     never bury the strip; still below tooltip (3000) / toast (4000). */
+  z-index: var(--hk-overlay-z-breadcrumb, 250);
+  display: flex;
+  align-items: center;
+  // --space-N contract tokens are N px across the library (HkTable,
+  // HkAlert, HkDrawer); keep fallbacks on that scale so hosts defining the
+  // family don't collapse this strip (8px→4px gap, 32px→16px padding).
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-12, 0.75rem) var(--space-32, 2rem);
+  background: var(--hi-color-surface, rgba(255,255,255,0.95));
+  border: 1px solid var(--hk-breadcrumb-border, rgba(0, 0, 0, 0.06));
+  border-radius: var(--radius-md, 0.5rem);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  /* Family blur pattern (HkModal/HkDrawer/HkPopover): host-tunable, and
+     stood down on phones — the strip floats over every popup, so its
+     backdrop-filter re-samples the whole blurred band each time the sheet
+     behind it resizes or swaps content. On the phone GPU that re-filter
+     read as a one-shot flash on every wizard step change (2026-09-21
+     chest report, round 5). */
+  @include backdrop-filter(var(--hk-modal-breadcrumb-blur, blur(var(--blur-md))));
+  pointer-events: none;
+  @include user-select(none);
+  animation: hk-modal-breadcrumb-in var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
+  /* Never wider than the viewport (minus the shared gutter): the strip is
+     centred on the app header, so a stack whose labels outgrow the screen
+     used to spill past BOTH edges at once and read as a clipped bar with
+     no beginning or end (2026-09-16 user report). The script side folds
+     the leading layers to fit; this is the fence for the frame in which a
+     late webfont or a host type scale outgrows the last measurement. */
+  max-width: calc(100vw - 2 * var(--viewport-gutter, 1rem));
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.hk-modal-breadcrumb-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  // Shrinkable: an over-long tail crumb ellipsises (see the item rule)
+  // instead of pushing the strip past the fence above.
+  min-width: 0;
+}
+
+.hk-modal-breadcrumb-item {
+  /* A block container is what `text-overflow` needs — as an inline-flex
+     the ellipsis would simply not render — and the crumb above already
+     owns the chevron/label alignment this used to provide. */
+  display: block;
+  line-height: 1.4;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-text-secondary, #666666);
+  white-space: nowrap;
+  /* Second line of defence under the script's 10-unit label clamp: the
+     host can narrow the cap with this hook, and a crumb squeezed by a
+     shrinking strip cuts cleanly instead of overflowing. */
+  max-width: var(--hk-breadcrumb-item-max, 12rem);
+  /* A flex item's automatic minimum size is its own text width — without
+     this the ellipsis above could never engage. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-modal-breadcrumb-item-current {
+  color: var(--hi-color-primary, #7aa2f7);
+}
+
+/* The folded leading layers — one clickable ellipsis standing in for
+   everything above the visible tail. */
+.hk-modal-breadcrumb-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--hk-breadcrumb-more-size, 1.5rem);
+  height: var(--hk-breadcrumb-more-size, 1.5rem);
+  padding: 0 var(--space-4, 0.25rem);
+  border: 0;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: transparent;
+  color: var(--hi-color-text-secondary, #666666);
+  font: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  /* The strip itself stays pointer-transparent (it floats over the page);
+     only the trigger takes clicks. */
+  pointer-events: auto;
+  flex: none;
+  position: relative;
+}
+
+/* Touch target: the drawn trigger is 24px (the strip's own scale), which is
+   under half a fingertip — the hit area is grown to ~40px without moving a
+   single pixel of the chrome around it. The neighbours are
+   pointer-transparent, so nothing else is stolen by the expansion. */
+.hk-modal-breadcrumb-more::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-8, 0.5rem));
+}
+
+/* Hover AND the open state (aria-expanded — on a phone the tap leaves
+ * :hover stuck on the trigger, so the two must share one legible face).
+ * Both colors ride tokens that exist in every theme: the wash is the
+ * menu-item grammar's own primary-subtle (a raw rgba(0,0,0,…) fallback
+ * vanished on dark surfaces), and the text is --hi-color-text-primary —
+ * the token family defines NO --hi-color-text, so the old fallback
+ * (#1f2328, light-theme ink) used to repaint the glyph near-black on a
+ * dark strip, i.e. unreadable exactly after the tap (2026-10-18 report).
+ * The host knob --hk-breadcrumb-more-hover still wins if declared. */
+.hk-modal-breadcrumb-more:hover,
+.hk-modal-breadcrumb-more[aria-expanded="true"] {
+  background: var(
+    --hk-breadcrumb-more-hover,
+    var(--c-primary-subtle, rgb(var(--color-primary, 122 162 247) / 8%))
+  );
+  color: var(--hi-color-text-primary, rgb(var(--color-text, 30 30 30)));
+}
+
+.hk-modal-breadcrumb-more:focus-visible {
+  outline: 2px solid var(--hi-color-primary, #7aa2f7);
+  outline-offset: 1px;
+}
+
+/* The all-layers menu rides HkPopover, so it inherits the family's
+   dropdown chrome and mobile-sheet form. Only the inset is re-anchored:
+   the popover panel already pads 4px, and HkMenuPanel's drawer-scale 12px
+   inset on top of it read as a double margin. */
+.hk-modal-breadcrumb-menu {
+  --hk-menu-panel-inset: var(--space-4, 0.25rem);
+}
+
+/* A visible-but-cut label is tappable: it opens the whole name in the same
+   popover family as the all-layers menu. The strip is pointer-
+   transparent, so only these buttons (and the "…" trigger) take the click. */
+.hk-modal-breadcrumb-item-reveal {
+  /* No padding: the strip's ruler measures a plain item, so a padded
+     button would make the fold under-count its own crumb. The hit area is
+     grown by a pseudo-element instead, exactly like the "…" trigger. */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: transparent;
+  /* font-family only: the item classes above own size, weight AND colour —
+     redeclaring `color` here would repaint every cut crumb (and drop the
+     current layer's accent) because an equally specific rule later in the
+     file wins. */
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+}
+
+/* A label is one text line tall (~17px) — under half a fingertip, and this
+   is the phone-primary affordance. Grow the hit area, not the chrome. */
+.hk-modal-breadcrumb-item-reveal::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-8, 0.5rem)) 0;
+}
+
+.hk-modal-breadcrumb-item-reveal:hover,
+.hk-modal-breadcrumb-item-reveal[aria-expanded="true"] {
+  /* Same token contract as the "…" trigger above (see there): sticky
+   * touch hover makes this face linger after the tap, so it must stay
+   * legible on dark surfaces too. */
+  background: var(
+    --hk-breadcrumb-more-hover,
+    var(--c-primary-subtle, rgb(var(--color-primary, 122 162 247) / 8%))
+  );
+  color: var(--hi-color-text-primary, rgb(var(--color-text, 30 30 30)));
+}
+
+.hk-modal-breadcrumb-item-reveal:focus-visible {
+  outline: 2px solid var(--hi-color-primary, #7aa2f7);
+  outline-offset: 1px;
+}
+
+/* The revealed name itself: the strip's own type, wrapping instead of
+   cutting, and selectable (the strip around it is not). Same token
+   contract as the trigger faces above — --hi-color-text does not exist
+   in any theme, and its light-ink fallback was unreadable on dark. */
+.hk-modal-breadcrumb-reveal {
+  margin: 0;
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+  max-width: min(24rem, calc(100vw - 2 * var(--viewport-gutter, 1rem)));
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--hi-color-text-primary, rgb(var(--color-text, 30 30 30)));
+  overflow-wrap: anywhere;
+  @include user-select(text);
+}
+
+/* The strip's own ruler: every layer laid out at its natural width so the
+   overflow decision can be made without depending on what the collapsed
+   strip happens to render. Out of flow (the nav is a flex row and must
+   not feel it) and out of the a11y tree. */
+.hk-modal-breadcrumb-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: var(--space-8, 0.5rem);
+  /* Size to the contents, never to the (clipped, viewport-fenced) nav:
+     a shrink-to-fit host would let the flex line compress the crumbs and
+     every measurement would come back short. */
+  width: max-content;
+  white-space: nowrap;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.hk-modal-breadcrumb-sep {
+  color: var(--hi-color-text-secondary, #666666);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+// RTL mirrors the chevron: the tsx always renders a right-pointing glyph,
+// which reads backwards on the flipped axis (HkBreadcrumb.scss precedent —
+// there the class wraps the svg, here the class IS the svg, so the mirror
+// lands on the element itself; static transform, no motion to guard).
+[dir="rtl"] .hk-modal-breadcrumb-sep {
+  transform: scaleX(-1);
+}
+
+@keyframes hk-modal-breadcrumb-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+// House reduced-motion guard (HkExpansionPanel / HkTooltip pattern): the
+// entrance is a transform slide — drop it, keep the strip visible instantly.
+@media (prefers-reduced-motion: reduce) {
+  .hk-modal-breadcrumb {
+    animation: none;
+  }
+}
+
+/* Phone stand-down for the strip's blur (see the base rule): the default
+ * is NONE on ≤767px; a host that explicitly wants the finish back can set
+ * --hk-modal-breadcrumb-blur-mobile (the same knob family the modal,
+ * drawer and popover sheets already expose). */
+@media (max-width: 767px) {
+  .hk-modal-breadcrumb {
+    @include backdrop-filter(var(--hk-modal-breadcrumb-blur-mobile, none));
+  }
+}

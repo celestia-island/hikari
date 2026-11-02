@@ -253,6 +253,22 @@ MISC_SHEETS: list[str] = [
     "HkDivider.scss",
 ]
 
+# W9 — final gap wave (found by the 193-coverage audit; these fell outside
+# the INVENTORY lists). HkMenuSection ships no sheet of its own.
+GAP_SHEETS: list[str] = [
+    "HkKeywordSearchModal.scss",
+    "HkLocalizedInput.scss",
+    "HkMenuIdentityItem.scss",
+    "HkMenuPanel.scss",
+    "HkModalBreadcrumb.scss",
+    "HkSearchTrigger.scss",
+    "HkSectionCard.scss",
+    "HkSolarLocationSetting.scss",
+    "HkStepGuide.scss",
+    "HkTagDotRow.scss",
+    "HkUserPicker.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -297,7 +313,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -306,7 +322,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

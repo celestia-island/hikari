@@ -1,0 +1,94 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-localized-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+/* Leading Languages glyph: balances the field's left cushion against the
+ * wrapped language chip on the right edge, so the centered text line stays
+ * on the box axis (HkInput reserves affix clearance symmetrically). */
+.hk-localized-input-lead {
+  color: rgb(var(--color-muted));
+  opacity: 0.75;
+}
+
+/* The wrapped language chip riding the input's right edge, layered on the
+ * shared .hk-affix-chip base (the picker owns hover/disabled/focus). It
+ * must never steal the field's click-to-edit: pointer events stop at the
+ * chip boundary (handled in the picker) and mousedown is suppressed to
+ * keep focus inside the input. */
+.hk-localized-input-chip {
+  padding: 0;
+  background: transparent;
+  color: rgb(var(--color-muted));
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    background: transparent;
+    color: rgb(var(--color-text));
+  }
+
+  /* Dim while no translation exists yet — same affordance level as an
+   * empty field; brightens the moment content lands. */
+  &[data-empty] {
+    opacity: 0.6;
+  }
+}
+
+.hk-localized-input-chip-badge {
+  /* Keep the badge compact inside the field's suffix slot. */
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-localized-input-chip-caret {
+  flex: none;
+  opacity: 0.6;
+}
+
+/* ── multiline mode ──────────────────────────────────────────────────
+ * The base HkInput box flows affixes as a flex ROW (single-line input
+ * absolutely positioned over the box) — but a textarea-type element is
+ * in-flow, so the language chip would land BELOW the field. Pin it to
+ * the field's top inline-end corner instead and keep every text line
+ * clear of the chip column via the measured affix width. Logical
+ * properties throughout: the pinned chips and the textarea clearance
+ * mirror with the writing direction, matching the base field's
+ * logical padding-inline / margin-inline-start affix layout. */
+.hk-localized-input[data-multiline] {
+  .hk-input-affix.hk-input-suffix {
+    position: absolute;
+    top: var(--space-6, 6px);
+    inset-inline-end: var(--space-8, 8px);
+  }
+
+  .hk-input-affix.hk-input-prefix {
+    position: absolute;
+    top: var(--space-6, 6px);
+    inset-inline-start: var(--space-8, 8px);
+  }
+
+  .hk-input-element.hk-input-textarea {
+    padding-inline-end: calc(var(--space-12, 12px) + var(--hk-input-affix-end-w, 0px));
+    padding-inline-start: calc(var(--space-12, 12px) + var(--hk-input-affix-start-w, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-localized-input-chip {
+    transition: none;
+  }
+}

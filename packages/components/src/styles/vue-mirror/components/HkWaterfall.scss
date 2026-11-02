@@ -1,0 +1,74 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-waterfall {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.hk-waterfall-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Section rhythm: the day buckets of the chat waterfalls read as separate
+   groups, so adjacent buckets get the same gutter as the cards inside them
+   (twice the card gap would over-separate the newest sections). */
+.hk-waterfall-bucket + .hk-waterfall-bucket {
+  margin-top: var(--space-12);
+}
+
+.hk-waterfall-columns {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* Independent columns (not CSS columns): each keeps its own transition
+   group, so a card arriving in one column never reflows the other.
+   Column spacing rides SIBLING MARGINS, never a container `gap`: a gap is
+   spent between every adjacent pair of rendered flex items — including the
+   pair (live column, collapsed column) — so with a collapsed trailing
+   column the surviving card rendered one `--space-12` narrower than the
+   bucket while the bucket's other children (a full-width bucketHeader
+   caption row) kept the true right edge. Every single-card section drew a
+   ragged right edge against its own header (chest reports view, user
+   screenshot 2026-10-31). A sibling margin is only spent where two
+   width-carrying columns actually sit, and an empty column cancels it. */
+.hk-waterfall-column {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.hk-waterfall-column + .hk-waterfall-column {
+  margin-inline-start: var(--space-12);
+}
+
+/* A bucket with fewer cards than columns leaves an empty column behind.
+   Without this it keeps its `flex: 1 1 0` share of the row and the
+   surviving card renders at half width beside a ghost; collapsed, the card
+   takes the full width until the bucket grows a card for that column —
+   and with the margin-based spacing above it costs no gap either, so the
+   surviving column spans the bucket edge to edge. */
+.hk-waterfall-column[data-empty] {
+  flex: 0 0 0;
+  margin-inline-start: 0;
+}
+
+/* Same no-ghost-cost rule on the leading edge: an empty column ahead of a
+   live one must not indent it off the bucket's start edge either. */
+.hk-waterfall-column[data-empty] + .hk-waterfall-column {
+  margin-inline-start: 0;
+}

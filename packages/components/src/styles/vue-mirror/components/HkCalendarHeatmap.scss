@@ -1,0 +1,100 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkCalendarHeatmap — GitHub-style calendar heatmap anatomy.
+//
+// Self-sufficient styling (the component self-sufficiency guard): every
+// class lives here, no host atomic/utility layer. The dynamic geometry
+// (cell size, gap, week-column count, rail row rhythm) stays inline in
+// the component; this sheet owns the static layout and typography.
+
+.hk-calendar-heatmap {
+  // The legend row: scale on the LEFT, toolbar slot on the RIGHT.
+  &-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: 16px;
+    row-gap: 8px;
+  }
+
+  &-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--hi-color-muted);
+  }
+
+  // w-max + auto margins center the whole calendar (rail included) on
+  // wide cards while letting narrow screens scroll from the left edge —
+  // auto margins resolve to zero when the content overflows, so mobile
+  // keeps its natural scroll origin.
+  &-scroll {
+    margin-top: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  &-body {
+    display: flex;
+    width: max-content;
+    margin-inline: auto;
+    gap: 8px;
+  }
+
+  // Weekday rail: the first (Monday) and last (Sunday) rows carry the
+  // labels (the wowsp convention); sticky so it survives horizontal
+  // scroll on narrow screens.
+  &-rail {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding-right: 2px;
+    font-size: 10px;
+    line-height: 14px;
+    color: var(--hi-color-muted);
+    background: var(--hi-color-surface);
+
+    > span {
+      white-space: nowrap;
+    }
+  }
+
+  &-cells {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // Month markers, one slot per week column; labels overflow their
+  // 14px column into the empty cells ahead (the GitHub convention — a
+  // month marker is always followed by unmarked columns), so no
+  // truncating: a clipped "O…" tells nothing.
+  &-markers {
+    display: grid;
+    margin-bottom: 4px;
+    font-size: 10px;
+    line-height: 12px;
+    color: var(--hi-color-muted);
+
+    > span {
+      white-space: nowrap;
+    }
+  }
+
+  // The grid itself: cells flow column-first into 7 rows.
+  &-grid {
+    display: grid;
+  }
+}

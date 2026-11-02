@@ -366,6 +366,25 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-rolling-number",
         ".hk-fab",
         ".hk-timezone-globe",
+        // W3 data-viz + data-table family
+        ".hk-bar-chart",
+        ".hk-donut",
+        ".hk-treemap",
+        ".hk-treemap-stage",
+        ".hk-calendar-heatmap",
+        ".hk-stat-card",
+        ".hk-gauge-ring",
+        ".hk-waterfall",
+        ".hk-table-host",
+        ".hk-tree",
+        ".hk-filter-bar",
+        ".hk-filter-chip-anchor",
+        ".hk-filter-panel",
+        ".hk-filter-trigger",
+        ".hk-selection-grid",
+        ".hk-selection-waterfall",
+        ".hk-card-list",
+        ".hk-pill-group-pill",
     ] {
         assert!(
             bundle.contains(needle),
@@ -472,6 +491,9 @@ fn no_vendored_sheet_is_pulled_in_twice() {
                     .to_string();
                 if name.ends_with(".scss") {
                     used_by.push(name);
+                } else {
+                    // Sass partials are written `@use "x"` for `_x.scss`.
+                    used_by.push(format!("{name}.scss"));
                 }
             }
         }
@@ -500,4 +522,119 @@ fn no_vendored_sheet_is_pulled_in_twice() {
              in index.scss — Sass would emit its rules twice"
         );
     }
+}
+
+/// A legacy sheet and a mirrored sheet must not paint the SAME class: with the
+/// mirrored imports landing last, a leftover legacy rule silently overrides the
+/// Vue geometry (R3 mutation M6 restored `components/table.scss` and every gate
+/// stayed green while the bundle grew).
+#[test]
+fn legacy_sheets_do_not_share_classes_with_the_mirrors() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let legacy_dir = root.join("src/styles/components");
+    let mirror_dir = root.join("src/styles/vue-mirror");
+    let mut legacy_files = Vec::new();
+    collect_files(&legacy_dir, &mut legacy_files);
+    let mut mirror_files = Vec::new();
+    collect_files(&mirror_dir, &mut mirror_files);
+
+    let classes_in = |files: &[std::path::PathBuf]| -> std::collections::BTreeSet<String> {
+        let mut set = std::collections::BTreeSet::new();
+        for file in files {
+            if file.extension().and_then(|e| e.to_str()) != Some("scss") {
+                continue;
+            }
+            let Ok(source) = std::fs::read_to_string(file) else {
+                continue;
+            };
+            for line in source.lines() {
+                let line = line.trim();
+                if !line.starts_with('.') {
+                    continue;
+                }
+                let name: String = line[1..]
+                    .chars()
+                    .take_while(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+                    .collect();
+                if name.starts_with("hk-") {
+                    set.insert(name);
+                }
+            }
+        }
+        set
+    };
+
+    // Known dual-source debt from earlier waves (each entry is retired with
+    // the family that owns it). NEW overlaps must fail here.
+    const KNOWN_DUAL_SOURCES: [&str; 8] = [
+        "hk-breadcrumb-dropdown-item",
+        "hk-card",
+        "hk-card-hoverable",
+        "hk-icon",
+        "hk-icon-button",
+        "hk-icon-button-icon",
+        "hk-input-wrapper",
+        "hk-menu-divider",
+    ];
+    let legacy = classes_in(&legacy_files);
+    let mirrored = classes_in(&mirror_files);
+    let clash: Vec<&String> = legacy
+        .intersection(&mirrored)
+        .filter(|name| !KNOWN_DUAL_SOURCES.contains(&name.as_str()))
+        .collect();
+    assert!(
+        clash.is_empty(),
+        "legacy sheets and mirrored sheets paint the same classes: {clash:?} — \
+         retire the legacy rule (or rename) so the Vue geometry wins"
+    );
+}
+
+/// Every localized key the mirrored components ask `hikari_i18n` for must
+/// exist in the English bundle. A typo silently falls back to the literal, so
+/// only a sentinel can catch it (R3 mutation M7 changed a key back to the
+/// pre-wave namespace and the whole suite stayed green).
+#[test]
+fn mirrored_i18n_keys_exist_in_the_english_bundle() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let components_dir = root.join("src");
+    let bundle_path = root.join("../i18n/src/locales/en/components.toml");
+    let Ok(bundle) = std::fs::read_to_string(&bundle_path) else {
+        // The i18n crate is a sibling checkout; skip when it is absent.
+        return;
+    };
+    let mut files = Vec::new();
+    collect_files(&components_dir, &mut files);
+    let mut missing: Vec<String> = Vec::new();
+    for file in files {
+        if file.extension().and_then(|e| e.to_str()) != Some("rs") {
+            continue;
+        }
+        let Ok(source) = std::fs::read_to_string(&file) else {
+            continue;
+        };
+        for line in source.lines() {
+            let Some(at) = line.find("components.hk.") else {
+                continue;
+            };
+            let rest = &line[at + "components.hk.".len()..];
+            let key: String = rest
+                .chars()
+                .take_while(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-' || *c == '_')
+                .collect();
+            // A key built by concatenation ends with a dot here; the real
+            // suffix is resolved at runtime.
+            if key.is_empty() || key.ends_with('.') {
+                continue;
+            }
+            // The bundle lists keys as `hk.<key> = "…"` under `[components]`.
+            let needle = format!("hk.{key} =");
+            if !bundle.contains(&needle) {
+                missing.push(format!("{}: components.hk.{key}", file.display()));
+            }
+        }
+    }
+    assert!(
+        missing.is_empty(),
+        "these keys are not in the English bundle (typos fall back silently): {missing:#?}"
+    );
 }

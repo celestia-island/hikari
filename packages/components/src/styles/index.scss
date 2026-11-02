@@ -615,6 +615,26 @@
 @import './vue-mirror/components/HkPhoneInput.scss';
 @import './vue-mirror/components/HkTag.scss';
 @import './vue-mirror/components/HkTagInput.scss';
+
+// W3 data-viz + data-table family mirrors
+@import './vue-mirror/components/HkBarChart.scss';
+@import './vue-mirror/components/HkDonutChart.scss';
+@import './vue-mirror/components/HkTreemap.scss';
+@import './vue-mirror/components/HkTreemapStage.scss';
+@import './vue-mirror/components/HkCalendarHeatmap.scss';
+@import './vue-mirror/components/HkStatCard.scss';
+@import './vue-mirror/components/HkGaugeRing.scss';
+@import './vue-mirror/components/HkWaterfall.scss';
+@import './vue-mirror/components/HkTable.scss';
+@import './vue-mirror/components/HkTree.scss';
+@import './vue-mirror/components/HkFilterBar.scss';
+@import './vue-mirror/components/HkFilterChip.scss';
+@import './vue-mirror/components/HkFilterPanel.scss';
+@import './vue-mirror/components/HkFilterTrigger.scss';
+@import './vue-mirror/components/HkPillToggleGroup.scss';
+@import './vue-mirror/components/HkSelectionGrid.scss';
+@import './vue-mirror/components/HkSelectionWaterfall.scss';
+@import './vue-mirror/components/HkCardList.scss';
 @import './vue-mirror/components/HkTemplateField.scss';
 @import './vue-mirror/components/HkTokenInput.scss';
 @import './vue-mirror/components/HkColorPicker.scss';
@@ -651,8 +671,6 @@
 @import './components/grid.scss';
 @import './components/section.scss';
 @import './components/scrollbar_container.scss';
-@import './components/table.scss';
-@import './components/tree.scss';
 @import './components/pagination.scss';
 @import './components/carousel.scss';
 @import './components/code_block.scss';
@@ -667,7 +685,6 @@
 @import './components/cascader.scss';
 @import './components/collapse.scss';
 @import './components/drag.scss';
-@import './components/filter.scss';
 @import './components/flex.scss';
 @import './components/pagination_jump_modal.scss';
 @import './components/selection.scss';

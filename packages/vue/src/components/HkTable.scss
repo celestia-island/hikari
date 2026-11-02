@@ -209,7 +209,7 @@
 }
 
 .hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell {
-  background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent);
 }
 
 .hk-table-draggable .hk-table-row[data-dragging] > .hk-table-cell:first-child {

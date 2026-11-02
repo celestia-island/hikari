@@ -1,0 +1,189 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-tree {
+  display: flex;
+  flex-direction: column;
+}
+
+.hk-tree-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.hk-tree-indent {
+  flex-shrink: 0;
+}
+
+.hk-tree-children {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: var(--guide-left, 8px);
+    top: 0;
+    bottom: 6px;
+    width: 1px;
+    background: color-mix(in srgb, var(--hi-color-border, #646464) 30%, transparent);
+  }
+}
+
+.hk-tree-row {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-8, 0.5rem);
+  cursor: pointer;
+  transition: background var(--duration-fast, 0.15s) ease;
+  color: var(--hi-color-text-primary, #1e1e1e);
+  position: relative;
+
+  &:hover {
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 5%, transparent);
+  }
+}
+
+.hk-tree-row[data-status="completed"] {
+  opacity: 0.55;
+
+  .hk-tree-label {
+    text-decoration: line-through;
+  }
+}
+
+.hk-tree-row[data-status="failed"] .hk-tree-label {
+  color: var(--hi-color-danger, #f85149);
+}
+
+.hk-tree-row[data-status="in_progress"],
+.hk-tree-row[data-status="running"] {
+  .hk-tree-label {
+    font-weight: 500;
+  }
+}
+
+.hk-tree-row[data-status="warning"] .hk-tree-label {
+  color: var(--hi-color-warning, #eed677);
+}
+
+.hk-tree-row[data-status="muted"] {
+  opacity: 0.45;
+}
+
+/* ── Row heights by size ───────────────────────── */
+
+.hk-tree[data-size="xs"] > .hk-tree-node > .hk-tree-row,
+.hk-tree[data-size="xs"] .hk-tree-children > .hk-tree-node > .hk-tree-row {
+  min-height: 22px;
+
+  .hk-tree-label { font-size: var(--text-xs, 0.75rem); }
+  .hk-tree-icon { width: 14px; height: 14px; }
+  .hk-tree-leaf { width: 4px; height: 4px; }
+}
+
+.hk-tree[data-size="sm"] > .hk-tree-node > .hk-tree-row,
+.hk-tree[data-size="sm"] .hk-tree-children > .hk-tree-node > .hk-tree-row {
+  min-height: 28px;
+
+  .hk-tree-label { font-size: var(--text-xs, 0.75rem); }
+  .hk-tree-icon { width: 16px; height: 16px; }
+  .hk-tree-leaf { width: 5px; height: 5px; }
+}
+
+.hk-tree[data-size="md"] > .hk-tree-node > .hk-tree-row,
+.hk-tree[data-size="md"] .hk-tree-children > .hk-tree-node > .hk-tree-row {
+  min-height: 34px;
+
+  .hk-tree-label { font-size: var(--text-sm, 0.875rem); }
+  .hk-tree-icon { width: 18px; height: 18px; }
+  .hk-tree-leaf { width: 6px; height: 6px; }
+}
+
+/* ── Toggle chevron ────────────────────────────── */
+
+.hk-tree-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--hi-color-muted, #6c6c6c);
+  border-radius: var(--radius-sm, 4px);
+  transition: color var(--duration-fast, 0.15s), background var(--duration-fast, 0.15s);
+}
+
+.hk-tree-toggle[data-parent] {
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 40%, transparent);
+    color: var(--hi-color-text-primary, #1e1e1e);
+  }
+}
+
+.hk-tree-chevron {
+  transition: transform var(--duration-normal, 0.3s) ease;
+}
+
+.hk-tree-chevron[data-open] {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-tree-chevron {
+    transition: none;
+  }
+}
+
+.hk-tree-leaf {
+  display: block;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 25%, transparent);
+}
+
+/* ── Icon slot ─────────────────────────────────── */
+
+.hk-tree-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-inline-start: var(--space-4, 0.25rem);
+}
+
+/* ── Label ─────────────────────────────────────── */
+
+.hk-tree-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  font-weight: 400;
+  margin-inline-start: var(--space-4, 0.25rem);
+}
+
+/* ── Label tag chip ────────────────────────────── */
+
+.hk-tree-label-tag {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0 0.375em;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--hi-color-primary, #7aa2f7);
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 18%, transparent);
+  border-radius: var(--radius-sm, 4px);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}

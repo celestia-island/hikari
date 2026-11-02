@@ -1,0 +1,105 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkDonutChart anatomy — self-sufficient styling (the component
+// self-sufficiency guard): every class lives here, no host atomic or
+// utility layer. Ink comes from theme tokens / the slice fills the
+// component computes.
+//
+// Upstreamed from wowsp's donut families' SCSS.
+//
+// AI-generated (GLM-5.3 via ZCode), 2026-10-31 — SySL-1.0 §2.3.
+
+.hk-donut {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  &--empty {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm, 13px);
+    color: var(--hi-color-muted);
+  }
+
+  &__ring-wrap {
+    flex: none;
+  }
+
+  &__ring {
+    display: block;
+  }
+
+  &__slice {
+    outline: none;
+    cursor: pointer;
+    transition: filter 0.16s ease;
+  }
+
+  &__center {
+    fill: rgb(var(--color-text) / 0.9);
+    font-size: 16px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__legend {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  &__legend-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--text-sm, 13px);
+    cursor: pointer;
+    transition: opacity 0.16s ease;
+  }
+
+  &__legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full, 9999px);
+    flex: none;
+  }
+
+  &__legend-label {
+    color: rgb(var(--color-text) / 0.85);
+  }
+
+  &__legend-pct {
+    color: var(--hi-color-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--text-xs, 12px);
+  }
+
+  // Paired hover focus: the hovered slice/row lifts, siblings dim —
+  // opacity only, no shape rescales (the geometry contract).
+  &__slice.is-hot,
+  &__legend-row.is-hot {
+    filter: brightness(1.08) saturate(1.15);
+  }
+
+  &__slice.is-dim,
+  &__legend-row.is-dim {
+    opacity: 0.45;
+  }
+}

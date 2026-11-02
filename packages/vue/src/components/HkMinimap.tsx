@@ -75,7 +75,7 @@ export default defineComponent({
     canZoomOut: { type: Boolean, default: true },
     /** Zoom governance (defaults on): the zoom bar steps by a fixed percent
      *  increment and clamps to [min, max]. Consumers with a wider native
-     *  camera range override these (e.g. the SCADA scene runs 20–400%). */
+     *  camera range override these (e.g. the operations scene runs 20–400%). */
     zoomStepPercent: { type: Number, default: 5 },
     minZoomPercent: { type: Number, default: 50 },
     maxZoomPercent: { type: Number, default: 200 },

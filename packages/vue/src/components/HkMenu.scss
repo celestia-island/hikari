@@ -193,16 +193,16 @@
     font-weight: 600;
   }
 
-  /* Rail groups keep the rail rhythm at every depth: the children
-   * wrapper spends the rail's own row gap, with no margin step above
-   * the first child and never an indent. */
+  /* Rail groups keep the ONE-COLUMN rhythm at every depth: width-only,
+   * never an indent. The children wrapper deliberately carries NO
+   * margin override of its own — the expanded sidebar's 2px step (the
+   * shared .hk-menu-sidebar-children rule above) applies in the rail
+   * too, because vertical rhythm is density-invariant (2026-10-31 user
+   * direction): a rail-specific step would move every row below an open
+   * group on each collapse/expand flip. */
   .hk-menu-sidebar-rail-group,
   .hk-menu-sidebar-rail-children {
     width: 100%;
-  }
-
-  .hk-menu-sidebar-rail-children {
-    margin-top: 0;
   }
 
   /* Disclosure ink, at the same secondary weight as the expanded

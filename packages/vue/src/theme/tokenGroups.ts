@@ -4,7 +4,7 @@ import type { ThemeTokenGroupModes, ThemeTokenGroupValues, ThemeTokenRGB, ThemeT
 
 /**
  * Extension token groups — namespaced slots beyond the 16 fixed UI tokens
- * (industrial/SCADA theming: wire colors, pipe states, phase marks — and,
+ * (operations theming: wire colors, pipe states, phase marks — and,
  * since the slot widening, non-color knobs of an existing scale family).
  *
  * A downstream app registers a group (`registerTokenGroup`); hikari then:
@@ -20,7 +20,7 @@ import type { ThemeTokenGroupModes, ThemeTokenGroupValues, ThemeTokenRGB, ThemeT
  *     tabs for enum slots.
  *
  * Three slot kinds share one shape (kind-less slots stay COLOR — the
- * pre-widening form every existing SCADA palette is written in):
+ * pre-widening form every existing operations palette is written in):
  *   color  → `"r g b"` triplet, clamped into the hue/s/l bands
  *   number → `${value}${unit}`, clamped into [min, max] and onto the step grid
  *   enum   → the option string verbatim, snapped back to the option list
@@ -106,7 +106,7 @@ export interface TokenEnumSlot extends TokenGroupSlotBase {
  */
 export type TokenGroupSlot = TokenColorSlot | TokenNumberSlot | TokenEnumSlot;
 
-/** Labeled sub-section of a group (e.g. "electrical power" inside "scada"). */
+/** Labeled sub-section of a group (e.g. "electrical power" inside "ops"). */
 export interface TokenGroupSection {
   /** Stable key, unique within the group. */
   key: string;
@@ -511,7 +511,7 @@ export function groupTokensToCSSVars(
 // ── Palette config files ───────────────────────────────────────────
 //
 // The webui-standard way to define an extension palette: a JSON config
-// file (e.g. chest `src/theme/palettes/scada.json`) loaded through
+// file (e.g. a downstream app's palette JSON) loaded through
 // `import.meta.glob` and fed to `registerTokenGroupConfig`. The parser
 // below validates the whole document and reports every problem at once,
 // so a typo in slot 37 names the slot instead of failing opaque. RGB

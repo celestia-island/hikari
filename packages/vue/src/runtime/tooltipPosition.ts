@@ -2,6 +2,12 @@
 // document-level tooltip bridge (runtime/tooltipBridge.ts). One placement
 // switch, one zoom story: whatever hosts a popup against a trigger rect
 // positions it through this helper so the two surfaces can never drift.
+// Every placement ends on the device-pixel grid (snapToPixelGrid): the
+// paint algorithm pixel-snaps normal flow content, but NOT a fixed
+// element positioned through an inline transform, so an unsnapped
+// fractional coordinate gets rasterized and resampled — every glyph,
+// edge and icon in the bubble smears into a uniform blur (the wowsp
+// stats-page hover-card report that traced it).
 import type { CSSProperties } from "vue";
 import { ancestorZoom } from "./cssZoom";
 import { popupViewportRect, type PopupViewportRect } from "./popupBounds";
@@ -137,11 +143,55 @@ export function resolveTooltipFlip(
 }
 
 /**
+ * Nudge a placed popup so its top-left corner lands EXACTLY on the
+ * device-pixel grid, killing the fractional-position paint blur.
+ *
+ * Placement coordinates are fractional almost by construction — the anchor
+ * center halves the trigger rect, the placement transform halves the popup
+ * box, the gutter shift adds its remainder, and a root DPI zoom
+ * (cssZoom) multiplies the whole chain by a fractional factor. The paint
+ * algorithm pixel-snaps normal flow content, but a fixed element positioned
+ * through an inline transform paints at its exact fractional device
+ * position: Chromium rasterizes the popup's layer and resamples it at
+ * paint, which smears every glyph, edge and icon into a uniform blur (the
+ * wowsp stats-page hover cards traced this to a hard-to-read tooltip).
+ * Snapping the final visual rect onto the physical grid removes the
+ * resample without moving the popup a visible distance — at most half a
+ * device pixel per axis, far below the viewport gutter margins the clamp
+ * pass just fit inside.
+ *
+ * The correction is measured in root visual px but written coordinates are
+ * local (divided by the cumulative zoom, ancestorZoom) — the same
+ * re-basing the clamp shift in applyTooltipPosition performs on its own
+ * remainders. Without layout (happy-dom/jsdom, hidden popups) the box
+ * measures zero and the call is a no-op — the same guard the measure pass
+ * applies. On-grid boxes write nothing, so re-placing an already-sharp
+ * popup is free.
+ */
+export function snapToPixelGrid(popup: HTMLElement): void {
+  const box = popup.getBoundingClientRect();
+  if (!(box.width > 0 && box.height > 0)) return;
+  const dpr = window.devicePixelRatio;
+  const step = Number.isFinite(dpr) && dpr > 0 ? 1 / dpr : 1;
+  const dx = Math.round(box.left / step) * step - box.left;
+  const dy = Math.round(box.top / step) * step - box.top;
+  if (dx === 0 && dy === 0) return;
+  const z = ancestorZoom(popup);
+  popup.style.left = `${(Number.parseFloat(popup.style.left) || 0) + dx / z}px`;
+  popup.style.top = `${(Number.parseFloat(popup.style.top) || 0) + dy / z}px`;
+}
+
+/**
  * Position a live popup element against a trigger rect: apply the shared
  * placement style, then measure the REAL box and pull it inside the
  * viewport gutter — capping an oversized bubble, flipping the side when
  * the preferred one is starved, and shifting the remainder so no edge
  * ever crosses the gutter (the mobile/desktop --viewport-gutter token).
+ * The placement ends on the device-pixel grid (snapToPixelGrid): placed
+ * coordinates are fractional almost by construction (halved trigger
+ * center, halved box, clamp remainder, a root DPI zoom), and a fixed
+ * element positioned through an inline transform paints at that exact
+ * fractional device position, which resamples the popup into a blur.
  *
  * Without layout (happy-dom/jsdom, hidden popups) measurement reports a
  * zero rect and the call degrades to exactly the pure
@@ -239,4 +289,9 @@ export function applyTooltipPosition(
     popup.style.left = `${curLeft + dx / z}px`;
     popup.style.top = `${curTop + dy / z}px`;
   }
+
+  // Paint it sharp: every path above (base anchor, caps, flip rewrite,
+  // gutter shift) writes fractional local px, so the placed box sits off
+  // the device grid almost always — snap it after ALL of them.
+  snapToPixelGrid(popup);
 }

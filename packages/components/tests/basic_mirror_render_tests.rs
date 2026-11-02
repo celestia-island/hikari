@@ -8,6 +8,7 @@
 //! dropped) reds here instead of shipping.
 
 use hikari_components::basic::*;
+use hikari_components::entry::*;
 use hikari_components::prelude::*;
 use hikari_components::rsx;
 
@@ -205,4 +206,153 @@ fn card_renders_header_body_footer() {
     ] {
         assert!(html.contains(needle), "missing {needle}: {html}");
     }
+}
+
+// ── W2b: advanced-input family ───────────────────────────────────────────
+
+#[test]
+fn number_input_renders_the_vue_shell() {
+    let html = render(NumberInput(NumberInputProps::default()));
+    assert!(html.contains("hk-number-input"), "{html}");
+    assert!(html.contains("hk-number-input-inner"), "{html}");
+}
+
+#[test]
+fn otp_input_publishes_the_size_ramp_font() {
+    // The sheet's font chain reads `--hk-otp-fitted-font`; without a publish
+    // every size falls back to the 1.25rem literal (R2c S1).
+    let html = render(OtpInput(OtpInputProps {
+        size: hikari_components::basic::OtpSize::Sm,
+        ..Default::default()
+    }));
+    assert!(html.contains("--hk-otp-fitted-font:0.875rem"), "{html}");
+    assert!(html.contains("hk-otp-sm"), "{html}");
+}
+
+#[test]
+fn rolling_number_renders_slots() {
+    let html = render(RollingNumber(RollingNumberProps {
+        value: "42".to_string(),
+        ..Default::default()
+    }));
+    assert!(html.contains("hk-rolling-number"), "{html}");
+    assert!(html.contains("data-el"), "{html}");
+}
+
+#[test]
+fn search_input_renders_icon_field_and_clear() {
+    let html = render(SearchInput(SearchInputProps {
+        model_value: "abc".to_string(),
+        ..Default::default()
+    }));
+    for needle in [
+        "hk-search-input",
+        "hk-search-input-icon",
+        "hk-search-input-field",
+        "hk-search-input-clear",
+    ] {
+        assert!(html.contains(needle), "missing {needle}: {html}");
+    }
+}
+
+#[test]
+fn template_text_renders_chips() {
+    let html = render(TemplateText(TemplateTextProps {
+        content: "Hi {{name}}".to_string(),
+        ..Default::default()
+    }));
+    assert!(html.contains("hk-template-text"), "{html}");
+    assert!(html.contains("hk-tpl-chip"), "{html}");
+}
+
+#[test]
+fn token_input_renders_the_value_trigger() {
+    let html = render(TokenInput(TokenInputProps::default()));
+    assert!(html.contains("hk-token-input"), "{html}");
+    assert!(html.contains("hk-token-input-value"), "{html}");
+}
+
+#[test]
+fn tag_input_renders_wrapper_and_box() {
+    let html = render(TagInput(TagInputProps::default()));
+    assert!(html.contains("hk-tag-input-wrapper"), "{html}");
+    assert!(html.contains("hk-tag-input-box"), "{html}");
+}
+
+#[test]
+fn date_tag_renders_the_tag() {
+    let html = render(DateTag(DateTagProps {
+        value: Some("2024-10-06".to_string()),
+        ..Default::default()
+    }));
+    assert!(html.contains("hk-date-tag"), "{html}");
+}
+
+#[test]
+fn date_picker_renders_the_trigger() {
+    let html = render(DatePicker(DatePickerProps::default()));
+    assert!(html.contains("hk-dp"), "{html}");
+}
+
+#[test]
+fn date_time_picker_renders_the_trigger() {
+    let html = render(DateTimePicker(DateTimePickerProps::default()));
+    assert!(html.contains("hk-dtp"), "{html}");
+}
+
+#[test]
+fn time_zone_globe_renders_the_globe_host() {
+    let html = render(TimeZoneGlobe(TimeZoneGlobeProps::default()));
+    assert!(html.contains("hk-timezone-globe"), "{html}");
+    assert!(html.contains("<svg"), "{html}");
+}
+
+#[test]
+fn slider_field_renders_slider_and_value() {
+    let html = render(SliderField(SliderFieldProps::default()));
+    assert!(html.contains("hk-slider-field"), "{html}");
+    assert!(html.contains("hk-slider-fill"), "{html}");
+}
+
+#[test]
+fn fab_renders_the_button() {
+    let html = render(Fab(FabProps {
+        aria_label: "Add".to_string(),
+        ..Default::default()
+    }));
+    assert!(html.contains("hk-fab-button"), "{html}");
+    assert!(html.contains("aria-label=\"Add\""), "{html}");
+}
+
+#[test]
+fn file_field_renders_the_box() {
+    let html = render(FileField(FileFieldProps::default()));
+    assert!(html.contains("hk-file-field"), "{html}");
+}
+
+#[test]
+fn file_picker_field_renders_the_row() {
+    let html = render(FilePickerField(FilePickerFieldProps::default()));
+    assert!(html.contains("hk-file-picker-field"), "{html}");
+}
+
+#[test]
+fn file_browser_dialog_renders_nothing_when_closed() {
+    let html = render(FileBrowserDialog(FileBrowserDialogProps::default()));
+    assert!(
+        html.is_empty() || !html.contains("hk-file-browser"),
+        "{html}"
+    );
+}
+
+#[test]
+fn color_picker_renders_the_trigger() {
+    let html = render(ColorPicker(ColorPickerProps::default()));
+    assert!(html.contains("hk-color-picker"), "{html}");
+}
+
+#[test]
+fn phone_input_renders_the_field() {
+    let html = render(PhoneInput(PhoneInputProps::default()));
+    assert!(html.contains("hk-phone-input"), "{html}");
 }

@@ -1,0 +1,55 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-rolling-number {
+  display: inline-flex;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+
+  /* char/slot/digit are all flex items (root and roll are flex
+     containers), so their display blockifies and vertical-align never
+     applies — no explicit display/vertical-align declarations. */
+
+  [data-el="slot"] {
+    position: relative;
+    overflow: hidden;
+    height: 1em;
+  }
+
+  [data-el="roll"] {
+    display: flex;
+    flex-direction: column;
+    animation: hk-rolling-number-up var(--duration-instant, 0.1s) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  [data-el="digit"] {
+    height: 1em;
+  }
+}
+
+@keyframes hk-rolling-number-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1em);
+  }
+}
+
+/* Reduced motion: stop the digit roll. The global switch
+ * (`html[data-css-animations="0"]`) pauses it too when the host wired
+ * it; the media block covers hosts that never did. Safe: the component
+ * arms a cron fallback that force-commits the final digit whenever
+ * `animationend` never fires. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-rolling-number [data-el="roll"] {
+    animation: none;
+  }
+}

@@ -1,0 +1,442 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkTagInput — the tag editor field: chips inside the field, one
+ * searchable catalog panel behind the chevron. Field chrome mirrors
+ * HkInput's box (border, radius, rhythm, focus ring) so a tag field sits
+ * flush beside plain inputs in the same form; the panel chrome mirrors
+ * HkAffixPicker's popup (search on top, rows below, NO inner scroll
+ * region — the HkSelectPanel window owns the single scrollbar, capped by
+ * the component's `maxHeight` so a long catalog scrolls there instead of
+ * stretching the panel). Chips and selected rows are reorderable; the
+ * drag states (`data-dragging` / `data-drop`) live at the bottom. */
+
+@use "./menu-item" as mi;
+@use "../styles/polyfill" as *;
+
+.hk-tag-input-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.hk-tag-input-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  /* Same caption hierarchy as HkInput's label, dark-theme survivable. */
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+/* ── the field ────────────────────────────────────────────────────── */
+.hk-tag-input-box {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  row-gap: var(--space-6);
+  /* Inline inset matches HkInput's element padding, so a tag field and a
+   * plain input line up in the same form; the block inset is tighter to
+   * leave wrapped chip rows room inside the same height rhythm. */
+  padding: var(--space-6) var(--space-12);
+  min-height: 2.5rem;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm);
+  color: rgb(var(--color-text));
+  cursor: text;
+  transition:
+    background-color var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard),
+    opacity var(--duration-normal) var(--ease-standard);
+
+  &:hover:not([data-disabled]) {
+    border-color: var(--c-primary-strong);
+  }
+
+  &:focus-within,
+  &.hk-tag-input-box-open {
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+    background: rgb(var(--color-surface));
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Size rhythm matches HkInput's field heights. */
+.hk-tag-input-box-sm {
+  min-height: 2rem;
+  padding: var(--space-4) var(--space-8);
+}
+
+.hk-tag-input-box-md {
+  min-height: 2.5rem;
+}
+
+.hk-tag-input-box-lg {
+  min-height: 3rem;
+  padding: var(--space-8) var(--space-12);
+}
+
+.hk-tag-input-tag {
+  max-width: 100%;
+  /* Reorder affordance: the chip BODY is the handle. */
+  cursor: grab;
+  /* A press that becomes a drag must not paint a text selection, and a
+   * touch that starts scrolling vertically belongs to the page (the
+   * browser takes the gesture back with a pointercancel; a horizontal
+   * drag is ours — see usePointerReorder). */
+  @include user-select(none);
+  touch-action: pan-y;
+}
+
+.hk-tag-input-tag-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A disabled field reorders nothing: the chips drop the grab affordance
+ * (and the gesture reservation with it) — the box's own not-allowed
+ * cursor takes over — and they become plain TEXT: with no drag left to
+ * lose, the press is free to select, so the chips are selectable here
+ * (the one state where selection and reordering cannot compete). */
+.hk-tag-input-box[data-disabled] .hk-tag-input-tag {
+  cursor: default;
+  touch-action: auto;
+  @include user-select(text);
+}
+
+/* ── inline typing input / placeholder ────────────────────────────── */
+.hk-tag-input-element {
+  /* Auto-growing: the element's width is published inline in `ch`
+   * units, so it must not stretch on the main axis. */
+  flex: 0 1 auto;
+  min-width: 2rem;
+  max-width: 100%;
+  padding: var(--space-2) 0;
+  border: none;
+  outline: none;
+  border-radius: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+
+  /* The shell owns the focus affordance (`:focus-within`); the base
+   * border/outline: none above already holds at all times, so only a
+   * stray element-level box-shadow needs explicit suppression. */
+  &:focus,
+  &:focus-visible {
+    box-shadow: none;
+  }
+
+  &::placeholder {
+    color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  }
+}
+
+.hk-tag-input-placeholder {
+  flex: 1 1 4rem;
+  min-width: 0;
+  padding: var(--space-2) 0;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-tag-input-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  /* Pins to the field's trailing edge. */
+  margin-inline-start: auto;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    background: rgb(var(--color-primary) / 12%);
+    color: rgb(var(--color-text));
+  }
+
+  /* Tactile press, one step past the hover fill (the rows' selected
+     hover). */
+  &:active:not(:disabled) {
+    background: rgb(var(--color-primary) / 16%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.hk-tag-input-hint {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+}
+
+/* ── the panel ────────────────────────────────────────────────────── */
+.hk-tag-input-panel {
+  display: flex;
+  flex-direction: column;
+  /* A FIXED measure, not a content-driven one: the popout is positioned
+   * once when it opens, so a panel that grew with its content would shift
+   * its own left edge mid-interaction — toggling a row adds a check glyph,
+   * and a query changes which rows (and how much meta text) survive.
+   * min-width stays as the lower bound a narrow viewport imposes on
+   * that width (an equal max-width could never constrain further). */
+  width: min(19rem, calc(100vw - 2rem));
+  min-width: 13rem;
+}
+
+/* Mobile sheet context (the HkAffixPicker #424 pattern): inside the
+ * full-width select sheet the popup's designed measure becomes a
+ * centered cap instead of a left-glued clamp, so the search + rows read
+ * as one designed block in the viewport-wide sheet. */
+.hk-select-sheet-panel .hk-tag-input-panel {
+  width: 100%;
+  max-width: min(19rem, 100%);
+  margin-inline: auto;
+}
+
+.hk-tag-input-search {
+  /* Same spellings as the mirrored HkAffixPicker popup head. */
+  padding: var(--space-8, 8px) var(--space-10, 10px) var(--space-6, 6px);
+}
+
+/* NOT a scroll region: the window surface (popout / sheet) owns THE one
+ * scrollbar and scrolls the search field with the rows. */
+.hk-tag-input-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  /* GEOMETRY-NEUTRAL band (menu-item WIDTH invariant): block-axis rhythm
+   * only — the hosting panel's inset is the one horizontal inset these
+   * rows get (the old 6px inline term stacked a second inset). */
+  padding-block: var(--space-4, 4px) var(--space-8, 8px);
+}
+
+.hk-tag-input-row {
+  /* Unified menu-item spec (_menu-item.scss): one row grammar with the
+   * select options and menu rows around it — metrics, reserved border,
+   * guarded hover, checked face, focus ring; the sheet reach comes from
+   * the shared registration list. The tsx emits the grammar's
+   * `data-checked` for the selected face (so mi.item's hover guard
+   * protects it) ALONGSIDE this family's legacy `data-selected`
+   * (tests/hosts key on it). `data-active` is the field's
+   * aria-activedescendant keyboard cursor (focus itself stays in the
+   * field) — mi.item has no HIGHLIGHT face, and its SELECTED face
+   * would bleed through a partial restatement, so the cursor face is
+   * restated in full below; mi.item's hover guard already excludes
+   * data-active rows. */
+  @include mi.item;
+
+  /* [data-active] is the field's aria-activedescendant keyboard cursor —
+     the grammar's HIGHLIGHT role. mi.item has no cursor face, but its
+     [data-active]/[data-checked] SELECTED face would bleed through a
+     partial restatement, so the cursor face restates the full set back
+     to the row's resting values: wash + inset ring only, reserved
+     border transparent, normal text color and weight. */
+  &[data-active] {
+    background: rgb(var(--color-primary) / 8%);
+    border-color: transparent;
+    color: rgb(var(--color-text) / 88%);
+    font-weight: var(--hk-menu-item-weight);
+    box-shadow: inset 0 0 0 1px rgb(var(--color-focused-border));
+  }
+
+  /* The "Use “<query>”" free-text row reads as an add affordance. */
+  &[data-custom="true"] {
+    color: rgb(var(--color-primary));
+
+    .hk-tag-input-row-label {
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+.hk-tag-input-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: rgb(var(--color-primary));
+}
+
+.hk-tag-input-row-flag {
+  flex: none;
+  font-size: calc(var(--text-base) * 1.05);
+  line-height: 1;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
+    sans-serif;
+}
+
+.hk-tag-input-row-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-tag-input-row-meta {
+  flex: none;
+  color: rgb(var(--color-muted));
+  font-size: calc(var(--text-sm) * 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── reordering ───────────────────────────────────────────────────── */
+/* Live drag (both lists): the item being moved LIFTS — a touch larger and
+ * raised off the surface — while the slot it would land in is ringed. The
+ * lift is what makes the drag read on touch, where the finger covers the
+ * chip, the cursor is invisible and dimming alone looks like nothing
+ * happened. The dimming stays LIGHT on purpose (0.85, the value of the
+ * HkDraggableList/HkDraggableGrid drag ghost): the item must still read as
+ * the one being moved, not fade out. `transform` reflows nothing — no
+ * neighbour ever moves for it — and it cannot move the drag's own geometry
+ * either: the resolution reads the pressed item's line and midpoint from
+ * the layout captured when the press landed, before this lift is painted.
+ * The raised shadow replaces the row's own box-shadow faces for as long as
+ * the drag lasts (the keyboard cursor's inset ring included: the lift is
+ * the live state).
+ *
+ * Chips carry the state as classes (HkTag takes no arbitrary attributes),
+ * panel rows as data attributes — both are assertable hooks that never
+ * collide with the pointer/hover faces. */
+.hk-tag-input-tag-dragging,
+.hk-tag-input-row[data-dragging] {
+  opacity: 0.85;
+  cursor: grabbing;
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 24%),
+    0 2px 6px rgb(0 0 0 / 16%);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* The scale runs ALONG each list's own drag axis — chips on X (a horizontal
+ * strip), rows on Y (a vertical list): a small scale that follows the
+ * gesture keeps the lifted item tight in a dense chip row. WHICH axis it
+ * runs on is TASTE, not necessity — a drag resolves its landing slot from
+ * the items' live rects (usePointerReorder's `indexAt`), where every item's
+ * span on the axis ACROSS the drag decides which line the pointer is on and
+ * the item's MIDPOINT on the drag axis picks the slot, except that the item
+ * being dragged is measured by the geometry captured when the press landed,
+ * before this lift is painted: no transform on it, along the axis, across it
+ * or an isotropic `scale()`, can move the line it is dragged along. The line
+ * filter started out a no-op precisely because every row spans the list's
+ * full width. */
+.hk-tag-input-tag-dragging {
+  transform: scaleX(1.03);
+}
+
+.hk-tag-input-row[data-dragging] {
+  transform: scaleY(1.03);
+}
+
+.hk-tag-input-tag-drop {
+  outline: 1px dashed rgb(var(--color-focused-border));
+  outline-offset: 1px;
+}
+
+.hk-tag-input-row[data-drop] {
+  box-shadow: inset 0 0 0 1px rgb(var(--color-focused-border));
+}
+
+/* Drag handle of a SELECTED panel row — the one element that claims the
+ * touch gesture outright, so the sheet keeps scrolling under the rest of
+ * the row. Only selected rows render one: an unselected row is not
+ * draggable and is never a drop target. */
+.hk-tag-input-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  /* The largest target the row rhythm allows: the row's content box is
+     the grammar row's min-height minus its block padding (34px − 2×6px =
+     22px; 44px − 2×10px = 24px inside sheets), so the handle grows to
+     that without changing the option rows' height — the 44px touch
+     guidance cannot fit in a list row, the sheet scrolls through them
+     instead. The grip was sized for the RETIRED 2.25rem/4px stock once:
+     at 28px it overflowed the 22px box and every selected+reorderable
+     row grew 6px taller than its neighbours. */
+  width: 1.5rem;
+  height: 1.375rem;
+  margin-inline-end: -6px;
+  color: rgb(var(--color-muted));
+  opacity: 0.6;
+  cursor: grab;
+  touch-action: none;
+  @include user-select(none);
+  transition: opacity 0.12s ease, color 0.12s ease;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.hk-tag-input-row:hover .hk-tag-input-grip,
+.hk-tag-input-row[data-dragging] .hk-tag-input-grip,
+.hk-tag-input-grip:focus-visible {
+  opacity: 1;
+  color: rgb(var(--color-text));
+}
+
+.hk-tag-input-empty {
+  padding: var(--space-14, 14px) var(--space-12, 12px);
+  color: rgb(var(--color-muted));
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-tag-input-box,
+  .hk-tag-input-chevron,
+  .hk-tag-input-grip,
+  .hk-tag-input-row,
+  /* The lift itself is KEPT without its ramp: the scale and the raised
+   * shadow are a static state marker, not motion, and dropping them would
+   * take the drag feedback away from exactly the users who cannot rely on
+   * the cursor following the pointer — only the 0.12s transition goes. */
+  .hk-tag-input-tag-dragging,
+  .hk-tag-input-row[data-dragging] {
+    transition: none;
+  }
+}

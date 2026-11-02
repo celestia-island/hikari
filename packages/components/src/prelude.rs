@@ -75,9 +75,12 @@ pub use crate::basic::ArrowProps;
 // Basic component Props
 pub use crate::basic::{
     AvatarProps, BackgroundProps, BadgeProps, ButtonProps, CardProps, CheckboxProps,
-    DatePickerProps, FileUploadProps, FormFieldProps, IconButtonGroupProps, IconButtonProps,
-    IconChipProps, InputProps, InputWrapperProps, KbdProps, LabelProps, RadioGroupProps,
-    SelectProps, SliderProps, SwitchProps, TextareaProps,
+    ColorPickerProps, DatePickerProps, DateTagProps, DateTimePickerProps, FileBrowserDialogProps,
+    FileFieldProps, FilePickerFieldProps, FileUploadProps, FormFieldProps, IconButtonGroupProps,
+    IconButtonProps, IconChipProps, InputProps, InputWrapperProps, KbdProps, LabelProps,
+    OtpInputProps, PhoneInputProps, RadioGroupProps, RollingNumberProps, SearchInputProps,
+    SelectProps, SliderFieldProps, SliderProps, SwitchProps, TagInputProps, TemplateTextProps,
+    TextareaProps, TimeZoneGlobeProps, TokenInputProps,
 };
 // Data component Props
 pub use crate::data::{
@@ -94,7 +97,8 @@ pub use crate::display::{
 };
 // Entry component Props
 pub use crate::entry::{
-    AutoCompleteProps, CascaderProps, NumberInputProps, SearchProps, TransferProps,
+    AutoCompleteProps, CascaderProps, NumberInputProps, NumberSteppersProps, SearchProps,
+    TransferProps,
 };
 // Feedback component Props
 pub use crate::feedback::{

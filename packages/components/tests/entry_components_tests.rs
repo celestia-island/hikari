@@ -124,31 +124,32 @@ mod tests {
     #[test]
     fn test_number_input_props_default() {
         let props = NumberInputProps::default();
-        assert_eq!(props.value, 0);
+        // The W2b mirror carries f64 values (Vue's number input) and drops the
+        // legacy Glow props.
+        assert_eq!(props.value, 0.0);
         assert!(props.min.is_none());
         assert!(props.max.is_none());
-        assert_eq!(props.step, 1);
+        assert_eq!(props.step, 1.0);
         assert!(!props.disabled);
         assert_eq!(props.size, NumberInputSize::Medium);
         assert_eq!(props.class, "");
         assert_eq!(props.style, "");
-        assert!(props.glow);
     }
 
     #[test]
     fn test_number_input_with_constraints() {
         let props = NumberInputProps {
-            value: 50,
-            min: Some(0),
-            max: Some(100),
-            step: 5,
+            value: 50.0,
+            min: Some(0.0),
+            max: Some(100.0),
+            step: 5.0,
             disabled: false,
             ..Default::default()
         };
-        assert_eq!(props.value, 50);
-        assert_eq!(props.min.unwrap(), 0);
-        assert_eq!(props.max.unwrap(), 100);
-        assert_eq!(props.step, 5);
+        assert_eq!(props.value, 50.0);
+        assert_eq!(props.min.unwrap(), 0.0);
+        assert_eq!(props.max.unwrap(), 100.0);
+        assert_eq!(props.step, 5.0);
     }
 
     // ── Search ──────────────────────────────────────────────────

@@ -1,0 +1,98 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkTokenInput — the standalone token editor control: value segment +
+ * unit suffix dropdown, no outer chrome (it rides OTHER components'
+ * slots). */
+.hk-token-input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  min-width: 0;
+}
+
+.hk-token-input.is-disabled {
+  opacity: 0.55;
+}
+
+.hk-token-input-value {
+  flex: 0 0 auto;
+  min-width: 3.25rem;
+  padding: 2px var(--space-8, 8px);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-muted) / 12%);
+  color: rgb(var(--color-text));
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hk-token-input-value:hover:not(:disabled) {
+  background: rgb(var(--color-muted) / 20%);
+}
+
+.hk-token-input-value:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-primary) / 40%);
+}
+
+.hk-token-input-unit {
+  flex: 0 0 auto;
+  width: 4.25rem;
+}
+
+/* The precision editor body: value input (major) + unit (minor). */
+.hk-token-input-editor-body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8, 8px);
+  padding: var(--space-8, 8px) 0;
+}
+
+.hk-token-editor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hk-token-editor-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hk-token-editor-unit {
+  flex: 0 0 auto;
+  width: 5rem;
+}
+
+.hk-token-input-clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-4, 4px);
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+}
+
+.hk-token-input-clear:hover {
+  background: rgb(var(--color-error) / 10%);
+  color: rgb(var(--color-error));
+}

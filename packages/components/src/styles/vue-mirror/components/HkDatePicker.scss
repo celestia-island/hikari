@@ -1,0 +1,368 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* ── HkDatePicker ───────────────────────────────────────────────
+ * Input-like trigger (mirrors HkInput chrome) + HkPopover calendar.
+ * Uses the shared --hi-* design tokens. */
+
+@use "./HkPickerPane" as picker-pane;
+@use "../styles/polyfill" as *;
+
+.hk-dp {
+  display: block;
+  width: 100%;
+}
+
+.hk-dp.is-disabled {
+  opacity: 0.5;
+}
+
+/* ── Trigger / native input ──────────────────────────────────── */
+/* The custom trigger and the native <input type="date"> carry
+ * byte-identical field chrome, so those declarations live in one group. */
+.hk-dp-trigger,
+.hk-dp-native {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm, 4px);
+  color: rgb(var(--color-text));
+  font-family: inherit;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.5;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    border-color var(--duration-fast, 0.15s) ease,
+    box-shadow var(--duration-fast, 0.15s) ease;
+}
+
+.hk-dp-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  cursor: pointer;
+  @include user-select(none);
+}
+
+.hk-dp:not(.is-disabled) .hk-dp-trigger:hover,
+.hk-dp:not(.is-disabled) .hk-dp-native:hover,
+.hk-dp-trigger:focus-visible,
+.hk-dp-native:focus-visible {
+  border-color: rgb(var(--color-focused-border));
+}
+
+.hk-dp.is-disabled .hk-dp-trigger {
+  cursor: not-allowed;
+
+  &:focus-visible {
+    border-color: color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+    box-shadow: none;
+    background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  }
+}
+
+/* Focus ring + open state live on the field itself. */
+.hk-dp-trigger:focus-visible,
+.hk-dp-native:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-dp-trigger.is-open {
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+}
+
+.hk-dp-trigger-sm {
+  min-height: 2rem;
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.hk-dp-value {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+
+  &[data-empty] {
+    color: var(--hi-color-muted);
+  }
+}
+
+.hk-dp-clear {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-sm, 4px);
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  .hk-dp-trigger:hover &,
+  .hk-dp-trigger:focus &,
+  .hk-dp-clear:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: var(--hi-color-text-primary);
+  }
+}
+
+.hk-dp-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--hi-color-muted);
+  pointer-events: none;
+}
+
+/* ── Calendar panel ──────────────────────────────────────────── */
+
+.hk-dp-popover.hk-popover-panel {
+  padding: var(--space-10, 10px) var(--space-12, 12px) var(--space-8, 8px);
+}
+
+.hk-dp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 8px);
+  min-width: 17.5rem;
+  @include user-select(none);
+  color: var(--hi-color-text-primary);
+}
+
+/* Mobile sheet context (#424 centered-cap pattern): the calendar keeps its
+ * designed measure inside the viewport-wide sheet instead of left-gluing
+ * at the anchored popover's min-width. Safe to stretch: the stage pins
+ * only its height (HkPickerPane.scss) and the day/month grids use 1fr
+ * tracks, so nothing fixed fights width: 100%. */
+.hk-popover-panel.hk-is-sheet .hk-dp-panel {
+  min-width: 0;
+  max-width: min(22rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.hk-dp-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-4, 4px);
+  /* Fixed height keeps the header row — and therefore the shared stage
+   * height — identical in every view and locale (enlarged on touch). */
+  height: var(--hk-picker-header);
+}
+
+.hk-dp-header-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 2px);
+  min-width: 0;
+}
+
+.hk-dp-header-side[data-side="right"] {
+  justify-content: flex-end;
+}
+
+.hk-dp-nav,
+.hk-dp-back {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm, 4px);
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+}
+
+.hk-dp-title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 4px);
+}
+
+.hk-dp-title-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: var(--space-2, 2px) var(--space-4, 4px);
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: var(--radius-sm, 4px);
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-dp-weekdays,
+.hk-dp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-2, 2px);
+}
+
+/* Month/year pick grids sit in the same fixed stage as the day grid and
+ * switch to a 4-column layout; the shared pane partial centers them. */
+.hk-dp-grid[data-variant="pick"] {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.hk-dp-wd {
+  text-align: center;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-muted);
+  height: var(--hk-picker-wd);
+  line-height: var(--hk-picker-wd);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.hk-dp-cell {
+  position: relative;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  /* Fixed height keeps the six-row day grid — and therefore the shared
+   * stage height — independent of the panel width, so drilling between
+   * views never changes the popup's size (enlarged on touch). */
+  height: var(--hk-picker-cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
+  cursor: pointer;
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled):not(.is-selected) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: -1px;
+  }
+
+  &.is-out {
+    opacity: 0.32;
+  }
+
+  &.is-disabled {
+    cursor: default;
+    opacity: 0.25;
+  }
+
+  &.is-today:not(.is-selected) {
+    font-weight: 700;
+    color: var(--hi-color-text-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+  }
+
+  &.is-selected {
+    background: var(--hi-color-primary);
+    color: rgb(var(--color-on-solid-text, 255 255 255));
+    font-weight: 600;
+  }
+}
+
+/* Month/year pick cells: wider targets, still inside the fixed stage. */
+.hk-dp-cell[data-variant="pick"] {
+  height: var(--hk-picker-pick);
+  font-weight: 500;
+}
+
+.hk-dp-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-6, 6px);
+  border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
+}
+
+/* ── Native mobile input ─────────────────────────────────────── */
+/* Unique native-input bits only; the shared field chrome comes from the
+ * .hk-dp-trigger / .hk-dp-native group at the top of the file. */
+
+.hk-dp-native {
+  display: block;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+}
+
+.hk-dp.is-disabled .hk-dp-native {
+  cursor: not-allowed;
+}

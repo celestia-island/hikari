@@ -1,0 +1,106 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 4px);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--space-2, 2px) var(--space-8, 8px);
+  @include user-select(none);
+}
+
+.hk-tag-sm {
+  font-size: var(--text-2xs, 0.625rem);
+  padding: 1px var(--space-6, 6px);
+}
+
+/* md is the default size: HkTag always co-applies `.hk-tag` (tsx class
+   list), so the base rule above already carries the md values — the
+   class stays in the markup, but needs no rule of its own. */
+
+.hk-tag-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.hk-tag-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 0;
+  /* Trailing edge of the chip in both directions. */
+  margin-inline-start: var(--space-2, 2px);
+  border-radius: var(--radius-sm, 4px);
+  transition: opacity var(--duration-fast, 0.15s) ease;
+}
+
+.hk-tag-close:hover {
+  opacity: 1;
+}
+
+/* Keyboard focus indicator (house focus-ring pattern). */
+.hk-tag-close:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.hk-tag-default {
+  background: color-mix(in srgb, var(--hi-color-surface, #ffffff) 60%, transparent);
+  color: var(--hi-color-text-primary, #1e1e1e);
+  border-color: var(--hi-color-border, #646464);
+}
+
+.hk-tag-primary {
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent);
+  color: var(--hi-color-primary, #7aa2f7);
+  border-color: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 20%, transparent);
+}
+
+.hk-tag-success {
+  background: color-mix(in srgb, var(--hi-color-success, #0eb840) 10%, transparent);
+  color: var(--hi-color-success, #0eb840);
+  border-color: color-mix(in srgb, var(--hi-color-success, #0eb840) 20%, transparent);
+}
+
+.hk-tag-warning {
+  background: color-mix(in srgb, var(--hi-color-warning, #eed677) 10%, transparent);
+  color: var(--hi-color-warning, #eed677);
+  border-color: color-mix(in srgb, var(--hi-color-warning, #eed677) 20%, transparent);
+}
+
+.hk-tag-danger {
+  background: color-mix(in srgb, var(--hi-color-danger, #f85149) 10%, transparent);
+  color: var(--hi-color-danger, #f85149);
+  border-color: color-mix(in srgb, var(--hi-color-danger, #f85149) 20%, transparent);
+}
+
+.hk-tag-info {
+  background: color-mix(in srgb, var(--hi-color-info, #6abed6) 10%, transparent);
+  color: var(--hi-color-info, #6abed6);
+  border-color: color-mix(in srgb, var(--hi-color-info, #6abed6) 20%, transparent);
+}

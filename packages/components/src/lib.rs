@@ -7,6 +7,10 @@
 //! Vue 3 package `@celestia-island/hikari`.
 
 // Core modules
+// rsx children are written `{expr}` by grammar; the macro expands them into
+// call arguments, so rustc's `unused_braces` misfires on the source spans.
+#![allow(unused_braces)]
+
 pub mod basic;
 pub mod data;
 pub mod display;

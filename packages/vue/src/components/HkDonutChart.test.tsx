@@ -45,6 +45,22 @@ describe("HkDonutChart", () => {
     ]);
   });
 
+  it("gives the ring svg intrinsic dimensions from the size prop", () => {
+    // Without width/height attributes the svg has no intrinsic size and
+    // collapses to 0x0 inside the block-level ring-wrap (wowsp measured a
+    // 0x0 getBoundingClientRect on the consuming page before this fix).
+    const byDefault = mount(<HkDonutChart entries={ENTRIES} />);
+    const defaultSvg = byDefault.querySelector("svg.hk-donut__ring");
+    expect(defaultSvg?.getAttribute("width")).toBe("150");
+    expect(defaultSvg?.getAttribute("height")).toBe("150");
+
+    const custom = mount(<HkDonutChart entries={ENTRIES} size={96} />);
+    const customSvg = custom.querySelector("svg.hk-donut__ring");
+    expect(customSvg?.getAttribute("width")).toBe("96");
+    expect(customSvg?.getAttribute("height")).toBe("96");
+    expect(customSvg?.getAttribute("viewBox")).toBe("0 0 96 96");
+  });
+
   it("defaults hints to label · value · percent", () => {
     const el = mount(<HkDonutChart entries={ENTRIES} />);
     const first = el.querySelector(".hk-donut__slice");

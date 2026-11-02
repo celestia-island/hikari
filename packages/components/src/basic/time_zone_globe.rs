@@ -50,10 +50,29 @@
 //     sheet's root is a flex column built for exactly that stacking
 //     (`__stage`, `__list`, `__hint`). The globe is display-only: a 3D
 //     drag/pick gesture has no tairitsu analogue in this wave.
-//   * no hover tooltip and no `hoveredSector` state: the tooltip needs the
-//     board's per-wedge picking plus pointer coordinates, and it repeats the
-//     row content the list already shows inline (offset · name · zone ·
-//     cities), so nothing is lost by dropping the echo.
+//   * the ALWAYS-ON READOUT is mirrored; the pointer-following TOOLTIP it
+//     replaced is not (upstream retired it too). Vue pins a HUD at the
+//     TOP-CENTRE of the stage showing the SELECTED sector — never the hovered
+//     wedge, because a drag re-selects without moving the pointer, so a hover
+//     preview would be stale exactly when it is read; and an anchored tooltip
+//     on a phone lands under the very finger doing the drag (user direction
+//     2026-11-01). The mirror renders the same chip with the same parts:
+//     offset label, the translated band name ONLY when it differs from that
+//     label (English: a band's name IS its offset, so rendering both would
+//     read "UTC+8 UTC+8"), the IANA id, and the representative cities.
+//     Difference in the HOST shape: Vue hides the chip when its WebGL board
+//     reports an error (the fallback list is then the whole interface); the
+//     mirror's renderer is the static SVG, which cannot fail, so the chip is
+//     always on. `role=status` + `aria-live=polite` + `aria-atomic` are
+//     carried verbatim.
+//   * NO TURNTABLE GESTURE. Vue locks the board's orbit elevation
+//     (`minPolarAngle` === `maxPolarAngle` === `90 − EYE_TILT_DEG`, i.e. 72°)
+//     so the sphere spins about its vertical axis and never tips or rolls
+//     (user direction 2026-11-01: "the globe turns in front of you"). The
+//     mirror owns no camera — its SVG is centred on the SELECTED sector on
+//     every render, which is the pose Vue's camera settles into. A host that
+//     drives a real board gets the same lock through the board mirror's
+//     `min_polar_angle` / `max_polar_angle` props ([`crate::scene`]).
 //   * no `update` emit: Vue emits both `update` and `update:modelValue` with
 //     the same zone id; the mirror exposes the `update:modelValue` edge as
 //     [`TimeZoneGlobeProps::on_value_change`] only.
@@ -268,6 +287,18 @@ pub fn offset_label(offset: i32) -> String {
         return "UTC".to_string();
     }
     format!("UTC{}{}", if offset > 0 { "+" } else { "-" }, offset.abs())
+}
+
+/// Whether the pinned readout shows the translated band name BESIDE the
+/// offset label (Vue: `infoName !== infoOffset`).
+///
+/// In English a band's translated name IS its offset label ("UTC+8"), so
+/// rendering both would read "UTC+8 UTC+8"; only a locale that actually names
+/// the band ("东八区") gets the second run. The comparison is on the rendered
+/// strings, exactly like Vue's, so a translation table that happens to return
+/// the label suppresses the duplicate too.
+pub fn time_zone_globe_readout_is_named(offset_label: &str, band_name: &str) -> bool {
+    band_name != offset_label
 }
 
 /// Locale key of a sector's translated band name (`m11`…`m1`, `z0`, `p1`…`p12`).
@@ -497,6 +528,19 @@ pub fn TimeZoneGlobe(props: TimeZoneGlobeProps) -> Element {
             .dangerous_inner_html(time_zone_globe_svg(selected)),
     ));
 
+    // The pinned readout: the COMMITTED selection, never the hovered wedge.
+    // A band's translated name is skipped when it IS the offset label
+    // (`infoName !== infoOffset` upstream).
+    let readout_sector = &SOLAR_TIME_ZONE_SECTORS[selected];
+    let readout_offset = offset_label(readout_sector.offset);
+    let readout_name = t(
+        &sector_name_key(readout_sector.offset),
+        &offset_label(readout_sector.offset),
+    );
+    let readout_is_named = time_zone_globe_readout_is_named(&readout_offset, &readout_name);
+    let readout_zone = readout_sector.zone.to_string();
+    let readout_cities = cities_line(readout_sector);
+
     // The 24 bands as Vue's no-WebGL fallback list rows.
     let mut rows: Vec<VNode> = Vec::with_capacity(SOLAR_TIME_ZONE_SECTORS.len());
     for (index, sector) in SOLAR_TIME_ZONE_SECTORS.iter().enumerate() {
@@ -556,6 +600,21 @@ pub fn TimeZoneGlobe(props: TimeZoneGlobeProps) -> Element {
             "aria-label": globe_label,
             "data-test": "hk-timezone-globe",
             div { class: "hk-timezone-globe__stage",
+                div {
+                    class: "hk-timezone-globe__readout",
+                    "data-test": "hk-timezone-globe-readout",
+                    "role": "status",
+                    "aria-live": "polite",
+                    "aria-atomic": "true",
+                    span { class: "hk-timezone-globe__readout-head",
+                        span { class: "hk-timezone-globe__readout-offset", {readout_offset.clone()} }
+                        if readout_is_named {
+                            span { class: "hk-timezone-globe__readout-name", {readout_name.clone()} }
+                        }
+                        span { class: "hk-timezone-globe__readout-zone", {readout_zone.clone()} }
+                    }
+                    span { class: "hk-timezone-globe__readout-cities", {readout_cities.clone()} }
+                }
                 {globe_host}
             }
             div {
@@ -748,11 +807,62 @@ mod tests {
     }
 
     #[test]
+    fn time_zone_globe_readout_keeps_the_name_only_when_it_says_something() {
+        // English: the band name IS the offset label → no duplicate run.
+        assert!(!time_zone_globe_readout_is_named("UTC+8", "UTC+8"));
+        assert!(!time_zone_globe_readout_is_named("UTC", "UTC"));
+        // A locale that NAMES the band keeps both ("UTC+8" + "东八区").
+        assert!(time_zone_globe_readout_is_named("UTC+8", "东八区"));
+        assert!(time_zone_globe_readout_is_named("UTC-11", "Midway Islands"));
+    }
+
+    #[test]
+    fn time_zone_globe_renders_the_pinned_readout_above_the_stage() {
+        let html = TimeZoneGlobe(TimeZoneGlobeProps {
+            model_value: "Asia/Shanghai".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        for needle in [
+            r#"class="hk-timezone-globe__readout""#,
+            r#"data-test="hk-timezone-globe-readout""#,
+            r#"role="status""#,
+            r#"aria-live="polite""#,
+            r#"aria-atomic="true""#,
+            r#"class="hk-timezone-globe__readout-head""#,
+            r#"class="hk-timezone-globe__readout-offset""#,
+            r#"class="hk-timezone-globe__readout-zone""#,
+            r#"class="hk-timezone-globe__readout-cities""#,
+            "UTC+8",
+            "Asia/Shanghai",
+        ] {
+            assert!(html.contains(needle), "missing {needle}: {html}");
+        }
+        // The committed selection is reported without any pointer interaction.
+        assert!(html.contains("Shanghai"), "{html}");
+        // English suppresses the duplicate band name (see the identity rule).
+        assert!(
+            !html.contains("hk-timezone-globe__readout-name"),
+            "English must not render the band name beside its own offset label: {html}"
+        );
+        // The HUD is INSIDE the stage, painted before the sphere, and the old
+        // pointer-following tooltip is gone upstream — neither may appear.
+        let stage = html.find("hk-timezone-globe__stage").expect("stage");
+        let readout = html.find("hk-timezone-globe__readout").expect("readout");
+        let svg = html.find("<svg").expect("sphere");
+        assert!(stage < readout && readout < svg, "{html}");
+        assert!(!html.contains("hk-timezone-globe__tooltip"), "{html}");
+    }
+
+    #[test]
     fn time_zone_globe_styles_come_from_the_canonical_vue_sheet() {
         let css = TimeZoneGlobeComponent::styles();
         for needle in [
             ".hk-timezone-globe",
             ".hk-timezone-globe__stage",
+            ".hk-timezone-globe__readout",
+            ".hk-timezone-globe__readout-head",
+            ".hk-timezone-globe__readout-cities",
             ".hk-timezone-globe__list",
             ".hk-timezone-globe__option",
             ".hk-timezone-globe__hint",

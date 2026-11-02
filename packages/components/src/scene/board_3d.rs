@@ -79,10 +79,17 @@
 //     `camera.position` / `controls.target` (OrbitControls, `flyTo`, `frameAll`)
 //     and exposes them through the engine. Here [`Board3DProps::camera_position`]
 //     + [`Board3DProps::camera_target`] are the truth, [`board3d_orbit_window`]
-//     normalises the distance window exactly like Vue does, and every flight the
+//     normalises the distance window exactly like Vue does,
+//     [`board3d_orbit_elevation_window`] does the same for the elevation window
+//     (`minPolarAngle` / `maxPolarAngle` — equal bounds pin the eye's polar
+//     angle, which is the turntable a globe picker needs), and every flight the
 //     engine would animate is exported as a pure pose function the host applies
 //     over its own clock: [`board3d_fly_pose`], [`board3d_focus_pose`],
-//     [`board3d_frame_pose`], [`board3d_topdown_pose`].
+//     [`board3d_frame_pose`], [`board3d_topdown_pose`]. [`board3d_resolved_pose`]
+//     applies BOTH clamps, in Vue's order (radius, then elevation), and relaxes
+//     both windows while the board is not `interactive` — OrbitControls clamps
+//     every frame regardless of `enabled`, so a locked elevation would otherwise
+//     fight an externally driven camera.
 //   * THE 3D MINIMAP IS A COMPOSITION, not a child mount. The card itself is
 //     mirrored in `scene::minimap_3d` (`Minimap3D`: zoom bar, slider pop,
 //     collapse affordance, orbit drag — mouse family there too, L67). Vue's
@@ -153,6 +160,13 @@ pub const BOARD3D_DEFAULT_TARGET: [f64; 3] = [0.0, 0.0, 0.0];
 /// Orbit distance window (Vue: `minDistance` / `maxDistance`).
 pub const BOARD3D_DEFAULT_MIN_DISTANCE: f64 = 2.0;
 pub const BOARD3D_DEFAULT_MAX_DISTANCE: f64 = 600.0;
+
+/// Orbit elevation window in DEGREES from the scene's +Y axis — OrbitControls'
+/// polar angle (Vue: `minPolarAngle` / `maxPolarAngle`, default the full
+/// sphere). EQUAL bounds lock the elevation, leaving azimuth as the only orbit
+/// axis (the turntable a globe picker needs).
+pub const BOARD3D_DEFAULT_MIN_POLAR_ANGLE: f64 = 0.0;
+pub const BOARD3D_DEFAULT_MAX_POLAR_ANGLE: f64 = 180.0;
 
 /// The camera's built-in near/far planes (Vue: `new PerspectiveCamera(fov, 1,
 /// 0.1, 4000)`).
@@ -328,6 +342,51 @@ pub fn board3d_orbit_window(interactive: bool, min_distance: f64, max_distance: 
     }
 }
 
+/// Vue's `polarWindow`: degrees in, RADIANS out, each bound clamped to the
+/// sphere's 0…180° range. A non-finite bound falls back to the OrbitControls
+/// default for its side (0 / π), and a reversed window normalises — the same
+/// discipline as [`board3d_distance_window`], so `minPolarAngle =
+/// maxPolarAngle = 72` pins exactly one elevation instead of leaving
+/// OrbitControls with `min > max`.
+pub fn board3d_polar_window(min_deg: f64, max_deg: f64) -> (f64, f64) {
+    let to_rad = |deg: f64| (deg.clamp(0.0, 180.0) * std::f64::consts::PI) / 180.0;
+    let min = if min_deg.is_finite() {
+        to_rad(min_deg)
+    } else {
+        0.0
+    };
+    let max = if max_deg.is_finite() {
+        to_rad(max_deg)
+    } else {
+        std::f64::consts::PI
+    };
+    (min.min(max), min.max(max))
+}
+
+/// The EFFECTIVE elevation window: a non-interactive board is an externally
+/// driven renderer and must not be fought by the interactive elevation range
+/// (Vue sets both polar bounds back to the full sphere; OrbitControls clamps
+/// them every frame regardless of `enabled`, so relaxing only the radius is not
+/// enough).
+pub fn board3d_orbit_elevation_window(interactive: bool, min_deg: f64, max_deg: f64) -> (f64, f64) {
+    if interactive {
+        board3d_polar_window(min_deg, max_deg)
+    } else {
+        (0.0, std::f64::consts::PI)
+    }
+}
+
+/// Clamp an orbit polar angle into a window (`OrbitControls` does this on
+/// every update). A non-finite angle passes through untouched.
+pub fn board3d_clamp_polar(polar: f64, window: (f64, f64)) -> f64 {
+    if !polar.is_finite() {
+        return polar;
+    }
+    let (low, high) = window;
+    let high = if high.is_nan() { polar } else { high };
+    polar.max(low).min(high)
+}
+
 /// Clamp an orbit radius into a window (`OrbitControls` does this on every
 /// update). A non-finite radius passes through untouched.
 pub fn board3d_clamp_distance(distance: f64, window: (f64, f64)) -> f64 {
@@ -359,6 +418,33 @@ pub fn board3d_clamp_pose_distance(
         position: board3d_v3_add(pose.target, board3d_v3_scale(dir, clamped)),
         ..pose
     }
+}
+
+/// The pose after `OrbitControls`' polar clamp: the eye is rotated about the
+/// pivot onto the nearest allowed elevation, keeping its RADIUS and AZIMUTH.
+///
+/// Spherical convention matches three's `OrbitControls` / `Spherical`:
+/// `polar` is the angle from the scene's +Y axis, `azimuth` is `atan2(x, z)`.
+/// A degenerate pose (eye on the pivot) passes through, and a pose already
+/// inside the window is returned unchanged.
+pub fn board3d_clamp_pose_polar(pose: Board3dCameraPose, window: (f64, f64)) -> Board3dCameraPose {
+    let delta = board3d_v3_sub(pose.position, pose.target);
+    let radius = board3d_v3_length(delta);
+    if !radius.is_finite() || radius <= 1e-12 {
+        return pose;
+    }
+    let polar = (delta[1] / radius).clamp(-1.0, 1.0).acos();
+    let clamped = board3d_clamp_polar(polar, window);
+    if !clamped.is_finite() || (clamped - polar).abs() <= 1e-12 {
+        return pose;
+    }
+    let azimuth = delta[0].atan2(delta[2]);
+    let position = [
+        pose.target[0] + radius * clamped.sin() * azimuth.sin(),
+        pose.target[1] + radius * clamped.cos(),
+        pose.target[2] + radius * clamped.sin() * azimuth.cos(),
+    ];
+    Board3dCameraPose { position, ..pose }
 }
 
 /// The camera basis for a pose. A degenerate pose (eye on pivot, or a view
@@ -867,6 +953,21 @@ pub struct Board3DProps {
     #[default(BOARD3D_DEFAULT_MAX_DISTANCE)]
     pub max_distance: f64,
 
+    /// Orbit elevation window in DEGREES from the scene's +Y axis
+    /// (OrbitControls' polar angle; Vue: `minPolarAngle` / `maxPolarAngle`,
+    /// default the full 0…180° sphere). Equal bounds pin the eye to one
+    /// elevation — azimuth becomes the only orbit axis, the turntable
+    /// behaviour a globe or instrument board needs. A reversed window
+    /// normalises; non-finite bounds fall back per side. Like the distance
+    /// window, it is applied to the CONTROLLED pose and relaxed to the full
+    /// sphere while the board is not `interactive` (an externally driven
+    /// camera is never fought).
+    #[default(BOARD3D_DEFAULT_MIN_POLAR_ANGLE)]
+    pub min_polar_angle: f64,
+
+    #[default(BOARD3D_DEFAULT_MAX_POLAR_ANGLE)]
+    pub max_polar_angle: f64,
+
     /// Wire two-finger / right-drag panning (Vue: `enablePan`).
     #[default(true)]
     pub enable_pan: bool,
@@ -981,9 +1082,20 @@ pub fn board3d_resolved_pose(props: &Board3DProps) -> Board3dCameraPose {
         near: BOARD3D_CAMERA_NEAR,
         far: BOARD3D_CAMERA_FAR,
     };
-    board3d_clamp_pose_distance(
+    let pose = board3d_clamp_pose_distance(
         pose,
         board3d_orbit_window(props.interactive, props.min_distance, props.max_distance),
+    );
+    // Vue's `controls.update()` clamps BOTH orbit windows every frame; the
+    // resolved pose is the mirror's equivalent, so the elevation clamp is
+    // applied after the radius one (they are independent axes).
+    board3d_clamp_pose_polar(
+        pose,
+        board3d_orbit_elevation_window(
+            props.interactive,
+            props.min_polar_angle,
+            props.max_polar_angle,
+        ),
     )
 }
 
@@ -1283,6 +1395,9 @@ mod tests {
         assert_eq!(props.camera_target, BOARD3D_DEFAULT_TARGET);
         assert_eq!(props.min_distance, 2.0);
         assert_eq!(props.max_distance, 600.0);
+        // Vue: `minPolarAngle: 0` / `maxPolarAngle: 180` — the full sphere.
+        assert_eq!(props.min_polar_angle, 0.0);
+        assert_eq!(props.max_polar_angle, 180.0);
         assert!(props.enable_pan);
         assert!(!props.auto_clipping);
         assert!(props.hover_box);
@@ -1353,6 +1468,76 @@ mod tests {
         let window = board3d_orbit_window(false, 2.0, 600.0);
         assert_eq!(window, (0.0, f64::INFINITY));
         assert_eq!(board3d_clamp_distance(5000.0, window), 5000.0);
+    }
+
+    #[test]
+    fn board3d_polar_window_matches_vue_polar_window() {
+        let deg = std::f64::consts::PI / 180.0;
+        // Degrees in, radians out; the full sphere by default.
+        assert_eq!(
+            board3d_polar_window(0.0, 180.0),
+            (0.0, std::f64::consts::PI)
+        );
+        // Equal bounds pin ONE elevation (the globe's 72° turntable).
+        let (min, max) = board3d_polar_window(72.0, 72.0);
+        assert!(close(min, 72.0 * deg) && close(max, 72.0 * deg));
+        // A reversed window normalises, and out-of-range bounds clamp to the
+        // sphere instead of producing a negative/past-π angle.
+        let (min, max) = board3d_polar_window(120.0, -30.0);
+        assert!(close(min, 0.0) && close(max, 120.0 * deg));
+        // Non-finite bounds fall back per side (Vue: 0 / π).
+        let (min, max) = board3d_polar_window(f64::NAN, 999.0);
+        assert!(close(min, 0.0) && close(max, std::f64::consts::PI));
+        // A non-interactive board relaxes the window to the whole sphere.
+        let window = board3d_orbit_elevation_window(false, 72.0, 72.0);
+        assert_eq!(window, (0.0, std::f64::consts::PI));
+        assert_eq!(
+            board3d_orbit_elevation_window(true, 72.0, 72.0),
+            board3d_polar_window(72.0, 72.0)
+        );
+        // The scalar clamp behaves on both ends.
+        assert_eq!(board3d_clamp_polar(0.3, (1.0, 2.0)), 1.0);
+        assert_eq!(board3d_clamp_polar(3.0, (1.0, 2.0)), 2.0);
+        assert_eq!(board3d_clamp_polar(1.5, (1.0, 2.0)), 1.5);
+    }
+
+    #[test]
+    fn board3d_clamp_pose_polar_pins_the_eye_to_its_ring() {
+        let deg = std::f64::consts::PI / 180.0;
+        // An eye straight above the pivot: polar 0, radius 6.
+        let pose = Board3dCameraPose {
+            position: [0.0, 6.0, 0.0],
+            target: [0.0, 0.0, 0.0],
+            ..Default::default()
+        };
+        let ring = (72.0 * deg, 72.0 * deg);
+        let clamped = board3d_clamp_pose_polar(pose, ring);
+        // The radius survives, the elevation is the ring's, and the eye keeps
+        // the azimuth it had (atan2(x, z) of a pole pose is 0 here → +Z).
+        assert!(close(board3d_v3_length(clamped.position), 6.0));
+        assert!(close(clamped.position[1], 6.0 * (72.0 * deg).cos()));
+        assert!(close(clamped.position[0], 0.0));
+        assert!(close(clamped.position[2], 6.0 * (72.0 * deg).sin()));
+        // Azimuth is preserved off-axis: rotating about Y keeps polar fixed.
+        let turned = Board3dCameraPose {
+            position: [3.0, 4.0, 5.0],
+            target: [1.0, 1.0, 1.0],
+            ..Default::default()
+        };
+        let kept = board3d_clamp_pose_polar(turned, (0.0, std::f64::consts::PI));
+        assert_eq!(kept, turned, "a pose inside the window is untouched");
+        // The turntable rule: a locked elevation makes a rotateUp input
+        // (polar + 0.8) land back on the same ring.
+        let first = board3d_clamp_pose_polar(pose, ring);
+        let mut above = first;
+        above.position[1] += 4.0;
+        let second = board3d_clamp_pose_polar(above, ring);
+        let polar_of = |pose: &Board3dCameraPose| {
+            let delta = board3d_v3_sub(pose.position, pose.target);
+            let r = board3d_v3_length(delta);
+            (delta[1] / r).clamp(-1.0, 1.0).acos()
+        };
+        assert!(close(polar_of(&first), polar_of(&second)));
     }
 
     #[test]

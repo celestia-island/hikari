@@ -106,13 +106,14 @@
 //     The mouse reads as ONE pointer id, so the TWO-POINTER PINCH is
 //     unreachable from the component's own bindings: the pure pinch machine
 //     stays exported for a host that tracks real pointer ids of its own.
-//   * THE WHEEL STEPS NOTHING. The glue delivers the DOM `wheel` as a
-//     `MouseEvent` with no `deltaY` (L88), so the sign test Vue's `onWheel`
-//     runs cannot. The mirror still listens through the generic channel and
-//     calls `preventDefault` on the live handle while `zoomable` (Vue's own
-//     gate, and its reason for the non-passive listener — the page must not
-//     scroll under the canvas), but the payload is never read and no zoom is
-//     emitted: the host drives the camera through the `camera` prop
+//   * THE WHEEL STEPS NOTHING. The wheel is typed on this wire since
+//     tairitsu 0.5.24 — real `deltaY` reaches the handler (the binding is
+//     `on_wheel`, corrected alongside #1042) — so the sign test Vue's
+//     `onWheel` runs COULD. The mirror deliberately does not step: while
+//     `zoomable`, the handler calls `preventDefault` (Vue's own gate, and
+//     its reason for the non-passive listener — the page must not scroll
+//     under the canvas) and reads none of the payload, emitting no zoom:
+//     the host drives the camera through the `camera` prop
 //     ([`node_canvas_zoom_by`] is the step, [`node_canvas_settle`] the
 //     edge).
 //   * `instance_key` must be NON-EMPTY for the gestures to register: an
@@ -1952,12 +1953,12 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
     let on_camera_change = props.on_camera_change.clone();
     let settle = node_canvas_settle(&props);
     let zoomable = props.zoomable;
-    // The wheel rides the GENERIC channel: the glue delivers the DOM `wheel`
-    // as a MouseEvent with no `deltaY` (L88), so the payload is never read —
-    // only the live handle is, to keep the page from scrolling under a
+    // The wheel is typed on this wire since tairitsu 0.5.24 — real `deltaY`
+    // reaches the handler (header delta). The payload is never read — only
+    // `preventDefault` runs, to keep the page from scrolling under a
     // zoomable canvas (Vue's own gate, and its reason for the non-passive
     // listener). No zoom is emitted: the host drives the camera through the
-    // props (header delta).
+    // props.
     let wheel = move |event: WheelEvent| {
         if !zoomable {
             return;

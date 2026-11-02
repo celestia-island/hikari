@@ -80,7 +80,7 @@
 //     shows nothing, and the press's synthetic mouse events are suppressed
 //     for 600 ms. The mirror cannot run that recognizer on the SHIPPED target:
 //     on `wasm32-wasip2` the press never arrives at all (no document-level
-//     listener API, and typed pointer events are not dispatched — ledger L86;
+//     listener API, and typed pointer events are not dispatched — ledger L88;
 //     see `feedback/touch_hint.rs`); on the `wasm32-unknown-unknown` web
 //     target `on_pointerdown` does fire and the handover works, but that
 //     target is not currently a build this crate produces (pre-existing

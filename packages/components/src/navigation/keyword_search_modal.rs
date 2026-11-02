@@ -117,7 +117,7 @@
 //     (ledger L49).
 //   * length math counts CHARS where JavaScript counts UTF-16 code units
 //     (`q.length`, `value.length`) — identical for every BMP query.
-//   * interactions bind the MOUSE family (`onclick`), per ledger L67: on
+//   * interactions bind the MOUSE family (`onclick`), per ledger L88: on
 //     wasm32-wasip2 the browser glue dispatches only the mouse family as
 //     typed events.
 

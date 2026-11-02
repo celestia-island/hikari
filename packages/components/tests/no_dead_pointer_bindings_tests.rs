@@ -1,4 +1,4 @@
-//! Dead-binding guard for the wasm32-wasip2 event channel (ledger L86).
+//! Dead-binding guard for the wasm32-wasip2 event channel (ledger L88).
 //!
 //! The tairitsu browser glue that hosts these components type-dispatches ONLY
 //! the mouse family (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/
@@ -37,27 +37,40 @@
 
 use std::path::{Path, PathBuf};
 
-/// Files that may still carry a dead binding, each with the reason it is
-/// allowed. An entry is a DEBT marker, not a licence: when the file is
-/// converted (or the upstream tairitsu glue starts typing `pointer*`), delete
-/// the row. An entry that outlives its need costs nothing here — this guard
-/// fails on unlisted hits, not on unused rows.
+/// Files that legitimately carry a pointer-typed binding on the wasip2 wire,
+/// each with the reason it is allowed to stay.
 ///
-/// Both rows below belong to the CATCH-UP TRACK working in those directories in
-/// the same wave; this track is hard-excluded from touching them. When that
-/// track lands its conversion, drop the rows.
+/// These are NOT debt: both entries are deliberate design, re-affirmed after the
+/// pointer-stopgap wave converted every other dead binding in this crate to the
+/// mouse family. Re-binding either of them would change behaviour, not just
+/// silence a warning, so the rows are permanent until the host ships typed
+/// pointer dispatch (the upstream getter contract). The guard still fails on any
+/// UNLISTED hit, so new dead bindings cannot ride in on these two.
 const ALLOWED: &[(&str, &str)] = &[
+    // DELIBERATELY POINTER-TYPED: the touch/pen handover discriminates via
+    // `PointerEvent.pointer_type`, and the mouse wire cannot synthesise a
+    // non-mouse pointer type (see `utils/pointer_synthesis.rs`, which always sets
+    // `Mouse`).
     (
         "feedback/tooltip.rs",
-        "OWNED BY THE CATCH-UP TRACK (hard-excluded from this track): its \
-         `onpointerdown` touch/long-press path is being converted there, so the \
-         file is not ours to edit in this wave.",
+        "DELIBERATELY POINTER-TYPED: the touch/pen handover discriminates via \
+         PointerEvent::pointer_type, and the mouse wire cannot synthesise a \
+         non-mouse pointer type (see utils/pointer_synthesis.rs, which always \
+         sets Mouse). Re-binding to the mouse family would silently delete the \
+         touch handover on every target. The wasip2 deadness of this binding is \
+         the file's declared delta (ledger L88); it revives when the host ships \
+         the typed pointer dispatch (tairitsu getter contract, \
+         celestia-island/tairitsu#104).",
     ),
+    // POINTER-TYPED PER THE VUE CANONICAL: the rail hover machine consumes
+    // pointerenter/leave/move exactly as Vue's `HkFaceShell` does.
     (
         "layout/face_shell.rs",
-        "OWNED BY THE CATCH-UP TRACK (hard-excluded from this track): its \
-         `onpointerenter` / `onpointerleave` / `onpointermove` hover trail is \
-         being converted there, so the file is not ours to edit in this wave.",
+        "POINTER-TYPED PER THE VUE CANONICAL: the rail hover machine consumes \
+         pointerenter/leave/move as Vue's HkFaceShell does. Same wire facts as \
+         above: cannot be synthesised from mouse events without losing the \
+         pointer-type distinction, so it stays typed and dead on wasip2 by \
+         declaration (L88), not by oversight.",
     ),
 ];
 
@@ -249,7 +262,7 @@ fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
         let lines: Vec<&str> = source.lines().collect();
         for (line_no, kind) in dead_findings(&lines) {
             violations.push(format!(
-                "  packages/components/src/{rel}:{line_no}: {kind} never fires on wasm32-wasip2 (L86)\n      {}",
+                "  packages/components/src/{rel}:{line_no}: {kind} never fires on wasm32-wasip2 (L88)\n      {}",
                 lines[line_no - 1].trim()
             ));
         }
@@ -259,7 +272,7 @@ fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
         violations.is_empty(),
         "\n{} dead pointer/touch/drag binding(s) found. The tairitsu browser glue \
          types only the mouse family, so these handlers are INERT on a real device \
-         (ledger L86).\n\n{}\n\nFix: bind the mouse family \
+         (ledger L88).\n\n{}\n\nFix: bind the mouse family \
          (`onmousedown`/`onmousemove`/`onmouseup`/`onmouseenter`/`onmouseleave` with a \
          `MouseEvent` parameter) and end drags from `buttons == 0` on the next move. \
          If the behaviour genuinely cannot be preserved, DELETE the binding and \
@@ -357,7 +370,7 @@ fn the_guard_recognises_both_shapes_and_ignores_documentation() {
         "documentation must not trip the guard"
     );
     assert!(
-        dead_binding_kind("//     `onpointerdown` never fires here (L86)").is_none(),
+        dead_binding_kind("//     `onpointerdown` never fires here (L88)").is_none(),
         "documentation must not trip the guard"
     );
 }

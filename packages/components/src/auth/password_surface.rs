@@ -99,7 +99,7 @@
 //     Mouse family, not pointer: on wasm32-wasip2 the glue typed-dispatches
 //     only the mouse family and routes `pointer*` through a data-less generic
 //     channel, so a typed `PointerEvent` handler never fires on the real target
-//     (ledger L86). A touch screen therefore cannot press-and-hold the eye (a
+//     (ledger L88). A touch screen therefore cannot press-and-hold the eye (a
 //     tap still toggles; the eye stays keyboard-operable). `contextmenu` (Vue's
 //     long-press callout guard) is not an rsx event and is dropped.
 //   [D3] ADDITIVE: a password GENERATOR. Vue ships no generator; its exported
@@ -1145,7 +1145,7 @@ impl PasswordPublish {
     }
 
     /// Vue's `onPointerdown` on the eye: no focus steal. Mouse family, not
-    /// pointer: wasip2 has no typed pointer dispatch (ledger L86).
+    /// pointer: wasip2 has no typed pointer dispatch (ledger L88).
     fn eye_press(&self, event: MouseEvent) {
         event.prevent_default();
         self.reveal_press();

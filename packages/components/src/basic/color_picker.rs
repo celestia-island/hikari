@@ -73,7 +73,7 @@
 //   * **mouse-family bindings, not pointer bindings.** On wasm32-wasip2 the
 //     tairitsu browser glue typed-dispatches only the mouse family and routes
 //     every `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L86). The
+//     `PointerEvent` handler never fires on the real target (ledger L88). The
 //     channel sliders bind `mousedown` / `mousemove` / `mouseup` and every
 //     handler takes a `MouseEvent`, so a touch screen cannot drag a channel (a
 //     tap still sets it).
@@ -613,7 +613,7 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
             let on_mouse_up = move |_event: MouseEvent| set_color_dragging(None);
             // `pointercancel` has no mouse-family equivalent, so it keeps
             // riding the generic register (the glue still delivers it, with a
-            // type string and no payload — ledger L86). Only the abort EDGE
+            // type string and no payload — ledger L88). Only the abort EDGE
             // matters here, so the missing data costs nothing.
             let on_pointer_cancel = move |_event: Box<dyn EventData>| set_color_dragging(None);
 

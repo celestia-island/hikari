@@ -37,7 +37,7 @@
 //     two targets split on that: on the SHIPPED `wasm32-wasip2` artifact the
 //     press never arrives at all (tairitsu exposes no document-level listener
 //     registration, and typed `pointer*` events are not dispatched — ledger
-//     L86; the tooltip mirror documents the same ceiling), while on the
+//     L88; the tooltip mirror documents the same ceiling), while on the
 //     `wasm32-unknown-unknown` web target the listeners and `on_pointerdown`
 //     do work but that target is not currently a build this crate produces
 //     (pre-existing errors in `navigation/anchor.rs` / `feedback/glow.rs`).

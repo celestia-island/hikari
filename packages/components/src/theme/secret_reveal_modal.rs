@@ -31,7 +31,7 @@
 //     carries `data-revealed="false"` plus a "Hold to show" accessible name
 //     for host styling. No per-instance state exists to flip internally
 //     (ledger L48), so the whole channel is controlled props.
-//   * GESTURE BINDINGS ARE MOUSE-FAMILY ONLY (ledger L67: the host glue
+//   * GESTURE BINDINGS ARE MOUSE-FAMILY ONLY (ledger L88: the host glue
 //     dispatches ONLY the mouse family as typed events — `pointer*`/`touch*`
 //     walk the generic channel and silently never fire). Press =
 //     `mousedown` (primary button only, like every hold in this crate);
@@ -186,7 +186,7 @@ pub fn SecretRevealModal(props: SecretRevealModalProps) -> Element {
         ..Default::default()
     };
 
-    // The hold target: the mouse family only (header delta, ledger L67).
+    // The hold target: the mouse family only (header delta, ledger L88).
     let request_show = props.on_reveal_request.clone();
     let request_hide = props.on_reveal_request.clone();
     let request_hide_leave = props.on_reveal_request.clone();

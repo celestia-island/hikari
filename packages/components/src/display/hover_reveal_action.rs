@@ -43,7 +43,7 @@
 //     hook, so a timer armed right before a teardown still fires. It only
 //     re-touches a detached node's class list, so the visible result is
 //     unchanged (same trade-off as `basic/rolling_number.rs`).
-//   * TOUCH REVEAL IS A HOST API, NOT A BINDING (ledger L86). Vue listens to
+//   * TOUCH REVEAL IS A HOST API, NOT A BINDING (ledger L88). Vue listens to
 //     `touchstart` / `touchend` / `touchcancel` / `touchmove`; the tairitsu
 //     browser glue type-dispatches only the mouse family (plus keyboard, focus
 //     and `input`/`change`) and routes every `touch*` event through
@@ -299,7 +299,7 @@ fn hover_reveal_on_leave(
 /// Vue's `onTouchStart`: any touch suppresses the mouse path; `tap` reveals
 /// immediately, `longpress` only arms the timer.
 ///
-/// PUBLIC because wasip2 cannot deliver touch events (ledger L86): this is the
+/// PUBLIC because wasip2 cannot deliver touch events (ledger L88): this is the
 /// host-facing entry to the machine Vue drives from its own binding. Call it with
 /// the root's DOM handle (on a real touch event, `event.current_target`).
 pub fn hover_reveal_on_touch_start(
@@ -363,7 +363,7 @@ pub struct HoverRevealActionProps {
 
     /// How long a touch-revealed extension lingers after the finger lifts
     /// (Vue default 3000). HOST-DRIVEN on wasip2: the component binds no touch
-    /// events (L86 — see the header), so this value is consumed only when a host
+    /// events (L88 — see the header), so this value is consumed only when a host
     /// calls [`hover_reveal_on_touch_end`] itself.
     #[default(3000.0)]
     pub touch_hide_delay: f64,
@@ -441,7 +441,7 @@ pub fn HoverRevealAction(props: HoverRevealActionProps) -> Element {
     });
 
     // NO `on_touch*` BINDINGS: the glue cannot deliver a typed `TouchEvent`, so
-    // they were inert on every real device (L86 delta in the header). The touch
+    // they were inert on every real device (L88 delta in the header). The touch
     // machine (`hover_reveal_on_touch_*`) and the `touch_*` / `long_press_delay`
     // props stay exported for a host that owns a real touch source.
 

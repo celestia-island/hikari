@@ -84,7 +84,7 @@
 //     (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
 //     `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
 //     `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L86). The
+//     `PointerEvent` handler never fires on the real target (ledger L88). The
 //     canvas therefore BINDS `mousedown` / `mousemove` / `mouseup`, and keeps the
 //     DURABLE public shape: `EventHandler<PointerEvent>` payloads,
 //     mouse-synthesised by [`crate::utils::pointer_from_mouse`]
@@ -498,7 +498,7 @@ pub struct ImageViewerProps {
     /// Wheel pass-through (Vue: `passive:false` + `preventDefault` + zoom).
     /// NEVER FIRES on today's wasip2 host: the glue routes the DOM `wheel`
     /// through the MouseEvent channel, which carries no `delta_y`, so a typed
-    /// `WheelEvent` binding cannot be satisfied (ledger L86). The prop is kept
+    /// `WheelEvent` binding cannot be satisfied (ledger L88). The prop is kept
     /// for the Vue contract and goes live UNCHANGED once the host implements the
     /// declared `wheel-event` getter; until then drive the zoom from the host's
     /// own wheel source via `scale`.
@@ -533,7 +533,7 @@ pub struct ImageViewerProps {
     /// Pointercancel pass-through (Vue: retires the pointer). NEVER FIRES on
     /// today's host: the mouse family has no cancel edge, and rsx types the
     /// `pointercancel` attribute as a `PointerEvent` the glue cannot deliver
-    /// (L86). Kept for the Vue contract — it goes live unchanged with the
+    /// (L88). Kept for the Vue contract — it goes live unchanged with the
     /// upstream pointer typing. Meanwhile a host retires the pointer from
     /// [`ImageViewerProps::on_pointer_up`].
     pub on_pointer_cancel: Option<EventHandler<PointerEvent>>,
@@ -622,7 +622,7 @@ pub fn ImageViewer(props: ImageViewerProps) -> Element {
             style: host_style,
             // Mouse family, not pointer: the wasip2 glue type-dispatches only
             // the mouse family, so a `pointer*` listener never fires here
-            // (ledger L86). `onwheel` / `onpointercancel` /
+            // (ledger L88). `onwheel` / `onpointercancel` /
             // `onlostpointercapture` are NOT bound — see their prop docs.
             onmousedown: move |e: MouseEvent| {
                 if let Some(handler) = on_pointer_down.as_ref() {

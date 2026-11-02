@@ -2,14 +2,14 @@
 // FileUpload component — the dashed drop box around a transparent native
 // `<input type="file">`.
 //
-// L86 DELTA: THE OS-FILE DROP PATH IS REMOVED ON wasm32-wasip2, DELIBERATELY.
+// L88 DELTA: THE OS-FILE DROP PATH IS REMOVED ON wasm32-wasip2, DELIBERATELY.
 // The zone used to bind `dragover` / `dragleave` / `drop` with `DragEvent`
 // handlers. The tairitsu browser glue type-dispatches only the mouse family
 // (plus keyboard / focus / input+change) and routes every `drag*` event through
 // `onGenericEvent`; the host side (`packages/web/src/wit_platform.rs`) turns that
 // into a `GenericEvent` carrying the type string and a live handle but NO data,
 // so the `DragEvent` downcast never matches and those typed handlers never ran
-// (ledger L86).
+// (ledger L88).
 //
 // TO BE PRECISE ABOUT WHAT WAS AND WAS NOT PRESERVABLE: the EVENT still arrives,
 // so the VISUAL half was preservable as a data-less generic register —

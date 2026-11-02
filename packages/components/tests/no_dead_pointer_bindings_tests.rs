@@ -25,11 +25,13 @@
 //!   2. an rsx attribute — `ontouchstart: ..`, `ondragstart: ..`,
 //!      `ondrop: ..` (with a value, or in the bare shorthand form).
 //!
-//! Binding the MOUSE family instead (`onmousedown` / `on_mousemove` /
-//! `on_mouseup`) remains the way to express a gesture the `pointer*` family
-//! cannot carry, and the `thread_local` + `buttons == 0` release edge remains
-//! how a drag ends when its release lands outside the element (there is no
-//! document/window listener seam — `tairitsu_vdom::DomOps` is element-scoped).
+//! Binding the POINTER family (`onpointerdown` / `on_pointermove` /
+//! `on_pointerup`) is the default spelling for a gesture; the mouse family
+//! stays typed and legitimate for a mouse-only seam (`click`, hover pairs).
+//! The `thread_local` + `buttons == 0` release edge remains how a drag ends
+//! when its release lands outside the element (there is no document/window
+//! listener seam — `tairitsu_vdom::DomOps` is element-scoped — and no
+//! component-side pointer capture either).
 //!
 //! A hit is not necessarily a bug to fix in this crate: the two shapes are also
 //! the honest spelling of an interaction that genuinely cannot be preserved

@@ -78,51 +78,43 @@
 //     frames after each load-driven reposition (frame 1 commits the transform
 //     unarmed, frame 2 arms). A frame clock is not available here, so the host
 //     owns the arming and the `.is-animatable` class is a prop.
-//   * [D] MOUSE-FAMILY BINDINGS + A SYNTHESISED POINTER PAYLOAD + THE
-//     RELEASE-OUTSIDE EDGE. On wasm32-wasip2 the tairitsu browser glue
-//     type-dispatches only the mouse family
-//     (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
-//     `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
-//     `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L88). The
-//     canvas therefore BINDS `mousedown` / `mousemove` / `mouseup`, and keeps the
-//     DURABLE public shape: `EventHandler<PointerEvent>` payloads,
-//     mouse-synthesised by [`crate::utils::pointer_from_mouse`]
-//     (`pointer_type: Mouse`, `pointer_id: 1` — what browsers report for the
-//     primary mouse pointer; the spec only permits RESERVING 0 or 1, so no
-//     consumer may hard-code either — `is_primary: true`, real coordinates /
-//     buttons / modifiers
-//     and the live handle; pressure / tilt / contact geometry stay unknown
-//     rather than invented). The WIT interface already declares the
-//     `pointer-event` / `wheel-event` getters and the host imports them without
-//     implementing them, so once that gap is filled the props carry REAL
-//     `PointerEvent`s with no API change.
+//   * [D] REAL POINTER BINDINGS + THE RELEASE-OUTSIDE EDGE. The tairitsu
+//     browser glue type-dispatches the `pointer*` family with real payloads
+//     (`pointerType` / `pointerId` / `isPrimary` / coords / buttons /
+//     modifiers — tairitsu 0.5.24), so the canvas BINDS `pointerdown` /
+//     `pointermove` / `pointerup` and forwards the typed `PointerEvent`
+//     verbatim: the DURABLE public shape the props always had. A mouse, a pen
+//     and a touch pointer all drive the chain now (before the pointer typing
+//     landed only the mouse family was typed, so touch produced no pan at
+//     all); `pointer_id` is whatever the browser reports — the spec only
+//     permits RESERVING 0 or 1 for the primary mouse pointer, so no consumer
+//     may hard-code either — and concurrent pointers now carry distinct ids,
+//     though the mirror is a pass-through and still reconstructs no PINCH
+//     frame (Vue's two-finger tracking needs per-pointer state). The pure
+//     geometry ([`image_viewer_wheel_scale`], [`image_viewer_anchor_pan`])
+//     stays exported for a host that tracks real pointer ids.
 //     Vue ends the gesture on its WINDOW `pointerup`; a component cannot own
 //     window listeners here (`tairitsu_vdom::DomOps` is element-scoped — no
-//     document/window registration seam) and no pointer capture is exposed. The
-//     closest reliable signal is the BUTTON STATE: the root `mouseup` retires a
-//     release inside the viewer, and the first `mousemove` reporting
-//     `buttons == 0` while `dragging` is set is reported as the release that
-//     happened elsewhere (the same `buttons == 0` fallback `basic/slider.rs`,
+//     document/window registration seam) and no component-side pointer
+//     capture exists on this wire. The closest reliable signal is the BUTTON
+//     STATE: the root `pointerup` retires a release inside the viewer (a touch
+//     pointer is implicitly captured by its press target, so touch releases
+//     always arrive), and the first `pointermove` reporting `buttons == 0`
+//     while `dragging` is set is reported as the release that happened
+//     elsewhere (the same `buttons == 0` fallback `basic/slider.rs`,
 //     `display/media_slider.rs` and `basic/color_picker.rs` carry). Without it
 //     a host that keeps a pointer set would pan on the next plain hover.
-//     Declared consequences meanwhile: a touch screen produces no `mousemove`
-//     sequence, so TOUCH pan/pinch is unavailable (a tap still
-//     double-click-zooms); a mouse is ONE pointer, so Vue's two-finger PINCH
-//     frame cannot be reconstructed from a constant `pointer_id`. TOUCH and
-//     MULTI-TOUCH therefore need a host that tracks real pointer ids: the pure
-//     geometry ([`image_viewer_wheel_scale`], [`image_viewer_anchor_pan`]) is
-//     exported for exactly that.
-//   * [D] THREE PROPS CANNOT FIRE HERE YET: `on_wheel`, `on_pointer_cancel` and
-//     `on_lost_pointer_capture`. The wheel arrives on the mouse channel with no
-//     `delta_y` (a zero delta reads as "zoom out" on every tick, so it is not
-//     read at all and the page keeps its own scroll), `pointercancel` has no
-//     mouse-family equivalent and rsx types that attribute as a `PointerEvent`
-//     the glue cannot deliver, and there is no pointer capture, hence no
-//     capture-loss edge. They stay on the props at their durable
-//     `PointerEvent` type and go live unchanged once the host implements the
-//     declared pointer/wheel getters; meanwhile the host drives zoom from
-//     `scale` and retires its pointer from `on_pointer_up`.
+//   * [D] TWO PROPS STILL CANNOT FIRE HERE: `on_wheel` and
+//     `on_lost_pointer_capture`. The wire now carries typed wheel deltas and
+//     the pointer-capture events too, but the mirror binds neither listener —
+//     the zoom stays host-driven through `scale`, and there is no
+//     component-side capture to lose. They stay on the props at their durable
+//     `PointerEvent` / `WheelEvent` types for the host that wants the
+//     pass-through; `on_pointer_cancel` DID go live with the real bindings: it
+//     fires through the typed wire when the browser aborts the gesture, and
+//     the payload is a REAL typed `PointerEvent` forwarded verbatim. Neither
+//     the viewer nor its cancel semantics read any field, so the host should
+//     retire its pointer from the signal itself.
 //
 // New file: the family had no Rust viewer (the legacy `display/zoom_controls.rs`
 // is the zoom-button strip, which Vue ships as `HkZoomToolbar` — a different
@@ -135,7 +127,6 @@ use tairitsu_vdom::{PointerEvent, WheelEvent};
 use crate::feedback::spinner::{Spinner, SpinnerSize};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-use crate::utils::pointer_from_mouse;
 
 pub struct ImageViewerComponent;
 
@@ -451,7 +442,7 @@ pub struct ImageViewerProps {
 
     /// Vue's `dragging` flag. It does two jobs in the mirror: it picks the
     /// `grabbing` cursor, and it is the CONTRACT for the release-outside edge —
-    /// the `mousemove` that reports `buttons == 0` is reported as a synthetic
+    /// the `pointermove` that reports `buttons == 0` is reported as a synthetic
     /// [`ImageViewerProps::on_pointer_up`] only while this is `true` (the viewer
     /// holds no drag state of its own, so a host that never sets `dragging`
     /// never receives that edge and must time out or retire its own press).
@@ -496,51 +487,50 @@ pub struct ImageViewerProps {
     pub on_error: Option<EventHandler<()>>,
 
     /// Wheel pass-through (Vue: `passive:false` + `preventDefault` + zoom).
-    /// NEVER FIRES on today's wasip2 host: the glue routes the DOM `wheel`
-    /// through the MouseEvent channel, which carries no `delta_y`, so a typed
-    /// `WheelEvent` binding cannot be satisfied (ledger L88). The prop is kept
-    /// for the Vue contract and goes live UNCHANGED once the host implements the
-    /// declared `wheel-event` getter; until then drive the zoom from the host's
-    /// own wheel source via `scale`.
+    /// STILL UNBOUND: the wire now carries typed `wheel` deltas (tairitsu
+    /// 0.5.24), but the mirror binds no wheel listener — the zoom stays
+    /// host-driven through `scale`. The prop is kept at its durable type for
+    /// the host that wants the pass-through.
     pub on_wheel: Option<EventHandler<WheelEvent>>,
 
     /// Pointerdown pass-through (Vue: registers the pointer + captures it).
-    /// SYNTHESISED ON THE MOUSE WIRE: the wasip2 glue types only the mouse
-    /// family today, so this fires from `mousedown` and the payload is built by
-    /// [`crate::utils::pointer_from_mouse`] — `pointer_type: Mouse`,
-    /// `pointer_id: 1` (the browsers' primary-mouse id; the spec only permits a
-    /// UA to reserve 0 or 1, so it is not a portable identity), `is_primary:
-    /// true`, real coordinates / buttons / modifiers / live handle, and contact geometry
-    /// (pressure, tilt, width/height, twist) left UNKNOWN rather than invented.
-    /// Once the host implements the declared `pointer-event` getters this prop
-    /// receives real `PointerEvent`s with no API change.
+    /// Fires from the real `pointerdown` — the typed payload the glue delivers
+    /// (tairitsu 0.5.24): real `pointer_type` / `pointer_id` / `is_primary`,
+    /// coordinates, buttons, modifiers, and (unlike the old mouse-wire
+    /// synthesis) real contact geometry where the device provides one. A
+    /// mouse, a pen or a touch pointer all drive it; `pointer_id` is the
+    /// browser's value (the spec only permits a UA to reserve 0 or 1 for the
+    /// primary mouse pointer, so it is not a portable identity).
     pub on_pointer_down: Option<EventHandler<PointerEvent>>,
 
-    /// Pointermove pass-through (Vue: panned / pinch frames).
-    /// Mouse-synthesised, like [`ImageViewerProps::on_pointer_down`] — and
-    /// because a mouse is ONE pointer, `pointer_id` is constant here and the
-    /// two-finger PINCH frame Vue drives cannot be reconstructed from this prop.
+    /// Pointermove pass-through (Vue: panned / pinch frames). Real pointer
+    /// payloads — concurrent pointers carry distinct `pointer_id`s, but this
+    /// prop is a bare pass-through, so the two-finger PINCH frame Vue drives
+    /// still needs a host that tracks the ids itself.
     pub on_pointer_move: Option<EventHandler<PointerEvent>>,
 
-    /// Pointerup pass-through (Vue: retires the pointer). Mouse-synthesised,
-    /// like [`ImageViewerProps::on_pointer_down`]. A release OUTSIDE the viewer
-    /// has no `mouseup` here, so it is reported as a synthetic release built
-    /// from the first `mousemove` that reports `buttons == 0` while `dragging`
-    /// is set (see the header delta) — a host that retires its pointer set on
-    /// this prop can never stay stuck.
+    /// Pointerup pass-through (Vue: retires the pointer). A release OUTSIDE
+    /// the viewer has no `pointerup` here (no component-side capture seam), so
+    /// it is reported from the first `pointermove` that reports `buttons == 0`
+    /// while `dragging` is set (see the header delta) — a host that retires
+    /// its pointer set on this prop can never stay stuck. Touch releases are
+    /// implicitly captured by the press target, so they always arrive as a
+    /// real `pointerup`.
     pub on_pointer_up: Option<EventHandler<PointerEvent>>,
 
-    /// Pointercancel pass-through (Vue: retires the pointer). NEVER FIRES on
-    /// today's host: the mouse family has no cancel edge, and rsx types the
-    /// `pointercancel` attribute as a `PointerEvent` the glue cannot deliver
-    /// (L88). Kept for the Vue contract — it goes live unchanged with the
-    /// upstream pointer typing. Meanwhile a host retires the pointer from
-    /// [`ImageViewerProps::on_pointer_up`].
+    /// Pointercancel pass-through (Vue: retires the pointer). LIVE since the
+    /// pointer bindings: the browser aborting the gesture (palm rejection, a
+    /// `touch-action` takeover, device rotation) fires it through the typed
+    /// wire. The payload is a REAL typed [`PointerEvent`] forwarded verbatim;
+    /// the viewer reads nothing from it, so retire the pointer from the
+    /// signal rather than from any field.
     pub on_pointer_cancel: Option<EventHandler<PointerEvent>>,
 
-    /// Capture-loss pass-through. NEVER FIRES on this wire: there is no pointer
-    /// capture to lose (no typed pointer channel, no capture API), so no loss
-    /// edge exists until the upstream typing lands (see the header delta).
+    /// Capture-loss pass-through. STILL UNBOUND: no component-side pointer
+    /// capture exists on this wire, so the viewer itself can never lose a
+    /// capture. (A host that sets capture over this element through its own
+    /// runtime access would produce `lostpointercapture`, but wiring that is
+    /// the host's concern.) Kept at the durable type for that host.
     pub on_lost_pointer_capture: Option<EventHandler<PointerEvent>>,
 
     /// Double-click pass-through (Vue: `setZoom` to
@@ -602,17 +592,18 @@ pub fn ImageViewer(props: ImageViewerProps) -> Element {
 
     // Pass-through wiring: the props are consumed once each, so clone per
     // listener (Callback is a cheap `Rc` clone). `on_wheel` /
-    // `on_pointer_cancel` / `on_lost_pointer_capture` are deliberately NOT
-    // wired — no channel can deliver them here (see their prop docs). The
-    // release-elsewhere edge reads the CONTROLLED dragging flag.
+    // `on_lost_pointer_capture` are deliberately NOT wired — the mirror binds
+    // neither listener (see their prop docs). The release-elsewhere edge reads
+    // the CONTROLLED dragging flag.
     let on_load = props.on_load.clone();
     let on_error = props.on_error.clone();
     let on_pointer_down = props.on_pointer_down.clone();
     let on_pointer_move = props.on_pointer_move.clone();
     let on_pointer_up = props.on_pointer_up.clone();
-    // The release prop is reached from two listeners (the root `mouseup` and the
-    // synthetic release on `mousemove`), so it needs its own clone.
+    // The release prop is reached from two listeners (the root `pointerup` and
+    // the release reported on `pointermove`), so it needs its own clone.
     let on_pointer_up_move = on_pointer_up.clone();
+    let on_pointer_cancel = props.on_pointer_cancel.clone();
     let on_double_click = props.on_double_click.clone();
     let viewer_dragging = props.dragging;
 
@@ -620,16 +611,16 @@ pub fn ImageViewer(props: ImageViewerProps) -> Element {
         div {
             class: classes,
             style: host_style,
-            // Mouse family, not pointer: the wasip2 glue type-dispatches only
-            // the mouse family, so a `pointer*` listener never fires here
-            // (ledger L88). `onwheel` / `onpointercancel` /
-            // `onlostpointercapture` are NOT bound — see their prop docs.
-            onmousedown: move |e: MouseEvent| {
+            // The real pointer family: the glue type-dispatches it with real
+            // payloads (tairitsu 0.5.24), so these listeners run on every
+            // pointer. `onwheel` / `onlostpointercapture` are NOT bound — see
+            // their prop docs.
+            onpointerdown: move |e: PointerEvent| {
                 if let Some(handler) = on_pointer_down.as_ref() {
-                    handler.call(pointer_from_mouse(&e));
+                    handler.call(e);
                 }
             },
-            onmousemove: move |e: MouseEvent| {
+            onpointermove: move |e: PointerEvent| {
                 // Vue ends the gesture on its window `pointerup`; the closest
                 // reliable signal here is the BUTTON STATE — a move reporting
                 // no held button is the release that happened elsewhere. The
@@ -639,17 +630,25 @@ pub fn ImageViewer(props: ImageViewerProps) -> Element {
                 // the host clears `dragging` when it retires the pointer.
                 if e.buttons == 0 && viewer_dragging {
                     if let Some(handler) = on_pointer_up_move.as_ref() {
-                        handler.call(pointer_from_mouse(&e));
+                        handler.call(e);
                     }
                     return;
                 }
                 if let Some(handler) = on_pointer_move.as_ref() {
-                    handler.call(pointer_from_mouse(&e));
+                    handler.call(e);
                 }
             },
-            onmouseup: move |e: MouseEvent| {
+            onpointerup: move |e: PointerEvent| {
                 if let Some(handler) = on_pointer_up.as_ref() {
-                    handler.call(pointer_from_mouse(&e));
+                    handler.call(e);
+                }
+            },
+            onpointercancel: move |e: PointerEvent| {
+                // The typed wire carries the abort with a REAL `PointerEvent`
+                // payload; pure pass-through — the viewer holds no drag state
+                // of its own and reads nothing from the event.
+                if let Some(handler) = on_pointer_cancel.as_ref() {
+                    handler.call(e);
                 }
             },
             // `dblclick` is NOT one of the mouse events tairitsu's rsx types
@@ -705,6 +704,7 @@ impl StyledComponent for ImageViewerComponent {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tairitsu_vdom::PointerType;
 
     /// The litmus box the Vue tests use: an 800x600 image in a 400x300 canvas
     /// (fit 0.5, drawn 400x300 at fit).
@@ -1029,6 +1029,194 @@ mod tests {
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored image viewer sheet"
+        );
+    }
+
+    // ── the pointer pass-through, driven without a browser ──────────────────
+    // The canvas is a pass-through, so the testable behaviour is the wiring
+    // itself: which DOM events the root binds, and how a move with no held
+    // button is classified (drag live → release; no drag → plain move).
+
+    /// The viewer root element (exact class token, not the `-img` prefix).
+    fn viewer_element(node: &VNode) -> &VElement {
+        match node {
+            VNode::Element(el) => {
+                if el
+                    .class
+                    .static_classes
+                    .split_whitespace()
+                    .any(|c| c == "hk-image-viewer")
+                {
+                    return el;
+                }
+                for child in &el.children {
+                    if let Some(found) = viewer_element_opt(child) {
+                        return found;
+                    }
+                }
+                panic!("no viewer root in the rendered tree");
+            }
+            _ => panic!("the viewer root is an element"),
+        }
+    }
+
+    fn viewer_element_opt(node: &VNode) -> Option<&VElement> {
+        match node {
+            VNode::Element(el) => {
+                if el
+                    .class
+                    .static_classes
+                    .split_whitespace()
+                    .any(|c| c == "hk-image-viewer")
+                {
+                    return Some(el);
+                }
+                el.children.iter().find_map(viewer_element_opt)
+            }
+            _ => None,
+        }
+    }
+
+    /// Fire one DOM event on the viewer root; panics if it is not bound.
+    fn viewer_fire(el: &VElement, event: &str, payload: PointerEvent) {
+        let handler = el
+            .event_handlers
+            .get(event)
+            .unwrap_or_else(|| panic!("no {event} listener is bound"));
+        (handler.borrow_mut())(Box::new(payload));
+    }
+
+    type ViewerLog = std::rc::Rc<std::cell::RefCell<Vec<&'static str>>>;
+
+    fn viewer_log() -> ViewerLog {
+        std::rc::Rc::new(std::cell::RefCell::new(Vec::new()))
+    }
+
+    #[test]
+    fn viewer_binds_the_pointer_family_not_the_mouse_family() {
+        let vnode = ImageViewer(ImageViewerProps::default());
+        let root = viewer_element(&vnode);
+        for event in ["pointerdown", "pointermove", "pointerup", "pointercancel"] {
+            assert!(
+                root.event_handlers.contains_key(event),
+                "the viewer root must bind {event}"
+            );
+        }
+        assert!(root.event_handlers.contains_key("dblclick"));
+        for dead in [
+            "mousedown",
+            "mousemove",
+            "mouseup",
+            "wheel",
+            "lostpointercapture",
+        ] {
+            assert!(
+                !root.event_handlers.contains_key(dead),
+                "the viewer root must not bind {dead}"
+            );
+        }
+    }
+
+    #[test]
+    fn viewer_press_move_and_release_drive_the_pointer_props() {
+        let log = viewer_log();
+        let down_log = log.clone();
+        let move_log = log.clone();
+        let up_log = log.clone();
+        let down_ids = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+        let down_ids_clone = down_ids.clone();
+        let vnode = ImageViewer(ImageViewerProps {
+            on_pointer_down: Some(Callback::new(move |e: PointerEvent| {
+                down_log.borrow_mut().push("down");
+                down_ids_clone.borrow_mut().push(e.pointer_id);
+            })),
+            on_pointer_move: Some(Callback::new(move |_| move_log.borrow_mut().push("move"))),
+            on_pointer_up: Some(Callback::new(move |_| up_log.borrow_mut().push("up"))),
+            ..Default::default()
+        });
+        let root = viewer_element(&vnode);
+
+        // A touch press now drives the chain with its real pointer id (before
+        // the pointer bindings only a mouse could fire these at all).
+        viewer_fire(
+            root,
+            "pointerdown",
+            PointerEvent::new()
+                .pointer_type(PointerType::Touch)
+                .pointer_id(12)
+                .buttons(1),
+        );
+        viewer_fire(root, "pointermove", PointerEvent::new().buttons(1));
+        viewer_fire(root, "pointerup", PointerEvent::new().buttons(0));
+        assert_eq!(*log.borrow(), ["down", "move", "up"]);
+        assert_eq!(*down_ids.borrow(), [12], "the real pointer_id must survive");
+    }
+
+    #[test]
+    fn viewer_release_outside_is_gated_on_the_dragging_contract() {
+        // No drag live: a move with `buttons == 0` is a plain hover, never a
+        // release — a host that never sets `dragging` gets no outside edge.
+        let log = viewer_log();
+        let down_log = log.clone();
+        let move_log = log.clone();
+        let up_log = log.clone();
+        let vnode = ImageViewer(ImageViewerProps {
+            dragging: false,
+            on_pointer_down: Some(Callback::new(move |_| down_log.borrow_mut().push("down"))),
+            on_pointer_move: Some(Callback::new(move |_| move_log.borrow_mut().push("move"))),
+            on_pointer_up: Some(Callback::new(move |_| up_log.borrow_mut().push("up"))),
+            ..Default::default()
+        });
+        let root = viewer_element(&vnode);
+        viewer_fire(root, "pointerdown", PointerEvent::new().buttons(1));
+        viewer_fire(root, "pointermove", PointerEvent::new().buttons(0));
+        assert_eq!(*log.borrow(), ["down", "move"], "a hover is not a release");
+
+        // Drag live: the same move classifies as the release that happened
+        // elsewhere, and the move is swallowed. There is no latch to retire —
+        // the edge repeats until the HOST clears `dragging` (the documented
+        // contract), so two such moves report two releases.
+        let log = viewer_log();
+        let down_log = log.clone();
+        let move_log = log.clone();
+        let up_log = log.clone();
+        let vnode = ImageViewer(ImageViewerProps {
+            dragging: true,
+            on_pointer_down: Some(Callback::new(move |_| down_log.borrow_mut().push("down"))),
+            on_pointer_move: Some(Callback::new(move |_| move_log.borrow_mut().push("move"))),
+            on_pointer_up: Some(Callback::new(move |_| up_log.borrow_mut().push("up"))),
+            ..Default::default()
+        });
+        let root = viewer_element(&vnode);
+        viewer_fire(root, "pointerdown", PointerEvent::new().buttons(1));
+        viewer_fire(root, "pointermove", PointerEvent::new().buttons(0));
+        viewer_fire(root, "pointermove", PointerEvent::new().buttons(0));
+        assert_eq!(
+            *log.borrow(),
+            ["down", "up", "up"],
+            "the release-elsewhere edge must fire and swallow the move, \
+             repeating until the host clears dragging"
+        );
+    }
+
+    #[test]
+    fn viewer_pointercancel_signals_the_host() {
+        let cancels = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+        let cancel_log = cancels.clone();
+        let vnode = ImageViewer(ImageViewerProps {
+            on_pointer_cancel: Some(Callback::new(move |e: PointerEvent| {
+                cancel_log.borrow_mut().push(e.pointer_id);
+            })),
+            ..Default::default()
+        });
+        let root = viewer_element(&vnode);
+        // The wire builds a real typed payload for the abort; the pass-through
+        // must forward it, not substitute a default.
+        viewer_fire(root, "pointercancel", PointerEvent::new().pointer_id(13));
+        assert_eq!(
+            *cancels.borrow(),
+            [13],
+            "the real cancel payload must reach the host"
         );
     }
 }

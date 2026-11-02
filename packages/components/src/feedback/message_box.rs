@@ -40,12 +40,12 @@
 
 use std::rc::Rc;
 
-use crate::basic::{Button, ButtonSize, ButtonVariant, Input, InputSize};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
 use hikari_icons::{Icon, MdiIcon};
 
 use super::modal::Modal;
+use crate::basic::{Button, ButtonSize, ButtonVariant, Input, InputSize};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct MessageBoxComponent;
 

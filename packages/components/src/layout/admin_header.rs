@@ -115,7 +115,6 @@
 //     gets the trigger.
 
 use hikari_i18n::t;
-
 use hikari_icons::{Icon, MdiIcon};
 
 use crate::basic::{

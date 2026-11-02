@@ -49,14 +49,30 @@ root = Path(__file__).resolve().parent.parent
 vue_src = root / "packages" / "vue" / "src"
 mirror_root = root / "packages" / "components" / "src" / "styles" / "vue-mirror"
 
-# (mirror path relative to vue-mirror/, upstream path relative to vue/src/)
-# Partials first: the sibling @use targets every mirrored family sheet
-# resolves against (`./scrim-fade`, `./menu-item`, `./hikari-vars`) plus the
-# shared polyfill partial (`../styles/polyfill`) and the token fallbacks.
-SHARED_PARTIALS: list[tuple[str, str]] = [
-    # The `s-*` layout sheet: the shell mirrors (AdminShell / AdminHeader /
-    # AdminTablePage / FaceShell / StatusBar) carry NO sheet of their own and
-    # this table is their entire geometry.
+# The ONE registry of explicit vendored rows — (mirror path relative to
+# vue-mirror/, upstream path relative to vue/src/). Two kinds live here:
+#
+#   Shared partials: the sibling @use targets every mirrored family sheet
+#   resolves against (`./scrim-fade`, `./menu-item`, `./hikari-vars`) plus the
+#   shared polyfill partial (`../styles/polyfill`) and the token fallbacks.
+#   The `s-*` layout sheet: the shell mirrors (AdminShell / AdminHeader /
+#   AdminTablePage / FaceShell / StatusBar) carry NO sheet of their own and
+#   those rows are their entire geometry.
+#
+#   Runtime sheets: chrome a Vue runtime MODULE ships itself rather than a
+#   component sheet (`runtime/*.scss`). The mirror keeps the upstream relative
+#   path — a `runtime/` sheet has no `components/` sibling, and pretending it
+#   were `components/HkTouchHint.scss` would invent a Vue component that does
+#   not exist. `runtime/touchHint.scss` is the touch hint bar's chrome, the
+#   touch half of the tooltip story (the Rust presenter is
+#   `feedback/touch_hint.rs`).
+#
+# There is exactly ONE insertion path for new rows: add them here (a new
+# explicit kind) or to a *_SHEETS family list below — either way the row
+# reaches the mirrors and the manifest only through registry_pairs(), so the
+# pair list and the manifest cannot drift apart.
+EXPLICIT_PAIRS: list[tuple[str, str]] = [
+    # Shared partials (must precede the family sheets that @use them).
     ("styles/admin-tokens.scss", "styles/admin-tokens.scss"),
     ("tokens.scss", "tokens.scss"),
     ("scale.scss", "scale.scss"),
@@ -64,18 +80,7 @@ SHARED_PARTIALS: list[tuple[str, str]] = [
     ("components/_scrim-fade.scss", "components/_scrim-fade.scss"),
     ("components/_menu-item.scss", "components/_menu-item.scss"),
     ("components/_hikari-vars.scss", "components/_hikari-vars.scss"),
-]
-
-# RUNTIME sheets: chrome a Vue runtime MODULE ships itself rather than a
-# component sheet (`runtime/*.scss`; the first such row in this table). The
-# row is (mirror path, upstream path) because the mirror keeps the upstream
-# relative path — a `runtime/` sheet has no `components/` sibling, and
-# pretending it were `components/HkTouchHint.scss` would invent a Vue
-# component that does not exist.
-#
-# `runtime/touchHint.scss` — the touch hint bar's chrome, the touch half of
-# the tooltip story (the Rust presenter is `feedback/touch_hint.rs`).
-RUNTIME_SHEETS: list[tuple[str, str]] = [
+    # Runtime sheets.
     ("runtime/touchHint.scss", "runtime/touchHint.scss"),
 ]
 
@@ -323,25 +328,31 @@ MARKER = "do not hand-edit here."
 MANIFEST_NAME = "manifest.tsv"
 
 
-def build_pairs() -> list[tuple[Path, Path]]:
-    pairs: list[tuple[Path, Path]] = []
-    for mirror_rel, upstream_rel in SHARED_PARTIALS:
-        pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for mirror_rel, upstream_rel in RUNTIME_SHEETS:
-        pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
+def registry_pairs() -> list[tuple[str, str]]:
+    """The single ordered source of (mirror, upstream) pairs.
+
+    build_pairs() and manifest_text() BOTH walk this list, so a row can only
+    be registered in one place and the manifest cannot disagree with the pair
+    list by construction. The order here is the manifest row order.
+    """
+    pairs = list(EXPLICIT_PAIRS)
     for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS:
-        pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
+        pairs.append((f"components/{sheet}", f"components/{sheet}"))
     return pairs
+
+
+def build_pairs() -> list[tuple[Path, Path]]:
+    return [
+        (mirror_root / mirror_rel, vue_src / upstream_rel)
+        for mirror_rel, upstream_rel in registry_pairs()
+    ]
 
 
 def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
-    for mirror_rel, upstream_rel in SHARED_PARTIALS:
-        lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for mirror_rel, upstream_rel in RUNTIME_SHEETS:
-        lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS:
-        lines.append(f"components/{sheet}\tcomponents/{sheet}")
+    lines.extend(
+        f"{mirror_rel}\t{upstream_rel}" for mirror_rel, upstream_rel in registry_pairs()
+    )
     return "\n".join(lines) + "\n"
 
 

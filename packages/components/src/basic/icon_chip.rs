@@ -15,8 +15,7 @@
 // conveyed by adjacent text. The `tone` palette is the one HkStatCard owns;
 // the mirror carries the same five tone names.
 
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;

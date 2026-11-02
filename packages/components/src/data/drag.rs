@@ -39,7 +39,9 @@
 //   * the rows NO LONGER carry the `draggable` attribute: a native drag would
 //     steal the gesture from the mouse path (the browser stops delivering
 //     `mousemove` once it starts a native drag), so keeping it would break the
-//     reorder it used to enable;
+//     reorder it used to enable. The `draggable` / `disabled` gate that attribute
+//     enforced in the browser is now checked explicitly inside the arm handler,
+//     so an unmarked row still cannot start a gesture;
 //   * NATIVE DRAG INTEROP IS GONE: dragging a row OUT of the tree into another
 //     application (or onto a page-level HTML5 drop target) carried
 //     `text/plain` = the item key through `data_transfer.set_data`; the mouse
@@ -214,9 +216,17 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     // own `mouseup` or retired from the button state (L67 delta in the header).
     // `prevent_default` keeps the press from starting a text selection, which is
     // what the drag handle needs.
+    let draggable = props.draggable;
     let dragged_key_for_start = props.dragged_key.clone();
     let allow_drag_for_start = props.allow_drag.clone();
     let on_arm = move |event: MouseEvent| {
+        // The element-level `draggable` attribute used to keep a non-draggable or
+        // disabled row from ever starting a gesture (the browser simply fired no
+        // `dragstart`). With the attribute gone the same gate has to be explicit,
+        // or every call into an unmarked row would arm a reorder.
+        if !draggable || disabled {
+            return;
+        }
         event.prevent_default();
 
         let key = item_key_2.clone();

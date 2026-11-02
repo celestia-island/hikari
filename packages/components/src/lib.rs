@@ -28,6 +28,7 @@ pub mod overlay;
 pub mod platform;
 pub mod portal;
 pub mod production;
+pub mod scene;
 #[cfg(target_arch = "wasm32")]
 pub mod scripts;
 pub mod style_builder;
@@ -49,6 +50,7 @@ pub use layout::*;
 pub use navigation::*;
 pub use overlay::*;
 pub use production::*;
+pub use scene::*;
 pub use styled::{StyleRegistry, StyledComponent};
 
 // Theme system

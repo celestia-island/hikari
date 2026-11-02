@@ -148,3 +148,9 @@ pub use crate::overlay::{
     AdaptiveDialogProps, ContextMenuProviderProps, FloatingLayerProps, PopupSelectProps,
     ProtocolModalProps, SelectPanelProps,
 };
+// Scene family Props
+pub use crate::scene::{
+    BlankCanvasProps, Board3DProps, BoardProps, DraggableGridProps, DraggableListProps,
+    KanbanProps, Minimap3DProps, MinimapProps, NodeCanvasProps, StarSystemProps, WindowedItemProps,
+    ZoomToolbarProps,
+};

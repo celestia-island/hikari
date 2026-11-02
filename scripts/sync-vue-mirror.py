@@ -215,6 +215,22 @@ OVERLAY_SHEETS: list[str] = [
     "HkCookieConsent.scss",
 ]
 
+# W7 — scene3d family (boards, canvases, drag grids, minimaps).
+SCENE_SHEETS: list[str] = [
+    "HkBoard.scss",
+    "HkBoard3D.scss",
+    "HkNodeCanvas.scss",
+    "HkKanban.scss",
+    "HkDraggableGrid.scss",
+    "HkDraggableList.scss",
+    "HkMinimap.scss",
+    "HkMinimap3D.scss",
+    "HkZoomToolbar.scss",
+    "HkWindowedItem.scss",
+    "HkStarSystem.scss",
+    "HkBlankCanvas.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -259,7 +275,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -268,7 +284,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

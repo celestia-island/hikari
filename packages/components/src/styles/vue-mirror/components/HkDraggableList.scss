@@ -1,0 +1,181 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-draggable-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+}
+
+.hk-draggable-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  min-height: var(--space-40, 40px);
+  padding: var(--space-8, 0.5rem) var(--space-10, 0.625rem);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--hi-color-bg-subtle, #21262d);
+  border: 1px solid var(--hi-color-border, #646464);
+  transition:
+    transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 150ms ease,
+    background 150ms ease;
+  @include user-select(none);
+
+  &:hover {
+    border-color: var(--hi-color-text-tertiary, #8b949e);
+  }
+
+  &[data-dragging] {
+    opacity: 0.35;
+    transform: scale(0.96);
+    border-style: dashed;
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 4%, transparent);
+    cursor: grabbing;
+  }
+
+  &[data-placeholder="before"] {
+    box-shadow: inset 0 2px 0 0 var(--hi-color-primary, #7aa2f7);
+  }
+  &[data-placeholder="after"] {
+    box-shadow: inset 0 -2px 0 0 var(--hi-color-primary, #7aa2f7);
+  }
+
+  &[data-locked] {
+    opacity: 0.65;
+  }
+
+  .hk-draggable-list[data-dragging] & {
+    &:hover {
+      border-color: var(--hi-color-border, #646464);
+    }
+  }
+}
+
+.hk-draggable-list-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-20, 20px);
+  flex-shrink: 0;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &[data-hidden] {
+    visibility: hidden;
+  }
+}
+
+/* A list where every row is locked can never reorder, so the handle lane
+ * has nothing to offer — collapse it instead of reserving an empty gutter
+ * that reads as "missing grips" (user report 2026-10-11: chest's 2FA
+ * factors list). Mixed lists are unaffected: they keep the lane on every
+ * row (locked ones render it hidden via [data-hidden]) so the grip column
+ * stays aligned. */
+.hk-draggable-list[data-all-locked] {
+  .hk-draggable-list-handle {
+    display: none;
+  }
+}
+
+.hk-draggable-list-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+
+  /* A vertical list's row content owns the lane's width: when the host
+     renders ONE root element per row (the card shapes — wowsp's install
+     and account cards), stretch it across the lane so every row fills
+     the list instead of hugging its own text (wowsp report 2026-10-18:
+     the settings card lists shrank to content width after adopting this
+     component — the retired SortableList rows were plain blocks that
+     filled). min-width: 0 keeps ellipsis chains inside the card working.
+     Fragment rows — several sibling elements sharing the lane (chest's
+     tab/subview manager rows) — keep host-owned layout: the selector
+     deliberately does not match them. The drag ghost reuses the row
+     markup, so a single-root ghost fills its frame exactly like its
+     live row. */
+  > :only-child {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* The per-row actions lane: renders only when the host supplies the
+ * `actions` slot (render-side guard), as a SIBLING of the content lane
+ * inside the row's flex layout — never a child of it, so the content
+ * lane's `> :only-child` fill above keeps stretching single-root rows
+ * even when actions ride along. Pinning is structural: the content lane
+ * keeps flex: 1 and this lane only refuses to shrink, so the actions
+ * land on the row's far edge — no margin-left:auto patch (it would
+ * paper over a content-lane regression instead of letting the fill rule
+ * fail loudly) and no directional property, so the lane follows the
+ * row's inline direction under RTL too. */
+.hk-draggable-list-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  flex-shrink: 0;
+}
+
+.hk-draggable-list-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  // No transform here: the tsx always writes the full translate3d inline
+  // (attachGhost/moveGhost) before the ghost paints — a class transform
+  // (e.g. a scale lift) could never win the cascade against it.
+  opacity: 0.85;
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 28%),
+    0 2px 6px rgb(0 0 0 / 18%);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--hi-color-bg-elevated, #161b22);
+  @include backdrop-filter(blur(2px));
+  pointer-events: none;
+  /* Drag ghost: above page chrome (--z-sidebar 900) but below every
+     popup band (overlay 1000 < dropdown 2000 < tooltip 3000 < toast 4000)
+     so a drag never buries toasts or open panels. */
+  z-index: var(--hk-z-drag);
+  will-change: transform;
+
+  > .hk-draggable-list-item {
+    margin: 0;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+    opacity: 1;
+    width: 100%;
+  }
+}
+
+/* Reduced motion: the dragging press cue (scale + dim) must snap instead
+   of animating; the hover border/background fades stay (house convention).
+   The ghost itself is pointer-positioned via inline transform — 1:1
+   direct manipulation, not autonomous motion — so it is left alone.
+   (house pattern: HkAffixPicker.scss / HkExpansionPanel.scss guards) */
+@media (prefers-reduced-motion: reduce) {
+  .hk-draggable-list-item {
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+}

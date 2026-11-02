@@ -1,0 +1,119 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-node-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  /* The gesture flags decide this, not the stylesheet: a surface that cannot
+     pan or zoom must not eat the page's touch scrolling. The component sets
+     `touch-action: none` inline when either gesture is on. */
+}
+
+.hk-node-canvas[data-pannable] {
+  cursor: grab;
+}
+
+.hk-node-canvas[data-pannable]:active {
+  cursor: grabbing;
+}
+
+/* The transformed layer. `transform-origin: 0 0` is what makes the camera
+   maths (`world * k + offset`) agree with what is painted. */
+.hk-node-canvas-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* Overlay chrome (inspectors, rails, HUD) lives in SCREEN coordinates — it
+   must not scale with the camera — with pointer events passing through the
+   layer and re-enabled per child. */
+.hk-node-canvas-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hk-node-canvas-overlay > * {
+  pointer-events: auto;
+}
+
+.hk-node-canvas-minimap {
+  position: absolute;
+  z-index: 4;
+}
+
+.hk-node-canvas-minimap[data-placement="bottom-right"] {
+  bottom: var(--space-12);
+  inset-inline-end: var(--space-12);
+}
+
+.hk-node-canvas-minimap[data-placement="bottom-left"] {
+  bottom: var(--space-12);
+  inset-inline-start: var(--space-12);
+}
+
+.hk-node-canvas-minimap[data-placement="top-right"] {
+  top: var(--space-12);
+  inset-inline-end: var(--space-12);
+}
+
+.hk-node-canvas-minimap[data-placement="top-left"] {
+  top: var(--space-12);
+  inset-inline-start: var(--space-12);
+}
+
+/* ── Interactive edges ───────────────────────────────────────────────
+   The halo paths are always in the DOM when `interactiveEdges` is on but
+   invisible until their edge is hovered or selected, so highlighting
+   costs no re-layout — only a visibility/opacity flip. Dimming fades the
+   strokes that are neither hovered nor selected while one is hovered,
+   which is what makes "which line am I on" readable on a busy canvas. */
+.hk-node-canvas-edge-halo {
+  visibility: hidden;
+}
+
+.hk-node-canvas-edge.is-hovered .hk-node-canvas-edge-halo,
+.hk-node-canvas-edge.is-selected .hk-node-canvas-edge-halo {
+  visibility: visible;
+  opacity: 0.28;
+}
+
+.hk-node-canvas-edge.is-selected .hk-node-canvas-edge-halo {
+  opacity: 0.4;
+}
+
+.hk-node-canvas-edge.is-dimmed > path:not(.hk-node-canvas-edge-halo) {
+  opacity: 0.25;
+}
+
+.hk-node-canvas-edge.is-dimmed text {
+  opacity: 0.4;
+}
+
+
+/* The invisible fat strokes that carry the pointer events. Transparent
+   (not none) so hit-testing still sees them; the cursor tells the user
+   the line is a target. A press-and-hold must not also summon the
+   platform's text-selection UI (iOS magnifier / callout). Hosts binding
+   their own long-press targets outside the canvas need the same
+   properties on those elements — see bindContextMenu's doc note. */
+.hk-node-canvas-edge-hit {
+  cursor: pointer;
+  @include user-select(none);
+  -webkit-touch-callout: none;
+}

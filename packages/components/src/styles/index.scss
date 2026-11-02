@@ -692,6 +692,20 @@
 @import './vue-mirror/components/HkProtocolModal.scss';
 @import './vue-mirror/components/HkCookieConsent.scss';
 @import './vue-mirror/components/HkTemplateField.scss';
+
+// W7 scene3d family mirrors
+@import './vue-mirror/components/HkBoard.scss';
+@import './vue-mirror/components/HkBoard3D.scss';
+@import './vue-mirror/components/HkNodeCanvas.scss';
+@import './vue-mirror/components/HkKanban.scss';
+@import './vue-mirror/components/HkDraggableGrid.scss';
+@import './vue-mirror/components/HkDraggableList.scss';
+@import './vue-mirror/components/HkMinimap.scss';
+@import './vue-mirror/components/HkMinimap3D.scss';
+@import './vue-mirror/components/HkZoomToolbar.scss';
+@import './vue-mirror/components/HkWindowedItem.scss';
+@import './vue-mirror/components/HkStarSystem.scss';
+@import './vue-mirror/components/HkBlankCanvas.scss';
 @import './vue-mirror/components/HkTokenInput.scss';
 @import './vue-mirror/components/HkColorPicker.scss';
 @import './vue-mirror/components/HkDatePicker.scss';

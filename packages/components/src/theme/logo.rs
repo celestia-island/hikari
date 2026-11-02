@@ -32,7 +32,7 @@
 // SVG rule (ledger L49): an rsx `svg {}` child would build an HTML-namespace
 // element, and the host must not add a box.
 //
-// Interaction (ledger L67, mouse family): both hosts bind `onclick` and
+// Interaction (ledger L86, mouse family): both hosts bind `onclick` and
 // re-emit the mouse event through `onclick` — the component keeps NO state
 // (nothing to store; the tairitsu 0.5.22 `use_signal` / `use_state` limits —
 // ledger L48 — never come into play).
@@ -191,7 +191,7 @@ pub fn Logo(props: LogoProps) -> Element {
     };
 
     let onclick = props.onclick.clone();
-    // Mouse family (ledger L67): the click re-emits verbatim on both hosts.
+    // Mouse family (ledger L86): the click re-emits verbatim on both hosts.
     let on_click = move |event: MouseEvent| {
         if let Some(handler) = onclick.as_ref() {
             handler.call(event);

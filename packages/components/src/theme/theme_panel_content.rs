@@ -47,7 +47,7 @@
 // theme tables, custom-theme store), the solar clock, the altitude timer
 // and the MutationObserver-driven engine all live outside. The mirror is
 // CONTROLLED — state arrives as props, every intent leaves through an
-// `on_*` channel bound to the MOUSE family (ledger L48/L67: zero
+// `on_*` channel bound to the MOUSE family (ledger L48/L86: zero
 // use_signal/use_state, typed pointer events never fire on wasip2).
 //
 // Deltas vs Vue (documented, not accidental):

@@ -44,7 +44,7 @@
 //     (data-image, testids) onto the button; tairitsu props are typed fields,
 //     so a host needing such hooks wraps the button (its own element carries
 //     them) — the rendered button itself is byte-identical.
-//   * INTERACTION rides the mouse family (ledger L67): `onclick` forwards the
+//   * INTERACTION rides the mouse family (ledger L86): `onclick` forwards the
 //     `MouseEvent` verbatim (Vue's `click` emit). No stopPropagation here —
 //     faces that need it (the admin header's outside-click shield) stop the
 //     press at their own layer.

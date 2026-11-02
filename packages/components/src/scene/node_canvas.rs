@@ -151,6 +151,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use tairitsu_vdom::WheelEvent;
+
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -1957,13 +1959,11 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
     // zoomable canvas (Vue's own gate, and its reason for the non-passive
     // listener). No zoom is emitted: the host drives the camera through the
     // props (header delta).
-    let wheel = move |event: Box<dyn EventData>| {
+    let wheel = move |event: WheelEvent| {
         if !zoomable {
             return;
         }
-        if let Some(mouse) = event.as_any().downcast_ref::<MouseEvent>() {
-            mouse.prevent_default();
-        }
+        event.prevent_default();
     };
     let pointer_down = {
         let key = instance_key.clone();
@@ -2065,7 +2065,7 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
     }
     if !print_mode {
         root = root
-            .on_event("wheel", wheel)
+            .on_wheel(wheel)
             .on_mousedown(pointer_down)
             .on_mousemove(pointer_move)
             .on_mouseup(pointer_up);

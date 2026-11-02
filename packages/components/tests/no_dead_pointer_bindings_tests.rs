@@ -1,33 +1,35 @@
 //! Dead-binding guard for the wasm32-wasip2 event channel (ledger L88).
 //!
-//! The tairitsu browser glue that hosts these components type-dispatches ONLY
-//! the mouse family (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/
-//! `mouseup`/`click`/`dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`),
-//! the keyboard family, the focus family and `input`/`change`. Every other DOM
-//! event — `pointer*`, `touch*`, `drag*`, … — falls through to
-//! `onGenericEvent(listenerId, eventHandle, eventType)`, which carries the
-//! type string and a live handle but NO data; the host side
-//! (`packages/web/src/wit_platform.rs`) turns that into a `GenericEvent`, so a
-//! handler that asked for `PointerEvent` / `TouchEvent` / `DragEvent` never
-//! matches its downcast and silently never runs.
+//! **Updated for tairitsu 0.5.24.** The glue now type-dispatches the `pointer*`
+//! family and `wheel` on top of the mouse / keyboard / focus / input families:
+//! `packages/web/src/wit_platform.rs` reads the event back through the
+//! `pointer-event` / `wheel-event` getter interfaces and builds a real
+//! `PointerEvent` / `WheelEvent` (celestia-island/tairitsu#104). A
+//! `PointerEvent` handler now runs, so binding `onpointerdown` /
+//! `on_pointermove` / `onwheel` is supported. That includes the two bindings
+//! this guard used to allowlist: they were dead only because of the wire, so
+//! they are live now.
+//!
+//! Still untyped: `touch*`, `drag*`, `drop` and every other DOM event falls
+//! through to `onGenericEvent(listenerId, eventHandle, eventType)`, which
+//! carries the type string and a live handle but NO data. A handler that asks
+//! for `TouchEvent` / `DragEvent` never matches its downcast and silently never
+//! runs.
 //!
 //! That failure is INVISIBLE: it does not fail to compile, it does not fail at
 //! runtime, it just makes an interaction inert on a real device. A Rust
 //! component that binds one of those families therefore looks correct in review
 //! and in CI. These two shapes are the whole trap:
 //!
-//!   1. a builder call — `.on_pointerdown(..)`, `.on_pointerenter(..)`,
-//!      `.on_touchstart(..)`, `.on_dragover(..)`;
-//!   2. an rsx attribute — `onpointerdown: ..`, `ontouchstart: ..`,
-//!      `ondragstart: ..`, `ondrop: ..` (with a value, or in the bare
-//!      shorthand form).
+//!   1. a builder call — `.on_touchstart(..)`, `.on_dragover(..)`;
+//!   2. an rsx attribute — `ontouchstart: ..`, `ondragstart: ..`,
+//!      `ondrop: ..` (with a value, or in the bare shorthand form).
 //!
 //! Binding the MOUSE family instead (`onmousedown` / `on_mousemove` /
-//! `on_mouseup` / `onmouseenter` / `on_mouseleave`, and the matching `MouseEvent`
-//! handler parameter) is the supported fix while the glue is untyped; the
-//! `thread_local` + `buttons == 0` release edge is the supported way to end a
-//! drag whose release lands outside the element (there is no document/window
-//! listener seam — `tairitsu_vdom::DomOps` is element-scoped).
+//! `on_mouseup`) remains the way to express a gesture the `pointer*` family
+//! cannot carry, and the `thread_local` + `buttons == 0` release edge remains
+//! how a drag ends when its release lands outside the element (there is no
+//! document/window listener seam — `tairitsu_vdom::DomOps` is element-scoped).
 //!
 //! A hit is not necessarily a bug to fix in this crate: the two shapes are also
 //! the honest spelling of an interaction that genuinely cannot be preserved
@@ -37,48 +39,26 @@
 
 use std::path::{Path, PathBuf};
 
-/// Files that legitimately carry a pointer-typed binding on the wasip2 wire,
-/// each with the reason it is allowed to stay.
+/// Files that may still carry a dead binding, each with the reason it is
+/// allowed. An entry is a DEBT marker, not a licence: when the upstream glue
+/// starts typing the family, delete the row. The guard fails on unlisted hits,
+/// not on unused rows.
 ///
-/// These are NOT debt: both entries are deliberate design, re-affirmed after the
-/// pointer-stopgap wave converted every other dead binding in this crate to the
-/// mouse family. Re-binding either of them would change behaviour, not just
-/// silence a warning, so the rows are permanent until the host ships typed
-/// pointer dispatch (the upstream getter contract). The guard still fails on any
-/// UNLISTED hit, so new dead bindings cannot ride in on these two.
-const ALLOWED: &[(&str, &str)] = &[
-    // DELIBERATELY POINTER-TYPED: the touch/pen handover discriminates via
-    // `PointerEvent.pointer_type`, and the mouse wire cannot synthesise a
-    // non-mouse pointer type (see `utils/pointer_synthesis.rs`, which always sets
-    // `Mouse`).
-    (
-        "feedback/tooltip.rs",
-        "DELIBERATELY POINTER-TYPED: the touch/pen handover discriminates via \
-         PointerEvent::pointer_type, and the mouse wire cannot synthesise a \
-         non-mouse pointer type (see utils/pointer_synthesis.rs, which always \
-         sets Mouse). Re-binding to the mouse family would silently delete the \
-         touch handover on every target. The wasip2 deadness of this binding is \
-         the file's declared delta (ledger L88); it revives when the host ships \
-         the typed pointer dispatch (tairitsu getter contract, \
-         celestia-island/tairitsu#104).",
-    ),
-    // POINTER-TYPED PER THE VUE CANONICAL: the rail hover machine consumes
-    // pointerenter/leave/move exactly as Vue's `HkFaceShell` does.
-    (
-        "layout/face_shell.rs",
-        "POINTER-TYPED PER THE VUE CANONICAL: the rail hover machine consumes \
-         pointerenter/leave/move as Vue's HkFaceShell does. Same wire facts as \
-         above: cannot be synthesised from mouse events without losing the \
-         pointer-type distinction, so it stays typed and dead on wasip2 by \
-         declaration (L88), not by oversight.",
-    ),
-];
+/// Both former rows are gone with tairitsu 0.5.24. `feedback/tooltip.rs`'s
+/// `onpointerdown` touch/pen handover (it discriminates via
+/// `PointerEvent::pointer_type`) and `layout/face_shell.rs`'s
+/// `onpointerenter/leave/move` rail hover machine were kept pointer-typed
+/// precisely because the mouse wire could not synthesise a non-mouse pointer
+/// type — the host now ships that typed dispatch, so they are live bindings and
+/// need no debt marker.
+const ALLOWED: &[(&str, &str)] = &[];
 
 /// The rsx attribute / builder name prefixes the glue cannot deliver typed.
-/// `drop` is its own name (not a `drag*` prefix) and rides the same data-less
-/// channel, so it belongs to the same trap: an `ondrop:` binding can only ever
-/// be a `DragEvent` handler that never fires.
-const POISONED_FAMILIES: [&str; 4] = ["pointer", "touch", "drag", "drop"];
+/// `pointer` left this list in tairitsu 0.5.24; `drop` is its own name (not a
+/// `drag*` prefix) and rides the same data-less channel, so it belongs to the
+/// same trap: an `ondrop:` binding can only ever be a `DragEvent` handler that
+/// never fires.
+const POISONED_FAMILIES: [&str; 3] = ["touch", "drag", "drop"];
 
 fn source_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -121,12 +101,12 @@ fn ident_from(text: &str, idx: usize) -> String {
 }
 
 fn poisoned_family(ident: &str) -> bool {
+    // `gotpointercapture` / `lostpointercapture` used to need a special case
+    // here; they are part of the `pointer*` family the host now types
+    // (tairitsu 0.5.24), so a plain prefix match is the whole rule.
     POISONED_FAMILIES
         .iter()
         .any(|family| ident.starts_with(family))
-        // `gotpointercapture` / `lostpointercapture` name the pointer family
-        // mid-word; they are just as undeliverable as `onpointer*`.
-        || ident.ends_with("pointercapture")
 }
 
 /// Classify a code line: `Some("builder")` for `.on_pointer*(` style calls,
@@ -306,17 +286,18 @@ fn every_allowlist_entry_states_a_reason_and_names_a_real_file() {
 #[test]
 fn the_guard_recognises_both_shapes_and_ignores_documentation() {
     // Positive controls: the two shapes, including the shorthand attribute form
-    // and the whitespace-before-paren builder form.
+    // and the whitespace-before-paren builder form. The examples are `touch` /
+    // `drag` now: `pointer*` stopped being poison in tairitsu 0.5.24.
     assert!(
-        dead_binding_kind(".on_pointerdown(handler)").is_some(),
+        dead_binding_kind(".on_touchstart(handler)").is_some(),
         "builder"
     );
     assert!(
-        dead_binding_kind("    .on_pointerenter (handler)").is_some(),
+        dead_binding_kind("    .on_touchmove (handler)").is_some(),
         "spaced builder"
     );
     assert!(
-        dead_binding_kind(".on_touchstart(move |e: TouchEvent| {").is_some(),
+        dead_binding_kind(".on_touchend(move |e: TouchEvent| {").is_some(),
         "touch builder"
     );
     assert!(
@@ -324,11 +305,11 @@ fn the_guard_recognises_both_shapes_and_ignores_documentation() {
         "drag builder"
     );
     assert!(
-        dead_binding_kind("onpointerdown: move |e| {}").is_some(),
+        dead_binding_kind("ontouchstart: move |e| {}").is_some(),
         "rsx attr"
     );
     assert!(
-        dead_binding_kind("            onpointerenter: handler,").is_some(),
+        dead_binding_kind("            ondragleave: handler,").is_some(),
         "indented rsx attr"
     );
     assert!(
@@ -343,9 +324,22 @@ fn the_guard_recognises_both_shapes_and_ignores_documentation() {
         dead_binding_kind("        ondrop,").is_some(),
         "shorthand drop attr"
     );
+    // `pointer*` and its capture pair are typed since tairitsu 0.5.24.
     assert!(
-        dead_binding_kind("        onlostpointercapture: h").is_some(),
-        "capture attr"
+        dead_binding_kind("        onlostpointercapture: h").is_none(),
+        "capture attr is live now"
+    );
+    assert!(
+        dead_binding_kind(".on_pointerdown(move |e: PointerEvent| {").is_none(),
+        "pointer builder is live now"
+    );
+    assert!(
+        dead_binding_kind("onpointerdown: move |e: PointerEvent| {}").is_none(),
+        "pointer rsx attr is live now"
+    );
+    assert!(
+        dead_binding_kind("onwheel: move |e: WheelEvent| {}").is_none(),
+        "wheel rsx attr is live"
     );
 
     // Negative controls: live mouse bindings, the generic register, and prose.
@@ -380,15 +374,15 @@ fn the_guard_catches_a_builder_call_split_over_lines() {
     // `rustfmt` wraps a long handler between the method name and its argument
     // list, which is the shape a strictly line-scoped scan missed.
     let split = [
-        "    root = root.on_pointerdown",
-        "        (move |event: PointerEvent| {",
+        "    root = root.on_touchstart",
+        "        (move |event: TouchEvent| {",
         "            drag = true;",
         "        });",
     ];
     assert_eq!(
         dead_findings(&split),
         vec![(1, "builder (call split over lines)")],
-        "a wrapped `.on_pointerdown` call must still be caught"
+        "a wrapped `.on_touchstart` call must still be caught"
     );
 
     // A blank line between the name and the paren keeps the same meaning.

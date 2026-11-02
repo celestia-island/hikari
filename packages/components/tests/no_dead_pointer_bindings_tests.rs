@@ -42,30 +42,22 @@ use std::path::{Path, PathBuf};
 /// converted (or the upstream tairitsu glue starts typing `pointer*`), delete
 /// the row. An entry that outlives its need costs nothing here — this guard
 /// fails on unlisted hits, not on unused rows.
+///
+/// Both rows below belong to the CATCH-UP TRACK working in those directories in
+/// the same wave; this track is hard-excluded from touching them. When that
+/// track lands its conversion, drop the rows.
 const ALLOWED: &[(&str, &str)] = &[
     (
-        "data/drag.rs",
-        "L67 residual outside the pointer-stopgap track's owned file set: its \
-         four rsx `ondrag*` bindings feed an HTML5 drag-and-drop helper and ride \
-         the data-less generic channel. Needs the same treatment as \
-         `basic/file_upload.rs` (delete, or upstream `drag*` typing).",
-    ),
-    (
-        "display/hover_reveal_action.rs",
-        "L67 residual outside the pointer-stopgap track's owned file set: four \
-         `on_touch*` builder calls cannot fire on wasip2 (no typed touch \
-         channel). Delete them or move the reveal to the mouse family.",
-    ),
-    (
         "feedback/tooltip.rs",
-        "Owned by a PARALLEL track in the same wave (hard-excluded here): its \
-         `onpointerdown` touch/long-press path is being converted there.",
+        "OWNED BY THE CATCH-UP TRACK (hard-excluded from this track): its \
+         `onpointerdown` touch/long-press path is being converted there, so the \
+         file is not ours to edit in this wave.",
     ),
     (
         "layout/face_shell.rs",
-        "Owned by a PARALLEL track in the same wave (hard-excluded here): its \
+        "OWNED BY THE CATCH-UP TRACK (hard-excluded from this track): its \
          `onpointerenter` / `onpointerleave` / `onpointermove` hover trail is \
-         being converted there.",
+         being converted there, so the file is not ours to edit in this wave.",
     ),
 ];
 

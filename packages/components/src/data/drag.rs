@@ -1,5 +1,55 @@
 // hi-components/src/data/drag.rs
-// Drag and drop component for tree node reordering
+// DragDropTree — the legacy tree reorder surface (`RenderDragNode` renders one
+// recursive node row with its drag handle, ghost and drop line).
+//
+// L67 DELTA: THIS IS A MOUSE-DRIVEN REORDER, NOT A NATIVE HTML5 DRAG.
+// The rows used to carry `draggable="true"` plus `dragstart` / `dragend` /
+// `dragover` / `dragleave` / `drop` with `DragEvent` handlers. The tairitsu
+// browser glue type-dispatches only the mouse family (plus keyboard, focus and
+// `input`/`change`) and routes every `drag*`/`drop` event through
+// `onGenericEvent`, whose payload is the type string and a live handle with no
+// data, so the `DragEvent` downcast never matched and the whole reorder path
+// was inert on a real device (ledger L67).
+//
+// The gesture never actually needed `DataTransfer`: the state lives in the
+// component's own signals (`dragged_key` / `drag_over_key` / `drop_target`), and
+// the only `data_transfer` use in this file was a no-op placeholder plus one
+// `set_data` call that existed for native-DnD interop. So the reorder is
+// REBOUND onto the mouse family, one edge per event:
+//
+//   dragstart  -> `mousedown`   arm the row (the `allow_drag` gate runs here)
+//   dragover   -> `mouseenter`  highlight the row under the pointer
+//   dragleave  -> `mouseleave`  clear the highlight
+//   drop       -> `mouseup`     commit `DropEvent` (left button only; the row
+//                               stops propagation so a nested row cannot
+//                               commit a second drop — the same guard the old
+//                               `ondrop` ran)
+//   dragend    -> the release edges: the row's own `mouseup` clears the
+//                 gesture, the tree root's `mouseup` clears one that landed on
+//                 tree padding, and a `mouseenter` reporting `buttons == 0`
+//                 while a row is still armed retires a release that happened
+//                 OUTSIDE the tree (there is no window-listener seam —
+//                 `tairitsu_vdom::DomOps` is element-scoped — so the button
+//                 state is the closest reliable signal, the same fallback
+//                 `basic/slider.rs` and `scene/kanban.rs` carry). The root's
+//                 `mouseleave` also clears the highlight so a stale drop line
+//                 cannot linger while the pointer is away.
+//
+// Declared consequences (nothing faked):
+//   * the rows NO LONGER carry the `draggable` attribute: a native drag would
+//     steal the gesture from the mouse path (the browser stops delivering
+//     `mousemove` once it starts a native drag), so keeping it would break the
+//     reorder it used to enable;
+//   * NATIVE DRAG INTEROP IS GONE: dragging a row OUT of the tree into another
+//     application (or onto a page-level HTML5 drop target) carried
+//     `text/plain` = the item key through `data_transfer.set_data`; the mouse
+//     channel has no payload, so that interop is unavailable until the upstream
+//     glue types the `drag*` family (or exposes the `DataTransfer` behind the
+//     event handle);
+//   * the browser's native drag image / `dropEffect` cursor are gone with it —
+//     the mirror's own `.hk-drag-ghost` / `.hk-drop-line` markers still paint;
+//   * a touch screen produces no `mousemove` sequence, so touch reordering is
+//     unavailable.
 
 use hikari_palette::classes::{ClassesBuilder, DragDropTreeClass};
 
@@ -67,8 +117,25 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
     let drop_target = use_signal(|| Option::<DropTarget>::None);
     let drag_over_key = use_signal(|| Option::<String>::None);
 
+    // End-of-gesture edges for the whole surface (Vue's `dragend`, L67 delta):
+    // a release that lands on tree PADDING never reaches a row, and a release
+    // that leaves the tree never reaches it at all — the root retires the first,
+    // and drops the highlight while the pointer is away for the second (the
+    // arm survives a leave, so dragging back in still resolves).
+    let root_dragged = dragged_key.clone();
+    let root_over = drag_over_key.clone();
+    let root_target = drop_target.clone();
+    // The highlight is cleared from two listeners, so it needs its own clone.
+    let root_over_leave = drag_over_key.clone();
+
     rsx! {
         div { class: format!("hk-drag-drop-tree {}", props.class),
+            onmouseup: move |_event: MouseEvent| {
+                root_dragged.set(None);
+                root_over.set(None);
+                root_target.set(None);
+            },
+            onmouseleave: move |_event: MouseEvent| root_over_leave.set(None),
 
             if drop_target.read().is_some() {
                 div { class: "hk-drop-indicator", id: "drop-indicator" }
@@ -142,10 +209,15 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         .add_if(DragDropTreeClass::NodeDisabled, || disabled)
         .build();
 
+    // `dragstart` -> `mousedown`: arm the row. The press is PUBLISHED, not
+    // claimed (no capture on this wire), so the release is resolved by the row's
+    // own `mouseup` or retired from the button state (L67 delta in the header).
+    // `prevent_default` keeps the press from starting a text selection, which is
+    // what the drag handle needs.
     let dragged_key_for_start = props.dragged_key.clone();
     let allow_drag_for_start = props.allow_drag.clone();
-    let ondragstart = move |mut e: DragEvent| {
-        e.prevent_default();
+    let on_arm = move |event: MouseEvent| {
+        event.prevent_default();
 
         let key = item_key_2.clone();
         let can_drag = if let Some(handler) = allow_drag_for_start.as_ref() {
@@ -156,48 +228,40 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         };
 
         if can_drag {
-            dragged_key_for_start.set(Some(key.clone()));
-
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                if let Some(ref mut data_transfer) = e.data_transfer {
-                    data_transfer.set_data("text/plain", &key);
-                }
-            }
+            dragged_key_for_start.set(Some(key));
         }
     };
 
-    let dragged_key_for_end = props.dragged_key.clone();
-    let drag_over_key_for_end = props.drag_over_key.clone();
-    let drop_target_for_end = props.drop_target.clone();
-    let ondragend = move |_: DragEvent| {
-        dragged_key_for_end.set(None);
-        drag_over_key_for_end.set(None);
-        drop_target_for_end.set(None);
-    };
-
+    // `dragover` -> `mouseenter`: highlight the row under the pointer, once
+    // (the old `dragover` repeated this on every frame). A row entered with NO
+    // button held while a drag is still armed means the release happened
+    // outside the tree, where no listener could see it — retire the gesture
+    // instead of highlighting, so a stale drop line can never survive.
     let dragged_key_for_over = props.dragged_key.clone();
     let drag_over_key_for_over = props.drag_over_key.clone();
-    let ondragover = move |e: DragEvent| {
-        e.prevent_default();
-        e.stop_propagation();
-
-        if dragged_key_for_over.read().is_some() && props.drop_allowed {
+    let drop_target_for_over = props.drop_target.clone();
+    let on_drag_over = move |event: MouseEvent| {
+        if dragged_key_for_over.read().is_none() {
+            return;
+        }
+        if event.buttons == 0 {
+            dragged_key_for_over.set(None);
+            drag_over_key_for_over.set(None);
+            drop_target_for_over.set(None);
+            return;
+        }
+        if props.drop_allowed {
             let key = item_key_3.clone();
-            drag_over_key_for_over.set(Some(key));
-
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                if let Some(data_transfer) = &e.data_transfer {
-                    // Note: drop_effect uses builder pattern, skip for now
-                    let _ = data_transfer;
-                }
+            if drag_over_key_for_over.read().as_ref() != Some(&key) {
+                drag_over_key_for_over.set(Some(key));
             }
         }
     };
 
+    // `dragleave` -> `mouseleave` (non-bubbling in both forms, so a nested row
+    // does not clear its ancestors' highlight).
     let drag_over_key_for_leave = props.drag_over_key.clone();
-    let ondragleave = move |_: DragEvent| {
+    let on_drag_leave = move |_: MouseEvent| {
         drag_over_key_for_leave.set(None);
     };
 
@@ -206,9 +270,16 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     let drop_target_for_drop = props.drop_target.clone();
     let allow_drop_for_drop = props.allow_drop.clone();
     let on_drop_for_drop = props.on_drop.clone();
-    let ondrop = move |e: DragEvent| {
-        e.prevent_default();
-        e.stop_propagation();
+    // `drop` -> `mouseup`: commit on release. Only the primary button commits
+    // (a `mouseup` also fires for the others, which `drop` never did), and the
+    // row stops propagation so a nested row cannot commit a second drop — the
+    // same guard the old `ondrop` ran. The release also retires the whole
+    // gesture, which is what `dragend` used to do after a successful drop.
+    let on_drag_drop = move |event: MouseEvent| {
+        event.stop_propagation();
+        if event.button != 0 {
+            return;
+        }
 
         if let Some(dragged) = dragged_key_for_drop.read().clone() {
             let position = DropPosition::Inside;
@@ -238,6 +309,7 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
                 }
             }
 
+            dragged_key_for_drop.set(None);
             drag_over_key_for_drop.set(None);
             drop_target_for_drop.set(None);
         }
@@ -246,12 +318,12 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     rsx! {
         div {
             class: drag_node_classes,
-            draggable: props.draggable && !disabled,
-            ondragstart,
-            ondragend,
-            ondragover,
-            ondragleave,
-            ondrop,
+            // NO `draggable` attribute: a native drag would steal the gesture
+            // from the mouse path (see the header delta).
+            onmousedown: on_arm,
+            onmouseenter: on_drag_over,
+            onmouseleave: on_drag_leave,
+            onmouseup: on_drag_drop,
 
             div { class: "hk-drag-handle",
 
@@ -300,5 +372,56 @@ impl StyledComponent for DragComponent {
 
     fn name() -> &'static str {
         "drag"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample() -> Vec<DragTreeNodeData> {
+        vec![DragTreeNodeData {
+            item_key: "alpha".to_string(),
+            title: "Alpha".to_string(),
+            node_children: vec![DragTreeNodeData {
+                item_key: "beta".to_string(),
+                title: "Beta".to_string(),
+                node_children: Vec::new(),
+                disabled: false,
+            }],
+            disabled: false,
+        }]
+    }
+
+    fn render() -> String {
+        DragDropTree(DragDropTreeProps {
+            data: sample(),
+            ..Default::default()
+        })
+        .render_to_html()
+    }
+
+    #[test]
+    fn drag_tree_renders_its_handle_and_the_recursive_rows() {
+        let html = render();
+        assert!(html.contains("hk-drag-drop-tree"), "{html}");
+        assert!(html.contains("hk-drag-handle"), "{html}");
+        assert!(html.contains("hk-drag-handle-icon"), "{html}");
+        assert!(html.contains("Alpha"), "the root row must paint: {html}");
+        assert!(html.contains("Beta"), "the child row must paint: {html}");
+    }
+
+    #[test]
+    fn drag_tree_rows_carry_no_native_draggable_attribute() {
+        // L67: the reorder is MOUSE-driven. A native HTML5 drag would steal the
+        // gesture — once the browser starts one it stops delivering
+        // `mousemove`, so the mouse path would go dead exactly where the old
+        // `drag*` bindings were. The attribute therefore has to stay absent;
+        // this guards a well-meaning "restore the drop zone" edit.
+        let html = render();
+        assert!(
+            !html.contains("draggable"),
+            "rows must not opt into native drag-and-drop: {html}"
+        );
     }
 }

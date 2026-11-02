@@ -154,8 +154,8 @@ impl FilterOperator {
         match self {
             FilterOperator::Eq => "equals",
             FilterOperator::Ne => "not equals",
-            FilterOperator::Approx => "fuzzy match",
-            FilterOperator::Napprox => "fuzzy non-match",
+            FilterOperator::Approx => "contains",
+            FilterOperator::Napprox => "does not contain",
             FilterOperator::Lt => "less than",
             FilterOperator::Lte => "at most",
             FilterOperator::Gte => "at least",
@@ -242,7 +242,7 @@ pub type FilterState = Vec<FilterCondition>;
 // ── pure functions (the model, shared by every member of the family) ─────
 
 /// The kind's default operator set (Vue: `DEFAULT_OPERATORS`). TEXT fields
-/// speak the FUZZY pair only — the old exact =/≠ for text is gone.
+/// speak the ≈/≉ (contains) pair only — the old exact =/≠ for text is gone.
 pub fn default_operators(kind: FilterFieldKind) -> &'static [FilterOperator] {
     match kind {
         FilterFieldKind::Text => &[FilterOperator::Approx, FilterOperator::Napprox],
@@ -267,15 +267,30 @@ pub fn operators_for(field: &FilterFieldDef) -> Vec<FilterOperator> {
 }
 
 /// Which ICON the operator renders as (Vue: `glyphOpFor`): fields that speak
-/// ONLY the eq/ne pair (select) render the fuzzy pair ≈/≉ — 等于其实是模糊匹配
-/// applies to them too. A number's exact = keeps the plain equals icon inside
-/// the ordered five.
+/// ONLY the eq/ne pair (select) render the ≈/≉ drawing — 等于其实是模糊匹配
+/// applies to the DRAWING only. The accessible NAME always comes from the real
+/// operator ([`operator_presentation`]); deriving it from this glyph told
+/// screen readers "contains" for an exact-equality button.
 pub fn glyph_operator(kind: FilterFieldKind, op: FilterOperator) -> FilterOperator {
     match (kind, op) {
         (FilterFieldKind::Select, FilterOperator::Eq) => FilterOperator::Approx,
         (FilterFieldKind::Select, FilterOperator::Ne) => FilterOperator::Napprox,
         _ => op,
     }
+}
+
+/// The presentation of one operator button: the GLYPH to draw and the
+/// accessible NAME to announce.
+///
+/// The two are deliberately independent. [`glyph_operator`] may swap the
+/// drawing for the field kind (a select field's exact pair draws ≈/≉ by Vue
+/// design), but the name is always the operator's own — a select row's "="
+/// button must be announced as "equals", never as "contains".
+pub fn operator_presentation(
+    kind: FilterFieldKind,
+    op: FilterOperator,
+) -> (FilterOperator, String) {
+    (glyph_operator(kind, op), op.label())
 }
 
 /// Keep only a legal number shape: optional leading minus, digits, one decimal
@@ -311,8 +326,8 @@ pub fn match_operators(kind: FilterFieldKind) -> &'static [FilterOperator] {
 }
 
 /// Does ONE non-empty condition hold against a concrete raw value? String forms
-/// compare case-insensitively for the fuzzy pair; numeric comparisons coerce
-/// and are false on non-numbers (Vue: `hkConditionMatches`).
+/// compare case-insensitively for the ≈/≉ (contains) pair; numeric comparisons
+/// coerce and are false on non-numbers (Vue: `hkConditionMatches`).
 pub fn condition_matches(cond: &FilterCondition, kind: FilterFieldKind, raw: &str) -> bool {
     let hay = raw.to_lowercase();
     let needle = cond.value.to_lowercase();
@@ -788,7 +803,7 @@ fn panel_row(
         .attr("role", "group")
         .attr("aria-label", format!("{label_text} — {panel_label}"));
     for op in &ops {
-        let glyph = glyph_operator(kind, *op);
+        let (glyph, label) = operator_presentation(kind, *op);
         let pressed = cond.op == *op;
         let on_value_change = wiring.on_value_change.clone();
         let state = wiring.state.clone();
@@ -797,8 +812,8 @@ fn panel_row(
             .class("hk-filter-panel-op")
             .attr("type", "button")
             .attr("aria-pressed", if pressed { "true" } else { "false" })
-            .attr("aria-label", glyph.label())
-            .attr("title", glyph.label())
+            .attr("aria-label", label.clone())
+            .attr("title", label)
             .on_click(move |_event: MouseEvent| {
                 if let Some(handler) = on_value_change.as_ref() {
                     handler.call(condition_with_operator(&state, index, op));
@@ -1246,6 +1261,45 @@ mod tests {
             Some(FilterFieldKind::Date)
         );
         assert_eq!(FilterFieldKind::from_token("bool"), None);
+    }
+
+    #[test]
+    fn filter_panel_operator_accessible_names_name_the_operator_not_the_glyph() {
+        // The accessible name is the OPERATOR's. A select field's exact pair
+        // draws ≈/≉ (Vue design) but must be announced as equals/not equals —
+        // reading the name off the glyph told screen readers "contains" for an
+        // exact-equality button.
+        let expected = [
+            (FilterOperator::Eq, "equals"),
+            (FilterOperator::Ne, "not equals"),
+            (FilterOperator::Approx, "contains"),
+            (FilterOperator::Napprox, "does not contain"),
+            (FilterOperator::Lt, "less than"),
+            (FilterOperator::Lte, "at most"),
+            (FilterOperator::Gte, "at least"),
+            (FilterOperator::Gt, "greater than"),
+        ];
+        for (operator, label) in expected {
+            assert_eq!(operator.label_fallback(), label);
+            // Every field kind announces the real operator, including the
+            // kinds whose glyph is swapped for the drawing.
+            for kind in [
+                FilterFieldKind::Text,
+                FilterFieldKind::Number,
+                FilterFieldKind::Select,
+                FilterFieldKind::Date,
+            ] {
+                assert_eq!(
+                    operator_presentation(kind, operator).1,
+                    label,
+                    "{kind:?} {operator:?} must be named {label:?}"
+                );
+            }
+        }
+        assert_eq!(
+            operator_presentation(FilterFieldKind::Select, FilterOperator::Eq),
+            (FilterOperator::Approx, "equals".to_string())
+        );
     }
 
     #[test]
@@ -1784,5 +1838,66 @@ mod tests {
         // The undeclared key offers only its current operator (the trailing
         // quote pins the button's own class, not the plural GROUP class).
         assert_eq!(html.matches("hk-filter-panel-op\"").count(), 1, "{html}");
+    }
+
+    /// The label a screen reader (and a tooltip) actually gets, per field kind.
+    ///
+    /// This is the regression test the S1 finding asked for: the old code
+    /// derived the button's accessible name from `glyph_operator`, so a
+    /// select field's exact-equality button was announced as "contains" while
+    /// `condition_matches` ran `hay == needle`. The test pins the RENDERED
+    /// `aria-label`/`title` of every operator button the four kinds offer, and
+    /// that select still draws the ≈/≉ glyph.
+    #[test]
+    fn filter_panel_rendered_operator_names_follow_the_real_operation_per_kind() {
+        let fields = vec![
+            text_field("name"),
+            select_field("provider", &["openai", "anthropic"]),
+            FilterFieldDef {
+                kind: FilterFieldKind::Number,
+                ..text_field("amount")
+            },
+            FilterFieldDef {
+                kind: FilterFieldKind::Date,
+                ..text_field("created")
+            },
+        ];
+        let state = vec![
+            cond("name", FilterOperator::Approx, "x"),
+            cond("provider", FilterOperator::Eq, "openai"),
+            cond("amount", FilterOperator::Lt, "10"),
+            cond("created", FilterOperator::Gte, "2024-01-02"),
+        ];
+        let html = FilterPanel(FilterPanelProps {
+            fields,
+            model_value: state,
+            ..Default::default()
+        })
+        .render_to_html();
+        let named = |label: &str| html.matches(&format!("aria-label=\"{label}\"")).count();
+
+        // Text: the ≈/≉ pair means contains — 1 each.
+        assert_eq!(named("contains"), 1, "{html}");
+        assert_eq!(named("does not contain"), 1, "{html}");
+        // Select: the exact pair is still DRAWN as ≈/≉, but its name is the
+        // real operator: eq + number's exact = are "equals"; select's ne is
+        // "not equals". The ≈ path appears in the text pair too, so four
+        // drawings carry it (text approx + text napprox + select eq + ne); the
+        // ≉ slash appears twice (text napprox + select ne).
+        assert_eq!(named("equals"), 2, "{html}");
+        assert_eq!(named("not equals"), 1, "{html}");
+        assert_eq!(html.matches("M5 15a6.5").count(), 4, "{html}");
+        assert_eq!(html.matches("m5 19 14-14").count(), 2, "{html}");
+        // Number: ordered five; Date: the ordered pair.
+        assert_eq!(named("less than"), 1, "{html}");
+        assert_eq!(named("greater than"), 1, "{html}");
+        assert_eq!(named("at most"), 2, "{html}"); // number lte + date lte
+        assert_eq!(named("at least"), 2, "{html}"); // number gte + date gte
+        // The title mirrors the accessible name.
+        assert_eq!(
+            html.matches("title=\"equals\"").count(),
+            2,
+            "title must mirror aria-label (select eq + number eq): {html}"
+        );
     }
 }

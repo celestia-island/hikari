@@ -86,16 +86,21 @@
    * half must be able to paint. Content clipping lives in
    * .hk-sidebar-rail-clip (inside the panel). */
   overflow: visible;
+  /* The sidebar z band (900 — above content, below floating panels),
+   * carried PERMANENTLY, not only while a peek is open (2026-11-02 user
+   * screenshot, wowsp): the straddling toggle hangs over the content
+   * column in every state, and its own z-index cannot save it — any
+   * stacking context the PANEL carries in a host (wowsp's glass
+   * backdrop-filter, a transform/opacity dress) demotes the toggle's
+   * local z into that panel, and the overhanging half then loses to
+   * plain positioned content painted later in tree order. The HOST is
+   * the elevation boundary: with the band here the whole rail subtree
+   * paints atomically above the content column no matter what contexts
+   * exist inside it, so a peek overlay, the pinned expand and the idle
+   * toggle all share one rule. */
+  z-index: var(--hk-z-sidebar, 900);
   /* The layout animation the PIN window deliberately keeps. */
   transition: width var(--duration-normal, 0.3s) ease;
-}
-
-/* A peek is an OVERLAY: the host rises to the sidebar z band (900 — above
- * content, below floating panels) so the full-width panel paints over the
- * content it temporarily covers. (The host no longer needs to toggle
- * `overflow` here: it never clips.) */
-.hk-sidebar-rail-host[data-peeking] {
-  z-index: var(--hk-z-sidebar, 900);
 }
 
 .hk-sidebar-rail-panel {
@@ -191,7 +196,11 @@
 .hk-sidebar-rail-flight {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  /* Local bump (--hk-z-above band): the layer only has to outrank the
+   * z-auto dissolve items it substitutes for — during a flip those items
+   * hold opacity contexts, so everything inside them (scrollbar chrome
+   * included) is trapped below this layer. */
+  z-index: var(--hk-z-above, 1);
   display: block;
   pointer-events: none;
 }
@@ -284,7 +293,14 @@
   inset-inline-end: calc(var(--hk-sidebar-rail-toggle-size, 24px) / -2 - var(--hk-sidebar-rail-border-width, 1px) / 2);
   inset-block-start: 50%;
   translate: 0 -50%;
-  z-index: 2;
+  /* The fab band — a floating circular affordance above the panel's local
+   * chrome. The ranking threat inside the panel is the overlay-scrollbar
+   * TRACK (absolute, z-index: 10 — a stacking context that also contains
+   * the thumb's 2 and the markers' 1, attached beside the sidebar body):
+   * the old raw z-index: 2 ranked BELOW that track, so a scroll or a
+   * marker flash could paint its band over the circle's inner half. The
+   * fab band clears both the track and everything inside it. */
+  z-index: var(--hk-z-fab, 40);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--duration-fast, 0.15s) ease;

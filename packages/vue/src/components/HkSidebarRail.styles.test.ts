@@ -34,7 +34,14 @@ import {
  * 3. The toggle's center rides the border LINE: negative half-size inset
  *    (plus half the border), vertical centering, size token on the host.
  * 4. The host stays the LAYOUT box (position relative, width transition)
- *    and [data-peeking] only raises it to the sidebar z band now.
+ *    and ALWAYS carries the sidebar z band — not only under [data-peeking]
+ *    (2026-11-02 user screenshot, wowsp): the straddling toggle hangs over
+ *    the content column in every state, and a host whose panel carries its
+ *    own stacking context (wowsp's glass backdrop-filter) demotes the
+ *    toggle's local z below plain positioned content, so the band must
+ *    live on the host, the elevation boundary.
+ * 4b. No raw z-index numbers: the toggle rides the fab band, the flight
+ *    layer the local-bump band — both through the scale tokens.
  * 5. Pinning: [data-pinning] kills the panel's and any nested sidebar's
  *    width transitions (the expand must not replay the slide) while the
  *    HOST width transition stays — and the pinned panel keeps the peek
@@ -93,12 +100,19 @@ describe("HkSidebarRail geometry contract", () => {
     expect(host, "the host width transition IS the intended motion").toContain("transition: width");
   });
 
-  it("a peek only raises the host to the sidebar z band now (no clip flip)", () => {
-    const peeking = ruleBody(css, ".hk-sidebar-rail-host[data-peeking]");
-    expect(peeking, "the peeking rule exists").not.toBeNull();
-    expect(peeking).toContain("z-index: var(--hk-z-sidebar, 900)");
-    // The host no longer toggles overflow here — it never clips.
-    expect(peeking).not.toContain("overflow");
+  it("the host carries the sidebar z band ALWAYS (the stacking-trap contract)", () => {
+    // The band lives on the host rule itself, not under [data-peeking]:
+    // the toggle's overhanging half must paint above the content column in
+    // every state, and a host whose panel carries its own stacking context
+    // (wowsp's glass backdrop-filter) demotes the toggle's local z below
+    // plain positioned content painted later in tree order. There is no
+    // bare peeking z rule left to tie the elevation to the peek state.
+    const host = ruleBody(css, ".hk-sidebar-rail-host {") ?? ruleBody(css, ".hk-sidebar-rail-host");
+    expect(host, "the host rule exists").not.toBeNull();
+    expect(host).toContain("z-index: var(--hk-z-sidebar, 900)");
+    expect(css).not.toContain(".hk-sidebar-rail-host[data-peeking] {");
+    // The peek shadow survives on the panel-scoped rules.
+    expect(css).toContain(".hk-sidebar-rail-host[data-peeking] .hk-sidebar-rail-panel");
   });
 
   it("the panel overlays from the inline-start edge, unclipped, and animates its width", () => {
@@ -186,8 +200,12 @@ describe("HkSidebarRail geometry contract", () => {
     // Vertical centering on the edge.
     expect(toggle).toContain("inset-block-start: 50%");
     expect(toggle).toContain("translate: 0 -50%");
-    // Above the panel + content.
-    expect(toggle).toContain("z-index: 2");
+    // Above the panel's local chrome — through the FAB band token, never a
+    // raw number: the overlay-scrollbar thumb rides a raw 2 through
+    // uncontexted ancestors right up to this panel, so the toggle must
+    // strictly outrank it (a tie would be DOM-order roulette).
+    expect(toggle).toContain("z-index: var(--hk-z-fab, 40)");
+    expect(toggle).not.toMatch(/z-index:\s*\d/);
   });
 
   it("the peek casts its shadow toward the content side, mirrored in RTL", () => {
@@ -256,7 +274,9 @@ describe("HkSidebarRail geometry contract", () => {
     expect(layer, "the flight layer rule exists").not.toBeNull();
     expect(layer).toContain("position: absolute");
     expect(layer).toContain("inset: 0");
-    expect(layer).toContain("z-index: 2");
+    // The local-bump band token, never a raw number (see 4b).
+    expect(layer).toContain("z-index: var(--hk-z-above, 1)");
+    expect(layer).not.toMatch(/z-index:\s*\d/);
     expect(layer).toContain("pointer-events: none");
 
     const clone = ruleBody(css, ".hk-sidebar-rail-flight-clone");

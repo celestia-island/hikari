@@ -82,11 +82,14 @@
 // hardcoded Chinese placeholder, `hk-select-dropdown` markup with no sheet
 // branch).
 
+use hikari_i18n::t;
+use hikari_icons::{Icon, MdiIcon};
+
+// The pointer highlight channel this file used is bound on the mouse family now
+// (ledger L86); the tairitsu event set it needs comes from the prelude.
 use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-use hikari_i18n::t;
-use hikari_icons::{Icon, MdiIcon};
 
 pub struct SelectComponent;
 

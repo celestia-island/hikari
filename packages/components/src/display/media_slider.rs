@@ -11,7 +11,7 @@
 //
 //   div.hk-media-slider [.is-disabled] data-size={md|sm} role="slider"
 //          tabindex="-1" [aria-label] aria-valuenow aria-valuemin="0"
-//          aria-valuemax="100" [+host class]   (pointerdown/move/up/cancel)
+//          aria-valuemax="100" [+host class]   (mousedown/move/up — L86 delta)
 //     div.hk-media-slider-buffered style="width:{buffered*100}%"   (buffered > 0)
 //     div.hk-media-slider-fill     style="width:{ratio*100}%"
 //     div.hk-media-slider-thumb    style="left:{ratio*100}%"
@@ -29,12 +29,28 @@
 // `ratio` in, one callback out.
 //
 // Behaviour deltas vs Vue (documented, not accidental):
+//   * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the tairitsu
+//     browser glue typed-dispatches only the mouse family
+//     (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
+//     `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
+//     `pointer*` event through a data-less generic channel, so a typed
+//     `PointerEvent` handler never fires on the real target (ledger L86). The
+//     track therefore binds `mousedown` / `mousemove` / `mouseup` and every
+//     handler takes a `MouseEvent`. Consequences: a touch screen produces no
+//     `mousemove` sequence, so TOUCH seeking is unavailable (a tap still
+//     seeks), and this channel has no `pointercancel`.
 //   * Vue attaches `pointermove` / `pointerup` / `pointercancel` to `window` on
 //     mount so a drag keeps tracking outside the track, and calls
-//     `setPointerCapture`. A component here cannot own window listeners and
-//     pointer capture is not exposed, so tracking rides the root element's own
-//     pointer events: a drag that leaves the track stops emitting until the
-//     pointer returns; `up` / `cancel` on the root still end the drag.
+//     `setPointerCapture`. A component here cannot own window listeners —
+//     `tairitsu_vdom::DomOps` is element-scoped, with no document/window
+//     registration seam — and pointer capture is not exposed, so tracking rides
+//     the root element's own mouse events: a drag that leaves the track stops
+//     emitting until the pointer returns.
+//   * A RELEASE OUTSIDE THE TRACK IS NOT LOST: the root `mouseup` ends a
+//     release inside the track, and a `mousemove` reporting `buttons == 0` ends
+//     a drag whose release happened elsewhere (Vue's window `pointerup` edge,
+//     recovered from the button state — the same guard `basic/slider.rs`,
+//     `scene/minimap.rs` and `basic/color_picker.rs` carry).
 //   * Vue measures its `trackRef` with `getBoundingClientRect()`. The mirror
 //     uses the host-provided measurement of the event's `currentTarget`
 //     (`tairitsu_vdom::get_bounding_client_rect`); when the host cannot
@@ -44,7 +60,7 @@
 //     `ratio * 100`% verbatim and leaves clamping to the pointer path and the
 //     owning player (`media_player::media_player_progress_pct`).
 
-use tairitsu_vdom::{DomHandle, PointerEvent, get_bounding_client_rect};
+use tairitsu_vdom::{DomHandle, get_bounding_client_rect};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -197,7 +213,7 @@ pub fn MediaSlider(props: MediaSliderProps) -> Element {
 
     let drag_key_down = props.instance_key.clone();
     let commit_down = commit.clone();
-    let handle_pointer_down = move |event: PointerEvent| {
+    let handle_mouse_down = move |event: MouseEvent| {
         if disabled {
             return;
         }
@@ -209,7 +225,7 @@ pub fn MediaSlider(props: MediaSliderProps) -> Element {
 
     let drag_key_move = props.instance_key.clone();
     let commit_move = commit.clone();
-    let handle_pointer_move = move |event: PointerEvent| {
+    let handle_mouse_move = move |event: MouseEvent| {
         if disabled || !media_slider_is_dragging(&drag_key_move) {
             return;
         }
@@ -226,10 +242,7 @@ pub fn MediaSlider(props: MediaSliderProps) -> Element {
     };
 
     let drag_key_up = props.instance_key.clone();
-    let handle_pointer_up = move |_: PointerEvent| set_media_slider_dragging(&drag_key_up, false);
-    let drag_key_cancel = props.instance_key.clone();
-    let handle_pointer_cancel =
-        move |_: PointerEvent| set_media_slider_dragging(&drag_key_cancel, false);
+    let handle_mouse_up = move |_: MouseEvent| set_media_slider_dragging(&drag_key_up, false);
 
     let fill_style = format!("width:{}", media_slider_css_pct(props.ratio));
     let thumb_style = format!("left:{}", media_slider_css_pct(props.ratio));
@@ -246,10 +259,9 @@ pub fn MediaSlider(props: MediaSliderProps) -> Element {
             "aria-valuenow": aria_value,
             "aria-valuemin": "0",
             "aria-valuemax": "100",
-            onpointerdown: handle_pointer_down,
-            onpointermove: handle_pointer_move,
-            onpointerup: handle_pointer_up,
-            onpointercancel: handle_pointer_cancel,
+            onmousedown: handle_mouse_down,
+            onmousemove: handle_mouse_move,
+            onmouseup: handle_mouse_up,
             if props.buffered > 0.0 {
                 div {
                     class: "hk-media-slider-buffered",

@@ -81,13 +81,27 @@
 //     have no analogue (there is nothing to paint and no timer to run), and
 //     the dots paint in `currentColor` instead of the JS-sampled
 //     `--hi-color-primary-rgb` (Vue reads it off `document.documentElement`).
-//   [D2] NO POINTER/DOCUMENT LISTENERS. Vue ends a hold-reveal on a
-//     `document`-level `pointerup` (once) plus `pointercancel`; tairitsu
-//     binds handlers to elements only, so the eye publishes the release on its
-//     OWN `pointerup`. A release outside the eye therefore never hides — the
-//     host can end the reveal from its own pointerup handler through
-//     `on_visibility_change(false)`. `contextmenu` (Vue's long-press callout
-//     guard) is not an rsx event and is dropped.
+//   [D2] NO DOCUMENT LISTENERS + the MOUSE FAMILY. Vue ends a hold-reveal on a
+//     `document`-level `pointerup` (once) plus `pointercancel`; tairitsu binds
+//     handlers to elements only (`tairitsu_vdom::DomOps` is element-scoped —
+//     there is no document/window registration seam), so the eye publishes the
+//     release on its OWN `mouseup`, and the box root publishes it twice more as
+//     the end-of-press fallback: `mouseup` catches a release anywhere inside the
+//     box, `mouseleave` catches one outside it (leaving the surface is the only
+//     way out of a press started on the eye, so the reveal can never stay stuck
+//     on). `reveal_release` is gated by `password_reveal_release`, so extra
+//     edges cannot flap a `toggle` reveal.
+//     DECLARED OVER-REACH: the `mouseleave` edge fires while the button may
+//     still be HELD, so dragging off the box ends a hold-reveal early — Vue
+//     keeps revealing until `document.pointerup`. It fails safe (never stuck,
+//     never visible longer than asked) and is the price of having no
+//     document-level release edge at all.
+//     Mouse family, not pointer: on wasm32-wasip2 the glue typed-dispatches
+//     only the mouse family and routes `pointer*` through a data-less generic
+//     channel, so a typed `PointerEvent` handler never fires on the real target
+//     (ledger L86). A touch screen therefore cannot press-and-hold the eye (a
+//     tap still toggles; the eye stays keyboard-operable). `contextmenu` (Vue's
+//     long-press callout guard) is not an rsx event and is dropped.
 //   [D3] ADDITIVE: a password GENERATOR. Vue ships no generator; its exported
 //     pure utils are `passwordLevel` + `validatePassword` only. The mirror
 //     adds a deterministic candidate generator (`password_candidates`) so a
@@ -141,7 +155,6 @@ use hikari_i18n::t;
 use crate::feedback::{Tooltip, TooltipPlacement};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-use tairitsu_vdom::PointerEvent;
 
 pub struct PasswordSurfaceComponent;
 
@@ -1131,8 +1144,9 @@ impl PasswordPublish {
         }
     }
 
-    /// Vue's `onPointerdown` on the eye: no focus steal.
-    fn eye_pointer(&self, event: PointerEvent) {
+    /// Vue's `onPointerdown` on the eye: no focus steal. Mouse family, not
+    /// pointer: wasip2 has no typed pointer dispatch (ledger L86).
+    fn eye_press(&self, event: MouseEvent) {
         event.prevent_default();
         self.reveal_press();
     }
@@ -1415,21 +1429,43 @@ pub fn PasswordSurface(props: PasswordSurfaceProps) -> Element {
     let composition_end = move |_event: Box<dyn EventData>| set_password_composing(false);
 
     let eye_press_events = publish.clone();
-    let eye_press = move |event: PointerEvent| eye_press_events.eye_pointer(event);
+    let eye_press = move |event: MouseEvent| eye_press_events.eye_press(event);
     let eye_release_events = publish.clone();
-    let eye_release = move |_event: PointerEvent| eye_release_events.reveal_release();
+    let eye_release = move |_event: MouseEvent| eye_release_events.reveal_release();
     let eye_key_events = publish.clone();
     let eye_key = move |event: KeyboardEvent| eye_key_events.eye_key(event);
     let eye_key_release_events = publish.clone();
     let eye_key_release = move |event: KeyboardEvent| eye_key_release_events.eye_key_release(event);
 
+    // End of a press-and-hold reveal when the release lands OUTSIDE the eye
+    // button (Vue's window `pointerup`). `tairitsu_vdom::DomOps` is
+    // element-scoped — no document/window seam — so the two edges this surface
+    // owns are the closest reliable signal: a release anywhere inside the box
+    // lands on the root's `mouseup`, and a release outside it must cross the
+    // root's `mouseleave` first. Both call `reveal_release`, which is a no-op
+    // unless the `hold` gate is actively revealing, so the extra edges cannot
+    // flap a `toggle` reveal.
+    //
+    // KNOWN OVER-REACH OF THE `mouseleave` EDGE: it fires on the way OUT, while
+    // the button may still be HELD, so dragging the pointer off the box ends the
+    // reveal immediately. Vue keeps revealing until `document.pointerup`, i.e.
+    // until the finger/button is actually released. The mirror therefore ends a
+    // held reveal EARLY, never late: it fails safe (the password is hidden at
+    // worst while the user still expects to be holding it), and the alternative —
+    // no leave edge — is the stuck state this fallback exists to kill. Declared
+    // in the header's [D2] as well.
+    let box_release_events = publish.clone();
+    let box_release = move |_event: MouseEvent| box_release_events.reveal_release();
+    let box_leave_events = publish.clone();
+    let box_leave = move |_event: MouseEvent| box_leave_events.reveal_release();
+
     let placeholder_press_events = publish.clone();
-    let placeholder_press = move |event: PointerEvent| {
+    let placeholder_press = move |event: MouseEvent| {
         event.prevent_default();
         placeholder_press_events.focus_request();
     };
     let blur_hint_press_events = publish.clone();
-    let blur_hint_press = move |event: PointerEvent| {
+    let blur_hint_press = move |event: MouseEvent| {
         event.prevent_default();
         blur_hint_press_events.clear_request();
     };
@@ -1457,6 +1493,11 @@ pub fn PasswordSurface(props: PasswordSurfaceProps) -> Element {
             "data-error": box_flags.error,
             "data-disabled": box_flags.disabled,
             "data-fw": box_flags.full_width,
+            // End-of-press edges for the eye's hold-to-reveal (see the note on
+            // `box_release` above): either one retires a reveal whose release
+            // never reached the button itself.
+            onmouseup: box_release,
+            onmouseleave: box_leave,
             div { class: lock_classes,
                 {lock_content}
             }
@@ -1469,7 +1510,7 @@ pub fn PasswordSurface(props: PasswordSurfaceProps) -> Element {
             if lanes.placeholder {
                 span {
                     class: "hk-pwd-placeholder",
-                    onpointerdown: placeholder_press,
+                    onmousedown: placeholder_press,
                     span { class: "hk-pwd-placeholder-text",
                         "{placeholder_text}"
                     }
@@ -1478,7 +1519,7 @@ pub fn PasswordSurface(props: PasswordSurfaceProps) -> Element {
             if lanes.blur_hint {
                 span {
                     class: "hk-pwd-blur-hint",
-                    onpointerdown: blur_hint_press,
+                    onmousedown: blur_hint_press,
                     "{entered_text}"
                 }
             }
@@ -1521,8 +1562,8 @@ pub fn PasswordSurface(props: PasswordSurfaceProps) -> Element {
                     "type": "button",
                     "data-revealing": revealing_flag,
                     "aria-label": eye_label,
-                    onpointerdown: eye_press,
-                    onpointerup: eye_release,
+                    onmousedown: eye_press,
+                    onmouseup: eye_release,
                     onkeydown: eye_key,
                     onkeyup: eye_key_release,
                     {glyph_host(eye_glyph)}

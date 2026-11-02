@@ -125,7 +125,17 @@ pub fn date_tag_layout(language: Language) -> DateTagLayout {
             order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
             separators: ["/", "/"],
         },
+        // "06.10.2024"
+        Language::German => DateTagLayout {
+            order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
+            separators: [".", "."],
+        },
         Language::Spanish => DateTagLayout {
+            order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
+            separators: ["/", "/"],
+        },
+        // "06/10/2024"
+        Language::Portuguese => DateTagLayout {
             order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
             separators: ["/", "/"],
         },
@@ -136,6 +146,15 @@ pub fn date_tag_layout(language: Language) -> DateTagLayout {
         },
         Language::Arabic => DateTagLayout {
             order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
+            separators: ["/", "/"],
+        },
+        // `Language` is `#[non_exhaustive]`: a future variant compiles through
+        // here and keeps the English layout until its own row is added. No
+        // in-tree test can reach this arm — an unlisted variant cannot be
+        // constructed from outside the defining crate; the first language
+        // added after this PR is its natural test.
+        _ => DateTagLayout {
+            order: [DateTagField::Month, DateTagField::Day, DateTagField::Year],
             separators: ["/", "/"],
         },
     }

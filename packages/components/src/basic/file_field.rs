@@ -46,13 +46,21 @@
 //     writes the answer back through `model_value`. The `#trigger` is still a real
 //     `<button>` with the id the caption points at, so the DOM contract (and
 //     a host that clicks the native input itself) is unchanged.
-//   * THE BOX IS THE DROP ZONE. Vue's field has no drop path at all; here the
-//     box accepts a file drop and reports the dropped NAMES through
-//     `on_files` (`DataTransfer` carries names only — `tairitsu_vdom` has no
-//     `File` object). This is the only way a host can hand the mirror
-//     files without owning a picker. No drag-over visual state is published:
-//     the mirrored sheet defines no drag marker and the component owns no
-//     state to flip, so the drop lands without a hover treatment.
+//   * THE BOX DROP ZONE IS REMOVED ON wasip2 — A DELIBERATE LOSS (was an
+//     ADDITIVE delta). Vue's field has no drop path at all; the mirror added one
+//     that reported dropped NAMES through `on_files`, wired to `dragover` /
+//     `drop` with `DragEvent` handlers. The glue routes every `drag*` event
+//     through `onGenericEvent`, whose payload carries only the type string (the
+//     host side turns it into a `GenericEvent`), so those typed handlers never
+//     ran (ledger L86). To be precise about what was preservable: the EVENTS do
+//     arrive, so a data-less generic register could have kept a drag-over
+//     treatment alive — the same "edge fires, payload missing" reasoning that
+//     keeps the `pointercancel` registers elsewhere. That was rejected: an
+//     affordance that accepts a drag it cannot honour is worse than none, and
+//     `DataTransfer.files` — the only source of the dropped names, and the whole
+//     point of the path — is not on the generic channel. Files still arrive
+//     through the `change` event / the host's own picker, and a dropped file now
+//     falls through to the browser default rather than being silently swallowed.
 //   * the native `<input type="file">` stays (local mode) for hosts that do
 //     drive it, but a `change` event reaches Rust as the browser's fake path
 //     string only, so [`picked_files_from_change_value`] recovers the leaf
@@ -339,38 +347,6 @@ pub fn FileField(props: FileFieldProps) -> Element {
         }
     };
 
-    // Drop zone: `DataTransfer` carries file NAMES only (delta).
-    let drop_handler = props.on_files.clone();
-    let on_drop = move |event: DragEvent| {
-        event.prevent_default();
-        if disabled {
-            return;
-        }
-        let Some(transfer) = event.data_transfer.as_ref() else {
-            return;
-        };
-        let dropped: Vec<PickedFile> = transfer
-            .files
-            .iter()
-            .map(|name| PickedFile {
-                name: name.clone(),
-                path: None,
-                size: None,
-            })
-            .collect();
-        let picked = cap_selection(dropped, multiple);
-        if picked.is_empty() {
-            return;
-        }
-        if let Some(handler) = drop_handler.as_ref() {
-            handler.call(picked);
-        }
-    };
-    // A drop only lands on a box that cancelled the dragover default.
-    let on_drag_over = move |event: DragEvent| {
-        event.prevent_default();
-    };
-
     rsx! {
         div {
             class: "hk-file-field",
@@ -391,8 +367,6 @@ pub fn FileField(props: FileFieldProps) -> Element {
                 "data-disabled": disabled,
                 "data-error": has_error,
                 "data-filled": has_files,
-                ondragover: on_drag_over,
-                ondrop: on_drop,
                 button {
                     class: "hk-file-trigger",
                     "type": "button",

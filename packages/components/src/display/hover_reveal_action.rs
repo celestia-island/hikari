@@ -43,14 +43,33 @@
 //     hook, so a timer armed right before a teardown still fires. It only
 //     re-touches a detached node's class list, so the visible result is
 //     unchanged (same trade-off as `basic/rolling_number.rs`).
-//   * Touch reveal (`tap` / `longpress`) is mirrored with the same two timers,
-//     including the swipe-cancels-longpress rule (`touchmove`).
+//   * TOUCH REVEAL IS A HOST API, NOT A BINDING (ledger L86). Vue listens to
+//     `touchstart` / `touchend` / `touchcancel` / `touchmove`; the tairitsu
+//     browser glue type-dispatches only the mouse family (plus keyboard, focus
+//     and `input`/`change`) and routes every `touch*` event through
+//     `onGenericEvent`, whose payload carries the type string and a live handle
+//     but no data — so a `TouchEvent` handler never ran on a real device and the
+//     four bindings were inert. They are REMOVED rather than re-pointed at a
+//     mouse event, because a touch has no distinct mouse equivalent: the two
+//     reveal modes and the swipe rule are kept as the exported
+//     [`hover_reveal_on_touch_start`] / [`hover_reveal_on_touch_end`] /
+//     [`hover_reveal_on_touch_move`] machine plus the
+//     [`HoverRevealActionProps::touch_reveal_mode`] /
+//     [`HoverRevealActionProps::touch_hide_delay`] / `long_press_delay` knobs, so
+//     a host that owns a real touch source (its own pointer capture, a native
+//     shell, the upstream fix) drives exactly the state the Vue component drives.
+//     What still works without it: a TAP reveals through the browser-synthesised
+//     compatibility mouse events (`mousedown` -> `hover_reveal_on_enter`, which is
+//     also why a bare synthetic click reveals — see the mousedown note in the
+//     render body), and every mouse user keeps the full hover path unchanged.
+//     Unreachable on this wire until a real touch channel exists: `longpress`
+//     arming, the swipe-cancels-longpress rule, and the touch-hide linger.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
 
 use tairitsu_vdom::dom_ops::{class_list_add, class_list_remove, clear_timeout, set_timeout};
-use tairitsu_vdom::{DomHandle, MouseEvent, TouchEvent};
+use tairitsu_vdom::{DomHandle, MouseEvent};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -279,7 +298,11 @@ fn hover_reveal_on_leave(
 
 /// Vue's `onTouchStart`: any touch suppresses the mouse path; `tap` reveals
 /// immediately, `longpress` only arms the timer.
-fn hover_reveal_on_touch_start(
+///
+/// PUBLIC because wasip2 cannot deliver touch events (ledger L86): this is the
+/// host-facing entry to the machine Vue drives from its own binding. Call it with
+/// the root's DOM handle (on a real touch event, `event.current_target`).
+pub fn hover_reveal_on_touch_start(
     handle: Option<u64>,
     mode: HoverRevealTouchMode,
     long_press_delay: f64,
@@ -304,7 +327,9 @@ fn hover_reveal_on_touch_start(
 
 /// Vue's `onTouchEnd` / `onTouchCancel`: cancel any pending long press and let
 /// the extension linger for `touch_hide_delay`.
-fn hover_reveal_on_touch_end(
+///
+/// PUBLIC for the same reason as [`hover_reveal_on_touch_start`].
+pub fn hover_reveal_on_touch_end(
     handle: Option<u64>,
     touch_hide_delay: f64,
     force_revealed: bool,
@@ -319,7 +344,9 @@ fn hover_reveal_on_touch_end(
 }
 
 /// Vue's `onTouchMove`: a sliding finger is a swipe, not a press.
-fn hover_reveal_on_touch_move(handle: Option<u64>, mode: HoverRevealTouchMode) {
+///
+/// PUBLIC for the same reason as [`hover_reveal_on_touch_start`].
+pub fn hover_reveal_on_touch_move(handle: Option<u64>, mode: HoverRevealTouchMode) {
     if mode != HoverRevealTouchMode::LongPress {
         return;
     }
@@ -335,15 +362,20 @@ pub struct HoverRevealActionProps {
     pub hide_delay: f64,
 
     /// How long a touch-revealed extension lingers after the finger lifts
-    /// (Vue default 3000).
+    /// (Vue default 3000). HOST-DRIVEN on wasip2: the component binds no touch
+    /// events (L86 — see the header), so this value is consumed only when a host
+    /// calls [`hover_reveal_on_touch_end`] itself.
     #[default(3000.0)]
     pub touch_hide_delay: f64,
 
-    /// When a touch reveals the extension (Vue default `tap`).
+    /// When a touch reveals the extension (Vue default `tap`). HOST-DRIVEN on
+    /// wasip2, like [`HoverRevealActionProps::touch_hide_delay`]: pass it to
+    /// [`hover_reveal_on_touch_start`] / [`hover_reveal_on_touch_move`].
     #[default]
     pub touch_reveal_mode: HoverRevealTouchMode,
 
     /// Rest duration before a `longpress` reveal fires (Vue default 500).
+    /// HOST-DRIVEN on wasip2, like [`HoverRevealActionProps::touch_hide_delay`].
     #[default(500.0)]
     pub long_press_delay: f64,
 
@@ -383,9 +415,6 @@ pub fn HoverRevealAction(props: HoverRevealActionProps) -> Element {
 
     let force_revealed = props.force_revealed;
     let hide_delay = props.hide_delay;
-    let touch_hide_delay = props.touch_hide_delay;
-    let touch_reveal_mode = props.touch_reveal_mode;
-    let long_press_delay = props.long_press_delay;
     let notify = props.on_reveal_change;
 
     let enter_notify = notify.clone();
@@ -411,40 +440,10 @@ pub fn HoverRevealAction(props: HoverRevealActionProps) -> Element {
         hover_reveal_on_enter(event.current_target, down_notify.clone());
     });
 
-    let touch_start_notify = notify.clone();
-    root = root.on_touchstart(move |event: TouchEvent| {
-        hover_reveal_on_touch_start(
-            event.current_target,
-            touch_reveal_mode,
-            long_press_delay,
-            touch_hide_delay,
-            touch_start_notify.clone(),
-        );
-    });
-
-    let touch_end_notify = notify.clone();
-    root = root.on_touchend(move |event: TouchEvent| {
-        hover_reveal_on_touch_end(
-            event.current_target,
-            touch_hide_delay,
-            force_revealed,
-            touch_end_notify.clone(),
-        );
-    });
-
-    let touch_cancel_notify = notify.clone();
-    root = root.on_touchcancel(move |event: TouchEvent| {
-        hover_reveal_on_touch_end(
-            event.current_target,
-            touch_hide_delay,
-            force_revealed,
-            touch_cancel_notify.clone(),
-        );
-    });
-
-    root = root.on_touchmove(move |event: TouchEvent| {
-        hover_reveal_on_touch_move(event.current_target, touch_reveal_mode);
-    });
+    // NO `on_touch*` BINDINGS: the glue cannot deliver a typed `TouchEvent`, so
+    // they were inert on every real device (L86 delta in the header). The touch
+    // machine (`hover_reveal_on_touch_*`) and the `touch_*` / `long_press_delay`
+    // props stay exported for a host that owns a real touch source.
 
     root = root.child(VNode::Element(Box::new(
         VElement::new("span")

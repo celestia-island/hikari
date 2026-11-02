@@ -26,7 +26,9 @@ compilable value in the canonical sheet and note it in the PR. Known blockers:
   * `calc(infinity * 1s)`            → a finite step-end duration;
   * CSS relative colour `rgb(from C r g b / a)`
                                      → `color-mix(in srgb, C <a*100>%, transparent)`
-                                       (identical in srgb).
+                                       (identical in srgb);
+  * `calc-size(auto, size * 0.8)`    → a plain percentage/px value (grass has no
+                                       calc-size; HkListTransition uses `80%`).
 
 Guards:
   * Rust:  packages/components/tests/vue_mirror_drift_tests.rs (cargo test)
@@ -142,6 +144,32 @@ DATA_SHEETS: list[str] = [
     "HkCardList.scss",
 ]
 
+# W4 — display + media family. HkCountdownDigit has no sheet of its own.
+DISPLAY_SHEETS: list[str] = [
+    "HkEmptyState.scss",
+    "HkQrCode.scss",
+    "HkSkeleton.scss",
+    "HkTimeline.scss",
+    "HkInfiniteTail.scss",
+    "HkLoadMore.scss",
+    "HkCrossfade.scss",
+    "HkListTransition.scss",
+    "HkTransitionContainer.scss",
+    "HkHoverRevealAction.scss",
+    "HkMediaPlayer.scss",
+    "HkMediaSlider.scss",
+    "HkMediaControlBar.scss",
+    "HkMediaVisualizer.scss",
+    "HkImageLightbox.scss",
+    "HkImagePreview.scss",
+    "HkImageViewer.scss",
+    "HkTerminal.scss",
+    "HkLogWindow.scss",
+    "HkJsonTree.scss",
+    "HkMarkdownRenderer.scss",
+    "HkDiffViewer.scss",
+]
+
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
     "HkBlockingToast.scss",
@@ -186,7 +214,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -195,7 +223,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

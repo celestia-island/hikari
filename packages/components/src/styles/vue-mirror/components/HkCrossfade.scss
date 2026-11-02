@@ -1,0 +1,89 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkCrossfade — same-position simultaneous dissolve host.
+ *
+ * Geometry: the host is a one-cell grid and every item occupies THAT cell
+ * (grid-area: 1/1). During a swap the leaving item keeps the cell, so old
+ * and new stack in the SAME box: no exit blank phase, no side-by-side
+ * reflow, and the host stays as tall as the taller of the two items until
+ * the leave completes — variable-height content never collapses mid-
+ * dissolve. This is the height-safe generalization of HkPickerPane's fixed
+ * stage + absolute leave (no known stage size needed, so whole pages can
+ * swap through it).
+ *
+ * Consumers size the host from the outside (width/height/flex are theirs);
+ * the component only guarantees the stacking geometry and the dissolve.
+ */
+.hk-crossfade {
+  display: grid;
+
+  > .hk-crossfade-item {
+    grid-area: 1 / 1;
+    width: 100%;
+    min-width: 0;
+    // The block-axis twin of min-width: 0. Grid items refuse to shrink
+    // below their content (min-height: auto) — for whole-page swaps the
+    // item's content is the entire app body, so a host constrained by the
+    // outside (an app shell viewport) had the item overflow it by the
+    // full content height, with the excess clipped by upstream
+    // overflow: hidden: unreachable content, dead inner scroll, misaligned
+    // absolute overlays (chest history page, 2026-09-14). The auto-height
+    // host contract is unaffected: the track still sizes to the taller
+    // item's contribution, so a dissolve never collapses mid-swap.
+    min-height: 0;
+  }
+}
+
+/* Dissolve curves: BOTH sides run --duration-normal so the exchange is a
+ * true cross-fade (not a fade-out-then-in), and both ease OUT (fast
+ * start) — midway through the swap the incoming layer already carries most
+ * of the opacity while the outgoing one has already shed most of its, so
+ * the composite never dips toward the background (the classic
+ * double-exposure artifact of symmetric linear fades). The leaving item
+ * also drops pointer events: it is dead content and must not intercept
+ * clicks while it dissolves under the incoming one.
+ *
+ * The enter side additionally honours --hk-crossfade-enter-delay (default
+ * 0): the sequencing hook HkTransitionContainer sets per swap (2026-10-27
+ * user direction — a height-changing swap holds the new content at
+ * opacity 0 until the box is ready, so nothing is clipped by the morph).
+ * Declared as a LONGHAND after the shorthand: the `transition` shorthand
+ * resets transition-delay to 0, so the order here is load-bearing. */
+.hk-crossfade-enter-active {
+  transition:
+    opacity
+    var(--duration-normal, 0.3s)
+    var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+  transition-delay: var(--hk-crossfade-enter-delay, 0ms);
+}
+
+.hk-crossfade-leave-active {
+  transition: opacity var(--duration-normal, 0.3s) ease-out;
+  pointer-events: none;
+}
+
+.hk-crossfade-enter-from,
+.hk-crossfade-leave-to {
+  opacity: 0;
+}
+
+/* Reduced motion: keep the opacity exchange (a fade carries no movement —
+ * HkPhaseTransition precedent), just shorter. Hosts driving the global
+ * animation switch (`html[data-css-animations="0"]`) already pin every
+ * transition via theme.scss's global rule, so no extra variant is needed
+ * here (that variant exists for ANIMATIONS, which the global rule pauses
+ * per-play-state; transitions die through its transition-duration clamp). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-crossfade-enter-active,
+  .hk-crossfade-leave-active {
+    transition: opacity var(--duration-fast, 0.15s) ease;
+  }
+}

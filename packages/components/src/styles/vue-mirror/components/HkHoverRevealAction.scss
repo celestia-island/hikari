@@ -1,0 +1,100 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-hover-reveal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  /* Let the reveal chain shrink inside width-constrained flex parents
+     (mobile status bars / header centres) so a scrollable main slot
+     can take over the overflow instead of the wrapper clipping it. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hk-hover-reveal-main {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hk-hover-reveal-extension {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Revealed state, shared by the tsx-managed hover/touch reveal
+   (.is-revealed) and keyboard focus anywhere in the wrapper
+   (:focus-within) — without the focus path the extension's real
+   buttons stay tab-reachable yet invisible (HkTabs renders its
+   add actions there). */
+.hk-hover-reveal.is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal:focus-within > .hk-hover-reveal-extension {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hk-hover-reveal[data-placement="right"] > .hk-hover-reveal-extension {
+  /* Anchors stay PHYSICAL on purpose: placement is a physical prop
+     (consumers pass literal left/right) and the slide transforms below
+     are physical too — logical axes here would mirror the box in RTL
+     while the motion still slides the old way. */
+  left: 100%;
+  top: 50%;
+  transform: translate(-4px, -50%);
+}
+.hk-hover-reveal[data-placement="right"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="right"]:focus-within > .hk-hover-reveal-extension {
+  transform: translate(4px, -50%);
+}
+
+.hk-hover-reveal[data-placement="left"] > .hk-hover-reveal-extension {
+  right: 100%;
+  top: 50%;
+  transform: translate(4px, -50%);
+}
+.hk-hover-reveal[data-placement="left"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="left"]:focus-within > .hk-hover-reveal-extension {
+  transform: translate(-4px, -50%);
+}
+
+.hk-hover-reveal[data-placement="bottom"] > .hk-hover-reveal-extension {
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, -4px);
+}
+.hk-hover-reveal[data-placement="bottom"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="bottom"]:focus-within > .hk-hover-reveal-extension {
+  transform: translate(-50%, 4px);
+}
+
+.hk-hover-reveal[data-placement="top"] > .hk-hover-reveal-extension {
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, 4px);
+}
+.hk-hover-reveal[data-placement="top"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="top"]:focus-within > .hk-hover-reveal-extension {
+  transform: translate(-50%, -4px);
+}
+
+/* Reduced motion: keep the opacity fade, drop the transform slide. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-hover-reveal-extension {
+    transition: opacity 0.15s ease;
+  }
+}

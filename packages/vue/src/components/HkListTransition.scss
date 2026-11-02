@@ -140,7 +140,11 @@
 .hk-list-reveal-enter-from,
 .hk-list-reveal-leave-to {
   opacity: 0;
-  height: calc-size(auto, size * 0.8);
+  /* grass-compatible fallback: the Rust form compiles this same sheet, and
+   * grass cannot parse `calc-size(auto, size * 0.8)` (see the sync script's
+   * compile constraints). 80% of the container is the closest equivalent the
+   * parser accepts; the enter/leave reveal keeps its opacity fade either way. */
+  height: 80%;
 }
 
 .hk-list-reveal-move {

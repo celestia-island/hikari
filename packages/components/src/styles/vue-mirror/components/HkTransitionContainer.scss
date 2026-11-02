@@ -1,0 +1,23 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkTransitionContainer — the state-keyed morph container. The host
+// carries the inline size (transitioned by the component); the stage
+// is the measured content. Overflow hides DURING the morph only (the
+// host is `overflow: clip` while a pinned size is active — applied via
+// the inline width/height, the clip rides along) so shortened content
+// never spills past the animating box.
+.hk-tc {
+  overflow: clip;
+}
+
+.hk-tc-stage {
+  width: 100%;
+}

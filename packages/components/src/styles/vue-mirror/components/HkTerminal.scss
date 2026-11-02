@@ -1,0 +1,37 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
+.hk-terminal {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 8rem;
+  padding: 0.35rem 0.45rem;
+  background: rgb(var(--color-background, 20 22 26));
+  border: 1px solid rgb(var(--color-border, 128 128 128) / 15%);
+  border-radius: vars.$hikari-radius-fine-md;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  /* xterm fills the host box */
+  .terminal,
+  .xterm {
+    height: 100%;
+  }
+
+  /* The viewport scrollbar inherits the shared chrome shape. */
+  .xterm-viewport {
+    border-radius: vars.$hikari-radius-fine-sm;
+  }
+}

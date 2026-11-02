@@ -1,0 +1,101 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+.hk-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-48, 3rem) var(--space-16, 1rem);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* The component's own surface. Opt-in (`boxed`): the host — card, modal,
+   panel — usually already provides a surface, and an always-on box turned
+   every in-card empty state into a nested placeholder layer. */
+.hk-empty-state--boxed {
+  background: var(--hk-empty-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
+  @include backdrop-filter(blur(var(--blur-sm, 8px)));
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+.hk-empty-icon {
+  width: var(--space-48, 3rem);
+  height: var(--space-48, 3rem);
+  margin-bottom: var(--space-12, 0.75rem);
+  color: var(--hi-color-text-secondary, #666666);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hk-empty-title {
+  font-size: var(--text-base, 0.875rem);
+  font-weight: 600;
+  color: var(--hi-color-text-primary, #1e1e1e);
+  margin: 0 0 var(--space-8, 0.5rem);
+}
+
+.hk-empty-desc {
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--hi-color-text-secondary, #666666);
+  margin: 0 0 var(--space-16, 1rem);
+  max-width: 24rem;
+  line-height: 1.5;
+}
+
+.hk-empty-action {
+  margin-top: var(--space-4, 0.25rem);
+}
+
+/* fit="page" (default): full width on mobile — the page supplies the outer
+   padding — and centered. */
+.hk-empty-state--page {
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* Desktop: the card must not span the page — cap around 30vw with a sane
+   floor/cap (320px … 560px) so tiny and 4K windows stay usable. */
+@media (min-width: 48rem) {
+  .hk-empty-state--page {
+    max-width: clamp(20rem, 30vw, 35rem);
+  }
+}
+
+/* fit="fill": stretch to the host container (panels, split views). */
+.hk-empty-state--fill {
+  width: 100%;
+  height: 100%;
+}
+
+/* Loading variant keeps a comfortable spinner area in short hosts. */
+.hk-empty-state--loading {
+  min-height: 10rem;
+}
+
+/* Visually hidden but announced: gives the loading status region text
+   content so screen readers have something to say when it appears. */
+.hk-empty-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

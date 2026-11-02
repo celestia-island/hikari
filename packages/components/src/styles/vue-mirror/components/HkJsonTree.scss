@@ -1,0 +1,232 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkJsonTree — the interactive JSON tree pane.
+// Class names are the legacy `s-jt-*` / `s-jv-*` set shared verbatim with
+// HkToolBlock (the tree was extracted from it); hosts may target
+// `.s-tool-json-tree` for pane-level chrome such as overlay scrollbars.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
+
+.s-tool-json-tree {
+  --jt-toggle: 14px;
+  margin: var(--space-4, 0.25rem) 0;
+  padding: var(--space-6, 0.375rem);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-size: var(--text-2xs, 0.625rem);
+  line-height: 1.55;
+  background: rgb(var(--color-surface) / 0.5);
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  @include user-select(none);
+  max-height: 320px;
+  overflow: auto;
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ONE SCROLLBAR PER WINDOW (2026-09-08 audit): inside a window surface's
+ * own scroller the bounded tree cap lit a second scrollbar under the
+ * window's — the window's scrollbar is the only one there and the tree
+ * grows with its content. Pages and standalone cards (the error landing,
+ * chat tool blocks outside windows) keep the bounded viewport above.
+ * The host's deferred overlay pass self-hides its rails once the
+ * content fits, so no attach-side change is needed. */
+.hk-modal-body-scroll .s-tool-json-tree,
+.hk-select-sheet-list .s-tool-json-tree,
+.hk-select-popout .s-tool-json-tree,
+.hk-popover-panel .s-tool-json-tree,
+.hk-drawer-body .s-tool-json-tree {
+  max-height: none;
+}
+
+.s-jt-row {
+  /* Tree rows are content — values users copy out of a payload — while
+   * the pane chrome above stays denied (L2 selection policy, 2026-10-29;
+   * the copy-tree affordance remains the bulk path). */
+  @include user-select(text);
+  /* Baseline alignment keeps the small type hints (boolean/number/string)
+     on the value's text baseline instead of floating above it. */
+  display: flex;
+  align-items: baseline;
+  min-height: 1.55em;
+  /* Inline paddingLeft (tsx) always overrides the left half; spell out the
+     dead slot so the live right inset is not mistaken for symmetric. */
+  padding: 0 var(--space-6, 0.375rem) 0 0;
+  border-radius: var(--radius-xs, 2px);
+  cursor: default;
+}
+
+.s-jt-row[data-parent] {
+  cursor: pointer;
+}
+
+.s-jt-row:hover {
+  background: rgb(var(--color-primary) / 4%);
+}
+
+.s-jt-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--jt-toggle, 14px);
+  height: var(--jt-toggle, 14px);
+  flex-shrink: 0;
+  /* Toggle → text is ONE spacing unit everywhere (leaf, collapsed and
+     expanded parents alike) — the collapsed row and its children read
+     on the same rhythm instead of ad-hoc gaps. */
+  margin-inline-end: var(--space-4, 0.25rem);
+  /* The toggle box has no text baseline of its own — pin it to the line
+     top and center it on the FIRST text line by formula (line-height
+     1.55 × font-size vs the fixed box), so the chevron/leaf sits on the
+     text's optical center in collapsed and expanded rows alike instead
+     of floating above the baseline group. */
+  align-self: flex-start;
+  margin-block-start: max(0px, calc((1.55em - var(--jt-toggle, 14px)) / 2));
+}
+
+.s-jt-toggle[data-parent] {
+  color: rgb(var(--color-muted));
+  border-radius: var(--radius-xs, 2px);
+}
+
+.s-jt-leaf {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgb(var(--color-muted) / 25%);
+}
+
+.s-jt-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.s-jt-children {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: var(--guide-left, 11px);
+    top: 0;
+    bottom: 2px;
+    width: 1px;
+    background: var(--border-faint, rgb(var(--color-border) / 10%));
+  }
+}
+
+.s-jt-key {
+  color: rgb(var(--color-primary));
+}
+
+.s-jt-colon {
+  color: rgb(var(--color-muted));
+  margin-inline-end: var(--space-4, 0.25rem);
+}
+
+.s-jv-null {
+  color: rgb(var(--color-muted));
+  font-style: italic;
+}
+
+/* Value colors join the shared --code-* family (see tokens.scss) so themes
+   restyle the tree together with HkToolBlock's code blocks; fallbacks keep
+   the One Dark originals. */
+.s-jv-str {
+  color: var(--code-string, #98c379);
+  word-break: break-all;
+}
+
+.s-jv-num {
+  color: var(--code-number, #d19a66);
+}
+
+.s-jv-bool {
+  color: var(--code-keyword, #c678dd);
+}
+
+.s-jv-str-raw {
+  color: var(--code-string, #98c379);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.s-jt-type {
+  color: rgb(var(--color-muted) / 0.6);
+  font-size: var(--text-3xs, 0.5rem);
+  font-style: italic;
+  font-weight: 400;
+  margin-inline-start: var(--space-8, 0.5rem);
+}
+
+.s-jt-badge {
+  color: rgb(var(--color-muted));
+  font-size: var(--text-3xs, 0.5rem);
+  font-weight: 500;
+  background: rgb(var(--color-surface) / 0.6);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-sm, 4px);
+  padding: 0 0.3em;
+  line-height: 1.4;
+}
+
+.s-jt-badge.is-open {
+  background: transparent;
+  border-color: transparent;
+  font-weight: 400;
+}
+
+.s-jt-indent {
+  /* The collapsed summary reads one tab in — the same column the
+     children occupy when the node is expanded — instead of hugging the
+     chevron. Kept as a flex slot (not padding) so it can never shrink. */
+  flex-shrink: 0;
+  width: var(--jt-toggle, 14px);
+}
+
+.s-jt-preview {
+  color: rgb(var(--color-muted));
+  /* Full row size: a keyless collapsed root's ONLY text is the preview,
+     and a smaller font here would shrink the line box below the toggle's
+     centering assumption and float the whole row high (the 2026-09-30
+     second-round screenshot report). Quietness comes from the muted
+     color, not a smaller size. */
+  font-size: inherit;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* Collapsed summaries live on ONE line: anything past the row's right
+   edge clips to an ellipsis instead of wrapping (a wrapped summary reads
+   as broken content, and the row is one click away from the full view —
+   expand, don't paginate). The box clip needs overflow != visible, which
+   per flexbox also zeroes the item's automatic minimum size, so the span
+   actually shrinks to the row instead of pushing it wide; min-width: 0
+   spells that out so the clip never depends on that spec side effect.
+   Applied to the container preview here and to the collapsed long-string
+   value via the .s-jt-clamp hook in the tsx — expanded leaf rows keep
+   their soft wrap. */
+.s-jt-preview,
+.s-jt-clamp {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

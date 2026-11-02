@@ -1,0 +1,155 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
+
+.s-log-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+  min-height: 0;
+}
+
+.s-log-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.s-log-tabs {
+  display: flex;
+  gap: var(--space-4, 0.25rem);
+}
+
+.s-log-tab {
+  padding: var(--space-4, 0.25rem) var(--space-10, 0.625rem);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs, 0.75rem);
+  cursor: pointer;
+  /* Declared here on purpose: these s-log classes intentionally escape
+   * the `button:where(:not([class^="hk-"])…)` element baseline (base.scss),
+   * which currently supplies their transition/focus ring only by accident
+   * of the hk- exclusion — do not lean on it. */
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease, opacity 200ms ease;
+}
+
+.s-log-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-primary));
+}
+
+.s-log-tab:hover:not([data-active]),
+.s-log-btn:hover:not([data-active]) {
+  background: rgb(var(--color-primary) / 12%);
+  color: rgb(var(--color-text));
+}
+
+.s-log-tab[data-active] {
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-solid-text, 255 255 255));
+  font-weight: 600;
+}
+
+.s-log-controls {
+  display: flex;
+  gap: var(--space-4, 0.25rem);
+}
+
+.s-log-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Reset the element-baseline button padding (base.scss button-base
+   * reaches these non-hk buttons): 0.5rem/1rem inside the fixed 1.75rem
+   * border-box collapses the content box and off-centers the icon. */
+  padding: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 12%));
+  border-radius: var(--radius-sm, 6px);
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease, opacity 200ms ease;
+}
+
+.s-log-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-primary));
+}
+
+.s-log-btn[data-active] {
+  background: rgb(var(--color-primary));
+  border-color: rgb(var(--color-primary));
+  /* Control chrome (icon buttons on the solid fill) follows the
+     theme-configurable icon color, not the computed on-primary. */
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
+}
+
+.s-log-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.s-log-viewer-scroll {
+  /* HScrollContainer root: the VIEWPORT child is the scroller (overlay
+     chrome, native bar hidden) — the root itself must never scroll, so
+     no overflow-y here (the stale `auto` this class used to carry would
+     read as a second, native scroll region). */
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-8, 0.5rem);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 12%));
+  border-radius: var(--radius-md, 8px);
+  background: rgb(var(--color-background) / 0.5);
+}
+
+.s-log-empty {
+  padding: var(--space-16, 1rem);
+  text-align: center;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+}
+
+.s-log-entry {
+  /* Log lines are the canonical copy-me content (diagnostics users
+   * select per-fragment, not just via the toolbar copy-all) — re-enable
+   * under the L2 selection policy (2026-10-29); the toolbar chrome
+   * around them stays denied. */
+  @include user-select(text);
+  padding: var(--space-2, 0.125rem) var(--space-4, 0.25rem);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.s-log-entry-error {
+  color: rgb(var(--color-error));
+}
+
+.s-log-entry-warn {
+  color: rgb(var(--color-warning));
+}
+
+.s-log-entry-debug {
+  color: rgb(var(--color-muted));
+}

@@ -1,0 +1,128 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// ------
+// HkImagePreview
+// Thumbnail image preview with skeleton / error states and a
+// click-to-enlarge affordance (opens the bundled HImageLightbox).
+// ------
+
+.hk-image-preview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--hi-color-gray-100, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: var(--radius-md, 8px);
+}
+
+// Enlarge affordance: the tile acts as a button once the image is up.
+.hk-image-preview.is-zoomable {
+  cursor: zoom-in;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+
+  &:hover {
+    border-color: var(--hi-color-primary, #7aa2f7);
+    // Emphasis drawn INSIDE the border box (HkSelectionGrid precedent):
+    // outer spread rings get shaved per-side by overlapping chrome.
+    box-shadow: inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
+  }
+
+  // Press feedback matching the house button pattern (HkButton variants,
+  // HkSelectionGrid): the tile is role="button" once zoomable.
+  &:active {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #7aa2f7);
+    outline-offset: 2px;
+  }
+}
+
+.hk-image-preview-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  // object-fit comes from the prop (inline style).
+  // Hidden while loading so the shimmer shows through; the real pixels
+  // fade in on the load event.
+  transition: opacity 0.2s ease;
+
+  &.is-pending {
+    opacity: 0;
+  }
+}
+
+// ------
+// Loading state — skeleton shimmer (same language as HkSkeleton)
+// plus a small centered spinner.
+// ------
+
+.hk-image-preview-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent) 25%,
+    color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 18%, transparent) 50%,
+    color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: hk-image-preview-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes hk-image-preview-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ------
+// Error state — broken-image glyph, message, retry.
+// ------
+
+.hk-image-preview-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-12, 0.75rem);
+  color: var(--hi-color-muted, #6c6c6c);
+  text-align: center;
+}
+
+.hk-image-preview-error-icon {
+  width: 2rem;
+  height: 2rem;
+  opacity: 0.6;
+}
+
+.hk-image-preview-error-text {
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+}
+
+// Reduced motion: keep the placeholder, drop the shimmer sweep.
+@media (prefers-reduced-motion: reduce) {
+  .hk-image-preview-loading {
+    animation: none;
+  }
+}

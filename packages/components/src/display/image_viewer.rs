@@ -132,11 +132,10 @@
 // is not part of it — the same crate-level import `scene/board.rs` uses.
 use tairitsu_vdom::{PointerEvent, WheelEvent};
 
-use crate::utils::pointer_from_mouse;
-
 use crate::feedback::spinner::{Spinner, SpinnerSize};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::pointer_from_mouse;
 
 pub struct ImageViewerComponent;
 

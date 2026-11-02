@@ -580,7 +580,8 @@ mod tests {
 
     #[test]
     fn wallpaper_canvas_transform_matches_the_ported_geometry() {
-        use {WallpaperPosition as P, WallpaperScale as S};
+        use WallpaperPosition as P;
+        use WallpaperScale as S;
         // The default look is the exact 1:1 framing.
         assert_eq!(wallpaper_canvas_transform(P::Center, S::Cover), "none");
         assert_eq!(wallpaper_canvas_transform(P::Center, S::Contain), "none");

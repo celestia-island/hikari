@@ -73,12 +73,11 @@
 use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 
+use super::image_viewer::{ImageViewer, ImageViewerProps};
 use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::feedback::modal::Modal;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-
-use super::image_viewer::{ImageViewer, ImageViewerProps};
 
 pub struct ImageLightboxComponent;
 

@@ -27,12 +27,11 @@
 
 use std::cell::RefCell;
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-
 use super::modal::Modal;
 use super::progress_bar::{ProgressBar, ProgressBarSize};
 use super::spinner::Spinner;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct ProgressDialogComponent;
 

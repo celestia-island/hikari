@@ -99,7 +99,6 @@
 // network, extra details) joining only once their facts exist.
 
 use hikari_i18n::t;
-
 use hikari_icons::{Icon, MdiIcon};
 
 use crate::display::{CountdownDigit, CountdownDigitProps};

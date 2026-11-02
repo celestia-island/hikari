@@ -11,3 +11,5 @@ pub use number_input::*;
 pub use number_steppers::*;
 pub use search::*;
 pub use transfer::{SelectChangeEvent, *};
+pub mod template_field;
+pub use template_field::*;

@@ -1,0 +1,41 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/**
+ * HkSearchTrigger chrome: the header icon button and the panel body.
+ * Deliberately the SAME grammar as HkFilterTrigger.scss — filter and
+ * search are the two header affordances of every list page and must
+ * read as one family. The active-keyword marker is the generic
+ * HkCornerBadge wrapped around the button (the filter trigger's green
+ * bottom-right dot, shared — see HkCornerBadge.scss).
+ */
+
+.hk-search-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hk-search-trigger-body {
+  /* One field, bounded like the filter panel: wide enough for a
+   * phrase, narrow enough to stay anchored beside its trigger. */
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-search-trigger-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-8, 0.5rem);
+  border-top: 1px solid rgb(var(--color-border) / 10%);
+  margin-top: var(--space-8, 0.5rem);
+}

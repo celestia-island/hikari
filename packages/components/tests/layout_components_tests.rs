@@ -3,10 +3,11 @@ mod tests {
 
     use hikari_components::layout::{
         Align, AsideProps, Col, ColProps, Container, ContainerProps, ContainerSize, Content,
-        ContentProps, Direction, Divider, DividerOrientation, DividerProps, DividerType, FlexBox,
-        FlexBoxProps, FlexGap, Footer, FooterProps, Grid, GridProps, Header, HeaderProps, Justify,
-        Row, RowProps, ScrollbarContainer, ScrollbarContainerProps, Section, SectionProps, Space,
-        SpaceDirection, SpaceProps, Spacer, SpacerProps, Wrap,
+        ContentProps, Direction, Divider, DividerLength, DividerOrientation, DividerProps,
+        DividerSpacing, DividerTone, DividerVariant, FlexBox, FlexBoxProps, FlexGap, Footer,
+        FooterProps, Grid, GridProps, Header, HeaderProps, Justify, Row, RowProps,
+        ScrollbarContainer, ScrollbarContainerProps, Section, SectionProps, Space, SpaceDirection,
+        SpaceProps, Spacer, SpacerProps, Wrap,
     };
     use hikari_components::prelude::*;
 
@@ -27,34 +28,35 @@ mod tests {
     }
 
     #[test]
-    fn test_divider_type_variants() {
-        assert_eq!(DividerType::default(), DividerType::Solid);
-        let _ = DividerType::Dashed;
-        let _ = DividerType::Dotted;
+    fn test_divider_variant_tones() {
+        assert_eq!(DividerVariant::default(), DividerVariant::Solid);
+        let _ = DividerVariant::Dashed;
     }
 
+    // The W8 wave REPLACED the legacy Divider with the Vue HkDivider mirror
+    // (MIGRATION in src/layout/divider.rs): text/divider_type/text_align/rtl/
+    // class are gone; the surface is the four-axis Tone/Variant/Spacing/Length.
     #[test]
     fn test_divider_props_default() {
         let props = DividerProps::default();
-        assert!(props.text.is_none());
         assert_eq!(props.orientation, DividerOrientation::Horizontal);
-        assert_eq!(props.divider_type, DividerType::Solid);
-        assert_eq!(props.text_align, "center");
-        assert!(props.rtl.is_none());
-        assert_eq!(props.class, "");
+        assert_eq!(props.tone, DividerTone::Subtle);
+        assert_eq!(props.variant, DividerVariant::Solid);
+        assert_eq!(props.spacing, DividerSpacing::None);
+        assert_eq!(props.length, DividerLength::default());
     }
 
     #[test]
-    fn test_divider_with_text() {
+    fn test_divider_four_axis_surface() {
         let props = DividerProps {
-            text: Some("or".to_string()),
             orientation: DividerOrientation::Horizontal,
-            divider_type: DividerType::Dashed,
-            text_align: "left".to_string(),
+            tone: DividerTone::Input,
+            variant: DividerVariant::Dashed,
+            spacing: DividerSpacing::Md,
             ..Default::default()
         };
-        assert_eq!(props.text.as_deref().unwrap(), "or");
-        assert_eq!(props.divider_type, DividerType::Dashed);
+        assert_eq!(props.variant, DividerVariant::Dashed);
+        assert_eq!(props.spacing, DividerSpacing::Md);
     }
 
     // ── FlexBox ───────────────────────────────────────────────

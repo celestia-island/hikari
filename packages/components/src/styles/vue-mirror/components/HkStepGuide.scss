@@ -1,0 +1,187 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkStepGuide — the big-artwork illustrated step cards.
+//
+// Grammar (wowsp's 待命 walkthrough, user direction 2026-09-25): every
+// step is a rounded SURFACE card. The artwork — stroke SVG, icon, or
+// bitmap — is drawn LARGE and bare on the card face (no frame, no bed);
+// the ordinal is a solid primary disc pinned to the card's outer
+// top corner, half outside it; the title and one-line description sit
+// left-aligned under the art. Completed steps swap the ordinal for a
+// check and pick up a success edge, letting the guide double as a
+// checklist while the flow progresses.
+//
+// Orientation follows the guide's OWN width (it is a container-query
+// root): wide → cards sit side by side with a chevron bridging
+// consecutive steps; narrow → they stack full-width. Fixed 520px
+// breakpoint: container-query conditions cannot carry var(), so
+// per-host thresholds would need a prop.
+
+.hk-step-guide {
+  container-type: inline-size;
+}
+
+.hk-step-guide-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin: 0 0 var(--space-12, 0.75rem);
+}
+
+.hk-step-guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  // Headroom so the corner-pinned ordinals never crowd the section label.
+  padding-block-start: var(--space-10, 0.625rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20, 1.25rem);
+}
+
+// ── the card ────────────────────────────────────────────────────────────────
+.hk-step-guide-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-10, 0.625rem);
+  padding: var(--space-20, 1.25rem);
+  padding-block-start: calc(var(--space-20, 1.25rem) + var(--space-2, 0.125rem));
+  border-radius: var(--radius-lg, 1rem);
+  background: var(--hi-color-surface, #ffffff);
+
+  &[data-done] {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi-color-success, #0eb840) 55%, transparent);
+
+    .hk-step-guide-ordinal {
+      background: var(--hi-color-success, #0eb840);
+    }
+
+    .hk-step-guide-art {
+      opacity: 0.45;
+    }
+  }
+}
+
+// ── the ordinal, pinned to the card's outer corner ──────────────────────────
+.hk-step-guide-ordinal {
+  position: absolute;
+  top: calc(var(--space-10, 0.625rem) * -1);
+  inset-inline-start: calc(var(--space-10, 0.625rem) * -1);
+  width: var(--space-24, 1.5rem);
+  height: var(--space-24, 1.5rem);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hi-color-primary, #7aa2f7);
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
+
+.hk-step-guide-check {
+  width: 62%;
+  height: 62%;
+}
+
+// ── the artwork, large and bare on the card face ────────────────────────────
+.hk-step-guide-art {
+  width: 100%;
+  height: var(--hk-step-guide-art-height, 128px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: var(--hi-color-primary, #7aa2f7);
+  transition: opacity 200ms ease;
+}
+
+.hk-step-guide-art-svg {
+  width: 68%;
+  height: 100%;
+}
+
+.hk-step-guide-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--radius-lg, 1rem) - var(--space-6, 0.375rem));
+}
+
+// ── the caption ─────────────────────────────────────────────────────────────
+.hk-step-guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.125rem);
+}
+
+.hk-step-guide-item-title {
+  font-size: var(--text-base, 0.9375rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--hi-color-text-primary, #1e1e1e);
+}
+
+.hk-step-guide-item-desc {
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.55;
+  color: var(--hi-color-text-tertiary, #8b949e);
+}
+
+// ── wide host: the cards lie side by side, chevron between ──────────────────
+@container (min-width: 520px) {
+  .hk-step-guide-list {
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--space-24, 1.5rem);
+  }
+
+  .hk-step-guide-item {
+    flex: 1 1 0;
+    min-width: 0;
+
+    // A chevron centered in the gap, pointing at the next card.
+    &:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      inset-inline-end: calc(var(--space-24, 1.5rem) * -1 + var(--space-2, 0.125rem));
+      width: 9px;
+      height: 9px;
+      border-inline-end: 2px solid var(--hi-color-text-tertiary, #8b949e);
+      border-block-end: 2px solid var(--hi-color-text-tertiary, #8b949e);
+      transform: translateY(-50%) rotate(-45deg);
+    }
+  }
+}
+
+// ── grid layout: auto-fill cards ────────────────────────────────────────────
+.hk-step-guide[data-layout="grid"] {
+  .hk-step-guide-list {
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(var(--hk-step-guide-card-min, 200px), 100%), 1fr)
+    );
+    gap: var(--space-20, 1.25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-step-guide-art {
+    transition: none;
+  }
+}

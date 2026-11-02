@@ -1,0 +1,103 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.s-scheme-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.s-scheme-mode-switch {
+  align-self: center;
+
+  /* The editor renders variant="segmented" — the DEFAULT segmented
+     chrome (hikari's own track) is exactly what the user asked for
+     (2026-10-23: the bespoke tinted track read as a different button
+     family from every other segmented group). The 2026-09-16 custom
+     track predates the editor's move to the segmented variant and is
+     retired with it. */
+}
+
+/* Why-this-strip note: the tabs switch which palette you are EDITING;
+   the applied mode lives in the theme popup's color-mode strip. */
+.s-scheme-mode-hint {
+  align-self: center;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  margin-top: calc(var(--space-8, 0.5rem) * -1);
+}
+
+.s-scheme-colors {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-10, 0.625rem);
+}
+
+.s-scheme-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.s-scheme-groups-title {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-muted));
+}
+
+// One MD3 expansion panel per palette section, flush against its peers.
+.s-scheme-group-panels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+// Section slot grid: 3 columns (full color names need width), 2 on
+// narrow viewports where the modal itself goes edge-to-edge. minmax(0,
+// 1fr) is what lets the row-layout picker labels actually ellipsize.
+.s-scheme-group-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4, 0.25rem) var(--space-6);
+  padding: var(--space-4, 0.25rem) var(--space-4, 0.25rem) var(--space-8, 0.5rem);
+}
+
+/* Non-color slot cell (number slider / enum tab strip). A picker labels
+   itself; a slider and a tab strip do not, so the field supplies the slot
+   label — and the slider, whose value is otherwise only exposed through
+   aria-valuetext, prints it in the unit its cssvar is written with. */
+.s-scheme-group-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.125rem);
+  min-width: 0;
+}
+
+.s-scheme-group-field-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-scheme-group-field-value {
+  font-size: var(--text-2xs, 0.625rem);
+  color: rgb(var(--color-muted));
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
+  .s-scheme-group-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

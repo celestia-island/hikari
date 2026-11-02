@@ -1104,7 +1104,7 @@
 }
 
 .s-auth-card input:not(.hk-otp-cell) {
-  transition: color calc(infinity * 1s) step-end, background-color calc(infinity * 1s) step-end;
+  transition: color 100000000s step-end, background-color 100000000s step-end;
   appearance: none;
   -webkit-appearance: none;
   /* 0 radius here was always a visual no-op: the auth card's inputs are

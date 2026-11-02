@@ -1,0 +1,216 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkIconButtonGroup — the icon-only button-group variant.
+ *
+ * Same visual language as the HkTabs strip (the ONE shared button-group
+ * look): inset track, muted items, primary accent on the active item,
+ * tactile press scale. Only the working-mode extras differ — the items
+ * are square, icon-only, and one size taller than a standard icon
+ * button (md 44px vs 32px), the Windows/macOS-style login chooser.
+ *
+ * Sizing is a component var so hosts can retune one axis per context:
+ *   --hk-icon-group-item-size
+ */
+
+.hk-icon-group {
+  --hk-icon-group-item-size: 2.75rem; /* md */
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.125rem);
+  max-width: 100%;
+  padding: var(--space-2, 0.125rem);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-md, 8px);
+  background: rgb(var(--color-surface, 255 255 255) / 60%);
+}
+
+.hk-icon-group-sm {
+  --hk-icon-group-item-size: 2.25rem;
+}
+
+.hk-icon-group-lg {
+  --hk-icon-group-item-size: 3.25rem;
+}
+
+/* ── Visual variants (orthogonal to the semantic mode) ──────────────────
+ *
+ * "track" (the default above) is the bordered inset strip. The two
+ * frameless variants drop the outer chrome — a frame is a host choice,
+ * not part of a group's meaning (2026-09-17 user direction):
+ *  - "plain": independent buttons, still spaced, each tinting itself;
+ *  - "slider": gapless packed row + one thumb pill that slides to the
+ *    active item (single-selection only; the position is the active
+ *    index × the item-size variable, so retuning the size keeps the
+ *    thumb aligned with no JS measurement).
+ */
+
+.hk-icon-group-plain {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.hk-icon-group-slider {
+  /* A hair of inset so the thumb's rounded corners never clip — nothing
+   * like the track's full frame. */
+  --hk-icon-group-inset: 0.125rem;
+
+  position: relative;
+  padding: var(--hk-icon-group-inset);
+  border: none;
+  background: transparent;
+  /* A visible gap between items (so the sliding thumb never visually
+   * merges neighbours) must ALSO feed the thumb's translate arithmetic —
+   * one custom property drives both, keeping the position pure index
+   * math with no JS measurement. Do not replace with a literal `gap: 0`;
+   * the thumb formula below consumes the same variable. */
+  --hk-icon-group-slider-gap: 0.375rem;
+  gap: var(--hk-icon-group-slider-gap);
+  flex-wrap: nowrap;
+}
+
+.hk-icon-group-slider .hk-icon-group-item {
+  position: relative;
+  /* Items ride above the thumb so their hit targets and tooltips stay
+   * first-class while the pill glides behind them. */
+  z-index: 1;
+  /* Tooltip-less items are DIRECT flex children here — without this a
+   * width-constrained host could compress them while the thumb keeps
+   * the full item-size width (misalignment). Wrapped items are already
+   * flex:none via .hk-tooltip-wrapper. */
+  flex: none;
+}
+
+/* The active item in slider mode carries no tint of its own — the thumb
+ * IS its highlight (keeps the sliding illusion seamless). Scoped to
+ * single mode: in "multiple" + slider the thumb is suppressed and the
+ * per-item tint is the ONLY active indication left. */
+.hk-icon-group-single.hk-icon-group-slider .hk-icon-group-item[data-active] {
+  background: transparent;
+}
+
+.hk-icon-group-slider-thumb {
+  position: absolute;
+  top: var(--hk-icon-group-inset);
+  left: var(--hk-icon-group-inset);
+  width: var(--hk-icon-group-item-size);
+  height: var(--hk-icon-group-item-size);
+  border-radius: var(--radius-sm, 4px);
+  background: rgb(var(--color-primary, 90 140 255) / 14%);
+  transform: translateX(
+    calc(
+      var(--hk-icon-group-active-index, 0) *
+        (var(--hk-icon-group-item-size) + var(--hk-icon-group-slider-gap))
+    )
+  );
+  transition: transform var(--duration-short, 0.15s) ease;
+  pointer-events: none;
+}
+
+/* The HkTooltip wrapper span is the flex child between items — let it
+   shrink to the button so the track gap (not the wrapper) spaces them. */
+.hk-icon-group > .hk-tooltip-wrapper {
+  display: inline-flex;
+  flex: none;
+}
+
+.hk-icon-group-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hk-icon-group-item-size);
+  height: var(--hk-icon-group-item-size);
+  padding: 0;
+  font: inherit;
+  color: rgb(var(--color-muted, 120 130 145));
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  outline: none;
+  transition: color var(--duration-short, 0.15s) ease,
+              background-color var(--duration-short, 0.15s) ease,
+              transform var(--duration-short, 0.15s) ease;
+
+  /* A real <button disabled> still matches :hover — guard the dead ones. */
+  &:hover:not(:disabled):not([data-active]) {
+    color: rgb(var(--color-text, 25 30 40));
+    background: rgb(var(--color-text, 25 30 40) / 6%);
+  }
+
+  /* Tactile press feedback — the button-group family cadence. */
+  &:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  &[data-active] {
+    color: rgb(var(--color-primary, 90 140 255));
+    background: rgb(var(--color-primary, 90 140 255) / 12%);
+  }
+
+  /* Inset ring: the track padding would clip an outset outline. */
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary, 90 140 255));
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.hk-icon-group-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  /* Brand marks (svg/img vnodes) at their intrinsic size; lucide comps
+     sized by the host. The box never grows past the square. */
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.hk-icon-group-item-initial {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Status marker (HkIconButtonGroupOption.marker) — a small dot pinned to
+ * the item's bottom-right corner. "success" = the theme's success green
+ * with a surface-colored ring so it stays legible on top of the icon's
+ * corner and across active/muted tints. Purely decorative: the accessible
+ * meaning lives in the option's label/tooltip the host controls. */
+.hk-icon-group-item-marker {
+  position: absolute;
+  right: calc(var(--space-1, 0.25rem) / 2);
+  bottom: calc(var(--space-1, 0.25rem) / 2);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.hk-icon-group-item-marker-success {
+  background: rgb(var(--color-success, 14 184 64));
+  box-shadow: 0 0 0 0.125rem rgb(var(--color-surface, 255 255 255));
+}
+
+/* Slider items already establish position:relative for the thumb stack —
+ * keep the marker above the gliding pill, not under it. */
+.hk-icon-group-slider .hk-icon-group-item .hk-icon-group-item-marker {
+  z-index: 1;
+}

@@ -203,6 +203,31 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
         base_definitions > 50,
         "token base sheets must define the runtime vocabulary (found {base_definitions})"
     );
+    // The `--hi-*` family is owned by the THEME layer (hikari-theme's
+    // `styles/*.scss`, emitted by the theme provider in both forms). Pull its
+    // definitions in when the repo checkout is present (a sdist ships the
+    // mirror but not the theme crate; the mirror-local definitions above keep
+    // the guard meaningful there).
+    let theme_styles = crate_root().join("..").join("theme").join("styles");
+    if theme_styles.is_dir()
+        && let Ok(entries) = std::fs::read_dir(&theme_styles)
+    {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().is_some_and(|ext| ext == "scss")
+                && let Ok(text) = std::fs::read_to_string(&path)
+            {
+                for line in text.lines() {
+                    let trimmed = line.trim_start();
+                    if let Some(rest) = trimmed.strip_prefix("--")
+                        && let Some(name) = rest.split(':').next()
+                    {
+                        definitions.insert(format!("--{}", name.trim()));
+                    }
+                }
+            }
+        }
+    }
 
     let mut referenced_without_fallback = 0usize;
     let dir = mirror_root().join("components");
@@ -213,10 +238,14 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
         .filter(|path| path.extension().is_some_and(|ext| ext == "scss"))
         .collect();
     sheets.sort();
-    for path in sheets {
-        let text = std::fs::read_to_string(&path)
+
+    // Local definitions count too (a `*-vars` partial legitimately declares the
+    // per-site tokens its consumer reads). Collect them from every mirrored
+    // sheet up front — the approximation is deliberate: the guard answers
+    // "does the mirrored tree define it anywhere", not "@use reachability".
+    for path in &sheets {
+        let text = std::fs::read_to_string(path)
             .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
-        // Local definitions inside the partial itself count as resolved.
         for line in text.lines() {
             let trimmed = line.trim_start();
             if let Some(rest) = trimmed.strip_prefix("--")
@@ -225,7 +254,21 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
                 definitions.insert(format!("--{}", name.trim()));
             }
         }
-        let mut rest = text.as_str();
+    }
+    for path in sheets {
+        let text = std::fs::read_to_string(&path)
+            .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
+        // Local definitions inside the partial itself count as resolved.
+        let clean = strip_scss_comments(&text);
+        for line in clean.lines() {
+            let trimmed = line.trim_start();
+            if let Some(rest) = trimmed.strip_prefix("--")
+                && let Some(name) = rest.split(':').next()
+            {
+                definitions.insert(format!("--{}", name.trim()));
+            }
+        }
+        let mut rest = clean.as_str();
         while let Some(start) = rest.find("var(--") {
             rest = &rest[start + 4..];
             let name_end = rest.find([')', ',']).unwrap_or(rest.len());
@@ -271,8 +314,40 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
             "registry bundle is missing the canonical token {needle}"
         );
     }
-    // Mirrored family sheets + the chrome they depend on.
-    for needle in [".hk-alert", ".hk-modal", ".hk-window-close", ".hk-btn"] {
+    // One stable class per mirrored family + the chrome they depend on. The
+    // list must grow with the sync table: a sheet that is vendored but never
+    // registered reds here (R3 found 17 unguarded sheets without it).
+    for needle in [
+        ".hk-alert",
+        ".hk-modal",
+        ".hk-window-close",
+        ".hk-btn",
+        ".hk-avatar",
+        ".hk-badge",
+        ".hk-card",
+        ".hk-checkbox",
+        ".hk-input",
+        ".hk-icon-button",
+        ".hk-icon-group",
+        ".hk-icon-chip",
+        ".hk-label",
+        ".hk-radio",
+        ".hk-select",
+        ".hk-slider",
+        ".hk-switch",
+        ".hk-textarea",
+        ".hk-corner-badge",
+        ".hk-spinner",
+        ".hk-progress-ring",
+        ".hk-toast",
+        ".hk-tooltip",
+        ".hk-drawer",
+        ".hk-popover",
+        ".hk-loading-veil",
+        ".hk-message-box",
+        ".hk-confirm-dialog",
+        ".hk-persistent-toast",
+    ] {
         assert!(
             bundle.contains(needle),
             "registry bundle is missing {needle}"
@@ -298,6 +373,40 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         (second.css_bundle().len(), digest(&second.css_bundle())),
         "registry bundle concatenation must be deterministic"
     );
+}
+
+/// Strip SCSS comments so `var(--x)` mentions inside prose do not count as
+/// references (a doc comment is not a declaration site).
+fn strip_scss_comments(source: &str) -> String {
+    let mut out = String::with_capacity(source.len());
+    let mut chars = source.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '/' && chars.peek() == Some(&'*') {
+            chars.next();
+            let mut prev = '\0';
+            for n in chars.by_ref() {
+                if prev == '*' && n == '/' {
+                    break;
+                }
+                if n == '\n' {
+                    out.push('\n');
+                }
+                prev = n;
+            }
+            continue;
+        }
+        if c == '/' && chars.peek() == Some(&'/') {
+            for n in chars.by_ref() {
+                if n == '\n' {
+                    out.push('\n');
+                    break;
+                }
+            }
+            continue;
+        }
+        out.push(c);
+    }
+    out
 }
 
 fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) {

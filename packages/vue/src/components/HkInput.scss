@@ -256,9 +256,11 @@
 }
 
 /* Autofill overrides */
+/* The finite duration (instead of `calc(infinity * 1s)`) keeps this sheet
+   compilable by the grass compiler the Rust form shares it with. */
 .hk-input-box input,
 .hk-input-box textarea {
-  transition: color calc(infinity * 1s) step-end, background-color calc(infinity * 1s) step-end;
+  transition: color 100000000s step-end, background-color 100000000s step-end;
 }
 
 .hk-input-box input:-webkit-autofill,

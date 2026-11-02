@@ -432,7 +432,7 @@ pub fn MessageBox(props: MessageBoxProps) -> Element {
                     div { class: "hk-message-box-actions",
                         Button {
                             variant: confirm_variant,
-                            size: ButtonSize::Medium,
+                            size: ButtonSize::Md,
                             class: "hk-message-box-confirm".to_string(),
                             onclick: Some(EventHandler::new(settle_confirm.clone())),
                             children: VNode::Text(VText::new(&confirm_label)),
@@ -440,7 +440,7 @@ pub fn MessageBox(props: MessageBoxProps) -> Element {
                         if show_cancel {
                             Button {
                                 variant: ButtonVariant::Secondary,
-                                size: ButtonSize::Medium,
+                                size: ButtonSize::Md,
                                 onclick: Some(EventHandler::new(settle_cancel.clone())),
                                 children: VNode::Text(VText::new(&cancel_label)),
                             }

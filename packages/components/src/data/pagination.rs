@@ -377,10 +377,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     }
 
                     IconButton {
-                        icon: MdiIcon::ArrowRight,
-                        size: IconButtonSize::Medium,
-                        glow: true,
-                        glow_color: GlowColor::Ghost,
+                        icon: Some(MdiIcon::ArrowRight),
+                        size: IconButtonSize::S32,
                         onclick: Some(EventHandler::new(move |_| {
                             if let Ok(page) = jump_to_for_button.get().parse::<u32>()
                                 && page >= 1 && page <= total_pages {
@@ -448,10 +446,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     }
 
                     IconButton {
-                        icon: MdiIcon::ArrowRight,
-                        size: IconButtonSize::Medium,
-                        glow: true,
-                        glow_color: GlowColor::Ghost,
+                        icon: Some(MdiIcon::ArrowRight),
+                        size: IconButtonSize::S32,
                         onclick: Some(EventHandler::new(move |_| {
                             if let Ok(page) = jump_to_for_button.get().parse::<u32>()
                                 && page >= 1 && page <= total_pages {

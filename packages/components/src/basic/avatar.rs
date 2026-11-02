@@ -1,170 +1,145 @@
-// hikari-components/src/basic/avatar.rs
-//! Avatar component for user profile images
-
-use hikari_palette::classes::{AvatarClass, ClassesBuilder, UtilityClass};
+// hi-components/src/basic/avatar.rs
+// Avatar — mirror of the canonical Vue `HkAvatar`.
+//
+// The stylesheet is the SAME sheet the Vue library ships
+// (`packages/vue/src/components/HkAvatar.scss`, vendored under
+// `src/styles/vue-mirror/`), compiled with `no_hash`.
+//
+//   div.hk-avatar.hk-avatar-{size}
+//     img[src alt={name}]                 (when `src` is set)
+//     span.hk-avatar-fallback  {initial}  (otherwise: the name's first char,
+//                                          upper-cased; "?" when no name)
+//
+// Delta vs Vue (documented): the fallback character is the localized
+// `hikari::avatar.fallback` string in Vue; the Rust locale tables carry the
+// `hk.*` key family, so the mirror uses the English fallback literal — same
+// as the other mirrored components (see the wave's PR note).
 
 use crate::prelude::*;
-use crate::style_builder::{CssProperty, StyleStringBuilder};
+use crate::styled::StyledComponent;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub struct AvatarComponent;
+
+/// The three size steps (Vue default `md`).
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum AvatarSize {
-    #[default]
-    Xs,
     Sm,
+    #[default]
     Md,
     Lg,
-    Xl,
 }
 
 impl AvatarSize {
-    pub fn pixels(&self) -> u32 {
+    /// The `hk-avatar-{size}` modifier class exactly as Vue emits it.
+    pub fn class_name(self) -> &'static str {
         match self {
-            AvatarSize::Xs => 24,
-            AvatarSize::Sm => 32,
-            AvatarSize::Md => 40,
-            AvatarSize::Lg => 48,
-            AvatarSize::Xl => 64,
-        }
-    }
-
-    pub fn icon_size(&self) -> u32 {
-        match self {
-            AvatarSize::Xs => 14,
-            AvatarSize::Sm => 18,
-            AvatarSize::Md => 22,
-            AvatarSize::Lg => 26,
-            AvatarSize::Xl => 34,
-        }
-    }
-
-    pub fn font_size(&self) -> &'static str {
-        match self {
-            AvatarSize::Xs => "0.625rem",
-            AvatarSize::Sm => "0.75rem",
-            AvatarSize::Md => "0.875rem",
-            AvatarSize::Lg => "1rem",
-            AvatarSize::Xl => "1.25rem",
+            AvatarSize::Sm => "hk-avatar-sm",
+            AvatarSize::Md => "hk-avatar-md",
+            AvatarSize::Lg => "hk-avatar-lg",
         }
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub enum AvatarVariant {
+/// The fallback initial, exactly as Vue derives it:
+/// `name?.charAt(0)?.toUpperCase() ?? "?"` — so a NULL name falls to `?`,
+/// while an EMPTY-string name renders an empty initial (the nullish operator
+/// does not catch `""`).
+pub fn avatar_fallback_initial(name: Option<&str>) -> String {
+    match name {
+        None => "?".to_string(),
+        Some(name) => name
+            .chars()
+            .next()
+            .map(|c| c.to_uppercase().to_string())
+            .unwrap_or_default(),
+    }
+}
+
+#[define_props]
+pub struct AvatarProps {
+    /// Image source; when absent the initial fallback renders.
+    pub src: Option<String>,
+
+    /// User name (also the image `alt`).
+    pub name: Option<String>,
+
     #[default]
-    Circular,
-    Rounded,
-    Square,
-}
-
-impl AvatarVariant {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            AvatarVariant::Circular => "50%",
-            AvatarVariant::Rounded => "8px",
-            AvatarVariant::Square => "0",
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
-pub enum AvatarFallbackMode {
-    #[default]
-    Initial,
-    Icon,
-    None,
+    pub size: AvatarSize,
 }
 
 #[component]
-pub fn Avatar(
-    #[props(default)] src: Option<String>,
-
-    #[props(default = "Avatar".to_string())] alt: String,
-
-    #[props(default = AvatarSize::Md)] size: AvatarSize,
-
-    #[props(default = AvatarVariant::Circular)] variant: AvatarVariant,
-
-    #[props(default)] fallback: Option<String>,
-
-    #[props(default)] fallback_mode: AvatarFallbackMode,
-
-    #[props(default)] class: String,
-) -> Element {
-    let size_px = size.pixels();
-    let icon_size = size.icon_size();
-    let font_size = size.font_size();
-
-    let container_style = StyleStringBuilder::new()
-        .add_px(CssProperty::Width, size_px)
-        .add_px(CssProperty::Height, size_px)
-        .add(CssProperty::BorderRadius, variant.as_str())
-        .add(CssProperty::Display, "flex")
-        .add(CssProperty::AlignItems, "center")
-        .add(CssProperty::JustifyContent, "center")
-        .add(CssProperty::Overflow, "hidden")
-        .build_clean();
-
-    let img_style = StyleStringBuilder::new()
-        .add_px(CssProperty::Width, size_px)
-        .add_px(CssProperty::Height, size_px)
-        .add(CssProperty::ObjectFit, "cover")
-        .build_clean();
-
-    let base_class = ClassesBuilder::new()
-        .add(AvatarClass::Avatar)
-        .add_raw(&class)
-        .build();
-
-    let fallback_text = fallback.clone().unwrap_or_else(|| {
-        alt.chars()
-            .find(|c| c.is_alphabetic() || c.is_numeric())
-            .map(|c| c.to_uppercase().to_string())
-            .unwrap_or_else(|| "?".to_string())
-    });
-
-    // Pre-compute conditions outside of rsx!
-    let has_src = src.is_some();
-    let is_icon_mode = fallback_mode == AvatarFallbackMode::Icon;
-    let is_initial_mode = fallback_mode == AvatarFallbackMode::Initial;
-    let src_val = src.clone();
-
-    // Build fallback content outside rsx!
-    let fallback_content = if is_icon_mode {
-        rsx! {
-            svg {
-                class: AvatarClass::AvatarIcon.as_class(),
-                width: icon_size,
-                height: icon_size,
-                view_box: "0 0 24 24",
-                fill: "currentColor",
-                path { d: "M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z" }
+pub fn Avatar(props: AvatarProps) -> Element {
+    let size_class = props.size.class_name();
+    match &props.src {
+        Some(src) => rsx! {
+            div {
+                class: format!("hk-avatar {size_class}"),
+                img {
+                    src: src.clone(),
+                    alt: props.name.clone().unwrap_or_default(),
+                }
+            }
+        },
+        None => {
+            let initial = avatar_fallback_initial(props.name.as_deref());
+            rsx! {
+                div {
+                    class: format!("hk-avatar {size_class}"),
+                    span { class: "hk-avatar-fallback", "{initial}" }
+                }
             }
         }
-    } else {
-        rsx! {
-            span {
-                class: AvatarClass::AvatarFallback.as_class(),
-                style: "font-size: {font_size};",
-                "{fallback_text}"
-            }
-        }
-    };
+    }
+}
 
-    // Build content based on condition
-    let inner_content = if has_src {
-        rsx! {
-            img {
-                class: AvatarClass::AvatarImg.as_class(),
-                src: src_val.unwrap_or_default(),
-                alt: alt.clone(),
-                style: img_style,
-            }
-        }
-    } else {
-        fallback_content
-    };
+impl StyledComponent for AvatarComponent {
+    fn styles() -> &'static str {
+        tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkAvatar.scss", no_hash }.0
+    }
 
-    rsx! {
-        div { class: base_class, style: container_style, {inner_content} }
+    fn name() -> &'static str {
+        "avatar"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn avatar_size_classes_match_vue() {
+        assert_eq!(AvatarSize::Sm.class_name(), "hk-avatar-sm");
+        assert_eq!(AvatarSize::Md.class_name(), "hk-avatar-md");
+        assert_eq!(AvatarSize::Lg.class_name(), "hk-avatar-lg");
+    }
+
+    #[test]
+    fn avatar_fallback_initial_matches_vue() {
+        assert_eq!(avatar_fallback_initial(Some("alice")), "A");
+        assert_eq!(avatar_fallback_initial(Some("Bob")), "B");
+        // An empty name renders an EMPTY initial in Vue (`??` is nullish-only).
+        assert_eq!(avatar_fallback_initial(Some("")), "");
+        assert_eq!(avatar_fallback_initial(None), "?");
+    }
+
+    #[test]
+    fn avatar_defaults_match_the_vue_props() {
+        let props = AvatarProps::default();
+        assert_eq!(props.size, AvatarSize::Md);
+        assert!(props.src.is_none());
+        assert!(props.name.is_none());
+    }
+
+    #[test]
+    fn avatar_styles_come_from_the_canonical_vue_sheet() {
+        let css = AvatarComponent::styles();
+        assert!(
+            css.contains(".hk-avatar"),
+            "avatar css must carry the vue classes"
+        );
+        assert!(
+            !css.contains("CSS generation failed"),
+            "scss compilation failed for the mirrored avatar sheet"
+        );
     }
 }

@@ -1,112 +1,138 @@
 // hi-components/src/basic/card.rs
-// Card component
-
-use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
+// Card — mirror of the canonical Vue `HkCard`.
+//
+// The stylesheet is the SAME sheet the Vue library ships
+// (`packages/vue/src/components/HkCard.scss`, vendored under
+// `src/styles/vue-mirror/`), compiled with `no_hash`. DOM contract:
+//
+//   div.hk-card [.hk-card-scrollable] [.hk-card-hoverable] [+class]
+//       (style: --hk-pad override)  onclick
+//     div.hk-card-header?                 (title or header slot)
+//       h3.hk-card-title                  (title text)
+//     div.hk-card-body [.hk-card-body-unpadded]
+//       ── scrollable: true ──
+//       div.hk-card-body-scroll           (the scroll region)
+//         div.hk-card-body-pad?           (padded wrapper)
+//           {children}
+//       ── else ──
+//       {children}
+//     div.hk-card-footer?                 (footer slot)
+//
+// Delta vs Vue (documented): Vue's scrollable body wraps `HkScrollContainer`
+// (overlay scrollbar chrome). That component's mirror lands with the display
+// wave; until then the mirror renders the same `hk-card-body-scroll` wrapper
+// with a plain `overflow:auto` inline style, so the scroll contract (the card
+// becomes a column whose body fills and scrolls) holds without the custom
+// scrollbar finish.
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::{HkPad, hk_pad_style};
 
 pub struct CardComponent;
 
 #[define_props]
 pub struct CardProps {
-    pub hoverable: bool,
-
-    pub bordered: bool,
-
-    pub class: String,
-
+    /// Header title (`h3.hk-card-title`).
     pub title: Option<String>,
 
-    pub extra: Option<Element>,
+    /// Hover lift (`hk-card-hoverable`).
+    #[default]
+    pub hoverable: bool,
+
+    /// Body padding (Vue default true; false emits `hk-card-body-unpadded`).
+    #[default(true)]
+    pub padded: bool,
+
+    /// Shared container-padding override (`--hk-pad`; see `utils::pad`).
+    pub padding: Option<HkPad>,
+
+    /// Turn the body into a scroll region (`hk-card-scrollable`).
+    #[default]
+    pub scrollable: bool,
+
+    #[default]
+    pub class: String,
+
+    /// Header slot content (wins over `title`).
+    pub header: Option<Element>,
+
+    /// Footer slot content.
+    pub footer: Option<Element>,
 
     pub children: Element,
 
+    /// Fired on a click anywhere on the card.
     pub onclick: Option<EventHandler<MouseEvent>>,
-
-    pub glow: bool,
 }
 
-///
-///
-///
 #[component]
 pub fn Card(props: CardProps) -> Element {
-    let card_classes = ClassesBuilder::new()
-        .add(CardClass::Card)
-        .add_if(CardClass::CardHoverable, || props.hoverable)
-        .add_if(CardClass::CardBordered, || props.bordered)
-        .add_raw(&props.class)
-        .build();
+    let mut classes = String::from("hk-card");
+    if props.scrollable {
+        classes.push_str(" hk-card-scrollable");
+    }
+    if props.hoverable {
+        classes.push_str(" hk-card-hoverable");
+    }
+    if !props.class.is_empty() {
+        classes.push(' ');
+        classes.push_str(&props.class);
+    }
 
-    let has_title = props.title.is_some();
-    let has_extra = props.extra.is_some();
+    let mut body_classes = String::from("hk-card-body");
+    if !props.padded {
+        body_classes.push_str(" hk-card-body-unpadded");
+    }
 
-    // Build the card content as a fragment
-    let glow_overlay = if props.glow {
-        Some(rsx! {
-            div {
-                class: "hk-card-glow hi-glow-dim",
-                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
-            }
-        })
-    } else {
-        None
-    };
+    let children = props.children.clone();
 
-    // Build title element
-    let title_el = props.title.as_ref().map(|title| {
-        rsx! {
-            div { class: CardClass::CardTitle.as_class(), "{title}" }
-        }
-    });
-
-    // Build extra element
-    let extra_el = props.extra.as_ref().map(|extra| {
-        rsx! {
-            div { class: CardClass::CardExtra.as_class(), {extra.clone()} }
-        }
-    });
-
-    let header = if has_title || has_extra {
-        Some(rsx! {
-            div { class: CardClass::CardHeader.as_class(),
-                {title_el.unwrap_or_else(VNode::empty)}
-                {extra_el.unwrap_or_else(VNode::empty)}
-            }
-        })
-    } else {
-        None
-    };
-
-    let body = rsx! {
-        div { class: CardClass::CardBody.as_class(), {props.children} }
-    };
-
-    let content = VNode::Fragment(vec![
-        glow_overlay.unwrap_or_else(VNode::empty),
-        header.unwrap_or_else(VNode::empty),
-        body,
-    ]);
-
-    // Unified version for all targets
-    // Note: Glow effect with mouse tracking requires element refs which will be added later
     rsx! {
         div {
-            class: card_classes,
-            onclick: move |e| {
-                if let Some(handler) = props.onclick.as_ref() {
+            class: classes,
+            style: hk_pad_style(props.padding),
+            onclick: move |e: MouseEvent| {
+                if let Some(handler) = &props.onclick {
                     handler.call(e);
                 }
             },
-            {content}
+            if props.title.is_some() || props.header.is_some() {
+                div { class: "hk-card-header",
+                    if let Some(header) = &props.header {
+                        {header.clone()}
+                    } else if let Some(title) = &props.title {
+                        h3 { class: "hk-card-title", "{title}" }
+                    }
+                }
+            }
+            div {
+                class: body_classes,
+                if props.scrollable {
+                    div {
+                        class: "hk-card-body-scroll",
+                        style: "overflow:auto",
+                        if props.padded {
+                            div { class: "hk-card-body-pad",
+                                {children}
+                            }
+                        } else {
+                            {children}
+                        }
+                    }
+                } else {
+                    {children}
+                }
+            }
+            if let Some(footer) = &props.footer {
+                div { class: "hk-card-footer", {footer.clone()} }
+            }
         }
     }
 }
 
 impl StyledComponent for CardComponent {
     fn styles() -> &'static str {
-        tairitsu_macros::scss! { file: "src/styles/components/card.scss", no_hash }.0
+        tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkCard.scss", no_hash }.0
     }
 
     fn name() -> &'static str {
@@ -114,183 +140,34 @@ impl StyledComponent for CardComponent {
     }
 }
 
-// ------
-// CardHeader - Optional header with title, subtitle, and actions
-// ------
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[define_props]
-pub struct CardHeaderProps {
-    pub title: Option<String>,
-
-    pub subtitle: Option<String>,
-
-    pub avatar: Option<Element>,
-
-    pub action: Option<Element>,
-
-    pub class: String,
-}
-
-///
-///
-///
-#[component]
-pub fn CardHeader(props: CardHeaderProps) -> Element {
-    let classes = ClassesBuilder::new()
-        .add(CardClass::CardHeader)
-        .add_raw(&props.class)
-        .build();
-
-    let has_avatar = props.avatar.is_some();
-    let has_title = props.title.is_some();
-    let has_subtitle = props.subtitle.is_some();
-    let has_action = props.action.is_some();
-
-    // Build conditional sections
-    let avatar_el = if has_avatar {
-        let avatar = props.avatar.clone().unwrap();
-        Some(rsx! {
-            div { class: "hk-card-header-avatar", {avatar} }
-        })
-    } else {
-        None
-    };
-
-    let title_el = if has_title {
-        let title = props.title.clone().unwrap();
-        Some(rsx! {
-            div { class: CardClass::CardTitle.as_class(), "{title}" }
-        })
-    } else {
-        None
-    };
-
-    let subtitle_el = if has_subtitle {
-        let subtitle = props.subtitle.clone().unwrap();
-        Some(rsx! {
-            div { class: CardClass::CardSubtitle.as_class(), "{subtitle}" }
-        })
-    } else {
-        None
-    };
-
-    let action_el = if has_action {
-        let action = props.action.clone().unwrap();
-        Some(rsx! {
-            div { class: "hk-card-header-action", {action} }
-        })
-    } else {
-        None
-    };
-
-    rsx! {
-        div { class: classes,
-            // Left section: avatar + title/subtitle
-            div { class: "hk-card-header-left",
-                {avatar_el.unwrap_or_else(VNode::empty)}
-                div {
-                    {title_el.unwrap_or_else(VNode::empty)}
-                    {subtitle_el.unwrap_or_else(VNode::empty)}
-                }
-            }
-            // Right section: action buttons
-            {action_el.unwrap_or_else(VNode::empty)}
-        }
+    #[test]
+    fn card_defaults_match_the_vue_props() {
+        let props = CardProps::default();
+        assert!(props.title.is_none());
+        assert!(!props.hoverable);
+        assert!(props.padded);
+        assert!(props.padding.is_none());
+        assert!(!props.scrollable);
+        assert_eq!(props.class, "");
+        assert!(props.header.is_none());
+        assert!(props.footer.is_none());
+        assert!(props.onclick.is_none());
     }
-}
 
-// ------
-// CardContent - Main content area
-// ------
-
-#[define_props]
-pub struct CardContentProps {
-    pub children: Element,
-
-    pub class: String,
-}
-
-///
-///
-///
-#[component]
-pub fn CardContent(props: CardContentProps) -> Element {
-    let classes = ClassesBuilder::new()
-        .add(CardClass::CardBody)
-        .add_raw(&props.class)
-        .build();
-
-    rsx! {
-        div { class: classes, {props.children} }
-    }
-}
-
-// ------
-// CardActions - Footer with action buttons
-// ------
-
-#[define_props]
-pub struct CardActionsProps {
-    pub children: Element,
-
-    pub class: String,
-
-    pub disable_spacing: bool,
-}
-
-///
-///
-///
-#[component]
-pub fn CardActions(props: CardActionsProps) -> Element {
-    let classes = ClassesBuilder::new()
-        .add(CardClass::CardActions)
-        .add_if(CardClass::CardActionsNoSpacing, || props.disable_spacing)
-        .add_raw(&props.class)
-        .build();
-
-    rsx! {
-        div { class: classes, {props.children} }
-    }
-}
-
-// ------
-// CardMedia - Optional media container (images/videos)
-// ------
-
-#[define_props]
-pub struct CardMediaProps {
-    pub src: String,
-
-    pub alt: String,
-
-    pub height: Option<String>,
-
-    pub class: String,
-}
-
-///
-///
-///
-#[component]
-pub fn CardMedia(props: CardMediaProps) -> Element {
-    let style = if let Some(height) = props.height {
-        format!("height: {}", height)
-    } else {
-        String::new()
-    };
-
-    let classes = ClassesBuilder::new()
-        .add(CardClass::CardMedia)
-        .add_raw(&props.class)
-        .build();
-
-    rsx! {
-        img {
-            class: classes,
-            src: props.src,
-            alt: props.alt,
-            style,
-        }
+    #[test]
+    fn card_styles_come_from_the_canonical_vue_sheet() {
+        let css = CardComponent::styles();
+        assert!(
+            css.contains(".hk-card") && css.contains(".hk-card-body"),
+            "card css must carry the vue classes"
+        );
+        assert!(
+            !css.contains("CSS generation failed"),
+            "scss compilation failed for the mirrored card sheet"
+        );
     }
 }

@@ -1,0 +1,180 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/*
+ * HkCheckbox / HkRadio — unified selection control.
+ */
+
+@use "../styles/polyfill" as *;
+
+.hk-checkbox {
+  display: inline-flex;
+  align-items: center;
+  /* When the control sits INLINE among text (not in a host flex row), the
+   * default `vertical-align: baseline` parks the inline-flex's bottom edge
+   * on the text baseline and rides the box ~4px above the text's visual
+   * center. `middle` is the house parity value (HkSwitch/HkRadio). */
+  vertical-align: middle;
+  gap: var(--space-8, 0.5rem);
+  cursor: pointer;
+  @include user-select(none);
+}
+
+.hk-checkbox[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- box ---------- */
+
+.hk-checkbox-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--radius-sm, 4px);
+  /* The resting outline is the palette border slot at FULL strength:
+   * --hi-color-border is the faint divider channel (15% alpha) and melts
+   * into white/dark surfaces. */
+  border: 1px solid rgb(var(--color-border, 100 100 100));
+  background: var(--hi-color-surface, rgba(255,255,255,0.95));
+  transition:
+    border-color var(--duration-normal, 0.3s) ease,
+    background var(--duration-normal, 0.3s) ease,
+    scale var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  flex-shrink: 0;
+  position: relative;
+
+  /* Box scales with the size modifier — it previously ignored `size`
+   * entirely (an lg row carried an md box, floating 2px high next to
+   * 16px text). sm/md/lg now match HkRadio's box scale. */
+  .hk-checkbox-sm & {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .hk-checkbox-lg & {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+}
+
+/* Press feedback (house parity: HkSwitch thumb squish). */
+.hk-checkbox:not([data-disabled]):active .hk-checkbox-box {
+  scale: 0.9;
+}
+
+/* Hover parity with HkRadio: an unchecked box picks up the primary edge
+   under the pointer. Checked/indeterminate keep their solid fill. */
+.hk-checkbox:not([data-disabled]):hover .hk-checkbox-box:not([data-checked]):not([data-indeterminate]) {
+  border-color: var(--hi-color-primary, #7aa2f7);
+}
+
+.hk-checkbox[data-type="radio"] .hk-checkbox-box {
+  border-radius: 50%;
+}
+
+.hk-checkbox-box[data-checked] {
+  background: var(--hi-color-primary, #7aa2f7);
+  border-color: var(--hi-color-primary, #7aa2f7);
+}
+
+.hk-checkbox-box[data-indeterminate] {
+  background: var(--hi-color-primary, #7aa2f7);
+  border-color: var(--hi-color-primary, #7aa2f7);
+}
+
+/* ---------- input ---------- */
+
+.hk-checkbox-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Keyboard focus: the native input is visually hidden, so draw the house
+   double ring (HkButton/HkTable pattern) on the box via :has();
+   :focus-visible keeps mouse toggles ring-free. */
+.hk-checkbox-box:has(.hk-checkbox-input:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--hi-color-surface, rgba(255,255,255,0.95)),
+    0 0 0 4px var(--hi-color-primary, #7aa2f7);
+}
+
+/* ---------- markers ---------- */
+
+.hk-checkbox-icon {
+  position: relative;
+  z-index: var(--hk-z-above);
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
+  width: 14px;
+  height: 14px;
+
+  .hk-checkbox-sm & {
+    width: 11px;
+    height: 11px;
+  }
+
+  .hk-checkbox-lg & {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.hk-checkbox-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--color-on-solid-icon, 255 255 255));
+  z-index: var(--hk-z-above);
+
+  .hk-checkbox-sm & {
+    width: 5px;
+    height: 5px;
+  }
+
+  .hk-checkbox-lg & {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+.hk-checkbox-indeterminate {
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgb(var(--color-on-solid-icon, 255 255 255));
+  z-index: var(--hk-z-above);
+
+  .hk-checkbox-sm & {
+    width: 6px;
+  }
+
+  .hk-checkbox-lg & {
+    width: 10px;
+  }
+}
+
+/* ---------- label ---------- */
+
+.hk-checkbox[data-animating] .hk-checkbox-box {
+  will-change: border-color, background;
+}
+
+/* Reduced motion: the press squish snaps instead of tweening (house
+   pattern: HkSwitch.scss / HkSlider.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-checkbox-box {
+    transition: none;
+  }
+}

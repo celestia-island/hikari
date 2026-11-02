@@ -19,6 +19,12 @@ Each mirror keeps one provenance header (everything up to and including the
 byte-for-byte. Edit the UPSTREAM Vue sheet, then run this script — never
 hand-edit a mirror.
 
+Compile constraint: a mirrored sheet must stay parseable by the grass
+compiler (the Rust form compiles this very file). Modern CSS the parser lacks
+(for example `calc(infinity * 1s)`) therefore cannot live in a mirrored
+sheet — use an equivalent literally-compilable value in the canonical sheet
+and note it in the PR.
+
 Guards:
   * Rust:  packages/components/tests/vue_mirror_drift_tests.rs (cargo test)
   * this script's --check mode exits 1 on any drift (CI-friendly)
@@ -58,6 +64,29 @@ SHARED_PARTIALS: list[tuple[str, str]] = [
 CHROME_SHEETS: list[str] = [
     "window-close.scss",
     "HkButton.scss",
+]
+
+# W2a — basic-form family (button / form controls / identity atoms) plus the
+# partial sheets they @use (HkIconButtonVars, HkPlaceholderMarquee).
+BASIC_SHEETS: list[str] = [
+    "HkIconButton.scss",
+    "HkIconButtonVars.scss",
+    "HkIconButtonGroup.scss",
+    "HkIconChip.scss",
+    "HkInput.scss",
+    "HkPlaceholderMarquee.scss",
+    "HkTextarea.scss",
+    "HkSelect.scss",
+    "HkCheckbox.scss",
+    "HkRadio.scss",
+    "HkSwitch.scss",
+    "HkSlider.scss",
+    "HkLabel.scss",
+    "HkBadge.scss",
+    "HkAvatar.scss",
+    "HkCard.scss",
+    # The dot tones HkIconButton references (vue: hk-corner-badge-<tone>).
+    "HkCornerBadge.scss",
 ]
 
 FAMILY_SHEETS: list[str] = [
@@ -104,7 +133,7 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
 
@@ -113,7 +142,7 @@ def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")
     return "\n".join(lines) + "\n"
 

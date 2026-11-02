@@ -1,0 +1,129 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/*
+ * HkBadge — canonical small label / tag / pill / status component.
+ *
+ * Color model is CSS-variable-driven so consumers can either pick a semantic
+ * variant class (sets all three channels coherently) or override any
+ * channel individually via the color / bgColor / borderColor props
+ * (rendered as inline --hk-badge-* custom properties).
+ */
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
+
+.hk-badge {
+  --hk-badge-text: inherit;
+  --hk-badge-bg: transparent;
+  --hk-badge-border: transparent;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--hk-badge-border);
+  background: var(--hk-badge-bg);
+  color: var(--hk-badge-text);
+  line-height: 1.4;
+  white-space: nowrap;
+  /* Tags are labels, not prose: dragging across a row of pills must never
+     start a text selection (the workspace tag contract makes HkCopyBadge
+     the copy path instead). */
+  @include user-select(none);
+}
+
+/* ---------- size ---------- */
+.hk-badge[data-size="sm"] {
+  font-size: var(--text-2xs);
+  padding: var(--space-1) var(--space-6);
+}
+
+/* ---------- shape ---------- */
+.hk-badge[data-pill="false"] {
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- typography ---------- */
+.hk-badge[data-mono] {
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+}
+
+.hk-badge[data-uppercase] {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- dot indicator ---------- */
+.hk-badge [data-el="dot"] {
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: 50%;
+  background: var(--hk-badge-text);
+  flex-shrink: 0;
+}
+
+/* dot-only: strip the pill padding/border/background so it's just the
+   indicator dot, not a dot wrapped in a bordered pill. */
+.hk-badge[data-dot-only] {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+/* ------
+   Semantic variants
+   ================================================================== */
+
+.hk-badge-default {
+  --hk-badge-text: rgb(var(--color-text));
+  --hk-badge-bg: rgb(var(--color-surface) / var(--opacity-half));
+  --hk-badge-border: var(--border-input);
+}
+
+.hk-badge-primary {
+  --hk-badge-text: rgb(var(--color-primary));
+  --hk-badge-bg: var(--c-primary-dim);
+  --hk-badge-border: var(--c-primary-overlay);
+}
+
+.hk-badge-success {
+  --hk-badge-text: rgb(var(--color-success));
+  --hk-badge-bg: rgb(var(--color-success) / 10%);
+  --hk-badge-border: rgb(var(--color-success) / 20%);
+}
+
+.hk-badge-error {
+  --hk-badge-text: rgb(var(--color-error));
+  --hk-badge-bg: var(--c-error-dim);
+  --hk-badge-border: var(--c-error-overlay);
+}
+
+.hk-badge-warning {
+  --hk-badge-text: rgb(var(--color-warning));
+  --hk-badge-bg: rgb(var(--color-warning) / 10%);
+  --hk-badge-border: rgb(var(--color-warning) / 20%);
+}
+
+.hk-badge-info {
+  --hk-badge-text: rgb(var(--color-info));
+  --hk-badge-bg: rgb(var(--color-info) / 10%);
+  --hk-badge-border: rgb(var(--color-info) / 20%);
+}
+
+.hk-badge-muted {
+  --hk-badge-text: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  --hk-badge-bg: rgb(var(--color-muted) / 8%);
+  --hk-badge-border: rgb(var(--color-muted) / 12%);
+}

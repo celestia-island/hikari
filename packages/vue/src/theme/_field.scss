@@ -87,7 +87,7 @@
 @mixin field-autofill-overrides($box-class) {
   .#{$box-class} input,
   .#{$box-class} textarea {
-    transition: color calc(infinity * 1s) step-end, background-color calc(infinity * 1s) step-end;
+    transition: color 100000000s step-end, background-color 100000000s step-end;
   }
 
   .#{$box-class} input:-webkit-autofill,

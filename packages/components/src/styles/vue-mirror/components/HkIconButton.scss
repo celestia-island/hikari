@@ -1,0 +1,179 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+@use "./HkIconButtonVars.scss";
+
+// ------
+// Hikari IconButton Component styling
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (HkIconButtonVars.scss)
+// - Custom: Runtime overrides via AnimationBuilder
+//
+// NOTE: This sheet now carries baseline hover/press feedback via the
+// --hi-icon-button-* active vars; hosts can out-rank it (see below).
+// ------
+
+.hk-icon-button {
+  // Layer2 variables are defined in HkIconButtonVars.scss
+
+  // Layout
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  // The status dot's anchor layer (.hk-icon-button-dot below) — a
+  // relative button keeps the mark INSIDE the control's own silhouette
+  // no matter what wrappers or flex rows do around it.
+  position: relative;
+  padding: 0;
+  line-height: 0;
+
+  // Size - use CSS variables
+  width: var(--hi-icon-button-size);
+  height: var(--hi-icon-button-size);
+  min-width: var(--hi-icon-button-size);
+  max-width: var(--hi-icon-button-size);
+  min-height: var(--hi-icon-button-size);
+  max-height: var(--hi-icon-button-size);
+
+  // Allow glow effect to show
+  overflow: visible;
+
+  // Remove default button styling
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  // Background - use CSS variables
+  background: var(--hi-icon-button-bg);
+  border: none;
+  border-radius: var(--hi-icon-button-radius);
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 400;
+  color: var(--hi-icon-button-icon-color);
+
+  // Transitions - use CSS variables
+  transition: var(--hi-icon-button-transition);
+
+  // Resting transform stays none and the press keeps it that way — the
+  // press feedback is the background wash only.
+
+  // Cursor
+  cursor: pointer;
+
+  // Focus state - only outline, no color changes (the glyph color var is
+  // identical at rest, so re-declaring it here would be a no-op)
+  &:focus-visible {
+    outline: 2px solid var(--hi-icon-button-border-color-focus);
+    outline-offset: 2px;
+  }
+
+  // Disabled state
+  &:disabled {
+    background: var(--hi-icon-button-bg-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // Hover / press feedback. The old contract deferred these to the
+  // Rust-side Glow wrapper, but Vue-library hosts render no Glow
+  // (window-close.scss and the lightbox close each had to paint their
+  // own tint). These defaults consume the designed active vars from
+  // HkIconButtonVars.scss; :where() keeps both rules at (0,1,0) so any
+  // host hover paint — .hk-window-close's (0,3,0) tint, the lightbox
+  // chip's (0,4,0) re-assertion — still outranks them (zero-specificity
+  // guard pattern from styles/theme/base.scss).
+  &:where(:hover:not(:disabled):not(:active)) {
+    background: var(--hi-icon-button-bg-hover, var(--hi-icon-button-bg-active));
+  }
+
+  &:where(:active:not(:disabled)) {
+    background: var(--hi-icon-button-bg-active);
+  }
+
+  // ------
+  // Size/variant hooks carry no rules here: .hk-icon-button-16/24/32/36/40
+  // and -ghost/-borderless/-primary/-secondary/-danger/-success get all of
+  // their custom properties from HkIconButtonVars.scss.
+  // ------
+
+  // ------
+  // Icon Styles - Use CSS Variables
+  // ------
+
+  .hk-icon-button-icon {
+    width: var(--hi-icon-button-icon-size);
+    height: var(--hi-icon-button-icon-size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    color: var(--hi-icon-button-icon-color);
+
+    svg {
+      width: var(--hi-icon-button-icon-size);
+      height: var(--hi-icon-button-icon-size);
+      display: block;
+    }
+
+    // Theme-context glyph size (user direction 2026-09-05): BA themes keep
+    // scale 1; thin-stroke themes publish a >1 scale for their slightly
+    // larger functional glyphs. transform keeps the 32px hit box intact.
+    .hk-icon {
+      transform: scale(var(--hk-func-icon-scale, 1));
+    }
+  }
+
+  // Active state for icon
+  &:active:not(:disabled) .hk-icon-button-icon {
+    color: var(--hi-icon-button-icon-color-active);
+  }
+
+  // Disabled state for icon
+  &:disabled .hk-icon-button-icon {
+    color: var(--hi-icon-button-icon-color-disabled);
+  }
+}
+
+// The transition above drives the press transform; snap it under reduced
+// motion (house pattern: HkFab.scss / HkExpansionPanel.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-icon-button {
+    transition: none;
+  }
+}
+
+// ------
+// Button-owned status dot (dot prop)
+// ------
+
+/* The mark lives INSIDE the button's own box (bottom-right inset), not
+ * straddling a wrapper corner: on a borderless ghost trigger inside a
+ * centered flex row, the corner-straddling badge read as a stray dot
+ * floating below the glyph (2026-10-28 user report). Tone channels come
+ * from HkCornerBadge's variant classes (one badge grammar); the surface
+ * ring keeps the dot legible on any button fill. */
+.hk-icon-button-dot {
+  position: absolute;
+  right: var(--hk-icon-button-dot-inset, 2px);
+  bottom: var(--hk-icon-button-dot-inset, 2px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hk-badge-bg, rgb(var(--color-success)));
+  box-shadow: 0 0 0 1.5px rgb(var(--color-surface) / 85%);
+  pointer-events: none;
+}

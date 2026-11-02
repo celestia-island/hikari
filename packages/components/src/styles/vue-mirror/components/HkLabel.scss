@@ -1,0 +1,49 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkLabel — unified label shell for control label positions.
+ *
+ * One typography source for every control label (checkbox / radio / switch /
+ * …): plain text via the `text` prop or rich content via the default slot
+ * both render inside this shell, so mixed plain/rich label lists read with
+ * the same font. Links inside a label are the one sanctioned rich-text
+ * element: they get the primary accent so a clickable agreement link is
+ * obviously interactive without any consumer-side styling. */
+
+.hk-label {
+  display: inline;
+  font-size: var(--text-base, 0.875rem);
+  line-height: 1.5;
+  color: var(--hi-color-text-primary, #1e1e1e);
+
+  &.hk-label-sm {
+    font-size: var(--text-xs, 0.75rem);
+  }
+
+  &.hk-label-lg {
+    font-size: var(--text-md, 1rem);
+  }
+
+  a {
+    color: var(--hi-color-primary, #7aa2f7);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 55%, transparent);
+      outline-offset: 2px;
+    }
+  }
+}

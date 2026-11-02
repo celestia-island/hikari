@@ -1,0 +1,223 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../tokens";
+@use "./menu-item" as mi;
+
+/* HkPopupSelect */
+
+.hk-popup-select-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.hk-popup-select-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  /* 72% keeps the caption hierarchy while surviving dark-theme tinted
+   * surfaces; override per-app with --hk-field-label-alpha. */
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+.hk-popup-select-required {
+  margin-inline-start: var(--space-2);
+  color: rgb(var(--color-error));
+}
+
+.hk-popup-select-trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  // Logical longhand: the wide end inset clears the arrow on the inline END
+  // edge, so an RTL locale mirrors both the padding and the arrow with it.
+  padding: var(--space-8) var(--space-12);
+  padding-inline-end: var(--space-32);
+  min-height: 2.5rem;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  /* Longhand on purpose: the former comma-separated shorthand declared one
+   * transition per property where only `filter` carried the duration — the
+   * rest animated at 0s so hover/focus snapped (HkButton.scss precedent). */
+  transition-property: background-color, border-color, color, box-shadow,
+    opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+  position: relative;
+}
+
+.hk-popup-select-trigger:hover:not([data-disabled]) {
+  border-color: var(--c-primary-strong);
+}
+
+// Press feedback (house pattern: HkButton.scss :active brightness dip).
+.hk-popup-select-trigger:active:not(:disabled):not([data-disabled]) {
+  filter: brightness(0.95);
+}
+
+.hk-popup-select-trigger:focus,
+.hk-popup-select-trigger[data-state="open"] {
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-popup-select-trigger[data-error] {
+  border-color: var(--c-error-strong);
+}
+
+.hk-popup-select-trigger[data-error]:focus,
+.hk-popup-select-trigger[data-error][data-state="open"] {
+  border-color: rgb(var(--color-error));
+  box-shadow: var(--shadow-focus-error);
+}
+
+.hk-popup-select-trigger[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Compact variant (size="sm"): the dense-row stock — filter condition
+ * rows, toolbars — where the 2.5rem form-field stock reads oversized.
+ * Mirrors HkDatePicker's .hk-dp-trigger-sm geometry. */
+.hk-popup-select-trigger-sm {
+  min-height: 2rem;
+  padding: var(--space-4) var(--space-8);
+  padding-inline-end: var(--space-28);
+  font-size: var(--text-sm);
+}
+
+.hk-popup-select-trigger-sm .hk-popup-select-arrow {
+  inset-inline-end: var(--space-8);
+}
+
+.hk-popup-select-value {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Italic overhang cushion (menu-item label rule): the value truncates
+   * at the padding edge and an italicized value's trailing stroke leans
+   * past the last advance. Symmetric because the trigger centers its
+   * value — one-sided room would read as a 0.1em optical shift. The
+   * token is declared on menu-item rows, and the trigger sits outside
+   * that grammar — hence the fallback. */
+  padding-inline: var(--hk-menu-item-label-cushion, 0.2em);
+}
+
+.hk-popup-select-arrow {
+  position: absolute;
+  inset-inline-end: var(--space-12);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  pointer-events: none;
+  transition: transform var(--duration-normal) ease;
+}
+
+.hk-popup-select-trigger[data-state="open"] .hk-popup-select-arrow {
+  transform: rotate(180deg);
+}
+
+.hk-popup-select-content {
+  min-width: 180px;
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* The viewport is an HkScrollContainer: its overlay scrollbar (the shared
+ * chrome in theme/_scrollbar.scss) draws the bar — no native styling here. */
+.hk-popup-select-viewport .hk-scroll-container-viewport {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+/* Unified menu-item spec (see ./_menu-item.scss); sheet geometry flows
+ * from the shared `.hk-popover-panel.hk-is-sheet` token context. */
+.hk-popup-select-item {
+  @include mi.item;
+}
+
+/* Two-line option rows, rendered ONLY for options that carry a
+ * description — a stock row keeps the bare label span (wrap allowed, no
+ * optical shift) so existing consumers see byte-identical geometry (R2).
+ * The body owns the row's flex growth so both lines ellipsis against the
+ * same edge. */
+.hk-popup-select-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hk-popup-select-item-label {
+  @include mi.label;
+}
+
+/* The secondary line inherits the row color (hover/checked tints flow
+ * through) and steps down via opacity + the caption size, so it stays
+ * clearly meta against both the plain and the primary checked face. */
+.hk-popup-select-item-desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: inherit;
+  opacity: 0.62;
+  /* Same italic-overhang clipping room the label mixin reserves. */
+  padding-inline-end: var(--hk-menu-item-label-cushion);
+}
+
+/* Keyboard highlight face yields to checked/active; the hover face comes
+ * from mi.item's own guarded :hover (identical values, higher specificity). */
+.hk-popup-select-item[data-highlighted]:not([data-checked]):not([data-active]) {
+  background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+  border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
+  color: rgb(var(--color-text));
+}
+
+.hk-popup-select-error {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: rgb(var(--color-error));
+}
+
+// Mobile sheet form (HPopover sheetOnMobile): full-width option list with
+// touch-sized rows (row geometry flows from the shared sheet tokens).
+// ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the sheet PANEL is the
+// window scroller (.hk-popover-panel.hk-is-sheet carries overflow-y:
+// auto), so the viewport must NOT cap itself here — an inner max-height
+// lit a second nested scrollbar inside the same window. The desktop
+// popout keeps its 240px content cap + viewport scroll, where the
+// viewport bar is the popup's only scrollbar.
+
+// Chevron flip is a transform animation — house reduced-motion guard
+// (HkExpansionPanel.scss silences its chevron the same way).
+@media (prefers-reduced-motion: reduce) {
+  .hk-popup-select-arrow {
+    transition: none;
+  }
+}

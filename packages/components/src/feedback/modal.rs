@@ -108,6 +108,8 @@ pub struct ModalAction {
     pub variant: ModalActionVariant,
     pub loading: bool,
     pub disabled: bool,
+    /// Fired on press (Vue's `ModalAction.onClick`).
+    pub on_click: Option<EventHandler<()>>,
 }
 
 #[define_props]
@@ -320,17 +322,18 @@ pub fn Modal(props: ModalProps) -> Element {
                         } else if let Some(actions) = &props.footer_actions {
                             for (i, action) in actions.iter().enumerate() {
                                 {
-                                    // Delta vs Vue (documented): footer actions
-                                    // render the crate's own Button until the
-                                    // HkButton (`.hk-btn`) mirror lands; the
-                                    // variant mapping is the Vue one.
+                                    // Footer actions render through the mirrored
+                                    // Button; the variant map is Vue's own, so
+                                    // `Outline` stays outline (it is NOT folded
+                                    // into secondary).
                                     let variant = match action.variant {
                                         ModalActionVariant::Primary => ButtonVariant::Primary,
                                         ModalActionVariant::Secondary => ButtonVariant::Secondary,
                                         ModalActionVariant::Danger => ButtonVariant::Danger,
                                         ModalActionVariant::Ghost => ButtonVariant::Ghost,
-                                        ModalActionVariant::Outline => ButtonVariant::Secondary,
+                                        ModalActionVariant::Outline => ButtonVariant::Outline,
                                     };
+                                    let action_click = action.on_click.clone();
                                     rsx! {
                                         Button {
                                             variant,
@@ -338,6 +341,11 @@ pub fn Modal(props: ModalProps) -> Element {
                                             disabled: action.disabled,
                                             loading: action.loading,
                                             class: "hk-modal-action".to_string(),
+                                            onclick: action_click.map(|handler| {
+                                                EventHandler::new(move |_event: MouseEvent| {
+                                                    handler.call(());
+                                                })
+                                            }),
                                             children: VNode::Text(VText::new(&action.label)),
                                         }
                                     }
@@ -418,6 +426,68 @@ mod tests {
         assert_eq!(action.variant, ModalActionVariant::Secondary);
         assert!(!action.loading);
         assert!(!action.disabled);
+    }
+
+    #[test]
+    fn modal_footer_action_wires_the_click_handler() {
+        let clicks = std::rc::Rc::new(std::cell::Cell::new(0usize));
+        let counter = std::rc::Rc::clone(&clicks);
+        let node = Modal(ModalProps {
+            open: true,
+            footer_actions: Some(vec![ModalAction {
+                label: "OK".to_string(),
+                on_click: Some(EventHandler::new(move |_: ()| {
+                    counter.set(counter.get() + 1);
+                })),
+                ..Default::default()
+            }]),
+            ..Default::default()
+        });
+        // Serialization drops handlers, so walk the tree and INVOKE the button's
+        // click listener: deleting the wiring leaves it a no-op.
+        fn click_action_button(node: &Element) -> bool {
+            match node {
+                VNode::Element(el) => {
+                    if el.class.to_string().contains("hk-modal-action")
+                        && let Some(handler) = el.event_handlers.get("click")
+                    {
+                        handler.borrow_mut()(
+                            Box::new(MouseEvent::default()) as Box<dyn tairitsu_vdom::EventData>
+                        );
+                        return true;
+                    }
+                    el.children.iter().any(click_action_button)
+                }
+                VNode::Fragment(children) => children.iter().any(click_action_button),
+                _ => false,
+            }
+        }
+        assert!(click_action_button(&node), "no action button found");
+        assert_eq!(clicks.get(), 1, "the wired handler must run");
+    }
+
+    #[test]
+    fn modal_footer_actions_keep_the_vue_variant_and_the_click_channel() {
+        let html = Modal(ModalProps {
+            open: true,
+            footer_actions: Some(vec![
+                ModalAction {
+                    label: "Cancel".to_string(),
+                    variant: ModalActionVariant::Outline,
+                    ..Default::default()
+                },
+                ModalAction {
+                    label: "OK".to_string(),
+                    variant: ModalActionVariant::Primary,
+                    ..Default::default()
+                },
+            ]),
+            ..Default::default()
+        })
+        .render_to_html();
+        // Outline must NOT be folded into secondary (Vue's map keeps it).
+        assert!(html.contains("hk-btn-outline"), "{html}");
+        assert!(html.contains("hk-btn-primary"), "{html}");
     }
 
     #[test]

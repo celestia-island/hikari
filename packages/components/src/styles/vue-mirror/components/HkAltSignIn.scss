@@ -1,0 +1,71 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkAltSignIn — alternative sign-in trigger row + entry panel.
+   Token-driven only; mirrors the .s-auth-footer type/color grammar so the
+   row sits inside an auth card without breaking its rhythm. */
+
+.hk-alt-signin {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.hk-alt-signin__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  width: 100%;
+  padding: var(--space-4, 0.25rem) 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-muted, #6c6c6c);
+  transition:
+    color var(--duration-normal, 0.3s) ease,
+    opacity var(--duration-normal, 0.3s) ease;
+}
+
+.hk-alt-signin__trigger:hover:not(:disabled),
+.hk-alt-signin__trigger[aria-expanded="true"] {
+  color: var(--hi-color-text-secondary, #666666);
+}
+
+/* Keyboard position feedback on the full-width disclosure row. */
+.hk-alt-signin__trigger:focus-visible:not(:disabled) {
+  outline: 2px solid var(--hi-color-primary, #7aa2f7);
+  outline-offset: 2px;
+}
+
+.hk-alt-signin__trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Decorative rules flanking the label give the collapsed row the
+   "section divider" read while staying a single focusable button. */
+.hk-alt-signin__rule {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.hk-alt-signin__label {
+  flex: 0 0 auto;
+}
+
+.hk-alt-signin__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.125rem);
+  min-width: 12rem;
+  padding: var(--space-4, 0.25rem);
+}

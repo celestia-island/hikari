@@ -138,3 +138,13 @@ pub use crate::production::{
     VideoPlayerProps,
 };
 pub use crate::styled::{StyleRegistry, StyledComponent};
+// Overlay + auth family Props
+pub use crate::auth::{
+    AltSignInProps, AuthCardProps, AuthMethodListProps, AuthSubmitButtonProps, CaptchaModalProps,
+    CaptchaWidgetProps, CookieConsentProps, MfaVerifyCardProps, PasswordSurfaceProps,
+    SignInCardProps, ThirdPartySignInCardProps,
+};
+pub use crate::overlay::{
+    AdaptiveDialogProps, ContextMenuProviderProps, FloatingLayerProps, PopupSelectProps,
+    ProtocolModalProps, SelectPanelProps,
+};

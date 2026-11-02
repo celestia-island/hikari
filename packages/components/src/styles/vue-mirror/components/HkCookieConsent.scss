@@ -1,0 +1,41 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.s-cookie-consent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  font-size: var(--text-2xs, 0.625rem);
+  color: rgb(var(--color-muted));
+}
+
+.s-cookie-consent-ok {
+  background: transparent;
+  border: none;
+  color: rgb(var(--color-primary));
+  cursor: pointer;
+  font-size: var(--text-2xs, 0.625rem);
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+.s-cookie-consent-icon {
+  color: rgb(var(--color-success));
+  opacity: 0.5;
+  cursor: default;
+}

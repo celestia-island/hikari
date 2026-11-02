@@ -10,7 +10,7 @@ description = "Core UI components (buttons, inputs, tables, modals) for the Hika
 doctest = false
 
 [features]
-default = ["basic", "feedback", "navigation", "layout", "data", "display", "entry", "production"]
+default = ["basic", "feedback", "navigation", "layout", "data", "display", "entry", "production", "overlay", "auth"]
 
 # Component groups (shortcuts) - the only features the module tree actually
 # gates on (`src/styled.rs` registers component groups per feature).
@@ -27,6 +27,8 @@ data = []
 display = []
 entry = []
 production = []
+overlay = []
+auth = []
 
 [dependencies]
 # Hikari design system

@@ -2,7 +2,7 @@
  * HkBoard — the shared node-and-edge board surface.
  *
  * ONE world-camera canvas that every graph-like page builds on (history
- * topic maps, SCADA scenes, PLC panels, and whatever comes next). The
+ * topic maps, operations scenes, PLC panels, and whatever comes next). The
  * board owns the motion feel and the chrome; the page owns the layout:
  *
  *  - CAMERA: 5% geometric zoom ladder with an ANIMATED settle (no snapping),
@@ -221,7 +221,7 @@ export default defineComponent({
     let pinchBase: { cam: BoardCamera; dist: number; mid: BoardPoint } | null = null;
     let dragState: { node: BoardNodeInput; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
     // Every node press is tracked (draggable or not) so read-only boards
-    // — SCADA scenes, mind maps — still get `nodeClick` on a short tap.
+    // — operations scenes, mind maps — still get `nodeClick` on a short tap.
     let pressed: { id: string; pointerId: number; x: number; y: number } | null = null;
 
     /** How many of the board's own pixels one DRAWN pixel is worth: the

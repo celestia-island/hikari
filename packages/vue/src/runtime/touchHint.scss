@@ -1,0 +1,73 @@
+/* installHkTouchHintBridge — the `.hk-touch-hint-bar` chrome.
+ *
+ * The bar is the TOUCH half of the tooltip story: docked at the TOP
+ * CENTRE of the viewport, breadcrumb-like, deliberately NOT anchored at
+ * the finger — a hint that covered the element being inspected would
+ * defeat itself. Palette, type and shadow mirror `.hk-tooltip-popup`
+ * (components/HkTooltip.scss) on purpose, including that file's
+ * intentional decoupling from theme tokens: a transient annotation must
+ * stay legible on any wallpaper, so light/dark re-ink is the whole
+ * colour story. Keep the two rules in step.
+ */
+.hk-touch-hint-bar {
+  position: fixed;
+  /* Below the phone status strip: notches and speaker bays eat the raw
+   * top edge, and a hint parked under hardware chrome is invisible. */
+  top: calc(env(safe-area-inset-top, 0px) + var(--space-8, 0.5rem));
+  left: 0;
+  right: 0;
+  /* max-content + auto margins is the centring pair — left:50%/translate
+   * would fight the entrance transform below for the transform slot. */
+  margin-inline: auto;
+  width: max-content;
+  max-width: min(92vw, 34rem);
+  padding: var(--space-6, 6px) var(--space-14, 0.875rem);
+  /* Pill, like the breadcrumb strip's family of floating chips. */
+  border-radius: var(--radius-full, 999px);
+  /* Fallback only — the presenter stamps the live tooltip-band z INLINE
+   * over this (the popup-manager handle pattern from the hover bridge). */
+  z-index: var(--hk-overlay-z-tooltip, 300);
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.4;
+  word-break: break-word;
+  /* It can never block: the bar floats over live content and must never
+   * steal the very taps and presses that re-trigger hints. */
+  pointer-events: none;
+  /* One line when it fits; a long hint card degrades to a 2-line
+   * -webkit-line-clamp with the platform ellipsis instead of an
+   * unbounded sliver or a clipped edge. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity var(--duration-fast, 0.15s) var(--ease-elastic, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform var(--duration-fast, 0.15s) var(--ease-elastic, cubic-bezier(0.16, 1, 0.3, 1));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  /* Same decoupled pair as .hk-tooltip-popup (see that file's header):
+   * light base, dark re-ink — legible on any wallpaper. */
+  background: #ffffff;
+  color: #000000;
+}
+
+.hk-touch-hint-bar.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* House reduced-motion guard (the HkTooltip pattern): the entrance is a
+   transform slide — drop it, keep the bar visible instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-touch-hint-bar {
+    transition: none;
+  }
+}
+
+/* Light mode needs no override — the base rule above already is the
+   light palette; only dark re-inks the bar (tooltip parity). */
+[data-mode="dark"] .hk-touch-hint-bar {
+  background: #4b4b4b;
+  color: #ffffff;
+}

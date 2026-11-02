@@ -400,10 +400,10 @@ describe("late registration", () => {
 
 describe("localized text and sections", () => {
   it("resolves LocalizedText by locale with en and first-value fallbacks", () => {
-    const map = { en: "Hydrogen", "zh-Hans": "氢气", ja: "水素" };
-    expect(resolveLocalizedText(map, "zh-Hans")).toBe("氢气");
-    expect(resolveLocalizedText(map, "fr")).toBe("Hydrogen");
-    expect(resolveLocalizedText({ de: "Wasserstoff" }, "fr")).toBe("Wasserstoff");
+    const map = { en: "Buffer", "zh-Hans": "缓冲", ja: "バッファ" };
+    expect(resolveLocalizedText(map, "zh-Hans")).toBe("缓冲");
+    expect(resolveLocalizedText(map, "fr")).toBe("Buffer");
+    expect(resolveLocalizedText({ de: "Puffer" }, "fr")).toBe("Puffer");
     expect(resolveLocalizedText("bare string", "zh-Hans")).toBe("bare string");
   });
 
@@ -423,16 +423,16 @@ describe("localized text and sections", () => {
           key: "media",
           label: "Media",
           slots: [
-            { key: "h2", label: "H2", defaults: { dark: { r: 3, g: 3, b: 3 }, light: { r: 4, g: 4, b: 4 } } },
+            { key: "accent", label: "Accent", defaults: { dark: { r: 3, g: 3, b: 3 }, light: { r: 4, g: 4, b: 4 } } },
           ],
         },
       ],
     });
     const resolved = resolveGroupTokens("dark");
     expect(resolved.sectioned.l1).toEqual({ r: 1, g: 1, b: 1 });
-    expect(resolved.sectioned.h2).toEqual({ r: 3, g: 3, b: 3 });
+    expect(resolved.sectioned.accent).toEqual({ r: 3, g: 3, b: 3 });
     const group = getTokenGroups().find((g) => g.id === "sectioned")!;
-    expect(allGroupSlots(group).map((s) => s.key)).toEqual(["l1", "h2"]);
+    expect(allGroupSlots(group).map((s) => s.key)).toEqual(["l1", "accent"]);
   });
 });
 

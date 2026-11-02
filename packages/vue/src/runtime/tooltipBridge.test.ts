@@ -13,7 +13,9 @@ import { usePopupManager } from "./usePopupManager";
  *   it; fresher writers (host re-set, HkPopover's `title=""` blanking,
  *   Vue undefined-removal) always win
  * - escape hatches: empty titles, [data-hk-tooltip-native], elements
- *   inside an HkTooltip wrapper — never engage
+ *   inside an HkTooltip wrapper — never engage; a pointerover with
+ *   pointerType "touch" never engages either (the touch hint bar in
+ *   runtime/touchHint.ts owns touch pointers)
  * - pointerdown hides but stays engaged; scroll/resize and Esc disengage
  * - the popup mounts inside #hk-overlay-root (same home as the component
  *   tooltip's teleported popup) — at body level its in-root ordinal z
@@ -133,6 +135,21 @@ describe("installHkTooltipBridge", () => {
     document.body.appendChild(wrapper);
     hover(wrapped);
     expect(wrapped.getAttribute("title")).toBe("Managed");
+    vi.advanceTimersByTime(1000);
+    expect(bridgePopup()?.classList.contains("hk-tooltip-visible")).toBe(false);
+  });
+
+  it("never engages a touch pointerover (the touch hint bar owns touch)", () => {
+    vi.useFakeTimers();
+    install();
+    const el = trigger("Touch owned");
+    el.dispatchEvent(
+      new PointerEvent("pointerover", { pointerType: "touch", bubbles: true }),
+    );
+    // Title untouched: engaging here would strip the attribute for an
+    // anchored popup the touch mode never shows, and break the touch
+    // bar's own title/data-hk-title fallback chain.
+    expect(el.hasAttribute("title")).toBe(true);
     vi.advanceTimersByTime(1000);
     expect(bridgePopup()?.classList.contains("hk-tooltip-visible")).toBe(false);
   });

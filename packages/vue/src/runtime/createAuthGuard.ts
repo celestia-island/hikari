@@ -4,7 +4,7 @@
  * Upstreamed from shittim-chest (its copy was the most evolved form:
  * setupWizardRoute split, permissions-store factory, session-restore
  * retry, fetchUser failure semantics) to replace the per-repo forks —
- * easy-hydro-erp carried an older vendored copy under
+ * the ERP adopter carried an older vendored copy under
  * `src/vendor/plana-ui/`. Structurally typed: no vue-router or pinia
  * dependency, so hikari stays UI-library-scoped and any router-shaped
  * object works.

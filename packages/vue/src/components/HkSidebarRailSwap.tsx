@@ -1,5 +1,6 @@
-import { defineComponent } from "vue";
+import { defineComponent, ref, type ComponentPublicInstance } from "vue";
 
+import { useRailIconFlight } from "../composables/useRailIconFlight";
 import HkCrossfade from "./HkCrossfade";
 
 import "./HkSidebarRail.scss";
@@ -77,6 +78,20 @@ import "./HkSidebarRail.scss";
  *   dissolve (HkCrossfade), so the frozen copy is neither tabbable nor
  *   announced while the live one fades in.
  *
+ * THE ICON FLIGHT (2026-11-02, useRailIconFlight): a pure dissolve
+ * cannot show the icons' small horizontal journey into the rail column —
+ * both copies fade, nothing moves (user direction: "I can't tell the
+ * icon slides slightly left as it collapses"). This component hands the
+ * flip to the flight choreographer: icons opted in by HkMenu
+ * (`data-flip-icon`) are cloned into a flight layer on THIS host and
+ * animated from the leaving rect to the entering one, while BOTH ends
+ * of each matched pair hide (`data-flipping` + the per-cell
+ * `data-flip-flying` mark — the single-glyph contract: the clone is the
+ * one visible glyph from arm to landing) and the rest of the content
+ * keeps the plain dissolve. Skipped under reduced motion / the
+ * animation switch / no WAAPI / no matching pair — every such case
+ * degrades to today's dissolve.
+ *
  * Reduced motion: HkCrossfade keeps a short opacity exchange (a fade
  * carries no movement) while the kit's sheets kill the width slides —
  * the handoff degrades to a quick dip, never a squeeze.
@@ -89,18 +104,28 @@ export default defineComponent({
     rail: { type: Boolean, default: false },
     /** Pinned width of the RAIL generation. The host's collapsed-width
      *  token (HkSidebar's `collapsedWidth`, the shell's
-     *  `sidebarCollapsedWidth`, wowsp's 56px). */
+     *  `sidebarCollapsedWidth`, wowsp's 56px). The rail row square's
+     *  body inline track reads the same width as
+     *  `--hk-sidebar-rail-w` — declared by the rail holder (HkSidebar /
+     *  HkFaceShell), so a non-default width keeps exact squares. */
     railWidth: { type: String, default: "56px" },
     /** Pinned width of the EXPANDED generation. The host's full sidebar
      *  width token — a CSS length or a var() reference. */
     expandedWidth: { type: String, default: "280px" },
   },
   setup(props, { slots }) {
+    // The swap host IS this component's root element — HkCrossfade's
+    // host div (class fallthrough). The component ref's $el reaches it
+    // without adding a wrapper (the clip's child combinator styles
+    // `.hk-sidebar-rail-clip > .hk-sidebar-rail-swap` directly).
+    const swapRef = ref<ComponentPublicInstance | null>(null);
+    const swapEl = (): HTMLElement | null => (swapRef.value?.$el as HTMLElement | null) ?? null;
+    useRailIconFlight(swapEl, () => props.rail, () => (props.rail ? "rail" : "full"));
     return () => (
       // The class rides HkCrossfade's host (Vue class fallthrough), so
       // HkSidebarRail.scss can size the swap INSIDE the clip without a
       // second wrapper element.
-      <HkCrossfade class="hk-sidebar-rail-swap" swapKey={props.rail ? "rail" : "full"} tag="div">
+      <HkCrossfade ref={swapRef} class="hk-sidebar-rail-swap" swapKey={props.rail ? "rail" : "full"} tag="div">
         <div
           class="hk-sidebar-rail-generation"
           data-rail={props.rail || undefined}

@@ -796,7 +796,9 @@ fn panel_row(
                 // Delta vs Vue `glyphOpFor`: a select field's exact pair
                 // (eq/ne) draws =/≠ here, never the fuzzy pair's ≈/≉ — an
                 // exact match must not look approximate, and its accessible
-                // name must not say "contains".
+                // name must not say "contains". Rust leads on this one: the
+                // recommended fix is for Vue to adopt the same =/≠ pairing,
+                // not for this form to revert to the fuzzy drawing.
                 op,
                 ..Default::default()
             }));
@@ -1269,7 +1271,8 @@ mod tests {
         })
         .render_to_html();
         // =/≠, not the fuzzy pair's ≈/≉: an exact match must not look
-        // approximate. (Delta vs Vue `glyphOpFor`, documented in panel_row.)
+        // approximate. (Delta vs Vue `glyphOpFor`, documented in panel_row;
+        // Rust leads and Vue is expected to adopt the same pairing.)
         assert_eq!(
             html.matches("class=\"lucide lucide-equal\"").count(),
             1,

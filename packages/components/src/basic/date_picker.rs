@@ -627,7 +627,10 @@ pub fn date_locale(language: Language) -> DateLocale {
         Language::Russian => (Locale::ru_RU, 1, DateOrder::DayMonthYear),
         Language::Arabic => (Locale::ar_SA, 0, DateOrder::DayMonthYear),
         // `Language` is `#[non_exhaustive]`: a future variant compiles through
-        // here and keeps the English snapshot until its own row is added.
+        // here and keeps the English snapshot until its own row is added. No
+        // in-tree test can reach this arm — an unlisted variant cannot be
+        // constructed from outside the defining crate; the first language
+        // added after this PR is its natural test.
         _ => (Locale::en_US, 0, DateOrder::MonthDayYear),
     };
     DateLocale {

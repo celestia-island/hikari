@@ -46,7 +46,7 @@ export default defineComponent({
   props: {
     /** The slices' source rows; pass count-desc for the wowsp look. */
     entries: { type: Array as PropType<HkDonutEntry[]>, required: true },
-    /** Square ring size (px). */
+    /** Square ring size (px) — the SVG's intrinsic width/height and viewBox. */
     size: { type: Number, default: 150 },
     /** Legend rows per column. */
     legendRows: { type: Number, default: LEGEND_ROWS_PER_COLUMN },
@@ -102,7 +102,12 @@ export default defineComponent({
       return (
         <div class="hk-donut" role="img" aria-label={aria.value}>
           <div class="hk-donut__ring-wrap">
-            <svg class="hk-donut__ring" viewBox={`0 0 ${props.size} ${props.size}`}>
+            <svg
+              class="hk-donut__ring"
+              width={props.size}
+              height={props.size}
+              viewBox={`0 0 ${props.size} ${props.size}`}
+            >
               {slices.value.map((s) => (
                 <path
                   key={s.key}

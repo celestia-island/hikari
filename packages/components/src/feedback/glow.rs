@@ -199,6 +199,12 @@ pub fn Glow(props: GlowProps) -> Element {
         // 交互状态管理 (方案 B: 使用 ButtonStateMachine)
         let (state, on_event) = use_interaction_state();
         let state_clone = state.clone();
+        // `on_event` is an `Rc` callback, not `Copy`: every mouse handler below
+        // owns an inexpensive `Rc` clone (same pattern as `state_clone`).
+        let on_event_for_enter = on_event.clone();
+        let on_event_for_leave = on_event.clone();
+        let on_event_for_down = on_event.clone();
+        let on_event_for_up = on_event.clone();
 
         // 鼠标移动处理 - 更新光标位置
         let onmousemove_handler = move |event: MouseEvent| {
@@ -240,7 +246,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // MouseEnter: 转换到 Hover 状态，设置强度 0.5
         let onmouseenter_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseEnter);
+            on_event_for_enter(InteractionEvent::MouseEnter);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;
@@ -258,7 +264,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // MouseLeave: 转换到 Idle 状态，设置强度 0
         let onmouseleave_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseLeave);
+            on_event_for_leave(InteractionEvent::MouseLeave);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;
@@ -276,7 +282,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // MouseDown: 转换到 Active 状态，设置强度 1.0
         let onmousedown_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseDown);
+            on_event_for_down(InteractionEvent::MouseDown);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;
@@ -294,7 +300,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // MouseUp: 根据当前状态恢复强度
         let onmouseup_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseUp);
+            on_event_for_up(InteractionEvent::MouseUp);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;

@@ -82,9 +82,8 @@
 //     on `wasm32-wasip2` the press never arrives at all (no document-level
 //     listener API, and typed pointer events are not dispatched — ledger L88;
 //     see `feedback/touch_hint.rs`); on the `wasm32-unknown-unknown` web
-//     target `on_pointerdown` does fire and the handover works, but that
-//     target is not currently a build this crate produces (pre-existing
-//     errors in `navigation/anchor.rs` / `feedback/glow.rs`). So the mirror
+//     target `on_pointerdown` does fire and the handover compiles, but that
+//     target still has no runtime host. So the mirror
 //     exposes the HANDOVER on every target: [`TooltipProps::on_touch_hint`]
 //     fires with the text and the contact point, and the host arms its own
 //     long-press and presents the mirrored
@@ -96,10 +95,9 @@
 //     transform paints at its exact fractional device position, so an
 //     unsnapped coordinate is resampled into a uniform blur). The pure kernel
 //     is exported ([`tooltip_pixel_snap_delta`]) and the tracker calls it
-//     ([`snap_to_pixel_grid`]); the DOM half is declared FOR A FUTURE HOST
-//     THAT BUILDS THE WEB TARGET: it compiles only under
-//     `wasm32-unknown-unknown`, which this crate does not currently produce
-//     (that target is red at base), and on the shipped `wasm32-wasip2`
+//     ([`snap_to_pixel_grid`]); the DOM half compiles only under
+//     `wasm32-unknown-unknown` (the target type-checks again but still has
+//     no runtime host), and on the shipped `wasm32-wasip2`
 //     artifact there is no layout to measure, so the pass is a no-op there —
 //     the same ceiling the clamp pass below documents.
 //   * NO FOCUS TRAP / NO `afterLeave` — there is no leave transition driver, so

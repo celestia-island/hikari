@@ -18,6 +18,8 @@ pub use tairitsu_hooks::{
     InteractionState,
     // Memo type
     Memo,
+    // Reactive handle returned by `use_signal`
+    ReactiveSignal,
     UseRef,
     provide_context,
     // Dioxus compatibility alias

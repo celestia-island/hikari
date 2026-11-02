@@ -33,15 +33,23 @@
 // Behaviour deltas vs Vue (documented):
 //   * NO 3D board: Vue builds on `HkBoard3D` (three.js `OrbitControls`, a
 //     rasterized world texture, a stereoscopic minimap, camera flights). The
-//     mirror renders the sphere as a STATIC inline SVG wireframe (orthographic
-//     projection: parallels are straight chords, meridians are ellipses) and
-//     draws the selected sector as a filled lune. Because Vue's camera FLIES
-//     to a clicked wedge, the projection here is centred on the SELECTED
-//     sector on every render — the eye always faces the selection, which is
-//     the state Vue's camera ends in. A 15° meridian lattice is invariant
-//     under that rotation, so the PRIME MERIDIAN is stroked heavier: it is
-//     what makes the eye's position (and therefore the selection) readable —
-//     a selection at UTC+8 shows UTC off to the disc's left limb.
+//     mirror renders the sphere as a STATIC inline SVG wireframe and draws the
+//     selected sector as a filled lune. Because Vue's camera FLIES to a
+//     clicked wedge, the projection here is centred on the SELECTED sector on
+//     every render — the eye always faces the selection, which is the state
+//     Vue's camera ends in. A 15° meridian lattice is invariant under that
+//     rotation, so the PRIME MERIDIAN is stroked heavier: it is what makes the
+//     eye's position (and therefore the selection) readable — a selection at
+//     UTC+8 shows UTC off to the disc's left limb.
+//   * THE EYE'S ELEVATION IS APPLIED, not dropped. Vue pins the board's orbit
+//     to `ORBIT_POLAR_DEG = 90 - EYE_TILT_DEG` (= 72° from +Y), i.e. the eye
+//     sits 18° above the equatorial plane, so the sphere is always seen from
+//     that ring (never pole-on, never equator-on). The static SVG applies the
+//     SAME elevation to its orthographic projection
+//     ([`GLOBE_EYE_TILT_DEG`], [`globe_point`]): a latitude circle projects to
+//     an ellipse instead of a chord, the north pole sits inside the disc's top
+//     limb at `y = -R·cos(18°)`, and the near equator sits below the centre.
+//     What is NOT reproduced is the drag itself — see the next bullet.
 //   * the interactive surface is Vue's OWN no-WebGL fallback list (the
 //     `fallback` slot): same 24 sectors, same offsets/names/ids/cities, same
 //     emit through `update:modelValue`. Vue renders that slot INSTEAD of the
@@ -50,10 +58,31 @@
 //     sheet's root is a flex column built for exactly that stacking
 //     (`__stage`, `__list`, `__hint`). The globe is display-only: a 3D
 //     drag/pick gesture has no tairitsu analogue in this wave.
-//   * no hover tooltip and no `hoveredSector` state: the tooltip needs the
-//     board's per-wedge picking plus pointer coordinates, and it repeats the
-//     row content the list already shows inline (offset · name · zone ·
-//     cities), so nothing is lost by dropping the echo.
+//   * the ALWAYS-ON READOUT is mirrored; the pointer-following TOOLTIP it
+//     replaced is not (upstream retired it too). Vue pins a HUD at the
+//     TOP-CENTRE of the stage showing the SELECTED sector — never the hovered
+//     wedge, because a drag re-selects without moving the pointer, so a hover
+//     preview would be stale exactly when it is read; and an anchored tooltip
+//     on a phone lands under the very finger doing the drag (user direction
+//     2026-11-01). The mirror renders the same chip with the same parts:
+//     offset label, the translated band name ONLY when it differs from that
+//     label (English: a band's name IS its offset, so rendering both would
+//     read "UTC+8 UTC+8"), the IANA id, and the representative cities.
+//     Difference in the HOST shape: Vue hides the chip when its WebGL board
+//     reports an error (the fallback list is then the whole interface); the
+//     mirror's renderer is the static SVG, which cannot fail, so the chip is
+//     always on. `role=status` + `aria-live=polite` + `aria-atomic` are
+//     carried verbatim.
+//   * NO TURNTABLE GESTURE. Vue locks the orbit elevation with equal polar
+//     bounds so the sphere spins about its vertical axis and never tips or
+//     rolls (user direction 2026-11-01: "the globe turns in front of you").
+//     The mirror owns no camera and no drag: its SVG is centred on the
+//     SELECTED sector and drawn from the SAME 18° elevation on every render,
+//     which is the pose Vue's camera settles into (the elevation half of the
+//     lock is applied — see the bullet above; only the interactive spin is
+//     absent). A host that drives a real board gets the full lock through the
+//     board mirror's `min_polar_angle` / `max_polar_angle` props
+//     ([`crate::scene`]).
 //   * no `update` emit: Vue emits both `update` and `update:modelValue` with
 //     the same zone id; the mirror exposes the `update:modelValue` edge as
 //     [`TimeZoneGlobeProps::on_value_change`] only.
@@ -270,6 +299,18 @@ pub fn offset_label(offset: i32) -> String {
     format!("UTC{}{}", if offset > 0 { "+" } else { "-" }, offset.abs())
 }
 
+/// Whether the pinned readout shows the translated band name BESIDE the
+/// offset label (Vue: `infoName !== infoOffset`).
+///
+/// In English a band's translated name IS its offset label ("UTC+8"), so
+/// rendering both would read "UTC+8 UTC+8"; only a locale that actually names
+/// the band ("东八区") gets the second run. The comparison is on the rendered
+/// strings, exactly like Vue's, so a translation table that happens to return
+/// the label suppresses the duplicate too.
+pub fn time_zone_globe_readout_is_named(offset_label: &str, band_name: &str) -> bool {
+    band_name != offset_label
+}
+
 /// Locale key of a sector's translated band name (`m11`…`m1`, `z0`, `p1`…`p12`).
 pub fn sector_name_key(offset: i32) -> String {
     let key = if offset == 0 {
@@ -333,19 +374,113 @@ fn svg_coord(value: f64) -> String {
     format!("{rounded:.2}")
 }
 
-/// Orthographic projection of one point of the visible hemisphere: `lng` is
-/// measured from the eye's meridian (0 = the centre of the disc), `lat` runs
-/// -90 (south pole) … +90 (north pole).
-pub fn globe_point(radius: f64, lng_deg: f64, lat_deg: f64) -> (f64, f64) {
+/// The eye's elevation above the equatorial plane, in degrees — Vue's
+/// `HkTimeZoneGlobe` `EYE_TILT_DEG` (the board pins `minPolarAngle` ===
+/// `maxPolarAngle` === `90 - EYE_TILT_DEG`). Both forms therefore look at the
+/// sphere from the same latitude: the north pole is visible INSIDE the disc's
+/// top limb and the near equator sits below the centre.
+pub const GLOBE_EYE_TILT_DEG: f64 = 18.0;
+
+/// Orthographic projection of one point of the visible hemisphere, seen from
+/// `eye_tilt_deg` above the equatorial plane: `lng` is measured from the eye's
+/// meridian (0 = the centre of the disc), `lat` runs -90 (south pole) … +90
+/// (north pole), and the returned `y` grows DOWNWARD like SVG's.
+///
+/// `eye_tilt_deg = 0` is the plain equator-on projection (parallels collapse
+/// to horizontal chords); the picker uses [`GLOBE_EYE_TILT_DEG`], where each
+/// latitude circle is a real ellipse and the poles sit at `(0, ∓R·cos(tilt))`.
+pub fn globe_point_at(radius: f64, eye_tilt_deg: f64, lng_deg: f64, lat_deg: f64) -> (f64, f64) {
+    let tilt = eye_tilt_deg.to_radians();
     let lng = lng_deg.to_radians();
     let lat = lat_deg.to_radians();
-    (radius * lat.cos() * lng.sin(), -radius * lat.sin())
+    (
+        radius * lat.cos() * lng.sin(),
+        radius * (tilt.sin() * lat.cos() * lng.cos() - tilt.cos() * lat.sin()),
+    )
 }
 
-/// Half-width of one meridian's projected ellipse — the lune path uses the
-/// same projection, so the two never drift apart.
-pub fn globe_meridian_rx(radius: f64, lng_deg: f64) -> f64 {
-    radius * lng_deg.to_radians().sin().abs()
+/// [`globe_point_at`] at the picker's eye tilt — the projection the wireframe
+/// and the lune are both drawn with, so the two never drift apart.
+pub fn globe_point(radius: f64, lng_deg: f64, lat_deg: f64) -> (f64, f64) {
+    globe_point_at(radius, GLOBE_EYE_TILT_DEG, lng_deg, lat_deg)
+}
+
+/// One parallel's projected ellipse in the tilted view: the centre's offset
+/// from the disc centre on the y axis (screen-down), then the semi-axes.
+///
+/// A latitude circle `lat` projects to `y = offset + ry·cos(Δlng)` with
+/// `x = rx·sin(Δlng)`, so at tilt 0 the `ry` term vanishes and the curve IS
+/// the horizontal chord an equator-on view draws.
+pub fn globe_parallel_ellipse(radius: f64, eye_tilt_deg: f64, lat_deg: f64) -> (f64, f64, f64) {
+    let tilt = eye_tilt_deg.to_radians();
+    let lat = lat_deg.to_radians();
+    (
+        -radius * tilt.cos() * lat.sin(),
+        radius * lat.cos(),
+        radius * tilt.sin() * lat.cos(),
+    )
+}
+
+/// One meridian's projected ellipse in the tilted view.
+///
+/// A meridian is a great circle, so its projection is an ellipse centred on
+/// the disc centre; `rx` / `ry` are the semi-axes in projection px and
+/// `rotation_deg` is the SVG `rotate()` angle (clockwise, y-down, about the
+/// disc centre). `ry ≈ 0` is the DEGENERATE case — the meridian's plane
+/// contains the view direction, so the ellipse collapses onto a straight
+/// vertical chord (the eye's own meridian and its antipode).
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct GlobeMeridianEllipse {
+    pub rx: f64,
+    pub ry: f64,
+    pub rotation_deg: f64,
+}
+
+/// The projected ellipse of the meridian at `lng_deg` from the eye.
+///
+/// The meridian parametrises as `p(ψ) = (A·cosψ, B·cosψ + C·sinψ)` with
+/// `A = sin(lng)`, `B = sin(tilt)·cos(lng)`, `C = -cos(tilt)` — the image of
+/// the unit circle under that 2×2 matrix, i.e. an ellipse whose semi-axes are
+/// its singular values and whose major axis is `M·v` for the major eigenvector
+/// `v` of `MᵀM`.
+pub fn globe_meridian_ellipse(
+    radius: f64,
+    eye_tilt_deg: f64,
+    lng_deg: f64,
+) -> GlobeMeridianEllipse {
+    let tilt = eye_tilt_deg.to_radians();
+    let lng = lng_deg.to_radians();
+    let a = lng.sin();
+    let b = tilt.sin() * lng.cos();
+    let c = -tilt.cos();
+    let p = a * a + b * b;
+    let q = b * c;
+    let r = c * c;
+    let mid = (p + r) / 2.0;
+    let spread = (((p - r) / 2.0).powi(2) + q * q).sqrt();
+    let major = (mid + spread).max(0.0).sqrt();
+    let minor = (mid - spread).max(0.0).sqrt();
+    // The major eigenvector of `MᵀM`, then its image under `M` gives the
+    // major axis direction (SVG rotation, y-down).
+    let (vx, vy) = if q.abs() > 1e-12 {
+        (q, (mid + spread) - p)
+    } else if p >= r {
+        (1.0, 0.0)
+    } else {
+        (0.0, 1.0)
+    };
+    let ux = a * vx;
+    let uy = b * vx + c * vy;
+    let rotation = if ux.abs() + uy.abs() > 1e-12 {
+        uy.atan2(ux).to_degrees()
+    } else {
+        0.0
+    };
+    GlobeMeridianEllipse {
+        rx: radius * major,
+        ry: radius * minor,
+        rotation_deg: rotation,
+    }
 }
 
 /// The filled lune of a sector, projected with that sector's centre on the
@@ -375,8 +510,29 @@ pub fn globe_sector_path(offset: i32, radius: f64) -> String {
     path
 }
 
-/// The static globe: a themed wireframe sphere (parallels as chords,
-/// meridians as ellipses) with the SELECTED sector filled.
+/// One meridian as SVG: its rotated ellipse, or a straight vertical chord
+/// when the ellipse is degenerate (the eye's meridian / its antipode, whose
+/// plane contains the view direction).
+fn meridian_svg(radius: f64, centre: f64, lng: f64, opacity: &str, width: &str) -> String {
+    let ellipse = globe_meridian_ellipse(radius, GLOBE_EYE_TILT_DEG, lng);
+    if ellipse.ry < 0.01 {
+        return format!(
+            r#"<line x1="{centre:.2}" y1="{}" x2="{centre:.2}" y2="{}" stroke="currentColor" stroke-opacity="{opacity}" stroke-width="{width}"/>"#,
+            svg_coord(centre - radius),
+            svg_coord(centre + radius),
+        );
+    }
+    format!(
+        r#"<ellipse cx="{centre:.2}" cy="{centre:.2}" rx="{}" ry="{}" transform="rotate({} {centre:.2} {centre:.2})" fill="none" stroke="currentColor" stroke-opacity="{opacity}" stroke-width="{width}"/>"#,
+        svg_coord(ellipse.rx),
+        svg_coord(ellipse.ry),
+        svg_coord(ellipse.rotation_deg),
+    )
+}
+
+/// The static globe: a themed wireframe sphere (parallels and meridians as
+/// ellipses in the same 18° elevation the Vue board uses) with the SELECTED
+/// sector filled.
 ///
 /// The eye rotates to the selection — Vue's camera flies to a clicked wedge,
 /// and this is where it comes to rest — so the selected lune always sits at
@@ -400,57 +556,31 @@ pub fn time_zone_globe_svg(selected_index: usize) -> String {
     svg.push_str(&format!(
         r#"<circle cx="{centre:.2}" cy="{centre:.2}" r="{radius:.2}" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.35" stroke-width="1"/>"#
     ));
-    // Parallels: a latitude circle projects to a horizontal chord at
-    // y = ∓R·sin(lat) with half-width R·cos(lat).
+    // Parallels: a latitude circle projects to an ellipse at
+    // y = -R·cos(tilt)·sin(lat) with semi-axes R·cos(lat) and
+    // R·sin(tilt)·cos(lat) — at tilt 0 the ry term collapses and the ellipse
+    // IS the horizontal chord an equator-on view draws.
     for lat in [60.0_f64, 30.0, 0.0, -30.0, -60.0] {
-        let y = centre - radius * lat.to_radians().sin();
-        let half = radius * lat.to_radians().cos();
+        let (offset_y, rx, ry) = globe_parallel_ellipse(radius, GLOBE_EYE_TILT_DEG, lat);
         svg.push_str(&format!(
-            r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="currentColor" stroke-opacity="0.16" stroke-width="1"/>"#,
-            svg_coord(centre - half),
-            svg_coord(y),
-            svg_coord(centre + half),
-            svg_coord(y),
+            r#"<ellipse cx="{centre:.2}" cy="{}" rx="{}" ry="{}" fill="none" stroke="currentColor" stroke-opacity="0.16" stroke-width="1"/>"#,
+            svg_coord(centre + offset_y),
+            svg_coord(rx),
+            svg_coord(ry),
         ));
     }
     // Meridians every 15° — one great circle per band edge, measured from the
     // eye. Only the front half is visible, but the projected outline of a
-    // full great circle IS the ellipse, so drawing it whole stays
-    // geometrically correct.
+    // full great circle IS the ellipse (rotated by the eye's tilt), so drawing
+    // it whole stays geometrically correct.
     for step in 0..24 {
         let lng = wrap_lng_deg(-180.0 + (step as f64) * SECTOR_SPAN_DEG - eye_lng);
-        let rx = globe_meridian_rx(radius, lng);
-        if rx < 0.01 {
-            // The eye's own meridian projects to a straight vertical chord.
-            svg.push_str(&format!(
-                r#"<line x1="{centre:.2}" y1="{}" x2="{centre:.2}" y2="{}" stroke="currentColor" stroke-opacity="0.16" stroke-width="1"/>"#,
-                svg_coord(centre - radius),
-                svg_coord(centre + radius),
-            ));
-            continue;
-        }
-        svg.push_str(&format!(
-            r#"<ellipse cx="{centre:.2}" cy="{centre:.2}" rx="{}" ry="{radius:.2}" fill="none" stroke="currentColor" stroke-opacity="0.16" stroke-width="1"/>"#,
-            svg_coord(rx),
-        ));
+        svg.push_str(&meridian_svg(radius, centre, lng, "0.16", "1"));
     }
     // The prime meridian: the one asymmetry that makes the rotation readable.
     let prime_lng = wrap_lng_deg(-eye_lng);
     if prime_lng.abs() < 89.0 {
-        let prime_rx = globe_meridian_rx(radius, prime_lng);
-        if prime_rx < 0.01 {
-            // Eye on the prime meridian: it IS the disc's diameter.
-            svg.push_str(&format!(
-                r#"<line x1="{centre:.2}" y1="{}" x2="{centre:.2}" y2="{}" stroke="currentColor" stroke-opacity="0.38" stroke-width="1.6"/>"#,
-                svg_coord(centre - radius),
-                svg_coord(centre + radius),
-            ));
-        } else {
-            svg.push_str(&format!(
-                r#"<ellipse cx="{centre:.2}" cy="{centre:.2}" rx="{}" ry="{radius:.2}" fill="none" stroke="currentColor" stroke-opacity="0.38" stroke-width="1.6"/>"#,
-                svg_coord(prime_rx),
-            ));
-        }
+        svg.push_str(&meridian_svg(radius, centre, prime_lng, "0.38", "1.6"));
     }
     // The selected sector, above the wireframe (Vue's highlight shells sit
     // above the base texture).
@@ -496,6 +626,19 @@ pub fn TimeZoneGlobe(props: TimeZoneGlobeProps) -> Element {
             .attr("style", "display:contents")
             .dangerous_inner_html(time_zone_globe_svg(selected)),
     ));
+
+    // The pinned readout: the COMMITTED selection, never the hovered wedge.
+    // A band's translated name is skipped when it IS the offset label
+    // (`infoName !== infoOffset` upstream).
+    let readout_sector = &SOLAR_TIME_ZONE_SECTORS[selected];
+    let readout_offset = offset_label(readout_sector.offset);
+    let readout_name = t(
+        &sector_name_key(readout_sector.offset),
+        &offset_label(readout_sector.offset),
+    );
+    let readout_is_named = time_zone_globe_readout_is_named(&readout_offset, &readout_name);
+    let readout_zone = readout_sector.zone.to_string();
+    let readout_cities = cities_line(readout_sector);
 
     // The 24 bands as Vue's no-WebGL fallback list rows.
     let mut rows: Vec<VNode> = Vec::with_capacity(SOLAR_TIME_ZONE_SECTORS.len());
@@ -556,6 +699,21 @@ pub fn TimeZoneGlobe(props: TimeZoneGlobeProps) -> Element {
             "aria-label": globe_label,
             "data-test": "hk-timezone-globe",
             div { class: "hk-timezone-globe__stage",
+                div {
+                    class: "hk-timezone-globe__readout",
+                    "data-test": "hk-timezone-globe-readout",
+                    "role": "status",
+                    "aria-live": "polite",
+                    "aria-atomic": "true",
+                    span { class: "hk-timezone-globe__readout-head",
+                        span { class: "hk-timezone-globe__readout-offset", {readout_offset.clone()} }
+                        if readout_is_named {
+                            span { class: "hk-timezone-globe__readout-name", {readout_name.clone()} }
+                        }
+                        span { class: "hk-timezone-globe__readout-zone", {readout_zone.clone()} }
+                    }
+                    span { class: "hk-timezone-globe__readout-cities", {readout_cities.clone()} }
+                }
                 {globe_host}
             }
             div {
@@ -658,33 +816,125 @@ mod tests {
     #[test]
     fn time_zone_globe_projection_is_orthographic() {
         let radius = 10.0;
-        // The eye's meridian and the equator meet at the centre of the disc.
-        assert_eq!(globe_point(radius, 0.0, 0.0), (0.0, 0.0));
-        // 90° east sits on the right limb; the north pole is straight up.
+        // Equator-on (tilt 0) is the plain orthographic projection the
+        // mirror has always documented: the eye's meridian and the equator
+        // meet at the centre, 90° east sits on the right limb, and the pole
+        // reaches the disc's top edge.
+        assert_eq!(globe_point_at(radius, 0.0, 0.0, 0.0), (0.0, 0.0));
+        assert!((globe_point_at(radius, 0.0, 90.0, 0.0).0 - radius).abs() < 1e-9);
+        assert!(
+            (globe_point_at(radius, 0.0, 0.0, 90.0).1 + radius).abs() < 1e-9,
+            "tilt 0 puts the north pole on the disc's top edge"
+        );
+        // The picker's projection is the SAME orthographic projection seen
+        // from 18° above the equator: the pole moves INSIDE the disc's top
+        // limb by cos(18°), and the near equator drops below the centre by
+        // sin(18°) while its left/right limbs stay on the equator line.
+        let tilt = GLOBE_EYE_TILT_DEG.to_radians();
+        assert!((globe_point(radius, 0.0, 0.0).0).abs() < 1e-9);
+        assert!((globe_point(radius, 0.0, 0.0).1 - radius * tilt.sin()).abs() < 1e-9);
+        assert!((globe_point(radius, 0.0, 90.0).1 + radius * tilt.cos()).abs() < 1e-9);
         assert!((globe_point(radius, 90.0, 0.0).0 - radius).abs() < 1e-9);
-        assert!((globe_point(radius, 0.0, 90.0).1 + radius).abs() < 1e-9);
-        // A meridian's ellipse collapses at 0°/180° and is widest at ±90°.
-        assert!(globe_meridian_rx(radius, 0.0) < 1e-9);
-        assert!((globe_meridian_rx(radius, 90.0) - radius).abs() < 1e-9);
-        assert!((globe_meridian_rx(radius, -90.0) - radius).abs() < 1e-9);
-        assert!((globe_meridian_rx(radius, 30.0) - radius * 0.5).abs() < 1e-9);
+        assert!(globe_point(radius, 90.0, 0.0).1.abs() < 1e-9);
+        // The eye's meridian is a vertical chord at EVERY elevation.
+        for lat in [-60.0_f64, -30.0, 0.0, 30.0, 60.0, 90.0] {
+            assert!(globe_point(radius, 0.0, lat).0.abs() < 1e-9, "{lat}");
+        }
+    }
+
+    #[test]
+    fn time_zone_globe_parallels_are_ellipses_at_the_eye_tilt() {
+        let radius = 10.0;
+        let tilt = GLOBE_EYE_TILT_DEG.to_radians();
+        // The equator: centred on the disc centre, full width, foreshortened
+        // in y by sin(tilt).
+        let (offset, rx, ry) = globe_parallel_ellipse(radius, GLOBE_EYE_TILT_DEG, 0.0);
+        assert!(offset.abs() < 1e-9);
+        assert!((rx - radius).abs() < 1e-9);
+        assert!((ry - radius * tilt.sin()).abs() < 1e-9);
+        // The pole: a degenerate ellipse at y = -R·cos(tilt) — INSIDE the
+        // disc's top limb, which is exactly the visual difference the Vue
+        // board's 18° elevation produces.
+        let (offset, rx, ry) = globe_parallel_ellipse(radius, GLOBE_EYE_TILT_DEG, 90.0);
+        assert!((offset + radius * tilt.cos()).abs() < 1e-9);
+        assert!(rx.abs() < 1e-9 && ry.abs() < 1e-9);
+        // A northern parallel sits above the centre; a southern one below.
+        assert!(globe_parallel_ellipse(radius, GLOBE_EYE_TILT_DEG, 60.0).0 < 0.0);
+        assert!(globe_parallel_ellipse(radius, GLOBE_EYE_TILT_DEG, -60.0).0 > 0.0);
+        // Every projected point of the parallel must satisfy the ellipse
+        // equation (the guard the SVG's cx/cy/rx/ry values rest on).
+        for lat in [60.0_f64, 30.0, 0.0, -30.0, -60.0] {
+            let (offset, rx, ry) = globe_parallel_ellipse(radius, GLOBE_EYE_TILT_DEG, lat);
+            for step in 0..24 {
+                let lng = -180.0 + step as f64 * 15.0;
+                let (x, y) = globe_point(radius, lng, lat);
+                let on_curve = (x / rx).powi(2) + ((y - offset) / ry).powi(2);
+                assert!(
+                    (on_curve - 1.0).abs() < 1e-9,
+                    "lat {lat} lng {lng}: {on_curve}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn time_zone_globe_meridian_ellipses_match_the_tilted_projection() {
+        let radius = 10.0;
+        let tilt = GLOBE_EYE_TILT_DEG.to_radians();
+        // The eye's meridian (and its antipode) collapse onto the vertical
+        // chord: the ellipse's minor axis vanishes.
+        for lng in [0.0_f64, 180.0] {
+            let ellipse = globe_meridian_ellipse(radius, GLOBE_EYE_TILT_DEG, lng);
+            assert!(ellipse.ry < 0.01, "lng {lng}: {ellipse:?}");
+            assert!((ellipse.rx - radius).abs() < 1e-9, "{ellipse:?}");
+        }
+        // The meridian 90° from the eye is axis-aligned: the disc's full
+        // height in x and cos(tilt) of it in y.
+        let side = globe_meridian_ellipse(radius, GLOBE_EYE_TILT_DEG, 90.0);
+        assert!((side.rx - radius).abs() < 1e-9, "{side:?}");
+        assert!((side.ry - radius * tilt.cos()).abs() < 1e-9, "{side:?}");
+        assert!(side.rotation_deg.abs() < 1e-9, "{side:?}");
+        // Any other meridian is a ROTATED ellipse; every projected point of
+        // the meridian must lie on it (rotate into the ellipse frame, then
+        // check the ellipse equation).
+        for lng in [15.0_f64, 30.0, 45.0, 75.0, 120.0, -45.0] {
+            let ellipse = globe_meridian_ellipse(radius, GLOBE_EYE_TILT_DEG, lng);
+            assert!(ellipse.ry > 0.0, "lng {lng} should not be degenerate");
+            let rotation = ellipse.rotation_deg.to_radians();
+            let (sin_r, cos_r) = rotation.sin_cos();
+            for step in 0..24 {
+                let lat = -90.0 + step as f64 * 7.5;
+                let (x, y) = globe_point(radius, lng, lat);
+                let local_x = x * cos_r + y * sin_r;
+                let local_y = -x * sin_r + y * cos_r;
+                let on_curve = (local_x / ellipse.rx).powi(2) + (local_y / ellipse.ry).powi(2);
+                assert!(
+                    (on_curve - 1.0).abs() < 1e-6,
+                    "lng {lng} lat {lat}: {on_curve} ({ellipse:?})"
+                );
+            }
+        }
     }
 
     #[test]
     fn time_zone_globe_svg_carries_the_wireframe_and_the_selected_lune() {
-        // A selection away from UTC: 5 parallels + 2 straight meridian
-        // chords, 22 meridian ellipses, and the lune.
+        // A selection away from UTC: 5 parallel ellipses + 22 rotated
+        // meridian ellipses (the eye's meridian and its antipode are straight
+        // chords), plus the lune path.
         let svg = time_zone_globe_svg(19);
         assert!(svg.starts_with("<svg"), "{svg}");
         assert!(svg.ends_with("</svg>"), "{svg}");
         assert!(svg.contains("<circle"), "the sphere body is missing");
-        assert_eq!(svg.matches("<line").count(), 5 + 2, "{svg}");
-        assert_eq!(svg.matches("<ellipse").count(), 22, "{svg}");
+        assert_eq!(svg.matches("<line").count(), 2, "{svg}");
+        assert_eq!(svg.matches("<ellipse").count(), 5 + 22, "{svg}");
         assert_eq!(svg.matches("<path").count(), 1, "{svg}");
-        // The lune always starts at the north pole of the projected disc,
-        // and no coordinate renders as a negative zero.
+        // The tilted meridians are ROTATED ellipses (the equator-on form had
+        // no rotation at all) — the elevation is applied, not just declared.
+        assert!(svg.contains("transform=\"rotate("), "{svg}");
+        // The lune starts at the north pole of the TILTED disc:
+        // y = -R·cos(18°) = -45.65, inside the disc's -48 top limb.
         let path = globe_sector_path(19, GLOBE_RADIUS);
-        assert!(path.starts_with("M0.00,-48.00"), "{path}");
+        assert!(path.starts_with("M0.00,-45.65"), "{path}");
         assert!(path.ends_with(" Z"), "{path}");
         assert!(!path.contains("-0.00"), "{path}");
         // Every sector produces a lune, whatever its offset.
@@ -696,18 +946,33 @@ mod tests {
     #[test]
     fn time_zone_globe_marks_the_prime_meridian_as_the_eye_turns() {
         // Selecting UTC puts the eye ON the prime meridian: it becomes the
-        // disc's diameter, stroked heavier than the rest of the grid.
+        // disc's vertical diameter, stroked heavier than the rest of the grid.
         let utc = time_zone_globe_svg(11);
-        assert_eq!(utc.matches("<line").count(), 5 + 2 + 1, "{utc}");
+        assert_eq!(utc.matches("<line").count(), 2 + 1, "{utc}");
+        assert_eq!(utc.matches("<ellipse").count(), 5 + 22, "{utc}");
         assert_eq!(utc.matches("stroke-width=\"1.6\"").count(), 1, "{utc}");
-        // One band east (UTC+1) tilts it into an ellipse.
+        // The heavier stroke must ride the CHORD, not an ellipse.
+        let heavy = utc
+            .split('<')
+            .find(|element| element.contains("stroke-width=\"1.6\""))
+            .expect("the prime meridian is drawn");
+        assert!(heavy.starts_with("line"), "UTC's prime meridian: {heavy}");
+        // One band east (UTC+1) tilts it into a rotated ellipse.
         let berlin = time_zone_globe_svg(12);
         assert_eq!(
             berlin.matches("stroke-width=\"1.6\"").count(),
             1,
             "{berlin}"
         );
-        assert_eq!(berlin.matches("<ellipse").count(), 23, "{berlin}");
+        assert_eq!(berlin.matches("<ellipse").count(), 5 + 22 + 1, "{berlin}");
+        let heavy = berlin
+            .split('<')
+            .find(|element| element.contains("stroke-width=\"1.6\""))
+            .expect("the prime meridian is drawn");
+        assert!(
+            heavy.starts_with("ellipse"),
+            "UTC+1's prime meridian: {heavy}"
+        );
         // From the far side of the globe it is simply not on the disc.
         let shanghai = time_zone_globe_svg(19);
         assert_eq!(
@@ -748,11 +1013,62 @@ mod tests {
     }
 
     #[test]
+    fn time_zone_globe_readout_keeps_the_name_only_when_it_says_something() {
+        // English: the band name IS the offset label → no duplicate run.
+        assert!(!time_zone_globe_readout_is_named("UTC+8", "UTC+8"));
+        assert!(!time_zone_globe_readout_is_named("UTC", "UTC"));
+        // A locale that NAMES the band keeps both ("UTC+8" + "东八区").
+        assert!(time_zone_globe_readout_is_named("UTC+8", "东八区"));
+        assert!(time_zone_globe_readout_is_named("UTC-11", "Midway Islands"));
+    }
+
+    #[test]
+    fn time_zone_globe_renders_the_pinned_readout_above_the_stage() {
+        let html = TimeZoneGlobe(TimeZoneGlobeProps {
+            model_value: "Asia/Shanghai".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        for needle in [
+            r#"class="hk-timezone-globe__readout""#,
+            r#"data-test="hk-timezone-globe-readout""#,
+            r#"role="status""#,
+            r#"aria-live="polite""#,
+            r#"aria-atomic="true""#,
+            r#"class="hk-timezone-globe__readout-head""#,
+            r#"class="hk-timezone-globe__readout-offset""#,
+            r#"class="hk-timezone-globe__readout-zone""#,
+            r#"class="hk-timezone-globe__readout-cities""#,
+            "UTC+8",
+            "Asia/Shanghai",
+        ] {
+            assert!(html.contains(needle), "missing {needle}: {html}");
+        }
+        // The committed selection is reported without any pointer interaction.
+        assert!(html.contains("Shanghai"), "{html}");
+        // English suppresses the duplicate band name (see the identity rule).
+        assert!(
+            !html.contains("hk-timezone-globe__readout-name"),
+            "English must not render the band name beside its own offset label: {html}"
+        );
+        // The HUD is INSIDE the stage, painted before the sphere, and the old
+        // pointer-following tooltip is gone upstream — neither may appear.
+        let stage = html.find("hk-timezone-globe__stage").expect("stage");
+        let readout = html.find("hk-timezone-globe__readout").expect("readout");
+        let svg = html.find("<svg").expect("sphere");
+        assert!(stage < readout && readout < svg, "{html}");
+        assert!(!html.contains("hk-timezone-globe__tooltip"), "{html}");
+    }
+
+    #[test]
     fn time_zone_globe_styles_come_from_the_canonical_vue_sheet() {
         let css = TimeZoneGlobeComponent::styles();
         for needle in [
             ".hk-timezone-globe",
             ".hk-timezone-globe__stage",
+            ".hk-timezone-globe__readout",
+            ".hk-timezone-globe__readout-head",
+            ".hk-timezone-globe__readout-cities",
             ".hk-timezone-globe__list",
             ".hk-timezone-globe__option",
             ".hk-timezone-globe__hint",

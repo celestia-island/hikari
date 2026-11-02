@@ -248,6 +248,21 @@ pub fn now_timestamp() -> f64 {
     js_sys::Date::now()
 }
 
+/// `window.devicePixelRatio` — one DEVICE pixel in CSS px. The tooltip's
+/// pixel-grid snap needs it (`runtime/tooltipPosition.ts` reads the same
+/// property); a missing window reads as 1, the ratio every zoom-free root
+/// renders at.
+pub fn device_pixel_ratio() -> f64 {
+    let ratio = web_sys::window()
+        .map(|window| window.device_pixel_ratio())
+        .unwrap_or(1.0);
+    if ratio.is_finite() && ratio > 0.0 {
+        ratio
+    } else {
+        1.0
+    }
+}
+
 use web_sys::HtmlCanvasElement;
 
 pub fn get_canvas_context(canvas: &HtmlCanvasElement) -> Option<CanvasContext> {

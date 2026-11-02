@@ -27,6 +27,7 @@ pub mod progress_ring;
 pub mod spinner;
 pub mod toast;
 pub mod tooltip;
+pub mod touch_hint;
 
 pub use alert::*;
 pub use blocking_toast::*;
@@ -48,3 +49,4 @@ pub use progress_ring::*;
 pub use spinner::*;
 pub use toast::*;
 pub use tooltip::*;
+pub use touch_hint::*;

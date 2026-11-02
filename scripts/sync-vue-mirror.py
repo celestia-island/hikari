@@ -66,6 +66,19 @@ SHARED_PARTIALS: list[tuple[str, str]] = [
     ("components/_hikari-vars.scss", "components/_hikari-vars.scss"),
 ]
 
+# RUNTIME sheets: chrome a Vue runtime MODULE ships itself rather than a
+# component sheet (`runtime/*.scss`; the first such row in this table). The
+# row is (mirror path, upstream path) because the mirror keeps the upstream
+# relative path — a `runtime/` sheet has no `components/` sibling, and
+# pretending it were `components/HkTouchHint.scss` would invent a Vue
+# component that does not exist.
+#
+# `runtime/touchHint.scss` — the touch hint bar's chrome, the touch half of
+# the tooltip story (the Rust presenter is `feedback/touch_hint.rs`).
+RUNTIME_SHEETS: list[tuple[str, str]] = [
+    ("runtime/touchHint.scss", "runtime/touchHint.scss"),
+]
+
 # The feedback family sheets mirrored by the wasm-mirror-feedback wave
 # (2026-11). Append later families here as their mirrors land; the drift
 # test walks this table, so an upstream rename fails loudly here.
@@ -314,6 +327,8 @@ def build_pairs() -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
         pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
+    for mirror_rel, upstream_rel in RUNTIME_SHEETS:
+        pairs.append((mirror_root / mirror_rel, vue_src / upstream_rel))
     for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS:
         pairs.append((mirror_root / "components" / sheet, vue_src / "components" / sheet))
     return pairs
@@ -322,6 +337,8 @@ def build_pairs() -> list[tuple[Path, Path]]:
 def manifest_text() -> str:
     lines = ["# mirror-path\tupstream-path (relative to packages/vue/src)"]
     for mirror_rel, upstream_rel in SHARED_PARTIALS:
+        lines.append(f"{mirror_rel}\t{upstream_rel}")
+    for mirror_rel, upstream_rel in RUNTIME_SHEETS:
         lines.append(f"{mirror_rel}\t{upstream_rel}")
     for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS:
         lines.append(f"components/{sheet}\tcomponents/{sheet}")

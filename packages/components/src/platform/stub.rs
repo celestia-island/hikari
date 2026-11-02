@@ -66,6 +66,12 @@ pub fn now_timestamp() -> f64 {
     0.0
 }
 
+/// No `window` on the stub platform: one CSS px per device px. Every consumer
+/// of this value already declares that it cannot measure layout here.
+pub fn device_pixel_ratio() -> f64 {
+    1.0
+}
+
 pub fn element_from_point(_x: i32, _y: i32) -> Option<()> {
     None
 }

@@ -341,6 +341,9 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-progress-ring",
         ".hk-toast",
         ".hk-tooltip",
+        // The touch half of the tooltip story: the top-docked hint bar
+        // (`runtime/touchHint.scss`, registered by `feedback::touch_hint`).
+        ".hk-touch-hint-bar",
         ".hk-drawer",
         ".hk-popover",
         ".hk-loading-veil",
@@ -453,6 +456,11 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-step-flow",
         ".hk-pane-holder",
         ".hk-sidebar-rail-host",
+        // The rail flip's flight layer + clones (single-glyph contract):
+        // the sheet half of `useRailIconFlight` (see `sidebar_rail_swap.rs`,
+        // which declares why the choreography itself is not portable).
+        ".hk-sidebar-rail-flight",
+        ".hk-sidebar-rail-flight-clone",
         ".hk-affix-chip",
         ".hk-header-picker",
         ".hk-locale-picker-trigger",

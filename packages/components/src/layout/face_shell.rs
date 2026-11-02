@@ -20,7 +20,8 @@
 //       ── isDesktop && !sidebarCollapsed && sidebar slot ──
 //       aside.hk-sidebar-rail-host                    (sidebarCollapsible)
 //             [data-rail] [data-peeking] [data-pinning]
-//             (style: width:{layout width};flex-shrink:0)
+//             (style: width:{layout width};flex-shrink:0;
+//                     --hk-sidebar-rail-w:{sidebarCollapsedWidth})
 //             pointerenter / pointerleave / pointermove / keydown
 //         div.hk-sidebar-rail-panel
 //               (style: width:{peek panel width};
@@ -102,6 +103,17 @@
 //     carries no sheet of its own, so that table reaches the bundle through the
 //     registry path (`StyleRegistry::register_vue_chrome` → `vue-sidebar-rail`),
 //     not through a component `styles()`.
+//   * THE RAIL ROW SQUARE'S TOKEN IS DECLARED, ITS RULE IS NOT VENDORED. Vue
+//     writes `--hk-sidebar-rail-w: sidebarCollapsedWidth` onto this aside and
+//     `HkSidebar.scss` consumes it (`.hk-sidebar[data-collapsed]
+//     .hk-sidebar-body { padding-inline: calc((var(--hk-sidebar-rail-w, 56px)
+//     - 34px) / 2) }`) so a rail row is EXACTLY its own min-height square at
+//     any rail width. The mirror declares the same token at the same place;
+//     `HkSidebar.scss` itself is not a manifest row because the crate has no
+//     `HkSidebar` mirror and the LEGACY `navigation/sidebar.rs` still paints
+//     the `.hk-sidebar*` family from its own sheet (a mirrored copy would land
+//     last and override it). A host that ships the canonical sheet gets exact
+//     squares; without it the token is inert, not wrong.
 //   * SCOPED SLOTS BECOME CONTROLLED STATE. Vue calls
 //     `slots.sidebar({ collapsed, onNavigate, inDrawer, peeking })` and
 //     `slots.userPanel({ onNavigate })`; a tairitsu slot is an `Element`, not a
@@ -645,7 +657,15 @@ pub fn FaceShell(props: FaceShellProps) -> Element {
                             "data-rail": presence(rail_active),
                             "data-peeking": presence(props.peeking),
                             "data-pinning": presence(props.pinning),
-                            style: format!("width:{layout_width};flex-shrink:0"),
+                            // `--hk-sidebar-rail-w` is the rail row square's
+                            // input (Vue declares the same token on this
+                            // aside): the consumed rule lives in
+                            // `HkSidebar.scss`, which this crate does not
+                            // vendor — see the header's platform/parity note.
+                            style: format!(
+                                "width:{layout_width};flex-shrink:0;--hk-sidebar-rail-w:{}",
+                                props.sidebar_collapsed_width
+                            ),
                             onpointerenter: move |event: PointerEvent| {
                                 if let Some(handler) = rail_enter.as_ref() {
                                     handler.call(event);
@@ -924,6 +944,36 @@ mod tests {
     }
 
     #[test]
+    fn face_shell_declares_the_rail_width_token_for_the_row_square() {
+        // Default rail width: the token rides the aside (Vue: the same
+        // declaration, consumed by HkSidebar.scss's body inline track).
+        let html = FaceShell(FaceShellProps {
+            viewport_width: 1280.0,
+            sidebar_collapsible: true,
+            sidebar: Some(rsx! { nav { "links" } }),
+            content: rsx! { p { "page" } },
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains("--hk-sidebar-rail-w:56px"),
+            "the default rail width must reach the aside as the token: {html}"
+        );
+
+        // A configured width retunes the token, never a second edit.
+        let html = FaceShell(FaceShellProps {
+            viewport_width: 1280.0,
+            sidebar_collapsible: true,
+            sidebar_collapsed_width: "72px".to_string(),
+            sidebar: Some(rsx! { nav { "links" } }),
+            content: rsx! { p { "page" } },
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("--hk-sidebar-rail-w:72px"), "{html}");
+    }
+
+    #[test]
     fn face_shell_rail_state_channel_round_trips() {
         assert!(!face_shell_rail_active(false, FaceShellRailStyle::Rail));
         assert!(face_shell_rail_active(true, FaceShellRailStyle::Rail));
@@ -1049,7 +1099,7 @@ mod tests {
             "hk-sidebar-rail-swap",
             "hk-sidebar-rail-generation",
             "hk-sidebar-rail-toggle",
-            "width:56px;flex-shrink:0",
+            "width:56px;flex-shrink:0;--hk-sidebar-rail-w:56px",
             "width:224px;border-inline-end:1px solid var(--border-faint",
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");

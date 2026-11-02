@@ -217,6 +217,7 @@ impl StyleRegistry {
         use crate::feedback::spinner::SpinnerComponent;
         use crate::feedback::toast::ToastComponent;
         use crate::feedback::tooltip::TooltipComponent;
+        use crate::feedback::touch_hint::TouchHintBarComponent;
         AlertComponent::register(self);
         BlockingToastComponent::register(self);
         ConfirmDialogComponent::register(self);
@@ -230,6 +231,7 @@ impl StyleRegistry {
         ProgressRingComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);
+        TouchHintBarComponent::register(self);
         ModalComponent::register(self);
         DrawerComponent::register(self);
         PopoverComponent::register(self);

@@ -27,9 +27,15 @@
 //
 // Behaviour taken from the Vue component: `mouseenter` / `mouseleave` plus
 // `focusin` / `focusout` on the wrapper, a `delay` before the bubble appears
-// (default 300 ms), a per-frame trigger-rect tracker while visible, and a
-// touch toggle on `pointerdown` whose synthetic mouse events are suppressed
-// for 600 ms.
+// (default 300 ms), a per-frame trigger-rect tracker while visible, and — on
+// `pointerdown` with a TOUCH or PEN pointer — a request for the touch hint
+// bar ([`TooltipProps::on_touch_hint`]) instead of a bubble. The touch half
+// of the tooltip story is `feedback/touch_hint.rs`: a finger cannot hover,
+// and an anchored bubble under the finger that asked "what is this?" hides
+// the very element being inspected, so Vue moved the touch answer to a bar
+// docked at the top of the viewport. A quick tap shows NOTHING; only the
+// long-press does (and the press's synthetic mouse events are suppressed for
+// 600 ms so they cannot flash a popup the touch mode never shows).
 //
 // Adaptation deltas vs Vue (deliberate, listed instead of hidden):
 //   * NO TELEPORT / NO POPUP MANAGER — the popup renders IN PLACE as the
@@ -67,12 +73,27 @@
 //     from the first paint (hidden by the sheet's `opacity: 0`) instead of
 //     being mounted on the first engage, and nothing registers / unregisters
 //     with the popup manager.
-//   * TOUCH — `pointerdown` with `pointerType === "touch"` toggles the bubble
-//     immediately (no delay) and suppresses the tap's synthetic mouse events
-//     for 600 ms, like Vue. NOT reproduced: Vue's document-level `pointerdown`
-//     listener that closes the bubble on the next tap anywhere else — tairitsu
-//     exposes no `addEventListener` API, so a tap outside leaves the bubble up
-//     until the trigger is tapped again.
+//   * TOUCH — `pointerdown` with `pointerType === "touch"` (or `"pen"`) no
+//     longer toggles the bubble. Vue hands the gesture to
+//     `runtime/touchHint.ts` (`armTouchHint(wrapper, text, { pointerId,
+//     origin })`): a long-press shows the top-docked hint bar, a quick tap
+//     shows nothing, and the press's synthetic mouse events are suppressed
+//     for 600 ms. The mirror cannot run that recognizer (no document-level
+//     listeners on `wasm32-wasip2`, and typed pointer events never dispatch
+//     there — ledger L67; see `feedback/touch_hint.rs`), so it exposes the
+//     HANDOVER instead: [`TooltipProps::on_touch_hint`] fires with the text
+//     and the contact point, and the host arms its own long-press and
+//     presents the mirrored [`crate::feedback::TouchHintBar`]. A host that
+//     wires nothing gets no touch hint — the tap does not fall back to the
+//     anchored bubble, exactly like Vue.
+//   * PIXEL GRID SNAP — the placement declarations are followed by Vue's
+//     `snapToPixelGrid` pass (a fixed popup positioned through an inline
+//     transform paints at its exact fractional device position, so an
+//     unsnapped coordinate is resampled into a uniform blur). The pure
+//     kernel is exported ([`tooltip_pixel_snap_delta`]) and the tracker
+//     applies it on the web build ([`snap_to_pixel_grid`]); on
+//     `wasm32-wasip2` there is no layout to measure, so the pass is a no-op
+//     there — the same ceiling the clamp pass below documents.
 //   * NO FOCUS TRAP / NO `afterLeave` — there is no leave transition driver, so
 //     there is no "finished leaving" edge to report.
 //   * The tag-id sequence (`hk-tooltip-{n}`) is Vue's format, but the id is
@@ -109,6 +130,56 @@ pub const TOOLTIP_TOUCH_SUPPRESS_MS: f64 = 600.0;
 /// The trigger box the placement math consumes, in root visual px:
 /// `(left, top, width, height)` — a `DOMRect`'s `x` / `y` / `width` / `height`.
 pub type TooltipRect = (f64, f64, f64, f64);
+
+/// One touch/pen press that asks for the touch hint bar — the payload of
+/// [`TooltipProps::on_touch_hint`].
+///
+/// Vue's `armTouchHint(node, text, { pointerId, origin })` takes exactly these
+/// three facts from the `pointerdown` it is called from (the contact point
+/// keeps the recognizer's slop math honest); the mirror hands them to the
+/// host, which owns the long-press (see the file header's touch delta).
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct TooltipTouchHintRequest {
+    /// The hint text (`props.text`), already the one Vue forwards.
+    pub text: String,
+    /// `PointerEvent.pointerId` — so other fingers cannot cancel the hold.
+    pub pointer_id: i32,
+    /// Client (viewport) px of the contact point (`origin.x`).
+    pub client_x: f64,
+    /// Client (viewport) px of the contact point (`origin.y`).
+    pub client_y: f64,
+}
+
+/// Vue's `snapToPixelGrid` kernel: the nudge that puts a placed popup's
+/// top-left corner EXACTLY on the device-pixel grid.
+///
+/// `step` is one DEVICE pixel in root visual px (`1 / window.devicePixelRatio`
+/// — Vue guards a non-finite/zero ratio back to `1`, so the helper does the
+/// same). Returns `(dx, dy)` in root visual px: how far the popup must move to
+/// land on the grid. An on-grid box returns `(0.0, 0.0)`, i.e. "write
+/// nothing", so re-placing an already-sharp popup is free. A zero-sized box
+/// (no layout: happy-dom/jsdom, a hidden popup) also returns zero — the same
+/// guard Vue's measure pass applies.
+pub fn tooltip_pixel_snap_delta(
+    left: f64,
+    top: f64,
+    width: f64,
+    height: f64,
+    dpr: f64,
+) -> (f64, f64) {
+    if !(width > 0.0 && height > 0.0) {
+        return (0.0, 0.0);
+    }
+    let step = if dpr.is_finite() && dpr > 0.0 {
+        1.0 / dpr
+    } else {
+        1.0
+    };
+    (
+        (left / step).round() * step - left,
+        (top / step).round() * step - top,
+    )
+}
 
 /// Instance sequence for `hk-tooltip-{n}` (Vue: `popupSeq`).
 static TOOLTIP_SEQ: AtomicU32 = AtomicU32::new(0);
@@ -181,6 +252,15 @@ pub struct TooltipProps {
     /// Extra class appended to the wrapper (Vue: attribute fallthrough).
     #[default]
     pub class: String,
+
+    /// The touch/pen handover (see the file header's touch delta). Vue arms
+    /// its own long-press recognizer on this press (`armTouchHint`) and
+    /// presents the top-docked hint bar; the crate cannot own a document-level
+    /// gesture, so the press leaves through this event and the HOST runs the
+    /// hold and mounts [`crate::feedback::TouchHintBar`]. A host that wires
+    /// nothing shows no hint on touch — the same "quick tap shows nothing"
+    /// behaviour, with the long-press left unimplemented instead of faked.
+    pub on_touch_hint: Option<EventHandler<TooltipTouchHintRequest>>,
 }
 
 /// Render one CSS length the way the browser expects it. Integral values print
@@ -307,6 +387,55 @@ fn write_popup_style(_popup_id: &str, _declarations: &[(&'static str, String)]) 
     false
 }
 
+/// Read one inline length off the popup and nudge it onto the device grid
+/// (Vue: `snapToPixelGrid`). Measured in ROOT VISUAL px and written back in
+/// the same unit; Vue divides the correction by `ancestorZoom(popup)` first —
+/// with a zoom-free root the factor is 1.0, which is the same declared
+/// ceiling the clamp pass above documents.
+///
+/// Returns whether the popup was found; a zero-sized box (no layout) or an
+/// on-grid box is a no-op, exactly Vue's early returns.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+fn snap_to_pixel_grid(popup_id: &str) -> bool {
+    let Some(element) = platform::get_element_by_id(popup_id) else {
+        return false;
+    };
+    let Some(html) = platform::get_element_by_class_upward("hk-tooltip-popup", &element) else {
+        return false;
+    };
+    let Some(rect) = platform::get_bounding_client_rect(&element) else {
+        return true;
+    };
+    let (dx, dy) = tooltip_pixel_snap_delta(
+        rect.x,
+        rect.y,
+        rect.width,
+        rect.height,
+        platform::device_pixel_ratio(),
+    );
+    if dx == 0.0 && dy == 0.0 {
+        return true;
+    }
+    let current = |property: &str| -> f64 {
+        platform::get_inline_style_value(&html, property)
+            .and_then(|value| value.trim().trim_end_matches("px").parse::<f64>().ok())
+            .unwrap_or(0.0)
+    };
+    let left = current("left") + dx;
+    let top = current("top") + dy;
+    platform::set_style_property(&html, "left", &px(left));
+    platform::set_style_property(&html, "top", &px(top));
+    true
+}
+
+/// The stub platform has no layout at all (`get_bounding_client_rect` is a
+/// `None` stub on `wasm32-wasip2`), so the snap pass is inert there; the
+/// tracker keeps running on its declaration writes.
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+fn snap_to_pixel_grid(_popup_id: &str) -> bool {
+    false
+}
+
 /// Show / hide the bubble by writing its inline `opacity` (see the header note
 /// on the visibility carrier: this is the declaration `.hk-tooltip-visible`
 /// carries, and it survives a re-render because the diff never re-writes the
@@ -351,6 +480,10 @@ fn position_loop_tick(state: PositionLoop) {
         state.tracking.set(false);
         return;
     }
+    // Vue's `applyTooltipPosition` ends on `snapToPixelGrid`: the base anchor
+    // maths (and, in Vue, the clamp rewrite) always leaves fractional local
+    // px, so the placed box is snapped after EVERY path that writes it.
+    snap_to_pixel_grid(&state.popup_id);
     let next = state;
     platform::request_animation_frame_with_timestamp(move |_timestamp| position_loop_tick(next));
 }
@@ -361,8 +494,9 @@ fn position_loop_tick(state: PositionLoop) {
 /// These are plain cells, not hooks: tairitsu 0.5.22 component-body hooks are
 /// render-scoped (see the file header), so the tooltip keeps its runtime state
 /// in the DOM and only holds what a handler must remember between two of its own
-/// calls — the delay generation (timer cancellation), the visible flag (touch
-/// toggle) and the tracker flag (loop cancellation).
+/// calls — the delay generation (timer cancellation) and the tracker flag (loop
+/// cancellation). The `visible` flag went away with the touch toggle: the
+/// bubble's visibility now lives only in the DOM (inline `opacity`).
 #[derive(Clone)]
 struct TooltipRuntime {
     popup_id: String,
@@ -370,7 +504,6 @@ struct TooltipRuntime {
     placement: TooltipPlacement,
     max_width: Option<String>,
     delay: u32,
-    visible: Rc<Cell<bool>>,
     generation: Rc<Cell<u32>>,
     tracking: Rc<Cell<bool>>,
 }
@@ -395,16 +528,8 @@ impl TooltipRuntime {
         );
     }
 
-    /// Show without the delay (Vue: `showNow()`, the touch path).
-    fn show_now(&self) {
-        // Invalidate any pending delayed show first.
-        self.generation.set(self.generation.get().wrapping_add(1));
-        self.reveal();
-    }
-
     /// Show the bubble now and start the per-frame tracker.
     fn reveal(&self) {
-        self.visible.set(true);
         set_popup_visible(&self.popup_id, true);
         self.tracking.set(true);
         position_loop_tick(PositionLoop {
@@ -420,18 +545,8 @@ impl TooltipRuntime {
     /// (Vue: `hide()`).
     fn hide(&self) {
         self.generation.set(self.generation.get().wrapping_add(1));
-        self.visible.set(false);
         self.tracking.set(false);
         set_popup_visible(&self.popup_id, false);
-    }
-
-    /// Touch toggle (Vue's `onPointerdown` touch branch).
-    fn toggle(&self) {
-        if self.visible.get() {
-            self.hide();
-        } else {
-            self.show_now();
-        }
     }
 }
 
@@ -448,7 +563,6 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         placement: props.placement,
         max_width: props.max_width.clone(),
         delay: props.delay,
-        visible: Rc::new(Cell::new(false)),
         generation: Rc::new(Cell::new(0)),
         tracking: Rc::new(Cell::new(false)),
     };
@@ -460,8 +574,9 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         let runtime = runtime.clone();
         let last_touch_at = last_touch_at.clone();
         move |_event: MouseEvent| {
-            // Synthetic mouseenter right after a touch tap must not re-open the
-            // bubble the tap just toggled.
+            // A touch press's synthetic mouseenter must not flash the anchored
+            // bubble the touch mode never shows — the top hint bar owns touch
+            // (Vue suppresses it for the same 600 ms window).
             if platform::now_timestamp() - last_touch_at.get() < TOOLTIP_TOUCH_SUPPRESS_MS {
                 return;
             }
@@ -495,14 +610,30 @@ pub fn Tooltip(props: TooltipProps) -> Element {
     };
 
     let on_pointerdown = {
-        let runtime = runtime.clone();
         let last_touch_at = last_touch_at.clone();
+        let text = props.text.clone();
+        let on_touch_hint = props.on_touch_hint.clone();
         move |event: PointerEvent| {
-            if !matches!(event.pointer_type, PointerType::Touch) {
+            // Touch and pen only. A stylus HOLD is the same deliberate ask a
+            // finger's is (Vue joined the two), while the pen keeps hover: it
+            // still floats the anchored popup, and a pen long-press may
+            // surface the bar beside it.
+            if !matches!(event.pointer_type, PointerType::Touch | PointerType::Pen) {
+                return;
+            }
+            // Nothing to say → no gesture at all (Vue: `!props.text.trim()`).
+            if text.trim().is_empty() {
                 return;
             }
             last_touch_at.set(platform::now_timestamp());
-            runtime.toggle();
+            if let Some(handler) = on_touch_hint.as_ref() {
+                handler.call(TooltipTouchHintRequest {
+                    text: text.clone(),
+                    pointer_id: event.pointer_id,
+                    client_x: f64::from(event.client_x),
+                    client_y: f64::from(event.client_y),
+                });
+            }
         }
     };
 
@@ -710,6 +841,57 @@ mod tests {
             format!("[data-hk-tooltip-anchor=\"{first}\"]"),
             "the measurement hook carries the popup id verbatim"
         );
+    }
+
+    #[test]
+    fn tooltip_pixel_snap_lands_on_the_device_grid() {
+        // Vue's own suite: a 100x40 box at (200.4, 100.6) with dpr 2 snaps
+        // to the half-pixel grid (1 device px = 0.5 css px).
+        // 200.4 → 200.5 (+0.1), 100.6 → 100.5 (−0.1): each axis takes the
+        // NEAREST grid line, which may lie either side of the box.
+        let (dx, dy) = tooltip_pixel_snap_delta(200.4, 100.6, 100.0, 40.0, 2.0);
+        assert!((dx - 0.1).abs() < 1e-9, "dx should be +0.1: {dx}");
+        assert!((dy + 0.1).abs() < 1e-9, "dy should be -0.1: {dy}");
+        // On-grid boxes write nothing (re-placing is free).
+        assert_eq!(
+            tooltip_pixel_snap_delta(200.5, 100.5, 100.0, 40.0, 2.0),
+            (0.0, 0.0)
+        );
+        // dpr 1 rounds to whole CSS px.
+        let (dx, dy) = tooltip_pixel_snap_delta(200.4, 100.6, 100.0, 40.0, 1.0);
+        assert!((dx + 0.4).abs() < 1e-9, "{dx}");
+        assert!((dy - 0.4).abs() < 1e-9, "{dy}");
+        // A non-finite / zero ratio is guarded back to 1, like Vue.
+        assert_eq!(
+            tooltip_pixel_snap_delta(200.4, 100.6, 100.0, 40.0, 0.0),
+            tooltip_pixel_snap_delta(200.4, 100.6, 100.0, 40.0, 1.0)
+        );
+        assert_eq!(
+            tooltip_pixel_snap_delta(200.4, 100.6, 100.0, 40.0, f64::NAN),
+            tooltip_pixel_snap_delta(200.4, 100.6, 100.0, 40.0, 1.0)
+        );
+        // No layout (a hidden popup / the stub platform) → no correction.
+        assert_eq!(
+            tooltip_pixel_snap_delta(200.4, 100.6, 0.0, 0.0, 2.0),
+            (0.0, 0.0)
+        );
+    }
+
+    #[test]
+    fn tooltip_touch_hint_request_carries_the_vue_arm_facts() {
+        let request = TooltipTouchHintRequest {
+            text: "Open details".to_string(),
+            pointer_id: 3,
+            client_x: 120.0,
+            client_y: 64.0,
+        };
+        assert_eq!(request.text, "Open details");
+        assert_eq!(request.pointer_id, 3);
+        assert_eq!((request.client_x, request.client_y), (120.0, 64.0));
+        // The handover is opt-in: a default tooltip has no touch receiver.
+        assert!(TooltipProps::default().on_touch_hint.is_none());
+        // ... and the default props still match Vue's.
+        assert_eq!(TooltipProps::default().text, "");
     }
 
     #[test]

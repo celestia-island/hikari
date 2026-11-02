@@ -24,11 +24,10 @@
 // (the HkButton `.hk-btn` mirror has not landed yet); the grid classes on
 // the buttons are the Vue ones so the shared sheet sizes the row.
 
+use super::modal::Modal;
 use crate::basic::{Button, ButtonSize, ButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-
-use super::modal::Modal;
 
 pub struct ConfirmDialogComponent;
 

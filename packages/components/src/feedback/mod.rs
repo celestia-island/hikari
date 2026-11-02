@@ -34,14 +34,14 @@ pub use blocking_toast::*;
 pub use confirm_dialog::*;
 pub use drawer::*;
 pub use glow::*;
-pub use loading_veil::*;
-pub use phase_transition::*;
 // Re-exports for backward compatibility
 pub use glow::{Glow as Acrylic, GlowBlur as AcrylicBlur, GlowColor as AcrylicMode};
+pub use loading_veil::*;
 pub use message_box::*;
 pub use modal::*;
 pub use persistent_toast::*;
 pub use persistent_toast_group::*;
+pub use phase_transition::*;
 pub use popover::*;
 pub use progress_bar::*;
 pub use progress_dialog::*;

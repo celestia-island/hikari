@@ -28,26 +28,25 @@ pub use breadcrumb::{
     Breadcrumb, BreadcrumbComponent, BreadcrumbItem, BreadcrumbItemProps, BreadcrumbProps,
     BreadcrumbSeparator, BreadcrumbSeparatorBuilder, BreadcrumbSeparatorProps,
 };
-pub use menu::{
-    Menu, MenuComponent, MenuContext, MenuItem, MenuItemHeight, MenuItemProps, MenuMode, MenuProps,
-    SubMenu, SubMenuProps,
-};
-pub use sidebar::{
-    Sidebar, SidebarComponent, SidebarItem, SidebarItemProps, SidebarLeaf, SidebarLeafProps,
-    SidebarProps, SidebarSection, SidebarSectionProps,
-};
-pub use stepper::{Stepper, StepperComponent, StepperDirection, StepperProps};
+pub use expansion_panel::*;
 // `Steps` and friends are the deprecated shim of `Stepper`; imported by name so
 // the overlap is visible at the export site instead of hidden behind a glob.
 pub use keyword_search_modal::*;
 pub use localized_input::*;
+pub use menu::{
+    Menu, MenuComponent, MenuContext, MenuItem, MenuItemHeight, MenuItemProps, MenuMode, MenuProps,
+    SubMenu, SubMenuProps,
+};
 pub use menu_identity_item::*;
 pub use menu_panel::*;
 pub use menu_section::*;
 pub use modal_breadcrumb::*;
 pub use search_trigger::*;
+pub use sidebar::{
+    Sidebar, SidebarComponent, SidebarItem, SidebarItemProps, SidebarLeaf, SidebarLeafProps,
+    SidebarProps, SidebarSection, SidebarSectionProps,
+};
+pub use stepper::{Stepper, StepperComponent, StepperDirection, StepperProps};
 #[allow(deprecated)]
 pub use steps::{StepData, StepStatus, Steps, StepsDirection, StepsProps};
 pub use tabs::{TabPane, TabPaneProps, TabPosition, Tabs, TabsComponent, TabsProps};
-
-pub use expansion_panel::*;

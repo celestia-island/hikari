@@ -60,12 +60,11 @@
 
 use hikari_i18n::t;
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-
 use super::locale_picker_popup::{
     LocalePickerPopup, LocalePickerPopupProps, LocalePopupEntry, LocalePopupPlacement,
 };
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct LocalePickerComponent;
 

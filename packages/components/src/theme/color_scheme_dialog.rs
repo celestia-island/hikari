@@ -43,13 +43,12 @@ use hikari_i18n::t;
 use crate::feedback::modal::{Modal, ModalAction, ModalActionVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-use crate::theme::color_scheme_editor::{
-    ColorSchemeEditor, SchemeEditKey, SchemeMode, SchemeTokenEdit, SchemeTokens,
-};
-
 // The custom-scheme payload this dialog confirms, re-exported from the
 // editor exactly like Vue re-exports `HCustomTheme` from the dialog.
 pub use crate::theme::color_scheme_editor::CustomTheme;
+use crate::theme::color_scheme_editor::{
+    ColorSchemeEditor, SchemeEditKey, SchemeMode, SchemeTokenEdit, SchemeTokens,
+};
 
 pub struct ColorSchemeDialogComponent;
 

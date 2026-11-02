@@ -14,7 +14,8 @@
 //   div.hk-donut[role="img"][aria-label]
 //     div.hk-donut__ring-wrap
 //       div[style="display:contents"][dangerous_inner_html=<svg …>]
-//         <svg class="hk-donut__ring" viewBox="0 0 {size} {size}">
+//         <svg class="hk-donut__ring" width="{size}" height="{size}"
+//              viewBox="0 0 {size} {size}">
 //           <path class="hk-donut__slice" d=… fill=… data-hint aria-label
 //                 tabindex="0">                    (one per non-zero entry)
 //           <text class="hk-donut__center" x={size/2} y={size/2 + 5}
@@ -315,8 +316,11 @@ fn donut_ring_svg(
     hint_of: Option<&Callback<DonutSlice, String>>,
 ) -> String {
     let mut svg = String::new();
+    // The svg carries width/height from the same square the viewBox uses:
+    // without intrinsic dimensions an inline SVG collapses to 0x0 under the
+    // block-level ring wrapper, exactly like the Vue form (hikari#1036).
     svg.push_str(&format!(
-        r#"<svg class="hk-donut__ring" viewBox="0 0 {size} {size}">"#
+        r#"<svg class="hk-donut__ring" width="{size}" height="{size}" viewBox="0 0 {size} {size}">"#
     ));
     for slice in slices {
         let hint = escape_markup(&donut_hint(slice, hint_of));
@@ -345,7 +349,8 @@ pub struct DonutChartProps {
     #[default]
     pub entries: Vec<DonutEntry>,
 
-    /// Square ring size (px, Vue default 150).
+    /// Square ring size (px, Vue default 150) — the SVG's intrinsic
+    /// width/height and the viewBox.
     #[default(DONUT_SIZE)]
     pub size: f64,
 
@@ -641,7 +646,7 @@ mod tests {
             r#"aria-label="DD 60%, CA 30%, BB 10%""#,
             r#"<div class="hk-donut__ring-wrap">"#,
             r#"<div style="display:contents">"#,
-            r#"<svg class="hk-donut__ring" viewBox="0 0 150 150">"#,
+            r#"<svg class="hk-donut__ring" width="150" height="150" viewBox="0 0 150 150">"#,
             r#"<path class="hk-donut__slice""#,
             r#"data-hint="DD · 60 · 60%""#,
             r#"<text class="hk-donut__center" x="75" y="80" text-anchor="middle">100%</text>"#,
@@ -658,6 +663,24 @@ mod tests {
         // 5 rows per column → a single column for three slices.
         assert_eq!(html.matches("hk-donut__legend-col").count(), 1);
         assert!(!html.contains("hk-donut--empty"), "{html}");
+    }
+
+    #[test]
+    fn donut_chart_sizes_the_ring_svg_from_the_size_prop() {
+        // Vue pin (HkDonutChart.test.tsx): the svg's width/height attributes
+        // follow the size prop, so the ring has intrinsic dimensions.
+        let html = DonutChart(DonutChartProps {
+            entries: vue_entries(),
+            size: 96.0,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains(
+                r#"<svg class="hk-donut__ring" width="96" height="96" viewBox="0 0 96 96">"#
+            ),
+            "{html}"
+        );
     }
 
     #[test]

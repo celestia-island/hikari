@@ -619,7 +619,14 @@
     // padding both consume the vars, so one override moves both.
     --hk-scroll-pad-top: 1rem;
     --hk-scroll-pad-right: 1rem;
-    --hk-scroll-pad-bottom: 1rem;
+    // The sheet docks flush on the bottom edge (bottom: 0 above), which on
+    // a gesture-nav phone is INSIDE the system bar's band — the body's
+    // last row would sit under the home pill. The footer already clears
+    // safe area below; a footer-less body gets the same guarantee through
+    // its own bottom gutter (2026-11-02 wowsp phone report). Hosts that
+    // paint edge-to-edge content still opt out per surface with
+    // --hk-scroll-pad-bottom, the same escape hatch the footer contract has.
+    --hk-scroll-pad-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     --hk-scroll-pad-left: 1rem;
   }
 

@@ -60,13 +60,10 @@
 //     Vue's `target.closest("button, a, input, textarea, select,
 //     [contenteditable]")` guard needs DOM introspection; a host that must keep
 //     those clicks simply does not publish `dragging_index`.
-//   * MOUSE events, not pointer events. On wasm32-wasip2 the tairitsu browser
-//     glue gives only the mouse family a typed `MouseEvent` payload and routes
-//     `pointer*` (with touch/transition/animation) through the generic event
-//     channel, so a `PointerEvent` handler never fires on the real target
-//     (evidence: `tairitsu/packages/browser-glue/dist/runtime/eventTarget.js`
-//     vs `packages/web/src/wit_platform.rs`). Touch/pen presses are therefore
-//     the host's to observe.
+//   * MOUSE events. The pointer family is typed on this wire since
+//     tairitsu 0.5.24 (the old never-fires window — ledger L88 — is closed),
+//     so staying on mouse is this surface's convention, not a platform
+//     necessity. Touch/pen presses are the host's to observe either way.
 //   * Vue's press-to-drag arm (`ARM_PX = 5`, a hysteresis so a clickable row
 //     keeps its tap action and a jittered tap never flashes a ghost) needs the
 //     press ORIGIN held across events — per-instance state the mirror does not

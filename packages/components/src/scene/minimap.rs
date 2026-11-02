@@ -46,20 +46,19 @@
 // `transform-origin: 0 0`, the `HkImageViewer` model.
 //
 // Deltas vs Vue (documented, not accidental):
-//   * [D] MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
-//     tairitsu browser glue dispatches only the mouse family as typed
-//     `MouseEvent`s and routes `pointer*` through a data-less generic
-//     channel, so a typed `PointerEvent` handler never fires on the real
-//     target (ledger L88). The card, the zoom bar and the pop therefore bind
-//     `mousedown` / `mousemove` / `mouseup` (the abort still listens on the
-//     generic `pointercancel` channel, which is alive but data-less).
-//     Declared consequences: a touch screen produces no `mousemove`
-//     sequence, so TOUCH dragging is unavailable; the mouse has no implicit
-//     capture, so a drag that leaves the card stops emitting until the
-//     pointer returns (the card IS the root — its `mouseup` is the
-//     root-level fallback), and a press released OUTSIDE the card is caught
-//     by the `buttons == 0` guard on the next move/leave instead of panning
-//     the map on a bare hover.
+//   * [D] MOUSE-FAMILY BINDINGS. The card, the zoom bar and the pop
+//     therefore bind `mousedown` / `mousemove` / `mouseup` (the abort
+//     listens on the generic `pointercancel` channel — typed payload since
+//     tairitsu 0.5.24, read by nothing). Wire update: the pointer family is
+//     typed on this wire now, so the mouse-only surface is a convention,
+//     not a platform necessity (ledger L88's never-fires window is closed).
+//     Declared consequences unchanged: a touch screen produces no
+//     `mousemove` sequence, so TOUCH dragging is unavailable; the mouse has
+//     no implicit capture, so a drag that leaves the card stops emitting
+//     until the pointer returns (the card IS the root — its `mouseup` is
+//     the root-level fallback), and a press released OUTSIDE the card is
+//     caught by the `buttons == 0` guard on the next move/leave instead of
+//     panning the map on a bare hover.
 //   * [D] NO MEASUREMENT SEAM for the SVG. Vue reads
 //     `root.querySelector("svg").getBoundingClientRect()` to convert drawn
 //     pixels into viewBox units (the `HkMinimap.scale` contract). The crate

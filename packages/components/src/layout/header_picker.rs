@@ -82,13 +82,13 @@
 //     `data-dragging` / `data-placeholder` are never emitted (no re-render
 //     source for a live drag), so the lift/placeholder visuals of Vue's sheet
 //     stay dormant.
-//   * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
-//     tairitsu browser glue typed-dispatches only the mouse family and routes
-//     every `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L88); the
-//     rows bind `mousedown` / `mouseup` / `mouseenter` / `mouseleave` and take
-//     `MouseEvent`. Consequences: a touch screen cannot reorder (a tap still
-//     selects), and a drag released on the window is an abandon, not a reorder.
+//   * MOUSE-FAMILY BINDINGS. The rows bind `mousedown` / `mouseup` /
+//     `mouseenter` / `mouseleave` and take `MouseEvent`. The pointer family
+//     is typed on this wire since tairitsu 0.5.24 (ledger L88's never-fires
+//     window is closed), so staying on mouse is a convention, not a platform
+//     necessity. Consequences unchanged: a touch screen cannot reorder (a tap
+//     still selects), and a drag released on the window is an abandon, not a
+//     reorder.
 //   * END OF DRAG when the release lands OUTSIDE the row that was armed — Vue's
 //     window `pointerup`/`pointercancel`. `tairitsu_vdom::DomOps` is
 //     element-scoped (no document/window registration seam), so the arm is
@@ -656,8 +656,8 @@ pub fn HeaderPicker(props: HeaderPickerProps) -> Element {
                 },
                 // Vue spreads this only for the desktop popout; the mirror has
                 // no sheet branch, so the guard has nothing to guard.
-                // `mouseenter`, not `pointerenter`: the wasip2 glue types only
-                // the mouse family (ledger L88).
+                // `mouseenter`, not `pointerenter` — either family is typed
+                // on this wire since tairitsu 0.5.24; this one is kept.
                 onmouseenter: move |_event: MouseEvent| {
                     enter_wiring.set_highlight(index_i32);
                 },

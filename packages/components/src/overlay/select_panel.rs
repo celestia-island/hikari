@@ -495,8 +495,10 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
                         }
                     },
                     // `mouseenter`, not `pointerenter`: the wasip2 glue types
-                    // only the mouse family, so a pointer-typed hover channel
-                    // never fires on a real device (ledger L88).
+                    // Hover via the mouse family. The pointer family is typed
+                    // on this wire since tairitsu 0.5.24, so this binding is a
+                    // convention, not a platform necessity (ledger L88's
+                    // never-fires window is closed).
                     onmouseenter: move |_event: MouseEvent| {
                         if hover_enabled {
                             enter_wiring.set_highlight(index_i32);

@@ -70,13 +70,12 @@
 //     button bare and lets `HkPopover` own the dialog semantics; with no popover
 //     the mirror puts `aria-haspopup` / `aria-expanded` / `aria-label` on the
 //     button so the open state is announced.
-//   * **mouse-family bindings, not pointer bindings.** On wasm32-wasip2 the
-//     tairitsu browser glue typed-dispatches only the mouse family and routes
-//     every `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L88). The
-//     channel sliders bind `mousedown` / `mousemove` / `mouseup` and every
-//     handler takes a `MouseEvent`, so a touch screen cannot drag a channel (a
-//     tap still sets it).
+//   * **mouse-family bindings.** The channel sliders bind `mousedown` /
+//     `mousemove` / `mouseup` and every handler takes a `MouseEvent`, so a
+//     touch screen cannot drag a channel (a tap still sets it). Wire update:
+//     the pointer family is typed on this wire since tairitsu 0.5.24
+//     (ledger L88's never-fires window is closed), so the mouse-only choice
+//     is a convention, not a platform necessity.
 //   * **no window-level drag listeners.** Vue adds `pointermove` / `pointerup`
 //     / `pointercancel` to `window` on pointerdown and removes them on release
 //     (plus on unmount). A component here cannot own window listeners —

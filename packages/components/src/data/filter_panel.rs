@@ -1085,9 +1085,10 @@ fn add_menu_layer(props: &FilterPanelProps) -> VNode {
             .on_click(move |_event: MouseEvent| {
                 commit_field_pick(&values, &picked, &click_value, &click_menu);
             })
-            // `mouseenter`, not `pointerenter`: the wasip2 glue types only the
-            // mouse family, so a pointer-typed hover channel never fires on a
-            // real device (ledger L88).
+            // `mouseenter`, not `pointerenter` — the pointer family is typed
+            // on this wire since tairitsu 0.5.24, so this binding is a
+            // convention, not a platform necessity (ledger L88's never-fires
+            // window is closed).
             .on_mouseenter(move |_event: MouseEvent| {
                 if let Some(handler) = hover_menu.as_ref() {
                     handler.call(AddMenuState {

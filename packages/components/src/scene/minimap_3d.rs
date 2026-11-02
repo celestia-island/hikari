@@ -41,27 +41,28 @@
 // `on_slider_open_change`.
 //
 // Deltas vs Vue (documented, one per deviation):
-//   * [D] MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
-//     tairitsu browser glue dispatches only the mouse family as typed
-//     `MouseEvent`s and routes `pointer*` through a data-less generic
-//     channel, so a typed `PointerEvent` handler never fires on the real
-//     target (ledger L88). The card, the zoom bar and the pop bind
-//     `mousedown` / `mousemove` / `mouseup`; the abort still listens on the
-//     generic `pointercancel` channel (alive but data-less). Declared
-//     consequences: a touch screen produces no `mousemove` sequence, so
-//     TOUCH orbiting is unavailable; the mouse has no implicit capture, so a
+//   * [D] MOUSE-FAMILY BINDINGS. The card, the zoom bar and the pop bind
+//     `mousedown` / `mousemove` / `mouseup`; the abort listens on the generic
+//     `pointercancel` channel (typed payload since tairitsu 0.5.24; the
+//     handler reads none of it). Wire update: the pointer family is typed
+//     now, so the mouse-only surface is a convention, not a platform
+//     necessity (ledger L88's never-fires window is closed). Declared
+//     consequences unchanged: a touch screen produces no `mousemove`
+//     sequence, so TOUCH orbiting is unavailable; the mouse has no implicit
+//     capture, so a
 //     drag that leaves the card stops emitting until the pointer returns
 //     (the card IS the root — its `mouseup` is the root-level fallback), and
 //     a press released OUTSIDE the card is caught by the `buttons == 0`
 //     guard on the next move/leave instead of orbiting on a bare hover.
-//   * [D] WHEEL STEPS NOTHING. The glue delivers the DOM `wheel` as a
-//     `MouseEvent` with no `deltaY` (L88), so Vue's `onWheel` rung — a sign
-//     test on `deltaY` — cannot run. The mirror still listens through the
-//     generic channel and stops the page scroll (`stopPropagation` +
-//     `preventDefault` on the live handle, Vue's own reason for binding it),
-//     but the payload is never read and the ladder is NOT stepped: the host
-//     drives the zoom through `zoom_percent` / `on_zoom_to` (the ± buttons
-//     and the slider still step it).
+//   * [D] WHEEL STEPS NOTHING. The wheel is typed on this wire since
+//     tairitsu 0.5.24 — real `deltaY` reaches the handler (the binding is
+//     `on_wheel`, corrected alongside #1042) — so Vue's sign-test rung COULD
+//     run; the mirror deliberately does not step the ladder. It keeps Vue's
+//     own reason for binding `onWheel` (`stopPropagation` +
+//     `preventDefault`: stop the page scroll, keep the gesture off the
+//     board) and reads none of the payload: the host drives the zoom
+//     through `zoom_percent` / `on_zoom_to` (the ± buttons and the slider
+//     still step it).
 //   * [D] THE CANVAS IS THE HOST'S. Vue builds a second `THREE.WebGLRenderer`
 //     against its own `<canvas>` (`MAP_W` × `MAP_H`, alpha, `setClearColor(0,
 //     0)`), and re-inits it whenever a fold/unfold cycle rebuilds the element.

@@ -8,12 +8,12 @@
 //
 //   * THE SWAP'S GEOMETRY COMES FROM THE ALREADY-VENDORED
 //     `HkSidebarRail.scss` — the rail family's shared chrome table (manifest
-//     row `components/HkSidebarRail.scss`). NOTE FOR THE WIRING WAVE: that
-//     sheet is vendored but NOT yet compiled by any component in this crate, so
-//     it must be registered on the registry path (the `register_vue_chrome`
-//     pattern in `styled.rs`); otherwise the swap keeps only HkCrossfade's own
-//     rules and loses its flex track. Verified class by class — both classes
-//     this file emits from that family are DEFINED there:
+//     row `components/HkSidebarRail.scss`). No component in this crate owns
+//     that sheet, so it reaches BOTH bundles as chrome:
+//     `StyleRegistry::register_vue_chrome` registers it (`vue-sidebar-rail`)
+//     and `src/styles/index.scss` imports it for the builder bundle. Verified
+//     class by class — both classes this file emits from that family are
+//     DEFINED there:
 //         `.hk-sidebar-rail-swap`        (the `.hk-sidebar-rail-clip >
 //             .hk-sidebar-rail-swap` rule: `flex: 1; min-height: 0;
 //             align-self: flex-start` — the shrink-to-fit host that keeps the
@@ -31,6 +31,39 @@
 //      column).
 //   2. The clip needs an ancestor `.hk-sidebar-rail-host` for the rail's
 //      tokens/geometry to make sense (the host carries the panel width).
+//
+// THE RAIL FLIP'S ICON FLIGHT (`useRailIconFlight`) — DECLARED, NOT SHIPPED.
+// A pure dissolve hides the small horizontal journey every rail icon actually
+// makes (the expanded row puts the glyph on its leading padding, the rail
+// centres it in the 56px column), so Vue adds a flight layer on THIS host: on
+// a density flip it pairs icons opted in by `data-flip-icon="<row key>"`
+// across the two generations (identified semantically through the crossfade
+// items' `data-crossfade-key`), clones each pair into
+// `div.hk-sidebar-rail-flight`, animates the clone from the leaving rect to
+// the entering one (WAAPI), hides both ends (`data-flipping` on this host +
+// `data-flip-flying` on each substituted cell — the single-glyph contract),
+// and sweeps the layer when the token-derived window ends.
+//
+// The mirror ships the SKELETON only, on purpose:
+//   * the sheet side is already vendored — `HkSidebarRail.scss` carries the
+//     flight layer, the clone box and the single-glyph hide rule, so a host
+//     that runs the choreography itself gets Vue's exact paint;
+//   * the attribute vocabulary and the TIMING MATH are exported below
+//     ([`RAIL_FLIP_ICON_ATTR`], [`RAIL_FLIP_ACTIVE_ATTR`],
+//     [`RAIL_FLIP_FLYING_ATTR`], [`RAIL_FLIP_ITEM_ATTR`],
+//     [`rail_flight_css_duration_ms`], [`rail_flight_window_ms`],
+//     [`rail_flight_sweep_ms`]) — all pure, all pinned to Vue's constants;
+//   * the FLIGHT ITSELF IS NOT REPRODUCIBLE on `wasm32-wasip2`. It needs
+//     `document.createElement` + `cloneNode`, `Element.animate` (WAAPI),
+//     `getBoundingClientRect` on four different nodes per pair,
+//     `getComputedStyle` custom-property reads and `setAttribute` /
+//     `removeAttribute` writes — none of which the crate's platform bridge
+//     exposes on the shipped target (its measurement/observer path is the
+//     `wasm32-unknown-unknown` build only). Shipping a "flight" built from
+//     static guesses would be a convincing fake: it would show TWO glyphs of
+//     one destination in different places, exactly the double-exposure the
+//     single-glyph contract exists to prevent. So the dissolve stays the
+//     handoff here, and the flight is declared missing.
 //
 // DOM contract (Vue's render output):
 //
@@ -100,6 +133,129 @@ pub const RAIL_SWAP_DEFAULT_RAIL_WIDTH: &str = "56px";
 
 /// The expanded generation's default width — Vue's `expandedWidth` default.
 pub const RAIL_SWAP_DEFAULT_EXPANDED_WIDTH: &str = "280px";
+
+// ── the rail flip's icon flight contract (see the header) ────────────────
+
+/// Row-key attribute that opts an icon cell into the flight
+/// (Vue: `RAIL_FLIP_ICON_ATTR`). Vue's `HkMenu` stamps it on every menu icon
+/// cell in BOTH densities; the value is the row key, which is what pairs the
+/// leaving and entering copies of one destination.
+pub const RAIL_FLIP_ICON_ATTR: &str = "data-flip-icon";
+
+/// Host attribute marking a flight in progress (Vue:
+/// `RAIL_FLIP_ACTIVE_ATTR`). The sheet's single-glyph hide rule hangs off it:
+/// `.hk-sidebar-rail-swap[data-flipping] .hk-menu-item-icon[data-flip-flying]`.
+pub const RAIL_FLIP_ACTIVE_ATTR: &str = "data-flipping";
+
+/// Per-cell mark stamped on exactly the cells a flight substituted — BOTH ends
+/// of every matched pair (Vue: `RAIL_FLIP_FLYING_ATTR`). The hide rule keys on
+/// THIS, never on the opt-in attribute: an opted-in cell without a partner
+/// (a rail fallback letter with no expanded counterpart) must dissolve, not
+/// vanish without a substitute.
+pub const RAIL_FLIP_FLYING_ATTR: &str = "data-flip-flying";
+
+/// The crossfade's per-item identity — the semantic pairing anchor (Vue:
+/// `RAIL_FLIP_ITEM_ATTR`). The mirrored `Crossfade` emits it as
+/// `data-crossfade-key="rail"|"full"`, so it is already in this file's DOM.
+pub const RAIL_FLIP_ITEM_ATTR: &str = "data-crossfade-key";
+
+/// Flight-window FALLBACK for when the theme's `--duration-normal` yields no
+/// parsable time (Vue: `RAIL_FLIGHT_MS`). A real browser reads the token, so
+/// this only covers environments that resolve no custom properties.
+pub const RAIL_FLIGHT_FALLBACK_MS: f64 = 300.0;
+
+/// Sweep margin on top of the derived flight window: above any healthy
+/// completion, so a stalled clone can never linger (Vue:
+/// `RAIL_FLIGHT_SWEEP_MARGIN_MS`).
+pub const RAIL_FLIGHT_SWEEP_MARGIN_MS: f64 = 300.0;
+
+/// Parse a CSS time custom property (`"120ms"`, `"0.15s"`, `""`) into
+/// milliseconds — Vue's `cssDurationMs`.
+///
+/// Anything unparsable or non-positive is `0` (the caller decides what 0
+/// means: no hold, or the fallback window). Units are case-insensitive in CSS
+/// (`"0.3S"` is legal), and the seconds test must NOT match `ms` — Vue
+/// lowercases first and excludes the `ms` suffix for exactly that reason.
+pub fn rail_flight_css_duration_ms(value: &str) -> f64 {
+    let Some(number) = js_parse_float(value) else {
+        return 0.0;
+    };
+    if !number.is_finite() || number <= 0.0 {
+        return 0.0;
+    }
+    let unit = value.trim().to_lowercase();
+    if unit.ends_with('s') && !unit.ends_with("ms") {
+        number * 1000.0
+    } else {
+        number
+    }
+}
+
+/// The flight window in ms: the theme's dissolve duration (falling back to
+/// [`RAIL_FLIGHT_FALLBACK_MS`]) plus any enter hold the host choreographed
+/// (`--hk-crossfade-enter-delay`). Both ends of the window therefore align with
+/// the entering fade without a hard-coded mirror of the theme's number.
+pub fn rail_flight_window_ms(dissolve: &str, enter_delay: &str) -> f64 {
+    let dissolve_ms = {
+        let parsed = rail_flight_css_duration_ms(dissolve);
+        if parsed > 0.0 {
+            parsed
+        } else {
+            RAIL_FLIGHT_FALLBACK_MS
+        }
+    };
+    dissolve_ms + rail_flight_css_duration_ms(enter_delay)
+}
+
+/// The sweep budget: the flight window plus [`RAIL_FLIGHT_SWEEP_MARGIN_MS`].
+pub fn rail_flight_sweep_ms(dissolve: &str, enter_delay: &str) -> f64 {
+    rail_flight_window_ms(dissolve, enter_delay) + RAIL_FLIGHT_SWEEP_MARGIN_MS
+}
+
+/// `parseFloat`'s leading-number rule, for the subset a CSS time can contain:
+/// optional sign, decimal digits with at most one point, and an optional
+/// `e`/`E` exponent. Leading whitespace is skipped; trailing garbage is
+/// ignored (`"120ms"` → 120). Returns `None` where `parseFloat` would return
+/// `NaN`; `Infinity` and hex literals are deliberately not accepted (no CSS
+/// duration is written that way).
+fn js_parse_float(value: &str) -> Option<f64> {
+    let trimmed = value.trim_start();
+    let bytes = trimmed.as_bytes();
+    let mut end = 0usize;
+    if matches!(bytes.first(), Some(b'+') | Some(b'-')) {
+        end = 1;
+    }
+    let mut digits = 0usize;
+    while end < bytes.len() && bytes[end].is_ascii_digit() {
+        end += 1;
+        digits += 1;
+    }
+    if end < bytes.len() && bytes[end] == b'.' {
+        end += 1;
+        while end < bytes.len() && bytes[end].is_ascii_digit() {
+            end += 1;
+            digits += 1;
+        }
+    }
+    if digits == 0 {
+        return None;
+    }
+    if end < bytes.len() && (bytes[end] == b'e' || bytes[end] == b'E') {
+        let mut probe = end + 1;
+        if probe < bytes.len() && (bytes[probe] == b'+' || bytes[probe] == b'-') {
+            probe += 1;
+        }
+        let mut exponent_digits = 0usize;
+        while probe < bytes.len() && bytes[probe].is_ascii_digit() {
+            probe += 1;
+            exponent_digits += 1;
+        }
+        if exponent_digits > 0 {
+            end = probe;
+        }
+    }
+    trimmed[..end].parse::<f64>().ok()
+}
 
 /// Vue: `swapKey={props.rail ? "rail" : "full"}` — the crossfade's generation
 /// identity.
@@ -293,6 +449,66 @@ mod tests {
         assert_eq!(RAIL_SWAP_CLASS, "hk-sidebar-rail-swap");
         assert_eq!(RAIL_SWAP_GENERATION_CLASS, "hk-sidebar-rail-generation");
         assert_eq!(RAIL_SWAP_CLIP_CLASS, "hk-sidebar-rail-clip");
+    }
+
+    #[test]
+    fn rail_flight_css_duration_matches_the_vue_parser() {
+        // Vue's own `cssDurationMs` cases (useRailIconFlight.test.ts).
+        assert_eq!(rail_flight_css_duration_ms(""), 0.0);
+        assert_eq!(rail_flight_css_duration_ms("0ms"), 0.0);
+        assert_eq!(rail_flight_css_duration_ms("150ms"), 150.0);
+        assert_eq!(rail_flight_css_duration_ms("0.2s"), 200.0);
+        assert_eq!(rail_flight_css_duration_ms("300ms"), 300.0);
+        // CSS units are case-insensitive — an uppercase S is still seconds.
+        assert_eq!(rail_flight_css_duration_ms("0.3S"), 300.0);
+        // ... while `MS` must not be mistaken for seconds.
+        assert_eq!(rail_flight_css_duration_ms("150MS"), 150.0);
+        assert_eq!(rail_flight_css_duration_ms("garbage"), 0.0);
+        // Non-positive and non-finite values mean "no hold".
+        assert_eq!(rail_flight_css_duration_ms("-5ms"), 0.0);
+        assert_eq!(rail_flight_css_duration_ms("0s"), 0.0);
+        assert_eq!(rail_flight_css_duration_ms("calc(1s)"), 0.0);
+        // Leading whitespace is skipped, like parseFloat.
+        assert_eq!(rail_flight_css_duration_ms("  120ms"), 120.0);
+    }
+
+    #[test]
+    fn rail_flight_window_is_token_derived_with_the_vue_fallback() {
+        // No theme value → the documented fallback window, plus the margin.
+        assert_eq!(rail_flight_window_ms("", ""), RAIL_FLIGHT_FALLBACK_MS);
+        assert_eq!(
+            rail_flight_sweep_ms("", ""),
+            RAIL_FLIGHT_FALLBACK_MS + RAIL_FLIGHT_SWEEP_MARGIN_MS
+        );
+        // A retuned theme retunes the flight with it (the dissolve reads the
+        // same token; the test DOM resolves none, hence the fallback above).
+        assert_eq!(rail_flight_window_ms("600ms", ""), 600.0);
+        assert_eq!(rail_flight_window_ms("0.6s", ""), 600.0);
+        // The entering-fade hold widens the window (and the sweep).
+        assert_eq!(rail_flight_window_ms("300ms", "120ms"), 420.0);
+        assert_eq!(rail_flight_sweep_ms("300ms", "120ms"), 720.0);
+    }
+
+    #[test]
+    fn rail_flight_attribute_vocabulary_matches_the_composable() {
+        // The three marks and the pairing anchor, verbatim — the vendored
+        // sheet's single-glyph rule spells two of them.
+        assert_eq!(RAIL_FLIP_ICON_ATTR, "data-flip-icon");
+        assert_eq!(RAIL_FLIP_ACTIVE_ATTR, "data-flipping");
+        assert_eq!(RAIL_FLIP_FLYING_ATTR, "data-flip-flying");
+        assert_eq!(RAIL_FLIP_ITEM_ATTR, "data-crossfade-key");
+        assert_eq!(RAIL_FLIGHT_FALLBACK_MS, 300.0);
+        assert_eq!(RAIL_FLIGHT_SWEEP_MARGIN_MS, 300.0);
+        // The pairing anchor is the one the mirrored Crossfade already emits.
+        assert!(
+            SidebarRailSwap(SidebarRailSwapProps {
+                rail: true,
+                ..Default::default()
+            })
+            .render_to_html()
+            .contains(RAIL_FLIP_ITEM_ATTR),
+            "the swap's generations carry the flight's pairing anchor"
+        );
     }
 
     #[test]

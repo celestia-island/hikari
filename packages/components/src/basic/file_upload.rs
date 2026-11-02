@@ -2,28 +2,44 @@
 // FileUpload component — the dashed drop box around a transparent native
 // `<input type="file">`.
 //
-// L67 DELTA: THE OS-FILE DROP PATH IS GONE ON wasm32-wasip2, NOT FAKED.
+// L86 DELTA: THE OS-FILE DROP PATH IS REMOVED ON wasm32-wasip2, DELIBERATELY.
 // The zone used to bind `dragover` / `dragleave` / `drop` with `DragEvent`
 // handlers. The tairitsu browser glue type-dispatches only the mouse family
 // (plus keyboard / focus / input+change) and routes every `drag*` event through
-// `onGenericEvent`; the host side (`packages/web/src/wit_platform.rs`) turns
-// that into a `GenericEvent` carrying the type string and a live handle but NO
-// data, so the `DragEvent` downcast never matches and those handlers never ran
-// (ledger L67). There is no substitute: a file dragged in from the OS produces
-// no mouse sequence over the drop zone, and only `DataTransfer.files` — which
-// the generic channel does not carry — could name the dropped files. So the
-// bindings are removed rather than left dead or re-pointed at `mouseenter`
-// (hover is not a file drag). Consequences, spelled out:
-//   * picking files still works — the native `input`'s `change` event is a
-//     typed channel, so click-to-browse uploads are unaffected;
-//   * `FileUploadStatus::Dragging` and the `.hk-file-upload-dragging` sheet
-//     rule are now UNREACHABLE (the enum variant and the CSS stay: they are
-//     public/stylesheet surface, not behaviour);
-//   * `upload_text`'s default ("Click or drag file to upload") still says
-//     "drag" — the Vue canonical string is not edited here.
+// `onGenericEvent`; the host side (`packages/web/src/wit_platform.rs`) turns that
+// into a `GenericEvent` carrying the type string and a live handle but NO data,
+// so the `DragEvent` downcast never matches and those typed handlers never ran
+// (ledger L86).
+//
+// TO BE PRECISE ABOUT WHAT WAS AND WAS NOT PRESERVABLE: the EVENT still arrives,
+// so the VISUAL half was preservable as a data-less generic register —
+// `.on_event("dragover", |_: Box<dyn EventData>| set(FileUploadStatus::Dragging))`
+// would light the zone today, exactly the "edge fires, payload missing" reasoning
+// that keeps the `pointercancel` registers in `basic/color_picker.rs` and
+// `scene/board.rs`. It is removed anyway, for three reasons:
+//   1. a highlight that invites a drop which cannot be honoured is a half-feature
+//      — it advertises an affordance the component cannot satisfy;
+//   2. ACCEPTING the drop would need `preventDefault` on `dragover` (a browser
+//      only reports `drop` for a zone that cancels the drag default), and then
+//      `drop`'s own default — navigating to the dropped file — would have to be
+//      swallowed too, so the user's file would be silently discarded. That is
+//      worse than the browser default;
+//   3. the part that MATTERS is genuinely unpreservable: only
+//      `DataTransfer.files` can name the dropped files, and the generic channel
+//      carries no `DataTransfer`, so an `on_files` report could never be built.
+// What that leaves (this is the same grammar as a plain HTML file input):
+//   * picking files still works — the native `input`'s `change` event is a typed
+//     channel, so click-to-browse uploads are unaffected;
+//   * `FileUploadStatus::Dragging` and the `.hk-file-upload-dragging` sheet rule
+//     are UNREACHABLE (the enum variant and the CSS stay: public/stylesheet
+//     surface, not behaviour);
+//   * `upload_text`'s default still says "Click or drag file to upload". That
+//     string lives in THIS crate (`FileUploadProps::upload_text`, the `#[default]`
+//     below), not in the Vue library — there is no such Vue canonical string, so
+//     it is this file's own copy to change and is left alone here.
 // Reinstating the drop path requires the upstream tairitsu glue to type the
-// `drag*` family (or expose the `DataTransfer` behind the event handle); when
-// it does, restore the three handlers and point them back at `ondrag*`.
+// `drag*` family (or expose the `DataTransfer` behind the event handle); when it
+// does, restore the three handlers and point them back at `ondrag*`.
 
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 

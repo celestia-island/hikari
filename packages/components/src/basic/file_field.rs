@@ -46,18 +46,21 @@
 //     writes the answer back through `model_value`. The `#trigger` is still a real
 //     `<button>` with the id the caption points at, so the DOM contract (and
 //     a host that clicks the native input itself) is unchanged.
-//   * THE BOX DROP ZONE IS GONE ON wasip2 (was an ADDITIVE delta). Vue's field
-//     has no drop path at all; the mirror added one that reported dropped NAMES
-//     through `on_files`. It was wired to `dragover` / `drop` with `DragEvent`
-//     handlers, and the tairitsu browser glue routes every `drag*` event through
-//     `onGenericEvent`, whose payload carries only the type string (the host
-//     side turns it into a `GenericEvent`), so those handlers never ran on a
-//     real device (ledger L67). There is no substitute: an OS file drag emits no
-//     mouse sequence over the box, and `DataTransfer.files` — the only source of
-//     the dropped names — is not on the generic channel. The bindings are
-//     REMOVED rather than left dead or re-pointed at `mouseenter` (hover is not
-//     a file drag). Files still arrive through the `change` event / the host's
-//     own picker, and a dropped file now falls through to the browser default.
+//   * THE BOX DROP ZONE IS REMOVED ON wasip2 — A DELIBERATE LOSS (was an
+//     ADDITIVE delta). Vue's field has no drop path at all; the mirror added one
+//     that reported dropped NAMES through `on_files`, wired to `dragover` /
+//     `drop` with `DragEvent` handlers. The glue routes every `drag*` event
+//     through `onGenericEvent`, whose payload carries only the type string (the
+//     host side turns it into a `GenericEvent`), so those typed handlers never
+//     ran (ledger L86). To be precise about what was preservable: the EVENTS do
+//     arrive, so a data-less generic register could have kept a drag-over
+//     treatment alive — the same "edge fires, payload missing" reasoning that
+//     keeps the `pointercancel` registers elsewhere. That was rejected: an
+//     affordance that accepts a drag it cannot honour is worse than none, and
+//     `DataTransfer.files` — the only source of the dropped names, and the whole
+//     point of the path — is not on the generic channel. Files still arrive
+//     through the `change` event / the host's own picker, and a dropped file now
+//     falls through to the browser default rather than being silently swallowed.
 //   * the native `<input type="file">` stays (local mode) for hosts that do
 //     drive it, but a `change` event reaches Rust as the browser's fake path
 //     string only, so [`picked_files_from_change_value`] recovers the leaf

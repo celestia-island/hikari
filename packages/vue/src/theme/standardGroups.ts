@@ -2,7 +2,7 @@ import { registerTokenGroup, type TokenGroupDefinition } from "./tokenGroups";
 
 /**
  * Standard theme groups — the token groups hikari registers ITSELF, as
- * opposed to the extension groups a downstream app registers (chest's SCADA
+ * opposed to the extension groups a downstream app registers (the operations
  * palette is the reference). They exist to make already-shipped L2 scale
  * families (see src/scale.scss) reachable from the color scheme dialog
  * instead of being constants a consumer can only fork.

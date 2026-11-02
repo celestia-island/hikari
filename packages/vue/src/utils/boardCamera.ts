@@ -4,7 +4,7 @@
  * A board lives in a fixed WORLD coordinate space; the camera maps
  * world → screen (`screen = world·k + (x, y)`, `transform-origin: 0 0`).
  * This module owns the rules that keep the viewport decoupled from the
- * graph, so every consumer (topic maps, SCADA scenes, PLC panels, …)
+ * graph, so every consumer (topic maps, operations scenes, PLC panels, …)
  * shares ONE motion feel:
  *
  *  - zoom is a GEOMETRIC 5% ladder (`k = 1.05ⁿ`): gestures accumulate
@@ -22,8 +22,8 @@
  *    land exactly on ladder rungs.
  *
  * Pure functions only — HkBoard / useBoardCamera supply state, timing and
- * gestures. Semantics intentionally mirror the chest SCADA scene camera
- * (the first consumer of this contract).
+ * gestures. Semantics intentionally mirror the first consumer's operations
+ * scene camera.
  */
 
 export interface BoardCamera {

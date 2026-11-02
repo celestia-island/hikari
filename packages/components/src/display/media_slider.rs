@@ -11,7 +11,7 @@
 //
 //   div.hk-media-slider [.is-disabled] data-size={md|sm} role="slider"
 //          tabindex="-1" [aria-label] aria-valuenow aria-valuemin="0"
-//          aria-valuemax="100" [+host class]   (mousedown/move/up — L86 delta)
+//          aria-valuemax="100" [+host class]   (mousedown/move/up — L88 delta)
 //     div.hk-media-slider-buffered style="width:{buffered*100}%"   (buffered > 0)
 //     div.hk-media-slider-fill     style="width:{ratio*100}%"
 //     div.hk-media-slider-thumb    style="left:{ratio*100}%"
@@ -34,7 +34,7 @@
 //     (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
 //     `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
 //     `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L86). The
+//     `PointerEvent` handler never fires on the real target (ledger L88). The
 //     track therefore binds `mousedown` / `mousemove` / `mouseup` and every
 //     handler takes a `MouseEvent`. Consequences: a touch screen produces no
 //     `mousemove` sequence, so TOUCH seeking is unavailable (a tap still

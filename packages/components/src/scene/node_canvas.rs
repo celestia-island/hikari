@@ -91,7 +91,7 @@
 //     listens on `window` for the release. On wasm32-wasip2 the tairitsu
 //     browser glue dispatches only the mouse family as typed `MouseEvent`s
 //     and routes `pointer*` through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L86).
+//     `PointerEvent` handler never fires on the real target (ledger L88).
 //     The surface therefore binds `mousedown` / `mousemove` / `mouseup`,
 //     and the same machine lives in a module-level `thread_local` registry
 //     keyed by [`NodeCanvasProps::instance_key`] —
@@ -108,7 +108,7 @@
 //     unreachable from the component's own bindings: the pure pinch machine
 //     stays exported for a host that tracks real pointer ids of its own.
 //   * THE WHEEL STEPS NOTHING. The glue delivers the DOM `wheel` as a
-//     `MouseEvent` with no `deltaY` (L86), so the sign test Vue's `onWheel`
+//     `MouseEvent` with no `deltaY` (L88), so the sign test Vue's `onWheel`
 //     runs cannot. The mirror still listens through the generic channel and
 //     calls `preventDefault` on the live handle while `zoomable` (Vue's own
 //     gate, and its reason for the non-passive listener — the page must not
@@ -1257,7 +1257,7 @@ impl MinimapPlacement {
 /// The pointer id the mouse family reads as: a mouse event carries no
 /// pointer identity and one page has one mouse, so a constant keeps the
 /// press/release bookkeeping consistent — and is also why the two-pointer
-/// pinch is unreachable from the component's own bindings (L86, header
+/// pinch is unreachable from the component's own bindings (L88, header
 /// delta).
 const NODE_CANVAS_MOUSE_POINTER_ID: i32 = 0;
 
@@ -1952,7 +1952,7 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
     let settle = node_canvas_settle(&props);
     let zoomable = props.zoomable;
     // The wheel rides the GENERIC channel: the glue delivers the DOM `wheel`
-    // as a MouseEvent with no `deltaY` (L86), so the payload is never read —
+    // as a MouseEvent with no `deltaY` (L88), so the payload is never read —
     // only the live handle is, to keep the page from scrolling under a
     // zoomable canvas (Vue's own gate, and its reason for the non-passive
     // listener). No zoom is emitted: the host drives the camera through the
@@ -1996,7 +1996,7 @@ pub fn NodeCanvas(props: NodeCanvasProps) -> Element {
         let origin = props.origin;
         let pointer_scale = props.pointer_scale;
         move |event: MouseEvent| {
-            // No implicit capture (L86): a press released outside the surface
+            // No implicit capture (L88): a press released outside the surface
             // never delivered its mouseup — an armed pan must not drift the
             // camera on a bare hover.
             if event.buttons == 0 {

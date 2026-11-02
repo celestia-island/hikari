@@ -52,7 +52,7 @@
 //     `drop` with `DragEvent` handlers. The glue routes every `drag*` event
 //     through `onGenericEvent`, whose payload carries only the type string (the
 //     host side turns it into a `GenericEvent`), so those typed handlers never
-//     ran (ledger L86). To be precise about what was preservable: the EVENTS do
+//     ran (ledger L88). To be precise about what was preservable: the EVENTS do
 //     arrive, so a data-less generic register could have kept a drag-over
 //     treatment alive — the same "edge fires, payload missing" reasoning that
 //     keeps the `pointercancel` registers elsewhere. That was rejected: an

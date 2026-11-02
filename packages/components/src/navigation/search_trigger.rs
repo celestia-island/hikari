@@ -100,7 +100,7 @@
 //     stroke attribute set, `aria-hidden="true"`), mounted through
 //     `dangerous_inner_html` on a `display:contents` host — `rsx!`'s
 //     `svg {}` lands in the HTML namespace in this host stack (ledger L49).
-//   * interactions bind the MOUSE family (`onclick`), per ledger L86: on
+//   * interactions bind the MOUSE family (`onclick`), per ledger L88: on
 //     wasm32-wasip2 the browser glue dispatches only the mouse family as
 //     typed events.
 //   * length math counts CHARS where JavaScript counts UTF-16 code units

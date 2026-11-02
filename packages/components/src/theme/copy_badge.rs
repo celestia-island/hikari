@@ -63,7 +63,7 @@
 //     [`copy_badge_activation`] (`action` wins, `tooltip` should accompany).
 //
 // The component is STATELESS (nothing to store; ledger L48 never comes into
-// play). Interaction binds the mouse family (ledger L86): `onclick` carries
+// play). Interaction binds the mouse family (ledger L88): `onclick` carries
 // the press; Enter/Space ride `onkeydown` exactly like Vue's keydown hook.
 
 use hikari_i18n::t;
@@ -504,7 +504,7 @@ mod tests {
         assert_eq!(
             clickers,
             vec!["hk-badge hk-badge-default hk-copy-badge".to_string()],
-            "the click seam binds on the face itself (mouse family, ledger L86)"
+            "the click seam binds on the face itself (mouse family, ledger L88)"
         );
 
         let mut keyed = Vec::new();

@@ -50,7 +50,7 @@
 //     tairitsu browser glue dispatches only the mouse family as typed
 //     `MouseEvent`s and routes `pointer*` through a data-less generic
 //     channel, so a typed `PointerEvent` handler never fires on the real
-//     target (ledger L86). The card, the zoom bar and the pop therefore bind
+//     target (ledger L88). The card, the zoom bar and the pop therefore bind
 //     `mousedown` / `mousemove` / `mouseup` (the abort still listens on the
 //     generic `pointercancel` channel, which is alive but data-less).
 //     Declared consequences: a touch screen produces no `mousemove`
@@ -734,7 +734,7 @@ thread_local! {
     /// minimaps on one page from cross-talking.
     static MINIMAP_DRAG: Cell<Option<(u64, i32, i32)>> = const { Cell::new(None) };
     /// Set by the zoom bar / pop on their own `mousedown` (the mouse family,
-    /// L86), consumed by the card in the same event (see the header's
+    /// L88), consumed by the card in the same event (see the header's
     /// zoom-chrome delta).
     static MINIMAP_CHROME_PRESS: Cell<bool> = const { Cell::new(false) };
 }
@@ -1166,7 +1166,7 @@ pub fn Minimap(props: MinimapProps) -> Element {
             class: "hk-mm-zoom-bar",
             // Vue: the zoom chrome never starts a map drag (the mark is read
             // by the card's own mousedown, which runs after this one).
-            // Mouse family (L86) — same batch as the card's drag chain.
+            // Mouse family (L88) — same batch as the card's drag chain.
             onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
             {VNode::Fragment(bar_nodes)}
         }
@@ -1187,7 +1187,7 @@ pub fn Minimap(props: MinimapProps) -> Element {
         rsx! {
             div {
                 class: "hk-mm-zoom-pop",
-                // Same chrome mark as the bar, on the mouse channel (L86).
+                // Same chrome mark as the bar, on the mouse channel (L88).
                 onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
                 Slider {
                     value: zoom_percent,
@@ -1231,7 +1231,7 @@ pub fn Minimap(props: MinimapProps) -> Element {
         minimap_drag_begin(event.current_target, event.client_x, event.client_y);
     };
     let pointer_move = move |event: MouseEvent| {
-        // No implicit capture (L86): a press released outside the card never
+        // No implicit capture (L88): a press released outside the card never
         // delivered its mouseup — an armed drag must not pan on a bare hover.
         if event.buttons == 0 {
             minimap_drag_end();
@@ -1256,7 +1256,7 @@ pub fn Minimap(props: MinimapProps) -> Element {
         }
     };
 
-    // The card IS the drag surface and the release root (mouse family, L86 —
+    // The card IS the drag surface and the release root (mouse family, L88 —
     // see the header's mouse delta): mousedown arms, mousemove pans, mouseup
     // ends, the data-less `pointercancel` channel aborts, and a mouseleave
     // with the button already up catches the outside release as well.

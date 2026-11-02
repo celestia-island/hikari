@@ -530,7 +530,7 @@ pub fn PopupSelect(props: PopupSelectProps) -> Element {
                     onclick: move |_event: MouseEvent| click_wiring.commit(click_value.clone()),
                     // `mouseenter`, not `pointerenter`: the wasip2 glue types
                     // only the mouse family, so a pointer-typed hover channel
-                    // never fires on a real device (ledger L86).
+                    // never fires on a real device (ledger L88).
                     onmouseenter: move |_event: MouseEvent| {
                         enter_wiring.set_highlight(index_i32);
                     },

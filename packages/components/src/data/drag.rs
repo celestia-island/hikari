@@ -2,14 +2,14 @@
 // DragDropTree — the legacy tree reorder surface (`RenderDragNode` renders one
 // recursive node row with its drag handle, ghost and drop line).
 //
-// L86 DELTA: THIS IS A MOUSE-DRIVEN REORDER, NOT A NATIVE HTML5 DRAG.
+// L88 DELTA: THIS IS A MOUSE-DRIVEN REORDER, NOT A NATIVE HTML5 DRAG.
 // The rows used to carry `draggable="true"` plus `dragstart` / `dragend` /
 // `dragover` / `dragleave` / `drop` with `DragEvent` handlers. The tairitsu
 // browser glue type-dispatches only the mouse family (plus keyboard, focus and
 // `input`/`change`) and routes every `drag*`/`drop` event through
 // `onGenericEvent`, whose payload is the type string and a live handle with no
 // data, so the `DragEvent` downcast never matched and the whole reorder path
-// was inert on a real device (ledger L86).
+// was inert on a real device (ledger L88).
 //
 // The gesture never actually needed `DataTransfer`: the state lives in the
 // component's own signals (`dragged_key` / `drag_over_key` / `drop_target`), and
@@ -334,7 +334,7 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
     let drop_target = use_signal(|| Option::<DropTarget>::None);
     let drag_over_key = use_signal(|| Option::<String>::None);
 
-    // End-of-gesture edges for the whole surface (Vue's `dragend`, L86 delta):
+    // End-of-gesture edges for the whole surface (Vue's `dragend`, L88 delta):
     // a release that lands on tree PADDING never reaches a row, and a release
     // that leaves the tree never reaches it at all — the root retires the first,
     // and drops the highlight while the pointer is away for the second (the
@@ -639,7 +639,7 @@ mod tests {
 
     #[test]
     fn drag_tree_rows_carry_no_native_draggable_attribute() {
-        // L86: the reorder is MOUSE-driven. A native HTML5 drag would steal the
+        // L88: the reorder is MOUSE-driven. A native HTML5 drag would steal the
         // gesture — once the browser starts one it stops delivering
         // `mousemove`, so the mouse path would go dead exactly where the old
         // `drag*` bindings were. The attribute therefore has to stay absent;

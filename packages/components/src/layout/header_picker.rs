@@ -85,7 +85,7 @@
 //   * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
 //     tairitsu browser glue typed-dispatches only the mouse family and routes
 //     every `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L86); the
+//     `PointerEvent` handler never fires on the real target (ledger L88); the
 //     rows bind `mousedown` / `mouseup` / `mouseenter` / `mouseleave` and take
 //     `MouseEvent`. Consequences: a touch screen cannot reorder (a tap still
 //     selects), and a drag released on the window is an abandon, not a reorder.
@@ -657,7 +657,7 @@ pub fn HeaderPicker(props: HeaderPickerProps) -> Element {
                 // Vue spreads this only for the desktop popout; the mirror has
                 // no sheet branch, so the guard has nothing to guard.
                 // `mouseenter`, not `pointerenter`: the wasip2 glue types only
-                // the mouse family (ledger L86).
+                // the mouse family (ledger L88).
                 onmouseenter: move |_event: MouseEvent| {
                     enter_wiring.set_highlight(index_i32);
                 },

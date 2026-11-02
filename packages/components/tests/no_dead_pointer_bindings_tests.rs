@@ -1,4 +1,4 @@
-//! Dead-binding guard for the wasm32-wasip2 event channel (ledger L86).
+//! Dead-binding guard for the wasm32-wasip2 event channel (ledger L88).
 //!
 //! The tairitsu browser glue that hosts these components type-dispatches ONLY
 //! the mouse family (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/
@@ -58,7 +58,7 @@ const ALLOWED: &[(&str, &str)] = &[
          non-mouse pointer type (see utils/pointer_synthesis.rs, which always \
          sets Mouse). Re-binding to the mouse family would silently delete the \
          touch handover on every target. The wasip2 deadness of this binding is \
-         the file's declared delta (ledger L86); it revives when the host ships \
+         the file's declared delta (ledger L88); it revives when the host ships \
          the typed pointer dispatch (tairitsu getter contract, \
          celestia-island/tairitsu#104).",
     ),
@@ -70,7 +70,7 @@ const ALLOWED: &[(&str, &str)] = &[
          pointerenter/leave/move as Vue's HkFaceShell does. Same wire facts as \
          above: cannot be synthesised from mouse events without losing the \
          pointer-type distinction, so it stays typed and dead on wasip2 by \
-         declaration (L86), not by oversight.",
+         declaration (L88), not by oversight.",
     ),
 ];
 
@@ -262,7 +262,7 @@ fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
         let lines: Vec<&str> = source.lines().collect();
         for (line_no, kind) in dead_findings(&lines) {
             violations.push(format!(
-                "  packages/components/src/{rel}:{line_no}: {kind} never fires on wasm32-wasip2 (L86)\n      {}",
+                "  packages/components/src/{rel}:{line_no}: {kind} never fires on wasm32-wasip2 (L88)\n      {}",
                 lines[line_no - 1].trim()
             ));
         }
@@ -272,7 +272,7 @@ fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
         violations.is_empty(),
         "\n{} dead pointer/touch/drag binding(s) found. The tairitsu browser glue \
          types only the mouse family, so these handlers are INERT on a real device \
-         (ledger L86).\n\n{}\n\nFix: bind the mouse family \
+         (ledger L88).\n\n{}\n\nFix: bind the mouse family \
          (`onmousedown`/`onmousemove`/`onmouseup`/`onmouseenter`/`onmouseleave` with a \
          `MouseEvent` parameter) and end drags from `buttons == 0` on the next move. \
          If the behaviour genuinely cannot be preserved, DELETE the binding and \
@@ -370,7 +370,7 @@ fn the_guard_recognises_both_shapes_and_ignores_documentation() {
         "documentation must not trip the guard"
     );
     assert!(
-        dead_binding_kind("//     `onpointerdown` never fires here (L86)").is_none(),
+        dead_binding_kind("//     `onpointerdown` never fires here (L88)").is_none(),
         "documentation must not trip the guard"
     );
 }

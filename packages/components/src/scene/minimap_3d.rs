@@ -45,7 +45,7 @@
 //     tairitsu browser glue dispatches only the mouse family as typed
 //     `MouseEvent`s and routes `pointer*` through a data-less generic
 //     channel, so a typed `PointerEvent` handler never fires on the real
-//     target (ledger L86). The card, the zoom bar and the pop bind
+//     target (ledger L88). The card, the zoom bar and the pop bind
 //     `mousedown` / `mousemove` / `mouseup`; the abort still listens on the
 //     generic `pointercancel` channel (alive but data-less). Declared
 //     consequences: a touch screen produces no `mousemove` sequence, so
@@ -55,7 +55,7 @@
 //     a press released OUTSIDE the card is caught by the `buttons == 0`
 //     guard on the next move/leave instead of orbiting on a bare hover.
 //   * [D] WHEEL STEPS NOTHING. The glue delivers the DOM `wheel` as a
-//     `MouseEvent` with no `deltaY` (L86), so Vue's `onWheel` rung — a sign
+//     `MouseEvent` with no `deltaY` (L88), so Vue's `onWheel` rung — a sign
 //     test on `deltaY` — cannot run. The mirror still listens through the
 //     generic channel and stops the page scroll (`stopPropagation` +
 //     `preventDefault` on the live handle, Vue's own reason for binding it),
@@ -938,7 +938,7 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
     let bar_node = rsx! {
         div {
             class: "hk-mm-zoom-bar",
-            // Mouse family (L86) — same batch as the card's drag chain.
+            // Mouse family (L88) — same batch as the card's drag chain.
             onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
             {VNode::Fragment(bar_nodes)}
         }
@@ -956,7 +956,7 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         rsx! {
             div {
                 class: "hk-mm-zoom-pop",
-                // Same chrome mark as the bar, on the mouse channel (L86).
+                // Same chrome mark as the bar, on the mouse channel (L88).
                 onmousedown: move |_event: MouseEvent| minimap_mark_chrome_press(),
                 Slider {
                     value: minimap_3d_clamp_zoom(zoom_percent),
@@ -980,7 +980,7 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         empty_vnode()
     };
 
-    // ── gestures: drag orbits the eye, wheel steps nothing (L86) ────────
+    // ── gestures: drag orbits the eye, wheel steps nothing (L88) ────────
     let on_orbit = props.on_orbit.clone();
     let on_slider_open_change = props.on_slider_open_change.clone();
     let pointer_down = move |event: MouseEvent| {
@@ -1005,7 +1005,7 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         );
     };
     let pointer_move = move |event: MouseEvent| {
-        // No implicit capture (L86): a press released outside the card never
+        // No implicit capture (L88): a press released outside the card never
         // delivered its mouseup — an armed drag must not orbit on a bare
         // hover.
         if event.buttons == 0 {
@@ -1023,7 +1023,7 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         }
     };
     // The wheel rides the GENERIC channel: the glue delivers the DOM `wheel`
-    // as a MouseEvent with no `deltaY` (L86), so Vue's sign test cannot run
+    // as a MouseEvent with no `deltaY` (L88), so Vue's sign test cannot run
     // and the ladder is NOT stepped here. Only the live handle is used, to
     // stop the page scroll and keep the gesture from reaching the board
     // under the card — Vue's own reason for binding `onWheel`.
@@ -1034,7 +1034,7 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         }
     };
 
-    // The card IS the drag surface and the release root (mouse family, L86 —
+    // The card IS the drag surface and the release root (mouse family, L88 —
     // see the header's mouse delta): mousedown arms, mousemove orbits,
     // mouseup ends, the data-less `pointercancel` channel aborts, and a
     // mouseleave with the button already up catches the outside release.

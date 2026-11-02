@@ -1,5 +1,5 @@
 // hi-components/src/utils/pointer_synthesis.rs
-// The mouse → pointer seam for the wasm32-wasip2 host (ledger L86).
+// The mouse → pointer seam for the wasm32-wasip2 host (ledger L88).
 //
 // The tairitsu browser glue type-dispatches only the mouse family
 // (`mouseenter` / `mouseleave` / `mousemove` / `mousedown` / `mouseup` / `click` /

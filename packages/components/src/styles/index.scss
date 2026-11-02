@@ -552,7 +552,6 @@
 
 @import './components/background.scss';
 @import './components/image.scss';
-@import './components/divider.scss';
 @import './components/icon.scss';
 @import './components/arrow.scss';
 @import './components/number_input.scss';
@@ -704,6 +703,31 @@
 @import './vue-mirror/components/HkMinimap3D.scss';
 @import './vue-mirror/components/HkZoomToolbar.scss';
 @import './vue-mirror/components/HkWindowedItem.scss';
+
+// W8 theme + misc family mirrors
+@import './vue-mirror/components/HkWallpaperBackdrop.scss';
+@import './vue-mirror/components/HkThemeToggle.scss';
+@import './vue-mirror/components/HkColorSchemeDialog.scss';
+@import './vue-mirror/components/HkSplash.scss';
+@import './vue-mirror/components/HkLogo.scss';
+@import './vue-mirror/components/HkAboutModal.scss';
+@import './vue-mirror/components/HkCopyBadge.scss';
+@import './vue-mirror/components/HkErrorLanding.scss';
+@import './vue-mirror/components/HkSettingsDialog.scss';
+@import './vue-mirror/components/HkSecretRevealModal.scss';
+@import './vue-mirror/components/HkDivider.scss';
+// W9 final gap wave
+@import './vue-mirror/components/HkKeywordSearchModal.scss';
+@import './vue-mirror/components/HkLocalizedInput.scss';
+@import './vue-mirror/components/HkMenuIdentityItem.scss';
+@import './vue-mirror/components/HkMenuPanel.scss';
+@import './vue-mirror/components/HkModalBreadcrumb.scss';
+@import './vue-mirror/components/HkSearchTrigger.scss';
+@import './vue-mirror/components/HkSectionCard.scss';
+@import './vue-mirror/components/HkSolarLocationSetting.scss';
+@import './vue-mirror/components/HkStepGuide.scss';
+@import './vue-mirror/components/HkTagDotRow.scss';
+@import './vue-mirror/components/HkUserPicker.scss';
 @import './vue-mirror/components/HkStarSystem.scss';
 @import './vue-mirror/components/HkBlankCanvas.scss';
 @import './vue-mirror/components/HkTokenInput.scss';

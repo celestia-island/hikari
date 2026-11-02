@@ -336,7 +336,7 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-slider",
         ".hk-switch",
         ".hk-textarea",
-        ".hk-corner-badge",
+        ".hk-corner-badge-anchor",
         ".hk-spinner",
         ".hk-progress-ring",
         ".hk-toast",
@@ -416,6 +416,31 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".s-admin-shell",
         ".s-status-bar",
         ".hk-menu-flag",
+        // W9 final gap family
+        ".hk-kw-search",
+        ".hk-localized-input",
+        ".hk-menu-identity-item",
+        ".hk-menu-list",
+        ".hk-modal-breadcrumb",
+        ".hk-search-trigger",
+        ".hk-section-card",
+        ".hk-solar-setting",
+        ".hk-step-guide",
+        ".hk-tag-dot-row",
+        ".hk-user-picker",
+        // W8 theme + misc family
+        ".s-about-modal",
+        ".s-theme-toggle",
+        ".hk-wallpaper",
+        ".hk-splash",
+        ".hk-logo",
+        ".hk-copy",
+        ".hk-corner-badge-anchor",
+        ".hk-error-landing",
+        ".hk-settings",
+        ".s-secret-modal",
+        ".hk-divider",
+        ".hk-template-field",
         // W5 layout + nav family
         ".hk-page-header",
         ".hk-titlebar",
@@ -634,7 +659,7 @@ fn legacy_sheets_do_not_share_classes_with_the_mirrors() {
 
     // Known dual-source debt from earlier waves (each entry is retired with
     // the family that owns it). NEW overlaps must fail here.
-    const KNOWN_DUAL_SOURCES: [&str; 10] = [
+    const KNOWN_DUAL_SOURCES: [&str; 12] = [
         "hk-breadcrumb-dropdown-item",
         "hk-card",
         "hk-card-hoverable",
@@ -646,6 +671,10 @@ fn legacy_sheets_do_not_share_classes_with_the_mirrors() {
         // Retired later with the legacy tabs/menu sheets (W8 theme wave).
         "hk-menu-item-icon",
         "hk-tabs",
+        // Dead block inside the legacy image.scss (no Rust user); retires with it.
+        "hk-logo",
+        // Legacy menu.scss also paints hk-menu-list; retires with that sheet.
+        "hk-menu-list",
     ];
     let legacy = classes_in(&legacy_files);
     let mirrored = classes_in(&mirror_files);

@@ -1,0 +1,398 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkErrorLanding — shared error landing page.
+//
+// Token strategy: every color reads the host's RGB-triplet theme vars and
+// falls back to a neutral light scheme, so the component renders correctly
+// standalone (server error page without hikari theme init) and adapts to
+// host themes (dark mode etc.) when the vars exist.
+
+@use "../styles/polyfill" as *;
+
+.hk-error-landing {
+  --hel-background: var(--color-background, 246 247 249);
+  --hel-surface: var(--color-surface, 255 255 255);
+  --hel-text: var(--color-text, 30 32 36);
+  --hel-muted: var(--color-muted, 118 122 128);
+  --hel-border: var(--color-border, 222 224 228);
+  --hel-primary: var(--color-primary, 58 118 236);
+  --hel-error: var(--color-error, 226 84 84);
+  --hel-warning: var(--color-warning, 222 168 62);
+
+  // The landing owns its full-viewport backdrop, so it must always fill
+  // the host's inline axis. Hosts vary: a plain block (the app overlay's
+  // fixed inset-0 box) already gives block children the full width, but a
+  // CENTERING host — e.g. a standalone mount root that is itself a
+  // centering flex/grid box — shrink-wraps flex/grid items to content
+  // width, which paints this background as one content-wide column and
+  // leaks the host body background down both sides. An explicit
+  // width:100% makes every host render the same edge-to-edge takeover.
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-20, 1.25rem);
+  background: rgb(var(--hel-background));
+  color: rgb(var(--hel-text));
+  font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
+}
+
+.hk-error-landing__card {
+  position: relative;
+  overflow: hidden;
+  width: min(440px, 100%);
+  background: rgb(var(--hel-surface));
+  border: 1px solid rgb(var(--hel-border) / 70%);
+  border-radius: var(--radius-xl, 20px);
+  box-shadow: var(--shadow-lg, 0 18px 48px rgb(0 0 0 / 8%));
+  padding: 2.25rem var(--space-28, 1.75rem) var(--space-28, 1.75rem);
+  text-align: center;
+
+  // Tone wash bleeding down from the top edge behind the icon — gives the
+  // upper half the designed depth the plain white card used to lack.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 150px;
+    background: radial-gradient(58% 100% at 50% 0%, rgb(var(--hel-error) / 8%), transparent 72%);
+    pointer-events: none;
+  }
+}
+
+.hk-error-landing.is-warning .hk-error-landing__card::before {
+  background: radial-gradient(58% 100% at 50% 0%, rgb(var(--hel-warning) / 10%), transparent 72%);
+}
+
+.hk-error-landing.is-info .hk-error-landing__card::before {
+  background: radial-gradient(58% 100% at 50% 0%, rgb(var(--hel-primary) / 7%), transparent 72%);
+}
+
+.hk-error-landing__brand {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-16, 1rem);
+
+  &:empty {
+    display: none;
+  }
+}
+
+.hk-error-landing__icon {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-14, 0.875rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+
+  &,
+  svg {
+    color: rgb(var(--hel-error));
+  }
+
+  background: linear-gradient(145deg, rgb(var(--hel-error) / 18%), rgb(var(--hel-error) / 6%));
+  border: 1px solid rgb(var(--hel-error) / 26%);
+  // Layered halo: a soft tone ring hugging the disc plus a long, faint
+  // drop shadow — reads as a designed badge instead of a flat circle.
+  box-shadow:
+    0 0 0 8px rgb(var(--hel-error) / 5%),
+    0 10px 28px -12px rgb(var(--hel-error) / 45%);
+}
+
+.hk-error-landing.is-warning .hk-error-landing__icon {
+  &,
+  svg {
+    color: rgb(var(--hel-warning));
+  }
+
+  background: linear-gradient(145deg, rgb(var(--hel-warning) / 20%), rgb(var(--hel-warning) / 7%));
+  border-color: rgb(var(--hel-warning) / 28%);
+  box-shadow:
+    0 0 0 8px rgb(var(--hel-warning) / 6%),
+    0 10px 28px -12px rgb(var(--hel-warning) / 45%);
+}
+
+.hk-error-landing.is-info .hk-error-landing__icon {
+  &,
+  svg {
+    color: rgb(var(--hel-primary));
+  }
+
+  background: linear-gradient(145deg, rgb(var(--hel-primary) / 16%), rgb(var(--hel-primary) / 5%));
+  border-color: rgb(var(--hel-primary) / 24%);
+  box-shadow:
+    0 0 0 8px rgb(var(--hel-primary) / 5%),
+    0 10px 28px -12px rgb(var(--hel-primary) / 40%);
+}
+
+// Code / status chips ride on the canonical HkBadge (mono, small). The
+// channels are re-resolved through the landing's --hel-* fallbacks so a
+// theme-less standalone render paints them exactly like the themed one,
+// and the code chip follows the landing tone like the icon does.
+.hk-error-landing__meta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-6, 0.375rem);
+  margin-bottom: var(--space-8, 0.5rem);
+}
+
+.hk-error-landing__meta .hk-badge:not(.hk-badge-muted) {
+  --hk-badge-text: rgb(var(--hel-error));
+  --hk-badge-bg: rgb(var(--hel-error) / 10%);
+  --hk-badge-border: rgb(var(--hel-error) / 22%);
+}
+
+.hk-error-landing.is-warning .hk-error-landing__meta .hk-badge:not(.hk-badge-muted) {
+  --hk-badge-text: rgb(var(--hel-warning));
+  --hk-badge-bg: rgb(var(--hel-warning) / 12%);
+  --hk-badge-border: rgb(var(--hel-warning) / 24%);
+}
+
+.hk-error-landing.is-info .hk-error-landing__meta .hk-badge:not(.hk-badge-muted) {
+  --hk-badge-text: rgb(var(--hel-primary));
+  --hk-badge-bg: rgb(var(--hel-primary) / 10%);
+  --hk-badge-border: rgb(var(--hel-primary) / 20%);
+}
+
+.hk-error-landing__meta .hk-badge-muted {
+  --hk-badge-text: rgb(var(--hel-muted));
+  --hk-badge-bg: rgb(var(--hel-muted) / 8%);
+  --hk-badge-border: rgb(var(--hel-border) / 80%);
+}
+
+.hk-error-landing__title {
+  position: relative;
+  margin: 0;
+  font-size: var(--text-xl, 1.25rem);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: rgb(var(--hel-text));
+  // Headlines may carry their own line breaks (hosts ship per-line copy,
+  // e.g. a two-clause landing where the dash clause moved to its own
+  // line) — render them as breaks, not spaces.
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.hk-error-landing__desc {
+  position: relative;
+  margin: var(--space-8, 0.5rem) 0 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.6;
+  color: rgb(var(--hel-muted));
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.hk-error-landing__details {
+  position: relative;
+  margin-top: var(--space-16, 1rem);
+  text-align: start;
+}
+
+.hk-error-landing__details-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 4px);
+  padding: 0 var(--space-2, 2px);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgb(var(--hel-muted));
+  @include user-select(none);
+}
+
+// Standing-frame details pane: the raw payload keeps a STABLE height —
+// the larger of a 9rem floor and ~20vh — so the frame pre-elevates a
+// little but NEVER breathes with the content. The 2026-10-01
+// content-hugging frame shipped and was reverted the same day after
+// mobile review: folding the tree shrank the whole error card with it
+// and the jumping height read as broken. Folding only changes what is
+// INSIDE the frame; a long stack trace scrolls inside it instead of
+// stretching the card. The 9rem term keeps short viewports (20vh < 9rem)
+// at nine rem of scroll area. The pane div is the track's positioning
+// context and wraps EXACTLY the scrolling body (useOverlayScrollbar
+// host contract); the family overlay scrollbar — BOTH axes, the body
+// below hides the native bar horizontally too — keeps the thumb
+// geometry fresh on fold/expand.
+.hk-error-landing__details-pane {
+  position: relative;
+  margin-top: var(--space-6, 0.375rem);
+  height: max(9rem, 20vh);
+  height: max(9rem, 20dvh);
+  border: 1px solid rgb(var(--hel-border) / 70%);
+  border-radius: var(--radius-md, 10px);
+  background: rgb(var(--hel-muted) / 4%);
+}
+
+.hk-error-landing__details-body {
+  // The frame's height is fixed, so the body simply fills it; a fold or
+  // an expand re-renders INSIDE the frame and never moves the card.
+  height: 100%;
+  overflow: auto;
+  border-radius: inherit;
+  padding: var(--space-4, 0.25rem);
+
+  // The overlay scrollbar is the only chrome — hide the native bar.
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// A nested HkJsonTree fills the pane instead of stacking its own frame
+// and 320px cap — the pane above owns the chrome now (overflow included:
+// the tree must never engage its own scroller). The leading landing class
+// is load-bearing SPECIFICITY, not decoration: hosts blanket-restyle the
+// shared tree class from :root (wowsp's glass dial, `:root
+// .s-tool-json-tree`) at the same (0,2,0) weight the two-class selector
+// below used to carry, and the later-bundled dial won the cascade — the
+// nested tree repainted its content band over the pane's uniform fill,
+// splitting the standing frame into a tinted text block above an untinted
+// void in BOTH themes (2026-10-30 wowsp report). Three classes put the
+// landing's pane chrome out of every :root-prefixed host dial's reach,
+// whatever the bundle order.
+.hk-error-landing .hk-error-landing__details-body .s-tool-json-tree {
+  max-height: none;
+  height: auto;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.hk-error-landing__actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-8, 0.5rem);
+  margin-top: var(--space-16, 1rem);
+}
+
+// Inline variant: the same card without the viewport takeover — used when
+// HkErrorBoundary captures a crash inside a pane and swaps in the landing
+// in-place instead of covering the whole screen, or when a host view
+// renders it as its failed content region right under a sibling header.
+.hk-error-landing.is-inline {
+  // Fill the HOST REGION's height so the base centering (the align/justify
+  // center on .hk-error-landing — this element matches that selector too,
+  // which is how the centering reaches the inline variant) seats the card
+  // in the middle
+  // of whatever container it landed in — the inline twin of the page
+  // variant centering in the viewport. The old zero min-height collapsed
+  // the root to its content height, which silently disabled that
+  // centering and glued the card to the container's top edge; the #695
+  // padding removal traded "a padding-frame too low" for "flush against
+  // the header". Both were symptoms of spacing-by-inset; centering in the
+  // actual container fixes both hosts at once. A host whose height is
+  // auto (a growing content column, not a framed pane) resolves the
+  // percentage to nothing and keeps a content-sized, top-seated landing
+  // — centering applies exactly as far as the container can express it.
+  min-height: 100%;
+  // The horizontal inset stays so a narrow pane never seats the card
+  // edge-to-edge. No block-axis padding: the gap above/below the card is
+  // the centering's job now — a hardcoded top inset is exactly what read
+  // as "floating too low" under a sibling header in #695.
+  padding: 0 var(--space-12, 0.75rem);
+  // Explicit overflow anchor: with the card's auto margins below
+  // collapsed there is no free space left to center in, and the alignment
+  // that then applies must be the START edge — reachable top, clip only
+  // at the unreachable bottom. Spelled out (and pinned by the contract
+  // test) rather than left emergent from the inherited center; with free
+  // space the margins absorb it before alignment ever applies, so this
+  // line only ever shows on overflow.
+  align-items: flex-start;
+  background: transparent;
+
+  // Fill seating: the host lays the landing out as the shrinking region of
+  // a definite-height flex pane (a settings card whose header sits above
+  // and the landing owns the rest). flex takes the remaining space and the
+  // lifted min-height lets the CARD compress to it instead of pushing the
+  // host pane into a scroll for chrome alone; once even the compressed
+  // floor cannot fit, the overflow anchor above still seats the card
+  // top-first and reachable. Every declaration is flex-context-only: a
+  // non-flex host (or a flex pane with auto height) ignores the fill
+  // entirely and keeps the default min-height centering contract, so a
+  // wrong host degrades to the flow landing, never to a collapsed one.
+  &.is-fill {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  // Safe centering: auto margins center the card on both axes while free
+  // space exists and collapse to 0 when it doesn't (the overflow case
+  // anchored by align-items above). Specificity (0,3,0) also keeps the
+  // slim padding below outranking the ≤480px media rule (0,1,0). The
+  // column layout plus the landing-box cap make the card COMPRESSIBLE:
+  // its only flexible part (the details frame below) yields height before
+  // the card pushes the host pane into a scroll. Flow rendering is
+  // unchanged — every child margin in this card is one-directional, so
+  // dropping block-margin collapsing moves no spacing.
+  .hk-error-landing__card {
+    margin: auto;
+    padding: var(--space-16, 1rem) var(--space-28, 1.75rem) var(--space-24, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    // Never smaller than the card's own content minimum (the details
+    // frame's floor included): min-height beats max-height per spec, so a
+    // pane tighter than floor + chrome spills the card into the host's
+    // scroller (top-anchored, reachable) instead of clipping the actions
+    // row inside the card's own overflow: hidden.
+    min-height: min-content;
+  }
+
+  // The details region passes a squeeze THROUGH to the frame instead of
+  // stopping it at its own content box.
+  .hk-error-landing__details {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  // The standing frame yields under a squeeze instead of stretching the
+  // card past its pane: the flex-basis IS the page-grade standing height,
+  // so an unconstrained card renders exactly the fixed frame, the floor
+  // keeps a usable scroll window when the host is tight, and the frame's
+  // own overlay scrollbar takes over below the basis. The stable-frame
+  // contract is intact — folding tree nodes still never resizes the frame;
+  // only a HOST constraint (pane resize, fill seating) moves it, and a
+  // resize reflecting the host's real geometry is feedback, not a jump.
+  .hk-error-landing__details-pane {
+    height: auto;
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-basis: max(9rem, 20vh);
+    flex-basis: max(9rem, 20dvh);
+    min-height: 6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hk-error-landing__card {
+    padding: var(--space-28, 1.75rem) 1.125rem var(--space-24, 1.5rem);
+  }
+}

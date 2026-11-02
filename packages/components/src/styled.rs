@@ -158,10 +158,13 @@ impl StyleRegistry {
             FilterOperatorIconComponent, FilterPanelComponent, FilterTriggerComponent,
             GaugeRingComponent, PaginationButtonComponent, PaginationComponent, SelectionComponent,
             SelectionGridComponent, SelectionWaterfallComponent, SortComponent, StatCardComponent,
-            TableComponent, TreeComponent, TreemapComponent, TreemapStageComponent,
-            TrendChartComponent, VirtualScrollComponent, WaterfallComponent,
+            TableComponent, TagDotRowComponent, TreeComponent, TreemapComponent,
+            TreemapStageComponent, TrendChartComponent, UserPickerComponent,
+            VirtualScrollComponent, WaterfallComponent,
         };
         TableComponent::register(self);
+        TagDotRowComponent::register(self);
+        UserPickerComponent::register(self);
         TreeComponent::register(self);
         PaginationComponent::register(self);
         BarChartComponent::register(self);
@@ -242,9 +245,18 @@ impl StyleRegistry {
     #[cfg(feature = "navigation")]
     pub fn register_navigation_components(&mut self) {
         use crate::navigation::{
-            BreadcrumbComponent, MenuComponent, SidebarComponent, TabsComponent,
+            BreadcrumbComponent, KeywordSearchModalComponent, LocalizedInputComponent,
+            MenuComponent, MenuIdentityItemComponent, MenuPanelComponent, MenuSectionComponent,
+            ModalBreadcrumbComponent, SearchTriggerComponent, SidebarComponent, TabsComponent,
         };
         MenuComponent::register(self);
+        MenuIdentityItemComponent::register(self);
+        MenuPanelComponent::register(self);
+        MenuSectionComponent::register(self);
+        KeywordSearchModalComponent::register(self);
+        SearchTriggerComponent::register(self);
+        LocalizedInputComponent::register(self);
+        ModalBreadcrumbComponent::register(self);
         TabsComponent::register(self);
         BreadcrumbComponent::register(self);
         SidebarComponent::register(self);
@@ -265,9 +277,11 @@ impl StyleRegistry {
             ListTransitionComponent, LoadMoreComponent, LogWindowComponent,
             MarkdownRendererComponent, MediaControlBarComponent, MediaPlayerComponent,
             MediaSliderComponent, MediaVisualizerComponent, QrCodeComponent, SkeletonComponent,
-            TagComponent, TerminalComponent, TimelineComponent, TransitionContainerComponent,
+            StepGuideComponent, TagComponent, TerminalComponent, TimelineComponent,
+            TransitionContainerComponent,
         };
         TagComponent::register(self);
+        StepGuideComponent::register(self);
         SkeletonComponent::register(self);
         TimelineComponent::register(self);
         EmptyStateComponent::register(self);
@@ -304,14 +318,17 @@ impl StyleRegistry {
     pub fn register_layout_components(&mut self) {
         use crate::layout::{
             AdminHeaderComponent, AdminShellComponent, AdminTablePageComponent,
-            AffixPickerComponent, DockBarComponent, FaceShellComponent, HeaderPickerComponent,
-            LocalePickerComponent, LocalePickerPopupComponent, NavItemComponent,
-            NavSidebarComponent, PageHeaderComponent, PaneHolderComponent, ShareBarComponent,
-            SidebarRailSwapComponent, SidebarRailToggleComponent, StatusBarComponent,
+            AffixPickerComponent, DividerComponent, DockBarComponent, FaceShellComponent,
+            HeaderPickerComponent, LocalePickerComponent, LocalePickerPopupComponent,
+            NavItemComponent, NavSidebarComponent, PageHeaderComponent, PaneHolderComponent,
+            SectionCardComponent, ShareBarComponent, SidebarRailSwapComponent,
+            SidebarRailToggleComponent, SolarLocationSettingComponent, StatusBarComponent,
             StatusPillComponent, StatusRowComponent, StepFlowComponent, TitleBarComponent,
             WindowControlsComponent,
         };
         AdminShellComponent::register(self);
+        SectionCardComponent::register(self);
+        SolarLocationSettingComponent::register(self);
         AdminHeaderComponent::register(self);
         AdminTablePageComponent::register(self);
         FaceShellComponent::register(self);
@@ -333,10 +350,47 @@ impl StyleRegistry {
         HeaderPickerComponent::register(self);
         LocalePickerComponent::register(self);
         LocalePickerPopupComponent::register(self);
+        DividerComponent::register(self);
     }
 
     #[cfg(not(feature = "layout"))]
     pub fn register_layout_components(&mut self) {
+        // No-op
+    }
+
+    /// Registers the theme + misc family mirrors.
+    #[cfg(feature = "theme")]
+    pub fn register_misc_components(&mut self) {
+        use crate::theme::{
+            AboutModalComponent, ActionBarComponent, AvatarButtonComponent,
+            ColorSchemeDialogComponent, ColorSchemeEditorComponent, ConnectionStatusComponent,
+            CopyBadgeComponent, CornerBadgeComponent, ErrorBoundaryComponent,
+            ErrorLandingComponent, LogoComponent, SecretRevealModalComponent,
+            SettingsDialogComponent, SplashComponent, ThemeDecorComponent,
+            ThemePanelContentComponent, ThemeToggleComponent, WallpaperBackdropComponent,
+        };
+        AboutModalComponent::register(self);
+        ActionBarComponent::register(self);
+        AvatarButtonComponent::register(self);
+        ColorSchemeDialogComponent::register(self);
+        ColorSchemeEditorComponent::register(self);
+        ConnectionStatusComponent::register(self);
+        CopyBadgeComponent::register(self);
+        CornerBadgeComponent::register(self);
+        ErrorBoundaryComponent::register(self);
+        ErrorLandingComponent::register(self);
+        LogoComponent::register(self);
+        SecretRevealModalComponent::register(self);
+        SettingsDialogComponent::register(self);
+        SplashComponent::register(self);
+        ThemeDecorComponent::register(self);
+        ThemePanelContentComponent::register(self);
+        ThemeToggleComponent::register(self);
+        WallpaperBackdropComponent::register(self);
+    }
+
+    #[cfg(not(feature = "theme"))]
+    pub fn register_misc_components(&mut self) {
         // No-op
     }
 
@@ -419,9 +473,10 @@ impl StyleRegistry {
     pub fn register_entry_components(&mut self) {
         use crate::entry::{
             AutoCompleteComponent, CascaderComponent, NumberInputComponent,
-            NumberSteppersComponent, SearchComponent, TransferComponent,
+            NumberSteppersComponent, SearchComponent, TemplateFieldComponent, TransferComponent,
         };
         NumberInputComponent::register(self);
+        TemplateFieldComponent::register(self);
         NumberSteppersComponent::register(self);
         SearchComponent::register(self);
         AutoCompleteComponent::register(self);
@@ -459,6 +514,7 @@ impl StyleRegistry {
         self.register_layout_components();
         self.register_overlay_components();
         self.register_scene_components();
+        self.register_misc_components();
         self.register_auth_components();
     }
 
@@ -474,6 +530,7 @@ impl StyleRegistry {
         self.register_layout_components();
         self.register_overlay_components();
         self.register_scene_components();
+        self.register_misc_components();
         self.register_auth_components();
         self.register_entry_components();
     }

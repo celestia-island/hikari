@@ -1,0 +1,429 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "./menu-item" as mi;
+@use "../styles/polyfill" as *;
+
+.s-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The trigger carries NO css of its own (2026-09-30 user direction): the
+ * retired bespoke trigger block — whose primary hover wash disagreed with
+ * the ghost gray of the HkIconButtons beside it and made the header
+ * cluster read as two different button families — is gone. The trigger IS
+ * an HkIconButton (ghost/28, the header chrome step) now, so its
+ * rest/hover/press chrome, radius and focus ring come verbatim from the
+ * shared HkIconButtonVars contract; the s-theme-toggle-btn class survives
+ * only as a stable hook on that button (chest's chrome guard asserts
+ * chest never re-paints it). Do not reintroduce a chrome rule for it. */
+
+/* Host strip under the mode group (mode-extra slot). */
+.s-theme-mode-extra {
+  margin-top: var(--space-8, 0.5rem);
+  width: 100%;
+}
+
+.s-theme-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 13rem;
+  max-width: 22rem;
+  padding: var(--space-8, 0.5rem);
+}
+
+/*
+ * The anchored popover panel is shrink-to-fit (width: max-content, #421),
+ * so any long-form prose in a host slot (mode-extra hint paragraphs) would
+ * otherwise set the panel's PREFERRED width — the menu once opened at the
+ * hint's single-line ideal width (~870px), stretching the segmented mode
+ * group full-bleed and leaving a wide void right of every row. The cap
+ * above clamps the menu's max-content contribution instead. The sheet
+ * branch is excluded: it stretches to the viewport by design, and its
+ * width never derives from content.
+ */
+.hk-popover-panel.hk-is-sheet .s-theme-menu {
+  /* User report 09-07 22:53 (mobile sheet, 412px viewport): the exclusion
+   * below let the host slot's long prose (chest DPI hint, ~870px ideal)
+   * keep driving the sheet's max-content contribution — clamped to
+   * 100vw-16px and left-anchored it left a mysterious right gap plus
+   * full-bleed stretched rows. The sheet content is capped to the same
+   * designed measure, centered within the viewport-wide sheet. */
+  max-width: min(22rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.s-theme-menu-label {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: rgb(var(--color-muted));
+  padding: var(--space-4, 0.25rem) var(--space-6, 0.375rem);
+}
+
+/* ── Color-mode group (unified HTabs segmented + merged auto cell) ──── */
+
+.s-theme-mode-row {
+  padding: 0 var(--space-6, 0.375rem) var(--space-4, 0.25rem);
+}
+
+/*
+ * Auto-mode altitude strip: the full-bleed content of the segmented
+ * group's merged cell (HTabs `mergeKeys` + `#merged`). The cell itself
+ * stays NAKED like every unselected option — no border, no own surface,
+ * no box: only the sliding indicator ever frames the active option.
+ * The strip reads passive in the strip's own typography (same
+ * size/weight as the triggers it replaces), but a press resolves auto
+ * to the manual side it currently renders (day → light, night → dark).
+ */
+.s-theme-mode-autoalt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 0.25rem);
+  width: 100%;
+  height: 100%;
+  /* No min-height: the track's cross size stays trigger-driven in BOTH
+     modes (the cell stretches, the strip fills it), so toggling auto ↔
+     manual never grows or shrinks the strip. */
+  padding: var(--space-4, 0.25rem) var(--space-12, 0.75rem);
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: rgb(var(--color-text-secondary, var(--color-muted)));
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  @include user-select(none);
+  /* Same policy as the canonical reset; keeps standalone component styles
+     working and lets the document-level native escape hatch through. */
+  -webkit-tap-highlight-color: var(--hk-tap-highlight-color, transparent);
+  html[data-hk-tap-highlight='native'] & {
+    -webkit-tap-highlight-color: revert;
+  }
+  appearance: none;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+
+.s-theme-mode-autoalt:hover {
+  color: rgb(var(--color-text));
+}
+
+.s-theme-mode-autoalt:active {
+  background: rgb(var(--color-primary) / 8%);
+  transform: scale(0.97);
+}
+
+.s-theme-mode-autoalt:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: -2px;
+}
+
+/* The press scale above rides the transition's transform leg; snap it
+ * under reduced motion while keeping the color/background legs
+ * (house pattern: HkIconButton.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .s-theme-mode-autoalt {
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+}
+
+.s-theme-mode-autoalt-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .s-theme-mode-row {
+    padding: 0 0 var(--space-4, 0.25rem);
+  }
+}
+
+/* ── Theme list rows ────────────────────────────────────────────────────
+ * Every row is ONE full-width pill, and the pill is THE ROW (2026-10-01
+ * user report: with the trailing slot reserving a real column, the row
+ * button's wash stopped short of the row edge — theme rows and the
+ * standalone 自定义 row hovered at different widths). The unified
+ * menu-item chrome therefore lives on `.s-theme-item-row` (which also
+ * carries `data-active` from the TSX), and the row's button surrenders
+ * its own chrome below, so the hover/active wash, border and radius
+ * span the full row no matter how wide the trailing column is. The
+ * standalone pills (自定义 row, host mode-extra rows) keep the chrome on
+ * the button itself — same spec, same width as a row.
+ *
+ * Metrics/states come from the unified menu-item spec (./_menu-item.scss)
+ * — the same grammar as menu rows and select options; inside the mobile
+ * sheet the shared `.hk-popover-panel.hk-is-sheet` token context applies
+ * the 44px touch geometry (the row family is registered there), so the
+ * old component-local media bump is gone (only the overlaid delete
+ * button keeps its own touch sizing below).
+ */
+
+.s-theme-item-row {
+  @include mi.item;
+
+  position: relative;
+}
+
+/* The row's button keeps the CLICK and FOCUS semantics (keyboard parity,
+ * screen-reader role) but no visual chrome of its own: background goes
+ * transparent and the border is dropped entirely — the ROW now owns the
+ * frame, and the content x lands on the same offset as the standalone
+ * pills anyway (row border 1 + row padding 12 = the standalone border 1 +
+ * padding 12 = 13px from the pill edge). Vertically the button bleeds
+ * over the row's frame (negative margins) and re-applies the padding
+ * inside, so the WHOLE pill is the click/focus target — master's pill
+ * WAS the button — while the name's content box keeps the standalone
+ * offsets (border 1 + pad-y). Row heights are unchanged: the button's
+ * net layout contribution is its content, so the row's own min-height
+ * rules exactly as the button's did before. */
+.s-theme-item-row .s-theme-item-btn {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  width: auto;
+  /* Fill the row's full cross size (overriding the row's align-items:
+   * center FOR THIS ITEM only) so the click/focus target is the whole
+   * pill, not just the name's line box. */
+  align-self: stretch;
+  /* Bleed over the row's frame — its vertical padding plus the 1px
+   * mi.item border — then re-apply that padding inside: the name's
+   * content box keeps the standalone pills' offsets (border 1 + pad)
+   * while the hit area covers the pill edge to edge. The 1px constant
+   * mirrors mi.item's border width; if the mixin's border ever changes,
+   * this pair moves with it. */
+  margin-block: calc(-1 * var(--hk-menu-item-pad-y, 6px) - 1px);
+  padding-block: calc(var(--hk-menu-item-pad-y, 6px) + 1px);
+  padding-inline: 0;
+  border: none;
+  /* Follow the row's pill radius: the button keeps mi.item's :focus-visible
+   * inset outline (keyboard parity), and outlines follow border-radius —
+   * a zero radius here would render the ring as a sharp rectangle poking
+   * past the row's rounded corners. */
+  border-radius: inherit;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+/* Suppress the button's own state chrome — the row above owns the wash.
+ * The hover guard repeats mi.item's guard chain so this override
+ * out-specifies the mixin's (0,6,0) hover rule. */
+.s-theme-item-row .s-theme-item-btn:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]),
+.s-theme-item-row .s-theme-item-btn[data-active],
+.s-theme-item-row .s-theme-item-btn[data-checked] {
+  background: transparent;
+  border-color: transparent;
+  color: inherit;
+  font-weight: inherit;
+}
+
+.s-theme-item-btn {
+  @include mi.item;
+
+  min-width: 0;
+  flex: 1;
+  width: auto;
+}
+
+.s-theme-item-name {
+  @include mi.label;
+}
+
+/* `item-name-suffix` slot — a host mark that must read as PART OF the
+ * name, not as a trailing affordance. Layout is what makes that true:
+ * the shared label mixin is `flex: 1`, which would stretch the name to
+ * the full row and leave the mark floating at the far right, next to the
+ * trailing column (and, in the host's cloud/local marker case, next to
+ * the edit button — reading as a per-row action). On suffix rows the
+ * name therefore shrinks to its content (`flex: 0 1 auto`, keeping the
+ * mixin's `min-width: 0` so long names still wrap inside the available
+ * box) and the suffix claims the leftover space on its leading side
+ * (`margin-inline-end: auto`), pinning the mark directly against the
+ * name's trailing edge. `white-space: normal` overrides the mixin's
+ * nowrap so a long name WRAPS instead of pushing the mark out of the
+ * row — a name that clips its own provenance mark defeats the point.
+ * Rows without the slot are untouched (the mixin's behaviour stands). */
+.s-theme-item-row[data-name-suffix="slot"] .s-theme-item-name {
+  flex: 0 1 auto;
+  white-space: normal;
+  /* The suffix mark is pinned DIRECTLY against the name's trailing edge
+   * (the variant's whole point), and this variant wraps instead of
+   * truncating — the label mixin's italic overhang cushion would open a
+   * dead 0.2em gap ahead of the mark for no clipping room in return. */
+  padding-inline-end: 0;
+}
+
+.s-theme-item-name-suffix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-start: var(--space-4, 0.25rem);
+  /* Trailing auto-margin eats the row's leftover width, so the mark sits
+   * with the name at the leading edge and the trailing column stays
+   * flush right. */
+  margin-inline-end: auto;
+}
+
+/* Leading slot glyphs share the spec's fixed icon cell — sized for the
+ * WIDEST lead mark hosts render there, not the generic 16px box: chest's
+ * three-dot palette swatch is 28px (3×8px dots + 2px gaps), and a mark
+ * wider than its cell bleeds symmetrically out of the cell into the row
+ * gap — at fractional zoom rounding the dots visually overlap the name
+ * (2026-09-11 field report). A uniform 28px cell keeps every row's name
+ * starting at the same x (swatch rows and icon rows stay aligned) and
+ * leaves the bleed zero room at any zoom.
+ *
+ * The widened cell is scoped to the LEAD slot only (2026-09-12 field
+ * report): the bare `.s-theme-item-btn .hk-menu-item-icon` this shipped
+ * as also matched the 自定义 row and every host row reusing
+ * s-theme-item-btn (chest's mode-extra DPI entry), where mi.icon
+ * normalizes the svg to the cell — their 14px glyphs rendered 28px
+ * wide. Rows without a leading slot keep the standard menu metrics. */
+.s-theme-item-btn .hk-menu-item-icon.s-theme-item-lead {
+  @include mi.icon;
+
+  width: 28px;
+  height: 28px;
+}
+
+/* The customize affordance joins the theme rows' 28px lead column so the
+ * palette glyph and the row marks sit on one line and every name starts
+ * at the same x (2026-09-11 field report: with the lead cell at 28px and
+ * this row at the generic box, the selected theme's bitmap mark read a
+ * full cell to the right of the customize palette). The cell widens but
+ * the GLYPH keeps the standard menu icon size — mi.icon normalizes svg
+ * to the cell, so the box is pinned back explicitly; widening a cell
+ * must never re-scale its glyph (the 0.42.2 regression class). */
+.s-theme-item-customize .hk-menu-item-icon {
+  @include mi.icon;
+
+  width: 28px;
+  height: 28px;
+}
+
+.s-theme-item-customize .hk-menu-item-icon > svg {
+  width: var(--hk-menu-item-icon-box);
+  height: var(--hk-menu-item-icon-box);
+}
+
+/* Host rows in the mode-extra strip (chest's DPI entry row reuses
+ * s-theme-item-btn) join the same 28px lead column, so every row's name
+ * in the toggle starts at one x — desktop popover and mobile sheet both
+ * (2026-09-12 field report: with the strip row at the generic 16px cell
+ * its label sat a full cell-width left of the theme rows' names). The
+ * strip container is the toggle's own, so the scope needs no host
+ * class-name contract. As with the customize row, the cell widens but
+ * the GLYPH keeps the standard menu icon size — widening a cell must
+ * never re-scale its glyph (the 0.42.2 regression class). */
+.s-theme-mode-extra .s-theme-item-btn .hk-menu-item-icon {
+  @include mi.icon;
+
+  width: 28px;
+  height: 28px;
+}
+
+.s-theme-mode-extra .s-theme-item-btn .hk-menu-item-icon > svg {
+  width: var(--hk-menu-item-icon-box);
+  height: var(--hk-menu-item-icon-box);
+}
+
+/* Custom rows keep the name clear of the overlaid delete button. */
+.s-theme-item-row[data-custom] .s-theme-item-name {
+  margin-inline-end: 2rem;
+}
+
+/* The selected-check cell retired with its render branch (2026-10-21
+ * user direction): the active row's data-active wash is the sole
+ * selection indicator. */
+
+/* Hover/active states come verbatim from the unified mi.item spec included
+ * on .s-theme-item-btn above — former local copies deleted (R3 sweep). */
+
+/* Delete affordance for custom themes — an overlay pinned inside the
+ * pill's trailing edge (the row is relative), not a reserved column:
+ * built-in rows show nothing there and the pill runs to the row edge. */
+.s-theme-item-delete {
+  position: absolute;
+  inset-inline-end: var(--space-8, 0.5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+}
+
+.s-theme-item-delete:hover {
+  background: rgb(var(--color-error) / 15%);
+  color: rgb(var(--color-error));
+}
+
+/* Keyboard parity for the destructive overlay (mi.item-style inset ring,
+ * error-tinted to match its hover). */
+.s-theme-item-delete:focus-visible {
+  outline: 2px solid rgb(var(--color-error));
+  outline-offset: -2px;
+}
+
+/* Touch-sized delete target on phone widths, scaled for the 44px sheet
+ * rows that the shared spec applies inside sheet contexts (see
+ * ./_menu-item.scss). The name clearance follows so the button and the
+ * label never collide on long custom scheme names. */
+@media (max-width: 767px) {
+  .s-theme-item-delete {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .s-theme-item-row[data-custom] .s-theme-item-name {
+    margin-inline-end: 2.75rem;
+  }
+}
+
+/* ── Host-provided row anatomy (item-leading / item-trailing) ───────────
+ * When the host renders the item-leading slot, EVERY row carries the
+ * fixed icon cell (not just the active row's check), so names align
+ * across the list; the cell keeps the unified menu-item icon metrics.
+ */
+.s-theme-item-lead {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 2px);
+  color: inherit;
+}
+
+/* When the host renders the item-trailing slot, every row reserves a
+ * REAL trailing column (the slot owns it — the built-in custom-delete
+ * overlay is suppressed), so trailing affordances align across rows
+ * instead of floating over the pill's edge. The custom-name clearance
+ * for the overlay delete no longer applies in this mode. */
+.s-theme-item-trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  flex-shrink: 0;
+  margin-inline-start: var(--space-4, 0.25rem);
+}
+
+.s-theme-item-row[data-trailing="slot"] .s-theme-item-name {
+  margin-inline-end: 0;
+}

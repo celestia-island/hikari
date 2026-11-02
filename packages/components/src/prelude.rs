@@ -88,9 +88,10 @@ pub use crate::data::{
     DonutChartProps, DragDropTreeProps, FilterBarProps, FilterChipProps, FilterOperatorIconProps,
     FilterPanelProps, FilterTriggerProps, GaugeRingProps, ListRowProps, PaginationButtonProps,
     PaginationProps, RenderDragNodeProps, RowSelectionProps, SelectionGridProps, SelectionProps,
-    SelectionWaterfallProps, SortProps, StatCardProps, TableProps, TreeNodeArrowProps,
-    TreeNodeContentProps, TreeNodeLabelProps, TreeNodeProps, TreeProps, TreemapProps,
-    TreemapStageProps, TrendChartProps, VirtualTreeProps, WaterfallProps,
+    SelectionWaterfallProps, SortProps, StatCardProps, TableProps, TagDotRowProps,
+    TreeNodeArrowProps, TreeNodeContentProps, TreeNodeLabelProps, TreeNodeProps, TreeProps,
+    TreemapProps, TreemapStageProps, TrendChartProps, UserPickerProps, VirtualTreeProps,
+    WaterfallProps,
 };
 // Display component Props
 pub use crate::display::{
@@ -98,8 +99,8 @@ pub use crate::display::{
     DiffViewerProps, DragLayerProps, EmptyStateProps, HoverRevealActionProps, ImageLightboxProps,
     ImagePreviewProps, ImageViewerProps, InfiniteTailProps, JsonTreeProps, ListTransitionProps,
     LoadMoreProps, LogWindowProps, MarkdownRendererProps, MediaControlBarProps, MediaPlayerProps,
-    MediaSliderProps, MediaVisualizerProps, QrCodeProps, SkeletonProps, TagProps, TerminalProps,
-    TimelineProps, TransitionContainerProps, UserGuideProps, ZoomControlsProps,
+    MediaSliderProps, MediaVisualizerProps, QrCodeProps, SkeletonProps, StepGuideProps, TagProps,
+    TerminalProps, TimelineProps, TransitionContainerProps, UserGuideProps, ZoomControlsProps,
 };
 // Entry component Props
 pub use crate::entry::{
@@ -119,18 +120,19 @@ pub use crate::layout::{
     AdminHeaderProps, AdminShellProps, AdminTablePageProps, AffixPickerProps, ContainerProps,
     DividerProps as LayoutDividerProps, DockBarProps, FaceShellProps, FlexBoxProps, FooterProps,
     HeaderPickerProps, LocalePickerPopupProps, LocalePickerProps, NavItemProps, NavSidebarProps,
-    PageHeaderProps, PaneHolderProps, ShareBarProps, SidebarRailSwapProps, SidebarRailToggleProps,
-    SpaceProps, StatusBarProps, StatusPillProps, StatusRowProps, StepFlowProps, TitleBarProps,
-    WindowControlsProps,
+    PageHeaderProps, PaneHolderProps, SectionCardProps, ShareBarProps, SidebarRailSwapProps,
+    SidebarRailToggleProps, SolarLocationSettingProps, SpaceProps, StatusBarProps, StatusPillProps,
+    StatusRowProps, StepFlowProps, TitleBarProps, WindowControlsProps,
 };
 // Navigation component Props
 // `StepsProps` is the deprecated shim of `StepperProps`; re-exported so the
 // migration window keeps existing prelude users compiling.
 #[allow(deprecated)]
 pub use crate::navigation::{
-    BreadcrumbItemProps, BreadcrumbProps, MenuItemProps, MenuProps, SidebarItemProps,
-    SidebarLeafProps, SidebarProps, SidebarSectionProps, StepsProps, SubMenuProps, TabPaneProps,
-    TabsProps,
+    BreadcrumbItemProps, BreadcrumbProps, KeywordSearchModalProps, LocalizedInputProps,
+    MenuIdentityItemProps, MenuItemProps, MenuPanelProps, MenuProps, MenuSectionProps,
+    ModalBreadcrumbProps, SearchTriggerProps, SidebarItemProps, SidebarLeafProps, SidebarProps,
+    SidebarSectionProps, StepsProps, SubMenuProps, TabPaneProps, TabsProps,
 };
 // Production component Props
 pub use crate::production::{
@@ -153,4 +155,13 @@ pub use crate::scene::{
     BlankCanvasProps, Board3DProps, BoardProps, DraggableGridProps, DraggableListProps,
     KanbanProps, Minimap3DProps, MinimapProps, NodeCanvasProps, StarSystemProps, WindowedItemProps,
     ZoomToolbarProps,
+};
+
+// Theme + misc family Props
+pub use crate::entry::TemplateFieldProps;
+pub use crate::theme::{
+    AboutModalProps, ActionBarProps, AvatarButtonProps, ColorSchemeDialogProps,
+    ColorSchemeEditorProps, ConnectionStatusProps, CopyBadgeProps, ErrorBoundaryProps,
+    ErrorLandingProps, LogoProps, SecretRevealModalProps, SettingsDialogProps, SplashProps,
+    ThemeDecorProps, ThemePanelContentProps, ThemeToggleProps, WallpaperBackdropProps,
 };

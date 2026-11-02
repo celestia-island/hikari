@@ -6,6 +6,7 @@ styles/_polyfill.scss	styles/polyfill.scss
 components/_scrim-fade.scss	components/_scrim-fade.scss
 components/_menu-item.scss	components/_menu-item.scss
 components/_hikari-vars.scss	components/_hikari-vars.scss
+runtime/touchHint.scss	runtime/touchHint.scss
 components/HkAlert.scss	components/HkAlert.scss
 components/HkBlockingToast.scss	components/HkBlockingToast.scss
 components/HkConfirmDialog.scss	components/HkConfirmDialog.scss

@@ -341,6 +341,9 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-progress-ring",
         ".hk-toast",
         ".hk-tooltip",
+        // The touch half of the tooltip story: the top-docked hint bar
+        // (`runtime/touchHint.scss`, registered by `feedback::touch_hint`).
+        ".hk-touch-hint-bar",
         ".hk-drawer",
         ".hk-popover",
         ".hk-loading-veil",

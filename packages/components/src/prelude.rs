@@ -113,7 +113,7 @@ pub use crate::feedback::{
     GlowProps, LoadingVeilProps, MessageBoxProps, ModalAction, ModalActionVariant, ModalProps,
     PersistentToastGroupProps, PersistentToastProps, PhaseTransitionProps, PopoverProps,
     ProgressBarProps, ProgressRingProps, SpinnerProps, ToastItemViewProps, ToastProps,
-    TooltipProps,
+    TooltipProps, TouchHintBarProps,
 };
 // Layout component Props
 pub use crate::layout::{

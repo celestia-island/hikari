@@ -42,23 +42,37 @@
 }
 
 /* ── Optional edge fades (fade=true / dock fades) ─────────────────
-   FOUR-EDGE composition (2026-10 revision): each edge owns a CSS var, and
-   the viewport's mask INTERSECTS a vertical and a horizontal gradient, so
-   the fade reaches zero on every side that hides content and the corners
-   fall off naturally in all four directions. The previous per-axis rules
-   overwrote one `mask-image` property, so a two-axis container only faded
-   one axis AND the band ended in a hard cut at the other axis's edges
-   (user report: the light effect is clipped at the two sides). Vertical
-   fades were missing entirely. Dock fades ride the same vars, which also
-   removes their old mask-override conflict. */
+   Each edge owns a CSS var; the viewport's mask is built from gradient
+   LAYERS listed in --hk-scroll-fade-layers. Two-axis containers list the
+   vertical and horizontal gradients and INTERSECT them (mask-composite),
+   so the fade reaches zero on every side that hides content and the
+   corners fall off naturally in all four directions (2026-10 revision;
+   the earlier per-axis rules overwrote one `mask-image` property, so a
+   two-axis container only faded one axis AND the band ended in a hard
+   cut at the other axis's edges — user report: the light effect is
+   clipped at the two sides. Vertical fades were missing entirely).
+
+   SINGLE-axis containers list ONE gradient on their scroll axis instead
+   (2026-11-02 revision): a composed mask needs `mask-composite`, which
+   older engines without the standard property (Android WebViews below
+   Chromium 120 — Tauri on Android rides the system WebView) fall back to
+   the default ADD composition on, and the union of two opaque layers is
+   fully opaque — the fade vanished and the overflow band ended in a hard
+   cut at the screen edge (wowsp phone report 2026-11-02: the settings
+   tab strip sliced its last pill mid-glyph). A single layer needs no
+   composite on any engine, and a single-axis container's cross-axis
+   gradient is the identity anyway (its edge vars stay 0px), so the
+   rendering is unchanged on engines that composed correctly. The
+   composite pair stays on the base rule: with one layer it is a no-op
+   (there is no layer below to composite against), so the axis rules only
+   swap the layer list. Dock fades ride the same vars — they feed the
+   vertical gradient, so they land on vertical and two-axis containers. */
 .hk-scroll-container:is([data-fade="true"], [data-dock-fade]) > .hk-scroll-container-viewport {
   --hk-scroll-fade-top: 0px;
   --hk-scroll-fade-right: 0px;
   --hk-scroll-fade-bottom: 0px;
   --hk-scroll-fade-left: 0px;
-  -webkit-mask-composite: source-in;
-  -webkit-mask-repeat: no-repeat;
-  @include mask-image(
+  --hk-scroll-fade-layers:
     linear-gradient(
       to bottom,
       transparent 0,
@@ -72,10 +86,36 @@
       #000 var(--hk-scroll-fade-left),
       #000 calc(100% - var(--hk-scroll-fade-right)),
       transparent 100%
-    )
-  );
+    );
+  -webkit-mask-composite: source-in;
+  -webkit-mask-repeat: no-repeat;
+  @include mask-image(var(--hk-scroll-fade-layers));
   mask-composite: intersect;
   mask-repeat: no-repeat;
+}
+
+/* Horizontal axis (HTabs pill strips, horizontal rails): one gradient,
+   no composite required — readable on any engine that knows
+   -webkit-mask-image. */
+.hk-scroll-container[data-axis="horizontal"]:is([data-fade="true"], [data-dock-fade]) > .hk-scroll-container-viewport {
+  --hk-scroll-fade-layers: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--hk-scroll-fade-left),
+    #000 calc(100% - var(--hk-scroll-fade-right)),
+    transparent 100%
+  );
+}
+
+/* Vertical axis (the default): same treatment on the scroll axis. */
+.hk-scroll-container[data-axis="vertical"]:is([data-fade="true"], [data-dock-fade]) > .hk-scroll-container-viewport {
+  --hk-scroll-fade-layers: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--hk-scroll-fade-top),
+    #000 calc(100% - var(--hk-scroll-fade-bottom)),
+    transparent 100%
+  );
 }
 
 .hk-scroll-container[data-fade="true"] {

@@ -167,6 +167,20 @@
 
 .hk-settings-host .hk-settings {
   height: var(--hk-settings-height, calc(70vh - 6.5rem));
+
+  /* Phone sheet: the docked sheet's body is much taller than the
+     desktop's fixed 70vh band, and a fixed height here cannot stretch —
+     the shell ended mid-sheet, the pane's viewport sliced the last card
+     mid-row, and the whole lower sheet stayed a dead background band
+     (wowsp phone report 2026-11-02). On phones the shell fills the body
+     region instead (100% of the body inner's content box, which is the
+     scroller minus its paddings), so the pane is the only scroller all
+     the way down to the sheet's tail. The --hk-settings-height contract
+     stays desktop-only: the host's height knob still sizes the desktop
+     modal, and a page-embedded shell (no host class) is untouched. */
+  @media (max-width: 767px) {
+    height: 100%;
+  }
 }
 
 /* Cancel the modal body's fixed right padding so the pane's overlay

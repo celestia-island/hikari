@@ -149,6 +149,7 @@
 use std::cell::Cell;
 
 use hikari_i18n::t;
+use tairitsu_vdom::WheelEvent;
 
 use crate::basic::slider::{Slider, SliderSize};
 use crate::prelude::*;
@@ -1022,16 +1023,13 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
             handler.call((next_theta, next_phi));
         }
     };
-    // The wheel rides the GENERIC channel: the glue delivers the DOM `wheel`
-    // as a MouseEvent with no `deltaY` (L88), so Vue's sign test cannot run
-    // and the ladder is NOT stepped here. Only the live handle is used, to
-    // stop the page scroll and keep the gesture from reaching the board
-    // under the card — Vue's own reason for binding `onWheel`.
-    let wheel_handler = move |event: Box<dyn EventData>| {
-        if let Some(mouse) = event.as_any().downcast_ref::<MouseEvent>() {
-            mouse.stop_propagation();
-            mouse.prevent_default();
-        }
+    // The wheel arrives typed, with real deltas. This card still does not step
+    // its ladder on it — keeping the gesture from reaching the board underneath
+    // is the whole job of this binding (Vue's own reason for `onWheel`). The
+    // stop/ prevent pair is the live handle's, and both are on `WheelEvent`.
+    let wheel_handler = move |event: WheelEvent| {
+        event.stop_propagation();
+        event.prevent_default();
     };
 
     // The card IS the drag surface and the release root (mouse family, L88 —
@@ -1050,7 +1048,7 @@ pub fn Minimap3D(props: Minimap3DProps) -> Element {
         .on_event("pointercancel", move |_event: Box<dyn EventData>| {
             minimap_3d_drag_end();
         })
-        .on_event("wheel", wheel_handler)
+        .on_wheel(wheel_handler)
         .on_mouseleave(move |event: MouseEvent| {
             if event.buttons == 0 {
                 minimap_3d_drag_end();

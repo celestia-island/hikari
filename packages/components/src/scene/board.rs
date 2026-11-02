@@ -1464,17 +1464,16 @@ pub fn Board(props: BoardProps) -> Element {
     let interactive = props.interactive;
     let mut root = VElement::new("div").class(board_classes(&props.class));
 
-    // The wheel rides the GENERIC channel: the glue delivers the DOM `wheel`
-    // as a MouseEvent with no `deltaY` (L88), so the payload is never read —
-    // only the live handle is, to keep the page from scrolling under an
-    // interactive board. `on_wheel` deliberately never fires (header delta).
-    root = root.on_event("wheel", move |event: Box<dyn EventData>| {
+    // The wheel arrives typed, with real deltas (tairitsu 0.5.24 dispatches it
+    // as `WheelEvent`). This component still does not zoom on it: the camera is
+    // the host's, driven through the `camera` prop — but that is now a choice,
+    // not a platform limit. The listener exists to keep the page from scrolling
+    // under an interactive board.
+    root = root.on_wheel(move |event: WheelEvent| {
         if !interactive {
             return;
         }
-        if let Some(mouse) = event.as_any().downcast_ref::<MouseEvent>() {
-            mouse.prevent_default();
-        }
+        event.prevent_default();
     });
 
     // The pointer press/move/release chain rides the mouse family (L88); the

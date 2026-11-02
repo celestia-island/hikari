@@ -621,7 +621,9 @@ pub fn date_locale(language: Language) -> DateLocale {
         Language::Japanese => (Locale::ja_JP, 0, DateOrder::YearMonthDay),
         Language::Korean => (Locale::ko_KR, 0, DateOrder::YearMonthDay),
         Language::French => (Locale::fr_FR, 1, DateOrder::DayMonthYear),
+        Language::German => (Locale::de_DE, 1, DateOrder::DayMonthYear),
         Language::Spanish => (Locale::es_ES, 1, DateOrder::DayMonthYear),
+        Language::Portuguese => (Locale::pt_BR, 0, DateOrder::DayMonthYear),
         Language::Russian => (Locale::ru_RU, 1, DateOrder::DayMonthYear),
         Language::Arabic => (Locale::ar_SA, 0, DateOrder::DayMonthYear),
     };

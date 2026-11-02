@@ -125,7 +125,17 @@ pub fn date_tag_layout(language: Language) -> DateTagLayout {
             order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
             separators: ["/", "/"],
         },
+        // "06.10.2024"
+        Language::German => DateTagLayout {
+            order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
+            separators: [".", "."],
+        },
         Language::Spanish => DateTagLayout {
+            order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
+            separators: ["/", "/"],
+        },
+        // "06/10/2024"
+        Language::Portuguese => DateTagLayout {
             order: [DateTagField::Day, DateTagField::Month, DateTagField::Year],
             separators: ["/", "/"],
         },

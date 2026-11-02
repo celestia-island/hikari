@@ -252,14 +252,18 @@ fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
 
     assert!(
         violations.is_empty(),
-        "\n{} dead pointer/touch/drag binding(s) found. The tairitsu browser glue \
-         types only the mouse family, so these handlers are INERT on a real device \
-         (ledger L88).\n\n{}\n\nFix: bind the mouse family \
-         (`onmousedown`/`onmousemove`/`onmouseup`/`onmouseenter`/`onmouseleave` with a \
-         `MouseEvent` parameter) and end drags from `buttons == 0` on the next move. \
-         If the behaviour genuinely cannot be preserved, DELETE the binding and \
-         document the delta in the file header. Only a file that another track \
-         actively owns may be added to ALLOWED, with its reason.\n",
+        "\n{} dead pointer/touch/drag binding(s) found. For the flagged family, \
+         the wire delivers no usable payload, so a typed handler compiles but its \
+         downcast never matches and the handler never runs (ledger L88's \
+         untyped-dispatch window; the pointer family and wheel are typed since \
+         tairitsu 0.5.24 and are legitimate spellings now).\n\n{}\n\nFix: bind a \
+         family whose payload the wire delivers — the mouse family \
+         (`onmousedown`/`onmousemove`/`onmouseup`/`onmouseenter`/`onmouseleave` \
+         with a `MouseEvent` parameter), or the typed pointer family for a \
+         gesture that needs pointer identity — and end drags from `buttons == 0` \
+         on the next move. If the behaviour genuinely cannot be preserved, DELETE \
+         the binding and document the delta in the file header. Only a file that \
+         another track actively owns may be added to ALLOWED, with its reason.\n",
         violations.len(),
         violations.join("\n")
     );

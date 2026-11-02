@@ -611,9 +611,9 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
             };
             let on_mouse_up = move |_event: MouseEvent| set_color_dragging(None);
             // `pointercancel` has no mouse-family equivalent, so it keeps
-            // riding the generic register (the glue still delivers it, with a
-            // type string and no payload — ledger L88). Only the abort EDGE
-            // matters here, so the missing data costs nothing.
+            // riding the generic register (there is no typed builder for it).
+            // The payload is a REAL typed `PointerEvent` since tairitsu 0.5.24
+            // — only the abort EDGE matters here, and nothing reads it.
             let on_pointer_cancel = move |_event: Box<dyn EventData>| set_color_dragging(None);
 
             let track = VElement::new("div")

@@ -132,9 +132,6 @@
 
 use hikari_i18n::t;
 use hikari_icons::MdiIcon;
-// The prelude curates the tairitsu event set; `PointerEvent` (the hover
-// highlight channel) is not part of it (same import as `basic/select.rs`).
-use tairitsu_vdom::PointerEvent;
 
 use crate::basic::select::{
     SelectAnchorRect, SelectOption, SelectPanelPlacement, select_popout_style, step_highlight,
@@ -497,7 +494,10 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
                             click_wiring.commit(click_value.clone());
                         }
                     },
-                    onpointerenter: move |_event: PointerEvent| {
+                    // `mouseenter`, not `pointerenter`: the wasip2 glue types
+                    // only the mouse family, so a pointer-typed hover channel
+                    // never fires on a real device (ledger L67).
+                    onmouseenter: move |_event: MouseEvent| {
                         if hover_enabled {
                             enter_wiring.set_highlight(index_i32);
                         }

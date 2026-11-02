@@ -82,16 +82,11 @@
 // hardcoded Chinese placeholder, `hk-select-dropdown` markup with no sheet
 // branch).
 
-use hikari_i18n::t;
-use hikari_icons::{Icon, MdiIcon};
-// The prelude curates the tairitsu event set; `PointerEvent` (the hover
-// highlight channel) is not part of it, so it comes from the crate directly —
-// the same import `feedback/tooltip.rs` uses.
-use tairitsu_vdom::PointerEvent;
-
 use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use hikari_i18n::t;
+use hikari_icons::{Icon, MdiIcon};
 
 pub struct SelectComponent;
 
@@ -520,8 +515,9 @@ pub fn Select(props: SelectProps) -> Element {
                     },
                     // Vue spreads this only for the desktop popout; the rows
                     // only exist while open, so the form-factor guard is the
-                    // whole rule.
-                    onpointerenter: move |_event: PointerEvent| {
+                    // whole rule. `mouseenter`, not `pointerenter`: the wasip2
+                    // glue types only the mouse family (ledger L67).
+                    onmouseenter: move |_event: MouseEvent| {
                         if !sheet_branch_visible {
                             enter_wiring.set_highlight(index_i32);
                         }

@@ -85,7 +85,7 @@
 //   * MOUSE-FAMILY BINDINGS, not pointer bindings. On wasm32-wasip2 the
 //     tairitsu browser glue typed-dispatches only the mouse family and routes
 //     every `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L67); the
+//     `PointerEvent` handler never fires on the real target (ledger L86); the
 //     rows bind `mousedown` / `mouseup` / `mouseenter` / `mouseleave` and take
 //     `MouseEvent`. Consequences: a touch screen cannot reorder (a tap still
 //     selects), and a drag released on the window is an abandon, not a reorder.
@@ -95,8 +95,15 @@
 //     retired by the two edges the surface actually owns: `mouseleave` on the
 //     list abandons a drag that left it (a release elsewhere must cross that
 //     boundary), and `mouseup` on the list abandons an arm whose release landed
-//     on list padding instead of another row. Without the second edge a stale
-//     arm would turn the NEXT plain click on a row into a reorder.
+//     on list padding instead of another row.
+//     The `mouseup` edge is the one that fixes a real misfire: only a row's own
+//     `mouseup` used to call `header_take_drag`, so a release on the list padding
+//     (or anywhere off the rows) left the arm ARMED. The next release that
+//     reached a row then committed that stale arm — e.g. press on padding, move
+//     across a row, release: the row's `mouseup` fires and reorders onto a row
+//     the user never dragged from. Retiring the arm on any release that reaches
+//     the list closes that path, and a release that never reaches the list is
+//     covered by the `mouseleave` edge above.
 //   * `mouseenter` highlighting is attached unconditionally. Vue spreads it
 //     only for the desktop popout because its sheet branch has no hover; the
 //     mirror has no sheet branch, so the form-factor guard has nothing to
@@ -650,7 +657,7 @@ pub fn HeaderPicker(props: HeaderPickerProps) -> Element {
                 // Vue spreads this only for the desktop popout; the mirror has
                 // no sheet branch, so the guard has nothing to guard.
                 // `mouseenter`, not `pointerenter`: the wasip2 glue types only
-                // the mouse family (ledger L67).
+                // the mouse family (ledger L86).
                 onmouseenter: move |_event: MouseEvent| {
                     enter_wiring.set_highlight(index_i32);
                 },

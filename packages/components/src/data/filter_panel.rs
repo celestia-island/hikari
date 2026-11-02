@@ -1093,7 +1093,7 @@ fn add_menu_layer(props: &FilterPanelProps) -> VNode {
             })
             // `mouseenter`, not `pointerenter`: the wasip2 glue types only the
             // mouse family, so a pointer-typed hover channel never fires on a
-            // real device (ledger L67).
+            // real device (ledger L86).
             .on_mouseenter(move |_event: MouseEvent| {
                 if let Some(handler) = hover_menu.as_ref() {
                     handler.call(AddMenuState {

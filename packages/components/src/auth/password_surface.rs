@@ -91,10 +91,15 @@
 //     way out of a press started on the eye, so the reveal can never stay stuck
 //     on). `reveal_release` is gated by `password_reveal_release`, so extra
 //     edges cannot flap a `toggle` reveal.
+//     DECLARED OVER-REACH: the `mouseleave` edge fires while the button may
+//     still be HELD, so dragging off the box ends a hold-reveal early — Vue
+//     keeps revealing until `document.pointerup`. It fails safe (never stuck,
+//     never visible longer than asked) and is the price of having no
+//     document-level release edge at all.
 //     Mouse family, not pointer: on wasm32-wasip2 the glue typed-dispatches
 //     only the mouse family and routes `pointer*` through a data-less generic
 //     channel, so a typed `PointerEvent` handler never fires on the real target
-//     (ledger L67). A touch screen therefore cannot press-and-hold the eye (a
+//     (ledger L86). A touch screen therefore cannot press-and-hold the eye (a
 //     tap still toggles; the eye stays keyboard-operable). `contextmenu` (Vue's
 //     long-press callout guard) is not an rsx event and is dropped.
 //   [D3] ADDITIVE: a password GENERATOR. Vue ships no generator; its exported
@@ -1140,7 +1145,7 @@ impl PasswordPublish {
     }
 
     /// Vue's `onPointerdown` on the eye: no focus steal. Mouse family, not
-    /// pointer: wasip2 has no typed pointer dispatch (ledger L67).
+    /// pointer: wasip2 has no typed pointer dispatch (ledger L86).
     fn eye_press(&self, event: MouseEvent) {
         event.prevent_default();
         self.reveal_press();
@@ -1440,6 +1445,15 @@ pub fn PasswordSurface(props: PasswordSurfaceProps) -> Element {
     // root's `mouseleave` first. Both call `reveal_release`, which is a no-op
     // unless the `hold` gate is actively revealing, so the extra edges cannot
     // flap a `toggle` reveal.
+    //
+    // KNOWN OVER-REACH OF THE `mouseleave` EDGE: it fires on the way OUT, while
+    // the button may still be HELD, so dragging the pointer off the box ends the
+    // reveal immediately. Vue keeps revealing until `document.pointerup`, i.e.
+    // until the finger/button is actually released. The mirror therefore ends a
+    // held reveal EARLY, never late: it fails safe (the password is hidden at
+    // worst while the user still expects to be holding it), and the alternative —
+    // no leave edge — is the stuck state this fallback exists to kill. Declared
+    // in the header's [D2] as well.
     let box_release_events = publish.clone();
     let box_release = move |_event: MouseEvent| box_release_events.reveal_release();
     let box_leave_events = publish.clone();

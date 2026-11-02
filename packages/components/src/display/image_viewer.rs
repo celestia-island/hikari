@@ -84,12 +84,14 @@
 //     (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
 //     `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
 //     `pointer*` event through a data-less generic channel, so a typed
-//     `PointerEvent` handler never fires on the real target (ledger L67). The
+//     `PointerEvent` handler never fires on the real target (ledger L86). The
 //     canvas therefore BINDS `mousedown` / `mousemove` / `mouseup`, and keeps the
 //     DURABLE public shape: `EventHandler<PointerEvent>` payloads,
 //     mouse-synthesised by [`crate::utils::pointer_from_mouse`]
-//     (`pointer_type: Mouse`, `pointer_id: 1` — the spec's value for the primary
-//     mouse pointer — `is_primary: true`, real coordinates / buttons / modifiers
+//     (`pointer_type: Mouse`, `pointer_id: 1` — what browsers report for the
+//     primary mouse pointer; the spec only permits RESERVING 0 or 1, so no
+//     consumer may hard-code either — `is_primary: true`, real coordinates /
+//     buttons / modifiers
 //     and the live handle; pressure / tilt / contact geometry stay unknown
 //     rather than invented). The WIT interface already declares the
 //     `pointer-event` / `wheel-event` getters and the host imports them without
@@ -448,7 +450,14 @@ pub struct ImageViewerProps {
     #[default]
     pub animatable: bool,
 
-    /// Vue's `dragging` flag, used only for the `grabbing` cursor.
+    /// Vue's `dragging` flag. It does two jobs in the mirror: it picks the
+    /// `grabbing` cursor, and it is the CONTRACT for the release-outside edge —
+    /// the `mousemove` that reports `buttons == 0` is reported as a synthetic
+    /// [`ImageViewerProps::on_pointer_up`] only while this is `true` (the viewer
+    /// holds no drag state of its own, so a host that never sets `dragging`
+    /// never receives that edge and must time out or retire its own press).
+    /// `scene/board.rs` needs no such contract: its press latch is
+    /// component-owned.
     #[default]
     pub dragging: bool,
 
@@ -490,7 +499,7 @@ pub struct ImageViewerProps {
     /// Wheel pass-through (Vue: `passive:false` + `preventDefault` + zoom).
     /// NEVER FIRES on today's wasip2 host: the glue routes the DOM `wheel`
     /// through the MouseEvent channel, which carries no `delta_y`, so a typed
-    /// `WheelEvent` binding cannot be satisfied (ledger L67). The prop is kept
+    /// `WheelEvent` binding cannot be satisfied (ledger L86). The prop is kept
     /// for the Vue contract and goes live UNCHANGED once the host implements the
     /// declared `wheel-event` getter; until then drive the zoom from the host's
     /// own wheel source via `scale`.
@@ -500,8 +509,9 @@ pub struct ImageViewerProps {
     /// SYNTHESISED ON THE MOUSE WIRE: the wasip2 glue types only the mouse
     /// family today, so this fires from `mousedown` and the payload is built by
     /// [`crate::utils::pointer_from_mouse`] — `pointer_type: Mouse`,
-    /// `pointer_id: 1` (the spec's primary-mouse id), `is_primary: true`, real
-    /// coordinates / buttons / modifiers / live handle, and contact geometry
+    /// `pointer_id: 1` (the browsers' primary-mouse id; the spec only permits a
+    /// UA to reserve 0 or 1, so it is not a portable identity), `is_primary:
+    /// true`, real coordinates / buttons / modifiers / live handle, and contact geometry
     /// (pressure, tilt, width/height, twist) left UNKNOWN rather than invented.
     /// Once the host implements the declared `pointer-event` getters this prop
     /// receives real `PointerEvent`s with no API change.
@@ -524,7 +534,7 @@ pub struct ImageViewerProps {
     /// Pointercancel pass-through (Vue: retires the pointer). NEVER FIRES on
     /// today's host: the mouse family has no cancel edge, and rsx types the
     /// `pointercancel` attribute as a `PointerEvent` the glue cannot deliver
-    /// (L67). Kept for the Vue contract — it goes live unchanged with the
+    /// (L86). Kept for the Vue contract — it goes live unchanged with the
     /// upstream pointer typing. Meanwhile a host retires the pointer from
     /// [`ImageViewerProps::on_pointer_up`].
     pub on_pointer_cancel: Option<EventHandler<PointerEvent>>,
@@ -613,7 +623,7 @@ pub fn ImageViewer(props: ImageViewerProps) -> Element {
             style: host_style,
             // Mouse family, not pointer: the wasip2 glue type-dispatches only
             // the mouse family, so a `pointer*` listener never fires here
-            // (ledger L67). `onwheel` / `onpointercancel` /
+            // (ledger L86). `onwheel` / `onpointercancel` /
             // `onlostpointercapture` are NOT bound — see their prop docs.
             onmousedown: move |e: MouseEvent| {
                 if let Some(handler) = on_pointer_down.as_ref() {

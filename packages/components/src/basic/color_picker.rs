@@ -70,13 +70,24 @@
 //     button bare and lets `HkPopover` own the dialog semantics; with no popover
 //     the mirror puts `aria-haspopup` / `aria-expanded` / `aria-label` on the
 //     button so the open state is announced.
+//   * **mouse-family bindings, not pointer bindings.** On wasm32-wasip2 the
+//     tairitsu browser glue typed-dispatches only the mouse family and routes
+//     every `pointer*` event through a data-less generic channel, so a typed
+//     `PointerEvent` handler never fires on the real target (ledger L67). The
+//     channel sliders bind `mousedown` / `mousemove` / `mouseup` and every
+//     handler takes a `MouseEvent`, so a touch screen cannot drag a channel (a
+//     tap still sets it).
 //   * **no window-level drag listeners.** Vue adds `pointermove` / `pointerup`
 //     / `pointercancel` to `window` on pointerdown and removes them on release
-//     (plus on unmount). A component here cannot own window listeners and
-//     `setPointerCapture` is not exposed, so a drag keeps tracking only while
-//     the pointer stays inside the channel slider; `pointerup` / `pointercancel`
-//     on the slider still end it. This is the same trade the `Slider` mirror
-//     documents.
+//     (plus on unmount). A component here cannot own window listeners —
+//     `tairitsu_vdom::DomOps` is element-scoped, with no document/window
+//     registration seam — and `setPointerCapture` is not exposed, so a drag
+//     keeps tracking only while the pointer stays inside the channel slider.
+//     A RELEASE OUTSIDE IS STILL RECOVERED: the slider's own `mouseup` ends a
+//     release inside it, and a `mousemove` reporting `buttons == 0` ends a drag
+//     released elsewhere ([`color_pointer_released`]); a browser-ABORTED
+//     gesture still reaches the generic `pointercancel` register. This is the
+//     same trade the `Slider` mirror documents.
 //   * **pointer reads need a host measurement.** Vue measures its live
 //     `trackRef` rect; the mirror asks for the event's `currentTarget` rect
 //     (`tairitsu_vdom::get_bounding_client_rect`) and degrades to a no-op when
@@ -92,7 +103,7 @@
 
 use std::cell::Cell;
 
-use tairitsu_vdom::{DomHandle, PointerEvent, get_bounding_client_rect};
+use tairitsu_vdom::{DomHandle, get_bounding_client_rect};
 
 use crate::basic::input::{Input, InputProps};
 use crate::prelude::*;
@@ -567,7 +578,7 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
             let pct = color_slider_pct(value);
 
             let down_emit = emit.clone();
-            let on_pointer_down = move |event: PointerEvent| {
+            let on_mouse_down = move |event: MouseEvent| {
                 set_color_dragging(Some(channel));
                 if let Some(ratio) = color_pointer_ratio(event.client_x, event.current_target) {
                     down_emit(color_with_channel(
@@ -578,12 +589,12 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
                 }
             };
             let move_emit = emit.clone();
-            let on_pointer_move = move |event: PointerEvent| {
+            let on_mouse_move = move |event: MouseEvent| {
                 if color_dragging() != Some(channel) {
                     return;
                 }
                 // Vue drags on window listeners; here the flag alone would
-                // stay set after a release outside the slider (the pointerup
+                // stay set after a release outside the slider (the mouseup
                 // never reaches this element), so a later HOVER would write
                 // values. `buttons == 0` means "no button held" — the release
                 // edge Vue would have seen.
@@ -599,10 +610,11 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
                     ));
                 }
             };
-            let on_pointer_up = move |_event: PointerEvent| set_color_dragging(None);
-            // `pointercancel` has no typed builder in tairitsu 0.5.22; the
-            // boxed register is what the element offers (the payload is
-            // unused, only the edge matters).
+            let on_mouse_up = move |_event: MouseEvent| set_color_dragging(None);
+            // `pointercancel` has no mouse-family equivalent, so it keeps
+            // riding the generic register (the glue still delivers it, with a
+            // type string and no payload — ledger L67). Only the abort EDGE
+            // matters here, so the missing data costs nothing.
             let on_pointer_cancel = move |_event: Box<dyn EventData>| set_color_dragging(None);
 
             let track = VElement::new("div")
@@ -613,9 +625,9 @@ pub fn ColorPicker(props: ColorPickerProps) -> Element {
                 .style(format!("left:{pct}%"));
             let slider = VElement::new("div")
                 .class("hk-color-picker-channel-slider")
-                .on_pointerdown(on_pointer_down)
-                .on_pointermove(on_pointer_move)
-                .on_pointerup(on_pointer_up)
+                .on_mousedown(on_mouse_down)
+                .on_mousemove(on_mouse_move)
+                .on_mouseup(on_mouse_up)
                 .on_event("pointercancel", on_pointer_cancel)
                 .child(VNode::Element(Box::new(track)))
                 .child(VNode::Element(Box::new(thumb)));

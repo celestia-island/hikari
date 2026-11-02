@@ -78,21 +78,47 @@
 //     frames after each load-driven reposition (frame 1 commits the transform
 //     unarmed, frame 2 arms). A frame clock is not available here, so the host
 //     owns the arming and the `.is-animatable` class is a prop.
-//   * [D] `lostpointercapture`: tairitsu's `on_event` registers in the bubble
-//     phase only, while Vue relies on a CAPTURE-phase listener because the
-//     event fires on the element that held capture (usually the `<img>`) and
-//     does not bubble. The mirror still exposes the pass-through, but a host
-//     that takes pointer capture should also retire the pointer from its own
-//     `pointerup`/`pointercancel` path.
+//   * [D] MOUSE-FAMILY BINDINGS + THE RELEASE-OUTSIDE EDGE. On wasm32-wasip2 the
+//     tairitsu browser glue type-dispatches only the mouse family
+//     (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/`mouseup`/`click`/
+//     `dblclick`/`mouseover`/`mouseout`/`contextmenu`/`wheel`) and routes every
+//     `pointer*` event through a data-less generic channel, so a typed
+//     `PointerEvent` handler never fires on the real target (ledger L67). The
+//     canvas therefore binds `mousedown` / `mousemove` / `mouseup`, and the
+//     `on_pointer_*` props keep their canonical names but carry `MouseEvent`
+//     payloads (see each prop's doc).
+//     Vue ends the gesture on its WINDOW `pointerup`; a component cannot own
+//     window listeners here (`tairitsu_vdom::DomOps` is element-scoped — no
+//     document/window registration seam) and no pointer capture is exposed. The
+//     closest reliable signal is the BUTTON STATE: the root `mouseup` retires a
+//     release inside the viewer, and the first `mousemove` reporting
+//     `buttons == 0` while `dragging` is set is reported as the release that
+//     happened elsewhere (the same `buttons == 0` fallback `basic/slider.rs`,
+//     `display/media_slider.rs` and `basic/color_picker.rs` carry). Without it
+//     a host that keeps a pointer set would pan on the next plain hover.
+//     Declared consequences: a touch screen produces no `mousemove` sequence, so
+//     TOUCH pan/pinch is unavailable (a tap still double-click-zooms); a mouse is
+//     ONE pointer, so Vue's two-finger PINCH frame cannot be produced. TOUCH and
+//     MULTI-TOUCH therefore need a host that tracks real pointer ids: the pure
+//     geometry ([`image_viewer_wheel_scale`], [`image_viewer_anchor_pan`]) is
+//     exported for exactly that.
+//   * [D] THREE PROPS CANNOT FIRE HERE: `on_wheel`, `on_pointer_cancel` and
+//     `on_lost_pointer_capture`. The wheel arrives on the mouse channel with no
+//     `delta_y` (a zero delta reads as "zoom out" on every tick, so it is not
+//     read at all and the page keeps its own scroll), `pointercancel` has no
+//     mouse-family equivalent and rsx types that attribute as a `PointerEvent`
+//     the glue cannot deliver, and there is no pointer capture, hence no
+//     capture-loss edge. They stay on the props (the Vue contract does not
+//     shrink) as documented no-ops; the host drives zoom from `scale` and
+//     retires its pointer from `on_pointer_up`.
 //
 // New file: the family had no Rust viewer (the legacy `display/zoom_controls.rs`
 // is the zoom-button strip, which Vue ships as `HkZoomToolbar` — a different
 // component). Nothing is retired here.
 
-// The prelude curates the tairitsu event set; `WheelEvent` / `PointerEvent`
-// (the wheel and drag channels) are not part of it — the same crate-level
-// import `basic/color_picker.rs` and `feedback/tooltip.rs` use.
-use tairitsu_vdom::{PointerEvent, WheelEvent};
+// The prelude curates the tairitsu event set; `WheelEvent` (the zoom channel)
+// is not part of it — the same crate-level import `scene/board.rs` uses.
+use tairitsu_vdom::WheelEvent;
 
 use crate::feedback::spinner::{Spinner, SpinnerSize};
 use crate::prelude::*;
@@ -449,24 +475,45 @@ pub struct ImageViewerProps {
     /// The image failed (Vue surfaces no error UI; see the header).
     pub on_error: Option<EventHandler<()>>,
 
-    /// Wheel pass-through (Vue: `passive:false` + `preventDefault`; calling
-    /// `prevent_default` on the event is the host's call).
+    /// Wheel pass-through (Vue: `passive:false` + `preventDefault` + zoom).
+    /// NEVER FIRES under wasm32-wasip2: the glue routes the DOM `wheel` through
+    /// the MouseEvent channel, which carries no `delta_y`, so a typed
+    /// `WheelEvent` binding can never be satisfied (ledger L67). The prop is
+    /// kept for the Vue contract; drive the zoom from the host's own wheel
+    /// source via `scale`. Widen back to a live binding once the upstream
+    /// tairitsu glue types the wheel payload.
     pub on_wheel: Option<EventHandler<WheelEvent>>,
 
     /// Pointerdown pass-through (Vue: registers the pointer + captures it).
-    pub on_pointer_down: Option<EventHandler<PointerEvent>>,
+    /// DELIVERS MOUSE EVENTS: the wasip2 glue has no typed pointer dispatch
+    /// today — `pointer*` rides a data-less generic channel (ledger L67) — so
+    /// this fires from `mousedown` and the payload is a [`MouseEvent`]. Widen
+    /// back to `PointerEvent` once the upstream tairitsu fix ships.
+    pub on_pointer_down: Option<EventHandler<MouseEvent>>,
 
-    /// Pointermove pass-through (Vue: panned / pinch frames).
-    pub on_pointer_move: Option<EventHandler<PointerEvent>>,
+    /// Pointermove pass-through (Vue: panned / pinch frames). Mouse events, like
+    /// [`ImageViewerProps::on_pointer_down`] — and because a mouse device is ONE
+    /// pointer, the two-finger PINCH frame Vue drives here cannot arrive.
+    pub on_pointer_move: Option<EventHandler<MouseEvent>>,
 
-    /// Pointerup pass-through (Vue: retires the pointer).
-    pub on_pointer_up: Option<EventHandler<PointerEvent>>,
+    /// Pointerup pass-through (Vue: retires the pointer). Mouse events, like
+    /// [`ImageViewerProps::on_pointer_down`]. A release OUTSIDE the viewer has
+    /// no `mouseup` here, so it is reported as a synthetic release on the first
+    /// `mousemove` that reports `buttons == 0` while `dragging` is set (see the
+    /// header delta) — a host that retires its pointer set on this prop can
+    /// never stay stuck.
+    pub on_pointer_up: Option<EventHandler<MouseEvent>>,
 
-    /// Pointercancel pass-through (Vue: retires the pointer).
-    pub on_pointer_cancel: Option<EventHandler<PointerEvent>>,
+    /// Pointercancel pass-through (Vue: retires the pointer). NEVER FIRES: the
+    /// mouse family has no cancel edge, and rsx types the `pointercancel`
+    /// attribute as a `PointerEvent` that the glue cannot deliver (L67). Kept
+    /// for the Vue contract; a host retires the pointer from `on_pointer_up`.
+    pub on_pointer_cancel: Option<EventHandler<MouseEvent>>,
 
-    /// Capture-loss pass-through (see the header's [D] about the phase).
-    pub on_lost_pointer_capture: Option<EventHandler<PointerEvent>>,
+    /// Capture-loss pass-through. NEVER FIRES: a pointer capture is what the
+    /// wire does not have here (no typed pointer channel, no capture API), so
+    /// there is no loss edge to report at all (see the header delta).
+    pub on_lost_pointer_capture: Option<EventHandler<MouseEvent>>,
 
     /// Double-click pass-through (Vue: `setZoom` to
     /// [`image_viewer_double_click_target`], anchored at the pointer).
@@ -526,55 +573,62 @@ pub fn ImageViewer(props: ImageViewerProps) -> Element {
     };
 
     // Pass-through wiring: the props are consumed once each, so clone per
-    // listener (Callback is a cheap `Rc` clone).
+    // listener (Callback is a cheap `Rc` clone). `on_wheel` /
+    // `on_pointer_cancel` / `on_lost_pointer_capture` are deliberately NOT
+    // wired — no channel can deliver them here (see their prop docs). The
+    // release-elsewhere edge reads the CONTROLLED dragging flag.
     let on_load = props.on_load.clone();
     let on_error = props.on_error.clone();
-    let on_wheel = props.on_wheel.clone();
     let on_pointer_down = props.on_pointer_down.clone();
     let on_pointer_move = props.on_pointer_move.clone();
     let on_pointer_up = props.on_pointer_up.clone();
-    let on_pointer_cancel = props.on_pointer_cancel.clone();
-    let on_lost_pointer_capture = props.on_lost_pointer_capture.clone();
+    // The release prop is reached from two listeners (the root `mouseup` and the
+    // synthetic release on `mousemove`), so it needs its own clone.
+    let on_pointer_up_move = on_pointer_up.clone();
     let on_double_click = props.on_double_click.clone();
+    let viewer_dragging = props.dragging;
 
     rsx! {
         div {
             class: classes,
             style: host_style,
-            onwheel: move |e: WheelEvent| {
-                if let Some(handler) = on_wheel.as_ref() {
-                    handler.call(e.clone());
-                }
-            },
-            onpointerdown: move |e: PointerEvent| {
+            // Mouse family, not pointer: the wasip2 glue type-dispatches only
+            // the mouse family, so a `pointer*` listener never fires here
+            // (ledger L67). `onwheel` / `onpointercancel` /
+            // `onlostpointercapture` are NOT bound — see their prop docs.
+            onmousedown: move |e: MouseEvent| {
                 if let Some(handler) = on_pointer_down.as_ref() {
                     handler.call(e.clone());
                 }
             },
-            onpointermove: move |e: PointerEvent| {
+            onmousemove: move |e: MouseEvent| {
+                // Vue ends the gesture on its window `pointerup`; the closest
+                // reliable signal here is the BUTTON STATE — a move reporting
+                // no held button is the release that happened elsewhere. The
+                // viewer holds no drag state of its own (`dragging` is a prop),
+                // so the edge is reported only while the host says a drag is
+                // live; `reveal_release`-style repeats cannot pile up because
+                // the host clears `dragging` when it retires the pointer.
+                if e.buttons == 0 && viewer_dragging {
+                    if let Some(handler) = on_pointer_up_move.as_ref() {
+                        handler.call(e.clone());
+                    }
+                    return;
+                }
                 if let Some(handler) = on_pointer_move.as_ref() {
                     handler.call(e.clone());
                 }
             },
-            onpointerup: move |e: PointerEvent| {
+            onmouseup: move |e: MouseEvent| {
                 if let Some(handler) = on_pointer_up.as_ref() {
-                    handler.call(e.clone());
-                }
-            },
-            onpointercancel: move |e: PointerEvent| {
-                if let Some(handler) = on_pointer_cancel.as_ref() {
-                    handler.call(e.clone());
-                }
-            },
-            onlostpointercapture: move |e: PointerEvent| {
-                if let Some(handler) = on_lost_pointer_capture.as_ref() {
                     handler.call(e.clone());
                 }
             },
             // `dblclick` is NOT one of the mouse events tairitsu's rsx types
             // (click/mousedown/mouseup/mousemove/mouseenter/mouseleave), so the
             // macro hands this listener the boxed event and the mirror
-            // downcasts it back to `MouseEvent` for the host.
+            // downcasts it back to `MouseEvent` for the host. The glue DOES
+            // deliver `dblclick` typed, so this one is live.
             ondblclick: move |event: Box<dyn EventData>| {
                 if let Some(handler) = on_double_click.as_ref()
                     && let Some(mouse) = event.as_any().downcast_ref::<MouseEvent>()

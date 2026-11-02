@@ -78,16 +78,24 @@
 //     `MouseEvent`s and routes `pointer*` through a data-less generic
 //     channel, so a typed `PointerEvent` handler never fires on the real
 //     target (ledger L67: `tairitsu/packages/browser-glue`'s eventTarget
-//     whitelist vs `packages/web/src/wit_platform.rs`). The props KEEP their
-//     `EventHandler<PointerEvent>` shapes (the host API does not break), but
-//     every payload is REBUILT from a mouse event
-//     ([`board_pointer_from_mouse`]): real coordinates, targets and live
-//     handle, `pointer_type: Mouse`, `is_primary: true`, one constant
-//     `pointer_id`. Declared consequences: a touch screen produces no
-//     `mousemove` sequence, so TOUCH dragging is unavailable (a tap still
-//     clicks); the mouse has no implicit capture, so a drag that leaves the
-//     board stops tracking until the pointer returns — a release inside the
-//     board still lands on the root `mouseup` (the root-level fallback).
+//     whitelist vs `packages/web/src/wit_platform.rs`). The `on_pointer_*`
+//     props KEEP their canonical Vue names but carry `MouseEvent` payloads
+//     (the type that actually fires); they can be widened back to
+//     `PointerEvent` once the upstream tairitsu fix ships. Declared
+//     consequences: a touch screen produces no `mousemove` sequence, so TOUCH
+//     dragging is unavailable (a tap still clicks); a mouse is ONE device, so
+//     Vue's two-finger pinch and its per-pointer identity cannot be produced
+//     (the pinch math stays exported for a host tracking real pointer ids).
+//   * END OF GESTURE when the release lands OUTSIDE the board. Vue listens on
+//     the window for it, and a component here cannot (`tairitsu_vdom::DomOps`
+//     is element-scoped — no document/window registration seam), so the mirror
+//     recovers the edge from the BUTTON STATE: the root `mouseup` ends every
+//     release inside the board, and the first `mousemove` reporting
+//     `buttons == 0` while the press latch is still armed is reported as a
+//     SYNTHETIC `on_pointer_up` (followed by the move). Without it a host that
+//     tracks the press would pan on the next plain hover. The latch
+//     ([`board_press_held`] / [`set_board_press_held`]) is non-reactive and
+//     only exists to tell hover from drag.
 //   * `nodeClick`: Vue derives it on the ROOT pointerup from a tracked press
 //     plus a 3px slop (`board_press_is_click` is that predicate). The mirror
 //     fires `on_node_click` from the node box's own `click` event, which the
@@ -130,9 +138,10 @@
 //     camera through the `camera` prop, and [`board_wheel_step_k`] is one
 //     rung.
 //   * `pointercancel` rides the generic channel as well: the handler fires
-//     when the browser aborts the gesture, but the platform delivers NO
-//     cancel data, so the host's `on_pointer_cancel` receives a DEFAULT
-//     `PointerEvent` (all zeros) — a signal, not a payload.
+//     when the browser aborts the gesture (it also retires the press latch),
+//     but the platform delivers NO cancel data, so the host's
+//     `on_pointer_cancel` receives a DEFAULT `MouseEvent` (all zeros) — a
+//     signal, not a payload.
 //   * `viewport` / `minK` / `maxK` / `fitCap` / `animated` / `fitOnMount`
 //     reach NO DOM attribute — in Vue they only steer the camera. They are
 //     carried as props so a host reading [`BoardProps`] sees the whole
@@ -151,9 +160,10 @@
 // No literal UI text is rendered (node labels and every other string arrive
 // through props/slots), so this component introduces NO `hikari_i18n::t` key.
 
+use std::cell::Cell;
 use std::collections::HashMap;
 
-use tairitsu_vdom::{EventWitHandle, PointerEvent, PointerType, WheelEvent};
+use tairitsu_vdom::WheelEvent;
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -1011,8 +1021,8 @@ impl BoardNodeRef {
 }
 
 /// A node press — Vue's `onNodePointerDown(e, node)`: the node's world rect at
-/// press time (so the host can run [`board_drag_position`]) plus the raw
-/// pointer event.
+/// press time (so the host can run [`board_drag_position`]) plus the raw mouse
+/// event (the pointer payload wasip2 can actually deliver — ledger L67).
 #[derive(Clone, Debug)]
 pub struct BoardNodePress {
     pub id: String,
@@ -1020,7 +1030,7 @@ pub struct BoardNodePress {
     pub start: BoardPoint,
     pub w: f64,
     pub h: f64,
-    pub pointer: PointerEvent,
+    pub pointer: MouseEvent,
 }
 
 impl BoardNodePress {
@@ -1223,48 +1233,25 @@ fn board_slot_is_empty(node: &VNode) -> bool {
     }
 }
 
-// ── the mouse → pointer seam (wasip2, ledger L67) ────────────────────────
+// ── the press latch (wasip2, ledger L67) ─────────────────────────────────
 
-/// The `pointer_id` every rebuilt pointer payload carries: a mouse event has
-/// no pointer identity and one page has one mouse, so a constant keeps the
-/// press/release bookkeeping consistent (the ledger L67 convention: the
-/// mouse family reads as pointer id 0).
-const BOARD_MOUSE_POINTER_ID: i32 = 0;
+thread_local! {
+    /// Whether a mouse button went down on a board and has not been seen come
+    /// up. NON-reactive by design (it never drives rendering) — it exists only
+    /// so a hover move (`buttons == 0`, no press) can be told apart from the
+    /// release-elsewhere edge that Vue gets from its window `pointerup`
+    /// listener. A singleton is exact: one mouse drags one board at a time.
+    static BOARD_PRESS_HELD: Cell<bool> = const { Cell::new(false) };
+}
 
-/// Rebuild the pointer-shaped payload a mouse event stands for (see the
-/// header's mouse-family delta). Coordinates, targets, modifiers and the
-/// LIVE handle are the mouse event's own — `prevent_default` /
-/// `stop_propagation` on the forwarded payload still reach the browser —
-/// while `pointer_type` is `Mouse`, `is_primary` is `true` and the pointer
-/// id is the constant above.
-fn board_pointer_from_mouse(event: &MouseEvent) -> PointerEvent {
-    let pointer = PointerEvent::new()
-        .pointer_type(PointerType::Mouse)
-        .is_primary(true)
-        .pointer_id(BOARD_MOUSE_POINTER_ID)
-        .client_x(event.client_x)
-        .client_y(event.client_y)
-        .screen_x(event.screen_x)
-        .screen_y(event.screen_y)
-        .offset_x(event.offset_x)
-        .offset_y(event.offset_y)
-        .page_x(event.page_x)
-        .page_y(event.page_y)
-        .movement_x(event.movement_x)
-        .movement_y(event.movement_y)
-        .button(event.button)
-        .buttons(event.buttons)
-        .ctrl_key(event.ctrl_key)
-        .shift_key(event.shift_key)
-        .alt_key(event.alt_key)
-        .meta_key(event.meta_key)
-        // The wit dispatcher's own convention: a missing handle reads as 0.
-        .target(event.target.unwrap_or(0))
-        .current_target(event.current_target.unwrap_or(0));
-    match event.wit_handle() {
-        Some(handle) => pointer.event_handle(EventWitHandle::from_wit(handle)),
-        None => pointer,
-    }
+/// Arm the press latch on a board `mousedown`.
+pub fn set_board_press_held(held: bool) {
+    BOARD_PRESS_HELD.with(|cell| cell.set(held));
+}
+
+/// Whether a board press is still latched (see [`set_board_press_held`]).
+pub fn board_press_held() -> bool {
+    BOARD_PRESS_HELD.with(|cell| cell.get())
 }
 
 #[define_props]
@@ -1338,26 +1325,33 @@ pub struct BoardProps {
     pub on_wheel: Option<EventHandler<WheelEvent>>,
 
     /// Viewport pointer press (Vue `onPointerDown`). Only while `interactive`.
-    /// The payload is rebuilt from the mouse family ([`board_pointer_from_mouse`],
-    /// header delta) — wasip2 has no typed pointer events (L67).
-    pub on_pointer_down: Option<EventHandler<PointerEvent>>,
+    /// DELIVERS MOUSE EVENTS: the wasip2 glue has no typed pointer dispatch
+    /// today — `pointer*` rides a data-less generic channel (ledger L67) — so
+    /// this fires from `mousedown` and the payload is a [`MouseEvent`]. Widen
+    /// back to `PointerEvent` once the upstream tairitsu fix ships.
+    pub on_pointer_down: Option<EventHandler<MouseEvent>>,
 
     /// Viewport pointer move (Vue `onPointerMove`). Only while `interactive`.
-    /// Mouse-rebuilt payload, like `on_pointer_down` (header delta).
-    pub on_pointer_move: Option<EventHandler<PointerEvent>>,
+    /// Mouse events, like [`BoardProps::on_pointer_down`].
+    pub on_pointer_move: Option<EventHandler<MouseEvent>>,
 
     /// Viewport pointer release (Vue `onPointerUp`; Vue resolves a node click
-    /// here — see [`board_press_is_click`]). Mouse-rebuilt payload, like
-    /// `on_pointer_down` (header delta).
-    pub on_pointer_up: Option<EventHandler<PointerEvent>>,
+    /// here — see [`board_press_is_click`]). Mouse events, like
+    /// [`BoardProps::on_pointer_down`]. A release OUTSIDE the board has no
+    /// `mouseup` here, so it is reported as a synthetic release on the first
+    /// `mousemove` that reports `buttons == 0` (the header delta) — the host's
+    /// press bookkeeping therefore cannot stay armed.
+    pub on_pointer_up: Option<EventHandler<MouseEvent>>,
 
     /// Viewport pointer cancel (Vue `onPointerCancel`: an aborted gesture must
-    /// never synthesise a click). The payload is a DEFAULT `PointerEvent` —
-    /// the platform delivers no cancel data (header delta).
-    pub on_pointer_cancel: Option<EventHandler<PointerEvent>>,
+    /// never synthesise a click). Still reaches the generic `pointercancel`
+    /// register — the glue delivers the event with a type string and NO data
+    /// (L67) — so the payload is a DEFAULT [`MouseEvent`]: a signal, not a
+    /// payload (header delta).
+    pub on_pointer_cancel: Option<EventHandler<MouseEvent>>,
 
-    /// A press that started on a node (Vue `onNodePointerDown`). Mouse-rebuilt
-    /// payload, like `on_pointer_down` (header delta).
+    /// A press that started on a node (Vue `onNodePointerDown`). Mouse events,
+    /// like [`BoardProps::on_pointer_down`].
     pub on_node_pointer_down: Option<EventHandler<BoardNodePress>>,
 
     /// A node's click (Vue `nodeClick`). Fires after a drag too — a native
@@ -1413,8 +1407,8 @@ pub fn Board(props: BoardProps) -> Element {
 
         // Vue: every node press is reported (draggable or not) so a read-only
         // board still clicks; `draggable` only decides who owns the gesture.
-        // Mouse family (L67): the payload is rebuilt by
-        // `board_pointer_from_mouse`.
+        // Mouse family (L67): the press payload carries the `MouseEvent` the
+        // glue can actually deliver.
         let press_handler = props.on_node_pointer_down.clone();
         let press_id = node.id.clone();
         let press_start = BoardPoint::new(node.x, node.y);
@@ -1429,7 +1423,7 @@ pub fn Board(props: BoardProps) -> Element {
                 start: press_start,
                 w: press_w,
                 h: press_h,
-                pointer: board_pointer_from_mouse(&event),
+                pointer: event.clone(),
             });
         });
 
@@ -1462,31 +1456,52 @@ pub fn Board(props: BoardProps) -> Element {
     });
 
     // The pointer press/move/release chain rides the mouse family (L67); the
-    // payloads are rebuilt for the pointer-typed props (header delta).
+    // props keep their Vue names and carry the `MouseEvent` that actually
+    // fires.
+    //
+    // END OF GESTURE when the release lands OUTSIDE the board: Vue listens on
+    // the window for it, and a component here cannot (`tairitsu_vdom::DomOps`
+    // is element-scoped — no document/window registration seam). The root
+    // `mouseup` covers every release inside the board; a `mousemove` reporting
+    // `buttons == 0` while a press is still latched is the release that
+    // happened elsewhere, so it is reported as a SYNTHETIC `on_pointer_up`
+    // before the move is forwarded (the host's press bookkeeping retires, and
+    // the following hover can no longer pan). The latch is a plain
+    // `thread_local` cell: it never drives rendering, exactly like the drag
+    // flags in `basic/slider.rs` / `display/media_slider.rs`.
     let down_handler = props.on_pointer_down.clone();
     root = root.on_mousedown(move |event: MouseEvent| {
         if !interactive {
             return;
         }
+        set_board_press_held(true);
         if let Some(handler) = down_handler.as_ref() {
-            handler.call(board_pointer_from_mouse(&event));
+            handler.call(event.clone());
         }
     });
 
     let move_handler = props.on_pointer_move.clone();
+    let move_up_handler = props.on_pointer_up.clone();
     root = root.on_mousemove(move |event: MouseEvent| {
         if !interactive {
             return;
         }
+        if event.buttons == 0 && board_press_held() {
+            set_board_press_held(false);
+            if let Some(handler) = move_up_handler.as_ref() {
+                handler.call(event.clone());
+            }
+        }
         if let Some(handler) = move_handler.as_ref() {
-            handler.call(board_pointer_from_mouse(&event));
+            handler.call(event.clone());
         }
     });
 
     let up_handler = props.on_pointer_up.clone();
     root = root.on_mouseup(move |event: MouseEvent| {
+        set_board_press_held(false);
         if let Some(handler) = up_handler.as_ref() {
-            handler.call(board_pointer_from_mouse(&event));
+            handler.call(event.clone());
         }
     });
 
@@ -1496,8 +1511,9 @@ pub fn Board(props: BoardProps) -> Element {
     // default event — a signal, not a payload (header delta).
     let cancel_handler = props.on_pointer_cancel.clone();
     root = root.on_event("pointercancel", move |_event: Box<dyn EventData>| {
+        set_board_press_held(false);
         if let Some(handler) = cancel_handler.as_ref() {
-            handler.call(PointerEvent::default());
+            handler.call(MouseEvent::default());
         }
     });
 

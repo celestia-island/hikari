@@ -310,9 +310,12 @@ pub fn modal_breadcrumb_crumbs(
         .iter()
         .enumerate()
         .map(|(index, layer)| {
+            // Vue is TRUTHY (`entry.title || t(...)`): an EMPTY string also
+            // falls back to the unnamed label, not just `None`.
             let label = layer
                 .title
                 .clone()
+                .filter(|title| !title.is_empty())
                 .unwrap_or_else(|| modal_breadcrumb_unnamed_label(&layer.kind));
             let text = modal_breadcrumb_clamp_label(&label, max_label_units);
             ModalBreadcrumbCrumb {
@@ -938,6 +941,23 @@ mod tests {
     }
 
     // ── the stack and its crumbs (pure) ───────────────────────────────
+
+    #[test]
+    fn modal_breadcrumb_empty_title_falls_back_to_the_unnamed_label() {
+        // Vue `entry.title || fallback` is truthy: Some("") must NOT render an
+        // empty crumb (R3 found the nullish port shipped empty labels).
+        let layers = vec![ModalBreadcrumbLayer {
+            id: "a".to_string(),
+            title: Some(String::new()),
+            ..Default::default()
+        }];
+        let crumbs = modal_breadcrumb_crumbs(&layers, 40.0);
+        assert!(
+            !crumbs[0].text.is_empty(),
+            "an empty title must take the unnamed fallback: {:?}",
+            crumbs[0].text
+        );
+    }
 
     #[test]
     fn modal_breadcrumb_stack_filters_and_sorts_like_the_registry() {

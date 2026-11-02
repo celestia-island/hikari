@@ -427,8 +427,8 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-section-card",
         ".hk-solar-setting",
         ".hk-step-guide",
-        ".hk-tag-dot-row",
-        ".hk-user-picker",
+        ".hk-tag-dot__dot",
+        ".hk-user-picker-field",
         // W8 theme + misc family
         ".s-about-modal",
         ".s-theme-toggle",
@@ -776,11 +776,15 @@ fn mirrored_i18n_keys_exist_in_the_english_bundle() {
             let translated = literal
                 .chars()
                 .any(|c| ('\u{3000}'..='\u{9fff}').contains(&c));
-            if literal.is_empty() || literal.contains('{') || translated {
+            if literal.is_empty() || translated {
                 continue;
             }
-            let needle = format!("hk.{key} = \"{literal}\"");
-            if !bundle.contains(&needle) {
+            // Placeholder keys ({x}) compare with the placeholders stripped:
+            // the surrounding copy must still agree (R3 M7 found them skipped).
+            let strip = |text: &str| text.replace(['{', '}'], "");
+            let needle = format!("hk.{key} = \"{}\"", strip(&literal));
+            let bundle_stripped = bundle.replace(['{', '}'], "");
+            if !bundle_stripped.contains(&needle) {
                 mismatched.push(format!("{key}: code=\"{literal}\""));
             }
         }

@@ -66,7 +66,7 @@
 //     tairitsu browser glue dispatches only the mouse family as typed
 //     `MouseEvent`s and routes `pointer*` through a data-less generic
 //     channel, so a typed `PointerEvent` handler never fires on the real
-//     target (ledger L67). The canvas binds `mousedown` / `mouseup` /
+//     target (ledger L86). The canvas binds `mousedown` / `mouseup` /
 //     `mousemove`, the root binds `mouseleave` for the hover report, and the
 //     press machine reads one constant mouse pointer id. Declared
 //     consequences: a touch screen produces no `mousemove` sequence, so
@@ -86,13 +86,14 @@
 //     engine would animate is exported as a pure pose function the host applies
 //     over its own clock: [`board3d_fly_pose`], [`board3d_focus_pose`],
 //     [`board3d_frame_pose`], [`board3d_topdown_pose`]. [`board3d_resolved_pose`]
-//     applies BOTH clamps, in Vue's order (radius, then elevation), and relaxes
-//     both windows while the board is not `interactive` — OrbitControls clamps
-//     every frame regardless of `enabled`, so a locked elevation would otherwise
-//     fight an externally driven camera.
+//     applies BOTH clamps (radius and elevation are independent axes, so their
+//     order cannot change the result) and relaxes both windows while the board
+//     is not `interactive` — OrbitControls clamps every frame regardless of
+//     `enabled`, so a locked elevation would otherwise fight an externally
+//     driven camera.
 //   * THE 3D MINIMAP IS A COMPOSITION, not a child mount. The card itself is
 //     mirrored in `scene::minimap_3d` (`Minimap3D`: zoom bar, slider pop,
-//     collapse affordance, orbit drag — mouse family there too, L67). Vue's
+//     collapse affordance, orbit drag — mouse family there too, L86). Vue's
 //     `HkBoard3D` mounts `HkMinimap3D` DIRECTLY, so the card's root
 //     (`div.hk-minimap.hk-minimap3d`) is itself a child of the board root;
 //     the mirror therefore renders the dock as a PLAIN CONTAINER SLOT — a
@@ -825,7 +826,7 @@ pub fn board3d_selection_frame_channel() -> &'static str {
 
 /// The pointer id the mouse family reads as: a mouse event carries no
 /// pointer identity and one page has one mouse, so a constant keeps the
-/// press/release bookkeeping consistent (L67, header delta).
+/// press/release bookkeeping consistent (L86, header delta).
 const BOARD3D_MOUSE_POINTER_ID: i32 = 0;
 
 /// A live press: Vue keeps this in a closure (`pressAt`).
@@ -1055,16 +1056,16 @@ pub struct Board3DProps {
 
     /// A click landed on the board: Vue raycasts here and emits `objectClick`
     /// with the registered id; the mirror hands the host the probe. Fed by
-    /// the mouse family (L67, header delta).
+    /// the mouse family (L86, header delta).
     pub on_pick: Option<EventHandler<Board3dPointerPick>>,
 
     /// The pointer moved over the board (Vue: `hoverDirty` → next-frame pick).
-    /// Fed by the mouse family (L67, header delta).
+    /// Fed by the mouse family (L86, header delta).
     pub on_pointer_move: Option<EventHandler<Board3dPointerPick>>,
 
     /// The pointer left the BOARD (the container, not the canvas — so moving
     /// onto a label chip does not drop the hover). The root `mouseleave`
-    /// feeds it (L67, header delta).
+    /// feeds it (L86, header delta).
     pub on_pointer_leave: Option<EventHandler<()>>,
 
     /// A label chip was activated (Vue: the chip's own `click` listener).
@@ -1087,8 +1088,8 @@ pub fn board3d_resolved_pose(props: &Board3DProps) -> Board3dCameraPose {
         board3d_orbit_window(props.interactive, props.min_distance, props.max_distance),
     );
     // Vue's `controls.update()` clamps BOTH orbit windows every frame; the
-    // resolved pose is the mirror's equivalent, so the elevation clamp is
-    // applied after the radius one (they are independent axes).
+    // resolved pose is the mirror's equivalent. Radius and elevation are
+    // independent axes, so the two clamps commute.
     board3d_clamp_pose_polar(
         pose,
         board3d_orbit_elevation_window(
@@ -1228,7 +1229,7 @@ pub fn Board3D(props: Board3DProps) -> Element {
         let key = press_key.clone();
         move |event: MouseEvent| {
             // A press on the canvas is a grab: it cancels any in-flight flight
-            // (Vue nulls its tween in `onPointerDown`). Mouse family (L67):
+            // (Vue nulls its tween in `onPointerDown`). Mouse family (L86):
             // the pointer id is the constant mouse id.
             board3d_begin_press(
                 &key,
@@ -1300,7 +1301,7 @@ pub fn Board3D(props: Board3DProps) -> Element {
     if let Some(style) = root_style {
         root = root.style(style);
     }
-    // The root-level release fallback (mouse has no implicit capture, L67):
+    // The root-level release fallback (mouse has no implicit capture, L86):
     // a `mouseup` that did not come from the canvas — a press dragged off
     // the canvas and released over the overlay, a chip or the dock — cancels
     // the press instead of leaving it armed forever. A canvas release

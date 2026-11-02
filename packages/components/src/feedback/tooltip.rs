@@ -78,22 +78,30 @@
 //     `runtime/touchHint.ts` (`armTouchHint(wrapper, text, { pointerId,
 //     origin })`): a long-press shows the top-docked hint bar, a quick tap
 //     shows nothing, and the press's synthetic mouse events are suppressed
-//     for 600 ms. The mirror cannot run that recognizer (no document-level
-//     listeners on `wasm32-wasip2`, and typed pointer events never dispatch
-//     there — ledger L67; see `feedback/touch_hint.rs`), so it exposes the
-//     HANDOVER instead: [`TooltipProps::on_touch_hint`] fires with the text
-//     and the contact point, and the host arms its own long-press and
-//     presents the mirrored [`crate::feedback::TouchHintBar`]. A host that
-//     wires nothing gets no touch hint — the tap does not fall back to the
-//     anchored bubble, exactly like Vue.
+//     for 600 ms. The mirror cannot run that recognizer on the SHIPPED target:
+//     on `wasm32-wasip2` the press never arrives at all (no document-level
+//     listener API, and typed pointer events are not dispatched — ledger L86;
+//     see `feedback/touch_hint.rs`); on the `wasm32-unknown-unknown` web
+//     target `on_pointerdown` does fire and the handover works, but that
+//     target is not currently a build this crate produces (pre-existing
+//     errors in `navigation/anchor.rs` / `feedback/glow.rs`). So the mirror
+//     exposes the HANDOVER on every target: [`TooltipProps::on_touch_hint`]
+//     fires with the text and the contact point, and the host arms its own
+//     long-press and presents the mirrored
+//     [`crate::feedback::TouchHintBar`]. A host that wires nothing gets no
+//     touch hint — the tap does not fall back to the anchored bubble, exactly
+//     like Vue.
 //   * PIXEL GRID SNAP — the placement declarations are followed by Vue's
 //     `snapToPixelGrid` pass (a fixed popup positioned through an inline
 //     transform paints at its exact fractional device position, so an
-//     unsnapped coordinate is resampled into a uniform blur). The pure
-//     kernel is exported ([`tooltip_pixel_snap_delta`]) and the tracker
-//     applies it on the web build ([`snap_to_pixel_grid`]); on
-//     `wasm32-wasip2` there is no layout to measure, so the pass is a no-op
-//     there — the same ceiling the clamp pass below documents.
+//     unsnapped coordinate is resampled into a uniform blur). The pure kernel
+//     is exported ([`tooltip_pixel_snap_delta`]) and the tracker calls it
+//     ([`snap_to_pixel_grid`]); the DOM half is declared FOR A FUTURE HOST
+//     THAT BUILDS THE WEB TARGET: it compiles only under
+//     `wasm32-unknown-unknown`, which this crate does not currently produce
+//     (that target is red at base), and on the shipped `wasm32-wasip2`
+//     artifact there is no layout to measure, so the pass is a no-op there —
+//     the same ceiling the clamp pass below documents.
 //   * NO FOCUS TRAP / NO `afterLeave` — there is no leave transition driver, so
 //     there is no "finished leaving" edge to report.
 //   * The tag-id sequence (`hk-tooltip-{n}`) is Vue's format, but the id is
@@ -176,9 +184,22 @@ pub fn tooltip_pixel_snap_delta(
         1.0
     };
     (
-        (left / step).round() * step - left,
-        (top / step).round() * step - top,
+        js_round(left / step) * step - left,
+        js_round(top / step) * step - top,
     )
+}
+
+/// `Math.round` semantics — ties go toward +∞ (`-2.5` → `-2`) — which is NOT
+/// Rust's `f64::round` (halves away from zero, `-2.5` → `-3`).
+///
+/// The snap mirrors the browser's own placement maths, and a popup's inline
+/// `left` / `top` can be NEGATIVE (a bubble anchored left of a trigger near
+/// the viewport's left edge), so exact negative halves are reachable values
+/// and a one-device-pixel difference on them would show up as a half-pixel
+/// blur — the artifact this pass exists to remove. Vue's
+/// `Math.round(left / step)` therefore has to be reproduced, not "rounded".
+fn js_round(value: f64) -> f64 {
+    (value + 0.5).floor()
 }
 
 /// Instance sequence for `hk-tooltip-{n}` (Vue: `popupSeq`).
@@ -875,6 +896,19 @@ mod tests {
             tooltip_pixel_snap_delta(200.4, 100.6, 0.0, 0.0, 2.0),
             (0.0, 0.0)
         );
+        // NEGATIVE halves follow JavaScript, not Rust: `Math.round(-2.5)` is
+        // -2 (toward +∞), while `f64::round(-2.5)` is -3 (away from zero).
+        // Reproducing the browser's choice is what keeps the placed popup on
+        // the grid; the divergence would be a full device pixel.
+        assert_eq!(
+            tooltip_pixel_snap_delta(-2.5, -3.5, 100.0, 40.0, 1.0),
+            (0.5, 0.5),
+            "JS Math.round ties go toward +∞"
+        );
+        // A negative NON-half still moves to the nearest line on each side.
+        let (dx, dy) = tooltip_pixel_snap_delta(-2.4, -3.6, 100.0, 40.0, 1.0);
+        assert!((dx - 0.4).abs() < 1e-9, "dx: {dx}");
+        assert!((dy + 0.4).abs() < 1e-9, "dy: {dy}");
     }
 
     #[test]

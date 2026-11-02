@@ -53,16 +53,16 @@
 //     [`RAIL_FLIP_FLYING_ATTR`], [`RAIL_FLIP_ITEM_ATTR`],
 //     [`rail_flight_css_duration_ms`], [`rail_flight_window_ms`],
 //     [`rail_flight_sweep_ms`]) — all pure, all pinned to Vue's constants;
-//   * the FLIGHT ITSELF IS NOT REPRODUCIBLE on `wasm32-wasip2`. It needs
-//     `document.createElement` + `cloneNode`, `Element.animate` (WAAPI),
-//     `getBoundingClientRect` on four different nodes per pair,
-//     `getComputedStyle` custom-property reads and `setAttribute` /
-//     `removeAttribute` writes — none of which the crate's platform bridge
-//     exposes on the shipped target (its measurement/observer path is the
-//     `wasm32-unknown-unknown` build only). Shipping a "flight" built from
-//     static guesses would be a convincing fake: it would show TWO glyphs of
-//     one destination in different places, exactly the double-exposure the
-//     single-glyph contract exists to prevent. So the dissolve stays the
+//   * the FLIGHT ITSELF IS NOT REPRODUCIBLE HERE, and the reason is the
+//     TARGET: the shipped `wasm32-wasip2` artifact has no DOM and no renderer
+//     at all — `platform/mod.rs` selects the inert stub for every non
+//     `wasm32-unknown-unknown` build, so there is nothing to measure, clone or
+//     animate. Two operations the choreography needs are additionally absent
+//     from the crate on EVERY target: `Node.cloneNode` (no wrapper exists)
+//     and WAAPI's `Element.animate`. That is why the mirror does not ship a
+//     "flight" built from static guesses — it would show TWO glyphs of one
+//     destination in different places, exactly the double-exposure the
+//     single-glyph contract exists to prevent. The dissolve stays the
 //     handoff here, and the flight is declared missing.
 //
 // DOM contract (Vue's render output):

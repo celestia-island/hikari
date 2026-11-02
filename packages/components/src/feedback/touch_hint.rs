@@ -33,15 +33,19 @@
 //     `scroll` / `keydown` / `contextmenu` on `document`, resolves an anchor
 //     with `closest("[title]")`, reads `title` / `data-hk-title`, and guards
 //     the anchor's inline `user-select` / `-webkit-touch-callout` for the
-//     hold. On `wasm32-wasip2` tairitsu exposes no document-level listener
-//     registration at all, and typed `pointer*` events never dispatch (the
-//     glue routes them through a data-less generic channel — ledger L67;
-//     the tooltip mirror documents the same ceiling). So the mirror owns the
-//     BAR and the RECOGNIZER TIMING (exported as pure values and one
-//     predicate below), and the HOST owns the gesture: it decides which
-//     press is a long-press and hands this component the text. A host that
-//     installs nothing shows no hint bar — the touch path is simply absent
-//     rather than silently half-working.
+//     hold. The recognizer needs document-level capture listeners, and the
+//     two targets split on that: on the SHIPPED `wasm32-wasip2` artifact the
+//     press never arrives at all (tairitsu exposes no document-level listener
+//     registration, and typed `pointer*` events are not dispatched — ledger
+//     L86; the tooltip mirror documents the same ceiling), while on the
+//     `wasm32-unknown-unknown` web target the listeners and `on_pointerdown`
+//     do work but that target is not currently a build this crate produces
+//     (pre-existing errors in `navigation/anchor.rs` / `feedback/glow.rs`).
+//     So the mirror owns the BAR and the RECOGNIZER TIMING (exported as pure
+//     values and one predicate below), and the HOST owns the gesture: it
+//     decides which press is a long-press and hands this component the text.
+//     A host that installs nothing shows no hint bar — the touch path is
+//     simply absent rather than silently half-working.
 //   * NO LINGER TIMER. Vue keeps the bar up while the finger is down and
 //     retires it [`TOUCH_HINT_LINGER_MS`] after the lift (and immediately on
 //     any new press, scroll, Escape or window blur). Those are page-level
@@ -53,10 +57,12 @@
 //     is the whole stacking story — the same delta `feedback/tooltip.rs`
 //     documents for its bubble.
 //   * NODE FROM FIRST PAINT. Vue creates the bar on the first show; the
-//     mirror renders it from the first paint (hidden — the sheet's base rule
-//     is `opacity: 0` without `.is-on`) because a tairitsu component cannot
-//     mount an element from an imperative side path. Same reading behaviour:
-//     a hidden `role=status` region announces nothing.
+//     mirror renders it from the first paint because a tairitsu component
+//     cannot mount an element from an imperative side path. Nothing is
+//     announced before the host supplies text: `text` defaults to `""`, so
+//     the `role=status` region is EMPTY (an empty live region has nothing to
+//     read; the sheet's `opacity: 0` only hides it visually and would not
+//     remove it from the accessibility tree on its own).
 //   * ANCHOR GUARDS ARE HOST-SIDE. `user-select` / `-webkit-touch-callout`
 //     are write-only concerns of the gesture that the host owns; the mirror
 //     writes no inline style on anyone's anchor.

@@ -67,8 +67,8 @@ SHARED_PARTIALS: list[tuple[str, str]] = [
 ]
 
 # RUNTIME sheets: chrome a Vue runtime MODULE ships itself rather than a
-# component sheet (`runtime/*.scss` → the imageFallback precedent). The row
-# is (mirror path, upstream path) because the mirror keeps the upstream
+# component sheet (`runtime/*.scss`; the first such row in this table). The
+# row is (mirror path, upstream path) because the mirror keeps the upstream
 # relative path — a `runtime/` sheet has no `components/` sibling, and
 # pretending it were `components/HkTouchHint.scss` would invent a Vue
 # component that does not exist.

@@ -239,6 +239,64 @@ fn drag_try_arm(
     dragged_key.set(Some(key));
 }
 
+/// The COMMIT step of a release, extracted so it can be driven without a DOM.
+///
+/// This is the code the row's `mouseup` handler runs, not a predicate standing in
+/// for it: it reads the armed key, applies [`drag_drop_moves`], fires
+/// `allow_drop` / `on_drop`, and retires the gesture either way. Keeping the
+/// DECISION in here (rather than `let moved = …` in the closure) is deliberate —
+/// a test can then prove the handler's use of the rule, which a test of the
+/// predicate alone cannot.
+///
+/// Returns the emitted [`DropEvent`], if any, so a caller (a test) can assert on
+/// it; the component ignores the value.
+pub fn drag_commit_drop(
+    dragged_key: &Signal<Option<String>>,
+    drag_over_key: &Signal<Option<String>>,
+    drop_target: &Signal<Option<DropTarget>>,
+    target_key: &str,
+    allow_drop: &Option<EventHandler<(DropTarget, bool)>>,
+    on_drop: &Option<EventHandler<DropEvent>>,
+) -> Option<DropEvent> {
+    pending_press_clear();
+
+    let dragged = dragged_key.read()?;
+    let mut emitted = None;
+
+    // A release on the row the press started from is a CLICK, not a reorder.
+    if drag_drop_moves(&dragged, target_key) {
+        let position = DropPosition::Inside;
+        let target = DropTarget {
+            target_key: target_key.to_string(),
+            position,
+        };
+
+        // `allow_drop` is a NOTIFICATION, not a veto: its handler returns unit, so
+        // it cannot decline the drop (the old code computed a `can_drop` that was
+        // `true` on both paths). A host that must refuse a target refuses the
+        // `on_drop` itself.
+        if let Some(handler) = allow_drop.as_ref() {
+            handler.call((target, true));
+        }
+
+        let event = DropEvent {
+            dragged_key: dragged,
+            target_key: target_key.to_string(),
+            position,
+        };
+        if let Some(handler) = on_drop.as_ref() {
+            handler.call(event.clone());
+        }
+        emitted = Some(event);
+    }
+
+    // Retired either way: a cancelled drag must take its ghost down.
+    dragged_key.set(None);
+    drag_over_key.set(None);
+    drop_target.set(None);
+    emitted
+}
+
 /// Whether releasing on `target` actually reorders `dragged`.
 ///
 /// Mirrors `layout::header_picker::header_reorder_indices`, which rejects
@@ -472,42 +530,14 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         if event.button != 0 {
             return;
         }
-
-        pending_press_clear();
-        if let Some(dragged) = dragged_key_for_drop.read().clone() {
-            let key = item_key_4.clone();
-            let moved = drag_drop_moves(&dragged, &key);
-
-            if moved {
-                let position = DropPosition::Inside;
-                let drop_target_info = DropTarget {
-                    target_key: key.clone(),
-                    position,
-                };
-
-                // `allow_drop` is a NOTIFICATION, not a veto: its handler returns
-                // unit, so it cannot decline the drop (the old code computed a
-                // `can_drop` that was `true` on both paths). A host that must
-                // refuse a target refuses the `on_drop` itself.
-                if let Some(handler) = allow_drop_for_drop.as_ref() {
-                    handler.call((drop_target_info, true));
-                }
-
-                let drop_event = DropEvent {
-                    dragged_key: dragged,
-                    target_key: key,
-                    position: DropPosition::Inside,
-                };
-
-                if let Some(handler) = on_drop_for_drop.as_ref() {
-                    handler.call(drop_event);
-                }
-            }
-
-            dragged_key_for_drop.set(None);
-            drag_over_key_for_drop.set(None);
-            drop_target_for_drop.set(None);
-        }
+        drag_commit_drop(
+            &dragged_key_for_drop,
+            &drag_over_key_for_drop,
+            &drop_target_for_drop,
+            &item_key_4,
+            &allow_drop_for_drop,
+            &on_drop_for_drop,
+        );
     };
 
     rsx! {
@@ -641,6 +671,163 @@ mod tests {
         // Nested rows are different keys, so a child -> parent drop stays a
         // reorder (that is how a node becomes a child of another).
         assert!(drag_drop_moves("beta", "alpha"));
+    }
+
+    /// Records what the component emits, so a test can assert on the handler's
+    /// real output rather than on a predicate standing in for it.
+    #[derive(Clone, Default)]
+    struct Emitted {
+        drops: std::rc::Rc<std::cell::RefCell<Vec<DropEvent>>>,
+        allows: std::rc::Rc<std::cell::RefCell<Vec<DropTarget>>>,
+    }
+
+    fn emitted() -> (
+        Emitted,
+        Option<EventHandler<DropEvent>>,
+        Option<EventHandler<(DropTarget, bool)>>,
+    ) {
+        let sink = Emitted::default();
+        let drops = sink.clone();
+        let on_drop = EventHandler::new(move |event: DropEvent| {
+            drops.drops.borrow_mut().push(event);
+        });
+        let allows = sink.clone();
+        let allow_drop = EventHandler::new(move |(target, _ok): (DropTarget, bool)| {
+            allows.allows.borrow_mut().push(target);
+        });
+        (sink, Some(on_drop), Some(allow_drop))
+    }
+
+    #[test]
+    fn a_click_never_commits_a_drop_through_the_handler() {
+        // THE HANDLER, not the predicate: this drives `drag_commit_drop`, the
+        // exact step the row's `mouseup` runs. Short-circuiting its gate
+        // (`drag_drop_moves` -> `true`) has to red THIS test — a predicate-only
+        // test would stay green, which is how the click-commits-drop-to-self
+        // regression class got in once already.
+        let (sink, on_drop, allow_drop) = emitted();
+        let dragged = Signal::new(Some("alpha".to_string()));
+        let over = Signal::new(Some("alpha".to_string()));
+        let target = Signal::new(None::<DropTarget>);
+
+        let out = drag_commit_drop(&dragged, &over, &target, "alpha", &allow_drop, &on_drop);
+
+        assert!(
+            out.is_none(),
+            "a click on the source row must commit nothing"
+        );
+        assert!(
+            sink.drops.borrow().is_empty(),
+            "the host must not receive a DropEvent: {:?}",
+            sink.drops.borrow()
+        );
+        assert!(
+            sink.allows.borrow().is_empty(),
+            "`allow_drop` must not fire for a cancelled drag"
+        );
+        // The gesture is retired either way (this is what takes the ghost down).
+        assert!(dragged.read().is_none(), "the arm must be cleared");
+        assert!(over.read().is_none(), "the highlight must be cleared");
+    }
+
+    #[test]
+    fn a_release_on_another_row_commits_through_the_handler() {
+        // Positive control for the same step: the gate must still let a real
+        // reorder through, with the canonical payload.
+        let (sink, on_drop, allow_drop) = emitted();
+        let dragged = Signal::new(Some("alpha".to_string()));
+        let over = Signal::new(Some("beta".to_string()));
+        let target = Signal::new(None::<DropTarget>);
+
+        let out = drag_commit_drop(&dragged, &over, &target, "beta", &allow_drop, &on_drop);
+
+        let event = out.expect("a drag onto another row must commit");
+        assert_eq!(event.dragged_key, "alpha");
+        assert_eq!(event.target_key, "beta");
+        assert_eq!(event.position, DropPosition::Inside);
+        assert_eq!(sink.drops.borrow().len(), 1, "the host receives it once");
+        assert_eq!(sink.allows.borrow().len(), 1, "allow_drop fires once");
+        assert!(dragged.read().is_none(), "the arm retires after the commit");
+    }
+
+    #[test]
+    fn a_sub_threshold_press_switches_no_ghost_on() {
+        // The ARM STEP the row's `mousemove` runs, driven directly. Forcing
+        // `drag_press_armed` to `true` has to red THIS test: a click must leave
+        // `dragged_key` untouched, which is what keeps the ghost off.
+        pending_press_clear();
+        pending_press_begin("alpha".to_string(), 10, 10);
+        let dragged = Signal::new(None::<String>);
+
+        // 3px of jitter: still a click.
+        drag_try_arm(
+            &MouseEvent::new().client_x(12).client_y(13),
+            &dragged,
+            &None,
+        );
+        assert!(
+            dragged.read().is_none(),
+            "a click must not arm the drag, so no ghost can paint"
+        );
+
+        // The paint side of the same state: an unarmed node renders no ghost.
+        let html = RenderDragNode(RenderDragNodeProps {
+            node: DragTreeNodeData {
+                item_key: "alpha".to_string(),
+                title: "Alpha".to_string(),
+                node_children: Vec::new(),
+                disabled: false,
+            },
+            dragged_key: dragged.clone(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(!html.contains("hk-drag-ghost"), "{html}");
+        assert!(!html.contains("hk-drag-node-dragging"), "{html}");
+
+        // 10px: past `DRAG_ARM_PX`, so the same press becomes a drag.
+        drag_try_arm(
+            &MouseEvent::new().client_x(20).client_y(10),
+            &dragged,
+            &None,
+        );
+        assert_eq!(
+            dragged.read(),
+            Some("alpha".to_string()),
+            "past the threshold the drag publishes"
+        );
+        pending_press_clear();
+    }
+
+    #[test]
+    fn arming_notifies_allow_drag_once_with_the_source_key() {
+        // Arm-time notification (canonical shape): the host hears "a drag began",
+        // with the PENDING key — never the row the pointer happened to enter.
+        pending_press_clear();
+        pending_press_begin("alpha".to_string(), 0, 0);
+        let dragged = Signal::new(None::<String>);
+        let seen = std::rc::Rc::new(std::cell::RefCell::new(Vec::<String>::new()));
+        let sink = seen.clone();
+        let allow_drag = EventHandler::new(move |(key, _ok): (String, bool)| {
+            sink.borrow_mut().push(key);
+        });
+
+        // Sub-threshold: no notification at all.
+        drag_try_arm(
+            &MouseEvent::new().client_x(0).client_y(2),
+            &dragged,
+            &Some(allow_drag.clone()),
+        );
+        assert!(seen.borrow().is_empty(), "a click must not notify the host");
+
+        drag_try_arm(
+            &MouseEvent::new().client_x(9).client_y(0),
+            &dragged,
+            &Some(allow_drag),
+        );
+        assert_eq!(seen.borrow().as_slice(), ["alpha".to_string()]);
+        assert_eq!(dragged.read(), Some("alpha".to_string()));
+        pending_press_clear();
     }
 
     #[test]

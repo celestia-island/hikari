@@ -118,7 +118,7 @@ pub fn Anchor(
 
 ///
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
+pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> ReactiveSignal<String> {
     let active_anchor = use_signal(|| String::new());
     let active_anchor_for_effect = active_anchor.clone();
 

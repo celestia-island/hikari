@@ -681,11 +681,12 @@ mod tests {
         allows: std::rc::Rc<std::cell::RefCell<Vec<DropTarget>>>,
     }
 
-    fn emitted() -> (
-        Emitted,
-        Option<EventHandler<DropEvent>>,
-        Option<EventHandler<(DropTarget, bool)>>,
-    ) {
+    /// The two handlers a commit step takes, aliased to keep the helper's
+    /// signature readable (and `clippy::type_complexity` quiet).
+    type DropHandler = Option<EventHandler<DropEvent>>;
+    type AllowDropHandler = Option<EventHandler<(DropTarget, bool)>>;
+
+    fn emitted() -> (Emitted, DropHandler, AllowDropHandler) {
         let sink = Emitted::default();
         let drops = sink.clone();
         let on_drop = EventHandler::new(move |event: DropEvent| {

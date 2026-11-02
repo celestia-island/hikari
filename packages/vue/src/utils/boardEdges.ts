@@ -9,7 +9,7 @@
  *      • "center"   — the border point the center→center ray exits through
  *                     (the classic mind-map / graph look);
  *      • "nearest"  — the border point closest to the other end;
- *      • "top"      — top-border midpoint (top-aligned columns, SCADA-style
+ *      • "top"      — top-border midpoint (top-aligned columns, operations-style
  *                     vertical drops);
  *      • "top-left" — the top-left corner (top-left aligned rows);
  *      • "fan"      — 天女散花: when one node feeds SEVERAL edges, the
@@ -19,7 +19,7 @@
  *  - ROUTE STYLE (`BoardEdgeStyle`) — how the two anchors join:
  *      • "straight"   — a straight segment;
  *      • "bezier"     — a horizontal-tangent cubic (flowing curve);
- *      • "orthogonal" — strict elbow (H-V-H), the SCADA pipe discipline;
+ *      • "orthogonal" — strict elbow (H-V-H), the operations pipe discipline;
  *      • "spine"      — vertical-first elbow (V-H), for tree rails.
  *
  * Edges may also route THROUGH empty corner nodes: `boardViaPath` chains

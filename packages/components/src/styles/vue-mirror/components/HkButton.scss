@@ -1,0 +1,417 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../tokens";
+@use "../styles/polyfill" as *;
+
+/* HkButton */
+.hk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  /* Longhand on purpose: the former comma-separated shorthand
+   * `transition: background-color, ..., filter var(--duration-normal) ...`
+   * declares one transition PER property where only the LAST carries the
+   * duration — every property but `filter` animated at 0s and hover states
+   * snapped (host overrides kept patching over it). One property LIST with
+   * one duration/easing animates them all. */
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+  white-space: nowrap;
+  @include user-select(none);
+  outline: none;
+  position: relative;
+}
+
+.hk-btn:focus-visible {
+  box-shadow:
+    0 0 0 2px rgb(var(--color-surface)),
+    0 0 0 4px rgb(var(--color-primary));
+}
+
+.hk-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Size variants ---- */
+/* Height scales WITH the size: a single base min-height made every sm
+   button 2.5rem (40px) tall — comically oversized next to page-header
+   text and toolbar rows. Font size does NOT scale with the size
+   (2026-08-30 user report, Material-Design convention): md and lg share
+   --text-base and lg only grows padding/min-height for a larger touch
+   target; sm keeps its compact --text-xs. xs (2026-10-02, connection
+   popover action row) shrinks the footprint further for inline popover
+   footers: same --text-xs, tighter padding, 1.375rem min-height, and a
+   13px glyph produced entirely by the CSS chain below (the glyph box
+   drops to 0.8125rem and the inner .hk-icon span scales to 100% of it,
+   so the svg that always renders at HIcon's size={16} lands at 13px)
+   while the square-glyph contract keeps its rhythm at the smaller
+   scale. HkButton.tsx itself renders every size's glyph identically. */
+
+.hk-btn-xs {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-xs);
+  min-height: 1.375rem;
+}
+
+.hk-btn-sm {
+  padding: var(--space-6) var(--space-12);
+  font-size: var(--text-xs);
+  min-height: 1.75rem;
+}
+
+.hk-btn-md {
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--text-base);
+  min-height: 2.5rem;
+}
+
+.hk-btn-lg {
+  padding: var(--space-10) var(--space-24);
+  font-size: var(--text-base);
+  min-height: 2.75rem;
+}
+
+/* ---- Prefix / suffix icon boxes ---- */
+/* Standard-part contract (2026-09-10 user direction): a button glyph
+   renders inside a FIXED SQUARE box — flex:none so host flex rows can
+   never squeeze it into a squat sliver, centered on both axes so the
+   icon rides the button's vertical midline at any button height, and
+   the box (not the bare svg) owns the rhythm so the glyph keeps a
+   consistent margin from the adjacent label via the button's own gap.
+   The 1rem box matches the 16px glyph HkButton renders for the
+   icon/suffix props. */
+.hk-btn-xs .hk-btn-icon,
+.hk-btn-xs .hk-btn-suffix {
+  inline-size: 0.8125rem;
+  block-size: 0.8125rem;
+
+  /* HIcon's smallest span is 1rem; the box scales the span (and the svg
+     fills the span), so the glyph lands at 13px inside the 22px button. */
+  .hk-icon {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+}
+
+.hk-btn-icon,
+.hk-btn-suffix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  line-height: 0;
+
+  svg {
+    display: block;
+  }
+}
+
+/* ---- Raw slot glyphs ----
+   The same fixed-glyph contract covers a raw svg passed as slot content
+   (the lucide `<Icon size={14}/>` child pattern): as a flex item of the
+   button it inherits flex-shrink:1, and under a squeezed host row the
+   host reset's `svg { max-width: 100% }` clamps it to the button's
+   SHRUNKEN content box — measured 3.3x14 in a real browser (chest admin
+   table action cells, 2026-09-23 user report: 行内操作按钮莫名其妙变成
+   一条小竖线). flex:none pins the glyph to its intrinsic size; the
+   button's automatic minimum size then covers the full glyph, so an
+   auto-layout table column or toolbar row grows to fit instead of
+   shrinking the controls into slivers. Only the DIRECT child needs the
+   guard: a glyph wrapped in a span (the .hk-btn-icon box, an inline
+   label, …) sits behind a non-replaced flex item whose min-content
+   already carries the svg's intrinsic size. */
+.hk-btn > svg {
+  flex: none;
+}
+
+/* ---- Icon-only square ---- */
+/* An icon-only HkButton (glyph, no label) occupies a SQUARE footprint
+   by default: padding collapses fully and width locks to the size
+   variant's min-height, so it reads as the same standard square the
+   HIconButton family guarantees. box-sizing is self-declared (house
+   convention — geometry rules never rely on a host-side reset reaching
+   the component): with zero padding the min-height governs the height
+   on every size, an exact square under border-box AND content-box.
+   Hosts may still override with an explicit width when a design
+   genuinely calls for another shape. */
+.hk-btn-icon-only {
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.hk-btn-xs.hk-btn-icon-only {
+  width: 1.375rem;
+}
+
+.hk-btn-sm.hk-btn-icon-only {
+  width: 1.75rem;
+}
+
+.hk-btn-md.hk-btn-icon-only {
+  width: 2.5rem;
+}
+
+.hk-btn-lg.hk-btn-icon-only {
+  width: 2.75rem;
+}
+
+/* The first-class block prop wins over the square width. */
+.hk-btn-block.hk-btn-icon-only {
+  width: 100%;
+}
+
+/* ---- Responsive label collapse ---- */
+/* A `collapseLabel` button carries icon + text at wide viewports and
+   collapses to the SAME icon-only square below the chosen breakpoint
+   (chest 2026-10-05 direction: the ad-hoc `hidden sm:inline` label-span
+   pattern left the button as a padded icon rectangle on phones — the
+   exact squat shape the icon-only contract exists to prevent). The
+   geometry mirrors the icon-only ladder above per size; the breakpoint
+   px values mirror the runtime useBreakpoint scale (sm 640 / md 768 /
+   lg 1024 / xl 1280) — a media query cannot read the TS constant, keep
+   the two tables in sync. The TS side suppresses the collapse class
+   together with `block` (a full-width button has nothing to collapse
+   into), so no block override is needed here. */
+.hk-btn-label {
+  /* Inline-flex so multi-node labels (text + inline marks) stay on one
+     row and center against the glyph box. */
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+@mixin hk-btn-collapse-geometry($square) {
+  .hk-btn-label {
+    display: none;
+  }
+
+  /* The exact icon-only geometry (all-side padding zero, width locked),
+     mirrored per size from the ladder above. */
+  padding: 0;
+  box-sizing: border-box;
+  width: $square;
+}
+
+.hk-btn-label-collapse-sm.hk-btn-xs {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-sm.hk-btn-sm {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-sm.hk-btn-md {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-sm.hk-btn-lg {
+  @media (max-width: 639.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-xs {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-sm {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-md {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-md.hk-btn-lg {
+  @media (max-width: 767.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-xs {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-sm {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-md {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-lg.hk-btn-lg {
+  @media (max-width: 1023.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-xs {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(1.375rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-sm {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(1.75rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-md {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(2.5rem);
+  }
+}
+
+.hk-btn-label-collapse-xl.hk-btn-lg {
+  @media (max-width: 1279.98px) {
+    @include hk-btn-collapse-geometry(2.75rem);
+  }
+}
+
+
+/* ---- Primary ---- */
+
+.hk-btn-primary {
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-solid));
+
+  /* Glyphs follow the icon slot so custom themes can split text/icon ink
+     (mirrors the legacy button-vars primary block). */
+  svg {
+    color: rgb(var(--color-on-solid-icon, 255 255 255));
+  }
+}
+
+/* :not(:focus-visible) keeps the keyboard double ring winning while a
+   focused button is under the cursor — this hover rule's (0,3,0)
+   box-shadow would otherwise beat the (0,2,0) :focus-visible ring. */
+.hk-btn-primary:hover:not(:disabled):not(:focus-visible) {
+  filter: brightness(1.1);
+  box-shadow: var(--shadow-button);
+}
+
+.hk-btn-primary:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ---- Secondary ---- */
+
+.hk-btn-secondary {
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-text));
+  border-color: rgb(var(--color-border) / 20%);
+  @include backdrop-filter(blur(var(--blur-sm)));
+}
+
+/* background stays the base surface — the hover declaration only restated
+   it; hover emphasis comes from the border-color change below. */
+.hk-btn-secondary:hover:not(:disabled) {
+  border-color: var(--c-primary-strong);
+}
+
+.hk-btn-secondary:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ---- Outline ---- */
+
+.hk-btn-outline {
+  background: transparent;
+  color: rgb(var(--color-primary));
+  border-color: var(--c-primary-intense);
+}
+
+.hk-btn-outline:hover:not(:disabled) {
+  background: var(--c-primary-light);
+  border-color: rgb(var(--color-primary));
+}
+
+.hk-btn-outline:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ---- Ghost ---- */
+
+.hk-btn-ghost {
+  background: transparent;
+  color: rgb(var(--color-text));
+  border-color: transparent;
+}
+
+.hk-btn-ghost:hover:not(:disabled) {
+  background: var(--c-primary-light);
+}
+
+.hk-btn-ghost:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ---- Danger ---- */
+
+.hk-btn-danger {
+  background: rgb(var(--color-error));
+  color: rgb(var(--color-on-solid));
+}
+
+.hk-btn-danger:hover:not(:disabled):not(:focus-visible) {
+  filter: brightness(1.1);
+  box-shadow: var(--shadow-button-danger);
+}
+
+.hk-btn-danger:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ---- Block ---- */
+
+.hk-btn-block {
+  width: 100%;
+}
+
+/* ---- Loading ---- */
+
+/* pointer-events: none is deliberate, not dead: the tsx already forces
+   `disabled` while loading (HkButton.tsx), so this only suppresses the
+   :disabled not-allowed cursor — a busy spinner reads busy, not broken. */
+.hk-btn-loading {
+  pointer-events: none;
+}

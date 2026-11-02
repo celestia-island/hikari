@@ -1,0 +1,120 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// Cross-engine property prefixes, authored here instead of in a minifier
+// (2026-10-31).
+//
+// Why the prefixes live in the sheet, not in the build:
+//
+// `-webkit-` prefixes for `backdrop-filter`, `user-select` and
+// `mask-image` used to be supplied by whatever CSS minifier the consumer
+// happened to run (lightningcss/autoprefixer against a browserslist
+// target). That makes the prefix a FUNCTION OF THE CONSUMER'S TARGET
+// MATRIX: narrow the target — drop a Safari floor, pin `cssTarget` to the
+// browser-support gate — and the prefix disappears with no build error
+// and no visible diff in the consumer's own dev browser. Only the old
+// engine that needed it breaks, usually in the field. That is the same
+// class of failure that took the pill's ink down in shittim-chest: a
+// minifier downgraded a `light-dark()` the sheet relied on, the custom
+// property pair went undefined, and the text fell back to the inherited
+// colour (2026-10-31 incident).
+//
+// hikari is a LIBRARY: it ships these sheets to hosts it cannot
+// enumerate, built by matrices it does not own. So the prefixes have to
+// be authored where the sheet is authored — right here — and every hikari
+// sheet that touches one of these properties goes through a mixin below.
+// A change to a host's target matrix then cannot remove a prefix hikari
+// decided to ship.
+//
+// Scope (user direction, 2026-10-31): this partial is hikari's internal
+// contract, not something consumers must adopt. An APP owns its own build
+// configuration (and its own `cssTarget`), so its own sheets may keep
+// letting its minifier add prefixes; using this partial there is allowed —
+// it is a normal `styles/*` entry — but it is never required. What must
+// not happen is hikari's shipped sheets depending on a consumer's
+// minifier for their prefixes.
+//
+// Editing rules:
+//   · a new cross-engine prefix is three coordinated edits, never a
+//     hand-written pair at a call site: an entry in
+//     `$polyfilled-properties`, a mixin below, and a sample value in the
+//     guard test's `PROBE_VALUES` table (it asserts its key set equals the
+//     list, so skipping either half reds instead of silently under-testing);
+//   · call sites use `@include <property>(<value>)` and each sheet that
+//     does so must `@use` this partial (any namespace, `as *` by
+//     convention);
+//   · `styles/polyfill.contract.test.ts` fails on a raw `-webkit-*:` or
+//     unprefixed declaration of a polyfilled property (case-insensitively,
+//     and after a nested block's `}` too), on a sheet that includes a
+//     mixin without `@use`-ing this partial, and on a mixin that stopped
+//     emitting the `-webkit-`/standard pair.
+//
+// Usage:
+//
+//   @use "../styles/polyfill" as *;
+//
+//   .hk-chip {
+//     @include backdrop-filter(blur(8px));
+//   }
+//
+// The mixins are variadic so a value keeps its original shape: a space
+// list (`@include backdrop-filter(blur(4px) saturate(1.2))`) and a comma
+// list of layers (`@include mask-image(linear-gradient(a), linear-gradient(b))`)
+// both emit verbatim. Pass `$important: true` to mark both sides
+// `!important`.
+
+@use "sass:map";
+@use "sass:meta";
+
+/// The properties this partial prefixes — the single source of truth.
+///
+/// The contract test expands its bare-declaration and `@use` assertions
+/// from this list, and each entry is also the name of its mixin, so
+/// adding a prefix means adding one entry here plus one mixin below.
+$polyfilled-properties: backdrop-filter, user-select, mask-image;
+
+/// Emit `<property>` with its `-webkit-` counterpart.
+///
+/// `$values...` is the CSS value verbatim (space or comma list, one entry
+/// or many layers); `$important: true` appends `!important` to both sides.
+@mixin backdrop-filter($values...) {
+  $flag: "";
+  @if map.get(meta.keywords($values), important) == true {
+    $flag: " !important";
+  }
+  -webkit-backdrop-filter: #{$values}#{$flag};
+  backdrop-filter: #{$values}#{$flag};
+}
+
+/// Emit `<property>` with its `-webkit-` counterpart.
+///
+/// `$values...` is the CSS value verbatim (space or comma list, one entry
+/// or many layers); `$important: true` appends `!important` to both sides.
+@mixin user-select($values...) {
+  $flag: "";
+  @if map.get(meta.keywords($values), important) == true {
+    $flag: " !important";
+  }
+  -webkit-user-select: #{$values}#{$flag};
+  user-select: #{$values}#{$flag};
+}
+
+/// Emit `<property>` with its `-webkit-` counterpart.
+///
+/// `$values...` is the CSS value verbatim (space or comma list, one entry
+/// or many layers); `$important: true` appends `!important` to both sides.
+@mixin mask-image($values...) {
+  $flag: "";
+  @if map.get(meta.keywords($values), important) == true {
+    $flag: " !important";
+  }
+  -webkit-mask-image: #{$values}#{$flag};
+  mask-image: #{$values}#{$flag};
+}

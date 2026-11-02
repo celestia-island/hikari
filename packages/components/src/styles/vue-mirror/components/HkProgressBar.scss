@@ -1,0 +1,154 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+.hk-progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.hk-progress-bar-label {
+  font-size: var(--text-2xs);
+  color: rgb(var(--color-muted));
+  line-height: 1;
+}
+
+.hk-progress-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: rgb(var(--color-muted) / 15%);
+  overflow: hidden;
+  position: relative;
+}
+
+.hk-progress-bar[data-size="xs"] .hk-progress-bar-track {
+  height: 2px;
+}
+
+.hk-progress-bar[data-size="md"] .hk-progress-bar-track {
+  height: 6px;
+}
+
+.hk-progress-bar-secondary {
+  position: absolute;
+  top: 0;
+  // Logical: anchors to the inline start like the in-flow fill, so an RTL
+  // track keeps the secondary bar on the same side as the fill.
+  inset-inline-start: 0;
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-standard);
+  opacity: 0.3;
+
+  &-loading {
+    background: rgb(var(--color-primary));
+  }
+
+  &-done {
+    background: rgb(var(--color-success));
+  }
+
+  &-error {
+    background: rgb(var(--color-error));
+  }
+}
+
+.hk-progress-bar-fill {
+  position: relative;
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-standard);
+
+  &-loading {
+    background: rgb(var(--color-primary));
+  }
+
+  &-done {
+    background: rgb(var(--color-success));
+  }
+
+  &-error {
+    background: rgb(var(--color-error));
+  }
+}
+
+.hk-progress-bar-indeterminate {
+  height: 100%;
+  width: 40%;
+  border-radius: var(--radius-full);
+  position: absolute;
+  animation: hk-progress-indeterminate 1.4s ease-in-out infinite;
+
+  &-loading {
+    background: rgb(var(--color-primary));
+  }
+
+  &-done {
+    background: rgb(var(--color-success));
+    animation: none;
+    width: 100%;
+  }
+
+  &-error {
+    background: rgb(var(--color-error));
+    animation: none;
+    width: 100%;
+  }
+}
+
+// Segmented mode: blocks sit flush side by side; the track's own radius
+// and overflow clip shape the pill ends.
+.hk-progress-bar-track--segments {
+  display: flex;
+}
+
+.hk-progress-bar-seg {
+  height: 100%;
+  flex-shrink: 0;
+  // No per-block rounding — flush multi-color blocks would otherwise show
+  // hairlines at the seams.
+  border-radius: 0;
+  transition: width var(--duration-normal) var(--ease-standard);
+  background: rgb(var(--color-primary));
+}
+
+// Keyframes animate the logical inset so the sweep mirrors in RTL together
+// with the fill/secondary anchoring (LTR-identical).
+@keyframes hk-progress-indeterminate {
+  0% {
+    inset-inline-start: -40%;
+  }
+  60% {
+    inset-inline-start: 100%;
+  }
+  100% {
+    inset-inline-start: 100%;
+  }
+}
+
+// House pattern (HkExpansionPanel.scss / HkAffixPicker.scss guards): the
+// infinite indeterminate sweep must not run under reduced motion; the bar
+// rests as a static 40% block at the inline start, like the done/error
+// variants rest at full width.
+@media (prefers-reduced-motion: reduce) {
+  .hk-progress-bar-indeterminate {
+    animation: none;
+  }
+
+  // Width is a size animation — progress steps snap instead of animating
+  // (house guard: the family bar-fill pattern).
+  .hk-progress-bar-fill,
+  .hk-progress-bar-secondary,
+  .hk-progress-bar-seg {
+    transition: none;
+  }
+}

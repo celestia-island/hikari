@@ -173,10 +173,19 @@ pub struct ButtonProps {
 - `ToastProps` yes
 - `TooltipProps` yes
 - `DrawerProps` yes
-- `ProgressProps` yes
-- `SpinProps` yes
+- `ProgressBarProps` yes
+- `ProgressRingProps` yes
+- `SpinnerProps` yes
 - `PopoverProps` yes
 - `GlowProps` yes
+- `ConfirmDialogProps` yes
+- `MessageBoxProps` yes
+- `ModalProps` yes
+- `LoadingVeilProps` yes
+- `PhaseTransitionProps` yes
+- `BlockingToastProps` yes
+- `PersistentToastProps` yes
+- `PersistentToastGroupProps` yes
 
 #### 导航组件
 - `StepperProps` yes

@@ -1,0 +1,408 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* ── Unified menu-item grammar (the ONE row spec) ────────────────────
+ *
+ * Every selectable list row the library renders — cascade menu rows,
+ * action rows, select options, popup-select items, theme pills, admin
+ * header rows, nav rows, breadcrumb dropdown items, tag strips —
+ * shares this exact grammar. Desktop (anchored popouts) and mobile (bottom sheets) are
+ * the same spec at two token sets; a sheet context merely swaps the
+ * tokens, so every row inside ANY sheet gets the touch geometry
+ * without per-component media queries.
+ *
+ * Metric contract (desktop / sheet):
+ *   min-height  34px / 44px        icon cell  16px / 20px
+ *   padding     6×12px / 10×16px   font       13px / 14px
+ *   gap 8px · radius --radius-md · weight 500 · line-height 1.3
+ *
+ * Interaction contract:
+ *   - hover: subtle primary wash + medium border (guarded — never
+ *     fights the active/checked state, never changes layout: the 1px
+ *     border is always reserved).
+ *   - active/checked: dim primary wash + strong border + primary text
+ *     + 600 (active > hover precedence).
+ *   - checked mark: an SVG check inside the reserved cell, normalized
+ *     to the cell like every other icon (16px / 20px in sheets).
+ *   - danger rows tint red; disabled rows dim to 45%.
+ *   - focus-visible: 2px inset primary ring (keyboard parity for every
+ *     row family — previously only HkNavItem had one).
+ *   - label carries the optical shift: small CJK rasterization biases
+ *     glyph ink high against box-centered icons; a half-pixel down
+ *     nudge re-centers the perceived mass (tunable per host).
+ *
+ * Section caption (a captioned run of rows):
+ *   The caption band ABOVE a run of rows is its own band, never a row.
+ *   Its block rhythm is deliberately BOTTOM-HEAVY (desktop 4px above /
+ *   8px below, sheets 6/12): the panel already insets the surface above
+ *   the caption, so the caption's own top band stays tight, while the
+ *   bottom band is the separation that must read as "this caption heads
+ *   the rows below, it is not one of them". The section wrapper is where
+ *   the parent's row rhythm moves when rows go behind a group box, so its
+ *   default gap MIRRORS the level rhythm (2px, --hk-menu-section-gap);
+ *   a surface whose rhythm differs publishes that token (HkMenuPanel's
+ *   4px list; a margin-separated consumer list sets 0). Its inline inset
+ *   is a hair SMALLER than the row's --hk-menu-item-pad-x, so the caption
+ *   hangs just left of the rows' leading icon column and reads as a
+ *   section title hugging the edge rather than as an indented row. No
+ *   text-transform: translators own casing (the HkTemplateField rule).
+ *
+ * Band taxonomy and the WIDTH invariant (2026-10-31):
+ *   A menu level holds two kinds of children. ROWS — selectable items,
+ *   custom rich rows, action buttons — all speak @mixin item: each spans
+ *   the level's content box edge to edge, so its hover/active wash is
+ *   that full box and every highlight in one panel reads the same width.
+ *   BANDS — the wrappers around runs of rows — must stay GEOMETRY-NEUTRAL:
+ *   zero padding of their own. The surface's inset (the popout's 8px, the
+ *   sheet list's 16px, HkMenuPanel's --hk-menu-panel-inset) is the ONE
+ *   horizontal inset a row ever receives. A band that pads itself insets
+ *   only ITS rows, and they stop lining up with the rows outside it: the
+ *   foot action band's highlight then reads wider than the selection rows
+ *   above it (2026-10-31 field report: the workspace picker's
+ *   「添加工作区」 ran ~12px wider than the 「个人空间」 row because the
+ *   consumer body wrapper carried a 6px hand pad the foot slot did not).
+ *   The band homes are: .hk-menu-slot--head/--foot/--extra (HkMenu's slot
+ *   bands), .hk-menu-section (a captioned run), .hk-menu-body (a
+ *   consumer-rendered run — @mixin body). Vertical rhythm BETWEEN bands
+ *   is band-owned, never wrapper-padding-owned: the foot band carries its
+ *   divider-grade top separation in HkMenu.scss, the section grammar owns
+ *   its caption bands here.
+ *
+ * Adoption: `@use "./menu-item" as mi;` then
+ *   .your-row { @include mi.item; }
+ *   .your-row .your-icon { @include mi.icon; }   // wrap TSX side!
+ *   .your-row .your-label { @include mi.label; }
+ *   .your-section { @include mi.section; }
+ *   .your-section-label { @include mi.section-label; }
+ *   .your-body { @include mi.body; }             // custom row-run band
+ * Keep the component's own class names — this file owns metrics and
+ * states only, never selectors of the adopting rows.
+ */
+
+/* ── Tokens ─────────────────────────────────────────────────────────── */
+
+@use "../styles/polyfill" as *;
+
+@mixin item-tokens {
+  --hk-menu-item-min-h: 34px;
+  --hk-menu-item-pad-x: 12px;
+  --hk-menu-item-pad-y: 6px;
+  --hk-menu-item-gap: 8px;
+  --hk-menu-item-font: var(--text-sm, 0.8125rem);
+  --hk-menu-item-weight: 500;
+  --hk-menu-item-lh: 1.3;
+  --hk-menu-item-radius: var(--radius-md, 8px);
+  --hk-menu-item-icon-box: 16px;
+  /* Label optical shift — see header comment. */
+  --hk-menu-item-optical: 0.5px;
+  /* Italic overhang cushion — the inline-end clipping room the label
+   * spends (see @mixin label). em-based, so it scales with the sheet's
+   * larger item font without a sheet-token override. */
+  --hk-menu-item-label-cushion: 0.2em;
+}
+
+/* Mobile bottom-sheet geometry. */
+@mixin item-sheet-tokens {
+  --hk-menu-item-min-h: 44px;
+  --hk-menu-item-pad-x: 16px;
+  --hk-menu-item-pad-y: 10px;
+  --hk-menu-item-font: var(--text-base, 0.875rem);
+  --hk-menu-item-icon-box: 20px;
+}
+
+/* Mobile bottom-sheet geometry for the section caption. The caption is a
+ * sibling BAND, not a row, so it carries its own token names: the
+ * sheet-context lists below register .hk-menu-section-label separately
+ * (rows pick up item-sheet-tokens; a caption inside the same panel must
+ * not be widened by the row mixin's token names). */
+@mixin section-label-sheet-tokens {
+  --hk-menu-section-label-pad-top: var(--space-6, 6px);
+  --hk-menu-section-label-pad-x: var(--space-8, 8px);
+  --hk-menu-section-label-pad-bottom: var(--space-12, 12px);
+  --hk-menu-section-label-font: var(--text-xs, 0.75rem);
+}
+
+/* Sheet context. The tokens are re-declared ON each adopting row, not
+ * merely on the panel: a custom property declared on an element always
+ * beats an inherited value, and @mixin item declares the desktop set at
+ * row level — an ancestor-only binding would never win. The (0,2,0)
+ * descendant selector here beats the row's own (0,1,0) declaration.
+ * Therefore every adopter MUST @include mi.item at a TOP-LEVEL (0,1,0)
+ * rule — a nested include (e.g. inside its parent menu selector)
+ * compiles to a higher specificity and silently defeats this binding
+ * (HkBreadcrumb was caught exactly this way). New row families and band
+ * elements (the divider, the section caption) must also register their
+ * class in this list. */
+.hk-select-sheet-panel,
+.hk-popover-panel.hk-is-sheet,
+.hk-drawer-panel {
+  .hk-menu-row,
+  .hk-menu-sidebar-row,
+  .hk-menu-action-item,
+  .hk-select-option,
+  .hk-popup-select-item,
+  .hk-filter-add-item,
+  .s-theme-item-row,
+  .s-theme-item-btn,
+  .s-popup-menu-item,
+  .hk-popup-menu-item,
+  .hk-breadcrumb-dropdown-item,
+  .hk-menu-divider,
+  .hk-tag-dot-row,
+  .hk-tag-dot,
+  /* Catalog chooser rows (2026-10-31 grammar-adoption wave): each used to
+   * carry a hand-rolled 36px/4×8 stock and sat, unregistered, inside a
+   * sheet that widened every family around it. */
+  .hk-affix-row,
+  .hk-tag-input-row,
+  .hk-tpl-row {
+    @include item-sheet-tokens;
+  }
+
+  /* The caption band's own sheet entry — same parent list, so every sheet
+   * surface that widens its rows widens their caption too. */
+  .hk-menu-section-label {
+    @include section-label-sheet-tokens;
+  }
+}
+
+/* Modal-hosted rows ride the sheet geometry too: unlike the three
+ * surfaces above, HkModal's docked sheet is the same .hk-modal-content
+ * element on every viewport (the docking happens in its own media
+ * query), so the token swap needs its own narrow scope instead of a
+ * class hook. Keep the breakpoint identical to the sheet family's. */
+@media (max-width: 767px) {
+  .hk-modal-content {
+    .hk-menu-row,
+    .hk-menu-sidebar-row,
+    .hk-menu-action-item,
+    .hk-select-option,
+    .hk-popup-select-item,
+    .hk-filter-add-item,
+    .hk-breadcrumb-dropdown-item,
+    .s-theme-item-row,
+    .s-theme-item-btn,
+    .s-popup-menu-item,
+    .hk-popup-menu-item,
+    .hk-menu-divider,
+    .hk-tag-dot-row,
+    .hk-tag-dot,
+    /* Catalog chooser rows (see the panel list above) — the user picker's
+     * rows are modal-hosted, so they ride THIS list; the popover-hosted
+     * choosers ride the panel list. */
+    .hk-affix-row,
+    .hk-tag-input-row,
+    .hk-tpl-row,
+    .hk-user-picker-row {
+      @include item-sheet-tokens;
+    }
+
+    /* Same registration rule as the panel list above: the caption rides
+     * the modal's sheet geometry without its own media query. */
+    .hk-menu-section-label {
+      @include section-label-sheet-tokens;
+    }
+  }
+}
+
+/* ── Row grammar ────────────────────────────────────────────────────── */
+
+@mixin item {
+  @include item-tokens;
+  display: flex;
+  align-items: center;
+  gap: var(--hk-menu-item-gap);
+  width: 100%;
+  min-height: var(--hk-menu-item-min-h);
+  padding: var(--hk-menu-item-pad-y) var(--hk-menu-item-pad-x);
+  border: 1px solid transparent;
+  border-radius: var(--hk-menu-item-radius);
+  background: transparent;
+  color: rgb(var(--color-text) / 88%);
+  font-size: var(--hk-menu-item-font);
+  font-weight: var(--hk-menu-item-weight);
+  font-family: inherit;
+  line-height: var(--hk-menu-item-lh);
+  text-align: start;
+  cursor: pointer;
+  appearance: none;
+  @include user-select(none);
+  /* Ride the canonical reset policy: this component sheet is also exported
+     standalone, so it keeps the token fallback (transparent) and honours the
+     document-level native escape hatch. */
+  -webkit-tap-highlight-color: var(--hk-tap-highlight-color, transparent);
+  html[data-hk-tap-highlight='native'] & {
+    -webkit-tap-highlight-color: revert;
+  }
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+  &:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]) {
+    background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+    border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
+    color: rgb(var(--color-text));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 70%);
+    outline-offset: -2px;
+  }
+
+  &[data-active],
+  &[data-checked] {
+    background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
+    border-color: var(--c-primary-strong, rgb(var(--color-primary) / 40%));
+    color: rgb(var(--color-primary));
+    font-weight: 600;
+  }
+
+  &[data-disabled],
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &[data-danger] {
+    color: rgb(var(--color-error, 247 118 142) / 90%);
+
+    /* Same checked-row guard as the base hover above: a checked danger
+     * row keeps its checked face instead of flashing the hover wash. */
+    &:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]) {
+      background: rgb(var(--color-error, 247 118 142) / 10%);
+      border-color: rgb(var(--color-error, 247 118 142) / 25%);
+      color: rgb(var(--color-error, 247 118 142));
+    }
+  }
+}
+
+/* ── Leading icon cell ────────────────────────────────────────────────
+ * Fixed square; any icon size the consumer passes is centered and
+ * normalized to the cell, so lucide 13/14/15/16px imports all read as
+ * one column. Icon inherits the row color (danger rows tint red). */
+@mixin icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--hk-menu-item-icon-box);
+  height: var(--hk-menu-item-icon-box);
+
+  > svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* ── Label ──────────────────────────────────────────────────────────── */
+@mixin label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  top: var(--hk-menu-item-optical);
+  /* Italic final strokes lean past the last glyph's advance, and the
+   * overflow:hidden pair above clips at the padding edge — an italic
+   * label (host-styled sentinel rows, emphasized picks) loses its
+   * trailing stroke (reported from the field: wowsp's all-clients
+   * sentinel row). The cushion is clipping room INSIDE the padding box
+   * (HkAffixPicker's `data-unset` fix, generalized to the one row
+   * spec): fitting text never gains an ellipsis, overflowing text
+   * truncates one cushion earlier. */
+  padding-inline-end: var(--hk-menu-item-label-cushion);
+}
+
+/* ── Divider row ──────────────────────────────────────────────────────
+ * A separator BETWEEN rows: one hairline, inset by the row grammar's
+ * own horizontal padding so it lines up with labels, with a row's
+ * worth of breathing room above and below. Reads the SAME tokens the
+ * item mixin declares, so registering the adopting class in the sheet
+ * context above widens the insets on sheets automatically. Never
+ * hand-roll a border-top divider inside a menu again (PlatformSwitcher
+ * shipped one that drifted). */
+@mixin divider {
+  flex: none;
+  height: 1px;
+  margin: var(--hk-menu-item-pad-y, 6px) auto;
+  width: calc(100% - 2 * var(--hk-menu-item-pad-x, 12px));
+  background: rgb(var(--color-border, 100 100 100) / 18%);
+  border: none;
+}
+
+/* ── Section caption band ────────────────────────────────────────────
+ * The small caption ABOVE a run of rows (the workspace picker's
+ * 「临时空间」 band is the field case). Every value is a custom property
+ * with a grammar fallback, exactly like the row tokens, so a host can
+ * restyle one surface without forking the band. The bottom band is the
+ * separation from the first row (bottom-heavy on purpose — see the
+ * header comment); the inline inset hangs just left of the rows' icon
+ * column. The 8px band is NOT the whole caption→row gap: the wrapper's
+ * own gap adds 2px on the level default (4px in .hk-menu-list), so the
+ * rendered separation is 10/12px on desktop and 14px in sheets. Sheet
+ * geometry arrives through the sheet-context lists above, never through
+ * a per-component media query. NO text-transform: translators own
+ * casing (the HkTemplateField rule). */
+@mixin section-label {
+  padding-block-start: var(--hk-menu-section-label-pad-top, var(--space-4, 4px));
+  padding-inline: var(--hk-menu-section-label-pad-x, var(--space-6, 6px));
+  padding-block-end: var(--hk-menu-section-label-pad-bottom, var(--space-8, 8px));
+  font-size: var(--hk-menu-section-label-font, var(--text-2xs, 0.625rem));
+  font-weight: var(--hk-menu-section-label-weight, 600);
+  letter-spacing: var(--hk-menu-section-label-tracking, 0.02em);
+  color: var(--hk-menu-section-label-color, rgb(var(--color-muted)));
+  @include user-select(none);
+}
+
+/* ── Section wrapper ─────────────────────────────────────────────────
+ * The role="group" box HkMenuSection renders: one caption plus its rows.
+ * Rows declare no margins — the inter-row rhythm is the parent's flex gap
+ * (.hk-menu-level 2px, .hk-menu-list 4px) — so a group box is where that
+ * rhythm must move. The default --hk-menu-section-gap therefore MIRRORS
+ * the level rhythm (2px), which keeps an unconfigured surface correct;
+ * every surface whose rhythm differs publishes the token: .hk-menu-list
+ * sets 4px, and a consumer list that separates rows with margins instead
+ * sets 0 and keeps its margins (those still apply inside the wrapper).
+ * Stacked sections take a 6px stack margin so two captioned runs read as
+ * two groups, not one long list. The wrapper stays chrome-free — the
+ * caption owns the band.
+ *
+ * MUST be included at a TOP-LEVEL (0,1,0) rule, like @mixin item: the
+ * `& + &` stack rule compiles to a broken descendant selector when the
+ * mixin is nested inside a parent menu selector. */
+@mixin section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hk-menu-section-gap, var(--space-2, 2px));
+
+  & + & {
+    margin-block-start: var(--hk-menu-section-stack, var(--space-6, 6px));
+  }
+}
+
+/* ── Consumer body band ──────────────────────────────────────────────
+ * The wrapper for a consumer-rendered run of rows inside a menu level —
+ * the workspace picker's custom two-line rows, a menu body of rich rows
+ * the flat HkMenuItem model cannot express. The WIDTH invariant (see the
+ * header's band taxonomy) makes this band GEOMETRY-NEUTRAL: exactly two
+ * declarations, no padding, ever. The surface's inset is the one inset
+ * the rows inside receive, so they line up edge-for-edge with the foot
+ * action band and every other row family in the same panel (the
+ * 2026-10-31 field report shipped as a padded consumer wrapper whose
+ * rows ran ~12px wider than the foot band's highlight). A host keeps its
+ * own class beside .hk-menu-body for tokens and width floors (e.g. the
+ * picker's min-width + caption tokens) — those are content decisions;
+ * horizontal insets are not.
+ *
+ * Not a row: it carries no row tokens, so it needs NO entry in the
+ * sheet-context lists — the rows INSIDE it register themselves. */
+@mixin body {
+  display: block;
+  min-width: 0;
+}

@@ -18,9 +18,44 @@ impl StyleRegistry {
         self.styles.insert(name, css);
     }
 
+    /// Registers the canonical Vue token fallbacks (`:root` custom
+    /// properties) mirrored from `packages/vue/src/tokens.scss` +
+    /// `scale.scss`. The mirrored component sheets reference this runtime
+    /// vocabulary (`--color-*`, `--space-*`, `--radius-*`, ...); without
+    /// these fallbacks their `var()` uses are invalid at computed-value
+    /// time for a host that only assembles the registry bundle.
+    /// Registers the mirrored shared chrome the family surfaces render
+    /// from but do not define: the window-close affordance
+    /// (`.hk-window-close`) and the button voice (`.hk-btn*`). Same
+    /// rationale as the token fallbacks — a registry-only host must get the
+    /// same shared layers the builder bundle carries.
+    pub fn register_vue_chrome(&mut self) {
+        self.register("vue-window-close", vue_window_close_css());
+        self.register("vue-button-chrome", vue_button_chrome_css());
+    }
+
+    pub fn register_vue_token_fallbacks(&mut self) {
+        // BOTH canonical base layers: `tokens.scss` carries the channel
+        // vocabulary (--color-*) and `scale.scss` the spacing/radius/type
+        // scale (--space-*, --radius-*, --text-*, ...). The mirrored family
+        // sheets reference both, so a registry-only host needs both.
+        self.register("vue-token-fallbacks", vue_token_fallbacks_css());
+        self.register("vue-scale-fallbacks", vue_scale_fallbacks_css());
+    }
+
     /// Returns all registered CSS as a single bundled string
     pub fn css_bundle(&self) -> String {
-        self.styles.values().copied().collect::<Vec<_>>().join("\n")
+        // Deterministic order: HashMap iteration order would make the bundle
+        // (and any same-specificity token override) depend on the hasher
+        // seed. Sort by registration name so `:root` layers concatenate in a
+        // stable, reviewable order.
+        let mut names: Vec<&&'static str> = self.styles.keys().collect();
+        names.sort();
+        names
+            .into_iter()
+            .map(|name| self.styles[name])
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     /// Gets the CSS for a component by name
@@ -110,21 +145,39 @@ impl StyleRegistry {
     #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::alert::AlertComponent;
+        use crate::feedback::blocking_toast::BlockingToastComponent;
+        use crate::feedback::confirm_dialog::ConfirmDialogComponent;
         use crate::feedback::drawer::DrawerComponent;
+        use crate::feedback::loading_veil::LoadingVeilComponent;
+        use crate::feedback::message_box::MessageBoxComponent;
         use crate::feedback::modal::ModalComponent;
+        use crate::feedback::persistent_toast::PersistentToastComponent;
+        use crate::feedback::persistent_toast_group::PersistentToastGroupComponent;
+        use crate::feedback::phase_transition::PhaseTransitionComponent;
         use crate::feedback::popover::PopoverComponent;
-        use crate::feedback::progress::ProgressComponent;
-        use crate::feedback::spin::SpinComponent;
+        use crate::feedback::progress_bar::ProgressBarComponent;
+        use crate::feedback::progress_dialog::ProgressDialogComponent;
+        use crate::feedback::progress_ring::ProgressRingComponent;
+        use crate::feedback::spinner::SpinnerComponent;
         use crate::feedback::toast::ToastComponent;
         use crate::feedback::tooltip::TooltipComponent;
         AlertComponent::register(self);
+        BlockingToastComponent::register(self);
+        ConfirmDialogComponent::register(self);
+        LoadingVeilComponent::register(self);
+        MessageBoxComponent::register(self);
+        PhaseTransitionComponent::register(self);
+        PersistentToastComponent::register(self);
+        PersistentToastGroupComponent::register(self);
+        ProgressBarComponent::register(self);
+        ProgressDialogComponent::register(self);
+        ProgressRingComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);
         ModalComponent::register(self);
         DrawerComponent::register(self);
         PopoverComponent::register(self);
-        ProgressComponent::register(self);
-        SpinComponent::register(self);
+        SpinnerComponent::register(self);
     }
 
     #[cfg(not(feature = "feedback"))]
@@ -188,6 +241,9 @@ impl StyleRegistry {
 
     /// Registers all available components based on feature flags
     pub fn register_available(&mut self) {
+        self.register_vue_token_fallbacks();
+        self.register_vue_chrome();
+
         #[cfg(feature = "basic")]
         self.register_basic_components();
 
@@ -209,6 +265,8 @@ impl StyleRegistry {
 
     /// Registers all components regardless of feature flags
     pub fn register_all(&mut self) {
+        self.register_vue_token_fallbacks();
+        self.register_vue_chrome();
         self.register_basic_components();
         self.register_data_components();
         self.register_feedback_components();
@@ -216,6 +274,33 @@ impl StyleRegistry {
         self.register_display_components();
         self.register_entry_components();
     }
+}
+
+/// CSS custom-property fallbacks mirrored from the canonical Vue token
+/// sheets (`packages/vue/src/tokens.scss` + `scale.scss`; vendored copies
+/// under `src/styles/vue-mirror/`, kept in sync by
+/// `scripts/sync-vue-mirror.py` with the drift test in
+/// `tests/vue_mirror_drift_tests.rs`). Register once per registry via
+/// [`StyleRegistry::register_vue_token_fallbacks`].
+pub fn vue_token_fallbacks_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/tokens.scss", no_hash }.0
+}
+
+/// The mirrored window-close chrome (`packages/vue/src/components/window-close.scss`).
+pub fn vue_window_close_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/window-close.scss", no_hash }.0
+}
+
+/// The mirrored button voice (`packages/vue/src/components/HkButton.scss`),
+/// used by the mirrored toast/footer surfaces.
+pub fn vue_button_chrome_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkButton.scss", no_hash }.0
+}
+
+/// The second canonical base layer: the spacing / radius / type scale
+/// (`packages/vue/src/scale.scss`, vendored under `src/styles/vue-mirror/`).
+pub fn vue_scale_fallbacks_css() -> &'static str {
+    tairitsu_macros::scss! { file: "src/styles/vue-mirror/scale.scss", no_hash }.0
 }
 
 /// Trait for components that provide their own CSS styles

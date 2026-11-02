@@ -12,7 +12,6 @@
 //! flowchart TB
 //!     subgraph "Application Layer"
 //!         A[Dropdown Component]
-//!         B[Modal Component]
 //!         C[Toast Component]
 //!     end
 
@@ -23,14 +22,12 @@
 //!
 //!     subgraph "Portal Entry Types"
 //!         F[PortalEntry]
-//!         F1[Modal]
 //!         F2[Dropdown]
 //!         F3[Toast]
 //!     end
 //!
 //!     subgraph "Portal Rendering"
 //!         G[PortalRender]
-//!         H[ModalPortalEntry]
 //!         I[DropdownPortalEntry]
 //!         J[ToastPortalEntry]
 //!     end
@@ -70,7 +67,7 @@
 //!
 //! ```rust
 //! let portal = use_portal();
-//! portal.add_entry(PortalEntry::Modal { ... });
+//! portal.add_entry(PortalEntry::Dropdown { ... });
 //! ```
 //!
 //! ### Positioning Strategies
@@ -142,22 +139,13 @@
 //! };
 //! ```
 //!
-//! ### Modal with Fixed Positioning
+//! ### Modal surfaces
 //!
-//! ```rust
-//! use hikari_components::portal::PortalEntry;
-//! use hikari_components::modal::ModalPosition;
-//!
-//! portal.add_entry(PortalEntry::Modal {
-//!     id: "modal-1".to_string(),
-//!     title: Some("My Modal".to_string()),
-//!     position: ModalPosition::Center,
-//!     mask_mode: MaskMode::Dimmed,
-//!     closable: true,
-//!     mask_closable: true,
-//!     children: rsx! { div { "Modal content" } },
-//! });
-//! ```
+//! The Modal and Popover families render through their own declarative
+//! components (mirrored from the canonical Vue `HkModal` / `HkPopover`); the
+//! legacy `PortalEntry::Modal` and `PortalEntry::Popover` layers were retired
+//! with those mirrors. Portal entries remain for the dropdown, toast and
+//! tooltip layers.
 //!
 //! ## Features
 //!
@@ -185,6 +173,6 @@ pub mod types;
 pub use positioning::calculate_position;
 pub use provider::{PortalContext, PortalProvider, generate_portal_id, use_portal};
 pub use types::{
-    ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-    ToastPosition, TriggerPlacement,
+    PORTAL_ID_COUNTER, PortalEntry, PortalMaskMode, PortalPositionStrategy, ToastPosition,
+    TriggerPlacement,
 };

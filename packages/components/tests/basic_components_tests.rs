@@ -197,7 +197,6 @@ mod tests {
             add_entry: Callback::new(|_| {}),
             remove_entry: Callback::new(|_| {}),
             clear_all: Callback::new(|_| {}),
-            start_close_animation: Callback::new(|_| {}),
         });
         let _ = Select(SelectProps::default());
     }

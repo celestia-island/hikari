@@ -1,0 +1,60 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+/* HkMessageBox — the shared transient message box (confirm / alert /
+ * single-field prompt). Hosted in its own HkModal; only the body
+ * layout (icon + text + the one prompt field) and the action row are
+ * styled here. */
+
+@use "../styles/polyfill" as *;
+
+.hk-message-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 8px);
+  padding-top: var(--space-2, 2px);
+}
+
+.hk-message-box-icon {
+  display: inline-flex;
+  color: rgb(var(--color-primary));
+
+  [data-tone="success"] & {
+    color: rgb(var(--color-success, 90 180 110));
+  }
+
+  [data-tone="warning"] &,
+  [data-tone="danger"] & {
+    color: rgb(var(--color-error, 247 118 142));
+  }
+}
+
+.hk-message-box-text {
+  /* Dialog message = content the user may need to copy (error detail),
+   * not chrome — whitelisted under the L2 selection policy (2026-10-29).
+   * The prompt's field below is covered by the editable-controls tier. */
+  @include user-select(text);
+  margin: 0;
+  color: rgb(var(--color-text));
+  font-size: var(--text-base, 15px);
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.hk-message-box-prompt {
+  margin-top: var(--space-6, 6px);
+}
+
+.hk-message-box-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8, 8px);
+}

@@ -1,0 +1,317 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "./scrim-fade" as sf;
+@use "../styles/polyfill" as *;
+
+.hk-drawer-overlay {
+  /* Overlay-root contract: #hk-overlay-root fences pointer events
+   * (pointer-events: none) — restore them or the drawer's taps pass
+   * through to the page below (2026-10-15 defect). */
+  pointer-events: auto;
+  position: fixed;
+  inset: 0;
+  background: var(--hk-drawer-overlay-bg, rgba(0, 0, 0, 0.45));
+  @include backdrop-filter(var(--hk-drawer-overlay-blur, blur(6px)));
+}
+
+// Overlay enter/leave — fade-only classes from the shared window-layer
+// contract (./_scrim-fade.scss); the panel below owns all the motion.
+@include sf.scrim-fade(
+  "hk-drawer-overlay",
+  $enter-duration: var(--duration-normal, 0.3s),
+  $enter-ease: var(--ease-elastic, cubic-bezier(0.16, 1, 0.3, 1)),
+  $leave-duration: var(--duration-normal, 0.3s),
+  $leave-ease: var(--ease-in, cubic-bezier(0.4, 0, 1, 1))
+);
+
+.hk-drawer-panel {
+  pointer-events: auto;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
+  // Token-gated (was a hard blur(12px)): the drawer resizes through
+  // animated width/height, and a backdrop-filter on a resizing fixed
+  // layer re-rasters the blurred region every frame — on phones that
+  // lag shows as patchy flicker along the moving edge. The mobile
+  // guard below turns it off ≤767px; hosts restore a finish per
+  // surface with --hk-drawer-blur / --hk-drawer-blur-mobile.
+  @include backdrop-filter(var(--hk-drawer-blur, blur(12px)));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  outline: none;
+  // Scope layout/style invalidation to the drawer subtree — the page
+  // behind a phone drawer is usually streaming, and containment keeps
+  // those invalidations from cascading into each other.
+  contain: layout style;
+  transition:
+    width var(--duration-normal, 0.3s) ease,
+    height var(--duration-normal, 0.3s) ease;
+}
+
+.hk-drawer-left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-right: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0;
+}
+
+.hk-drawer-right {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  border-left: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: var(--radius-md, 0.5rem) 0 0 var(--radius-md, 0.5rem);
+}
+
+.hk-drawer-top {
+  top: 0;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: 0 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem);
+}
+
+.hk-drawer-bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0 0;
+}
+
+.hk-drawer-left-enter-active,
+.hk-drawer-right-enter-active,
+.hk-drawer-top-enter-active,
+.hk-drawer-bottom-enter-active {
+  /* No overshoot on the transform: a back-out curve (y > 1) slides the
+     panel PAST its resting position and snaps back — on a left drawer
+     that briefly opens a gap between the panel edge and the screen
+     edge. Both properties use the same plain ease-out. */
+  transition:
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-drawer-left-leave-active,
+.hk-drawer-right-leave-active,
+.hk-drawer-top-leave-active,
+.hk-drawer-bottom-leave-active {
+  transition:
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-drawer-left-enter-from,
+.hk-drawer-left-leave-to {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.hk-drawer-right-enter-from,
+.hk-drawer-right-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.hk-drawer-top-enter-from,
+.hk-drawer-top-leave-to {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+.hk-drawer-bottom-enter-from,
+.hk-drawer-bottom-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+/* Side drawers slide as an OPAQUE surface. The panel used to share the
+ * scrim's fade (opacity: 0 in the enter/leave states); on a phone the
+ * drawer was still partly on screen when its right half went transparent
+ * — the page behind showed through and the right rounded corners
+ * dissolved, which reads as a width shrink (screen recording
+ * 2026-10-19). The scrim keeps its own fade; the panel only translates.
+ * Top/bottom sheets keep the fade above. */
+.hk-drawer-left-enter-active,
+.hk-drawer-right-enter-active {
+  transition: transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-drawer-left-leave-active,
+.hk-drawer-right-leave-active {
+  transition: transform var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-drawer-left-enter-from,
+.hk-drawer-left-leave-to,
+.hk-drawer-right-enter-from,
+.hk-drawer-right-leave-to {
+  opacity: 1;
+}
+
+.hk-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
+  flex-shrink: 0;
+}
+
+.hk-drawer-title {
+  font-size: var(--text-base, 0.875rem);
+  font-weight: 700;
+  color: var(--hi-color-text-primary, #1e1e1e);
+}
+
+// Legacy placement hook — the chrome lives on the shared .hk-icon-button
+// / .hk-window-close rules (window-close.scss) since the unified-close
+// wave; only the header-flex placement stays here.
+.hk-drawer-close {
+  flex-shrink: 0;
+}
+
+/* Track host for the body's overlay scrollbar — owns the flex slot in
+   the panel column so the rail hugs the BODY band, not header/footer. */
+.hk-drawer-body-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.hk-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Consumers nesting a self-padded menu (HkMenuPanel) zero this via
+     --hk-drawer-body-padding so nav rows and the footer menu share one
+     left edge. */
+  /* --hk-pad (runtime/containerPad, the `padding` prop) outranks the
+     per-component theme token, which outranks the historical default. */
+  padding: var(--hk-pad, var(--hk-drawer-body-padding, var(--space-16, 1rem)));
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hk-drawer-footer {
+  /* HkMenuPanel carries its own inset; zero this variable when the
+     footer hosts one so both edges align. */
+  padding: var(--hk-drawer-footer-padding, var(--space-12, 0.75rem) var(--space-16, 1rem));
+  border-top: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
+  flex-shrink: 0;
+}
+
+// ------
+// Mobile bottom drawer = the sheet family (2026-09-08 scan wave 2).
+// HkAdaptiveDialog renders its mobile form as a bottom drawer, which
+// made it the ONLY bottom-docked window outside the HkModal / HkPopover /
+// HkSelectPanel sheet family contract: glued to `bottom: 0` (hosts lifting
+// --hk-sheet-bottom-gap saw no effect), capped by the inline `size` 70vh
+// with no top-inset reservation (a tall dialog covered the secondary-window
+// breadcrumb strip), 8px corners against the family's 12px, a footer that
+// ignored the home-bar safe area, and sm/md footer buttons without the
+// family's 44px touch lift. Same geometry, same tokens, one family.
+// ------
+@media (max-width: 767px) {
+  // Phones: docked drawers never backdrop-filter — the panel resizes
+  // through animated width/height, and a backdrop-filter on a resizing
+  // fixed layer re-rasters the blurred region every frame; on a phone
+  // GPU that lag shows as patchy flicker along the moving edge (same
+  // family guard as the modal/select sheets, 2026-09-15 chest report).
+  // The scrim's dim alone reads correctly there.
+  .hk-drawer-overlay {
+    @include backdrop-filter(var(--hk-drawer-overlay-blur-mobile, none));
+  }
+
+  .hk-drawer-panel {
+    @include backdrop-filter(var(--hk-drawer-blur-mobile, none));
+  }
+
+  .hk-drawer-bottom {
+    bottom: var(--hk-sheet-bottom-gap, 0px);
+    border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                   var(--hk-modal-radius, var(--radius-lg, 12px))
+                   0 0;
+    // The inline maxHeight from the `size` prop must lose to the family cap
+    // (plain-vh fallback first for dvh-less engines, then dvh) — same
+    // inline-beating !important pattern as HkModal's mobile max-width.
+    max-height: calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+    ) !important;
+    max-height: calc(
+      100dvh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+    ) !important;
+  }
+
+  // Scoped to BOTTOM drawers only: side drawers (admin panels etc.) keep
+  // their desktop footer contract on phones — the sheet family is the
+  // bottom-docked form factor. Three-value padding keeps the axes right:
+  // the --hk-drawer-footer-padding hook owns the TOP, 1rem the sides, and
+  // the home-bar safe area lands on the BOTTOM where it belongs (a 2-value
+  // form would put the safe-area calc on the horizontal axis — and for
+  // hosts that zero the var it would strip the bottom protection entirely,
+  // the exact opposite of the intent).
+  .hk-drawer-bottom .hk-drawer-footer {
+    // Family baseline: home-bar safe area stacked on the base inset (same
+    // stacking as HkModal's mobile footer), on top of the existing
+    // --hk-drawer-footer-padding hook for menu-panel hosts.
+    padding: var(--hk-drawer-footer-padding, 0.625rem 1rem) 1rem
+      calc(0.375rem + var(--hk-sheet-footer-gap, 0.5rem) + env(safe-area-inset-bottom, 0px));
+
+    // Footer actions are the drawer's primary touch targets on phones:
+    // lift sm/md buttons to the 44px class, exactly like HkModal's mobile
+    // footer (padding/min-height only; font-size stays --text-base).
+    .hk-btn-sm,
+    .hk-btn-md {
+      min-height: 2.75rem;
+      padding: var(--space-8) var(--space-16);
+      font-size: var(--text-base);
+    }
+  }
+}
+
+/* Reduced motion: the width/height size morph and the four slide
+   directions snap instead of animating — the surface machine's
+   zero-duration probe (useSurfaceMachine.completeNow) finalizes open/
+   close immediately. The overlay scrim's fade is already flattened by
+   the same media query inside scrim-fade().
+   (house pattern: HkModal.scss / HkPopover.scss guards) */
+@media (prefers-reduced-motion: reduce) {
+  .hk-drawer-panel,
+  .hk-drawer-left-enter-active,
+  .hk-drawer-right-enter-active,
+  .hk-drawer-top-enter-active,
+  .hk-drawer-bottom-enter-active,
+  .hk-drawer-left-leave-active,
+  .hk-drawer-right-leave-active,
+  .hk-drawer-top-leave-active,
+  .hk-drawer-bottom-leave-active {
+    transition: none;
+  }
+}
+
+/* ── Overlay-root pointer-events contract ──────────────────────────
+ * #hk-overlay-root fences pointer events (pointer-events: none) and
+ * every teleported layer MUST restore them. This compiled-css guard
+ * makes the restoration a test-visible invariant rather than an
+ * implementation detail (2026-10-15: the mobile drawer painted above
+ * the page but every tap passed through because neither the overlay
+ * nor the panel restored pointer events after the overlay-root
+ * isolation migration). */

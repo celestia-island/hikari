@@ -51,7 +51,7 @@ const containers: HTMLElement[] = [];
 
 beforeEach(() => {
   FakeResizeObserver.instances = [];
-  (globalThis as { ResizeObserver?: unknown }).ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  (globalThis as { ResizeObserver?: unknown }).ResizeObserver = FakeResizeObserver;
 });
 
 afterEach(() => {

@@ -1242,8 +1242,9 @@ impl StyledComponent for DateTimePickerComponent {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use hikari_i18n::Language;
+
+    use super::*;
 
     fn moment(year: i32, month: u32, day: u32, hour: u32, minute: u32) -> NaiveDateTime {
         NaiveDate::from_ymd_opt(year, month, day)

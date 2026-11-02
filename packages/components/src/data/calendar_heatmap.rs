@@ -759,8 +759,9 @@ impl StyledComponent for CalendarHeatmapComponent {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use hikari_i18n::Language;
+
+    use super::*;
 
     /// A Monday, for grid-shape assertions (the Vue suite's anchor too).
     const MON: &str = "2025-12-01";

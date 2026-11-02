@@ -18,6 +18,8 @@ pub use tairitsu_hooks::{
     InteractionState,
     // Memo type
     Memo,
+    // Reactive handle returned by `use_signal`
+    ReactiveSignal,
     UseRef,
     provide_context,
     // Dioxus compatibility alias
@@ -66,6 +68,12 @@ pub fn empty_vnode() -> VNode {
 // Re-export Icon component and types from hikari-icons for convenience
 pub use hikari_icons::{Icon, IconProps, MdiIcon};
 
+// Overlay + auth family Props
+pub use crate::auth::{
+    AltSignInProps, AuthCardProps, AuthMethodListProps, AuthSubmitButtonProps, CaptchaModalProps,
+    CaptchaWidgetProps, CookieConsentProps, MfaVerifyCardProps, PasswordSurfaceProps,
+    SignInCardProps, ThirdPartySignInCardProps,
+};
 // Add ArrowProps from basic module
 pub use crate::basic::ArrowProps;
 // Re-export Props types from components for use in rsx! macro
@@ -102,6 +110,8 @@ pub use crate::display::{
     MediaSliderProps, MediaVisualizerProps, QrCodeProps, SkeletonProps, StepGuideProps, TagProps,
     TerminalProps, TimelineProps, TransitionContainerProps, UserGuideProps, ZoomControlsProps,
 };
+// Theme + misc family Props
+pub use crate::entry::TemplateFieldProps;
 // Entry component Props
 pub use crate::entry::{
     AutoCompleteProps, CascaderProps, NumberInputProps, NumberSteppersProps, SearchProps,
@@ -134,21 +144,14 @@ pub use crate::navigation::{
     MenuSectionProps, ModalBreadcrumbProps, SearchTriggerProps, SidebarItemProps, SidebarLeafProps,
     SidebarProps, SidebarSectionProps, StepsProps, SubMenuProps, TabPaneProps, TabsProps,
 };
+pub use crate::overlay::{
+    AdaptiveDialogProps, ContextMenuProviderProps, FloatingLayerProps, PopupSelectProps,
+    ProtocolModalProps, SelectPanelProps,
+};
 // Production component Props
 pub use crate::production::{
     AudioPlayerProps, CodeHighlightProps, MarkdownEditorProps, RichTextEditorProps,
     VideoPlayerProps,
-};
-pub use crate::styled::{StyleRegistry, StyledComponent};
-// Overlay + auth family Props
-pub use crate::auth::{
-    AltSignInProps, AuthCardProps, AuthMethodListProps, AuthSubmitButtonProps, CaptchaModalProps,
-    CaptchaWidgetProps, CookieConsentProps, MfaVerifyCardProps, PasswordSurfaceProps,
-    SignInCardProps, ThirdPartySignInCardProps,
-};
-pub use crate::overlay::{
-    AdaptiveDialogProps, ContextMenuProviderProps, FloatingLayerProps, PopupSelectProps,
-    ProtocolModalProps, SelectPanelProps,
 };
 // Scene family Props
 pub use crate::scene::{
@@ -156,9 +159,7 @@ pub use crate::scene::{
     KanbanProps, Minimap3DProps, MinimapProps, NodeCanvasProps, StarSystemProps, WindowedItemProps,
     ZoomToolbarProps,
 };
-
-// Theme + misc family Props
-pub use crate::entry::TemplateFieldProps;
+pub use crate::styled::{StyleRegistry, StyledComponent};
 pub use crate::theme::{
     AboutModalProps, ActionBarProps, AvatarButtonProps, ColorSchemeDialogProps,
     ColorSchemeEditorProps, ConnectionStatusProps, CopyBadgeProps, ErrorBoundaryProps,

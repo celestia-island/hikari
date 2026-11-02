@@ -39,8 +39,8 @@
 //     registration, and typed `pointer*` events are not dispatched — ledger
 //     L88; the tooltip mirror documents the same ceiling), while on the
 //     `wasm32-unknown-unknown` web target the listeners and `on_pointerdown`
-//     do work but that target is not currently a build this crate produces
-//     (pre-existing errors in `navigation/anchor.rs` / `feedback/glow.rs`).
+//     do work, but that target still has no runtime host (it type-checks
+//     again since the anchor/glow web-target fix).
 //     So the mirror owns the BAR and the RECOGNIZER TIMING (exported as pure
 //     values and one predicate below), and the HOST owns the gesture: it
 //     decides which press is a long-press and hands this component the text.

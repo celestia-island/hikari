@@ -27,8 +27,7 @@
 //   * the icon is a typed `MdiIcon` (Vue resolves a name string through the
 //     icon registry; the Rust icon primitive has no name registry).
 
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;

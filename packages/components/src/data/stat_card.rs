@@ -41,8 +41,7 @@
 // takes a component); the ring variant renders through the mirrored
 // `GaugeRing`; `pct` is clamped to 0–100 exactly like Vue's `clampPct`.
 
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 
 use crate::data::gauge_ring::{GaugeRing, GaugeRingData, GaugeRingProps};
 use crate::feedback::progress_bar::{

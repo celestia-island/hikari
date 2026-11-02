@@ -1,4 +1,4 @@
-//! Dead-binding guard for the wasm32-wasip2 event channel (ledger L67).
+//! Dead-binding guard for the wasm32-wasip2 event channel (ledger L86).
 //!
 //! The tairitsu browser glue that hosts these components type-dispatches ONLY
 //! the mouse family (`mouseenter`/`mouseleave`/`mousemove`/`mousedown`/
@@ -176,6 +176,56 @@ fn dead_binding_kind(line: &str) -> Option<&'static str> {
     None
 }
 
+/// The BUILDER SHAPE SPLIT ACROSS LINES: `.on_pointerdown` closing a line with
+/// the argument list opening on the next one.
+///
+/// `rustfmt` wraps a long closure exactly this way, so a strictly line-scoped
+/// scan would let a real binding through — and this is the shape an author is
+/// most likely to produce when they paste a long handler.
+fn split_builder(lines: &[&str], index: usize) -> Option<&'static str> {
+    let line = lines.get(index)?;
+    if is_doc_line(line) {
+        return None;
+    }
+    let trimmed = line.trim_end();
+    let at = trimmed.rfind(".on_")?;
+    let ident = ident_from(trimmed, at + 4);
+    if ident.is_empty() || !poisoned_family(&ident) {
+        return None;
+    }
+    if at + 4 + ident.len() != trimmed.len() {
+        // Something else follows the method name on this line: that is the
+        // single-line shape's job, not this one.
+        return None;
+    }
+    // The argument list has to open on one of the next few non-blank lines.
+    for candidate in lines.iter().skip(index + 1).take(3) {
+        let candidate = candidate.trim_start();
+        if candidate.is_empty() {
+            continue;
+        }
+        return candidate
+            .starts_with('(')
+            .then_some("builder (call split over lines)");
+    }
+    None
+}
+
+/// Every dead-binding finding in `lines`, as `(1-based line, shape)`.
+fn dead_findings(lines: &[&str]) -> Vec<(usize, &'static str)> {
+    let mut findings = Vec::new();
+    for index in 0..lines.len() {
+        if let Some(kind) = dead_binding_kind(lines[index]) {
+            findings.push((index + 1, kind));
+            continue;
+        }
+        if let Some(kind) = split_builder(lines, index) {
+            findings.push((index + 1, kind));
+        }
+    }
+    findings
+}
+
 #[test]
 fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
     let base = source_root();
@@ -196,14 +246,12 @@ fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
         }
         let source = std::fs::read_to_string(path)
             .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
-        for (index, line) in source.lines().enumerate() {
-            if let Some(kind) = dead_binding_kind(line) {
-                violations.push(format!(
-                    "  packages/components/src/{rel}:{}: {kind} never fires on wasm32-wasip2 (L67)\n      {}",
-                    index + 1,
-                    line.trim()
-                ));
-            }
+        let lines: Vec<&str> = source.lines().collect();
+        for (line_no, kind) in dead_findings(&lines) {
+            violations.push(format!(
+                "  packages/components/src/{rel}:{line_no}: {kind} never fires on wasm32-wasip2 (L86)\n      {}",
+                lines[line_no - 1].trim()
+            ));
         }
     }
 
@@ -211,7 +259,7 @@ fn no_dead_pointer_touch_drag_bindings_outside_the_allowlist() {
         violations.is_empty(),
         "\n{} dead pointer/touch/drag binding(s) found. The tairitsu browser glue \
          types only the mouse family, so these handlers are INERT on a real device \
-         (ledger L67).\n\n{}\n\nFix: bind the mouse family \
+         (ledger L86).\n\n{}\n\nFix: bind the mouse family \
          (`onmousedown`/`onmousemove`/`onmouseup`/`onmouseenter`/`onmouseleave` with a \
          `MouseEvent` parameter) and end drags from `buttons == 0` on the next move. \
          If the behaviour genuinely cannot be preserved, DELETE the binding and \
@@ -309,7 +357,47 @@ fn the_guard_recognises_both_shapes_and_ignores_documentation() {
         "documentation must not trip the guard"
     );
     assert!(
-        dead_binding_kind("//     `onpointerdown` never fires here (L67)").is_none(),
+        dead_binding_kind("//     `onpointerdown` never fires here (L86)").is_none(),
         "documentation must not trip the guard"
+    );
+}
+
+#[test]
+fn the_guard_catches_a_builder_call_split_over_lines() {
+    // `rustfmt` wraps a long handler between the method name and its argument
+    // list, which is the shape a strictly line-scoped scan missed.
+    let split = [
+        "    root = root.on_pointerdown",
+        "        (move |event: PointerEvent| {",
+        "            drag = true;",
+        "        });",
+    ];
+    assert_eq!(
+        dead_findings(&split),
+        vec![(1, "builder (call split over lines)")],
+        "a wrapped `.on_pointerdown` call must still be caught"
+    );
+
+    // A blank line between the name and the paren keeps the same meaning.
+    let split_blank = ["    .on_touchstart", "", "        (handler)"];
+    assert_eq!(
+        dead_findings(&split_blank),
+        vec![(1, "builder (call split over lines)")]
+    );
+
+    // Negative controls: the live mouse equivalent, and a poisoned NAME that is
+    // not being called (a bare field / prose), must stay clean.
+    let live = [
+        "    root = root.on_mousedown",
+        "        (move |e: MouseEvent| {})",
+    ];
+    assert!(dead_findings(&live).is_empty(), "mouse builder is live");
+    let not_a_call = [
+        "    let on_pointer_down = props.on_pointer_down.clone();",
+        "",
+    ];
+    assert!(
+        dead_findings(&not_a_call).is_empty(),
+        "copying a pointer-typed PROP is not a binding"
     );
 }

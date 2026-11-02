@@ -2,14 +2,14 @@
 // DragDropTree — the legacy tree reorder surface (`RenderDragNode` renders one
 // recursive node row with its drag handle, ghost and drop line).
 //
-// L67 DELTA: THIS IS A MOUSE-DRIVEN REORDER, NOT A NATIVE HTML5 DRAG.
+// L86 DELTA: THIS IS A MOUSE-DRIVEN REORDER, NOT A NATIVE HTML5 DRAG.
 // The rows used to carry `draggable="true"` plus `dragstart` / `dragend` /
 // `dragover` / `dragleave` / `drop` with `DragEvent` handlers. The tairitsu
 // browser glue type-dispatches only the mouse family (plus keyboard, focus and
 // `input`/`change`) and routes every `drag*`/`drop` event through
 // `onGenericEvent`, whose payload is the type string and a live handle with no
 // data, so the `DragEvent` downcast never matched and the whole reorder path
-// was inert on a real device (ledger L67).
+// was inert on a real device (ledger L86).
 //
 // The gesture never actually needed `DataTransfer`: the state lives in the
 // component's own signals (`dragged_key` / `drag_over_key` / `drop_target`), and
@@ -23,7 +23,8 @@
 //   drop       -> `mouseup`     commit `DropEvent` (left button only; the row
 //                               stops propagation so a nested row cannot
 //                               commit a second drop — the same guard the old
-//                               `ondrop` ran)
+//                               `ondrop` ran; and only when the release landed
+//                               on a DIFFERENT row — see the grammar delta)
 //   dragend    -> the release edges: the row's own `mouseup` clears the
 //                 gesture, the tree root's `mouseup` clears one that landed on
 //                 tree padding, and a `mouseenter` reporting `buttons == 0`
@@ -34,6 +35,18 @@
 //                 `basic/slider.rs` and `scene/kanban.rs` carry). The root's
 //                 `mouseleave` also clears the highlight so a stale drop line
 //                 cannot linger while the pointer is away.
+//
+// Grammar delta the mouse wire forces: A CLICK MUST NOT COMMIT A DROP. Native
+// DnD made `dragstart` require real pointer movement, so a plain press-and-
+// release on a row never produced a `drop`; `mousedown` has no such
+// precondition, so an armed row released on itself would emit
+// `DropEvent{dragged: A, target: A}` on every click. The commit is therefore
+// gated by [`drag_drop_moves`] — the same `from == to` rejection
+// `layout::header_picker::header_reorder_indices` applies — and a release back
+// on the source row retires the gesture WITHOUT an emit (a reorder from an item
+// to itself is a no-op in both forms). There is no separate movement threshold:
+// reaching another row is the threshold, because the release is resolved by the
+// row that receives it.
 //
 // Declared consequences (nothing faked):
 //   * the rows NO LONGER carry the `draggable` attribute: a native drag would
@@ -96,6 +109,20 @@ pub struct DropEvent {
     pub position: DropPosition,
 }
 
+/// Whether releasing on `target` actually reorders `dragged`.
+///
+/// Mirrors `layout::header_picker::header_reorder_indices`, which rejects
+/// `from == to`: a release on the row the press started from is a CLICK, not a
+/// reorder. Native drag-and-drop enforced this in the browser — `dragstart` only
+/// fires after real movement, so a click never produced a `drop` — and a mouse
+/// `mousedown` has no such precondition, so the mirror has to state it here.
+///
+/// Also covers the drag-back-onto-itself case: a reorder from an item to itself
+/// is a no-op in both forms.
+pub fn drag_drop_moves(dragged: &str, target: &str) -> bool {
+    dragged != target
+}
+
 #[define_props]
 pub struct DragDropTreeProps {
     pub data: Vec<DragTreeNodeData>,
@@ -119,7 +146,7 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
     let drop_target = use_signal(|| Option::<DropTarget>::None);
     let drag_over_key = use_signal(|| Option::<String>::None);
 
-    // End-of-gesture edges for the whole surface (Vue's `dragend`, L67 delta):
+    // End-of-gesture edges for the whole surface (Vue's `dragend`, L86 delta):
     // a release that lands on tree PADDING never reaches a row, and a release
     // that leaves the tree never reaches it at all — the root retires the first,
     // and drops the highlight while the pointer is away for the second (the
@@ -213,7 +240,7 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
 
     // `dragstart` -> `mousedown`: arm the row. The press is PUBLISHED, not
     // claimed (no capture on this wire), so the release is resolved by the row's
-    // own `mouseup` or retired from the button state (L67 delta in the header).
+    // own `mouseup` or retired from the button state (L86 delta in the header).
     // `prevent_default` keeps the press from starting a text selection, which is
     // what the drag handle needs.
     let draggable = props.draggable;
@@ -230,16 +257,15 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         event.prevent_default();
 
         let key = item_key_2.clone();
-        let can_drag = if let Some(handler) = allow_drag_for_start.as_ref() {
+        // `allow_drag` is a NOTIFICATION, not a veto: its handler returns unit,
+        // so it cannot decline the gesture (the old code computed a `can_drag`
+        // that was `true` on both branches). The arm is gated on `draggable` /
+        // `disabled` above; a host that must refuse a row keeps `draggable` false
+        // for it.
+        if let Some(handler) = allow_drag_for_start.as_ref() {
             handler.call((key.clone(), true));
-            true
-        } else {
-            true
-        };
-
-        if can_drag {
-            dragged_key_for_start.set(Some(key));
         }
+        dragged_key_for_start.set(Some(key));
     };
 
     // `dragover` -> `mouseenter`: highlight the row under the pointer, once
@@ -285,6 +311,11 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     // row stops propagation so a nested row cannot commit a second drop — the
     // same guard the old `ondrop` ran. The release also retires the whole
     // gesture, which is what `dragend` used to do after a successful drop.
+    //
+    // A release on the row the press started from is a CLICK, not a reorder:
+    // native DnD required real movement before `dragstart`, `mousedown` does not,
+    // so [`drag_drop_moves`] restores that precondition. The gesture is retired
+    // either way — only the emit is suppressed.
     let on_drag_drop = move |event: MouseEvent| {
         event.stop_propagation();
         if event.button != 0 {
@@ -292,26 +323,28 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         }
 
         if let Some(dragged) = dragged_key_for_drop.read().clone() {
-            let position = DropPosition::Inside;
             let key = item_key_4.clone();
+            let moved = drag_drop_moves(&dragged, &key);
 
-            let drop_target_info = DropTarget {
-                target_key: key.clone(),
-                position,
-            };
-
-            let can_drop = if let Some(handler) = allow_drop_for_drop.as_ref() {
-                handler.call((drop_target_info.clone(), true));
-                true
-            } else {
-                true
-            };
-
-            if can_drop {
-                let drop_event = DropEvent {
-                    dragged_key: dragged,
+            if moved {
+                let position = DropPosition::Inside;
+                let drop_target_info = DropTarget {
                     target_key: key.clone(),
                     position,
+                };
+
+                // `allow_drop` is a NOTIFICATION, not a veto: its handler returns
+                // unit, so it cannot decline the drop (the old code computed a
+                // `can_drop` that was `true` on both paths). A host that must
+                // refuse a target refuses the `on_drop` itself.
+                if let Some(handler) = allow_drop_for_drop.as_ref() {
+                    handler.call((drop_target_info, true));
+                }
+
+                let drop_event = DropEvent {
+                    dragged_key: dragged,
+                    target_key: key,
+                    position: DropPosition::Inside,
                 };
 
                 if let Some(handler) = on_drop_for_drop.as_ref() {
@@ -423,7 +456,7 @@ mod tests {
 
     #[test]
     fn drag_tree_rows_carry_no_native_draggable_attribute() {
-        // L67: the reorder is MOUSE-driven. A native HTML5 drag would steal the
+        // L86: the reorder is MOUSE-driven. A native HTML5 drag would steal the
         // gesture — once the browser starts one it stops delivering
         // `mousemove`, so the mouse path would go dead exactly where the old
         // `drag*` bindings were. The attribute therefore has to stay absent;
@@ -433,5 +466,38 @@ mod tests {
             !html.contains("draggable"),
             "rows must not opt into native drag-and-drop: {html}"
         );
+    }
+
+    #[test]
+    fn a_click_on_a_row_commits_no_drop() {
+        // The click sequence: press row A (arm -> dragged = A), no movement, release
+        // on row A. Native DnD never fired `drop` here because `dragstart` needs
+        // real movement; `mousedown` + `mouseup` alone do not, so the commit has
+        // to reject the self-target. This is the predicate the drop handler gates
+        // on, so a regression in the grammar shows up here.
+        assert!(
+            !drag_drop_moves("alpha", "alpha"),
+            "a press-and-release on the same row is a CLICK, not a reorder"
+        );
+    }
+
+    #[test]
+    fn a_release_on_another_row_commits_the_drop() {
+        assert!(drag_drop_moves("alpha", "beta"));
+        assert!(drag_drop_moves("beta", "alpha"));
+        // Nested rows are different keys, so a child -> parent drop stays a
+        // reorder (that is how a node becomes a child of another).
+        assert!(drag_drop_moves("beta", "alpha"));
+    }
+
+    #[test]
+    fn the_drop_rule_matches_the_header_picker_reorder_rule() {
+        use crate::layout::header_picker::header_reorder_indices;
+        // Same `from == to` rejection, expressed for string keys here and for
+        // indices there — keep the two grammars in step.
+        assert_eq!(header_reorder_indices(1, 1, 3), None);
+        assert!(!drag_drop_moves("k", "k"));
+        assert_eq!(header_reorder_indices(0, 1, 3), Some((0, 1)));
+        assert!(drag_drop_moves("k0", "k1"));
     }
 }

@@ -17,7 +17,7 @@ export interface HkAltSignInEntry {
  *
  * A small muted trigger row (styled in the `.s-auth-footer` grammar) that
  * opens a popover listing third-party/alternative credential entries —
- * platform passkey on shittim-chest, feishu OAuth on easy-hydro-erp — so
+ * platform passkey on shittim-chest, feishu OAuth on the ERP adopter — so
  * both apps share one implementation and only differ in content.
  *
  * Entries render as [`HkMenuActionItem`] rows inside an [`HkPopover`]

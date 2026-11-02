@@ -40,9 +40,16 @@ pub enum TextDirection {
 ///
 /// The variants line up with the single directory name used per language across
 /// the celestia-island documentation sites (see [`Language::code`]).
+///
+/// `#[non_exhaustive]`: adding a variant is a breaking change for downstream
+/// exhaustive `match`es, so matches outside this crate must keep a wildcard
+/// arm. That does not undo the German/Portuguese addition — it only prevents
+/// the next one from breaking consumers — and it makes a new language's
+/// fallback explicit instead of a compile error.
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize,
 )]
+#[non_exhaustive]
 pub enum Language {
     #[default]
     English,
@@ -51,7 +58,9 @@ pub enum Language {
     Japanese,
     Korean,
     French,
+    German,
     Spanish,
+    Portuguese,
     Russian,
     Arabic,
 }
@@ -65,7 +74,9 @@ impl Language {
         Self::Japanese,
         Self::Korean,
         Self::French,
+        Self::German,
         Self::Spanish,
+        Self::Portuguese,
         Self::Russian,
         Self::Arabic,
     ];
@@ -79,7 +90,9 @@ impl Language {
             Self::Japanese => "ja",
             Self::Korean => "ko",
             Self::French => "fr",
+            Self::German => "de",
             Self::Spanish => "es",
+            Self::Portuguese => "pt",
             Self::Russian => "ru",
             Self::Arabic => "ar",
         }
@@ -94,7 +107,9 @@ impl Language {
             Self::Japanese => "日本語",
             Self::Korean => "한국어",
             Self::French => "Français",
+            Self::German => "Deutsch",
             Self::Spanish => "Español",
+            Self::Portuguese => "Português",
             Self::Russian => "Русский",
             Self::Arabic => "العربية",
         }
@@ -208,7 +223,9 @@ fn hikari_default_keys(language: &Language) -> I18nKeys {
         Language::Japanese => "ja",
         Language::Korean => "ko",
         Language::French => "fr",
+        Language::German => "de",
         Language::Spanish => "es",
+        Language::Portuguese => "pt",
         Language::Russian => "ru",
         Language::Arabic => "ar",
         Language::English => "en",

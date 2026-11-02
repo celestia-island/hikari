@@ -111,10 +111,10 @@
 //     component-side capture to lose. They stay on the props at their durable
 //     `PointerEvent` / `WheelEvent` types for the host that wants the
 //     pass-through; `on_pointer_cancel` DID go live with the real bindings: it
-//     fires through the typed wire when the browser aborts the gesture, but
-//     the payload arrives as a DEFAULT `PointerEvent` on this wire — a
-//     signal, not a payload — so the host retires its pointer from the signal
-//     and never reads the event.
+//     fires through the typed wire when the browser aborts the gesture, and
+//     the payload is a REAL typed `PointerEvent` forwarded verbatim. Neither
+//     the viewer nor its cancel semantics read any field, so the host should
+//     retire its pointer from the signal itself.
 //
 // New file: the family had no Rust viewer (the legacy `display/zoom_controls.rs`
 // is the zoom-button strip, which Vue ships as `HkZoomToolbar` — a different
@@ -521,8 +521,9 @@ pub struct ImageViewerProps {
     /// Pointercancel pass-through (Vue: retires the pointer). LIVE since the
     /// pointer bindings: the browser aborting the gesture (palm rejection, a
     /// `touch-action` takeover, device rotation) fires it through the typed
-    /// wire. The payload arrives as a DEFAULT [`PointerEvent`] on this wire —
-    /// a signal, not a payload: retire the pointer, never read the event.
+    /// wire. The payload is a REAL typed [`PointerEvent`] forwarded verbatim;
+    /// the viewer reads nothing from it, so retire the pointer from the
+    /// signal rather than from any field.
     pub on_pointer_cancel: Option<EventHandler<PointerEvent>>,
 
     /// Capture-loss pass-through. STILL UNBOUND: no component-side pointer
@@ -643,10 +644,9 @@ pub fn ImageViewer(props: ImageViewerProps) -> Element {
                 }
             },
             onpointercancel: move |e: PointerEvent| {
-                // The typed wire carries the abort; the payload is a
-                // default-valued event on this wire — a signal, not a payload
-                // (header delta). Pure pass-through: the viewer holds no drag
-                // state of its own.
+                // The typed wire carries the abort with a REAL `PointerEvent`
+                // payload; pure pass-through — the viewer holds no drag state
+                // of its own and reads nothing from the event.
                 if let Some(handler) = on_pointer_cancel.as_ref() {
                     handler.call(e);
                 }
@@ -1201,16 +1201,22 @@ mod tests {
 
     #[test]
     fn viewer_pointercancel_signals_the_host() {
-        let cancels = std::rc::Rc::new(std::cell::RefCell::new(0usize));
-        let cancel_count = cancels.clone();
+        let cancels = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+        let cancel_log = cancels.clone();
         let vnode = ImageViewer(ImageViewerProps {
-            on_pointer_cancel: Some(Callback::new(move |_| {
-                *cancel_count.borrow_mut() += 1;
+            on_pointer_cancel: Some(Callback::new(move |e: PointerEvent| {
+                cancel_log.borrow_mut().push(e.pointer_id);
             })),
             ..Default::default()
         });
         let root = viewer_element(&vnode);
-        viewer_fire(root, "pointercancel", PointerEvent::default());
-        assert_eq!(*cancels.borrow(), 1, "the cancel must reach the host");
+        // The wire builds a real typed payload for the abort; the pass-through
+        // must forward it, not substitute a default.
+        viewer_fire(root, "pointercancel", PointerEvent::new().pointer_id(13));
+        assert_eq!(
+            *cancels.borrow(),
+            [13],
+            "the real cancel payload must reach the host"
+        );
     }
 }

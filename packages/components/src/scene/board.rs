@@ -142,9 +142,11 @@
 //     gesture over; [`board_wheel_step_k`] is one rung.
 //   * `pointercancel` still arrives through the generic register (the typed
 //     builders stop at enter/leave): the handler fires when the browser aborts
-//     the gesture (it also retires the press latch), and the platform delivers
-//     NO usable cancel data, so the host's `on_pointer_cancel` receives a
-//     DEFAULT `PointerEvent` — a signal, not a payload.
+//     the gesture and retires the press latch. The payload is a REAL typed
+//     `PointerEvent` (tairitsu 0.5.24 routes every pointer-family event
+//     through the getters) and the mirror forwards it verbatim — nothing here
+//     reads its fields, so the prop is an abort signal, and a host must not
+//     read meaning from cancel geometry either.
 //   * `viewport` / `minK` / `maxK` / `fitCap` / `animated` / `fitOnMount`
 //     reach NO DOM attribute — in Vue they only steer the camera. They are
 //     carried as props so a host reading [`BoardProps`] sees the whole
@@ -1356,9 +1358,10 @@ pub struct BoardProps {
 
     /// Viewport pointer cancel (Vue `onPointerCancel`: an aborted gesture must
     /// never synthesise a click). Still reached through the generic
-    /// `pointercancel` register (there is no typed builder for it) — the
-    /// platform delivers NO usable cancel data, so the payload is a DEFAULT
-    /// [`PointerEvent`]: a signal, not a payload (header delta).
+    /// `pointercancel` register (there is no typed builder for it). The
+    /// payload is a REAL typed [`PointerEvent`] (tairitsu 0.5.24 routes every
+    /// pointer-family event through the getters) forwarded verbatim; the
+    /// board itself reads nothing from it, so treat it as the abort signal.
     pub on_pointer_cancel: Option<EventHandler<PointerEvent>>,
 
     /// A press that started on a node (Vue `onNodePointerDown`). Its `pointer`
@@ -1517,15 +1520,23 @@ pub fn Board(props: BoardProps) -> Element {
         }
     });
 
-    // `pointercancel` rides the generic channel (there is no typed binding
-    // for it): the handler fires when the browser aborts the gesture, but
-    // the platform delivers NO cancel data, so the host handler receives a
-    // default event — a signal, not a payload (header delta).
+    // `pointercancel` rides the generic register (there is no typed builder
+    // for it): the handler fires when the browser aborts the gesture. The
+    // typed wire delivers a REAL `PointerEvent` here (tairitsu 0.5.24 routes
+    // every pointer-family event through the getters), and the board forwards
+    // it verbatim — nothing in the mirror reads its fields, so the prop stays
+    // an abort signal, and a host should not read meaning from cancel
+    // geometry either.
     let cancel_handler = props.on_pointer_cancel.clone();
-    root = root.on_event("pointercancel", move |_event: Box<dyn EventData>| {
+    root = root.on_event("pointercancel", move |event: Box<dyn EventData>| {
         set_board_press_held(false);
+        let cancel = event
+            .as_any()
+            .downcast_ref::<PointerEvent>()
+            .cloned()
+            .unwrap_or_default();
         if let Some(handler) = cancel_handler.as_ref() {
-            handler.call(PointerEvent::default());
+            handler.call(cancel);
         }
     });
 
@@ -2327,11 +2338,11 @@ mod tests {
     #[test]
     fn board_pointercancel_retires_the_latch_and_signals() {
         set_board_press_held(false);
-        let cancels = std::rc::Rc::new(std::cell::RefCell::new(0usize));
-        let cancel_count = cancels.clone();
+        let cancels = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+        let cancel_log = cancels.clone();
         let vnode = Board(BoardProps {
-            on_pointer_cancel: Some(Callback::new(move |_| {
-                *cancel_count.borrow_mut() += 1;
+            on_pointer_cancel: Some(Callback::new(move |e: PointerEvent| {
+                cancel_log.borrow_mut().push(e.pointer_id);
             })),
             ..Default::default()
         });
@@ -2339,17 +2350,20 @@ mod tests {
 
         board_fire(root, "pointerdown", PointerEvent::new().buttons(1));
         assert!(board_press_held());
-        // The generic register delivers the cancel as a signal: the latch
-        // retires and the prop fires even though the payload is a default.
+        // The generic register delivers the cancel: the latch retires and the
+        // prop receives the payload the wire built — NOT a fabricated default.
         let handler = root
             .event_handlers
             .get("pointercancel")
             .unwrap_or_else(|| panic!("pointercancel must be registered"));
-        // The delivered payload: a default-valued `PointerEvent` (a signal).
-        let cancelled = PointerEvent::default();
-        (handler.borrow_mut())(Box::new(cancelled));
+        let aborted = PointerEvent::new().pointer_id(9);
+        (handler.borrow_mut())(Box::new(aborted));
         assert!(!board_press_held(), "the cancel must retire the latch");
-        assert_eq!(*cancels.borrow(), 1);
+        assert_eq!(
+            *cancels.borrow(),
+            [9],
+            "the real cancel payload must be forwarded, not a default"
+        );
     }
 
     #[test]

@@ -1,0 +1,80 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
+.hk-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6, 0.375rem);
+  padding: 2px var(--space-8, 0.5rem);
+  border-radius: var(--radius-full, 999px);
+  font-size: var(--text-2xs, 0.625rem);
+  line-height: 1.4;
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-surface) / 60%);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  max-width: 100%;
+  min-width: 0;
+}
+
+.hk-status-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgb(var(--color-muted));
+}
+
+.hk-status-pill-warn .hk-status-pill-dot {
+  background: rgb(var(--color-warning));
+}
+
+.hk-status-pill-error .hk-status-pill-dot {
+  background: rgb(var(--color-error));
+}
+
+/* Live/ok state: success dot with a gentle pulse so liveness reads at a glance. */
+.hk-status-pill-ok .hk-status-pill-dot {
+  background: rgb(var(--color-success));
+  animation: hk-status-pill-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hk-status-pill-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--color-success) / 35%); }
+  50%      { box-shadow: 0 0 0 3px rgb(var(--color-success) / 0%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-status-pill-ok .hk-status-pill-dot {
+    animation: none;
+  }
+}
+
+.hk-status-pill-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-status-pill-latency {
+  color: rgb(var(--color-muted));
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.hk-status-pill-version {
+  color: rgb(var(--color-muted) / 80%);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

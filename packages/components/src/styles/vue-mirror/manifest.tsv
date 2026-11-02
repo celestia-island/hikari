@@ -1,4 +1,5 @@
 # mirror-path	upstream-path (relative to packages/vue/src)
+styles/admin-tokens.scss	styles/admin-tokens.scss
 tokens.scss	tokens.scss
 scale.scss	scale.scss
 styles/_polyfill.scss	styles/polyfill.scss
@@ -102,3 +103,18 @@ components/HkLogWindow.scss	components/HkLogWindow.scss
 components/HkJsonTree.scss	components/HkJsonTree.scss
 components/HkMarkdownRenderer.scss	components/HkMarkdownRenderer.scss
 components/HkDiffViewer.scss	components/HkDiffViewer.scss
+components/HkPageHeader.scss	components/HkPageHeader.scss
+components/HkTitleBar.scss	components/HkTitleBar.scss
+components/HkWindowControls.scss	components/HkWindowControls.scss
+components/HkStatusRow.scss	components/HkStatusRow.scss
+components/HkStatusPill.scss	components/HkStatusPill.scss
+components/HkDockBar.scss	components/HkDockBar.scss
+components/HkShareBar.scss	components/HkShareBar.scss
+components/HkStepFlow.scss	components/HkStepFlow.scss
+components/HkPaneHolder.scss	components/HkPaneHolder.scss
+components/HkSidebarRail.scss	components/HkSidebarRail.scss
+components/HkAffixPicker.scss	components/HkAffixPicker.scss
+components/HkHeaderPicker.scss	components/HkHeaderPicker.scss
+components/HkLocalePicker.scss	components/HkLocalePicker.scss
+components/HkNavItem.scss	components/HkNavItem.scss
+components/HkMenu.scss	components/HkMenu.scss

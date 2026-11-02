@@ -385,6 +385,25 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-selection-waterfall",
         ".hk-card-list",
         ".hk-pill-group-pill",
+        // The shared `s-*` shell sheet (the five sheet-less mirrors' geometry)
+        ".s-admin-shell",
+        ".s-status-bar",
+        ".hk-menu-flag",
+        // W5 layout + nav family
+        ".hk-page-header",
+        ".hk-titlebar",
+        ".hk-window-controls",
+        ".hk-status-row",
+        ".hk-status-pill",
+        ".hk-dock-bar",
+        ".hk-share-bar",
+        ".hk-step-flow",
+        ".hk-pane-holder",
+        ".hk-sidebar-rail-host",
+        ".hk-affix-chip",
+        ".hk-header-picker",
+        ".hk-locale-picker-trigger",
+        ".hk-nav-item",
         // W4 display + media family
         ".hk-empty-state",
         ".hk-qr-card",
@@ -588,7 +607,7 @@ fn legacy_sheets_do_not_share_classes_with_the_mirrors() {
 
     // Known dual-source debt from earlier waves (each entry is retired with
     // the family that owns it). NEW overlaps must fail here.
-    const KNOWN_DUAL_SOURCES: [&str; 8] = [
+    const KNOWN_DUAL_SOURCES: [&str; 10] = [
         "hk-breadcrumb-dropdown-item",
         "hk-card",
         "hk-card-hoverable",
@@ -597,6 +616,9 @@ fn legacy_sheets_do_not_share_classes_with_the_mirrors() {
         "hk-icon-button-icon",
         "hk-input-wrapper",
         "hk-menu-divider",
+        // Retired later with the legacy tabs/menu sheets (W8 theme wave).
+        "hk-menu-item-icon",
+        "hk-tabs",
     ];
     let legacy = classes_in(&legacy_files);
     let mirrored = classes_in(&mirror_files);

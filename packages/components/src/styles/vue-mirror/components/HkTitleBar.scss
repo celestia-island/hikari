@@ -1,0 +1,173 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkTitleBar — hybrid-shell caption bar.
+//
+// Colors ride the theme channels (--color-*) so the bar follows whatever
+// preset/mode the host app is in. Drag is pure CSS app-region (Tauri and
+// Electron both honor it); interactive children opt out with no-drag.
+// Text selection is chrome-disabled across the whole bar.
+
+@use "../styles/polyfill" as *;
+
+.hk-titlebar {
+  --hk-tb-height: 32px;
+  --hk-tb-bg: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 80%, transparent);
+  --hk-tb-border: rgb(var(--color-border, 100 100 100) / 0.25);
+  --hk-tb-fg: rgb(var(--color-text-secondary, 102 102 102));
+  --hk-tb-fg-strong: rgb(var(--color-text, 30 30 30));
+  --hk-tb-hover: rgb(var(--color-primary, 122 162 247) / 0.12);
+  --hk-tb-active: rgb(var(--color-primary, 122 162 247) / 0.2);
+  --hk-tb-focus: rgb(var(--color-primary, 122 162 247) / 0.6);
+  --hk-tb-close-hover: #e81123;
+  --hk-tb-close-active: #f1707a;
+  /* --hk-tb-close-ink and --hk-tb-icon-size are HOST-CONFIGURABLE, so they
+     are read with fallbacks at their use sites instead of being declared
+     here: a declaration on .hk-titlebar itself would out-rank a value the
+     host sets on :root (local declarations beat inherited ones), which
+     made the tokens look configurable while only the component could win.
+     The close fill is a FIXED danger red, so its ink default is fixed too:
+     deriving it from the theme's on-solid choice (the default dark preset
+     picks polar-night ink for its pale primary fills) painted a dark X on
+     dark red at roughly 1:1 - the host-visible bug both wowsp and momoi
+     filed. */
+  --hk-tb-radius-close: 0 8px 0 0;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--hk-tb-height);
+  display: flex;
+  align-items: center;
+  z-index: var(--hk-z-titlebar);
+  @include user-select(none);
+  background: var(--hk-tb-bg);
+  @include backdrop-filter(blur(var(--blur-md, 16px)));
+  border-bottom: 1px solid var(--hk-tb-border);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.hk-titlebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline-start: 12px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.hk-titlebar-icon {
+  width: var(--hk-tb-icon-size, 16px);
+  height: var(--hk-tb-icon-size, 16px);
+  display: block;
+  pointer-events: none;
+}
+
+.hk-titlebar-title-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--hk-tb-fg-strong);
+}
+
+.hk-titlebar-subtitle {
+  font-size: 10px;
+  color: var(--hk-tb-fg);
+  opacity: 0.7;
+  padding-inline-start: 8px;
+  white-space: nowrap;
+}
+
+.hk-titlebar-spacer {
+  flex: 1;
+}
+
+.hk-titlebar-actions {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Caption buttons are scoped under the bar on purpose: a host's element
+   rules (`button:hover:not(:disabled)` scores (0,2,1)) would otherwise
+   out-rank the component's class-level hover and repaint the caption -
+   the momoi field report. Scoped selectors sit at (0,3,0), one level
+   above any plausible element rule, while the close-specific rules stay
+   later in the sheet so they keep winning among themselves. */
+.hk-titlebar .hk-titlebar-btn {
+  width: 46px;
+  height: var(--hk-tb-height);
+  border: none;
+  background: transparent;
+  color: var(--hk-tb-fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  outline: none;
+  padding: 0;
+}
+
+.hk-titlebar .hk-titlebar-btn:hover {
+  background: var(--hk-tb-hover);
+  color: var(--hk-tb-fg-strong);
+}
+
+.hk-titlebar .hk-titlebar-btn:active {
+  background: var(--hk-tb-active);
+}
+
+/* Only the rightmost (close) button carries the window's top-right
+   corner radius; the other captions highlight as plain rectangles. */
+.hk-titlebar .hk-titlebar-btn-close {
+  border-radius: var(--hk-tb-radius-close);
+}
+
+/* RTL mirrors the caption row, so the close button lands top-left and
+   the window corner radius flips with it. */
+[dir="rtl"] .hk-titlebar .hk-titlebar-btn-close {
+  border-radius: 8px 0 0 0;
+}
+
+/* A maximized frame has no rounded window corner to follow: Windows 11
+   squares decorated windows itself and borderless hosts square the DWM
+   corners manually, so keeping the radius would round the hover fill
+   away from the (square) frame corner. The (0,3,0) compound out-ranks
+   both the base rule and the RTL mirror above. */
+.hk-titlebar[data-maximized] .hk-titlebar-btn-close {
+  border-radius: 0;
+}
+
+.hk-titlebar .hk-titlebar-btn-close:hover {
+  background: var(--hk-tb-close-hover);
+  color: var(--hk-tb-close-ink, #ffffff);
+}
+
+.hk-titlebar .hk-titlebar-btn-close:active {
+  background: var(--hk-tb-close-active);
+  color: var(--hk-tb-close-ink, #ffffff);
+}
+
+.hk-titlebar .hk-titlebar-btn:focus-visible {
+  outline: 2px solid var(--hk-tb-focus);
+  outline-offset: -2px;
+}
+
+/* Host apps offset their own root container below the bar. The var is
+   declared on .hk-titlebar and does not inherit to the host root, so
+   hosts re-declare it first:
+   :root { --hk-tb-height: 32px; }
+   #app { position: absolute; top: var(--hk-tb-height); … } */

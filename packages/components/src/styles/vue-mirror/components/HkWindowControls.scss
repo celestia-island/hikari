@@ -1,0 +1,90 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkWindowControls — the two deliberate modes (2026-10-23 user ruling).
+//
+// standard: borderless ghost buttons at the header chrome's own size
+// step (2rem boxes, 16px glyphs, 0.375rem gaps) — no borders, no
+// dividers, no container chrome; the close hover is a small rounded
+// red wash. Reads as one family with gear/search icon buttons. The
+// HOST keeps the canonical right edge inset
+// (--hk-window-controls-edge-inset, declared in styles/admin-tokens)
+// — a standard cluster never rides the frame; gluing it to the corner
+// is the flush mode's look worn by the wrong mode (field report
+// 2026-10-25: the chest login strip had no right padding at all).
+//
+// flush: edge-riding squares for thin captions — the host zeroes its
+// own right padding (the s-header-bar--chrome contract pattern); the
+// buttons stretch the host height, radius 0, wash-on-hover only.
+
+.hk-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: center;
+}
+
+.hk-window-controls__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  /* Inherit the host's foreground — a fixed gray literal is invisible
+   * on light floors and wrong in dark mode. */
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    background: rgb(var(--color-muted, 108 108 108) / 16%);
+  }
+
+  &--close {
+    &:hover {
+      background: rgb(232 17 35);
+      color: #fff;
+    }
+  }
+}
+
+// ── flush (thin captions) ───────────────────────────────────────────
+.hk-window-controls--flush {
+  gap: 0;
+  align-self: stretch;
+  margin-left: 0.25rem;
+
+  .hk-window-controls__btn {
+    width: 2.75rem;
+    height: auto;
+    min-height: 2.25rem;
+    border-radius: 0;
+
+    & + & {
+      /* No dividers in flush mode either — wash-on-hover only. */
+      border-left: none;
+    }
+  }
+}
+
+// Phones: the cluster shrinks so the full action row fits.
+@media (max-width: 767px) {
+  .hk-window-controls {
+    gap: 0.25rem;
+  }
+  .hk-window-controls__btn {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}

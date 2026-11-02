@@ -7,7 +7,14 @@
 
 pub mod anchor;
 pub mod breadcrumb;
+pub mod keyword_search_modal;
+pub mod localized_input;
 pub mod menu;
+pub mod menu_identity_item;
+pub mod menu_panel;
+pub mod menu_section;
+pub mod modal_breadcrumb;
+pub mod search_trigger;
 pub mod sidebar;
 pub mod stepper;
 pub mod steps;
@@ -31,6 +38,13 @@ pub use sidebar::{
 pub use stepper::{Stepper, StepperComponent, StepperDirection, StepperProps};
 // `Steps` and friends are the deprecated shim of `Stepper`; imported by name so
 // the overlap is visible at the export site instead of hidden behind a glob.
+pub use keyword_search_modal::*;
+pub use localized_input::*;
+pub use menu_identity_item::*;
+pub use menu_panel::*;
+pub use menu_section::*;
+pub use modal_breadcrumb::*;
+pub use search_trigger::*;
 #[allow(deprecated)]
 pub use steps::{StepData, StepStatus, Steps, StepsDirection, StepsProps};
 pub use tabs::{TabPane, TabPaneProps, TabPosition, Tabs, TabsComponent, TabsProps};

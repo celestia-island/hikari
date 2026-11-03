@@ -70,6 +70,33 @@
  *   self-contained — every value it formats comes from the options, so a
  *     crafted URL cannot steer the heal target or the copy.
  *
+ * LOCALE SELECTION (opt-in via `copy.locales`): a host that ships a locale
+ * table gets a failure panel whose copy is picked at PAGE runtime, before any
+ * framework (and any app i18n) exists. The generated script consults, in
+ * order — mirroring the boot-chrome family's stored → OS prefs → navigator →
+ * English fallback:
+ *
+ *   1. `copy.storageKey` — the host's saved UI locale tag in `localStorage`
+ *      (the user's explicit in-app choice outranks everything; WoWSP stores
+ *      `wowsp-ui-locale`);
+ *   2. the shell's OS preference, read from `window[osPrefsGlobal]` (default
+ *      `__CELESTIA_OS_PREFS__`, the boot-chrome family global; an explicit
+ *      `""` disables the source);
+ *   3. `navigator.languages`, then `navigator.language`;
+ *   4. none of the above matched: the English fallback copy.
+ *
+ * Each candidate tag is matched against the table exactly first, then with
+ * trailing subtags progressively stripped (`zh-hant-cn` → `zh-hant` →
+ * `zh`), then by its primary subtag alone. When several table keys share a
+ * primary subtag, the FIRST key in the host's insertion order wins
+ * (`zh-CN` listed before `zh-TW` means a `zh-HK` request resolves to the
+ * zh-CN entry).
+ *
+ * BYTE-COMPAT: a host that does NOT configure `copy.locales` gets a script
+ * byte-identical to the pre-locale implementation — none of the selection
+ * code is emitted, so a host that hashed the single-copy script into its CSP
+ * keeps its old hash.
+ *
  * Usage (the `/plugins/boot-recovery` subpath is the ONLY supported import for
  * consumers — it resolves to this file, not to the package's TypeScript
  * sources):
@@ -150,6 +177,42 @@ function jsonAscii(value) {
       return "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0");
     })
     .replace(/</g, "\\u003c");
+}
+
+/**
+ * Serialise the locale table as the generated script's `COPY_TABLE` literal:
+ * a JSON array of `[tag, message, retry]` triples, every string through
+ * `jsonAscii` (CJK becomes \uXXXX escapes, no `</script` can survive), so
+ * the generated script stays ASCII-only and byte-deterministic.
+ *
+ * @param {Array<[string, string, string]>} triples
+ * @returns {string}
+ */
+function copyTableLiteral(triples) {
+  const rows = [];
+  for (const triple of triples) {
+    rows.push(
+      "[" +
+        jsonAscii(triple[0]) +
+        "," +
+        jsonAscii(triple[1]) +
+        "," +
+        jsonAscii(triple[2]) +
+        "]",
+    );
+  }
+  return "[" + rows.join(",") + "]";
+}
+
+/**
+ * JSON literal for a nullable string option: a bare `null`, not the string
+ * `"null"` (`jsonAscii` stringifies).
+ *
+ * @param {string | null} value
+ * @returns {string}
+ */
+function jsonLiteral(value) {
+  return value === null ? "null" : jsonAscii(value);
 }
 
 /**
@@ -288,6 +351,103 @@ function normaliseCopy(input) {
 }
 
 /**
+ * Normalise the host's optional locale table.
+ *
+ * Keys are BCP 47-ish tags; each is trimmed, lowercased and has `_` turned
+ * into `-` (so `"zh_CN"` and `"zh-cn"` collide loudly instead of one of
+ * them silently shadowing the other). Each entry must be an object carrying
+ * non-empty `message` and `retry` strings — a typo must fail the build at
+ * config time, not paint an empty panel on a dead boot. The result is an
+ * array of `[tag, message, retry]` triples in the host's insertion order
+ * (which is the tie-break order for shared primary subtags), or `null`
+ * when no table was configured — the single-copy mode keeps the
+ * byte-identical script a host may have hashed into its CSP.
+ *
+ * @param {unknown} locales
+ * @returns {Array<[string, string, string]> | null}
+ */
+function normaliseLocales(locales) {
+  if (locales === undefined || locales === null) return null;
+  const triples = [];
+  const seen = new Map();
+  for (const rawKey in locales) {
+    if (!Object.prototype.hasOwnProperty.call(locales, rawKey)) continue;
+    const tag = String(rawKey).trim().replace(/_/g, "-").toLowerCase();
+    if (!tag) {
+      throw new Error(
+        "[hikari boot-recovery] copy.locales key " +
+          JSON.stringify(rawKey) +
+          " normalises to an empty locale tag",
+      );
+    }
+    const previous = seen.get(tag);
+    if (previous !== undefined) {
+      throw new Error(
+        "[hikari boot-recovery] copy.locales keys " +
+          JSON.stringify(previous) +
+          " and " +
+          JSON.stringify(rawKey) +
+          " normalise to the same locale tag " +
+          JSON.stringify(tag),
+      );
+    }
+    const entry = locales[rawKey];
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      typeof entry.message !== "string" ||
+      !entry.message ||
+      typeof entry.retry !== "string" ||
+      !entry.retry
+    ) {
+      throw new Error(
+        "[hikari boot-recovery] copy.locales[" +
+          JSON.stringify(tag) +
+          "]: copy.locales entries must carry non-empty message and retry strings",
+      );
+    }
+    seen.set(tag, rawKey);
+    triples.push([tag, entry.message, entry.retry]);
+  }
+  return triples.length ? triples : null;
+}
+
+/**
+ * Normalise `copy.storageKey`: the localStorage key holding the host's
+ * saved UI locale tag. It is the FIRST locale source (the user's explicit
+ * in-app choice outranks the OS preference and the navigator), so
+ * configuring it without a table to consult is a config error, not a silent
+ * no-op. An empty/whitespace value is treated as absent.
+ *
+ * @param {unknown} value
+ * @param {boolean} hasTable
+ * @returns {string | null}
+ */
+function normaliseStorageKey(value, hasTable) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  if (!hasTable) {
+    throw new Error(
+      "[hikari boot-recovery] copy.storageKey requires copy.locales",
+    );
+  }
+  return value.trim();
+}
+
+/**
+ * Normalise `osPrefsGlobal`: the name of the `window` global carrying the
+ * shell's OS locale preference (`{ locale: string }`). Defaults to the
+ * boot-chrome family global; an explicit empty string disables the source
+ * (for a host that publishes no such global and does not want one probed).
+ *
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+function normaliseOsPrefsGlobal(value) {
+  if (value === "") return null;
+  return typeof value === "string" ? value : "__CELESTIA_OS_PREFS__";
+}
+
+/**
  * Normalise the loading-screen half: `false` disables it entirely (heal-only
  * mode); an object customises the element selector and the dismissed class.
  * An empty `dismissedClass` disables the dismissed check (a host whose loader
@@ -324,6 +484,9 @@ function normaliseLoadingScreen(input) {
  *   predicateSource: string | null,
  *   loadingScreen: { selector: string, dismissedClass: string } | null,
  *   copy: { message: string, retry: string },
+ *   copyTable: Array<[string, string, string]> | null,
+ *   storageKey: string | null,
+ *   osPrefsGlobal: string | null,
  *   injectTo: "head" | "head-prepend",
  * }}
  */
@@ -333,6 +496,9 @@ function resolveOptions(options) {
     typeof input.canonicalOrigin === "string" && input.canonicalOrigin.trim()
       ? input.canonicalOrigin.trim()
       : BOOT_RECOVERY_CANONICAL_ORIGIN;
+  const copyRaw =
+    input.copy && typeof input.copy === "object" ? input.copy : {};
+  const copyTable = normaliseLocales(copyRaw.locales);
   return {
     canonicalOrigin: canonicalOrigin,
     canonicalHostname: canonicalHostname(canonicalOrigin),
@@ -343,6 +509,9 @@ function resolveOptions(options) {
         : null,
     loadingScreen: normaliseLoadingScreen(input.loadingScreen),
     copy: normaliseCopy(input.copy),
+    copyTable: copyTable,
+    storageKey: normaliseStorageKey(copyRaw.storageKey, copyTable !== null),
+    osPrefsGlobal: normaliseOsPrefsGlobal(input.osPrefsGlobal),
     injectTo: normaliseInjectTo(input.injectTo),
   };
 }
@@ -422,17 +591,23 @@ function htmlFileMatches(filename, htmlFiles) {
  * CSS for the failure panel, injected as one inline `<style>` next to the panel
  * itself. Deliberately SELF-CONTAINED: it styles only hikari's own panel
  * classes, never the host's loading element, so a custom `selector` cannot
- * break out of a stylesheet. `color` starts from the light-scheme value and
- * flips under `prefers-color-scheme: dark` — the host's loading screen owns the
- * backdrop, but hikari can at least keep the panel text legible before any
- * theme has loaded. The button derives every colour from `currentColor`.
+ * break out of a stylesheet. The values are hikari's seed tokens written out
+ * literally (packages/vue/src/styles/theme/channels.scss + scale.scss): the
+ * primary 122 162 247 with its 82%-black hover mix and button shadow, the
+ * elevated card shadow, the md/lg radii, the `--font-sans` stack and the
+ * text seed 30 30 30. The card carries its own surface — white in the light
+ * scheme, the Nord surface rgb(46 52 64) under `prefers-color-scheme: dark`
+ * — so the panel stays legible on any backdrop (WoWSP's dark loader paints
+ * #0b1220) before any theme engine has loaded.
  */
 const FAILURE_PANEL_CSS = [
-  ".hk-boot-recovery{display:flex;flex-direction:column;align-items:center;gap:1rem;max-width:32rem;padding:1.5rem;text-align:center;font-family:system-ui,sans-serif;color:#1e2837}",
-  ".hk-boot-recovery__message{margin:0;font-size:.95rem;line-height:1.5}",
-  ".hk-boot-recovery__retry{font:inherit;font-size:.85rem;padding:.5rem 1.25rem;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit;cursor:pointer}",
-  ".hk-boot-recovery__retry:hover{background:rgba(127,127,127,.15)}",
-  "@media (prefers-color-scheme:dark){.hk-boot-recovery{color:#cfe3ff}}",
+  ".hk-boot-recovery{display:flex;flex-direction:column;align-items:center;gap:1.25rem;max-width:32rem;padding:2rem 2.5rem;text-align:center;background:#fff;border:1px solid rgb(30 30 30 / 8%);border-radius:12px;box-shadow:0 8px 32px rgb(0 0 0 / 15%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;color:rgb(30 30 30)}",
+  ".hk-boot-recovery__message{margin:0;font-size:.875rem;line-height:1.6}",
+  ".hk-boot-recovery__retry{appearance:none;font:inherit;font-size:.875rem;font-weight:600;padding:.5rem 1.5rem;border:0;border-radius:8px;background:rgb(122 162 247);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgb(122 162 247 / 35%);transition:background .15s cubic-bezier(.4,0,.2,1),box-shadow .15s cubic-bezier(.4,0,.2,1)}",
+  ".hk-boot-recovery__retry:hover{background:rgb(100 133 203)}",
+  ".hk-boot-recovery__retry:active{background:rgb(83 111 167)}",
+  ".hk-boot-recovery__retry:focus-visible{outline:none;box-shadow:0 0 0 3px rgb(122 162 247 / 25%)}",
+  "@media (prefers-color-scheme:dark){.hk-boot-recovery{background:rgb(46 52 64);border-color:rgb(255 255 255 / 8%);box-shadow:0 8px 32px rgb(0 0 0 / 45%);color:rgb(216 222 233)}}",
 ].join("\n");
 
 /**
@@ -486,6 +661,18 @@ export function bootRecoveryScript(options = {}) {
     );
     lines.push("  var COPY_MESSAGE = " + jsonAscii(resolved.copy.message) + ";");
     lines.push("  var COPY_RETRY = " + jsonAscii(resolved.copy.retry) + ";");
+    if (resolved.copyTable) {
+      lines.push("  var COPY_FALLBACK = [COPY_MESSAGE, COPY_RETRY];");
+      lines.push(
+        "  var COPY_TABLE = " + copyTableLiteral(resolved.copyTable) + ";",
+      );
+      lines.push(
+        "  var STORAGE_KEY = " + jsonLiteral(resolved.storageKey) + ";",
+      );
+      lines.push(
+        "  var OS_PREFS_GLOBAL = " + jsonLiteral(resolved.osPrefsGlobal) + ";",
+      );
+    }
     lines.push("  var PANEL_CSS = " + jsonAscii(FAILURE_PANEL_CSS) + ";");
   }
   lines.push("");
@@ -572,6 +759,79 @@ export function bootRecoveryScript(options = {}) {
     lines.push("    location.reload();");
     lines.push("  }");
     lines.push("");
+    if (resolved.copyTable) {
+      lines.push("  /* Panel copy locale sources, first match wins (mirrors boot-chrome's");
+      lines.push("     stored -> OS prefs -> navigator -> English fallback order):");
+      lines.push("     1. localStorage[STORAGE_KEY] - the host's saved UI locale, the");
+      lines.push("        user's explicit in-app choice, outranks everything;");
+      lines.push("     2. window[OS_PREFS_GLOBAL].locale - the shell's OS preference;");
+      lines.push("     3. navigator.languages, then navigator.language;");
+      lines.push("     4. no match - the English fallback pair (COPY_FALLBACK).");
+      lines.push("     Each candidate tag is matched against COPY_TABLE exactly, then");
+      lines.push("     with trailing subtags progressively stripped, then by its");
+      lines.push("     primary subtag alone; entries sharing a primary subtag resolve");
+      lines.push("     to the FIRST one the host listed. The winning entry is returned");
+      lines.push("     as its [message, retry] pair, like COPY_FALLBACK. */");
+      lines.push("  function localeKey(tag, drop) {");
+      lines.push('    var parts = String(tag).replace(/_/g, "-").toLowerCase().split("-");');
+      lines.push("    if (drop >= parts.length) return null;");
+      lines.push('    return parts.slice(0, parts.length - drop).join("-");');
+      lines.push("  }");
+      lines.push("  function tableHit(key) {");
+      lines.push("    for (var i = 0; i < COPY_TABLE.length; i++) {");
+      lines.push("      if (COPY_TABLE[i][0] === key) return COPY_TABLE[i];");
+      lines.push("    }");
+      lines.push("    return null;");
+      lines.push("  }");
+      lines.push("  function primaryHit(tag) {");
+      lines.push('    var primary = String(tag).replace(/_/g, "-").toLowerCase().split("-")[0];');
+      lines.push("    for (var i = 0; i < COPY_TABLE.length; i++) {");
+      lines.push('      if (COPY_TABLE[i][0].split("-")[0] === primary) return COPY_TABLE[i];');
+      lines.push("    }");
+      lines.push("    return null;");
+      lines.push("  }");
+      lines.push("  function pickCopy() {");
+      lines.push("    var candidates = [];");
+      lines.push("    if (STORAGE_KEY) {");
+      lines.push("      try {");
+      lines.push("        var stored = localStorage.getItem(STORAGE_KEY);");
+      lines.push('        if (typeof stored === "string" && stored) candidates.push(stored);');
+      lines.push("      } catch (e) {}");
+      lines.push("    }");
+      lines.push('    if (OS_PREFS_GLOBAL && typeof window !== "undefined") {');
+      lines.push("      try {");
+      lines.push("        var prefs = window[OS_PREFS_GLOBAL];");
+      lines.push('        if (prefs && typeof prefs.locale === "string") candidates.push(prefs.locale);');
+      lines.push("      } catch (e) {}");
+      lines.push("    }");
+      lines.push('    if (typeof navigator !== "undefined") {');
+      lines.push("      try {");
+      lines.push("        if (navigator.languages && navigator.languages.length) {");
+      lines.push("          for (var i = 0; i < navigator.languages.length; i++) {");
+      lines.push('            if (typeof navigator.languages[i] === "string" && navigator.languages[i]) {');
+      lines.push("              candidates.push(navigator.languages[i]);");
+      lines.push("            }");
+      lines.push("          }");
+      lines.push("        }");
+      lines.push('        if (typeof navigator.language === "string" && navigator.language) {');
+      lines.push("          candidates.push(navigator.language);");
+      lines.push("        }");
+      lines.push("      } catch (e) {}");
+      lines.push("    }");
+      lines.push("    for (var c = 0; c < candidates.length; c++) {");
+      lines.push("      var hit = tableHit(localeKey(candidates[c], 0));");
+      lines.push("      if (hit) return [hit[1], hit[2]];");
+      lines.push('      var parts = String(candidates[c]).replace(/_/g, "-").toLowerCase().split("-");');
+      lines.push("      for (var drop = 1; drop < parts.length; drop++) {");
+      lines.push("        hit = tableHit(localeKey(candidates[c], drop));");
+      lines.push("        if (hit) return [hit[1], hit[2]];");
+      lines.push("      }");
+      lines.push("      hit = primaryHit(candidates[c]);");
+      lines.push("      if (hit) return [hit[1], hit[2]];");
+      lines.push("    }");
+      lines.push("    return null;");
+      lines.push("  }");
+    }
     lines.push(
       "  /* Replace the loader's contents with the failure panel. Built from",
     );
@@ -588,11 +848,20 @@ export function bootRecoveryScript(options = {}) {
     lines.push('    box.setAttribute("role", "alert");');
     lines.push('    var message = document.createElement("p");');
     lines.push('    message.className = "hk-boot-recovery__message";');
-    lines.push("    message.textContent = COPY_MESSAGE;");
+    if (resolved.copyTable) {
+      lines.push("    var copy = pickCopy() || COPY_FALLBACK;");
+      lines.push("    message.textContent = copy[0];");
+    } else {
+      lines.push("    message.textContent = COPY_MESSAGE;");
+    }
     lines.push('    var button = document.createElement("button");');
     lines.push('    button.type = "button";');
     lines.push('    button.className = "hk-boot-recovery__retry";');
-    lines.push("    button.textContent = COPY_RETRY;");
+    lines.push(
+      resolved.copyTable
+        ? "    button.textContent = copy[1];"
+        : "    button.textContent = COPY_RETRY;",
+    );
     lines.push('    button.addEventListener("click", retry);');
     lines.push("    box.appendChild(message);");
     lines.push("    box.appendChild(button);");
@@ -630,8 +899,14 @@ export function bootRecoveryScript(options = {}) {
  *   loadingScreen?: { selector?: string, dismissedClass?: string } | false,
  *   deadlineMs?: number,
  *   canonicalOrigin?: string,
+ *   osPrefsGlobal?: string,
  *   isMangledOrigin?: (protocol: string, hostname: string) => boolean,
- *   copy?: { message?: string, retry?: string },
+ *   copy?: {
+ *     message?: string,
+ *     retry?: string,
+ *     locales?: Record<string, { message: string, retry: string }>,
+ *     storageKey?: string,
+ *   },
  *   injectTo?: "head" | "head-prepend",
  *   }} [options]
  * @returns {import("vite").Plugin}

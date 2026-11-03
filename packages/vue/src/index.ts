@@ -252,7 +252,40 @@ export {
   type Board3DLightPoint,
   type LightingRigOptions,
 } from "./scene3d/lighting";
-export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./components/HkTrendChart";
+// Trend chart: the offline pre-render helper + the pure geometry surface
+// (the TS port of the Rust mirror's trend_chart.rs) + the pen/threshold
+// data types. HkTrendChart renders exactly this helper's markup.
+export {
+  renderTrendChartSvg,
+  trendGeometry,
+  trendHeightPx,
+  trendPenColor,
+  trendWindowEnd,
+  trendPolyline,
+  trendAreaPath,
+  TREND_CHART_WIDTH,
+  TREND_CHART_HEIGHT,
+  TREND_CHART_TIME_WINDOW_MS,
+  TREND_CHART_GRID_LEFT,
+  TREND_CHART_GRID_RIGHT,
+  TREND_CHART_GRID_TOP,
+  TREND_CHART_GRID_BOTTOM,
+  TREND_THRESHOLD_DASHED,
+  TREND_THRESHOLD_DOTTED,
+  TREND_THRESHOLD_HH_COLOR,
+  TREND_THRESHOLD_H_COLOR,
+  TREND_THRESHOLD_L_COLOR,
+  TREND_THRESHOLD_LL_COLOR,
+  type RenderTrendChartOptions,
+  type TrendPen,
+  type TrendPoint,
+  type AlarmThresholds,
+  type TrendCoord,
+  type TrendFrame,
+  type TrendPenGeometry,
+  type TrendThresholdLine,
+  type TrendGeometry,
+} from "./components/trendGeometry";
 export { type HkTreemapNode, type HkTreemapValueFormatter } from "./components/HkTreemap";
 
 // ── Theme decor (theme-provided decorative widgets, host-placed) ──────────

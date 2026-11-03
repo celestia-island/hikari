@@ -938,6 +938,7 @@ export type { HkPillToggleGroupOption } from "./components/HkPillToggleGroup";
 export { HkIconChip as HkIconChip } from "./components/HkIconChip";
 export { HkIconChip as HIconChip } from "./components/HkIconChip";
 export { HkCardList, HkListRow } from "./components/HkCardList";
+export type { HkListRowAction, HkListRowActionsMode } from "./components/HkCardList";
 export { HkCardList as HCardList, HkListRow as HListRow } from "./components/HkCardList";
 export { HkSectionHeader, type SectionHeaderVariant } from "./components/HkSectionHeader";
 export { HkSectionHeader as HSectionHeader } from "./components/HkSectionHeader";

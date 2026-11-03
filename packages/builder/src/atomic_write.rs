@@ -64,11 +64,12 @@ fn write_temp(tmp: &Path, data: &[u8]) -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::HashSet;
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
     use std::thread;
+
+    use super::*;
 
     /// Temp scratch dir per test; panicking tests leave it behind, which is
     /// fine for a target-dir test run.

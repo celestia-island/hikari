@@ -1567,8 +1567,9 @@ impl StyledComponent for BoardComponent {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tairitsu_vdom::PointerType;
+
+    use super::*;
 
     fn node(id: &str, x: f64, y: f64, w: f64, h: f64) -> BoardNode {
         BoardNode::new(id, x, y, w, h)

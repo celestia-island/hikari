@@ -703,8 +703,9 @@ impl StyledComponent for ImageViewerComponent {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tairitsu_vdom::PointerType;
+
+    use super::*;
 
     /// The litmus box the Vue tests use: an 800x600 image in a 400x300 canvas
     /// (fit 0.5, drawn 400x300 at fit).

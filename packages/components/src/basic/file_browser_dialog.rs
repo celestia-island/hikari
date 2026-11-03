@@ -262,8 +262,6 @@ pub fn accept_extensions(accept: Option<&str>) -> Vec<String> {
         .collect()
 }
 
-/// Vue's `visibleEntries`: with an active filter, directories always pass and
-/// a file must end with the (lowercased) extension.
 /// The filter `select` `change` emission: the selected key, verbatim.
 ///
 /// tairitsu 0.5.26 delivers the real selected value (ledger L127 resolved),
@@ -274,6 +272,8 @@ pub fn filter_change_emission(value: &str) -> Option<String> {
     Some(value.to_owned())
 }
 
+/// Vue's `visibleEntries`: with an active filter, directories always pass and
+/// a file must end with the (lowercased) extension.
 pub fn visible_entries(entries: &[RemoteFileEntry], filter_ext: &str) -> Vec<RemoteFileEntry> {
     let sorted = sort_entries(entries);
     if filter_ext.is_empty() {
@@ -808,8 +808,10 @@ pub fn FileBrowserDialog(props: FileBrowserDialogProps) -> Element {
                         // tairitsu 0.5.26 delivers the real selected value
                         // (ledger L127 resolved): "" is the "All" option's
                         // key and resets the host filter, exactly like Vue.
-                        if let Some(handler) = handler.as_ref() {
-                            handler.call(event.value.clone());
+                        if let Some(emission) = filter_change_emission(&event.value)
+                            && let Some(handler) = handler.as_ref()
+                        {
+                            handler.call(emission);
                         }
                     },
                     {VNode::Fragment(options)}

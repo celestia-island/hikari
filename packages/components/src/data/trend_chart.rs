@@ -40,10 +40,14 @@
 // escaping.
 //
 // Deltas vs Vue (documented):
-//   * ECharts is NOT embedded. Vue lazily imports `echarts/core` and hands it
-//     an option tree; the mirror draws the same series geometry as declarative
-//     SVG (the HkBarChart / HkDonutChart dependency-free line), which is why
-//     the projection is a pure function instead of canvas state.
+//   * ECharts is NOT embedded — by BOTH sides now: the Vue canonical dropped
+//     echarts (feat/offline-trend-render) and renders this exact SVG subtree
+//     through the TS port of this file's pure geometry
+//     (`packages/vue/src/components/trendGeometry.ts`, this module's tests
+//     ported alongside), so the two mirrors share one dependency-free
+//     contract (the HkBarChart / HkDonutChart dependency-free line) — which
+//     is why the projection is a pure function instead of canvas state.
+//     Deltas below that describe the OLD echarts build are kept as history.
 //   * There is no ECharts chrome: no cartesian grid, no axis/tick labels, no
 //     legend, no tooltip/axisPointer, no `dataZoom`, and `smooth: true` becomes
 //     a straight polyline. Threshold guides DO keep Vue's colors and dash

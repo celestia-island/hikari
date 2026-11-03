@@ -1,191 +1,87 @@
-import { defineComponent, onMounted, onUnmounted, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, type PropType } from "vue";
 
-// echarts is loaded lazily (dynamic import in onMounted) so a consumer that
-// merely imports this component — or anything else from the hikari package —
-// never pays for echarts in the initial bundle. The static import graph
-// previously dragged the whole echarts module tree into the shared chunk,
-// which every entry page (e.g. the login screen) had to download and parse.
-import type { ECharts } from "echarts/core";
+import { renderTrendChartSvg, trendHeightPx, type AlarmThresholds, type TrendPen, type TrendPoint } from "./trendGeometry";
 
-export interface TrendPoint {
-  time: number;
-  value: number;
-}
-
-export interface AlarmThresholds {
-  hh?: number;
-  h?: number;
-  l?: number;
-  ll?: number;
-}
-
-export interface TrendPen {
-  label: string;
-  data: TrendPoint[];
-  thresholds?: AlarmThresholds;
-}
+// The pen/threshold data types live in the pure geometry module (the Rust
+// mirror's trend_chart.rs surface) and re-export here so direct-file
+// importers keep their established paths.
+export type { AlarmThresholds, TrendPen, TrendPoint };
 
 /**
- * Streaming line-chart wrapper around echarts. Takes any number of
- * "pens" (labelled time-series) and renders them against a rolling
- * time window, with optional alarm threshold lines (hh/h/l/ll) per pen.
- * Pure echarts plumbing — no domain logic, so any consumer can feed it
- * metrics, telemetry or analytics series.
+ * HkTrendChart — labelled time-series ("pens") drawn over a rolling time
+ * window, with optional alarm threshold guides (hh/h/l/ll per pen). Pure
+ * plumbing — no domain logic, so any consumer can feed it metrics,
+ * telemetry or analytics series.
+ *
+ * Dependency-free (the HkBarChart / HkDonutChart line): the chart is a
+ * hand-drawn declarative SVG subtree produced by ./trendGeometry — the
+ * faithful TS port of the Rust mirror's pure `trend_geometry` — mounted on
+ * its own `display:contents` host exactly as that mirror documents
+ * (packages/components/src/data/trend_chart.rs's DOM contract):
+ *
+ *   div.hk-trend-chart  style="width:100%;height:{height}"
+ *     div[style="display:contents"]
+ *       svg.hk-trend-chart__svg  viewBox + preserveAspectRatio="none"
+ *         line.hk-trend-chart__threshold  (one per present limit)
+ *         path.hk-trend-chart__area       (one per pen)
+ *         polyline.hk-trend-chart__line   (one per pen)
+ *
+ * The `hk-trend-chart*` classes are INERT hooks (no sheet defines them);
+ * the component ships NO stylesheet and no canvas. Pen ink rides the theme
+ * tokens (`rgb(var(--color-primary))` …), so a scheme flip repaints without
+ * a re-render, and threshold guides keep the old markLine colors and dash
+ * flavors.
+ *
+ * OFFLINE PRE-RENDER SEMANTICS: no animation exists at all — the first
+ * render IS the finished frame. Streaming updates re-render the same
+ * geometry synchronously when `pens` is reactive state. The identical
+ * markup is available as a pure string via `renderTrendChartSvg(pens,
+ * opts)` for hosts that embed static exports (inline or as a data URL)
+ * without mounting Vue at all.
+ *
+ * Sizing: the root box is `width:100%` tall `height` (a CSS length,
+ * default "240px"); its px value lifts into the viewBox (non-px lengths
+ * keep the 640×240 mirror frame) and `preserveAspectRatio="none"`
+ * stretches the plot to the box, so container resizes need no listeners.
+ *
+ * AI-generated (glm-5.3-flash via DeepSeek Harness), 2026-11-03 — SySL-1.0 §2.3.
  */
 export default defineComponent({
   name: "HkTrendChart",
   props: {
+    /** The labelled series, in ascending time order (default []). */
     pens: { type: Array as PropType<TrendPen[]>, default: () => [] },
+    /** The root box's CSS height (default "240px"); its px value sizes the viewBox. */
     height: { type: String, default: "240px" },
+    /** Draw the alarm threshold guides (default true). */
     showThresholds: { type: Boolean, default: true },
-    timeWindowMs: { type: Number, default: 300_000 }, // 5 minutes
+    /** Rolling window length in ms (default 300_000 — five minutes). */
+    timeWindowMs: { type: Number, default: 300_000 },
+    /** The window's "now" in epoch ms. Absent: the window freezes at the
+     * newest sample across pens, so a render is deterministic (the old
+     * echarts build read Date.now() on every tick). */
+    now: { type: Number, default: undefined },
+    /** The viewBox width (default 640 — the mirror's frame). */
+    width: { type: Number, default: 640 },
   },
   setup(props) {
-    const chartEl = ref<HTMLElement>();
-    let chart: ECharts | null = null;
-    let resizeCleanup: (() => void) | undefined;
-
-    function renderChart() {
-      if (!chart || props.pens.length === 0) return;
-
-      const now = Date.now();
-      const minTime = now - props.timeWindowMs;
-
-      const series = props.pens.map((pen) => ({
-        name: pen.label,
-        type: "line" as const,
-        data: pen.data
-          .filter((p) => p.time >= minTime)
-          .map((p) => [p.time, p.value]),
-        smooth: true,
-        symbol: "none",
-        lineStyle: { width: 2 },
-      }));
-
-      const markLines: Record<string, unknown>[] = [];
-      if (props.showThresholds) {
-        for (const pen of props.pens) {
-          if (pen.thresholds) {
-            const t = pen.thresholds;
-            if (t.hh != null)
-              markLines.push({
-                yAxis: t.hh,
-                lineStyle: { color: "#FF1744", type: "dashed", width: 1 },
-                label: { show: false },
-              });
-            if (t.h != null)
-              markLines.push({
-                yAxis: t.h,
-                lineStyle: { color: "#FF6D00", type: "dotted", width: 1 },
-                label: { show: false },
-              });
-            if (t.l != null)
-              markLines.push({
-                yAxis: t.l,
-                lineStyle: { color: "#FFD600", type: "dotted", width: 1 },
-                label: { show: false },
-              });
-            if (t.ll != null)
-              markLines.push({
-                yAxis: t.ll,
-                lineStyle: { color: "#FF1744", type: "dashed", width: 1 },
-                label: { show: false },
-              });
-          }
-        }
-      }
-
-      chart.setOption(
-        {
-          tooltip: {
-            trigger: "axis",
-            axisPointer: { type: "cross" },
-          },
-          legend: {
-            top: 0,
-            textStyle: { fontSize: 11 },
-          },
-          grid: { left: 50, right: 20, top: 30, bottom: 40 },
-          xAxis: {
-            type: "time",
-            min: minTime,
-            max: now,
-          },
-          yAxis: { type: "value", scale: true },
-          dataZoom: [{ type: "inside" }],
-          series:
-            markLines.length > 0
-              ? series.map((s) => ({
-                  ...s,
-                  markLine: { silent: true, data: markLines.map((m) => [{ ...m }, { ...m }]) },
-                }))
-              : series,
-        },
-        // Merge (not notMerge): this fires on every streaming tick (deep watch
-        // on pens). notMerge:true replaced the whole option each tick, which
-        // reset the user's dataZoom pan/zoom on every update and rebuilt every
-        // series. Merge updates data incrementally and — because we never
-        // specify dataZoom start/end here — preserves the user's current zoom.
-      );
-    }
-
-    function onResize() {
-      chart?.resize();
-    }
-
-    onMounted(async () => {
-      if (chartEl.value) {
-        const echarts = await import("echarts/core");
-        const { LineChart } = await import("echarts/charts");
-        const {
-          DataZoomComponent,
-          GridComponent,
-          LegendComponent,
-          MarkLineComponent,
-          TooltipComponent,
-        } = await import("echarts/components");
-        const { CanvasRenderer } = await import("echarts/renderers");
-        echarts.use([
-          LineChart,
-          GridComponent,
-          TooltipComponent,
-          LegendComponent,
-          DataZoomComponent,
-          MarkLineComponent,
-          CanvasRenderer,
-        ]);
-        chart = echarts.init(chartEl.value);
-        renderChart();
-        // Keep the canvas in sync with its container. echarts doesn't
-        // observe its own element, so without this the chart keeps its
-        // initial pixel size when the column narrows (mobile rotation,
-        // sidebar collapse, container resize) and renders off-canvas or
-        // leaves dead space. ResizeObserver covers container-driven
-        // changes; the window listener catches the cases where the
-        // observer isn't supported / doesn't fire (older WebViews).
-        const el = chartEl.value;
-        window.addEventListener("resize", onResize);
-        let ro: ResizeObserver | undefined;
-        if (typeof ResizeObserver !== "undefined") {
-          ro = new ResizeObserver(onResize);
-          ro.observe(el);
-        }
-        resizeCleanup = () => {
-          window.removeEventListener("resize", onResize);
-          ro?.disconnect();
-        };
-      }
-    });
-
-    onUnmounted(() => {
-      resizeCleanup?.();
-      resizeCleanup = undefined;
-      chart?.dispose();
-      chart = null;
-    });
-
-    watch(() => props.pens, renderChart, { deep: true });
-
-    return () => <div ref={chartEl} style={{ width: "100%", height: props.height }} />;
+    const svg = computed(() =>
+      renderTrendChartSvg(props.pens, {
+        now: props.now,
+        timeWindowMs: props.timeWindowMs,
+        width: props.width,
+        height: props.height,
+        showThresholds: props.showThresholds,
+      }),
+    );
+    // An empty height keeps the viewBox-derived px (the mirror's rule).
+    const heightCss = computed(() =>
+      props.height.trim() === "" ? `${trendHeightPx(props.height)}px` : props.height,
+    );
+    return () => (
+      <div class="hk-trend-chart" style={`width:100%;height:${heightCss.value}`}>
+        <div style="display:contents" innerHTML={svg.value} />
+      </div>
+    );
   },
 });

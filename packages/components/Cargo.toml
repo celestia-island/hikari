@@ -42,16 +42,16 @@ hikari-i18n = { version = "^0.5", path = "../i18n" }
 
 # Tairitsu framework (replaces Dioxus (legacy compat))
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
-# Floor 0.5.24: the first tairitsu release whose family ships together (0.5.23
-# existed only for `tairitsu`/`tairitsu-macros`) and the one that types the
-# `pointer*` family and `wheel` in the browser glue. It also still carries the
-# 0.5.18 property this crate depends on — `scss!` honouring `no_hash`, which
-# every component stylesheet passes; older macros silently hashed (or corrupted)
-# them, leaving components without any styling.
-tairitsu-vdom = "^0.5.24"
-tairitsu-hooks = "^0.5.24"
-tairitsu-macros = "^0.5.24"
-tairitsu-style = "^0.5.24"
+# Floor 0.5.25: first release with typed `change` delivery (ChangeEvent
+# handlers fire — the host discriminates by registered type). Still carries
+# 0.5.24's family-complete pointer/wheel typing and 0.5.18's `scss!`
+# `no_hash` honouring, which every component stylesheet passes; older macros
+# silently hashed (or corrupted) them, leaving components without any
+# styling.
+tairitsu-vdom = "^0.5.25"
+tairitsu-hooks = "^0.5.25"
+tairitsu-macros = "^0.5.25"
+tairitsu-style = "^0.5.25"
 
 # Global static variables
 once_cell = "^1.19"

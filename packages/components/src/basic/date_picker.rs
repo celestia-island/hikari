@@ -404,6 +404,34 @@ pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<NaiveDate> {
     cells
 }
 
+/// Decide what a native `<input type=date>` `change` should emit.
+///
+/// Returns `None` when the event must NOT touch the model:
+/// - an empty value is UNACTIONABLE on this wire — `ChangeEvent` carries no
+///   value (the glue implements no input value getter; ledger L127), so an
+///   empty `raw` cannot distinguish "user cleared the date" from "value
+///   unreadable". NOTE: once a value getter ships, "" becomes a legitimate
+///   clear and this sentinel must be redesigned (ledger L127);
+/// - an out-of-range or malformed value re-syncs to the model (Vue writes the
+///   element value back; the controlled mirror emits nothing and the host
+///   re-renders the prop).
+///
+/// A valid, allowed date yields `Some(Some(iso))` for `on_value_change`.
+pub fn native_change_emission(
+    raw: &str,
+    min_key: Option<&str>,
+    max_key: Option<&str>,
+) -> Option<Option<String>> {
+    if raw.is_empty() {
+        return None;
+    }
+    let day = parse_iso_date(raw)?;
+    if is_disabled_day(day, min_key, max_key) {
+        return None;
+    }
+    Some(Some(to_iso_date(day)))
+}
+
 /// Is a day outside the inclusive `min` / `max` bounds? Both bounds are ISO
 /// day keys (already normalized by the parser), and — exactly like Vue — the
 /// comparison is a lexicographic string comparison, which is chronological
@@ -939,21 +967,20 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
         let native_max = props.max.clone();
         let on_value_change = props.on_value_change.clone();
         let on_native_change = move |event: ChangeEvent| {
-            let raw = event.value.clone();
-            if raw.is_empty() {
-                if let Some(handler) = on_value_change.as_ref() {
-                    handler.call(None);
-                }
-                return;
-            }
-            // Out-of-range or malformed input re-syncs to the model (Vue
-            // writes the element value back; the controlled mirror simply
-            // emits nothing, and the host re-renders the prop).
-            if let Some(day) = parse_iso_date(&raw)
-                && !is_disabled_day(day, min_key.as_deref(), max_key.as_deref())
+            // `ChangeEvent` carries no value on this wire (the glue implements
+            // no input value getter (ledger L127), so `raw` is
+            // always empty here. `native_change_emission` maps "" to NO
+            // EMISSION: an empty `raw` cannot distinguish "user cleared the
+            // date" from "value unreadable", and emitting a spurious clear
+            // would wipe the model on every commit. NOTE: when the value
+            // getter ships, "" becomes a LEGITIMATE clear — this guard and
+            // its sentinel must be redesigned then, not silently re-enabled
+            // (ledger L127).
+            if let Some(emission) =
+                native_change_emission(&event.value, min_key.as_deref(), max_key.as_deref())
                 && let Some(handler) = on_value_change.as_ref()
             {
-                handler.call(Some(to_iso_date(day)));
+                handler.call(emission);
             }
         };
         let native_label = pick_date_label.clone();
@@ -1394,6 +1421,33 @@ mod tests {
 
     fn date(year: i32, month: u32, day: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(year, month, day).expect("valid test date")
+    }
+
+    // GUARD PIN (ledger L127): on this wire `ChangeEvent.value` is always ""
+    // (no glue value getter), so the empty case must stay a NO-EMISSION — a
+    // regression to `handler.call(None)` here wipes the model on every
+    // mobile-native commit.
+    #[test]
+    fn native_change_emission_treats_empty_as_unactionable() {
+        assert_eq!(native_change_emission("", None, None), None);
+        assert_eq!(native_change_emission("", Some("2026-01-01"), None), None);
+    }
+
+    #[test]
+    fn native_change_emission_still_parses_real_values() {
+        assert_eq!(
+            native_change_emission("2026-03-09", None, None),
+            Some(Some("2026-03-09".to_owned()))
+        );
+    }
+
+    #[test]
+    fn native_change_emission_still_rejects_garbage_and_out_of_range() {
+        assert_eq!(native_change_emission("not-a-date", None, None), None);
+        assert_eq!(
+            native_change_emission("2026-03-09", Some("2026-04-01"), None),
+            None
+        );
     }
 
     fn anchor() -> DatePickerAnchorRect {

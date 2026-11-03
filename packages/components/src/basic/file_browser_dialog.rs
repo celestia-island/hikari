@@ -264,6 +264,22 @@ pub fn accept_extensions(accept: Option<&str>) -> Vec<String> {
 
 /// Vue's `visibleEntries`: with an active filter, directories always pass and
 /// a file must end with the (lowercased) extension.
+/// Decide what a filter `select` `change` should emit upstream.
+///
+/// Returns `None` when the event must NOT touch the host filter: an empty
+/// value is currently UNACTIONABLE — `ChangeEvent` carries no value on this
+/// wire (the glue implements no value getter; ledger L127), so `""` cannot
+/// distinguish the legitimate "All" option (whose key IS `""`) from an
+/// unreadable value. NOTE: once a value getter ships, "" becomes the real
+/// All selection and this sentinel must be redesigned (ledger L127).
+pub fn filter_change_emission(value: &str) -> Option<String> {
+    if value.is_empty() {
+        None
+    } else {
+        Some(value.to_owned())
+    }
+}
+
 pub fn visible_entries(entries: &[RemoteFileEntry], filter_ext: &str) -> Vec<RemoteFileEntry> {
     let sorted = sort_entries(entries);
     if filter_ext.is_empty() {
@@ -795,8 +811,18 @@ pub fn FileBrowserDialog(props: FileBrowserDialogProps) -> Element {
                     style: "width:100%",
                     "aria-label": t("hikari::filePicker.filterAll", "All"),
                     onchange: move |event: ChangeEvent| {
-                        if let Some(handler) = handler.as_ref() {
-                            handler.call(event.value.clone());
+                        // `ChangeEvent` carries no value on this wire (no glue
+                        // value getter (ledger L127), so the
+                        // empty-value suppression below fires on EVERY
+                        // selection. NOTE: the "All" option's key IS "" — when
+                        // a value getter ships, selecting All yields "" and
+                        // this guard must be redesigned (it cannot tell "All"
+                        // from "unreadable"), not silently re-enabled
+                        // (ledger L127).
+                        if let Some(emission) = filter_change_emission(&event.value)
+                            && let Some(handler) = handler.as_ref()
+                        {
+                            handler.call(emission);
                         }
                     },
                     {VNode::Fragment(options)}
@@ -1099,6 +1125,22 @@ mod tests {
             kind,
             ..Default::default()
         }
+    }
+
+    // GUARD PIN (ledger L127): on this wire `ChangeEvent.value` is always ""
+    // (no glue value getter), so the empty case must stay a NO-EMISSION — the
+    // "All" option's key IS "", so a regression to `handler.call("")` here
+    // would reset the host's filter on every selection even after a value
+    // getter ships (the sentinel needs a redesign then, not silent
+    // re-enabling).
+    #[test]
+    fn filter_change_emission_suppresses_empty() {
+        assert_eq!(filter_change_emission(""), None);
+    }
+
+    #[test]
+    fn filter_change_emission_passes_real_extensions_through() {
+        assert_eq!(filter_change_emission(".csv"), Some(".csv".to_owned()));
     }
 
     fn file(name: &str, size: u64) -> RemoteFileEntry {

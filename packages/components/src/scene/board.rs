@@ -141,7 +141,8 @@
 //     [`BoardProps`] at its durable type for the host that wants to take the
 //     gesture over; [`board_wheel_step_k`] is one rung.
 //   * `pointercancel` still arrives through the generic register (the typed
-//     builders stop at enter/leave): the handler fires when the browser aborts
+//     builders stop at enter/leave/over/out): the handler fires when the
+//     browser aborts
 //     the gesture and retires the press latch. The payload is a REAL typed
 //     `PointerEvent` (tairitsu 0.5.24 routes every pointer-family event
 //     through the getters) and the mirror forwards it verbatim — nothing here

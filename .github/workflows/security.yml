@@ -50,6 +50,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Runner hosts carry no ambient cargo on PATH; the audit job above already
+      # pays for a toolchain step, and this job died with `cargo: command not
+      # found` without one (2026-11-03, both farm nodes).
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install cargo-deny
         run: cargo install --locked cargo-deny
 

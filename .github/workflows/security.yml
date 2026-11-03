@@ -50,8 +50,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Runner hosts carry no ambient cargo on PATH; the audit job above already
+      # pays for a toolchain step, and this job died with `cargo: command not
+      # found` without one (2026-11-03, both farm nodes).
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install cargo-deny
-        run: cargo install --locked cargo-deny
+        # Version-pinned guard (same pattern as tairitsu audit.yml): an unknown
+        # older cargo-deny on a warm runner would be reused forever, and an
+        # unpinned cold install drifts the deny.toml schema under us.
+        run: |
+          cargo deny --version 2>/dev/null | grep -q ' 0\.20\.2' \
+            || cargo install cargo-deny --version 0.20.2 --locked --force
 
       - name: Run cargo deny
         run: cargo deny check

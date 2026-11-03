@@ -406,12 +406,13 @@ pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<NaiveDate> {
 
 /// Decide what a native `<input type=date>` `change` should emit.
 ///
-/// Returns `None` when the event must NOT touch the model:
-/// - an empty value is UNACTIONABLE on this wire — `ChangeEvent` carries no
-///   value (the glue implements no input value getter; ledger L127), so an
-///   empty `raw` cannot distinguish "user cleared the date" from "value
-///   unreadable". NOTE: once a value getter ships, "" becomes a legitimate
-///   clear and this sentinel must be redesigned (ledger L127);
+/// Returns what the event should emit, or `None` when the event must NOT
+/// touch the model:
+/// - an EMPTY value is a legitimate CLEAR (ledger L127 resolved: tairitsu
+///   0.5.26 implements the `html-input-element` value getter, so the wire
+///   delivers the real committed value — `""` means the user emptied the
+///   input, and the model is told). Redesign history: on ≤0.5.25 the wire
+///   was value-blind and this branch was a no-emission guard;
 /// - an out-of-range or malformed value re-syncs to the model (Vue writes the
 ///   element value back; the controlled mirror emits nothing and the host
 ///   re-renders the prop).
@@ -423,7 +424,9 @@ pub fn native_change_emission(
     max_key: Option<&str>,
 ) -> Option<Option<String>> {
     if raw.is_empty() {
-        return None;
+        // tairitsu 0.5.26 delivers the real committed value: an empty `raw`
+        // is the user's clear, not a blind wire artefact.
+        return Some(None);
     }
     let day = parse_iso_date(raw)?;
     if is_disabled_day(day, min_key, max_key) {
@@ -967,15 +970,9 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
         let native_max = props.max.clone();
         let on_value_change = props.on_value_change.clone();
         let on_native_change = move |event: ChangeEvent| {
-            // `ChangeEvent` carries no value on this wire (the glue implements
-            // no input value getter (ledger L127), so `raw` is
-            // always empty here. `native_change_emission` maps "" to NO
-            // EMISSION: an empty `raw` cannot distinguish "user cleared the
-            // date" from "value unreadable", and emitting a spurious clear
-            // would wipe the model on every commit. NOTE: when the value
-            // getter ships, "" becomes a LEGITIMATE clear — this guard and
-            // its sentinel must be redesigned then, not silently re-enabled
-            // (ledger L127).
+            // tairitsu 0.5.26 delivers the real committed value (ledger L127
+            // resolved): "" is a genuine clear and flows through
+            // `native_change_emission` as an emission, exactly like Vue.
             if let Some(emission) =
                 native_change_emission(&event.value, min_key.as_deref(), max_key.as_deref())
                 && let Some(handler) = on_value_change.as_ref()
@@ -1423,14 +1420,22 @@ mod tests {
         NaiveDate::from_ymd_opt(year, month, day).expect("valid test date")
     }
 
-    // GUARD PIN (ledger L127): on this wire `ChangeEvent.value` is always ""
-    // (no glue value getter), so the empty case must stay a NO-EMISSION — a
-    // regression to `handler.call(None)` here wipes the model on every
-    // mobile-native commit.
+    // LEDGER L127 RESOLVED: an empty committed value is a REAL clear —
+    // tairitsu 0.5.26 delivers it and the pure fn emits `Some(None)`, so the
+    // host clears the model exactly like Vue. A regression to suppression
+    // here would strand the mobile-native clear.
     #[test]
-    fn native_change_emission_treats_empty_as_unactionable() {
-        assert_eq!(native_change_emission("", None, None), None);
-        assert_eq!(native_change_emission("", Some("2026-01-01"), None), None);
+    fn native_change_emission_emits_the_empty_clear() {
+        assert_eq!(
+            native_change_emission("", None, None),
+            Some(None),
+            "an empty committed value clears the model"
+        );
+        assert_eq!(
+            native_change_emission("", Some("2026-01-01"), None),
+            Some(None),
+            "the clear applies even with bounds"
+        );
     }
 
     #[test]

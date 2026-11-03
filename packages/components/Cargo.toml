@@ -42,16 +42,21 @@ hikari-i18n = { version = "^0.5", path = "../i18n" }
 
 # Tairitsu framework (replaces Dioxus (legacy compat))
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
-# Floor 0.5.25: first release with typed `change` delivery (ChangeEvent
-# handlers fire — the host discriminates by registered type). Still carries
-# 0.5.24's family-complete pointer/wheel typing and 0.5.18's `scss!`
-# `no_hash` honouring, which every component stylesheet passes; older macros
-# silently hashed (or corrupted) them, leaving components without any
-# styling.
-tairitsu-vdom = "^0.5.25"
-tairitsu-hooks = "^0.5.25"
-tairitsu-macros = "^0.5.25"
-tairitsu-style = "^0.5.25"
+# Floor: the 0.5.26 release LINE (crates 0.5.26 + tairitsu-web 0.5.26 +
+# glue 0.5.4). The four declared crates are byte-identical from 0.5.24 on —
+# the behavioural floors live in tairitsu-web and the glue:
+#   - glue 0.5.4: the `html-input-element` value getter (ChangeEvent.value
+#     carries the real committed value);
+#   - tairitsu-web 0.5.25: typed-`change` discrimination;
+#   - tairitsu-web 0.5.26: the value read through `html_input_element`;
+#   - tairitsu 0.5.18: `scss!` `no_hash` honouring (older macros silently
+#     hashed or corrupted component stylesheets).
+# Nothing enforces the tairitsu-web/glue pairing at package time: consumers
+# must package the whole line together (ledger L127's failure mode).
+tairitsu-vdom = "^0.5.26"
+tairitsu-hooks = "^0.5.26"
+tairitsu-macros = "^0.5.26"
+tairitsu-style = "^0.5.26"
 
 # Global static variables
 once_cell = "^1.19"

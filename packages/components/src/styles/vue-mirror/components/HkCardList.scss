@@ -76,3 +76,106 @@
   align-items: center;
   gap: var(--space-8, 0.5rem);
 }
+
+/* ── Option-control array (HkListRow's `actions`) ───────────────────────
+ * The row's last lane: named icon buttons in one of two layouts (see
+ * HkListRowActionsMode). "persistent" keeps the lane in the flow — it
+ * costs the row its width and stays visible. "overlay" (the default)
+ * parks the lane OUT of the flow: pinned to the row's right edge,
+ * invisible and inert until engaged — hover / keyboard focus on pointer
+ * devices (CSS below), tap on touch (the [data-revealed] state) — and
+ * then temporarily covers the trailing content, so a dense list never
+ * pays for actions it is not using. Touch-first clients swap the lane
+ * for one trigger that opens the same actions as a named, upward menu
+ * (tooltips never fire there, so names must live in the menu). */
+.hk-list-row {
+  position: relative;
+}
+
+.hk-list-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  flex-shrink: 0;
+
+  /* In the flow (persistent + touch): pin to the right edge when the
+     row carries no trailing slot of its own. */
+  &--persistent,
+  &--touch {
+    margin-left: auto;
+  }
+
+  /* Parked overlay: absolute over the row's right content. Kept
+     focusable for keyboard users — opacity alone hides it visually
+     while :focus-within reveals it (visibility:hidden would drop it
+     out of the tab order entirely). */
+  &--overlay {
+    position: absolute;
+    right: var(--space-8, 0.5rem);
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.125rem;
+    border-radius: var(--radius-sm, 0.375rem);
+    background: rgb(var(--color-surface, 255 255 255));
+    box-shadow: 0 2px 10px rgb(var(--color-border, 100 100 100) / 22%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fast, 0.15s) ease;
+  }
+
+  &--overlay[data-revealed],
+  &--overlay:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Pointer devices: hovering the row reveals the parked overlay. */
+@media (hover: hover) {
+  .hk-list-row:hover > .hk-list-row-actions--overlay {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.hk-list-row-actions__btn,
+.hk-list-row-actions__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs, 0.25rem);
+  background: transparent;
+  color: rgb(var(--color-muted, 108 108 108));
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: rgb(var(--color-text, 30 30 30) / 6%);
+    color: rgb(var(--color-text, 30 30 30));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary, 122 162 247));
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &[data-danger] {
+    color: rgb(var(--color-error, 247 118 142) / 90%);
+
+    &:hover:not(:disabled) {
+      background: rgb(var(--color-error, 247 118 142) / 10%);
+      color: rgb(var(--color-error, 247 118 142));
+    }
+  }
+}

@@ -131,9 +131,22 @@ function tags(
 }
 
 // ── fake page harness ──────────────────────────────────────────────────────
-// The generated script only reaches for three globals. Passing fakes as
-// Function parameters shadows Node's (absent) globals, so the REAL shipped
-// script runs unmodified — no copied logic, no drift.
+// The generated script only reaches for three globals on every page
+// (location / document / setTimeout); locale-aware variants additionally
+// read localStorage / navigator / window. Passing fakes as Function
+// parameters shadows Node's globals (Node exposes a real `navigator`!), so
+// the REAL shipped script runs unmodified — no copied logic, no drift.
+
+/** Minimal stand-in for the `localStorage` the locale-aware copy reads. */
+interface FakeLocalStorage {
+  getItem: (key: string) => string | null;
+}
+
+/** Minimal stand-in for the `navigator` the locale-aware copy reads. */
+interface FakeNavigator {
+  languages?: string[];
+  language?: string;
+}
 
 interface FakeNode {
   tag: string;
@@ -217,6 +230,12 @@ interface FakePage {
   replaceThrows?: boolean;
   /** The script to execute (default: the shipped default script). */
   script?: string;
+  /** `localStorage` backing the host's saved UI locale (locale-aware scripts). */
+  localStorage?: FakeLocalStorage;
+  /** `navigator` (locale-aware scripts; absent = the script must not see one). */
+  navigator?: FakeNavigator;
+  /** `window` global bag, e.g. the shell's OS prefs (locale-aware scripts). */
+  window?: Record<string, unknown>;
 }
 
 /**
@@ -268,13 +287,28 @@ function runRecovery(page: FakePage = {}): RecoveryRun {
     "location",
     "document",
     "setTimeout",
+    "localStorage",
+    "navigator",
+    "window",
     script,
   ) as (
     location: FakeLocation,
     document: FakeDocument,
     setTimeout: FakeSetTimeout,
+    localStorage: FakeLocalStorage | undefined,
+    navigator: FakeNavigator | undefined,
+    window: Record<string, unknown> | undefined,
   ) => void;
-  run(location, fakeDocument, fakeSetTimeout);
+  // Passing undefined shadows Node's own globals: a locale-aware script run
+  // without a fake navigator must not see Node's real one.
+  run(
+    location,
+    fakeDocument,
+    fakeSetTimeout,
+    page.localStorage,
+    page.navigator,
+    page.window,
+  );
 
   return {
     replaced,
@@ -292,6 +326,26 @@ function runRecovery(page: FakePage = {}): RecoveryRun {
 function panelButton(run: RecoveryRun): FakeNode {
   const panel = mustFind(run.loading?.children ?? [], "div");
   return mustFind(panel.children, "button");
+}
+
+/** The panel's message <p>, if a panel was painted into the fake loader. */
+function panelMessage(run: RecoveryRun): FakeNode {
+  const panel = mustFind(run.loading?.children ?? [], "div");
+  return mustFind(panel.children, "p");
+}
+
+/** Fake localStorage backed by a plain record. */
+function fakeStorage(entries: Record<string, string> = {}): FakeLocalStorage {
+  return {
+    getItem: (key) => (key in entries ? entries[key] : null),
+  };
+}
+
+/** Fake navigator with a languages list (and an optional explicit language). */
+function fakeNavigator(languages: string[], language?: string): FakeNavigator {
+  return language === undefined
+    ? { languages, language: languages[0] ?? "" }
+    : { languages, language };
 }
 
 /** Click every listener the button carries (the generated script registers one). */
@@ -566,9 +620,12 @@ describe("the recovery script's runtime behaviour (executed against a fake page)
     const style = mustFind(run.loading?.children ?? [], "style");
     // Colour-scheme aware and self-contained: the panel must not flip to light
     // colours on a dark desktop (or vice versa) before the app's theme loads.
+    // The card carries its own seed-token surface (white / Nord rgb(46 52 64)),
+    // so it stays legible on a dark loader backdrop (WoWSP paints #0b1220).
     expect(style.textContent).toContain("prefers-color-scheme:dark");
-    expect(style.textContent).toContain("#1e2837");
-    expect(style.textContent).toContain("#cfe3ff");
+    expect(style.textContent).toContain("rgb(30 30 30)");
+    expect(style.textContent).toContain("rgb(216 222 233)");
+    expect(style.textContent).toContain("rgb(122 162 247)");
     expect(style.textContent).toContain(".hk-boot-recovery");
 
     const panel = mustFind(run.loading?.children ?? [], "div");
@@ -732,6 +789,280 @@ describe("the recovery script's runtime behaviour (executed against a fake page)
     const panel = mustFind(run.loading?.children ?? [], "div");
     expect(mustFind(panel.children, "p").textContent).toBe(message);
     expect(mustFind(panel.children, "button").textContent).toBe("重试");
+  });
+});
+
+// ── locale-aware copy (copy.locales) ──────────────────────────────────────
+
+/** A WoWSP-shaped table: English fallback + two Chinese scripts, in the order
+ * the host lists them — zh-CN BEFORE zh-TW, which is the tie-break order. */
+const LOCALE_TABLE = {
+  "en-US": { message: "EN message", retry: "Reload" },
+  "zh-CN": { message: "简体中文消息", retry: "重新加载" },
+  "zh-TW": { message: "繁體中文訊息", retry: "重新載入" },
+};
+
+const WITH_TABLE = bootRecoveryScript({
+  copy: { locales: LOCALE_TABLE, storageKey: "wowsp-ui-locale" },
+});
+
+/** Fire the watchdog and return the painted panel's message and button. */
+function paint(page: FakePage): { message: FakeNode; button: FakeNode } {
+  const run = runRecovery(page);
+  run.timers[0].callback();
+  return { message: panelMessage(run), button: panelButton(run) };
+}
+
+describe("the locale-aware script's content contract", () => {
+  it("embeds the table, the storage key and the OS-prefs global", () => {
+    // The table is an ARRAY of [tag, message, retry] triples in the host's
+    // insertion order — the tie-break order for shared primary subtags.
+    expect(WITH_TABLE).toContain(
+      'var COPY_TABLE = [["en-us","EN message","Reload"],["zh-cn",',
+    );
+    // CJK rides through jsonAscii as \uXXXX escapes (ASCII-only script).
+    expect(WITH_TABLE).toContain('"\\u7b80\\u4f53\\u4e2d\\u6587\\u6d88\\u606f"');
+    expect(WITH_TABLE).toContain(
+      '["zh-tw","\\u7e41\\u9ad4\\u4e2d\\u6587\\u8a0a\\u606f","\\u91cd\\u65b0\\u8f09\\u5165"]',
+    );
+    expect(WITH_TABLE).toContain(
+      'var COPY_FALLBACK = [COPY_MESSAGE, COPY_RETRY];',
+    );
+    expect(WITH_TABLE).toContain('var STORAGE_KEY = "wowsp-ui-locale";');
+    expect(WITH_TABLE).toContain(
+      'var OS_PREFS_GLOBAL = "__CELESTIA_OS_PREFS__";',
+    );
+    // showFailure resolves the pair at paint time.
+    expect(WITH_TABLE).toContain("var copy = pickCopy() || COPY_FALLBACK;");
+    // Insertion order is preserved in the emitted literal.
+    expect(WITH_TABLE.indexOf('"en-us"')).toBeLessThan(
+      WITH_TABLE.indexOf('"zh-cn"'),
+    );
+    expect(WITH_TABLE.indexOf('"zh-cn"')).toBeLessThan(
+      WITH_TABLE.indexOf('"zh-tw"'),
+    );
+  });
+
+  it("stays ASCII-only, deterministic and tag-safe with a locale table", () => {
+    const foreign = [...WITH_TABLE].filter((char) => {
+      const code = char.charCodeAt(0);
+      return code !== 9 && code !== 10 && (code < 32 || code > 126);
+    });
+    expect(foreign).toEqual([]);
+    expect(
+      bootRecoveryScript({
+        copy: { locales: LOCALE_TABLE, storageKey: "wowsp-ui-locale" },
+      }),
+    ).toBe(WITH_TABLE); // deterministic: byte-identical regeneration
+    expect(WITH_TABLE.toLowerCase()).not.toContain("</script");
+    // No template-literal hole sequence may leak into the generated text
+    // (built by concatenation so THIS file stays grep-safe).
+    expect(WITH_TABLE).not.toContain(String.fromCharCode(36) + "{");
+  });
+
+  it("keeps single-copy scripts free of every locale machinery string", () => {
+    // Byte-compat for hosts that hash the script into their CSP: without
+    // copy.locales NONE of the selection code is emitted.
+    for (const script of [
+      bootRecoveryScript(),
+      bootRecoveryScript({ copy: { message: "Boot failed", retry: "Retry" } }),
+    ]) {
+      expect(script).not.toContain("COPY_TABLE");
+      expect(script).not.toContain("COPY_FALLBACK");
+      expect(script).not.toContain("localStorage");
+      expect(script).not.toContain("OS_PREFS");
+      expect(script).not.toContain("pickCopy");
+      expect(script).not.toContain("STORAGE_KEY");
+    }
+  });
+});
+
+describe("copy locale selection (executed against a fake page)", () => {
+  it("paints the whole panel in the navigator locale (zh-CN)", () => {
+    const painted = paint({
+      script: WITH_TABLE,
+      navigator: fakeNavigator(["zh-CN", "en-US"]),
+    });
+    expect(painted.message.textContent).toBe(LOCALE_TABLE["zh-CN"].message);
+    expect(painted.button.textContent).toBe(LOCALE_TABLE["zh-CN"].retry);
+  });
+
+  it("prefers the host storage key over the OS preference and the navigator", () => {
+    // The user's explicit in-app choice outranks everything.
+    const painted = paint({
+      script: WITH_TABLE,
+      localStorage: fakeStorage({ "wowsp-ui-locale": "zh-TW" }),
+      window: { __CELESTIA_OS_PREFS__: { locale: "zh-CN" } },
+      navigator: fakeNavigator(["en-US"]),
+    });
+    expect(painted.message.textContent).toBe(LOCALE_TABLE["zh-TW"].message);
+    expect(painted.button.textContent).toBe(LOCALE_TABLE["zh-TW"].retry);
+  });
+
+  it("prefers the OS preference over the navigator list", () => {
+    const painted = paint({
+      script: WITH_TABLE,
+      window: { __CELESTIA_OS_PREFS__: { locale: "zh-CN" } },
+      navigator: fakeNavigator(["en-US"]),
+    });
+    expect(painted.message.textContent).toBe(LOCALE_TABLE["zh-CN"].message);
+  });
+
+  it("matches an exact navigator tag (ja-JP style)", () => {
+    const table = { "ja-JP": { message: "日本語メッセージ", retry: "再読み込み" } };
+    const painted = paint({
+      script: bootRecoveryScript({ copy: { locales: table } }),
+      navigator: fakeNavigator(["ja-JP"]),
+    });
+    expect(painted.message.textContent).toBe("日本語メッセージ");
+    expect(painted.button.textContent).toBe("再読み込み");
+  });
+
+  it("strips trailing subtags progressively (zh-Hant-CN -> zh-Hant)", () => {
+    const table = { "zh-Hant": { message: "繁體訊息", retry: "重新載入" } };
+    const painted = paint({
+      script: bootRecoveryScript({ copy: { locales: table } }),
+      navigator: fakeNavigator(["zh-Hant-CN"]),
+    });
+    expect(painted.message.textContent).toBe("繁體訊息");
+  });
+
+  it("resolves a shared primary subtag to the FIRST listed entry (zh-HK)", () => {
+    // zh-HK hits no key exactly; the primary subtag zh matches zh-CN first
+    // because the host listed it before zh-TW.
+    const painted = paint({
+      script: WITH_TABLE,
+      navigator: fakeNavigator(["zh-HK"]),
+    });
+    expect(painted.message.textContent).toBe(LOCALE_TABLE["zh-CN"].message);
+    expect(painted.button.textContent).toBe(LOCALE_TABLE["zh-CN"].retry);
+  });
+
+  it("falls back to the English copy when nothing matches", () => {
+    const script = bootRecoveryScript({
+      copy: { locales: { "zh-CN": LOCALE_TABLE["zh-CN"] } },
+    });
+    const painted = paint({
+      script,
+      navigator: fakeNavigator(["fr-FR", "de-DE"]),
+    });
+    expect(painted.message.textContent).toBe(BOOT_RECOVERY_MESSAGE);
+    expect(painted.button.textContent).toBe(BOOT_RECOVERY_RETRY);
+  });
+
+  it("resolves from the storage key alone (no window, no navigator)", () => {
+    const painted = paint({
+      script: WITH_TABLE,
+      localStorage: fakeStorage({ "wowsp-ui-locale": "zh-CN" }),
+    });
+    expect(painted.message.textContent).toBe(LOCALE_TABLE["zh-CN"].message);
+  });
+
+  it("still reloads via the button after painting a locale row", () => {
+    const run = runRecovery({
+      script: WITH_TABLE,
+      navigator: fakeNavigator(["zh-CN"]),
+    });
+    run.timers[0].callback();
+    clickButton(panelButton(run));
+    expect(run.reloads).toBe(1);
+    expect(run.replaced).toEqual([]);
+  });
+});
+
+describe("copy.locales / osPrefsGlobal validation", () => {
+  it("rejects two keys that normalise to the same locale tag", () => {
+    expect(() =>
+      bootRecoveryScript({
+        copy: {
+          locales: {
+            "zh-CN": LOCALE_TABLE["zh-CN"],
+            zh_cn: LOCALE_TABLE["zh-TW"],
+          },
+        },
+      }),
+    ).toThrow(/same locale tag/);
+    // Plugin creation fails equally loudly (config-time validation).
+    expect(() =>
+      bootRecoveryPlugin({
+        copy: {
+          locales: {
+            "en-US": LOCALE_TABLE["en-US"],
+            "en_us": LOCALE_TABLE["en-US"],
+          },
+        },
+      }),
+    ).toThrow(/same locale tag/);
+  });
+
+  it("rejects a malformed entry, naming the tag", () => {
+    expect(() =>
+      bootRecoveryScript({
+        copy: { locales: { "zh-CN": { message: "消息", retry: "" } } },
+      }),
+    ).toThrow(/must carry non-empty message and retry strings/);
+    expect(() =>
+      bootRecoveryScript({
+        copy: { locales: { "zh_CN": invalidInput("oops") } },
+      }),
+    ).toThrow(/must carry non-empty message and retry strings/);
+    // The thrown error names the normalised tag.
+    try {
+      bootRecoveryScript({
+        copy: { locales: { "zh_CN": invalidInput("oops") } },
+      });
+      expect.unreachable("validation must throw");
+    } catch (err) {
+      expect(String(err)).toContain("zh-cn");
+    }
+  });
+
+  it("rejects storageKey without a locales table", () => {
+    expect(() =>
+      bootRecoveryScript({ copy: { storageKey: "wowsp-ui-locale" } }),
+    ).toThrow(/copy\.storageKey requires copy\.locales/);
+    expect(() =>
+      bootRecoveryPlugin({ copy: { storageKey: "wowsp-ui-locale" } }),
+    ).toThrow(/copy\.storageKey requires copy\.locales/);
+    // An empty storageKey is absent, not a misconfiguration: single-copy mode.
+    expect(bootRecoveryScript({ copy: { storageKey: "" } })).toBe(SCRIPT);
+  });
+});
+
+describe("osPrefsGlobal", () => {
+  it("disables the OS-prefs source when set to an empty string", () => {
+    const script = bootRecoveryScript({
+      copy: { locales: LOCALE_TABLE, storageKey: "wowsp-ui-locale" },
+      osPrefsGlobal: "",
+    });
+    expect(script).toContain("var OS_PREFS_GLOBAL = null;");
+    expect(script).not.toContain("__CELESTIA_OS_PREFS__");
+    // The OS preference is now ignored: the navigator list decides.
+    const painted = paint({
+      script,
+      window: { __CELESTIA_OS_PREFS__: { locale: "zh-CN" } },
+      navigator: fakeNavigator(["en-US"]),
+    });
+    expect(painted.message.textContent).toBe(LOCALE_TABLE["en-US"].message);
+    // A navigator-only environment still resolves.
+    const zhPainted = paint({ script, navigator: fakeNavigator(["zh-CN"]) });
+    expect(zhPainted.message.textContent).toBe(LOCALE_TABLE["zh-CN"].message);
+  });
+
+  it("reads a renamed OS-prefs global (WoWSP's real wiring)", () => {
+    const script = bootRecoveryScript({
+      copy: { locales: LOCALE_TABLE, storageKey: "wowsp-ui-locale" },
+      osPrefsGlobal: "__WOWSP_OS_PREFS__",
+    });
+    expect(script).toContain('"__WOWSP_OS_PREFS__"');
+    expect(script).not.toContain('"__CELESTIA_OS_PREFS__"');
+    const painted = paint({
+      script,
+      window: { __WOWSP_OS_PREFS__: { locale: "zh-TW" } },
+      navigator: fakeNavigator(["en-US"]),
+    });
+    expect(painted.message.textContent).toBe(LOCALE_TABLE["zh-TW"].message);
+    expect(painted.button.textContent).toBe(LOCALE_TABLE["zh-TW"].retry);
   });
 });
 

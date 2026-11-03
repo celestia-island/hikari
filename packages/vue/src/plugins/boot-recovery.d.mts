@@ -64,6 +64,28 @@ export interface BootRecoveryCopyOptions {
   message?: string;
   /** Retry button label. */
   retry?: string;
+  /**
+   * Host translations of the panel copy, keyed by BCP 47-ish locale tags
+   * (`"en-US"`, `"zh-CN"`, `"zh-TW"`, …). Keys are normalised at config
+   * time (trimmed, lowercased, `_` → `-`); insertion order is preserved and
+   * breaks ties when several keys share a primary subtag (`zh-CN` listed
+   * before `zh-TW` means a `zh-HK` request resolves to the zh-CN entry).
+   * Every entry must carry non-empty `message` and `retry` strings —
+   * anything else fails the build loudly, as does two keys normalising to
+   * the same tag. Omitting the table (or passing it empty) keeps the
+   * single-copy script — byte-identical to the pre-locale implementation
+   * apart from the panel stylesheet, so a host that hashes the script into
+   * its CSP only needs to refresh the hash it already owns.
+   */
+  locales?: Record<string, { message: string; retry: string }>;
+  /**
+   * `localStorage` key that holds the host's saved UI locale tag (WoWSP
+   * uses `"wowsp-ui-locale"`). Consulted FIRST — the user's explicit
+   * in-app choice outranks the shell's OS preference and the navigator
+   * list. Only meaningful together with `locales`: configuring it without
+   * a table fails at config time.
+   */
+  storageKey?: string;
 }
 
 /** Options for {@link bootRecoveryPlugin} / {@link bootRecoveryScript}. */
@@ -88,6 +110,13 @@ export interface BootRecoveryPluginOptions {
   deadlineMs?: number;
   /** Absolute http(s) app origin (default `http://tauri.localhost`). */
   canonicalOrigin?: string;
+  /**
+   * Name of the `window` global carrying the shell's OS locale preference
+   * (`{ locale: string }`). Default `"__CELESTIA_OS_PREFS__"` — the
+   * boot-chrome family global; an explicit empty string `""` disables the
+   * OS-preference source. Only embedded when `copy.locales` is configured.
+   */
+  osPrefsGlobal?: string;
   /**
    * Custom mangled-origin predicate. It runs in the PAGE, so it is embedded
    * by source text: pass a self-contained ES2017-safe function expression or

@@ -264,20 +264,14 @@ pub fn accept_extensions(accept: Option<&str>) -> Vec<String> {
 
 /// Vue's `visibleEntries`: with an active filter, directories always pass and
 /// a file must end with the (lowercased) extension.
-/// Decide what a filter `select` `change` should emit upstream.
+/// The filter `select` `change` emission: the selected key, verbatim.
 ///
-/// Returns `None` when the event must NOT touch the host filter: an empty
-/// value is currently UNACTIONABLE — `ChangeEvent` carries no value on this
-/// wire (the glue implements no value getter; ledger L127), so `""` cannot
-/// distinguish the legitimate "All" option (whose key IS `""`) from an
-/// unreadable value. NOTE: once a value getter ships, "" becomes the real
-/// All selection and this sentinel must be redesigned (ledger L127).
+/// tairitsu 0.5.26 delivers the real selected value (ledger L127 resolved),
+/// so "" — the "All" option's key — is a legitimate reset and flows through
+/// as `Some("")`. Redesign history: on ≤0.5.25 this suppressed empty
+/// because the wire was value-blind.
 pub fn filter_change_emission(value: &str) -> Option<String> {
-    if value.is_empty() {
-        None
-    } else {
-        Some(value.to_owned())
-    }
+    Some(value.to_owned())
 }
 
 pub fn visible_entries(entries: &[RemoteFileEntry], filter_ext: &str) -> Vec<RemoteFileEntry> {
@@ -811,18 +805,11 @@ pub fn FileBrowserDialog(props: FileBrowserDialogProps) -> Element {
                     style: "width:100%",
                     "aria-label": t("hikari::filePicker.filterAll", "All"),
                     onchange: move |event: ChangeEvent| {
-                        // `ChangeEvent` carries no value on this wire (no glue
-                        // value getter (ledger L127), so the
-                        // empty-value suppression below fires on EVERY
-                        // selection. NOTE: the "All" option's key IS "" — when
-                        // a value getter ships, selecting All yields "" and
-                        // this guard must be redesigned (it cannot tell "All"
-                        // from "unreadable"), not silently re-enabled
-                        // (ledger L127).
-                        if let Some(emission) = filter_change_emission(&event.value)
-                            && let Some(handler) = handler.as_ref()
-                        {
-                            handler.call(emission);
+                        // tairitsu 0.5.26 delivers the real selected value
+                        // (ledger L127 resolved): "" is the "All" option's
+                        // key and resets the host filter, exactly like Vue.
+                        if let Some(handler) = handler.as_ref() {
+                            handler.call(event.value.clone());
                         }
                     },
                     {VNode::Fragment(options)}
@@ -1127,15 +1114,13 @@ mod tests {
         }
     }
 
-    // GUARD PIN (ledger L127): on this wire `ChangeEvent.value` is always ""
-    // (no glue value getter), so the empty case must stay a NO-EMISSION — the
-    // "All" option's key IS "", so a regression to `handler.call("")` here
-    // would reset the host's filter on every selection even after a value
-    // getter ships (the sentinel needs a redesign then, not silent
-    // re-enabling).
+    // LEDGER L127 RESOLVED: "" (the "All" option's key) is now a REAL
+    // filter reset — tairitsu 0.5.26 delivers the selected value, so the
+    // passthrough emits it verbatim. A regression to suppression here would
+    // strand the All reset.
     #[test]
-    fn filter_change_emission_suppresses_empty() {
-        assert_eq!(filter_change_emission(""), None);
+    fn filter_change_emission_passes_the_all_reset_through() {
+        assert_eq!(filter_change_emission(""), Some(String::new()));
     }
 
     #[test]

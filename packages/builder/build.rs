@@ -2,6 +2,11 @@
 //!
 //! Generates component constants and compiles SCSS using tairitsu-packager
 
+// The atomic-write helper is shared with the library (single implementation,
+// unit-tested by `cargo test -p hikari-builder`).
+#[path = "src/atomic_write.rs"]
+mod atomic_write;
+
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
@@ -186,7 +191,10 @@ pub fn default_components() -> HashSet<String> {
 "#,
     );
 
-    fs::write(output_dir.join("components.rs"), content)?;
+    // Atomic replace: a parallel cargo sharing this workspace must never
+    // observe a truncated or missing components.rs (plain `fs::write`
+    // truncates the destination before writing).
+    atomic_write::atomic_write(&output_dir.join("components.rs"), content.as_bytes())?;
 
     Ok(())
 }
@@ -206,10 +214,13 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     fs::create_dir_all(&output_dir)?;
     let css_output = output_dir.join("bundle.css");
 
-    // Delete existing bundle to prevent cache issues
-    if css_output.exists() {
-        fs::remove_file(&css_output)?;
-    }
+    // Note: no delete-first here. The previous code removed the existing
+    // bundle before writing the new one, which (a) left `bundle.css`
+    // missing for the whole write window and (b) had a check-then-remove
+    // race: two overlapping build scripts both saw the file exist, the
+    // loser failed on `remove_file` with NotFound and the build script
+    // exited non-zero (cargo reports that as exit 101). The atomic
+    // replace below makes the old file's presence irrelevant.
 
     // Compile SCSS -> CSS with grass directly (minified). Previously this went
     // through tairitsu-packager, which dragged in the whole WASM toolchain
@@ -250,8 +261,10 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     // Get file size
     let file_size = css_content.len();
 
-    // Write to output
-    fs::write(&css_output, &css_content)?;
+    // Atomic replace: readers of `public/styles/bundle.css` (dev servers,
+    // a parallel cargo in this workspace) see either the complete previous
+    // bundle or the complete new one — never a truncated file.
+    atomic_write::atomic_write(&css_output, css_content.as_bytes())?;
 
     // Verify file was written
     if css_output.exists() {

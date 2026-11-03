@@ -5,7 +5,9 @@
 //! ## Modules
 //!
 //! - **[`icons`]** - Icon selection and Rust code generation
+//! - **[`atomic_write`]** - Race-safe artifact replacement shared with the build script
 
+pub mod atomic_write;
 pub mod icons;
 
 pub use icons::{

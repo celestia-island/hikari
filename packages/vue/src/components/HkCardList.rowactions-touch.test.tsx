@@ -13,17 +13,16 @@ import { HkCardList, HkListRow } from "./HkCardList";
 
 beforeAll(() => {
   vi.spyOn(window, "matchMedia").mockImplementation(
-    (query: string) =>
-      ({
-        matches: query.includes("hover: none") || query.includes("pointer: coarse"),
-        media: query,
-        onchange: null,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        addListener: () => {},
-        removeListener: () => {},
-        dispatchEvent: () => false,
-      }) as unknown as MediaQueryList,
+    (query: string): MediaQueryList => ({
+      matches: query.includes("hover: none") || query.includes("pointer: coarse"),
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }),
   );
 });
 

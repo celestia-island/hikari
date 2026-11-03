@@ -57,7 +57,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install cargo-deny
-        run: cargo install --locked cargo-deny
+        # Version-pinned guard (same pattern as tairitsu audit.yml): an unknown
+        # older cargo-deny on a warm runner would be reused forever, and an
+        # unpinned cold install drifts the deny.toml schema under us.
+        run: |
+          cargo deny --version 2>/dev/null | grep -q ' 0\.20\.2' \
+            || cargo install cargo-deny --version 0.20.2 --locked --force
 
       - name: Run cargo deny
         run: cargo deny check

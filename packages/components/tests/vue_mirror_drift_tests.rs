@@ -802,3 +802,67 @@ fn mirrored_i18n_keys_exist_in_the_english_bundle() {
         "bundle text disagrees with the code's English fallback: {mismatched:#?}"
     );
 }
+
+/// Every locale's `components.toml` must carry the SAME `hk.*` key set —
+/// a locale missing a key (or carrying an extra one) silently diverges at
+/// runtime: the English drift guard above only reads the en bundle, and
+/// the en-literal comparison only checks keys the Rust sources reference.
+/// Values are host-trust (untranslated keys stay permitted); the KEY SET
+/// is not. Proven load-bearing by the close-out round's N4 mutation (a
+/// zh-Hant value change — and, by the same blindness, any key drift —
+/// left the whole suite green before this test existed).
+#[test]
+fn localized_component_bundles_carry_the_same_hk_keyset() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let locales_dir = root.join("../i18n/src/locales");
+    let Ok(entries) = std::fs::read_dir(&locales_dir) else {
+        // The i18n crate is a sibling checkout; skip when it is absent.
+        return;
+    };
+    let mut reference: Option<(String, Vec<String>)> = None;
+    let mut diverged: Vec<String> = Vec::new();
+    let mut checked = 0usize;
+    let mut locale_dirs: Vec<_> = entries
+        .filter_map(|entry| entry.ok().map(|e| e.path()))
+        .filter(|path| path.is_dir())
+        .collect();
+    locale_dirs.sort();
+    for dir in locale_dirs {
+        let bundle_path = dir.join("components.toml");
+        let Ok(bundle) = std::fs::read_to_string(&bundle_path) else {
+            continue;
+        };
+        let mut keys: Vec<String> = bundle
+            .lines()
+            .filter_map(|line| line.strip_prefix("hk."))
+            .filter_map(|line| line.split(" =").next())
+            .map(|key| key.trim().to_string())
+            .filter(|key| !key.is_empty())
+            .collect();
+        keys.sort();
+        checked += 1;
+        match &reference {
+            None => reference = Some((dir.file_name().unwrap().to_string_lossy().into_owned(), keys)),
+            Some((reference_locale, reference_keys)) => {
+                let locale = dir.file_name().unwrap().to_string_lossy().into_owned();
+                if keys != *reference_keys {
+                    let missing: Vec<&String> =
+                        reference_keys.iter().filter(|k| !keys.contains(k)).collect();
+                    let extra: Vec<&String> = keys.iter().filter(|k| !reference_keys.contains(k)).collect();
+                    diverged.push(format!(
+                        "{locale} vs {reference_locale}: missing {missing:?}, extra {extra:?}"
+                    ));
+                }
+            }
+        }
+    }
+    assert!(
+        checked > 0,
+        "no components.toml bundles found under {}",
+        locales_dir.display()
+    );
+    assert!(
+        diverged.is_empty(),
+        "localized bundles diverge in their hk.* key set: {diverged:#?}"
+    );
+}

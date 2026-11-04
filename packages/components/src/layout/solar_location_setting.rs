@@ -80,7 +80,9 @@
 //     IP-insight probe + its retry affordance for "ip"). The mirror takes
 //     the finished rows as [`SolarLocationSettingProps::detected`] — the
 //     host owns the probe and its state, the same seam as the engine
-//     delta above. `None` hides the block (Vue's manual pane has none).
+//     delta above. `None` hides the block (Vue's manual pane has none);
+//     note the crate renders a Some block for ANY draft, manual
+//     included — Vue-identical hosts pass None there.
 //   * `HkTabs` (segmented) IS NOT MIRRORED and `HkTabs.scss` is not part
 //     of the vendored set, so the segmented strip renders here as DOM
 //     hooks — the same `hk-tabs*` classes/attributes Vue's HTabs emits
@@ -604,6 +606,9 @@ pub struct SolarLocationSettingProps {
 
     /// The editor's detected-value readout (Vue renders it for the
     /// timezone / ip drafts from its engine). `None` hides the block.
+    /// DELTA vs Vue: the crate renders the block whenever this prop is
+    /// Some — including a manual draft, where Vue ALWAYS hides it. A
+    /// host mirroring Vue exactly passes `None` for manual drafts.
     pub detected: Option<SolarDetectedReadout>,
 
     /// The readout's retry affordance was pressed (Vue:

@@ -4,23 +4,20 @@
 
 ## 基礎用法
 
-```hikari
+```rust
 use hikari_components::overlay::{
-    ScreenIdentifyHost, ScreenIdentifyProvider, ScreenIdentifyRequest, use_screen_identify,
+    ScreenIdentifyHost, ScreenIdentifyRequest, show_screen_identify,
 };
 use hikari_components::prelude::*;
 
-// Mount once: the provider owns the dwell, the host paints the card.
+// Mount once per window: the host paints whatever the singleton holds.
 rsx! {
-    ScreenIdentifyProvider {
-        ScreenIdentifyHost {}
-        // …the app
-    }
+    ScreenIdentifyHost {}
+    // …the app
 }
 
-// anywhere below the provider (a tray button, a board node, a shortcut):
-let identify = use_screen_identify();
-identify.show.call(
+// from anywhere (a tray button, a board node, a shortcut):
+show_screen_identify(
     ScreenIdentifyRequest::new("7").with_name("Wall B"),
 );
 ```
@@ -34,7 +31,8 @@ popups.
 
 | 屬性 | 說明 | 型別 | 預設值 |
 |------|------|------|--------|
-| `ScreenIdentifyProvider` / `children` | mounts the context; once per window | `Element` | — |
+| `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
+| `dismiss_screen_identify()` | hides the flash immediately | — | — |
 | `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
@@ -61,9 +59,9 @@ popups.
 - 再次 `show` 會重啟閃爍，不會疊卡，也不會繼承舊截止時間。
 - 卡片用共享的滾動數字列印整秒（3 → 2 → 1）；駐留超過 9 秒會裁掉十位，辨識是「一眼」動作，請保持個位數。
 - tick 只回報剩餘時間；跨越截止時間的那次 tick 結束閃爍——永遠不會畫出「剩餘 0」的一幀。
-- 卡片是 HUD：不攔截指標（`pointer-events: none`）；RTL 下用邏輯角位，卡片仍在玻璃的同一個角。
-- 每個視窗只掛一次 `ScreenIdentifyProvider` 與 `ScreenIdentifyHost`；其他任何位置用 `use_screen_identify()` 驅動。
+- 卡片是 HUD：不攔截指標（`pointer-events: none`）；RTL 下左右角位鏡像（邏輯角位），上下角位維持物理邊。
+- 每個視窗只掛一次 `ScreenIdentifyHost`；其他任何位置用 `show_screen_identify()` 驅動（模組單例，與 Vue 相同）。
 
 ## 與 Vue 形態的關係
 
-本族鏡像 Vue 的 `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer`，編譯**同一份** vendored 樣式表（`HkScreenIdentifyCard.scss`、`HkAmbientLayer.scss`），兩種形態的卡片語法與 HUD 帶完全一致。Vue 形態用 `#hk-hud-root` 承載階層；Rust 形態沒有 Teleport，由 `AmbientLayer` 的 wrapper 自己攜帶階層帶（`calc(var(--hk-z-hud, 90050) + order)`）。
+本族鏡像 Vue 的 `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer`，編譯**同一份** vendored 樣式表（`HkScreenIdentifyCard.scss`、`HkAmbientLayer.scss`），兩種形態的卡片語法與 HUD 帶完全一致。Vue 形態用 `#hk-hud-root` 承載階層；Rust 形態沒有 Teleport，由 `AmbientLayer` 的 wrapper 自己攜帶階層帶（`calc(var(--hk-z-hud, 90050) + (zIndex - 1))`）。

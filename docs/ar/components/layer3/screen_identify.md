@@ -4,23 +4,20 @@
 
 ## الاستخدام الأساسي
 
-```hikari
+```rust
 use hikari_components::overlay::{
-    ScreenIdentifyHost, ScreenIdentifyProvider, ScreenIdentifyRequest, use_screen_identify,
+    ScreenIdentifyHost, ScreenIdentifyRequest, show_screen_identify,
 };
 use hikari_components::prelude::*;
 
-// Mount once: the provider owns the dwell, the host paints the card.
+// Mount once per window: the host paints whatever the singleton holds.
 rsx! {
-    ScreenIdentifyProvider {
-        ScreenIdentifyHost {}
-        // …the app
-    }
+    ScreenIdentifyHost {}
+    // …the app
 }
 
-// anywhere below the provider (a tray button, a board node, a shortcut):
-let identify = use_screen_identify();
-identify.show.call(
+// from anywhere (a tray button, a board node, a shortcut):
+show_screen_identify(
     ScreenIdentifyRequest::new("7").with_name("Wall B"),
 );
 ```
@@ -34,7 +31,8 @@ popups.
 
 | الخاصية | الوصف | النوع | الافتراضي |
 |------|------|------|--------|
-| `ScreenIdentifyProvider` / `children` | mounts the context; once per window | `Element` | — |
+| `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
+| `dismiss_screen_identify()` | hides the flash immediately | — | — |
 | `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
@@ -61,9 +59,9 @@ popups.
 - إعادة `show` تعيد تشغيل الوميض دون تكديس البطاقات أو وراثة الموعد النهائي القديم.
 - تطبع البطاقة ثواني كاملة (3 → 2 → 1) عبر الرقم الدوّار المشترك؛ مدة تتجاوز 9 ثوانٍ ستقصّ خانة العشرات، فأبقِ التحديد في ثوانٍ أحادية.
 - لا يبلّغ tick إلا عن المتبقي؛ وtick الذي يتجاوز الموعد النهائي يُنهي الوميض — ولا يُرسم إطار بباقٍ صفري.
-- البطاقة HUD: لا تعترض المؤشر (`pointer-events: none`) وتبقى في الزاوية نفسها عند RTL (تموضع منطقي).
-- ركّب `ScreenIdentifyProvider` و`ScreenIdentifyHost` مرة واحدة لكل نافذة، والباقي يستدعي `use_screen_identify()`.
+- البطاقة HUD: لا تعترض المؤشر (`pointer-events: none`) وتنعكس الزاويتان اليمنى/اليسرى عند RTL (تموضع منطقي).
+- ركّب `ScreenIdentifyHost` مرة واحدة لكل نافذة، والباقي يستدعي `show_screen_identify()` (نمط الوحدة المفردة كما في Vue).
 
 ## العلاقة بصيغة Vue
 
-تعكس هذه العائلة `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` من Vue وتُصرّف **الملفات نفسها** المضمّنة (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`)، فتتطابق قواعد البطاقة وطبقة HUD. في صيغة Vue تحمل `#hk-hud-root` الطبقة؛ ولا يوجد Teleport في صيغة Rust، لذا يحمل غلاف `AmbientLayer` النطاق بنفسه (`calc(var(--hk-z-hud, 90050) + order)`).
+تعكس هذه العائلة `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` من Vue وتُصرّف **الملفات نفسها** المضمّنة (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`)، فتتطابق قواعد البطاقة وطبقة HUD. في صيغة Vue تحمل `#hk-hud-root` الطبقة؛ ولا يوجد Teleport في صيغة Rust، لذا يحمل غلاف `AmbientLayer` النطاق بنفسه (`calc(var(--hk-z-hud, 90050) + (zIndex - 1))`).

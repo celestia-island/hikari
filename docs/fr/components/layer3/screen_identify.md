@@ -4,23 +4,20 @@ La famille d'identification d'écran répond à la question que tout environneme
 
 ## Utilisation de base
 
-```hikari
+```rust
 use hikari_components::overlay::{
-    ScreenIdentifyHost, ScreenIdentifyProvider, ScreenIdentifyRequest, use_screen_identify,
+    ScreenIdentifyHost, ScreenIdentifyRequest, show_screen_identify,
 };
 use hikari_components::prelude::*;
 
-// Mount once: the provider owns the dwell, the host paints the card.
+// Mount once per window: the host paints whatever the singleton holds.
 rsx! {
-    ScreenIdentifyProvider {
-        ScreenIdentifyHost {}
-        // …the app
-    }
+    ScreenIdentifyHost {}
+    // …the app
 }
 
-// anywhere below the provider (a tray button, a board node, a shortcut):
-let identify = use_screen_identify();
-identify.show.call(
+// from anywhere (a tray button, a board node, a shortcut):
+show_screen_identify(
     ScreenIdentifyRequest::new("7").with_name("Wall B"),
 );
 ```
@@ -34,7 +31,8 @@ popups.
 
 | Propriété | Description | Type | Défaut |
 |------|------|------|--------|
-| `ScreenIdentifyProvider` / `children` | mounts the context; once per window | `Element` | — |
+| `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
+| `dismiss_screen_identify()` | hides the flash immediately | — | — |
 | `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
@@ -61,9 +59,9 @@ popups.
 - Un second `show` redémarre le flash sans empiler les cartes ni hériter de l'ancienne échéance.
 - La carte imprime des secondes entières (3 → 2 → 1) via le chiffre roulant partagé ; un maintien > 9 s rognerait la dizaine — gardez l'identification en secondes simples.
 - Un tick ne fait que rapporter le reste ; le tick qui franchit l'échéance termine le flash — aucune image à reste nul n'est peinte.
-- La carte est un HUD : elle n'intercepte jamais le pointeur (`pointer-events: none`) et reste dans le même coin de l'écran en RTL (placement logique).
-- Montez `ScreenIdentifyProvider` et `ScreenIdentifyHost` une fois par fenêtre ; le reste appelle `use_screen_identify()`.
+- La carte est un HUD : elle n'intercepte jamais le pointeur (`pointer-events: none`) et le coin gauche/droite s'inverse en RTL (placement logique).
+- Montez `ScreenIdentifyHost` une fois par fenêtre ; le reste appelle `show_screen_identify()` (singleton de module, comme Vue).
 
 ## Rapport avec la forme Vue
 
-Cette famille reflète `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` de Vue et compile les **mêmes** feuilles vendorisées (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`) : même grammaire de carte, même bande HUD. La forme Vue porte la couche avec `#hk-hud-root` ; la forme Rust n'ayant pas de Teleport, le wrapper d'`AmbientLayer` porte lui-même la bande (`calc(var(--hk-z-hud, 90050) + order)`).
+Cette famille reflète `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` de Vue et compile les **mêmes** feuilles vendorisées (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`) : même grammaire de carte, même bande HUD. La forme Vue porte la couche avec `#hk-hud-root` ; la forme Rust n'ayant pas de Teleport, le wrapper d'`AmbientLayer` porte lui-même la bande (`calc(var(--hk-z-hud, 90050) + (zIndex - 1))`).

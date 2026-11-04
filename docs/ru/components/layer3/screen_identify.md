@@ -4,23 +4,20 @@
 
 ## Базовое использование
 
-```hikari
+```rust
 use hikari_components::overlay::{
-    ScreenIdentifyHost, ScreenIdentifyProvider, ScreenIdentifyRequest, use_screen_identify,
+    ScreenIdentifyHost, ScreenIdentifyRequest, show_screen_identify,
 };
 use hikari_components::prelude::*;
 
-// Mount once: the provider owns the dwell, the host paints the card.
+// Mount once per window: the host paints whatever the singleton holds.
 rsx! {
-    ScreenIdentifyProvider {
-        ScreenIdentifyHost {}
-        // …the app
-    }
+    ScreenIdentifyHost {}
+    // …the app
 }
 
-// anywhere below the provider (a tray button, a board node, a shortcut):
-let identify = use_screen_identify();
-identify.show.call(
+// from anywhere (a tray button, a board node, a shortcut):
+show_screen_identify(
     ScreenIdentifyRequest::new("7").with_name("Wall B"),
 );
 ```
@@ -34,7 +31,8 @@ popups.
 
 | Свойство | Описание | Тип | По умолчанию |
 |------|------|------|--------|
-| `ScreenIdentifyProvider` / `children` | mounts the context; once per window | `Element` | — |
+| `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
+| `dismiss_screen_identify()` | hides the flash immediately | — | — |
 | `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
@@ -61,9 +59,9 @@ popups.
 - Повторный `show` перезапускает вспышку, не наследуя прежний дедлайн и не стопоря карточки.
 - Карточка печатает целые секунды (3 → 2 → 1) общим «катящимся» цифровым элементом; выдержка > 9 с обрежет десятки — держите идентификацию в однозначных секундах.
 - Тик только сообщает остаток; тик, пересекающий дедлайн, завершает вспышку — кадр с нулевым остатком не рисуется.
-- Карточка — это HUD: она не перехватывает указатель (`pointer-events: none`) и остаётся в том же углу экрана при RTL (логическое позиционирование).
-- Смонтируйте `ScreenIdentifyProvider` и `ScreenIdentifyHost` по одному разу на окно; всё остальное вызывает `use_screen_identify()`.
+- Карточка — это HUD: она не перехватывает указатель (`pointer-events: none`) левые/правые углы зеркалятся при RTL (логическое позиционирование).
+- Смонтируйте `ScreenIdentifyHost` по одному разу на окно; всё остальное вызывает `show_screen_identify()` (модульный синглтон, как в Vue).
 
 ## Связь с формой Vue
 
-Семейство зеркалит `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` из Vue и компилирует **те же** vendored-листы (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`), поэтому грамматика карточки и полоса HUD совпадают. В форме Vue слой несёт `#hk-hud-root`; в форме Rust Teleport нет, поэтому полосу несёт сам wrapper `AmbientLayer` (`calc(var(--hk-z-hud, 90050) + order)`).
+Семейство зеркалит `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` из Vue и компилирует **те же** vendored-листы (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`), поэтому грамматика карточки и полоса HUD совпадают. В форме Vue слой несёт `#hk-hud-root`; в форме Rust Teleport нет, поэтому полосу несёт сам wrapper `AmbientLayer` (`calc(var(--hk-z-hud, 90050) + (zIndex - 1))`).

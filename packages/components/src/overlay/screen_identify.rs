@@ -34,28 +34,33 @@
 //
 // What is mirrored, and the Rust-side deltas (documented, not accidental):
 //   * STATE HOME — Vue keeps the context in a module singleton so any module
-//     can call `showScreenIdentify`. A Rust process may host several windows
-//     per page, so the Rust form provides the SAME read/write pair through a
-//     context: mount [`ScreenIdentifyProvider`] once, then
-//     [`use_screen_identify`] anywhere below it. [`ScreenIdentifyState`] is a
-//     pure value (show / tick / dismiss) so the dwell and countdown are
-//     testable without a browser and a host may drive it from its own clock.
+//     can call `showScreenIdentify`. The Rust form mirrors that exactly: one
+//     `thread_local!` signal per thread/page (one page = one window), so
+//     [`show_screen_identify`] / [`dismiss_screen_identify`] work from
+//     anywhere while a component is mounted. This is also the only correct
+//     home in tairitsu 0.5.26 — `use_signal` allocates a fresh signal on every
+//     render (no hook slot), so render-scoped state would reset the flash the
+//     moment it re-rendered. [`ScreenIdentifyState`] stays a pure value
+//     (show / tick / dismiss) so the dwell and countdown are testable without
+//     a browser and a host may drive it from its own clock.
 //   * TIMERS — Vue schedules `setTimeout` + `setInterval`. Tairitsu has no
-//     component-scoped timer hook, so the provider schedules one
+//     component-scoped timer hook, so `show_screen_identify` schedules one
 //     `platform::set_timeout` chain (tick every 100 ms) and guards it with a
 //     generation counter: a restart or a dismiss bumps the generation, the
 //     in-flight chain observes the mismatch and stops. Ticks only REPORT the
 //     remainder and the tick that crosses the deadline ends the flash — the
 //     Vue round-2 bug (a tick clearing the dwell timeout and leaving the flash
 //     active forever) and the round-2 S3 (a tick painting a zero remainder
-//     one frame early) both stay fixed in the Rust form.
+//     one frame early) both stay fixed in the Rust form. A held-open flash
+//     (`duration_ms: Some(0)`) schedules NO chain, exactly like Vue.
 //   * LABELS — Vue composes the accessible name from `t("hikari::screenIdentify.label")`
 //     / `labelNamed`; the Rust form reads the same sentences from
 //     `hikari-i18n` (`components.hk.screenIdentify.label` / `labelNamed`) and
 //     substitutes `{number}` / `{name}` itself. A non-empty `label` prop wins,
 //     exactly like Vue (`if (props.label) return props.label`).
 //   * NO runtime registry — Vue registers the context with `readHkRuntime`;
-//     the Rust crate has no such registry. The context handle IS the accessor.
+//     the Rust crate has no such registry. [`use_screen_identify`] IS the
+//     accessor (and always succeeds, like Vue's module-singleton accessor).
 
 use super::ambient_layer::{AmbientLayer, AmbientLayerPointerEvents, AmbientLayerProps};
 use crate::display::CountdownDigit;
@@ -137,7 +142,7 @@ impl ScreenIdentifyState {
         self.active
     }
 
-    /// The number the card prints (empty while idle).
+    /// The number the card prints (the last payload; `dismiss` keeps it).
     pub fn number(&self) -> &str {
         &self.number
     }
@@ -205,7 +210,7 @@ impl ScreenIdentifyState {
         }
         let left = self.deadline_ms - now_ms;
         if left > 0.0 {
-            self.remaining_ms = left as u64;
+            self.remaining_ms = left.ceil() as u64;
             true
         } else {
             self.remaining_ms = 0;
@@ -227,30 +232,95 @@ impl ScreenIdentifyState {
 
 /// The screen-identify context handed to components and app code
 /// (Vue: the `useScreenIdentify()` read side + `show`/`dismiss`).
+/// The screen-identify context handed to components and app code
+/// (Vue: the `useScreenIdentify()` read side + `show`/`dismiss`).
 #[derive(Clone)]
 pub struct ScreenIdentifyContext {
     /// The live state (read side; write through `show` / `dismiss` so an
     /// in-flight timer chain cannot drift from the visible state).
-    pub state: ReactiveSignal<ScreenIdentifyState>,
+    pub state: Signal<ScreenIdentifyState>,
     /// Start (or restart) the flash.
     pub show: Callback<ScreenIdentifyRequest>,
     /// Hide immediately.
     pub dismiss: Callback<()>,
 }
 
-/// The context accessor. Panics when no [`ScreenIdentifyProvider`] is above
-/// the caller — a host must mount the provider once (same contract as
-/// `use_portal`).
-pub fn use_screen_identify() -> ScreenIdentifyContext {
-    use_screen_identify_opt().expect(
-        "ScreenIdentifyContext not found: mount <ScreenIdentifyProvider> above this component",
-    )
+thread_local! {
+    /// The one identify signal per thread/page. Created on first access so
+    /// importing the module has no side effects.
+    static IDENTIFY_SIGNAL: std::cell::RefCell<Option<Signal<ScreenIdentifyState>>> =
+        const { std::cell::RefCell::new(None) };
 }
 
-/// The non-panicking accessor (Vue has no equivalent: its context is a module
-/// singleton that always exists).
-pub fn use_screen_identify_opt() -> Option<ScreenIdentifyContext> {
-    use_context::<ScreenIdentifyContext>().map(|ctx| ctx.get().clone())
+/// The live signal (module singleton, Vue's module `state` refs).
+pub fn screen_identify_signal() -> Signal<ScreenIdentifyState> {
+    IDENTIFY_SIGNAL.with(|slot| {
+        let mut slot = slot.borrow_mut();
+        slot.get_or_insert_with(|| Signal::new(ScreenIdentifyState::default()))
+            .clone()
+    })
+}
+
+/// Start (or restart) the flash. Any module may call this, like Vue's
+/// `showScreenIdentify`; the host re-renders because it reads the signal.
+pub fn show_screen_identify(request: ScreenIdentifyRequest) {
+    let state = screen_identify_signal();
+    let now = crate::platform::now_timestamp();
+    let generation = {
+        let mut current = state.write();
+        current.show(&request, now);
+        current.generation()
+    };
+    // Held-open flashes schedule no timer chain (Vue returns before any
+    // timer for `durationMs <= 0`).
+    if screen_identify_should_tick(&state.get()) {
+        screen_identify_tick_chain(state, generation);
+    }
+}
+
+/// Hide the flash immediately (idempotent).
+pub fn dismiss_screen_identify() {
+    screen_identify_signal().write().dismiss();
+}
+
+/// The identify context accessor (Vue: `useScreenIdentify()`). Always
+/// succeeds — the state is a module singleton, not a provider.
+pub fn use_screen_identify() -> ScreenIdentifyContext {
+    ScreenIdentifyContext {
+        state: screen_identify_signal(),
+        show: Callback::new(show_screen_identify),
+        dismiss: Callback::new(|_| dismiss_screen_identify()),
+    }
+}
+
+/// Whether the flash needs a tick chain: an active, timed flash does; an
+/// idle or held-open one does not.
+pub fn screen_identify_should_tick(state: &ScreenIdentifyState) -> bool {
+    state.active() && !state.held_open()
+}
+
+/// One chain step on an explicit clock: advance the dwell only when this
+/// chain's generation still owns the flash. Split from the timer closure so
+/// the stale-chain guard and the deadline crossing are directly testable.
+pub fn screen_identify_chain_step(
+    state: &mut ScreenIdentifyState,
+    generation: u32,
+    now_ms: f64,
+) -> bool {
+    // A newer show/dismiss superseded this chain: bow out.
+    if state.generation() != generation {
+        return false;
+    }
+    state.tick(now_ms)
+}
+
+/// Test-only reset; NOT part of the public API. Tests share the thread-local
+/// singleton, so each module-state case starts from a clean host.
+#[doc(hidden)]
+pub fn _reset_screen_identify_for_tests() {
+    IDENTIFY_SIGNAL.with(|slot| {
+        *slot.borrow_mut() = None;
+    });
 }
 
 /// The accessible-name composer for the card (Vue: the `accessibleLabel`
@@ -289,68 +359,20 @@ pub fn screen_identify_label(
     screen_identify_label_with(number, name, override_label, &plain, &named)
 }
 
-fn screen_identify_tick_chain(state: ReactiveSignal<ScreenIdentifyState>, generation: u32) {
+fn screen_identify_tick_chain(state: Signal<ScreenIdentifyState>, generation: u32) {
     crate::platform::set_timeout(
         move || {
-            // A newer show/dismiss superseded this chain: bow out.
-            if state.get().generation() != generation {
-                return;
-            }
             let now = crate::platform::now_timestamp();
-            let still_active = state.write().tick(now);
+            let still_active = {
+                let mut current = state.write();
+                screen_identify_chain_step(&mut current, generation, now)
+            };
             if still_active {
-                screen_identify_tick_chain(state, generation);
+                screen_identify_tick_chain(state.clone(), generation);
             }
         },
         SCREEN_IDENTIFY_TICK_MS as i32,
     );
-}
-
-/// Provider props — the app subtree that may drive the identify flash.
-#[define_props]
-pub struct ScreenIdentifyProviderProps {
-    /// The app content (Vue: the calling module).
-    pub children: Element,
-}
-
-/// The context provider. Mount ONCE per window/page, above every consumer and
-/// above the host that paints the card:
-///
-/// ```ignore
-/// rsx! {
-///     ScreenIdentifyProvider {
-///         ScreenIdentifyHost {}
-///         // … the app
-///     }
-/// }
-/// ```
-#[component]
-pub fn ScreenIdentifyProvider(props: ScreenIdentifyProviderProps) -> Element {
-    let state = use_signal(ScreenIdentifyState::default);
-
-    let state_for_show = state.clone();
-    let show = Callback::new(move |request: ScreenIdentifyRequest| {
-        let now = crate::platform::now_timestamp();
-        let generation = {
-            let mut current = state_for_show.write();
-            current.show(&request, now);
-            current.generation()
-        };
-        screen_identify_tick_chain(state_for_show.clone(), generation);
-    });
-
-    let state_for_dismiss = state.clone();
-    let dismiss = Callback::new(move |_| {
-        state_for_dismiss.write().dismiss();
-    });
-
-    use_context_provider(move || ScreenIdentifyContext {
-        state,
-        show,
-        dismiss,
-    });
-
-    props.children.clone()
 }
 
 /// Where the card parks on the physical screen (Vue: `ScreenIdentifyPlacement`).
@@ -492,8 +514,7 @@ pub fn screen_identify_host_content(
 
 #[component]
 pub fn ScreenIdentifyHost(props: ScreenIdentifyHostProps) -> Element {
-    let identify = use_screen_identify();
-    let snapshot = identify.state.get();
+    let snapshot = screen_identify_signal().get();
     screen_identify_host_content(&snapshot, props.placement, props.label.clone())
 }
 

@@ -4,23 +4,20 @@
 
 ## 기본 사용법
 
-```hikari
+```rust
 use hikari_components::overlay::{
-    ScreenIdentifyHost, ScreenIdentifyProvider, ScreenIdentifyRequest, use_screen_identify,
+    ScreenIdentifyHost, ScreenIdentifyRequest, show_screen_identify,
 };
 use hikari_components::prelude::*;
 
-// Mount once: the provider owns the dwell, the host paints the card.
+// Mount once per window: the host paints whatever the singleton holds.
 rsx! {
-    ScreenIdentifyProvider {
-        ScreenIdentifyHost {}
-        // …the app
-    }
+    ScreenIdentifyHost {}
+    // …the app
 }
 
-// anywhere below the provider (a tray button, a board node, a shortcut):
-let identify = use_screen_identify();
-identify.show.call(
+// from anywhere (a tray button, a board node, a shortcut):
+show_screen_identify(
     ScreenIdentifyRequest::new("7").with_name("Wall B"),
 );
 ```
@@ -34,7 +31,8 @@ popups.
 
 | 속성 | 설명 | 타입 | 기본값 |
 |------|------|------|--------|
-| `ScreenIdentifyProvider` / `children` | mounts the context; once per window | `Element` | — |
+| `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
+| `dismiss_screen_identify()` | hides the flash immediately | — | — |
 | `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
@@ -61,9 +59,9 @@ popups.
 - 다시 `show`하면 카드를 쌓지 않고 이전 마감 시간도 물려받지 않고 플래시를 재시작합니다.
 - 카드는 공유 롤링 숫자로 정수 초(3 → 2 → 1)를 표시합니다. 9초를 넘으면 십의 자리가 잘리므로 식별은 한 자리 초로 유지하세요.
 - tick은 남은 시간만 보고하며, 마감을 넘긴 tick이 플래시를 끝냅니다—'남은 0' 프레임은 그려지지 않습니다.
-- 카드는 HUD입니다: 포인터 입력을 가로채지 않으며(`pointer-events: none`), RTL에서도 논리 모서리로 같은 위치에 남습니다.
-- `ScreenIdentifyProvider`와 `ScreenIdentifyHost`는 창당 한 번만 마운트하고, 나머지는 `use_screen_identify()`로 구동합니다.
+- 카드는 HUD입니다: 포인터 입력을 가로채지 않으며(`pointer-events: none`), RTL에서는 좌우 모서리가 거울처럼 바뀝니다(논리 모서리).
+- `ScreenIdentifyHost`는 창당 한 번만 마운트하고, 나머지는 `show_screen_identify()`로 구동합니다(Vue와 같은 모듈 싱글턴).
 
 ## Vue 형태와의 관계
 
-이 패밀리는 Vue의 `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer`를 미러링하고 **같은** vendored 스타일시트(`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`)를 컴파일합니다. Vue 형태는 `#hk-hud-root`가 레이어를 담당하고, Rust 형태는 Teleport가 없어 `AmbientLayer` wrapper가 대역(`calc(var(--hk-z-hud, 90050) + order)`)을 직접 실습니다.
+이 패밀리는 Vue의 `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer`를 미러링하고 **같은** vendored 스타일시트(`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`)를 컴파일합니다. Vue 형태는 `#hk-hud-root`가 레이어를 담당하고, Rust 형태는 Teleport가 없어 `AmbientLayer` wrapper가 대역(`calc(var(--hk-z-hud, 90050) + (zIndex - 1))`)을 직접 실습니다.

@@ -4,23 +4,20 @@ The screen-identify family answers one question every multi-screen setup has: **
 
 ## Basic usage
 
-```hikari
+```rust
 use hikari_components::overlay::{
-    ScreenIdentifyHost, ScreenIdentifyProvider, ScreenIdentifyRequest, use_screen_identify,
+    ScreenIdentifyHost, ScreenIdentifyRequest, show_screen_identify,
 };
 use hikari_components::prelude::*;
 
-// Mount once: the provider owns the dwell, the host paints the card.
+// Mount once per window: the host paints whatever the singleton holds.
 rsx! {
-    ScreenIdentifyProvider {
-        ScreenIdentifyHost {}
-        // …the app
-    }
+    ScreenIdentifyHost {}
+    // …the app
 }
 
-// anywhere below the provider (a tray button, a board node, a shortcut):
-let identify = use_screen_identify();
-identify.show.call(
+// from anywhere (a tray button, a board node, a shortcut):
+show_screen_identify(
     ScreenIdentifyRequest::new("7").with_name("Wall B"),
 );
 ```
@@ -34,7 +31,8 @@ popups.
 
 | Property | Description | Type | Default |
 |------|------|------|--------|
-| `ScreenIdentifyProvider` / `children` | mounts the context; once per window | `Element` | — |
+| `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
+| `dismiss_screen_identify()` | hides the flash immediately | — | — |
 | `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
@@ -61,9 +59,9 @@ popups.
 - A second `show` restarts the flash instead of stacking cards or inheriting the old deadline.
 - The card prints whole seconds (3 → 2 → 1) through the shared rolling countdown digit; a dwell above 9 s would clip the tens digit, so keep identify in single digits.
 - A tick only reports the remainder; the tick that crosses the deadline ends the flash — the flash never paints a zero-remainder frame.
-- The card is a HUD: it never intercepts pointer input (`pointer-events: none`), and it stays in the same corner of the glass under RTL (logical placement).
-- Mount `ScreenIdentifyProvider` once and `ScreenIdentifyHost` once per window; everything else calls `use_screen_identify()`.
+- The card is a HUD: it never intercepts pointer input (`pointer-events: none`), and the physical left/right corner mirrors under RTL (logical placement).
+- Mount `ScreenIdentifyHost` once per window; everything else calls `show_screen_identify()` (a module singleton, like Vue's `showScreenIdentify`).
 
 ## Relationship to the Vue form
 
-This family mirrors the canonical Vue `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` and compiles the **same** vendored stylesheets (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`), so both forms render the same card grammar and the same HUD band. The Vue form owns the layer with `#hk-hud-root`; the Rust form has no Teleport, so `AmbientLayer`'s wrapper itself carries the band (`calc(var(--hk-z-hud, 90050) + order)`).
+This family mirrors the canonical Vue `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` and compiles the **same** vendored stylesheets (`HkScreenIdentifyCard.scss`, `HkAmbientLayer.scss`), so both forms render the same card grammar and the same HUD band. The Vue form owns the layer with `#hk-hud-root`; the Rust form has no Teleport, so `AmbientLayer`'s wrapper itself carries the band (`calc(var(--hk-z-hud, 90050) + (zIndex - 1))`).

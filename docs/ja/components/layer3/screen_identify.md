@@ -4,23 +4,20 @@
 
 ## 基本的な使い方
 
-```hikari
+```rust
 use hikari_components::overlay::{
-    ScreenIdentifyHost, ScreenIdentifyProvider, ScreenIdentifyRequest, use_screen_identify,
+    ScreenIdentifyHost, ScreenIdentifyRequest, show_screen_identify,
 };
 use hikari_components::prelude::*;
 
-// Mount once: the provider owns the dwell, the host paints the card.
+// Mount once per window: the host paints whatever the singleton holds.
 rsx! {
-    ScreenIdentifyProvider {
-        ScreenIdentifyHost {}
-        // …the app
-    }
+    ScreenIdentifyHost {}
+    // …the app
 }
 
-// anywhere below the provider (a tray button, a board node, a shortcut):
-let identify = use_screen_identify();
-identify.show.call(
+// from anywhere (a tray button, a board node, a shortcut):
+show_screen_identify(
     ScreenIdentifyRequest::new("7").with_name("Wall B"),
 );
 ```
@@ -34,7 +31,8 @@ popups.
 
 | プロパティ | 説明 | 型 | 既定値 |
 |------|------|------|--------|
-| `ScreenIdentifyProvider` / `children` | mounts the context; once per window | `Element` | — |
+| `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
+| `dismiss_screen_identify()` | hides the flash immediately | — | — |
 | `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
@@ -61,9 +59,9 @@ popups.
 - 再度 `show` すると、カードを重ねず古い期限も引き継がずにフラッシュを再起動します。
 - カードは共有の回転数字で整数秒（3 → 2 → 1）を表示します。9 秒を超えると十の位が欠けるため、識別は一桁秒に保ってください。
 - tick は残り時間を報告するだけです。期限を跨いだ tick がフラッシュを終了させるため、「残り 0」のフレームは描かれません。
-- カードは HUD です。ポインター入力を遮らず（`pointer-events: none`）、RTL でも論理角位で同じ位置に留まります。
-- `ScreenIdentifyProvider` と `ScreenIdentifyHost` はウィンドウごとに 1 回だけマウントし、その他は `use_screen_identify()` で駆動します。
+- カードは HUD です。ポインター入力を遮らず（`pointer-events: none`）、RTL では左右の角が鏡像になります（論理角位）。
+- `ScreenIdentifyHost` はウィンドウごとに 1 回だけマウントし、その他は `show_screen_identify()` で駆動します（Vue と同じモジュールシングルトン）。
 
 ## Vue 版との関係
 
-本ファミリーは Vue の `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` を鏡映し、**同じ** vendored スタイルシート（`HkScreenIdentifyCard.scss`、`HkAmbientLayer.scss`）をコンパイルします。Vue 版は `#hk-hud-root` がレイヤーを担い、Rust 版は Teleport を持たないため `AmbientLayer` の wrapper 自体が帯（`calc(var(--hk-z-hud, 90050) + order)`）を運びます。
+本ファミリーは Vue の `useScreenIdentify` / `HkScreenIdentifyCard` / `HkScreenIdentifyHost` / `HkAmbientLayer` を鏡映し、**同じ** vendored スタイルシート（`HkScreenIdentifyCard.scss`、`HkAmbientLayer.scss`）をコンパイルします。Vue 版は `#hk-hud-root` がレイヤーを担い、Rust 版は Teleport を持たないため `AmbientLayer` の wrapper 自体が帯（`calc(var(--hk-z-hud, 90050) + (zIndex - 1))`）を運びます。

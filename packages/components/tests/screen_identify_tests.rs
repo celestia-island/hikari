@@ -303,6 +303,138 @@ fn host_puts_the_card_on_the_ambient_layer_while_active() {
     );
 }
 
+// ── The module singleton + timer-chain guards ───────────────────────
+
+#[test]
+fn show_and_dismiss_drive_the_singleton_state() {
+    _reset_screen_identify_for_tests();
+    // A held-open request keeps the card up without scheduling a timer chain.
+    show_screen_identify(
+        ScreenIdentifyRequest::new("7")
+            .with_name("Wall B")
+            .with_duration_ms(0),
+    );
+    let state = screen_identify_signal().get();
+    assert!(state.active());
+    assert!(state.held_open());
+    assert_eq!(state.number(), "7");
+    assert_eq!(state.name(), Some("Wall B"));
+    assert!(!screen_identify_should_tick(&state));
+
+    // The module singleton is the same handle every accessor sees.
+    let identify = use_screen_identify();
+    assert_eq!(identify.state.get().number(), "7");
+    identify.dismiss.call(());
+    assert!(!screen_identify_signal().get().active());
+    _reset_screen_identify_for_tests();
+}
+
+#[test]
+fn host_renders_the_live_singleton_state_and_goes_away_on_dismiss() {
+    _reset_screen_identify_for_tests();
+
+    // Idle: the host paints nothing.
+    let idle = render(ScreenIdentifyHost(ScreenIdentifyHostProps::default()));
+    assert!(!idle.contains("hk-screen-identify"), "{idle}");
+
+    // A held-open flash: the host paints the card on the ambient layer.
+    show_screen_identify(
+        ScreenIdentifyRequest::new("7")
+            .with_name("Wall B")
+            .with_duration_ms(0),
+    );
+    let active = render(ScreenIdentifyHost(ScreenIdentifyHostProps::default()));
+    for needle in [
+        "hk-ambient-layer",
+        "hk-screen-identify",
+        "aria-label=\"Screen 7, Wall B\"",
+    ] {
+        assert!(active.contains(needle), "missing {needle}: {active}");
+    }
+
+    // Restart with a different payload: the host repaints from the singleton.
+    show_screen_identify(ScreenIdentifyRequest::new("8").with_duration_ms(0));
+    let restarted = render(ScreenIdentifyHost(ScreenIdentifyHostProps::default()));
+    assert!(restarted.contains("aria-label=\"Screen 8\""), "{restarted}");
+
+    identify_dismiss_for_test();
+    let after = render(ScreenIdentifyHost(ScreenIdentifyHostProps::default()));
+    assert!(!after.contains("hk-screen-identify"), "{after}");
+    _reset_screen_identify_for_tests();
+}
+
+/// The `Callback` path is what app code uses; exercise it directly so the
+/// test does not depend on a component event loop.
+fn identify_dismiss_for_test() {
+    let identify = use_screen_identify();
+    identify.dismiss.call(());
+}
+
+#[test]
+fn only_timed_flashes_need_a_tick_chain() {
+    let mut state = ScreenIdentifyState::default();
+    assert!(!screen_identify_should_tick(&state));
+
+    state.show(&ScreenIdentifyRequest::new("1"), 0.0);
+    assert!(screen_identify_should_tick(&state));
+
+    state.show(&ScreenIdentifyRequest::new("1").with_duration_ms(0), 0.0);
+    assert!(!screen_identify_should_tick(&state));
+}
+
+#[test]
+fn a_superseded_chain_step_bows_out_instead_of_ticking_the_new_flash() {
+    let mut state = ScreenIdentifyState::default();
+    state.show(&ScreenIdentifyRequest::new("1"), 0.0);
+    let first_generation = state.generation();
+
+    // Restart: the old generation must no longer advance the state.
+    state.show(&ScreenIdentifyRequest::new("2"), 0.0);
+    let restarted_generation = state.generation();
+    assert_ne!(first_generation, restarted_generation);
+    assert!(!screen_identify_chain_step(
+        &mut state,
+        first_generation,
+        10.0
+    ));
+    assert_eq!(state.number(), "2");
+    assert_eq!(state.remaining_ms(), SCREEN_IDENTIFY_DEFAULT_MS);
+    assert!(screen_identify_chain_step(
+        &mut state,
+        restarted_generation,
+        10.0
+    ));
+
+    // Dismiss also retires the chain.
+    state.dismiss();
+    assert!(!screen_identify_chain_step(
+        &mut state,
+        restarted_generation,
+        20.0
+    ));
+}
+
+#[test]
+fn chain_step_crosses_the_deadline_and_ceils_fractional_remainders() {
+    let mut state = ScreenIdentifyState::default();
+    state.show(
+        &ScreenIdentifyRequest::new("1").with_duration_ms(1_000),
+        0.0,
+    );
+    let generation = state.generation();
+
+    // A fractional last millisecond still prints whole "1s" (Vue's ceil); a
+    // truncating implementation would report 0 and unmount the badge early.
+    assert!(screen_identify_chain_step(&mut state, generation, 999.5));
+    assert_eq!(state.remaining_ms(), 1);
+    assert_eq!(state.seconds_left(), 1);
+
+    // The step that reaches the deadline ends the flash.
+    assert!(!screen_identify_chain_step(&mut state, generation, 1_000.0));
+    assert!(!state.active());
+    assert_eq!(state.remaining_ms(), 0);
+}
+
 // ── The ambient HUD layer ───────────────────────────────────────────
 
 #[test]
@@ -361,7 +493,9 @@ fn ambient_layer_opt_in_and_landmark() {
 }
 
 #[test]
-fn ambient_layer_empty_label_drops_the_landmark() {
+fn ambient_layer_empty_label_drops_the_role_but_keeps_the_empty_aria_label() {
+    // Vue binds `aria-label={props.label}` unconditionally: an empty label
+    // emits `aria-label=""` and no role. Match the DOM exactly.
     let html = render(AmbientLayer(AmbientLayerProps {
         pointer_events: AmbientLayerPointerEvents::None,
         z_index: 1,
@@ -369,7 +503,7 @@ fn ambient_layer_empty_label_drops_the_landmark() {
         children: VNode::Text(VText::new("dot")),
     }));
     assert!(!html.contains("role=\"region\""), "{html}");
-    assert!(!html.contains("aria-label"), "{html}");
+    assert!(html.contains("aria-label=\"\""), "{html}");
 }
 
 // ── Style-registry membership ───────────────────────────────────────

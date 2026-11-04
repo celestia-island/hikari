@@ -147,7 +147,7 @@ pub use crate::navigation::{
 pub use crate::overlay::{
     AdaptiveDialogProps, AmbientLayerProps, ContextMenuProviderProps, FloatingLayerProps,
     PopupSelectProps, ProtocolModalProps, ScreenIdentifyCardProps, ScreenIdentifyHostProps,
-    ScreenIdentifyProviderProps, SelectPanelProps,
+    SelectPanelProps,
 };
 // Production component Props
 pub use crate::production::{

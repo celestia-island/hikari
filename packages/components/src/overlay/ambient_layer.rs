@@ -108,11 +108,10 @@ pub struct AmbientLayerProps {
 #[component]
 pub fn AmbientLayer(props: AmbientLayerProps) -> Element {
     let style = ambient_layer_style(props.z_index);
+    // Vue binds `aria-label={props.label}` unconditionally, so an empty label
+    // still emits `aria-label=""` (with no role); match that exactly.
     let role = ambient_layer_landmark(props.label.as_deref());
-    let aria_label = match (role, props.label.as_deref()) {
-        (Some(_), Some(label)) => Some(label.to_string()),
-        _ => None,
-    };
+    let aria_label = props.label.clone();
 
     let root = VElement::new("div")
         .class("hk-ambient-layer")

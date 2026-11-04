@@ -10,4 +10,5 @@ mod layout_components_tests;
 mod navigation_components_tests;
 mod navigation_extra_tests;
 mod production_components_tests;
+mod screen_identify_tests;
 mod vue_mirror_drift_tests;

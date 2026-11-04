@@ -405,6 +405,9 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-adaptive-dialog-drawer-header",
         ".hk-popup-select-wrapper",
         ".hk-floating-layer",
+        // The ambient HUD family (the screen-identify host + card).
+        ".hk-ambient-layer",
+        ".hk-screen-identify",
         ".hk-alt-signin",
         ".s-auth-form",
         ".s-auth-form",

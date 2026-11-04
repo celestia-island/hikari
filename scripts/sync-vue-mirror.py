@@ -290,6 +290,7 @@ GAP_SHEETS: list[str] = [
 
 FAMILY_SHEETS: list[str] = [
     "HkAlert.scss",
+    "HkAmbientLayer.scss",
     "HkBlockingToast.scss",
     "HkConfirmDialog.scss",
     "HkDrawer.scss",
@@ -306,6 +307,7 @@ FAMILY_SHEETS: list[str] = [
     "HkSpinner.scss",
     "HkToast.scss",
     "HkTooltip.scss",
+    "HkScreenIdentifyCard.scss",
 ]
 
 HEADER_LINES = [

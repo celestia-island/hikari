@@ -6,15 +6,19 @@
 //! upstream has none — see each header's ownership note).
 
 pub mod adaptive_dialog;
+pub mod ambient_layer;
 pub mod context_menu_provider;
 pub mod floating_layer;
 pub mod popup_select;
 pub mod protocol_modal;
+pub mod screen_identify;
 pub mod select_panel;
 
 pub use adaptive_dialog::*;
+pub use ambient_layer::*;
 pub use context_menu_provider::*;
 pub use floating_layer::*;
 pub use popup_select::*;
 pub use protocol_modal::*;
+pub use screen_identify::*;
 pub use select_panel::*;

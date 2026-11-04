@@ -429,14 +429,17 @@ impl StyleRegistry {
     #[cfg(feature = "overlay")]
     pub fn register_overlay_components(&mut self) {
         use crate::overlay::{
-            AdaptiveDialogComponent, ContextMenuProviderComponent, FloatingLayerComponent,
-            PopupSelectComponent, ProtocolModalComponent, SelectPanelComponent,
+            AdaptiveDialogComponent, AmbientLayerComponent, ContextMenuProviderComponent,
+            FloatingLayerComponent, PopupSelectComponent, ProtocolModalComponent,
+            ScreenIdentifyCardComponent, SelectPanelComponent,
         };
         AdaptiveDialogComponent::register(self);
+        AmbientLayerComponent::register(self);
         ContextMenuProviderComponent::register(self);
         FloatingLayerComponent::register(self);
         PopupSelectComponent::register(self);
         ProtocolModalComponent::register(self);
+        ScreenIdentifyCardComponent::register(self);
         SelectPanelComponent::register(self);
     }
 

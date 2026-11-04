@@ -63,6 +63,7 @@
     "hikari::theme.solar.detectedIpZone": "Часовой пояс IP",
     "hikari::theme.solar.detectedProbing": "Определение по сети…",
     "hikari::theme.solar.detectedFailed": "Не удалось определить — проверьте сеть и повторите попытку",
+    "hikari::theme.solar.detectedRefreshFailed": "Не удалось обновить — показаны последние известные значения",
     "hikari::theme.solar.detectedRetry": "Повторить",
     "hikari::theme.solar.hemisphere": "Полушарие",
     "hikari::theme.solar.north": "Северное",

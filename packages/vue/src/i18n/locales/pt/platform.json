@@ -63,6 +63,7 @@
     "hikari::theme.solar.detectedIpZone": "Fuso do IP",
     "hikari::theme.solar.detectedProbing": "Consultando pela rede…",
     "hikari::theme.solar.detectedFailed": "A consulta falhou; verifique a rede e tente novamente",
+    "hikari::theme.solar.detectedRefreshFailed": "A atualização falhou; mostrando os últimos valores conhecidos",
     "hikari::theme.solar.detectedRetry": "Tentar novamente",
     "hikari::theme.solar.hemisphere": "Hemisfério",
     "hikari::theme.solar.north": "Norte",

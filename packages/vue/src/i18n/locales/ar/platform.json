@@ -63,6 +63,7 @@
     "hikari::theme.solar.detectedIpZone": "المنطقة الزمنية للـ IP",
     "hikari::theme.solar.detectedProbing": "جارٍ الكشف عبر الشبكة…",
     "hikari::theme.solar.detectedFailed": "فشل الكشف — تحقّق من الشبكة ثم أعد المحاولة",
+    "hikari::theme.solar.detectedRefreshFailed": "فشل التحديث — تُعرض آخر القيم المعروفة",
     "hikari::theme.solar.detectedRetry": "إعادة المحاولة",
     "hikari::theme.solar.hemisphere": "نصف الكرة",
     "hikari::theme.solar.north": "الشمالي",

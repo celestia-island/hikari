@@ -2,12 +2,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
-import { HkSolarLocationSetting } from "./HkSolarLocationSetting";
+import { HkSolarLocationSetting, solarOffsetText, solarTimezoneDetectedRows } from "./HkSolarLocationSetting";
 import { setLocale } from "../i18n/context";
 import {
   SOLAR_LOCATION_STRATEGY_STORAGE_KEY,
   SOLAR_MANUAL_LOCATION_STORAGE_KEY,
   manualLocationOf,
+  probeSolarIpInsight,
   resetSolarIpInsight,
   setSolarLocationStrategy,
   setSolarManualLocation,
@@ -276,6 +277,71 @@ describe("HkSolarLocationSetting card", () => {
     expect(summary.getAttribute("data-strategy")).toBe("manual");
     expect(summary.textContent).toContain("Manual · Australia/Sydney · Southern");
   });
+
+  it("never probes on mount or on the timezone pane — the offline-first contract", async () => {
+    // The strategy card's own promise: a fresh environment must not
+    // issue a network request (nor touch permissions) until the user
+    // deliberately enters the IP pane (or applies the ip strategy).
+    const fetchMock = vi.mocked(globalThis.fetch);
+    const container = mountSetting();
+    await settle();
+    expect(fetchMock, "mounting the card stays offline").not.toHaveBeenCalled();
+
+    await openEditor(container);
+    await settle();
+    expect(fetchMock, "opening the editor on the timezone pane stays offline").not.toHaveBeenCalled();
+
+    // Switching away and back (timezone ⇄ manual) never probes either.
+    clickStrategy("manual");
+    await settle();
+    clickStrategy("timezone");
+    await settle();
+    expect(fetchMock, "timezone ⇄ manual switches stay offline").not.toHaveBeenCalled();
+  });
+});
+
+describe("solarTimezoneDetectedRows + solarOffsetText (pure builders)", () => {
+  const en = localeBundle("en");
+  const translate = (key: string): string => en[key] ?? key;
+
+  function rowOf(rows: ReturnType<typeof solarTimezoneDetectedRows>, label: string): string | undefined {
+    return rows.find((row) => row.label === label)?.badges[0]?.text;
+  }
+
+  it("bands + example cities only for zones whose offset IS a wheel sector", () => {
+    const rows = solarTimezoneDetectedRows("Asia/Shanghai", translate);
+    expect(rowOf(rows, "Time zone ID")).toBe("Asia/Shanghai");
+    expect(rowOf(rows, "Time zone")).toBe(en["hikari::theme.solar.sector.p8"]);
+    expect(rowOf(rows, "Example cities")).toContain(en["hikari::theme.solar.city.shanghai"]);
+  });
+
+  it("falls back to the exact offset outside the wheel — never a mislabeled band", () => {
+    // Half-hour zone: no whole-hour band.
+    const kolkata = solarTimezoneDetectedRows("Asia/Kolkata", translate);
+    expect(rowOf(kolkata, "UTC offset")).toBe("UTC+05:30");
+    // Whole-hour zones OUTSIDE the −11…+12 wheel: +13 (Samoa/Tonga/Line
+    // Islands) and POSIX-inverted Etc/GMT+12 (standard −12) must not
+    // borrow the nearest sector's band or cities.
+    for (const zone of ["Pacific/Apia", "Pacific/Kiritimati", "Etc/GMT+12"]) {
+      const rows = solarTimezoneDetectedRows(zone, translate);
+      expect(rows.find((row) => row.label === "Time zone"), zone).toBeUndefined();
+      expect(rows.find((row) => row.label === "Example cities"), zone).toBeUndefined();
+      expect(rowOf(rows, "UTC offset"), zone).toMatch(/^UTC[+-]\d{2}:\d{2}$/);
+    }
+    expect(rowOf(solarTimezoneDetectedRows("Pacific/Apia", translate), "UTC offset")).toBe("UTC+13:00");
+    expect(rowOf(solarTimezoneDetectedRows("Etc/GMT+12", translate), "UTC offset")).toBe("UTC-12:00");
+    expect(rowOf(solarTimezoneDetectedRows("Pacific/Kiritimati", translate), "UTC offset")).toBe("UTC+14:00");
+  });
+
+  it("offsetText pins the exact sign and fraction formatting", () => {
+    expect(solarOffsetText(0)).toBe("UTC");
+    expect(solarOffsetText(8)).toBe("UTC+08:00");
+    expect(solarOffsetText(5.5)).toBe("UTC+05:30");
+    expect(solarOffsetText(5.75)).toBe("UTC+05:45");
+    expect(solarOffsetText(12.75)).toBe("UTC+12:45");
+    expect(solarOffsetText(-3.5)).toBe("UTC-03:30");
+    expect(solarOffsetText(-12)).toBe("UTC-12:00");
+  });
 });
 
 describe("HkSolarLocationSetting editor", () => {
@@ -311,7 +377,7 @@ describe("HkSolarLocationSetting editor", () => {
     const en = localeBundle("en");
     const rows = detectedRows();
     expect(rows.get("Time zone ID")).toContain(zone);
-    if (sector && Number.isInteger(standardOffsetHours(zone))) {
+    if (sector && sector.offset === standardOffsetHours(zone)) {
       expect(rows.get("Time zone")).toContain(en[sectorNameKey(sector.offset)]!);
       expect(rows.get("Example cities")).toContain(en[cityKey(sector.cities[0]!)]!);
     } else {
@@ -367,6 +433,20 @@ describe("HkSolarLocationSetting editor", () => {
     const regionBadge = [...detectedSection().querySelectorAll<HTMLElement>(".hk-badge")]
       .find((badge) => badge.textContent?.includes("China · Shanghai"));
     expect(regionBadge?.getAttribute("data-pill")).toBe("false");
+
+    // A failed REFRESH keeps the last known values on the rows — the
+    // status copy must say "refresh failed", not contradict them with
+    // the first-probe failure text. (With state=ok the readout shows no
+    // status line at all; the forced engine probe is exactly what the
+    // retry button would drive.)
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false })));
+    await probeSolarIpInsight(true);
+    await vi.waitFor(() => {
+      expect(detectedSection().querySelector('[data-state="failed"]')).toBeTruthy();
+    });
+    expect(detectedSection().textContent).toContain("Refresh failed — showing the last known values");
+    expect(detectedRows().get("IP address")).toContain("203.0.113.7");
+    expect(detectedSection().querySelector(".hk-solar-detected-retry")).toBeTruthy();
   });
 
   it("switching strategies swaps the hint and reveals the manual pane", async () => {
@@ -509,7 +589,7 @@ describe("HkSolarLocationSetting i18n", () => {
     const zh = localeBundle("zh-Hans");
     const rows = detectedRows();
     expect(rows.get("时区 ID")).toContain(zone);
-    if (sector && Number.isInteger(standardOffsetHours(zone))) {
+    if (sector && sector.offset === standardOffsetHours(zone)) {
       expect(rows.get("时区")).toContain(zh[sectorNameKey(sector.offset)]!);
       expect(rows.get("代表城市")).toContain(zh[cityKey(sector.cities[0]!)]!);
     } else {

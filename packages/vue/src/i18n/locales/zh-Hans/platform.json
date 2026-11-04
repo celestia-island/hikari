@@ -63,6 +63,7 @@
     "hikari::theme.solar.detectedIpZone": "IP 时区",
     "hikari::theme.solar.detectedProbing": "正在联网检测…",
     "hikari::theme.solar.detectedFailed": "检测失败，请检查网络后重试",
+    "hikari::theme.solar.detectedRefreshFailed": "刷新失败，仍显示上次检测的结果",
     "hikari::theme.solar.detectedRetry": "重新检测",
     "hikari::theme.solar.hemisphere": "半球",
     "hikari::theme.solar.north": "北半球",

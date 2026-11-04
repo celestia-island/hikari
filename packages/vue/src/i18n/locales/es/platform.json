@@ -63,6 +63,7 @@
     "hikari::theme.solar.detectedIpZone": "Zona horaria IP",
     "hikari::theme.solar.detectedProbing": "Consultando por la red…",
     "hikari::theme.solar.detectedFailed": "La consulta falló; comprueba la red e inténtalo de nuevo",
+    "hikari::theme.solar.detectedRefreshFailed": "La actualización falló; se muestran los últimos valores conocidos",
     "hikari::theme.solar.detectedRetry": "Reintentar",
     "hikari::theme.solar.hemisphere": "Hemisferio",
     "hikari::theme.solar.north": "Norte",

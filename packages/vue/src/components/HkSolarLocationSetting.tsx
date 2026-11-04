@@ -55,6 +55,61 @@ interface SolarDetectedRow {
   badges: SolarDetectedBadge[];
 }
 
+/** Exact UTC offset label ("UTC+08:00", "UTC+05:30", "UTC") — the
+ *  offset is language-independent, so no locale key needed. Exported
+ *  for the unit pins on the sign/fraction formatting (negative and
+ *  half-quarter offsets never render on a UTC CI runner through the
+ *  component path alone). */
+export function solarOffsetText(hours: number): string {
+  if (hours === 0) return "UTC";
+  const sign = hours > 0 ? "+" : "-";
+  const abs = Math.abs(hours);
+  const whole = Math.floor(abs + 1e-9);
+  const minutes = Math.round((abs - whole) * 60);
+  return `UTC${sign}${String(whole).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+/** Pure row builder for the timezone pane (exported for tests). The
+ *  translated band name + example cities appear ONLY for zones whose
+ *  whole-hour standard offset IS one of the 24 wheel sectors (−11 …
+ *  +12): half-hour zones (Asia/Kolkata +5.5) AND whole-hour zones
+ *  outside the wheel (Pacific/Apia +13, Pacific/Kiritimati +14,
+ *  Etc/GMT+12 at standard −12) fall back to the exact UTC offset
+ *  instead of a mislabeled nearest band. */
+export function solarTimezoneDetectedRows(
+  zone: string,
+  translate: (key: string) => string,
+): SolarDetectedRow[] {
+  const rows: SolarDetectedRow[] = [
+    {
+      label: translate("hikari::theme.solar.detectedZone"),
+      badges: [{ text: zone, mono: true }],
+    },
+  ];
+  const hours = standardOffsetHours(zone);
+  const sector = sectorForZone(zone);
+  if (sector && sector.offset === hours) {
+    rows.push({
+      label: translate("hikari::theme.solar.detectedBand"),
+      badges: [{ text: translate(sectorNameKey(sector.offset)) }],
+    });
+    if (sector.cities.length > 0) {
+      const separator = translate("hikari::theme.solar.citySeparator");
+      const text = sector.cities.map((slug) => translate(cityKey(slug))).join(separator);
+      rows.push({
+        label: translate("hikari::theme.solar.detectedCities"),
+        badges: [{ text, wrap: true }],
+      });
+    }
+  } else {
+    rows.push({
+      label: translate("hikari::theme.solar.detectedOffset"),
+      badges: [{ text: solarOffsetText(hours) }],
+    });
+  }
+  return rows;
+}
+
 /**
  * HkSolarLocationSetting — the solar clock's location STRATEGY card
  * (2026-10-31 product direction: strategies, not a fixed cascade;
@@ -203,55 +258,9 @@ export const HkSolarLocationSetting = defineComponent({
     });
 
     // ── Detected-value readout (timezone / ip tabs) ───────────────────
-    /** Exact UTC offset label ("UTC+08:00", "UTC+05:30", "UTC") — the
-     *  offset is language-independent, so no locale key needed. */
-    function offsetText(hours: number): string {
-      if (hours === 0) return "UTC";
-      const sign = hours > 0 ? "+" : "-";
-      const abs = Math.abs(hours);
-      const whole = Math.floor(abs + 1e-9);
-      const minutes = Math.round((abs - whole) * 60);
-      return `UTC${sign}${String(whole).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-    }
-
-    function citiesBadge(sector: { cities: readonly string[] }): SolarDetectedBadge {
-      const separator = t("hikari::theme.solar.citySeparator", ", ");
-      const text = sector.cities.map((slug) => t(cityKey(slug))).join(separator);
-      return { text, wrap: true };
-    }
-
     const detectedRows = computed<SolarDetectedRow[]>(() => {
       if (draftStrategy.value === "timezone") {
-        const zone = systemTimeZoneId();
-        const rows: SolarDetectedRow[] = [
-          { label: t("hikari::theme.solar.detectedZone"), badges: [{ text: zone, mono: true }] },
-        ];
-        // Whole-hour zones carry the sector's translated band name plus
-        // its representative cities (display examples only — the same
-        // set the globe's readout shows). Half-hour zones (Asia/Kolkata,
-        // …) have no whole-hour band: they fall back to the exact UTC
-        // offset instead of a mislabeled nearest band.
-        const hours = standardOffsetHours(zone);
-        const sector = sectorForZone(zone);
-        const wholeHour = Number.isInteger(hours);
-        if (wholeHour && sector) {
-          rows.push({
-            label: t("hikari::theme.solar.detectedBand"),
-            badges: [{ text: t(sectorNameKey(sector.offset)) }],
-          });
-          if (sector.cities.length > 0) {
-            rows.push({
-              label: t("hikari::theme.solar.detectedCities"),
-              badges: [citiesBadge(sector)],
-            });
-          }
-        } else {
-          rows.push({
-            label: t("hikari::theme.solar.detectedOffset"),
-            badges: [{ text: offsetText(hours) }],
-          });
-        }
-        return rows;
+        return solarTimezoneDetectedRows(systemTimeZoneId(), (key) => t(key));
       }
       if (draftStrategy.value === "ip") {
         const insight = solarIpInsight.value;
@@ -309,7 +318,15 @@ export const HkSolarLocationSetting = defineComponent({
       if (draftStrategy.value !== "ip") return null;
       const state = solarIpProbeState.value;
       if (state === "failed") {
-        return { kind: "failed", text: t("hikari::theme.solar.detectedFailed") };
+        // A failed FIRST probe has nothing to show but the failure; a
+        // failed REFRESH leaves the last known values on the rows — the
+        // copy must say so instead of contradicting them.
+        return {
+          kind: "failed",
+          text: detectedRows.value.length > 0
+            ? t("hikari::theme.solar.detectedRefreshFailed")
+            : t("hikari::theme.solar.detectedFailed"),
+        };
       }
       if (detectedRows.value.length === 0 && (state === "probing" || state === "idle")) {
         return { kind: "probing", text: t("hikari::theme.solar.detectedProbing") };

@@ -63,6 +63,7 @@
     "hikari::theme.solar.detectedIpZone": "IP-Zeitzone",
     "hikari::theme.solar.detectedProbing": "Netzwerkabfrage läuft…",
     "hikari::theme.solar.detectedFailed": "Abfrage fehlgeschlagen — bitte Netzwerk prüfen und erneut versuchen",
+    "hikari::theme.solar.detectedRefreshFailed": "Aktualisierung fehlgeschlagen — die letzten bekannten Werte werden angezeigt",
     "hikari::theme.solar.detectedRetry": "Erneut versuchen",
     "hikari::theme.solar.hemisphere": "Hemisphäre",
     "hikari::theme.solar.north": "Nördlich",

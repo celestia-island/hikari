@@ -13,6 +13,11 @@ export type CornerBadgeVariant =
   | "info"
   | "muted";
 
+/** Which corner of the anchor the mark hangs on. Exported so hosts that
+ *  embed the shell (HkIconButton's dot, HkTabs' trigger badge) share the
+ *  one vocabulary instead of re-spelling the union. */
+export type CornerBadgeCorner = "top-right" | "top-left" | "bottom-right" | "bottom-left";
+
 /**
  * HkCornerBadge — the generic corner mark for ANY anchor (user
  * direction 2026-10-15): a green/red/traffic dot, a notification count
@@ -44,7 +49,7 @@ export default defineComponent({
     text: { type: String, default: undefined },
     /** Which corner of the anchor. */
     corner: {
-      type: String as PropType<"top-right" | "top-left" | "bottom-right" | "bottom-left">,
+      type: String as PropType<CornerBadgeCorner>,
       default: "top-right",
     },
     /** Extra clearance from the corner in px (0 = sit ON the corner,

@@ -22,11 +22,16 @@ export interface TabItem {
   icon?: unknown;
   /** Corner-count badge rendered on the trigger through HkCornerBadge —
    *  the ONE sup/sub decoration shell (user direction 2026-11-05:
-   *  hand-rolled "(n)" count suffixes baked into labels are replaced by
-   *  the standard corner mark, and triggers are badge hosts like every
-   *  other button). Zero stays visible: a tab count is presence
-   *  information (the "（0）" the inline suffix carried), not
-   *  notification noise — pass no badge to hide it entirely. */
+   *  hand-rolled "(n)" count suffixes baked into labels are being
+   *  replaced by the standard corner mark, and triggers are badge hosts
+   *  like every other button). Zero stays visible: a tab count is
+   *  presence information (the "（0）" the inline suffix carried), not
+   *  notification noise — pass no badge to hide it entirely. The badge
+   *  anchors the LABEL, so a tab with an empty label renders no badge
+   *  either; pass `label` (an accessible name like "{n} active") or the
+   *  mark is aria-hidden decoration and the count is announced nowhere
+   *  (a DEV warning fires — a silent a11y regression against the inline
+   *  suffix it replaces must at least be loud). */
   badge?: {
     count: number;
     /** "N+" ceiling (HkCornerBadge.max). */
@@ -36,8 +41,16 @@ export interface TabItem {
     corner?: CornerBadgeCorner;
     /** Tone channel (HkCornerBadge.variant names, default "primary"). */
     variant?: CornerBadgeVariant;
-    /** Accessible name for the mark — without it the badge is
-     *  aria-hidden decoration and the count is announced nowhere. */
+    /** Corner clearance in px (HkCornerBadge.offset). Default 4: the
+     *  pill protrudes half its 18px height past the label box, and the
+     *  strip's vertical clearance below the label is trigger padding
+     *  (4px) + list padding (2px) = 6px before the scroller viewport
+     *  clips — offset 4 keeps the protrusion at 5px, inside that
+     *  clearance. 0 sits ON the corner and clips ~3px on the default
+     *  scrollable strip; raise it if your host adds no extra padding. */
+    offset?: number;
+    /** Accessible name for the mark — strongly expected (DEV-warned
+     *  when missing). */
     label?: string;
   };
   disabled?: boolean;
@@ -223,6 +236,22 @@ export default defineComponent({
           "[HkTabs] duplicate tab keys dropped:",
           props.tabs.map((tb) => tb.key).join(", "),
         );
+      }
+      if (import.meta.env.DEV) {
+        // A badge the strip renders as aria-hidden decoration is a
+        // SILENT a11y regression against the inline "(n)" suffix it
+        // replaces — the count was part of the accessible name before
+        // and is announced nowhere now. Same tier as the duplicate-key
+        // drift alarm above.
+        for (const tb of props.tabs) {
+          if (tb.badge && !tb.badge.label) {
+            // eslint-disable-next-line no-console -- dev-only drift alarm
+            console.warn(
+              "[HkTabs] tab badge without a label is aria-hidden — pass badge.label so the count is announced:",
+              tb.key,
+            );
+          }
+        }
       }
       return list;
     });
@@ -569,16 +598,19 @@ export default defineComponent({
           >
             {icon}
             {/* The badge anchors the LABEL (inside the trigger's own
-             *  padding box) rather than the button box: the mark stays
-             *  unclipped by the scroller's overflow and reads as part
-             *  of the control's silhouette (the HkIconButton dot's
-             *  2026-10-28 lesson, count form). */}
+             *  padding box) rather than the button box: the mark reads
+             *  as part of the control's silhouette (the HkIconButton
+             *  dot's 2026-10-28 lesson, count form). Clipping is kept
+             *  honest by the offset default: the pill straddles the
+             *  label's corner and the scroller viewport clips at
+             *  6px below the label — see TabItem.badge.offset. */}
             {tab.label && (tab.badge ? (
               <HkCornerBadge
                 count={tab.badge.count}
                 max={tab.badge.max}
                 showZero
                 corner={tab.badge.corner ?? "bottom-right"}
+                offset={tab.badge.offset ?? 4}
                 variant={tab.badge.variant ?? "primary"}
                 label={tab.badge.label}
               >

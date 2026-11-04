@@ -14,8 +14,9 @@ export type CornerBadgeVariant =
   | "muted";
 
 /** Which corner of the anchor the mark hangs on. Exported so hosts that
- *  embed the shell (HkIconButton's dot, HkTabs' trigger badge) share the
- *  one vocabulary instead of re-spelling the union. */
+ *  embed the shell (HkTabs' trigger badge) share the one vocabulary
+ *  instead of re-spelling the union; HkIconButton's dot borrows the tone
+ *  channels but is an inset span of its own, not a corner mark. */
 export type CornerBadgeCorner = "top-right" | "top-left" | "bottom-right" | "bottom-left";
 
 /**

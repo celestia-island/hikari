@@ -701,6 +701,10 @@ describe("HkTabs trigger corner badge", () => {
     expect(mark.textContent).toBe("3");
     expect(mark.dataset.corner).toBe("bottom-right");
     expect(trig.textContent).not.toContain("(3)");
+    // Default clearance: the straddling pill must stay inside the
+    // scroller's 6px vertical clearance below the label (see
+    // TabItem.badge.offset) — the offset var pins that contract.
+    expect(mark.style.getPropertyValue("--hk-corner-badge-offset")).toBe("4px");
     // The sibling trigger stays badge-free.
     expect(container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[1]!.querySelector(".hk-corner-badge")).toBeNull();
   });
@@ -719,7 +723,47 @@ describe("HkTabs trigger corner badge", () => {
     expect(mark.getAttribute("aria-label")).toBe("120 pending");
   });
 
-  it("leaves badgeless triggers byte-identical to the plain render", () => {
+  it("follows a live count change without a remount (presence stays current)", async () => {
+    const active = ref("a");
+    const tabs = ref<TabItem[]>([{ key: "a", label: "Alpha", badge: { count: 1, label: "1 item" } }]);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTabs, {
+            variant: "segmented",
+            tabs: tabs.value,
+            renderPanels: false,
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const mark = () => container.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
+    expect(mark().textContent).toBe("1");
+    tabs.value = [{ key: "a", label: "Alpha", badge: { count: 12, label: "12 items" } }];
+    await nextTick();
+    expect(mark().textContent).toBe("12");
+  });
+
+  it("warns in DEV when a badge lacks an accessible label", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      mountBadge({ count: 3 });
+      const alarms = warn.mock.calls.filter((c) => String(c[0]).includes("badge without a label"));
+      expect(alarms.length, "the a11y drift alarm must fire").toBeGreaterThan(0);
+      expect(alarms[0]![1]).toBe("a");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("leaves badgeless triggers free of the badge anchor (plain label span render)", () => {
     const { container } = mountBadge(undefined);
     expect(container.querySelector(".hk-corner-badge-anchor")).toBeNull();
     const label = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!.querySelector("span")!;

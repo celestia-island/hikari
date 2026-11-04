@@ -270,6 +270,7 @@ hk.solarLocationSetting.detectedIpZone = "المنطقة الزمنية للـ I
 hk.solarLocationSetting.detectedOffset = "إزاحة UTC"
 hk.solarLocationSetting.detectedOrg = "المشغّل"
 hk.solarLocationSetting.detectedProbing = "جارٍ الكشف عبر الشبكة…"
+hk.solarLocationSetting.detectedRefreshFailed = "فشل التحديث — تُعرض آخر القيم المعروفة"
 hk.solarLocationSetting.detectedRegion = "منطقة الشبكة"
 hk.solarLocationSetting.detectedRetry = "إعادة المحاولة"
 hk.solarLocationSetting.detectedZone = "معرّف المنطقة الزمنية"

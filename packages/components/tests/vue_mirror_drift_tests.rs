@@ -842,13 +842,23 @@ fn localized_component_bundles_carry_the_same_hk_keyset() {
         keys.sort();
         checked += 1;
         match &reference {
-            None => reference = Some((dir.file_name().unwrap().to_string_lossy().into_owned(), keys)),
+            None => {
+                reference = Some((
+                    dir.file_name().unwrap().to_string_lossy().into_owned(),
+                    keys,
+                ))
+            }
             Some((reference_locale, reference_keys)) => {
                 let locale = dir.file_name().unwrap().to_string_lossy().into_owned();
                 if keys != *reference_keys {
-                    let missing: Vec<&String> =
-                        reference_keys.iter().filter(|k| !keys.contains(k)).collect();
-                    let extra: Vec<&String> = keys.iter().filter(|k| !reference_keys.contains(k)).collect();
+                    let missing: Vec<&String> = reference_keys
+                        .iter()
+                        .filter(|k| !keys.contains(k))
+                        .collect();
+                    let extra: Vec<&String> = keys
+                        .iter()
+                        .filter(|k| !reference_keys.contains(k))
+                        .collect();
                     diverged.push(format!(
                         "{locale} vs {reference_locale}: missing {missing:?}, extra {extra:?}"
                     ));

@@ -232,17 +232,24 @@ impl ScreenIdentifyState {
 
 /// The screen-identify context handed to components and app code
 /// (Vue: the `useScreenIdentify()` read side + `show`/`dismiss`).
-/// The screen-identify context handed to components and app code
-/// (Vue: the `useScreenIdentify()` read side + `show`/`dismiss`).
 #[derive(Clone)]
 pub struct ScreenIdentifyContext {
-    /// The live state (read side; write through `show` / `dismiss` so an
-    /// in-flight timer chain cannot drift from the visible state).
-    pub state: Signal<ScreenIdentifyState>,
+    /// The live state signal (private: writes go through `show` / `dismiss`
+    /// so an in-flight timer chain cannot drift from the visible state; read
+    /// it through [`ScreenIdentifyContext::state`], like Vue's `readonly()`
+    /// refs).
+    state: Signal<ScreenIdentifyState>,
     /// Start (or restart) the flash.
     pub show: Callback<ScreenIdentifyRequest>,
     /// Hide immediately.
     pub dismiss: Callback<()>,
+}
+
+impl ScreenIdentifyContext {
+    /// A snapshot of the live state (Vue: the readonly refs).
+    pub fn state(&self) -> ScreenIdentifyState {
+        self.state.get()
+    }
 }
 
 thread_local! {
@@ -252,8 +259,9 @@ thread_local! {
         const { std::cell::RefCell::new(None) };
 }
 
-/// The live signal (module singleton, Vue's module `state` refs).
-pub fn screen_identify_signal() -> Signal<ScreenIdentifyState> {
+/// The live signal (module singleton, Vue's module `state` refs). Private:
+/// app code reads through [`use_screen_identify`] / [`show_screen_identify`].
+fn screen_identify_signal() -> Signal<ScreenIdentifyState> {
     IDENTIFY_SIGNAL.with(|slot| {
         let mut slot = slot.borrow_mut();
         slot.get_or_insert_with(|| Signal::new(ScreenIdentifyState::default()))
@@ -261,8 +269,19 @@ pub fn screen_identify_signal() -> Signal<ScreenIdentifyState> {
     })
 }
 
+/// Republish the signal so a mounted host repaints.
+///
+/// tairitsu 0.5.26's `Signal::write()` mutates WITHOUT notifying subscribers;
+/// the only component-dirty path is `set()` (`runtime::notify_signal`). The
+/// toast store does the same `get()`-then-`set()` dance (`feedback/toast.rs`);
+/// without it the flash would change state invisibly.
+fn republish_screen_identify(state: &Signal<ScreenIdentifyState>) {
+    let snapshot = state.get();
+    state.set(snapshot);
+}
+
 /// Start (or restart) the flash. Any module may call this, like Vue's
-/// `showScreenIdentify`; the host re-renders because it reads the signal.
+/// `showScreenIdentify`; the host is notified by the republish below.
 pub fn show_screen_identify(request: ScreenIdentifyRequest) {
     let state = screen_identify_signal();
     let now = crate::platform::now_timestamp();
@@ -271,6 +290,7 @@ pub fn show_screen_identify(request: ScreenIdentifyRequest) {
         current.show(&request, now);
         current.generation()
     };
+    republish_screen_identify(&state);
     // Held-open flashes schedule no timer chain (Vue returns before any
     // timer for `durationMs <= 0`).
     if screen_identify_should_tick(&state.get()) {
@@ -280,7 +300,9 @@ pub fn show_screen_identify(request: ScreenIdentifyRequest) {
 
 /// Hide the flash immediately (idempotent).
 pub fn dismiss_screen_identify() {
-    screen_identify_signal().write().dismiss();
+    let state = screen_identify_signal();
+    state.write().dismiss();
+    republish_screen_identify(&state);
 }
 
 /// The identify context accessor (Vue: `useScreenIdentify()`). Always
@@ -367,6 +389,9 @@ fn screen_identify_tick_chain(state: Signal<ScreenIdentifyState>, generation: u3
                 let mut current = state.write();
                 screen_identify_chain_step(&mut current, generation, now)
             };
+            // The step (even the one that ends the flash) must repaint the
+            // host: the countdown and the disappearance are both visible.
+            republish_screen_identify(&state);
             if still_active {
                 screen_identify_tick_chain(state.clone(), generation);
             }
@@ -376,8 +401,8 @@ fn screen_identify_tick_chain(state: Signal<ScreenIdentifyState>, generation: u3
 }
 
 /// Where the card parks on the physical screen (Vue: `ScreenIdentifyPlacement`).
-/// Logical: RTL mirrors the left/right pair while the card stays at the same
-/// corner of the glass.
+/// Logical: RTL mirrors the physical left/right pair; the top/bottom edges stay
+/// put, so the card lands in the corresponding corner of the glass.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ScreenIdentifyPlacement {
     #[default]
@@ -476,14 +501,15 @@ pub struct ScreenIdentifyHostProps {
 /// Mount ONCE per window to render the screen-identify card.
 ///
 /// It is the glue between the two halves of the identify contract: the
-/// provider owns the payload/dwell/countdown, and [`AmbientLayer`] owns the
-/// LAYER — the card rides the ambient-HUD band, which paints above every popup,
-/// the modal backdrop included. The host decides nothing else: no transport,
-/// no numbering, no app policy.
-/// The host's whole decision, as a pure function of the state: idle renders
-/// nothing; an active flash renders the card on the ambient layer. Kept
-/// separate from the component so the glue is testable without a hook runtime
-/// (the Vue suite mounts a real modal for the same assertion).
+/// module singleton owns the payload/dwell/countdown, and [`AmbientLayer`]
+/// owns the LAYER — the card rides the ambient-HUD band, which paints above
+/// every popup, the modal backdrop included. The host decides nothing else:
+/// no transport, no numbering, no app policy.
+///
+/// [`screen_identify_host_content`] is the host's whole decision as a pure
+/// function (idle renders nothing; an active flash renders the card on the
+/// ambient layer), and the live-runtime test mounts the real component to prove
+/// the show/dismiss repaint path.
 pub fn screen_identify_host_content(
     state: &ScreenIdentifyState,
     placement: ScreenIdentifyPlacement,

@@ -33,7 +33,7 @@ popups.
 |------|------|------|--------|
 | `show_screen_identify(request)` | starts or restarts the flash | `ScreenIdentifyRequest` | — |
 | `dismiss_screen_identify()` | hides the flash immediately | — | — |
-| `use_screen_identify()` | returns `ScreenIdentifyContext` (`state`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
+| `use_screen_identify()` | returns `ScreenIdentifyContext` (read-only `state()`, `show`, `dismiss`) | `ScreenIdentifyContext` | — |
 | `ScreenIdentifyRequest` / `number` | fleet number or any short label | `String` | — |
 | `ScreenIdentifyRequest` / `name` | stable screen name line | `Option<String>` | `None` |
 | `ScreenIdentifyRequest` / `duration_ms` | dwell; `Some(0)` holds open | `Option<u64>` | `None` → 3000 |

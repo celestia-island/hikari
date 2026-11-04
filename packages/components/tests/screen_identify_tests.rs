@@ -2,10 +2,11 @@
 //! of the canonical Vue `useScreenIdentify` / `HkScreenIdentifyCard` /
 //! `HkScreenIdentifyHost` / `HkAmbientLayer` mirrors).
 //!
-//! The state machine tests drive the dwell on an explicit clock (the provider
-//! feeds it `platform::now_timestamp()`); the render tests assert the DOM shape
-//! the vendored Vue sheets key on. The cross-form sheet comparison itself lives
-//! in `vue_mirror_drift_tests.rs`.
+//! The state machine tests drive the dwell on an explicit clock (the module
+//! singleton feeds it `platform::now_timestamp()`); the render tests assert the
+//! DOM shape the vendored Vue sheets key on; the live-runtime test mounts the
+//! real host through tairitsu's runtime to pin the show/dismiss repaint path.
+//! The cross-form sheet comparison lives in `vue_mirror_drift_tests.rs`.
 
 use hikari_components::overlay::*;
 use hikari_components::prelude::*;
@@ -314,7 +315,7 @@ fn show_and_dismiss_drive_the_singleton_state() {
             .with_name("Wall B")
             .with_duration_ms(0),
     );
-    let state = screen_identify_signal().get();
+    let state = use_screen_identify().state();
     assert!(state.active());
     assert!(state.held_open());
     assert_eq!(state.number(), "7");
@@ -323,9 +324,9 @@ fn show_and_dismiss_drive_the_singleton_state() {
 
     // The module singleton is the same handle every accessor sees.
     let identify = use_screen_identify();
-    assert_eq!(identify.state.get().number(), "7");
+    assert_eq!(identify.state().number(), "7");
     identify.dismiss.call(());
-    assert!(!screen_identify_signal().get().active());
+    assert!(!use_screen_identify().state().active());
     _reset_screen_identify_for_tests();
 }
 
@@ -433,6 +434,49 @@ fn chain_step_crosses_the_deadline_and_ceils_fractional_remainders() {
     assert!(!screen_identify_chain_step(&mut state, generation, 1_000.0));
     assert!(!state.active());
     assert_eq!(state.remaining_ms(), 0);
+}
+
+// ── The live runtime repaint path ───────────────────────────────────
+
+/// Mount the real host through tairitsu's runtime and assert the state is
+/// REPUBLISHED: `Signal::write()` alone does not dirty a component in 0.5.26,
+/// so a flash would change invisibly if `set()` were missing (R3's S1).
+#[test]
+fn a_mounted_host_repaints_on_show_and_dismiss() {
+    use tairitsu_vdom::runtime;
+
+    _reset_screen_identify_for_tests();
+    let id = runtime::use_component(|| ScreenIdentifyHost(ScreenIdentifyHostProps::default()));
+
+    runtime::mark_dirty(id);
+    runtime::flush_render();
+    let html = |id| {
+        runtime::get_current_vnode(id)
+            .expect("host should have rendered")
+            .render_to_html()
+    };
+    assert!(!html(id).contains("hk-screen-identify"), "{}", html(id));
+
+    show_screen_identify(
+        ScreenIdentifyRequest::new("7")
+            .with_name("Wall B")
+            .with_duration_ms(0),
+    );
+    runtime::flush_render();
+    let painted = html(id);
+    for needle in [
+        "hk-ambient-layer",
+        "hk-screen-identify",
+        "aria-label=\"Screen 7, Wall B\"",
+    ] {
+        assert!(painted.contains(needle), "missing {needle}: {painted}");
+    }
+
+    dismiss_screen_identify();
+    runtime::flush_render();
+    assert!(!html(id).contains("hk-screen-identify"), "{}", html(id));
+
+    _reset_screen_identify_for_tests();
 }
 
 // ── The ambient HUD layer ───────────────────────────────────────────

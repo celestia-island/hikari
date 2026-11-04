@@ -54,7 +54,7 @@
 # 组件 — 第 3 层
 - [Editor 编辑器组件](./components/layer3/editor.md)
 - [Media 媒体组件](./components/layer3/media.md)
+- [识别屏幕](./components/layer3/screen_identify.md)
 - [UserGuide 用户引导](./components/layer3/user_guide.md)
 - [Visualization 可视化组件](./components/layer3/visualization.md)
 - [ZoomControls 缩放控制](./components/layer3/zoom_controls.md)
-- [识别屏幕](./components/layer3/screen_identify.md)

@@ -54,7 +54,7 @@
 # 元件 — 第 3 層
 - [Editor 編輯器元件](./components/layer3/editor.md)
 - [Media 媒體元件](./components/layer3/media.md)
+- [辨識螢幕](./components/layer3/screen_identify.md)
 - [UserGuide 使用者引導](./components/layer3/user_guide.md)
 - [Visualization 視覺化元件](./components/layer3/visualization.md)
 - [ZoomControls 縮放控制](./components/layer3/zoom_controls.md)
-- [辨識螢幕](./components/layer3/screen_identify.md)

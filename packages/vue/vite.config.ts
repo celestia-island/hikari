@@ -18,6 +18,15 @@ export default defineConfig({
       // package itself uses, so module identity stays one instance.
       'lucide-vue-next': resolve(__dirname, 'node_modules/lucide-vue-next'),
       'vue': 'vue/dist/vue.esm-bundler.js',
+      // @vitejs/plugin-vue-jsx injects its SSR register glue as a virtual
+      // import ("/__vue-jsx-ssr-register-helper"). Vitest evaluates that
+      // virtual module with a context whose require() is built from the id
+      // as a file URL, and the rootless URL (no drive letter) throws on
+      // Windows — killing every node-environment SSR suite before a single
+      // test runs (hikari#1058). Serving a real file instead makes the
+      // module context a normal path; see
+      // src/test-utils/vueJsxSsrRegisterHelper.ts for the mirrored body.
+      '/__vue-jsx-ssr-register-helper': resolve(__dirname, 'src/test-utils/vueJsxSsrRegisterHelper.ts'),
     },
   },
   build: {

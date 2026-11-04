@@ -153,6 +153,22 @@ export function offsetLabel(offset: number): string {
   return `UTC${offset > 0 ? "+" : "-"}${Math.abs(offset)}`;
 }
 
+/** Locale key of a sector's translated band name (m11..m1, z0, p1..p12).
+ *  Lives here (not on the globe component) so readouts that only need the
+ *  translated band name can name a sector without entering three.js's
+ *  module graph (the strategy dialog's detected-value rows). */
+export function sectorNameKey(offset: number): string {
+  const k = offset < 0 ? `m${Math.abs(offset)}` : offset === 0 ? "z0" : `p${offset}`;
+  return "hikari::theme.solar.sector." + k;
+}
+
+/** Locale key of a representative city slug — same rationale as
+ *  {@link sectorNameKey}: the readouts translate city slugs without
+ *  importing the globe (and its three.js graph). */
+export function cityKey(slug: string): string {
+  return "hikari::theme.solar.city." + slug;
+}
+
 // ── Globe angle conventions (three.js sphere ↔ texture longitude) ──────────
 //
 // three's SphereGeometry maps an equirectangular texture with

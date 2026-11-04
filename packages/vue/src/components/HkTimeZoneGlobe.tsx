@@ -66,11 +66,13 @@ import {
   SECTOR_SPAN_DEG,
   SOLAR_TIME_ZONE_SECTORS,
   azimuthToTextureLngDeg,
+  cityKey,
   isRotationalSettle,
   offsetLabel,
   sectorCenterLngDeg,
   sectorIndexForLngDeg,
   sectorIndexForZone,
+  sectorNameKey,
   textureLngToAzimuthDeg,
   wedgePhiStartDeg,
 } from "../theme/solarTimeZones";
@@ -113,16 +115,12 @@ function wedgePhiStart(offset: number): number {
   return wedgePhiStartDeg(sectorCenterLngDeg(offset)) * DEG;
 }
 
-/** Locale key of a sector's translated band name (m11..m1, z0, p1..p12). */
-export function sectorNameKey(offset: number): string {
-  const k = offset === 0 ? "z0" : offset < 0 ? "m" + String(-offset) : "p" + String(offset);
-  return "hikari::theme.solar.sector." + k;
-}
-
-/** Locale key of a representative city slug. */
-export function cityKey(slug: string): string {
-  return "hikari::theme.solar.city." + slug;
-}
+// sectorNameKey / cityKey moved to theme/solarTimeZones.ts (the pure-data
+// sector module, imported at the top) so readouts that only need the
+// translated names can use them without entering this component's
+// three.js module graph; the same names re-export here for the globe's
+// own template and existing consumers.
+export { cityKey, sectorNameKey };
 
 export default defineComponent({
   name: "HkTimeZoneGlobe",

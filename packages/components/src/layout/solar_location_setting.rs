@@ -1,6 +1,6 @@
 // hi-components/src/layout/solar_location_setting.rs
 // SolarLocationSetting — mirror of the canonical Vue `HkSolarLocationSetting`:
-// the solar clock's location STRATEGY row plus its editor modal (the
+// the solar clock's location STRATEGY card plus its editor modal (the
 // user-visible, user-editable ladder: timezone → ip → manual).
 //
 // The stylesheet is the SAME sheet the Vue library ships
@@ -10,13 +10,20 @@
 //
 // DOM contract (mirrors the Vue render output one-to-one):
 //
-//   ── the settings row ──
-//   div.hk-solar-setting
-//     div.hk-solar-summary [data-strategy]
-//       span.hk-solar-summary-icon [aria-hidden=true]   (the lucide glyph)
-//       span.hk-solar-summary-text                      (live summary)
-//     button.hk-btn…hk-solar-edit                        (mirrored Button,
-//                                                        size sm / outline)
+//   ── the settings card (the standard HkCard face, 2026-11-05 wave) ──
+//   div.hk-card.hk-solar-setting
+//     div.hk-card-header > h3.hk-card-title?             (card_title prop;
+//                              None → the localized default, "" → hidden)
+//     div.hk-card-body
+//       div.hk-solar-row
+//         div.hk-solar-summary [data-strategy]
+//           span.hk-solar-summary-icon [aria-hidden=true] (the lucide glyph)
+//           span.hk-solar-summary-text                    (live summary)
+//         button.hk-btn…hk-solar-edit                     (mirrored Button,
+//                                                          size sm / outline)
+//       {mirrored Modal}                                  (teleports out in
+//                                                          Vue; tree-wise a
+//                                                          body child)
 //   ── the editor (mirrored Modal, width "sm", Cancel/Apply footer) ──
 //   div.hk-modal… > div.hk-solar-editor [data-strategy]
 //     div.hk-tabs[data-variant=segmented][data-scrollable=true]
@@ -29,6 +36,16 @@
 //             span.hk-tabs-trigger-icon?                 (the lucide glyph)
 //             span {label}
 //     p.hk-solar-hint                                   (per-strategy copy)
+//     div.hk-solar-detected [data-test=hk-solar-detected]? (the detected-
+//                              value readout; Vue renders it for the
+//                              timezone / ip drafts, the host feeds it)
+//       div.hk-solar-detected-row                         (one info per line)
+//         span.hk-solar-detected-label {label}
+//         div.hk-solar-detected-value
+//           {mirrored CopyBadge}…                         (click-to-copy tags)
+//       div.hk-solar-detected-status [data-state]?        (probe note)
+//         span {message}
+//         button.hk-btn…hk-solar-detected-retry?          (retry affordance)
 //     ── manual only ──
 //     div.hk-solar-manual
 //       {mirrored TimeZoneGlobe}                         (the band picker)
@@ -50,14 +67,22 @@
 //
 // Deltas vs Vue (documented, not accidental):
 //   * NO ENGINE. `theme/useSolarTime.ts` (storage, `Intl`-based zone
-//     offsets, the sun clock) is not mirrored: the strategy, manual
-//     location and system zone id arrive as props, and the manual pane's
-//     resolved-coordinates readout is either passed in
+//     offsets, the sun clock, the IP-insight probe) is not mirrored: the
+//     strategy, manual location and system zone id arrive as props, and
+//     the manual pane's resolved-coordinates readout is either passed in
 //     ([`SolarLocationSettingProps::resolved_geo`]) or derived from the
 //     standard-offset prop via [`solar_manual_location_geo`] (Vue's
 //     formula — hemisphere fixes the latitude's sign, longitude =
 //     standard offset / 4 — with `Intl` doing the offset in Vue and the
 //     host doing it here).
+//   * NO READOUT ENGINE either. Vue's editor derives the detected-value
+//     rows itself (the device zone's band/cities for "timezone"; the
+//     IP-insight probe + its retry affordance for "ip"). The mirror takes
+//     the finished rows as [`SolarLocationSettingProps::detected`] — the
+//     host owns the probe and its state, the same seam as the engine
+//     delta above. `None` hides the block (Vue's manual pane has none);
+//     note the crate renders a Some block for ANY draft, manual
+//     included — Vue-identical hosts pass None there.
 //   * `HkTabs` (segmented) IS NOT MIRRORED and `HkTabs.scss` is not part
 //     of the vendored set, so the segmented strip renders here as DOM
 //     hooks — the same `hk-tabs*` classes/attributes Vue's HTabs emits
@@ -86,9 +111,16 @@
 // canonical ones from the Vue app dictionary (`hikari::theme.solar.*` in
 // `packages/vue/src/i18n/locales/en/platform.json`), re-keyed to the
 // crate's component namespace (the same mapping `layout/affix_picker.rs`
-// applies). New keys (see the wave receipt): title, edit, apply, cancel,
-// strategyTimezone, strategyIp, strategyManual, timezoneHint, ipHint,
-// manualHint, hemisphere, north, south, resolvedAt.
+// applies). Keys: title, edit, apply, cancel, cardTitle, summaryTimezone,
+// summaryIp, strategyTimezone, strategyIp, strategyManual, timezoneHint,
+// ipHint, manualHint, detectedZone, detectedBand, detectedOffset,
+// detectedCities, detectedIp, detectedAsn, detectedOrg, detectedRegion,
+// detectedIpZone, detectedProbing, detectedRefreshFailed, detectedFailed,
+// detectedRetry, hemisphere, north, south, resolvedAt. Of these only
+// title/edit/apply/cancel + cardTitle/summary*/strategy*/hints/hemisphere/
+// north/south + resolvedAt are t()ed HERE (17 call sites); the detected*
+// keys are BUNDLE-SIDE — hosts building the readout rows localize them —
+// the crate itself never t()s them.
 
 // These kernels are line-for-line ports of the upstream JS math: the negated
 // comparisons, manual clamps and inline tuple types keep the port auditable
@@ -104,6 +136,7 @@ use crate::basic::{Button, ButtonProps, ButtonSize, ButtonVariant};
 use crate::feedback::modal::{Modal, ModalAction, ModalActionVariant, ModalProps};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::theme::copy_badge::{CopyBadge, CopyBadgeProps};
 
 pub struct SolarLocationSettingComponent;
 
@@ -252,18 +285,22 @@ pub fn solar_hemisphere_label(hemisphere: SolarHemisphere) -> String {
     }
 }
 
-/// The row's live summary (Vue's `summaryText` computed): the strategy
-/// name, plus the live zone for `timezone`, the zone and hemisphere for
-/// `manual` (falling back to the system zone when no manual fix is
-/// stored — Vue's `??` nullish fallbacks, so an EMPTY stored zone stays
-/// empty), and the bare label for `ip`.
+/// The row's live summary (Vue's `summaryText` computed): the fixed
+/// policy shapes — "Auto · By time zone" for the offline default,
+/// "Auto · IP location" for the network cascade — and the manual
+/// strategy's stored pin (`Manual · {zone} · {hemisphere}`, falling back
+/// to the system zone and the neutral north when no fix is stored —
+/// Vue's `??` nullish fallbacks, so an EMPTY stored zone stays empty).
 pub fn solar_summary_text(
     strategy: SolarLocationStrategy,
     manual_location: Option<&SolarManualLocation>,
     system_time_zone: &str,
 ) -> String {
     match strategy {
-        SolarLocationStrategy::Ip => solar_strategy_label(strategy),
+        SolarLocationStrategy::Ip => t(
+            "components.hk.solarLocationSetting.summaryIp",
+            "Auto · IP location",
+        ),
         SolarLocationStrategy::Manual => {
             let (zone, hemisphere) = match manual_location {
                 Some(location) => (location.time_zone.as_str(), location.hemisphere),
@@ -276,29 +313,39 @@ pub fn solar_summary_text(
                 solar_hemisphere_label(hemisphere)
             )
         }
-        SolarLocationStrategy::Timezone => {
-            format!("{} · {}", solar_strategy_label(strategy), system_time_zone)
-        }
+        SolarLocationStrategy::Timezone => t(
+            "components.hk.solarLocationSetting.summaryTimezone",
+            "Auto · By time zone",
+        ),
     }
 }
 
 /// The per-strategy explanation under the segmented strip (Vue's
-/// `hintText`).
+/// `hintText`) — the strategy's PRINCIPLE, stated without colons.
 pub fn solar_strategy_hint(strategy: SolarLocationStrategy) -> String {
     match strategy {
         SolarLocationStrategy::Timezone => t(
             "components.hk.solarLocationSetting.timezoneHint",
-            "Offline: follow the device time zone. No network request, no permission prompt.",
+            "Offline. The device time zone drives the estimate, with no network request and no permission prompt.",
         ),
         SolarLocationStrategy::Ip => t(
             "components.hk.solarLocationSetting.ipHint",
-            "Locate over the network: granted browser geolocation → IP lookup → time-zone estimate fallback.",
+            "Locates over the network, trying granted browser geolocation, then an IP lookup, with the time-zone estimate as the fallback.",
         ),
         SolarLocationStrategy::Manual => t(
             "components.hk.solarLocationSetting.manualHint",
-            "Pick an IANA time zone and hemisphere; the sun clock follows them exactly.",
+            "Pick an IANA time zone and a hemisphere; the sun clock follows them exactly.",
         ),
     }
+}
+
+/// The settings card's localized default title (Vue: the `title` prop's
+/// i18n fallback — `hikari::theme.solar.cardTitle`).
+pub fn solar_card_title() -> String {
+    t(
+        "components.hk.solarLocationSetting.cardTitle",
+        "Daylight location",
+    )
 }
 
 // ── the lucide glyphs (static trusted markup — see the header) ──────────
@@ -402,6 +449,65 @@ pub fn solar_hemisphere_options() -> Vec<SolarSegmentedOption> {
     ]
 }
 
+/// One copyable value of the editor's detected-value readout (Vue:
+/// `SolarDetectedBadge`). `mono` faces technical ids in the badge mono
+/// face; `wrap` renders the rectangular, soft-wrapping chip (Vue:
+/// `pill={false}`) for long prose values instead of a pill.
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
+pub struct SolarDetectedBadge {
+    pub text: String,
+    pub mono: bool,
+    pub wrap: bool,
+}
+
+/// One "label → value tags" line of the readout (Vue:
+/// `SolarDetectedRow`) — one info item per line, so long values keep
+/// their own row and the two columns stay aligned.
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
+pub struct SolarDetectedRow {
+    pub label: String,
+    pub badges: Vec<SolarDetectedBadge>,
+}
+
+/// The probe status line's payload (Vue's `probeStatus`): the state
+/// token plus the localized message, and — for failures — the retry
+/// button's label. The retry EDGE rides the top-level
+/// [`SolarLocationSettingProps::on_retry_probe`] prop (the standard
+/// edge-prop seam, not the payload).
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
+pub enum SolarProbeStatus {
+    #[default]
+    Probing,
+    Failed,
+}
+
+impl SolarProbeStatus {
+    /// The `data-state` attribute Vue renders on the status line.
+    pub fn token(self) -> &'static str {
+        match self {
+            SolarProbeStatus::Probing => "probing",
+            SolarProbeStatus::Failed => "failed",
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
+pub struct SolarDetectedStatus {
+    pub status: SolarProbeStatus,
+    pub message: String,
+    pub retry_label: Option<String>,
+}
+
+/// The editor's detected-value readout (Vue's detected block): the rows
+/// plus an optional probe status line. The host feeds it — Vue derives
+/// the timezone rows from the device zone and probes the IP lookup for
+/// the ip pane (engine deltas, see the header).
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
+pub struct SolarDetectedReadout {
+    pub rows: Vec<SolarDetectedRow>,
+    pub status: Option<SolarDetectedStatus>,
+}
+
 /// One `hk-tabs-trigger` button: `role=radio` + `aria-checked` (the
 /// segmented working mode), the `data-active` face and the roving
 /// tabindex — the active trigger joins the page tab sequence, the others
@@ -496,6 +602,23 @@ pub struct SolarLocationSettingProps {
     #[default("UTC".to_string())]
     pub system_time_zone: String,
 
+    /// The settings card's header title (Vue: the `title` prop). `None`
+    /// uses the localized default ([`solar_card_title`]); an EMPTY string
+    /// hides the header (hosts that label their own section around the
+    /// card — wowsp's titled sub-section).
+    pub card_title: Option<String>,
+
+    /// The editor's detected-value readout (Vue renders it for the
+    /// timezone / ip drafts from its engine). `None` hides the block.
+    /// DELTA vs Vue: the crate renders the block whenever this prop is
+    /// Some — including a manual draft, where Vue ALWAYS hides it. A
+    /// host mirroring Vue exactly passes `None` for manual drafts.
+    pub detected: Option<SolarDetectedReadout>,
+
+    /// The readout's retry affordance was pressed (Vue:
+    /// `probeSolarIpInsight(true)` — the host owns the probe).
+    pub on_retry_probe: Option<EventHandler<()>>,
+
     /// Editor visibility (Vue: the `open` ref — the host seeds the draft
     /// on every open, like `seedDraft()`).
     #[default]
@@ -540,7 +663,7 @@ pub struct SolarLocationSettingProps {
 
 #[component]
 pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
-    // ── the row ────────────────────────────────────────────────────────
+    // ── the card body's summary + Edit line ────────────────────────────
     let summary = solar_summary_text(
         props.strategy,
         props.manual_location.as_ref(),
@@ -567,7 +690,7 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
 
     let row = VNode::Element(Box::new(
         VElement::new("div")
-            .class("hk-solar-setting")
+            .class("hk-solar-row")
             .child(VNode::Element(Box::new(
                 VElement::new("div")
                     .class("hk-solar-summary")
@@ -582,8 +705,29 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
             .child(open_button),
     ));
 
+    // ── the card (HkCard's face; see the header DOM contract) ─────────
+    let mut card = VElement::new("div").class("hk-card hk-solar-setting");
+    let title = match &props.card_title {
+        Some(title) if title.is_empty() => None,
+        Some(title) => Some(title.clone()),
+        // Vue's unset prop resolves its i18n default inside the
+        // component; the mirror resolves it here.
+        None => Some(solar_card_title()),
+    };
+    if let Some(title) = &title {
+        card = card.child(VNode::Element(Box::new(
+            VElement::new("div")
+                .class("hk-card-header")
+                .child(VNode::Element(Box::new(
+                    VElement::new("h3")
+                        .class("hk-card-title")
+                        .child(VNode::Text(VText::new(title))),
+                ))),
+        )));
+    }
+
     // ── the editor ─────────────────────────────────────────────────────
-    let title = t(
+    let modal_title = t(
         "components.hk.solarLocationSetting.title",
         "Sun clock location",
     );
@@ -591,7 +735,7 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
     let strategy_strip = solar_segmented_strip(
         &solar_strategy_options(),
         props.draft_strategy.token(),
-        &title,
+        &modal_title,
         &Some(EventHandler::new(move |key: String| {
             if let (Some(handler), Some(strategy)) =
                 (strategy_on_change.as_ref(), solar_strategy_from_token(&key))
@@ -610,6 +754,57 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
         .attr("data-strategy", props.draft_strategy.token());
     editor = editor.child(strategy_strip);
     editor = editor.child(hint);
+    if let Some(detected) = &props.detected {
+        // ── the detected-value readout: one info item per line, each
+        // value a copyable tag (mirrored CopyBadge) ──
+        let mut block = VElement::new("div")
+            .class("hk-solar-detected")
+            .attr("data-test", "hk-solar-detected");
+        for row in &detected.rows {
+            let mut value = VElement::new("div").class("hk-solar-detected-value");
+            for badge in &row.badges {
+                value = value.child(CopyBadge(CopyBadgeProps {
+                    label: badge.text.clone(),
+                    value: Some(badge.text.clone()),
+                    mono: badge.mono,
+                    pill: !badge.wrap,
+                    ..Default::default()
+                }));
+            }
+            block = block.child(VNode::Element(Box::new(
+                VElement::new("div")
+                    .class("hk-solar-detected-row")
+                    .child(VNode::Element(Box::new(
+                        VElement::new("span")
+                            .class("hk-solar-detected-label")
+                            .child(VNode::Text(VText::new(&row.label))),
+                    )))
+                    .child(VNode::Element(Box::new(value))),
+            )));
+        }
+        if let Some(status) = &detected.status {
+            let mut line = VElement::new("div")
+                .class("hk-solar-detected-status")
+                .attr("data-state", status.status.token());
+            line = line.child(VNode::Element(Box::new(
+                VElement::new("span").child(VNode::Text(VText::new(&status.message))),
+            )));
+            if let Some(label) = &status.retry_label {
+                let handler = props.on_retry_probe.clone();
+                line = line.child(Button(ButtonProps {
+                    variant: ButtonVariant::Ghost,
+                    size: ButtonSize::Sm,
+                    class: "hk-solar-detected-retry".to_string(),
+                    label: Some(label.clone()),
+                    onclick: handler
+                        .map(|h| EventHandler::new(move |_event: MouseEvent| h.call(()))),
+                    ..Default::default()
+                }));
+            }
+            block = block.child(VNode::Element(Box::new(line)));
+        }
+        editor = editor.child(VNode::Element(Box::new(block)));
+    }
     if props.draft_strategy == SolarLocationStrategy::Manual {
         let hemisphere_label = t(
             "components.hk.solarLocationSetting.hemisphere",
@@ -663,7 +858,7 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
     let apply_strategy = props.draft_strategy;
     let modal = Modal(ModalProps {
         open: props.open,
-        title: Some(title),
+        title: Some(modal_title),
         width: "sm".to_string(),
         footer_actions: Some(vec![
             ModalAction {
@@ -688,7 +883,14 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
         ..Default::default()
     });
 
-    VNode::Fragment(vec![row, modal])
+    // Tree parity with Vue: the modal lives in the card's default slot
+    // (HkModal teleports its surface out in the browser; the crate
+    // renders the same tree in place).
+    let body = VElement::new("div")
+        .class("hk-card-body")
+        .child(row)
+        .child(modal);
+    VNode::Element(Box::new(card.child(VNode::Element(Box::new(body)))))
 }
 
 impl StyledComponent for SolarLocationSettingComponent {
@@ -713,6 +915,10 @@ mod tests {
         assert_eq!(props.strategy, SolarLocationStrategy::Timezone);
         assert!(props.manual_location.is_none());
         assert_eq!(props.system_time_zone, "UTC");
+        // The card header defaults to the localized title; the readout
+        // block is host-fed and hidden by default.
+        assert!(props.card_title.is_none());
+        assert!(props.detected.is_none());
         assert!(!props.open);
         assert_eq!(props.draft_strategy, SolarLocationStrategy::Timezone);
         assert_eq!(props.draft_time_zone, "");
@@ -751,15 +957,16 @@ mod tests {
 
     #[test]
     fn solar_summary_matches_the_vue_computed() {
-        // timezone: label · system zone.
+        // timezone: the fixed policy shape — the zone lives in the
+        // editor's readout, not the summary.
         assert_eq!(
             solar_summary_text(SolarLocationStrategy::Timezone, None, "Asia/Shanghai"),
-            "Time zone · Asia/Shanghai"
+            "Auto · By time zone"
         );
-        // ip: the bare label.
+        // ip: the other fixed policy shape.
         assert_eq!(
             solar_summary_text(SolarLocationStrategy::Ip, None, "UTC"),
-            "IP location"
+            "Auto · IP location"
         );
         // manual without a stored fix falls back to the system zone and
         // the neutral north (Vue's `??` chain).
@@ -857,7 +1064,14 @@ mod tests {
         .render_to_html();
 
         for needle in [
-            r#"class="hk-solar-setting""#,
+            // The standard HkCard face: root carries both classes, the
+            // localized default header rides the card-title hook.
+            r#"class="hk-card hk-solar-setting""#,
+            r#"class="hk-card-header""#,
+            r#"class="hk-card-title""#,
+            "Daylight location",
+            r#"class="hk-card-body""#,
+            r#"class="hk-solar-row""#,
             r#"class="hk-solar-summary""#,
             r#"data-strategy="manual""#,
             r#"class="hk-solar-summary-icon""#,
@@ -874,6 +1088,116 @@ mod tests {
         // Editor closed: no editor body, no modal surface.
         assert!(!html.contains("hk-solar-editor"), "{html}");
         assert!(!html.contains("hk-modal-root"), "{html}");
+    }
+
+    #[test]
+    fn solar_card_title_prop_follows_the_vue_semantics() {
+        let render_with = |card_title: Option<String>| {
+            SolarLocationSetting(SolarLocationSettingProps {
+                card_title,
+                ..Default::default()
+            })
+            .render_to_html()
+        };
+        // None → the localized default (Vue's unset prop).
+        assert!(render_with(None).contains("Daylight location"));
+        // Some(text) → the host's string replaces it.
+        let custom = render_with(Some("日照位置".to_string()));
+        assert!(custom.contains("日照位置"), "{custom}");
+        assert!(!custom.contains("Daylight location"), "{custom}");
+        // Some("") → the header is hidden entirely (hosts that label
+        // their own section around the card).
+        let hidden = render_with(Some(String::new()));
+        assert!(!hidden.contains("hk-card-header"), "{hidden}");
+        assert!(!hidden.contains("hk-card-title"), "{hidden}");
+        // The body row still renders.
+        assert!(hidden.contains(r#"class="hk-solar-row""#), "{hidden}");
+    }
+
+    #[test]
+    fn solar_detected_readout_renders_copyable_rows_and_the_probe_note() {
+        let html = SolarLocationSetting(SolarLocationSettingProps {
+            open: true,
+            draft_strategy: SolarLocationStrategy::Ip,
+            detected: Some(SolarDetectedReadout {
+                rows: vec![
+                    SolarDetectedRow {
+                        label: "IP address".to_string(),
+                        badges: vec![SolarDetectedBadge {
+                            text: "203.0.113.7".to_string(),
+                            mono: true,
+                            ..Default::default()
+                        }],
+                    },
+                    SolarDetectedRow {
+                        label: "Network region".to_string(),
+                        badges: vec![SolarDetectedBadge {
+                            text: "China · Shanghai · Shanghai".to_string(),
+                            wrap: true,
+                            ..Default::default()
+                        }],
+                    },
+                ],
+                status: Some(SolarDetectedStatus {
+                    status: SolarProbeStatus::Failed,
+                    message: "Detection failed — check the network and retry".to_string(),
+                    retry_label: Some("Retry".to_string()),
+                }),
+            }),
+            ..Default::default()
+        })
+        .render_to_html();
+
+        for needle in [
+            r#"class="hk-solar-detected""#,
+            r#"data-test="hk-solar-detected""#,
+            r#"class="hk-solar-detected-row""#,
+            r#"class="hk-solar-detected-label""#,
+            "IP address",
+            r#"class="hk-solar-detected-value""#,
+            // The mirrored CopyBadge: interactive pill face, mono for
+            // technical ids, the rectangular chip for the wrapping value.
+            "hk-copy-badge",
+            r#"role="button""#,
+            r#"data-mono="""#,
+            r#"data-pill="false""#,
+            "203.0.113.7",
+            "China · Shanghai · Shanghai",
+            // The probe note with its retry affordance.
+            r#"class="hk-solar-detected-status""#,
+            r#"data-state="failed""#,
+            "Detection failed — check the network and retry",
+            "hk-solar-detected-retry",
+            "hk-btn-ghost",
+            ">Retry</span>",
+            // Click-to-copy tooltip chrome rides the mirrored Tooltip.
+            "hk-tooltip-wrapper",
+        ] {
+            assert!(html.contains(needle), "missing {needle}: {html}");
+        }
+    }
+
+    #[test]
+    fn solar_detected_readout_renders_the_probing_note_without_rows() {
+        let html = SolarLocationSetting(SolarLocationSettingProps {
+            open: true,
+            draft_strategy: SolarLocationStrategy::Ip,
+            detected: Some(SolarDetectedReadout {
+                rows: Vec::new(),
+                status: Some(SolarDetectedStatus {
+                    message: "Detecting over the network…".to_string(),
+                    ..Default::default()
+                }),
+            }),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains(r#"class="hk-solar-detected""#), "{html}");
+        assert!(html.contains(r#"data-state="probing""#), "{html}");
+        assert!(html.contains("Detecting over the network…"), "{html}");
+        // No retry affordance, no rows.
+        assert!(!html.contains("hk-solar-detected-retry"), "{html}");
+        assert!(!html.contains(r#"class="hk-solar-detected-row""#), "{html}");
     }
 
     #[test]
@@ -894,6 +1218,9 @@ mod tests {
         for needle in [
             r#"class="hk-solar-editor""#,
             r#"data-strategy="manual""#,
+            // The card face with its localized default header.
+            r#"class="hk-card hk-solar-setting""#,
+            "Daylight location",
             r#"class="hk-tabs""#,
             r#"data-variant="segmented""#,
             r#"data-scrollable="true""#,
@@ -943,6 +1270,8 @@ mod tests {
         assert!(!html.contains("hk-solar-manual"), "{html}");
         assert!(!html.contains("hk-timezone-globe"), "{html}");
         assert!(!html.contains("hk-solar-resolved"), "{html}");
+        // The readout block is host-fed; without the prop it stays out.
+        assert!(!html.contains("hk-solar-detected"), "{html}");
         // Three strategy triggers; the ip one is active.
         assert_eq!(
             html.matches(r#"class="hk-tabs-trigger""#).count(),
@@ -957,12 +1286,19 @@ mod tests {
         let css = SolarLocationSettingComponent::styles();
         for needle in [
             ".hk-solar-setting",
+            ".hk-solar-row",
             ".hk-solar-summary",
             ".hk-solar-summary-icon",
             ".hk-solar-summary-text",
             ".hk-solar-edit",
             ".hk-solar-editor",
             ".hk-solar-hint",
+            ".hk-solar-detected",
+            ".hk-solar-detected-row",
+            ".hk-solar-detected-label",
+            ".hk-solar-detected-value",
+            ".hk-solar-detected-status",
+            ".hk-solar-detected-retry",
             ".hk-solar-manual",
             ".hk-solar-hemisphere",
             ".hk-solar-field-label",

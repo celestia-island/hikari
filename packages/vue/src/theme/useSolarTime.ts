@@ -327,6 +327,135 @@ export function systemTimeZoneId(): string {
 const GEO_API_URL = "https://ipapi.co/json/";
 const GEO_API_TIMEOUT_MS = 4000;
 
+/** One fetch of the lookup body with the shared timeout — the single
+ *  network path for both consumers (the "ip" strategy's geo resolution
+ *  and the strategy dialog's insight readout), so narrowing, abort
+ *  handling and the no-store contract live in exactly one place. */
+async function fetchIpLookupBody(): Promise<unknown> {
+  const controller = new AbortController();
+  const timer = scheduleCronAfter(() => controller.abort(), GEO_API_TIMEOUT_MS);
+  return fetch(GEO_API_URL, {
+    signal: controller.signal,
+    cache: "no-store",
+  })
+    .then((r) => (r.ok ? r.json() : null))
+    .finally(() => timer.disconnect());
+}
+
+/** The trimmed-string guard for the untrusted lookup body: only a
+ *  non-empty string survives (missing fields read as undefined). */
+function insightField(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/** What the IP lookup service reported about this network — the
+ *  display-only insight the strategy dialog renders as copyable tags.
+ *  Every field is optional except `ip`: the service may omit any of
+ *  them, and the readout only shows rows it actually has. */
+export interface SolarIpInsight {
+  /** The detected public address (IPv4 or IPv6, verbatim). */
+  ip: string;
+  /** Autonomous-system number ("AS4134"), when reported. */
+  asn?: string;
+  /** The network's operator / organization label, when reported. */
+  org?: string;
+  /** Country name, region and city — the service's own spellings. */
+  countryName?: string;
+  region?: string;
+  city?: string;
+  /** The zone id the service attributes to this network. */
+  timeZone?: string;
+  /** When this snapshot was taken (epoch ms) — the probe TTL reads it. */
+  fetchedAt: number;
+}
+
+/** The last IP insight the lookup produced (either consumer). Module
+ *  state — the dialog reads it reactively; tests reset it via
+ *  `resetSolarIpInsight()`. */
+export const solarIpInsight = ref<SolarIpInsight | null>(null);
+
+/** The dialog probe's coarse state machine ("idle" until something asked
+ *  for insight; "probing" while the fetch is in flight; terminal "ok" /
+ *  "failed" until the next probe). */
+export type SolarIpProbeState = "idle" | "probing" | "ok" | "failed";
+export const solarIpProbeState = ref<SolarIpProbeState>("idle");
+
+/** How long an insight snapshot stays fresh for the dialog readout — an
+ *  IP insight describes a network, not an identity, so the readout
+ *  re-probes after this window (a fresh probe is still cheap: one
+ *  no-store GET with a 4s timeout). */
+const IP_INSIGHT_TTL_MS = 10 * 60 * 1000;
+
+let ipProbeInflight: Promise<void> | null = null;
+
+/** The untrusted body narrowed into display insight (null when the body
+ *  carries no usable `ip` — geo numbers alone are not insight). Shape
+ *  guards only, never declarations: the body is whatever the service
+ *  sent (same contract as the geo numbers above). */
+function parseIpInsight(body: unknown): Omit<SolarIpInsight, "fetchedAt"> | null {
+  if (typeof body !== "object" || body === null || !("ip" in body)) return null;
+  const ip = insightField((body as { ip: unknown }).ip);
+  if (!ip) return null;
+  const record = body as Record<string, unknown>;
+  return {
+    ip,
+    asn: insightField(record.asn),
+    org: insightField(record.org),
+    countryName: insightField(record.country_name),
+    region: insightField(record.region),
+    city: insightField(record.city),
+    timeZone: insightField(record.timezone),
+  };
+}
+
+function storeIpInsight(insight: Omit<SolarIpInsight, "fetchedAt">): void {
+  solarIpInsight.value = { ...insight, fetchedAt: Date.now() };
+  solarIpProbeState.value = "ok";
+}
+
+/** Is the stored insight fresh enough to show without a new probe? */
+export function solarIpInsightFresh(now: number = Date.now()): boolean {
+  const insight = solarIpInsight.value;
+  return insight !== null && now - insight.fetchedAt < IP_INSIGHT_TTL_MS;
+}
+
+/** Ask the lookup service for the current insight (the strategy dialog's
+ *  IP-tab readout). Deduplicates concurrent calls; a fresh snapshot is
+ *  reported without touching the network unless `force` (the retry
+ *  button). Errors land as "failed" — the readout shows its retry affordance.
+ *  Purely informational: nothing here changes the strategy or the memo. */
+export async function probeSolarIpInsight(force = false): Promise<void> {
+  if (ipProbeInflight) return ipProbeInflight;
+  if (!force && solarIpInsightFresh()) {
+    solarIpProbeState.value = "ok";
+    return;
+  }
+  const probe = (async () => {
+    solarIpProbeState.value = "probing";
+    try {
+      const insight = parseIpInsight(await fetchIpLookupBody());
+      if (!insight) throw new Error("ip insight unavailable");
+      storeIpInsight(insight);
+    } catch {
+      solarIpProbeState.value = "failed";
+    } finally {
+      ipProbeInflight = null;
+    }
+  })();
+  ipProbeInflight = probe;
+  return probe;
+}
+
+/** Test seam: clear the module-level insight + probe state (the same
+ *  reset surface the strategy setters give the strategy refs). */
+export function resetSolarIpInsight(): void {
+  solarIpInsight.value = null;
+  solarIpProbeState.value = "idle";
+  ipProbeInflight = null;
+}
+
 /** Synchronous coarse estimate: default latitude + the timezone-offset
  *  longitude. No fetch, no permission — the first-paint guess. */
 export function timezoneFallback(): GeoLocation {
@@ -357,14 +486,12 @@ async function browserGeolocation(): Promise<GeoLocation> {
 }
 
 async function ipGeolocation(): Promise<GeoLocation> {
-  const controller = new AbortController();
-  const timer = scheduleCronAfter(() => controller.abort(), GEO_API_TIMEOUT_MS);
-  const d: unknown = await fetch(GEO_API_URL, {
-    signal: controller.signal,
-    cache: "no-store",
-  })
-    .then((r) => (r.ok ? r.json() : null))
-    .finally(() => timer.disconnect());
+  const d: unknown = await fetchIpLookupBody();
+  // The same body feeds the dialog's insight readout — record what the
+  // service said even when the geo numbers below reject (a city-level
+  // insight is still valid display data for the readout).
+  const insight = parseIpInsight(d);
+  if (insight) storeIpInsight(insight);
   // The body is whatever the service sent: narrow it, never declare it.
   if (d && typeof d === "object" && "latitude" in d && "longitude" in d) {
     const { latitude, longitude } = d;

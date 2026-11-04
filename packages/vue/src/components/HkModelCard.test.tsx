@@ -85,6 +85,23 @@ describe("HkModelCard anatomy", () => {
     // caption lane must collapse, not render an empty row.
     expect(root.querySelector(".hk-model-card-caption")).toBeNull();
   });
+
+  it("treats a fragment of dead v-if comments as empty (the JSX <>{cond && …}</> shape)", () => {
+    const show = ref(false);
+    const slotsOf = () => ({
+      title: () => h("span", "m"),
+      // The compiled shape of a consumer's conditional footer is a
+      // Fragment vnode whose children are dead comment placeholders —
+      // the guard must recurse into it, not stop at the Fragment.
+      footer: () => (<>{show.value && <span class="live" />}</>),
+    });
+    // All-dead fragment → the footer lane collapses.
+    expect(mountCard({}, slotsOf()).querySelector(".hk-model-card-footer")).toBeNull();
+    // A fragment with live content still renders its lane.
+    show.value = true;
+    const live = mountCard({}, slotsOf());
+    expect(live.querySelector(".hk-model-card-footer .live")?.textContent).toBe("");
+  });
 });
 
 describe("HkModelCard state attributes", () => {

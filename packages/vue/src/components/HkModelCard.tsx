@@ -1,5 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import { Comment, type VNode } from "vue";
+import { Comment, Fragment, type VNode } from "vue";
 
 import "./HkModelCard.scss";
 
@@ -11,13 +11,18 @@ export type ModelCardTier = "deep" | "normal" | "basic";
 
 /** Whether a slot actually rendered anything. Testing the slot function
  *  for truthiness is not enough: a consumer's `v-if` slot renders a
- *  comment placeholder vnode, and an empty-array render still walks the
- *  row — the caption/footer lanes must collapse instead of leaving an
- *  empty flex row behind (same guard as HkCardList's renderedRows). */
+ *  comment placeholder vnode, and a consumer's `<>{cond && …}</>`
+ *  fragment compiles to a Fragment vnode carrying those same dead
+ *  comments — both must read as empty (same guard as HkCardList's
+ *  renderedRows, recursed into fragments). */
 function hasRenderedContent(nodes: unknown): boolean {
   if (nodes == null || nodes === false || nodes === "") return false;
   if (Array.isArray(nodes)) return nodes.some((n) => hasRenderedContent(n));
-  if (typeof nodes === "object") return (nodes as VNode).type !== Comment;
+  if (typeof nodes === "object") {
+    const node = nodes as VNode;
+    if (node.type === Fragment) return hasRenderedContent(node.children);
+    return node.type !== Comment;
+  }
   return true; // non-empty text content
 }
 
@@ -46,6 +51,7 @@ export default defineComponent({
     return () => {
       const caption = slots.caption?.();
       const footer = slots.footer?.();
+      const actions = slots.actions?.();
       return (
         <div
           class="hk-model-card"
@@ -57,8 +63,8 @@ export default defineComponent({
         >
           <div class="hk-model-card-top">
             <div class="hk-model-card-leading">{slots.title?.()}</div>
-            {hasRenderedContent(slots.actions?.()) && (
-              <div class="hk-model-card-actions">{slots.actions!()}</div>
+            {hasRenderedContent(actions) && (
+              <div class="hk-model-card-actions">{actions}</div>
             )}
           </div>
           {hasRenderedContent(caption) && (

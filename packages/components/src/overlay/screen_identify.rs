@@ -294,7 +294,7 @@ pub fn show_screen_identify(request: ScreenIdentifyRequest) {
     // Held-open flashes schedule no timer chain (Vue returns before any
     // timer for `durationMs <= 0`).
     if screen_identify_should_tick(&state.get()) {
-        screen_identify_tick_chain(state, generation);
+        screen_identify_tick_chain(generation);
     }
 }
 
@@ -381,28 +381,45 @@ pub fn screen_identify_label(
     screen_identify_label_with(number, name, override_label, &plain, &named)
 }
 
-fn screen_identify_tick_chain(state: Signal<ScreenIdentifyState>, generation: u32) {
+fn screen_identify_tick_chain(generation: u32) {
     crate::platform::set_timeout(
         move || {
-            let now = crate::platform::now_timestamp();
-            let still_active = {
-                let mut current = state.write();
-                screen_identify_chain_step(&mut current, generation, now)
-            };
-            // The step (even the one that ends the flash) must repaint the
-            // host: the countdown and the disappearance are both visible.
-            republish_screen_identify(&state);
+            let still_active =
+                screen_identify_tick_step(generation, crate::platform::now_timestamp());
             if still_active {
-                screen_identify_tick_chain(state.clone(), generation);
+                screen_identify_tick_chain(generation);
             }
         },
         SCREEN_IDENTIFY_TICK_MS as i32,
     );
 }
 
+/// One tick step on the module singleton (the timer body). Advances the dwell,
+/// republishes the signal so the host repaints (the countdown move and the
+/// card's disappearance both ride this), and reports whether the flash is
+/// still up. A superseded generation returns immediately without repainting.
+///
+/// `#[doc(hidden)]` but public so tests can drive an explicit clock: the
+/// non-wasm platform's `set_timeout` is a no-op, so the shipped lane cannot
+/// otherwise execute a chain step.
+#[doc(hidden)]
+pub fn screen_identify_tick_step(generation: u32, now_ms: f64) -> bool {
+    let state = screen_identify_signal();
+    if state.get().generation() != generation {
+        return false;
+    }
+    let still_active = {
+        let mut current = state.write();
+        screen_identify_chain_step(&mut current, generation, now_ms)
+    };
+    republish_screen_identify(&state);
+    still_active
+}
+
 /// Where the card parks on the physical screen (Vue: `ScreenIdentifyPlacement`).
 /// Logical: RTL mirrors the physical left/right pair; the top/bottom edges stay
-/// put, so the card lands in the corresponding corner of the glass.
+/// put (the sheet keys `inset-inline-*` for left/right and `top`/`bottom` for
+/// the vertical edges).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ScreenIdentifyPlacement {
     #[default]

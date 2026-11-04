@@ -59,7 +59,7 @@ popups.
 - A second `show` restarts the flash instead of stacking cards or inheriting the old deadline.
 - The card prints whole seconds (3 → 2 → 1) through the shared rolling countdown digit; a dwell above 9 s would clip the tens digit, so keep identify in single digits.
 - A tick only reports the remainder; the tick that crosses the deadline ends the flash — the flash never paints a zero-remainder frame.
-- The card is a HUD: it never intercepts pointer input (`pointer-events: none`), and the physical left/right corner mirrors under RTL (logical placement).
+- The card is a HUD: it never intercepts pointer input (`pointer-events: none`), and the physical left/right corner mirrors under RTL while the top/bottom edges stay put (logical placement).
 - Mount `ScreenIdentifyHost` once per window; everything else calls `show_screen_identify()` (a module singleton, like Vue's `showScreenIdentify`).
 
 ## Relationship to the Vue form

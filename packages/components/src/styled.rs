@@ -431,7 +431,7 @@ impl StyleRegistry {
         use crate::overlay::{
             AdaptiveDialogComponent, AmbientLayerComponent, ContextMenuProviderComponent,
             FloatingLayerComponent, PopupSelectComponent, ProtocolModalComponent,
-            ScreenIdentifyCardComponent, SelectPanelComponent,
+            ScreenIdentifyCardComponent, ScreenIdentifyHostComponent, SelectPanelComponent,
         };
         AdaptiveDialogComponent::register(self);
         AmbientLayerComponent::register(self);
@@ -440,6 +440,7 @@ impl StyleRegistry {
         PopupSelectComponent::register(self);
         ProtocolModalComponent::register(self);
         ScreenIdentifyCardComponent::register(self);
+        ScreenIdentifyHostComponent::register(self);
         SelectPanelComponent::register(self);
     }
 

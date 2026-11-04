@@ -442,7 +442,7 @@ fn chain_step_crosses_the_deadline_and_ceils_fractional_remainders() {
 /// REPUBLISHED: `Signal::write()` alone does not dirty a component in 0.5.26,
 /// so a flash would change invisibly if `set()` were missing (R3's S1).
 #[test]
-fn a_mounted_host_repaints_on_show_and_dismiss() {
+fn a_mounted_host_repaints_on_show_countdown_and_dismiss() {
     use tairitsu_vdom::runtime;
 
     _reset_screen_identify_for_tests();
@@ -457,25 +457,66 @@ fn a_mounted_host_repaints_on_show_and_dismiss() {
     };
     assert!(!html(id).contains("hk-screen-identify"), "{}", html(id));
 
-    show_screen_identify(
-        ScreenIdentifyRequest::new("7")
-            .with_name("Wall B")
-            .with_duration_ms(0),
-    );
+    // The default dwell is used, so the painted card carries the countdown.
+    show_screen_identify(ScreenIdentifyRequest::new("7").with_name("Wall B"));
+    let generation = use_screen_identify().state().generation();
     runtime::flush_render();
     let painted = html(id);
     for needle in [
         "hk-ambient-layer",
         "hk-screen-identify",
         "aria-label=\"Screen 7, Wall B\"",
+        "hk-screen-identify-count",
+        "hk-countdown-digit",
     ] {
         assert!(painted.contains(needle), "missing {needle}: {painted}");
     }
+
+    // The timer body is drivable on an explicit clock: one second in the host
+    // must repaint the countdown (3s -> 2s), and the deadline step must remove
+    // the card from the DOM.
+    assert!(screen_identify_tick_step(generation, 1_000.0));
+    runtime::flush_render();
+    let counted = html(id);
+    assert!(counted.contains("hk-countdown-digit"), "{counted}");
+    assert!(
+        counted.contains(">2<"),
+        "countdown should read 2s: {counted}"
+    );
+
+    assert!(!screen_identify_tick_step(
+        generation,
+        SCREEN_IDENTIFY_DEFAULT_MS as f64
+    ));
+    runtime::flush_render();
+    assert!(!html(id).contains("hk-screen-identify"), "{}", html(id));
 
     dismiss_screen_identify();
     runtime::flush_render();
     assert!(!html(id).contains("hk-screen-identify"), "{}", html(id));
 
+    _reset_screen_identify_for_tests();
+}
+
+#[test]
+fn a_superseded_generation_never_ticks_the_new_flash() {
+    _reset_screen_identify_for_tests();
+    show_screen_identify(ScreenIdentifyRequest::new("1"));
+    let first_generation = use_screen_identify().state().generation();
+    show_screen_identify(ScreenIdentifyRequest::new("2"));
+    let restarted_generation = use_screen_identify().state().generation();
+    assert_ne!(first_generation, restarted_generation);
+
+    // A late timer from the first flash must not advance the second one.
+    assert!(!screen_identify_tick_step(first_generation, 2_000.0));
+    let state = use_screen_identify().state();
+    assert_eq!(state.number(), "2");
+    assert_eq!(state.remaining_ms(), SCREEN_IDENTIFY_DEFAULT_MS);
+    assert_eq!(state.seconds_left(), 3);
+
+    assert!(screen_identify_tick_step(restarted_generation, 2_000.0));
+    let advanced = use_screen_identify().state();
+    assert_eq!(advanced.seconds_left(), 1);
     _reset_screen_identify_for_tests();
 }
 
@@ -566,6 +607,7 @@ fn registry_ships_both_vendored_sheets() {
     // The component tables are the vendored Vue copies, not empty stubs.
     assert!(!AmbientLayerComponent::styles().is_empty());
     assert!(!ScreenIdentifyCardComponent::styles().is_empty());
-    // The host composes existing surfaces and ships no sheet of its own.
+    // The host composes existing surfaces and ships no sheet of its own (it
+    // is registered like the crate's other empty-sheet members).
     assert!(ScreenIdentifyHostComponent::styles().is_empty());
 }

@@ -2,6 +2,7 @@ import {
   defineComponent,
   h,
   nextTick,
+  onBeforeUnmount,
   ref,
   watch,
   type Component,
@@ -9,11 +10,23 @@ import {
 } from "vue";
 
 import HkTransitionContainer from "./HkTransitionContainer";
+import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 import HkScrollContainer from "./HkScrollContainer";
 import HTabs from "./HkTabs";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import HModal from "./HkModal";
 import "./HkSettingsDialog.scss";
+
+/** The family's sheet-morph window (HkStepFlow announces the same beat):
+ *  the pane container reports its WHOLE choreography (enter delay + morph),
+ *  but the sheet's own resize must not inherit that doubling. */
+export const SHEET_MORPH_MS = 300;
+
+/** Morph duration to hand the modal for a settled swap. */
+export function sheetMorphMs(choreographyMs: number): number {
+  if (!(choreographyMs > 0)) return 0;
+  return Math.min(choreographyMs, SHEET_MORPH_MS);
+}
 
 /** One rail entry of the settings dialog. */
 export interface HkSettingsSection {
@@ -63,6 +76,22 @@ export interface HkSettingsSection {
  * Desktop keeps the rail exactly as it was; the flip is live on resize
  * and shared by every consumer of this shell (page-embedded bodies
  * included).
+ *
+ * Docked-sheet height hand-off (2026-11-04 chest report): inside a phone
+ * sheet the modal sizes the window from this shell's content, but it
+ * measures the frame through `.hk-modal-body-inner` — which the host
+ * rule pins at `height: 100%` (unscoped, so it pins the phone sheet too),
+ * so the observed box never changes on a section swap and the sheet froze
+ * at whichever section it OPENED with (the 470px About card inside a 24px
+ * pane; the freeze survives hikari #1041's phone fill). Every settled
+ * swap of the pane's morph container is therefore forwarded as the
+ * family's sheet protocol event (`hk-stepflow-swap`, detail
+ * `{phase: "morph", durationMs}`, where the duration is capped to the
+ * family's own sheet morph beat — the container reports its whole
+ * choreography, enter delay included — or `{phase: "instant"}` when the
+ * swap settled with no animation), which HkModal already turns into a
+ * frame re-measure. Page-embedded bodies (no modal ancestor) simply
+ * bubble it nowhere.
  */
 export const HkSettingsBody = defineComponent({
   name: "HkSettingsBody",
@@ -114,15 +143,108 @@ export const HkSettingsBody = defineComponent({
     // typed here — the scroll reset needs the live viewport element and
     // nothing else.
     const paneRef = ref<{ getScrollElement(): HTMLElement | undefined } | null>(null);
+    const shellRef = ref<HTMLElement | null>(null);
+    const morphRef = ref<{ $el?: HTMLElement } | null>(null);
+    let stageBeforeSwap = 0;
+    // One instant-wait loop at a time: a new section change (or unmount)
+    // retires the previous epoch so a stale poll can never announce against
+    // the next swap's half-settled geometry.
+    let instantEpoch = 0;
+    let instantPoll: number | null = null;
+    const scheduleFrame = (cb: () => void): number =>
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame(cb)
+        : window.setTimeout(cb, 16);
+    const cancelFrame = (id: number): void => {
+      if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+      else clearTimeout(id);
+    };
+    const cancelInstantPoll = (): void => {
+      if (instantPoll !== null) {
+        cancelFrame(instantPoll);
+        instantPoll = null;
+      }
+    };
+    onBeforeUnmount(() => {
+      instantEpoch += 1;
+      cancelInstantPoll();
+    });
     // Section switches restart the pane from the top. Written through the
     // public ref slice (the viewport element) rather than scrollTo so the
     // reset stays synchronous and testable in no-layout environments.
     watch(active, () => {
+      // The instant settle below needs the height the pane had BEFORE the
+      // swap; watchers run before the component patches, so this is still
+      // the outgoing stage.
+      instantEpoch += 1;
+      cancelInstantPoll();
+      stageBeforeSwap = morphRef.value?.$el?.offsetHeight ?? 0;
       void nextTick(() => {
         const viewport = paneRef.value?.getScrollElement();
         if (viewport) viewport.scrollTop = 0;
       });
     });
+
+    // ── docked-sheet height hand-off ──────────────────────────────────
+    // A phone sheet is sized from this shell's content, but HkModal
+    // observes `.hk-modal-body-inner`, which the host rule pins at
+    // `height: 100%` (see the SCSS): the box never changes on a section
+    // swap, so the sheet would keep the section it OPENED with — about
+    // 24px of pane for a 470px 「About」 card (2026-11-04 chest report;
+    // the same freeze survives hikari #1041). The pane's own morph
+    // container already knows when a swap settles; forward that beat
+    // through the family's sheet protocol (`hk-stepflow-swap`, the one
+    // HkModal listens for) so the modal re-measures the frame.
+    //
+    // `durationMs` 0 = the swap settled instantly (reduced motion / the
+    // global animation switch) — the protocol's `instant` phase snaps the
+    // sheet instead of animating. That snap must not be announced from the
+    // settle beat itself: with no choreography the settle lands while the
+    // pane's crossfade still holds the LEAVING generation in the flow, so
+    // the modal would measure the outgoing (taller) height and a shrink
+    // would no-op — the sheet stayed 621px over a 251px section in the
+    // round-1 probe. Wait (bounded) for the stage to actually change, then
+    // hand the beat over; a growing swap has already changed by then and
+    // dispatches on the first frame.
+    function dispatchSheetSwap(durationMs: number): void {
+      const el = shellRef.value;
+      if (!el) return;
+      el.dispatchEvent(
+        new CustomEvent(STEPFLOW_SWAP_EVENT, {
+          bubbles: true,
+          detail:
+            durationMs > 0
+              ? { phase: "morph", durationMs }
+              : { phase: "instant" },
+        }),
+      );
+    }
+
+    function announceSheetSwap(payload: { durationMs: number }): void {
+      if (!shellRef.value) return;
+      if (payload.durationMs > 0) {
+        dispatchSheetSwap(sheetMorphMs(payload.durationMs));
+        return;
+      }
+      cancelInstantPoll();
+      const epoch = instantEpoch;
+      const stage = (): number => morphRef.value?.$el?.offsetHeight ?? 0;
+      const before = stageBeforeSwap;
+      const deadline = Date.now() + 400;
+      const tick = (): void => {
+        if (epoch !== instantEpoch) {
+          instantPoll = null;
+          return;
+        }
+        if (stage() !== before || Date.now() >= deadline) {
+          instantPoll = null;
+          dispatchSheetSwap(0);
+          return;
+        }
+        instantPoll = scheduleFrame(tick);
+      };
+      instantPoll = scheduleFrame(tick);
+    }
 
     function pick(key: string) {
       // Belt-and-braces: every caller already refuses disabled entries
@@ -144,7 +266,7 @@ export const HkSettingsBody = defineComponent({
     const { isMobile } = useBreakpoint();
 
     return () => (
-      <div class="hk-settings" data-phone={isMobile.value || undefined}>
+      <div class="hk-settings" data-phone={isMobile.value || undefined} ref={shellRef}>
         {/* Scroll ownership (see the docblock): both scrollers are
             HkScrollContainers — the overlay chrome replaces the native
             bars, and the paired-class rules in the SCSS carry each
@@ -219,7 +341,12 @@ export const HkSettingsBody = defineComponent({
               incoming section's height and the contents dissolve, the
               same mechanism HkTabs panels use. A settings pane is a page
               slot — it must not hard-cut. */}
-          <HkTransitionContainer swapKey={active()} axis="height">
+          <HkTransitionContainer
+            ref={morphRef}
+            swapKey={active()}
+            axis="height"
+            onSwap={(payload: { durationMs: number }) => announceSheetSwap(payload)}
+          >
             {slots[active()]?.()}
           </HkTransitionContainer>
         </HkScrollContainer>

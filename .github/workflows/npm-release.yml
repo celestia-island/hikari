@@ -2,7 +2,9 @@ name: npm Release
 
 on:
   push:
-    tags: ["v*"]
+    # npm-v* per the org split-line convention (versioning-audit B1,
+    # 2026-11-04); the historical v0.55.* tags are a retired namespace.
+    tags: ["npm-v*"]
   workflow_dispatch:
     inputs:
       version:

@@ -51,6 +51,13 @@ export {
   DESKTOP_GUTTER_PX,
   GUTTER_MOBILE_MAX_WIDTH,
 } from "./viewportGutter";
+// The cumulative CSS-zoom factor between a body-teleported element and
+// the viewport root (runtime/cssZoom.ts). Hosts that measure anchors
+// with gBCR and write fixed px themselves — a horizontal HkDraggableList
+// port especially — need the same ghost-math division the components run
+// internally; until this re-export existed the factor had to be copied
+// verbatim into consumers.
+export { ancestorZoom } from "./cssZoom";
 export {
   displayWidthUnits,
   glyphWidthUnits,

@@ -137,14 +137,24 @@ describe("static sweep — literal var() presentation attributes must ride an in
     void violations;
   });
 
-  it("every painted component file is clean", async () => {
-    const files = (await readdir(dir)).filter((f) => /^Hk.+\.tsx$/.test(f) && !f.includes(".test."));
-    const offenders: string[] = [];
-    for (const f of files) {
-      offenders.push(...(await violations(f)));
-    }
-    expect(offenders).toEqual([]);
-  });
+  // The sweep reads ~200 painter files before it can judge anything; on a
+  // starved runner (the CI worker contention that masked hikari#1058) those
+  // sequential reads once bled past the default 5s test timeout, which
+  // reads as a flake and proves nothing. The gate is about *what* the
+  // files contain, never about how fast they read. (Same reasoning as
+  // theme/wallpaperSsr.test.ts's IMPORT_TIMEOUT_MS.)
+  const SWEEP_TIMEOUT_MS = 30_000;
+
+  it(
+    "every painted component file is clean",
+    async () => {
+      const files = (await readdir(dir)).filter((f) => /^Hk.+\.tsx$/.test(f) && !f.includes(".test."));
+      // Parallel reads: one I/O round trip instead of ~200 awaited ones.
+      const offenders = (await Promise.all(files.map((f) => violations(f)))).flat();
+      expect(offenders).toEqual([]);
+    },
+    SWEEP_TIMEOUT_MS,
+  );
 });
 
 describe("index export surface smoke", () => {

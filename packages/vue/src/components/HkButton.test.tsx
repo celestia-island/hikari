@@ -201,7 +201,9 @@ describe("HkButton icon-only square contract", () => {
 // over the square width. Textual assertions because happy-dom does not
 // lay out.
 describe("HkButton icon-only SCSS contract", () => {
-  const scss = readFileSync(join(here, "HkButton.scss"), "utf-8");
+  // autocrlf checkouts write CRLF to disk; normalize so the LF-joined
+  // selector anchor below matches what git stores regardless of platform.
+  const scss = readFileSync(join(here, "HkButton.scss"), "utf-8").replace(/\r\n/g, "\n");
 
   it("self-declares the collapsed square geometry", () => {
     const rule = scss.match(/\.hk-btn-icon-only\s*{[^}]*}/)?.[0] ?? "";
@@ -310,7 +312,8 @@ describe("HkButton label prop + responsive collapse contract", () => {
 // useBreakpoint px scale (sm 640 / md 768 / lg 1024 / xl 1280), and must
 // land on the exact icon-only square width of its size.
 describe("HkButton label-collapse SCSS contract", () => {
-  const scss = readFileSync(join(here, "HkButton.scss"), "utf-8");
+  // Normalized to LF (autocrlf checkouts) — see the icon-only contract above.
+  const scss = readFileSync(join(here, "HkButton.scss"), "utf-8").replace(/\r\n/g, "\n");
 
   const breakpoints: Array<[string, string]> = [
     ["sm", "639.98px"],

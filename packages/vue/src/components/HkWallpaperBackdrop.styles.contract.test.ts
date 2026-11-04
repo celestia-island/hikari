@@ -32,7 +32,10 @@ import { describe, expect, it } from "vitest";
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
-const read = (rel: string): string => readFileSync(join(here, rel), "utf-8");
+// autocrlf checkouts write CRLF to disk; normalize so the LF-joined
+// selector anchor below matches what git stores regardless of platform.
+const read = (rel: string): string =>
+  readFileSync(join(here, rel), "utf-8").replace(/\r\n/g, "\n");
 
 const sheet = read("./HkWallpaperBackdrop.scss");
 const tsx = read("./HkWallpaperBackdrop.tsx");

@@ -57,3 +57,4 @@
 - [UserGuide](./components/layer3/user_guide.md)
 - [Visualization 컴포넌트](./components/layer3/visualization.md)
 - [ZoomControls](./components/layer3/zoom_controls.md)
+- [화면 식별](./components/layer3/screen_identify.md)

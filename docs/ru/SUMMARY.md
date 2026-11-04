@@ -57,3 +57,4 @@
 - [User Guide](./components/layer3/user_guide.md)
 - [Visualization](./components/layer3/visualization.md)
 - [Zoom Controls](./components/layer3/zoom_controls.md)
+- [Идентификация экрана](./components/layer3/screen_identify.md)

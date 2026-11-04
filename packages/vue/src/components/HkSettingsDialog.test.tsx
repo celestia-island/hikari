@@ -260,7 +260,9 @@ describe("settings dialog SCSS host contract (source-level)", () => {
   // depends on.
   // vitest serves modules through its own scheme, so import.meta.url is
   // not a file URL here; the suite's cwd is packages/vue.
-  const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8");
+  // autocrlf checkouts write CRLF to disk; normalize so the LF-joined
+  // anchors below match what git stores regardless of platform.
+  const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8").replace(/\r\n/g, "\n");
 
   it("self-check: the extractor sees a rule that exists", () => {
     // The shell rules are BEM-nested in the source (&__rail-item inside
@@ -508,7 +510,8 @@ describe("phone shell (rail → top tab strip, 2026-10-28 user direction)", () =
     // assertions read INSIDE the &[data-phone] block — several of these
     // declarations also exist elsewhere in the sheet, and a bare
     // toContain would keep passing after the phone rule dies (R2).
-    const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8");
+    // Normalized to LF (autocrlf checkouts) — see the host contract above.
+    const scss = readFileSync("src/components/HkSettingsDialog.scss", "utf8").replace(/\r\n/g, "\n");
     const phoneBlock = scss.slice(
       scss.indexOf("&[data-phone] {"),
       scss.indexOf("Dialog host"),

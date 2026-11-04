@@ -13,7 +13,9 @@ import { fileURLToPath } from "node:url";
  * the normalization fixed.
  */
 const here = dirname(fileURLToPath(import.meta.url));
-const scss = readFileSync(join(here, "HkJsonTree.scss"), "utf-8");
+// autocrlf checkouts write CRLF to disk; normalize so the LF-joined
+// selector anchor below matches what git stores regardless of platform.
+const scss = readFileSync(join(here, "HkJsonTree.scss"), "utf-8").replace(/\r\n/g, "\n");
 
 describe("HkJsonTree spacing contract", () => {
   it("keeps the toggle exactly one spacing unit from the row text", () => {

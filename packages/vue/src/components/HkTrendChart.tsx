@@ -1,11 +1,20 @@
 import { computed, defineComponent, type PropType } from "vue";
 
-import { renderTrendChartSvg, trendHeightPx, type AlarmThresholds, type TrendPen, type TrendPoint } from "./trendGeometry";
+import {
+  renderTrendChartSvg,
+  trendHeightPx,
+  type AlarmThresholds,
+  type TrendGuide,
+  type TrendPen,
+  type TrendPoint,
+  type TrendYDomain,
+} from "./trendGeometry";
 
 // The pen/threshold data types live in the pure geometry module (the Rust
 // mirror's trend_chart.rs surface) and re-export here so direct-file
-// importers keep their established paths.
-export type { AlarmThresholds, TrendPen, TrendPoint };
+// importers keep their established paths. TrendGuide / TrendYDomain are the
+// wowsp-migration extensions (documented in ./trendGeometry).
+export type { AlarmThresholds, TrendGuide, TrendPen, TrendPoint, TrendYDomain };
 
 /**
  * HkTrendChart — labelled time-series ("pens") drawn over a rolling time
@@ -22,15 +31,28 @@ export type { AlarmThresholds, TrendPen, TrendPoint };
  *   div.hk-trend-chart  style="width:100%;height:{height}"
  *     div[style="display:contents"]
  *       svg.hk-trend-chart__svg  viewBox + preserveAspectRatio="none"
- *         line.hk-trend-chart__threshold  (one per present limit)
- *         path.hk-trend-chart__area       (one per pen)
- *         polyline.hk-trend-chart__line   (one per pen)
+ *         line.hk-trend-chart__guide       (optional chart-level guides)
+ *         line.hk-trend-chart__threshold   (one per present limit)
+ *         text.hk-trend-chart__y-tick / __x-tick  (optional axis text)
+ *         path.hk-trend-chart__area        (one per pen)
+ *         polyline.hk-trend-chart__line    (one per pen)
+ *         circle.hk-trend-chart__dot       (optional, per inked sample)
+ *         text.hk-trend-chart__guide-label (optional tier names, on top)
  *
  * The `hk-trend-chart*` classes are INERT hooks (no sheet defines them);
  * the component ships NO stylesheet and no canvas. Pen ink rides the theme
  * tokens (`rgb(var(--color-primary))` …), so a scheme flip repaints without
  * a re-render, and threshold guides keep the old markLine colors and dash
  * flavors.
+ *
+ * WOWSP-MIGRATION EXTRAS (all optional, all defaulting to today's frame):
+ * chart-level named `guides` (dashed tier lines with left-edge tier labels
+ * and hints), per-sample dot ink (`TrendPoint.fill`/`hint`), y-axis
+ * numbers (`yAxisFormat` plus the `yAxisClearancePx` collision rule),
+ * baseline x ticks (`xTickCount` + `xTickFormat`), a stepped `yDomain`,
+ * and a `preserveAspectRatio` override. The exact rules live in
+ * ./trendGeometry; with the extras absent the markup is byte-identical to
+ * the mirror's.
  *
  * OFFLINE PRE-RENDER SEMANTICS: no animation exists at all — the first
  * render IS the finished frame. Streaming updates re-render the same
@@ -63,6 +85,29 @@ export default defineComponent({
     now: { type: Number, default: undefined },
     /** The viewBox width (default 640 — the mirror's frame). */
     width: { type: Number, default: 640 },
+    /** Chart-level horizontal guides rendered with the alarms — the named
+     * tier lines. Default: none. */
+    guides: { type: Array as PropType<TrendGuide[]>, default: undefined },
+    /** Formats the y-axis gridline numbers (floor/mid/ceiling of the shown
+     * domain); absent → no y-axis text. */
+    yAxisFormat: { type: Function as PropType<(value: number) => string>, default: undefined },
+    /** A mid/ceiling number whose gridline sits within this many viewBox px
+     * of a guide's line is dropped (the floor number always renders).
+     * Default 0 — nothing is dropped. */
+    yAxisClearancePx: { type: Number, default: 0 },
+    /** Baseline tick count, clamped to the shown sample count; needs
+     * `xTickFormat`. Default: no x ticks. */
+    xTickCount: { type: Number, default: undefined },
+    /** Formats each tick's epoch ms; needs `xTickCount`. */
+    xTickFormat: { type: Function as PropType<(timeMs: number) => string>, default: undefined },
+    /** The stepped y extent rule; absent → the raw extent (flat-pad ±1). */
+    yDomain: { type: Object as PropType<TrendYDomain>, default: undefined },
+    /** The SVG fit (default "none" — stretch to the box, the mirror's
+     * rule; "xMidYMid meet" keeps the frame's aspect). */
+    preserveAspectRatio: {
+      type: String as PropType<"none" | "xMidYMid meet">,
+      default: "none",
+    },
   },
   setup(props) {
     const svg = computed(() =>
@@ -72,6 +117,13 @@ export default defineComponent({
         width: props.width,
         height: props.height,
         showThresholds: props.showThresholds,
+        guides: props.guides,
+        yAxisFormat: props.yAxisFormat,
+        yAxisClearancePx: props.yAxisClearancePx,
+        xTickCount: props.xTickCount,
+        xTickFormat: props.xTickFormat,
+        yDomain: props.yDomain,
+        preserveAspectRatio: props.preserveAspectRatio,
       }),
     );
     // An empty height keeps the viewBox-derived px (the mirror's rule).

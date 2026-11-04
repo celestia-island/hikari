@@ -1,4 +1,4 @@
-import { AlertTriangle, Info, X } from "lucide-vue-next";
+import { AlertTriangle, Check, Info, X } from "lucide-vue-next";
 import {
   computed,
   defineComponent,
@@ -15,7 +15,7 @@ import { useI18n } from "../i18n/context";
 import "./HkPersistentToast.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
-export type PersistentToastTone = "loading" | "info" | "warning" | "error";
+export type PersistentToastTone = "loading" | "info" | "warning" | "error" | "success";
 
 /** Viewport gutter the detail card clamps into (mirror of
  *  --viewport-gutter's desktop value; the card is chrome-adjacent and
@@ -251,6 +251,8 @@ export default defineComponent({
               <span class="hk-persistent-toast__spinner" aria-hidden="true" />
             ) : props.tone === "error" || props.tone === "warning" ? (
               <AlertTriangle size={12} class="hk-persistent-toast__icon" aria-hidden="true" />
+            ) : props.tone === "success" ? (
+              <Check size={12} class="hk-persistent-toast__icon" aria-hidden="true" />
             ) : (
               <Info size={12} class="hk-persistent-toast__icon" aria-hidden="true" />
             )}

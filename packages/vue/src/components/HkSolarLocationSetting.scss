@@ -1,10 +1,16 @@
-/* HkSolarLocationSetting — the solar-clock location strategy row and
+/* HkSolarLocationSetting — the solar-clock location strategy card and
  * its editor modal body (see the component docblock for the strategy
  * ladder). AI-generated: developed with the ZCode agent (model
  * GLM-5.3); human-directed. */
 
-/* ── The settings-page row: live summary + Edit button ────────────────── */
+/* ── The settings-page card (HkCard root; header/body classes are the
+ *    card family's own) ─────────────────────────────────────────────── */
 .hk-solar-setting {
+  min-width: 0;
+}
+
+/* ── The card body's live summary + Edit button line ──────────────────── */
+.hk-solar-row {
   display: flex;
   align-items: center;
   gap: var(--space-8, 0.5rem);
@@ -57,6 +63,61 @@
   color: rgb(var(--color-muted));
   font-size: var(--text-xs);
   line-height: 1.5;
+}
+
+/* ── Detected-value readout (timezone / ip panes) ───────────────────────
+ * One info item per line: a fixed label column and a value column of
+ * copyable tags, so long values keep their own row and the two columns
+ * stay aligned across rows. */
+.hk-solar-detected {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-solar-detected-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-8, 0.5rem);
+  align-items: start;
+}
+
+.hk-solar-detected-label {
+  padding-top: var(--space-1, 0.125rem);
+  font-size: var(--text-xs);
+  color: rgb(var(--color-muted));
+  /* Long localized labels wrap instead of pushing the value column out. */
+  overflow-wrap: anywhere;
+}
+
+.hk-solar-detected-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6, 0.375rem);
+  min-width: 0;
+}
+
+/* Values are labels, not prose — but a readout value that outruns the
+ * modal soft-wraps inside its chip instead of clipping or overflowing. */
+.hk-solar-detected-value .hk-badge {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+/* Probe status line (IP pane): muted progress / failure note, with the
+ * retry affordance inline after the text. */
+.hk-solar-detected-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-6, 0.375rem);
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs);
+}
+
+.hk-solar-detected-retry {
+  flex-shrink: 0;
 }
 
 .hk-solar-manual {

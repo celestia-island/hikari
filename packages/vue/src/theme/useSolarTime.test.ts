@@ -401,3 +401,156 @@ describe("time zone catalog", () => {
     expect(id.length).toBeGreaterThan(0);
   });
 });
+
+describe("solar IP insight (the strategy dialog's readout)", () => {
+  let mod: SolarModule;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.unstubAllGlobals();
+    localStorage.clear();
+    // Offline by default — the insight probe must never touch the real
+    // network from tests.
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("offline");
+    }));
+    mod = await import("./useSolarTime");
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const LOOKUP_BODY = {
+    ip: "203.0.113.7",
+    version: "IPv4",
+    asn: "AS4134",
+    org: "Chinanet",
+    country_name: "China",
+    region: "Shanghai",
+    city: "Shanghai",
+    timezone: "Asia/Shanghai",
+    latitude: 31.22,
+    longitude: 121.45,
+  };
+
+  function lookupFetch(): ReturnType<typeof vi.fn> {
+    return vi.fn(async () => ({ ok: true, json: async () => ({ ...LOOKUP_BODY }) }));
+  }
+
+  it("a successful probe stores the narrowed insight and reports ok", async () => {
+    vi.stubGlobal("fetch", lookupFetch());
+    expect(mod.solarIpInsight.value).toBeNull();
+    expect(mod.solarIpProbeState.value).toBe("idle");
+
+    await mod.probeSolarIpInsight();
+    expect(mod.solarIpProbeState.value).toBe("ok");
+    expect(mod.solarIpInsight.value).toMatchObject({
+      ip: "203.0.113.7",
+      asn: "AS4134",
+      org: "Chinanet",
+      countryName: "China",
+      region: "Shanghai",
+      city: "Shanghai",
+      timeZone: "Asia/Shanghai",
+    });
+    expect(mod.solarIpInsightFresh()).toBe(true);
+  });
+
+  it("a probe against a body without a usable ip fails and stores nothing", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ latitude: 1, longitude: 2 }),
+    })));
+    await mod.probeSolarIpInsight();
+    expect(mod.solarIpProbeState.value).toBe("failed");
+    expect(mod.solarIpInsight.value).toBeNull();
+    expect(mod.solarIpInsightFresh()).toBe(false);
+  });
+
+  it("an offline probe fails without throwing and stays retryable", async () => {
+    await mod.probeSolarIpInsight();
+    expect(mod.solarIpProbeState.value).toBe("failed");
+
+    vi.stubGlobal("fetch", lookupFetch());
+    await mod.probeSolarIpInsight(true);
+    expect(mod.solarIpProbeState.value).toBe("ok");
+    expect(mod.solarIpInsight.value?.ip).toBe("203.0.113.7");
+  });
+
+  it("a fresh snapshot answers the probe without touching the network; force bypasses it", async () => {
+    const fetchMock = lookupFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    await mod.probeSolarIpInsight();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Fresh snapshot: the probe reports ok without a new fetch.
+    await mod.probeSolarIpInsight();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Forced (the retry button): a real re-probe.
+    await mod.probeSolarIpInsight(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("concurrent probes share one in-flight fetch", async () => {
+    const fetchMock = lookupFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    await Promise.all([
+      mod.probeSolarIpInsight(),
+      mod.probeSolarIpInsight(),
+      mod.probeSolarIpInsight(true),
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mod.solarIpProbeState.value).toBe("ok");
+  });
+
+  it("stale snapshots (past the TTL) re-probe without force", async () => {
+    vi.stubGlobal("fetch", lookupFetch());
+    await mod.probeSolarIpInsight();
+    const insight = mod.solarIpInsight.value!;
+    expect(mod.solarIpInsightFresh(insight.fetchedAt + 1)).toBe(true);
+    expect(mod.solarIpInsightFresh(insight.fetchedAt + 11 * 60 * 1000)).toBe(false);
+  });
+
+  it("the ip strategy's own geo resolution records the insight from the same body", async () => {
+    mod.setSolarLocationStrategy("ip");
+    mod.setGeolocationProvider(async () => null);
+    vi.stubGlobal("fetch", lookupFetch());
+    await mod.getGeolocation();
+    expect(mod.solarIpInsight.value?.ip).toBe("203.0.113.7");
+    expect(mod.solarIpProbeState.value).toBe("ok");
+  });
+
+  it("resetSolarIpInsight clears the module state", async () => {
+    vi.stubGlobal("fetch", lookupFetch());
+    await mod.probeSolarIpInsight();
+    mod.resetSolarIpInsight();
+    expect(mod.solarIpInsight.value).toBeNull();
+    expect(mod.solarIpProbeState.value).toBe("idle");
+    expect(mod.solarIpInsightFresh()).toBe(false);
+  });
+
+  it("trims and drops junk insight fields from the untrusted body", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ip: "  2001:db8::1  ",
+        asn: "",
+        org: 42,
+        country_name: "Japan",
+        region: null,
+        city: undefined,
+        timezone: "Asia/Tokyo",
+      }),
+    })));
+    await mod.probeSolarIpInsight();
+    expect(mod.solarIpInsight.value).toEqual({
+      ip: "2001:db8::1",
+      countryName: "Japan",
+      timeZone: "Asia/Tokyo",
+      fetchedAt: expect.any(Number),
+    });
+  });
+});

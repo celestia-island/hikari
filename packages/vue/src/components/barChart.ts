@@ -7,7 +7,10 @@
 // the two apps draw the identical bar shape: equal slots, each bar
 // centered with 62%-of-slot width capped at 36px, top-only corner
 // rounding clamped so a squat bar never inverts its corners, and three
-// gridline guides (0 / half / the nice max).
+// gridline guides (0 / half / the nice max). Each slot also carries the
+// baseline for an optional value label above the bar (top − 5, null for
+// an empty slot) — the wowsp tier histogram's labelY convention, which
+// HkBarChart renders behind its showValues prop.
 //
 // AI-generated (GLM-5.3 via ZCode), 2026-10-31 — SySL-1.0 §2.3.
 
@@ -18,6 +21,12 @@ export interface BarSlot {
   /** Empty string for a zero bucket — no invisible sliver to hover. */
   path: string;
   value: number;
+  /** Text baseline for a value label ABOVE the bar (top − 5, wowsp's
+   * tierBars convention — the 10-unit label clears the bar with a
+   * readable gap); null for a zero bucket, so an empty slot carries no
+   * above-bar label either (HkBarChart's showValues renders labelY
+   * non-null slots only). */
+  labelY: number | null;
 }
 
 /** The full layout HkBarChart renders. */
@@ -79,7 +88,7 @@ export function barLayout(
   const bars: BarSlot[] = values.map((value, i) => {
     const centerX = sidePad + slotW * (i + 0.5);
     if (!(value > 0)) {
-      return { centerX, barWidth: barW, path: "", value };
+      return { centerX, barWidth: barW, path: "", value, labelY: null };
     }
     const h = (value / scale) * plotH;
     const top = baselineY - h;
@@ -94,7 +103,7 @@ export function barLayout(
       `L ${fmtBar(x1 - rx)} ${fmtBar(top)} ` +
       `Q ${fmtBar(x1)} ${fmtBar(top)} ${fmtBar(x1)} ${fmtBar(top + rx)} ` +
       `L ${fmtBar(x1)} ${fmtBar(baselineY)} Z`;
-    return { centerX, barWidth: barW, path, value };
+    return { centerX, barWidth: barW, path, value, labelY: fmtBar(top - 5) };
   });
   const gridlines = [0, 0.5, 1].map((f) => ({
     y: fmtBar(baselineY - f * plotH),

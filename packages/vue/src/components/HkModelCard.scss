@@ -1,0 +1,97 @@
+@use "../styles/polyfill" as *;
+
+/* HkModelCard — the dense model card for tier-grouped model grids: a
+   leading identity lane (the consumer's model tag), an optional actions
+   lane (the serving switch), an optional caption (which provider a
+   merged card came from) and an optional footer (usage + capability
+   hints). The tier rides the card as an inset leading stripe; disabled
+   dims without killing the controls inside.
+
+   Motion contract: hover feedback is BORDER COLOR ONLY. The card never
+   transforms — a hover lift displaces nothing, reflows nothing, and
+   (2026-11-04 user direction) never animates the card upward. */
+
+.hk-model-card {
+  --hk-model-card-accent: transparent;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgb(var(--color-muted) / 4%);
+  min-width: 0;
+  box-shadow: inset 2px 0 0 0 var(--hk-model-card-accent);
+}
+
+.hk-model-card[data-tier="deep"] {
+  --hk-model-card-accent: rgb(var(--color-primary));
+}
+
+.hk-model-card[data-tier="normal"] {
+  --hk-model-card-accent: rgb(var(--color-success));
+}
+
+.hk-model-card[data-tier="basic"] {
+  --hk-model-card-accent: rgb(var(--color-muted) / 45%);
+}
+
+.hk-model-card[data-hoverable] {
+  transition: border-color var(--duration-normal) ease;
+}
+
+.hk-model-card[data-hoverable]:hover {
+  border-color: rgb(var(--color-muted) / 30%);
+}
+
+.hk-model-card[data-interactive] {
+  cursor: pointer;
+  @include user-select(none);
+}
+
+.hk-model-card[data-interactive]:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.hk-model-card[data-disabled] {
+  opacity: 0.5;
+  --hk-model-card-accent: transparent;
+}
+
+.hk-model-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.hk-model-card-leading {
+  min-width: 0;
+}
+
+.hk-model-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.hk-model-card-caption {
+  font-size: var(--text-2xs);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-model-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-width: 0;
+  color: rgb(var(--color-muted));
+}

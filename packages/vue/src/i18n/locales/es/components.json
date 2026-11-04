@@ -299,5 +299,7 @@
   "hikari::titleBar.minimize": "Minimizar",
   "hikari::titleBar.maximize": "Maximizar",
   "hikari::titleBar.restore": "Restaurar",
-  "hikari::titleBar.close": "Cerrar"
+  "hikari::titleBar.close": "Cerrar",
+  "hikari::screenIdentify.label": "Pantalla {number}",
+  "hikari::screenIdentify.labelNamed": "Pantalla {number}, {name}"
 }

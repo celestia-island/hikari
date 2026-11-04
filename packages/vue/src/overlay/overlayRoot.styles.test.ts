@@ -27,7 +27,15 @@ function sourcesIn(dir: string): string[] {
     if (entry === "node_modules" || entry === "__tests__") continue;
     const path = join(dir, entry);
     if (statSync(path).isDirectory()) out.push(...sourcesIn(path));
-    else if (/\.(scss|tsx)$/.test(entry)) out.push(path);
+    // Production sources only: the ladder guard must see inline
+    // document-space elevations written from TS too (hudRoot.ts is one),
+    // while test files' assertions are not consumers.
+    else if (
+      /\.(scss|tsx|ts)$/.test(entry) &&
+      !/\.test\.(ts|tsx)$/.test(entry)
+    ) {
+      out.push(path);
+    }
   }
   return out;
 }
@@ -56,7 +64,7 @@ describe("overlay root document-space elevation contract", () => {
     );
   });
 
-  it("parks the band between the floating bands and error/titlebar", () => {
+  it("parks the band between the floating bands and the HUD/error/titlebar", () => {
     const value = (name: string) => {
       const m = scale.match(new RegExp(`--hk-z-${name}:\\s*(\\d+)`));
       expect(m, `--hk-z-${name} must stay defined in scale.scss`).not.toBeNull();
@@ -67,10 +75,12 @@ describe("overlay root document-space elevation contract", () => {
     expect(band).toBeGreaterThan(value("tooltip"));
     expect(band).toBeGreaterThan(value("modal"));
     expect(band).toBeGreaterThan(value("toolbar"));
-    // Below the two surfaces that intentionally stay on top, exactly as
-    // in the pre-isolation global scale.
-    expect(band).toBeLessThan(value("error"));
-    expect(band).toBeLessThan(value("titlebar"));
+    // Below the ambient HUD (always-visible annotations must paint above
+    // the whole popup tree) and below the two surfaces that intentionally
+    // stay on top, exactly as in the pre-isolation global scale.
+    expect(band).toBeLessThan(value("hud"));
+    expect(value("hud")).toBeLessThan(value("error"));
+    expect(value("hud")).toBeLessThan(value("titlebar"));
   });
 
   it("inlines a self-sufficient pre-stylesheet elevation", () => {
@@ -85,15 +95,17 @@ describe("overlay root document-space elevation contract", () => {
     expect(root.style.getPropertyValue("position")).toBe("relative");
   });
 
-  it("lets no z-index consumer land between the root band and the error band", () => {
+  it("keeps every z-index consumer on a sanctioned rung of the ladder", () => {
     // The exact gap class the 2026-10-15 fix closed: a document-space
     // surface that must own the top (hikari's error landing) sat at
     // --hk-z-modal = 5000, and the elevated root silently jumped over
     // it. Every --hk-z-* consumer must resolve STRICTLY below the root
-    // band (content chrome) or be one of the two intentional
-    // top-owners, which must stay ABOVE it — nothing ties the band
-    // (a tie would be DOM-order roulette) and nothing lands between
-    // the two bands. Consumers are matched anywhere INSIDE a
+    // band (content chrome), be one of the two intentional top-owners
+    // (which must stay ABOVE it), or be the ambient HUD band — the ONE
+    // sanctioned rung between the popup tree and the top-owners
+    // (2026-11-05 identify defect: the card must out-paint the modal
+    // backdrop). Nothing ties a band (a tie would be DOM-order
+    // roulette). Consumers are matched anywhere INSIDE a
     // z-index-bearing line, so calc()/nested-fallback wrappers
     // (`var(--x, var(--hk-z-scrollbar))`) are still inventoried; their
     // ARITHMETIC is not evaluated (a calc() offset off a top-owner
@@ -126,7 +138,7 @@ describe("overlay root document-space elevation contract", () => {
     }
     // Positive controls: the scan must see the known top-owners and the
     // root itself, or the line patterns stopped matching.
-    for (const required of ["overlay-root", "error", "titlebar", "toolbar"]) {
+    for (const required of ["overlay-root", "hud", "error", "titlebar", "toolbar"]) {
       expect(
         found.has(required),
         `scan lost the --hk-z-${required} consumer — patterns rotted`,
@@ -148,6 +160,15 @@ describe("overlay root document-space elevation contract", () => {
 
     const topOwners = new Set(["error", "titlebar"]);
     const rootSheet = resolve(overlayDir, "overlayRoot.scss");
+    // The root rung has the same two-owner shape as the HUD rung: the
+    // sheet owns the CSS declaration, the factory owns the inline
+    // pre-stylesheet one.
+    const rootOwners = new Set([rootSheet, resolve(overlayDir, "overlayRoot.ts")]);
+    const hudSheet = resolve(overlayDir, "hudRoot.scss");
+    // The HUD rung has TWO owners that must agree: the sheet (CSS) and the
+    // factory (inline, pre-stylesheet). Both are allowlisted; a third
+    // consumer at 90050 would race the root by DOM order.
+    const hudOwners = new Set([hudSheet, resolve(overlayDir, "hudRoot.ts")]);
     for (const [name, files] of found) {
       const value = bandValues.get(name);
       expect(
@@ -169,17 +190,37 @@ describe("overlay root document-space elevation contract", () => {
         // order.
         for (const file of files) {
           expect(
-            file,
-            `--hk-z-overlay-root consumed at ${file} — only ${rootSheet} may tie the band`,
-          ).toBe(rootSheet);
+            rootOwners.has(file),
+            `--hk-z-overlay-root consumed at ${file} — only ${[...rootOwners].join(" / ")} may tie the band`,
+          ).toBe(true);
+        }
+      } else if (name === "hud") {
+        // The one sanctioned band BETWEEN the popup tree and the
+        // top-owners: the ambient HUD root (2026-11-05 identify
+        // defect). It must stay strictly above the overlay root and
+        // strictly below error/titlebar, and only its own sheet may
+        // consume it — a second consumer at 90050 would race the HUD
+        // root by DOM order.
+        expect(
+          value!,
+          `--hk-z-hud (${value}) must sit strictly above the overlay root ` +
+            `(${OVERLAY_ROOT_DOCUMENT_Z}) and below the error band — consumers: ` +
+            `${[...files].join(", ")}`,
+        ).toBeGreaterThan(OVERLAY_ROOT_DOCUMENT_Z);
+        expect(value!).toBeLessThan(bandValues.get("error")!);
+        for (const file of files) {
+          expect(
+            hudOwners.has(file),
+            `--hk-z-hud consumed at ${file} — only ${[...hudOwners].join(" / ")} may own the HUD band`,
+          ).toBe(true);
         }
       } else {
         expect(
           value!,
           `--hk-z-${name} (${value}) at ${[...files].join(", ")} must resolve ` +
             `strictly below the overlay root band (${OVERLAY_ROOT_DOCUMENT_Z}) ` +
-            `or above the error band — ties and in-between values get painted ` +
-            `over by (or paint over) the floating tree`,
+            `— ties and the band between the root and error are reserved for ` +
+            `their owners (hudRoot.scss / the two top-owners)`,
         ).toBeLessThan(OVERLAY_ROOT_DOCUMENT_Z);
       }
     }

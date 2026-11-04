@@ -303,5 +303,7 @@
   "hikari::titleBar.minimize": "最小化",
   "hikari::titleBar.maximize": "最大化",
   "hikari::titleBar.restore": "還原",
-  "hikari::titleBar.close": "關閉"
+  "hikari::titleBar.close": "關閉",
+  "hikari::screenIdentify.label": "螢幕 {number}",
+  "hikari::screenIdentify.labelNamed": "螢幕 {number}，{name}"
 }

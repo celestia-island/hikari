@@ -1,0 +1,38 @@
+/**
+ * Ambient HUD root styles — the isolated stacking context and its internal
+ * ordinal band. These values NEVER compete with the document's global
+ * stacking space; the `isolation: isolate` fence guarantees it.
+ *
+ * The root's document-space elevation (`--hk-z-hud`, 90050) is what lifts
+ * an always-visible annotation above the WHOLE popup tree — the 2026-11-05
+ * identify defect had a hand-written `z-index: 5000` under a modal, so the
+ * number card read as dimmed background. The fence plus the elevation keep
+ * every HUD layer above #hk-overlay-root (90000) and below the error
+ * landing (95000) / window titlebar (100001). See overlay/hudRoot.ts for
+ * the band table and the module contract.
+ */
+#hk-hud-root {
+  /* Fences the root's z-index space from the global stacking order. */
+  isolation: isolate;
+
+  /* Document-space elevation between the popup tree and the top-owners.
+   * The fallback must match overlayRoot.ts's HUD_ROOT_DOCUMENT_Z. */
+  z-index: var(--hk-z-hud, 90050);
+
+  /* The root itself doesn't intercept pointer events; each HUD layer
+   * decides for itself (the identify card stays non-interactive). */
+  pointer-events: none;
+
+  /* A zero-size anchor, not a visible surface: layers inside are
+   * position: fixed overlays. */
+  position: relative;
+  width: 0;
+  height: 0;
+  overflow: visible;
+
+  /* ── Internal ordinal band ── */
+  /* Base band for HkAmbientLayer wrappers. THIS sheet owns the internal
+   * floor (hudRoot.ts owns the document-space band above); several HUD
+   * layers stack by their own zIndex prop / DOM order above this floor. */
+  --hk-overlay-z-hud: 1;
+}

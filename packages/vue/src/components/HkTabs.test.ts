@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkTabs from "./HkTabs";
+import type { TabItem } from "./HkTabs";
 import { CROSSFADE_WATCHDOG_MS } from "./HkCrossfade";
 import { DEFAULT_ANIMATION_DURATION_MS } from "../composables/useAnimationLoop";
 
@@ -659,5 +660,113 @@ describe("HkTabs panel morph (HkTransitionContainer consumption)", () => {
     // rendered while merged — no host, no panel.
     expect(container.querySelector(".hk-tabs-panels")).toBeNull();
     expect(container.querySelector(".hk-tabs-panel")).toBeNull();
+  });
+});
+
+describe("HkTabs trigger corner badge", () => {
+  /** Mount a two-tab strip with an optional badge on the first option. */
+  function mountBadge(badge: TabItem["badge"]): { container: HTMLElement } {
+    const active = ref("a");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTabs, {
+            variant: "segmented",
+            tabs: [
+              { key: "a", label: "Alpha", badge },
+              { key: "b", label: "Beta" },
+            ],
+            renderPanels: false,
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { container };
+  }
+
+  it("renders the count through HkCornerBadge inside the trigger (no hand-rolled suffix)", () => {
+    const { container } = mountBadge({ count: 3, label: "3 items" });
+    const trig = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!;
+    // The mark is the family's corner-badge pill, anchored bottom-right
+    // (the subscript corner) of the label, not a "(3)" text suffix.
+    const mark = trig.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
+    expect(mark).not.toBeNull();
+    expect(mark.textContent).toBe("3");
+    expect(mark.dataset.corner).toBe("bottom-right");
+    expect(trig.textContent).not.toContain("(3)");
+    // Default clearance: the straddling pill must stay inside the
+    // scroller's 6px vertical clearance below the label (see
+    // TabItem.badge.offset) — the offset var pins that contract.
+    expect(mark.style.getPropertyValue("--hk-corner-badge-offset")).toBe("4px");
+    // The sibling trigger stays badge-free.
+    expect(container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[1]!.querySelector(".hk-corner-badge")).toBeNull();
+  });
+
+  it("keeps zero visible (presence count, not notification noise)", () => {
+    const { container } = mountBadge({ count: 0, label: "0 items" });
+    const mark = container.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
+    expect(mark.textContent).toBe("0");
+  });
+
+  it("collapses past max to the N+ form and names the mark for assistive tech", () => {
+    const { container } = mountBadge({ count: 120, max: 99, label: "120 pending" });
+    const mark = container.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
+    expect(mark.textContent).toBe("99+");
+    expect(mark.getAttribute("role")).toBe("img");
+    expect(mark.getAttribute("aria-label")).toBe("120 pending");
+  });
+
+  it("follows a live count change without a remount (presence stays current)", async () => {
+    const active = ref("a");
+    const tabs = ref<TabItem[]>([{ key: "a", label: "Alpha", badge: { count: 1, label: "1 item" } }]);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTabs, {
+            variant: "segmented",
+            tabs: tabs.value,
+            renderPanels: false,
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const mark = () => container.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
+    expect(mark().textContent).toBe("1");
+    tabs.value = [{ key: "a", label: "Alpha", badge: { count: 12, label: "12 items" } }];
+    await nextTick();
+    expect(mark().textContent).toBe("12");
+  });
+
+  it("warns in DEV when a badge lacks an accessible label", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      mountBadge({ count: 3 });
+      const alarms = warn.mock.calls.filter((c) => String(c[0]).includes("badge without a label"));
+      expect(alarms.length, "the a11y drift alarm must fire").toBeGreaterThan(0);
+      expect(alarms[0]![1]).toBe("a");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("leaves badgeless triggers free of the badge anchor (plain label span render)", () => {
+    const { container } = mountBadge(undefined);
+    expect(container.querySelector(".hk-corner-badge-anchor")).toBeNull();
+    const label = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!.querySelector("span")!;
+    expect(label.textContent).toBe("Alpha");
   });
 });

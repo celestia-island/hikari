@@ -73,7 +73,13 @@
    * ONE band consumed by the fenced floating-layer root itself rather
    * than by a component: it lifts #hk-overlay-root above every
    * content-chrome band while keeping the pre-isolation order (floating
-   * layers < error landing < window titlebar). */
+   * layers < ambient HUD < error landing < window titlebar). --hk-z-hud
+   * is the ONE band consumed by the ambient-HUD root
+   * (overlay/hudRoot.ts): always-visible, non-interactive annotations
+   * (screen-identify cards, recording marks) that must paint above the
+   * whole popup tree — modal backdrops included — while the error
+   * landing and the window titlebar keep their own above-everything
+   * guarantees. */
   --hk-z-base: 0;            /* base content stacking context */
   --hk-z-above: 1;           /* local bump: checkbox marks, switch thumbs */
   --hk-z-scrollbar: 10;      /* scrollbar tracks and corner rulers */
@@ -91,7 +97,12 @@
                                  is always readable and copyable */
   --hk-z-overlay-root: 90000; /* #hk-overlay-root — every floating layer's
                                  document-space elevation (overlay/overlayRoot.ts);
-                                 above all content chrome, below error + titlebar */
+                                 above all content chrome, below the HUD root */
+  --hk-z-hud: 90050;         /* #hk-hud-root — the ambient HUD layer
+                                (overlay/hudRoot.ts): non-interactive,
+                                always-visible annotations above EVERY
+                                popup (modal backdrop included), below
+                                error + titlebar */
   --hk-z-error: 95000;       /* error landing overlay (covers everything) */
   --hk-z-titlebar: 100001;   /* window titlebar (Tauri shell) */
 

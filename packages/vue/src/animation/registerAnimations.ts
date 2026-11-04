@@ -134,3 +134,7 @@ registerCssAnimation("hk-persistent-toast-card-in");
 // The styles/theme/mixins.scss ambient/glow/entrance keyframes were
 // retired with the legacy Gen-1 sheet vendoring (hikari #476) — their
 // registrar entries went with them.
+// components/HkScreenIdentifyCard.scss — the identify card's entrance
+// (opacity + 6px rise, plays once; the card unmounts at dwell end, so
+// no leave keyframe).
+registerCssAnimation("hk-screen-identify-in");

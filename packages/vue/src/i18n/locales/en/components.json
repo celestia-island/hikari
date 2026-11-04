@@ -299,5 +299,7 @@
   "hikari::titleBar.minimize": "Minimize",
   "hikari::titleBar.maximize": "Maximize",
   "hikari::titleBar.restore": "Restore",
-  "hikari::titleBar.close": "Close"
+  "hikari::titleBar.close": "Close",
+  "hikari::screenIdentify.label": "Screen {number}",
+  "hikari::screenIdentify.labelNamed": "Screen {number}, {name}"
 }

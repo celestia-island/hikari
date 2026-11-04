@@ -39,8 +39,11 @@ import "./HkAmbientLayer.scss";
 export default defineComponent({
   name: "HkAmbientLayer",
   props: {
-    /** Whether the layer accepts pointer input. Default `none` — an
-     *  annotation must not block the window it annotates. */
+    /** Whether the layer's CONTENT accepts pointer input. Default `none`
+     *  — an annotation must not block the window it annotates. `auto`
+     *  restores pointer events on the slot children only; the
+     *  viewport-spanning wrapper itself always stays a ghost, so an
+     *  interactive HUD can never swallow page clicks. */
     pointerEvents: {
       type: String as PropType<"none" | "auto">,
       default: "none",

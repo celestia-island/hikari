@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick } from "vue";
 
+import HkModal from "./HkModal";
 import HkScreenIdentifyHost from "./HkScreenIdentifyHost";
 import type { ScreenIdentifyPlacement } from "./HkScreenIdentifyCard";
 
@@ -28,7 +29,16 @@ function mountHost(props: HostProps = {}) {
   const app = createApp(
     defineComponent({
       setup() {
-        return () => h(HkScreenIdentifyHost, props);
+        // A REAL modal in the same app: it populates #hk-overlay-root, so
+        // the "the card is not in the popup tree" assertion below has an
+        // object to be true about (R2 S3: without it the negative arm was
+        // vacuous).
+        return () => [
+          h(HkModal, { modelValue: true, title: "Screen layout" }, {
+            default: () => h("p", "open dialog"),
+          }),
+          h(HkScreenIdentifyHost, props),
+        ];
       },
     }),
   );
@@ -60,6 +70,9 @@ describe("HkScreenIdentifyHost", () => {
   it("paints the card inside the ambient HUD root, not the popup root", async () => {
     mountHost();
     await nextTick();
+    // The modal mounted above must actually own the popup tree; otherwise
+    // the negative arm below proves nothing.
+    expect(document.querySelector("#hk-overlay-root .hk-modal-root")).not.toBeNull();
     showScreenIdentify({ number: 4, name: "Kiosk", durationMs: 3000 });
     await nextTick();
 

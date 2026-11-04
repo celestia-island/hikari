@@ -30,8 +30,9 @@
   height: 0;
   overflow: visible;
 
-  /* ── Internal ordinal bands (hudRoot.ts is the source of truth) ── */
-  /* Base band for HkAmbientLayer wrappers; several HUD layers stack by
-   * their own zIndex prop / DOM order above this floor. */
+  /* ── Internal ordinal band ── */
+  /* Base band for HkAmbientLayer wrappers. THIS sheet owns the internal
+   * floor (hudRoot.ts owns the document-space band above); several HUD
+   * layers stack by their own zIndex prop / DOM order above this floor. */
   --hk-overlay-z-hud: 1;
 }

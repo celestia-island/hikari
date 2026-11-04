@@ -27,7 +27,15 @@ function sourcesIn(dir: string): string[] {
     if (entry === "node_modules" || entry === "__tests__") continue;
     const path = join(dir, entry);
     if (statSync(path).isDirectory()) out.push(...sourcesIn(path));
-    else if (/\.(scss|tsx)$/.test(entry)) out.push(path);
+    // Production sources only: the ladder guard must see inline
+    // document-space elevations written from TS too (hudRoot.ts is one),
+    // while test files' assertions are not consumers.
+    else if (
+      /\.(scss|tsx|ts)$/.test(entry) &&
+      !/\.test\.(ts|tsx)$/.test(entry)
+    ) {
+      out.push(path);
+    }
   }
   return out;
 }
@@ -152,7 +160,15 @@ describe("overlay root document-space elevation contract", () => {
 
     const topOwners = new Set(["error", "titlebar"]);
     const rootSheet = resolve(overlayDir, "overlayRoot.scss");
+    // The root rung has the same two-owner shape as the HUD rung: the
+    // sheet owns the CSS declaration, the factory owns the inline
+    // pre-stylesheet one.
+    const rootOwners = new Set([rootSheet, resolve(overlayDir, "overlayRoot.ts")]);
     const hudSheet = resolve(overlayDir, "hudRoot.scss");
+    // The HUD rung has TWO owners that must agree: the sheet (CSS) and the
+    // factory (inline, pre-stylesheet). Both are allowlisted; a third
+    // consumer at 90050 would race the root by DOM order.
+    const hudOwners = new Set([hudSheet, resolve(overlayDir, "hudRoot.ts")]);
     for (const [name, files] of found) {
       const value = bandValues.get(name);
       expect(
@@ -174,9 +190,9 @@ describe("overlay root document-space elevation contract", () => {
         // order.
         for (const file of files) {
           expect(
-            file,
-            `--hk-z-overlay-root consumed at ${file} — only ${rootSheet} may tie the band`,
-          ).toBe(rootSheet);
+            rootOwners.has(file),
+            `--hk-z-overlay-root consumed at ${file} — only ${[...rootOwners].join(" / ")} may tie the band`,
+          ).toBe(true);
         }
       } else if (name === "hud") {
         // The one sanctioned band BETWEEN the popup tree and the
@@ -194,9 +210,9 @@ describe("overlay root document-space elevation contract", () => {
         expect(value!).toBeLessThan(bandValues.get("error")!);
         for (const file of files) {
           expect(
-            file,
-            `--hk-z-hud consumed at ${file} — only ${hudSheet} may own the HUD band`,
-          ).toBe(hudSheet);
+            hudOwners.has(file),
+            `--hk-z-hud consumed at ${file} — only ${[...hudOwners].join(" / ")} may own the HUD band`,
+          ).toBe(true);
         }
       } else {
         expect(

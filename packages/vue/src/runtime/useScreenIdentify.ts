@@ -53,7 +53,10 @@ export interface ScreenIdentifyRequest {
   /** Stable screen name (Tauri window label, short id, user title). */
   name?: string;
   /** Dwell in ms. Defaults to {@link SCREEN_IDENTIFY_DEFAULT_MS}; `0`
-   *  (or negative) keeps the card up until `dismissScreenIdentify()`. */
+   *  (or negative) keeps the card up until `dismissScreenIdentify()`.
+   *  The card prints WHOLE SECONDS through hikari's single-digit
+   *  countdown surface, so dwells above 9 s render a clipped tens digit —
+   *  identify is a glance, keep it in single digits. */
   durationMs?: number;
 }
 
@@ -144,8 +147,11 @@ export function showScreenIdentify(request: ScreenIdentifyRequest): void {
     // The tick only REPORTS the remainder. It must not clear the dwell
     // timeout: at t=duration both fire in schedule order and an interval
     // that cancelled its own timer left the flash active forever
-    // (caught by the auto-hide test).
-    state.remainingMs.value = Math.max(0, endsAt - Date.now());
+    // (caught by the auto-hide test). It also never WRITES a 0 remainder:
+    // the timeout is what ends the flash, and a 0 tick one task earlier
+    // would paint a countdown-less card for one frame (R2 S3).
+    const left = endsAt - Date.now();
+    if (left > 0) state.remainingMs.value = left;
   }, SCREEN_IDENTIFY_TICK_MS);
   identifyTimer = setTimeout(() => {
     identifyTimer = null;

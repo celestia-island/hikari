@@ -588,7 +588,7 @@ export default defineComponent({
           // Flush the growth deferred through the unfold. One tick later
           // the transition classes are off the frame, so the base height
           // transition animates the pin change instead of the enter's
-          // transform/clip-only transition list swallowing it as a snap.
+          // opacity/transform-only transition list swallowing it as a snap.
           void nextTick(() => {
             if (machine.phase.value === "open") morph.remeasure();
           });

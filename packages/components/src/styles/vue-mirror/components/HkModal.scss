@@ -176,9 +176,11 @@
 
   .hk-modal-content-leave-to {
     opacity: 0;
-    // Mirror of enter-from: the identity state needs no pinned clip any
-    // more — scale(1, 0.9) interpolates with the plain translate
-    // continuously (same transform list shape on both ends).
+    // Mirror of enter-from. No identity pin is needed any more: CSS
+    // transform-list interpolation pads the shorter list with identity
+    // scale(1, 1), so translate()+scale(1, 0.9) ↔ bare translate()
+    // interpolates continuously (unlike `none → inset()` clips, which
+    // are DISCRETE — the #508 lesson does not apply to transforms).
     transform: translate(
           calc(-50% + var(--hk-modal-shift-x, 0px)),
           calc(-50% + var(--hk-modal-shift-y, 0px))

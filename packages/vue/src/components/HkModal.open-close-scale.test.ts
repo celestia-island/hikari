@@ -110,6 +110,39 @@ describe("HkModal desktop content-scale open/close contract (user direction 2026
     }
   });
 
+  it("keeps the ride animated on the timing tokens (never a snap)", () => {
+    // The retired close-collapse contract pinned "transitions clip-path
+    // on leave (the collapse animates, not snaps)"; its replacement must
+    // not be weaker on that axis. Deleting the transition blocks (or
+    // hardcoding their durations away from the family tokens) must turn
+    // this red — computed animation is unobservable in happy-dom, so
+    // this source pin is the only CI guard for "it animates at all".
+    const enter = bodyOf(".hk-modal-content-enter-active");
+    expect(enter).toMatch(
+      /opacity var\(--hk-modal-duration, 0\.42s\) var\(--hk-modal-ease-out, cubic-bezier\(0\.33, 1, 0\.68, 1\)\)/,
+    );
+    expect(enter).toMatch(
+      /transform var\(--hk-modal-duration, 0\.42s\) var\(--hk-modal-ease-out, cubic-bezier\(0\.33, 1, 0\.68, 1\)\)/,
+    );
+    expect(enter).not.toMatch(/clip-path/);
+
+    const leave = bodyOf(".hk-modal-content-leave-active");
+    expect(leave).toMatch(
+      /opacity var\(--hk-modal-duration, 0\.32s\) var\(--hk-modal-ease-in, cubic-bezier\(0\.45, 0, 0\.55, 1\)\)/,
+    );
+    expect(leave).toMatch(
+      /transform var\(--hk-modal-duration, 0\.32s\) var\(--hk-modal-ease-in, cubic-bezier\(0\.45, 0, 0\.55, 1\)\)/,
+    );
+    expect(leave).not.toMatch(/clip-path/);
+
+    for (const active of [
+      ".hk-modal-content-enter-active",
+      ".hk-modal-content-leave-active",
+    ]) {
+      expect(bodyOf(active)).toMatch(/will-change: transform, opacity/);
+    }
+  });
+
   it("keeps the mobile sheet's translateY choreography untouched", () => {
     const from = bodyOf(".hk-modal-content-enter-from", mobile);
     expect(from).toMatch(/translateY\(100%\)/);

@@ -1,5 +1,6 @@
 name: npm Release
 
+# Publishes @celestia-island/hikari from packages/vue on npm-v<version> tags.
 on:
   push:
     # npm-v* per the org split-line convention (versioning-audit B1,

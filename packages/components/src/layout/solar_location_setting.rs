@@ -116,7 +116,11 @@
 // ipHint, manualHint, detectedZone, detectedBand, detectedOffset,
 // detectedCities, detectedIp, detectedAsn, detectedOrg, detectedRegion,
 // detectedIpZone, detectedProbing, detectedFailed, detectedRetry,
-// hemisphere, north, south, resolvedAt.
+// hemisphere, north, south, resolvedAt. Of these only title/edit/apply/
+// cancel + strategy*/hints/hemisphere/north/south + resolvedAt are t()ed
+// HERE (17 call sites); the detected* keys are BUNDLE-SIDE — hosts
+// building the readout rows localize them — the crate itself never t()s
+// them.
 
 // These kernels are line-for-line ports of the upstream JS math: the negated
 // comparisons, manual clamps and inline tuple types keep the port auditable

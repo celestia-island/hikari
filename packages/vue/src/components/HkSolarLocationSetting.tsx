@@ -17,7 +17,6 @@ import {
   systemTimeZoneId,
   type SolarHemisphere,
   type SolarLocationStrategy,
-  type SolarManualLocation,
 } from "../theme/useSolarTime";
 import {
   cityKey,
@@ -35,7 +34,7 @@ import "./HkSolarLocationSetting.scss";
 // The globe picker loads lazily (defineAsyncComponent, module level —
 // the async wrapper is created once, import() is module-cached):
 // three.js and the board only enter the bundle graph when a host
-// actually opens the manual pane — the settings row stays weightless.
+// actually opens the manual pane — the settings card stays weightless.
 const HkTimeZoneGlobe = defineAsyncComponent(() => import("./HkTimeZoneGlobe"));
 
 /** One copyable value of the editor's detected-value readout. `mono`
@@ -146,7 +145,7 @@ export function solarTimezoneDetectedRows(
  *    info item per line as HkCopyBadge tags (click copies, hover says
  *    so): timezone shows the device zone id + its translated band and
  *    example cities; ip probes the lookup engine on tab entry and shows
- *    IP / autonomous system / organization / network region / service
+ *    IP / autonomous system / organization / network region / IP time
  *    zone, with a retry affordance when the probe fails;
  *  - the manual pane exposes the IANA globe picker and an explicit
  *    hemisphere segmented group — hemisphere is NEVER inferred from the

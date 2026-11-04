@@ -46,6 +46,16 @@ export default defineComponent({
      *  mirroring the menu/vocabulary a11y rulings (#736/#737): chrome
      *  announces structure, the host supplies the name. */
     label: { type: String, default: undefined },
+    /** The direction the list flows: "vertical" (the default) stacks
+     *  rows in one column; "horizontal" lays them in ONE never-wrapping
+     *  row (wowsp's overlay-columns editor is the first host). Only the
+     *  pointer geometry differs — the arm threshold reads |dx| instead
+     *  of the hypot, the ghost follows BOTH axes, and the placeholder
+     *  targets slots by pointer.x against their horizontal midpoints
+     *  (the same adjacent-midpoint rule, walked along the row). Roles,
+     *  slots, the reserved handle lane and the commit-once-at-pointerup
+     *  contract are identical on both axes. */
+    axis: { type: String as PropType<"vertical" | "horizontal">, default: "vertical" },
   },
   emits: {
     reorder: (_fromIndex: number, _toIndex: number) => true,
@@ -173,21 +183,27 @@ export default defineComponent({
       }
     }
 
-    function moveGhost(clientY: number) {
+    function moveGhost(clientX: number, clientY: number) {
       const s = drag.value;
       if (!s || !ghostNode) return;
       // gx/gy are the ghost's visual top-left (client coords minus the
       // visual grab offset); the teleported ghost paints local px scaled
-      // by the cumulative zoom — divide once at the write layer.
+      // by the cumulative zoom — divide once at the write layer. A
+      // vertical drag pins the ghost to the source row's x (rows only
+      // ever move along the column); a horizontal drag follows BOTH
+      // axes — a card drifts vertically as naturally as a row drifts.
       const z = ancestorZoom(document.body);
-      const gx = (s.originX - s.grabOffsetX) / z;
+      const gx = (props.axis === "horizontal"
+        ? clientX - s.grabOffsetX
+        : s.originX - s.grabOffsetX) / z;
       const gy = (clientY - s.grabOffsetY) / z;
       ghostNode.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
     }
 
-    function recomputePlaceholder(clientY: number) {
+    function recomputePlaceholder(clientX: number, clientY: number) {
       const s = drag.value;
       if (!s) return;
+      const horizontal = props.axis === "horizontal";
       const rows = rowEls.value;
       let target = s.fromIndex;
       let fallback = s.fromIndex;
@@ -200,10 +216,15 @@ export default defineComponent({
         if (!el) continue;
 
         const rect = el.getBoundingClientRect();
-        const mid = rect.top + rect.height / 2;
+        // The adjacent-midpoint rule along the list's ONE axis — the
+        // column walks by y, the row walks by x. The horizontal form is
+        // the plain rule over every slot: this list never wraps, so the
+        // pointer's line is always the whole row (no banding).
+        const mid = horizontal ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
+        const pointer = horizontal ? clientX : clientY;
         fallback = i;
 
-        if (clientY < mid) {
+        if (pointer < mid) {
           target = i;
           break;
         }
@@ -227,8 +248,14 @@ export default defineComponent({
 
       if (!p.armed) {
         // Arm past the threshold: only now does the drag publish, the
-        // ghost rise, and the gesture claim its defaults.
-        if (Math.hypot(e.clientX - p.state.originX, e.clientY - p.state.originY) <= ARM_PX) {
+        // ghost rise, and the gesture claim its defaults. Vertical arms
+        // on the hypot (travel along either axis counts); horizontal
+        // arms on |dx| alone — a y-wiggle under a pressed card is
+        // jitter, never a drag intent.
+        const travelled = props.axis === "horizontal"
+          ? Math.abs(e.clientX - p.state.originX)
+          : Math.hypot(e.clientX - p.state.originX, e.clientY - p.state.originY);
+        if (travelled <= ARM_PX) {
           return;
         }
         p.armed = true;
@@ -243,8 +270,8 @@ export default defineComponent({
       }
 
       e.preventDefault();
-      moveGhost(e.clientY);
-      recomputePlaceholder(e.clientY);
+      moveGhost(e.clientX, e.clientY);
+      recomputePlaceholder(e.clientX, e.clientY);
     }
 
     function onPointerUp() {
@@ -291,6 +318,7 @@ export default defineComponent({
           class="hk-draggable-list"
           role="list"
           aria-label={props.label || undefined}
+          data-axis={props.axis === "horizontal" ? "horizontal" : undefined}
           data-dragging={s ? "" : undefined}
           data-all-locked={allLocked || undefined}
         >

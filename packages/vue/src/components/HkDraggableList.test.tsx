@@ -525,3 +525,193 @@ describe("HkDraggableList actions lane", () => {
     fireWin("pointerup");
   });
 });
+
+describe("HkDraggableList horizontal axis", () => {
+  /** axis="horizontal" lays the SAME list as one never-wrapping row
+   *  (wowsp's overlay-columns editor). Only the pointer geometry
+   *  changes: the arm reads |dx| alone, the ghost follows BOTH axes,
+   *  and the placeholder targets slots by pointer.x against their
+   *  horizontal midpoints (the plain single-line rule — the list never
+   *  wraps). Roles, slots, the reserved handle lane and the
+   *  commit-once-at-pointerup contract stay exactly as vertical. */
+
+  const PointerEventCtor: typeof MouseEvent =
+    (globalThis as { PointerEvent?: typeof MouseEvent }).PointerEvent ?? MouseEvent;
+
+  const pointerInit: MouseEventInit = { bubbles: true, cancelable: true };
+
+  function fire(el: Element, type: string, x = 0, y = 0) {
+    el.dispatchEvent(new PointerEventCtor(type, {
+      ...pointerInit,
+      button: 0,
+      clientX: x,
+      clientY: y,
+    }));
+  }
+
+  function fireWin(type: string, x = 0, y = 0) {
+    window.dispatchEvent(new PointerEventCtor(type, {
+      ...pointerInit,
+      clientX: x,
+      clientY: y,
+    }));
+  }
+
+  const emitLog: Array<{ from: number; to: number }> = [];
+
+  function mountHorizontal(items: string[], opts?: { lockedKeys?: string[] }): HTMLElement {
+    emitLog.length = 0;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(
+          HDraggableList,
+          {
+            items: items.map((key) => ({ key })),
+            axis: "horizontal",
+            lockedKeys: opts?.lockedKeys ?? [],
+            onReorder: (from: number, to: number) => emitLog.push({ from, to }),
+          },
+          {
+            item: ({ item }: { item: { key: string } }) =>
+              h("span", { class: "row-body" }, item.key),
+          },
+        ),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    return container.querySelector(".hk-draggable-list") as HTMLElement;
+  }
+
+  function rowsOf(root: HTMLElement): HTMLElement[] {
+    return Array.from(root.querySelectorAll(".hk-draggable-list-item")) as HTMLElement[];
+  }
+
+  /** happy-dom reports zero rects; pin the slots to a 100px-each single
+   *  line [0..100][100..200][200..300] (40px tall) so the midpoint rule
+   *  walks real geometry. */
+  function layLine(root: HTMLElement, width = 100, height = 40): HTMLElement[] {
+    const rows = rowsOf(root);
+    rows.forEach((row, i) => {
+      const left = i * width;
+      row.getBoundingClientRect = () =>
+        ({
+          left,
+          top: 0,
+          right: left + width,
+          bottom: height,
+          width,
+          height,
+          x: left,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect;
+    });
+    return rows;
+  }
+
+  it("keeps list semantics and marks no axis on the vertical default", () => {
+    const verticalRoot = mountList(["a"], []);
+    expect(verticalRoot.hasAttribute("data-axis")).toBe(false);
+
+    const root = mountHorizontal(["a", "b"]);
+    expect(root.getAttribute("data-axis")).toBe("horizontal");
+    expect(root.getAttribute("role")).toBe("list");
+    const rows = rowsOf(root);
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.getAttribute("role") === "listitem")).toBe(true);
+  });
+
+  it("arms on |dx| alone — vertical travel never arms a horizontal drag", async () => {
+    const root = mountHorizontal(["a", "b"]);
+    layLine(root);
+    const row = rowsOf(root)[0]!;
+
+    fire(row, "pointerdown", 50, 20);
+    // 30px of pure-Y travel: under the |dx| arm, still a plain press.
+    fireWin("pointermove", 50, 50);
+    await nextTick();
+    expect(row.hasAttribute("data-dragging")).toBe(false);
+
+    // 6px of pure-X travel crosses ARM_PX: the drag publishes.
+    fireWin("pointermove", 56, 50);
+    await nextTick();
+    expect(row.getAttribute("data-dragging")).not.toBeNull();
+
+    fireWin("pointerup");
+  });
+
+  it("moves the ghost on BOTH axes", async () => {
+    const root = mountHorizontal(["a"]);
+    layLine(root); // slot [0..100]
+    // A stale ghost from an earlier failed run would shadow this assert.
+    document.querySelectorAll(".hk-draggable-list-ghost").forEach((n) => n.remove());
+    const row = rowsOf(root)[0]!;
+
+    fire(row, "pointerdown", 50, 20); // grabOffset (50, 20)
+    fireWin("pointermove", 106, 20); // arm past ARM_PX on |dx|
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    let ghost = document.querySelector(".hk-draggable-list-ghost") as HTMLElement | null;
+    expect(ghost, "the ghost must rise next frame").not.toBeNull();
+
+    fireWin("pointermove", 260, 130); // both axes travel: (260-50, 130-20)
+    ghost = document.querySelector(".hk-draggable-list-ghost");
+    expect(ghost!.style.transform).toBe("translate3d(210px, 110px, 0)");
+
+    fireWin("pointerup");
+  });
+
+  it("targets the placeholder by pointer.x against slot midpoints", async () => {
+    const root = mountHorizontal(["a", "b", "c"]);
+    const rows = layLine(root);
+    const row = rows[0]!;
+
+    fire(row, "pointerdown", 50, 20);
+    fireWin("pointermove", 60, 20); // arm; still left of b's midpoint (150) → before b
+    await nextTick();
+    expect(rows[1]!.getAttribute("data-placeholder")).toBe("after");
+
+    fireWin("pointermove", 180, 20); // past b's midpoint, under c's (250) → before c
+    await nextTick();
+    expect(rows[1]!.hasAttribute("data-placeholder")).toBe(false);
+    expect(rows[2]!.getAttribute("data-placeholder")).toBe("after");
+
+    fireWin("pointerup");
+    // Commit-once-at-pointerup: ONE reorder, at the placeholder slot.
+    expect(emitLog).toEqual([{ from: 0, to: 2 }]);
+  });
+
+  it("marks the leading edge when the pointer retreats before earlier slots", async () => {
+    const root = mountHorizontal(["a", "b", "c"]);
+    const rows = layLine(root);
+    const row = rows[2]!;
+
+    fire(row, "pointerdown", 250, 20);
+    fireWin("pointermove", 240, 20); // arm
+    await nextTick();
+
+    fireWin("pointermove", 20, 20); // before a's midpoint (50) → lands before a
+    await nextTick();
+    expect(rows[0]!.getAttribute("data-placeholder")).toBe("before");
+    expect(rows[1]!.hasAttribute("data-placeholder")).toBe(false);
+
+    fireWin("pointerup");
+    expect(emitLog).toEqual([{ from: 2, to: 0 }]);
+  });
+
+  it("skips locked slots when walking the row", async () => {
+    const root = mountHorizontal(["a", "b", "c"], { lockedKeys: ["b"] });
+    const rows = layLine(root);
+    const row = rows[0]!;
+
+    fire(row, "pointerdown", 50, 20);
+    fireWin("pointermove", 160, 20); // past b's midpoint — b is locked, c takes the drop
+    await nextTick();
+    expect(rows[1]!.hasAttribute("data-placeholder")).toBe(false);
+    expect(rows[2]!.getAttribute("data-placeholder")).toBe("after");
+
+    fireWin("pointerup");
+    expect(emitLog).toEqual([{ from: 0, to: 2 }]);
+  });
+});

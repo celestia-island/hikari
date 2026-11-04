@@ -53,6 +53,32 @@
   }
 }
 
+/* The horizontal axis: the SAME list laid out as ONE never-wrapping row
+ * (wowsp's overlay-columns editor is the first host). Only geometry
+ * changes — the drop line moves to the leading/trailing edge (the
+ * horizontal twin of the top/bottom inset above; the descendant rules
+ * below out-specify the vertical box-shadow, so they REPLACE it rather
+ * than stack onto it), and min-width: 0 lets an over-full row shrink
+ * its items so the single line always holds (the content lane keeps its
+ * own min-width, so ellipsis chains keep working inside them). The
+ * reserved handle lane stays the row's leading column exactly as it is
+ * vertically, and the actions lane stays the row's trailing edge. */
+.hk-draggable-list[data-axis="horizontal"] {
+  flex-direction: row;
+  flex-wrap: nowrap;
+
+  .hk-draggable-list-item {
+    min-width: 0;
+  }
+
+  .hk-draggable-list-item[data-placeholder="before"] {
+    box-shadow: inset 2px 0 0 0 var(--hi-color-primary, #7aa2f7);
+  }
+  .hk-draggable-list-item[data-placeholder="after"] {
+    box-shadow: inset -2px 0 0 0 var(--hi-color-primary, #7aa2f7);
+  }
+}
+
 .hk-draggable-list-handle {
   display: flex;
   align-items: center;

@@ -1,0 +1,103 @@
+// HkScreenIdentifyCard — the numbered "which screen is this?" card.
+//
+// Grammar (user direction 2026-10-12): a LARGE SQUARE card, fixed light
+// surface, BLACK number. The card must read from across a room and look
+// identical in light and dark themes, so the surface/ink here are
+// deliberately NOT the themed tokens (a themed card would swallow the
+// number in dark mode — the reason the original card hardcoded both).
+// It is a HUD: pointer-events none, it never intercepts the window it
+// annotates.
+
+.hk-screen-identify {
+  position: fixed;
+  z-index: var(--hk-overlay-z-hud, 1);
+  // Logical side properties: the card stays in the same corner of the
+  // glass under RTL.
+  inset-inline-start: var(--space-16, 16px);
+  bottom: var(--space-16, 16px);
+  // One viewport-clamped width drives both axes, so the badge reads as a
+  // physical numbered card, not a text bubble.
+  aspect-ratio: 1;
+  width: clamp(96px, 18vw, 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // Fixed LIGHT card: the black number must read in every theme.
+  background: rgb(255 255 255 / 96%);
+  border: 1px solid rgb(0 0 0 / 18%);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-elevated);
+  pointer-events: none;
+  animation: hk-screen-identify-in 180ms ease-out;
+
+  // The four corners. Left/right pair mirrors under RTL (logical
+  // properties); top/bottom are the physical edges either way.
+  &[data-placement="bottom-right"] {
+    inset-inline-start: auto;
+    inset-inline-end: var(--space-16, 16px);
+  }
+
+  &[data-placement="top-left"] {
+    top: var(--space-16, 16px);
+    bottom: auto;
+  }
+
+  &[data-placement="top-right"] {
+    top: var(--space-16, 16px);
+    inset-inline-start: auto;
+    inset-inline-end: var(--space-16, 16px);
+    bottom: auto;
+  }
+
+  // Reduce-motion: the card still appears, it just does not slide in.
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.hk-screen-identify-num {
+  font-family: var(--font-mono, monospace);
+  // Big enough to read from across a room, scaled with the card: half the
+  // card's clamp at every viewport width. The token scale stops at
+  // heading sizes, so this one numeral is intentionally a clamp().
+  font-size: clamp(3rem, 9vw, 5rem);
+  font-weight: 700;
+  line-height: 1;
+  // BLACK, deliberately not themed (user direction 2026-10-12).
+  color: #000;
+}
+
+// The seconds left, as hikari's rolling digit: a corner badge on the
+// card, top-inline-end.
+.hk-screen-identify-count {
+  position: absolute;
+  top: var(--space-4, 4px);
+  inset-inline-end: var(--space-8, 8px);
+  font-size: var(--text-base, 0.875rem);
+  color: rgb(0 0 0 / 62%);
+}
+
+// The stable screen name: the opposite corner badge, bottom-inline-start,
+// one ellipsized line so a long window label cannot leave the card.
+.hk-screen-identify-name {
+  position: absolute;
+  inset-inline-start: var(--space-8, 8px);
+  bottom: var(--space-4, 4px);
+  max-width: calc(100% - 2 * var(--space-8, 8px));
+  overflow: hidden;
+  font-size: var(--text-xs, 0.75rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(0 0 0 / 62%);
+}
+
+@keyframes hk-screen-identify-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -299,5 +299,7 @@
   "hikari::titleBar.minimize": "Minimizar",
   "hikari::titleBar.maximize": "Maximizar",
   "hikari::titleBar.restore": "Restaurar",
-  "hikari::titleBar.close": "Fechar"
+  "hikari::titleBar.close": "Fechar",
+  "hikari::screenIdentify.label": "Ecrã {number}",
+  "hikari::screenIdentify.labelNamed": "Ecrã {number}, {name}"
 }

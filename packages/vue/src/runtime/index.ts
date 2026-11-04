@@ -100,6 +100,15 @@ export {
 export { useToast, TOAST_DURATION, type ToastAction, type ToastItem, type ToastMessage, type ToastType } from "./useToast";
 export { useConfirm } from "./useConfirm";
 export { useBlockingToast, showBlockingToast, resolveBlockingToast, clearBlockingToasts, type BlockingToastItem, type BlockingToastOptions, type BlockingToastVariant } from "./useBlockingToast";
+export {
+  useScreenIdentify,
+  showScreenIdentify,
+  dismissScreenIdentify,
+  SCREEN_IDENTIFY_DEFAULT_MS,
+  SCREEN_IDENTIFY_TICK_MS,
+  type ScreenIdentifyRequest,
+  type ScreenIdentifyContext,
+} from "./useScreenIdentify";
 export { useBreakpoint } from "./useBreakpoint";
 export { useClipboard, useClipboardWithToast } from "./useClipboard";
 export { provideScrollWindow, useScrollWindow, type ScrollWindowContext } from "../composables/useScrollWindow";

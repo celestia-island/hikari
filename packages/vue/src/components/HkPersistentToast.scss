@@ -65,6 +65,10 @@ button.hk-persistent-toast {
   color: rgb(var(--color-muted));
 }
 
+.hk-persistent-toast--success .hk-persistent-toast__icon {
+  color: rgb(var(--color-success));
+}
+
 .hk-persistent-toast__label {
   overflow: hidden;
   text-overflow: ellipsis;

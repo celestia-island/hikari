@@ -111,6 +111,15 @@ describe("HkPersistentToast inert default", () => {
     expect(container.querySelector(".hk-persistent-toast__spinner")).not.toBeNull();
   });
 
+  it("renders a static icon for the success tone", () => {
+    const { container } = mount({ props: { tone: "success", label: "Saved" } });
+    const c = chip(container);
+    expect(c.classList.contains("hk-persistent-toast--success")).toBe(true);
+    // Success renders a static lucide icon like the other non-loading tones.
+    expect(container.querySelector(".hk-persistent-toast__spinner")).toBeNull();
+    expect(c.querySelector("svg")).not.toBeNull();
+  });
+
   it("renders the ✕ sibling button only when dismissible", () => {
     const onDismiss = vi.fn();
     const { container } = mount({ props: { label: "x", dismissible: true }, onDismiss });

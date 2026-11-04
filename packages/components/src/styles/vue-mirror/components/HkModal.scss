@@ -107,56 +107,46 @@
 // ------
 // Content enter/leave transitions (desktop ≥768px)
 //
-// Height-style unveil WITHOUT layout: the visible box starts at 90% of
-// its height and grows to 100% while the frame settles from a +5% offset
-// back to rest (user spec 2026-09-14). Numbers line up so the character
-// of the old height-grow reveal is preserved exactly:
-//   t=0  box [center−0.45h, center+0.45h] shifted +0.05h, bottom 10%
-//        clipped → visible [center−0.40h, center+0.40h] (the old 80%
-//        centered start);
-//   t=1  clip 0, offset 0 → visible [center−0.50h, center+0.50h];
-//   the bottom edge is pinned at its final line the whole time and the
-//   top edge sweeps up 0.1h — content rides rigidly (never squashed).
-// Implemented with transform (translate) + clip-path (inset) + opacity:
-// all compositor/paint-level, zero layout per frame — the previous
-// height-keyword reveal re-laid-out the entire modal subtree every frame
-// and re-filtered the frame's own backdrop blur per frame (visible frame
-// drops on content-heavy modals, chest history topic detail). Scoped to
-// ≥768px; ≤767px keeps the sheet's translateY choreography below.
+// Content-scale reveal (user direction 2026-11-04): the frame grows by
+// SCALING the content itself about the frame's center — the width stays
+// pinned at 100% the whole time while the height scales from 90% up to
+// 100%. No clip-path and no Y offset ride the open/close any more: the
+// visible box IS the frame at every t, so nothing is ever sliced off
+// (the 2026-09-14 clip unveil — and the #508/#512/#524 lineage before
+// it — is superseded; the "content rides rigidly" invariant was the
+// very thing that made the old reveal read as dead weight on ordinary
+// modals). Implemented with transform (translate + uniform-axis scale)
+// + opacity: all compositor-level, zero layout per frame, and the
+// centering translate stays the leading term of EVERY transform state
+// so the frame never re-seats mid-flight (dragged windows keep their
+// shift). Scoped to ≥768px; ≤767px keeps the sheet's translateY
+// choreography below.
 // ------
 
 @media (min-width: 768px) {
   .hk-modal-content-enter-active {
+    // The scale anchors at the frame's center: the window expands from
+    // the middle outward on the Y axis only (X is pinned by scaleX 1).
+    transform-origin: 50% 50%;
     transition:
       opacity var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
       transform var(--hk-modal-duration, 0.42s)
-        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
-      clip-path var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
-    will-change: transform, opacity, clip-path;
+    will-change: transform, opacity;
   }
 
-  // Close: the unveil's TRUE reverse — the visible box collapses back
-  // toward the center (top edge sweeps down, bottom edge sweeps up,
-  // content rides rigidly — never squashed) while the frame fades
-  // (user report 2026-09-15: the fade+drift close read as the box
-  // shrinking straight down instead of folding back into its center).
-  // The earlier re-clip attempt (#508) broke because leave-from had no
-  // clip at all: interpolating `none → inset()` is DISCRETE, so the
-  // bottom band (the footer) vanished at the first frame. Pinning the
-  // identity clip in leave-from — byte-identical to enter-to — makes
-  // the same-shape insets interpolate continuously, which structurally
-  // rules that jump out while restoring the symmetric collapse.
+  // Close: the reveal's TRUE reverse — the frame scales back down to
+  // 90% height about its center (both vertical edges ease toward the
+  // center line) while fading out.
   .hk-modal-content-leave-active {
+    transform-origin: 50% 50%;
     transition:
       opacity var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
       transform var(--hk-modal-duration, 0.32s)
-        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
-      clip-path var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-    will-change: transform, opacity, clip-path;
+    will-change: transform, opacity;
   }
 
   .hk-modal-content-enter-from {
@@ -165,9 +155,7 @@
           calc(-50% + var(--hk-modal-shift-x, 0px)),
           calc(-50% + var(--hk-modal-shift-y, 0px))
         )
-        translateY(5%);
-    clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
-                                 var(--hk-modal-radius, var(--radius-lg, 12px)));
+        scale(1, 0.9);
   }
 
   .hk-modal-content-enter-to {
@@ -176,8 +164,6 @@
           calc(-50% + var(--hk-modal-shift-x, 0px)),
           calc(-50% + var(--hk-modal-shift-y, 0px))
         );
-    clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
-                              var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
 
   .hk-modal-content-leave-from {
@@ -186,24 +172,18 @@
           calc(-50% + var(--hk-modal-shift-x, 0px)),
           calc(-50% + var(--hk-modal-shift-y, 0px))
         );
-    // The pinned identity clip: identical to enter-to so the leave's
-    // clip interpolates (never jumps) — see the close note above.
-    clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
-                              var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
 
   .hk-modal-content-leave-to {
     opacity: 0;
-    // Mirror of enter-from: shifted +5% with the bottom 10% clipped, the
-    // visible box is 90% and centered — both edges ease toward the
-    // center line, exactly reversing the unveil.
+    // Mirror of enter-from: the identity state needs no pinned clip any
+    // more — scale(1, 0.9) interpolates with the plain translate
+    // continuously (same transform list shape on both ends).
     transform: translate(
           calc(-50% + var(--hk-modal-shift-x, 0px)),
           calc(-50% + var(--hk-modal-shift-y, 0px))
         )
-        translateY(5%);
-    clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
-                                 var(--hk-modal-radius, var(--radius-lg, 12px)));
+        scale(1, 0.9);
   }
 }
 

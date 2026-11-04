@@ -299,5 +299,7 @@
   "hikari::titleBar.minimize": "最小化",
   "hikari::titleBar.maximize": "最大化",
   "hikari::titleBar.restore": "元に戻す",
-  "hikari::titleBar.close": "閉じる"
+  "hikari::titleBar.close": "閉じる",
+  "hikari::screenIdentify.label": "画面 {number}",
+  "hikari::screenIdentify.labelNamed": "画面 {number}、{name}"
 }

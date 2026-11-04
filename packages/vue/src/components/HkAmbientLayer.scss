@@ -1,0 +1,23 @@
+// HkAmbientLayer — the ambient HUD host (see HkAmbientLayer.tsx).
+//
+// The wrapper lives INSIDE #hk-hud-root (overlay/hudRoot.scss owns the
+// root's document elevation). It spans the viewport so slot children can
+// position themselves against the screen edges, but it is a ghost for
+// pointers: annotations must never block the window they annotate.
+
+.hk-ambient-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--hk-overlay-z-hud, 1);
+  overflow: visible;
+  pointer-events: none;
+
+  // The one opt-in for a clickable HUD targets the slot CONTENT, never
+  // the wrapper: the wrapper spans the viewport, so re-enabling pointer
+  // events on it would swallow every click on the page behind an
+  // "interactive" HUD (R2 S2). Children restore their own
+  // pointer-events, the layer itself stays a ghost.
+  &[data-pointer-events="auto"] > * {
+    pointer-events: auto;
+  }
+}

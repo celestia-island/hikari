@@ -299,5 +299,7 @@
   "hikari::titleBar.minimize": "최소화",
   "hikari::titleBar.maximize": "최대화",
   "hikari::titleBar.restore": "복원",
-  "hikari::titleBar.close": "닫기"
+  "hikari::titleBar.close": "닫기",
+  "hikari::screenIdentify.label": "화면 {number}",
+  "hikari::screenIdentify.labelNamed": "화면 {number}, {name}"
 }

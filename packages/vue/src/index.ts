@@ -2,6 +2,7 @@ export { default as HActionBar } from "./components/HkActionBar";
 export { default as HAdaptiveDialog } from "./components/HkAdaptiveDialog";
 export { default as HAlert } from "./components/HkAlert";
 export { default as HAltSignIn } from "./components/HkAltSignIn";
+export { default as HAmbientLayer } from "./components/HkAmbientLayer";
 export { default as HAvatar } from "./components/HkAvatar";
 export { default as HBadge } from "./components/HkBadge";
 export { default as HCornerBadge } from "./components/HkCornerBadge";
@@ -85,6 +86,8 @@ export { default as HProgressBar } from "./components/HkProgressBar";
 export { default as HProgressDialog } from "./components/HkProgressDialog";
 export { default as HRadio } from "./components/HkRadio";
 export { default as HScrollContainer } from "./components/HkScrollContainer";
+export { default as HScreenIdentifyCard } from "./components/HkScreenIdentifyCard";
+export { default as HScreenIdentifyHost } from "./components/HkScreenIdentifyHost";
 export { default as HSearchInput } from "./components/HkSearchInput";
 export { default as HSplash } from "./components/HkSplash";
 export { default as HkLoadingVeil } from "./components/HkLoadingVeil";
@@ -413,6 +416,13 @@ export {
   type BlockingToastItem,
   type BlockingToastOptions,
   type BlockingToastVariant,
+  useScreenIdentify,
+  showScreenIdentify,
+  dismissScreenIdentify,
+  SCREEN_IDENTIFY_DEFAULT_MS,
+  SCREEN_IDENTIFY_TICK_MS,
+  type ScreenIdentifyRequest,
+  type ScreenIdentifyContext,
   useBreakpoint,
   useClipboard,
   useClipboardWithToast,
@@ -701,6 +711,7 @@ export { default as HkActionBar } from "./components/HkActionBar";
 export { default as HkAdaptiveDialog } from "./components/HkAdaptiveDialog";
 export { default as HkAlert } from "./components/HkAlert";
 export { default as HkAltSignIn, type HkAltSignInEntry } from "./components/HkAltSignIn";
+export { default as HkAmbientLayer } from "./components/HkAmbientLayer";
 export { default as HkAvatar } from "./components/HkAvatar";
 export { default as HkBadge } from "./components/HkBadge";
 export { default as HkBoard } from "./components/HkBoard";
@@ -849,6 +860,11 @@ export { default as HkTimeline } from "./components/HkTimeline";
 export { default as HkTitleBar } from "./components/HkTitleBar";
 export { default as HkStepFlow } from "./components/HkStepFlow";
 export { default as HkScrollPin } from "./components/HkScrollPin";
+export {
+  default as HkScreenIdentifyCard,
+  type ScreenIdentifyPlacement,
+} from "./components/HkScreenIdentifyCard";
+export { default as HkScreenIdentifyHost } from "./components/HkScreenIdentifyHost";
 export { default as HkMediaPlayer } from "./components/HkMediaPlayer";
 export { default as HkMediaControlBar } from "./components/HkMediaControlBar";
 export { default as HkMediaSlider } from "./components/HkMediaSlider";
@@ -976,6 +992,11 @@ export { type HAboutLinkIcon as HkAboutLinkIcon } from "./components/HkAboutModa
 export { type HAboutComponentVersion as HkAboutComponentVersion } from "./components/HkAboutModal";
 export { type HCustomTheme as HkCustomTheme } from "./components/HkColorSchemeDialog";
 export { OVERLAY_ROOT_SELECTOR, OVERLAY_Z, ensureOverlayRoot } from "./overlay/overlayRoot";
+export {
+  HUD_ROOT_SELECTOR,
+  HUD_ROOT_DOCUMENT_Z,
+  ensureHudRoot,
+} from "./overlay/hudRoot";
 export { HK_PAD_VAR, hkPadStyle, type HkPad } from "./runtime/containerPad";
 
 // Window-chrome handoff (2026-10-28): the boot bar hikari's Vite plugin draws

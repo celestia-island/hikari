@@ -256,14 +256,21 @@ describe("HkSolarLocationSetting card", () => {
   it("grays the edit action outside auto mode and re-enables it in auto", async () => {
     const { setMode } = useTheme();
     // Mount in AUTO first, then drive the live mode transitions a host's
-    // own switch performs — this is the user path and it keeps the test
-    // independent of which mode the singleton happened to carry at mount.
+    // own switch performs — the user path. The "enabled at mount" assertion
+    // below DEPENDS on the beforeEach resetEngineState() forcing the theme
+    // singleton back to "system"; do not remove that reset, or the first
+    // assertion here must go.
     const container = mountSetting();
     await settle();
     expect(editButton(container).disabled, "auto mode enables the editor").toBe(false);
     expect(editButton(container).closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe(
       "Edit",
     );
+    expect(
+      editButton(container).getAttribute("aria-describedby"),
+      "no reason reference while enabled",
+    ).toBeNull();
+    expect(container.querySelector(".hk-solar-edit-reason"), "no reason span while enabled").toBeNull();
 
     setMode("light");
     await settle();
@@ -273,24 +280,58 @@ describe("HkSolarLocationSetting card", () => {
     expect(btn.closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe(
       "Switch to Auto mode to change the daylight location",
     );
+    // The disabled reason must reach keyboard/AT users too: the tooltip is
+    // mouse-only (a natively disabled control is unfocusable), so the same
+    // text rides a visually hidden span referenced via aria-describedby.
+    const describedBy = btn.getAttribute("aria-describedby");
+    expect(describedBy, "the disabled button points at its reason text").toBeTruthy();
+    const reason = container.querySelector(`#${describedBy}`);
+    expect(reason, "the referenced reason span exists").toBeTruthy();
+    expect(reason?.classList.contains("hk-solar-edit-reason")).toBe(true);
+    expect(reason?.textContent?.trim()).toBe(
+      "Switch to Auto mode to change the daylight location",
+    );
 
     // A disabled native button cannot open the editor.
     btn.click();
     await settle();
     expect(modalHeader(), "disabled edit never opens the modal").toBeNull();
 
-    // Back to auto: the SAME mounted card re-enables on the live mode ref.
+    // Back to auto: the SAME mounted card re-enables on the live mode ref,
+    // and the a11y reason leaves the DOM with the disabled state.
     setMode("system");
     await settle();
     expect(editButton(container).disabled).toBe(false);
     expect(editButton(container).closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe(
       "Edit",
     );
+    expect(editButton(container).getAttribute("aria-describedby")).toBeNull();
+    expect(container.querySelector(".hk-solar-edit-reason")).toBeNull();
 
     // Dark is just another manual side of the same gate.
     setMode("dark");
     await settle();
     expect(editButton(container).disabled).toBe(true);
+  });
+
+  it("gives each mounted card its own disabled-reason id", async () => {
+    const { setMode } = useTheme();
+    setMode("dark");
+    const first = mountSetting();
+    const second = mountSetting();
+    await settle();
+
+    const ids = [first, second].map((c) =>
+      c.querySelector<HTMLElement>(".hk-solar-edit-reason")?.getAttribute("id"),
+    );
+    expect(ids.every(Boolean), "both disabled cards render their reason text").toBe(true);
+    expect(ids[0]).not.toBe(ids[1]);
+    // Each button points at its OWN card's span, not the other one's.
+    for (const c of [first, second]) {
+      const btn = editButton(c);
+      const own = c.querySelector(`#${btn.getAttribute("aria-describedby")}`);
+      expect(own, "the describedby reference resolves inside the same card").toBeTruthy();
+    }
   });
 
   it("is a standard hikari card: localized default title, overridable, hideable", async () => {

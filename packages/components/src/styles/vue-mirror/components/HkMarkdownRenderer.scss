@@ -217,3 +217,41 @@
   @include backdrop-filter(blur(4px));
   z-index: 10;
 }
+
+/* ── Inline chips (opt-in `inlineChips` prop) ────────────────────────
+   Fill-template tokens (`{{ name }}`) and asset references (`@level/name`,
+   bare `@name`) chipped inside rendered prose. The look is the family's
+   `.hk-tpl-chip` (HkTemplateField.scss is canonical); duplicated here
+   SCOPED to the markdown body so a markdown-only consumer does not pull
+   the template editor's sheet. Refs take the muted variant: a reference
+   points elsewhere, it is not a fillable value, so it must not read as
+   a template token. */
+.hk-markdown-body .hk-tpl-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-6, 6px);
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid color-mix(in srgb, var(--hi-color-primary) 32%, transparent);
+  background: color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
+  color: color-mix(in srgb, var(--hi-color-primary) 70%, rgb(0 0 0));
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8em;
+  line-height: 1.5;
+  white-space: nowrap;
+  /* NO user-select here: rendered prose IS content (see the sheet's own
+   * `user-select(text)` policy at the top and styles/selection.scss's
+   * "markdown body" content container). The editor chip in
+   * HkTemplateField.scss disables selection for caret/click handling;
+   * copying a PROMPT BODY must keep every `{{token}}` / `@ref` in the
+   * clipboard, so this scoped copy must not carry that rule. */
+
+  [data-theme="dark"] & {
+    color: color-mix(in srgb, var(--hi-color-primary) 60%, rgb(255 255 255));
+  }
+
+  &[data-ref] {
+    border-color: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 40%, transparent);
+    background: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 10%, transparent);
+    color: var(--hi-color-muted, #6c6c6c);
+  }
+}

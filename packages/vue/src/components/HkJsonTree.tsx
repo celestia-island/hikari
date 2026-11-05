@@ -171,14 +171,25 @@ export function parseCssTimeMs(raw: string): number | null {
   return Math.round(ms);
 }
 
+/** The narrow slice of `window` the motion gate needs — structural so a
+ *  test can pass a plain object without a double cast. */
+export interface FoldMotionWindow {
+  matchMedia?: (query: string) => { matches: boolean };
+}
+
+/** The narrow slice of `document` the motion gate needs. */
+export interface FoldMotionDocument {
+  documentElement?: { dataset?: { cssAnimations?: string } } | null;
+}
+
 /**
  * Whether the animation context currently asks for no motion: the OS
  * `prefers-reduced-motion` preference or the host's global CSS-animation
  * switch (parked by `setReducedMotion`).
  */
 export function prefersNoFoldMotion(
-  win: Window | null = typeof window !== "undefined" ? window : null,
-  doc: Document | null = typeof document !== "undefined" ? document : null,
+  win: FoldMotionWindow | null = typeof window !== "undefined" ? window : null,
+  doc: FoldMotionDocument | null = typeof document !== "undefined" ? document : null,
 ): boolean {
   if (win && typeof win.matchMedia === "function") {
     try {
@@ -187,7 +198,7 @@ export function prefersNoFoldMotion(
       /* a host shim without a usable matchMedia falls through to the switch */
     }
   }
-  return doc?.documentElement?.dataset.cssAnimations === "0";
+  return doc?.documentElement?.dataset?.cssAnimations === "0";
 }
 
 export interface FoldMotion {

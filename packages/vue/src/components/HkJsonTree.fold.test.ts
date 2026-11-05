@@ -7,6 +7,8 @@ import {
   prefersNoFoldMotion,
   resolveFoldMotion,
   runFold,
+  type FoldMotionDocument,
+  type FoldMotionWindow,
 } from "./HkJsonTree";
 import { readHkRuntime } from "../runtime/registry";
 
@@ -69,23 +71,32 @@ function stubScrollHeight(proto: object, value: number) {
 function fakeFoldElement(scrollHeight: number, offsetHeight: number) {
   const heights: string[] = [];
   const transitions: string[] = [];
-  const overflows: string[] = [];
-  const style = {
-    get height() { return heights[heights.length - 1] ?? ""; },
-    set height(value: string) { heights.push(value); },
-    get transition() { return transitions[transitions.length - 1] ?? ""; },
-    set transition(value: string) { transitions.push(value); },
-    get overflow() { return overflows[overflows.length - 1] ?? ""; },
-    set overflow(value: string) { overflows.push(value); },
-  };
-  const el = {
-    style,
-    scrollHeight,
-    offsetHeight,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  };
-  return { el: el as unknown as HTMLElement, heights, transitions };
+  // A REAL element (not a cast) with the two layout metrics stubbed: the
+  // style writes are recorded by proxying the live CSSStyleDeclaration, so
+  // the fold choreography runs unmodified and the recording needs no
+  // escape hatches.
+  const target = document.createElement("div");
+  Object.defineProperty(target, "scrollHeight", { configurable: true, get: () => scrollHeight });
+  Object.defineProperty(target, "offsetHeight", { configurable: true, get: () => offsetHeight });
+  const style = new Proxy(target.style, {
+    set(targetStyle, property, value) {
+      if (property === "height") heights.push(String(value));
+      if (property === "transition") transitions.push(String(value));
+      return Reflect.set(targetStyle, property, value);
+    },
+    get(targetStyle, property) {
+      const value = Reflect.get(targetStyle, property, targetStyle);
+      return typeof value === "function" ? value.bind(targetStyle) : value;
+    },
+  });
+  const el = new Proxy(target, {
+    get(node, property) {
+      if (property === "style") return style;
+      const value = Reflect.get(node, property, node);
+      return typeof value === "function" ? value.bind(node) : value;
+    },
+  });
+  return { el, heights, transitions };
 }
 
 const DEFAULT_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
@@ -189,14 +200,14 @@ describe("fold motion helpers", () => {
   });
 
   it("treats reduced motion and the global animation switch as no-motion", () => {
-    const win = { matchMedia: () => ({ matches: true }) } as unknown as Window;
-    const doc = { documentElement: { dataset: {} } } as unknown as Document;
+    const win: FoldMotionWindow = { matchMedia: () => ({ matches: true }) };
+    const doc: FoldMotionDocument = { documentElement: { dataset: {} } };
     expect(prefersNoFoldMotion(win, doc)).toBe(true);
-    const motionWin = { matchMedia: () => ({ matches: false }) } as unknown as Window;
+    const motionWin: FoldMotionWindow = { matchMedia: () => ({ matches: false }) };
     expect(prefersNoFoldMotion(motionWin, doc)).toBe(false);
-    const parkedDoc = {
+    const parkedDoc: FoldMotionDocument = {
       documentElement: { dataset: { cssAnimations: "0" } },
-    } as unknown as Document;
+    };
     expect(prefersNoFoldMotion(motionWin, parkedDoc)).toBe(true);
   });
 });

@@ -29,11 +29,13 @@
   flex: 1 1 auto;
   color: rgb(var(--color-text-secondary, var(--color-muted)));
   font-size: var(--text-sm);
-  /* Tighten the inherited 1.5 leading WITHOUT clipping descenders: the
-   * text clips at the ellipsis (`overflow: hidden` below), so a line box
-   * of exactly 1em cut the y/g tails in Latin locales. 1.2 keeps the box
-   * close to the 16px glyph box while every descender stays inside it. */
-  line-height: 1.2;
+  /* The text clips at the ellipsis (`overflow: hidden` below), so the
+   * line box must cover the FONT'S OWN metrics: a fixed 1em/1.2em value
+   * cut descenders in tall fallback faces (Latin 1.17em, Arabic 1.36em,
+   * Noto CJK 1.46em). `normal` makes the box equal the resolved font's
+   * ascent+descent by construction; the row's 28px min-height and flex
+   * centering own the geometry around it. */
+  line-height: normal;
 }
 
 .hk-solar-summary-icon {

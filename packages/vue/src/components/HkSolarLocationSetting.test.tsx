@@ -252,10 +252,18 @@ describe("HkSolarLocationSetting card", () => {
 
   it("grays the edit action outside auto mode and re-enables it in auto", async () => {
     const { setMode } = useTheme();
-    setMode("light");
+    // Mount in AUTO first, then drive the live mode transitions a host's
+    // own switch performs — this is the user path and it keeps the test
+    // independent of which mode the singleton happened to carry at mount.
     const container = mountSetting();
     await settle();
+    expect(editButton(container).disabled, "auto mode enables the editor").toBe(false);
+    expect(editButton(container).closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe(
+      "Edit",
+    );
 
+    setMode("light");
+    await settle();
     const btn = editButton(container);
     expect(btn.disabled, "manual modes disable the solar editor").toBe(true);
     expect(btn.getAttribute("aria-label")).toBe("Edit");

@@ -68,7 +68,7 @@ export default defineComponent({
       const label = props.label ?? t("hikari::filterBar.trigger", "Filters");
       return (
         <span ref={anchorRef} class="hk-filter-trigger">
-          <HkCornerBadge dot={active.value} variant="success" corner="bottom-right" offset={1}>
+          <HkCornerBadge dot={active.value} variant="success" placement="bottom-right" offset={1}>
             <HkIconButton
               size={chromeSize.value}
               variant="ghost"

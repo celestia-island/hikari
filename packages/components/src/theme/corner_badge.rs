@@ -1,7 +1,8 @@
 // hi-components/src/theme/corner_badge.rs
 // CornerBadge — mirror of the canonical Vue `HkCornerBadge` (the generic
-// corner mark for ANY anchor: a traffic dot, a notification count with a
-// "N+" cap, or a custom text pill pinned to one corner).
+// anchored mark for ANY anchor: a traffic dot, a notification count with a
+// "N+" cap, or a custom text pill placed on a corner of — or beside — the
+// anchored child).
 //
 // The stylesheet is the SAME sheet the Vue library ships
 // (`packages/vue/src/components/HkCornerBadge.scss`, vendored under
@@ -14,11 +15,11 @@
 //
 // DOM contract (mirrors the Vue render output one-to-one):
 //
-//   span.hk-corner-badge-anchor
+//   span.hk-corner-badge-anchor data-placement={placement}
 //     {children}                                (the ANCHOR, never the label)
 //     span.hk-corner-badge .hk-corner-badge-{variant}
 //          .hk-corner-badge--dot | .hk-corner-badge--pill
-//          data-corner={corner} [style=--hk-corner-badge-offset:{n}px]
+//          data-placement={placement} [style=--hk-corner-badge-offset:{n}px]
 //          [aria-hidden=true] | [role=img aria-label={label}]
 //          {text}                                (pill only; dot renders none)
 //
@@ -72,24 +73,36 @@ impl CornerBadgeVariant {
     }
 }
 
-/// Which corner of the anchor the mark pins to (Vue default `top-right`).
+/// Where the mark sits relative to the anchor — two families (Vue
+/// `CornerBadgePlacement`, same values). The four corners OVERLAY the
+/// anchor (the mark centers ON its edge via translate(±50%)); `Right` /
+/// `Left` put the mark in the wrapper's flow BESIDE the anchor, vertically
+/// centered, so the anchor's own box is never covered — the button-group /
+/// tab-trigger default on the Vue side.
+///
+/// Default `BottomRight`: the subscript mark for a fixed box (avatar /
+/// icon), the Vue component's own default.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub enum CornerBadgeCorner {
-    #[default]
+pub enum CornerBadgePlacement {
     TopRight,
     TopLeft,
+    #[default]
     BottomRight,
     BottomLeft,
+    Right,
+    Left,
 }
 
-impl CornerBadgeCorner {
-    /// The `data-corner` value the sheet's geometry rules key on.
-    pub fn data_corner(self) -> &'static str {
+impl CornerBadgePlacement {
+    /// The `data-placement` value the sheet's geometry rules key on.
+    pub fn data_placement(self) -> &'static str {
         match self {
-            CornerBadgeCorner::TopRight => "top-right",
-            CornerBadgeCorner::TopLeft => "top-left",
-            CornerBadgeCorner::BottomRight => "bottom-right",
-            CornerBadgeCorner::BottomLeft => "bottom-left",
+            CornerBadgePlacement::TopRight => "top-right",
+            CornerBadgePlacement::TopLeft => "top-left",
+            CornerBadgePlacement::BottomRight => "bottom-right",
+            CornerBadgePlacement::BottomLeft => "bottom-left",
+            CornerBadgePlacement::Right => "right",
+            CornerBadgePlacement::Left => "left",
         }
     }
 }
@@ -153,10 +166,13 @@ pub struct CornerBadgeProps {
     /// Custom label text (the pill form). The default slot stays the ANCHOR.
     pub text: Option<String>,
 
+    /// Where the mark hangs (Vue: `placement`; the three corner families
+    /// overlay, `Right`/`Left` sit beside the anchor).
     #[default]
-    pub corner: CornerBadgeCorner,
+    pub placement: CornerBadgePlacement,
 
-    /// Extra clearance from the corner in px (0 = sit ON the corner).
+    /// Extra clearance in px. Corners: clearance from the corner (0 = sit
+    /// ON the corner); sides: extra gap beyond the wrapper spacing.
     #[default]
     pub offset: i64,
 
@@ -177,7 +193,9 @@ pub fn CornerBadge(props: CornerBadgeProps) -> Element {
     );
     let visible = corner_badge_visible(props.dot, text.as_deref());
 
-    let mut anchor = VElement::new("span").class("hk-corner-badge-anchor");
+    let mut anchor = VElement::new("span")
+        .class("hk-corner-badge-anchor")
+        .attr("data-placement", props.placement.data_placement());
     anchor = anchor.child(props.children);
 
     if visible {
@@ -190,7 +208,7 @@ pub fn CornerBadge(props: CornerBadgeProps) -> Element {
             "hk-corner-badge {} {form}",
             props.variant.class_name()
         ));
-        mark = mark.attr("data-corner", props.corner.data_corner());
+        mark = mark.attr("data-placement", props.placement.data_placement());
         if let Some(style) = corner_badge_offset_style(props.offset) {
             mark = mark.style(style);
         }
@@ -241,7 +259,7 @@ mod tests {
         assert_eq!(props.max, None);
         assert!(!props.show_zero);
         assert_eq!(props.text, None);
-        assert_eq!(props.corner, CornerBadgeCorner::TopRight);
+        assert_eq!(props.placement, CornerBadgePlacement::BottomRight);
         assert_eq!(props.offset, 0);
         assert_eq!(props.label, None);
     }
@@ -271,11 +289,20 @@ mod tests {
     }
 
     #[test]
-    fn corner_badge_corners_feed_the_sheets_data_rules() {
-        assert_eq!(CornerBadgeCorner::TopRight.data_corner(), "top-right");
-        assert_eq!(CornerBadgeCorner::TopLeft.data_corner(), "top-left");
-        assert_eq!(CornerBadgeCorner::BottomRight.data_corner(), "bottom-right");
-        assert_eq!(CornerBadgeCorner::BottomLeft.data_corner(), "bottom-left");
+    fn corner_badge_placement_values_feed_the_sheets_data_rules() {
+        assert_eq!(CornerBadgePlacement::TopRight.data_placement(), "top-right");
+        assert_eq!(CornerBadgePlacement::TopLeft.data_placement(), "top-left");
+        assert_eq!(
+            CornerBadgePlacement::BottomRight.data_placement(),
+            "bottom-right"
+        );
+        assert_eq!(
+            CornerBadgePlacement::BottomLeft.data_placement(),
+            "bottom-left"
+        );
+        // The side family: the button-group / tab-trigger placement.
+        assert_eq!(CornerBadgePlacement::Right.data_placement(), "right");
+        assert_eq!(CornerBadgePlacement::Left.data_placement(), "left");
     }
 
     #[test]
@@ -332,7 +359,8 @@ mod tests {
 
     #[test]
     fn corner_badge_renders_the_vue_dom_contract() {
-        // Pill form, capped count, decorative (aria-hidden), top-right.
+        // Pill form, capped count, decorative (aria-hidden), default
+        // placement (bottom-right — the subscript mark).
         let html = CornerBadge(CornerBadgeProps {
             variant: CornerBadgeVariant::Error,
             count: Some(99),
@@ -342,7 +370,7 @@ mod tests {
         .render_to_html();
         assert!(
             html.contains(
-                r#"<span aria-hidden="true" data-corner="top-right" class="hk-corner-badge hk-corner-badge-error hk-corner-badge--pill">9+</span>"#
+                r#"<span aria-hidden="true" data-placement="bottom-right" class="hk-corner-badge hk-corner-badge-error hk-corner-badge--pill">9+</span>"#
             ),
             "{html}"
         );
@@ -355,7 +383,7 @@ mod tests {
         // a clearance offset.
         let dot = CornerBadge(CornerBadgeProps {
             dot: true,
-            corner: CornerBadgeCorner::BottomLeft,
+            placement: CornerBadgePlacement::BottomLeft,
             offset: 4,
             ..Default::default()
         })
@@ -364,7 +392,7 @@ mod tests {
             dot.contains(
                 // Vue keeps aria-hidden="true" on the label-less dot (only
                 // `label` swaps it for role=img + aria-label).
-                r#"<span aria-hidden="true" data-corner="bottom-left" class="hk-corner-badge hk-corner-badge-primary hk-corner-badge--dot" style="--hk-corner-badge-offset:4px"></span>"#
+                r#"<span aria-hidden="true" data-placement="bottom-left" class="hk-corner-badge hk-corner-badge-primary hk-corner-badge--dot" style="--hk-corner-badge-offset:4px"></span>"#
             ),
             "{dot}"
         );
@@ -378,11 +406,56 @@ mod tests {
         .render_to_html();
         assert!(
             labelled.contains(
-                r#"<span aria-label="3 notifications" data-corner="top-right" role="img" class="hk-corner-badge hk-corner-badge-primary hk-corner-badge--pill">3</span>"#
+                r#"<span aria-label="3 notifications" data-placement="bottom-right" role="img" class="hk-corner-badge hk-corner-badge-primary hk-corner-badge--pill">3</span>"#
             ),
             "{labelled}"
         );
         assert!(!labelled.contains("aria-hidden"), "{labelled}");
+    }
+
+    #[test]
+    fn corner_badge_side_placement_rides_after_the_anchor() {
+        // `right` = the button-group / tab-trigger default: the anchor
+        // comes first, the mark follows it in the wrapper's flow (the
+        // sheet makes it static + vertically centered), so the anchor's
+        // own box is never covered.
+        let html = CornerBadge(CornerBadgeProps {
+            count: Some(3),
+            placement: CornerBadgePlacement::Right,
+            children: VNode::Text(VText::new("Active")),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains(r#"<span data-placement="right" class="hk-corner-badge-anchor">"#),
+            "{html}"
+        );
+        let anchor_at = html.find("Active").expect("the anchor child");
+        let mark_at = html
+            .find("hk-corner-badge hk-corner-badge-primary")
+            .expect("the mark");
+        assert!(
+            anchor_at < mark_at,
+            "the mark must follow the anchor child: {html}"
+        );
+        assert!(
+            html.contains(r#"<span aria-hidden="true" data-placement="right" class="hk-corner-badge hk-corner-badge-primary hk-corner-badge--pill">3</span>"#),
+            "{html}"
+        );
+
+        // `left` flips the flow order via the sheet; the DOM stays the
+        // same (Vue parity — order is a CSS concern, not a render one).
+        let left = CornerBadge(CornerBadgeProps {
+            text: Some("5h".to_string()),
+            placement: CornerBadgePlacement::Left,
+            offset: 2,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            left.contains(r#"<span aria-hidden="true" data-placement="left" class="hk-corner-badge hk-corner-badge-primary hk-corner-badge--pill" style="--hk-corner-badge-offset:2px">5h</span>"#),
+            "{left}"
+        );
     }
 
     #[test]
@@ -403,11 +476,30 @@ mod tests {
             ".hk-corner-badge-muted",
             // grass unquotes the value — the same canonical form the Vue
             // build's own styles test asserts.
-            "[data-corner=bottom-left]",
+            "[data-placement=bottom-left]",
+            // The side family (button-group / tab-trigger placement): the
+            // flow rules and the anchor's centering + gap must be in the
+            // mirrored sheet, not only in the Vue build.
+            "[data-placement=right]",
+            "[data-placement=left]",
         ] {
             assert!(
                 css.contains(class_name),
                 "corner badge css must come from the vue-mirror sheet (missing {class_name})"
+            );
+        }
+        for side_rule in [
+            // The mark owns its spacing now (gap + offset in one margin):
+            // presence of the token + the two logical margin properties is
+            // what pins the side family in the vendored copy.
+            "--hk-corner-badge-gap",
+            "margin-inline-start",
+            "margin-inline-end",
+            "align-self",
+        ] {
+            assert!(
+                css.contains(side_rule),
+                "the mirrored sheet must carry the side-placement rule {side_rule}"
             );
         }
         assert!(

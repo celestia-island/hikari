@@ -201,7 +201,7 @@ export { default as HLogo } from "./components/HkLogo";
 
 // Component types
 export { type BadgeVariant } from "./components/HkBadge";
-export { type CornerBadgeVariant } from "./components/HkCornerBadge";
+export { type CornerBadgePlacement, type CornerBadgeVariant } from "./components/HkCornerBadge";
 export { type BoardNodeInput, type BoardEdgeInput } from "./components/HkBoard";
 export { isSafeHref, safeHref } from "./utils/safeHref";
 export { type BoardAnchorMode, type BoardEdgeStyle, type BoardPoint } from "./utils/boardEdges";

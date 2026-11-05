@@ -54,12 +54,35 @@ describe("HkScreenIdentifyCard layout contract", () => {
   });
 
   it("parks the card in every corner through placement attributes", () => {
-    for (const placement of ["bottom-right", "top-left", "top-right"]) {
-      expect(scss).toContain(`&[data-placement="${placement}"]`);
+    // Each non-default corner must OVERRIDE the exact edges that move it
+    // there — an earlier round flagged this guard as presence-only, so a
+    // placement block that forgot its edge rule stayed green.
+    const corners: Array<[string, RegExp[]]> = [
+      // End-side corners must ALSO release the logical start edge — an
+      // over-constrained inset would resolve to the start edge and leave
+      // the card bottom-left no matter the placement (R1 V-3 probe).
+      ["bottom-right", [/inset-inline-end:\s*var\(--space-16/, /inset-inline-start:\s*auto/]],
+      ["top-left", [/top:\s*var\(--space-16/, /bottom:\s*auto/]],
+      [
+        "top-right",
+        [
+          /inset-inline-end:\s*var\(--space-16/,
+          /inset-inline-start:\s*auto/,
+          /top:\s*var\(--space-16[\s\S]*bottom:\s*auto/,
+        ],
+      ],
+    ];
+    for (const [placement, edges] of corners) {
+      const block = ruleBlock(`&[data-placement="${placement}"]`);
+      for (const edge of edges) {
+        expect(block).toMatch(edge);
+      }
     }
-    // Left/right use logical properties so RTL mirrors the pair while
-    // the card stays at the same corner of the glass.
-    expect(ruleBlock(".hk-screen-identify")).toMatch(/inset-inline-start:/);
+    // The default corner's own block must not have been turned into a
+    // catch-all: it keeps the bottom-left seat via the logical edge only.
+    const card = ruleBlock(".hk-screen-identify");
+    expect(card).toMatch(/inset-inline-start:\s*var\(--space-16/);
+    expect(card).toMatch(/bottom:\s*var\(--space-16/);
   });
 
   it("rides hikari text tokens for every font size except the numeral", () => {

@@ -304,10 +304,10 @@ FAMILY_SHEETS: list[str] = [
     "HkProgressBar.scss",
     "HkProgressDialog.scss",
     "HkProgressRing.scss",
+    "HkScreenIdentifyCard.scss",
     "HkSpinner.scss",
     "HkToast.scss",
     "HkTooltip.scss",
-    "HkScreenIdentifyCard.scss",
 ]
 
 HEADER_LINES = [

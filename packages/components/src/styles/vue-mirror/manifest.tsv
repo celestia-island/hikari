@@ -22,10 +22,10 @@ components/HkPopover.scss	components/HkPopover.scss
 components/HkProgressBar.scss	components/HkProgressBar.scss
 components/HkProgressDialog.scss	components/HkProgressDialog.scss
 components/HkProgressRing.scss	components/HkProgressRing.scss
+components/HkScreenIdentifyCard.scss	components/HkScreenIdentifyCard.scss
 components/HkSpinner.scss	components/HkSpinner.scss
 components/HkToast.scss	components/HkToast.scss
 components/HkTooltip.scss	components/HkTooltip.scss
-components/HkScreenIdentifyCard.scss	components/HkScreenIdentifyCard.scss
 components/window-close.scss	components/window-close.scss
 components/HkButton.scss	components/HkButton.scss
 components/HkIconButton.scss	components/HkIconButton.scss

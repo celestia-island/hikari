@@ -255,6 +255,7 @@ fn card_honours_label_override_and_placement() {
         seconds_left: 1,
         placement: ScreenIdentifyPlacement::TopRight,
         label: Some("The far right wall".to_string()),
+        countdown_key: String::new(),
     }));
     assert!(html.contains("aria-label=\"The far right wall\""), "{html}");
     assert!(html.contains("data-placement=\"top-right\""), "{html}");
@@ -436,6 +437,69 @@ fn chain_step_crosses_the_deadline_and_ceils_fractional_remainders() {
     assert_eq!(state.remaining_ms(), 0);
 }
 
+// ── The timer wiring (capture seam) ─────────────────────────────────
+
+/// The chain WIRING is a contract, not an implementation detail: a timed
+/// flash schedules exactly one chain, a held-open flash schedules none, and
+/// an active step re-arms while a finished one does not. R7 recorded these
+/// as unobservable because the non-wasm `set_timeout` is a no-op; the
+/// capture seam makes them testable.
+#[test]
+fn the_timer_wiring_schedules_exactly_the_right_chains() {
+    _reset_screen_identify_for_tests();
+    screen_identify_capture_timers(true);
+
+    // Held-open: the call site must not schedule anything.
+    show_screen_identify(ScreenIdentifyRequest::new("0").with_duration_ms(0));
+    assert!(
+        screen_identify_take_captured_chains().is_empty(),
+        "a held-open flash must not schedule a chain"
+    );
+
+    // Timed flash: exactly one chain.
+    show_screen_identify(ScreenIdentifyRequest::new("7"));
+    let generation = use_screen_identify().state().generation();
+    let mut chains = screen_identify_take_captured_chains();
+    assert_eq!(chains.len(), 1, "a timed flash schedules exactly one chain");
+
+    // Running the scheduled step while active re-arms exactly one more
+    // (the reschedule wiring). The frozen stub clock keeps the remainder
+    // constant here — the dwell ADVANCE itself is pinned by the
+    // explicit-clock tests below.
+    let step = chains.remove(0);
+    step();
+    let mut rearmed = screen_identify_take_captured_chains();
+    assert_eq!(rearmed.len(), 1, "an active step re-arms exactly one chain");
+    assert_eq!(use_screen_identify().state().seconds_left(), 3);
+
+    // A superseded chain neither advances nor re-arms.
+    show_screen_identify(ScreenIdentifyRequest::new("2"));
+    let restarted = use_screen_identify().state().generation();
+    assert_ne!(generation, restarted);
+    screen_identify_take_captured_chains();
+    // `rearmed` is the generation-7 chain's re-arm: after the restart it is
+    // exactly the stale wake a real timer would still fire.
+    let stale = rearmed.remove(0);
+    stale();
+    assert!(screen_identify_take_captured_chains().is_empty());
+    assert_eq!(use_screen_identify().state().number(), "2");
+
+    // Dismissal retires the scheduled chain: its next wake observes the new
+    // generation and neither advances nor re-arms (the stub clock is frozen,
+    // so the deadline arm is covered by the explicit-clock tests above).
+    show_screen_identify(ScreenIdentifyRequest::new("3"));
+    let mut scheduled = screen_identify_take_captured_chains();
+    assert_eq!(scheduled.len(), 1);
+    dismiss_screen_identify();
+    let step = scheduled.remove(0);
+    step();
+    assert!(screen_identify_take_captured_chains().is_empty());
+    assert!(!use_screen_identify().state().active());
+
+    screen_identify_capture_timers(false);
+    _reset_screen_identify_for_tests();
+}
+
 // ── The live runtime repaint path ───────────────────────────────────
 
 /// Mount the real host through tairitsu's runtime and assert the state is
@@ -485,7 +549,6 @@ fn a_mounted_host_repaints_on_show_countdown_and_dismiss() {
         counted.contains(">2<"),
         "countdown should read 2s: {counted}"
     );
-
     assert!(!screen_identify_tick_step(
         generation,
         SCREEN_IDENTIFY_DEFAULT_MS as f64
@@ -587,6 +650,64 @@ fn a_superseded_generation_never_ticks_or_repaints_the_new_flash() {
     let advanced = use_screen_identify().state();
     assert_eq!(advanced.seconds_left(), 1);
     _reset_screen_identify_for_tests();
+}
+
+// ── Per-flash flip registry keying ──────────────────────────────────
+
+/// The digit rendered inside a flip span of the serialized host HTML
+/// (`render_to_html` emits `<span class="hk-flip-out" style="…">3</span>`).
+fn flip_digit(html: &str, class: &str) -> String {
+    let marker = format!("class=\"{class}\"");
+    let start = html
+        .find(&marker)
+        .unwrap_or_else(|| panic!("{class} span not found in: {html}"));
+    let text_start = start + html[start..].find('>').expect("span opening tag") + 1;
+    let text = &html[text_start..];
+    let digits: String = text.chars().take_while(|c| c.is_ascii_digit()).collect();
+    assert!(!digits.is_empty(), "{class} carries no digit: {html}");
+    digits
+}
+
+/// The host keys the shared `CountdownDigit` flip registry PER FLASH
+/// (number + generation). Three renders through the pure host-content
+/// function pin both halves of that contract:
+///   * within one flash, a seconds-changing tick must FLIP (out = previous,
+///     in = new) — a key that churned per tick would rest instead (R3 M1);
+///   * a dismiss + re-show of the same number must start from a RESTING
+///     pair — a number-only key would keep the old slot and flip 2->3
+///     (R3 M2). Vue gets both for free by remounting its digit.
+#[test]
+fn the_host_keys_the_flip_registry_per_flash() {
+    let mut state = ScreenIdentifyState::default();
+    let render_host = |state: &ScreenIdentifyState| {
+        render(screen_identify_host_content(
+            state,
+            ScreenIdentifyPlacement::BottomLeft,
+            None,
+        ))
+    };
+
+    // First paint of the flash: a resting 3/3 pair.
+    state.show(&ScreenIdentifyRequest::new("7"), 0.0);
+    let first = render_host(&state);
+    assert_eq!(flip_digit(&first, "hk-flip-out"), "3", "{first}");
+    assert_eq!(flip_digit(&first, "hk-flip-in"), "3", "{first}");
+
+    // Same flash, one tick: the slot is REUSED, so the outgoing value is
+    // the previous "3" — continuity only holds while the key is stable.
+    state.tick(1_000.0);
+    let second = render_host(&state);
+    assert_eq!(flip_digit(&second, "hk-flip-out"), "3", "{second}");
+    assert_eq!(flip_digit(&second, "hk-flip-in"), "2", "{second}");
+
+    // Dismiss + re-show the same number: generation bumped, NEW slot, and
+    // the pair rests again even though the registry still holds "2" under
+    // the old key.
+    state.dismiss();
+    state.show(&ScreenIdentifyRequest::new("7"), 0.0);
+    let third = render_host(&state);
+    assert_eq!(flip_digit(&third, "hk-flip-out"), "3", "{third}");
+    assert_eq!(flip_digit(&third, "hk-flip-in"), "3", "{third}");
 }
 
 // ── The ambient HUD layer ───────────────────────────────────────────

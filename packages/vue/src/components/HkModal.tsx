@@ -489,6 +489,12 @@ export default defineComponent({
 
     function onKeydown(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        // Cross-component precedence: a nested control that already consumed
+        // Escape (a range reset, an inline editor, a picker) owns the key, so
+        // the window must not close underneath it. `defaultPrevented` is the
+        // cross-component "I handled this" signal; the event still bubbles
+        // here from the nested target.
+        if (e.defaultPrevented) return;
         if (props.closable) {
           e.preventDefault();
           e.stopPropagation();

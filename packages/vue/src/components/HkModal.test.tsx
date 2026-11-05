@@ -546,3 +546,56 @@ describe("HkModal chrome / content split", () => {
     });
   });
 });
+
+describe("HkModal Escape precedence", () => {
+  it("lets a nested control own Escape while a bare Escape still closes", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const open = ref(true);
+    const emitted: boolean[] = [];
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: open.value,
+            closable: true,
+            title: "Escape precedence",
+            "onUpdate:modelValue": (v: boolean) => { emitted.push(v); open.value = v; },
+          }, {
+            default: () => h("div", {
+              class: "escape-owner",
+              onKeydown: (e: KeyboardEvent) => {
+                if (e.key === "Escape") e.preventDefault();
+              },
+            }, "nested control"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(".escape-owner")).not.toBeNull();
+    });
+    const owner = document.body.querySelector<HTMLElement>(".escape-owner")!;
+
+    // The nested control consumes Escape: the window must stay open.
+    owner.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(emitted, "a consumed Escape must not close the window").toEqual([]);
+    expect(open.value).toBe(true);
+
+    // A bare Escape (nothing below consumed it) still closes.
+    const content = document.body.querySelector<HTMLElement>(".hk-modal-content")!;
+    content.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(emitted).toEqual([false]);
+  });
+});

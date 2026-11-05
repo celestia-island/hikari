@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "Restaurar",
   "hikari::titleBar.close": "Fechar",
   "hikari::screenIdentify.label": "Ecrã {number}",
-  "hikari::screenIdentify.labelNamed": "Ecrã {number}, {name}"
+  "hikari::screenIdentify.labelNamed": "Ecrã {number}, {name}",
+  "hikari::ribbon.rangeAria": "Intervalo de observação",
+  "hikari::ribbon.windowStart": "Início da janela",
+  "hikari::ribbon.windowEnd": "Fim da janela",
+  "hikari::ribbon.reset": "Redefinir intervalo",
+  "hikari::ribbon.moveWindow": "Mover janela",
+  "hikari::ribbon.resizeWindow": "Redimensionar janela",
+  "hikari::ribbon.dragHint": "Arraste para selecionar um intervalo; clique duplo, Escape ou Home redefine"
 }

@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "元に戻す",
   "hikari::titleBar.close": "閉じる",
   "hikari::screenIdentify.label": "画面 {number}",
-  "hikari::screenIdentify.labelNamed": "画面 {number}、{name}"
+  "hikari::screenIdentify.labelNamed": "画面 {number}、{name}",
+  "hikari::ribbon.rangeAria": "観測範囲",
+  "hikari::ribbon.windowStart": "ウィンドウ開始",
+  "hikari::ribbon.windowEnd": "ウィンドウ終了",
+  "hikari::ribbon.reset": "範囲をリセット",
+  "hikari::ribbon.moveWindow": "ウィンドウを移動",
+  "hikari::ribbon.resizeWindow": "ウィンドウのサイズ変更",
+  "hikari::ribbon.dragHint": "ドラッグして範囲を選択。ダブルクリック、Escape、Home でリセット"
 }

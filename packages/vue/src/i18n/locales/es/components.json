@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "Restaurar",
   "hikari::titleBar.close": "Cerrar",
   "hikari::screenIdentify.label": "Pantalla {number}",
-  "hikari::screenIdentify.labelNamed": "Pantalla {number}, {name}"
+  "hikari::screenIdentify.labelNamed": "Pantalla {number}, {name}",
+  "hikari::ribbon.rangeAria": "Rango de observación",
+  "hikari::ribbon.windowStart": "Inicio de la ventana",
+  "hikari::ribbon.windowEnd": "Fin de la ventana",
+  "hikari::ribbon.reset": "Restablecer rango",
+  "hikari::ribbon.moveWindow": "Mover ventana",
+  "hikari::ribbon.resizeWindow": "Redimensionar ventana",
+  "hikari::ribbon.dragHint": "Arrastra para seleccionar un rango; doble clic, Escape o Inicio restablecen"
 }

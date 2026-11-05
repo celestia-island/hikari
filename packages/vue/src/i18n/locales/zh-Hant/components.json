@@ -305,5 +305,12 @@
   "hikari::titleBar.restore": "還原",
   "hikari::titleBar.close": "關閉",
   "hikari::screenIdentify.label": "螢幕 {number}",
-  "hikari::screenIdentify.labelNamed": "螢幕 {number}，{name}"
+  "hikari::screenIdentify.labelNamed": "螢幕 {number}，{name}",
+  "hikari::ribbon.rangeAria": "觀察範圍",
+  "hikari::ribbon.windowStart": "視窗起點",
+  "hikari::ribbon.windowEnd": "視窗終點",
+  "hikari::ribbon.reset": "重設範圍",
+  "hikari::ribbon.moveWindow": "移動視窗",
+  "hikari::ribbon.resizeWindow": "縮放視窗",
+  "hikari::ribbon.dragHint": "拖曳選取範圍；雙擊、Escape 或 Home 重設"
 }

@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "복원",
   "hikari::titleBar.close": "닫기",
   "hikari::screenIdentify.label": "화면 {number}",
-  "hikari::screenIdentify.labelNamed": "화면 {number}, {name}"
+  "hikari::screenIdentify.labelNamed": "화면 {number}, {name}",
+  "hikari::ribbon.rangeAria": "관찰 범위",
+  "hikari::ribbon.windowStart": "창 시작",
+  "hikari::ribbon.windowEnd": "창 끝",
+  "hikari::ribbon.reset": "범위 초기화",
+  "hikari::ribbon.moveWindow": "창 이동",
+  "hikari::ribbon.resizeWindow": "창 크기 조정",
+  "hikari::ribbon.dragHint": "드래그하여 범위를 선택하세요. 더블 클릭, Escape 또는 Home으로 초기화"
 }

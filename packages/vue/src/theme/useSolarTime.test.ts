@@ -514,6 +514,20 @@ describe("solar IP insight (the strategy dialog's readout)", () => {
     expect(mod.solarIpInsightFresh(insight.fetchedAt + 11 * 60 * 1000)).toBe(false);
   });
 
+  it("a probe and the ip cascade's geo resolution racing share one lookup GET", async () => {
+    mod.setSolarLocationStrategy("ip");
+    mod.setGeolocationProvider(async () => null);
+    const fetchMock = lookupFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    // The dialog probe and the theme clock's resolution race the same
+    // lookup — the body fetch dedupes them into one network request and
+    // both consumers converge on the same insight.
+    await Promise.all([mod.probeSolarIpInsight(), mod.getGeolocation()]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mod.solarIpInsight.value?.ip).toBe("203.0.113.7");
+    expect(mod.solarIpProbeState.value).toBe("ok");
+  });
+
   it("the ip strategy's own geo resolution records the insight from the same body", async () => {
     mod.setSolarLocationStrategy("ip");
     mod.setGeolocationProvider(async () => null);

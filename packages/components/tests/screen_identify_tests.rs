@@ -463,7 +463,9 @@ fn the_timer_wiring_schedules_exactly_the_right_chains() {
     assert_eq!(chains.len(), 1, "a timed flash schedules exactly one chain");
 
     // Running the scheduled step while active re-arms exactly one more
-    // (the reschedule wiring), and the state advanced with it.
+    // (the reschedule wiring). The frozen stub clock keeps the remainder
+    // constant here — the dwell ADVANCE itself is pinned by the
+    // explicit-clock tests below.
     let step = chains.remove(0);
     step();
     let mut rearmed = screen_identify_take_captured_chains();
@@ -547,7 +549,6 @@ fn a_mounted_host_repaints_on_show_countdown_and_dismiss() {
         counted.contains(">2<"),
         "countdown should read 2s: {counted}"
     );
-
     assert!(!screen_identify_tick_step(
         generation,
         SCREEN_IDENTIFY_DEFAULT_MS as f64
@@ -649,6 +650,64 @@ fn a_superseded_generation_never_ticks_or_repaints_the_new_flash() {
     let advanced = use_screen_identify().state();
     assert_eq!(advanced.seconds_left(), 1);
     _reset_screen_identify_for_tests();
+}
+
+// ── Per-flash flip registry keying ──────────────────────────────────
+
+/// The digit rendered inside a flip span of the serialized host HTML
+/// (`render_to_html` emits `<span class="hk-flip-out" style="…">3</span>`).
+fn flip_digit(html: &str, class: &str) -> String {
+    let marker = format!("class=\"{class}\"");
+    let start = html
+        .find(&marker)
+        .unwrap_or_else(|| panic!("{class} span not found in: {html}"));
+    let text_start = start + html[start..].find('>').expect("span opening tag") + 1;
+    let text = &html[text_start..];
+    let digits: String = text.chars().take_while(|c| c.is_ascii_digit()).collect();
+    assert!(!digits.is_empty(), "{class} carries no digit: {html}");
+    digits
+}
+
+/// The host keys the shared `CountdownDigit` flip registry PER FLASH
+/// (number + generation). Three renders through the pure host-content
+/// function pin both halves of that contract:
+///   * within one flash, a seconds-changing tick must FLIP (out = previous,
+///     in = new) — a key that churned per tick would rest instead (R3 M1);
+///   * a dismiss + re-show of the same number must start from a RESTING
+///     pair — a number-only key would keep the old slot and flip 2->3
+///     (R3 M2). Vue gets both for free by remounting its digit.
+#[test]
+fn the_host_keys_the_flip_registry_per_flash() {
+    let mut state = ScreenIdentifyState::default();
+    let render_host = |state: &ScreenIdentifyState| {
+        render(screen_identify_host_content(
+            state,
+            ScreenIdentifyPlacement::BottomLeft,
+            None,
+        ))
+    };
+
+    // First paint of the flash: a resting 3/3 pair.
+    state.show(&ScreenIdentifyRequest::new("7"), 0.0);
+    let first = render_host(&state);
+    assert_eq!(flip_digit(&first, "hk-flip-out"), "3", "{first}");
+    assert_eq!(flip_digit(&first, "hk-flip-in"), "3", "{first}");
+
+    // Same flash, one tick: the slot is REUSED, so the outgoing value is
+    // the previous "3" — continuity only holds while the key is stable.
+    state.tick(1_000.0);
+    let second = render_host(&state);
+    assert_eq!(flip_digit(&second, "hk-flip-out"), "3", "{second}");
+    assert_eq!(flip_digit(&second, "hk-flip-in"), "2", "{second}");
+
+    // Dismiss + re-show the same number: generation bumped, NEW slot, and
+    // the pair rests again even though the registry still holds "2" under
+    // the old key.
+    state.dismiss();
+    state.show(&ScreenIdentifyRequest::new("7"), 0.0);
+    let third = render_host(&state);
+    assert_eq!(flip_digit(&third, "hk-flip-out"), "3", "{third}");
+    assert_eq!(flip_digit(&third, "hk-flip-in"), "3", "{third}");
 }
 
 // ── The ambient HUD layer ───────────────────────────────────────────

@@ -18,14 +18,14 @@
 //
 //   span.hk-filter-trigger               (style: position:relative — the layer's
 //                                         containing block)
-//     span.hk-corner-badge-anchor
+//     span.hk-corner-badge-anchor data-placement="bottom-right"
 //       button.hk-icon-button.hk-icon-button-{32|28}.hk-icon-button-ghost
 //              type=button aria-label={label} aria-haspopup=dialog
 //              aria-expanded [disabled] [data-active]
 //         span.hk-icon-button-icon
 //           span[style="display:contents"] > the funnel svg (16)
 //       span.hk-corner-badge.hk-corner-badge-success.hk-corner-badge--dot
-//              data-corner="bottom-right"
+//              data-placement="bottom-right"
 //              (style: --hk-corner-badge-offset) aria-hidden="true"   (active)
 //     ── open only ──
 //     div.hk-filter-trigger-body        (style: absolute layer geometry)
@@ -224,12 +224,13 @@ pub fn FilterTrigger(props: FilterTriggerProps) -> Element {
 
     let mut anchor = VElement::new("span")
         .class("hk-corner-badge-anchor")
+        .attr("data-placement", "bottom-right")
         .child(VNode::Element(Box::new(button)));
     if active {
         anchor = anchor.child(VNode::Element(Box::new(
             VElement::new("span")
                 .class(filter_trigger_corner_badge_classes())
-                .attr("data-corner", "bottom-right")
+                .attr("data-placement", "bottom-right")
                 .style(filter_trigger_corner_offset_style(
                     FILTER_TRIGGER_CORNER_OFFSET,
                 ))
@@ -461,7 +462,14 @@ mod tests {
             html.contains("hk-corner-badge hk-corner-badge-success hk-corner-badge--dot"),
             "{html}"
         );
-        assert!(html.contains("data-corner=\"bottom-right\""), "{html}");
+        assert!(
+            html.contains(r#"data-placement="bottom-right""#),
+            "the sheet keys the mark on data-placement: {html}"
+        );
+        assert!(
+            html.contains(r#"<span data-placement="bottom-right" class="hk-corner-badge-anchor">"#),
+            "the anchor carries the same vocabulary: {html}"
+        );
         assert!(html.contains("--hk-corner-badge-offset:1px"), "{html}");
         assert!(html.contains("aria-hidden=\"true\""), "{html}");
         assert!(html.contains("data-active"), "{html}");

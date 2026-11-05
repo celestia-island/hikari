@@ -96,7 +96,7 @@ const HkSearchTrigger = defineComponent({
           {/* The active-keyword marker rides the generic corner badge —
            * the same green bottom-right dot the filter trigger wears
            * (2026-10-15: was a hand-rolled primary dot, top-right). */}
-          <HkCornerBadge dot={active.value} variant="success" corner="bottom-right" offset={1}>
+          <HkCornerBadge dot={active.value} variant="success" placement="bottom-right" offset={1}>
           <HkIconButton
             size={chromeSize.value}
             variant="ghost"

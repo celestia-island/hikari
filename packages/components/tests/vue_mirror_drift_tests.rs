@@ -1035,3 +1035,33 @@ fn localized_solar_values_match_the_vue_canonical_bundle() {
         "crate solar values drifted from the vue canonical: {mismatches:#?}"
     );
 }
+
+/// The corner-badge sheet keys ALL of its geometry on `data-placement`
+/// (2026-11-05: the four corner overlays plus the two side placements).
+/// A hand-rolled Rust host that still emits the retired `data-corner`
+/// attribute silently loses every inset rule — the mark falls back to its
+/// static position and only the base translate applies. The filter/search
+/// trigger dots shipped that way until the mirror review caught it, and
+/// their unit tests were actively ratifying the dead attribute; this guard
+/// couples the emitters to the sheet's vocabulary from now on.
+#[test]
+fn corner_badge_hosts_speak_the_sheets_data_placement_vocabulary() {
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut files = Vec::new();
+    collect_files(&src, &mut files);
+    let mut offenders = Vec::new();
+    for file in &files {
+        if file.extension().and_then(|e| e.to_str()) != Some("rs") {
+            continue;
+        }
+        let source = std::fs::read_to_string(file).expect("read rust source");
+        if source.contains("hk-corner-badge") && source.contains("data-corner") {
+            offenders.push(file.display().to_string());
+        }
+    }
+    assert!(
+        offenders.is_empty(),
+        "corner-badge geometry is keyed on data-placement; these sources still \
+         carry data-corner (update the emitters and their doc contracts): {offenders:?}"
+    );
+}

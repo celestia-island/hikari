@@ -68,6 +68,21 @@ function installSelection(intersects: (node: Node) => boolean) {
   return () => Object.defineProperty(window, "getSelection", { configurable: true, value: original });
 }
 
+/** Replace `navigator.clipboard.writeText` with a spy (the component's only
+ *  copy path) and return a restorer. */
+function installClipboard() {
+  const writeText = vi.fn(async () => undefined);
+  const original = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+  return {
+    writeText,
+    restore: () => {
+      if (original) Object.defineProperty(navigator, "clipboard", original);
+      else Reflect.deleteProperty(navigator, "clipboard");
+    },
+  };
+}
+
 function stubLayout(el: HTMLElement, box: { height: number }) {
   Object.defineProperty(el, "offsetHeight", { configurable: true, get: () => box.height });
 }
@@ -449,7 +464,48 @@ describe("HkJsonTree selection gate", () => {
     }
   });
 
+  it("does not copy when the click ends a selection inside the opt-in tree", async () => {
+    const clip = installClipboard();
+    const restore = installSelection(() => true);
+    try {
+      const el = mountTree({ text: '{"cfg":{"retries":2}}', selectable: true });
+      (el.querySelector(".s-jt-row:not([data-parent])") as HTMLElement).click();
+      await nextTick();
+      expect(clip.writeText).not.toHaveBeenCalled();
+    } finally {
+      restore();
+      clip.restore();
+    }
+  });
+
+  it("copies from a leaf row when the live selection is outside the tree", async () => {
+    const clip = installClipboard();
+    const restore = installSelection(() => false);
+    try {
+      const el = mountTree({ text: '{"cfg":{"retries":2}}', selectable: true });
+      (el.querySelector(".s-jt-row:not([data-parent])") as HTMLElement).click();
+      await nextTick();
+      expect(clip.writeText).toHaveBeenCalledTimes(1);
+    } finally {
+      restore();
+      clip.restore();
+    }
+  });
+
   it("does not consult the selection at all when the host did not opt in", async () => {
+    const clip = installClipboard();
+    const restore = installSelection(() => true);
+    try {
+      const el = mountTree({ text: '{"cfg":{"retries":2}}' });
+      (el.querySelector(".s-jt-row:not([data-parent])") as HTMLElement).click();
+      await nextTick();
+      expect(clip.writeText).toHaveBeenCalledTimes(1);
+    } finally {
+      restore();
+      clip.restore();
+    }
+  });
+  it("still toggles a parent row when the host did not opt in", async () => {
     vi.useFakeTimers();
     const el = mountTree({ text: '{"cfg":{"retries":2}}' });
     const before = openGroups(el);

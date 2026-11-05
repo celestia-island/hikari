@@ -131,6 +131,10 @@ describe("HkJsonTree selection + motion contract", () => {
     expect(rowBlock, ".s-jt-row rule present").not.toBe("");
     expect(rowBlock).toContain("@include user-select(none)");
     expect(rowBlock).not.toContain("@include user-select(text)");
+    // iOS long-press must not raise the callout menu over a row that is
+    // itself a toggle target; the opt-in rule is the only place that lifts it.
+    const treeBlock = scss.slice(scss.indexOf(".s-tool-json-tree {"), scss.indexOf("/* ONE SCROLLBAR"));
+    expect(treeBlock).toContain("-webkit-touch-callout: none;");
   });
 
   it("re-enables selection only through the explicit selectable hook", () => {

@@ -83,7 +83,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-          targets: wasm32-wasip2
+          # wasm32-unknown-unknown moved here with the deleted `test` job: that
+          # job was the only gate compiling the WEB wasm target (the clippy step
+          # below covers wasip2, which is a different target with different
+          # cfg branches).
+          targets: wasm32-wasip2,wasm32-unknown-unknown
 
       - name: Run cargo clippy
         run: cargo clippy --all --all-features
@@ -92,5 +96,13 @@ jobs:
 
       - name: Lint wasm32-wasip2 target
         run: cargo clippy --workspace --all-features --target wasm32-wasip2
+        env:
+          RUSTFLAGS: '--cfg releasing'
+
+      - name: Type-check the web wasm target
+        # Compiled from the deleted `test` job. It is a `cargo check`, not clippy:
+        # the web glue has its own cfg surface and clippy on this target has
+        # never been part of the gate, so keep exactly the coverage that existed.
+        run: cargo check -p hikari-components --target wasm32-unknown-unknown
         env:
           RUSTFLAGS: '--cfg releasing'

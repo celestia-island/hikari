@@ -72,4 +72,8 @@ jobs:
           fi
 
       - name: Run tests
-        run: just test
+        # `--all-features` on purpose: the deleted `ci.yml` test job was the only
+        # lane that executed the feature-gated tests (15 `#[test]` fns behind
+        # `tauri` in packages/host), and `just test` is `cargo test --workspace`
+        # (default features only). One lane, but the widest one.
+        run: cargo test --workspace --all-features

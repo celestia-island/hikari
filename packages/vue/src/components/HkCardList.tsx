@@ -1,4 +1,4 @@
-import { Comment, computed, defineComponent, h, onBeforeUnmount, onMounted, ref, type Component, type PropType, type VNode } from "vue";
+import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, type Component, type PropType } from "vue";
 import { MoreHorizontal } from "lucide-vue-next";
 
 import HkCard from "./HkCard";
@@ -6,24 +6,23 @@ import { HkIconChip } from "./HkIconChip";
 import HkMenu from "./HkMenu";
 import type { HkMenuItem } from "./HkMenu";
 import HkTooltip from "./HkTooltip";
+import { hasRenderedContent } from "../runtime/hasRenderedContent";
 import { useMediaQuery } from "../runtime/useMediaQuery";
 import type { StatTone } from "./HkStatCard";
 import "./HkCardList.scss";
 
 /**
- * Whether a default slot actually rendered any row. Testing
- * `slots.default` for truthiness is not enough: the canonical template
- * idiom (`<HkListRow v-for>` plus `<template #empty>`) always provides a
- * default slot whose v-for renders zero vnodes, and a `v-if` row renders
- * a comment placeholder — both would otherwise show an empty bordered
- * card where the empty state belongs.
+ * Whether a default slot actually rendered any row — the SHARED slot
+ * guard (runtime/hasRenderedContent, recursed into fragments so the
+ * JSX `<>{cond && …}</>` shape reads as empty too; HkModelCard uses the
+ * same one). Testing `slots.default` for truthiness is not enough: the
+ * canonical template idiom (`<HkListRow v-for>` plus
+ * `<template #empty>`) always provides a default slot whose v-for
+ * renders zero vnodes, and a `v-if` row renders a comment placeholder
+ * — both would otherwise show an empty bordered card where the empty
+ * state belongs.
  */
-function renderedRows(nodes: unknown): boolean {
-  if (nodes == null || nodes === false || nodes === "") return false;
-  if (Array.isArray(nodes)) return nodes.some((n) => renderedRows(n));
-  if (typeof nodes === "object") return (nodes as VNode).type !== Comment;
-  return true; // non-empty text content
-}
+const renderedRows = hasRenderedContent;
 
 /**
  * HkCardList — the standard card list: an unpadded HkCard whose body is

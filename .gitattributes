@@ -20,3 +20,14 @@ generated/** linguist-generated
 
 # Exclude documentation output
 docs/**/output/** linguist-generated
+
+# Line endings for the web package's source: deterministic LF on disk so
+# source-reading contract tests (which pin literal "\n" joins between
+# selectors/rules) behave identically on every platform. Without an
+# explicit eol rule, a Windows checkout with core.autocrlf=true materializes
+# CRLF on disk and the LF-pinned anchors miss (see #1067). Files already in
+# the index keep their stored endings until touched — no renormalization
+# shipped with this rule.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.scss text eol=lf

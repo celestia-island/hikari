@@ -27,11 +27,12 @@ import "./HkRangeRibbon.scss";
  * bar at x% sits at the same inline position on both surfaces.
  *
  * Editing: drag on the strip to brush a new window, drag either edge handle
- * to resize it, and reset (button / double-click / Escape / Home on the
- * range surface) back to the full domain. The strip is focusable: arrows
- * slide the window, Shift+arrows resize it. Handle sliders nudge their own
- * edge. Hovering or focusing a segment floats its tip card (tip.title +
- * tip.lines); the card anchors inside the ribbon at the edges.
+ * to resize it, and reset back to the full domain — the reset button, a
+ * strip double-click, Escape anywhere inside the ribbon, or Home when the
+ * range surface (strip / handle / reset button) holds focus. The strip is
+ * focusable: arrows slide the window, Shift+arrows resize it. Handle sliders
+ * nudge their own edge. Hovering or focusing a segment floats its tip card
+ * (tip.title + tip.lines); the card anchors inside the ribbon at the edges.
  *
  * Contract with the host: `segments` are fed in FULL-DOMAIN fractions
  * (0..1) and `windowChange` always answers in those same absolute
@@ -190,8 +191,12 @@ function windowedBox(placed: PlacedSegment, win: WindowRange): SegmentBox | null
   };
 }
 
+/** Pointer travel (px) that turns a press into a brush; below it a click
+ *  with sub-pixel jitter must not zoom to a hairline window. */
+const BRUSH_SLOP = 3;
+
 type Gesture =
-  | { kind: "brush"; pointerId: number; anchor: number }
+  | { kind: "brush"; pointerId: number; anchor: number; originX: number; dragging: boolean }
   | { kind: "edge"; pointerId: number; edge: "start" | "end" };
 
 export default defineComponent({
@@ -293,8 +298,10 @@ export default defineComponent({
       return true;
     }
 
-    function resetWindow(): void {
-      commitIfChanged(null);
+    /** Returns true when a window actually existed (and was cleared), so the
+     *  caller can leave Escape alone when the host needs it. */
+    function resetWindow(): boolean {
+      return commitIfChanged(null);
     }
 
     function fractionFrom(clientX: number): number | null {
@@ -365,7 +372,13 @@ export default defineComponent({
       if (event.pointerType === "mouse" && event.button !== 0) return;
       const fraction = fractionFrom(event.clientX);
       if (fraction === null) return;
-      gesture = { kind: "brush", pointerId: event.pointerId, anchor: fraction };
+      gesture = {
+        kind: "brush",
+        pointerId: event.pointerId,
+        anchor: fraction,
+        originX: event.clientX,
+        dragging: false,
+      };
       (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
     }
 
@@ -381,6 +394,11 @@ export default defineComponent({
 
     function onPointerMove(event: PointerEvent): void {
       if (!gesture || gesture.pointerId !== event.pointerId) return;
+      if (gesture.kind === "brush" && !gesture.dragging) {
+        // A plain click with sub-pixel jitter is not a brush.
+        if (Math.abs(event.clientX - gesture.originX) < BRUSH_SLOP) return;
+        gesture.dragging = true;
+      }
       const fraction = fractionFrom(event.clientX);
       if (fraction === null) return;
       if (gesture.kind === "brush") brushTo(fraction);
@@ -435,21 +453,21 @@ export default defineComponent({
 
     function onRootKeyDown(event: KeyboardEvent): void {
       if (!props.windowEnabled) return;
-      // Escape resets from anywhere inside the ribbon…
+      // Escape resets from anywhere inside the ribbon — but only a REAL reset
+      // consumes the key: with no window, Escape must still reach the host
+      // (a dialog closes on it while focus sits in here).
       if (event.key === "Escape") {
-        event.preventDefault();
-        resetWindow();
+        if (resetWindow()) event.preventDefault();
         return;
       }
       if (event.key !== "Home") return;
-      // …but Home is the range surface's own shortcut: a focused segment
-      // keeps its native Home behaviour (caret/scroll in the host).
+      // Home is the range surface's own shortcut: a focused segment keeps
+      // its native Home behaviour (caret/scroll in the host).
       const surface = (event.target as Element | null)?.closest?.(
-        ".hk-range-ribbon-strip, .hk-range-ribbon-handle",
+        ".hk-range-ribbon-strip, .hk-range-ribbon-handle, .hk-range-ribbon-reset",
       );
       if (!surface) return;
-      event.preventDefault();
-      resetWindow();
+      if (resetWindow()) event.preventDefault();
     }
 
     function showTip(id: string): void {

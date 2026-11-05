@@ -62,23 +62,33 @@ describe("scroll-pin whitespace contract", () => {
     expect(base).toMatch(/background: var\(\s*--hk-scroll-pin-bg/);
   });
 
-  it("keeps an opaque static background before the color-mix tint", () => {
-    // Engine support: color-mix() is unsupported on WebKit <=16.1 and Edge
-    // WebView2 <111, and a declaration with an unsupported value is DROPPED
-    // as a whole — the pin then paints transparent and scrolled content
-    // shows through the "pinned" surface (the 2026-11 raw-records report).
-    // The plain fallback must precede the tint; the later declaration wins
-    // on modern engines by cascade order.
+  it("keeps the plain background unconditional and the color-mix tint behind @supports", () => {
+    // IACVT (the R3 finding): color-mix() nested in a var() fallback is VALID
+    // at parse time, so an engine without color-mix keeps the declaration and
+    // only fails at COMPUTED-VALUE time — the property becomes unset
+    // (transparent) and the earlier declaration does NOT win. Cascade order
+    // is therefore not enough; the tint must live inside a feature query
+    // while the plain fallback stays unconditional.
     const base = cssBlock(pinScss, ".hk-scroll-pin {");
-    const backgrounds = [...base.matchAll(/(?:^|;)\s*background\s*:([^;]+)/gm)].map((match) =>
-      match[1]!.replace(/\s+/g, " ").trim(),
+    // The prose above explains IACVT and names color-mix; only DECLARATIONS
+    // matter here, so line comments are stripped before the check.
+    const baseRules = base.replace(/^\s*\/\/.*$/gm, "");
+    expect(baseRules, "the opaque surface is unconditional").toMatch(
+      /background:\s*var\(\s*--hk-scroll-pin-bg,\s*var\(\s*--hi-color-surface,\s*#ffffff\s*\)\s*\)/,
     );
-    expect(backgrounds.length, "the base declares background twice").toBe(2);
-    expect(backgrounds[0], "the fallback is a plain var chain").toContain(
-      "var(--hk-scroll-pin-bg, var(--hi-color-surface, #ffffff))",
+    expect(baseRules, "the tint must not sit in the unconditional block").not.toContain("color-mix");
+
+    const gateStart = pinScss.indexOf("@supports");
+    expect(gateStart, "a feature query gates the tint").toBeGreaterThanOrEqual(0);
+    const prelude = pinScss
+      .slice(gateStart, pinScss.indexOf("{", gateStart))
+      .replace(/\s+/g, " ");
+    expect(prelude, "the gate tests color-mix() support").toContain(
+      "background: color-mix(in srgb, white 95%, transparent)",
     );
-    expect(backgrounds[0], "the fallback must not need color-mix").not.toContain("color-mix");
-    expect(backgrounds[1], "the modern tint follows the fallback").toContain("color-mix");
+    const gate = cssBlock(pinScss, "@supports");
+    expect(gate, "the tint rides the @supports block").toContain(".hk-scroll-pin");
+    expect(gate).toMatch(/background:\s*var\(\s*--hk-scroll-pin-bg,\s*color-mix/);
   });
 
   it("every side x strategy pairing exists (12 total)", () => {

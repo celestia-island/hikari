@@ -593,6 +593,26 @@ describe("HkRangeRibbon pointer plumbing", () => {
     await nextTick();
     expectWindow(lastWindow(host.windowChange), 0.25, 0.5);
   });
+
+  it("ignores sub-pixel jitter on a click (3px brush slop)", async () => {
+    const host = mountHost(null);
+    const { strip, x } = stubStrip(host.root);
+
+    pointer("pointerdown", x(0.5), strip);
+    pointer("pointermove", x(0.5) + 2, strip); // 2px: under the slop
+    pointer("pointerup", x(0.5) + 2, strip);
+    await nextTick();
+    expect(host.windowChange, "a jittery click must not zoom").not.toHaveBeenCalled();
+    expect(host.root.hasAttribute("data-windowed")).toBe(false);
+
+    // 4px clears the slop: this is a real brush.
+    pointer("pointerdown", x(0.5), strip);
+    pointer("pointermove", x(0.5) + 4, strip);
+    pointer("pointerup", x(0.5) + 4, strip);
+    await nextTick();
+    expect(host.windowChange).toHaveBeenCalled();
+    expect(host.root.hasAttribute("data-windowed")).toBe(true);
+  });
 });
 
 // ── Handles ─────────────────────────────────────────────────────────────
@@ -718,6 +738,31 @@ describe("HkRangeRibbon reset", () => {
     keydown(strip, "Home");
     await nextTick();
     expect(host.windowChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it("resets on Home from the reset button too", async () => {
+    const host = mountHost([0.2, 0.6]);
+    const button = host.root.querySelector<HTMLElement>(".hk-range-ribbon-reset")!;
+    const event = keydown(button, "Home");
+    await nextTick();
+    expect(host.windowChange).toHaveBeenLastCalledWith(null);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("leaves Escape to the host when there is nothing to reset", async () => {
+    const host = mountHost(null);
+    const strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    const event = keydown(strip, "Escape");
+    await nextTick();
+    expect(host.windowChange, "no window: nothing resets").not.toHaveBeenCalled();
+    expect(event.defaultPrevented, "a host dialog must still see Escape").toBe(false);
+
+    // With a window the reset really happens, so Escape is consumed.
+    await host.setWindow([0.2, 0.6]);
+    const second = keydown(host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!, "Escape");
+    await nextTick();
+    expect(host.windowChange).toHaveBeenLastCalledWith(null);
+    expect(second.defaultPrevented).toBe(true);
   });
 
   it("hides the reset button when no window exists (negative)", () => {
@@ -946,6 +991,8 @@ describe("HkRangeRibbon tip card", () => {
       { id: "left", lane: "cpu", start: 0.02, end: 0.12, label: "left", tip: { title: "Left" } },
       { id: "mid", lane: "cpu", start: 0.45, end: 0.55, label: "mid", tip: { title: "Mid" } },
       { id: "right", lane: "cpu", start: 0.9, end: 0.99, label: "right", tip: { title: "Right" } },
+      { id: "quarter", lane: "cpu", start: 0.2, end: 0.3, label: "quarter", tip: { title: "Q" } },
+      { id: "threequarter", lane: "cpu", start: 0.7, end: 0.8, label: "threequarter", tip: { title: "TQ" } },
     ];
     const root = mountRibbon({ window: null, segments });
     const anchorOf = async (id: string): Promise<string | null> => {
@@ -958,6 +1005,9 @@ describe("HkRangeRibbon tip card", () => {
     expect(await anchorOf("left"), "near the track start").toBe("start"); // center 7%
     expect(await anchorOf("mid"), "mid-track").toBe("middle"); // center 50%
     expect(await anchorOf("right"), "near the track end").toBe("end"); // center 94.5%
+    // The thresholds are exclusive: exactly 25% / 75% still centres.
+    expect(await anchorOf("quarter"), "exactly 25%").toBe("middle");
+    expect(await anchorOf("threequarter"), "exactly 75%").toBe("middle");
   });
 });
 

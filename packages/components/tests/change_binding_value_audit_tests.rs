@@ -13,21 +13,36 @@
 //!     the element's `value` attribute) and says nothing about the click; a
 //!     handler that forwards it writes junk into host state.
 //!   * a file input's `value` is the browser FAKE PATH (`C:\fakepath\a.png`),
-//!     never a name a host can open — it must be reduced to its leaf name, and
-//!     the `FileList` behind it is not on the wire at all.
+//!     never a name a host can open, and it is ONE path even for a `multiple`
+//!     input — so it must be reduced to a leaf name, never split on `,`.
 //!   * a cleared extension control really does commit `""`, so a "reject empty"
 //!     guard that was honest on the value-blind wire now swallows a user action.
 //!
-//! Every binding must be registered in [`BINDINGS`] with the control it renders
-//! and how its handler treats the committed value. Adding a binding, deleting
-//! one, or changing whether a handler reads the value without updating the
-//! registry is a failure — and each row states when it can be deleted.
+//! The guard has two halves, and both are needed:
+//!
+//!   1. **Inventory.** Every binding must be registered in [`BINDINGS`] with the
+//!      control it renders and how its handler treats the committed value.
+//!      Adding a binding, deleting one, or changing whether a handler reads the
+//!      value without updating the registry is a failure; each row also states
+//!      when it can be deleted.
+//!   2. **Completeness.** The registry is only as good as the parser that fills
+//!      it, so a lexical pass counts every `onchange` in an attribute position —
+//!      in code AND in the `"onchange":` string spelling — after stripping
+//!      comments and string literals. Any spelling the parser does not
+//!      understand makes the two counts disagree, which is a failure: a shape
+//!      the audit cannot see must not be silently invisible.
 //!
 //! The registry is the inventory: at the time of writing there are **16**
-//! `onchange:` attribute bindings. The "17" that #1042's follow-up counted was
-//! a substring `rg`, which also matched `entry/number_input.rs`'s
+//! `onchange:` attribute bindings. The "17" that #1042's follow-up counted was a
+//! substring `rg`, which also matched `entry/number_input.rs`'s
 //! `pub onchange: Option<EventHandler<f64>>` PROP declaration — an API field,
-//! not a wire binding, so it is deliberately not a row here.
+//! not a wire binding. That one occurrence is the [`NON_BINDING_OCCURRENCES`]
+//! list, with its reason.
+//!
+//! One comment in this file is a pin, not decoration: a gate must be a ROUTE in
+//! code, so every scan below runs on a view of the source with comments and
+//! string literals blanked. A `//` note, a `/* … */` block, or a string that
+//! happens to spell `.value` cannot satisfy (or trip) anything.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -63,7 +78,7 @@ enum ValueUse {
     Ignored,
     /// The value is parsed/validated and only an accepted value is emitted.
     Parsed(&'static str),
-    /// The value is reduced to file leaf names before it crosses the boundary.
+    /// The value is reduced to a file leaf name before it crosses the boundary.
     LeafNames(&'static str),
     /// The value IS the model and is passed through verbatim.
     Verbatim(&'static str),
@@ -143,10 +158,11 @@ const BINDINGS: &[Binding] = &[
         label: "hidden native file input",
         control: Control::File,
         value_use: ValueUse::LeafNames("picked_files_from_change_value"),
-        retire_when: "Delete the leaf-name indirection when the glue exposes the \
-                      input's `FileList` (a `get-files` member on \
-                      `html-input-element`); the value is then a real name list \
-                      and the fake-path reduction becomes dead code.",
+        retire_when: "Delete the leaf-name indirection once `tairitsu-vdom` hands \
+                      a handler the file list. The glue already has it (`getFiles` \
+                      returns the live FileList handle; WIT \
+                      `html-input-element.get-files`), so the missing link is the \
+                      Rust event, not upstream work in the glue.",
     },
     Binding {
         file: "basic/file_upload.rs",
@@ -155,10 +171,11 @@ const BINDINGS: &[Binding] = &[
         label: "transparent native file input",
         control: Control::File,
         value_use: ValueUse::LeafNames("upload_leaf_names"),
-        retire_when: "Delete the leaf-name indirection when the glue exposes the \
-                      input's `FileList`: `multiple` currently reaches the handler \
-                      as one fake path, i.e. one name for an N-file pick, and the \
-                      real list removes that delta too.",
+        retire_when: "Delete the leaf-name indirection once `tairitsu-vdom` hands \
+                      a handler the file list: the wire's value is one fake path, \
+                      so a multi pick reports one name today. The glue already \
+                      returns the live FileList handle; the missing link is the \
+                      Rust event exposing it.",
     },
     Binding {
         file: "basic/radio_group.rs",
@@ -273,6 +290,15 @@ const BINDINGS: &[Binding] = &[
     },
 ];
 
+/// `onchange` occurrences that are NOT bindings, each with the reason it is
+/// allowed. This list is the only place a non-binding `onchange` may live, and
+/// every entry counts as one occurrence in the completeness check.
+const NON_BINDING_OCCURRENCES: &[(&str, &str)] = &[(
+    "entry/number_input.rs",
+    "the mirror's own `pub onchange: Option<EventHandler<f64>>` PROP declaration \
+     — an API field, not a wire binding",
+)];
+
 fn source_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("src")
@@ -299,22 +325,179 @@ fn rust_sources(dir: &Path, base: &Path, out: &mut Vec<(String, PathBuf)>) {
     }
 }
 
-fn is_doc_line(line: &str) -> bool {
-    line.trim_start().starts_with("//")
+/// A source file as two line-aligned views.
+///
+/// `code` blanks every comment **and** every string / char / raw-string
+/// literal; `plain` blanks only comments. Both keep line structure (and column
+/// widths), so a finding in either view points at the original line.
+///
+/// Why two: a gate or a read must only be found in `code` (a comment naming the
+/// helper is documentation, a string spelling `.value` is not a read), while an
+/// attribute name written as a string — `"onchange":` — only survives in
+/// `plain`, and it is exactly one of the spellings the parser must not miss.
+fn strip_prose(source: &str) -> (Vec<String>, Vec<String>) {
+    let chars: Vec<char> = source.chars().collect();
+    let count = chars.len();
+    let mut comment = vec![false; count];
+    let mut literal = vec![false; count];
+    let mut index = 0usize;
+    let blank = |mask: &mut Vec<bool>, from: usize, to: usize| {
+        for flag in mask.iter_mut().take(to.min(count)).skip(from) {
+            *flag = true;
+        }
+    };
+    while index < count {
+        let ch = chars[index];
+        // `//` to end of line.
+        if ch == '/' && chars.get(index + 1) == Some(&'/') {
+            let start = index;
+            while index < count && chars[index] != '\n' {
+                index += 1;
+            }
+            blank(&mut comment, start, index);
+            continue;
+        }
+        // `/* … */`, possibly across lines.
+        if ch == '/' && chars.get(index + 1) == Some(&'*') {
+            let start = index;
+            index += 2;
+            while index < count && !(chars[index] == '*' && chars.get(index + 1) == Some(&'/')) {
+                index += 1;
+            }
+            index = (index + 2).min(count);
+            blank(&mut comment, start, index);
+            continue;
+        }
+        // `r"…"`, `r#"…"#`, `r##"…"##` (only where `r` starts a token).
+        let after_ident =
+            index > 0 && (chars[index - 1].is_alphanumeric() || chars[index - 1] == '_');
+        if ch == 'r' && !after_ident {
+            let mut cursor = index + 1;
+            let mut hashes = 0usize;
+            while cursor < count && chars[cursor] == '#' {
+                hashes += 1;
+                cursor += 1;
+            }
+            if chars.get(cursor) == Some(&'"') {
+                let start = index;
+                cursor += 1;
+                while cursor < count {
+                    if chars[cursor] == '"' {
+                        let closed =
+                            (0..hashes).all(|offset| chars.get(cursor + 1 + offset) == Some(&'#'));
+                        if closed {
+                            cursor += 1 + hashes;
+                            break;
+                        }
+                    }
+                    cursor += 1;
+                }
+                index = cursor;
+                blank(&mut literal, start, index);
+                continue;
+            }
+        }
+        // `"…"` with escapes.
+        if ch == '"' {
+            let start = index;
+            index += 1;
+            while index < count {
+                if chars[index] == '\\' {
+                    index += 2;
+                    continue;
+                }
+                if chars[index] == '"' {
+                    index += 1;
+                    break;
+                }
+                index += 1;
+            }
+            blank(&mut literal, start, index);
+            continue;
+        }
+        // `'x'` / `'\x'` is a char literal; a bare `'` (a lifetime) is code.
+        if ch == '\'' {
+            if chars.get(index + 2) == Some(&'\'') && chars.get(index + 1) != Some(&'\\') {
+                blank(&mut literal, index, index + 3);
+                index += 3;
+                continue;
+            }
+            if chars.get(index + 1) == Some(&'\\') && chars.get(index + 3) == Some(&'\'') {
+                blank(&mut literal, index, index + 4);
+                index += 4;
+                continue;
+            }
+        }
+        index += 1;
+    }
+
+    let mut code_lines: Vec<String> = Vec::new();
+    let mut plain_lines: Vec<String> = Vec::new();
+    let mut code = String::new();
+    let mut plain = String::new();
+    for (at, &ch) in chars.iter().enumerate() {
+        if ch == '\n' {
+            code_lines.push(std::mem::take(&mut code));
+            plain_lines.push(std::mem::take(&mut plain));
+            continue;
+        }
+        if comment[at] {
+            code.push(' ');
+            plain.push(' ');
+        } else if literal[at] {
+            code.push(' ');
+            plain.push(ch);
+        } else {
+            code.push(ch);
+            plain.push(ch);
+        }
+    }
+    code_lines.push(code);
+    plain_lines.push(plain);
+    (code_lines, plain_lines)
+}
+
+/// 1-based lines where `needle` sits in an **attribute position**: not part of a
+/// longer identifier, not a field access (`props.onchange`), and followed by `:`
+/// (the ordinary spelling) or `,` (the shorthand `onchange,` = `onchange: onchange`).
+fn attribute_occurrences(code: &str, needle: &str) -> Vec<usize> {
+    let mut lines = Vec::new();
+    for (at, _) in code.match_indices(needle) {
+        let before = code[..at].chars().next_back();
+        if before.is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '.') {
+            continue;
+        }
+        let rest = code[at + needle.len()..].trim_start();
+        if matches!(rest.chars().next(), Some(':') | Some(',')) {
+            lines.push(code[..at].matches('\n').count() + 1);
+        }
+    }
+    lines
+}
+
+/// 1-based lines where an attribute name is written as a **string literal**
+/// (`"onchange": …`) — the spelling that lives in `plain`, not in `code`.
+fn quoted_attribute_occurrences(plain: &str, name: &str) -> Vec<usize> {
+    let needle = format!("\"{name}\"");
+    let mut lines = Vec::new();
+    for (at, _) in plain.match_indices(&needle) {
+        let rest = plain[at + needle.len()..].trim_start();
+        if rest.starts_with(':') {
+            lines.push(plain[..at].matches('\n').count() + 1);
+        }
+    }
+    lines
 }
 
 /// The handler expression on an `onchange:` binding line, or `None` when the
-/// line is not a binding. Prose is excluded: the file headers discuss these very
-/// shapes, and would otherwise register as inventory.
+/// line is not a binding. Run on `code`, so a trailing comment or a string is
+/// already blank and cannot leak into the key.
 fn binding_handler(line: &str) -> Option<String> {
-    if is_doc_line(line) {
-        return None;
-    }
-    let trimmed = line.trim_start();
-    let rest = trimmed.strip_prefix("onchange")?;
-    let mut rest = rest.trim_start();
-    rest = rest.strip_prefix(':')?.trim_start();
-    Some(rest.trim_end_matches(',').trim_end().to_string())
+    let rest = line.trim_start().strip_prefix("onchange")?;
+    let rest = rest.trim_start().strip_prefix(':')?.trim_start();
+    // `trim_end` first: a stripped trailing comment leaves spaces after the
+    // comma, so the order matters for `onchange: handler, // note`.
+    Some(rest.trim_end().trim_end_matches(',').trim_end().to_string())
 }
 
 /// The top-level `pub fn NAME` a line sits under — the component, not the
@@ -377,28 +560,37 @@ fn handler_region(lines: &[&str], index: usize, handler: &str) -> Option<(usize,
         .map(|end| (def, end))
 }
 
-/// How many lines of the handler read the committed value. Doc lines are prose,
-/// so a comment that explains the read is not a read.
+/// How many code lines of the handler read the committed value.
 fn reads_committed_value(lines: &[&str], region: (usize, usize)) -> usize {
     lines[region.0..=region.1]
         .iter()
-        .filter(|line| !is_doc_line(line))
         .filter(|line| line.contains(".value"))
         .count()
 }
 
-/// Does the handler's CODE route the value through `gate`? Doc lines are
-/// skipped on purpose: a comment that names the helper is documentation, and a
-/// pin satisfied by prose is the "pins a string, not the behaviour" false green
-/// this guard has to avoid.
+/// Does the handler's CODE route the value through `gate`?
 fn routes_through(lines: &[&str], region: (usize, usize), gate: &str) -> bool {
     lines[region.0..=region.1]
         .iter()
-        .filter(|line| !is_doc_line(line))
         .any(|line| line.contains(gate))
 }
 
-/// One `onchange:` binding found in the tree.
+/// Patterns a handler of this disposition must NOT contain.
+///
+/// A gate has to be a ROUTE, not a mention: calling the reducer and then
+/// emitting the raw value beside it would still satisfy a substring check, so
+/// the reducer's own parsing steps are forbidden in a handler that claims to
+/// use it.
+fn forbidden_for(value_use: ValueUse) -> &'static [&'static str] {
+    match value_use {
+        // The reducer owns the parsing; `split` in the handler means the raw
+        // value is being cut up beside it (and a comma is legal in a name).
+        ValueUse::LeafNames(_) => &["split"],
+        ValueUse::Parsed(_) | ValueUse::Verbatim(_) | ValueUse::Ignored => &[],
+    }
+}
+
+/// The key of a registered binding: file, component fn, handler expression.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone)]
 struct Found {
     file: String,
@@ -412,27 +604,47 @@ impl std::fmt::Display for Found {
     }
 }
 
-fn extract(files: &[(String, PathBuf)]) -> Vec<(Found, Vec<String>)> {
+/// One `onchange` occurrence in the tree, with the line it sits on.
+///
+/// The line is the occurrence identity: two bindings can share a
+/// `(file, site, handler)` key — `data/table.rs` has exactly that shape — and a
+/// lookup by key alone would audit the first one twice while never looking at
+/// the second.
+struct Extracted {
+    found: Found,
+    /// 0-based line index of the binding.
+    line: usize,
+    /// The original lines, for human-readable failure messages.
+    lines: Vec<String>,
+    /// The same lines with comments and literals blanked — the only text the
+    /// scans are allowed to trust.
+    code: Vec<String>,
+}
+
+fn extract(files: &[(String, PathBuf)]) -> Vec<Extracted> {
     let mut found = Vec::new();
     for (rel, path) in files {
         let source = std::fs::read_to_string(path)
             .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
-        let lines: Vec<&str> = source.lines().collect();
-        for (index, line) in lines.iter().enumerate() {
+        let (code_lines, _) = strip_prose(&source);
+        let code: Vec<&str> = code_lines.iter().map(String::as_str).collect();
+        for (index, line) in code.iter().enumerate() {
             let Some(handler) = binding_handler(line) else {
                 continue;
             };
-            let site = enclosing_site(&lines, index).unwrap_or_else(|| {
+            let site = enclosing_site(&code, index).unwrap_or_else(|| {
                 panic!("{rel}:{} binds `onchange` outside any `pub fn` — the audit cannot name the component", index + 1)
             });
-            found.push((
-                Found {
+            found.push(Extracted {
+                found: Found {
                     file: rel.clone(),
                     site,
                     handler,
                 },
-                lines.iter().map(|line| line.to_string()).collect(),
-            ));
+                line: index,
+                lines: source.lines().map(str::to_string).collect(),
+                code: code_lines.clone(),
+            });
         }
     }
     found
@@ -452,15 +664,20 @@ fn registered_multiset() -> BTreeMap<Found, usize> {
     registered
 }
 
-fn binding_for(found: &Found) -> &'static Binding {
-    BINDINGS
-        .iter()
-        .find(|binding| {
-            binding.file == found.file
-                && binding.site == found.site
-                && binding.handler == found.handler
+/// Registry rows grouped by their key, in declaration order. Rows sharing a key
+/// are consumed one per occurrence, so a duplicated key audits both sites.
+fn rows_by_key() -> BTreeMap<Found, Vec<&'static Binding>> {
+    let mut rows: BTreeMap<Found, Vec<&'static Binding>> = BTreeMap::new();
+    for binding in BINDINGS {
+        rows.entry(Found {
+            file: binding.file.to_string(),
+            site: binding.site.to_string(),
+            handler: binding.handler.to_string(),
         })
-        .unwrap_or_else(|| panic!("no registry row for {found}"))
+        .or_default()
+        .push(binding);
+    }
+    rows
 }
 
 /// Compare what the tree actually binds against what the registry claims.
@@ -521,8 +738,8 @@ fn every_onchange_binding_is_registered_and_every_row_is_real() {
     );
 
     let mut found: BTreeMap<Found, usize> = BTreeMap::new();
-    for (binding, _) in extract(&files) {
-        *found.entry(binding).or_insert(0) += 1;
+    for extracted in extract(&files) {
+        *found.entry(extracted.found).or_insert(0) += 1;
     }
     let registered = registered_multiset();
 
@@ -542,29 +759,114 @@ fn every_onchange_binding_is_registered_and_every_row_is_real() {
 }
 
 #[test]
+fn no_onchange_spelling_escapes_the_inventory() {
+    // The registry is only as good as the parser that fills it. Count every
+    // `onchange` in an attribute position — the canonical `onchange:` form, the
+    // `"onchange":` string spelling, a whole element on one line, and the
+    // `onchange,` shorthand — after blanking comments and literals, and require
+    // the count to equal the parsed bindings plus the registered non-binding
+    // occurrences. A spelling the parser does not know makes the two disagree,
+    // so "I wrote it in a shape the guard cannot see" fails instead of passing.
+    let base = source_root();
+    let mut files = Vec::new();
+    rust_sources(&base, &base, &mut files);
+    files.sort();
+
+    let extracted = extract(&files);
+    let mut parsed_per_file: BTreeMap<&str, usize> = BTreeMap::new();
+    for item in &extracted {
+        *parsed_per_file.entry(item.found.file.as_str()).or_insert(0) += 1;
+    }
+
+    let mut problems: Vec<String> = Vec::new();
+    let mut total_seen = 0usize;
+    let mut total_parsed = 0usize;
+    for (rel, path) in &files {
+        let source = std::fs::read_to_string(path)
+            .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
+        let (code, plain) = strip_prose(&source);
+        let code = code.join("\n");
+        let plain = plain.join("\n");
+        let mut seen = attribute_occurrences(&code, "onchange");
+        seen.extend(quoted_attribute_occurrences(&plain, "onchange"));
+        seen.sort_unstable();
+
+        let parsed = parsed_per_file.get(rel.as_str()).copied().unwrap_or(0);
+        let allowed = NON_BINDING_OCCURRENCES
+            .iter()
+            .filter(|(file, _)| file == rel)
+            .count();
+        total_seen += seen.len();
+        total_parsed += parsed;
+        if seen.len() != parsed + allowed {
+            let seen_count = seen.len();
+            problems.push(format!(
+                "  {rel}: {seen_count} `onchange` occurrence(s) at line(s) {seen:?} but {parsed} \
+                 registered binding(s) + {allowed} declared non-binding occurrence(s). \
+                 A shape this audit does not parse is invisible to it \u{2014} write the \
+                 canonical `onchange: handler,` form, or extend the parser and register \
+                 the row.",
+            ));
+        }
+    }
+
+    assert!(
+        problems.is_empty(),
+        "\n{} `onchange` occurrence(s) outside the inventory:\n\n{}\n\n\
+         (Parsed bindings: {}, declared non-binding occurrences: {}.)\n",
+        problems.len(),
+        problems.join("\n"),
+        total_parsed,
+        total_seen - total_parsed
+    );
+}
+
+#[test]
 fn every_registered_binding_reads_the_value_the_way_it_claims() {
     let base = source_root();
     let mut files = Vec::new();
     rust_sources(&base, &base, &mut files);
     files.sort();
 
+    // Every occurrence is paired with its own registry row: a key can repeat
+    // (two checkboxes in the same component), and consuming rows in occurrence
+    // order is what stops the second site from being audited as the first.
+    let rows = rows_by_key();
+    let mut used: BTreeMap<Found, usize> = BTreeMap::new();
+    let mut audited: BTreeMap<(String, usize), String> = BTreeMap::new();
     let mut checked = 0usize;
-    for (found, lines) in extract(&files) {
-        let binding = binding_for(&found);
-        let lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-        let index = lines
-            .iter()
-            .enumerate()
-            .find(|(i, line)| {
-                binding_handler(line).is_some_and(|handler| {
-                    handler == found.handler
-                        && enclosing_site(&lines, *i).as_deref() == Some(found.site.as_str())
-                })
-            })
-            .map(|(i, _)| i)
-            .unwrap_or_else(|| panic!("{}: no line matches the registered key", found.file));
+    for extracted in extract(&files) {
+        let found = &extracted.found;
+        let same_key = rows
+            .get(found)
+            .unwrap_or_else(|| panic!("no registry row for {found}"));
+        let slot = used.entry(found.clone()).or_insert(0);
+        let binding = *same_key.get(*slot).unwrap_or_else(|| {
+            panic!(
+                "{}:{}: more `onchange` occurrences ({}) than registry rows ({}) for this \
+                 key — add a row for the new site",
+                found.file,
+                extracted.line + 1,
+                *slot + 1,
+                same_key.len()
+            )
+        });
+        *slot += 1;
+        let code: Vec<&str> = extracted.code.iter().map(String::as_str).collect();
+        let index = extracted.line;
+        if let Some(previous) =
+            audited.insert((found.file.clone(), index), binding.label.to_string())
+        {
+            panic!(
+                "{}:{}: audited twice (as `{previous}` and `{}`) — each occurrence must \
+                 map to its own row",
+                found.file,
+                index + 1,
+                binding.label
+            );
+        }
 
-        let region = handler_region(&lines, index, &found.handler).unwrap_or_else(|| {
+        let region = handler_region(&code, index, &found.handler).unwrap_or_else(|| {
             panic!(
                 "{}:{}: the handler body for `{}` could not be delimited — the audit \
                  cannot prove what it does with `ChangeEvent.value`, so it must fail \
@@ -574,8 +876,8 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
                 found.handler
             )
         });
-        let reads = reads_committed_value(&lines, region);
-        let body = lines[region.0..=region.1].join("\n");
+        let reads = reads_committed_value(&code, region);
+        let body = extracted.lines[region.0..=region.1].join("\n");
 
         match binding.value_use {
             ValueUse::Ignored => {
@@ -583,7 +885,7 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
                     reads,
                     0,
                     "{} ({}): the registry says the handler ignores the committed \
-                     value, but its body reads `.value` (lines {}-{}):\n{body}\n\
+                     value, but its code reads `.value` (lines {}-{}):\n{body}\n\
                      A {}'s DOM `value` is not the user's action — recompute the \
                      state from props (ledger L127).",
                     found.file,
@@ -605,7 +907,7 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
                 assert!(
                     reads > 0,
                     "{} ({}): the registry says the handler consumes the committed \
-                     value, but nothing in its body (lines {}-{}) reads `.value`: \
+                     value, but nothing in its code (lines {}-{}) reads `.value`: \
                      it has gone value-blind and the control is inert.\n{body}",
                     found.file,
                     binding.label,
@@ -613,7 +915,7 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
                     region.1 + 1
                 );
                 assert!(
-                    routes_through(&lines, region, gate),
+                    routes_through(&code, region, gate),
                     "{} ({}): the committed value must go through `{gate}` in the \
                      handler's CODE (a comment naming it does not count), which is \
                      missing from lines {}-{}:\n{body}",
@@ -622,6 +924,18 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
                     region.0 + 1,
                     region.1 + 1
                 );
+                for forbidden in forbidden_for(binding.value_use) {
+                    assert!(
+                        !routes_through(&code, region, forbidden),
+                        "{} ({}): the handler routes through `{gate}` but still \
+                         contains `{forbidden}` — the gate has to own the parsing, \
+                         otherwise the raw value is emitted beside it (lines {}-{}):\n{body}",
+                        found.file,
+                        binding.label,
+                        region.0 + 1,
+                        region.1 + 1
+                    );
+                }
             }
         }
 
@@ -644,7 +958,7 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
             Control::File => assert!(
                 matches!(binding.value_use, ValueUse::LeafNames(_)),
                 "{} ({}): a file input's committed value is the browser fake path; \
-                 the handler must reduce it to leaf names.",
+                 the handler must reduce it to a leaf name.",
                 found.file,
                 binding.label
             ),
@@ -657,16 +971,104 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
         BINDINGS.len(),
         "every registry row must be checked against the source"
     );
+    assert_eq!(
+        audited.len(),
+        checked,
+        "each audited occurrence must be a distinct line: {} rows vs {} distinct sites",
+        checked,
+        audited.len()
+    );
+    for (key, same_key) in &rows {
+        assert_eq!(
+            used.get(key).copied().unwrap_or(0),
+            same_key.len(),
+            "{key}: {} registry row(s) never matched an occurrence — a duplicated key \
+             must have one row per site",
+            same_key.len() - used.get(key).copied().unwrap_or(0)
+        );
+    }
+}
+
+#[test]
+fn duplicate_keys_are_audited_once_per_occurrence() {
+    // `data/table.rs` has two `onchange:` bindings with the SAME
+    // (file, component, handler) key. Looking a row up by that triple and
+    // taking the first match would audit the header checkbox twice and never
+    // look at the row checkbox, so the pairing is pinned here: each occurrence
+    // must land on its own line and consume its own row.
+    let base = source_root();
+    let mut files = Vec::new();
+    rust_sources(&base, &base, &mut files);
+    files.sort();
+
+    let rows = rows_by_key();
+    let mut used: BTreeMap<Found, usize> = BTreeMap::new();
+    let mut lines_seen: BTreeMap<(String, usize), ()> = BTreeMap::new();
+    for extracted in extract(&files) {
+        let same_key = rows
+            .get(&extracted.found)
+            .unwrap_or_else(|| panic!("no registry row for {}", extracted.found));
+        let slot = used.entry(extracted.found.clone()).or_insert(0);
+        let _binding = same_key.get(*slot).unwrap_or_else(|| {
+            panic!(
+                "{}:{}: occurrence {} has no registry row",
+                extracted.found.file,
+                extracted.line + 1,
+                *slot + 1
+            )
+        });
+        *slot += 1;
+        assert!(
+            lines_seen
+                .insert((extracted.found.file.clone(), extracted.line), ())
+                .is_none(),
+            "{}:{}: the same line was paired twice",
+            extracted.found.file,
+            extracted.line + 1
+        );
+    }
+
+    for (key, same_key) in &rows {
+        assert_eq!(
+            used.get(key).copied().unwrap_or(0),
+            same_key.len(),
+            "{}: {} row(s) never matched an occurrence",
+            key,
+            same_key.len() - used.get(key).copied().unwrap_or(0)
+        );
+    }
+
+    // The duplicated key is the live sample: it must resolve to two DISTINCT
+    // lines in the same file, one per row.
+    let table_lines: Vec<usize> = lines_seen
+        .keys()
+        .filter(|(file, _)| file == "data/table.rs")
+        .map(|(_, line)| *line)
+        .collect();
+    assert_eq!(
+        table_lines.len(),
+        2,
+        "the two table checkboxes must be two audited sites, got {table_lines:?}"
+    );
+    assert_ne!(
+        table_lines[0], table_lines[1],
+        "the two table checkboxes must be different lines"
+    );
 }
 
 #[test]
 fn every_row_states_when_it_can_be_deleted() {
     for binding in BINDINGS {
+        let text = binding.retire_when.trim();
+        let words = text.split_whitespace().count();
         assert!(
-            binding.retire_when.len() > 60,
-            "{} ({}): `retire_when` must say concretely when the row goes away: {:?}",
+            text.len() > 60 && words >= 12,
+            "{} ({}): `retire_when` must be a real sentence about when the row goes \
+             away (trimmed length > 60, at least 12 words; got {} chars / {words} \
+             words): {:?}",
             binding.file,
             binding.label,
+            text.len(),
             binding.retire_when
         );
         assert!(
@@ -685,49 +1087,79 @@ fn every_row_states_when_it_can_be_deleted() {
 }
 
 #[test]
-fn the_extractor_sees_the_shapes_and_ignores_prose() {
-    // Positive controls: the binding shapes the audit must catch.
+fn the_lexical_scan_sees_every_spelling_and_ignores_prose() {
+    // The four spellings the reference count must catch. Three of them are
+    // shapes the line-start parser does NOT see, which is exactly why the
+    // completeness check exists rather than another regex in the parser.
+    let canonical = "input {\n    onchange: on_change,\n}\n";
     assert_eq!(
-        binding_handler("                    onchange: on_change,"),
-        Some("on_change".to_string())
-    );
-    assert_eq!(
-        binding_handler("                onchange: handle_change,"),
-        Some("handle_change".to_string())
-    );
-    assert_eq!(
-        binding_handler("onchange: move |_event: ChangeEvent| {"),
-        Some("move |_event: ChangeEvent| {".to_string())
-    );
-    assert_eq!(
-        binding_handler("    onchange:on_native_change,"),
-        Some("on_native_change".to_string())
+        attribute_occurrences(&strip_prose(canonical).0.join("\n"), "onchange"),
+        vec![2]
     );
 
-    // Negative controls: prose and other attributes are not inventory.
+    let one_line = "    input { type: \"file\", onchange: on_change, multiple: true }\n";
     assert_eq!(
-        binding_handler("//   * `input.hk-switch-input` type=checkbox [checked] (onchange)"),
-        None
-    );
-    assert_eq!(binding_handler("// onchange: on_change,"), None);
-    assert_eq!(binding_handler("oninput: on_field_input,"), None);
-    assert_eq!(
-        binding_handler("pub onchange: Option<EventHandler<f64>>,"),
-        None
+        attribute_occurrences(&strip_prose(one_line).0.join("\n"), "onchange"),
+        vec![1]
     );
 
-    // The site is the component, not the closure or the loop.
-    let lines = [
-        "pub fn Table(props: TableProps) -> Element {",
-        "        for row in rows {",
-        "            input {",
-        "                onchange: handle,",
-        "            }",
-        "        }",
-    ];
-    assert_eq!(enclosing_site(&lines, 3).as_deref(), Some("Table"));
+    let shorthand = "    input {\n        onchange,\n    }\n";
+    assert_eq!(
+        attribute_occurrences(&strip_prose(shorthand).0.join("\n"), "onchange"),
+        vec![2]
+    );
 
-    // The region closes on the handler's own closing brace, not an inner block.
+    let quoted = "    input {\n        \"onchange\": move |e: ChangeEvent| {},\n    }\n";
+    let (code, plain) = strip_prose(quoted);
+    assert!(
+        attribute_occurrences(&code.join("\n"), "onchange").is_empty(),
+        "the string spelling lives in `plain`, not in `code`"
+    );
+    assert_eq!(
+        quoted_attribute_occurrences(&plain.join("\n"), "onchange"),
+        vec![2]
+    );
+
+    // Prose and lookalikes are not occurrences: a line comment, a block comment
+    // (one line and across lines), a string that spells the name WITHOUT being
+    // an attribute, a field access, and a longer identifier.
+    let prose = "    // onchange: on_change,\n    /* onchange, */\n    /*\n     * onchange:\n     */\n    let s = \"onchange\";\n    props.onchange;\n    let durationchange = 1;\n";
+    let (code, plain) = strip_prose(prose);
+    assert!(
+        attribute_occurrences(&code.join("\n"), "onchange").is_empty(),
+        "comments, strings and field accesses are not occurrences"
+    );
+    assert!(
+        quoted_attribute_occurrences(&plain.join("\n"), "onchange").is_empty(),
+        "a string literal that is not followed by `:` is not an attribute name"
+    );
+
+    // A binding whose line ends in a comment still parses, and the comment must
+    // not leak into the handler key (a stripped line keeps the comment's spaces,
+    // so the comma is not the last character any more).
+    let with_note = "    onchange: handle_change, // the commit channel\n";
+    let (code, _) = strip_prose(with_note);
+    assert_eq!(binding_handler(&code[0]), Some("handle_change".to_string()));
+
+    // A string that CONTAINS comment markers must not swallow the code after it.
+    let tricky = "    let url = \"http://example.com/a\";\n    onchange: on_change,\n";
+    assert_eq!(
+        attribute_occurrences(&strip_prose(tricky).0.join("\n"), "onchange"),
+        vec![2]
+    );
+
+    // A raw string with `#` delimiters keeps its quotes from desyncing the scan.
+    let raw = "    let css = r#\"content: \"x\"\"#;\n    onchange: on_change,\n";
+    assert_eq!(
+        attribute_occurrences(&strip_prose(raw).0.join("\n"), "onchange"),
+        vec![2]
+    );
+}
+
+#[test]
+fn the_region_and_gate_scans_follow_code_not_prose() {
+    // The handler body is delimited by a `}` at the opening indentation — an
+    // inner block's `}` must not close it early.
     let inline = [
         "            onchange: move |_event: ChangeEvent| {",
         "                if x {",
@@ -750,38 +1182,99 @@ fn the_extractor_sees_the_shapes_and_ignores_prose() {
         "    input { onchange: on_change }",
         "            onchange: on_change,",
     ];
-    let region = handler_region(&named[..], 7, "on_change").expect("named handler region");
-    assert_eq!(region, (0, 5));
+    assert_eq!(handler_region(&named[..], 7, "on_change"), Some((0, 5)));
 
-    // The read counter follows code, not documentation.
-    let reads = [
-        "    let on_change = {",
-        "        // event.value is a fake path",
-        "        use(&e.value);",
-        "    };",
-    ];
-    assert_eq!(reads_committed_value(&reads[..], (0, 3)), 1);
-
-    // A gate satisfied only by a comment is NOT a gate: that is the false green
-    // this pin exists to prevent (the helper being named in prose while the
-    // handler emits the raw value).
+    // Prose has three spellings and none of them is a gate.
     let prose_only = [
         "    let on_change = move |e: ChangeEvent| {",
         "        // `upload_leaf_names` would reduce this, but we skip it",
         "        let names: Vec<String> = e.value.split(',').map(String::from).collect();",
         "    };",
     ];
-    assert!(!routes_through(
-        &prose_only[..],
-        (0, 3),
-        "upload_leaf_names"
-    ));
-    let real = [
+    let (code, _) = strip_prose(&prose_only.join("\n"));
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert!(!routes_through(&code, (0, 3), "upload_leaf_names"));
+
+    let block_inline = [
         "    let on_change = move |e: ChangeEvent| {",
-        "        let names = upload_leaf_names(&e.value, multiple);",
+        "        /* upload_leaf_names would reduce this */",
+        "        handler.call(e.value);",
         "    };",
     ];
-    assert!(routes_through(&real[..], (0, 2), "upload_leaf_names"));
+    let (code, _) = strip_prose(&block_inline.join("\n"));
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert!(
+        !routes_through(&code, (0, 3), "upload_leaf_names"),
+        "a one-line block comment must not satisfy a gate"
+    );
+
+    let block_multi = [
+        "    let on_change = move |e: ChangeEvent| {",
+        "        /*",
+        "         * upload_leaf_names",
+        "         */",
+        "        handler.call(e.value);",
+        "    };",
+    ];
+    let (code, _) = strip_prose(&block_multi.join("\n"));
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert!(
+        !routes_through(&code, (0, 5), "upload_leaf_names"),
+        "a multi-line block comment must not satisfy a gate"
+    );
+
+    let trailing = [
+        "    let on_change = move |e: ChangeEvent| {",
+        "        handler.call(e.value); // upload_leaf_names would be right",
+        "    };",
+    ];
+    let (code, _) = strip_prose(&trailing.join("\n"));
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert!(
+        !routes_through(&code, (0, 2), "upload_leaf_names"),
+        "a trailing line comment must not satisfy a gate"
+    );
+
+    // A gate that is only MENTIONED is not a route: the reducer is called and
+    // the value is still cut up beside it, which the forbidden pattern catches.
+    let mention_only = [
+        "    let on_change = move |e: ChangeEvent| {",
+        "        let _ = upload_leaf_names(&e.value);",
+        "        let names: Vec<String> = e.value.split(',').map(String::from).collect();",
+        "    };",
+    ];
+    let (code, _) = strip_prose(&mention_only.join("\n"));
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert!(routes_through(&code, (0, 3), "upload_leaf_names"));
+    assert!(
+        forbidden_for(ValueUse::LeafNames("upload_leaf_names"))
+            .iter()
+            .any(|pattern| routes_through(&code, (0, 3), pattern)),
+        "a handler that splits beside the reducer must hit a forbidden pattern"
+    );
+    assert!(forbidden_for(ValueUse::Ignored).is_empty());
+
+    // A string that spells `.value` is not a read; a real read is.
+    let stringy = [
+        "    let on_change = move |e: ChangeEvent| {",
+        "        let _ = \".value\";",
+        "    };",
+    ];
+    let (code, _) = strip_prose(&stringy.join("\n"));
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert_eq!(
+        reads_committed_value(&code, (0, 2)),
+        0,
+        "a string literal spelling `.value` is not a read"
+    );
+    let real = [
+        "    let on_change = move |e: ChangeEvent| {",
+        "        handler.call(e.value);",
+        "    };",
+    ];
+    let (code, _) = strip_prose(&real.join("\n"));
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert_eq!(reads_committed_value(&code, (0, 2)), 1);
 }
 
 #[test]

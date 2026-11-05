@@ -64,9 +64,12 @@
 //   * the native `<input type="file">` stays (local mode) for hosts that do
 //     drive it, but a `change` event reaches Rust as the browser's fake path
 //     string only, so [`picked_files_from_change_value`] recovers the leaf
-//     names from it (`C:\fakepath\a.csv` → `a.csv`) and drops the size/path
-//     it cannot see. Vue reads `input.files` instead; `EventData` here has no
-//     DOM file list.
+//     name from it (`C:\fakepath\a.csv` → `a.csv`) and drops the size/path it
+//     cannot see. Vue reads `input.files` instead. The GLUE already ships that
+//     (`getFiles` returns the live FileList handle; WIT
+//     `html-input-element.get-files`), the gap is on the Rust side:
+//     `tairitsu-vdom`'s `ChangeEvent` carries `value` and an opaque `target`
+//     handle but no FileList accessor, so a handler cannot reach it yet.
 //   * Vue's `useId()` has no tairitsu analogue: the caption's `for` is
 //     emitted only when the caller passes `id` (the same rule the Input
 //     mirror documents).
@@ -188,37 +191,40 @@ pub fn file_field_placeholder(
     }
 }
 
-/// Recover the leaf names from a native `<input type="file">` change value.
-/// The browser hands over a fake path (`C:\fakepath\a.csv` / `a.csv`), and a
-/// `multiple` input joins selections with `,` — this is the only file channel
-/// a `ChangeEvent` carries (see the header delta). `multiple: false` keeps
-/// the first entry only, exactly Vue's `files.slice(0, 1)`.
-pub fn picked_files_from_change_value(value: &str, multiple: bool) -> Vec<PickedFile> {
-    let mut files: Vec<PickedFile> = Vec::new();
-    for candidate in value.split(',') {
-        let candidate = candidate.trim();
-        if candidate.is_empty() {
-            continue;
-        }
-        let name = candidate
-            .rsplit(['/', '\\'])
-            .next()
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-        if name.is_empty() {
-            continue;
-        }
-        files.push(PickedFile {
-            name,
-            path: None,
-            size: None,
-        });
-        if !multiple {
-            break;
-        }
+/// Recover the leaf name from a native `<input type="file">` change value.
+///
+/// The browser hands over the input's `value`: its fake path
+/// (`C:\fakepath\a.csv`, or a bare name where the engine does not fake it).
+/// That string is the only file channel a `ChangeEvent` carries today — the
+/// event exposes `value` plus an opaque `target` handle, and this crate has no
+/// FileList accessor, so the glue's live `getFiles` is out of a handler's reach
+/// (see the header delta).
+///
+/// The value is ONE path even for a `multiple` input: the HTML spec makes
+/// `value` the FIRST selected file's name, not a list. Splitting on `,` would
+/// therefore corrupt a file legitimately named `report, final.pdf`, so the whole
+/// string is treated as one name and the result holds at most one entry. A
+/// multi pick reporting a single name is a documented delta, not a parse
+/// shortcut — reporting all of them needs the FileList, not a smarter split.
+pub fn picked_files_from_change_value(value: &str) -> Vec<PickedFile> {
+    let candidate = value.trim();
+    if candidate.is_empty() {
+        return Vec::new();
     }
-    files
+    let name = candidate
+        .rsplit(['/', '\\'])
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    if name.is_empty() {
+        return Vec::new();
+    }
+    vec![PickedFile {
+        name,
+        path: None,
+        size: None,
+    }]
 }
 
 /// Cap a drop / change selection like Vue's `multiple ? files : files[0]`.
@@ -338,7 +344,7 @@ pub fn FileField(props: FileFieldProps) -> Element {
         if disabled {
             return;
         }
-        let files = picked_files_from_change_value(&event.value, multiple);
+        let files = picked_files_from_change_value(&event.value);
         if files.is_empty() {
             return;
         }
@@ -531,26 +537,24 @@ mod tests {
 
     #[test]
     fn file_field_change_value_yields_leaf_names() {
-        assert!(picked_files_from_change_value("", false).is_empty());
+        assert!(picked_files_from_change_value("").is_empty());
         // The browser's fake path, both separators.
         assert_eq!(
-            picked_files_from_change_value("C:\\fakepath\\a.csv", false)[0].name,
+            picked_files_from_change_value("C:\\fakepath\\a.csv")[0].name,
             "a.csv"
         );
         assert_eq!(
-            picked_files_from_change_value("/tmp/reports/b.json", false)[0].name,
+            picked_files_from_change_value("/tmp/reports/b.json")[0].name,
             "b.json"
         );
-        // `multiple` inputs join the fake paths with commas; a single pick
-        // keeps only the first entry (Vue's `files.slice(0, 1)`).
-        let many = picked_files_from_change_value("/tmp/a.csv, /tmp/b.csv", true);
-        assert_eq!(many.len(), 2);
-        assert_eq!(many[1].name, "b.csv");
-        let one = picked_files_from_change_value("/tmp/a.csv, /tmp/b.csv", false);
-        assert_eq!(one.len(), 1);
-        assert_eq!(one[0].name, "a.csv");
-        // Nothing to recover from blank segments.
-        assert!(picked_files_from_change_value(" , ,", true).is_empty());
+        // A comma is part of the NAME, not a separator: `value` is one path even
+        // for a `multiple` input, so splitting on `,` would truncate the file to
+        // "report" and hand the host a name that does not exist.
+        let comma = picked_files_from_change_value("/tmp/report, final.pdf");
+        assert_eq!(comma.len(), 1);
+        assert_eq!(comma[0].name, "report, final.pdf");
+        // A path with no leaf name yields nothing.
+        assert!(picked_files_from_change_value("C:\\fakepath\\").is_empty());
     }
 
     #[test]

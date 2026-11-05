@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import { HkJsonTree, buildJsonTree, tryParseJson } from "./HkJsonTree";
@@ -14,12 +14,21 @@ function mountTree(props: Record<string, unknown>) {
   return container;
 }
 
+/** Past the fold's report window: the leave timer (duration + 60ms) has
+ *  fired and Vue has removed the leaving block, so "collapsed" really means
+ *  "gone from the DOM" again. */
+async function settleFold() {
+  await vi.advanceTimersByTimeAsync(400);
+  await nextTick();
+}
+
 afterEach(() => {
   for (const { app, container } of mounts) {
     app.unmount();
     container.remove();
   }
   mounts.length = 0;
+  vi.useRealTimers();
 });
 
 describe("tryParseJson", () => {
@@ -72,20 +81,26 @@ describe("HkJsonTree component", () => {
   });
 
   it("toggles containers open and closed on row clicks", async () => {
+    // The fold is animated, so a collapse leaves the block mounted for the
+    // transition window; settling it is what finally removes the rows.
+    vi.useFakeTimers();
     const el = mountTree({ text: '{"cfg":{"retries":2}}' });
     // Root + first-level children start expanded: the leaf row is visible.
     expect(el.querySelector(".s-jv-num")!.textContent).toBe("2");
-    // Collapse the root container.
+    // Collapse the root container: the preview row shows immediately, the
+    // children block is still animating out.
     const rootRow = el.querySelector('.s-jt-row[data-parent]')!;
     (rootRow as HTMLElement).click();
     await nextTick();
-    // Closed container shows the inline preview instead of children.
     expect(el.querySelector(".s-jt-preview")).not.toBeNull();
+    expect(el.querySelector(".s-jt-children")).not.toBeNull();
+    await settleFold();
     expect(el.querySelector(".s-jv-num")).toBeNull();
     // Re-open restores the child rows.
     (rootRow as HTMLElement).click();
     await nextTick();
     expect(el.querySelector(".s-jv-num")!.textContent).toBe("2");
+    await settleFold();
   });
 
   it("marks both collapsed summary shapes with the one-line clip hook", async () => {
@@ -108,6 +123,7 @@ describe("HkJsonTree component", () => {
   });
 
   it("collapses and re-expands long strings via row clicks", async () => {
+    vi.useFakeTimers();
     const long = Array.from({ length: 15 }, (_, i) => `line-${i}`).join("\n");
     const el = mountTree({ text: JSON.stringify({ log: long }) });
     // Direct children of the root start expanded: raw per-line rows show.
@@ -116,10 +132,12 @@ describe("HkJsonTree component", () => {
     const row = el.querySelectorAll(".s-jt-row[data-parent]")[1]!;
     (row as HTMLElement).click();
     await nextTick();
+    await settleFold();
     expect(el.querySelectorAll(".s-jv-str-raw")).toHaveLength(0);
     (row as HTMLElement).click();
     await nextTick();
     expect(el.querySelectorAll(".s-jv-str-raw")).toHaveLength(15);
+    await settleFold();
   });
 
   it("prefers the value prop over text", () => {

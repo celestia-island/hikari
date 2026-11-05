@@ -14,10 +14,10 @@
 //                      span.s-jt-key  span.s-jt-colon
 //                      span.s-jv-{null|bool|num|str}   span.s-jt-type
 //     collapsed:     div.s-jt-row[data-parent]  (style: padding-left)
-//                      span.s-jt-toggle[data-parent] > chevron
+//                      span.s-jt-toggle[data-parent] > icon.s-jt-chevron
 //                      span.s-jt-key  span.s-jt-colon
 //                      span.s-jt-indent  span.s-jt-preview
-//     expanded:      div.s-jt-group
+//     expanded:      div.s-jt-group[data-open]
 //                      div.s-jt-row[data-parent] … span.s-jt-badge.is-open
 //                      div.s-jt-children  (style: --guide-left)
 //                        …child rows
@@ -54,6 +54,15 @@
 //   * Every string reaching the DOM is a text node (tairitsu escapes text
 //     children), and no `dangerous_inner_html` host exists in this file —
 //     a JSON payload cannot inject markup.
+//   * Motion (2026-11-05): the sheet drives the chevron rotation from
+//     `data-open`, so the icon animates in BOTH forms; the height fold
+//     itself is Vue-only (tairitsu has no <Transition> hook machinery — see
+//     phase_transition.rs for the documented precedent), and Vue's collapsed
+//     node additionally wraps its row in `.s-jt-group` so its children
+//     <Transition> has a stable home. The Rust collapsed row stays ONE row:
+//     same classes, same sheet, final state only.
+//   * Selection: the sheet denies row text selection by default; the
+//     `selectable` prop mirrors Vue's deliberate opt-in (`s-jt-selectable`).
 
 // The parser/mirror branches keep Vue's nesting for readability; clippy's
 // collapsible-if rewrite makes the token loops harder to compare line by line.
@@ -613,6 +622,11 @@ pub struct JsonTreeProps {
     /// Accessible name for the tree role.
     pub aria_label: Option<String>,
 
+    /// Deliberate opt-in to row text selection (Vue `selectable`; the sheet
+    /// denies selection by default).
+    #[default]
+    pub selectable: bool,
+
     /// A parent row was clicked (its node id).
     pub on_toggle: Option<EventHandler<usize>>,
 
@@ -645,17 +659,19 @@ fn json_key_nodes(node: &JsonNode, children: &mut Vec<VNode>) {
     }
 }
 
-fn json_toggle_node(is_parent: bool, is_open: bool) -> VNode {
+fn json_toggle_node(is_parent: bool) -> VNode {
     let mut toggle = VElement::new("span").class("s-jt-toggle");
     if is_parent {
-        let icon = if is_open {
-            MdiIcon::ChevronDown
-        } else {
-            MdiIcon::ChevronRight
-        };
-        toggle = toggle
-            .attr("data-parent", "")
-            .child(rsx! { Icon { icon, size: 10 } });
+        // One right-pointing glyph; the sheet rotates it from the group's
+        // `data-open` with the same fold tokens Vue uses. Swapping icons
+        // would teleport on click and cannot animate.
+        toggle = toggle.attr("data-parent", "").child(rsx! {
+            Icon {
+                icon: MdiIcon::ChevronRight,
+                size: 10,
+                class: "s-jt-chevron".to_string(),
+            }
+        });
     } else {
         toggle = toggle.child(rsx! { span { class: "s-jt-leaf" } });
     }
@@ -714,7 +730,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
         };
         if !is_open {
             let mut children: Vec<VNode> = Vec::new();
-            children.push(json_toggle_node(true, false));
+            children.push(json_toggle_node(true));
             json_key_nodes(node, &mut children);
             children.push(VNode::Element(Box::new(
                 VElement::new("span").class("s-jt-indent"),
@@ -733,7 +749,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
         }
 
         let mut head_children: Vec<VNode> = Vec::new();
-        head_children.push(json_toggle_node(true, true));
+        head_children.push(json_toggle_node(true));
         json_key_nodes(node, &mut head_children);
         head_children.push(json_text_node("s-jt-badge is-open", &badge_text));
         let head = VElement::new("div")
@@ -755,6 +771,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
             .children(rows);
         let group = VElement::new("div")
             .class("s-jt-group")
+            .attr("data-open", "")
             .child(VNode::Element(Box::new(json_attach_toggle(
                 head,
                 node.id,
@@ -769,7 +786,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
         let length_label = format!("string ({})", json_long_string_length(node));
         if !is_open {
             let mut children: Vec<VNode> = Vec::new();
-            children.push(json_toggle_node(true, false));
+            children.push(json_toggle_node(true));
             json_key_nodes(node, &mut children);
             children.push(VNode::Element(Box::new(
                 VElement::new("span").class("s-jt-indent"),
@@ -795,7 +812,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
         }
 
         let mut head_children: Vec<VNode> = Vec::new();
-        head_children.push(json_toggle_node(true, true));
+        head_children.push(json_toggle_node(true));
         json_key_nodes(node, &mut head_children);
         head_children.push(json_text_node("s-jt-badge is-open", &length_label));
         let head = VElement::new("div")
@@ -810,7 +827,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
             // its line box.
             let text = if line.is_empty() { " " } else { line };
             let children: Vec<VNode> = vec![
-                json_toggle_node(false, false),
+                json_toggle_node(false),
                 json_text_node("s-jv-str-raw", text),
             ];
             let row = VElement::new("div")
@@ -835,6 +852,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
             .children(line_nodes);
         let group = VElement::new("div")
             .class("s-jt-group")
+            .attr("data-open", "")
             .child(VNode::Element(Box::new(json_attach_toggle(
                 head,
                 node.id,
@@ -845,7 +863,7 @@ fn render_json_node(node: &JsonNode, context: &JsonRenderContext<'_>) -> VNode {
     }
 
     // ── leaves ──────────────────────────────────────────────────────────
-    let mut children: Vec<VNode> = vec![json_toggle_node(false, false)];
+    let mut children: Vec<VNode> = vec![json_toggle_node(false)];
     json_key_nodes(node, &mut children);
     children.push(json_text_node(node.value_class, &node.text));
     children.push(json_text_node("s-jt-type", node.type_label));
@@ -898,6 +916,9 @@ pub fn JsonTree(props: JsonTreeProps) -> Element {
     let body = render_json_node(&root, &context);
 
     let mut root_classes = String::from("s-tool-json-tree");
+    if props.selectable {
+        root_classes.push_str(" s-jt-selectable");
+    }
     if !props.class.is_empty() {
         root_classes.push(' ');
         root_classes.push_str(&props.class);
@@ -942,6 +963,7 @@ mod tests {
         assert_eq!(props.max_depth, 8);
         assert!(props.expanded.is_none());
         assert!(props.aria_label.is_none());
+        assert!(!props.selectable);
         assert!(props.on_toggle.is_none());
         assert!(props.on_copy.is_none());
         assert_eq!(props.class, "");
@@ -1123,6 +1145,11 @@ mod tests {
         assert!(html.contains("Array(2)"), "{html}");
         // The root row is a toggle target.
         assert!(html.contains("data-parent"), "{html}");
+        // Expanded nodes carry the motion hook the sheet rotates from, and
+        // the chevron is the single classed glyph (not a swapped pair).
+        assert!(html.contains("s-jt-group"), "{html}");
+        assert!(html.contains("data-open"), "{html}");
+        assert!(html.contains("s-jt-chevron"), "{html}");
     }
 
     #[test]
@@ -1139,6 +1166,26 @@ mod tests {
         // Nothing is expanded, so no children container is emitted.
         assert!(!html.contains("s-jt-children"), "{html}");
         assert_eq!(html.matches("s-jt-row").count(), 1, "{html}");
+        // Collapsed renders the final state only: no data-open hook.
+        assert!(!html.contains("data-open"), "{html}");
+    }
+
+    #[test]
+    fn json_tree_opt_in_selection_adds_the_class() {
+        let plain = JsonTree(JsonTreeProps {
+            text: "{\"a\":1}".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(!plain.contains("s-jt-selectable"), "{plain}");
+
+        let selectable = JsonTree(JsonTreeProps {
+            text: "{\"a\":1}".to_string(),
+            selectable: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(selectable.contains("s-jt-selectable"), "{selectable}");
     }
 
     #[test]

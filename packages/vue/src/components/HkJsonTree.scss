@@ -9,6 +9,13 @@
 
 .s-tool-json-tree {
   --jt-toggle: 14px;
+  /* Fold motion tokens. The enter/leave choreography is JS-driven (the
+   * children block is height-measured only while it exists), so it reads
+   * these two properties off the live element instead of hard-coding ms:
+   * a theme that retimes the shared family retimes the tree with it.
+   * Seeded from the duration/easing family, never from ad-hoc values. */
+  --jt-fold-duration: var(--hi-duration-fast, var(--duration-fast, 0.15s));
+  --jt-fold-ease: var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   margin: var(--space-4, 0.25rem) 0;
   padding: var(--space-6, 0.375rem);
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
@@ -18,6 +25,9 @@
   border-radius: var(--radius-sm, 4px);
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   @include user-select(none);
+  /* Selection stays off even when a long-press would otherwise raise the
+   * iOS callout menu on a row. */
+  -webkit-touch-callout: none;
   max-height: 320px;
   overflow: auto;
 
@@ -46,10 +56,12 @@
 }
 
 .s-jt-row {
-  /* Tree rows are content — values users copy out of a payload — while
-   * the pane chrome above stays denied (L2 selection policy, 2026-10-29;
-   * the copy-tree affordance remains the bulk path). */
-  @include user-select(text);
+  /* Read-only viewer, not a document (2026-11-05 user direction): row text
+   * is NOT selectable by default, so a click or drag meant to toggle/copy
+   * cannot leave a half-selected payload behind. Extraction goes through
+   * the copy affordances; hosts that really need fragment selection opt in
+   * with the `selectable` prop, whose rule below re-enables it. */
+  @include user-select(none);
   /* Baseline alignment keeps the small type hints (boolean/number/string)
      on the value's text baseline instead of floating above it. */
   display: flex;
@@ -60,6 +72,16 @@
   padding: 0 var(--space-6, 0.375rem) 0 0;
   border-radius: var(--radius-xs, 2px);
   cursor: default;
+}
+
+/* The ONLY place row text becomes selectable again: an explicit host opt-in
+ * (`selectable` prop → `s-jt-selectable`). Never widen this selector — the
+ * default contract is "the tree cannot be selected casually". The iOS
+ * long-press callout is lifted in the same breath, or opting in would still
+ * deny the one gesture phone users select text with. */
+.s-tool-json-tree.s-jt-selectable .s-jt-row {
+  @include user-select(text);
+  -webkit-touch-callout: default;
 }
 
 .s-jt-row[data-parent] {
@@ -93,6 +115,22 @@
 .s-jt-toggle[data-parent] {
   color: rgb(var(--color-muted));
   border-radius: var(--radius-xs, 2px);
+}
+
+/* One right-pointing glyph rotated on open (instead of swapping in a
+ * down-pointing icon): the rotation rides the same fold tokens as the
+ * height choreography, so the chevron and the block leave/arrive together
+ * instead of the icon teleporting on click. */
+.s-jt-chevron {
+  transition: transform var(--jt-fold-duration, var(--duration-fast, 0.15s))
+    var(--jt-fold-ease, var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)));
+}
+
+/* Scoped to the OPEN group's OWN head row: a descendant selector would also
+ * rotate every chevron nested below it, so collapsed grandchildren inside
+ * an expanded parent would render as if they were open (R2 2026-11-05). */
+.s-jt-group[data-open] > .s-jt-row .s-jt-chevron {
+  transform: rotate(90deg);
 }
 
 .s-jt-leaf {
@@ -219,4 +257,14 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* Reduced motion: the JS fold already snaps (it reads the same preference
+ * and the global switch), but the chevron rotation is pure CSS and would
+ * otherwise keep spinning. The host-wide `html[data-css-animations="0"]`
+ * pin covers the rest of the animation context. */
+@media (prefers-reduced-motion: reduce) {
+  .s-jt-chevron {
+    transition: none;
+  }
 }

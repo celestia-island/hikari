@@ -13,10 +13,11 @@
  *
  * This module splits a plain-text run into literal text and chip
  * segments; the caller renders chips as `.hk-tpl-chip` spans (the
- * family's chip look). The accessible text is preserved byte-exactly:
- * tokens render the canonical `{{ name }}` spelling (whatever spacing
- * the source holds — same rule HkTemplateText applies) and refs render
- * their exact raw text, so copy-out still round-trips the source.
+ * family's chip look). Chips preserve the REFERENCE, not the exact
+ * bytes: tokens render the canonical `{{ name }}` spelling (so `{{name}}`
+ * displays as `{{ name }}` — the same rule HkTemplateText applies, and
+ * `parseTemplate`/`serializeTemplate` remain byte-exact for the value
+ * itself) while refs render their raw matched text.
  *
  * Boundary guards (an `@` must NOT chip):
  *   - preceded by a word character (`foo@bar.com` — emails stay text);
@@ -63,6 +64,17 @@ function splitRefs(text: string, push: (seg: HkInlineChipSegment) => void): void
   for (let m = REF_RE.exec(text); m; m = REF_RE.exec(text)) {
     if (m.index > cursor) {
       push({ kind: "text", text: text.slice(cursor, m.index) });
+    }
+    // URL guard: an `@` inside a bare URL is part of the URL. marked
+    // autolinks most of these (and `<a>` is a chip skip surface), but the
+    // rule must not depend on the engine's autolink heuristic — npm-scoped
+    // package URLs are common in prompt prose.
+    let tokenStart = m.index;
+    while (tokenStart > 0 && !/\s/.test(text[tokenStart - 1]!)) tokenStart -= 1;
+    if (text.slice(tokenStart, m.index).includes("://")) {
+      push({ kind: "text", text: m[0] });
+      cursor = m.index + m[0].length;
+      continue;
     }
     push({ kind: "ref", raw: m[0] });
     cursor = m.index + m[0].length;

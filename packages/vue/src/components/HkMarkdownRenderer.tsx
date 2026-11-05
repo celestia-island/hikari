@@ -134,6 +134,11 @@ export default defineComponent({
   setup(props) {
     const renderedHtml = ref("");
     const parseError = ref(false);
+    // Monotonic parse counter: `renderedHtml` does not change when the
+    // SAME body is re-parsed for a prop flip, so a watch on it would never
+    // fire — and the chip pass mutates the DOM in place, leaving chips
+    // behind after `inlineChips` goes back to false.
+    const parseSeq = ref(0);
 
     async function parse() {
       if (!props.content) {
@@ -150,6 +155,8 @@ export default defineComponent({
       } catch {
         parseError.value = true;
         renderedHtml.value = renderPlain(props.content);
+      } finally {
+        parseSeq.value += 1;
       }
     }
 
@@ -180,11 +187,18 @@ export default defineComponent({
       }
     }
 
-    watch(renderedHtml, () => {
+    watch(parseSeq, () => {
       void nextTick(() => {
+        const body = bodyRef.value;
+        if (!body) return;
+        // Re-seat the DOM on the pristine rendered HTML first: the chip
+        // pass mutates it in place, so a prop flip must start from the
+        // un-chipped markup (assigning the string Vue already patched is
+        // idempotent; when the body did not change it is the only write).
+        body.innerHTML = renderedHtml.value;
         // The chip pass runs BEFORE the overlay scan: it splits text
         // nodes, so the scan must reconcile against the final DOM.
-        if (props.inlineChips) applyInlineChipsToBody(bodyRef.value);
+        if (props.inlineChips) applyInlineChipsToBody(body);
         syncOverlayScrollbars();
       });
     });

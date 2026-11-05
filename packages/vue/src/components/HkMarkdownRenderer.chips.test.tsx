@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 import HkMarkdownRenderer from "./HkMarkdownRenderer";
 import { applyInlineChipsToBody, inlineChipDisplay, parseInlineChips } from "./inlineChips";
@@ -127,5 +127,52 @@ describe("HkMarkdownRenderer inlineChips", () => {
     expect(container.querySelectorAll(".hk-tpl-chip").length).toBe(0);
     expect(container.textContent).toContain("{{container_badge}}");
     expect(container.textContent).toContain("@system/related-todos");
+  });
+
+  it("guards the grammar boundaries the two implementations must share", () => {
+    // Multi-level refs, `@` at either end, a leading `_`/`-` segment.
+    expect(parseInlineChips("@a/b/c")).toEqual([{ kind: "ref", raw: "@a/b/c" }]);
+    expect(parseInlineChips("@sole")).toEqual([{ kind: "ref", raw: "@sole" }]);
+    expect(parseInlineChips("mail @")).toEqual([{ kind: "text", text: "mail @" }]);
+    expect(parseInlineChips("@_private @-x @--flag")).toEqual([
+      { kind: "text", text: "@_private @-x @--flag" },
+    ]);
+    // Never chips inside a bare URL (npm-scoped packages are common in
+    // prompt prose) — the Rust mirror guards this too.
+    expect(parseInlineChips("see https://www.npmjs.com/package/@celestia-island/hikari")).toEqual([
+      { kind: "text", text: "see https://www.npmjs.com/package/@celestia-island/hikari" },
+    ]);
+    // Carriage returns inside the braces are still the same token.
+    expect(parseInlineChips("{{\rname\r}}")).toEqual([{ kind: "token", token: "name" }]);
+  });
+
+  it("un-chips when the prop flips back off (same mount)", async () => {
+    // The chip pass mutates the DOM in place, so a naive watcher leaves the
+    // chips behind when the prop goes back to false — this drives the real
+    // toggle on ONE mounted instance.
+    const flag = ref(true);
+    const content = "Badge {{x}} and @a/b";
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({ render: () => h(HkMarkdownRenderer, { content, inlineChips: flag.value }) });
+    app.mount(container);
+    mounts.push({ app, container });
+
+    await settleFor(container, ".hk-tpl-chip");
+    expect(container.querySelectorAll(".hk-tpl-chip").length).toBe(2);
+
+    flag.value = false;
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 10));
+    await nextTick();
+    expect(container.querySelectorAll(".hk-tpl-chip").length).toBe(0);
+    expect(container.textContent).toContain("{{x}}");
+    expect(container.textContent).toContain("@a/b");
+
+    // ...and back on, still one mount.
+    flag.value = true;
+    await nextTick();
+    await settleFor(container, ".hk-tpl-chip");
+    expect(container.querySelectorAll(".hk-tpl-chip").length).toBe(2);
   });
 });

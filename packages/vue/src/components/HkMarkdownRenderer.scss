@@ -228,7 +228,12 @@
   font-size: 0.8em;
   line-height: 1.5;
   white-space: nowrap;
-  @include user-select(none);
+  /* NO user-select here: rendered prose IS content (see the sheet's own
+   * `user-select(text)` policy at the top and styles/selection.scss's
+   * "markdown body" content container). The editor chip in
+   * HkTemplateField.scss disables selection for caret/click handling;
+   * copying a PROMPT BODY must keep every `{{token}}` / `@ref` in the
+   * clipboard, so this scoped copy must not carry that rule. */
 
   [data-theme="dark"] & {
     color: color-mix(in srgb, var(--hi-color-primary) 60%, rgb(255 255 255));

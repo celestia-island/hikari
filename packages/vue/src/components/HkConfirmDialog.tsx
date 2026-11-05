@@ -67,31 +67,36 @@ export default defineComponent({
           default: () => (
             <div class="hk-confirm-dialog">
               <p class="hk-confirm-dialog-message">{props.message}</p>
-              {/* Primary action first, dismiss second — the message-box order
-               *  the confirmation surfaces share (HkMessageBox,
-               *  HkBlockingToast); form-dialog footers keep the primary
-               *  rightmost. It mirrors under `dir="rtl"` because the row only
-               *  reverses visually. */}
-              <div class="hk-confirm-dialog-actions">
-                <HButton
-                  class="hk-confirm-dialog-btn"
-                  variant={props.confirmVariant}
-                  size="md"
-                  loading={props.loading}
-                  onClick={onConfirm}
-                >
-                  {props.confirmLabel || t("hikari::confirmDialog.confirm", "Confirm")}
-                </HButton>
-                <HButton
-                  class="hk-confirm-dialog-btn"
-                  variant="secondary"
-                  size="md"
-                  disabled={props.loading}
-                  onClick={onCancel}
-                >
-                  {props.cancelLabel || t("hikari::confirmDialog.cancel", "Cancel")}
-                </HButton>
-              </div>
+            </div>
+          ),
+          /* The confirm pair lives in the modal's standard footer band —
+           * it used to render inline under the message while HkMessageBox
+           * (the sibling confirmation surface) already hosted the same
+           * pair in this exact slot, so the confirm family was split
+           * across two placements for no reason (2026-11-05 window
+           * screening). Primary action first, dismiss second — the
+           * message-box order; it mirrors under `dir="rtl"` because the
+           * row only reverses visually. */
+          footer: () => (
+            <div class="hk-confirm-dialog-actions">
+              <HButton
+                class="hk-confirm-dialog-btn"
+                variant={props.confirmVariant}
+                size="md"
+                loading={props.loading}
+                onClick={onConfirm}
+              >
+                {props.confirmLabel || t("hikari::confirmDialog.confirm", "Confirm")}
+              </HButton>
+              <HButton
+                class="hk-confirm-dialog-btn"
+                variant="secondary"
+                size="md"
+                disabled={props.loading}
+                onClick={onCancel}
+              >
+                {props.cancelLabel || t("hikari::confirmDialog.cancel", "Cancel")}
+              </HButton>
             </div>
           ),
         }}

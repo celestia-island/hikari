@@ -54,6 +54,20 @@ function cssBlock(src: string, selector: string): string {
   return "";
 }
 
+/** The BASE `.hk-modal-body` rule — a TOP-LEVEL selector (column 0).
+ *  A bare `indexOf(".hk-modal-body {")` also matches the TAIL of the
+ *  desktop open/close choreography's descendant selectors, and
+ *  `.hk-modal-content-enter-active .hk-modal-body {` sits earlier in the
+ *  sheet — so the naive read hands back that transition block instead of
+ *  the base rule. Anchor on a line start. */
+const TOP_LEVEL_BODY = "\n.hk-modal-body {";
+
+function baseBodyBlock(): string {
+  const at = modalScss.indexOf(TOP_LEVEL_BODY);
+  expect(at, "top-level .hk-modal-body rule exists").toBeGreaterThanOrEqual(0);
+  return cssBlock(modalScss.slice(at), ".hk-modal-body {");
+}
+
 describe("scroll-pin whitespace contract", () => {
   it("the pin base is sticky with a floating-chrome surface", () => {
     const base = cssBlock(pinScss, ".hk-scroll-pin {");
@@ -111,7 +125,7 @@ describe("scroll-pin whitespace contract", () => {
     // The chain reads the shared container-pad token (--hk-pad, the
     // modal root's `padding` prop) over the per-component theme token
     // over the historical 1.5rem.
-    const body = cssBlock(modalScss, ".hk-modal-body {");
+    const body = baseBodyBlock();
     for (const side of ["top", "right", "bottom", "left"]) {
       expect(body, `--hk-scroll-pad-${side}`).toContain(
         `--hk-scroll-pad-${side}: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));`,
@@ -134,7 +148,7 @@ describe("scroll-pin whitespace contract", () => {
     // Anchor on the standalone pseudo blocks INSIDE .hk-modal-body — the
     // combined selector ("&::before,\n &::after {") contains "&::after {"
     // as a literal, so a bare indexOf would match the shared rule instead.
-    const bodyBlock = cssBlock(modalScss, ".hk-modal-body {");
+    const bodyBlock = baseBodyBlock();
     expect(bodyBlock).toMatch(
       /&::before \{\s*top: 0;\s*height: var\(--hk-scroll-pad-top/,
     );

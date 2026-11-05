@@ -67,9 +67,11 @@
   z-index: 1;
   top: 50%;
   left: 50%;
-  // The centering translate is part of EVERY transform state — the
-  // enter/leave choreography scales on top of it and must never re-seat
-  // the frame.
+  // The centering translate is the frame's WHOLE transform: no
+  // enter/leave state carries a transform any more (the open/close scales
+  // the content region instead — see the choreography block below), so
+  // nothing can re-seat the frame mid-flight and dragged windows keep
+  // their shift.
   transform: translate(
         calc(-50% + var(--hk-modal-shift-x, 0px)),
         calc(-50% + var(--hk-modal-shift-y, 0px))
@@ -107,85 +109,96 @@
 // ------
 // Content enter/leave transitions (desktop ≥768px)
 //
-// Content-scale reveal (user direction 2026-11-04): the frame grows by
-// SCALING the content itself about the frame's center — the width stays
-// pinned at 100% the whole time while the height scales from 90% up to
-// 100%. No clip-path and no Y offset ride the open/close any more: the
-// visible box IS the frame at every t, so nothing is ever sliced off
-// (the 2026-09-14 clip unveil — and the #508/#512/#524 lineage before
-// it — is superseded; the "content rides rigidly" invariant was the
-// very thing that made the old reveal read as dead weight on ordinary
-// modals). Implemented with transform (translate + uniform-axis scale)
-// + opacity: all compositor-level, zero layout per frame, and the
-// centering translate stays the leading term of EVERY transform state
-// so the frame never re-seats mid-flight (dragged windows keep their
-// shift). Scoped to ≥768px; ≤767px keeps the sheet's translateY
-// choreography below.
+// Default window open/close (user direction 2026-11-05, superseding the
+// 2026-11-04 whole-frame reveal): what scales is the CONTENT REGION
+// only. The frame, the title bar and the footer action row are chrome —
+// they materialize at their final size on one opacity fade, because
+// scaling them squashed title/button text and the corner radii while
+// the eye was still reading them. `.hk-modal-body` is the content
+// region and the ONLY scaled surface: it settles from 90% to 100% of
+// its own box about its center, with ONE factor on BOTH axes
+// (`scale(0.9)` on both axes — the 2026-11-04 single-axis
+// `scale(1, 0.9)` grammar is retired because X stays uniform, so text,
+// radii and shadows inside the body are never stretched along one
+// axis). Header and footer are SIBLINGS of the body, never
+// descendants, so no transform they inherit can reach them.
+//
+// Hosts retune the ride through the `--hk-modal-*` tokens (duration /
+// easing) or the body padding vars — NOT by setting `transform` on
+// `.hk-modal-body`: these state rules match at (0,2,0), so a host's
+// single-class transform would be overridden mid-ride and again under
+// reduced motion.
+//
+// No clip-path and no Y offset ride the open/close either: the visible
+// box IS the frame at every t, so nothing is ever sliced off (the
+// 2026-09-14 clip unveil — and the #508/#512/#524 lineage before it —
+// stays retired). All compositor-level: zero layout per frame. The
+// centering translate lives on the base .hk-modal-content rule, so the
+// frame never re-seats mid-flight and dragged windows keep their shift
+// through the whole ride. Scoped to ≥768px; ≤767px keeps the sheet's
+// translateY choreography below.
 // ------
 
 @media (min-width: 768px) {
+  // Chrome: fade only. No transform state touches the frame here — the
+  // frame's transform is the static centering translate from its base
+  // rule, and that is the whole list.
   .hk-modal-content-enter-active {
-    // The scale anchors at the frame's center: the window expands from
-    // the middle outward on the Y axis only (X is pinned by scaleX 1).
-    transform-origin: 50% 50%;
     transition:
       opacity var(--hk-modal-duration, 0.42s)
-        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
-      transform var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
-    will-change: transform, opacity;
+    will-change: opacity;
   }
 
-  // Close: the reveal's TRUE reverse — the frame scales back down to
-  // 90% height about its center (both vertical edges ease toward the
-  // center line) while fading out.
+  // Close: the reveal's TRUE reverse — same chrome fade, while the
+  // content settles back toward 90% and the window dissolves.
   .hk-modal-content-leave-active {
-    transform-origin: 50% 50%;
     transition:
       opacity var(--hk-modal-duration, 0.32s)
-        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
-      transform var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-    will-change: transform, opacity;
+    will-change: opacity;
   }
 
-  .hk-modal-content-enter-from {
-    opacity: 0;
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        )
-        scale(1, 0.9);
-  }
-
-  .hk-modal-content-enter-to {
-    opacity: 1;
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        );
-  }
-
-  .hk-modal-content-leave-from {
-    opacity: 1;
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        );
-  }
-
+  .hk-modal-content-enter-from,
   .hk-modal-content-leave-to {
     opacity: 0;
-    // Mirror of enter-from. No identity pin is needed any more: CSS
-    // transform-list interpolation pads the shorter list with identity
-    // scale(1, 1), so translate()+scale(1, 0.9) ↔ bare translate()
-    // interpolates continuously (unlike `none → inset()` clips, which
-    // are DISCRETE — the #508 lesson does not apply to transforms).
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        )
-        scale(1, 0.9);
+  }
+
+  .hk-modal-content-enter-to,
+  .hk-modal-content-leave-from {
+    opacity: 1;
+  }
+
+  // Content region: the one scaled surface. The timing lives on the
+  // per-state transition so the enter and the leave can differ (0.42s
+  // open / 0.32s close) exactly like the chrome fade does.
+  .hk-modal-content-enter-active .hk-modal-body {
+    transform-origin: 50% 50%;
+    transition:
+      transform var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+    will-change: transform;
+  }
+
+  .hk-modal-content-leave-active .hk-modal-body {
+    transform-origin: 50% 50%;
+    transition:
+      transform var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
+    will-change: transform;
+  }
+
+  .hk-modal-content-enter-from .hk-modal-body,
+  .hk-modal-content-leave-to .hk-modal-body {
+    transform: scale(0.9);
+  }
+
+  // The resting ends are explicit scale(1) — never `transform: none` —
+  // so both ends of the interpolation carry the same function shape and
+  // the ride is a plain two-point scale.
+  .hk-modal-content-enter-to .hk-modal-body,
+  .hk-modal-content-leave-from .hk-modal-body {
+    transform: scale(1);
   }
 }
 
@@ -663,6 +676,16 @@
 @media (prefers-reduced-motion: reduce) {
   .hk-modal-content {
     transition: none;
+  }
+  // The content-scale reveal flattens with it. Both selectors sit at the
+  // same specificity as the desktop pairs above and this block comes
+  // later in the sheet, so the flattened state wins by source order.
+  .hk-modal-content .hk-modal-body {
+    transform: none;
+    transition: none;
+    // …and drop the compositor hint the ride would otherwise leave on
+    // the (tall) content block for the flattened frame.
+    will-change: auto;
   }
 }
 

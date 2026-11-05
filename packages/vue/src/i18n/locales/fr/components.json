@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "Restaurer",
   "hikari::titleBar.close": "Fermer",
   "hikari::screenIdentify.label": "Écran {number}",
-  "hikari::screenIdentify.labelNamed": "Écran {number}, {name}"
+  "hikari::screenIdentify.labelNamed": "Écran {number}, {name}",
+  "hikari::ribbon.rangeAria": "Plage d’observation",
+  "hikari::ribbon.windowStart": "Début de la fenêtre",
+  "hikari::ribbon.windowEnd": "Fin de la fenêtre",
+  "hikari::ribbon.reset": "Réinitialiser la plage",
+  "hikari::ribbon.moveWindow": "Déplacer la fenêtre",
+  "hikari::ribbon.resizeWindow": "Redimensionner la fenêtre",
+  "hikari::ribbon.dragHint": "Faites glisser pour sélectionner une plage ; double-clic, Échap ou Origine réinitialisent"
 }

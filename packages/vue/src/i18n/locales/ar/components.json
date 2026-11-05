@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "استعادة",
   "hikari::titleBar.close": "إغلاق",
   "hikari::screenIdentify.label": "الشاشة {number}",
-  "hikari::screenIdentify.labelNamed": "الشاشة {number}، {name}"
+  "hikari::screenIdentify.labelNamed": "الشاشة {number}، {name}",
+  "hikari::ribbon.rangeAria": "نطاق المراقبة",
+  "hikari::ribbon.windowStart": "بداية النافذة",
+  "hikari::ribbon.windowEnd": "نهاية النافذة",
+  "hikari::ribbon.reset": "إعادة تعيين النطاق",
+  "hikari::ribbon.moveWindow": "تحريك النافذة",
+  "hikari::ribbon.resizeWindow": "تغيير حجم النافذة",
+  "hikari::ribbon.dragHint": "اسحب لتحديد نطاق؛ انقر نقرًا مزدوجًا أو اضغط Escape أو Home لإعادة التعيين"
 }

@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "Wiederherstellen",
   "hikari::titleBar.close": "Schließen",
   "hikari::screenIdentify.label": "Bildschirm {number}",
-  "hikari::screenIdentify.labelNamed": "Bildschirm {number}, {name}"
+  "hikari::screenIdentify.labelNamed": "Bildschirm {number}, {name}",
+  "hikari::ribbon.rangeAria": "Beobachtungsbereich",
+  "hikari::ribbon.windowStart": "Fensteranfang",
+  "hikari::ribbon.windowEnd": "Fensterende",
+  "hikari::ribbon.reset": "Bereich zurücksetzen",
+  "hikari::ribbon.moveWindow": "Fenster verschieben",
+  "hikari::ribbon.resizeWindow": "Fenstergröße ändern",
+  "hikari::ribbon.dragHint": "Ziehen, um einen Bereich auszuwählen; Doppelklick, Escape oder Home setzt zurück"
 }

@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "Restore",
   "hikari::titleBar.close": "Close",
   "hikari::screenIdentify.label": "Screen {number}",
-  "hikari::screenIdentify.labelNamed": "Screen {number}, {name}"
+  "hikari::screenIdentify.labelNamed": "Screen {number}, {name}",
+  "hikari::ribbon.rangeAria": "Observation range",
+  "hikari::ribbon.windowStart": "Window start",
+  "hikari::ribbon.windowEnd": "Window end",
+  "hikari::ribbon.reset": "Reset range",
+  "hikari::ribbon.moveWindow": "Move window",
+  "hikari::ribbon.resizeWindow": "Resize window",
+  "hikari::ribbon.dragHint": "Drag to select a range; double-click, Escape or Home resets"
 }

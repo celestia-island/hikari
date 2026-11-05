@@ -305,5 +305,12 @@
   "hikari::titleBar.restore": "还原",
   "hikari::titleBar.close": "关闭",
   "hikari::screenIdentify.label": "屏幕 {number}",
-  "hikari::screenIdentify.labelNamed": "屏幕 {number}，{name}"
+  "hikari::screenIdentify.labelNamed": "屏幕 {number}，{name}",
+  "hikari::ribbon.rangeAria": "观察范围",
+  "hikari::ribbon.windowStart": "窗口起点",
+  "hikari::ribbon.windowEnd": "窗口终点",
+  "hikari::ribbon.reset": "重置范围",
+  "hikari::ribbon.moveWindow": "移动窗口",
+  "hikari::ribbon.resizeWindow": "缩放窗口",
+  "hikari::ribbon.dragHint": "拖拽选择范围；双击、Escape 或 Home 重置"
 }

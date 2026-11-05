@@ -138,3 +138,8 @@ registerCssAnimation("hk-persistent-toast-card-in");
 // (opacity + 6px rise, plays once; the card unmounts at dwell end, so
 // no leave keyframe).
 registerCssAnimation("hk-screen-identify-in");
+// components/HkRangeRibbon.scss — pending-segment breathe (loops forever):
+// a queued / in-flight row keeps pulsing while it has not settled, so a
+// brushed window still reads as live. Reduced motion keeps the dashed
+// pending look and drops the loop (house pattern, see HkSkeleton).
+registerCssAnimation("hk-range-ribbon-pulse", { infinite: true });

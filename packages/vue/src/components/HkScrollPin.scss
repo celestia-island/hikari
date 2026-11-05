@@ -23,11 +23,31 @@
   // Floating-chrome surface: near-opaque surface tint + blur so scrolled
   // content never bleeds through the pinned row (same look the step-flow
   // sticky header introduced; hosts retune through --hk-scroll-pin-bg).
-  background: var(
-    --hk-scroll-pin-bg,
-    color-mix(in srgb, var(--hi-color-surface, #ffffff) 95%, transparent)
-  );
+  //
+  // The opaque surface is UNCONDITIONAL. The color-mix() tint cannot simply
+  // follow it in this block: color-mix() nested in a var() fallback is VALID
+  // at parse time, so an engine without color-mix KEEPS the declaration and
+  // only fails at computed-value time (invalid at computed-value time,
+  // IACVT) — the property then resolves to unset (transparent) and the
+  // earlier declaration does NOT win. Cascade order alone therefore cannot
+  // save WebKit <=16.1 / Edge WebView2 <111; the tint must sit behind a
+  // feature query, where those engines drop the whole declaration and keep
+  // this opaque surface instead of painting the pinned row transparent
+  // (2026-11 raw-records scroll-through report).
+  background: var(--hk-scroll-pin-bg, var(--hi-color-surface, #ffffff));
   @include backdrop-filter(var(--hk-scroll-pin-blur, blur(6px)));
+}
+
+// Near-opaque tint for engines that implement color-mix(); the
+// unconditional plain background above stays the base everywhere else (see
+// the IACVT note there — this is a feature query, not a cascade fix).
+@supports (background: color-mix(in srgb, white 95%, transparent)) {
+  .hk-scroll-pin {
+    background: var(
+      --hk-scroll-pin-bg,
+      color-mix(in srgb, var(--hi-color-surface, #ffffff) 95%, transparent)
+    );
+  }
 }
 
 // ------

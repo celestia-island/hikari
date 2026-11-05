@@ -1,0 +1,401 @@
+@use "../styles/polyfill" as *;
+
+/* HkRangeRibbon — a multi-lane sequence ribbon with a brushed window.
+   Anatomy: a thin OVERVIEW strip (the full domain, always), the window
+   highlight + outside scrims + two edge handles riding over it, then the
+   lane list whose segment bars show either the full domain or the window.
+
+   Geometry is part of the contract and pinned by HkRangeRibbon.test.tsx:
+   the strip is 32px tall, a handle is an 8px half-overlapping grip
+   (translateX(-50%) so `left: 20%` centers it on the window edge), a
+   clipped segment keeps a 2px minimum so edge slivers stay visible, and
+   the reset chip clears the edge handle (right: 4px = the handle's
+   half-width, so a handle at 0% / 100% is never covered).
+
+   Every colour/size comes from hikari theme tokens; the only motion is the
+   pending-segment breathe, registered in animation/registerAnimations.ts. */
+
+.hk-range-ribbon {
+  // ONE label column for both surfaces: the overview paints through an
+  // empty gutter of this width, so an x% bar sits at the same inline
+  // position in the strip and in its lane (the strip locates segments).
+  --hk-range-ribbon-label-col: minmax(48px, 84px);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  min-width: 0;
+}
+
+// ── Overview strip (the full-domain minimap + brush surface) ─────────────
+.hk-range-ribbon-overview {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--hk-range-ribbon-label-col) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+// The empty first cell that lines the strip up with the lane tracks.
+.hk-range-ribbon-overview-gutter {
+  display: block;
+  min-width: 0;
+}
+
+// The strip's own coordinate space: handles/reset are positioned against
+// this box, which is exactly the strip's width (never the gutter too).
+.hk-range-ribbon-overview-field {
+  position: relative;
+  min-width: 0;
+}
+
+.hk-range-ribbon-strip {
+  position: relative;
+  display: block;
+  height: 32px;
+  margin: 0;
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface) / 55%);
+  box-shadow: inset 0 0 0 1px rgb(var(--color-border) / 60%);
+  cursor: crosshair;
+  overflow: hidden;
+  touch-action: none;
+  @include user-select(none);
+}
+
+.hk-range-ribbon[data-window-enabled="false"] .hk-range-ribbon-strip {
+  cursor: default;
+}
+
+.hk-range-ribbon-strip:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.hk-range-ribbon-overview-lanes {
+  position: absolute;
+  inset: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.hk-range-ribbon-overview-row {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 1px;
+}
+
+.hk-range-ribbon-overview-segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 1px;
+  border-radius: 1px;
+  background: rgb(var(--color-muted) / 45%);
+}
+
+.hk-range-ribbon-overview-segment[data-tone="success"] {
+  background: rgb(var(--color-success) / 60%);
+}
+
+.hk-range-ribbon-overview-segment[data-tone="secondary"] {
+  background: rgb(var(--color-secondary) / 55%);
+}
+
+.hk-range-ribbon-overview-segment[data-tone="warning"] {
+  background: rgb(var(--color-warning) / 70%);
+}
+
+.hk-range-ribbon-overview-segment[data-tone="error"] {
+  background: rgb(var(--color-error) / 65%);
+}
+
+.hk-range-ribbon-overview-segment[data-tone="muted"] {
+  background: rgb(var(--color-muted) / 25%);
+}
+
+.hk-range-ribbon-overview-segment[data-status="error"] {
+  background: rgb(var(--color-error) / 85%);
+}
+
+.hk-range-ribbon-overview-segment[data-status="pending"] {
+  opacity: 0.5;
+}
+
+// Outside-the-window dim: two scrims rather than one masked sheet, so the
+// highlighted window reads as a hole in the overview (and stays testable).
+.hk-range-ribbon-scrim {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgb(var(--color-background) / 62%);
+  pointer-events: none;
+}
+
+.hk-range-ribbon-window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border: 1px solid rgb(var(--color-primary));
+  border-radius: 2px;
+  background: rgb(var(--color-primary) / 10%);
+  pointer-events: none;
+}
+
+.hk-range-ribbon-handle {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  z-index: 2;
+  width: 8px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(var(--color-surface));
+  border-radius: var(--radius-full);
+  background: rgb(var(--color-primary));
+  cursor: ew-resize;
+  touch-action: none;
+  // Dragging the grip must not start a native text selection (house
+  // pattern: HkMediaSlider's track).
+  @include user-select(none);
+}
+
+.hk-range-ribbon-handle:hover {
+  box-shadow: 0 0 0 2px rgb(var(--color-primary) / 25%);
+}
+
+.hk-range-ribbon-handle:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.hk-range-ribbon-reset {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface) / 85%);
+  color: rgb(var(--color-text));
+  cursor: pointer;
+  transition: background-color var(--duration-fast, 0.15s) ease;
+}
+
+.hk-range-ribbon-reset:hover {
+  background: rgb(var(--color-surface));
+}
+
+.hk-range-ribbon-reset:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 1px;
+}
+
+// Visually hidden, still read by AT: labels the keyboard contract the
+// strip's slider role cannot express by itself.
+.hk-range-ribbon-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// ── Lane list ───────────────────────────────────────────────────────────
+.hk-range-ribbon-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.hk-range-ribbon-lane {
+  display: grid;
+  grid-template-columns: var(--hk-range-ribbon-label-col) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.hk-range-ribbon-lane-label {
+  overflow: hidden;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-2xs);
+  // 1.3 floor: an overflow clip box shorter than the font ink box cuts the
+  // descenders of g/j/p/q/y (textClip.contract.test.ts).
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-range-ribbon-lane-track {
+  position: relative;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-muted) / 8%);
+}
+
+// ── Segment bars ────────────────────────────────────────────────────────
+// No overflow:hidden here: the tip card is a child and must float above
+// the neighbouring lanes. The label clips itself instead.
+.hk-range-ribbon-segment {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-width: 2px;
+  padding: 0 var(--space-2);
+  border: 1px solid rgb(var(--color-border) / 45%);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-muted) / 30%);
+  color: rgb(var(--color-text));
+  font-size: var(--text-2xs);
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.hk-range-ribbon-segment[data-tone="success"] {
+  border-color: rgb(var(--color-success) / 55%);
+  background: rgb(var(--color-success) / 22%);
+}
+
+.hk-range-ribbon-segment[data-tone="secondary"] {
+  border-color: rgb(var(--color-secondary) / 55%);
+  background: rgb(var(--color-secondary) / 20%);
+}
+
+.hk-range-ribbon-segment[data-tone="warning"] {
+  border-color: rgb(var(--color-warning) / 65%);
+  background: rgb(var(--color-warning) / 24%);
+}
+
+.hk-range-ribbon-segment[data-tone="error"] {
+  border-color: rgb(var(--color-error) / 60%);
+  background: rgb(var(--color-error) / 22%);
+}
+
+.hk-range-ribbon-segment[data-tone="muted"] {
+  border-color: rgb(var(--color-muted) / 35%);
+  background: rgb(var(--color-muted) / 16%);
+  color: rgb(var(--color-muted));
+}
+
+// Status channels win over the tone channel: an errored row is an error
+// regardless of what tone it also carries.
+.hk-range-ribbon-segment[data-status="error"] {
+  border-color: rgb(var(--color-error));
+  background: rgb(var(--color-error) / 32%);
+}
+
+// Queued / in-flight rows still breathe — the one motion in the ribbon.
+.hk-range-ribbon-segment[data-status="pending"] {
+  border-style: dashed;
+  animation: hk-range-ribbon-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes hk-range-ribbon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// House pattern (HkSkeleton / HkStatusPill): keep the dashed pending look,
+// drop the loop.
+@media (prefers-reduced-motion: reduce) {
+  .hk-range-ribbon-segment[data-status="pending"] {
+    animation: none;
+  }
+}
+
+.hk-range-ribbon-segment[data-selected="true"] {
+  border-color: rgb(var(--color-primary));
+  box-shadow: 0 0 0 1px rgb(var(--color-primary));
+  z-index: 1;
+}
+
+.hk-range-ribbon-segment:hover {
+  border-color: rgb(var(--color-primary) / 70%);
+}
+
+.hk-range-ribbon-segment:focus-visible {
+  z-index: 2;
+  border-color: rgb(var(--color-primary));
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 1px;
+}
+
+.hk-range-ribbon-segment-label {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  // Same descender floor as the lane label: this is the clip box.
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ── Tip card ────────────────────────────────────────────────────────────
+.hk-range-ribbon-tip {
+  position: absolute;
+  bottom: calc(100% + var(--space-6));
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 108px;
+  max-width: 240px;
+  padding: var(--space-4) var(--space-6);
+  transform: translateX(-50%);
+  border: 1px solid rgb(var(--color-border));
+  border-radius: var(--radius-md);
+  background: rgb(var(--color-surface));
+  box-shadow: 0 6px 18px rgb(var(--color-text) / 16%);
+  color: rgb(var(--color-text));
+  font-size: var(--text-2xs);
+  line-height: 1.35;
+  text-align: start;
+  white-space: normal;
+  pointer-events: none;
+}
+
+// A tip on a segment near either end of the track grows INWARD from that
+// segment's own edge instead of centring (and overflowing) the ribbon.
+.hk-range-ribbon-tip[data-anchor="start"] {
+  left: 0;
+  transform: none;
+}
+
+.hk-range-ribbon-tip[data-anchor="end"] {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.hk-range-ribbon-tip-title {
+  font-weight: 600;
+}
+
+.hk-range-ribbon-tip-line {
+  color: rgb(var(--color-muted));
+}

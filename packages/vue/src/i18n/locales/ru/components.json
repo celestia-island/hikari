@@ -301,5 +301,12 @@
   "hikari::titleBar.restore": "Восстановить",
   "hikari::titleBar.close": "Закрыть",
   "hikari::screenIdentify.label": "Экран {number}",
-  "hikari::screenIdentify.labelNamed": "Экран {number}, {name}"
+  "hikari::screenIdentify.labelNamed": "Экран {number}, {name}",
+  "hikari::ribbon.rangeAria": "Диапазон наблюдения",
+  "hikari::ribbon.windowStart": "Начало окна",
+  "hikari::ribbon.windowEnd": "Конец окна",
+  "hikari::ribbon.reset": "Сбросить диапазон",
+  "hikari::ribbon.moveWindow": "Переместить окно",
+  "hikari::ribbon.resizeWindow": "Изменить размер окна",
+  "hikari::ribbon.dragHint": "Перетащите, чтобы выбрать диапазон; двойной щелчок, Escape или Home сбрасывает"
 }

@@ -11,7 +11,7 @@
 //
 //   button.hk-icon-button.hk-icon-button-{size}.hk-icon-button-{variant}
 //          [host class]
-//          [disabled] [aria-label] [autofocus]
+//          [disabled] [aria-label] [autofocus] [aria-describedby]
 //          (style: host style attribute; omitted when unset)
 //     span.hk-icon-button-icon
 //       ── precedence (Vue: icon slot > default slot > icon prop > fallback) ──
@@ -35,7 +35,10 @@
 //     `None` therefore reaches Vue's placeholder branch, which a required
 //     glyph could not.
 //   * `{...attrs}` passthrough has no tairitsu equivalent: `aria_label`,
-//     `button_type` (Vue: `attrs.type`; NOT emitted by default — the Vue
+//     `aria_describedby` (Vue: `attrs['aria-describedby']` — the one attr a
+//     disabled control needs so its reason text stays reachable; grew its
+//     own prop here instead of a generic attrs map), `button_type` (Vue:
+//     `attrs.type`; NOT emitted by default — the Vue
 //     template sets no `type`, unlike HkButton) and `autofocus` are explicit
 //     props, and a host `class` is appended after the size/variant classes.
 //   * The glyph box is pinned by the sheet in Vue (`.hk-icon-button-icon svg
@@ -226,6 +229,12 @@ pub struct IconButtonProps {
     /// Accessible name for the button itself (Vue: `attrs['aria-label']`).
     pub aria_label: Option<String>,
 
+    /// id of the element describing this button (Vue:
+    /// `attrs['aria-describedby']`). Emitted only when set — the disabled
+    /// state's reason text is the first consumer (a natively disabled
+    /// control is unfocusable, so the description cannot ride a tooltip).
+    pub aria_describedby: Option<String>,
+
     /// Named `icon` slot: wins over the default slot and the `icon` prop
     /// (Vue: `slots.icon`).
     pub icon_slot: Option<Element>,
@@ -295,6 +304,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     let dot_variant = props.dot_variant;
     let dot_label = props.dot_label.clone();
     let aria_label = props.aria_label.clone();
+    let aria_describedby = props.aria_describedby.clone();
     let onclick = props.onclick.clone();
 
     // Vue: `aria-hidden={dotLabel ? undefined : "true"}` and
@@ -318,6 +328,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             "type": button_type,
             disabled: disabled,
             "aria-label": aria_label,
+            "aria-describedby": aria_describedby,
             autofocus: autofocus,
             style: style_attr,
             onclick: move |e: MouseEvent| {
@@ -451,6 +462,7 @@ mod tests {
         assert_eq!(props.dot_variant, IconButtonDotVariant::Success);
         assert_eq!(props.dot_label, None);
         assert_eq!(props.aria_label, None);
+        assert_eq!(props.aria_describedby, None);
         assert_eq!(props.icon_slot, None);
         assert!(slot_is_empty(&props.children));
         assert!(props.onclick.is_none());
@@ -477,6 +489,27 @@ mod tests {
             icon_button_classes(&IconButtonProps::default()),
             "hk-icon-button hk-icon-button-32 hk-icon-button-ghost"
         );
+    }
+
+    #[test]
+    fn icon_button_emits_aria_describedby_only_when_set() {
+        let render = |describedby: Option<&str>| {
+            IconButton(IconButtonProps {
+                aria_describedby: describedby.map(|id| id.to_string()),
+                ..Default::default()
+            })
+            .render_to_html()
+        };
+        // Set: the attribute rides the button exactly as Vue's attrs
+        // passthrough would place it.
+        let with_id = render(Some("hk-solar-edit-reason"));
+        assert!(
+            with_id.contains(r#"aria-describedby="hk-solar-edit-reason""#),
+            "{with_id}"
+        );
+        // Unset: NO attribute at all — Vue's spread omits undefined keys.
+        let bare = render(None);
+        assert!(!bare.contains("aria-describedby"), "{bare}");
     }
 
     #[test]

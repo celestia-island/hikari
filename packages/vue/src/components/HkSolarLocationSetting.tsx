@@ -38,6 +38,12 @@ import "./HkSolarLocationSetting.scss";
 // actually opens the manual pane — the settings card stays weightless.
 const HkTimeZoneGlobe = defineAsyncComponent(() => import("./HkTimeZoneGlobe"));
 
+/** Per-instance id for the disabled-state reason text (aria-describedby).
+ *  A host page may mount more than one card (settings + a popover), so a
+ *  static id would collide; a module counter keeps ids unique across mounts
+ *  while staying deterministic for tests. */
+let nextSolarReasonId = 0;
+
 /** One copyable value of the editor's detected-value readout. `mono`
  *  faces technical ids (zone ids, IPs, ASNs) in the badge mono face;
  *  `wrap` renders the rectangular, soft-wrapping chip for long prose
@@ -181,6 +187,7 @@ export const HkSolarLocationSetting = defineComponent({
     // AUTO-mode gate: the sun clock only drives the theme in "system".
     const { currentMode } = useTheme();
     const editorDisabled = computed(() => currentMode.value !== "system");
+    const reasonId = `hk-solar-edit-reason-${(nextSolarReasonId += 1)}`;
     // The engine hydrates lazily (storage-silent imports): a host that
     // mounts this card before initTheme() still sees the stored strategy.
     hydrateSolarLocationState();
@@ -449,7 +456,10 @@ export const HkSolarLocationSetting = defineComponent({
           {/* Icon-only Edit (2026-11-05): the row's action is the standard
               ghost icon-button square, not a text pill. Disabled outside
               auto mode; the wrapper owns the tooltip because a disabled
-              button drops pointer events. */}
+              button drops pointer events, and — since a natively disabled
+              control is also UNFOCUSABLE, so keyboard/AT users never see a
+              tooltip — the same explanation rides a visually hidden span
+              referenced through aria-describedby. */}
           <span
             class="hk-solar-edit-wrap"
             title={
@@ -463,11 +473,17 @@ export const HkSolarLocationSetting = defineComponent({
               variant="ghost"
               class="hk-solar-edit"
               aria-label={t("hikari::theme.solar.edit")}
+              aria-describedby={editorDisabled.value ? reasonId : undefined}
               disabled={editorDisabled.value}
               onClick={openEditor}
             >
               {{ icon: () => <Pencil size={16} /> }}
             </HkIconButton>
+            {editorDisabled.value && (
+              <span id={reasonId} class="hk-solar-edit-reason">
+                {t("hikari::theme.solar.editAutoOnly")}
+              </span>
+            )}
           </span>
         </div>
 

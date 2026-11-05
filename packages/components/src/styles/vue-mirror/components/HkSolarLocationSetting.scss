@@ -69,11 +69,32 @@
 
 /* The icon-only action's tooltip host: the button itself is disabled in
  * manual modes and therefore loses pointer events (native `disabled`), so
- * the title has to live on this wrapper. */
+ * the title has to live on this wrapper. `relative` anchors the visually
+ * hidden reason span below. */
 .hk-solar-edit-wrap {
   display: inline-flex;
   flex: none;
   align-items: center;
+  position: relative;
+}
+
+/* The disabled-state reason for screen readers: a natively disabled button
+ * is unfocusable, so keyboard/AT users can never reach a tooltip. The span
+ * is referenced from the button's aria-describedby (rendered only while
+ * disabled) and collapses to nothing visually — the clip pair hides the
+ * box entirely without `display:none`, which would drop it from the
+ * accessibility tree too. */
+.hk-solar-edit-reason {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
 }
 
 .hk-solar-edit {

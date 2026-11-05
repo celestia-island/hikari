@@ -29,6 +29,13 @@
 //                  [disabled] [aria-label="Edit"]         (disabled =
 //                              editor_disabled; the label stays "Edit" —
 //                              the wrapper's title explains the lock)
+//                  [aria-describedby]                     (disabled only —
+//                              points at the reason span below)
+//           span.hk-solar-edit-reason [id]                (disabled only —
+//                              the visually hidden editAutoOnly text, so
+//                              keyboard/AT users hear the lock too: a
+//                              natively disabled control is unfocusable
+//                              and never shows a tooltip)
 //             span.hk-icon-button-icon
 //               span[style="display:contents"] > svg       (lucide pencil, 16)
 //       {mirrored Modal}                                  (teleports out in
@@ -85,6 +92,11 @@
 //     formula — hemisphere fixes the latitude's sign, longitude =
 //     standard offset / 4 — with `Intl` doing the offset in Vue and the
 //     host doing it here).
+//   * The reason span's id is STATIC here (`hk-solar-edit-reason`) while
+//     Vue allocates a per-instance counter id (a page may mount several
+//     cards). tairitsu keeps renders deterministic (no instance state), so
+//     a host mounting several cards must scope its own ids — documented
+//     renderer delta, the describedby wiring is identical.
 //   * NO THEME ENGINE EITHER. Vue reads `useTheme().currentMode` itself
 //     and disables the Edit control unless the mode is `system`; the card
 //     takes [`SolarLocationSettingProps::editor_disabled`] and the host
@@ -123,7 +135,7 @@
 //     `IconButton`'s `icon_slot` (so the `.hk-icon-button-icon` box is
 //     preserved exactly as Vue's `icon` slot renders it) and therefore
 //     needs its own `span[style="display:contents"]` mount — the standard
-//     crate glyph host (`layout/timeline.rs`, `display/empty_state.rs`),
+//     crate glyph host (`display/timeline.rs`, `display/empty_state.rs`),
 //     which is layout-neutral wherever it lands.
 //   * `refreshThemeClock()` on apply is the host's step (the engine call
 //     it belongs to is not mirrored).
@@ -735,6 +747,8 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
     // contract). The wrapper owns the tooltip because a disabled button
     // receives no pointer events.
     let edit_label = t("components.hk.solarLocationSetting.edit", "Edit");
+    // (While disabled this string doubles as the visually hidden reason
+    // text below — one lookup, three surfaces: tooltip, aria text node.)
     let edit_title = if props.editor_disabled {
         t(
             "components.hk.solarLocationSetting.editAutoOnly",
@@ -743,11 +757,19 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
     } else {
         edit_label.clone()
     };
+    // The disabled-state reason for screen readers (see the header DOM
+    // contract): the tooltip is mouse-only because a natively disabled
+    // control is unfocusable, so the same editAutoOnly text rides a
+    // visually hidden span the button references via aria-describedby.
+    const SOLAR_EDIT_REASON_ID: &str = "hk-solar-edit-reason";
     let open_button = IconButton(IconButtonProps {
         variant: IconButtonVariant::Ghost,
         size: IconButtonSize::S28,
         class: "hk-solar-edit".to_string(),
         aria_label: Some(edit_label),
+        aria_describedby: props
+            .editor_disabled
+            .then(|| SOLAR_EDIT_REASON_ID.to_string()),
         disabled: props.editor_disabled,
         icon_slot: Some(solar_glyph_host(solar_pencil_icon_svg())),
         onclick: props
@@ -756,12 +778,23 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
             .map(|handler| EventHandler::new(move |_event: MouseEvent| handler.call(()))),
         ..Default::default()
     });
-    let edit_wrap = VNode::Element(Box::new(
-        VElement::new("span")
-            .class("hk-solar-edit-wrap")
-            .attr("title", edit_title)
-            .child(open_button),
-    ));
+    let edit_wrap = VElement::new("span")
+        .class("hk-solar-edit-wrap")
+        // (cloned: the same string re-rides the reason span below)
+        .attr("title", edit_title.clone())
+        .child(open_button);
+    let edit_wrap = if props.editor_disabled {
+        VNode::Element(Box::new(
+            edit_wrap.child(VNode::Element(Box::new(
+                VElement::new("span")
+                    .attr("id", SOLAR_EDIT_REASON_ID)
+                    .class("hk-solar-edit-reason")
+                    .child(VNode::Text(VText::new(&edit_title))),
+            ))),
+        ))
+    } else {
+        VNode::Element(Box::new(edit_wrap))
+    };
 
     let row = VNode::Element(Box::new(
         VElement::new("div")
@@ -984,6 +1017,20 @@ impl StyledComponent for SolarLocationSettingComponent {
 mod tests {
     use super::*;
 
+    /// The solar Edit button's full opening tag (`<button … >`), extracted
+    /// from a rendered card so assertions can scope to THIS control instead
+    /// of the whole document (a localized string elsewhere may legally
+    /// contain the same token). Test-only by design.
+    fn solar_edit_button_open_tag(html: &str) -> Option<&str> {
+        // The button's FULL class string is unique to it — the bare hook
+        // `hk-solar-edit` also prefixes the wrapper's `hk-solar-edit-wrap`.
+        let class_at =
+            html.find("hk-icon-button hk-icon-button-28 hk-icon-button-ghost hk-solar-edit")?;
+        let start = html[..class_at].rfind("<button")?;
+        let end = html[class_at..].find('>')? + class_at;
+        Some(&html[start..=end])
+    }
+
     #[test]
     fn solar_defaults_match_the_vue_state() {
         let props = SolarLocationSettingProps::default();
@@ -1185,8 +1232,18 @@ mod tests {
         assert!(!html.contains(">Edit<"), "{html}");
         // Default props = ENABLED (the host's `editor_disabled` is the gate);
         // without this negative arm, hardcoding `disabled: true` keeps every
-        // crate test green (R3 mutation b).
-        assert!(!html.contains("disabled"), "{html}");
+        // crate test green (R3 mutation b). Scoped to the BUTTON's opening
+        // tag, not the whole document: a future localized string (or an
+        // unrelated `aria-disabled="false"`) must not trip this spuriously.
+        let edit_open_tag =
+            solar_edit_button_open_tag(&html).expect("the solar edit button renders");
+        assert!(
+            !edit_open_tag.contains("disabled"),
+            "default props must leave the edit control enabled: {edit_open_tag}"
+        );
+        // Enabled also means NO reason text and NO describedby reference.
+        assert!(!html.contains("hk-solar-edit-reason"), "{html}");
+        assert!(!html.contains("aria-describedby"), "{html}");
         // Vue's template emits no `type` on HkIconButton.
         assert!(!html.contains(r#"type="button""#), "{html}");
         // Editor closed: no editor body, no modal surface.
@@ -1235,9 +1292,22 @@ mod tests {
             r#"aria-label="Edit""#,
             r#"class="hk-icon-button hk-icon-button-28 hk-icon-button-ghost hk-solar-edit""#,
             r#"title="Switch to Auto mode to change the daylight location""#,
+            // The a11y reason: the disabled control is unfocusable, so the
+            // same text rides a hidden span referenced by describedby.
+            r#"aria-describedby="hk-solar-edit-reason""#,
+            r#"id="hk-solar-edit-reason""#,
+            r#"class="hk-solar-edit-reason""#,
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
+        // The reason span carries the auto-only text itself.
+        let reason_at = html
+            .find(r#"class="hk-solar-edit-reason""#)
+            .expect("reason span");
+        assert!(
+            html[reason_at..].contains("Switch to Auto mode to change the daylight location"),
+            "the reason text follows its span: {html}"
+        );
         // The enabled tooltip is gone; the glyph still renders.
         assert!(!html.contains(r#"title="Edit""#), "{html}");
         assert!(html.contains("lucide-pencil"), "{html}");
@@ -1421,6 +1491,7 @@ mod tests {
             ".hk-solar-summary-text",
             ".hk-solar-edit",
             ".hk-solar-edit-wrap",
+            ".hk-solar-edit-reason",
             ".hk-solar-editor",
             ".hk-solar-hint",
             ".hk-solar-detected",

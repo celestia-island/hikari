@@ -27,7 +27,11 @@ jobs:
   lane:
     uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@2e76d373762dc6b36c1ab7625c1c34842c28ad4a
     with:
-      devtools-ref: 2e76d373762dc6b36c1ab7625c1c34842c28ad4a
+      # NO `devtools-ref:` here: cnb-overflow.yml never declared that input
+      # (unlike verify-versions / pr-title-check / commit-msg-lint callees),
+      # so passing it made every run fail at startup with 0 jobs — the lane
+      # was dead from 2026-10-30 (#919) until this fix. The pin is on the
+      # `uses:` line above; that is the only place the callee ref belongs.
       target_repo: hikari
       target_sha: ${{ inputs.target_sha || github.event.pull_request.head.sha || github.sha }}
       task: cargo-check

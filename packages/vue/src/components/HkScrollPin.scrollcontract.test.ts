@@ -62,6 +62,25 @@ describe("scroll-pin whitespace contract", () => {
     expect(base).toMatch(/background: var\(\s*--hk-scroll-pin-bg/);
   });
 
+  it("keeps an opaque static background before the color-mix tint", () => {
+    // Engine support: color-mix() is unsupported on WebKit <=16.1 and Edge
+    // WebView2 <111, and a declaration with an unsupported value is DROPPED
+    // as a whole — the pin then paints transparent and scrolled content
+    // shows through the "pinned" surface (the 2026-11 raw-records report).
+    // The plain fallback must precede the tint; the later declaration wins
+    // on modern engines by cascade order.
+    const base = cssBlock(pinScss, ".hk-scroll-pin {");
+    const backgrounds = [...base.matchAll(/(?:^|;)\s*background\s*:([^;]+)/gm)].map((match) =>
+      match[1]!.replace(/\s+/g, " ").trim(),
+    );
+    expect(backgrounds.length, "the base declares background twice").toBe(2);
+    expect(backgrounds[0], "the fallback is a plain var chain").toContain(
+      "var(--hk-scroll-pin-bg, var(--hi-color-surface, #ffffff))",
+    );
+    expect(backgrounds[0], "the fallback must not need color-mix").not.toContain("color-mix");
+    expect(backgrounds[1], "the modern tint follows the fallback").toContain("color-mix");
+  });
+
   it("every side x strategy pairing exists (12 total)", () => {
     for (const strategy of ["offset", "bleed", "none"]) {
       for (const side of ["top", "bottom", "left", "right"]) {

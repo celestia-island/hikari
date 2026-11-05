@@ -23,6 +23,15 @@
   // Floating-chrome surface: near-opaque surface tint + blur so scrolled
   // content never bleeds through the pinned row (same look the step-flow
   // sticky header introduced; hosts retune through --hk-scroll-pin-bg).
+  //
+  // Static fallback FIRST: color-mix() is unsupported on WebKit <=16.1 and
+  // Edge WebView2 <111, and an unsupported VALUE drops the whole declaration
+  // — the pin then paints fully transparent with only the blur left, so
+  // content visibly scrolls through the "pinned" surface (2026-11 user
+  // report: the raw-records control block kept scrolling). Old engines keep
+  // this opaque surface; modern engines win the translucent tint below by
+  // cascade order.
+  background: var(--hk-scroll-pin-bg, var(--hi-color-surface, #ffffff));
   background: var(
     --hk-scroll-pin-bg,
     color-mix(in srgb, var(--hi-color-surface, #ffffff) 95%, transparent)

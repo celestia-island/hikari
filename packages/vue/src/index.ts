@@ -822,6 +822,9 @@ export {
   default as HkRangeRibbon,
   type RibbonLane,
   type RibbonSegment,
+  type RibbonStatus,
+  type RibbonTip,
+  type RibbonTone,
 } from "./components/HkRangeRibbon";
 export { default as HkRowActions } from "./components/HkRowActions";
 export { default as HkPopupSelect } from "./components/HkPopupSelect";

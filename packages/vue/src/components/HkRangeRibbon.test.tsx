@@ -200,16 +200,27 @@ function stubStrip(
   };
 }
 
-function pointer(type: string, clientX: number, target: EventTarget): void {
+interface PointerOptions {
+  pointerId?: number;
+  pointerType?: string;
+  button?: number;
+}
+
+function pointer(
+  type: string,
+  clientX: number,
+  target: EventTarget,
+  options: PointerOptions = {},
+): void {
   target.dispatchEvent(
     new PointerEvent(type, {
       bubbles: true,
       cancelable: true,
-      pointerId: 1,
-      pointerType: "mouse",
+      pointerId: options.pointerId ?? 1,
+      pointerType: options.pointerType ?? "mouse",
       clientX,
       clientY: 10,
-      button: 0,
+      button: options.button ?? 0,
     }),
   );
 }
@@ -283,6 +294,19 @@ describe("HkRangeRibbon full domain", () => {
     // …and a segment can never invent an undeclared lane.
     expect(segmentById(root, "orphan")).toBeNull();
     expect(root.querySelector('[data-segment-id="orphan"]')).toBeNull();
+  });
+
+  it("shares the label column with the lanes so both axes agree", () => {
+    const root = mountRibbon({ window: [0.2, 0.6] });
+    const overview = root.querySelector<HTMLElement>(".hk-range-ribbon-overview")!;
+    const gutter = overview.querySelector<HTMLElement>(".hk-range-ribbon-overview-gutter");
+    const field = overview.querySelector<HTMLElement>(".hk-range-ribbon-overview-field");
+    expect(gutter, "the overview keeps an empty label gutter").toBeTruthy();
+    expect(field, "the strip lives in the lane-matching column").toBeTruthy();
+    expect(field!.firstElementChild?.classList.contains("hk-range-ribbon-strip")).toBe(true);
+    // Handle percentages resolve against the strip's own box (the field),
+    // never against the gutter — a window edge lines up with the bar it clips.
+    expect(root.querySelector<HTMLElement>('[data-edge="start"]')!.parentElement).toBe(field);
   });
 });
 
@@ -373,6 +397,27 @@ describe("HkRangeRibbon windowed view", () => {
     expect(nan.querySelector(".hk-range-ribbon-handle")).toBeNull();
     expect(laneSegments(nan)).toHaveLength(4);
   });
+
+  it("clamps a minWindow above half the domain around the point and treats malformed windows as full", () => {
+    // minWindow 0.7 around 0.5 → [0.15, 0.85].
+    const wide = mountRibbon({ window: [0.5, 0.5], minWindow: 0.7 });
+    const highlight = wide.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
+    expect(boxOf(highlight).left).toBeCloseTo(15, 4);
+    expect(boxOf(highlight).width).toBeCloseTo(70, 4);
+
+    // Malformed values mean "no window" (full domain), never a crash: a
+    // one-member array, an infinity and an all-NaN pair all fall back.
+    const malformed: number[][] = [
+      [0.2],
+      [0.2, Number.POSITIVE_INFINITY],
+      [Number.NaN, Number.NaN],
+    ];
+    for (const window of malformed) {
+      const root = mountRibbon({ window });
+      expect(root.querySelector(".hk-range-ribbon-handle")).toBeNull();
+      expect(laneSegments(root)).toHaveLength(4);
+    }
+  });
 });
 
 // ── Brushing ────────────────────────────────────────────────────────────
@@ -442,6 +487,111 @@ describe("HkRangeRibbon brush", () => {
     expect(boxOf(parse).left).toBeCloseTo(20, 4);
     expect(boxOf(parse).width).toBeCloseTo(60, 4);
     expect(root.querySelector(".hk-range-ribbon-reset")).toBeTruthy();
+  });
+});
+
+// ── Pointer plumbing (capture / multi-touch / release) ──────────────────
+describe("HkRangeRibbon pointer plumbing", () => {
+  it("captures the pointer on strip and handle pointerdown", () => {
+    const host = mountHost([0.2, 0.6]);
+    const { strip, x } = stubStrip(host.root);
+    const stripCapture = vi.fn();
+    strip.setPointerCapture = stripCapture;
+    pointer("pointerdown", x(0.5), strip);
+    expect(stripCapture, "strip captures the brush pointer").toHaveBeenCalledWith(1);
+    pointer("pointerup", x(0.5), strip);
+
+    const handle = host.root.querySelector<HTMLElement>('[data-edge="end"]')!;
+    const handleCapture = vi.fn();
+    handle.setPointerCapture = handleCapture;
+    pointer("pointerdown", x(0.6), handle);
+    expect(handleCapture, "handle captures the resize pointer").toHaveBeenCalledWith(1);
+    pointer("pointerup", x(0.6), handle);
+  });
+
+  it("ignores a second pointer while a brush is in flight", async () => {
+    const host = mountHost(null);
+    const { strip, x } = stubStrip(host.root);
+    pointer("pointerdown", x(0.2), strip, { pointerId: 1 });
+    pointer("pointerdown", x(0.8), strip, { pointerId: 2 }); // second finger
+    pointer("pointermove", x(0.4), strip, { pointerId: 1 });
+    await nextTick();
+    expectWindow(lastWindow(host.windowChange), 0.2, 0.4);
+
+    // The other pointer's release must not end the first drag…
+    const calls = host.windowChange.mock.calls.length;
+    pointer("pointerup", x(0.4), strip, { pointerId: 2 });
+    pointer("pointermove", x(0.5), strip, { pointerId: 1 });
+    await nextTick();
+    expect(host.windowChange.mock.calls.length).toBe(calls + 1);
+    expectWindow(lastWindow(host.windowChange), 0.2, 0.5);
+  });
+
+  it("ends the gesture when the pointer is released outside the ribbon", async () => {
+    const host = mountHost(null);
+    const { strip, x } = stubStrip(host.root);
+    pointer("pointerdown", x(0.2), strip);
+    pointer("pointermove", x(0.3), strip);
+    await nextTick();
+    let calls = host.windowChange.mock.calls.length;
+
+    document.body.dispatchEvent(
+      new PointerEvent("pointerup", {
+        bubbles: true,
+        pointerId: 1,
+        pointerType: "mouse",
+        clientX: x(0.9),
+        clientY: 10,
+        button: 0,
+      }),
+    );
+    document.body.dispatchEvent(
+      new PointerEvent("pointermove", {
+        bubbles: true,
+        pointerId: 1,
+        pointerType: "mouse",
+        clientX: x(0.9),
+        clientY: 10,
+      }),
+    );
+    await nextTick();
+    expect(host.windowChange.mock.calls.length, "released drag stops tracking").toBe(calls);
+
+    // pointercancel ends it too.
+    pointer("pointerdown", x(0.1), strip);
+    pointer("pointermove", x(0.2), strip);
+    await nextTick();
+    calls = host.windowChange.mock.calls.length;
+    document.body.dispatchEvent(
+      new PointerEvent("pointercancel", {
+        bubbles: true,
+        pointerId: 1,
+        pointerType: "mouse",
+        clientX: x(0.2),
+        clientY: 10,
+      }),
+    );
+    document.body.dispatchEvent(
+      new PointerEvent("pointermove", {
+        bubbles: true,
+        pointerId: 1,
+        pointerType: "mouse",
+        clientX: x(0.6),
+        clientY: 10,
+      }),
+    );
+    await nextTick();
+    expect(host.windowChange.mock.calls.length, "cancelled drag stops tracking").toBe(calls);
+  });
+
+  it("brushes with touch pointers", async () => {
+    const host = mountHost(null);
+    const { strip, x } = stubStrip(host.root);
+    pointer("pointerdown", x(0.25), strip, { pointerType: "touch", pointerId: 3 });
+    pointer("pointermove", x(0.5), strip, { pointerType: "touch", pointerId: 3 });
+    pointer("pointerup", x(0.5), strip, { pointerType: "touch", pointerId: 3 });
+    await nextTick();
+    expectWindow(lastWindow(host.windowChange), 0.25, 0.5);
   });
 });
 
@@ -624,16 +774,57 @@ describe("HkRangeRibbon keyboard", () => {
     const host = mountHost(null);
     const strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
 
-    // A bare arrow cannot brush without a brush: no window, no emission.
-    keydown(strip, "ArrowRight");
+    // A bare arrow cannot brush without a brush: no window, no emission —
+    // and the arrow is left un-prevented for the host.
+    const bareArrow = keydown(strip, "ArrowRight");
     await nextTick();
     expect(host.windowChange).not.toHaveBeenCalled();
+    expect(bareArrow.defaultPrevented, "an inert arrow is not swallowed").toBe(false);
     expect(host.root.hasAttribute("data-windowed")).toBe(false);
 
     // Shift+Arrow is the keyboard entry point into windowed mode.
     keydown(strip, "ArrowLeft", { shiftKey: true });
     await nextTick();
     expectWindow(lastWindow(host.windowChange), 0, 0.95);
+  });
+
+  it("does not emit an identical window at a domain edge", async () => {
+    const host = mountHost([0.9, 1]);
+    let strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    let event = keydown(strip, "ArrowRight");
+    await nextTick();
+    expect(host.windowChange, "sliding past the right edge is a no-op").not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+
+    await host.setWindow([0, 0.1]);
+    strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    event = keydown(strip, "ArrowLeft");
+    await nextTick();
+    expect(host.windowChange, "sliding past the left edge is a no-op").not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+
+    await host.setWindow([0.4, 1]);
+    strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    event = keydown(strip, "ArrowRight", { shiftKey: true });
+    await nextTick();
+    expect(host.windowChange, "growing past the right edge is a no-op").not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it("keeps Home for the range surface and Escape for the whole ribbon", async () => {
+    const host = mountHost([0.2, 0.6]);
+    const segment = segmentById(host.root, "write")!;
+
+    // A focused segment keeps its native Home (caret/scroll) behaviour.
+    const homeOnSegment = keydown(segment, "Home");
+    await nextTick();
+    expect(host.windowChange, "Home on a segment does not reset").not.toHaveBeenCalled();
+    expect(homeOnSegment.defaultPrevented).toBe(false);
+
+    // Escape still resets from anywhere inside the ribbon.
+    keydown(segment, "Escape");
+    await nextTick();
+    expect(host.windowChange).toHaveBeenLastCalledWith(null);
   });
 });
 
@@ -660,6 +851,34 @@ describe("HkRangeRibbon selection", () => {
     keydown(parse, " ");
     await nextTick();
     expect(host.select).toHaveBeenCalledTimes(2);
+  });
+
+  it("paints tone, kind and status onto the lane bars", () => {
+    const segments: RibbonSegment[] = [
+      {
+        id: "tinted",
+        lane: "cpu",
+        start: 0.1,
+        end: 0.3,
+        label: "tinted",
+        tone: "warning",
+        kind: "wave",
+      },
+      { id: "queued", lane: "cpu", start: 0.4, end: 0.6, label: "queued", status: "pending" },
+      { id: "failed", lane: "cpu", start: 0.7, end: 0.9, label: "failed", status: "error" },
+      { id: "plain", lane: "cpu", start: 0.92, end: 0.98, label: "plain" },
+    ];
+    const root = mountRibbon({ window: null, segments });
+    const tinted = segmentById(root, "tinted")!;
+    expect(tinted.getAttribute("data-tone")).toBe("warning");
+    expect(tinted.getAttribute("data-kind")).toBe("wave");
+    expect(segmentById(root, "queued")!.getAttribute("data-status")).toBe("pending");
+    expect(segmentById(root, "failed")!.getAttribute("data-status")).toBe("error");
+    // A plain row carries none of the optional markers (no "undefined" text).
+    const plain = segmentById(root, "plain")!;
+    expect(plain.hasAttribute("data-tone")).toBe(false);
+    expect(plain.hasAttribute("data-kind")).toBe(false);
+    expect(plain.hasAttribute("data-status")).toBe(false);
   });
 });
 
@@ -701,6 +920,45 @@ describe("HkRangeRibbon tip card", () => {
     await nextTick();
     expect(parse.querySelector(".hk-range-ribbon-tip")).toBeNull();
   });
+
+  it("does not resurrect a tip for a segment that left the window", async () => {
+    const host = mountHost(null);
+    const flush = segmentById(host.root, "flush")!;
+    flush.dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    expect(flush.querySelector(".hk-range-ribbon-tip"), "tip floats on hover").toBeTruthy();
+
+    // Narrow the window until the hovered segment is clipped out: its bar
+    // unmounts without a mouseleave, and the tip id must not survive it.
+    await host.setWindow([0.2, 0.6]);
+    expect(segmentById(host.root, "flush")).toBeNull();
+    expect(host.root.querySelector(".hk-range-ribbon-tip")).toBeNull();
+
+    // Restoring the full domain re-renders the bar — with NO tip, because
+    // nothing is hovering or focusing it any more.
+    await host.setWindow(null);
+    expect(segmentById(host.root, "flush")).toBeTruthy();
+    expect(host.root.querySelector(".hk-range-ribbon-tip")).toBeNull();
+  });
+
+  it("anchors the tip inward at the track edges", async () => {
+    const segments: RibbonSegment[] = [
+      { id: "left", lane: "cpu", start: 0.02, end: 0.12, label: "left", tip: { title: "Left" } },
+      { id: "mid", lane: "cpu", start: 0.45, end: 0.55, label: "mid", tip: { title: "Mid" } },
+      { id: "right", lane: "cpu", start: 0.9, end: 0.99, label: "right", tip: { title: "Right" } },
+    ];
+    const root = mountRibbon({ window: null, segments });
+    const anchorOf = async (id: string): Promise<string | null> => {
+      const bar = segmentById(root, id)!;
+      bar.dispatchEvent(new MouseEvent("mouseenter"));
+      await nextTick();
+      return bar.querySelector<HTMLElement>(".hk-range-ribbon-tip")!.getAttribute("data-anchor");
+    };
+    // The card grows away from the edge it would otherwise overflow.
+    expect(await anchorOf("left"), "near the track start").toBe("start"); // center 7%
+    expect(await anchorOf("mid"), "mid-track").toBe("middle"); // center 50%
+    expect(await anchorOf("right"), "near the track end").toBe("end"); // center 94.5%
+  });
 });
 
 // ── A11y + i18n ─────────────────────────────────────────────────────────
@@ -709,6 +967,7 @@ describe("HkRangeRibbon a11y and i18n", () => {
     const root = mountRibbon({ window: [0.2, 0.6] });
     const strip = root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
     expect(strip.getAttribute("role")).toBe("slider");
+    expect(strip.getAttribute("aria-orientation")).toBe("horizontal");
     expect(strip.getAttribute("aria-valuemin")).toBe("0");
     expect(strip.getAttribute("aria-valuemax")).toBe("100");
     expect(strip.getAttribute("aria-valuenow"), "strip value = window start").toBe("20");
@@ -717,6 +976,7 @@ describe("HkRangeRibbon a11y and i18n", () => {
 
     const start = root.querySelector<HTMLElement>('[data-edge="start"]')!;
     expect(start.getAttribute("role")).toBe("slider");
+    expect(start.getAttribute("aria-orientation")).toBe("horizontal");
     expect(start.getAttribute("aria-valuemin")).toBe("0");
     expect(start.getAttribute("aria-valuemax")).toBe("58");
     expect(start.getAttribute("aria-valuenow")).toBe("20");
@@ -724,6 +984,7 @@ describe("HkRangeRibbon a11y and i18n", () => {
 
     const end = root.querySelector<HTMLElement>('[data-edge="end"]')!;
     expect(end.getAttribute("role")).toBe("slider");
+    expect(end.getAttribute("aria-orientation")).toBe("horizontal");
     expect(end.getAttribute("aria-valuemin")).toBe("22");
     expect(end.getAttribute("aria-valuemax")).toBe("100");
     expect(end.getAttribute("aria-valuenow")).toBe("60");
@@ -782,6 +1043,53 @@ describe("HkRangeRibbon a11y and i18n", () => {
   });
 });
 
+// ── Controlled / uncontrolled switch ────────────────────────────────────
+describe("HkRangeRibbon controlled contract", () => {
+  it("keeps the host's window while controlled and falls back to full when the prop is dropped", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const control = ref<"controlled" | "uncontrolled">("controlled");
+    const win = ref<[number, number] | null>([0.2, 0.6]);
+    const emitted = vi.fn();
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkRangeRibbon, {
+            lanes: LANES,
+            segments: SEGMENTS,
+            ...(control.value === "controlled"
+              ? { window: win.value, onWindowChange: emitted }
+              : {}),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    mounts.push({ app, container });
+    const root = container.querySelector<HTMLElement>(".hk-range-ribbon")!;
+    const { strip, x } = stubStrip(root);
+
+    pointer("pointerdown", x(0.55), strip);
+    pointer("pointermove", x(0.7), strip);
+    pointer("pointerup", x(0.7), strip);
+    await nextTick();
+    expect(emitted, "the drag still reports").toHaveBeenCalled();
+
+    // The host ignored the emission: its window stays authoritative.
+    const highlight = root.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
+    expect(parseFloat(highlight.style.left), "start still 20%").toBeCloseTo(20, 4);
+    expect(parseFloat(highlight.style.width), "width still 40%").toBeCloseTo(40, 4);
+
+    // Dropping the prop hands control to the ribbon's own state, which never
+    // mirrored the ignored controlled value: the full domain shows.
+    control.value = "uncontrolled";
+    await nextTick();
+    expect(root.hasAttribute("data-windowed")).toBe(false);
+    expect(root.querySelector(".hk-range-ribbon-handle")).toBeNull();
+    expect(laneSegments(root)).toHaveLength(4);
+  });
+});
+
 // ── Stylesheet contract ─────────────────────────────────────────────────
 const componentDir = dirname(fileURLToPath(import.meta.url));
 
@@ -790,7 +1098,9 @@ const componentDir = dirname(fileURLToPath(import.meta.url));
 function ruleBody(sheet: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const matches = [
-    ...sheet.matchAll(new RegExp(`(?:(?<=^)|(?<=[}{]))\\s*${escaped}\\s*\\{([^}]*)\\}`, "g")),
+    ...sheet.matchAll(
+      new RegExp(`(?:(?<=^)|(?<=[}{])|(?<=\\*/))\\s*${escaped}\\s*\\{([^}]*)\\}`, "g"),
+    ),
   ];
   expect(matches, `${selector} compiles exactly once`).toHaveLength(1);
   return matches[0]?.[1] ?? "";
@@ -878,5 +1188,37 @@ describe("HkRangeRibbon stylesheet contract", () => {
     expect(css).toMatch(
       /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.hk-range-ribbon-segment\[data-status=pending\][\s\S]*?animation: none/,
     );
+  });
+
+  it("shares one label column between the overview and the lanes", () => {
+    expect(
+      declaration(ruleBody(css, ".hk-range-ribbon"), "--hk-range-ribbon-label-col"),
+      "the root declares the shared label column",
+    ).toBe("minmax(48px, 84px)");
+    const overviewColumns = declaration(
+      ruleBody(css, ".hk-range-ribbon-overview"),
+      "grid-template-columns",
+    );
+    const laneColumns = declaration(ruleBody(css, ".hk-range-ribbon-lane"), "grid-template-columns");
+    expect(overviewColumns, "the overview opts into the shared column").toContain(
+      "var(--hk-range-ribbon-label-col)",
+    );
+    expect(overviewColumns, "both surfaces use the same tracks").toBe(laneColumns);
+    // The strip's own box is the coordinate space for handle percentages.
+    expect(ruleBody(css, ".hk-range-ribbon-overview-field")).toContain("position: relative");
+    expect(css).toContain(".hk-range-ribbon-overview-gutter");
+  });
+
+  it("anchors the tip inward at the track edges", () => {
+    const tip = ruleBody(css, ".hk-range-ribbon-tip");
+    expect(declaration(tip, "text-align")).toBe("start");
+    expect(declaration(tip, "transform"), "centered by default").toBe("translateX(-50%)");
+    const startAnchor = ruleBody(css, ".hk-range-ribbon-tip[data-anchor=start]");
+    expect(declaration(startAnchor, "left")).toBe("0");
+    expect(declaration(startAnchor, "transform")).toBe("none");
+    const endAnchor = ruleBody(css, ".hk-range-ribbon-tip[data-anchor=end]");
+    expect(declaration(endAnchor, "left")).toBe("auto");
+    expect(declaration(endAnchor, "right")).toBe("0");
+    expect(declaration(endAnchor, "transform")).toBe("none");
   });
 });

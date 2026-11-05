@@ -16,6 +16,11 @@
    pending-segment breathe, registered in animation/registerAnimations.ts. */
 
 .hk-range-ribbon {
+  // ONE label column for both surfaces: the overview paints through an
+  // empty gutter of this width, so an x% bar sits at the same inline
+  // position in the strip and in its lane (the strip locates segments).
+  --hk-range-ribbon-label-col: minmax(48px, 84px);
+
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -25,6 +30,23 @@
 
 // ── Overview strip (the full-domain minimap + brush surface) ─────────────
 .hk-range-ribbon-overview {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--hk-range-ribbon-label-col) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+// The empty first cell that lines the strip up with the lane tracks.
+.hk-range-ribbon-overview-gutter {
+  display: block;
+  min-width: 0;
+}
+
+// The strip's own coordinate space: handles/reset are positioned against
+// this box, which is exactly the strip's width (never the gutter too).
+.hk-range-ribbon-overview-field {
   position: relative;
   min-width: 0;
 }
@@ -199,7 +221,7 @@
 
 .hk-range-ribbon-lane {
   display: grid;
-  grid-template-columns: minmax(48px, 84px) minmax(0, 1fr);
+  grid-template-columns: var(--hk-range-ribbon-label-col) minmax(0, 1fr);
   align-items: center;
   gap: var(--space-4);
   min-width: 0;
@@ -349,9 +371,22 @@
   color: rgb(var(--color-text));
   font-size: var(--text-2xs);
   line-height: 1.35;
-  text-align: left;
+  text-align: start;
   white-space: normal;
   pointer-events: none;
+}
+
+// A tip on a segment near either end of the track grows INWARD from that
+// segment's own edge instead of centring (and overflowing) the ribbon.
+.hk-range-ribbon-tip[data-anchor="start"] {
+  left: 0;
+  transform: none;
+}
+
+.hk-range-ribbon-tip[data-anchor="end"] {
+  left: auto;
+  right: 0;
+  transform: none;
 }
 
 .hk-range-ribbon-tip-title {

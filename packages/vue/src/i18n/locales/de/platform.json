@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "Inhalte auf Brandfarben",
     "hikari::theme.solar.title": "Sonnenuhr-Standort",
     "hikari::theme.solar.edit": "Bearbeiten",
+    "hikari::theme.solar.editAutoOnly": "Wechsle in den Automatikmodus, um den Tageslichtstandort zu ändern",
     "hikari::theme.solar.apply": "Anwenden",
     "hikari::theme.solar.cancel": "Abbrechen",
     "hikari::theme.solar.strategyTimezone": "Zeitzone",

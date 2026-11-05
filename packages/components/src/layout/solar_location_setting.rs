@@ -19,8 +19,18 @@
 //         div.hk-solar-summary [data-strategy]
 //           span.hk-solar-summary-icon [aria-hidden=true] (the lucide glyph)
 //           span.hk-solar-summary-text                    (live summary)
-//         button.hk-btn…hk-solar-edit                     (mirrored Button,
-//                                                          size sm / outline)
+//         span.hk-solar-edit-wrap [title]                 (tooltip host: a
+//                              disabled button drops pointer events, so the
+//                              title lives here — same choice as Vue)
+//           button.hk-icon-button.hk-icon-button-28
+//                  .hk-icon-button-ghost.hk-solar-edit    (mirrored
+//                              IconButton — size 28 / ghost; NO `type`
+//                              attribute, exactly Vue's template)
+//                  [disabled] [aria-label="Edit"]         (disabled =
+//                              editor_disabled; the label stays "Edit" —
+//                              the wrapper's title explains the lock)
+//             span.hk-icon-button-icon
+//               span[style="display:contents"] > svg       (lucide pencil, 16)
 //       {mirrored Modal}                                  (teleports out in
 //                                                          Vue; tree-wise a
 //                                                          body child)
@@ -75,6 +85,11 @@
 //     formula — hemisphere fixes the latitude's sign, longitude =
 //     standard offset / 4 — with `Intl` doing the offset in Vue and the
 //     host doing it here).
+//   * NO THEME ENGINE EITHER. Vue reads `useTheme().currentMode` itself
+//     and disables the Edit control unless the mode is `system`; the card
+//     takes [`SolarLocationSettingProps::editor_disabled`] and the host
+//     feeds `current_mode != System`. The wrapper's title switches to the
+//     `editAutoOnly` string while disabled (Vue picks the same string).
 //   * NO READOUT ENGINE either. Vue's editor derives the detected-value
 //     rows itself (the device zone's band/cities for "timezone"; the
 //     IP-insight probe + its retry affordance for "ip"). The mirror takes
@@ -97,12 +112,19 @@
 //     a measured frame, and there is no measurement pairing in the crate
 //     this wave, so it stays the sheet's transparent pre-measurement self
 //     and a host may measure and light it up.
-//   * The three summary/editor glyphs (lucide `Clock` / `Globe2` /
-//     `MapPin`, size 16) are TRUSTED STATIC MARKUP through
-//     `dangerous_inner_html` (ledger L49: an `rsx!` `svg {}` child lands
-//     in the HTML namespace; `Globe2` is lucide's `earth` icon under its
-//     alias — the class pair says `lucide-earth`), serialized byte for
-//     byte the way `lucide-vue-next` v1 renders `<Clock size={16} />`.
+//   * The four glyphs (the summary's lucide `Clock` / `Globe2` / `MapPin`
+//     plus the Edit action's `Pencil`, all size 16) are TRUSTED STATIC
+//     MARKUP through `dangerous_inner_html` (ledger L49: an `rsx!` `svg {}`
+//     child lands in the HTML namespace; `Globe2` is lucide's `earth` icon
+//     under its alias — the class pair says `lucide-earth`), serialized
+//     byte for byte the way `lucide-vue-next` v1 renders `<Clock
+//     size={16} />`. The summary glyphs mount on their own
+//     `span.hk-solar-summary-icon`; the Pencil rides the mirrored
+//     `IconButton`'s `icon_slot` (so the `.hk-icon-button-icon` box is
+//     preserved exactly as Vue's `icon` slot renders it) and therefore
+//     needs its own `span[style="display:contents"]` mount — the standard
+//     crate glyph host (`layout/timeline.rs`, `display/empty_state.rs`),
+//     which is layout-neutral wherever it lands.
 //   * `refreshThemeClock()` on apply is the host's step (the engine call
 //     it belongs to is not mirrored).
 //
@@ -111,14 +133,14 @@
 // canonical ones from the Vue app dictionary (`hikari::theme.solar.*` in
 // `packages/vue/src/i18n/locales/en/platform.json`), re-keyed to the
 // crate's component namespace (the same mapping `layout/affix_picker.rs`
-// applies). Keys: title, edit, apply, cancel, cardTitle, summaryTimezone,
+// applies). Keys: title, edit, editAutoOnly, apply, cancel, cardTitle, summaryTimezone,
 // summaryIp, strategyTimezone, strategyIp, strategyManual, timezoneHint,
 // ipHint, manualHint, detectedZone, detectedBand, detectedOffset,
 // detectedCities, detectedIp, detectedAsn, detectedOrg, detectedRegion,
 // detectedIpZone, detectedProbing, detectedRefreshFailed, detectedFailed,
 // detectedRetry, hemisphere, north, south, resolvedAt. Of these only
-// title/edit/apply/cancel + cardTitle/summary*/strategy*/hints/hemisphere/
-// north/south + resolvedAt are t()ed HERE (17 call sites); the detected*
+// title/edit/editAutoOnly/apply/cancel + cardTitle/summary*/strategy*/hints/
+// hemisphere/north/south + resolvedAt are t()ed HERE (18 call sites); the detected*
 // keys are BUNDLE-SIDE — hosts building the readout rows localize them —
 // the crate itself never t()s them.
 
@@ -132,7 +154,10 @@
 use hikari_i18n::t;
 
 use crate::basic::time_zone_globe::{TimeZoneGlobe, TimeZoneGlobeProps};
-use crate::basic::{Button, ButtonProps, ButtonSize, ButtonVariant};
+use crate::basic::{
+    Button, ButtonProps, ButtonSize, ButtonVariant, IconButton, IconButtonProps, IconButtonSize,
+    IconButtonVariant,
+};
 use crate::feedback::modal::{Modal, ModalAction, ModalActionVariant, ModalProps};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -390,6 +415,29 @@ pub fn solar_map_pin_icon_svg() -> String {
     )
 }
 
+/// lucide `pencil` (`<Pencil size={16} />`) — the Edit action's glyph,
+/// passed through the mirrored `IconButton`'s `icon_slot`. Same path data
+/// `layout/header_picker.rs` pins for its row verbs: size-independent, so
+/// only the 16px box differs from that 14px use.
+pub fn solar_pencil_icon_svg() -> String {
+    lucide_icon_svg(
+        "pencil",
+        16,
+        r#"<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path>"#,
+    )
+}
+
+/// One trusted glyph on its own `display:contents` host — the crate's
+/// standard SVG mount for slots (tairitsu's element tree is HTML-namespaced,
+/// so the markup has to ride `dangerous_inner_html`; see the header).
+fn solar_glyph_host(markup: String) -> Element {
+    VNode::Element(Box::new(
+        VElement::new("span")
+            .style("display:contents")
+            .dangerous_inner_html(markup),
+    ))
+}
+
 /// The row's summary glyph, per strategy (Vue's `summaryIcon`).
 pub fn solar_summary_icon_svg(strategy: SolarLocationStrategy) -> String {
     match strategy {
@@ -640,6 +688,13 @@ pub struct SolarLocationSettingProps {
     /// derives it live from the engine; see the header delta).
     pub resolved_geo: Option<SolarGeo>,
 
+    /// Locks the Edit control (native `disabled`) and switches the
+    /// wrapper's tooltip to the `editAutoOnly` string. DELTA vs Vue: Vue
+    /// derives this from `useTheme().currentMode !== "system"`; the crate
+    /// has no engine, so the host feeds `current_mode != System`.
+    #[default]
+    pub editor_disabled: bool,
+
     /// The Edit button was pressed; the host seeds the draft and opens.
     pub on_open: Option<EventHandler<()>>,
 
@@ -676,17 +731,37 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
             .dangerous_inner_html(solar_summary_icon_svg(props.strategy)),
     ));
 
-    let open_button = Button(ButtonProps {
-        variant: ButtonVariant::Outline,
-        size: ButtonSize::Sm,
+    // The Edit action: an icon-only ghost square (see the header DOM
+    // contract). The wrapper owns the tooltip because a disabled button
+    // receives no pointer events.
+    let edit_label = t("components.hk.solarLocationSetting.edit", "Edit");
+    let edit_title = if props.editor_disabled {
+        t(
+            "components.hk.solarLocationSetting.editAutoOnly",
+            "Switch to Auto mode to change the daylight location",
+        )
+    } else {
+        edit_label.clone()
+    };
+    let open_button = IconButton(IconButtonProps {
+        variant: IconButtonVariant::Ghost,
+        size: IconButtonSize::S28,
         class: "hk-solar-edit".to_string(),
-        label: Some(t("components.hk.solarLocationSetting.edit", "Edit")),
+        aria_label: Some(edit_label),
+        disabled: props.editor_disabled,
+        icon_slot: Some(solar_glyph_host(solar_pencil_icon_svg())),
         onclick: props
             .on_open
             .clone()
             .map(|handler| EventHandler::new(move |_event: MouseEvent| handler.call(()))),
         ..Default::default()
     });
+    let edit_wrap = VNode::Element(Box::new(
+        VElement::new("span")
+            .class("hk-solar-edit-wrap")
+            .attr("title", edit_title)
+            .child(open_button),
+    ));
 
     let row = VNode::Element(Box::new(
         VElement::new("div")
@@ -702,7 +777,7 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
                             .child(VNode::Text(VText::new(&summary))),
                     ))),
             )))
-            .child(open_button),
+            .child(edit_wrap),
     ));
 
     // ── the card (HkCard's face; see the header DOM contract) ─────────
@@ -925,6 +1000,8 @@ mod tests {
         // The explicit-pick contract's neutral start.
         assert_eq!(props.draft_hemisphere, SolarHemisphere::North);
         assert!(props.resolved_geo.is_none());
+        // The Edit control starts enabled (Vue: `currentMode === "system"`).
+        assert!(!props.editor_disabled);
         assert!(props.on_open.is_none());
         assert!(props.on_close.is_none());
         assert!(props.on_strategy_change.is_none());
@@ -1044,6 +1121,18 @@ mod tests {
                 .contains(r#"class="lucide lucide-map-pin-icon lucide-map-pin""#)
         );
         assert!(clock.contains(r#"<circle cx="12" cy="12" r="10"></circle>"#));
+        // The Edit action's Pencil (the IconButton slot glyph): same 16px
+        // serializer, lucide's class pair.
+        let pencil = solar_pencil_icon_svg();
+        assert!(
+            pencil.contains(r#"class="lucide lucide-pencil-icon lucide-pencil""#),
+            "{pencil}"
+        );
+        assert!(
+            pencil
+                .starts_with(r#"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" "#),
+            "{pencil}"
+        );
         // The summary glyph follows the strategy.
         assert_eq!(
             solar_summary_icon_svg(SolarLocationStrategy::Manual),
@@ -1079,12 +1168,23 @@ mod tests {
             "lucide-map-pin",
             r#"class="hk-solar-summary-text""#,
             "Manual · Australia/Sydney · Southern",
-            "hk-solar-edit",
-            "hk-btn-outline",
-            ">Edit</span>",
+            // The Edit action: wrapper tooltip host + the mirrored
+            // IconButton (28 / ghost) with the Pencil slot glyph.
+            r#"class="hk-solar-edit-wrap""#,
+            r#"title="Edit""#,
+            r#"class="hk-icon-button hk-icon-button-28 hk-icon-button-ghost hk-solar-edit""#,
+            r#"aria-label="Edit""#,
+            r#"class="hk-icon-button-icon""#,
+            "lucide-pencil",
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
+        // Icon-only: the old text pill is gone, and the button carries no
+        // label text of its own (the accessible name is the aria-label).
+        assert!(!html.contains("hk-btn-outline"), "{html}");
+        assert!(!html.contains(">Edit<"), "{html}");
+        // Vue's template emits no `type` on HkIconButton.
+        assert!(!html.contains(r#"type="button""#), "{html}");
         // Editor closed: no editor body, no modal surface.
         assert!(!html.contains("hk-solar-editor"), "{html}");
         assert!(!html.contains("hk-modal-root"), "{html}");
@@ -1110,8 +1210,33 @@ mod tests {
         let hidden = render_with(Some(String::new()));
         assert!(!hidden.contains("hk-card-header"), "{hidden}");
         assert!(!hidden.contains("hk-card-title"), "{hidden}");
-        // The body row still renders.
+        // The body row still renders (with its Edit action) — only the
+        // header goes away.
         assert!(hidden.contains(r#"class="hk-solar-row""#), "{hidden}");
+        assert!(hidden.contains(r#"class="hk-solar-edit-wrap""#), "{hidden}");
+    }
+
+    #[test]
+    fn solar_edit_disables_outside_the_auto_mode() {
+        // Vue: `editorDisabled = currentMode !== "system"` — the host
+        // feeds the same boolean. Disabled keeps the accessible name and
+        // swaps the wrapper's tooltip to the auto-only explanation.
+        let html = SolarLocationSetting(SolarLocationSettingProps {
+            editor_disabled: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        for needle in [
+            r#"disabled="disabled""#,
+            r#"aria-label="Edit""#,
+            r#"class="hk-icon-button hk-icon-button-28 hk-icon-button-ghost hk-solar-edit""#,
+            r#"title="Switch to Auto mode to change the daylight location""#,
+        ] {
+            assert!(html.contains(needle), "missing {needle}: {html}");
+        }
+        // The enabled tooltip is gone; the glyph still renders.
+        assert!(!html.contains(r#"title="Edit""#), "{html}");
+        assert!(html.contains("lucide-pencil"), "{html}");
     }
 
     #[test]
@@ -1291,6 +1416,7 @@ mod tests {
             ".hk-solar-summary-icon",
             ".hk-solar-summary-text",
             ".hk-solar-edit",
+            ".hk-solar-edit-wrap",
             ".hk-solar-editor",
             ".hk-solar-hint",
             ".hk-solar-detected",

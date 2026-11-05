@@ -1,9 +1,9 @@
 // AI-generated: developed with the ZCode agent (model GLM-5.3); human-directed.
 import { computed, defineAsyncComponent, defineComponent, ref, watch } from "vue";
-import { Clock, Globe2, MapPin } from "lucide-vue-next";
+import { Clock, Globe2, MapPin, Pencil } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
-import { refreshThemeClock } from "../theme/useTheme";
+import { refreshThemeClock, useTheme } from "../theme/useTheme";
 import {
   hydrateSolarLocationState,
   manualLocationOf,
@@ -25,6 +25,7 @@ import {
   standardOffsetHours,
 } from "../theme/solarTimeZones";
 import HkButton from "./HkButton";
+import HkIconButton from "./HkIconButton";
 import HkCard from "./HkCard";
 import HkCopyBadge from "./HkCopyBadge";
 import HkModal, { type ModalAction } from "./HkModal";
@@ -136,9 +137,10 @@ export function solarTimezoneDetectedRows(
  *  - the card is a standard HkCard titled "Daylight location" (the
  *    `title` prop overrides or, with an empty string, hides the header
  *    for hosts that already label their section), its body carrying the
- *    live strategy summary and an Edit button — the summary names the
- *    POLICY in a fixed shape ("Auto · By time zone" / "Auto · IP
- *    location" / "Manual · {zone} · {hemisphere}");
+ *    live strategy summary and an ICON-ONLY Edit button (HkIconButton
+ *    ghost/28, the row's own cross size) — the summary names the POLICY
+ *    in a fixed shape ("Auto · By time zone" / "Auto · IP location" /
+ *    "Manual · {zone} · {hemisphere}");
  *  - the modal drafts a strategy (segmented Clock/Globe2/MapPin tabs).
  *    The first line under the tabs states the strategy's PRINCIPLE; for
  *    the non-manual strategies a detected-value readout follows, one
@@ -154,6 +156,14 @@ export function solarTimezoneDetectedRows(
  *    setSolarLocationStrategy → refreshThemeClock() (the setters drop
  *    the engine's geo memo but do not re-resolve on their own), and the
  *    card's summary reflects the new state immediately.
+ *
+ * The Edit affordance is AUTO-MODE ONLY (2026-11-05 user direction): the
+ * solar clock only drives the theme in `currentMode === "system"`; in a
+ * manual light/dark mode the button is disabled (gray) and its tooltip
+ * says so. The component reads the singleton theme state itself, so a
+ * host that drops it under its own mode switch gets the behavior without
+ * wiring anything. The Rust mirror takes the same state as an
+ * `editor_disabled` prop (it has no theme engine).
  */
 export const HkSolarLocationSetting = defineComponent({
   name: "HkSolarLocationSetting",
@@ -168,6 +178,9 @@ export const HkSolarLocationSetting = defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
+    // AUTO-mode gate: the sun clock only drives the theme in "system".
+    const { currentMode } = useTheme();
+    const editorDisabled = computed(() => currentMode.value !== "system");
     // The engine hydrates lazily (storage-silent imports): a host that
     // mounts this card before initTheme() still sees the stored strategy.
     hydrateSolarLocationState();
@@ -433,14 +446,29 @@ export const HkSolarLocationSetting = defineComponent({
             <span class="hk-solar-summary-icon" aria-hidden="true">{summaryIcon()}</span>
             <span class="hk-solar-summary-text">{summaryText.value}</span>
           </div>
-          <HkButton
-            size="sm"
-            variant="outline"
-            class="hk-solar-edit"
-            onClick={openEditor}
+          {/* Icon-only Edit (2026-11-05): the row's action is the standard
+              ghost icon-button square, not a text pill. Disabled outside
+              auto mode; the wrapper owns the tooltip because a disabled
+              button drops pointer events. */}
+          <span
+            class="hk-solar-edit-wrap"
+            title={
+              editorDisabled.value
+                ? t("hikari::theme.solar.editAutoOnly")
+                : t("hikari::theme.solar.edit")
+            }
           >
-            {t("hikari::theme.solar.edit")}
-          </HkButton>
+            <HkIconButton
+              size={28}
+              variant="ghost"
+              class="hk-solar-edit"
+              aria-label={t("hikari::theme.solar.edit")}
+              disabled={editorDisabled.value}
+              onClick={openEditor}
+            >
+              {{ icon: () => <Pencil size={16} /> }}
+            </HkIconButton>
+          </span>
         </div>
 
         <HkModal

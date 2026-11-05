@@ -15,6 +15,10 @@
   align-items: center;
   gap: var(--space-8, 0.5rem);
   min-width: 0;
+  /* The row's cross size is the icon-button square (28px), so the summary
+   * line and the action share ONE geometric center independent of the
+   * host's line-height. */
+  min-height: var(--space-28, 1.75rem);
 }
 
 .hk-solar-summary {
@@ -25,6 +29,10 @@
   flex: 1 1 auto;
   color: rgb(var(--color-text-secondary, var(--color-muted)));
   font-size: var(--text-sm);
+  /* Drop the inherited 1.5 leading: the text box then equals the glyph
+   * box, so its center is the row's center instead of the line box's
+   * (the descender gap read as a 1–2px sag on CJK glyphs). */
+  line-height: 1;
 }
 
 .hk-solar-summary-icon {
@@ -32,6 +40,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  line-height: 0;
   color: rgb(var(--color-muted));
 }
 
@@ -43,6 +52,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The icon-only action's tooltip host: the button itself is disabled in
+ * manual modes and therefore loses pointer events (native `disabled`), so
+ * the title has to live on this wrapper. */
+.hk-solar-edit-wrap {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
 }
 
 .hk-solar-edit {

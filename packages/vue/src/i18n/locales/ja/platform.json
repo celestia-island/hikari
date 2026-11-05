@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "ブランドカラー上のコンテンツ",
     "hikari::theme.solar.title": "太陽時計の位置",
     "hikari::theme.solar.edit": "編集",
+    "hikari::theme.solar.editAutoOnly": "自動モードに切り替えると日照位置を調整できます",
     "hikari::theme.solar.apply": "適用",
     "hikari::theme.solar.cancel": "キャンセル",
     "hikari::theme.solar.strategyTimezone": "タイムゾーン",

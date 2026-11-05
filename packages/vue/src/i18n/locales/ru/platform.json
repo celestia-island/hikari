@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "Контент на фирменном цвете",
     "hikari::theme.solar.title": "Расположение солнечных часов",
     "hikari::theme.solar.edit": "Изменить",
+    "hikari::theme.solar.editAutoOnly": "Переключитесь в автоматический режим, чтобы изменить положение солнца",
     "hikari::theme.solar.apply": "Применить",
     "hikari::theme.solar.cancel": "Отмена",
     "hikari::theme.solar.strategyTimezone": "Часовой пояс",

@@ -17,6 +17,20 @@
 //     div.hk-markdown-overlay         (loading only)
 //       div.hk-spinner …
 //
+// Opt-in `inline_chips` (`inlineChips` in Vue) — the pass runs over the
+// rendered inline spans, so the chip markup lives INSIDE the existing
+// block elements:
+//
+//   span.hk-tpl-chip [data-static=""]              (a {{ token }} form)
+//   span.hk-tpl-chip [data-static=""] [data-ref=""]  (an @level/name /
+//                                                    bare @name reference)
+//
+//   Chipped text: the chip body carries the canonical `{{ name }}`
+//   spelling for tokens and the raw matched text for refs; literal
+//   surfaces (fenced/inline code, link text and hrefs) are never
+//   chipped. Off by default — every existing consumer renders the same
+//   bytes as before.
+//
 // Delta vs Vue (documented). The Vue component is NOT a simple hand-rolled
 // marker parser: it lazy-loads `marked` with `{gfm: true, breaks: true}`,
 // overrides the code/table renderers and sanitises with DOMPurify, with
@@ -298,6 +312,198 @@ pub fn markdown_inline(text: &str) -> Vec<MdInline> {
     out
 }
 
+/// One segment of the inline-chip pass (`inlineChips` prop).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InlineChipSegment {
+    /// Literal text, escaped on render.
+    Text(String),
+    /// A fill-template token (`{{ name }}`); renders the canonical spelling.
+    Token(String),
+    /// An asset reference (`@level/name`, bare `@name`); renders raw.
+    Ref(String),
+}
+
+fn chip_is_ident(ch: char) -> bool {
+    ch.is_ascii_alphanumeric() || ch == '_'
+}
+
+fn chip_is_segment(ch: char) -> bool {
+    ch.is_ascii_alphanumeric() || ch == '_' || ch == '-'
+}
+
+/// JavaScript's `\s` class — the token grammar's brace padding is parsed
+/// with it on the Vue side (`templateGrammar.ts`), and `char::is_whitespace`
+/// does NOT agree with it (JS includes U+FEFF, excludes U+0085), so the
+/// mirror spells the set out instead of inheriting Rust's.
+fn chip_is_space(ch: char) -> bool {
+    matches!(
+        ch,
+        ' ' | '\t' | '\n' | '\u{0b}' | '\u{0c}' | '\r' | '\u{a0}' | '\u{1680}' | '\u{2000}'
+            ..='\u{200a}'
+                | '\u{2028}'
+                | '\u{2029}'
+                | '\u{202f}'
+                | '\u{205f}'
+                | '\u{3000}'
+                | '\u{feff}'
+    )
+}
+
+/// Split one literal text run into text / token / ref segments. Mirrors
+/// `inlineChips.ts`: the token grammar is `templateGrammar.ts`'s (bare
+/// `[A-Za-z0-9_]+` only — richer engine grammars stay literal) and an
+/// `@` does not start a ref when the previous char is a word char or
+/// another `@` (so `foo@bar.com` and `user@@host` stay text).
+pub fn inline_chips_parse(text: &str) -> Vec<InlineChipSegment> {
+    let chars: Vec<char> = text.chars().collect();
+    let mut out: Vec<InlineChipSegment> = Vec::new();
+    let mut buffer = String::new();
+    let mut index = 0usize;
+
+    fn flush(buffer: &mut String, out: &mut Vec<InlineChipSegment>) {
+        if !buffer.is_empty() {
+            out.push(InlineChipSegment::Text(std::mem::take(buffer)));
+        }
+    }
+
+    while index < chars.len() {
+        // `{{ name }}` — the shared fill-template grammar.
+        if chars[index] == '{' && chars.get(index + 1) == Some(&'{') {
+            let mut cursor = index + 2;
+            while chars.get(cursor).is_some_and(|c| chip_is_space(*c)) {
+                cursor += 1;
+            }
+            let start = cursor;
+            while chars.get(cursor).is_some_and(|c| chip_is_ident(*c)) {
+                cursor += 1;
+            }
+            let name: String = chars[start..cursor].iter().collect();
+            let mut tail = cursor;
+            while chars.get(tail).is_some_and(|c| chip_is_space(*c)) {
+                tail += 1;
+            }
+            if !name.is_empty()
+                && chars.get(tail) == Some(&'}')
+                && chars.get(tail + 1) == Some(&'}')
+            {
+                flush(&mut buffer, &mut out);
+                out.push(InlineChipSegment::Token(name));
+                index = tail + 2;
+                continue;
+            }
+        }
+
+        // `@ref` — one or more `/`-separated segments, never absorbing
+        // trailing punctuation (those chars are outside the charset).
+        if chars[index] == '@' {
+            let prev_ok =
+                index == 0 || !(chip_is_ident(chars[index - 1]) || chars[index - 1] == '@');
+            // URL guard: a ref inside a bare URL stays text, because Vue
+            // (marked, gfm) autolinks the URL and `<a>` is a chip skip
+            // surface there while this mirror has no autolink rule.
+            let mut token_start = index;
+            while token_start > 0 && !chars[token_start - 1].is_whitespace() {
+                token_start -= 1;
+            }
+            let in_url = chars[token_start..index]
+                .windows(3)
+                .any(|w| w[0] == ':' && w[1] == '/' && w[2] == '/');
+            // The FIRST ref char is an ASCII ALNUM — exactly the Vue
+            // regex's `[A-Za-z0-9]` head — so `@_private` / `@-x` stay
+            // text on both sides (the underscore is legal INSIDE a
+            // segment, not as its head).
+            if prev_ok
+                && !in_url
+                && chars
+                    .get(index + 1)
+                    .is_some_and(|c| c.is_ascii_alphanumeric())
+            {
+                let start = index;
+                let mut cursor = index + 1;
+                while chars.get(cursor).is_some_and(|c| chip_is_segment(*c)) {
+                    cursor += 1;
+                }
+                while chars.get(cursor) == Some(&'/')
+                    && chars.get(cursor + 1).is_some_and(|c| chip_is_segment(*c))
+                {
+                    cursor += 1;
+                    while chars.get(cursor).is_some_and(|c| chip_is_segment(*c)) {
+                        cursor += 1;
+                    }
+                }
+                flush(&mut buffer, &mut out);
+                out.push(InlineChipSegment::Ref(
+                    chars[start..cursor].iter().collect(),
+                ));
+                index = cursor;
+                continue;
+            }
+        }
+
+        buffer.push(chars[index]);
+        index += 1;
+    }
+    flush(&mut buffer, &mut out);
+    out
+}
+
+/// Render a literal text run with chip forms wrapped in
+/// `span.hk-tpl-chip` (`data-static=""`; refs additionally carry
+/// `data-ref=""`). The chip text is the canonical `{{ name }}` for
+/// tokens and the raw form for refs — same rule as the Vue pass, so
+/// copy-out round-trips the source.
+fn inline_chips_html(text: &str) -> String {
+    let mut html = String::new();
+    for segment in inline_chips_parse(text) {
+        match segment {
+            InlineChipSegment::Text(run) => html.push_str(&md_escape(&run)),
+            InlineChipSegment::Token(name) => {
+                html.push_str("<span class=\"hk-tpl-chip\" data-static=\"\">");
+                html.push_str(&md_escape(&format!("{{{{ {name} }}}}")));
+                html.push_str("</span>");
+            }
+            InlineChipSegment::Ref(raw) => {
+                html.push_str("<span class=\"hk-tpl-chip\" data-static=\"\" data-ref=\"\">");
+                html.push_str(&md_escape(&raw));
+                html.push_str("</span>");
+            }
+        }
+    }
+    html
+}
+
+/// Chip-aware inline renderer: identical to [`markdown_inline_html`]
+/// except literal text runs chip their `{{ token }}` / `@ref` forms.
+/// Nesting (strong / em / strike) recurses through this same function,
+/// so a token inside emphasis still chips.
+pub fn markdown_inline_html_chips(inlines: &[MdInline]) -> String {
+    let mut html = String::new();
+    for inline in inlines {
+        match inline {
+            MdInline::Text(text) => html.push_str(&inline_chips_html(text)),
+            MdInline::Strong(text) => {
+                html.push_str("<strong>");
+                html.push_str(&markdown_inline_html_chips(&markdown_inline(text)));
+                html.push_str("</strong>");
+            }
+            MdInline::Em(text) => {
+                html.push_str("<em>");
+                html.push_str(&markdown_inline_html_chips(&markdown_inline(text)));
+                html.push_str("</em>");
+            }
+            MdInline::Strike(text) => {
+                html.push_str("<del>");
+                html.push_str(&markdown_inline_html_chips(&markdown_inline(text)));
+                html.push_str("</del>");
+            }
+            // Code / links / images / breaks are literal surfaces for the
+            // chip pass — reuse the plain renderer for each.
+            other => html.push_str(&markdown_inline_html(std::slice::from_ref(other))),
+        }
+    }
+    html
+}
+
 /// Render the inline span of one block as escaped HTML.
 pub fn markdown_inline_html(inlines: &[MdInline]) -> String {
     let mut html = String::new();
@@ -572,20 +778,33 @@ pub fn markdown_parse(source: &str) -> Vec<MdBlock> {
 
 /// Render markdown to the escaped HTML Vue mounts through `innerHTML`.
 pub fn markdown_render(source: &str) -> String {
+    markdown_render_impl(source, false)
+}
+
+/// Chip-aware variant of [`markdown_render`]: literal text runs carry
+/// `{{ token }}` / `@ref` chip spans (the `inlineChips` prop).
+pub fn markdown_render_with_chips(source: &str) -> String {
+    markdown_render_impl(source, true)
+}
+
+/// Inline renderer for one text run, chip-aware when asked.
+fn md_inline(text: &str, chips: bool) -> String {
+    if chips {
+        markdown_inline_html_chips(&markdown_inline(text))
+    } else {
+        markdown_inline_html(&markdown_inline(text))
+    }
+}
+
+fn markdown_render_impl(source: &str, chips: bool) -> String {
     let mut html = String::new();
     for block in &markdown_parse(source) {
         match block {
             MdBlock::Heading { level, text } => {
-                html.push_str(&format!(
-                    "<h{level}>{}</h{level}>",
-                    markdown_inline_html(&markdown_inline(text))
-                ));
+                html.push_str(&format!("<h{level}>{}</h{level}>", md_inline(text, chips)));
             }
             MdBlock::Paragraph { text } => {
-                html.push_str(&format!(
-                    "<p>{}</p>",
-                    markdown_inline_html(&markdown_inline(text))
-                ));
+                html.push_str(&format!("<p>{}</p>", md_inline(text, chips)));
             }
             MdBlock::CodeBlock { lang, text } => {
                 let safe = markdown_language_is_safe(lang);
@@ -619,17 +838,14 @@ pub fn markdown_render(source: &str) -> String {
                     html.push_str("<ul>");
                 }
                 for item in items {
-                    html.push_str(&format!(
-                        "<li>{}</li>",
-                        markdown_inline_html(&markdown_inline(item))
-                    ));
+                    html.push_str(&format!("<li>{}</li>", md_inline(item, chips)));
                 }
                 html.push_str(if *ordered { "</ol>" } else { "</ul>" });
             }
             MdBlock::Blockquote { text } => {
                 html.push_str(&format!(
                     "<blockquote><p>{}</p></blockquote>",
-                    markdown_inline_html(&markdown_inline(text))
+                    md_inline(text, chips)
                 ));
             }
             MdBlock::Table { head, rows } => {
@@ -637,19 +853,13 @@ pub fn markdown_render(source: &str) -> String {
                     "<div class=\"hk-md-table-wrap\"><div class=\"hk-md-table-scroll\"><table><thead><tr>",
                 );
                 for cell in head {
-                    html.push_str(&format!(
-                        "<th>{}</th>",
-                        markdown_inline_html(&markdown_inline(cell))
-                    ));
+                    html.push_str(&format!("<th>{}</th>", md_inline(cell, chips)));
                 }
                 html.push_str("</tr></thead><tbody>");
                 for row in rows {
                     html.push_str("<tr>");
                     for cell in row {
-                        html.push_str(&format!(
-                            "<td>{}</td>",
-                            markdown_inline_html(&markdown_inline(cell))
-                        ));
+                        html.push_str(&format!("<td>{}</td>", md_inline(cell, chips)));
                     }
                     html.push_str("</tr>");
                 }
@@ -681,6 +891,13 @@ pub struct MarkdownRendererProps {
     #[default]
     pub loading: bool,
 
+    /// Opt-in inline chip pass: `{{ token }}` fill-template tokens and
+    /// `@level/name` / bare `@name` asset references inside literal text
+    /// render as `.hk-tpl-chip` spans (refs carry `data-ref`). Literal
+    /// surfaces (`code` / links) stay verbatim. Vue prop: `inlineChips`.
+    #[default]
+    pub inline_chips: bool,
+
     #[default]
     pub class: String,
 }
@@ -695,6 +912,8 @@ pub fn MarkdownRenderer(props: MarkdownRendererProps) -> Element {
         String::new()
     } else if props.plain {
         markdown_render_plain(&props.content)
+    } else if props.inline_chips {
+        markdown_render_with_chips(&props.content)
     } else {
         markdown_render(&props.content)
     };
@@ -746,6 +965,7 @@ mod tests {
         assert_eq!(props.content, "");
         assert!(!props.plain);
         assert!(!props.loading);
+        assert!(!props.inline_chips);
         assert_eq!(props.class, "");
     }
 
@@ -1058,6 +1278,146 @@ mod tests {
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored markdown sheet"
+        );
+    }
+
+    #[test]
+    fn inline_chips_parse_splits_tokens_refs_and_text() {
+        assert_eq!(
+            inline_chips_parse("Badge: {{container_badge}} -> @system/permission-mode"),
+            vec![
+                InlineChipSegment::Text("Badge: ".to_string()),
+                InlineChipSegment::Token("container_badge".to_string()),
+                InlineChipSegment::Text(" -> ".to_string()),
+                InlineChipSegment::Ref("@system/permission-mode".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn inline_chips_parse_keeps_richer_grammars_literal() {
+        // Same rule as the Vue template grammar: only bare identifiers.
+        assert_eq!(
+            inline_chips_parse("{{ a.b }} {{ x | f }} {{ ok }}"),
+            vec![
+                InlineChipSegment::Text("{{ a.b }} {{ x | f }} ".to_string()),
+                InlineChipSegment::Token("ok".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn inline_chips_parse_guards_at_boundaries() {
+        assert_eq!(
+            inline_chips_parse("mail foo@bar.com"),
+            vec![InlineChipSegment::Text("mail foo@bar.com".to_string())]
+        );
+        assert_eq!(
+            inline_chips_parse("user@@host"),
+            vec![InlineChipSegment::Text("user@@host".to_string())]
+        );
+        assert_eq!(
+            inline_chips_parse("see @system/x, then @demiurge."),
+            vec![
+                InlineChipSegment::Text("see ".to_string()),
+                InlineChipSegment::Ref("@system/x".to_string()),
+                InlineChipSegment::Text(", then ".to_string()),
+                InlineChipSegment::Ref("@demiurge".to_string()),
+                InlineChipSegment::Text(".".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn inline_chips_render_only_when_asked() {
+        let source = "Badge: {{container_badge}}\n\nRead @system/related-todos first.";
+        let plain = markdown_render(source);
+        assert!(!plain.contains("hk-tpl-chip"));
+        assert!(plain.contains("{{container_badge}}"));
+
+        let chipped = markdown_render_with_chips(source);
+        assert!(
+            chipped.contains(
+                "<span class=\"hk-tpl-chip\" data-static=\"\">{{ container_badge }}</span>"
+            )
+        );
+        assert!(chipped.contains(
+            "<span class=\"hk-tpl-chip\" data-static=\"\" data-ref=\"\">@system/related-todos</span>"
+        ));
+        // No chip form may be emitted twice (idempotency of the pass).
+        assert_eq!(chipped.matches("hk-tpl-chip").count(), 2);
+    }
+
+    #[test]
+    fn inline_chips_never_enter_code_blocks() {
+        let chipped = markdown_render_with_chips("```\n{{ keep_literal }}\n```");
+        assert!(!chipped.contains("hk-tpl-chip"));
+        assert!(chipped.contains("{{ keep_literal }}"));
+    }
+
+    #[test]
+    fn inline_chips_escape_the_text_run_around_a_chip() {
+        // A chip body is charset-limited so it can never carry markup; what
+        // this pins is that the SURROUNDING text run is still escaped while
+        // the chip stays a live chip.
+        let chipped = markdown_render_with_chips("@system/x & <b>alert</b>");
+        assert!(chipped.contains(">@system/x</span>"));
+        assert!(chipped.contains("&amp;"));
+        assert!(chipped.contains("&lt;b&gt;"));
+        assert!(!chipped.contains("<b>"));
+    }
+
+    #[test]
+    fn inline_chips_share_the_vue_boundary_rules() {
+        // Same corpus as the Vue suite's boundary case.
+        assert_eq!(
+            inline_chips_parse("@a/b/c"),
+            vec![InlineChipSegment::Ref("@a/b/c".to_string())]
+        );
+        assert_eq!(
+            inline_chips_parse("@sole"),
+            vec![InlineChipSegment::Ref("@sole".to_string())]
+        );
+        assert_eq!(
+            inline_chips_parse("mail @"),
+            vec![InlineChipSegment::Text("mail @".to_string())]
+        );
+        // A leading `_` / `-` is NOT a ref (ident first char only).
+        assert_eq!(
+            inline_chips_parse("@_private @-x @--flag"),
+            vec![InlineChipSegment::Text("@_private @-x @--flag".to_string())]
+        );
+        // Never inside a bare URL — Vue gets this from marked's autolink
+        // plus the `<a>` skip, the mirror guards it directly.
+        assert_eq!(
+            inline_chips_parse("see https://www.npmjs.com/package/@celestia-island/hikari"),
+            vec![InlineChipSegment::Text(
+                "see https://www.npmjs.com/package/@celestia-island/hikari".to_string()
+            )]
+        );
+        // Carriage returns inside the braces are the same token.
+        assert_eq!(
+            inline_chips_parse("{{\rname\r}}"),
+            vec![InlineChipSegment::Token("name".to_string())]
+        );
+    }
+
+    #[test]
+    fn inline_chips_prop_name_tracks_the_vue_component() {
+        // The mirror's `inline_chips` and Vue's `inlineChips` are two
+        // declarations of one contract; nothing else pins them together.
+        let vue = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("vue")
+            .join("src")
+            .join("components")
+            .join("HkMarkdownRenderer.tsx");
+        let Ok(source) = std::fs::read_to_string(&vue) else {
+            return; // crates.io sdist: the Vue tree is not shipped
+        };
+        assert!(
+            source.contains("inlineChips:"),
+            "Vue prop renamed — update MarkdownRendererProps::inline_chips and the chip tests"
         );
     }
 }

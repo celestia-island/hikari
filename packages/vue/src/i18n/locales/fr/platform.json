@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "Contenu sur la couleur de marque",
     "hikari::theme.solar.title": "Position de l'horloge solaire",
     "hikari::theme.solar.edit": "Modifier",
+    "hikari::theme.solar.editAutoOnly": "Passez en mode Automatique pour modifier l'emplacement du jour",
     "hikari::theme.solar.apply": "Appliquer",
     "hikari::theme.solar.cancel": "Annuler",
     "hikari::theme.solar.strategyTimezone": "Fuseau horaire",

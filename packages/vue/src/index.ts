@@ -913,6 +913,17 @@ export {
   type HkTemplateSegment,
   type HkTemplateTokenDef,
 } from "./components/templateGrammar";
+// The chip grammar lives beside the fill-template grammar it reuses; both
+// are exported so hosts can reason about (and test) reference forms
+// without mounting a renderer.
+export {
+  parseInlineChips,
+  inlineChipDisplay,
+  applyInlineChipsToBody,
+  type HkInlineChipSegment,
+  type HkInlineChipTokenSegment,
+  type HkInlineChipRefSegment,
+} from "./components/inlineChips";
 export { HkErrorLanding as HkErrorLanding } from "./components/HkErrorLanding";
 export { HkErrorReportingOverlay as HkErrorReportingOverlay } from "./errorReporting";
 export { HkAdminShell as HkAdminShell } from "./components/HkAdminShell";

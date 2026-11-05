@@ -1,6 +1,7 @@
 import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import type { Renderer, Tokens } from "marked";
 import HSpinner from "./HkSpinner";
+import { applyInlineChipsToBody } from "./inlineChips";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { asIndexable } from "../utils/typing";
 import "./HkMarkdownRenderer.scss";
@@ -118,10 +119,26 @@ export default defineComponent({
     content: { type: String, required: true },
     loading: { type: Boolean, default: false },
     plain: { type: Boolean, default: false },
+    /**
+     * Opt-in inline chip pass: fill-template tokens (`{{ name }}`) and
+     * asset references (`@level/name`, bare `@name`) inside the
+     * rendered prose chip up as `.hk-tpl-chip` spans (refs carry
+     * `data-ref`, the muted variant). Applied AFTER sanitize, as pure
+     * DOM surgery with `textContent` only — the pass cannot introduce
+     * markup, and `code`/`pre`/`a` subtrees are skipped so literal
+     * code and link text stay verbatim. Off by default: every existing
+     * consumer renders exactly as before.
+     */
+    inlineChips: { type: Boolean, default: false },
   },
   setup(props) {
     const renderedHtml = ref("");
     const parseError = ref(false);
+    // Monotonic parse counter: `renderedHtml` does not change when the
+    // SAME body is re-parsed for a prop flip, so a watch on it would never
+    // fire — and the chip pass mutates the DOM in place, leaving chips
+    // behind after `inlineChips` goes back to false.
+    const parseSeq = ref(0);
 
     async function parse() {
       if (!props.content) {
@@ -138,11 +155,13 @@ export default defineComponent({
       } catch {
         parseError.value = true;
         renderedHtml.value = renderPlain(props.content);
+      } finally {
+        parseSeq.value += 1;
       }
     }
 
     watch(
-      () => [props.content, props.plain],
+      () => [props.content, props.plain, props.inlineChips],
       () => { void parse(); },
       { immediate: true },
     );
@@ -168,8 +187,20 @@ export default defineComponent({
       }
     }
 
-    watch(renderedHtml, () => {
-      void nextTick(syncOverlayScrollbars);
+    watch(parseSeq, () => {
+      void nextTick(() => {
+        const body = bodyRef.value;
+        if (!body) return;
+        // Re-seat the DOM on the pristine rendered HTML first: the chip
+        // pass mutates it in place, so a prop flip must start from the
+        // un-chipped markup (assigning the string Vue already patched is
+        // idempotent; when the body did not change it is the only write).
+        body.innerHTML = renderedHtml.value;
+        // The chip pass runs BEFORE the overlay scan: it splits text
+        // nodes, so the scan must reconcile against the final DOM.
+        if (props.inlineChips) applyInlineChipsToBody(body);
+        syncOverlayScrollbars();
+      });
     });
 
     onBeforeUnmount(() => {

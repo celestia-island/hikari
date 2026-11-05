@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, createCommentVNode, defineComponent, h } from "vue";
+import { createApp, createCommentVNode, defineComponent, h, ref } from "vue";
 
 import { HkCardList, HkListRow } from "./HkCardList";
 
@@ -77,6 +77,33 @@ describe("HkCardList", () => {
     );
     expect(c.querySelector(".hk-card-list")).toBeNull();
     expect(c.querySelector(".probe-empty")).toBeTruthy();
+  });
+
+  it("falls back to the empty slot when the default slot is a fragment of dead v-if comments (JSX <>{cond && …}</> idiom)", () => {
+    // The compiled shape of a consumer's JSX-conditional default slot is
+    // a Fragment carrying the dead comments — the shared guard must
+    // recurse into it or an empty list renders an empty bordered card
+    // (R2 S2-1 integration pin: this case is what makes the recursion
+    // load-bearing at the HkCardList seam, not just in the unit table).
+    const show = ref(false);
+    const c = mount(
+      h(HkCardList, null, {
+        default: () => (<>{show.value && <div class="row" />}</>) as never,
+        empty: () => h("p", { class: "probe-empty" }, "empty"),
+      }),
+    );
+    expect(c.querySelector(".hk-card-list")).toBeNull();
+    expect(c.querySelector(".probe-empty")).toBeTruthy();
+    // The live side: real rows keep the list and hide the empty slot.
+    show.value = true;
+    const live = mount(
+      h(HkCardList, null, {
+        default: () => (<>{show.value && <div class="row" />}</>) as never,
+        empty: () => h("p", { class: "probe-empty" }, "empty"),
+      }),
+    );
+    expect(live.querySelector(".hk-card-list")).toBeTruthy();
+    expect(live.querySelector(".probe-empty")).toBeNull();
   });
 
   it("keeps the list when rows exist even with the empty slot present", () => {

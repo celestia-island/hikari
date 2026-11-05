@@ -241,7 +241,10 @@ describe("HkSolarLocationSetting card", () => {
     expect(btn.classList.contains("hk-icon-button")).toBe(true);
     expect(btn.classList.contains("hk-icon-button-28")).toBe(true);
     expect(btn.classList.contains("hk-icon-button-ghost")).toBe(true);
-    expect(btn.querySelector(".hk-icon-button-icon svg"), "pencil glyph renders").toBeTruthy();
+    expect(
+      btn.querySelector(".hk-icon-button-icon svg.lucide-pencil"),
+      "the Pencil glyph (not IconButton's fallback circle) renders",
+    ).toBeTruthy();
     expect(btn.textContent?.trim(), "no text label in the icon button").toBe("");
     expect(btn.getAttribute("aria-label")).toBe("Edit");
     expect(btn.disabled, "auto mode enables the editor").toBe(false);

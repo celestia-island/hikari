@@ -1183,6 +1183,10 @@ mod tests {
         // label text of its own (the accessible name is the aria-label).
         assert!(!html.contains("hk-btn-outline"), "{html}");
         assert!(!html.contains(">Edit<"), "{html}");
+        // Default props = ENABLED (the host's `editor_disabled` is the gate);
+        // without this negative arm, hardcoding `disabled: true` keeps every
+        // crate test green (R3 mutation b).
+        assert!(!html.contains("disabled"), "{html}");
         // Vue's template emits no `type` on HkIconButton.
         assert!(!html.contains(r#"type="button""#), "{html}");
         // Editor closed: no editor body, no modal surface.

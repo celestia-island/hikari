@@ -52,12 +52,20 @@
   }
 
   // Weekday rail: the first (Monday) and last (Sunday) rows carry the
-  // labels (the wowsp convention); sticky so it survives horizontal
-  // scroll on narrow screens.
+  // labels (the wowsp convention). `align-self: flex-end` rows-aligns
+  // the rail with the GRID, not with the -cells box: -cells is one
+  // marker strip taller than the grid (the month labels ride above
+  // it), so a stretched rail started its seven rows on the markers and
+  // every label sat one strip too high (2026-11-05 user report from
+  // the chest quota card). The rail's natural height (7 cells + 6
+  // gaps) equals the grid's exactly, so end-alignment is row-exact.
+  // No sticky mask on purpose: a hard-coded surface can't match every
+  // host card (it painted a visible stripe behind the labels), and
+  // sticky without a mask lets cells slide beneath the labels during
+  // horizontal scroll — the rail scrolls with the calendar instead
+  // (the GitHub convention).
   &-rail {
-    position: sticky;
-    left: 0;
-    z-index: 1;
+    align-self: flex-end;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -65,7 +73,6 @@
     font-size: 10px;
     line-height: 14px;
     color: var(--hi-color-muted);
-    background: var(--hi-color-surface);
 
     > span {
       white-space: nowrap;

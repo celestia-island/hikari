@@ -507,6 +507,12 @@ export type { PasswordValidationResult, PasswordLevel, PasswordStrengthEvaluator
 export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
 export { useApproachEnd } from "./composables/useApproachEnd";
 export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";
+// The scroll-progress pill's public vocabulary: HkScrollContainer's
+// `scrollProgress` registrar — lists (HkAdminTablePage does it built-in)
+// inject this key to register their row root + total with the nearest
+// enclosing container that has the feature on.
+export { HK_SCROLL_PROGRESS_REGISTRAR } from "./components/HkScrollProgress";
+export type { HkScrollProgressHandle, HkScrollProgressRegistrar } from "./components/HkScrollProgress";
 // The change-mark rail's public vocabulary: HkScrollContainer's `markers`
 // prop is typed with it, so consumers can name what they pass.
 export type { OverlayScrollMapSegment, OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";

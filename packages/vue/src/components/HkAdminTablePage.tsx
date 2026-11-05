@@ -1,7 +1,16 @@
-import { defineComponent, type Component, type PropType } from "vue";
+import {
+  defineComponent,
+  inject,
+  onMounted,
+  onUnmounted,
+  ref,
+  type Component,
+  type PropType,
+} from "vue";
 import { HAlert, HCard, HEmptyState, HSpinner, HTable, useI18n } from "@celestia-island/hikari";
 import HkCrossfade from "./HkCrossfade";
 import { HkPageHeader } from "./HkPageHeader";
+import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgress";
 import type { HkRowManageGate } from "./HkTable";
 
 
@@ -65,12 +74,39 @@ export const HkAdminTablePage = defineComponent({
       type: [Boolean, Function] as PropType<HkRowManageGate>,
       default: false,
     },
+    /** Authoritative row total the scroll-progress pill uses as its
+     *  denominator (the server count behind a paged list — chest's
+     *  usePagedTableFetch total). Omitted: the pill falls back to
+     *  counting the delivered DOM rows. Registration into the
+     *  enclosing shell viewport is automatic (see setup). */
+    total: { type: Number, default: undefined },
   },
   emits: {
     reorder: (_fromIndex: number, _toIndex: number) => true,
     manage: (_row: Record<string, unknown>, _opener: HTMLElement) => true,
   },
   setup(props, { emit, slots }) {
+    // Scroll-progress registration: the nearest enclosing HkScrollContainer
+    // with `scrollProgress` on provides the registrar (provide/inject
+    // scoping resolves the shell viewport for admin pages and keeps an
+    // inner container's lists out of the shell). The handle exposes the
+    // table card as the row root plus the `total` prop live — the pill's
+    // denominator follows it as pages load.
+    const registrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
+    const tableCardRef = ref<HTMLElement | null>(null);
+    let handle: HkScrollProgressHandle | null = null;
+    onMounted(() => {
+      if (!registrar) return;
+      handle = {
+        getRoot: () => tableCardRef.value,
+        getTotal: () => props.total,
+      };
+      registrar.register(handle);
+    });
+    onUnmounted(() => {
+      if (registrar && handle) registrar.unregister(handle);
+      handle = null;
+    });
 
     return () => {
       const { t } = useI18n();
@@ -129,21 +165,23 @@ export const HkAdminTablePage = defineComponent({
             ) : slots.body ? (
               <div class="hk-admin-table-page-body">{slots.body()}</div>
             ) : (
-              <HCard padded={false}>
-                <HTable
-                  columns={props.columns}
-                  rows={props.rows}
-                  rowKey={props.rowKey}
-                  draggable={props.draggable}
-                  manageable={props.manageable}
-                  onReorder={(from: number, to: number) => emit("reorder", from, to)}
-                  onManage={(row: Record<string, unknown>, opener: HTMLElement) =>
-                    emit("manage", row, opener)
-                  }
-                >
-                  {slots}
-                </HTable>
-              </HCard>
+              <div ref={tableCardRef} class="hk-admin-table-page-tablecard">
+                <HCard padded={false}>
+                  <HTable
+                    columns={props.columns}
+                    rows={props.rows}
+                    rowKey={props.rowKey}
+                    draggable={props.draggable}
+                    manageable={props.manageable}
+                    onReorder={(from: number, to: number) => emit("reorder", from, to)}
+                    onManage={(row: Record<string, unknown>, opener: HTMLElement) =>
+                      emit("manage", row, opener)
+                    }
+                  >
+                    {slots}
+                  </HTable>
+                </HCard>
+              </div>
             )}
           </HkCrossfade>
           {slots["create-modal"]?.()}

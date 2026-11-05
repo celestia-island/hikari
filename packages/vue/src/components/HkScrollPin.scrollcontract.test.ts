@@ -36,11 +36,9 @@ const fileBrowserScss = read("HkFileBrowserDialog.scss");
 const fileBrowserTsx = read("HkFileBrowserDialog.tsx");
 const scrollContainerTsx = read("HkScrollContainer.tsx");
 
-/** Extract ONE balanced `{...}` declaration block following the given
- *  selector — a naive `[^}]*` would stop at the first nested `}` and let
- *  properties appended after a future nested block evade the pin. */
 /** Every stylesheet under packages/vue/src: any sheet may assign the pin
- *  knob, so the IACVT guard must see the whole tree, not one component. */
+ *  knob, so the IACVT guard must see the whole source tree, not one
+ *  component and not the package's non-source siblings. */
 function sheetsUnder(dir: string, acc: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
@@ -50,6 +48,9 @@ function sheetsUnder(dir: string, acc: string[] = []): string[] {
   return acc;
 }
 
+/** Extract ONE balanced `{...}` declaration block following the given
+ *  selector — a naive `[^}]*` would stop at the first nested `}` and let
+ *  properties appended after a future nested block evade the pin. */
 function cssBlock(src: string, selector: string): string {
   const at = src.indexOf(selector);
   expect(at, `${selector} block exists`).toBeGreaterThanOrEqual(0);
@@ -63,6 +64,20 @@ function cssBlock(src: string, selector: string): string {
     }
   }
   return "";
+}
+
+/** The BASE `.hk-modal-body` rule — a TOP-LEVEL selector (column 0).
+ *  A bare `indexOf(".hk-modal-body {")` also matches the TAIL of the
+ *  desktop open/close choreography's descendant selectors, and
+ *  `.hk-modal-content-enter-active .hk-modal-body {` sits earlier in the
+ *  sheet — so the naive read hands back that transition block instead of
+ *  the base rule. Anchor on a line start. */
+const TOP_LEVEL_BODY = "\n.hk-modal-body {";
+
+function baseBodyBlock(): string {
+  const at = modalScss.indexOf(TOP_LEVEL_BODY);
+  expect(at, "top-level .hk-modal-body rule exists").toBeGreaterThanOrEqual(0);
+  return cssBlock(modalScss.slice(at), ".hk-modal-body {");
 }
 
 describe("scroll-pin whitespace contract", () => {
@@ -110,14 +125,16 @@ describe("scroll-pin whitespace contract", () => {
     // The step-flow sticky header was the second in-repo instance. Every
     // assignment of the knob must be a plain var() with NO fallback (or a
     // plain colour), never a var() whose fallback holds color-mix().
-    const srcDir = join(here, "..", "..");
+    const srcDir = join(here, "..");
     const offenders: string[] = [];
     let assignments = 0;
     for (const sheet of sheetsUnder(srcDir)) {
       const source = readFileSync(sheet, "utf-8")
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/^\s*\/\/.*$/gm, "");
-      for (const match of source.matchAll(/--hk-scroll-pin-bg\s*:([^;]*);/g)) {
+      // Tolerate a last declaration that has no trailing semicolon (a block
+      // can end right after the value).
+      for (const match of source.matchAll(/--hk-scroll-pin-bg\s*:([^;}]*)/g)) {
         assignments += 1;
         const value = match[1]!.replace(/\s+/g, " ").trim();
         if (value.includes("color-mix")) {
@@ -184,7 +201,7 @@ describe("scroll-pin whitespace contract", () => {
     // The chain reads the shared container-pad token (--hk-pad, the
     // modal root's `padding` prop) over the per-component theme token
     // over the historical 1.5rem.
-    const body = cssBlock(modalScss, ".hk-modal-body {");
+    const body = baseBodyBlock();
     for (const side of ["top", "right", "bottom", "left"]) {
       expect(body, `--hk-scroll-pad-${side}`).toContain(
         `--hk-scroll-pad-${side}: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));`,
@@ -207,7 +224,7 @@ describe("scroll-pin whitespace contract", () => {
     // Anchor on the standalone pseudo blocks INSIDE .hk-modal-body — the
     // combined selector ("&::before,\n &::after {") contains "&::after {"
     // as a literal, so a bare indexOf would match the shared rule instead.
-    const bodyBlock = cssBlock(modalScss, ".hk-modal-body {");
+    const bodyBlock = baseBodyBlock();
     expect(bodyBlock).toMatch(
       /&::before \{\s*top: 0;\s*height: var\(--hk-scroll-pad-top/,
     );

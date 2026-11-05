@@ -311,7 +311,12 @@ export default defineComponent({
     /** Returns true when a window actually existed (and was cleared), so the
      *  caller can leave Escape alone when the host needs it. */
     function resetWindow(): boolean {
-      return commitIfChanged(null);
+      if (!commitIfChanged(null)) return false;
+      // A reset that interrupts a drag (Escape mid-brush) must drop the
+      // gesture too, or the next pointermove re-brushes from the stale
+      // anchor and undoes the reset.
+      gesture = null;
+      return true;
     }
 
     function fractionFrom(clientX: number): number | null {

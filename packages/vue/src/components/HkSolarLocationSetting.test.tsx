@@ -18,6 +18,7 @@ import {
   type SolarLocationStrategy,
 } from "../theme/useSolarTime";
 import { cityKey, sectorForZone, sectorNameKey, standardOffsetHours } from "../theme/solarTimeZones";
+import { useTheme } from "../theme/useTheme";
 
 // The locale dictionaries, loaded the same way the locales-coverage suite
 // reads them (import.meta.glob; readFileSync resolves wrong under vitest's
@@ -68,6 +69,9 @@ function resetEngineState(): void {
   setSolarLocationStrategy("timezone");
   setSolarManualLocation(null);
   resetSolarIpInsight();
+  // The card's Edit gate reads the singleton theme mode; every case starts
+  // in AUTO ("system") so the action is enabled by default.
+  useTheme().setMode("system");
 }
 
 function mountSetting(): HTMLElement {
@@ -229,10 +233,64 @@ describe("HkSolarLocationSetting card", () => {
     expect(summary.textContent).not.toContain(systemTimeZoneId());
     expect(summary.querySelector("svg"), "strategy glyph renders").toBeTruthy();
 
+    // The Edit affordance is an ICON-ONLY HkIconButton (ghost/28) — the
+    // square matches the row's 28px cross size; the accessible name and
+    // the tooltip carry the action (the wrapper owns the title because a
+    // disabled button loses pointer events).
     const btn = editButton(container);
-    expect(btn.textContent?.trim()).toBe("Edit");
+    expect(btn.classList.contains("hk-icon-button")).toBe(true);
+    expect(btn.classList.contains("hk-icon-button-28")).toBe(true);
+    expect(btn.classList.contains("hk-icon-button-ghost")).toBe(true);
+    expect(
+      btn.querySelector(".hk-icon-button-icon svg.lucide-pencil"),
+      "the Pencil glyph (not IconButton's fallback circle) renders",
+    ).toBeTruthy();
+    expect(btn.textContent?.trim(), "no text label in the icon button").toBe("");
+    expect(btn.getAttribute("aria-label")).toBe("Edit");
+    expect(btn.disabled, "auto mode enables the editor").toBe(false);
+    expect(btn.closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe("Edit");
     // No editor in the DOM before the first open.
     expect(document.body.querySelector(".hk-solar-editor")).toBeNull();
+  });
+
+  it("grays the edit action outside auto mode and re-enables it in auto", async () => {
+    const { setMode } = useTheme();
+    // Mount in AUTO first, then drive the live mode transitions a host's
+    // own switch performs — this is the user path and it keeps the test
+    // independent of which mode the singleton happened to carry at mount.
+    const container = mountSetting();
+    await settle();
+    expect(editButton(container).disabled, "auto mode enables the editor").toBe(false);
+    expect(editButton(container).closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe(
+      "Edit",
+    );
+
+    setMode("light");
+    await settle();
+    const btn = editButton(container);
+    expect(btn.disabled, "manual modes disable the solar editor").toBe(true);
+    expect(btn.getAttribute("aria-label")).toBe("Edit");
+    expect(btn.closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe(
+      "Switch to Auto mode to change the daylight location",
+    );
+
+    // A disabled native button cannot open the editor.
+    btn.click();
+    await settle();
+    expect(modalHeader(), "disabled edit never opens the modal").toBeNull();
+
+    // Back to auto: the SAME mounted card re-enables on the live mode ref.
+    setMode("system");
+    await settle();
+    expect(editButton(container).disabled).toBe(false);
+    expect(editButton(container).closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe(
+      "Edit",
+    );
+
+    // Dark is just another manual side of the same gate.
+    setMode("dark");
+    await settle();
+    expect(editButton(container).disabled).toBe(true);
   });
 
   it("is a standard hikari card: localized default title, overridable, hideable", async () => {
@@ -573,7 +631,9 @@ describe("HkSolarLocationSetting i18n", () => {
     expect(card?.querySelector(".hk-card-title")?.textContent?.trim()).toBe("日照位置");
     const summary = rowSummary(container);
     expect(summary.textContent).toContain("自动 · 基于时区");
-    expect(editButton(container).textContent?.trim()).toBe("编辑");
+    // The icon button localizes its accessible name/tooltip, not a text label.
+    expect(editButton(container).getAttribute("aria-label")).toBe("编辑");
+    expect(editButton(container).closest(".hk-solar-edit-wrap")?.getAttribute("title")).toBe("编辑");
 
     await openEditor(container);
     expect(modalHeader()!.textContent).toContain("太阳钟定位");

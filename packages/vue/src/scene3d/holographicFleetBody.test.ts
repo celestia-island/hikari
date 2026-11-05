@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 
 import { fakeAs } from "../test-utils/fakes";
+import { HIKARI_FONT_SANS } from "../theme/fontContext";
 import {
   hologramHudText,
   makeFleetHologram,
@@ -13,24 +14,81 @@ import {
 const INPUT: FleetHologramInput = {
   id: "node-1",
   label: "node-1 engine stack",
-  status: "Online",
   detail: "3 endpoints",
   role: "planet",
   radius: 1,
 };
 
-function mockCanvas(): ReturnType<typeof vi.fn> {
+interface CanvasSpy {
+  fillText: ReturnType<typeof vi.fn>;
+  /** The font currently on the most recently created 2D context. */
+  font: () => string;
+}
+
+/** Font metrics scale with the requested size, like a real canvas: this
+ *  keeps the fit/ellipsis paths testable instead of always fitting at 64px. */
+function mockFontPx(font: string): number {
+  const match = /(\d+)px/.exec(font);
+  return match ? Number(match[1]) : 64;
+}
+
+function mockCanvas(): CanvasSpy {
   const fillText = vi.fn();
-  const gradient = fakeAs<CanvasGradient>({ addColorStop: vi.fn() });
-  const context = fakeAs<CanvasRenderingContext2D>({
-    clearRect: vi.fn(),
-    fillRect: vi.fn(),
-    fillText,
-    measureText: (text: string) => fakeAs<TextMetrics>({ width: text.length * 24 }),
-    createRadialGradient: () => gradient,
+  const stateByCanvas = new WeakMap<HTMLCanvasElement, { font: string }>();
+  let current: { font: string } | null = null;
+  const widthDescriptor = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, "width");
+  const heightDescriptor = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, "height");
+
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (
+    this: HTMLCanvasElement,
+  ) {
+    const state = { font: "" };
+    stateByCanvas.set(this, state);
+    current = state;
+    const gradient = fakeAs<CanvasGradient>({ addColorStop: vi.fn() });
+    return fakeAs<CanvasRenderingContext2D>({
+      clearRect: vi.fn(),
+      fillRect: vi.fn(),
+      fillText,
+      measureText: (text: string) =>
+        fakeAs<TextMetrics>({ width: text.length * mockFontPx(state.font) * 0.45 }),
+      createRadialGradient: () => gradient,
+      get font() {
+        return state.font;
+      },
+      set font(value: string) {
+        state.font = value;
+      },
+    });
   });
-  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context);
-  return fillText;
+
+  // A real canvas resets its 2D state (including the font) whenever width
+  // or height changes. Model that here so "font applied AFTER the resize"
+  // is actually guarded, not just "font assigned once somewhere".
+  const resetState = (canvas: HTMLCanvasElement): void => {
+    const state = stateByCanvas.get(canvas);
+    if (state) state.font = "";
+  };
+  if (widthDescriptor?.set) {
+    vi.spyOn(HTMLCanvasElement.prototype, "width", "set").mockImplementation(function (
+      this: HTMLCanvasElement,
+      value: number,
+    ) {
+      widthDescriptor.set!.call(this, value);
+      resetState(this);
+    });
+  }
+  if (heightDescriptor?.set) {
+    vi.spyOn(HTMLCanvasElement.prototype, "height", "set").mockImplementation(function (
+      this: HTMLCanvasElement,
+      value: number,
+    ) {
+      heightDescriptor.set!.call(this, value);
+      resetState(this);
+    });
+  }
+
+  return { fillText, font: () => current?.font ?? "" };
 }
 
 afterEach(() => {
@@ -38,46 +96,106 @@ afterEach(() => {
 });
 
 describe("hologramHudText", () => {
-  it("contains only the real label, current status and supplied detail", () => {
-    expect(hologramHudText(INPUT)).toBe("node-1 engine stack  ·  Online  ·  3 endpoints");
-    expect(hologramHudText({ ...INPUT, status: "Offline", detail: "" }))
-      .toBe("node-1 engine stack  ·  Offline");
-    expect(hologramHudText({ ...INPUT, label: "", status: "", detail: "" }))
-      .toBe("node-1");
+  it("carries the label and detail, never a supplied liveness status", () => {
+    expect(hologramHudText(INPUT)).toBe("node-1 engine stack  ·  3 endpoints");
+    // `status` is no longer part of the HUD input type; a caller that
+    // still spreads the host body must not leak it into the ball.
+    const withStatus = { ...INPUT, status: "Offline", detail: "" };
+    expect(hologramHudText(withStatus)).toBe("node-1 engine stack");
+    expect(hologramHudText({ ...INPUT, label: "", detail: "" })).toBe("node-1");
   });
 });
 
 describe("makeFleetHologram", () => {
-  it("pins the real-data ticker to the centre of the front dial", () => {
-    const fillText = mockCanvas();
+  it("pins the real-data HUD line to the centre of the front dial", () => {
+    const { fillText, font } = mockCanvas();
     const hologram = makeFleetHologram(INPUT, new THREE.Color(0x7fb8dd), false);
 
     expect(hologram.hudTexture).not.toBeNull();
     expect(hologram.hudPanel).not.toBeNull();
     expect(hologram.hudPanel!.geometry).toBeInstanceOf(THREE.PlaneGeometry);
-    // The ticker is a child of the camera-facing dial, AT its centre: the
+    // The HUD line is a child of the camera-facing dial, AT its centre: the
     // dial owns the plane, so facing the dial faces the text (user
     // direction 2026-10-31 — no wrapping ribbon).
     expect(hologram.frontDial.children).toContain(hologram.hudPanel);
     expect(hologram.hudPanel!.position.x).toBe(0);
     expect(hologram.hudPanel!.position.y).toBe(0);
-    // Not vacuous: a blank ticker must fail here, not just render wrong
-    // text when it renders anything at all.
+    // Not vacuous: a blank HUD line must fail here, not just render wrong
+    // text when it renders anything at all. The third argument is the
+    // only legal one — canvas's optional `maxWidth` condenses glyphs and
+    // is exactly the 2026-11-05 defect.
     expect(fillText.mock.calls.length).toBeGreaterThan(0);
     for (const call of fillText.mock.calls) {
-      expect(call[0]).toBe("node-1 engine stack  ·  Online  ·  3 endpoints");
+      expect(call[0]).toBe("node-1 engine stack  ·  3 endpoints");
+      expect(call).toHaveLength(3);
     }
 
-    // The plane's aspect matches the texture's (1024×96): a mismatched
-    // aspect compresses the glyphs horizontally (R2 S3-1 regression).
+    // The canvas is painted in the host's UI sans stack, not a mono face:
+    // the chip beside the ball and the in-ball line must read as one UI.
+    // The mock clears context state on every canvas resize, so this also
+    // proves the font is re-applied AFTER the dimensions are set (the real
+    // canvas trap), not merely assigned once before them.
+    expect(font()).toBe(`600 64px ${HIKARI_FONT_SANS}`);
+    expect(font()).toContain("sans-serif");
+    expect(font()).not.toContain("monospace");
+
+    // The plane's aspect matches the texture tile's own aspect: a
+    // mismatched aspect compresses the glyphs horizontally.
+    const image = hologram.hudTexture!.image as HTMLCanvasElement;
     const plane = hologram.hudPanel!.geometry as THREE.PlaneGeometry;
     const params = plane.parameters as { width: number; height: number };
-    expect(params.width / params.height).toBeCloseTo(1024 / 96, 5);
+    expect(params.width / params.height).toBeCloseTo(image.width / image.height, 5);
 
     // The text plane never widens the body's pointer target.
     const hits: THREE.Intersection[] = [];
     hologram.hudPanel!.raycast(new THREE.Raycaster(), hits);
     expect(hits).toHaveLength(0);
+  });
+
+  it("widens the tile for a long label instead of clipping or condensing", () => {
+    const label = "n".repeat(70);
+    const { fillText, font } = mockCanvas();
+    const hologram = makeFleetHologram(
+      { ...INPUT, label, detail: "" },
+      new THREE.Color(),
+      false,
+    );
+    const image = hologram.hudTexture!.image as HTMLCanvasElement;
+    // 70 glyphs at 46px is the largest uniform size whose natural width
+    // fits the 1504px text box; the tile adds the 96px seam gap.
+    expect(font()).toBe(`600 46px ${HIKARI_FONT_SANS}`);
+    expect(image.width).toBe(1545);
+    const rendered = fillText.mock.calls[0]?.[0] as string;
+    expect(rendered).toBe(label);
+    expect(fillText.mock.calls[0]).toHaveLength(3);
+  });
+
+  it("ellipsizes when even 40px cannot fit the label", () => {
+    const label = "n".repeat(120);
+    const { fillText, font } = mockCanvas();
+    const hologram = makeFleetHologram(
+      { ...INPUT, label, detail: "" },
+      new THREE.Color(),
+      false,
+    );
+    const image = hologram.hudTexture!.image as HTMLCanvasElement;
+    expect(font()).toBe(`600 40px ${HIKARI_FONT_SANS}`);
+    expect(image.width).toBe(1590);
+    const rendered = fillText.mock.calls[0]?.[0] as string;
+    expect(rendered.endsWith("…")).toBe(true);
+    expect(rendered.length).toBeLessThan(label.length);
+    expect(fillText.mock.calls[0]).toHaveLength(3);
+  });
+
+  it("uses a host-provided --font-sans stack for the canvas text", () => {
+    document.documentElement.style.setProperty("--font-sans", '"Host Sans", sans-serif');
+    try {
+      const { font } = mockCanvas();
+      makeFleetHologram(INPUT, new THREE.Color(), false);
+      expect(font()).toBe('600 64px "Host Sans", sans-serif');
+    } finally {
+      document.documentElement.style.removeProperty("--font-sans");
+    }
   });
 
   it("gives main cores denser dial content than node cores", () => {
@@ -311,10 +429,11 @@ describe("makeFleetHologram", () => {
     expect(hologram.selectionRing.quaternion.angleTo(camera.quaternion)).toBeCloseTo(0, 6);
     // …the dial's ticks sweep…
     expect(hologram.frontSpinner.rotation.z).toBeCloseTo(0.55, 6);
-    // …and the real-data ticker scrolls across the dial's centre.
-    expect(hologram.hudTexture?.offset.x).toBeCloseTo(0.09, 6);
+    // …and the measured HUD line stays put at the dial's centre: its
+    // band already fits the label, so a scroll would only slice it.
+    expect(hologram.hudTexture?.offset.x).toBe(0);
     poseFleetHologram(hologram, 10, 20, camera.quaternion);
-    expect(hologram.hudTexture?.offset.x).toBeCloseTo(0.18, 6);
+    expect(hologram.hudTexture?.offset.x).toBe(0);
   });
 });
 
@@ -323,7 +442,7 @@ describe("makeSatelliteHologram", () => {
     const satellite = makeSatelliteHologram(0.2, new THREE.Color(0x9fb8dd), false);
 
     // Endpoint tier: three crossed support dials plus a three-ring
-    // spindle — the gateway's language, minimal content, no ticker.
+    // spindle — the gateway's language, minimal content, no HUD line.
     expect(satellite.getObjectsByProperty("name", "fleet-hologram-face-dial"))
       .toHaveLength(3);
     expect(satellite.getObjectsByProperty("name", "fleet-hologram-ring-spindle-circle"))

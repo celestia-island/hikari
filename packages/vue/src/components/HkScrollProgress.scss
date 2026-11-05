@@ -1,0 +1,58 @@
+@use "../styles/polyfill" as *;
+
+/* ── Scroll-progress pill (HkScrollContainer scrollProgress) ──────
+   The "xx / xx" counter that floats near the bottom-center of a
+   scrolling list: first visible row index over total rows. It hangs
+   off the container HOST (position: relative), never the viewport —
+   viewport-absolute chrome scrolls away with the content, the same
+   reason the autotag band and the selection-hint gradients paint on
+   the root.
+
+   Visual vocabulary is the autotag band's (the container's other
+   bottom chrome): muted mono digits on the mixed surface pill, same
+   z-index tier (6). The bottom inset is safe-area aware the way
+   HkFab's corners are. Bare digits only — counters are locale-neutral
+   (the HkLoadMore counter precedent). */
+.hk-scroll-progress-pill {
+  position: absolute;
+  left: 50%;
+  bottom: max(var(--space-10), env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 6;
+  pointer-events: none;
+  @include user-select(none);
+  padding: var(--space-2) var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--hi-color-muted, #6c6c6c);
+  background: color-mix(in srgb, var(--hi-color-surface, rgba(255, 255, 255, 0.95)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100, 100, 100, 0.08)) 12%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  @include backdrop-filter(blur(4px));
+
+  /* Resting = transparent; only an in-flight scroll lights it. The
+   * ~200ms ease is the show AND hide fade (data-state flips on the
+   * container's throttled sensing pass). */
+  opacity: 0;
+  transition: opacity 200ms ease;
+
+  &[data-state="active"] {
+    opacity: 0.85;
+  }
+
+  /* A failed precondition (no registered list, no vertical overflow,
+   * a list whose rows are empty) removes the box outright — the pill
+   * must never linger as dead chrome. */
+  &[data-state="hidden"] {
+    display: none;
+  }
+}
+
+/* Reduced motion: no fade at all — the state flips instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-scroll-progress-pill {
+    transition: none;
+  }
+}

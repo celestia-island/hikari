@@ -113,3 +113,88 @@ describe("HkJsonTree spacing contract", () => {
     expect(scss).not.toMatch(/margin-inline-start: 0\.\d+em/);
   });
 });
+
+/**
+ * Selection + fold-motion contract (2026-11-05 user direction).
+ *
+ * The tree is a viewer, not a document: rows must NOT be selectable by
+ * default, and the only re-enable site is the explicit `selectable` opt-in.
+ * The fold is animated through the shared motion family — the JS side reads
+ * the two `--jt-fold-*` properties, so a theme retime moves the tree with the
+ * rest of the system; the chevron is ONE glyph rotated by those same tokens
+ * (not a glyph swap) and must honour reduced motion.
+ */
+describe("HkJsonTree selection + motion contract", () => {
+  const rowBlock = scss.slice(scss.indexOf(".s-jt-row {"), scss.indexOf("/* The ONLY place"));
+
+  it("denies text selection on rows by default", () => {
+    expect(rowBlock, ".s-jt-row rule present").not.toBe("");
+    expect(rowBlock).toContain("@include user-select(none)");
+    expect(rowBlock).not.toContain("@include user-select(text)");
+    // iOS long-press must not raise the callout menu over a row that is
+    // itself a toggle target; the opt-in rule is the only place that lifts it.
+    const treeBlock = scss.slice(scss.indexOf(".s-tool-json-tree {"), scss.indexOf("/* ONE SCROLLBAR"));
+    expect(treeBlock).toContain("-webkit-touch-callout: none;");
+  });
+
+  it("re-enables selection only through the explicit selectable hook", () => {
+    expect(scss).toContain(".s-tool-json-tree.s-jt-selectable .s-jt-row {");
+    expect(scss).toContain("@include user-select(text)");
+    // Exactly one opt-in selector site: a second selector that re-enables
+    // selection without the host asking would silently undo the contract.
+    expect(scss.match(/s-jt-selectable/g)?.length).toBe(2); // the comment + this selector
+    expect(scss.slice(scss.indexOf(".s-tool-json-tree.s-jt-selectable .s-jt-row {"))).toContain(
+      "-webkit-touch-callout: default;",
+    );
+  });
+
+  it("seeds the fold tokens from the shared motion family", () => {
+    expect(scss).toContain(
+      "--jt-fold-duration: var(--hi-duration-fast, var(--duration-fast, 0.15s));",
+    );
+    expect(scss).toContain(
+      "--jt-fold-ease: var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));",
+    );
+  });
+
+  it("rotates one chevron with the fold tokens instead of swapping glyphs", () => {
+    const tsx = readFileSync(join(here, "HkJsonTree.tsx"), "utf-8");
+    expect(tsx).toContain('class="s-jt-chevron"');
+    expect(tsx).not.toContain("ChevronDown");
+    expect(scss).toContain(".s-jt-group[data-open] > .s-jt-row .s-jt-chevron {");
+    expect(scss).toContain("transform: rotate(90deg);");
+    // Child combinator, not a descendant: an open group must not rotate the
+    // chevrons of collapsed grandchildren nested below it.
+    const rotateAt = scss.indexOf(".s-jt-group[data-open] > .s-jt-row .s-jt-chevron {");
+    expect(rotateAt).toBeGreaterThanOrEqual(0);
+    const rotateRule = scss.slice(rotateAt, scss.indexOf("}", rotateAt));
+    expect(rotateRule).toContain("rotate(90deg)");
+    const chevron = scss.slice(scss.indexOf(".s-jt-chevron {"), scss.indexOf(".s-jt-group[data-open]"));
+    expect(chevron).toContain("var(--jt-fold-duration");
+    expect(chevron).toContain("var(--jt-fold-ease");
+  });
+
+  it("switches the chevron rotation off under reduced motion", () => {
+    // The whole rule must live INSIDE the media block: slicing to EOF would
+    // also pass if a later bare `.s-jt-chevron { transition: none }` was
+    // added outside it (R2 2026-11-05), which would disable the rotation
+    // for everyone instead of just reduced-motion users.
+    expect(scss).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{\s*\.s-jt-chevron \{\s*transition: none;\s*\}\s*\}/,
+    );
+  });
+
+  it("keeps the JS fallback duration equal to the sheet fallback", () => {
+    const tsx = readFileSync(join(here, "HkJsonTree.tsx"), "utf-8");
+    const jsFallback = /const JT_FOLD_FALLBACK_MS = (\d+);/.exec(tsx)?.[1];
+    expect(jsFallback).toBe("150");
+    expect(scss).toContain(
+      "--jt-fold-duration: var(--hi-duration-fast, var(--duration-fast, 0.15s));",
+    );
+  });
+
+  it("pins the selectable prop default to off", () => {
+    const tsx = readFileSync(join(here, "HkJsonTree.tsx"), "utf-8");
+    expect(tsx).toContain("selectable: { type: Boolean, default: false }");
+  });
+});

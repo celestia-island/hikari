@@ -30,10 +30,11 @@
  * the button itself), or a `<code>` slotted into a click-to-copy table
  * cell (the 2026-10-18 copy-cells contract). Content containers own
  * their re-enables instead: hikari's prose/code components (markdown
- * body, diff code, json-tree rows, log entries) self-declare
- * `user-select: text` in their sheets, so vendored copies carry their
- * own contract, and hosts mark standalone code/log surfaces with
- * `.hk-selectable`.
+ * body, diff code, log entries) self-declare `user-select: text` in
+ * their sheets, so vendored copies carry their own contract, and hosts
+ * mark standalone code/log surfaces with `.hk-selectable`. The JSON tree
+ * is deliberately NOT one of them (2026-11-05): its rows stay denied and
+ * a host opts in per instance via the component's `selectable` prop.
  *
  * Order: SECOND in the canonical composition (index.scss), right after
  * the reset — the same "only lowers defaults; component sheets and host

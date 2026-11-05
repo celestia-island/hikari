@@ -2,9 +2,11 @@
 //
 // Compact confirmation sheet — sized like a dropdown popover (24rem) so
 // short messages do not float in a half-empty 32rem modal. The message
-// block centers vertically between the title and the actions; the two
-// buttons share the row equally (no right-clustering of tiny sm buttons),
-// and on touch-width viewports they grow to the 44px thumb standard.
+// block centers vertically between the title and the actions; the action
+// pair lives in the modal's footer band (2026-11-05 move — the same slot
+// HkMessageBox hosts its pair in) and right-aligns there at its natural
+// width, the two buttons still sharing that row equally via flex; on
+// touch-width viewports they grow to the 44px thumb standard.
 
 @use "../styles/polyfill" as *;
 
@@ -38,9 +40,11 @@
   min-width: 0;
 }
 
-/* Touch-width viewports: thumb-friendly actions — full-width halves with
-   the 44px minimum hit target; the dialog keeps its centered popover
-   sizing but with slimmer side insets so the buttons get the width. */
+/* Touch-width viewports: keep the 44px thumb target on the pair. The
+   modal footer's own mobile lift owns padding/font-size for sm/md
+   buttons inside the band (HkModal.scss .hk-modal-footer .hk-btn-md),
+   so the old 15px font-size override stayed behind on the move into
+   the footer — buttons read like every other lifted footer button. */
 @media (max-width: 640px) {
   .hk-confirm-dialog {
     gap: 1rem;
@@ -48,7 +52,6 @@
 
   .hk-confirm-dialog-btn {
     min-height: 44px;
-    font-size: 0.9375rem;
   }
 
   .hk-confirm-dialog-actions {

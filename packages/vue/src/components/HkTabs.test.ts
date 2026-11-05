@@ -691,22 +691,45 @@ describe("HkTabs trigger corner badge", () => {
     return { container };
   }
 
-  it("renders the count through HkCornerBadge inside the trigger (no hand-rolled suffix)", () => {
+  it("renders the count through HkCornerBadge BESIDE the label (side default, no hand-rolled suffix)", () => {
     const { container } = mountBadge({ count: 3, label: "3 items" });
     const trig = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!;
-    // The mark is the family's corner-badge pill, anchored bottom-right
-    // (the subscript corner) of the label, not a "(3)" text suffix.
+    // The mark is the family's pill, placed on the BUTTON-GROUP default:
+    // `right` — beside the label, vertically centered, never covering
+    // it (user direction 2026-11-05: the corner overlay read as "歪了/
+    // 盖住了" on a tab trigger). Not a "(3)" text suffix either.
     const mark = trig.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
     expect(mark).not.toBeNull();
     expect(mark.textContent).toBe("3");
-    expect(mark.dataset.corner).toBe("bottom-right");
+    expect(mark.dataset.placement).toBe("right");
+    expect(trig.querySelector(".hk-corner-badge-anchor")!.getAttribute("data-placement")).toBe("right");
     expect(trig.textContent).not.toContain("(3)");
-    // Default clearance: the straddling pill must stay inside the
-    // scroller's 6px vertical clearance below the label (see
-    // TabItem.badge.offset) — the offset var pins that contract.
-    expect(mark.style.getPropertyValue("--hk-corner-badge-offset")).toBe("4px");
+    // Side placement needs no corner clearance: the wrapper gap is the
+    // spacing, so the tab default writes no offset var.
+    expect(mark.style.getPropertyValue("--hk-corner-badge-offset")).toBe("");
+    // Side flow order: the label comes first, the mark after it.
+    const anchor = trig.querySelector(".hk-corner-badge-anchor")!;
+    expect(anchor.firstElementChild!.textContent).toBe("Alpha");
+    expect(anchor.lastElementChild).toBe(mark);
     // The sibling trigger stays badge-free.
     expect(container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[1]!.querySelector(".hk-corner-badge")).toBeNull();
+  });
+
+  it("keeps the explicit corner override, with the corner clearance default", () => {
+    // A host that opts back into the overlay must still get the 4px
+    // clearance the scroller viewport needs (the placement-aware default),
+    // without restating it.
+    const { container } = mountBadge({ count: 3, label: "3 items", placement: "bottom-right" });
+    const mark = container.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
+    expect(mark.dataset.placement).toBe("bottom-right");
+    expect(mark.style.getPropertyValue("--hk-corner-badge-offset")).toBe("4px");
+  });
+
+  it("honours an explicit offset in either placement family", () => {
+    const side = mountBadge({ count: 3, label: "3 items", offset: 2 });
+    const mark = side.container.querySelector<HTMLElement>(".hk-corner-badge--pill")!;
+    expect(mark.dataset.placement).toBe("right");
+    expect(mark.style.getPropertyValue("--hk-corner-badge-offset")).toBe("2px");
   });
 
   it("keeps zero visible (presence count, not notification noise)", () => {

@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "品牌色内容",
     "hikari::theme.solar.title": "太阳钟定位",
     "hikari::theme.solar.edit": "编辑",
+    "hikari::theme.solar.editAutoOnly": "切换到自动模式后可调整日照位置",
     "hikari::theme.solar.apply": "应用",
     "hikari::theme.solar.cancel": "取消",
     "hikari::theme.solar.strategyTimezone": "时区",

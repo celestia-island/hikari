@@ -236,6 +236,14 @@ export const HkFaceShell = defineComponent({
      *  `stage` renders the content bare — the face owns scrolling,
      *  canvases and floating layers. */
     contentMode: { type: String as PropType<"document" | "stage">, default: "document" },
+    /** Scroll-progress pill on the document viewport (2026-11): while a
+     *  registered list scrolls, the shell floats an "xx / xx" counter
+     *  near the viewport's bottom-center (HkScrollContainer
+     *  `scrollProgress`; lists register themselves — HkAdminTablePage
+     *  does it for every admin list — so hosts inherit the affordance
+     *  with zero per-page work). Default ON: the shell is the
+     *  system-wide default-on point. Pass `false` to run the face bare. */
+    scrollProgress: { type: Boolean, default: true },
     /** Content-area padding (inside the scroll viewport). Document mode
      *  only — a stage face owns its own geometry. Padding is applied to
      *  an inner wrapper rather than the scroll container so card
@@ -537,7 +545,7 @@ export const HkFaceShell = defineComponent({
             {props.contentMode === "stage" ? (
               renderContentStage()
             ) : (
-              <HScrollContainer class="s-admin-shell-scroll">
+              <HScrollContainer class="s-admin-shell-scroll" scrollProgress={props.scrollProgress}>
                 {/* Padding lives INSIDE the scroll viewport (an inner
                     wrapper) so card box-shadows are not clipped at the
                     viewport edges. */}

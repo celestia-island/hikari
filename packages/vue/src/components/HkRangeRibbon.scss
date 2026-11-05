@@ -158,6 +158,9 @@
   background: rgb(var(--color-primary));
   cursor: ew-resize;
   touch-action: none;
+  // Dragging the grip must not start a native text selection (house
+  // pattern: HkMediaSlider's track).
+  @include user-select(none);
 }
 
 .hk-range-ribbon-handle:hover {

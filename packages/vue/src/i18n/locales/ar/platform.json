@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "المحتوى على لون العلامة",
     "hikari::theme.solar.title": "موقع الساعة الشمسية",
     "hikari::theme.solar.edit": "تحرير",
+    "hikari::theme.solar.editAutoOnly": "بدّل إلى الوضع التلقائي لتعديل موضع ضوء النهار",
     "hikari::theme.solar.apply": "تطبيق",
     "hikari::theme.solar.cancel": "إلغاء",
     "hikari::theme.solar.strategyTimezone": "المنطقة الزمنية",

@@ -201,7 +201,7 @@ export { default as HLogo } from "./components/HkLogo";
 
 // Component types
 export { type BadgeVariant } from "./components/HkBadge";
-export { type CornerBadgeVariant } from "./components/HkCornerBadge";
+export { type CornerBadgePlacement, type CornerBadgeVariant } from "./components/HkCornerBadge";
 export { type BoardNodeInput, type BoardEdgeInput } from "./components/HkBoard";
 export { isSafeHref, safeHref } from "./utils/safeHref";
 export { type BoardAnchorMode, type BoardEdgeStyle, type BoardPoint } from "./utils/boardEdges";
@@ -507,6 +507,12 @@ export type { PasswordValidationResult, PasswordLevel, PasswordStrengthEvaluator
 export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
 export { useApproachEnd } from "./composables/useApproachEnd";
 export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";
+// The scroll-progress pill's public vocabulary: HkScrollContainer's
+// `scrollProgress` registrar — lists (HkAdminTablePage does it built-in)
+// inject this key to register their row root + total with the nearest
+// enclosing container that has the feature on.
+export { HK_SCROLL_PROGRESS_REGISTRAR } from "./components/HkScrollProgress";
+export type { HkScrollProgressHandle, HkScrollProgressRegistrar } from "./components/HkScrollProgress";
 // The change-mark rail's public vocabulary: HkScrollContainer's `markers`
 // prop is typed with it, so consumers can name what they pass.
 export type { OverlayScrollMapSegment, OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
@@ -921,6 +927,17 @@ export {
   type HkTemplateSegment,
   type HkTemplateTokenDef,
 } from "./components/templateGrammar";
+// The chip grammar lives beside the fill-template grammar it reuses; both
+// are exported so hosts can reason about (and test) reference forms
+// without mounting a renderer.
+export {
+  parseInlineChips,
+  inlineChipDisplay,
+  applyInlineChipsToBody,
+  type HkInlineChipSegment,
+  type HkInlineChipTokenSegment,
+  type HkInlineChipRefSegment,
+} from "./components/inlineChips";
 export { HkErrorLanding as HkErrorLanding } from "./components/HkErrorLanding";
 export { HkErrorReportingOverlay as HkErrorReportingOverlay } from "./errorReporting";
 export { HkAdminShell as HkAdminShell } from "./components/HkAdminShell";

@@ -802,6 +802,27 @@ describe("HkRangeRibbon reset", () => {
     expect(second.defaultPrevented).toBe(true);
   });
 
+  it("drops an in-flight brush when a reset interrupts it", async () => {
+    const host = mountHost(null);
+    const { strip, x } = stubStrip(host.root);
+    pointer("pointerdown", x(0.2), strip);
+    pointer("pointermove", x(0.4), strip);
+    await nextTick();
+    const afterBrush = host.windowChange.mock.calls.length;
+    expect(afterBrush, "the brush emitted").toBeGreaterThan(0);
+
+    keydown(strip, "Escape");
+    await nextTick();
+    expect(host.windowChange).toHaveBeenLastCalledWith(null);
+    const afterReset = host.windowChange.mock.calls.length;
+
+    // The pointer is still down, but the reset cleared the gesture: the
+    // next move must not re-brush from the stale anchor.
+    pointer("pointermove", x(0.8), strip);
+    await nextTick();
+    expect(host.windowChange.mock.calls.length, "no brush after the reset").toBe(afterReset);
+  });
+
   it("hides the reset button when no window exists (negative)", () => {
     const root = mountRibbon({ window: null });
     expect(root.querySelector(".hk-range-ribbon-reset")).toBeNull();
@@ -1255,6 +1276,9 @@ describe("HkRangeRibbon stylesheet contract", () => {
     );
     expect(declaration(handle, "cursor")).toBe("ew-resize");
     expect(handle).toContain("touch-action: none");
+    expect(handle, "a handle drag cannot start a text selection").toMatch(
+      /user-select:\s*none/,
+    );
 
     // A clipped 2px sliver must still be visible.
     expect(declaration(ruleBody(css, ".hk-range-ribbon-segment"), "min-width")).toBe("2px");

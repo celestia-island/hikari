@@ -101,10 +101,24 @@ describe("selection policy sheet", () => {
     expect(cssDiff).toMatch(/\.hk-diff-viewer__sign[^{]*\{[^}]*?user-select:\s*none/);
   });
 
-  it("re-enables json-tree rows inside the denied pane chrome", () => {
+  it("denies json-tree rows by default; only the selectable opt-in re-enables", () => {
+    // 2026-11-05 user direction reversed the 2026-10-29 blanket re-enable:
+    // the JSON viewer is not a document, so a click/drag meant to toggle or
+    // copy must not leave a half-selected payload behind. The one re-enable
+    // site is the host's explicit `selectable` prop (s-jt-selectable).
     const css = compile("../components/HkJsonTree.scss");
-    expect(css).toMatch(/\.s-jt-row[^{]*\{[^}]*?user-select:\s*text/);
-    expect(css).toMatch(/\.s-tool-json-tree[^{]*\{[^}]*?user-select:\s*none/);
+    // Anchor the BASE row rule by slicing to its closing brace: the opt-in
+    // selector also ends in `.s-jt-row{`, so a bare regex would read the
+    // opt-in block and flip this assertion's meaning.
+    const rowAt = css.indexOf(".s-jt-row{");
+    expect(rowAt).toBeGreaterThanOrEqual(0);
+    const rowRule = css.slice(rowAt, css.indexOf("}", rowAt));
+    expect(rowRule).toContain("user-select:none");
+    expect(rowRule).not.toContain("user-select:text");
+    expect(css).toMatch(
+      /\.s-tool-json-tree\.s-jt-selectable \.s-jt-row\{[^}]*?user-select:\s*text/,
+    );
+    expect(css).toMatch(/\.s-tool-json-tree\{[^}]*?user-select:\s*none/);
   });
 
   it("re-enables the alert body and the confirm-dialog message", () => {

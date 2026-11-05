@@ -876,3 +876,83 @@ fn localized_component_bundles_carry_the_same_hk_keyset() {
         "localized bundles diverge in their hk.* key set: {diverged:#?}"
     );
 }
+
+/// Every locale's crate solar strings must BYTE-EQUAL the canonical Vue
+/// dictionary (`hk.solarLocationSetting.<key>` ↔
+/// `hikari::theme.solar.<key>`): the two forms are one product surface,
+/// so a value may only change on both sides together. The keyset gate
+/// above proves presence and the en literal guard only pins the code
+/// fallbacks — this closes the non-en VALUE gap the solar wave's
+/// close-out rounds recorded (round 5 caught the fr hemisphere gender
+/// regressing exactly through it).
+#[test]
+fn localized_solar_values_match_the_vue_canonical_bundle() {
+    let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let crate_locales = manifest.join("../i18n/src/locales");
+    let vue_locales = manifest.join("../vue/src/i18n/locales");
+    if !crate_locales.is_dir() || !vue_locales.is_dir() {
+        // The i18n / vue checkouts are siblings; a vendored sdist copy
+        // carries neither upstream tree — the mirrors are self-contained.
+        return;
+    }
+    let mut mismatches: Vec<String> = Vec::new();
+    let mut checked = 0usize;
+    let mut locale_dirs: Vec<_> = std::fs::read_dir(&crate_locales)
+        .expect("crate locales dir readable")
+        .filter_map(|entry| entry.ok().map(|e| e.path()))
+        .filter(|path| path.is_dir())
+        .collect();
+    locale_dirs.sort();
+    for dir in locale_dirs {
+        let locale = dir.file_name().unwrap().to_string_lossy().into_owned();
+        let crate_path = dir.join("components.toml");
+        let vue_path = vue_locales.join(&locale).join("platform.json");
+        let (Ok(crate_text), Ok(vue_text)) = (
+            std::fs::read_to_string(&crate_path),
+            std::fs::read_to_string(&vue_path),
+        ) else {
+            mismatches.push(format!("{locale}: bundle files unreadable"));
+            continue;
+        };
+        for line in crate_text.lines() {
+            let Some(rest) = line.strip_prefix("hk.solarLocationSetting.") else {
+                continue;
+            };
+            let Some((key, raw_value)) = rest.split_once(" = ") else {
+                continue;
+            };
+            let Some(value) = raw_value
+                .strip_prefix('"')
+                .and_then(|v| v.strip_suffix('"'))
+            else {
+                mismatches.push(format!("{locale}/{key}: unparseable crate line {line:?}"));
+                continue;
+            };
+            let needle = format!("\"hikari::theme.solar.{key}\": \"");
+            let Some(vline) = vue_text.lines().find(|l| l.contains(&needle)) else {
+                mismatches.push(format!("{locale}/{key}: missing from the vue bundle"));
+                continue;
+            };
+            let Some(vue_value) = vline
+                .split(&needle)
+                .nth(1)
+                .and_then(|tail| tail.strip_suffix("\",").or_else(|| tail.strip_suffix('"')))
+            else {
+                mismatches.push(format!("{locale}/{key}: unparseable vue line {vline:?}"));
+                continue;
+            };
+            checked += 1;
+            if vue_value != value {
+                mismatches.push(format!("{locale}/{key}: crate={value:?} vue={vue_value:?}"));
+            }
+        }
+    }
+    assert!(
+        checked > 0,
+        "no solar keys compared — the extraction shapes drifted"
+    );
+    assert!(
+        mismatches.is_empty(),
+        "crate solar values drifted from the vue canonical: {mismatches:#?}"
+    );
+}

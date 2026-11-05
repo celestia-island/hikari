@@ -330,16 +330,30 @@ const GEO_API_TIMEOUT_MS = 4000;
 /** One fetch of the lookup body with the shared timeout — the single
  *  network path for both consumers (the "ip" strategy's geo resolution
  *  and the strategy dialog's insight readout), so narrowing, abort
- *  handling and the no-store contract live in exactly one place. */
+ *  handling and the no-store contract live in exactly one place.
+ *  Concurrent callers SHARE the in-flight GET (a probe and an apply's
+ *  geo resolution racing each other used to issue two identical
+ *  requests); failures propagate to every joiner. */
+let ipBodyInflight: Promise<unknown> | null = null;
+
 async function fetchIpLookupBody(): Promise<unknown> {
-  const controller = new AbortController();
-  const timer = scheduleCronAfter(() => controller.abort(), GEO_API_TIMEOUT_MS);
-  return fetch(GEO_API_URL, {
-    signal: controller.signal,
-    cache: "no-store",
-  })
-    .then((r) => (r.ok ? r.json() : null))
-    .finally(() => timer.disconnect());
+  if (ipBodyInflight) return ipBodyInflight;
+  const inflight = (async () => {
+    const controller = new AbortController();
+    const timer = scheduleCronAfter(() => controller.abort(), GEO_API_TIMEOUT_MS);
+    return fetch(GEO_API_URL, {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .finally(() => timer.disconnect());
+  })();
+  ipBodyInflight = inflight;
+  try {
+    return await inflight;
+  } finally {
+    ipBodyInflight = null;
+  }
 }
 
 /** The trimmed-string guard for the untrusted lookup body: only a

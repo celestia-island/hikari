@@ -536,6 +536,7 @@ fn a_held_open_flash_is_removed_by_dismiss() {
 fn a_superseded_generation_never_ticks_or_repaints_the_new_flash() {
     use std::cell::Cell;
     use std::rc::Rc;
+
     use tairitsu_vdom::runtime;
 
     _reset_screen_identify_for_tests();

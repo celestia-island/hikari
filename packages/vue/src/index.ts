@@ -860,6 +860,7 @@ export { default as HkDatePicker } from "./components/HkDatePicker";
 export { default as HkTimeline } from "./components/HkTimeline";
 export { default as HkTitleBar } from "./components/HkTitleBar";
 export { default as HkStepFlow } from "./components/HkStepFlow";
+export { STEPFLOW_SWAP_EVENT } from "./components/HkStepFlow";
 export { default as HkScrollPin } from "./components/HkScrollPin";
 export {
   default as HkScreenIdentifyCard,

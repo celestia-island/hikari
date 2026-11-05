@@ -210,7 +210,17 @@ export default defineComponent({
      *  to this one. Sensing rides the same rAF-coalesced update pass as
      *  the overflow mirror — no second scroll listener. Off by default
      *  (per-house additive-chrome discipline; HkFaceShell turns it on
-     *  for the document-mode shell). */
+     *  for the document-mode shell).
+     *
+     *  Known edges (both accepted, documented for the next reader):
+     *  the registrar is provided at SETUP time only — a container
+     *  mounted OFF that flips the prop on later renders the pill with
+     *  nothing registered (hosts pass the prop statically; FaceShell
+     *  never toggles it). And sensing keys on THIS container's viewport
+     *  scroll — a nested INNER scroller moving on its own triggers no
+     *  pass here, so rows clipped inside the inner scroller can be
+     *  counted by the outer pill while invisible. The admin grammar
+     *  (one shell viewport) never nests. */
     scrollProgress: { type: Boolean, default: false },
     /** Idle window (ms) after the last scroll-offset change before the
      *  pill fades out. Read live; clamped to 300..3000. Only meaningful
@@ -344,7 +354,6 @@ export default defineComponent({
     }
 
     function registerProgress(handle: HkScrollProgressHandle) {
-      console.log("REGISTER called");
       progressRegistrars.add(handle);
       scheduleUpdate();
     }
@@ -407,7 +416,6 @@ export default defineComponent({
      *  page that loaded more rows than it declared), in which case the
      *  DOM count wins so numerator can never exceed denominator. */
     function senseScrollProgress(vp: HTMLElement) {
-      console.log("SENSE prop=", props.scrollProgress, "regs=", progressRegistrars.size);
       if (!props.scrollProgress || progressRegistrars.size === 0) {
         setProgressHidden();
         return;
@@ -415,7 +423,6 @@ export default defineComponent({
       const band = vp.getBoundingClientRect();
       const active = pickActiveProgressRoot(band);
       const rows = active ? active.root.querySelectorAll(props.scrollProgressSelector) : [];
-      console.log("SENSE band=", band.top, band.bottom, "active=", !!active, "rows=", rows.length, "sh=", vp.scrollHeight, "ch=", vp.clientHeight);
       if (!active || rows.length === 0 || vp.scrollHeight <= vp.clientHeight + 1) {
         setProgressHidden();
         return;

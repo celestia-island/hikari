@@ -3,6 +3,9 @@
 // the overlay-scrollbar tests do it (happy-dom performs no layout) —
 // Object.defineProperties for the viewport's scroll numbers, spyOn for
 // the getBoundingClientRect boxes the numerator reads.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, inject, nextTick, onMounted, onUnmounted, provide, ref } from "vue";
 
@@ -141,6 +144,47 @@ describe("HkScrollProgress", () => {
     const pill = scroller.pill();
     expect(pill).not.toBeNull();
     expect(pill!.dataset.state).toBe("hidden");
+  });
+
+  it("provides NO registrar when scrollProgress is off", () => {
+    // The provide is guarded by the prop — a list inside an OFF container
+    // must resolve null (so it falls through to an OUTER on-container, or
+    // registers nowhere). Pins the guard: deleting the `if (props.scrollProgress)`
+    // around the provide turns this red.
+    let saw: unknown = "unset";
+    const Probe = defineComponent({
+      setup() {
+        saw = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
+        return () => h("div", "probe");
+      },
+    });
+    mountScroller(() => h(Probe), { scrollProgress: false });
+    expect(saw).toBeNull();
+  });
+
+  it("resolves inner-OFF inside outer-ON to the OUTER registrar", async () => {
+    const seen: unknown[] = [];
+    const Probe = defineComponent({
+      setup() {
+        const registrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
+        onMounted(() => {
+          registrar?.register({ getRoot: () => null, getTotal: () => 7 });
+          seen.push(registrar);
+        });
+        return () => h("div", "probe");
+      },
+    });
+    // An OFF inner container does NOT provide — the probe falls through
+    // to the outer ON container's registrar (nearest provide scope).
+    const scroller = mountScroller(
+      () => h(HkScrollContainer, { scrollProgress: false }, { default: () => h(Probe) }),
+    );
+    scroller.refresh();
+    await nextTick();
+    expect(seen.length).toBe(1);
+    // The registration landed on the OUTER container (one pill in the tree,
+    // owned by the outer host — the inner one renders no pill at all).
+    expect(scroller.container.querySelectorAll(".hk-scroll-progress-pill").length).toBe(1);
   });
 
   it("shows the active count over the registered total on scroll", async () => {
@@ -407,5 +451,41 @@ describe("HkAdminTablePage scroll-progress registration", () => {
     // First visible row #6 over the DECLARED total — the delivered rows
     // (30) never override the page's server count.
     expect(pill!.textContent).toBe("6 / 500");
+  });
+});
+
+
+// ── SCSS contract (textual pins — happy-dom does not lay out) ────────
+// The house style pins sheet claims with readFileSync probes
+// (HkButton.test.tsx icon-only precedent): these guard the paint
+// decisions the DOM tests cannot see.
+const scss = readFileSync(join(__dirname, "HkScrollProgress.scss"), "utf-8").replace(/\r\n/g, "\n");
+
+describe("HkScrollProgress SCSS contract", () => {
+  it("hides by display:none, never just transparency", () => {
+    const hidden = scss.match(/&\[data-state="hidden"\]\s*{[^}]*}/)?.[0] ?? "";
+    expect(hidden, "hidden-state rule must exist").toBeTruthy();
+    expect(hidden).toContain("display: none");
+  });
+
+  it("fades via a 200ms opacity transition on the pill itself", () => {
+    const rule = scss.match(/\.hk-scroll-progress-pill\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule, "pill rule must exist").toBeTruthy();
+    expect(rule).toContain("transition: opacity 200ms ease");
+    expect(rule).toContain("pointer-events: none");
+  });
+
+  it("hangs bottom-center with the safe-area inset and the autotag z-tier", () => {
+    const rule = scss.match(/\.hk-scroll-progress-pill\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule).toContain("position: absolute");
+    expect(rule).toContain("left: 50%");
+    expect(rule).toContain("max(var(--space-10), env(safe-area-inset-bottom, 0px))");
+    expect(rule).toContain("z-index: 6");
+  });
+
+  it("drops the fade entirely under prefers-reduced-motion", () => {
+    const reduced = scss.match(/@media \(prefers-reduced-motion: reduce\)\s*{[^}@]*{[^}]*}\s*}/)?.[0] ?? "";
+    expect(reduced, "reduced-motion block must exist").toBeTruthy();
+    expect(reduced).toContain("transition: none");
   });
 });

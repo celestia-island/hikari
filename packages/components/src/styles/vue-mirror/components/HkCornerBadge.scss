@@ -9,13 +9,20 @@
 // VENDORED MIRROR — do not hand-edit here.
 
 /**
- * HkCornerBadge — the generic corner mark (dot / count / label) pinned
- * to one corner of the default-slot anchor (see HkCornerBadge.tsx for
- * the contract). Geometry follows the house pattern the trigger dots
- * and the Rust family's .hk-badge-wrapper established: the anchor is a
- * relative inline-flex wrapper (the badge escapes nothing — hosts wrap
- * ANY child), the mark centers ON the corner via translate(50%,-50%)
- * with an optional --hk-corner-badge-offset clearance.
+ * HkCornerBadge — the generic anchored mark (dot / count / label) for the
+ * default-slot anchor (see HkCornerBadge.tsx for the contract). Geometry
+ * has TWO placement families, selected by `data-placement`:
+ *
+ *   corners (bottom-right / …) OVERLAY the anchor: the anchor is a
+ *   relative inline-flex wrapper (the badge escapes nothing), the mark
+ *   centers ON the corner via translate(±50%) with an optional
+ *   --hk-corner-badge-offset clearance — the subscript mark;
+ *
+ *   sides (`right` / `left`) put the mark in the wrapper's FLOW beside the
+ *   anchor, vertically centered, so the anchor's own box (and text) is
+ *   never covered. The wrapper is already a row; the mark spaces ITSELF
+ *   (margin = --hk-corner-badge-gap + --hk-corner-badge-offset, default
+ *   6px + 0), so a multi-child anchor's own layout is never touched.
  */
 
 .hk-corner-badge-anchor {
@@ -25,39 +32,68 @@
 
 .hk-corner-badge {
   position: absolute;
-  /* Centered on the corner; the corner data-attribute flips the axes
-   * and the offset var adds clearance without re-deriving transforms. */
+  /* Corner placements center ON the corner; the side placement rules
+   * below return the mark to the flow (static, no transform). */
   transform: translate(var(--hk-corner-badge-tx, 50%), var(--hk-corner-badge-ty, -50%));
   pointer-events: none;
   white-space: nowrap;
 }
 
-.hk-corner-badge[data-corner="top-right"] {
+.hk-corner-badge[data-placement="top-right"] {
   top: var(--hk-corner-badge-offset, 0px);
   right: var(--hk-corner-badge-offset, 0px);
   --hk-corner-badge-tx: 50%;
   --hk-corner-badge-ty: -50%;
 }
 
-.hk-corner-badge[data-corner="top-left"] {
+.hk-corner-badge[data-placement="top-left"] {
   top: var(--hk-corner-badge-offset, 0px);
   left: var(--hk-corner-badge-offset, 0px);
   --hk-corner-badge-tx: -50%;
   --hk-corner-badge-ty: -50%;
 }
 
-.hk-corner-badge[data-corner="bottom-right"] {
+.hk-corner-badge[data-placement="bottom-right"] {
   bottom: var(--hk-corner-badge-offset, 0px);
   right: var(--hk-corner-badge-offset, 0px);
   --hk-corner-badge-tx: 50%;
   --hk-corner-badge-ty: 50%;
 }
 
-.hk-corner-badge[data-corner="bottom-left"] {
+.hk-corner-badge[data-placement="bottom-left"] {
   bottom: var(--hk-corner-badge-offset, 0px);
   left: var(--hk-corner-badge-offset, 0px);
   --hk-corner-badge-tx: -50%;
   --hk-corner-badge-ty: 50%;
+}
+
+/* Side placements: the mark rides the wrapper's row. `right` stays after
+ * the anchor (DOM order), `left` flips ahead of it; `align-self` centers
+ * the mark on the row and the mark's own margin spaces it from the anchor,
+ * so the anchor's other children keep their default alignment. The flex
+ * row follows the writing direction, so an RTL host mirrors the side for
+ * free (the house flex-row convention, see HkNumberSteppers). The two
+ * sides are written out separately (rather than one shared rule) so each
+ * side's block stays a single, greppable declaration. */
+.hk-corner-badge[data-placement="right"] {
+  position: static;
+  transform: none;
+  align-self: center;
+  margin-inline-start: calc(
+    var(--hk-corner-badge-gap, var(--space-6, 6px)) +
+      var(--hk-corner-badge-offset, 0px)
+  );
+}
+
+.hk-corner-badge[data-placement="left"] {
+  position: static;
+  transform: none;
+  align-self: center;
+  order: -1;
+  margin-inline-end: calc(
+    var(--hk-corner-badge-gap, var(--space-6, 6px)) +
+      var(--hk-corner-badge-offset, 0px)
+  );
 }
 
 /* Dot form: a filled circle in the variant's tone (same token trio

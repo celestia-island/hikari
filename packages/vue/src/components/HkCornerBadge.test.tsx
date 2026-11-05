@@ -21,7 +21,7 @@ afterEach(() => {
   }
 });
 
-describe("HkCornerBadge — the generic corner mark (2026-10-15)", () => {
+describe("HkCornerBadge — the generic anchored mark (2026-10-15)", () => {
   it("anchors the default slot in a relative wrapper with no mark by default", () => {
     const c = mount(h(HkCornerBadge, null, () => h("button", { class: "probe" }, "x")));
     const anchor = c.querySelector(".hk-corner-badge-anchor")!;
@@ -32,17 +32,32 @@ describe("HkCornerBadge — the generic corner mark (2026-10-15)", () => {
     expect(c.querySelector(".hk-corner-badge")).toBeNull();
   });
 
+  it("defaults to the subscript overlay (bottom-right) exactly like an avatar mark", () => {
+    const c = mount(h(HkCornerBadge, { count: 2 }, () => h("i")));
+    const anchor = c.querySelector(".hk-corner-badge-anchor")!;
+    expect(anchor.getAttribute("data-placement")).toBe("bottom-right");
+    expect(c.querySelector(".hk-corner-badge")!.getAttribute("data-placement")).toBe("bottom-right");
+  });
+
   it("dot form: a variant-colored dot at the requested corner, decorative by default", () => {
     const c = mount(
-      h(HkCornerBadge, { dot: true, variant: "success", corner: "bottom-right" }, () => h("i")),
+      h(HkCornerBadge, { dot: true, variant: "success", placement: "top-right" }, () => h("i")),
     );
     const badge = c.querySelector(".hk-corner-badge")!;
     expect(badge).toBeTruthy();
     expect(badge.className).toContain("hk-corner-badge--dot");
     expect(badge.className).toContain("hk-corner-badge-success");
-    expect(badge.getAttribute("data-corner")).toBe("bottom-right");
+    expect(badge.getAttribute("data-placement")).toBe("top-right");
     expect(badge.getAttribute("aria-hidden")).toBe("true");
     expect(badge.getAttribute("role")).toBeNull();
+  });
+
+  it("side placements carry the same data attribute on anchor and mark (button-group default)", () => {
+    const c = mount(
+      h(HkCornerBadge, { count: 4, placement: "right" }, () => h("span", "Active")),
+    );
+    expect(c.querySelector(".hk-corner-badge-anchor")!.getAttribute("data-placement")).toBe("right");
+    expect(c.querySelector(".hk-corner-badge")!.getAttribute("data-placement")).toBe("right");
   });
 
   it("count form: renders the number, caps past max, hides zero unless showZero", () => {

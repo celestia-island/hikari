@@ -255,6 +255,7 @@ fn card_honours_label_override_and_placement() {
         seconds_left: 1,
         placement: ScreenIdentifyPlacement::TopRight,
         label: Some("The far right wall".to_string()),
+        countdown_key: String::new(),
     }));
     assert!(html.contains("aria-label=\"The far right wall\""), "{html}");
     assert!(html.contains("data-placement=\"top-right\""), "{html}");
@@ -434,6 +435,67 @@ fn chain_step_crosses_the_deadline_and_ceils_fractional_remainders() {
     assert!(!screen_identify_chain_step(&mut state, generation, 1_000.0));
     assert!(!state.active());
     assert_eq!(state.remaining_ms(), 0);
+}
+
+// ── The timer wiring (capture seam) ─────────────────────────────────
+
+/// The chain WIRING is a contract, not an implementation detail: a timed
+/// flash schedules exactly one chain, a held-open flash schedules none, and
+/// an active step re-arms while a finished one does not. R7 recorded these
+/// as unobservable because the non-wasm `set_timeout` is a no-op; the
+/// capture seam makes them testable.
+#[test]
+fn the_timer_wiring_schedules_exactly_the_right_chains() {
+    _reset_screen_identify_for_tests();
+    screen_identify_capture_timers(true);
+
+    // Held-open: the call site must not schedule anything.
+    show_screen_identify(ScreenIdentifyRequest::new("0").with_duration_ms(0));
+    assert!(
+        screen_identify_take_captured_chains().is_empty(),
+        "a held-open flash must not schedule a chain"
+    );
+
+    // Timed flash: exactly one chain.
+    show_screen_identify(ScreenIdentifyRequest::new("7"));
+    let generation = use_screen_identify().state().generation();
+    let mut chains = screen_identify_take_captured_chains();
+    assert_eq!(chains.len(), 1, "a timed flash schedules exactly one chain");
+
+    // Running the scheduled step while active re-arms exactly one more
+    // (the reschedule wiring), and the state advanced with it.
+    let step = chains.remove(0);
+    step();
+    let mut rearmed = screen_identify_take_captured_chains();
+    assert_eq!(rearmed.len(), 1, "an active step re-arms exactly one chain");
+    assert_eq!(use_screen_identify().state().seconds_left(), 3);
+
+    // A superseded chain neither advances nor re-arms.
+    show_screen_identify(ScreenIdentifyRequest::new("2"));
+    let restarted = use_screen_identify().state().generation();
+    assert_ne!(generation, restarted);
+    screen_identify_take_captured_chains();
+    // `rearmed` is the generation-7 chain's re-arm: after the restart it is
+    // exactly the stale wake a real timer would still fire.
+    let stale = rearmed.remove(0);
+    stale();
+    assert!(screen_identify_take_captured_chains().is_empty());
+    assert_eq!(use_screen_identify().state().number(), "2");
+
+    // Dismissal retires the scheduled chain: its next wake observes the new
+    // generation and neither advances nor re-arms (the stub clock is frozen,
+    // so the deadline arm is covered by the explicit-clock tests above).
+    show_screen_identify(ScreenIdentifyRequest::new("3"));
+    let mut scheduled = screen_identify_take_captured_chains();
+    assert_eq!(scheduled.len(), 1);
+    dismiss_screen_identify();
+    let step = scheduled.remove(0);
+    step();
+    assert!(screen_identify_take_captured_chains().is_empty());
+    assert!(!use_screen_identify().state().active());
+
+    screen_identify_capture_timers(false);
+    _reset_screen_identify_for_tests();
 }
 
 // ── The live runtime repaint path ───────────────────────────────────

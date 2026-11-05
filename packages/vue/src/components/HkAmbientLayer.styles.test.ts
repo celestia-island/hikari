@@ -35,6 +35,17 @@ describe("HkAmbientLayer pointer contract", () => {
     const blockStart = declarations.lastIndexOf('[data-pointer-events="auto"]', autoAt);
     expect(blockStart).toBeGreaterThan(-1);
     expect(declarations.slice(blockStart, autoAt)).toContain("> *");
+    // EVERY auto occurrence must live in that child-scoped block — an
+    // earlier round flagged a guard that only pinned the FIRST one, so a
+    // second stray auto elsewhere slipped through.
+    for (const match of declarations.matchAll(/pointer-events:\s*auto/g)) {
+      const at = match.index ?? -1;
+      const scopeStart = declarations.lastIndexOf('[data-pointer-events="auto"]', at);
+      expect(scopeStart).toBeGreaterThan(-1);
+      expect(declarations.slice(scopeStart, at)).toContain("> *");
+    }
+    // The wrapper's own block states the ghost rule exactly once.
+    expect(declarations.match(/pointer-events:\s*none/g)).toHaveLength(1);
   });
 
   it("sits on the HUD ordinal band, below its root's document elevation", () => {

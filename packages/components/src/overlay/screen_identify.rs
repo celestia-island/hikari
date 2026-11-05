@@ -381,17 +381,49 @@ pub fn screen_identify_label(
     screen_identify_label_with(number, name, override_label, &plain, &named)
 }
 
+thread_local! {
+    /// Test-only timer capture (see [`screen_identify_capture_timers`]).
+    static CAPTURED_CHAINS: std::cell::RefCell<Vec<Box<dyn FnOnce()>>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    /// Test-only capture switch (see [`screen_identify_capture_timers`]).
+    static CAPTURE_TIMERS: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Route scheduled chain steps to a thread-local queue instead of
+/// `platform::set_timeout`.
+///
+/// The non-wasm platform's `set_timeout` is a no-op and its clock is frozen,
+/// so the chain WIRING (schedule on show, reschedule while active, no
+/// schedule for held-open) is unobservable on the test lane — R7 recorded
+/// exactly that blind spot. With capture on, tests take the queued closures
+/// and run them by hand, making the wiring itself a guarded contract.
+#[doc(hidden)]
+pub fn screen_identify_capture_timers(capture: bool) {
+    CAPTURE_TIMERS.with(|flag| flag.set(capture));
+    if !capture {
+        CAPTURED_CHAINS.with(|queue| queue.borrow_mut().clear());
+    }
+}
+
+/// Take every chain closure queued while capture was on (test-only).
+#[doc(hidden)]
+pub fn screen_identify_take_captured_chains() -> Vec<Box<dyn FnOnce()>> {
+    CAPTURED_CHAINS.with(|queue| std::mem::take(&mut *queue.borrow_mut()))
+}
+
 fn screen_identify_tick_chain(generation: u32) {
-    crate::platform::set_timeout(
-        move || {
-            let still_active =
-                screen_identify_tick_step(generation, crate::platform::now_timestamp());
-            if still_active {
-                screen_identify_tick_chain(generation);
-            }
-        },
-        SCREEN_IDENTIFY_TICK_MS as i32,
-    );
+    let step = move || {
+        let still_active = screen_identify_tick_step(generation, crate::platform::now_timestamp());
+        if still_active {
+            screen_identify_tick_chain(generation);
+        }
+    };
+    let capture = CAPTURE_TIMERS.with(|flag| flag.get());
+    if capture {
+        CAPTURED_CHAINS.with(|queue| queue.borrow_mut().push(Box::new(step)));
+    } else {
+        crate::platform::set_timeout(step, SCREEN_IDENTIFY_TICK_MS as i32);
+    }
 }
 
 /// One tick step on the module singleton (the timer body). Advances the dwell,
@@ -461,6 +493,14 @@ pub struct ScreenIdentifyCardProps {
     /// Accessible label override. When absent the card composes one from the
     /// number and the optional name.
     pub label: Option<String>,
+
+    /// Mirror-only: identity for the shared `CountdownDigit` flip registry
+    /// (the same seam [`CountdownDigitProps::instance_key`] documents). The
+    /// host composes number + flash generation so a re-flash of the same
+    /// number starts from a resting slot; Vue gets the equivalent for free by
+    /// remounting its digit. Empty falls back to the number alone.
+    #[default]
+    pub countdown_key: String,
 }
 
 fn span_with_text(class: &str, text: &str) -> VNode {
@@ -491,12 +531,17 @@ pub fn ScreenIdentifyCard(props: ScreenIdentifyCardProps) -> Element {
     }
 
     if props.seconds_left > 0 {
+        let instance_key = if props.countdown_key.is_empty() {
+            format!("screen-identify-{}", props.number)
+        } else {
+            props.countdown_key.clone()
+        };
         let count = VElement::new("span")
             .class("hk-screen-identify-count")
             .attr("aria-hidden", "true")
             .child(CountdownDigit(CountdownDigitProps {
                 value: props.seconds_left as f64,
-                instance_key: format!("screen-identify-{}", props.number),
+                instance_key,
             }));
         root = root.child(VNode::Element(Box::new(count)));
     }
@@ -542,6 +587,9 @@ pub fn screen_identify_host_content(
         seconds_left: state.seconds_left(),
         placement,
         label,
+        // Per-flash flip identity: a re-flash of the same number must start
+        // from a resting countdown slot (Vue remounts its digit per mount).
+        countdown_key: format!("screen-identify-{}-{}", state.number(), state.generation()),
     });
 
     AmbientLayer(AmbientLayerProps {

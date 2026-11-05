@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "On-brand content",
     "hikari::theme.solar.title": "Sun clock location",
     "hikari::theme.solar.edit": "Edit",
+    "hikari::theme.solar.editAutoOnly": "Switch to Auto mode to change the daylight location",
     "hikari::theme.solar.apply": "Apply",
     "hikari::theme.solar.cancel": "Cancel",
     "hikari::theme.solar.strategyTimezone": "Time zone",

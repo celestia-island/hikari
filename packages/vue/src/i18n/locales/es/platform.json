@@ -41,6 +41,7 @@
     "hikari::theme.onSolidGroupTitle": "Contenido sobre el color de marca",
     "hikari::theme.solar.title": "Ubicación del reloj solar",
     "hikari::theme.solar.edit": "Editar",
+    "hikari::theme.solar.editAutoOnly": "Cambia al modo Automático para ajustar la ubicación de la luz diurna",
     "hikari::theme.solar.apply": "Aplicar",
     "hikari::theme.solar.cancel": "Cancelar",
     "hikari::theme.solar.strategyTimezone": "Zona horaria",

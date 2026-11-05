@@ -28,10 +28,16 @@
 // live on the shared .hk-scroll-pin rules (HkScrollPin.scss).
 .hk-step-flow[data-sticky-header] > .hk-timeline.hk-scroll-pin {
   --hk-scroll-pin-z: var(--hk-stepflow-sticky-z, 10);
-  --hk-scroll-pin-bg: var(
-    --hk-stepflow-sticky-bg,
-    color-mix(in srgb, var(--hi-color-surface, #ffffff) 95%, transparent)
-  );
+  // No color-mix() fallback here: a custom property holding one is a VALID
+  // token stream at parse time, so on an engine without color-mix the pin's
+  // `background: var(--hk-scroll-pin-bg, …)` base declaration is poisoned at
+  // computed-value time and the sticky header paints transparent (IACVT —
+  // the var() fallback of the BACKGROUND is not used, because the knob IS
+  // defined). Leaving the knob undefined (no fallback) lets the pin's own
+  // opaque base surface win on those engines, while the pin's @supports tint
+  // takes over on modern ones; a host-provided --hk-stepflow-sticky-bg still
+  // wins everywhere.
+  --hk-scroll-pin-bg: var(--hk-stepflow-sticky-bg);
   // The HOST's declared gutter owns the resting offset, not this rule. The
   // pin contract's offset rule is (0,3,0) and parks a top pin at
   // var(--hk-scroll-pad-top, 0px); this rule is (0,4,0), so a bare `0px`

@@ -20,7 +20,7 @@
  * contract instead of "just move the padding".
  */
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,6 +39,17 @@ const scrollContainerTsx = read("HkScrollContainer.tsx");
 /** Extract ONE balanced `{...}` declaration block following the given
  *  selector — a naive `[^}]*` would stop at the first nested `}` and let
  *  properties appended after a future nested block evade the pin. */
+/** Every stylesheet under packages/vue/src: any sheet may assign the pin
+ *  knob, so the IACVT guard must see the whole tree, not one component. */
+function sheetsUnder(dir: string, acc: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) sheetsUnder(path, acc);
+    else if (entry.name.endsWith(".scss")) acc.push(path);
+  }
+  return acc;
+}
+
 function cssBlock(src: string, selector: string): string {
   const at = src.indexOf(selector);
   expect(at, `${selector} block exists`).toBeGreaterThanOrEqual(0);
@@ -89,6 +100,39 @@ describe("scroll-pin whitespace contract", () => {
     const gate = cssBlock(pinScss, "@supports");
     expect(gate, "the tint rides the @supports block").toContain(".hk-scroll-pin");
     expect(gate).toMatch(/background:\s*var\(\s*--hk-scroll-pin-bg,\s*color-mix/);
+  });
+
+  it("never puts color-mix() inside a --hk-scroll-pin-bg knob fallback", () => {
+    // Same IACVT class as the pin base: a custom property holding a
+    // color-mix() token stream is VALID at parse time, so on WebKit <=16.1 /
+    // Edge WebView2 <111 the pin's `var(--hk-scroll-pin-bg, opaque)` is
+    // poisoned at computed-value time and the surface paints transparent.
+    // The step-flow sticky header was the second in-repo instance. Every
+    // assignment of the knob must be a plain var() with NO fallback (or a
+    // plain colour), never a var() whose fallback holds color-mix().
+    const srcDir = join(here, "..", "..");
+    const offenders: string[] = [];
+    let assignments = 0;
+    for (const sheet of sheetsUnder(srcDir)) {
+      const source = readFileSync(sheet, "utf-8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
+      for (const match of source.matchAll(/--hk-scroll-pin-bg\s*:([^;]*);/g)) {
+        assignments += 1;
+        const value = match[1]!.replace(/\s+/g, " ").trim();
+        if (value.includes("color-mix")) {
+          offenders.push(`${sheet.slice(srcDir.length + 1)} -> ${value}`);
+        }
+      }
+    }
+    expect(assignments, "the knob is assigned somewhere (step-flow)").toBeGreaterThan(0);
+    expect(offenders, "pin-knob assignments must not hold color-mix()").toEqual([]);
+    // Positive control: the scan must still SEE the step-flow assignment it
+    // guards, and that one is the literal plain-var form.
+    const stepflow = readFileSync(join(here, "HkStepFlow.scss"), "utf-8");
+    expect(stepflow).toMatch(
+      /--hk-scroll-pin-bg:\s*var\(\s*--hk-stepflow-sticky-bg\s*\)\s*;/,
+    );
   });
 
   it("every side x strategy pairing exists (12 total)", () => {

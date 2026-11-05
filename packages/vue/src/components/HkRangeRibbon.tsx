@@ -192,11 +192,21 @@ function windowedBox(placed: PlacedSegment, win: WindowRange): SegmentBox | null
 }
 
 /** Pointer travel (px) that turns a press into a brush; below it a click
- *  with sub-pixel jitter must not zoom to a hairline window. */
-const BRUSH_SLOP = 3;
+ *  with sub-pixel jitter must not zoom to a hairline window. Touch taps
+ *  drift much further than a mouse press (4–6px is normal), so touch gets
+ *  its own, wider threshold — otherwise a tap would brush a minWindow. */
+const BRUSH_SLOP_MOUSE = 3;
+const BRUSH_SLOP_TOUCH = 10;
 
 type Gesture =
-  | { kind: "brush"; pointerId: number; anchor: number; originX: number; dragging: boolean }
+  | {
+      kind: "brush";
+      pointerId: number;
+      anchor: number;
+      originX: number;
+      slop: number;
+      dragging: boolean;
+    }
   | { kind: "edge"; pointerId: number; edge: "start" | "end" };
 
 export default defineComponent({
@@ -377,6 +387,7 @@ export default defineComponent({
         pointerId: event.pointerId,
         anchor: fraction,
         originX: event.clientX,
+        slop: event.pointerType === "touch" ? BRUSH_SLOP_TOUCH : BRUSH_SLOP_MOUSE,
         dragging: false,
       };
       (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
@@ -396,7 +407,7 @@ export default defineComponent({
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       if (gesture.kind === "brush" && !gesture.dragging) {
         // A plain click with sub-pixel jitter is not a brush.
-        if (Math.abs(event.clientX - gesture.originX) < BRUSH_SLOP) return;
+        if (Math.abs(event.clientX - gesture.originX) < gesture.slop) return;
         gesture.dragging = true;
       }
       const fraction = fractionFrom(event.clientX);
@@ -576,8 +587,9 @@ export default defineComponent({
           )}
           onPointerdown={onStripPointerDown}
           onDblclick={(event: MouseEvent) => {
-            event.preventDefault();
-            resetWindow();
+            // Same rule as Escape/Home: only a double-click that actually
+            // resets consumes the event.
+            if (resetWindow()) event.preventDefault();
           }}
           onKeydown={onStripKeyDown}
         >

@@ -613,6 +613,27 @@ describe("HkRangeRibbon pointer plumbing", () => {
     expect(host.windowChange).toHaveBeenCalled();
     expect(host.root.hasAttribute("data-windowed")).toBe(true);
   });
+
+  it("gives touch pointers a wider brush slop", async () => {
+    const host = mountHost(null);
+    const { strip, x } = stubStrip(host.root);
+
+    // A touch tap drifts 4-6px in practice: 6px must still be a tap.
+    pointer("pointerdown", x(0.5), strip, { pointerType: "touch", pointerId: 4 });
+    pointer("pointermove", x(0.5) + 6, strip, { pointerType: "touch", pointerId: 4 });
+    pointer("pointerup", x(0.5) + 6, strip, { pointerType: "touch", pointerId: 4 });
+    await nextTick();
+    expect(host.windowChange, "a 6px touch tap must not zoom").not.toHaveBeenCalled();
+    expect(host.root.hasAttribute("data-windowed")).toBe(false);
+
+    // 12px clears the touch slop: this is a real brush.
+    pointer("pointerdown", x(0.5), strip, { pointerType: "touch", pointerId: 4 });
+    pointer("pointermove", x(0.5) + 12, strip, { pointerType: "touch", pointerId: 4 });
+    pointer("pointerup", x(0.5) + 12, strip, { pointerType: "touch", pointerId: 4 });
+    await nextTick();
+    expect(host.windowChange).toHaveBeenCalled();
+    expect(host.root.hasAttribute("data-windowed")).toBe(true);
+  });
 });
 
 // ── Handles ─────────────────────────────────────────────────────────────
@@ -721,6 +742,22 @@ describe("HkRangeRibbon reset", () => {
     await nextTick();
     expect(host.windowChange).toHaveBeenLastCalledWith(null);
     expect(laneSegments(host.root)).toHaveLength(4);
+  });
+
+  it("only consumes a double-click when it actually resets", async () => {
+    const idle = mountHost(null);
+    const idleEvent = new MouseEvent("dblclick", { bubbles: true, cancelable: true });
+    idle.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.dispatchEvent(idleEvent);
+    await nextTick();
+    expect(idle.windowChange).not.toHaveBeenCalled();
+    expect(idleEvent.defaultPrevented, "nothing to reset: the host keeps the event").toBe(false);
+
+    const host = mountHost([0.2, 0.6]);
+    const event = new MouseEvent("dblclick", { bubbles: true, cancelable: true });
+    host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.dispatchEvent(event);
+    await nextTick();
+    expect(host.windowChange).toHaveBeenLastCalledWith(null);
+    expect(event.defaultPrevented).toBe(true);
   });
 
   it("resets on Escape", async () => {

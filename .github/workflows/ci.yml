@@ -2,7 +2,8 @@
 name: Run Tests
 
 # The full Rust suite deliberately does not run here: it runs exactly once per
-# pull request in test.yml (`just test`, stable toolchain). This workflow keeps
+# pull request in test.yml (`cargo test --workspace --all-features`, stable
+# toolchain). This workflow keeps
 # the formatting, lint and reusable-workflow gates. The farm has 4-6 worker
 # slots and PR jobs queue 38-77 minutes; a second full-suite run of the same
 # tree only adds queue depth.

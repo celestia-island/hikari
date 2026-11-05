@@ -16,11 +16,9 @@ concurrency:
 
 jobs:
   coverage:
-    # Fork pull requests pay for their own CI: this job is heavy (it compiles,
-    # builds, tests or audits) and a fork's run would spend shared runner time on
-    # untrusted content. The required commit-lint and PR-title checks are the
-    # deliberate exception: they are sub-minute, execute no pull request code, and
-    # hold no secrets.
+    # Master-only by design (see `on:`): llvm-cov EXECUTES the workspace suite
+    # under instrumentation, so a per-PR run would be a second full-suite
+    # execution of the same tree.
     name: Test Coverage
     runs-on: [self-hosted, linux, x64, local]
     timeout-minutes: 30

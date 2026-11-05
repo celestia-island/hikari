@@ -31,7 +31,15 @@
 //      carries no `DataTransfer`, so an `on_files` report could never be built.
 // What that leaves (this is the same grammar as a plain HTML file input):
 //   * picking files still works — the native `input`'s `change` event is a typed
-//     channel, so click-to-browse uploads are unaffected;
+//     channel (tairitsu 0.5.25) and it carries the committed value since 0.5.26.
+//     That value is the input's `value` property, i.e. the browser's FAKE PATH
+//     (`C:\fakepath\a.png`), and for a `multiple` input only the FIRST picked
+//     file's name — the `FileList` behind it is not on this wire (the glue's
+//     `html-input-element` `files` members are honest no-ops). The handler
+//     therefore reduces the value to leaf names through
+//     `basic/file_field`'s `picked_files_from_change_value` and never reports a
+//     path a host cannot open; a multi pick reports one name until the upstream
+//     `get-files` channel ships;
 //   * `FileUploadStatus::Dragging` and the `.hk-file-upload-dragging` sheet rule
 //     are UNREACHABLE (the enum variant and the CSS stay: public/stylesheet
 //     surface, not behaviour);
@@ -45,6 +53,7 @@
 
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
+use crate::basic::file_field::picked_files_from_change_value;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -90,6 +99,25 @@ pub struct FileUploadProps {
     pub on_error: Option<EventHandler<String>>,
 }
 
+/// The leaf names of a file pick, recovered from the `change` value.
+///
+/// tairitsu 0.5.26 fills `ChangeEvent.value` from the target's `value`
+/// property through the `html-input-element` getter — not from its `FileList`,
+/// which the glue exposes as a no-op. What arrives is the browser's fake path
+/// (`C:\fakepath\a.png`, or a bare name on browsers that do not fake it), and
+/// for a `multiple` input only the first picked file's name. A host cannot open
+/// a fake path, so only leaf names cross this boundary.
+///
+/// The parse itself is [`picked_files_from_change_value`], shared with
+/// `basic/file_field`: the two file components must not grow two spellings of
+/// "turn a change value into file names".
+pub fn upload_leaf_names(value: &str, multiple: bool) -> Vec<String> {
+    picked_files_from_change_value(value, multiple)
+        .into_iter()
+        .map(|file| file.name)
+        .collect()
+}
+
 #[component]
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let upload_status = use_signal(|| FileUploadStatus::Idle);
@@ -120,37 +148,35 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let drag_classes = drag_builder.build();
 
     let on_files_for_change = props.on_files.clone();
+    let multiple = props.multiple;
 
     let upload_status_for_change = upload_status.clone();
     let files_for_change = files.clone();
     let on_change = move |e: ChangeEvent| {
         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
-            let file_value = e.value;
-            if file_value.is_empty() {
+            // `e.value` is the browser's fake path, never a name a host can
+            // open — `upload_leaf_names` reduces it. An empty value means the
+            // input has nothing selected (a cancelled picker, a reset), which
+            // is not a selection event: report nothing rather than an empty
+            // list a host would read as "the user cleared the field".
+            let selected_files = upload_leaf_names(&e.value, multiple);
+            if selected_files.is_empty() {
                 return;
             }
 
-            let selected_files: Vec<String> = file_value
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
+            files_for_change.set(selected_files.clone());
 
-            if !selected_files.is_empty() {
-                files_for_change.set(selected_files.clone());
-
-                if let Some(handler) = on_files_for_change.as_ref() {
-                    handler.call(selected_files);
-                }
-
-                upload_status_for_change.set(FileUploadStatus::Success);
+            if let Some(handler) = on_files_for_change.as_ref() {
+                handler.call(selected_files);
             }
+
+            upload_status_for_change.set(FileUploadStatus::Success);
         }
 
         #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         {
-            let _ = e;
+            let _ = (e, multiple);
         }
     };
 
@@ -283,5 +309,53 @@ impl StyledComponent for FileUploadComponent {
 
     fn name() -> &'static str {
         "file_upload"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // GUARD PIN: a file input's `change` value is the browser fake path, so the
+    // emission must be leaf names. Reporting `e.value` verbatim (as the mirror
+    // did while the handler was still dead on the wire) puts an unopenable
+    // `C:\fakepath\…` string into the host's file list — the shape this test
+    // reds on.
+    #[test]
+    fn upload_leaf_names_drops_the_browser_fake_path() {
+        assert_eq!(
+            upload_leaf_names("C:\\fakepath\\report.csv", false),
+            vec!["report.csv".to_string()]
+        );
+        assert_eq!(
+            upload_leaf_names("/home/lab/report.csv", false),
+            vec!["report.csv".to_string()]
+        );
+        // A browser that does not fake the path hands over the bare name.
+        assert_eq!(
+            upload_leaf_names("report.csv", false),
+            vec!["report.csv".to_string()]
+        );
+    }
+
+    #[test]
+    fn upload_leaf_names_honours_multiple() {
+        let joined = "C:\\fakepath\\a.png, C:\\fakepath\\b.png";
+        assert_eq!(
+            upload_leaf_names(joined, true),
+            vec!["a.png".to_string(), "b.png".to_string()]
+        );
+        // Vue's `multiple ? files : files[0]`.
+        assert_eq!(upload_leaf_names(joined, false), vec!["a.png".to_string()]);
+    }
+
+    #[test]
+    fn upload_leaf_names_reports_nothing_for_a_cleared_input() {
+        // The cleared / cancelled picker: no names, so the handler emits
+        // nothing instead of an empty selection.
+        assert!(upload_leaf_names("", true).is_empty());
+        assert!(upload_leaf_names("", false).is_empty());
+        // Path-only fragments have no leaf name.
+        assert!(upload_leaf_names("C:\\fakepath\\", false).is_empty());
     }
 }

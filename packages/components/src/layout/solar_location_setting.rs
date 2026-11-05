@@ -1013,10 +1013,6 @@ impl StyledComponent for SolarLocationSettingComponent {
     }
 }
 
-/// The solar Edit button's full opening tag (`<button … >`), extracted from
-/// a rendered card so assertions can scope to THIS control instead of the
-/// whole document (a localized string elsewhere may legally contain the
-/// same token).
 #[cfg(test)]
 mod tests {
     use super::*;

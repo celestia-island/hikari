@@ -71,12 +71,14 @@ export default defineComponent({
           ),
           /* The confirm pair lives in the modal's standard footer band —
            * it used to render inline under the message while HkMessageBox
-           * (the sibling confirmation surface) already hosted the same
-           * pair in this exact slot, so the confirm family was split
-           * across two placements for no reason (2026-11-05 window
-           * screening). Primary action first, dismiss second — the
-           * message-box order; it mirrors under `dir="rtl"` because the
-           * row only reverses visually. */
+           * (the sibling MODAL confirmation surface) already hosted the
+           * same pair in this exact slot. HkBlockingToast keeps its own
+           * inline pair by design — it is a toast card, not a modal — so
+           * the family now has exactly two placements: this footer band
+           * for every modal-hosted confirm, and the toast card's inline
+           * row. Primary action first, dismiss second — the message-box
+           * order; it mirrors under `dir="rtl"` because the row only
+           * reverses visually. */
           footer: () => (
             <div class="hk-confirm-dialog-actions">
               <HButton

@@ -471,6 +471,8 @@ fn a_mounted_host_repaints_on_show_countdown_and_dismiss() {
     ] {
         assert!(painted.contains(needle), "missing {needle}: {painted}");
     }
+    // The host adds no second landmark: the card carries the status role.
+    assert!(!painted.contains("role=\"region\""), "{painted}");
 
     // The timer body is drivable on an explicit clock: one second in the host
     // must repaint the countdown (3s -> 2s), and the deadline step must remove
@@ -490,6 +492,38 @@ fn a_mounted_host_repaints_on_show_countdown_and_dismiss() {
     ));
     runtime::flush_render();
     assert!(!html(id).contains("hk-screen-identify"), "{}", html(id));
+
+    dismiss_screen_identify();
+    runtime::flush_render();
+    assert!(!html(id).contains("hk-screen-identify"), "{}", html(id));
+
+    _reset_screen_identify_for_tests();
+}
+
+#[test]
+fn a_held_open_flash_is_removed_by_dismiss() {
+    use tairitsu_vdom::runtime;
+
+    _reset_screen_identify_for_tests();
+    let id = runtime::use_component(|| ScreenIdentifyHost(ScreenIdentifyHostProps::default()));
+    runtime::mark_dirty(id);
+    runtime::flush_render();
+    let html = |id| {
+        runtime::get_current_vnode(id)
+            .expect("host should have rendered")
+            .render_to_html()
+    };
+
+    // Held open: only dismiss can remove the card, so this is the strongest
+    // observation of the dismiss repaint path (the delayed path above ends
+    // the flash on the tick step before dismiss is reached).
+    show_screen_identify(
+        ScreenIdentifyRequest::new("9")
+            .with_name("Back")
+            .with_duration_ms(0),
+    );
+    runtime::flush_render();
+    assert!(html(id).contains("hk-screen-identify"), "{}", html(id));
 
     dismiss_screen_identify();
     runtime::flush_render();

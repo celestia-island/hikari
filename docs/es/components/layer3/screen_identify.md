@@ -59,7 +59,7 @@ popups.
 - Un segundo `show` reinicia el destello sin apilar tarjetas ni heredar la fecha límite anterior.
 - La tarjeta imprime segundos enteros (3 → 2 → 1) con el dígito rodante compartido; una permanencia > 9 s recortaría la decena, mantén la identificación en segundos de una cifra.
 - Un tick solo informa del resto; el tick que cruza la fecha límite termina el destello — nunca se pinta un fotograma con resto cero.
-- La tarjeta es un HUD: nunca intercepta el puntero (`pointer-events: none`) y la esquina izquierda/derecha se refleja en RTL (posición lógica).
+- La tarjeta es un HUD: nunca intercepta el puntero (`pointer-events: none`) y la esquina izquierda/derecha se refleja en RTL (posición lógica), mientras los bordes superior/inferior no cambian.
 - Monta `ScreenIdentifyHost` una vez por ventana; el resto llama a `show_screen_identify()` (singleton de módulo, como en Vue).
 
 ## Relación con la forma Vue

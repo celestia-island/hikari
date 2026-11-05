@@ -11,7 +11,7 @@
 //
 //   div.hk-ambient-layer
 //       data-pointer-events="none|auto"
-//       [role=region aria-label={label}]          (only with a non-empty label)
+//       [role=region] aria-label={label}          (role only with a non-empty label)
 //       (style: z-index:calc(var(--hk-z-hud, 90050) + {zIndex - 1}))
 //     {children}
 //
@@ -35,8 +35,8 @@
 //     local order inside the HUD root, default 1). The emitted value is
 //     `band + zIndex - 1`, so the default seat is the band floor and larger
 //     numbers stack nearer the user.
-//   * no `role`/`aria-label` when the label is empty (Vue passes `undefined`);
-//     rsx omits attributes whose value is `None`, so both trees stay exact.
+//   * an empty label still emits `aria-label=""` with no role — Vue binds
+//     `aria-label={props.label}` unconditionally, so both trees stay exact.
 //   * the pointer opt-in targets the wrapper's children only: the wrapper
 //     spans the viewport, so re-enabling pointer events on it would swallow
 //     every click behind an "interactive" HUD (the R2 S2 fix shipped in Vue).
@@ -78,8 +78,8 @@ pub fn ambient_layer_style(z_index: i32) -> String {
     format!("z-index:calc(var(--hk-z-hud, {AMBIENT_LAYER_DOCUMENT_Z}) + {local})")
 }
 
-/// The accessible landmark pair (Vue: `role={label ? "region" : undefined}`
-/// with the same label): an empty/absent label emits neither attribute.
+/// The accessible landmark role (Vue: `role={label ? "region" : undefined}`):
+/// an empty/absent label drops the role but keeps `aria-label` (empty).
 pub fn ambient_layer_landmark(label: Option<&str>) -> Option<&'static str> {
     match label {
         Some(value) if !value.is_empty() => Some("region"),
@@ -98,7 +98,8 @@ pub struct AmbientLayerProps {
     pub z_index: i32,
 
     /// Accessible name for the layer as a landmark (Vue: `ariaLabel`); an
-    /// empty value drops both `role` and `aria-label`.
+    /// empty value drops `role` but still emits `aria-label=""` (Vue binds the
+    /// attribute unconditionally).
     pub label: Option<String>,
 
     /// The annotation widgets (Vue: the default slot).

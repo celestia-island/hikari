@@ -59,7 +59,7 @@ popups.
 - Un second `show` redémarre le flash sans empiler les cartes ni hériter de l'ancienne échéance.
 - La carte imprime des secondes entières (3 → 2 → 1) via le chiffre roulant partagé ; un maintien > 9 s rognerait la dizaine — gardez l'identification en secondes simples.
 - Un tick ne fait que rapporter le reste ; le tick qui franchit l'échéance termine le flash — aucune image à reste nul n'est peinte.
-- La carte est un HUD : elle n'intercepte jamais le pointeur (`pointer-events: none`) et le coin gauche/droite s'inverse en RTL (placement logique).
+- La carte est un HUD : elle n'intercepte jamais le pointeur (`pointer-events: none`) et le coin gauche/droite s'inverse en RTL (placement logique), tandis que les bords haut/bas ne bougent pas.
 - Montez `ScreenIdentifyHost` une fois par fenêtre ; le reste appelle `show_screen_identify()` (singleton de module, comme Vue).
 
 ## Rapport avec la forme Vue

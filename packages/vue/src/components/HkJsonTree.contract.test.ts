@@ -165,17 +165,28 @@ describe("HkJsonTree selection + motion contract", () => {
     expect(rotateAt).toBeGreaterThanOrEqual(0);
     const rotateRule = scss.slice(rotateAt, scss.indexOf("}", rotateAt));
     expect(rotateRule).toContain("rotate(90deg)");
-    expect(rotateRule).not.toContain(".s-jt-group[data-open] .s-jt-chevron");
     const chevron = scss.slice(scss.indexOf(".s-jt-chevron {"), scss.indexOf(".s-jt-group[data-open]"));
     expect(chevron).toContain("var(--jt-fold-duration");
     expect(chevron).toContain("var(--jt-fold-ease");
   });
 
   it("switches the chevron rotation off under reduced motion", () => {
-    expect(scss).toContain("@media (prefers-reduced-motion: reduce)");
-    const reduced = scss.slice(scss.indexOf("@media (prefers-reduced-motion: reduce)"));
-    expect(reduced).toContain(".s-jt-chevron");
-    expect(reduced).toContain("transition: none");
+    // The whole rule must live INSIDE the media block: slicing to EOF would
+    // also pass if a later bare `.s-jt-chevron { transition: none }` was
+    // added outside it (R2 2026-11-05), which would disable the rotation
+    // for everyone instead of just reduced-motion users.
+    expect(scss).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{\s*\.s-jt-chevron \{\s*transition: none;\s*\}\s*\}/,
+    );
+  });
+
+  it("keeps the JS fallback duration equal to the sheet fallback", () => {
+    const tsx = readFileSync(join(here, "HkJsonTree.tsx"), "utf-8");
+    const jsFallback = /const JT_FOLD_FALLBACK_MS = (\d+);/.exec(tsx)?.[1];
+    expect(jsFallback).toBe("150");
+    expect(scss).toContain(
+      "--jt-fold-duration: var(--hi-duration-fast, var(--duration-fast, 0.15s));",
+    );
   });
 
   it("pins the selectable prop default to off", () => {

@@ -104,10 +104,12 @@ describe("HkJsonTree component", () => {
   });
 
   it("marks both collapsed summary shapes with the one-line clip hook", async () => {
+    vi.useFakeTimers();
     // Container summary: the preview span is the stylesheet's clip target.
     const folded = mountTree({ text: JSON.stringify({ a: 1, b: 2 }) });
     (folded.querySelector('.s-jt-row[data-parent]')! as HTMLElement).click();
     await nextTick();
+    await settleFold();
     expect(folded.querySelector(".s-jt-preview")).not.toBeNull();
     // Long string summary: the collapsed value span carries the hook and
     // keeps its string coloring (the clip must not mute it).
@@ -116,6 +118,7 @@ describe("HkJsonTree component", () => {
     const longRow = el.querySelectorAll(".s-jt-row[data-parent]")[1]!;
     (longRow as HTMLElement).click();
     await nextTick();
+    await settleFold();
     const clamp = el.querySelector(".s-jt-clamp");
     expect(clamp).not.toBeNull();
     expect(clamp!.classList.contains("s-jv-str")).toBe(true);

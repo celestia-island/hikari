@@ -14,7 +14,7 @@
 //                      span.s-jt-key  span.s-jt-colon
 //                      span.s-jv-{null|bool|num|str}   span.s-jt-type
 //     collapsed:     div.s-jt-row[data-parent]  (style: padding-left)
-//                      span.s-jt-toggle[data-parent] > icon.s-jt-chevron
+//                      span.s-jt-toggle[data-parent] > div.hk-icon.s-jt-chevron
 //                      span.s-jt-key  span.s-jt-colon
 //                      span.s-jt-indent  span.s-jt-preview
 //     expanded:      div.s-jt-group[data-open]

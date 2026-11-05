@@ -3,6 +3,7 @@ import { createApp, h, nextTick } from "vue";
 
 import {
   HkJsonTree,
+  cancelFold,
   parseCssTimeMs,
   prefersNoFoldMotion,
   resolveFoldMotion,
@@ -41,12 +42,30 @@ afterEach(() => {
     container.remove();
   }
   delete document.documentElement.dataset.cssAnimations;
+  vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
 function busTransitions(): number {
   const state = readHkRuntime("animationBus") as { transitions?: number } | undefined;
   return state?.transitions ?? 0;
+}
+
+/** Replace `window.getSelection` with a stub whose `containsNode` answers
+ *  `intersects` — the ONLY behaviour the selection gate reads (happy-dom's
+ *  own partial-containment answer is inverted, so a naive real-selection
+ *  test would encode the wrong semantics). Returns a restorer. */
+function installSelection(intersects: (node: Node) => boolean) {
+  const original = window.getSelection;
+  const fake = {
+    isCollapsed: false,
+    rangeCount: 1,
+    anchorNode: document.body,
+    toString: () => "picked",
+    containsNode: (node: Node) => intersects(node),
+  };
+  Object.defineProperty(window, "getSelection", { configurable: true, value: () => fake });
+  return () => Object.defineProperty(window, "getSelection", { configurable: true, value: original });
 }
 
 function stubLayout(el: HTMLElement, box: { height: number }) {
@@ -162,6 +181,24 @@ describe("runFold choreography", () => {
     expect(done).toBe(1);
   });
 
+  it("abandons an in-flight run on cancel without calling Vue's done", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "" }));
+    const { el, heights } = fakeFoldElement(42, 0);
+    let done = 0;
+    let ended = 0;
+    runFold(el, true, () => { done += 1; }, { onEnd: () => { ended += 1; } });
+    expect(heights).toEqual(["0px", "42px"]);
+    cancelFold(el);
+    expect(ended).toBe(1);
+    expect(heights.at(-1)).toBe("");
+    // The cancelled run's timer was cleared: it must never resolve Vue's
+    // transition (Vue already resolved the cancellation) nor settle twice.
+    vi.advanceTimersByTime(400);
+    expect(done).toBe(0);
+    expect(ended).toBe(1);
+  });
+
   it("skips the measurement and finishes immediately when motion is parked", () => {
     document.documentElement.dataset.cssAnimations = "0";
     const { el, heights, transitions } = fakeFoldElement(42, 42);
@@ -235,6 +272,61 @@ describe("HkJsonTree fold animation", () => {
     await nextTick();
     expect(el.querySelector(".s-jt-children")).toBeNull();
     expect(busTransitions()).toBe(0);
+  });
+
+  it("reflects the expanded state on the group for the chevron rotation", async () => {
+    vi.useFakeTimers();
+    const el = mountTree({ text: '{"cfg":{"retries":2}}' });
+    const group = el.querySelector(".s-jt-group") as HTMLElement;
+    expect(group.hasAttribute("data-open")).toBe(true);
+    (el.querySelector(".s-jt-row[data-parent]") as HTMLElement).click();
+    await nextTick();
+    // Same wrapper, hook removed: deleting the attribute binding stops the
+    // chevron rotating while every other suite would stay green (R2).
+    expect(group.hasAttribute("data-open")).toBe(false);
+  });
+
+  it("finishes an enter on transitionend and releases the run", async () => {
+    vi.useFakeTimers();
+    const restore = stubScrollHeight(HTMLElement.prototype, 42);
+    try {
+      const el = mountTree({ text: '{"cfg":{"retries":2}}' });
+      const rootRow = el.querySelector(".s-jt-row[data-parent]") as HTMLElement;
+      rootRow.click();
+      await nextTick();
+      await vi.advanceTimersByTimeAsync(400);
+      await nextTick();
+      rootRow.click();
+      await nextTick();
+      const children = el.querySelector(".s-jt-children") as HTMLElement;
+      expect(children.style.height).toBe("42px");
+      expect(busTransitions()).toBe(1);
+
+      const event = new Event("transitionend");
+      Object.defineProperty(event, "propertyName", { value: "height" });
+      children.dispatchEvent(event);
+      await nextTick();
+      expect(children.style.height).toBe("");
+      expect(children.style.transition).toBe("");
+      expect(busTransitions()).toBe(0);
+
+      // The run is gone: a duplicate event (or the fallback timer) must not
+      // call Vue's done a second time or re-settle the report. Listener
+      // errors are swallowed by happy-dom's dispatcher, so watch the window
+      // error channel instead of relying on the DOM outcome.
+      const uncaught: unknown[] = [];
+      const onError = (event: Event) => uncaught.push(event);
+      window.addEventListener("error", onError);
+      children.dispatchEvent(event);
+      await vi.advanceTimersByTimeAsync(400);
+      await nextTick();
+      window.removeEventListener("error", onError);
+      expect(uncaught).toEqual([]);
+      expect(el.querySelector(".s-jt-children")).toBe(children);
+      expect(busTransitions()).toBe(0);
+    } finally {
+      restore();
+    }
   });
 
   it("opens from 0 to the measured natural height and clears the inline height", async () => {
@@ -320,5 +412,54 @@ describe("HkJsonTree selection opt-in", () => {
     expect(plain.firstElementChild!.classList.contains("s-jt-selectable")).toBe(false);
     const selectable = mountTree({ text: '{"a":1}', selectable: true });
     expect(selectable.firstElementChild!.classList.contains("s-jt-selectable")).toBe(true);
+  });
+});
+
+describe("HkJsonTree selection gate", () => {
+  const openGroups = (el: HTMLElement) => el.querySelectorAll(".s-jt-group[data-open]").length;
+
+  it("keeps a selection touching the opt-in tree from toggling a row", async () => {
+    vi.useFakeTimers();
+    const el = mountTree({ text: '{"cfg":{"retries":2}}', selectable: true });
+    const before = openGroups(el);
+    const restore = installSelection(() => true);
+    try {
+      (el.querySelector(".s-jt-row[data-parent]") as HTMLElement).click();
+      await nextTick();
+      expect(openGroups(el)).toBe(before);
+      // The click ended a drag, not a toggle: the children never started
+      // leaving.
+      expect(el.querySelector(".s-jt-children")).not.toBeNull();
+    } finally {
+      restore();
+    }
+  });
+
+  it("still toggles when the live selection is outside the tree", async () => {
+    vi.useFakeTimers();
+    const el = mountTree({ text: '{"cfg":{"retries":2}}', selectable: true });
+    const before = openGroups(el);
+    const restore = installSelection(() => false);
+    try {
+      (el.querySelector(".s-jt-row[data-parent]") as HTMLElement).click();
+      await nextTick();
+      expect(openGroups(el)).toBe(before - 1);
+    } finally {
+      restore();
+    }
+  });
+
+  it("does not consult the selection at all when the host did not opt in", async () => {
+    vi.useFakeTimers();
+    const el = mountTree({ text: '{"cfg":{"retries":2}}' });
+    const before = openGroups(el);
+    const restore = installSelection(() => true);
+    try {
+      (el.querySelector(".s-jt-row[data-parent]") as HTMLElement).click();
+      await nextTick();
+      expect(openGroups(el)).toBe(before - 1);
+    } finally {
+      restore();
+    }
   });
 });

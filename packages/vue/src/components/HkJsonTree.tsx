@@ -404,7 +404,7 @@ export const HkJsonTree = defineComponent({
     let foldReportDepth = 0;
     const foldCallbacks: FoldCallbacks = {
       onStart: (durationMs: number) => {
-        foldReportWindow = Math.max(JT_FOLD_REPORT_MS, durationMs + 40);
+        foldReportWindow = Math.max(JT_FOLD_REPORT_MS, durationMs + 80);
         foldReportDepth += 1;
         foldReport.run();
       },

@@ -1,6 +1,7 @@
 import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import type { Renderer, Tokens } from "marked";
 import HSpinner from "./HkSpinner";
+import { applyInlineChipsToBody } from "./inlineChips";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { asIndexable } from "../utils/typing";
 import "./HkMarkdownRenderer.scss";
@@ -118,6 +119,17 @@ export default defineComponent({
     content: { type: String, required: true },
     loading: { type: Boolean, default: false },
     plain: { type: Boolean, default: false },
+    /**
+     * Opt-in inline chip pass: fill-template tokens (`{{ name }}`) and
+     * asset references (`@level/name`, bare `@name`) inside the
+     * rendered prose chip up as `.hk-tpl-chip` spans (refs carry
+     * `data-ref`, the muted variant). Applied AFTER sanitize, as pure
+     * DOM surgery with `textContent` only — the pass cannot introduce
+     * markup, and `code`/`pre`/`a` subtrees are skipped so literal
+     * code and link text stay verbatim. Off by default: every existing
+     * consumer renders exactly as before.
+     */
+    inlineChips: { type: Boolean, default: false },
   },
   setup(props) {
     const renderedHtml = ref("");
@@ -142,7 +154,7 @@ export default defineComponent({
     }
 
     watch(
-      () => [props.content, props.plain],
+      () => [props.content, props.plain, props.inlineChips],
       () => { void parse(); },
       { immediate: true },
     );
@@ -169,7 +181,12 @@ export default defineComponent({
     }
 
     watch(renderedHtml, () => {
-      void nextTick(syncOverlayScrollbars);
+      void nextTick(() => {
+        // The chip pass runs BEFORE the overlay scan: it splits text
+        // nodes, so the scan must reconcile against the final DOM.
+        if (props.inlineChips) applyInlineChipsToBody(bodyRef.value);
+        syncOverlayScrollbars();
+      });
     });
 
     onBeforeUnmount(() => {

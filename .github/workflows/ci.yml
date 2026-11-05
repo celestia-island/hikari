@@ -1,6 +1,12 @@
 ---
 name: Run Tests
 
+# The full Rust suite deliberately does not run here: it runs exactly once per
+# pull request in test.yml (`just test`, stable toolchain). This workflow keeps
+# the formatting, lint and reusable-workflow gates. The farm has 4-6 worker
+# slots and PR jobs queue 38-77 minutes; a second full-suite run of the same
+# tree only adds queue depth.
+
 on:
   push:
     branches: [ master ]
@@ -86,53 +92,5 @@ jobs:
 
       - name: Lint wasm32-wasip2 target
         run: cargo clippy --workspace --all-features --target wasm32-wasip2
-        env:
-          RUSTFLAGS: '--cfg releasing'
-
-  test:
-    # Fork pull requests pay for their own CI: this job is heavy (it compiles,
-    # builds, tests or audits) and a fork's run would spend shared runner time on
-    # untrusted content. The required commit-lint and PR-title checks are the
-    # deliberate exception: they are sub-minute, execute no pull request code, and
-    # hold no secrets.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    name: Run tests
-    runs-on: [self-hosted, linux, x64, local]
-    timeout-minutes: 300
-    steps:
-      - name: Checkout Project
-        uses: actions/checkout@v7
-
-      - name: Install apt dependencies
-        run: sudo apt-get install -y libasound2-dev libudev-dev
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-          targets: wasm32-wasip2, wasm32-unknown-unknown
-
-      - name: Check the vendored Vue sheet mirrors
-        # The Rust crate compiles the same sheets the Vue library ships; a
-        # mirror that drifted from packages/vue/src is a styling divergence
-        # with no compile error of its own.
-        run: python3 scripts/sync-vue-mirror.py --check
-
-      - name: Run cargo test
-        run: cargo test --all-features --all
-        env:
-          RUSTFLAGS: '--cfg releasing'
-
-      - name: Check wasm32-wasip2 target
-        run: cargo check --workspace --all-features --target wasm32-wasip2
-        env:
-          RUSTFLAGS: '--cfg releasing'
-
-      - name: Check wasm32-unknown-unknown target
-        # The web platform path only type-checks when someone asks for this
-        # target (no gate compiles it otherwise). Scoped to the components
-        # crate: the rest of the workspace still needs a getrandom backend
-        # decision (`wasm_js` cfg) to build for the web target.
-        run: cargo check -p hikari-components --all-features --target wasm32-unknown-unknown
         env:
           RUSTFLAGS: '--cfg releasing'

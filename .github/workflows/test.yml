@@ -28,12 +28,18 @@ jobs:
     name: Test
     runs-on: [self-hosted, linux, x64, local]
     timeout-minutes: 300
+    # Exactly one full-suite run per pull request, on stable. The nightly leg
+    # re-ran the identical tree for no extra signal: nightly correctness is
+    # covered by the static lanes (clippy.yml runs stable+nightly, fmt.yml runs
+    # nightly). The farm has 4-6 worker slots and PR jobs queue 38-77 minutes,
+    # so a duplicate suite run buys queue depth, not confidence.
+    # The matrix is kept with a single leg on purpose: the job name stays
+    # `Test (stable)` and the `matrix.toolchain` reference below stays valid.
     strategy:
       fail-fast: false
       matrix:
         toolchain:
           - stable
-          - nightly
 
     steps:
       - uses: actions/checkout@v7

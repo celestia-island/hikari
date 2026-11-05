@@ -92,7 +92,9 @@ struct Binding {
     /// The handler expression as written on the binding line — the second half
     /// of the key, so a new binding in a registered file cannot borrow a row.
     handler: &'static str,
-    /// Readable row name; also the only thing distinguishing identical keys.
+    /// Readable row name used in failure messages. Rows that share a key are
+    /// distinguished by OCCURRENCE ORDER (so both table checkboxes are audited),
+    /// not by this text.
     label: &'static str,
     control: Control,
     value_use: ValueUse,

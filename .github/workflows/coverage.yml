@@ -7,7 +7,7 @@ on:
   # NO `pull_request:` — llvm-cov EXECUTES the whole workspace suite under
   # instrumentation (nightly), which was a second full-suite run per PR on top
   # of `Tests`. Coverage is a master-quality signal, not a PR gate: the same
-  # assertions already run once per PR on stable in `ci-dedupe` (Tests), and the
+  # assertions already run once per PR on stable in the `Tests` workflow, and the
   # farm's 4–6 worker slots queue 38–77 minutes for the work that does run.
 
 concurrency:
@@ -21,7 +21,6 @@ jobs:
     # untrusted content. The required commit-lint and PR-title checks are the
     # deliberate exception: they are sub-minute, execute no pull request code, and
     # hold no secrets.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: Test Coverage
     runs-on: [self-hosted, linux, x64, local]
     timeout-minutes: 30

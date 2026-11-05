@@ -103,6 +103,6 @@ jobs:
         # Compiled from the deleted `test` job. It is a `cargo check`, not clippy:
         # the web glue has its own cfg surface and clippy on this target has
         # never been part of the gate, so keep exactly the coverage that existed.
-        run: cargo check -p hikari-components --target wasm32-unknown-unknown
+        run: cargo check -p hikari-components --all-features --target wasm32-unknown-unknown
         env:
           RUSTFLAGS: '--cfg releasing'

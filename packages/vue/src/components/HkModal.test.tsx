@@ -476,3 +476,73 @@ describe("HkModal dial slot (stack priority)", () => {
     expect(dialLayer()).toBeNull();
   });
 });
+
+describe("HkModal chrome / content split", () => {
+  it("keeps the title bar and the footer action row outside the scaled content region", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: true,
+            title: "Window",
+            footerActions: [{ label: "OK", variant: "primary" }],
+          }, {
+            default: () => h("p", { class: "body-probe" }, "content"),
+            // The sub-header only exists when the consumer passes this
+            // slot — mount it, or its sibling pin below is vacuous.
+            header: () => h("p", { class: "subheader-probe" }, "sub"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    await vi.waitFor(() => {
+      const content = document.body.querySelector(".hk-modal-content");
+      expect(content).not.toBeNull();
+      const body = content!.querySelector(".hk-modal-body");
+      expect(body).not.toBeNull();
+      const header = content!.querySelector(".hk-modal-header");
+      const footer = content!.querySelector(".hk-modal-footer");
+      expect(header).not.toBeNull();
+      expect(footer).not.toBeNull();
+      // The open/close scale lives on .hk-modal-body (user direction
+      // 2026-11-05: content only). Header and footer must stay SIBLINGS
+      // of the body — one level deeper and the chrome would ride the
+      // scale again.
+      expect(body!.contains(header)).toBe(false);
+      expect(body!.contains(footer)).toBe(false);
+      expect(header!.parentElement).toBe(content);
+      expect(footer!.parentElement).toBe(content);
+      // The content itself IS inside the scaled region.
+      expect(body!.querySelector(".body-probe")).not.toBeNull();
+      // The sub-header is chrome too (it sits above the scroller with its
+      // own divider): it must stay a sibling of the body, never ride the
+      // content scale.
+      const subheader = content!.querySelector(".hk-modal-subheader");
+      expect(subheader, "the sub-header slot must render for this pin").not.toBeNull();
+      expect(subheader!.querySelector(".subheader-probe")).not.toBeNull();
+      expect(body!.contains(subheader)).toBe(false);
+      expect(subheader!.parentElement).toBe(content);
+      // No inline transform on any ride surface: the animation is CSS
+      // class-driven, and an inline `style` transform on the frame, the
+      // body or the chrome would win over the stylesheet unseen.
+      // Exactly one footer band: an empty decoy sibling before the real
+      // action row would make a first-match query read the wrong element.
+      expect(content!.querySelectorAll(".hk-modal-footer").length).toBe(1);
+      const title = content!.querySelector<HTMLElement>(".hk-modal-title");
+      expect(title).not.toBeNull();
+      for (const el of [content!, body!, header!, footer!, title!] as HTMLElement[]) {
+        const inline = [el.style.transform, el.style.scale, el.style.zoom, el.style.translate]
+          .map((value) => value ?? "")
+          .join("");
+        expect(inline, `inline transform on ${el.className}`).toBe("");
+      }
+    });
+  });
+});

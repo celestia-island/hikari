@@ -162,7 +162,7 @@ describe("HkScrollProgress", () => {
     expect(saw).toBeNull();
   });
 
-  it("resolves inner-OFF inside outer-ON to the OUTER registrar", async () => {
+  it("resolves inner-OFF inside outer-ON to the OUTER registrar identity", async () => {
     const seen: unknown[] = [];
     const Probe = defineComponent({
       setup() {
@@ -174,17 +174,28 @@ describe("HkScrollProgress", () => {
         return () => h("div", "probe");
       },
     });
-    // An OFF inner container does NOT provide — the probe falls through
-    // to the outer ON container's registrar (nearest provide scope).
-    const scroller = mountScroller(
-      () => h(HkScrollContainer, { scrollProgress: false }, { default: () => h(Probe) }),
+    // Three probes: (a) directly under the outer ON container, (b) inside
+    // an inner OFF container, (c) inside an inner ON container. Registrar
+    // IDENTITY pins the scoping matrix: (a)==(b) — the OFF inner provides
+    // nothing, so (b) falls through to the OUTER registrar — while (c)
+    // receives the INNER container's own registrar (shadowing). Deleting
+    // the `if (props.scrollProgress)` provide guard turns (b) into a
+    // third distinct registrar and this test red.
+    const scroller = mountScroller(() =>
+      h("div", [
+        h(Probe),
+        h(HkScrollContainer, { scrollProgress: false }, { default: () => h(Probe) }),
+        h(HkScrollContainer, { scrollProgress: true }, { default: () => h(Probe) }),
+      ]),
     );
     scroller.refresh();
     await nextTick();
-    expect(seen.length).toBe(1);
-    // The registration landed on the OUTER container (one pill in the tree,
-    // owned by the outer host — the inner one renders no pill at all).
-    expect(scroller.container.querySelectorAll(".hk-scroll-progress-pill").length).toBe(1);
+    expect(seen.length).toBe(3);
+    expect(seen[0]).not.toBeNull();
+    expect(seen[1]).toBe(seen[0]);
+    expect(seen[2]).not.toBe(seen[0]);
+    // Two pills exist (outer ON + inner ON; the OFF inner renders none).
+    expect(scroller.container.querySelectorAll(".hk-scroll-progress-pill").length).toBe(2);
   });
 
   it("shows the active count over the registered total on scroll", async () => {

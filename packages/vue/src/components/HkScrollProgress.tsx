@@ -43,8 +43,10 @@ export const HK_SCROLL_PROGRESS_REGISTRAR: InjectionKey<HkScrollProgressRegistra
  *    rows): `display: none`, never just transparent;
  *  - "active"  — the scroll offset is changing: opaque;
  *  - "idle"    — scrolling stopped: opacity 0 over the ~200ms fade.
- *  `aria-hidden` throughout — the info reaches assistive tech through the
- *  tail's role=status channel; this is visual chrome only. */
+ *  A11y honesty: `aria-hidden` throughout — the pill is DECORATIVE chrome
+ *  and nothing announces the row position (HkInfiniteTail's role=status
+ *  announces load / end-of-list events only, never a scroll position);
+ *  this component adds no announce channel of its own. */
 const HkScrollProgress = defineComponent({
   name: "HkScrollProgress",
   props: {

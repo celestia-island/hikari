@@ -39,10 +39,11 @@
   flex: 1 1 auto;
   color: rgb(var(--color-text-secondary, var(--color-muted)));
   font-size: var(--text-sm);
-  /* Drop the inherited 1.5 leading: the text box then equals the glyph
-   * box, so its center is the row's center instead of the line box's
-   * (the descender gap read as a 1–2px sag on CJK glyphs). */
-  line-height: 1;
+  /* Tighten the inherited 1.5 leading WITHOUT clipping descenders: the
+   * text clips at the ellipsis (`overflow: hidden` below), so a line box
+   * of exactly 1em cut the y/g tails in Latin locales. 1.2 keeps the box
+   * close to the 16px glyph box while every descender stays inside it. */
+  line-height: 1.2;
 }
 
 .hk-solar-summary-icon {

@@ -27,10 +27,18 @@
 //!      when it can be deleted.
 //!   2. **Completeness.** The registry is only as good as the parser that fills
 //!      it, so a lexical pass counts every `onchange` in an attribute position —
-//!      in code AND in the `"onchange":` string spelling — after stripping
-//!      comments and string literals. Any spelling the parser does not
-//!      understand makes the two counts disagree, which is a failure: a shape
-//!      the audit cannot see must not be silently invisible.
+//!      in code, in the `"onchange":` string spelling and in the raw
+//!      `r#"onchange"#:` spelling — after stripping comments (including nested
+//!      blocks) and string literals. Any spelling the parser does not
+//!      understand makes the two counts disagree, which is a failure.
+//!
+//!      **What this half does NOT promise:** it covers the spellings enumerated
+//!      below and nothing else. A binding written in a shape nobody has thought
+//!      of yet can still be invisible to it — text scanning closes the gaps we
+//!      know about, not the class. The durable fix is a token-tree walk
+//!      (`syn::parse_file` over the macro body, where attributes are tokens
+//!      rather than text and are immune to formatting, shorthand and raw
+//!      strings); it is tracked as a follow-up, not part of this change.
 //!
 //! The registry is the inventory: at the time of writing there are **16**
 //! `onchange:` attribute bindings. The "17" that #1042's follow-up counted was a
@@ -160,11 +168,12 @@ const BINDINGS: &[Binding] = &[
         label: "hidden native file input",
         control: Control::File,
         value_use: ValueUse::LeafNames("picked_files_from_change_value"),
-        retire_when: "Delete the leaf-name indirection once `tairitsu-vdom` hands \
-                      a handler the file list. The glue already has it (`getFiles` \
-                      returns the live FileList handle; WIT \
-                      `html-input-element.get-files`), so the missing link is the \
-                      Rust event, not upstream work in the glue.",
+        retire_when: "Delete the leaf-name indirection once a handler can resolve \
+                      the file list, which needs BOTH halves wired: a \
+                      `tairitsu-vdom` accessor on `ChangeEvent`, and the glue's \
+                      `__fileListHandles` / `_fileListhandles` tables unified — \
+                      today a handle from `getFiles` is unknown to `file-list`'s \
+                      `item` / `get-length` and they throw.",
     },
     Binding {
         file: "basic/file_upload.rs",
@@ -173,11 +182,11 @@ const BINDINGS: &[Binding] = &[
         label: "transparent native file input",
         control: Control::File,
         value_use: ValueUse::LeafNames("upload_leaf_names"),
-        retire_when: "Delete the leaf-name indirection once `tairitsu-vdom` hands \
-                      a handler the file list: the wire's value is one fake path, \
-                      so a multi pick reports one name today. The glue already \
-                      returns the live FileList handle; the missing link is the \
-                      Rust event exposing it.",
+        retire_when: "Delete the leaf-name indirection once a handler can resolve \
+                      the file list: the wire's value is one fake path, so a multi \
+                      pick reports one name today. Needs both a `tairitsu-vdom` \
+                      accessor and the glue's two FileList handle tables unified; \
+                      neither is in this crate.",
     },
     Binding {
         file: "basic/radio_group.rs",
@@ -359,14 +368,29 @@ fn strip_prose(source: &str) -> (Vec<String>, Vec<String>) {
             blank(&mut comment, start, index);
             continue;
         }
-        // `/* … */`, possibly across lines.
+        // `/* … */`, possibly across lines AND possibly nested: Rust allows
+        // `/* a /* b */ c */`, and closing on the first `*/` would put the rest
+        // of the comment back into the code view — where it can hide a real
+        // binding or satisfy a real gate.
         if ch == '/' && chars.get(index + 1) == Some(&'*') {
             let start = index;
-            index += 2;
-            while index < count && !(chars[index] == '*' && chars.get(index + 1) == Some(&'/')) {
+            let mut depth = 0usize;
+            while index < count {
+                if chars[index] == '/' && chars.get(index + 1) == Some(&'*') {
+                    depth += 1;
+                    index += 2;
+                    continue;
+                }
+                if chars[index] == '*' && chars.get(index + 1) == Some(&'/') {
+                    depth -= 1;
+                    index += 2;
+                    if depth == 0 {
+                        break;
+                    }
+                    continue;
+                }
                 index += 1;
             }
-            index = (index + 2).min(count);
             blank(&mut comment, start, index);
             continue;
         }
@@ -460,8 +484,11 @@ fn strip_prose(source: &str) -> (Vec<String>, Vec<String>) {
 }
 
 /// 1-based lines where `needle` sits in an **attribute position**: not part of a
-/// longer identifier, not a field access (`props.onchange`), and followed by `:`
-/// (the ordinary spelling) or `,` (the shorthand `onchange,` = `onchange: onchange`).
+/// longer identifier, not a field access (`props.onchange`), and followed by one
+/// of the terminators an rsx attribute can have — `:` (the ordinary spelling),
+/// `,` (the shorthand `onchange,`), `}` (the LAST attribute of an element, where
+/// the comma is optional: `input { "type": "file", onchange }`), or the end of
+/// the line (the same last-attribute form written across lines).
 fn attribute_occurrences(code: &str, needle: &str) -> Vec<usize> {
     let mut lines = Vec::new();
     for (at, _) in code.match_indices(needle) {
@@ -470,20 +497,27 @@ fn attribute_occurrences(code: &str, needle: &str) -> Vec<usize> {
             continue;
         }
         let rest = code[at + needle.len()..].trim_start();
-        if matches!(rest.chars().next(), Some(':') | Some(',')) {
+        let terminator = matches!(
+            rest.chars().next(),
+            Some(':') | Some(',') | Some('}') | Some('\n') | None
+        );
+        if terminator {
             lines.push(code[..at].matches('\n').count() + 1);
         }
     }
     lines
 }
 
-/// 1-based lines where an attribute name is written as a **string literal**
-/// (`"onchange": …`) — the spelling that lives in `plain`, not in `code`.
+/// 1-based lines where an attribute name is written as a **string literal** —
+/// `"onchange": …` or the raw spelling `r#"onchange"#:` — i.e. the shapes that
+/// live in `plain` rather than in `code`. The raw form's closing `#`s sit
+/// between the quote and the colon, so they are skipped before the terminator.
 fn quoted_attribute_occurrences(plain: &str, name: &str) -> Vec<usize> {
     let needle = format!("\"{name}\"");
     let mut lines = Vec::new();
     for (at, _) in plain.match_indices(&needle) {
         let rest = plain[at + needle.len()..].trim_start();
+        let rest = rest.trim_start_matches('#');
         if rest.starts_with(':') {
             lines.push(plain[..at].matches('\n').count() + 1);
         }
@@ -783,6 +817,7 @@ fn no_onchange_spelling_escapes_the_inventory() {
     let mut problems: Vec<String> = Vec::new();
     let mut total_seen = 0usize;
     let mut total_parsed = 0usize;
+    let mut total_declared = 0usize;
     for (rel, path) in &files {
         let source = std::fs::read_to_string(path)
             .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
@@ -800,6 +835,7 @@ fn no_onchange_spelling_escapes_the_inventory() {
             .count();
         total_seen += seen.len();
         total_parsed += parsed;
+        total_declared += allowed;
         if seen.len() != parsed + allowed {
             let seen_count = seen.len();
             problems.push(format!(
@@ -815,11 +851,10 @@ fn no_onchange_spelling_escapes_the_inventory() {
     assert!(
         problems.is_empty(),
         "\n{} `onchange` occurrence(s) outside the inventory:\n\n{}\n\n\
-         (Parsed bindings: {}, declared non-binding occurrences: {}.)\n",
+         (Seen: {total_seen}; parsed bindings: {total_parsed}; declared non-binding \
+         occurrences: {total_declared}.)\n",
         problems.len(),
-        problems.join("\n"),
-        total_parsed,
-        total_seen - total_parsed
+        problems.join("\n")
     );
 }
 
@@ -932,6 +967,30 @@ fn every_registered_binding_reads_the_value_the_way_it_claims() {
                         "{} ({}): the handler routes through `{gate}` but still \
                          contains `{forbidden}` — the gate has to own the parsing, \
                          otherwise the raw value is emitted beside it (lines {}-{}):\n{body}",
+                        found.file,
+                        binding.label,
+                        region.0 + 1,
+                        region.1 + 1
+                    );
+                }
+                if matches!(binding.value_use, ValueUse::LeafNames(_)) {
+                    // The reducer must own EVERY read, not just the first one:
+                    // `let _ = reduce(&e.value); emit(vec![e.value.clone()])`
+                    // calls the gate and still ships the raw fake path. For this
+                    // disposition, each line that reads the value must also be
+                    // the line that routes it.
+                    let unguarded: Vec<usize> = code[region.0..=region.1]
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, line)| line.contains(".value") && !line.contains(gate))
+                        .map(|(offset, _)| region.0 + offset + 1)
+                        .collect();
+                    assert!(
+                        unguarded.is_empty(),
+                        "{} ({}): the handler reads the committed value on line(s) \
+                         {unguarded:?} without routing them through `{gate}` — the \
+                         reducer has to own every read, otherwise the raw fake path \
+                         is emitted beside the reduced name (lines {}-{}):\n{body}",
                         found.file,
                         binding.label,
                         region.0 + 1,
@@ -1122,6 +1181,38 @@ fn the_lexical_scan_sees_every_spelling_and_ignores_prose() {
         vec![2]
     );
 
+    // The LAST attribute of an element may drop the comma and close the brace —
+    // `input { "type": "file", onchange }` — which the line-start parser misses.
+    let last_attr = "    input { \"type\": \"file\", onchange }\n";
+    assert_eq!(
+        attribute_occurrences(&strip_prose(last_attr).0.join("\n"), "onchange"),
+        vec![1]
+    );
+    // The same form written across lines ends the attribute at the line break.
+    let last_attr_split = "    input {\n        \"type\": \"file\",\n        onchange\n    }\n";
+    assert_eq!(
+        attribute_occurrences(&strip_prose(last_attr_split).0.join("\n"), "onchange"),
+        vec![3]
+    );
+
+    // …and the raw spelling puts its closing `#`s between the quote and the colon.
+    let raw_attr = "    input {\n        r#\"onchange\"#: move |e: ChangeEvent| {},\n    }\n";
+    let (code, plain) = strip_prose(raw_attr);
+    assert!(
+        attribute_occurrences(&code.join("\n"), "onchange").is_empty(),
+        "a raw string is a literal, not a code token"
+    );
+    assert_eq!(
+        quoted_attribute_occurrences(&plain.join("\n"), "onchange"),
+        vec![2],
+        "the raw-string attribute name must be counted"
+    );
+    let double_hash = "    input {\n        r##\"onchange\"##: handler,\n    }\n";
+    assert_eq!(
+        quoted_attribute_occurrences(&strip_prose(double_hash).1.join("\n"), "onchange"),
+        vec![2]
+    );
+
     // Prose and lookalikes are not occurrences: a line comment, a block comment
     // (one line and across lines), a string that spells the name WITHOUT being
     // an attribute, a field access, and a longer identifier.
@@ -1142,6 +1233,23 @@ fn the_lexical_scan_sees_every_spelling_and_ignores_prose() {
     let with_note = "    onchange: handle_change, // the commit channel\n";
     let (code, _) = strip_prose(with_note);
     assert_eq!(binding_handler(&code[0]), Some("handle_change".to_string()));
+
+    // Nested block comments close by DEPTH: the tail of
+    // `/* a /* b */ onchange: on_change, */` is still a comment, so neither a
+    // binding nor a gate may be found there.
+    let nested = "    /* a /* b */ onchange: on_change, */\n    onchange: on_change,\n";
+    assert_eq!(
+        attribute_occurrences(&strip_prose(nested).0.join("\n"), "onchange"),
+        vec![2],
+        "only the real binding outside the nested comment counts"
+    );
+    let nested_gate = "    let on_change = move |e: ChangeEvent| {\n        /* a /* b */ upload_leaf_names(&e.value); */\n        handler.call(e.value);\n    };\n";
+    let (code, _) = strip_prose(nested_gate);
+    let code: Vec<&str> = code.iter().map(String::as_str).collect();
+    assert!(
+        !routes_through(&code, (0, 2), "upload_leaf_names"),
+        "a gate inside a nested block comment is still a comment"
+    );
 
     // A string that CONTAINS comment markers must not swallow the code after it.
     let tricky = "    let url = \"http://example.com/a\";\n    onchange: on_change,\n";

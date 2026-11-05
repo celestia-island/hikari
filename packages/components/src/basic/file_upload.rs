@@ -38,12 +38,16 @@
 //     therefore reduces the value to a leaf name through
 //     `basic/file_field`'s `picked_files_from_change_value` and never reports a
 //     path a host cannot open.
-//     The full `FileList` is NOT unreachable upstream: the glue implements
-//     `getFiles` (it returns the live FileList handle) and the WIT
-//     `html-input-element.get-files` member exists. The missing link is on the
-//     Rust side — `tairitsu-vdom`'s `ChangeEvent` exposes `value` and an opaque
-//     `target` handle but no FileList accessor, so a handler cannot read it yet.
-//     Until it does, a multi pick reports one leaf name;
+//     The full `FileList` needs TWO upstream fixes, not one, and neither is in
+//     this crate: (a) `tairitsu-vdom`'s `ChangeEvent` exposes `value` and an
+//     opaque `target` handle but no FileList accessor; (b) the glue's handle
+//     tables do not meet — `getFiles` stores into
+//     `globalThis.__fileListHandles` (glue-html) while the `file-list` members
+//     read a module-local `_fileListhandles` map (glue-fetch), so a handle from
+//     one is unknown to the other and `getLength` / `item` throw. The WIT
+//     members exist (`html-input-element.get-files`, `file-list`), so this is
+//     wiring, not a missing feature. Until both land, a multi pick reports one
+//     leaf name;
 //   * `FileUploadStatus::Dragging` and the `.hk-file-upload-dragging` sheet rule
 //     are UNREACHABLE (the enum variant and the CSS stay: public/stylesheet
 //     surface, not behaviour);

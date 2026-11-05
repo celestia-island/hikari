@@ -65,11 +65,18 @@
 //     drive it, but a `change` event reaches Rust as the browser's fake path
 //     string only, so [`picked_files_from_change_value`] recovers the leaf
 //     name from it (`C:\fakepath\a.csv` → `a.csv`) and drops the size/path it
-//     cannot see. Vue reads `input.files` instead. The GLUE already ships that
-//     (`getFiles` returns the live FileList handle; WIT
-//     `html-input-element.get-files`), the gap is on the Rust side:
-//     `tairitsu-vdom`'s `ChangeEvent` carries `value` and an opaque `target`
-//     handle but no FileList accessor, so a handler cannot reach it yet.
+//     cannot see. Vue reads `input.files` instead, and reaching that needs TWO
+//     fixes upstream, not one:
+//       * `tairitsu-vdom`'s `ChangeEvent` carries `value` and an opaque `target`
+//         handle but no FileList accessor, so a handler cannot resolve the
+//         handle it would need;
+//       * the glue's handle tables are DISJOINT — `getFiles` stores into
+//         `globalThis.__fileListHandles` (glue-html), while the `file-list`
+//         interface reads a module-local `_fileListhandles` map (glue-fetch),
+//         so even a resolved handle comes back as `FileList handle N not
+//         found` and `getLength` / `item` throw.
+//     The WIT members exist (`html-input-element.get-files`, `file-list`), so
+//     this is a wiring gap on both sides, not a missing feature.
 //   * Vue's `useId()` has no tairitsu analogue: the caption's `for` is
 //     emitted only when the caller passes `id` (the same rule the Input
 //     mirror documents).
@@ -283,8 +290,10 @@ pub struct FileFieldProps {
     /// Trigger id and the caption's `for` target (Vue generates one).
     pub id: Option<String>,
 
-    /// Fires with the new selection — a pick, a drop, a native change, or an
-    /// empty vec for the clear button (Vue: `update:modelValue`).
+    /// Fires with the new selection — a pick, a native `change`, or an empty vec
+    /// for the clear button (Vue: `update:modelValue`). There is no `drop`: the
+    /// drag path is removed on this wire (see the header delta), so nothing can
+    /// arrive from a drop.
     pub on_files: Option<EventHandler<Vec<PickedFile>>>,
 
     /// Fires on a trigger press: the host opens its picker / mounts the

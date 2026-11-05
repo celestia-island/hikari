@@ -143,7 +143,7 @@ export function buildFleetScene(
         return;
       }
       // Everything else this builder puts in the scene that owns GPU
-      // resources is a Mesh (pick proxies, dial cores, ticker planes),
+      // resources is a Mesh (pick proxies, dial cores, HUD planes),
       // a Line (dial rings, spindle circles, orbit rings) or Points —
       // all three carry `geometry` + `material`.
       if (

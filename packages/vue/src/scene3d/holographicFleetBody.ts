@@ -1,7 +1,7 @@
 /**
  * holographicFleetBody — one node's hologram: a spherical shell built from
  * six overlapping face dials plus a fat-centre ring spindle, with ONE
- * detailed camera-facing dial at the front carrying the real-data ticker.
+ * detailed camera-facing dial at the front carrying the real-data HUD line.
  *
  * User direction (2026-10-31): the body must read as a ball of circles
  * from every side — no polyhedron, no solid sphere, no shared wireframe,
@@ -10,15 +10,23 @@
  * get a miniature crossed-dial shell with no text. Every decorative line
  * stays out of raycast picking; the invisible centre proxy remains the
  * node's pointer target.
+ *
+ * User direction (2026-11-05): the HUD line inside the ball is set in the
+ * host's sans UI stack at natural glyph advances — never condensed by
+ * canvas — and carries descriptive data only (no liveness wording such as
+ * "Online"; that stays on the chip and the selection card). The band is
+ * measured from the line and sits still, so nothing is sliced at a wrap
+ * seam either.
  */
 
 import * as THREE from "three";
 
+import { HIKARI_FONT_SANS } from "../theme/fontContext";
 import type { FleetBodySpec } from "./holographicFleetSpec";
 
 export type FleetHologramInput = Pick<
   FleetBodySpec,
-  "id" | "label" | "status" | "detail" | "role" | "radius"
+  "id" | "label" | "detail" | "role" | "radius"
 >;
 
 export interface FleetHologram {
@@ -27,24 +35,113 @@ export interface FleetHologram {
   mesh: THREE.Mesh;
   /** Six faint overlapping face dials: the spherical shell. */
   shell: THREE.Group;
-  /** The detailed camera-facing dial that carries the real-data ticker. */
+  /** The detailed camera-facing dial that carries the real-data HUD line. */
   frontDial: THREE.Group;
   /** Sweeping layer inside the front dial (ticks and arcs rotate here). */
   frontSpinner: THREE.Group;
   /** Circular focus mark, shown while the body is selected. */
   selectionRing: THREE.Group;
-  /** The real-data ticker plane at the front dial's centre. */
+  /** The real-data HUD plane at the front dial's centre. */
   hudPanel: THREE.Mesh | null;
   /** Null only when the host cannot create a 2D canvas (SSR/test DOM). */
   hudTexture: THREE.CanvasTexture | null;
 }
 
-/** The single source of truth for the dial ticker's content. */
+/** The single source of truth for the dial HUD line's content.
+ *  Liveness (`status`) is deliberately absent (user direction 2026-11-05):
+ *  the ball carries the node's descriptive data, while liveness already
+ *  has a home on the chip and the selection card. */
 export function hologramHudText(input: FleetHologramInput): string {
-  return [input.label, input.status, input.detail]
+  return [input.label, input.detail]
     .map((part) => part.trim())
     .filter((part) => part.length > 0)
     .join("  ·  ") || input.id;
+}
+
+/** HUD tile geometry. The width is measured from the live line: a long
+ *  label widens the strip instead of condensing the glyphs. */
+const HUD_TILE_HEIGHT = 96;
+/** The plane's scale reference: a 1024px tile maps to a 1.14×radius band,
+ *  so the glyph height on the ball stays constant as the tile grows. */
+const HUD_REFERENCE_WIDTH = 1024;
+const HUD_MIN_TILE_WIDTH = 640;
+const HUD_MAX_TILE_WIDTH = 1600;
+const HUD_FONT_MAX_PX = 64;
+const HUD_FONT_MIN_PX = 40;
+const HUD_FONT_STEP_PX = 2;
+const HUD_ITEM_GAP_PX = 96;
+
+/** The host applies the canonical UI stack as `--font-sans` during
+ *  bootstrap; reading it keeps canvas text in the same family as the DOM
+ *  around it (and honours a host font override). The exported stack is
+ *  only the fallback for SSR / test DOMs without computed styles. */
+function hudFontFamily(): string {
+  if (typeof document !== "undefined") {
+    try {
+      const declared = getComputedStyle(document.documentElement)
+        .getPropertyValue("--font-sans")
+        .trim();
+      if (declared && !/[;{}]/.test(declared) && !/var\(/i.test(declared)) return declared;
+    } catch {
+      // No computed-style implementation: fall through to the canonical stack.
+    }
+  }
+  return HIKARI_FONT_SANS;
+}
+
+function hudFont(fontPx: number, family: string): string {
+  return `600 ${fontPx}px ${family}`;
+}
+
+/** Cut the line at a code-point boundary when even the smallest HUD size
+ *  cannot hold it, so an emoji or astral character is never split into a
+ *  lone surrogate. Never pass the result to a `maxWidth` argument: this
+ *  function shortens the text, it does not scale glyphs horizontally. */
+function ellipsizeHudText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  const characters = Array.from(text);
+  let low = 0;
+  let high = characters.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    const candidate = `${characters.slice(0, mid).join("")}…`;
+    if (ctx.measureText(candidate).width <= maxWidth) low = mid;
+    else high = mid - 1;
+  }
+  return `${characters.slice(0, low).join("").trimEnd()}…`;
+}
+
+interface HudTextLayout {
+  fontPx: number;
+  text: string;
+  width: number;
+}
+
+/** Choose the largest uniform font size that fits the tile, then fall back
+ *  to a code-point-boundary ellipsis. Uniform scaling preserves every
+ *  glyph's aspect; only the horizontal `maxWidth` squeeze is banned. */
+function layoutHudText(
+  ctx: CanvasRenderingContext2D,
+  line: string,
+  family: string,
+): HudTextLayout {
+  const maxTextWidth = HUD_MAX_TILE_WIDTH - HUD_ITEM_GAP_PX;
+  for (let px = HUD_FONT_MAX_PX; px >= HUD_FONT_MIN_PX; px -= HUD_FONT_STEP_PX) {
+    ctx.font = hudFont(px, family);
+    const width = ctx.measureText(line).width;
+    if (width <= maxTextWidth) return { fontPx: px, text: line, width };
+  }
+  ctx.font = hudFont(HUD_FONT_MIN_PX, family);
+  const text = ellipsizeHudText(ctx, line, maxTextWidth);
+  return {
+    fontPx: HUD_FONT_MIN_PX,
+    text,
+    width: ctx.measureText(text).width,
+  };
 }
 
 /** Decorative geometry must not become a broad, invisible pointer target. */
@@ -278,49 +375,58 @@ function makeRingSpindle(
 
 function makeHudTexture(input: FleetHologramInput): THREE.CanvasTexture | null {
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 96;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
+  const family = hudFontFamily();
   const line = hologramHudText(input);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // 64px glyphs on the 96px strip: the plane's aspect is locked to the
-  // canvas's below, so on-disc text height is fontPx/canvasW × planeW —
-  // 64/1024 of the band, readable at fleet zoom.
-  ctx.font = "600 64px ui-monospace, SFMono-Regular, Consolas, monospace";
+  const layout = layoutHudText(ctx, line, family);
+  const tileWidth = Math.min(
+    HUD_MAX_TILE_WIDTH,
+    Math.max(HUD_MIN_TILE_WIDTH, Math.ceil(layout.width + HUD_ITEM_GAP_PX)),
+  );
+
+  // Setting the canvas dimensions resets every 2D context state, so the
+  // font and paint state go on AFTER the final size is known.
+  canvas.width = tileWidth;
+  canvas.height = HUD_TILE_HEIGHT;
+  ctx.font = hudFont(layout.fontPx, family);
   ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
   ctx.fillStyle = "#ffffff";
 
-  // A clipped horizontal ticker for the dial's centre (user direction
-  // 2026-10-31: the text belongs to the disc's middle, not a wrapping
-  // ribbon). Long host labels are condensed by canvas rather than
-  // replaced with fabricated data.
-  const maxItemWidth = 610;
-  const measured = ctx.measureText(line).width;
-  const itemWidth = Math.min(maxItemWidth, Math.max(360, measured + 64));
-  for (let x = 24; x < canvas.width; x += itemWidth) {
-    ctx.fillText(line, x, canvas.height / 2, maxItemWidth - 48);
-  }
+  // One natural-width line, centred in a tile that is exactly the band's
+  // width. The band sits still (no offset scroll), so the line is never
+  // sliced at a texture seam. There is deliberately NO `maxWidth`
+  // argument — that is the canvas feature which condensed long labels
+  // and made glyph advances unequal (user direction 2026-11-05).
+  ctx.fillText(
+    layout.text,
+    Math.max(0, (tileWidth - layout.width) / 2),
+    HUD_TILE_HEIGHT / 2,
+  );
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.name = "fleet-hologram-hud-texture";
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
   return texture;
 }
 
-/** The real-data ticker plane, pinned to the front dial's centre. The
- *  plane's aspect is locked to the texture's (1024:96) — a mismatched
- *  aspect would compress the glyphs horizontally. */
-function makeTickerPlane(
+/** The real-data HUD plane, pinned to the front dial's centre. The
+ *  plane's aspect is locked to the texture tile's own aspect — the tile
+ *  width is measured from the live label, so the band grows with long
+ *  names and glyphs are never compressed horizontally. */
+function makeHudPlane(
   bodyRadius: number,
   color: THREE.Color,
   offline: boolean,
   texture: THREE.CanvasTexture,
 ): THREE.Mesh {
-  const width = bodyRadius * 1.14;
-  const height = width * (96 / 1024);
+  const image = texture.image as HTMLCanvasElement | undefined;
+  const tileWidth = image?.width ?? HUD_REFERENCE_WIDTH;
+  const tileHeight = image?.height ?? HUD_TILE_HEIGHT;
+  const width = bodyRadius * 1.14 * (tileWidth / HUD_REFERENCE_WIDTH);
+  const height = width * (tileHeight / tileWidth);
   const mesh = unpickable(new THREE.Mesh(
     new THREE.PlaneGeometry(width, height),
     new THREE.MeshBasicMaterial({
@@ -405,7 +511,7 @@ export function makeFleetHologram(
   const hudTexture = makeHudTexture(input);
   let hudPanel: THREE.Mesh | null = null;
   if (hudTexture) {
-    hudPanel = makeTickerPlane(input.radius, color, offline, hudTexture);
+    hudPanel = makeHudPlane(input.radius, color, offline, hudTexture);
     hudPanel.position.z = input.radius * 0.02;
     frontDial.add(hudPanel);
   }
@@ -458,8 +564,9 @@ export function makeSatelliteHologram(
 }
 
 /** Independent motion: the shell turns slowly, the front dial and the
- *  selection ring face the camera, the dial's ticks sweep, and the
- *  real-data ticker scrolls across the disc's centre. */
+ *  selection ring face the camera, and the dial's ticks sweep. The HUD
+ *  line itself sits still at the disc's centre: its band is measured from
+ *  the label, so a scroll would only slice it at the texture seam. */
 export function poseFleetHologram(
   hologram: FleetHologram,
   elapsed: number,
@@ -472,8 +579,5 @@ export function poseFleetHologram(
   if (cameraQuaternion) {
     hologram.frontDial.quaternion.copy(cameraQuaternion);
     hologram.selectionRing.quaternion.copy(cameraQuaternion);
-  }
-  if (hologram.hudTexture) {
-    hologram.hudTexture.offset.x = (elapsed * 0.018) % 1;
   }
 }

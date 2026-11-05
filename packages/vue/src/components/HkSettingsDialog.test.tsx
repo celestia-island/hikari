@@ -3,12 +3,15 @@ import { readFileSync } from "node:fs";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import { Languages, Globe } from "lucide-vue-next";
 import {
+  SHEET_MORPH_MS,
+  sheetMorphMs,
   HkSettingsBody as HSettingsBody,
   HkSettingsDialog as HSettingsDialog,
   HkSettingsGroup as HSettingsGroup,
   HkSettingsHint as HSettingsHint,
   HkSettingsSub as HSettingsSub,
 } from "./HkSettingsDialog";
+import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 
 function mount(component: ReturnType<typeof defineComponent>) {
   const container = document.createElement("div");
@@ -522,5 +525,171 @@ describe("phone shell (rail → top tab strip, 2026-10-28 user direction)", () =
     expect(phoneBlock).toContain("justify-content: center;");
     expect(phoneBlock).toContain("padding: var(--space-6) var(--space-14);");
     expect(phoneBlock).toContain("font-size: var(--text-base);");
+  });
+});
+
+/**
+ * Docked-sheet height hand-off (2026-11-04 chest phone report).
+ *
+ * Inside a phone sheet the modal sizes the window from this shell's
+ * content, but it observes `.hk-modal-body-inner` — pinned at
+ * `height: 100%` by the host rule — so a section swap never changes the
+ * observed box and the sheet kept the height of whichever section it
+ * OPENED with (the About card clipped inside a ~24px pane). The shell
+ * therefore forwards the pane's settled swap through the family's
+ * `hk-stepflow-swap` protocol, which HkModal already turns into a frame
+ * re-measure.
+ *
+ * The morph container only emits `swap` once its ResizeObserver has seen
+ * the incoming stage and its settle timer has run, so these tests drive
+ * the observer directly (happy-dom ships no layout engine: every rect
+ * would read zero, which the container correctly reads as "same box" and
+ * never settles).
+ */
+class StageResizeObserver implements ResizeObserver {
+  static all: StageResizeObserver[] = [];
+  observed: Element[] = [];
+  private readonly callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    StageResizeObserver.all.push(this);
+  }
+  observe(target: Element): void {
+    this.observed.push(target);
+  }
+  unobserve(): void {}
+  disconnect(): void {}
+  /** Fire the callback for the observer watching the transition stage. */
+  static settleStage(height = 220): boolean {
+    const ro = StageResizeObserver.all.find((o) =>
+      o.observed.some((el) => el.classList.contains("hk-tc-stage")),
+    );
+    if (!ro) return false;
+    // Only `contentRect` is consumed by the container; the rest of the
+    // entry descriptor is layout detail happy-dom cannot produce.
+    const entry = { contentRect: { width: 320, height } } as ResizeObserverEntry;
+    ro.callback([entry], ro);
+    return true;
+  }
+}
+
+describe("HSettingsBody — docked-sheet height hand-off", () => {
+  const originalRO = globalThis.ResizeObserver;
+  const originalMatchMedia = window.matchMedia;
+
+  afterEach(() => {
+    globalThis.ResizeObserver = originalRO;
+    window.matchMedia = originalMatchMedia;
+    StageResizeObserver.all = [];
+    document.documentElement.removeAttribute("data-css-animations");
+  });
+
+  function mountWithSwapLog() {
+    StageResizeObserver.all = [];
+    globalThis.ResizeObserver = StageResizeObserver;
+    const events: Array<{ phase?: string; durationMs?: number }> = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push((e as CustomEvent).detail ?? {});
+    });
+    const app = createApp(Host);
+    app.mount(container);
+    return { container, events, unmount: () => { app.unmount(); container.remove(); } };
+  }
+
+  async function switchToNetwork(container: HTMLElement) {
+    container.querySelectorAll<HTMLButtonElement>(".hk-settings__rail-item")[1].click();
+    await nextTick();
+  }
+
+  it("forwards a settled section swap as a morph beat for the modal", async () => {
+    const { container, events, unmount } = mountWithSwapLog();
+    await switchToNetwork(container);
+    expect(StageResizeObserver.settleStage(220)).toBe(true);
+    // The container arms its settle timer for the choreography remainder
+    // (300ms default) plus a 40ms grace; give it room.
+    await new Promise((r) => setTimeout(r, 500));
+    expect(events).toEqual([{ phase: "morph", durationMs: 300 }]);
+    unmount();
+  });
+
+  it("announces an instant settle as soon as the pane height is final", async () => {
+    // Growing swap: the stage has already reached its incoming height when
+    // the container settles, so the sheet must be told on the first frame —
+    // not after the bounded wait (which exists only for the leaving
+    // generation still holding a shrink at the old height).
+    window.matchMedia = (query: string): MediaQueryList => ({
+      matches: query.includes("prefers-reduced-motion"),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    });
+    const { container, events, unmount } = mountWithSwapLog();
+    const host = container.querySelector(".hk-tc") as HTMLElement;
+    let height = 100;
+    Object.defineProperty(host, "offsetHeight", {
+      configurable: true,
+      get: () => height,
+    });
+    await switchToNetwork(container); // records the pre-swap height (100)
+    height = 150; // the incoming section is taller
+    expect(StageResizeObserver.settleStage(220)).toBe(true);
+    await new Promise((r) => setTimeout(r, 120));
+    expect(events).toEqual([{ phase: "instant" }]);
+    unmount();
+  });
+
+  it("snaps the sheet when the swap settles with no animation", async () => {
+    // Reduced motion zeroes the container's morph duration.
+    window.matchMedia = (query: string): MediaQueryList => ({
+      matches: query.includes("prefers-reduced-motion"),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    });
+    const { container, events, unmount } = mountWithSwapLog();
+    const host = container.querySelector(".hk-tc") as HTMLElement;
+    Object.defineProperty(host, "offsetHeight", {
+      configurable: true,
+      get: () => 150,
+    });
+    await switchToNetwork(container);
+    expect(StageResizeObserver.settleStage(220)).toBe(true);
+    // No layout in happy-dom: the stage never changes, so the instant
+    // branch must WAIT out its bounded settle window (a shrink keeps the
+    // leaving generation in the flow) — nothing may be announced early…
+    await new Promise((r) => setTimeout(r, 150));
+    expect(events).toEqual([]);
+    // …and the bounded window must still fire (a swap that never changes
+    // height must not swallow the announcement).
+    await new Promise((r) => setTimeout(r, 500));
+    expect(events).toEqual([{ phase: "instant" }]);
+    unmount();
+  });
+});
+
+
+describe("sheetMorphMs — the sheet's own morph window", () => {
+  it("caps the container's full choreography at the family morph beat", () => {
+    // A height-changing swap reports enterDelay + morph (600ms); the sheet
+    // must resize inside the family's 300ms window, not twice as long.
+    expect(sheetMorphMs(600)).toBe(SHEET_MORPH_MS);
+    expect(sheetMorphMs(SHEET_MORPH_MS)).toBe(SHEET_MORPH_MS);
+    expect(sheetMorphMs(120)).toBe(120);
+  });
+
+  it("maps a non-positive choreography to the instant snap", () => {
+    expect(sheetMorphMs(0)).toBe(0);
+    expect(sheetMorphMs(-1)).toBe(0);
+    expect(sheetMorphMs(Number.NaN)).toBe(0);
   });
 });

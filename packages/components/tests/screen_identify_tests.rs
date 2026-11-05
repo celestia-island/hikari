@@ -533,22 +533,56 @@ fn a_held_open_flash_is_removed_by_dismiss() {
 }
 
 #[test]
-fn a_superseded_generation_never_ticks_the_new_flash() {
+fn a_superseded_generation_never_ticks_or_repaints_the_new_flash() {
+    use std::cell::Cell;
+    use std::rc::Rc;
+    use tairitsu_vdom::runtime;
+
     _reset_screen_identify_for_tests();
+
+    // Count host renders so the "returns immediately WITHOUT repainting" claim
+    // is pinned, not just the state outcome (removing the pre-check would
+    // otherwise survive on the inner chain-step guard).
+    let renders = Rc::new(Cell::new(0u32));
+    let renders_for_component = Rc::clone(&renders);
+    let id = runtime::use_component(move || {
+        renders_for_component.set(renders_for_component.get() + 1);
+        ScreenIdentifyHost(ScreenIdentifyHostProps::default())
+    });
+    // Render once so the host's `get()` subscribes it before any state write.
+    runtime::mark_dirty(id);
+    runtime::flush_render();
+    assert!(renders.get() >= 1, "the host should have rendered once");
+
     show_screen_identify(ScreenIdentifyRequest::new("1"));
     let first_generation = use_screen_identify().state().generation();
     show_screen_identify(ScreenIdentifyRequest::new("2"));
     let restarted_generation = use_screen_identify().state().generation();
     assert_ne!(first_generation, restarted_generation);
+    runtime::flush_render();
+    let after_restart = renders.get();
 
-    // A late timer from the first flash must not advance the second one.
+    // A late timer from the first flash must neither advance nor repaint the
+    // second one.
     assert!(!screen_identify_tick_step(first_generation, 2_000.0));
+    runtime::flush_render();
+    assert_eq!(
+        renders.get(),
+        after_restart,
+        "a superseded generation must not repaint the host"
+    );
     let state = use_screen_identify().state();
     assert_eq!(state.number(), "2");
     assert_eq!(state.remaining_ms(), SCREEN_IDENTIFY_DEFAULT_MS);
     assert_eq!(state.seconds_left(), 3);
 
+    // The owning generation does advance and repaint.
     assert!(screen_identify_tick_step(restarted_generation, 2_000.0));
+    runtime::flush_render();
+    assert!(
+        renders.get() > after_restart,
+        "the owning step must repaint"
+    );
     let advanced = use_screen_identify().state();
     assert_eq!(advanced.seconds_left(), 1);
     _reset_screen_identify_for_tests();
@@ -623,6 +657,43 @@ fn ambient_layer_empty_label_drops_the_role_but_keeps_the_empty_aria_label() {
     }));
     assert!(!html.contains("role=\"region\""), "{html}");
     assert!(html.contains("aria-label=\"\""), "{html}");
+}
+
+// ── Static bundle + cross-form band pins ─────────────────────────────
+
+#[test]
+fn the_static_bundle_imports_the_family_sheets() {
+    let index = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/styles/index.scss"
+    ))
+    .expect("styles/index.scss should exist");
+    for sheet in ["HkAmbientLayer.scss", "HkScreenIdentifyCard.scss"] {
+        assert!(
+            index.contains(&format!("./vue-mirror/components/{sheet}")),
+            "styles/index.scss is missing the {sheet} import"
+        );
+    }
+}
+
+#[test]
+fn the_rust_band_matches_the_vue_hud_root() {
+    // The upstream file only exists in a repo checkout (a crates.io sdist
+    // carries the mirrors but not packages/vue) — skip there, like the drift
+    // test does.
+    let hud_root = concat!(env!("CARGO_MANIFEST_DIR"), "/../vue/src/overlay/hudRoot.ts");
+    let Ok(source) = std::fs::read_to_string(hud_root) else {
+        return;
+    };
+    let line = source
+        .lines()
+        .find(|line| line.contains("HUD_ROOT_DOCUMENT_Z"))
+        .expect("hudRoot.ts should declare HUD_ROOT_DOCUMENT_Z");
+    assert!(
+        line.contains(&AMBIENT_LAYER_DOCUMENT_Z.to_string()),
+        "the Rust ambient band ({}) must match the Vue HUD root: {line}",
+        AMBIENT_LAYER_DOCUMENT_Z
+    );
 }
 
 // ── Style-registry membership ───────────────────────────────────────

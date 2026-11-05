@@ -54,6 +54,7 @@
 # コンポーネント — レイヤー 3
 - [エディタコンポーネント](./components/layer3/editor.md)
 - [メディアコンポーネント](./components/layer3/media.md)
+- [画面の識別](./components/layer3/screen_identify.md)
 - [ユーザーガイド](./components/layer3/user_guide.md)
 - [ビジュアライゼーションコンポーネント](./components/layer3/visualization.md)
 - [ズームコントロール](./components/layer3/zoom_controls.md)

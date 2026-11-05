@@ -683,6 +683,12 @@
 @import './vue-mirror/components/HkAdaptiveDialog.scss';
 @import './vue-mirror/components/HkPopupSelect.scss';
 @import './vue-mirror/components/HkFloatingLayer.scss';
+
+// Ambient HUD family mirrors (the Vue #hk-hud-root band contract + the
+// screen-identify card). The Rust form has no Teleport, so AmbientLayer's
+// wrapper carries the band itself; the sheets are still byte-identical.
+@import './vue-mirror/components/HkAmbientLayer.scss';
+@import './vue-mirror/components/HkScreenIdentifyCard.scss';
 @import './vue-mirror/components/HkAltSignIn.scss';
 @import './vue-mirror/components/HkMfaVerifyCard.scss';
 @import './vue-mirror/components/HkThirdPartySignInCard.scss';

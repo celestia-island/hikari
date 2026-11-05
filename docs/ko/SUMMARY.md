@@ -54,6 +54,7 @@
 # 컴포넌트 — 레이어 3
 - [에디터 컴포넌트](./components/layer3/editor.md)
 - [Media 컴포넌트](./components/layer3/media.md)
+- [화면 식별](./components/layer3/screen_identify.md)
 - [UserGuide](./components/layer3/user_guide.md)
 - [Visualization 컴포넌트](./components/layer3/visualization.md)
 - [ZoomControls](./components/layer3/zoom_controls.md)

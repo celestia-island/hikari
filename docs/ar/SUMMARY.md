@@ -54,6 +54,7 @@
 # المكوّنات — الطبقة 3
 - [Editor](./components/layer3/editor.md)
 - [Media](./components/layer3/media.md)
+- [تحديد الشاشة](./components/layer3/screen_identify.md)
 - [User Guide](./components/layer3/user_guide.md)
 - [Visualization](./components/layer3/visualization.md)
 - [Zoom Controls](./components/layer3/zoom_controls.md)

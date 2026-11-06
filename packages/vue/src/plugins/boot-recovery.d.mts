@@ -5,13 +5,14 @@
 import type { Plugin } from "vite";
 
 /**
- * Types for `boot-recovery.mjs` — the self-contained, published Vite plugin
- * entry (`@celestia-island/hikari/plugins/boot-recovery`).
+ * Types for `boot-recovery.mjs` — the published Vite plugin entry
+ * (`@celestia-island/hikari/plugins/boot-recovery`).
  *
  * The implementation is plain ESM loaded from `node_modules` while a consumer's
  * `vite.config.*` is resolved, where TypeScript cannot be stripped and Vite's
  * `configLoader: "runner"` tears the module runner down before plugin hooks
- * run. Keep the runtime file limited to static imports (`node:path` only).
+ * run. Keep the runtime file limited to static imports (`node:path` plus the
+ * generated `./bootLandingCss.mjs` sheet — both plain ESM, no dynamic import).
  */
 
 /** The canonical Tauri app origin on Windows/Android. */
@@ -25,6 +26,9 @@ export declare const BOOT_RECOVERY_LOADING_SELECTOR: "#loading-screen";
 
 /** Default class that marks a loading element as already dismissed. */
 export declare const BOOT_RECOVERY_DISMISSED_CLASS: "hidden";
+
+/** Default failure-panel title (English; override through `copy.title`). */
+export declare const BOOT_RECOVERY_TITLE: string;
 
 /** Default failure-panel message (English; override through `copy.message`). */
 export declare const BOOT_RECOVERY_MESSAGE: string;
@@ -43,7 +47,7 @@ export interface BootRecoveryDefaults {
     selector: string;
     dismissedClass: string;
   }>;
-  readonly copy: Readonly<{ message: string; retry: string }>;
+  readonly copy: Readonly<{ title: string; message: string; retry: string }>;
   readonly injectTo: "head" | "head-prepend";
 }
 
@@ -60,7 +64,14 @@ export interface BootRecoveryLoadingScreenOptions {
 
 /** Overridable failure-panel copy (English defaults). */
 export interface BootRecoveryCopyOptions {
-  /** Main message of the panel. */
+  /**
+   * Headline of the panel. The failure surface is the shared
+   * `HkErrorLanding` card (tone icon, headline, explanation, action), so a
+   * host that translates its failure page supplies this per locale; an
+   * empty value falls back to the English default.
+   */
+  title?: string;
+  /** Main message (the landing card's explanation) of the panel. */
   message?: string;
   /** Retry button label. */
   retry?: string;
@@ -72,12 +83,17 @@ export interface BootRecoveryCopyOptions {
    * before `zh-TW` means a `zh-HK` request resolves to the zh-CN entry).
    * Every entry must carry non-empty `message` and `retry` strings —
    * anything else fails the build loudly, as does two keys normalising to
-   * the same tag. Omitting the table (or passing it empty) keeps the
-   * single-copy script — byte-identical to the pre-locale implementation
-   * apart from the panel stylesheet, so a host that hashes the script into
-   * its CSP only needs to refresh the hash it already owns.
+   * the same tag. `title` is optional: a row without one paints the host's
+   * default title over localized copy, so a translating host should supply
+   * it. Omitting the table (or passing it empty) keeps the single-copy
+   * script — the same shape apart from the copy it embeds — so a host that
+   * hashes the script into its CSP only needs to refresh the hash it
+   * already owns.
    */
-  locales?: Record<string, { message: string; retry: string }>;
+  locales?: Record<
+    string,
+    { title?: string; message: string; retry: string }
+  >;
   /**
    * `localStorage` key that holds the host's saved UI locale tag (WoWSP
    * uses `"wowsp-ui-locale"`). Consulted FIRST — the user's explicit

@@ -700,7 +700,13 @@ export default defineComponent({
         // element, dir="auto", an explicit deeper override) would
         // otherwise light the wrong edge. Lands the same pass as the
         // overflow attrs, so band slots and lit attrs are never from
-        // different frames.
+        // different frames. Known trade (2026-11-06 review): a pure
+        // direction change at rest (locale flip, scrollLeft 0, no
+        // layout delta) schedules no sensing pass, so the mirror and
+        // the depths sit stale until the next scroll / resize /
+        // refresh / prop touch — wrong physical edge in that window,
+        // self-healing; a dir MutationObserver was rejected as
+        // over-engineering for a narrow trigger.
         const dir = rtl ? "rtl" : "ltr";
         if (lastPublishedDir !== dir) {
           lastPublishedDir = dir;

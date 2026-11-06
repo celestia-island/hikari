@@ -368,6 +368,11 @@ describe("HkScrollContainer progressive fade strengths", () => {
     stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: -48 });
     m.instance?.refresh();
     expect(m.root.getAttribute("data-h-overflow")).toBe("both");
+    // The mirror is the CSS slot swap's only direction truth — a mutant
+    // that hardcodes "ltr" (or inverts the ternary) would keep the
+    // depths correct and light the WRONG physical edge, so the artifact
+    // itself is pinned, not just its consequences.
+    expect(m.root.getAttribute("data-dir")).toBe("rtl");
     // Physical start edge (visual RIGHT under RTL) hides 48px…
     expect(varOf(m, "left")).toBe("1");
     expect(varOf(m, "right")).toBe("0.5");

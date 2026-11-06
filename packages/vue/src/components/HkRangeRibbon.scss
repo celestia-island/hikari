@@ -12,7 +12,9 @@
    the reset chip clears the edge handle (right: 4px = the handle's
    half-width, so a handle at 0% / 100% is never covered).
 
-   Every colour/size comes from hikari theme tokens; the only motion is the
+   Colours and spacing come from hikari theme tokens; a few geometry values
+   (the 32px strip, the 8px grip, the 2px min-width floor) are deliberate
+   literals pinned by the contract, not token drift. The only motion is the
    pending-segment breathe, registered in animation/registerAnimations.ts. */
 
 .hk-range-ribbon {

@@ -348,7 +348,7 @@ const BODY_ENTER_TRANSITION =
 const BODY_LEAVE_TRANSITION =
   "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
 
-describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-05)", () => {
+describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-06)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
     // Guard against a vacuous suite: the compiled sheet must really contain
     // the frame rule, the body rule and the reduced-motion flatten.
@@ -547,10 +547,19 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(winner(frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active"), "transform", MOBILE)).toBe("none");
     const resting = frameWith();
     expect(winner(resting, "transform", MOBILE)).toBe("none");
-    // No content-region scale in the sheet layout.
+    // No content-region scale in the sheet layout — at EITHER end of the
+    // ride. The settled states used to go unpinned (a max-width block
+    // could scale the body there and no assertion noticed; R3 mutation
+    // 2026-11-06), so all four states are spelled out.
     const body = child(frame, "hk-modal-body");
     expect(winner(body, "transform", MOBILE)).toBeUndefined();
     expect(winner(child(leaveEnd, "hk-modal-body"), "transform", MOBILE)).toBeUndefined();
+    expect(
+      winner(child(frameWith("hk-modal-content-enter-to", "hk-modal-content-enter-active"), "hk-modal-body"), "transform", MOBILE),
+    ).toBeUndefined();
+    expect(
+      winner(child(frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active"), "hk-modal-body"), "transform", MOBILE),
+    ).toBeUndefined();
   });
 
   it("never lets ANY rule put a transform on a chrome surface", () => {

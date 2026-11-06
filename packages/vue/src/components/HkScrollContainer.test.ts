@@ -180,6 +180,106 @@ describe("HkScrollContainer overflow sensing", () => {
   });
 });
 
+// ── Progressive fade strengths (fadeDistance, 2026-11-06): while `fade`
+// is on the container mirrors the hidden-content depth past each edge as
+// a 0..1 band scale on the root's inline style — pull the strip and the
+// trailing fade deepens, saturate at the full band, recede on the way
+// back. CSS consumes the vars (fade.contract.test.ts pins the sheet). ──
+describe("HkScrollContainer progressive fade strengths", () => {
+  const varOf = (m: Mounted, side: string): string =>
+    m.root.style.getPropertyValue(`--hk-scroll-fade-strength-${side}`);
+
+  it("publishes the hidden depth per edge, saturating at 1", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    // scrollWidth 300 in a 100px viewport: hiddenLeft = scrollLeft,
+    // hiddenRight = 200 - scrollLeft. Default fadeDistance 96.
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    // 48/96 = exactly half depth on the start edge; 152 hidden past the
+    // end edge saturates the band.
+    expect(varOf(m, "left")).toBe("0.5");
+    expect(varOf(m, "right")).toBe("1");
+    // Vertical edges hide nothing: strength 1 with a 0px band (invisible).
+    expect(varOf(m, "top")).toBe("1");
+    expect(varOf(m, "bottom")).toBe("1");
+  });
+
+  it("grows the strength with the pull and recedes on the way back", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("1"); // nothing hidden past the start
+    expect(varOf(m, "right")).toBe("1"); // 200 hidden: saturated
+
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 24 });
+    m.viewport.dispatchEvent(new Event("scroll"));
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("0.25"); // 24/96: the pull deepens it
+    expect(varOf(m, "right")).toBe("1"); // 176 hidden: still saturated
+
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 190 });
+    m.viewport.dispatchEvent(new Event("scroll"));
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("1"); // fully pulled: saturated
+    expect(varOf(m, "right")).toBe("0.104"); // 10 hidden past the end: receding
+  });
+
+  it("keeps the ≤1px deadband of the overflow sense on the strength side", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 199.5 });
+    m.instance?.refresh();
+    // 0.5px hidden past the end: the sense still reports "start" (the
+    // same deadband) and the strength must not read as a visible fade.
+    expect(m.root.getAttribute("data-h-overflow")).toBe("start");
+    expect(varOf(m, "right")).toBe("1");
+  });
+
+  it("degrades to the binary shape with a zero fadeDistance", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true, fadeDistance: 0 });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("1");
+    expect(varOf(m, "right")).toBe("1");
+  });
+
+  it("re-senses immediately when fadeDistance changes at runtime", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true, fadeDistance: 96 });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("0.5");
+    m.instance?.refresh();
+    // Distance is read live per pass, so a remount-free change lands on
+    // the next refresh (the reactive watcher schedules one).
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 24 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("0.25");
+  });
+
+  it("publishes nothing while the fade prop is off", () => {
+    const m = mountScroller({ axis: "horizontal" });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("");
+    expect(varOf(m, "right")).toBe("");
+    expect(m.root.getAttribute("data-h-overflow")).toBe("both"); // sense still runs
+  });
+
+  it("normalizes RTL scroll signs for both the sense and the strengths", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    m.viewport.style.direction = "rtl";
+    // Chromium RTL convention: scrollLeft runs 0 → -(max). Raw -48 sits
+    // mid-scroll; the pre-normalization sense would have read "end"
+    // (scrollPos ≤ 1) for every RTL position.
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: -48 });
+    m.instance?.refresh();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("both");
+    // Physical start edge (visual RIGHT under RTL) hides 48px…
+    expect(varOf(m, "left")).toBe("1");
+    expect(varOf(m, "right")).toBe("0.5");
+    m.viewport.style.direction = "";
+  });
+});
+
 describe("HkScrollContainer scrollbar reactivity", () => {
   it("builds and tears down the overlay tracks when the scrollbar prop flips", async () => {
     const container = document.createElement("div");

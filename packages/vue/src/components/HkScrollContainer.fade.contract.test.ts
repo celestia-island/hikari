@@ -1,8 +1,10 @@
 /**
- * Source contract for the scroll-container edge fades (the 2026-11-02
- * revision of the 2026-10 composition): each edge owns a CSS var, the
- * viewport mask is built from the gradient LAYERS listed in
- * --hk-scroll-fade-layers, and the axis rules swap that list —
+ * Source contract for the scroll-container edge fades (the 2026-11-06
+ * progressive revision of the 2026-11-02 composition): each edge owns a
+ * CSS var, the viewport mask is built from the gradient LAYERS listed in
+ * --hk-scroll-fade-layers, the axis rules swap that list, and every lit
+ * band is the fade size scaled by a live strength the component
+ * publishes from the hidden-content depth (the progressive fade) —
  *
  *   - two-axis containers list the vertical AND horizontal gradients and
  *     intersect them, so the fade reaches zero on all four sides and the
@@ -28,6 +30,17 @@
  *   - all four edge vars are declared (top/right/bottom/left, 0px base);
  *   - start/end/both rules exist for BOTH axes;
  *   - RTL swaps the horizontal vars instead of rewriting the mask.
+ *
+ * And the regression this file now exists to keep dead (2026-11-06,
+ * user report "still hard-clipped while swiping", measured in a real
+ * engine): #902 (2026-10-29) declared the four zero defaults on the
+ * VIEWPORT base rule, and a directly declared custom property beats any
+ * inherited value, so the viewport's own 0px shadowed every root state
+ * rule's band — no edge ever faded again (resolved mask stops
+ * `rgb(0,0,0) 0px … rgb(0,0,0) 100%`), every faded strip hard-clipped,
+ * and the dock fades died with it. The defaults therefore live on the
+ * ROOT rule that also carries the strength fallbacks, and the viewport
+ * declares only the layers/mask pair.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -90,17 +103,50 @@ describe("scroll fade composition contract", () => {
     }
   });
 
-  it("fades both axes from the sensed overflow", () => {
-    for (const axis of ["v", "h"]) {
-      for (const state of ["start", "end", "both"]) {
-        expect(sheet).toContain(
-          `[data-${axis}-overflow="${state}"]`,
-        );
+  it("declares the zero defaults on the ROOT, never on the viewport (the #902 shadowing)", () => {
+    // A directly declared custom property beats any inherited value: the
+    // moment the viewport base rule re-declares these defaults, every
+    // root state rule's band is shadowed back to 0px and the fades die
+    // silently (the 2026-10-29..11-06 hard-clip regression, measured in
+    // a real engine). The viewport rule declares only the layer list.
+    const viewportBase = sheet.match(
+      /\.hk-scroll-container:is\(\[data-fade="true"\], \[data-dock-fade\]\) > \.hk-scroll-container-viewport \{[\s\S]*?\n\}/,
+    );
+    expect(viewportBase, "the viewport base rule exists").toBeTruthy();
+    for (const edge of ["top", "right", "bottom", "left"]) {
+      expect(viewportBase![0]).not.toContain(`--hk-scroll-fade-${edge}: 0px;`);
+    }
+    // And the root rule that carries them exists with the strengths.
+    const rootDefaults = sheet.match(
+      /\.hk-scroll-container:is\(\[data-fade="true"\], \[data-dock-fade\]\) \{[\s\S]*?\n\}/,
+    );
+    expect(rootDefaults, "the root defaults rule exists").toBeTruthy();
+    for (const edge of ["top", "right", "bottom", "left"]) {
+      expect(rootDefaults![0]).toContain(`--hk-scroll-fade-${edge}: 0px;`);
+      expect(rootDefaults![0]).toContain(`--hk-scroll-fade-strength-${edge}: 1;`);
+    }
+  });
+
+  it("scales every lit band by the published strength (the progressive fade)", () => {
+    // Band = fade size × strength, so the component's hidden-content
+    // depth (0..1 over fadeDistance) deepens each edge from a hard cut
+    // to the full band. A bare `var(--hk-scroll-fade-size)` band in a
+    // state rule is the pre-progressive binary shape — drift.
+    const bandRules = sheet.match(
+      /^\.hk-scroll-container\[data-fade="true"\]\[data-[hv]-overflow="(?:start|end|both)"\] \{[^}]*\}/gm,
+    ) ?? [];
+    expect(bandRules.length, "six lit-band state rules (3 per axis)").toBe(6);
+    for (const block of bandRules) {
+      const declarations = block.match(/--hk-scroll-fade-(?:top|right|bottom|left): [^;]+;/g) ?? [];
+      expect(declarations.length, "each state rule lights at least one band").toBeGreaterThan(0);
+      for (const declaration of declarations) {
+        expect(
+          declaration,
+          `strength-scaled band: ${declaration}`,
+        ).toMatch(/^--hk-scroll-fade-(?:top|right|bottom|left): calc\(var\(--hk-scroll-fade-size\) \* var\(--hk-scroll-fade-strength-(?:top|right|bottom|left), 1\)\);$/);
       }
     }
-    // The vertical half is what the old sheet was missing entirely.
-    expect(sheet).toContain('--hk-scroll-fade-top: var(--hk-scroll-fade-size)');
-    expect(sheet).toContain('--hk-scroll-fade-bottom: var(--hk-scroll-fade-size)');
+    expect(sheet).not.toMatch(/--hk-scroll-fade-(?:top|right|bottom|left): var\(--hk-scroll-fade-size\);/);
   });
 
   it("swaps horizontal sides under RTL instead of rewriting the mask", () => {

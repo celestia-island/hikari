@@ -84,6 +84,16 @@ export default defineComponent({
     /** Fade the viewport's inline edges (CSS mask) on the sides where
      *  the sensed overflow (`data-h-overflow`) reports hidden content. */
     fade: { type: Boolean, default: false },
+    /** Hidden-content distance (px) over which a lit edge fade deepens
+     *  from a hard cut to the full band (the progressive fade): the
+     *  component senses how much content hides past each edge and
+     *  mirrors it as a 0..1 strength (--hk-scroll-fade-strength-<side>)
+     *  that scales the band in CSS, so pulling the strip grows the
+     *  trailing fade and scrolling back recedes it. Read live (runtime
+     *  changes need no remount, like approachDistance). 0 or negative
+     *  degrades to the pre-2026-11 binary shape: any lit edge jumps
+     *  straight to the full band. Only read while `fade` is on. */
+    fadeDistance: { type: Number, default: 96 },
     /** Additive opt-in: while autoFollow is enabled and the user has
      *  scrolled away from the bottom, float a small jump-back FAB that
      *  snaps to the latest content and re-arms follow. */
@@ -258,6 +268,13 @@ export default defineComponent({
     // CSS. Attributes are only touched on change to avoid DOM churn.
     let lastHOverflow: OverflowSense | null = null;
     let lastVOverflow: OverflowSense | null = null;
+
+    // Progressive fade strengths last written to the root (see the
+    // fadeDistance prop doc). Same write-only-on-change discipline as
+    // the overflow mirror: scroll redraws the mask every frame anyway,
+    // but a pass that re-senses identical geometry must not churn
+    // inline style for nothing.
+    const lastFadeStrengths = new Map<string, string>();
 
     // Sensed selection edge hint (see the selectionHint prop doc),
     // mirrored onto the root as data-selection-beyond — the same
@@ -618,13 +635,29 @@ export default defineComponent({
     }
 
     /** Mirror the live scroll geometry onto the root element as
-     *  data-h-overflow / data-v-overflow. Runs on every scheduled
-     *  update (scroll, resize, content resize via the aligner). */
+     *  data-h-overflow / data-v-overflow, and while `fade` is on publish
+     *  the per-edge fade strengths (hidden-content depth saturating over
+     *  fadeDistance). Runs on every scheduled update (scroll, resize,
+     *  content resize via the aligner).
+     *
+     *  Scroll offsets are normalized to LTR convention first: Chromium
+     *  reports negative scrollLeft under RTL (0 at the inline start down
+     *  to -(max) at the inline end), so both the overflow sense and the
+     *  strengths would read as "always at start" without it. Strengths
+     *  are PHYSICAL-side (left/right), so the direction-neutral
+     *  start/end state rules and their RTL width swap below consume the
+     *  same vars unchanged. */
     function senseOverflow(vp: HTMLElement) {
       const root = vp.parentElement;
       if (!root) return;
-      const h = hasH() ? computeOverflow(vp.scrollWidth, vp.clientWidth, vp.scrollLeft) : "none";
-      const v = hasV() ? computeOverflow(vp.scrollHeight, vp.clientHeight, vp.scrollTop) : "none";
+      const rtl = getComputedStyle(vp).direction === "rtl";
+      const hMax = Math.max(0, vp.scrollWidth - vp.clientWidth);
+      const vMax = Math.max(0, vp.scrollHeight - vp.clientHeight);
+      const clampPos = (pos: number, max: number) => Math.min(max, Math.max(0, pos));
+      const hPos = clampPos(hasH() ? (rtl ? -vp.scrollLeft : vp.scrollLeft) : 0, hMax);
+      const vPos = clampPos(hasV() ? vp.scrollTop : 0, vMax);
+      const h = hasH() ? computeOverflow(vp.scrollWidth, vp.clientWidth, hPos) : "none";
+      const v = hasV() ? computeOverflow(vp.scrollHeight, vp.clientHeight, vPos) : "none";
       if (h !== lastHOverflow) {
         lastHOverflow = h;
         root.setAttribute("data-h-overflow", h);
@@ -632,6 +665,38 @@ export default defineComponent({
       if (v !== lastVOverflow) {
         lastVOverflow = v;
         root.setAttribute("data-v-overflow", v);
+      }
+      if (props.fade) {
+        // Physical-side depths: the normalized hPos counts the inline
+        // START, which is the visual RIGHT edge under RTL — swap there
+        // so --hk-scroll-fade-strength-left always means the left edge.
+        publishFadeStrengths(root, {
+          left: rtl ? hMax - hPos : hPos,
+          right: rtl ? hPos : hMax - hPos,
+          top: vPos,
+          bottom: vMax - vPos,
+        });
+      }
+    }
+
+    /** Progressive fade strengths (see the fadeDistance prop doc): the
+     *  hidden px past an edge saturates linearly over fadeDistance into
+     *  the band's 0..1 depth, so the fade grows with the pull and caps
+     *  at the full band. An edge hiding nothing (the same ≤1px deadband
+     *  computeOverflow uses) publishes 1 — with its 0px band that is
+     *  invisible, and it keeps dock-fed edges (which share the vars,
+     *  no fade prop → never published) at their designed full band. */
+    function publishFadeStrengths(root: HTMLElement, hidden: { left: number; right: number; top: number; bottom: number }) {
+      const dist = Math.max(0, props.fadeDistance);
+      for (const [side, depth] of Object.entries(hidden) as Array<[keyof typeof hidden, number]>) {
+        const strength =
+          depth <= 1 || dist === 0
+            ? "1"
+            : String(Math.min(1, Math.round((depth / dist) * 1000) / 1000));
+        if (lastFadeStrengths.get(side) !== strength) {
+          lastFadeStrengths.set(side, strength);
+          root.style.setProperty(`--hk-scroll-fade-strength-${side}`, strength);
+        }
       }
     }
 
@@ -704,6 +769,13 @@ export default defineComponent({
     }, { flush: "post" });
 
     watch(() => props.selectionSelector, () => scheduleUpdate());
+
+    // Runtime fade changes re-sense immediately: flipping `fade` on with
+    // content already hidden must not wait for a scroll, and a different
+    // fadeDistance re-derives every strength without any DOM motion.
+    watch(() => [props.fade, props.fadeDistance] as const, () => {
+      scheduleUpdate();
+    });
 
     function onScroll() {
       if (!viewportRef.value) return;

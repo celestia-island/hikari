@@ -66,12 +66,43 @@
    composite pair stays on the base rule: with one layer it is a no-op
    (there is no layer below to composite against), so the axis rules only
    swap the layer list. Dock fades ride the same vars — they feed the
-   vertical gradient, so they land on vertical and two-axis containers. */
-.hk-scroll-container:is([data-fade="true"], [data-dock-fade]) > .hk-scroll-container-viewport {
+   vertical gradient, so they land on vertical and two-axis containers.
+
+   PROGRESSIVE DEPTH (2026-11-06 revision) — two halves:
+
+   1. The state-driven vars moved back to the ROOT. #902 (2026-10-29)
+      added the four zero defaults to the VIEWPORT base rule below, and a
+      directly declared custom property beats any inherited value, so the
+      viewport's own 0px shadowed every state rule's band — measured in a
+      real engine (resolved mask stops `rgb(0,0,0) 0px … rgb(0,0,0)
+      100%`): no edge ever faded, every faded strip hard-clipped, and the
+      dock fades died with it. The defaults live on the root here (same
+      element the state rules write), where a consumer override on the
+      container still wins by the usual specificity order.
+
+   2. Each lit band is the fade size scaled by a live strength the
+      component publishes while `fade` is on: the hidden-content depth
+      past that edge (px) saturates over `fadeDistance` (default 96px)
+      into a 0..1 number mirrored as --hk-scroll-fade-strength-<side>.
+      Pull the strip and the trailing edge's fade grows from a hard cut
+      through a hint to the full band; scroll back and it recedes. Edges
+      with nothing hidden read strength 1 (the pre-JS / dock-fade
+      fallback), which with a 0px band contributes nothing. Physical-side
+      names: the component normalizes RTL scroll signs, so the LTR and
+      RTL state rules consume the same vars and only the width swap below
+      stays direction-aware. */
+.hk-scroll-container:is([data-fade="true"], [data-dock-fade]) {
   --hk-scroll-fade-top: 0px;
   --hk-scroll-fade-right: 0px;
   --hk-scroll-fade-bottom: 0px;
   --hk-scroll-fade-left: 0px;
+  --hk-scroll-fade-strength-top: 1;
+  --hk-scroll-fade-strength-right: 1;
+  --hk-scroll-fade-strength-bottom: 1;
+  --hk-scroll-fade-strength-left: 1;
+}
+
+.hk-scroll-container:is([data-fade="true"], [data-dock-fade]) > .hk-scroll-container-viewport {
   --hk-scroll-fade-layers:
     linear-gradient(
       to bottom,
@@ -122,49 +153,57 @@
   --hk-scroll-fade-size: var(--space-24);
 }
 
+/* ── Lit bands: fade size scaled by the published strength ─────────
+   `calc(length * number)` keeps the band arithmetic in CSS (consumer
+   --hk-scroll-fade-size overrides keep working; the JS side publishes
+   only the unitless strength). An edge with nothing hidden keeps the
+   default strength 1 AND a 0px band — no fade either way. */
+
 /* Vertical axis — the half the old implementation never had. */
 .hk-scroll-container[data-fade="true"][data-v-overflow="start"] {
-  --hk-scroll-fade-top: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-top: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-top, 1));
 }
 
 .hk-scroll-container[data-fade="true"][data-v-overflow="end"] {
-  --hk-scroll-fade-bottom: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-bottom: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-bottom, 1));
 }
 
 .hk-scroll-container[data-fade="true"][data-v-overflow="both"] {
-  --hk-scroll-fade-top: var(--hk-scroll-fade-size);
-  --hk-scroll-fade-bottom: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-top: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-top, 1));
+  --hk-scroll-fade-bottom: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-bottom, 1));
 }
 
 /* Horizontal axis (LTR: inline start = left). */
 .hk-scroll-container[data-fade="true"][data-h-overflow="start"] {
-  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-left: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-left, 1));
 }
 
 .hk-scroll-container[data-fade="true"][data-h-overflow="end"] {
-  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
 .hk-scroll-container[data-fade="true"][data-h-overflow="both"] {
-  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
-  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-left: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-left, 1));
+  --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
 /* RTL: the inline start edge is the right side, so the horizontal vars
-   swap instead of the mask (the mask itself is direction-neutral). */
+   swap instead of the mask (the mask itself is direction-neutral). The
+   strengths are published per PHYSICAL side (the component normalizes
+   RTL scroll signs), so the swap moves only the band slots. */
 [dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="start"] {
   --hk-scroll-fade-left: 0px;
-  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
 [dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="end"] {
   --hk-scroll-fade-right: 0px;
-  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-left: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-left, 1));
 }
 
 [dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="both"] {
-  --hk-scroll-fade-left: var(--hk-scroll-fade-size);
-  --hk-scroll-fade-right: var(--hk-scroll-fade-size);
+  --hk-scroll-fade-left: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-left, 1));
+  --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
 /* ── Anchored docks (dockTop / dockBottom slots) ─────────────────

@@ -274,36 +274,10 @@
 }
 
 .hk-selection-grid-action {
+  /* Wave B2: per-item actions are STANDARD icon buttons (S24/ghost) — box,
+     ink, hover and focus come from the component; the seat keeps the grid's
+     flex slot. */
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
-  color: var(--hi-color-text-tertiary, #8b949e);
-  cursor: pointer;
-  transition:
-    color 200ms ease,
-    background 200ms ease;
-
-  &:hover:not(:disabled) {
-    color: rgb(var(--color-text));
-    background: rgb(var(--color-text) / 8%);
-  }
-
-  &:focus-visible {
-    outline: 2px solid rgb(var(--color-primary));
-    outline-offset: -2px;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
 }
 
 /* ── Optional selected edge ──────────────────────────────────────────────

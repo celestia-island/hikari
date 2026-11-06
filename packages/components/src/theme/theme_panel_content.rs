@@ -90,6 +90,7 @@
 use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::layout::divider::{Divider, DividerProps, DividerSpacing};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -571,14 +572,21 @@ pub fn ThemePanelContent(props: ThemePanelContentProps) -> Element {
                             if let Some(tail) = trailing {
                                 span { class: "s-theme-item-trailing", {tail} }
                             } else if custom {
-                                button {
-                                    class: "s-theme-item-delete",
-                                    "type": "button",
-                                    title: delete_title,
-                                    onclick: delete_press,
-                                    // No trash glyph in the shipped MDI set
-                                    // (see the header delta).
-                                    Icon { icon: MdiIcon::Close, size: 12 }
+                                // Wave B2/B3: standard icon button; the
+                                // title-only a11y gap is closed (the label
+                                // now rides aria-label too).
+                                IconButton {
+                                    size: IconButtonSize::S24,
+                                    variant: IconButtonVariant::Ghost,
+                                    title: Some(delete_title.clone()),
+                                    aria_label: Some(delete_title.clone()),
+                                    class: "s-theme-item-delete".to_string(),
+                                    onclick: Some(EventHandler::new(move |event: MouseEvent| {
+                                        delete_press(event);
+                                    })),
+                                    children: rsx! {
+                                        Icon { icon: MdiIcon::Close, size: 12 }
+                                    },
                                 }
                             }
                         }
@@ -804,7 +812,17 @@ mod tests {
         assert!(html.contains(r#"class="s-theme-item-name""#), "{html}");
         assert!(html.contains(r#"data-active="""#), "{html}");
         assert!(html.contains(r#"data-custom="""#), "{html}");
-        assert!(html.contains(r#"class="s-theme-item-delete""#), "{html}");
+        // Wave B2/B3: the delete is the STANDARD icon button (S24/ghost +
+        // seat = the old 1.5rem box), and the label now rides aria-label too
+        // (it was title-only).
+        assert!(
+            html.contains(
+                r#"class="hk-icon-button hk-icon-button-24 hk-icon-button-ghost s-theme-item-delete""#,
+            ),
+            "{html}"
+        );
+        assert!(html.contains(r#"aria-label="Delete theme""#), "{html}");
+        assert!(html.contains(r#"title="Delete theme""#), "{html}");
         assert!(html.contains("Delete theme"), "{html}");
         // The customize entry with the palette glyph cell.
         assert!(html.contains("s-theme-item-customize"), "{html}");

@@ -1,3 +1,5 @@
+import HkIconButton from "./HkIconButton";
+
 import { computed, defineComponent, nextTick, ref, watch, type PropType } from "vue";
 import { Plus, X } from "lucide-vue-next";
 
@@ -325,18 +327,19 @@ export default defineComponent({
                   {ops.map((op) => {
                     const glyph = glyphOpFor(kind, op);
                     return (
-                    <button
+                    <HkIconButton
                       key={op}
-                      type="button"
                       class="hk-filter-panel-op"
+                      size={28}
+                      variant="ghost"
                       aria-pressed={cond.op === op}
                       aria-label={t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback)}
-                      title={t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback)}
+                      {...{ title: t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback) }}
                       disabled={props.disabled || !field}
                       onClick={() => emitCondition(index, { op })}
                     >
-                      <HkFilterOperatorIcon op={glyph} />
-                    </button>
+                      {{ icon: () => <HkFilterOperatorIcon op={glyph} /> }}
+                    </HkIconButton>
                     );
                   })}
                 </div>
@@ -394,19 +397,20 @@ export default defineComponent({
                    * page refetches without it). Sibling conditions on
                    * the same field survive — index-targeted removal,
                    * never key-targeted. */}
-                  <button
-                    type="button"
+                  <HkIconButton
                     class="hk-filter-panel-remove"
+                    size={24}
+                    variant="ghost"
                     aria-label={t("hikari::filterPanel.removeCondition", "Remove condition")}
-                    title={t("hikari::filterPanel.removeCondition", "Remove condition")}
+                    {...{ title: t("hikari::filterPanel.removeCondition", "Remove condition") }}
                     disabled={props.disabled}
                     onClick={() => {
                       const next = props.modelValue.filter((_, i) => i !== index);
                       emit("update:modelValue", next);
                     }}
                   >
-                    <X size={14} aria-hidden="true" />
-                  </button>
+                    {{ icon: () => <X aria-hidden="true" /> }}
+                  </HkIconButton>
                 </div>
               </div>
             );

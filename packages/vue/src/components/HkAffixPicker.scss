@@ -181,6 +181,13 @@
 }
 
 .hk-affix-tag-x {
+  /* Wave B2 hybrid decision: the × keeps its own onmousedown
+     prevent-default (tapping must not steal focus or start a selection) and
+     its 1.5rem field density, so it deliberately stays a BARE button — the
+     contract is pinned Rust-side
+     (`affix_tag_close_stays_a_bare_button_by_contract`). What standardizes
+     is the INK: it consumes the icon-button channel vars (current values as
+     first fallbacks = zero visual change). */
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -191,15 +198,21 @@
   border: 0;
   border-radius: var(--radius-full, 999px);
   background: transparent;
-  color: rgb(var(--color-muted));
+  color: var(--hi-icon-button-icon-color, rgb(var(--color-muted)));
   cursor: pointer;
   appearance: none;
   transition: color 0.12s ease, background 0.12s ease;
 
   &:hover,
   &:focus-visible {
-    color: rgb(var(--color-error, 247 118 142));
-    background: rgb(var(--color-error, 247 118 142) / 12%);
+    color: var(
+      --hi-icon-button-icon-color-active,
+      rgb(var(--color-error, 247 118 142))
+    );
+    background: var(
+      --hi-icon-button-bg-hover,
+      rgb(var(--color-error, 247 118 142) / 12%)
+    );
   }
 }
 

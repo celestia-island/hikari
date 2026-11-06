@@ -1,3 +1,5 @@
+import HkIconButton from "./HkIconButton";
+
 import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
 import { Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
 import {
@@ -292,14 +294,16 @@ export const HkThemePanelContent = defineComponent({
                 {trailingSlot ? (
                   <span class="s-theme-item-trailing">{trailingSlot(scope)}</span>
                 ) : th.isCustom ? (
-                  <button
-                    type="button"
+                  <HkIconButton
                     class="s-theme-item-delete"
-                    title={t("hikari::theme.deleteTheme")}
+                    size={24}
+                    variant="ghost"
+                    aria-label={t("hikari::theme.deleteTheme")}
+                    {...{ title: t("hikari::theme.deleteTheme") }}
                     onClick={() => removeCustomTheme(th.id)}
                   >
-                    <Trash2 size={12} />
-                  </button>
+                    {{ icon: () => <Trash2 aria-hidden="true" /> }}
+                  </HkIconButton>
                 ) : null}
               </div>
             );

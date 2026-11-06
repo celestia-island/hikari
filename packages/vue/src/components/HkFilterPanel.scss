@@ -83,33 +83,23 @@
 }
 
 .hk-filter-panel-op {
+  /* Wave B2: the operator toggles are STANDARD icon buttons at the S28 rung
+     (the old 1.75rem box). The pressed operator's persistent primary tint
+     rides the seat's channel overrides, scoped to [aria-pressed="true"];
+     font-weight stays a seat concern (the component carries no text). */
   flex: 0 0 auto;
   scroll-snap-align: center;
-  min-width: 1.75rem;
-  height: 1.75rem;
-  padding: 0 var(--space-6, 0.375rem);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  background: transparent;
-  color: rgb(var(--color-muted, var(--color-text-secondary)));
-  font-size: var(--text-sm, 0.875rem);
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
 
-.hk-filter-panel-op:hover {
-  background: rgb(var(--color-primary) / 12%);
-  color: rgb(var(--color-text));
-}
-
-.hk-filter-panel-op[aria-pressed="true"] {
-  background: rgb(var(--color-primary) / 18%);
-  color: rgb(var(--color-primary));
-  font-weight: 700;
+  &[aria-pressed="true"] {
+    --hi-icon-button-bg: rgb(var(--color-primary) / 18%);
+    --hi-icon-button-icon-color: rgb(var(--color-primary));
+    --hi-icon-button-icon-color-active: rgb(var(--color-primary));
+    /* Keep the primary tint THROUGH hover (the old file-order cascade
+       did): without this the pressed op falls back to the ghost gray-20
+       hover wash and reads un-pressed under the pointer. */
+    --hi-icon-button-bg-hover: rgb(var(--color-primary) / 18%);
+    font-weight: 700;
+  }
 }
 
 .hk-filter-panel-op:disabled {
@@ -133,28 +123,16 @@
 }
 
 .hk-filter-panel-remove {
+  /* Wave B2: the condition remove is the STANDARD icon button (S24 = the
+     old 1.5rem box). The error-tinted hover rides the channel vars — ink
+     hover-scoped (the token-input lesson: a rest-scoped ink var reads at
+     rest); the standard layer owns disabled presentation. */
   flex: 0 0 auto;
-  width: 1.5rem;
-  height: 1.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  background: transparent;
-  color: rgb(var(--color-muted, var(--color-text-secondary)));
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
+  --hi-icon-button-bg-hover: rgb(var(--color-error) / 12%);
 
-.hk-filter-panel-remove:hover {
-  background: rgb(var(--color-error) / 12%);
-  color: rgb(var(--color-error));
-}
-
-.hk-filter-panel-remove:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  &:hover {
+    --hi-icon-button-icon-color: rgb(var(--color-error));
+  }
 }
 
 /* The growth verb: parked in the OPERATOR COLUMN (grid-column 2), so it

@@ -2503,4 +2503,36 @@ mod tests {
             "scss compilation failed for the mirrored password sheet"
         );
     }
+
+    /// Wave B2/B3 hybrid decision, PINNED: the reveal eye is a PRESS-AND-HOLD
+    /// control (onmousedown/onmouseup/onkeydown/onkeyup drive the revealing
+    /// state) — that interaction contract is exactly what HkIconButton does
+    /// not carry, so the eye deliberately stays a BARE button styled through
+    /// the standard channel vars. Migrating it would turn hold-to-reveal into
+    /// a click toggle.
+    #[test]
+    fn pwd_eye_stays_a_bare_button_by_contract() {
+        let html = PasswordSurface(PasswordSurfaceProps {
+            value: "hunter2".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains(r#"class="hk-pwd-eye""#), "{html}");
+        assert!(html.contains(r#"type="button""#), "{html}");
+        assert!(!html.contains("hk-icon-button"), "{html}");
+        // The press-and-hold wiring lives in the SOURCE (events are runtime-
+        // wired, not serialized): all four phases must stay on the eye.
+        let src = include_str!("password_surface.rs");
+        for wiring in [
+            "onmousedown: eye_press",
+            "onmouseup: eye_release",
+            "onkeydown: eye_key",
+            "onkeyup: eye_key_release",
+        ] {
+            assert!(
+                src.contains(wiring),
+                "the eye's hold-to-reveal wiring `{wiring}` must stay"
+            );
+        }
+    }
 }

@@ -4,14 +4,11 @@ on:
   workflow_dispatch:
   push:
     branches: [master]
-  pull_request:
-    types: [opened, reopened, ready_for_review, synchronize]
-    paths:
-      - '.github/workflows/coverage.yml'
-      - 'packages/**/*'
-      - 'examples/**/*'
-      - 'Cargo.toml'
-      - 'justfile'
+  # NO `pull_request:` — llvm-cov EXECUTES the whole workspace suite under
+  # instrumentation (nightly), which was a second full-suite run per PR on top
+  # of `Tests`. Coverage is a master-quality signal, not a PR gate: the same
+  # assertions already run once per PR on stable in the `Tests` workflow, and the
+  # farm's 4–6 worker slots queue 38–77 minutes for the work that does run.
 
 concurrency:
   group: coverage-${{ github.ref }}
@@ -19,12 +16,9 @@ concurrency:
 
 jobs:
   coverage:
-    # Fork pull requests pay for their own CI: this job is heavy (it compiles,
-    # builds, tests or audits) and a fork's run would spend shared runner time on
-    # untrusted content. The required commit-lint and PR-title checks are the
-    # deliberate exception: they are sub-minute, execute no pull request code, and
-    # hold no secrets.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Master-only by design (see `on:`): llvm-cov EXECUTES the workspace suite
+    # under instrumentation, so a per-PR run would be a second full-suite
+    # execution of the same tree.
     name: Test Coverage
     runs-on: [self-hosted, linux, x64, local]
     timeout-minutes: 30

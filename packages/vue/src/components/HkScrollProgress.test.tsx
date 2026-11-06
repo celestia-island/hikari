@@ -439,11 +439,11 @@ describe("HkAdminTablePage scroll-progress registration", () => {
     rects.push(vi.spyOn(viewport, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, right: 300, bottom: 400, width: 300, height: 400, x: 0, y: 0,
     } as DOMRect));
-    // The list root is AdminTablePage's table-card wrapper (the anchor
-    // class the page ships for exactly this geometry contract).
+    // The list root is HkTable's own host element — the table
+    // self-registers (the page only forwards the total).
     const card = container.querySelector("table");
     expect(card).not.toBeNull();
-    const cardHost = container.querySelector<HTMLElement>(".hk-admin-table-page-tablecard")!;
+    const cardHost = container.querySelector<HTMLElement>(".hk-table-host")!;
     expect(cardHost.contains(card!)).toBe(true);
     rects.push(vi.spyOn(cardHost, "getBoundingClientRect").mockReturnValue({
       left: 0, top: -200, right: 300, bottom: 3800, width: 300, height: 4000, x: 0, y: -200,

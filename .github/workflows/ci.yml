@@ -9,10 +9,6 @@ name: Run Tests
 # tree only adds queue depth.
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    types: [opened, reopened, ready_for_review, synchronize]
   workflow_dispatch:
 
 concurrency:

@@ -17,16 +17,6 @@ name: Web Tests
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ master ]
-    paths:
-      - "packages/vue/**"
-      - ".github/workflows/ci-hosted.yml"
-  pull_request:
-    types: [opened, reopened, ready_for_review, synchronize]
-    paths:
-      - "packages/vue/**"
-      - ".github/workflows/ci-hosted.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

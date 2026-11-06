@@ -2,8 +2,6 @@ name: Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
   # NO `pull_request:` — llvm-cov EXECUTES the whole workspace suite under
   # instrumentation (nightly), which was a second full-suite run per PR on top
   # of `Tests`. Coverage is a master-quality signal, not a PR gate: the same

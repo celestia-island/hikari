@@ -6,8 +6,6 @@ name: CNB Overflow Lane
 # result lane. Architecture record: celestia-devtools PR #116 / #117.
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
   workflow_dispatch:
     inputs:
       target_sha:

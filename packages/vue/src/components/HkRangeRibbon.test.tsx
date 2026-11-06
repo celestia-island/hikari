@@ -1149,6 +1149,23 @@ describe("HkRangeRibbon a11y and i18n", () => {
     expect(host.windowChange).not.toHaveBeenCalled();
     expect(laneSegments(host.root)).toHaveLength(4);
   });
+
+  it("does not advertise the range affordance when the window is disabled", () => {
+    const disabled = mountRibbon({ windowEnabled: false, window: null });
+    const disabledStrip = disabled.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    expect(disabledStrip.hasAttribute("title"), "no drag hint on a disabled strip").toBe(false);
+    expect(disabledStrip.hasAttribute("aria-describedby"), "nothing to describe").toBe(false);
+    expect(disabled.querySelector(".hk-range-ribbon-hint"), "no sr-only hint").toBeNull();
+
+    // The enabled ribbon still carries all three.
+    const enabled = mountRibbon({ window: null });
+    const enabledStrip = enabled.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    expect(enabledStrip.getAttribute("title")).toContain("Drag to select a range");
+    const describedBy = enabledStrip.getAttribute("aria-describedby");
+    expect(describedBy, "the enabled strip describes its keyboard contract").toBeTruthy();
+    expect(document.getElementById(describedBy!), "the hint element exists").toBeTruthy();
+    expect(enabled.querySelector(".hk-range-ribbon-hint")).toBeTruthy();
+  });
 });
 
 // ── Controlled / uncontrolled switch ────────────────────────────────────

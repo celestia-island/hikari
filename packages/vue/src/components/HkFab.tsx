@@ -1,3 +1,5 @@
+import { ChevronDown } from "lucide-vue-next";
+
 import {
   defineComponent,
   h,
@@ -141,19 +143,9 @@ export default defineComponent({
             : RegistryIcon
               ? h(RegistryIcon)
               : (
-                // Inline chevron-down fallback (kept local to avoid
-                // pulling the lucide symbol through a non-registry path).
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                // Wave B4: the hand-drawn fallback retired — the standard
+                // lucide component, same channel as every other control.
+                <ChevronDown aria-hidden="true" />
               )}
         </span>
       );

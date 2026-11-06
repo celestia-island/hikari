@@ -1,3 +1,5 @@
+import { Check, ChevronUp, GripVertical } from "lucide-vue-next";
+
 import { computed, defineComponent, inject, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
@@ -770,17 +772,7 @@ export default defineComponent({
                       ]}
                     >
                       {allChecked.value && (
-                        <svg
-                          class="hk-table-checkbox-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="3"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
+                        <Check class="hk-table-checkbox-icon" stroke-width={3} />
                       )}
                     </span>
                   </label>
@@ -802,20 +794,10 @@ export default defineComponent({
                   >
                     <span class="hk-table-header-label">{col.title}</span>
                     {canSort && sortKey.value === col.key && (
-                      <svg
-                        class={[
+                      <ChevronUp class={[
                           "hk-table-sort-icon",
                           sortDirection.value === "desc" ? "hk-table-sort-icon-desc" : "",
-                        ]}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="18 15 12 9 6 15" />
-                      </svg>
+                        ]} />
                     )}
                   </th>
                 );
@@ -874,14 +856,7 @@ export default defineComponent({
                           onPointerdown={(e: PointerEvent) => onHandlePointerdown(e, index)}
                           onKeydown={(e: KeyboardEvent) => onHandleKeydown(e, index)}
                         >
-                          <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true">
-                            <circle cx="3.5" cy="3" r="1.2" />
-                            <circle cx="8.5" cy="3" r="1.2" />
-                            <circle cx="3.5" cy="7" r="1.2" />
-                            <circle cx="8.5" cy="7" r="1.2" />
-                            <circle cx="3.5" cy="11" r="1.2" />
-                            <circle cx="8.5" cy="11" r="1.2" />
-                          </svg>
+                          <GripVertical size={14} aria-hidden="true" />
                         </span>
                       </td>
                     )}
@@ -902,17 +877,7 @@ export default defineComponent({
                             ]}
                           >
                             {selectedRowKeys.value.has(rowKey) && (
-                              <svg
-                                class="hk-table-checkbox-icon"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="3"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              >
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
+                              <Check class="hk-table-checkbox-icon" stroke-width={3} />
                             )}
                           </span>
                         </label>

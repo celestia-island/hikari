@@ -1,3 +1,5 @@
+import { ChevronDown } from "lucide-vue-next";
+
 import { defineComponent, ref, type PropType } from "vue";
 
 import HkLocalePickerPopup from "./HkLocalePickerPopup";
@@ -50,14 +52,7 @@ export const HkLocalePicker = defineComponent({
           onClick={() => (open.value = !open.value)}
         >
           {props.currentLocale.toUpperCase()}
-          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-            <path
-              d="M2 3.5l3 3 3-3"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.2"
-            />
-          </svg>
+          <ChevronDown size={10} aria-hidden="true" />
         </button>
         <HkLocalePickerPopup
           open={open.value}

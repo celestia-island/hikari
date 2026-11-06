@@ -1,3 +1,5 @@
+import { ChevronRight } from "lucide-vue-next";
+
 import {
   computed,
   defineComponent,
@@ -626,18 +628,7 @@ export default defineComponent({
         .join(" ");
 
     const separator = () => (
-      <svg
-        class="hk-modal-breadcrumb-sep"
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-      >
-        <polyline points="9 18 15 12 9 6" />
-      </svg>
+      <ChevronRight class="hk-modal-breadcrumb-sep" size={12} />
     );
 
     return () =>

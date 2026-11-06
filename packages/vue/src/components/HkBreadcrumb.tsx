@@ -1,3 +1,5 @@
+import { ChevronRight } from "lucide-vue-next";
+
 import { computed, defineComponent, type PropType } from "vue";
 import { safeHref } from "../utils/safeHref";
 import { useI18n } from "../i18n/context";
@@ -26,9 +28,7 @@ export default defineComponent({
               )}
               {index < props.items.length - 1 && (
                 <span class="hk-breadcrumb-separator">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                  <ChevronRight />
                 </span>
               )}
             </li>

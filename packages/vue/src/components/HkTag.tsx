@@ -1,4 +1,6 @@
 import { X } from "lucide-vue-next";
+
+import HkIconButton from "./HkIconButton";
 import { computed, defineComponent, type PropType } from "vue";
 
 import "./HkTag.scss";
@@ -38,14 +40,15 @@ export default defineComponent({
         )}
         {slots.default?.()}
         {props.closable && (
-          <button
-            type="button"
+          <HkIconButton
             class="hk-tag-close"
+            size={16}
+            variant="ghost"
             aria-label={props.closeLabel}
             onClick={() => emit("close")}
           >
-            <X size={12} />
-          </button>
+            {{ icon: () => <X aria-hidden="true" /> }}
+          </HkIconButton>
         )}
       </span>
     );

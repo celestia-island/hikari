@@ -1,3 +1,7 @@
+import { X } from "lucide-vue-next";
+
+import HkIconButton from "./HkIconButton";
+
 import { computed, defineComponent, ref, useId, watch } from "vue";
 
 import { useI18n } from "../i18n/context";
@@ -170,26 +174,15 @@ export default defineComponent({
               </span>
             </button>
             {files.length > 0 && !props.disabled && (
-              <button
-                type="button"
+              <HkIconButton
                 class="hk-file-clear"
+                size={24}
+                variant="ghost"
                 aria-label={t("hikari::filePicker.fieldClear", "Clear selection")}
                 onClick={clear}
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  width="14"
-                  height="14"
-                  aria-hidden="true"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+                {{ icon: () => <X aria-hidden="true" /> }}
+              </HkIconButton>
             )}
             {props.mode === "local" && (
               <input

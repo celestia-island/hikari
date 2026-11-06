@@ -1838,4 +1838,26 @@ mod tests {
         // The retired legacy markup family must not come back.
         assert!(!css.contains(".hk-date-picker"), "legacy classes retired");
     }
+
+    /// Wave B1 hybrid decision, PINNED (see search_input's twin): the date
+    /// clear is tabindex=-1 with its own keydown stop-propagation (a stray
+    /// keypress must not reach the field's picker key handler), so it
+    /// deliberately stays a BARE button styled through the standard channel
+    /// vars. Migrating it onto HkIconButton changes a keyboard contract.
+    #[test]
+    fn date_clear_stays_a_bare_button_by_contract() {
+        let html = DatePicker(DatePickerProps {
+            model_value: Some("2026-11-06".to_string()),
+            clearable: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains(r#"class="hk-dp-clear""#),
+            "the clear must stay a bare button (see the wave-B1 hybrid note): {html}"
+        );
+        assert!(html.contains(r#"tabindex="-1""#), "{html}");
+        assert!(html.contains(r#"type="button""#), "{html}");
+        assert!(!html.contains("hk-icon-button"), "{html}");
+    }
 }

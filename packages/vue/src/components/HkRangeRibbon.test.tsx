@@ -850,6 +850,27 @@ describe("HkRangeRibbon reset", () => {
     expect(second.defaultPrevented).toBe(true);
   });
 
+  it("cancels an in-flight brush with Escape and consumes the key", async () => {
+    const host = mountHost(null);
+    const { strip, x } = stubStrip(host.root);
+    // Pointer down and stay inside the brush slop: no window exists yet.
+    pointer("pointerdown", x(0.5), strip);
+    pointer("pointermove", x(0.5) + 2, strip); // 2px < the 3px mouse slop
+    await nextTick();
+    expect(host.windowChange, "still inside the slop").not.toHaveBeenCalled();
+
+    const escape = keydown(strip, "Escape");
+    await nextTick();
+    expect(escape.defaultPrevented, "cancelling a live gesture consumes the key").toBe(true);
+    expect(host.windowChange, "cancelling is not a window change").not.toHaveBeenCalled();
+
+    // PROBE: the gesture is gone — a later move must not revive the brush.
+    pointer("pointermove", x(0.8), strip);
+    await nextTick();
+    expect(host.windowChange, "no brush may be revived after the cancel").not.toHaveBeenCalled();
+    expect(host.root.hasAttribute("data-windowed")).toBe(false);
+  });
+
   it("drops an in-flight brush when a reset interrupts it", async () => {
     const host = mountHost(null);
     const { strip, x } = stubStrip(host.root);
@@ -1155,6 +1176,38 @@ describe("HkRangeRibbon a11y and i18n", () => {
     expect(hint!.textContent).toContain("Resize window");
   });
 
+  it("announces a narrow window with a decimal so it differs from the full domain", () => {
+    const full = mountRibbon({ window: null });
+    expect(
+      full.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.getAttribute("aria-valuetext"),
+      "the full domain keeps the classic integer text",
+    ).toBe("0% – 100%");
+
+    const narrow = mountRibbon({ window: [0.004, 0.996] });
+    const strip = narrow.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    const text = strip.getAttribute("aria-valuetext")!;
+    expect(text, "a fractional window keeps one decimal").toContain("0.4%");
+    expect(text).toContain("99.6%");
+    expect(text, "rounding to integers would be indistinguishable").not.toBe("0% – 100%");
+    expect(strip.getAttribute("aria-valuenow"), "valuenow uses the same precision").toBe("0.4");
+
+    const start = narrow.querySelector<HTMLElement>('[data-edge="start"]')!;
+    const end = narrow.querySelector<HTMLElement>('[data-edge="end"]')!;
+    expect(start.getAttribute("aria-valuenow")).toBe("0.4");
+    expect(start.getAttribute("aria-valuetext")).toBe("0.4%");
+    expect(end.getAttribute("aria-valuetext")).toBe("99.6%");
+    // The handle bounds share the precision: at a razor-narrow window an
+    // integer-rounded max (97) would contradict a decimal valuenow (97.5).
+    expect(start.getAttribute("aria-valuemax"), "start max keeps the decimal").toBe("97.6");
+    expect(end.getAttribute("aria-valuemin"), "end min keeps the decimal").toBe("2.4");
+
+    // An integer window keeps the integer text the earlier pins assert.
+    const integer = mountRibbon({ window: [0.2, 0.6] });
+    expect(
+      integer.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.getAttribute("aria-valuetext"),
+    ).toBe("20% – 60%");
+  });
+
   it("localizes the labels and hint from the active locale bundle", async () => {
     await setLocale("ja");
     const root = mountRibbon({ window: [0.2, 0.6] });
@@ -1341,8 +1394,12 @@ describe("HkRangeRibbon stylesheet contract", () => {
     );
     expect(declaration(handle, "cursor")).toBe("ew-resize");
     expect(handle).toContain("touch-action: none");
+    // Require the UNPREFIXED declaration at a declaration boundary: the old
+    // /user-select:\s*none/ also matched "-webkit-user-select: none", so a
+    // hypothetical polyfill that emitted only the prefixed property would
+    // satisfy the pin while the standard property was gone.
     expect(handle, "a handle drag cannot start a text selection").toMatch(
-      /user-select:\s*none/,
+      /(?:^|[;{])\s*user-select\s*:\s*none/,
     );
 
     // A clipped 2px sliver must still be visible.

@@ -87,6 +87,21 @@ function clamp01(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;
 }
 
+/** Percent with adaptive precision. An integer percentage stays an integer —
+ *  the full domain must keep announcing the classic "0% – 100%" — while a
+ *  fractional one keeps a decimal, so a narrow window ("0.4% – 99.6%") is
+ *  distinguishable from the full domain instead of rounding to the same
+ *  text. */
+function percentNumber(fraction: number): number {
+  const percentage = fraction * 100;
+  const rounded = Math.round(percentage);
+  return Math.abs(percentage - rounded) < 1e-9 ? rounded : Number(percentage.toFixed(1));
+}
+
+function percentText(fraction: number): string {
+  return `${percentNumber(fraction)}%`;
+}
+
 /** Inline left/width pair — percentages are deterministic in tests and do
  *  not depend on layout measurement for rendering. */
 function percent(fraction: number): string {
@@ -166,8 +181,10 @@ function intersectsWindow(placed: PlacedSegment, win: WindowRange): boolean {
 }
 
 /** Clamp every segment into the domain; drop NaN/unusable entries (a broken
- *  row must not take the whole ribbon down). A zero-length segment is kept —
- *  it renders as a tick thanks to the sheet's min-width. */
+ *  row must not take the whole ribbon down). A zero-length segment is kept:
+ *  the LANE sheet gives it a 2px min-width floor under `box-sizing:
+ *  border-box`, so a lane tick is exactly that 2px (the 1px borders sit
+ *  inside it); the overview twin draws 1px. */
 function placeSegments(segments: RibbonSegment[] | undefined): PlacedSegment[] {
   if (!Array.isArray(segments)) return [];
   const placed: PlacedSegment[] = [];
@@ -426,7 +443,12 @@ export default defineComponent({
       if (!props.windowEnabled || gesture) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
       if (!activeWindow.value) return;
-      // The handle sits over the strip: never start a brush underneath it.
+      // The handles are SIBLINGS of the strip, not children of it, so this
+      // press never reaches the strip's brush handler in the first place.
+      // The stopPropagation below keeps the press out of BUBBLE-phase
+      // listeners in the consuming host — none exist in-package today (every
+      // in-package document-level pointerdown listener is capture-phase and
+      // still sees the press).
       event.stopPropagation();
       gesture = { kind: "edge", pointerId: event.pointerId, edge };
       (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
@@ -494,10 +516,17 @@ export default defineComponent({
     function onRootKeyDown(event: KeyboardEvent): void {
       if (!props.windowEnabled) return;
       // Escape resets from anywhere inside the ribbon — but only a REAL reset
-      // consumes the key: with no window, Escape must still reach the host
-      // (a dialog closes on it while focus sits in here).
+      // consumes the key: with no window AND no live gesture, Escape still
+      // reaches the host (a dialog closes on it while focus sits in here).
       if (event.key === "Escape") {
-        if (resetWindow()) event.preventDefault();
+        // An in-flight drag is a real, unsaved gesture: cancel it even before
+        // the first commit (a brush still inside the slop has produced no
+        // window yet, so the reset path alone would find nothing to do).
+        // Cancelling consumes the key on its own; with NO gesture and no
+        // window the key is still handed back to the host.
+        const hadGesture = gesture !== null;
+        gesture = null;
+        if (resetWindow() || hadGesture) event.preventDefault();
         return;
       }
       if (event.key !== "Home") return;
@@ -606,10 +635,8 @@ export default defineComponent({
           aria-disabled={props.windowEnabled ? undefined : "true"}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={Math.round((win ? win[0] : 0) * 100)}
-          aria-valuetext={`${Math.round((win ? win[0] : 0) * 100)}% – ${Math.round(
-            (win ? win[1] : 1) * 100,
-          )}%`}
+          aria-valuenow={percentNumber(win ? win[0] : 0)}
+          aria-valuetext={`${percentText(win ? win[0] : 0)} – ${percentText(win ? win[1] : 1)}`}
           title={
             props.windowEnabled
               ? t(
@@ -695,9 +722,9 @@ export default defineComponent({
                     tabindex={0}
                     aria-label={t("hikari::ribbon.windowStart", "Window start")}
                     aria-valuemin={0}
-                    aria-valuemax={Math.round((win[1] - minWidth.value) * 100)}
-                    aria-valuenow={Math.round(win[0] * 100)}
-                    aria-valuetext={`${Math.round(win[0] * 100)}%`}
+                    aria-valuemax={percentNumber(win[1] - minWidth.value)}
+                    aria-valuenow={percentNumber(win[0])}
+                    aria-valuetext={percentText(win[0])}
                     style={{ left: percent(win[0]) }}
                     onPointerdown={(event: PointerEvent) => onHandlePointerDown("start", event)}
                     onKeydown={(event: KeyboardEvent) => onHandleKeyDown("start", event)}
@@ -709,10 +736,10 @@ export default defineComponent({
                     aria-orientation="horizontal"
                     tabindex={0}
                     aria-label={t("hikari::ribbon.windowEnd", "Window end")}
-                    aria-valuemin={Math.round((win[0] + minWidth.value) * 100)}
+                    aria-valuemin={percentNumber(win[0] + minWidth.value)}
                     aria-valuemax={100}
-                    aria-valuenow={Math.round(win[1] * 100)}
-                    aria-valuetext={`${Math.round(win[1] * 100)}%`}
+                    aria-valuenow={percentNumber(win[1])}
+                    aria-valuetext={percentText(win[1])}
                     style={{ left: percent(win[1]) }}
                     onPointerdown={(event: PointerEvent) => onHandlePointerDown("end", event)}
                     onKeydown={(event: KeyboardEvent) => onHandleKeyDown("end", event)}

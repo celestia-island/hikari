@@ -1466,7 +1466,7 @@ describe("HkRangeRibbon stylesheet contract", () => {
   it("shares one label column between the overview and the lanes", () => {
     expect(
       declaration(ruleBody(css, ".hk-range-ribbon"), "--hk-range-ribbon-label-col"),
-      "the root declares the shared label column",
+      "the root declares the shared fallback column (JS publishes the measured px on top)",
     ).toBe("minmax(48px, 84px)");
     const overviewColumns = declaration(
       ruleBody(css, ".hk-range-ribbon-overview"),
@@ -1493,5 +1493,58 @@ describe("HkRangeRibbon stylesheet contract", () => {
     expect(declaration(endAnchor, "left")).toBe("auto");
     expect(declaration(endAnchor, "right")).toBe("0");
     expect(declaration(endAnchor, "transform")).toBe("none");
+  });
+
+  // Wave (2026-11-06 raw-records five): MINIMAL MODE - the bare dual-handle
+  // bar. Contract: data-minimal on the root, strip present + windowed at
+  // the full domain, ZERO lane chrome (no lanes block, no lane rows, no
+  // overview minimap, no gutter probe), and the standard mode keeps its
+  // lane chrome + alignment probe.
+  it("minimal mode renders the bare dual-handle bar (no lane chrome)", () => {
+    const root = mountRibbon({ minimal: true });
+    expect(root.getAttribute("data-minimal")).toBe("true");
+    const stripEl = root.querySelector(".hk-range-ribbon-strip")!;
+    expect(stripEl).not.toBeNull();
+    // The strip carries the slider a11y (role/tabindex/label/valuenow).
+    expect(stripEl.getAttribute("aria-label")).toBe("Observation range");
+    // Uncontrolled default window = the FULL domain: valuenow sits at 0
+    // (domain start) and the valuetext reads the whole range.
+    expect(stripEl.getAttribute("aria-valuenow")).toBe("0");
+    expect(stripEl.getAttribute("aria-valuetext")).toContain("0%");
+    // The lanes BLOCK is skipped entirely (no lane rows at all).
+    expect(root.querySelector(".hk-range-ribbon-lanes")).toBeNull();
+    expect(root.querySelector(".hk-range-ribbon-lane")).toBeNull();
+    // The overview minimap container shells remain but render EMPTY, and
+    // the gutter probe is display:none (visibility is the semantic).
+    const minimap = root.querySelector(".hk-range-ribbon-overview-lanes");
+    expect(minimap!.children.length).toBe(0);
+    // (The gutter probe's display:none in minimal mode is enforced by the
+    //  static scss assertion at the end of this file — happy-dom cannot
+    //  resolve the nested attribute selector.)
+    expect(root.querySelector(".hk-range-ribbon-overview-segment")).toBeNull();
+    // Uncontrolled default window = the FULL domain (edge to edge).
+    // Standard consumers keep the lane chrome + the alignment probe.
+    const std = mountRibbon({});
+    expect(std.querySelector(".hk-range-ribbon-lane")).not.toBeNull();
+    expect(std.querySelector(".hk-range-ribbon-overview-gutter")).not.toBeNull();
+    // Default LANES vocabulary (cpu/boot/parse/io/write/flush).
+    expect(std.textContent).toContain("CPU");
+  });
+
+  // Static scss contract: in minimal mode the gutter probe is display:none
+  // and the overview collapses to a single column (the strip spans the
+  // full width).
+  it("minimal mode overrides the overview grid in the sheet", () => {
+    const scss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkRangeRibbon.scss"), "utf-8");
+    // The nested scss compiles to a single-column overview + a hidden
+    // gutter probe in minimal mode; assert the SOURCE structure (the flat
+    // compiled selector does not appear verbatim in the nested sheet).
+    expect(scss).toContain(".hk-range-ribbon[data-minimal] {");
+    expect(scss).toMatch(
+      /[\s\S]*?\.hk-range-ribbon\[data-minimal\] \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
+    );
+    expect(scss).toMatch(
+      /\.hk-range-ribbon\[data-minimal\] \{[\s\S]*?\.hk-range-ribbon-overview-gutter \{[\s\S]*?display: none/,
+    );
   });
 });

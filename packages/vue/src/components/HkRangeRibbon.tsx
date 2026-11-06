@@ -1,14 +1,5 @@
 import { RotateCcw } from "lucide-vue-next";
-import {
-  computed,
-  defineComponent,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  useId,
-  watch,
-  type PropType,
-} from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, type PropType, useId, watch } from "vue";
 
 import { useI18n } from "../i18n/context";
 import HIconButton from "./HkIconButton";
@@ -269,6 +260,14 @@ export default defineComponent({
     windowEnabled: { type: Boolean, default: true },
     /** Narrowest window the ribbon will produce, in domain fractions. */
     minWindow: { type: Number, default: MIN_WINDOW_FALLBACK },
+    /** Wave (2026-11-06 raw-records five): MINIMAL MODE — a bare dual-handle
+     *  range bar. No lane rows, no overview minimap, no label gutter; the
+     *  strip spans the full width and its track uses muted-based tokens
+     *  (the surface-based track read whitish inside dark phone modals).
+     *  The uncontrolled default window is already the FULL domain, so a
+     *  minimal bar starts pinned edge to edge. `segments` / `selectedId`
+     *  are IGNORED in this mode (no segment DOM to select from). */
+    minimal: { type: Boolean, default: false },
   },
   emits: {
     select: (_id: string) => true,
@@ -277,6 +276,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
     const stripRef = ref<HTMLElement | null>(null);
+
     const internalWindow = ref<WindowRange | null>(null);
     /** Id of the segment whose tip card is floating (hover or focus). */
     const tipSegmentId = ref<string | null>(null);
@@ -548,6 +548,53 @@ export default defineComponent({
       if (tipSegmentId.value === id) tipSegmentId.value = null;
     }
 
+    // Wave (raw-records five): the label column is JS-MEASURED. The fixed
+    // minmax(48px,84px) floor left a dead band next to short labels, and a
+    // CSS max-content cannot align two independent grids (each lane sizes
+    // to its own label; the overview gutter has no text to size from — a
+    // hidden-probe attempt measured misaligned in real Chrome). Measuring
+    // the widest rendered label and publishing it as the shared var gives
+    // BOTH surfaces the same resolved column: adaptive and aligned.
+    const rootRef = ref<HTMLElement | null>(null);
+    const pinnedCol = ref<string | null>(null);
+    /** TWO-PHASE measure: FREE the column first. A pinned px width clips
+     *  long labels, and a clipped label's offsetWidth equals the clip - so
+     *  a naive offsetWidth max can never GROW after the first pin (and a
+     *  smaller max leaves the dead band). Freeing lets labels reflow to
+     *  natural width; the next frame reads the true text width
+     *  (scrollWidth == offsetWidth when unclipped) and re-pins only when
+     *  the value changed (converges - no ResizeObserver loop). */
+    const syncLabelCol = () => {
+      const root = rootRef.value;
+      if (!root) return;
+      root.style.setProperty("--hk-range-ribbon-label-col", "max-content");
+      requestAnimationFrame(() => {
+        const r = rootRef.value;
+        if (!r) return;
+        const labels = r.querySelectorAll<HTMLElement>(".hk-range-ribbon-lane-label");
+        let max = 0;
+        for (const el of labels) {
+          max = Math.max(max, el.offsetWidth, el.scrollWidth);
+        }
+        if (max <= 0) return;
+        const next = `${max}px`;
+        // Guard on the CURRENT INLINE value, not the last measurement:
+        // after the FREE phase the inline value is "max-content", and an
+        // unchanged measurement must STILL re-pin (the re-pin restores the
+        // px column the free took away - skipping it because "40px == 40px"
+        // left the bar resting misaligned at freed max-content, measured in
+        // real Chrome: field 20 vs tracks 41/60).
+        if (r.style.getPropertyValue("--hk-range-ribbon-label-col") !== next) {
+          pinnedCol.value = next;
+          r.style.setProperty("--hk-range-ribbon-label-col", next);
+        }
+      });
+    };
+    const labelObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => syncLabelCol())
+        : null;
+
     onMounted(() => {
       // Window-level listeners: a pointer captured by a drag target still
       // emits moves/ups here, and a drag that leaves the strip keeps
@@ -556,9 +603,22 @@ export default defineComponent({
       window.addEventListener("pointermove", onPointerMove);
       window.addEventListener("pointerup", endGesture);
       window.addEventListener("pointercancel", endGesture);
+      // Publish the measured label column (see syncLabelCol above): after
+      // the first paint, on any lane-label resize (locale swap, viewport
+      // font change), and when the lanes vocabulary itself changes.
+      syncLabelCol();
+      labelObserver?.observe(rootRef.value!);
+      watch(
+        lanes,
+        () => {
+          nextTick(syncLabelCol);
+        },
+        { deep: true },
+      );
     });
 
     onBeforeUnmount(() => {
+      labelObserver?.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", endGesture);
       window.removeEventListener("pointercancel", endGesture);
@@ -657,7 +717,7 @@ export default defineComponent({
           {/* The overview paints the FULL domain only — it never follows
               the zoom, so the window's position stays locatable. */}
           <div class="hk-range-ribbon-overview-lanes" aria-hidden="true">
-            {lanes.value.map((lane) => (
+            {!props.minimal && lanes.value.map((lane) => (
               <div class="hk-range-ribbon-overview-row" key={lane.key} data-lane={lane.key}>
                 {(byLane.get(lane.key) ?? []).map((placed) => {
                   const box = fullDomainBox(placed);
@@ -701,7 +761,9 @@ export default defineComponent({
 
       return (
         <div
+          ref={rootRef}
           class="hk-range-ribbon"
+          data-minimal={props.minimal || undefined}
           data-windowed={win ? "true" : undefined}
           data-window-enabled={props.windowEnabled ? "true" : "false"}
           onKeydown={onRootKeyDown}
@@ -710,6 +772,11 @@ export default defineComponent({
               (empty gutter first), so x% means the same inline position on
               both surfaces — the strip can be used to locate a bar. */}
           <div class="hk-range-ribbon-overview">
+            {/* The gutter's width IS the shared label column: the
+                component JS-measures the widest rendered label and
+                publishes it on the root (two-phase free/measure/pin), so
+                this empty cell keeps the strip's x% aligned with the
+                lanes' x% at any label width. */}
             <span class="hk-range-ribbon-overview-gutter" aria-hidden="true" />
             <div class="hk-range-ribbon-overview-field">
               {strip}
@@ -780,6 +847,7 @@ export default defineComponent({
               </span>
             )}
           </div>
+          {!props.minimal && (
           <div class="hk-range-ribbon-lanes">
             {lanes.value.map((lane) => (
               <div class="hk-range-ribbon-lane" key={lane.key} data-lane={lane.key}>
@@ -795,6 +863,7 @@ export default defineComponent({
               </div>
             ))}
           </div>
+          )}
         </div>
       );
     };

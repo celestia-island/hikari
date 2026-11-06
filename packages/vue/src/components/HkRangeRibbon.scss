@@ -23,6 +23,12 @@
   // ONE label column for both surfaces: the overview paints through an
   // empty gutter of this width, so an x% bar sits at the same inline
   // position in the strip and in its lane (the strip locates segments).
+  // Wave (2026-11-06 raw-records five): the label column is JS-MEASURED —
+  // the component publishes the widest rendered label as a px value on the
+  // root (two-phase free/measure/pin). THIS fixed column is the no-JS /
+  // pre-measure fallback: a shared width keeps strip-lane x% alignment
+  // before the measurement lands (a bare max-content here would resolve
+  // 0px in the empty gutter and misalign everything).
   --hk-range-ribbon-label-col: minmax(48px, 84px);
 
   display: flex;
@@ -42,7 +48,9 @@
   min-width: 0;
 }
 
-// The empty first cell that lines the strip up with the lane tracks.
+// The empty first cell that lines the strip up with the lane tracks. Its
+// width comes from the shared var, which the component JS-measures and
+// publishes on the root (two-phase free/measure/pin).
 .hk-range-ribbon-overview-gutter {
   display: block;
   min-width: 0;
@@ -53,6 +61,29 @@
 .hk-range-ribbon-overview-field {
   position: relative;
   min-width: 0;
+}
+
+.hk-range-ribbon[data-minimal] {
+  gap: 0;
+
+  /* Bare-bar layout: single column, gutter probe out of the way — the
+     strip spans the full width (its in-flow content is absolute, so
+     without this the max-content column would collapse to zero). */
+  .hk-range-ribbon-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hk-range-ribbon-overview-gutter {
+    display: none;
+  }
+}
+
+.hk-range-ribbon[data-minimal] .hk-range-ribbon-strip {
+  // Minimal mode (raw-records five): the track reads through muted-based
+  // tokens — the surface-based track read whitish inside dark phone
+  // modals. The inset hairline keeps the frame visible but quiet.
+  background: rgb(var(--color-muted) / 25%);
+  box-shadow: inset 0 0 0 1px rgb(var(--color-border) / 40%);
 }
 
 .hk-range-ribbon-strip {

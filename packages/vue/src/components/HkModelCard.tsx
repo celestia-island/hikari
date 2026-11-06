@@ -1,6 +1,6 @@
 import { defineComponent, type PropType } from "vue";
-import { Comment, Fragment, type VNode } from "vue";
 
+import { hasRenderedContent } from "../runtime/hasRenderedContent";
 import "./HkModelCard.scss";
 
 /** The capability tier a model card belongs to — the family's shared
@@ -8,23 +8,6 @@ import "./HkModelCard.scss";
  *  by it). The tier only drives the inset accent stripe; the card never
  *  interprets it beyond color. */
 export type ModelCardTier = "deep" | "normal" | "basic";
-
-/** Whether a slot actually rendered anything. Testing the slot function
- *  for truthiness is not enough: a consumer's `v-if` slot renders a
- *  comment placeholder vnode, and a consumer's `<>{cond && …}</>`
- *  fragment compiles to a Fragment vnode carrying those same dead
- *  comments — both must read as empty (same guard as HkCardList's
- *  renderedRows, recursed into fragments). */
-function hasRenderedContent(nodes: unknown): boolean {
-  if (nodes == null || nodes === false || nodes === "") return false;
-  if (Array.isArray(nodes)) return nodes.some((n) => hasRenderedContent(n));
-  if (typeof nodes === "object") {
-    const node = nodes as VNode;
-    if (node.type === Fragment) return hasRenderedContent(node.children);
-    return node.type !== Comment;
-  }
-  return true; // non-empty text content
-}
 
 export default defineComponent({
   name: "HkModelCard",

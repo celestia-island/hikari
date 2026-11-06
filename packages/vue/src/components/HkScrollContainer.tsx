@@ -84,6 +84,23 @@ export default defineComponent({
     /** Fade the viewport's inline edges (CSS mask) on the sides where
      *  the sensed overflow (`data-h-overflow`) reports hidden content. */
     fade: { type: Boolean, default: false },
+    /** Hidden-content distance (px) over which a lit edge fade deepens
+     *  from a hard cut to the full band (the progressive fade): the
+     *  component senses how much content hides past each edge and
+     *  mirrors it as a 0..1 strength (--hk-scroll-fade-strength-<side>)
+     *  that scales the band in CSS, so pulling the strip grows the
+     *  trailing fade and scrolling back recedes it. Read live (runtime
+     *  changes need no remount, like approachDistance). 0 or negative
+     *  degrades to the pre-2026-11 binary shape: any lit edge jumps
+     *  straight to the full band. Only read while `fade` is on.
+     *
+     *  RTL normalization assumes the Chromium/WebKit convention
+     *  (scrollLeft runs 0 → -max): every engine hikari deploys on is
+     *  Chromium-family (the sheet's WebView notes). A legacy
+     *  positive-descending engine would clamp the normalized offset to
+     *  0 — bounded degradation: the sense parks at "end" and one fade
+     *  stays saturated, never inverted. */
+    fadeDistance: { type: Number, default: 96 },
     /** Additive opt-in: while autoFollow is enabled and the user has
      *  scrolled away from the bottom, float a small jump-back FAB that
      *  snaps to the latest content and re-arms follow. */
@@ -258,6 +275,20 @@ export default defineComponent({
     // CSS. Attributes are only touched on change to avoid DOM churn.
     let lastHOverflow: OverflowSense | null = null;
     let lastVOverflow: OverflowSense | null = null;
+
+    // Progressive fade strengths last written to the root (see the
+    // fadeDistance prop doc). Same write-only-on-change discipline as
+    // the overflow mirror: scroll redraws the mask every frame anyway,
+    // but a pass that re-senses identical geometry must not churn
+    // inline style for nothing. The mirrored direction rides the same
+    // contract — it keys the CSS band-slot swap (see the SCSS RTL
+    // rules) and MUST agree with the physical-side depths below, which
+    // is why the computed direction is mirrored instead of CSS
+    // sniffing [dir] itself: a computed rtl under a missing/mismatched
+    // ancestor attribute (dir on the container, dir="auto") would
+    // light the wrong physical edge.
+    const lastFadeStrengths = new Map<string, string>();
+    let lastPublishedDir: string | null = null;
 
     // Sensed selection edge hint (see the selectionHint prop doc),
     // mirrored onto the root as data-selection-beyond — the same
@@ -618,13 +649,29 @@ export default defineComponent({
     }
 
     /** Mirror the live scroll geometry onto the root element as
-     *  data-h-overflow / data-v-overflow. Runs on every scheduled
-     *  update (scroll, resize, content resize via the aligner). */
+     *  data-h-overflow / data-v-overflow, and while `fade` is on publish
+     *  the per-edge fade strengths (hidden-content depth saturating over
+     *  fadeDistance). Runs on every scheduled update (scroll, resize,
+     *  content resize via the aligner).
+     *
+     *  Scroll offsets are normalized to LTR convention first: Chromium
+     *  reports negative scrollLeft under RTL (0 at the inline start down
+     *  to -(max) at the inline end), so both the overflow sense and the
+     *  strengths would read as "always at start" without it. Strengths
+     *  are PHYSICAL-side (left/right), so the direction-neutral
+     *  start/end state rules and their RTL width swap below consume the
+     *  same vars unchanged. */
     function senseOverflow(vp: HTMLElement) {
       const root = vp.parentElement;
       if (!root) return;
-      const h = hasH() ? computeOverflow(vp.scrollWidth, vp.clientWidth, vp.scrollLeft) : "none";
-      const v = hasV() ? computeOverflow(vp.scrollHeight, vp.clientHeight, vp.scrollTop) : "none";
+      const rtl = getComputedStyle(vp).direction === "rtl";
+      const hMax = Math.max(0, vp.scrollWidth - vp.clientWidth);
+      const vMax = Math.max(0, vp.scrollHeight - vp.clientHeight);
+      const clampPos = (pos: number, max: number) => Math.min(max, Math.max(0, pos));
+      const hPos = clampPos(hasH() ? (rtl ? -vp.scrollLeft : vp.scrollLeft) : 0, hMax);
+      const vPos = clampPos(hasV() ? vp.scrollTop : 0, vMax);
+      const h = hasH() ? computeOverflow(vp.scrollWidth, vp.clientWidth, hPos) : "none";
+      const v = hasV() ? computeOverflow(vp.scrollHeight, vp.clientHeight, vPos) : "none";
       if (h !== lastHOverflow) {
         lastHOverflow = h;
         root.setAttribute("data-h-overflow", h);
@@ -632,6 +679,78 @@ export default defineComponent({
       if (v !== lastVOverflow) {
         lastVOverflow = v;
         root.setAttribute("data-v-overflow", v);
+      }
+      if (props.fade) {
+        // Physical-side depths: the normalized hPos counts the inline
+        // START, which is the visual RIGHT edge under RTL — swap there
+        // so --hk-scroll-fade-strength-left always means the left edge.
+        // Axis-gated edges never hide anything this container can fade,
+        // so they publish the unlit "1" rather than live geometry.
+        publishFadeStrengths(root, {
+          left: hasH() ? (rtl ? hMax - hPos : hPos) : 0,
+          right: hasH() ? (rtl ? hPos : hMax - hPos) : 0,
+          top: hasV() ? vPos : 0,
+          bottom: hasV() ? vMax - vPos : 0,
+        });
+        // Mirror the COMPUTED direction for the CSS band-slot swap (the
+        // SCSS RTL rules key on this attribute, not on [dir]): the
+        // depths above are physical, so the slot mapping must come from
+        // the same resolved direction the normalization used — an
+        // ancestor [dir] the selector happens to miss (dir on this
+        // element, dir="auto", an explicit deeper override) would
+        // otherwise light the wrong edge. Lands the same pass as the
+        // overflow attrs, so band slots and lit attrs are never from
+        // different frames. Known trade (2026-11-06 review): a pure
+        // direction change at rest (locale flip, scrollLeft 0, no
+        // layout delta) schedules no sensing pass, so the mirror and
+        // the depths sit stale until the next scroll / resize /
+        // refresh / prop touch — wrong physical edge in that window,
+        // self-healing; a dir MutationObserver was rejected as
+        // over-engineering for a narrow trigger.
+        const dir = rtl ? "rtl" : "ltr";
+        if (lastPublishedDir !== dir) {
+          lastPublishedDir = dir;
+          root.setAttribute("data-dir", dir);
+        }
+      } else {
+        clearPublishedFade(root);
+      }
+    }
+
+    /** Drop every fade state the mirror published (fade prop off):
+     *  the four strength vars, their cache and the mirrored direction —
+     *  a stale inline value must not outlive the feature that wrote it
+     *  (same contract shape as stopSelectionSensing). */
+    function clearPublishedFade(root: HTMLElement) {
+      if (lastFadeStrengths.size === 0 && lastPublishedDir === null) return;
+      for (const side of ["left", "right", "top", "bottom"]) {
+        root.style.removeProperty(`--hk-scroll-fade-strength-${side}`);
+      }
+      lastFadeStrengths.clear();
+      if (lastPublishedDir !== null) {
+        lastPublishedDir = null;
+        root.removeAttribute("data-dir");
+      }
+    }
+
+    /** Progressive fade strengths (see the fadeDistance prop doc): the
+     *  hidden px past an edge saturates linearly over fadeDistance into
+     *  the band's 0..1 depth, so the fade grows with the pull and caps
+     *  at the full band. An edge hiding nothing (the same ≤1px deadband
+     *  computeOverflow uses) publishes 1 — with its 0px band that is
+     *  invisible, and it keeps dock-fed edges (which share the vars,
+     *  no fade prop → never published) at their designed full band. */
+    function publishFadeStrengths(root: HTMLElement, hidden: { left: number; right: number; top: number; bottom: number }) {
+      const dist = Math.max(0, props.fadeDistance);
+      for (const [side, depth] of Object.entries(hidden) as Array<[keyof typeof hidden, number]>) {
+        const strength =
+          depth <= 1 || dist === 0
+            ? "1"
+            : String(Math.min(1, Math.round((depth / dist) * 1000) / 1000));
+        if (lastFadeStrengths.get(side) !== strength) {
+          lastFadeStrengths.set(side, strength);
+          root.style.setProperty(`--hk-scroll-fade-strength-${side}`, strength);
+        }
       }
     }
 
@@ -704,6 +823,13 @@ export default defineComponent({
     }, { flush: "post" });
 
     watch(() => props.selectionSelector, () => scheduleUpdate());
+
+    // Runtime fade changes re-sense immediately: flipping `fade` on with
+    // content already hidden must not wait for a scroll, and a different
+    // fadeDistance re-derives every strength without any DOM motion.
+    watch(() => [props.fade, props.fadeDistance] as const, () => {
+      scheduleUpdate();
+    });
 
     function onScroll() {
       if (!viewportRef.value) return;

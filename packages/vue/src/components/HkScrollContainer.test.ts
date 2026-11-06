@@ -180,6 +180,206 @@ describe("HkScrollContainer overflow sensing", () => {
   });
 });
 
+// ── Progressive fade strengths (fadeDistance, 2026-11-06): while `fade`
+// is on the container mirrors the hidden-content depth past each edge as
+// a 0..1 band scale on the root's inline style — pull the strip and the
+// trailing fade deepens, saturate at the full band, recede on the way
+// back. CSS consumes the vars (fade.contract.test.ts pins the sheet). ──
+describe("HkScrollContainer progressive fade strengths", () => {
+  const varOf = (m: Mounted, side: string): string =>
+    m.root.style.getPropertyValue(`--hk-scroll-fade-strength-${side}`);
+
+  it("publishes the hidden depth per edge, saturating at 1", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    // scrollWidth 300 in a 100px viewport: hiddenLeft = scrollLeft,
+    // hiddenRight = 200 - scrollLeft. Default fadeDistance 96.
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    // 48/96 = exactly half depth on the start edge; 152 hidden past the
+    // end edge saturates the band.
+    expect(varOf(m, "left")).toBe("0.5");
+    expect(varOf(m, "right")).toBe("1");
+    // Vertical edges hide nothing: strength 1 with a 0px band (invisible).
+    expect(varOf(m, "top")).toBe("1");
+    expect(varOf(m, "bottom")).toBe("1");
+  });
+
+  it("grows the strength with the pull and recedes on the way back", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("1"); // nothing hidden past the start
+    expect(varOf(m, "right")).toBe("1"); // 200 hidden: saturated
+
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 24 });
+    m.viewport.dispatchEvent(new Event("scroll"));
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("0.25"); // 24/96: the pull deepens it
+    expect(varOf(m, "right")).toBe("1"); // 176 hidden: still saturated
+
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 190 });
+    m.viewport.dispatchEvent(new Event("scroll"));
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("1"); // fully pulled: saturated
+    expect(varOf(m, "right")).toBe("0.104"); // 10 hidden past the end: receding
+  });
+
+  it("keeps the ≤1px deadband of the overflow sense on the strength side", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 199.5 });
+    m.instance?.refresh();
+    // 0.5px hidden past the end: the sense still reports "start" (the
+    // same deadband) and the strength must not read as a visible fade.
+    expect(m.root.getAttribute("data-h-overflow")).toBe("start");
+    expect(varOf(m, "right")).toBe("1");
+  });
+
+  it("degrades to the binary shape with a zero fadeDistance", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true, fadeDistance: 0 });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("1");
+    expect(varOf(m, "right")).toBe("1");
+  });
+
+  it("re-derives strengths when only fadeDistance changes at runtime", async () => {
+    // The distance is read live per pass: changing it with NO scroll and
+    // NO refresh() call must re-derive every strength on the watcher's
+    // scheduled pass alone (a scroll-driven delta would pass even with a
+    // dead watcher — the scroll event schedules its own pass).
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ fade: true, fadeDistance: 96 });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", fade: props.fade, fadeDistance: props.fadeDistance }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    // One baseline pass (the mount pass ran before the stub landed);
+    // after this, NO further scroll happens — the flip below must
+    // re-derive on the watcher's pass alone.
+    viewport.dispatchEvent(new Event("scroll"));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.5");
+
+    props.fadeDistance = 192; // same geometry, doubled distance
+    await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(viewport.scrollLeft, "no scroll between the passes").toBe(48);
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.25");
+    app.unmount();
+  });
+
+  it("publishes on a fade prop flip without any scroll (the re-sense watcher)", async () => {
+    // Mounting fade-off with content already hidden publishes nothing;
+    // flipping the prop on must light the strengths on the watcher's
+    // scheduled pass alone — no scroll event, no refresh() call.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ fade: false });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", fade: props.fade }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("");
+
+    props.fade = true;
+    await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.5");
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-right")).toBe("1");
+    app.unmount();
+  });
+
+  it("clears the published strengths and mirrored dir when fade flips off", async () => {
+    // Stale inline values must not outlive the feature (the
+    // stopSelectionSensing symmetry): off removes all four strength
+    // vars and data-dir from the root, so a downstream reader of the
+    // root's style never sees zombie strengths.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ fade: true });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", fade: props.fade }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.getAttribute("data-dir")).toBe("ltr");
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).not.toBe("");
+
+    props.fade = false;
+    await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    for (const side of ["left", "right", "top", "bottom"]) {
+      expect(root.style.getPropertyValue(`--hk-scroll-fade-strength-${side}`)).toBe("");
+    }
+    expect(root.hasAttribute("data-dir")).toBe(false);
+    app.unmount();
+  });
+
+  it("publishes nothing while the fade prop is off", () => {
+    const m = mountScroller({ axis: "horizontal" });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    expect(varOf(m, "left")).toBe("");
+    expect(varOf(m, "right")).toBe("");
+    expect(m.root.getAttribute("data-h-overflow")).toBe("both"); // sense still runs
+  });
+
+  it("normalizes RTL scroll signs for both the sense and the strengths", () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    m.viewport.style.direction = "rtl";
+    // Chromium RTL convention: scrollLeft runs 0 → -(max). Raw -48 sits
+    // mid-scroll; the pre-normalization sense would have read "end"
+    // (scrollPos ≤ 1) for every RTL position.
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: -48 });
+    m.instance?.refresh();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("both");
+    // The mirror is the CSS slot swap's only direction truth — a mutant
+    // that hardcodes "ltr" (or inverts the ternary) would keep the
+    // depths correct and light the WRONG physical edge, so the artifact
+    // itself is pinned, not just its consequences.
+    expect(m.root.getAttribute("data-dir")).toBe("rtl");
+    // Physical start edge (visual RIGHT under RTL) hides 48px…
+    expect(varOf(m, "left")).toBe("1");
+    expect(varOf(m, "right")).toBe("0.5");
+    m.viewport.style.direction = "";
+  });
+});
+
 describe("HkScrollContainer scrollbar reactivity", () => {
   it("builds and tears down the overlay tracks when the scrollbar prop flips", async () => {
     const container = document.createElement("div");

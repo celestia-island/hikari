@@ -435,14 +435,14 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     const rideRule = (selector: string): CssRule | undefined =>
       RIDE_RULES.find((r) => r.selector === selector);
 
-    const from = rideRule(".hk-ride.hk-ride--from");
+    const from = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--from");
     expect(from, "compressed end rule").toBeTruthy();
     expect(from!.declarations.get("height")).toBe(
       "calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px) * var(--hk-ride-factor, 0.9))",
     );
     expect(from!.important.has("height"), "the ride outranks the morph's inline pin").toBe(true);
 
-    const to = rideRule(".hk-ride.hk-ride--to");
+    const to = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--to");
     expect(to, "natural end rule").toBeTruthy();
     expect(to!.declarations.get("height")).toBe(
       "calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px))",
@@ -451,7 +451,7 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
 
     // Only the content region is ever scaled — top origin, so the compressed
     // paint lands exactly in the shorter slot the frame leaves for it.
-    const scaled = rideRule(".hk-ride.hk-ride--from > .hk-ride-content");
+    const scaled = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content");
     expect(scaled, "content compress rule").toBeTruthy();
     expect(scaled!.declarations.get("transform")).toBe(
       "scaleY(var(--hk-ride-factor, 0.9))",

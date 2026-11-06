@@ -108,15 +108,39 @@ function percent(fraction: number): string {
   return `${Number((fraction * 100).toFixed(4))}%`;
 }
 
-/** Normalize a host window: swap inverted ranges, clamp to the domain,
- *  ignore non-finite or malformed input (that means "no window"), and never
- *  return a window narrower than `minWidth`. */
-function normalizeWindow(input: unknown, minWidth: number): WindowRange | null {
+/**
+ * Normalize a host-supplied window into the ribbon's contract.
+ *
+ * This is the ONE implementation the component and its hosts share — the
+ * component's former private helper, identical except the min-guard, which
+ * absorbs the component's existing sanitizer (that helper had no other
+ * observers, so this is not a behaviour change). A consumer that keeps its
+ * own rendering/filter driven by the same window (chest's trace model builds
+ * its row filter from these fractions) must import this instead of mirroring
+ * the algorithm: a copy forks silently the moment the algorithm or the 0.02
+ * default changes upstream.
+ *
+ * @param input Any host window value. `null` / `undefined`, a non-array, an
+ *   array with fewer than two entries, or either member non-finite all mean
+ *   "no window" and return `null` (the host reads that as the full domain).
+ * @param minWidth Narrowest window the ribbon will produce, defaulting to
+ *   0.02. Clamped to [0, 1]; a non-finite or non-positive value falls back
+ *   to the default.
+ * @returns An ordered, domain-clamped `[start, end]` pair of full-domain
+ *   fractions, never narrower than `minWidth`, or `null` for "no window".
+ */
+export function normalizeHkRangeWindow(
+  input: unknown,
+  minWidth: number = MIN_WINDOW_FALLBACK,
+): [number, number] | null {
   if (input == null || !Array.isArray(input) || input.length < 2) return null;
   const first = Number(input[0]);
   const second = Number(input[1]);
   if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
-  const min = Math.min(Math.max(minWidth, 0), 1);
+  const min =
+    Number.isFinite(minWidth) && minWidth > 0
+      ? Math.min(minWidth, 1)
+      : MIN_WINDOW_FALLBACK;
   let lo = clamp01(Math.min(first, second));
   let hi = clamp01(Math.max(first, second));
   if (hi - lo < min) {
@@ -271,7 +295,7 @@ export default defineComponent({
     const activeWindow = computed<WindowRange | null>(() => {
       if (!props.windowEnabled) return null;
       const source = controlled.value ? props.window : internalWindow.value;
-      return normalizeWindow(source, minWidth.value);
+      return normalizeHkRangeWindow(source, minWidth.value);
     });
 
     const lanes = computed<RibbonLane[]>(() =>

@@ -6,7 +6,11 @@ import { compile } from "sass";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref, type Ref } from "vue";
 
-import HkRangeRibbon, { type RibbonLane, type RibbonSegment } from "./HkRangeRibbon";
+import HkRangeRibbon, {
+  normalizeHkRangeWindow,
+  type RibbonLane,
+  type RibbonSegment,
+} from "./HkRangeRibbon";
 import { setLocale } from "../i18n/context";
 import jaBundle from "../i18n/locales/ja/components.json";
 
@@ -307,6 +311,50 @@ describe("HkRangeRibbon full domain", () => {
     // Handle percentages resolve against the strip's own box (the field),
     // never against the gutter — a window edge lines up with the bar it clips.
     expect(root.querySelector<HTMLElement>('[data-edge="start"]')!.parentElement).toBe(field);
+  });
+});
+
+// ── Exported normalizer / component parity ──────────────────────────────
+describe("HkRangeRibbon window normalizer parity", () => {
+  it("keeps the component on the exported helper (source contract)", () => {
+    // The rendered-parity cases below are DIVERGENCE detectors: a
+    // byte-identical inlined copy of the algorithm renders the same window
+    // and passes them. This source pin is the CALL-SITE guard — the
+    // component must keep CALLING the exported normalizer rather than
+    // growing a private copy again.
+    const tsx = readFileSync(resolve(componentDir, "HkRangeRibbon.tsx"), "utf8");
+    expect(tsx).toMatch(/return normalizeHkRangeWindow\(source, minWidth\.value\)/);
+  });
+
+  it("renders exactly the window the exported helper returns", () => {
+    const rawWindows: Array<[number, number]> = [
+      [0.7, 0.3],
+      [0.5, 0.5],
+      [1.2, 1.5],
+      [-0.5, -0.2],
+      [1, 1],
+      [0.49, 0.51],
+    ];
+    for (const raw of rawWindows) {
+      const normalized = normalizeHkRangeWindow(raw);
+      expect(normalized, `${raw} normalizes`).not.toBeNull();
+
+      const root = mountRibbon({ window: raw });
+      expect(root.hasAttribute("data-windowed"), `${raw} is windowed`).toBe(true);
+      const highlight = root.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
+      expect(boxOf(highlight).left, `${raw} left`).toBeCloseTo(normalized![0] * 100, 4);
+      expect(boxOf(highlight).width, `${raw} width`).toBeCloseTo(
+        (normalized![1] - normalized![0]) * 100,
+        4,
+      );
+
+      // Feeding the helper's output back in is idempotent — the rendered
+      // box is byte-identical, which is what lets a host pass either the raw
+      // or the normalized value into the same prop.
+      const again = mountRibbon({ window: [...normalized!] as [number, number] });
+      const againHighlight = again.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
+      expect(boxOf(againHighlight), `${raw} idempotent`).toEqual(boxOf(highlight));
+    }
   });
 });
 

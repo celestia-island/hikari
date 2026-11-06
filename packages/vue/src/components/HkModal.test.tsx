@@ -660,4 +660,158 @@ describe("HkModal Escape precedence", () => {
       document.removeEventListener("keydown", pageListener);
     }
   });
+
+  it("does not close a non-closable window on a consumed Escape, and does not swallow it", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(true);
+    const emitted: boolean[] = [];
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: open.value,
+            closable: false,
+            title: "Locked",
+            "onUpdate:modelValue": (v: boolean) => { emitted.push(v); open.value = v; },
+          }, {
+            default: () => h("div", {
+              class: "escape-owner",
+              onKeydown: (e: KeyboardEvent) => {
+                if (e.key === "Escape") e.preventDefault();
+              },
+            }, "nested control"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(".escape-owner")).not.toBeNull();
+    });
+    const owner = document.body.querySelector<HTMLElement>(".escape-owner")!;
+
+    const pageHits: string[] = [];
+    const pageListener = (e: KeyboardEvent) => {
+      if (e.key === "Escape") pageHits.push("escape");
+    };
+    document.addEventListener("keydown", pageListener);
+    try {
+      const consumed = new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      });
+      owner.dispatchEvent(consumed);
+      await nextTick();
+      expect(consumed.defaultPrevented, "the nested control consumed the key").toBe(true);
+      expect(emitted, "a non-closable window never emits on Escape").toEqual([]);
+      expect(open.value).toBe(true);
+      // Current semantics: the precedence guard returns before the close path
+      // and does NOT stopPropagation for a non-closable window, so page-level
+      // listeners still see the key.
+      expect(pageHits, "a non-closable window must not swallow the key").toEqual(["escape"]);
+    } finally {
+      document.removeEventListener("keydown", pageListener);
+    }
+  });
+
+  it("leaves a bare Escape to the host when the window is not closable", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(true);
+    const emitted: boolean[] = [];
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: open.value,
+            closable: false,
+            title: "Locked",
+            "onUpdate:modelValue": (v: boolean) => { emitted.push(v); open.value = v; },
+          }, {
+            default: () => h("div", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(".hk-modal-content")).not.toBeNull();
+    });
+    const content = document.body.querySelector<HTMLElement>(".hk-modal-content")!;
+
+    const pageHits: string[] = [];
+    const pageListener = (e: KeyboardEvent) => {
+      if (e.key === "Escape") pageHits.push("escape");
+    };
+    document.addEventListener("keydown", pageListener);
+    try {
+      const bare = new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      });
+      content.dispatchEvent(bare);
+      await nextTick();
+      expect(emitted, "a non-closable window must stay open").toEqual([]);
+      expect(open.value).toBe(true);
+      expect(pageHits, "the host still gets the key").toEqual(["escape"]);
+      expect(bare.defaultPrevented, "and the window did not consume it").toBe(false);
+    } finally {
+      document.removeEventListener("keydown", pageListener);
+    }
+  });
+
+  it("keeps the Tab focus trap working when a nested control consumes Tab", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: true,
+            closable: false,
+            title: "Trap",
+          }, {
+            default: () => h("div", {
+              class: "tab-owner",
+              onKeydown: (e: KeyboardEvent) => {
+                if (e.key === "Tab") e.preventDefault();
+              },
+            }, [
+              h("button", { class: "tab-first" }, "first"),
+              h("button", { class: "tab-last" }, "last"),
+            ]),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(".tab-last")).not.toBeNull();
+    });
+    const first = document.body.querySelector<HTMLButtonElement>(".tab-first")!;
+    const last = document.body.querySelector<HTMLButtonElement>(".tab-last")!;
+    const owner = document.body.querySelector<HTMLElement>(".tab-owner")!;
+
+    last.focus();
+    expect(document.activeElement, "the last focusable holds focus").toBe(last);
+
+    // A nested control consumes Tab; the focus trap must still run. This pins
+    // the defaultPrevented guard INSIDE the Escape branch: hoisting it to the
+    // top of the handler would silently disable wrapping for exactly this
+    // case.
+    owner.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(document.activeElement, "focus wraps back to the first focusable").toBe(first);
+  });
 });

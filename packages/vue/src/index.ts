@@ -826,6 +826,7 @@ export { default as HkTagDotRow } from "./components/HkTagDotRow";
 export { default as HkModelCard, type ModelCardTier } from "./components/HkModelCard";
 export {
   default as HkRangeRibbon,
+  normalizeHkRangeWindow,
   type RibbonLane,
   type RibbonSegment,
   type RibbonStatus,

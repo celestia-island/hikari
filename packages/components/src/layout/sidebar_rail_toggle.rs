@@ -51,16 +51,12 @@
 // state, by contrast, is always the string `"true"` / `"false"`
 // (`aria-expanded={String(props.expanded)}`).
 //
-// Deltas vs Vue (documented, not accidental):
-//   * THE BUTTON IS RENDERED DIRECTLY, NOT THROUGH `IconButton`. Vue composes
-//     `<HkIconButton variant="ghost" size={24} aria-expanded aria-label …>`
-//     and relies on attribute fallthrough for `aria-expanded`; the Rust
-//     `IconButtonProps` has no generic attribute passthrough (only explicit
-//     props), so composing it would silently DROP `aria-expanded`. The mirror
-//     therefore emits the identical button — same class list, same
-//     `span.hk-icon-button-icon` slot — with the ARIA state intact. The class
-//     list is derived from `IconButtonSize::S24` / `IconButtonVariant::Ghost`,
-//     so it cannot drift from the component it stands in for.
+// Parity with Vue (2026-11-06 family sweep):
+//   * The circle IS the standard `IconButton` (S24 / ghost) on BOTH forms —
+//     the hand-assembled class trio and the bare `<button>` it replaced
+//     drifted from the Vue twin (no `type`, no shared chrome).
+//     `IconButtonProps` carries `aria_expanded` explicitly, so the ARIA
+//     state rides the composed component instead of being dropped.
 //   * The chevron pair is lucide markup mounted through
 //     `dangerous_inner_html` on a `style="display:contents"` host (an rsx
 //     `svg {}` child would be an HTML-namespace element that never paints).
@@ -83,7 +79,7 @@
 //     hand a host — the geometry is the pure part, the measurement is the
 //     platform's.
 
-use crate::basic::{IconButtonSize, IconButtonVariant};
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -161,14 +157,14 @@ pub fn rail_toggle_aria_expanded(expanded: bool) -> &'static str {
     if expanded { "true" } else { "false" }
 }
 
-/// The standing-in-for-IconButton class list (`variant="ghost"`, `size={24}`),
-/// in IconButton's own order.
-pub fn rail_toggle_button_classes() -> String {
-    format!(
-        "hk-icon-button {} {}",
-        IconButtonSize::S24.class_name(),
-        IconButtonVariant::Ghost.class_name()
-    )
+/// Extra seat class for the toggle's button. The standard trio (base + size
+/// + variant) is emitted by `IconButton` itself, so today this is empty —
+/// kept as the single hook if the wrapper ever needs a seat of its own.
+pub fn rail_toggle_seat_class() -> String {
+    // The wrapper carries the positioning seat; the button's standard trio
+    // (base + size + variant) is emitted by IconButton itself, so there is
+    // nothing extra to append.
+    String::new()
 }
 
 /// lucide `ChevronsRightLeft` at `size={14}` — the EXPANDED state's glyph
@@ -258,22 +254,30 @@ pub fn SidebarRailToggle(props: SidebarRailToggleProps) -> Element {
         wrapper = wrapper.attr("data-expanded", flag);
     }
 
-    let button = VElement::new("button")
-        .class(rail_toggle_button_classes())
-        .attr("aria-expanded", rail_toggle_aria_expanded(expanded))
-        .attr("aria-label", rail_toggle_label(expanded))
-        .on_click(move |_event: MouseEvent| {
-            if let Some(handler) = on_toggle.as_ref() {
-                handler.call(());
-            }
-        })
-        .child(rsx! {
-            span { class: "hk-icon-button-icon",
+    // The circle is the STANDARD icon button (2026-11-06 family sweep): the
+    // hand-assembled class trio and the bare <button> it replaced drifted
+    // from the Vue twin (no type, no shared chrome) — HkIconButton owns box,
+    // ink, hover, press and focus on both sides.
+    let button = rsx! {
+        IconButton {
+            size: IconButtonSize::S24,
+            variant: IconButtonVariant::Ghost,
+            aria_label: Some(rail_toggle_label(expanded)),
+            aria_expanded: Some(expanded),
+            class: rail_toggle_seat_class(),
+            onclick: Some(EventHandler::new(move |_event: MouseEvent| {
+                if let Some(handler) = on_toggle.as_ref() {
+                    handler.call(());
+                }
+            })),
+            children: rsx! {
                 {glyph_host(rail_toggle_chevron_svg(expanded))}
-            }
-        });
+            },
+            ..Default::default()
+        }
+    };
 
-    wrapper = wrapper.child(VNode::Element(Box::new(button)));
+    wrapper = wrapper.child(button);
     VNode::Element(Box::new(wrapper))
 }
 
@@ -336,15 +340,6 @@ mod tests {
         // `aria-expanded={String(props.expanded)}`: always present.
         assert_eq!(rail_toggle_aria_expanded(true), "true");
         assert_eq!(rail_toggle_aria_expanded(false), "false");
-    }
-
-    #[test]
-    fn sidebar_rail_toggle_button_matches_the_icon_button_composition() {
-        // Vue: `<HkIconButton variant="ghost" size={24}>` — IconButton's order.
-        assert_eq!(
-            rail_toggle_button_classes(),
-            "hk-icon-button hk-icon-button-24 hk-icon-button-ghost"
-        );
     }
 
     #[test]
@@ -415,9 +410,10 @@ mod tests {
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
-        // The button carries no `type` — the documented delta from the Vue
-        // twin, which now always emits type="button".
-        assert!(!html.contains(r#"type="button""#), "{html}");
+        // Parity with the Vue twin (2026-11-06 family fix): both forms now
+        // emit type="button", so an icon button can never submit a form. The
+        // old assertion pinned the divergence as a permanent delta.
+        assert!(html.contains(r#"type="button""#), "{html}");
     }
 
     #[test]

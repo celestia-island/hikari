@@ -2,6 +2,8 @@ import { CircleX as XCircle, X } from "lucide-vue-next";
 import { computed, defineComponent, onBeforeUpdate, onMounted, onUnmounted, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
 import { AlertTriangle, CheckCircle, Copy, Info } from "lucide-vue-next";
 
+import HIconButton from "./HkIconButton";
+
 
 import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../runtime/useToast";
 import { useClipboard } from "../runtime/useClipboard";
@@ -39,7 +41,6 @@ function renderCountLabel(count: number, unit: string) {
   return `${count} ${unit}`;
 }
 
-const ACTION_ICON_SIZE = 18;
 
 const HkToastItem = defineComponent({
   name: "HkToastItem",
@@ -169,27 +170,32 @@ const HkToastItem = defineComponent({
             </button>
           )}
           {props.toast.copyable && (
-            <button
+            <HIconButton
               class="hk-toast-copy-btn"
-              title={t("hikari::toast.copy", "Copy")}
-              onClick={(e) => {
+              size={24}
+              variant="ghost"
+              aria-label={t("hikari::toast.copy", "Copy")}
+              {...{ title: t("hikari::toast.copy", "Copy") }}
+              onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 handleCopy();
               }}
             >
-              <Copy size={ACTION_ICON_SIZE} />
-            </button>
+              {{ icon: () => <Copy aria-hidden="true" /> }}
+            </HIconButton>
           )}
-          <button
+          <HIconButton
             class="hk-toast-close"
+            size={24}
+            variant="ghost"
             aria-label={t("hikari::toast.close", "Close")}
-            onClick={(e) => {
+            onClick={(e: MouseEvent) => {
               e.stopPropagation();
               handleClose();
             }}
           >
-            <X size={ACTION_ICON_SIZE} />
-          </button>
+            {{ icon: () => <X aria-hidden="true" /> }}
+          </HIconButton>
         </div>
       );
     };

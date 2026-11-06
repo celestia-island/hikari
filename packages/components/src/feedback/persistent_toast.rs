@@ -17,7 +17,8 @@
 //         — or —
 //       Icon .hk-persistent-toast__icon             (every other tone)
 //       span.hk-persistent-toast__label
-//     button.hk-persistent-toast__dismiss [aria-label]   (when `dismissible`)
+//     button.hk-icon-button.hk-icon-button-24.hk-icon-button-ghost
+//       .hk-persistent-toast__dismiss [aria-label]   (when `dismissible`)
 //     div.hk-persistent-toast-card.hii-dropdown-content  (when the card is
 //         role="group" [aria-label]                       open and `detail`
 //                                                         is provided)
@@ -88,6 +89,7 @@ use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 use tairitsu_vdom::dom_ops::{clear_timeout, set_timeout};
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -463,19 +465,22 @@ pub fn PersistentToast(props: PersistentToastProps) -> Element {
                 }
             }
             if dismissible {
-                button {
-                    class: "hk-persistent-toast__dismiss",
-                    "type": "button",
-                    "aria-label": t("hikari::persistentToast.dismiss", "Dismiss"),
-                    onclick: move |event: MouseEvent| {
+                IconButton {
+                    size: IconButtonSize::S24,
+                    variant: IconButtonVariant::Ghost,
+                    aria_label: Some(t("hikari::persistentToast.dismiss", "Dismiss")),
+                    class: "hk-persistent-toast__dismiss".to_string(),
+                    onclick: Some(EventHandler::new(move |event: MouseEvent| {
                         if let Some(handler) = on_dismiss_click.as_ref() {
                             handler.call(event);
                         }
+                    })),
+                    children: rsx! {
+                        Icon {
+                            icon: MdiIcon::Close,
+                            size: 12,
+                        }
                     },
-                    Icon {
-                        icon: MdiIcon::Close,
-                        size: PERSISTENT_TOAST_ICON_PX,
-                    }
                 }
             }
             if is_open {
@@ -654,6 +659,34 @@ mod tests {
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored persistent-toast sheet"
+        );
+    }
+
+    /// Same L177 pin as the alert: the engine contract is the RENDERED class
+    /// list, because one mirrored sheet serves both renderers.
+    #[test]
+    fn dismiss_renders_the_standard_icon_button_layers() {
+        let html = PersistentToast(PersistentToastProps {
+            label: "l".to_string(),
+            dismissible: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("hk-persistent-toast__dismiss"), "{html}");
+        assert!(html.contains("hk-icon-button "), "{html}");
+        assert!(html.contains("hk-icon-button-24"), "{html}");
+        assert!(html.contains("hk-icon-button-ghost"), "{html}");
+        assert!(
+            !html.contains(r#"class="hk-persistent-toast__dismiss""#),
+            "the seat must not sit on a bare button: {html}"
+        );
+        // Same parity as the alert and toast pins: the dismiss control is
+        // never a form submitter, and the seat renders exactly once.
+        assert!(html.contains(r#"type="button""#), "{html}");
+        assert_eq!(
+            html.matches("hk-persistent-toast__dismiss").count(),
+            1,
+            "{html}"
         );
     }
 }

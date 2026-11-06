@@ -113,12 +113,12 @@
 
 .hk-toast-warning .hk-toast-copy-btn,
 .hk-toast-warning .hk-toast-close {
-  color: #1c1c1e;
-}
-
-.hk-toast-warning .hk-toast-copy-btn:hover,
-.hk-toast-warning .hk-toast-close:hover {
-  background: rgb(0 0 0 / 12%);
+  /* The amber surface stays amber in both schemes, so the controls read it
+     through the standard channel vars instead of re-declaring ink/wash. */
+  --hi-icon-button-icon-color: #1c1c1e;
+  --hi-icon-button-icon-color-active: #1c1c1e;
+  --hi-icon-button-bg-hover: rgb(0 0 0 / 12%);
+  --hi-icon-button-bg-active: rgb(0 0 0 / 18%);
 }
 
 .hk-toast-info {
@@ -186,33 +186,14 @@
   outline-offset: 2px;
 }
 
+/* The controls are the STANDARD icon button (2026-11-06 family sweep); the
+   real seat pin is the rendered-class-list contract. What remains here is
+   only a flex layout nudge — `flex-shrink: 0`, the same value the standard
+   layer already declares, so this flat key carries no box/ink of its own
+   and cannot fight the component regardless of bundle order. */
 .hk-toast-copy-btn,
 .hk-toast-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
   flex-shrink: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  border-radius: var(--radius-sm, 4px);
-  opacity: 0.7;
-  transition: opacity var(--duration-fast, 0.15s) ease;
-  padding: 0;
-}
-
-.hk-toast-copy-btn:hover,
-.hk-toast-close:hover {
-  opacity: 1;
-}
-
-.hk-toast-copy-btn:focus-visible,
-.hk-toast-close:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
-  outline-offset: 2px;
 }
 
 .hk-toast-enter-active {

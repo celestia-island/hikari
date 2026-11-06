@@ -1,18 +1,16 @@
 name: CNB Overflow Lane
 
-# Parallel CI lane: every PR push also runs cargo-check on CNB cloud (cnb.cool) via the
-# org ci-farm dispatch pipeline; the result lands as a cnb/cargo-check commit status on
-# the PR head. This relieves the 4-slot self-hosted farm with a second, independent
-# result lane. Architecture record: celestia-devtools PR #116 / #117.
-
 on:
+  # Overflow/mirror sync: runs after a squash merge and on demand, never on the
+  # pull request (2026-11-06 trigger policy).
+  push:
+    branches: [master]
   workflow_dispatch:
     inputs:
       target_sha:
-        description: 'Commit SHA (empty = PR head / branch head)'
+        description: "Commit SHA (empty = branch head)"
         type: string
-        default: ''
-
+        default: ""
 permissions:
   statuses: write
   actions: read
@@ -23,14 +21,9 @@ concurrency:
 
 jobs:
   lane:
-    uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@2e76d373762dc6b36c1ab7625c1c34842c28ad4a
+    uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@bcf5ed8f3caebe8dbf0a528ab9deecb6d42cf211
     with:
-      # NO `devtools-ref:` here: cnb-overflow.yml never declared that input
-      # (unlike verify-versions / pr-title-check / commit-msg-lint callees),
-      # so passing it made every run fail at startup with 0 jobs — the lane
-      # was dead from 2026-10-30 (#919) until this fix. The pin is on the
-      # `uses:` line above; that is the only place the callee ref belongs.
-      target_repo: hikari
+      target_repo: ${{ github.event.repository.name }}
       target_sha: ${{ inputs.target_sha || github.event.pull_request.head.sha || github.sha }}
       task: cargo-check
       lane: pr-${{ github.event.pull_request.number || 'manual' }}

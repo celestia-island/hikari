@@ -342,7 +342,7 @@ const LEAVE_TRANSITION =
   "opacity var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)), " +
   "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
 
-describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-06)", () => {
+describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-07)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
     // Guard against a vacuous suite: the compiled sheet must really contain
     // the frame rule, the body rule and the reduced-motion flatten.
@@ -539,24 +539,25 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     // 2026-11-07 (S2): the cascade mock cannot match `:not()`, a type
     // qualifier, an extra media gate or a pseudo-element, so twelve such
     // mutations stayed green). Every rule that targets the body — in any
-    // media query, at any specificity — must stay out of the transform
-    // family, with ONE exemption: the reduced-motion flatten, which is
-    // allowed to neutralise (`none` / `auto` / `none` transition) and may
-    // not scale.
-    const BODY_TARGET = /(^|[\s>+~,:.(\[])\.hk-modal-body(?![\w-])/;
+    // media query, at any specificity — must never SCALE it. Allowed
+    // anywhere: an inert `transform: none` (the reduced-motion guard) and
+    // any `transform-origin`, which does nothing without a transform.
+    //
+    // Class-TOKEN based, not class-dot based: `div.hk-modal-body` (the same
+    // compound, type-qualified) puts a letter before the dot and slipped
+    // through the first cut, as did `[class~="hk-modal-body"]` (R3 finding
+    // 2026-11-07 (S2)). The trailing guard keeps -scroll / -inner out.
+    const BODY_TARGET = /(^|[^\w-])hk-modal-body(?![\w-])/;
     const TRANSFORM_FAMILY = /^(transform|transform-origin|translate|scale|rotate|zoom|perspective)$/;
-    const NEUTRAL = new Set(["none", "auto", "50% 50%", "center", "center center"]);
+    const INERT = new Set(["none", "auto"]);
     const offenders: string[] = [];
     for (const rule of RULES) {
       if (!BODY_TARGET.test(rule.selector)) continue;
-      const reduced = rule.media.some((m) => m.includes("prefers-reduced-motion"));
       for (const prop of rule.declarations.keys()) {
-        const value = (rule.declarations.get(prop) ?? "").replace(/\s+/g, " ").trim();
         if (!TRANSFORM_FAMILY.test(prop)) continue;
-        // `transform-origin: 50% 50%` is inert without a transform; the
-        // reduced-motion flatten may only neutralise.
-        const neutral = NEUTRAL.has(value) || (prop === "transform-origin" && reduced);
-        if (!neutral) offenders.push(`${rule.selector} { ${prop}: ${value} }`);
+        if (prop === "transform-origin") continue;
+        const value = (rule.declarations.get(prop) ?? "").replace(/\s+/g, " ").trim();
+        if (!INERT.has(value)) offenders.push(`${rule.selector} { ${prop}: ${value} }`);
       }
     }
     expect(offenders, "the content region must never be scaled").toEqual([]);

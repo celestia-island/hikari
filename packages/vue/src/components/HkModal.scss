@@ -57,11 +57,11 @@
   z-index: 1;
   top: 50%;
   left: 50%;
-  // The centering translate is the frame's PERMANENT transform prefix:
-  // every state (rest, enter-from/to, leave-from/to) carries this exact
-  // translate, and the open/close ride only ever APPENDS a `scaleY()` to
-  // it (see the choreography block below) — so the ride can never re-seat
-  // the frame and dragged windows keep their shift.
+  // The centering translate is the frame's WHOLE transform, in every state
+  // (rest, enter-from/to, leave-from/to). The open/close ride is carried by
+  // the height instead (see the choreography block below), so the frame can
+  // never re-seat mid-flight, dragged windows keep their shift, and the
+  // chrome is never scaled.
   transform: translate(
         calc(-50% + var(--hk-modal-shift-x, 0px)),
         calc(-50% + var(--hk-modal-shift-y, 0px))
@@ -99,43 +99,41 @@
 // ------
 // Content enter/leave transitions (desktop ≥768px)
 //
-// Default window open/close (user direction 2026-11-06, superseding the
-// 2026-11-05 content-only ride): the window's own HEIGHT now rides the
-// open/close. The frame settles `scaleY(0.9) → scaleY(1)` about its
-// center (the default 50% 50% origin, composed AFTER the permanent
-// centering translate, which is byte-identical in every state — so the
-// box grows symmetrically up and down from its rest center and nothing
-// re-seats the frame mid-flight; dragged windows keep --hk-modal-shift-*
-// through the whole ride). Because a uniform map about the frame center
-// preserves relative geometry, anything sitting centered in the frame —
-// the content region above all — stays horizontally AND vertically
-// centered at every t. The chrome (title bar, sub-header, footer) has no
-// transform rule of its own; it inherits this single frame scale, which
-// IS the window-height motion the user asked for.
+// Default window open/close (user direction 2026-11-07, third revision):
+// the WINDOW's own height rides, the CHROME keeps its natural size, and
+// only the content region is compressed. Concretely:
 //
-// The content region does NOT ride on its own (user direction 2026-11-07,
-// superseding the body scale that shipped in 0.55.303 / 0.55.304): width
-// is never scaled, only height is. `.hk-modal-body` therefore carries NO
-// transform rule in any ride state — its vertical ride is entirely the
-// frame's `scaleY` above, so during the open/close its width stays exactly
-// 100% of the window while its height follows the 0.9 → 1 compression. Two
-// retired grammars before this one: the two-arg `scale(0.95, 1)` pinch and
-// the `scale(1.1, 1)` overshoot.
+//   frame height  : chrome + content × 0.9   ⇄   chrome + content
+//   content region: scaleY(0.9)              ⇄   scaleY(1)  (origin top)
 //
-// Hosts retune the ride through the `--hk-modal-*` tokens (duration /
-// easing) or the body padding vars — NOT by setting `transform` on
-// `.hk-modal-body` or the frame: the frame's state rules pair a matched
-// function list (`translate + scaleY`) so both ends of the interpolation
-// ride the same shape, and a host's single-class transform would be
-// overridden mid-ride and again under reduced motion.
+// Why not `transform: scaleY()` on the frame (the 2026-11-05/06 grammar):
+// a frame-level scale squashes the title glyphs, the footer buttons and the
+// corner radii along with everything else — the user reported exactly that
+// ("顶部标题和底部按钮组也跟着压缩") on 0.55.305. The ride is therefore a
+// LAYOUT-height animation driven by the family primitive `useHeightRide`,
+// which publishes the measured chrome/content split as CSS variables; this
+// sheet maps the surface states onto the ride's two ends. Chrome lives
+// outside the transform, so its type renders at natural size for the whole
+// flight, and the content region keeps its natural LAYOUT box (only its
+// paint is compressed about its own top edge), so the compressed paint
+// lands exactly in the shorter slot the frame leaves for it.
 //
-// No clip-path and no Y offset ride the open/close: the visible box IS the
-// frame at every t, so nothing is ever sliced off (the 2026-09-14 clip
-// unveil — and the #508/#512/#524 lineage before it — stays retired). All
-// compositor-level: zero layout per frame. The centering translate lives
-// on the base .hk-modal-content rule, so the frame never re-seats
-// mid-flight. Scoped to ≥768px; ≤767px keeps the sheet's translateY
-// choreography below.
+// The centering translate stays the frame's whole transform in every state
+// (byte-identical between rest and both ride ends, `--hk-modal-shift-*`
+// included), so the ride never re-seats the frame, dragged windows keep
+// their shift, and a box that grows by Δ about its center moves its top
+// edge up by Δ/2 — the symmetric growth the user asked for.
+//
+// Scroll containers are untouched by construction: `HkScrollContainer`,
+// `HkScrollPin` and the overlay scrollbar measure layout boxes, which the
+// content region's transform never changes, and nothing inside the content
+// reflows per frame. Surfaces may read `data-hk-riding` to skip work while
+// a ride is in flight.
+//
+// The `!important` on the two height ends is load-bearing: the size morph
+// pins the frame's height as an inline px value, and the ride — not the pin
+// — owns the box for the duration of the flight. Reduced motion flattens
+// both the height transition and the content scale.
 // ------
 
 @media (min-width: 768px) {
@@ -145,9 +143,9 @@
     transition:
       opacity var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
-      transform var(--hk-modal-duration, 0.42s)
+      height var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
-    will-change: opacity, transform;
+    will-change: opacity, height;
   }
 
   // Close: the reveal's TRUE reverse — same chrome fade, while the window
@@ -156,32 +154,24 @@
     transition:
       opacity var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
-      transform var(--hk-modal-duration, 0.32s)
+      height var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-    will-change: opacity, transform;
+    will-change: opacity, height;
   }
 
-  // The translate prefix is byte-identical to the base rule; only the
-  // appended scaleY changes. scaleY(1) at the settled end — never `none`
-  // — keeps both ends of the interpolation on the same function shape.
+  // The frame's transform is the plain centering translate in EVERY state —
+  // the ride is carried by the shared `.hk-ride--*` contract (geometry) plus
+  // the modal's own phase mapping (the machine's states are translated into
+  // `hk-ride--from` / `hk-ride--to` on the frame), which is what keeps the
+  // chrome crisp.
   .hk-modal-content-enter-from,
   .hk-modal-content-leave-to {
     opacity: 0;
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        )
-        scaleY(0.9);
   }
 
   .hk-modal-content-enter-to,
   .hk-modal-content-leave-from {
     opacity: 1;
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        )
-        scaleY(1);
   }
 }
 

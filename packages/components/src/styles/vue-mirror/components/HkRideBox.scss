@@ -1,0 +1,75 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+// HkRideBox.scss
+// The family-level height-ride container (see useHeightRide for the WHY).
+//
+// Contract, in one place:
+//   .hk-ride            the frame whose LAYOUT height rides
+//   .hk-ride--from      compressed end   (chrome + content × factor)
+//   .hk-ride--to        natural end      (chrome + content)
+//   .hk-ride-content    the ONLY scaled region (origin top, so the
+//                       compressed paint lands exactly in the shorter slot
+//                       the frame leaves for it)
+//   --hk-ride-chrome    px, measured by the composable
+//   --hk-ride-content   px, measured by the composable
+//   --hk-ride-factor    the content fraction (default 0.9)
+//   [data-hk-riding]    present for the whole flight; scroll features that
+//                       must skip work read it, like [data-hk-morphing] on
+//                       the mobile sheet
+//
+// At rest neither state class is present, so the frame keeps whatever
+// height its own layout gives it (`auto`, or a consumer's px pin) and the
+// ride degrades to "no ride" rather than to a wrong box if a measurement
+// is missing.
+
+// NOTE: the shared class deliberately carries GEOMETRY only. Timing,
+// easing and `overflow` belong to the consuming surface (the modal already
+// runs its own enter/leave transition list, and the phone sheet has a
+// completely different choreography), so this sheet can never clobber one.
+.hk-ride {
+  // Only meaningful while a ride class is present (the height resolves
+  // from the measured variables); at rest the box keeps its own layout
+  // height, or the consumer's px pin.
+}
+
+// The two ends of the ride. `!important` is deliberate and load-bearing: a
+// consumer's own size-morph pins `height` as an INLINE px value, and the
+// ride — not the pin — owns the box for the duration of the flight.
+.hk-ride[data-hk-ride-ready].hk-ride--from {
+  height: calc(
+    var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px) * var(--hk-ride-factor, 0.9)
+  ) !important;
+}
+
+.hk-ride[data-hk-ride-ready].hk-ride--to {
+  height: calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px)) !important;
+}
+
+.hk-ride-content {
+  transform-origin: 50% 0;
+  transition: transform var(--hk-ride-duration, 0.42s) var(--hk-ride-ease, cubic-bezier(0.33, 1, 0.68, 1));
+}
+
+.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content {
+  transform: scaleY(var(--hk-ride-factor, 0.9));
+}
+
+/* Reduced motion: the frame swaps instantly and the content is never
+ * compressed. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-ride,
+  .hk-ride-content {
+    transition: none;
+  }
+  .hk-ride.hk-ride--from > .hk-ride-content {
+    transform: none;
+  }
+}

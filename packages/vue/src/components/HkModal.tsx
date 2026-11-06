@@ -14,6 +14,7 @@ import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph, type RideEntry } from "../composables/useSizeMorph";
+import { useHeightRide } from "../composables/useHeightRide";
 
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 
@@ -348,6 +349,46 @@ export default defineComponent({
         );
       },
     });
+
+    // Desktop open/close: the WINDOW's own height rides, the chrome
+    // (title bar, sub-header, footer) keeps its natural size, and only the
+    // content region is visually compressed. The measurement half lives in
+    // the family primitive (useHeightRide); this sheet maps its surface
+    // states onto the ride's two ends (see the choreography block below).
+    const ride = useHeightRide(contentRef, bodyRef, { factor: 0.9 });
+
+    /** The window ride's own state, translated from the surface phases:
+     *  the open/close endpoints are the compressed end (`--from`) and the
+     *  natural end (`--to`). Between and after them no ride class is
+     *  present, so the frame keeps its laid-out height (or the morph's
+     *  px pin) and the geometry contract never leaks into the rest state. */
+    // The body element mounts with the frame on every open, and the inline
+    // variables die with the previous frame. Republish the split cached from
+    // the last rest measurement FIRST (so the first painted frame is already
+    // correct), then — if this is the very first open — measure as soon as
+    // the element lands (the sheet keeps the frame at `auto` until then, so
+    // that measurement sees honest natural geometry).
+    watch(
+      bodyRef,
+      (el) => {
+        if (!el) return;
+        if (!ride.publish()) void nextTick(() => ride.refresh());
+      },
+      { flush: "post" },
+    );
+
+    const rideStateClass = (): string | null => {
+      switch (machine.phase.value) {
+        case "openingFrom":
+        case "closingTo":
+          return "hk-ride--from";
+        case "openingTo":
+        case "closingFrom":
+          return "hk-ride--to";
+        default:
+          return null;
+      }
+    };
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
 
@@ -566,6 +607,10 @@ export default defineComponent({
       ],
       onPhase: (from, to, event) => {
         if (to === "openingFrom") {
+          // Measure BEFORE the enter classes land: the ride's `height:
+          // calc()` needs the rest chrome/content split, and a frame that is
+          // already compressed reports the compressed box.
+          ride.refresh();
           // Open-request bookkeeping (was the modelValue watcher's open
           // arm): registration, overlay registry, back-guard, focus
           // capture.
@@ -598,6 +643,9 @@ export default defineComponent({
           });
         } else if (to === "open") {
           surfTrack.cancel();
+          // Re-measure at the landed rest geometry so the NEXT ride starts
+          // from this box (content may have changed while the surface opened).
+          void nextTick(() => ride.refresh());
           onAfterEnter();
           // Idempotent re-arm for the fast paths (see openingFrom); the
           // morph is usually armed already by the enter-edge tick.
@@ -610,6 +658,9 @@ export default defineComponent({
             if (machine.phase.value === "open") morph.remeasure();
           });
         } else if (to === "closingFrom") {
+          // Same rule on the way out: the frame is at its open (natural)
+          // height right now, so this is the last honest measurement.
+          ride.refresh();
           // Close-request bookkeeping (was the watcher's close arm): the
           // registries forget the surface at request time; the finalize
           // edge below completes the teardown at leave end.
@@ -1065,7 +1116,7 @@ export default defineComponent({
             />
             <div
                   ref={contentRef}
-                  class={["hk-modal-content", props.contentClass, ...machine.classesFor("hk-modal-content")]}
+                  class={["hk-modal-content", "hk-ride", rideStateClass(), props.contentClass, ...machine.classesFor("hk-modal-content")]}
                   role="dialog"
                   aria-modal="true"
                   aria-label={resolvedSurfaceName.value}
@@ -1131,7 +1182,7 @@ export default defineComponent({
                       )}
                     </>
                   ) : null,
-                  <div ref={bodyRef} class="hk-modal-body">
+                  <div ref={bodyRef} class="hk-modal-body hk-ride-content">
                     <div
                       ref={scrollContainerRef}
                       class="hk-modal-body-scroll hk-scroll-pin-host"

@@ -2,27 +2,23 @@
  * Behavioral contract for the DESKTOP modal open/close choreography — run
  * against the COMPILED stylesheet, not the source text.
  *
- * User direction 2026-11-07 (supersedes the 2026-11-05 content-only ride
- * and the 2026-11-06 body scales): ONLY THE HEIGHT COMPRESSES — width is
- * never scaled. The frame settles `translate(…) scaleY(0.9) →
- * translate(…) scaleY(1)` about its center, so the box grows symmetrically
- * and anything centered in it (the content region above all) stays
- * horizontally AND vertically centered at every t; the translate prefix is
- * byte-identical in every state so the ride can never re-seat the frame.
- * `.hk-modal-body` carries NO transform rule of its own: its vertical ride
- * is entirely the frame's scaleY, so its width stays exactly 100% while its
- * height follows the 0.9 → 1 compression. The retired grammars, oldest
- * first: the 2026-11-04 whole-frame `scale(1, 0.9)`, the 2026-11-05
- * body-only uniform `scale(0.9)`, the 2026-11-06 `scale(1.1, 1)` overshoot
- * and its same-day `scale(0.95, 1)` pinch.
+ * User direction 2026-11-07 (third revision, supersedes the 2026-11-05
+ * content-only ride and the 2026-11-06 body scales): ONLY THE HEIGHT MOVES,
+ * and the CHROME KEEPS ITS NATURAL SIZE. The frame's transform is the plain
+ * centering translate in EVERY state; the open/close is carried by LAYOUT
+ * HEIGHT through the family primitive (`useHeightRide` publishes
+ * `--hk-ride-chrome` / `--hk-ride-content` / `--hk-ride-factor`, and the
+ * frame maps its surface phases onto `hk-ride--from` / `hk-ride--to`):
  *
- * Why compile: a source-text scanner can be dodged by a later duplicate
- * rule, a block comment, SCSS interpolation, `@extend` or an `@use`d
- * partial, and it cannot see the cascade. This contract compiles
- * `HkModal.scss` with the repo's own sass, parses the emitted CSS into
- * ordered rules with their media context, and then asks the real cascade
- * question for each moment of the ride: which declaration WINS for the
- * frame, the chrome and the content region?
+ *   frame height  : chrome + content × 0.9   ⇄   chrome + content
+ *   content region: scaleY(0.9)              ⇄   scaleY(1)   (origin top)
+ *
+ * The retired grammars, oldest first: the 2026-11-04 whole-frame
+ * `scale(1, 0.9)`, the 2026-11-05 body-only uniform `scale(0.9)`, the
+ * 2026-11-06 `scale(1.1, 1)` overshoot, its same-day `scale(0.95, 1)`
+ * pinch, and the 2026-11-06/07 frame-level `scaleY(0.9)` ride (retired
+ * because a frame scale squashed the title glyphs and the footer buttons —
+ * the user's 2026-11-07 report on 0.55.305).
  */
 import { describe, expect, it } from "vitest";
 import { dirname, join } from "node:path";
@@ -337,10 +333,17 @@ const FRAME_TO = `${CENTERING} scaleY(1)`;
  *  R2 finding 2026-11-06 (S1): prefix `toContain` let both survive. */
 const ENTER_TRANSITION =
   "opacity var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)), " +
-  "transform var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1))";
+  "height var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1))";
 const LEAVE_TRANSITION =
   "opacity var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)), " +
-  "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
+  "height var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
+/** The ride's own geometry lives in the shared container sheet; the modal
+ *  frame maps its phases onto these two ends. */
+const RIDE_SHEET = (() => {
+  const path = join(here, "HkRideBox.scss");
+  return compile(path, { loadPaths: [here, join(here, "..", "styles")], style: "expanded" }).css;
+})();
+const RIDE_RULES = parseRules(stripComments(RIDE_SHEET));
 
 describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-07)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
@@ -352,30 +355,22 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(selectors.some((s) => s.includes("hk-modal-content-enter-from"))).toBe(true);
   });
 
-  it("rides the frame height as scaleY appended to the byte-identical centering translate", () => {
-    // 2026-11-06: the window's own height moves with the open/close. The
-    // translate prefix must be byte-identical in EVERY state (rest too) so
-    // the ride can never re-seat the frame or drop a dragged window's
-    // shift; only the appended scaleY flips 0.9 → 1.
-    expect(winner(frameWith(...RIDE[0].classes), "transform", DESKTOP), RIDE[0].name).toBe(FRAME_FROM);
-    expect(winner(frameWith(...RIDE[1].classes), "transform", DESKTOP), RIDE[1].name).toBe(FRAME_TO);
-    expect(winner(frameWith(...RIDE[2].classes), "transform", DESKTOP), RIDE[2].name).toBe(FRAME_TO);
-    expect(winner(frameWith(...RIDE[3].classes), "transform", DESKTOP), RIDE[3].name).toBe(FRAME_FROM);
-    // …and the same with the opt-in draggable flag on, where an
-    // attribute-qualified frame rule could otherwise slip past the mocks
-    // (R2 finding 2026-11-06 (S2): the body had this loop, the frame
-    // didn't — the repo's own [data-draggable] block is the natural next
-    // mutation site).
-    for (const state of RIDE) {
-      const expected = state.name === "enter-from" || state.name === "leave-to" ? FRAME_FROM : FRAME_TO;
-      expect(
-        winner(draggableFrameWith(...state.classes), "transform", DESKTOP),
-        `draggable frame ${state.name}`,
-      ).toBe(expected);
+  it("keeps the frame's transform at the plain centering translate in every state", () => {
+    // The ride is layout height, not a frame transform — that is the whole
+    // point (a frame scale squashed the chrome). So the transform must be
+    // the SAME `translate(...)` in rest and at both ride ends, and adding a
+    // scale to it in any state is the regression this pins.
+    for (const state of [...RIDE, { name: "rest", classes: [] as string[] }]) {
+      for (const [label, frame] of [
+        ["", frameWith(...state.classes)],
+        ["draggable ", draggableFrameWith(...state.classes)],
+      ] as const) {
+        expect(winner(frame, "transform", DESKTOP), `${label}${state.name}`).toBe(CENTERING);
+        for (const prop of ["scale", "zoom", "translate", "rotate", "transform-origin"]) {
+          expect(winner(frame, prop, DESKTOP), `${label}${state.name} ${prop}`).toBeUndefined();
+        }
+      }
     }
-    // …and at rest, too: the settled frame carries the translate only.
-    expect(winner(frameWith(), "transform", DESKTOP)).toBe(CENTERING);
-    expect(winner(draggableFrameWith(), "transform", DESKTOP)).toBe(CENTERING);
   });
 
   it("never lets a transform longhand creep onto the frame", () => {
@@ -421,37 +416,54 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       "will-change",
       DESKTOP,
     );
-    expect(enterWill).toBe("opacity, transform");
+    expect(enterWill).toBe("opacity, height");
     // The close direction promotes the same pair of layers.
     const leaveWill = winner(
       frameWith("hk-modal-content-leave-to", "hk-modal-content-leave-active"),
       "will-change",
       DESKTOP,
     );
-    expect(leaveWill).toBe("opacity, transform");
+    expect(leaveWill).toBe("opacity, height");
   });
 
-  it("never scales the content region: width stays 100% at every t", () => {
-    // 2026-11-07: only the height compresses. The body must carry no
-    // transform of its own in ANY ride state — its vertical ride is the
-    // frame's scaleY inherited down the tree, so a body transform here
-    // would either re-scale the width or double the Y compression.
-    const REST_OR_RIDE = [...RIDE, { name: "rest", classes: [] as string[] }];
-    // The whole transform family, on BOTH branches (R2 finding 2026-11-07
-    // (S2): the draggable branch used to pin `transform` only, so a
-    // `[data-draggable] … { scale: … }` longhand stayed green).
-    const PROPS = ["transform", "transform-origin", "scale", "translate", "rotate", "zoom", "perspective"];
-    for (const state of REST_OR_RIDE) {
-      for (const [label, frame] of [
-        ["", frameWith(...state.classes)],
-        ["draggable ", draggableFrameWith(...state.classes)],
-      ] as const) {
-        const body = child(frame, "hk-modal-body");
-        for (const prop of PROPS) {
-          expect(winner(body, prop, DESKTOP), `${label}${state.name} body ${prop}`).toBeUndefined();
-        }
-      }
-    }
+  it("rides the HEIGHT through the shared container contract, chrome untouched", () => {
+    // The two ends of the ride are expressed as `height: calc(chrome +
+    // content × factor)` on the frame (`!important` beats the size morph's
+    // inline pin for the duration of the flight) and as a top-origin
+    // `scaleY` on the CONTENT REGION only — so the title bar and the footer
+    // keep their natural size, which is the 2026-11-07 user requirement.
+    const rideRule = (selector: string): CssRule | undefined =>
+      RIDE_RULES.find((r) => r.selector === selector);
+
+    const from = rideRule(".hk-ride.hk-ride--from");
+    expect(from, "compressed end rule").toBeTruthy();
+    expect(from!.declarations.get("height")).toBe(
+      "calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px) * var(--hk-ride-factor, 0.9))",
+    );
+    expect(from!.important.has("height"), "the ride outranks the morph's inline pin").toBe(true);
+
+    const to = rideRule(".hk-ride.hk-ride--to");
+    expect(to, "natural end rule").toBeTruthy();
+    expect(to!.declarations.get("height")).toBe(
+      "calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px))",
+    );
+    expect(to!.important.has("height")).toBe(true);
+
+    // Only the content region is ever scaled — top origin, so the compressed
+    // paint lands exactly in the shorter slot the frame leaves for it.
+    const scaled = rideRule(".hk-ride.hk-ride--from > .hk-ride-content");
+    expect(scaled, "content compress rule").toBeTruthy();
+    expect(scaled!.declarations.get("transform")).toBe(
+      "scaleY(var(--hk-ride-factor, 0.9))",
+    );
+    const origin = rideRule(".hk-ride-content");
+    expect(origin!.declarations.get("transform-origin")).toBe("50% 0");
+
+    // …and the CHROME is never named by any ride rule: the modal's header,
+    // sub-header and footer must not be reachable from the ride sheet.
+    const CHROME = /hk-modal-(header|subheader|footer|title|close)\b/;
+    const offenders = RIDE_RULES.filter((r) => CHROME.test(r.selector)).map((r) => r.selector);
+    expect(offenders, "the ride container must not target modal chrome").toEqual([]);
   });
 
   it("never transforms the chrome: title bar, sub-header, footer, close button, title glyph", () => {
@@ -532,6 +544,16 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(
       winner(child(frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active"), "hk-modal-body"), "transform", MOBILE),
     ).toBeUndefined();
+  });
+
+  it("maps the surface states onto the ride's two ends", () => {
+    // The modal's TSX adds `hk-ride--from` for openingFrom/closingTo and
+    // `hk-ride--to` for openingTo/closingFrom; the container sheet keys off
+    // exactly those class names. A rename on either side has to fail here.
+    const names = RIDE_RULES.map((r) => r.selector).join("\n");
+    expect(names).toContain("hk-ride--from");
+    expect(names).toContain("hk-ride--to");
+    expect(names).toContain("hk-ride-content");
   });
 
   it("never lets ANY rule put a ride transform on the content region", () => {
@@ -662,11 +684,11 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       expect(winner(body, "translate", DESKTOP), `body ${state.name}`).toBeUndefined();
       expect(winner(body, "zoom", DESKTOP), `body ${state.name}`).toBeUndefined();
 
+      // The FRAME never carries a scale any more — the ride is height, and
+      // the only `scaleY` in the choreography lives on the content region's
+      // shared contract (pinned by the ride test above).
       const frameTransform = winner(frame, "transform", DESKTOP) ?? "";
-      const centeringRe = CENTERING.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      expect(frameTransform, `frame ${state.name}`).toMatch(
-        new RegExp(`^${centeringRe} scaleY\\((0\\.9|1)\\)$`),
-      );
+      expect(frameTransform, `frame ${state.name}`).toBe(CENTERING);
       expect(frameTransform, `frame ${state.name}`).not.toMatch(FRAME_ESCAPES);
       expect(winner(frame, "scale", DESKTOP), `frame ${state.name}`).toBeUndefined();
       expect(winner(frame, "zoom", DESKTOP), `frame ${state.name}`).toBeUndefined();

@@ -341,10 +341,6 @@ const ENTER_TRANSITION =
 const LEAVE_TRANSITION =
   "opacity var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)), " +
   "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
-const BODY_ENTER_TRANSITION =
-  "transform var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1))";
-const BODY_LEAVE_TRANSITION =
-  "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
 
 describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-06)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
@@ -441,16 +437,20 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     // frame's scaleY inherited down the tree, so a body transform here
     // would either re-scale the width or double the Y compression.
     const REST_OR_RIDE = [...RIDE, { name: "rest", classes: [] as string[] }];
+    // The whole transform family, on BOTH branches (R2 finding 2026-11-07
+    // (S2): the draggable branch used to pin `transform` only, so a
+    // `[data-draggable] … { scale: … }` longhand stayed green).
+    const PROPS = ["transform", "transform-origin", "scale", "translate", "rotate", "zoom", "perspective"];
     for (const state of REST_OR_RIDE) {
-      const frame = frameWith(...state.classes);
-      const body = child(frame, "hk-modal-body");
-      for (const prop of ["transform", "transform-origin", "scale", "translate", "zoom"]) {
-        expect(winner(body, prop, DESKTOP), `${state.name} body ${prop}`).toBeUndefined();
+      for (const [label, frame] of [
+        ["", frameWith(...state.classes)],
+        ["draggable ", draggableFrameWith(...state.classes)],
+      ] as const) {
+        const body = child(frame, "hk-modal-body");
+        for (const prop of PROPS) {
+          expect(winner(body, prop, DESKTOP), `${label}${state.name} body ${prop}`).toBeUndefined();
+        }
       }
-      // …and with the opt-in draggable flag on, where an attribute-qualified
-      // rule could otherwise slip past the mocks.
-      const dragged = child(draggableFrameWith(...state.classes), "hk-modal-body");
-      expect(winner(dragged, "transform", DESKTOP), `draggable ${state.name} body transform`).toBeUndefined();
     }
   });
 
@@ -481,7 +481,7 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     }
   });
 
-  it("flattens the content scale under prefers-reduced-motion", () => {
+  it("flattens the frame ride (and any stray body transform) under prefers-reduced-motion", () => {
     const frame = frameWith("hk-modal-content-enter-from", "hk-modal-content-enter-active");
     const body = child(frame, "hk-modal-body");
     expect(winner(body, "transform", DESKTOP_REDUCED)).toBe("none");
@@ -534,6 +534,34 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     ).toBeUndefined();
   });
 
+  it("never lets ANY rule put a ride transform on the content region", () => {
+    // Fail-closed sweep, selector-level and media-independent (R2 finding
+    // 2026-11-07 (S2): the cascade mock cannot match `:not()`, a type
+    // qualifier, an extra media gate or a pseudo-element, so twelve such
+    // mutations stayed green). Every rule that targets the body — in any
+    // media query, at any specificity — must stay out of the transform
+    // family, with ONE exemption: the reduced-motion flatten, which is
+    // allowed to neutralise (`none` / `auto` / `none` transition) and may
+    // not scale.
+    const BODY_TARGET = /(^|[\s>+~,:.(\[])\.hk-modal-body(?![\w-])/;
+    const TRANSFORM_FAMILY = /^(transform|transform-origin|translate|scale|rotate|zoom|perspective)$/;
+    const NEUTRAL = new Set(["none", "auto", "50% 50%", "center", "center center"]);
+    const offenders: string[] = [];
+    for (const rule of RULES) {
+      if (!BODY_TARGET.test(rule.selector)) continue;
+      const reduced = rule.media.some((m) => m.includes("prefers-reduced-motion"));
+      for (const prop of rule.declarations.keys()) {
+        const value = (rule.declarations.get(prop) ?? "").replace(/\s+/g, " ").trim();
+        if (!TRANSFORM_FAMILY.test(prop)) continue;
+        // `transform-origin: 50% 50%` is inert without a transform; the
+        // reduced-motion flatten may only neutralise.
+        const neutral = NEUTRAL.has(value) || (prop === "transform-origin" && reduced);
+        if (!neutral) offenders.push(`${rule.selector} { ${prop}: ${value} }`);
+      }
+    }
+    expect(offenders, "the content region must never be scaled").toEqual([]);
+  });
+
   it("never lets ANY rule put a transform on a chrome surface", () => {
     // Fail-closed sweep: selector-level and media-independent, so a chrome
     // transform is caught whatever the combinator, grouping, attribute
@@ -570,7 +598,7 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     const CHROME_ALLOWED = new Set(["opacity", "transition", "will-change", "transform"]);
     // The contracted transform values a ride rule may carry. Frame: the
     // three translate+scaleY states (reduced-motion flatten included);
-    // body: the two two-arg scales.
+    // body: nothing (its width is never scaled — 2026-11-07).
     const LEGAL_FRAME = new Set([CENTERING, FRAME_FROM, FRAME_TO]);
     // The body carries no transform contract any more (2026-11-07): any
     // ride rule targeting it is an offender outright.

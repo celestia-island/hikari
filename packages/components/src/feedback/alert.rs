@@ -23,6 +23,7 @@
 use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 use crate::utils::{HkPad, hk_pad_style};
@@ -202,19 +203,22 @@ pub fn Alert(props: AlertProps) -> Element {
                     }
                 }
                 if props.closable {
-                    button {
-                        class: "hk-alert-close",
-                        "type": "button",
-                        "aria-label": t("hikari::alert.close", "Close"),
-                        onclick: move |_| {
+                    IconButton {
+                        size: IconButtonSize::S24,
+                        variant: IconButtonVariant::Ghost,
+                        aria_label: Some(t("hikari::alert.close", "Close")),
+                        class: "hk-alert-close".to_string(),
+                        onclick: Some(EventHandler::new(move |_: MouseEvent| {
                             if let Some(handler) = on_close_handler.as_ref() {
                                 handler.call(MouseEvent::default());
                             }
+                        })),
+                        children: rsx! {
+                            Icon {
+                                icon: MdiIcon::Close,
+                                size: 12,
+                            }
                         },
-                        Icon {
-                            icon: MdiIcon::Close,
-                            size: 14,
-                        }
                     }
                 }
             }

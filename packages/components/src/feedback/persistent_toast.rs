@@ -88,6 +88,7 @@ use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 use tairitsu_vdom::dom_ops::{clear_timeout, set_timeout};
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -463,19 +464,22 @@ pub fn PersistentToast(props: PersistentToastProps) -> Element {
                 }
             }
             if dismissible {
-                button {
-                    class: "hk-persistent-toast__dismiss",
-                    "type": "button",
-                    "aria-label": t("hikari::persistentToast.dismiss", "Dismiss"),
-                    onclick: move |event: MouseEvent| {
+                IconButton {
+                    size: IconButtonSize::S24,
+                    variant: IconButtonVariant::Ghost,
+                    aria_label: Some(t("hikari::persistentToast.dismiss", "Dismiss")),
+                    class: "hk-persistent-toast__dismiss".to_string(),
+                    onclick: Some(EventHandler::new(move |event: MouseEvent| {
                         if let Some(handler) = on_dismiss_click.as_ref() {
                             handler.call(event);
                         }
+                    })),
+                    children: rsx! {
+                        Icon {
+                            icon: MdiIcon::Close,
+                            size: 12,
+                        }
                     },
-                    Icon {
-                        icon: MdiIcon::Close,
-                        size: PERSISTENT_TOAST_ICON_PX,
-                    }
                 }
             }
             if is_open {

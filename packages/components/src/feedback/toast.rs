@@ -85,6 +85,7 @@ use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 use tairitsu_vdom::dom_ops::{clear_timeout, set_timeout};
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -832,34 +833,41 @@ pub fn ToastItemView(props: ToastItemViewProps) -> Element {
                 }
             }
             if copyable {
-                button {
-                    class: "hk-toast-copy-btn",
-                    "type": "button",
-                    title: t("hikari::toast.copy", "Copy"),
-                    onclick: move |_| {
+                IconButton {
+                    size: IconButtonSize::S24,
+                    variant: IconButtonVariant::Ghost,
+                    title: Some(t("hikari::toast.copy", "Copy")),
+                    aria_label: Some(t("hikari::toast.copy", "Copy")),
+                    class: "hk-toast-copy-btn".to_string(),
+                    onclick: Some(EventHandler::new(move |_: MouseEvent| {
                         if let Some(handler) = on_copy_click.as_ref() {
                             handler.call(copy_payload.clone());
                         }
+                    })),
+                    children: rsx! {
+                        Icon {
+                            icon: MdiIcon::ContentCopy,
+                            size: 12,
+                        }
                     },
-                    Icon {
-                        icon: MdiIcon::ContentCopy,
-                        size: TOAST_ACTION_ICON_PX,
-                    }
                 }
             }
-            button {
-                class: "hk-toast-close",
-                "type": "button",
-                "aria-label": t("hikari::toast.close", "Close"),
-                onclick: move |_| {
+            IconButton {
+                size: IconButtonSize::S24,
+                variant: IconButtonVariant::Ghost,
+                aria_label: Some(t("hikari::toast.close", "Close")),
+                class: "hk-toast-close".to_string(),
+                onclick: Some(EventHandler::new(move |_: MouseEvent| {
                     if let Some(handler) = on_remove_close.as_ref() {
                         handler.call(slot_id);
                     }
+                })),
+                children: rsx! {
+                    Icon {
+                        icon: MdiIcon::Close,
+                        size: 12,
+                    }
                 },
-                Icon {
-                    icon: MdiIcon::Close,
-                    size: TOAST_ACTION_ICON_PX,
-                }
             }
         }
     }

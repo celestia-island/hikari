@@ -232,6 +232,11 @@ pub struct IconButtonProps {
     /// Accessible name for the button itself (Vue: `attrs['aria-label']`).
     pub aria_label: Option<String>,
 
+    /// Native `title` (Vue: `attrs.title`). Emitted only when set. A `title`
+    /// is NOT an accessible name, so this is a sibling of `aria_label`, not a
+    /// substitute: the family's copy/close controls carry both.
+    pub title: Option<String>,
+
     /// id of the element describing this button (Vue:
     /// `attrs['aria-describedby']`). Emitted only when set — the disabled
     /// state's reason text is the first consumer (a natively disabled
@@ -257,8 +262,11 @@ pub struct IconButtonProps {
     #[default]
     pub style: String,
 
-    /// `type` attribute passthrough. `None` emits NO `type` — a deliberate
-    /// delta: the Vue twin always emits `type="button"` (so does HkButton);
+    /// `type` attribute passthrough. `None` now falls back to `"button"`
+    /// (2026-11-06), matching the Vue twin and HkButton; the historical
+    /// "emit nothing" delta is gone, so an icon button inside a `<form>` no
+    /// longer becomes a submitter in either form of the family. An explicit
+    /// value still wins (a consumer that wants a submitter passes `"submit"`).
     /// this renderer emits one only when the host sets `button_type`.
     pub button_type: Option<String>,
 
@@ -308,6 +316,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     let dot_variant = props.dot_variant;
     let dot_label = props.dot_label.clone();
     let aria_label = props.aria_label.clone();
+    let title_attr = props.title.clone();
     let aria_describedby = props.aria_describedby.clone();
     let onclick = props.onclick.clone();
 
@@ -323,7 +332,14 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     } else {
         Some(props.style.clone())
     };
-    let button_type = props.button_type.clone();
+    // Parity with the Vue twin (2026-11-06 family fix): a real `<button>`
+    // with no `type` submits the enclosing form, so the default is
+    // `"button"` on BOTH forms of the family; an explicit `button_type`
+    // still wins.
+    let button_type = props
+        .button_type
+        .clone()
+        .or_else(|| Some("button".to_string()));
     let autofocus = props.autofocus;
 
     rsx! {
@@ -332,6 +348,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             "type": button_type,
             disabled: disabled,
             "aria-label": aria_label,
+            title: title_attr,
             "aria-describedby": aria_describedby,
             autofocus: autofocus,
             style: style_attr,

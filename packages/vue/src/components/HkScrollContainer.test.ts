@@ -255,6 +255,39 @@ describe("HkScrollContainer progressive fade strengths", () => {
     expect(varOf(m, "left")).toBe("0.25");
   });
 
+  it("publishes on a fade prop flip without any scroll (the re-sense watcher)", async () => {
+    // Mounting fade-off with content already hidden publishes nothing;
+    // flipping the prop on must light the strengths on the watcher's
+    // scheduled pass alone — no scroll event, no refresh() call.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ fade: false });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", fade: props.fade }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("");
+
+    props.fade = true;
+    await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.5");
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-right")).toBe("1");
+    app.unmount();
+  });
+
   it("publishes nothing while the fade prop is off", () => {
     const m = mountScroller({ axis: "horizontal" });
     stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });

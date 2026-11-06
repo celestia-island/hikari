@@ -37,7 +37,12 @@ export default defineComponent({
     }
 
     function onWindowKeydown(e: KeyboardEvent) {
-      if (e.key === "Escape") close();
+      // A nested control that consumed Escape owns the key. This listener
+      // sits on `window`, i.e. LAST in the bubble path, so
+      // `event.defaultPrevented` is the cross-component signal (same
+      // precedence rule as HkModal's 0.55.295 fix).
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      close();
     }
 
     watch(

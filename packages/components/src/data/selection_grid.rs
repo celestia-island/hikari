@@ -66,6 +66,7 @@
 
 use hikari_icons::MdiIcon;
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -478,13 +479,17 @@ pub fn SelectionGrid(props: SelectionGridProps) -> Element {
                 };
                 let disabled = action.disabled;
                 actions = actions.child(rsx! {
-                    button {
-                        class: "hk-selection-grid-action",
-                        "type": "button",
-                        title: action.label.clone(),
-                        "aria-label": action.label.clone(),
+                    // Wave B2: per-item actions are STANDARD icon buttons;
+                    // disabled and the "never a selection" stop-propagation
+                    // ride the component + handler body unchanged.
+                    IconButton {
+                        size: IconButtonSize::S24,
+                        variant: IconButtonVariant::Ghost,
+                        title: Some(action.label.clone()),
+                        aria_label: Some(action.label.clone()),
                         disabled: action.disabled,
-                        onclick: move |event: MouseEvent| {
+                        class: "hk-selection-grid-action".to_string(),
+                        onclick: Some(EventHandler::new(move |event: MouseEvent| {
                             // An action is never a selection: without this the
                             // row's own click handler fires too.
                             event.stop_propagation();
@@ -494,8 +499,10 @@ pub fn SelectionGrid(props: SelectionGridProps) -> Element {
                             if let Some(handler) = &emit_action {
                                 handler.call(payload.clone());
                             }
+                        })),
+                        children: rsx! {
+                            {icon_markup}
                         },
-                        {icon_markup}
                     }
                 });
             }
@@ -781,6 +788,10 @@ mod tests {
 
     #[test]
     fn selection_grid_renders_the_vue_dom() {
+        // Wave B2: per-item actions are STANDARD icon buttons (S24/ghost +
+        // seat, disabled passthrough). Asserted on the disabled action here:
+        // the button carries the trio + seat and the disabled attr.
+
         let html = SelectionGrid(SelectionGridProps {
             group_title: Some("Pick one".to_string()),
             hint: Some("Choose a target".to_string()),
@@ -804,6 +815,15 @@ mod tests {
             ..Default::default()
         })
         .render_to_html();
+        // Wave B2: per-item actions are STANDARD icon buttons — the
+        // disabled action's button carries the trio + seat and the disabled
+        // attribute (attribute-sorted serialization targets each on its own).
+        assert!(html.contains("hk-selection-grid-action"), "{html}");
+        assert!(
+            html.contains(r#"class="hk-icon-button hk-icon-button-24 hk-icon-button-ghost hk-selection-grid-action""#),
+            "{html}"
+        );
+        assert!(html.contains(r#"aria-label="Remove""#), "{html}");
 
         for needle in [
             "hk-selection-grid",

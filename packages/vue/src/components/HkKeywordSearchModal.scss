@@ -41,23 +41,10 @@
 }
 
 .hk-kw-search-clear {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  color: var(--hi-color-text-secondary, #666666);
-  cursor: pointer;
-  display: inline-flex;
+  /* Wave B2/B3: the clear affordance is the STANDARD icon button — box,
+     ink, hover and focus come from the component; the seat keeps only the
+     field's inner padding slot. */
   padding: var(--space-2, 0.125rem);
-  border-radius: var(--radius-sm, 0.25rem);
-
-  &:hover {
-    color: var(--hi-color-text-primary, #1e1e1e);
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 55%, transparent);
-    outline-offset: 2px;
-  }
 }
 
 /* ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the results list is NOT a

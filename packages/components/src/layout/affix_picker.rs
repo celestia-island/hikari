@@ -1592,4 +1592,39 @@ mod tests {
         }
         assert_eq!(AffixPickerComponent::name(), "affix-picker");
     }
+
+    /// Wave B2 hybrid decision, PINNED: the tag × keeps its own
+    /// `onmousedown` prevent-default (tapping × must not steal focus or start
+    /// a text selection in the picker), which HkIconButton does not carry —
+    /// so it deliberately stays a BARE button styled through the standard
+    /// channel vars. Migrating it onto HkIconButton changes a mouse
+    /// contract; the dedicated pin guards the Chrome group.
+    #[test]
+    fn affix_tag_close_stays_a_bare_button_by_contract() {
+        let html = AffixPicker(AffixPickerProps {
+            options: catalog(),
+            selected: vec!["jp".to_string()],
+            mode: AffixMode::Multi,
+            open: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains(r#"class="hk-affix-tag-x""#), "{html}");
+        assert!(!html.contains("hk-icon-button"), "{html}");
+        // The mouse contract lives in the SOURCE (events are wired at
+        // runtime, not serialized): tapping × must not steal focus or start
+        // a selection — the onmousedown prevent-default the standard
+        // component does not carry.
+        // Count-based, NOT contains-based: this test's own needle below
+        // contributes one literal occurrence, so a healthy file holds
+        // EXACTLY TWO (render wiring + this test). A plain contains() is
+        // tautologically true — the hollow-pin bug a review round caught.
+        let src = include_str!("affix_picker.rs");
+        let needle = "onmousedown: move |event: MouseEvent| event.prevent_default()";
+        assert_eq!(
+            src.matches(needle).count(),
+            2,
+            "the x's prevent-default must stay wired exactly once"
+        );
+    }
 }

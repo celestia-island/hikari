@@ -1,3 +1,5 @@
+import HkIconButton from "./HkIconButton";
+
 import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
@@ -241,9 +243,10 @@ export default defineComponent({
               autofocus
             />
             {query.value && (
-              <button
+              <HkIconButton
                 class="hk-kw-search-clear"
-                type="button"
+                size={24}
+                variant="ghost"
                 aria-label={t("hikari::keywordSearch.clear", "Clear")}
                 onClick={() => {
                   query.value = "";
@@ -251,19 +254,21 @@ export default defineComponent({
                   semanticResults.value = [];
                 }}
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+                {{ icon: () => (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                ) }}
+              </HkIconButton>
             )}
           </div>
 

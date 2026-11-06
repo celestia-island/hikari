@@ -132,6 +132,7 @@ use std::rc::Rc;
 
 use hikari_i18n::t;
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::feedback::{Modal, ModalProps};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -733,15 +734,23 @@ pub fn KeywordSearchModal(props: KeywordSearchModalProps) -> Element {
                         oninput: on_query_input,
                     }
                     if shows_clear {
-                        button {
-                            class: "hk-kw-search-clear",
-                            "type": "button",
-                            "aria-label": t("components.hk.keywordSearch.clear", "Clear"),
-                            onclick: on_clear,
-                            div {
-                                style: "display:contents",
-                                dangerous_inner_html: KEYWORD_SEARCH_CLEAR_SVG,
-                            }
+                        // Wave B2/B3: the clear affordance is the STANDARD
+                        // icon button (close-family pattern, ledger L177's
+                        // two-step: this renderer first, then Vue).
+                        IconButton {
+                            size: IconButtonSize::S24,
+                            variant: IconButtonVariant::Ghost,
+                            aria_label: Some(t("components.hk.keywordSearch.clear", "Clear")),
+                            class: "hk-kw-search-clear".to_string(),
+                            onclick: Some(EventHandler::new(move |event: MouseEvent| {
+                                on_clear(event);
+                            })),
+                            children: rsx! {
+                                div {
+                                    style: "display:contents",
+                                    dangerous_inner_html: KEYWORD_SEARCH_CLEAR_SVG,
+                                }
+                            },
                         }
                     }
                 }
@@ -1080,9 +1089,12 @@ mod tests {
             r#"placeholder="Type a name…""#,
             r#"value="work""#,
             "autofocus",
-            // The live query shows the clear ✕.
-            r#"class="hk-kw-search-clear""#,
+            // The live query shows the clear ✕ — the STANDARD icon button
+            // (wave B2/B3): base/24/ghost + seat, in the documented order.
+            "hk-kw-search-clear",
+            r#"class="hk-icon-button hk-icon-button-24 hk-icon-button-ghost hk-kw-search-clear""#,
             r#"aria-label="Clear""#,
+            r#"type="button""#,
             // The filtered row, carrying the slot's markup.
             r#"class="hk-kw-search-result""#,
             ">workspace<",

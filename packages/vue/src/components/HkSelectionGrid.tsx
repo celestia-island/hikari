@@ -1,3 +1,5 @@
+import HkIconButton from "./HkIconButton";
+
 import { Check } from "lucide-vue-next";
 import { defineComponent, type PropType } from "vue";
 
@@ -156,11 +158,12 @@ export default defineComponent({
                       {item.actions.map((action) => {
                         const ActionIcon = action.icon;
                         return (
-                          <button
+                          <HkIconButton
                             key={action.id}
-                            type="button"
                             class="hk-selection-grid-action"
-                            title={action.label}
+                            size={24}
+                            variant="ghost"
+                            {...{ title: action.label }}
                             aria-label={action.label}
                             disabled={action.disabled || undefined}
                             onClick={(e: MouseEvent) => {
@@ -171,7 +174,7 @@ export default defineComponent({
                             }}
                           >
                             {ActionIcon && <ActionIcon size={14} />}
-                          </button>
+                          </HkIconButton>
                         );
                       })}
                     </div>

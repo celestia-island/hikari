@@ -13,6 +13,10 @@
 // Semantics (the HkAffixPicker vocabulary): "single" closes on pick and
 // replaces the selection; "multi" toggles rows in a working copy and
 // commits on Confirm. The field's tag × removes directly — no dialog.
+import { X } from "lucide-vue-next";
+
+import HkIconButton from "./HkIconButton";
+
 import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
@@ -186,17 +190,18 @@ export default defineComponent({
                 {user.email && <span class="hk-user-picker-tag-email">{user.email}</span>}
               </span>
               {!props.disabled && (
-                <button
-                  type="button"
+                <HkIconButton
                   class="hk-user-picker-tag-x"
+                  size={16}
+                  variant="ghost"
                   aria-label={`${t("hikari::userPicker.remove", "Remove")} ${tagTitle(user)}`}
                   onClick={(e: MouseEvent) => {
                     e.stopPropagation();
                     removeTag(user.uid);
                   }}
                 >
-                  ×
-                </button>
+                  {{ icon: () => <X aria-hidden="true" /> }}
+                </HkIconButton>
               )}
             </span>
           ))}

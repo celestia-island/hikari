@@ -177,6 +177,21 @@ fn mirror_bodies_match_their_upstream_sheets() {
 /// `scale.scss`). A fallback-less reference to an undefined property is
 /// invalid at computed-value time — the same class of silent breakage the
 /// Vue host avoids because it always ships those two layers.
+///
+/// Escape hatch: `INTENTIONALLY_UNRESOLVED` names references a HOST is
+/// expected to provide, deliberately left undefined by the library —
+/// defining them (here OR as a fallback) would defeat the documented
+/// behavior. Each entry carries the pointer to the intent; a name lands
+/// here only with that rationale in the sheet. First real occupant:
+/// #1106's HkStepFlow sticky-header knob (IACVT — a default would poison
+/// the pin's `background` on engines without color-mix, because the knob
+/// itself is defined and therefore WINS over the base surface's own
+/// fallback; see the comment block at the reference site).
+const INTENTIONALLY_UNRESOLVED: &[(&str, &str)] = &[(
+    "--hk-stepflow-sticky-bg",
+    "packages/vue/src/components/HkStepFlow.scss",
+)];
+
 #[test]
 fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
     // Known-positive guard: both directions must find something, otherwise a
@@ -277,8 +292,9 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
             if !has_fallback {
                 referenced_without_fallback += 1;
                 assert!(
-                    definitions.contains(name),
-                    "{} references {name} without a fallback, but neither tokens.scss nor scale.scss defines it",
+                    definitions.contains(name)
+                        || INTENTIONALLY_UNRESOLVED.iter().any(|(v, _)| *v == name),
+                    "{} references {name} without a fallback, but neither tokens.scss nor scale.scss defines it and it is not on the intentionally-unresolved list",
                     path.file_name().unwrap().to_string_lossy()
                 );
             }

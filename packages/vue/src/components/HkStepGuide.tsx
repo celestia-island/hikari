@@ -1,3 +1,5 @@
+import { Check } from "lucide-vue-next";
+
 import { defineComponent, h, type Component, type PropType } from "vue";
 
 import "./HkStepGuide.scss";
@@ -77,20 +79,7 @@ export default defineComponent({
                 >
                   <span class="hk-step-guide-ordinal">
                     {isDone ? (
-                      <svg
-                        class="hk-step-guide-check"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M20 6L9 17l-5-5"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="3"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
+                      <Check class="hk-step-guide-check" stroke-width={3} aria-hidden="true" />
                     ) : (
                       idx + 1
                     )}

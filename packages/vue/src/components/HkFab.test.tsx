@@ -64,11 +64,12 @@ afterEach(() => {
 });
 
 describe("HkFab shell", () => {
-  it("renders a round button with the aria label and the default chevron svg", () => {
+  it("renders a round button with the aria label and the default chevron glyph", () => {
     const m = mountFab({ ariaLabel: "Jump to latest" });
     expect(m.button.getAttribute("aria-label")).toBe("Jump to latest");
-    // No icon prop -> inline chevron-down fallback svg.
-    expect(m.button.querySelector("svg polyline")).not.toBeNull();
+    // No icon prop -> the standard lucide chevron-down (wave B4: the
+    // hand-drawn inline fallback retired).
+    expect(m.button.querySelector("svg.lucide-chevron-down")).not.toBeNull();
   });
 
   it("mirrors positioning/corner/size/variant props onto data attributes", () => {

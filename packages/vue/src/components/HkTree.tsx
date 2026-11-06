@@ -1,3 +1,5 @@
+import { ChevronRight } from "lucide-vue-next";
+
 import { defineComponent, ref, watch, h, type Component, type PropType, type VNodeChild } from "vue";
 
 import "./HkTree.scss";
@@ -158,9 +160,7 @@ const TreeNodeRow = ({
           onClick={(e: MouseEvent) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
         >
           {hasChildren ? (
-            <svg viewBox="0 0 16 16" width="12" height="12" class="hk-tree-chevron" data-open={isExpanded || undefined}>
-              <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+            <ChevronRight class="hk-tree-chevron" data-open={isExpanded || undefined} size={12} stroke-width={1.5} />
           ) : (
             <span class="hk-tree-leaf" />
           )}

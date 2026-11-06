@@ -86,6 +86,7 @@ export { default as HProgressBar } from "./components/HkProgressBar";
 export { default as HProgressDialog } from "./components/HkProgressDialog";
 export { default as HRadio } from "./components/HkRadio";
 export { default as HScrollContainer } from "./components/HkScrollContainer";
+export { default as HRideBox } from "./components/HkRideBox";
 export { default as HScreenIdentifyCard } from "./components/HkScreenIdentifyCard";
 export { default as HScreenIdentifyHost } from "./components/HkScreenIdentifyHost";
 export { default as HSearchInput } from "./components/HkSearchInput";
@@ -518,6 +519,8 @@ export type { HkScrollProgressHandle, HkScrollProgressRegistrar } from "./compon
 export type { OverlayScrollMapSegment, OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useSurfaceTransition } from "./composables/useSurfaceTransition";
+export { useHeightRide } from "./composables/useHeightRide";
+export type { HeightRide, HeightRideOptions } from "./composables/useHeightRide";
 export { useSizeMorph } from "./composables/useSizeMorph";
 export type { SizeMorph } from "./composables/useSizeMorph";
 export { useImage } from "./composables/useImage";

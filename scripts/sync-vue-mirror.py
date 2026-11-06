@@ -297,6 +297,7 @@ FAMILY_SHEETS: list[str] = [
     "HkLoadingVeil.scss",
     "HkMessageBox.scss",
     "HkModal.scss",
+    "HkRideBox.scss",
     "HkPersistentToast.scss",
     "HkPersistentToastGroup.scss",
     "HkPhaseTransition.scss",

@@ -15,6 +15,7 @@ components/HkDrawer.scss	components/HkDrawer.scss
 components/HkLoadingVeil.scss	components/HkLoadingVeil.scss
 components/HkMessageBox.scss	components/HkMessageBox.scss
 components/HkModal.scss	components/HkModal.scss
+components/HkRideBox.scss	components/HkRideBox.scss
 components/HkPersistentToast.scss	components/HkPersistentToast.scss
 components/HkPersistentToastGroup.scss	components/HkPersistentToastGroup.scss
 components/HkPhaseTransition.scss	components/HkPhaseTransition.scss

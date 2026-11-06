@@ -1,0 +1,53 @@
+// AI-generated: developed with the DeepSeek Harness agent (model
+// DeepSeek-V4.1-Flash) directed and reviewed by langyo — SySL-1.0 §2.3
+// disclosure.
+//
+// The boot failure panel's stylesheet.
+//
+// The panel is the pre-boot twin of hikari's HkErrorLanding: it paints when
+// the app bundle never mounted, so it cannot mount Vue, but it must read as
+// the SAME surface as the in-app error landing. Instead of hand-copying token
+// values into a bespoke stylesheet (the pre-0.55.3xx panel did), this entry
+// compiles the LIVE sheets the component library ships:
+//
+//   - theme/channels.scss  the static seed channels (--color-*),
+//   - theme/scale.scss     the L2 scale tokens (--space/--text/--radius/...),
+//   - HkErrorLanding.scss  the landing card itself (classes + --hel-* bridges),
+//   - HkButton.scss        the primary action (the landing's action row has no
+//                          button chrome of its own; the component family's
+//                          button carries it, and a host-invented button style
+//                          would drift from the app's).
+//
+// scripts/gen-boot-landing-css.mjs compiles this file (compressed, ASCII) into
+// src/plugins/bootLandingCss.mjs, which the generated boot script inlines so
+// the panel needs no second network round-trip. bootLandingCss.test.ts
+// recompiles this entry and fails on drift, so editing the component sheets
+// updates the panel through this file alone.
+//
+// The component sheets paint the LIGHT seed scheme by default (the same
+// pre-engine floor the app shows before initTheme()). The boot page has no
+// theme engine at all, so the dark branch below maps the seed channels to the
+// library's OWN default dark palette (src/theme/presets.ts, the "default"
+// preset's dark tokens — the palette theme-loader.js paints the loader with).
+// Only the seed channels the compiled landing + button sheets actually read are
+// restated; the panel is not a theme, it is the one-frame fallback scheme.
+
+@use "../styles/theme/channels.scss";
+@use "../styles/theme/scale.scss";
+@use "../components/HkErrorLanding.scss";
+@use "../components/HkButton.scss";
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: 136 192 208;
+    --color-on-solid: 46 52 64;
+    --color-on-solid-text: 46 52 64;
+    --color-on-solid-icon: 46 52 64;
+    --color-text: 247 249 252;
+    --color-muted: 180 180 180;
+    --color-border: 128 128 128;
+    --color-background: 22 27 38;
+    --color-surface: 34 40 54;
+    --color-error: 191 97 106;
+  }
+}

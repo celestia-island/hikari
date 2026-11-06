@@ -58,6 +58,7 @@
     "lint": "vue-tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "gen:boot-landing-css": "node scripts/gen-boot-landing-css.mjs",
     "prepublishOnly": "vue-tsc --noEmit"
   },
   "peerDependencies": {

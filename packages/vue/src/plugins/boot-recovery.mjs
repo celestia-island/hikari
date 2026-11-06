@@ -24,12 +24,35 @@
  *      without user action.
  *   2. BOOT WATCHDOG (default on) — after `deadlineMs`, check whether the
  *      host's loading element is still in the document. If it is (and does not
- *      carry the dismissal class), nothing mounted: replace its contents with a
- *      minimal message + retry panel. The retry button re-checks the origin,
- *      then heals or reloads. Reloading is ALWAYS user-triggered — a
- *      permanently broken build must never reload-loop. `loadingScreen: false`
- *      turns this half off (heal-only mode, for hosts with their own fatal
- *      landing page).
+ *      carry the dismissal class), nothing mounted: replace its contents with
+ *      the shared error landing (see FAILURE PANEL below). The retry button
+ *      re-checks the origin, then heals or reloads. Reloading is ALWAYS
+ *      user-triggered — a permanently broken build must never reload-loop.
+ *      `loadingScreen: false` turns this half off (heal-only mode, for hosts
+ *      with their own fatal landing page).
+ *
+ * FAILURE PANEL — the READY-MADE `HkErrorLanding` surface, not a bespoke card:
+ * the panel is the component's pre-framework twin. It renders the same DOM
+ * contract the Vue component and hikari's Rust `ErrorLanding` mirror emit
+ * (`.hk-error-landing.is-error` → `__card` → `__icon` + `__title` +
+ * `__desc` + `__actions` with an `.hk-btn-primary` action), and its
+ * stylesheet is compiled from the LIVE component sheets — theme/channels,
+ * theme/scale, `HkErrorLanding.scss` and `HkButton.scss` — into
+ * `./bootLandingCss.mjs` by `scripts/gen-boot-landing-css.mjs`.
+ * `bootLandingCss.test.ts` recompiles that entry and fails whenever the
+ * checked-in sheet drifts, so the boot surface cannot fork away from the app's
+ * error landing (the pre-0.55.3xx panel hand-rolled `.hk-boot-recovery`
+ * classes with literal token values, which is exactly the divergence this
+ * module now refuses). The panel is styled INSIDE the host's loading element,
+ * never the element itself, so a custom `loadingScreen.selector` stays
+ * untouched; dark mode uses hikari's default dark seed palette through the
+ * entry's `prefers-color-scheme` block, because no theme engine has run yet.
+ *
+ * PANEL COPY: `copy.title` is the landing headline (default
+ * `BOOT_RECOVERY_TITLE`), `copy.message` its explanation, `copy.retry` the
+ * reload label; each locale row may override the title alongside the other
+ * two. A row without a title paints the host's default title over localized
+ * copy.
  *
  * WHY INLINE, WHY CLASSIC, WHY END OF `<head>`:
  *   - Inline: the heal must not depend on a second HTTP request, which could
@@ -51,10 +74,11 @@
  * stripping (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) and Vite's
  * `configLoader: "runner"` may have torn its module runner down before plugin
  * hooks run. The implementation therefore uses static imports only, and in fact
- * needs nothing from Node but `basename`; types live next door in
- * `boot-recovery.d.mts`. `boot-recovery.install.test.ts` imports the file from
- * a simulated npm install in a child node process — the guard that keeps it
- * that way.
+ * needs nothing from Node but `basename`; the panel stylesheet comes in as a
+ * static import of the generated `bootLandingCss.mjs` (plain ESM, no Node
+ * API). Types live next door in `boot-recovery.d.mts`.
+ * `boot-recovery.install.test.ts` imports the file from a simulated npm
+ * install in a child node process — the guard that keeps it that way.
  *
  * THE GENERATED SCRIPT'S CONTRACT (also the host-CSP contract):
  *   deterministic — the same options always produce byte-identical text, so a
@@ -83,7 +107,9 @@
  *      `__CELESTIA_OS_PREFS__`, the boot-chrome family global; an explicit
  *      `""` disables the source);
  *   3. `navigator.languages`, then `navigator.language`;
- *   4. none of the above matched: the English fallback copy.
+ *   4. none of the above matched: the host's `copy` triple (English by
+ *      default). A matched row without its own `title` inherits the host's
+ *      `copy.title`.
  *
  * Each candidate tag is matched against the table exactly first, then with
  * trailing subtags progressively stripped (`zh-hant-cn` → `zh-hant` →
@@ -92,10 +118,11 @@
  * (`zh-CN` listed before `zh-TW` means a `zh-HK` request resolves to the
  * zh-CN entry).
  *
- * BYTE-COMPAT: a host that does NOT configure `copy.locales` gets a script
- * byte-identical to the pre-locale implementation — none of the selection
- * code is emitted, so a host that hashed the single-copy script into its CSP
- * keeps its old hash.
+ * BYTE-COMPAT: a host that does NOT configure `copy.locales` gets no locale
+ * selection machinery at all — the panel paints the single `copy` triple. The
+ * panel restyle itself changes the script bytes for EVERY host (new DOM, new
+ * stylesheet, the title constant), so a host that hashes the inline script
+ * into its CSP must refresh that hash with the dependency bump.
  *
  * Usage (the `/plugins/boot-recovery` subpath is the ONLY supported import for
  * consumers — it resolves to this file, not to the package's TypeScript
@@ -109,6 +136,8 @@
 
 import { basename } from "node:path";
 
+import { BOOT_LANDING_CSS } from "./bootLandingCss.mjs";
+
 /** The canonical Tauri app origin on Windows/Android. */
 export const BOOT_RECOVERY_CANONICAL_ORIGIN = "http://tauri.localhost";
 
@@ -120,6 +149,9 @@ export const BOOT_RECOVERY_LOADING_SELECTOR = "#loading-screen";
 
 /** Default class that marks a loading element as already dismissed. */
 export const BOOT_RECOVERY_DISMISSED_CLASS = "hidden";
+
+/** Default failure-panel title (English; overridable through `copy.title`). */
+export const BOOT_RECOVERY_TITLE = "Application failed to load";
 
 /** Default failure-panel copy (English; overridable through `copy`). */
 export const BOOT_RECOVERY_MESSAGE =
@@ -144,6 +176,7 @@ export const BOOT_RECOVERY_DEFAULTS = Object.freeze({
     dismissedClass: BOOT_RECOVERY_DISMISSED_CLASS,
   }),
   copy: Object.freeze({
+    title: BOOT_RECOVERY_TITLE,
     message: BOOT_RECOVERY_MESSAGE,
     retry: BOOT_RECOVERY_RETRY,
   }),
@@ -181,23 +214,27 @@ function jsonAscii(value) {
 
 /**
  * Serialise the locale table as the generated script's `COPY_TABLE` literal:
- * a JSON array of `[tag, message, retry]` triples, every string through
+ * a JSON array of `[tag, title, message, retry]` rows, every string through
  * `jsonAscii` (CJK becomes \uXXXX escapes, no `</script` can survive), so
- * the generated script stays ASCII-only and byte-deterministic.
+ * the generated script stays ASCII-only and byte-deterministic. A row whose
+ * host omitted `title` carries `""`; the runtime falls back to
+ * `COPY_TITLE` for it.
  *
- * @param {Array<[string, string, string]>} triples
+ * @param {Array<[string, string, string, string]>} entries
  * @returns {string}
  */
-function copyTableLiteral(triples) {
+function copyTableLiteral(entries) {
   const rows = [];
-  for (const triple of triples) {
+  for (const entry of entries) {
     rows.push(
       "[" +
-        jsonAscii(triple[0]) +
+        jsonAscii(entry[0]) +
         "," +
-        jsonAscii(triple[1]) +
+        jsonAscii(entry[1]) +
         "," +
-        jsonAscii(triple[2]) +
+        jsonAscii(entry[2]) +
+        "," +
+        jsonAscii(entry[3]) +
         "]",
     );
   }
@@ -339,12 +376,21 @@ function normaliseInjectTo(value) {
 /**
  * Merge the `copy` overrides over the English defaults.
  *
+ * `title` is the landing headline (the panel mirrors HkErrorLanding's card:
+ * headline + explanation + action), `message` its explanation and `retry`
+ * the reload label. An empty title falls back to the English default, so a
+ * host that only ever configured the pre-title pair still paints a heading.
+ *
  * @param {unknown} input
- * @returns {{ message: string, retry: string }}
+ * @returns {{ title: string, message: string, retry: string }}
  */
 function normaliseCopy(input) {
   const raw = input && typeof input === "object" ? input : {};
   return {
+    title:
+      typeof raw.title === "string" && raw.title
+        ? raw.title
+        : BOOT_RECOVERY_TITLE,
     message: typeof raw.message === "string" ? raw.message : BOOT_RECOVERY_MESSAGE,
     retry: typeof raw.retry === "string" ? raw.retry : BOOT_RECOVERY_RETRY,
   };
@@ -357,18 +403,23 @@ function normaliseCopy(input) {
  * into `-` (so `"zh_CN"` and `"zh-cn"` collide loudly instead of one of
  * them silently shadowing the other). Each entry must be an object carrying
  * non-empty `message` and `retry` strings — a typo must fail the build at
- * config time, not paint an empty panel on a dead boot. The result is an
- * array of `[tag, message, retry]` triples in the host's insertion order
+ * config time, not paint an empty panel on a dead boot. `title` is the
+ * landing headline and is OPTIONAL (a row without one paints the host's
+ * default title over localized copy, which is why hosts translating the
+ * panel should supply it); a present-but-empty title is rejected like any
+ * other malformed field. The result is an array of
+ * `[tag, title, message, retry]` rows in the host's insertion order
  * (which is the tie-break order for shared primary subtags), or `null`
- * when no table was configured — the single-copy mode keeps the
- * byte-identical script a host may have hashed into its CSP.
+ * when no table was configured — the single-copy mode emits none of the
+ * selection machinery (the panel restyle still changes the script bytes for
+ * every host; see BYTE-COMPAT in the module doc).
  *
  * @param {unknown} locales
- * @returns {Array<[string, string, string]> | null}
+ * @returns {Array<[string, string, string, string]> | null}
  */
 function normaliseLocales(locales) {
   if (locales === undefined || locales === null) return null;
-  const triples = [];
+  const rows = [];
   const seen = new Map();
   for (const rawKey in locales) {
     if (!Object.prototype.hasOwnProperty.call(locales, rawKey)) continue;
@@ -406,10 +457,20 @@ function normaliseLocales(locales) {
           "]: copy.locales entries must carry non-empty message and retry strings",
       );
     }
+    if (
+      entry.title !== undefined &&
+      (typeof entry.title !== "string" || !entry.title)
+    ) {
+      throw new Error(
+        "[hikari boot-recovery] copy.locales[" +
+          JSON.stringify(tag) +
+          "].title: when present it must be a non-empty string",
+      );
+    }
     seen.set(tag, rawKey);
-    triples.push([tag, entry.message, entry.retry]);
+    rows.push([tag, entry.title || "", entry.message, entry.retry]);
   }
-  return triples.length ? triples : null;
+  return rows.length ? rows : null;
 }
 
 /**
@@ -483,8 +544,8 @@ function normaliseLoadingScreen(input) {
  *   deadlineMs: number,
  *   predicateSource: string | null,
  *   loadingScreen: { selector: string, dismissedClass: string } | null,
- *   copy: { message: string, retry: string },
- *   copyTable: Array<[string, string, string]> | null,
+ *   copy: { title: string, message: string, retry: string },
+ *   copyTable: Array<[string, string, string, string]> | null,
  *   storageKey: string | null,
  *   osPrefsGlobal: string | null,
  *   injectTo: "head" | "head-prepend",
@@ -588,27 +649,27 @@ function htmlFileMatches(filename, htmlFiles) {
 }
 
 /**
- * CSS for the failure panel, injected as one inline `<style>` next to the panel
- * itself. Deliberately SELF-CONTAINED: it styles only hikari's own panel
- * classes, never the host's loading element, so a custom `selector` cannot
- * break out of a stylesheet. The values are hikari's seed tokens written out
- * literally (packages/vue/src/styles/theme/channels.scss + scale.scss): the
- * primary 122 162 247 with its 82%-black hover mix and button shadow, the
- * elevated card shadow, the md/lg radii, the `--font-sans` stack and the
- * text seed 30 30 30. The card carries its own surface — white in the light
- * scheme, the Nord surface rgb(46 52 64) under `prefers-color-scheme: dark`
- * — so the panel stays legible on any backdrop (WoWSP's dark loader paints
- * #0b1220) before any theme engine has loaded.
+ * The failure panel's stylesheet — hikari's OWN component sheet, not a
+ * hand-copied palette.
+ *
+ * The panel is the pre-framework twin of HkErrorLanding: the card, its icon
+ * disc, the headline/explanation and the action row are the component's own
+ * classes, and the stylesheet is compiled from the LIVE component sources
+ * (`boot-landing.scss`: theme/channels + theme/scale + HkErrorLanding +
+ * HkButton) into `./bootLandingCss.mjs` by
+ * `scripts/gen-boot-landing-css.mjs`. `bootLandingCss.test.ts` recompiles
+ * the entry and fails whenever the checked-in sheet drifts from the
+ * components, so the boot surface cannot fork away from the app's error
+ * landing again (the pre-0.55.3xx panel hand-rolled `.hk-boot-recovery`
+ * classes with literal token values instead of reusing the component).
+ *
+ * Deliberately SELF-CONTAINED: the sheet styles only hikari's own classes and
+ * is appended INSIDE the host's loading element (never applied to it), so a
+ * custom `selector` cannot break out of the stylesheet. Dark mode rides
+ * hikari's default dark seed palette through the entry's
+ * `prefers-color-scheme` block, because no theme engine exists yet when the
+ * panel paints.
  */
-const FAILURE_PANEL_CSS = [
-  ".hk-boot-recovery{display:flex;flex-direction:column;align-items:center;gap:1.25rem;max-width:32rem;padding:2rem 2.5rem;text-align:center;background:#fff;border:1px solid rgb(30 30 30 / 8%);border-radius:12px;box-shadow:0 8px 32px rgb(0 0 0 / 15%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;color:rgb(30 30 30)}",
-  ".hk-boot-recovery__message{margin:0;font-size:.875rem;line-height:1.6}",
-  ".hk-boot-recovery__retry{appearance:none;font:inherit;font-size:.875rem;font-weight:600;padding:.5rem 1.5rem;border:0;border-radius:8px;background:rgb(122 162 247);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgb(122 162 247 / 35%);transition:background .15s cubic-bezier(.4,0,.2,1),box-shadow .15s cubic-bezier(.4,0,.2,1)}",
-  ".hk-boot-recovery__retry:hover{background:rgb(100 133 203)}",
-  ".hk-boot-recovery__retry:active{background:rgb(83 111 167)}",
-  ".hk-boot-recovery__retry:focus-visible{outline:none;box-shadow:0 0 0 3px rgb(122 162 247 / 25%)}",
-  "@media (prefers-color-scheme:dark){.hk-boot-recovery{background:rgb(46 52 64);border-color:rgb(255 255 255 / 8%);box-shadow:0 8px 32px rgb(0 0 0 / 45%);color:rgb(216 222 233)}}",
-].join("\n");
 
 /**
  * The whole recovery as one compact, dependency-free inline IIFE — the exact
@@ -659,10 +720,13 @@ export function bootRecoveryScript(options = {}) {
         jsonAscii(resolved.loadingScreen.dismissedClass) +
         ";",
     );
+    lines.push("  var COPY_TITLE = " + jsonAscii(resolved.copy.title) + ";");
     lines.push("  var COPY_MESSAGE = " + jsonAscii(resolved.copy.message) + ";");
     lines.push("  var COPY_RETRY = " + jsonAscii(resolved.copy.retry) + ";");
     if (resolved.copyTable) {
-      lines.push("  var COPY_FALLBACK = [COPY_MESSAGE, COPY_RETRY];");
+      lines.push(
+        "  var COPY_FALLBACK = [COPY_TITLE, COPY_MESSAGE, COPY_RETRY];",
+      );
       lines.push(
         "  var COPY_TABLE = " + copyTableLiteral(resolved.copyTable) + ";",
       );
@@ -673,7 +737,7 @@ export function bootRecoveryScript(options = {}) {
         "  var OS_PREFS_GLOBAL = " + jsonLiteral(resolved.osPrefsGlobal) + ";",
       );
     }
-    lines.push("  var PANEL_CSS = " + jsonAscii(FAILURE_PANEL_CSS) + ";");
+    lines.push("  var PANEL_CSS = " + jsonAscii(BOOT_LANDING_CSS) + ";");
   }
   lines.push("");
   lines.push(
@@ -766,12 +830,15 @@ export function bootRecoveryScript(options = {}) {
       lines.push("        user's explicit in-app choice, outranks everything;");
       lines.push("     2. window[OS_PREFS_GLOBAL].locale - the shell's OS preference;");
       lines.push("     3. navigator.languages, then navigator.language;");
-      lines.push("     4. no match - the English fallback pair (COPY_FALLBACK).");
+      lines.push("     4. no match - the host fallback triple (COPY_FALLBACK).");
       lines.push("     Each candidate tag is matched against COPY_TABLE exactly, then");
       lines.push("     with trailing subtags progressively stripped, then by its");
       lines.push("     primary subtag alone; entries sharing a primary subtag resolve");
       lines.push("     to the FIRST one the host listed. The winning entry is returned");
-      lines.push("     as its [message, retry] pair, like COPY_FALLBACK. */");
+      lines.push(
+        "     as its [title, message, retry] triple, like COPY_FALLBACK; a",
+      );
+      lines.push("     row without a title inherits COPY_TITLE. */");
       lines.push("  function localeKey(tag, drop) {");
       lines.push('    var parts = String(tag).replace(/_/g, "-").toLowerCase().split("-");');
       lines.push("    if (drop >= parts.length) return null;");
@@ -820,53 +887,106 @@ export function bootRecoveryScript(options = {}) {
       lines.push("    }");
       lines.push("    for (var c = 0; c < candidates.length; c++) {");
       lines.push("      var hit = tableHit(localeKey(candidates[c], 0));");
-      lines.push("      if (hit) return [hit[1], hit[2]];");
+      lines.push(
+        "      if (hit) return [hit[1] || COPY_TITLE, hit[2], hit[3]];",
+      );
       lines.push('      var parts = String(candidates[c]).replace(/_/g, "-").toLowerCase().split("-");');
       lines.push("      for (var drop = 1; drop < parts.length; drop++) {");
       lines.push("        hit = tableHit(localeKey(candidates[c], drop));");
-      lines.push("        if (hit) return [hit[1], hit[2]];");
+      lines.push(
+        "        if (hit) return [hit[1] || COPY_TITLE, hit[2], hit[3]];",
+      );
       lines.push("      }");
       lines.push("      hit = primaryHit(candidates[c]);");
-      lines.push("      if (hit) return [hit[1], hit[2]];");
+      lines.push(
+        "      if (hit) return [hit[1] || COPY_TITLE, hit[2], hit[3]];",
+      );
       lines.push("    }");
       lines.push("    return null;");
       lines.push("  }");
     }
+    lines.push("");
     lines.push(
-      "  /* Replace the loader's contents with the failure panel. Built from",
+      "  /* HkErrorLanding's error glyph: lucide's triangle-alert (ISC),",
     );
     lines.push(
-      "     constant strings through DOM APIs only: no markup parsing and no",
+      "     created through the SVG DOM so the panel parses no markup. */",
     );
-    lines.push("     page input, so there is nothing to escape or inject. */");
+    lines.push('  var SVG_NS = "http://www.w3.org/2000/svg";');
+    lines.push("  var ICON_PATHS = [");
+    lines.push(
+      '    "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",',
+    );
+    lines.push('    "M12 9v4",');
+    lines.push('    "M12 17h.01",');
+    lines.push("  ];");
+    lines.push("  function toneIcon() {");
+    lines.push('    var svg = document.createElementNS(SVG_NS, "svg");');
+    lines.push('    svg.setAttribute("width", "28");');
+    lines.push('    svg.setAttribute("height", "28");');
+    lines.push('    svg.setAttribute("viewBox", "0 0 24 24");');
+    lines.push('    svg.setAttribute("fill", "none");');
+    lines.push('    svg.setAttribute("stroke", "currentColor");');
+    lines.push('    svg.setAttribute("stroke-width", "2");');
+    lines.push('    svg.setAttribute("stroke-linecap", "round");');
+    lines.push('    svg.setAttribute("stroke-linejoin", "round");');
+    lines.push("    for (var i = 0; i < ICON_PATHS.length; i++) {");
+    lines.push('      var path = document.createElementNS(SVG_NS, "path");');
+    lines.push('      path.setAttribute("d", ICON_PATHS[i]);');
+    lines.push("      svg.appendChild(path);");
+    lines.push("    }");
+    lines.push("    return svg;");
+    lines.push("  }");
+    lines.push("");
+    lines.push(
+      "  /* Replace the loader's contents with the HkErrorLanding card. Built",
+    );
+    lines.push(
+      "     from constant strings through DOM APIs only: no markup parsing",
+    );
+    lines.push(
+      "     and no page input, so there is nothing to escape or inject. */",
+    );
     lines.push("  function showFailure(loading) {");
     lines.push('    loading.textContent = "";');
-    lines.push('    var style = document.createElement("style");');
-    lines.push("    style.textContent = PANEL_CSS;");
-    lines.push('    var box = document.createElement("div");');
-    lines.push('    box.className = "hk-boot-recovery";');
-    lines.push('    box.setAttribute("role", "alert");');
-    lines.push('    var message = document.createElement("p");');
-    lines.push('    message.className = "hk-boot-recovery__message";');
     if (resolved.copyTable) {
       lines.push("    var copy = pickCopy() || COPY_FALLBACK;");
-      lines.push("    message.textContent = copy[0];");
     } else {
-      lines.push("    message.textContent = COPY_MESSAGE;");
+      lines.push("    var copy = [COPY_TITLE, COPY_MESSAGE, COPY_RETRY];");
     }
+    lines.push('    var style = document.createElement("style");');
+    lines.push("    style.textContent = PANEL_CSS;");
+    lines.push('    var landing = document.createElement("div");');
+    lines.push('    landing.className = "hk-error-landing is-error is-inline";');
+    lines.push('    landing.setAttribute("role", "alert");');
+    lines.push('    landing.setAttribute("data-hk-boot-recovery-panel", "");');
+    lines.push('    var card = document.createElement("div");');
+    lines.push('    card.className = "hk-error-landing__card";');
+    lines.push('    var icon = document.createElement("div");');
+    lines.push('    icon.className = "hk-error-landing__icon";');
+    lines.push('    icon.setAttribute("aria-hidden", "true");');
+    lines.push("    icon.appendChild(toneIcon());");
+    lines.push('    var heading = document.createElement("h1");');
+    lines.push('    heading.className = "hk-error-landing__title";');
+    lines.push("    heading.textContent = copy[0];");
+    lines.push('    var message = document.createElement("p");');
+    lines.push('    message.className = "hk-error-landing__desc";');
+    lines.push("    message.textContent = copy[1];");
+    lines.push('    var actions = document.createElement("div");');
+    lines.push('    actions.className = "hk-error-landing__actions";');
     lines.push('    var button = document.createElement("button");');
     lines.push('    button.type = "button";');
-    lines.push('    button.className = "hk-boot-recovery__retry";');
-    lines.push(
-      resolved.copyTable
-        ? "    button.textContent = copy[1];"
-        : "    button.textContent = COPY_RETRY;",
-    );
+    lines.push('    button.className = "hk-btn hk-btn-primary hk-btn-sm";');
+    lines.push("    button.textContent = copy[2];");
     lines.push('    button.addEventListener("click", retry);');
-    lines.push("    box.appendChild(message);");
-    lines.push("    box.appendChild(button);");
+    lines.push("    actions.appendChild(button);");
+    lines.push("    card.appendChild(icon);");
+    lines.push("    card.appendChild(heading);");
+    lines.push("    card.appendChild(message);");
+    lines.push("    card.appendChild(actions);");
+    lines.push("    landing.appendChild(card);");
     lines.push("    loading.appendChild(style);");
-    lines.push("    loading.appendChild(box);");
+    lines.push("    loading.appendChild(landing);");
     lines.push("  }");
   }
   lines.push("})();");
@@ -902,9 +1022,10 @@ export function bootRecoveryScript(options = {}) {
  *   osPrefsGlobal?: string,
  *   isMangledOrigin?: (protocol: string, hostname: string) => boolean,
  *   copy?: {
+ *     title?: string,
  *     message?: string,
  *     retry?: string,
- *     locales?: Record<string, { message: string, retry: string }>,
+ *     locales?: Record<string, { title?: string, message: string, retry: string }>,
  *     storageKey?: string,
  *   },
  *   injectTo?: "head" | "head-prepend",

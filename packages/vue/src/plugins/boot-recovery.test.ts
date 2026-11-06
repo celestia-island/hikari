@@ -20,6 +20,7 @@ import {
   BOOT_RECOVERY_LOADING_SELECTOR,
   BOOT_RECOVERY_MESSAGE,
   BOOT_RECOVERY_RETRY,
+  BOOT_RECOVERY_TITLE,
   bootRecoveryPlugin,
   bootRecoveryScript,
   isMangledOrigin,
@@ -200,6 +201,8 @@ interface FakeLocation {
 interface FakeDocument {
   querySelector: (selector: string) => FakeNode | null;
   createElement: (tag: string) => FakeNode;
+  /** The landing icon is built through the SVG namespace. */
+  createElementNS: (namespace: string, tag: string) => FakeNode;
 }
 
 type FakeSetTimeout = (callback: () => void, ms: number) => number;
@@ -275,6 +278,7 @@ function runRecovery(page: FakePage = {}): RecoveryRun {
       return matches(selector) ? loading : null;
     },
     createElement: (tag) => fakeNode(tag),
+    createElementNS: (_namespace, tag) => fakeNode(tag),
   };
 
   const fakeSetTimeout: FakeSetTimeout = (callback, ms) => {
@@ -322,16 +326,46 @@ function runRecovery(page: FakePage = {}): RecoveryRun {
   };
 }
 
-/** The panel's button, if a panel was painted into the fake loader. */
-function panelButton(run: RecoveryRun): FakeNode {
-  const panel = mustFind(run.loading?.children ?? [], "div");
-  return mustFind(panel.children, "button");
+/** The painted HkErrorLanding root (the panel), if the watchdog painted one. */
+function panelRoot(run: RecoveryRun): FakeNode {
+  const panel = (run.loading?.children ?? []).find(
+    (child) => child.tag === "div" && child.className.startsWith("hk-error-landing"),
+  );
+  if (!panel) throw new Error("the failure panel was not painted");
+  return panel;
 }
 
-/** The panel's message <p>, if a panel was painted into the fake loader. */
+/** The panel's landing card (`.hk-error-landing__card`). */
+function panelCard(run: RecoveryRun): FakeNode {
+  const card = panelRoot(run).children.find(
+    (child) => child.className === "hk-error-landing__card",
+  );
+  if (!card) throw new Error("the failure panel has no landing card");
+  return card;
+}
+
+/** The card's action row, if the landing painted one. */
+function panelActions(run: RecoveryRun): FakeNode {
+  const actions = panelCard(run).children.find(
+    (child) => child.className === "hk-error-landing__actions",
+  );
+  if (!actions) throw new Error("the failure panel has no action row");
+  return actions;
+}
+
+/** The panel's retry button, if a panel was painted into the fake loader. */
+function panelButton(run: RecoveryRun): FakeNode {
+  return mustFind(panelActions(run).children, "button");
+}
+
+/** The panel's explanation <p>, if a panel was painted into the fake loader. */
 function panelMessage(run: RecoveryRun): FakeNode {
-  const panel = mustFind(run.loading?.children ?? [], "div");
-  return mustFind(panel.children, "p");
+  return mustFind(panelCard(run).children, "p");
+}
+
+/** The panel's headline <h1>, if a panel was painted into the fake loader. */
+function panelTitle(run: RecoveryRun): FakeNode {
+  return mustFind(panelCard(run).children, "h1");
 }
 
 /** Fake localStorage backed by a plain record. */
@@ -369,7 +403,11 @@ describe("defaults", () => {
       canonicalOrigin: "http://tauri.localhost",
       deadlineMs: 15000,
       loadingScreen: { selector: "#loading-screen", dismissedClass: "hidden" },
-      copy: { message: BOOT_RECOVERY_MESSAGE, retry: BOOT_RECOVERY_RETRY },
+      copy: {
+        title: BOOT_RECOVERY_TITLE,
+        message: BOOT_RECOVERY_MESSAGE,
+        retry: BOOT_RECOVERY_RETRY,
+      },
       injectTo: "head",
     });
     expect(Object.isFrozen(BOOT_RECOVERY_DEFAULTS)).toBe(true);
@@ -473,9 +511,11 @@ describe("the generated inline recovery script", () => {
       /location\.(?:pathname|search|hash|href|origin|port|username|password)/,
     );
     expect(SCRIPT).not.toMatch(/localStorage|sessionStorage|document\.cookie/);
-    // The only URL literal in the whole script is the canonical origin.
+    // The only http(s) URL literals are the canonical origin and the SVG
+    // namespace the landing glyph is drawn under.
     expect(SCRIPT.match(/https?:\/\/[^\s"']+/g) ?? []).toEqual([
       BOOT_RECOVERY_CANONICAL_ORIGIN,
+      "http://www.w3.org/2000/svg",
     ]);
   });
 
@@ -524,8 +564,11 @@ describe("the generated inline recovery script", () => {
     });
     expect(custom).toContain('"https://app.example"');
     expect(custom).toContain('hostname === "evil.example"');
-    // Custom canonical origin is the only URL literal.
-    expect(custom.match(/https?:\/\/[^\s"']+/g) ?? []).toEqual(["https://app.example"]);
+    // The custom canonical origin is the only other URL literal.
+    expect(custom.match(/https?:\/\/[^\s"']+/g) ?? []).toEqual([
+      "https://app.example",
+      "http://www.w3.org/2000/svg",
+    ]);
   });
 
   it("escapes non-ASCII and tag-breaking copy instead of breaking the contract", () => {
@@ -618,31 +661,47 @@ describe("the recovery script's runtime behaviour (executed against a fake page)
     expect(run.loading?.children.map((child) => child.tag)).toEqual(["style", "div"]);
 
     const style = mustFind(run.loading?.children ?? [], "style");
-    // Colour-scheme aware and self-contained: the panel must not flip to light
-    // colours on a dark desktop (or vice versa) before the app's theme loads.
-    // The card carries its own seed-token surface (white / Nord rgb(46 52 64)),
-    // so it stays legible on a dark loader backdrop (WoWSP paints #0b1220).
-    expect(style.textContent).toContain("prefers-color-scheme:dark");
-    expect(style.textContent).toContain("rgb(30 30 30)");
-    expect(style.textContent).toContain("rgb(216 222 233)");
-    expect(style.textContent).toContain("rgb(122 162 247)");
-    expect(style.textContent).toContain(".hk-boot-recovery");
+    // The stylesheet IS the component sheet: the landing card, its action
+    // button chrome and the seed channels are compiled from the live sources
+    // (boot-landing.scss), so the panel cannot fork away from HkErrorLanding.
+    expect(style.textContent).toContain(".hk-error-landing__card");
+    expect(style.textContent).toContain(".hk-error-landing__icon");
+    expect(style.textContent).toContain(".hk-btn-primary");
+    // Dark scheme rides hikari's own default dark seed palette, the same
+    // table theme-loader.js paints the loader with: no theme engine has run
+    // yet, and the panel must not flip to light colours on a dark desktop.
+    expect(style.textContent).toContain("prefers-color-scheme");
+    expect(style.textContent).toContain("--color-surface: 34 40 54");
+    expect(style.textContent).toContain("--color-primary: 136 192 208");
 
-    const panel = mustFind(run.loading?.children ?? [], "div");
-    expect(panel.className).toBe("hk-boot-recovery");
+    const panel = panelRoot(run);
+    expect(panel.className).toBe("hk-error-landing is-error is-inline");
     expect(panel.attributes.role).toBe("alert");
+    expect(panel.attributes["data-hk-boot-recovery-panel"]).toBe("");
 
-    const message = mustFind(panel.children, "p");
-    expect(message.textContent).toBe(BOOT_RECOVERY_MESSAGE);
+    // The card mirrors HkErrorLanding's DOM contract: tone icon (the lucide
+    // triangle-alert glyph), headline, explanation, action row.
+    const card = panelCard(run);
+    const icon = mustFind(card.children, "div");
+    expect(icon.className).toBe("hk-error-landing__icon");
+    expect(icon.attributes["aria-hidden"]).toBe("true");
+    const svg = mustFind(icon.children, "svg");
+    expect(svg.attributes.viewBox).toBe("0 0 24 24");
+    expect(svg.children.filter((node) => node.tag === "path")).toHaveLength(3);
+
+    expect(panelTitle(run).className).toBe("hk-error-landing__title");
+    expect(panelTitle(run).textContent).toBe(BOOT_RECOVERY_TITLE);
+    expect(panelMessage(run).className).toBe("hk-error-landing__desc");
+    expect(panelMessage(run).textContent).toBe(BOOT_RECOVERY_MESSAGE);
 
     // Manual recovery only: reaching the deadline never navigates.
     expect(run.reloads).toBe(0);
     expect(run.replaced).toEqual([]);
 
-    const button = mustFind(panel.children, "button");
+    const button = panelButton(run);
     expect(button.type).toBe("button");
     expect(button.textContent).toBe(BOOT_RECOVERY_RETRY);
-    expect(button.className).toBe("hk-boot-recovery__retry");
+    expect(button.className).toBe("hk-btn hk-btn-primary hk-btn-sm");
     clickButton(button);
     expect(run.reloads).toBe(1); // the user chose to retry
   });
@@ -729,13 +788,13 @@ describe("the recovery script's runtime behaviour (executed against a fake page)
 
   it("uses the configured copy in the panel", () => {
     const custom = bootRecoveryScript({
-      copy: { message: "Boot failed", retry: "Retry boot" },
+      copy: { title: "Boot failed", message: "Try again later", retry: "Retry boot" },
     });
     const run = runRecovery({ script: custom });
     run.timers[0].callback();
-    const panel = mustFind(run.loading?.children ?? [], "div");
-    expect(mustFind(panel.children, "p").textContent).toBe("Boot failed");
-    expect(mustFind(panel.children, "button").textContent).toBe("Retry boot");
+    expect(panelTitle(run).textContent).toBe("Boot failed");
+    expect(panelMessage(run).textContent).toBe("Try again later");
+    expect(panelButton(run).textContent).toBe("Retry boot");
   });
 
   it("uses the configured deadline", () => {
@@ -786,9 +845,8 @@ describe("the recovery script's runtime behaviour (executed against a fake page)
       script: bootRecoveryScript({ copy: { message, retry: "重试" } }),
     });
     run.timers[0].callback();
-    const panel = mustFind(run.loading?.children ?? [], "div");
-    expect(mustFind(panel.children, "p").textContent).toBe(message);
-    expect(mustFind(panel.children, "button").textContent).toBe("重试");
+    expect(panelMessage(run).textContent).toBe(message);
+    expect(panelButton(run).textContent).toBe("重试");
   });
 });
 
@@ -806,27 +864,36 @@ const WITH_TABLE = bootRecoveryScript({
   copy: { locales: LOCALE_TABLE, storageKey: "wowsp-ui-locale" },
 });
 
-/** Fire the watchdog and return the painted panel's message and button. */
-function paint(page: FakePage): { message: FakeNode; button: FakeNode } {
+/** Fire the watchdog and return the painted panel's copy nodes. */
+function paint(page: FakePage): {
+  title: FakeNode;
+  message: FakeNode;
+  button: FakeNode;
+} {
   const run = runRecovery(page);
   run.timers[0].callback();
-  return { message: panelMessage(run), button: panelButton(run) };
+  return {
+    title: panelTitle(run),
+    message: panelMessage(run),
+    button: panelButton(run),
+  };
 }
 
 describe("the locale-aware script's content contract", () => {
   it("embeds the table, the storage key and the OS-prefs global", () => {
-    // The table is an ARRAY of [tag, message, retry] triples in the host's
-    // insertion order — the tie-break order for shared primary subtags.
+    // The table is an ARRAY of [tag, title, message, retry] rows in the host's
+    // insertion order — the tie-break order for shared primary subtags. A row
+    // without a title carries "" and inherits COPY_TITLE at paint time.
     expect(WITH_TABLE).toContain(
-      'var COPY_TABLE = [["en-us","EN message","Reload"],["zh-cn",',
+      'var COPY_TABLE = [["en-us","","EN message","Reload"],["zh-cn",',
     );
     // CJK rides through jsonAscii as \uXXXX escapes (ASCII-only script).
     expect(WITH_TABLE).toContain('"\\u7b80\\u4f53\\u4e2d\\u6587\\u6d88\\u606f"');
     expect(WITH_TABLE).toContain(
-      '["zh-tw","\\u7e41\\u9ad4\\u4e2d\\u6587\\u8a0a\\u606f","\\u91cd\\u65b0\\u8f09\\u5165"]',
+      '["zh-tw","","\\u7e41\\u9ad4\\u4e2d\\u6587\\u8a0a\\u606f","\\u91cd\\u65b0\\u8f09\\u5165"]',
     );
     expect(WITH_TABLE).toContain(
-      'var COPY_FALLBACK = [COPY_MESSAGE, COPY_RETRY];',
+      'var COPY_FALLBACK = [COPY_TITLE, COPY_MESSAGE, COPY_RETRY];',
     );
     expect(WITH_TABLE).toContain('var STORAGE_KEY = "wowsp-ui-locale";');
     expect(WITH_TABLE).toContain(
@@ -885,6 +952,24 @@ describe("copy locale selection (executed against a fake page)", () => {
     });
     expect(painted.message.textContent).toBe(LOCALE_TABLE["zh-CN"].message);
     expect(painted.button.textContent).toBe(LOCALE_TABLE["zh-CN"].retry);
+    // A row without its own title inherits the host's default headline.
+    expect(painted.title.textContent).toBe(BOOT_RECOVERY_TITLE);
+  });
+
+  it("localizes the landing headline when the row carries a title", () => {
+    const table = {
+      "zh-CN": {
+        title: "應用程式載入失敗",
+        message: "訊息",
+        retry: "重試",
+      },
+    };
+    const painted = paint({
+      script: bootRecoveryScript({ copy: { locales: table } }),
+      navigator: fakeNavigator(["zh-CN"]),
+    });
+    expect(painted.title.textContent).toBe("應用程式載入失敗");
+    expect(painted.message.textContent).toBe("訊息");
   });
 
   it("prefers the host storage key over the OS preference and the navigator", () => {
@@ -925,6 +1010,9 @@ describe("copy locale selection (executed against a fake page)", () => {
       navigator: fakeNavigator(["zh-Hant-CN"]),
     });
     expect(painted.message.textContent).toBe("繁體訊息");
+    // The stripped-subtag hit still yields the full [title, message, retry]
+    // triple: a short pair here would paint an undefined retry label.
+    expect(painted.button.textContent).toBe("重新載入");
   });
 
   it("resolves a shared primary subtag to the FIRST listed entry (zh-HK)", () => {
@@ -948,6 +1036,7 @@ describe("copy locale selection (executed against a fake page)", () => {
     });
     expect(painted.message.textContent).toBe(BOOT_RECOVERY_MESSAGE);
     expect(painted.button.textContent).toBe(BOOT_RECOVERY_RETRY);
+    expect(painted.title.textContent).toBe(BOOT_RECOVERY_TITLE);
   });
 
   it("resolves from the storage key alone (no window, no navigator)", () => {
@@ -1015,6 +1104,16 @@ describe("copy.locales / osPrefsGlobal validation", () => {
     } catch (err) {
       expect(String(err)).toContain("zh-cn");
     }
+  });
+
+  it("rejects a present-but-empty locale title", () => {
+    expect(() =>
+      bootRecoveryScript({
+        copy: {
+          locales: { "zh-CN": { title: "", message: "消息", retry: "重试" } },
+        },
+      }),
+    ).toThrow(/title: when present it must be a non-empty string/);
   });
 
   it("rejects storageKey without a locales table", () => {

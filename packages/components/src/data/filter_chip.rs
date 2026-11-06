@@ -56,6 +56,10 @@
 //     contract needs, and a Vec keeps the prop deterministic + comparable.
 //   * `icon` is an `Element` slot (Vue resolves a component/name through
 //     `HkPillToggleGroup`'s `resolveIcon`).
+//   * no tone channel: Vue's `options[].tone` / `data-tone` (2026-11-06,
+//     the per-lane hue tint) is unimplemented here — this renderer emits
+//     `data-active` only, so the vendored sheet's tone rules are inert in
+//     this form rather than wrong.
 
 use crate::data::filter_panel::{filter_popup_layer_style, glyph_host};
 use crate::feedback::popover::PopoverPlacement;

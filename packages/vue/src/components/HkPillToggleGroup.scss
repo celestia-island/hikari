@@ -95,6 +95,40 @@
     background: rgb(var(--color-primary) / 12%);
   }
 
+  /* Tone channels (2026-11-06): a pill can carry the hue identity of the
+   * thing it filters (the trace chips tint with their lane's token so a
+   * chip, its ribbon segments and its rows share one identity). A tone
+   * re-tints the ACTIVE state only — inactive pills stay muted regardless
+   * of tone. The four hue tones share one alpha (16%); the "muted" tone
+   * rides 18% because it has to read as a neutral wash rather than a hue.
+   * The attribute pair wins on SPECIFICITY ((0,3,0) vs (0,2,0)) — order
+   * independent; they are also written after the plain rule so the source
+   * order agrees with what specificity already decides. */
+  &[data-tone="success"][data-active] {
+    color: rgb(var(--color-success, 14 184 64));
+    background: rgb(var(--color-success, 14 184 64) / 16%);
+  }
+
+  &[data-tone="secondary"][data-active] {
+    color: rgb(var(--color-secondary, 81 154 115));
+    background: rgb(var(--color-secondary, 81 154 115) / 16%);
+  }
+
+  &[data-tone="warning"][data-active] {
+    color: rgb(var(--color-warning, 238 214 119));
+    background: rgb(var(--color-warning, 238 214 119) / 16%);
+  }
+
+  &[data-tone="error"][data-active] {
+    color: rgb(var(--color-error, 247 118 142));
+    background: rgb(var(--color-error, 247 118 142) / 16%);
+  }
+
+  &[data-tone="muted"][data-active] {
+    color: rgb(var(--color-text, 30 30 30));
+    background: rgb(var(--color-muted, 108 108 108) / 18%);
+  }
+
   &:focus-visible {
     outline: 2px solid rgb(var(--color-primary));
     outline-offset: -2px;

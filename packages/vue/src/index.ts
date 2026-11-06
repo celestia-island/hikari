@@ -978,7 +978,7 @@ export type {
 } from "./composables/useInfinitePages";
 export { default as HkFilterChip } from "./components/HkFilterChip";
 export { default as HkPillToggleGroup } from "./components/HkPillToggleGroup";
-export type { HkPillToggleGroupOption } from "./components/HkPillToggleGroup";
+export type { HkPillToggleGroupOption, HkPillTone } from "./components/HkPillToggleGroup";
 export { HkIconChip as HkIconChip } from "./components/HkIconChip";
 export { HkIconChip as HIconChip } from "./components/HkIconChip";
 export { HkCardList, HkListRow } from "./components/HkCardList";

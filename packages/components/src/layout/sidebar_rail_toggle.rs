@@ -415,7 +415,8 @@ mod tests {
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
-        // The button carries NO `type` — HkIconButton's template sets none.
+        // The button carries no `type` — the documented delta from the Vue
+        // twin, which now always emits type="button".
         assert!(!html.contains(r#"type="button""#), "{html}");
     }
 

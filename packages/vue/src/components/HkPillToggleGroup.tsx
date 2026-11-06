@@ -3,6 +3,13 @@ import { defineComponent, h, type PropType, type VNode } from "vue";
 import { useOptionStrip } from "../composables/useOptionStrip";
 import "./HkPillToggleGroup.scss";
 
+/** Semantic tone channel for a pill's ACTIVE tint — the same vocabulary
+ *  the HkRangeRibbon segment family speaks (a filter bar can keep its
+ *  lane-hue identity while riding the shared pill chrome). Omit (or
+ *  "primary") = the default primary tint. A tone recolors the ACTIVE
+ *  state only; inactive pills stay muted regardless of tone. */
+export type HkPillTone = "primary" | "success" | "secondary" | "warning" | "error" | "muted";
+
 /** One toggleable pill of the group. */
 export interface HkPillToggleGroupOption {
   /** Stable identity — the value emitted back through `toggle`. */
@@ -14,6 +21,8 @@ export interface HkPillToggleGroupOption {
    * (never stringified: a raw function child renders as source text,
    * which is exactly the landmine this normalization defuses). */
   icon?: unknown;
+  /** Active-tint hue channel (see {@link HkPillTone}). */
+  tone?: HkPillTone;
 }
 
 /** Normalize an option icon to a renderable vnode. A component (function
@@ -94,6 +103,7 @@ export default defineComponent({
               type="button"
               key={o.value}
               class="hk-pill-group-pill"
+              data-tone={o.tone && o.tone !== "primary" ? o.tone : undefined}
               data-active={props.selected.has(o.value) || undefined}
               aria-pressed={props.selected.has(o.value) ? "true" : "false"}
               onClick={() => emit("toggle", o.value)}

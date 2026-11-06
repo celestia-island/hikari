@@ -24,8 +24,9 @@
 //                              title lives here — same choice as Vue)
 //           button.hk-icon-button.hk-icon-button-28
 //                  .hk-icon-button-ghost.hk-solar-edit    (mirrored
-//                              IconButton — size 28 / ghost; NO `type`
-//                              attribute, exactly Vue's template)
+//                              IconButton — size 28 / ghost; no `type`
+//                              here (delta: the Vue twin now always
+//                              emits type="button"))
 //                  [disabled] [aria-label="Edit"]         (disabled =
 //                              editor_disabled; the label stays "Edit" —
 //                              the wrapper's title explains the lock)
@@ -1244,7 +1245,8 @@ mod tests {
         // Enabled also means NO reason text and NO describedby reference.
         assert!(!html.contains("hk-solar-edit-reason"), "{html}");
         assert!(!html.contains("aria-describedby"), "{html}");
-        // Vue's template emits no `type` on HkIconButton.
+        // Delta, not parity: the Vue twin now always emits type="button"
+        // on HkIconButton; this renderer emits none unless asked.
         assert!(!html.contains(r#"type="button""#), "{html}");
         // Editor closed: no editor body, no modal surface.
         assert!(!html.contains("hk-solar-editor"), "{html}");

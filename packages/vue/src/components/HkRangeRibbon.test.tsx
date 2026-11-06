@@ -771,6 +771,18 @@ describe("HkRangeRibbon reset", () => {
     const host = mountHost([0.2, 0.6]);
     const button = host.root.querySelector<HTMLElement>(".hk-range-ribbon-reset");
     expect(button, "reset button is shown while a window exists").toBeTruthy();
+    // The reset affordance rides the STANDARD icon button (user direction
+    // 2026-11-06: no hand-rolled chip chrome), carrying its lucide glyph
+    // through the house-normal slot — pin the lucide class the slot must
+    // produce so a glyph swap cannot silently vanish.
+    expect(button!.className, "reset is an HkIconButton, not a bespoke chip").toContain(
+      "hk-icon-button",
+    );
+    expect(
+      button!.querySelector("svg.lucide-rotate-ccw"),
+      "reset glyph renders through the icon slot",
+    ).not.toBeNull();
+    expect(button!.getAttribute("type"), "reset never becomes a submit button").toBe("button");
     button!.click();
     await nextTick();
     expect(host.windowChange).toHaveBeenLastCalledWith(null);
@@ -1405,8 +1417,36 @@ describe("HkRangeRibbon stylesheet contract", () => {
     // A clipped 2px sliver must still be visible.
     expect(declaration(ruleBody(css, ".hk-range-ribbon-segment"), "min-width")).toBe("2px");
     expect(declaration(ruleBody(css, ".hk-range-ribbon-lane-track"), "height")).toBe("20px");
-    // The reset chip clears the edge handle (half its 8px width).
-    expect(declaration(ruleBody(css, ".hk-range-ribbon-reset"), "right")).toBe("4px");
+    // The reset seat clears the edge handle (half its 8px width). The rule
+    // must sit on the descendant key (0,2,0): `.hk-icon-button` declares
+    // `position: relative` at (0,1,0), so a bare-class seat would depend on
+    // bundle order.
+    const resetSeat = ruleBody(css, ".hk-range-ribbon .hk-range-ribbon-reset");
+    expect(declaration(resetSeat, "right")).toBe("4px");
+    expect(declaration(resetSeat, "position"), "the seat must out-rank .hk-icon-button").toBe(
+      "absolute",
+    );
+    expect(declaration(resetSeat, "top"), "the seat clears the strip edge").toBe("4px");
+    // The grip must paint ABOVE the seat: a right-side window puts its end
+    // handle inside the seat's box, and an opaque seat below it would make
+    // the grip unreachable by pointer.
+    const gripZ = Number(declaration(ruleBody(css, ".hk-range-ribbon-handle"), "z-index"));
+    const seatZ = Number(declaration(resetSeat, "z-index"));
+    expect(gripZ, "the edge grip outranks the reset seat").toBeGreaterThan(seatZ);
+    // The surface backing is what keeps the control legible over the strip's
+    // segments and scrims: ghost carries NO background (HkIconButtonVars),
+    // so without these three the reset degrades to a bare glyph floating on
+    // the paint. Removing them alone left the whole suite green (R3 M5b) —
+    // pin the paint, not just the geometry.
+    expect(declaration(resetSeat, "--hi-icon-button-bg"), "resting surface tint").toContain(
+      "var(--color-surface)",
+    );
+    expect(declaration(resetSeat, "--hi-icon-button-bg-hover"), "hover surface tint").toContain(
+      "var(--color-surface)",
+    );
+    expect(declaration(resetSeat, "--hi-icon-button-bg-active"), "press surface tint").toContain(
+      "var(--color-surface)",
+    );
     expect(ruleBody(css, ".hk-range-ribbon-window")).toContain("var(--color-primary)");
     expect(ruleBody(css, ".hk-range-ribbon-scrim")).toContain("var(--color-background)");
   });

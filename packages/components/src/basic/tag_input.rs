@@ -123,6 +123,7 @@
 
 use hikari_i18n::t;
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::basic::{Input, InputSize};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -1155,22 +1156,30 @@ pub fn TagInput(props: TagInputProps) -> Element {
             span { class: format!("hk-tag hk-tag-default {chip_class} hk-tag-input-tag"),
                 span { class: "hk-tag-input-tag-text", "{label}" }
                 if !disabled {
-                    button {
-                        "type": "button",
-                        class: "hk-tag-close",
-                        "aria-label": close_label,
-                        onclick: move |event: MouseEvent| {
+                    // The chip × is the STANDARD icon button at the S16 rung
+                    // (wave B1): the chip is dense, so 14px → 16px is the
+                    // declared growth; ghost/seat per the close-family
+                    // pattern. The "a × never opens the panel" rule rides the
+                    // handler body (stop_propagation), same as before.
+                    IconButton {
+                        size: IconButtonSize::S16,
+                        variant: IconButtonVariant::Ghost,
+                        aria_label: Some(close_label),
+                        class: "hk-tag-close".to_string(),
+                        onclick: Some(EventHandler::new(move |event: MouseEvent| {
                             // Vue resolves the field press back to
                             // `target.closest(".hk-tag-close")`; without DOM
                             // queries the press is stopped here instead, which
                             // is the same "a × never opens the panel" rule.
                             event.stop_propagation();
                             remove_chip.remove_key(&key);
+                        })),
+                        children: rsx! {
+                            div {
+                                style: "display:contents",
+                                dangerous_inner_html: lucide_icon_svg("x", 12, LUCIDE_X_BODY),
+                            }
                         },
-                        div {
-                            style: "display:contents",
-                            dangerous_inner_html: lucide_icon_svg("x", 12, LUCIDE_X_BODY),
-                        }
                     }
                 }
             }
@@ -2032,6 +2041,29 @@ mod tests {
         assert_eq!(LUCIDE_GRIP_VERTICAL_BODY.matches("<circle").count(), 6);
     }
 
+    /// Wave B1: the chip × rides the standard icon button at the S16 rung
+    /// (the chip is dense — 14px → 16px is the declared growth). Same
+    /// rendered-class-list contract as the close family; the × must keep
+    /// type="button" so a chip inside a form never submits it.
+    #[test]
+    fn tag_chip_close_renders_the_standard_icon_button_layers() {
+        let html = TagInput(TagInputProps {
+            model_value: vec!["cn".to_string()],
+            options: catalog(),
+            label: Some("Countries".to_string()),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("hk-tag-close"), "{html}");
+        assert!(
+            !html.contains(r#"class="hk-tag-close""#),
+            "the seat must not sit on a bare button: {html}"
+        );
+        assert_eq!(html.matches("hk-icon-button-16").count(), 1, "{html}");
+        assert!(html.contains("hk-icon-button-ghost"), "{html}");
+        assert!(html.contains(r#"type="button""#), "{html}");
+    }
+
     #[test]
     fn tag_input_renders_the_vue_field_contract() {
         let html = TagInput(TagInputProps {
@@ -2055,7 +2087,9 @@ mod tests {
             "{html}"
         );
         assert!(html.contains(r#"class="hk-tag-input-tag-text""#), "{html}");
-        assert!(html.contains(r#"class="hk-tag-close""#), "{html}");
+        // Wave B1: the × is the standard icon button (S16/ghost + seat) —
+        // the dedicated pin below owns the rendered-class-list contract.
+        assert!(html.contains("hk-tag-close"), "{html}");
         assert!(html.contains(r#"aria-label="Remove — China""#), "{html}");
         // The inline combobox publishes the listbox contract.
         assert!(

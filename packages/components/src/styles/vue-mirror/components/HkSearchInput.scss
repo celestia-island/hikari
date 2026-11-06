@@ -74,6 +74,13 @@
 }
 
 .hk-search-input-clear {
+  /* Wave B1 hybrid decision: this clear is tabindex=-1 (Escape and the
+     field's own keyboard path own dismissal) and keeps the field's hit-band
+     density, so it deliberately stays a BARE button — pinned by
+     `search_clear_stays_a_bare_button_by_contract`. What standardizes is the
+     INK: it consumes the same icon-button channel vars the standard
+     component reads, so theming moves together (current values kept as the
+     first fallback = zero visual change). */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -83,7 +90,7 @@
   padding: 0;
   background: transparent;
   border: none;
-  color: var(--hi-color-muted);
+  color: var(--hi-icon-button-icon-color, var(--hi-color-muted));
   cursor: pointer;
   transition:
     background-color var(--duration-fast, 0.15s) ease,
@@ -95,12 +102,12 @@
   }
 
   &:hover {
-    background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
-    color: var(--hi-color-text-primary);
+    background: var(--hi-icon-button-bg-hover, color-mix(in srgb, var(--hi-color-surface) 60%, transparent));
+    color: var(--hi-icon-button-icon-color-active, var(--hi-color-text-primary));
   }
 
   &:active {
-    background: color-mix(in srgb, var(--hi-color-surface) 80%, transparent);
+    background: var(--hi-icon-button-bg-active, color-mix(in srgb, var(--hi-color-surface) 80%, transparent));
   }
 }
 

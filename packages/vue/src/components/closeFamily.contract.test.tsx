@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkAlert from "./HkAlert";
+import HkFileField from "./HkFileField";
+import HkTag from "./HkTag";
 import HkPersistentToast from "./HkPersistentToast";
 
 /**
@@ -27,6 +29,24 @@ const seats = [
     seat: "hk-alert-close",
   },
   {
+    // Wave B1: the file field's clear rides the standard button at S24.
+    name: "HkFileField clear",
+    render: () =>
+      h(HkFileField, {
+        modelValue: [{ name: "a.txt" }],
+      }),
+    seat: "hk-file-clear",
+    rung: 24,
+  },
+  {
+    // Wave B1: the chip close rides S16 (the 14px bespoke box is retired;
+    // 14 -> 16 is the declared density growth).
+    name: "HkTag chip close",
+    render: () => h(HkTag, { closable: true, closeLabel: "Remove" }),
+    seat: "hk-tag-close",
+    rung: 16,
+  },
+  {
     name: "HkPersistentToast dismiss",
     render: () => h(HkPersistentToast, { label: "l", dismissible: true }),
     seat: "hk-persistent-toast__dismiss",
@@ -48,7 +68,8 @@ afterEach(() => {
 });
 
 describe("close-button family rides the standard icon button", () => {
-  for (const { name, render, seat } of seats) {
+  for (const entry of seats) {
+    const { name, render, seat } = entry;
     it(`${name} renders the standard class list plus its seat`, async () => {
       const host = mountSeat(render);
       await nextTick();
@@ -59,20 +80,22 @@ describe("close-button family rides the standard icon button", () => {
       // wrapper would leave the sheet styling the wrong box.
       expect(control!.tagName, `${name} must be a button`).toBe("BUTTON");
 
+      const rung = (entry as typeof entry & { rung?: number }).rung ?? 24;
       const tokens = [...control!.classList];
       expect(tokens, `${name} carries the base layer`).toContain("hk-icon-button");
-      expect(tokens, `${name} carries the 24px rung`).toContain("hk-icon-button-24");
+      expect(tokens, `${name} carries the ${rung}px rung`).toContain(
+        `hk-icon-button-${rung}`,
+      );
       expect(tokens, `${name} carries the ghost variant`).toContain(
         "hk-icon-button-ghost",
       );
       expect(tokens, `${name} carries its seat`).toContain(seat);
       // Documented order: base, size, variant, seat.
-      expect(tokens.indexOf("hk-icon-button")).toBeLessThan(
-        tokens.indexOf("hk-icon-button-24"),
-      );
-      expect(tokens.indexOf("hk-icon-button-24")).toBeLessThan(
-        tokens.indexOf("hk-icon-button-ghost"),
-      );
+      const base = tokens.indexOf("hk-icon-button");
+      const rungAt = tokens.indexOf(`hk-icon-button-${rung}`);
+      const ghost = tokens.indexOf("hk-icon-button-ghost");
+      expect(base).toBeLessThan(rungAt);
+      expect(rungAt).toBeLessThan(ghost);
       expect(tokens.indexOf("hk-icon-button-ghost")).toBeLessThan(
         tokens.indexOf(seat),
       );
@@ -90,6 +113,19 @@ describe("close-button family rides the standard icon button", () => {
       ).toBe(1);
     });
   }
+
+  it("sources the wave-B1 field clears from the standard component too", () => {
+    // The token editor's clear lives inside an HkAdaptiveDialog slot (no
+    // bare mount path), so it is pinned at SOURCE level like the toast.
+    const token = readSource("HkTokenInput.tsx");
+    expect(token, "token clear rides HkIconButton").toMatch(
+      new RegExp('<HkIconButton[\\s\\S]{0,200}?class="hk-token-input-clear"'),
+    );
+    expect(token, "token clear is not a raw button").not.toMatch(
+      new RegExp('<button[^>]*class="hk-token-input-clear"'),
+    );
+    expect(token, "token clear rides the 24px rung").toContain("size={24}");
+  });
 
   it("sources the toast controls from the standard component too", () => {
     // HkToast is driven by useToast rather than props, so it cannot be

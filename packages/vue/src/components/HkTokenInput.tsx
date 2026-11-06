@@ -5,6 +5,8 @@ import HkInput from "./HkInput";
 import HkSelect from "./HkSelect";
 import { X } from "lucide-vue-next";
 
+import HkIconButton from "./HkIconButton";
+
 import { useI18n } from "../i18n/context";
 import "./HkTokenInput.scss";
 
@@ -159,14 +161,15 @@ export default defineComponent({
                     onUpdate:modelValue={(v: number | null) => emit("update:modelValue", v)}
                     onUpdate:unit={(u: TokenUnit) => (editorUnit.value = u)}
                   />
-                  <button
-                    type="button"
+                  <HkIconButton
                     class="hk-token-input-clear"
+                    size={24}
+                    variant="ghost"
                     aria-label={clearLabel.value}
                     onClick={clearValue}
                   >
-                    <X size={13} />
-                  </button>
+                    {{ icon: () => <X aria-hidden="true" /> }}
+                  </HkIconButton>
                 </div>
               ),
           }}

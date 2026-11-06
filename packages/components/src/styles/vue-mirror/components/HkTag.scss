@@ -41,32 +41,12 @@
 }
 
 .hk-tag-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  /* The chip × is the STANDARD icon button at the S16 rung (wave B1): the
+     14px bespoke box, the opacity dance and the focus outline are retired —
+     box/ink/hover/focus come from the component. The seat keeps only the
+     chip's trailing-edge spacing. 14px → 16px is the declared growth. */
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0.5;
-  padding: 0;
-  /* Trailing edge of the chip in both directions. */
   margin-inline-start: var(--space-2, 2px);
-  border-radius: var(--radius-sm, 4px);
-  transition: opacity var(--duration-fast, 0.15s) ease;
-}
-
-.hk-tag-close:hover {
-  opacity: 1;
-}
-
-/* Keyboard focus indicator (house focus-ring pattern). */
-.hk-tag-close:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
-  outline-offset: 2px;
 }
 
 .hk-tag-default {

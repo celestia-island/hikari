@@ -405,4 +405,27 @@ mod tests {
             "scss compilation failed for the mirrored search input sheet"
         );
     }
+
+    /// Wave B1 hybrid decision, PINNED so it cannot be "helpfully" undone:
+    /// this clear is tabindex=-1 (unfocusable by design — Escape and the
+    /// field's own keyboard path own dismissal) and keeps its own box
+    /// density, so it deliberately stays a BARE button styled through the
+    /// standard channel vars rather than an HkIconButton. If you migrate it,
+    /// you are changing a keyboard/focus contract — bring that discussion,
+    /// not a drive-by PR.
+    #[test]
+    fn search_clear_stays_a_bare_button_by_contract() {
+        let html = SearchInput(SearchInputProps {
+            model_value: "abc".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.contains(r#"class="hk-search-input-clear""#),
+            "the clear must stay a bare button (see the wave-B1 hybrid note): {html}"
+        );
+        assert!(html.contains(r#"tabindex="-1""#), "{html}");
+        assert!(html.contains(r#"type="button""#), "{html}");
+        assert!(!html.contains("hk-icon-button"), "{html}");
+    }
 }

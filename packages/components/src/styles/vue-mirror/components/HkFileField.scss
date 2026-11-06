@@ -108,28 +108,10 @@
 }
 
 .hk-file-clear {
+  /* The clear affordance is the STANDARD icon button (wave B1): S24 exactly
+     replaces the old 1.5rem box; box, ink, hover and focus come from the
+     component. The seat keeps only its flex slot in the trigger row. */
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-xs, 2px);
-  color: rgb(var(--color-text) / 55%);
-  cursor: pointer;
-
-  &:hover {
-    background: rgb(var(--color-text) / 8%);
-    color: rgb(var(--color-text));
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #7aa2f7);
-    outline-offset: 1px;
-  }
 }
 
 /* The native input stays in the DOM for the trigger to click, but is

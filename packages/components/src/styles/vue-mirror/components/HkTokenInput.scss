@@ -78,21 +78,26 @@
 }
 
 .hk-token-input-clear {
+  /* The editor's clear affordance is the STANDARD icon button (wave B1):
+     S24 replaces the old 26px box. The OLD contract is preserved exactly:
+     muted ink at rest, error ink + wash on hover (an R3 review round caught
+     a first draft that set the ink var at rest — red-at-rest was never the
+     design). The hover-scoped override keeps ghost's rest ink while the
+     error channels apply on hover/press only. */
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   margin-top: var(--space-4, 4px);
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: rgb(var(--color-muted));
-  cursor: pointer;
-}
+  --hi-icon-button-bg-hover: rgb(var(--color-error) / 10%);
+  --hi-icon-button-bg-active: rgb(var(--color-error) / 16%);
 
-.hk-token-input-clear:hover {
-  background: rgb(var(--color-error) / 10%);
-  color: rgb(var(--color-error));
+  &:hover {
+    --hi-icon-button-icon-color: rgb(var(--color-error));
+  }
+
+  &:active {
+    /* Press ink reads the -active channel (HkIconButton.scss
+       `&:active .hk-icon-button-icon`), so the base var alone is a no-op
+       here — set both. */
+    --hi-icon-button-icon-color: rgb(var(--color-error));
+    --hi-icon-button-icon-color-active: rgb(var(--color-error));
+  }
 }

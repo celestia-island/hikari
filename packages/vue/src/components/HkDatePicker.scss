@@ -95,6 +95,11 @@
 }
 
 .hk-dp-clear {
+  /* Wave B1 hybrid decision (see HkSearchInput's twin): tabindex=-1 + own
+     keydown stop-propagation = stays a BARE button, pinned by
+     `date_clear_stays_a_bare_button_by_contract`. The reveal-on-hover
+     mechanism is the field's own contract and stays. What standardizes is
+     the INK via the icon-button channel vars (zero visual change). */
   appearance: none;
   display: inline-flex;
   align-items: center;
@@ -104,7 +109,7 @@
   border: 0;
   background: transparent;
   border-radius: var(--radius-sm, 4px);
-  color: var(--hi-color-muted);
+  color: var(--hi-icon-button-icon-color, var(--hi-color-muted));
   cursor: pointer;
   opacity: 0;
   transition: opacity var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
@@ -116,7 +121,7 @@
   }
 
   &:hover {
-    color: var(--hi-color-text-primary);
+    color: var(--hi-icon-button-icon-color-active, var(--hi-color-text-primary));
   }
 }
 

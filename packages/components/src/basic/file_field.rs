@@ -86,6 +86,7 @@
 
 use hikari_i18n::t;
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -386,15 +387,23 @@ pub fn FileField(props: FileFieldProps) -> Element {
                     }
                 }
                 if has_files && !disabled {
-                    button {
-                        class: "hk-file-clear",
-                        "type": "button",
-                        "aria-label": t("hikari::filePicker.fieldClear", "Clear selection"),
-                        onclick: clear_click,
-                        div {
-                            style: "display:contents",
-                            dangerous_inner_html: CLEAR_SVG,
-                        }
+                    // The clear affordance is the STANDARD icon button
+                    // (2026-11-06 wave B1): S24 exactly replaces the old
+                    // 1.5rem box, ghost/seat per the close-family pattern.
+                    IconButton {
+                        size: IconButtonSize::S24,
+                        variant: IconButtonVariant::Ghost,
+                        aria_label: Some(t("hikari::filePicker.fieldClear", "Clear selection")),
+                        class: "hk-file-clear".to_string(),
+                        onclick: Some(EventHandler::new(move |event: MouseEvent| {
+                            clear_click(event);
+                        })),
+                        children: rsx! {
+                            div {
+                                style: "display:contents",
+                                dangerous_inner_html: CLEAR_SVG,
+                            }
+                        },
                     }
                 }
                 if !mode.is_remote() {
@@ -649,5 +658,29 @@ mod tests {
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored file field sheet"
         );
+    }
+
+    /// Wave B1: the field clear rides the standard icon button; the seat
+    /// keeps only layout. Contract = rendered class list (trio + seat) and
+    /// type="button", same as the close-family pins.
+    #[test]
+    fn file_clear_renders_the_standard_icon_button_layers() {
+        let html = FileField(FileFieldProps {
+            model_value: vec![PickedFile {
+                name: "a.txt".to_string(),
+                path: None,
+                size: None,
+            }],
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("hk-file-clear"), "{html}");
+        assert!(
+            !html.contains(r#"class="hk-file-clear""#),
+            "the seat must not sit on a bare button: {html}"
+        );
+        assert_eq!(html.matches("hk-icon-button-24").count(), 1, "{html}");
+        assert!(html.contains("hk-icon-button-ghost"), "{html}");
+        assert!(html.contains(r#"type="button""#), "{html}");
     }
 }

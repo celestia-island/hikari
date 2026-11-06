@@ -211,7 +211,12 @@ export default defineComponent({
       if (props.closable && props.overlay) close();
     }
 
-    function onEscape() {
+    function onEscape(e: KeyboardEvent) {
+      // Precedence (the same class as HkModal's 0.55.295 fix): a nested
+      // control that already consumed Escape owns the key, so the drawer
+      // must not close underneath it. Precedence only — this surface has
+      // never preventDefault'd/stopPropagation'd Escape, and still does not.
+      if (e.defaultPrevented) return;
       if (props.closable) close();
     }
 
@@ -300,7 +305,7 @@ export default defineComponent({
               aria-modal={props.overlay}
               tabindex={-1}
               onKeydown={(e: KeyboardEvent) => {
-                if (e.key === "Escape") onEscape();
+                if (e.key === "Escape") onEscape(e);
                 else if (e.key === "Tab" && panelRef.value) trapFocus(panelRef.value, e);
               }}
             >

@@ -146,3 +146,60 @@ describe("HkDrawer window-stack close channel", () => {
     }
   });
 });
+
+describe("HkDrawer Escape precedence", () => {
+  async function settle(): Promise<void> {
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+  }
+
+  it("lets a nested control own Escape while a bare Escape still closes", async () => {
+    const open = ref(true);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkDrawer, {
+            modelValue: open.value,
+            closable: true,
+            title: "Inspector",
+            "onUpdate:modelValue": (v: boolean) => { open.value = v; },
+          }, {
+            default: () => h("div", {
+              class: "escape-owner",
+              onKeydown: (e: KeyboardEvent) => {
+                if (e.key === "Escape") e.preventDefault();
+              },
+            }, "nested control"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await settle();
+
+    const owner = document.body.querySelector<HTMLElement>(".hk-drawer-panel .escape-owner");
+    expect(owner, "the slot content renders inside the panel").not.toBeNull();
+
+    // `cancelable: true` is load-bearing: preventDefault() on a non-cancelable
+    // synthetic event is a no-op, and the drawer would then close as if
+    // nothing had consumed the key.
+    owner!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+    );
+    await settle();
+    expect(open.value, "a consumed Escape must not close the drawer").toBe(true);
+
+    // A bare Escape (nothing below consumed it) still closes.
+    const panel = document.body.querySelector<HTMLElement>(".hk-drawer-panel")!;
+    panel.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+    );
+    await settle();
+    expect(open.value).toBe(false);
+  });
+});

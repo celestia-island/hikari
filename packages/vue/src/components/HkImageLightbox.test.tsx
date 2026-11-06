@@ -90,6 +90,29 @@ describe("HkImageLightbox", () => {
     expect(s.emitted).toEqual([false]);
   });
 
+  it("a nested consumed Escape does not close the lightbox", async () => {
+    const s = mountLightbox(true);
+    const dialog = s.dialog()!;
+    const owner = dialog.querySelector<HTMLElement>(".hk-image-viewer-img")!;
+    // Model a nested control that owns Escape. `cancelable: true` is
+    // load-bearing: preventDefault() on a non-cancelable event is a no-op.
+    owner.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") e.preventDefault();
+    }, { once: true });
+
+    owner.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(s.emitted, "a consumed Escape must not close the lightbox").toEqual([]);
+    expect(s.dialog()).not.toBeNull();
+
+    // A bare Escape (nothing below consumed it) still closes.
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
+    await nextTick();
+    expect(s.emitted).toEqual([false]);
+  });
+
   it("the Escape listener is removed once closed (no stray closes)", async () => {
     const s = mountLightbox(true);
 

@@ -143,7 +143,7 @@ export default defineComponent({
     return () =>
       h(
         props.as,
-        { ref: rootRef, class: RIDE_CLASS },
+        { ref: rootRef, class: [RIDE_CLASS, "hk-ride-box"] },
         [
           h("div", { class: "hk-ride-chrome-start" }, slots["chrome-start"]?.()),
           h("div", { ref: contentRef, class: RIDE_CONTENT_CLASS }, slots.default?.()),

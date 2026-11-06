@@ -43,6 +43,15 @@
 // The two ends of the ride. `!important` is deliberate and load-bearing: a
 // consumer's own size-morph pins `height` as an INLINE px value, and the
 // ride — not the pin — owns the box for the duration of the flight.
+.hk-ride-box {
+  position: relative;
+}
+
+// The ride's geometry is DESKTOP-only on purpose: the ≤767px sheet has its
+// own clip/translateY choreography, and a shared height override there would
+// fight the sheet's `max-height ... !important` cap.
+@media (min-width: 768px) {
+
 .hk-ride[data-hk-ride-ready].hk-ride--from {
   height: calc(
     var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px) * var(--hk-ride-factor, 0.9)
@@ -53,14 +62,11 @@
   height: calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px)) !important;
 }
 
-.hk-ride {
-  // The chrome-end band is pinned to the frame's bottom edge during a ride:
-  // the content region keeps its NATURAL layout height (below), so in flow
-  // it would push that band past the shortened frame and hide it. Pinning it
-  // keeps the band visible while the content's compressed paint ends exactly
-  // where the band starts.
-  position: relative;
-}
+// The box's OWN root class carries the positioning context: the shared
+// `.hk-ride` class is also worn by surfaces that bring their own `position`
+// (`.hk-modal-content` is `position: fixed`), and a `position: relative`
+// here would tie with it at (0,1,0) and win or lose by bundle order.
+
 
 .hk-ride-content {
   transform-origin: 50% 0;
@@ -87,6 +93,8 @@
 
 .hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content {
   transform: scaleY(var(--hk-ride-factor, 0.9));
+}
+
 }
 
 /* Reduced motion: the frame swaps instantly and the content is never

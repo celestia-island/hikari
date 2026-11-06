@@ -688,10 +688,11 @@
       calc(-50% + var(--hk-modal-shift-y, 0px))
     );
   }
-  // The content region carries no transform of its own any more (width is
-  // never scaled — 2026-11-07), so only the frame needs flattening above.
-  // The body lines stay as a fail-closed guard: if a future state rule ever
-  // reintroduces a body transform, reduced motion still flattens it.
+  // The content region carries no transform of its own any more (the ride is
+  // height-only — 2026-11-07). These lines are a belt-and-braces guard only:
+  // at (0,2,0) they would NOT outrank a future ride rule at (0,4,0), so the
+  // family sheet's own reduced-motion block (which repeats the full
+  // selector) is the one that actually flattens the content scale.
   .hk-modal-content .hk-modal-body {
     transform: none;
     transition: none;

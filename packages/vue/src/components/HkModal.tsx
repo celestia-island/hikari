@@ -2,6 +2,10 @@ import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, s
 
 import { useI18n } from "../i18n/context";
 import "./HkModal.scss";
+// The ride GEOMETRY lives in the family sheet; the modal maps its phases onto
+// it, so the modal must ship it too (deep-import consumers of
+// `./components/HkModal` never touch the barrel). Idempotent with HkRideBox.
+import "./HkRideBox.scss";
 import HkFloatingLayer from "./HkFloatingLayer";
 import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";

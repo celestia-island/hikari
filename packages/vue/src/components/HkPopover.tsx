@@ -627,6 +627,14 @@ export default defineComponent({
 
     function onPanelKeydown(e: KeyboardEvent) {
       if (e.key === "Escape" && props.closeOnEscape) {
+        // Precedence (the same class as HkModal 0.55.295 and the
+        // HkDrawer / HkImageLightbox siblings): the panel hosts the
+        // consumer's default slot, so a control inside it that already
+        // consumed Escape (preventDefault) owns the key — the popover must
+        // not close underneath it. The popover's own consumption is
+        // unchanged: it still preventDefaults when it closes, and it has
+        // never stopped propagation.
+        if (e.defaultPrevented) return;
         e.preventDefault();
         close();
       }

@@ -69,7 +69,7 @@ export interface HeightRide {
    *  Safe to call at any time OUTSIDE a ride (rest geometry is what the
    *  ride needs); calling it mid-ride re-measures the live, compressed
    *  box and is therefore a no-op unless `force` is passed. */
-  refresh(force?: boolean): void;
+  refresh(force?: boolean): boolean;
   /** Re-apply the LAST measured split without touching the DOM boxes.
    *  A surface that unmounts its frame on close loses the inline variables
    *  with it; republishing on the next mount is what makes the very first
@@ -105,7 +105,8 @@ export function useHeightRide(
   content: Ref<HTMLElement | null | undefined>,
   options: HeightRideOptions = {},
 ): HeightRide {
-  const factor = options.factor ?? 0.9;
+  // Read live: a consumer may change `factor` after mount.
+  const factorOf = (): number => options.factor ?? 0.9;
   let chrome = 0;
   let contentH = 0;
 
@@ -118,15 +119,15 @@ export function useHeightRide(
     f.removeAttribute(RIDE_READY_ATTR);
   };
 
-  const refresh = (force = false): void => {
+  const refresh = (force = false): boolean => {
     const f = frame.value;
     const c = content.value;
-    if (!f || !c) return;
+    if (!f || !c) return false;
     // Once the split is known, re-measuring DURING a ride would read the
     // compressed boxes and shrink again on the next flight. The first
     // measurement is exempt: the sheet keeps the frame at `auto` until the
     // split is published, so that one is taken on honest natural geometry.
-    if (!force && f.hasAttribute(RIDE_READY_ATTR) && isInFlight(f)) return;
+    if (!force && f.hasAttribute(RIDE_READY_ATTR) && isInFlight(f)) return false;
     // Neither side reads the FRAME's height (that is the number the ride
     // computes): the content region's own layout box, plus the frame's OTHER
     // element children (the pinned chrome bands, always `flex-shrink: 0`).
@@ -146,16 +147,17 @@ export function useHeightRide(
       ? c.offsetHeight
       : Math.max(0, f.offsetHeight - chromeNatural);
     const measured = contentNatural > 0 ? contentNatural : c.offsetHeight;
-    if (measured <= 0) return;
+    if (measured <= 0) return false;
     contentH = measured;
     chrome = chromeNatural;
     f.style.setProperty("--hk-ride-chrome", `${chrome}px`);
     f.style.setProperty("--hk-ride-content", `${contentH}px`);
-    f.style.setProperty("--hk-ride-factor", String(factor));
+    f.style.setProperty("--hk-ride-factor", String(factorOf()));
     // Readiness flag: the sheet only overrides the frame's height once the
     // split is real, so an unmeasured ride degrades to a plain fade instead
     // of collapsing to `calc(0px + 0px)`.
     f.setAttribute(RIDE_READY_ATTR, "");
+    return true;
   };
 
   onBeforeUnmount(() => release());
@@ -165,7 +167,7 @@ export function useHeightRide(
     if (!f || contentH <= 0) return false;
     f.style.setProperty("--hk-ride-chrome", `${chrome}px`);
     f.style.setProperty("--hk-ride-content", `${contentH}px`);
-    f.style.setProperty("--hk-ride-factor", String(factor));
+    f.style.setProperty("--hk-ride-factor", String(factorOf()));
     f.setAttribute(RIDE_READY_ATTR, "");
     return true;
   };

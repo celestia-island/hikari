@@ -80,12 +80,14 @@
 // is the ONLY thing that compresses it. Without this the slot shrink and the
 // transform would compound (0.9 × 0.9 = 0.81) and leave a gap above the
 // pinned chrome-end band (2026-11-07 R3 finding).
-.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content {
+.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content,
+.hk-ride[data-hk-ride-ready].hk-ride--to > .hk-ride-content {
   flex: 0 0 auto;
   height: var(--hk-ride-content, auto);
 }
 
-.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-chrome-end {
+.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-chrome-end,
+.hk-ride[data-hk-ride-ready].hk-ride--to > .hk-ride-chrome-end {
   position: absolute;
   inset-inline: 0;
   bottom: 0;

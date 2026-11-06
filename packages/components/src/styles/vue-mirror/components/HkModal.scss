@@ -190,12 +190,29 @@
   // footer (2026-11-07 R3 finding). The footer band pins to the frame's
   // bottom edge instead, so it stays visible while the content's natural box
   // overflows underneath it.
-  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-body {
+
+  // The content's compression has to ride the SAME per-direction token pair
+  // as the frame's height: the family sheet's default (0.42s) would leave a
+  // 0.1s tail on close (0.32s height) — a visible gap above the pinned
+  // footer — and would ignore a host's `--hk-modal-duration` retune.
+  .hk-modal-content-enter-active > .hk-modal-body {
+    transition: transform var(--hk-modal-duration, 0.42s)
+      var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+  }
+
+  .hk-modal-content-leave-active > .hk-modal-body {
+    transition: transform var(--hk-modal-duration, 0.32s)
+      var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
+  }
+
+  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-body,
+  .hk-modal-content[data-hk-ride-ready].hk-ride--to > .hk-modal-body {
     flex: 0 0 auto;
     height: var(--hk-ride-content, auto);
   }
 
-  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-footer {
+  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-footer,
+  .hk-modal-content[data-hk-ride-ready].hk-ride--to > .hk-modal-footer {
     position: absolute;
     inset-inline: 0;
     bottom: 0;

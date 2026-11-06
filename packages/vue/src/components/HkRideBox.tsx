@@ -26,7 +26,7 @@
  * read the `data-hk-riding` attribute this box stamps (the same contract
  * `data-hk-morphing` gives the mobile sheet).
  */
-import { defineComponent, h, nextTick, onMounted, ref, watch } from "vue";
+import { defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import {
   RIDE_ATTR,
@@ -90,6 +90,9 @@ export default defineComponent({
     };
 
     let landTimer: ReturnType<typeof setTimeout> | null = null;
+    /** Bumped on every arm: a stale async continuation (rapid
+     *  riding→rest→riding in one tick) must not land the NEW ride. */
+    let generation = 0;
 
     const clearLand = (): void => {
       if (landTimer !== null) {
@@ -110,6 +113,7 @@ export default defineComponent({
     };
 
     const armRide = async (riding: boolean): Promise<void> => {
+      const mine = ++generation;
       clearLand();
       // Measure at REST geometry first (a frame at the compressed end
       // reports a short box, which would make the next ride shrink twice).
@@ -117,6 +121,7 @@ export default defineComponent({
       const wasRiding = rootRef.value?.classList.contains(RIDE_FROM_CLASS) ?? false;
       apply(riding);
       await nextTick();
+      if (mine !== generation) return;
       if (riding) return;
       if (!wasRiding) {
         emit("settle");
@@ -130,11 +135,17 @@ export default defineComponent({
       const duration = el ? readRideMs(el) : 420;
       landTimer = setTimeout(() => {
         landTimer = null;
+        if (mine !== generation) return;
         land();
       }, duration + 120);
     };
 
     onMounted(() => void armRide(props.riding));
+    onBeforeUnmount(() => {
+      generation += 1;
+      clearLand();
+      ride.release();
+    });
     watch(
       () => props.riding,
       (riding) => void armRide(riding),

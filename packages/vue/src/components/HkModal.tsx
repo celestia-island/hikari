@@ -376,7 +376,12 @@ export default defineComponent({
       bodyRef,
       (el) => {
         if (!el) return;
-        if (!ride.publish()) void nextTick(() => ride.refresh());
+        // ALWAYS measure: the component instance survives a close, so a
+        // cached split may belong to different content (this modal is reused
+        // across tabs/entries). Publishing the cache first made the second
+        // and later opens ride the PREVIOUS geometry, cropping new content
+        // and then snapping when the cache expired (R5 finding).
+        void nextTick(() => ride.refresh());
       },
       { flush: "post" },
     );

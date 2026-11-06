@@ -92,7 +92,14 @@ export default defineComponent({
      *  trailing fade and scrolling back recedes it. Read live (runtime
      *  changes need no remount, like approachDistance). 0 or negative
      *  degrades to the pre-2026-11 binary shape: any lit edge jumps
-     *  straight to the full band. Only read while `fade` is on. */
+     *  straight to the full band. Only read while `fade` is on.
+     *
+     *  RTL normalization assumes the Chromium/WebKit convention
+     *  (scrollLeft runs 0 → -max): every engine hikari deploys on is
+     *  Chromium-family (the sheet's WebView notes). A legacy
+     *  positive-descending engine would clamp the normalized offset to
+     *  0 — bounded degradation: the sense parks at "end" and one fade
+     *  stays saturated, never inverted. */
     fadeDistance: { type: Number, default: 96 },
     /** Additive opt-in: while autoFollow is enabled and the user has
      *  scrolled away from the bottom, float a small jump-back FAB that
@@ -273,8 +280,15 @@ export default defineComponent({
     // fadeDistance prop doc). Same write-only-on-change discipline as
     // the overflow mirror: scroll redraws the mask every frame anyway,
     // but a pass that re-senses identical geometry must not churn
-    // inline style for nothing.
+    // inline style for nothing. The mirrored direction rides the same
+    // contract — it keys the CSS band-slot swap (see the SCSS RTL
+    // rules) and MUST agree with the physical-side depths below, which
+    // is why the computed direction is mirrored instead of CSS
+    // sniffing [dir] itself: a computed rtl under a missing/mismatched
+    // ancestor attribute (dir on the container, dir="auto") would
+    // light the wrong physical edge.
     const lastFadeStrengths = new Map<string, string>();
+    let lastPublishedDir: string | null = null;
 
     // Sensed selection edge hint (see the selectionHint prop doc),
     // mirrored onto the root as data-selection-beyond — the same
@@ -670,12 +684,46 @@ export default defineComponent({
         // Physical-side depths: the normalized hPos counts the inline
         // START, which is the visual RIGHT edge under RTL — swap there
         // so --hk-scroll-fade-strength-left always means the left edge.
+        // Axis-gated edges never hide anything this container can fade,
+        // so they publish the unlit "1" rather than live geometry.
         publishFadeStrengths(root, {
-          left: rtl ? hMax - hPos : hPos,
-          right: rtl ? hPos : hMax - hPos,
-          top: vPos,
-          bottom: vMax - vPos,
+          left: hasH() ? (rtl ? hMax - hPos : hPos) : 0,
+          right: hasH() ? (rtl ? hPos : hMax - hPos) : 0,
+          top: hasV() ? vPos : 0,
+          bottom: hasV() ? vMax - vPos : 0,
         });
+        // Mirror the COMPUTED direction for the CSS band-slot swap (the
+        // SCSS RTL rules key on this attribute, not on [dir]): the
+        // depths above are physical, so the slot mapping must come from
+        // the same resolved direction the normalization used — an
+        // ancestor [dir] the selector happens to miss (dir on this
+        // element, dir="auto", an explicit deeper override) would
+        // otherwise light the wrong edge. Lands the same pass as the
+        // overflow attrs, so band slots and lit attrs are never from
+        // different frames.
+        const dir = rtl ? "rtl" : "ltr";
+        if (lastPublishedDir !== dir) {
+          lastPublishedDir = dir;
+          root.setAttribute("data-dir", dir);
+        }
+      } else {
+        clearPublishedFade(root);
+      }
+    }
+
+    /** Drop every fade state the mirror published (fade prop off):
+     *  the four strength vars, their cache and the mirrored direction —
+     *  a stale inline value must not outlive the feature that wrote it
+     *  (same contract shape as stopSelectionSensing). */
+    function clearPublishedFade(root: HTMLElement) {
+      if (lastFadeStrengths.size === 0 && lastPublishedDir === null) return;
+      for (const side of ["left", "right", "top", "bottom"]) {
+        root.style.removeProperty(`--hk-scroll-fade-strength-${side}`);
+      }
+      lastFadeStrengths.clear();
+      if (lastPublishedDir !== null) {
+        lastPublishedDir = null;
+        root.removeAttribute("data-dir");
       }
     }
 

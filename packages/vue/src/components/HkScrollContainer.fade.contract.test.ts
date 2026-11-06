@@ -125,6 +125,22 @@ describe("scroll fade composition contract", () => {
       expect(rootDefaults![0]).toContain(`--hk-scroll-fade-${edge}: 0px;`);
       expect(rootDefaults![0]).toContain(`--hk-scroll-fade-strength-${edge}: 1;`);
     }
+    // Sheet-wide: the four zero defaults live EXACTLY in the root rule.
+    // A second rule re-declaring any of them (the R2 escape: a bare
+    // `.hk-scroll-container-viewport { --hk-scroll-fade-top: 0px }`)
+    // would re-shadow the bands without this going red. The RTL swap
+    // rules also write 0px — the DEAD-side slot, not a default — so
+    // they are excluded from the stray scan.
+    const rtlBlocks = sheet.match(
+      /\.hk-scroll-container\[data-dir="rtl"\]\[data-fade="true"\]\[data-h-overflow="(?:start|end|both)"\] \{[^}]*\}/g,
+    ) ?? [];
+    const sheetWithoutDefaults = sheet.replace(rootDefaults![0], "").replace(new RegExp(String.raw`${rtlBlocks.map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)).join("|")}`, "g"), "");
+    for (const edge of ["top", "right", "bottom", "left"]) {
+      expect(
+        sheetWithoutDefaults.includes(`--hk-scroll-fade-${edge}: 0px;`),
+        `a stray zero default for ${edge} lives outside the root rule`,
+      ).toBe(false);
+    }
   });
 
   it("scales every lit band by the published strength (the progressive fade)", () => {
@@ -149,13 +165,25 @@ describe("scroll fade composition contract", () => {
     expect(sheet).not.toMatch(/--hk-scroll-fade-(?:top|right|bottom|left): var\(--hk-scroll-fade-size\);/);
   });
 
-  it("swaps horizontal sides under RTL instead of rewriting the mask", () => {
+  it("swaps horizontal sides under the mirrored data-dir instead of rewriting the mask", () => {
+    // The slot swap keys on the component's mirrored data-dir (computed
+    // direction), NOT a literal [dir] selector: the physical-side
+    // strengths resolve direction in JS, and an ancestor attribute the
+    // selector misses (dir on the container, dir="auto", a deeper
+    // override) would light the wrong edge. See HkScrollContainer.tsx
+    // senseOverflow's data-dir mirror.
     expect(sheet).toContain(
-      '[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="start"]',
+      '.hk-scroll-container[data-dir="rtl"][data-fade="true"][data-h-overflow="start"]',
     );
     expect(sheet).toContain(
-      '[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="end"]',
+      '.hk-scroll-container[data-dir="rtl"][data-fade="true"][data-h-overflow="end"]',
     );
+    // A literal [dir="rtl"] band rule would disagree with the mirrored
+    // depths under exactly the configurations the mirror exists for.
+    expect(
+      sheet.match(/\[dir="rtl"\][^\n]*\{\s*--hk-scroll-fade-(?:left|right)/),
+      "no literal [dir]-keyed band rules remain",
+    ).toBeNull();
   });
 
   it("routes the dock fades through the same edge vars", () => {

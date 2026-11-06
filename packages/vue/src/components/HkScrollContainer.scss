@@ -88,9 +88,12 @@
       through a hint to the full band; scroll back and it recedes. Edges
       with nothing hidden read strength 1 (the pre-JS / dock-fade
       fallback), which with a 0px band contributes nothing. Physical-side
-      names: the component normalizes RTL scroll signs, so the LTR and
-      RTL state rules consume the same vars and only the width swap below
-      stays direction-aware. */
+      names AND a mirrored data-dir: the component resolves the computed
+      direction once and publishes both the depths and the direction
+      attribute from the same pass, so the LTR and RTL state rules
+      consume the same vars and the slot swap below never disagrees with
+      the depths (a literal [dir] selector can miss dir on the
+      container, dir="auto", or a deeper override). */
 .hk-scroll-container:is([data-fade="true"], [data-dock-fade]) {
   --hk-scroll-fade-top: 0px;
   --hk-scroll-fade-right: 0px;
@@ -187,21 +190,28 @@
   --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
-/* RTL: the inline start edge is the right side, so the horizontal vars
-   swap instead of the mask (the mask itself is direction-neutral). The
-   strengths are published per PHYSICAL side (the component normalizes
-   RTL scroll signs), so the swap moves only the band slots. */
-[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="start"] {
+/* RTL: the inline start edge is the right side, so the horizontal band
+   slots swap instead of the mask (the mask itself is direction-neutral).
+   The swap keys on the component's MIRRORED data-dir, not on [dir]:
+   the strengths are published per PHYSICAL side from the computed
+   direction (normalized scroll signs), and a literal ancestor-[dir]
+   selector diverges from that resolution exactly when [dir] sits on the
+   container itself, on a dir="auto" ancestor, or under an explicit
+   deeper override — computed-direction-is-truth keeps slots and depths
+   in agreement. The attribute lands in the same sensing pass as the
+   overflow attrs (write-only-on-change, removed when fade turns off),
+   so slots and lit attrs are never from different frames. */
+.hk-scroll-container[data-dir="rtl"][data-fade="true"][data-h-overflow="start"] {
   --hk-scroll-fade-left: 0px;
   --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
-[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="end"] {
+.hk-scroll-container[data-dir="rtl"][data-fade="true"][data-h-overflow="end"] {
   --hk-scroll-fade-right: 0px;
   --hk-scroll-fade-left: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-left, 1));
 }
 
-[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="both"] {
+.hk-scroll-container[data-dir="rtl"][data-fade="true"][data-h-overflow="both"] {
   --hk-scroll-fade-left: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-left, 1));
   --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
@@ -226,7 +236,14 @@
    (opacity 100 -> 0 across --hk-scroll-dock-fade) reads as intentional
    instead of a hard clip against the dock's top edge. Content never
    sits under the dock, so this fades the viewport's last few pixels,
-   not the dock itself. */
+   not the dock itself. Ownership note (2026-11-06): when `fade` is ALSO
+   on, the state band rules below have higher specificity and own that
+   edge while it hides content — the dock band applies only when the
+   sense reports nothing hidden past it. With the progressive fade the
+   shared edge therefore deepens with the pull (≤ --space-24) and snaps
+   to the full dock fade only at the scroll end; no shipped consumer
+   combines the two, but a future one should treat that as the
+   documented shape, not a bug. */
 .hk-scroll-container[data-dock-fade="bottom"] {
   --hk-scroll-fade-bottom: var(--hk-scroll-dock-fade, 2rem);
 }

@@ -242,17 +242,42 @@ describe("HkScrollContainer progressive fade strengths", () => {
     expect(varOf(m, "right")).toBe("1");
   });
 
-  it("re-senses immediately when fadeDistance changes at runtime", () => {
-    const m = mountScroller({ axis: "horizontal", fade: true, fadeDistance: 96 });
-    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
-    m.instance?.refresh();
-    expect(varOf(m, "left")).toBe("0.5");
-    m.instance?.refresh();
-    // Distance is read live per pass, so a remount-free change lands on
-    // the next refresh (the reactive watcher schedules one).
-    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 24 });
-    m.instance?.refresh();
-    expect(varOf(m, "left")).toBe("0.25");
+  it("re-derives strengths when only fadeDistance changes at runtime", async () => {
+    // The distance is read live per pass: changing it with NO scroll and
+    // NO refresh() call must re-derive every strength on the watcher's
+    // scheduled pass alone (a scroll-driven delta would pass even with a
+    // dead watcher — the scroll event schedules its own pass).
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ fade: true, fadeDistance: 96 });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", fade: props.fade, fadeDistance: props.fadeDistance }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    // One baseline pass (the mount pass ran before the stub landed);
+    // after this, NO further scroll happens — the flip below must
+    // re-derive on the watcher's pass alone.
+    viewport.dispatchEvent(new Event("scroll"));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.5");
+
+    props.fadeDistance = 192; // same geometry, doubled distance
+    await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(viewport.scrollLeft, "no scroll between the passes").toBe(48);
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.25");
+    app.unmount();
   });
 
   it("publishes on a fade prop flip without any scroll (the re-sense watcher)", async () => {
@@ -285,6 +310,43 @@ describe("HkScrollContainer progressive fade strengths", () => {
     await new Promise<void>((r) => requestAnimationFrame(() => r()));
     expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.5");
     expect(root.style.getPropertyValue("--hk-scroll-fade-strength-right")).toBe("1");
+    app.unmount();
+  });
+
+  it("clears the published strengths and mirrored dir when fade flips off", async () => {
+    // Stale inline values must not outlive the feature (the
+    // stopSelectionSensing symmetry): off removes all four strength
+    // vars and data-dir from the root, so a downstream reader of the
+    // root's style never sees zombie strengths.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ fade: true });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", fade: props.fade }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.getAttribute("data-dir")).toBe("ltr");
+    expect(root.style.getPropertyValue("--hk-scroll-fade-strength-left")).not.toBe("");
+
+    props.fade = false;
+    await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    for (const side of ["left", "right", "top", "bottom"]) {
+      expect(root.style.getPropertyValue(`--hk-scroll-fade-strength-${side}`)).toBe("");
+    }
+    expect(root.hasAttribute("data-dir")).toBe(false);
     app.unmount();
   });
 

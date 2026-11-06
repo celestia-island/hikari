@@ -2,21 +2,19 @@
  * Behavioral contract for the DESKTOP modal open/close choreography — run
  * against the COMPILED stylesheet, not the source text.
  *
- * User direction 2026-11-06 (supersedes the 2026-11-05 content-only ride):
- * the window's own HEIGHT rides the open/close — the frame settles
- * `translate(…) scaleY(0.9) → translate(…) scaleY(1)` about its center, so
- * the box grows symmetrically and anything centered in it (the content
- * region above all) stays horizontally AND vertically centered at every t;
- * the translate prefix is byte-identical in every state so the ride can
- * never re-seat the frame. `.hk-modal-body` keeps a ride of its own:
- * `scale(0.95, 1) → scale(1, 1)` — the horizontal factor starts slightly
- * NARROW and spreads out to fill the window (user direction 2026-11-06,
- * revising the first cut: a 1.1 overshoot read as uglier than a slight
- * pinch), while its vertical factor stays 1 because the body's Y already
- * rides the frame's scaleY (own 0.9 would compound to 0.81). The retired
- * grammars: the 2026-11-04 whole-frame `scale(1, 0.9)`, the 2026-11-05
- * body-only uniform `scale(0.9)`, and the 2026-11-06 `scale(1.1, 1)`
- * overshoot.
+ * User direction 2026-11-07 (supersedes the 2026-11-05 content-only ride
+ * and the 2026-11-06 body scales): ONLY THE HEIGHT COMPRESSES — width is
+ * never scaled. The frame settles `translate(…) scaleY(0.9) →
+ * translate(…) scaleY(1)` about its center, so the box grows symmetrically
+ * and anything centered in it (the content region above all) stays
+ * horizontally AND vertically centered at every t; the translate prefix is
+ * byte-identical in every state so the ride can never re-seat the frame.
+ * `.hk-modal-body` carries NO transform rule of its own: its vertical ride
+ * is entirely the frame's scaleY, so its width stays exactly 100% while its
+ * height follows the 0.9 → 1 compression. The retired grammars, oldest
+ * first: the 2026-11-04 whole-frame `scale(1, 0.9)`, the 2026-11-05
+ * body-only uniform `scale(0.9)`, the 2026-11-06 `scale(1.1, 1)` overshoot
+ * and its same-day `scale(0.95, 1)` pinch.
  *
  * Why compile: a source-text scanner can be dodged by a later duplicate
  * rule, a block comment, SCSS interpolation, `@extend` or an `@use`d
@@ -343,12 +341,8 @@ const ENTER_TRANSITION =
 const LEAVE_TRANSITION =
   "opacity var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)), " +
   "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
-const BODY_ENTER_TRANSITION =
-  "transform var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1))";
-const BODY_LEAVE_TRANSITION =
-  "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
 
-describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-06)", () => {
+describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-07)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
     // Guard against a vacuous suite: the compiled sheet must really contain
     // the frame rule, the body rule and the reduced-motion flatten.
@@ -437,49 +431,27 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(leaveWill).toBe("opacity, transform");
   });
 
-  it("rides the content region X 0.95→1 with Y pinned at 1, about its center", () => {
-    // 2026-11-06 (revised): the content starts slightly NARROW (95% of the
-    // window width) and spreads to 100%; the vertical factor stays 1 — the
-    // body's Y already rides the frame's scaleY, so its own 1 keeps the
-    // compound at exactly 0.9→1.
-    const expect_ = (state: string, value: string) => {
-      const frame = frameWith(...RIDE.find((r) => r.name === state)!.classes);
-      const body = child(frame, "hk-modal-body");
-      expect(winner(body, "transform", DESKTOP), state).toBe(value);
-      // `center center` / `center` / `50%` all compute to the same origin.
-      const origin = (winner(body, "transform-origin", DESKTOP) ?? "")
-        .replace(/\bcenter\b/g, "50%")
-        .split(/\s+/)
-        .filter(Boolean);
-      const [x = "50%", y = "50%"] = origin;
-      expect([x, y], state).toEqual(["50%", "50%"]);
-    };
-    expect_("enter-from", "scale(0.95, 1)");
-    expect_("leave-to", "scale(0.95, 1)");
-    expect_("enter-to", "scale(1, 1)");
-    expect_("leave-from", "scale(1, 1)");
-    // …and the same with the opt-in draggable flag on, where an
-    // attribute-qualified rule could otherwise slip past the mocks.
-    for (const state of RIDE) {
-      const frame = draggableFrameWith(...state.classes);
-      const body = child(frame, "hk-modal-body");
-      const expected =
-        state.name === "enter-from" || state.name === "leave-to" ? "scale(0.95, 1)" : "scale(1, 1)";
-      expect(winner(body, "transform", DESKTOP), `draggable ${state.name}`).toBe(expected);
+  it("never scales the content region: width stays 100% at every t", () => {
+    // 2026-11-07: only the height compresses. The body must carry no
+    // transform of its own in ANY ride state — its vertical ride is the
+    // frame's scaleY inherited down the tree, so a body transform here
+    // would either re-scale the width or double the Y compression.
+    const REST_OR_RIDE = [...RIDE, { name: "rest", classes: [] as string[] }];
+    // The whole transform family, on BOTH branches (R2 finding 2026-11-07
+    // (S2): the draggable branch used to pin `transform` only, so a
+    // `[data-draggable] … { scale: … }` longhand stayed green).
+    const PROPS = ["transform", "transform-origin", "scale", "translate", "rotate", "zoom", "perspective"];
+    for (const state of REST_OR_RIDE) {
+      for (const [label, frame] of [
+        ["", frameWith(...state.classes)],
+        ["draggable ", draggableFrameWith(...state.classes)],
+      ] as const) {
+        const body = child(frame, "hk-modal-body");
+        for (const prop of PROPS) {
+          expect(winner(body, prop, DESKTOP), `${label}${state.name} body ${prop}`).toBeUndefined();
+        }
+      }
     }
-    // At rest the body carries no transform at all.
-    expect(winner(child(frameWith(), "hk-modal-body"), "transform", DESKTOP)).toBeUndefined();
-  });
-
-  it("rides the content scale on the family timing tokens", () => {
-    const body = (state: string, prop: string) => {
-      const frame = frameWith(...RIDE.find((r) => r.name === state)!.classes);
-      return winner(child(frame, "hk-modal-body"), prop, DESKTOP);
-    };
-    // Whole-value pins, same rationale as the frame transitions above.
-    expect(body("enter-from", "transition")).toBe(BODY_ENTER_TRANSITION);
-    expect(body("leave-to", "transition")).toBe(BODY_LEAVE_TRANSITION);
-    expect(body("enter-from", "will-change")).toBe("transform");
   });
 
   it("never transforms the chrome: title bar, sub-header, footer, close button, title glyph", () => {
@@ -509,7 +481,7 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     }
   });
 
-  it("flattens the content scale under prefers-reduced-motion", () => {
+  it("flattens the frame ride (and any stray body transform) under prefers-reduced-motion", () => {
     const frame = frameWith("hk-modal-content-enter-from", "hk-modal-content-enter-active");
     const body = child(frame, "hk-modal-body");
     expect(winner(body, "transform", DESKTOP_REDUCED)).toBe("none");
@@ -562,6 +534,35 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     ).toBeUndefined();
   });
 
+  it("never lets ANY rule put a ride transform on the content region", () => {
+    // Fail-closed sweep, selector-level and media-independent (R2 finding
+    // 2026-11-07 (S2): the cascade mock cannot match `:not()`, a type
+    // qualifier, an extra media gate or a pseudo-element, so twelve such
+    // mutations stayed green). Every rule that targets the body — in any
+    // media query, at any specificity — must never SCALE it. Allowed
+    // anywhere: an inert `transform: none` (the reduced-motion guard) and
+    // any `transform-origin`, which does nothing without a transform.
+    //
+    // Class-TOKEN based, not class-dot based: `div.hk-modal-body` (the same
+    // compound, type-qualified) puts a letter before the dot and slipped
+    // through the first cut, as did `[class~="hk-modal-body"]` (R3 finding
+    // 2026-11-07 (S2)). The trailing guard keeps -scroll / -inner out.
+    const BODY_TARGET = /(^|[^\w-])hk-modal-body(?![\w-])/;
+    const TRANSFORM_FAMILY = /^(transform|transform-origin|translate|scale|rotate|zoom|perspective)$/;
+    const INERT = new Set(["none", "auto"]);
+    const offenders: string[] = [];
+    for (const rule of RULES) {
+      if (!BODY_TARGET.test(rule.selector)) continue;
+      for (const prop of rule.declarations.keys()) {
+        if (!TRANSFORM_FAMILY.test(prop)) continue;
+        if (prop === "transform-origin") continue;
+        const value = (rule.declarations.get(prop) ?? "").replace(/\s+/g, " ").trim();
+        if (!INERT.has(value)) offenders.push(`${rule.selector} { ${prop}: ${value} }`);
+      }
+    }
+    expect(offenders, "the content region must never be scaled").toEqual([]);
+  });
+
   it("never lets ANY rule put a transform on a chrome surface", () => {
     // Fail-closed sweep: selector-level and media-independent, so a chrome
     // transform is caught whatever the combinator, grouping, attribute
@@ -598,9 +599,11 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     const CHROME_ALLOWED = new Set(["opacity", "transition", "will-change", "transform"]);
     // The contracted transform values a ride rule may carry. Frame: the
     // three translate+scaleY states (reduced-motion flatten included);
-    // body: the two two-arg scales.
+    // body: nothing (its width is never scaled — 2026-11-07).
     const LEGAL_FRAME = new Set([CENTERING, FRAME_FROM, FRAME_TO]);
-    const LEGAL_BODY = new Set(["scale(0.95, 1)", "scale(1, 1)"]);
+    // The body carries no transform contract any more (2026-11-07): any
+    // ride rule targeting it is an offender outright.
+    const LEGAL_BODY = new Set<string>([]);
     const offenders: string[] = [];
     // Media-independent on purpose: a ride selector declared at top level
     // (no media query) applies at every width, so it must obey the same
@@ -641,19 +644,19 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
   });
 
   it("keeps the contracted per-axis grammar (no alternate syntax escapes)", () => {
-    // 2026-11-06 grammar: the frame rides `translate(…) scaleY(s)`; the
-    // body rides two-arg `scale(x, 1)`. Any other expression of the same
-    // idea — single-arg scale on the frame list, per-axis longhand
-    // functions, scale3d, a computed matrix, or the independent transform
-    // properties — would break the contracted interpolation shape and must
-    // be impossible.
+    // 2026-11-07 grammar: the FRAME rides `translate(…) scaleY(s)` and the
+    // body rides nothing. Any other expression of the same idea — a
+    // single-arg scale or a scaleX on the frame list, a two-arg scale, any
+    // body transform, scale3d, a computed matrix, or the independent
+    // transform properties — would break the contracted shape (or the
+    // width contract) and must be impossible.
     const BODY_ESCAPES = /scale[XYZ]\(|scale3d\(|matrix[23]d?\(/;
     const FRAME_ESCAPES = /scale\([^)]*,|scaleX\(|scale3d\(|matrix[23]d?\(|\brotate\(/;
     for (const state of RIDE) {
       const frame = frameWith(...state.classes);
       const body = child(frame, "hk-modal-body");
       const bodyTransform = winner(body, "transform", DESKTOP) ?? "";
-      expect(bodyTransform, `body ${state.name}`).toMatch(/^scale\(([\d.]+), 1\)$/);
+      expect(bodyTransform, `body ${state.name}`).toBe("");
       expect(bodyTransform, `body ${state.name}`).not.toMatch(BODY_ESCAPES);
       expect(winner(body, "scale", DESKTOP), `body ${state.name}`).toBeUndefined();
       expect(winner(body, "translate", DESKTOP), `body ${state.name}`).toBeUndefined();

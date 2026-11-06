@@ -123,23 +123,21 @@
 // transform rule of its own; it inherits this single frame scale, which
 // IS the window-height motion the user asked for.
 //
-// The content region keeps a ride of its own: `.hk-modal-body` settles
-// `scale(0.95, 1) → scale(1, 1)` about its center. The horizontal factor
-// starts slightly NARROW (user direction 2026-11-06, after reviewing the
-// first cut: a 1.1 overshoot read as uglier than a slight pinch, so the
-// content starts at 95% width and spreads out to fill the window). The
-// vertical factor stays exactly 1: the body's Y dimension already rides
-// the frame's `scaleY`, so its own 1 makes the compound 0.9 → 1 — the
-// same vertical ride as before, never the doubled 0.81 a second Y factor
-// would produce.
+// The content region does NOT ride on its own (user direction 2026-11-07,
+// superseding the body scale that shipped in 0.55.303 / 0.55.304): width
+// is never scaled, only height is. `.hk-modal-body` therefore carries NO
+// transform rule in any ride state — its vertical ride is entirely the
+// frame's `scaleY` above, so during the open/close its width stays exactly
+// 100% of the window while its height follows the 0.9 → 1 compression. Two
+// retired grammars before this one: the two-arg `scale(0.95, 1)` pinch and
+// the `scale(1.1, 1)` overshoot.
 //
 // Hosts retune the ride through the `--hk-modal-*` tokens (duration /
 // easing) or the body padding vars — NOT by setting `transform` on
-// `.hk-modal-body` or the frame: the state rules pair matched function
-// lists (`translate+scaleY` on the frame, two-arg `scale` on the body)
-// so both ends of every interpolation ride the same shape, and a host's
-// single-class transform would be overridden mid-ride and again under
-// reduced motion.
+// `.hk-modal-body` or the frame: the frame's state rules pair a matched
+// function list (`translate + scaleY`) so both ends of the interpolation
+// ride the same shape, and a host's single-class transform would be
+// overridden mid-ride and again under reduced motion.
 //
 // No clip-path and no Y offset ride the open/close: the visible box IS the
 // frame at every t, so nothing is ever sliced off (the 2026-09-14 clip
@@ -163,7 +161,7 @@
   }
 
   // Close: the reveal's TRUE reverse — same chrome fade, while the window
-  // settles back toward 90% height and the content pinches back in.
+  // settles back toward 90% height, width untouched in both directions.
   .hk-modal-content-leave-active {
     transition:
       opacity var(--hk-modal-duration, 0.32s)
@@ -194,37 +192,6 @@
           calc(-50% + var(--hk-modal-shift-y, 0px))
         )
         scaleY(1);
-  }
-
-  // Content region: the one surface with its own transform. The timing
-  // lives on the per-state transition so the enter and the leave can
-  // differ (0.42s open / 0.32s close) exactly like the chrome fade does.
-  .hk-modal-content-enter-active .hk-modal-body {
-    transform-origin: 50% 50%;
-    transition:
-      transform var(--hk-modal-duration, 0.42s)
-        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
-    will-change: transform;
-  }
-
-  .hk-modal-content-leave-active .hk-modal-body {
-    transform-origin: 50% 50%;
-    transition:
-      transform var(--hk-modal-duration, 0.32s)
-        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-    will-change: transform;
-  }
-
-  // Both ends two-arg `scale`: X starts at 95% and spreads to 1, Y stays 1
-  // (the body's vertical ride comes from the frame's scaleY, not itself).
-  .hk-modal-content-enter-from .hk-modal-body,
-  .hk-modal-content-leave-to .hk-modal-body {
-    transform: scale(0.95, 1);
-  }
-
-  .hk-modal-content-enter-to .hk-modal-body,
-  .hk-modal-content-leave-from .hk-modal-body {
-    transform: scale(1, 1);
   }
 }
 
@@ -714,14 +681,13 @@
       calc(-50% + var(--hk-modal-shift-y, 0px))
     );
   }
-  // The content-scale reveal flattens with it. Both selectors sit at the
-  // same specificity as the desktop pairs above and this block comes
-  // later in the sheet, so the flattened state wins by source order.
+  // The content region carries no transform of its own any more (width is
+  // never scaled — 2026-11-07), so only the frame needs flattening above.
+  // The body lines stay as a fail-closed guard: if a future state rule ever
+  // reintroduces a body transform, reduced motion still flattens it.
   .hk-modal-content .hk-modal-body {
     transform: none;
     transition: none;
-    // …and drop the compositor hint the ride would otherwise leave on
-    // the (tall) content block for the flattened frame.
     will-change: auto;
   }
 }

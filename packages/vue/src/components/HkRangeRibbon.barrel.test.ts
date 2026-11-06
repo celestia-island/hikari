@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   HkRangeRibbon,
+  normalizeHkRangeWindow,
   type RibbonLane,
   type RibbonSegment,
   type RibbonStatus,
@@ -20,6 +21,14 @@ describe("the public barrel", () => {
   it("re-exports the ribbon component under its public name", () => {
     expect(HkRangeRibbon, "HkRangeRibbon must be re-exported").toBeTruthy();
     expect(HkRangeRibbon.name).toBe("HkRangeRibbon");
+  });
+
+  it("re-exports the range-window normalizer hosts share", () => {
+    expect(typeof normalizeHkRangeWindow, "normalizeHkRangeWindow must be re-exported").toBe(
+      "function",
+    );
+    expect(normalizeHkRangeWindow([0.7, 0.3])).toEqual([0.3, 0.7]);
+    expect(normalizeHkRangeWindow(null)).toBeNull();
   });
 
   it("re-exports the ribbon's public types", () => {

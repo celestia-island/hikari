@@ -104,25 +104,12 @@ button.hk-persistent-toast {
   }
 }
 
+/* The dismiss affordance is the STANDARD icon button (2026-11-06 family
+   sweep): box, glyph, ink, hover, press and focus come from HkIconButton.
+   This sheet keeps only the seat — the chip is a compact host, so the control
+   is pulled in slightly rather than sitting on the chip's padding edge. */
 .hk-persistent-toast__dismiss {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: rgb(var(--color-text) / 45%);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: var(--radius-full, 999px);
-
-  &:hover {
-    color: rgb(var(--color-text));
-    background: rgb(var(--color-text) / 8%);
-  }
-
-  &:focus-visible {
-    outline: 1px solid rgb(var(--color-primary) / 70%);
-  }
+  flex-shrink: 0;
 }
 
 // The detail card: a fixed-position rich surface teleported to body,

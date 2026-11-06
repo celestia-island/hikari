@@ -3,6 +3,8 @@ import { useI18n } from "../i18n/context";
 import { hkPadStyle, type HkPad } from "../runtime/containerPad";
 import { AlertTriangle, CheckCircle, Info, X } from "lucide-vue-next";
 
+import HIconButton from "./HkIconButton";
+
 import "./HkAlert.scss";
 
 export type AlertVariant = "error" | "warning" | "info" | "success";
@@ -73,14 +75,18 @@ export default defineComponent({
           </div>
 
           {props.closable && (
-            <button
+            /* The close affordance is the STANDARD icon button (2026-11-06
+               family sweep): HkIconButton owns box, glyph size, hover, press
+               and focus; the sheet keeps only the seat. */
+            <HIconButton
               class="hk-alert-close"
-              type="button"
+              size={24}
+              variant="ghost"
               aria-label={t("hikari::alert.close", "Close")}
               onClick={onClose}
             >
-              <X size={14} />
-            </button>
+              {{ icon: () => <X aria-hidden="true" /> }}
+            </HIconButton>
           )}
         </div>
       );

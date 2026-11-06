@@ -115,29 +115,10 @@
 }
 
 /* ── Close button ──────────────────────────────── */
-
-.hk-alert-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* The control is the STANDARD icon button (2026-11-06 family sweep): box,
+   glyph size, ink, hover, press and focus all come from HkIconButton. This
+   sheet keeps only the seat — it has to out-rank `.hk-icon-button`'s own
+   `position`/var declarations, hence the descendant key at (0,2,0). */
+.hk-alert .hk-alert-close {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border: 0;
-  background: transparent;
-  border-radius: var(--radius-sm, 4px);
-  color: var(--hi-color-muted, #6c6c6c);
-  cursor: pointer;
-  padding: 0;
-  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
-
-  &:hover {
-    background: var(--hi-color-surface, #ffffff);
-    color: var(--hi-color-text-primary, #1e1e1e);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #7aa2f7);
-    outline-offset: 2px;
-  }
 }

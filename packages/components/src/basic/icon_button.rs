@@ -237,6 +237,11 @@ pub struct IconButtonProps {
     /// substitute: the family's copy/close controls carry both.
     pub title: Option<String>,
 
+    /// Disclosure state (Vue: `attrs['aria-expanded']`). Emitted as
+    /// `"true"`/`"false"` when set — a disclosure control must announce its
+    /// state even when the panel is conditionally rendered.
+    pub aria_expanded: Option<bool>,
+
     /// id of the element describing this button (Vue:
     /// `attrs['aria-describedby']`). Emitted only when set — the disabled
     /// state's reason text is the first consumer (a natively disabled
@@ -317,6 +322,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     let dot_label = props.dot_label.clone();
     let aria_label = props.aria_label.clone();
     let title_attr = props.title.clone();
+    let aria_expanded = props.aria_expanded.map(|v| v.to_string());
     let aria_describedby = props.aria_describedby.clone();
     let onclick = props.onclick.clone();
 
@@ -349,6 +355,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             disabled: disabled,
             "aria-label": aria_label,
             title: title_attr,
+            "aria-expanded": aria_expanded,
             "aria-describedby": aria_describedby,
             autofocus: autofocus,
             style: style_attr,

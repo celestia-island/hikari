@@ -1245,9 +1245,10 @@ mod tests {
         // Enabled also means NO reason text and NO describedby reference.
         assert!(!html.contains("hk-solar-edit-reason"), "{html}");
         assert!(!html.contains("aria-describedby"), "{html}");
-        // Delta, not parity: the Vue twin now always emits type="button"
-        // on HkIconButton; this renderer emits none unless asked.
-        assert!(!html.contains(r#"type="button""#), "{html}");
+        // Parity with the Vue twin (2026-11-06 family fix): an icon button is
+        // never a form submitter, so this renderer emits type="button" too.
+        // The old "Delta, not parity" note pinned the defect as intended.
+        assert!(html.contains(r#"type="button""#), "{html}");
         // Editor closed: no editor body, no modal surface.
         assert!(!html.contains("hk-solar-editor"), "{html}");
         assert!(!html.contains("hk-modal-root"), "{html}");

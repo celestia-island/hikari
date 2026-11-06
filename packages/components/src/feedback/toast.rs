@@ -18,8 +18,10 @@
 //           span.hk-toast-message [title]           (rotation-gated text)
 //           span.hk-toast-count                     (only when count > 1)
 //         button.hk-toast-action                    (`slot.action`)
-//         button.hk-toast-copy-btn [title]          (`slot.copyable`)
-//         button.hk-toast-close [aria-label]
+//         button.hk-icon-button.hk-icon-button-24.hk-icon-button-ghost.hk-toast-copy-btn
+//           [title][aria-label]                     (`slot.copyable`)
+//         button.hk-icon-button.hk-icon-button-24.hk-icon-button-ghost.hk-toast-close
+//           [aria-label]
 //
 // The semantics below are TAKEN FROM the Vue sources, not invented here:
 //

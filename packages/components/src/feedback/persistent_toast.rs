@@ -17,7 +17,8 @@
 //         — or —
 //       Icon .hk-persistent-toast__icon             (every other tone)
 //       span.hk-persistent-toast__label
-//     button.hk-persistent-toast__dismiss [aria-label]   (when `dismissible`)
+//     button.hk-icon-button.hk-icon-button-24.hk-icon-button-ghost
+//       .hk-persistent-toast__dismiss [aria-label]   (when `dismissible`)
 //     div.hk-persistent-toast-card.hii-dropdown-content  (when the card is
 //         role="group" [aria-label]                       open and `detail`
 //                                                         is provided)
@@ -658,6 +659,26 @@ mod tests {
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored persistent-toast sheet"
+        );
+    }
+
+    /// Same L177 pin as the alert: the engine contract is the RENDERED class
+    /// list, because one mirrored sheet serves both renderers.
+    #[test]
+    fn dismiss_renders_the_standard_icon_button_layers() {
+        let html = PersistentToast(PersistentToastProps {
+            label: "l".to_string(),
+            dismissible: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("hk-persistent-toast__dismiss"), "{html}");
+        assert!(html.contains("hk-icon-button "), "{html}");
+        assert!(html.contains("hk-icon-button-24"), "{html}");
+        assert!(html.contains("hk-icon-button-ghost"), "{html}");
+        assert!(
+            !html.contains(r#"class="hk-persistent-toast__dismiss""#),
+            "the seat must not sit on a bare button: {html}"
         );
     }
 }

@@ -1,4 +1,6 @@
 import { AlertTriangle, Check, Info, X } from "lucide-vue-next";
+
+import HIconButton from "./HkIconButton";
 import {
   computed,
   defineComponent,
@@ -259,14 +261,15 @@ export default defineComponent({
             <span class="hk-persistent-toast__label">{props.label}</span>
           </Tag>
           {props.dismissible && (
-            <button
-              type="button"
+            <HIconButton
               class="hk-persistent-toast__dismiss"
+              size={24}
+              variant="ghost"
               aria-label={t("hikari::persistentToast.dismiss", "Dismiss")}
               onClick={() => emit("dismiss")}
             >
-              <X size={12} aria-hidden="true" />
-            </button>
+              {{ icon: () => <X aria-hidden="true" /> }}
+            </HIconButton>
           )}
           {slots.detail && open.value && (
             <Teleport to={ensureOverlayRoot()}>

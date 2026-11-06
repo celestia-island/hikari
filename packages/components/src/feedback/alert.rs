@@ -13,7 +13,8 @@
 //     div.hk-alert-body
 //       p.hk-alert-title        → optional
 //       p.hk-alert-text         → body slot or the `message` prop
-//     button.hk-alert-close     → when `closable` (X icon, aria-label)
+//     button.hk-icon-button.hk-icon-button-24.hk-icon-button-ghost.hk-alert-close
+//                                → when `closable` (standard IconButton, X glyph, aria-label)
 //
 // Dismissal is uncontrolled in Vue: the ✕ hides THIS instance locally and
 // emits `close` (no v-model); reopening requires remounting at the call
@@ -296,6 +297,34 @@ mod tests {
         assert!(
             !css.contains("hk-alert-glow-wrapper"),
             "legacy glow wrapper hook is retired"
+        );
+    }
+
+    /// Ledger L177: the sheet these controls use is byte-mirrored into this
+    /// crate, so ONE stylesheet serves both renderers. If this renderer emits
+    /// a bare `button.hk-alert-close` while Vue emits the standard icon
+    /// button, the shared sheet can only style one of them — the other loses
+    /// its box, ink and hover with no failing test anywhere. Pin the RENDERED
+    /// class list, not the presence of the seat string.
+    #[test]
+    fn alert_close_renders_the_standard_icon_button_layers() {
+        let html = Alert(AlertProps {
+            message: "m".to_string(),
+            closable: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("hk-alert-close"), "{html}");
+        assert!(html.contains("hk-icon-button "), "{html}");
+        assert!(html.contains("hk-icon-button-24"), "{html}");
+        assert!(html.contains("hk-icon-button-ghost"), "{html}");
+        assert!(
+            !html.contains(r#"class="hk-alert-close""#),
+            "the seat must not sit on a bare button: {html}"
+        );
+        assert!(
+            html.contains(r#"type="button""#),
+            "a form-adjacent icon button must never default to submit: {html}"
         );
     }
 }

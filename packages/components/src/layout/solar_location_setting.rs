@@ -24,9 +24,9 @@
 //                              title lives here — same choice as Vue)
 //           button.hk-icon-button.hk-icon-button-28
 //                  .hk-icon-button-ghost.hk-solar-edit    (mirrored
-//                              IconButton — size 28 / ghost; no `type`
-//                              here (delta: the Vue twin now always
-//                              emits type="button"))
+//                              IconButton — size 28 / ghost; emits
+//                              type="button" like the Vue twin (2026-11-06
+//                              family parity))
 //                  [disabled] [aria-label="Edit"]         (disabled =
 //                              editor_disabled; the label stays "Edit" —
 //                              the wrapper's title explains the lock)

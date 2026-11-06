@@ -176,10 +176,11 @@
   outline-offset: 2px;
 }
 
-/* The control is the STANDARD icon button (2026-11-06 family sweep); this
-   sheet keeps only the seat. `.hk-toast-close` is a direct child of the row,
-   so the descendant key at (0,2,0) out-ranks `.hk-icon-button`'s own
-   `position`/var declarations without depending on bundle order. */
+/* The controls are the STANDARD icon button (2026-11-06 family sweep); the
+   real seat pin is the rendered-class-list contract. What remains here is
+   only a flex layout nudge — `flex-shrink: 0`, the same value the standard
+   layer already declares, so this flat key carries no box/ink of its own
+   and cannot fight the component regardless of bundle order. */
 .hk-toast-copy-btn,
 .hk-toast-close {
   flex-shrink: 0;

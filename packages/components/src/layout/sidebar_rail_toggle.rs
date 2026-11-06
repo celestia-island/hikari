@@ -51,16 +51,12 @@
 // state, by contrast, is always the string `"true"` / `"false"`
 // (`aria-expanded={String(props.expanded)}`).
 //
-// Deltas vs Vue (documented, not accidental):
-//   * THE BUTTON IS RENDERED DIRECTLY, NOT THROUGH `IconButton`. Vue composes
-//     `<HkIconButton variant="ghost" size={24} aria-expanded aria-label …>`
-//     and relies on attribute fallthrough for `aria-expanded`; the Rust
-//     `IconButtonProps` has no generic attribute passthrough (only explicit
-//     props), so composing it would silently DROP `aria-expanded`. The mirror
-//     therefore emits the identical button — same class list, same
-//     `span.hk-icon-button-icon` slot — with the ARIA state intact. The class
-//     list is derived from `IconButtonSize::S24` / `IconButtonVariant::Ghost`,
-//     so it cannot drift from the component it stands in for.
+// Parity with Vue (2026-11-06 family sweep):
+//   * The circle IS the standard `IconButton` (S24 / ghost) on BOTH forms —
+//     the hand-assembled class trio and the bare `<button>` it replaced
+//     drifted from the Vue twin (no `type`, no shared chrome).
+//     `IconButtonProps` carries `aria_expanded` explicitly, so the ARIA
+//     state rides the composed component instead of being dropped.
 //   * The chevron pair is lucide markup mounted through
 //     `dangerous_inner_html` on a `style="display:contents"` host (an rsx
 //     `svg {}` child would be an HTML-namespace element that never paints).
@@ -161,8 +157,9 @@ pub fn rail_toggle_aria_expanded(expanded: bool) -> &'static str {
     if expanded { "true" } else { "false" }
 }
 
-/// The standing-in-for-IconButton class list (`variant="ghost"`, `size={24}`),
-/// in IconButton's own order.
+/// Extra seat class for the toggle's button. The standard trio (base + size
+/// + variant) is emitted by `IconButton` itself, so today this is empty —
+/// kept as the single hook if the wrapper ever needs a seat of its own.
 pub fn rail_toggle_seat_class() -> String {
     // The wrapper carries the positioning seat; the button's standard trio
     // (base + size + variant) is emitted by IconButton itself, so there is

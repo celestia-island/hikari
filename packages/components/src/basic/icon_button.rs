@@ -38,11 +38,9 @@
 //     `aria_describedby` (Vue: `attrs['aria-describedby']` — the one attr a
 //     disabled control needs so its reason text stays reachable; grew its
 //     own prop here instead of a generic attrs map), `button_type` (Vue:
-//     `attrs.type`; the Vue template now ALWAYS emits `type="button"` and
-//     only an explicit `attrs.type` replaces it — 2026-11-06, the family
-//     had been the lone control defaulting to submit inside a `<form>`.
-//     This twin still emits nothing unless `button_type` is set: that is
-//     now a real, documented delta) and `autofocus` are explicit
+//     `attrs.type`; BOTH forms now always emit `type="button"` and only an
+//     explicit value replaces it — 2026-11-06 family fix (an icon button is
+//     never a form submitter on either side) and `autofocus` are explicit
 //     props, and a host `class` is appended after the size/variant classes.
 //   * The glyph box is pinned by the sheet in Vue (`.hk-icon-button-icon svg
 //     { width: var(--hi-icon-button-icon-size) }` → 12px on the 16/24 steps,
@@ -272,7 +270,6 @@ pub struct IconButtonProps {
     /// "emit nothing" delta is gone, so an icon button inside a `<form>` no
     /// longer becomes a submitter in either form of the family. An explicit
     /// value still wins (a consumer that wants a submitter passes `"submit"`).
-    /// this renderer emits one only when the host sets `button_type`.
     pub button_type: Option<String>,
 
     /// Autofocus attribute (Vue: attrs passthrough).
@@ -496,9 +493,9 @@ mod tests {
         assert!(props.onclick.is_none());
         assert_eq!(props.class, "");
         assert_eq!(props.style, "");
-        // The Vue twin always emits `type="button"` (2026-11-06); this
-        // renderer stays type-less unless the host sets `button_type` —
-        // the documented delta, pinned here.
+        // The props default stays `None`: the RENDER step now turns that
+        // into `type="button"` on both forms (2026-11-06 family fix), so
+        // None means "no explicit override", not "attribute omitted".
         assert_eq!(props.button_type, None);
         assert!(!props.autofocus);
     }

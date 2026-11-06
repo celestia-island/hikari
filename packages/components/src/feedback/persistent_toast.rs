@@ -680,5 +680,13 @@ mod tests {
             !html.contains(r#"class="hk-persistent-toast__dismiss""#),
             "the seat must not sit on a bare button: {html}"
         );
+        // Same parity as the alert and toast pins: the dismiss control is
+        // never a form submitter, and the seat renders exactly once.
+        assert!(html.contains(r#"type="button""#), "{html}");
+        assert_eq!(
+            html.matches("hk-persistent-toast__dismiss").count(),
+            1,
+            "{html}"
+        );
     }
 }

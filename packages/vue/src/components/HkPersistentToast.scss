@@ -96,8 +96,8 @@ button.hk-persistent-toast {
 
 /* The dismiss affordance is the STANDARD icon button (2026-11-06 family
    sweep): box, glyph, ink, hover, press and focus come from HkIconButton.
-   This sheet keeps only the seat — the chip is a compact host, so the control
-   is pulled in slightly rather than sitting on the chip's padding edge. */
+   This sheet keeps only the flex nudge — `flex-shrink: 0`, duplicated from
+   the standard layer; the class-list contract pins the rest. */
 .hk-persistent-toast__dismiss {
   flex-shrink: 0;
 }

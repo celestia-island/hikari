@@ -107,8 +107,11 @@
 /* ── Close button ──────────────────────────────── */
 /* The control is the STANDARD icon button (2026-11-06 family sweep): box,
    glyph size, ink, hover, press and focus all come from HkIconButton. This
-   sheet keeps only the seat — it has to out-rank `.hk-icon-button`'s own
-   `position`/var declarations, hence the descendant key at (0,2,0). */
+   sheet keeps only a redundant flex-shrink nudge — the same value the
+   standard layer already declares. The key stays at (0,2,0) as defensive
+   specificity: if this seat ever has to override a component declaration,
+   it already out-ranks `.hk-icon-button`'s own (0,1,0) rules regardless of
+   bundle order. */
 .hk-alert .hk-alert-close {
   flex-shrink: 0;
 }

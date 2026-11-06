@@ -112,9 +112,6 @@ pub const TOAST_MSG_SWAP_MS: i32 = 150;
 /// `LoadingSpinner size = 18`).
 pub const TOAST_ICON_PX: u32 = 18;
 
-/// Action/copy/close glyph size (Vue: `ACTION_ICON_SIZE = 18`).
-pub const TOAST_ACTION_ICON_PX: u32 = 18;
-
 /// The five toast types (Vue: `ToastType = "error" | "success" | "warning" |
 /// "info" | "loading"`). `show()` defaults to `info`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
@@ -1109,6 +1106,58 @@ mod tests {
         store.clear();
         let empty = ToastSlot::default();
         assert!(store.displayed_message(&empty).is_none());
+    }
+
+    /// Same L177 pin as the alert and the persistent toast: one mirrored
+    /// sheet serves both renderers, so the contract is the RENDERED class
+    /// list (base / size / variant / seat, in that order) — not the seat
+    /// string appearing in a source file. A revert of the copy/close pair to
+    /// bare `<button class="hk-toast-*">` must go red HERE.
+    #[test]
+    fn toast_actions_render_the_standard_icon_button_layers() {
+        let html = ToastItemView(ToastItemViewProps {
+            slot: ToastSlot {
+                id: 1,
+                toast_type: ToastType::Info,
+                messages: vec![ToastMessage {
+                    id: 1,
+                    text: "m".to_string(),
+                }],
+                duration: None,
+                copyable: true,
+                action: None,
+            },
+            displayed: Some(ToastMessage {
+                id: 1,
+                text: "m".to_string(),
+            }),
+            on_remove: None,
+            on_copy: None,
+        })
+        .render_to_html();
+        for seat in ["hk-toast-copy-btn", "hk-toast-close"] {
+            assert!(html.contains(seat), "missing {seat}: {html}");
+            assert!(
+                !html.contains(&format!(r#"class="{seat}""#)),
+                "the seat must not sit on a bare button: {html}"
+            );
+        }
+        // Per-seat rigidity: BOTH controls are 24/ghost, and no other rung
+        // may appear — a contains-check alone would let one button's wrong
+        // size hide behind the other's correct one.
+        assert_eq!(html.matches("hk-icon-button-24").count(), 2, "{html}");
+        assert_eq!(html.matches("hk-icon-button-ghost").count(), 2, "{html}");
+        for other in [
+            "hk-icon-button-16",
+            "hk-icon-button-28",
+            "hk-icon-button-32",
+        ] {
+            assert!(!html.contains(other), "unexpected rung {other}: {html}");
+        }
+        assert_eq!(html.matches(r#"type="button""#).count(), 2, "{html}");
+        // The `title` prop is a real channel (copy carries a hover tooltip);
+        // pin it so a dropped attr cannot slip past the class-list checks.
+        assert!(html.contains(r#"title="Copy""#), "{html}");
     }
 
     #[test]

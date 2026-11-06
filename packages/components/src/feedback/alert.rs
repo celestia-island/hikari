@@ -326,5 +326,6 @@ mod tests {
             html.contains(r#"type="button""#),
             "a form-adjacent icon button must never default to submit: {html}"
         );
+        assert_eq!(html.matches("hk-alert-close").count(), 1, "{html}");
     }
 }

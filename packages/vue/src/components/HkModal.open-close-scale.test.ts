@@ -2,13 +2,20 @@
  * Behavioral contract for the DESKTOP modal open/close choreography — run
  * against the COMPILED stylesheet, not the source text.
  *
- * User direction 2026-11-05 (supersedes the 2026-11-04 whole-frame
- * reveal): the CONTENT REGION is the ONLY scaled surface. The frame, the
- * title bar, the sub-header and the footer action row are chrome — they
- * materialize at their final size on one opacity fade, while
- * `.hk-modal-body` settles from 90% to 100% of its own box about its
- * center with ONE factor on BOTH axes (transfer-style `scale(0.9)`). The
- * retired 2026-11-04 grammar scaled the whole frame `scale(1, 0.9)`.
+ * User direction 2026-11-06 (supersedes the 2026-11-05 content-only ride):
+ * the window's own HEIGHT rides the open/close — the frame settles
+ * `translate(…) scaleY(0.9) → translate(…) scaleY(1)` about its center, so
+ * the box grows symmetrically and anything centered in it (the content
+ * region above all) stays horizontally AND vertically centered at every t;
+ * the translate prefix is byte-identical in every state so the ride can
+ * never re-seat the frame. `.hk-modal-body` keeps a ride of its own:
+ * `scale(1.1, 1) → scale(1, 1)` — the horizontal factor deliberately
+ * OVERSHOOTS (user direction 2026-11-06: at the extremes the content is
+ * WIDER than the window, clipped by the frame's overflow), while its
+ * vertical factor stays 1 because the body's Y already rides the frame's
+ * scaleY (own 0.9 would compound to 0.81). The retired grammars: the
+ * 2026-11-04 whole-frame `scale(1, 0.9)` and the 2026-11-05 body-only
+ * uniform `scale(0.9)`.
  *
  * Why compile: a source-text scanner can be dodged by a later duplicate
  * rule, a block comment, SCSS interpolation, `@extend` or an `@use`d
@@ -291,6 +298,7 @@ function winner(
 const DESKTOP = ["(min-width: 768px)"];
 const MOBILE = ["(max-width: 767px)"];
 const DESKTOP_REDUCED = ["(min-width: 768px)", "(prefers-reduced-motion: reduce)"];
+const MOBILE_REDUCED = ["(max-width: 767px)", "(prefers-reduced-motion: reduce)"];
 
 /** A frame carrying one ride state (plus the shared -active pair). */
 function frameWith(...stateClasses: readonly string[]): MockElement {
@@ -317,6 +325,28 @@ const child = (parent: MockElement, cls: string): MockElement => el([cls], paren
 const CENTERING =
   "translate(calc(-50% + var(--hk-modal-shift-x, 0px)), calc(-50% + var(--hk-modal-shift-y, 0px)))";
 
+/** Frame ride states: the centering translate is a PERMANENT prefix and
+ *  only the appended scaleY changes (2026-11-06: the window's height rides
+ *  the open/close about its center). */
+const FRAME_FROM = `${CENTERING} scaleY(0.9)`;
+const FRAME_TO = `${CENTERING} scaleY(1)`;
+
+/** Exact compiled transition values (winner()-normalized) — pinned whole,
+ *  not by prefix: an embedded fourth time value (delay) or a smuggled extra
+ *  segment must fail, because the surface machine reads duration only and a
+ *  delay would desync the fade from the height ride.
+ *  R2 finding 2026-11-06 (S1): prefix `toContain` let both survive. */
+const ENTER_TRANSITION =
+  "opacity var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)), " +
+  "transform var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1))";
+const LEAVE_TRANSITION =
+  "opacity var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)), " +
+  "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
+const BODY_ENTER_TRANSITION =
+  "transform var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1))";
+const BODY_LEAVE_TRANSITION =
+  "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
+
 describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-05)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
     // Guard against a vacuous suite: the compiled sheet must really contain
@@ -327,19 +357,36 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(selectors.some((s) => s.includes("hk-modal-content-enter-from"))).toBe(true);
   });
 
-  it("keeps the frame's whole transform at the centering translate in every ride state", () => {
+  it("rides the frame height as scaleY appended to the byte-identical centering translate", () => {
+    // 2026-11-06: the window's own height moves with the open/close. The
+    // translate prefix must be byte-identical in EVERY state (rest too) so
+    // the ride can never re-seat the frame or drop a dragged window's
+    // shift; only the appended scaleY flips 0.9 → 1.
+    expect(winner(frameWith(...RIDE[0].classes), "transform", DESKTOP), RIDE[0].name).toBe(FRAME_FROM);
+    expect(winner(frameWith(...RIDE[1].classes), "transform", DESKTOP), RIDE[1].name).toBe(FRAME_TO);
+    expect(winner(frameWith(...RIDE[2].classes), "transform", DESKTOP), RIDE[2].name).toBe(FRAME_TO);
+    expect(winner(frameWith(...RIDE[3].classes), "transform", DESKTOP), RIDE[3].name).toBe(FRAME_FROM);
+    // …and the same with the opt-in draggable flag on, where an
+    // attribute-qualified frame rule could otherwise slip past the mocks
+    // (R2 finding 2026-11-06 (S2): the body had this loop, the frame
+    // didn't — the repo's own [data-draggable] block is the natural next
+    // mutation site).
     for (const state of RIDE) {
-      const frame = frameWith(...state.classes);
-      expect(winner(frame, "transform", DESKTOP), state.name).toBe(CENTERING);
+      const expected = state.name === "enter-from" || state.name === "leave-to" ? FRAME_FROM : FRAME_TO;
+      expect(
+        winner(draggableFrameWith(...state.classes), "transform", DESKTOP),
+        `draggable frame ${state.name}`,
+      ).toBe(expected);
     }
-    // …and at rest, too.
+    // …and at rest, too: the settled frame carries the translate only.
     expect(winner(frameWith(), "transform", DESKTOP)).toBe(CENTERING);
+    expect(winner(draggableFrameWith(), "transform", DESKTOP)).toBe(CENTERING);
   });
 
-  it("never lets a transform property creep onto the frame", () => {
-    // A frame-level `scale:` / `zoom:` / `translate:` (or an origin) would
-    // scale the chrome with it — the retired reveal expressed with the
-    // longhand properties instead of `transform`.
+  it("never lets a transform longhand creep onto the frame", () => {
+    // A frame-level `scale:` / `zoom:` / `translate:` / `rotate:` longhand
+    // (or an origin override) would ride the chrome on its own grammar
+    // instead of the contracted translate+scaleY list.
     for (const state of RIDE) {
       const frame = frameWith(...state.classes);
       for (const prop of ["scale", "zoom", "translate", "rotate", "transform-origin"]) {
@@ -353,25 +400,47 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     }
   });
 
-  it("fades the frame without animating any transform", () => {
+  it("fades the frame and rides its height on one shared token pair per direction", () => {
+    // Pinned WHOLE (winner() normalizes whitespace), not by prefix: a
+    // fourth time value (transition-delay) or an extra smuggled segment
+    // must fail — the surface machine measures duration only, so a delay
+    // would start the scaleY ride late and the measured deadline would cut
+    // it short (R2 finding 2026-11-06 (S1): `toContain` prefixes let both
+    // survive).
     const enter = winner(
       frameWith("hk-modal-content-enter-from", "hk-modal-content-enter-active"),
       "transition",
       DESKTOP,
     );
-    expect(enter).toContain("opacity var(--hk-modal-duration, 0.42s)");
-    expect(enter).not.toContain("transform");
+    expect(enter).toBe(ENTER_TRANSITION);
 
     const leave = winner(
       frameWith("hk-modal-content-leave-to", "hk-modal-content-leave-active"),
       "transition",
       DESKTOP,
     );
-    expect(leave).toContain("opacity var(--hk-modal-duration, 0.32s)");
-    expect(leave).not.toContain("transform");
+    expect(leave).toBe(LEAVE_TRANSITION);
+
+    const enterWill = winner(
+      frameWith("hk-modal-content-enter-from", "hk-modal-content-enter-active"),
+      "will-change",
+      DESKTOP,
+    );
+    expect(enterWill).toBe("opacity, transform");
+    // The close direction promotes the same pair of layers.
+    const leaveWill = winner(
+      frameWith("hk-modal-content-leave-to", "hk-modal-content-leave-active"),
+      "will-change",
+      DESKTOP,
+    );
+    expect(leaveWill).toBe("opacity, transform");
   });
 
-  it("scales ONLY the content region, from 90% on both axes to 100%", () => {
+  it("rides the content region X 1.1→1 with Y pinned at 1, about its center", () => {
+    // 2026-11-06: the horizontal factor OVERSHOOTS (wider-than-window at
+    // the extremes; the frame's overflow clips the overhang) and the
+    // vertical factor stays 1 — the body's Y already rides the frame's
+    // scaleY, so its own 1 keeps the compound at exactly 0.9→1.
     const expect_ = (state: string, value: string) => {
       const frame = frameWith(...RIDE.find((r) => r.name === state)!.classes);
       const body = child(frame, "hk-modal-body");
@@ -384,16 +453,17 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       const [x = "50%", y = "50%"] = origin;
       expect([x, y], state).toEqual(["50%", "50%"]);
     };
-    expect_("enter-from", "scale(0.9)");
-    expect_("leave-to", "scale(0.9)");
-    expect_("enter-to", "scale(1)");
-    expect_("leave-from", "scale(1)");
+    expect_("enter-from", "scale(1.1, 1)");
+    expect_("leave-to", "scale(1.1, 1)");
+    expect_("enter-to", "scale(1, 1)");
+    expect_("leave-from", "scale(1, 1)");
     // …and the same with the opt-in draggable flag on, where an
     // attribute-qualified rule could otherwise slip past the mocks.
     for (const state of RIDE) {
       const frame = draggableFrameWith(...state.classes);
       const body = child(frame, "hk-modal-body");
-      const expected = state.name === "enter-from" || state.name === "leave-to" ? "scale(0.9)" : "scale(1)";
+      const expected =
+        state.name === "enter-from" || state.name === "leave-to" ? "scale(1.1, 1)" : "scale(1, 1)";
       expect(winner(body, "transform", DESKTOP), `draggable ${state.name}`).toBe(expected);
     }
     // At rest the body carries no transform at all.
@@ -405,12 +475,9 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       const frame = frameWith(...RIDE.find((r) => r.name === state)!.classes);
       return winner(child(frame, "hk-modal-body"), prop, DESKTOP);
     };
-    expect(body("enter-from", "transition")).toContain(
-      "transform var(--hk-modal-duration, 0.42s) var(--hk-modal-ease-out",
-    );
-    expect(body("leave-to", "transition")).toContain(
-      "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in",
-    );
+    // Whole-value pins, same rationale as the frame transitions above.
+    expect(body("enter-from", "transition")).toBe(BODY_ENTER_TRANSITION);
+    expect(body("leave-to", "transition")).toBe(BODY_LEAVE_TRANSITION);
     expect(body("enter-from", "will-change")).toBe("transform");
   });
 
@@ -448,16 +515,41 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(winner(body, "transition", DESKTOP_REDUCED)).toBe("none");
     expect(winner(body, "will-change", DESKTOP_REDUCED)).toBe("auto");
     expect(winner(frame, "transition", DESKTOP_REDUCED)).toBe("none");
+    // The frame's height ride flattens too: the ride states fall back to
+    // the bare centering translate (no appended scaleY) — same specificity
+    // as the desktop state rules, later in the sheet, so the flatten wins
+    // by source order. Both ride directions pin (R2 finding 2026-11-06
+    // (S3): the body flatten used to pin enter-from only).
+    expect(winner(frame, "transform", DESKTOP_REDUCED)).toBe(CENTERING);
+    const leaveEnd = frameWith("hk-modal-content-leave-to", "hk-modal-content-leave-active");
+    expect(winner(leaveEnd, "transform", DESKTOP_REDUCED)).toBe(CENTERING);
+    const leaveBody = child(leaveEnd, "hk-modal-body");
+    expect(winner(leaveBody, "transform", DESKTOP_REDUCED)).toBe("none");
+    // Phones flatten too: the media-independent reduce block also wins over
+    // the ≤767px sheet's translateY(100%) — a reduced-motion phone falls
+    // back to the bare translate (one opacity-0 frame hides the flip)
+    // instead of a full-height slide flash.
+    expect(winner(frame, "transform", MOBILE_REDUCED)).toBe(CENTERING);
+    expect(winner(leaveEnd, "transform", MOBILE_REDUCED)).toBe(CENTERING);
   });
 
   it("keeps the mobile sheet's translateY choreography untouched", () => {
     const frame = frameWith("hk-modal-content-enter-from", "hk-modal-content-enter-active");
     expect(winner(frame, "transform", MOBILE)).toBe("translateY(100%)");
+    // The close direction rides the same downward slide (R2 finding
+    // 2026-11-06 (S2): leave-to wasn't pinned — splitting the shared rule
+    // and flipping it to translateY(-100%) used to stay green).
+    const leaveEnd = frameWith("hk-modal-content-leave-to", "hk-modal-content-leave-active");
+    expect(winner(leaveEnd, "transform", MOBILE)).toBe("translateY(100%)");
+    // Settled states: no ride transform at either end of the sheet ride.
+    expect(winner(frameWith("hk-modal-content-enter-to", "hk-modal-content-enter-active"), "transform", MOBILE)).toBe("none");
+    expect(winner(frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active"), "transform", MOBILE)).toBe("none");
     const resting = frameWith();
     expect(winner(resting, "transform", MOBILE)).toBe("none");
     // No content-region scale in the sheet layout.
     const body = child(frame, "hk-modal-body");
     expect(winner(body, "transform", MOBILE)).toBeUndefined();
+    expect(winner(child(leaveEnd, "hk-modal-body"), "transform", MOBILE)).toBeUndefined();
   });
 
   it("never lets ANY rule put a transform on a chrome surface", () => {
@@ -480,7 +572,7 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
 
   it("lets the ride states declare only the animation properties", () => {
     // A layout declaration smuggled beside the scale (height/max-width/
-    // padding) breaks "uniform on both axes" without touching any scale
+    // padding) breaks the geometry contract without touching any scale
     // token, and a `transition-delay` desyncs the surface machine's
     // measured deadline (it reads duration only). Both must be impossible:
     // the ride rules may carry nothing but the animation properties.
@@ -491,22 +583,30 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       "will-change",
       "opacity",
     ]);
-    const CHROME_ALLOWED = new Set(["opacity", "transition", "will-change"]);
+    // Chrome ride states now also carry `transform` (the 2026-11-06 frame
+    // height ride) — but nothing else beyond opacity/transition/will-change.
+    const CHROME_ALLOWED = new Set(["opacity", "transition", "will-change", "transform"]);
+    // The contracted transform values a ride rule may carry. Frame: the
+    // three translate+scaleY states (reduced-motion flatten included);
+    // body: the two two-arg scales.
+    const LEGAL_FRAME = new Set([CENTERING, FRAME_FROM, FRAME_TO]);
+    const LEGAL_BODY = new Set(["scale(1.1, 1)", "scale(1, 1)"]);
     const offenders: string[] = [];
     // Media-independent on purpose: a ride selector declared at top level
     // (no media query) applies at every width, so it must obey the same
-    // allowlist as the desktop block.
+    // allowlist as the desktop block. And UNANCHORED on purpose (R2 finding
+    // 2026-11-06 (S2): the previous scan matched `^selector$`, so a
+    // `[data-draggable] .hk-modal-content-enter-from`-style duplicate —
+    // anything the cascade mock cannot match, like `:not()`/type-qualified/
+    // pseudo-element rules — sailed past it): ANY rule whose selector
+    // carries a ride class must obey the allowlist, wherever it sits.
     for (const rule of RULES) {
       // The ≤767px sheet has its own choreography (translateY + height), and
       // the mobile assertions below cover it; this allowlist is the desktop
       // contract.
       if (rule.media.some((m) => m.includes("max-width"))) continue;
-      const isBodyRide =
-        /-enter-(from|to|active)\s+\.hk-modal-body$|-leave-(from|to|active)\s+\.hk-modal-body$/.test(
-          rule.selector,
-        );
-      const isChromeRide = /^\.hk-modal-content-(enter|leave)-(from|to|active)$/.test(rule.selector);
-      if (!isBodyRide && !isChromeRide) continue;
+      if (!/hk-modal-content-(enter|leave)-(from|to|active)/.test(rule.selector)) continue;
+      const isBodyRide = rule.selector.trim().endsWith(".hk-modal-body");
       const allowed = isBodyRide ? MATRIX_ALLOWED : CHROME_ALLOWED;
       for (const prop of rule.declarations.keys()) {
         if (!allowed.has(prop) && !prop.startsWith("--")) {
@@ -516,20 +616,47 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
           offenders.push(`${rule.selector} { ${prop} (transition longhand) }`);
         }
       }
+      // …and any transform such a rule carries must be one of the
+      // contracted ride values, verbatim (normalized whitespace only).
+      const raw = rule.declarations.get("transform");
+      if (raw !== undefined) {
+        const value = raw.replace(/\s+/g, " ").trim();
+        const legal = isBodyRide ? LEGAL_BODY : LEGAL_FRAME;
+        if (!legal.has(value)) {
+          offenders.push(`${rule.selector} { transform: ${value} (not a contracted ride value) }`);
+        }
+      }
     }
     expect(offenders, "ride rules must carry only animation properties").toEqual([]);
   });
 
-  it("keeps the scale on both axes (no per-axis / longhand grammar)", () => {
+  it("keeps the contracted per-axis grammar (no alternate syntax escapes)", () => {
+    // 2026-11-06 grammar: the frame rides `translate(…) scaleY(s)`; the
+    // body rides two-arg `scale(x, 1)`. Any other expression of the same
+    // idea — single-arg scale on the frame list, per-axis longhand
+    // functions, scale3d, a computed matrix, or the independent transform
+    // properties — would break the contracted interpolation shape and must
+    // be impossible.
+    const BODY_ESCAPES = /scale[XYZ]\(|scale3d\(|matrix[23]d?\(/;
+    const FRAME_ESCAPES = /scale\([^)]*,|scaleX\(|scale3d\(|matrix[23]d?\(|\brotate\(/;
     for (const state of RIDE) {
       const frame = frameWith(...state.classes);
       const body = child(frame, "hk-modal-body");
-      const transform = winner(body, "transform", DESKTOP) ?? "";
-      expect(transform, state.name).not.toMatch(/scale\([^)]*,/); // scale(x, y)
-      expect(transform, state.name).not.toMatch(/scale[XYZ]\(/);
-      expect(winner(body, "scale", DESKTOP), state.name).toBeUndefined();
-      expect(winner(body, "translate", DESKTOP), state.name).toBeUndefined();
-      expect(winner(body, "zoom", DESKTOP), state.name).toBeUndefined();
+      const bodyTransform = winner(body, "transform", DESKTOP) ?? "";
+      expect(bodyTransform, `body ${state.name}`).toMatch(/^scale\(([\d.]+), 1\)$/);
+      expect(bodyTransform, `body ${state.name}`).not.toMatch(BODY_ESCAPES);
+      expect(winner(body, "scale", DESKTOP), `body ${state.name}`).toBeUndefined();
+      expect(winner(body, "translate", DESKTOP), `body ${state.name}`).toBeUndefined();
+      expect(winner(body, "zoom", DESKTOP), `body ${state.name}`).toBeUndefined();
+
+      const frameTransform = winner(frame, "transform", DESKTOP) ?? "";
+      const centeringRe = CENTERING.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      expect(frameTransform, `frame ${state.name}`).toMatch(
+        new RegExp(`^${centeringRe} scaleY\\((0\\.9|1)\\)$`),
+      );
+      expect(frameTransform, `frame ${state.name}`).not.toMatch(FRAME_ESCAPES);
+      expect(winner(frame, "scale", DESKTOP), `frame ${state.name}`).toBeUndefined();
+      expect(winner(frame, "zoom", DESKTOP), `frame ${state.name}`).toBeUndefined();
     }
   });
 });

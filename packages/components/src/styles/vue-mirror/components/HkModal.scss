@@ -67,11 +67,11 @@
   z-index: 1;
   top: 50%;
   left: 50%;
-  // The centering translate is the frame's WHOLE transform: no
-  // enter/leave state carries a transform any more (the open/close scales
-  // the content region instead — see the choreography block below), so
-  // nothing can re-seat the frame mid-flight and dragged windows keep
-  // their shift.
+  // The centering translate is the frame's PERMANENT transform prefix:
+  // every state (rest, enter-from/to, leave-from/to) carries this exact
+  // translate, and the open/close ride only ever APPENDS a `scaleY()` to
+  // it (see the choreography block below) — so the ride can never re-seat
+  // the frame and dragged windows keep their shift.
   transform: translate(
         calc(-50% + var(--hk-modal-shift-x, 0px)),
         calc(-50% + var(--hk-modal-shift-y, 0px))
@@ -109,69 +109,96 @@
 // ------
 // Content enter/leave transitions (desktop ≥768px)
 //
-// Default window open/close (user direction 2026-11-05, superseding the
-// 2026-11-04 whole-frame reveal): what scales is the CONTENT REGION
-// only. The frame, the title bar and the footer action row are chrome —
-// they materialize at their final size on one opacity fade, because
-// scaling them squashed title/button text and the corner radii while
-// the eye was still reading them. `.hk-modal-body` is the content
-// region and the ONLY scaled surface: it settles from 90% to 100% of
-// its own box about its center, with ONE factor on BOTH axes
-// (`scale(0.9)` on both axes — the 2026-11-04 single-axis
-// `scale(1, 0.9)` grammar is retired because X stays uniform, so text,
-// radii and shadows inside the body are never stretched along one
-// axis). Header and footer are SIBLINGS of the body, never
-// descendants, so no transform they inherit can reach them.
+// Default window open/close (user direction 2026-11-06, superseding the
+// 2026-11-05 content-only ride): the window's own HEIGHT now rides the
+// open/close. The frame settles `scaleY(0.9) → scaleY(1)` about its
+// center (the default 50% 50% origin, composed AFTER the permanent
+// centering translate, which is byte-identical in every state — so the
+// box grows symmetrically up and down from its rest center and nothing
+// re-seats the frame mid-flight; dragged windows keep --hk-modal-shift-*
+// through the whole ride). Because a uniform map about the frame center
+// preserves relative geometry, anything sitting centered in the frame —
+// the content region above all — stays horizontally AND vertically
+// centered at every t. The chrome (title bar, sub-header, footer) has no
+// transform rule of its own; it inherits this single frame scale, which
+// IS the window-height motion the user asked for.
+//
+// The content region keeps a ride of its own: `.hk-modal-body` settles
+// `scale(1.1, 1) → scale(1, 1)` about its center. The horizontal factor
+// deliberately OVERSHOOTS past 1 (user direction 2026-11-06: at the
+// open/close extremes the content is WIDER than the window — the frame's
+// `overflow: hidden` clips the overhang at the window edges, reading as
+// a press-in from both sides). The vertical factor stays exactly 1: the
+// body's Y dimension already rides the frame's `scaleY`, so its own 1
+// makes the compound 0.9 → 1 — the same vertical ride as before, never
+// the doubled 0.81 a second Y factor would produce.
 //
 // Hosts retune the ride through the `--hk-modal-*` tokens (duration /
 // easing) or the body padding vars — NOT by setting `transform` on
-// `.hk-modal-body`: these state rules match at (0,2,0), so a host's
+// `.hk-modal-body` or the frame: the state rules pair matched function
+// lists (`translate+scaleY` on the frame, two-arg `scale` on the body)
+// so both ends of every interpolation ride the same shape, and a host's
 // single-class transform would be overridden mid-ride and again under
 // reduced motion.
 //
-// No clip-path and no Y offset ride the open/close either: the visible
-// box IS the frame at every t, so nothing is ever sliced off (the
-// 2026-09-14 clip unveil — and the #508/#512/#524 lineage before it —
-// stays retired). All compositor-level: zero layout per frame. The
-// centering translate lives on the base .hk-modal-content rule, so the
-// frame never re-seats mid-flight and dragged windows keep their shift
-// through the whole ride. Scoped to ≥768px; ≤767px keeps the sheet's
-// translateY choreography below.
+// No clip-path and no Y offset ride the open/close: besides the deliberate
+// X overshoot above, the visible box IS the frame at every t, so nothing
+// is ever sliced off (the 2026-09-14 clip unveil — and the #508/#512/#524
+// lineage before it — stays retired). All compositor-level: zero layout
+// per frame. The centering translate lives on the base .hk-modal-content
+// rule, so the frame never re-seats mid-flight. Scoped to ≥768px; ≤767px
+// keeps the sheet's translateY choreography below.
 // ------
 
 @media (min-width: 768px) {
-  // Chrome: fade only. No transform state touches the frame here — the
-  // frame's transform is the static centering translate from its base
-  // rule, and that is the whole list.
+  // Chrome: opacity fade + the frame's height ride, on one shared token
+  // pair so the window's growth lands exactly with its fade.
   .hk-modal-content-enter-active {
     transition:
       opacity var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+      transform var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
-    will-change: opacity;
+    will-change: opacity, transform;
   }
 
-  // Close: the reveal's TRUE reverse — same chrome fade, while the
-  // content settles back toward 90% and the window dissolves.
+  // Close: the reveal's TRUE reverse — same chrome fade, while the window
+  // settles back toward 90% height and the content widens back out.
   .hk-modal-content-leave-active {
     transition:
       opacity var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
+      transform var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-    will-change: opacity;
+    will-change: opacity, transform;
   }
 
+  // The translate prefix is byte-identical to the base rule; only the
+  // appended scaleY changes. scaleY(1) at the settled end — never `none`
+  // — keeps both ends of the interpolation on the same function shape.
   .hk-modal-content-enter-from,
   .hk-modal-content-leave-to {
     opacity: 0;
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        )
+        scaleY(0.9);
   }
 
   .hk-modal-content-enter-to,
   .hk-modal-content-leave-from {
     opacity: 1;
+    transform: translate(
+          calc(-50% + var(--hk-modal-shift-x, 0px)),
+          calc(-50% + var(--hk-modal-shift-y, 0px))
+        )
+        scaleY(1);
   }
 
-  // Content region: the one scaled surface. The timing lives on the
-  // per-state transition so the enter and the leave can differ (0.42s
-  // open / 0.32s close) exactly like the chrome fade does.
+  // Content region: the one surface with its own transform. The timing
+  // lives on the per-state transition so the enter and the leave can
+  // differ (0.42s open / 0.32s close) exactly like the chrome fade does.
   .hk-modal-content-enter-active .hk-modal-body {
     transform-origin: 50% 50%;
     transition:
@@ -188,17 +215,16 @@
     will-change: transform;
   }
 
+  // Both ends two-arg `scale`: X overshoots 1.1 → 1, Y stays 1 (the body's
+  // vertical ride comes from the frame's scaleY, not from itself).
   .hk-modal-content-enter-from .hk-modal-body,
   .hk-modal-content-leave-to .hk-modal-body {
-    transform: scale(0.9);
+    transform: scale(1.1, 1);
   }
 
-  // The resting ends are explicit scale(1) — never `transform: none` —
-  // so both ends of the interpolation carry the same function shape and
-  // the ride is a plain two-point scale.
   .hk-modal-content-enter-to .hk-modal-body,
   .hk-modal-content-leave-from .hk-modal-body {
-    transform: scale(1);
+    transform: scale(1, 1);
   }
 }
 
@@ -676,6 +702,17 @@
 @media (prefers-reduced-motion: reduce) {
   .hk-modal-content {
     transition: none;
+  }
+  // The frame's height ride flattens with it: the ride states fall back to
+  // the bare centering translate (same specificity as the desktop state
+  // rules above, later in the sheet, so the flattened state wins by source
+  // order — one painted frame at opacity 0 hides the flip).
+  .hk-modal-content-enter-from,
+  .hk-modal-content-leave-to {
+    transform: translate(
+      calc(-50% + var(--hk-modal-shift-x, 0px)),
+      calc(-50% + var(--hk-modal-shift-y, 0px))
+    );
   }
   // The content-scale reveal flattens with it. Both selectors sit at the
   // same specificity as the desktop pairs above and this block comes

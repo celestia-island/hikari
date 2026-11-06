@@ -114,14 +114,14 @@
 // IS the window-height motion the user asked for.
 //
 // The content region keeps a ride of its own: `.hk-modal-body` settles
-// `scale(1.1, 1) → scale(1, 1)` about its center. The horizontal factor
-// deliberately OVERSHOOTS past 1 (user direction 2026-11-06: at the
-// open/close extremes the content is WIDER than the window — the frame's
-// `overflow: hidden` clips the overhang at the window edges, reading as
-// a press-in from both sides). The vertical factor stays exactly 1: the
-// body's Y dimension already rides the frame's `scaleY`, so its own 1
-// makes the compound 0.9 → 1 — the same vertical ride as before, never
-// the doubled 0.81 a second Y factor would produce.
+// `scale(0.95, 1) → scale(1, 1)` about its center. The horizontal factor
+// starts slightly NARROW (user direction 2026-11-06, after reviewing the
+// first cut: a 1.1 overshoot read as uglier than a slight pinch, so the
+// content starts at 95% width and spreads out to fill the window). The
+// vertical factor stays exactly 1: the body's Y dimension already rides
+// the frame's `scaleY`, so its own 1 makes the compound 0.9 → 1 — the
+// same vertical ride as before, never the doubled 0.81 a second Y factor
+// would produce.
 //
 // Hosts retune the ride through the `--hk-modal-*` tokens (duration /
 // easing) or the body padding vars — NOT by setting `transform` on
@@ -131,13 +131,13 @@
 // single-class transform would be overridden mid-ride and again under
 // reduced motion.
 //
-// No clip-path and no Y offset ride the open/close: besides the deliberate
-// X overshoot above, the visible box IS the frame at every t, so nothing
-// is ever sliced off (the 2026-09-14 clip unveil — and the #508/#512/#524
-// lineage before it — stays retired). All compositor-level: zero layout
-// per frame. The centering translate lives on the base .hk-modal-content
-// rule, so the frame never re-seats mid-flight. Scoped to ≥768px; ≤767px
-// keeps the sheet's translateY choreography below.
+// No clip-path and no Y offset ride the open/close: the visible box IS the
+// frame at every t, so nothing is ever sliced off (the 2026-09-14 clip
+// unveil — and the #508/#512/#524 lineage before it — stays retired). All
+// compositor-level: zero layout per frame. The centering translate lives
+// on the base .hk-modal-content rule, so the frame never re-seats
+// mid-flight. Scoped to ≥768px; ≤767px keeps the sheet's translateY
+// choreography below.
 // ------
 
 @media (min-width: 768px) {
@@ -153,7 +153,7 @@
   }
 
   // Close: the reveal's TRUE reverse — same chrome fade, while the window
-  // settles back toward 90% height and the content widens back out.
+  // settles back toward 90% height and the content pinches back in.
   .hk-modal-content-leave-active {
     transition:
       opacity var(--hk-modal-duration, 0.32s)
@@ -205,11 +205,11 @@
     will-change: transform;
   }
 
-  // Both ends two-arg `scale`: X overshoots 1.1 → 1, Y stays 1 (the body's
-  // vertical ride comes from the frame's scaleY, not from itself).
+  // Both ends two-arg `scale`: X starts at 95% and spreads to 1, Y stays 1
+  // (the body's vertical ride comes from the frame's scaleY, not itself).
   .hk-modal-content-enter-from .hk-modal-body,
   .hk-modal-content-leave-to .hk-modal-body {
-    transform: scale(1.1, 1);
+    transform: scale(0.95, 1);
   }
 
   .hk-modal-content-enter-to .hk-modal-body,

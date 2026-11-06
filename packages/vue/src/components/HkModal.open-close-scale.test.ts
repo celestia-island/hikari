@@ -9,13 +9,14 @@
  * region above all) stays horizontally AND vertically centered at every t;
  * the translate prefix is byte-identical in every state so the ride can
  * never re-seat the frame. `.hk-modal-body` keeps a ride of its own:
- * `scale(1.1, 1) → scale(1, 1)` — the horizontal factor deliberately
- * OVERSHOOTS (user direction 2026-11-06: at the extremes the content is
- * WIDER than the window, clipped by the frame's overflow), while its
- * vertical factor stays 1 because the body's Y already rides the frame's
- * scaleY (own 0.9 would compound to 0.81). The retired grammars: the
- * 2026-11-04 whole-frame `scale(1, 0.9)` and the 2026-11-05 body-only
- * uniform `scale(0.9)`.
+ * `scale(0.95, 1) → scale(1, 1)` — the horizontal factor starts slightly
+ * NARROW and spreads out to fill the window (user direction 2026-11-06,
+ * revising the first cut: a 1.1 overshoot read as uglier than a slight
+ * pinch), while its vertical factor stays 1 because the body's Y already
+ * rides the frame's scaleY (own 0.9 would compound to 0.81). The retired
+ * grammars: the 2026-11-04 whole-frame `scale(1, 0.9)`, the 2026-11-05
+ * body-only uniform `scale(0.9)`, and the 2026-11-06 `scale(1.1, 1)`
+ * overshoot.
  *
  * Why compile: a source-text scanner can be dodged by a later duplicate
  * rule, a block comment, SCSS interpolation, `@extend` or an `@use`d
@@ -347,7 +348,7 @@ const BODY_ENTER_TRANSITION =
 const BODY_LEAVE_TRANSITION =
   "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
 
-describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-05)", () => {
+describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-06)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
     // Guard against a vacuous suite: the compiled sheet must really contain
     // the frame rule, the body rule and the reduced-motion flatten.
@@ -436,11 +437,11 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(leaveWill).toBe("opacity, transform");
   });
 
-  it("rides the content region X 1.1→1 with Y pinned at 1, about its center", () => {
-    // 2026-11-06: the horizontal factor OVERSHOOTS (wider-than-window at
-    // the extremes; the frame's overflow clips the overhang) and the
-    // vertical factor stays 1 — the body's Y already rides the frame's
-    // scaleY, so its own 1 keeps the compound at exactly 0.9→1.
+  it("rides the content region X 0.95→1 with Y pinned at 1, about its center", () => {
+    // 2026-11-06 (revised): the content starts slightly NARROW (95% of the
+    // window width) and spreads to 100%; the vertical factor stays 1 — the
+    // body's Y already rides the frame's scaleY, so its own 1 keeps the
+    // compound at exactly 0.9→1.
     const expect_ = (state: string, value: string) => {
       const frame = frameWith(...RIDE.find((r) => r.name === state)!.classes);
       const body = child(frame, "hk-modal-body");
@@ -453,8 +454,8 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       const [x = "50%", y = "50%"] = origin;
       expect([x, y], state).toEqual(["50%", "50%"]);
     };
-    expect_("enter-from", "scale(1.1, 1)");
-    expect_("leave-to", "scale(1.1, 1)");
+    expect_("enter-from", "scale(0.95, 1)");
+    expect_("leave-to", "scale(0.95, 1)");
     expect_("enter-to", "scale(1, 1)");
     expect_("leave-from", "scale(1, 1)");
     // …and the same with the opt-in draggable flag on, where an
@@ -463,7 +464,7 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       const frame = draggableFrameWith(...state.classes);
       const body = child(frame, "hk-modal-body");
       const expected =
-        state.name === "enter-from" || state.name === "leave-to" ? "scale(1.1, 1)" : "scale(1, 1)";
+        state.name === "enter-from" || state.name === "leave-to" ? "scale(0.95, 1)" : "scale(1, 1)";
       expect(winner(body, "transform", DESKTOP), `draggable ${state.name}`).toBe(expected);
     }
     // At rest the body carries no transform at all.
@@ -546,10 +547,19 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(winner(frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active"), "transform", MOBILE)).toBe("none");
     const resting = frameWith();
     expect(winner(resting, "transform", MOBILE)).toBe("none");
-    // No content-region scale in the sheet layout.
+    // No content-region scale in the sheet layout — at EITHER end of the
+    // ride. The settled states used to go unpinned (a max-width block
+    // could scale the body there and no assertion noticed; R3 mutation
+    // 2026-11-06), so all four states are spelled out.
     const body = child(frame, "hk-modal-body");
     expect(winner(body, "transform", MOBILE)).toBeUndefined();
     expect(winner(child(leaveEnd, "hk-modal-body"), "transform", MOBILE)).toBeUndefined();
+    expect(
+      winner(child(frameWith("hk-modal-content-enter-to", "hk-modal-content-enter-active"), "hk-modal-body"), "transform", MOBILE),
+    ).toBeUndefined();
+    expect(
+      winner(child(frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active"), "hk-modal-body"), "transform", MOBILE),
+    ).toBeUndefined();
   });
 
   it("never lets ANY rule put a transform on a chrome surface", () => {
@@ -590,7 +600,7 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     // three translate+scaleY states (reduced-motion flatten included);
     // body: the two two-arg scales.
     const LEGAL_FRAME = new Set([CENTERING, FRAME_FROM, FRAME_TO]);
-    const LEGAL_BODY = new Set(["scale(1.1, 1)", "scale(1, 1)"]);
+    const LEGAL_BODY = new Set(["scale(0.95, 1)", "scale(1, 1)"]);
     const offenders: string[] = [];
     // Media-independent on purpose: a ride selector declared at top level
     // (no media query) applies at every width, so it must obey the same

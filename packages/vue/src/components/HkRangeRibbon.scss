@@ -9,8 +9,10 @@
    the strip is 32px tall, a handle is an 8px half-overlapping grip
    (translateX(-50%) so `left: 20%` centers it on the window edge), a
    clipped segment keeps a 2px minimum so edge slivers stay visible, and
-   the reset chip clears the edge handle (right: 4px = the handle's
-   half-width, so a handle at 0% / 100% is never covered).
+   the reset button (a standard HkIconButton) clears the edge handle
+   (right: 4px = the handle's half-width, so a handle at 0% / 100% is never
+   covered). The 24px touch-floor seat costs the strip's top-right brush
+   band — the free band below the seat is what remains.
 
    Colours and spacing come from hikari theme tokens; a few geometry values
    (the 32px strip, the 8px grip, the 2px min-width floor) are deliberate
@@ -152,7 +154,12 @@
   position: absolute;
   top: 3px;
   bottom: 3px;
-  z-index: 2;
+  // ABOVE the reset seat (z-index 3): a 24px seat reaches ~10-13% into the
+  // strip's right edge, so at z-index 2 a window whose end lands in that
+  // band had both grips covered by the reset's box and unreachable by
+  // pointer (the seat is opaque and paints later). The grip wins the band;
+  // the reset keeps every other pixel of its area.
+  z-index: 4;
   width: 8px;
   transform: translateX(-50%);
   border: 1px solid rgb(var(--color-surface));
@@ -174,32 +181,31 @@
   outline-offset: 2px;
 }
 
-.hk-range-ribbon-reset {
+// The reset affordance is a STANDARD HkIconButton (size 24, ghost) — the
+// icon-button sheet owns box, glyph size, hover, press and focus chrome.
+// 24 is the touch floor the family uses for dense chrome (the same floor the
+// consumers' icon-size guards enforce); the 32px strip still seats it with a
+// 4px inset top and bottom.
+// This rule only pins the seat on the overview field: right = the edge
+// handle's half-width, so a handle at 0% / 100% is never covered.
+// The seat rides the descendant key on purpose: `.hk-icon-button` declares
+// `position: relative` at the SAME (0,1,0) specificity, so a bare
+// `.hk-range-ribbon-reset` rule would only win while HkIconButton.scss
+// happens to come first in the bundle (the exact failure the lightbox close
+// hit in 2026-09-11 — its seat rule is `.hk-image-lightbox-close.hk-icon-button`
+// for this reason). (0,2,0) makes the seat order-independent.
+// The surface backing rides it for the same reason: the `--hi-icon-button-*`
+// properties also live on `.hk-icon-button` (HkIconButtonVars). The ghost
+// variant is transparent by default — a control floating on the strip's own
+// paint keeps a surface tint to stay legible over segments and scrims.
+.hk-range-ribbon .hk-range-ribbon-reset {
   position: absolute;
   top: 4px;
   right: 4px;
   z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: 1px solid rgb(var(--color-border));
-  border-radius: var(--radius-sm);
-  background: rgb(var(--color-surface) / 85%);
-  color: rgb(var(--color-text));
-  cursor: pointer;
-  transition: background-color var(--duration-fast, 0.15s) ease;
-}
-
-.hk-range-ribbon-reset:hover {
-  background: rgb(var(--color-surface));
-}
-
-.hk-range-ribbon-reset:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
-  outline-offset: 1px;
+  --hi-icon-button-bg: rgb(var(--color-surface) / 85%);
+  --hi-icon-button-bg-hover: rgb(var(--color-surface));
+  --hi-icon-button-bg-active: rgb(var(--color-surface));
 }
 
 // Visually hidden, still read by AT: labels the keyboard contract the

@@ -122,6 +122,36 @@ describe("HkIconButton", () => {
   });
 });
 
+
+describe("HkIconButton button semantics", () => {
+  it("renders type=button so a form never treats the chrome as a submitter", () => {
+    const c = mountComp(() => h(HkIconButton, { "aria-label": "probe" }));
+    const btn = c.querySelector<HTMLButtonElement>("button")!;
+    expect(btn.getAttribute("type")).toBe("button");
+  });
+
+  it("never overwrites an explicit type", () => {
+    for (const explicit of ["submit", "reset"] as const) {
+      const c = mountComp(() => h(HkIconButton, { "aria-label": "probe", type: explicit } as never));
+      expect(c.querySelector<HTMLButtonElement>("button")!.getAttribute("type")).toBe(explicit);
+    }
+  });
+
+  it("keeps the default when the attribute is explicitly undefined or empty", () => {
+    // The discriminating cases: a pre-fix ordering (default first, attrs
+    // after) elides the attribute for `undefined` and passes an empty
+    // string through — the first is an implicit submitter, the second an
+    // invalid value that ALSO defaults to submit.
+    for (const value of [undefined, null, ""] as const) {
+      const c = mountComp(() => h(HkIconButton, { "aria-label": "probe", type: value } as never));
+      expect(
+        c.querySelector<HTMLButtonElement>("button")!.getAttribute("type"),
+        `type=${JSON.stringify(value)} must fall back to button`,
+      ).toBe("button");
+    }
+  });
+});
+
 /**
  * Static pin for the header-chrome glyph step (user report 2026-09-29:
  * the search / refresh / filter glyphs in the top-right clusters read

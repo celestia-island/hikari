@@ -61,6 +61,14 @@ export default defineComponent({
         disabled={props.disabled}
         onClick={(e: MouseEvent) => emit("click", e)}
         {...attrs}
+        // A rendered <button> defaults to type=submit, which silently turns
+        // every icon-only control inside a <form> into a submitter. The
+        // family is chrome, never a submitter: default it here, once, so
+        // call sites do not each spread an attribute the component does not
+        // declare. Placed AFTER the attrs spread and guarded with `||` so an
+        // explicit `type` still wins while an explicitly `undefined` one
+        // cannot silently defeat the default (HkButton's idiom).
+        type={((attrs.type as string) || "button") as "button" | "reset" | "submit"}
       >
         <span class="hk-icon-button-icon">
           {slots.icon

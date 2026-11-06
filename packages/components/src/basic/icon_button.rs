@@ -38,8 +38,11 @@
 //     `aria_describedby` (Vue: `attrs['aria-describedby']` — the one attr a
 //     disabled control needs so its reason text stays reachable; grew its
 //     own prop here instead of a generic attrs map), `button_type` (Vue:
-//     `attrs.type`; NOT emitted by default — the Vue
-//     template sets no `type`, unlike HkButton) and `autofocus` are explicit
+//     `attrs.type`; the Vue template now ALWAYS emits `type="button"` and
+//     only an explicit `attrs.type` replaces it — 2026-11-06, the family
+//     had been the lone control defaulting to submit inside a `<form>`.
+//     This twin still emits nothing unless `button_type` is set: that is
+//     now a real, documented delta) and `autofocus` are explicit
 //     props, and a host `class` is appended after the size/variant classes.
 //   * The glyph box is pinned by the sheet in Vue (`.hk-icon-button-icon svg
 //     { width: var(--hi-icon-button-icon-size) }` → 12px on the 16/24 steps,
@@ -254,8 +257,9 @@ pub struct IconButtonProps {
     #[default]
     pub style: String,
 
-    /// `type` attribute passthrough. `None` emits NO `type` — exactly the Vue
-    /// template, which (unlike HkButton) sets none.
+    /// `type` attribute passthrough. `None` emits NO `type` — a deliberate
+    /// delta: the Vue twin always emits `type="button"` (so does HkButton);
+    /// this renderer emits one only when the host sets `button_type`.
     pub button_type: Option<String>,
 
     /// Autofocus attribute (Vue: attrs passthrough).
@@ -468,7 +472,9 @@ mod tests {
         assert!(props.onclick.is_none());
         assert_eq!(props.class, "");
         assert_eq!(props.style, "");
-        // Unlike HkButton, the Vue template emits no `type` at all.
+        // The Vue twin always emits `type="button"` (2026-11-06); this
+        // renderer stays type-less unless the host sets `button_type` —
+        // the documented delta, pinned here.
         assert_eq!(props.button_type, None);
         assert!(!props.autofocus);
     }

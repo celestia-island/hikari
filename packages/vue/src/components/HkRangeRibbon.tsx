@@ -11,6 +11,7 @@ import {
 } from "vue";
 
 import { useI18n } from "../i18n/context";
+import HIconButton from "./HkIconButton";
 import "./HkRangeRibbon.scss";
 
 /**
@@ -744,15 +745,23 @@ export default defineComponent({
                     onPointerdown={(event: PointerEvent) => onHandlePointerDown("end", event)}
                     onKeydown={(event: KeyboardEvent) => onHandleKeyDown("end", event)}
                   />
-                  <button
-                    type="button"
+                  {/* The reset affordance is the STANDARD icon button (user
+                      direction 2026-11-06: no hand-rolled chip chrome) —
+                      HkIconButton owns box, glyph size, hover, press and
+                      focus; this sheet only pins the seat (position) and a
+                      surface backing via its override vars. The glyph slots
+                      as a lucide component (the house-normal integration:
+                      every in-tree HkIconButton slots its glyph). */}
+                  <HIconButton
                     class="hk-range-ribbon-reset"
+                    size={24}
+                    variant="ghost"
                     aria-label={t("hikari::ribbon.reset", "Reset range")}
-                    title={t("hikari::ribbon.reset", "Reset range")}
+                    {...{ title: t("hikari::ribbon.reset", "Reset range") }}
                     onClick={resetWindow}
                   >
-                    <RotateCcw size={12} aria-hidden="true" />
-                  </button>
+                    {{ icon: () => <RotateCcw aria-hidden="true" /> }}
+                  </HIconButton>
                 </>
               )}
             </div>

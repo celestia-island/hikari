@@ -132,14 +132,22 @@ export function useHeightRide(
     // element children (the pinned chrome bands, always `flex-shrink: 0`).
     // Phones/WebViews that report 0 publish nothing at all rather than a
     // wrong box.
-    const contentNatural = c.offsetHeight;
     let chromeNatural = 0;
     for (const child of Array.from(f.children)) {
       if (child === c || !(child instanceof HTMLElement)) continue;
       chromeNatural += child.offsetHeight;
     }
-    if (contentNatural <= 0) return;
-    contentH = contentNatural;
+    // At rest the frame is at (or pinned to) its natural height, so the
+    // content region's natural height is the honest difference there; mid
+    // flight only the content's own box is trustworthy (the frame is short
+    // by design). Both branches are frame-height independent when it
+    // matters — a compressed frame never feeds the next ride.
+    const contentNatural = isInFlight(f)
+      ? c.offsetHeight
+      : Math.max(0, f.offsetHeight - chromeNatural);
+    const measured = contentNatural > 0 ? contentNatural : c.offsetHeight;
+    if (measured <= 0) return;
+    contentH = measured;
     chrome = chromeNatural;
     f.style.setProperty("--hk-ride-chrome", `${chrome}px`);
     f.style.setProperty("--hk-ride-content", `${contentH}px`);

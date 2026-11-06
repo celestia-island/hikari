@@ -173,6 +173,23 @@
   .hk-modal-content-leave-from {
     opacity: 1;
   }
+
+  // The content region keeps its NATURAL layout height for the whole ride: it
+  // must not join the frame's flex shrink, or the slot compression and the
+  // `.hk-ride-content` scale would compound to 0.81 and leave a gap above the
+  // footer (2026-11-07 R3 finding). The footer band pins to the frame's
+  // bottom edge instead, so it stays visible while the content's natural box
+  // overflows underneath it.
+  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-body {
+    flex: 0 0 auto;
+    height: var(--hk-ride-content, auto);
+  }
+
+  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-footer {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+  }
 }
 
 // ------

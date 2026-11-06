@@ -145,9 +145,9 @@ export default defineComponent({
         props.as,
         { ref: rootRef, class: RIDE_CLASS },
         [
-          slots["chrome-start"]?.(),
+          h("div", { class: "hk-ride-chrome-start" }, slots["chrome-start"]?.()),
           h("div", { ref: contentRef, class: RIDE_CONTENT_CLASS }, slots.default?.()),
-          slots["chrome-end"]?.(),
+          h("div", { class: "hk-ride-chrome-end" }, slots["chrome-end"]?.()),
         ],
       );
   },

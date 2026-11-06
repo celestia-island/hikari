@@ -53,9 +53,36 @@
   height: calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px)) !important;
 }
 
+.hk-ride {
+  // The chrome-end band is pinned to the frame's bottom edge during a ride:
+  // the content region keeps its NATURAL layout height (below), so in flow
+  // it would push that band past the shortened frame and hide it. Pinning it
+  // keeps the band visible while the content's compressed paint ends exactly
+  // where the band starts.
+  position: relative;
+}
+
 .hk-ride-content {
   transform-origin: 50% 0;
   transition: transform var(--hk-ride-duration, 0.42s) var(--hk-ride-ease, cubic-bezier(0.33, 1, 0.68, 1));
+}
+
+// THE load-bearing pair of the whole primitive: while riding, the content
+// region stops participating in the flex shrink and holds its NATURAL
+// height, so its layout box is stable (scroll geometry, pins and the
+// overlay scrollbar keep reading the same numbers) and the `scaleY` below
+// is the ONLY thing that compresses it. Without this the slot shrink and the
+// transform would compound (0.9 × 0.9 = 0.81) and leave a gap above the
+// pinned chrome-end band (2026-11-07 R3 finding).
+.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content {
+  flex: 0 0 auto;
+  height: var(--hk-ride-content, auto);
+}
+
+.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-chrome-end {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
 }
 
 .hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content {
@@ -69,7 +96,10 @@
   .hk-ride-content {
     transition: none;
   }
-  .hk-ride.hk-ride--from > .hk-ride-content {
+  /* Repeated with the readiness gate so this flatten outranks the state
+   *  rule above (which is (0,4,0)); a bare `.hk-ride.hk-ride--from` here
+   *  would lose the cascade and the a11y contract would be a lie. */
+  .hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content {
     transform: none;
   }
 }

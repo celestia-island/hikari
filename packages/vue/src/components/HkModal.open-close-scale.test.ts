@@ -432,8 +432,12 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     // inline pin for the duration of the flight) and as a top-origin
     // `scaleY` on the CONTENT REGION only — so the title bar and the footer
     // keep their natural size, which is the 2026-11-07 user requirement.
-    const rideRule = (selector: string): CssRule | undefined =>
-      RIDE_RULES.find((r) => r.selector === selector);
+    // A selector may be declared by more than one rule (the ride's geometry
+    // pairs: the compressed height, the content's natural-height lock and the
+    // content's scale). Look the declaration up by property, not by "the
+    // first rule with this selector".
+    const rideRule = (selector: string, prop = "height"): CssRule | undefined =>
+      RIDE_RULES.find((r) => r.selector === selector && r.declarations.has(prop));
 
     const from = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--from");
     expect(from, "compressed end rule").toBeTruthy();
@@ -451,12 +455,12 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
 
     // Only the content region is ever scaled — top origin, so the compressed
     // paint lands exactly in the shorter slot the frame leaves for it.
-    const scaled = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content");
+    const scaled = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content", "transform");
     expect(scaled, "content compress rule").toBeTruthy();
     expect(scaled!.declarations.get("transform")).toBe(
       "scaleY(var(--hk-ride-factor, 0.9))",
     );
-    const origin = rideRule(".hk-ride-content");
+    const origin = rideRule(".hk-ride-content", "transform-origin");
     expect(origin!.declarations.get("transform-origin")).toBe("50% 0");
 
     // …and the CHROME is never named by any ride rule: the modal's header,

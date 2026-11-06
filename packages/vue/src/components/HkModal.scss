@@ -153,7 +153,7 @@
   }
 
   // Close: the reveal's TRUE reverse — same chrome fade, while the window
-  // settles back toward 90% height and the content widens back out.
+  // settles back toward 90% height and the content pinches back in.
   .hk-modal-content-leave-active {
     transition:
       opacity var(--hk-modal-duration, 0.32s)

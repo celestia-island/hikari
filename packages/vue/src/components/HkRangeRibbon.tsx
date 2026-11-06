@@ -578,7 +578,7 @@ export default defineComponent({
           aria-orientation="horizontal"
           tabindex={props.windowEnabled ? 0 : -1}
           aria-label={t("hikari::ribbon.rangeAria", "Observation range")}
-          aria-describedby={hintId}
+          aria-describedby={props.windowEnabled ? hintId : undefined}
           aria-disabled={props.windowEnabled ? undefined : "true"}
           aria-valuemin={0}
           aria-valuemax={100}
@@ -586,10 +586,14 @@ export default defineComponent({
           aria-valuetext={`${Math.round((win ? win[0] : 0) * 100)}% – ${Math.round(
             (win ? win[1] : 1) * 100,
           )}%`}
-          title={t(
-            "hikari::ribbon.dragHint",
-            "Drag to select a range; double-click, Escape or Home resets",
-          )}
+          title={
+            props.windowEnabled
+              ? t(
+                  "hikari::ribbon.dragHint",
+                  "Drag to select a range; double-click, Escape or Home resets",
+                )
+              : undefined
+          }
           onPointerdown={onStripPointerDown}
           onDblclick={(event: MouseEvent) => {
             // Same rule as Escape/Home: only a double-click that actually
@@ -701,18 +705,20 @@ export default defineComponent({
                 </>
               )}
             </div>
-            <span id={hintId} class="hk-range-ribbon-hint">
-              {`${t(
-                "hikari::ribbon.moveWindow",
-                "Move window",
-              )}: ←/→ · ${t(
-                "hikari::ribbon.resizeWindow",
-                "Resize window",
-              )}: ⇧+←/→ · ${t(
-                "hikari::ribbon.dragHint",
-                "Drag to select a range; double-click, Escape or Home resets",
-              )}`}
-            </span>
+            {props.windowEnabled && (
+              <span id={hintId} class="hk-range-ribbon-hint">
+                {`${t(
+                  "hikari::ribbon.moveWindow",
+                  "Move window",
+                )}: ←/→ · ${t(
+                  "hikari::ribbon.resizeWindow",
+                  "Resize window",
+                )}: ⇧+←/→ · ${t(
+                  "hikari::ribbon.dragHint",
+                  "Drag to select a range; double-click, Escape or Home resets",
+                )}`}
+              </span>
+            )}
           </div>
           <div class="hk-range-ribbon-lanes">
             {lanes.value.map((lane) => (

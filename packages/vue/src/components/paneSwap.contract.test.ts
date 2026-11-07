@@ -80,7 +80,10 @@ const SANCTIONED_SWAP_KEYFRAMES: Record<string, string> = {
   "HkPickerPane.scss: hk-picker-pane-fwd-out": "fixed-stage picker with a direction axis (see above)",
   "HkPickerPane.scss: hk-picker-pane-back-in": "fixed-stage picker with a direction axis (see above)",
   "HkPickerPane.scss: hk-picker-pane-back-out": "fixed-stage picker with a direction axis (see above)",
-  "HkModalBreadcrumb.scss: hk-modal-breadcrumb-in": "breadcrumb level change — a text strip, not a pane",
+  // (2026-11-07) HkModalBreadcrumb's hk-modal-breadcrumb-in mount keyframe
+  // retired: the strip's entrance/exit moved onto the window choreography's
+  // Transition classes, and its crumbs ride HkListTransition's surface
+  // variant — no bespoke keyframes remain in that sheet.
 };
 
 /** Swap-vocabulary keyframe names: anything that reads as a pane-swap

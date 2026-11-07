@@ -8,6 +8,7 @@ import {
   onMounted,
   ref,
   Teleport,
+  Transition,
   watch,
 } from "vue";
 import { usePopupManager, type PopupEntry } from "../runtime/usePopupManager";
@@ -21,12 +22,17 @@ import { clampToDisplayWidth, displayWidthUnits, ELLIPSIS } from "../runtime/dis
 import HkPopover from "./HkPopover";
 import HkMenuPanel from "./HkMenuPanel";
 import HkMenuActionItem from "./HkMenuActionItem";
+import HkListTransition from "./HkListTransition";
 import "./HkModalBreadcrumb.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 /** Window kinds always participate in the stack: modals and drawers block
  *  the page on every form factor, desktop and mobile alike. */
 const WINDOW_KINDS: ReadonlySet<string> = new Set(["modal", "drawer"]);
+
+/** TransitionGroup key of the fold trigger ("…"). Popup ids are UUIDs /
+ *  random base36, so this literal can never collide with a real layer. */
+const MORE_KEY = "hk-modal-breadcrumb-more";
 
 /* Layout fallbacks for the overflow budget — the numbers this component's
  * own stylesheet declares (12px label type, 12px chevron, 8px gaps, 2rem
@@ -85,8 +91,10 @@ export default defineComponent({
      * header" and "this clearance"; a header whose centre already sits at
      * least this far down keeps the strip centred on it. Authored in the
      * strip's LOCAL px like every length here — a host root zoom scales it
-     * at paint, so it can only over-deliver daylight. Below 8 the entrance
-     * keyframe's own 8px slide transiently pokes back above the app top.
+     * at paint, so it can only over-deliver daylight. Below 10 the
+     * entrance's own 10px rise (the window choreography this strip rides)
+     * transiently pokes back above the app top; the default 12 keeps a
+     * 2px margin mid-flight.
      */
     topGap: { type: Number, default: 12 },
   },
@@ -331,6 +339,10 @@ export default defineComponent({
 
     function openMenu(): void {
       if (!crumbs.value.length) return;
+      // A strip mid-LEAVE is still in the DOM (its Transition holds the
+      // last node) with its trigger still tappable — but its surfaces are
+      // unmounted and a set ref here would spring open on a later remount.
+      if (!visible.value) return;
       // The two surfaces are never open together — and the symmetric close
       // matters on a phone: the strip paints above the sheet's scrim, so
       // its trigger stays tappable while a reveal is docked (review round
@@ -386,6 +398,9 @@ export default defineComponent({
         revealed.value = null;
         return;
       }
+      // Same mid-leave guard as openMenu: a frozen crumb must not anchor
+      // a new surface to a strip that is already dissolving.
+      if (!visible.value) return;
       if (!crumbEls.has(crumb.id)) return;
       menuOpen.value = false;
       revealAnchor.value = crumbEls.get(crumb.id) ?? null;
@@ -556,7 +571,11 @@ export default defineComponent({
       triggerClone = null;
     }
 
-    const ENTER_ANIM_MS = 150;
+    /** The strip's whole-surface entrance runs the window choreography at
+     *  its own chrome pace (the enter transition is 300ms — see the
+     *  sheet); the bus report must outlive it so JS choreography that
+     *  depends on the strip's presence (sheet banding) is not cut short. */
+    const ENTER_ANIM_MS = 300;
     const enterAnim = useReportedTransition(ENTER_ANIM_MS);
     let handle: ReturnType<typeof scheduleEvery> | null = null;
     watch(
@@ -631,140 +650,171 @@ export default defineComponent({
       <ChevronRight class="hk-modal-breadcrumb-sep" size={12} />
     );
 
-    return () =>
-      visible.value ? (
-        <Teleport to={ensureOverlayRoot()}>
-          <nav
-            ref={navRef}
-            class="hk-modal-breadcrumb"
-            aria-label={t("hikari::modal.stackLabel", "Window layers")}
-            aria-live="polite"
-            style={{
-              top: `${topPx.value}px`,
-              maxWidth: maxWidthPx.value == null ? undefined : `${maxWidthPx.value}px`,
-            }}
-          >
-            {/* Measurement clone: every layer, always, out of flow and out
-                of the a11y tree. It is the strip's own ruler — the visible
-                crumbs below are a fold of the very list laid out here. */}
-            <div class="hk-modal-breadcrumb-measure" aria-hidden="true" ref={measureHostRef}>
-              {crumbs.value.map((crumb, i) => (
-                <span
-                  key={crumb.id}
-                  class="hk-modal-breadcrumb-crumb"
-                  ref={(el) => setCloneEl(crumb.id, el as Element | null)}
-                >
-                  {i > 0 && separator()}
-                  <span class={itemClass(crumb)}>{crumb.text}</span>
-                </span>
-              ))}
-              <span class="hk-modal-breadcrumb-crumb">
-                <span
-                  class="hk-modal-breadcrumb-more"
-                  ref={(el) => (triggerClone = el as HTMLElement | null)}
-                >
-                  {ELLIPSIS}
-                </span>
-              </span>
-            </div>
-
-            {triggerShown.value && (
-              <span class="hk-modal-breadcrumb-crumb">
-                <button
-                  ref={moreRef}
-                  type="button"
-                  class="hk-modal-breadcrumb-more"
-                  aria-haspopup="dialog"
-                  aria-expanded={menuOpen.value}
-                  aria-label={menuLabel.value}
-                  onClick={openMenu}
-                >
-                  {ELLIPSIS}
-                </button>
-              </span>
-            )}
-
-            {tail.value.map((crumb, i) => (
-              <span key={crumb.id} class="hk-modal-breadcrumb-crumb">
-                {/* A chevron separates two items — the FIRST rendered item
-                    carries none, whether or not the trigger precedes it. */}
-                {(triggerShown.value || i > 0) && separator()}
-                {crumb.truncated ? (
-                  // Cut label: tappable, and the full name is the button's
-                  // accessible name (a cut string is not a name).
-                  <button
-                    type="button"
-                    ref={(el) => setCrumbEl(crumb.id, el as Element | null)}
-                    class={`${itemClass(crumb)} hk-modal-breadcrumb-item-reveal`}
-                    aria-haspopup="dialog"
-                    aria-expanded={revealed.value?.id === crumb.id}
-                    aria-label={crumb.label}
-                    onClick={() => toggleReveal(crumb)}
+    return () => (
+      <Teleport to={ensureOverlayRoot()}>
+        {/* Whole-surface enter/leave on the strip itself: the window
+            choreography at chrome pace (rise + settle + fade in, the
+            reverse out — classes in the sheet, user direction
+            2026-11-07). The leave KEEPS the last live DOM: Vue freezes
+            the node mid-transition, so the strip fades out in the exact
+            shape the stack had when its last-but-one layer closed. The
+            Teleport itself stays mounted even while `visible` is false —
+            a leave can only play under a parent that survives it. */}
+        <Transition name="hk-modal-breadcrumb" appear>
+          {visible.value ? (
+            <nav
+              ref={navRef}
+              class="hk-modal-breadcrumb"
+              aria-label={t("hikari::modal.stackLabel", "Window layers")}
+              aria-live="polite"
+              style={{
+                top: `${topPx.value}px`,
+                maxWidth: maxWidthPx.value == null ? undefined : `${maxWidthPx.value}px`,
+              }}
+            >
+              {/* Measurement clone: every layer, always, out of flow and
+                  out of the a11y tree. It is the strip's own ruler — the
+                  visible crumbs below are a fold of the very list laid
+                  out here. */}
+              <div class="hk-modal-breadcrumb-measure" aria-hidden="true" ref={measureHostRef}>
+                {crumbs.value.map((crumb, i) => (
+                  <span
+                    key={crumb.id}
+                    class="hk-modal-breadcrumb-crumb"
+                    ref={(el) => setCloneEl(crumb.id, el as Element | null)}
                   >
-                    {crumb.text}
-                  </button>
-                ) : (
-                  <span class={itemClass(crumb)}>{crumb.text}</span>
+                    {i > 0 && separator()}
+                    <span class={itemClass(crumb)}>{crumb.text}</span>
+                  </span>
+                ))}
+                <span class="hk-modal-breadcrumb-crumb">
+                  <span
+                    class="hk-modal-breadcrumb-more"
+                    ref={(el) => (triggerClone = el as HTMLElement | null)}
+                  >
+                    {ELLIPSIS}
+                  </span>
+                </span>
+              </div>
+
+              {/* Trigger + visible tail ride the library's keyed-list
+                  container (surface variant): a layer joining the stack
+                  arrives the way its window does (rise + settle + fade),
+                  a layer leaving sinks back while its neighbours glide
+                  into the freed space (FLIP move) — and the fold trigger
+                  gets the same treatment when the fold appears or
+                  dissolves. display:contents keeps the strip's own flex
+                  row as the sole layout owner (see the sheet). */}
+              <HkListTransition
+                tag="span"
+                class="hk-modal-breadcrumb-levels"
+                variant="surface"
+                move
+              >
+                {triggerShown.value && (
+                  <span key={MORE_KEY} class="hk-modal-breadcrumb-crumb">
+                    <button
+                      ref={moreRef}
+                      type="button"
+                      class="hk-modal-breadcrumb-more"
+                      aria-haspopup="dialog"
+                      aria-expanded={menuOpen.value}
+                      aria-label={menuLabel.value}
+                      onClick={openMenu}
+                    >
+                      {ELLIPSIS}
+                    </button>
+                  </span>
                 )}
-              </span>
-            ))}
-          </nav>
-          <HkPopover
-            modelValue={menuOpen.value}
-            onUpdate:modelValue={(v: boolean) => {
-              menuOpen.value = v;
-            }}
-            anchorRef={moreRef.value}
-            placement="bottom-start"
-            // The strip paints ABOVE the anchored band on purpose (z 2500 vs
-            // the dropdown band's 2000), and the trigger sits inside its
-            // padding box — a 4px offset would tuck the menu's first pixels
-            // under the strip's own bar. 16px clears the 12px padding plus
-            // the 1px border.
-            offset={16}
-            sheetOnMobile
-            title={menuLabel.value}
-            class="hk-modal-breadcrumb-menu"
-            // The menu's own registry handle: while the sheet form blocks,
-            // it is a layer of the very stack this menu lists — the rows
-            // must skip it (selecting "the menu" is not a place to go).
-            onRegistered={(handle: { id: string }) => {
-              menuSheetId.value = handle.id;
-            }}
-            onClosed={onMenuClosed}
-          >
-            <HkMenuPanel label={menuLabel.value}>
-              {menuItems.value.map((item) => (
-                <HkMenuActionItem
-                  key={item.id}
-                  label={item.label}
-                  active={item.current}
-                  onClick={() => selectLayer(item.id)}
-                />
-              ))}
-            </HkMenuPanel>
-          </HkPopover>
-          <HkPopover
-            modelValue={revealed.value !== null}
-            onUpdate:modelValue={(v: boolean) => {
-              if (!v) revealed.value = null;
-            }}
-            anchorRef={revealAnchor.value}
-            placement="bottom-start"
-            // Same clearance as the menu: the crumb sits inside the strip's
-            // own padding box, which paints above the anchored band.
-            offset={16}
-            sheetOnMobile
-            // The name is the surface's reason to exist, so it names it.
-            // The sheet heading ellipsises (it is chrome) — the panel body
-            // below carries the whole name and wraps.
-            title={revealed.value?.label ?? ""}
-          >
-            {revealed.value && (
-              <p class="hk-modal-breadcrumb-reveal">{revealed.value.label}</p>
-            )}
-          </HkPopover>
+
+                {tail.value.map((crumb, i) => (
+                  <span key={crumb.id} class="hk-modal-breadcrumb-crumb">
+                    {/* A chevron separates two items — the FIRST rendered item
+                        carries none, whether or not the trigger precedes it. */}
+                    {(triggerShown.value || i > 0) && separator()}
+                    {crumb.truncated ? (
+                      // Cut label: tappable, and the full name is the button's
+                      // accessible name (a cut string is not a name).
+                      <button
+                        type="button"
+                        ref={(el) => setCrumbEl(crumb.id, el as Element | null)}
+                        class={`${itemClass(crumb)} hk-modal-breadcrumb-item-reveal`}
+                        aria-haspopup="dialog"
+                        aria-expanded={revealed.value?.id === crumb.id}
+                        aria-label={crumb.label}
+                        onClick={() => toggleReveal(crumb)}
+                      >
+                        {crumb.text}
+                      </button>
+                    ) : (
+                      <span class={itemClass(crumb)}>{crumb.text}</span>
+                    )}
+                  </span>
+                ))}
+              </HkListTransition>
+            </nav>
+            ) : null}
+          </Transition>
+          {visible.value && (
+            <HkPopover
+              modelValue={menuOpen.value}
+              onUpdate:modelValue={(v: boolean) => {
+                menuOpen.value = v;
+              }}
+              anchorRef={moreRef.value}
+              placement="bottom-start"
+              // The strip paints ABOVE the anchored band on purpose (z 2500 vs
+              // the dropdown band's 2000), and the trigger sits inside its
+              // padding box — a 4px offset would tuck the menu's first pixels
+              // under the strip's own bar. 16px clears the 12px padding plus
+              // the 1px border.
+              offset={16}
+              sheetOnMobile
+              title={menuLabel.value}
+              class="hk-modal-breadcrumb-menu"
+              // The menu's own registry handle: while the sheet form blocks,
+              // it is a layer of the very stack this menu lists — the rows
+              // must skip it (selecting "the menu" is not a place to go).
+              onRegistered={(handle: { id: string }) => {
+                menuSheetId.value = handle.id;
+              }}
+              onClosed={onMenuClosed}
+            >
+              <HkMenuPanel label={menuLabel.value}>
+                {menuItems.value.map((item) => (
+                  <HkMenuActionItem
+                    key={item.id}
+                    label={item.label}
+                    active={item.current}
+                    onClick={() => selectLayer(item.id)}
+                  />
+                ))}
+              </HkMenuPanel>
+            </HkPopover>
+          )}
+          {visible.value && (
+            <HkPopover
+              modelValue={revealed.value !== null}
+              onUpdate:modelValue={(v: boolean) => {
+                if (!v) revealed.value = null;
+              }}
+              anchorRef={revealAnchor.value}
+              placement="bottom-start"
+              // Same clearance as the menu: the crumb sits inside the strip's
+              // own padding box, which paints above the anchored band.
+              offset={16}
+              sheetOnMobile
+              // The name is the surface's reason to exist, so it names it.
+              // The sheet heading ellipsises (it is chrome) — the panel body
+              // below carries the whole name and wraps.
+              title={revealed.value?.label ?? ""}
+            >
+              {revealed.value && (
+                <p class="hk-modal-breadcrumb-reveal">{revealed.value.label}</p>
+              )}
+            </HkPopover>
+          )}
         </Teleport>
-      ) : null;
+      );
   },
 });

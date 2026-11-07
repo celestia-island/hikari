@@ -161,6 +161,38 @@
   transition: transform var(--duration-fast, 0.15s) ease;
 }
 
+/* surface — the window choreography (HkModal's whole-window entrance,
+ * user direction 2026-11-07): a row arrives rising 10px while settling
+ * from 97% scale and fading in, and leaves by sinking back to that same
+ * pose. A compositor-only signature end to end — opacity + transform
+ * only, so the row never reflows per frame (the lesson the modal's own
+ * height-ride era taught the hard way). Siblings glide into the freed
+ * space with the same ease. Shares the window family's curves: the
+ * modal's ease-out (0.33, 1, 0.68, 1) arriving, its ease-in
+ * (0.45, 0, 0.55, 1) departing. */
+.hk-list-surface-enter-active {
+  transition:
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.hk-list-surface-leave-active {
+  transition:
+    opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
+    transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1);
+  position: absolute;
+}
+
+.hk-list-surface-enter-from,
+.hk-list-surface-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.97);
+}
+
+.hk-list-surface-move {
+  transition: transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+}
+
 .hk-list-none-enter-active,
 .hk-list-none-leave-active,
 .hk-list-none-move {
@@ -181,11 +213,14 @@
   .hk-list-grow-leave-active,
   .hk-list-reveal-enter-active,
   .hk-list-reveal-leave-active,
+  .hk-list-surface-enter-active,
+  .hk-list-surface-leave-active,
   .hk-list-pop-move,
   .hk-list-slide-move,
   .hk-list-fade-move,
   .hk-list-grow-move,
-  .hk-list-reveal-move {
+  .hk-list-reveal-move,
+  .hk-list-surface-move {
     transition: none !important;
   }
 }

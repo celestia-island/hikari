@@ -179,7 +179,13 @@
    the strip itself is pointer-transparent), and inheritance does not
    beat an explicit auto. The ghost must not take clicks while it sinks:
    a tap opened a popover anchored to the fading element (2026-11-07
-   review). Specificity (0,1,1) outranks the (0,1,0) button faces. */
+   review). Specificity (0,1,1) outranks the (0,1,0) button faces.
+   Belt relationship: pinLeaving also sets `inert` on the ghost (blocks
+   clicks AND focus for every descendant where the pin ran); this rule is
+   the CSS belt that still dead-ends buttons when the pin skipped (no
+   layout — tests — or a host without captured rects). Future surface
+   consumers whose rows carry links/inputs, not just buttons: extend this
+   selector or rely on the inert. */
 .hk-list-surface-leave-active button {
   pointer-events: none;
 }

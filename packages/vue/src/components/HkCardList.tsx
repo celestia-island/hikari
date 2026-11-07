@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, type Component, type PropType } from "vue";
+import { computed, defineComponent, h, inject, onBeforeUnmount, onMounted, ref, type Component, type PropType } from "vue";
 import { MoreHorizontal } from "lucide-vue-next";
 
 import HkCard from "./HkCard";
@@ -9,6 +9,7 @@ import HkTooltip from "./HkTooltip";
 import { hasRenderedContent } from "../runtime/hasRenderedContent";
 import { useMediaQuery } from "../runtime/useMediaQuery";
 import type { StatTone } from "./HkStatCard";
+import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgress";
 import "./HkCardList.scss";
 
 /**
@@ -43,7 +44,43 @@ const renderedRows = hasRenderedContent;
  */
 export const HkCardList = defineComponent({
   name: "HkCardList",
-  setup(_props, { slots }) {
+  props: {
+    /** Authoritative row total the scroll-progress pill uses as its
+     *  denominator (the server count behind a windowed/infinite list).
+     *  Forwarded to the nearest enclosing HkScrollContainer with
+     *  `scrollProgress` on, exactly like HkAdminTablePage's `total`.
+     *  Omitted: the pill falls back to counting the delivered DOM rows
+     *  (right for fully-delivered lists, drifting low for windowed
+     *  ones — pass the server count there). */
+    total: { type: Number, default: undefined },
+  },
+  setup(props, { slots }) {
+    // Scroll-progress registration (the HkTable precedent): the NEAREST
+    // enclosing HkScrollContainer with `scrollProgress` on provides the
+    // registrar — provide/inject scoping resolves the admin shell's
+    // viewport for console pages and keeps a list registered against an
+    // inner container out of the shell. The handle hands the pill the
+    // list element as the row root, the `total` prop live, and the
+    // rendered HkListRow elements as the rows (a card list's rows ARE
+    // its data rows — no section-band caveat).
+    const listRef = ref<HTMLElement | null>(null);
+    const progressRegistrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
+    const progressHandle: HkScrollProgressHandle = {
+      getRoot: () => listRef.value,
+      getTotal: () => props.total,
+      getRows: () =>
+        listRef.value
+          ? Array.from(listRef.value.children).filter((el) =>
+              el.classList.contains("hk-list-row"),
+            )
+          : [],
+    };
+    onMounted(() => {
+      progressRegistrar?.register(progressHandle);
+    });
+    onBeforeUnmount(() => {
+      progressRegistrar?.unregister(progressHandle);
+    });
     return () => {
       const rows = slots.default?.();
       return (
@@ -51,7 +88,7 @@ export const HkCardList = defineComponent({
           {slots.empty && !renderedRows(rows) ? (
             slots.empty()
           ) : (
-            <div class="hk-card-list" role="list">
+            <div class="hk-card-list" role="list" ref={listRef}>
               {rows}
             </div>
           )}

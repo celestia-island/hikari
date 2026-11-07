@@ -159,8 +159,9 @@ describe("selection policy sheet", () => {
     // neither a commented-out rule nor a selector list that re-widens the
     // rule can pass.
     const css = compile("../components/HkTable.scss");
-    // 1) The legacy `copy` glyph must not come back anywhere.
-    expect(css).not.toMatch(/cursor:\s*copy/);
+    // 1) The legacy `copy` glyph must not come back anywhere — not as the
+    //    bare keyword, not as a `url(...)` fallback list, not in any case.
+    expect(css).not.toMatch(/cursor\s*:[^;}]*\bcopy\b/i);
     // 2) The marked cell IS the clickable-text surface.
     expect(css).toMatch(
       /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*pointer/,
@@ -190,13 +191,5 @@ describe("selection policy sheet", () => {
     );
     expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
       css.indexOf("[data-copy-cell]"),
-    );
-    // 6) The marked rule must sit under the table-level opt-out gate:
-    //    moving it into a dead block (`.hk-table:not([data-copy-cells])`)
-    //    would keep a marker-bearing selector while the pointer never
-    //    applies.
-    expect(css).toMatch(
-      /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*pointer/,
-    );
-  });
+    );  });
 });

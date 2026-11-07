@@ -906,7 +906,7 @@ export default defineComponent({
                       const isSlotCell = Boolean(slots[`cell-${col.key}`]);
                       const value = row[col.key];
                       // ONE predicate behind the hover hint AND the
-                      // `copy` cursor (`data-copy-cell`): a DEFAULT text
+                      // copy-affordance cursor (`pointer`, `data-copy-cell`): a DEFAULT text
                       // cell advertises the copy affordance only when its
                       // background click really copies — the td is a text
                       // leaf that still RENDERS text (see `renderedText`).

@@ -84,14 +84,12 @@
   // (capped) height and pins it as px on every content change — the
   // transition below animates old→new px. Both pinned values are
   // explicit px, so this needs no interpolate-size keyword support.
-  // clip-path rides the same token pair for the mobile sheet's reveal
-  // morph (--hk-sheet-morph: clip below): the pin lands instantly and
-  // the top edge sweeps up paint-only — no per-frame layout, no
-  // per-frame backdrop re-raster over the resizing fixed layer.
-  transition:
-    height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-    clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  // Height is the only leg the desktop rest state ever animates: the
+  // clip-path reveal morph belongs to the ≤767px sheet block (which
+  // replaces this list wholesale), and nothing — hikari or host —
+  // changes the frame's max-height after mount (the 70vh cap is the
+  // body's, a different element).
+  transition: height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
   @include backdrop-filter(var(--hk-modal-blur, none));
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(100,100,100,0.08)));
@@ -493,7 +491,7 @@
     //   direction change. Growth keeps its animated reveal via the
     //   clip-path sweep (the only transition left on phones).
     //
-    // Desktop keeps the full base list (height + max-height + clip-path).
+    // Desktop keeps the base list (height only — the size morph's leg).
     // 0.3s = the stepflow crossfade's family standard (2026-09-21 user
     // spec, round 7): the clip sweep, the riding body and the fade must
     // land together. Keyboard-driven height changes never animate

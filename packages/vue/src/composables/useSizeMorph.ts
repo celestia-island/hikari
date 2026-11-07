@@ -38,12 +38,13 @@ export interface SizeMorph {
    *  HkSelectPanel both arm at the machine's `open` edge). The call may
    *  land one render flush before the enter classes actually leave the
    *  frame (the machine flips the phase synchronously, Vue re-renders on
-   *  the next flush); that is safe because no enter class on any
-   *  breakpoint carries layout rules — the choreographies are
-   *  opacity+transform — so calibration still reads the rest geometry.
-   *  There is no early-arm protocol anymore: the modal's enter never
-   *  reads the frame's height, so an enter-time pin would only freeze a
-   *  stale height under `overflow: hidden`. */
+   *  the next flush); that is safe because no enter class carries layout
+   *  rules that differ from rest — the choreographies are
+   *  opacity+transform, and the ≤767px from-pair's `height: auto`
+   *  coincides with the unpinned rest height — so calibration still
+   *  reads the rest geometry. There is no early-arm protocol anymore:
+   *  the modal's enter never reads the frame's height, so an enter-time
+   *  pin would only freeze a stale height under `overflow: hidden`. */
   start(): void;
   /** Disarm the morph and release the frame to `height: auto` — call
    *  before a surface's leave/close so the exit animation owns the
@@ -187,7 +188,7 @@ export interface SizeMorphOptions {
  * (2026-09-21 chest report, round 5) without reintroducing a frame of
  * per-frame layout. The layer promotion is RESIDENT for the whole arm
  * cycle (applied at start(), cleared by hold() at the close request; a
- * mid-cycle release() — the contamination guard or a reopen edge —
+ * mid-cycle release() — the contamination guard's re-pin —
  * deliberately keeps it, see release()): promoting at the
  * step-change moment cost a one-frame see-through as the old layer died
  * before the new one rastered (same report).
@@ -244,9 +245,9 @@ export function useSizeMorph(
    *  normal close. */
   let revealWatchdog: ReturnType<typeof setTimeout> | null = null;
   /** Resident layer promotion on clip-mode surfaces: applied at arm time
-   *  and cleared by hold() at the close request (a mid-cycle release()
-   *  deliberately leaves it for the cycle to unwind, see clearResidentWill's
-   *  callers). Promoting at the STEP-change moment
+   *  and cleared by hold() at the close request (a mid-cycle release() —
+   *  the contamination guard's re-pin — deliberately leaves it for the
+   *  cycle to unwind, see clearResidentWill's callers). Promoting at the STEP-change moment
    *  (0.55.38's per-sweep will-change) destroyed the old layer one frame
    *  before the new one had rastered — on the phone GPU the sheet read
    *  as a one-frame see-through flash exactly when the raster race had

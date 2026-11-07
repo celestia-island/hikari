@@ -1176,6 +1176,48 @@ describe("HkModalBreadcrumb motion", () => {
     }
   });
 
+  it("keeps the band and the geometry alive through a reopen inside the leave window", async () => {
+    // The strip's no-mode crossfade: closing the last-but-one starts the
+    // frozen strip's leave, and a window opened inside that window mounts
+    // a SUCCESSOR while the old nav is still fading. The old nav's
+    // after-leave then fires late — it must neither withdraw the band the
+    // successor re-published nor blind the live strip's geometry source
+    // (a plain navRef would be nulled by Vue's teardown).
+    lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb"));
+    try {
+      const win = manager.register("modal", true, "第一层");
+      manager.register("modal", true, "第二层");
+      await mountStrip();
+      setViewport(120);
+      await until(() => more() !== null);
+      manager.unregister(win.id);
+      await nextTick();
+      // The leave keeps the band (the strip still paints above sheets).
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+      // Reopen inside the leave window: a successor strip mounts.
+      manager.register("modal", true, "第二层续");
+      await nextTick();
+      await nextTick();
+      expect(strip()).not.toBeNull();
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+      // ~300ms: the frozen nav's after-leave fires. The band must survive
+      // it (sampled inside the pre-slow-tick window — an unguarded
+      // withdrawal would self-heal only at the next 1s tick).
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      await nextTick();
+      expect(strip()).not.toBeNull();
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+      // ~1.1s: the successor's slow tick re-measures the fold through
+      // navRef — a stripped ref would collapse the fold here.
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      expect(strip()).not.toBeNull();
+      expect(more()).not.toBeNull();
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
   it("keeps a mid-leave strip inert: its surfaces cannot spring back", async () => {
     lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb"));
     try {

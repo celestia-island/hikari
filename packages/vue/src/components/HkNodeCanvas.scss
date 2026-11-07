@@ -67,6 +67,16 @@
   inset-inline-start: var(--space-12);
 }
 
+/* The wrapper is the ONE anchor: the docked card goes static so it sizes
+   the wrapper's shrink-to-fit box instead of stacking its own absolute
+   corner offset on top of the wrapper's (the doubled inset read as the
+   map floating oddly far and lopsided from its corner — one inset came
+   from here, a second from `.hk-minimap`'s self-docking rule). Works for
+   every placement: the wrapper's own data-placement carries the corner. */
+.hk-node-canvas-minimap > .hk-minimap {
+  position: static;
+}
+
 /* ── Interactive edges ───────────────────────────────────────────────
    The halo paths are always in the DOM when `interactiveEdges` is on but
    invisible until their edge is hovered or selected, so highlighting

@@ -217,7 +217,11 @@ export default defineComponent({
      *  out with `false`. Needs `contentBounds` to know the hull — without
      *  it there is nothing to clamp against and this is a no-op. */
     clampToBounds: { type: Boolean, default: true },
-    /** Mount the minimap in the corner. */
+    /** Mount the minimap in the corner. The slot's card must be a
+     *  DIRECT child of the dock wrapper (`.hk-node-canvas-minimap >
+     *  .hk-minimap` is reset to static — the dock owns the corner inset;
+     *  an intermediate wrapper around the card would re-stack the card's
+     *  own self-docking offset on top of the dock's). */
     minimap: { type: Boolean, default: true },
     /** Which corner the minimap takes. */
     minimapPlacement: {

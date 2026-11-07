@@ -1176,13 +1176,16 @@ describe("HkModalBreadcrumb motion", () => {
     }
   });
 
-  it("keeps the band and the geometry alive through a reopen inside the leave window", async () => {
-    // The strip's no-mode crossfade: closing the last-but-one starts the
-    // frozen strip's leave, and a window opened inside that window mounts
-    // a SUCCESSOR while the old nav is still fading. The old nav's
-    // after-leave then fires late — it must neither withdraw the band the
-    // successor re-published nor blind the live strip's geometry source
-    // (a plain navRef would be nulled by Vue's teardown).
+  it("survives a reopen inside the leave window (band + fold end state)", async () => {
+    // The strip's no-mode reopen: closing the last-but-one starts the
+    // frozen strip's leave, and a window opened inside that window
+    // fast-forwards the old nav while a successor mounts. This test pins
+    // the observable END STATE: the band must survive the whole exchange,
+    // the successor must stand, and the fold must still stand after the
+    // slow tick re-measures through navRef. (It does NOT discriminate the
+    // belt-and-suspenders race guards in the tsx — those are inert under
+    // Vue 3.5.40's fast-forward and were verified with a real-Chrome
+    // mutation pair during review.)
     lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb"));
     try {
       const win = manager.register("modal", true, "第一层");
@@ -1200,15 +1203,16 @@ describe("HkModalBreadcrumb motion", () => {
       await nextTick();
       expect(strip()).not.toBeNull();
       expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
-      // ~300ms: the frozen nav's after-leave fires. The band must survive
-      // it (sampled inside the pre-slow-tick window — an unguarded
-      // withdrawal would self-heal only at the next 1s tick).
+      // Past the leave's nominal clock (~300ms): the band must still be
+      // up and the successor standing — whatever transient the exchange
+      // produced has settled by now.
       await new Promise((resolve) => setTimeout(resolve, 450));
       await nextTick();
       expect(strip()).not.toBeNull();
       expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
       // ~1.1s: the successor's slow tick re-measures the fold through
-      // navRef — a stripped ref would collapse the fold here.
+      // navRef — the fold must still stand (the trigger's existence is
+      // the observable).
       await new Promise((resolve) => setTimeout(resolve, 700));
       expect(strip()).not.toBeNull();
       expect(more()).not.toBeNull();

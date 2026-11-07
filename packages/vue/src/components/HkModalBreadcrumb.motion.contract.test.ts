@@ -203,6 +203,11 @@ describe("crumb list surface variant (HkListTransition)", () => {
     const move = rule(list, ".hk-list-surface-move");
     expect(move).toContain("transform");
     expect(move).toContain(EASE_OUT);
+    // Insurance: if a mis-classified ghost is ever stamped with the move
+    // class, its shorthand must not REPLACE the leave's opacity
+    // transition (a transform-only move would cancel the fade).
+    expect(move).toContain("opacity");
+    expect(move).toContain(EASE_IN);
   });
 
   it("shares the pose constants with HkModal itself", () => {

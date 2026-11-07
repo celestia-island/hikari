@@ -201,7 +201,16 @@
 }
 
 .hk-list-surface-move {
-  transition: transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+  /* opacity rides along on purpose: if a multi-row batch ever classifies
+     a leaving ghost as moved (its FLIP delta measured before the
+     correction pass lands), the stamped move transition would REPLACE
+     the leave's transition shorthand — a transform-only move cancels the
+     fade mid-flight and snaps the ghost invisible. Carrying the leave's
+     own opacity curve keeps the fade alive under that stamp; for true
+     moved rows the property goes 1→1 and is inert. */
+  transition:
+    opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .hk-list-none-enter-active,

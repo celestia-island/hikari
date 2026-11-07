@@ -664,33 +664,40 @@ export default defineComponent({
             shape the stack had when its last-but-one layer closed. The
             Teleport itself stays mounted even while `visible` is false —
             a leave can only play under a parent that survives it. */}
-        {/* No `mode`: a re-open inside the 150ms leave deliberately
-            crossfades the frozen strip with the fresh one (near-identical
-            chrome, continuous motion) instead of paying out-in's dead
-            150ms before the next window's strip appears — quick
+        {/* No `mode`: a reopen inside the leave window must mount the
+            successor IMMEDIATELY — Vue fast-forwards the frozen strip's
+            leave (its leaveCb fires during the successor's mount, so the
+            old nav detaches in that same patch; no painted overlap to
+            manage), and out-in would buy a dead 150ms of empty header
+            before the next window's strip appears. Quick
             open→close→open cycling is the common flow and must not lag. */}
         <Transition
           name="hk-modal-breadcrumb"
           appear
           onAfterLeave={() => {
-            // Only the LAST strip out withdraws the band: a reopen inside
-            // the leave window mounts a successor whose own resync has
-            // already re-published the band — nulling it here would blind
-            // the sheets until the next slow tick (2026-11-07 review).
+            // Withdraw only when no strip is visible. Under 3.5.40 a
+            // reopen inside the leave fast-forwards the old strip and
+            // this fires with `visible` already true — the successor's
+            // band must not be touched. The guard is belt-and-suspenders
+            // (mutation-verified inert today): its job is to keep this
+            // hook correct if a future Vue lets a late leave land after
+            // a successor mounted.
             if (!visible.value) publishBand(null);
           }}
         >
           {visible.value ? (
             <nav
-              // Function ref that ignores null: with no Transition mode,
-              // a reopen inside the leave window lets the FROZEN strip
-              // finish its leave AFTER the successor mounted — Vue's
-              // teardown would null a plain object ref at that moment and
-              // blind the live strip's geometry source (fold budget falls
-              // back to Infinity, top to the 43px estimate) until some
-              // later patch re-bound it (2026-11-07 review). A stale
-              // element is safe here: every consumer runs only while the
-              // strip is engaged, and the next mount overwrites.
+              // Function ref that ignores null: when a reopen inside the
+              // leave window fast-forwards the frozen strip, Vue's
+              // teardown nulls a plain object ref DURING the successor's
+              // mount patch — before the successor re-binds it — which
+              // would blind the live strip's geometry source for that
+              // tick (fold budget falls back to Infinity, top to the
+              // 43px estimate). Mutation-verified inert under 3.5.40's
+              // ordering today; kept so a future re-order cannot
+              // reintroduce the window. A stale element is safe here:
+              // every consumer runs only while the strip is engaged, and
+              // the next mount overwrites.
               ref={(el) => {
                 if (el) navRef.value = el as HTMLElement;
               }}

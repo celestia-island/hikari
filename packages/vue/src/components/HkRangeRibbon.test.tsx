@@ -862,6 +862,35 @@ describe("HkRangeRibbon reset", () => {
     expect(second.defaultPrevented).toBe(true);
   });
 
+  it("treats a full-domain window as nothing to reset (raw-records rest state)", async () => {
+    // A minimal-style host rests at the controlled FULL selection [0, 1]:
+    // the grips paint, but there is no narrower selection to come back to.
+    // Escape there must reach the host (the dialog closes), not "reset" the
+    // bar it already shows — before 2026-11-07 every press swallowed the key.
+    const host = mountHost([0, 1]);
+    const strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    const event = keydown(strip, "Escape");
+    await nextTick();
+    expect(host.windowChange, "full selection: nothing resets").not.toHaveBeenCalled();
+    expect(event.defaultPrevented, "a host dialog must still see Escape").toBe(false);
+
+    // The reset BUTTON agrees with Escape: nothing to reset at [0, 1].
+    expect(host.root.querySelector(".hk-range-ribbon-reset")).toBeNull();
+    // The grips stay (they are the selection itself, not a reset affordance).
+    expect(host.root.querySelector(".hk-range-ribbon-handle")).not.toBeNull();
+
+    // A real sub-domain still resets — and the chip is back for it.
+    await host.setWindow([0.3, 0.7]);
+    expect(host.root.querySelector(".hk-range-ribbon-reset")).not.toBeNull();
+    const second = keydown(host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!, "Escape");
+    await nextTick();
+    expect(host.windowChange).toHaveBeenLastCalledWith(null);
+    expect(second.defaultPrevented).toBe(true);
+    // Back at the full selection the chip is gone again.
+    await host.setWindow([0, 1]);
+    expect(host.root.querySelector(".hk-range-ribbon-reset")).toBeNull();
+  });
+
   it("cancels an in-flight brush with Escape and consumes the key", async () => {
     const host = mountHost(null);
     const { strip, x } = stubStrip(host.root);
@@ -1496,10 +1525,13 @@ describe("HkRangeRibbon stylesheet contract", () => {
   });
 
   // Wave (2026-11-06 raw-records five): MINIMAL MODE - the bare dual-handle
-  // bar. Contract: data-minimal on the root, strip present + windowed at
-  // the full domain, ZERO lane chrome (no lanes block, no lane rows, no
-  // overview minimap, no gutter probe), and the standard mode keeps its
-  // lane chrome + alignment probe.
+  // bar. Contract: data-minimal on the root, strip present, ZERO lane chrome
+  // (no lanes block, no lane rows, no overview minimap, no gutter probe),
+  // and the standard mode keeps its lane chrome + alignment probe. The
+  // uncontrolled default window is NULL here — the grips need a controlled
+  // non-null window (the chest raw-records adapter feeds [0, 1] for its
+  // "default = everything selected" reading); the aria readings below come
+  // from the strip's null-window fallbacks, not from a real window.
   it("minimal mode renders the bare dual-handle bar (no lane chrome)", () => {
     const root = mountRibbon({ minimal: true });
     expect(root.getAttribute("data-minimal")).toBe("true");
@@ -1507,8 +1539,9 @@ describe("HkRangeRibbon stylesheet contract", () => {
     expect(stripEl).not.toBeNull();
     // The strip carries the slider a11y (role/tabindex/label/valuenow).
     expect(stripEl.getAttribute("aria-label")).toBe("Observation range");
-    // Uncontrolled default window = the FULL domain: valuenow sits at 0
-    // (domain start) and the valuetext reads the whole range.
+    // No window ⇒ the strip's aria falls back to the full range ("0" /
+    // "0% – 100%"): a truthful reading for an unfiltered bar, even though
+    // no grips paint without a controlled window.
     expect(stripEl.getAttribute("aria-valuenow")).toBe("0");
     expect(stripEl.getAttribute("aria-valuetext")).toContain("0%");
     // The lanes BLOCK is skipped entirely (no lane rows at all).
@@ -1522,7 +1555,6 @@ describe("HkRangeRibbon stylesheet contract", () => {
     //  static scss assertion at the end of this file — happy-dom cannot
     //  resolve the nested attribute selector.)
     expect(root.querySelector(".hk-range-ribbon-overview-segment")).toBeNull();
-    // Uncontrolled default window = the FULL domain (edge to edge).
     // Standard consumers keep the lane chrome + the alignment probe.
     const std = mountRibbon({});
     expect(std.querySelector(".hk-range-ribbon-lane")).not.toBeNull();

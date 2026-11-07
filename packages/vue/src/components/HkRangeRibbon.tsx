@@ -264,9 +264,12 @@ export default defineComponent({
      *  range bar. No lane rows, no overview minimap, no label gutter; the
      *  strip spans the full width and its track uses muted-based tokens
      *  (the surface-based track read whitish inside dark phone modals).
-     *  The uncontrolled default window is already the FULL domain, so a
-     *  minimal bar starts pinned edge to edge. `segments` / `selectedId`
-     *  are IGNORED in this mode (no segment DOM to select from). */
+     *  The grips paint only for a NON-null window, so an uncontrolled
+     *  minimal bar starts as a bare track; a host that wants the "default =
+     *  everything selected" reading feeds the controlled window `[0, 1]`
+     *  (the chest raw-records adapter does exactly that).
+     *  `segments` / `selectedId` are IGNORED in this mode (no segment DOM to
+     *  select from). */
     minimal: { type: Boolean, default: false },
   },
   emits: {
@@ -350,9 +353,21 @@ export default defineComponent({
       return true;
     }
 
-    /** Returns true when a window actually existed (and was cleared), so the
-     *  caller can leave Escape alone when the host needs it. */
+    /** A window that covers the whole domain IS the unfiltered state — there
+     *  is nothing to reset back to (2026-11-07, the raw-records consumer: a
+     *  minimal bar paints its grips for a non-null window, so its rest state
+     *  is the FULL selection `[0, 1]`; without this check Escape "reset" it
+     *  every press, swallowed the key, and the hosting dialog could never
+     *  close while the bar held focus). */
+    function isFullDomain(win: WindowRange | null): boolean {
+      return win !== null && win[0] <= WINDOW_EPSILON && win[1] >= 1 - WINDOW_EPSILON;
+    }
+
+    /** Returns true when a window actually existed AND was narrower than the
+     *  full domain (and was cleared), so the caller can leave Escape alone
+     *  when the host needs it — a full-domain window has nothing to reset. */
     function resetWindow(): boolean {
+      if (isFullDomain(activeWindow.value)) return false;
       if (!commitIfChanged(null)) return false;
       // A reset that interrupts a drag (Escape mid-brush) must drop the
       // gesture too, or the next pointermove re-brushes from the stale
@@ -818,7 +833,10 @@ export default defineComponent({
                       focus; this sheet only pins the seat (position) and a
                       surface backing via its override vars. The glyph slots
                       as a lucide component (the house-normal integration:
-                      every in-tree HkIconButton slots its glyph). */}
+                      every in-tree HkIconButton slots its glyph). A
+                      full-domain window has nothing to reset, so the chip
+                      only renders for a REAL sub-domain selection. */}
+                  {win && !isFullDomain(win) && (
                   <HIconButton
                     class="hk-range-ribbon-reset"
                     size={24}
@@ -829,6 +847,7 @@ export default defineComponent({
                   >
                     {{ icon: () => <RotateCcw aria-hidden="true" /> }}
                   </HIconButton>
+                  )}
                 </>
               )}
             </div>

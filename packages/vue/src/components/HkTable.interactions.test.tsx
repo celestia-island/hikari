@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h } from "vue";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import * as sass from "sass";
 
 import HTable from "./HkTable";
 import { useToast } from "../runtime/useToast";
@@ -23,10 +25,11 @@ import { useToast } from "../runtime/useToast";
  *   row-action affordance)
  * - `Column.copyable: false` and the table-wide `copy-cells=false` opt
  *   out wholesale
- * - the `copy` cursor and the hover hint ride `[data-copy-cell]` — the
- *   default text cells, in a copyable column, whose value still renders
- *   text — never every cell, so the pointer describes what a background
- *   click really does. Slot cells' inner leaves still copy, so their
+ * - the click cursor (`pointer`; the copy SEMANTICS live in the `title`
+ *   hint) and the hover hint ride `[data-copy-cell]` — the default text
+ *   cells, in a copyable column, whose value still renders text — never
+ *   every cell, so the cursor describes what a background click really
+ *   does. Slot cells' inner leaves still copy, so their
  *   plain arrow is a deliberate under-promise (2026-11-07 user
  *   direction)
  * - `manageable` renders the trailing ⋯ column (HkRowActions) and
@@ -76,6 +79,34 @@ const COLS = [
   { key: "name", title: "Name" },
   { key: "endpoint", title: "Endpoint" },
 ];
+
+// The compiled sheet, injected into the document so `getComputedStyle` sees
+// the REAL cascade. Selector-text assertions cannot catch a rule that reaches
+// an unmarked cell through inheritance, an element selector (`td`) or a media
+// block — the cascade can.
+//
+// `style: "expanded"` is load-bearing: the compressed writer emits
+// `@media(min-width:600px)` (no space after `@media`) and happy-dom then
+// DROPS the whole block (cssRules stays empty), which would make a
+// media-wrapped widening rule invisible to this suite.
+const HERE = dirname(fileURLToPath(import.meta.url));
+const SRC = resolve(HERE, "..");
+const SHEET_STYLE = "expanded" as const;
+const SHEET_CSS = sass.compile(resolve(HERE, "HkTable.scss"), {
+  loadPaths: [SRC, join(SRC, "components"), join(SRC, "styles"), join(SRC, "styles", "theme")],
+  style: SHEET_STYLE,
+  silenceDeprecations: ["import", "global-builtin", "legacy-js-api"],
+}).css;
+// The parser probe below is compiled with the SAME style on purpose: if a
+// future edit flips SHEET_STYLE back to "compressed", the probe loses its
+// media block too and this suite goes red. That keeps the "fixture must stay
+// `expanded`" premise under its own tripwire instead of silently disarming
+// the cascade assertion.
+const PROBE_CSS = sass.compileString("@media (min-width: 600px) { .hk-probe { color: red } }", {
+  style: SHEET_STYLE,
+}).css;
+// happy-dom reports an unset cursor as "" (a browser reports "auto").
+const isAuto = (value: string): boolean => value === "" || value === "auto";
 
 async function settle() {
   await Promise.resolve();
@@ -414,5 +445,71 @@ describe("HkTable interaction stylesheet", () => {
     const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));
     expect(block).toContain(".hk-table-manage-cell");
     expect(block.indexOf("cursor: default")).toBeGreaterThan(-1);
+  });
+});
+
+describe("HkTable click-cursor cascade", () => {
+  let sheet: HTMLStyleElement;
+  beforeEach(() => {
+    sheet = document.createElement("style");
+    sheet.textContent = SHEET_CSS;
+    document.head.appendChild(sheet);
+  });
+  afterEach(() => {
+    sheet.remove();
+  });
+
+  it("parses the injected sheet (a blind sheet would make this suite vacuous)", () => {
+    expect(sheet.sheet?.cssRules?.length ?? 0).toBeGreaterThan(0);
+    // Probe the PARSER, not this sheet: the next test can only catch a
+    // media-wrapped widening rule if a media block survives parsing. The
+    // probe CSS is synthetic (so unrelated sheet edits, e.g. dropping the
+    // reduced-motion block, can never turn this suite red) but compiled with
+    // the SAME style as the fixture (so a fixture-style regression does).
+    const probe = document.createElement("style");
+    probe.textContent = PROBE_CSS;
+    document.head.appendChild(probe);
+    try {
+      const rules = [...(probe.sheet?.cssRules ?? [])];
+      expect(rules.some((rule) => typeof (rule as { media?: unknown }).media !== "undefined")).toBe(
+        true,
+      );
+    } finally {
+      probe.remove();
+    }
+  });
+
+  it("reaches the marked cell only — computed cascade, not selector text", () => {
+    const c = mount(
+      h(
+        HTable,
+        {
+          columns: [...COLS, { key: "secret", title: "Secret", copyable: false }],
+          rows: [{ name: "alpha", endpoint: "https://x.example", secret: "nope-token" }],
+          draggable: true,
+          selectable: true,
+          manageable: true,
+        },
+        { "cell-endpoint": () => "pure-text-slot" },
+      ),
+    );
+    // drag grip, selection, name, endpoint (slot), secret (opted out), row actions
+    const tds = Array.from(c.querySelectorAll<HTMLElement>("tbody td"));
+    expect(tds).toHaveLength(6);
+    const cursor = (index: number): string => getComputedStyle(tds[index]!).cursor;
+    expect(cursor(2)).toBe("pointer");
+    for (const index of [0, 1, 3, 4]) {
+      expect(isAuto(cursor(index))).toBe(true);
+    }
+    expect(cursor(5)).toBe("default");
+  });
+
+  it("an opted-out table hands every cell the ordinary cursor back", () => {
+    const c = mount(
+      h(HTable, { columns: COLS, rows: [{ name: "alpha", endpoint: "x" }], copyCells: false }),
+    );
+    for (const td of Array.from(c.querySelectorAll<HTMLElement>("tbody td"))) {
+      expect(isAuto(getComputedStyle(td).cursor)).toBe(true);
+    }
   });
 });

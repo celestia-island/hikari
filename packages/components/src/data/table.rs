@@ -82,7 +82,8 @@
 //     runs the clipboard-with-toast runtime; with no clipboard handle in this
 //     wave the honest default is the sheet's opt-out branch (plain selectable
 //     text). Setting it true applies Vue's affordance (no-select cells + the
-//     `copy` cursor) — the host owns the click handling. The cursor rides the
+//     `pointer` cursor; the COPY semantics live in the `title` hint) — the
+//     host owns the click handling. The cursor rides the
 //     `data-copy-cell` marker, emitted for exactly the cells whose background
 //     click copies (copyable column, non-empty text), so the pointer and the
 //     `title` hint advertise the same predicate Vue uses (2026-11-07).

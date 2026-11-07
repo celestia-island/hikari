@@ -139,7 +139,7 @@ describe("selection policy sheet", () => {
     // 2026-10-18 contract: copy-cells (default) denies drag selection on
     // every body cell; the opt-out now needs an explicit mirror — absence
     // of a deny no longer means selectable once the root denies. The
-    // `copy` CURSOR is narrower than the selection deny since 2026-11-07
+    // click CURSOR is narrower than the selection deny since 2026-11-07
     // (marker-scoped, asserted by the next test): the deny still covers
     // the whole cell body, only the pointer narrowed.
     const css = compile("../components/HkTable.scss");
@@ -149,45 +149,62 @@ describe("selection policy sheet", () => {
     );
   });
 
-  it("hands the copy cursor only to the marked cells, never to every cell", () => {
-    // 2026-11-07 user direction: `.hk-table-cell { cursor: copy }` on the
-    // whole body promised a copy on slot/control/empty cells whose
-    // background click copies nothing. Asserted on the COMPILED sheet so
+  it("hands the clickable-text pointer only to the marked cells, never to every cell", () => {
+    // 2026-11-07 user direction: the copy affordance used to ride every
+    // `.hk-table-cell` (a copy cursor on slot/control/empty cells whose
+    // background click copies nothing). It now rides `[data-copy-cell]`
+    // only, and the cursor is the generic `pointer` — the OS paints CSS
+    // `copy` with the legacy arrow+plus bitmap, so the copy semantics
+    // live in the `title` hint instead. Asserted on the COMPILED sheet so
     // neither a commented-out rule nor a selector list that re-widens the
-    // rule (`.hk-table-cell, .hk-table-cell[data-copy-cell]`) can pass.
+    // rule can pass.
     const css = compile("../components/HkTable.scss");
-    const copyRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((match) =>
-      /cursor:\s*copy/.test(match[2]!),
+    // 1) The legacy `copy` glyph must not come back anywhere — not as the
+    //    bare keyword, not as a `url(...)` fallback list, not in any case.
+    //    Only the KEYWORD counts: `url(copy-icon.cur)` / `var(--copy-cursor)`
+    //    merely spell "copy" without selecting the legacy glyph.
+    const legacyCopy = [...css.matchAll(/cursor\s*:([^;}]*)/gi)].filter((match) => {
+      const value = match[1]!.replace(/url\([^)]*\)|var\([^)]*\)/gi, " ");
+      return /\bcopy\b/i.test(value);
+    });
+    expect(legacyCopy).toHaveLength(0);
+    // 2) The marked cell IS the clickable-text surface.
+    expect(css).toMatch(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*pointer/,
     );
-    expect(copyRules.length).toBeGreaterThan(0);
-    for (const rule of copyRules) {
+    // 3) No rule may hand an UNMARKED table cell the copy layer's pointer
+    //    (that is exactly the re-widening this contract removed).
+    expect(css).not.toMatch(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\{[^}]*?cursor:\s*pointer/,
+    );
+    // 4) The marker must sit on the CELL compound, not on an ancestor:
+    //    `.hk-table[data-copy-cell] .hk-table-cell` keeps the token in the
+    //    selector yet can never match a real cell.
+    for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!/cursor\s*:[^;}]*\bpointer\b/i.test(rule[2]!)) continue;
       for (const selector of rule[1]!.split(",")) {
-        // Tolerate the empty-value spelling Vue emits
-        // (`[data-copy-cell=""]`) but neither a prefix token nor a
-        // selector carrying a different value.
-        expect(selector).toMatch(/\[data-copy-cell(?:="")?\]/);
-        // The marker must sit on the CELL compound: moving it to an
-        // ancestor (`.hk-table[data-copy-cell] .hk-table-cell`) keeps the
-        // token in the selector yet can never match a real cell.
         const lastCompound = selector.trim().split(/\s+/).pop() ?? "";
-        expect(lastCompound).toMatch(/\.hk-table-cell/);
+        // Only the CELL compound itself is constrained: a legitimate
+        // descendant rule (`.hk-table-cell a { cursor: pointer }`) is a
+        // control inside the cell and keeps its own cursor.
+        if (!lastCompound.startsWith(".hk-table-cell")) continue;
         expect(lastCompound).toMatch(/\[data-copy-cell(?:="")?\]/);
       }
     }
-    // The marked rule must also sit under the table-level opt-out gate:
-    // moving it into a dead block (`.hk-table:not([data-copy-cells])`)
-    // would keep a marker-bearing selector while the cursor never applies.
-    expect(css).toMatch(
-      /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*copy/,
-    );
-    // The control-track override repeats `.hk-table-cell` so its
-    // specificity TIES the marker rule above and, declared after it, wins
-    // the tie — the defense-in-depth promise needs that ordering.
+    // 5) The control-track override repeats `.hk-table-cell` so its
+    //    specificity TIES the marker rule above and, declared after it,
+    //    wins the tie — the defense-in-depth promise needs that ordering.
     expect(css).toMatch(
       /\.hk-table\[data-copy-cells\] \.hk-table-cell\.hk-table-manage-cell\{[^}]*?cursor:\s*default/,
     );
-    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
-      css.indexOf("[data-copy-cell]"),
+    // Anchor on the rule that DECLARES the cursor (not merely on the first
+    // selector that mentions the marker — a decoy rule carrying the selector
+    // without a cursor would neutralize the order pin).
+    const markedRule = css.match(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*pointer/,
     );
-  });
+    expect(markedRule).not.toBeNull();
+    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
+      css.indexOf(markedRule![0]),
+    );  });
 });

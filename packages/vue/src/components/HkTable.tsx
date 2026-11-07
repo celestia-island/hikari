@@ -1076,7 +1076,7 @@ export default defineComponent({
             const isSlotCell = Boolean(slots[`cell-${col.key}`]);
             const value = row[col.key];
             // ONE predicate behind the hover hint AND the
-            // `copy` cursor (`data-copy-cell`): a DEFAULT text
+            // copy-affordance cursor (`pointer`, `data-copy-cell`): a DEFAULT text
             // cell advertises the copy affordance only when its
             // background click really copies — the td is a text
             // leaf that still RENDERS text (see `renderedText`).
@@ -1085,7 +1085,7 @@ export default defineComponent({
             // copy) and `copyable: false` columns copy nothing,
             // so both keep the plain arrow — a deliberate
             // under-promise, never an over-promise (2026-11-07
-            // user direction: `cursor: copy` on every cell
+            // user direction: a copy affordance on every cell
             // promised more than the handler does; badges carry
             // their own pointer/tooltip). A slot that renders
             // BARE text is the one case where the td surface

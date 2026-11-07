@@ -11,6 +11,7 @@ import { createApp, defineComponent, h, inject, nextTick, onMounted, onUnmounted
 
 import HkScrollContainer from "./HkScrollContainer";
 import { HkAdminTablePage } from "./HkAdminTablePage";
+import HTable from "./HkTable";
 import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressRegistrar } from "./HkScrollProgress";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -217,6 +218,24 @@ describe("HkScrollProgress", () => {
     const pill = scroller.pill()!;
     expect(pill.dataset.state).toBe("active");
     expect(pill.textContent).toBe("11 / 340");
+  });
+
+  it("counts only a sectioned HkTable's data rows, not its bands", async () => {
+    // The band is a `<tr>` in the section body but not a row. The table's
+    // handle `getRows` wins over the container's `tbody tr` selector, so
+    // the pill reports 2 sections x 2 rows = 4, not 6.
+    const sections = [
+      { key: "panel-a", label: "Panel A", rows: [{ name: "a0" }, { name: "a1" }] },
+      { key: "panel-b", label: "Panel B", rows: [{ name: "b0" }, { name: "b1" }] },
+    ];
+    const scroller = mountScroller(() =>
+      h(HTable, { columns: [{ key: "name", title: "Name" }], sections }),
+    );
+    stubRootRect(scroller.container, ".hk-table-host", -100, 1900);
+    stubRows(scroller.container, 6, 0);
+    scroller.refresh();
+    await nextTick();
+    expect(scroller.pill()!.textContent).toBe("1 / 4");
   });
 
   it("falls back to the DOM row count when the total is absent", async () => {

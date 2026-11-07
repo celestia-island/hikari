@@ -105,6 +105,18 @@
   background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
 }
 
+/* A section's band is the first child of its body, so the base zebra rule
+   would shade each section's FIRST data row (child 2). Restart the phase
+   after the band: even data children are unshaded, odd ones carry the
+   stripe — the same first-row-unshaded phase an unsectioned body has. */
+.hk-table-striped .hk-table-section-body .hk-table-row:nth-child(even) {
+  background: none;
+}
+
+.hk-table-striped .hk-table-section-body .hk-table-row:nth-child(odd) {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
+}
+
 .hk-table-bordered {
   border: 1px solid var(--hi-color-border, rgba(100,100,100,0.1));
   border-radius: var(--radius-md, 8px);
@@ -168,22 +180,25 @@
    rowgroup header, not a data row: it never carries `.hk-table-row`, so
    the copy layer (which marks and cursor-styles cells via
    `[data-copy-cell]`), the hover paint, the striped rule, the drag strip
-   and the selection/⋯ tracks all ignore it by construction.
+   and the selection/⋯ tracks all ignore it by construction. The band cell
+   carries no `data-copy-cell`, so it needs no copy-cursor override either.
 
    The cell itself is TYPE-NEUTRAL for consumer markup: the `section` slot
    carries arbitrary content (badges, panel names, status chips), so only
    the track is styled here (padding / hairline / background / start
-   alignment / no copy cursor). Sizing is delivered by the consumer's own
-   classes; the plain `label` fallback gets its own span below. */
+   alignment). `font-weight: inherit` neutralizes the UA `th { font-weight:
+   bold }`; nothing here sets `white-space` (long panel names may wrap) or
+   `cursor` (selectable band text keeps its I-beam). Sizing is delivered by
+   the consumer's own classes; the plain `label` fallback gets its own span
+   below. The hk-table-sm/lg ladder steps ONLY the band's padding —
+   typography deliberately does not scale with the table size, because the
+   consumer's slot content owns its type. */
 .hk-table-section-cell {
   padding: var(--space-8, 8px) var(--space-12, 12px);
   border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
   text-align: start;
   background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
-  white-space: nowrap;
-  /* A band is a heading, not a copy target: keep the ordinary arrow even
-     where a consumer's own sheet would widen the copy cursor. */
-  cursor: default;
+  font-weight: inherit;
 }
 
 /* The default `label` branch only (the `section` slot bypasses this span

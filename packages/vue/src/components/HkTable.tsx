@@ -29,11 +29,15 @@ interface Column {
   copyable?: boolean;
 }
 
-/** One group in a grouped/sectioned table (`sections`). The section owns
- *  its rows: sorting, selection and drag-to-reorder all run WITHIN it,
- *  and its band is rendered inside the table body — the single column
- *  header stays at the top, exactly once. */
+/** One group in a grouped/sectioned table (`sections`). Sorting runs
+ *  WITHIN a section; selection spans the whole table (the header checkbox
+ *  selects every section's rows); drag-to-reorder is clamped to the
+ *  pressed row's section. Its band renders inside the table body — the
+ *  single column header stays at the top, exactly once. */
 export interface HkTableSection {
+  /** Stable UNIQUE identity for the section: it is the Vue key of the
+   *  section body and the drag clamp resolves the pressed row's section by
+   *  it. Duplicate keys collapse in Vue's keyed diff. */
   key: string;
   /** Default band text; the `section` slot overrides the whole band content. */
   label?: string;
@@ -101,11 +105,12 @@ export default defineComponent({
     /** Grouped mode: when provided, `rows` is unused and the body renders
      *  ONE `<tbody class="hk-table-section-body">` per section, each led by
      *  a band row (`<th scope="rowgroup">`, `colspan` = total columns).
-     *  The column header still renders exactly once at the top. Sorting,
-     *  selection and the drag strip all run within each section; a row can
-     *  never be dragged into another section. An empty section keeps its
-     *  band (callers show unreachable/empty panels), and when every section
-     *  is empty the trailing empty row still renders. */
+     *  The column header still renders exactly once at the top. Sorting
+     *  runs within each section; selection spans the whole table; the drag
+     *  strip is clamped to the pressed row's section. `section.key` must be
+     *  UNIQUE (Vue keyed diff + drag clamp identity). An empty section
+     *  keeps its band (callers show unreachable/empty panels), and when
+     *  every section is empty the trailing empty row still renders. */
     sections: { type: Array as PropType<HkTableSection[]>, default: undefined },
     rowKey: { type: String, default: undefined },
     caption: { type: String, default: undefined },
@@ -271,6 +276,17 @@ export default defineComponent({
     const progressHandle: HkScrollProgressHandle = {
       getRoot: () => wrapperHostRef.value ?? null,
       getTotal: () => props.total,
+      // Sectioned bodies lead with a band `<tr>` that is not a data row:
+      // hand the pill the data rows only. Unsectioned returns undefined so
+      // the container keeps its `scrollProgressSelector` path unchanged.
+      getRows: () =>
+        props.sections
+          ? Array.from(
+              wrapperHostRef.value?.querySelectorAll<HTMLElement>(
+                "tbody.hk-table-section-body > .hk-table-row",
+              ) ?? [],
+            )
+          : undefined,
     };
     onMounted(() => {
       progressRegistrar?.register(progressHandle);
@@ -821,6 +837,12 @@ export default defineComponent({
       sectionKey: string | null,
     ): void {
       if (reorderInert.value) return;
+      // A live press already owns the engine. `rowDrag.start` would no-op,
+      // but arming the strip for this second pointer would point the
+      // in-flight drag at another section — and its next resolution would
+      // abandon the gesture. Bail before touching the key.
+      if (rowDrag.pressed.value) return;
+      const previousKey = dragSectionKey.value;
       // Arm the strip's section BEFORE the engine reads `items()`: the
       // press's own row is looked up in the live (clamped) strip, and the
       // render-time index is only a fallback for a handle that somehow
@@ -828,13 +850,19 @@ export default defineComponent({
       dragSectionKey.value = props.sections ? sectionKey : null;
       const row = (e.currentTarget as HTMLElement | null)?.closest("tr");
       const strip = row ? liveRowEls().indexOf(row as HTMLElement) : index;
-      if (strip >= 0) {
-        // Where the finger grabbed the row — the ghost hangs the strip's
-        // lift off this point so the grab stays under the pointer.
-        pressClientY = e.clientY;
-        rowDrag.start(e, strip);
-      } else {
-        dragSectionKey.value = null;
+      if (strip < 0) {
+        dragSectionKey.value = previousKey;
+        return;
+      }
+      // Where the finger grabbed the row — the ghost hangs the strip's
+      // lift off this point so the grab stays under the pointer.
+      pressClientY = e.clientY;
+      rowDrag.start(e, strip);
+      if (!rowDrag.pressed.value) {
+        // The engine refused the press (non-primary button, prevented
+        // default, interactive target): never leave the strip armed for a
+        // gesture that does not exist.
+        dragSectionKey.value = previousKey;
       }
     }
 
@@ -956,13 +984,21 @@ export default defineComponent({
       const shiftPx = rowShift(
         sectionKey !== null && sectionKey !== arrangementSectionKey.value ? -1 : localIndex,
       );
+      // `dragFrom` is a STRIP index and restarts at 0 in every section:
+      // matching it against `localIndex` alone would dim/tint row 0 of
+      // EVERY other section during a section-A drag. Require the row's own
+      // section too.
+      const rowDragging =
+        rowDrag.dragging.value &&
+        rowDrag.dragFrom.value === localIndex &&
+        (sectionKey === null || sectionKey === dragSectionKey.value);
       return (
         <tr
           key={rowKey}
           class="hk-table-row"
           style={shiftPx ? { "--hk-drag-shift": `${shiftPx}px` } : undefined}
           data-shift={shiftPx ? "" : undefined}
-          data-dragging={rowDrag.dragging.value && rowDrag.dragFrom.value === localIndex ? "" : undefined}
+          data-dragging={rowDragging ? "" : undefined}
         >
           {props.draggable && (
             <td class="hk-table-cell hk-table-drag-cell">

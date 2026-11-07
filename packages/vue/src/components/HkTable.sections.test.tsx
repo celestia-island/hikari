@@ -1,10 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, provide } from "vue";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import HTable, { type HkTableSection } from "./HkTable";
+import {
+  HK_SCROLL_PROGRESS_REGISTRAR,
+  type HkScrollProgressHandle,
+  type HkScrollProgressRegistrar,
+} from "./HkScrollProgress";
 import { useToast } from "../runtime/useToast";
 
 /**
@@ -412,11 +417,11 @@ function mountDraggableSections(): SectionsTable {
   };
 }
 
-function pointer(type: string, y: number): PointerEvent {
+function pointer(type: string, y: number, pointerId = 7): PointerEvent {
   return new PointerEvent(type, {
     bubbles: true,
     cancelable: true,
-    pointerId: 7,
+    pointerId,
     button: 0,
     // A move with no button held is a released pointer the page never saw
     // the release of — the engine ignores it, so the gesture carries the
@@ -451,6 +456,41 @@ describe("HkTable section-clamped reorder", () => {
     window.dispatchEvent(pointer("pointerup", 70));
     await nextTick();
     expect(t.emitted).toEqual([[0, 1]]);
+  });
+
+  it("marks exactly one row as dragging while a section drag is live", async () => {
+    const t = mountDraggableSections();
+    t.handles[0]!.dispatchEvent(pointer("pointerdown", 20));
+    window.dispatchEvent(pointer("pointermove", 26));
+    await nextTick();
+
+    // `dragFrom` is strip-local and restarts at 0 in every section: without
+    // the pressed-section guard, row 0 of BOTH sections carries the dim /
+    // tint paint.
+    const dragging = Array.from(
+      t.container.querySelectorAll<HTMLElement>(".hk-table-row[data-dragging]"),
+    );
+    expect(dragging).toHaveLength(1);
+    expect(dragging[0]).toBe(t.bodies[0]!.querySelectorAll(".hk-table-row")[0]);
+
+    // Press release (no movement past the origin) clears the lifecycle.
+    window.dispatchEvent(pointer("pointerup", 26));
+    await nextTick();
+    expect(t.container.querySelectorAll(".hk-table-row[data-dragging]")).toHaveLength(0);
+  });
+
+  it("ignores a second pointerdown while a press is live", async () => {
+    const t = mountDraggableSections();
+    // First pointer presses section A's first grip but has not moved yet.
+    t.handles[0]!.dispatchEvent(pointer("pointerdown", 20));
+    // A second pointer (id 8) lands on section B's grip: it must not re-arm
+    // the strip, or the in-flight A drag is abandoned on its next move.
+    t.handles[2]!.dispatchEvent(pointer("pointerdown", 220, 8));
+    window.dispatchEvent(pointer("pointermove", 70));
+    window.dispatchEvent(pointer("pointerup", 70));
+    await nextTick();
+    expect(t.emitted).toEqual([[0, 1]]);
+    expect(t.container.querySelectorAll(".hk-table-row[data-dragging]")).toHaveLength(0);
   });
 
   it("emits the pressed section's flat offset (section B: 2 → 3)", async () => {
@@ -506,32 +546,119 @@ describe("HkTable section-clamped reorder", () => {
   });
 });
 
+describe("HkTable scroll-progress registration", () => {
+  it("hands the pill data rows only in sectioned mode", () => {
+    const handles: HkScrollProgressHandle[] = [];
+    const registrar: HkScrollProgressRegistrar = {
+      register: (handle) => handles.push(handle),
+      unregister: () => {},
+    };
+    const Provider = defineComponent({
+      setup() {
+        provide(HK_SCROLL_PROGRESS_REGISTRAR, registrar);
+        return () => h(HTable, { columns: COLS, sections: SECTIONS });
+      },
+    });
+    mount(h(Provider));
+    expect(handles).toHaveLength(1);
+
+    const rows = handles[0]!.getRows?.() ?? [];
+    expect(rows).toHaveLength(4);
+    expect(rows.every((row) => row.classList.contains("hk-table-row"))).toBe(true);
+    expect(rows.some((row) => row.classList.contains("hk-table-section-row"))).toBe(false);
+  });
+
+  it("keeps the container selector path for unsectioned tables", () => {
+    const handles: HkScrollProgressHandle[] = [];
+    const registrar: HkScrollProgressRegistrar = {
+      register: (handle) => handles.push(handle),
+      unregister: () => {},
+    };
+    const Provider = defineComponent({
+      setup() {
+        provide(HK_SCROLL_PROGRESS_REGISTRAR, registrar);
+        return () => h(HTable, { columns: COLS, rows: SECTIONS[0]!.rows });
+      },
+    });
+    mount(h(Provider));
+    expect(handles).toHaveLength(1);
+    // Undefined = the container keeps its `scrollProgressSelector` path
+    // byte-for-byte; a sectioned table hands over its own row elements.
+    expect(handles[0]!.getRows?.()).toBeUndefined();
+  });
+});
+
 describe("HkTable section band stylesheet", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const scss = readFileSync(join(here, "HkTable.scss"), "utf-8");
+  const bandStart = scss.indexOf("/* ── Section bands");
+  const bandEnd = scss.indexOf("/* ── Drag-to-reorder");
+  const bandBlock = scss.slice(bandStart, bandEnd);
+  // Comments may NAME a property the guard forbids ("no white-space …");
+  // only declarations are contract.
+  const bandCss = bandBlock.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  function ruleBody(selector: string): string {
+    const at = bandCss.indexOf(selector);
+    expect(at, `missing rule ${selector}`).toBeGreaterThan(-1);
+    return bandCss.slice(bandCss.indexOf("{", at) + 1, bandCss.indexOf("}", at));
+  }
 
   it("styles the band track and leaves consumer slot typography alone", () => {
-    const start = scss.indexOf(".hk-table-section-cell");
-    const end = scss.indexOf(".hk-table-section-label");
-    expect(start).toBeGreaterThan(-1);
-    expect(end).toBeGreaterThan(start);
-    const block = scss.slice(start, end);
+    expect(bandStart).toBeGreaterThan(-1);
+    expect(bandEnd).toBeGreaterThan(bandStart);
 
-    expect(block).toContain("text-align: start");
-    expect(block).toContain("border-bottom");
-    expect(block).toContain("background:");
-    expect(block).toContain("cursor: default");
-    // The `section` slot carries arbitrary consumer markup (proper nouns,
-    // badges, status chips): the cell must not transform or resize it.
-    expect(block).not.toContain("text-transform");
-    expect(block).not.toContain("letter-spacing");
-    expect(block).not.toContain("font-size");
-    expect(block).not.toContain("font-weight");
+    const cell = ruleBody(".hk-table-section-cell");
+    expect(cell).toContain("text-align: start");
+    expect(cell).toContain("border-bottom");
+    expect(cell).toContain("background:");
+    // The UA's `th { font-weight: bold }` must not leak into slot content.
+    expect(cell).toContain("font-weight: inherit");
+    expect(cell).not.toMatch(/font-weight:\s*(?:bold|[1-9]\d{2})/);
+    expect(cell).not.toContain("font-size:");
+    // A long panel name / chip row may wrap; selectable text keeps its
+    // I-beam (the band never carries `data-copy-cell`).
+    expect(cell).not.toContain("white-space");
+    expect(cell).not.toContain("cursor");
+    expect(cell).not.toContain("text-transform");
+    expect(cell).not.toContain("letter-spacing");
+
+    // The whole band block must not reintroduce those on any rule (sm/lg,
+    // bordered, label), while the default-label span owns its own size.
+    expect(bandCss).not.toContain("text-transform");
+    expect(bandCss).not.toContain("letter-spacing");
+    expect(bandCss).not.toContain("white-space");
+    expect(bandCss).not.toContain("cursor");
+    const label = ruleBody(".hk-table-section-label");
+    expect(label).toContain("font-size: var(--text-sm");
+    expect(label).toContain("font-weight: 500");
   });
 
-  it("walks the band padding down the sm/md/lg ladder", () => {
-    expect(scss).toContain(".hk-table-sm .hk-table-section-cell");
-    expect(scss).toContain(".hk-table-lg .hk-table-section-cell");
-    expect(scss).toContain("var(--space-16, 16px) var(--space-24, 24px)");
+  it("walks the band padding down the sm/md/lg ladder without scaling type", () => {
+    expect(bandCss).toContain(".hk-table-sm .hk-table-section-cell");
+    expect(bandCss).toContain(".hk-table-lg .hk-table-section-cell");
+    expect(bandCss).toContain("var(--space-16, 16px) var(--space-24, 24px)");
+    for (const selector of [
+      ".hk-table-sm .hk-table-section-cell",
+      ".hk-table-lg .hk-table-section-cell",
+    ]) {
+      const body = ruleBody(selector);
+      expect(body.trim()).toMatch(/^padding:/);
+      expect(body).not.toContain("font-size");
+      expect(body).not.toContain("font-weight");
+    }
+  });
+
+  it("restarts the striped phase after each section's band", () => {
+    const compact = scss.replace(/\s+/g, " ");
+    // The band is child 1, so the base even rule would shade every
+    // section's FIRST data row. The scoped pair restores the unsectioned
+    // first-row-unshaded phase.
+    expect(compact).toContain(
+      ".hk-table-striped .hk-table-section-body .hk-table-row:nth-child(even) { background: none; }",
+    );
+    expect(compact).toContain(
+      ".hk-table-striped .hk-table-section-body .hk-table-row:nth-child(odd) { background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03)); }",
+    );
   });
 });

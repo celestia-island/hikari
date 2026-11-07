@@ -13,7 +13,11 @@ import HkScrollContainer from "./HkScrollContainer";
 import { HkAdminTablePage } from "./HkAdminTablePage";
 import HTable from "./HkTable";
 import { HkCardList, HkListRow } from "./HkCardList";
-import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressRegistrar } from "./HkScrollProgress";
+import {
+  HK_SCROLL_PROGRESS_REGISTRAR,
+  type HkScrollProgressHandle,
+  type HkScrollProgressRegistrar,
+} from "./HkScrollProgress";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 const rects: Array<ReturnType<typeof vi.spyOn>> = [];
@@ -529,6 +533,49 @@ describe("HkCardList scroll-progress registration", () => {
     mounts[0].app.unmount();
     expect(unregistered.length).toBe(1);
     expect(unregistered[0]).toBe(registered[0]);
+  });
+
+  it("keeps the handle honest across the empty-slot lifecycle (rows→empty→rows)", async () => {
+    // The list element unmounts when the empty slot renders: the handle
+    // must read a NULL root (the pill's hidden precondition — never a
+    // stale detached element), and a re-render must recover a fresh
+    // connected list under the SAME handle.
+    const registered: Array<HkScrollProgressHandle> = [];
+    const registrar: HkScrollProgressRegistrar = {
+      register: (handle) => registered.push(handle),
+      unregister: () => {},
+    };
+    const hasRows = ref(true);
+    const Provider = defineComponent({
+      setup() {
+        provide(HK_SCROLL_PROGRESS_REGISTRAR, registrar);
+        return () =>
+          h(HkCardList, { total: 9 }, {
+            default: () => (hasRows.value ? [h(HkListRow, { key: "a", title: "a" })] : []),
+            empty: () => h("div", {}, "empty"),
+          });
+      },
+    });
+    mountTree(h(Provider));
+    const handle = registered[0]!;
+    expect(handle.getRoot()).not.toBeNull();
+    expect(handle.getRows!()).toHaveLength(1);
+
+    // Rows → empty: the ref clears with the element (no stale root).
+    hasRows.value = false;
+    await nextTick();
+    expect(handle.getRoot()).toBeNull();
+    expect(handle.getRows!()).toHaveLength(0);
+    expect(handle.getTotal()).toBe(9); // the prop stays live
+
+    // Empty → rows: the same handle recovers a fresh connected list.
+    hasRows.value = true;
+    await nextTick();
+    const root = handle.getRoot()!;
+    expect(root).not.toBeNull();
+    expect(root.isConnected).toBe(true);
+    expect(root.classList.contains("hk-card-list")).toBe(true);
+    expect(handle.getRows!()).toHaveLength(1);
   });
 
   it("renders its rows into the shell viewport's pill denominator end-to-end", async () => {

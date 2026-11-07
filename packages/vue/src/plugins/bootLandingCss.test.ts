@@ -27,6 +27,13 @@ import { BOOT_LANDING_CSS } from "./bootLandingCss.mjs";
  * "reuse the component" a mechanical property instead of a promise (edit the
  * component sheet and the panel follows through one regeneration).
  *
+ * Scope note (2026-11-07 mutation round): the entry @uses the VENDORED
+ * `styles/theme/scale.scss`, not the canonical `src/scale.scss` — drifting
+ * the canonical copy alone turns fontStacks.contract.test.ts red (three
+ * arms) but is invisible here. Token edits: change src/scale.scss, re-copy
+ * to the vendored path, regenerate this artifact — all three guards then
+ * see the same bytes.
+ *
  * Regenerate with (from packages/vue): pnpm run gen:boot-landing-css
  */
 

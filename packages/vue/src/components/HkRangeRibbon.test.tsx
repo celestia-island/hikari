@@ -862,6 +862,35 @@ describe("HkRangeRibbon reset", () => {
     expect(second.defaultPrevented).toBe(true);
   });
 
+  it("treats a full-domain window as nothing to reset (raw-records rest state)", async () => {
+    // A minimal-style host rests at the controlled FULL selection [0, 1]:
+    // the grips paint, but there is no narrower selection to come back to.
+    // Escape there must reach the host (the dialog closes), not "reset" the
+    // bar it already shows — before 2026-11-07 every press swallowed the key.
+    const host = mountHost([0, 1]);
+    const strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    const event = keydown(strip, "Escape");
+    await nextTick();
+    expect(host.windowChange, "full selection: nothing resets").not.toHaveBeenCalled();
+    expect(event.defaultPrevented, "a host dialog must still see Escape").toBe(false);
+
+    // The reset BUTTON agrees with Escape: nothing to reset at [0, 1].
+    expect(host.root.querySelector(".hk-range-ribbon-reset")).toBeNull();
+    // The grips stay (they are the selection itself, not a reset affordance).
+    expect(host.root.querySelector(".hk-range-ribbon-handle")).not.toBeNull();
+
+    // A real sub-domain still resets — and the chip is back for it.
+    await host.setWindow([0.3, 0.7]);
+    expect(host.root.querySelector(".hk-range-ribbon-reset")).not.toBeNull();
+    const second = keydown(host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!, "Escape");
+    await nextTick();
+    expect(host.windowChange).toHaveBeenLastCalledWith(null);
+    expect(second.defaultPrevented).toBe(true);
+    // Back at the full selection the chip is gone again.
+    await host.setWindow([0, 1]);
+    expect(host.root.querySelector(".hk-range-ribbon-reset")).toBeNull();
+  });
+
   it("cancels an in-flight brush with Escape and consumes the key", async () => {
     const host = mountHost(null);
     const { strip, x } = stubStrip(host.root);

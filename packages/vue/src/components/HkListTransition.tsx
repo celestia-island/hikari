@@ -130,8 +130,9 @@ export default defineComponent({
       // ghost ΔW/2 away from where the user last saw it (2026-11-07
       // review, real-Chrome repro: 74px jump on a single removal, 138px
       // on a double). Cancel it while nobody has painted: lift the ghost
-      // out of flow inline (Vue's leave-active will repeat the same
-      // declaration one microtask later), force the refit with one
+      // out of flow inline — in the SAME patch pass as the pin (Vue adds
+      // the leave-active class synchronously here too; its nextFrame only
+      // gates the leave-from → leave-to swap) — force the refit with one
       // layout read, and write the visual delta back as a ONE-SHOT
       // margin. The ghost's motion itself stays opacity + transform only
       // (compositor contract intact; a margin written once before the
@@ -139,7 +140,10 @@ export default defineComponent({
       // Multi-row removals stay exact: each ghost is compensated against
       // the pre-patch viewport rect captured BEFORE this patch, and the
       // forced read in its own turn already sees every earlier ghost's
-      // refit.
+      // refit. (The compensation dies with the element: a keyed
+      // TransitionGroup child's leave is never cancelled — re-adding the
+      // key mounts a fresh element — so the stale-inline-position worry
+      // ends at unpinLeaving's defensive cleanup.)
       const pre = prePatchRects.get(el);
       if (pre == null || node.offsetParent == null) return;
       node.style.position = "absolute";

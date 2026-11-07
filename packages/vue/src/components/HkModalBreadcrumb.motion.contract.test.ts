@@ -193,6 +193,13 @@ describe("crumb list surface variant (HkListTransition)", () => {
     // The leaving crumb is lifted out of flow so the space collapses and
     // the siblings glide (FLIP move) into it.
     expect(leave).toContain("position: absolute");
+    // A sinking ghost takes no clicks — neither the row nor the buttons
+    // inside it, whose own pointer-events:auto would otherwise beat
+    // inheritance (the strip re-enables only its buttons).
+    expect(leave).toContain("pointer-events: none");
+    expect(rule(list, ".hk-list-surface-leave-active button")).toContain(
+      "pointer-events: none",
+    );
     const move = rule(list, ".hk-list-surface-move");
     expect(move).toContain("transform");
     expect(move).toContain(EASE_OUT);

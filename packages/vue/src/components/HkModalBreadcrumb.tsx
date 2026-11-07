@@ -673,15 +673,27 @@ export default defineComponent({
           name="hk-modal-breadcrumb"
           appear
           onAfterLeave={() => {
-            // The strip is gone for real — the host's own static token
-            // rules again (see the visible watcher's false branch for why
-            // this lives here and not there).
-            publishBand(null);
+            // Only the LAST strip out withdraws the band: a reopen inside
+            // the leave window mounts a successor whose own resync has
+            // already re-published the band — nulling it here would blind
+            // the sheets until the next slow tick (2026-11-07 review).
+            if (!visible.value) publishBand(null);
           }}
         >
           {visible.value ? (
             <nav
-              ref={navRef}
+              // Function ref that ignores null: with no Transition mode,
+              // a reopen inside the leave window lets the FROZEN strip
+              // finish its leave AFTER the successor mounted — Vue's
+              // teardown would null a plain object ref at that moment and
+              // blind the live strip's geometry source (fold budget falls
+              // back to Infinity, top to the 43px estimate) until some
+              // later patch re-bound it (2026-11-07 review). A stale
+              // element is safe here: every consumer runs only while the
+              // strip is engaged, and the next mount overwrites.
+              ref={(el) => {
+                if (el) navRef.value = el as HTMLElement;
+              }}
               class="hk-modal-breadcrumb"
               aria-label={t("hikari::modal.stackLabel", "Window layers")}
               aria-live="polite"

@@ -181,6 +181,17 @@
     opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
     transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1);
   position: absolute;
+  pointer-events: none;
+}
+
+/* A dying ghost's interactive descendants re-enable hit-testing on
+   themselves (the modal breadcrumb's trigger/reveal buttons carry auto —
+   the strip itself is pointer-transparent), and inheritance does not
+   beat an explicit auto. The ghost must not take clicks while it sinks:
+   a tap opened a popover anchored to the fading element (2026-11-07
+   review). Specificity (0,1,1) outranks the (0,1,0) button faces. */
+.hk-list-surface-leave-active button {
+  pointer-events: none;
 }
 
 .hk-list-surface-enter-from,

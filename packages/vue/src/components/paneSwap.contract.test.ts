@@ -127,15 +127,6 @@ describe("pane-swap contract", () => {
       // These are hosts that MUST render their slot keyed by state — they
       // are exactly the pane slots the rule is about, and each is either
       // wrapped by the standard above or justified here.
-      // HkRideBox renders its two CHROME slots by name
-      // (`slots["chrome-start"]`, `slots["chrome-end"]`). They are not pane
-      // slots and never swap: they are the fixed-size bands bracketing the
-      // content region, and the whole point of the box is that they stay
-      // OUTSIDE the scaled region (2026-11-07 user report: a frame-level
-      // scale squashed the title bar and the footer buttons). Routing them
-      // through HkTransitionContainer would be wrong — they must render
-      // exactly once, in place, in the same paint.
-      "HkRideBox.tsx",
       "HkTabs.tsx", // wrapped by HkTransitionContainer (pinned above)
       "HkSettingsDialog.tsx", // wrapped by HkTransitionContainer (pinned above)
       // HkStepFlow is NOT a rogue pane slot — it is a sibling mechanism

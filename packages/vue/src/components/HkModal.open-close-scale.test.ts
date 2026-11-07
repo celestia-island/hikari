@@ -2,25 +2,12 @@
  * Behavioral contract for the DESKTOP modal open/close choreography — run
  * against the COMPILED stylesheet, not the source text.
  *
- * User direction 2026-11-07 (third revision, supersedes the 2026-11-05
- * content-only ride and the 2026-11-06 body scales): ONLY THE HEIGHT MOVES,
- * and the CHROME KEEPS ITS NATURAL SIZE. The frame's transform is the plain
- * centering translate in EVERY state; the open/close is carried by LAYOUT
- * HEIGHT through the family primitive (`useHeightRide` publishes
- * `--hk-ride-chrome` / `--hk-ride-content` / `--hk-ride-factor`, and the
- * frame maps its surface phases onto `hk-ride--from` / `hk-ride--to`):
- *
- *   frame height  : chrome + content × 0.9   ⇄   chrome + content
- *   frame        : translateY(10px) scale(0.97) ⇄ translateY(0) scale(1)
- *   content/body : never transformed (the whole window zooms)
- *
- * The retired grammars, oldest first: the 2026-11-04 whole-frame
- * `scale(1, 0.9)`, the 2026-11-05 body-only uniform `scale(0.9)`, the
- * 2026-11-06 `scale(1.1, 1)` overshoot, its same-day `scale(0.95, 1)`
- * pinch, and the 2026-11-06/07 frame-level `scaleY(0.9)` ride (retired
- * because a frame scale squashed the title glyphs and the footer buttons —
- * the user's 2026-11-07 report on 0.55.305).
- */
+ * User direction 2026-11-07 (fifth revision, chosen from a comparison
+ * page): the whole window zooms and rises — B3. The frame's transform is
+ * the permanent centering translate with a translateY+scale appended, a
+ * compositor-only motion; opacity rides the same clock. The body carries
+ * NO rule in this choreography (nothing inside is ever scaled on its own).
+  */
 import { describe, expect, it } from "vitest";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -338,13 +325,6 @@ const ENTER_TRANSITION =
 const LEAVE_TRANSITION =
   "opacity var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)), " +
   "transform var(--hk-modal-duration, 0.32s) var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))";
-/** The ride's own geometry lives in the shared container sheet; the modal
- *  frame maps its phases onto these two ends. */
-const RIDE_SHEET = (() => {
-  const path = join(here, "HkRideBox.scss");
-  return compile(path, { loadPaths: [here, join(here, "..", "styles")], style: "expanded" }).css;
-})();
-const RIDE_RULES = parseRules(stripComments(RIDE_SHEET));
 
 describe("HkModal desktop open/close contract (compiled cascade, user direction 2026-11-07)", () => {
   it("compiles into a stylesheet with the ride rules present (known-positive)", () => {
@@ -434,49 +414,6 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(leaveWill).toBe("opacity, transform");
   });
 
-  it("rides the HEIGHT through the shared container contract, chrome untouched", () => {
-    // The two ends of the ride are expressed as `height: calc(chrome +
-    // content × factor)` on the frame (`!important` beats the size morph's
-    // inline pin for the duration of the flight) and as a top-origin
-    // `scaleY` on the CONTENT REGION only — so the title bar and the footer
-    // keep their natural size, which is the 2026-11-07 user requirement.
-    // A selector may be declared by more than one rule (the ride's geometry
-    // pairs: the compressed height, the content's natural-height lock and the
-    // content's scale). Look the declaration up by property, not by "the
-    // first rule with this selector".
-    const rideRule = (selector: string, prop = "height"): CssRule | undefined =>
-      RIDE_RULES.find((r) => r.selector === selector && r.declarations.has(prop));
-
-    const from = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--from");
-    expect(from, "compressed end rule").toBeTruthy();
-    expect(from!.declarations.get("height")).toBe(
-      "calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px) * var(--hk-ride-factor, 0.9))",
-    );
-    expect(from!.important.has("height"), "the ride outranks the morph's inline pin").toBe(true);
-
-    const to = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--to");
-    expect(to, "natural end rule").toBeTruthy();
-    expect(to!.declarations.get("height")).toBe(
-      "calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px))",
-    );
-    expect(to!.important.has("height")).toBe(true);
-
-    // Only the content region is ever scaled — top origin, so the compressed
-    // paint lands exactly in the shorter slot the frame leaves for it.
-    const scaled = rideRule(".hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-content", "transform");
-    expect(scaled, "content compress rule").toBeTruthy();
-    expect(scaled!.declarations.get("transform")).toBe(
-      "scaleY(var(--hk-ride-factor, 0.9))",
-    );
-    const origin = rideRule(".hk-ride-content", "transform-origin");
-    expect(origin!.declarations.get("transform-origin")).toBe("50% 0");
-
-    // …and the CHROME is never named by any ride rule: the modal's header,
-    // sub-header and footer must not be reachable from the ride sheet.
-    const CHROME = /hk-modal-(header|subheader|footer|title|close)\b/;
-    const offenders = RIDE_RULES.filter((r) => CHROME.test(r.selector)).map((r) => r.selector);
-    expect(offenders, "the ride container must not target modal chrome").toEqual([]);
-  });
 
   it("never transforms the chrome: title bar, sub-header, footer, close button, title glyph", () => {
     for (const state of RIDE) {
@@ -558,15 +495,6 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     ).toBeUndefined();
   });
 
-  it("maps the surface states onto the ride's two ends", () => {
-    // The modal's TSX adds `hk-ride--from` for openingFrom/closingTo and
-    // `hk-ride--to` for openingTo/closingFrom; the container sheet keys off
-    // exactly those class names. A rename on either side has to fail here.
-    const names = RIDE_RULES.map((r) => r.selector).join("\n");
-    expect(names).toContain("hk-ride--from");
-    expect(names).toContain("hk-ride--to");
-    expect(names).toContain("hk-ride-content");
-  });
 
   it("never lets ANY rule put a ride transform on the content region", () => {
     // Fail-closed sweep, selector-level and media-independent (R2 finding
@@ -588,8 +516,6 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     // width never does). Everything else — scaleX, a 2-arg scale, a
     // translate, a matrix — is a contract break.
     const LEGAL_BODY_TRANSFORM = new Set([
-      "scaleY(var(--hk-ride-factor, 0.9))",
-      "scaleY(1)",
       "none",
     ]);
     const offenders: string[] = [];
@@ -657,8 +583,6 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     // The body carries no transform contract any more (2026-11-07): any
     // ride rule targeting it is an offender outright.
     const LEGAL_BODY = new Set<string>([
-      "scaleY(var(--hk-ride-factor, 0.9))",
-      "scaleY(1)",
       "none",
     ]);
     const offenders: string[] = [];

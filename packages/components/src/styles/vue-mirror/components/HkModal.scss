@@ -86,9 +86,10 @@
   // explicit px, so this needs no interpolate-size keyword support.
   // Height is the only leg the desktop rest state ever animates: the
   // clip-path reveal morph belongs to the ≤767px sheet block (which
-  // replaces this list wholesale), and nothing — hikari or host —
-  // changes the frame's max-height after mount (the 70vh cap is the
-  // body's, a different element).
+  // replaces this list wholesale), and on desktop nothing — hikari or
+  // host — changes the frame's max-height after mount (the 70vh cap is
+  // the body's, a different element; the phone caps move by design and
+  // deliberately carry no leg — see the IME cap-chase note below).
   transition: height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
   @include backdrop-filter(var(--hk-modal-blur, none));

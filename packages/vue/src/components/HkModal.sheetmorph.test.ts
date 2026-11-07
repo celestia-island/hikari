@@ -11,9 +11,11 @@
  *   - growth morphs REVEAL through clip-path (--hk-sheet-morph: clip on
  *     the docking surfaces, useSizeMorph does the pin-instantly +
  *     sweep-up dance) — paint/compositor-level, zero per-frame layout;
- *     the frame stylesheet carries the clip-path transition on the SAME
- *     duration/ease tokens as the height transition, so the stretch look
- *     and its reduced-motion / data-css-animations governance are intact
+ *     the ≤767px sheet block replaces the frame's transition list
+ *     wholesale and carries the clip-path transition retimed to the
+ *     stepflow family standard, so the stretch look and its
+ *     reduced-motion / data-css-animations governance are intact (the
+ *     desktop base list animates the size morph's height leg only)
  *   - docked phone surfaces NEVER backdrop-filter (mobile-guard tokens
  *     defaulting to none: --hk-modal-blur-mobile, --hk-modal-overlay-
  *     blur-mobile, --hk-drawer-blur-mobile, --hk-drawer-overlay-blur-
@@ -54,12 +56,17 @@ describe("sheet family morph-performance contract", () => {
     expect(mobileModal).toMatch(/^[ \t]*--hk-sheet-morph:[ \t]*clip;$/m);
   });
 
-  it("carries a clip-path transition on the morph timing tokens", () => {
-    // Same duration/ease pair as the height morph — the reveal must keep
-    // the stretch look, not invent new timing.
+  it("keeps the clip sweep on the sheet block, out of the desktop base list", () => {
+    // 2026-11-07 residue sweep: the desktop rest state never sweeps a
+    // clip-path (no clip-mode surface exists ≥768px), so the base list
+    // carries the size morph's height leg only. The reveal grammar lives
+    // in the ≤767px block, which replaces the frame's transition list
+    // wholesale and retimes the sweep to the stepflow family standard
+    // (pinned by the next test).
     const frame = modal.match(/\.hk-modal-content\s*{[^}]*}/)?.[0] ?? "";
+    expect(frame).not.toMatch(/^[ \t]*clip-path var\(--duration-fast/m);
     expect(frame).toMatch(
-      /^[ \t]*clip-path var\(--duration-fast, 0\.15s\) var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\);$/m,
+      /^[ \t]*transition: height var\(--duration-fast, 0\.15s\) var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\);$/m,
     );
   });
 

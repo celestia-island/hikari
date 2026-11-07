@@ -378,6 +378,24 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     }
   });
 
+  it("keeps the desktop rest transition to the height leg only", () => {
+    // The size morph's height leg is the ONLY property the desktop rest
+    // state ever animates. The clip-path reveal morph belongs to the
+    // ≤767px sheet block (which replaces the list wholesale), and
+    // nothing changes the frame's max-height after mount (the 70vh cap
+    // is the body's, a different element) — retired legs smuggled back
+    // into the shorthand must fail this pin (2026-11-07 residue sweep).
+    const rest = frameWith();
+    expect(winner(rest, "transition", DESKTOP)).toBe(
+      "height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1))",
+    );
+    // The phone sheet keeps its own clip-path-only morph list.
+    const mobileRest = frameWith();
+    expect(winner(mobileRest, "transition", MOBILE)).toBe(
+      "clip-path var(--hk-modal-morph-duration, 0.3s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1))",
+    );
+  });
+
   it("fades the frame and rides its height on one shared token pair per direction", () => {
     // Pinned WHOLE (winner() normalizes whitespace), not by prefix: a
     // fourth time value (transition-delay) or an extra smuggled segment

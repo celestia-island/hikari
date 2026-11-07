@@ -114,16 +114,21 @@ describe("HkModal mobile sheet spacing contract", () => {
       expect(tr).not.toMatch(/\bmax-height\b/);
     });
 
-    it("keeps the desktop frame transition list intact (base rule)", () => {
-      // The guard is phone-only by design: the base rule outside the
-      // media block keeps height+max-height+clip-path animated.
+    it("keeps the desktop frame transition to the height leg only (base rule)", () => {
+      // The guard is phone-only by design: outside the media block the
+      // base rule animates height only — the size morph's leg. The
+      // clip-path reveal lives in the ≤767px block (which replaces the
+      // list wholesale), and nothing changes the frame's max-height
+      // after mount (the 70vh cap is the body's, a different element):
+      // the 2026-11-07 residue sweep retired the never-animated
+      // max-height/clip-path legs, and this pin keeps them retired.
       const base = src.match(/\.hk-modal-content\s*{[^}]*}/)?.[0] ?? "";
       expect(base.length, "base .hk-modal-content rule extracted").toBeGreaterThan(0);
       const tr = base.match(/transition:\s*([^;]+);/)?.[1] ?? "";
       expect(tr.length, "base transition declaration present").toBeGreaterThan(0);
       expect(tr).toMatch(/\bheight\b/);
-      expect(tr).toMatch(/\bmax-height\b/);
-      expect(tr).toMatch(/\bclip-path\b/);
+      expect(tr).not.toMatch(/\bmax-height\b/);
+      expect(tr).not.toMatch(/\bclip-path\b/);
     });
 
     it("lifts the 70vh body cap on phones so the footer sits on the bottom edge", () => {

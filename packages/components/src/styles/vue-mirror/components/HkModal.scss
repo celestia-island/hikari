@@ -33,6 +33,44 @@
 // Overlay (backdrop)
 // ------
 
+// The BLUR is a separate static plate, NOT on the fading overlay: a
+// backdrop-filter re-filters the whole viewport on every composited frame
+// while ANY animation is live (the steady state is cached and clean —
+// measured separately), and the enter storm (frame + dim + strip + crumbs
+// mounting together) measured 36% dropped frames with the filter live vs
+// 0% with it suppressed (2026-11-07 open-jank spike, headless rAF matrix;
+// one modal, blur 3px). The plate holds the filter and never animates;
+// the overlay below is a solid-color dim curtain whose opacity ramp is
+// the cheapest possible layer to animate — and the ramp is what the eye
+// tracks, so the blur cutting in with the first frame (instead of
+// ramping over 0.42s) reads as focus pull, not as a missing layer.
+.hk-modal-blur-plate {
+  position: fixed;
+  inset: 0;
+  // Below the overlay (0) and the content frame (1) inside the root's own
+  // stacking context — the plate is DOM-last but paints first.
+  z-index: -1;
+  @include backdrop-filter(var(--hk-modal-overlay-blur, blur(3px)));
+  // The root is pointer-events: none; the plate must never take clicks.
+  pointer-events: none;
+}
+
+// STACK-COVERED: a covered (non-topmost) window's plate is REMOVED
+// outright (display:none, not merely filter:none — a present
+// backdrop-filter element still forces the per-frame backdrop surface
+// during any animation even with the filter computed to none, measured
+// at ~44pp dropped frames vs 2% hidden; 2026-11-07 open-jank spike).
+// Blur reads as a property of the TOP surface anyway: lower windows sit
+// under the top window's own dim + blur, so their own filter is
+// visually redundant (blur-of-blur). The dim curtains are untouched:
+// depth still darkens, only the redundant blur legs drop. (The
+// breadcrumb strip — z band 250 — paints ABOVE these roots: the strip
+// band is not part of any plate's backdrop, which is why removing the
+// covered plates, not the strip, was the fix that measured.)
+.hk-modal-root[data-stack-covered] .hk-modal-blur-plate {
+  display: none;
+}
+
 .hk-modal-overlay {
   position: fixed;
   inset: 0;
@@ -42,8 +80,18 @@
   // handle hasn't resolved yet — zIndex briefly starts at 0).
   z-index: 0;
   background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
+  // The overlay itself carries the blur ONLY where no plate exists (the
+  // Rust-rendered modals share this compiled sheet but their markup has
+  // no plate element — dropping the property from the overlay would
+  // silently strip their desktop blur). The Vue path always renders a
+  // plate, so :root:has(...) opts the overlay down to dim-only there and
+  // the plate owns the blur (including its stack-covered removal).
   @include backdrop-filter(var(--hk-modal-overlay-blur, blur(3px)));
   pointer-events: auto;
+}
+
+:root:has(.hk-modal-blur-plate) .hk-modal-overlay {
+  @include backdrop-filter(none);
 }
 
 // Overlay enter/leave — fade-only classes emitted from the shared
@@ -163,6 +211,11 @@
   .hk-modal-content-enter-from,
   .hk-modal-content-leave-to {
     opacity: 0;
+    // Pre-promote at insert: enter-from lands in the same frame the
+    // content mounts — carrying will-change HERE (shared with the leave's
+    // end pose) means the layer is composited before the transition's
+    // first measured frame, not one hitch later.
+    will-change: opacity, transform;
     transform: translate(
           calc(-50% + var(--hk-modal-shift-x, 0px)),
           calc(-50% + var(--hk-modal-shift-y, 0px))
@@ -453,8 +506,16 @@
   // the page, so an opaque-ish sheet reads identically. Hosts restore
   // the finish per surface with --hk-modal-blur-mobile /
   // --hk-modal-bg-mobile.
+  .hk-modal-blur-plate {
+    @include backdrop-filter(var(--hk-modal-overlay-blur-mobile, none));
+  }
+
   .hk-modal-overlay {
     @include backdrop-filter(var(--hk-modal-overlay-blur-mobile, none));
+  }
+
+  :root:has(.hk-modal-blur-plate) .hk-modal-overlay {
+    @include backdrop-filter(none);
   }
 
   // Height-morph window (round 20): while the sheet's height animates
@@ -575,6 +636,7 @@
   .hk-modal-content-leave-to {
     opacity: 0;
     height: auto;
+    will-change: opacity, transform;
     transform: translateY(100%);
   }
 

@@ -113,8 +113,16 @@
   inset-inline-end: var(--space-10);
   bottom: var(--space-10);
   z-index: 6;
-  // Defensive re-enable (the inner HkMinimap root asserts it too,
-  // HkMinimap.scss:15): keeps the dock alive if a host ever parks the
-  // board under an ancestor `pointer-events: none`.
+  // Defensive re-enable (the inner HkMinimap root asserts it too, in
+  // HkMinimap.scss's root rule): keeps the dock alive if a host ever
+  // parks the board under an ancestor `pointer-events: none`.
   pointer-events: auto;
+}
+
+// The dock is the ONE anchor (same contract as HkNodeCanvas's): the
+// docked card goes static so the dock's own corner inset is the only
+// one applied — without this the card stacked its self-docking offset
+// on top and sat twice as far from the corner as designed.
+.hk-board-minimap > .hk-minimap {
+  position: static;
 }

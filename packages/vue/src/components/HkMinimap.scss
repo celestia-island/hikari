@@ -1,6 +1,13 @@
 @use "../styles/polyfill" as *;
 
 .hk-minimap {
+  // SELF-DOCKING form (position: absolute + corner insets): for hosts
+  // that mount the card DIRECTLY on a positioned surface (HkTreemapStage,
+  // HkBoard3D's minimap3d). Hosts that wrap the card in a positioned DOCK
+  // (HkNodeCanvas's `.hk-node-canvas-minimap`, HkBoard's
+  // `.hk-board-minimap`) reset the card to `position: static` in their
+  // own sheet — the dock owns the corner and the card must not stack a
+  // second absolute offset on top of it (the doubled inset bug).
   position: absolute;
   bottom: var(--space-12);
   // Corner overlay anchor mirrors in RTL like the sibling HkZoomToolbar

@@ -152,9 +152,13 @@ describe("strip surface enter/leave (window choreography)", () => {
 
   it("has no keyframe animation on the base class (no double entrance)", () => {
     // The Transition enter classes replaced the old mount keyframe; a
-    // reintroduced base `animation:` would stack on top of them.
+    // reintroduced base `animation:` would stack on top of them. A regex
+    // literal on purpose: a plain string would read as a `@keyframes`
+    // DECLARATION to naive scanners of the source tree (see
+    // registerAnimations.test.ts's parity) — the `\s` escape keeps this
+    // assertion from being mistaken for one.
     expect(rule(breadcrumb, ".hk-modal-breadcrumb")).not.toMatch(/animation\s*:/);
-    expect(breadcrumb).not.toContain("@keyframes hk-modal-breadcrumb-in");
+    expect(breadcrumb).not.toMatch(/@keyframes\s+hk-modal-breadcrumb-in/);
   });
 
   it("drops the motion under prefers-reduced-motion", () => {
@@ -207,6 +211,15 @@ describe("crumb list surface variant (HkListTransition)", () => {
     expect(reducedList).toContain(".hk-list-surface-enter-active");
     expect(reducedList).toContain(".hk-list-surface-leave-active");
     expect(reducedList).toContain(".hk-list-surface-move");
+    // The shared guard rule's BODY matters, not just the selector list —
+    // pin it (mirrors the strip-side ruleIn assertions above).
+    expect(ruleIn(reducedList, ".hk-list-surface-enter-active")).toContain(
+      "transition: none !important",
+    );
+    expect(ruleIn(reducedList, ".hk-list-surface-leave-active")).toContain(
+      "transition: none !important",
+    );
+    expect(ruleIn(reducedList, ".hk-list-surface-move")).toContain("transition: none !important");
   });
 });
 

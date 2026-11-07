@@ -89,6 +89,13 @@ export default defineComponent({
     // position:relative (the full-width leave flash).
     const hostRef = ref<{ $el?: Element } | null>(null);
     const prePatchBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
+    /** Pre-patch VIEWPORT position of every row (gBCR). The offset boxes
+     *  above are relative to the offsetParent's padding box — for a host
+     *  whose padding box MOVES when its content shrinks (a centered
+     *  shrink-to-fit host) that origin shift is exactly the ghost-drift
+     *  the compensation below cancels, so the viewport truth is what the
+     *  compensation must restore. */
+    const prePatchRects = new WeakMap<Element, { x: number; y: number }>();
     onBeforeUpdate(() => {
       // Fragment hosts (tag="") have a comment anchor as $el — no
       // element children to measure there.
@@ -102,6 +109,8 @@ export default defineComponent({
           width: e.offsetWidth,
           height: e.offsetHeight,
         });
+        const r = e.getBoundingClientRect();
+        prePatchRects.set(e, { x: r.left, y: r.top });
       }
     });
 
@@ -110,12 +119,47 @@ export default defineComponent({
 
     function pinLeaving(el: Element) {
       if (!usesAbsoluteLeave()) return;
+      const node = el as HTMLElement;
       pinLeaveGeometry(el, { anchorX: "left", box: prePatchBoxes.get(el) });
+      // ── Centered-host compensation ─────────────────────────────────
+      // An absolute ghost is positioned against the host's PADDING box —
+      // and a shrink-to-fit host REFITS the instant the ghost leaves the
+      // flow. A centered host (the modal breadcrumb's nav: fixed +
+      // left:50% + translate(-50%,-50%)) then moves its padding origin
+      // right by half the freed width, and the pinned `left` lands the
+      // ghost ΔW/2 away from where the user last saw it (2026-11-07
+      // review, real-Chrome repro: 74px jump on a single removal, 138px
+      // on a double). Cancel it while nobody has painted: lift the ghost
+      // out of flow inline (Vue's leave-active will repeat the same
+      // declaration one microtask later), force the refit with one
+      // layout read, and write the visual delta back as a ONE-SHOT
+      // margin. The ghost's motion itself stays opacity + transform only
+      // (compositor contract intact; a margin written once before the
+      // first leave frame is a static position, not an animation).
+      // Multi-row removals stay exact: each ghost is compensated against
+      // the pre-patch viewport rect captured BEFORE this patch, and the
+      // forced read in its own turn already sees every earlier ghost's
+      // refit.
+      const pre = prePatchRects.get(el);
+      if (pre == null || node.offsetParent == null) return;
+      node.style.position = "absolute";
+      const now = node.getBoundingClientRect();
+      const dx = pre.x - now.left;
+      const dy = pre.y - now.top;
+      if (dx !== 0) node.style.marginLeft = `${dx}px`;
+      if (dy !== 0) node.style.marginTop = `${dy}px`;
     }
 
     function unpinLeaving(el: Element) {
       if (!usesAbsoluteLeave()) return;
       clearLeaveGeometry(el);
+      // The compensation writes of pinLeaving — an aborted leave returns
+      // the row to the flow, where a stale position/margin would freeze
+      // it off its slot.
+      const node = el as HTMLElement;
+      node.style.position = "";
+      node.style.marginLeft = "";
+      node.style.marginTop = "";
     }
 
     return () => {

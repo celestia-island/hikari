@@ -604,9 +604,13 @@ export default defineComponent({
           menuOpen.value = false;
           revealed.value = null;
           hiddenCount.value = 0;
-          // The band is the strip's live promise to the sheet family: with
-          // the strip gone the host's own static token rules again.
-          publishBand(null);
+          // The band is NOT withdrawn here: the strip now plays a ~150ms
+          // leave (the Transition below holds the frozen DOM), and during
+          // that window the strip still paints above every sheet — the
+          // band must keep promising the FROZEN strip's real bottom edge,
+          // not the host's static guess. The withdrawal moved to the
+          // Transition's after-leave, the moment the strip actually goes
+          // away. (Unmount keeps its own synchronous clear below.)
         }
       },
       { immediate: true },
@@ -660,7 +664,21 @@ export default defineComponent({
             shape the stack had when its last-but-one layer closed. The
             Teleport itself stays mounted even while `visible` is false —
             a leave can only play under a parent that survives it. */}
-        <Transition name="hk-modal-breadcrumb" appear>
+        {/* No `mode`: a re-open inside the 150ms leave deliberately
+            crossfades the frozen strip with the fresh one (near-identical
+            chrome, continuous motion) instead of paying out-in's dead
+            150ms before the next window's strip appears — quick
+            open→close→open cycling is the common flow and must not lag. */}
+        <Transition
+          name="hk-modal-breadcrumb"
+          appear
+          onAfterLeave={() => {
+            // The strip is gone for real — the host's own static token
+            // rules again (see the visible watcher's false branch for why
+            // this lives here and not there).
+            publishBand(null);
+          }}
+        >
           {visible.value ? (
             <nav
               ref={navRef}

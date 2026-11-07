@@ -33,6 +33,27 @@ function freezeRaf(): void {
   vi.stubGlobal("cancelAnimationFrame", () => {});
 }
 
+/** Pin the viewport to the phone band (<768px): the desktop height ride
+ *  blacks the morph out of the open/close edges, and these suites test the
+ *  morph's own contracts. happy-dom's 1024px default would route them into
+ *  the desktop branch. */
+function stubPhoneViewport(): void {
+  vi.stubGlobal(
+    "matchMedia",
+    (query: string) =>
+      ({
+        matches: false,
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        onchange: null,
+        dispatchEvent: () => false,
+      }) as MediaQueryList,
+  );
+}
+
 function stubDurations(): void {
   const realGCS = window.getComputedStyle.bind(window);
   vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {
@@ -101,6 +122,7 @@ describe("HkModal leave-window height pin", () => {
   it("keeps the morph pin through the whole leave and releases at finalize", async () => {
     vi.useFakeTimers();
     freezeRaf();
+      stubPhoneViewport();
     stubDurations();
     stubLayout(500);
     try {
@@ -138,6 +160,7 @@ describe("HkModal leave-window height pin", () => {
   it("flushes growth deferred through the enter with an open-edge remeasure", async () => {
     vi.useFakeTimers();
     freezeRaf();
+      stubPhoneViewport();
     stubDurations();
     stubLayout(400);
     try {

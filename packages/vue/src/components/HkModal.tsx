@@ -339,7 +339,7 @@ export default defineComponent({
         // report: the window folded "together with the chrome"). The body
         // ride matters for the ≤767px sheet sweep, where the ride geometry
         // is disabled — so the two never legitimately overlap.
-        if (bodyRef.value && rideStateClass() === null) out.push({ el: bodyRef.value });
+        if (bodyRef.value && !desktopRide()) out.push({ el: bodyRef.value });
         return out;
       },
       // Republish the morph's real sweep span and its landing on the body
@@ -393,18 +393,15 @@ export default defineComponent({
       { flush: "post" },
     );
 
-    const rideStateClass = (): string | null => {
-      switch (machine.phase.value) {
-        case "openingFrom":
-        case "closingTo":
-          return "hk-ride--from";
-        case "openingTo":
-        case "closingFrom":
-          return "hk-ride--to";
-        default:
-          return null;
-      }
-    };
+    // The ride's geometry lives behind `@media (min-width: 768px)`, so the
+    // phase->class mapping alone cannot tell whether the ride actually owns
+    // the frame (on a phone the classes land but nothing happens). This
+    // predicate gates every "is the ride flying" decision below.
+    const desktopRide = (): boolean =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 768px)").matches;
+
+
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
 
@@ -655,7 +652,21 @@ export default defineComponent({
           // open branch's own start() covers them.
           void nextTick(() => {
             const p = machine.phase.value;
-            if (p === "openingFrom" || p === "openingTo") morph.start();
+            if (p !== "openingFrom" && p !== "openingTo") return;
+            // DESKTOP RIDE FLIGHT = MORPH BLACKOUT. While the ride owns the
+            // frame, the morph must not write anything to it: arming installs
+            // a ResizeObserver on the body, and the ride's own class change
+            // (locking the body to its measured height) fires it — the
+            // remeasure then lands `transition: none` mid-flight, which kills
+            // the ride's running height/scaleY transitions and pins the
+            // COMPRESSED used height as if it were natural (2026-11-07 user
+            // report: the open "replays" — ride animates part-way, snaps to
+            // the bad pin, then re-animates to full height). The morph arms at
+            // the open edge instead, where the ride classes are already off
+            // and the pin equals the used height (no visible change). The
+            // phone keeps the enter-edge arm: its sheet choreography rides
+            // the morph's clip sweep, and the ride geometry is gated off.
+            if (!desktopRide()) morph.start();
           });
         } else if (to === "open") {
           surfTrack.cancel();
@@ -663,9 +674,50 @@ export default defineComponent({
           // from this box (content may have changed while the surface opened).
           void nextTick(() => ride.refresh());
           onAfterEnter();
-          // Idempotent re-arm for the fast paths (see openingFrom); the
-          // morph is usually armed already by the enter-edge tick.
-          morph.start();
+          // Idempotent re-arm for the fast paths (see openingFrom) — but on
+          // desktop the ride may still be RUNNING when the machine flips to
+          // `open` (its deadline is advisory): arming the morph right now
+          // would land `transition: none` + a px pin on a frame whose height
+          // is mid-transition, snapping it to the end value (2026-11-07
+          // user report: the window "jumps" the last third of its growth).
+          // Wait for the height leg to actually land (watchdog: the budget
+          // plus slack), then arm — the pin then equals the used height and
+          // the handoff is invisible. The phone has no ride; arm at once.
+          if (desktopRide()) {
+            const f = contentRef.value;
+            const armNow = (): void => {
+              if (machine.phase.value !== "open" || unmounted) return;
+              morph.start();
+            };
+            // No live CSS duration (test DOMs, reduced motion, the global
+            // animation switch): nothing is animating, arm at once — the
+            // same zero-duration semantics the surface machine uses.
+            const rawDuration = f ? getComputedStyle(f).transitionDuration : "";
+            const durMs = rawDuration
+              .split(",")
+              .map((part) => parseFloat(part))
+              .filter((v) => Number.isFinite(v))
+              .reduce((a, b) => Math.max(a, b), 0);
+            if (!f || durMs === 0) {
+              armNow();
+            } else {
+              let done = false;
+              const finish = (): void => {
+                if (done) return;
+                done = true;
+                f.removeEventListener("transitionend", onHeightEnd);
+                clearTimeout(guard);
+                armNow();
+              };
+              const onHeightEnd = (e: TransitionEvent): void => {
+                if (e.target === f && e.propertyName === "height") finish();
+              };
+              const guard = setTimeout(finish, 600);
+              f.addEventListener("transitionend", onHeightEnd);
+            }
+          } else {
+            morph.start();
+          }
           // Flush the growth deferred through the unfold. One tick later
           // the transition classes are off the frame, so the base height
           // transition animates the pin change instead of the enter's
@@ -1132,7 +1184,7 @@ export default defineComponent({
             />
             <div
                   ref={contentRef}
-                  class={["hk-modal-content", "hk-ride", rideStateClass(), props.contentClass, ...machine.classesFor("hk-modal-content")]}
+                  class={["hk-modal-content", props.contentClass, ...machine.classesFor("hk-modal-content")]}
                   data-hk-ride-ready={ride.hasCache() ? "" : undefined}
                   role="dialog"
                   aria-modal="true"
@@ -1201,7 +1253,7 @@ export default defineComponent({
                       )}
                     </>
                   ) : null,
-                  <div ref={bodyRef} class="hk-modal-body hk-ride-content">
+                  <div ref={bodyRef} class="hk-modal-body">
                     <div
                       ref={scrollContainerRef}
                       class="hk-modal-body-scroll hk-scroll-pin-host"

@@ -137,75 +137,126 @@
 // ------
 
 @media (min-width: 768px) {
-  // Chrome: opacity fade + the frame's height ride, on one shared token
-  // pair so the window's growth lands exactly with its fade.
+  // RESIDENT legs — the ride's continuity never depends on the transition
+  // classes' lifetime. The surface machine's deadline is advisory: it can
+  // flip the phase (and drop the classes) before the CSS lands. With the
+  // legs resident, that class drop only changes the TARGET (calc -> auto,
+  // scale -> none) and the browser finishes the motion on these legs
+  // instead of snapping (2026-11-07 user report: the open "replayed" — a
+  // partial ride, a snap, then a second animation). The height/max-height/
+  // clip-path legs stay at the base tokens for the size morph (its own
+  // heightMorph overrides the duration inline when it runs).
+  .hk-modal-content {
+    // Let the height leg interpolate to/from `auto` (Chromium 129+; older
+    // engines just snap that one handoff): when the transition classes come
+    // off mid-ride the calc end becomes the frame's own `auto` layout, and
+    // without this the motion would jump instead of finishing.
+    interpolate-size: allow-keywords;
+    transition:
+      opacity var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+      height var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+      max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+      clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+
+  // The content's compression leg is resident for the same reason — and it
+  // is what makes the ENTER start at exactly scaleY(0.9): a freshly
+  // inserted element's first style never transitions, so the from-pair
+  // paints at 0.9 and only ever animates from there.
+  .hk-modal-body {
+    transition: transform var(--hk-modal-duration, 0.42s)
+      var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+  }
+
+  // Open: the window's height rides while the chrome keeps its size.
   .hk-modal-content-enter-active {
     transition:
       opacity var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
       height var(--hk-modal-duration, 0.42s)
         var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
-    will-change: opacity, height;
+    will-change: opacity;
   }
 
-  // Close: the reveal's TRUE reverse — same chrome fade, while the window
-  // settles back toward 90% height, width untouched in both directions.
+  // Close: the reveal's TRUE reverse — same ride, the window settles back
+  // toward 90% height, width untouched in both directions.
   .hk-modal-content-leave-active {
     transition:
       opacity var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
       height var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-    will-change: opacity, height;
+    will-change: opacity;
   }
 
-  // The frame's transform is the plain centering translate in EVERY state —
-  // the ride is carried by the shared `.hk-ride--*` contract (geometry) plus
-  // the modal's own phase mapping (the machine's states are translated into
-  // `hk-ride--from` / `hk-ride--to` on the frame), which is what keeps the
-  // chrome crisp.
-  .hk-modal-content-enter-from,
-  .hk-modal-content-leave-to {
+  // The ride's two ends. The from-pair ships with the FIRST paint (a
+  // freshly inserted element does not transition into its initial style),
+  // so the compressed height and the 0.9 content scale are both real at
+  // frame one — the phase-mapped classes that shipped one tick late are
+  // exactly what made the open look like clipping (2026-11-07 reports).
+  // `!important` outranks the size morph's inline pin for the flight.
+  .hk-modal-content[data-hk-ride-ready].hk-modal-content-enter-from,
+  .hk-modal-content[data-hk-ride-ready].hk-modal-content-leave-to {
     opacity: 0;
+    height: calc(
+      var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px) * var(--hk-ride-factor, 0.9)
+    ) !important;
   }
 
+  // The natural end is an EXPLICIT calc too: the frame's base height is
+  // `auto`, and a transition cannot interpolate px -> auto. Without this
+  // leg the -active body lock made `auto` resolve to (almost) the
+  // compressed height, so the frame never grew while the content's scale
+  // unfolded underneath it — the "clipped open" the user reported. When the
+  // classes come off at rest, the morph's pin (the same px) catches the
+  // handoff with no visible change.
   .hk-modal-content-enter-to,
   .hk-modal-content-leave-from {
     opacity: 1;
+    height: calc(var(--hk-ride-chrome, 0px) + var(--hk-ride-content, 0px));
   }
 
-  // The content region keeps its NATURAL layout height for the whole ride: it
-  // must not join the frame's flex shrink, or the slot compression and the
-  // `.hk-ride-content` scale would compound to 0.81 and leave a gap above the
-  // footer (2026-11-07 R3 finding). The footer band pins to the frame's
-  // bottom edge instead, so it stays visible while the content's natural box
-  // overflows underneath it.
-
-  // The content's compression has to ride the SAME per-direction token pair
-  // as the frame's height: the family sheet's default (0.42s) would leave a
-  // 0.1s tail on close (0.32s height) — a visible gap above the pinned
-  // footer — and would ignore a host's `--hk-modal-duration` retune.
-  .hk-modal-content-enter-active > .hk-modal-body {
-    transition: transform var(--hk-modal-duration, 0.42s)
-      var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+  // Only the content region is ever scaled — top origin, so the compressed
+  // paint lands exactly in the shorter slot the frame leaves for it.
+  .hk-modal-content-enter-from > .hk-modal-body,
+  .hk-modal-content-leave-to > .hk-modal-body {
+    transform: scaleY(var(--hk-ride-factor, 0.9));
+    transform-origin: 50% 0;
   }
 
+  .hk-modal-content-enter-to > .hk-modal-body,
+  .hk-modal-content-leave-from > .hk-modal-body {
+    transform: scaleY(1);
+    transform-origin: 50% 0;
+  }
+
+  // The content region keeps its NATURAL layout height for the whole
+  // flight (or the slot shrink and the scale would compound to 0.81 and
+  // leave a gap above the footer), and the footer pins to the frame's
+  // bottom edge so it stays visible while the content's natural box
+  // overflows underneath it. The -active pair spans the flight window in
+  // both directions.
+  .hk-modal-content-enter-active > .hk-modal-body,
   .hk-modal-content-leave-active > .hk-modal-body {
-    transition: transform var(--hk-modal-duration, 0.32s)
-      var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-  }
-
-  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-body,
-  .hk-modal-content[data-hk-ride-ready].hk-ride--to > .hk-modal-body {
     flex: 0 0 auto;
     height: var(--hk-ride-content, auto);
   }
 
-  .hk-modal-content[data-hk-ride-ready].hk-ride--from > .hk-modal-footer,
-  .hk-modal-content[data-hk-ride-ready].hk-ride--to > .hk-modal-footer {
+  .hk-modal-content-enter-active > .hk-modal-footer,
+  .hk-modal-content-leave-active > .hk-modal-footer {
     position: absolute;
     inset-inline: 0;
     bottom: 0;
+  }
+
+  // Close-direction compression timing for the content (the frame's height
+  // leg above is 0.32s ease-in; a 0.42s content leg would trail it and open
+  // a gap above the pinned footer).
+  .hk-modal-content-leave-active > .hk-modal-body {
+    transition: transform var(--hk-modal-duration, 0.32s)
+      var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
   }
 }
 

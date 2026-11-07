@@ -42,6 +42,27 @@ function freezeRaf(): void {
   vi.stubGlobal("cancelAnimationFrame", () => {});
 }
 
+/** Pin the viewport to the phone band (<768px): the desktop height ride
+ *  blacks the morph out of the open/close edges, and these suites test the
+ *  morph's own contracts. happy-dom's 1024px default would route them into
+ *  the desktop branch. */
+function stubPhoneViewport(): void {
+  vi.stubGlobal(
+    "matchMedia",
+    (query: string) =>
+      ({
+        matches: false,
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        onchange: null,
+        dispatchEvent: () => false,
+      }) as MediaQueryList,
+  );
+}
+
 function stubDurations(): void {
   const realGCS = window.getComputedStyle.bind(window);
   vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {
@@ -107,6 +128,7 @@ describe("HkModal stepflow swap handoff", () => {
   it("morphs over the announced phase for a modal mounted CLOSED (the real consumer path)", async () => {
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubDurations();
     const rig = await mountRig();
 
@@ -128,6 +150,7 @@ describe("HkModal stepflow swap handoff", () => {
   it("leaves the stylesheet default in place for an instant settlement", async () => {
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubDurations();
     const rig = await mountRig();
     rig.open.value = true;
@@ -203,6 +226,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
   it("republishes the morph's real fold span and its landing", async () => {
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubClip();
     // Content starts at 500 (frame 596) and the sheet is uncapped, so the
     // morph can fold: shrinking the content must publish a conceal.
@@ -259,6 +283,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
   it("publishes NOTHING when the sheet is capped and cannot fold", async () => {
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubClip();
     // Content that already overflows the cap: the natural height cannot
     // change, so the morph stages no sweep at all — the flow must park
@@ -293,6 +318,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
     // measurements) is unit-witnessed in useSizeMorph.test.ts.
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubDurations();
     const rig = await mountRig();
     rig.open.value = true;
@@ -317,6 +343,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
   it("ignores announcements while the surface is still unfolding", async () => {
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubDurations();
     const rig = await mountRig();
     rig.open.value = true;
@@ -335,6 +362,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
   it("drops the override when the modal unmounts mid-sweep", async () => {
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubDurations();
     const rig = await mountRig();
     rig.open.value = true;
@@ -423,9 +451,11 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     // change).
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubDurations();
     stubClip();
     stubBox(500, Number.POSITIVE_INFINITY);
+    stubPhoneViewport();
     const roInstances: Array<{ callback: () => void }> = [];
     vi.stubGlobal("ResizeObserver", class {
       callback: () => void;
@@ -475,6 +505,7 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     stubDurations();
     stubClip();
     stubBox(500, Number.POSITIVE_INFINITY);
+    stubPhoneViewport();
     const roInstances: Array<{ callback: () => void }> = [];
     vi.stubGlobal("ResizeObserver", class {
       callback: () => void;
@@ -520,6 +551,7 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     // rides anything — it just transitions the frame's height inline.
     vi.useFakeTimers();
     freezeRaf();
+    stubPhoneViewport();
     stubClip();
     stubBox(500, Number.POSITIVE_INFINITY);
     const container = document.createElement("div");

@@ -70,6 +70,14 @@ export interface HeightRide {
    *  ride needs); calling it mid-ride re-measures the live, compressed
    *  box and is therefore a no-op unless `force` is passed. */
   refresh(force?: boolean): boolean;
+  /** Inline style vars for the CURRENT cache, or null when nothing has
+   *  been measured yet. Consumers bind this in their render so the very
+   *  first painted frame of a remount already carries the ride (a post-
+   *  mount publish is one paint too late: the enter-from frame would show
+   *  a full-height frame with unscaled content — read as "clipping"). */
+  styleVars(): Record<string, string> | null;
+  /** True when a measured split exists (drives the ready attribute). */
+  hasCache(): boolean;
   /** Re-apply the LAST measured split without touching the DOM boxes.
    *  A surface that unmounts its frame on close loses the inline variables
    *  with it; republishing on the next mount is what makes the very first
@@ -138,15 +146,12 @@ export function useHeightRide(
       if (child === c || !(child instanceof HTMLElement)) continue;
       chromeNatural += child.offsetHeight;
     }
-    // At rest the frame is at (or pinned to) its natural height, so the
-    // content region's natural height is the honest difference there; mid
-    // flight only the content's own box is trustworthy (the frame is short
-    // by design). Both branches are frame-height independent when it
-    // matters — a compressed frame never feeds the next ride.
-    const contentNatural = isInFlight(f)
-      ? c.offsetHeight
-      : Math.max(0, f.offsetHeight - chromeNatural);
-    const measured = contentNatural > 0 ? contentNatural : c.offsetHeight;
+    // The content region's own layout box is the ONLY honest source. With
+    // no ride class the body is flex-natural; while a ride class is present
+    // the box is locked to the published var (stable, no new information —
+    // and the frame's height is the ride's own output, so deriving the
+    // content from it would feed every early error forward forever).
+    const measured = c.offsetHeight;
     if (measured <= 0) return false;
     contentH = measured;
     chrome = chromeNatural;
@@ -172,8 +177,19 @@ export function useHeightRide(
     return true;
   };
 
+  const styleVars = (): Record<string, string> | null =>
+    contentH <= 0
+      ? null
+      : {
+          "--hk-ride-chrome": `${chrome}px`,
+          "--hk-ride-content": `${contentH}px`,
+          "--hk-ride-factor": String(factorOf()),
+        };
+
   return {
     refresh,
+    styleVars,
+    hasCache: () => contentH > 0,
     publish,
     chromeHeight: () => chrome,
     contentHeight: () => contentH,

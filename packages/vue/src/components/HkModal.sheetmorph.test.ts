@@ -99,9 +99,14 @@ describe("sheet family morph-performance contract", () => {
     const panel = select.match(/\.hk-select-sheet-panel\s*{[\s\S]*?^}/m)?.[0] ?? "";
     expect(panel).toMatch(/^[ \t]*--hk-sheet-morph:[ \t]*clip;$/m);
     expect(panel).toMatch(/^[ \t]*contain:[ \t]*layout style;$/m);
+    // 2026-11-07 residue sweep: the panel rides the modal's ≤767px
+    // grammar — clip-path is the ONLY leg (clip mode pins instantly and
+    // folds transition-off, and a max-height leg on a dvh-capped sheet
+    // is the IME cap-chase the modal block fixed on 2026-09-21).
     expect(panel).toMatch(
-      /^[ \t]*clip-path var\(--duration-fast, 0\.15s\) var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\);$/m,
+      /^[ \t]*transition: clip-path var\(--duration-fast, 0\.15s\)[\s]*var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\);$/m,
     );
+    expect(panel).not.toMatch(/\bmax-height var\(--duration-fast/m);
     // Opaque already — the panel must not regress to a translucent
     // finish that re-composites against the streaming page.
     expect(panel).toMatch(/^[ \t]*background:[ \t]*rgb\(var\(--color-surface\)\);$/m);

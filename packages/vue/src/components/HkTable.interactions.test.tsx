@@ -23,6 +23,10 @@ import { useToast } from "../runtime/useToast";
  *   row-action affordance)
  * - `Column.copyable: false` and the table-wide `copy-cells=false` opt
  *   out wholesale
+ * - the `copy` cursor and the hover hint ride `[data-copy-cell]` — the
+ *   default text cells (with text) in a copyable column — never every
+ *   cell, so the pointer describes what a background click really does
+ *   (2026-11-07 user direction)
  * - `manageable` renders the trailing ⋯ column (HkRowActions) and
  *   emits `manage(row, opener)`; the trigger click never copies
  */
@@ -210,6 +214,73 @@ describe("HkTable cell copy layer", () => {
   });
 });
 
+describe("HkTable copy affordance marker", () => {
+  it("marks text cells in copyable columns only — slot and opt-out cells stay plain", () => {
+    const c = mount(
+      h(
+        HTable,
+        {
+          columns: [...COLS, { key: "secret", title: "Secret", copyable: false }],
+          rows: [{ name: "alpha", endpoint: "", secret: "nope-token" }],
+        },
+        {
+          "cell-endpoint": () => h("div", { class: "probe-slot" }, "slot-text"),
+        },
+      ),
+    );
+    const tds = bodyCells(c);
+    // Default text cell: the marker and the hint are ONE predicate.
+    expect(tds[0]!.hasAttribute("data-copy-cell")).toBe(true);
+    expect(tds[0]!.getAttribute("title")).toBe("Click to copy");
+    // Slot cell: a background click copies nothing → no marker, no hint.
+    expect(tds[1]!.hasAttribute("data-copy-cell")).toBe(false);
+    expect(tds[1]!.getAttribute("title")).toBeNull();
+    // `copyable: false` column: same.
+    expect(tds[2]!.hasAttribute("data-copy-cell")).toBe(false);
+    expect(tds[2]!.getAttribute("title")).toBeNull();
+  });
+
+  it("an empty text cell copies nothing, so it advertises nothing", () => {
+    const c = mount(h(HTable, { columns: COLS, rows: [{ name: "   ", endpoint: "" }] }));
+    const tds = bodyCells(c);
+    expect(tds[0]!.hasAttribute("data-copy-cell")).toBe(false);
+    expect(tds[0]!.getAttribute("title")).toBeNull();
+  });
+
+  it("the drag, selection and row-action tracks are never copy surfaces", () => {
+    const c = mount(
+      h(HTable, {
+        columns: COLS,
+        rows: [{ name: "alpha", endpoint: "https://x.example" }],
+        draggable: true,
+        selectable: true,
+        manageable: true,
+      }),
+    );
+    // drag grip, selection, name, endpoint, row actions.
+    const tds = Array.from(c.querySelectorAll<HTMLElement>("tbody td"));
+    expect(tds).toHaveLength(5);
+    expect(tds[0]!.classList.contains("hk-table-drag-cell")).toBe(true);
+    expect(tds[1]!.querySelector(".hk-table-checkbox-input")).not.toBeNull();
+    expect(tds[4]!.classList.contains("hk-table-manage-cell")).toBe(true);
+    for (const td of [tds[0]!, tds[1]!, tds[4]!]) {
+      expect(td.hasAttribute("data-copy-cell")).toBe(false);
+    }
+    // Both data cells still advertise.
+    expect(tds[2]!.hasAttribute("data-copy-cell")).toBe(true);
+    expect(tds[3]!.hasAttribute("data-copy-cell")).toBe(true);
+  });
+
+  it("copy-cells=false drops the marker together with the layer", () => {
+    const c = mount(
+      h(HTable, { columns: COLS, rows: [{ name: "alpha", endpoint: "x" }], copyCells: false }),
+    );
+    for (const td of bodyCells(c)) {
+      expect(td.hasAttribute("data-copy-cell")).toBe(false);
+    }
+  });
+});
+
 describe("HkTable manageable column", () => {
   it("renders the trailing ⋯ column and emits manage(row, opener)", async () => {
     const rows = [
@@ -291,14 +362,22 @@ describe("HkTable interaction stylesheet", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const scss = readFileSync(join(here, "HkTable.scss"), "utf-8");
 
-  it("scopes the selection kill + copy cursor under data-copy-cells", () => {
+  it("scopes the selection kill under data-copy-cells", () => {
     expect(scss).toContain(".hk-table[data-copy-cells]");
     const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));
     expect(block).toContain("@include user-select(none)");
     // The -webkit-/standard pair comes from styles/polyfill.scss (guarded
     // by its contract test) — a hand-written pair here would be drift.
     expect(block).not.toMatch(/(?:^|\n)\s*-webkit-user-select:/);
-    expect(block).toContain("cursor: copy");
+  });
+
+  it("the copy cursor rides the data-copy-cell marker, never the whole cell", () => {
+    // 2026-11-07 user direction: the blanket `.hk-table-cell { cursor: copy }`
+    // promised a copy on slot/control cells whose background click copies
+    // nothing. The pointer must ride the same predicate as the click layer.
+    expect(scss).not.toMatch(/\.hk-table-cell\s*\{[^}]*cursor:\s*copy/);
+    const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));
+    expect(block).toMatch(/\.hk-table-cell\[data-copy-cell\]\s*\{\s*cursor:\s*copy;/);
   });
 
   it("the manage cell is a control track, not a copy surface", () => {

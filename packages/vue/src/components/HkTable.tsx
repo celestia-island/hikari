@@ -885,26 +885,37 @@ export default defineComponent({
                     )}
                     {props.columns.map((col) => {
                       const isSlotCell = Boolean(slots[`cell-${col.key}`]);
-                      const cellCopyable =
-                        props.copyCells && col.copyable !== false;
+                      const value = row[col.key];
+                      // ONE predicate behind the hover hint AND the
+                      // `copy` cursor (`data-copy-cell`): the cell's
+                      // background click is a copy click only when the td
+                      // itself is a text leaf that HAS text. Slot cells
+                      // (chips/badges/wrappers) and `copyable: false`
+                      // columns copy nothing from a background click, so
+                      // they must not advertise it — the cursor
+                      // describes the click, not the column
+                      // (2026-11-07 user direction: `cursor: copy` on
+                      // every cell promised more than the handler does —
+                      // their inner leaves/badges still copy, and badges
+                      // carry their own pointer/tooltip).
+                      const cellCopies =
+                        props.copyCells &&
+                        col.copyable !== false &&
+                        !isSlotCell &&
+                        String(value ?? "").trim() !== "";
                       return (
                         <td
                           key={col.key}
                           class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
-                          // The hover affordance rides only on
-                          // default-rendered text cells — slot cells own
-                          // their hints (HkCopyBadge carries the house
-                          // tooltip already).
-                          title={
-                            cellCopyable && !isSlotCell ? copyHint.value : undefined
-                          }
+                          data-copy-cell={cellCopies ? "" : undefined}
+                          title={cellCopies ? copyHint.value : undefined}
                           onClick={(e: MouseEvent) =>
                             onCellClick(e, col, e.currentTarget as HTMLElement)
                           }
                         >
                           {isSlotCell
-                            ? slots[`cell-${col.key}`]!({ row, value: row[col.key], index })
-                            : row[col.key]}
+                            ? slots[`cell-${col.key}`]!({ row, value, index })
+                            : value}
                         </td>
                       );
                     })}

@@ -136,13 +136,34 @@ describe("selection policy sheet", () => {
   });
 
   it("keeps the table contract two-sided under the deny-by-default root", () => {
-    // 2026-10-18 contract: copy-cells (default) denies cells with the
-    // click-to-copy cursor; the opt-out now needs an explicit mirror —
-    // absence of a deny no longer means selectable once the root denies.
+    // 2026-10-18 contract: copy-cells (default) denies drag selection on
+    // every body cell; the opt-out now needs an explicit mirror — absence
+    // of a deny no longer means selectable once the root denies. The
+    // `copy` CURSOR is narrower than the selection deny since 2026-11-07
+    // (marker-scoped, asserted by the next test): the deny still covers
+    // the whole cell body, only the pointer narrowed.
     const css = compile("../components/HkTable.scss");
     expect(css).toMatch(/\.hk-table\[data-copy-cells\] \.hk-table-cell\{[^}]*?user-select:\s*none/);
     expect(css).toMatch(
       /\.hk-table:not\(\[data-copy-cells\]\) \.hk-table-cell\{[^}]*?user-select:\s*text/,
     );
+  });
+
+  it("hands the copy cursor only to the marked cells, never to every cell", () => {
+    // 2026-11-07 user direction: `.hk-table-cell { cursor: copy }` on the
+    // whole body promised a copy on slot/control/empty cells whose
+    // background click copies nothing. Asserted on the COMPILED sheet so
+    // neither a commented-out rule nor a selector list that re-widens the
+    // rule (`.hk-table-cell, .hk-table-cell[data-copy-cell]`) can pass.
+    const css = compile("../components/HkTable.scss");
+    const copyRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((match) =>
+      /cursor:\s*copy/.test(match[2]!),
+    );
+    expect(copyRules.length).toBeGreaterThan(0);
+    for (const rule of copyRules) {
+      for (const selector of rule[1]!.split(",")) {
+        expect(selector).toContain("[data-copy-cell]");
+      }
+    }
   });
 });

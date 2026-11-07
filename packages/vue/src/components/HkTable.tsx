@@ -46,6 +46,20 @@ export type HkRowManageGate =
 const INTERACTIVE_SELECTOR =
   'button, a, input, select, textarea, label, [role="button"], [aria-haspopup], [data-no-copy]';
 
+/** The text a default-rendered cell child ACTUALLY renders, following
+ *  Vue's own `normalizeVNode` branch order: strings, numbers and bigints
+ *  become text nodes; `null` / `undefined` / booleans become comment
+ *  placeholders that render nothing. So `String(false)` is not a copy
+ *  payload — the click handler would find an empty textContent — and a
+ *  cell whose value is `false` must not advertise a copy affordance.
+ *  Objects are not supported as children (Vue treats them as vnodes);
+ *  they fall out of this helper, which is the honest answer for them. */
+function renderedText(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" || typeof value === "bigint"
+    ? String(value).trim()
+    : "";
+}
+
 /** Duration of every drag motion this component paints: the arrangement
  *  shift (placeholder onto the resolved slot, neighbours gliding across)
  *  and the ghost's settle fade on release. One number so the transition
@@ -887,22 +901,24 @@ export default defineComponent({
                       const isSlotCell = Boolean(slots[`cell-${col.key}`]);
                       const value = row[col.key];
                       // ONE predicate behind the hover hint AND the
-                      // `copy` cursor (`data-copy-cell`): the cell's
-                      // background click is a copy click only when the td
-                      // itself is a text leaf that HAS text. Slot cells
-                      // (chips/badges/wrappers) and `copyable: false`
-                      // columns copy nothing from a background click, so
-                      // they must not advertise it — the cursor
-                      // describes the click, not the column
-                      // (2026-11-07 user direction: `cursor: copy` on
-                      // every cell promised more than the handler does —
-                      // their inner leaves/badges still copy, and badges
-                      // carry their own pointer/tooltip).
+                      // `copy` cursor (`data-copy-cell`): a DEFAULT text
+                      // cell advertises the copy affordance only when its
+                      // background click really copies — the td is a text
+                      // leaf that still RENDERS text (see `renderedText`).
+                      // Slot cells (chips/badges/wrappers) and
+                      // `copyable: false` columns do not copy from a
+                      // background click, so they keep the plain arrow.
+                      // Their inner text leaves still copy on click, so
+                      // that arrow is a deliberate under-promise — never
+                      // an over-promise (2026-11-07 user direction:
+                      // `cursor: copy` on every cell promised more than
+                      // the handler does; badges carry their own
+                      // pointer/tooltip).
                       const cellCopies =
                         props.copyCells &&
                         col.copyable !== false &&
                         !isSlotCell &&
-                        String(value ?? "").trim() !== "";
+                        renderedText(value) !== "";
                       return (
                         <td
                           key={col.key}

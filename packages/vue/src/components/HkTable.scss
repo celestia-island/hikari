@@ -412,13 +412,15 @@
    gets plain selectable text back wholesale.
 
    The `copy` cursor rides `[data-copy-cell]`, NOT every cell
-   (2026-11-07 user direction): the marker is the SAME predicate as the
-   click handler and the `title` hint — a default-rendered text cell, in
-   a `copyable` column, whose text is non-empty. Slot cells
-   (chips/badges/layout wrappers) and `copyable: false` columns copy
-   nothing from a background click, so they keep the ordinary arrow;
-   a `copy` cursor there (which Windows paints as the legacy arrow+plus
-   glyph) promised an affordance the click does not deliver. */
+   (2026-11-07 user direction): the marker is the same predicate as the
+   `title` hint and as a DEFAULT text cell's background click — a
+   default-rendered cell, in a `copyable` column, whose value still
+   renders text. Slot cells (chips/badges/layout wrappers) and
+   `copyable: false` columns do not copy from a background click, so
+   they keep the ordinary arrow; a `copy` cursor there (which Windows
+   paints as the legacy arrow+plus glyph) promised an affordance the
+   click does not deliver. Their inner text leaves still copy on click —
+   the arrow under-promises on purpose rather than over-promising. */
 .hk-table[data-copy-cells] {
   .hk-table-cell {
     @include user-select(none);
@@ -428,7 +430,10 @@
     cursor: copy;
   }
 
-  /* The row-actions column is a control, not text — no copy cursor. */
+  /* Defense in depth: the row-actions track is a control and never
+     carries `data-copy-cell`, so this rule is inert today — it stays so
+     a future widening of the marker cannot hand the ⋯ trigger a copy
+     cursor. */
   .hk-table-manage-cell {
     cursor: default;
   }

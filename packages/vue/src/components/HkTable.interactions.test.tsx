@@ -24,9 +24,11 @@ import { useToast } from "../runtime/useToast";
  * - `Column.copyable: false` and the table-wide `copy-cells=false` opt
  *   out wholesale
  * - the `copy` cursor and the hover hint ride `[data-copy-cell]` — the
- *   default text cells (with text) in a copyable column — never every
- *   cell, so the pointer describes what a background click really does
- *   (2026-11-07 user direction)
+ *   default text cells, in a copyable column, whose value still renders
+ *   text — never every cell, so the pointer describes what a background
+ *   click really does. Slot cells' inner leaves still copy, so their
+ *   plain arrow is a deliberate under-promise (2026-11-07 user
+ *   direction)
  * - `manageable` renders the trailing ⋯ column (HkRowActions) and
  *   emits `manage(row, opener)`; the trigger click never copies
  */
@@ -216,15 +218,21 @@ describe("HkTable cell copy layer", () => {
 
 describe("HkTable copy affordance marker", () => {
   it("marks text cells in copyable columns only — slot and opt-out cells stay plain", () => {
+    // The slot cell's VALUE is non-empty (and the slot renders plain
+    // text), so `!isSlotCell` is the only reason it can fail here — a
+    // fixture with an empty value would hide that clause behind the
+    // emptiness gate.
     const c = mount(
       h(
         HTable,
         {
           columns: [...COLS, { key: "secret", title: "Secret", copyable: false }],
-          rows: [{ name: "alpha", endpoint: "", secret: "nope-token" }],
+          rows: [
+            { name: "alpha", endpoint: "https://x.example", secret: "nope-token" },
+          ],
         },
         {
-          "cell-endpoint": () => h("div", { class: "probe-slot" }, "slot-text"),
+          "cell-endpoint": () => "pure-text-slot",
         },
       ),
     );
@@ -233,9 +241,11 @@ describe("HkTable copy affordance marker", () => {
     expect(tds[0]!.hasAttribute("data-copy-cell")).toBe(true);
     expect(tds[0]!.getAttribute("title")).toBe("Click to copy");
     // Slot cell: a background click copies nothing → no marker, no hint.
+    expect(tds[1]!.textContent).toBe("pure-text-slot");
     expect(tds[1]!.hasAttribute("data-copy-cell")).toBe(false);
     expect(tds[1]!.getAttribute("title")).toBeNull();
     // `copyable: false` column: same.
+    expect(tds[2]!.textContent).toBe("nope-token");
     expect(tds[2]!.hasAttribute("data-copy-cell")).toBe(false);
     expect(tds[2]!.getAttribute("title")).toBeNull();
   });
@@ -245,6 +255,26 @@ describe("HkTable copy affordance marker", () => {
     const tds = bodyCells(c);
     expect(tds[0]!.hasAttribute("data-copy-cell")).toBe(false);
     expect(tds[0]!.getAttribute("title")).toBeNull();
+  });
+
+  it("a value that renders no text (boolean / null) advertises nothing", async () => {
+    // Vue normalizes booleans and null into comment placeholders, so the
+    // cell renders nothing and a click cannot copy anything — a
+    // `String(value)`-based predicate would have lied here.
+    const c = mount(
+      h(HTable, {
+        columns: COLS,
+        rows: [{ name: false, endpoint: null }],
+      }),
+    );
+    const tds = bodyCells(c);
+    for (const td of tds) {
+      expect(td.textContent).toBe("");
+      expect(td.hasAttribute("data-copy-cell")).toBe(false);
+    }
+    tds[0]!.click();
+    await settle();
+    expect(writeText).not.toHaveBeenCalled();
   });
 
   it("the drag, selection and row-action tracks are never copy surfaces", () => {
@@ -371,14 +401,10 @@ describe("HkTable interaction stylesheet", () => {
     expect(block).not.toMatch(/(?:^|\n)\s*-webkit-user-select:/);
   });
 
-  it("the copy cursor rides the data-copy-cell marker, never the whole cell", () => {
-    // 2026-11-07 user direction: the blanket `.hk-table-cell { cursor: copy }`
-    // promised a copy on slot/control cells whose background click copies
-    // nothing. The pointer must ride the same predicate as the click layer.
-    expect(scss).not.toMatch(/\.hk-table-cell\s*\{[^}]*cursor:\s*copy/);
-    const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));
-    expect(block).toMatch(/\.hk-table-cell\[data-copy-cell\]\s*\{\s*cursor:\s*copy;/);
-  });
+  // The cursor half of the contract is pinned on the COMPILED sheet in
+  // styles/selectionSheet.test.ts: raw-text matching here cannot tell a
+  // live rule from a commented-out one, nor catch a selector list that
+  // re-widens the rule.
 
   it("the manage cell is a control track, not a copy surface", () => {
     const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));

@@ -1438,15 +1438,19 @@ mod tests {
 
     #[test]
     fn table_marks_only_the_cells_whose_background_click_copies() {
-        let mut cols = columns();
-        // The age column opts out of the copy layer; the name column is the
-        // control that must still advertise it.
-        cols[1].copyable = false;
+        // Three columns so each positive/negative pair isolates ONE clause:
+        //   name   copyable + text   → marker (the positive control)
+        //   age    copyable + EMPTY  → no marker (the emptiness clause)
+        //   secret opted out + text  → no marker (the copyable clause)
+        let mut opt_out = TableColumn::new("secret", "Secret");
+        opt_out.copyable = false;
         let html = Table(TableProps {
-            columns: cols,
-            // name holds text, age is EMPTY (an empty text cell copies
-            // nothing, so it must not promise either).
-            rows: vec![TableRow::new(vec!["Ada", ""]).key("r1")],
+            columns: vec![
+                TableColumn::new("name", "Name"),
+                TableColumn::new("age", "Age"),
+                opt_out,
+            ],
+            rows: vec![TableRow::new(vec!["Ada", "", "nope"]).key("r1")],
             copy_cells: true,
             draggable: true,
             selectable: true,
@@ -1456,8 +1460,8 @@ mod tests {
         .render_to_html();
 
         let cells = tds(&html);
-        // drag grip, checkbox, name, age, row actions.
-        assert_eq!(cells.len(), 5, "{html}");
+        // drag grip, checkbox, name, age, secret, row actions.
+        assert_eq!(cells.len(), 6, "{html}");
         assert!(cells[0].contains("hk-table-drag-cell"), "{}", cells[0]);
         assert!(
             !cells[0].contains("data-copy-cell"),
@@ -1473,13 +1477,24 @@ mod tests {
         assert!(cells[2].ends_with(">Ada"), "{}", cells[2]);
         assert!(cells[2].contains("data-copy-cell=\"\""), "{}", cells[2]);
         assert!(cells[2].contains("title=\"Click to copy\""), "{}", cells[2]);
-        // Opted-out column and empty text: neither marker nor hint.
-        for cell in &cells[3..5] {
-            assert!(
-                !cell.contains("data-copy-cell") && !cell.contains("Click to copy"),
-                "no copy affordance expected: {cell}"
-            );
-        }
+        // Empty text: the click copies nothing, so no marker and no hint.
+        assert!(
+            !cells[3].contains("data-copy-cell") && !cells[3].contains("Click to copy"),
+            "an empty text cell must not advertise a copy: {}",
+            cells[3]
+        );
+        // Opted-out column WITH text: same, pinned independently of the
+        // emptiness clause above.
+        assert!(
+            !cells[4].contains("data-copy-cell") && !cells[4].contains("Click to copy"),
+            "a copyable:false column must not advertise a copy: {}",
+            cells[4]
+        );
+        assert!(
+            !cells[5].contains("data-copy-cell"),
+            "the row-actions track is a control: {}",
+            cells[5]
+        );
 
         // Copy layer off: no marker anywhere, even on the text cell.
         let off = Table(TableProps {

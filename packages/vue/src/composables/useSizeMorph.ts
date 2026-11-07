@@ -51,8 +51,9 @@ export interface SizeMorph {
    *  choreography owns the frame's geometry through the whole leave and
    *  the pin keeps it stable (a mid-leave content change must not resize
    *  the folding frame). The next start() re-arms and, because the pin
-   *  was kept, a re-pin to the SAME natural height is a no-op (the
-   *  typical reopen-interrupt case — held content is unchanged, delta
+   *  was kept, a re-pin to the SAME natural height is a no-op (a reopen
+   *  that goes hold → start without releasing — no current HkModal path
+   *  does this, its reopen edge releases the pin first; held content is unchanged, delta
    *  zero; a re-pin to a CHANGED natural while an enter's transition
    *  classes own the frame lands without a height animation, i.e. snaps
    *  — acceptable, the enter's own choreography owns that moment). */
@@ -634,13 +635,12 @@ export function useSizeMorph(
    *  finished) frame — the only moment guaranteed free of transition-class
    *  flex rules. Never calibrate from a remeasure sample: the first
    *  remeasure can itself be the contaminated one (a frozen enter leaves
-   *  the flex rules behind when the surface is mid-repair). HkModal's
-   *  reopen-interrupt arm violates the precondition on purpose (it
-   *  calibrates a pinned, enter-classed frame): benign today because no
-   *  current enter/leave class carries height/flex rules (the inline pin
-   *  beats the mobile sheet's static height:auto), and the contamination
-   *  guard below degrades any future SCSS regression to a dropped pin
-   *  rather than a corrupted one. */
+   *  the flex rules behind when the surface is mid-repair). Every current
+   *  consumer arms at the machine's `open` edge, on a resting frame. If a
+   *  future caller ever arms earlier (mid-enter), this precondition is
+   *  violated by construction and the contamination guard below degrades
+   *  the bad sample to a dropped pin rather than a corrupted one — it
+   *  does not make early arming correct. */
   function calibrate(): void {
     const f = frame.value;
     const c = content.value;

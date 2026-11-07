@@ -55,33 +55,20 @@
   pointer-events: none;
 }
 
-// TWO SUPPRESSION LEGS, both measured (2026-11-07 open-jank spike):
-// Chromium re-runs a backdrop-filter on every composited frame while any
-// animation is live — the steady state (nothing animating) is cached and
-// runs 60fps with the filter on, but any enter/leave/crumb motion in the
-// page turns it into a per-frame full-viewport filter.
-//   1. ENTER-SCOPED: while the content frame's enter runs (the open
-//      storm: frame + dim + strip + crumbs mounting together) the plate
-//      carries no filter — measured 36% dropped frames live vs 0%
-//      suppressed. The blur lands when the enter settles, under the
-//      finished dim ramp; during the enter the backdrop reads
-//      sharp-but-dimming, which at 3px/0.42s reads as focus pull, not as
-//      a missing layer. The sibling combinator reaches the plate because
-//      it is DOM-last (see the tsx); enter-from is included so the
-//      suppression is live from the first frame. The LEAVE measured
-//      clean with the filter live, so it is left alone.
-//   2. STACK-COVERED: a covered (non-topmost) window carries no filter
-//      AT ALL — the breadcrumb strip and crumb entries animate BELOW
-//      every window plate, and each of those frames re-ran every
-//      covered plate's full-viewport filter. Blur reads as a property
-//      of the top surface anyway: lower windows sit under the top
-//      window's own dim + blur, so their own filter is visually
-//      redundant (blur-of-blur). The dim curtains are untouched: depth
-//      still darkens, only the redundant blur legs drop.
-.hk-modal-content-enter-from ~ .hk-modal-blur-plate,
-.hk-modal-content-enter-active ~ .hk-modal-blur-plate,
+// STACK-COVERED: a covered (non-topmost) window's plate is REMOVED
+// outright (display:none, not merely filter:none — a present
+// backdrop-filter element still forces the per-frame backdrop surface
+// during any animation even with the filter computed to none, measured
+// at ~44pp dropped frames vs 2% hidden; 2026-11-07 open-jank spike).
+// Blur reads as a property of the TOP surface anyway: lower windows sit
+// under the top window's own dim + blur, so their own filter is
+// visually redundant (blur-of-blur). The dim curtains are untouched:
+// depth still darkens, only the redundant blur legs drop. (The
+// breadcrumb strip — z band 250 — paints ABOVE these roots: the strip
+// band is not part of any plate's backdrop, which is why removing the
+// covered plates, not the strip, was the fix that measured.)
 .hk-modal-root[data-stack-covered] .hk-modal-blur-plate {
-  --hk-modal-overlay-blur: none;
+  display: none;
 }
 
 .hk-modal-overlay {
@@ -93,7 +80,18 @@
   // handle hasn't resolved yet — zIndex briefly starts at 0).
   z-index: 0;
   background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
+  // The overlay itself carries the blur ONLY where no plate exists (the
+  // Rust-rendered modals share this compiled sheet but their markup has
+  // no plate element — dropping the property from the overlay would
+  // silently strip their desktop blur). The Vue path always renders a
+  // plate, so :root:has(...) opts the overlay down to dim-only there and
+  // the plate owns the blur (including its stack-covered removal).
+  @include backdrop-filter(var(--hk-modal-overlay-blur, blur(3px)));
   pointer-events: auto;
+}
+
+:root:has(.hk-modal-blur-plate) .hk-modal-overlay {
+  @include backdrop-filter(none);
 }
 
 // Overlay enter/leave — fade-only classes emitted from the shared
@@ -512,6 +510,14 @@
     @include backdrop-filter(var(--hk-modal-overlay-blur-mobile, none));
   }
 
+  .hk-modal-overlay {
+    @include backdrop-filter(var(--hk-modal-overlay-blur-mobile, none));
+  }
+
+  :root:has(.hk-modal-blur-plate) .hk-modal-overlay {
+    @include backdrop-filter(none);
+  }
+
   // Height-morph window (round 20): while the sheet's height animates
   // every frame, a backdrop-filter anywhere in the resizing subtree has
   // to re-render its backdrop surface every frame — the same per-frame
@@ -630,6 +636,7 @@
   .hk-modal-content-leave-to {
     opacity: 0;
     height: auto;
+    will-change: opacity, transform;
     transform: translateY(100%);
   }
 

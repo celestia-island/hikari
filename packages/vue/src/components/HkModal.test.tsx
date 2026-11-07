@@ -815,3 +815,81 @@ describe("HkModal Escape precedence", () => {
     expect(document.activeElement, "focus wraps back to the first focusable").toBe(first);
   });
 });
+
+describe("HkModal blur plate", () => {
+  it("renders the plate as the aria-hidden last child of the root", async () => {
+    // The plate is DOM-last so the sheet's stack-covered drop can be keyed
+    // by attribute scoping without depending on paint order (z-indexes
+    // carry that). Structural pin: last child + hidden from a11y.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(true);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, { modelValue: open.value }, { default: () => h("div", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    await nextTick();
+    const root = document.querySelector(".hk-modal-root")!;
+    const last = root.lastElementChild as HTMLElement | null;
+    expect(last?.classList.contains("hk-modal-blur-plate")).toBe(true);
+    expect(last?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("marks covered roots while a higher window is open", async () => {
+    // TOP-ONLY BLUR wiring: the covered (lower) root carries
+    // data-stack-covered; the top root does not. Flips live with the
+    // registry: closing the top window un-covers the lower one.
+    const mounts2: ReturnType<typeof createApp>[] = [];
+    const containers2: HTMLElement[] = [];
+    try {
+      const openA = ref(true);
+      const openB = ref(true);
+      const mk = (mv: { value: boolean }, title: string) => {
+        const container = document.createElement("div");
+        document.body.appendChild(container);
+        containers2.push(container);
+        const Wrapper = defineComponent({
+          setup() {
+            return () =>
+              h(HkModal, { modelValue: mv.value, title }, { default: () => h("div", "content") });
+          },
+        });
+        const app = createApp(Wrapper);
+        mounts2.push(app);
+        app.mount(container);
+      };
+      mk(openA, "下层窗");
+      mk(openB, "上层窗");
+      await nextTick();
+      await nextTick();
+      const roots = () => [...document.querySelectorAll(".hk-modal-root")];
+      expect(roots()).toHaveLength(2);
+      // The later-registered window is the top: the FIRST root is covered.
+      const attrs = roots().map((r) => r.hasAttribute("data-stack-covered"));
+      expect(attrs).toEqual([true, false]);
+      openB.value = false;
+      await nextTick();
+      // The leave settles on the surface machine's own clock.
+      const deadline = Date.now() + 1500;
+      while (roots().some((r) => r.classList.contains("hk-modal-content-leave-active")) && Date.now() < deadline) {
+        await nextTick();
+      }
+      const deadline2 = Date.now() + 1500;
+      while (roots().some((r) => r.hasAttribute("data-stack-covered")) && Date.now() < deadline2) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        await nextTick();
+      }
+      expect(roots().every((r) => !r.hasAttribute("data-stack-covered"))).toBe(true);
+    } finally {
+      for (const a of mounts2.splice(0)) a.unmount();
+      for (const c of containers2.splice(0)) c.remove();
+    }
+  });
+});

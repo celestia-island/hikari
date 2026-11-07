@@ -16,6 +16,7 @@
 // Text selection is chrome-disabled across the whole bar.
 
 @use "../styles/polyfill" as *;
+@use "./hikari-vars" as vars;
 
 .hk-titlebar {
   --hk-tb-height: 32px;
@@ -52,7 +53,10 @@
   background: var(--hk-tb-bg);
   @include backdrop-filter(blur(var(--blur-md, 16px)));
   border-bottom: 1px solid var(--hk-tb-border);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  // The token, not a literal (docs/en/guides/fonts.md): this sheet used
+  // to hand-roll a CJK-less sans, dropping CJK titlebar text onto a
+  // platform fallback on Linux.
+  font-family: var(--font-sans, vars.$hikari-font-family-sans);
   -webkit-app-region: drag;
   app-region: drag;
 }

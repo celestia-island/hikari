@@ -46,6 +46,25 @@ export type HkRowManageGate =
 const INTERACTIVE_SELECTOR =
   'button, a, input, select, textarea, label, [role="button"], [aria-haspopup], [data-no-copy]';
 
+/** The text a default-rendered cell child ACTUALLY renders, restricted to
+ *  the table-cell value contract. Vue's `normalizeVNode` sends strings,
+ *  numbers, bigints, symbols and functions through
+ *  `createVNode(Text, null, String(child))`, arrays through a Fragment,
+ *  and NON-vnode objects through that same Text branch (a plain object
+ *  shows `[object Object]`, a `Date` its `toString`); booleans / `null` /
+ *  `undefined` become comment placeholders that render NOTHING. Only
+ *  strings / numbers / bigints are table-cell values here: `String(false)`
+ *  is not a copy payload — the handler would find an empty textContent —
+ *  so a `false` cell must not advertise the affordance. Symbols,
+ *  functions, arrays, objects and Dates DO render something and their
+ *  click copies, so leaving them out is a deliberate UNDER-promise (never
+ *  a lie); a slot is the supported way to render structured content. */
+function renderedText(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" || typeof value === "bigint"
+    ? String(value).trim()
+    : "";
+}
+
 /** Duration of every drag motion this component paints: the arrangement
  *  shift (placeholder onto the resolved slot, neighbours gliding across)
  *  and the ghost's settle fade on release. One number so the transition
@@ -885,26 +904,41 @@ export default defineComponent({
                     )}
                     {props.columns.map((col) => {
                       const isSlotCell = Boolean(slots[`cell-${col.key}`]);
-                      const cellCopyable =
-                        props.copyCells && col.copyable !== false;
+                      const value = row[col.key];
+                      // ONE predicate behind the hover hint AND the
+                      // `copy` cursor (`data-copy-cell`): a DEFAULT text
+                      // cell advertises the copy affordance only when its
+                      // background click really copies — the td is a text
+                      // leaf that still RENDERS text (see `renderedText`).
+                      // Slot cells (chips/badges/wrappers) never take the
+                      // click on their td surface (only inner text leaves
+                      // copy) and `copyable: false` columns copy nothing,
+                      // so both keep the plain arrow — a deliberate
+                      // under-promise, never an over-promise (2026-11-07
+                      // user direction: `cursor: copy` on every cell
+                      // promised more than the handler does; badges carry
+                      // their own pointer/tooltip). A slot that renders
+                      // BARE text is the one case where the td surface
+                      // does copy and still stays unmarked: the slot owns
+                      // its own hints.
+                      const cellCopies =
+                        props.copyCells &&
+                        col.copyable !== false &&
+                        !isSlotCell &&
+                        renderedText(value) !== "";
                       return (
                         <td
                           key={col.key}
                           class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
-                          // The hover affordance rides only on
-                          // default-rendered text cells — slot cells own
-                          // their hints (HkCopyBadge carries the house
-                          // tooltip already).
-                          title={
-                            cellCopyable && !isSlotCell ? copyHint.value : undefined
-                          }
+                          data-copy-cell={cellCopies ? "" : undefined}
+                          title={cellCopies ? copyHint.value : undefined}
                           onClick={(e: MouseEvent) =>
                             onCellClick(e, col, e.currentTarget as HTMLElement)
                           }
                         >
                           {isSlotCell
-                            ? slots[`cell-${col.key}`]!({ row, value: row[col.key], index })
-                            : row[col.key]}
+                            ? slots[`cell-${col.key}`]!({ row, value, index })
+                            : value}
                         </td>
                       );
                     })}

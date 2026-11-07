@@ -41,7 +41,7 @@
 //                 span[style="display:contents"]           (grip svg markup)
 //             td.hk-table-cell                             (selectable; width 40px)
 //               label.hk-table-checkbox-label …            (same checkbox shape)
-//             td.hk-table-cell [.hk-text-{align}] [title={copy hint}] {cell text}
+//             td.hk-table-cell [.hk-text-{align}] [data-copy-cell] [title={copy hint}] {cell text}
 //             td.hk-table-cell.hk-table-manage-cell        (manageable)
 //               button.hk-icon-button …                    (⋯ trigger)
 //           ── or, with no rows ──
@@ -72,11 +72,18 @@
 //   * `copy_cells` defaults to FALSE (Vue: true). Vue's click-to-copy layer
 //     runs the clipboard-with-toast runtime; with no clipboard handle in this
 //     wave the honest default is the sheet's opt-out branch (plain selectable
-//     text). Setting it true applies Vue's affordance (no-select cells +
-//     `cursor: copy`) — the host owns the click handling.
+//     text). Setting it true applies Vue's affordance (no-select cells + the
+//     `copy` cursor) — the host owns the click handling. The cursor rides the
+//     `data-copy-cell` marker, emitted for exactly the cells whose background
+//     click copies (copyable column, non-empty text), so the pointer and the
+//     `title` hint advertise the same predicate Vue uses (2026-11-07).
 //   * no per-cell slot content (Vue: `slots[\`cell-${key}\`]`): a cell is
-//     text ([`TableRow::cells`]); the `title` copy hint is emitted for
-//     text cells only, exactly Vue's default branch.
+//     text ([`TableRow::cells`]); the `title` copy hint and the
+//     `data-copy-cell` cursor marker are emitted for text cells only, exactly
+//     Vue's default branch. Whitespace definitions differ from JS in exactly
+//     two code points (`str::trim` drops U+0085 but keeps U+FEFF; JS
+//     `String.trim` does the reverse), which can only matter for a cell made
+//     solely of one of those invisible characters.
 //   * `draggable` mirrors the grip column, the inert-while-sorted rule and
 //     the keyboard twin (ArrowUp/ArrowDown on the focused handle emits
 //     `reorder`). The POINTER engine (ghost clone, FLIP shift, pointer
@@ -906,7 +913,8 @@ pub fn Table(props: TableProps) -> Element {
                     cell_classes.push(' ');
                     cell_classes.push_str(align);
                 }
-                let copy_hint = if copy_cells && column.copyable {
+                let cell_copies = copy_cells && column.copyable && !cell_text.trim().is_empty();
+                let copy_hint = if cell_copies {
                     Some(t("components.hk.clipboard.clickToCopy", "Click to copy"))
                 } else {
                     None
@@ -914,6 +922,7 @@ pub fn Table(props: TableProps) -> Element {
                 cells.push(rsx! {
                     td {
                         class: cell_classes,
+                        "data-copy-cell": cell_copies.then_some(""),
                         title: copy_hint,
                         {cell_text}
                     }
@@ -1419,5 +1428,88 @@ mod tests {
         assert!(empty.contains("colspan=\"4\""), "{empty}");
         assert!(empty.contains(">No data<"), "{empty}");
         assert!(!empty.contains("hk-table-row"), "{empty}");
+    }
+
+    /// Split the rendered body into per-cell attribute strings so a test can
+    /// say WHICH td carries a marker (a whole-document `contains` cannot).
+    fn tds(html: &str) -> Vec<&str> {
+        html.split("<td")
+            .skip(1)
+            .map(|cell| cell.split("</td>").next().unwrap_or(""))
+            .collect()
+    }
+
+    #[test]
+    fn table_marks_only_the_cells_whose_background_click_copies() {
+        // Three columns so each positive/negative pair isolates ONE clause:
+        //   name   copyable + text      → marker (the positive control)
+        //   age    copyable + WHITESPACE → no marker (the trim clause: an
+        //          `is_empty()`-only gate would advertise a copy of invisible
+        //          text, so the cell has to be blank-but-not-empty)
+        //   secret opted out + text      → no marker (the copyable clause)
+        let mut opt_out = TableColumn::new("secret", "Secret");
+        opt_out.copyable = false;
+        let html = Table(TableProps {
+            columns: vec![
+                TableColumn::new("name", "Name"),
+                TableColumn::new("age", "Age"),
+                opt_out,
+            ],
+            rows: vec![TableRow::new(vec!["Ada", "   ", "nope"]).key("r1")],
+            copy_cells: true,
+            draggable: true,
+            selectable: true,
+            manageable: true,
+            ..Default::default()
+        })
+        .render_to_html();
+
+        let cells = tds(&html);
+        // drag grip, checkbox, name, age, secret, row actions.
+        assert_eq!(cells.len(), 6, "{html}");
+        assert!(cells[0].contains("hk-table-drag-cell"), "{}", cells[0]);
+        assert!(
+            !cells[0].contains("data-copy-cell"),
+            "the drag grip is a control, not a copy surface: {}",
+            cells[0]
+        );
+        assert!(
+            !cells[1].contains("data-copy-cell"),
+            "the selection track is a control: {}",
+            cells[1]
+        );
+        // The text cell in the copyable column carries marker AND hint.
+        assert!(cells[2].ends_with(">Ada"), "{}", cells[2]);
+        assert!(cells[2].contains("data-copy-cell=\"\""), "{}", cells[2]);
+        assert!(cells[2].contains("title=\"Click to copy\""), "{}", cells[2]);
+        // Whitespace-only text: the click copies nothing visible, so no
+        // marker and no hint.
+        assert!(
+            !cells[3].contains("data-copy-cell") && !cells[3].contains("Click to copy"),
+            "a whitespace-only cell must not advertise a copy: {}",
+            cells[3]
+        );
+        // Opted-out column WITH text: same, pinned independently of the
+        // emptiness clause above.
+        assert!(
+            !cells[4].contains("data-copy-cell") && !cells[4].contains("Click to copy"),
+            "a copyable:false column must not advertise a copy: {}",
+            cells[4]
+        );
+        assert!(
+            !cells[5].contains("data-copy-cell"),
+            "the row-actions track is a control: {}",
+            cells[5]
+        );
+
+        // Copy layer off: no marker anywhere, even on the text cell.
+        let off = Table(TableProps {
+            columns: columns(),
+            rows: vec![TableRow::new(vec!["Ada", "36"]).key("r1")],
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(!off.contains("data-copy-cell"), "{off}");
+        assert!(!off.contains("Click to copy"), "{off}");
     }
 }

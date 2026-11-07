@@ -136,13 +136,58 @@ describe("selection policy sheet", () => {
   });
 
   it("keeps the table contract two-sided under the deny-by-default root", () => {
-    // 2026-10-18 contract: copy-cells (default) denies cells with the
-    // click-to-copy cursor; the opt-out now needs an explicit mirror —
-    // absence of a deny no longer means selectable once the root denies.
+    // 2026-10-18 contract: copy-cells (default) denies drag selection on
+    // every body cell; the opt-out now needs an explicit mirror — absence
+    // of a deny no longer means selectable once the root denies. The
+    // `copy` CURSOR is narrower than the selection deny since 2026-11-07
+    // (marker-scoped, asserted by the next test): the deny still covers
+    // the whole cell body, only the pointer narrowed.
     const css = compile("../components/HkTable.scss");
     expect(css).toMatch(/\.hk-table\[data-copy-cells\] \.hk-table-cell\{[^}]*?user-select:\s*none/);
     expect(css).toMatch(
       /\.hk-table:not\(\[data-copy-cells\]\) \.hk-table-cell\{[^}]*?user-select:\s*text/,
+    );
+  });
+
+  it("hands the copy cursor only to the marked cells, never to every cell", () => {
+    // 2026-11-07 user direction: `.hk-table-cell { cursor: copy }` on the
+    // whole body promised a copy on slot/control/empty cells whose
+    // background click copies nothing. Asserted on the COMPILED sheet so
+    // neither a commented-out rule nor a selector list that re-widens the
+    // rule (`.hk-table-cell, .hk-table-cell[data-copy-cell]`) can pass.
+    const css = compile("../components/HkTable.scss");
+    const copyRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((match) =>
+      /cursor:\s*copy/.test(match[2]!),
+    );
+    expect(copyRules.length).toBeGreaterThan(0);
+    for (const rule of copyRules) {
+      for (const selector of rule[1]!.split(",")) {
+        // Tolerate the empty-value spelling Vue emits
+        // (`[data-copy-cell=""]`) but neither a prefix token nor a
+        // selector carrying a different value.
+        expect(selector).toMatch(/\[data-copy-cell(?:="")?\]/);
+        // The marker must sit on the CELL compound: moving it to an
+        // ancestor (`.hk-table[data-copy-cell] .hk-table-cell`) keeps the
+        // token in the selector yet can never match a real cell.
+        const lastCompound = selector.trim().split(/\s+/).pop() ?? "";
+        expect(lastCompound).toMatch(/\.hk-table-cell/);
+        expect(lastCompound).toMatch(/\[data-copy-cell(?:="")?\]/);
+      }
+    }
+    // The marked rule must also sit under the table-level opt-out gate:
+    // moving it into a dead block (`.hk-table:not([data-copy-cells])`)
+    // would keep a marker-bearing selector while the cursor never applies.
+    expect(css).toMatch(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*copy/,
+    );
+    // The control-track override repeats `.hk-table-cell` so its
+    // specificity TIES the marker rule above and, declared after it, wins
+    // the tie — the defense-in-depth promise needs that ordering.
+    expect(css).toMatch(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\.hk-table-manage-cell\{[^}]*?cursor:\s*default/,
+    );
+    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
+      css.indexOf("[data-copy-cell]"),
     );
   });
 });

@@ -23,6 +23,12 @@ import { useToast } from "../runtime/useToast";
  *   row-action affordance)
  * - `Column.copyable: false` and the table-wide `copy-cells=false` opt
  *   out wholesale
+ * - the `copy` cursor and the hover hint ride `[data-copy-cell]` — the
+ *   default text cells, in a copyable column, whose value still renders
+ *   text — never every cell, so the pointer describes what a background
+ *   click really does. Slot cells' inner leaves still copy, so their
+ *   plain arrow is a deliberate under-promise (2026-11-07 user
+ *   direction)
  * - `manageable` renders the trailing ⋯ column (HkRowActions) and
  *   emits `manage(row, opener)`; the trigger click never copies
  */
@@ -210,6 +216,105 @@ describe("HkTable cell copy layer", () => {
   });
 });
 
+describe("HkTable copy affordance marker", () => {
+  it("marks text cells in copyable columns only — slot and opt-out cells stay plain", () => {
+    // The slot cell's VALUE is non-empty (and the slot renders plain
+    // text), so `!isSlotCell` is the only reason it can fail here — a
+    // fixture with an empty value would hide that clause behind the
+    // emptiness gate.
+    const c = mount(
+      h(
+        HTable,
+        {
+          columns: [...COLS, { key: "secret", title: "Secret", copyable: false }],
+          rows: [
+            { name: "alpha", endpoint: "https://x.example", secret: "nope-token" },
+          ],
+        },
+        {
+          "cell-endpoint": () => "pure-text-slot",
+        },
+      ),
+    );
+    const tds = bodyCells(c);
+    // Default text cell: the marker and the hint are ONE predicate.
+    expect(tds[0]!.hasAttribute("data-copy-cell")).toBe(true);
+    expect(tds[0]!.getAttribute("title")).toBe("Click to copy");
+    // Slot cell: the td surface does NOT advertise. (A bare-text slot's
+    // surface click does copy the text — the marker still stays off: the
+    // slot owns its hints, so the arrow under-promises on purpose.)
+    expect(tds[1]!.textContent).toBe("pure-text-slot");
+    expect(tds[1]!.hasAttribute("data-copy-cell")).toBe(false);
+    expect(tds[1]!.getAttribute("title")).toBeNull();
+    // `copyable: false` column: same.
+    expect(tds[2]!.textContent).toBe("nope-token");
+    expect(tds[2]!.hasAttribute("data-copy-cell")).toBe(false);
+    expect(tds[2]!.getAttribute("title")).toBeNull();
+  });
+
+  it("an empty text cell copies nothing, so it advertises nothing", () => {
+    const c = mount(h(HTable, { columns: COLS, rows: [{ name: "   ", endpoint: "" }] }));
+    const tds = bodyCells(c);
+    expect(tds[0]!.hasAttribute("data-copy-cell")).toBe(false);
+    expect(tds[0]!.getAttribute("title")).toBeNull();
+  });
+
+  it("a value that renders no text (boolean / null) advertises nothing", async () => {
+    // Vue normalizes booleans and null into comment placeholders, so the
+    // cell renders nothing and a click cannot copy anything — a
+    // `String(value)`-based predicate would have lied here.
+    const c = mount(
+      h(HTable, {
+        columns: COLS,
+        rows: [{ name: false, endpoint: null }],
+      }),
+    );
+    const tds = bodyCells(c);
+    for (const td of tds) {
+      expect(td.textContent).toBe("");
+      expect(td.hasAttribute("data-copy-cell")).toBe(false);
+    }
+    // This pins the HANDLER's own emptiness gate (depth in front of the
+    // marker predicate), not the marker: the two must not drift apart.
+    tds[0]!.click();
+    await settle();
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it("the drag, selection and row-action tracks are never copy surfaces", () => {
+    const c = mount(
+      h(HTable, {
+        columns: COLS,
+        rows: [{ name: "alpha", endpoint: "https://x.example" }],
+        draggable: true,
+        selectable: true,
+        manageable: true,
+      }),
+    );
+    // drag grip, selection, name, endpoint, row actions.
+    const tds = Array.from(c.querySelectorAll<HTMLElement>("tbody td"));
+    expect(tds).toHaveLength(5);
+    expect(tds[0]!.classList.contains("hk-table-drag-cell")).toBe(true);
+    expect(tds[1]!.querySelector(".hk-table-checkbox-input")).not.toBeNull();
+    expect(tds[4]!.classList.contains("hk-table-manage-cell")).toBe(true);
+    for (const td of [tds[0]!, tds[1]!, tds[4]!]) {
+      expect(td.hasAttribute("data-copy-cell")).toBe(false);
+    }
+    // Both data cells still advertise.
+    expect(tds[2]!.hasAttribute("data-copy-cell")).toBe(true);
+    expect(tds[3]!.hasAttribute("data-copy-cell")).toBe(true);
+  });
+
+  it("copy-cells=false drops the marker together with the layer", () => {
+    const c = mount(
+      h(HTable, { columns: COLS, rows: [{ name: "alpha", endpoint: "x" }], copyCells: false }),
+    );
+    for (const td of bodyCells(c)) {
+      expect(td.hasAttribute("data-copy-cell")).toBe(false);
+    }
+  });
+});
+
 describe("HkTable manageable column", () => {
   it("renders the trailing ⋯ column and emits manage(row, opener)", async () => {
     const rows = [
@@ -291,15 +396,19 @@ describe("HkTable interaction stylesheet", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const scss = readFileSync(join(here, "HkTable.scss"), "utf-8");
 
-  it("scopes the selection kill + copy cursor under data-copy-cells", () => {
+  it("scopes the selection kill under data-copy-cells", () => {
     expect(scss).toContain(".hk-table[data-copy-cells]");
     const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));
     expect(block).toContain("@include user-select(none)");
     // The -webkit-/standard pair comes from styles/polyfill.scss (guarded
     // by its contract test) — a hand-written pair here would be drift.
     expect(block).not.toMatch(/(?:^|\n)\s*-webkit-user-select:/);
-    expect(block).toContain("cursor: copy");
   });
+
+  // The cursor half of the contract is pinned on the COMPILED sheet in
+  // styles/selectionSheet.test.ts: raw-text matching here cannot tell a
+  // live rule from a commented-out one, nor catch a selector list that
+  // re-widens the rule.
 
   it("the manage cell is a control track, not a copy surface", () => {
     const block = scss.slice(scss.indexOf(".hk-table[data-copy-cells]"));

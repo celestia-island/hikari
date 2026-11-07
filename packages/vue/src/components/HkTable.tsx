@@ -29,6 +29,27 @@ interface Column {
   copyable?: boolean;
 }
 
+/** One group in a grouped/sectioned table (`sections`). The section owns
+ *  its rows: sorting, selection and drag-to-reorder all run WITHIN it,
+ *  and its band is rendered inside the table body — the single column
+ *  header stays at the top, exactly once. */
+export interface HkTableSection {
+  key: string;
+  /** Default band text; the `section` slot overrides the whole band content. */
+  label?: string;
+  rows: Record<string, unknown>[];
+}
+
+/** A section's live display state: the sorted rows plus the flat offset
+ *  its first row occupies in the concatenation of every section's rows
+ *  (the index space `reorder` emits and selection walks). */
+interface SectionView {
+  section: HkTableSection;
+  index: number;
+  rows: Record<string, unknown>[];
+  offset: number;
+}
+
 /** Per-row gate for the manage column: `true` renders the trigger;
  *  `false` renders an empty cell (permission gates, rows without
  *  actions — the roster convention is no ⋯ at all, not a dead button);
@@ -76,7 +97,16 @@ export default defineComponent({
   name: "HkTable",
   props: {
     columns: { type: Array as PropType<Column[]>, required: true },
-    rows: { type: Array as PropType<Record<string, unknown>[]>, required: true },
+    rows: { type: Array as PropType<Record<string, unknown>[]>, default: () => [] },
+    /** Grouped mode: when provided, `rows` is unused and the body renders
+     *  ONE `<tbody class="hk-table-section-body">` per section, each led by
+     *  a band row (`<th scope="rowgroup">`, `colspan` = total columns).
+     *  The column header still renders exactly once at the top. Sorting,
+     *  selection and the drag strip all run within each section; a row can
+     *  never be dragged into another section. An empty section keeps its
+     *  band (callers show unreachable/empty panels), and when every section
+     *  is empty the trailing empty row still renders. */
+    sections: { type: Array as PropType<HkTableSection[]>, default: undefined },
     rowKey: { type: String, default: undefined },
     caption: { type: String, default: undefined },
     size: { type: String as PropType<"sm" | "md" | "lg">, default: "md" },
@@ -90,7 +120,13 @@ export default defineComponent({
      *  consumer applies `moveTo(rows, from, to)`. While a column sort is
      *  active the displayed arrangement is derived, so two indices cannot
      *  faithfully encode the visual move: reordering is INERT until the
-     *  sort is cleared (the handles render dimmed and refuse presses). */
+     *  sort is cleared (the handles render dimmed and refuse presses).
+     *  With `sections` the drag strip is CLAMPED to the section that owns
+     *  the pressed row (a row can never be dropped into another section),
+     *  and the emitted `reorder(from, to)` indices are FLAT indices into
+     *  the concatenation of every section's rows — section-local index
+     *  plus that section's flat offset — so a consumer holding one flat
+     *  array can apply the move. */
     draggable: { type: Boolean, default: false },
     /** 2026-10-18 table-interaction contract: table content is not
      *  prose. When on (the default for every roster/admin table), plain
@@ -267,10 +303,13 @@ export default defineComponent({
       sortDirection.value = "asc";
     }
 
-    const sortedRows = computed(() => {
-      if (!sortKey.value) return [...props.rows];
+    /** Sort one row list by the active column sort. Sectioned tables call
+     *  this per section (the section order is preserved); the unsectioned
+     *  table calls it on `rows` — the exact arrangement it always had. */
+    function sortRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+      if (!sortKey.value) return [...rows];
       const dir = sortDirection.value === "asc" ? 1 : -1;
-      return [...props.rows].sort((a, b) => {
+      return [...rows].sort((a, b) => {
         const aVal = a[sortKey.value!];
         const bVal = b[sortKey.value!];
         if (aVal == null && bVal == null) return 0;
@@ -280,7 +319,31 @@ export default defineComponent({
         if (aVal > bVal) return 1 * dir;
         return 0;
       });
+    }
+
+    const sortedRows = computed(() => sortRows(props.rows));
+
+    /** The sectioned display plan: each section's rows sorted WITHIN the
+     *  section, section order untouched, plus the flat offset its first row
+     *  occupies. Offsets are computed from the displayed (sorted) lengths so
+     *  a reorder emit and the selection walk agree on one index space. */
+    const sectionView = computed<SectionView[]>(() => {
+      if (!props.sections) return [];
+      let offset = 0;
+      return props.sections.map((section, index) => {
+        const rows = sortRows(section.rows);
+        const view: SectionView = { section, index, rows, offset };
+        offset += rows.length;
+        return view;
+      });
     });
+
+    /** Every displayed data row, in display order — the flat list selection
+     *  and `reorder` indices are expressed against. Unsectioned: today's
+     *  `sortedRows`; sectioned: the concatenation of every section's rows. */
+    const displayRows = computed(() =>
+      props.sections ? sectionView.value.flatMap((view) => view.rows) : sortedRows.value,
+    );
 
     function toggleRow(row: Record<string, unknown>, index: number) {
       const key = getRowKey(row, index);
@@ -290,29 +353,36 @@ export default defineComponent({
       selectedRowKeys.value = next;
       emit(
         "update:selectedRows",
-        sortedRows.value.filter((r, i) => next.has(getRowKey(r, i)))
+        displayRows.value.filter((r, i) => next.has(getRowKey(r, i)))
       );
     }
 
     function toggleAll() {
-      if (selectedRowKeys.value.size === sortedRows.value.length) {
+      if (selectedRowKeys.value.size === displayRows.value.length) {
         selectedRowKeys.value = new Set();
         emit("update:selectedRows", []);
       } else {
-        const keys = new Set(sortedRows.value.map((r, i) => getRowKey(r, i)));
+        const keys = new Set(displayRows.value.map((r, i) => getRowKey(r, i)));
         selectedRowKeys.value = keys;
-        emit("update:selectedRows", [...sortedRows.value]);
+        emit("update:selectedRows", [...displayRows.value]);
       }
     }
 
     const allChecked = computed(
       () =>
         props.selectable &&
-        sortedRows.value.length > 0 &&
-        selectedRowKeys.value.size === sortedRows.value.length
+        displayRows.value.length > 0 &&
+        selectedRowKeys.value.size === displayRows.value.length
     );
 
     // ── Drag-to-reorder (draggable) ─────────────────────────────────────
+    /** The section that owns the live press (`null` while no press owns
+     *  one). The drag strip is CLAMPED to it: `items()` returns only that
+     *  section's row elements, so the engine can never resolve a slot in
+     *  another section — the same clamp HkTagInput applies to its row drag
+     *  (the selected group is its drop space). */
+    const dragSectionKey = ref<string | null>(null);
+
     /** The strip the reorder engine measures: the body rows in display
      *  order, read from the DOM on demand.
      *
@@ -335,6 +405,19 @@ export default defineComponent({
       // resolve onto them.
       const own = host?.querySelector<HTMLElement>("table.hk-table") ?? null;
       if (!own) return [];
+      if (props.sections) {
+        const key = dragSectionKey.value;
+        if (key == null) return [];
+        const body =
+          Array.from(own.querySelectorAll<HTMLElement>("tbody.hk-table-section-body")).find(
+            (candidate) =>
+              candidate.closest("table") === own && candidate.dataset.sectionKey === key,
+          ) ?? null;
+        if (!body) return [];
+        return Array.from(body.querySelectorAll<HTMLElement>(".hk-table-row")).filter(
+          (row) => row.parentElement === body && row.closest("table") === own,
+        );
+      }
       return Array.from(own.querySelectorAll<HTMLElement>("tbody > .hk-table-row")).filter(
         (row) => row.closest("table") === own,
       );
@@ -349,6 +432,18 @@ export default defineComponent({
      *  clears the sort (tri-state), which is the way back to dragging. */
     const reorderInert = computed(() => sortKey.value !== null);
 
+    /** Freeze the arrangement and emit the commit. With sections the strip
+     *  indices are SECTION-LOCAL, so the emitted pair is translated into
+     *  the flat index space — `section offset + local index` — which is the
+     *  array a consumer holds after concatenating its sections. */
+    function commitReorder(view: SectionView | null, from: number, to: number): void {
+      arrangementSectionKey.value = view?.section.key ?? null;
+      arrangement.value = { from, slot: to };
+      arrangementHeld.value = true;
+      const offset = view?.offset ?? 0;
+      emit("reorder", offset + from, offset + to);
+    }
+
     /** `moveTo` in the consumer's array: the entry at `from` takes `to`'s
      *  place and the entries between shift by one (HkTagInput's drop
      *  semantics — insert-at-target, what dropping a row ON another row
@@ -356,6 +451,26 @@ export default defineComponent({
     function onReorderDrop(from: number, to: number): void {
       if (reorderInert.value) return;
       if (from === to || from < 0 || to < 0) return;
+      if (props.sections) {
+        const key = dragSectionKey.value;
+        const view =
+          key == null
+            ? null
+            : sectionView.value.find((candidate) => candidate.section.key === key) ?? null;
+        // The strip was clamped to this section at press time; a section
+        // that vanished under the drag has no drop to commit.
+        if (!view) return;
+        if (from >= view.rows.length || to >= view.rows.length) return;
+        // The arrangement the user dropped is ALREADY on screen (the live
+        // shift painted it while the pointer hovered) — freeze it, so the
+        // commit-whenever-the-consumer-lands-it is seamless: the render that
+        // carries the new order paints the rows exactly where the shift
+        // already put them. A consumer that persists over the network first
+        // (the house pattern: every admin list upsert) keeps showing the
+        // chosen order instead of snapping back to the pre-drop one.
+        commitReorder(view, from, to);
+        return;
+      }
       if (from >= props.rows.length || to >= props.rows.length) return;
       // The arrangement the user dropped is ALREADY on screen (the live
       // shift painted it while the pointer hovered) — freeze it, so the
@@ -364,9 +479,7 @@ export default defineComponent({
       // already put them. A consumer that persists over the network first
       // (the house pattern: every admin list upsert) keeps showing the
       // chosen order instead of snapping back to the pre-drop one.
-      arrangement.value = { from, slot: to };
-      arrangementHeld.value = true;
-      emit("reorder", from, to);
+      commitReorder(null, from, to);
     }
 
     /** The scrollable ancestor a live drag pulls along, resolved on demand
@@ -425,9 +538,17 @@ export default defineComponent({
       width: number;
     }
     const stripMeasure = ref<StripMeasure | null>(null);
+    /** The section the measured strip — and the arrangement painted over
+     *  it — belongs to. `rowShift` is fed section-local indices and only
+     *  shifts rows of THIS section; every other section's rows stay put, so
+     *  a clamped drag can never paint a cross-section glide. Null while
+     *  unsectioned. */
+    const arrangementSectionKey = ref<string | null>(null);
     /** The painted arrangement: display index `from`'s placeholder sits at
      *  slot `slot`. Live while the drag moves; FROZEN after a real drop
-     *  (see `onReorderDrop`) until `rows` carries the emitted move. */
+     *  (see `onReorderDrop`) until `rows` carries the emitted move. With
+     *  sections these are SECTION-LOCAL strip indices; the emitted
+     *  `reorder` pair is the flat translation. */
     const arrangement = ref<{ from: number; slot: number } | null>(null);
     const arrangementHeld = ref(false);
 
@@ -479,6 +600,9 @@ export default defineComponent({
         left: source?.left ?? 0,
         width: source?.width ?? 0,
       };
+      // The measured strip IS the pressed section's row list: name that
+      // section so rowShift only paints the rows it measured.
+      arrangementSectionKey.value = props.sections ? dragSectionKey.value : null;
     }
 
     // ── The ghost ──
@@ -611,6 +735,7 @@ export default defineComponent({
         releaseTimer = null;
         releasing.value = false;
         arrangement.value = null;
+        arrangementSectionKey.value = props.sections ? dragSectionKey.value : null;
         measureStrip();
         captureGhost();
         onceFrame(() => {
@@ -629,6 +754,7 @@ export default defineComponent({
           // Cancel / release on the origin: glide the arrangement home.
           const moved = arrangement.value != null && arrangement.value.from !== arrangement.value.slot;
           arrangement.value = null;
+          arrangementSectionKey.value = null;
           if (moved) {
             releasing.value = true;
             anim.run();
@@ -640,6 +766,10 @@ export default defineComponent({
           }
         }
         fadeGhost();
+        // The gesture is over: the next press arms its own section (and a
+        // held drop keeps painting through `arrangementSectionKey`, which
+        // outlives this release).
+        dragSectionKey.value = null;
       }
     });
 
@@ -648,21 +778,24 @@ export default defineComponent({
       const from = rowDrag.dragFrom.value;
       const a = arrangement.value;
       if (a && a.from === from && a.slot === slot) return;
+      arrangementSectionKey.value = props.sections ? dragSectionKey.value : null;
       arrangement.value = { from, slot };
       // A slot equal to the origin paints no shift — reporting motion for
       // nothing would only tell the bus a lie.
       if (from !== slot) anim.run();
     });
 
-    watch(() => props.rows, () => {
-      // The consumer's array moved — the committed drop, an external edit,
-      // a refresh. The held arrangement's job is done: clearing in this
-      // same pre-render flush paints the new order and drops the shifts in
-      // one paint, which coincide (that is the freeze's whole point).
+    watch([() => props.rows, () => props.sections], () => {
+      // The consumer's array (or section list) moved — the committed drop,
+      // an external edit, a refresh. The held arrangement's job is done:
+      // clearing in this same pre-render flush paints the new order and
+      // drops the shifts in one paint, which coincide (that is the freeze's
+      // whole point).
       // NOTE the contract: reference replacement. A consumer mutating the
       // array in place must emit a replacement (or re-key) for the hold to
       // lift — the house consumers all do.
       arrangementHeld.value = false;
+      arrangementSectionKey.value = null;
       if (rowDrag.dragging.value) {
         // A strip replaced UNDER a live drag: the measurement is stale
         // (tops were read at press time) and the engine will resolve
@@ -682,10 +815,17 @@ export default defineComponent({
       detachGhost();
     });
 
-    function onHandlePointerdown(e: PointerEvent, index: number): void {
+    function onHandlePointerdown(
+      e: PointerEvent,
+      index: number,
+      sectionKey: string | null,
+    ): void {
       if (reorderInert.value) return;
-      // The press's own row is looked up in the live strip: the render-time
-      // index is a fallback for a handle that somehow left the table.
+      // Arm the strip's section BEFORE the engine reads `items()`: the
+      // press's own row is looked up in the live (clamped) strip, and the
+      // render-time index is only a fallback for a handle that somehow
+      // left the table.
+      dragSectionKey.value = props.sections ? sectionKey : null;
       const row = (e.currentTarget as HTMLElement | null)?.closest("tr");
       const strip = row ? liveRowEls().indexOf(row as HTMLElement) : index;
       if (strip >= 0) {
@@ -693,18 +833,36 @@ export default defineComponent({
         // lift off this point so the grab stays under the pointer.
         pressClientY = e.clientY;
         rowDrag.start(e, strip);
+      } else {
+        dragSectionKey.value = null;
       }
     }
 
-    /** Keyboard twin of the drop: move one row one slot. Runs on a focused
-     *  handle, so plain ArrowUp/Down are unambiguous (no competing cursor
-     *  semantics on a button) and are consumed even at the ends, where the
-     *  row has nowhere to go. */
-    function onHandleKeydown(e: KeyboardEvent, index: number): void {
+    /** Keyboard twin of the drop: move one row one slot, CLAMPED to the
+     *  row's section and emitted as flat indices (section offset + local
+     *  pair). Runs on a focused handle, so plain ArrowUp/Down are
+     *  unambiguous (no competing cursor semantics on a button) and are
+     *  consumed even at the ends, where the row has nowhere to go. */
+    function onHandleKeydown(
+      e: KeyboardEvent,
+      index: number,
+      sectionKey: string | null,
+    ): void {
       if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
       e.preventDefault();
       if (reorderInert.value) return;
       const delta = e.key === "ArrowUp" ? -1 : 1;
+      if (props.sections) {
+        const view =
+          sectionKey == null
+            ? null
+            : sectionView.value.find((candidate) => candidate.section.key === sectionKey) ?? null;
+        if (!view) return;
+        const to = index + delta;
+        if (index < 0 || to < 0 || index >= view.rows.length || to >= view.rows.length) return;
+        commitReorder(view, index, to);
+        return;
+      }
       onReorderDrop(index, index + delta);
     }
 
@@ -758,6 +916,147 @@ export default defineComponent({
         (props.draggable ? 1 : 0) +
         (props.manageable ? 1 : 0)
     );
+
+    /** The one empty state: rendered inside the sole body when unsectioned,
+     *  and as a trailing body when EVERY section is empty (each section
+     *  still keeps its band — chest must keep unreachable/empty panels
+     *  visible). */
+    function renderEmptyRow() {
+      return (
+        <tr>
+          <td colspan={totalCols.value} class="hk-table-empty">
+            {slots.empty ? slots.empty() : (props.emptyText || t("hikari::table.noData", "No data"))}
+          </td>
+        </tr>
+      );
+    }
+
+    /** One data row, shared by the unsectioned body and every section body.
+     *  `localIndex` is the display index INSIDE its section (the index the
+     *  `cell-<key>` slots receive and the clamped drag strip resolves
+     *  against); `flatIndex` is the index in the concatenation of every
+     *  section's rows (row identity fallback + selection + `reorder`
+     *  emits). Unsectioned, the two are the same number. */
+    function renderDataRow(
+      row: Record<string, unknown>,
+      localIndex: number,
+      flatIndex: number,
+      sectionKey: string | null,
+    ) {
+      const rowKey = getRowKey(row, flatIndex);
+      // The FLIP shift this row rides under the live (or frozen)
+      // arrangement — 0 for rows the arrangement leaves put. It travels to
+      // the CELLS as a custom property, not as a row transform: `<tr>`
+      // transforms are unreliable across engines (the predecessor lift
+      // avoided them for exactly this), while a <td> is a plain box
+      // everywhere — and a custom property is inert paint-wise, so the row
+      // element only NAMES the shift and the stylesheet moves the paint.
+      // A sectioned strip is measured from its OWN section's rows, so a row
+      // outside the arrangement's section is never fed a strip index.
+      const shiftPx = rowShift(
+        sectionKey !== null && sectionKey !== arrangementSectionKey.value ? -1 : localIndex,
+      );
+      return (
+        <tr
+          key={rowKey}
+          class="hk-table-row"
+          style={shiftPx ? { "--hk-drag-shift": `${shiftPx}px` } : undefined}
+          data-shift={shiftPx ? "" : undefined}
+          data-dragging={rowDrag.dragging.value && rowDrag.dragFrom.value === localIndex ? "" : undefined}
+        >
+          {props.draggable && (
+            <td class="hk-table-cell hk-table-drag-cell">
+              {/* A span, not a <button>: the reorder engine (house
+                  rule, HkDraggableList's handle too) treats presses
+                  on interactive controls as ACTIVATION, not drag —
+                  the grip is a span so a press on it IS the drag
+                  gesture. Keyboard stays first-class: focusable,
+                  ArrowUp/Down nudges the row (aria-keyshortcuts). */}
+              <span
+                role="button"
+                tabindex={0}
+                class="hk-table-drag-handle"
+                aria-label={handleName(row)}
+                title={handleName(row)}
+                aria-keyshortcuts="ArrowUp ArrowDown"
+                aria-disabled={reorderInert.value || undefined}
+                data-disabled={reorderInert.value || undefined}
+                onPointerdown={(e: PointerEvent) =>
+                  onHandlePointerdown(e, localIndex, sectionKey)
+                }
+                onKeydown={(e: KeyboardEvent) => onHandleKeydown(e, localIndex, sectionKey)}
+              >
+                <GripVertical size={14} aria-hidden="true" />
+              </span>
+            </td>
+          )}
+          {props.selectable && (
+            <td class="hk-table-cell" style={{ width: "40px" }}>
+              <label class="hk-table-checkbox-label">
+                <input
+                  type="checkbox"
+                  class="hk-table-checkbox-input"
+                  checked={selectedRowKeys.value.has(rowKey)}
+                  onChange={() => toggleRow(row, flatIndex)}
+                />
+                <span
+                  class={[
+                    "hk-table-checkbox",
+                    "hk-table-checkbox-md",
+                    selectedRowKeys.value.has(rowKey) ? "hk-table-checkbox-checked" : "",
+                  ]}
+                >
+                  {selectedRowKeys.value.has(rowKey) && (
+                    <Check class="hk-table-checkbox-icon" stroke-width={3} />
+                  )}
+                </span>
+              </label>
+            </td>
+          )}
+          {props.columns.map((col) => {
+            const isSlotCell = Boolean(slots[`cell-${col.key}`]);
+            const value = row[col.key];
+            // ONE predicate behind the hover hint AND the
+            // `copy` cursor (`data-copy-cell`): a DEFAULT text
+            // cell advertises the copy affordance only when its
+            // background click really copies — the td is a text
+            // leaf that still RENDERS text (see `renderedText`).
+            // Slot cells (chips/badges/wrappers) never take the
+            // click on their td surface (only inner text leaves
+            // copy) and `copyable: false` columns copy nothing,
+            // so both keep the plain arrow — a deliberate
+            // under-promise, never an over-promise (2026-11-07
+            // user direction: `cursor: copy` on every cell
+            // promised more than the handler does; badges carry
+            // their own pointer/tooltip). A slot that renders
+            // BARE text is the one case where the td surface
+            // does copy and still stays unmarked: the slot owns
+            // its own hints.
+            const cellCopies =
+              props.copyCells &&
+              col.copyable !== false &&
+              !isSlotCell &&
+              renderedText(value) !== "";
+            return (
+              <td
+                key={col.key}
+                class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
+                data-copy-cell={cellCopies ? "" : undefined}
+                title={cellCopies ? copyHint.value : undefined}
+                onClick={(e: MouseEvent) =>
+                  onCellClick(e, col, e.currentTarget as HTMLElement)
+                }
+              >
+                {isSlotCell
+                  ? slots[`cell-${col.key}`]!({ row, value, index: localIndex })
+                  : value}
+              </td>
+            );
+          })}
+          {props.manageable && renderManageCell(row)}
+        </tr>
+      );
+    }
 
     return () => {
       return (
@@ -828,126 +1127,56 @@ export default defineComponent({
               )}
             </tr>
           </thead>
-          <tbody class="hk-table-body">
-            {sortedRows.value.length === 0 ? (
-              <tr>
-                <td colspan={totalCols.value} class="hk-table-empty">
-                  {slots.empty ? slots.empty() : (props.emptyText || t("hikari::table.noData", "No data"))}
-                </td>
-              </tr>
-            ) : (
-              sortedRows.value.map((row, index) => {
-                const rowKey = getRowKey(row, index);
-                // The FLIP shift this row rides under the live (or frozen)
-                // arrangement — 0 for rows the arrangement leaves put. It
-                // travels to the CELLS as a custom property, not as a row
-                // transform: `<tr>` transforms are unreliable across
-                // engines (the predecessor lift avoided them for exactly
-                // this), while a <td> is a plain box everywhere — and a
-                // custom property is inert paint-wise, so the row element
-                // only NAMES the shift and the stylesheet moves the paint.
-                const shiftPx = rowShift(index);
-                return (
-                  <tr
-                    key={rowKey}
-                    class="hk-table-row"
-                    style={shiftPx ? { "--hk-drag-shift": `${shiftPx}px` } : undefined}
-                    data-shift={shiftPx ? "" : undefined}
-                    data-dragging={rowDrag.dragging.value && rowDrag.dragFrom.value === index ? "" : undefined}
-                  >
-                    {props.draggable && (
-                      <td class="hk-table-cell hk-table-drag-cell">
-                        {/* A span, not a <button>: the reorder engine (house
-                            rule, HkDraggableList's handle too) treats presses
-                            on interactive controls as ACTIVATION, not drag —
-                            the grip is a span so a press on it IS the drag
-                            gesture. Keyboard stays first-class: focusable,
-                            ArrowUp/Down nudges the row (aria-keyshortcuts). */}
-                        <span
-                          role="button"
-                          tabindex={0}
-                          class="hk-table-drag-handle"
-                          aria-label={handleName(row)}
-                          title={handleName(row)}
-                          aria-keyshortcuts="ArrowUp ArrowDown"
-                          aria-disabled={reorderInert.value || undefined}
-                          data-disabled={reorderInert.value || undefined}
-                          onPointerdown={(e: PointerEvent) => onHandlePointerdown(e, index)}
-                          onKeydown={(e: KeyboardEvent) => onHandleKeydown(e, index)}
-                        >
-                          <GripVertical size={14} aria-hidden="true" />
-                        </span>
-                      </td>
-                    )}
-                    {props.selectable && (
-                      <td class="hk-table-cell" style={{ width: "40px" }}>
-                        <label class="hk-table-checkbox-label">
-                          <input
-                            type="checkbox"
-                            class="hk-table-checkbox-input"
-                            checked={selectedRowKeys.value.has(rowKey)}
-                            onChange={() => toggleRow(row, index)}
-                          />
-                          <span
-                            class={[
-                              "hk-table-checkbox",
-                              "hk-table-checkbox-md",
-                              selectedRowKeys.value.has(rowKey) ? "hk-table-checkbox-checked" : "",
-                            ]}
-                          >
-                            {selectedRowKeys.value.has(rowKey) && (
-                              <Check class="hk-table-checkbox-icon" stroke-width={3} />
-                            )}
-                          </span>
-                        </label>
-                      </td>
-                    )}
-                    {props.columns.map((col) => {
-                      const isSlotCell = Boolean(slots[`cell-${col.key}`]);
-                      const value = row[col.key];
-                      // ONE predicate behind the hover hint AND the
-                      // `copy` cursor (`data-copy-cell`): a DEFAULT text
-                      // cell advertises the copy affordance only when its
-                      // background click really copies — the td is a text
-                      // leaf that still RENDERS text (see `renderedText`).
-                      // Slot cells (chips/badges/wrappers) never take the
-                      // click on their td surface (only inner text leaves
-                      // copy) and `copyable: false` columns copy nothing,
-                      // so both keep the plain arrow — a deliberate
-                      // under-promise, never an over-promise (2026-11-07
-                      // user direction: `cursor: copy` on every cell
-                      // promised more than the handler does; badges carry
-                      // their own pointer/tooltip). A slot that renders
-                      // BARE text is the one case where the td surface
-                      // does copy and still stays unmarked: the slot owns
-                      // its own hints.
-                      const cellCopies =
-                        props.copyCells &&
-                        col.copyable !== false &&
-                        !isSlotCell &&
-                        renderedText(value) !== "";
-                      return (
-                        <td
-                          key={col.key}
-                          class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
-                          data-copy-cell={cellCopies ? "" : undefined}
-                          title={cellCopies ? copyHint.value : undefined}
-                          onClick={(e: MouseEvent) =>
-                            onCellClick(e, col, e.currentTarget as HTMLElement)
-                          }
-                        >
-                          {isSlotCell
-                            ? slots[`cell-${col.key}`]!({ row, value, index })
-                            : value}
-                        </td>
-                      );
-                    })}
-                    {props.manageable && renderManageCell(row)}
+          {props.sections ? (
+            <>
+              {sectionView.value.map((view) => (
+                <tbody
+                  key={view.section.key}
+                  class="hk-table-body hk-table-section-body"
+                  data-section-key={view.section.key}
+                >
+                  {/* The band: a real rowgroup header, never a data row.
+                      It carries no `.hk-table-row`, so the copy layer,
+                      hover paint, drag-strip measurement, selection and the
+                      ⋯ column all ignore it by construction. */}
+                  <tr class="hk-table-section-row">
+                    <th
+                      class="hk-table-section-cell"
+                      scope="rowgroup"
+                      colspan={totalCols.value}
+                    >
+                      {slots.section
+                        ? slots.section({ section: view.section, index: view.index })
+                        : view.section.label != null
+                          ? (
+                            <span class="hk-table-section-label">{view.section.label}</span>
+                          )
+                          : null}
+                    </th>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
+                  {view.rows.map((row, localIndex) =>
+                    renderDataRow(
+                      row,
+                      localIndex,
+                      view.offset + localIndex,
+                      view.section.key,
+                    ),
+                  )}
+                </tbody>
+              ))}
+              {displayRows.value.length === 0 && (
+                <tbody class="hk-table-body">{renderEmptyRow()}</tbody>
+              )}
+            </>
+          ) : (
+            <tbody class="hk-table-body">
+              {sortedRows.value.length === 0
+                ? renderEmptyRow()
+                : sortedRows.value.map((row, index) =>
+                    renderDataRow(row, index, index, null),
+                  )}
+            </tbody>
+          )}
         </table>
         </div>
       </div>

@@ -89,6 +89,12 @@
 //     `reorder`). The POINTER engine (ghost clone, FLIP shift, pointer
 //     capture, live strip measurement) is not mirrored — it needs
 //     per-instance refs + measurement, which tairitsu 0.5.22 does not expose.
+//   * `sections` (grouped tables: ONE `<thead>` + one `<tbody>` per section
+//     with a `<th scope="rowgroup">` band, per-section sorting/selection, and
+//     a drag strip CLAMPED to the section that owns the pressed row) is
+//     Vue-only for now: mirroring it needs per-section DOM query + clamp
+//     state that this wave does not carry (and the pointer engine above is
+//     not mirrored either).
 //   * `manageable` is a boolean (render the column) and the per-row verdict
 //     rides [`TableRow::manage`]: Vue's gate is `boolean | (row) => boolean |
 //     "disabled"`, and a function prop cannot be a `PartialEq` props field.

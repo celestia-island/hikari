@@ -76,10 +76,18 @@ function flaggedRules(source: string): Array<{ selector: string; body: string }>
   return out;
 }
 
-/** The block's own transition declaration (multi-line shorthands joined). */
-function transitionOf(block: string): string {
-  const match = block.match(/transition:[^;]+;/);
-  return match?.[0]?.replace(/\s+/g, " ").trim() ?? "";
+/** Every transition declaration in the block (multi-line shorthands
+ *  joined, in order). Reading ALL of them closes the coverage hole the
+ *  mutation round proved (H1): a stray second `transition:` declaration
+ *  silently overrides the first in real CSS (last wins), so leg checks
+ *  scoped to the first would pass while the real grammar went rogue.
+ *  The flagged-rule assertions below additionally require EXACTLY one
+ *  declaration — two shorthands in one rule is an authoring hazard the
+ *  mechanical contract refuses outright. */
+function transitionOf(block: string): string[] {
+  return [...block.matchAll(/transition:[^;]+;/g)].map((m) =>
+    m[0].replace(/\s+/g, " ").trim(),
+  );
 }
 
 describe("sheet family morph-flag ↔ transition-grammar contract", () => {
@@ -94,10 +102,15 @@ describe("sheet family morph-flag ↔ transition-grammar contract", () => {
   it("every flagged rule carries a clip-path leg and no dead height/max-height legs", () => {
     for (const sheet of FAMILY_SHEETS) {
       for (const rule of flaggedRules(read(sheet))) {
-        const tr = transitionOf(rule.body);
+        const declarations = transitionOf(rule.body);
+        expect(
+          declarations.length,
+          `${sheet} ${rule.selector} carries exactly one transition declaration (a stray second silently overrides the first in real CSS)`,
+        ).toBe(1);
+        const tr = declarations[0] ?? "";
         expect(tr, `${sheet} ${rule.selector} has a transition`).toContain("clip-path");
         expect(tr, `${sheet} ${rule.selector} height leg is dead in clip mode`).not.toMatch(
-          /\bheight\b/,
+          /(?<!max-)\bheight\b/,
         );
         expect(
           tr,

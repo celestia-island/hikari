@@ -64,6 +64,29 @@
   flex-shrink: 0;
 }
 
+/* Presence pulse (data-pulse, dot required): an in-flight / live state
+   breathes instead of sitting static. Opacity-only so the pill's layout
+   box never moves; consumers wanting a glow layer their own shadow. */
+@keyframes hk-badge-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.hk-badge[data-pulse] [data-el="dot"] {
+  animation: hk-badge-dot-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-badge[data-pulse] [data-el="dot"] {
+    animation: none;
+  }
+}
+
 /* dot-only: strip the pill padding/border/background so it's just the
    indicator dot, not a dot wrapped in a bordered pill. */
 .hk-badge[data-dot-only] {

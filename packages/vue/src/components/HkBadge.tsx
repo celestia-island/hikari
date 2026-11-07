@@ -15,6 +15,9 @@ export default defineComponent({
   props: {
     variant: { type: String as PropType<BadgeVariant>, default: "default" },
     dot: { type: Boolean, default: false },
+    /** Animate the dot with a presence pulse (in-flight / live state).
+     * Meaningful only with `dot`; honors prefers-reduced-motion. */
+    pulse: { type: Boolean, default: false },
     size: { type: String as PropType<"sm" | "md">, default: "md" },
     mono: { type: Boolean, default: false },
     uppercase: { type: Boolean, default: false },
@@ -38,6 +41,7 @@ export default defineComponent({
         data-size={props.size}
         data-pill={props.pill ? undefined : "false"}
         data-mono={props.mono ? "" : undefined}
+        data-pulse={props.pulse && props.dot ? "" : undefined}
         data-uppercase={props.uppercase ? "" : undefined}
         data-dot-only={(props.dot && !slots.default) || undefined}
         style={Object.keys(style.value).length ? style.value : undefined}

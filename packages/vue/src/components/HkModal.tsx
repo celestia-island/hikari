@@ -332,7 +332,14 @@ export default defineComponent({
         // finding). Riding the block keeps the scrollport's content
         // untransformed; the block's own poke below the frame lands
         // off-screen on a bottom-docked sheet.
-        if (bodyRef.value) out.push({ el: bodyRef.value });
+        // While the desktop height ride owns the body's paint (its scaleY
+        // IS the choreography), the morph must not write an inline transform
+        // on the same element: an inline style outranks the ride's class
+        // rule, and the close would stop compressing (2026-11-07 user
+        // report: the window folded "together with the chrome"). The body
+        // ride matters for the ≤767px sheet sweep, where the ride geometry
+        // is disabled — so the two never legitimately overlap.
+        if (bodyRef.value && rideStateClass() === null) out.push({ el: bodyRef.value });
         return out;
       },
       // Republish the morph's real sweep span and its landing on the body
@@ -1126,6 +1133,7 @@ export default defineComponent({
             <div
                   ref={contentRef}
                   class={["hk-modal-content", "hk-ride", rideStateClass(), props.contentClass, ...machine.classesFor("hk-modal-content")]}
+                  data-hk-ride-ready={ride.hasCache() ? "" : undefined}
                   role="dialog"
                   aria-modal="true"
                   aria-label={resolvedSurfaceName.value}
@@ -1133,6 +1141,8 @@ export default defineComponent({
                   style={{
                     maxWidth: resolvedWidth.value,
                     zIndex: contentZ.value,
+                    ...ride.styleVars(),
+
                   }}
                   onClick={onContentClick}
                   tabindex={-1}

@@ -76,6 +76,11 @@
   height: var(--hk-ride-content, auto);
 }
 
+.hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-chrome-start,
+.hk-ride[data-hk-ride-ready].hk-ride--to > .hk-ride-chrome-start {
+  flex-shrink: 0;
+}
+
 .hk-ride[data-hk-ride-ready].hk-ride--from > .hk-ride-chrome-end,
 .hk-ride[data-hk-ride-ready].hk-ride--to > .hk-ride-chrome-end {
   position: absolute;

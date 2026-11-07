@@ -63,5 +63,10 @@ fontFamily: {
 A literal stack in a utility bypasses both copies above — it will not
 see the runtime context, it will not receive CJK-safety fixes, and it
 will drift (this is exactly how a `JetBrains Mono, Fira Code, …, mono`
-utility shipped downstream with zero CJK coverage). Literal stacks
-belong in exactly two places: `fontContext.ts` and `scale.scss`.
+utility shipped downstream with zero CJK coverage). Canonical literal
+stacks live in exactly two places: `fontContext.ts` and `scale.scss`.
+One Sass-variable fallback copy (`src/components/_hikari-vars.scss`)
+mirrors both stacks for the `var(--font-*, …)` fallbacks component
+sheets use — all four copies are pinned to each other by
+`fontStacks.contract.test.ts`, so adding a face anywhere else means
+updating every copy or failing the suite.

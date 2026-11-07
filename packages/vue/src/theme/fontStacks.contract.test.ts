@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { HIKARI_FONT_MONO, HIKARI_FONT_SANS } from "./fontContext";
+import { HIKARI_FONT_MONO, HIKARI_FONT_READING, HIKARI_FONT_SANS } from "./fontContext";
 
 /**
  * Font-stack sync contract (2026-11-07): the static SCSS tokens and the
@@ -51,26 +51,45 @@ describe("font stack sync (scale.scss ↔ fontContext.ts)", () => {
     }
   });
 
-  it("keeps --font-sans/--font-mono identical to the fontContext constants", () => {
+  it("keeps --font-sans/--font-reading/--font-mono identical to the fontContext constants", () => {
     for (const path of SCSS_SOURCES) {
       expect(tokenFromScss(path, "font-sans")).toBe(HIKARI_FONT_SANS);
+      expect(tokenFromScss(path, "font-reading")).toBe(HIKARI_FONT_READING);
       expect(tokenFromScss(path, "font-mono")).toBe(HIKARI_FONT_MONO);
     }
   });
 
-  it("orders every mono stack CJK-safe: a CJK UI face lands before the generic monospace catcher", () => {
-    // The generic catcher is where Linux fontconfig roulette lives — a CJK
-    // face must always be resolved before the stack reaches it. Known
-    // positive: this exact predicate fails on the pre-2026-11-07 stack,
-    // which ended `…"Microsoft YaHei", monospace` with no Linux CJK face.
-    for (const stack of [HIKARI_FONT_MONO, ...SCSS_SOURCES.map((p) => tokenFromScss(p, "font-mono"))]) {
+  it("keeps the Sass-variable fallback copies identical to the constants too", () => {
+    // _hikari-vars.scss mirrors both stacks as Sass variables for the
+    // `var(--font-*, …)` fallbacks component sheets use; normalize its
+    // single-quoted faces before comparing.
+    const normalize = (stack: string) => stack.replace(/'/g, '"').trim();
+    const vars = readFileSync(resolve(here, "../components/_hikari-vars.scss"), "utf-8");
+    const sassSans = vars.match(/\$hikari-font-family-sans:\s*([^;]+);/);
+    const sassMono = vars.match(/\$hikari-font-family-mono:\s*([^;]+);/);
+    expect(sassSans, "_hikari-vars.scss must declare the sans fallback").toBeTruthy();
+    expect(sassMono, "_hikari-vars.scss must declare the mono fallback").toBeTruthy();
+    expect(normalize(sassSans![1]!)).toBe(HIKARI_FONT_SANS);
+    expect(normalize(sassMono![1]!)).toBe(HIKARI_FONT_MONO);
+  });
+
+  it("orders every mono stack CJK-safe: the Linux CJK face lands before the generic monospace catcher", () => {
+    // The generic catcher is where Linux fontconfig roulette lives — the
+    // Linux-reachable CJK face must always be resolved before the stack
+    // reaches it. Known positive: this exact predicate FAILS on the
+    // pre-2026-11-07 stack (`…"PingFang SC", "Microsoft YaHei",
+    // monospace`) — "PingFang SC" / "Microsoft YaHei" don't exist on
+    // Linux builds, so a predicate accepting ANY CJK face there would
+    // have passed the stack that caused the incident. Only the
+    // Linux-coverable face satisfies it.
+    for (const stack of [HIKARI_FONT_MONO, ...SCSS_SOURCES.map((p) => tokenFromScss(p, "font-mono")),]) {
       const faces = stack.split(",").map((f) => f.trim().replace(/^"|"$/g, ""));
       const catcher = faces.indexOf("monospace");
       expect(catcher, "stack must end in the generic monospace catcher").toBe(faces.length - 1);
       const beforeCatcher = faces.slice(0, catcher);
       expect(
-        beforeCatcher.some((f) => /Noto Sans CJK|PingFang|Microsoft YaHei|Hiragino Sans GB/.test(f)),
-        `CJK UI face must precede the monospace catcher: ${stack}`,
+        beforeCatcher.some((f) => /Noto Sans CJK/.test(f)),
+        `Linux CJK face must precede the monospace catcher: ${stack}`,
       ).toBe(true);
     }
   });

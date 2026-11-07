@@ -26,7 +26,7 @@ function collectSourceFiles(dir: string): string[] {
     if (entry.isDirectory()) {
       if (p === path.resolve(srcDir, "animation")) continue;
       out.push(...collectSourceFiles(p));
-    } else if (/\.(scss|ts|tsx)$/.test(entry.name) && !/\btest\.[tj]sx?$/.test(entry.name)) {
+    } else if (/\.(scss|ts|tsx)$/.test(entry.name) && !/\.(test|spec)\.[tj]sx?$/.test(entry.name)) {
       out.push(p);
     }
   }

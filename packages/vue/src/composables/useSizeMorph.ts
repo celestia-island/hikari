@@ -35,12 +35,16 @@ export interface SizeMorph {
   /** Arm the morph: observe the content and pin the frame's natural
    *  height on every change. Call once the surface finished its open
    *  enter — the enter must own the frame's geometry (HkModal and
-   *  HkSelectPanel both arm at the machine's `open` edge; the enter
-   *  classes are off the frame by then, so calibration reads the rest
-   *  state). There is no early-arm protocol anymore: the modal's enter
-   *  is opacity+transform and never reads the frame's height, so an
-   *  enter-time pin would only freeze a stale height under
-   *  `overflow: hidden`. */
+   *  HkSelectPanel both arm at the machine's `open` edge). The call may
+   *  land one render flush before the enter classes actually leave the
+   *  frame (the machine flips the phase synchronously, Vue re-renders on
+   *  the next flush); that is safe because no enter class carries layout
+   *  rules that differ from rest — the choreographies are
+   *  opacity+transform, and the ≤767px from-pair's `height: auto`
+   *  coincides with the unpinned rest height — so calibration still
+   *  reads the rest geometry. There is no early-arm protocol anymore:
+   *  the modal's enter never reads the frame's height, so an enter-time
+   *  pin would only freeze a stale height under `overflow: hidden`. */
   start(): void;
   /** Disarm the morph and release the frame to `height: auto` — call
    *  before a surface's leave/close so the exit animation owns the
@@ -56,7 +60,13 @@ export interface SizeMorph {
    *  does this, its reopen edge releases the pin first; held content is unchanged, delta
    *  zero; a re-pin to a CHANGED natural while an enter's transition
    *  classes own the frame lands without a height animation, i.e. snaps
-   *  — acceptable, the enter's own choreography owns that moment). */
+   *  — acceptable, the enter's own choreography owns that moment).
+   *  Recorded design note: a close during an ENTER that never reached
+   *  `open` finds the morph disarmed (hold() early-returns) and the
+   *  leave folds on the live `height: auto` — the same unpinned grammar
+   *  the enter plays, and preferable to folding on a stale mount-time
+   *  pin. contentHold freezes the rendered leaf state at closingFrom, so
+   *  only a self-updating child could resize such a fold. */
   hold(): void;
   /** Drop the height pin and hand the frame back to `height: auto`
    *  without disarming anything (a hold()ed morph stays disarmed; an
@@ -177,7 +187,9 @@ export interface SizeMorphOptions {
  * shrink animation the clip-path-only transition list had lost
  * (2026-09-21 chest report, round 5) without reintroducing a frame of
  * per-frame layout. The layer promotion is RESIDENT for the whole arm
- * cycle (applied at start(), cleared on hold/release): promoting at the
+ * cycle (applied at start(), cleared by hold() at the close request; a
+ * mid-cycle release() — the contamination guard's re-pin —
+ * deliberately keeps it, see release()): promoting at the
  * step-change moment cost a one-frame see-through as the old layer died
  * before the new one rastered (same report).
  * Height-mode surfaces (desktop) keep the height morph unchanged.
@@ -233,7 +245,9 @@ export function useSizeMorph(
    *  normal close. */
   let revealWatchdog: ReturnType<typeof setTimeout> | null = null;
   /** Resident layer promotion on clip-mode surfaces: applied at arm time
-   *  and cleared on hold/release. Promoting at the STEP-change moment
+   *  and cleared by hold() at the close request (a mid-cycle release() —
+   *  the contamination guard's re-pin — deliberately leaves it for the
+   *  cycle to unwind, see clearResidentWill's callers). Promoting at the STEP-change moment
    *  (0.55.38's per-sweep will-change) destroyed the old layer one frame
    *  before the new one had rastered — on the phone GPU the sheet read
    *  as a one-frame see-through flash exactly when the raster race had

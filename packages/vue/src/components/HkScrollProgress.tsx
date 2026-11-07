@@ -24,6 +24,12 @@ import "./HkScrollProgress.scss";
 export interface HkScrollProgressHandle {
   getRoot(): HTMLElement | null;
   getTotal(): number | undefined;
+  /** The list's own row elements in display order — wins over the
+   *  container's `scrollProgressSelector` when present. This is for a
+   *  list whose DOM rows are not all data rows (HkTable's section bands
+   *  are `<tr>`s in the body, but they are not rows). Return `undefined`
+   *  to fall back to the container's selector. */
+  getRows?(): readonly Element[] | undefined;
 }
 
 /** Provided by every HkScrollContainer instance whose `scrollProgress`

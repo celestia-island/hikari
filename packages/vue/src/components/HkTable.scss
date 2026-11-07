@@ -95,6 +95,26 @@
   background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
 }
 
+/* A section's band is the first child of its body, so the base zebra rule
+   would shade each section's FIRST data row (child 2). Restart the phase
+   after the band: even data children are unshaded, odd ones carry the
+   stripe — the same first-row-unshaded phase an unsectioned body has. */
+.hk-table-striped .hk-table-section-body .hk-table-row:nth-child(even) {
+  background: none;
+}
+
+.hk-table-striped .hk-table-section-body .hk-table-row:nth-child(odd) {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
+}
+
+/* The sectioned zebra pair above is (0,4,0) — it would out-specify the
+   shared `.hk-table-hover .hk-table-row:hover` rule (0,3,0) and kill hover
+   feedback on EVERY row of a striped sectioned table. Keep the pointer
+   feedback by re-stating it at a spec that beats the pair. */
+.hk-table-striped.hk-table-hover .hk-table-section-body .hk-table-row:hover {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.04));
+}
+
 .hk-table-bordered {
   border: 1px solid var(--hi-color-border, rgba(100,100,100,0.1));
   border-radius: var(--radius-md, 8px);
@@ -151,6 +171,51 @@
   padding: var(--space-32, 32px) var(--space-16, 16px);
   text-align: center;
   color: var(--hi-color-text-secondary, #666666);
+}
+
+/* ── Section bands (grouped tables) ───────────────────────────────────
+   One `<tbody>` per section, each led by a band row. The band is a
+   rowgroup header, not a data row: it never carries `.hk-table-row`, so
+   the copy layer (which marks and cursor-styles cells via
+   `[data-copy-cell]`), the hover paint, the striped rule, the drag strip
+   and the selection/⋯ tracks all ignore it by construction. The band cell
+   carries no `data-copy-cell`, so it needs no copy-cursor override either.
+
+   The cell itself is TYPE-NEUTRAL for consumer markup: the `section` slot
+   carries arbitrary content (badges, panel names, status chips), so only
+   the track is styled here (padding / hairline / background / start
+   alignment). `font-weight: inherit` neutralizes the UA `th { font-weight:
+   bold }`; nothing here sets `white-space` (long panel names may wrap) or
+   `cursor` (selectable band text keeps its I-beam). Sizing is delivered by
+   the consumer's own classes; the plain `label` fallback gets its own span
+   below. The hk-table-sm/lg ladder steps ONLY the band's padding —
+   typography deliberately does not scale with the table size, because the
+   consumer's slot content owns its type. */
+.hk-table-section-cell {
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  text-align: start;
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
+  font-weight: inherit;
+}
+
+/* The default `label` branch only (the `section` slot bypasses this span
+   entirely): the previous text-sm / font-medium band look. */
+.hk-table-section-label {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+}
+
+.hk-table-sm .hk-table-section-cell {
+  padding: var(--space-4, 4px) var(--space-8, 8px);
+}
+
+.hk-table-lg .hk-table-section-cell {
+  padding: var(--space-16, 16px) var(--space-24, 24px);
+}
+
+.hk-table-bordered .hk-table-section-cell {
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
 }
 
 /* ── Drag-to-reorder (draggable) ─────────────────────────────────────── */

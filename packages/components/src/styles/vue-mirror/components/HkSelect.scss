@@ -321,24 +321,29 @@
   display: flex;
   flex-direction: column;
   /* The panel height hugs its content (up to the cap below); the sheet
-   * morphs smoothly when content grows/shrinks — a language list gaining
-   * or losing rows, a select whose options filter. `height: auto` growth
+   * morphs when content grows/shrinks — a language list gaining or
+   * losing rows, a select whose options filter. `height: auto` growth
    * cannot fire a CSS transition, so HkSelectPanel's useSizeMorph pins
-   * the measured natural height as px (see useSizeMorph) and the
-   * transition below animates old→new px; `interpolate-size: allow-keywords`
-   * stays harmless for the enter/leave slide. Growth reveals through
-   * clip-path instead (--hk-sheet-morph: clip, see useSizeMorph): the
-   * pin lands instantly and the top edge sweeps up paint-only — the
-   * sheet is a fixed full-width layer, and an animated height relaid
-   * out + repainted it every frame (mobile patchy-flicker source,
-   * 2026-09-15). Same duration/ease tokens, same stretch look. */
+   * the measured natural height as px (see useSizeMorph) and growth
+   * reveals through clip-path (--hk-sheet-morph: clip, see
+   * useSizeMorph): the pin lands instantly and the top edge sweeps up
+   * paint-only — the sheet is a fixed full-width layer, and an animated
+   * height relaid out + repainted it every frame (mobile
+   * patchy-flicker source, 2026-09-15). Shrink folds the same way and
+   * the atomic re-pin lands transition-off, so — exactly like the
+   * modal's ≤767px block — the clip-path leg is the ONLY animated
+   * property here. The max-height leg in particular must stay OUT: the
+   * cap below carries a live dvh/inset term, and with max-height in the
+   * list an adjustResize keyboard RETARGETS a 150ms transition every
+   * frame — cap-bound sheets chase their own viewport permanently (the
+   * IME cap-chase the modal block fixed on 2026-09-21; aligning this
+   * panel to that grammar on 2026-11-07 — inference-level evidence,
+   * same engine class, no same-day field report). */
   interpolate-size: allow-keywords;
   --hk-sheet-morph: clip;
   contain: layout style;
-  transition:
-    height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-    clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: clip-path var(--duration-fast, 0.15s)
+    var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   max-height: min(
     72vh,
     calc(

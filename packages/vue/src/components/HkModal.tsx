@@ -566,6 +566,20 @@ export default defineComponent({
     // optimization for the class flip. See runtime/surfaceMachine.ts
     // for the axioms, the total transition table, and the invariants.
     const overlayEl = ref<HTMLElement>();
+    // TOP-ONLY BLUR: this window's blur plate carries the filter only
+    // while it is the topmost WINDOW-kind layer of the stack. The covered
+    // window's plate drops to dim-only (see the sheet) — with N stacked
+    // full-viewport backdrop-filters every composited frame re-runs all
+    // of them, and the open storm measured 36-55% dropped frames vs 2%
+    // with a single live filter. Reacts live: covered flips with every
+    // register/unregister above this window.
+    const stackCovered = computed(() => {
+      // Reuses the shared topWindowZ authority (the same windowing filter
+      // the dial consumes below) instead of a private registry scan.
+      const top = topWindowZ.value;
+      if (!handle.value || top === null) return false;
+      return handle.value.zIndex < top;
+    });
     const machine = useSurfaceMachine({
       layers: [
         // Budgets are the starvation-era upper bound; the driver probes
@@ -1071,6 +1085,7 @@ export default defineComponent({
         <Teleport to={ensureOverlayRoot()}>
           <div
             class="hk-modal-root"
+            data-stack-covered={stackCovered.value || undefined}
             style={{ zIndex: overlayZ.value, ...hkPadStyle(props.padding) }}
             onKeydown={onKeydown}
           >
@@ -1195,6 +1210,11 @@ export default defineComponent({
                   renderFooter(),
                   ])}
                 </div>
+          {/* Static blur plate — the LAST child of hk-modal-root so the
+              sheet's stack-covered drop ([data-stack-covered] on this
+              root) reaches it; paint order rides the explicit z-indexes
+              (plate -1 < overlay 0 < content 1), not DOM order. */}
+          <div class="hk-modal-blur-plate" aria-hidden="true" />
           </div>
         </Teleport>
       );

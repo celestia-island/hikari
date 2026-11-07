@@ -38,7 +38,6 @@
   @include backdrop-filter(var(--hk-modal-breadcrumb-blur, blur(var(--blur-md))));
   pointer-events: none;
   @include user-select(none);
-  animation: hk-modal-breadcrumb-in var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
   /* Never wider than the viewport (minus the shared gutter): the strip is
      centred on the app header, so a stack whose labels outgrow the screen
      used to spill past BOTH edges at once and read as a clipped bar with
@@ -48,6 +47,62 @@
   max-width: calc(100vw - 2 * var(--viewport-gutter, 1rem));
   box-sizing: border-box;
   overflow: hidden;
+}
+
+/* ── Whole-surface enter/leave (window choreography) ─────────────────
+   The strip IS a window artefact — it materializes when a second window
+   opens and dissolves when the last-but-one closes — so its own entrance
+   and exit ride the same motion signature as the windows themselves
+   (B3, user direction 2026-11-07): rise 10px while settling from 97%
+   scale and fading in; leave is the true reverse. A compositor-only pair
+   (opacity + transform only; nothing layout ever animates — the
+   backdrop-filtered layer never re-rasters mid-motion).
+
+   The centering translate is the PERMANENT transform prefix in every
+   state (byte-identical between resting and animated), exactly the
+   contract the modal frame keeps for its dragged-shift vars.
+
+   Vue drives these classes (<Transition name="hk-modal-breadcrumb"
+   appear> in the tsx); there is no keyframe animation on the base class —
+   a mount replay would stack on top of the enter transition. */
+.hk-modal-breadcrumb-enter-active {
+  transition:
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Chrome departs quicker than the windows it names (the modal's own
+   leave runs 0.32s): the strip has nothing left to say once its last
+   level is gone. */
+.hk-modal-breadcrumb-leave-active {
+  transition:
+    opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
+    transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.hk-modal-breadcrumb-enter-from,
+.hk-modal-breadcrumb-leave-to {
+  opacity: 0;
+  transform: translate(-50%, calc(-50% - 10px)) scale(0.97);
+}
+
+.hk-modal-breadcrumb-enter-to,
+.hk-modal-breadcrumb-leave-from {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ── The keyed crumb list ────────────────────────────────────────────
+   The trigger and the visible tail ride HkListTransition (surface
+   variant — the window choreography per crumb). The group renders a real
+   wrapper span, and it is `display: contents`: the strip's own flex row
+   stays the SOLE layout owner (gap, alignment, the fence's clipping) and
+   the wrapper generates no box of its own, while still giving the
+   TransitionGroup a DOM host whose children can be measured pre-patch
+   (the multi-removal geometry pins need it) and absolutely positioned
+   against the strip when a crumb leaves. */
+.hk-modal-breadcrumb-levels {
+  display: contents;
 }
 
 .hk-modal-breadcrumb-crumb {
@@ -249,22 +304,15 @@
   transform: scaleX(-1);
 }
 
-@keyframes hk-modal-breadcrumb-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% - 8px));
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
 // House reduced-motion guard (HkExpansionPanel / HkTooltip pattern): the
-// entrance is a transform slide — drop it, keep the strip visible instantly.
+// entrance and exit are transform rides — drop both, keep the strip's
+// state changes instant (Vue's transition classes with no transition
+// resolve to an immediate swap; the crumb group's guard lives in
+// HkListTransition.scss).
 @media (prefers-reduced-motion: reduce) {
-  .hk-modal-breadcrumb {
-    animation: none;
+  .hk-modal-breadcrumb-enter-active,
+  .hk-modal-breadcrumb-leave-active {
+    transition: none;
   }
 }
 

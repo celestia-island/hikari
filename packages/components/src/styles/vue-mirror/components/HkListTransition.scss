@@ -161,6 +161,58 @@
   transition: transform var(--duration-fast, 0.15s) ease;
 }
 
+/* surface — the window choreography (HkModal's whole-window entrance,
+ * user direction 2026-11-07): a row arrives rising 10px while settling
+ * from 97% scale and fading in, and leaves by sinking back to that same
+ * pose. A compositor-only signature end to end — opacity + transform
+ * only, so the row never reflows per frame (the lesson the modal's own
+ * height-ride era taught the hard way). Siblings glide into the freed
+ * space with the same ease. Shares the window family's curves: the
+ * modal's ease-out (0.33, 1, 0.68, 1) arriving, its ease-in
+ * (0.45, 0, 0.55, 1) departing. */
+.hk-list-surface-enter-active {
+  transition:
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.hk-list-surface-leave-active {
+  transition:
+    opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
+    transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1);
+  position: absolute;
+  pointer-events: none;
+}
+
+/* A dying ghost's interactive descendants re-enable hit-testing on
+   themselves (the modal breadcrumb's trigger/reveal buttons carry auto —
+   the strip itself is pointer-transparent), and inheritance does not
+   beat an explicit auto. The ghost must not take clicks while it sinks:
+   a tap opened a popover anchored to the fading element (2026-11-07
+   review). Specificity (0,1,1) outranks the (0,1,0) button faces. */
+.hk-list-surface-leave-active button {
+  pointer-events: none;
+}
+
+.hk-list-surface-enter-from,
+.hk-list-surface-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.97);
+}
+
+.hk-list-surface-move {
+  /* opacity rides along on purpose: if a multi-row batch ever classifies
+     a leaving ghost as moved (its FLIP delta measured before the
+     correction pass lands), the stamped move transition would REPLACE
+     the leave's transition shorthand — a transform-only move cancels the
+     fade mid-flight and snaps the ghost invisible. Carrying the leave's
+     own opacity curve keeps the fade alive under that stamp; for true
+     moved rows the property goes 1→1 and is inert. */
+  transition:
+    opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+}
+
 .hk-list-none-enter-active,
 .hk-list-none-leave-active,
 .hk-list-none-move {
@@ -181,11 +233,14 @@
   .hk-list-grow-leave-active,
   .hk-list-reveal-enter-active,
   .hk-list-reveal-leave-active,
+  .hk-list-surface-enter-active,
+  .hk-list-surface-leave-active,
   .hk-list-pop-move,
   .hk-list-slide-move,
   .hk-list-fade-move,
   .hk-list-grow-move,
-  .hk-list-reveal-move {
+  .hk-list-reveal-move,
+  .hk-list-surface-move {
     transition: none !important;
   }
 }

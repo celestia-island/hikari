@@ -28,6 +28,13 @@ afterEach(async () => {
   document.body
     .querySelectorAll(".hk-popover-panel, .hk-popover-scrim, .hk-popover-backdrop")
     .forEach((el) => el.remove());
+  // A strip whose LEAVE is still playing (the Transition holds the last
+  // DOM for the fade-out) lives under the overlay root, outside the test's
+  // container — unmounting the app does not reclaim it once the vdom has
+  // let go. Strip it, or the next test's `strip()` finds this test's ghost.
+  document.body
+    .querySelectorAll("#hk-overlay-root nav.hk-modal-breadcrumb")
+    .forEach((el) => el.remove());
 });
 
 /** Lend the layout-less test DOM a box model for one test: every element
@@ -71,6 +78,14 @@ async function mountStrip(props: Record<string, unknown> = {}): Promise<void> {
   app.mount(container);
   await nextTick();
   await nextTick();
+  // A fold decided at mount (narrow viewport, long labels) evicts its
+  // folded crumbs through the keyed-list container — they linger as
+  // leaving ghosts for one frame. Settle before the test body reads.
+  await until(
+    () =>
+      strip() === null ||
+      strip()!.querySelector(".hk-list-surface-leave-active") === null,
+  );
 }
 
 function strip(): HTMLElement | null {
@@ -82,7 +97,11 @@ function strip(): HTMLElement | null {
 function visibleCrumbs(): HTMLElement[] {
   const nav = strip();
   if (!nav) return [];
-  return [...nav.querySelectorAll<HTMLElement>(":scope > .hk-modal-breadcrumb-crumb")];
+  return [
+    ...nav.querySelectorAll<HTMLElement>(
+      ":scope > .hk-modal-breadcrumb-levels > .hk-modal-breadcrumb-crumb",
+    ),
+  ];
 }
 
 /** What a crumb RENDERS — a cut label also carries its full name in a
@@ -147,9 +166,10 @@ describe("HkModalBreadcrumb window-stack policy", () => {
     ).toBe("Pick a color");
 
     // Morphing back to an anchored popover (blocking=false) removes the
-    // level instead of leaving a stale crumb behind.
+    // level instead of leaving a stale crumb behind. The removal now plays
+    // the strip's own leave first — settle on the strip being GONE.
     manager.setBlocking(popup.id, false);
-    await nextTick();
+    await until(() => strip() === null);
     expect(strip()).toBeNull();
   });
 
@@ -227,7 +247,7 @@ describe("HkModalBreadcrumb label budget", () => {
     await mountStrip();
     const nav = strip()!;
     const first = nav.querySelector<HTMLButtonElement>(
-      ":scope > .hk-modal-breadcrumb-crumb button.hk-modal-breadcrumb-item",
+      ":scope > .hk-modal-breadcrumb-levels > .hk-modal-breadcrumb-crumb button.hk-modal-breadcrumb-item",
     )!;
     // Rendered cut, announced whole: a truncated string is not a name.
     expect(first.textContent).toBe(LONG_TAIL);
@@ -378,7 +398,7 @@ describe("HkModalBreadcrumb label budget", () => {
     expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeTruthy();
 
     manager.unregister(other.id); // one layer left: the strip goes away
-    await nextTick();
+    await until(() => strip() === null);
     expect(strip()).toBeNull();
     manager.register("modal", true, "新来的层级");
     await nextTick();
@@ -539,10 +559,12 @@ describe("HkModalBreadcrumb overflow fold", () => {
     expect(more()).toBeNull();
     expect(labels()).toEqual(["第一层", "第二层"]);
 
-    // 96px: one 8px gap more than the stack needs.
+    // 96px: one 8px gap more than the stack needs. The fold evicts the
+    // leading crumb through the list container — settle the leaving ghost.
     setViewport(178);
     await nextTick();
     expect(more()).not.toBeNull();
+    await until(() => labels().join("\u0001") === "第二层");
     expect(labels()).toEqual(["第二层"]);
   });
 
@@ -900,6 +922,9 @@ describe("HkModalBreadcrumb overflow fold", () => {
 
     setViewport(2400);
     await nextTick();
+    // Unfolding dismisses the trigger and replays the leading crumbs
+    // through the list container — both linger as ghosts for a frame.
+    await until(() => more() === null && labels().length === 3);
     expect(more()).toBeNull();
     expect(labels()).toHaveLength(3);
   });
@@ -1052,5 +1077,211 @@ describe("HkModalBreadcrumb all-layers menu", () => {
     expect(manager.registry.value.has(noChannel.id)).toBe(true);
     // The jump dismisses the menu that carried it.
     expect(more()!.getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe("HkModalBreadcrumb motion", () => {
+  /** happy-dom computes no transition durations, so Vue tears a leaving
+   *  node down the same frame it leaves — too fast to observe the leave
+   *  classes. This lend lends the queried elements a real duration so
+   *  Vue's whenTransitionEnds schedules the removal on a clock instead. */
+  function lendTransitionDuration(match: (el: Element) => boolean, duration = "0.3s"): void {
+    const original = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation(
+      (el: Element, pseudo?: string | null): CSSStyleDeclaration => {
+        const decl = original(el, pseudo ?? undefined);
+        if (!match(el)) return decl;
+        return new Proxy(decl, {
+          get(target, prop, recv) {
+            if (prop === "transitionDuration") return `${duration}, ${duration}`;
+            if (prop === "transitionDelay") return "0s, 0s";
+            if (prop === "transitionProperty") return "opacity, transform";
+            if (prop === "animationDuration") return "0s";
+            if (prop === "animationDelay") return "0s";
+            const v = Reflect.get(target, prop, recv);
+            return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+          },
+        });
+      },
+    );
+  }
+
+  it("hosts the visible crumbs in the keyed list container", async () => {
+    manager.register("modal", true, "Settings");
+    manager.register("modal", true, "Details");
+    await mountStrip();
+    const levels = strip()!.querySelectorAll(
+      ":scope > .hk-modal-breadcrumb-levels",
+    );
+    expect(levels).toHaveLength(1);
+    // The crumbs — and ONLY the crumbs — live inside the group; the
+    // measurement clone stays a direct child of the nav (it is the ruler,
+    // not part of the choreography).
+    expect(
+      levels[0].querySelectorAll(":scope > .hk-modal-breadcrumb-crumb"),
+    ).toHaveLength(2);
+    expect(strip()!.querySelector(":scope > .hk-modal-breadcrumb-measure")).not.toBeNull();
+    // Resting: no transition class leaks onto the settled group.
+    expect(strip()!.querySelector(".hk-list-surface-enter-active")).toBeNull();
+    expect(strip()!.querySelector(".hk-list-surface-leave-active")).toBeNull();
+  });
+
+  it("animates a crumb in when its window joins the stack", async () => {
+    manager.register("modal", true, "第一层");
+    manager.register("modal", true, "第二层");
+    await mountStrip();
+    manager.register("modal", true, "第三层");
+    await nextTick();
+    const crumbs = visibleCrumbs();
+    expect(crumbs).toHaveLength(3);
+    // The arrival carries the window choreography's enter classes (the
+    // sheet gives them their rise + settle + fade; here we pin the WIRING).
+    expect(crumbs[2].classList.contains("hk-list-surface-enter-active")).toBe(true);
+    await until(() => !crumbs[2].classList.contains("hk-list-surface-enter-active"));
+    // Settled crumbs lose every transition class.
+    expect(crumbs[2].className).not.toMatch(/hk-list-surface/);
+  });
+
+  it("animates a crumb out (pinned ghost) when its window closes", async () => {
+    // THREE layers: closing one of two dismisses the whole strip (its own
+    // leave), which freezes the nav — a crumb-level leave needs a
+    // survivor behind it.
+    lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb-crumb"));
+    try {
+      const win = manager.register("modal", true, "第一层");
+      manager.register("modal", true, "第二层");
+      manager.register("modal", true, "第三层");
+      await mountStrip();
+      manager.unregister(win.id);
+      await nextTick();
+      // The leaving crumb stays in the DOM — pinned out of flow, sinking
+      // back to the window-leave pose — while its siblings take over.
+      const ghosts = strip()!.querySelectorAll(
+        ":scope > .hk-modal-breadcrumb-levels > .hk-modal-breadcrumb-crumb",
+      );
+      expect(ghosts).toHaveLength(3);
+      expect(ghosts[0].classList.contains("hk-list-surface-leave-active")).toBe(true);
+      expect(ghosts[0].textContent).toContain("第一层");
+      // And the ghosts are real (the survivors show no leave class).
+      expect(ghosts[1].classList.contains("hk-list-surface-leave-active")).toBe(false);
+      expect(ghosts[2].classList.contains("hk-list-surface-leave-active")).toBe(false);
+      await until(
+        () =>
+          strip() === null ||
+          strip()!.querySelector(".hk-list-surface-leave-active") === null,
+        1500,
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("survives a reopen inside the leave window (band + fold end state)", async () => {
+    // The strip's no-mode reopen: closing the last-but-one starts the
+    // frozen strip's leave, and a window opened inside that window
+    // fast-forwards the old nav while a successor mounts. This test pins
+    // the observable END STATE: the band must survive the whole exchange,
+    // the successor must stand, and the fold must still stand after the
+    // slow tick re-measures through navRef. (It does NOT discriminate the
+    // belt-and-suspenders race guards in the tsx — those are inert under
+    // Vue 3.5.40's fast-forward and were verified with a real-Chrome
+    // mutation pair during review.)
+    lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb"));
+    try {
+      const win = manager.register("modal", true, "第一层");
+      manager.register("modal", true, "第二层");
+      await mountStrip();
+      setViewport(120);
+      await until(() => more() !== null);
+      manager.unregister(win.id);
+      await nextTick();
+      // The leave keeps the band (the strip still paints above sheets).
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+      // Reopen inside the leave window: a successor strip mounts.
+      manager.register("modal", true, "第二层续");
+      await nextTick();
+      await nextTick();
+      expect(strip()).not.toBeNull();
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+      // Past the leave's nominal clock (~300ms): the band must still be
+      // up and the successor standing — whatever transient the exchange
+      // produced has settled by now.
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      await nextTick();
+      expect(strip()).not.toBeNull();
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+      // ~1.1s: the successor's slow tick re-measures the fold through
+      // navRef — the fold must still stand (the trigger's existence is
+      // the observable).
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      expect(strip()).not.toBeNull();
+      expect(more()).not.toBeNull();
+      expect(document.body.style.getPropertyValue("--hk-sheet-top-inset")).not.toBe("");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("keeps a mid-leave strip inert: its surfaces cannot spring back", async () => {
+    lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb"));
+    try {
+      // The SHORT layer opens first so the fold keeps the CUT label as the
+      // visible tail — the frozen DOM then carries both tappable surfaces
+      // (the "…" trigger AND the cut-name button). LONG is the layer we
+      // close.
+      manager.register("modal", true, "第二层");
+      const win = manager.register("modal", true, LONG);
+      await mountStrip();
+      // Fold so the trigger exists, then drop to one layer: the strip
+      // starts leaving (its DOM is frozen — trigger included).
+      setViewport(120);
+      await until(() => more() !== null);
+      manager.unregister(win.id);
+      await nextTick();
+      const leaving = strip();
+      expect(leaving).not.toBeNull();
+      expect(leaving!.classList.contains("hk-modal-breadcrumb-leave-active")).toBe(true);
+      // A tap on the frozen trigger must not re-open the menu: the
+      // surfaces are unmounted and a set ref would spring open on a later
+      // remount (the mid-leave guard in the tsx).
+      more()!.click();
+      await nextTick();
+      expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
+      // Same for the frozen cut-label crumb's reveal (the symmetric
+      // guard in toggleReveal).
+      strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+      await nextTick();
+      expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
+
+      await until(() => strip() === null, 1500);
+      expect(strip()).toBeNull();
+
+      // THE spring-back probe: with the guard gone, the taps above left
+      // menuOpen/revealed set, and the next window would reopen the strip
+      // with its panel already standing. The guard must keep both refs
+      // down so the remount paints inert.
+      manager.register("modal", true, "新来的层级");
+      await nextTick();
+      await nextTick();
+      expect(strip()).not.toBeNull();
+      expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("arrives on mount with the whole-surface enter classes (appear)", async () => {
+    lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb"));
+    try {
+      manager.register("modal", true, "第一层");
+      manager.register("modal", true, "第二层");
+      await mountStrip();
+      expect(strip()!.classList.contains("hk-modal-breadcrumb-enter-active")).toBe(true);
+      await until(
+        () => !strip()!.classList.contains("hk-modal-breadcrumb-enter-active"),
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 });

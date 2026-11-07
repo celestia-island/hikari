@@ -84,8 +84,6 @@ registerCssAnimation("hk-status-pill-pulse", { infinite: true });
 registerCssAnimation("hk-rolling-number-up");
 // components/HkSpinner.scss — spinner rotation (loops forever).
 registerCssAnimation("hk-spinner-rotate", { infinite: true });
-// components/HkModalBreadcrumb.scss — breadcrumb entrance (plays once).
-registerCssAnimation("hk-modal-breadcrumb-in");
 // components/HkToast.scss — toast spinner rotation (loops forever).
 registerCssAnimation("hk-toast-spin", { infinite: true });
 // components/HkSkeleton.scss — skeleton shimmer (loops forever).

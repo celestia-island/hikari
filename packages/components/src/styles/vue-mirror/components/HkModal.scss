@@ -109,41 +109,19 @@
 // ------
 // Content enter/leave transitions (desktop ≥768px)
 //
-// Default window open/close (user direction 2026-11-07, third revision):
-// the WINDOW's own height rides, the CHROME keeps its natural size, and
-// only the content region is compressed. Concretely:
-//
-//   frame height  : chrome + content × 0.9   ⇄   chrome + content
-//   content region: scaleY(0.9)              ⇄   scaleY(1)  (origin top)
-//
-// Why not `transform: scaleY()` on the frame (the 2026-11-05/06 grammar):
-// a frame-level scale squashes the title glyphs, the footer buttons and the
-// corner radii along with everything else — the user reported exactly that
-// ("顶部标题和底部按钮组也跟着压缩") on 0.55.305. The ride is therefore a
-// LAYOUT-height animation driven by the family primitive `useHeightRide`,
-// which publishes the measured chrome/content split as CSS variables; this
-// sheet maps the surface states onto the ride's two ends. Chrome lives
-// outside the transform, so its type renders at natural size for the whole
-// flight, and the content region keeps its natural LAYOUT box (only its
-// paint is compressed about its own top edge), so the compressed paint
-// lands exactly in the shorter slot the frame leaves for it.
-//
-// The centering translate stays the frame's whole transform in every state
-// (byte-identical between rest and both ride ends, `--hk-modal-shift-*`
-// included), so the ride never re-seats the frame, dragged windows keep
-// their shift, and a box that grows by Δ about its center moves its top
-// edge up by Δ/2 — the symmetric growth the user asked for.
-//
-// Scroll containers are untouched by construction: `HkScrollContainer`,
-// `HkScrollPin` and the overlay scrollbar measure layout boxes, which the
-// content region's transform never changes, and nothing inside the content
-// reflows per frame. Surfaces may read `data-hk-riding` to skip work while
-// a ride is in flight.
-//
-// The `!important` on the two height ends is load-bearing: the size morph
-// pins the frame's height as an inline px value, and the ride — not the pin
-// — owns the box for the duration of the flight. Reduced motion flattens
-// both the height transition and the content scale.
+// Default window open/close (user direction 2026-11-07, fifth revision —
+// chosen from a side-by-side comparison page): the WHOLE WINDOW zooms and
+// rises while it fades. A compositor animation end to end — no layout
+// property moves, nothing reflows per frame, the backdrop-filtered fixed
+// layer never re-rasters. The 3% scale is imperceptible as glyph
+// distortion; the 10px rise gives the motion direction. Chrome, content,
+// sticky bars — everything inside keeps its exact shape at every t.
+// (Retired grammars, oldest first: the 2026-11-04 whole-frame scale(1,0.9);
+// the 2026-11-05 body-only uniform scale; the 0.95 pinch; the frame-level
+// scaleY(0.9); and the 2026-11-07 layout-height ride of 0.55.307–310, whose
+// family container — HkRideBox/useHeightRide — was retired with it: it
+// fought the size morph for the same property and animated layout on a
+// backdrop-filtered fixed layer.)
 // ------
 
 @media (min-width: 768px) {

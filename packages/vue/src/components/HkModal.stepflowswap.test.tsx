@@ -456,14 +456,21 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     stubClip();
     stubBox(500, Number.POSITIVE_INFINITY);
     stubPhoneViewport();
-    const roInstances: Array<{ callback: () => void }> = [];
+    const roInstances: Array<{ callback: () => void; target: Element | null }> = [];
+    // Select the morph's observer by its OBSERVED TARGET, never by index:
+    // the overlay scrollbar attaches its own ResizeObserver at the mounted
+    // flip, and since the morph arms at the `open` edge (after the enter)
+    // the scrollbar's observer registers first.
+    const morphRo = () =>
+      roInstances.find((ro) => ro.target?.classList.contains("hk-modal-body-inner"))!;
     vi.stubGlobal("ResizeObserver", class {
       callback: () => void;
+      target: Element | null = null;
       constructor(cb: () => void) {
         this.callback = cb;
         roInstances.push(this);
       }
-      observe() {}
+      observe(el: Element) { this.target = el; }
       disconnect() {}
     });
     const rig = await mountRig();
@@ -477,7 +484,7 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
     await nextTick();
     content = 560;
-    roInstances[0]!.callback();
+    morphRo().callback();
     await vi.advanceTimersByTimeAsync(400);
     expect(frame.style.height).toBe("596px");
 
@@ -506,14 +513,19 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     stubClip();
     stubBox(500, Number.POSITIVE_INFINITY);
     stubPhoneViewport();
-    const roInstances: Array<{ callback: () => void }> = [];
+    const roInstances: Array<{ callback: () => void; target: Element | null }> = [];
+    // Same target-based selection as the safety-timer test: the scrollbar's
+    // observer registers before the morph's open-edge arm.
+    const morphRo = () =>
+      roInstances.find((ro) => ro.target?.classList.contains("hk-modal-body-inner"))!;
     vi.stubGlobal("ResizeObserver", class {
       callback: () => void;
+      target: Element | null = null;
       constructor(cb: () => void) {
         this.callback = cb;
         roInstances.push(this);
       }
-      observe() {}
+      observe(el: Element) { this.target = el; }
       disconnect() {}
     });
     // No rAF stub: happy-dom maps rAF onto its timer queue, so the
@@ -528,7 +540,7 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
     await nextTick();
     content = 560;
-    roInstances[0]!.callback();
+    morphRo().callback();
     await vi.advanceTimersByTimeAsync(700);
     expect(frame.style.height).toBe("596px");
 
@@ -540,7 +552,7 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     // Harness validity + unfreeze proof: the SAME observer path now
     // moves the pin without any event.
     content = 700;
-    roInstances[0]!.callback();
+    morphRo().callback();
     await vi.advanceTimersByTimeAsync(700);
     expect(frame.style.height).toBe("796px");
     restoreBox();

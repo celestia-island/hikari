@@ -15,7 +15,7 @@ import HkModal from "./HkModal";
  *
  * happy-dom has no layout engine, so the frame's offsetHeight is stubbed
  * at the HTMLElement prototype level BEFORE mount — the morph's
- * openingFrom-tick arm then measures 500px and pins it, and every
+ * open-edge arm then measures 500px and pins it, and every
  * mid-leave assertion reads the inline height string directly.
  */
 const mounts: ReturnType<typeof createApp>[] = [];
@@ -128,7 +128,7 @@ describe("HkModal leave-window height pin", () => {
     try {
       const rig = await mountRig();
 
-      // Open to rest: the enter-edge arm measured 500px and pinned it.
+      // Open to rest: the open-edge arm measured 500px and pinned it.
       rig.open.value = true;
       await vi.advanceTimersByTimeAsync(600);
       expect(rig.frameEl()).not.toBeNull();
@@ -157,7 +157,7 @@ describe("HkModal leave-window height pin", () => {
     }
   });
 
-  it("flushes growth deferred through the enter with an open-edge remeasure", async () => {
+  it("leaves the frame unpinned through the enter; the open edge pins the settled height", async () => {
     vi.useFakeTimers();
     freezeRaf();
       stubPhoneViewport();
@@ -166,24 +166,65 @@ describe("HkModal leave-window height pin", () => {
     try {
       const rig = await mountRig();
 
-      // Open: the enter-edge arm pins the enter-time height (400px).
+      // Open: nothing arms during the enter — the frame stays height:auto
+      // so content that streams in mid-enter reflows it live instead of
+      // sitting clipped behind a mount-time pin (2026-11-07 chest report:
+      // topic windows fetched their detail mid-enter and the bottom of
+      // the window stayed missing for the whole open animation).
       rig.open.value = true;
       await vi.advanceTimersByTimeAsync(150); // mid-enter, past the flip
-      expect(rig.pinHeight()).toBe("400px");
+      expect(rig.frameEl()).not.toBeNull();
+      expect(rig.pinHeight()).toBe("");
 
-      // Content grows mid-enter — with the enter's defer gate the pin
-      // must NOT chase it (the choreography's height-relative geometry
-      // stays put; in a real browser the RO fires and is deferred too).
+      // Content grows mid-enter: still unpinned — the growth IS the
+      // frame (auto height follows it frame-by-frame).
       layoutH = 700;
       await vi.advanceTimersByTimeAsync(50);
-      expect(rig.pinHeight()).toBe("400px");
+      expect(rig.pinHeight()).toBe("");
 
-      // The open edge flushes the deferred growth one tick after the
-      // transition classes clear — the pin lands at the grown height.
+      // The open edge pins the settled natural height directly — no
+      // deferred flush, no second growth spurt after the enter.
       await vi.advanceTimersByTimeAsync(450);
       expect(rig.pinHeight()).toBe("700px");
 
-      // Sanity: the surface really rested open before the flush assertion.
+      // Sanity: the surface really rested open before the pin assertion.
+      expect(rig.frameEl()).not.toBeNull();
+    } finally {
+      restoreLayout();
+    }
+  });
+
+  it("drops the held pin at a reopen-interrupt edge; the open edge re-pins", async () => {
+    vi.useFakeTimers();
+    freezeRaf();
+      stubPhoneViewport();
+    stubDurations();
+    stubLayout(500);
+    try {
+      const rig = await mountRig();
+
+      // Open to rest (the open-edge arm pins 500px), then request a
+      // close: the leave holds the pin (the fold owns the frame).
+      rig.open.value = true;
+      await vi.advanceTimersByTimeAsync(600);
+      expect(rig.pinHeight()).toBe("500px");
+      rig.open.value = false;
+      await vi.advanceTimersByTimeAsync(150); // mid-leave
+      expect(rig.frameEl()).not.toBeNull();
+      expect(rig.pinHeight()).toBe("500px");
+
+      // Reopen mid-leave: the reopening edge must DROP the held pin —
+      // otherwise the reopen enter plays at the OLD content's height and
+      // clips whatever the new content renders (the sibling of the
+      // first-open bug this suite retired).
+      rig.open.value = true;
+      await vi.advanceTimersByTimeAsync(150); // mid-reopen-enter
+      expect(rig.frameEl()).not.toBeNull();
+      expect(rig.pinHeight()).toBe("");
+
+      // The open edge re-pins at rest (content unchanged → same height).
+      await vi.advanceTimersByTimeAsync(450);
+      expect(rig.pinHeight()).toBe("500px");
       expect(rig.frameEl()).not.toBeNull();
     } finally {
       restoreLayout();

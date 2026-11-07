@@ -284,24 +284,27 @@ export default defineComponent({
     const innerRef = ref<HTMLElement>();
     // Content-driven size morphing: the frame follows content growth with
     // the height transition instead of snapping (see useSizeMorph). The
-    // gate freezes resize-driven re-measurement through the enter unfold:
-    // the choreography's geometry is height-relative (translateY 5% +
-    // bottom-10% clip of the frame height), so content streaming in
-    // mid-enter would otherwise recompute the pixel geometry under the
-    // running animation (2026-09-16 chest field report — the frame
-    // snapped 459→697px mid-unfold). The open phase edge flushes the
-    // deferred growth with an animated remeasure.
-    // The freeze flag (round 16): while a stepflow SLIDE is in flight the
-    // sheet's height must not chase the flow's changing cell — the gate
-    // below also returns true then, and the morph window's own event
-    // flushes the frozen change with an explicit remeasure.
+    // morph arms at the machine's `open` edge only — never during the
+    // enter. Under the current whole-window zoom+rise choreography the
+    // open animation is opacity+transform on the frame: nothing about it
+    // reads the frame's height, so an enter-time pin has nothing left to
+    // protect, and pinning during the enter would freeze the frame at the
+    // mount-time height while `overflow: hidden` clips whatever content
+    // streams in behind it (2026-11-07 chest report — topic windows
+    // fetched their detail mid-enter and read as "the bottom of the
+    // window is missing" for the whole open animation, then grew). The
+    // old arm-and-freeze existed for the retired height-relative unveil
+    // (translateY fraction + bottom clip of the frame height), whose
+    // geometry a mid-enter resize would have corrupted; that grammar is
+    // gone, so the freeze is gone with it.
+    // The freeze flag (round 16) stays: while a stepflow SLIDE is in
+    // flight the sheet's height must not chase the flow's changing cell —
+    // the gate below also returns true then, and the morph window's own
+    // event flushes the frozen change with an explicit remeasure.
     let swapFrozen = false;
     let swapFreezeTimer: ReturnType<typeof setTimeout> | null = null;
     const morph = useSizeMorph(contentRef, innerRef, {
-      deferRemeasure: () =>
-        swapFrozen ||
-        machine.phase.value === "openingFrom" ||
-        machine.phase.value === "openingTo",
+      deferRemeasure: () => swapFrozen,
       // The sheet's chrome and content block ride the fold edge in
       // lockstep with the clip sweep: the title bar glides with the edge
       // instead of being sliced by it mid-sweep, the content block starts
@@ -593,26 +596,32 @@ export default defineComponent({
             backGuard.push();
           }
           surfTrack.run();
-          // Arm the size morph WITH the enter (one tick later, once the
-          // mounting patch landed): the pin locks the frame's height for
-          // the whole unfold so late-streaming content cannot move the
-          // choreography mid-flight (see the morph's gate above). The
-          // zero-duration fast paths reach `open` before the tick — the
-          // open branch's own start() covers them.
-          void nextTick(() => {
-            const p = machine.phase.value;
-            if (p !== "openingFrom" && p !== "openingTo") return;
-            if (p === "openingFrom" || p === "openingTo") morph.start();
-          });
+          // No morph arm here, on purpose: the enter is opacity+transform
+          // (whole-window zoom+rise), which never reads the frame's
+          // height — the frame stays at `height: auto` so content that
+          // streams in mid-enter reflows it live instead of being clipped
+          // behind a stale mount-time pin (see the morph gate above). The
+          // size morph arms once, at the `open` edge below.
+          // A REOPEN-INTERRUPT (OPEN mid-close) lands here too: the close
+          // request held the previous cycle's pin (morph.hold(), so the
+          // fold played on a stable box) and nothing else would drop it —
+          // the reopen enter would then play pinned at the OLD content's
+          // height, clipping new content exactly like the first-open bug
+          // this file retired. Release the pin so every enter — first or
+          // interrupted — starts at `height: auto`; the hold-kept pin's
+          // other purpose (the close completing) is served by the
+          // finalize edge's own release.
+          morph.release();
         } else if (to === "open") {
           surfTrack.cancel();
           onAfterEnter();
-          // Idempotent re-arm for the fast paths (see openingFrom).
+          // The ONLY morph arm (see the openingFrom note): the enter has
+          // landed, so calibrating and pinning here measures the frame at
+          // rest — with the enter classes no longer in play one tick
+          // later, the follow-up remeasure re-checks the natural height
+          // under the base height transition (a growth that landed in the
+          // last tick of the enter animates instead of snapping).
           morph.start();
-          // Flush the growth deferred through the unfold. One tick later
-          // the transition classes are off the frame, so the base height
-          // transition animates the pin change instead of the enter's
-          // opacity/transform-only transition list swallowing it as a snap.
           void nextTick(() => {
             if (machine.phase.value === "open") morph.remeasure();
           });

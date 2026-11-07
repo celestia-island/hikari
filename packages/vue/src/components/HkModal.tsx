@@ -18,7 +18,6 @@ import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph, type RideEntry } from "../composables/useSizeMorph";
-import { useHeightRide } from "../composables/useHeightRide";
 
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 
@@ -332,14 +331,8 @@ export default defineComponent({
         // finding). Riding the block keeps the scrollport's content
         // untransformed; the block's own poke below the frame lands
         // off-screen on a bottom-docked sheet.
-        // While the desktop height ride owns the body's paint (its scaleY
-        // IS the choreography), the morph must not write an inline transform
-        // on the same element: an inline style outranks the ride's class
-        // rule, and the close would stop compressing (2026-11-07 user
-        // report: the window folded "together with the chrome"). The body
-        // ride matters for the ≤767px sheet sweep, where the ride geometry
-        // is disabled — so the two never legitimately overlap.
-        if (bodyRef.value && !desktopRide()) out.push({ el: bodyRef.value });
+        if (bodyRef.value) out.push({ el: bodyRef.value });
+        if (bodyRef.value) out.push({ el: bodyRef.value });
         return out;
       },
       // Republish the morph's real sweep span and its landing on the body
@@ -361,47 +354,11 @@ export default defineComponent({
       },
     });
 
-    // Desktop open/close: the WINDOW's own height rides, the chrome
-    // (title bar, sub-header, footer) keeps its natural size, and only the
-    // content region is visually compressed. The measurement half lives in
-    // the family primitive (useHeightRide); this sheet maps its surface
-    // states onto the ride's two ends (see the choreography block below).
-    const ride = useHeightRide(contentRef, bodyRef, { factor: 0.9 });
-
     /** The window ride's own state, translated from the surface phases:
      *  the open/close endpoints are the compressed end (`--from`) and the
      *  natural end (`--to`). Between and after them no ride class is
      *  present, so the frame keeps its laid-out height (or the morph's
      *  px pin) and the geometry contract never leaks into the rest state. */
-    // The body element mounts with the frame on every open, and the inline
-    // variables die with the previous frame. Republish the split cached from
-    // the last rest measurement FIRST (so the first painted frame is already
-    // correct), then — if this is the very first open — measure as soon as
-    // the element lands (the sheet keeps the frame at `auto` until then, so
-    // that measurement sees honest natural geometry).
-    watch(
-      bodyRef,
-      (el) => {
-        if (!el) return;
-        // ALWAYS measure: the component instance survives a close, so a
-        // cached split may belong to different content (this modal is reused
-        // across tabs/entries). Publishing the cache first made the second
-        // and later opens ride the PREVIOUS geometry, cropping new content
-        // and then snapping when the cache expired (R5 finding).
-        void nextTick(() => ride.refresh());
-      },
-      { flush: "post" },
-    );
-
-    // The ride's geometry lives behind `@media (min-width: 768px)`, so the
-    // phase->class mapping alone cannot tell whether the ride actually owns
-    // the frame (on a phone the classes land but nothing happens). This
-    // predicate gates every "is the ride flying" decision below.
-    const desktopRide = (): boolean =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(min-width: 768px)").matches;
-
-
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
 
@@ -620,10 +577,6 @@ export default defineComponent({
       ],
       onPhase: (from, to, event) => {
         if (to === "openingFrom") {
-          // Measure BEFORE the enter classes land: the ride's `height:
-          // calc()` needs the rest chrome/content split, and a frame that is
-          // already compressed reports the compressed box.
-          ride.refresh();
           // Open-request bookkeeping (was the modelValue watcher's open
           // arm): registration, overlay registry, back-guard, focus
           // capture.
@@ -653,71 +606,13 @@ export default defineComponent({
           void nextTick(() => {
             const p = machine.phase.value;
             if (p !== "openingFrom" && p !== "openingTo") return;
-            // DESKTOP RIDE FLIGHT = MORPH BLACKOUT. While the ride owns the
-            // frame, the morph must not write anything to it: arming installs
-            // a ResizeObserver on the body, and the ride's own class change
-            // (locking the body to its measured height) fires it — the
-            // remeasure then lands `transition: none` mid-flight, which kills
-            // the ride's running height/scaleY transitions and pins the
-            // COMPRESSED used height as if it were natural (2026-11-07 user
-            // report: the open "replays" — ride animates part-way, snaps to
-            // the bad pin, then re-animates to full height). The morph arms at
-            // the open edge instead, where the ride classes are already off
-            // and the pin equals the used height (no visible change). The
-            // phone keeps the enter-edge arm: its sheet choreography rides
-            // the morph's clip sweep, and the ride geometry is gated off.
-            if (!desktopRide()) morph.start();
+            if (p === "openingFrom" || p === "openingTo") morph.start();
           });
         } else if (to === "open") {
           surfTrack.cancel();
-          // Re-measure at the landed rest geometry so the NEXT ride starts
-          // from this box (content may have changed while the surface opened).
-          void nextTick(() => ride.refresh());
           onAfterEnter();
-          // Idempotent re-arm for the fast paths (see openingFrom) — but on
-          // desktop the ride may still be RUNNING when the machine flips to
-          // `open` (its deadline is advisory): arming the morph right now
-          // would land `transition: none` + a px pin on a frame whose height
-          // is mid-transition, snapping it to the end value (2026-11-07
-          // user report: the window "jumps" the last third of its growth).
-          // Wait for the height leg to actually land (watchdog: the budget
-          // plus slack), then arm — the pin then equals the used height and
-          // the handoff is invisible. The phone has no ride; arm at once.
-          if (desktopRide()) {
-            const f = contentRef.value;
-            const armNow = (): void => {
-              if (machine.phase.value !== "open" || unmounted) return;
-              morph.start();
-            };
-            // No live CSS duration (test DOMs, reduced motion, the global
-            // animation switch): nothing is animating, arm at once — the
-            // same zero-duration semantics the surface machine uses.
-            const rawDuration = f ? getComputedStyle(f).transitionDuration : "";
-            const durMs = rawDuration
-              .split(",")
-              .map((part) => parseFloat(part))
-              .filter((v) => Number.isFinite(v))
-              .reduce((a, b) => Math.max(a, b), 0);
-            if (!f || durMs === 0) {
-              armNow();
-            } else {
-              let done = false;
-              const finish = (): void => {
-                if (done) return;
-                done = true;
-                f.removeEventListener("transitionend", onHeightEnd);
-                clearTimeout(guard);
-                armNow();
-              };
-              const onHeightEnd = (e: TransitionEvent): void => {
-                if (e.target === f && e.propertyName === "height") finish();
-              };
-              const guard = setTimeout(finish, 600);
-              f.addEventListener("transitionend", onHeightEnd);
-            }
-          } else {
-            morph.start();
-          }
+          // Idempotent re-arm for the fast paths (see openingFrom).
+          morph.start();
           // Flush the growth deferred through the unfold. One tick later
           // the transition classes are off the frame, so the base height
           // transition animates the pin change instead of the enter's
@@ -726,9 +621,6 @@ export default defineComponent({
             if (machine.phase.value === "open") morph.remeasure();
           });
         } else if (to === "closingFrom") {
-          // Same rule on the way out: the frame is at its open (natural)
-          // height right now, so this is the last honest measurement.
-          ride.refresh();
           // Close-request bookkeeping (was the watcher's close arm): the
           // registries forget the surface at request time; the finalize
           // edge below completes the teardown at leave end.
@@ -1185,7 +1077,6 @@ export default defineComponent({
             <div
                   ref={contentRef}
                   class={["hk-modal-content", props.contentClass, ...machine.classesFor("hk-modal-content")]}
-                  data-hk-ride-ready={ride.hasCache() ? "" : undefined}
                   role="dialog"
                   aria-modal="true"
                   aria-label={resolvedSurfaceName.value}
@@ -1193,7 +1084,6 @@ export default defineComponent({
                   style={{
                     maxWidth: resolvedWidth.value,
                     zIndex: contentZ.value,
-                    ...ride.styleVars(),
 
                   }}
                   onClick={onContentClick}

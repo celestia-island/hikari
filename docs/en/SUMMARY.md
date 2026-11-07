@@ -8,6 +8,7 @@
 - [StyleStringBuilder System](./guides/03-stylestringbuilder-system.md)
 - [Migration Guide](./guides/07-migration-guide.md)
 - [Dependency Style](./guides/dependency_style.md)
+- [Font Stacks](./guides/fonts.md)
 - [I18n](./guides/i18n.md)
 - [Static Assets Guide](./guides/static_assets_guide.md)
 

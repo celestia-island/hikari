@@ -143,3 +143,7 @@ registerCssAnimation("hk-screen-identify-in");
 // brushed window still reads as live. Reduced motion keeps the dashed
 // pending look and drops the loop (house pattern, see HkSkeleton).
 registerCssAnimation("hk-range-ribbon-pulse", { infinite: true });
+// HkBadge's presence pulse (opacity-only, loops forever): the `pulse`
+// prop's dot breathes while its state is in-flight — a settled dot sits
+// static. Reduced motion drops the loop (house pattern, see HkSkeleton).
+registerCssAnimation("hk-badge-dot-pulse", { infinite: true });

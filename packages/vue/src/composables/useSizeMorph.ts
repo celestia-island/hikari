@@ -34,10 +34,13 @@ const REVEAL_WARMUP_FRAMES = 2;
 export interface SizeMorph {
   /** Arm the morph: observe the content and pin the frame's natural
    *  height on every change. Call once the surface finished its open
-   *  enter transition — pinning during enter would override the
-   *  choreography's own height animation. (Surfaces whose enter is
-   *  height-INDEPENDENT — HkModal's clip+transform unfold — may arm
-   *  earlier with a `deferRemeasure` gate, see below.) */
+   *  enter — the enter must own the frame's geometry (HkModal and
+   *  HkSelectPanel both arm at the machine's `open` edge; the enter
+   *  classes are off the frame by then, so calibration reads the rest
+   *  state). There is no early-arm protocol anymore: the modal's enter
+   *  is opacity+transform and never reads the frame's height, so an
+   *  enter-time pin would only freeze a stale height under
+   *  `overflow: hidden`. */
   start(): void;
   /** Disarm the morph and release the frame to `height: auto` — call
    *  before a surface's leave/close so the exit animation owns the
@@ -54,6 +57,13 @@ export interface SizeMorph {
    *  classes own the frame lands without a height animation, i.e. snaps
    *  — acceptable, the enter's own choreography owns that moment). */
   hold(): void;
+  /** Drop the height pin and hand the frame back to `height: auto`
+   *  without disarming anything (a hold()ed morph stays disarmed; an
+   *  armed one keeps observing). In-flight reveals are torn down first,
+   *  exactly like stop(). This is the reopen-interrupt edge's tool: a
+   *  reopen enter must not inherit the previous cycle's pin, or new
+   *  content sits clipped behind the old height for the whole enter. */
+  release(): void;
   /** Re-measure and pin now (resize events, open flows). */
   remeasure(): void;
   /** Plain CSS height morph (round 18): transition the frame's pin
@@ -69,13 +79,14 @@ export interface RideEntry {
 
 export interface SizeMorphOptions {
   /** While this returns true, resize-driven re-measurements are deferred
-   *  (the current pin stays). HkModal freezes the frame's height during
-   *  the enter unfold: the choreography's translateY(5%) + bottom-10%
-   *  clip are fractions of the frame height, so late-streaming content
-   *  resizing the frame mid-enter would recompute the geometry under the
-   *  running animation (2026-09-16 chest field report — the frame snapped
-   *  459→697px mid-unfold). The caller flushes the deferred growth with
-   *  an explicit remeasure() at the open edge. */
+   *  (the current pin stays). HkModal freezes the frame's height while a
+   *  stepflow SLIDE is in flight: the sheet must not chase the flow's
+   *  changing cell mid-slide, and the slide's morph event flushes the
+   *  frozen change with an explicit remeasure once the content settles.
+   *  (The gate used to also cover the modal's own enter — that open
+   *  choreography is opacity+transform today and never reads the frame's
+   *  height, so the enter arms nothing and defers nothing; see the morph
+   *  note in HkModal.) */
   deferRemeasure?: () => boolean;
   /** Fold riders (2026-09-23 round-14 chest report): elements collected
    *  when a clip sweep is STAGED whose translateY must track the sweep's
@@ -834,9 +845,9 @@ export function useSizeMorph(
   }
 
   function onResize(): void {
-    // Frozen window (e.g. HkModal's enter unfold): keep the current pin;
-    // the caller flushes the accumulated change with an explicit
-    // remeasure() once the choreography hands the height back.
+    // Frozen window (HkModal's stepflow SLIDE freeze — the only defer
+    // gate left): keep the current pin; the morph event flushes the
+    // accumulated change with an explicit remeasure.
     if (options.deferRemeasure?.()) return;
     // Debounce the choreography: content can change in a burst (a list
     // transition shrinking rows over several frames, a textarea growing
@@ -1076,5 +1087,5 @@ export function useSizeMorph(
     setTimeout(restore, durationMs + 350);
   }
 
-  return { start, stop, hold, remeasure, heightMorph };
+  return { start, stop, hold, release, remeasure, heightMorph };
 }

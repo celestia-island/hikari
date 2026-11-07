@@ -529,6 +529,41 @@ describe("HkTable section-clamped reorder", () => {
     expect(t.emitted).toEqual([]);
   });
 
+  it("does not smear another section's measured tops into a keyboard commit", async () => {
+    const t = mountDraggableSections();
+    // A real drop in panel A holds its arrangement (the consumer has not
+    // landed the new sections yet) and leaves panel A's strip measured.
+    t.handles[0]!.dispatchEvent(pointer("pointerdown", 20));
+    window.dispatchEvent(pointer("pointermove", 70));
+    // The drag must actually LIVE one frame (that is when the strip is
+    // measured) before the release, or there is no measurement to misuse.
+    await nextTick();
+    window.dispatchEvent(pointer("pointerup", 70));
+    await nextTick();
+    expect(t.emitted).toEqual([[0, 1]]);
+    // Panel A's held drop paints from its own measured strip.
+    expect(t.bodies[0]!.querySelector(".hk-table-row")!.getAttribute("style")).toContain(
+      "--hk-drag-shift",
+    );
+
+    // A keyboard reorder in panel B is a DIFFERENT strip: panel A's measured
+    // tops (40px rows at y 0/40) must not paint panel B's rows (60px rows at
+    // y 200/240). With a foreign measurement reused, B's rows would carry a
+    // 40px shift; the commit must drop it instead.
+    t.handles[2]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(t.emitted).toEqual([
+      [0, 1],
+      [2, 3],
+    ]);
+    for (const row of Array.from(t.bodies[1]!.querySelectorAll<HTMLElement>(".hk-table-row"))) {
+      expect(row.getAttribute("style")).toBeNull();
+      expect(row.hasAttribute("data-shift")).toBe(false);
+    }
+  });
+
   it("keeps the keyboard twin clamped to the row's section and flat", async () => {
     const t = mountDraggableSections();
     t.handles[2]!.dispatchEvent(
@@ -566,6 +601,62 @@ describe("HkTable scroll-progress registration", () => {
     expect(rows).toHaveLength(4);
     expect(rows.every((row) => row.classList.contains("hk-table-row"))).toBe(true);
     expect(rows.some((row) => row.classList.contains("hk-table-section-row"))).toBe(false);
+  });
+
+  it("counts only its OWN rows when a sectioned table nests inside a cell", () => {
+    const handles: HkScrollProgressHandle[] = [];
+    const registrar: HkScrollProgressRegistrar = {
+      register: (handle) => handles.push(handle),
+      unregister: () => {},
+    };
+    const inner = () =>
+      h(HTable, {
+        columns: COLS,
+        sections: [
+          {
+            key: "inner",
+            rows: [{ name: "i0" }, { name: "i1" }, { name: "i2" }],
+          },
+        ],
+      });
+    const Provider = defineComponent({
+      setup() {
+        provide(HK_SCROLL_PROGRESS_REGISTRAR, registrar);
+        return () =>
+          h(
+            HTable,
+            {
+              columns: COLS,
+              sections: [
+                { key: "outer", rows: [{ name: "o0" }, { name: "o1" }] },
+              ],
+            },
+            { "cell-name": () => inner() },
+          );
+      },
+    });
+    mount(h(Provider));
+
+    // The outer table registered, and each of its two rows rendered an inner
+    // sectioned table (three registrations in total). The outer handle must
+    // report its OWN two data rows — the host subtree also contains the
+    // nested tables, and a bare descendant query would count 2 + 3 + 3.
+    const roots = handles.map((handle) => handle.getRoot());
+    const outer = handles.find((_handle, index) => {
+      const root = roots[index];
+      return (
+        root != null &&
+        roots.some((other) => other != null && other !== root && root.contains(other))
+      );
+    });
+    expect(outer).toBeDefined();
+    const ownRows = outer!.getRows?.() ?? [];
+    expect(ownRows).toHaveLength(2);
+    // Both reported rows belong to the OUTER table's own body — never to a
+    // nested table's body (its rows are descendants of the same host).
+    const outerTable = outer!.getRoot()?.querySelector("table.hk-table") ?? null;
+    expect(outerTable).not.toBeNull();
+    expect(ownRows.every((row) => row.closest("table") === outerTable)).toBe(true);
   });
 
   it("keeps the container selector path for unsectioned tables", () => {
@@ -632,6 +723,15 @@ describe("HkTable section band stylesheet", () => {
     const label = ruleBody(".hk-table-section-label");
     expect(label).toContain("font-size: var(--text-sm");
     expect(label).toContain("font-weight: 500");
+  });
+
+  it("keeps hover feedback alive on a striped sectioned table", () => {
+    // The scoped zebra pair is (0,4,0); the shared hover rule is (0,3,0),
+    // so without a sectioned hover re-statement the pointer feedback dies on
+    // every row of a striped sectioned table.
+    expect(scss).toMatch(
+      /\.hk-table-striped\.hk-table-hover \.hk-table-section-body \.hk-table-row:hover \{/,
+    );
   });
 
   it("walks the band padding down the sm/md/lg ladder without scaling type", () => {

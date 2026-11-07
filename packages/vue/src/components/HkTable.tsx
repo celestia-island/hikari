@@ -279,14 +279,18 @@ export default defineComponent({
       // Sectioned bodies lead with a band `<tr>` that is not a data row:
       // hand the pill the data rows only. Unsectioned returns undefined so
       // the container keeps its `scrollProgressSelector` path unchanged.
-      getRows: () =>
-        props.sections
-          ? Array.from(
-              wrapperHostRef.value?.querySelectorAll<HTMLElement>(
-                "tbody.hk-table-section-body > .hk-table-row",
-              ) ?? [],
-            )
-          : undefined,
+      getRows: () => {
+        if (!props.sections) return undefined;
+        // The host can contain a NESTED table (its rows are descendants
+        // too): the strip reader above already scopes by `closest("table")`,
+        // and the pill's row list must use the same boundary or a nested
+        // sectioned table inflates this table's count.
+        const own = wrapperHostRef.value?.querySelector<HTMLElement>("table.hk-table") ?? null;
+        if (!own) return [];
+        return Array.from(
+          own.querySelectorAll<HTMLElement>("tbody.hk-table-section-body > .hk-table-row"),
+        ).filter((row) => row.closest("table") === own);
+      },
     };
     onMounted(() => {
       progressRegistrar?.register(progressHandle);
@@ -453,7 +457,17 @@ export default defineComponent({
      *  the flat index space — `section offset + local index` — which is the
      *  array a consumer holds after concatenating its sections. */
     function commitReorder(view: SectionView | null, from: number, to: number): void {
-      arrangementSectionKey.value = view?.section.key ?? null;
+      const sectionKey = view?.section.key ?? null;
+      // The live measurement belongs to the strip it was taken on. A
+      // keyboard commit may target ANOTHER section (the pointer drag it
+      // follows landed elsewhere): reuse would paint this section's local
+      // indices through foreign tops, so drop the measurement instead.
+      // Unsectioned keeps the historic single-strip behavior.
+      if (props.sections && sectionKey !== measuredSectionKey.value) {
+        stripMeasure.value = null;
+        measuredSectionKey.value = null;
+      }
+      arrangementSectionKey.value = sectionKey;
       arrangement.value = { from, slot: to };
       arrangementHeld.value = true;
       const offset = view?.offset ?? 0;
@@ -554,6 +568,13 @@ export default defineComponent({
       width: number;
     }
     const stripMeasure = ref<StripMeasure | null>(null);
+    /** Which section the live `stripMeasure` was taken for (`null` =
+     *  unsectioned, or no measurement). A KEYBOARD commit can follow a
+     *  pointer drag on ANOTHER section; painting that section's local
+     *  indices through this strip's measured tops would smear the
+     *  pre-paint, so `commitReorder` drops a foreign measurement instead
+     *  of reusing it (rowShift is then 0 — the order simply lands). */
+    const measuredSectionKey = ref<string | null>(null);
     /** The section the measured strip — and the arrangement painted over
      *  it — belongs to. `rowShift` is fed section-local indices and only
      *  shifts rows of THIS section; every other section's rows stay put, so
@@ -592,6 +613,7 @@ export default defineComponent({
       const rows = liveRowEls();
       if (rows.length === 0) {
         stripMeasure.value = null;
+        measuredSectionKey.value = null;
         return;
       }
       // A drag starting while a HELD arrangement is still painted would
@@ -616,9 +638,10 @@ export default defineComponent({
         left: source?.left ?? 0,
         width: source?.width ?? 0,
       };
+      measuredSectionKey.value = props.sections ? dragSectionKey.value : null;
       // The measured strip IS the pressed section's row list: name that
       // section so rowShift only paints the rows it measured.
-      arrangementSectionKey.value = props.sections ? dragSectionKey.value : null;
+      arrangementSectionKey.value = measuredSectionKey.value;
     }
 
     // ── The ghost ──

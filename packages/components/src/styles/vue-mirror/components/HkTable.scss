@@ -117,6 +117,14 @@
   background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
 }
 
+/* The sectioned zebra pair above is (0,4,0) — it would out-specify the
+   shared `.hk-table-hover .hk-table-row:hover` rule (0,3,0) and kill hover
+   feedback on EVERY row of a striped sectioned table. Keep the pointer
+   feedback by re-stating it at a spec that beats the pair. */
+.hk-table-striped.hk-table-hover .hk-table-section-body .hk-table-row:hover {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.04));
+}
+
 .hk-table-bordered {
   border: 1px solid var(--hi-color-border, rgba(100,100,100,0.1));
   border-radius: var(--radius-md, 8px);

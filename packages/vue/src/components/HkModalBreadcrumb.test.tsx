@@ -1179,8 +1179,12 @@ describe("HkModalBreadcrumb motion", () => {
   it("keeps a mid-leave strip inert: its surfaces cannot spring back", async () => {
     lendTransitionDuration((el) => el.classList.contains("hk-modal-breadcrumb"));
     try {
-      const win = manager.register("modal", true, LONG);
+      // The SHORT layer opens first so the fold keeps the CUT label as the
+      // visible tail — the frozen DOM then carries both tappable surfaces
+      // (the "…" trigger AND the cut-name button). LONG is the layer we
+      // close.
       manager.register("modal", true, "第二层");
+      const win = manager.register("modal", true, LONG);
       await mountStrip();
       // Fold so the trigger exists, then drop to one layer: the strip
       // starts leaving (its DOM is frozen — trigger included).
@@ -1197,8 +1201,24 @@ describe("HkModalBreadcrumb motion", () => {
       more()!.click();
       await nextTick();
       expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
+      // Same for the frozen cut-label crumb's reveal (the symmetric
+      // guard in toggleReveal).
+      strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+      await nextTick();
+      expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
+
       await until(() => strip() === null, 1500);
       expect(strip()).toBeNull();
+
+      // THE spring-back probe: with the guard gone, the taps above left
+      // menuOpen/revealed set, and the next window would reopen the strip
+      // with its panel already standing. The guard must keep both refs
+      // down so the remount paints inert.
+      manager.register("modal", true, "新来的层级");
+      await nextTick();
+      await nextTick();
+      expect(strip()).not.toBeNull();
+      expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
     } finally {
       vi.restoreAllMocks();
     }

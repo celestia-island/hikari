@@ -15,7 +15,10 @@ const srcDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Recursively collect SCSS/TS/TSX sources under src/, skipping the
  * animation registrar's own directory (it is the thing under test, not
- * an animation-owning component). */
+ * an animation-owning component). Test files are skipped too: a keyframe
+ * NAME quoted inside a test (a negative assertion, a fixture) is not a
+ * declaration — counting it made the parity below agree with itself
+ * instead of with the sheets (2026-11-07 review, M7). */
 function collectSourceFiles(dir: string): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -23,7 +26,7 @@ function collectSourceFiles(dir: string): string[] {
     if (entry.isDirectory()) {
       if (p === path.resolve(srcDir, "animation")) continue;
       out.push(...collectSourceFiles(p));
-    } else if (/\.(scss|ts|tsx)$/.test(entry.name)) {
+    } else if (/\.(scss|ts|tsx)$/.test(entry.name) && !/\btest\.[tj]sx?$/.test(entry.name)) {
       out.push(p);
     }
   }
@@ -65,7 +68,6 @@ describe("registerAnimations", () => {
     expect(byName.get("hk-range-ribbon-pulse")?.infinite).toBe(true);
     expect(byName.get("s-auth-card-in")?.infinite).toBe(false);
     expect(byName.get("hk-rolling-number-up")?.infinite).toBe(false);
-    expect(byName.get("hk-modal-breadcrumb-in")?.infinite).toBe(false);
     expect(byName.get("hk-pwd-flash")?.infinite).toBe(false);
   });
 

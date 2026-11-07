@@ -16,6 +16,7 @@
 // host themes (dark mode etc.) when the vars exist.
 
 @use "../styles/polyfill" as *;
+@use "./hikari-vars" as vars;
 
 .hk-error-landing {
   --hel-background: var(--color-background, 246 247 249);
@@ -44,7 +45,7 @@
   padding: var(--space-20, 1.25rem);
   background: rgb(var(--hel-background));
   color: rgb(var(--hel-text));
-  font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
+  font-family: var(--font-sans, vars.$hikari-font-family-sans);
 }
 
 .hk-error-landing__card {

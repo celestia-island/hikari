@@ -161,7 +161,13 @@ describe("selection policy sheet", () => {
     const css = compile("../components/HkTable.scss");
     // 1) The legacy `copy` glyph must not come back anywhere — not as the
     //    bare keyword, not as a `url(...)` fallback list, not in any case.
-    expect(css).not.toMatch(/cursor\s*:[^;}]*\bcopy\b/i);
+    //    Only the KEYWORD counts: `url(copy-icon.cur)` / `var(--copy-cursor)`
+    //    merely spell "copy" without selecting the legacy glyph.
+    const legacyCopy = [...css.matchAll(/cursor\s*:([^;}]*)/gi)].filter((match) => {
+      const value = match[1]!.replace(/url\([^)]*\)|var\([^)]*\)/gi, " ");
+      return /\bcopy\b/i.test(value);
+    });
+    expect(legacyCopy).toHaveLength(0);
     // 2) The marked cell IS the clickable-text surface.
     expect(css).toMatch(
       /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*pointer/,
@@ -175,7 +181,7 @@ describe("selection policy sheet", () => {
     //    `.hk-table[data-copy-cell] .hk-table-cell` keeps the token in the
     //    selector yet can never match a real cell.
     for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-      if (!/cursor:\s*pointer/.test(rule[2]!)) continue;
+      if (!/cursor\s*:[^;}]*\bpointer\b/i.test(rule[2]!)) continue;
       for (const selector of rule[1]!.split(",")) {
         if (!selector.includes(".hk-table-cell")) continue;
         const lastCompound = selector.trim().split(/\s+/).pop() ?? "";
@@ -189,7 +195,9 @@ describe("selection policy sheet", () => {
     expect(css).toMatch(
       /\.hk-table\[data-copy-cells\] \.hk-table-cell\.hk-table-manage-cell\{[^}]*?cursor:\s*default/,
     );
+    // `[data-copy-cell` (no closing bracket) so the equivalent
+    // `[data-copy-cell=""]` spelling still yields a real index.
     expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
-      css.indexOf("[data-copy-cell]"),
+      css.indexOf("[data-copy-cell"),
     );  });
 });

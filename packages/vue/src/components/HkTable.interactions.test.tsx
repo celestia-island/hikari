@@ -82,13 +82,18 @@ const COLS = [
 
 // The compiled sheet, injected into the document so `getComputedStyle` sees
 // the REAL cascade. Selector-text assertions cannot catch a rule that reaches
-// an unmarked cell through inheritance, an element selector (`td`) or a dead
-// `@media` — the cascade can.
+// an unmarked cell through inheritance, an element selector (`td`) or a media
+// block — the cascade can.
+//
+// `style: "expanded"` is load-bearing: the compressed writer emits
+// `@media(min-width:600px)` (no space after `@media`) and happy-dom then
+// DROPS the whole block (cssRules stays empty), which would make a
+// media-wrapped widening rule invisible to this suite.
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, "..");
 const SHEET_CSS = sass.compile(resolve(HERE, "HkTable.scss"), {
   loadPaths: [SRC, join(SRC, "components"), join(SRC, "styles"), join(SRC, "styles", "theme")],
-  style: "compressed",
+  style: "expanded",
   silenceDeprecations: ["import", "global-builtin", "legacy-js-api"],
 }).css;
 // happy-dom reports an unset cursor as "" (a browser reports "auto").
@@ -443,6 +448,14 @@ describe("HkTable click-cursor cascade", () => {
   });
   afterEach(() => {
     sheet.remove();
+  });
+
+  it("parses the injected sheet (a blind sheet would make this suite vacuous)", () => {
+    const rules = sheet.sheet?.cssRules;
+    expect(rules?.length ?? 0).toBeGreaterThan(0);
+    // The sheet carries at least one media block; if the parser dropped it,
+    // a media-wrapped widening rule would be invisible to the next test.
+    expect([...(rules ?? [])].some((rule) => rule.constructor.name === "CSSMediaRule")).toBe(true);
   });
 
   it("reaches the marked cell only — computed cascade, not selector text", () => {

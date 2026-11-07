@@ -453,7 +453,13 @@ export default defineComponent({
       }
       const band = vp.getBoundingClientRect();
       const active = pickActiveProgressRoot(band);
-      const rows = active ? active.root.querySelectorAll(props.scrollProgressSelector) : [];
+      // A list may own the row grammar (HkTable's section bands are body
+      // `<tr>`s that are not data rows); its `getRows` wins over the
+      // container selector. No `getRows` (or an undefined return) keeps the
+      // existing selector path byte-for-byte.
+      const rows = active
+        ? active.handle.getRows?.() ?? active.root.querySelectorAll(props.scrollProgressSelector)
+        : [];
       if (!active || rows.length === 0 || vp.scrollHeight <= vp.clientHeight + 1) {
         setProgressHidden();
         return;

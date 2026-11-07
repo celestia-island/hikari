@@ -8,7 +8,7 @@
 // `src/styles/vue-mirror/` and guarded by `tests/vue_mirror_drift_tests.rs`),
 // compiled with `no_hash` so the `.hk-table*` / `.hk-text-*` class names are
 // literal and identical in both forms. DOM contract (mirrors the Vue render
-// output):
+// output; the `sections` branch is Vue-only — see the deltas):
 //
 //   div.hk-table-host [host class]
 //     div.hk-table-wrapper
@@ -46,6 +46,15 @@
 //               button.hk-icon-button …                    (⋯ trigger)
 //           ── or, with no rows ──
 //           tr > td.hk-table-empty colspan={total_columns} {empty content}
+//           ── or, with `sections` (Vue-only; see deltas) ──
+//           tbody.hk-table-body.hk-table-section-body [data-section-key]
+//             tr.hk-table-section-row
+//               th.hk-table-section-cell [scope=rowgroup] [colspan={total_columns}]
+//                 span.hk-table-section-label? {section label}
+//                 …                                      (`section` slot content)
+//             tr.hk-table-row …                          (that section's rows)
+//           tbody.hk-table-body                          (when every section is empty)
+//             tr > td.hk-table-empty [colspan={total_columns}]
 //
 // State contract (the tairitsu 0.5.22 limit this wave works under, ledger
 // L48): Vue keeps `sortKey` / `sortDirection` / `selectedRowKeys` in local
@@ -89,6 +98,14 @@
 //     `reorder`). The POINTER engine (ghost clone, FLIP shift, pointer
 //     capture, live strip measurement) is not mirrored — it needs
 //     per-instance refs + measurement, which tairitsu 0.5.22 does not expose.
+//   * `sections` (grouped tables: ONE `<thead>` + one `<tbody>` per section
+//     with a `<th scope="rowgroup">` band, sorting WITHIN a section,
+//     selection ACROSS the whole table, and FLAT reorder indices) is
+//     Vue-only for now: the section model + band render are not carried in
+//     this wave. The controlled-state half needs no DOM state (the keyboard
+//     reorder already emits flat pairs); only the section-clamped POINTER
+//     strip needs per-section DOM query/clamp state, and that engine is
+//     already unmirrored above.
 //   * `manageable` is a boolean (render the column) and the per-row verdict
 //     rides [`TableRow::manage`]: Vue's gate is `boolean | (row) => boolean |
 //     "disabled"`, and a function prop cannot be a `PartialEq` props field.
@@ -565,7 +582,8 @@ pub struct TableProps {
     /// Column definitions (Vue: required `columns`).
     pub columns: Vec<TableColumn>,
 
-    /// Row data (Vue: required `rows`).
+    /// Row data (Vue: `rows` defaults to `[]` and is unused when `sections`
+    /// is set; this mirror has no sections — see the header delta).
     pub rows: Vec<TableRow>,
 
     /// Accessible caption, rendered as `caption.hk-table-sr-only`.

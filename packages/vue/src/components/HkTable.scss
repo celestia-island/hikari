@@ -415,12 +415,16 @@
    (2026-11-07 user direction): the marker is the same predicate as the
    `title` hint and as a DEFAULT text cell's background click — a
    default-rendered cell, in a `copyable` column, whose value still
-   renders text. Slot cells (chips/badges/layout wrappers) and
-   `copyable: false` columns do not copy from a background click, so
-   they keep the ordinary arrow; a `copy` cursor there (which Windows
-   paints as the legacy arrow+plus glyph) promised an affordance the
-   click does not deliver. Their inner text leaves still copy on click —
-   the arrow under-promises on purpose rather than over-promising. */
+   renders text. Slot cells (chips/badges/layout wrappers) never take
+   the click on their td SURFACE — only their inner text leaves copy —
+   and `copyable: false` columns copy nothing at all, so both keep the
+   ordinary arrow; a `copy` cursor there (which Windows paints as the
+   legacy arrow+plus glyph) promised an affordance the surface click
+   does not deliver. Two deliberate under-promises follow: an inner
+   leaf that copies still shows the arrow, and a slot that renders BARE
+   text (no wrapper) makes the td's own surface copy — yet stays
+   unmarked because the slot owns its hints. Under-promising is the
+   point; over-promising is the bug this rule removes. */
 .hk-table[data-copy-cells] {
   .hk-table-cell {
     @include user-select(none);
@@ -431,10 +435,12 @@
   }
 
   /* Defense in depth: the row-actions track is a control and never
-     carries `data-copy-cell`, so this rule is inert today — it stays so
-     a future widening of the marker cannot hand the ⋯ trigger a copy
-     cursor. */
-  .hk-table-manage-cell {
+     carries `data-copy-cell`, so this rule is inert today. It repeats
+     `.hk-table-cell` on purpose: that keeps its specificity equal to the
+     marker rule above (`(0,4,0)`) and, declared after it, it still wins
+     if a future widening ever hands the marker to the ⋯ trigger. A bare
+     `.hk-table-manage-cell` (`(0,3,0)`) would now lose that tie. */
+  .hk-table-cell.hk-table-manage-cell {
     cursor: default;
   }
 }

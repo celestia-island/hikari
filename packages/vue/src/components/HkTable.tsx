@@ -46,14 +46,19 @@ export type HkRowManageGate =
 const INTERACTIVE_SELECTOR =
   'button, a, input, select, textarea, label, [role="button"], [aria-haspopup], [data-no-copy]';
 
-/** The text a default-rendered cell child ACTUALLY renders, following
- *  Vue's own `normalizeVNode` branch order: strings, numbers and bigints
- *  become text nodes; `null` / `undefined` / booleans become comment
- *  placeholders that render nothing. So `String(false)` is not a copy
- *  payload — the click handler would find an empty textContent — and a
- *  cell whose value is `false` must not advertise a copy affordance.
- *  Objects are not supported as children (Vue treats them as vnodes);
- *  they fall out of this helper, which is the honest answer for them. */
+/** The text a default-rendered cell child ACTUALLY renders, restricted to
+ *  the table-cell value contract. Vue's `normalizeVNode` sends strings,
+ *  numbers, bigints, symbols and functions through
+ *  `createVNode(Text, null, String(child))`, arrays through a Fragment,
+ *  and NON-vnode objects through that same Text branch (a plain object
+ *  shows `[object Object]`, a `Date` its `toString`); booleans / `null` /
+ *  `undefined` become comment placeholders that render NOTHING. Only
+ *  strings / numbers / bigints are table-cell values here: `String(false)`
+ *  is not a copy payload — the handler would find an empty textContent —
+ *  so a `false` cell must not advertise the affordance. Symbols,
+ *  functions, arrays, objects and Dates DO render something and their
+ *  click copies, so leaving them out is a deliberate UNDER-promise (never
+ *  a lie); a slot is the supported way to render structured content. */
 function renderedText(value: unknown): string {
   return typeof value === "string" || typeof value === "number" || typeof value === "bigint"
     ? String(value).trim()
@@ -905,15 +910,17 @@ export default defineComponent({
                       // cell advertises the copy affordance only when its
                       // background click really copies — the td is a text
                       // leaf that still RENDERS text (see `renderedText`).
-                      // Slot cells (chips/badges/wrappers) and
-                      // `copyable: false` columns do not copy from a
-                      // background click, so they keep the plain arrow.
-                      // Their inner text leaves still copy on click, so
-                      // that arrow is a deliberate under-promise — never
-                      // an over-promise (2026-11-07 user direction:
-                      // `cursor: copy` on every cell promised more than
-                      // the handler does; badges carry their own
-                      // pointer/tooltip).
+                      // Slot cells (chips/badges/wrappers) never take the
+                      // click on their td surface (only inner text leaves
+                      // copy) and `copyable: false` columns copy nothing,
+                      // so both keep the plain arrow — a deliberate
+                      // under-promise, never an over-promise (2026-11-07
+                      // user direction: `cursor: copy` on every cell
+                      // promised more than the handler does; badges carry
+                      // their own pointer/tooltip). A slot that renders
+                      // BARE text is the one case where the td surface
+                      // does copy and still stays unmarked: the slot owns
+                      // its own hints.
                       const cellCopies =
                         props.copyCells &&
                         col.copyable !== false &&

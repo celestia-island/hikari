@@ -240,7 +240,9 @@ describe("HkTable copy affordance marker", () => {
     // Default text cell: the marker and the hint are ONE predicate.
     expect(tds[0]!.hasAttribute("data-copy-cell")).toBe(true);
     expect(tds[0]!.getAttribute("title")).toBe("Click to copy");
-    // Slot cell: a background click copies nothing → no marker, no hint.
+    // Slot cell: the td surface does NOT advertise. (A bare-text slot's
+    // surface click does copy the text — the marker still stays off: the
+    // slot owns its hints, so the arrow under-promises on purpose.)
     expect(tds[1]!.textContent).toBe("pure-text-slot");
     expect(tds[1]!.hasAttribute("data-copy-cell")).toBe(false);
     expect(tds[1]!.getAttribute("title")).toBeNull();
@@ -272,6 +274,8 @@ describe("HkTable copy affordance marker", () => {
       expect(td.textContent).toBe("");
       expect(td.hasAttribute("data-copy-cell")).toBe(false);
     }
+    // This pins the HANDLER's own emptiness gate (depth in front of the
+    // marker predicate), not the marker: the two must not drift apart.
     tds[0]!.click();
     await settle();
     expect(writeText).not.toHaveBeenCalled();

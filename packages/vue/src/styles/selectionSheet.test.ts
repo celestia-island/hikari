@@ -162,8 +162,32 @@ describe("selection policy sheet", () => {
     expect(copyRules.length).toBeGreaterThan(0);
     for (const rule of copyRules) {
       for (const selector of rule[1]!.split(",")) {
-        expect(selector).toContain("[data-copy-cell]");
+        // Tolerate the empty-value spelling Vue emits
+        // (`[data-copy-cell=""]`) but neither a prefix token nor a
+        // selector carrying a different value.
+        expect(selector).toMatch(/\[data-copy-cell(?:="")?\]/);
+        // The marker must sit on the CELL compound: moving it to an
+        // ancestor (`.hk-table[data-copy-cell] .hk-table-cell`) keeps the
+        // token in the selector yet can never match a real cell.
+        const lastCompound = selector.trim().split(/\s+/).pop() ?? "";
+        expect(lastCompound).toMatch(/\.hk-table-cell/);
+        expect(lastCompound).toMatch(/\[data-copy-cell(?:="")?\]/);
       }
     }
+    // The marked rule must also sit under the table-level opt-out gate:
+    // moving it into a dead block (`.hk-table:not([data-copy-cells])`)
+    // would keep a marker-bearing selector while the cursor never applies.
+    expect(css).toMatch(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*copy/,
+    );
+    // The control-track override repeats `.hk-table-cell` so its
+    // specificity TIES the marker rule above and, declared after it, wins
+    // the tie — the defense-in-depth promise needs that ordering.
+    expect(css).toMatch(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\.hk-table-manage-cell\{[^}]*?cursor:\s*default/,
+    );
+    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
+      css.indexOf("[data-copy-cell]"),
+    );
   });
 });

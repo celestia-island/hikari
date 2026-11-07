@@ -80,7 +80,10 @@
 //   * no per-cell slot content (Vue: `slots[\`cell-${key}\`]`): a cell is
 //     text ([`TableRow::cells`]); the `title` copy hint and the
 //     `data-copy-cell` cursor marker are emitted for text cells only, exactly
-//     Vue's default branch.
+//     Vue's default branch. Whitespace definitions differ from JS in exactly
+//     two code points (`str::trim` drops U+0085 but keeps U+FEFF; JS
+//     `String.trim` does the reverse), which can only matter for a cell made
+//     solely of one of those invisible characters.
 //   * `draggable` mirrors the grip column, the inert-while-sorted rule and
 //     the keyboard twin (ArrowUp/ArrowDown on the focused handle emits
 //     `reorder`). The POINTER engine (ghost clone, FLIP shift, pointer
@@ -1439,9 +1442,11 @@ mod tests {
     #[test]
     fn table_marks_only_the_cells_whose_background_click_copies() {
         // Three columns so each positive/negative pair isolates ONE clause:
-        //   name   copyable + text   → marker (the positive control)
-        //   age    copyable + EMPTY  → no marker (the emptiness clause)
-        //   secret opted out + text  → no marker (the copyable clause)
+        //   name   copyable + text      → marker (the positive control)
+        //   age    copyable + WHITESPACE → no marker (the trim clause: an
+        //          `is_empty()`-only gate would advertise a copy of invisible
+        //          text, so the cell has to be blank-but-not-empty)
+        //   secret opted out + text      → no marker (the copyable clause)
         let mut opt_out = TableColumn::new("secret", "Secret");
         opt_out.copyable = false;
         let html = Table(TableProps {
@@ -1450,7 +1455,7 @@ mod tests {
                 TableColumn::new("age", "Age"),
                 opt_out,
             ],
-            rows: vec![TableRow::new(vec!["Ada", "", "nope"]).key("r1")],
+            rows: vec![TableRow::new(vec!["Ada", "   ", "nope"]).key("r1")],
             copy_cells: true,
             draggable: true,
             selectable: true,
@@ -1477,10 +1482,11 @@ mod tests {
         assert!(cells[2].ends_with(">Ada"), "{}", cells[2]);
         assert!(cells[2].contains("data-copy-cell=\"\""), "{}", cells[2]);
         assert!(cells[2].contains("title=\"Click to copy\""), "{}", cells[2]);
-        // Empty text: the click copies nothing, so no marker and no hint.
+        // Whitespace-only text: the click copies nothing visible, so no
+        // marker and no hint.
         assert!(
             !cells[3].contains("data-copy-cell") && !cells[3].contains("Click to copy"),
-            "an empty text cell must not advertise a copy: {}",
+            "a whitespace-only cell must not advertise a copy: {}",
             cells[3]
         );
         // Opted-out column WITH text: same, pinned independently of the

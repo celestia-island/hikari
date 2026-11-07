@@ -122,7 +122,7 @@ describe("HkModal leave-window height pin", () => {
   it("keeps the morph pin through the whole leave and releases at finalize", async () => {
     vi.useFakeTimers();
     freezeRaf();
-      stubPhoneViewport();
+    stubPhoneViewport();
     stubDurations();
     stubLayout(500);
     try {
@@ -160,7 +160,7 @@ describe("HkModal leave-window height pin", () => {
   it("leaves the frame unpinned through the enter; the open edge pins the settled height", async () => {
     vi.useFakeTimers();
     freezeRaf();
-      stubPhoneViewport();
+    stubPhoneViewport();
     stubDurations();
     stubLayout(400);
     try {
@@ -197,7 +197,7 @@ describe("HkModal leave-window height pin", () => {
   it("drops the held pin at a reopen-interrupt edge; the open edge re-pins", async () => {
     vi.useFakeTimers();
     freezeRaf();
-      stubPhoneViewport();
+    stubPhoneViewport();
     stubDurations();
     stubLayout(500);
     try {

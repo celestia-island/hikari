@@ -743,10 +743,12 @@ describe("useSizeMorph clip reveal", () => {
 // ── Leave-window hold + enter-window defer (2026-09-16 modal report) ──
 // The modal's close fold owns the frame's geometry for the whole leave:
 // hold() keeps the pin (a mid-leave content change must not resize the
-// folding frame) and the reopen-interrupt path animates FROM that pin.
-// The enter unfold is height-relative geometry (translateY 5% + bottom
-// 10% clip of the frame height), so deferRemeasure freezes resize-driven
-// re-pins through the enter and the open edge flushes them.
+// folding frame); a reopen that goes hold → start without releasing
+// animates from that pin (no current HkModal path does this — its reopen
+// edge releases first). deferRemeasure is the generic freeze gate: while
+// it returns true, resize-driven re-pins are deferred and an explicit
+// remeasure() flushes them — HkModal's only remaining freezer is the
+// stepflow slide window.
 
 describe("useSizeMorph hold + deferRemeasure", () => {
   it("hold keeps the pin and stops observing (leave-window stability)", () => {
@@ -790,14 +792,15 @@ describe("useSizeMorph hold + deferRemeasure", () => {
     // The initial pin is NOT gated (arming must pin immediately).
     expect(h.frame.style.height).toBe("120px");
 
-    // Content streams in mid-enter: the RO fires but the pin must not
-    // move — the unfold's height-relative geometry stays put.
+    // Content changes while the gate is closed: the RO fires but the pin
+    // must not move — the caller froze the frame on purpose (the
+    // stepflow slide window at the consumer).
     h.setNatural(160);
     FakeResizeObserver.instances[0]!.callback();
     await settle();
     expect(h.frame.style.height).toBe("120px");
 
-    // The open edge flushes the deferred growth.
+    // An explicit remeasure bypasses the gate and flushes the growth.
     h.remeasure();
     expect(h.frame.style.height).toBe("160px");
 

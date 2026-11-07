@@ -574,12 +574,10 @@ export default defineComponent({
     // with a single live filter. Reacts live: covered flips with every
     // register/unregister above this window.
     const stackCovered = computed(() => {
-      const entries = [...manager.registry.value.values()];
-      const windowish = entries.filter(
-        (e) => e.kind === "modal" || e.kind === "drawer" || e.blocking,
-      );
-      if (!handle.value || windowish.length === 0) return false;
-      const top = Math.max(...windowish.map((e) => e.zIndex));
+      // Reuses the shared topWindowZ authority (the same windowing filter
+      // the dial consumes below) instead of a private registry scan.
+      const top = topWindowZ.value;
+      if (!handle.value || top === null) return false;
       return handle.value.zIndex < top;
     });
     const machine = useSurfaceMachine({
@@ -1213,10 +1211,9 @@ export default defineComponent({
                   ])}
                 </div>
           {/* Static blur plate — the LAST child of hk-modal-root so the
-              enter-scoped suppression in the sheet can key off the
-              content's enter classes via the general sibling combinator;
-              paint order rides the explicit z-indexes (plate -1 < overlay
-              0 < content 1), not DOM order. */}
+              sheet's stack-covered drop ([data-stack-covered] on this
+              root) reaches it; paint order rides the explicit z-indexes
+              (plate -1 < overlay 0 < content 1), not DOM order. */}
           <div class="hk-modal-blur-plate" aria-hidden="true" />
           </div>
         </Teleport>

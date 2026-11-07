@@ -128,6 +128,14 @@ describe("modal blur plate (static filter, stack-covered removal)", () => {
     );
   });
 
+  it("removes the plate on stack-covered windows", () => {
+    // A present backdrop-filter element still forces the per-frame
+    // backdrop surface even computed to none (~44pp worse than hidden).
+    const covered = ruleBodies(css, ".hk-modal-root[data-stack-covered] .hk-modal-blur-plate");
+    expect(covered.length).toBeGreaterThanOrEqual(1);
+    for (const body of covered) expect(body).toContain("display: none");
+  });
+
   it("keeps no enter/leave-scoped suppression legs (the top plate animates with the filter)", () => {
     // The top plate's own enter measured 2% dropped WITH the filter
     // live (single live blur) — suppression legs were removed with the

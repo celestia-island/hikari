@@ -566,6 +566,22 @@ export default defineComponent({
     // optimization for the class flip. See runtime/surfaceMachine.ts
     // for the axioms, the total transition table, and the invariants.
     const overlayEl = ref<HTMLElement>();
+    // TOP-ONLY BLUR: this window's blur plate carries the filter only
+    // while it is the topmost WINDOW-kind layer of the stack. The covered
+    // window's plate drops to dim-only (see the sheet) — with N stacked
+    // full-viewport backdrop-filters every composited frame re-runs all
+    // of them, and the open storm measured 36-55% dropped frames vs 2%
+    // with a single live filter. Reacts live: covered flips with every
+    // register/unregister above this window.
+    const stackCovered = computed(() => {
+      const entries = [...manager.registry.value.values()];
+      const windowish = entries.filter(
+        (e) => e.kind === "modal" || e.kind === "drawer" || e.blocking,
+      );
+      if (!handle.value || windowish.length === 0) return false;
+      const top = Math.max(...windowish.map((e) => e.zIndex));
+      return handle.value.zIndex < top;
+    });
     const machine = useSurfaceMachine({
       layers: [
         // Budgets are the starvation-era upper bound; the driver probes
@@ -1071,6 +1087,7 @@ export default defineComponent({
         <Teleport to={ensureOverlayRoot()}>
           <div
             class="hk-modal-root"
+            data-stack-covered={stackCovered.value || undefined}
             style={{ zIndex: overlayZ.value, ...hkPadStyle(props.padding) }}
             onKeydown={onKeydown}
           >
@@ -1195,6 +1212,12 @@ export default defineComponent({
                   renderFooter(),
                   ])}
                 </div>
+          {/* Static blur plate — the LAST child of hk-modal-root so the
+              enter-scoped suppression in the sheet can key off the
+              content's enter classes via the general sibling combinator;
+              paint order rides the explicit z-indexes (plate -1 < overlay
+              0 < content 1), not DOM order. */}
+          <div class="hk-modal-blur-plate" aria-hidden="true" />
           </div>
         </Teleport>
       );

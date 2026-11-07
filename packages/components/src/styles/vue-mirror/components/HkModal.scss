@@ -33,6 +33,57 @@
 // Overlay (backdrop)
 // ------
 
+// The BLUR is a separate static plate, NOT on the fading overlay: a
+// backdrop-filter re-filters the whole viewport on every composited frame
+// while ANY animation is live (the steady state is cached and clean —
+// measured separately), and the enter storm (frame + dim + strip + crumbs
+// mounting together) measured 36% dropped frames with the filter live vs
+// 0% with it suppressed (2026-11-07 open-jank spike, headless rAF matrix;
+// one modal, blur 3px). The plate holds the filter and never animates;
+// the overlay below is a solid-color dim curtain whose opacity ramp is
+// the cheapest possible layer to animate — and the ramp is what the eye
+// tracks, so the blur cutting in with the first frame (instead of
+// ramping over 0.42s) reads as focus pull, not as a missing layer.
+.hk-modal-blur-plate {
+  position: fixed;
+  inset: 0;
+  // Below the overlay (0) and the content frame (1) inside the root's own
+  // stacking context — the plate is DOM-last but paints first.
+  z-index: -1;
+  @include backdrop-filter(var(--hk-modal-overlay-blur, blur(3px)));
+  // The root is pointer-events: none; the plate must never take clicks.
+  pointer-events: none;
+}
+
+// TWO SUPPRESSION LEGS, both measured (2026-11-07 open-jank spike):
+// Chromium re-runs a backdrop-filter on every composited frame while any
+// animation is live — the steady state (nothing animating) is cached and
+// runs 60fps with the filter on, but any enter/leave/crumb motion in the
+// page turns it into a per-frame full-viewport filter.
+//   1. ENTER-SCOPED: while the content frame's enter runs (the open
+//      storm: frame + dim + strip + crumbs mounting together) the plate
+//      carries no filter — measured 36% dropped frames live vs 0%
+//      suppressed. The blur lands when the enter settles, under the
+//      finished dim ramp; during the enter the backdrop reads
+//      sharp-but-dimming, which at 3px/0.42s reads as focus pull, not as
+//      a missing layer. The sibling combinator reaches the plate because
+//      it is DOM-last (see the tsx); enter-from is included so the
+//      suppression is live from the first frame. The LEAVE measured
+//      clean with the filter live, so it is left alone.
+//   2. STACK-COVERED: a covered (non-topmost) window carries no filter
+//      AT ALL — the breadcrumb strip and crumb entries animate BELOW
+//      every window plate, and each of those frames re-ran every
+//      covered plate's full-viewport filter. Blur reads as a property
+//      of the top surface anyway: lower windows sit under the top
+//      window's own dim + blur, so their own filter is visually
+//      redundant (blur-of-blur). The dim curtains are untouched: depth
+//      still darkens, only the redundant blur legs drop.
+.hk-modal-content-enter-from ~ .hk-modal-blur-plate,
+.hk-modal-content-enter-active ~ .hk-modal-blur-plate,
+.hk-modal-root[data-stack-covered] .hk-modal-blur-plate {
+  --hk-modal-overlay-blur: none;
+}
+
 .hk-modal-overlay {
   position: fixed;
   inset: 0;
@@ -42,7 +93,6 @@
   // handle hasn't resolved yet — zIndex briefly starts at 0).
   z-index: 0;
   background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
-  @include backdrop-filter(var(--hk-modal-overlay-blur, blur(3px)));
   pointer-events: auto;
 }
 
@@ -163,6 +213,11 @@
   .hk-modal-content-enter-from,
   .hk-modal-content-leave-to {
     opacity: 0;
+    // Pre-promote at insert: enter-from lands in the same frame the
+    // content mounts — carrying will-change HERE (shared with the leave's
+    // end pose) means the layer is composited before the transition's
+    // first measured frame, not one hitch later.
+    will-change: opacity, transform;
     transform: translate(
           calc(-50% + var(--hk-modal-shift-x, 0px)),
           calc(-50% + var(--hk-modal-shift-y, 0px))
@@ -453,7 +508,7 @@
   // the page, so an opaque-ish sheet reads identically. Hosts restore
   // the finish per surface with --hk-modal-blur-mobile /
   // --hk-modal-bg-mobile.
-  .hk-modal-overlay {
+  .hk-modal-blur-plate {
     @include backdrop-filter(var(--hk-modal-overlay-blur-mobile, none));
   }
 

@@ -91,10 +91,19 @@ const COLS = [
 // media-wrapped widening rule invisible to this suite.
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, "..");
+const SHEET_STYLE = "expanded" as const;
 const SHEET_CSS = sass.compile(resolve(HERE, "HkTable.scss"), {
   loadPaths: [SRC, join(SRC, "components"), join(SRC, "styles"), join(SRC, "styles", "theme")],
-  style: "expanded",
+  style: SHEET_STYLE,
   silenceDeprecations: ["import", "global-builtin", "legacy-js-api"],
+}).css;
+// The parser probe below is compiled with the SAME style on purpose: if a
+// future edit flips SHEET_STYLE back to "compressed", the probe loses its
+// media block too and this suite goes red. That keeps the "fixture must stay
+// `expanded`" premise under its own tripwire instead of silently disarming
+// the cascade assertion.
+const PROBE_CSS = sass.compileString("@media (min-width: 600px) { .hk-probe { color: red } }", {
+  style: SHEET_STYLE,
 }).css;
 // happy-dom reports an unset cursor as "" (a browser reports "auto").
 const isAuto = (value: string): boolean => value === "" || value === "auto";
@@ -454,14 +463,17 @@ describe("HkTable click-cursor cascade", () => {
     expect(sheet.sheet?.cssRules?.length ?? 0).toBeGreaterThan(0);
     // Probe the PARSER, not this sheet: the next test can only catch a
     // media-wrapped widening rule if a media block survives parsing. The
-    // probe is synthetic so unrelated sheet edits (e.g. dropping the
-    // reduced-motion block) can never turn this suite red.
+    // probe CSS is synthetic (so unrelated sheet edits, e.g. dropping the
+    // reduced-motion block, can never turn this suite red) but compiled with
+    // the SAME style as the fixture (so a fixture-style regression does).
     const probe = document.createElement("style");
-    probe.textContent = "@media (min-width: 600px) { .hk-probe { color: red; } }";
+    probe.textContent = PROBE_CSS;
     document.head.appendChild(probe);
     try {
       const rules = [...(probe.sheet?.cssRules ?? [])];
-      expect(rules.some((rule) => rule.constructor.name === "CSSMediaRule")).toBe(true);
+      expect(rules.some((rule) => typeof (rule as { media?: unknown }).media !== "undefined")).toBe(
+        true,
+      );
     } finally {
       probe.remove();
     }

@@ -183,9 +183,11 @@ describe("selection policy sheet", () => {
     for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       if (!/cursor\s*:[^;}]*\bpointer\b/i.test(rule[2]!)) continue;
       for (const selector of rule[1]!.split(",")) {
-        if (!selector.includes(".hk-table-cell")) continue;
         const lastCompound = selector.trim().split(/\s+/).pop() ?? "";
-        expect(lastCompound).toMatch(/\.hk-table-cell/);
+        // Only the CELL compound itself is constrained: a legitimate
+        // descendant rule (`.hk-table-cell a { cursor: pointer }`) is a
+        // control inside the cell and keeps its own cursor.
+        if (!lastCompound.startsWith(".hk-table-cell")) continue;
         expect(lastCompound).toMatch(/\[data-copy-cell(?:="")?\]/);
       }
     }
@@ -195,11 +197,14 @@ describe("selection policy sheet", () => {
     expect(css).toMatch(
       /\.hk-table\[data-copy-cells\] \.hk-table-cell\.hk-table-manage-cell\{[^}]*?cursor:\s*default/,
     );
-    // Anchor on the MARKER rule itself (not on the `[data-copy-cells]` scope
-    // rule that shares the prefix) and keep the `="`/`]` variants working:
-    // the marker rule is the only one whose selector starts with the cell
-    // class, so this index really pins declaration order.
-    const markerAt = css.search(/\.hk-table-cell\[data-copy-cell(?:="")?\]/);
-    expect(markerAt).toBeGreaterThan(-1);
-    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(markerAt);  });
+    // Anchor on the rule that DECLARES the cursor (not merely on the first
+    // selector that mentions the marker — a decoy rule carrying the selector
+    // without a cursor would neutralize the order pin).
+    const markedRule = css.match(
+      /\.hk-table\[data-copy-cells\] \.hk-table-cell\[data-copy-cell(?:="")?\]\{[^}]*?cursor:\s*pointer/,
+    );
+    expect(markedRule).not.toBeNull();
+    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
+      css.indexOf(markedRule![0]),
+    );  });
 });

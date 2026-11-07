@@ -416,14 +416,14 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       "will-change",
       DESKTOP,
     );
-    expect(enterWill).toBe("opacity, height");
+    expect(enterWill).toBe("opacity");
     // The close direction promotes the same pair of layers.
     const leaveWill = winner(
       frameWith("hk-modal-content-leave-to", "hk-modal-content-leave-active"),
       "will-change",
       DESKTOP,
     );
-    expect(leaveWill).toBe("opacity, height");
+    expect(leaveWill).toBe("opacity");
   });
 
   it("rides the HEIGHT through the shared container contract, chrome untouched", () => {
@@ -574,19 +574,26 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     // through the first cut, as did `[class~="hk-modal-body"]` (R3 finding
     // 2026-11-07 (S2)). The trailing guard keeps -scroll / -inner out.
     const BODY_TARGET = /(^|[^\w-])hk-modal-body(?![\w-])/;
-    const TRANSFORM_FAMILY = /^(transform|transform-origin|translate|scale|rotate|zoom|perspective)$/;
-    const INERT = new Set(["none", "auto"]);
+    const TRANSFORM_FAMILY = /^(transform|translate|scale|rotate|zoom|perspective)$/;
+    // The content region's ONLY motion is a vertical compression about its
+    // top edge (2026-11-07 user direction: only the height compresses, the
+    // width never does). Everything else — scaleX, a 2-arg scale, a
+    // translate, a matrix — is a contract break.
+    const LEGAL_BODY_TRANSFORM = new Set([
+      "scaleY(var(--hk-ride-factor, 0.9))",
+      "scaleY(1)",
+      "none",
+    ]);
     const offenders: string[] = [];
     for (const rule of RULES) {
       if (!BODY_TARGET.test(rule.selector)) continue;
       for (const prop of rule.declarations.keys()) {
         if (!TRANSFORM_FAMILY.test(prop)) continue;
-        if (prop === "transform-origin") continue;
         const value = (rule.declarations.get(prop) ?? "").replace(/\s+/g, " ").trim();
-        if (!INERT.has(value)) offenders.push(`${rule.selector} { ${prop}: ${value} }`);
+        if (!LEGAL_BODY_TRANSFORM.has(value)) offenders.push(`${rule.selector} { ${prop}: ${value} }`);
       }
     }
-    expect(offenders, "the content region must never be scaled").toEqual([]);
+    expect(offenders, "the content region may only compress vertically").toEqual([]);
   });
 
   it("never lets ANY rule put a transform on a chrome surface", () => {
@@ -619,17 +626,44 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       "transition",
       "will-change",
       "opacity",
+      // The from-pair carries the ride's height end, and the -active pair
+      // locks the content region out of the flex shrink for the flight
+      // (the 0.81-compounding guard, 2026-11-07 R3 finding).
+      "height",
+      "flex",
+      // …and the -active pair pins the footer band to the frame's bottom
+      // edge for the flight (it would otherwise be pushed out by the
+      // content region's locked natural box).
+      "position",
+      "inset-inline",
+      "bottom",
     ]);
     // Chrome ride states now also carry `transform` (the 2026-11-06 frame
     // height ride) — but nothing else beyond opacity/transition/will-change.
-    const CHROME_ALLOWED = new Set(["opacity", "transition", "will-change", "transform"]);
+    const CHROME_ALLOWED = new Set([
+      "opacity",
+      "transition",
+      "will-change",
+      "transform",
+      "height",
+      // The -active pair pins the footer band to the frame's bottom edge
+      // for the flight (2026-11-07: the content region's locked natural
+      // box would otherwise push it past the shortened frame).
+      "position",
+      "inset-inline",
+      "bottom",
+    ]);
     // The contracted transform values a ride rule may carry. Frame: the
     // three translate+scaleY states (reduced-motion flatten included);
     // body: nothing (its width is never scaled — 2026-11-07).
     const LEGAL_FRAME = new Set([CENTERING, FRAME_FROM, FRAME_TO]);
     // The body carries no transform contract any more (2026-11-07): any
     // ride rule targeting it is an offender outright.
-    const LEGAL_BODY = new Set<string>([]);
+    const LEGAL_BODY = new Set<string>([
+      "scaleY(var(--hk-ride-factor, 0.9))",
+      "scaleY(1)",
+      "none",
+    ]);
     const offenders: string[] = [];
     // Media-independent on purpose: a ride selector declared at top level
     // (no media query) applies at every width, so it must obey the same
@@ -682,8 +716,14 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       const frame = frameWith(...state.classes);
       const body = child(frame, "hk-modal-body");
       const bodyTransform = winner(body, "transform", DESKTOP) ?? "";
-      expect(bodyTransform, `body ${state.name}`).toBe("");
-      expect(bodyTransform, `body ${state.name}`).not.toMatch(BODY_ESCAPES);
+      // The contracted body grammar: nothing but the vertical compression
+      // at the ride's two ends (and no transform at rest).
+      const expectCompressed = state.classes.some((c) =>
+        c.includes("enter-from") || c.includes("leave-to"));
+      const expected = expectCompressed
+        ? "scaleY(var(--hk-ride-factor, 0.9))"
+        : "scaleY(1)";
+      expect(bodyTransform, `body ${state.name}`).toBe(expected);
       expect(winner(body, "scale", DESKTOP), `body ${state.name}`).toBeUndefined();
       expect(winner(body, "translate", DESKTOP), `body ${state.name}`).toBeUndefined();
       expect(winner(body, "zoom", DESKTOP), `body ${state.name}`).toBeUndefined();

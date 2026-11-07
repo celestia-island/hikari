@@ -32,6 +32,27 @@ function freezeRaf(): void {
   vi.stubGlobal("cancelAnimationFrame", () => {});
 }
 
+/** Pin the viewport to the phone band (<768px): the desktop height ride
+ *  blacks the morph out of the open/close edges, and these suites test the
+ *  morph's own contracts. happy-dom's 1024px default would route them into
+ *  the desktop branch. */
+function stubPhoneViewport(): void {
+  vi.stubGlobal(
+    "matchMedia",
+    (query: string) =>
+      ({
+        matches: false,
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        onchange: null,
+        dispatchEvent: () => false,
+      }) as MediaQueryList,
+  );
+}
+
 function stubDurations(): void {
   const realGCS = window.getComputedStyle.bind(window);
   vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {
@@ -103,6 +124,7 @@ describe("HkModal close-fold content hold", () => {
   it("folds over the last live content even when the consumer clears state on close", async () => {
     vi.useFakeTimers();
     freezeRaf();
+      stubPhoneViewport();
     stubDurations();
     const rig = await mountRig(["alpha", "beta"]);
 
@@ -129,6 +151,7 @@ describe("HkModal close-fold content hold", () => {
   it("a reopen interrupt drops the hold and serves live content again", async () => {
     vi.useFakeTimers();
     freezeRaf();
+      stubPhoneViewport();
     stubDurations();
     const rig = await mountRig(["alpha", "beta"]);
 

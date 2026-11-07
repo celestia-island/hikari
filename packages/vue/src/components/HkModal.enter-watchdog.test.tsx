@@ -81,7 +81,7 @@ describe("HkModal enter-class watchdog", () => {
     await vi.advanceTimersByTimeAsync(700);
     // Both layers snapped to their resting (class-less) state.
     expect(overlay!.className).toBe("hk-modal-overlay");
-    expect(content!.className).toBe("hk-modal-content hk-ride");
+    expect(content!.className).toBe("hk-modal-content");
     // …and the surface is still open and intact.
     expect(document.querySelector(".hk-modal-content")).not.toBeNull();
   });
@@ -170,7 +170,7 @@ describe("HkModal enter-class watchdog across an interrupted leave", () => {
     // (fade from visible) instead of the full-opacity pop.
     await vi.advanceTimersByTimeAsync(700);
     expect(overlay.className).toBe("hk-modal-overlay");
-    expect(content.className).toBe("hk-modal-content hk-ride");
+    expect(content.className).toBe("hk-modal-content");
     // The surface is still open, and closing it afterwards runs a NORMAL
     // leave (fade from visible) instead of the full-opacity pop.
     open.value = false;

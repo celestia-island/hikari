@@ -99,4 +99,4 @@ jobs:
       - name: Publish
         run: |
           cd packages/vue
-          npm publish --access public
+          npm publish --access public --provenance

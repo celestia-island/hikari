@@ -8,14 +8,16 @@ import { HIKARI_FONT_MONO, HIKARI_FONT_READING, HIKARI_FONT_SANS } from "./fontC
 
 /**
  * Font-stack sync contract (2026-11-07): the static SCSS tokens and the
- * runtime fontContext constants are TWO copies of one truth, and they
+ * runtime fontContext constants are copies of one truth, and they
  * drifted once — `--font-sans` carried the Linux CJK face
- * ("Noto Sans CJK SC") in both copies while `--font-mono` carried it only
- * in fontContext.ts, so any surface rendering the STATIC sheet (pre-boot
- * paint, or a downstream utility emitting its own literal stack) dropped
- * CJK text into a random platform mono on Linux. This file pins all
- * three copies to each other, so the next face can only be added in one
- * place by failing here.
+ * ("Noto Sans CJK SC") in both sheet copies while `--font-mono` carried
+ * it only in fontContext.ts, so any surface rendering the STATIC sheet
+ * (pre-boot paint, or a downstream utility emitting its own literal
+ * stack) dropped CJK text into a random platform mono on Linux. All
+ * FOUR copies are pinned here — both scale.scss sheets, the fontContext
+ * constants, and the Sass-variable fallbacks in
+ * `components/_hikari-vars.scss` — so the next face can only be added
+ * in one place by failing here.
  *
  * Known-positive anchor: the mono stack must keep a CJK UI face AFTER the
  * Latin mono faces and BEFORE the generic `monospace` catcher — that

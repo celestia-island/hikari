@@ -12,7 +12,12 @@ import { createApp, defineComponent, h, inject, nextTick, onMounted, onUnmounted
 import HkScrollContainer from "./HkScrollContainer";
 import { HkAdminTablePage } from "./HkAdminTablePage";
 import HTable from "./HkTable";
-import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressRegistrar } from "./HkScrollProgress";
+import { HkCardList, HkListRow } from "./HkCardList";
+import {
+  HK_SCROLL_PROGRESS_REGISTRAR,
+  type HkScrollProgressHandle,
+  type HkScrollProgressRegistrar,
+} from "./HkScrollProgress";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 const rects: Array<ReturnType<typeof vi.spyOn>> = [];
@@ -480,6 +485,149 @@ describe("HkAdminTablePage scroll-progress registration", () => {
     expect(pill).not.toBeNull();
     // First visible row #6 over the DECLARED total — the delivered rows
     // (30) never override the page's server count.
+    expect(pill!.textContent).toBe("6 / 500");
+  });
+});
+
+
+describe("HkCardList scroll-progress registration", () => {
+  it("registers its list root, rows and total with the provided registrar", async () => {
+    const registered: Array<{ getRoot: () => HTMLElement | null; getTotal: () => number | undefined; getRows?: () => readonly Element[] | undefined }> = [];
+    const unregistered: unknown[] = [];
+    const registrar: HkScrollProgressRegistrar = {
+      register: (handle) => registered.push(handle),
+      unregister: (handle) => unregistered.push(handle),
+    };
+    const Provider = defineComponent({
+      setup() {
+        provide(HK_SCROLL_PROGRESS_REGISTRAR, registrar);
+        return () =>
+          h(HkCardList, { total: 42 }, {
+            default: () => [
+              h(HkListRow, { key: "a", title: "a" }),
+              h(HkListRow, { key: "b", title: "b" }),
+              // A non-row child (a bare div a host slipped in) must not
+              // count as a data row — getRows filters to .hk-list-row.
+              h("div", { key: "spacer", class: "h-2" }),
+            ],
+          });
+      },
+    });
+    const container = mountTree(h(Provider));
+    expect(registered.length).toBe(1);
+    expect(registered[0].getTotal()).toBe(42);
+    // The list element is the row root — the element containing the rows.
+    const root = registered[0].getRoot()!;
+    expect(root).not.toBeNull();
+    expect(root.classList.contains("hk-card-list")).toBe(true);
+    expect(root.querySelectorAll(".hk-list-row")).toHaveLength(2);
+    // getRows hands the pill the HkListRow children only (the spacer
+    // div is excluded) — the section-band precision HkTable carries,
+    // mirrored for card lists.
+    const rows = registered[0].getRows!();
+    expect(rows).toBeDefined();
+    expect(rows!).toHaveLength(2);
+    expect(rows!.every((el) => el.classList.contains("hk-list-row"))).toBe(true);
+
+    // Unmount unregisters the SAME handle.
+    mounts[0].app.unmount();
+    expect(unregistered.length).toBe(1);
+    expect(unregistered[0]).toBe(registered[0]);
+  });
+
+  it("keeps the handle honest across the empty-slot lifecycle (rows→empty→rows)", async () => {
+    // The list element unmounts when the empty slot renders: the handle
+    // must read a NULL root (the pill's hidden precondition — never a
+    // stale detached element), and a re-render must recover a fresh
+    // connected list under the SAME handle.
+    const registered: Array<HkScrollProgressHandle> = [];
+    const registrar: HkScrollProgressRegistrar = {
+      register: (handle) => registered.push(handle),
+      unregister: () => {},
+    };
+    const hasRows = ref(true);
+    const Provider = defineComponent({
+      setup() {
+        provide(HK_SCROLL_PROGRESS_REGISTRAR, registrar);
+        return () =>
+          h(HkCardList, { total: 9 }, {
+            default: () => (hasRows.value ? [h(HkListRow, { key: "a", title: "a" })] : []),
+            empty: () => h("div", {}, "empty"),
+          });
+      },
+    });
+    mountTree(h(Provider));
+    const handle = registered[0]!;
+    expect(handle.getRoot()).not.toBeNull();
+    expect(handle.getRows!()).toHaveLength(1);
+
+    // Rows → empty: the ref clears with the element (no stale root).
+    hasRows.value = false;
+    await nextTick();
+    expect(handle.getRoot()).toBeNull();
+    expect(handle.getRows!()).toHaveLength(0);
+    expect(handle.getTotal()).toBe(9); // the prop stays live
+
+    // Empty → rows: the same handle recovers a fresh connected list.
+    hasRows.value = true;
+    await nextTick();
+    const root = handle.getRoot()!;
+    expect(root).not.toBeNull();
+    expect(root.isConnected).toBe(true);
+    expect(root.classList.contains("hk-card-list")).toBe(true);
+    expect(handle.getRows!()).toHaveLength(1);
+  });
+
+  it("renders its rows into the shell viewport's pill denominator end-to-end", async () => {
+    // The real provide/inject path: a card list inside a
+    // scrollProgress-on container registers itself, and the pill's
+    // denominator is the list's declared total (not the delivered rows)
+    // — the same end-to-end contract the table page carries.
+    const list = h(HkCardList, {
+      total: 500,
+    }, {
+      default: () => Array.from({ length: 30 }, (_, i) =>
+        h(HkListRow, { key: i, title: `r${i}` })),
+    });
+    const instance = ref<{ refresh: () => void } | null>(null);
+    let scrollTop = 0;
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { ref: instance as never, scrollProgress: true }, { default: () => list });
+      },
+    });
+    const container = mountTree(h(Wrapper));
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    Object.defineProperties(viewport, {
+      scrollHeight: { configurable: true, get: () => 4000 },
+      clientHeight: { configurable: true, get: () => 400 },
+      scrollWidth: { configurable: true, get: () => 300 },
+      clientWidth: { configurable: true, get: () => 300 },
+      scrollLeft: { configurable: true, get: () => 0 },
+      scrollTop: { configurable: true, get: () => scrollTop },
+    });
+    rects.push(vi.spyOn(viewport, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, right: 300, bottom: 400, width: 300, height: 400, x: 0, y: 0,
+    } as DOMRect));
+    const listRoot = container.querySelector<HTMLElement>(".hk-card-list")!;
+    expect(listRoot).not.toBeNull();
+    rects.push(vi.spyOn(listRoot, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: -200, right: 300, bottom: 3800, width: 300, height: 4000, x: 0, y: -200,
+    } as DOMRect));
+    container.querySelectorAll<HTMLElement>(".hk-list-row").forEach((row, i) => {
+      const top = i * 40 - 200;
+      rects.push(vi.spyOn(row, "getBoundingClientRect").mockReturnValue({
+        left: 0, top, right: 300, bottom: top + 40, width: 300, height: 40, x: 0, y: top,
+      } as DOMRect));
+    });
+    scrollTop = 200;
+    instance.value!.refresh();
+    await nextTick();
+    const pill = container.querySelector<HTMLElement>(".hk-scroll-progress-pill");
+    expect(pill).not.toBeNull();
+    // First visible row #6 over the DECLARED total — the delivered 30
+    // rows never override the list's server count.
     expect(pill!.textContent).toBe("6 / 500");
   });
 });

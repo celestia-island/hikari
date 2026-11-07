@@ -195,9 +195,11 @@ describe("selection policy sheet", () => {
     expect(css).toMatch(
       /\.hk-table\[data-copy-cells\] \.hk-table-cell\.hk-table-manage-cell\{[^}]*?cursor:\s*default/,
     );
-    // `[data-copy-cell` (no closing bracket) so the equivalent
-    // `[data-copy-cell=""]` spelling still yields a real index.
-    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(
-      css.indexOf("[data-copy-cell"),
-    );  });
+    // Anchor on the MARKER rule itself (not on the `[data-copy-cells]` scope
+    // rule that shares the prefix) and keep the `="`/`]` variants working:
+    // the marker rule is the only one whose selector starts with the cell
+    // class, so this index really pins declaration order.
+    const markerAt = css.search(/\.hk-table-cell\[data-copy-cell(?:="")?\]/);
+    expect(markerAt).toBeGreaterThan(-1);
+    expect(css.indexOf(".hk-table-cell.hk-table-manage-cell")).toBeGreaterThan(markerAt);  });
 });

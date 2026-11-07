@@ -451,11 +451,20 @@ describe("HkTable click-cursor cascade", () => {
   });
 
   it("parses the injected sheet (a blind sheet would make this suite vacuous)", () => {
-    const rules = sheet.sheet?.cssRules;
-    expect(rules?.length ?? 0).toBeGreaterThan(0);
-    // The sheet carries at least one media block; if the parser dropped it,
-    // a media-wrapped widening rule would be invisible to the next test.
-    expect([...(rules ?? [])].some((rule) => rule.constructor.name === "CSSMediaRule")).toBe(true);
+    expect(sheet.sheet?.cssRules?.length ?? 0).toBeGreaterThan(0);
+    // Probe the PARSER, not this sheet: the next test can only catch a
+    // media-wrapped widening rule if a media block survives parsing. The
+    // probe is synthetic so unrelated sheet edits (e.g. dropping the
+    // reduced-motion block) can never turn this suite red.
+    const probe = document.createElement("style");
+    probe.textContent = "@media (min-width: 600px) { .hk-probe { color: red; } }";
+    document.head.appendChild(probe);
+    try {
+      const rules = [...(probe.sheet?.cssRules ?? [])];
+      expect(rules.some((rule) => rule.constructor.name === "CSSMediaRule")).toBe(true);
+    } finally {
+      probe.remove();
+    }
   });
 
   it("reaches the marked cell only — computed cascade, not selector text", () => {

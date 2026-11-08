@@ -53,9 +53,10 @@ const componentDir = resolve(dirname(fileURLToPath(import.meta.url)));
 interface Rule {
   selector: string;
   body: string;
-  /** Set for a rule that lives inside an at-rule (only `@media` today), so
-   * `find()`/the selector-set helper keep reading the UNCONDITIONAL anatomy
-   * and a media-scoped copy can never shadow it. */
+  /** Set for a rule that lives inside an at-rule (`@media`, plus the `@scope` /
+   * `@layer` / `@supports` / `@container` preludes the walker also keeps), so
+   * `find()`/the selector-set helper keep reading the UNCONDITIONAL anatomy and
+   * a scoped copy can never shadow it. */
   media?: string;
 }
 
@@ -69,11 +70,11 @@ function rules(css: string): Rule[] {
     .replace(/@charset[^;]*;/g, "")
     .trim();
   const out: Rule[] = [];
-  // Brace-matching walk, not a flat regex: a rule inside `@media` must not be
-  // parsed as if it were unconditional. `@media (prefers-reduced-motion)
-  // .hk-checkbox-box` is exactly that shape, and a flat splitter hands it the
-  // same selector as the base rule — `find()` would then read whichever came
-  // first while the media copy won at runtime.
+  // Brace-matching walk, not a flat regex: a rule inside an at-rule must not be
+  // parsed as if it were unconditional. `@media (prefers-reduced-motion:
+  // reduce) { .hk-checkbox-box { … } }` is exactly that shape, and a flat
+  // splitter hands it the same selector as the base rule — `find()` would then
+  // read whichever came first while the media copy won at runtime.
   const stack: Array<{ prelude: string; atRule: boolean }> = [];
   let buffer = "";
   for (const char of bare) {
@@ -258,9 +259,11 @@ function labelClasses(): string[] {
  * subject. The label readers need this: `.hk-label a { line-height: 2 }` names
  * the label in the subject only until you read the whole selector, so a
  * subject-only reader files the link's rule under "somebody else's rule" while
- * the browser restyles every labeled row. Parenthesised arguments are stripped
- * first, so the gate's `:has(.hk-label:not(:empty))` does not count as a
- * mention.
+ * the browser restyles every labeled row. The generic spelling of the same
+ * rule (`a { line-height: 2 }`, no class anywhere) is covered by the mover
+ * table instead, because `PHRASING_CONTENT` makes every element a label can
+ * contain reachable. Parenthesised arguments are stripped first, so the gate's
+ * `:has(.hk-label:not(:empty))` does not count as a mention.
  */
 function rulesMentioningAny(all: Rule[], classes: string[], includeMedia = false): Rule[] {
   return all.filter((r) => {
@@ -492,16 +495,42 @@ function compiledHostBundle(): Rule[] {
  * `animation-play-state` is the one animation property that cannot move
  * anything, so pausing the animation engine stays paint-only.
  *
- * Custom properties are exempt on GLOBAL subjects only: the offsets are
- * computed FROM the same `--text-*` variables the label sizes itself with, so
- * `:root { --text-base: 2rem }` scales the line box and the offset together
- * and measured 0.000px. A SCOPED one is a mover — `span:first-of-type
+ * `content` is not paint-only either: `span::before { content: url(<40px
+ * svg>) }` inserts a replaced box that takes part in the line box and pulled
+ * the label 24.5px with the gate green. It generates a box, so it is a mover.
+ *
+ * Custom properties: a SCOPED one is always a mover — `span:first-of-type
  * { --text-base: 2rem }` in a foreign sheet took the md offset from 1.5px to
  * 15px with the gate green (a literal `line-height` / `font-size` on a part is
- * a class-led rule, and those are banned outright).
+ * a class-led rule, and those are banned outright). A GLOBAL one is a mover
+ * too unless it is one of the `--text-*` sizes AND its value is a `px`/`rem`
+ * length: `:root { --text-base: 2rem }` scales the line box and the offset
+ * together (measured 0.000px), while `--text-base: 50%` resolves against the
+ * parent font size where the label reads it and against the containing
+ * block's WIDTH inside the margin `calc()` (measured: box 33.75px low), and
+ * the unitless `0.875` is dropped as a `font-size` but still parsed inside the
+ * calc (measured: box 3.0px high). Both were green before the value test.
  */
 const PAINTS_ONLY =
-  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline-(?:color|style|width)|text-decoration|caret-color|cursor|pointer-events|user-select|content|quotes|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
+  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline-(?:color|style|width)|text-decoration|caret-color|cursor|pointer-events|user-select|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|scroll-behavior|overflow-style|tap-highlight-color|font-smoothing|text-size-adjust|scroll-snap|overscroll-behavior|touch-action|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
+
+/** The elements a `<label>` may contain: HTML phrasing content, plus custom
+ * elements (`x-foo`, the hyphen is the tell). A rule on one of these can
+ * restyle the text inside the label, so it is reachable; a rule on a block
+ * element cannot — `<label>` accepts phrasing content only and a block inside
+ * it is invalid markup. Review measured what the narrow `span|label` set cost:
+ * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
+ * the box with the whole gate green — the exact hazard the comment above
+ * names. Widening it to EVERY tag is not an option either: it turns the table
+ * from 47 rows into 928 (`p { margin: 0 }`, `ul { padding: 0 }`, …), i.e. a
+ * table nobody reads. `img`/`svg`/`input` are deliberately out: a replaced
+ * element inside a label is sized by `width`/`height` and its own rules are
+ * full of them. */
+const PHRASING_CONTENT = new Set([
+  "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data", "del", "dfn", "em", "i", "ins",
+  "kbd", "label", "mark", "output", "q", "rp", "rt", "ruby", "s", "samp", "slot", "small", "span",
+  "strong", "sub", "sup", "time", "u", "var", "wbr",
+]);
 
 /** Attributes a selection part actually carries: `data-checked` on the box,
  * `data-size` on the root, … An attribute nothing carries cannot reach a part,
@@ -522,11 +551,15 @@ const PART_ATTRS = new Set([
 ]);
 
 /**
- * True when a subject compound can BE a selection part or its root: the parts
- * are `span`s (box, label, thumb) and the root is a `label`, and the classes
- * they carry are all `hk-*` — so a compound with no class/id selector, an
- * attribute selector on something a part carries, and an
- * element/universal/pseudo-only tag is reachable.
+ * True when a subject compound can BE a selection part, its root, or anything
+ * the label's text can contain: the parts are `span`s (box, label, thumb) and
+ * the root is a `label`, but a `<span class="hk-label">` may hold any phrasing
+ * content (`<a>`, `<code>`, `<em>`, …) and a rule on one of those restyles the
+ * row just the same — `a { line-height: 2 }` in a foreign sheet moved the
+ * label 3.0/3.5/4.0px with the gate green. The classes a part carries are all
+ * `hk-*`, so a compound with no class/id selector, an attribute selector on
+ * something a part carries, and a phrasing-content/universal/pseudo-only tag
+ * is reachable.
  *
  * The tag is compared LOWERCASED and with any namespace prefix dropped: HTML
  * type selectors are ASCII case-insensitive, so `SPAN { margin-block-start:
@@ -542,6 +575,20 @@ function couldMatchAPart(compound: string): boolean {
   const bare = withoutParens(compound.replace(/\[[^\]]*\]/g, ""));
   if (bare.includes("(") || bare.includes(")")) return true;
   if (/[.#]/.test(bare)) return false;
+  // A global subject is reachable whatever attributes qualify it: `html`
+  // covers every element no matter which theme hook is on it, so
+  // `html[data-theme=dark] { --text-base: 50% }` is a real mover (`data-theme`
+  // is not something a part carries, so the attribute test below said
+  // "unreachable" and the whole rule vanished — measured: box 33.75px low with
+  // the gate green).
+  const globalBare = bare
+    .replace(/::?[-\w]+/g, "")
+    .replace(/\s+/g, "")
+    .toLowerCase()
+    .replace(/^.*\|/, "");
+  if (globalBare === "*" || globalBare === "html" || globalBare === "body" || globalBare === ":root") {
+    return true;
+  }
   const attributes = [...compound.matchAll(/\[\s*([-\w]+)/g)].map((m) => m[1]!.toLowerCase());
   if (attributes.some((name) => !PART_ATTRS.has(name))) return false;
   const tag = bare
@@ -551,16 +598,31 @@ function couldMatchAPart(compound: string): boolean {
     .trim()
     .toLowerCase()
     .replace(/^.*\|/, "");
-  return tag === "" || tag === "span" || tag === "label";
+  return tag === "" || PHRASING_CONTENT.has(tag) || tag.includes("-");
 }
 
-/** Subjects that cover EVERY element. A custom property set there scales the
- * line box and the offset together — `:root { --text-base: 2rem }` measured
- * 0.000px — so it cannot pull the two apart. A SCOPED one can: review put
+/** Subjects that cover EVERY element (`*`, `:root`, `html`, `body`, their
+ * `:where()` spellings) or NO element at all (`*::before`, `*::after` — a
+ * custom property set on a pseudo-element inherits nowhere, so it cannot pull
+ * anything apart). Every other subject is scoped: review put
  * `span:first-of-type { --text-base: 2rem }` in a foreign sheet and the md
- * offset went 1.5px → 15px (label 13.5px off the box) with the gate green. So
- * the exemption below only holds for these subjects. */
+ * offset went 1.5px → 15px (label 13.5px off the box) with the gate green. */
 const GLOBAL_SUBJECT = /^(?:\*|\*::[-\w]+|:root|html|body|:where\(\*\)|:where\(\*::[-\w]+\))$/;
+
+/** The tokens the first-line arithmetic reads: the three `--text-*` sizes the
+ * offsets are computed from (and that HkLabel sizes itself with). Only these
+ * can pull the line box and the offset apart. */
+const OFFSET_TOKENS = /^--text-(?:xs|sm|base|md|lg|xl)$/;
+
+/** A token value that means the same thing in `font-size` and in the
+ * `calc()`s: an absolute or root-relative length. `50%` resolves against the
+ * PARENT font size in one place and the containing block's WIDTH in the other
+ * (measured: box 33.75px low), `0.875` is invalid in both and dropped where it
+ * lands in `font-size` but not inside the calc (measured: box 3.0px high), and
+ * `2em` would resolve against a different element in each place. Colour and
+ * font tokens are not offset tokens at all, so they stay exempt: the exemption
+ * is keyed on the NAME, not on looking like a length. */
+const SAFE_LENGTH = /^-?(?:\d*\.\d+|\d+)(?:px|rem)$/;
 
 /** Every declaration that can move a box, as `name: value` text. The VALUE is
  * part of the row on purpose: a name-only pin read `* { border-width: 0 }` and
@@ -577,9 +639,12 @@ function movingDeclarations(body: string, scopedCustomProperties = false): strin
     const match = declaration.match(/^([-\w]+)\s*:\s*(.+)$/);
     if (!match) return;
     const name = match[1]!;
-    const moves = name.startsWith("--") ? scopedCustomProperties : !PAINTS_ONLY.test(name);
+    const value = match[2]!.trim();
+    const moves = name.startsWith("--")
+      ? scopedCustomProperties || (OFFSET_TOKENS.test(name) && !SAFE_LENGTH.test(value))
+      : !PAINTS_ONLY.test(name.replace(/^-(?:webkit|moz|ms|o)-/, ""));
     if (!moves) return;
-    out.push(`${name}: ${match[2]!.trim()}`);
+    out.push(`${name}: ${value}`);
   };
   for (const char of body) {
     if (char === "(") depth += 1;
@@ -1670,9 +1735,10 @@ describe("label first-line anchoring", () => {
     // neither can see is a rule that carries no token at all. Both shipped
     // surfaces are walked: the host bundle (the 159 mirrors plus the host's own
     // sheets) and every foreign sheet on its own (the host does not import all
-    // of them). Review measured three shapes through this hole — element,
-    // pseudo and attribute subjects — and each moved the box with this file
-    // green.
+    // of them). Review measured six shapes through this hole — element,
+    // pseudo, attribute, link-inside-the-label, `content`-generated box and a
+    // global custom property carrying a non-length — and each moved the box
+    // with this file green.
     //
     // The rows pinned below are what remains, and each one pins the
     // declaration TEXT (`name: value`), not just the name: a name-only pin read
@@ -1680,26 +1746,38 @@ describe("label first-line anchoring", () => {
     // (measured: the label 8px low with this table byte-identical), and the
     // same went for `:where(*) { padding: 0 }` → `4px`.
     //
-    // EIGHTEEN rows are scoped by a DIRECT parent that is not a selection
-    // control (`.hk-row > *`). They translate or size the control inside that
-    // row and never touch the box's own offset — but two of them re-shape the
-    // control itself: `.s-auth-form > *` (`display: flex; flex-direction:
-    // column`) turns the control into a column flex container and
-    // `.s-about-modal-backdrop > *` (`height: 100%`) stretches it, so a control
-    // placed DIRECTLY under either parent loses the first-line anchoring. The
-    // package renders none there (see the migration notes); the rows stay
-    // pinned so any value change is still a red test.
+    // The 47 rows fall into four shapes, and the count of each is part of the
+    // claim, so a new shape cannot slip in unnoticed:
     //
-    // The other TEN are not that shape and are listed so the claim stays
-    // honest: six hang off `::before`/`::after`, one is
-    // `label:where(:not([class^=hk-]):not([class*=" hk-"]))` (its `:not`s
-    // exclude every hikari class), and three are bare universals (`*`,
-    // `:where(*)`) that DO reach the box. Those ten are harmless AT THESE
-    // VALUES — the gated offset is (0,4,0) and compiles after them, and the
-    // declarations they carry are `box-sizing` / `border-style` /
-    // `border-width` on the universals and `display` / `font-weight` /
-    // `margin-bottom` on the label row. Change a value and this table goes
-    // red, which is exactly what a row is for.
+    // * NINE universals — `*`, `*::before`, `*::after` in the reset, the theme
+    //   entry and the host entry, plus the three `:where(…)` spellings. They
+    //   reach the box directly; harmless AT THESE VALUES because they carry
+    //   only `box-sizing` / `border-style` / `border-width` / `margin: 0` /
+    //   `padding: 0` and the gated offset is (0,4,0) and compiles after them.
+    // * EIGHT inherited root rows — `html`, `body` (and the one
+    //   `html::-webkit-scrollbar`): everything inside the label inherits
+    //   `line-height` / `font-size` from them, so `html { line-height: 2 }`
+    //   would move the text the same way a `span` rule does. This is also why
+    //   `html { writing-mode: vertical-rl }` is now a red test instead of a
+    //   recorded limitation.
+    // * NINETEEN direct-parent rows (`.hk-row > *`, `.s-auth-form > *`, …).
+    //   They translate or size the control inside that row and never touch the
+    //   box's own offset — but two re-shape the control itself:
+    //   `.s-auth-form > *` (`display: flex; flex-direction: column`) and
+    //   `.s-about-modal-backdrop > *` (`height: 100%`), so a control placed
+    //   DIRECTLY under either parent loses the first-line anchoring. The
+    //   package renders none there (see the migration notes).
+    // * ELEVEN descendant rows on phrasing content — `code`, `.hk-markdown
+    //   code`, `.hk-menu-item a`, `.icon-grid small`,
+    //   `.hk-diff-viewer__hunk-stats em`, … — plus the
+    //   `label:where(:not([class^=hk-])…)` host reset. These are the rows that
+    //   make `a { line-height: 2 }` impossible to ship silently: a label may
+    //   hold a link, so a rule on a link moves the row.
+    //
+    // Change any value and this table goes red, which is exactly what a row is
+    // for. Over-reporting is deliberate: `html { font-size: 18px }` is a red
+    // row even though it scales the line box and the offset together, because
+    // a row is cheaper than a proof.
     const rows = [
       ...elementOnlyMovers("bundle", compiledHostBundle()),
       ...compiledForeignSheets().flatMap((sheet) => elementOnlyMovers(sheet.rel, rules(sheet.css))),
@@ -1707,32 +1785,51 @@ describe("label first-line anchoring", () => {
     expect(rows, "rules that move a part without naming one").toEqual([
       "bundle :: - | .hk-calendar-heatmap-markers > span | white-space: nowrap",
       "bundle :: - | .hk-calendar-heatmap-rail > span | white-space: nowrap",
+      "bundle :: - | .hk-diff-viewer__hunk-stats em | font-style: normal; font-weight: 600",
       "bundle :: - | .hk-draggable-list-content > :only-child | flex: 1; min-width: 0",
       "bundle :: - | .hk-glow-wrapper > * | position: relative",
       "bundle :: - | .hk-glow-wrapper-block > * | position: relative",
       "bundle :: - | .hk-layout > * | position: relative",
+      "bundle :: - | .hk-markdown a:focus-visible | outline-offset: 2px; outline: 2px solid var(--hi-color-primary, #7aa2f7)",
+      "bundle :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
+      "bundle :: - | .hk-menu-item a | align-items: center; display: flex; gap: 1rem; height: 100%; width: 100%",
       "bundle :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
       "bundle :: - | .hk-row > * | margin: 0 0.5rem",
+      "bundle :: - | .hk-sidebar-item-content a | align-items: center; bottom: -0.75rem; display: flex; gap: 0.875rem; left: -1.5rem; padding-left: 1.5rem; position: absolute; right: -1rem; top: -0.75rem",
+      "bundle :: - | .hk-sidebar-leaf-content > a | align-items: center; display: flex; gap: 0.875rem; height: 100%; margin: -0.625rem -1rem -0.625rem -2.5rem; padding-left: 2.5rem; padding: inherit; width: 100%",
       "bundle :: - | .s-about-modal-backdrop > * | height: 100%; width: 100%",
       "bundle :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
       "bundle :: - | :where(*) | box-sizing: border-box; margin: 0; padding: 0",
       "bundle :: - | :where(*::after) | box-sizing: border-box; margin: 0; padding: 0",
       "bundle :: - | :where(*::before) | box-sizing: border-box; margin: 0; padding: 0",
+      "bundle :: - | body | -moz-osx-font-smoothing: grayscale; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif; font-size: 1rem; line-height: 1.5",
+      "bundle :: - | code | font-family: ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace; font-size: 0.9em; padding: 0.2em 0.4em",
+      "bundle :: - | html | font-size: 16px",
+      "bundle :: - | html::-webkit-scrollbar | display: none",
       "bundle :: - | label:where(:not([class^=hk-]):not([class*=\" hk-\"])) | display: block; font-weight: 500; margin-bottom: 0.25rem",
       "components/HkAboutModal.scss :: - | .s-about-modal-backdrop > * | height: 100%; width: 100%",
       "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-markers > span | white-space: nowrap",
       "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-rail > span | white-space: nowrap",
+      "components/HkDiffViewer.scss :: - | .hk-diff-viewer__hunk-stats em | font-style: normal; font-weight: 600",
       "components/HkDraggableList.scss :: - | .hk-draggable-list-content > :only-child | flex: 1; min-width: 0",
+      "components/HkMarkdownRenderer.scss :: - | .hk-markdown a:focus-visible | outline-offset: 2px; outline: 2px solid var(--hi-color-primary, #7aa2f7)",
+      "components/HkMarkdownRenderer.scss :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
       "components/HkModal.scss :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
       "components/HkScrollContainer.scss :: - | .hk-scroll-container[data-dock-tail=true] > .hk-scroll-container-viewport > * | flex-shrink: 0",
+      "demo.scss :: - | .icon-grid small | font-size: 0.625rem",
+      "demo.scss :: - | body | font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif); margin: 0; padding: 2rem",
       "styles/admin-tokens.scss :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
       "styles/index.scss :: - | * | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/index.scss :: - | *::after | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/index.scss :: - | *::before | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/index.scss :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
+      "styles/index.scss :: - | body | font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif); margin: 0",
+      "styles/index.scss :: - | html | line-height: 1.5",
       "styles/reset.scss :: - | * | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/reset.scss :: - | *::after | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/reset.scss :: - | *::before | border-style: solid; border-width: 0; box-sizing: border-box",
+      "styles/reset.scss :: - | body | font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif); margin: 0",
+      "styles/reset.scss :: - | html | line-height: 1.5",
     ]);
   });
 

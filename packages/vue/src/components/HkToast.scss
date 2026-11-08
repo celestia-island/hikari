@@ -78,7 +78,7 @@
   letter-spacing: 0.02em;
   opacity: 0.75;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: rgb(0 0 0 / 20%);
   white-space: nowrap;
 }

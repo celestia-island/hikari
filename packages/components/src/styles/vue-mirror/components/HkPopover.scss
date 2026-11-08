@@ -82,7 +82,7 @@
   background: var(--hk-popover-bg, rgb(var(--color-surface)));
   @include backdrop-filter(var(--hk-popover-blur, blur(var(--blur-lg)) saturate(1.2)));
   border: 1px solid rgb(var(--color-border) / 20%);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg, 12px);
   box-shadow: var(--shadow-dropdown);
   /* The glass chrome's historical 4px menu inset — the shared token
      (runtime/containerPad) retunes it per instance (`padding` prop). */
@@ -219,7 +219,7 @@
     content: "";
     width: 2.25rem;
     height: 4px;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: rgb(var(--color-border, 100 100 100) / 40%);
   }
 }

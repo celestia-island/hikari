@@ -190,7 +190,7 @@
   bottom: calc(var(--space-1, 0.25rem) / 2);
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   pointer-events: none;
 }
 

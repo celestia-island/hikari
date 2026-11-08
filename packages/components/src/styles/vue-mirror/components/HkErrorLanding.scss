@@ -54,7 +54,7 @@
   width: min(440px, 100%);
   background: rgb(var(--hel-surface));
   border: 1px solid rgb(var(--hel-border) / 70%);
-  border-radius: var(--radius-xl, 20px);
+  border-radius: var(--radius-xl, 16px);
   box-shadow: var(--shadow-lg, 0 18px 48px rgb(0 0 0 / 8%));
   padding: 2.25rem var(--space-28, 1.75rem) var(--space-28, 1.75rem);
   text-align: center;
@@ -240,7 +240,7 @@
   height: max(9rem, 20vh);
   height: max(9rem, 20dvh);
   border: 1px solid rgb(var(--hel-border) / 70%);
-  border-radius: var(--radius-md, 10px);
+  border-radius: var(--radius-md, 8px);
   background: rgb(var(--hel-muted) / 4%);
 }
 

@@ -23,7 +23,7 @@
   max-width: min(92vw, 34rem);
   padding: var(--space-6, 6px) var(--space-14, 0.875rem);
   /* Pill, like the breadcrumb strip's family of floating chips. */
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full, 9999px);
   /* Fallback only — the presenter stamps the live tooltip-band z INLINE
    * over this (the popup-manager handle pattern from the hover bridge). */
   z-index: var(--hk-overlay-z-tooltip, 300);

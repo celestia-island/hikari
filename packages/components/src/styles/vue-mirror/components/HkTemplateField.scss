@@ -58,7 +58,7 @@
   padding: var(--space-6, 0.375rem) var(--space-10, 0.625rem);
   background: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
-  border-radius: 6px;
+  border-radius: var(--radius-md, 8px);
   transition:
     border-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
     box-shadow var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1));

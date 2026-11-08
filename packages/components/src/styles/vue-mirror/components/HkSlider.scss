@@ -27,7 +27,7 @@
   inset: 50% 0 auto 0;
   height: 6px;
   transform: translateY(-50%);
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full, 9999px);
   background: rgb(var(--color-muted) / 22%);
 }
 
@@ -55,7 +55,7 @@
   left: 0;
   height: 6px;
   transform: translateY(-50%);
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full, 9999px);
   background: rgb(var(--color-primary));
   pointer-events: none;
 }

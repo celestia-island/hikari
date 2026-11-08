@@ -313,7 +313,7 @@
 }
 
 /* The circle: HkIconButton's radius channel overridden locally (its
- * global default is the 4px --radius-sm), with the sidebar surface + a
+ * global default is the 8px --radius-md), with the sidebar surface + a
  * hairline shadow so the circle reads on any panel tone. */
 .hk-sidebar-rail-toggle .hk-icon-button {
   --hi-icon-button-radius: 9999px;

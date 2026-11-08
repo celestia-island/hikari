@@ -9,7 +9,7 @@
   padding: 3px 8px;
   overflow: hidden;
   border: 1px solid rgb(var(--color-border, 100 116 139) / 0.38);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   background: rgb(var(--color-background, 11 16 32) / 0.8);
   color: rgb(var(--color-text, 226 232 240));
   font-size: 11px;

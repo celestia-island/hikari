@@ -142,7 +142,7 @@
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255,255,255,0.95)));
   @include backdrop-filter(var(--hk-modal-blur, none));
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(100,100,100,0.08)));
-  border-radius: var(--hk-modal-radius, var(--radius-lg, 12px));
+  border-radius: var(--hk-modal-radius, var(--radius-xl, 16px));
   box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
@@ -593,8 +593,8 @@
       --hk-modal-bg-mobile,
       var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)))
     );
-    border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
-                   var(--hk-modal-radius, var(--radius-lg, 12px))
+    border-radius: var(--hk-modal-radius, var(--radius-xl, 16px))
+                   var(--hk-modal-radius, var(--radius-xl, 16px))
                    0 0;
     border-left: 0;
     border-right: 0;

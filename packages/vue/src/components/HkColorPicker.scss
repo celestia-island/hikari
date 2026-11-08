@@ -38,7 +38,7 @@
   gap: 4px;
   padding: 4px 6px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md, 8px);
   background: none;
   cursor: pointer;
   outline: none;

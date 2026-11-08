@@ -247,7 +247,7 @@
   /* 8px panel inset (was 4px): option hover blocks used to run almost
      edge-to-edge, reading as a glued full-width strip on touch widths. */
   padding: var(--space-8);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg, 12px);
   overflow-y: auto;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   @include backdrop-filter(blur(var(--blur-md)));
@@ -385,7 +385,7 @@
     content: "";
     width: 2.25rem;
     height: var(--space-4);
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: rgb(var(--color-border, 100 100 100) / 40%);
   }
 }

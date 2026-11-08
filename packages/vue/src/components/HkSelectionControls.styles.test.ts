@@ -150,8 +150,6 @@ function subjectSelector(selector: string): string {
   return selector.slice(cut + 1).trim();
 }
 
-/** True when `className` names a class in `text` — `(.hk-checkbox-box)` may
- * not match `.hk-checkbox-box-inner`, and a `\w`/`-` continuation blocks it. */
 /** Drops parenthesised groups (`:has(...)`, `:not(...)`), innermost first. */
 function withoutParens(text: string): string {
   let out = text;
@@ -162,11 +160,18 @@ function withoutParens(text: string): string {
   return out;
 }
 
+/** True when `className` names a class in `text` — `(.hk-checkbox-box)` may
+ * not match `.hk-checkbox-box-inner`, and a `\w`/`-` continuation blocks it. */
 function namesClass(text: string, className: string): boolean {
   // Parenthesised arguments are stripped first: a `:has()` / `:not()` argument
   // names OTHER elements, so `.hk-checkbox:has(.hk-label:not(:empty))` is a
   // rule about the root and must not count as a rule about the label (or as a
   // media-scoped label rule, which is the same reader one filter later).
+  // `:is()` / `:where()` are the opposite case — they name the SAME element,
+  // so stripping them is a deliberate false negative, sound only because the
+  // class-led pin below bans such a subject outright (`:is(.hk-checkbox-box)`
+  // does not start with a class). Text reading cannot tell the two wrappers
+  // apart, so the ban is what keeps this approximation honest.
   const escaped = className.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`${escaped}(?![\\w-])`).test(withoutParens(text));
 }
@@ -217,12 +222,14 @@ function find(all: Rule[], selector: string): Rule {
 function expectSelectorSet(all: Rule[], classSuffix: string, expected: string[]) {
   // Subject match, not a suffix match: `.hk-checkbox-box:not([data-x])` and
   // `.hk-checkbox-box[data-checked]` DO touch the class and must show up here
-  // (the closing round mutated exactly that shape past a suffix test). The
-  // rtl mirrors lead with a `[dir=rtl]` scope that this sheet owns as a
-  // whole-clause copy, so they stay excluded.
+  // (the closing round mutated exactly that shape past a suffix test). Every
+  // such spelling is class-led, so the subject scan sees it — an earlier
+  // revision filtered `[dir=` scopes out of this set on the theory that the
+  // sheets carry rtl mirrors, but neither sheet has ever declared one (and the
+  // class-led pin now bans that shape), so the filter only hid a rule from
+  // this reader.
   const present = subjectRules(all, classSuffix)
     .map((r) => r.selector)
-    .filter((s) => !s.startsWith("[dir="))
     .sort();
   expect(present, `selector set touching \`${classSuffix}\``).toEqual(expected.sort());
 }
@@ -828,18 +835,23 @@ describe("label first-line anchoring", () => {
     expect(present, `rules whose subject names \`${control}\``).toEqual(expected.sort());
   });
 
+const PARTS = {
+  checkbox: [
+    ".hk-checkbox",
+    ".hk-checkbox-box",
+    ".hk-checkbox-icon",
+    ".hk-checkbox-dot",
+    ".hk-checkbox-indeterminate",
+    ".hk-checkbox-input",
+  ],
+  radio: [".hk-radio", ".hk-radio-box", ".hk-radio-dot", ".hk-radio-input"],
+} as const;
+
   it.each([
     [
       "checkbox",
       checkbox,
-      [
-        ".hk-checkbox",
-        ".hk-checkbox-box",
-        ".hk-checkbox-icon",
-        ".hk-checkbox-dot",
-        ".hk-checkbox-indeterminate",
-        ".hk-checkbox-input",
-      ],
+      PARTS.checkbox,
       [
         // one row per compiled rule of a control part, in selector order
         ".hk-checkbox → -webkit-user-select, align-items, cursor, display, gap, user-select, vertical-align",
@@ -874,7 +886,7 @@ describe("label first-line anchoring", () => {
     [
       "radio",
       radio,
-      [".hk-radio", ".hk-radio-box", ".hk-radio-dot", ".hk-radio-input"],
+      PARTS.radio,
       [
         ".hk-radio → -webkit-user-select, align-items, cursor, display, gap, user-select, vertical-align",
         ".hk-radio-box → align-items, background, border, border-radius, box-sizing, display, flex-shrink, justify-content, position, transition",
@@ -910,8 +922,14 @@ describe("label first-line anchoring", () => {
     // checked box, `.hk-checkbox-icon { translate: 0 4px }` drops the tick 4px
     // below the box centre, `scale: 1.6` in the base box rule inflates it out
     // of the line. This table pins the whole surface — rule → the declaration
-    // names it carries, media scopes included — so every edit of a control
-    // part has to be made here on purpose.
+    // names it carries, media scopes included — so adding or removing a
+    // declaration on a control part has to be made here on purpose. It pins
+    // NAMES, not values: a `height: 14px → 30px` edit on the tick, or a
+    // `display: flex → block` on the box, passes this table. Those are the
+    // surfaces the anchoring does not read (the tick is decoration inside the
+    // box), and the declarations that DO move the box are pinned by value
+    // elsewhere in this file; the table's job is to make the surface explicit
+    // so a value edit is a visible, reviewable diff rather than a silent one.
     const called = (subject: string) =>
       (parts as readonly string[]).some((part) => namesClass(subject, part));
     const pinned = all
@@ -948,6 +966,28 @@ describe("label first-line anchoring", () => {
     expect(odd, "subjects that do not start with a class name").toEqual([]);
   });
 
+  it.each([
+    ["checkbox", checkbox, PARTS.checkbox],
+    ["radio", radio, PARTS.radio],
+  ])("%s rules that move something name a part they can move", (_name, all, parts) => {
+    // The class-led pin makes the subject visible to the readers; it does not
+    // make the readers see every ELEMENT. The icon and the dot carry classes
+    // from whichever component renders them (lucide stamps `lucide-check` on
+    // the svg), so a class-led rule can still move a rendered part without
+    // naming a `.hk-` class: `.lucide-check { translate: 0 4px }` shifts the
+    // tick exactly like an attribute-spelled subject would. Any rule that
+    // declares motion or spacing must therefore name the part it moves.
+    const moves = (body: string) =>
+      declarationNames(body).some(
+        (name) => /^(?:margin|padding|inset|top|bottom|left|right|translate|transform|scale|rotate|align-self|order)(?:-|$)/.test(name),
+      );
+    const stray = all
+      .filter((r) => moves(r.body))
+      .filter((r) => !(parts as readonly string[]).some((p) => namesClass(subjectSelector(r.selector), p)))
+      .map((r) => r.selector);
+    expect(stray, "rules that move a part without naming one").toEqual([]);
+  });
+
   it("HkLabel pins the line box on its base rule and restyles only font sizes", () => {
     // The offset rides HkLabel's line box, so every rule that can change it
     // has to be visible here: a media copy, a per-size line-height, or a
@@ -968,6 +1008,18 @@ describe("label first-line anchoring", () => {
       "font-size",
       "line-height",
     ]);
+    // The name is not enough for the two declarations the offset cannot
+    // survive: `display: none` removes the label from every control (the gate
+    // still matches the element — it is in the DOM — so the box takes its
+    // offset onto an empty row) and a changed `line-height` moves the target
+    // the offset aims at. Both are read by value below and above.
+    expect(valueOf(find(labelSheet, ".hk-label").body, "display"), "label display").toBe(
+      "inline",
+    );
+    expect(
+      valueOf(find(labelSheet, ".hk-label").body, "line-height"),
+      "label line-height (unitless multiplier)",
+    ).toBe("1.5");
     for (const size of ["sm", "lg"]) {
       expect(
         declarationNames(find(labelSheet, `.hk-label.hk-label-${size}`).body),
@@ -1026,7 +1078,7 @@ describe("HkSwitch geometry", () => {
     expect(toPx(valueOf(body, "height"))).toBe(h);
   });
 
-  it.each(geometry)("%s thumb is %ipx", (size, _w, _h, thumb) => {
+  it.each(geometry.map(([size, , , thumb]) => [size, thumb]))("%s thumb is %ipx", (size, thumb) => {
     const body = find(sw, `.hk-switch-${size} .hk-switch-thumb`).body;
     expect(toPx(valueOf(body, "width"))).toBe(thumb);
     expect(toPx(valueOf(body, "height"))).toBe(thumb);

@@ -108,8 +108,8 @@
  * keeps both renderers on the same anatomy). A whitespace-only label is the
  * one shape the gate cannot see through: it is non-empty for the selector yet
  * generates no line box once the label is blockified as a flex item, so it
- * takes the 1.5px offset (md) onto a zero-height line — a 1.5px taller row,
- * which is the same footprint the truly empty shell would have had.
+ * takes the 1.5px offset (md) onto a zero-height line: the control is 1.5px
+ * taller than the empty shell (18px → 19.5px) and its box sits 1.5px lower.
  *
  * The label's own line-height is what this rides, and its font size sets the
  * term, so a host that restyles EITHER on `.hk-label` has to restyle this pair

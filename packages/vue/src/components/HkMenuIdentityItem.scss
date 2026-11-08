@@ -42,6 +42,16 @@
   color: rgb(var(--color-primary) / 70%);
 }
 
+/* The fallback span is a blockified flex item with auto height, so flex
+   centering of the trimmed box is exact — no anatomy swap needed here
+   (the height:100% fallbacks swap flex for block under the same guard;
+   full rationale: HkAvatar.scss). */
+@supports (text-box: trim-both cap alphabetic) {
+  .hk-menu-identity-item__fallback {
+    text-box: trim-both cap alphabetic;
+  }
+}
+
 .hk-menu-identity-item__text {
   display: flex;
   flex-direction: column;

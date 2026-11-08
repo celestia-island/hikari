@@ -50,6 +50,32 @@
   font-weight: 600;
 }
 
+/* Optical vertical centering for the single-glyph fallback (2026-11-08
+ * user report: 头像首字母偏下). Flex centers the LINE box, but a capital
+ * glyph sits on the baseline — below the line box's geometric center on
+ * every UI font whose ascent exceeds its descent (Noto Sans CJK ≈0.065em,
+ * Windows Segoe UI ≈0.064em: ≈1px at md's 16px, visible in a circle).
+ * `text-box: trim-both cap alphabetic` trims the line box to
+ * [cap-top, baseline], so the centered box hugs the glyph ink — the
+ * avatar-initial case the property was designed for. Trim only reaches
+ * BLOCK-container line boxes (Chromium ignores it on a flex container's
+ * anonymous text block — verified headless), so under the guard the span
+ * swaps flex for block + align-content/text-align centering: same box,
+ * the trimmed line is centered on the block axis instead. Engines without
+ * text-box (pre-128 Chromium / pre-18.2 Safari / pre-154 Firefox) fail
+ * @supports and keep the flex anatomy unchanged — zero regression.
+ * CJK initials stay centered: the ideograph ink center lands on the
+ * [cap, baseline] band center (德 verified side by side, headless
+ * Chrome). */
+@supports (text-box: trim-both cap alphabetic) {
+  .hk-avatar-fallback {
+    display: block;
+    align-content: center;
+    text-align: center;
+    text-box: trim-both cap alphabetic;
+  }
+}
+
 [data-theme="dark"] .hk-avatar {
   background-color: var(--hi-surface);
   color: var(--hi-color-text-secondary, rgba(102,102,102,0.6));

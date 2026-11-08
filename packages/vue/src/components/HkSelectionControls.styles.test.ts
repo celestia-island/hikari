@@ -1172,11 +1172,12 @@ const PAINTS_ONLY =
  * (`x-foo`, the hyphen is the tell). A rule on one of these can restyle the
  * text inside the label, so it is reachable. A block element is reachable too,
  * through `LABEL_BLOCK_CONTENT` below: invalid markup renders, its CSS applies,
- * and a block child moves the first line off the label's top. Review measured what the narrow `span|label` set cost:
+ * and a block child moves the first line off the label's top. Review measured
+ * what the narrow `span|label` set cost:
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
- * replaced element as well turns the table from 54 rows into 975 — 613 of the
+ * replaced element as well turns the table from 73 rows into 975 — 613 of the
  * rows are `@keyframes` steps and the other 362 are element/registration rows
  * (`svg` 154, `input` 5, `p { margin: 0 }` …), 308 of them new, i.e. a table
  * nobody reads. (Both numbers move by two whenever the shipped table does: they
@@ -1188,7 +1189,7 @@ const PAINTS_ONLY =
  *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
  *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
  *   styling that no label can ever match: lifting the unscoped restriction
- *   alone takes this table from 54 rows to 260 (measured), one row per host
+ *   alone takes this table from 73 rows to 260 (measured), one row per host
  *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,

@@ -355,6 +355,9 @@ mod tests {
             ":has(.hk-label:not(:empty)) .hk-radio-box {",
             "align-self: flex-start",
             "margin-block-start",
+            // Same label pin as HkCheckbox (the stretch inversion).
+            ":has(.hk-label:not(:empty)) .hk-label {",
+            "align-self: flex-start;",
         ] {
             assert!(
                 css.contains(needle),

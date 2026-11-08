@@ -89,6 +89,19 @@ function stripComments(css: string): string {
       index = end < 0 ? css.length : end + 2;
       continue;
     }
+    // An UNQUOTED `url()` may contain `/*` and even `"`: `url(https://h/a/*)`
+    // is one token, and a scanner that reads the `/*` as a comment start eats
+    // the rest of the sheet — review put
+    // `url(https://e.invalid/a/*)` + `span { margin-block-start: 8px }` +
+    // `.b::after { content: "*/" }` in a foreign sheet and every reader below
+    // went blind while Chrome applied the span rule. Copy the token whole.
+    if (/^url\(/i.test(css.slice(index)) && !/[\w-]/.test(css[index - 1] ?? "")) {
+      const close = css.indexOf(")", index);
+      const end = close < 0 ? css.length : close + 1;
+      out += css.slice(index, end);
+      index = end;
+      continue;
+    }
     out += char;
     index += 1;
   }
@@ -100,8 +113,13 @@ function rules(css: string): Rule[] {
   // Expanded output keeps loud comments, and sheets containing non-ASCII
   // text get a braille-less `@charset "UTF-8";` statement — both would glue
   // onto the next selector and shift every rule pair, so strip them first.
+  // Only a LEADING `@charset "…";` may go. A flat `@charset[^;]*;` also ate the
+  // statement out of a declaration VALUE: `span { background: "@charset";
+  // margin-block-start: 8px }` lost `@charset";` and became the single
+  // declaration `background: " margin-block-start: 8px` — paint-only, no row,
+  // while Chrome applied the margin (measured +8.000px at every probe).
   const bare = stripComments(css)
-    .replace(/@charset[^;]*;/g, "")
+    .replace(/^\s*@charset\s+"(?:[^"\\]|\\.)*"\s*;/i, "")
     .trim();
   const out: Rule[] = [];
   // Brace-matching walk, not a flat regex: a rule inside an at-rule must not be
@@ -451,6 +469,17 @@ function foreignSheetPaths(): string[] {
     }
   };
   walk(ROOT);
+  // Two shipped sheets live OUTSIDE this package: `tairitsu_macros::scss!`
+  // embeds `packages/components/src/styles/components/{link,typography}.scss`
+  // into the Rust `HkLink` / `HkTypography` sheets, so neither the host bundle
+  // graph nor the walk above ever sees them — `a { line-height: 2 }` added
+  // there would be green here AND ship to the Rust host. Review enumerated all
+  // 181 `scss!` paths and found these are the only two no other reader
+  // compiles. They emit class-led selectors only today (measured: this walk
+  // adds zero rows), so reading them costs nothing.
+  for (const rustm of ["link.scss", "typography.scss"]) {
+    sheets.push(resolve(ROOT, "..", "..", "components/src/styles/components", rustm));
+  }
   return sheets;
 }
 
@@ -560,16 +589,20 @@ const PAINTS_ONLY =
  * markup. Review measured what the narrow `span|label` set cost:
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
- * names. Widening it to EVERY tag is not an option either: it turns the table
- * from 56 rows into 918 (557 of them `@keyframes` steps, 314 element rules —
- * `svg` 151, `input` 51, `p { margin: 0 }` …), i.e. a table nobody reads.
+ * names. Widening it to EVERY tag is not an option either: reaching every
+ * replaced element as well turns the table from 56 rows into 918 — `@keyframes`
+ * steps account for 557 (`svg` 151 rows, `input` 51, `p { margin: 0 }` …), so
+ * 361 element/registration rows are left over, 305 of them new, i.e. a table
+ * nobody reads.
  * Deliberately NOT in this set, with what each omission costs:
  *
  * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized
  *   by `width`/`height` rather than by the line box. They are reachable — but
  *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
- *   because the shipped `.hk-icon svg { height: 100% }` family is 155 rows of
- *   host-internal styling that no label can ever match;
+ *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
+ *   styling that no label can ever match: lifting the unscoped restriction
+ *   alone takes this table from 56 rows to 259 (measured), one row per host
+ *   icon/track sizing rule, and `svg` alone is 151 of the full-reach rows;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
  *   `template`, `noscript`, `area`, `embed`, `picture`, `iframe`, `audio`):
@@ -643,16 +676,30 @@ function couldMatchAPart(compound: string, selector: string = compound): boolean
   // foreign sheet and the box went +60.797px with the gate green, because
   // `:root` was stripped to the EMPTY string by a `::?` pattern (so the old
   // check could never fire) and the attribute test then called `data-theme`
-  // unreachable. `html[data-theme=dark]` (+60.797px) and `html.dark` were the
-  // same hole from the other side.
-  const globalBare = bare
-    .replace(/\.[-\w]+/g, "")
-    .replace(/#[-\w]+/g, "")
-    .replace(/::[-\w]+/g, "")
+  // unreachable. The `html[data-theme=dark]` spelling (+60.797px) was the
+  // attribute half of that hole and went red one commit earlier; `html.dark`
+  // is the class half, fixed here.
+  // `:root` is the `html` element, and it survives the pseudo strip below (that
+  // is the whole point of the token), so it is rewritten first — `.dark:root`
+  // included, because the class strip runs before this test.
+  const noState = bare.replace(/\.[-\w]+/g, "").replace(/#[-\w]+/g, "");
+  const globalBare = (/:root\b/i.test(noState) ? "html" : noState)
+    // `::?` and not `::`: a SINGLE-colon qualifier is the common spelling and
+    // stripping only the double one made `body:not(.dark)`, `body:first-child`,
+    // `html:lang(en)`, `body:has(.app)`, `html:where(.dark)` all unreachable —
+    // review put `body:not(.dark) { --text-base: 50% }` in a foreign sheet and
+    // the guard stayed GREEN while the box moved +60.797px. (That is a
+    // different hole from the `html[data-theme=dark]` one: the attribute strip
+    // at the top of this function already handled `[data-theme]`, and this
+    // function's own class/id strips handle `.dark`; what the single-colon
+    // strip fixes is the QUALIFIER. `:root:not([data-theme=light])` rides both:
+    // it is global once `:root` is recognised, which is why the attribute test
+    // below can no longer call it unreachable.)
+    .replace(/::?[-\w]+/g, "")
     .replace(/\s+/g, "")
     .toLowerCase()
     .replace(/^.*\|/, "");
-  if (globalBare === "*" || globalBare === "html" || globalBare === "body" || globalBare === ":root") {
+  if (globalBare === "*" || globalBare === "html" || globalBare === "body") {
     return true;
   }
   if (/[.#]/.test(bare)) return false;
@@ -699,6 +746,28 @@ const OFFSET_TOKENS = /^--text-(?:xs|sm|base|md|lg|xl)$/;
  * like a length. */
 const SAFE_LENGTH = /^(?:\d*\.\d+|\d+)(?:px|rem)$/;
 
+/** The smallest font size (px) whose line box still COVERS the box it anchors:
+ * one line box is 1.5 × the font size, so a token below `box / 1.5` makes the
+ * line SHORTER than the box and the half-line offset overshoots — `--text-base:
+ * 0.5rem` measured the box +1.500px low (and the row 18→15px tall) with the
+ * gate green, because a length looked safe. Growth is safe (`2rem` → 0.000,
+ * the row grows around the box), shrink is not, so the floor is one-sided.
+ * Tokens no offset reads have no floor. */
+const OFFSET_TOKEN_FLOOR_PX: Record<string, number> = {
+  // sm box 0.875rem = 14px, md box 1.125rem = 18px, lg box 1.375rem = 22px
+  "--text-xs": 14 / 1.5,
+  "--text-base": 18 / 1.5,
+  "--text-md": 22 / 1.5,
+};
+
+/** A length that still leaves the offset aimed at a line box the box fits in. */
+function safeOffsetValue(name: string, value: string): boolean {
+  if (!SAFE_LENGTH.test(value)) return false;
+  const px = value.endsWith("rem") ? Number.parseFloat(value) * 16 : Number.parseFloat(value);
+  const floor = OFFSET_TOKEN_FLOOR_PX[name];
+  return floor === undefined || px >= floor;
+}
+
 /** Every declaration that can move a box, as `name: value` text. The VALUE is
  * part of the row on purpose: a name-only pin read `* { border-width: 0 }` and
  * `* { border-width: 8px }` as the same row (measured: the label 8px low with
@@ -716,7 +785,7 @@ function movingDeclarations(body: string, scopedCustomProperties = false): strin
     const name = match[1]!;
     const value = match[2]!.trim();
     const moves = name.startsWith("--")
-      ? scopedCustomProperties || (OFFSET_TOKENS.test(name) && !SAFE_LENGTH.test(value))
+      ? scopedCustomProperties || (OFFSET_TOKENS.test(name) && !safeOffsetValue(name, value))
       : !PAINTS_ONLY.test(name.replace(/^-(?:webkit|moz|ms|o)-/, ""));
     if (!moves) return;
     out.push(`${name}: ${value}`);
@@ -733,7 +802,14 @@ function movingDeclarations(body: string, scopedCustomProperties = false): strin
 
 /** Rules that can reach a part without naming it, one row per complex selector. */
 /**
- * `@property` registrations that redefine one of the offset tokens. The
+ * `@property` registrations that are not a safe re-registration of an offset
+ * token — every other one is a row, including a registration of a name this
+ * sheet never reads (`--hi-color-primary`, `--space-16`): the table below is
+ * pinned, so over-reporting costs one line and under-reporting is the defect.
+ * The NAME is matched case-insensitively because the at-rule name is: Chrome
+ * registers `@PROPERTY --text-base { … }` exactly like the lowercase spelling
+ * (measured `innerWidth` 20 vs 10), so a case-sensitive reader is a blind
+ * spot, not a safe default. The
  * splitter above deliberately keeps at-rule bodies out of `Rule[]` (a `@media`
  * copy must not shadow the base rule), so a registration is invisible to every
  * assertion that walks rules: review registered
@@ -749,12 +825,12 @@ function movingDeclarations(body: string, scopedCustomProperties = false): strin
 function atPropertyMovers(label: string, css: string): string[] {
   const rows: string[] = [];
   const bare = stripComments(css);
-  for (const [whole, body = ""] of [...bare.matchAll(/@property\s+(--[-\w]+)\s*\{([^}]*)\}/g)].map(
+  for (const [whole, body = ""] of [...bare.matchAll(/@property\s+(--[-\w]+)\s*\{([^}]*)\}/gi)].map(
     (m) => [m[0]!, m[2]!] as const,
   )) {
-    const name = /@property\s+(--[-\w]+)/.exec(whole)?.[1] ?? "--";
+    const name = /@property\s+(--[-\w]+)/i.exec(whole)?.[1] ?? "--";
     const value = /initial-value\s*:\s*([^;]+)/i.exec(body)?.[1]?.trim();
-    if (OFFSET_TOKENS.test(name) && value !== undefined && SAFE_LENGTH.test(value)) continue;
+    if (OFFSET_TOKENS.test(name) && value !== undefined && safeOffsetValue(name, value)) continue;
     rows.push(`${label} :: @property | ${name} | initial-value: ${value ?? "<absent>"}`);
   }
   return rows;
@@ -1592,12 +1668,12 @@ describe("label first-line anchoring", () => {
     expect(odd, "subjects that do not start with a class name").toEqual([]);
   });
 
-  it.each([
-    ["HkCheckbox.scss", checkbox, ".hk-checkbox"],
-    ["HkRadio.scss", radio, ".hk-radio"],
-    ["HkSwitch.scss", sw, ".hk-switch"],
-    ["HkLabel.scss", labelSheet, ".hk-label"],
-  ])("%s only styles its own parts", (_name, all, own) => {
+  it.each<[string, Rule[], string, string[]]>([
+    ["HkCheckbox.scss", checkbox, ".hk-checkbox", [".hk-label"]],
+    ["HkRadio.scss", radio, ".hk-radio", [".hk-label"]],
+    ["HkSwitch.scss", sw, ".hk-switch", []],
+    ["HkLabel.scss", labelSheet, ".hk-label", []],
+  ])("%s only styles its own parts", (_name, all, own, ownChildren) => {
     // Every reader above is per-sheet, but no consumer ever sees a sheet: the
     // Rust host imports all four into ONE stylesheet (styles/index.scss:
     // checkbox, radio, switch, label), so a later sheet wins at equal
@@ -1626,19 +1702,32 @@ describe("label first-line anchoring", () => {
     for (const rule of all) {
       for (const one of splitTopLevel(rule.selector, ",")) {
         const subject = withoutForeignArgs(subjectSelector(one));
+        // `.hk-label` is the row's OWN CHILD, not another component's part:
+        // `.hk-checkbox` / `.hk-radio` render it inside themselves and both
+        // already read it inside the gate. They pin its item alignment (the
+        // stretch inversion — HkCheckbox.scss documents it), so the label is
+        // theirs to name for the same reason the box is.
+        const allowed = [own, ...ownChildren];
         for (const token of subject.match(/\.hk-[a-z0-9-]+/g) ?? []) {
-          if (token !== own && !token.startsWith(`${own}-`)) foreign.push(`${rule.selector} -> ${token}`);
+          if (!allowed.includes(token) && !token.startsWith(`${own}-`)) {
+            foreign.push(`${rule.selector} -> ${token}`);
+          }
         }
       }
     }
     expect(foreign, "rules that name another component's part").toEqual([]);
   });
 
-  it.each([
-    ["checkbox", checkbox, PARTS.checkbox],
-    ["radio", radio, PARTS.radio],
-    ["switch", sw, PARTS.switch],
-  ])("%s rules that move or lay out a part name the part they touch", (_name, all, parts) => {
+  it.each<[string, Rule[], readonly string[], readonly string[]]>([
+    ["checkbox", checkbox, PARTS.checkbox, [".hk-label"]],
+    ["radio", radio, PARTS.radio, [".hk-label"]],
+    ["switch", sw, PARTS.switch, []],
+  ])("%s rules that move or lay out a part name the part they touch", (
+    _name,
+    all,
+    parts,
+    ownChildren,
+  ) => {
     // The class-led pin makes the subject visible to the readers; it does not
     // make the readers see every ELEMENT. The icon and the dot carry classes
     // from whichever component renders them (lucide stamps `lucide-check` on
@@ -1672,7 +1761,10 @@ describe("label first-line anchoring", () => {
       // HkRadioGroup is a different component: its rules lay out the group,
       // not the row, and the wrapper has no `.hk-` part to name.
       .filter(({ one }) => !/^\.hk-radio-group(?:$|[-.:])/.test(subjectSelector(one)))
-      .filter(({ one }) => !(parts as readonly string[]).some((p) => namesClass(subjectSelector(one), p)))
+      .filter(
+        ({ one }) =>
+          ![...parts, ...ownChildren].some((p) => namesClass(subjectSelector(one), p)),
+      )
       .map(({ rule }) => rule.selector);
     expect(stray, "rules that move or lay out a part without naming one").toEqual([]);
   });
@@ -1957,6 +2049,38 @@ describe("label first-line anchoring", () => {
     ]);
   });
 
+  it.each([
+    // A GLOBAL subject stays global however it is qualified. `:root` is the
+    // `html` element and `:not()` / `:has()` / `:where()` / `:first-child` /
+    // `:lang()` arguments name something ELSE, so every spelling below still
+    // reaches the label — and every one of them used to be filed as
+    // unreachable: the reach reader compared the STRIPPED subject against the
+    // four literals and only stripped `::` pseudo-elements, so `html:not(.light)
+    // { --text-base: -1rem }` stayed green while the box moved 24.0px (review,
+    // round 5, plus `body:first-child` / `html:lang(en)` / `body:has(.app)` /
+    // `html:where(.dark)` and the `:root:not([data-theme=light])` shape, whose
+    // attribute argument made the attribute test call it unreachable).
+    "html:not(.light)",
+    "body:not(.hk-no-theme)",
+    "html:has(body)",
+    "html:where(*)",
+    "html:first-child",
+    "body:first-child",
+    "html:lang(en)",
+    "body:has(.app)",
+    "html:where(.dark)",
+    ":root:not([data-theme=light])",
+    ".dark:root",
+  ])("%s is a reachable global subject", (spelling) => {
+    expect(
+      elementOnlyMovers("pin", rules(`${spelling} { --text-base: 50% }`)),
+      `rows for \`${spelling}\``,
+    ).toEqual([`pin :: - | ${spelling} | --text-base: 50%`]);
+    // The qualifier must not turn a paint-only declaration into a row: the
+    // reachability reader is what changed, not the mover filter.
+    expect(elementOnlyMovers("pin", rules(`${spelling} { color: red }`)), `paint rows`).toEqual([]);
+  });
+
   it("HkLabel pins the line box on its base rule and leaves the first line alone", () => {
     // The offset rides HkLabel's line box, so every rule that can change it
     // has to be visible here: a media copy, a per-size line-height, or a
@@ -2047,15 +2171,35 @@ describe("label first-line anchoring", () => {
   });
 
   it.each([
-    ["checkbox", checkbox],
-    ["radio", radio],
-    ["switch", sw],
-  ])("%s sheets declare no .hk-label rule of their own", (_name, all) => {
+    ["checkbox", checkbox, ".hk-checkbox"],
+    ["radio", radio, ".hk-radio"],
+    ["switch", sw, ".hk-switch"],
+  ])("%s sheets carry at most the one label pin, gated and alignment-only", (
+    _name,
+    all,
+    control,
+  ) => {
     // `namesClass`, like every other reader — `startsWith` would miss a
     // leading attribute compound such as `[dir=rtl].hk-label` (the class-led
     // pin above bans it first, but the reader should not depend on that).
-    const labelRules = rulesMentioningAny(all, labelClasses(), true).map((r) => r.selector);
-    expect(labelRules, "label rules inside a control sheet").toEqual([]);
+    //
+    // The ban used to be absolute (the label is HkLabel's sheet). It is now
+    // ONE sanctioned rule per box control: the label has to be pinned to the
+    // same edge as the box or a stretched control separates them (measured
+    // −42.0px at a 105px control). Everything about it is pinned here instead
+    // of banned: exactly one rule, the same `:has(.hk-label:not(:empty))` gate
+    // the box rules carry, only `align-self`, and only `flex-start`.
+    const labelRules = rulesMentioningAny(all, labelClasses(), true);
+    const expected = control === ".hk-switch"
+      ? []
+      : [`${control}:has(.hk-label:not(:empty)) .hk-label`];
+    expect(labelRules.map((r) => r.selector), "label rules inside a control sheet").toEqual(expected);
+    for (const rule of labelRules) {
+      expect(declarationNames(rule.body), `\`${rule.selector}\` may only align the label`).toEqual([
+        "align-self",
+      ]);
+      expect(valueOf(rule.body, "align-self")).toBe("flex-start");
+    }
   });
 
   it("checkbox size offsets appear in md → sm → lg order (an equal-specificity tie)", () => {

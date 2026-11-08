@@ -135,6 +135,12 @@
   margin-block-start: calc((1.5 * var(--text-md, 1rem) - 1.375rem) / 2);
 }
 
+/* Both parts, never the row (HkCheckbox.scss documents the stretch inversion
+ * this closes: −42.0px at a 105px control, −13.5px at 48px, 0.000 after). */
+.hk-radio:has(.hk-label:not(:empty)) .hk-label {
+  align-self: flex-start;
+}
+
 /* Press feedback (house parity: HkCheckbox box / HkSwitch thumb). */
 .hk-radio:not([data-disabled]):active .hk-radio-box {
   scale: 0.9;

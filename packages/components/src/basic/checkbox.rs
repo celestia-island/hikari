@@ -396,12 +396,20 @@ mod tests {
             // has block comments stripped, so prose cannot satisfy a needle
             // (grass keeps `/* … */` in expanded output, and this sheet quotes
             // `align-self: flex-start` in one).
-            // `align-self: flex-start` is the half only the gated box rule
-            // declares: the row keeps `align-items: center`, which is why a
+            // `align-self: flex-start` is the half only the two gated rules
+            // declare: the row keeps `align-items: center`, which is why a
             // foreign `align-items` cannot undo the anchoring.
             ":has(.hk-label:not(:empty)) .hk-checkbox-box {",
             "align-self: flex-start",
             "margin-block-start",
+            // The label pin: with only the box pinned, a control a host
+            // STRETCHES (a grid cell or flex row taller than the content, or
+            // `min-height` on the control) put the box at the top of the
+            // control while the label stayed centred — measured 42.0px apart
+            // at a 105px control. Both parts pinned is what keeps the pair
+            // together at every control height.
+            ":has(.hk-label:not(:empty)) .hk-label {",
+            "align-self: flex-start;",
         ] {
             assert!(
                 css.contains(needle),

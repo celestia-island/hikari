@@ -164,6 +164,29 @@
   margin-block-start: calc((1.5 * var(--text-md, 1rem) - 1.375rem) / 2);
 }
 
+/* Both PARTS are pinned, not the row. Pinning only the box inverts the
+ * anchoring the moment the control is TALLER than its own content — a grid
+ * cell or a flex row that stretches the item (a two-column option grid that
+ * pairs a one-line option with a four-line one; `min-height` on the control
+ * does the same): the box sits at the top of the stretched control while the
+ * label stays centred by the row's `align-items`, measured 42.0px apart at a
+ * 105px control and 13.5px at 48px, against 0.000 before this component
+ * anchored anything. With the label pinned as well the pair moves together
+ * and the offset still lands on line one at every control height (0.000 at
+ * 48/60/105px, sm and lg included).
+ *
+ * Keeping BOTH alignment declarations on the items — never `align-items` on
+ * the row — is also what keeps a host's `align-items` unable to flip the
+ * anatomy: a row-level `flex-start` here would be undone by any later sheet
+ * naming the control while the offset still applied (a host's
+ * `align-items: center !important` measured +0.750px against the item pins
+ * and broke the row-level variant). The visible cost: a control a host
+ * stretches now renders its text at the TOP of the control instead of
+ * centred. */
+.hk-checkbox:has(.hk-label:not(:empty)) .hk-label {
+  align-self: flex-start;
+}
+
 /* Press feedback (house parity: HkSwitch thumb squish). */
 .hk-checkbox:not([data-disabled]):active .hk-checkbox-box {
   scale: 0.9;

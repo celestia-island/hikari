@@ -90,16 +90,28 @@ pub(crate) mod test_css {
     /// reaches the caller, prose included. Because those sheets also quote
     /// their own declarations in that prose (the checkbox sheet writes
     /// `` `align-self: flex-start` `` in one), a needle checked against the
-    /// raw string can be satisfied by a sentence instead of a rule: on the
-    /// heading revision of this guard `align-self: flex-start` appeared
-    /// TWICE in the compiled sheet, once as code and once as a comment, and
-    /// deleting the declaration left the needle green. Structural needles are
-    /// matched against this stripped string, where only a declaration or a
-    /// selector can satisfy them.
+    /// raw string can be satisfied by a sentence instead of a rule: on the first
+    /// review of this guard `align-self: flex-start` appeared TWICE in the
+    /// compiled sheet, once as code and once as a comment, and deleting the
+    /// declaration left the needle green. Structural needles are matched
+    /// against this stripped string, where a declaration or a selector is what
+    /// satisfies them.
     ///
-    /// Not a general CSS parser: a `/*` inside a string literal (for example
-    /// `content: "/*"`) would be stripped as if it opened a comment, and no
-    /// sheet in this crate does that.
+    /// Not a general CSS parser, and two shapes sit outside what a text strip
+    /// can decide:
+    ///
+    /// * a `/*` inside a string literal (for example `content: "/*"`) is
+    ///   stripped as if it opened a comment — no sheet in this crate does it;
+    /// * grass runs interpolation inside comments, so a LOUD comment can emit
+    ///   a marker (`/* probe #{"*" + "/"} align-self: flex-start */` reaches
+    ///   the caller as `/* probe */ align-self: flex-start */`). The strip then
+    ///   ends at the injected marker and reads the rest as CSS, which let a
+    ///   deleted declaration keep the needle green in review.
+    ///
+    /// The second is caught instead of documented: the strip asserts that no
+    /// marker survives, so unbalanced input panics rather than handing prose to
+    /// a needle (the emitted CSS is already corrupt, so nothing ships through
+    /// it). Balanced input is unaffected.
     pub(crate) fn without_comments(css: &str) -> String {
         let mut out = String::with_capacity(css.len());
         let mut rest = css;
@@ -112,7 +124,33 @@ pub(crate) mod test_css {
             }
         }
         out.push_str(rest);
+        // A marker that survives means the input was NOT balanced, and the
+        // text-level strip cannot tell an injected one from a real one: grass
+        // interpolates inside comments, so `/* #{…} */` can hand this function
+        // a `*/` of its own. Callers turn the result into needles, so prose
+        // would be read as CSS; panicking is the only honest outcome here.
+        assert!(
+            !out.contains("/*") && !out.contains("*/"),
+            "compiled css has unbalanced comment markers after stripping — a Sass              interpolation inside a comment most likely emitted one"
+        );
         out
+    }
+
+    #[test]
+    fn without_comments_rejects_a_comment_that_emits_a_marker() {
+        // The exact shape a loud comment hands the stripper: grass runs
+        // interpolation inside comments, so the injected `*/` closes the strip
+        // early and the tail arrives as prose. Balanced sheets never produce
+        // this; corrupt output must panic instead of satisfying a needle.
+        let emitted = "/* probe */ align-self: flex-start */\n.a { align-self: center; }";
+        assert!(
+            emitted.matches("*/").count() > emitted.matches("/*").count(),
+            "the fixture is supposed to be unbalanced"
+        );
+        assert!(
+            std::panic::catch_unwind(|| without_comments(emitted)).is_err(),
+            "unbalanced comment markers must not be stripped silently"
+        );
     }
 
     #[test]

@@ -89,10 +89,11 @@
  * while the per-part guards still saw a clean sheet. The row itself keeps
  * `align-items: center` on every engine.
  *
- * Four rules cooperate — one `align-self` carrier plus one offset per size
- * step. Every one of them carries the gate, and exactly one offset is IN
- * EFFECT per row: an sm/lg box matches the md rule too, and the size rule that
- * follows it wins on source order (all three are (0,4,0)). The anatomy is
+ * Three rules cooperate — the md rule carries `align-self` and the base offset,
+ * the sm/lg rules add only their own offsets. Every one of them carries the
+ * gate, and exactly one offset is IN EFFECT per row: an sm/lg box matches the
+ * md rule too, and the size rule that follows it wins on source order (all
+ * three are (0,4,0)). The anatomy is
  * atomic — every selector contains `:has()`, so an engine without it drops
  * each rule whole and the box falls through to the `align-items: center`
  * fallback in the root rule: exactly the previous rendering, never the bare

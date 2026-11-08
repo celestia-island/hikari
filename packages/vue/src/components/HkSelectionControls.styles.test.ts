@@ -1203,21 +1203,43 @@ describe("label first-line anchoring", () => {
   // HkLabel). Scan the whole directory instead of the four files, and pin the
   // host's import order so dropping one import cannot silently delete the
   // anatomy either.
-  it("no other component sheet names a selection part", () => {
-    const OWN = new Set(["HkCheckbox.scss", "HkRadio.scss", "HkSwitch.scss", "HkLabel.scss"]);
+  it("no other sheet in the package names a selection part", () => {
+    // Every `.scss` under `src/` can ship — the component sheets through their
+    // TSX side-effect imports, `styles/*` and `overlay/*` through the theme
+    // entry — so a `.hk-checkbox-box` rule is only harmless in the four sheets
+    // that own it. Walking `components/` alone still left `reset.scss` (the
+    // file that already sets the global `box-sizing`) outside the net.
+    const ROOT = resolve(componentDir, "..");
+    const OWN = new Set([
+      resolve(componentDir, "HkCheckbox.scss"),
+      resolve(componentDir, "HkRadio.scss"),
+      resolve(componentDir, "HkSwitch.scss"),
+      resolve(componentDir, "HkLabel.scss"),
+    ]);
     // `(?!\w)` and not `(?![\w-])`: the parts ARE the suffix (`.hk-checkbox-box`),
     // so rejecting a trailing hyphen would only match the bare root and let the
     // very rule this test exists for through.
     const SELECTION = /\.hk-(?:checkbox|radio|switch|label)(?!\w)/g;
+    const sheets: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = resolve(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name !== "node_modules") walk(full);
+        } else if (entry.name.endsWith(".scss") && !OWN.has(full)) {
+          sheets.push(full);
+        }
+      }
+    };
+    walk(ROOT);
+    expect(sheets.length, "owed sheets: every other stylesheet in the package").toBeGreaterThan(100);
     const mentions: string[] = [];
-    const files = readdirSync(componentDir).filter((f) => f.endsWith(".scss") && !OWN.has(f));
-    expect(files.length, "component sheets that are not one of the four").toBeGreaterThan(100);
-    for (const file of files) {
-      const source = readFileSync(resolve(componentDir, file), "utf8")
+    for (const file of sheets) {
+      const source = readFileSync(file, "utf8")
         .replace(/\/\*[\s\S]*?\*\//g, " ")
         .replace(/(^|[^:])\/\/.*$/gm, "$1");
       for (const hit of source.match(SELECTION) ?? []) {
-        mentions.push(`${file} -> ${hit}`);
+        mentions.push(`${file.slice(ROOT.length + 1)} -> ${hit}`);
       }
     }
     expect(mentions, "sheets outside the selection controls naming one").toEqual([]);

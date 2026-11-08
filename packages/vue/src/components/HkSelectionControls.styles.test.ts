@@ -3109,6 +3109,14 @@ describe("label first-line anchoring", () => {
       "pin :: - | x-widget[data-kind=chip] | line-height: 2",
     ]);
     expect(elementOnlyMovers("pin", rules("span[data-el=dot] { margin-block-start: 8px }"))).toEqual([]);
+    // The other copy of the namespace strip lives in `subjectTag`, and it had
+    // no pin at all: deleting `^.*\|` made `*|p { margin-block-start: 8px }`
+    // (a legal spelling of `p`, 8.000px measured) invisible while the whole
+    // suite stayed green. `|p` (the EMPTY prefix) matches no element in HTML,
+    // so only the `*|` form is asserted.
+    expect(elementOnlyMovers("pin", rules("*|p { margin-block-start: 8px }"))).toEqual([
+      "pin :: - | *|p | margin-block-start: 8px",
+    ]);
     // The block-child arm reaches the tag through `subjectTag`, which strips
     // attributes for the same reason: `p[data-x]` is still the `<p>` that pushes
     // the label's first line down, and reading it as the tag "p[data-x]" made

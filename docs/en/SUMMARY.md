@@ -14,6 +14,7 @@
 
 # Design
 - [Overview](./design/overview.md)
+- [Page Chrome: The Action-Bar Grammar](./design/page-chrome.md)
 
 # System
 - [Overview](./system/overview.md)

@@ -13,6 +13,7 @@
 
 # 디자인
 - [개요](./design/overview.md)
+- [페이지 크롬: 액션 바 문법](./design/page-chrome.md)
 
 # 시스템
 - [개요](./system/overview.md)

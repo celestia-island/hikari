@@ -13,6 +13,7 @@
 
 # デザイン
 - [概要](./design/overview.md)
+- [ページクローム：アクションバーの文法](./design/page-chrome.md)
 
 # システム
 - [概要](./system/overview.md)

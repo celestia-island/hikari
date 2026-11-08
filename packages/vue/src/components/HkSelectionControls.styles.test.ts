@@ -1377,8 +1377,6 @@ function couldMatchAPart(compound: string, selector: string = compound): boolean
     return true;
   }
   if (/[.#]/.test(bare)) return false;
-  const attributes = [...compound.matchAll(/\[\s*([-\w]+)/g)].map((m) => m[1]!.toLowerCase());
-  if (attributes.some((name) => !PART_ATTRS.has(name))) return false;
   const tag = bare
     .replace(/::?[-\w]+/g, "")
     .replace(/\*/g, "")
@@ -1386,7 +1384,34 @@ function couldMatchAPart(compound: string, selector: string = compound): boolean
     .trim()
     .toLowerCase()
     .replace(/^.*\|/, "");
-  if (tag === "" || PHRASING_CONTENT.has(tag) || tag.includes("-")) return true;
+  // A phrasing-content or custom-element tag is reachable no matter WHICH
+  // attribute qualifies it: the label may hold `<a href>`, `<time datetime>`,
+  // `<data value>` and a rule on one of those restyles the row just the same.
+  // The attribute gate below is for subjects that could BE a part (a `span`
+  // needs the attribute to exist on the part at all), and applying it to
+  // content too was a hole: review put `a[href^="http"] { line-height: 2 }` in
+  // `link.scss` and got 213/213 green while the SAME rule without `[href…]`
+  // was a row — a host's real link rule is usually attribute-qualified, so
+  // this is the shape a reader would meet first. (`[data-el=dot]` on a bare
+  // attribute selector stays unreachable on purpose: nothing carries it.)
+  // `span` and `label` are the tags the PARTS and the root actually are, so an
+  // attribute on one of them still has to exist on the part — that is the whole
+  // job of `PART_ATTRS`. Every other phrasing tag and every custom element is
+  // content only, so its attributes cannot disqualify it.
+  const isContentTag = tag === "" || PHRASING_CONTENT.has(tag) || tag.includes("-");
+  // `span` and `label` are the tags the PARTS and the root actually are, and a
+  // bare attribute selector can match a part too, so an attribute on those still
+  // has to exist on the part — that is the whole job of `PART_ATTRS`. Every
+  // other phrasing tag and every custom element is content only, so its
+  // attributes cannot disqualify it: `a[href^="http"]` restyles the row exactly
+  // like `a` does, and that spelling was invisible to this reader.
+  const couldBeAPart = tag === "" || tag === "span" || tag === "label";
+  if (!couldBeAPart && isContentTag) {
+    return true;
+  }
+  const attributes = [...compound.matchAll(/\[\s*([-\w]+)/g)].map((m) => m[1]!.toLowerCase());
+  if (attributes.some((name) => !PART_ATTRS.has(name))) return false;
+  if (isContentTag) return true;
   // `selector` is the whole comma-free selector, not just the subject
   // compound: `svg { … }` reaches the icon a label holds, `.hk-icon svg { … }`
   // needs an ancestor class a label never has.
@@ -2753,10 +2778,17 @@ describe("label first-line anchoring", () => {
     // sheet passed this assertion (211/211 green, review's finding) while
     // serving the same bytes from a second path. The assertion's whole job is
     // to prove the mirror is a copy that can drift.
-    expect(
-      realpathSync(resolve(mirrorDir, "HkCheckbox.scss")),
-      "the mirror must be a different file, not a second path to the source",
-    ).not.toBe(realpathSync(resolve(componentDir, "HkCheckbox.scss")));
+    // Every mirrored sheet, not just the checkbox one: the vendored copy that
+    // shipped first was a symlink to the canonical file and the window closed
+    // here only because `realpathSync` was applied to that one name — an
+    // `HkRadio.scss` symlink would have passed the drift test byte-for-byte
+    // (a symlink satisfies a content comparison) and broken the sdist.
+    for (const name of ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"]) {
+      expect(
+        realpathSync(resolve(mirrorDir, `${name}.scss`)),
+        `the ${name} mirror must be a different file, not a second path to the source`,
+      ).not.toBe(realpathSync(resolve(componentDir, `${name}.scss`)));
+    }
     expect(mirrored.map(key).sort(), "the vendored mirrors are the compiled Vue sheets").toEqual(
       declared.map(key).sort(),
     );
@@ -3018,6 +3050,30 @@ describe("label first-line anchoring", () => {
     expect(elementOnlyMovers("pin", rules("my-widget > span { line-height: 2 }"))).toEqual([
       "pin :: - | my-widget > span | line-height: 2",
     ]);
+  });
+
+  it("an attribute-qualified phrasing rule still names the row it restyles", () => {
+    // The label's slot may hold any phrasing content, and the shapes a host
+    // writes are usually qualified: `a[href^="http"]`, `a:not(.nav)`,
+    // `time[datetime]`. The attribute gate exists for subjects that could BE a
+    // part — a `span` only reaches a part if the attribute exists on it — and
+    // applying it to content too made review's `a[href^="http"] { line-height:
+    // 2 }` invisible (213/213 green) while the unqualified spelling was a row.
+    // Both spellings are pinned, plus the negative control that keeps
+    // `[data-el=dot]` out (nothing carries that attribute).
+    expect(
+      elementOnlyMovers("pin", rules(String.raw`a[href^="http"] { line-height: 2 }`)),
+    ).toEqual([`pin :: - | a[href^="http"] | line-height: 2`]);
+    expect(elementOnlyMovers("pin", rules("a { line-height: 2 }"))).toEqual([
+      "pin :: - | a | line-height: 2",
+    ]);
+    expect(
+      elementOnlyMovers("pin", rules(String.raw`time[datetime] { margin-block-start: 8px }`)),
+    ).toEqual([`pin :: - | time[datetime] | margin-block-start: 8px`]);
+    expect(elementOnlyMovers("pin", rules("x-widget[data-kind=chip] { line-height: 2 }"))).toEqual([
+      "pin :: - | x-widget[data-kind=chip] | line-height: 2",
+    ]);
+    expect(elementOnlyMovers("pin", rules("span[data-el=dot] { margin-block-start: 8px }"))).toEqual([]);
   });
 
   it("an escape-spelled url( opens a token in every walker, not just two", () => {

@@ -400,7 +400,6 @@ mod tests {
             // declare: the row keeps `align-items: center`, which is why a
             // foreign `align-items` cannot undo the anchoring.
             ":has(.hk-label:not(:empty)) .hk-checkbox-box {",
-            "align-self: flex-start",
             "margin-block-start",
             // The label pin: with only the box pinned, a control a host
             // STRETCHES (a grid cell or flex row taller than the content, or
@@ -409,13 +408,35 @@ mod tests {
             // at a 105px control. Both parts pinned is what keeps the pair
             // together at every control height.
             ":has(.hk-label:not(:empty)) .hk-label {",
-            "align-self: flex-start;",
         ] {
             assert!(
                 css.contains(needle),
                 "checkbox css must carry {needle} (a class, a selector or a declaration)"
             );
         }
+        // The two `align-self` needles above are satisfied by EITHER gated rule,
+        // so deleting just one of them stayed green here while the Vue guard went
+        // red (review M-diff, S2). Assert each rule's body separately: the box
+        // rule keeps its item alignment AND the offset arithmetic, the label rule
+        // keeps its own alignment.
+        let body_of = |selector: &str| -> &str {
+            let after = css.split(selector).nth(1).unwrap_or("");
+            &after[..after.find('}').unwrap_or(0)]
+        };
+        let box_rule = body_of(":has(.hk-label:not(:empty)) .hk-checkbox-box {");
+        assert!(
+            box_rule.contains("align-self: flex-start;"),
+            "the gated BOX rule must declare align-self: flex-start"
+        );
+        assert!(
+            box_rule.contains("margin-block-start: calc("),
+            "the gated BOX rule must carry the first-line offset"
+        );
+        let label_rule = body_of(":has(.hk-label:not(:empty)) .hk-label {");
+        assert!(
+            label_rule.contains("align-self: flex-start;"),
+            "the gated LABEL rule must declare align-self: flex-start"
+        );
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored checkbox sheet"

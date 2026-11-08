@@ -72,6 +72,10 @@ interface Rule {
  */
 const PARSE_LEFTOVER: string[] = [];
 
+/** At-rules whose body must be RULES, so a declaration arriving there is a
+ * desync rather than content. */
+const GROUPING_AT_RULE = /^@(?:media|supports|layer|container|scope|starting-style|document|keyframes)\b/i;
+
 /** Index just past the `)` of the `url(` token starting at `start`, skipping
  * quoted runs and escapes. An UNQUOTED url token may contain `}` — CSS ends it
  * only at `)`, `"`, `'`, `(`, whitespace or an escape — so a walker that treats
@@ -80,17 +84,167 @@ const PARSE_LEFTOVER: string[] = [];
  * in a foreign sheet and the label pin was dropped from the row while the guard
  * stayed 120/120 (measured −42.000px on a 105px control).
  */
-function urlTokenEnd(css: string, start: number): number {
-  let at = start + 4;
+const IDENT_CHAR = /[\w-]/;
+
+/** Index just past the escape sequence that starts at `at` (a backslash). A CSS
+ * escape is `\\` + up to six hex digits + one optional whitespace terminator, or
+ * `\\` + any other single character. Treating it as two code units is wrong for
+ * the hex form: `u\\72 l(` is how a sheet may spell `url(`, and a scanner that
+ * copies two characters sees `\\7` + `2` + ` ` instead.
+ */
+function escapeEnd(css: string, at: number): number {
+  let index = at + 1;
+  if (index >= css.length) return index;
+  if (/[0-9a-fA-F]/.test(css[index]!)) {
+    let digits = 0;
+    while (index < css.length && digits < 6 && /[0-9a-fA-F]/.test(css[index]!)) {
+      index += 1;
+      digits += 1;
+    }
+    if (css[index] === "\r" && css[index + 1] === "\n") return index + 2;
+    if (" \t\n\r\f".includes(css[index] ?? "\u0000")) return index + 1;
+    return index;
+  }
+  return index + 1;
+}
+
+/** The character an escape sequence stands for (`\\72 ` → `r`, `\\;` → `;`). */
+function escapeChar(text: string): string {
+  const hex = /^\\([0-9a-fA-F]{1,6})/.exec(text);
+  if (!hex) return text.slice(1, 2);
+  const code = parseInt(hex[1]!, 16);
+  if (code === 0 || code > 0x10ffff) return "\uFFFD";
+  return String.fromCodePoint(code);
+}
+
+/** End index of the identifier that starts at `start`, escapes included. */
+function identEnd(css: string, start: number): number {
+  let at = start;
   while (at < css.length) {
+    if (css[at] === "\\") {
+      at = escapeEnd(css, at);
+      continue;
+    }
     const char = css[at]!;
-    if (char === "\\") at += 2;
-    else if (char === "\"" || char === "'") {
+    if (IDENT_CHAR.test(char) || char.charCodeAt(0) > 0x7f) {
       at += 1;
-      while (at < css.length && css[at] !== char) at += css[at] === "\\" ? 2 : 1;
-      at += 1;
-    } else if (char === ")") return at + 1;
-    else at += 1;
+      continue;
+    }
+    break;
+  }
+  return at;
+}
+
+/** The DECODED identifier between `start` and `end` (`u\\72 l` → `url`). */
+function identText(css: string, start: number, end: number): string {
+  let out = "";
+  let at = start;
+  while (at < end) {
+    if (css[at] === "\\") {
+      const stop = escapeEnd(css, at);
+      out += escapeChar(css.slice(at, stop));
+      at = stop;
+      continue;
+    }
+    out += css[at];
+    at += 1;
+  }
+  return out;
+}
+
+/** Index just past the closing quote of the string that starts at `at`. */
+function stringEnd(css: string, at: number): number {
+  const quote = css[at]!;
+  let index = at + 1;
+  while (index < css.length) {
+    if (css[index] === "\\") {
+      index = escapeEnd(css, index);
+      continue;
+    }
+    if (css[index] === quote) return index + 1;
+    index += 1;
+  }
+  return css.length;
+}
+
+/**
+ * Index just past the `)` of the `url(` token that starts at `at` — in ANY
+ * escape spelling — or -1 when the identifier there is not `url` followed by
+ * `(`. The CSS tokenizer decodes escapes BEFORE comparing the identifier, so a
+ * reader that looks for the literal text `url(` is blind to `u\\72 l(`.
+ *
+ * An UNQUOTED url token may contain `}`, `;`, `"` and `/*`: CSS ends it only at
+ * `)`, a quote, `(`, whitespace or an escape, so a walker that treats those as
+ * structure desyncs on a sheet the browser applies. Review used exactly this to
+ * hide a rule between two such tokens — one whose payload ENDS in the comment
+ * OPENER, the next one's payload beginning with the CLOSER: every reader (and
+ * `scanText`) ate the rule as a comment while Chrome applied it (+42.000px at
+ * a 105px control).
+ */
+function urlTokenEnd(css: string, at: number): number {
+  if (IDENT_CHAR.test(css[at - 1] ?? "") || css[at - 1] === "\\") return -1;
+  const end = identEnd(css, at);
+  if (end === at || css[end] !== "(") return -1;
+  if (identText(css, at, end).toLowerCase() !== "url") return -1;
+  let index = end + 1;
+  while (index < css.length) {
+    const char = css[index]!;
+    if (char === "\\") {
+      index = escapeEnd(css, index);
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      index = stringEnd(css, index);
+      continue;
+    }
+    if (char === ")") return index + 1;
+    index += 1;
+  }
+  return css.length;
+}
+
+/**
+ * Index of the `}` that closes the block opened at `open` — strings, url
+ * tokens and escapes are DATA — or `css.length` when the block never closes.
+ * A flat `\{([^}]*)\}` reader stops at the first `}` byte, but a `}` inside a
+ * string or an unquoted url token does not end the block for the browser:
+ * review put `@property --text-base { … initial-value: 1rem; zz: "}";
+ * initial-value: 50% }` in a foreign sheet, the reader judged only the prefix
+ * (safe `1rem`), and Chrome registered the LAST `initial-value: 50%` with
+ * `inherits: false` — the percent vector at +24.703px, guard green.
+ */
+function blockEnd(css: string, open: number): number {
+  let depth = 0;
+  let index = open;
+  while (index < css.length) {
+    const char = css[index]!;
+    if (char === "\\") {
+      index = escapeEnd(css, index);
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      index = stringEnd(css, index);
+      continue;
+    }
+    if (IDENT_CHAR.test(char) || char === "\\") {
+      const url = urlTokenEnd(css, index);
+      if (url >= 0) {
+        index = url;
+        continue;
+      }
+    }
+    if (char === "{") {
+      depth += 1;
+      index += 1;
+      continue;
+    }
+    if (char === "}") {
+      depth -= 1;
+      index += 1;
+      if (depth === 0) return index - 1;
+      continue;
+    }
+    index += 1;
   }
   return css.length;
 }
@@ -104,7 +258,11 @@ function urlTokenEnd(css: string, start: number): number {
  * regex paired the two delimiters across the middle rule — `span` was deleted
  * before any reader saw it while the browser applied it (measured: every row
  * 8.000px low, guard green). So walk the text instead: quotes and escapes are
- * honoured, and a comment opener inside a string is data, not a delimiter.
+ * honoured, and a comment opener inside a string is data, not a delimiter. The
+ * `url()` body is skipped the same way, and the token is recognised by its
+ * DECODED identifier name (`urlTokenEnd`) — `u\72 l(` IS `url(` to the CSS
+ * tokenizer, and matching the literal text reopened the hole in that spelling
+ * once already.
  */
 function stripComments(css: string): string {
   let out = "";
@@ -120,7 +278,8 @@ function stripComments(css: string): string {
       continue;
     }
     if (char === "\\") {
-      // An escape consumes the NEXT code point: `\/*` is the escaped `/`
+      // An escape consumes a whole SEQUENCE — `\72 ` is three code units — and
+      // `\/*` is the escaped `/`
       // followed by `*` — a legal custom-property VALUE — and the browser never
       // opens a comment, but a scanner that tests `/*` first does, deletes the
       // rest of the sheet and blinds every reader while Chrome applies it.
@@ -129,8 +288,9 @@ function stripComments(css: string): string {
       // the SHIPPED sheet and its mirror: 120/120 green while the 105px row
       // went +42.000px; in a foreign sheet the same wrapper hid a mover for
       // every row (−8.000px).
-      out += css.slice(index, index + 2);
-      index += 2;
+      const end = escapeEnd(css, index);
+      out += css.slice(index, end);
+      index = end;
       continue;
     }
     if (char === "/" && css[index + 1] === "*") {
@@ -144,7 +304,7 @@ function stripComments(css: string): string {
     // `url(https://e.invalid/a/*)` + `span { margin-block-start: 8px }` +
     // `.b::after { content: "*/" }` in a foreign sheet and every reader below
     // went blind while Chrome applied the span rule. Copy the token whole.
-    if (/^url\(/i.test(css.slice(index)) && !/[\w-]/.test(css[index - 1] ?? "")) {
+    if ((IDENT_CHAR.test(char) || char === "\\") && urlTokenEnd(css, index) > 0) {
       const end = urlTokenEnd(css, index);
       out += css.slice(index, end);
       index = end;
@@ -188,21 +348,22 @@ function rules(css: string): Rule[] {
       // Escaped code point: `\{` / `\}` / `\;` are DATA inside a selector or a
       // declaration value (`.zz\{ { … }` is one class), and `.zz-a { --x: \/*; }`
       // is the phantom-comment wrapper that defeated `stripComments` — the same
-      // shape defeats any walker that does not skip escapes.
-      buffer += bare.slice(at - 1, at + 1);
-      at += 1;
+      // shape defeats any walker that does not skip escapes. The escape is
+      // consumed as a WHOLE (`\72 ` is three code units, not two).
+      const end = escapeEnd(bare, at - 1);
+      buffer += bare.slice(at - 1, end);
+      at = end;
       continue;
     }
-    if (char === "u" || char === "U") {
+    if (IDENT_CHAR.test(char) || char === "u" || char === "U") {
       // An unquoted `url(` token may hold `}` and `;` — it ends only at `)` —
       // so the block delimiters must not be read inside it. Review put
       // `span:last-child { background-image: url(}); align-self: center
       // !important }` in a foreign sheet: the `}` closed the rule early, the
       // `align-self` became a top-level prelude and both were dropped, 120
       // green while the label pin was gone (−42.000px at a 105px control).
-      const lower = bare.slice(at - 1, at + 3).toLowerCase();
-      if (lower === "url(" && !/[\w-]/.test(bare[at - 2] ?? "")) {
-        const end = urlTokenEnd(bare, at - 1);
+      const end = urlTokenEnd(bare, at - 1);
+      if (end > 0) {
         buffer += bare.slice(at - 1, end);
         at = end;
         continue;
@@ -250,6 +411,21 @@ function rules(css: string): Rule[] {
     // it is expected and not recorded.
     if (!frame && buffer.trim()) {
       PARSE_LEFTOVER.push(`stray } after: ${buffer.trim().slice(0, 120)}`);
+    }
+    // A stray `}` inside a GROUPING at-rule dumps the rest of the rule into the
+    // at-rule's own body, where the walker used to drop it silently: review put
+    // `@media (min-width:1px) { span { background-image: #{"u\72 l(a}b)"};
+    // margin-block-start: 8px } }` in a foreign sheet, the unmatched `}` closed
+    // the span rule early and the tail — including the mover — disappeared into
+    // the media frame, which only records leftovers when the STACK is empty
+    // (line above). Grouping at-rules (`@media`, `@supports`, `@layer`, …)
+    // must contain RULES, so direct text in one is a desync, never content;
+    // `@font-face` / `@property` / `@page` legitimately hold declarations and
+    // are deliberately not in the set.
+    if (frame?.atRule && buffer.trim() && GROUPING_AT_RULE.test(frame.prelude)) {
+      PARSE_LEFTOVER.push(
+        `declaration in ${frame.prelude}: ${buffer.trim().slice(0, 120)}`,
+      );
     }
     const body = buffer.trim();
     buffer = "";
@@ -519,8 +695,14 @@ function toPx(decl: string): number {
 /** Last declaration of `prop`, or undefined — the non-asserting reader for
  * values the collection phase needs (an `expect` there aborts the whole file). */
 function lastDecl(body: string, prop: string): string | undefined {
-  const matches = [...body.matchAll(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, "g"))];
-  return matches.at(-1)?.[1]?.trim();
+  // Decoded names, not a text regex: `align\2d items` is the same property to
+  // the browser, and a regex over raw text would not see the last one.
+  let value: string | undefined;
+  for (const declaration of splitDeclarations(body)) {
+    const part = splitDeclaration(declaration);
+    if (part && part.name === prop.toLowerCase()) value = part.value;
+  }
+  return value;
 }
 
 function valueOf(body: string, prop: string): string {
@@ -528,9 +710,12 @@ function valueOf(body: string, prop: string): string {
   // takes the first one stays green while the render takes the appended
   // value (an extra `align-items: center` inside the gated rule put the box
   // back on the block middle — +21.75px at three lines — with a green suite).
-  const matches = [...body.matchAll(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, "g"))];
-  expect(matches.length, `declaration \`${prop}\` (declared exactly once)`).toBe(1);
-  return matches[0]![1]!.trim();
+  const values = splitDeclarations(body)
+    .map((declaration) => splitDeclaration(declaration))
+    .filter((part): part is { name: string; value: string } => part?.name === prop.toLowerCase())
+    .map((part) => part.value);
+  expect(values.length, `declaration \`${prop}\` (declared exactly once)`).toBe(1);
+  return values[0]!;
 }
 
 /** Split a rule body into declarations: paren- AND string-aware (`a: f(x; y)`
@@ -566,8 +751,9 @@ function splitDeclarations(body: string): string[] {
       // it through Sass interpolation (`$_p: "a)"; background: #{$_p}`) — a
       // literal `background: a)` is rejected by Sass, `#{"a)"}` is not — and
       // measured the label 8.000px low with the guard 126/126 green.
-      buffer += body.slice(at, at + 2);
-      at += 2;
+      const end = escapeEnd(body, at);
+      buffer += body.slice(at, end);
+      at = end;
       continue;
     }
     if (char === "\"" || char === "'") {
@@ -577,14 +763,14 @@ function splitDeclarations(body: string): string[] {
       at = end + 1;
       continue;
     }
-    if (char === "u" || char === "U") {
-      // Same url-token rule as the brace walk: `url(…)` ends only at `)`, and
-      // its body may carry `;` or an unbalanced paren (`url(a\\)b)`) that must
-      // not reach the splitter.
-      if (body.slice(at, at + 4).toLowerCase() === "url(" && !/[\w-]/.test(body[at - 1] ?? "")) {
-        const end = urlTokenEnd(body, at);
-        buffer += body.slice(at, end);
-        at = end;
+    if (IDENT_CHAR.test(char) || char === "\\") {
+      // Same url-token rule as the brace walk, in ANY escape spelling:
+      // `url(…)` ends only at `)`, and its body may carry `;` or an unbalanced
+      // paren (`url(a\\)b)`) that must not reach the splitter.
+      const url = urlTokenEnd(body, at);
+      if (url > 0) {
+        buffer += body.slice(at, url);
+        at = url;
         continue;
       }
     }
@@ -598,12 +784,106 @@ function splitDeclarations(body: string): string[] {
   return out;
 }
 
+/** Decode CSS escapes in a stretch of text (`\2d ` → `-`, `\72 ` → `r`). The
+ * tokenizer decodes them BEFORE it compares an identifier, so a reader that
+ * compares raw text misses `margin\2d block\2d start` and `initial\2d value` —
+ * both legal, both applied by Chrome, both invisible before this existed. */
+function decodeEscapes(text: string): string {
+  return identText(text, 0, text.length);
+}
+
+/** `{ name, value }` of one declaration, with the NAME decoded and lower-cased.
+ * The split is at the first `:` at depth 0 (strings, url tokens, parens and
+ * escapes are data), so a `:` inside a value cannot become the separator. */
+function splitDeclaration(
+  declaration: string,
+): { name: string; value: string } | undefined {
+  let depth = 0;
+  let at = 0;
+  while (at < declaration.length) {
+    const char = declaration[at]!;
+    if (char === "\\") {
+      at = escapeEnd(declaration, at);
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      at = stringEnd(declaration, at);
+      continue;
+    }
+    const url = IDENT_CHAR.test(char) ? urlTokenEnd(declaration, at) : -1;
+    if (url > 0) {
+      at = url;
+      continue;
+    }
+    if (char === "(") depth += 1;
+    else if (char === ")") depth = Math.max(0, depth - 1);
+    else if (char === ":" && depth === 0) {
+      return {
+        name: decodeEscapes(declaration.slice(0, at).trim()).toLowerCase(),
+        value: declaration.slice(at + 1).trim(),
+      };
+    }
+    at += 1;
+  }
+  return undefined;
+}
+
+/**
+ * Every `@import` target a compiled sheet still carries. Sass INLINES `@use`d
+ * partials, so an `@import` that survives compilation is either a plain CSS
+ * import — an external sheet every reader in this file is blind to — or a
+ * `data:` URL whose percent-decoded body is a whole stylesheet. Review used
+ * both: `@import url("data:text/css,span%7Bmargin-block-start%3A8px%7D")`
+ * applied the span rule (−8.000px on every row, guard 144/144 green), a plain
+ * `@import "./x.css"` did the same, and `…%2Ehk%2Dcheckbox%2Dbox%7Balign-self%
+ * 3Acenter%21important…%7D` defeated the literal token scan of the payload with
+ * percent-encoding. The walk therefore treats an import as "content it cannot
+ * see" and the test below fails CLOSED: the package ships no import at all, so
+ * a sheet that grows one is a red suite until the walker learns to follow it.
+ */
+function importTargets(css: string): string[] {
+  const out: string[] = [];
+  const bare = stripComments(css);
+  for (const head of [...bare.matchAll(/@import\b/gi)]) {
+    let at = head.index + head[0].length;
+    let depth = 0;
+    let target = "";
+    while (at < bare.length) {
+      const char = bare[at]!;
+      if (char === "\\") {
+        target += bare.slice(at, escapeEnd(bare, at));
+        at = escapeEnd(bare, at);
+        continue;
+      }
+      if (char === "\"" || char === "'") {
+        const end = stringEnd(bare, at);
+        target += bare.slice(at, end);
+        at = end;
+        continue;
+      }
+      const url = IDENT_CHAR.test(char) ? urlTokenEnd(bare, at) : -1;
+      if (url > 0) {
+        target += bare.slice(at, url);
+        at = url;
+        continue;
+      }
+      if (char === "(") depth += 1;
+      else if (char === ")") depth = Math.max(0, depth - 1);
+      else if (char === ";" && depth === 0) break;
+      target += char;
+      at += 1;
+    }
+    out.push(target.trim().slice(0, 160));
+  }
+  return out;
+}
+
 /** Declaration names of a rule body, in source order. */
 function declarationNames(body: string): string[] {
   const names: string[] = [];
   for (const declaration of splitDeclarations(body)) {
-    const name = declaration.match(/^([-\w]+)\s*:/);
-    if (name) names.push(name[1]!);
+    const part = splitDeclaration(declaration);
+    if (part) names.push(part.name);
   }
   return names;
 }
@@ -675,7 +955,7 @@ function foreignSheetPaths(): string[] {
   // into the Rust `HkLink` / `HkTypography` sheets, so neither the host bundle
   // graph nor the walk above ever sees them — `a { line-height: 2 }` added
   // there would be green here AND ship to the Rust host. Review enumerated all
-  // 181 `scss!` paths and found these are the only two no other reader
+  // 180 distinct `scss!` file arguments and found these are the only two no other reader
   // compiles. They emit class-led selectors only today (measured: zero rows in
   // the pinned table, 59 in the all-tags one — every one of them class-led or a
   // `@keyframes` step, none element-scoped), so reading them costs nothing.
@@ -987,10 +1267,10 @@ function safeOffsetValue(name: string, value: string): boolean {
 function movingDeclarations(body: string, scopedCustomProperties = false): string[] {
   const out: string[] = [];
   for (const declaration of splitDeclarations(body)) {
-    const match = declaration.replace(/\s+/g, " ").match(/^([-\w]+)\s*:\s*(.*)$/);
-    if (!match) continue;
-    const name = match[1]!;
-    const value = match[2]!.trim();
+    const part = splitDeclaration(declaration);
+    if (!part) continue;
+    const name = part.name;
+    const value = part.value.replace(/\s+/g, " ");
     if (value === "") {
       // `--text-base: ;` is legal CSS and Chrome keeps the property with an
       // EMPTY value — which `var(--text-base, 0.875rem)` does NOT replace with
@@ -1052,10 +1332,27 @@ function scanText(css: string): string {
 function atPropertyMovers(label: string, css: string): string[] {
   const rows: string[] = [];
   const bare = stripComments(css);
-  for (const [whole, body = ""] of [...bare.matchAll(/@property\s+(--[-\w]+)\s*\{([^}]*)\}/gi)].map(
-    (m) => [m[0]!, m[2]!] as const,
-  )) {
-    const name = /@property\s+(--[-\w]+)/i.exec(whole)?.[1] ?? "--";
+  for (const head of [...bare.matchAll(/@property\b/gi)]) {
+    // The name is read with the identifier scanner and DECODED: `@property
+    // --text\2d base { … }` registers `--text-base` in Chrome, and a `[--\w]+`
+    // regex would not even find the block. The body is taken by brace-matching,
+    // not `([^}]*)`: a `}` inside a string or an unquoted url token is DATA for
+    // the browser, and truncating there let the reader judge a safe prefix while
+    // Chrome kept the LAST `initial-value` of the real body (measured +24.703px,
+    // guard green).
+    let at = head.index + head[0].length;
+    while (at < bare.length && /\s/.test(bare[at]!)) at += 1;
+    const nameEnd = identEnd(bare, at);
+    const name = identText(bare, at, nameEnd).toLowerCase();
+    let open = nameEnd;
+    while (open < bare.length && /\s/.test(bare[open]!)) open += 1;
+    if (nameEnd === at || bare[open] !== "{") continue;
+    const close = blockEnd(bare, open);
+    const body = bare.slice(open + 1, close);
+    if (close >= bare.length) {
+      rows.push(`${label} :: @property | ${name} | initial-value: <unterminated>`);
+      continue;
+    }
     // The browser applies the LAST descriptor of a property, exactly like it
     // applies the last declaration — so a registration that repeats
     // `initial-value` must be judged by the value Chrome keeps. Reading the
@@ -1065,10 +1362,14 @@ function atPropertyMovers(label: string, css: string): string[] {
     // value is judged (the reverse order is safe in the browser, so it must be
     // silent here too), and an empty value counts as absent: an `@property` that
     // declares it is invalid as a whole and registers nothing.
-    const last = [...body.matchAll(/initial-value\s*:\s*([^;]*)/gi)].at(-1)?.[1]?.trim();
-    const value = last === "" ? undefined : last;
-    if (OFFSET_TOKENS.test(name) && value !== undefined && safeOffsetValue(name, value)) continue;
-    rows.push(`${label} :: @property | ${name} | initial-value: ${value ?? "<absent>"}`);
+    const last = splitDeclarations(body)
+      .map((declaration) => splitDeclaration(declaration))
+      .filter((part): part is { name: string; value: string } => part?.name === "initial-value")
+      .at(-1);
+    const value = last?.value.trim();
+    const initial = value === "" ? undefined : value;
+    if (OFFSET_TOKENS.test(name) && initial !== undefined && safeOffsetValue(name, initial)) continue;
+    rows.push(`${label} :: @property | ${name} | initial-value: ${initial ?? "<absent>"}`);
   }
   return rows;
 }
@@ -1079,7 +1380,28 @@ function elementOnlyMovers(label: string, all: Rule[]): string[] {
     if (/hk-(?:checkbox|radio|switch|label)(?!\w)/.test(rule.selector)) continue;
     for (const one of splitTopLevel(rule.selector, ",")) {
       const subject = subjectSelector(one);
-      if (!couldMatchAPart(subject, one)) continue;
+      if (!couldMatchAPart(subject, one)) {
+        // "Not reachable as a PART" is not "cannot move the part": a custom
+        // property is INHERITED, so an ancestor of the control hands it down
+        // whichever element the rule names. `div { --text-base: 50% }` and
+        // `.hk-row { --text-base: 50% }` in a foreign sheet moved the box
+        // +36.438px off the first line with the gate green, because the subject
+        // could neither BE a part nor CONTAIN one, so the rule never became a
+        // row at all (review: 8 payloads, `:not()`/nested/`@container` forms
+        // included). Only the block-axis size tokens are in play here — they are
+        // what the `calc()` and the `font-size` behind it read — and only an
+        // UNSAFE value is a row, which is the same rule the global subjects have
+        // used since the round-4 percent vector. `--space-*` is deliberately out:
+        // it feeds the row's INLINE gap, so no value of it can shift the box off
+        // the first line.
+        for (const declaration of splitDeclarations(rule.body)) {
+          const part = splitDeclaration(declaration);
+          if (!part || !OFFSET_TOKENS.test(part.name)) continue;
+          if (safeOffsetValue(part.name, part.value)) continue;
+          rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${part.name}: ${part.value}`);
+        }
+        continue;
+      }
       const moves = movingDeclarations(rule.body, !GLOBAL_SUBJECT.test(subject.replace(/\s+/g, "")));
       if (moves.length === 0) continue;
       rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${moves.join("; ")}`);
@@ -2747,6 +3069,34 @@ describe("readers hold against the payloads rounds six to eight used", () => {
     );
   });
 
+  it("no compiled sheet carries an @import the walker cannot follow", () => {
+    // Fail-closed on purpose: `@import` pulls in a stylesheet no reader here can
+    // see, and the browser applies it. Review smuggled `span { margin-block-start:
+    // 8px }` in both ways — a `data:` URL (`@import url("data:text/css,
+    // span%7B…%7D")`, −8.000px on every row) and a plain `@import "./x.css"` —
+    // with the guard 144/144 green. The package ships no import today, so the
+    // invariant is "no imports at all" rather than "imports are parsed".
+    const offenders = compiledForeignSheets().flatMap((sheet) => {
+      const targets = importTargets(sheet.css);
+      return targets.length === 0 ? [] : [`${sheet.rel} :: ${targets.join(" | ")}`];
+    });
+    expect(offenders, "sheets that import a stylesheet the walk cannot see").toEqual([]);
+  });
+
+  it("reads an @import target through its url token", () => {
+    // The `data:` spelling carries `;` and `{` inside the URL, and the walk that
+    // finds the terminating `;` has to treat them as data or the target is cut
+    // short — the assertion that follows is only useful if the reader sees the
+    // whole thing.
+    expect(importTargets('@import url("data:text/css,span%7Bmargin-block-start%3A8px%7D");')).toEqual(
+      ['url("data:text/css,span%7Bmargin-block-start%3A8px%7D")'],
+    );
+    expect(importTargets('@import "./x.css" screen;')).toEqual(['"./x.css" screen']);
+    expect(importTargets("a { color: red }")).toEqual([]);
+    // A `;` inside a string is not the end of the statement.
+    expect(importTargets('@import url("a;b.css");')).toEqual(['url("a;b.css")']);
+  });
+
   it("no sheet leaves the walker with text it could not consume", () => {
     // The structural half of the reader hardening: every payload above is one
     // spelling of the same failure mode — a walker that desyncs drops rules and
@@ -2860,5 +3210,110 @@ describe("readers hold against the payloads rounds six to eight used", () => {
     expect(movingDeclarations("border-color: red")).toEqual([]);
     expect(movingDeclarations("border-radius: 4px")).toEqual([]);
     expect(movingDeclarations("background: none")).toEqual([]);
+  });
+
+  it.each([
+    ["the escaped spelling", String.raw`u\72 l`],
+    ["the plain spelling", "url"],
+  ])("a %s url token is copied whole, comment opener and all", (_name, spelling) => {
+    // The CSS tokenizer decodes escapes BEFORE it compares the identifier, so
+    // `u\72 l(` IS the `url(` token. A reader that matches the literal text is
+    // blind to the escape spelling: review wrapped a `.hk-checkbox-box` rule
+    // between two such tokens — the first token's payload ending in the comment
+    // OPENER, the second's beginning with the CLOSER — and `stripComments`, the
+    // rule walker and the declaration splitter all ate the rule as a comment
+    // while Chrome applied it (measured +42.000px at a 105px control, and
+    // −8.000px for the `span` variant). Chasing the literal text is what the
+    // previous round did; the token is identified by its DECODED name now.
+    const opener = `${spelling}(https://e.invalid/a/*)`;
+    const closer = `${spelling}(https://e.invalid/b*/)`;
+    const css = `x { --v: ${opener} }\nspan { margin-block-start: 8px }\ny { --v: ${closer} }\n`;
+    expect(stripComments(css)).toContain("span { margin-block-start: 8px }");
+    const parsed = rules(css);
+    expect(parsed.map((rule) => rule.selector)).toEqual(["x", "span", "y"]);
+    expect(movingDeclarations(parsed[1]!.body)).toEqual(["margin-block-start: 8px"]);
+    expect(urlTokenEnd(`${opener}`, 0)).toBe(opener.length);
+  });
+
+  it("escaped identifiers decode to their name", () => {
+    // `identText` is what makes the url-token test above possible; it also keeps
+    // every other escape spelling honest (`\6b` is `k`).
+    expect(identText(String.raw`u\72 l`, 0, String.raw`u\72 l`.length)).toBe("url");
+    expect(identText(String.raw`\68 k-label`, 0, String.raw`\68 k-label`.length)).toBe("hk-label");
+    expect(identText("plain", 0, 5)).toBe("plain");
+  });
+
+  it("decodes escaped property names before comparing them", () => {
+    // Chrome decodes escapes in a property name before it looks the property up,
+    // so `margin\2d block\2d start` IS `margin-block-start`. Every reader here
+    // compared raw text, which made an escaped mover invisible: review could put
+    // `span { margin\2d block\2d start: 8px }` in a foreign sheet and the mover
+    // table stayed at its 56 expected rows while the label rendered 8px low.
+    expect(splitDeclaration(String.raw`margin\2d block\2d start: 8px`)?.name).toBe(
+      "margin-block-start",
+    );
+    expect(movingDeclarations(String.raw`margin\2d block\2d start: 8px`)).toEqual([
+      "margin-block-start: 8px",
+    ]);
+    expect(declarationNames(String.raw`margin\2d block\2d start: 8px; color: red`)).toEqual([
+      "margin-block-start",
+      "color",
+    ]);
+    expect(valueOf(String.raw`align\2d items: center`, "align-items")).toBe("center");
+    expect(lastDecl(String.raw`--text\2d base: 1rem; --text\2d base: 50%`, "--text-base")).toBe(
+      "50%",
+    );
+    // A `:` inside a value is not the separator (`a` may hold a `:`, and a url
+    // token a `;`), so the split stays at depth 0.
+    expect(splitDeclaration("background: url(https://e.invalid/a:b)")?.value).toBe(
+      "url(https://e.invalid/a:b)",
+    );
+  });
+
+  it("decodes an escaped @property name and an escaped initial-value", () => {
+    // Same class one level up: the registration's OWN name and descriptor are
+    // identifiers too. `@property --text\2d base { … initial\2d value: 50% }`
+    // registers `--text-base` with a percentage initial value in Chrome, and the
+    // `[--\w]+` regex found neither the block nor the descriptor.
+    expect(
+      atPropertyMovers(
+        "sheet",
+        String.raw`@property --text\2d base { syntax: "*"; inherits: false; initial-value: 50% }`,
+      ),
+    ).toHaveLength(1);
+    expect(
+      atPropertyMovers(
+        "sheet",
+        String.raw`@property --text-base { syntax: "*"; inherits: false; initial\2d value: 50% }`,
+      ),
+    ).toHaveLength(1);
+    // …and the safe value stays silent in either spelling, or the guard would
+    // redden every sheet that writes it the escaped way.
+    expect(
+      atPropertyMovers(
+        "sheet",
+        String.raw`@property --text\2d base { syntax: "*"; inherits: false; initial\2d value: 1rem }`,
+      ),
+    ).toEqual([]);
+  });
+
+  it("a `}` inside a string or url token does not end the block", () => {
+    // The browser ends an `@property` block at the matching `}`, not at the
+    // first `}` byte. Truncating there let the reader judge a safe prefix while
+    // Chrome kept the LAST `initial-value` of the real body — the percent
+    // vector at +24.703px, guard green.
+    const block =
+      '@property --text-base { syntax: "*"; inherits: false; initial-value: 1rem; zz: "}"; initial-value: 50% }';
+    expect(blockEnd(block, block.indexOf("{"))).toBe(block.length - 1);
+    const rows = atPropertyMovers("sheet", block);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toContain("initial-value: 50%");
+    // Same with an unquoted url token holding the brace, and with a nested block.
+    const viaUrl =
+      "@property --text-base { syntax: \"*\"; inherits: false; initial-value: 1rem; zz: url(}); initial-value: 50% }";
+    expect(atPropertyMovers("sheet", viaUrl)).toHaveLength(1);
+    expect(blockEnd("a{b{c}d}e", 1)).toBe(7);
+    // Fail-closed: an unterminated block is a row, not silence.
+    expect(atPropertyMovers("sheet", "@property --text-base { initial-value: 1rem;")).toHaveLength(1);
   });
 });

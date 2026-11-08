@@ -3964,6 +3964,13 @@ describe("every reader the guard added is pinned by a payload", () => {
     expect(urlTokenEnd("myurl(a)", 2)).toBe(-1);
     expect(urlTokenEnd("url(a;b)", 0)).toBe(8);
     expect(urlTokenEnd('url("a;b")', 0)).toBe(10);
+    // The ident is ASCII case-insensitive in CSS, like every other keyword.
+    expect(urlTokenEnd("URL(a;b)", 0)).toBe(8);
+    expect(urlTokenEnd("Url(a;b)", 0)).toBe(8);
+    // An escaped code point outside Unicode is U+FFFD, not a character: the
+    // clamp in `escapeChar` was the one line no payload reached.
+    expect(decodeEscapes(String.raw`a\0 b`)).toBe("a\uFFFDb");
+    expect(decodeEscapes(String.raw`a\110000 b`)).toBe("a\uFFFDb");
     // A quote inside an UNQUOTED url is a bad url, and CSS resumes at its `)`:
     // running to the closing quote instead swallowed the rest of the sheet.
     expect(urlTokenEnd('url(a"b) c { d: e }', 0)).toBe(8);

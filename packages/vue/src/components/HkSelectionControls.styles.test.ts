@@ -162,6 +162,28 @@ function subjectSelector(selector: string): string {
   return selector.slice(cut + 1).trim();
 }
 
+/**
+ * Drops the parenthesised ARGUMENTS that name other elements — `:has()`,
+ * `:not()` and the `:nth-*` family — and flattens the wrappers that name the
+ * SAME element (`:is()` / `:where()`), so a class inside `:is()` is still read.
+ * `withoutParens()` above is the blunter tool the geometry readers use; this
+ * one exists because the cross-sheet walk must not lose `:is(.hk-checkbox-box)`.
+ */
+function withoutForeignArgs(text: string): string {
+  const FOREIGN = /^:(?:has|not|nth-child|nth-last-child|nth-of-type|nth-last-of-type)$/i;
+  let out = text;
+  for (let guard = 0; guard < 16; guard += 1) {
+    const group = /\(([^()]*)\)/.exec(out);
+    if (!group) break;
+    const head = /:[a-z-]+$/i.exec(out.slice(0, group.index))?.[0] ?? "";
+    const tail = out.slice(group.index + group[0].length);
+    out = FOREIGN.test(head)
+      ? `${out.slice(0, group.index - head.length)} ${tail}`
+      : `${out.slice(0, group.index)} ${group[1]} ${tail}`;
+  }
+  return out;
+}
+
 /** Drops parenthesised groups (`:has(...)`, `:not(...)`), innermost first. */
 function withoutParens(text: string): string {
   let out = text;
@@ -365,6 +387,7 @@ function offsetTerms(body: string): {
 const checkbox = rules(compile(resolve(componentDir, "HkCheckbox.scss"), { style: "expanded" }).css);
 const radio = rules(compile(resolve(componentDir, "HkRadio.scss"), { style: "expanded" }).css);
 const sw = rules(compile(resolve(componentDir, "HkSwitch.scss"), { style: "expanded" }).css);
+const labelSheet = rules(compile(resolve(componentDir, "HkLabel.scss"), { style: "expanded" }).css);
 
 describe("selection controls inline alignment", () => {
   it.each([
@@ -429,11 +452,9 @@ describe("HkRadio interaction parity", () => {
 
 describe("label first-line anchoring", () => {
   // HkLabel owns BOTH numbers the offset rides on: the label line box
-  // (`line-height`) and the per-size font size. Compile that sheet here so
+  // (`line-height`) and the per-size font size. The sheet is compiled at module
+  // level with the other three so the cross-sheet walk below can see it too;
   // the pairing is checked against the real label, not a copy of its numbers.
-  const labelSheet = rules(
-    compile(resolve(componentDir, "HkLabel.scss"), { style: "expanded" }).css,
-  );
   // Looked up without asserting: a renamed `.hk-label` used to throw here and
   // abort the whole file ("Tests  no tests") instead of failing one test.
   const labelBase = labelSheet.find((r) => !r.media && r.selector === ".hk-label");
@@ -1079,6 +1100,34 @@ describe("label first-line anchoring", () => {
   });
 
   it.each([
+    ["HkCheckbox.scss", checkbox, ".hk-checkbox"],
+    ["HkRadio.scss", radio, ".hk-radio"],
+    ["HkSwitch.scss", sw, ".hk-switch"],
+    ["HkLabel.scss", labelSheet, ".hk-label"],
+  ])("%s only styles its own parts", (_name, all, own) => {
+    // Every reader above is per-sheet, but no consumer ever sees a sheet: the
+    // Rust host imports all four into ONE stylesheet (styles/index.scss:
+    // checkbox, radio, switch, label), so a later sheet wins at equal
+    // specificity whatever component it names. A `.hk-radio-box { width:
+    // 2.5rem; height: 2.5rem }` copied into HkRadio.scss therefore moved every
+    // checkbox box by 11px with all of the above green — the sheet that owns
+    // `.hk-checkbox-box` never sees the rule, and the sheet that carries it is
+    // never asked about checkbox parts. Those mirror sheets ("House parity
+    // (HkCheckbox)") are exactly where such a copy comes from, so walk each
+    // sheet's subjects: a rule may name only its own component's parts.
+    const foreign: string[] = [];
+    for (const rule of all) {
+      const subject = withoutForeignArgs(subjectSelector(rule.selector));
+      for (const token of subject.match(/\.hk-[a-z0-9-]+/g) ?? []) {
+        if (token !== own && !token.startsWith(`${own}-`)) {
+          foreign.push(`${rule.selector} -> ${token}`);
+        }
+      }
+    }
+    expect(foreign, "rules that name another component's part").toEqual([]);
+  });
+
+  it.each([
     ["checkbox", checkbox, PARTS.checkbox],
     ["radio", radio, PARTS.radio],
   ])("%s rules that move or lay out a part name the part they touch", (_name, all, parts) => {
@@ -1089,7 +1138,10 @@ describe("label first-line anchoring", () => {
     // naming a `.hk-` class: `.lucide-check { translate: 0 4px }` shifts the
     // tick exactly like an attribute-spelled subject would. Any rule that
     // declares motion or spacing must therefore name the part it moves.
-    // Layout is the other half of "move": the box sits where it sits because
+    // Size is the third: `width`/`height` on the box is what the offsets
+    // divide by, and it is the one property a reader reaches through
+    // `:is()`/`:where()` (parens stripped) without naming the part. Layout is
+    // the other half of "move": the box sits where it sits because
     // the row is a flex row with `center`/`flex-start`, so a rule that flips
     // `display`, `align-items` or `position` moves it just as surely as a
     // margin does. This is also the reader that sees a subject reaching the row
@@ -1099,7 +1151,7 @@ describe("label first-line anchoring", () => {
     // green.
     const moves = (body: string) =>
       declarationNames(body).some((name) =>
-        /^(?:margin|padding|inset|top|bottom|left|right|translate|transform|scale|rotate|align-self|order|display|align-items|justify-content|position|box-sizing)(?:-|$)/.test(
+        /^(?:margin|padding|inset|top|bottom|left|right|translate|transform|scale|rotate|align-self|order|display|align-items|justify-content|position|box-sizing|width|height|min-width|min-height|max-width|max-height|block-size|inline-size)(?:-|$)/.test(
           name,
         ),
       );

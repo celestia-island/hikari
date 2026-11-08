@@ -897,6 +897,22 @@
   letter-spacing: 0.02em;
 }
 
+/* Optical vertical centering for the letter fallback (2026-11-08 user
+   report: 头像首字母偏下) — same mechanism and guard as HkAvatar.scss:
+   flex centers the line box while the capital sits on the baseline
+   (≈0.065em low on CJK-metric fonts), and trim only reaches block
+   containers, so under @supports the span swaps flex for
+   block + align-content/text-align centering; unsupported engines keep
+   the flex anatomy unchanged. */
+@supports (text-box: trim-both cap alphabetic) {
+  .s-user-avatar {
+    display: block;
+    align-content: center;
+    text-align: center;
+    text-box: trim-both cap alphabetic;
+  }
+}
+
 .s-user-avatar-img {
   width: 100%;
   height: 100%;

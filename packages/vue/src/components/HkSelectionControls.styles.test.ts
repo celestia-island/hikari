@@ -196,6 +196,19 @@ function rootClasses(control: string): string[] {
   return [control, `${control}-sm`, `${control}-md`, `${control}-lg`];
 }
 
+/**
+ * Every class an HkLabel can carry: the bare block, its default size step and
+ * the two alternates. `HkLabel.tsx` renders `class={["hk-label",
+ * `hk-label-${props.size}`]}`, so `.hk-label-md` IS the label — and a reader
+ * that knows only the bare block files its rules under "somebody else's rule".
+ * `namesClass`'s `(?![\\w-])` boundary makes that a hard blind spot: a
+ * `.hk-label-md { line-height: 2 }` never matches `.hk-label` and every label
+ * assertion stays green while the text drops 3.5px against the box.
+ */
+function labelClasses(): string[] {
+  return [".hk-label", ".hk-label-sm", ".hk-label-md", ".hk-label-lg"];
+}
+
 /** Rules whose subject names ANY of `classes` — the root has four spellings. */
 function rulesNamingAny(all: Rule[], classes: string[], includeMedia = false): Rule[] {
   return all.filter(
@@ -240,6 +253,13 @@ function toPx(decl: string): number {
   expect(m, `length in "${decl}"`).not.toBeNull();
   const value = parseFloat(m![1]!);
   return m![2] === "px" ? value : value * 16;
+}
+
+/** Last declaration of `prop`, or undefined — the non-asserting reader for
+ * values the collection phase needs (an `expect` there aborts the whole file). */
+function lastDecl(body: string, prop: string): string | undefined {
+  const matches = [...body.matchAll(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, "g"))];
+  return matches.at(-1)?.[1]?.trim();
 }
 
 function valueOf(body: string, prop: string): string {
@@ -383,27 +403,41 @@ describe("label first-line anchoring", () => {
   // A bare number: `line-height: 1.5` is a multiplier of the label's font
   // size, which is what the offset's `1.5 * font-size` term assumes. A px
   // line-height would parse to the same float but mean a different line box.
-  const labelLineHeightDecl = valueOf(labelLineHeightRule, "line-height");
-  expect(
-    labelLineHeightDecl,
-    `HkLabel line-height "${labelLineHeightDecl}" must be a unitless multiplier`,
-  ).toMatch(/^[\d.]+$/);
+  // Read without asserting here: an `expect` at describe level aborts
+  // collection and reports as "no tests" instead of a failing test, which
+  // hides every other assertion in this file (the third closing round hit
+  // exactly that when a label mutant looked like a harness failure). The
+  // assertions live in the `it` below; this only derives the number the rest
+  // of the block needs.
+  const labelLineHeightDecl = lastDecl(labelLineHeightRule, "line-height") ?? "";
   const labelLineHeight = parseFloat(labelLineHeightDecl);
   const labelFont = (selector: string) => cssVar(find(labelSheet, selector).body, "font-size");
 
-  // The offset rides the label's FIRST line box, which starts at the label's
-  // border-box top: a block-direction margin, padding or border on `.hk-label`
-  // would sit between them and silently shift the text against the box (a
-  // `border-block-start: 1px solid transparent` moves the text 1px down with
-  // every assertion still green), and a translate/transform does the same
-  // from the other side.
-  const labelBox = find(labelSheet, ".hk-label").body;
-  expect(
-    labelBox,
-    "the offset assumes a margin/padding/border-free, untransformed .hk-label",
-  ).not.toMatch(
-    /(?:^|;)\s*(?:margin|padding|border|translate|transform)(?:-[a-z-]+)?\s*:/,
-  );
+  it("HkLabel keeps the plain inline box the offsets assume", () => {
+    expect(
+      valueOf(labelLineHeightRule, "line-height"),
+      `HkLabel line-height "${labelLineHeightDecl}" must be a unitless multiplier`,
+    ).toMatch(/^[\d.]+$/);
+    // The offset rides the label's FIRST line box, which starts at the label's
+    // border-box top: a block-direction margin, padding or border on the label
+    // would sit between them and silently shift the text against the box (a
+    // `border-block-start: 1px solid transparent` moves the text 1px down with
+    // every assertion still green), and a translate/transform does the same
+    // from the other side. A `::before` block adds height above the first line
+    // box. Every spelling of the label counts (see `labelClasses`).
+    for (const rule of rulesNamingAny(labelSheet, labelClasses(), true)) {
+      expect(
+        rule.body,
+        `the offset assumes a margin/padding/border-free, untransformed label (\`${rule.selector}\`)`,
+      ).not.toMatch(
+        /(?:^|;)\s*(?:margin|padding|border|translate|transform)(?:-[a-z-]+)?\s*:/,
+      );
+      expect(
+        declarationNames(rule.body).filter((n) => /^(?:content|display)$/.test(n)),
+        `\`${rule.selector}\` may not become a block box or take a pseudo-element`,
+      ).toEqual(rule.selector === ".hk-label" ? ["display"] : []);
+    }
+  });
 
   it.each([
     ["HkCheckbox", checkbox, ".hk-checkbox"],
@@ -646,7 +680,7 @@ describe("label first-line anchoring", () => {
   ])("%s labels carry no media-scoped rule at all", (_name, all) => {
     // Same hole on the other half of the pair: a media-scoped `.hk-label`
     // rule changes the line box the offset rides.
-    const mediaLabel = subjectRules(all, ".hk-label", true).filter((r) => r.media);
+    const mediaLabel = rulesNamingAny(all, labelClasses(), true).filter((r) => r.media);
     expect(mediaLabel.map((r) => `${r.media} | ${r.selector}`)).toEqual([]);
   });
 
@@ -746,6 +780,30 @@ describe("label first-line anchoring", () => {
   });
 
   it.each([
+    ["checkbox", checkbox, ".hk-checkbox", ".hk-checkbox-box"],
+    ["radio", radio, ".hk-radio", ".hk-radio-box"],
+  ])("%s keeps the two boxes the anatomy rides on", (_name, all, control, box) => {
+    // The whitelists above pin NAMES, so the two properties that decide
+    // whether the offset can work at all can still be swapped for a legal
+    // value: `display: inline-flex → inline` drops the flex row (−21.5px md,
+    // −25px lg — worse than the reported defect) and `position: relative →
+    // absolute` takes the box out of the flow, so the label starts where the
+    // box used to be. One line each, and only these two are read by value.
+    for (const selector of rootClasses(control)) {
+      const rule = all.find((r) => !r.media && r.selector === selector);
+      if (!rule) continue; // `-sm` / `-md` / `-lg` are only rules when a sheet declares them
+      expect(valueOf(rule.body, "display"), `\`${selector}\` display`).toBe("inline-flex");
+    }
+    expect(valueOf(find(all, control).body, "display"), `\`${control}\` display`).toBe(
+      "inline-flex",
+    );
+    const boxBody = find(all, box).body;
+    expect(valueOf(boxBody, "position"), `\`${box}\` position`).toBe("relative");
+    expect(valueOf(boxBody, "align-items"), `\`${box}\` align-items`).toBe("center");
+    expect(valueOf(boxBody, "justify-content"), `\`${box}\` justify-content`).toBe("center");
+  });
+
+  it.each([
     ["HkCheckbox", checkbox],
     ["HkRadio", radio],
     ["HkSwitch", sw],
@@ -829,8 +887,8 @@ describe("label first-line anchoring", () => {
     // row (the box lands 21.5px above its one-line place), `.hk-checkbox-md:has(
     // .hk-label:not(:empty)) { align-items: center }` puts the reported
     // misalignment back on every md row. Pin the set of root rules.
-    const present = rulesNamingAny(all, rootClasses(control))
-      .map((r) => r.selector)
+    const present = rulesNamingAny(all, rootClasses(control), true)
+      .map((r) => (r.media ? `${r.media} | ${r.selector}` : r.selector))
       .sort();
     expect(present, `rules whose subject names \`${control}\``).toEqual(expected.sort());
   });
@@ -993,7 +1051,7 @@ const PARTS = {
     // has to be visible here: a media copy, a per-size line-height, or a
     // label rule smuggled into a control sheet all shift the text against the
     // box by 0.6–3px with the coefficient assertions still green.
-    const labelRules = subjectRules(labelSheet, ".hk-label", true);
+    const labelRules = rulesNamingAny(labelSheet, labelClasses(), true);
     expect(
       labelRules.map((r) => `${r.media ?? "-"} | ${r.selector}`).sort(),
       "every HkLabel rule (media scopes included)",
@@ -1002,6 +1060,21 @@ const PARTS = {
       .filter((r) => declarationNames(r.body).includes("line-height"))
       .map((r) => r.selector);
     expect(withLineHeight, "line-height carriers").toEqual([".hk-label"]);
+    // Font size is the other half of the line box, so each step is read by
+    // value: a `font-size: 20px` on a size step moves the target the offset
+    // aims at without changing a single declaration name.
+    expect(labelFont(".hk-label"), "label md font size").toEqual({
+      token: "--text-base",
+      fallback: "0.875rem",
+    });
+    expect(labelFont(".hk-label.hk-label-sm"), "label sm font size").toEqual({
+      token: "--text-xs",
+      fallback: "0.75rem",
+    });
+    expect(labelFont(".hk-label.hk-label-lg"), "label lg font size").toEqual({
+      token: "--text-md",
+      fallback: "1rem",
+    });
     expect(declarationNames(find(labelSheet, ".hk-label").body).sort()).toEqual([
       "color",
       "display",
@@ -1036,9 +1109,7 @@ const PARTS = {
     // `namesClass`, like every other reader — `startsWith` would miss a
     // leading attribute compound such as `[dir=rtl].hk-label` (the class-led
     // pin above bans it first, but the reader should not depend on that).
-    const labelRules = all
-      .filter((r) => namesClass(subjectSelector(r.selector), ".hk-label"))
-      .map((r) => r.selector);
+    const labelRules = rulesNamingAny(all, labelClasses(), true).map((r) => r.selector);
     expect(labelRules, "label rules inside a control sheet").toEqual([]);
   });
 

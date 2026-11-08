@@ -730,7 +730,9 @@ function labelClasses(): string[] {
  * contain reachable. Parenthesised arguments are stripped first, so the gate's
  * `:has(.hk-label:not(:empty))` does not count as a mention.
  */
-function rulesMentioningAny(all: Rule[], classes: string[], includeMedia = false): Rule[] {
+// `includeMedia` is REQUIRED: every call site passes it explicitly, so a
+// default is a dead branch that reads like a silent "skip media copies".
+function rulesMentioningAny(all: Rule[], classes: string[], includeMedia: boolean): Rule[] {
   return all.filter((r) => {
     if (r.media && !includeMedia) return false;
     return classes.some((c) => namesClass(r.selector, c));
@@ -2763,10 +2765,10 @@ describe("label first-line anchoring", () => {
     //   `.s-about-modal-backdrop > *` (`height: 100%`), so a control placed
     //   DIRECTLY under either parent loses the first-line anchoring. The
     //   package renders none there (see the migration notes).
-    // * NINE descendant rows on phrasing content — `code`, `.hk-menu-item a`,
-    //   `.icon-grid small`, `.hk-diff-viewer__hunk-stats em`, … (two fewer
-    //   than before: `.hk-markdown a:focus-visible` carried only
-    //   `outline*`, which is in `PAINTS_ONLY` now) — plus the
+    // * NINE descendant rows, of which EIGHT are on phrasing content — `code`,
+    //   `.hk-menu-item a`, `.icon-grid small`, `.hk-diff-viewer__hunk-stats
+    //   em`, … (two fewer than before: `.hk-markdown a:focus-visible` carried
+    //   only `outline*`, which is in `PAINTS_ONLY` now) — and the ninth is the
     //   `label:where(:not([class^=hk-])…)` host reset. These are the rows that
     //   make `a { line-height: 2 }` impossible to ship silently: a label may
     //   hold a link, so a rule on a link moves the row.
@@ -2947,6 +2949,30 @@ describe("label first-line anchoring", () => {
     ["span { color: red }", "paint only"],
   ])("%s stays out of the table (%s)", (sheet) => {
     expect(elementOnlyMovers("pin", rules(sheet))).toEqual([]);
+  });
+
+  it("a custom element in the label is reachable, and the hyphen is why", () => {
+    // The reachability test has three halves — a bare `span`/`label`, any
+    // phrasing element, and a hyphenated tag (`x-foo`, which HTML treats as
+    // phrasing content until its own stylesheet says otherwise). Review deleted
+    // only the hyphen branch: the whole 210-test suite stayed GREEN while
+    // `my-widget { line-height: 2 }` — a payload a browser applies, and the same
+    // mechanism the phrasing rows rest on — dropped out of the table (1 row →
+    // 0). Pinned by exact rows, not by a length.
+    expect(elementOnlyMovers("pin", rules("my-widget { line-height: 2 }"))).toEqual([
+      "pin :: - | my-widget | line-height: 2",
+    ]);
+    expect(elementOnlyMovers("pin", rules("x-row { margin-block-start: 8px }"))).toEqual([
+      "pin :: - | x-row | margin-block-start: 8px",
+    ]);
+    // The negative control: a bare-`span` rule stays a row through the same
+    // reader, and the tag rule is not "anything with a dash in the selector".
+    expect(elementOnlyMovers("pin", rules("span { line-height: 2 }"))).toEqual([
+      "pin :: - | span | line-height: 2",
+    ]);
+    expect(elementOnlyMovers("pin", rules("my-widget > span { line-height: 2 }"))).toEqual([
+      "pin :: - | my-widget > span | line-height: 2",
+    ]);
   });
 
   it("a block-level child moves the label's first line, so it is a row", () => {
@@ -3559,7 +3585,6 @@ describe("readers hold against the payloads rounds six to eight used", () => {
     const css = `@property --text-base { syntax: "*"; inherits: false; initial-value: ${tail} }`;
     const moved = atPropertyMovers("sheet", css);
     expect(moved.length, moved.join(" | ")).toBe(rows);
-    expect(css.length).toBeGreaterThan(0);
   });
 
   it.each([
@@ -4121,6 +4146,10 @@ describe("every reader the guard added is pinned by a payload", () => {
     // clamp in `escapeChar` was the one line no payload reached.
     expect(decodeEscapes(String.raw`a\0 b`)).toBe("a\uFFFDb");
     expect(decodeEscapes(String.raw`a\110000 b`)).toBe("a\uFFFDb");
+    // The 6-digit cap is observable even past the clamp: a 7th hex digit is not
+    // part of the escape, so it stays LITERAL (`\123456` = U+123456 → U+FFFD,
+    // then `7`). A reader that took 7 or 8 digits would drop that `7`.
+    expect(decodeEscapes(String.raw`a\1234567 b`)).toBe("a\uFFFD7 b");
     // A quote inside an UNQUOTED url is a bad url, and CSS resumes at its `)`:
     // running to the closing quote instead swallowed the rest of the sheet.
     expect(urlTokenEnd('url(a"b) c { d: e }', 0)).toBe(8);

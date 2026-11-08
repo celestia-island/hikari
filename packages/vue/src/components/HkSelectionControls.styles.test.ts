@@ -277,6 +277,20 @@ function blockEnd(css: string, open: number): number {
   let index = open;
   while (index < css.length) {
     const char = css[index]!;
+    // The url token is tested BEFORE the escape branch: an escape-INITIAL
+    // spelling (`\75 rl(`) starts with a backslash, so an escape-first walker
+    // reads it as an ordinary ident, and the `(…}` inside it never opens a
+    // token. Review hid a whole `@property` registration behind
+    // `--z: \75 rl(}` plus `); initial-value: 50%`: the block end was found
+    // early, the LAST `initial-value` was dropped from every reader, and
+    // Chrome registered the percent vector (+24.703px) with the guard green.
+    if (IDENT_CHAR.test(char) || char === "\\") {
+      const url = urlTokenEnd(css, index);
+      if (url >= 0) {
+        index = url;
+        continue;
+      }
+    }
     if (char === "\\") {
       index = escapeEnd(css, index);
       continue;
@@ -284,13 +298,6 @@ function blockEnd(css: string, open: number): number {
     if (char === "\"" || char === "'") {
       index = stringEnd(css, index);
       continue;
-    }
-    if (IDENT_CHAR.test(char) || char === "\\") {
-      const url = urlTokenEnd(css, index);
-      if (url >= 0) {
-        index = url;
-        continue;
-      }
     }
     if (char === "{") {
       depth += 1;
@@ -411,6 +418,25 @@ function rules(css: string): Rule[] {
   while (at < bare.length) {
     const char = bare[at]!;
     at += 1;
+    if (IDENT_CHAR.test(char) || char === "\\") {
+      // An unquoted `url(` token may hold `}` and `;` — it ends only at `)` —
+      // so the block delimiters must not be read inside it. Review put
+      // `span:last-child { background-image: url(}); align-self: center
+      // !important }` in a foreign sheet: the `}` closed the rule early, the
+      // `align-self` became a top-level prelude and both were dropped, 120
+      // green while the label pin was gone (−42.000px at a 105px control).
+      // This test runs BEFORE the escape branch for the same reason it does in
+      // `stripComments` and `splitDeclarations`: an escape-INITIAL spelling of
+      // `url(` (`\75 rl(`) starts with a backslash, and an escape-first walker
+      // reads it as an ident — review put `--z: \75 rl(}` in an `@property`
+      // block and the `initial-value` after it vanished from every reader.
+      const end = urlTokenEnd(bare, at - 1);
+      if (end > 0) {
+        buffer += bare.slice(at - 1, end);
+        at = end;
+        continue;
+      }
+    }
     if (char === "\\") {
       // Escaped code point: `\{` / `\}` / `\;` are DATA inside a selector or a
       // declaration value (`.zz\{ { … }` is one class), and `.zz-a { --x: \/*; }`
@@ -421,20 +447,6 @@ function rules(css: string): Rule[] {
       buffer += bare.slice(at - 1, end);
       at = end;
       continue;
-    }
-    if (IDENT_CHAR.test(char) || char === "u" || char === "U") {
-      // An unquoted `url(` token may hold `}` and `;` — it ends only at `)` —
-      // so the block delimiters must not be read inside it. Review put
-      // `span:last-child { background-image: url(}); align-self: center
-      // !important }` in a foreign sheet: the `}` closed the rule early, the
-      // `align-self` became a top-level prelude and both were dropped, 120
-      // green while the label pin was gone (−42.000px at a 105px control).
-      const end = urlTokenEnd(bare, at - 1);
-      if (end > 0) {
-        buffer += bare.slice(at - 1, end);
-        at = end;
-        continue;
-      }
     }
     if (char === "\"" || char === "'") {
       // Strings are DATA, not structure: a brace or a semicolon inside one is
@@ -2774,8 +2786,10 @@ describe("label first-line anchoring", () => {
     // what the `@property` reader and the string-aware stripping above are
     // for: the two shapes that used to be invisible entirely):
     //
-    // * NINE universals — `*`, `*::before`, `*::after` in the reset, the theme
-    //   entry and the host entry, plus the three `:where(…)` spellings. They
+    // * NINE universals — `*`, `*::before`, `*::after` as the RESET's own rows,
+    //   the same three re-declared by the theme entry and by the host bundle
+    //   (those re-declarations land in the same three buckets), and the three
+    //   `:where(…)` spellings. They
     //   reach the box directly; harmless AT THESE VALUES because they carry
     //   only `box-sizing` / `border-style` / `border-width` / `margin: 0` /
     //   `padding: 0` and the gated offset is (0,4,0) and compiles after them.
@@ -3006,13 +3020,36 @@ describe("label first-line anchoring", () => {
     ]);
   });
 
+  it("an escape-spelled url( opens a token in every walker, not just two", () => {
+    // The first fix for the escape-initial spelling reordered only
+    // `stripComments` and `splitDeclarations`; `blockEnd` and the `rules()`
+    // brace walk still tested the escape first, so review hid a whole
+    // registration behind one: `--z: \75 rl(}` inside `@property --text-base`
+    // plus `); initial-value: 50% }` made `blockEnd` find the `}` early, the
+    // LAST `initial-value` disappeared from every reader, and Chrome registered
+    // the percent vector (+24.703px) with 212/212 green. All FOUR walkers now
+    // test the url token first, and this payload fails if any of them regresses.
+    const payload = String.raw`@property --text-base { syntax: "*"; inherits: false; initial-value: 1rem; --z: \75 rl(} .y { ); initial-value: 50% } .z { color: red }`;
+    expect(atPropertyMovers("pin", payload)).toEqual([
+      "pin :: @property | --text-base | initial-value: 50%",
+    ]);
+    // The same payload through the brace walk alone: the `}` inside the url body
+    // must not close the rule, so the declaration after it is still read.
+    const walked = rules(String.raw`.a { background-image: \75 rl(}); color: red }`);
+    expect(walked.map((rule) => rule.selector)).toEqual([".a"]);
+    expect(movingDeclarations(walked[0]!.body)).toEqual([]);
+    expect(declarationNames(walked[0]!.body)).toEqual(["background-image", "color"]);
+  });
+
   it("an escape-spelled url( still opens a token, so the mover behind it is a row", () => {
     // `url(` has an escape spelling for every letter, and the walkers recognise
-    // it by DECODED name (`urlTokenEnd`). Both of them tested the url token
+    // it by DECODED name (`urlTokenEnd`). All FOUR of them tested the url token
     // AFTER the escape branch, which consumed the leading backslash first — so
     // an escape-INITIAL spelling (`\75 rl(` = "url(") was read as an ordinary
     // ident, the `(` counted toward the paren depth, and the declaration after
-    // it vanished. Review put
+    // it vanished. (The first fix reordered only `stripComments` and
+    // `splitDeclarations`; review then hid a whole `@property` registration in
+    // `blockEnd`/`rules()` — see the four-walker pin below.) Review put
     // `span:last-child { background-image: unquote("\75 rl(a(b)"); margin-block-start: 8px }`
     // in a shipped sheet: 211/211 green while Chrome applied the mover and put
     // the label 8.000px low. Three spellings, three exact rows — a loop over

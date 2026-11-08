@@ -130,13 +130,15 @@
  *
  * An element that brings its OWN typography is the two-channel case, and a
  * heading is the one to remember: `<h1>` carries UA `font-size: 2em`, so its
- * line is 42px — the height channel alone reads 10.500 — AND it carries an
- * 18.76px block-start margin, which pushes that taller line down; measured
- * together the label reads 29.250px low. A heading in a label is a typography
+ * line is 42px — the height channel alone reads 10.500 — AND it carries a
+ * `0.67em` block-start margin (18.76px requested, 18.75 used after the
+ * LayoutUnit snap), which pushes that taller line down; measured together the
+ * label reads 10.500 + 18.750 = 29.250px low. A heading in a label is a typography
  * decision before it is an anchoring one.
  *
  * The third channel is the label's own box. Both parts are pinned to the row's
- * flex line, so the label's border-box top starts exactly where the box's does —
+ * flex line, so the label's border-box top starts exactly where the box's MARGIN
+ * box does (the box's own border box is `offset` lower) —
  * and anything the label adds ABOVE its text (`padding-block-start`, a
  * block-start `border`) pushes the text down inside that border box while the
  * box stays at the line start. `padding-block-start: 8px` on `.hk-label` is
@@ -147,13 +149,20 @@
  * hazard, not a live offset.
  *
  * One shape the anchoring does not promise: a size modifier on an ANCESTOR
- * wrapper instead of on the control. The SIZES are ancestor-scoped (`.hk-checkbox-sm &`
- * compiles to `.hk-checkbox-sm .hk-checkbox-box`), the offsets are not — each
- * one hangs off the same element whose `:has()` gate it needs — so a wrapper and
- * the control inside it can disagree about which size step is in force, and the
- * sheet has no rule that reconciles them. Both renderers put the modifier on the
- * control itself; that is the only spelling the sheet promises, and the only one
- * the geometry was measured on.
+ * wrapper instead of on the control. The box sizes are ancestor-scoped
+ * (`.hk-checkbox-sm &` compiles to `.hk-checkbox-sm .hk-checkbox-box`) and so
+ * are the offsets (`…:has(.hk-label:not(:empty)) .hk-checkbox-box` matches a
+ * wrapper too), but the LABEL's typography follows the control — HkLabel's
+ * `size` prop — so a wrapper makes the box and the line disagree instead of
+ * stepping both: `.hk-checkbox-lg` around a default control is a 22px box with
+ * the lg 1px offset on the md 21px line (+1.500px), the sm wrapper is a 14px box
+ * with the sm 2px offset on that same 21px line (−1.500px), and an lg wrapper
+ * around an sm control puts a 22px box 1px onto an 18px line (+3.000px). The
+ * radio adds a second asymmetry: its sizes key on `[data-size=…]` on ANY
+ * ancestor while its offsets need the attribute on `.hk-radio` itself, so an
+ * ancestor `data-size="lg"` gives a 22px box with the md 1.5px offset. Both
+ * renderers put the modifier on the control itself; that is the only spelling
+ * the sheet promises, and the only one the geometry was measured on.
  *
  * Nothing in this sheet can neutralise any of the three channels, because the
  * offset lands the box on the line and the line itself moved; the fix is to

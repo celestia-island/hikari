@@ -1,0 +1,101 @@
+@use "../styles/polyfill" as *;
+
+/* ── Scroll-progress dock (HkScrollProgressDock) ──────────────────
+   The localized range sentence floating near the bottom-center of a
+   scrolling list ("Rows 11 → 20 of 340" with the arrow glyph between
+   the two halves): the visible row band over the total. The pill
+   TELEPORTS to the container HOST (position: relative), never the
+   viewport — viewport-absolute chrome scrolls away with the content,
+   the same reason the autotag band and the selection-hint gradients
+   paint on the root. Standalone (no host to teleport to) renders the
+   pill in place inside the scope, which the consumer must position.
+
+   Visual vocabulary is the autotag band's (the container's other
+   bottom chrome): muted mono digits on the mixed surface pill, same
+   z-index tier (6). The bottom inset is safe-area aware the way
+   HkFab's corners are. The WORDING is localized through the i18n
+   context (hikari::scrollProgress.rangeHead / .rangeTail / .single;
+   the rangeHead/rangeTail split, user direction 2026-11-09, lets the
+   arrow GLYPH carry the separator so no locale needs a punctuation
+   bridge between the halves — ja keeps "件中 … 件目", ko keeps its
+   tail bare). Word order stays per-locale: ja's total names the HEAD
+   ("500 件中 11"), the tail carries only the row index. */
+
+/* The wrapper slot: a real element the Teleport anchor and any debug
+   ref can point at, with zero layout footprint. */
+.hk-scroll-progress-dock-scope {
+  display: contents;
+}
+
+.hk-scroll-progress-dock {
+  position: absolute;
+  left: 50%;
+  bottom: max(var(--space-10), env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 6;
+  pointer-events: none;
+  @include user-select(none);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+  /* One step up from the old 2xs (user direction 2026-11-09: the
+   * sentence was too small to read at a glance) — still a small dock,
+   * deliberately NOT text-sm. Padding grows with the ink. */
+  padding: var(--space-4) var(--space-10);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--hi-color-muted, #6c6c6c);
+  background: color-mix(in srgb, var(--hi-color-surface, rgba(255, 255, 255, 0.95)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100, 100, 100, 0.08)) 12%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  @include backdrop-filter(blur(4px));
+
+  /* Resting = transparent; only an in-flight scroll lights it. The
+   * ~200ms ease is the show AND hide fade (data-state flips on the
+   * dock's throttled sensing pass). */
+  opacity: 0;
+  transition: opacity 200ms ease;
+
+  &[data-state="active"] {
+    opacity: 0.85;
+  }
+
+  /* A failed precondition (no registered list, no vertical overflow,
+   * a list whose rows are empty) removes the box outright — the pill
+   * must never linger as dead chrome. */
+  &[data-state="hidden"] {
+    display: none;
+  }
+}
+
+/* Letter-spacing is INK tracking: it belongs on the text halves only,
+ * never on the arrow glyph between them. */
+.hk-scroll-progress-dock-text {
+  letter-spacing: 0.04em;
+}
+
+/* The arrow rides the text size (≈1em of the pill's xs), muted like
+ * the ink, and never shrinks below its box in the flex row. */
+.hk-scroll-progress-dock-arrow {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  color: var(--hi-color-muted, #6c6c6c);
+}
+
+/* RTL mirrors the arrow: the tsx always renders a right-pointing glyph,
+ * which reads backwards on the flipped axis (the breadcrumb separator
+ * precedent — scaleX mirrors paint only; the box is symmetric around
+ * its center). */
+[dir="rtl"] .hk-scroll-progress-dock-arrow {
+  transform: scaleX(-1);
+}
+
+/* Reduced motion: no fade at all — the state flips instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-scroll-progress-dock {
+    transition: none;
+  }
+}

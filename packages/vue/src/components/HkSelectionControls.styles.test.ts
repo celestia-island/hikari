@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { compile } from "sass";
@@ -1081,7 +1081,11 @@ function compiledForeignSheets(): CompiledSheet[] {
   if (!foreignSheetCache) {
     const ROOT = resolve(componentDir, "..");
     foreignSheetCache = foreignSheetPaths().map((file) => {
-      const rel = file.slice(ROOT.length + 1);
+      // `relative`, not `slice`: the two `packages/components` sheets live
+      // OUTSIDE this package, and slicing `root` off their path produced
+      // `ts/src/styles/components/link.scss` — a file that does not exist, in
+      // the one line a failing row would print (review: diagnostic only).
+      const rel = relative(ROOT, file);
       try {
         return {
           rel,
@@ -1166,9 +1170,9 @@ const PAINTS_ONLY =
 
 /** The TEXT-LEVEL phrasing content a `<label>` may hold, plus custom elements
  * (`x-foo`, the hyphen is the tell). A rule on one of these can restyle the
- * text inside the label, so it is reachable; a rule on a block element cannot —
- * `<label>` accepts phrasing content only and a block inside it is invalid
- * markup. Review measured what the narrow `span|label` set cost:
+ * text inside the label, so it is reachable. A block element is reachable too,
+ * through `LABEL_BLOCK_CONTENT` below: invalid markup renders, its CSS applies,
+ * and a block child moves the first line off the label's top. Review measured what the narrow `span|label` set cost:
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
@@ -1198,17 +1202,58 @@ const PHRASING_CONTENT = new Set([
   "strong", "sub", "sup", "time", "u", "var", "wbr",
 ]);
 
+/** BLOCK-level elements the default slot can hold. `<label>`'s content model
+ * says phrasing content only, but invalid markup still RENDERS and its CSS
+ * still applies — and a block child breaks the one assumption the offset
+ * rests on: that the label's border-box top IS its first line's top. Review
+ * put `p { margin-block-start: 8px }` in a host sheet: the label's first line
+ * started 8px below the border-box top while the box stayed pinned to that
+ * top, so the box sat 8.000px ABOVE the first line and the gate was GREEN.
+ * `div { margin-block-start: 8px }` measured the same, `div { line-height: 2 }`
+ * moved the line box 21→28px and `p { font-size: 2rem }` 21→48px. `:where(p)`
+ * and `:is(p)` spellings WERE rows, so the hole is the subject set, not the
+ * anchoring rule. The earlier comment here claimed a block element "cannot"
+ * reach the label; that was a claim about markup validity, not about pixels,
+ * and it is the only such claim the review could still falsify. */
+const LABEL_BLOCK_CONTENT = new Set([
+  "address", "article", "aside", "blockquote", "dd", "details", "div", "dl", "dt", "fieldset",
+  "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr",
+  "li", "main", "ol", "p", "pre", "section", "summary", "table", "tbody", "td", "tfoot", "th",
+  "thead", "tr", "ul",
+]);
+
 /** Replaced elements a label may hold. Reachable only through an UNSCOPED rule
  * (`svg { display: block }` in the reset): a descendant rule needs an ancestor
  * a label never has, and the icon family (`.hk-icon svg`, `.hk-menu-item-icon
- * svg`, …) would otherwise add 206 host-internal rows to the causal table (135
- * of them carrying a replaced-element subject).
+ * svg`, …) would otherwise add 206 rows to the causal table — every one of
+ * them carrying a replaced-element subject, 136 from the host bundle and 70
+ * from the component sheets (measured by lifting only the unscoped half).
  * Review put `svg { height: 40px }` in a foreign sheet — and `height: 40px` on
  * the already-shipped reset — and the icon ink moved 32px with the gate green,
  * so the unscoped shape has to be a row. */
 const REPLACED_CONTENT = new Set([
   "img", "svg", "canvas", "input", "video", "iframe", "embed", "object", "audio", "picture",
 ]);
+
+/** The tag a subject compound names, lowercased and namespace-free — the same
+ * normalisation `couldMatchAPart` uses. "" when the compound is class/id-led. */
+function subjectTag(compound: string): string {
+  return withoutParens(compound.replace(/\[[^\]]*\]/g, ""))
+    .replace(/::?[-\w]+/g, "")
+    .replace(/\*/g, "")
+    .replace(/\s+/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/^.*\|/, "");
+}
+
+/** Declarations on a block-level CHILD that move the label's first line off the
+ * label's top: block-start space, the font metrics behind the line box, and a
+ * box-type change (`display: block` on the child's own first box). Custom
+ * properties are NOT here on purpose — inheritance runs down, so a token set on
+ * a div inside the label cannot reach the label's own `font-size`. */
+const FIRST_LINE_MOVERS =
+  /^(?:margin(?:-(?:block|block-start|top))?|padding(?:-(?:block|block-start|top))?|border(?:-(?:block|block-start|top|block-width|block-start-width|top-width))?|font-size|font|line-height|line-height-step|display)$/;
 
 /** Attributes a selection part actually carries: `data-checked` on the box,
  * `data-size` on the root, … An attribute nothing carries cannot reach a part,
@@ -1527,6 +1572,29 @@ function elementOnlyMovers(label: string, all: Rule[]): string[] {
     for (const one of splitTopLevel(rule.selector, ",")) {
       const subject = subjectSelector(one);
       if (!couldMatchAPart(subject, one)) {
+        // A block-level child is not a PART, but it sits INSIDE the label, and a
+        // block-start margin / padding / border on it (or a font metric, or a
+        // box-type change) pushes the label's FIRST LINE down while the box
+        // stays pinned to the label's border-box top. Review put
+        // `p { margin-block-start: 8px }` in a host sheet: first line 8px below
+        // the label's top, box 8px above it, and the gate was GREEN —
+        // `:where(p)` / `:is(p)` measured the same and WERE rows, so the hole
+        // was the subject set, not the anchoring rule. `div { line-height: 2 }`
+        // took the line box 21→28px, `p { font-size: 2rem }` 21→48px,
+        // `p { padding-block-start: 8px }` 21→29px. UNSCOPED only, like the
+        // replaced elements (`.hk-markdown p` needs an ancestor a label never
+        // has), and only `FIRST_LINE_MOVERS` (`div { --text-base: 0.875rem }`
+        // cannot reach the label: inheritance runs down, not up).
+        if (LABEL_BLOCK_CONTENT.has(subjectTag(subject)) && !/[ >+~]/.test(one.trim())) {
+          const blockMoves = splitDeclarations(rule.body)
+            .map((declaration) => splitDeclaration(declaration))
+            .filter((part): part is NonNullable<typeof part> => part !== null)
+            .filter((part) => FIRST_LINE_MOVERS.test(part.name))
+            .map((part) => `${part.name}: ${part.value}`);
+          if (blockMoves.length > 0) {
+            rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${blockMoves.join("; ")}`);
+          }
+        }
         // "Not reachable as a PART" is not "cannot move the part": a custom
         // property is INHERITED, so an ancestor of the control hands it down
         // whichever element the rule names. `div { --text-base: 50% }` and
@@ -2523,7 +2591,7 @@ describe("label first-line anchoring", () => {
     for (const file of sheets) {
       const source = scanText(readFileSync(file, "utf8")).replace(/(^|[^:])\/\/.*$/gm, "$1");
       for (const hit of source.match(SELECTION) ?? []) {
-        mentions.push(`${file.slice(ROOT.length + 1)} -> ${hit}`);
+        mentions.push(`${relative(ROOT, file)} -> ${hit}`);
       }
     }
     expect(mentions, "sheets outside the selection controls naming one").toEqual([]);
@@ -2670,7 +2738,7 @@ describe("label first-line anchoring", () => {
     // (measured: the label 8px low with this table byte-identical), and the
     // same went for `:where(*) { padding: 0 }` → `4px`.
     //
-    // The 54 rows fall into five shapes, and the count of each is part of the
+    // The 73 rows fall into six shapes, and the count of each is part of the
     // claim, so a new shape cannot slip in unnoticed — though a new RULE of a
     // shape already here still shows up only as a row-count change (that is
     // what the `@property` reader and the string-aware stripping above are
@@ -2706,9 +2774,17 @@ describe("label first-line anchoring", () => {
     //   is exactly what the host ships: `svg { display: block; max-width:
     //   100% }` already shifts an icon inside a label by 7.5px today. Only the
     //   UNSCOPED shape is a row (`REPLACED_CONTENT` requires a selector with no
-    //   combinator): the `.hk-icon svg { height: 100% }` family is 206 rows
-    //   (135 of them with a replaced-element subject) of host-internal styling
-    //   no label can match.
+    //   combinator): the `.hk-icon svg { height: 100% }` family is 206 rows of
+    //   styling no label can match — every one of them carries a replaced-
+    //   element subject, 136 of them come from the host bundle and the other 70
+    //   from the component sheets (measured by lifting only the unscoped half
+    //   of `REPLACED_CONTENT`: the pinned 54 → 260, i.e. +206).
+    // * NINETEEN unscoped block-child rows — `h1`–`h6`, `hr`, `pre`, `td`,
+    //   `th` in the reset plus `demo.scss`'s `h1`/`h2`: a block-level child of
+    //   the label pushes the label's FIRST LINE off its top while the box stays
+    //   pinned there (`p { margin-block-start: 8px }` measured −8.000px, see
+    //   `LABEL_BLOCK_CONTENT`). Only the UNSCOPED shape is a row, and only the
+    //   declarations in `FIRST_LINE_MOVERS`.
     //
     // Change any value and this table goes red, which is exactly what a row is
     // for. Over-reporting is deliberate: `html { font-size: 18px }` is a red
@@ -2728,7 +2804,7 @@ describe("label first-line anchoring", () => {
       "bundle :: - | .hk-glow-wrapper > * | position: relative",
       "bundle :: - | .hk-glow-wrapper-block > * | position: relative",
       "bundle :: - | .hk-layout > * | position: relative",
-         "bundle :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
+      "bundle :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
       "bundle :: - | .hk-menu-item a | align-items: center; display: flex; gap: 1rem; height: 100%; width: 100%",
       "bundle :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
       "bundle :: - | .hk-row > * | margin: 0 0.5rem",
@@ -2741,10 +2817,27 @@ describe("label first-line anchoring", () => {
       "bundle :: - | :where(*::before) | box-sizing: border-box; margin: 0; padding: 0",
       "bundle :: - | body | -moz-osx-font-smoothing: grayscale; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif; font-size: 1rem; line-height: 1.5",
       "bundle :: - | code | font-family: ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace; font-size: 0.9em; padding: 0.2em 0.4em",
+      "bundle :: - | h1 | font-size: 1.875rem",
+      "bundle :: - | h1 | line-height: 1.25",
+      "bundle :: - | h2 | font-size: 1.5rem",
+      "bundle :: - | h2 | line-height: 1.25",
+      "bundle :: - | h3 | font-size: 1.25rem",
+      "bundle :: - | h3 | line-height: 1.25",
+      "bundle :: - | h4 | font-size: 1.125rem",
+      "bundle :: - | h4 | line-height: 1.25",
+      "bundle :: - | h5 | font-size: 1rem",
+      "bundle :: - | h5 | line-height: 1.25",
+      "bundle :: - | h6 | font-size: 0.875rem",
+      "bundle :: - | h6 | line-height: 1.25",
+      "bundle :: - | hr | border: none; margin: 1.5rem 0",
       "bundle :: - | html | font-size: 16px",
       "bundle :: - | html::-webkit-scrollbar | display: none",
       "bundle :: - | img | display: block; height: auto; max-width: 100%",
       "bundle :: - | label:where(:not([class^=hk-]):not([class*=\" hk-\"])) | display: block; font-weight: 500; margin-bottom: 0.25rem",
+      "bundle :: - | pre | font-size: 0.875rem; padding: 1rem; border: 1px solid var(--hi-color-border)",
+      "bundle :: - | pre::-webkit-scrollbar | display: none",
+      "bundle :: - | td | padding: 0.5rem 1rem",
+      "bundle :: - | th | padding: 0.5rem 1rem",
       "components/HkAboutModal.scss :: - | .s-about-modal-backdrop > * | height: 100%; width: 100%",
       "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-markers > span | white-space: nowrap",
       "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-rail > span | white-space: nowrap",
@@ -2755,6 +2848,8 @@ describe("label first-line anchoring", () => {
       "components/HkScrollContainer.scss :: - | .hk-scroll-container[data-dock-tail=true] > .hk-scroll-container-viewport > * | flex-shrink: 0",
       "demo.scss :: - | .icon-grid small | font-size: 0.625rem",
       "demo.scss :: - | body | font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif); margin: 0; padding: 2rem",
+      "demo.scss :: - | h1 | font-size: 2rem",
+      "demo.scss :: - | h2 | font-size: 1.25rem; margin: 2rem 0 1rem",
       "styles/admin-tokens.scss :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
       "styles/index.scss :: - | * | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/index.scss :: - | *::after | border-style: solid; border-width: 0; box-sizing: border-box",
@@ -2844,10 +2939,48 @@ describe("label first-line anchoring", () => {
     // must stay silent, or the table would grow on harmless sheets.
     ["div { --text-base: 0.875rem }", "a SAFE length on an unreachable ancestor"],
     ["[data-nope] { margin-block-start: 8px }", "an attribute no part carries"],
-    ["div { margin-block-start: 8px }", "an unreachable block subject"],
+    // A block child now IS a row (it moves the label's first line off its
+    // top): `div { margin-block-start: 8px }` used to be pinned here as
+    // "unreachable", which is exactly the hole review falsified.
+    ["div { color: red }", "paint only on a block child"],
     ["span { color: red }", "paint only"],
   ])("%s stays out of the table (%s)", (sheet) => {
     expect(elementOnlyMovers("pin", rules(sheet))).toEqual([]);
+  });
+
+  it("a block-level child moves the label's first line, so it is a row", () => {
+    // The label's default slot takes any element, and invalid markup renders:
+    // a block child with a block-start margin (or a font metric, or a box-type
+    // change) pushes the FIRST LINE down while the box stays pinned to the
+    // label's border-box top. Review measured `p { margin-block-start: 8px }`
+    // at −8.000px with the gate GREEN, and pinned the opposite here as
+    // "unreachable block subject"; `:where(p)`/`:is(p)` were rows, so the hole
+    // was the subject set.
+    for (const sheet of [
+      "p { margin-block-start: 8px }",
+      "div { margin-block-start: 8px }",
+      "div { line-height: 2 }",
+      "p { font-size: 2rem }",
+      "p { padding-block-start: 8px }",
+      "h1 { line-height: 1.25 }",
+      "pre { padding: 1rem }",
+      "hr { margin: 1.5rem 0 }",
+      ":where(p) { margin-block-start: 8px }",
+    ]) {
+      expect(elementOnlyMovers("pin", rules(sheet)), sheet).toHaveLength(1);
+    }
+    // The three negatives: a SCOPED block rule needs an ancestor a label never
+    // has, a paint-only declaration moves nothing, and a custom property set on
+    // a child cannot reach the label (inheritance runs down, not up).
+    for (const sheet of [
+      ".article p { margin-block-start: 8px }",
+      ".hk-markdown p { margin-block-start: 8px }",
+      "p { color: red }",
+      "p { background: none }",
+      "p { --text-base: 0.875rem }",
+    ]) {
+      expect(elementOnlyMovers("pin", rules(sheet)), sheet).toEqual([]);
+    }
   });
 
   it("HkLabel pins the line box on its base rule and leaves the first line alone", () => {
@@ -3310,8 +3443,20 @@ describe("readers hold against the payloads rounds six to eight used", () => {
     // `packages/components/src/styles/index.scss` and the label dropped
     // 8.000px (`boxTopRel −6.500`) with the gate 203/203 green, pixel-identical
     // to writing the rule into the CSS by hand.
+    // The four sheets that OWN the fix are excluded from `foreignSheetPaths()`
+    // (their anatomy is pinned by its own readers), so the walk used to skip
+    // them: `@import url("data:text/css,span%7Bmargin-block-start%3A8px%7D");`
+    // after the `@use` of HkCheckbox.scss stayed GREEN 209/209 while Chrome
+    // measured boxTop 1.5 / labelTop 8 / rootH 29 — the same 8px drop the
+    // bundle payload below documents. Only two side gates kept it out of S0:
+    // the mirrored form trips the bundle walk and a Vue-only one trips
+    // `python3 scripts/sync-vue-mirror.py --check`.
     const surfaces: Array<{ rel: string; css: string }> = [
       ...compiledForeignSheets(),
+      ...["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"].map((name) => ({
+        rel: `packages/vue/src/components/${name}.scss (own sheet)`,
+        css: compile(resolve(componentDir, `${name}.scss`), { style: "expanded" }).css,
+      })),
       {
         rel: "packages/components/src/styles/index.scss (host bundle)",
         css: compiledHostBundleSource(),
@@ -3328,6 +3473,10 @@ describe("readers hold against the payloads rounds six to eight used", () => {
       surfaces.filter((sheet) => sheet.rel.includes("components/src/styles/index.scss")),
       "the host bundle must be in the @import walk",
     ).toHaveLength(1);
+    expect(
+      surfaces.filter((sheet) => sheet.rel.includes("(own sheet)")),
+      "the four sheets that own the fix must be in the @import walk",
+    ).toHaveLength(4);
   });
 
   it("reads an @import target through its url token", () => {

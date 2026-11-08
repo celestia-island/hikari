@@ -87,12 +87,14 @@ export const HkAdminTablePage = defineComponent({
      *  the table (or a body-slot roster) self-registers against it and
      *  the pill floats over the scrolling viewport; the crossfade's
      *  generation swaps happen INSIDE the dock, so the registration
-     *  survives every exchange. A page under a shell fallback dock
-     *  stands that fallback down automatically (the nested-dock rule);
-     *  set `false` to demote the page — lists then fall through to the
-     *  nearest enabled dock above, if any. Layering: the shell master
-     *  switch (HkFaceShell `scrollProgress`) > this prop > the dock's
-     *  own `disabled`. Like every dock gate, the layering is RESOLVED
+     *  survives every exchange. A page under a shell fallback dock has
+     *  its OWN dock stand down automatically (the nested-dock rule
+     *  serves the outermost enabled dock — the fallback keeps the
+     *  pill); set `false` to demote the page — lists then fall through
+     *  to the nearest enabled dock above, if any. Layering: the shell
+     *  master switch (HkFaceShell `scrollProgress`) > this prop > the
+     *  dock's own `disabled`. Like every dock gate, the layering is
+     *  RESOLVED
      *  ONCE at the dock's setup — hosts pass these statically, and a
      *  runtime flip needs a remount (the HkScrollContainer prop
      *  precedent). */

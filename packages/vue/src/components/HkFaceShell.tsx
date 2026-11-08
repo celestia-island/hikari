@@ -244,8 +244,9 @@ export const HkFaceShell = defineComponent({
      *  page-level `progressDock` > the dock's own `disabled`). While on
      *  (the default), the shell ALSO mounts its own fallback dock
      *  around the document content: unmigrated pages and bare lists
-     *  still float the pill with zero per-page work, and a standard
-     *  page's own dock stands the fallback down (the nested-dock rule —
+     *  still float the pill with zero per-page work; a standard page's
+     *  own dock nests INSIDE the fallback and is the side that stands
+     *  down (the nested-dock rule serves the outermost enabled dock —
      *  one pill, never two). Lists register themselves (HkTable /
      *  HkCardList / HkAdminTablePage do it built-in). Pass `false` to
      *  run the face bare. */
@@ -561,10 +562,12 @@ export const HkFaceShell = defineComponent({
                 {/* The shell's FALLBACK dock (2026-11-09): wraps the
                     padded content so unmigrated pages and bare lists
                     still float the pill. A page that mounts its own dock
-                    (HkAdminTablePage's, by default) stands this fallback
-                    down via the nested-dock rule — one pill, never two.
-                    The scope is display: contents — the padding wrapper
-                    below stays the viewport's only layout box. */}
+                    (HkAdminTablePage's, by default) nests INSIDE this
+                    one and is the side that stands down — the nested
+                    -dock rule serves the OUTERMOST enabled dock, so the
+                    fallback keeps sensing and one pill paints, never
+                    two. The scope is display: contents — the padding
+                    wrapper below stays the viewport's only layout box. */}
                 <HkScrollProgressDock>
                   {/* Padding lives INSIDE the scroll viewport (an inner
                       wrapper) so card box-shadows are not clipped at the

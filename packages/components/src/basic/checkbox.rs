@@ -386,9 +386,10 @@ mod tests {
             // The first-line anchoring lane: geometry that grass must keep
             // parsing (`:has()` gate + the calc offset). A silent drop would
             // otherwise leave every needle above intact. The gate needle
-            // carries the trailing ` {` because the sheet's COMMENT also
-            // spells the selector — a rule-only needle cannot be satisfied by
-            // prose, and `align-items: flex-start` pins the half that only the
+            // carries the trailing ` {` so only a RULE can satisfy it: this
+            // sheet's comment spells the gate's two halves and the radio
+            // sheet's spells the whole selector, and prose must never stand in
+            // for the rule. `align-items: flex-start` pins the half only the
             // gated rule declares (the root rule says `center`).
             ":has(.hk-label:not(:empty)) {",
             "align-items: flex-start",

@@ -87,19 +87,12 @@ function rules(css: string): Rule[] {
     if (!frame || frame.atRule || !body) {
       continue;
     }
-    // Keep control rules; the rtl mirrors lead with an attribute selector,
-    // and HkRadio's size steps nest as `[data-size=…] .hk-radio-box`. A rule
-    // that reaches a control PART leads with neither (an `[data-type=…]` or
-    // `[data-disabled]` prefix is legal and would otherwise be dropped from
-    // every selector-set assertion below), so anything naming a part stays.
-    const isControlRule =
-      frame.prelude.startsWith(".hk-") ||
-      frame.prelude.startsWith("[dir=") ||
-      frame.prelude.startsWith("[data-size=") ||
-      /\.hk-(?:checkbox|radio|switch)[\w-]*\b/.test(frame.prelude);
-    if (!isControlRule) {
-      continue;
-    }
+    // EVERY rule, not just the ones naming a control part: a label rule
+    // smuggled in as `[data-theme=dark] .hk-label { line-height: 2 }` — or a
+    // bare `*` — used to be dropped here, invisible to every guard below while
+    // the browser applied it (the text then sits 2–3px off the box). No sheet
+    // in this package emits a rule the assertions below cannot name, so an
+    // unclassifiable rule should fail loudly instead of vanishing.
     const media = stack.filter((f) => f.atRule).map((f) => f.prelude).join(" ");
     out.push(media ? { selector: frame.prelude, body, media } : { selector: frame.prelude, body });
   }
@@ -126,6 +119,24 @@ function rules(css: string): Rule[] {
  * 2026-11 closing round reproduced the whole reported bug with
  * `…:not([data-indeterminate]) { align-self: center }` and 44/44 green).
  */
+/** Split a selector list on `separator` at depth 0 (`:is(a, b)` stays whole). */
+function splitTopLevel(selector: string, separator: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < selector.length; i += 1) {
+    const char = selector[i]!;
+    if (char === "(" || char === "[") depth += 1;
+    else if (char === ")" || char === "]") depth -= 1;
+    else if (depth === 0 && char === separator) {
+      parts.push(selector.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(selector.slice(start));
+  return parts.map((part) => part.trim()).filter(Boolean);
+}
+
 function subjectSelector(selector: string): string {
   let depth = 0;
   let cut = -1;
@@ -189,9 +200,34 @@ function toPx(decl: string): number {
 }
 
 function valueOf(body: string, prop: string): string {
-  const m = body.match(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`));
-  expect(m, `declaration \`${prop}\``).not.toBeNull();
-  return m![1]!.trim();
+  // The browser applies the LAST declaration of a property; a reader that
+  // takes the first one stays green while the render takes the appended
+  // value (an extra `align-items: center` inside the gated rule put the box
+  // back on the block middle — +21.75px at three lines — with 55/55 green).
+  const matches = [...body.matchAll(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, "g"))];
+  expect(matches.length, `declaration \`${prop}\` (declared exactly once)`).toBe(1);
+  return matches[0]![1]!.trim();
+}
+
+/** Declaration names of a rule body, paren-aware (`a: f(x; y)` is one). */
+function declarationNames(body: string): string[] {
+  const names: string[] = [];
+  let depth = 0;
+  let buffer = "";
+  const flush = () => {
+    const declaration = buffer.trim();
+    buffer = "";
+    const name = declaration.match(/^([-\w]+)\s*:/);
+    if (name) names.push(name[1]!);
+  };
+  for (const char of body) {
+    if (char === "(") depth += 1;
+    else if (char === ")") depth -= 1;
+    if (char === ";" && depth === 0) flush();
+    else buffer += char;
+  }
+  flush();
+  return names;
 }
 
 /** `var(--token, fallback)` → its two halves; a literal value fails loudly. */
@@ -580,7 +616,7 @@ describe("label first-line anchoring", () => {
     // loses to the gate on `:has()` engines and therefore renders identically
     // — but it takes over exactly on the engines the `center` fallback exists
     // for, so it must not be there at all.
-    const carriers = subjectRules(all, control)
+    const carriers = subjectRules(all, control, true)
       .filter((r) => /(?:^|;)\s*align-items\s*:/.test(r.body))
       .map((r) => `${r.selector} → ${valueOf(r.body, "align-items")}`)
       .sort();
@@ -589,11 +625,198 @@ describe("label first-line anchoring", () => {
     );
   });
 
+  it.each([
+    ["checkbox", checkbox, ".hk-checkbox-box"],
+    ["radio", radio, ".hk-radio-box"],
+  ])("%s box declares box-sizing once, and on the box itself", (_name, all, box) => {
+    // A second carrier — an `[dir=rtl]` scope, a media copy, a state face —
+    // wins at runtime while the base rule (the one every assertion reads)
+    // still says border-box (a `[dir=rtl] .hk-checkbox-box
+    // { box-sizing: content-box }` lands the box +1px low in rtl only).
+    const carriers = subjectRules(all, box, true)
+      .filter((r) => declarationNames(r.body).includes("box-sizing"))
+      .map((r) => r.selector);
+    expect(carriers, `box-sizing carriers on \`${box}\``).toEqual([box]);
+  });
+
+  it.each([
+    [
+      "checkbox",
+      checkbox,
+      ".hk-checkbox-box",
+      [
+        "align-items",
+        "background",
+        "border",
+        "border-color",
+        "border-radius",
+        "box-shadow",
+        "box-sizing",
+        "display",
+        "flex-shrink",
+        "height",
+        "justify-content",
+        "margin-block-start",
+        "position",
+        "scale",
+        "transition",
+        "width",
+        "will-change",
+      ],
+    ],
+    [
+      "radio",
+      radio,
+      ".hk-radio-box",
+      [
+        "align-items",
+        "background",
+        "border",
+        "border-color",
+        "border-radius",
+        "box-shadow",
+        "box-sizing",
+        "display",
+        "flex-shrink",
+        "height",
+        "justify-content",
+        "margin-block-start",
+        "position",
+        "scale",
+        "transition",
+        "width",
+      ],
+    ],
+  ])("%s box may only declare the properties pinned here", (_name, all, box, allowed) => {
+    // A property WHITELIST, because a blacklist is always one spelling short:
+    // `margin-block` next to the calc, `block-size` instead of `width`,
+    // `min-height`, `top` beside a whitelisted `position`, or a
+    // `--text-base:` override on the box that retargets the calc itself —
+    // each of those moved the box and left every reader green. This covers
+    // state faces, media copies and rtl scopes too (`subjectRules(…, true)`).
+    const declared = new Set<string>();
+    for (const rule of subjectRules(all, box, true)) {
+      for (const name of declarationNames(rule.body)) declared.add(name);
+    }
+    expect([...declared].sort(), `properties declared on \`${box}\``).toEqual([...allowed].sort());
+  });
+
+  it.each([
+    ["HkCheckbox", checkbox],
+    ["HkRadio", radio],
+    ["HkSwitch", sw],
+  ])("%s declares each property once per rule", (_name, all) => {
+    // The duplicate-selector guard does not see this: a second declaration
+    // INSIDE an already-pinned rule wins at runtime (CSS cascade) while every
+    // reader keeps the first value.
+    const duplicates = all
+      .map((r) => ({ selector: r.selector, names: declarationNames(r.body) }))
+      .filter((r) => r.names.length !== new Set(r.names).size)
+      .map((r) => `${r.selector} → ${r.names.join(",")}`);
+    expect(duplicates, "rules declaring a property twice").toEqual([]);
+  });
+
+  it.each([
+    ["checkbox", checkbox],
+    ["radio", radio],
+  ])("%s sheet uses no comma-list selector", (_name, all) => {
+    // Each reader resolves ONE subject per rule, so a rule that applies to the
+    // box through a comma list (`…box, …icon { translate: 0 4px }`) is
+    // invisible to it while the browser shifts the box 4px. Neither anchoring
+    // sheet uses one; the switch's shared `.hk-switch-thumb, .hk-switch-content`
+    // block sits outside the anchoring contract.
+    const lists = all
+      .filter((r) => splitTopLevel(r.selector, ",").length > 1)
+      .map((r) => r.selector);
+    expect(lists, "comma-list selectors").toEqual([]);
+  });
+
+  it.each([
+    ["checkbox", checkbox, ".hk-checkbox"],
+    ["radio", radio, ".hk-radio"],
+  ])("%s root may only declare the properties pinned here", (_name, all, control) => {
+    // `place-items: start` re-aligns the row exactly like `align-items`, while
+    // the carrier test looks for the longhand — so a shotgunned shorthand would
+    // win every run with the `align-items` carrier set still at two. A root
+    // whitelist closes the whole family instead of the one spelling.
+    const declared = new Set<string>();
+    for (const rule of subjectRules(all, control, true)) {
+      for (const name of declarationNames(rule.body)) declared.add(name);
+    }
+    expect([...declared].sort(), `properties declared on \`${control}\``).toEqual([
+      "-webkit-user-select",
+      "align-items",
+      "cursor",
+      "display",
+      "gap",
+      "opacity",
+      "user-select",
+      "vertical-align",
+    ]);
+  });
+
+  it.each([
+    ["HkCheckbox", checkbox],
+    ["HkRadio", radio],
+    ["HkSwitch", sw],
+  ])("%s rules never end in a positional subject", (_name, all) => {
+    // The box readers key on a CLASS subject, so a rule that reaches the box
+    // positionally — `…:has(.hk-label) > :first-child { margin-block-start: 0 }`
+    // — is invisible to them while the browser applies it. Every rule in
+    // these sheets ends in a class or attribute compound today; pin the shape.
+    const odd = all
+      .filter((r) => !/^[.[]/.test(subjectSelector(r.selector)))
+      .map((r) => r.selector);
+    expect(odd, "rules whose subject is not a class/attribute compound").toEqual([]);
+  });
+
+  it("HkLabel pins the line box on its base rule and restyles only font sizes", () => {
+    // The offset rides HkLabel's line box, so every rule that can change it
+    // has to be visible here: a media copy, a per-size line-height, or a
+    // label rule smuggled into a control sheet all shift the text against the
+    // box by 0.6–3px with the coefficient assertions still green.
+    const labelRules = subjectRules(labelSheet, ".hk-label", true);
+    expect(
+      labelRules.map((r) => `${r.media ?? "-"} | ${r.selector}`).sort(),
+      "every HkLabel rule (media scopes included)",
+    ).toEqual(["- | .hk-label", "- | .hk-label.hk-label-lg", "- | .hk-label.hk-label-sm"]);
+    const withLineHeight = labelRules
+      .filter((r) => declarationNames(r.body).includes("line-height"))
+      .map((r) => r.selector);
+    expect(withLineHeight, "line-height carriers").toEqual([".hk-label"]);
+    expect(declarationNames(find(labelSheet, ".hk-label").body).sort()).toEqual([
+      "color",
+      "display",
+      "font-size",
+      "line-height",
+    ]);
+    for (const size of ["sm", "lg"]) {
+      expect(
+        declarationNames(find(labelSheet, `.hk-label.hk-label-${size}`).body),
+        `\`.hk-label-${size}\` may only restyle the font size`,
+      ).toEqual(["font-size"]);
+    }
+  });
+
+  it.each([
+    ["checkbox", checkbox],
+    ["radio", radio],
+    ["switch", sw],
+  ])("%s sheets declare no .hk-label rule of their own", (_name, all) => {
+    const labelRules = all
+      .filter((r) => subjectSelector(r.selector).startsWith(".hk-label"))
+      .map((r) => r.selector);
+    expect(labelRules, "label rules inside a control sheet").toEqual([]);
+  });
+
   it("checkbox size offsets appear in md → sm → lg order (an equal-specificity tie)", () => {
-    // All three checkbox offsets are 0,4,0 (radio's size steps carry
-    // `[data-size=…]` and are 0,5,0), so for the checkbox the source order IS
-    // the tie-break: reordering them silently hands sm the md offset
-    // (−0.5px) and lg the sm one (+0.5px).
+    // All three checkbox offsets are 0,4,0, and a `-sm` / `-lg` control also
+    // matches the plain `.hk-checkbox` rule (its class list contains both), so
+    // the source order IS the tie-break: the base md offset has to come first,
+    // because wherever it lands after a size rule it wins that control's tie
+    // and hands it the md offset (sm 1.5 instead of 2.0 → box 0.5px high,
+    // lg 1.5 instead of 1.0 → 0.5px low). Radio's size steps carry
+    // `[data-size=…]` and win on specificity (0,5,0).
     const offsets = [
       ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box",
       ".hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box",

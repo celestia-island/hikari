@@ -105,9 +105,10 @@
  * That last part rests on the label's FIRST line box being exactly `1.5 ×
  * font-size` tall. A descendant with a larger inline box — a 24px span
  * inside the label, an icon taller than the text — makes the first line
- * taller and leaves the box `(firstLineBox − 21) / 2` px low: 2.5px at 26px,
- * 4px at 29px. Only the declared typography is pinned; content that outgrows
- * it moves the target.
+ * taller and leaves the box `(firstLineBox − 21) / 2` px HIGH, so the text
+ * reads that far low: 2.5px at 26px, 4px at 29px (measured 4.5px at a 30px
+ * line). Only the declared typography is pinned; content that outgrows it
+ * moves the target.
  *
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control

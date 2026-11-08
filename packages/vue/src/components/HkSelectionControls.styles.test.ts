@@ -1117,17 +1117,27 @@ describe("label first-line anchoring", () => {
     // Every reader above is per-sheet, but no consumer ever sees a sheet: the
     // Rust host imports all four into ONE stylesheet (styles/index.scss:
     // checkbox, radio, switch, label), so a later sheet wins at equal
-    // specificity whatever component it names. A `.hk-radio-box { width:
-    // 2.5rem; height: 2.5rem }` copied into HkRadio.scss therefore moved every
-    // checkbox box by 11px with all of the above green — the sheet that owns
-    // `.hk-checkbox-box` never sees the rule, and the sheet that carries it is
-    // never asked about checkbox parts. Those mirror sheets ("House parity
-    // (HkCheckbox)") are exactly where such a copy comes from, so walk each
-    // sheet's subjects: a rule may name only its own component's parts.
+    // specificity whatever component it names. A `.hk-checkbox-box { width:
+    // 2.5rem; height: 2.5rem }` copied into HkRadio.scss therefore moved the md
+    // checkbox box by 11px with all of the above green — the sm/lg boxes keep
+    // their own (0,2,0) size rules, which out-rank an (0,1,0) rule in a later
+    // sheet; the sheet that owns `.hk-checkbox-box` never sees the rule, and
+    // the sheet that carries it is never asked about checkbox parts. Those
+    // mirror sheets ("House parity (HkCheckbox)") are exactly where such a copy
+    // comes from, so walk each sheet's subjects: a rule may name only its own
+    // component's parts.
+    //
+    // The walk reads class TOKENS. A foreign part spelled as an attribute
+    // inside `:is()` — `.y:is([class*="hk-checkbox-box"])` — passes it; that
+    // shape only bites if the part itself carries a host class, which nothing
+    // in the TSX does, so a token scan is the right depth today.
     // A comma list is one rule with several subjects: `.hk-checkbox-box,
     // .hk-switch-thumb { width: 2.5rem }` in HkSwitch.scss names the box in the
     // first compound, and a subject-only reader that stops at the last
-    // compound (or at the comma) never sees it — that was the fifth door.
+    // compound (or at the comma) never sees it — that was the sixth door. The
+    // switch keeps its one shared list (`.hk-switch-thumb, .hk-switch-content`
+    // inside the reduced-motion block); reading one complex selector at a time
+    // is what makes that legal rather than invisible.
     const foreign: string[] = [];
     for (const rule of all) {
       for (const one of splitTopLevel(rule.selector, ",")) {

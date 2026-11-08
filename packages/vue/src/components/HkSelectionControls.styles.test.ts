@@ -486,14 +486,22 @@ function compiledHostBundle(): Rule[] {
  * box moves with the text — added no row at all. A new geometric property is a
  * future hole in an allowlist; here it is a red test instead.
  *
- * Custom properties are the one deliberate exemption: the offsets are computed
- * FROM the same `--text-*` variables the label sizes itself with, so a foreign
- * `* { --text-base: 2rem }` scales the line box and the offset together and
- * cannot pull the two apart (a literal `line-height` / `font-size` on a part
- * is a class-led rule, and those are banned outright).
+ * `animation` is not here either: the shorthand names @keyframes and a frame
+ * can carry `transform`, so `span:last-child { animation: d1 1s infinite }`
+ * with `translateY(8px)` frames moved the label 8px with the gate green.
+ * `animation-play-state` is the one animation property that cannot move
+ * anything, so pausing the animation engine stays paint-only.
+ *
+ * Custom properties are exempt on GLOBAL subjects only: the offsets are
+ * computed FROM the same `--text-*` variables the label sizes itself with, so
+ * `:root { --text-base: 2rem }` scales the line box and the offset together
+ * and measured 0.000px. A SCOPED one is a mover — `span:first-of-type
+ * { --text-base: 2rem }` in a foreign sheet took the md offset from 1.5px to
+ * 15px with the gate green (a literal `line-height` / `font-size` on a part is
+ * a class-led rule, and those are banned outright).
  */
 const PAINTS_ONLY =
-  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline-(?:color|style|width)|text-decoration|caret-color|cursor|pointer-events|user-select|content|quotes|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
+  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline-(?:color|style|width)|text-decoration|caret-color|cursor|pointer-events|user-select|content|quotes|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
 
 /** Attributes a selection part actually carries: `data-checked` on the box,
  * `data-size` on the root, … An attribute nothing carries cannot reach a part,
@@ -519,6 +527,11 @@ const PART_ATTRS = new Set([
  * they carry are all `hk-*` — so a compound with no class/id selector, an
  * attribute selector on something a part carries, and an
  * element/universal/pseudo-only tag is reachable.
+ *
+ * The tag is compared LOWERCASED and with any namespace prefix dropped: HTML
+ * type selectors are ASCII case-insensitive, so `SPAN { margin-block-start:
+ * 8px }` moved the label 8px with the gate green, and `*|span` / `|span` (a
+ * namespace) walked through the same comparison.
  */
 function couldMatchAPart(compound: string): boolean {
   // The arguments go FIRST. Reading the tag before dropping them turned
@@ -535,16 +548,26 @@ function couldMatchAPart(compound: string): boolean {
     .replace(/::?[-\w]+/g, "")
     .replace(/\*/g, "")
     .replace(/\s+/g, "")
-    .trim();
+    .trim()
+    .toLowerCase()
+    .replace(/^.*\|/, "");
   return tag === "" || tag === "span" || tag === "label";
 }
+
+/** Subjects that cover EVERY element. A custom property set there scales the
+ * line box and the offset together — `:root { --text-base: 2rem }` measured
+ * 0.000px — so it cannot pull the two apart. A SCOPED one can: review put
+ * `span:first-of-type { --text-base: 2rem }` in a foreign sheet and the md
+ * offset went 1.5px → 15px (label 13.5px off the box) with the gate green. So
+ * the exemption below only holds for these subjects. */
+const GLOBAL_SUBJECT = /^(?:\*|\*::[-\w]+|:root|html|body|:where\(\*\)|:where\(\*::[-\w]+\))$/;
 
 /** Every declaration that can move a box, as `name: value` text. The VALUE is
  * part of the row on purpose: a name-only pin read `* { border-width: 0 }` and
  * `* { border-width: 8px }` as the same row (measured: the label 8px low with
  * the table byte-identical), so `padding: 0` → `4px` and `border-width: 0` →
  * `8px` now both turn the table red. */
-function movingDeclarations(body: string): string[] {
+function movingDeclarations(body: string, scopedCustomProperties = false): string[] {
   const out: string[] = [];
   let depth = 0;
   let buffer = "";
@@ -552,8 +575,11 @@ function movingDeclarations(body: string): string[] {
     const declaration = buffer.trim().replace(/\s+/g, " ");
     buffer = "";
     const match = declaration.match(/^([-\w]+)\s*:\s*(.+)$/);
-    if (!match || match[1]!.startsWith("--") || PAINTS_ONLY.test(match[1]!)) return;
-    out.push(`${match[1]}: ${match[2]!.trim()}`);
+    if (!match) return;
+    const name = match[1]!;
+    const moves = name.startsWith("--") ? scopedCustomProperties : !PAINTS_ONLY.test(name);
+    if (!moves) return;
+    out.push(`${name}: ${match[2]!.trim()}`);
   };
   for (const char of body) {
     if (char === "(") depth += 1;
@@ -570,10 +596,11 @@ function elementOnlyMovers(label: string, all: Rule[]): string[] {
   const rows: string[] = [];
   for (const rule of all) {
     if (/hk-(?:checkbox|radio|switch|label)(?!\w)/.test(rule.selector)) continue;
-    const moves = movingDeclarations(rule.body);
-    if (moves.length === 0) continue;
     for (const one of splitTopLevel(rule.selector, ",")) {
-      if (!couldMatchAPart(subjectSelector(one))) continue;
+      const subject = subjectSelector(one);
+      if (!couldMatchAPart(subject)) continue;
+      const moves = movingDeclarations(rule.body, !GLOBAL_SUBJECT.test(subject.replace(/\s+/g, "")));
+      if (moves.length === 0) continue;
       rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${moves.join("; ")}`);
     }
   }
@@ -981,7 +1008,9 @@ describe("label first-line anchoring", () => {
     // in a comment today; nothing executed it, so copying the two gated rules
     // into HkSwitch.scss (`align-items: flex-start` on a labeled switch, or an
     // `align-self` on the track with a naive 1.5rem offset) would move the
-    // track 1px off the row and every assertion here would stay green. Pin the
+    // track off the row (measured back then: 1.5px; the copied offset with
+    // the 24px track is −1.5px, hanging it above the row) while every
+    // assertion in this file stayed green. Pin the
     // negative: one carrier, value `center`, and no item alignment at all.
     const carriers = rulesMentioningAny(sw, [".hk-switch"], true)
       .filter((r) => /(?:^|;)\s*align-items\s*:/.test(r.body))
@@ -1652,17 +1681,25 @@ describe("label first-line anchoring", () => {
     // same went for `:where(*) { padding: 0 }` → `4px`.
     //
     // EIGHTEEN rows are scoped by a DIRECT parent that is not a selection
-    // control (`.hk-row > *`), so they move the control inside that row but
-    // never the offset inside it. The other TEN are not that shape and are
-    // listed so the claim stays honest: six hang off `::before`/`::after`, one
-    // is `label:where(:not([class^=hk-]):not([class*=" hk-"]))` (its `:not`s
+    // control (`.hk-row > *`). They translate or size the control inside that
+    // row and never touch the box's own offset — but two of them re-shape the
+    // control itself: `.s-auth-form > *` (`display: flex; flex-direction:
+    // column`) turns the control into a column flex container and
+    // `.s-about-modal-backdrop > *` (`height: 100%`) stretches it, so a control
+    // placed DIRECTLY under either parent loses the first-line anchoring. The
+    // package renders none there (see the migration notes); the rows stay
+    // pinned so any value change is still a red test.
+    //
+    // The other TEN are not that shape and are listed so the claim stays
+    // honest: six hang off `::before`/`::after`, one is
+    // `label:where(:not([class^=hk-]):not([class*=" hk-"]))` (its `:not`s
     // exclude every hikari class), and three are bare universals (`*`,
     // `:where(*)`) that DO reach the box. Those ten are harmless AT THESE
     // VALUES — the gated offset is (0,4,0) and compiles after them, and the
-    // declarations they carry are `box-sizing`, `margin: 0`, `padding: 0`,
-    // `border-width: 0`. Change the value and this table goes red, which is
-    // exactly what a row is for. Declarations are pinned per row too, so a new
-    // mover lands here as an added row either way.
+    // declarations they carry are `box-sizing` / `border-style` /
+    // `border-width` on the universals and `display` / `font-weight` /
+    // `margin-bottom` on the label row. Change a value and this table goes
+    // red, which is exactly what a row is for.
     const rows = [
       ...elementOnlyMovers("bundle", compiledHostBundle()),
       ...compiledForeignSheets().flatMap((sheet) => elementOnlyMovers(sheet.rel, rules(sheet.css))),

@@ -109,9 +109,11 @@ pub(crate) mod test_css {
     ///   deleted declaration keep the needle green in review.
     ///
     /// The second is caught instead of documented: the strip asserts that no
-    /// marker survives, so unbalanced input panics rather than handing prose to
-    /// a needle (the emitted CSS is already corrupt, so nothing ships through
-    /// it). Balanced input is unaffected.
+    /// marker survives, so input that still carries one (the emitted-comment
+    /// shape) panics rather than handing prose to a needle. An unterminated
+    /// `/*` is the other way round — the rest is dropped to end of input, as
+    /// the `a/*b` unit test shows. Both inputs are already corrupt CSS, so
+    /// nothing ships through either path.
     pub(crate) fn without_comments(css: &str) -> String {
         let mut out = String::with_capacity(css.len());
         let mut rest = css;

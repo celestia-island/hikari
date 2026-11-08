@@ -90,14 +90,24 @@
  * sitting ~2px low).
  *
  * Four rules cooperate — the `flex-start` switch plus one offset per size
- * step — and every one of them carries the gate, so the anatomy is atomic:
- * either all four apply or none does. One line box is `line-height` tall
- * (HkLabel pins 1.5), so on a one-line label each offset lands the box exactly
- * where `center` did (single-line rows keep their pixels at all three steps),
- * and on a wrapped label it keeps the box on line one. An engine without
- * `:has()` support drops the gate with the rule, so it falls through to the
- * `align-items: center` fallback in the root rule, i.e. exactly the previous
+ * step. Every one of them carries the gate, and a given element takes the
+ * switch plus at most one offset (each offset names its own size step), so
+ * the anatomy is atomic: all four selectors contain `:has()`, so an engine
+ * without it drops each rule whole and the row falls through to the
+ * `align-items: center` fallback in the root rule — exactly the previous
  * rendering, never the bare top-edge state.
+ *
+ * One line box is `line-height` tall (HkLabel pins 1.5), so on a one-line
+ * label each offset lands the box exactly where `center` did (single-line
+ * rows keep their pixels at all three steps), and on a wrapped label it
+ * keeps the box on line one.
+ *
+ * That last part rests on the label's FIRST line box being exactly `1.5 ×
+ * font-size` tall. A descendant with a larger inline box — a 24px span
+ * inside the label, an icon taller than the text — makes the first line
+ * taller and leaves the box `(firstLineBox − 21) / 2` px low: 2.5px at 26px,
+ * 4px at 29px. Only the declared typography is pinned; content that outgrows
+ * it moves the target.
  *
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control
@@ -110,6 +120,14 @@
  * generates no line box once the label is blockified as a flex item, so it
  * takes the 1.5px offset (md) onto a zero-height line: the control is 1.5px
  * taller than the empty shell (18px → 19.5px) and its box sits 1.5px lower.
+ * A zero-width space (U+200B) is the marker to reach for when a row must be
+ * visibly empty: unlike a plain space it measures 0.00 against `center`.
+ *
+ * Hosts must DELETE their own `align-items` override on `.hk-checkbox` /
+ * `.hk-radio`, not flip it: `flex-start` was the old workaround and is
+ * 0.75px off now (it no longer pays for the 1.5px margin-box), while a
+ * same-specificity `center` keeps today's defect on this engine and adds
+ * 0.75px on top of it on a `:has()` engine.
  *
  * The label's own line-height is what this rides, and its font size sets the
  * term, so a host that restyles EITHER on `.hk-label` has to restyle this pair

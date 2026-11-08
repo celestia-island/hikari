@@ -243,13 +243,13 @@ export default defineComponent({
      *  pill fades out. Read live; clamped to 300..3000. Only meaningful
      *  with `scrollProgress`. */
     scrollProgressIdle: { type: Number, default: 900 },
-    /** Which descendants count as "rows" for the numerator/denominator.
-     *  The default matches the table grammar every admin list ships —
-     *  BODY rows only: a `tr` default would count the header row as row
-     *  one and skew every index. A non-table list (a card roster)
-     *  overrides with its own row spelling. Only read while
-     *  `scrollProgress` is on; a runtime change re-senses on the next
-     *  pass. */
+    /** Which descendants count as "rows" for the pill's visible band
+     *  (from/to) and its total fallback. The default matches the table
+     *  grammar every admin list ships — BODY rows only: a `tr` default
+     *  would count the header row as row one and skew every index. A
+     *  non-table list (a card roster) overrides with its own row
+     *  spelling. Only read while `scrollProgress` is on; a runtime
+     *  change re-senses on the next pass. */
     scrollProgressSelector: { type: String, default: "tbody tr" },
   },
   emits: { approachEnd: () => true, "update:backTopVisible": (_v: boolean) => true },

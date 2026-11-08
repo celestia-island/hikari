@@ -12,7 +12,8 @@ import HButton from "./HkButton";
  * - `loading`: the SAME button with its built-in spinner (HkButton
  *   swaps in an HSpinner while loading) — no second spinner here, the
  *   affordance morphs in place at a stable height.
- * - `end`: a muted "reached the end" note replacing the button.
+ * - `end`: the muted count-carrying sentence ("All N items listed")
+ *   replacing the button.
  *
  * Optional `shown`/`total` render a tabular mono counter next to the
  * control in the idle / loading states ("3 / 19"); in the `end` state

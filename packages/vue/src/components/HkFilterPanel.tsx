@@ -507,8 +507,11 @@ export default defineComponent({
             }),
           )}
           {/* On-demand rows: the state array minus the entries a pinned
-           * row already binds (2026-10-15 order semantics preserved —
-           * the array order IS the visible order). */}
+           * row already binds. 2026-10-15's "the array order IS the
+           * visible order" holds WITHIN this band; a pinned row's entry
+           * (array end) renders in the pinned band ABOVE it instead —
+           * row position no longer maps 1:1 to array position, and
+           * pages must not assume it does (2026-11-08). */}
           {addedRows.value.map(({ cond, index }) =>
             renderConditionRow({
               keyVal: `row:${index}`,

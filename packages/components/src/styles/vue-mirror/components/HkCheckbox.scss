@@ -122,11 +122,12 @@
  * and leaves the box `(firstLineBox − 21) / 2` px HIGH, so the text reads
  * that far low. What sets the error is the resulting LINE, not the height of
  * the intruder: a 16×26 icon with `vertical-align: middle` gives the 26px
- * line this table assumes (2.500px), the same icon baseline-aligned drags its
- * own box and descender into the line and makes it 32px (5.500px), and as an
- * inline `<svg>` it reaches 47px (13.000px). Only the declared typography is
- * pinned; content that outgrows it moves the target, and by how much depends
- * on the intruder's alignment.
+ * line this table assumes (2.500px), while the same icon baseline-aligned
+ * drags its own box and the font's descender into the line and makes it 32px
+ * (5.500px). Only the declared typography is pinned; content that outgrows it
+ * moves the target, and by how much follows from the line it lands in, so a
+ * replaced element that ignores the baseline can push it further than either
+ * figure — calculate, do not assume a fixed amount.
  *
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control
@@ -153,6 +154,14 @@
  * On an engine without `:has()` neither of them is inert: that is the tier the
  * `center` fallback exists for, and a host that needs the old top-edge look
  * there should scope its override with `@supports not selector(:has(*))`.
+ * Two host styles become DEAD rather than harmful, and both are worth knowing
+ * about: a `margin-*` nudge on `.hk-checkbox-box` loses to the offset declared
+ * here (the gated rule outranks it, so the nudge simply does not render), and a
+ * host that stacked the control (`flex-direction: column` on the row) loses the
+ * centring it used to get from `align-items` — with the box and the label both
+ * pinned to the top, `align-self: center` on the parts is what restores it, not
+ * deleting the `align-items` above. Neither shape exists in this package; they
+ * matter to a consumer only if it restyled the parts itself.
  *
  * The label's own line-height is what this rides, and its font size sets the
  * term, so a host that restyles EITHER on `.hk-label` has to restyle this pair

@@ -61,6 +61,41 @@ interface Rule {
 }
 
 /**
+ * Sheets the walker below could not consume exactly. `rules()` runs at module
+ * level, where a `throw` aborts collection and vitest reports "no tests" — a
+ * real parse failure would look like a broken harness — so a leftover is
+ * RECORDED here and asserted in a test instead. It is also the structural guard
+ * the single payloads below cannot be: any future desync (a stray `}`, an
+ * unterminated block, a construct the walker does not know) leaves text behind
+ * and turns that test red, instead of silently dropping the rule the way
+ * `url(})` did while 120 tests stayed green.
+ */
+const PARSE_LEFTOVER: string[] = [];
+
+/** Index just past the `)` of the `url(` token starting at `start`, skipping
+ * quoted runs and escapes. An UNQUOTED url token may contain `}` — CSS ends it
+ * only at `)`, `"`, `'`, `(`, whitespace or an escape — so a walker that treats
+ * `}` as a block delimiter desyncs on a sheet the browser applies: review put
+ * `span:last-child { background-image: url(}); align-self: center !important }`
+ * in a foreign sheet and the label pin was dropped from the row while the guard
+ * stayed 120/120 (measured −42.000px on a 105px control).
+ */
+function urlTokenEnd(css: string, start: number): number {
+  let at = start + 4;
+  while (at < css.length) {
+    const char = css[at]!;
+    if (char === "\\") at += 2;
+    else if (char === "\"" || char === "'") {
+      at += 1;
+      while (at < css.length && css[at] !== char) at += css[at] === "\\" ? 2 : 1;
+      at += 1;
+    } else if (char === ")") return at + 1;
+    else at += 1;
+  }
+  return css.length;
+}
+
+/**
  * Removes block comments and the `@charset` statement — but only where they
  * really are comments. A flat non-greedy comment regex is blind to string
  * literals: review bundled one rule whose `background` was a quoted URL
@@ -84,6 +119,20 @@ function stripComments(css: string): string {
       index = end + 1;
       continue;
     }
+    if (char === "\\") {
+      // An escape consumes the NEXT code point: `\/*` is the escaped `/`
+      // followed by `*` — a legal custom-property VALUE — and the browser never
+      // opens a comment, but a scanner that tests `/*` first does, deletes the
+      // rest of the sheet and blinds every reader while Chrome applies it.
+      // Review wrapped a `.hk-checkbox-box { align-self: center !important;
+      // margin-block-start: 0 !important }` in `--x: \/*;` … `--x: */;` inside
+      // the SHIPPED sheet and its mirror: 120/120 green while the 105px row
+      // went +42.000px; in a foreign sheet the same wrapper hid a mover for
+      // every row (−8.000px).
+      out += css.slice(index, index + 2);
+      index += 2;
+      continue;
+    }
     if (char === "/" && css[index + 1] === "*") {
       const end = css.indexOf("*/", index + 2);
       index = end < 0 ? css.length : end + 2;
@@ -96,8 +145,7 @@ function stripComments(css: string): string {
     // `.b::after { content: "*/" }` in a foreign sheet and every reader below
     // went blind while Chrome applied the span rule. Copy the token whole.
     if (/^url\(/i.test(css.slice(index)) && !/[\w-]/.test(css[index - 1] ?? "")) {
-      const close = css.indexOf(")", index);
-      const end = close < 0 ? css.length : close + 1;
+      const end = urlTokenEnd(css, index);
       out += css.slice(index, end);
       index = end;
       continue;
@@ -117,7 +165,10 @@ function rules(css: string): Rule[] {
   // statement out of a declaration VALUE: `span { background: "@charset";
   // margin-block-start: 8px }` lost `@charset";` and became the single
   // declaration `background: " margin-block-start: 8px` — paint-only, no row,
-  // while Chrome applied the margin (measured +8.000px at every probe).
+  // while Chrome applied the margin (measured +8.000px at every probe). The
+  // `;`-statement branch in the walk below also drops a leading `@charset`, so
+  // this strip is belt-and-braces: it keeps the text a caller hands the walker
+  // clean, and a mutation removing it alone stays green (that branch covers it).
   const bare = stripComments(css)
     .replace(/^\s*@charset\s+"(?:[^"\\]|\\.)*"\s*;/i, "")
     .trim();
@@ -133,6 +184,30 @@ function rules(css: string): Rule[] {
   while (at < bare.length) {
     const char = bare[at]!;
     at += 1;
+    if (char === "\\") {
+      // Escaped code point: `\{` / `\}` / `\;` are DATA inside a selector or a
+      // declaration value (`.zz\{ { … }` is one class), and `.zz-a { --x: \/*; }`
+      // is the phantom-comment wrapper that defeated `stripComments` — the same
+      // shape defeats any walker that does not skip escapes.
+      buffer += bare.slice(at - 1, at + 1);
+      at += 1;
+      continue;
+    }
+    if (char === "u" || char === "U") {
+      // An unquoted `url(` token may hold `}` and `;` — it ends only at `)` —
+      // so the block delimiters must not be read inside it. Review put
+      // `span:last-child { background-image: url(}); align-self: center
+      // !important }` in a foreign sheet: the `}` closed the rule early, the
+      // `align-self` became a top-level prelude and both were dropped, 120
+      // green while the label pin was gone (−42.000px at a 105px control).
+      const lower = bare.slice(at - 1, at + 3).toLowerCase();
+      if (lower === "url(" && !/[\w-]/.test(bare[at - 2] ?? "")) {
+        const end = urlTokenEnd(bare, at - 1);
+        buffer += bare.slice(at - 1, end);
+        at = end;
+        continue;
+      }
+    }
     if (char === "\"" || char === "'") {
       // Strings are DATA, not structure: a brace or a semicolon inside one is
       // not a block delimiter. `content: "}"` closed a rule body early and
@@ -168,6 +243,14 @@ function rules(css: string): Rule[] {
       continue;
     }
     const frame = stack.pop();
+    // A closer with TEXT in the buffer is the desync that matters: a rule body
+    // closed early leaves its tail read as a top-level prelude, and this is
+    // where it would vanish. A closer with an empty buffer is how a caller that
+    // slices a fragment out of a block (the reduced-motion test does) ends, so
+    // it is expected and not recorded.
+    if (!frame && buffer.trim()) {
+      PARSE_LEFTOVER.push(`stray } after: ${buffer.trim().slice(0, 120)}`);
+    }
     const body = buffer.trim();
     buffer = "";
     if (!frame || frame.atRule || !body) {
@@ -182,10 +265,16 @@ function rules(css: string): Rule[] {
     const media = stack.filter((f) => f.atRule).map((f) => f.prelude).join(" ");
     out.push(media ? { selector: frame.prelude, body, media } : { selector: frame.prelude, body });
   }
+  if (stack.length || buffer.trim()) {
+    PARSE_LEFTOVER.push(
+      `${stack.length} frame(s) + ${buffer.trim().length} char(s) left: ${buffer.trim().slice(0, 120)}`,
+    );
+  }
   // No `expect` here: this runs at module level, and a describe-level failure
   // aborts collection, which vitest reports as "Tests  no tests" — a real
-  // duplicate then looks like a broken harness. The check lives in
-  // "compiles each selector at most once" below, where it fails as a test.
+  // duplicate then looks like a broken harness. The checks live in
+  // "compiles each selector at most once" and "no sheet leaves the walker with
+  // text it could not consume" below, where they fail as tests.
   return out;
 }
 
@@ -219,17 +308,36 @@ function duplicateSelectors(all: Rule[]): string[] {
  */
 /** Split a selector list on `separator` at depth 0 (`:is(a, b)` stays whole). */
 function splitTopLevel(selector: string, separator: string): string[] {
+  // Quotes and escapes are DATA here too. A quoted attribute value may hold an
+  // unbalanced bracket — `span[class$=")"]` — and counting it pushed the depth
+  // negative, so the comma never split, the two subjects fused into one string
+  // that no reader could match, and the whole rule went invisible: review made
+  // `span[class$=")"], span:last-child { align-self: center !important }` green
+  // while the 105px row moved −42.000px. Depth is clamped at 0 as well, so a
+  // stray closer cannot reorder the split either.
   const parts: string[] = [];
   let depth = 0;
   let start = 0;
-  for (let i = 0; i < selector.length; i += 1) {
-    const char = selector[i]!;
-    if (char === "(" || char === "[") depth += 1;
-    else if (char === ")" || char === "]") depth -= 1;
-    else if (depth === 0 && char === separator) {
-      parts.push(selector.slice(start, i));
-      start = i + 1;
+  let at = 0;
+  while (at < selector.length) {
+    const char = selector[at]!;
+    if (char === "\\") {
+      at += 2;
+      continue;
     }
+    if (char === "\"" || char === "'") {
+      at += 1;
+      while (at < selector.length && selector[at] !== char) at += selector[at] === "\\" ? 2 : 1;
+      at += 1;
+      continue;
+    }
+    if (char === "(" || char === "[") depth += 1;
+    else if (char === ")" || char === "]") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && char === separator) {
+      parts.push(selector.slice(start, at));
+      start = at + 1;
+    }
+    at += 1;
   }
   parts.push(selector.slice(start));
   return parts.map((part) => part.trim()).filter(Boolean);
@@ -238,11 +346,23 @@ function splitTopLevel(selector: string, separator: string): string[] {
 function subjectSelector(selector: string): string {
   let depth = 0;
   let cut = -1;
-  for (let i = 0; i < selector.length; i += 1) {
-    const char = selector[i]!;
+  let at = 0;
+  while (at < selector.length) {
+    const char = selector[at]!;
+    if (char === "\\") {
+      at += 2;
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      at += 1;
+      while (at < selector.length && selector[at] !== char) at += selector[at] === "\\" ? 2 : 1;
+      at += 1;
+      continue;
+    }
     if (char === "(" || char === "[") depth += 1;
-    else if (char === ")" || char === "]") depth -= 1;
-    else if (depth === 0 && (char === " " || char === ">" || char === "+" || char === "~")) cut = i;
+    else if (char === ")" || char === "]") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && (char === " " || char === ">" || char === "+" || char === "~")) cut = at;
+    at += 1;
   }
   return selector.slice(cut + 1).trim();
 }
@@ -534,8 +654,8 @@ function foreignSheetPaths(): string[] {
   // there would be green here AND ship to the Rust host. Review enumerated all
   // 181 `scss!` paths and found these are the only two no other reader
   // compiles. They emit class-led selectors only today (measured: zero rows in
-  // the pinned table, 59 in the all-tags one — one `svg` rule and 56
-  // `@keyframes` steps, all class-led), so reading them costs nothing.
+  // the pinned table, 59 in the all-tags one — every one of them class-led or a
+  // `@keyframes` step, none element-scoped), so reading them costs nothing.
   for (const rustm of ["link.scss", "typography.scss"]) {
     sheets.push(resolve(ROOT, "..", "..", "components/src/styles/components", rustm));
   }
@@ -652,7 +772,7 @@ const PAINTS_ONLY =
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
  * replaced element as well turns the table from 56 rows into 977 — `@keyframes`
- * steps account for 613 (`svg` 151 rows, `input` 51, `p { margin: 0 }` …), so
+ * steps account for 613 (`svg` 154 rows, `input` 51, `p { margin: 0 }` …), so
  * 364 element/registration rows are left over, 308 of them new, i.e. a table
  * nobody reads.
  * Deliberately NOT in this set, with what each omission costs:
@@ -2427,7 +2547,7 @@ describe("HkSwitch geometry", () => {
  * all 109 tests green before its reader was hardened, and each moved the
  * rendered label by 6.5–8.0px on a labeled control.
  */
-describe("readers hold against the payloads round six used", () => {
+describe("readers hold against the payloads rounds six and seven used", () => {
   it.each([
     ["@layer statement", "@layer zz;"],
     ["@import statement", '@import url("data:text/css,");'],
@@ -2507,5 +2627,87 @@ describe("readers hold against the payloads round six used", () => {
     // or `--hk-*` definitions into offenders.
     expect(scanText("/* .hk-checkbox-box { margin: 0 } */")).not.toContain("hk-checkbox-box");
     expect(scanText(".x { --hk-checkbox-box: 18px }")).not.toContain("hk-checkbox-box");
+  });
+
+  it("an escaped comment delimiter is data, not a comment", () => {
+    // `\/*` is the escaped `/` followed by `*` — the browser never opens a
+    // comment, but a scanner that tests `/*` before testing the escape does,
+    // and deletes the rest of the sheet. Review wrapped a
+    // `.hk-checkbox-box { align-self: center !important }` override in
+    // `--x: \/*;` … `--x: */;` inside the SHIPPED sheet and its mirror: 120/120
+    // green while the 105px row went +42.000px, and the same wrapper in a
+    // foreign sheet hid a mover for every row (−8.000px).
+    const shipped = [
+      ".zz-a { --x: \\/*; }",
+      ".hk-checkbox-box { align-self: center !important; margin-block-start: 0 !important; }",
+      ".zz-b { --x: */; }",
+    ].join("\n");
+    expect(scanText(shipped)).toContain("align-self: center");
+    expect(rules(shipped).map((rule) => rule.selector)).toEqual([
+      ".zz-a",
+      ".hk-checkbox-box",
+      ".zz-b",
+    ]);
+    // The precision control: the same escape with nothing after it is legal
+    // CSS and must stay silent.
+    expect(scanText(".zz { --x: \\/* }")).not.toContain("hk-");
+    expect(rules(".zz { --x: \\/* }").length).toBe(1);
+  });
+
+  it("a `}` inside an unquoted url() does not close the rule early", () => {
+    // The brace walk had no url-token awareness: `url(})` closed the rule body,
+    // every declaration after it became a top-level prelude and was dropped.
+    // Review put `span:last-child { background-image: url(}); align-self:
+    // center !important }` in a foreign sheet and the label's `align-self` pin
+    // vanished from the row set — 120 green, −42.000px at a 105px control.
+    const parsed = rules(
+      "span:last-child { background-image: url(}); align-self: center !important; }",
+    );
+    expect(parsed.length, "the rule survives the `}`").toBe(1);
+    expect(parsed[0]!.selector).toBe("span:last-child");
+    expect(movingDeclarations(parsed[0]!.body)).toContain("align-self: center !important");
+    // A bare `url(})` with nothing after it stays green: it moves nothing.
+    expect(rules(".zz { background-image: url(}) }")[0]!.body).toContain("url(})");
+  });
+
+  it.each([
+    ["a quoted closer", 'span[class$=")"], span:last-child'],
+    ["a quoted opener", 'span[data-x="("], span:last-child'],
+  ])("a bracket inside a quoted attribute (%s) does not fuse two subjects", (_name, list) => {
+    // `splitTopLevel` / `subjectSelector` counted brackets without skipping
+    // strings, so `")"` drove the depth negative, the comma never split, and
+    // the fused subject matched no part: review made
+    // `span[class$=")"], span:last-child { align-self: center !important }`
+    // green while the 105px row moved −42.000px.
+    expect(splitTopLevel(list, ",")).toHaveLength(2);
+    expect(subjectSelector(list)).toBe("span:last-child");
+    expect(subjectSelector('span[class$=")"]')).toBe('span[class$=")"]');
+    expect(subjectSelector('span[data-x="("]')).toBe('span[data-x="("]');
+  });
+
+  it("a string holding a brace cannot close a rule body early", () => {
+    // The string body is copied whole, and that copy is what this test pins:
+    // without it `content: "}"` (or an inline SVG data URL carrying `</svg>`)
+    // ends the block at the quoted brace and every declaration after it is
+    // silently dropped — the exact silent-green shape this file exists to
+    // prevent. Measured −8.000px with the guard green before the copy landed.
+    const svg = rules(
+      'span:last-child { background-image: url("data:image/svg+xml,<svg>}</svg>"); margin-block-start: 8px }',
+    );
+    expect(svg.length, "one rule, not two").toBe(1);
+    expect(movingDeclarations(svg[0]!.body)).toEqual(["margin-block-start: 8px"]);
+    expect(declarationNames(svg[0]!.body)).toEqual(["background-image", "margin-block-start"]);
+    expect(declarationNames(rules('span { content: "}"; margin-block-start: 8px }')[0]!.body)).toEqual(
+      ["content", "margin-block-start"],
+    );
+  });
+
+  it("no sheet leaves the walker with text it could not consume", () => {
+    // The structural half of the reader hardening: every payload above is one
+    // spelling of the same failure mode — a walker that desyncs drops rules and
+    // reports green. A leftover frame, a non-empty buffer or a stray `}` means
+    // some sheet was parsed by a walker that did not understand it, so the file
+    // refuses to vouch for anything and fails here instead of staying quiet.
+    expect(PARSE_LEFTOVER, "sheets the walker could not consume exactly").toEqual([]);
   });
 });

@@ -72,11 +72,13 @@
  * anonymous text block — verified headless), so under the guard the span
  * swaps flex for block + align-content/text-align centering: same box,
  * the trimmed line is centered on the block axis instead. Engines without
- * text-box (pre-128 Chromium / pre-18.2 Safari / pre-154 Firefox) fail
+ * text-box (pre-133 Chromium / pre-18.2 Safari / pre-154 Firefox) fail
  * @supports and keep the flex anatomy unchanged — zero regression.
  * CJK initials stay centered: the ideograph ink center lands on the
  * [cap, baseline] band center (德 verified side by side, headless
- * Chrome). */
+ * Chrome). Support note: the guard tests the `text-box` SHORTHAND,
+ * which Chromium parses from 133 (the longhands land in 128) — engines
+ * older than that fail @supports and keep the flex anatomy. */
 @supports (text-box: trim-both cap alphabetic) {
   .hk-avatar-fallback {
     display: block;

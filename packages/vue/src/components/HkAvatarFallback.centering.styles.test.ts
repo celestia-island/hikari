@@ -23,10 +23,11 @@ import { describe, expect, it } from "vitest";
  * this guard pins the COMPILED sheets. All three sheets are mirrored
  * verbatim into the Rust crate (vue-mirror drift tests), which catches
  * one-sided edits — this file catches the block disappearing from BOTH
- * copies at once. Supported engines: Chromium 128+, Safari 18.2+,
- * Firefox 154+; anything older fails @supports and keeps the flex
- * anatomy (the pre-fix behavior), which is why the base rules below are
- * also pinned to keep their flex centering.
+ * copies at once. Supported engines: Chromium 133+, Safari 18.2+,
+ * Firefox 154+ (the guard tests the text-box shorthand; the longhands
+ * exist in Chromium from 128) — anything older fails @supports and keeps
+ * the flex anatomy (the pre-fix behavior), which is why the base rules
+ * below are also pinned to keep their flex centering.
  */
 
 const componentDir = resolve(dirname(fileURLToPath(import.meta.url)));
@@ -58,6 +59,14 @@ function supportsBody(sheetCss: string, preamble: string, label: string): string
   throw new Error(`${label}: unterminated @supports block`);
 }
 
+/** The prelude of the FIRST rule inside the first `@supports` block with
+ *  exactly `preamble` — the selector the guard actually targets. */
+function guardedSelector(sheetCss: string, preamble: string, label: string): string {
+  const body = supportsBody(sheetCss, preamble, label);
+  const open = body.indexOf("{");
+  return body.slice(0, open).trim();
+}
+
 /** The body of the top-level rule whose prelude is exactly `selector`. */
 function ruleFor(sheetCss: string, selector: string, label: string): string {
   const needle = `${selector} {`;
@@ -77,6 +86,7 @@ describe("avatar letter-fallback optical centering (text-box guard)", () => {
 
   it("hk-avatar-fallback: guard block swaps flex for block + centered trimmed line", () => {
     const body = supportsBody(css.avatar, SUPPORTS_PREAMBLE, "avatar");
+    expect(guardedSelector(css.avatar, SUPPORTS_PREAMBLE, "avatar")).toBe(".hk-avatar-fallback");
     expect(body).toContain("display: block");
     expect(body).toContain("align-content: center");
     expect(body).toContain("text-align: center");
@@ -92,6 +102,7 @@ describe("avatar letter-fallback optical centering (text-box guard)", () => {
 
   it("s-user-avatar: guard block swaps flex for block + centered trimmed line", () => {
     const body = supportsBody(css.adminTokens, SUPPORTS_PREAMBLE, "admin-tokens");
+    expect(guardedSelector(css.adminTokens, SUPPORTS_PREAMBLE, "admin-tokens")).toBe(".s-user-avatar");
     expect(body).toContain("display: block");
     expect(body).toContain("align-content: center");
     expect(body).toContain("text-align: center");
@@ -107,6 +118,9 @@ describe("avatar letter-fallback optical centering (text-box guard)", () => {
 
   it("menu identity fallback: trim only — auto-height flex item needs no anatomy swap", () => {
     const body = supportsBody(css.menuIdentity, SUPPORTS_PREAMBLE, "menu-identity");
+    expect(guardedSelector(css.menuIdentity, SUPPORTS_PREAMBLE, "menu-identity")).toBe(
+      ".hk-menu-identity-item__fallback",
+    );
     expect(body).toContain("text-box: trim-both cap alphabetic");
     expect(body).not.toContain("display:");
   });

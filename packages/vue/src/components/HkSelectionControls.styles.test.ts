@@ -129,7 +129,34 @@ function rules(css: string): Rule[] {
   // read whichever came first while the media copy won at runtime.
   const stack: Array<{ prelude: string; atRule: boolean }> = [];
   let buffer = "";
-  for (const char of bare) {
+  let at = 0;
+  while (at < bare.length) {
+    const char = bare[at]!;
+    at += 1;
+    if (char === "\"" || char === "'") {
+      // Strings are DATA, not structure: a brace or a semicolon inside one is
+      // not a block delimiter. `content: "}"` closed a rule body early and
+      // `@import url("data:text/css,");` put a `;` in a statement prelude —
+      // either desyncs every row after it while the browser applies the sheet.
+      let end = at;
+      while (end < bare.length && bare[end] !== char) end += bare[end] === "\\" ? 2 : 1;
+      buffer += bare.slice(at - 1, end + 1);
+      at = end + 1;
+      continue;
+    }
+    if (char === ";") {
+      // An at-rule STATEMENT has no block: `@layer a, b;`, `@import url(…);`,
+      // `@charset "…";`. Left in the prelude buffer it glued onto the NEXT
+      // rule's prelude, and the walker dropped both (an `@`-prelude becomes a
+      // frame whose body is discarded). Review put `@layer zz;` in front of
+      // `span { margin-block-start: 8px }` in a foreign sheet: 109 green while
+      // Chrome applied the span rule and moved the label 8.000px. Drop the
+      // statement, keep the rule. (Inside a rule body a `;` is a declaration
+      // separator, so only an `@`-prelude is dropped here.)
+      if (/^\s*@/.test(buffer)) buffer = "";
+      else buffer += char;
+      continue;
+    }
     if (char === "{") {
       const prelude = buffer.trim();
       buffer = "";
@@ -386,24 +413,55 @@ function valueOf(body: string, prop: string): string {
   return matches[0]![1]!.trim();
 }
 
-/** Declaration names of a rule body, paren-aware (`a: f(x; y)` is one). */
-function declarationNames(body: string): string[] {
-  const names: string[] = [];
+/** Split a rule body into declarations: paren- AND string-aware (`a: f(x; y)`
+ * is one declaration, and so is `content: ";"`).
+ *
+ * The string half is load-bearing, not symmetry. A CSS string may hold an
+ * unbalanced paren, and counting it left the paren depth stuck above zero: no
+ * `;` split fired again, the rest of the block merged into ONE buffer named by
+ * the first declaration, and every reader then judged the whole tail by that
+ * first name. Review put `span { background-image: url("a).png");
+ * margin-block-start: 8px }` in a foreign sheet and the mover table stayed
+ * green while Chrome moved the label 8.000px — the same block with a balanced
+ * URL (`url("a.png")`) was red, so one character inside the quotes was the
+ * entire difference. `background: "("` does it with no url() at all.
+ */
+function splitDeclarations(body: string): string[] {
+  const out: string[] = [];
   let depth = 0;
   let buffer = "";
+  let at = 0;
   const flush = () => {
     const declaration = buffer.trim();
     buffer = "";
-    const name = declaration.match(/^([-\w]+)\s*:/);
-    if (name) names.push(name[1]!);
+    if (declaration) out.push(declaration);
   };
-  for (const char of body) {
+  while (at < body.length) {
+    const char = body[at]!;
+    if (char === "\"" || char === "'") {
+      let end = at + 1;
+      while (end < body.length && body[end] !== char) end += body[end] === "\\" ? 2 : 1;
+      buffer += body.slice(at, end + 1);
+      at = end + 1;
+      continue;
+    }
     if (char === "(") depth += 1;
     else if (char === ")") depth -= 1;
     if (char === ";" && depth === 0) flush();
     else buffer += char;
+    at += 1;
   }
   flush();
+  return out;
+}
+
+/** Declaration names of a rule body, in source order. */
+function declarationNames(body: string): string[] {
+  const names: string[] = [];
+  for (const declaration of splitDeclarations(body)) {
+    const name = declaration.match(/^([-\w]+)\s*:/);
+    if (name) names.push(name[1]!);
+  }
   return names;
 }
 
@@ -475,8 +533,9 @@ function foreignSheetPaths(): string[] {
   // graph nor the walk above ever sees them — `a { line-height: 2 }` added
   // there would be green here AND ship to the Rust host. Review enumerated all
   // 181 `scss!` paths and found these are the only two no other reader
-  // compiles. They emit class-led selectors only today (measured: this walk
-  // adds zero rows), so reading them costs nothing.
+  // compiles. They emit class-led selectors only today (measured: zero rows in
+  // the pinned table, 59 in the all-tags one — one `svg` rule and 56
+  // `@keyframes` steps, all class-led), so reading them costs nothing.
   for (const rustm of ["link.scss", "typography.scss"]) {
     sheets.push(resolve(ROOT, "..", "..", "components/src/styles/components", rustm));
   }
@@ -575,7 +634,9 @@ function compiledHostBundle(): Rule[] {
  * length: `:root { --text-base: 2rem }` scales the line box and the offset
  * together (measured 0.000px), while `--text-base: 50%` resolves against the
  * parent font size where the label reads it and against the containing
- * block's WIDTH inside the margin `calc()` (measured: box 33.75px low), and
+ * block's WIDTH inside the margin `calc()` (measured: the box runs low by
+ * `(0.75 × the control's own width − 18) / 2` — 24.766px at an 82.047px
+ * control, not one fixed number), and
  * the unitless `0.875` is dropped as a `font-size` but still parsed inside the
  * calc (measured: box 3.0px high). Both were green before the value test.
  */
@@ -590,9 +651,9 @@ const PAINTS_ONLY =
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
- * replaced element as well turns the table from 56 rows into 918 — `@keyframes`
- * steps account for 557 (`svg` 151 rows, `input` 51, `p { margin: 0 }` …), so
- * 361 element/registration rows are left over, 305 of them new, i.e. a table
+ * replaced element as well turns the table from 56 rows into 977 — `@keyframes`
+ * steps account for 613 (`svg` 151 rows, `input` 51, `p { margin: 0 }` …), so
+ * 364 element/registration rows are left over, 308 of them new, i.e. a table
  * nobody reads.
  * Deliberately NOT in this set, with what each omission costs:
  *
@@ -601,7 +662,7 @@ const PAINTS_ONLY =
  *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
  *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
  *   styling that no label can ever match: lifting the unscoped restriction
- *   alone takes this table from 56 rows to 259 (measured), one row per host
+ *   alone takes this table from 56 rows to 262 (measured), one row per host
  *   icon/track sizing rule, and `svg` alone is 151 of the full-reach rows;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
@@ -673,12 +734,16 @@ function couldMatchAPart(compound: string, selector: string = compound): boolean
   // hangs `.dark`, `#app`-style ids or `[data-theme]` off it. This has to run
   // BEFORE the class/id rejection below, and it has to strip those qualifiers
   // itself — review put `:root[data-theme="dark"] { --text-base: 50% }` in a
-  // foreign sheet and the box went +60.797px with the gate green, because
-  // `:root` was stripped to the EMPTY string by a `::?` pattern (so the old
-  // check could never fire) and the attribute test then called `data-theme`
-  // unreachable. The `html[data-theme=dark]` spelling (+60.797px) was the
-  // attribute half of that hole and went red one commit earlier; `html.dark`
-  // is the class half, fixed here.
+  // foreign sheet and the box ran low by `(0.75 × the control's own width −
+  // 18) / 2` with the gate green (+60.797px at a 190.125px control, +24.766px
+  // at 82.047px), because `:root` was stripped to the EMPTY string by a `::?`
+  // pattern (so the old check could never fire) and the attribute test then
+  // called `data-theme` unreachable. Both spellings that hole was found with —
+  // the attribute `html[data-theme=dark]` and the class `html.dark` — already
+  // went red at the commit before this one; what is left to close here is the
+  // QUALIFIER family those two sit in (`body:not(.dark)`, `html:where(.dark)`,
+  // `:root:not([data-theme=light])`), which the single-colon strip below is
+  // what makes reachable.
   // `:root` is the `html` element, and it survives the pseudo strip below (that
   // is the whole point of the token), so it is rewritten first — `.dark:root`
   // included, because the class strip runs before this test.
@@ -748,10 +813,13 @@ const SAFE_LENGTH = /^(?:\d*\.\d+|\d+)(?:px|rem)$/;
 
 /** The smallest font size (px) whose line box still COVERS the box it anchors:
  * one line box is 1.5 × the font size, so a token below `box / 1.5` makes the
- * line SHORTER than the box and the half-line offset overshoots — `--text-base:
- * 0.5rem` measured the box +1.500px low (and the row 18→15px tall) with the
- * gate green, because a length looked safe. Growth is safe (`2rem` → 0.000,
- * the row grows around the box), shrink is not, so the floor is one-sided.
+ * line SHORTER than the box and the offset lands a box that no longer fits:
+ * `--text-base: 0.5rem` collapsed the row 18→15px with the gate green (a length
+ * looked safe), and the 18px box then overhangs its 15px line by 3.0px — the
+ * offset still lands 1.5px down, so the box top sits 3.0px ABOVE the row's own
+ * top edge (measured boxTop −3.0, box centre exactly on the line centre).
+ * Growth is safe (`2rem` → 0.000, the row grows around the box), shrink is not,
+ * so the floor is one-sided.
  * Tokens no offset reads have no floor. */
 const OFFSET_TOKEN_FLOOR_PX: Record<string, number> = {
   // sm box 0.875rem = 14px, md box 1.125rem = 18px, lg box 1.375rem = 22px
@@ -775,29 +843,33 @@ function safeOffsetValue(name: string, value: string): boolean {
  * `8px` now both turn the table red. */
 function movingDeclarations(body: string, scopedCustomProperties = false): string[] {
   const out: string[] = [];
-  let depth = 0;
-  let buffer = "";
-  const flush = () => {
-    const declaration = buffer.trim().replace(/\s+/g, " ");
-    buffer = "";
-    const match = declaration.match(/^([-\w]+)\s*:\s*(.+)$/);
-    if (!match) return;
+  for (const declaration of splitDeclarations(body)) {
+    const match = declaration.replace(/\s+/g, " ").match(/^([-\w]+)\s*:\s*(.+)$/);
+    if (!match) continue;
     const name = match[1]!;
     const value = match[2]!.trim();
     const moves = name.startsWith("--")
       ? scopedCustomProperties || (OFFSET_TOKENS.test(name) && !safeOffsetValue(name, value))
       : !PAINTS_ONLY.test(name.replace(/^-(?:webkit|moz|ms|o)-/, ""));
-    if (!moves) return;
-    out.push(`${name}: ${value}`);
-  };
-  for (const char of body) {
-    if (char === "(") depth += 1;
-    else if (char === ")") depth -= 1;
-    if (char === ";" && depth === 0) flush();
-    else buffer += char;
+    if (moves) out.push(`${name}: ${value}`);
   }
-  flush();
   return [...new Set(out)].sort();
+}
+
+/** The text the two foreign-sheet scans match against. The comment strip has to
+ * be the STRING-AWARE one: both scans used a flat `/\*[\s\S]*?\*\//g`, so a
+ * sheet that carried a string holding the comment OPENER before an offending
+ * rule and one holding the CLOSER after it had that rule deleted from the
+ * scanned text — while the browser applied it (measured +6.500px on a wrapped
+ * md row, both scans green). A pair of unquoted `url()` tokens whose paths end
+ * in the opener and begin with the closer does the same, and those are tokens
+ * a real sheet plausibly carries. `stripComments` skips string and url()
+ * bodies, so only an actual comment is removed. Custom-property NAMES are
+ * blanked after it: `--hk-checkbox-box: 18px` defines a value, it does not
+ * restyle a part.
+ */
+function scanText(css: string): string {
+  return stripComments(css).replace(/--[\w-]+/g, "--");
 }
 
 /** Rules that can reach a part without naming it, one row per complex selector. */
@@ -1807,9 +1879,7 @@ describe("label first-line anchoring", () => {
     expect(sheets.length, "owed sheets: every other stylesheet in the package").toBeGreaterThan(100);
     const mentions: string[] = [];
     for (const file of sheets) {
-      const source = readFileSync(file, "utf8")
-        .replace(/\/\*[\s\S]*?\*\//g, " ")
-        .replace(/(^|[^:])\/\/.*$/gm, "$1");
+      const source = scanText(readFileSync(file, "utf8")).replace(/(^|[^:])\/\/.*$/gm, "$1");
       for (const hit of source.match(SELECTION) ?? []) {
         mentions.push(`${file.slice(ROOT.length + 1)} -> ${hit}`);
       }
@@ -1852,7 +1922,7 @@ describe("label first-line anchoring", () => {
       // Custom-property names are the one bare-token false positive —
       // `--hk-checkbox-box: 18px` DEFINES a value, it does not restyle a part —
       // so they are blanked before the match.
-      const bare = sheet.css.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/--[\w-]+/g, "--");
+      const bare = scanText(sheet.css);
       for (const hit of bare.match(/hk-(?:checkbox|radio|switch|label)(?!\w)/g) ?? []) {
         offenders.push(`${sheet.rel} -> ${hit}`);
       }
@@ -2348,5 +2418,94 @@ describe("HkSwitch geometry", () => {
     );
     expect(hit, `${selector} inside the reduced-motion block`).toBeDefined();
     expect(valueOf(hit!.body, "transition")).toBe("none");
+  });
+});
+
+/**
+ * The reader defects round six found, pinned one test per carrier. Each of
+ * these payloads is legal CSS that a browser APPLIES; every one of them kept
+ * all 109 tests green before its reader was hardened, and each moved the
+ * rendered label by 6.5–8.0px on a labeled control.
+ */
+describe("readers hold against the payloads round six used", () => {
+  it.each([
+    ["@layer statement", "@layer zz;"],
+    ["@import statement", '@import url("data:text/css,");'],
+    ["@charset statement", '@charset "UTF-8";'],
+  ])("an at-rule statement (%s) does not swallow the rule after it", (_name, statement) => {
+    // The walker treated ANY `@`-prelude as a frame whose body is discarded. A
+    // statement has no block, so it never closed: it merged into the next
+    // rule's prelude and both vanished, one statement buying one invisible
+    // rule (`@layer zz;` + `span { margin-block-start: 8px }` measured −8.000px
+    // on the label, guard green).
+    const parsed = rules(`${statement}\nspan { margin-block-start: 8px; }`);
+    expect(parsed.map((rule) => rule.selector)).toEqual(["span"]);
+    expect(declarationNames(parsed[0]!.body)).toContain("margin-block-start");
+  });
+
+  it("an at-rule statement inside a media block does not swallow the rule after it", () => {
+    const parsed = rules(
+      "@media screen { @layer zz; span { margin-block-start: 8px; } }",
+    );
+    const hit = parsed.find((rule) => rule.selector === "span");
+    expect(hit, "the span rule inside the media block").toBeDefined();
+    expect(hit!.media).toBe("@media screen");
+  });
+
+  it.each([
+    ["url() with an unbalanced paren", 'background-image: url("a).png"); margin-block-start: 8px'],
+    ["url() with an unbalanced opener", 'background-image: url("a(.png"); margin-block-start: 8px'],
+    ["plain string with a paren", 'background: "("; margin-block-start: 8px'],
+  ])("a quoted paren (%s) does not hide the rest of the block", (_name, body) => {
+    // The splitter counted parens without skipping string bodies, so a string
+    // with one unbalanced paren left `depth != 0` for ever: no `;` split fired
+    // again and the whole tail merged into a buffer named by the FIRST
+    // declaration — discarded as paint when that name was paint-only. Measured
+    // −8.000px, guard green; the same block with `url("a.png")` was red.
+    expect(movingDeclarations(body)).toEqual(["margin-block-start: 8px"]);
+    expect(declarationNames(body)).toContain("margin-block-start");
+  });
+
+  it("a balanced string is still one declaration (the precision control)", () => {
+    expect(movingDeclarations('background-image: url("a.png"); margin-block-start: 8px')).toEqual([
+      "margin-block-start: 8px",
+    ]);
+    expect(declarationNames('background-image: url("a.png"); margin-block-start: 8px')).toEqual([
+      "background-image",
+      "margin-block-start",
+    ]);
+  });
+
+  it("a quoted comment delimiter cannot hide a part from the scans", () => {
+    // Both foreign-sheet scans stripped comments with a flat non-greedy regex,
+    // so a sheet could delete the offending rule from the SCANNED text with two
+    // valid strings — one carrying the comment opener before it, one carrying
+    // the closer after. Chrome
+    // applied the rule (measured +6.500px on a wrapped md row), both scans
+    // green.
+    const css = [
+      '.p1::after { content: "/*"; }',
+      ".hk-checkbox-box { margin-block-start: 8px !important; }",
+      '.p2::after { content: "*/"; }',
+    ].join("\n");
+    expect(scanText(css)).toContain("hk-checkbox-box");
+  });
+
+  it("a quoted comment delimiter cannot hide a part through url() tokens", () => {
+    // The plausible carrier: an external URL whose path ends in `/*` and
+    // another that starts with `*/`.
+    const css = [
+      ".p1 { background-image: url(https://e.invalid/a/*); }",
+      ".hk-checkbox-box { margin-block-start: 8px !important; }",
+      ".p2 { background-image: url(https://e.invalid/b*/); }",
+    ].join("\n");
+    expect(scanText(css)).toContain("hk-checkbox-box");
+  });
+
+  it("a real comment and a custom-property NAME are still not hits", () => {
+    // The other half of the same reader: hardening it must not turn comments
+    // or `--hk-*` definitions into offenders.
+    expect(scanText("/* .hk-checkbox-box { margin: 0 } */")).not.toContain("hk-checkbox-box");
+    expect(scanText(".x { --hk-checkbox-box: 18px }")).not.toContain("hk-checkbox-box");
   });
 });

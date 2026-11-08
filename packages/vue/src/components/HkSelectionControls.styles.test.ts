@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -978,6 +978,15 @@ describe("label first-line anchoring", () => {
     ".hk-checkbox-input",
   ],
   radio: [".hk-radio", ".hk-radio-box", ".hk-radio-dot", ".hk-radio-input"],
+  switch: [
+    ".hk-switch",
+    ".hk-switch-input",
+    ".hk-switch-track",
+    ".hk-switch-thumb",
+    ".hk-switch-content",
+    ".hk-switch-content-off",
+    ".hk-switch-content-on",
+  ],
 } as const;
 
   it.each([
@@ -1115,12 +1124,16 @@ describe("label first-line anchoring", () => {
     // never asked about checkbox parts. Those mirror sheets ("House parity
     // (HkCheckbox)") are exactly where such a copy comes from, so walk each
     // sheet's subjects: a rule may name only its own component's parts.
+    // A comma list is one rule with several subjects: `.hk-checkbox-box,
+    // .hk-switch-thumb { width: 2.5rem }` in HkSwitch.scss names the box in the
+    // first compound, and a subject-only reader that stops at the last
+    // compound (or at the comma) never sees it — that was the fifth door.
     const foreign: string[] = [];
     for (const rule of all) {
-      const subject = withoutForeignArgs(subjectSelector(rule.selector));
-      for (const token of subject.match(/\.hk-[a-z0-9-]+/g) ?? []) {
-        if (token !== own && !token.startsWith(`${own}-`)) {
-          foreign.push(`${rule.selector} -> ${token}`);
+      for (const one of splitTopLevel(rule.selector, ",")) {
+        const subject = withoutForeignArgs(subjectSelector(one));
+        for (const token of subject.match(/\.hk-[a-z0-9-]+/g) ?? []) {
+          if (token !== own && !token.startsWith(`${own}-`)) foreign.push(`${rule.selector} -> ${token}`);
         }
       }
     }
@@ -1130,6 +1143,7 @@ describe("label first-line anchoring", () => {
   it.each([
     ["checkbox", checkbox, PARTS.checkbox],
     ["radio", radio, PARTS.radio],
+    ["switch", sw, PARTS.switch],
   ])("%s rules that move or lay out a part name the part they touch", (_name, all, parts) => {
     // The class-led pin makes the subject visible to the readers; it does not
     // make the readers see every ELEMENT. The icon and the dot carry classes
@@ -1155,14 +1169,69 @@ describe("label first-line anchoring", () => {
           name,
         ),
       );
+    // Every complex selector in a comma list is checked: `subjectSelector()`
+    // reads one subject, so `.hk-switch-thumb, .hk-checkbox-box { width: 2.5rem }`
+    // in HkSwitch.scss used to name the thumb and never be asked about the box.
     const stray = all
-      .filter((r) => moves(r.body))
+      .flatMap((r) => splitTopLevel(r.selector, ",").map((one) => ({ rule: r, one: one.trim() })))
+      .filter(({ rule }) => moves(rule.body))
       // HkRadioGroup is a different component: its rules lay out the group,
       // not the row, and the wrapper has no `.hk-` part to name.
-      .filter((r) => !/^\.hk-radio-group(?:$|[-.:])/.test(subjectSelector(r.selector)))
-      .filter((r) => !(parts as readonly string[]).some((p) => namesClass(subjectSelector(r.selector), p)))
-      .map((r) => r.selector);
+      .filter(({ one }) => !/^\.hk-radio-group(?:$|[-.:])/.test(subjectSelector(one)))
+      .filter(({ one }) => !(parts as readonly string[]).some((p) => namesClass(subjectSelector(one), p)))
+      .map(({ rule }) => rule.selector);
     expect(stray, "rules that move or lay out a part without naming one").toEqual([]);
+  });
+
+  // Everything above compiles four sheets by hand. The browser gets whatever
+  // the bundle happens to include: a Vue consumer pulls in each component's
+  // sheet through its TSX side-effect import, and the Rust host imports ~200
+  // mirrors in `styles/index.scss`. So the fourth door was simply "write the
+  // foreign rule in a sheet the guard never reads" — `.hk-checkbox-box { width:
+  // 2.5rem; height: 2.5rem }` appended to HkSelectionGrid.scss moves the box
+  // 11px with all 89 tests green (HkSelectionGrid is imported 30 lines after
+  // HkLabel). Scan the whole directory instead of the four files, and pin the
+  // host's import order so dropping one import cannot silently delete the
+  // anatomy either.
+  it("no other component sheet names a selection part", () => {
+    const OWN = new Set(["HkCheckbox.scss", "HkRadio.scss", "HkSwitch.scss", "HkLabel.scss"]);
+    // `(?!\w)` and not `(?![\w-])`: the parts ARE the suffix (`.hk-checkbox-box`),
+    // so rejecting a trailing hyphen would only match the bare root and let the
+    // very rule this test exists for through.
+    const SELECTION = /\.hk-(?:checkbox|radio|switch|label)(?!\w)/g;
+    const mentions: string[] = [];
+    const files = readdirSync(componentDir).filter((f) => f.endsWith(".scss") && !OWN.has(f));
+    expect(files.length, "component sheets that are not one of the four").toBeGreaterThan(100);
+    for (const file of files) {
+      const source = readFileSync(resolve(componentDir, file), "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/(^|[^:])\/\/.*$/gm, "$1");
+      for (const hit of source.match(SELECTION) ?? []) {
+        mentions.push(`${file} -> ${hit}`);
+      }
+    }
+    expect(mentions, "sheets outside the selection controls naming one").toEqual([]);
+  });
+
+  it("the host stylesheet imports the four sheets in the documented order", () => {
+    // `packages/components/src/styles/index.scss` is the Rust host's single
+    // entry; a dropped `@import` deletes the anatomy from every Rust consumer
+    // with this whole file still green.
+    const host = readFileSync(
+      resolve(componentDir, "../../../components/src/styles/index.scss"),
+      "utf8",
+    );
+    const imported = [...host.matchAll(/@import\s+['"]\.\/vue-mirror\/components\/([\w]+)\.scss['"]/g)].map(
+      (m) => m[1],
+    );
+    expect(imported.length, "mirror imports in the host stylesheet").toBeGreaterThan(100);
+    const at = (name: string) => imported.indexOf(name);
+    for (const name of ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"]) {
+      expect(at(name), `${name} is imported by the host stylesheet`).toBeGreaterThanOrEqual(0);
+    }
+    expect(at("HkCheckbox")).toBeLessThan(at("HkRadio"));
+    expect(at("HkRadio")).toBeLessThan(at("HkSwitch"));
+    expect(at("HkSwitch")).toBeLessThan(at("HkLabel"));
   });
 
   it("HkLabel pins the line box on its base rule and leaves the first line alone", () => {

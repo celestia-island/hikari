@@ -24,7 +24,7 @@ mueve.
 La acción de creación principal de una página — la que crea una nueva entidad
 de primer nivel (un proveedor, un canal, un grupo, una regla de acceso, un
 tema en la línea compartida) — es un **botón de icono más en el grupo de la
-esquina superior derecha, a la izquierda del refresco**. Nunca es un botón
+esquina superior derecha, a la izquierda de la actualización**. Nunca es un botón
 independiente dentro del cuerpo de la página.
 
 La etiqueta visible que habría llevado el botón del cuerpo se convierte en el

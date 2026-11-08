@@ -1150,7 +1150,7 @@ function compiledHostBundle(): Rule[] {
  * calc (measured: box 3.0px high). Both were green before the value test.
  */
 const PAINTS_ONLY =
-  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline(?:-(?:color|style|width|offset))?|text-decoration|caret-color|cursor|pointer-events|user-select|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|scroll-behavior|overflow-style|tap-highlight-color|font-smoothing|text-size-adjust|scroll-snap|overscroll-behavior|touch-action|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
+  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline(?:-(?:color|style|width|offset))?|text-decoration|caret-color|cursor|pointer-events|user-select|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|scroll-behavior|overflow-style|tap-highlight-color|font-smoothing|scroll-snap|overscroll-behavior|touch-action|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
 
 /** The TEXT-LEVEL phrasing content a `<label>` may hold, plus custom elements
  * (`x-foo`, the hyphen is the tell). A rule on one of these can restyle the
@@ -1310,6 +1310,21 @@ const GLOBAL_SUBJECT = /^(?:\*|\*::[-\w]+|:root|html|body|:where\(\*\)|:where\(\
  * can pull the line box and the offset apart. */
 const OFFSET_TOKENS = /^--text-(?:xs|sm|base|md|lg|xl)$/;
 
+/** Declarations that INHERIT the block axis itself. Unlike the `--text-*`
+ * tokens they do not have to reach the label through a size: `writing-mode`
+ * (and the `text-orientation` that only means anything beside it) hands the
+ * vertical axis down to every descendant, so the subject of the rule does not
+ * have to be able to BE or CONTAIN a part. Review proved the hole with the
+ * same CSS in five spellings: `html { writing-mode: vertical-rl }`,
+ * `body`, `label`, `span` and `:where(.hk-row)` were all red rows, while
+ * `.hk-row { writing-mode: vertical-rl }` and `div { writing-mode:
+ * vertical-rl }` were green with the layout ruined — box top 0, label top 26,
+ * the two rects no longer overlapping, a 42px control turned into a 613px
+ * vertical strip. `line-height` and `direction` deliberately stay out: the
+ * label sets its own line-height (`1.5` on `.hk-label`), and `direction` does
+ * not move anything on the block axis by itself. */
+const INHERITED_BLOCK = /^(?:writing-mode|text-orientation)$/;
+
 /** A token value that means the same thing in `font-size` and in the
  * `calc()`s: an absolute or root-relative length. `50%` resolves against the
  * PARENT font size in one place and the containing block's WIDTH in the other
@@ -1333,12 +1348,24 @@ const SAFE_LENGTH = /^(?:\d*\.\d+|\d+)(?:px|rem)$/;
  * top edge (measured boxTop −3.0, box centre exactly on the line centre).
  * Growth is safe (`2rem` → 0.000, the row grows around the box), shrink is not,
  * so the floor is one-sided.
- * Tokens no offset reads have no floor. */
+ * Every token that can reach a label has a floor; a token with no entry used to
+ * read as safe. */
 const OFFSET_TOKEN_FLOOR_PX: Record<string, number> = {
   // sm box 0.875rem = 14px, md box 1.125rem = 18px, lg box 1.375rem = 22px
   "--text-xs": 14 / 1.5,
   "--text-base": 18 / 1.5,
   "--text-md": 22 / 1.5,
+  // The other three box no label of their own, and a missing floor read as
+  // "safe" (`floor === undefined || px >= floor`), so `:root { --text-sm: 4px }`
+  // was a row-less sheet even though nothing stops a host from sizing an
+  // ANCESTOR with it — the label then inherits 4px, its line box collapses to
+  // 6px under a 14px box, and the same `box / 1.5` arithmetic decides. Review
+  // deleted any one of these three and the suite stayed green (3 rows). They
+  // take the 12px global floor: below it the line box no longer covers any box
+  // in the family (`--text-base: 12px` measured boxTop 0.000).
+  "--text-sm": 12,
+  "--text-lg": 12,
+  "--text-xl": 12,
 };
 
 /** A length that still leaves the offset aimed at a line box the box fits in. */
@@ -1346,7 +1373,10 @@ function safeOffsetValue(name: string, value: string): boolean {
   if (!SAFE_LENGTH.test(value)) return false;
   const px = value.endsWith("rem") ? Number.parseFloat(value) * 16 : Number.parseFloat(value);
   const floor = OFFSET_TOKEN_FLOOR_PX[name];
-  return floor === undefined || px >= floor;
+  // Every name `OFFSET_TOKENS` admits has a floor (a test below pins the two in
+  // step), so a missing entry is a bug in this file, not a licence: fail closed.
+  if (floor === undefined) return false;
+  return px >= floor;
 }
 
 /** Every declaration that can move a box, as `name: value` text. The VALUE is
@@ -1493,7 +1523,16 @@ function elementOnlyMovers(label: string, all: Rule[]): string[] {
         // the first line.
         for (const declaration of splitDeclarations(rule.body)) {
           const part = splitDeclaration(declaration);
-          if (!part || !OFFSET_TOKENS.test(part.name)) continue;
+          if (!part) continue;
+          // An inherited block-axis declaration is a row on ANY subject: it
+          // reaches the label whichever element the selector names, so
+          // "cannot contain a part" is not an argument here (see
+          // `INHERITED_BLOCK`).
+          if (INHERITED_BLOCK.test(part.name)) {
+            rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${part.name}: ${part.value}`);
+            continue;
+          }
+          if (!OFFSET_TOKENS.test(part.name)) continue;
           if (safeOffsetValue(part.name, part.value)) continue;
           rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${part.name}: ${part.value}`);
         }
@@ -3212,11 +3251,31 @@ describe("readers hold against the payloads rounds six to eight used", () => {
     // span%7B…%7D")`, −8.000px on every row) and a plain `@import "./x.css"` —
     // with the guard 144/144 green. The package ships no import today, so the
     // invariant is "no imports at all" rather than "imports are parsed".
-    const offenders = compiledForeignSheets().flatMap((sheet) => {
+    // Two surfaces ship, and the walk has to cover both: the package's own
+    // sheets and the HOST BUNDLE the Rust builder emits. The bundle used to be
+    // outside it — review put `@import url("data:text/css,span%3Alast-child
+    // %7Bmargin-block-start%3A8px%7D");` after the last `@use` in
+    // `packages/components/src/styles/index.scss` and the label dropped
+    // 8.000px (`boxTopRel −6.500`) with the gate 203/203 green, pixel-identical
+    // to writing the rule into the CSS by hand.
+    const surfaces: Array<{ rel: string; css: string }> = [
+      ...compiledForeignSheets(),
+      {
+        rel: "packages/components/src/styles/index.scss (host bundle)",
+        css: compiledHostBundleSource(),
+      },
+    ];
+    const offenders = surfaces.flatMap((sheet) => {
       const targets = importTargets(sheet.css);
       return targets.length === 0 ? [] : [`${sheet.rel} :: ${targets.join(" | ")}`];
     });
     expect(offenders, "sheets that import a stylesheet the walk cannot see").toEqual([]);
+    // Negative control: the assertion above is green whenever the list is
+    // short, so pin the list — dropping the bundle back out turns THIS red.
+    expect(
+      surfaces.filter((sheet) => sheet.rel.includes("components/src/styles/index.scss")),
+      "the host bundle must be in the @import walk",
+    ).toHaveLength(1);
   });
 
   it("reads an @import target through its url token", () => {
@@ -3589,9 +3648,129 @@ describe("every reader the guard added is pinned by a payload", () => {
       String.raw`[class]:first-of-type { margin-block-start: 8px !important }`,
       String.raw`[cl\61 ss]:first-of-type { margin-block-start: 8px !important }`,
       String.raw`sp\61 n:first-of-type { align-self: center !important }`,
+      String.raw`sp\000061 n:first-of-type { margin-block-start: 8px !important }`,
+      String.raw`[cl\000061 ss]:first-of-type { margin-block-start: 8px !important }`,
     ]) {
       expect(elementOnlyMovers("sheet", rules(sheet)), sheet).toHaveLength(1);
     }
+  });
+
+  it("every offset token's floor is the one that decides", () => {
+    // `floor === undefined || px >= floor` reads a MISSING floor as safe, so a
+    // deleted entry is invisible until a payload asks: review removed
+    // `--text-md` (the lg label's own token) and the suite stayed green.
+    // A FIXED list on purpose: iterating the map would let a deleted entry pass
+    // by doing one fewer turn, which is exactly how the hole looked.
+    for (const name of ["--text-xs", "--text-sm", "--text-base", "--text-md", "--text-lg", "--text-xl"]) {
+      const floor = OFFSET_TOKEN_FLOOR_PX[name];
+      expect(floor, `${name} must have a floor`).toBeTypeOf("number");
+      expect(
+        elementOnlyMovers("sheet", rules(`:root { ${name}: ${floor - 1}px }`)),
+        `${name} below its floor`,
+      ).toHaveLength(1);
+      expect(
+        elementOnlyMovers("sheet", rules(`:root { ${name}: ${floor}px }`)),
+        `${name} exactly at its floor`,
+      ).toHaveLength(0);
+      expect(
+        elementOnlyMovers("sheet", rules(`:root { ${name}: ${floor + 1}px }`)),
+        `${name} above its floor`,
+      ).toHaveLength(0);
+    }
+    // The floor for the three boxed tokens is `box / 1.5`, and the value is
+    // pinned absolutely here: a map whose own values feed the payload above
+    // cannot notice a wrong number.
+    expect(OFFSET_TOKEN_FLOOR_PX["--text-xs"]).toBeCloseTo(9.3333, 3);
+    expect(OFFSET_TOKEN_FLOOR_PX["--text-base"]).toBe(12);
+    expect(OFFSET_TOKEN_FLOOR_PX["--text-md"]).toBeCloseTo(14.6667, 3);
+    expect(elementOnlyMovers("sheet", rules(":root { --text-base: 11px }"))).toHaveLength(1);
+    expect(elementOnlyMovers("sheet", rules(":root { --text-base: 12px }"))).toHaveLength(0);
+    expect(elementOnlyMovers("sheet", rules(":root { --text-md: 14px }"))).toHaveLength(1);
+    expect(elementOnlyMovers("sheet", rules(":root { --text-md: 15px }"))).toHaveLength(0);
+    // The fail-closed branch (`floor === undefined` → unsafe) is unreachable
+    // while the map is complete, so it is pinned by making the map incomplete
+    // for one call: a token added to `OFFSET_TOKENS` without a floor must fail
+    // closed, not read 999px as safe.
+    const savedFloor = OFFSET_TOKEN_FLOOR_PX["--text-sm"];
+    try {
+      delete OFFSET_TOKEN_FLOOR_PX["--text-sm"];
+      expect(elementOnlyMovers("sheet", rules(":root { --text-sm: 999px }"))).toHaveLength(1);
+    } finally {
+      OFFSET_TOKEN_FLOOR_PX["--text-sm"] = savedFloor!;
+    }
+    // …and the map must stay in step with the token regex: a token with no
+    // entry anywhere is a token nothing floors.
+    for (const name of ["--text-xs", "--text-sm", "--text-base", "--text-md", "--text-lg", "--text-xl"]) {
+      expect(OFFSET_TOKENS.test(name), name).toBe(true);
+      expect(name in OFFSET_TOKEN_FLOOR_PX, name).toBe(true);
+    }
+  });
+
+  it("an inherited block-axis declaration is a row on any subject", () => {
+    // `writing-mode` inherits, so the subject does not have to be able to BE or
+    // CONTAIN a part. Measured before the fix: box top 0, label top 26, no
+    // overlap, 42px row → 613px, gate green.
+    for (const subject of [".hk-row", "div", ":where(.hk-row)", "#panel", "*"]) {
+      for (const name of ["writing-mode", "text-orientation", "WRITING-MODE"]) {
+        expect(
+          elementOnlyMovers("sheet", rules(`${subject} { ${name}: vertical-rl }`)),
+          `${subject} { ${name} }`,
+        ).toHaveLength(1);
+      }
+    }
+    // A phrasing subject reaches the label as a part already; the row still
+    // exists, and `align`-only declarations stay out.
+    expect(elementOnlyMovers("sheet", rules("span { writing-mode: vertical-rl }"))).toHaveLength(1);
+    expect(elementOnlyMovers("sheet", rules(".hk-row { align-items: center }"))).toHaveLength(0);
+    // `text-size-adjust` was whitelisted as "paint only", but it INHERITS and
+    // Android's text autosizing scales the used font size with it: the label's
+    // line box grows while the box's `rem` offset does not (desktop delta
+    // 0.000, which is why it looked harmless).
+    expect(elementOnlyMovers("sheet", rules("span { text-size-adjust: 200% }"))).toHaveLength(1);
+    expect(elementOnlyMovers("sheet", rules("span { color: red }"))).toHaveLength(0);
+  });
+
+  it("every grouping at-rule name is the one that decides", () => {
+    // `GROUPING_AT_NAMES` decides whether a block's text is recorded; narrowing
+    // it to `{media}` or deleting one member left the suite green because only
+    // `@media` had a payload.
+    isolated(() => {
+      // Fixed list, not the set itself: a member deleted from `GROUPING_AT_NAMES`
+      // has to turn its own line red, not silently drop out of the loop.
+      for (const name of [
+        "media",
+        "supports",
+        "layer",
+        "container",
+        "scope",
+        "starting-style",
+        "document",
+        "keyframes",
+      ]) {
+        const before = PARSE_LEFTOVER.length;
+        rules(`@${name} all { margin-block-start: 8px }`);
+        expect(PARSE_LEFTOVER.slice(before).join("\n"), name).toContain(`declaration in @${name} all`);
+      }
+      // …and the set must not carry names beyond the ones pinned here.
+      expect([...GROUPING_AT_NAMES].sort()).toEqual([
+        "container",
+        "document",
+        "keyframes",
+        "layer",
+        "media",
+        "scope",
+        "starting-style",
+        "supports",
+      ]);
+      // Case-insensitive and escapable, like the at-keyword itself.
+      for (const prelude of ["@MEDIA all", String.raw`@\6d edia all`, String.raw`\40 media all`]) {
+        const before = PARSE_LEFTOVER.length;
+        rules(`${prelude} { margin-block-start: 8px }`);
+        // The message quotes the RAW prelude (that is the point of a tripwire),
+        // so only the record itself is asserted here.
+        expect(PARSE_LEFTOVER.slice(before).join("\n"), prelude).toContain("declaration in ");
+      }
+    });
   });
 
   it("each `unconsumable text` tripwire fires on a payload", () => {
@@ -3707,6 +3886,11 @@ describe("every reader the guard added is pinned by a payload", () => {
     // The `hk-*` token tests read `className` too, so an erased spelling must
     // land on the same string as its plain form.
     expect(rules(String.raw`.\68 k-checkbox { color: red }`).map((r) => r.selector)).toEqual([
+      ".hk-checkbox",
+    ]);
+    // Up to SIX hex digits, and formatters pad: capping the scan at two digits
+    // left `sp\000061 n` undecoded while `sp\61 n` worked (review's G55).
+    expect(rules(String.raw`.\000068 k-checkbox { color: red }`).map((r) => r.selector)).toEqual([
       ".hk-checkbox",
     ]);
   });

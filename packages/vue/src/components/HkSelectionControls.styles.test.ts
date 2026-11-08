@@ -60,13 +60,47 @@ interface Rule {
   media?: string;
 }
 
+/**
+ * Removes block comments and the `@charset` statement — but only where they
+ * really are comments. A flat non-greedy comment regex is blind to string
+ * literals: review bundled one rule whose `background` was a quoted URL
+ * containing a comment OPENER, a plain `span { margin-block-start: 8px }`
+ * between it and a rule whose `content` was a quoted comment CLOSER, and the
+ * regex paired the two delimiters across the middle rule — `span` was deleted
+ * before any reader saw it while the browser applied it (measured: every row
+ * 8.000px low, guard green). So walk the text instead: quotes and escapes are
+ * honoured, and a comment opener inside a string is data, not a delimiter.
+ */
+function stripComments(css: string): string {
+  let out = "";
+  let index = 0;
+  while (index < css.length) {
+    const char = css[index]!;
+    if (char === "\"" || char === "'") {
+      // Copy the whole string literal, escapes included.
+      let end = index + 1;
+      while (end < css.length && css[end] !== char) end += css[end] === "\\" ? 2 : 1;
+      out += css.slice(index, end + 1);
+      index = end + 1;
+      continue;
+    }
+    if (char === "/" && css[index + 1] === "*") {
+      const end = css.indexOf("*/", index + 2);
+      index = end < 0 ? css.length : end + 2;
+      continue;
+    }
+    out += char;
+    index += 1;
+  }
+  return out;
+}
+
 /** Splitter for the expanded output of these leaf sheets. */
 function rules(css: string): Rule[] {
   // Expanded output keeps loud comments, and sheets containing non-ASCII
   // text get a braille-less `@charset "UTF-8";` statement — both would glue
   // onto the next selector and shift every rule pair, so strip them first.
-  const bare = css
-    .replace(/\/\*[\s\S]*?\*\//g, "")
+  const bare = stripComments(css)
     .replace(/@charset[^;]*;/g, "")
     .trim();
   const out: Rule[] = [];
@@ -456,18 +490,23 @@ function compiledForeignSheets(): CompiledSheet[] {
   return foreignSheetCache;
 }
 
-/** The host bundle the Rust builder ships, compiled and parsed once. */
+/** The host bundle the Rust builder ships, compiled once. */
+let hostBundleCssCache: string | null = null;
+function compiledHostBundleSource(): string {
+  if (hostBundleCssCache === null) {
+    hostBundleCssCache = compile(resolve(componentDir, "../../../components/src/styles/index.scss"), {
+      style: "expanded",
+      loadPaths: [resolve(componentDir, "../../../theme/styles")],
+      logger: { warn() {}, debug() {} },
+    }).css;
+  }
+  return hostBundleCssCache;
+}
+
+/** The host bundle the Rust builder ships, parsed once. */
 let hostBundleCache: Rule[] | null = null;
 function compiledHostBundle(): Rule[] {
-  if (!hostBundleCache) {
-    hostBundleCache = rules(
-      compile(resolve(componentDir, "../../../components/src/styles/index.scss"), {
-        style: "expanded",
-        loadPaths: [resolve(componentDir, "../../../theme/styles")],
-        logger: { warn() {}, debug() {} },
-      }).css,
-    );
-  }
+  if (!hostBundleCache) hostBundleCache = rules(compiledHostBundleSource());
   return hostBundleCache;
 }
 
@@ -514,22 +553,44 @@ function compiledHostBundle(): Rule[] {
 const PAINTS_ONLY =
   /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline-(?:color|style|width)|text-decoration|caret-color|cursor|pointer-events|user-select|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|scroll-behavior|overflow-style|tap-highlight-color|font-smoothing|text-size-adjust|scroll-snap|overscroll-behavior|touch-action|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
 
-/** The elements a `<label>` may contain: HTML phrasing content, plus custom
- * elements (`x-foo`, the hyphen is the tell). A rule on one of these can
- * restyle the text inside the label, so it is reachable; a rule on a block
- * element cannot — `<label>` accepts phrasing content only and a block inside
- * it is invalid markup. Review measured what the narrow `span|label` set cost:
+/** The TEXT-LEVEL phrasing content a `<label>` may hold, plus custom elements
+ * (`x-foo`, the hyphen is the tell). A rule on one of these can restyle the
+ * text inside the label, so it is reachable; a rule on a block element cannot —
+ * `<label>` accepts phrasing content only and a block inside it is invalid
+ * markup. Review measured what the narrow `span|label` set cost:
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: it turns the table
- * from 47 rows into 928 (`p { margin: 0 }`, `ul { padding: 0 }`, …), i.e. a
- * table nobody reads. `img`/`svg`/`input` are deliberately out: a replaced
- * element inside a label is sized by `width`/`height` and its own rules are
- * full of them. */
+ * from 56 rows into 918 (557 of them `@keyframes` steps, 314 element rules —
+ * `svg` 151, `input` 51, `p { margin: 0 }` …), i.e. a table nobody reads.
+ * Deliberately NOT in this set, with what each omission costs:
+ *
+ * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized
+ *   by `width`/`height` rather than by the line box. They are reachable — but
+ *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
+ *   because the shipped `.hk-icon svg { height: 100% }` family is 155 rows of
+ *   host-internal styling that no label can ever match;
+ * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
+ *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
+ *   `template`, `noscript`, `area`, `embed`, `picture`, `iframe`, `audio`):
+ *   reachable in principle, green today, and a rule on one of them is a real
+ *   mover this table does not see — recorded as a known limit rather than
+ *   paid for with ~40 rows nobody would read. */
 const PHRASING_CONTENT = new Set([
   "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data", "del", "dfn", "em", "i", "ins",
   "kbd", "label", "mark", "output", "q", "rp", "rt", "ruby", "s", "samp", "slot", "small", "span",
   "strong", "sub", "sup", "time", "u", "var", "wbr",
+]);
+
+/** Replaced elements a label may hold. Reachable only through an UNSCOPED rule
+ * (`svg { display: block }` in the reset): a descendant rule needs an ancestor
+ * a label never has, and the icon family (`.hk-icon svg`, `.hk-menu-item-icon
+ * svg`, …) would otherwise add 155 host-internal rows to the causal table.
+ * Review put `svg { height: 40px }` in a foreign sheet — and `height: 40px` on
+ * the already-shipped reset — and the icon ink moved 32px with the gate green,
+ * so the unscoped shape has to be a row. */
+const REPLACED_CONTENT = new Set([
+  "img", "svg", "canvas", "input", "video", "iframe", "embed", "object", "audio", "picture",
 ]);
 
 /** Attributes a selection part actually carries: `data-checked` on the box,
@@ -566,7 +627,7 @@ const PART_ATTRS = new Set([
  * 8px }` moved the label 8px with the gate green, and `*|span` / `|span` (a
  * namespace) walked through the same comparison.
  */
-function couldMatchAPart(compound: string): boolean {
+function couldMatchAPart(compound: string, selector: string = compound): boolean {
   // The arguments go FIRST. Reading the tag before dropping them turned
   // `span:nth-child(2)` into the tag "span2", i.e. "cannot reach a part", so
   // that rule never formed a row — review measured it moving the label
@@ -574,21 +635,27 @@ function couldMatchAPart(compound: string): boolean {
   // unbalanced paren after the strip fails CLOSED (counted as reachable).
   const bare = withoutParens(compound.replace(/\[[^\]]*\]/g, ""));
   if (bare.includes("(") || bare.includes(")")) return true;
-  if (/[.#]/.test(bare)) return false;
-  // A global subject is reachable whatever attributes qualify it: `html`
-  // covers every element no matter which theme hook is on it, so
-  // `html[data-theme=dark] { --text-base: 50% }` is a real mover (`data-theme`
-  // is not something a part carries, so the attribute test below said
-  // "unreachable" and the whole rule vanished — measured: box 33.75px low with
-  // the gate green).
+  // A GLOBAL subject reaches every element no matter what qualifies it: `html`
+  // (or `:root`, `body`, `*`) is still the ancestor of the label when the rule
+  // hangs `.dark`, `#app`-style ids or `[data-theme]` off it. This has to run
+  // BEFORE the class/id rejection below, and it has to strip those qualifiers
+  // itself — review put `:root[data-theme="dark"] { --text-base: 50% }` in a
+  // foreign sheet and the box went +60.797px with the gate green, because
+  // `:root` was stripped to the EMPTY string by a `::?` pattern (so the old
+  // check could never fire) and the attribute test then called `data-theme`
+  // unreachable. `html[data-theme=dark]` (+60.797px) and `html.dark` were the
+  // same hole from the other side.
   const globalBare = bare
-    .replace(/::?[-\w]+/g, "")
+    .replace(/\.[-\w]+/g, "")
+    .replace(/#[-\w]+/g, "")
+    .replace(/::[-\w]+/g, "")
     .replace(/\s+/g, "")
     .toLowerCase()
     .replace(/^.*\|/, "");
   if (globalBare === "*" || globalBare === "html" || globalBare === "body" || globalBare === ":root") {
     return true;
   }
+  if (/[.#]/.test(bare)) return false;
   const attributes = [...compound.matchAll(/\[\s*([-\w]+)/g)].map((m) => m[1]!.toLowerCase());
   if (attributes.some((name) => !PART_ATTRS.has(name))) return false;
   const tag = bare
@@ -598,7 +665,11 @@ function couldMatchAPart(compound: string): boolean {
     .trim()
     .toLowerCase()
     .replace(/^.*\|/, "");
-  return tag === "" || PHRASING_CONTENT.has(tag) || tag.includes("-");
+  if (tag === "" || PHRASING_CONTENT.has(tag) || tag.includes("-")) return true;
+  // `selector` is the whole comma-free selector, not just the subject
+  // compound: `svg { … }` reaches the icon a label holds, `.hk-icon svg { … }`
+  // needs an ancestor class a label never has.
+  return REPLACED_CONTENT.has(tag) && !/[ >+~]/.test(selector.trim());
 }
 
 /** Subjects that cover EVERY element (`*`, `:root`, `html`, `body`, their
@@ -619,10 +690,14 @@ const OFFSET_TOKENS = /^--text-(?:xs|sm|base|md|lg|xl)$/;
  * PARENT font size in one place and the containing block's WIDTH in the other
  * (measured: box 33.75px low), `0.875` is invalid in both and dropped where it
  * lands in `font-size` but not inside the calc (measured: box 3.0px high), and
- * `2em` would resolve against a different element in each place. Colour and
- * font tokens are not offset tokens at all, so they stay exempt: the exemption
- * is keyed on the NAME, not on looking like a length. */
-const SAFE_LENGTH = /^-?(?:\d*\.\d+|\d+)(?:px|rem)$/;
+ * `2em` would resolve against a different element in each place, and a
+ * NEGATIVE one (`-1rem`) is dropped as an invalid `font-size` but stays a
+ * legal length inside the `calc()` — review measured `body { --text-base:
+ * -1rem }` at −24.000px with the gate green, i.e. the same failure the
+ * unitless `0.875` has. Colour and font tokens are not offset tokens at all,
+ * so they stay exempt: the exemption is keyed on the NAME, not on looking
+ * like a length. */
+const SAFE_LENGTH = /^(?:\d*\.\d+|\d+)(?:px|rem)$/;
 
 /** Every declaration that can move a box, as `name: value` text. The VALUE is
  * part of the row on purpose: a name-only pin read `* { border-width: 0 }` and
@@ -657,13 +732,41 @@ function movingDeclarations(body: string, scopedCustomProperties = false): strin
 }
 
 /** Rules that can reach a part without naming it, one row per complex selector. */
+/**
+ * `@property` registrations that redefine one of the offset tokens. The
+ * splitter above deliberately keeps at-rule bodies out of `Rule[]` (a `@media`
+ * copy must not shadow the base rule), so a registration is invisible to every
+ * assertion that walks rules: review registered
+ * `@property --text-base { syntax: "*"; inherits: false; initial-value: 50% }`
+ * and the box moved +60.797px with the gate green, because `inherits: false`
+ * stops the theme's own `:root { --text-base: 0.875rem }` from reaching the
+ * label while the margin `calc()` still resolves the percentage against the
+ * containing block's width. `initial-value: 1rem` measured 0, so only the
+ * unsafe VALUE is the row (a registration with a safe initial value crosses
+ * nothing), and an absent value counts as a row: it is invalid CSS that
+ * browsers drop, which is exactly the "two places disagree" shape.
+ */
+function atPropertyMovers(label: string, css: string): string[] {
+  const rows: string[] = [];
+  const bare = stripComments(css);
+  for (const [whole, body = ""] of [...bare.matchAll(/@property\s+(--[-\w]+)\s*\{([^}]*)\}/g)].map(
+    (m) => [m[0]!, m[2]!] as const,
+  )) {
+    const name = /@property\s+(--[-\w]+)/.exec(whole)?.[1] ?? "--";
+    const value = /initial-value\s*:\s*([^;]+)/i.exec(body)?.[1]?.trim();
+    if (OFFSET_TOKENS.test(name) && value !== undefined && SAFE_LENGTH.test(value)) continue;
+    rows.push(`${label} :: @property | ${name} | initial-value: ${value ?? "<absent>"}`);
+  }
+  return rows;
+}
+
 function elementOnlyMovers(label: string, all: Rule[]): string[] {
   const rows: string[] = [];
   for (const rule of all) {
     if (/hk-(?:checkbox|radio|switch|label)(?!\w)/.test(rule.selector)) continue;
     for (const one of splitTopLevel(rule.selector, ",")) {
       const subject = subjectSelector(one);
-      if (!couldMatchAPart(subject)) continue;
+      if (!couldMatchAPart(subject, one)) continue;
       const moves = movingDeclarations(rule.body, !GLOBAL_SUBJECT.test(subject.replace(/\s+/g, "")));
       if (moves.length === 0) continue;
       rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${moves.join("; ")}`);
@@ -1746,8 +1849,11 @@ describe("label first-line anchoring", () => {
     // (measured: the label 8px low with this table byte-identical), and the
     // same went for `:where(*) { padding: 0 }` → `4px`.
     //
-    // The 47 rows fall into four shapes, and the count of each is part of the
-    // claim, so a new shape cannot slip in unnoticed:
+    // The 56 rows fall into five shapes, and the count of each is part of the
+    // claim, so a new shape cannot slip in unnoticed — though a new RULE of a
+    // shape already here still shows up only as a row-count change (that is
+    // what the `@property` reader and the string-aware stripping above are
+    // for: the two shapes that used to be invisible entirely):
     //
     // * NINE universals — `*`, `*::before`, `*::after` in the reset, the theme
     //   entry and the host entry, plus the three `:where(…)` spellings. They
@@ -1773,6 +1879,13 @@ describe("label first-line anchoring", () => {
     //   `label:where(:not([class^=hk-])…)` host reset. These are the rows that
     //   make `a { line-height: 2 }` impossible to ship silently: a label may
     //   hold a link, so a rule on a link moves the row.
+    // * NINE unscoped replaced-element rows — `img`/`svg`/`canvas`/`input` in
+    //   the reset (and the duplicated `styles/index.scss`/bundle copies), which
+    //   is exactly what the host ships: `svg { display: block; max-width:
+    //   100% }` already shifts an icon inside a label by 7.5px today. Only the
+    //   UNSCOPED shape is a row (`REPLACED_CONTENT` requires a selector with no
+    //   combinator): the `.hk-icon svg { height: 100% }` family is 155 rows of
+    //   host-internal styling no label can match.
     //
     // Change any value and this table goes red, which is exactly what a row is
     // for. Over-reporting is deliberate: `html { font-size: 18px }` is a red
@@ -1781,6 +1894,8 @@ describe("label first-line anchoring", () => {
     const rows = [
       ...elementOnlyMovers("bundle", compiledHostBundle()),
       ...compiledForeignSheets().flatMap((sheet) => elementOnlyMovers(sheet.rel, rules(sheet.css))),
+      ...atPropertyMovers("bundle", compiledHostBundleSource()),
+      ...compiledForeignSheets().flatMap((sheet) => atPropertyMovers(sheet.rel, sheet.css)),
     ].sort();
     expect(rows, "rules that move a part without naming one").toEqual([
       "bundle :: - | .hk-calendar-heatmap-markers > span | white-space: nowrap",
@@ -1806,6 +1921,7 @@ describe("label first-line anchoring", () => {
       "bundle :: - | code | font-family: ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace; font-size: 0.9em; padding: 0.2em 0.4em",
       "bundle :: - | html | font-size: 16px",
       "bundle :: - | html::-webkit-scrollbar | display: none",
+      "bundle :: - | img | display: block; height: auto; max-width: 100%",
       "bundle :: - | label:where(:not([class^=hk-]):not([class*=\" hk-\"])) | display: block; font-weight: 500; margin-bottom: 0.25rem",
       "components/HkAboutModal.scss :: - | .s-about-modal-backdrop > * | height: 100%; width: 100%",
       "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-markers > span | white-space: nowrap",
@@ -1824,12 +1940,20 @@ describe("label first-line anchoring", () => {
       "styles/index.scss :: - | *::before | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/index.scss :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
       "styles/index.scss :: - | body | font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif); margin: 0",
+      "styles/index.scss :: - | canvas | display: block; max-width: 100%",
       "styles/index.scss :: - | html | line-height: 1.5",
+      "styles/index.scss :: - | img | display: block; max-width: 100%",
+      "styles/index.scss :: - | input | font: inherit; line-height: inherit; margin: 0; padding: 0",
+      "styles/index.scss :: - | svg | display: block; max-width: 100%",
       "styles/reset.scss :: - | * | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/reset.scss :: - | *::after | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/reset.scss :: - | *::before | border-style: solid; border-width: 0; box-sizing: border-box",
       "styles/reset.scss :: - | body | font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif); margin: 0",
+      "styles/reset.scss :: - | canvas | display: block; max-width: 100%",
       "styles/reset.scss :: - | html | line-height: 1.5",
+      "styles/reset.scss :: - | img | display: block; max-width: 100%",
+      "styles/reset.scss :: - | input | font: inherit; line-height: inherit; margin: 0; padding: 0",
+      "styles/reset.scss :: - | svg | display: block; max-width: 100%",
     ]);
   });
 

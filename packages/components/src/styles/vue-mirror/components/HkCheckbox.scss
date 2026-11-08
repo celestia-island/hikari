@@ -182,8 +182,9 @@
  * one (`.panel p { … }`, `.hk-markdown p`) is not reported even though a wrapper
  * with that class can hold the label — a recorded limit, not an oversight: the
  * shipped `.hk-icon svg` / `.hk-markdown p` families are host-internal styling,
- * and lifting the unscoped restriction takes the table from 73 rows to 279
- * (measured) — see the `elementOnlyMovers` comment in the contract test.
+ * and the contract test records what lifting the restriction would cost (73
+ * rows to 279 for the replaced channel alone) — see the `elementOnlyMovers`
+ * comment there.
  *
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control

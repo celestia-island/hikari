@@ -89,12 +89,13 @@
  * line box it belongs to at the default step (reported as the label text
  * sitting ~2px low).
  *
- * Two rules cooperate and both carry the gate, so the anatomy is atomic:
- * `flex-start` on the control, plus half a line box minus half of the box on
- * the box itself. One line box is `line-height` tall (HkLabel pins 1.5), so on
- * a one-line label the offset lands the box exactly where `center` did —
- * single-line rows keep their pixels — and on a wrapped label it keeps the box
- * on line one. An engine without `:has()` support falls through to the
+ * Four rules cooperate — the `flex-start` switch plus one offset per size
+ * step — and every one of them carries the gate, so the anatomy is atomic:
+ * either all four apply or none does. One line box is `line-height` tall
+ * (HkLabel pins 1.5), so on a one-line label each offset lands the box exactly
+ * where `center` did (single-line rows keep their pixels at all three steps),
+ * and on a wrapped label it keeps the box on line one. An engine without
+ * `:has()` support drops the gate with the rule, so it falls through to the
  * `align-items: center` fallback in the root rule, i.e. exactly the previous
  * rendering, never the bare top-edge state.
  *
@@ -104,12 +105,21 @@
  * to ride and keeps its old footprint — and so does an empty-but-present label
  * shell (`<HkCheckbox>{''}</HkCheckbox>` renders `span.hk-label` with nothing
  * inside; the Rust side emits no label at all for that input, and the gate
- * keeps both renderers on the same anatomy).
+ * keeps both renderers on the same anatomy). A whitespace-only label is the
+ * one shape the gate cannot see through: it is non-empty for the selector yet
+ * generates no line box once the label is blockified as a flex item, so it
+ * takes the 1.5px offset (md) onto a zero-height line — a 1.5px taller row,
+ * which is the same footprint the truly empty shell would have had.
  *
- * The label's own line-height is what this rides, so a host that restyles
- * `.hk-label` line-height has to restyle this pair too — the styles contract
- * test pins the coefficient against HkLabel.scss and each box term against the
- * size modifiers above. */
+ * The label's own line-height is what this rides, and its font size sets the
+ * term, so a host that restyles EITHER on `.hk-label` has to restyle this pair
+ * too — the styles contract test pins the coefficient against HkLabel.scss and
+ * each box term against the size modifiers above.
+ *
+ * HkSwitch is deliberately not part of this. Its md track is 24px, taller than
+ * the 21px line box, so a first-line anchor would need a negative offset and
+ * would hang the track outside the row; its rows stay block-centred. The two
+ * box controls are the ones whose text reads as a paragraph. */
 .hk-checkbox:has(.hk-label:not(:empty)) {
   align-items: flex-start;
 }

@@ -383,21 +383,24 @@ mod tests {
             ".hk-checkbox-icon",
             ".hk-checkbox-dot",
             ".hk-checkbox-indeterminate",
-            // The first-line anchoring lane: geometry that grass must keep
-            // parsing (`:has()` gate + the calc offset). A silent drop would
-            // otherwise leave every needle above intact. The gate needle
-            // carries the trailing ` {` so only a RULE can satisfy it: this
-            // sheet's comment spells the gate's two halves and the radio
-            // sheet's spells the whole selector, and prose must never stand in
-            // for the rule. `align-items: flex-start` pins the half only the
-            // gated rule declares (the root rule says `center`).
+            // The first-line anchoring lane: the gate, the switch it flips and
+            // the offset it feeds, so a silent drop cannot leave every needle
+            // above intact. These three check PRESENCE only — the values
+            // (`1.5`, the half-line arithmetic, the per-step box) are pinned
+            // against this same sheet by the Vue styles contract test, which
+            // compiles it with sass. The gate needle carries the trailing ` {`
+            // so only a RULE can satisfy it: this sheet's comment spells the
+            // gate's two halves and the radio sheet's spells the whole
+            // selector, so prose would otherwise stand in for the rule.
+            // `align-items: flex-start` pins the half only the gated rule
+            // declares (the root rule says `center`).
             ":has(.hk-label:not(:empty)) {",
             "align-items: flex-start",
             "margin-block-start",
         ] {
             assert!(
                 css.contains(needle),
-                "checkbox css must carry the vue class {needle}"
+                "checkbox css must carry {needle} (a class, a selector or a declaration)"
             );
         }
         assert!(

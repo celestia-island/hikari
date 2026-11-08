@@ -354,7 +354,7 @@ mod tests {
         ] {
             assert!(
                 css.contains(needle),
-                "radio css must carry the vue class {needle}"
+                "radio css must carry {needle} (a class, a selector or a declaration)"
             );
         }
         assert!(

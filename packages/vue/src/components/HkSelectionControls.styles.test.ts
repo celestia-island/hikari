@@ -31,10 +31,11 @@ import { describe, expect, it } from "vitest";
  *      whole label block, so a wrapped option no longer floats its box
  *      between the lines — and a host that used to re-align the row with
  *      `align-items: flex-start` (which parked the box on the line's top
- *      edge, ~2px off) no longer has to. The switch and the offset both
- *      carry the `:has(.hk-label:not(:empty))` gate, so engines without
- *      `:has()` fall back to the previous centering instead of the bare top
- *      edge, and a label-less or empty-label control keeps its old footprint.
+ *      edge, ~2px off) no longer has to. The `flex-start` switch and each
+ *      of the three offsets carry the `:has(.hk-label:not(:empty))` gate, so
+ *      engines without `:has()` fall back to the previous centering instead
+ *      of the bare top edge, and a label-less or empty-label control keeps
+ *      its old footprint.
  *      See the "label first-line anchoring" block for the three-way
  *      arithmetic this pins.
  *
@@ -117,7 +118,7 @@ function rules(css: string): Rule[] {
  * suffix test silently routes `.hk-checkbox-box[data-checked]` and
  * `.hk-checkbox-box:not([data-indeterminate])` around every assertion (the
  * 2026-11 closing round reproduced the whole reported bug with
- * `…:not([data-indeterminate]) { align-self: center }` and 44/44 green).
+ * `…:not([data-indeterminate]) { align-self: center }` and a fully green suite).
  */
 /** Split a selector list on `separator` at depth 0 (`:is(a, b)` stays whole). */
 function splitTopLevel(selector: string, separator: string): string[] {
@@ -151,9 +152,23 @@ function subjectSelector(selector: string): string {
 
 /** True when `className` names a class in `text` — `(.hk-checkbox-box)` may
  * not match `.hk-checkbox-box-inner`, and a `\w`/`-` continuation blocks it. */
+/** Drops parenthesised groups (`:has(...)`, `:not(...)`), innermost first. */
+function withoutParens(text: string): string {
+  let out = text;
+  for (let next = out.replace(/\([^()]*\)/g, ""); next !== out; ) {
+    out = next;
+    next = out.replace(/\([^()]*\)/g, "");
+  }
+  return out;
+}
+
 function namesClass(text: string, className: string): boolean {
+  // Parenthesised arguments are stripped first: a `:has()` / `:not()` argument
+  // names OTHER elements, so `.hk-checkbox:has(.hk-label:not(:empty))` is a
+  // rule about the root and must not count as a rule about the label (or as a
+  // media-scoped label rule, which is the same reader one filter later).
   const escaped = className.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`${escaped}(?![\\w-])`).test(text);
+  return new RegExp(`${escaped}(?![\\w-])`).test(withoutParens(text));
 }
 
 /** Rules whose SUBJECT names `className` (media-scoped ones included only
@@ -161,6 +176,27 @@ function namesClass(text: string, className: string): boolean {
 function subjectRules(all: Rule[], className: string, includeMedia = false): Rule[] {
   return all.filter(
     (r) => (includeMedia || !r.media) && namesClass(subjectSelector(r.selector), className),
+  );
+}
+
+/**
+ * Every class a control root can carry: the bare block plus its size steps.
+ * `HkCheckbox.tsx` renders `class="hk-checkbox hk-checkbox-md"`, so a `:has()`
+ * rule spelled on `-sm` / `-md` / `-lg` restyles the very same row — and a
+ * reader that only knows the bare block files it under "somebody else's rule"
+ * and never looks at it (a `.hk-checkbox-md:has(.hk-label:not(:empty))
+ * { align-items: center }` restores the reported misalignment on md rows).
+ */
+function rootClasses(control: string): string[] {
+  return [control, `${control}-sm`, `${control}-md`, `${control}-lg`];
+}
+
+/** Rules whose subject names ANY of `classes` — the root has four spellings. */
+function rulesNamingAny(all: Rule[], classes: string[], includeMedia = false): Rule[] {
+  return all.filter(
+    (r) =>
+      (includeMedia || !r.media) &&
+      classes.some((className) => namesClass(subjectSelector(r.selector), className)),
   );
 }
 
@@ -203,7 +239,7 @@ function valueOf(body: string, prop: string): string {
   // The browser applies the LAST declaration of a property; a reader that
   // takes the first one stays green while the render takes the appended
   // value (an extra `align-items: center` inside the gated rule put the box
-  // back on the block middle — +21.75px at three lines — with 55/55 green).
+  // back on the block middle — +21.75px at three lines — with a green suite).
   const matches = [...body.matchAll(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, "g"))];
   expect(matches.length, `declaration \`${prop}\` (declared exactly once)`).toBe(1);
   return matches[0]![1]!.trim();
@@ -588,7 +624,7 @@ describe("label first-line anchoring", () => {
     // The parsers above read the UNCONDITIONAL anatomy, so a media-scoped
     // duplicate is invisible to them: `@media (min-width: 1px) {
     // .hk-checkbox-box { box-sizing: content-box } }` would win at runtime
-    // with the suite 44/44 green (+1px). The one sanctioned copy is the
+    // with the suite green (+1px). The one sanctioned copy is the
     // reduced-motion transition kill, and it must stay a transition kill.
     const mediaRules = subjectRules(all, box, true).filter((r) => r.media);
     expect(mediaRules.map((r) => `${r.media} | ${r.selector}`).sort()).toEqual([
@@ -612,11 +648,12 @@ describe("label first-line anchoring", () => {
     ["radio", radio, ".hk-radio"],
   ])("%s re-aligns the row only on the gate", (_name, all, control) => {
     // `align-items` is the other half of the contract. A second rule on the
-    // control root (`.hk-checkbox[class] { align-items: flex-start }`, 0,1,0)
-    // loses to the gate on `:has()` engines and therefore renders identically
-    // — but it takes over exactly on the engines the `center` fallback exists
-    // for, so it must not be there at all.
-    const carriers = subjectRules(all, control, true)
+    // control root (`.hk-checkbox[class] { align-items: flex-start }` — the
+    // compound is 0,2,0, the bare `[class]` part only 0,1,0) loses to the gate
+    // on `:has()` engines and therefore renders identically — but it takes
+    // over exactly on the engines the `center` fallback exists for, so it must
+    // not be there at all. All four root spellings count (see `rootClasses`).
+    const carriers = rulesNamingAny(all, rootClasses(control), true)
       .filter((r) => /(?:^|;)\s*align-items\s*:/.test(r.body))
       .map((r) => `${r.selector} → ${valueOf(r.body, "align-items")}`)
       .sort();
@@ -740,7 +777,7 @@ describe("label first-line anchoring", () => {
     // win every run with the `align-items` carrier set still at two. A root
     // whitelist closes the whole family instead of the one spelling.
     const declared = new Set<string>();
-    for (const rule of subjectRules(all, control, true)) {
+    for (const rule of rulesNamingAny(all, rootClasses(control), true)) {
       for (const name of declarationNames(rule.body)) declared.add(name);
     }
     expect([...declared].sort(), `properties declared on \`${control}\``).toEqual([
@@ -756,18 +793,159 @@ describe("label first-line anchoring", () => {
   });
 
   it.each([
+    [
+      "checkbox",
+      checkbox,
+      ".hk-checkbox",
+      [
+        ".hk-checkbox",
+        ".hk-checkbox[data-disabled]",
+        ".hk-checkbox:has(.hk-label:not(:empty))",
+      ],
+    ],
+    [
+      "radio",
+      radio,
+      ".hk-radio",
+      [".hk-radio", ".hk-radio[data-disabled]", ".hk-radio:has(.hk-label:not(:empty))"],
+    ],
+  ])("%s root is the subject of exactly the rules pinned here", (
+    _name,
+    all,
+    control,
+    expected,
+  ) => {
+    // The whitelist above constrains WHICH properties a root rule may declare,
+    // never WHICH root rules exist — and every one of those properties is legal
+    // somewhere. So a new face declares nothing exotic and still reshapes the
+    // row: `.hk-checkbox[data-disabled] { display: block }` stacks a disabled
+    // row (the box lands 21.5px above its one-line place), `.hk-checkbox-md:has(
+    // .hk-label:not(:empty)) { align-items: center }` puts the reported
+    // misalignment back on every md row. Pin the set of root rules.
+    const present = rulesNamingAny(all, rootClasses(control))
+      .map((r) => r.selector)
+      .sort();
+    expect(present, `rules whose subject names \`${control}\``).toEqual(expected.sort());
+  });
+
+  it.each([
+    [
+      "checkbox",
+      checkbox,
+      [
+        ".hk-checkbox",
+        ".hk-checkbox-box",
+        ".hk-checkbox-icon",
+        ".hk-checkbox-dot",
+        ".hk-checkbox-indeterminate",
+        ".hk-checkbox-input",
+      ],
+      [
+        // one row per compiled rule of a control part, in selector order
+        ".hk-checkbox → -webkit-user-select, align-items, cursor, display, gap, user-select, vertical-align",
+        ".hk-checkbox-box → align-items, background, border, border-radius, box-sizing, display, flex-shrink, height, justify-content, position, transition, width",
+        ".hk-checkbox-box:has(.hk-checkbox-input:focus-visible) → box-shadow",
+        ".hk-checkbox-box[data-checked] → background, border-color",
+        ".hk-checkbox-box[data-indeterminate] → background, border-color",
+        ".hk-checkbox-dot → background, border-radius, height, width, z-index",
+        ".hk-checkbox-icon → color, height, position, width, z-index",
+        ".hk-checkbox-indeterminate → background, border-radius, height, width, z-index",
+        ".hk-checkbox-input → height, opacity, pointer-events, position, width",
+        ".hk-checkbox-lg .hk-checkbox-box → height, width",
+        ".hk-checkbox-lg .hk-checkbox-dot → height, width",
+        ".hk-checkbox-lg .hk-checkbox-icon → height, width",
+        ".hk-checkbox-lg .hk-checkbox-indeterminate → width",
+        ".hk-checkbox-lg:has(.hk-label:not(:empty)) .hk-checkbox-box → margin-block-start",
+        ".hk-checkbox-sm .hk-checkbox-box → height, width",
+        ".hk-checkbox-sm .hk-checkbox-dot → height, width",
+        ".hk-checkbox-sm .hk-checkbox-icon → height, width",
+        ".hk-checkbox-sm .hk-checkbox-indeterminate → width",
+        ".hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box → margin-block-start",
+        ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box → margin-block-start",
+        ".hk-checkbox:has(.hk-label:not(:empty)) → align-items",
+        ".hk-checkbox:not([data-disabled]):active .hk-checkbox-box → scale",
+        ".hk-checkbox:not([data-disabled]):hover .hk-checkbox-box:not([data-checked]):not([data-indeterminate]) → border-color",
+        ".hk-checkbox[data-animating] .hk-checkbox-box → will-change",
+        ".hk-checkbox[data-disabled] → cursor, opacity",
+        ".hk-checkbox[data-type=radio] .hk-checkbox-box → border-radius",
+        "@media (prefers-reduced-motion: reduce) | .hk-checkbox-box → transition",
+      ],
+    ],
+    [
+      "radio",
+      radio,
+      [".hk-radio", ".hk-radio-box", ".hk-radio-dot", ".hk-radio-input"],
+      [
+        ".hk-radio → -webkit-user-select, align-items, cursor, display, gap, user-select, vertical-align",
+        ".hk-radio-box → align-items, background, border, border-radius, box-sizing, display, flex-shrink, justify-content, position, transition",
+        ".hk-radio-box:has(.hk-radio-input:focus-visible) → box-shadow",
+        ".hk-radio-box[data-checked] → background, border-color",
+        ".hk-radio-dot → background, border-radius, height, width, z-index",
+        ".hk-radio-input → height, opacity, pointer-events, position, width",
+        ".hk-radio:has(.hk-label:not(:empty)) .hk-radio-box → margin-block-start",
+        ".hk-radio:has(.hk-label:not(:empty)) → align-items",
+        ".hk-radio:not([data-disabled]):active .hk-radio-box → scale",
+        ".hk-radio:not([data-disabled]):hover .hk-radio-box:not([data-checked]) → border-color",
+        ".hk-radio[data-disabled] → cursor, opacity",
+        ".hk-radio[data-size=lg]:has(.hk-label:not(:empty)) .hk-radio-box → margin-block-start",
+        ".hk-radio[data-size=sm]:has(.hk-label:not(:empty)) .hk-radio-box → margin-block-start",
+        "@media (prefers-reduced-motion: reduce) | .hk-radio-box → transition",
+        "[data-size=lg] .hk-radio-box → height, width",
+        "[data-size=lg] .hk-radio-dot → height, width",
+        "[data-size=md] .hk-radio-box → height, width",
+        "[data-size=sm] .hk-radio-box → height, width",
+        "[data-size=sm] .hk-radio-dot → height, width",
+      ],
+    ],
+  ] as const)("%s parts declare exactly the properties pinned here, rule by rule", (
+    _name,
+    all,
+    parts,
+    expected,
+  ) => {
+    // The whitelists and the selector sets above constrain each domain in one
+    // dimension. Neither says WHICH rule may carry WHICH whitelisted property,
+    // so a pinned face can grow a legal-but-wrong declaration and move the
+    // box: `.hk-checkbox-box[data-checked] { display: none }` deletes every
+    // checked box, `.hk-checkbox-icon { translate: 0 4px }` drops the tick 4px
+    // below the box centre, `scale: 1.6` in the base box rule inflates it out
+    // of the line. This table pins the whole surface — rule → the declaration
+    // names it carries, media scopes included — so every edit of a control
+    // part has to be made here on purpose.
+    const called = (subject: string) =>
+      (parts as readonly string[]).some((part) => namesClass(subject, part));
+    const pinned = all
+      .filter((r) => called(subjectSelector(r.selector)))
+      .map(
+        (r) =>
+          `${r.media ? `${r.media} | ` : ""}${r.selector} → ${declarationNames(r.body)
+            .sort()
+            .join(", ")}`,
+      )
+      .sort();
+    expect(pinned, "declarations of the control parts, rule by rule").toEqual(
+      [...expected].sort(),
+    );
+  });
+
+  it.each([
     ["HkCheckbox", checkbox],
     ["HkRadio", radio],
     ["HkSwitch", sw],
-  ])("%s rules never end in a positional subject", (_name, all) => {
-    // The box readers key on a CLASS subject, so a rule that reaches the box
-    // positionally — `…:has(.hk-label) > :first-child { margin-block-start: 0 }`
-    // — is invisible to them while the browser applies it. Every rule in
-    // these sheets ends in a class or attribute compound today; pin the shape.
+  ])("%s rules never end in a subject that does not start with a class", (_name, all) => {
+    // Every reader in this file decides "does this rule touch the box / the
+    // root / the label?" by looking for that class NAME in the subject text.
+    // A subject that can match the element without spelling its class is
+    // therefore invisible to all of them while the browser applies it:
+    // `…:has(.hk-label) > :first-child` and `span.hk-label` reach it
+    // positionally, `[class="hk-checkbox-box"]`, `[class*="hk-checkbox-box"]`,
+    // `[data-checked]` and `[dir=rtl].hk-label` reach it by attribute. The
+    // parts are matched by class in the TSX and nothing else, so a class-led
+    // subject name is the invariant that makes the readers sound: pin it.
     const odd = all
-      .filter((r) => !/^[.[]/.test(subjectSelector(r.selector)))
+      .filter((r) => !subjectSelector(r.selector).startsWith("."))
       .map((r) => r.selector);
-    expect(odd, "rules whose subject is not a class/attribute compound").toEqual([]);
+    expect(odd, "subjects that do not start with a class name").toEqual([]);
   });
 
   it("HkLabel pins the line box on its base rule and restyles only font sizes", () => {
@@ -803,8 +981,11 @@ describe("label first-line anchoring", () => {
     ["radio", radio],
     ["switch", sw],
   ])("%s sheets declare no .hk-label rule of their own", (_name, all) => {
+    // `namesClass`, like every other reader — `startsWith` would miss a
+    // leading attribute compound such as `[dir=rtl].hk-label` (the class-led
+    // pin above bans it first, but the reader should not depend on that).
     const labelRules = all
-      .filter((r) => subjectSelector(r.selector).startsWith(".hk-label"))
+      .filter((r) => namesClass(subjectSelector(r.selector), ".hk-label"))
       .map((r) => r.selector);
     expect(labelRules, "label rules inside a control sheet").toEqual([]);
   });

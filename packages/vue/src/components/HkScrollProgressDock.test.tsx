@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, inject, nextTick, onMounted, onUnmounted, provide, ref } from "vue";
+import { createApp, defineComponent, h, inject, nextTick, onMounted, onUnmounted, provide, reactive, ref } from "vue";
 
 import HkScrollContainer from "./HkScrollContainer";
 import { HkAdminTablePage } from "./HkAdminTablePage";
@@ -36,6 +36,10 @@ let localeTouched = false;
 class FakeResizeObserver implements ResizeObserver {
   static instances: FakeResizeObserver[] = [];
   observed: Element[] = [];
+  /** Elements handed to unobserve — the unregister-cleanup pin reads
+   *  this (S3-2 of the #1181 review: register → unregister must stop
+   *  observing the departed root, not just hide the pill). */
+  unobserved: Element[] = [];
   disconnected = false;
 
   constructor(_callback: (...args: never[]) => void) {
@@ -44,7 +48,9 @@ class FakeResizeObserver implements ResizeObserver {
   observe(el: Element): void {
     this.observed.push(el);
   }
-  unobserve(): void {}
+  unobserve(el: Element): void {
+    this.unobserved.push(el);
+  }
   disconnect(): void {
     this.disconnected = true;
   }
@@ -389,6 +395,31 @@ describe("HkScrollProgressDock", () => {
     expect(scroller.pill()!.dataset.state).toBe("hidden");
   });
 
+  it("answers hidden inside the 1px sub-overflow tolerance band", async () => {
+    // (S3-1 of the #1181 review) The overflow precondition reads
+    // scrollHeight > clientHeight + 1: a 1px content bleed (borders,
+    // subpixel rounding) must NOT light the pill. Pins the tolerance
+    // from both sides — clientHeight + 1 stays hidden, clientHeight + 2
+    // arms on the next pass.
+    const List = makeList({ rows: ROWS, total: 340 });
+    const scroller = mountScroller(() => h(List));
+    Object.defineProperties(scroller.viewport, {
+      scrollHeight: { configurable: true, get: () => 401 },
+      clientHeight: { configurable: true, get: () => 400 },
+    });
+    stubRows(scroller.container, ROWS, 0);
+    stubRootRect(scroller.container, ".probe-table", 0, 401);
+    await scroller.scrollPass();
+    expect(scroller.pill()!.dataset.state).toBe("hidden");
+
+    Object.defineProperties(scroller.viewport, {
+      scrollHeight: { configurable: true, get: () => 402 },
+    });
+    await scroller.scrollPass();
+    // Same offset (no move), so the pill shows rested — but shown.
+    expect(scroller.pill()!.dataset.state).not.toBe("hidden");
+  });
+
   it("fades to idle after the idle window and re-arms on the next move", async () => {
     // The idle timer is the dock's own setTimeout — fake it together
     // with rAF so the coalesced pass still runs (the animation bus
@@ -508,6 +539,81 @@ describe("HkScrollProgressDock", () => {
     handleBox.fn?.();
     await nextTick();
     expect(scroller.pill()!.dataset.state).toBe("hidden");
+  });
+
+  it("unobserves a list root when its registration goes away", async () => {
+    // (S3-2 of the #1181 review) Unregister must not just hide the pill —
+    // the departed root's ResizeObserver entry has to go too, or a stale
+    // observer keeps sensing a list the dock no longer knows.
+    const handleBox: { fn?: () => void } = {};
+    const List = defineComponent({
+      setup() {
+        const registrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
+        const rootRef = ref<HTMLElement | null>(null);
+        onMounted(() => {
+          const handle = { getRoot: () => rootRef.value, getTotal: () => 10 };
+          registrar?.register(handle);
+          handleBox.fn = () => registrar?.unregister(handle);
+        });
+        return () =>
+          h("div", { ref: rootRef }, [
+            h("table", {}, [h("tbody", {}, Array.from({ length: 10 }, (_, i) => h("tr", { key: i }, `r${i}`)))]),
+          ]);
+      },
+    });
+    // The fake RO is opt-in per test (see the unmount-cleanup pin): the
+    // environment's RO stays otherwise.
+    FakeResizeObserver.instances = [];
+    globalThis.ResizeObserver = FakeResizeObserver;
+    const scroller = mountScroller(() => h(List));
+    stubRows(scroller.container, 10, 0);
+    stubRootRect(scroller.container, "table", -100, 1900);
+    await scroller.scrollPass();
+    const root = scroller.container.querySelector("table")!.parentElement!;
+    expect(
+      FakeResizeObserver.instances.some((ro) => ro.observed.includes(root)),
+      "the registered root was observed on the first pass",
+    ).toBe(true);
+
+    handleBox.fn?.();
+    await nextTick();
+    const unobserved = FakeResizeObserver.instances.flatMap((ro) => ro.unobserved);
+    expect(unobserved, "the departed root was unobserved").toContain(root);
+  });
+
+  it("re-senses with the live selector when the prop changes at runtime", async () => {
+    // (S3-4 of the #1181 review) `selector` is read on every sense pass:
+    // a runtime override must take effect on the NEXT pass without a
+    // remount (the prop doc's promise). The list's handle carries no
+    // getRows, so the band rides the selector path.
+    const List = defineComponent({
+      setup() {
+        const registrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
+        const rootRef = ref<HTMLElement | null>(null);
+        onMounted(() => registrar?.register({ getRoot: () => rootRef.value, getTotal: () => 10 }));
+        return () =>
+          h("div", { ref: rootRef }, [
+            h("table", {}, [h("tbody", {}, Array.from({ length: 10 }, (_, i) => h("tr", { key: i }, `r${i}`)))]),
+            // The only element the overridden selector matches.
+            h("div", { class: "probe-row" }, "extra"),
+          ]);
+      },
+    });
+    const dockProps = reactive<Record<string, unknown>>({ selector: "tbody tr" });
+    const scroller = mountScroller(() => h(List), dockProps);
+    stubRows(scroller.container, 10, 0);
+    rects.push(vi.spyOn(scroller.container.querySelector(".probe-row")!, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, right: 100, bottom: 40, width: 100, height: 40, x: 0, y: 0,
+    } as DOMRect));
+    stubRootRect(scroller.container, "table", -100, 1900);
+    await scroller.scrollPass();
+    // Ten stacked rows fill the band: range form, rows 1 through 10.
+    expect(pillParts(scroller.pill()!)).toEqual(["Rows 1", "10 of 10"]);
+
+    dockProps.selector = ".probe-row";
+    await scroller.scrollPass();
+    // The selector now matches ONLY the extra element — the band is its.
+    expect(pillParts(scroller.pill()!)).toEqual(["Row 1 of 10"]);
   });
 
   it("disconnects every sensor on unmount (listeners, ROs, idle timer)", async () => {

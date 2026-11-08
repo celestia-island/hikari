@@ -106,8 +106,10 @@
  * three are (0,4,0)). The anatomy is
  * atomic — every selector contains `:has()`, so an engine without it drops
  * each rule whole and the box falls through to the `align-items: center`
- * fallback in the root rule: exactly the previous rendering, never the bare
- * top-edge state.
+ * fallback in the root rule: the previous PLACEMENT, never the bare top-edge
+ * state. The box rule's own `box-sizing` is the one carrier outside the gate
+ * (it must hold on every engine), so a consumer with no global reset renders
+ * that box 2px smaller — the sizing note above spells it out.
  *
  * One line box is `line-height` tall (HkLabel pins 1.5), so on a one-line
  * label each offset lands the box exactly where `center` did (single-line

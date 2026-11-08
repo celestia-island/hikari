@@ -102,12 +102,14 @@
  * so a one-line option lands exactly where `center` did and a wrapped option
  * keeps its box on the first line; an engine without `:has()` falls through to
  * the `align-items: center` fallback in the root rule (the previous
- * rendering).
+ * placement; the box's own `box-sizing` still applies — it is not gated,
+ * see HkCheckbox.scss).
  *
  * The gate is `:has(.hk-label:not(:empty))`, the same as HkCheckbox: a radio
  * without a non-empty label has no line box to ride, so a bare option and an
- * empty label shell both keep the old footprint instead of taking a phantom
- * offset. The styles contract test pins the coefficient against HkLabel.scss
+ * empty label shell both keep the old layout instead of taking a phantom
+ * offset (a consumer with no global reset renders that box 2px smaller —
+ * the ungated `box-sizing`, as HkCheckbox.scss documents). The styles contract test pins the coefficient against HkLabel.scss
  * and each box term against the [data-size] rules above. */
 .hk-radio:has(.hk-label:not(:empty)) .hk-radio-box {
   /* The item, not the row (HkCheckbox.scss documents why). */

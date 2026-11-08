@@ -131,7 +131,7 @@ pub(crate) mod test_css {
         // would be read as CSS; panicking is the only honest outcome here.
         assert!(
             !out.contains("/*") && !out.contains("*/"),
-            "compiled css has unbalanced comment markers after stripping — a Sass              interpolation inside a comment most likely emitted one"
+            "compiled css has unbalanced comment markers after stripping — a Sass interpolation inside a comment most likely emitted one"
         );
         out
     }

@@ -35,10 +35,12 @@ import { describe, expect, it } from "vitest";
  *      edge, 1.5px off at the default step; 2.0 at sm and 1.0 at lg)
  *      no longer has to. The anatomy rides the ITEM (`align-self`) plus one
  *      gated offset per size step, so a foreign `align-items` on the row
- *      cannot undo it; every carrier keeps the `:has(.hk-label:not(:empty))`
- *      gate, so engines without `:has()` fall back to the previous centering
- *      instead of the bare top edge, and a label-less or empty-label control
- *      keeps its old footprint.
+ *      cannot undo it. The `align-self` carrier and every offset keep the
+ *      `:has(.hk-label:not(:empty))` gate (the `box-sizing` carrier is
+ *      deliberately ungated — it has to hold on every engine), so engines
+ *      without `:has()` fall back to the previous centering instead of the
+ *      bare top edge, and a label-less or empty-label control keeps its old
+ *      layout.
  *      See the "label first-line anchoring" block for the three-way
  *      arithmetic this pins.
  *
@@ -476,9 +478,22 @@ function compiledHostBundle(): Rule[] {
  * pulled the label 3.0/3.5/4.0px off the box and
  * `span:first-child { margin-block-start: 8px !important }` pushed it
  * 4.0/6.5px down, both with every test in this file green.
+ *
+ * The test is INVERTED on purpose: a declaration counts as a mover unless it
+ * only paints. An allowlist of movers was tried first and it had no `border*`,
+ * so `span { border-block-start: 8px solid transparent }` — measured: the label
+ * 8px below its box, invisible to the delta metric because the label's border
+ * box moves with the text — added no row at all. A new geometric property is a
+ * future hole in an allowlist; here it is a red test instead.
+ *
+ * Custom properties are the one deliberate exemption: the offsets are computed
+ * FROM the same `--text-*` variables the label sizes itself with, so a foreign
+ * `* { --text-base: 2rem }` scales the line box and the offset together and
+ * cannot pull the two apart (a literal `line-height` / `font-size` on a part
+ * is a class-led rule, and those are banned outright).
  */
-const MOVES_A_PART =
-  /^(?:margin|padding|inset|top|bottom|left|right|translate|transform|scale|rotate|display|position|align-self|align-items|align-content|place-items|place-content|place-self|justify-content|justify-items|justify-self|order|flex|flex-grow|flex-shrink|flex-basis|gap|row-gap|column-gap|line-height|font-size|font-family|box-sizing|width|height|min-width|min-height|max-width|max-height|block-size|inline-size|white-space|vertical-align)(?:-|$)/;
+const PAINTS_ONLY =
+  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline-(?:color|style|width)|text-decoration|caret-color|cursor|pointer-events|user-select|content|quotes|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
 
 /** Attributes a selection part actually carries: `data-checked` on the box,
  * `data-size` on the root, … An attribute nothing carries cannot reach a part,
@@ -506,16 +521,48 @@ const PART_ATTRS = new Set([
  * element/universal/pseudo-only tag is reachable.
  */
 function couldMatchAPart(compound: string): boolean {
-  if (/[.#]/.test(compound.replace(/\[[^\]]*\]/g, ""))) return false;
+  // The arguments go FIRST. Reading the tag before dropping them turned
+  // `span:nth-child(2)` into the tag "span2", i.e. "cannot reach a part", so
+  // that rule never formed a row — review measured it moving the label
+  // 3.0/3.5/4.0px with the whole gate green. Anything that still has an
+  // unbalanced paren after the strip fails CLOSED (counted as reachable).
+  const bare = withoutParens(compound.replace(/\[[^\]]*\]/g, ""));
+  if (bare.includes("(") || bare.includes(")")) return true;
+  if (/[.#]/.test(bare)) return false;
   const attributes = [...compound.matchAll(/\[\s*([-\w]+)/g)].map((m) => m[1]!.toLowerCase());
   if (attributes.some((name) => !PART_ATTRS.has(name))) return false;
-  const tag = compound
-    .replace(/\[[^\]]*\]/g, "")
+  const tag = bare
     .replace(/::?[-\w]+/g, "")
-    .replace(/[()]/g, "")
     .replace(/\*/g, "")
+    .replace(/\s+/g, "")
     .trim();
   return tag === "" || tag === "span" || tag === "label";
+}
+
+/** Every declaration that can move a box, as `name: value` text. The VALUE is
+ * part of the row on purpose: a name-only pin read `* { border-width: 0 }` and
+ * `* { border-width: 8px }` as the same row (measured: the label 8px low with
+ * the table byte-identical), so `padding: 0` → `4px` and `border-width: 0` →
+ * `8px` now both turn the table red. */
+function movingDeclarations(body: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let buffer = "";
+  const flush = () => {
+    const declaration = buffer.trim().replace(/\s+/g, " ");
+    buffer = "";
+    const match = declaration.match(/^([-\w]+)\s*:\s*(.+)$/);
+    if (!match || match[1]!.startsWith("--") || PAINTS_ONLY.test(match[1]!)) return;
+    out.push(`${match[1]}: ${match[2]!.trim()}`);
+  };
+  for (const char of body) {
+    if (char === "(") depth += 1;
+    else if (char === ")") depth -= 1;
+    if (char === ";" && depth === 0) flush();
+    else buffer += char;
+  }
+  flush();
+  return [...new Set(out)].sort();
 }
 
 /** Rules that can reach a part without naming it, one row per complex selector. */
@@ -523,11 +570,11 @@ function elementOnlyMovers(label: string, all: Rule[]): string[] {
   const rows: string[] = [];
   for (const rule of all) {
     if (/hk-(?:checkbox|radio|switch|label)(?!\w)/.test(rule.selector)) continue;
-    const moves = [...new Set(declarationNames(rule.body).filter((n) => MOVES_A_PART.test(n)))].sort();
+    const moves = movingDeclarations(rule.body);
     if (moves.length === 0) continue;
     for (const one of splitTopLevel(rule.selector, ",")) {
       if (!couldMatchAPart(subjectSelector(one))) continue;
-      rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${moves.join(",")}`);
+      rows.push(`${label} :: ${rule.media ?? "-"} | ${one} | ${moves.join("; ")}`);
     }
   }
   return rows;
@@ -1598,45 +1645,57 @@ describe("label first-line anchoring", () => {
     // pseudo and attribute subjects — and each moved the box with this file
     // green.
     //
-    // The rows pinned below are what remains, and every one is scoped by a
-    // DIRECT parent that is not a selection control (`.hk-row > *`), so it can
-    // move the control inside that row but never the offset inside the control.
-    // Each row pins its declaration NAMES too: adding `display: block` to
-    // `.hk-row > *` would break the root's `inline-flex` row and fails here,
-    // and a new `span { line-height: 2 }` fails as an added row.
+    // The rows pinned below are what remains, and each one pins the
+    // declaration TEXT (`name: value`), not just the name: a name-only pin read
+    // `* { border-width: 0 }` and `* { border-width: 8px }` as the same row
+    // (measured: the label 8px low with this table byte-identical), and the
+    // same went for `:where(*) { padding: 0 }` → `4px`.
+    //
+    // EIGHTEEN rows are scoped by a DIRECT parent that is not a selection
+    // control (`.hk-row > *`), so they move the control inside that row but
+    // never the offset inside it. The other TEN are not that shape and are
+    // listed so the claim stays honest: six hang off `::before`/`::after`, one
+    // is `label:where(:not([class^=hk-]):not([class*=" hk-"]))` (its `:not`s
+    // exclude every hikari class), and three are bare universals (`*`,
+    // `:where(*)`) that DO reach the box. Those ten are harmless AT THESE
+    // VALUES — the gated offset is (0,4,0) and compiles after them, and the
+    // declarations they carry are `box-sizing`, `margin: 0`, `padding: 0`,
+    // `border-width: 0`. Change the value and this table goes red, which is
+    // exactly what a row is for. Declarations are pinned per row too, so a new
+    // mover lands here as an added row either way.
     const rows = [
       ...elementOnlyMovers("bundle", compiledHostBundle()),
       ...compiledForeignSheets().flatMap((sheet) => elementOnlyMovers(sheet.rel, rules(sheet.css))),
     ].sort();
     expect(rows, "rules that move a part without naming one").toEqual([
-      "bundle :: - | .hk-calendar-heatmap-markers > span | white-space",
-      "bundle :: - | .hk-calendar-heatmap-rail > span | white-space",
-      "bundle :: - | .hk-draggable-list-content > :only-child | flex,min-width",
-      "bundle :: - | .hk-glow-wrapper > * | position",
-      "bundle :: - | .hk-glow-wrapper-block > * | position",
-      "bundle :: - | .hk-layout > * | position",
-      "bundle :: - | .hk-modal-body-inner > * + * | margin-top",
-      "bundle :: - | .hk-row > * | margin",
-      "bundle :: - | .s-about-modal-backdrop > * | height,width",
-      "bundle :: - | .s-auth-form > * | display,flex-direction,gap",
-      "bundle :: - | :where(*) | box-sizing,margin,padding",
-      "bundle :: - | :where(*::after) | box-sizing,margin,padding",
-      "bundle :: - | :where(*::before) | box-sizing,margin,padding",
-      'bundle :: - | label:where(:not([class^=hk-]):not([class*=" hk-"])) | display,margin-bottom',
-      "components/HkAboutModal.scss :: - | .s-about-modal-backdrop > * | height,width",
-      "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-markers > span | white-space",
-      "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-rail > span | white-space",
-      "components/HkDraggableList.scss :: - | .hk-draggable-list-content > :only-child | flex,min-width",
-      "components/HkModal.scss :: - | .hk-modal-body-inner > * + * | margin-top",
-      "components/HkScrollContainer.scss :: - | .hk-scroll-container[data-dock-tail=true] > .hk-scroll-container-viewport > * | flex-shrink",
-      "styles/admin-tokens.scss :: - | .s-auth-form > * | display,flex-direction,gap",
-      "styles/index.scss :: - | * | box-sizing",
-      "styles/index.scss :: - | *::after | box-sizing",
-      "styles/index.scss :: - | *::before | box-sizing",
-      "styles/index.scss :: - | .s-auth-form > * | display,flex-direction,gap",
-      "styles/reset.scss :: - | * | box-sizing",
-      "styles/reset.scss :: - | *::after | box-sizing",
-      "styles/reset.scss :: - | *::before | box-sizing",
+      "bundle :: - | .hk-calendar-heatmap-markers > span | white-space: nowrap",
+      "bundle :: - | .hk-calendar-heatmap-rail > span | white-space: nowrap",
+      "bundle :: - | .hk-draggable-list-content > :only-child | flex: 1; min-width: 0",
+      "bundle :: - | .hk-glow-wrapper > * | position: relative",
+      "bundle :: - | .hk-glow-wrapper-block > * | position: relative",
+      "bundle :: - | .hk-layout > * | position: relative",
+      "bundle :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
+      "bundle :: - | .hk-row > * | margin: 0 0.5rem",
+      "bundle :: - | .s-about-modal-backdrop > * | height: 100%; width: 100%",
+      "bundle :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
+      "bundle :: - | :where(*) | box-sizing: border-box; margin: 0; padding: 0",
+      "bundle :: - | :where(*::after) | box-sizing: border-box; margin: 0; padding: 0",
+      "bundle :: - | :where(*::before) | box-sizing: border-box; margin: 0; padding: 0",
+      "bundle :: - | label:where(:not([class^=hk-]):not([class*=\" hk-\"])) | display: block; font-weight: 500; margin-bottom: 0.25rem",
+      "components/HkAboutModal.scss :: - | .s-about-modal-backdrop > * | height: 100%; width: 100%",
+      "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-markers > span | white-space: nowrap",
+      "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-rail > span | white-space: nowrap",
+      "components/HkDraggableList.scss :: - | .hk-draggable-list-content > :only-child | flex: 1; min-width: 0",
+      "components/HkModal.scss :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
+      "components/HkScrollContainer.scss :: - | .hk-scroll-container[data-dock-tail=true] > .hk-scroll-container-viewport > * | flex-shrink: 0",
+      "styles/admin-tokens.scss :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
+      "styles/index.scss :: - | * | border-style: solid; border-width: 0; box-sizing: border-box",
+      "styles/index.scss :: - | *::after | border-style: solid; border-width: 0; box-sizing: border-box",
+      "styles/index.scss :: - | *::before | border-style: solid; border-width: 0; box-sizing: border-box",
+      "styles/index.scss :: - | .s-auth-form > * | display: flex; flex-direction: column; gap: var(--space-16, 1rem)",
+      "styles/reset.scss :: - | * | border-style: solid; border-width: 0; box-sizing: border-box",
+      "styles/reset.scss :: - | *::after | border-style: solid; border-width: 0; box-sizing: border-box",
+      "styles/reset.scss :: - | *::before | border-style: solid; border-width: 0; box-sizing: border-box",
     ]);
   });
 

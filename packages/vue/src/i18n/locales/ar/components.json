@@ -244,7 +244,7 @@
   "hikari::messageBox.promptTitle": "إدخال",
   "hikari::loadMore.more": "تحميل المزيد",
   "hikari::loadMore.loading": "جارٍ التحميل…",
-  "hikari::loadMore.end": "وصلت إلى النهاية",
+  "hikari::loadMore.end": "تم إدراج جميع العناصر",
   "hikari::tagInput.title": "الوسوم",
   "hikari::tagInput.search": "بحث",
   "hikari::tagInput.empty": "لا تطابقات",
@@ -308,5 +308,9 @@
   "hikari::ribbon.reset": "إعادة تعيين النطاق",
   "hikari::ribbon.moveWindow": "تحريك النافذة",
   "hikari::ribbon.resizeWindow": "تغيير حجم النافذة",
-  "hikari::ribbon.dragHint": "اسحب لتحديد نطاق؛ انقر نقرًا مزدوجًا أو اضغط Escape أو Home لإعادة التعيين"
+  "hikari::ribbon.dragHint": "اسحب لتحديد نطاق؛ انقر نقرًا مزدوجًا أو اضغط Escape أو Home لإعادة التعيين",
+  "hikari::loadMore.endTotal": "تم إدراج جميع العناصر البالغ عددها {n}",
+  "hikari::tablePage.totalCount": "الإجمالي {n}",
+  "hikari::scrollProgress.range": "الصفوف {from}–{to} من {total}",
+  "hikari::scrollProgress.single": "الصف {from} من {total}"
 }

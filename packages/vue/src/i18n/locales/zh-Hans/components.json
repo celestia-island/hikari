@@ -248,7 +248,7 @@
   "hikari::messageBox.promptTitle": "输入",
   "hikari::loadMore.more": "加载更多",
   "hikari::loadMore.loading": "正在加载…",
-  "hikari::loadMore.end": "到底啦",
+  "hikari::loadMore.end": "已全部列出",
   "hikari::tagInput.title": "标签",
   "hikari::tagInput.search": "搜索",
   "hikari::tagInput.empty": "没有匹配项",
@@ -312,5 +312,9 @@
   "hikari::ribbon.reset": "重置范围",
   "hikari::ribbon.moveWindow": "移动窗口",
   "hikari::ribbon.resizeWindow": "缩放窗口",
-  "hikari::ribbon.dragHint": "拖拽选择范围；双击、Escape 或 Home 重置"
+  "hikari::ribbon.dragHint": "拖拽选择范围；双击、Escape 或 Home 重置",
+  "hikari::loadMore.endTotal": "已全部列出，共计 {n} 条",
+  "hikari::tablePage.totalCount": "共 {n} 条",
+  "hikari::scrollProgress.range": "第 {from} ~ {to} 条，共 {total} 条",
+  "hikari::scrollProgress.single": "第 {from} 条，共 {total} 条"
 }

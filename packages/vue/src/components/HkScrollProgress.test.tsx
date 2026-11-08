@@ -222,7 +222,25 @@ describe("HkScrollProgress", () => {
     await nextTick();
     const pill = scroller.pill()!;
     expect(pill.dataset.state).toBe("active");
-    expect(pill.textContent).toBe("11 / 340");
+    expect(pill.textContent).toBe("Rows 11–20 of 340");
+  });
+
+  it("reads the fully-scrolled band as an end, not a mid-list numerator", async () => {
+    // User report 2026-11-08: the old pill keyed on the FIRST visible
+    // row, so a fully-scrolled 30-row list read "16 / 30" — never 30.
+    // The band's `to` is the LAST visible row: at the bottom it lands on
+    // the row count and the sentence closes the list.
+    const List = makeList({ rows: 30, total: 30 });
+    const scroller = mountScroller(() => h(List));
+    scroller.setScrollTop(800);
+    stubRows(scroller.container, 30, 800);
+    stubRootRect(scroller.container, ".probe-table", -800, 400);
+    scroller.refresh();
+    await nextTick();
+    // Row tops i*40-800 against the 0..400 band: the first row whose
+    // bottom clears the band top is #21, and the final row's top is
+    // still above the band bottom, so the band closes at #30 = the end.
+    expect(scroller.pill()!.textContent).toBe("Rows 21–30 of 30");
   });
 
   it("counts only a sectioned HkTable's data rows, not its bands", async () => {
@@ -240,7 +258,7 @@ describe("HkScrollProgress", () => {
     stubRows(scroller.container, 6, 0);
     scroller.refresh();
     await nextTick();
-    expect(scroller.pill()!.textContent).toBe("1 / 4");
+    expect(scroller.pill()!.textContent).toBe("Rows 1–4 of 4");
   });
 
   it("falls back to the DOM row count when the total is absent", async () => {
@@ -251,7 +269,7 @@ describe("HkScrollProgress", () => {
     stubRootRect(scroller.container, ".probe-table", -100, 1900);
     scroller.refresh();
     await nextTick();
-    expect(scroller.pill()!.textContent).toBe("11 / 40");
+    expect(scroller.pill()!.textContent).toBe("Rows 11–20 of 40");
   });
 
   it("falls back to the DOM row count when the declared total went stale", async () => {
@@ -264,7 +282,7 @@ describe("HkScrollProgress", () => {
     stubRootRect(scroller.container, ".probe-table", -100, 1900);
     scroller.refresh();
     await nextTick();
-    expect(scroller.pill()!.textContent).toBe("11 / 40");
+    expect(scroller.pill()!.textContent).toBe("Rows 11–20 of 40");
   });
 
   it("answers hidden when the content fits without overflow", async () => {
@@ -352,7 +370,7 @@ describe("HkScrollProgress", () => {
     scroller.refresh();
     await nextTick();
     // B's rows all intersect the band, so the first visible row is #1.
-    expect(scroller.pill()!.textContent).toBe("1 / 20");
+    expect(scroller.pill()!.textContent).toBe("Rows 1–20 of 20");
 
     // B leaves the registry: the nearest-above tier describes A — every
     // A row sits above the band, so the numerator reads as "past the
@@ -360,7 +378,7 @@ describe("HkScrollProgress", () => {
     bHandle.fn?.();
     scroller.refresh();
     await nextTick();
-    expect(scroller.pill()!.textContent).toBe("10 / 10");
+    expect(scroller.pill()!.textContent).toBe("Row 10 of 10");
   });
 
   it("hides once the registration goes away", async () => {
@@ -485,7 +503,7 @@ describe("HkAdminTablePage scroll-progress registration", () => {
     expect(pill).not.toBeNull();
     // First visible row #6 over the DECLARED total — the delivered rows
     // (30) never override the page's server count.
-    expect(pill!.textContent).toBe("6 / 500");
+    expect(pill!.textContent).toBe("Rows 6–15 of 500");
   });
 });
 
@@ -628,7 +646,7 @@ describe("HkCardList scroll-progress registration", () => {
     expect(pill).not.toBeNull();
     // First visible row #6 over the DECLARED total — the delivered 30
     // rows never override the list's server count.
-    expect(pill!.textContent).toBe("6 / 500");
+    expect(pill!.textContent).toBe("Rows 6–15 of 500");
   });
 });
 

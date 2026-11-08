@@ -243,13 +243,13 @@ export default defineComponent({
      *  pill fades out. Read live; clamped to 300..3000. Only meaningful
      *  with `scrollProgress`. */
     scrollProgressIdle: { type: Number, default: 900 },
-    /** Which descendants count as "rows" for the numerator/denominator.
-     *  The default matches the table grammar every admin list ships —
-     *  BODY rows only: a `tr` default would count the header row as row
-     *  one and skew every index. A non-table list (a card roster)
-     *  overrides with its own row spelling. Only read while
-     *  `scrollProgress` is on; a runtime change re-senses on the next
-     *  pass. */
+    /** Which descendants count as "rows" for the pill's visible band
+     *  (from/to) and its total fallback. The default matches the table
+     *  grammar every admin list ships — BODY rows only: a `tr` default
+     *  would count the header row as row one and skew every index. A
+     *  non-table list (a card roster) overrides with its own row
+     *  spelling. Only read while `scrollProgress` is on; a runtime
+     *  change re-senses on the next pass. */
     scrollProgressSelector: { type: String, default: "tbody tr" },
   },
   emits: { approachEnd: () => true, "update:backTopVisible": (_v: boolean) => true },
@@ -357,7 +357,8 @@ export default defineComponent({
     const progressRegistrars = new Set<HkScrollProgressHandle>();
     const progressShown = ref(false);
     const progressActive = ref(false);
-    const progressNumerator = ref(0);
+    const progressFrom = ref(0);
+    const progressTo = ref(0);
     const progressDenominator = ref(0);
     let progressIdleTimer: ReturnType<typeof setTimeout> | null = null;
     // The offset the last sensing pass saw; null = not baselined yet, so
@@ -409,7 +410,8 @@ export default defineComponent({
       progressActive.value = false;
       disarmProgressIdle();
       progressLastTop = null;
-      progressNumerator.value = 0;
+      progressFrom.value = 0;
+      progressTo.value = 0;
       progressDenominator.value = 0;
     }
 
@@ -440,12 +442,16 @@ export default defineComponent({
      *  mirror (scroll / resize / content resize / refresh — no second
      *  listener). Preconditions: a registration, vertical overflow, and
      *  an active list with at least one row; failing any hides the pill
-     *  outright. While they hold, the numerator is the first row whose
-     *  bottom edge is still below the viewport top (1-based), and the
-     *  denominator is the registered total — unless it is missing,
+     *  outright. While they hold, the band is the VISIBLE ROW RANGE —
+     *  `from` is the first row whose bottom edge is still below the
+     *  viewport top and `to` the last row whose top edge is still above
+     *  the viewport bottom (both 1-based, partial rows counted) — and
+     *  the denominator is the registered total — unless it is missing,
      *  non-finite, sub-1, or STALE (smaller than the live row count, a
      *  page that loaded more rows than it declared), in which case the
-     *  DOM count wins so numerator can never exceed denominator. */
+     *  DOM count wins so the band can never exceed the total (user
+     *  direction 2026-11-08: the old single first-row numerator made a
+     *  fully-scrolled list read "16 / 30" instead of an end). */
     function senseScrollProgress(vp: HTMLElement) {
       if (!props.scrollProgress || progressRegistrars.size === 0) {
         setProgressHidden();
@@ -464,10 +470,17 @@ export default defineComponent({
         setProgressHidden();
         return;
       }
-      let numerator = rows.length;
+      let first = rows.length;
       for (let i = 0; i < rows.length; i++) {
         if ((rows[i] as HTMLElement).getBoundingClientRect().bottom > band.top) {
-          numerator = i + 1;
+          first = i + 1;
+          break;
+        }
+      }
+      let last = first;
+      for (let i = rows.length - 1; i >= 0; i--) {
+        if ((rows[i] as HTMLElement).getBoundingClientRect().top < band.bottom) {
+          last = i + 1;
           break;
         }
       }
@@ -476,7 +489,8 @@ export default defineComponent({
         typeof declared === "number" && Number.isFinite(declared) && declared >= 1
           ? Math.max(declared, rows.length)
           : rows.length;
-      progressNumerator.value = Math.min(numerator, denominator);
+      progressFrom.value = Math.min(first, denominator);
+      progressTo.value = Math.min(Math.max(last, progressFrom.value), denominator);
       progressDenominator.value = denominator;
       progressShown.value = true;
       // Scroll-active: only a changed offset counts (the pass also runs
@@ -1089,8 +1103,9 @@ export default defineComponent({
             <HkScrollProgress
               shown={progressShown.value}
               active={progressActive.value}
-              numerator={progressNumerator.value}
-              denominator={progressDenominator.value}
+              from={progressFrom.value}
+              to={progressTo.value}
+              total={progressDenominator.value}
             />
           )}
           {props.autoFollow && props.followAffordance && !pinned.value && (

@@ -1,8 +1,9 @@
 @use "../styles/polyfill" as *;
 
 /* ── Scroll-progress pill (HkScrollContainer scrollProgress) ──────
-   The "xx / xx" counter that floats near the bottom-center of a
-   scrolling list: first visible row index over total rows. It hangs
+   The localized range sentence floating near the bottom-center of a
+   scrolling list ("Rows 11–20 of 340"): the visible row band over the
+   total. It hangs
    off the container HOST (position: relative), never the viewport —
    viewport-absolute chrome scrolls away with the content, the same
    reason the autotag band and the selection-hint gradients paint on
@@ -11,8 +12,10 @@
    Visual vocabulary is the autotag band's (the container's other
    bottom chrome): muted mono digits on the mixed surface pill, same
    z-index tier (6). The bottom inset is safe-area aware the way
-   HkFab's corners are. Bare digits only — counters are locale-neutral
-   (the HkLoadMore counter precedent). */
+   HkFab's corners are. The WORDING is localized through the i18n
+   context (hikari::scrollProgress.range / .single, 2026-11-08) — the
+   old bare "xx / xx" pair keyed on the first visible row and a
+   fully-scrolled list never read as an end. */
 .hk-scroll-progress-pill {
   position: absolute;
   left: 50%;

@@ -244,7 +244,7 @@
   "hikari::messageBox.promptTitle": "Ввод",
   "hikari::loadMore.more": "Загрузить ещё",
   "hikari::loadMore.loading": "Загрузка…",
-  "hikari::loadMore.end": "Вы дошли до конца",
+  "hikari::loadMore.end": "Перечислены все записи",
   "hikari::tagInput.title": "Теги",
   "hikari::tagInput.search": "Поиск",
   "hikari::tagInput.empty": "Нет совпадений",
@@ -308,5 +308,9 @@
   "hikari::ribbon.reset": "Сбросить диапазон",
   "hikari::ribbon.moveWindow": "Переместить окно",
   "hikari::ribbon.resizeWindow": "Изменить размер окна",
-  "hikari::ribbon.dragHint": "Перетащите, чтобы выбрать диапазон; двойной щелчок, Escape или Home сбрасывает"
+  "hikari::ribbon.dragHint": "Перетащите, чтобы выбрать диапазон; двойной щелчок, Escape или Home сбрасывает",
+  "hikari::loadMore.endTotal": "Перечислены все {n} записей",
+  "hikari::tablePage.totalCount": "Всего {n}",
+  "hikari::scrollProgress.range": "Строки {from}–{to} из {total}",
+  "hikari::scrollProgress.single": "Строка {from} из {total}"
 }

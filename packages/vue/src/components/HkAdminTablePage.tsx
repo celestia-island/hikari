@@ -69,8 +69,17 @@ export const HkAdminTablePage = defineComponent({
      *  denominator (the server count behind a paged list — chest's
      *  usePagedTableFetch total). Forwarded to HTable, which
      *  self-registers with the enclosing shell viewport's registrar.
-     *  Omitted: the pill falls back to counting the delivered DOM rows. */
+     *  Omitted: the pill falls back to counting the delivered DOM rows.
+     *  The SAME number feeds the header's count readout below. */
     total: { type: Number, default: undefined },
+    /** Top-right "共 N 条" count readout in the page header (user
+     *  direction 2026-11-08: EVERY standard list names its size — the
+     *  scaffold owns the wording so pages stop hand-rolling their own
+     *  "{n} items" spans). Prefers `total` (the server count behind a
+     *  paged list) and falls back to the delivered row count; hidden at
+     *  zero so a fresh or empty list shows no "共 0 条" flash. Pages
+     *  that render their own count elsewhere set this false. */
+    countReadout: { type: Boolean, default: true },
   },
   emits: {
     reorder: (_fromIndex: number, _toIndex: number) => true,
@@ -80,21 +89,53 @@ export const HkAdminTablePage = defineComponent({
     return () => {
       const { t } = useI18n();
       const emptyTitle = props.emptyTitle || t("hikari::tablePage.emptyTitle", "No data");
+      // The header count readout: the authoritative total when declared,
+      // else the delivered rows; hidden at zero (an empty list's empty
+      // state already says so — "共 0 条" next to it reads as noise).
+      const readoutCount = props.total ?? props.rows.length;
+      const countReadout =
+        props.countReadout && readoutCount > 0 ? (
+          <span
+            data-testid="hk-admin-table-page-count"
+            style={{
+              fontSize: "var(--text-xs, 0.75rem)",
+              color: "rgb(var(--color-muted, var(--color-text-secondary)))",
+              fontVariantNumeric: "tabular-nums",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {t("hikari::tablePage.totalCount", "{n} in total").replace("{n}", String(readoutCount))}
+          </span>
+        ) : null;
       // Extracted to an identifier: JSX children given as an inline object
       // literal are not normalized to slots the way a bound one is (the
       // chest retrySlots idiom this mirrors relies on the identifier form).
       const emptySlots = slots["empty-action"]
         ? { action: () => slots["empty-action"]?.() }
         : undefined;
+      // The readout rides the header's actions row RIGHTMOST — after the
+      // page's own actions — and is the band's sole content on a
+      // headerless scaffold, so a bare readout never claims a full-width
+      // row of its own (the 安全扫描 double-margin report, 2026-11-08).
+      const actionsSlot = slots.actions
+        ? () => (
+            <>
+              {slots.actions?.()}
+              {countReadout}
+            </>
+          )
+        : countReadout
+          ? () => countReadout
+          : undefined;
       return (
         <div>
           {props.title ? (
             <HkPageHeader title={props.title} subtitle={props.subtitle} icon={props.icon} dense={props.dense}>
-              {{ actions: () => slots.actions?.() }}
+              {{ actions: actionsSlot }}
             </HkPageHeader>
-          ) : slots.actions ? (
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "var(--space-16, 1rem)" }}>
-              {slots.actions()}
+          ) : actionsSlot ? (
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "var(--space-8, 0.5rem)", marginBottom: "var(--space-16, 1rem)" }}>
+              {actionsSlot()}
             </div>
           ) : null}
           {slots.filter ? <div class="hk-admin-table-page-filter">{slots.filter()}</div> : null}

@@ -35,6 +35,17 @@ export interface HkFilterFieldDef {
   /** Override the kind's default operator set. */
   operators?: HkFilterOperator[];
   placeholder?: string;
+  /** PINNED (枚举) field — user direction 2026-11-08. The panel carries
+   *  TWO condition classes: pinned fields render as PERMANENT rows at
+   *  the panel's top — ONE row per field, always visible, never
+   *  removable (the select's "All" row is the clear verb) — while every
+   *  other field stays on demand behind the add-condition chooser. An
+   *  empty value filters nothing, so a fresh pinned row reads as "All".
+   *  Pinned fields never appear in the chooser, and a state that
+   *  somehow carries MORE than one condition on a pinned key renders
+   *  the first bound to the permanent row and the surplus as ordinary
+   *  removable rows (no condition is ever silently dropped). */
+  pinned?: boolean;
 }
 
 /** One condition: WHICH field, the operator and the (string) value. An
@@ -223,10 +234,63 @@ export default defineComponent({
       () => props.modelValue.filter((c) => c.value !== "").length,
     );
 
-    // The visible rows ARE the state array, in order (2026-10-15); the
-    // chooser offers EVERY declared field — the same field may join
-    // many times over.
-    const rows = computed(() => props.modelValue);
+    // ── The two condition classes (user direction 2026-11-08) ────────
+    // PINNED (枚举) fields render permanent rows ahead of everything —
+    // one row per field, always visible, never removable; the
+    // add-condition chooser only offers the rest.
+    const pinnedFields = computed(() => props.fields.filter((f) => f.pinned));
+    const addableFields = computed(() => props.fields.filter((f) => !f.pinned));
+
+    /** Patch ONE pinned field's condition — the field's bound state
+     *  entry when one exists, an appended entry otherwise (a pinned row
+     *  that has never been touched owns no state yet). */
+    function patchPinned(key: string, patch: Partial<HkFilterCondition>) {
+      const idx = props.modelValue.findIndex((c) => c.key === key);
+      if (idx >= 0) {
+        emit(
+          "update:modelValue",
+          props.modelValue.map((c, i) => (i === idx ? { ...c, ...patch } : c)),
+        );
+        return;
+      }
+      const field = fieldByKey(key);
+      emit("update:modelValue", [
+        ...props.modelValue,
+        { key, op: field ? operatorsFor(field)[0]! : "eq", value: "", ...patch },
+      ]);
+    }
+
+    /** Pinned rows materialize from the FIELDS: declaration order, ONE
+     *  row per field, bound to the field's first state entry when one
+     *  exists (`index` −1 = the row's emptiness is local — no state
+     *  entry yet, edits append). */
+    const pinnedRows = computed(() =>
+      pinnedFields.value.map((field) => {
+        const index = props.modelValue.findIndex((c) => c.key === field.key);
+        const cond: HkFilterCondition =
+          index >= 0
+            ? props.modelValue[index]!
+            : { key: field.key, op: operatorsFor(field)[0]!, value: "" };
+        return { field, cond, index };
+      }),
+    );
+
+    /** The on-demand rows: every state entry EXCEPT the ones a pinned
+     *  row already binds (the first entry per pinned key). Surplus
+     *  entries on a pinned key (legacy state) stay here as ordinary
+     *  removable rows — nothing is silently dropped. */
+    const addedRows = computed(() => {
+      const bound = new Set(
+        pinnedRows.value.filter((r) => r.index >= 0).map((r) => r.index),
+      );
+      return props.modelValue
+        .map((cond, index) => ({ cond, index }))
+        .filter(({ index }) => !bound.has(index));
+    });
+
+    const visibleRowCount = computed(
+      () => pinnedRows.value.length + addedRows.value.length,
+    );
 
     // ── The add-condition field chooser (user direction 2026-10-14) ──
     // "Add condition" NEVER appends by declaration order — it opens a
@@ -239,7 +303,7 @@ export default defineComponent({
 
     function openAddMenu() {
       addMenuOpen.value = true;
-      addHighlight.value = props.fields.length > 0 ? 0 : -1;
+      addHighlight.value = addableFields.value.length > 0 ? 0 : -1;
     }
 
     function closeAddMenu() {
@@ -262,7 +326,7 @@ export default defineComponent({
     // field list reactively) must keep the highlight in range and close
     // on an empty menu.
     watch(
-      () => props.fields,
+      () => addableFields.value,
       (list) => {
         if (!addMenuOpen.value) return;
         if (list.length === 0) {
@@ -284,7 +348,7 @@ export default defineComponent({
 
     function onAddTriggerKeydown(e: KeyboardEvent) {
       if (props.disabled) return;
-      const count = props.fields.length;
+      const count = addableFields.value.length;
       if (e.key === "ArrowDown") {
         e.preventDefault();
         if (!addMenuOpen.value) openAddMenu();
@@ -297,7 +361,7 @@ export default defineComponent({
         // With the menu open, Enter/Space CONFIRM the highlighted field;
         // the native button activation (a toggle click) is suppressed.
         e.preventDefault();
-        const field = props.fields[addHighlight.value];
+        const field = addableFields.value[addHighlight.value];
         if (field) pickAddable(field);
       } else if (e.key === "Escape" && addMenuOpen.value) {
         // Escape closes ONE layer — the menu, not the host panel: stop
@@ -310,118 +374,165 @@ export default defineComponent({
 
     return () => {
       const label = props.label ?? t("hikari::filterBar.trigger", "Filters");
-      return (
-        <div class="hk-filter-panel" data-testid="hk-filter-panel" data-active={activeCount.value > 0 || undefined} data-empty={rows.value.length === 0 || undefined} aria-label={label}>
-          {rows.value.map((cond, index) => {
-            const field = fieldByKey(cond.key);
-            // An undeclared key (the page renamed a field under live
-            // state) renders a bare inert row naming the key —
-            // removable, not editable.
-            const kind = field?.kind ?? "text";
-            const ops = field ? operatorsFor(field) : ([cond.op] as HkFilterOperator[]);
-            const labelText = field?.label ?? cond.key;
-            return (
-              <div key={index} class="hk-filter-panel-row" data-kind={kind}>
-                <span class="hk-filter-panel-field">{labelText}</span>
-                <div class="hk-filter-panel-ops" role="group" aria-label={`${labelText} — ${label}`}>
-                  {ops.map((op) => {
-                    const glyph = glyphOpFor(kind, op);
-                    return (
-                    <HkIconButton
-                      key={op}
-                      class="hk-filter-panel-op"
-                      size={28}
-                      variant="ghost"
-                      aria-pressed={cond.op === op}
-                      aria-label={t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback)}
-                      {...{ title: t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback) }}
-                      disabled={props.disabled || !field}
-                      onClick={() => emitCondition(index, { op })}
-                    >
-                      {{ icon: () => <HkFilterOperatorIcon op={glyph} /> }}
-                    </HkIconButton>
-                    );
-                  })}
-                </div>
-                <div class="hk-filter-panel-value">
-                  <div class="hk-filter-panel-control">
-                    {kind === "select" && field ? (
-                      <HkPopupSelect
-                        modelValue={cond.value}
-                        onUpdate:modelValue={(v: string) => emitCondition(index, { value: v })}
-                        label={labelText}
-                        // The row's left cell already names the field —
-                        // the control's own caption above it reads as
-                        // duplication (user direction 2026-10-12), and
-                        // the compact variant keeps the dense row stock.
-                        hideLabel
-                        size="sm"
-                        disabled={props.disabled}
-                        options={selectOptions(field)}
-                      />
-                    ) : kind === "date" ? (
-                      // The calendar picker — never the OS native input
-                      // (2026-10-11 direction); the wire format is the
-                      // same ISO YYYY-MM-DD the native input spoke.
-                      <HkDatePicker
-                        modelValue={cond.value || null}
-                        onUpdate:modelValue={(v: string | null) =>
-                          emitCondition(index, { value: v ?? "" })
-                        }
-                        size="sm"
-                        disabled={props.disabled || !field}
-                      />
-                    ) : (
-                      <HkInput
-                        type="text"
-                        variant={kind === "number" ? "number" : "text"}
-                        modelValue={cond.value}
-                        onUpdate:modelValue={(v: string) =>
-                          emitCondition(index, {
-                            // Belt over the browser's native number filtering:
-                            // the stored model keeps a clean number SHAPE only
-                            // (sign, digits, one dot), so pages can hand it to
-                            // RPC params verbatim.
-                            value: kind === "number" ? sanitizeNumberInput(v) : v,
-                          })
-                        }
-                        label={labelText}
-                        hideLabel
-                        size="sm"
-                        placeholder={field?.placeholder ?? ""}
-                        disabled={props.disabled || !field}
-                      />
-                    )}
-                  </div>
-                  {/* Drop THIS condition (the row leaves the panel; the
-                   * page refetches without it). Sibling conditions on
-                   * the same field survive — index-targeted removal,
-                   * never key-targeted. */}
-                  <HkIconButton
-                    class="hk-filter-panel-remove"
-                    size={24}
-                    variant="ghost"
-                    aria-label={t("hikari::filterPanel.removeCondition", "Remove condition")}
-                    {...{ title: t("hikari::filterPanel.removeCondition", "Remove condition") }}
+
+      /** One condition row. `commit(patch)` routes the edit — an index
+       *  patch for state-bound rows, a keyed patch-or-append for pinned
+       *  rows. `removable=false` renders a pinned row without the drop
+       *  verb: the select's "All" row is its clear affordance, the row
+       *  itself is permanent furniture. */
+      const renderConditionRow = (opts: {
+        keyVal: string;
+        cond: HkFilterCondition;
+        field: HkFilterFieldDef | undefined;
+        pinned: boolean;
+        commit: (patch: Partial<HkFilterCondition>) => void;
+        remove?: () => void;
+      }) => {
+        const { cond, field, pinned } = opts;
+        // An undeclared key (the page renamed a field under live
+        // state) renders a bare inert row naming the key —
+        // removable, not editable.
+        const kind = field?.kind ?? "text";
+        const ops = field ? operatorsFor(field) : ([cond.op] as HkFilterOperator[]);
+        const labelText = field?.label ?? cond.key;
+        return (
+          <div key={opts.keyVal} class="hk-filter-panel-row" data-kind={kind} data-pinned={pinned || undefined}>
+            <span class="hk-filter-panel-field">{labelText}</span>
+            <div class="hk-filter-panel-ops" role="group" aria-label={`${labelText} — ${label}`}>
+              {ops.map((op) => {
+                const glyph = glyphOpFor(kind, op);
+                return (
+                <HkIconButton
+                  key={op}
+                  class="hk-filter-panel-op"
+                  size={28}
+                  variant="ghost"
+                  aria-pressed={cond.op === op}
+                  aria-label={t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback)}
+                  {...{ title: t(OPERATOR_LABEL[glyph].key, OPERATOR_LABEL[glyph].fallback) }}
+                  disabled={props.disabled || !field}
+                  onClick={() => opts.commit({ op })}
+                >
+                  {{ icon: () => <HkFilterOperatorIcon op={glyph} /> }}
+                </HkIconButton>
+                );
+              })}
+            </div>
+            <div class="hk-filter-panel-value">
+              <div class="hk-filter-panel-control">
+                {kind === "select" && field ? (
+                  <HkPopupSelect
+                    modelValue={cond.value}
+                    onUpdate:modelValue={(v: string) => opts.commit({ value: v })}
+                    label={labelText}
+                    // The row's left cell already names the field —
+                    // the control's own caption above it reads as
+                    // duplication (user direction 2026-10-12), and
+                    // the compact variant keeps the dense row stock.
+                    hideLabel
+                    size="sm"
                     disabled={props.disabled}
-                    onClick={() => {
-                      const next = props.modelValue.filter((_, i) => i !== index);
-                      emit("update:modelValue", next);
-                    }}
-                  >
-                    {{ icon: () => <X aria-hidden="true" /> }}
-                  </HkIconButton>
-                </div>
+                    options={selectOptions(field)}
+                  />
+                ) : kind === "date" ? (
+                  // The calendar picker — never the OS native input
+                  // (2026-10-11 direction); the wire format is the
+                  // same ISO YYYY-MM-DD the native input spoke.
+                  <HkDatePicker
+                    modelValue={cond.value || null}
+                    onUpdate:modelValue={(v: string | null) =>
+                      opts.commit({ value: v ?? "" })
+                    }
+                    size="sm"
+                    disabled={props.disabled || !field}
+                  />
+                ) : (
+                  <HkInput
+                    type="text"
+                    variant={kind === "number" ? "number" : "text"}
+                    modelValue={cond.value}
+                    onUpdate:modelValue={(v: string) =>
+                      opts.commit({
+                        // Belt over the browser's native number filtering:
+                        // the stored model keeps a clean number SHAPE only
+                        // (sign, digits, one dot), so pages can hand it to
+                        // RPC params verbatim.
+                        value: kind === "number" ? sanitizeNumberInput(v) : v,
+                      })
+                    }
+                    label={labelText}
+                    hideLabel
+                    size="sm"
+                    placeholder={field?.placeholder ?? ""}
+                    disabled={props.disabled || !field}
+                  />
+                )}
               </div>
-            );
-          })}
-          {props.fields.length > 0 && (
+              {/* Drop THIS condition (the row leaves the panel; the
+               * page refetches without it). Sibling conditions on
+               * the same field survive — index-targeted removal,
+               * never key-targeted. Pinned rows carry NO drop verb —
+               * they are permanent furniture, not state entries. */}
+              {opts.remove && (
+                <HkIconButton
+                  class="hk-filter-panel-remove"
+                  size={24}
+                  variant="ghost"
+                  aria-label={t("hikari::filterPanel.removeCondition", "Remove condition")}
+                  {...{ title: t("hikari::filterPanel.removeCondition", "Remove condition") }}
+                  disabled={props.disabled}
+                  onClick={opts.remove}
+                >
+                  {{ icon: () => <X aria-hidden="true" /> }}
+                </HkIconButton>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div class="hk-filter-panel" data-testid="hk-filter-panel" data-active={activeCount.value > 0 || undefined} data-empty={visibleRowCount.value === 0 || undefined} aria-label={label}>
+          {/* Pinned (枚举) rows: permanent furniture, declaration order,
+           * ONE row per field — the panel's standing enum band (user
+           * direction 2026-11-08). An untouched field binds no state
+           * entry; its first edit appends one. */}
+          {pinnedRows.value.map(({ field, cond }) =>
+            renderConditionRow({
+              keyVal: `pinned:${field.key}`,
+              cond,
+              field,
+              pinned: true,
+              commit: (patch) => patchPinned(field.key, patch),
+            }),
+          )}
+          {/* On-demand rows: the state array minus the entries a pinned
+           * row already binds. 2026-10-15's "the array order IS the
+           * visible order" holds WITHIN this band; a pinned row's entry
+           * (array end) renders in the pinned band ABOVE it instead —
+           * row position no longer maps 1:1 to array position, and
+           * pages must not assume it does (2026-11-08). */}
+          {addedRows.value.map(({ cond, index }) =>
+            renderConditionRow({
+              keyVal: `row:${index}`,
+              cond,
+              field: fieldByKey(cond.key),
+              pinned: false,
+              commit: (patch) => emitCondition(index, patch),
+              remove: () => {
+                const next = props.modelValue.filter((_, i) => i !== index);
+                emit("update:modelValue", next);
+              },
+            }),
+          )}
+          {addableFields.value.length > 0 && (
             <div class="hk-filter-panel-addrow">
               {/* The ONE growth verb, parked in the operator column so
                * the row grid reads as one aligned axis (user direction
                * 2026-10-12). It opens the field chooser (2026-10-14) —
-               * and since 2026-10-15 the chooser offers EVERY declared
-               * field: the same column may join repeatedly. */}
+               * and since 2026-10-15 the same column may join
+               * repeatedly. Pinned fields never appear here (they are
+               * already on the panel, 2026-11-08). */}
               <button
                 ref={addBtnRef}
                 type="button"
@@ -461,7 +572,7 @@ export default defineComponent({
                     role="menu"
                     aria-label={t("hikari::filterPanel.chooseField", "Choose a field to add")}
                   >
-                    {props.fields.map((field, i) => (
+                    {addableFields.value.map((field, i) => (
                       <button
                         key={field.key}
                         type="button"

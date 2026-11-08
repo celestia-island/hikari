@@ -11,10 +11,15 @@
 // 3. the pill renderer itself — HkScrollContainer imports and mounts it
 //    inside its host, so the component stays internal to the feature.
 //
-// The pill shows bare digits "12 / 340" (first visible row / total rows) —
-// deliberately locale-neutral, the same contract as HkLoadMore's counter.
+// The pill shows the VISIBLE RANGE against the total — "第 16 ~ 30 条，
+// 共 30 条" (zh) / "Rows 16–30 of 30" (en) — localized through the i18n
+// context (user direction 2026-11-08: the old bare "16 / 30" pair keyed
+// on the FIRST visible row, so a fully-scrolled list never read "30";
+// the range form names the band the viewport actually shows and the
+// bottom-of-list state reads as an ending, not a midpoint).
 import { defineComponent, type InjectionKey } from "vue";
 
+import { useI18n } from "../i18n/context";
 import "./HkScrollProgress.scss";
 
 /** What a list hands to the registrar so the pill can describe it:
@@ -58,19 +63,40 @@ const HkScrollProgress = defineComponent({
   props: {
     shown: { type: Boolean, default: false },
     active: { type: Boolean, default: false },
-    numerator: { type: Number, default: 0 },
-    denominator: { type: Number, default: 0 },
+    /** First visible row (1-based). */
+    from: { type: Number, default: 0 },
+    /** Last visible row (1-based, inclusive) — at the bottom of the
+     *  list this equals the row count, so the range reads as an end. */
+    to: { type: Number, default: 0 },
+    /** Authoritative total (the pill's "共 N 条" / "of N"). */
+    total: { type: Number, default: 0 },
   },
   setup(props) {
-    return () => (
-      <span
-        class="hk-scroll-progress-pill"
-        aria-hidden="true"
-        data-state={!props.shown ? "hidden" : props.active ? "active" : "idle"}
-      >
-        {props.numerator} / {props.denominator}
-      </span>
-    );
+    const { t } = useI18n();
+    return () => {
+      // One visible row collapses the range to the single-row sentence;
+      // a degenerate band (0 rows) hides the text with the pill itself.
+      const text =
+        props.total < 1 || props.from < 1 || props.to < props.from
+          ? ""
+          : props.from === props.to
+            ? t("hikari::scrollProgress.single", "Row {from} of {total}")
+                .replace("{from}", String(props.from))
+                .replace("{total}", String(props.total))
+            : t("hikari::scrollProgress.range", "Rows {from}–{to} of {total}")
+                .replace("{from}", String(props.from))
+                .replace("{to}", String(props.to))
+                .replace("{total}", String(props.total));
+      return (
+        <span
+          class="hk-scroll-progress-pill"
+          aria-hidden="true"
+          data-state={!props.shown ? "hidden" : props.active ? "active" : "idle"}
+        >
+          {text}
+        </span>
+      );
+    };
   },
 });
 

@@ -244,7 +244,7 @@
   "hikari::messageBox.promptTitle": "입력",
   "hikari::loadMore.more": "더 불러오기",
   "hikari::loadMore.loading": "불러오는 중…",
-  "hikari::loadMore.end": "마지막 항목입니다",
+  "hikari::loadMore.end": "모든 항목이 표시되었습니다",
   "hikari::tagInput.title": "태그",
   "hikari::tagInput.search": "검색",
   "hikari::tagInput.empty": "일치 항목 없음",
@@ -308,5 +308,9 @@
   "hikari::ribbon.reset": "범위 초기화",
   "hikari::ribbon.moveWindow": "창 이동",
   "hikari::ribbon.resizeWindow": "창 크기 조정",
-  "hikari::ribbon.dragHint": "드래그하여 범위를 선택하세요. 더블 클릭, Escape 또는 Home으로 초기화"
+  "hikari::ribbon.dragHint": "드래그하여 범위를 선택하세요. 더블 클릭, Escape 또는 Home으로 초기화",
+  "hikari::loadMore.endTotal": "총 {n}개 항목이 모두 표시되었습니다",
+  "hikari::tablePage.totalCount": "총 {n}개",
+  "hikari::scrollProgress.range": "총 {total}개 중 {from}~{to}",
+  "hikari::scrollProgress.single": "총 {total}개 중 {from}"
 }

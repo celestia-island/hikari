@@ -244,7 +244,7 @@
   "hikari::messageBox.promptTitle": "Input",
   "hikari::loadMore.more": "Load more",
   "hikari::loadMore.loading": "Loading…",
-  "hikari::loadMore.end": "You've reached the end",
+  "hikari::loadMore.end": "All items listed",
   "hikari::tagInput.title": "Tags",
   "hikari::tagInput.search": "Search",
   "hikari::tagInput.empty": "No matches",
@@ -308,5 +308,9 @@
   "hikari::ribbon.reset": "Reset range",
   "hikari::ribbon.moveWindow": "Move window",
   "hikari::ribbon.resizeWindow": "Resize window",
-  "hikari::ribbon.dragHint": "Drag to select a range; double-click, Escape or Home resets"
+  "hikari::ribbon.dragHint": "Drag to select a range; double-click, Escape or Home resets",
+  "hikari::loadMore.endTotal": "All {n} items listed",
+  "hikari::tablePage.totalCount": "{n} in total",
+  "hikari::scrollProgress.range": "Rows {from}–{to} of {total}",
+  "hikari::scrollProgress.single": "Row {from} of {total}"
 }

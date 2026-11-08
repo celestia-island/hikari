@@ -244,7 +244,7 @@
   "hikari::messageBox.promptTitle": "Saisie",
   "hikari::loadMore.more": "Charger plus",
   "hikari::loadMore.loading": "Chargement…",
-  "hikari::loadMore.end": "Vous avez tout vu",
+  "hikari::loadMore.end": "Tous les éléments sont listés",
   "hikari::tagInput.title": "Étiquettes",
   "hikari::tagInput.search": "Rechercher",
   "hikari::tagInput.empty": "Aucun résultat",
@@ -308,5 +308,9 @@
   "hikari::ribbon.reset": "Réinitialiser la plage",
   "hikari::ribbon.moveWindow": "Déplacer la fenêtre",
   "hikari::ribbon.resizeWindow": "Redimensionner la fenêtre",
-  "hikari::ribbon.dragHint": "Faites glisser pour sélectionner une plage ; double-clic, Échap ou Origine réinitialisent"
+  "hikari::ribbon.dragHint": "Faites glisser pour sélectionner une plage ; double-clic, Échap ou Origine réinitialisent",
+  "hikari::loadMore.endTotal": "Les {n} éléments sont tous listés",
+  "hikari::tablePage.totalCount": "{n} au total",
+  "hikari::scrollProgress.range": "Lignes {from}–{to} sur {total}",
+  "hikari::scrollProgress.single": "Ligne {from} sur {total}"
 }

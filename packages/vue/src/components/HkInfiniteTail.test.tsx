@@ -72,11 +72,13 @@ describe("HkInfiniteTail", () => {
     expect(c.querySelector('[role="status"]')).not.toBeNull();
   });
 
-  it("end renders the reached-the-end note with the progress counter", () => {
+  it("end renders the count-carrying end sentence without the counter", () => {
+    // User direction 2026-11-08: the sentence carries 共计, the mono
+    // counter stands down in the end state.
     const c = mount(h(HkInfiniteTail, { state: "end", shown: 19, total: 19 }));
     expect(c.querySelector(".hk-load-more")!.getAttribute("data-state")).toBe("end");
-    expect(c.querySelector(".hk-load-more-count")!.textContent).toBe("19 / 19");
-    expect(c.textContent).toContain("You've reached the end");
+    expect(c.querySelector(".hk-load-more-count")).toBeNull();
+    expect(c.textContent).toContain("All 19 items listed");
   });
 
   it("idle + auto renders the invisible sentinel and observes it", async () => {

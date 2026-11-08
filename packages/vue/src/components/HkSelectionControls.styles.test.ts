@@ -558,6 +558,18 @@ function splitDeclarations(body: string): string[] {
   };
   while (at < body.length) {
     const char = body[at]!;
+    if (char === "\\") {
+      // Escaped code point: `\)` / `\(` are DATA. `url(a\\)b)` is one token, and
+      // counting its escaped paren pushed the depth off zero — every later
+      // declaration in the body then merged into the first (paint-only) one and
+      // vanished from `declarationNames` / `movingDeclarations`. Review reached
+      // it through Sass interpolation (`$_p: "a)"; background: #{$_p}`) — a
+      // literal `background: a)` is rejected by Sass, `#{"a)"}` is not — and
+      // measured the label 8.000px low with the guard 126/126 green.
+      buffer += body.slice(at, at + 2);
+      at += 2;
+      continue;
+    }
     if (char === "\"" || char === "'") {
       let end = at + 1;
       while (end < body.length && body[end] !== char) end += body[end] === "\\" ? 2 : 1;
@@ -565,8 +577,19 @@ function splitDeclarations(body: string): string[] {
       at = end + 1;
       continue;
     }
+    if (char === "u" || char === "U") {
+      // Same url-token rule as the brace walk: `url(…)` ends only at `)`, and
+      // its body may carry `;` or an unbalanced paren (`url(a\\)b)`) that must
+      // not reach the splitter.
+      if (body.slice(at, at + 4).toLowerCase() === "url(" && !/[\w-]/.test(body[at - 1] ?? "")) {
+        const end = urlTokenEnd(body, at);
+        buffer += body.slice(at, end);
+        at = end;
+        continue;
+      }
+    }
     if (char === "(") depth += 1;
-    else if (char === ")") depth -= 1;
+    else if (char === ")") depth = Math.max(0, depth - 1);
     if (char === ";" && depth === 0) flush();
     else buffer += char;
     at += 1;
@@ -771,9 +794,9 @@ const PAINTS_ONLY =
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
- * replaced element as well turns the table from 56 rows into 977 — `@keyframes`
- * steps account for 613 (`svg` 154 rows, `input` 51, `p { margin: 0 }` …), so
- * 364 element/registration rows are left over, 308 of them new, i.e. a table
+ * replaced element as well turns the table from 56 rows into 977 — 613 of the
+ * rows are `@keyframes` steps and the other 364 are element/registration rows
+ * (`svg` 154, `input` 51, `p { margin: 0 }` …), 308 of them new, i.e. a table
  * nobody reads.
  * Deliberately NOT in this set, with what each omission costs:
  *
@@ -783,7 +806,7 @@ const PAINTS_ONLY =
  *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
  *   styling that no label can ever match: lifting the unscoped restriction
  *   alone takes this table from 56 rows to 262 (measured), one row per host
- *   icon/track sizing rule, and `svg` alone is 151 of the full-reach rows;
+ *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
  *   `template`, `noscript`, `area`, `embed`, `picture`, `iframe`, `audio`):
@@ -964,10 +987,22 @@ function safeOffsetValue(name: string, value: string): boolean {
 function movingDeclarations(body: string, scopedCustomProperties = false): string[] {
   const out: string[] = [];
   for (const declaration of splitDeclarations(body)) {
-    const match = declaration.replace(/\s+/g, " ").match(/^([-\w]+)\s*:\s*(.+)$/);
+    const match = declaration.replace(/\s+/g, " ").match(/^([-\w]+)\s*:\s*(.*)$/);
     if (!match) continue;
     const name = match[1]!;
     const value = match[2]!.trim();
+    if (value === "") {
+      // `--text-base: ;` is legal CSS and Chrome keeps the property with an
+      // EMPTY value — which `var(--text-base, 0.875rem)` does NOT replace with
+      // its fallback (a defined-but-empty custom property makes the consuming
+      // declaration invalid at computed-value time instead). The old `(.+)`
+      // dropped the declaration entirely, so the label's font-size fell back to
+      // the inherited 16px and the box's calc went invalid: measured −3.000px
+      // with the guard 126/126 green. An empty value on a NON-custom property
+      // is an invalid declaration the browser drops, so only `--name:` is a row.
+      if (name.startsWith("--")) out.push(`${name}: `);
+      continue;
+    }
     const moves = name.startsWith("--")
       ? scopedCustomProperties || (OFFSET_TOKENS.test(name) && !safeOffsetValue(name, value))
       : !PAINTS_ONLY.test(name.replace(/^-(?:webkit|moz|ms|o)-/, ""));
@@ -1021,7 +1056,17 @@ function atPropertyMovers(label: string, css: string): string[] {
     (m) => [m[0]!, m[2]!] as const,
   )) {
     const name = /@property\s+(--[-\w]+)/i.exec(whole)?.[1] ?? "--";
-    const value = /initial-value\s*:\s*([^;]+)/i.exec(body)?.[1]?.trim();
+    // The browser applies the LAST descriptor of a property, exactly like it
+    // applies the last declaration — so a registration that repeats
+    // `initial-value` must be judged by the value Chrome keeps. Reading the
+    // FIRST one left `initial-value: 1rem; initial-value: 50%` green while the
+    // label rendered 8px (metric +24.703 at an 81.891px control, +155.250 at
+    // 190.125px) — the round-4 percent S0 vector, resurrected. Only the last
+    // value is judged (the reverse order is safe in the browser, so it must be
+    // silent here too), and an empty value counts as absent: an `@property` that
+    // declares it is invalid as a whole and registers nothing.
+    const last = [...body.matchAll(/initial-value\s*:\s*([^;]*)/gi)].at(-1)?.[1]?.trim();
+    const value = last === "" ? undefined : last;
     if (OFFSET_TOKENS.test(name) && value !== undefined && safeOffsetValue(name, value)) continue;
     rows.push(`${label} :: @property | ${name} | initial-value: ${value ?? "<absent>"}`);
   }
@@ -2547,7 +2592,7 @@ describe("HkSwitch geometry", () => {
  * all 109 tests green before its reader was hardened, and each moved the
  * rendered label by 6.5–8.0px on a labeled control.
  */
-describe("readers hold against the payloads rounds six and seven used", () => {
+describe("readers hold against the payloads rounds six to eight used", () => {
   it.each([
     ["@layer statement", "@layer zz;"],
     ["@import statement", '@import url("data:text/css,");'],
@@ -2709,5 +2754,111 @@ describe("readers hold against the payloads rounds six and seven used", () => {
     // some sheet was parsed by a walker that did not understand it, so the file
     // refuses to vouch for anything and fails here instead of staying quiet.
     expect(PARSE_LEFTOVER, "sheets the walker could not consume exactly").toEqual([]);
+  });
+
+  it.each([
+    ["an escaped closer", "span { background: a\\)b; margin-block-start: 8px }", "background"],
+    [
+      "an escaped closer inside url()",
+      "span { background-image: url(a\\)b); margin-block-start: 8px }",
+      "background-image",
+    ],
+    ["an escaped opener", "span { background: a\\(b; margin-block-start: 8px }", "background"],
+    ["a Sass-interpolated closer", "span { background: a)b; margin-block-start: 8px }", "background"],
+  ])("%s does not swallow the declarations after it", (_name, css, first) => {
+    // The declaration splitter counted parens without honouring escapes and
+    // without flooring the depth, so one unmatched `)` made every `;` after it
+    // stay at depth −1: the tail merged into the first (paint-only) declaration
+    // and `movingDeclarations` saw nothing. Review reached the shape through
+    // Sass interpolation (`$_p: "a)"; background: #{$_p}`, since a literal
+    // `a)` is a Sass parse error) and measured the label 8.000px low with the
+    // guard 126/126 green; the escaped spelling is the same hole one character
+    // away.
+    const body = rules(css)[0]!.body;
+    expect(declarationNames(body)).toEqual([first, "margin-block-start"]);
+    expect(movingDeclarations(body)).toEqual(["margin-block-start: 8px"]);
+  });
+
+  it("an unbalanced brace-free paren in a value still splits", () => {
+    // Precision control for the clamp: a stray `)` must not reorder the split
+    // either, and a balanced pair must keep behaving like one declaration.
+    expect(splitDeclarations("background: f(a; b); margin-block-start: 8px")).toEqual([
+      "background: f(a; b)",
+      "margin-block-start: 8px",
+    ]);
+    expect(splitDeclarations("a: 1; b: 2")).toEqual(["a: 1", "b: 2"]);
+  });
+
+  it.each([
+    ["a repeated initial-value, unsafe last", "1rem; initial-value: 50%", 1],
+    ["a repeated initial-value, safe last", "50%; initial-value: 1rem", 0],
+    ["a single unsafe value", "50%", 1],
+    ["a single safe value", "1rem", 0],
+    ["an empty value", "1rem; initial-value:", 1],
+  ])("@property %s is judged by the value Chrome keeps", (_name, tail, rows) => {
+    // CSS applies the LAST descriptor; the reader took the first. A registration
+    // that repeats `initial-value: 1rem; initial-value: 50%` therefore stayed
+    // green while the label rendered at 8px (+24.703px at an 81.891px control,
+    // +155.250 at 190.125px) — the round-4 percent vector resurrected. The
+    // reverse order is safe in the browser and must stay silent here: judging
+    // duplicates as rows unconditionally is the false positive this pin avoids.
+    const css = `@property --text-base { syntax: "*"; inherits: false; initial-value: ${tail} }`;
+    const moved = atPropertyMovers("sheet", css);
+    expect(moved.length, moved.join(" | ")).toBe(rows);
+    expect(css.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ["an empty custom property", ":root { --text-base: ; }"],
+    ["an empty custom property with a space", ":root { --text-base:  ; }"],
+  ])("%s is a mover, not a dropped declaration", (_name, css) => {
+    // `--text-base: ;` is legal CSS and Chrome keeps the property with an EMPTY
+    // value, which `var(--text-base, 0.875rem)` does NOT replace with its
+    // fallback — the label's font-size declaration becomes invalid instead and
+    // the box's calc collapses (measured −3.000px at md, guard green). The old
+    // `(.+)` reader dropped the declaration outright.
+    const body = rules(css)[0]!.body;
+    expect(declarationNames(body)).toEqual(["--text-base"]);
+    expect(movingDeclarations(body)).toEqual(["--text-base: "]);
+    // The precision controls: a real value is silent, and a non-custom
+    // property with no value is invalid CSS the browser drops.
+    expect(movingDeclarations(rules(":root { --text-base: 0.875rem }")[0]!.body)).toEqual([]);
+    expect(movingDeclarations("color: ")).toEqual([]);
+  });
+
+  it.each([
+    ["the lowercase spelling", '@property --text-base { syntax: "*"; inherits: false; initial-value: 50% }'],
+    ["the uppercase spelling", '@PROPERTY --text-base { syntax: "*"; inherits: false; initial-value: 50% }'],
+    [
+      "an uppercase descriptor",
+      '@property --text-base { syntax: "*"; inherits: false; INITIAL-VALUE: 50% }',
+    ],
+  ])("%s of a registration is a row", (_name, css) => {
+    // At-rule names are case-insensitive and Chrome registers `@PROPERTY …`
+    // exactly like the lowercase spelling (measured +24.703 / +73.875 / +155.250
+    // on the three rows). The reader's `/gi` was unpinned — swapping it for `/g`
+    // left the 126-test suite green — so both spellings are pinned here.
+    const moved = atPropertyMovers("sheet", css);
+    expect(moved).toHaveLength(1);
+    expect(moved[0]).toContain("| --text-base | initial-value: 50%");
+    const safe = css.replace("50%", "1rem");
+    expect(atPropertyMovers("sheet", safe)).toEqual([]);
+  });
+
+  it.each([
+    ["a border width", "border-block-start: 8px solid transparent"],
+    ["a padding", "padding-block-start: 8px"],
+    ["a line-height", "line-height: 2"],
+  ])("%s is a mover, never white-listed as paint", (_name, declaration) => {
+    // The paint whitelist is a regex over property NAMES, and widening it by one
+    // layout-affecting longhand is invisible: adding `border-block-start` to it
+    // left the 126-test suite green while `border-block-start: 8px solid
+    // transparent` pushed the first line's text down 8px (measured −7.500 on the
+    // text anchor, +0.500 on the border-box metric, i.e. the box metric cannot
+    // see it). `border-color`/`border-radius` stay silent — they are paint.
+    expect(movingDeclarations(declaration)).toEqual([declaration]);
+    expect(movingDeclarations("border-color: red")).toEqual([]);
+    expect(movingDeclarations("border-radius: 4px")).toEqual([]);
+    expect(movingDeclarations("background: none")).toEqual([]);
   });
 });

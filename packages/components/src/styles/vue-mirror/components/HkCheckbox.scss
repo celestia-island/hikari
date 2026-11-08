@@ -156,7 +156,8 @@
  * there should scope its override with `@supports not selector(:has(*))`.
  * Two host styles become DEAD rather than harmful, and both are worth knowing
  * about: a `margin-*` nudge on `.hk-checkbox-box` loses to the offset declared
- * here (the gated rule outranks it, so the nudge simply does not render), and a
+ * here at equal importance (the gated rule outranks it, so the nudge does not
+ * render — an `!important` nudge still wins, and measured +2.500px), and a
  * host that stacked the control (`flex-direction: column` on the row) loses the
  * centring it used to get from `align-items` — with the box and the label both
  * pinned to the top, `align-self: center` on the parts is what restores it, not

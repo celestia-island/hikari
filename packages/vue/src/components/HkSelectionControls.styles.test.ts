@@ -233,15 +233,27 @@ function urlTokenEnd(css: string, at: number): number {
   const end = identEnd(css, at);
   if (end === at || css[end] !== "(") return -1;
   if (identText(css, at, end).toLowerCase() !== "url") return -1;
+  // `url(` has TWO token shapes. A QUOTED one (`url("a;b")`) runs to its own
+  // closing quote — `)` inside it is data — and only a quote may start it.
   let index = end + 1;
+  while (index < css.length && /\s/.test(css[index]!)) index += 1;
+  if (css[index] === "\"" || css[index] === "'") {
+    index = stringEnd(css, index);
+    while (index < css.length && /\s/.test(css[index]!)) index += 1;
+    return css[index] === ")" ? index + 1 : index;
+  }
+  // An UNQUOTED one ends at the first `)`. A quote, `(` or whitespace inside it
+  // is a *bad url*: CSS consumes the remnants up to that `)` and drops the
+  // declaration, then keeps parsing. Letting `stringEnd()` run from such a
+  // quote ran to EOF and swallowed the REST OF THE SHEET (measured:
+  // `.zz { background-image: url(a"b) }` + `a { line-height: 2 }` left 49
+  // characters unread, zero rows, while Chrome applied the `a` rule and put the
+  // label 3.500px off the box — the 3.0/3.5/4.0 family this file already
+  // documents). Only a `\` escape keeps a `)` as data.
   while (index < css.length) {
     const char = css[index]!;
     if (char === "\\") {
       index = escapeEnd(css, index);
-      continue;
-    }
-    if (char === "\"" || char === "'") {
-      index = stringEnd(css, index);
       continue;
     }
     if (char === ")") return index + 1;
@@ -1160,10 +1172,11 @@ const PAINTS_ONLY =
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
- * replaced element as well turns the table from 54 rows into 977 — 613 of the
- * rows are `@keyframes` steps and the other 364 are element/registration rows
- * (`svg` 154, `input` 51, `p { margin: 0 }` …), 308 of them new, i.e. a table
- * nobody reads.
+ * replaced element as well turns the table from 54 rows into 975 — 613 of the
+ * rows are `@keyframes` steps and the other 362 are element/registration rows
+ * (`svg` 154, `input` 5, `p { margin: 0 }` …), 308 of them new, i.e. a table
+ * nobody reads. (Both numbers move by two whenever the shipped table does: they
+ * were 977/364 while it still carried the two `outline` rows.)
  * Deliberately NOT in this set, with what each omission costs:
  *
  * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized
@@ -1171,7 +1184,7 @@ const PAINTS_ONLY =
  *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
  *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
  *   styling that no label can ever match: lifting the unscoped restriction
- *   alone takes this table from 54 rows to 262 (measured), one row per host
+ *   alone takes this table from 54 rows to 260 (measured), one row per host
  *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
@@ -1188,7 +1201,8 @@ const PHRASING_CONTENT = new Set([
 /** Replaced elements a label may hold. Reachable only through an UNSCOPED rule
  * (`svg { display: block }` in the reset): a descendant rule needs an ancestor
  * a label never has, and the icon family (`.hk-icon svg`, `.hk-menu-item-icon
- * svg`, …) would otherwise add 155 host-internal rows to the causal table.
+ * svg`, …) would otherwise add 206 host-internal rows to the causal table (135
+ * of them carrying a replaced-element subject).
  * Review put `svg { height: 40px }` in a foreign sheet — and `height: 40px` on
  * the already-shipped reset — and the icon ink moved 32px with the gate green,
  * so the unscoped shape has to be a row. */
@@ -1320,10 +1334,15 @@ const OFFSET_TOKENS = /^--text-(?:xs|sm|base|md|lg|xl)$/;
  * `.hk-row { writing-mode: vertical-rl }` and `div { writing-mode:
  * vertical-rl }` were green with the layout ruined — box top 0, label top 26,
  * the two rects no longer overlapping, a 42px control turned into a 613px
- * vertical strip. `line-height` and `direction` deliberately stay out: the
- * label sets its own line-height (`1.5` on `.hk-label`), and `direction` does
- * not move anything on the block axis by itself. */
-const INHERITED_BLOCK = /^(?:writing-mode|text-orientation)$/;
+ * vertical strip. `text-size-adjust` joins them for the same reason: it
+ * inherits, and Chrome's text autosizing scales the USED font size of every
+ * descendant (so the label's line box grows while the box's `rem`-derived
+ * offset does not) — desktop measured it inert, which is exactly why an
+ * ancestor-scoped spelling went unnoticed until review ran it on `span` and
+ * on `.hk-row` side by side. `line-height` and `direction` deliberately stay
+ * out: the label sets its own line-height (`1.5` on `.hk-label`), and
+ * `direction` does not move anything on the block axis by itself. */
+const INHERITED_BLOCK = /^(?:(?:-webkit-)?text-size-adjust|writing-mode|text-orientation)$/;
 
 /** A token value that means the same thing in `font-size` and in the
  * `calc()`s: an absolute or root-relative length. `50%` resolves against the
@@ -2527,7 +2546,7 @@ describe("label first-line anchoring", () => {
     // `#{$_s} { margin-block-start: 8px !important }` spells no token in the
     // source, and moved the box +4.0px (one line) / +6.5px (three-line md)
     // with the guard green. Any prefilter is a spelling, and the whole point of
-    // compiling is to stop matching spellings: all 195 sheets cost ~1.6s.
+    // compiling is to stop matching spellings: all 197 sheets cost ~1.6s.
     const sheets = compiledForeignSheets();
     const broke = sheets.flatMap((sheet) =>
       sheet.error ? [`${sheet.rel} -> ${sheet.error}`] : [],
@@ -2609,11 +2628,28 @@ describe("label first-line anchoring", () => {
         .filter((rule) => SELECTION.test(rule.selector))
         .map(key)
         .sort();
-    const declared = ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"].flatMap((name) =>
+    const ownNames = ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"];
+    const declared = ownNames.flatMap((name) =>
+      rules(compile(resolve(componentDir, `${name}.scss`), options).css),
+    );
+    // The MIRROR is what the Rust host ships, and nothing above used to compare
+    // it with the Vue sheet it is generated from: edit a sheet, forget
+    // `sync-vue-mirror.py`, and every test here stayed green while Rust built
+    // the OLD css (the shipped fix would simply be absent on that host).
+    // `sync-vue-mirror.py --check` catches the drift in the gate list; pinning
+    // it here makes it fail in the guard lane too.
+    const mirrored = ownNames.flatMap((name) =>
       rules(compile(resolve(mirrorDir, `${name}.scss`), options).css),
     );
     const inBundle = scoped(bundle);
     const inSheets = scoped(declared);
+    expect(
+      resolve(mirrorDir, "HkCheckbox.scss"),
+      "the mirror must be a different file, not a second path to the source",
+    ).not.toBe(resolve(componentDir, "HkCheckbox.scss"));
+    expect(mirrored.map(key).sort(), "the vendored mirrors are the compiled Vue sheets").toEqual(
+      declared.map(key).sort(),
+    );
     expect(inSheets.length, "selection-scoped rules the four sheets declare").toBeGreaterThan(50);
     expect(inBundle, "selection-scoped rules reachable from the host entry").toEqual(inSheets);
   });
@@ -2670,8 +2706,9 @@ describe("label first-line anchoring", () => {
     //   is exactly what the host ships: `svg { display: block; max-width:
     //   100% }` already shifts an icon inside a label by 7.5px today. Only the
     //   UNSCOPED shape is a row (`REPLACED_CONTENT` requires a selector with no
-    //   combinator): the `.hk-icon svg { height: 100% }` family is 155 rows of
-    //   host-internal styling no label can match.
+    //   combinator): the `.hk-icon svg { height: 100% }` family is 206 rows
+    //   (135 of them with a replaced-element subject) of host-internal styling
+    //   no label can match.
     //
     // Change any value and this table goes red, which is exactly what a row is
     // for. Over-reporting is deliberate: `html { font-size: 18px }` is a red
@@ -2853,6 +2890,21 @@ describe("label first-line anchoring", () => {
       ".hk-label.hk-label-lg → font-size",
       ".hk-label.hk-label-sm → font-size",
     ]);
+    // Every spelling in `labelClasses()` has to be read as the label — the
+    // assertion above only walks what this reader RETURNS, so a class list that
+    // forgets a size step is invisible: with `.hk-label-md` dropped from the
+    // list, a top-level `.hk-label-md { line-height: 2.5 }` in this sheet stayed
+    // GREEN (review measured it; the compound `&.hk-label-md` spelling is only
+    // caught because the bare `.hk-label` entry mentions it).
+    // A FIXED list, not `labelClasses()`: iterating the list under test lets a
+    // deleted member pass by doing one fewer turn.
+    expect(labelClasses()).toEqual([".hk-label", ".hk-label-sm", ".hk-label-md", ".hk-label-lg"]);
+    for (const spelling of [".hk-label", ".hk-label-sm", ".hk-label-md", ".hk-label-lg"]) {
+      expect(
+        rulesMentioningAny(rules(`${spelling} { line-height: 2.5 }`), labelClasses(), true),
+        `${spelling} must be read as a label rule`,
+      ).toHaveLength(1);
+    }
     // And no rule on this sheet may reach the label through another spelling:
     // `*` or `[class~="hk-label"]` is exactly the round-3 hole, one file over.
     expect(duplicateSelectors(labelSheet), "duplicate compiled selectors").toEqual([]);
@@ -3621,19 +3673,29 @@ describe("every reader the guard added is pinned by a payload", () => {
   });
 
   it("a GLOBAL subject is case-insensitive like the element it names", () => {
-    // HTML type selectors are ASCII case-insensitive, and `writing-mode` on the
-    // root inherits into the label — the docblock above files
-    // `html { writing-mode: vertical-rl }` as a must-be-red payload. Only the
-    // lowercased global path can deliver it: the tag path drops to
-    // `REPLACED_CONTENT`/`PHRASING_CONTENT`, neither of which holds `html`, so
-    // without the lowercase the `HTML` spelling is invisible (measured: one red
-    // row with it, 197/197 green without).
-    for (const sheet of [
-      "html { writing-mode: vertical-rl }",
-      "HTML { writing-mode: vertical-rl }",
-      "Html { writing-mode: vertical-rl }",
-    ]) {
-      expect(elementOnlyMovers("sheet", rules(sheet)), sheet).toHaveLength(1);
+    // HTML type selectors are ASCII case-insensitive, and the reader has to
+    // lowercase before it compares: `HTML` is `html`, a global subject, so a
+    // declaration on it lands on the root and reaches the label by simple
+    // descent. The pin is an ELEMENT mover, not `writing-mode` — that one is a
+    // row on any subject since `INHERITED_BLOCK` landed, so it no longer
+    // exercises this path at all (dropping the `.toLowerCase()` stayed green
+    // while `HTML { writing-mode: vertical-rl }` was in the list; review caught
+    // it, measured GREEN without the lowercase and RED with it).
+    for (const name of ["HTML", "Html"]) {
+      for (const body of [
+        "writing-mode: vertical-rl",
+        "margin-block-start: 8px",
+        "--text-base: 11px",
+      ]) {
+        const sheet = `${name} { ${body} }`;
+        expect(elementOnlyMovers("sheet", rules(sheet)), sheet).toHaveLength(1);
+      }
+      // …and a rule whose declarations move nothing stays a non-row: the
+      // lowercased path must not turn every root rule into a mover.
+      expect(
+        elementOnlyMovers("sheet", rules(`${name} { color: red }`)),
+        `${name} { color: red }`,
+      ).toEqual([]);
     }
   });
 
@@ -3687,6 +3749,23 @@ describe("every reader the guard added is pinned by a payload", () => {
     expect(elementOnlyMovers("sheet", rules(":root { --text-base: 12px }"))).toHaveLength(0);
     expect(elementOnlyMovers("sheet", rules(":root { --text-md: 14px }"))).toHaveLength(1);
     expect(elementOnlyMovers("sheet", rules(":root { --text-md: 15px }"))).toHaveLength(0);
+    // The three tokens that share the 12px global floor get absolute pins too:
+    // "floor ± 1" only proves the entry EXISTS, not that it is 12 (review moved
+    // all three to 11 and to 13 with the suite green).
+    for (const token of ["--text-sm", "--text-lg", "--text-xl"]) {
+      expect(
+        elementOnlyMovers("sheet", rules(`:root { ${token}: 12px }`)),
+        `${token}: 12px`,
+      ).toHaveLength(0);
+      expect(
+        elementOnlyMovers("sheet", rules(`:root { ${token}: 11.9px }`)),
+        `${token}: 11.9px`,
+      ).toHaveLength(1);
+      expect(
+        elementOnlyMovers("sheet", rules(`:root { ${token}: 12.1px }`)),
+        `${token}: 12.1px`,
+      ).toHaveLength(0);
+    }
     // The fail-closed branch (`floor === undefined` → unsafe) is unreachable
     // while the map is complete, so it is pinned by making the map incomplete
     // for one call: a token added to `OFFSET_TOKENS` without a floor must fail
@@ -3727,6 +3806,18 @@ describe("every reader the guard added is pinned by a payload", () => {
     // line box grows while the box's `rem` offset does not (desktop delta
     // 0.000, which is why it looked harmless).
     expect(elementOnlyMovers("sheet", rules("span { text-size-adjust: 200% }"))).toHaveLength(1);
+    // …and because it INHERITS, an ancestor spelling is a row too — review put
+    // it on `.hk-row` and the row count was zero while `span` was one.
+    for (const subject of [".hk-row", "div", "#panel", ":where(.hk-row)"]) {
+      expect(
+        elementOnlyMovers("sheet", rules(`${subject} { text-size-adjust: 200% }`)),
+        `${subject} { text-size-adjust } must be a row`,
+      ).toHaveLength(1);
+      expect(
+        elementOnlyMovers("sheet", rules(`${subject} { -webkit-text-size-adjust: 200% }`)),
+        `${subject} { -webkit-text-size-adjust } must be a row`,
+      ).toHaveLength(1);
+    }
     expect(elementOnlyMovers("sheet", rules("span { color: red }"))).toHaveLength(0);
   });
 
@@ -3825,6 +3916,12 @@ describe("every reader the guard added is pinned by a payload", () => {
     ["2rem", false],
     ["8px", true],
     ["12px", false],
+    // `em` resolves against a DIFFERENT element in `font-size` and in the
+    // `calc()`, so it can never be judged safe: widening the regex to accept it
+    // was green until review put `:root { --text-base: 14em }` in a sheet.
+    ["14em", true],
+    ["1em", true],
+    ["1.5em", true],
   ])("`--text-base: %s` is %s", (value, unsafe) => {
     expect(elementOnlyMovers("pin", rules(`:root { --text-base: ${value} }`))).toEqual(
       unsafe ? [`pin :: - | :root | --text-base: ${value}`] : [],
@@ -3867,6 +3964,16 @@ describe("every reader the guard added is pinned by a payload", () => {
     expect(urlTokenEnd("myurl(a)", 2)).toBe(-1);
     expect(urlTokenEnd("url(a;b)", 0)).toBe(8);
     expect(urlTokenEnd('url("a;b")', 0)).toBe(10);
+    // A quote inside an UNQUOTED url is a bad url, and CSS resumes at its `)`:
+    // running to the closing quote instead swallowed the rest of the sheet.
+    expect(urlTokenEnd('url(a"b) c { d: e }', 0)).toBe(8);
+    expect(urlTokenEnd("url(a'b) c { d: e }", 0)).toBe(8);
+    // The quoted form may hold `)`, and whitespace before the quote is legal.
+    expect(urlTokenEnd('url( "a)b" ) x', 0)).toBe(12);
+    // …and the walker must still see what follows a bad url.
+    const afterBadUrl = rules('.zz { background-image: url(a"b) } a { line-height: 2 }');
+    expect(afterBadUrl.map((rule) => rule.selector)).toEqual([".zz", "a"]);
+    expect(elementOnlyMovers("sheet", afterBadUrl)).toHaveLength(1);
     // blockEnd: `\{` / `\}` are data, so the matching brace is the last one.
     expect(blockEnd("x { a\\} b }", 2)).toBe(10);
     // splitDeclaration / splitDeclarations: a `;` inside a url token is not a

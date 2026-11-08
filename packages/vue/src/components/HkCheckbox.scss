@@ -114,10 +114,14 @@
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control
  * (selection column, a bare box next to a host's own caption) has no line box
- * to ride and keeps its old footprint — and so does an empty-but-present label
+ * to ride and keeps its old LAYOUT — centered on its own row, no margin — and
+ * so does an empty-but-present label
  * shell (`<HkCheckbox>{''}</HkCheckbox>` renders `span.hk-label` with nothing
  * inside; the Rust side emits no label at all for that input, and the gate
- * keeps both renderers on the same anatomy). A whitespace-only label is the
+ * keeps both renderers on the same anatomy). "Layout", not bytes: the box
+ * rule now declares its own `box-sizing: border-box` (see below), so a
+ * consumer with no global reset renders that box 2px smaller than before —
+ * which is the reset the sheet used to borrow from the host. A whitespace-only label is the
  * one shape the gate cannot see through: it is non-empty for the selector yet
  * generates no line box once the label is blockified as a flex item, so it
  * takes the 1.5px offset (md) onto a zero-height line: the control is 1.5px

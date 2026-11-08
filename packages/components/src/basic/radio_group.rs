@@ -334,7 +334,11 @@ mod tests {
 
     #[test]
     fn radio_styles_come_from_the_canonical_vue_sheet() {
-        let css = RadioGroupComponent::styles();
+        // Comments stripped first (see `test_css::without_comments`): grass's
+        // expanded output keeps `/* … */`, and the sheet quotes
+        // `align-self: flex-start` in prose, so a raw needle could be
+        // satisfied by a comment instead of a declaration.
+        let css = crate::test_css::without_comments(RadioGroupComponent::styles());
         for needle in [
             ".hk-radio-group",
             ".hk-radio-group-horizontal",
@@ -346,8 +350,8 @@ mod tests {
             // The first-line anchoring lane (house parity: HkCheckbox): the
             // gated box rule, its item alignment and its calc offset must
             // survive grass. The needles spell a declaration and a whole rule
-            // head, and sass strips these comments, so prose cannot stand in
-            // for either.
+            // head, and `css` has its comments stripped, so prose cannot
+            // stand in for either.
             ":has(.hk-label:not(:empty)) .hk-radio-box {",
             "align-self: flex-start",
             "margin-block-start",

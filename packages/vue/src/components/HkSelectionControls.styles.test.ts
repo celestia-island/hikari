@@ -755,12 +755,16 @@ describe("label first-line anchoring", () => {
     ["checkbox", checkbox, ".hk-checkbox"],
     ["radio", radio, ".hk-radio"],
   ])("%s re-aligns the row only on the gate", (_name, all, control) => {
-    // `align-items` is the other half of the contract. A second rule on the
-    // control root (`.hk-checkbox[class] { align-items: flex-start }` — the
-    // compound is 0,2,0, the bare `[class]` part only 0,1,0) loses to the gate
-    // on `:has()` engines and therefore renders identically — but it takes
-    // over exactly on the engines the `center` fallback exists for, so it must
-    // not be there at all. All four root spellings count (see `rootClasses`).
+    // `align-items` is the other half of the contract. On a `:has()` engine a
+    // second rule on the control root (`.hk-checkbox[class] { align-items:
+    // flex-start }`) is INERT, not merely out-ranked: the box carries its own
+    // `align-self`, and an item's alignment is not a specificity contest
+    // against the row's `align-items` — that is exactly why the anatomy moved
+    // to the item, and review measured 0.000 under every foreign spelling,
+    // `!important` included. It must still not be there, because the fallback
+    // engines have no gate and therefore no `align-self`: there the extra rule
+    // is the only alignment and it parks the box on the line's top edge. All
+    // four root spellings count (see `rootClasses`).
     const carriers = rulesNamingAny(all, rootClasses(control), true)
       .filter((r) => /(?:^|;)\s*align-items\s*:/.test(r.body))
       .map((r) => `${r.selector} → ${valueOf(r.body, "align-items")}`)
@@ -1074,6 +1078,56 @@ describe("label first-line anchoring", () => {
         "[data-size=sm] .hk-radio-dot → height, width",
       ],
     ],
+    [
+      "switch",
+      sw,
+      PARTS.switch,
+      [
+        // The switch is the control that must NOT anchor: review (R9 SV-3)
+        // moved its track +4.000px with `.hk-switch-track { margin-block-start:
+        // 8px }`, +2.000/2.500/3.000px with `.hk-switch { place-items: start }`
+        // and +4.000px through a gate spelled `:has([class~="hk-label"])` —
+        // every one green, because the negative pin above only forbade two
+        // literal rules and this control had no rule-by-rule table. It has one
+        // now, so the whole surface is explicit: a new rule shows up as a new
+        // row, and a new property on an old rule as a changed row.
+        ".hk-switch → -webkit-user-select, align-items, cursor, display, gap, user-select, vertical-align",
+        ".hk-switch-input → height, opacity, pointer-events, position, width",
+        ".hk-switch-input:focus-visible ~ .hk-switch-track → box-shadow",
+        ".hk-switch-lg .hk-switch-content → font-size",
+        ".hk-switch-lg .hk-switch-content-off → inset-inline-start",
+        ".hk-switch-lg .hk-switch-content-on → inset-inline-end",
+        ".hk-switch-lg .hk-switch-thumb → height, width",
+        ".hk-switch-lg .hk-switch-track → height, width",
+        ".hk-switch-lg[data-checked] .hk-switch-thumb → transform",
+        ".hk-switch-md .hk-switch-thumb → height, width",
+        ".hk-switch-md .hk-switch-track → height, width",
+        ".hk-switch-md[data-checked] .hk-switch-thumb → transform",
+        ".hk-switch-sm .hk-switch-content → font-size",
+        ".hk-switch-sm .hk-switch-content-off → inset-inline-start",
+        ".hk-switch-sm .hk-switch-content-on → inset-inline-end",
+        ".hk-switch-sm .hk-switch-thumb → height, width",
+        ".hk-switch-sm .hk-switch-track → height, width",
+        ".hk-switch-sm[data-checked] .hk-switch-thumb → transform",
+        ".hk-switch-content → font-size, font-weight, line-height, position, transition, white-space, z-index",
+        ".hk-switch-content-off → color, inset-inline-start",
+        ".hk-switch-content-on → color, inset-inline-end",
+        ".hk-switch-danger[data-checked] .hk-switch-track → background, border-color",
+        ".hk-switch-primary[data-checked] .hk-switch-track → background, border-color",
+        ".hk-switch-secondary[data-checked] .hk-switch-track → background, border-color",
+        ".hk-switch-thumb → background, border-radius, box-shadow, inset-inline-start, position, transition, z-index",
+        ".hk-switch-track → align-items, background, border, border-radius, display, flex-shrink, overflow, position, transition",
+        ".hk-switch-warning[data-checked] .hk-switch-track → background, border-color",
+        ".hk-switch[data-disabled] → cursor, opacity",
+        ".hk-switch:not([data-disabled])[data-checked]:hover .hk-switch-track → filter",
+        ".hk-switch:not([data-disabled]):active .hk-switch-thumb → scale",
+        ".hk-switch:not([data-disabled]):not([data-checked]):hover .hk-switch-track → background, border-color",
+        "@media (prefers-reduced-motion: reduce) | .hk-switch-thumb, .hk-switch-content → transition",
+        "[dir=rtl] .hk-switch-lg[data-checked] .hk-switch-thumb → transform",
+        "[dir=rtl] .hk-switch-md[data-checked] .hk-switch-thumb → transform",
+        "[dir=rtl] .hk-switch-sm[data-checked] .hk-switch-thumb → transform",
+      ],
+    ],
   ] as const)("%s parts declare exactly the properties pinned here, rule by rule", (
     _name,
     all,
@@ -1101,7 +1155,11 @@ describe("label first-line anchoring", () => {
       .filter((r) => called(subjectSelector(r.selector)))
       .map(
         (r) =>
-          `${r.media ? `${r.media} | ` : ""}${r.selector} → ${declarationNames(r.body)
+          // `replace(/\s+/g, " ")`: one media rule in the switch sheet is a
+          // comma list, and the compiled prelude carries the newline+indent.
+          `${r.media ? `${r.media} | ` : ""}${r.selector.replace(/\s+/g, " ")} → ${declarationNames(
+            r.body,
+          )
             .sort()
             .join(", ")}`,
       )
@@ -1198,7 +1256,7 @@ describe("label first-line anchoring", () => {
     // green.
     const moves = (body: string) =>
       declarationNames(body).some((name) =>
-        /^(?:margin|padding|inset|top|bottom|left|right|translate|transform|scale|rotate|align-self|order|display|align-items|justify-content|position|box-sizing|width|height|min-width|min-height|max-width|max-height|block-size|inline-size)(?:-|$)/.test(
+        /^(?:margin|padding|inset|top|bottom|left|right|translate|transform|scale|rotate|align-self|order|display|align-items|place-items|place-content|justify-content|position|box-sizing|width|height|min-width|min-height|max-width|max-height|block-size|inline-size)(?:-|$)/.test(
           name,
         ),
       );
@@ -1223,10 +1281,10 @@ describe("label first-line anchoring", () => {
   // bundle entry `styles/index.scss`, which imports all 159 mirrors. So the fourth door was simply "write the
   // foreign rule in a sheet the guard never reads" — `.hk-checkbox-box { width:
   // 2.5rem; height: 2.5rem }` appended to HkSelectionGrid.scss moves the box
-  // 11px with all 89 tests green (HkSelectionGrid is imported 30 lines after
-  // HkLabel). Scan the whole directory instead of the four files, and pin the
-  // host's import order so dropping one import cannot silently delete the
-  // anatomy either.
+  // 11px with every test in this file green (HkSelectionGrid is imported 30
+  // lines after HkLabel). Scan the whole directory instead of the four files,
+  // and pin the host's import order so dropping one import cannot silently
+  // delete the anatomy either.
   it("no other sheet in the package names a selection part", () => {
     // Every `.scss` under `src/` can ship — the component sheets through their
     // TSX side-effect imports, `styles/*` and `overlay/*` through the theme
@@ -1246,9 +1304,15 @@ describe("label first-line anchoring", () => {
     // scan. `(?!\w)` and not `(?![\w-])` keeps the parts in: they ARE the
     // suffix (`.hk-checkbox-box`), so rejecting a trailing hyphen would only
     // match the bare root and let the very rule this test exists for through.
-    // A name assembled from two halves (`"hk-check" + "box"`) still slips;
-    // that shape is recorded as a residual, and the anatomy itself no longer
-    // depends on the row, so it can only resize a part, not un-anchor it.
+    // A name assembled from two halves (`"hk-check" + "box"`) or written with
+    // a CSS escape (`.hk-checkbo\78 -box`) still slips through a SOURCE scan —
+    // and it does not merely resize a part: a foreign rule can also feed the
+    // offset (`margin-block-start`), and a pure resize moves the box by
+    // `Δheight/2` because the offset's `-1.125rem` is a literal while the box
+    // height is not. Measured in review: +4.000px at one line, +6.500px on a
+    // three-line md row, +11.000px for the resize form, all green. The next
+    // test compiles every foreign sheet instead, which closes the language
+    // rather than the spelling.
     const SELECTION = /hk-(?:checkbox|radio|switch|label)(?!\w)/g;
     const sheets: string[] = [];
     const walk = (dir: string) => {
@@ -1275,6 +1339,67 @@ describe("label first-line anchoring", () => {
     expect(mentions, "sheets outside the selection controls naming one").toEqual([]);
   });
 
+  it("no other sheet in the package COMPILES a rule that names a selection part", () => {
+    // The scan above reads SOURCE, so a name that only exists after Sass has
+    // run walks straight past it: `$s: "hk-check" + "box"` and the CSS escape
+    // `.hk-checkbo\78 -box` both compile to `.hk-checkbox-box`. Review
+    // measured the shipped cost of that hole: +4.000px at one line, +6.500px
+    // on a three-line md row (a foreign rule feeding `margin-block-start`),
+    // +11.000px for the resize form — with every test in this file green.
+    // Compiling is the fix, not a longer regex: 180 sheets take ~2s and the
+    // assertion sees exactly the selectors the browser would apply.
+    const ROOT = resolve(componentDir, "..");
+    const OWN = new Set([
+      resolve(componentDir, "HkCheckbox.scss"),
+      resolve(componentDir, "HkRadio.scss"),
+      resolve(componentDir, "HkSwitch.scss"),
+      resolve(componentDir, "HkLabel.scss"),
+    ]);
+    const sheets: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = resolve(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name !== "node_modules") walk(full);
+        } else if (entry.name.endsWith(".scss") && !OWN.has(full)) {
+          sheets.push(full);
+        }
+      }
+    };
+    walk(ROOT);
+    const offenders: string[] = [];
+    const broke: string[] = [];
+    for (const file of sheets) {
+      // A sheet that never spells `hk-` cannot name a part without building
+      // the string from pieces that do not contain the token either; the
+      // prefilter keeps this test at ~2s instead of compiling all 195.
+      if (!readFileSync(file, "utf8").includes("hk-")) continue;
+      const rel = file.slice(ROOT.length + 1);
+      let css: string;
+      try {
+        css = compile(file, {
+          style: "expanded",
+          loadPaths: [ROOT, resolve(componentDir, "../../../theme/styles")],
+        }).css;
+      } catch (error) {
+        broke.push(`${rel} -> ${(error as Error).message.split("\n")[0]}`);
+        continue;
+      }
+      // Compiled, not source: `#{…}`, escapes and variables are resolved, so
+      // the only spelling that can still hide is one the browser cannot
+      // apply either. `(?!\w)` keeps the parts in — `.hk-checkbox-box` ends the
+      // token at the hyphen on purpose.
+      const bare = css.replace(/\/\*[\s\S]*?\*\//g, " ");
+      for (const hit of bare.match(/\.hk-(?:checkbox|radio|switch|label)(?!\w)/g) ?? []) {
+        offenders.push(`${rel} -> ${hit}`);
+      }
+    }
+    expect(broke, "foreign sheets this guard could not compile (so it cannot vouch for them)").toEqual(
+      [],
+    );
+    expect(offenders, "sheets outside the selection controls compiling a selection part").toEqual([]);
+  });
+
   it("the host stylesheet imports the four sheets in the documented order", () => {
     // `packages/components/src/styles/index.scss` is the Rust host's single
     // entry; a dropped `@import` deletes the anatomy from every Rust consumer
@@ -1283,9 +1408,13 @@ describe("label first-line anchoring", () => {
       resolve(componentDir, "../../../components/src/styles/index.scss"),
       "utf8",
     );
-    const imported = [...host.matchAll(/@import\s+['"]\.\/vue-mirror\/components\/([\w]+)\.scss['"]/g)].map(
-      (m) => m[1],
-    );
+    // `[\w-]+`, not `[\w]+`: `window-close.scss` is hyphenated, and the
+    // narrower class silently read 158 of the 159 imports while this comment
+    // claimed all of them were pinned.
+    const imported = [
+      ...host.matchAll(/@import\s+['"]\.\/vue-mirror\/components\/([\w-]+)\.scss['"]/g),
+    ].map((m) => m[1]);
+    expect(imported.length, "mirror imports the regex reads").toBe(159);
     expect(imported.length, "mirror imports in the host stylesheet").toBeGreaterThan(100);
     const at = (name: string) => imported.indexOf(name);
     for (const name of ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"]) {
@@ -1294,6 +1423,44 @@ describe("label first-line anchoring", () => {
     expect(at("HkCheckbox")).toBeLessThan(at("HkRadio"));
     expect(at("HkRadio")).toBeLessThan(at("HkSwitch"));
     expect(at("HkSwitch")).toBeLessThan(at("HkLabel"));
+  });
+
+  it("the host bundle ships no selection rule the four sheets do not declare", () => {
+    // `index.scss` is the Rust host's single entry, and it imports ~40
+    // `components/*.scss` besides the 159 mirrors. Review put
+    // `.hk-checkbox-box { margin-block-start: 8px !important }` in one of those
+    // and moved the box +4.000px (one line) and +6.500px (three-line md) with
+    // every guard green: the tests above read the four sheets and the host's
+    // import ORDER, never the rest of what the host ships. Compiling the
+    // bundle the way `builder` does and requiring its selection-scoped rules
+    // to be exactly the four sheets' own closes the whole surface — a rule
+    // added anywhere reachable from this entry changes the set.
+    const hostDir = resolve(componentDir, "../../../components");
+    const mirrorDir = resolve(hostDir, "src/styles/vue-mirror/components");
+    const silent = { warn() {}, debug() {} };
+    const options = { style: "expanded" as const, logger: silent };
+    const bundle = compile(resolve(hostDir, "src/styles/index.scss"), {
+      ...options,
+      loadPaths: [resolve(componentDir, "../../../theme/styles")],
+    }).css;
+    // Selector-scoped, not selector-textual: `:has(.hk-label…)` on a foreign
+    // rule must land in the set too, so the test is the token anywhere in the
+    // selector.
+    const SELECTION = /hk-(?:checkbox|radio|switch|label)(?!\w)/;
+    const key = (rule: Rule) =>
+      `${rule.media ?? "-"} | ${rule.selector.replace(/\s+/g, " ")} | ${rule.body.replace(/\s+/g, " ")}`;
+    const scoped = (all: Rule[]) =>
+      all
+        .filter((rule) => SELECTION.test(rule.selector))
+        .map(key)
+        .sort();
+    const declared = ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"].flatMap((name) =>
+      rules(compile(resolve(mirrorDir, `${name}.scss`), options).css),
+    );
+    const inBundle = scoped(rules(bundle));
+    const inSheets = scoped(declared);
+    expect(inSheets.length, "selection-scoped rules the four sheets declare").toBeGreaterThan(50);
+    expect(inBundle, "selection-scoped rules reachable from the host entry").toEqual(inSheets);
   });
 
   it("HkLabel pins the line box on its base rule and leaves the first line alone", () => {

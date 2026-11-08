@@ -375,7 +375,11 @@ mod tests {
 
     #[test]
     fn checkbox_styles_come_from_the_canonical_vue_sheet() {
-        let css = CheckboxComponent::styles();
+        // Comments stripped first: grass's expanded output keeps every
+        // `/* … */`, and both sheets quote `align-self: flex-start` in prose
+        // (see `test_css::without_comments`), so a raw needle can be
+        // satisfied by a comment alone.
+        let css = crate::test_css::without_comments(CheckboxComponent::styles());
         for needle in [
             ".hk-checkbox",
             ".hk-checkbox-box",
@@ -388,9 +392,10 @@ mod tests {
             // cannot leave every needle above intact. These three check
             // PRESENCE only — the values (`1.5`, the half-line arithmetic, the
             // per-step box) are pinned against this same sheet by the Vue
-            // styles contract test, which compiles it with sass. (Sass keeps
-            // these comments out of the compiled CSS, so a needle can only be
-            // satisfied by a declaration or a selector, never by prose.)
+            // styles contract test, which compiles it with sass. `css` above
+            // has block comments stripped, so prose cannot satisfy a needle
+            // (grass keeps `/* … */` in expanded output, and this sheet quotes
+            // `align-self: flex-start` in one).
             // `align-self: flex-start` is the half only the gated box rule
             // declares: the row keeps `align-items: center`, which is why a
             // foreign `align-items` cannot undo the anchoring.

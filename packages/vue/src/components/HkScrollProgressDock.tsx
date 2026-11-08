@@ -147,19 +147,22 @@ const HkScrollProgressDockPill = defineComponent({
       // text with the pill itself (its precondition path hides it).
       const degenerate = props.total < 1 || props.from < 1 || props.to < props.from;
       const single = !degenerate && props.from === props.to;
+      // Each half interpolates whatever placeholders its locale uses
+      // (ja's head carries {total}; ko's tail is bare) — the missing
+      // ones are no-ops.
+      const fill = (s: string) =>
+        s
+          .replace("{from}", String(props.from))
+          .replace("{to}", String(props.to))
+          .replace("{total}", String(props.total));
       const head = single || degenerate
         ? ""
-        : t("hikari::scrollProgress.rangeHead", "Rows {from}")
-            .replace("{from}", String(props.from));
+        : fill(t("hikari::scrollProgress.rangeHead", "Rows {from}"));
       const tail = single || degenerate
         ? ""
-        : t("hikari::scrollProgress.rangeTail", "{to} of {total}")
-            .replace("{to}", String(props.to))
-            .replace("{total}", String(props.total));
+        : fill(t("hikari::scrollProgress.rangeTail", "{to} of {total}"));
       const sentence = single
-        ? t("hikari::scrollProgress.single", "Row {from} of {total}")
-            .replace("{from}", String(props.from))
-            .replace("{total}", String(props.total))
+        ? fill(t("hikari::scrollProgress.single", "Row {from} of {total}"))
         : "";
       return (
         <span
@@ -230,9 +233,16 @@ export const HkScrollProgressDock = defineComponent({
     // ── Gate resolution (static, at setup — see the `disabled` doc) ──
     const shellAllowed = inject(HK_SCROLL_PROGRESS_ALLOWED, true);
     const nestedDockActive = inject(HK_SCROLL_PROGRESS_DOCK_ACTIVE, false);
+    const viewportSource = inject(HK_SCROLL_PROGRESS_VIEWPORT, null);
+    const hostSource = inject(HK_SCROLL_PROGRESS_HOST, null);
     const enabled = !props.disabled && shellAllowed && !nestedDockActive;
 
-    if (!enabled) {
+    // Standalone with NOTHING to sense (no `viewport` prop, no container
+    // above providing the key): fully lazy. Providing a registrar here
+    // would shadow an outer dock's and swallow its lists' registration,
+    // so a viewportless dock leaves the vocabulary untouched.
+    const viewportless = props.viewport == null && viewportSource === null;
+    if (!enabled || viewportless) {
       // Fully lazy: no provide, no listener, no pill — the slot is the
       // whole footprint (the fragment keeps no wrapper element in the
       // DOM either).
@@ -247,8 +257,6 @@ export const HkScrollProgressDock = defineComponent({
     } satisfies HkScrollProgressRegistrar);
     provide(HK_SCROLL_PROGRESS_DOCK_ACTIVE, true);
 
-    const viewportSource = inject(HK_SCROLL_PROGRESS_VIEWPORT, null);
-    const hostSource = inject(HK_SCROLL_PROGRESS_HOST, null);
     // The prop wins over the container-provided viewport (a standalone
     // dock hands its own box; an embedded one may re-point the sensor).
     const resolvedViewport = computed(

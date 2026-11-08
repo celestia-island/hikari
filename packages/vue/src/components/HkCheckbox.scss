@@ -119,6 +119,19 @@
  * replaced element that ignores the baseline can push it further than either
  * figure — calculate, do not assume a fixed amount.
  *
+ * Line-box HEIGHT is only one of the two channels that move the first line,
+ * and the formula above covers only that one. A BLOCK child (`<p>`, `<div>`,
+ * `<h1>`) does not change the line's height at all: it takes its own top
+ * margin and displaces the line DOWN, so a host's
+ * `p { margin-block-start: 8px }` leaves a 21px line sitting 8px lower — the
+ * height formula reads 0.000 while the box is 8.000px high — and a plain `<p>`
+ * with no host CSS whatsoever is already 14.000px out (the UA's `1em`
+ * margin-block-start). Nothing in this sheet can neutralise that, because the
+ * offset lands the box on the line and the line itself moved; the fix is to
+ * treat the label's slot as text. The styles contract test pairs this
+ * paragraph with the `LABEL_BLOCK_CONTENT` channel, which reports any host
+ * rule that declares one of those first-line movers on a block tag.
+ *
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control
  * (selection column, a bare box next to a host's own caption) has no line box
@@ -148,10 +161,16 @@
  * about: a `margin-*` nudge on `.hk-checkbox-box` loses to the offset declared
  * here at equal importance (the gated rule outranks it, so the nudge does not
  * render — an `!important` nudge still wins, and measured +2.500px), and a
- * host that stacked the control (`flex-direction: column` on the row) loses the
- * centring it used to get from `align-items` — with the box and the label both
- * pinned to the top, `align-self: center` on the parts is what restores it, not
- * deleting the `align-items` above. Neither shape exists in this package; they
+ * host that stacked the control (`flex-direction: column` on the row) changes
+ * the AXIS this pin acts on rather than losing a vertical centring: in a column
+ * `align-self` is the INLINE axis, so nothing here is pinned to the top — the
+ * box's start edge goes to the column's (measured 106 → 0 on a 230px column)
+ * while the vertical metric is unchanged at every step. `align-self: center` on
+ * the parts restores that horizontal position only if it outranks the gated
+ * rule (an id or `!important`: the natural `.hk-checkbox .hk-checkbox-box` at
+ * (0,2,0) loses to (0,4,0)), and the stacked control is 1.5px taller than it
+ * was (68.00 → 69.50) because the box now carries the offset. Neither shape
+ * exists in this package; they
  * matter to a consumer only if it restyled the parts itself.
  *
  * The label's own line-height is what this rides, and its font size sets the

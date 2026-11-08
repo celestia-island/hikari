@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, realpathSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -328,6 +328,26 @@ function stripComments(css: string): string {
   let index = 0;
   while (index < css.length) {
     const char = css[index]!;
+    // An UNQUOTED `url()` may contain `/*` and even `"`: `url(https://h/a/*)`
+    // is one token, and a scanner that reads the `/*` as a comment start eats
+    // the rest of the sheet — review put
+    // `url(https://e.invalid/a/*)` + `span { margin-block-start: 8px }` +
+    // `.b::after { content: "*/" }` in a foreign sheet and every reader below
+    // went blind while Chrome applied the span rule. Copy the token whole.
+    // …and this test runs BEFORE the escape branch, because an escape-INITIAL
+    // spelling of `url(` (`\75 rl(`, `\000075rl(`) starts with a backslash: a
+    // walker that consumes escapes first never asks `urlTokenEnd`, so it reads
+    // the token as an ordinary ident and a mover on the NEXT declaration looks
+    // like it is inside a paren. Review hid a `margin-block-start: 8px` behind
+    // `unquote("\75 rl(a(b)")` in a shipped sheet — 211/211 green, Chrome
+    // applied it, label 8.000px low. `urlTokenEnd` decodes the ident, so it is
+    // the only test that can see this spelling.
+    if ((IDENT_CHAR.test(char) || char === "\\") && urlTokenEnd(css, index) > 0) {
+      const end = urlTokenEnd(css, index);
+      out += css.slice(index, end);
+      index = end;
+      continue;
+    }
     if (char === "\"" || char === "'") {
       // Copy the whole string literal, escapes included.
       let end = index + 1;
@@ -355,18 +375,6 @@ function stripComments(css: string): string {
     if (char === "/" && css[index + 1] === "*") {
       const end = css.indexOf("*/", index + 2);
       index = end < 0 ? css.length : end + 2;
-      continue;
-    }
-    // An UNQUOTED `url()` may contain `/*` and even `"`: `url(https://h/a/*)`
-    // is one token, and a scanner that reads the `/*` as a comment start eats
-    // the rest of the sheet — review put
-    // `url(https://e.invalid/a/*)` + `span { margin-block-start: 8px }` +
-    // `.b::after { content: "*/" }` in a foreign sheet and every reader below
-    // went blind while Chrome applied the span rule. Copy the token whole.
-    if ((IDENT_CHAR.test(char) || char === "\\") && urlTokenEnd(css, index) > 0) {
-      const end = urlTokenEnd(css, index);
-      out += css.slice(index, end);
-      index = end;
       continue;
     }
     out += char;
@@ -835,6 +843,21 @@ function splitDeclarations(body: string): string[] {
   };
   while (at < body.length) {
     const char = body[at]!;
+    if ((IDENT_CHAR.test(char) || char === "\\") && urlTokenEnd(body, at) > 0) {
+      // The url test runs BEFORE the escape branch: an escape-INITIAL `url`
+      // spelling (`\75 rl(` = "url(") starts with a backslash, and a walker
+      // that consumes escapes first reads the whole token as an ordinary ident
+      // — the paren then counts toward the depth and the declaration after it
+      // vanishes. Review put
+      // `span:last-child { background-image: unquote("\\75 rl(a(b)"); margin-block-start: 8px }`
+      // in a shipped sheet: 211/211 green, Chrome applied the mover and put the
+      // label 8.000px low. `urlTokenEnd` decodes the ident, so it is the only
+      // test that can see this spelling.
+      const url = urlTokenEnd(body, at);
+      buffer += body.slice(at, url);
+      at = url;
+      continue;
+    }
     if (char === "\\") {
       // Escaped code point: `\)` / `\(` are DATA. `url(a\\)b)` is one token, and
       // counting its escaped paren pushed the depth off zero — every later
@@ -854,17 +877,6 @@ function splitDeclarations(body: string): string[] {
       buffer += body.slice(at, end + 1);
       at = end + 1;
       continue;
-    }
-    if (IDENT_CHAR.test(char) || char === "\\") {
-      // Same url-token rule as the brace walk, in ANY escape spelling:
-      // `url(…)` ends only at `)`, and its body may carry `;` or an unbalanced
-      // paren (`url(a\\)b)`) that must not reach the splitter.
-      const url = urlTokenEnd(body, at);
-      if (url > 0) {
-        buffer += body.slice(at, url);
-        at = url;
-        continue;
-      }
     }
     if (char === "(") depth += 1;
     else if (char === ")") depth = Math.max(0, depth - 1);
@@ -1181,7 +1193,7 @@ const PAINTS_ONLY =
  * names. Widening it to EVERY tag is not an option either: reaching every
  * replaced element as well turns the table from 73 rows into 975 — 613 of the
  * rows are `@keyframes` steps and the other 362 are element/registration rows
- * (`svg` 154, `input` 5, `p { margin: 0 }` …), 308 of them new, i.e. a table
+ * (`svg` 154, `input` 5, `p { margin: 0 }` …), 289 of them new, i.e. a table
  * nobody reads. (Both numbers move by two whenever the shipped table does: they
  * were 977/364 while it still carried the two `outline` rows.)
  * Deliberately NOT in this set, with what each omission costs:
@@ -1191,7 +1203,7 @@ const PAINTS_ONLY =
  *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
  *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
  *   styling that no label can ever match: lifting the unscoped restriction
- *   alone takes this table from 73 rows to 260 (measured), one row per host
+ *   alone takes this table from 73 rows to 279 (measured), one row per host
  *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
@@ -1217,7 +1229,14 @@ const PHRASING_CONTENT = new Set([
  * and `:is(p)` spellings WERE rows, so the hole is the subject set, not the
  * anchoring rule. The earlier comment here claimed a block element "cannot"
  * reach the label; that was a claim about markup validity, not about pixels,
- * and it is the only such claim the review could still falsify. */
+ * and it is the only such claim the review could still falsify.
+ *
+ * `p` and `div` are members although no row in the causal table comes from
+ * them TODAY: a row needs a shipped sheet declaring a mover for that tag, and
+ * none does. The channel is what covers them — a host sheet that writes
+ * `p { margin-block-start: 8px }` is reported the moment it is compiled in,
+ * which is the whole reason the set is a tag list and not a list of the tags
+ * that happen to appear in today's tables. */
 const LABEL_BLOCK_CONTENT = new Set([
   "address", "article", "aside", "blockquote", "dd", "details", "div", "dl", "dt", "fieldset",
   "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr",
@@ -2714,10 +2733,15 @@ describe("label first-line anchoring", () => {
     );
     const inBundle = scoped(bundle);
     const inSheets = scoped(declared);
+    // REAL paths, not path strings: `resolve()` normalises `..` but cannot
+    // see a symlink, so a vendored mirror that was a link to the canonical
+    // sheet passed this assertion (211/211 green, review's finding) while
+    // serving the same bytes from a second path. The assertion's whole job is
+    // to prove the mirror is a copy that can drift.
     expect(
-      resolve(mirrorDir, "HkCheckbox.scss"),
+      realpathSync(resolve(mirrorDir, "HkCheckbox.scss")),
       "the mirror must be a different file, not a second path to the source",
-    ).not.toBe(resolve(componentDir, "HkCheckbox.scss"));
+    ).not.toBe(realpathSync(resolve(componentDir, "HkCheckbox.scss")));
     expect(mirrored.map(key).sort(), "the vendored mirrors are the compiled Vue sheets").toEqual(
       declared.map(key).sort(),
     );
@@ -2765,13 +2789,14 @@ describe("label first-line anchoring", () => {
     //   `.s-about-modal-backdrop > *` (`height: 100%`), so a control placed
     //   DIRECTLY under either parent loses the first-line anchoring. The
     //   package renders none there (see the migration notes).
-    // * NINE descendant rows, of which EIGHT are on phrasing content — `code`,
-    //   `.hk-menu-item a`, `.icon-grid small`, `.hk-diff-viewer__hunk-stats
-    //   em`, … (two fewer than before: `.hk-markdown a:focus-visible` carried
-    //   only `outline*`, which is in `PAINTS_ONLY` now) — and the ninth is the
-    //   `label:where(:not([class^=hk-])…)` host reset. These are the rows that
-    //   make `a { line-height: 2 }` impossible to ship silently: a label may
-    //   hold a link, so a rule on a link moves the row.
+    // * NINE rows on phrasing content, in two shapes: SEVEN carry a descendant
+    //   combinator (`.hk-menu-item a`, `.icon-grid small`,
+    //   `.hk-diff-viewer__hunk-stats em`, …) and TWO are single-compound (`code`
+    //   and the `label:where(:not([class^=hk-])…)` host reset). Two fewer than
+    //   before: `.hk-markdown a:focus-visible` carried only `outline*`, which is
+    //   in `PAINTS_ONLY` now. These are the rows that make `a { line-height: 2 }`
+    //   impossible to ship silently: a label may hold a link, so a rule on a
+    //   link moves the row.
     // * NINE unscoped replaced-element rows — `img`/`svg`/`canvas`/`input` in
     //   the reset (and the duplicated `styles/index.scss`/bundle copies), which
     //   is exactly what the host ships: `svg { display: block; max-width:
@@ -2781,9 +2806,12 @@ describe("label first-line anchoring", () => {
     //   styling no label can match — every one of them carries a replaced-
     //   element subject, 136 of them come from the host bundle and the other 70
     //   from the component sheets (measured by lifting only the unscoped half
-    //   of `REPLACED_CONTENT`: the pinned 54 → 260, i.e. +206).
-    // * NINETEEN unscoped block-child rows — `h1`–`h6`, `hr`, `pre`, `td`,
-    //   `th` in the reset plus `demo.scss`'s `h1`/`h2`: a block-level child of
+    //   of `REPLACED_CONTENT`: the pinned 73 → 279, i.e. +206).
+    // * NINETEEN unscoped block-child rows — and nineteen is a declaration
+    //   count, not a tag count: `h1`–`h6` contribute two rows each (their
+    //   `font-size` and their `line-height`), `hr`/`pre`/`pre::-webkit-scrollbar`
+    //   /`td`/`th` one each in the reset, and `demo.scss`'s `h1`/`h2` two more —
+    //   12 + 5 + 2. A block-level child of
     //   the label pushes the label's FIRST LINE off its top while the box stays
     //   pinned there (`p { margin-block-start: 8px }` measured −8.000px, see
     //   `LABEL_BLOCK_CONTENT`). Only the UNSCOPED shape is a row, and only the
@@ -2973,6 +3001,33 @@ describe("label first-line anchoring", () => {
     expect(elementOnlyMovers("pin", rules("my-widget > span { line-height: 2 }"))).toEqual([
       "pin :: - | my-widget > span | line-height: 2",
     ]);
+  });
+
+  it("an escape-spelled url( still opens a token, so the mover behind it is a row", () => {
+    // `url(` has an escape spelling for every letter, and the walkers recognise
+    // it by DECODED name (`urlTokenEnd`). Both of them tested the url token
+    // AFTER the escape branch, which consumed the leading backslash first — so
+    // an escape-INITIAL spelling (`\75 rl(` = "url(") was read as an ordinary
+    // ident, the `(` counted toward the paren depth, and the declaration after
+    // it vanished. Review put
+    // `span:last-child { background-image: unquote("\75 rl(a(b)"); margin-block-start: 8px }`
+    // in a shipped sheet: 211/211 green while Chrome applied the mover and put
+    // the label 8.000px low. Three spellings, three exact rows — a loop over
+    // spellings would let a reader that handles one and not the others pass.
+    expect(elementOnlyMovers("pin", rules(String.raw`span:last-child { background-image: \75 rl(a(b); margin-block-start: 8px }`))).toEqual([
+      "pin :: - | span:last-child | margin-block-start: 8px",
+    ]);
+    expect(elementOnlyMovers("pin", rules(String.raw`span:last-child { background-image: \75rl(a(b); margin-block-start: 8px }`))).toEqual([
+      "pin :: - | span:last-child | margin-block-start: 8px",
+    ]);
+    expect(elementOnlyMovers("pin", rules(String.raw`span:last-child { background-image: \000075rl(a(b); margin-block-start: 8px }`))).toEqual([
+      "pin :: - | span:last-child | margin-block-start: 8px",
+    ]);
+    // The same token through the comment stripper: a `/*` inside an unquoted
+    // url body is DATA, and the escape-initial spelling has to survive it too.
+    expect(
+      movingDeclarations(stripComments(String.raw`background-image: \75 rl(a/*b); margin-block-start: 8px`)),
+    ).toEqual(["margin-block-start: 8px"]);
   });
 
   it("a block-level child moves the label's first line, so it is a row", () => {

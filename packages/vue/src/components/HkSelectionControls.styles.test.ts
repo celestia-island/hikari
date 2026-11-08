@@ -396,6 +396,25 @@ function rules(css: string): Rule[] {
     if (char === "{") {
       const prelude = buffer.trim();
       buffer = "";
+      // A `{` whose prelude is not a plausible SELECTOR is a block this walk
+      // cannot classify, and consuming it as a rule frame makes its whole rule
+      // evaporate: round 11 put `span:last-child { margin-block-start: 8px;
+      // --zz: { } }` and the CSS-nesting form `span:last-child { color: red;
+      // & { margin-block-start: 8px } }` in front of Chrome — both applied
+      // (−8.000px at every probe, `align-self: center !important` inside the
+      // block resurrected the old −18.000 at radio lg) with the gate green and
+      // `PARSE_LEFTOVER` empty, because the inner "rule" gets an empty body and
+      // the `if (!body) continue` below drops it, then the OUTER frame's body
+      // is empty too. Strings are stripped before the test so an attribute
+      // value carrying `;` or `&` does not trip it. Fail closed: the block is
+      // recorded and the aggregate assertion reddens.
+      const selectorish = prelude.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, "\"\"");
+      if (
+        !prelude.startsWith("@") &&
+        (selectorish.includes(";") || /:\s*$/.test(selectorish) || selectorish.includes("&"))
+      ) {
+        PARSE_LEFTOVER.push(`unclassifiable block: ${prelude.slice(0, 120)}`);
+      }
       stack.push({ prelude, atRule: prelude.startsWith("@") });
       continue;
     }
@@ -845,6 +864,14 @@ function importTargets(css: string): string[] {
   const out: string[] = [];
   const bare = stripComments(css);
   for (const head of [...bare.matchAll(/@import\b/gi)]) {
+    // Only a TOP-LEVEL statement start counts: a sheet may legitimately carry
+    // the text in a declaration value (`content: "@import …"`), and flagging
+    // that would redden the suite on a harmless sheet. Walk back over the
+    // statement separator: `@import` is real only when everything before it is
+    // whitespace, `;`, or a closed top-level rule.
+    const before = bare.slice(0, head.index).trimEnd();
+    const separator = before === "" ? undefined : before[before.length - 1];
+    if (before !== "" && separator !== ";" && separator !== "}") continue;
     let at = head.index + head[0].length;
     let depth = 0;
     let target = "";
@@ -1064,7 +1091,7 @@ function compiledHostBundle(): Rule[] {
  * calc (measured: box 3.0px high). Both were green before the value test.
  */
 const PAINTS_ONLY =
-  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline-(?:color|style|width)|text-decoration|caret-color|cursor|pointer-events|user-select|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|scroll-behavior|overflow-style|tap-highlight-color|font-smoothing|text-size-adjust|scroll-snap|overscroll-behavior|touch-action|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
+  /^(?:color|background|border-(?:color|radius|image|block-color|inline-color)|box-shadow|text-shadow|filter|backdrop-filter|opacity|outline(?:-(?:color|style|width|offset))?|text-decoration|caret-color|cursor|pointer-events|user-select|fill|stroke|stop-color|stop-opacity|will-change|visibility|z-index|transition|animation-play-state|scroll-behavior|overflow-style|tap-highlight-color|font-smoothing|text-size-adjust|scroll-snap|overscroll-behavior|touch-action|mask|clip-path|scrollbar-color|scrollbar-width|accent-color|print-color-adjust)(?:-|$)/;
 
 /** The TEXT-LEVEL phrasing content a `<label>` may hold, plus custom elements
  * (`x-foo`, the hyphen is the tell). A rule on one of these can restyle the
@@ -1151,6 +1178,10 @@ function couldMatchAPart(compound: string, selector: string = compound): boolean
   // 3.0/3.5/4.0px with the whole gate green. Anything that still has an
   // unbalanced paren after the strip fails CLOSED (counted as reachable).
   const bare = withoutParens(compound.replace(/\[[^\]]*\]/g, ""));
+  // Functional pseudo ARGUMENTS (`:not(.light)`, `:has(.app)`, `:lang(en)`)
+  // name something else: `withoutParens` already dropped them above, so the
+  // subject is what is left. That is what makes `html:not(...)`/`body:first-
+  // child`/`html:where(...)` recognized as the GLOBAL element they qualify.
   if (bare.includes("(") || bare.includes(")")) return true;
   // A GLOBAL subject reaches every element no matter what qualifies it: `html`
   // (or `:root`, `body`, `*`) is still the ancestor of the label when the rule
@@ -2554,8 +2585,7 @@ describe("label first-line anchoring", () => {
       "bundle :: - | .hk-glow-wrapper > * | position: relative",
       "bundle :: - | .hk-glow-wrapper-block > * | position: relative",
       "bundle :: - | .hk-layout > * | position: relative",
-      "bundle :: - | .hk-markdown a:focus-visible | outline-offset: 2px; outline: 2px solid var(--hi-color-primary, #7aa2f7)",
-      "bundle :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
+         "bundle :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
       "bundle :: - | .hk-menu-item a | align-items: center; display: flex; gap: 1rem; height: 100%; width: 100%",
       "bundle :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
       "bundle :: - | .hk-row > * | margin: 0 0.5rem",
@@ -2577,7 +2607,6 @@ describe("label first-line anchoring", () => {
       "components/HkCalendarHeatmap.scss :: - | .hk-calendar-heatmap-rail > span | white-space: nowrap",
       "components/HkDiffViewer.scss :: - | .hk-diff-viewer__hunk-stats em | font-style: normal; font-weight: 600",
       "components/HkDraggableList.scss :: - | .hk-draggable-list-content > :only-child | flex: 1; min-width: 0",
-      "components/HkMarkdownRenderer.scss :: - | .hk-markdown a:focus-visible | outline-offset: 2px; outline: 2px solid var(--hi-color-primary, #7aa2f7)",
       "components/HkMarkdownRenderer.scss :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
       "components/HkModal.scss :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
       "components/HkScrollContainer.scss :: - | .hk-scroll-container[data-dock-tail=true] > .hk-scroll-container-viewport > * | flex-shrink: 0",
@@ -2636,6 +2665,46 @@ describe("label first-line anchoring", () => {
     // The qualifier must not turn a paint-only declaration into a row: the
     // reachability reader is what changed, not the mover filter.
     expect(elementOnlyMovers("pin", rules(`${spelling} { color: red }`)), `paint rows`).toEqual([]);
+  });
+
+  it.each([
+    // The six hardening lines review found UNPINNED: removing each one kept
+    // the whole suite green, while the payload beside it is a rule Chrome
+    // applies. Every row below comes from exactly one of those lines, so a
+    // regression there is a red test instead of a silent hole.
+    // (a) the tag is compared case-insensitively,
+    ["SPAN { margin-block-start: 8px }", "SPAN", "margin-block-start: 8px"],
+    // (b) a namespace prefix does not turn the tag into "not a tag",
+    ["*|span { margin-block-start: 8px }", "*|span", "margin-block-start: 8px"],
+    // (c) `--text-base` has a shrink floor: 0.5rem = 8px makes the line box
+    // SHORTER than the 18px box, and the floor is what refuses it,
+    [":root { --text-base: 0.5rem }", ":root", "--text-base: 0.5rem"],
+    // (d) a SCOPED custom property is a row at any value (this one is even a
+    // "safe" length — scoping is the point, not the value),
+    ["span:first-of-type { --text-base: 2rem }", "span:first-of-type", "--text-base: 2rem"],
+    // (e)/(f) the two attributes the BOX itself carries: `PART_ATTRS` is what
+    // lets an attribute selector reach a part at all.
+    ["[data-checked] { margin-block-start: 8px }", "[data-checked]", "margin-block-start: 8px"],
+    [
+      "[data-indeterminate] { margin-block-start: 8px }",
+      "[data-indeterminate]",
+      "margin-block-start: 8px",
+    ],
+  ])("%s is a mover", (sheet, selector, moves) => {
+    expect(elementOnlyMovers("pin", rules(sheet)), `rows for \`${sheet}\``).toEqual([
+      `pin :: - | ${selector} | ${moves}`,
+    ]);
+  });
+
+  it.each([
+    // The controls for the six rows above: each is one line away from a row and
+    // must stay silent, or the table would grow on harmless sheets.
+    ["div { --text-base: 0.875rem }", "a SAFE length on an unreachable ancestor"],
+    ["[data-nope] { margin-block-start: 8px }", "an attribute no part carries"],
+    ["div { margin-block-start: 8px }", "an unreachable block subject"],
+    ["span { color: red }", "paint only"],
+  ])("%s stays out of the table (%s)", (sheet) => {
+    expect(elementOnlyMovers("pin", rules(sheet))).toEqual([]);
   });
 
   it("HkLabel pins the line box on its base rule and leaves the first line alone", () => {
@@ -3093,6 +3162,13 @@ describe("readers hold against the payloads rounds six to eight used", () => {
     );
     expect(importTargets('@import "./x.css" screen;')).toEqual(['"./x.css" screen']);
     expect(importTargets("a { color: red }")).toEqual([]);
+    // The text is NOT an import when it is a declaration value or a string
+    // body: the reader is keyed on the statement position, so a harmless sheet
+    // that merely quotes it stays green.
+    expect(importTargets('a::after { content: "@import url(x)"; }')).toEqual([]);
+    expect(importTargets(".a { background: url(https://e.invalid/@import) }")).toEqual([]);
+    // ...and a real import after a closed rule still counts.
+    expect(importTargets('a { color: red }\n@import "b.css";')).toEqual(['"b.css"']);
     // A `;` inside a string is not the end of the statement.
     expect(importTargets('@import url("a;b.css");')).toEqual(['url("a;b.css")']);
   });
@@ -3315,5 +3391,153 @@ describe("readers hold against the payloads rounds six to eight used", () => {
     expect(blockEnd("a{b{c}d}e", 1)).toBe(7);
     // Fail-closed: an unterminated block is a row, not silence.
     expect(atPropertyMovers("sheet", "@property --text-base { initial-value: 1rem;")).toHaveLength(1);
+  });
+});
+
+describe("every reader the guard added is pinned by a payload", () => {
+  /** Run `body` with `PARSE_LEFTOVER` restored afterwards: the aggregate
+   * "no sheet leaves the walker with text it could not consume" assertion runs
+   * on the same module-level array, so a payload test that records a leftover
+   * must not leak into it. */
+  function isolated(body: () => void): void {
+    const saved = PARSE_LEFTOVER.length;
+    try {
+      body();
+    } finally {
+      PARSE_LEFTOVER.length = saved;
+    }
+  }
+
+  it.each([
+    // FAMILY B (round 11): a declaration whose value is a BLOCK. Chrome keeps
+    // the block as the custom property's value, applies the rest of the rule
+    // and moves the box (−8.000px at every probe; `align-self: center
+    // !important` inside the block resurrected the old −18.000 at radio lg,
+    // `:root { --text-base: 50%` inside one gave +24.703/+155.250).
+    "span:last-child { margin-block-start: 8px; --zz: { } }",
+    "span:last-child { align-self: center !important; --zz: { } }",
+    "span:last-child { margin-block-start: 8px; --zz: { } --yy: { } }",
+    "@media (min-width: 1px) { span:last-child { margin-block-start: 8px; --zz: { } } }",
+    ":root { --text-base: 50%; --zz: { } }",
+    // FAMILY A: CSS NESTING that sass did not flatten (the payload `@use`s a
+    // plain `.css` companion, so the browser is the only flattener). Chrome
+    // applies the nested rule, the walker used to hand the inner block an empty
+    // body and drop both frames.
+    "span:last-child { color: red; & { margin-block-start: 8px } }",
+    "span:last-child { & { margin-block-start: 8px } }",
+    "span:last-child { &:last-child { margin-block-start: 8px } }",
+  ])("%s is recorded as an unclassifiable block", (sheet) => {
+    isolated(() => {
+      const before = PARSE_LEFTOVER.length;
+      rules(sheet);
+      expect(PARSE_LEFTOVER.slice(before).join("\n")).toContain("unclassifiable block");
+    });
+  });
+
+  it.each([
+    // Legit blocks: an empty rule, the two at-rules that HOLD declarations, a
+    // statement at-rule, and an attribute value that merely contains `;`/`&`.
+    ".zz { }",
+    "@font-face { font-family: zz; src: local(zz) }",
+    '@property --zz { syntax: "*"; inherits: false; initial-value: 1rem }',
+    "@layer a, b;",
+    '.zz[title="a;b&c"] { color: red }',
+  ])("%s is not recorded as an unclassifiable block", (sheet) => {
+    isolated(() => {
+      const before = PARSE_LEFTOVER.length;
+      rules(sheet);
+      expect(PARSE_LEFTOVER.slice(before)).toEqual([]);
+    });
+  });
+
+  it.each([
+    // INHERITED custom properties: an ancestor hands the token down whichever
+    // element the rule names, so an UNSAFE value on a subject that can neither
+    // BE a part nor CONTAIN one is still a row (+36.438px measured in Chrome).
+    // The safe-value control lives in the table above.
+    ["div", "50%"],
+    [".hk-row", "50%"],
+    ["div:not(.hk-icon)", "0.5rem"],
+    ["article > div", "50%"],
+    ["div:hover", "0.5rem"],
+  ])("an unsafe token on the unreachable `%s` is a row", (subject, value) => {
+    expect(elementOnlyMovers("pin", rules(`${subject} { --text-base: ${value} }`))).toEqual([
+      `pin :: - | ${subject} | --text-base: ${value}`,
+    ]);
+  });
+
+  it("a container-wrapped ancestor rule is a row too", () => {
+    expect(
+      elementOnlyMovers("pin", rules("@container (min-width: 1px) { div { --text-base: 50% } }")),
+    ).toEqual(["pin :: @container (min-width: 1px) | div | --text-base: 50%"]);
+  });
+
+  it.each([
+    // `SAFE_LENGTH` is ONE-SIDED on purpose: growth is safe, shrink and the
+    // negative form are not. `-1rem` is dropped as an invalid `font-size` but
+    // stays a legal length inside the `calc()` (measured −24.000px), and
+    // `0.5rem` makes the line box shorter than the box it anchors (−3.0px).
+    ["-1rem", true],
+    ["0.5rem", true],
+    ["0.6875rem", true],
+    ["2rem", false],
+    ["8px", true],
+    ["12px", false],
+  ])("`--text-base: %s` is %s", (value, unsafe) => {
+    expect(elementOnlyMovers("pin", rules(`:root { --text-base: ${value} }`))).toEqual(
+      unsafe ? [`pin :: - | :root | --text-base: ${value}`] : [],
+    );
+  });
+
+  it.each([
+    // The GLOBAL spellings, judged with a NON-custom-property mover: only a
+    // reachable subject can form this row, which is what makes the reachability
+    // reader (case, namespace, pseudo arguments) load-bearing instead of being
+    // shadowed by the inherited-token branch above.
+    "html:not(.light)",
+    "body:first-child",
+    "html:lang(en)",
+    "body:has(.app)",
+    "html:where(.dark)",
+    ":root:not([data-theme=light])",
+    ".dark:root",
+    "html.dark",
+    "*|html",
+  ])("%s can move a part without naming one", (spelling) => {
+    expect(elementOnlyMovers("pin", rules(`${spelling} { margin-block-start: 8px }`))).toEqual([
+      `pin :: - | ${spelling} | margin-block-start: 8px`,
+    ]);
+  });
+
+  // The primitives' escape / url-token branches: the walker has its own string
+  // loop, so these are the OTHER readers, and each branch below was reachable
+  // only through code that no payload exercised.
+  it("escapes and url tokens stay data in every reader", () => {
+    // stringEnd: `\\"` is an escaped quote, not the end of the string.
+    const escaped = '"a\\"b"';
+    expect(escaped[stringEnd(escaped, 0) - 1]).toBe('"');
+    expect(stringEnd(escaped, 0)).toBe(escaped.length);
+    // urlTokenEnd: only a real `url(` ident starts a token (`xurl(` does not),
+    // and the token runs to `)` with `;`/`}` inside it kept as data.
+    expect(urlTokenEnd("xurl(a)", 0)).toBe(-1);
+    // A caller that lands MID-ident (`myurl(` from the `u`) must not see a
+    // token either: the walker asks at every ident character.
+    expect(urlTokenEnd("myurl(a)", 2)).toBe(-1);
+    expect(urlTokenEnd("url(a;b)", 0)).toBe(8);
+    expect(urlTokenEnd('url("a;b")', 0)).toBe(10);
+    // blockEnd: `\{` / `\}` are data, so the matching brace is the last one.
+    expect(blockEnd("x { a\\} b }", 2)).toBe(10);
+    // splitDeclaration / splitDeclarations: a `;` inside a url token is not a
+    // declaration separator, and the url token is not the value's name.
+    expect(splitDeclaration("background: url(a;b)")).toEqual({
+      name: "background",
+      value: "url(a;b)",
+    });
+    expect(splitDeclarations("background: url(a;b); color: red").length).toBe(2);
+    // importTargets: a url token target survives its `;` (and only a real
+    // top-level statement counts).
+    expect(importTargets("@import url(a;b);")).toEqual(["url(a;b)"]);
+    // rules(): an escaped brace is part of a selector, not a block delimiter.
+    expect(rules(".zz\\{ { margin-block-start: 8px }").map((r) => r.selector)).toEqual([".zz\\{"]);
   });
 });

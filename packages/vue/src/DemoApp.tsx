@@ -620,11 +620,11 @@ export default defineComponent({
           <h2>HTimeline</h2>
           <HTimeline steps={timelineSteps} currentKey="v2" />
           <h3>Narrow host → auto window (prev / current / next, edges fade)</h3>
-          <div style="max-width:280px;padding:8px;border:1px dashed var(--hi-color-border, #888);border-radius:8px">
+          <div style="max-width:280px;padding:8px;border:1px dashed var(--hi-color-border, #888);border-radius:var(--radius-md, 8px)">
             <HTimeline steps={wizardSteps} currentKey="vendor" />
           </div>
           <h3>collapse="always" at the first step</h3>
-          <div style="max-width:280px;padding:8px;border:1px dashed var(--hi-color-border, #888);border-radius:8px">
+          <div style="max-width:280px;padding:8px;border:1px dashed var(--hi-color-border, #888);border-radius:var(--radius-md, 8px)">
             <HTimeline steps={wizardSteps} currentKey="type" collapse="always" />
           </div>
         </section>
@@ -658,7 +658,7 @@ export default defineComponent({
 
         <section>
           <h2>HZoomToolbar / HMinimap</h2>
-          <div style="position:relative;height:200px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.35)">
+          <div style="position:relative;height:200px;border-radius:var(--radius-md, 8px);overflow:hidden;background:rgba(0,0,0,0.35)">
             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.75rem;opacity:0.5">
               Host surface — zoom {zoomState.value.zoom.toFixed(2)}x, pan ({Math.round(zoomState.value.panX)}, {Math.round(zoomState.value.panY)})
             </div>

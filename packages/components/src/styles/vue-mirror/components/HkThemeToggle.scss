@@ -97,7 +97,7 @@
      manual never grows or shrinks the strip. */
   padding: var(--space-4, 0.25rem) var(--space-12, 0.75rem);
   border: 0;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-md, 8px);
   background: transparent;
   color: rgb(var(--color-text-secondary, var(--color-muted)));
   font: inherit;

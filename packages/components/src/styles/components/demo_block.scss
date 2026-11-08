@@ -20,7 +20,7 @@
 .hk-component-demo {
     background-color: var(--hi-color-bg-container, var(--hi-color-surface));
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     margin: 1.5rem 0;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -53,14 +53,14 @@
     padding: 2px;
     background: var(--hi-color-surface-secondary, var(--hi-secondary-bg));
     border: 1px solid var(--hi-color-border);
-    border-radius: 999px;
+    border-radius: var(--radius-full);
 }
 
 .hk-component-demo-toggle-btn {
     appearance: none;
     border: none;
     background: transparent;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     padding: 0.15rem 0.7rem;
     font-size: 0.75rem;
     line-height: 1.5;
@@ -118,7 +118,7 @@
     padding: 0.75rem 1rem;
     background-color: rgba(233, 75, 53, 0.1);
     border: 1px solid var(--hi-color-danger);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     color: var(--hi-color-danger);
     font-size: 0.875rem;
 }

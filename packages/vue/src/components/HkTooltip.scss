@@ -15,7 +15,7 @@
   z-index: var(--hk-overlay-z-tooltip, 300);
   padding: var(--space-4) var(--space-8);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md, 8px);
   /* Width is position-independent (same contract as .hk-popover-panel):
    * max-content sizes the bubble to its text wherever it sits — a fixed
    * element otherwise shrink-to-fits against `viewport - left` and a

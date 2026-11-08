@@ -99,7 +99,7 @@
   align-self: flex-start;
 
   // 统一使用 4px 圆角
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
 
   overflow: visible;
 }
@@ -111,7 +111,7 @@
   width: 100%;
 
   // 统一使用 4px 圆角
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   overflow: visible;
 }
 

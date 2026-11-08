@@ -678,7 +678,7 @@
 .s-admin-header-emergency {
   padding: var(--space-4) var(--space-12);
   border-width: 1px;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-md, 8px);
   font-size: var(--text-xs);
   /* Uno's font-size utilities also emit `line-height: 1`; the chip
    * rendered that way in chest, so the class keeps it. */
@@ -1077,7 +1077,7 @@
   box-sizing: border-box;
   background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 70%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text, 30 30 30)) 12%, transparent);
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--hi-radius-lg, 12px);
   box-shadow: 0 2px 16px rgb(0 0 0 / 8%);
   animation: s-auth-card-in 0.45s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)) both;
 }
@@ -1207,7 +1207,7 @@
   color: var(--hi-color-danger, #f85149);
   background: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
-  border-radius: 6px;
+  border-radius: var(--radius-md, 8px);
   padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
 }
 
@@ -1286,7 +1286,7 @@
   color: var(--hi-color-warning, #ffa500);
   background: color-mix(in srgb, var(--hi-color-warning, #ffa500) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--hi-color-warning, #ffa500) 20%, transparent);
-  border-radius: 6px;
+  border-radius: var(--radius-md, 8px);
   padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
   text-align: center;
 }

@@ -39,7 +39,7 @@
      picks polar-night ink for its pale primary fills) painted a dark X on
      dark red at roughly 1:1 - the host-visible bug both wowsp and momoi
      filed. */
-  --hk-tb-radius-close: 0 8px 0 0;
+  --hk-tb-radius-close: 0 var(--radius-md) 0 0;
 
   position: fixed;
   top: 0;
@@ -143,7 +143,7 @@
 /* RTL mirrors the caption row, so the close button lands top-left and
    the window corner radius flips with it. */
 [dir="rtl"] .hk-titlebar .hk-titlebar-btn-close {
-  border-radius: 8px 0 0 0;
+  border-radius: var(--radius-md) 0 0 0;
 }
 
 /* A maximized frame has no rounded window corner to follow: Windows 11

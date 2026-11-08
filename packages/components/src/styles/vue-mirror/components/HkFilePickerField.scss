@@ -31,7 +31,7 @@
   min-height: 2.5rem;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md, 8px);
   transition:
     border-color var(--duration-normal) var(--ease-standard),
     background-color var(--duration-normal) var(--ease-standard);

@@ -227,7 +227,7 @@ const CHEVRON_DOWN_SVG: &str = r#"<svg viewBox="0 0 24 24" fill="none" stroke="c
 const COUNTRY_PANEL_STYLE: &str = "position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;max-height:15rem;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:4px;background:rgb(var(--color-surface));border:1px solid rgb(var(--color-text) / 14%);border-radius:var(--radius-md, 8px);box-shadow:var(--shadow-modal, none)";
 
 /// Inline geometry for one country row (same reason as the panel).
-const COUNTRY_ROW_STYLE: &str = "display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.375rem 0.5rem;border:none;border-radius:var(--radius-sm, 6px);background:none;color:rgb(var(--color-text));font:inherit;cursor:pointer;text-align:start;white-space:nowrap";
+const COUNTRY_ROW_STYLE: &str = "display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.375rem 0.5rem;border:none;border-radius:var(--radius-sm, 4px);background:none;color:rgb(var(--color-text));font:inherit;cursor:pointer;text-align:start;white-space:nowrap";
 
 /// Vue's `normalizeDial`: drop one leading `+`, then one leading `00`, then
 /// every non-digit (`"+86"` / `"86"` / `"0086"` all become `"86"`).

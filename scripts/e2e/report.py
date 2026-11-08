@@ -165,7 +165,7 @@ class ReportGenerator:
                                font-size:11px;margin-left:6px">{tr.route}</code>
                 </span>
                 <span style="background:{status_color};color:white;padding:2px 10px;
-                             border-radius:10px;font-size:11px;font-weight:bold">
+                             border-radius:9999px;font-size:11px;font-weight:bold">
                   {tr.status.upper()}
                 </span>
               </div>

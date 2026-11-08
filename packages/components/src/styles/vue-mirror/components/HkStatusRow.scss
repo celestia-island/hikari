@@ -18,7 +18,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.875rem 1rem 0.875rem 1.125rem;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg, 12px);
   border: 1px solid rgb(var(--color-border, 60 60 60) / 18%);
   background: rgb(var(--color-surface, 255 255 255) / 70%);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -29,7 +29,7 @@
     inset-block: 0.625rem;
     left: 0;
     width: 3px;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: rgb(var(--color-muted, 108 108 108) / 45%);
   }
 
@@ -64,7 +64,7 @@
   width: 2.25rem;
   height: 2.25rem;
   flex-shrink: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md, 8px);
   background: rgb(var(--color-muted, 108 108 108) / 10%);
   color: rgb(var(--color-muted, 108 108 108));
 }

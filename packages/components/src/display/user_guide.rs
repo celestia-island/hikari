@@ -324,7 +324,7 @@ impl StyledComponent for UserGuideComponent {
     color: var(--hi-text-secondary);
     background-color: var(--hi-color-bg-elevated);
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-full, 9999px);
 }
 
 .hk-user-guide-description {
@@ -348,7 +348,7 @@ impl StyledComponent for UserGuideComponent {
     font-size: 14px;
     cursor: pointer;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius-md, 8px);
     transition: all 0.2s ease;
 }
 
@@ -369,7 +369,7 @@ impl StyledComponent for UserGuideComponent {
     align-items: center;
     gap: 4px;
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: var(--radius-md, 8px);
     border: 1px solid var(--hi-color-border);
     background-color: transparent;
     color: var(--hi-text-primary);

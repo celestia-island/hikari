@@ -51,7 +51,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   /* Resting state is a softly FILLED neutral track (iOS-style) rather
    * than a bare surface sliver: the off state must read as a control
    * even on a same-colored card. The border rides one step ahead of the

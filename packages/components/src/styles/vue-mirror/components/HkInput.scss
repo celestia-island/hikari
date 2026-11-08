@@ -42,7 +42,7 @@
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md, 8px);
   overflow: hidden;
   /* Longhand on purpose: the comma shorthand attached the duration to the
    * LAST property only, so hover border-color and the focus-within

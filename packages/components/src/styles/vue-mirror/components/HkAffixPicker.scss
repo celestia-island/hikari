@@ -31,7 +31,7 @@
   padding-block: 4px;
   padding-inline: 9px 11px;
   border: none;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-md, 8px);
   background: transparent;
   color: rgb(var(--color-text));
   cursor: pointer;
@@ -206,7 +206,7 @@
   height: 1.5rem;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full, 9999px);
   background: transparent;
   color: var(--hi-icon-button-icon-color, rgb(var(--color-muted)));
   cursor: pointer;

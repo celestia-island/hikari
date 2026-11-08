@@ -21,7 +21,7 @@
   font-weight: 600;
   line-height: 1;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md, 8px);
   cursor: pointer;
   /* Longhand on purpose: the former comma-separated shorthand
    * `transition: background-color, ..., filter var(--duration-normal) ...`

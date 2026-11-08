@@ -180,12 +180,12 @@
 .hk-border-transparent { border-color: transparent; }
 
 // Border Radius
-.hk-radius-sm { border-radius: 0.125rem; }
-.hk-radius-md { border-radius: 0.375rem; }
-.hk-radius-lg { border-radius: 0.5rem; }
-.hk-radius-xl { border-radius: 0.75rem; }
-.hk-rounded { border-radius: 0.25rem; }
-.hk-rounded-full { border-radius: 9999px; }
+.hk-radius-sm { border-radius: var(--radius-sm); }
+.hk-radius-md { border-radius: var(--radius-md); }
+.hk-radius-lg { border-radius: var(--radius-lg); }
+.hk-radius-xl { border-radius: var(--radius-xl); }
+.hk-rounded { border-radius: var(--radius-sm); }
+.hk-rounded-full { border-radius: var(--radius-full); }
 
 // Shadow
 .hk-shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }

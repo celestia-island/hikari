@@ -187,7 +187,7 @@
   height: 1rem;
   font-size: var(--text-2xs, 0.625rem);
   font-weight: 600;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   background: var(--hi-color-bg-subtle, #21262d);
   color: var(--hi-color-text-tertiary, #8b949e);
   letter-spacing: 0.02em;

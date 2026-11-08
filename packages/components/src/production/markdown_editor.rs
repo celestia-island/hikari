@@ -474,7 +474,7 @@ impl StyledComponent for MarkdownEditorComponent {
     padding: 0;
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: var(--radius-md, 8px);
     color: var(--hi-text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;

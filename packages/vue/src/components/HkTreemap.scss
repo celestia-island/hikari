@@ -30,7 +30,7 @@
   flex: 0 0 auto;
   width: 0.625rem;
   height: 0.625rem;
-  border-radius: var(--radius-xs, 0.1875rem);
+  border-radius: var(--radius-xs, 2px);
 }
 
 .hk-treemap__legend-label {
@@ -76,7 +76,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-xs, 0.1875rem);
+  border-radius: var(--radius-xs, 2px);
   color: var(--hk-treemap-fg, white);
   /* The 1px gutter between cells is the theme mortar showing through. */
   outline: 1px solid rgb(var(--color-background, 255 255 255) / 55%);

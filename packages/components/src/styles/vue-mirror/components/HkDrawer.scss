@@ -61,7 +61,7 @@
   bottom: 0;
   left: 0;
   border-right: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
-  border-radius: 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0;
+  border-radius: 0 var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem) 0;
 }
 
 .hk-drawer-right {
@@ -69,7 +69,7 @@
   bottom: 0;
   right: 0;
   border-left: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
-  border-radius: var(--radius-md, 0.5rem) 0 0 var(--radius-md, 0.5rem);
+  border-radius: var(--radius-lg, 0.75rem) 0 0 var(--radius-lg, 0.75rem);
 }
 
 .hk-drawer-top {
@@ -77,7 +77,7 @@
   left: 0;
   right: 0;
   border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
-  border-radius: 0 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem);
+  border-radius: 0 0 var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem);
 }
 
 .hk-drawer-bottom {
@@ -85,7 +85,7 @@
   left: 0;
   right: 0;
   border-top: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
-  border-radius: var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0 0;
+  border-radius: var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem) 0 0;
 }
 
 .hk-drawer-left-enter-active,

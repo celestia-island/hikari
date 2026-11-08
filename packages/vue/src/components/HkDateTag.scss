@@ -10,7 +10,7 @@
   flex-direction: row;
   align-items: baseline;
   padding: var(--space-2, 2px) var(--space-10, 0.625rem);
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full, 9999px);
   background: rgb(var(--color-text) / 6%);
   white-space: nowrap;
   /* One size for the whole pill: segments AND separators inherit it,

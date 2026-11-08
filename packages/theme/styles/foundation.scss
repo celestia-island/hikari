@@ -50,11 +50,11 @@
 
   // Base Radius
   --hi-radius-none: 0;
-  --hi-radius-sm: 4px;
-  --hi-radius-md: 8px;
-  --hi-radius-lg: 12px;
-  --hi-radius-xl: 16px;
-  --hi-radius-full: 9999px;
+  --hi-radius-sm: var(--radius-sm, 4px);
+  --hi-radius-md: var(--radius-md, 8px);
+  --hi-radius-lg: var(--radius-lg, 12px);
+  --hi-radius-xl: var(--radius-xl, 16px);
+  --hi-radius-full: var(--radius-full, 9999px);
 
   // Component Radius
   --hi-button-radius: var(--hi-radius-md);

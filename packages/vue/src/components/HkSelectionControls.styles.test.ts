@@ -99,8 +99,14 @@ function atNameOf(prelude: string): string {
   const text = prelude.trimStart();
   let at = 0;
   let head = "";
-  // The `@` itself may be escaped (`\40 layer` IS `@layer`), so the leading
-  // run is decoded before the first character is judged.
+  // The leading run is decoded before the first character is judged. The escape
+  // Chrome honours is the NAME (`@\70 roperty` IS `@property`); an escaped SIGN
+  // (`\40 layer`) is NOT an at-rule for Chrome — it tokenizes as an ident, the
+  // whole qualified rule is invalid and dropped (measured: real
+  // `@layer { span:last-child { margin-block-start: 8px } }` moved the label
+  // 8.000px, `\40 layer` moved it 0.000). Decoding it anyway is deliberate and
+  // fail-CLOSED: the inner rules then become rows, i.e. the guard over-reports a
+  // sheet Chrome ignores instead of under-reporting one it applies.
   if (text[0] === "@") {
     head = "@";
     at = 1;
@@ -2677,6 +2683,14 @@ describe("label first-line anchoring", () => {
     // source, and moved the box +4.0px (one line) / +6.5px (three-line md)
     // with the guard green. Any prefilter is a spelling, and the whole point of
     // compiling is to stop matching spellings: all 197 sheets cost ~1.6s.
+    // The two sheets that live OUTSIDE this package are part of the walk on
+    // purpose (`tairitsu_macros::scss!` embeds them into the Rust HkLink /
+    // HkTypography sheets, and no other reader compiles them). Nothing pinned
+    // them: review deleted the whole `link.scss` / `typography.scss` append and
+    // appended `a { line-height: 2 }` to `link.scss` — GREEN, because the walk
+    // simply never compiled the file. Names, not counts, so a rename shows up.
+    const walked = foreignSheetPaths().map((path) => path.slice(path.lastIndexOf("/") + 1));
+    expect(walked).toEqual(expect.arrayContaining(["link.scss", "typography.scss"]));
     const sheets = compiledForeignSheets();
     const broke = sheets.flatMap((sheet) =>
       sheet.error ? [`${sheet.rel} -> ${sheet.error}`] : [],
@@ -3052,6 +3066,29 @@ describe("label first-line anchoring", () => {
     ]);
   });
 
+  it("an escaped `)` inside an unquoted url keeps the mover behind it", () => {
+    // `url(` bodies are read by `urlTokenEnd` with an escape branch of their own:
+    // `\)` is DATA (the token ends at the next real `)`), and the `/*` that
+    // follows it stays ordinary text. Delete that branch and the token ends at
+    // the escaped `)`, the rest of the declaration looks like a comment opener,
+    // `stripComments` eats the mover — review compiled
+    // `url(a#{"\\"}#{")/*")` into a real sheet and the whole rule vanished
+    // (212/212 green, the label 8.000px low). Both readers are pinned: the
+    // comment stripper and the element arm that turns the mover into a row.
+    expect(
+      movingDeclarations(stripComments(String.raw`background-image: url(a\)/*b); margin-block-start: 8px`)),
+    ).toEqual(["margin-block-start: 8px"]);
+    expect(
+      elementOnlyMovers(
+        "pin",
+        rules(String.raw`span { background-image: url(a\)/*b); margin-block-start: 8px }`),
+      ),
+    ).toEqual(["pin :: - | span | margin-block-start: 8px"]);
+    // The balanced form is the trigger; an unbalanced escape still fails CLOSED
+    // through the leftover detector, which is why only this shape needs a pin.
+    expect(movingDeclarations(stripComments(String.raw`background-image: url(a); color: red`))).toEqual([]);
+  });
+
   it("an attribute-qualified phrasing rule still names the row it restyles", () => {
     // The label's slot may hold any phrasing content, and the shapes a host
     // writes are usually qualified: `a[href^="http"]`, `a:not(.nav)`,
@@ -3074,6 +3111,16 @@ describe("label first-line anchoring", () => {
       "pin :: - | x-widget[data-kind=chip] | line-height: 2",
     ]);
     expect(elementOnlyMovers("pin", rules("span[data-el=dot] { margin-block-start: 8px }"))).toEqual([]);
+    // The block-child arm reaches the tag through `subjectTag`, which strips
+    // attributes for the same reason: `p[data-x]` is still the `<p>` that pushes
+    // the label's first line down, and reading it as the tag "p[data-x]" made
+    // review's payload green.
+    expect(
+      elementOnlyMovers("pin", rules("p[data-x] { margin-block-start: 8px }")),
+    ).toEqual(["pin :: - | p[data-x] | margin-block-start: 8px"]);
+    expect(elementOnlyMovers("pin", rules(String.raw`blockquote[cite] { line-height: 2 }`))).toEqual([
+      "pin :: - | blockquote[cite] | line-height: 2",
+    ]);
   });
 
   it("an escape-spelled url( opens a token in every walker, not just two", () => {

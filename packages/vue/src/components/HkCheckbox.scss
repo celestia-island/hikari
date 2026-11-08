@@ -119,18 +119,47 @@
  * replaced element that ignores the baseline can push it further than either
  * figure — calculate, do not assume a fixed amount.
  *
- * Line-box HEIGHT is only one of the two channels that move the first line,
- * and the formula above covers only that one. A BLOCK child (`<p>`, `<div>`,
- * `<h1>`) does not change the line's height at all: it takes its own top
- * margin and displaces the line DOWN, so a host's
- * `p { margin-block-start: 8px }` leaves a 21px line sitting 8px lower — the
- * height formula reads 0.000 while the box is 8.000px high — and a plain `<p>`
- * with no host CSS whatsoever is already 14.000px out (the UA's `1em`
- * margin-block-start). Nothing in this sheet can neutralise that, because the
+ * Line-box HEIGHT is only one of the THREE channels that move the first line,
+ * and the formula above covers only that one. A block child that INHERITS the
+ * label's typography (`<p>`, `<div>`) leaves the 21px line height untouched and
+ * changes only its OFFSET: it takes its own top margin and displaces the line
+ * DOWN, so a host's `p { margin-block-start: 8px }` leaves a 21px line sitting
+ * 8px lower — the height formula reads 0.000 while the box is 8.000px high —
+ * and a plain `<p>` with no host CSS whatsoever is already 14.000px out (the
+ * UA's `1em` margin-block-start).
+ *
+ * An element that brings its OWN typography is the two-channel case, and a
+ * heading is the one to remember: `<h1>` carries UA `font-size: 2em`, so its
+ * line is 42px — the height channel alone reads 10.500 — AND it carries an
+ * 18.76px block-start margin, which pushes that taller line down; measured
+ * together the label reads 29.250px low. A heading in a label is a typography
+ * decision before it is an anchoring one.
+ *
+ * The third channel is the label's own box. Both parts are pinned to the row's
+ * flex line, so the label's border-box top starts exactly where the box's does —
+ * and anything the label adds ABOVE its text (`padding-block-start`, a
+ * block-start `border`) pushes the text down inside that border box while the
+ * box stays at the line start. `padding-block-start: 8px` on `.hk-label` is
+ * therefore the same 8.000px error as a block child's top margin, and it is
+ * invisible to `LABEL_BLOCK_CONTENT`, which watches rules on DESCENDANTS (a
+ * block tag as the label's child) rather than rules on the label itself.
+ * HkLabel ships no padding and no border, so this one is a host-authorship
+ * hazard, not a live offset.
+ *
+ * One shape the anchoring does not promise: a size modifier on an ANCESTOR
+ * wrapper instead of on the control. The SIZES are ancestor-scoped (`.hk-checkbox-sm &`
+ * compiles to `.hk-checkbox-sm .hk-checkbox-box`), the offsets are not — each
+ * one hangs off the same element whose `:has()` gate it needs — so a wrapper and
+ * the control inside it can disagree about which size step is in force, and the
+ * sheet has no rule that reconciles them. Both renderers put the modifier on the
+ * control itself; that is the only spelling the sheet promises, and the only one
+ * the geometry was measured on.
+ *
+ * Nothing in this sheet can neutralise any of the three channels, because the
  * offset lands the box on the line and the line itself moved; the fix is to
- * treat the label's slot as text. The styles contract test pairs this
- * paragraph with the `LABEL_BLOCK_CONTENT` channel, which reports any host
- * rule that declares one of those first-line movers on a block tag.
+ * treat the label's slot as text. The styles contract test pairs the block-child
+ * channel with `LABEL_BLOCK_CONTENT`, which reports any host rule that declares
+ * one of those first-line movers on a block tag.
  *
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control

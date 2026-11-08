@@ -1193,9 +1193,12 @@ const PAINTS_ONLY =
  * names. Widening it to EVERY tag is not an option either: reaching every
  * replaced element as well turns the table from 73 rows into 975 — 613 of the
  * rows are `@keyframes` steps and the other 362 are element/registration rows
- * (`svg` 154, `input` 5, `p { margin: 0 }` …), 289 of them new, i.e. a table
- * nobody reads. (Both numbers move by two whenever the shipped table does: they
- * were 977/364 while it still carried the two `outline` rows.)
+ * — `svg` alone is 154 of them — and 301 of those rows are new, i.e. a table
+ * nobody reads. (301, not `362 − 73 = 289`: twelve of the pinned rows change
+ * shape in that table — the six `h1`…`h6` `line-height` rows merge and six block
+ * rows gain declarations — so 61 survive verbatim. Both totals move by two
+ * whenever the shipped table does: they were 977/364 while it still carried the
+ * two `outline` rows.)
  * Deliberately NOT in this set, with what each omission costs:
  *
  * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized

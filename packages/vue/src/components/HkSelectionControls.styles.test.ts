@@ -1209,7 +1209,10 @@ const PAINTS_ONLY =
  * what the narrow `span|label` set cost:
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
- * names. Widening it to EVERY tag is not an option either: reaching every
+ * names. (That family is a shorthand for "sm/md/lg, within half a pixel":
+ * re-measured 3.000/3.000/3.500 on the round-20 fixtures, and the direction —
+ * a line-height mover pushes the label's first line down — is what the row is
+ * for.) Widening it to EVERY tag is not an option either: reaching every
  * replaced element as well turns the table from 73 rows into 980 — 613 of the
  * rows are `@keyframes` steps and the other 367 are element/registration rows
  * — `svg` alone is 154 of them — and 306 of those rows are new, i.e. a table
@@ -1231,9 +1234,16 @@ const PAINTS_ONLY =
  *   reason (the `PART_ATTRS` gate runs before the tag is consulted), and the
  *   host bundle really ships one:
  *   `input:where(:not([class^=hk-]):not([class*=" hk-"]):not([data-field-embedded]))`
- *   with `border` / `font-size` / `padding` is a mover this table does not see.
- *   Closing it costs exactly one row; it is recorded rather than paid because
- *   no shipped component puts an `<input>` inside a label;
+ *   with `border` / `font-size` / `padding` is a mover this table does not see
+ *   (measured: a label holding a bare `<input>` puts its first line 7.5px below
+ *   the label's top). Two changes would show it, and neither is free: adding
+ *   `data-field-embedded` to `PART_ATTRS` alone still yields **0** new rows,
+ *   because `[class*=" hk-"]` carries a QUOTED space the unscoped test reads as
+ *   a descendant combinator; and the spellings that do show up cost more than
+ *   one row — `input:where(:not([class^=hk-]))` is 1 row, the whole
+ *   `input|select|textarea:where(…)` family is 5 (the five rows the full-reach
+ *   table gained in round 19). Recorded rather than paid because no shipped
+ *   component puts an `<input>` inside a label;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
  *   `template`, `noscript`, `area`, `embed`, `picture`, `iframe`, `audio`):
@@ -2860,8 +2870,12 @@ describe("label first-line anchoring", () => {
     //   link moves the row.
     // * NINE unscoped replaced-element rows — `img`/`svg`/`canvas`/`input` in
     //   the reset (and the duplicated `styles/index.scss`/bundle copies), which
-    //   is exactly what the host ships: `svg { display: block; max-width:
-    //   100% }` already shifts an icon inside a label by 7.5px today. Only the
+    //   is what the host ships: `svg { display: block; max-width: 100% }`
+    //   already moves an icon inside a label — measured −9.000 / −2.500 /
+    //   −1.000 / +2.500 for a 26px icon, text+icon, `.hk-icon` and a bare
+    //   `svg`, the sign turning on the fixture (the third channel again; the
+    //   `display: block` half is in `packages/vue/src/styles/reset.scss`, not
+    //   in the Rust bundle, which ships `svg { max-width: 100% }` alone). Only the
     //   UNSCOPED shape is a row (`REPLACED_CONTENT` requires a selector with no
     //   combinator): the `.hk-icon svg { height: 100% }` family is 206 rows of
     //   styling no label can match — every one of them carries a replaced-

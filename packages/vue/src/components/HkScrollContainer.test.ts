@@ -14,6 +14,8 @@ interface Mounted {
     refresh: () => void;
     scrollToElement: (el: HTMLElement | null) => void;
     getOverflow: () => { horizontal: string; vertical: string };
+    scrollToEnd?: (behavior?: ScrollBehavior) => void;
+    scrollToStart?: (behavior?: ScrollBehavior) => void;
     isNearEnd?: () => boolean;
     recheck?: () => void;
   } | null;
@@ -691,5 +693,294 @@ describe("HkScrollContainer dock publication (2026-11-09)", () => {
     expect(hostRef).not.toBeNull();
     expect(viewportRef!.value).toBe(viewport);
     expect(hostRef!.value).toBe(root);
+  });
+});
+
+// ── Overflow glow (overflowGlow opt-in, 2026-11-08): the container mounts
+// the SHARED <HkEdgeGlow> painter on the physical edges whose sensed
+// overflow still hides content, derived in the SAME pass as
+// data-h-overflow / data-v-overflow (direction-resolved). Both halves are
+// pinned: which edges light per axis/direction, and that the feature's DOM
+// (root + bands) lives and dies with the prop. ──
+describe("HkScrollContainer overflow glow", () => {
+  const bandsOf = (m: Mounted): (string | null)[] =>
+    Array.from(m.root.querySelectorAll<HTMLElement>(".hk-edge-glow-band"), (b) =>
+      b.getAttribute("data-edge"),
+    );
+  const glowOf = (m: Mounted): HTMLElement | null =>
+    m.root.querySelector<HTMLElement>(".hk-edge-glow");
+
+  it("publishes the data-overflow-glow hook and mounts the painter only while on", () => {
+    const off = mountScroller({ axis: "horizontal" });
+    expect(off.root.hasAttribute("data-overflow-glow")).toBe(false);
+    expect(glowOf(off)).toBeNull();
+
+    const on = mountScroller({ axis: "horizontal", overflowGlow: true });
+    expect(on.root.getAttribute("data-overflow-glow")).toBe("true");
+    // The inert root is mounted up front; nothing is lit while content fits.
+    expect(glowOf(on)).not.toBeNull();
+    expect(bandsOf(on)).toEqual([]);
+  });
+
+  it("lights the hidden SIDE from the sensed overflow (horizontal, LTR)", async () => {
+    const m = mountScroller({ axis: "horizontal", overflowGlow: true });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    await nextTick();
+    // Parked at the inline start: content hides towards the end (right).
+    expect(m.root.getAttribute("data-h-overflow")).toBe("end");
+    expect(bandsOf(m)).toEqual(["right"]);
+
+    // Mid-scroll both sides hide content -> both bands (canonical order).
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 100 });
+    m.instance?.refresh();
+    await nextTick();
+    expect(bandsOf(m)).toEqual(["left", "right"]);
+
+    // Everything fits again: no band survives the resolved overflow.
+    stubGeometry(m.viewport, { scrollWidth: 100, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    await nextTick();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("none");
+    expect(bandsOf(m)).toEqual([]);
+  });
+
+  it("maps the horizontal verdict through the COMPUTED direction (RTL)", async () => {
+    // At the RTL inline start, the hidden content is towards the inline END
+    // = the visual LEFT edge. A [dir]- or "always LTR"-style mapping would
+    // light the right edge and send the user the wrong way.
+    const m = mountScroller({ axis: "horizontal", overflowGlow: true });
+    m.viewport.style.direction = "rtl";
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    await nextTick();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("end");
+    expect(bandsOf(m)).toEqual(["left"]);
+    m.viewport.style.direction = "";
+  });
+
+  it("lights the vertical bands on vertical-axis containers", async () => {
+    const m = mountScroller({ axis: "vertical", overflowGlow: true });
+    stubGeometry(m.viewport, { scrollHeight: 300, clientHeight: 100, scrollTop: 0 });
+    m.instance?.refresh();
+    await nextTick();
+    expect(m.root.getAttribute("data-v-overflow")).toBe("end");
+    expect(bandsOf(m)).toEqual(["bottom"]);
+  });
+
+  it("lights all four bands on a two-axis container mid-scroll", async () => {
+    const m = mountScroller({ axis: "both", overflowGlow: true });
+    stubGeometry(m.viewport, {
+      scrollWidth: 300, clientWidth: 100, scrollLeft: 100,
+      scrollHeight: 300, clientHeight: 100, scrollTop: 100,
+    });
+    m.instance?.refresh();
+    await nextTick();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("both");
+    expect(m.root.getAttribute("data-v-overflow")).toBe("both");
+    expect(bandsOf(m)).toEqual(["top", "bottom", "left", "right"]);
+  });
+
+  it("lights a band that appears at runtime and unmounts the painter on prop-off", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ overflowGlow: false });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", overflowGlow: props.overflowGlow }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    expect(root.querySelector(".hk-edge-glow")).toBeNull();
+
+    props.overflowGlow = true;
+    await nextTick();
+    stubGeometry(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    // The prop watcher re-senses on its scheduled pass (no scroll event).
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(root.getAttribute("data-overflow-glow")).toBe("true");
+    expect(
+      Array.from(root.querySelectorAll(".hk-edge-glow-band"), (b) => b.getAttribute("data-edge")),
+    ).toEqual(["right"]);
+
+    props.overflowGlow = false;
+    await nextTick();
+    expect(root.hasAttribute("data-overflow-glow")).toBe(false);
+    expect(root.querySelector(".hk-edge-glow")).toBeNull();
+  });
+});
+
+// ── Anchor parking (anchor="end", 2026-11-08): the axis parks at its end on
+// the first overflow pass and STICKILY re-parks while the viewport is still
+// there when the extent changes — never fighting a user who scrolled away.
+// happy-dom does no layout, so the box is stubbed with SETTER-capable
+// offsets: the component WRITES the parked position. ──
+describe("HkScrollContainer anchor parking", () => {
+  /** Setter-capable scroll box: unlike stubGeometry above, the scroll
+   *  offsets must be assignable so a park is observable. A re-stub models
+   *  the next layout pass (the engine keeps the current offset unless the
+   *  caller passes a new one, exactly like a real reflow). */
+  function stubScrollBox(
+    el: HTMLElement,
+    geom: {
+      scrollWidth?: number;
+      clientWidth?: number;
+      scrollHeight?: number;
+      clientHeight?: number;
+      scrollLeft?: number;
+      scrollTop?: number;
+    },
+  ) {
+    let scrollLeft = geom.scrollLeft ?? 0;
+    let scrollTop = geom.scrollTop ?? 0;
+    Object.defineProperties(el, {
+      scrollWidth: { configurable: true, get: () => geom.scrollWidth ?? 0 },
+      clientWidth: { configurable: true, get: () => geom.clientWidth ?? 0 },
+      scrollHeight: { configurable: true, get: () => geom.scrollHeight ?? 0 },
+      clientHeight: { configurable: true, get: () => geom.clientHeight ?? 0 },
+      scrollLeft: {
+        configurable: true,
+        get: () => scrollLeft,
+        set: (v: number) => { scrollLeft = v; },
+      },
+      scrollTop: {
+        configurable: true,
+        get: () => scrollTop,
+        set: (v: number) => { scrollTop = v; },
+      },
+    });
+  }
+
+  const flushFrames = async () => {
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  };
+
+  it("parks the overflowing horizontal axis at its end on the first overflow pass", () => {
+    const m = mountScroller({ axis: "horizontal", anchor: "end" });
+    stubScrollBox(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollLeft, "parked at max = 300 - 100").toBe(200);
+    // The mirror reflects the POST-park geometry, not the pre-park start.
+    expect(m.root.getAttribute("data-h-overflow")).toBe("start");
+  });
+
+  it('leaves the shipped default (anchor="start") completely alone', () => {
+    // "start" is inert by construction (the scroll origin IS the start on
+    // the engines hikari deploys on), so even a mid-scroll offset is never
+    // rewritten.
+    const m = mountScroller({ axis: "horizontal" });
+    stubScrollBox(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 100 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollLeft).toBe(100);
+  });
+
+  it("re-parks stickily when the extent changes while still at the end", () => {
+    const m = mountScroller({ axis: "horizontal", anchor: "end" });
+    stubScrollBox(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollLeft).toBe(200);
+
+    // Data grows under a viewport parked at the OLD end: the previous
+    // pass's (max, pos) pair says "was at the end", so the new end wins.
+    stubScrollBox(m.viewport, { scrollWidth: 500, clientWidth: 100, scrollLeft: 200 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollLeft).toBe(400);
+  });
+
+  it("never fights a user who scrolled away from the end", () => {
+    const m = mountScroller({ axis: "horizontal", anchor: "end" });
+    stubScrollBox(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollLeft).toBe(200);
+
+    // The user scrolls back: same extent, so nothing re-parks.
+    stubScrollBox(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 50 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollLeft).toBe(50);
+
+    // …and a LATER extent change must not yank them to the end either: the
+    // previous pass recorded pos 50, so "was at the end" is false.
+    stubScrollBox(m.viewport, { scrollWidth: 500, clientWidth: 100, scrollLeft: 50 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollLeft).toBe(50);
+  });
+
+  it("parks the vertical axis too (axis-agnostic contract)", () => {
+    const m = mountScroller({ anchor: "end" });
+    stubScrollBox(m.viewport, { scrollHeight: 300, clientHeight: 100, scrollTop: 0 });
+    m.instance?.refresh();
+    expect(m.viewport.scrollTop).toBe(200);
+  });
+
+  it("parks at the LOGICAL end under RTL (negative offset convention)", () => {
+    const m = mountScroller({ axis: "horizontal", anchor: "end" });
+    m.viewport.style.direction = "rtl";
+    stubScrollBox(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    // Chromium-family RTL: the inline end sits at -max.
+    expect(m.viewport.scrollLeft).toBe(-200);
+    m.viewport.style.direction = "";
+  });
+
+  it("takes effect when the prop flips to end at runtime (re-baselined)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ anchor: "start" as "start" | "end" });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { axis: "horizontal", anchor: props.anchor }, {
+            default: () => h("span", "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubScrollBox(viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 60 });
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(viewport.scrollLeft, "start is inert").toBe(60);
+
+    props.anchor = "end";
+    await nextTick();
+    await flushFrames();
+    expect(viewport.scrollLeft, "the opt-in parks on its first pass").toBe(200);
+  });
+
+  it("exposes scrollToEnd and scrollToStart for the enabled axis", () => {
+    const m = mountScroller({ axis: "horizontal" });
+    stubScrollBox(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.scrollToEnd?.("auto");
+    expect(m.viewport.scrollLeft).toBe(200);
+    m.instance?.scrollToStart?.("auto");
+    expect(m.viewport.scrollLeft).toBe(0);
+  });
+
+  it("exposes the vertical twins and resolves RTL for scrollToEnd", () => {
+    const vertical = mountScroller({});
+    stubScrollBox(vertical.viewport, { scrollHeight: 300, clientHeight: 100, scrollTop: 0 });
+    vertical.instance?.scrollToEnd?.("auto");
+    expect(vertical.viewport.scrollTop).toBe(200);
+    vertical.instance?.scrollToStart?.("auto");
+    expect(vertical.viewport.scrollTop).toBe(0);
+
+    const rtl = mountScroller({ axis: "horizontal" });
+    rtl.viewport.style.direction = "rtl";
+    stubScrollBox(rtl.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    rtl.instance?.scrollToEnd?.("auto");
+    expect(rtl.viewport.scrollLeft).toBe(-200);
+    rtl.viewport.style.direction = "";
   });
 });

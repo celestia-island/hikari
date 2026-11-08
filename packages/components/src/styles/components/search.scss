@@ -2,6 +2,7 @@
 // Uses InputWrapper for layout, only search-specific styles here
 
 @use 'variables' as vars;
+@use 'mixins' as mix;
 
 // ------
 // Search Wrapper
@@ -106,6 +107,11 @@
 .hk-search-suggestions-dropdown {
   max-height: 240px;
   overflow-y: auto;
+
+  // Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
+  // native bar never paints; overflow mechanics stay.
+  @include mix.scrollbar-hidden;
+
   background-color: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fine-lg;

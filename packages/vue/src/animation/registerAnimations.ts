@@ -145,3 +145,9 @@ registerCssAnimation("hk-range-ribbon-pulse", { infinite: true });
 // prop's dot breathes while its state is in-flight — a settled dot sits
 // static. Reduced motion drops the loop (house pattern, see HkSkeleton).
 registerCssAnimation("hk-badge-dot-pulse", { infinite: true });
+// components/HkEdgeGlow.scss — the shared edge-glow breathe (loops
+// forever): the one painter behind HkScrollContainer's overflow glow and
+// any host-mounted band (the static selection hint keeps animate off).
+// Reduced motion keeps the band and drops the loop (house pattern, see
+// HkSkeleton); the global CSS-animation switch pauses it as usual.
+registerCssAnimation("hk-edge-glow-breathe", { infinite: true });

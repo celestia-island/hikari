@@ -1,8 +1,22 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
 import HkCalendarHeatmap from "./HkCalendarHeatmap";
 import { HEATMAP_LEVEL_OPACITY, shiftIso } from "./calendarHeatmap";
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+/** Resolve after two animation frames: the scroll container coalesces its
+ *  sensing pass through the shared animationBus, whose rAF is scheduled one
+ *  frame ahead of the awaited callback. */
+const flushFrames = async () => {
+  await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  await new Promise<void>((r) => requestAnimationFrame(() => r()));
+};
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -379,5 +393,127 @@ describe("HkCalendarHeatmap", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+// ── Overlay scroll strip (2026-11-08) ────────────────────────────────────
+// The calendar body rides HkScrollContainer now: hikari's auto-hiding
+// overlay bar is the only bar, the strip opens focused on the NEWEST day
+// (anchor="end"), a host can opt back to the start, and a series
+// replacement re-parks at the end. happy-dom performs no layout, so the
+// strip's extent is stubbed and a dispatched scroll event runs the
+// container's coalesced sensing pass.
+describe("HkCalendarHeatmap overlay scroll strip", () => {
+  const stripOf = (c: HTMLElement): HTMLElement =>
+    c.querySelector<HTMLElement>(".hk-calendar-heatmap-scroll")!;
+  const viewportOf = (c: HTMLElement): HTMLElement =>
+    c.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+
+  /** Mount a live render function (reactive props re-render — the range
+   *  switch test replaces the series). */
+  function mountLive(render: () => ReturnType<typeof h>): HTMLElement {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({ render });
+    app.mount(container);
+    mounts.push({ app, container });
+    return container;
+  }
+
+  /** Give the viewport a scrollable extent. Only the SIZES are stubbed:
+   *  the position stays happy-dom's settable scrollLeft, so the park's
+   *  write is observable exactly as a reader's scroll would be. */
+  function stubStrip(el: HTMLElement, scrollWidth: number, clientWidth: number) {
+    Object.defineProperties(el, {
+      scrollWidth: { configurable: true, get: () => scrollWidth },
+      clientWidth: { configurable: true, get: () => clientWidth },
+    });
+  }
+
+  it("mounts the overlay chrome over the strip, with the body still inside", () => {
+    const c = mount(
+      h(HkCalendarHeatmap, { days: daysFrom(CLEAN_HEAD_MON, 7), first: null }),
+    );
+    const strip = stripOf(c);
+    // The class contract survives (consumers style .hk-calendar-heatmap-scroll)
+    // and the element IS the scroll container root.
+    expect(strip.classList.contains("hk-scroll-container")).toBe(true);
+    // hikari's auto-hiding overlay track is the only bar…
+    expect(
+      c.querySelector('.hk-scrollbar-track[data-axis="horizontal"]'),
+    ).not.toBeNull();
+    // …the overflow glow is opted in (the strip hides days at its edges)…
+    expect(strip.getAttribute("data-overflow-glow")).toBe("true");
+    // …and the body still rides inside the scrolling viewport.
+    expect(viewportOf(c).querySelector(".hk-calendar-heatmap-body")).not.toBeNull();
+  });
+
+  it("keeps native overflow out of the Vue form (source contract)", () => {
+    const sheet = readFileSync(join(here, "HkCalendarHeatmap.scss"), "utf8");
+    // The -rail/-cells contract is pinned by calendarHeatmapRail.contract;
+    // this pin owns the STRIP rule the migration rewrote.
+    const scrollRule = sheet.match(/&-scroll \{[\s\S]*?\n  \}/)?.[0] ?? "";
+    expect(scrollRule, "the &-scroll rule still owns the strip box").toContain("&-scroll {");
+    // The Vue strip IS the HkScrollContainer root. Any overflow declaration
+    // in this rule would bring a NATIVE bar back on top of the overlay chrome
+    // (the 2026-11-08 regression this migration fixed).
+    expect(scrollRule).not.toMatch(/overflow/);
+    // The Rust/WASM renderer still renders the plain div, so the sheet keeps
+    // a fallback scroller for it — but ONLY off the container form, and the
+    // platform bar stays suppressed (the chart family's native-bar invariant;
+    // the Rust form is bar-less until it migrates onto the shared script).
+    const fallback =
+      sheet.match(/&-scroll:not\(\.hk-scroll-container\) \{[\s\S]*?\n  \}/)?.[0] ?? "";
+    expect(fallback, "the plain-form fallback must exist for the Rust mirror").not.toBe("");
+    expect(fallback).toContain("overflow-x: auto");
+    expect(fallback).toContain("scrollbar-width: none");
+    expect(fallback).toMatch(/&::-webkit-scrollbar\s*\{[\s\S]*?display:\s*none/);
+    expect(fallback, "the plain form keeps its centering").toContain("margin-inline: auto");
+  });
+
+  it("opens focused on the newest end (anchor=end parks the strip)", async () => {
+    const c = mount(
+      h(HkCalendarHeatmap, { days: daysFrom(CLEAN_HEAD_MON, 7), first: null }),
+    );
+    const viewport = viewportOf(c);
+    stubStrip(viewport, 300, 100);
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(viewport.scrollLeft, "parked at max = 300 - 100").toBe(200);
+  });
+
+  it("forwards anchor=start so a host can opt back to the oldest end", async () => {
+    const c = mount(
+      h(HkCalendarHeatmap, {
+        days: daysFrom(CLEAN_HEAD_MON, 7),
+        first: null,
+        anchor: "start",
+      }),
+    );
+    const viewport = viewportOf(c);
+    stubStrip(viewport, 300, 100);
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(viewport.scrollLeft).toBe(0);
+  });
+
+  it("re-parks at the end when the series is replaced (range switch)", async () => {
+    const state = reactive({ days: daysFrom(CLEAN_HEAD_MON, 7) });
+    const c = mountLive(() => h(HkCalendarHeatmap, { days: state.days, first: null }));
+    const viewport = viewportOf(c);
+    stubStrip(viewport, 300, 100);
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(viewport.scrollLeft, "initial end focus").toBe(200);
+
+    // A reader scrolls back to the oldest day…
+    viewport.scrollLeft = 0;
+    // …then switches range: the new series must land on ITS newest end
+    // (the container's sticky anchor deliberately would not, since the
+    // reader is no longer parked — the days watcher is the deterministic
+    // re-park).
+    state.days = daysFrom("2025-11-01", 30);
+    await nextTick();
+    await nextTick();
+    expect(viewport.scrollLeft).toBe(200);
   });
 });

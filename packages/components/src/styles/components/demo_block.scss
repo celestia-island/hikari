@@ -15,6 +15,8 @@
 //     <div class="hi-component-demo-source" hidden>…a code block…</div>
 //   </div>
 
+@use 'mixins' as mix;
+
 .hk-component-demo {
     background-color: var(--hi-color-bg-container, var(--hi-color-surface));
     border: 1px solid var(--hi-color-border);
@@ -85,6 +87,10 @@
     align-items: flex-start;
     padding: 1.5rem;
     overflow-x: auto;
+
+    // Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
+    // native bar never paints; overflow mechanics stay.
+    @include mix.scrollbar-hidden;
 
     > svg,
     > img,

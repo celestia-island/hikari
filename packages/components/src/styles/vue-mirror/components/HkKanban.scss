@@ -69,6 +69,14 @@
   gap: var(--space-8);
   padding: 0 var(--space-8) var(--space-8);
   overflow-y: auto;
+
+  /* Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the lane
+     keeps native overflow MECHANICS, the platform bar must never paint. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-kanban-card {

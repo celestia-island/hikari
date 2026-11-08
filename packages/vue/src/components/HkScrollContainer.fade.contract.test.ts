@@ -57,13 +57,15 @@ describe("scroll fade composition contract", () => {
     // not the raw declaration — is what a sheet may carry. The mixin
     // itself owns the -webkit-/standard pair.
     const declarations = sheet.match(/^\s*@include mask-image\(/gm) ?? [];
-    // Exactly THREE pairs live in the sheet, all accounted for: the base
-    // block on the viewport (fed by --hk-scroll-fade-layers), and one
-    // feather pair per selection-hint painter (the 2026-10-30 inline
-    // falloff). Anything else is per-axis mask drift — the axis rules
-    // must swap the VAR, never re-declare the property (the 2026-10
-    // competing-cascade regression).
-    expect(declarations.length, "one include per mask pair, no per-axis drift").toBe(3);
+    // Exactly ONE pair lives in the sheet: the base block on the viewport
+    // (fed by --hk-scroll-fade-layers). The two selection-hint feather
+    // pairs this count used to allow (the 2026-10-30 inline falloff) moved
+    // to the shared <HkEdgeGlow> painter with the 2026-11-08 extraction —
+    // the band's mask now lives in that component's sheet, so a leftover
+    // include here would be the stray painter, not the contract. Anything
+    // else is per-axis mask drift: the axis rules must swap the VAR, never
+    // re-declare the property (the 2026-10 competing-cascade regression).
+    expect(declarations.length, "one include per mask pair, no per-axis drift").toBe(1);
     expect(sheet).not.toMatch(/^\s*-webkit-mask-image:/m);
     // The composed default (two layers, four edges) still goes through
     // mask-composite — that pair belongs to the base rule only.

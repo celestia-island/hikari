@@ -305,74 +305,51 @@
 
 /* ── Selection edge hint (selectionHint opt-in) ────────────────────
    A list taller than its viewport hides its SELECTED row as soon as it
-   scrolls out of the band; these gradients light the offending edge so
-   the user can see at a glance that a selected item lies beyond it
-   (the settings rail's "why is nothing highlighted?" question). Pure
-   CSS driven by data-selection-beyond, mirrored by the component's
-   sensing pass — no extra DOM, "none" matches nothing.
+   scrolls out of the band; the component senses whether any selected
+   descendant lies fully outside the viewport (see the selectionHint prop
+   doc) and mirrors the verdict as data-selection-beyond — the attribute
+   contract consumers style against, unchanged.
 
-   Painted on the CONTAINER ROOT's pseudo-elements, not the viewport's:
-   viewport pseudos live in SCROLLED space and would scroll away with
-   the content, while the root is the fixed non-scrolled box (position:
-   relative; overflow: hidden). Absolutely-positioned pseudos are also
-   never flex items of the column root, so the hint costs no layout.
+   THE BAND IS NOT PAINTED HERE ANY MORE (2026-11-08). The primary-color
+   feathered gradient moved to the shared <HkEdgeGlow> painter
+   (components/HkEdgeGlow.tsx/.scss), which the component mounts with edges
+   derived from the same verdict and static (no breathe). One painter now
+   serves this hint AND the scroll container's overflow glow: the two
+   features had identical geometry (band from the edge inward, inline ends
+   feathered by a one-axis mask), and a second copy in either sheet would
+   have let the band's feather curve, thickness or colour drift between the
+   settings rail's hint and a chart's glow. The retired ::before/::after
+   painters must not come back — a stale pseudo plus the mounted painter
+   would double-paint the band.
 
-   The band's INLINE ENDS dissolve over --hk-scroll-selection-hint-feather
-   so its corners fall off naturally (user report 2026-10-30: the lit
-   band's ends cut as hard vertical edges) — the same natural-falloff
-   treatment the overflow fades below received. The vertical decay stays
-   in the background gradient; the horizontal feather is a single-axis
-   mask layered on top of it, so no mask-composite is needed and the
-   symmetric stops are direction-neutral (no RTL swap).
-
-   Both knobs are declared on the root state rule (not the pseudos) so a
-   consumer override ON the container wins — a directly declared custom
-   property beats any inherited value, so an ancestor's cannot reach the
-   painters (same contract shape as --hk-scroll-fade-size). */
+   What stays here is the OVERRIDE SURFACE: both knobs are declared on the
+   ROOT state rule (not on the painter, not on the viewport) so a consumer
+   override ON the container wins — a directly declared custom property
+   beats any inherited value, so an ancestor's cannot reach the painter,
+   while the painter's own inline --hk-edge-glow-* declarations resolve
+   against the knobs inherited from this root (the same contract shape as
+   --hk-scroll-fade-size). The component passes them through as the
+   painter's size/feather, so the band's geometry is authored once, in
+   HkEdgeGlow. "none" matches no band: the component passes an empty edge
+   list. */
 .hk-scroll-container[data-selection-beyond] {
   --hk-scroll-selection-hint-size: var(--space-24);
   --hk-scroll-selection-hint-feather: var(--space-24);
 }
 
-.hk-scroll-container[data-selection-beyond="top"]::before,
-.hk-scroll-container[data-selection-beyond="both"]::before {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: var(--hk-scroll-selection-hint-size);
-  pointer-events: none;
-  background: linear-gradient(to bottom, rgb(var(--color-primary) / 32%), transparent);
-  @include mask-image(
-    linear-gradient(
-      to right,
-      transparent 0,
-      #000 var(--hk-scroll-selection-hint-feather),
-      #000 calc(100% - var(--hk-scroll-selection-hint-feather)),
-      transparent 100%
-    )
-  );
-}
+/* ── Overflow glow (overflowGlow opt-in) ───────────────────────────
+   The same <HkEdgeGlow> painter, mounted on the PHYSICAL edges whose
+   sensed overflow still hides content (edges derived in the same pass as
+   data-h-overflow / data-v-overflow, direction-resolved). No rule below
+   paints it — the band lives in HkEdgeGlow.scss — so this section only
+   documents the two consumer knobs the component feeds the painter with:
 
-.hk-scroll-container[data-selection-beyond="bottom"]::after,
-.hk-scroll-container[data-selection-beyond="both"]::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: var(--hk-scroll-selection-hint-size);
-  pointer-events: none;
-  background: linear-gradient(to top, rgb(var(--color-primary) / 32%), transparent);
-  @include mask-image(
-    linear-gradient(
-      to right,
-      transparent 0,
-      #000 var(--hk-scroll-selection-hint-feather),
-      #000 calc(100% - var(--hk-scroll-selection-hint-feather)),
-      transparent 100%
-    )
-  );
-}
+     --hk-scroll-overflow-glow-size    (default: --space-24)
+     --hk-scroll-overflow-glow-feather (default: --space-24)
+
+   Set either on the container (or any ancestor) to tune a host's band
+   without touching the library. The root also carries
+   data-overflow-glow="true" while the feature is on, as a styling hook. */
 
 /* autoFollow content is bottom-anchored while it fits the viewport: the
    newest row hugs the bottom edge (a tail-following console, e.g. the

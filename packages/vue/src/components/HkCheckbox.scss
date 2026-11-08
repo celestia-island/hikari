@@ -9,9 +9,9 @@
   /* Fallback anatomy: centering the box against the label block is what every
    * engine and every host saw before first-line anchoring, and it needs no
    * `:has()` support. A labeled control on a `:has()`-capable engine is
-   * switched to `flex-start` by the first-line rules below (they ship as a
-   * pair — the switch alone would park the box on the line's top edge); a
-   * label-less control keeps this line on every engine. */
+   * handled by the first-line rules below, which move the BOX (`align-self`)
+   * and leave this line alone; a label-less control keeps it on every
+   * engine. */
   align-items: center;
   /* When the control sits INLINE among text (not in a host flex row), the
    * default `vertical-align: baseline` parks the inline-flex's bottom edge
@@ -79,13 +79,24 @@
  * line box it belongs to at the default step (reported as the label text
  * sitting ~2px low).
  *
- * Four rules cooperate — the `flex-start` switch plus one offset per size
- * step. Every one of them carries the gate, and a given element takes the
- * switch plus at most one offset (each offset names its own size step), so
- * the anatomy is atomic: all four selectors contain `:has()`, so an engine
- * without it drops each rule whole and the row falls through to the
- * `align-items: center` fallback in the root rule — exactly the previous
- * rendering, never the bare top-edge state.
+ * The anatomy rides the BOX, not the row: `align-self: flex-start` on the
+ * item plus one offset per size step. `align-self` on the item outranks any
+ * `align-items` on the container — whatever specificity, whatever order,
+ * whatever sheet — so nothing outside this component can flip the row back
+ * while the offset stays paid. A row-level `align-items: flex-start` would not
+ * be safe that way: any later sheet naming the control (a comma list, an
+ * attribute spelling, a `label` type selector, `!important`) could undo it
+ * while the per-part guards still saw a clean sheet. The row itself keeps
+ * `align-items: center` on every engine.
+ *
+ * Four rules cooperate — one `align-self` carrier plus one offset per size
+ * step. Every one of them carries the gate, and exactly one offset is IN
+ * EFFECT per row: an sm/lg box matches the md rule too, and the size rule that
+ * follows it wins on source order (all three are (0,4,0)). The anatomy is
+ * atomic — every selector contains `:has()`, so an engine without it drops
+ * each rule whole and the box falls through to the `align-items: center`
+ * fallback in the root rule: exactly the previous rendering, never the bare
+ * top-edge state.
  *
  * One line box is `line-height` tall (HkLabel pins 1.5), so on a one-line
  * label each offset lands the box exactly where `center` did (single-line
@@ -115,10 +126,12 @@
  * visibly empty: unlike a plain space it measures 0.00 against `center`.
  *
  * Hosts must DELETE their own `align-items` override on `.hk-checkbox` /
- * `.hk-radio`, not flip it: `flex-start` was the old workaround and is
- * 0.75px off now (it no longer pays for the 1.5px margin-box), while a
- * same-specificity `center` keeps today's defect on this engine and adds
- * 0.75px on top of it on a `:has()` engine.
+ * `.hk-radio`: the box no longer reads the row's alignment, so a kept
+ * `flex-start` is inert where the gate applies (it parks the box on the same
+ * line edge) and a `center` is inert too — the offset is what moves the box.
+ * On an engine without `:has()` neither of them is inert: that is the tier the
+ * `center` fallback exists for, and a host that needs the old top-edge look
+ * there should scope its override with `@supports not selector(:has(*))`.
  *
  * The label's own line-height is what this rides, and its font size sets the
  * term, so a host that restyles EITHER on `.hk-label` has to restyle this pair
@@ -129,11 +142,10 @@
  * the 21px line box, so a first-line anchor would need a negative offset and
  * would hang the track outside the row; its rows stay block-centred. The two
  * box controls are the ones whose text reads as a paragraph. */
-.hk-checkbox:has(.hk-label:not(:empty)) {
-  align-items: flex-start;
-}
-
 .hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box {
+  /* The item, not the row: immune to a host's or a sibling sheet's
+   * `align-items` on `.hk-checkbox` (or on the `label` element). */
+  align-self: flex-start;
   margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
 }
 

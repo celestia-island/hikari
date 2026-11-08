@@ -383,19 +383,19 @@ mod tests {
             ".hk-checkbox-icon",
             ".hk-checkbox-dot",
             ".hk-checkbox-indeterminate",
-            // The first-line anchoring lane: the gate, the switch it flips and
-            // the offset it feeds, so a silent drop cannot leave every needle
-            // above intact. These three check PRESENCE only — the values
-            // (`1.5`, the half-line arithmetic, the per-step box) are pinned
-            // against this same sheet by the Vue styles contract test, which
-            // compiles it with sass. The gate needle carries the trailing ` {`
-            // so only a RULE can satisfy it: this sheet's comment spells the
-            // gate's two halves and the radio sheet's spells the whole
-            // selector, so prose would otherwise stand in for the rule.
-            // `align-items: flex-start` pins the half only the gated rule
-            // declares (the root rule says `center`).
-            ":has(.hk-label:not(:empty)) {",
-            "align-items: flex-start",
+            // The first-line anchoring lane: the gated box rule, the item
+            // alignment it declares and the offset it feeds, so a silent drop
+            // cannot leave every needle above intact. These three check
+            // PRESENCE only — the values (`1.5`, the half-line arithmetic, the
+            // per-step box) are pinned against this same sheet by the Vue
+            // styles contract test, which compiles it with sass. (Sass keeps
+            // these comments out of the compiled CSS, so a needle can only be
+            // satisfied by a declaration or a selector, never by prose.)
+            // `align-self: flex-start` is the half only the gated box rule
+            // declares: the row keeps `align-items: center`, which is why a
+            // foreign `align-items` cannot undo the anchoring.
+            ":has(.hk-label:not(:empty)) .hk-checkbox-box {",
+            "align-self: flex-start",
             "margin-block-start",
         ] {
             assert!(

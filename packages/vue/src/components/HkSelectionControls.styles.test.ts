@@ -7,10 +7,11 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Compiled-stylesheet guard for the three selection controls
- * (HkCheckbox / HkRadio / HkSwitch).
+ * (HkCheckbox / HkRadio / HkSwitch) and the label sheet they ride
+ * (HkLabel).
  *
  * Vitest stubs CSS, so the behavioral suites can never catch a geometry or
- * alignment fact drifting. This guard compiles the three sheets and pins
+ * alignment fact drifting. This guard compiles the four sheets and pins
  * the facts the 2026-09 alignment/size fix introduced:
  *
  *   1. inline-in-text alignment: every control root declares
@@ -29,13 +30,15 @@ import { describe, expect, it } from "vitest";
  *   5. label first-line anchoring: checkbox/radio pin the box to the
  *      MIDDLE OF THE LABEL'S FIRST LINE BOX instead of the middle of the
  *      whole label block, so a wrapped option no longer floats its box
- *      between the lines — and a host that used to re-align the row with
+ *      between the lines — a host that used to re-align the row with
  *      `align-items: flex-start` (which parked the box on the line's top
- *      edge, ~2px off) no longer has to. The `flex-start` switch and each
- *      of the three offsets carry the `:has(.hk-label:not(:empty))` gate, so
- *      engines without `:has()` fall back to the previous centering instead
- *      of the bare top edge, and a label-less or empty-label control keeps
- *      its old footprint.
+ *      edge, 1.5px off at the default step; 2.0 at sm and 1.0 at lg)
+ *      no longer has to. The anatomy rides the ITEM (`align-self`) plus one
+ *      gated offset per size step, so a foreign `align-items` on the row
+ *      cannot undo it; every carrier keeps the `:has(.hk-label:not(:empty))`
+ *      gate, so engines without `:has()` fall back to the previous centering
+ *      instead of the bare top edge, and a label-less or empty-label control
+ *      keeps its old footprint.
  *      See the "label first-line anchoring" block for the three-way
  *      arithmetic this pins.
  *
@@ -166,7 +169,7 @@ function subjectSelector(selector: string): string {
  * Drops the parenthesised ARGUMENTS that name other elements — `:has()`,
  * `:not()` and the `:nth-*` family — and flattens the wrappers that name the
  * SAME element (`:is()` / `:where()`), so a class inside `:is()` is still read.
- * `withoutParens()` above is the blunter tool the geometry readers use; this
+ * `withoutParens()` below is the blunter tool the geometry readers use; this
  * one exists because the cross-sheet walk must not lose `:is(.hk-checkbox-box)`.
  */
 function withoutForeignArgs(text: string): string {
@@ -500,21 +503,25 @@ describe("label first-line anchoring", () => {
   });
 
   it.each([
-    ["HkCheckbox", checkbox, ".hk-checkbox"],
-    ["HkRadio", radio, ".hk-radio"],
-  ])("%s switches a labeled row to flex-start, keeping centering as the fallback", (
+    ["HkCheckbox", checkbox, ".hk-checkbox", ".hk-checkbox-box"],
+    ["HkRadio", radio, ".hk-radio", ".hk-radio-box"],
+  ])("%s anchors the BOX, keeps the row centered, and falls back whole", (
     _name,
     all,
     selector,
+    box,
   ) => {
     // `center` rode the middle of the whole label block (a wrapped option
     // floated its box between the lines); `flex-start` alone parks the box on
-    // the line's TOP edge (~2px high/low depending on the host font). The
-    // pair — flex-start plus the offsets below — is the contract, and both
-    // halves carry the `:has(.hk-label:not(:empty))` gate so an engine without `:has()`
-    // keeps the old centering instead of the bare top edge.
+    // the line's TOP edge. The contract is `align-self` on the ITEM plus the
+    // gated offsets — deliberately not `align-items` on the row, because a
+    // row-level switch can be undone by any later sheet naming the control
+    // (a comma list, an attribute spelling, a `label` type selector,
+    // `!important`) while every per-part guard still reads a clean sheet.
+    // `align-self` on the item outranks the container's `align-items` under
+    // every specificity and source order, so the anatomy is immune.
     expect(valueOf(find(all, selector).body, "align-items")).toBe("center");
-    expect(valueOf(find(all, `${selector}:has(.hk-label:not(:empty))`).body, "align-items")).toBe(
+    expect(valueOf(find(all, `${selector}:has(.hk-label:not(:empty)) ${box}`).body, "align-self")).toBe(
       "flex-start",
     );
   });
@@ -758,9 +765,7 @@ describe("label first-line anchoring", () => {
       .filter((r) => /(?:^|;)\s*align-items\s*:/.test(r.body))
       .map((r) => `${r.selector} → ${valueOf(r.body, "align-items")}`)
       .sort();
-    expect(carriers, `align-items carriers on \`${control}\``).toEqual(
-      [`${control} → center`, `${control}:has(.hk-label:not(:empty)) → flex-start`].sort(),
-    );
+    expect(carriers, `align-items carriers on \`${control}\``).toEqual([`${control} → center`]);
   });
 
   it.each([
@@ -777,6 +782,28 @@ describe("label first-line anchoring", () => {
     expect(carriers, `box-sizing carriers on \`${box}\``).toEqual([box]);
   });
 
+  it("HkSwitch stays block-centred — no label gate, no item alignment", () => {
+    // The switch is deliberately OUT of the first-line anatomy: its md track is
+    // 24px, taller than the 21px line box, so the same arithmetic would need a
+    // NEGATIVE offset and hang the track outside the row. That rationale lives
+    // in a comment today; nothing executed it, so copying the two gated rules
+    // into HkSwitch.scss (`align-items: flex-start` on a labeled switch, or an
+    // `align-self` on the track with a naive 1.5rem offset) would move the
+    // track 1px off the row and every assertion here would stay green. Pin the
+    // negative: one carrier, value `center`, and no item alignment at all.
+    const carriers = rulesMentioningAny(sw, [".hk-switch"], true)
+      .filter((r) => /(?:^|;)\s*align-items\s*:/.test(r.body))
+      .map((r) => `${r.selector} → ${valueOf(r.body, "align-items")}`)
+      .sort();
+    expect(carriers, "align-items carriers in HkSwitch.scss").toEqual([".hk-switch → center"]);
+    const selfAligned = sw
+      .filter((r) => declarationNames(r.body).includes("align-self"))
+      .map((r) => r.selector);
+    expect(selfAligned, "HkSwitch rules declaring align-self").toEqual([]);
+    const gated = sw.filter((r) => /:has\(\.hk-label/.test(r.selector)).map((r) => r.selector);
+    expect(gated, "HkSwitch rules gated on a label").toEqual([]);
+  });
+
   it.each([
     [
       "checkbox",
@@ -784,6 +811,7 @@ describe("label first-line anchoring", () => {
       ".hk-checkbox-box",
       [
         "align-items",
+        "align-self",
         "background",
         "border",
         "border-color",
@@ -808,6 +836,7 @@ describe("label first-line anchoring", () => {
       ".hk-radio-box",
       [
         "align-items",
+        "align-self",
         "background",
         "border",
         "border-color",
@@ -933,17 +962,13 @@ describe("label first-line anchoring", () => {
       "checkbox",
       checkbox,
       ".hk-checkbox",
-      [
-        ".hk-checkbox",
-        ".hk-checkbox[data-disabled]",
-        ".hk-checkbox:has(.hk-label:not(:empty))",
-      ],
+      [".hk-checkbox", ".hk-checkbox[data-disabled]"],
     ],
     [
       "radio",
       radio,
       ".hk-radio",
-      [".hk-radio", ".hk-radio[data-disabled]", ".hk-radio:has(.hk-label:not(:empty))"],
+      [".hk-radio", ".hk-radio[data-disabled]"],
     ],
   ])("%s root is the subject of exactly the rules pinned here", (
     _name,
@@ -1015,8 +1040,7 @@ describe("label first-line anchoring", () => {
         ".hk-checkbox-sm .hk-checkbox-icon → height, width",
         ".hk-checkbox-sm .hk-checkbox-indeterminate → width",
         ".hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box → margin-block-start",
-        ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box → margin-block-start",
-        ".hk-checkbox:has(.hk-label:not(:empty)) → align-items",
+        ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box → align-self, margin-block-start",
         ".hk-checkbox:not([data-disabled]):active .hk-checkbox-box → scale",
         ".hk-checkbox:not([data-disabled]):hover .hk-checkbox-box:not([data-checked]):not([data-indeterminate]) → border-color",
         ".hk-checkbox[data-animating] .hk-checkbox-box → will-change",
@@ -1036,8 +1060,7 @@ describe("label first-line anchoring", () => {
         ".hk-radio-box[data-checked] → background, border-color",
         ".hk-radio-dot → background, border-radius, height, width, z-index",
         ".hk-radio-input → height, opacity, pointer-events, position, width",
-        ".hk-radio:has(.hk-label:not(:empty)) .hk-radio-box → margin-block-start",
-        ".hk-radio:has(.hk-label:not(:empty)) → align-items",
+        ".hk-radio:has(.hk-label:not(:empty)) .hk-radio-box → align-self, margin-block-start",
         ".hk-radio:not([data-disabled]):active .hk-radio-box → scale",
         ".hk-radio:not([data-disabled]):hover .hk-radio-box:not([data-checked]) → border-color",
         ".hk-radio[data-disabled] → cursor, opacity",
@@ -1195,8 +1218,9 @@ describe("label first-line anchoring", () => {
 
   // Everything above compiles four sheets by hand. The browser gets whatever
   // the bundle happens to include: a Vue consumer pulls in each component's
-  // sheet through its TSX side-effect import, and the Rust host imports ~200
-  // mirrors in `styles/index.scss`. So the fourth door was simply "write the
+  // sheet through its TSX side-effect import, while the Rust host ships two
+  // artefacts — each component's own `scss!` sheet, and the builder's single
+  // bundle entry `styles/index.scss`, which imports all 159 mirrors. So the fourth door was simply "write the
   // foreign rule in a sheet the guard never reads" — `.hk-checkbox-box { width:
   // 2.5rem; height: 2.5rem }` appended to HkSelectionGrid.scss moves the box
   // 11px with all 89 tests green (HkSelectionGrid is imported 30 lines after
@@ -1216,10 +1240,16 @@ describe("label first-line anchoring", () => {
       resolve(componentDir, "HkSwitch.scss"),
       resolve(componentDir, "HkLabel.scss"),
     ]);
-    // `(?!\w)` and not `(?![\w-])`: the parts ARE the suffix (`.hk-checkbox-box`),
-    // so rejecting a trailing hyphen would only match the bare root and let the
-    // very rule this test exists for through.
-    const SELECTION = /\.hk-(?:checkbox|radio|switch|label)(?!\w)/g;
+    // The token, not the class spelling: no leading dot, so an attribute
+    // selector (`[class~="hk-checkbox"]`), a Sass variable holding the name
+    // (`$c: "hk-checkbox"`) or a string-built selector is caught by the same
+    // scan. `(?!\w)` and not `(?![\w-])` keeps the parts in: they ARE the
+    // suffix (`.hk-checkbox-box`), so rejecting a trailing hyphen would only
+    // match the bare root and let the very rule this test exists for through.
+    // A name assembled from two halves (`"hk-check" + "box"`) still slips;
+    // that shape is recorded as a residual, and the anatomy itself no longer
+    // depends on the row, so it can only resize a part, not un-anchor it.
+    const SELECTION = /hk-(?:checkbox|radio|switch|label)(?!\w)/g;
     const sheets: string[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {

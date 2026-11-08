@@ -344,12 +344,12 @@ mod tests {
             ".hk-radio-input",
             ".hk-radio-dot",
             // The first-line anchoring lane (house parity: HkCheckbox): the
-            // `:has()` gate and its calc offset must survive grass. The gate
-            // needle carries the trailing ` {` because this sheet's COMMENT
-            // also spells the selector — without it, deleting all four gated
-            // rules still passes on the comment alone.
-            ":has(.hk-label:not(:empty)) {",
-            "align-items: flex-start",
+            // gated box rule, its item alignment and its calc offset must
+            // survive grass. The needles spell a declaration and a whole rule
+            // head, and sass strips these comments, so prose cannot stand in
+            // for either.
+            ":has(.hk-label:not(:empty)) .hk-radio-box {",
+            "align-self: flex-start",
             "margin-block-start",
         ] {
             assert!(

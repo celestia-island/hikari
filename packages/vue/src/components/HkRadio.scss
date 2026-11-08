@@ -27,7 +27,7 @@
   /* Fallback anatomy (house parity: HkCheckbox): centering the box against
    * the label block is what every engine and every host saw before first-line
    * anchoring, and it needs no `:has()` support. A labeled radio on a
-   * `:has()`-capable engine is switched to `flex-start` by the first-line
+   * `:has()`-capable engine gets an `align-self` on the box by the first-line
    * rules below; a label-less radio keeps this line on every engine. */
   align-items: center;
   /* House parity (HkCheckbox/HkSwitch): keeps the box on the text's
@@ -96,8 +96,9 @@
 /* ---------- first-line anchoring (house parity: HkCheckbox) ---------- */
 
 /* Same anatomy as HkCheckbox's box offset, and gated the same way so the pair
- * is atomic: `flex-start` on a labeled radio plus half a line box minus half
- * the box on the box. One line box is `line-height` tall (HkLabel pins 1.5),
+ * is atomic: `align-self: flex-start` on a labeled radio's box plus half a
+ * line box minus half the box. One line box is `line-height` tall (HkLabel
+ * pins 1.5),
  * so a one-line option lands exactly where `center` did and a wrapped option
  * keeps its box on the first line; an engine without `:has()` falls through to
  * the `align-items: center` fallback in the root rule (the previous
@@ -108,11 +109,9 @@
  * empty label shell both keep the old footprint instead of taking a phantom
  * offset. The styles contract test pins the coefficient against HkLabel.scss
  * and each box term against the [data-size] rules above. */
-.hk-radio:has(.hk-label:not(:empty)) {
-  align-items: flex-start;
-}
-
 .hk-radio:has(.hk-label:not(:empty)) .hk-radio-box {
+  /* The item, not the row (HkCheckbox.scss documents why). */
+  align-self: flex-start;
   margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
 }
 

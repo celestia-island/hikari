@@ -32,10 +32,11 @@ import { describe, expect, it } from "vitest";
  *      between the lines — and a host that used to re-align the row with
  *      `align-items: flex-start` (which parked the box on the line's top
  *      edge, ~2px off) no longer has to. The switch and the offset both
- *      carry the `:has(.hk-label)` gate, so engines without `:has()` fall
- *      back to the previous centering instead of the bare top edge. See the
- *      "label first-line anchoring" block for the three-way arithmetic this
- *      pins.
+ *      carry the `:has(.hk-label:not(:empty))` gate, so engines without
+ *      `:has()` fall back to the previous centering instead of the bare top
+ *      edge, and a label-less or empty-label control keeps its old footprint.
+ *      See the "label first-line anchoring" block for the three-way
+ *      arithmetic this pins.
  *
  * The rules below are parsed out of the COMPILED css (not the .scss
  * source) so a rule that fails to compile can never count as present.
@@ -46,9 +47,13 @@ const componentDir = resolve(dirname(fileURLToPath(import.meta.url)));
 interface Rule {
   selector: string;
   body: string;
+  /** Set for a rule that lives inside an at-rule (only `@media` today), so
+   * `find()`/the selector-set helper keep reading the UNCONDITIONAL anatomy
+   * and a media-scoped copy can never shadow it. */
+  media?: string;
 }
 
-/** Flat-rule splitter for the expanded output of these leaf sheets. */
+/** Splitter for the expanded output of these leaf sheets. */
 function rules(css: string): Rule[] {
   // Expanded output keeps loud comments, and sheets containing non-ASCII
   // text get a braille-less `@charset "UTF-8";` statement — both would glue
@@ -58,28 +63,61 @@ function rules(css: string): Rule[] {
     .replace(/@charset[^;]*;/g, "")
     .trim();
   const out: Rule[] = [];
-  for (const match of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    const selector = match[1]!.trim();
+  // Brace-matching walk, not a flat regex: a rule inside `@media` must not be
+  // parsed as if it were unconditional. `@media (prefers-reduced-motion)
+  // .hk-checkbox-box` is exactly that shape, and a flat splitter hands it the
+  // same selector as the base rule — `find()` would then read whichever came
+  // first while the media copy won at runtime.
+  const stack: Array<{ prelude: string; atRule: boolean }> = [];
+  let buffer = "";
+  for (const char of bare) {
+    if (char === "{") {
+      const prelude = buffer.trim();
+      buffer = "";
+      stack.push({ prelude, atRule: prelude.startsWith("@") });
+      continue;
+    }
+    if (char !== "}") {
+      buffer += char;
+      continue;
+    }
+    const frame = stack.pop();
+    const body = buffer.trim();
+    buffer = "";
+    if (!frame || frame.atRule || !body) {
+      continue;
+    }
     // Keep control rules; the rtl mirrors lead with an attribute selector,
     // and HkRadio's size steps nest as `[data-size=…] .hk-radio-box`. A rule
     // that reaches a control PART leads with neither (an `[data-type=…]` or
     // `[data-disabled]` prefix is legal and would otherwise be dropped from
     // every selector-set assertion below), so anything naming a part stays.
     const isControlRule =
-      selector.startsWith(".hk-") ||
-      selector.startsWith("[dir=") ||
-      selector.startsWith("[data-size=") ||
-      /\.hk-(?:checkbox|radio|switch)[\w-]*\b/.test(selector);
+      frame.prelude.startsWith(".hk-") ||
+      frame.prelude.startsWith("[dir=") ||
+      frame.prelude.startsWith("[data-size=") ||
+      /\.hk-(?:checkbox|radio|switch)[\w-]*\b/.test(frame.prelude);
     if (!isControlRule) {
       continue;
     }
-    out.push({ selector, body: match[2]! });
+    const media = stack.filter((f) => f.atRule).map((f) => f.prelude).join(" ");
+    out.push(media ? { selector: frame.prelude, body, media } : { selector: frame.prelude, body });
+  }
+  // `find()` returns the FIRST match, so a rule duplicated further down the
+  // sheet (appended, or re-emitted by a later partial) would silently shadow
+  // the one every assertion below reads while winning at runtime. No sheet in
+  // this package emits a duplicate selector, so pin it.
+  const seen = new Set<string>();
+  for (const rule of out) {
+    const key = `${rule.media ?? ""}|${rule.selector}`;
+    expect(seen.has(key), `duplicate compiled selector \`${rule.selector}\``).toBe(false);
+    seen.add(key);
   }
   return out;
 }
 
 function find(all: Rule[], selector: string): Rule {
-  const hit = all.find((r) => r.selector === selector);
+  const hit = all.find((r) => !r.media && r.selector === selector);
   expect(hit, `compiled rule for \`${selector}\``).toBeDefined();
   return hit!;
 }
@@ -94,6 +132,7 @@ function find(all: Rule[], selector: string): Rule {
  */
 function expectSelectorSet(all: Rule[], classSuffix: string, expected: string[]) {
   const present = all
+    .filter((r) => !r.media)
     .map((r) => r.selector)
     .filter((s) => {
       const last = s.split(/\s+>/).pop()!.trim().split(" ").pop()!;
@@ -253,10 +292,10 @@ describe("label first-line anchoring", () => {
     // floated its box between the lines); `flex-start` alone parks the box on
     // the line's TOP edge (~2px high/low depending on the host font). The
     // pair — flex-start plus the offsets below — is the contract, and both
-    // halves carry the `:has(.hk-label)` gate so an engine without `:has()`
+    // halves carry the `:has(.hk-label:not(:empty))` gate so an engine without `:has()`
     // keeps the old centering instead of the bare top edge.
     expect(valueOf(find(all, selector).body, "align-items")).toBe("center");
-    expect(valueOf(find(all, `${selector}:has(.hk-label)`).body, "align-items")).toBe(
+    expect(valueOf(find(all, `${selector}:has(.hk-label:not(:empty))`).body, "align-items")).toBe(
       "flex-start",
     );
   });
@@ -265,33 +304,33 @@ describe("label first-line anchoring", () => {
   // it centers; the box size is read from the box's OWN rule, so changing the
   // box scale without updating the offset fails here.
   const rows: Array<[string, Rule[], string, string, string]> = [
-    ["checkbox md", checkbox, ".hk-checkbox:has(.hk-label) .hk-checkbox-box", ".hk-label", ".hk-checkbox-box"],
+    ["checkbox md", checkbox, ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box", ".hk-label", ".hk-checkbox-box"],
     [
       "checkbox sm",
       checkbox,
-      ".hk-checkbox-sm:has(.hk-label) .hk-checkbox-box",
+      ".hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box",
       ".hk-label.hk-label-sm",
       ".hk-checkbox-sm .hk-checkbox-box",
     ],
     [
       "checkbox lg",
       checkbox,
-      ".hk-checkbox-lg:has(.hk-label) .hk-checkbox-box",
+      ".hk-checkbox-lg:has(.hk-label:not(:empty)) .hk-checkbox-box",
       ".hk-label.hk-label-lg",
       ".hk-checkbox-lg .hk-checkbox-box",
     ],
-    ["radio md", radio, ".hk-radio:has(.hk-label) .hk-radio-box", ".hk-label", "[data-size=md] .hk-radio-box"],
+    ["radio md", radio, ".hk-radio:has(.hk-label:not(:empty)) .hk-radio-box", ".hk-label", "[data-size=md] .hk-radio-box"],
     [
       "radio sm",
       radio,
-      ".hk-radio[data-size=sm]:has(.hk-label) .hk-radio-box",
+      ".hk-radio[data-size=sm]:has(.hk-label:not(:empty)) .hk-radio-box",
       ".hk-label.hk-label-sm",
       "[data-size=sm] .hk-radio-box",
     ],
     [
       "radio lg",
       radio,
-      ".hk-radio[data-size=lg]:has(.hk-label) .hk-radio-box",
+      ".hk-radio[data-size=lg]:has(.hk-label:not(:empty)) .hk-radio-box",
       ".hk-label.hk-label-lg",
       "[data-size=lg] .hk-radio-box",
     ],
@@ -325,39 +364,53 @@ describe("label first-line anchoring", () => {
 
   it.each([
     ["checkbox", checkbox, ".hk-checkbox-box", [
-      ".hk-checkbox:has(.hk-label) .hk-checkbox-box",
-      ".hk-checkbox-sm:has(.hk-label) .hk-checkbox-box",
-      ".hk-checkbox-lg:has(.hk-label) .hk-checkbox-box",
+      ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box",
+      ".hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box",
+      ".hk-checkbox-lg:has(.hk-label:not(:empty)) .hk-checkbox-box",
     ]],
     ["radio", radio, ".hk-radio-box", [
-      ".hk-radio:has(.hk-label) .hk-radio-box",
-      ".hk-radio[data-size=sm]:has(.hk-label) .hk-radio-box",
-      ".hk-radio[data-size=lg]:has(.hk-label) .hk-radio-box",
+      ".hk-radio:has(.hk-label:not(:empty)) .hk-radio-box",
+      ".hk-radio[data-size=sm]:has(.hk-label:not(:empty)) .hk-radio-box",
+      ".hk-radio[data-size=lg]:has(.hk-label:not(:empty)) .hk-radio-box",
     ]],
   ])(
     "%s box only moves on a label-gated offset",
     (_name, all, box, expected) => {
       // (a) every vertical-shift declaration on the box is one of the three
-      // offset rules and carries the `:has(.hk-label)` gate — a label-less
-      // control (selection column, a bare box beside a host's own caption) has
-      // no line box to ride and must keep its old footprint; (b) nothing else
-      // in the sheet can move the box: a smuggled `margin-*`, `translate`,
-      // `top`/`bottom`/`inset` or a re-declared offset lands in this set and
-      // fails the exact toEqual. The parser keeps every rule that names a
-      // control part, so such a rule cannot hide outside the filter either.
+      // offset rules and carries the `:has(.hk-label:not(:empty))` gate — a
+      // label-less (or empty-label) control has no line box to ride and must
+      // keep its old footprint; (b) nothing else in the sheet can move the
+      // box: a smuggled `margin-*`, `padding-*`, `translate`, `align-self` or
+      // `top`/`bottom`/`inset` lands in this set and fails the exact toEqual.
+      // The parser keeps every rule that names a control part, and it rejects
+      // duplicate selectors, so such a rule can neither hide outside the
+      // filter nor shadow the rule this test reads.
       const shiftRules = all.filter(
         (r) =>
           r.selector.trim().endsWith(box) &&
-          /(?:^|;)\s*(?:margin(?:-[a-z-]+)?|translate|top|bottom|inset(?:-[a-z-]+)?)\s*:/.test(
+          /(?:^|;)\s*(?:margin(?:-[a-z-]+)?|padding(?:-[a-z-]+)?|translate|align-self|top|bottom|inset(?:-[a-z-]+)?)\s*:/.test(
             r.body,
           ),
       );
       expect(shiftRules.map((r) => r.selector).sort()).toEqual([...expected].sort());
       for (const rule of shiftRules) {
-        expect(rule.selector).toContain(":has(.hk-label)");
+        expect(rule.selector).toContain(":has(.hk-label:not(:empty))");
       }
     },
   );
+
+  it.each([
+    ["checkbox", checkbox, ".hk-checkbox-box"],
+    ["radio", radio, ".hk-radio-box"],
+  ])("%s box declares the sizing its offset reads", (_name, all, box) => {
+    // The offset reads the box's width as a BORDER-BOX height (`width` and
+    // `height` are equal, the box is square but its 1px border is added on
+    // top of a content-box). Under a host reset that is border-box and
+    // everything agrees; a consumer that imports this sheet without one would
+    // inflate the box by 2px and land the offset 1px low, so the sheet
+    // declares the sizing itself.
+    expect(valueOf(find(all, box).body, "box-sizing")).toBe("border-box");
+  });
 });
 
 describe("HkSwitch geometry", () => {

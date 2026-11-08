@@ -44,6 +44,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* The first-line offset below reads the box's width as its BORDER-BOX
+   * height, so the sheet declares the sizing itself instead of inheriting it
+   * from the host reset: a consumer importing this sheet without a global
+   * `border-box` would otherwise inflate the box by its 1px border and land
+   * the offset 1px low. */
+  box-sizing: border-box;
   width: 1.125rem;
   height: 1.125rem;
   border-radius: var(--radius-sm, 4px);
@@ -79,8 +85,9 @@
  * instead of the middle of the whole label block. `center` rode the block, so
  * a two- or three-line option floated the box between the lines — hosts
  * re-aligned the row themselves, and the `flex-start` override they reached
- * for parked the box on the line's top edge, 1.5px above the text's optical
- * middle (reported as the label text sitting ~2px low).
+ * for parked the box on the line's top edge — 1.5px above the middle of the
+ * line box it belongs to at the default step (reported as the label text
+ * sitting ~2px low).
  *
  * Two rules cooperate and both carry the gate, so the anatomy is atomic:
  * `flex-start` on the control, plus half a line box minus half of the box on
@@ -89,27 +96,33 @@
  * single-line rows keep their pixels — and on a wrapped label it keeps the box
  * on line one. An engine without `:has()` support falls through to the
  * `align-items: center` fallback in the root rule, i.e. exactly the previous
- * rendering, never the bare top-edge state. Gated on `:has(.hk-label)` also
- * means a label-less control (selection column, a bare box next to a host's
- * own caption) has no line box to ride and keeps its old footprint.
+ * rendering, never the bare top-edge state.
+ *
+ * The gate needs both halves: `:has(.hk-label)` proves a label element is
+ * there, `:not(:empty)` proves it carries content. A label-less control
+ * (selection column, a bare box next to a host's own caption) has no line box
+ * to ride and keeps its old footprint — and so does an empty-but-present label
+ * shell (`<HkCheckbox>{''}</HkCheckbox>` renders `span.hk-label` with nothing
+ * inside; the Rust side emits no label at all for that input, and the gate
+ * keeps both renderers on the same anatomy).
  *
  * The label's own line-height is what this rides, so a host that restyles
  * `.hk-label` line-height has to restyle this pair too — the styles contract
  * test pins the coefficient against HkLabel.scss and each box term against the
  * size modifiers above. */
-.hk-checkbox:has(.hk-label) {
+.hk-checkbox:has(.hk-label:not(:empty)) {
   align-items: flex-start;
 }
 
-.hk-checkbox:has(.hk-label) .hk-checkbox-box {
+.hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box {
   margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
 }
 
-.hk-checkbox-sm:has(.hk-label) .hk-checkbox-box {
+.hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box {
   margin-block-start: calc((1.5 * var(--text-xs, 0.75rem) - 0.875rem) / 2);
 }
 
-.hk-checkbox-lg:has(.hk-label) .hk-checkbox-box {
+.hk-checkbox-lg:has(.hk-label:not(:empty)) .hk-checkbox-box {
   margin-block-start: calc((1.5 * var(--text-md, 1rem) - 1.375rem) / 2);
 }
 

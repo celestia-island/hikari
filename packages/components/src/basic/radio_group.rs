@@ -345,7 +345,7 @@ mod tests {
             ".hk-radio-dot",
             // The first-line anchoring lane (house parity: HkCheckbox): the
             // `:has()` gate and its calc offset must survive grass.
-            ":has(.hk-label)",
+            ":has(.hk-label:not(:empty))",
             "margin-block-start",
         ] {
             assert!(

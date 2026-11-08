@@ -1216,8 +1216,8 @@ const PAINTS_ONLY =
  * nobody reads. (306, not `367 − 73 = 294`: twelve of the pinned rows change
  * shape in that table — the six `h1`…`h6` `line-height` rows merge and six block
  * rows gain declarations — so 61 survive verbatim. Both totals move whenever
- * the shipped table does: 975/362 before the attribute-qualified content rows
- * of round 19 landed, 977/364 while it still carried the two `outline` rows.)
+ * the shipped table does: they were 975/362 before the attribute-qualified
+ * content rows of round 19 landed.)
  * Deliberately NOT in this set, with what each omission costs:
  *
  * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized

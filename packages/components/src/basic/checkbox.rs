@@ -383,6 +383,11 @@ mod tests {
             ".hk-checkbox-icon",
             ".hk-checkbox-dot",
             ".hk-checkbox-indeterminate",
+            // The first-line anchoring lane: geometry that grass must keep
+            // parsing (`:has()` gate + the calc offset). A silent drop would
+            // otherwise leave every needle above intact.
+            ":has(.hk-label)",
+            "margin-block-start",
         ] {
             assert!(
                 css.contains(needle),

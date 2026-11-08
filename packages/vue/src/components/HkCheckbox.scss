@@ -6,17 +6,13 @@
 
 .hk-checkbox {
   display: inline-flex;
-  /* First-line anchored, not block-centered: the box pins to the FIRST line
-   * of the label (offset below). `center` used to ride the middle of the
-   * whole label block, so a two- or three-line option floated the box
-   * between the lines — hosts had to re-align it themselves, and the
-   * `flex-start` override they reached for then parked the box on the line's
-   * top edge, 1.5px above the text's optical middle (reported as the text
-   * sitting ~2px low).
-   * Single-line rows are unchanged: for every size step the offset below puts
-   * the box exactly where `center` did (half of one line box, minus half the
-   * box). */
-  align-items: flex-start;
+  /* Fallback anatomy: centering the box against the label block is what every
+   * engine and every host saw before first-line anchoring, and it needs no
+   * `:has()` support. A labeled control on a `:has()`-capable engine is
+   * switched to `flex-start` by the first-line rules below (they ship as a
+   * pair — the switch alone would park the box on the line's top edge); a
+   * label-less control keeps this line on every engine. */
+  align-items: center;
   /* When the control sits INLINE among text (not in a host flex row), the
    * default `vertical-align: baseline` parks the inline-flex's bottom edge
    * on the text baseline and rides the box ~4px above the text's visual
@@ -69,19 +65,32 @@
 
 /* ---------- first-line anchoring ---------- */
 
-/* The box rides the vertical middle of the label's first line box. One line
- * box is `line-height` tall (HkLabel pins 1.5), so half of it sits above the
- * box's own middle once the box is pushed down by the leftover of half a line
- * minus half a box: `(1.5 × label font-size − box) / 2`. On a one-line label
- * that is exactly the offset `align-items: center` produced; on a wrapped
- * label it keeps the box on line one instead of between the lines.
+/* A labeled control pins its box to the MIDDLE OF THE LABEL'S FIRST LINE BOX
+ * instead of the middle of the whole label block. `center` rode the block, so
+ * a two- or three-line option floated the box between the lines — hosts
+ * re-aligned the row themselves, and the `flex-start` override they reached
+ * for parked the box on the line's top edge, 1.5px above the text's optical
+ * middle (reported as the label text sitting ~2px low).
  *
- * Gated on `:has(.hk-label)`: a label-less control (selection column, a bare
- * box next to a host's own caption) has no line box to ride and keeps its old
- * footprint. The label's own line-height is what this rides, so a host that
- * restyles `.hk-label` line-height has to restyle this pair too — the styles
- * contract test pins the correlation against HkLabel.scss, and each box term
- * against the size modifiers above. */
+ * Two rules cooperate and both carry the gate, so the anatomy is atomic:
+ * `flex-start` on the control, plus half a line box minus half of the box on
+ * the box itself. One line box is `line-height` tall (HkLabel pins 1.5), so on
+ * a one-line label the offset lands the box exactly where `center` did —
+ * single-line rows keep their pixels — and on a wrapped label it keeps the box
+ * on line one. An engine without `:has()` support falls through to the
+ * `align-items: center` fallback in the root rule, i.e. exactly the previous
+ * rendering, never the bare top-edge state. Gated on `:has(.hk-label)` also
+ * means a label-less control (selection column, a bare box next to a host's
+ * own caption) has no line box to ride and keeps its old footprint.
+ *
+ * The label's own line-height is what this rides, so a host that restyles
+ * `.hk-label` line-height has to restyle this pair too — the styles contract
+ * test pins the coefficient against HkLabel.scss and each box term against the
+ * size modifiers above. */
+.hk-checkbox:has(.hk-label) {
+  align-items: flex-start;
+}
+
 .hk-checkbox:has(.hk-label) .hk-checkbox-box {
   margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
 }

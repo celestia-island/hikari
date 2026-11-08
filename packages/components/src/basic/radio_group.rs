@@ -343,6 +343,10 @@ mod tests {
             ".hk-radio-box",
             ".hk-radio-input",
             ".hk-radio-dot",
+            // The first-line anchoring lane (house parity: HkCheckbox): the
+            // `:has()` gate and its calc offset must survive grass.
+            ":has(.hk-label)",
+            "margin-block-start",
         ] {
             assert!(
                 css.contains(needle),

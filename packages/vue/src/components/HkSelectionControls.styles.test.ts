@@ -31,8 +31,11 @@ import { describe, expect, it } from "vitest";
  *      whole label block, so a wrapped option no longer floats its box
  *      between the lines — and a host that used to re-align the row with
  *      `align-items: flex-start` (which parked the box on the line's top
- *      edge, ~2px off) no longer has to. See the "label first-line
- *      anchoring" block for the three-way arithmetic this pins.
+ *      edge, ~2px off) no longer has to. The switch and the offset both
+ *      carry the `:has(.hk-label)` gate, so engines without `:has()` fall
+ *      back to the previous centering instead of the bare top edge. See the
+ *      "label first-line anchoring" block for the three-way arithmetic this
+ *      pins.
  *
  * The rules below are parsed out of the COMPILED css (not the .scss
  * source) so a rule that fails to compile can never count as present.
@@ -58,12 +61,16 @@ function rules(css: string): Rule[] {
   for (const match of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const selector = match[1]!.trim();
     // Keep control rules; the rtl mirrors lead with an attribute selector,
-    // and HkRadio's size steps nest as `[data-size=…] .hk-radio-box`.
-    if (
-      !selector.startsWith(".hk-") &&
-      !selector.startsWith("[dir=") &&
-      !selector.startsWith("[data-size=")
-    ) {
+    // and HkRadio's size steps nest as `[data-size=…] .hk-radio-box`. A rule
+    // that reaches a control PART leads with neither (an `[data-type=…]` or
+    // `[data-disabled]` prefix is legal and would otherwise be dropped from
+    // every selector-set assertion below), so anything naming a part stays.
+    const isControlRule =
+      selector.startsWith(".hk-") ||
+      selector.startsWith("[dir=") ||
+      selector.startsWith("[data-size=") ||
+      /\.hk-(?:checkbox|radio|switch)[\w-]*\b/.test(selector);
+    if (!isControlRule) {
       continue;
     }
     out.push({ selector, body: match[2]! });
@@ -213,18 +220,45 @@ describe("label first-line anchoring", () => {
   const labelSheet = rules(
     compile(resolve(componentDir, "HkLabel.scss"), { style: "expanded" }).css,
   );
-  const labelLineHeight = parseFloat(valueOf(find(labelSheet, ".hk-label").body, "line-height"));
+  const labelLineHeightRule = find(labelSheet, ".hk-label").body;
+  // A bare number: `line-height: 1.5` is a multiplier of the label's font
+  // size, which is what the offset's `1.5 * font-size` term assumes. A px
+  // line-height would parse to the same float but mean a different line box.
+  const labelLineHeightDecl = valueOf(labelLineHeightRule, "line-height");
+  expect(
+    labelLineHeightDecl,
+    `HkLabel line-height "${labelLineHeightDecl}" must be a unitless multiplier`,
+  ).toMatch(/^[\d.]+$/);
+  const labelLineHeight = parseFloat(labelLineHeightDecl);
   const labelFont = (selector: string) => cssVar(find(labelSheet, selector).body, "font-size");
+
+  // The offset rides the label's FIRST line box, which starts at the label's
+  // border-box top: a block-direction margin or padding on `.hk-label` would
+  // sit between them and silently shift every box.
+  const labelBox = find(labelSheet, ".hk-label").body;
+  expect(
+    labelBox,
+    "the offset assumes a margin/padding-free .hk-label",
+  ).not.toMatch(/(?:^|;)\s*(?:margin|padding)(?:-(?:block|top|bottom)(?:-start|-end)?)?\s*:/);
 
   it.each([
     ["HkCheckbox", checkbox, ".hk-checkbox"],
     ["HkRadio", radio, ".hk-radio"],
-  ])("%s pins the row to the first line, not the block", (_name, all, selector) => {
+  ])("%s switches a labeled row to flex-start, keeping centering as the fallback", (
+    _name,
+    all,
+    selector,
+  ) => {
     // `center` rode the middle of the whole label block (a wrapped option
     // floated its box between the lines); `flex-start` alone parks the box on
     // the line's TOP edge (~2px high/low depending on the host font). The
-    // pair — flex-start plus the offsets below — is the contract.
-    expect(valueOf(find(all, selector).body, "align-items")).toBe("flex-start");
+    // pair — flex-start plus the offsets below — is the contract, and both
+    // halves carry the `:has(.hk-label)` gate so an engine without `:has()`
+    // keeps the old centering instead of the bare top edge.
+    expect(valueOf(find(all, selector).body, "align-items")).toBe("center");
+    expect(valueOf(find(all, `${selector}:has(.hk-label)`).body, "align-items")).toBe(
+      "flex-start",
+    );
   });
 
   // Each row pairs the offset rule with the label size it reads and the box
@@ -290,29 +324,40 @@ describe("label first-line anchoring", () => {
   );
 
   it.each([
-    ["checkbox", checkbox, [
+    ["checkbox", checkbox, ".hk-checkbox-box", [
       ".hk-checkbox:has(.hk-label) .hk-checkbox-box",
       ".hk-checkbox-sm:has(.hk-label) .hk-checkbox-box",
       ".hk-checkbox-lg:has(.hk-label) .hk-checkbox-box",
     ]],
-    ["radio", radio, [
+    ["radio", radio, ".hk-radio-box", [
       ".hk-radio:has(.hk-label) .hk-radio-box",
       ".hk-radio[data-size=sm]:has(.hk-label) .hk-radio-box",
       ".hk-radio[data-size=lg]:has(.hk-label) .hk-radio-box",
     ]],
-  ])("%s offset is gated on a label and is the only margin on the box", (_name, all, expected) => {
-    // Two facts at once: (a) every offset rule carries the `:has(.hk-label)`
-    // gate — a label-less control (selection column, a bare box beside a
-    // host's own caption) has no line box to ride and must keep its old
-    // footprint; (b) no other rule in the sheet touches the box's margin, so
-    // a smuggled more-specific `margin-*` override cannot silently win at
-    // runtime while the assertions above keep reading the pinned rules.
-    const marginRules = all.filter((r) => /(?:^|;)\s*margin(-[a-z-]+)?\s*:/.test(r.body));
-    expect(marginRules.map((r) => r.selector).sort()).toEqual([...expected].sort());
-    for (const rule of marginRules) {
-      expect(rule.selector).toContain(":has(.hk-label)");
-    }
-  });
+  ])(
+    "%s box only moves on a label-gated offset",
+    (_name, all, box, expected) => {
+      // (a) every vertical-shift declaration on the box is one of the three
+      // offset rules and carries the `:has(.hk-label)` gate — a label-less
+      // control (selection column, a bare box beside a host's own caption) has
+      // no line box to ride and must keep its old footprint; (b) nothing else
+      // in the sheet can move the box: a smuggled `margin-*`, `translate`,
+      // `top`/`bottom`/`inset` or a re-declared offset lands in this set and
+      // fails the exact toEqual. The parser keeps every rule that names a
+      // control part, so such a rule cannot hide outside the filter either.
+      const shiftRules = all.filter(
+        (r) =>
+          r.selector.trim().endsWith(box) &&
+          /(?:^|;)\s*(?:margin(?:-[a-z-]+)?|translate|top|bottom|inset(?:-[a-z-]+)?)\s*:/.test(
+            r.body,
+          ),
+      );
+      expect(shiftRules.map((r) => r.selector).sort()).toEqual([...expected].sort());
+      for (const rule of shiftRules) {
+        expect(rule.selector).toContain(":has(.hk-label)");
+      }
+    },
+  );
 });
 
 describe("HkSwitch geometry", () => {

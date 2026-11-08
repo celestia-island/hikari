@@ -34,13 +34,12 @@
 
 .hk-radio {
   display: inline-flex;
-  /* First-line anchored (house parity: HkCheckbox). `center` used to ride the
-   * middle of the whole label block, so a wrapped option floated its box
-   * between the lines; hosts then re-aligned it with `flex-start` and parked
-   * the box on the line's top edge, 1.5px above the text's optical middle. The
-   * offset below puts it back on the first line's middle and is a no-op for
-   * one-line options (every size step lands where `center` did). */
-  align-items: flex-start;
+  /* Fallback anatomy (house parity: HkCheckbox): centering the box against
+   * the label block is what every engine and every host saw before first-line
+   * anchoring, and it needs no `:has()` support. A labeled radio on a
+   * `:has()`-capable engine is switched to `flex-start` by the first-line
+   * rules below; a label-less radio keeps this line on every engine. */
+  align-items: center;
   /* House parity (HkCheckbox/HkSwitch): keeps the box on the text's
    * visual midline when a radio row is lifted out of the group into an
    * inline text context. No-op inside the flex group. */
@@ -101,13 +100,19 @@
 
 /* ---------- first-line anchoring (house parity: HkCheckbox) ---------- */
 
-/* Same anatomy as HkCheckbox's box offset — one line box tall (HkLabel pins
- * `line-height: 1.5`), the box rides its vertical middle, so the box is
- * pushed down by (1.5 × label font-size − box) / 2 and a wrapped option keeps
- * its box on the first line. Gated on :has(.hk-label) so a label-less radio
- * keeps its old footprint; the styles contract test pins the coefficient
- * against HkLabel.scss and each box term against the [data-size] rules
- * above. */
+/* Same anatomy as HkCheckbox's box offset, and gated the same way so the pair
+ * is atomic: `flex-start` on a labeled radio plus half a line box minus half
+ * the box on the box. One line box is `line-height` tall (HkLabel pins 1.5),
+ * so a one-line option lands exactly where `center` did and a wrapped option
+ * keeps its box on the first line; an engine without `:has()` falls through to
+ * the `align-items: center` fallback in the root rule (the previous
+ * rendering), and a label-less radio has no line box to ride and keeps its
+ * footprint. The styles contract test pins the coefficient against
+ * HkLabel.scss and each box term against the [data-size] rules above. */
+.hk-radio:has(.hk-label) {
+  align-items: flex-start;
+}
+
 .hk-radio:has(.hk-label) .hk-radio-box {
   margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
 }

@@ -101,8 +101,9 @@ function atNameOf(prelude: string): string {
   let head = "";
   // The leading run is decoded before the first character is judged. The escape
   // Chrome honours is the NAME (`@\70 roperty` IS `@property`); an escaped SIGN
-  // (`\40 layer`) is NOT an at-rule for Chrome — it tokenizes as an ident, the
-  // whole qualified rule is invalid and dropped (measured: real
+  // (`\40 layer`) is NOT an at-rule for Chrome — it parses as a plain qualified
+  // rule whose type selector `\@layer` matches nothing, so the block's contents
+  // never apply (measured: real
   // `@layer { span:last-child { margin-block-start: 8px } }` moved the label
   // 8.000px, `\40 layer` moved it 0.000). Decoding it anyway is deliberate and
   // fail-CLOSED: the inner rules then become rows, i.e. the guard over-reports a
@@ -1209,14 +1210,14 @@ const PAINTS_ONLY =
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
- * replaced element as well turns the table from 73 rows into 975 — 613 of the
- * rows are `@keyframes` steps and the other 362 are element/registration rows
- * — `svg` alone is 154 of them — and 301 of those rows are new, i.e. a table
- * nobody reads. (301, not `362 − 73 = 289`: twelve of the pinned rows change
+ * replaced element as well turns the table from 73 rows into 980 — 613 of the
+ * rows are `@keyframes` steps and the other 367 are element/registration rows
+ * — `svg` alone is 154 of them — and 306 of those rows are new, i.e. a table
+ * nobody reads. (306, not `367 − 73 = 294`: twelve of the pinned rows change
  * shape in that table — the six `h1`…`h6` `line-height` rows merge and six block
- * rows gain declarations — so 61 survive verbatim. Both totals move by two
- * whenever the shipped table does: they were 977/364 while it still carried the
- * two `outline` rows.)
+ * rows gain declarations — so 61 survive verbatim. Both totals move whenever
+ * the shipped table does: 975/362 before the attribute-qualified content rows
+ * of round 19 landed, 977/364 while it still carried the two `outline` rows.)
  * Deliberately NOT in this set, with what each omission costs:
  *
  * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized
@@ -1225,7 +1226,14 @@ const PAINTS_ONLY =
  *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
  *   styling that no label can ever match: lifting the unscoped restriction
  *   alone takes this table from 73 rows to 279 (measured), one row per host
- *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows;
+ *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows.
+ *   An ATTRIBUTE-QUALIFIED replaced rule falls out of the table for a second
+ *   reason (the `PART_ATTRS` gate runs before the tag is consulted), and the
+ *   host bundle really ships one:
+ *   `input:where(:not([class^=hk-]):not([class*=" hk-"]):not([data-field-embedded]))`
+ *   with `border` / `font-size` / `padding` is a mover this table does not see.
+ *   Closing it costs exactly one row; it is recorded rather than paid because
+ *   no shipped component puts an `<input>` inside a label;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
  *   `template`, `noscript`, `area`, `embed`, `picture`, `iframe`, `audio`):
@@ -1390,20 +1398,6 @@ function couldMatchAPart(compound: string, selector: string = compound): boolean
     .trim()
     .toLowerCase()
     .replace(/^.*\|/, "");
-  // A phrasing-content or custom-element tag is reachable no matter WHICH
-  // attribute qualifies it: the label may hold `<a href>`, `<time datetime>`,
-  // `<data value>` and a rule on one of those restyles the row just the same.
-  // The attribute gate below is for subjects that could BE a part (a `span`
-  // needs the attribute to exist on the part at all), and applying it to
-  // content too was a hole: review put `a[href^="http"] { line-height: 2 }` in
-  // `link.scss` and got 213/213 green while the SAME rule without `[href…]`
-  // was a row — a host's real link rule is usually attribute-qualified, so
-  // this is the shape a reader would meet first. (`[data-el=dot]` on a bare
-  // attribute selector stays unreachable on purpose: nothing carries it.)
-  // `span` and `label` are the tags the PARTS and the root actually are, so an
-  // attribute on one of them still has to exist on the part — that is the whole
-  // job of `PART_ATTRS`. Every other phrasing tag and every custom element is
-  // content only, so its attributes cannot disqualify it.
   const isContentTag = tag === "" || PHRASING_CONTENT.has(tag) || tag.includes("-");
   // `span` and `label` are the tags the PARTS and the root actually are, and a
   // bare attribute selector can match a part too, so an attribute on those still
@@ -2669,8 +2663,9 @@ describe("label first-line anchoring", () => {
     // The scan above reads SOURCE, so a name that only exists after Sass has
     // run walks straight past it: `$s: "hk-check" + "box"` and the CSS escape
     // `.hk-checkbo\78 -box` both compile to `.hk-checkbox-box`. Review
-    // measured the shipped cost of that hole: +4.000px at one line, +6.500px
-    // on a three-line md row (a foreign rule feeding `margin-block-start`),
+    // measured the shipped cost of that hole: +6.500px at one line and on a
+    // three-line md row (a foreign rule feeding `margin-block-start`; the
+    // one-line figure read +4.000 before the label pin landed),
     // +11.000px for the resize form — with every test in this file green.
     // Compiling is the fix, not a longer regex: an escape shell (`\78 `) or a
     // `@use`d variable can assemble the className at compile time, and no
@@ -2748,8 +2743,9 @@ describe("label first-line anchoring", () => {
     // `index.scss` is the Rust host's single entry, and it imports 35
     // `components/*.scss` besides the 159 mirrors. Review put
     // `.hk-checkbox-box { margin-block-start: 8px !important }` in one of those
-    // and moved the box +4.000px (one line) and +6.500px (three-line md) with
-    // every guard green: the tests above read the four sheets and the host's
+    // and moved the box +6.500px (one line and three-line md; the one-line
+    // figure read +4.000 before the label pin landed), with every guard green:
+    // the tests above read the four sheets and the host's
     // import ORDER, never the rest of what the host ships. Compiling the
     // bundle the way `builder` does and requiring its selection-scoped rules
     // to be exactly the four sheets' own closes the whole surface — a rule
@@ -2797,7 +2793,9 @@ describe("label first-line anchoring", () => {
     // here only because `realpathSync` was applied to that one name — an
     // `HkRadio.scss` symlink would have passed the drift test byte-for-byte
     // (a symlink satisfies a content comparison) and broken the sdist.
-    for (const name of ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"]) {
+    // The list comes from `ownNames` above, not from a second copy of the four
+    // names: a fifth sheet would otherwise be mirrored and never checked.
+    for (const name of ownNames) {
       expect(
         realpathSync(resolve(mirrorDir, `${name}.scss`)),
         `the ${name} mirror must be a different file, not a second path to the source`,
@@ -3131,7 +3129,10 @@ describe("label first-line anchoring", () => {
     // plus `); initial-value: 50% }` made `blockEnd` find the `}` early, the
     // LAST `initial-value` disappeared from every reader, and Chrome registered
     // the percent vector (+24.703px) with 212/212 green. All FOUR walkers now
-    // test the url token first, and this payload fails if any of them regresses.
+    // test the url token first; this payload covers `blockEnd` and the `rules()`
+    // brace walk, and the older escape-spelling test above covers
+    // `stripComments` / `splitDeclarations` (a mutation of either of those two
+    // leaves THIS payload green, which is why both live in the file).
     const payload = String.raw`@property --text-base { syntax: "*"; inherits: false; initial-value: 1rem; --z: \75 rl(} .y { ); initial-value: 50% } .z { color: red }`;
     expect(atPropertyMovers("pin", payload)).toEqual([
       "pin :: @property | --text-base | initial-value: 50%",

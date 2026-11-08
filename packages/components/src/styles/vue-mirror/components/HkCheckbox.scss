@@ -177,8 +177,13 @@
  * Nothing in this sheet can neutralise any of the three channels, because the
  * offset lands the box on the line and the line itself moved; the fix is to
  * treat the label's slot as text. The styles contract test pairs the block-child
- * channel with `LABEL_BLOCK_CONTENT`, which reports any host rule that declares
- * one of those first-line movers on a block tag.
+ * channel with `LABEL_BLOCK_CONTENT`, which reports an UNSCOPED host rule that
+ * declares one of those first-line movers on a block tag (`p { … }`). A SCOPED
+ * one (`.panel p { … }`, `.hk-markdown p`) is not reported even though a wrapper
+ * with that class can hold the label — a recorded limit, not an oversight: the
+ * shipped `.hk-icon svg` / `.hk-markdown p` families are host-internal styling,
+ * and lifting the unscoped restriction takes the table from 73 rows to 279
+ * (measured) — see the `elementOnlyMovers` comment in the contract test.
  *
  * The gate needs both halves: `:has(.hk-label)` proves a label element is
  * there, `:not(:empty)` proves it carries content. A label-less control

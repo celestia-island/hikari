@@ -1,6 +1,7 @@
 import { defineComponent, type Component, type PropType } from "vue";
 import { HAlert, HCard, HEmptyState, HSpinner, HTable, useI18n } from "@celestia-island/hikari";
 import HkCrossfade from "./HkCrossfade";
+import HkScrollProgressDock from "./HkScrollProgressDock";
 import { HkPageHeader } from "./HkPageHeader";
 import type { HkRowManageGate } from "./HkTable";
 
@@ -80,6 +81,24 @@ export const HkAdminTablePage = defineComponent({
      *  zero so a fresh or empty list shows no "共 0 条" flash. Pages
      *  that render their own count elsewhere set this false. */
     countReadout: { type: Boolean, default: true },
+    /** The page's own scroll-progress DOCK (user direction 2026-11-09:
+     *  the list large-component uses the dock itself). DEFAULT ON — the
+     *  page mounts an HkScrollProgressDock around the body crossfade so
+     *  the table (or a body-slot roster) self-registers against it and
+     *  the pill floats over the scrolling viewport; the crossfade's
+     *  generation swaps happen INSIDE the dock, so the registration
+     *  survives every exchange. A page under a shell fallback dock has
+     *  its OWN dock stand down automatically (the nested-dock rule
+     *  serves the outermost enabled dock — the fallback keeps the
+     *  pill); set `false` to demote the page — lists then fall through
+     *  to the nearest enabled dock above, if any. Layering: the shell
+     *  master switch (HkFaceShell `scrollProgress`) > this prop > the
+     *  dock's own `disabled`. Like every dock gate, the layering is
+     *  RESOLVED
+     *  ONCE at the dock's setup — hosts pass these statically, and a
+     *  runtime flip needs a remount (the HkScrollContainer prop
+     *  precedent). */
+    progressDock: { type: Boolean, default: true },
   },
   emits: {
     reorder: (_fromIndex: number, _toIndex: number) => true,
@@ -151,48 +170,55 @@ export const HkAdminTablePage = defineComponent({
               every host dissolves between them instead of popping. The
               key collapses loading-vs-empty into one "placeholder"
               generation: spinner → empty is a data arrival, not a slot
-              identity change worth animating. */}
-          <HkCrossfade
-            swapKey={
-              props.error ? "error"
-                : props.loading && !props.rows.length ? "placeholder"
-                  : !props.rows.length ? "placeholder"
-                    : "content"
-            }
-          >
-            {props.error ? (
-              <HAlert message={props.error} />
-            ) : props.loading && !props.rows.length ? (
-              <HSpinner center />
-            ) : !props.rows.length ? (
-              <HEmptyState
-                boxed
-                title={emptyTitle}
-                description={props.emptyDescription}
-              >
-                {emptySlots}
-              </HEmptyState>
-            ) : slots.body ? (
-              <div class="hk-admin-table-page-body">{slots.body()}</div>
-            ) : (
-              <HCard padded={false}>
-                <HTable
-                  columns={props.columns}
-                  rows={props.rows}
-                  rowKey={props.rowKey}
-                  total={props.total}
-                  draggable={props.draggable}
-                  manageable={props.manageable}
-                  onReorder={(from: number, to: number) => emit("reorder", from, to)}
-                  onManage={(row: Record<string, unknown>, opener: HTMLElement) =>
-                    emit("manage", row, opener)
-                  }
+              identity change worth animating.
+              The whole exchange rides INSIDE this page's scroll-progress
+              dock (default on; `progressDock:false` demotes to a bare
+              passthrough): the dock must wrap the CROSSFADE, not sit in
+              a generation — a generation-scoped dock would unmount with
+              every swap and drop the registration. */}
+          <HkScrollProgressDock disabled={!props.progressDock}>
+            <HkCrossfade
+              swapKey={
+                props.error ? "error"
+                  : props.loading && !props.rows.length ? "placeholder"
+                    : !props.rows.length ? "placeholder"
+                      : "content"
+              }
+            >
+              {props.error ? (
+                <HAlert message={props.error} />
+              ) : props.loading && !props.rows.length ? (
+                <HSpinner center />
+              ) : !props.rows.length ? (
+                <HEmptyState
+                  boxed
+                  title={emptyTitle}
+                  description={props.emptyDescription}
                 >
-                  {slots}
-                </HTable>
-              </HCard>
-            )}
-          </HkCrossfade>
+                  {emptySlots}
+                </HEmptyState>
+              ) : slots.body ? (
+                <div class="hk-admin-table-page-body">{slots.body()}</div>
+              ) : (
+                <HCard padded={false}>
+                  <HTable
+                    columns={props.columns}
+                    rows={props.rows}
+                    rowKey={props.rowKey}
+                    total={props.total}
+                    draggable={props.draggable}
+                    manageable={props.manageable}
+                    onReorder={(from: number, to: number) => emit("reorder", from, to)}
+                    onManage={(row: Record<string, unknown>, opener: HTMLElement) =>
+                      emit("manage", row, opener)
+                    }
+                  >
+                    {slots}
+                  </HTable>
+                </HCard>
+              )}
+            </HkCrossfade>
+          </HkScrollProgressDock>
           {slots["create-modal"]?.()}
           {slots["edit-modal"]?.()}
         </div>

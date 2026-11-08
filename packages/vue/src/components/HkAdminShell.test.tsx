@@ -81,7 +81,14 @@ const setWidth = (w: number) => {
 function paddingInner(container: HTMLElement): HTMLElement | null | undefined {
   const viewport = container.querySelector(".hk-scroll-container-viewport")
     ?? container.querySelector(".hk-scroll-container");
-  return viewport?.firstElementChild as HTMLElement | null | undefined;
+  // The shell's fallback scroll-progress dock (2026-11-09) wraps the
+  // content with a display:contents scope — descend through it, the
+  // padding wrapper is still the viewport's only layout box.
+  let inner = viewport?.firstElementChild as HTMLElement | null | undefined;
+  if (inner?.classList.contains("hk-scroll-progress-dock-scope")) {
+    inner = inner.firstElementChild as HTMLElement;
+  }
+  return inner;
 }
 
 function mobileInnerPadding(container: HTMLElement): string {
@@ -240,10 +247,9 @@ describe("HkAdminShell", () => {
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
     // The padded inner wrapper exists INSIDE the scroll viewport (not as
-    // padding on the container itself).
-    const viewport = c.querySelector(".hk-scroll-container-viewport")
-      ?? c.querySelector(".hk-scroll-container");
-    const inner = viewport?.firstElementChild as HTMLElement | null | undefined;
+    // padding on the container itself) — behind the fallback dock's
+    // display:contents scope (see paddingInner).
+    const inner = paddingInner(c);
     expect(inner).toBeTruthy();
     expect(inner?.style.padding).toBe("2rem");
   });

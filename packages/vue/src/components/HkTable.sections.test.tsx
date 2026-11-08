@@ -9,7 +9,7 @@ import {
   HK_SCROLL_PROGRESS_REGISTRAR,
   type HkScrollProgressHandle,
   type HkScrollProgressRegistrar,
-} from "./HkScrollProgress";
+} from "./HkScrollProgressDock";
 import { useToast } from "../runtime/useToast";
 
 /**

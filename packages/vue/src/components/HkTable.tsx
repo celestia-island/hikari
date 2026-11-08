@@ -12,7 +12,7 @@ import { ancestorZoom } from "../runtime/cssZoom";
 import { useClipboardWithToast } from "../runtime/useClipboard";
 import { useToast } from "../runtime/useToast";
 import HkRowActions from "./HkRowActions";
-import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgress";
+import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgressDock";
 import "./HkTable.scss";
 
 interface Column {
@@ -157,10 +157,11 @@ export default defineComponent({
     /** Authoritative row total the scroll-progress pill uses as its
      *  denominator (the server count behind a paged list). Omitted: the
      *  pill falls back to counting the delivered DOM rows. Every HkTable
-     *  self-registers with the nearest enclosing HkScrollContainer that
-     *  has `scrollProgress` on — no wrapper needed (2026-11-06: moved
-     *  here from HkAdminTablePage so the 17 bare-HkTable views inherit
-     *  the pill too). */
+     *  self-registers with the nearest enclosing enabled
+     *  HkScrollProgressDock — no wrapper needed (2026-11-06: moved here
+     *  from HkAdminTablePage so the 17 bare-HkTable views inherit the
+     *  pill too; 2026-11-09: the feature became the standalone dock
+     *  component, the vocabulary unchanged). */
     total: { type: Number, default: undefined },
   },
   emits: {
@@ -266,10 +267,10 @@ export default defineComponent({
       wrapperScrollbar = null;
     });
 
-    // Scroll-progress registration: the nearest enclosing HkScrollContainer
-    // with `scrollProgress` on provides the registrar (provide/inject
+    // Scroll-progress registration: the nearest enclosing ENABLED
+    // HkScrollProgressDock provides the registrar (provide/inject
     // scoping resolves the shell viewport for admin pages and keeps an
-    // inner container's lists out of the shell). The handle exposes the
+    // inner dock's lists out of the shell). The handle exposes the
     // table host as the row root plus the `total` prop live — the pill's
     // denominator follows it as pages load.
     const progressRegistrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
@@ -278,7 +279,7 @@ export default defineComponent({
       getTotal: () => props.total,
       // Sectioned bodies lead with a band `<tr>` that is not a data row:
       // hand the pill the data rows only. Unsectioned returns undefined so
-      // the container keeps its `scrollProgressSelector` path unchanged.
+      // the dock keeps its `selector` path unchanged.
       getRows: () => {
         if (!props.sections) return undefined;
         // The host can contain a NESTED table (its rows are descendants

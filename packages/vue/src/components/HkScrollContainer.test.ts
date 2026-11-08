@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick, reactive, ref } from "vue";
+import { createApp, defineComponent, h, inject, nextTick, reactive, ref } from "vue";
 
 import HkScrollContainer from "./HkScrollContainer";
+import { HK_SCROLL_PROGRESS_HOST, HK_SCROLL_PROGRESS_REGISTRAR, HK_SCROLL_PROGRESS_VIEWPORT } from "./HkScrollProgressDock";
 import type { OverlayScrollbarMarker } from "../composables/useOverlayScrollbar";
 
 interface Mounted {
@@ -646,5 +647,49 @@ describe("HkScrollContainer change-mark rail", () => {
     const track = m.container.querySelector<HTMLElement>(".hk-scrollbar-track:not([data-axis='horizontal'])");
     expect(track?.classList.contains("has-markers") ?? false, "no widening").toBe(false);
     expect(track?.querySelectorAll(".hk-scrollbar-marker").length ?? 0).toBe(0);
+  });
+});
+
+describe("HkScrollContainer dock publication (2026-11-09)", () => {
+  it("publishes viewport + host refs and NO scroll-progress registrar", () => {
+    // The pill feature moved into the standalone HkScrollProgressDock:
+    // the container's only remaining role is publishing the two refs
+    // any dock in its slot injects (the one-way key dependency). Pin
+    // BOTH directions with probe injects: the dock keys resolve, the
+    // retired registrar key does not — a container that regrows the old
+    // provide (or drops the new ones) turns this red.
+    const seen = {
+      viewport: "unset" as unknown,
+      host: "unset" as unknown,
+      registrar: "unset" as unknown,
+    };
+    const Probe = defineComponent({
+      setup() {
+        seen.viewport = inject(HK_SCROLL_PROGRESS_VIEWPORT, null);
+        seen.host = inject(HK_SCROLL_PROGRESS_HOST, null);
+        seen.registrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
+        return () => h("div", "probe");
+      },
+    });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    containers.push(host);
+    const app = createApp({ render: () => h(HkScrollContainer, {}, { default: () => h(Probe) }) });
+    mounts.push(app);
+    app.mount(host);
+    const root = host.querySelector<HTMLElement>(".hk-scroll-container");
+    const viewport = host.querySelector<HTMLElement>(".hk-scroll-container-viewport");
+    expect(root).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    expect(seen.registrar).toBeNull();
+    // The refs are the shared `Ref<HTMLElement | null>` contract, and
+    // by probe time the template refs have landed: they point at THIS
+    // container's viewport / host elements.
+    const viewportRef = seen.viewport as { value: unknown } | null;
+    const hostRef = seen.host as { value: unknown } | null;
+    expect(viewportRef).not.toBeNull();
+    expect(hostRef).not.toBeNull();
+    expect(viewportRef!.value).toBe(viewport);
+    expect(hostRef!.value).toBe(root);
   });
 });

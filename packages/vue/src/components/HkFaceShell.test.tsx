@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createApp, h } from "vue";
+import { createApp, defineComponent, h, inject } from "vue";
 
 // HDrawer teleports and animates; replace it with an inline passthrough
 // (same stub shape as HkAdminShell.test.tsx) so the shell contract is
@@ -36,6 +36,7 @@ vi.mock("@celestia-island/hikari", async (importOriginal) => {
 
 import { HkFaceShell } from "./HkFaceShell";
 import { HkAdminShell } from "./HkAdminShell";
+import { HK_SCROLL_PROGRESS_ALLOWED } from "./HkScrollProgressDock";
 
 /**
  * HkFaceShell — the generalized face shell extracted from HkAdminShell
@@ -96,6 +97,11 @@ describe("HkFaceShell stage mode", () => {
     // The document host is GONE — that is the stage contract.
     expect(c.querySelector(".hk-scroll-container")).toBeNull();
     expect(c.querySelector(".hk-scroll-container-viewport")).toBeNull();
+    // …and so is the fallback scroll-progress dock (document-mode only —
+    // a stage face owns its own geometry, so the shell mounts no dock
+    // scope and provides no pill chrome at all).
+    expect(c.querySelector(".hk-scroll-progress-dock-scope")).toBeNull();
+    expect(c.querySelector(".hk-scroll-progress-dock")).toBeNull();
     // No padding wrapper anywhere: the content slot's first element IS
     // the main region's child (contentPadding is a document-mode prop).
     expect(main!.firstElementChild?.textContent).toBe("CONTENT");
@@ -158,9 +164,54 @@ describe("HkFaceShell document mode (the default)", () => {
     expect(c.querySelector(".hk-scroll-container")).toBeTruthy();
     const viewport = c.querySelector(".hk-scroll-container-viewport")
       ?? c.querySelector(".hk-scroll-container");
-    const inner = viewport!.firstElementChild as HTMLElement;
+    // The shell's fallback scroll-progress dock wraps the content
+    // (2026-11-09): its scope is display: contents, so the padding
+    // wrapper below it is STILL the viewport's only layout box.
+    const scope = viewport!.firstElementChild as HTMLElement;
+    expect(scope.classList.contains("hk-scroll-progress-dock-scope")).toBe(true);
+    const inner = scope.firstElementChild as HTMLElement;
     expect(inner.style.padding).toBe("2rem");
     expect(inner.textContent).toContain("CONTENT");
+  });
+});
+
+describe("HkFaceShell scroll-progress dock master switch", () => {
+  const makeProbe = (box: { seen: unknown }) =>
+    defineComponent({
+      setup() {
+        box.seen = inject(HK_SCROLL_PROGRESS_ALLOWED, null);
+        return () => h("main", null, "CONTENT");
+      },
+    });
+
+  it("provides ALLOWED=true by default and mounts the fallback dock", () => {
+    const box: { seen: unknown } = { seen: "unset" };
+    const c = mount(h(HkFaceShell, {
+      navTitle: "Navigation",
+    }, {
+      header: () => null,
+      content: () => h(makeProbe(box)),
+    }));
+    // The `scrollProgress` prop (default true) is the face-level lever
+    // over every dock in the subtree.
+    expect(box.seen).toBe(true);
+    expect(c.querySelector(".hk-scroll-progress-dock-scope")).not.toBeNull();
+  });
+
+  it("scrollProgress:false closes the switch and stands the fallback dock down", () => {
+    const box: { seen: unknown } = { seen: "unset" };
+    const c = mount(h(HkFaceShell, {
+      navTitle: "Navigation",
+      scrollProgress: false,
+    }, {
+      header: () => null,
+      content: () => h(makeProbe(box)),
+    }));
+    expect(box.seen).toBe(false);
+    // Fully lazy: no scope, no pill anywhere in the shell.
+    expect(c.querySelector(".hk-scroll-progress-dock-scope")).toBeNull();
+    expect(c.querySelector(".hk-scroll-progress-dock")).toBeNull();
+    expect(c.querySelector(".hk-scroll-container-viewport")!.textContent).toContain("CONTENT");
   });
 });
 

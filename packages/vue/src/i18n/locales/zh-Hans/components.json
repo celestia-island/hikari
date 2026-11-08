@@ -315,6 +315,7 @@
   "hikari::ribbon.dragHint": "拖拽选择范围；双击、Escape 或 Home 重置",
   "hikari::loadMore.endTotal": "已全部列出，共计 {n} 条",
   "hikari::tablePage.totalCount": "共 {n} 条",
-  "hikari::scrollProgress.range": "第 {from} ~ {to} 条，共 {total} 条",
+  "hikari::scrollProgress.rangeHead": "第 {from}",
+  "hikari::scrollProgress.rangeTail": "{to} 条，共 {total} 条",
   "hikari::scrollProgress.single": "第 {from} 条，共 {total} 条"
 }

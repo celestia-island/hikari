@@ -9,7 +9,7 @@ import HkTooltip from "./HkTooltip";
 import { hasRenderedContent } from "../runtime/hasRenderedContent";
 import { useMediaQuery } from "../runtime/useMediaQuery";
 import type { StatTone } from "./HkStatCard";
-import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgress";
+import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgressDock";
 import "./HkCardList.scss";
 
 /**
@@ -47,22 +47,22 @@ export const HkCardList = defineComponent({
   props: {
     /** Authoritative row total the scroll-progress pill uses as its
      *  denominator (the server count behind a windowed/infinite list).
-     *  Forwarded to the nearest enclosing HkScrollContainer with
-     *  `scrollProgress` on, exactly like HkAdminTablePage's `total`.
-     *  Omitted: the pill falls back to counting the delivered DOM rows
-     *  (right for fully-delivered lists, drifting low for windowed
-     *  ones — pass the server count there). */
+     *  Forwarded to the nearest enclosing enabled HkScrollProgressDock,
+     *  exactly like HkAdminTablePage's `total`. Omitted: the pill falls
+     *  back to counting the delivered DOM rows (right for
+     *  fully-delivered lists, drifting low for windowed ones — pass the
+     *  server count there). */
     total: { type: Number, default: undefined },
   },
   setup(props, { slots }) {
     // Scroll-progress registration (the HkTable precedent): the NEAREST
-    // enclosing HkScrollContainer with `scrollProgress` on provides the
-    // registrar — provide/inject scoping resolves the admin shell's
-    // viewport for console pages and keeps a list registered against an
-    // inner container out of the shell. The handle hands the pill the
-    // list element as the row root, the `total` prop live, and the
-    // rendered HkListRow elements as the rows (a card list's rows ARE
-    // its data rows — no section-band caveat).
+    // enclosing ENABLED HkScrollProgressDock provides the registrar —
+    // provide/inject scoping resolves the shell viewport for console
+    // pages and keeps a list registered against an inner dock out of
+    // the shell. The handle hands the pill the list element as the row
+    // root, the `total` prop live, and the rendered HkListRow elements
+    // as the rows (a card list's rows ARE its data rows — no
+    // section-band caveat).
     const listRef = ref<HTMLElement | null>(null);
     const progressRegistrar = inject(HK_SCROLL_PROGRESS_REGISTRAR, null);
     const progressHandle: HkScrollProgressHandle = {

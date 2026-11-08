@@ -17,12 +17,16 @@ import { attachOverlayScrollbars, type OverlayScrollbarHandle, type OverlayScrol
 import { useApproachEnd, type ApproachEndHandle } from "../composables/useApproachEnd";
 import { provideScrollWindow } from "../composables/useScrollWindow";
 import { SCROLL_HOST_CLASS } from "./HkScrollPin";
-import {
-  HK_SCROLL_PROGRESS_REGISTRAR,
-  default as HkScrollProgress,
-  type HkScrollProgressHandle,
-  type HkScrollProgressRegistrar,
-} from "./HkScrollProgress";
+// One-WAY dependency on the dock module (keys only — no component, no
+// cycle): the container publishes its viewport + host refs so an
+// HkScrollProgressDock inside the slot can sense this scroller and
+// teleport its pill onto this host. The dock feature itself (2026-11-09
+// componentization) moved OUT of this container into the standalone
+// HkScrollProgressDock; the `scrollProgress` / `scrollProgressIdle` /
+// `scrollProgressSelector` props and the whole sensing engine that
+// served them are retired — hosts wrap their content in the dock
+// instead (HkFaceShell does it for the document shell).
+import { HK_SCROLL_PROGRESS_HOST, HK_SCROLL_PROGRESS_VIEWPORT } from "./HkScrollProgressDock";
 import { scheduleFrame, notifyScrollStart, onceFrame, type AnimationHandle } from "../runtime/animationBus";
 import HFab from "./HkFab";
 
@@ -217,40 +221,6 @@ export default defineComponent({
       type: String,
       default: '[aria-current]:not([aria-current="false"]), [aria-selected="true"], .is-active',
     },
-    /** Scroll-progress pill opt-in (2026-11): while on, the container
-     *  floats a small "xx / xx" counter near its bottom-center while the
-     *  scroll offset is changing — first visible row index over total
-     *  rows of whichever registered list is under the viewport. Lists
-     *  opt in per-list by registering against the provided registrar
-     *  (see `HK_SCROLL_PROGRESS_REGISTRAR`); provide/inject scoping
-     *  keeps a list registered against an inner container from leaking
-     *  to this one. Sensing rides the same rAF-coalesced update pass as
-     *  the overflow mirror — no second scroll listener. Off by default
-     *  (per-house additive-chrome discipline; HkFaceShell turns it on
-     *  for the document-mode shell).
-     *
-     *  Known edges (both accepted, documented for the next reader):
-     *  the registrar is provided at SETUP time only — a container
-     *  mounted OFF that flips the prop on later renders the pill with
-     *  nothing registered (hosts pass the prop statically; FaceShell
-     *  never toggles it). And sensing keys on THIS container's viewport
-     *  scroll — a nested INNER scroller moving on its own triggers no
-     *  pass here, so rows clipped inside the inner scroller can be
-     *  counted by the outer pill while invisible. The admin grammar
-     *  (one shell viewport) never nests. */
-    scrollProgress: { type: Boolean, default: false },
-    /** Idle window (ms) after the last scroll-offset change before the
-     *  pill fades out. Read live; clamped to 300..3000. Only meaningful
-     *  with `scrollProgress`. */
-    scrollProgressIdle: { type: Number, default: 900 },
-    /** Which descendants count as "rows" for the pill's visible band
-     *  (from/to) and its total fallback. The default matches the table
-     *  grammar every admin list ships — BODY rows only: a `tr` default
-     *  would count the header row as row one and skew every index. A
-     *  non-table list (a card roster) overrides with its own row
-     *  spelling. Only read while `scrollProgress` is on; a runtime
-     *  change re-senses on the next pass. */
-    scrollProgressSelector: { type: String, default: "tbody tr" },
   },
   emits: { approachEnd: () => true, "update:backTopVisible": (_v: boolean) => true },
   setup(props, { slots, expose, emit }) {
@@ -259,9 +229,16 @@ export default defineComponent({
     // and both consumers below declare `Ref<HTMLElement | null …>`, so the
     // null form is the shared contract (no cast at either call site).
     const viewportRef = ref<HTMLElement | null>(null);
-    const hostRef = ref<HTMLElement>();
+    const hostRef = ref<HTMLElement | null>(null);
     const dockTopRef = ref<HTMLElement>();
     const dockBottomRef = ref<HTMLElement>();
+    // Unconditional publication (see the import comment): any
+    // HkScrollProgressDock inside the slot senses THIS viewport and
+    // teleports its pill onto THIS host. The refs are the shared
+    // `Ref<HTMLElement | null>` contract (null on unmount), so the dock
+    // needs no cast and re-resolves when the template refs land.
+    provide(HK_SCROLL_PROGRESS_VIEWPORT, viewportRef);
+    provide(HK_SCROLL_PROGRESS_HOST, hostRef);
     let ro: ResizeObserver | null = null;
     let dockRO: ResizeObserver | null = null;
     let scheduled: AnimationHandle | null = null;
@@ -345,162 +322,6 @@ export default defineComponent({
 
     if (props.mode === "windowed") {
       provideScrollWindow(viewportRef, props.overscanScreens);
-    }
-
-    // ── Scroll progress pill (scrollProgress opt-in) ──────────────────
-    // Registration store + pill state. The registrar is PROVIDED here —
-    // once, at setup, only when the prop is on (the windowed-mode
-    // precedent above) — so provide/inject scoping resolves a list's
-    // inject to the NEAREST enclosing container with the feature on: a
-    // list registered against an inner container never leaks to an
-    // outer one, and with the prop off there is no registrar at all.
-    const progressRegistrars = new Set<HkScrollProgressHandle>();
-    const progressShown = ref(false);
-    const progressActive = ref(false);
-    const progressFrom = ref(0);
-    const progressTo = ref(0);
-    const progressDenominator = ref(0);
-    let progressIdleTimer: ReturnType<typeof setTimeout> | null = null;
-    // The offset the last sensing pass saw; null = not baselined yet, so
-    // the mount-time pass never counts as "scrolling" (the pill appears
-    // on the first real offset change, not on mount).
-    let progressLastTop: number | null = null;
-
-    function clampProgressIdle(): number {
-      return Math.min(3000, Math.max(300, props.scrollProgressIdle));
-    }
-
-    function disarmProgressIdle() {
-      if (progressIdleTimer !== null) {
-        clearTimeout(progressIdleTimer);
-        progressIdleTimer = null;
-      }
-    }
-
-    function armProgressIdle() {
-      disarmProgressIdle();
-      progressIdleTimer = setTimeout(() => {
-        progressIdleTimer = null;
-        progressActive.value = false;
-      }, clampProgressIdle());
-    }
-
-    function registerProgress(handle: HkScrollProgressHandle) {
-      progressRegistrars.add(handle);
-      scheduleUpdate();
-    }
-
-    function unregisterProgress(handle: HkScrollProgressHandle) {
-      progressRegistrars.delete(handle);
-      scheduleUpdate();
-    }
-
-    if (props.scrollProgress) {
-      provide(HK_SCROLL_PROGRESS_REGISTRAR, {
-        register: registerProgress,
-        unregister: unregisterProgress,
-      } satisfies HkScrollProgressRegistrar);
-    }
-
-    /** Drop every pill precondition at once. `progressLastTop` resets so
-     *  the next appearance re-baselines — a pass that only re-armed the
-     *  preconditions (content grew back) must not read as a scroll. */
-    function setProgressHidden() {
-      progressShown.value = false;
-      progressActive.value = false;
-      disarmProgressIdle();
-      progressLastTop = null;
-      progressFrom.value = 0;
-      progressTo.value = 0;
-      progressDenominator.value = 0;
-    }
-
-    /** The ACTIVE registration: the first registered list whose root
-     *  intersects the container viewport (registration order — the Set
-     *  preserves insertion); when none intersects, the one whose root
-     *  top is nearest ABOVE the viewport top (the list the user just
-     *  scrolled out of). Deterministic in both tiers. */
-    function pickActiveProgressRoot(band: DOMRect): { handle: HkScrollProgressHandle; root: HTMLElement } | null {
-      let firstIntersecting: { handle: HkScrollProgressHandle; root: HTMLElement } | null = null;
-      let nearestAbove: { handle: HkScrollProgressHandle; root: HTMLElement; top: number } | null = null;
-      for (const handle of progressRegistrars) {
-        const root = handle.getRoot();
-        if (!root || !root.isConnected) continue;
-        const rect = root.getBoundingClientRect();
-        if (rect.bottom > band.top && rect.top < band.bottom) {
-          if (!firstIntersecting) firstIntersecting = { handle, root };
-          continue;
-        }
-        if (rect.top <= band.top && (!nearestAbove || rect.top > nearestAbove.top)) {
-          nearestAbove = { handle, root, top: rect.top };
-        }
-      }
-      return firstIntersecting ?? (nearestAbove ? { handle: nearestAbove.handle, root: nearestAbove.root } : null);
-    }
-
-    /** Pill sensing, riding the same throttled pass as the overflow
-     *  mirror (scroll / resize / content resize / refresh — no second
-     *  listener). Preconditions: a registration, vertical overflow, and
-     *  an active list with at least one row; failing any hides the pill
-     *  outright. While they hold, the band is the VISIBLE ROW RANGE —
-     *  `from` is the first row whose bottom edge is still below the
-     *  viewport top and `to` the last row whose top edge is still above
-     *  the viewport bottom (both 1-based, partial rows counted) — and
-     *  the denominator is the registered total — unless it is missing,
-     *  non-finite, sub-1, or STALE (smaller than the live row count, a
-     *  page that loaded more rows than it declared), in which case the
-     *  DOM count wins so the band can never exceed the total (user
-     *  direction 2026-11-08: the old single first-row numerator made a
-     *  fully-scrolled list read "16 / 30" instead of an end). */
-    function senseScrollProgress(vp: HTMLElement) {
-      if (!props.scrollProgress || progressRegistrars.size === 0) {
-        setProgressHidden();
-        return;
-      }
-      const band = vp.getBoundingClientRect();
-      const active = pickActiveProgressRoot(band);
-      // A list may own the row grammar (HkTable's section bands are body
-      // `<tr>`s that are not data rows); its `getRows` wins over the
-      // container selector. No `getRows` (or an undefined return) keeps the
-      // existing selector path byte-for-byte.
-      const rows = active
-        ? active.handle.getRows?.() ?? active.root.querySelectorAll(props.scrollProgressSelector)
-        : [];
-      if (!active || rows.length === 0 || vp.scrollHeight <= vp.clientHeight + 1) {
-        setProgressHidden();
-        return;
-      }
-      let first = rows.length;
-      for (let i = 0; i < rows.length; i++) {
-        if ((rows[i] as HTMLElement).getBoundingClientRect().bottom > band.top) {
-          first = i + 1;
-          break;
-        }
-      }
-      let last = first;
-      for (let i = rows.length - 1; i >= 0; i--) {
-        if ((rows[i] as HTMLElement).getBoundingClientRect().top < band.bottom) {
-          last = i + 1;
-          break;
-        }
-      }
-      const declared = active.handle.getTotal();
-      const denominator =
-        typeof declared === "number" && Number.isFinite(declared) && declared >= 1
-          ? Math.max(declared, rows.length)
-          : rows.length;
-      progressFrom.value = Math.min(first, denominator);
-      progressTo.value = Math.min(Math.max(last, progressFrom.value), denominator);
-      progressDenominator.value = denominator;
-      progressShown.value = true;
-      // Scroll-active: only a changed offset counts (the pass also runs
-      // for resizes and content mutations). The idle fade re-arms on
-      // every moving pass, so continuous scrolling never snaps off.
-      if (progressLastTop !== null && vp.scrollTop !== progressLastTop) {
-        progressActive.value = true;
-        armProgressIdle();
-      }
-      progressLastTop = vp.scrollTop;
     }
 
     const hasV = () => props.axis !== "horizontal";
@@ -642,7 +463,6 @@ export default defineComponent({
       senseOverflow(vp);
       senseBackTop(vp);
       senseSelectionBeyond(vp);
-      senseScrollProgress(vp);
     }
 
     /** Back-to-top hysteresis, derived on the same throttled pass as the
@@ -946,7 +766,6 @@ export default defineComponent({
       overlay?.detach();
       overlay = null;
       stopApproach();
-      disarmProgressIdle();
       selectionMO?.disconnect();
       selectionMO = null;
       scheduled?.disconnect();
@@ -1098,15 +917,6 @@ export default defineComponent({
           )}
           {showAutoTag.value && (
             <span class="hk-scroll-container-autotag" aria-hidden="true">{t("hikari::scrollContainer.auto", "Auto")}</span>
-          )}
-          {props.scrollProgress && (
-            <HkScrollProgress
-              shown={progressShown.value}
-              active={progressActive.value}
-              from={progressFrom.value}
-              to={progressTo.value}
-              total={progressDenominator.value}
-            />
           )}
           {props.autoFollow && props.followAffordance && !pinned.value && (
             <HFab

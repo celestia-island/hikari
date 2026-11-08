@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "Faites glisser pour sélectionner une plage ; double-clic, Échap ou Origine réinitialisent",
   "hikari::loadMore.endTotal": "Les {n} éléments sont tous listés",
   "hikari::tablePage.totalCount": "{n} au total",
-  "hikari::scrollProgress.range": "Lignes {from}–{to} sur {total}",
+  "hikari::scrollProgress.rangeHead": "Lignes {from}",
+  "hikari::scrollProgress.rangeTail": "{to} sur {total}",
   "hikari::scrollProgress.single": "Ligne {from} sur {total}"
 }

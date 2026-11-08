@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "اسحب لتحديد نطاق؛ انقر نقرًا مزدوجًا أو اضغط Escape أو Home لإعادة التعيين",
   "hikari::loadMore.endTotal": "تم إدراج جميع العناصر البالغ عددها {n}",
   "hikari::tablePage.totalCount": "الإجمالي {n}",
-  "hikari::scrollProgress.range": "الصفوف {from}–{to} من {total}",
+  "hikari::scrollProgress.rangeHead": "الصفوف {from}",
+  "hikari::scrollProgress.rangeTail": "{to} من {total}",
   "hikari::scrollProgress.single": "الصف {from} من {total}"
 }

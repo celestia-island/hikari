@@ -6,9 +6,13 @@
 // default the library's selection grammar: non-false aria-current,
 // aria-selected="true", .is-active) lies fully outside the viewport's
 // visible vertical band, and mirrors the verdict on the root as
-// data-selection-beyond="top" | "bottom" | "both" | "none" so the
-// shipped SCSS can paint a primary-color gradient at each offending
-// edge. Sensing rides the container's own rAF-coalesced update pass
+// data-selection-beyond="top" | "bottom" | "both" | "none". The gradient
+// itself is the shared <HkEdgeGlow> painter (2026-11-08): the container
+// mounts it on the offending edge(s), and the pair of ::before/::after
+// painters this sheet used to carry is retired — the same painter now
+// serves the overflow glow too. The data-selection-beyond attribute
+// remains the documented consumer contract. Sensing rides the container's
+// own rAF-coalesced update pass
 // (scroll / resize / refresh()), plus a viewport MutationObserver for
 // the mutations that move a selection without scrolling anything (the
 // .is-active class hopping between rows).
@@ -228,118 +232,133 @@ describe("HkScrollContainer selection edge hint", () => {
 
     props.selectionHint = false;
     await nextTick();
-    // Turning it off also clears the mirrored state — a stale hint
-    // must not outlive the feature that wrote it.
+    // Turning it off also clears the mirrored state AND unmounts the
+    // painter — a stale hint must not outlive the feature that wrote it.
     expect(m.root.hasAttribute("data-selection-beyond")).toBe(false);
+    expect(m.root.querySelector(".hk-edge-glow")).toBeNull();
   });
 });
 
 describe("HkScrollContainer selection edge hint style contract", () => {
-  // The gradients live on the CONTAINER ROOT's pseudo-elements (the
-  // root is the fixed non-scrolled box; viewport pseudos scroll away),
-  // driven by data-selection-beyond. Pinned on the compiled sheet so a
-  // silent deletion or retune of any half turns this red. Note sass
-  // emits UNQUOTED attribute values ([data-selection-beyond=top]) and
-  // selector groups as `a,\nb {` — the pins match the group-final
-  // spelling, and the gradient assertions allow either slash spacing.
+  // Since 2026-11-08 the band is painted by the shared <HkEdgeGlow>
+  // component, not by pseudo-elements in this sheet (the same painter the
+  // overflow glow mounts). The sheet half therefore pins the HANDOFF: the
+  // root still declares the two consumer override knobs, and no pseudo
+  // painter may come back (a stale pseudo would double-paint over the
+  // mounted band). The runtime half below pins that the container actually
+  // mounts the painter with the right edge and static mode.
+  //
+  // Note sass emits UNQUOTED attribute values
+  // ([data-selection-beyond=top]); the rule lookup strips quotes on both
+  // sides so a pin reads the way the sheet was authored.
   const css = compile(join(here, "HkScrollContainer.scss"), { style: "expanded" }).css.replace(
     /\/\*[\s\S]*?\*\//g,
     "",
   );
 
   function ruleBody(selector: string): string | null {
-    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const m = css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
+    const unquoted = css.replace(/"/g, "");
+    const escaped = selector.replace(/"/g, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = unquoted.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
     return m ? m[1]! : null;
   }
 
-  /** Group-final selector for a painted edge: `[state]` pairs with
-   *  "both" in one rule, and "both" is what precedes the brace. */
-  function edgeRule(pseudo: "::before" | "::after"): string | null {
-    return ruleBody(`.hk-scroll-container[data-selection-beyond=both]${pseudo}`);
-  }
-
-  const TOP_GRADIENT =
-    /background:\s*linear-gradient\(to bottom, rgb\(var\(--color-primary\)\s*\/\s*32%\), transparent\)/;
-  const BOTTOM_GRADIENT =
-    /background:\s*linear-gradient\(to top, rgb\(var\(--color-primary\)\s*\/\s*32%\), transparent\)/;
-
-  /** The symmetric inline feather stops: transparent at both ends of the
-   *  band, opaque from each --hk-scroll-selection-hint-feather inset
-   *  inward — the corners fall off naturally instead of cutting hard. */
-  const FEATHER_MASK =
-    /mask-image:\s*linear-gradient\(\s*to right,\s*transparent 0,\s*#000 var\(--hk-scroll-selection-hint-feather\),\s*#000 calc\(100% - var\(--hk-scroll-selection-hint-feather\)\),\s*transparent 100%\)/;
-
-  /** Exactly one -webkit- and one standard feather mask per painter. */
-  function expectFeatherMaskPair(body: string, label: string): void {
-    const webkit = body.match(/-webkit-mask-image:[^;]+/g) ?? [];
-    expect(webkit, `${label}: exactly one -webkit-mask-image`).toHaveLength(1);
-    expect(webkit[0]).toMatch(FEATHER_MASK);
-    // (?<!-) keeps -webkit-mask-image: from also counting here.
-    const standard = body.match(/(?<!-)mask-image:[^;]+/g) ?? [];
-    expect(standard, `${label}: exactly one mask-image`).toHaveLength(1);
-    expect(standard[0]).toMatch(FEATHER_MASK);
-  }
-
-  it("declares the size and feather knobs on the root state rule, not the pseudos", () => {
+  it("keeps the size and feather knobs declared on the root state rule", () => {
     // Declared on the root rule so a consumer override ON the container
     // wins — a directly declared custom property beats any inherited
-    // value, so an ancestor's cannot reach the painters, and a
-    // declaration on the pseudo itself would kill the knob (the
-    // --hk-scroll-fade-size contract shape).
+    // value, so an ancestor's cannot reach the painter. The component
+    // passes these two inherited knobs through as the shared painter's
+    // size/feather (HkEdgeGlow's inline vars resolve against them), which
+    // keeps the override shape the settings rail documented.
     const root = ruleBody(".hk-scroll-container[data-selection-beyond]");
     expect(root, "root size rule exists").not.toBeNull();
     expect(root).toContain("--hk-scroll-selection-hint-size: var(--space-24)");
     expect(root).toContain("--hk-scroll-selection-hint-feather: var(--space-24)");
-    for (const pseudo of ["::before", "::after"]) {
-      const body = edgeRule(pseudo as "::before" | "::after");
-      expect(body, `both${pseudo} exists`).not.toBeNull();
-      expect(body).not.toContain("--hk-scroll-selection-hint-size:");
-      expect(body).not.toContain("--hk-scroll-selection-hint-feather:");
-    }
   });
 
-  it("paints the top gradient for top and both, on ::before", () => {
-    const body = edgeRule("::before");
-    expect(body, "the top/both ::before rule exists").not.toBeNull();
-    expect(body).toContain('content: ""');
-    expect(body).toContain("position: absolute");
-    expect(body).toContain("top: 0");
-    expect(body).toContain("height: var(--hk-scroll-selection-hint-size)");
-    expect(body).toContain("pointer-events: none");
-    expect(body).toMatch(TOP_GRADIENT);
-    // The inline ends feather (2026-10-30: the band's ends cut as hard
-    // vertical edges) — exactly one -webkit-/standard mask pair.
-    expectFeatherMaskPair(body!, "top painter");
-    // The group's first half is the bare "top" state — the share both
-    // halves rule (one rule, two selectors) is the contract.
-    expect(css).toContain(".hk-scroll-container[data-selection-beyond=top]::before");
+  it("retires the pseudo-element painters (the band is the shared component)", () => {
+    // A stale ::before/::after painter would double-paint the band now that
+    // the container mounts <HkEdgeGlow> on the same edge. The compiled
+    // sheet must match no pseudo painter at all, and the raw source must
+    // not regain one.
+    expect(css).not.toMatch(/\[data-selection-beyond[^{]*::(?:before|after)/);
+    const source = readFileSync(join(here, "HkScrollContainer.scss"), "utf8");
+    // Scoped to the state attribute: the sheet legitimately owns OTHER
+    // pseudo-elements (the dock-tail spacer is a viewport ::after).
+    expect(source).not.toMatch(/\[data-selection-beyond[^\n]*::(?:before|after)/);
   });
 
-  it("paints the bottom gradient for bottom and both, on ::after", () => {
-    const body = edgeRule("::after");
-    expect(body, "the bottom/both ::after rule exists").not.toBeNull();
-    expect(body).toContain('content: ""');
-    expect(body).toContain("bottom: 0");
-    expect(body).toContain("height: var(--hk-scroll-selection-hint-size)");
-    expect(body).toContain("pointer-events: none");
-    expect(body).toMatch(BOTTOM_GRADIENT);
-    expectFeatherMaskPair(body!, "bottom painter");
-    expect(css).toContain(".hk-scroll-container[data-selection-beyond=bottom]::after");
-  });
-
-  it("paints nothing for the none state", () => {
-    // Either spelling (quoted source, unquoted compiled) must be absent
-    // — "none" is the hint's quiet state and must match no painter.
+  it("matches no band for the none state", () => {
+    // "none" is the hint's quiet state: no painter rule may key on it (and
+    // the component passes an empty edge list).
     expect(css).not.toContain("data-selection-beyond=none");
     expect(css).not.toContain('data-selection-beyond="none"');
   });
 
+  it("mounts the shared painter on the offending edge", async () => {
+    const m = mountHint({ selectionHint: true }, h("div", { class: "is-active" }, "row"));
+    stubViewportBand(m);
+    stubBand(m.viewport.querySelector(".is-active")!, 500, 560);
+    m.instance?.refresh();
+    expect(m.root.getAttribute("data-selection-beyond")).toBe("bottom");
+    // The attribute is written imperatively; the PAINTER is JSX, so its
+    // bands land with the scheduled component re-render.
+    await nextTick();
+    const glow = m.root.querySelector<HTMLElement>(".hk-edge-glow");
+    expect(glow, "the shared painter is mounted").not.toBeNull();
+    expect(glow!.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      Array.from(m.root.querySelectorAll<HTMLElement>(".hk-edge-glow-band"), (b) =>
+        b.getAttribute("data-edge"),
+      ),
+    ).toEqual(["bottom"]);
+  });
+
+  it("feeds the painter the documented knobs and keeps it static", async () => {
+    // Knobs: the container passes the two override vars through, so a
+    // consumer's tuned size/feather reaches the painter. Static: a state
+    // hint must not breathe — the overflow glow is the animated consumer.
+    const m = mountHint({ selectionHint: true }, h("div", { class: "is-active" }, "row"));
+    stubViewportBand(m);
+    stubBand(m.viewport.querySelector(".is-active")!, -120, -60);
+    m.instance?.refresh();
+    await nextTick();
+    const glow = m.root.querySelector<HTMLElement>(".hk-edge-glow")!;
+    expect(glow.style.getPropertyValue("--hk-edge-glow-size")).toBe(
+      "var(--hk-scroll-selection-hint-size)",
+    );
+    expect(glow.style.getPropertyValue("--hk-edge-glow-feather")).toBe(
+      "var(--hk-scroll-selection-hint-feather)",
+    );
+    expect(glow.hasAttribute("data-animate")).toBe(false);
+    expect(
+      Array.from(m.root.querySelectorAll<HTMLElement>(".hk-edge-glow-band"), (b) =>
+        b.getAttribute("data-edge"),
+      ),
+    ).toEqual(["top"]);
+  });
+
+  it("drops the band when the verdict returns to none, keeping the inert root", async () => {
+    const m = mountHint({ selectionHint: true }, h("div", { class: "is-active" }, "row"));
+    stubViewportBand(m);
+    const row = m.viewport.querySelector<HTMLElement>(".is-active")!;
+    stubBand(row, 500, 560);
+    m.instance?.refresh();
+    await nextTick();
+    expect(m.root.querySelectorAll(".hk-edge-glow-band")).toHaveLength(1);
+
+    // Selection comes back into the band: the band list empties while the
+    // painter's inert root stays mounted (the feature is still on).
+    stubBand(row, 120, 160);
+    m.instance?.refresh();
+    await nextTick();
+    expect(m.root.querySelectorAll(".hk-edge-glow-band")).toHaveLength(0);
+    expect(m.root.querySelector(".hk-edge-glow")).not.toBeNull();
+  });
+
   it("self-check: the extractor sees a rule that exists (raw source)", () => {
-    // Compiled-sheet pins above inspect specific rules; this anchor
-    // fails if the file is renamed or the sheet stops compiling.
-    const source = readFileSync(join(here, "HkScrollContainer.scss"), "utf8");
-    expect(source).toContain('.hk-scroll-container[data-selection-beyond="top"]::before,');
-    expect(source).toContain('.hk-scroll-container[data-selection-beyond="bottom"]::after,');
+    // Compiled-sheet pins above inspect specific rules; this anchor fails
+    // if the file is renamed or the sheet stops compiling.
+    expect(ruleBody(".hk-scroll-container[data-selection-beyond]")).not.toBeNull();
   });
 });

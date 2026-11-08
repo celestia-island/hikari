@@ -39,6 +39,9 @@
    * a field-rich page must not grow an unbounded dropdown. */
   max-height: min(26rem, 60vh);
   overflow-y: auto;
+  /* Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
+     panel keeps native overflow mechanics, the platform bar never paints. */
+  scrollbar-width: none;
   /* Minimum outer margins for every column (user direction
    * 2026-10-12): the rows never touch the panel edge. */
   padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
@@ -49,6 +52,10 @@
   &[data-empty] {
     width: max-content;
     min-width: 0;
+  }
+
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -80,6 +87,12 @@
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   padding: 1px;
+
+  /* Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
+     operator strip pans natively; the platform bar never paints. */
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-filter-panel-op {

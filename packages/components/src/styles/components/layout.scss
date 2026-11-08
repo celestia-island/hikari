@@ -97,6 +97,10 @@
   overflow-y: auto;
   overflow-x: hidden;
 
+  // Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
+  // native bar never paints; overflow mechanics stay.
+  @include mix.scrollbar-hidden;
+
   // Content padding - 减小间距
   padding: 0;
 
@@ -171,6 +175,11 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+
+    // Native-scrollbar invariant (nativeScrollbar.contract.test.ts): this
+    // base rule needs its own suppression — the &.scrollbar-hidden modifier
+    // below only covers the JS-toggled state, not the scrolling element.
+    @include mix.scrollbar-hidden;
 
     // Padding inside scrollable area (no left padding)
     padding: vars.$hikari-spacing-md vars.$hikari-spacing-md

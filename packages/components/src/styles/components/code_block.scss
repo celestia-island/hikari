@@ -1,6 +1,8 @@
 // website/src/styles/code_block.scss
 // Code block component styles
 
+@use 'mixins' as mix;
+
 .hk-code-block {
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
@@ -31,6 +33,11 @@
 .hk-code-block-content {
     padding: 1rem;
     overflow-x: auto;
+
+    // Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
+    // native bar never paints; overflow mechanics stay.
+    @include mix.scrollbar-hidden;
+
     background-color: var(--hi-color-surface);
 }
 

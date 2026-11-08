@@ -29,6 +29,7 @@ import { SCROLL_HOST_CLASS } from "./HkScrollPin";
 import { HK_SCROLL_PROGRESS_HOST, HK_SCROLL_PROGRESS_VIEWPORT } from "./HkScrollProgressDock";
 import { scheduleFrame, notifyScrollStart, onceFrame, type AnimationHandle } from "../runtime/animationBus";
 import HFab from "./HkFab";
+import HkEdgeGlow, { type EdgeGlowEdge } from "./HkEdgeGlow";
 
 type ScrollAxis = "vertical" | "horizontal" | "both";
 type ScrollMode = "traditional" | "windowed";
@@ -50,6 +51,43 @@ function computeOverflow(scrollSize: number, clientSize: number, scrollPos: numb
   if (atEnd) return "start";
   return "both";
 }
+
+/** Physical edges still hiding content, derived from the per-axis
+ *  overflow verdicts in the SAME pass that publishes them (see the
+ *  overflowGlow prop doc). Physical, because HkEdgeGlow paints screen sides:
+ *  the horizontal scroll-START verdict denotes the inline start, which is the
+ *  visual RIGHT edge under RTL — exactly the mapping the fade strengths
+ *  already apply, and the reason both consumers resolve direction in JS
+ *  instead of sniffing [dir] in CSS. Axis-gated verdicts arrive as "none",
+ *  so the caller needs no hasH/hasV branch. */
+function overflowGlowEdgesFor(
+  horizontal: OverflowSense,
+  vertical: OverflowSense,
+  rtl: boolean,
+): EdgeGlowEdge[] {
+  const edges: EdgeGlowEdge[] = [];
+  const hStart: EdgeGlowEdge = rtl ? "right" : "left";
+  const hEnd: EdgeGlowEdge = rtl ? "left" : "right";
+  if (horizontal === "start" || horizontal === "both") edges.push(hStart);
+  if (horizontal === "end" || horizontal === "both") edges.push(hEnd);
+  if (vertical === "start" || vertical === "both") edges.push("top");
+  if (vertical === "end" || vertical === "both") edges.push("bottom");
+  return edges;
+}
+
+/** Map a selection-beyond verdict onto the glow painter's PHYSICAL edges
+ *  (the hint is vertical by design — see the selectionHint prop doc). */
+function selectionGlowEdgesFor(beyond: SelectionBeyond): EdgeGlowEdge[] {
+  if (beyond === "top") return ["top"];
+  if (beyond === "bottom") return ["bottom"];
+  if (beyond === "both") return ["top", "bottom"];
+  return [];
+}
+
+/** Sticky-end tolerance in px (see the anchor prop doc): within this many
+ *  pixels of an end the viewport still counts as parked there, so a pass
+ *  does not rewrite an offset the engine already placed. */
+const ANCHOR_TOLERANCE = 2;
 
 export default defineComponent({
   name: "HkScrollContainer",
@@ -85,6 +123,35 @@ export default defineComponent({
      *  ignored for vertical-only and axis="both" containers (the
      *  latter would re-introduce cross-axis center-clipping). */
     align: { type: String as PropType<ScrollAlign>, default: "start" },
+    /** Where a newly overflowing scroll axis parks on its FIRST overflow
+     *  pass (2026-11-08, the battle heatmap's "focus the newest day"
+     *  direction). The default "start" matches every engine's natural scroll
+     *  origin and is therefore inert BY CONSTRUCTION: parking at the start
+     *  would mean writing 0 to an offset that already is 0 (under RTL the
+     *  Chromium-family convention keeps scrollLeft 0 at the inline start
+     *  too), so only "end" has code paths to run — which is also why the
+     *  default cannot disturb the shipped containers.
+     *
+     *  With "end", each enabled scroll axis parks at the LOGICAL content end
+     *  — the newest data, the last row — as soon as that axis starts
+     *  overflowing, and then stays parked STICKILY: a later change of the
+     *  scroll extent (data replaced, a range narrowed, the viewport resized)
+     *  re-parks the axis only while the viewport was still at the end on the
+     *  PREVIOUS pass (tolerance 2px). A user who scrolled away owns the
+     *  offset; an extent change under them is not a request to yank them
+     *  back, so the anchor stops re-parking the moment it sees them
+     *  elsewhere. Logical, not physical: under RTL the inline end is the
+     *  visual LEFT edge and the offset that lands there is negative, the same
+     *  normalization the fade/overflow sensing applies.
+     *
+     *  The sticky re-park covers content arriving after mount (an async
+     *  series, a window resize); a consumer that REPLACES its data can also
+     *  re-park deterministically through the exposed `scrollToEnd()` (the
+     *  heatmap does that on a range switch). Not intended together with
+     *  `autoFollow` on a vertical container: both own the vertical end, and
+     *  autoFollow's jump-back affordance assumes the user is the only one
+     *  moving the offset. */
+    anchor: { type: String as PropType<"start" | "end">, default: "start" },
     /** Fade the viewport's inline edges (CSS mask) on the sides where
      *  the sensed overflow (`data-h-overflow`) reports hidden content. */
     fade: { type: Boolean, default: false },
@@ -105,6 +172,36 @@ export default defineComponent({
      *  0 — bounded degradation: the sense parks at "end" and one fade
      *  stays saturated, never inverted. */
     fadeDistance: { type: Number, default: 96 },
+    /** Opt-in overflow glow (2026-11-08 user direction: the battle heatmap
+     *  must show that content still hides at an edge now that the native bar
+     *  is gone, without a native bar coming back): while on, the container
+     *  mounts the shared <HkEdgeGlow> painter as a FIXED, NON-SCROLLING
+     *  child and lights the PHYSICAL edges where the sensed overflow still
+     *  hides content. It is the same feathered primary-gradient band the
+     *  settings rail's selectionHint paints — one painter for both features
+     *  (components/HkEdgeGlow), so the band's geometry, feather and colour
+     *  cannot drift between them.
+     *
+     *  Edges are derived in the SAME sensing pass that writes
+     *  data-h-overflow / data-v-overflow, from those verdicts mapped
+     *  through the COMPUTED direction (not [dir]): axis="horizontal" lights
+     *  left/right, "vertical" top/bottom, "both" all four sides; a
+     *  scroll-start verdict lights the physical start side (right under
+     *  RTL), a scroll-end verdict the other one, "both" both. The bands
+     *  breathe (`animate`) — an overflow glow is ambient chrome while a
+     *  strip scrolls, unlike the static selection STATE hint; the loop is
+     *  registered in animation/registerAnimations.ts and dropped under
+     *  reduced motion.
+     *
+     *  Size and feather are consumer-tunable from OUTSIDE: the painter gets
+     *  `var(--hk-scroll-overflow-glow-size, var(--space-24))` and the
+     *  `-feather` twin, so a host sets the knob on this container (or any
+     *  ancestor) instead of fighting the sheet. While the prop is on the root
+     *  carries `data-overflow-glow="true"` — a styling hook for a host that
+     *  wants its own backdrop behind the band. Off by default (per-house
+     *  additive-chrome discipline); only surfaces that hide content without
+     *  visible native chrome opt in. */
+    overflowGlow: { type: Boolean, default: false },
     /** Additive opt-in: while autoFollow is enabled and the user has
      *  scrolled away from the bottom, float a small jump-back FAB that
      *  snaps to the latest content and re-arms follow. */
@@ -199,9 +296,10 @@ export default defineComponent({
      *  descendant (which ones count is `selectionSelector`) lies fully
      *  outside the viewport's visible vertical band, and mirrors the
      *  verdict on the root as `data-selection-beyond="top" | "bottom" |
-     *  "both" | "none"` so consumers can paint an edge hint in pure CSS
-     *  (the shipped SCSS draws a primary-color gradient at each
-     *  offending edge). VERTICAL only by design: horizontal carousels
+     *  "both" | "none"` so consumers can paint an edge hint in pure CSS,
+     *  and mounts the shared <HkEdgeGlow> painter (the primary-color
+     *  feathered gradient — the same one the overflowGlow opt-in uses)
+     *  on each offending edge. VERTICAL only by design: horizontal carousels
      *  keep their own affordances (edge fades, snap alignment) and no
      *  horizontal consumer has proven the need yet. Sensing rides the
      *  same rAF-coalesced update pass as the overflow mirror, so
@@ -271,6 +369,13 @@ export default defineComponent({
     // mirrored onto the root as data-selection-beyond — the same
     // write-only-on-change discipline as the overflow mirror.
     let lastSelectionBeyond: SelectionBeyond | null = null;
+    // The same verdict published as PHYSICAL edges for the shared
+    // <HkEdgeGlow> painter that replaced the retired pseudo-element
+    // painters (2026-11-08): top/bottom only — the hint is vertical by
+    // design — and empty while nothing hides the selection. A reactive ref
+    // because the render function mounts/moves the bands from it; written
+    // in the same pass as the attribute, on change only.
+    const selectionHintEdges = shallowRef<EdgeGlowEdge[]>([]);
     // Selection/content liveness for the hint: a scroll or resize
     // listener cannot see the .is-active class moving between rows (no
     // scroll happens, no box changes), so while selectionHint is on a
@@ -279,6 +384,72 @@ export default defineComponent({
     // Attached lazily on mount when the prop is already on; the prop
     // watcher swaps it at runtime.
     let selectionMO: MutationObserver | null = null;
+
+    // ── Overflow glow sensing (overflowGlow opt-in) ────────────────────
+    // The lit edges are derived in the overflow sensing pass (the same one
+    // that mirrors data-h-overflow / data-v-overflow) and published here
+    // only when the SET changes: the mirror's write-only-on-change
+    // discipline now also covers reactivity, so a pass that re-senses
+    // identical geometry cannot re-render the painter. Empty = no band; the
+    // painter's inert root stays mounted while the prop is on, so lighting
+    // an edge never mounts chrome mid-scroll.
+    const overflowGlowEdges = shallowRef<EdgeGlowEdge[]>([]);
+    /** Joined edge list last published — the write-only-on-change key. */
+    let lastOverflowGlowKey = "";
+
+    /** Publish the sensed glow edges (see the overflowGlow prop doc). */
+    function publishOverflowGlowEdges(edges: EdgeGlowEdge[]) {
+      const key = edges.join(",");
+      if (key === lastOverflowGlowKey) return;
+      lastOverflowGlowKey = key;
+      overflowGlowEdges.value = edges;
+    }
+
+    /** Drop every glow band (feature turned off / container torn down). The
+     *  DOM half follows from the render gate on the prop; this clears the
+     *  SENSED state so a re-enable never paints a stale edge for one frame
+     *  (same contract shape as stopSelectionSensing's attribute removal). */
+    function clearOverflowGlow() {
+      lastOverflowGlowKey = "";
+      overflowGlowEdges.value = [];
+    }
+
+    // Runtime prop swap: off clears the sensed edges, and on re-senses
+    // immediately so an already-overflowing container lights its band
+    // without waiting for the next scroll. Teardown rides the same clearer:
+    // the rendered subtree dies with the root, but the sensed state must not
+    // outlive the feature that wrote it.
+    watch(() => props.overflowGlow, (on) => {
+      if (!on) clearOverflowGlow();
+      scheduleUpdate();
+    }, { flush: "post" });
+    onBeforeUnmount(clearOverflowGlow);
+
+    // ── Anchor parking state (see the anchor prop doc) ─────────────────
+    // Per enabled axis: the extent (max scroll offset) and the offset the
+    // LAST pass measured; `null` = never sensed, so the next pass has
+    // nothing to judge against and parks unconditionally. Remembering the
+    // previous OFFSET — not just the previous extent — is load-bearing:
+    // content that grows under a viewport sitting at the old end leaves the
+    // live offset short of the NEW end, so a "was the viewport at the end?"
+    // test against today's max would read "the user scrolled away" exactly
+    // when they did not.
+    const anchorSeen = {
+      horizontal: null as { max: number; pos: number } | null,
+      vertical: null as { max: number; pos: number } | null,
+    };
+
+    // A prop swap re-baselines so flipping anchor to "end" at runtime takes
+    // effect on the next pass instead of waiting for an extent change.
+    watch(() => props.anchor, () => {
+      anchorSeen.horizontal = null;
+      anchorSeen.vertical = null;
+      scheduleUpdate();
+    });
+    onBeforeUnmount(() => {
+      anchorSeen.horizontal = null;
+      anchorSeen.vertical = null;
+    });
 
     const alignerRef = shallowRef<HTMLElement | null>(null);
     let alignRO: ResizeObserver | null = null;
@@ -488,11 +659,57 @@ export default defineComponent({
       }
     }
 
+    /** Anchor parking (see the anchor prop doc). Only "end" has code: the
+     *  scroll origin IS the start edge on every engine hikari deploys on —
+     *  LTR scrollLeft 0, and the Chromium-family RTL convention also starts
+     *  at 0 and runs down to -max — so anchoring "start" would only ever
+     *  write 0 over 0. That is what makes the shipped default provably
+     *  inert. */
+    function senseAnchor(vp: HTMLElement) {
+      if (props.anchor !== "end") return;
+      if (hasH()) anchorAxis(vp, true, getComputedStyle(vp).direction === "rtl");
+      if (hasV()) anchorAxis(vp, false, false);
+    }
+
+    /** Park ONE axis at its end when the sticky conditions hold (see the
+     *  anchor prop doc and the anchorSeen block). Positions are compared in
+     *  the normalized LTR convention, so the decisions are direction-free;
+     *  only the write converts back (the RTL inline end is -max). */
+    function anchorAxis(vp: HTMLElement, horizontal: boolean, rtl: boolean) {
+      const size = horizontal ? vp.scrollWidth : vp.scrollHeight;
+      const client = horizontal ? vp.clientWidth : vp.clientHeight;
+      const max = Math.max(0, size - client);
+      const raw = horizontal ? vp.scrollLeft : vp.scrollTop;
+      const pos = rtl ? -raw : raw;
+      const seen = horizontal ? anchorSeen.horizontal : anchorSeen.vertical;
+      // The previous pass's pair, deliberately: content that grew under a
+      // viewport parked at the OLD end must still count as "at the end"
+      // (see the anchorSeen block).
+      const wasAtEnd = seen ? seen.pos >= seen.max - ANCHOR_TOLERANCE : true;
+      const extentChanged = seen ? seen.max !== max : true;
+      let nextPos = pos;
+      if (max > 0 && wasAtEnd && extentChanged && pos < max - ANCHOR_TOLERANCE) {
+        const target = rtl ? -max : max;
+        if (horizontal) vp.scrollLeft = target;
+        else vp.scrollTop = target;
+        nextPos = max;
+      }
+      const record = { max, pos: nextPos };
+      if (horizontal) anchorSeen.horizontal = record;
+      else anchorSeen.vertical = record;
+    }
+
     /** Mirror the live scroll geometry onto the root element as
      *  data-h-overflow / data-v-overflow, and while `fade` is on publish
      *  the per-edge fade strengths (hidden-content depth saturating over
-     *  fadeDistance). Runs on every scheduled update (scroll, resize,
-     *  content resize via the aligner).
+     *  fadeDistance); while `overflowGlow` is on, derive the glow's
+     *  physical edges from the same verdicts. Runs on every scheduled
+     *  update (scroll, resize, content resize via the aligner).
+     *
+     *  Anchor parking runs FIRST (when opted in): it writes the scroll
+     *  offset, and every geometry read below must see the post-park state —
+     *  the scroll event the write fires would otherwise correct a pre-park
+     *  mirror one painted frame too late.
      *
      *  Scroll offsets are normalized to LTR convention first: Chromium
      *  reports negative scrollLeft under RTL (0 at the inline start down
@@ -504,6 +721,7 @@ export default defineComponent({
     function senseOverflow(vp: HTMLElement) {
       const root = vp.parentElement;
       if (!root) return;
+      senseAnchor(vp);
       const rtl = getComputedStyle(vp).direction === "rtl";
       const hMax = Math.max(0, vp.scrollWidth - vp.clientWidth);
       const vMax = Math.max(0, vp.scrollHeight - vp.clientHeight);
@@ -519,6 +737,12 @@ export default defineComponent({
       if (v !== lastVOverflow) {
         lastVOverflow = v;
         root.setAttribute("data-v-overflow", v);
+      }
+      // Same-pass glow edges (see the overflowGlow prop doc): the verdicts
+      // above and the physical mapping below come from ONE geometry read,
+      // so a lit edge and the attribute that explains it never disagree.
+      if (props.overflowGlow) {
+        publishOverflowGlowEdges(overflowGlowEdgesFor(h, v, rtl));
       }
       if (props.fade) {
         // Physical-side depths: the normalized hPos counts the inline
@@ -601,7 +825,9 @@ export default defineComponent({
      *  comparison cancels it out. A match that is not rendered
      *  (getClientRects() empty — a display:none selected row) must not
      *  light the hint. Vertical only; the attribute lands on the same
-     *  host as data-v-overflow and is only touched on change. */
+     *  host as data-v-overflow and is only touched on change, and the same
+     *  verdict drives the shared <HkEdgeGlow> painter's top/bottom bands
+     *  (one painter for the hint and the overflow glow). */
     function senseSelectionBeyond(vp: HTMLElement) {
       if (!props.selectionHint) return;
       const root = vp.parentElement;
@@ -619,6 +845,11 @@ export default defineComponent({
       if (next !== lastSelectionBeyond) {
         lastSelectionBeyond = next;
         root.setAttribute("data-selection-beyond", next);
+        // The shared painter's input (see the selectionHintEdges block):
+        // same verdict, same pass, change-only. The attribute above stays
+        // the documented consumer contract; this ref is how the component's
+        // own render/JSX learns the verdict.
+        selectionHintEdges.value = selectionGlowEdgesFor(next);
       }
     }
 
@@ -647,6 +878,7 @@ export default defineComponent({
       selectionMO = null;
       if (lastSelectionBeyond !== null) {
         lastSelectionBeyond = null;
+        selectionHintEdges.value = [];
         viewportRef.value?.parentElement?.removeAttribute("data-selection-beyond");
       }
     }
@@ -808,6 +1040,50 @@ export default defineComponent({
       vp.scrollTo({ top: target, behavior });
     }
 
+    /** Park the enabled scroll axis/axes at the logical END — the newest
+     *  data, the last row — honouring the requested scroll behavior (default
+     *  = "auto", an immediate jump; "smooth" rides the engine). This is the
+     *  deterministic half of the `anchor` contract: the prop keeps the axis
+     *  parked across extent changes while the user stays there, and a
+     *  consumer that REPLACES its data (the heatmap's range switch) calls
+     *  this to re-park even if the viewport was elsewhere when the new data
+     *  arrived.
+     *
+     *  LOGICAL, not physical: under RTL the inline end is the visual LEFT
+     *  edge and requires a negative offset in the Chromium-family
+     *  convention, so the offset is direction-resolved here exactly like the
+     *  overflow/fade sensing resolves its normalized positions. Resolves
+     *  against live geometry at call time, so callers re-render first (the
+     *  heatmap calls through a `flush: "post"` watcher). */
+    function scrollToEnd(behavior: ScrollBehavior = "auto") {
+      scrollAxisTo("end", behavior);
+    }
+
+    /** The start twin of `scrollToEnd` (offset 0 on both directions under
+     *  the Chromium-family RTL convention). */
+    function scrollToStart(behavior: ScrollBehavior = "auto") {
+      scrollAxisTo("start", behavior);
+    }
+
+    /** Shared implementation: build a ScrollToOptions carrying only the
+     *  enabled axes (an omitted member keeps its current offset per CSSOM,
+     *  so a vertical-only container never touches scrollLeft — and a host
+     *  with a cross-axis overflow it does not want moved keeps it). */
+    function scrollAxisTo(end: "start" | "end", behavior: ScrollBehavior) {
+      const vp = viewportRef.value;
+      if (!vp) return;
+      const options: ScrollToOptions = { behavior };
+      if (hasH()) {
+        const max = Math.max(0, vp.scrollWidth - vp.clientWidth);
+        const rtl = getComputedStyle(vp).direction === "rtl";
+        options.left = end === "start" ? 0 : rtl ? -max : max;
+      }
+      if (hasV()) {
+        options.top = end === "start" ? 0 : Math.max(0, vp.scrollHeight - vp.clientHeight);
+      }
+      vp.scrollTo(options);
+    }
+
     /** Public contract is `HTMLElement | undefined` (HkKanban, HkWaterfall,
      *  HkTabs, HkSettingsDialog and HkLogWindow all declare it that way), so
      *  the internal `null`-on-unmount ref is normalized here instead of
@@ -853,7 +1129,22 @@ export default defineComponent({
       approachHandle.value?.recheck();
     }
 
-    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow, isNearEnd, recheck, backTopVisible });
+    expose({
+      scrollTo,
+      scrollToElement,
+      // The end/start parks (see scrollToEnd): exposed for consumers that
+      // replace their content and must re-park deterministically instead of
+      // waiting for the anchor's sticky pass.
+      scrollToEnd,
+      scrollToStart,
+      getScrollElement,
+      getScrollTop,
+      refresh,
+      getOverflow,
+      isNearEnd,
+      recheck,
+      backTopVisible,
+    });
 
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";
@@ -885,6 +1176,7 @@ export default defineComponent({
           data-axis={props.axis}
           data-align={alignCenter() ? "center" : undefined}
           data-fade={props.fade ? "true" : undefined}
+          data-overflow-glow={props.overflowGlow ? "true" : undefined}
           data-dock-tail={props.dockTailClearance ? "true" : undefined}
           data-dock-fade={
             props.dockFade && dockBottomSlot
@@ -914,6 +1206,35 @@ export default defineComponent({
             <div ref={dockBottomRef} class="hk-scroll-dock" data-side="bottom">
               {dockBottomSlot()}
             </div>
+          )}
+          {/* Edge painters (2026-11-08): both are the SAME shared
+              <HkEdgeGlow> component, mounted as non-scrolling children of
+              the root (the root is the fixed box; painter pseudo-elements on
+              the viewport would live in scrolled space and slide away).
+              Above the viewport in tree order and z-indexed under the
+              scrollbar chrome; the selection hint is static (a STATE hint),
+              the overflow glow breathes (ambient chrome). Each stays mounted
+              while its prop is on — an empty edge list renders the inert
+              root only — so lighting an edge never mounts chrome mid-scroll.
+              The hint's knobs are declared by HkScrollContainer.scss on the
+              [data-selection-beyond] root rule (consumer overrides win
+              there); the glow's knobs resolve on the painter with the
+              documented fallbacks, so a host sets them anywhere up the
+              tree. */}
+          {props.selectionHint && (
+            <HkEdgeGlow
+              edges={selectionHintEdges.value}
+              size="var(--hk-scroll-selection-hint-size)"
+              feather="var(--hk-scroll-selection-hint-feather)"
+            />
+          )}
+          {props.overflowGlow && (
+            <HkEdgeGlow
+              animate
+              edges={overflowGlowEdges.value}
+              size="var(--hk-scroll-overflow-glow-size, var(--space-24))"
+              feather="var(--hk-scroll-overflow-glow-feather, var(--space-24))"
+            />
           )}
           {showAutoTag.value && (
             <span class="hk-scroll-container-autotag" aria-hidden="true">{t("hikari::scrollContainer.auto", "Auto")}</span>

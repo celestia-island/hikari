@@ -27,6 +27,7 @@ export {
   type HkDockBarSurface as HDockBarSurface,
 } from "./components/HkDockBar";
 export { default as HDrawer } from "./components/HkDrawer";
+export { default as HEdgeGlow } from "./components/HkEdgeGlow";
 export { default as HEmptyState } from "./components/HkEmptyState";
 export { default as HStepGuide } from "./components/HkStepGuide";
 export type { StepGuideItem } from "./components/HkStepGuide";
@@ -784,6 +785,13 @@ export {
 export type { HkDonutEntry, HkDonutSlice } from "./components/donutGeometry";
 export { default as HkDockBar } from "./components/HkDockBar";
 export { default as HkDrawer } from "./components/HkDrawer";
+// The shared edge-glow painter: the feathered primary-gradient band behind
+// HkScrollContainer's selectionHint and overflowGlow, exported so a host can
+// mount the same effect anywhere (a clipped chart, a carousel) instead of
+// re-authoring the pseudo-element recipe. Physical edges only — see the
+// component doc for why.
+export { default as HkEdgeGlow } from "./components/HkEdgeGlow";
+export type { EdgeGlowEdge } from "./components/HkEdgeGlow";
 export { default as HkEmptyState } from "./components/HkEmptyState";
 export { default as HkExpansionPanel } from "./components/HkExpansionPanel";
 export { default as HkFab } from "./components/HkFab";

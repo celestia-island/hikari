@@ -34,20 +34,57 @@
     color: var(--hi-color-muted);
   }
 
-  // w-max + auto margins center the whole calendar (rail included) on
-  // wide cards while letting narrow screens scroll from the left edge —
-  // auto margins resolve to zero when the content overflows, so mobile
-  // keeps its natural scroll origin.
+  // The strip's scroll host is HkScrollContainer — the root element carries
+  // .hk-scroll-container PLUS this class. The native horizontal bar is gone
+  // (2026-11-08: the battle heatmap's platform bar was the last one in the
+  // chart family and read as an embedded widget); hikari's auto-hiding
+  // overlay scrollbar is the only bar, and the container's align="center"
+  // centers the calendar while it fits and lets it scroll when it does not
+  // (the old auto-margin recipe now lives there — do NOT re-add overflow
+  // here: a native bar would come back and the overlay chrome would stack
+  // under it).
+  //
+  // padding-bottom is the OVERLAY TRACK's strip, not breathing room: the
+  // shared chrome is positioned against this root (bottom: 2px, height:
+  // 6px), so 8px of padding keeps the bar BELOW the Sunday rail instead of
+  // painting over it while the strip scrolls.
   &-scroll {
     margin-top: 12px;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    padding-bottom: 8px;
   }
 
+  // ── Legacy plain-form fallback (Rust/WASM renderer) ──────────────────
+  // The Vue form mounted the strip on HkScrollContainer (above), but the
+  // Rust/WASM CalendarHeatmap (packages/components/src/data/calendar_heatmap.rs)
+  // still renders the pre-migration plain -.hk-calendar-heatmap-scroll div and
+  // reads THIS sheet through the generated vue-mirror. The mirror sheet no
+  // longer owns the plain form's overflow/centering, so restore the previous
+  // horizontal scrolling here for the plain form ONLY: a Vue strip carries
+  // .hk-scroll-container on the same element and never matches, so the
+  // overlay chrome can never be re-claimed by this rule. The platform bar is
+  // suppressed (the chart family's no-native-bar invariant) — until the Rust
+  // renderer migrates onto the shared scroll-container script this form
+  // scrolls by wheel/touch/keyboard without a visible bar, the same
+  // bar-less trade the suppression-only scrollers take.
+  &-scroll:not(.hk-scroll-container) {
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    > .hk-calendar-heatmap-body {
+      margin-inline: auto;
+    }
+  }
+
+  // width: max-content keeps the strip's natural extent (the container's
+  // aligner owns the centering, so no auto margins here — they would be
+  // resolved inside a box sized exactly to this element's content).
   &-body {
     display: flex;
     width: max-content;
-    margin-inline: auto;
     gap: 8px;
   }
 

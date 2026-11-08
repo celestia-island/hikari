@@ -1,6 +1,8 @@
 // website/src/styles/markdown_renderer.scss
 // Markdown rendering styles
 
+@use 'mixins' as mix;
+
 .hk-markdown-content {
     line-height: 1.75;
     color: var(--hi-color-text-primary);
@@ -47,6 +49,11 @@
         padding: 1rem;
         margin: 1.5rem 0;
         overflow-x: auto;
+
+        // Native-scrollbar invariant (nativeScrollbar.contract.test.ts):
+        // the native bar never paints; overflow mechanics stay.
+        @include mix.scrollbar-hidden;
+
         font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
         font-size: 0.875rem;
         line-height: 1.6;

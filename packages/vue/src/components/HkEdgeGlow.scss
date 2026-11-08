@@ -1,0 +1,132 @@
+@use "../styles/polyfill" as *;
+
+// HkEdgeGlow — the shared feathered edge band (see HkEdgeGlow.tsx for the
+// component contract and the extraction rationale).
+//
+// One root (the absolutely-positioned inset-0 layer) plus one span per lit
+// edge. The root carries the clipping and the pointer ghost; each band owns
+// only its own edge placement, its gradient direction and its perpendicular
+// feather mask. Sizes/colour arrive as inline custom properties
+// (--hk-edge-glow-size / -feather / -color) so an instance overrides them
+// without a sheet rule, and the defaults live in the component props — a
+// consumer tuning one band never edits this file.
+//
+// The end feather is a MASK on a single axis, deliberately: composing two
+// mask gradients needs mask-composite, and engines without the standard
+// property (Android WebViews below Chromium 120 — Tauri on Android rides the
+// system WebView) fall back to additive composition, where the union of two
+// opaque layers is fully opaque and the feathered ends vanish into a hard
+// cut. HkScrollContainer.scss records the same trap for its fade bands.
+
+.hk-edge-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hk-edge-glow-band {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Top: spans the inline axis, thickness along the block-start edge, ink at
+   the edge dissolving inward — and the two inline ends feathered by a
+   perpendicular (to right) mask, so the band's corners fall off naturally
+   instead of cutting as hard vertical edges (the 2026-10-30 selection-hint
+   report this shape was extracted from). */
+.hk-edge-glow-band[data-edge="top"] {
+  inset-inline: 0;
+  top: 0;
+  height: var(--hk-edge-glow-size);
+  background: linear-gradient(to bottom, var(--hk-edge-glow-color), transparent);
+  @include mask-image(
+    linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--hk-edge-glow-feather),
+      #000 calc(100% - var(--hk-edge-glow-feather)),
+      transparent 100%
+    )
+  );
+}
+
+/* Bottom: the top band's mirror — gradient runs upward from the bottom edge. */
+.hk-edge-glow-band[data-edge="bottom"] {
+  inset-inline: 0;
+  bottom: 0;
+  height: var(--hk-edge-glow-size);
+  background: linear-gradient(to top, var(--hk-edge-glow-color), transparent);
+  @include mask-image(
+    linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--hk-edge-glow-feather),
+      #000 calc(100% - var(--hk-edge-glow-feather)),
+      transparent 100%
+    )
+  );
+}
+
+/* Left: spans the block axis, thickness along the inline-start edge, with
+   the perpendicular feather running vertically instead. */
+.hk-edge-glow-band[data-edge="left"] {
+  inset-block: 0;
+  left: 0;
+  width: var(--hk-edge-glow-size);
+  background: linear-gradient(to right, var(--hk-edge-glow-color), transparent);
+  @include mask-image(
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--hk-edge-glow-feather),
+      #000 calc(100% - var(--hk-edge-glow-feather)),
+      transparent 100%
+    )
+  );
+}
+
+/* Right: the left band's mirror — gradient runs leftward from the right edge. */
+.hk-edge-glow-band[data-edge="right"] {
+  inset-block: 0;
+  right: 0;
+  width: var(--hk-edge-glow-size);
+  background: linear-gradient(to left, var(--hk-edge-glow-color), transparent);
+  @include mask-image(
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--hk-edge-glow-feather),
+      #000 calc(100% - var(--hk-edge-glow-feather)),
+      transparent 100%
+    )
+  );
+}
+
+/* The breathe: opacity only, so the band's layout box never moves and the
+   masked gradient keeps its exact geometry. Registered in
+   animation/registerAnimations.ts (the host's global CSS-animation switch
+   pauses it together with every other hikari loop). */
+@keyframes hk-edge-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.62;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.hk-edge-glow[data-animate="true"] .hk-edge-glow-band {
+  animation: hk-edge-glow-breathe 2.6s ease-in-out infinite;
+}
+
+/* Reduced motion keeps the glow but drops the loop: the band is information
+   (something is hidden past this edge), only its motion is optional. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-edge-glow[data-animate="true"] .hk-edge-glow-band {
+    animation: none;
+    opacity: 1;
+  }
+}

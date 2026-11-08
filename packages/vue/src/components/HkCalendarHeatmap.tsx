@@ -1,6 +1,7 @@
-import { computed, defineComponent, type PropType } from "vue";
+import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
+import HkScrollContainer from "./HkScrollContainer";
 import {
   calendarGrid,
   heatmapCellFill,
@@ -53,6 +54,18 @@ function fill(template: string, vars: Record<string, string | number>): string {
  * null = never). All math lives in ./calendarHeatmap (pure, pinned by
  * its own tests). The `toolbar` slot rides right of the legend — the
  * consumer's range tabs / controls belong there.
+ *
+ * Scrolling (2026-11-08): the calendar body rides HkScrollContainer
+ * (axis="horizontal", align="center") so the strip uses hikari's own
+ * auto-hiding overlay scrollbar and NEVER a native bar — a chart that
+ * paints a platform scrollbar reads as an embedded widget, and the
+ * battle heatmap's bar was the last one in the family. The container's
+ * `anchor` prop defaults to "end" here: the newest day is the reading
+ * interest, so the strip opens focused on it (and the `anchor` prop lets
+ * a host opt back to "start"), while the container's overflow glow marks
+ * the side that still hides days. A series replacement (range switch,
+ * refetch across midnight) re-parks at the end explicitly — see the
+ * days watcher.
  */
 export default defineComponent({
   name: "HkCalendarHeatmap",
@@ -72,6 +85,15 @@ export default defineComponent({
     /** Square-cell scale (GitHub-scale: a 53-week grid stays compact). */
     cellSize: { type: Number, default: 14 },
     cellGap: { type: Number, default: 3 },
+    /** Which end of the horizontal strip is focused first: the default
+     *  "end" opens on the NEWEST day (the reading interest — a year-wide
+     *  series otherwise starts at the oldest, faded edge, which is exactly
+     *  the "why is the chart empty-looking?" report this default answers).
+     *  Forwarded to HkScrollContainer's `anchor`; the days/range watcher
+     *  still re-parks at the end on a data change, so this prop changes the
+     *  INITIAL focus (and the sticky behaviour) rather than the re-park
+     *  contract. Pass "start" to restore the old GitHub-style origin. */
+    anchor: { type: String as PropType<"start" | "end">, default: "end" },
   },
   setup(props, { slots }) {
     const { t } = useI18n();
@@ -160,6 +182,38 @@ export default defineComponent({
         : undefined;
     });
 
+    // The strip's scroll host. Only the two handle members the heatmap
+    // uses are named (structural typing, the consumers' house convention):
+    // the end park and the sensing refresh.
+    const scroller = ref<{
+      scrollToEnd: (behavior?: ScrollBehavior) => void;
+      refresh: () => void;
+    } | null>(null);
+
+    /** Re-park at the newest day whenever the caller replaces the series —
+     *  a range switch (the toolbar tabs), a refetch across UTC midnight, a
+     *  totalled window. The container's `anchor="end"` only keeps a
+     *  viewport that ALREADY sits at the end, deliberately (it must never
+     *  fight a reader who scrolled back); switching range from mid-strip is
+     *  a data replacement, so "land on the newest" is made unconditional
+     *  here instead.
+     *
+     *  flush: "post" is load-bearing — the grid must have re-rendered (new
+     *  scrollWidth, possibly a narrower strip) before the target is
+     *  measured, or the park would aim at the previous range's extent.
+     *  refresh() then re-derives the overlay chrome from the same new
+     *  extent: a range that shrinks the series from overflowing to fitting
+     *  fires no scroll event, so without it the auto-hiding track could
+     *  stay painted over content that no longer overflows. */
+    watch(
+      () => props.days,
+      () => {
+        scroller.value?.scrollToEnd("auto");
+        scroller.value?.refresh();
+      },
+      { flush: "post" },
+    );
+
     return () => (
       <div class="hk-calendar-heatmap">
         {/* The legend row: the scale in the caller's one unit on the
@@ -191,10 +245,23 @@ export default defineComponent({
           {slots.toolbar?.({})}
         </div>
 
-        {/* The scroll wrapper centers the whole calendar (rail included)
-         * on wide cards while letting narrow screens scroll from the
-         * left edge (see the SCSS). */}
-        <div class="hk-calendar-heatmap-scroll">
+        {/* The strip rides HkScrollContainer: hikari's own auto-hiding
+         * overlay scrollbar is the ONLY bar (a native one would read as an
+         * embedded platform widget — the battle heatmap's last regression),
+         * align="center" keeps the whole calendar (rail included) centered
+         * while it fits and lets it scroll once it does not, and
+         * anchor="end" opens it focused on the newest day. The class stays
+         * on the container root, so consumers styling
+         * .hk-calendar-heatmap-scroll keep working; overflowGlow lights the
+         * side that still hides days. */}
+        <HkScrollContainer
+          ref={scroller}
+          class="hk-calendar-heatmap-scroll"
+          axis="horizontal"
+          align="center"
+          anchor={props.anchor}
+          overflowGlow
+        >
           <div class="hk-calendar-heatmap-body">
             {/* Weekday rail: the first (Monday) and last (Sunday) rows
              * carry the labels, the wowsp convention. */}
@@ -271,7 +338,7 @@ export default defineComponent({
               </div>
             </div>
           </div>
-        </div>
+        </HkScrollContainer>
       </div>
     );
   },

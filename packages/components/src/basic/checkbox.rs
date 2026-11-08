@@ -385,8 +385,13 @@ mod tests {
             ".hk-checkbox-indeterminate",
             // The first-line anchoring lane: geometry that grass must keep
             // parsing (`:has()` gate + the calc offset). A silent drop would
-            // otherwise leave every needle above intact.
-            ":has(.hk-label:not(:empty))",
+            // otherwise leave every needle above intact. The gate needle
+            // carries the trailing ` {` because the sheet's COMMENT also
+            // spells the selector — a rule-only needle cannot be satisfied by
+            // prose, and `align-items: flex-start` pins the half that only the
+            // gated rule declares (the root rule says `center`).
+            ":has(.hk-label:not(:empty)) {",
+            "align-items: flex-start",
             "margin-block-start",
         ] {
             assert!(

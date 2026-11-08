@@ -344,8 +344,12 @@ mod tests {
             ".hk-radio-input",
             ".hk-radio-dot",
             // The first-line anchoring lane (house parity: HkCheckbox): the
-            // `:has()` gate and its calc offset must survive grass.
-            ":has(.hk-label:not(:empty))",
+            // `:has()` gate and its calc offset must survive grass. The gate
+            // needle carries the trailing ` {` because this sheet's COMMENT
+            // also spells the selector — without it, deleting all four gated
+            // rules still passes on the comment alone.
+            ":has(.hk-label:not(:empty)) {",
+            "align-items: flex-start",
             "margin-block-start",
         ] {
             assert!(

@@ -116,6 +116,43 @@ function rules(css: string): Rule[] {
   return out;
 }
 
+/**
+ * The SUBJECT of a complex selector = its last compound. Combinators are
+ * split only OUTSIDE brackets/parens, so `:has(…)` / `:not(…)` arguments can
+ * never split a selector. Testing the subject is what keeps the sheet's own
+ * idiom inside the guards below: a `selector.endsWith(".hk-checkbox-box")`
+ * suffix test silently routes `.hk-checkbox-box[data-checked]` and
+ * `.hk-checkbox-box:not([data-indeterminate])` around every assertion (the
+ * 2026-11 closing round reproduced the whole reported bug with
+ * `…:not([data-indeterminate]) { align-self: center }` and 44/44 green).
+ */
+function subjectSelector(selector: string): string {
+  let depth = 0;
+  let cut = -1;
+  for (let i = 0; i < selector.length; i += 1) {
+    const char = selector[i]!;
+    if (char === "(" || char === "[") depth += 1;
+    else if (char === ")" || char === "]") depth -= 1;
+    else if (depth === 0 && (char === " " || char === ">" || char === "+" || char === "~")) cut = i;
+  }
+  return selector.slice(cut + 1).trim();
+}
+
+/** True when `className` names a class in `text` — `(.hk-checkbox-box)` may
+ * not match `.hk-checkbox-box-inner`, and a `\w`/`-` continuation blocks it. */
+function namesClass(text: string, className: string): boolean {
+  const escaped = className.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`${escaped}(?![\\w-])`).test(text);
+}
+
+/** Rules whose SUBJECT names `className` (media-scoped ones included only
+ * when `scope` says so — the default reads the unconditional anatomy). */
+function subjectRules(all: Rule[], className: string, includeMedia = false): Rule[] {
+  return all.filter(
+    (r) => (includeMedia || !r.media) && namesClass(subjectSelector(r.selector), className),
+  );
+}
+
 function find(all: Rule[], selector: string): Rule {
   const hit = all.find((r) => !r.media && r.selector === selector);
   expect(hit, `compiled rule for \`${selector}\``).toBeDefined();
@@ -131,13 +168,14 @@ function find(all: Rule[], selector: string): Rule {
  * specific rule also touches the class.
  */
 function expectSelectorSet(all: Rule[], classSuffix: string, expected: string[]) {
-  const present = all
-    .filter((r) => !r.media)
+  // Subject match, not a suffix match: `.hk-checkbox-box:not([data-x])` and
+  // `.hk-checkbox-box[data-checked]` DO touch the class and must show up here
+  // (the closing round mutated exactly that shape past a suffix test). The
+  // rtl mirrors lead with a `[dir=rtl]` scope that this sheet owns as a
+  // whole-clause copy, so they stay excluded.
+  const present = subjectRules(all, classSuffix)
     .map((r) => r.selector)
-    .filter((s) => {
-      const last = s.split(/\s+>/).pop()!.trim().split(" ").pop()!;
-      return last === classSuffix && !s.startsWith("[dir=");
-    })
+    .filter((s) => !s.startsWith("[dir="))
     .sort();
   expect(present, `selector set touching \`${classSuffix}\``).toEqual(expected.sort());
 }
@@ -208,22 +246,25 @@ describe("selection controls inline alignment", () => {
 });
 
 describe("HkCheckbox box scale follows the size modifier", () => {
-  const cases: Array<[string, string, number]> = [
-    ["base (md)", ".hk-checkbox-box", 18],
-    ["sm", ".hk-checkbox-sm .hk-checkbox-box", 14],
-    ["lg", ".hk-checkbox-lg .hk-checkbox-box", 22],
+  // [name, px, selector] — `%s` in the title reads the number and prints
+  // "18px"; a `%i` in the second slot used to read the selector string and
+  // name the test "base (md) box is NaNpx".
+  const cases: Array<[string, number, string]> = [
+    ["base (md)", 18, ".hk-checkbox-box"],
+    ["sm", 14, ".hk-checkbox-sm .hk-checkbox-box"],
+    ["lg", 22, ".hk-checkbox-lg .hk-checkbox-box"],
   ];
-  it.each(cases)("%s box is %ipx", (_name, selector, px) => {
+  it.each(cases)("%s box is %spx", (_name, px, selector) => {
     const body = find(checkbox, selector).body;
     expect(toPx(valueOf(body, "width"))).toBe(px);
     expect(toPx(valueOf(body, "height"))).toBe(px);
   });
 
   it.each([
-    ["sm", ".hk-checkbox-sm .hk-checkbox-icon", 11],
-    ["md base", ".hk-checkbox-icon", 14],
-    ["lg", ".hk-checkbox-lg .hk-checkbox-icon", 16],
-  ])("%s check icon is %ipx", (_name, selector, px) => {
+    ["sm", 11, ".hk-checkbox-sm .hk-checkbox-icon"],
+    ["md base", 14, ".hk-checkbox-icon"],
+    ["lg", 16, ".hk-checkbox-lg .hk-checkbox-icon"],
+  ])("%s check icon is %spx", (_name, px, selector) => {
     const body = find(checkbox, selector).body;
     expect(toPx(valueOf(body, "width"))).toBe(px);
   });
@@ -272,13 +313,18 @@ describe("label first-line anchoring", () => {
   const labelFont = (selector: string) => cssVar(find(labelSheet, selector).body, "font-size");
 
   // The offset rides the label's FIRST line box, which starts at the label's
-  // border-box top: a block-direction margin or padding on `.hk-label` would
-  // sit between them and silently shift every box.
+  // border-box top: a block-direction margin, padding or border on `.hk-label`
+  // would sit between them and silently shift the text against the box (a
+  // `border-block-start: 1px solid transparent` moves the text 1px down with
+  // every assertion still green), and a translate/transform does the same
+  // from the other side.
   const labelBox = find(labelSheet, ".hk-label").body;
   expect(
     labelBox,
-    "the offset assumes a margin/padding-free .hk-label",
-  ).not.toMatch(/(?:^|;)\s*(?:margin|padding)(?:-(?:block|top|bottom)(?:-start|-end)?)?\s*:/);
+    "the offset assumes a margin/padding/border-free, untransformed .hk-label",
+  ).not.toMatch(
+    /(?:^|;)\s*(?:margin|padding|border|translate|transform)(?:-[a-z-]+)?\s*:/,
+  );
 
   it.each([
     ["HkCheckbox", checkbox, ".hk-checkbox"],
@@ -380,17 +426,19 @@ describe("label first-line anchoring", () => {
       // offset rules and carries the `:has(.hk-label:not(:empty))` gate — a
       // label-less (or empty-label) control has no line box to ride and must
       // keep its old footprint; (b) nothing else in the sheet can move the
-      // box: a smuggled `margin-*`, `padding-*`, `translate`, `align-self` or
-      // `top`/`bottom`/`inset` lands in this set and fails the exact toEqual.
-      // The parser keeps every rule that names a control part, and it rejects
-      // duplicate selectors, so such a rule can neither hide outside the
-      // filter nor shadow the rule this test reads.
-      const shiftRules = all.filter(
-        (r) =>
-          r.selector.trim().endsWith(box) &&
-          /(?:^|;)\s*(?:margin(?:-[a-z-]+)?|padding(?:-[a-z-]+)?|translate|align-self|top|bottom|inset(?:-[a-z-]+)?)\s*:/.test(
-            r.body,
-          ),
+      // box: a smuggled `margin-*`, `padding-*`, `translate`, `transform`,
+      // `align-self` or `top`/`bottom`/`inset` lands in this set and fails the
+      // exact toEqual. `transform` is in the set because a `translateY()`
+      // inside it moves the box exactly like `translate` does (this sheet
+      // already animates the switch with transforms).
+      // The parser keeps every rule that names a control part, it rejects
+      // duplicate selectors, and the match reads the SUBJECT of each complex
+      // selector (not its suffix), so a rule can neither hide outside the
+      // filter behind `[data-…]`/`:not(…)` nor shadow the rule this test reads.
+      const shiftRules = subjectRules(all, box).filter((r) =>
+        /(?:^|;)\s*(?:margin(?:-[a-z-]+)?|padding(?:-[a-z-]+)?|translate|transform|align-self|top|bottom|inset(?:-[a-z-]+)?)\s*:/.test(
+          r.body,
+        ),
       );
       expect(shiftRules.map((r) => r.selector).sort()).toEqual([...expected].sort());
       for (const rule of shiftRules) {
@@ -410,6 +458,153 @@ describe("label first-line anchoring", () => {
     // inflate the box by 2px and land the offset 1px low, so the sheet
     // declares the sizing itself.
     expect(valueOf(find(all, box).body, "box-sizing")).toBe("border-box");
+  });
+
+  // The subject sets below are the R2 defence applied to the boxes: each one
+  // names EVERY rule whose subject is that part, so a new or widened rule
+  // (`.hk-checkbox[data-type=radio] .hk-checkbox-box`, a `:not(…)` tail, a
+  // size step that re-emits the box) has to be added here on purpose instead
+  // of silently taking part in the rendering the assertions above describe.
+  it.each([
+    [
+      "checkbox",
+      checkbox,
+      ".hk-checkbox-box",
+      [
+        ".hk-checkbox-box",
+        ".hk-checkbox-box[data-checked]",
+        ".hk-checkbox-box[data-indeterminate]",
+        ".hk-checkbox-box:has(.hk-checkbox-input:focus-visible)",
+        ".hk-checkbox-sm .hk-checkbox-box",
+        ".hk-checkbox-lg .hk-checkbox-box",
+        ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box",
+        ".hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box",
+        ".hk-checkbox-lg:has(.hk-label:not(:empty)) .hk-checkbox-box",
+        ".hk-checkbox:not([data-disabled]):active .hk-checkbox-box",
+        ".hk-checkbox:not([data-disabled]):hover .hk-checkbox-box:not([data-checked]):not([data-indeterminate])",
+        ".hk-checkbox[data-type=radio] .hk-checkbox-box",
+        ".hk-checkbox[data-animating] .hk-checkbox-box",
+      ],
+    ],
+    [
+      "radio",
+      radio,
+      ".hk-radio-box",
+      [
+        ".hk-radio-box",
+        ".hk-radio-box[data-checked]",
+        ".hk-radio-box:has(.hk-radio-input:focus-visible)",
+        "[data-size=sm] .hk-radio-box",
+        "[data-size=md] .hk-radio-box",
+        "[data-size=lg] .hk-radio-box",
+        ".hk-radio:has(.hk-label:not(:empty)) .hk-radio-box",
+        ".hk-radio[data-size=sm]:has(.hk-label:not(:empty)) .hk-radio-box",
+        ".hk-radio[data-size=lg]:has(.hk-label:not(:empty)) .hk-radio-box",
+        ".hk-radio:not([data-disabled]):hover .hk-radio-box:not([data-checked])",
+        ".hk-radio:not([data-disabled]):active .hk-radio-box",
+      ],
+    ],
+  ])("%s box is only ever the subject of the rules pinned here", (
+    _name,
+    all,
+    box,
+    expected,
+  ) => {
+    expectSelectorSet(all, box, expected);
+  });
+
+  it.each([
+    ["checkbox", checkbox, ".hk-checkbox-box", [
+      ".hk-checkbox-box",
+      ".hk-checkbox-sm .hk-checkbox-box",
+      ".hk-checkbox-lg .hk-checkbox-box",
+    ]],
+    ["radio", radio, ".hk-radio-box", [
+      "[data-size=sm] .hk-radio-box",
+      "[data-size=md] .hk-radio-box",
+      "[data-size=lg] .hk-radio-box",
+    ]],
+  ])("%s box owes its width/height to the size steps and nothing else", (
+    _name,
+    all,
+    box,
+    expected,
+  ) => {
+    // A state face that grows the box (`.hk-checkbox-box[data-checked]
+    // { width: 2rem }`) keeps the offset aimed at an 18px box while the
+    // rendered box is 32px — green suite, +7px off. The offset reads the
+    // base/size-step box, so those must be the only rules sizing it.
+    const sized = subjectRules(all, box)
+      .filter((r) => /(?:^|;)\s*(?:width|height)\s*:/.test(r.body))
+      .map((r) => r.selector)
+      .sort();
+    expect(sized, `rules sizing \`${box}\``).toEqual([...expected].sort());
+  });
+
+  it.each([
+    ["checkbox", checkbox, ".hk-checkbox-box"],
+    ["radio", radio, ".hk-radio-box"],
+  ])("%s box has no media-scoped geometry besides the reduced-motion copy", (
+    _name,
+    all,
+    box,
+  ) => {
+    // The parsers above read the UNCONDITIONAL anatomy, so a media-scoped
+    // duplicate is invisible to them: `@media (min-width: 1px) {
+    // .hk-checkbox-box { box-sizing: content-box } }` would win at runtime
+    // with the suite 44/44 green (+1px). The one sanctioned copy is the
+    // reduced-motion transition kill, and it must stay a transition kill.
+    const mediaRules = subjectRules(all, box, true).filter((r) => r.media);
+    expect(mediaRules.map((r) => `${r.media} | ${r.selector}`).sort()).toEqual([
+      `@media (prefers-reduced-motion: reduce) | ${box}`,
+    ]);
+    expect(mediaRules[0]!.body.replace(/\s+/g, "")).toBe("transition:none;");
+  });
+
+  it.each([
+    ["checkbox", checkbox],
+    ["radio", radio],
+  ])("%s labels carry no media-scoped rule at all", (_name, all) => {
+    // Same hole on the other half of the pair: a media-scoped `.hk-label`
+    // rule changes the line box the offset rides.
+    const mediaLabel = subjectRules(all, ".hk-label", true).filter((r) => r.media);
+    expect(mediaLabel.map((r) => `${r.media} | ${r.selector}`)).toEqual([]);
+  });
+
+  it.each([
+    ["checkbox", checkbox, ".hk-checkbox"],
+    ["radio", radio, ".hk-radio"],
+  ])("%s re-aligns the row only on the gate", (_name, all, control) => {
+    // `align-items` is the other half of the contract. A second rule on the
+    // control root (`.hk-checkbox[class] { align-items: flex-start }`, 0,1,0)
+    // loses to the gate on `:has()` engines and therefore renders identically
+    // — but it takes over exactly on the engines the `center` fallback exists
+    // for, so it must not be there at all.
+    const carriers = subjectRules(all, control)
+      .filter((r) => /(?:^|;)\s*align-items\s*:/.test(r.body))
+      .map((r) => `${r.selector} → ${valueOf(r.body, "align-items")}`)
+      .sort();
+    expect(carriers, `align-items carriers on \`${control}\``).toEqual(
+      [`${control} → center`, `${control}:has(.hk-label:not(:empty)) → flex-start`].sort(),
+    );
+  });
+
+  it("checkbox size offsets appear in md → sm → lg order (an equal-specificity tie)", () => {
+    // All three checkbox offsets are 0,4,0 (radio's size steps carry
+    // `[data-size=…]` and are 0,5,0), so for the checkbox the source order IS
+    // the tie-break: reordering them silently hands sm the md offset
+    // (−0.5px) and lg the sm one (+0.5px).
+    const offsets = [
+      ".hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box",
+      ".hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box",
+      ".hk-checkbox-lg:has(.hk-label:not(:empty)) .hk-checkbox-box",
+    ];
+    const order = offsets.map((selector) => {
+      const index = checkbox.findIndex((r) => r.selector === selector);
+      expect(index, `compiled rule for \`${selector}\``).toBeGreaterThanOrEqual(0);
+      return index;
+    });
+    expect(order).toEqual([...order].sort((a, b) => a - b));
   });
 });
 

@@ -201,6 +201,14 @@ const HkScrollProgressDockPill = defineComponent({
  *
  * Standalone (outside any HkScrollContainer) needs the `viewport` prop
  * to sense anything; without it the dock is lazy by design.
+ *
+ * ONE DOCK PER VIEWPORT: the stand-down rule covers NESTED docks (an
+ * inner dock under an enabled outer one is inert), but two SIBLING
+ * docks — both enabled, neither an ancestor of the other, resolving
+ * the same container viewport/host — would each paint a pill at the
+ * same bottom-center spot. The shipped grammar never builds that shape
+ * (the shell fallback dock wraps every page dock), but a hand-rolled
+ * bare-container composition must keep one dock per subtree.
  */
 export const HkScrollProgressDock = defineComponent({
   name: "HkScrollProgressDock",
@@ -211,10 +219,12 @@ export const HkScrollProgressDock = defineComponent({
      *  passes them statically (the HkScrollContainer prop precedent), so
      *  a runtime flip needs a remount and is not sensed. */
     disabled: { type: Boolean, default: false },
-    /** The element to sense when the dock is used STANDALONE. Wins over
-     *  the injected `HK_SCROLL_PROGRESS_VIEWPORT` (HkScrollContainer
-     *  provides it unconditionally). Omitted inside a container = the
-     *  container's viewport; omitted with no container = lazy. */
+    /** The element to sense when the dock is used STANDALONE. A NON-NULL
+     *  element wins over the injected `HK_SCROLL_PROGRESS_VIEWPORT`
+     *  (HkScrollContainer provides it unconditionally); an explicit
+     *  `null` (or an omission) defers to the injected viewport — the
+     *  `??` fallback below is deliberate, so passing `null` inside a
+     *  container keeps sensing it. Omitted with no container = lazy. */
     viewport: { type: Object as PropType<HTMLElement | null>, default: undefined },
     /** Idle window (ms) after the last scroll-offset change before the
      *  pill fades out. Read live; clamped to 300..3000. */

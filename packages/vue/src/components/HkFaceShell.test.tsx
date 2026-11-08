@@ -97,6 +97,11 @@ describe("HkFaceShell stage mode", () => {
     // The document host is GONE — that is the stage contract.
     expect(c.querySelector(".hk-scroll-container")).toBeNull();
     expect(c.querySelector(".hk-scroll-container-viewport")).toBeNull();
+    // …and so is the fallback scroll-progress dock (document-mode only —
+    // a stage face owns its own geometry, so the shell mounts no dock
+    // scope and provides no pill chrome at all).
+    expect(c.querySelector(".hk-scroll-progress-dock-scope")).toBeNull();
+    expect(c.querySelector(".hk-scroll-progress-dock")).toBeNull();
     // No padding wrapper anywhere: the content slot's first element IS
     // the main region's child (contentPadding is a document-mode prop).
     expect(main!.firstElementChild?.textContent).toBe("CONTENT");

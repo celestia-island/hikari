@@ -524,11 +524,11 @@ describe("HkScrollProgressDock", () => {
     const removedScroll: Array<[EventTarget, EventListener]> = [];
     const protoAdd = HTMLElement.prototype.addEventListener;
     const protoRemove = HTMLElement.prototype.removeEventListener;
-    HTMLElement.prototype.addEventListener = function (type, fn, opts) {
+    HTMLElement.prototype.addEventListener = function (this: HTMLElement, type: string, fn: EventListenerOrEventListenerObject, opts?: boolean | AddEventListenerOptions) {
       if (type === "scroll") addedScroll.push([this, fn as EventListener]);
       return protoAdd.call(this, type, fn, opts);
     };
-    HTMLElement.prototype.removeEventListener = function (type, fn, opts) {
+    HTMLElement.prototype.removeEventListener = function (this: HTMLElement, type: string, fn: EventListenerOrEventListenerObject, opts?: boolean | EventListenerOptions) {
       if (type === "scroll") removedScroll.push([this, fn as EventListener]);
       return protoRemove.call(this, type, fn, opts);
     };

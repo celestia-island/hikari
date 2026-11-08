@@ -92,7 +92,10 @@ export const HkAdminTablePage = defineComponent({
      *  set `false` to demote the page — lists then fall through to the
      *  nearest enabled dock above, if any. Layering: the shell master
      *  switch (HkFaceShell `scrollProgress`) > this prop > the dock's
-     *  own `disabled`. */
+     *  own `disabled`. Like every dock gate, the layering is RESOLVED
+     *  ONCE at the dock's setup — hosts pass these statically, and a
+     *  runtime flip needs a remount (the HkScrollContainer prop
+     *  precedent). */
     progressDock: { type: Boolean, default: true },
   },
   emits: {

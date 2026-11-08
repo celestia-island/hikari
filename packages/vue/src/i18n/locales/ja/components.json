@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "ドラッグして範囲を選択。ダブルクリック、Escape、Home でリセット",
   "hikari::loadMore.endTotal": "{n} 件すべて表示しました",
   "hikari::tablePage.totalCount": "全 {n} 件",
-  "hikari::scrollProgress.range": "{total} 件中 {from} ～ {to} 件目",
+  "hikari::scrollProgress.rangeHead": "{total} 件中 {from}",
+  "hikari::scrollProgress.rangeTail": "{to} 件目",
   "hikari::scrollProgress.single": "{total} 件中 {from} 件目"
 }

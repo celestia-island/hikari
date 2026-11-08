@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "드래그하여 범위를 선택하세요. 더블 클릭, Escape 또는 Home으로 초기화",
   "hikari::loadMore.endTotal": "총 {n}개 항목이 모두 표시되었습니다",
   "hikari::tablePage.totalCount": "총 {n}개",
-  "hikari::scrollProgress.range": "총 {total}개 중 {from}~{to}",
+  "hikari::scrollProgress.rangeHead": "총 {total}개 중 {from}",
+  "hikari::scrollProgress.rangeTail": "{to}",
   "hikari::scrollProgress.single": "총 {total}개 중 {from}"
 }

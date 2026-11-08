@@ -1,10 +1,11 @@
-import { computed, defineComponent, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, provide, ref, watch, type PropType } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import { useSidebarRail } from "../composables/useSidebarRail";
 import { provideMenuGroupState } from "../composables/useMenuGroupState";
 import HkSidebarRailSwap from "./HkSidebarRailSwap";
 import HkSidebarRailToggle, { isPointerOverRailToggle } from "./HkSidebarRailToggle";
+import HkScrollProgressDock, { HK_SCROLL_PROGRESS_ALLOWED } from "./HkScrollProgressDock";
 
 /** CSS-wide keywords. A shorthand rebuilt from one of them is NOT a
  * padding (`inherit 0 inherit` is rejected by every engine, measured in
@@ -236,13 +237,18 @@ export const HkFaceShell = defineComponent({
      *  `stage` renders the content bare — the face owns scrolling,
      *  canvases and floating layers. */
     contentMode: { type: String as PropType<"document" | "stage">, default: "document" },
-    /** Scroll-progress pill on the document viewport (2026-11): while a
-     *  registered list scrolls, the shell floats an "xx / xx" counter
-     *  near the viewport's bottom-center (HkScrollContainer
-     *  `scrollProgress`; lists register themselves — HkAdminTablePage
-     *  does it for every admin list — so hosts inherit the affordance
-     *  with zero per-page work). Default ON: the shell is the
-     *  system-wide default-on point. Pass `false` to run the face bare. */
+    /** Scroll-progress DOCK master switch (2026-11-09): the shell-level
+     *  on/off lever for every HkScrollProgressDock in the face —
+     *  provided to the subtree as `HK_SCROLL_PROGRESS_ALLOWED`, so a
+     *  `false` here turns a page's own dock lazy too (the shell >
+     *  page-level `progressDock` > the dock's own `disabled`). While on
+     *  (the default), the shell ALSO mounts its own fallback dock
+     *  around the document content: unmigrated pages and bare lists
+     *  still float the pill with zero per-page work, and a standard
+     *  page's own dock stands the fallback down (the nested-dock rule —
+     *  one pill, never two). Lists register themselves (HkTable /
+     *  HkCardList / HkAdminTablePage do it built-in). Pass `false` to
+     *  run the face bare. */
     scrollProgress: { type: Boolean, default: true },
     /** Content-area padding (inside the scroll viewport). Document mode
      *  only — a stage face owns its own geometry. Padding is applied to
@@ -301,6 +307,12 @@ export const HkFaceShell = defineComponent({
     // until an HkMenu reads it, and the mobile drawer's slot must see the
     // same one as the desktop sidebar.
     provideMenuGroupState();
+
+    // ── scroll-progress dock master switch ───────────────────────────
+    // The `scrollProgress` prop is now the FACE-LEVEL lever over every
+    // dock in the subtree (see the prop doc): provided once, statically
+    // — hosts pass it statically, the HkScrollContainer prop precedent.
+    provide(HK_SCROLL_PROGRESS_ALLOWED, props.scrollProgress);
 
     // ── desktop icon rail + hover peek (sidebarCollapsible) ──────────
     // SEMI-CONTROLLED rail state: a local session-only ref is the live
@@ -545,11 +557,20 @@ export const HkFaceShell = defineComponent({
             {props.contentMode === "stage" ? (
               renderContentStage()
             ) : (
-              <HScrollContainer class="s-admin-shell-scroll" scrollProgress={props.scrollProgress}>
-                {/* Padding lives INSIDE the scroll viewport (an inner
-                    wrapper) so card box-shadows are not clipped at the
-                    viewport edges. */}
-                <div style={contentStyle.value}>{renderContentStage()}</div>
+              <HScrollContainer class="s-admin-shell-scroll">
+                {/* The shell's FALLBACK dock (2026-11-09): wraps the
+                    padded content so unmigrated pages and bare lists
+                    still float the pill. A page that mounts its own dock
+                    (HkAdminTablePage's, by default) stands this fallback
+                    down via the nested-dock rule — one pill, never two.
+                    The scope is display: contents — the padding wrapper
+                    below stays the viewport's only layout box. */}
+                <HkScrollProgressDock>
+                  {/* Padding lives INSIDE the scroll viewport (an inner
+                      wrapper) so card box-shadows are not clipped at the
+                      viewport edges. */}
+                  <div style={contentStyle.value}>{renderContentStage()}</div>
+                </HkScrollProgressDock>
               </HScrollContainer>
             )}
           </main>

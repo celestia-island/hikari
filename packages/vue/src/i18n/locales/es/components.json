@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "Arrastra para seleccionar un rango; doble clic, Escape o Inicio restablecen",
   "hikari::loadMore.endTotal": "Se han listado los {n} elementos",
   "hikari::tablePage.totalCount": "{n} en total",
-  "hikari::scrollProgress.range": "Filas {from}–{to} de {total}",
+  "hikari::scrollProgress.rangeHead": "Filas {from}",
+  "hikari::scrollProgress.rangeTail": "{to} de {total}",
   "hikari::scrollProgress.single": "Fila {from} de {total}"
 }

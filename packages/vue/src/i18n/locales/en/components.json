@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "Drag to select a range; double-click, Escape or Home resets",
   "hikari::loadMore.endTotal": "All {n} items listed",
   "hikari::tablePage.totalCount": "{n} in total",
-  "hikari::scrollProgress.range": "Rows {from}–{to} of {total}",
+  "hikari::scrollProgress.rangeHead": "Rows {from}",
+  "hikari::scrollProgress.rangeTail": "{to} of {total}",
   "hikari::scrollProgress.single": "Row {from} of {total}"
 }

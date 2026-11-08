@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "Ziehen, um einen Bereich auszuwählen; Doppelklick, Escape oder Home setzt zurück",
   "hikari::loadMore.endTotal": "Alle {n} Einträge aufgelistet",
   "hikari::tablePage.totalCount": "{n} insgesamt",
-  "hikari::scrollProgress.range": "Zeilen {from}–{to} von {total}",
+  "hikari::scrollProgress.rangeHead": "Zeilen {from}",
+  "hikari::scrollProgress.rangeTail": "{to} von {total}",
   "hikari::scrollProgress.single": "Zeile {from} von {total}"
 }

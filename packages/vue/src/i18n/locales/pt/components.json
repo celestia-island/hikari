@@ -311,6 +311,7 @@
   "hikari::ribbon.dragHint": "Arraste para selecionar um intervalo; clique duplo, Escape ou Home redefine",
   "hikari::loadMore.endTotal": "Todos os {n} itens listados",
   "hikari::tablePage.totalCount": "{n} no total",
-  "hikari::scrollProgress.range": "Linhas {from}–{to} de {total}",
+  "hikari::scrollProgress.rangeHead": "Linhas {from}",
+  "hikari::scrollProgress.rangeTail": "{to} de {total}",
   "hikari::scrollProgress.single": "Linha {from} de {total}"
 }

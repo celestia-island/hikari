@@ -248,7 +248,7 @@
   "hikari::messageBox.promptTitle": "輸入",
   "hikari::loadMore.more": "載入更多",
   "hikari::loadMore.loading": "載入中…",
-  "hikari::loadMore.end": "到底啦",
+  "hikari::loadMore.end": "已全部列出",
   "hikari::tagInput.title": "標籤",
   "hikari::tagInput.search": "搜尋",
   "hikari::tagInput.empty": "沒有符合項目",
@@ -312,5 +312,9 @@
   "hikari::ribbon.reset": "重設範圍",
   "hikari::ribbon.moveWindow": "移動視窗",
   "hikari::ribbon.resizeWindow": "縮放視窗",
-  "hikari::ribbon.dragHint": "拖曳選取範圍；雙擊、Escape 或 Home 重設"
+  "hikari::ribbon.dragHint": "拖曳選取範圍；雙擊、Escape 或 Home 重設",
+  "hikari::loadMore.endTotal": "已全部列出，共計 {n} 條",
+  "hikari::tablePage.totalCount": "共 {n} 條",
+  "hikari::scrollProgress.range": "第 {from} ~ {to} 條，共 {total} 條",
+  "hikari::scrollProgress.single": "第 {from} 條，共 {total} 條"
 }

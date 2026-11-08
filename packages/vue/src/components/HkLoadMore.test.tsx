@@ -49,13 +49,25 @@ describe("HkLoadMore", () => {
     expect(c.querySelector(".hk-btn-ring")).not.toBeNull();
   });
 
-  it("end state swaps the button for the reached-the-end status note", () => {
+  it("end state swaps the button for the end sentence carrying the total", () => {
+    // User direction 2026-11-08: the end note IS the count sentence
+    // ("All 19 items listed") and the mono counter stands down beside it.
     const c = mount(h(HkLoadMore, { state: "end", shown: 19, total: 19 }));
     expect(c.querySelector("button.hk-btn")).toBeNull();
     const note = c.querySelector('[role="status"]');
     expect(note).not.toBeNull();
-    expect(note!.textContent).toContain("You've reached the end");
-    expect(c.querySelector(".hk-load-more-count")!.textContent).toBe("19 / 19");
+    expect(note!.textContent).toContain("All 19 items listed");
+    expect(c.querySelector(".hk-load-more-count")).toBeNull();
+  });
+
+  it("end state falls back to the delivered count when no total is declared", () => {
+    const c = mount(h(HkLoadMore, { state: "end", shown: 7 }));
+    expect(c.querySelector('[role="status"]')!.textContent).toContain("All 7 items listed");
+  });
+
+  it("end state without any count renders the generic end note", () => {
+    const c = mount(h(HkLoadMore, { state: "end" }));
+    expect(c.querySelector('[role="status"]')!.textContent).toContain("All items listed");
   });
 
   it("omits the counter entirely when shown/total are absent", () => {

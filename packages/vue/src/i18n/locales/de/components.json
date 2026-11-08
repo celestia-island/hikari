@@ -244,7 +244,7 @@
   "hikari::messageBox.promptTitle": "Eingabe",
   "hikari::loadMore.more": "Mehr laden",
   "hikari::loadMore.loading": "Wird geladen…",
-  "hikari::loadMore.end": "Das Ende ist erreicht",
+  "hikari::loadMore.end": "Alle Einträge aufgelistet",
   "hikari::tagInput.title": "Tags",
   "hikari::tagInput.search": "Suchen",
   "hikari::tagInput.empty": "Keine Treffer",
@@ -308,5 +308,9 @@
   "hikari::ribbon.reset": "Bereich zurücksetzen",
   "hikari::ribbon.moveWindow": "Fenster verschieben",
   "hikari::ribbon.resizeWindow": "Fenstergröße ändern",
-  "hikari::ribbon.dragHint": "Ziehen, um einen Bereich auszuwählen; Doppelklick, Escape oder Home setzt zurück"
+  "hikari::ribbon.dragHint": "Ziehen, um einen Bereich auszuwählen; Doppelklick, Escape oder Home setzt zurück",
+  "hikari::loadMore.endTotal": "Alle {n} Einträge aufgelistet",
+  "hikari::tablePage.totalCount": "{n} insgesamt",
+  "hikari::scrollProgress.range": "Zeilen {from}–{to} von {total}",
+  "hikari::scrollProgress.single": "Zeile {from} von {total}"
 }

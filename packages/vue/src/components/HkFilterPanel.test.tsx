@@ -376,3 +376,100 @@ describe("hkFieldMatches — the canonical combination semantics (2026-10-15)", 
     expect(hkFieldMatches("text", [{ key: "x", op: "approx" as const, value: "WEB" }], "my-web-tool")).toBe(true);
   });
 });
+
+describe("HkFilterPanel pinned fields (枚举, 2026-11-08)", () => {
+  const PINNED_FIELDS = [
+    { key: "tier", label: "Tier", kind: "text" as const, pinned: true },
+    { key: "agent", label: "Agent", kind: "select" as const, pinned: true, options: [{ value: "a1", label: "Agent One" }] },
+    { key: "tool", label: "Tool", kind: "text" as const, placeholder: "web_automation" },
+  ];
+
+  it("renders pinned fields as permanent rows ahead of any state", () => {
+    const c = mount(h(HkFilterPanel, { fields: PINNED_FIELDS, modelValue: [] }));
+    // Two pinned fields, zero state — the rows exist anyway, marked
+    // data-pinned, and the panel is NOT data-empty anymore.
+    const rows = c.querySelectorAll(".hk-filter-panel-row");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.getAttribute("data-pinned")).toBe("true");
+    expect(rows[1]!.getAttribute("data-pinned")).toBe("true");
+    const labels = [...c.querySelectorAll(".hk-filter-panel-field")].map((el) => el.textContent);
+    expect(labels).toEqual(["Tier", "Agent"]);
+    // Permanent furniture: NO drop verb on pinned rows.
+    expect(c.querySelector('[data-pinned="true"] .hk-filter-panel-remove')).toBeNull();
+    expect(c.querySelector(".hk-filter-panel")!.getAttribute("data-empty")).toBeNull();
+  });
+
+  it("a pinned edit appends its condition once, then patches in place", async () => {
+    let seen: HkFilterState | null = null;
+    const fields = [{ key: "tier", label: "Tier", kind: "text" as const, pinned: true }];
+    const c = mount(
+      h(HkFilterPanel, { fields, modelValue: [], "onUpdate:modelValue": (s: HkFilterState) => (seen = s) }),
+    );
+    const input = c.querySelector<HTMLInputElement>(".hk-filter-panel-row input")!;
+    input.value = "core";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    await Promise.resolve();
+    // First edit on an untouched pinned row APPENDS the condition.
+    expect(seen).toEqual([{ key: "tier", op: "approx", value: "core" }]);
+
+    const c2 = mount(
+      h(HkFilterPanel, {
+        fields,
+        modelValue: [{ key: "tier", op: "approx", value: "core" }],
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
+      }),
+    );
+    const input2 = c2.querySelector<HTMLInputElement>(".hk-filter-panel-row input")!;
+    input2.value = "edge";
+    input2.dispatchEvent(new Event("input", { bubbles: true }));
+    await Promise.resolve();
+    // The row is bound to the existing entry — edits patch it, never
+    // stack a second condition on the same pinned field.
+    expect(seen).toEqual([{ key: "tier", op: "approx", value: "edge" }]);
+  });
+
+  it("pinned fields never appear in the chooser; an all-pinned panel has no add verb", async () => {
+    let seen: HkFilterState | null = null;
+    const c = mount(
+      h(HkFilterPanel, { fields: PINNED_FIELDS, modelValue: [], "onUpdate:modelValue": (s: HkFilterState) => (seen = s) }),
+    );
+    c.querySelector(".hk-filter-panel-add")!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+    // Only the on-demand fields are offered.
+    const items = [...document.body.querySelectorAll(".hk-filter-add-item")].map((el) => el.textContent);
+    expect(items).toEqual(["Tool"]);
+
+    const only = mount(h(HkFilterPanel, { fields: PINNED_FIELDS.slice(0, 2), modelValue: [] }));
+    expect(only.querySelector(".hk-filter-panel-add")).toBeNull();
+    void seen;
+  });
+
+  it("surplus conditions on a pinned key render as ordinary removable rows", async () => {
+    let seen: HkFilterState | null = null;
+    const fields = [{ key: "tier", label: "Tier", kind: "text" as const, pinned: true }];
+    const c = mount(
+      h(HkFilterPanel, {
+        fields,
+        modelValue: [
+          { key: "tier", op: "eq", value: "core" },
+          { key: "tier", op: "approx", value: "edge" },
+        ],
+        "onUpdate:modelValue": (s: HkFilterState) => (seen = s),
+      }),
+    );
+    // One permanent bound row + ONE surplus row carrying a drop verb —
+    // nothing is silently dropped.
+    const rows = c.querySelectorAll(".hk-filter-panel-row");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.getAttribute("data-pinned")).toBe("true");
+    expect(rows[1]!.getAttribute("data-pinned")).toBeNull();
+    expect(rows[1]!.querySelector(".hk-filter-panel-remove")).not.toBeNull();
+    (rows[1]!.querySelector(".hk-filter-panel-remove") as HTMLElement).dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await Promise.resolve();
+    // The bound entry (the FIRST condition on the pinned key) survives.
+    expect(seen).toEqual([{ key: "tier", op: "eq", value: "core" }]);
+  });
+});

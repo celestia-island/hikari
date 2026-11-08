@@ -20,8 +20,9 @@ import "./HkInfiniteTail.scss";
  *   reads as "more is arriving", not "the page ended". In manual mode
  *   the load-more button morphs to its in-place spinner instead
  *   (HkLoadMore's own loading contract).
- * - `"end"` — the machine is exhausted: the muted end note (and the
- *   shown/total progress counter when the host passes them).
+ * - `"end"` — the machine is exhausted: the count-carrying end note
+ *   ("All N items listed", HkLoadMore's contract; the mono counter
+ *   stands down there).
  * - `"idle"` — more exists, nothing in flight. With `auto` (default)
  *   the invisible sentinel watches the viewport and emits `loadMore`
  *   as it approaches; with `auto={false}` the explicit load-more

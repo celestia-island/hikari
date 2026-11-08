@@ -244,7 +244,7 @@
   "hikari::messageBox.promptTitle": "Entrada",
   "hikari::loadMore.more": "Cargar más",
   "hikari::loadMore.loading": "Cargando…",
-  "hikari::loadMore.end": "Has llegado al final",
+  "hikari::loadMore.end": "Todos los elementos listados",
   "hikari::tagInput.title": "Etiquetas",
   "hikari::tagInput.search": "Buscar",
   "hikari::tagInput.empty": "Sin coincidencias",
@@ -308,5 +308,9 @@
   "hikari::ribbon.reset": "Restablecer rango",
   "hikari::ribbon.moveWindow": "Mover ventana",
   "hikari::ribbon.resizeWindow": "Redimensionar ventana",
-  "hikari::ribbon.dragHint": "Arrastra para seleccionar un rango; doble clic, Escape o Inicio restablecen"
+  "hikari::ribbon.dragHint": "Arrastra para seleccionar un rango; doble clic, Escape o Inicio restablecen",
+  "hikari::loadMore.endTotal": "Se han listado los {n} elementos",
+  "hikari::tablePage.totalCount": "{n} en total",
+  "hikari::scrollProgress.range": "Filas {from}–{to} de {total}",
+  "hikari::scrollProgress.single": "Fila {from} de {total}"
 }

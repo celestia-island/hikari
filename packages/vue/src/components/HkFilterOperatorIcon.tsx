@@ -24,9 +24,15 @@ const NAPPROX_PATHS = [
 const CUSTOM: Partial<Record<HkFilterOperator, string[]>> = {
   napprox: NAPPROX_PATHS,
   lt: ["m19 6-11 6 11 6"],
-  lte: ["m19 5-11 6 11 6", "M8 20h11"],
+  // The comparison underline rides y=19, NOT y=20: the chevron spans
+  // y5..17, so a y19 line centers the ink band at y12 — the SAME optical
+  // center lucide's Equal / EqualNot (paths y5..19) draw. The old y20
+  // lines dragged the ink to y5..20 and the ≷ glyphs sat visibly low
+  // against the equals family inside the 28px operator toggles (user
+  // report 2026-11-08: ≥/≤ 没有与 = 垂直对齐).
+  lte: ["m19 5-11 6 11 6", "M8 19h11"],
   gt: ["m5 6 11 6-11 6"],
-  gte: ["m5 5 11 6-11 6", "M5 20h11"],
+  gte: ["m5 5 11 6-11 6", "M5 19h11"],
 };
 
 const LUCIDE: Partial<Record<HkFilterOperator, typeof Equal>> = {

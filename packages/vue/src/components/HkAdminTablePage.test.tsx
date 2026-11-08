@@ -138,4 +138,61 @@ describe("HkAdminTablePage", () => {
     expect(got[0]![0]).toBe(rows[0]);
     expect(got[0]![1]).toBe(btn);
   });
+
+  it("renders the count readout in the header, preferring the declared total", () => {
+    // User direction 2026-11-08: every standard list names its size —
+    // the scaffold owns the "N in total" wording so pages stop
+    // hand-rolling their own count spans.
+    const c = mount(
+      h(HkAdminTablePage, {
+        title: "T",
+        rows: Array.from({ length: 12 }, (_, i) => ({ name: `r${i}` })),
+        columns: COLS,
+        total: 500,
+      }),
+    );
+    const readout = c.querySelector('[data-testid="hk-admin-table-page-count"]');
+    expect(readout).not.toBeNull();
+    expect(readout!.textContent).toBe("500 in total");
+  });
+
+  it("falls back to the delivered row count when no total is declared", () => {
+    const c = mount(
+      h(HkAdminTablePage, { title: "T", rows: [{ name: "a" }, { name: "b" }], columns: COLS }),
+    );
+    expect(c.querySelector('[data-testid="hk-admin-table-page-count"]')!.textContent).toBe("2 in total");
+  });
+
+  it("hides the readout on an empty list and honors countReadout:false", () => {
+    const empty = mount(h(HkAdminTablePage, { title: "T", rows: [], columns: COLS }));
+    expect(empty.querySelector('[data-testid="hk-admin-table-page-count"]')).toBeNull();
+    const optedOut = mount(
+      h(HkAdminTablePage, { title: "T", rows: [{ name: "a" }], columns: COLS, countReadout: false }),
+    );
+    expect(optedOut.querySelector('[data-testid="hk-admin-table-page-count"]')).toBeNull();
+  });
+
+  it("renders the readout beside page actions, rightmost", () => {
+    const slots = { actions: () => h("button", { class: "page-action" }, "Do") };
+    const c = mount(
+      h(HkAdminTablePage, { title: "T", rows: [{ name: "a" }], columns: COLS }, slots),
+    );
+    const header = c.querySelector(".hk-page-header")!;
+    expect(header.querySelector("button.page-action")).not.toBeNull();
+    // The count span trails the page's own actions inside the header row.
+    const actions = header.querySelector(".hk-page-header-actions") ?? header;
+    expect(actions.textContent).toContain("1 in total");
+  });
+
+  it("keeps the headerless actions band for a bare readout", () => {
+    // No title: the band is the readout's only host — one slim right
+    // aligned row, never a second stacked header (安全扫描 report,
+    // 2026-11-08).
+    const c = mount(
+      h(HkAdminTablePage, { rows: [{ name: "a" }], columns: COLS }),
+    );
+    const readout = c.querySelector('[data-testid="hk-admin-table-page-count"]');
+    expect(readout).not.toBeNull();
+    expect(readout!.textContent).toBe("1 in total");
+  });
 });

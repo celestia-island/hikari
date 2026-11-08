@@ -26,6 +26,13 @@ import { describe, expect, it } from "vitest";
  *   4. interaction faces: hover/press feedback exists on all three
  *      (checkbox hover was missing entirely; radio hover had no press
  *      twin) and the off track is a filled neutral, not a bare surface.
+ *   5. label first-line anchoring: checkbox/radio pin the box to the
+ *      MIDDLE OF THE LABEL'S FIRST LINE BOX instead of the middle of the
+ *      whole label block, so a wrapped option no longer floats its box
+ *      between the lines — and a host that used to re-align the row with
+ *      `align-items: flex-start` (which parked the box on the line's top
+ *      edge, ~2px off) no longer has to. See the "label first-line
+ *      anchoring" block for the three-way arithmetic this pins.
  *
  * The rules below are parsed out of the COMPILED css (not the .scss
  * source) so a rule that fails to compile can never count as present.
@@ -50,8 +57,15 @@ function rules(css: string): Rule[] {
   const out: Rule[] = [];
   for (const match of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const selector = match[1]!.trim();
-    // Keep control rules; the rtl mirrors lead with an attribute selector.
-    if (!selector.startsWith(".hk-") && !selector.startsWith("[dir=")) continue;
+    // Keep control rules; the rtl mirrors lead with an attribute selector,
+    // and HkRadio's size steps nest as `[data-size=…] .hk-radio-box`.
+    if (
+      !selector.startsWith(".hk-") &&
+      !selector.startsWith("[dir=") &&
+      !selector.startsWith("[data-size=")
+    ) {
+      continue;
+    }
     out.push({ selector, body: match[2]! });
   }
   return out;
@@ -94,6 +108,43 @@ function valueOf(body: string, prop: string): string {
   const m = body.match(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`));
   expect(m, `declaration \`${prop}\``).not.toBeNull();
   return m![1]!.trim();
+}
+
+/** `var(--token, fallback)` → its two halves; a literal value fails loudly. */
+function cssVar(body: string, prop: string): { token: string; fallback: string } {
+  const decl = valueOf(body, prop);
+  const m = decl.match(/^var\((--[\w-]+),\s*(.+)\)$/);
+  expect(m, `\`${prop}: ${decl}\` must read a token with a fallback`).not.toBeNull();
+  return { token: m![1]!, fallback: m![2]!.trim() };
+}
+
+/**
+ * `calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2)` → the four moving
+ * parts: the label line-height coefficient, the label font token + fallback,
+ * and the box term. Every one of them is checked against its home sheet in
+ * "label first-line anchoring" below, so the formula can never drift away
+ * from the label typography or the box scale it rides on.
+ */
+function offsetTerms(body: string): {
+  lineHeight: number;
+  token: string;
+  fallback: string;
+  box: string;
+} {
+  const decl = valueOf(body, "margin-block-start");
+  const m = decl.match(
+    /^calc\(\(([\d.]+) \* var\((--[\w-]+),\s*([^)]+)\) - ([\d.]+rem)\) \/ 2\)$/,
+  );
+  expect(
+    m,
+    `first-line offset \`${decl}\` must stay "(line-height × label font − box) / 2"`,
+  ).not.toBeNull();
+  return {
+    lineHeight: parseFloat(m![1]!),
+    token: m![2]!,
+    fallback: m![3]!.trim(),
+    box: m![4]!,
+  };
 }
 
 const checkbox = rules(compile(resolve(componentDir, "HkCheckbox.scss"), { style: "expanded" }).css);
@@ -152,6 +203,115 @@ describe("HkRadio interaction parity", () => {
     const body = find(radio, ".hk-radio:not([data-disabled]):active .hk-radio-box").body;
     expect(valueOf(body, "scale")).toBe("0.9");
     expect(valueOf(find(radio, ".hk-radio-box").body, "transition")).toContain("scale");
+  });
+});
+
+describe("label first-line anchoring", () => {
+  // HkLabel owns BOTH numbers the offset rides on: the label line box
+  // (`line-height`) and the per-size font size. Compile that sheet here so
+  // the pairing is checked against the real label, not a copy of its numbers.
+  const labelSheet = rules(
+    compile(resolve(componentDir, "HkLabel.scss"), { style: "expanded" }).css,
+  );
+  const labelLineHeight = parseFloat(valueOf(find(labelSheet, ".hk-label").body, "line-height"));
+  const labelFont = (selector: string) => cssVar(find(labelSheet, selector).body, "font-size");
+
+  it.each([
+    ["HkCheckbox", checkbox, ".hk-checkbox"],
+    ["HkRadio", radio, ".hk-radio"],
+  ])("%s pins the row to the first line, not the block", (_name, all, selector) => {
+    // `center` rode the middle of the whole label block (a wrapped option
+    // floated its box between the lines); `flex-start` alone parks the box on
+    // the line's TOP edge (~2px high/low depending on the host font). The
+    // pair — flex-start plus the offsets below — is the contract.
+    expect(valueOf(find(all, selector).body, "align-items")).toBe("flex-start");
+  });
+
+  // Each row pairs the offset rule with the label size it reads and the box
+  // it centers; the box size is read from the box's OWN rule, so changing the
+  // box scale without updating the offset fails here.
+  const rows: Array<[string, Rule[], string, string, string]> = [
+    ["checkbox md", checkbox, ".hk-checkbox:has(.hk-label) .hk-checkbox-box", ".hk-label", ".hk-checkbox-box"],
+    [
+      "checkbox sm",
+      checkbox,
+      ".hk-checkbox-sm:has(.hk-label) .hk-checkbox-box",
+      ".hk-label.hk-label-sm",
+      ".hk-checkbox-sm .hk-checkbox-box",
+    ],
+    [
+      "checkbox lg",
+      checkbox,
+      ".hk-checkbox-lg:has(.hk-label) .hk-checkbox-box",
+      ".hk-label.hk-label-lg",
+      ".hk-checkbox-lg .hk-checkbox-box",
+    ],
+    ["radio md", radio, ".hk-radio:has(.hk-label) .hk-radio-box", ".hk-label", "[data-size=md] .hk-radio-box"],
+    [
+      "radio sm",
+      radio,
+      ".hk-radio[data-size=sm]:has(.hk-label) .hk-radio-box",
+      ".hk-label.hk-label-sm",
+      "[data-size=sm] .hk-radio-box",
+    ],
+    [
+      "radio lg",
+      radio,
+      ".hk-radio[data-size=lg]:has(.hk-label) .hk-radio-box",
+      ".hk-label.hk-label-lg",
+      "[data-size=lg] .hk-radio-box",
+    ],
+  ];
+
+  it.each(rows)(
+    "%s offset is half of (one label line − box), in the label's own units",
+    (_name, all, offsetSelector, labelSelector, boxSelector) => {
+      const terms = offsetTerms(find(all, offsetSelector).body);
+      const font = labelFont(labelSelector);
+      const boxBody = find(all, boxSelector).body;
+      const boxPx = toPx(valueOf(boxBody, "width"));
+      expect(toPx(valueOf(boxBody, "height")), "box stays square").toBe(boxPx);
+
+      // The formula and the sheets it serves must agree on every input.
+      expect(terms.lineHeight, "line-height coefficient mirrors HkLabel").toBe(labelLineHeight);
+      expect(terms.token, "label font token").toBe(font.token);
+      expect(terms.fallback, "label font token fallback").toBe(font.fallback);
+      expect(toPx(terms.box), "box term mirrors the box's own width").toBe(boxPx);
+
+      // Structure: the offset is HALF the leftover between one line box and
+      // the box, i.e. the box midline lands on the line midline — exactly
+      // where `align-items: center` put it for a single-line label. Dropping
+      // the `/ 2` (box top on the line top) or over-correcting fails here.
+      const lineBoxPx = labelLineHeight * toPx(font.fallback);
+      const declaredOffset = (terms.lineHeight * toPx(terms.fallback) - toPx(terms.box)) / 2;
+      expect(declaredOffset).toBeCloseTo((lineBoxPx - boxPx) / 2, 6);
+      expect(declaredOffset, "box must be shorter than one line box").toBeGreaterThan(0);
+    },
+  );
+
+  it.each([
+    ["checkbox", checkbox, [
+      ".hk-checkbox:has(.hk-label) .hk-checkbox-box",
+      ".hk-checkbox-sm:has(.hk-label) .hk-checkbox-box",
+      ".hk-checkbox-lg:has(.hk-label) .hk-checkbox-box",
+    ]],
+    ["radio", radio, [
+      ".hk-radio:has(.hk-label) .hk-radio-box",
+      ".hk-radio[data-size=sm]:has(.hk-label) .hk-radio-box",
+      ".hk-radio[data-size=lg]:has(.hk-label) .hk-radio-box",
+    ]],
+  ])("%s offset is gated on a label and is the only margin on the box", (_name, all, expected) => {
+    // Two facts at once: (a) every offset rule carries the `:has(.hk-label)`
+    // gate — a label-less control (selection column, a bare box beside a
+    // host's own caption) has no line box to ride and must keep its old
+    // footprint; (b) no other rule in the sheet touches the box's margin, so
+    // a smuggled more-specific `margin-*` override cannot silently win at
+    // runtime while the assertions above keep reading the pinned rules.
+    const marginRules = all.filter((r) => /(?:^|;)\s*margin(-[a-z-]+)?\s*:/.test(r.body));
+    expect(marginRules.map((r) => r.selector).sort()).toEqual([...expected].sort());
+    for (const rule of marginRules) {
+      expect(rule.selector).toContain(":has(.hk-label)");
+    }
   });
 });
 

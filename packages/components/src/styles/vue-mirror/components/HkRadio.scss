@@ -34,7 +34,13 @@
 
 .hk-radio {
   display: inline-flex;
-  align-items: center;
+  /* First-line anchored (house parity: HkCheckbox). `center` used to ride the
+   * middle of the whole label block, so a wrapped option floated its box
+   * between the lines; hosts then re-aligned it with `flex-start` and parked
+   * the box on the line's top edge, 1.5px above the text's optical middle. The
+   * offset below puts it back on the first line's middle and is a no-op for
+   * one-line options (every size step lands where `center` did). */
+  align-items: flex-start;
   /* House parity (HkCheckbox/HkSwitch): keeps the box on the text's
    * visual midline when a radio row is lifted out of the group into an
    * inline text context. No-op inside the flex group. */
@@ -91,6 +97,27 @@
 
 .hk-radio:not([data-disabled]):hover .hk-radio-box:not([data-checked]) {
   border-color: var(--hi-color-primary);
+}
+
+/* ---------- first-line anchoring (house parity: HkCheckbox) ---------- */
+
+/* Same anatomy as HkCheckbox's box offset — one line box tall (HkLabel pins
+ * `line-height: 1.5`), the box rides its vertical middle, so the box is
+ * pushed down by (1.5 × label font-size − box) / 2 and a wrapped option keeps
+ * its box on the first line. Gated on :has(.hk-label) so a label-less radio
+ * keeps its old footprint; the styles contract test pins the coefficient
+ * against HkLabel.scss and each box term against the [data-size] rules
+ * above. */
+.hk-radio:has(.hk-label) .hk-radio-box {
+  margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
+}
+
+.hk-radio[data-size="sm"]:has(.hk-label) .hk-radio-box {
+  margin-block-start: calc((1.5 * var(--text-xs, 0.75rem) - 0.875rem) / 2);
+}
+
+.hk-radio[data-size="lg"]:has(.hk-label) .hk-radio-box {
+  margin-block-start: calc((1.5 * var(--text-md, 1rem) - 1.375rem) / 2);
 }
 
 /* Press feedback (house parity: HkCheckbox box / HkSwitch thumb). */

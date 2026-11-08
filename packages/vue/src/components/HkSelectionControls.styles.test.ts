@@ -73,8 +73,55 @@ interface Rule {
 const PARSE_LEFTOVER: string[] = [];
 
 /** At-rules whose body must be RULES, so a declaration arriving there is a
- * desync rather than content. */
-const GROUPING_AT_RULE = /^@(?:media|supports|layer|container|scope|starting-style|document|keyframes)\b/i;
+ * desync rather than content. `@font-face` / `@property` / `@page` legitimately
+ * hold declarations and are deliberately absent. */
+const GROUPING_AT_NAMES = new Set([
+  "media",
+  "supports",
+  "layer",
+  "container",
+  "scope",
+  "starting-style",
+  "document",
+  "keyframes",
+]);
+
+/** The DECODED, lowercased at-keyword of a prelude (`@\\6d edia all` → `media`),
+ * or "" when the prelude is not an at-rule at all. Every "is this an at-rule?"
+ * decision the walker makes comes from here, and the CSS tokenizer decodes
+ * `\\xx` BEFORE it compares the name: review put
+ * `@\\70 roperty --text-base { … initial-value: 50% }` in front of Chrome, which
+ * registered the property and moved the box +155.250px, while the reader
+ * compared the RAW prelude, classified the block as a plain rule, dropped it,
+ * left `PARSE_LEFTOVER` empty and stayed green — the same escape blind spot the
+ * `u\\72 l(` row closed for the url token. */
+function atNameOf(prelude: string): string {
+  const text = prelude.trimStart();
+  let at = 0;
+  let head = "";
+  // The `@` itself may be escaped (`\40 layer` IS `@layer`), so the leading
+  // run is decoded before the first character is judged.
+  if (text[0] === "@") {
+    head = "@";
+    at = 1;
+  }
+  while (at < text.length) {
+    const char = text[at]!;
+    if (char === "\\") {
+      const stop = escapeEnd(text, at);
+      head += escapeChar(text.slice(at, stop));
+      at = stop;
+      continue;
+    }
+    if (IDENT_CHAR.test(char)) {
+      head += char;
+      at += 1;
+      continue;
+    }
+    break;
+  }
+  return head.startsWith("@") ? head.slice(1).toLowerCase() : "";
+}
 
 /** Index just past the `)` of the `url(` token starting at `start`, skipping
  * quoted runs and escapes. An UNQUOTED url token may contain `}` — CSS ends it
@@ -389,7 +436,7 @@ function rules(css: string): Rule[] {
       // Chrome applied the span rule and moved the label 8.000px. Drop the
       // statement, keep the rule. (Inside a rule body a `;` is a declaration
       // separator, so only an `@`-prelude is dropped here.)
-      if (/^\s*@/.test(buffer)) buffer = "";
+      if (atNameOf(buffer)) buffer = "";
       else buffer += char;
       continue;
     }
@@ -410,12 +457,12 @@ function rules(css: string): Rule[] {
       // recorded and the aggregate assertion reddens.
       const selectorish = prelude.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, "\"\"");
       if (
-        !prelude.startsWith("@") &&
+        !atNameOf(prelude) &&
         (selectorish.includes(";") || /:\s*$/.test(selectorish) || selectorish.includes("&"))
       ) {
         PARSE_LEFTOVER.push(`unclassifiable block: ${prelude.slice(0, 120)}`);
       }
-      stack.push({ prelude, atRule: prelude.startsWith("@") });
+      stack.push({ prelude, atRule: atNameOf(prelude) !== "" });
       continue;
     }
     if (char !== "}") {
@@ -441,7 +488,7 @@ function rules(css: string): Rule[] {
     // must contain RULES, so direct text in one is a desync, never content;
     // `@font-face` / `@property` / `@page` legitimately hold declarations and
     // are deliberately not in the set.
-    if (frame?.atRule && buffer.trim() && GROUPING_AT_RULE.test(frame.prelude)) {
+    if (frame?.atRule && buffer.trim() && GROUPING_AT_NAMES.has(atNameOf(frame.prelude))) {
       PARSE_LEFTOVER.push(
         `declaration in ${frame.prelude}: ${buffer.trim().slice(0, 120)}`,
       );
@@ -458,7 +505,19 @@ function rules(css: string): Rule[] {
     // in this package emits a rule the assertions below cannot name, so an
     // unclassifiable rule should fail loudly instead of vanishing.
     const media = stack.filter((f) => f.atRule).map((f) => f.prelude).join(" ");
-    out.push(media ? { selector: frame.prelude, body, media } : { selector: frame.prelude, body });
+    // The selector is DECODED here, once, for the same reason the tokenizer
+    // decodes before it matches: review put `sp\61 n:first-of-type
+    // { margin-block-start: 8px !important }` and
+    // `[cl\61 ss]:first-of-type { … }` in front of Chrome — both applied
+    // (6.500px on every probe, and `sp\61 n … align-self: center !important`
+    // restored the −42.000px grid offset) while every reader below compared the
+    // RAW text: `couldMatchAPart` saw a tag no phrasing set contains, the
+    // attribute lookup missed `class`, `subjectSelector`'s two-code-unit escape
+    // step turned the hex terminator into a descendant combinator, and the
+    // `hk-*` token tests could not even see `\68 k-checkbox`. One decode point
+    // beats four decoders that can disagree.
+    const selector = decodeEscapes(frame.prelude);
+    out.push(media ? { selector, body, media } : { selector, body });
   }
   if (stack.length || buffer.trim()) {
     PARSE_LEFTOVER.push(
@@ -1101,7 +1160,7 @@ const PAINTS_ONLY =
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
- * replaced element as well turns the table from 56 rows into 977 — 613 of the
+ * replaced element as well turns the table from 54 rows into 977 — 613 of the
  * rows are `@keyframes` steps and the other 364 are element/registration rows
  * (`svg` 154, `input` 51, `p { margin: 0 }` …), 308 of them new, i.e. a table
  * nobody reads.
@@ -1112,7 +1171,7 @@ const PAINTS_ONLY =
  *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
  *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
  *   styling that no label can ever match: lifting the unscoped restriction
- *   alone takes this table from 56 rows to 262 (measured), one row per host
+ *   alone takes this table from 54 rows to 262 (measured), one row per host
  *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows;
  * - the non-text-level phrasing controls (`button`, `select`, `textarea`,
  *   `progress`, `meter`, `object`, `map`, `datalist`, `math`, `script`,
@@ -1363,7 +1422,14 @@ function scanText(css: string): string {
 function atPropertyMovers(label: string, css: string): string[] {
   const rows: string[] = [];
   const bare = stripComments(css);
-  for (const head of [...bare.matchAll(/@property\b/gi)]) {
+  // The at-KEYWORD is read with the identifier scanner and decoded for the same
+  // reason the property name is: `@\\70 roperty` IS `@property` to Chrome, and a
+  // literal `@property` regex is blind to it (measured: +155.250px on a
+  // 190.125px control, guard green, `PARSE_LEFTOVER` empty).
+  for (const head of [...bare.matchAll(/@[\w\\-]+/g)]) {
+    if (identText(bare, head.index + 1, identEnd(bare, head.index + 1)).toLowerCase() !== "property") {
+      continue;
+    }
     // The name is read with the identifier scanner and DECODED: `@property
     // --text\2d base { … }` registers `--text-base` in Chrome, and a `[--\w]+`
     // regex would not even find the block. The body is taken by brace-matching,
@@ -1371,7 +1437,7 @@ function atPropertyMovers(label: string, css: string): string[] {
     // the browser, and truncating there let the reader judge a safe prefix while
     // Chrome kept the LAST `initial-value` of the real body (measured +24.703px,
     // guard green).
-    let at = head.index + head[0].length;
+    let at = identEnd(bare, head.index + 1);
     while (at < bare.length && /\s/.test(bare[at]!)) at += 1;
     const nameEnd = identEnd(bare, at);
     const name = identText(bare, at, nameEnd).toLowerCase();
@@ -2529,7 +2595,7 @@ describe("label first-line anchoring", () => {
     // (measured: the label 8px low with this table byte-identical), and the
     // same went for `:where(*) { padding: 0 }` → `4px`.
     //
-    // The 56 rows fall into five shapes, and the count of each is part of the
+    // The 54 rows fall into five shapes, and the count of each is part of the
     // claim, so a new shape cannot slip in unnoticed — though a new RULE of a
     // shape already here still shows up only as a row-count change (that is
     // what the `@property` reader and the string-aware stripping above are
@@ -2553,9 +2619,10 @@ describe("label first-line anchoring", () => {
     //   `.s-about-modal-backdrop > *` (`height: 100%`), so a control placed
     //   DIRECTLY under either parent loses the first-line anchoring. The
     //   package renders none there (see the migration notes).
-    // * ELEVEN descendant rows on phrasing content — `code`, `.hk-markdown
-    //   code`, `.hk-menu-item a`, `.icon-grid small`,
-    //   `.hk-diff-viewer__hunk-stats em`, … — plus the
+    // * NINE descendant rows on phrasing content — `code`, `.hk-menu-item a`,
+    //   `.icon-grid small`, `.hk-diff-viewer__hunk-stats em`, … (two fewer
+    //   than before: `.hk-markdown a:focus-visible` carried only
+    //   `outline*`, which is in `PAINTS_ONLY` now) — plus the
     //   `label:where(:not([class^=hk-])…)` host reset. These are the rows that
     //   make `a { line-height: 2 }` impossible to ship silently: a label may
     //   hold a link, so a rule on a link moves the row.
@@ -3426,6 +3493,12 @@ describe("every reader the guard added is pinned by a payload", () => {
     "span:last-child { color: red; & { margin-block-start: 8px } }",
     "span:last-child { & { margin-block-start: 8px } }",
     "span:last-child { &:last-child { margin-block-start: 8px } }",
+    // The two below carry ONE of the three disjuncts on purpose. Every payload
+    // above also contains a `:`, so the `;` arm and the `:` arm each covered for
+    // the other and deleting either left the suite green (review's MA/MB).
+    // These pin the arms one at a time.
+    "span:last-child { color: red; --b { } }",
+    "span:last-child { --zz: { } }",
   ])("%s is recorded as an unclassifiable block", (sheet) => {
     isolated(() => {
       const before = PARSE_LEFTOVER.length;
@@ -3447,6 +3520,96 @@ describe("every reader the guard added is pinned by a payload", () => {
       const before = PARSE_LEFTOVER.length;
       rules(sheet);
       expect(PARSE_LEFTOVER.slice(before)).toEqual([]);
+    });
+  });
+
+  it("an escaped at-keyword is the at-rule it decodes to", () => {
+    isolated(() => {
+      // `@\70 roperty` IS `@property` to Chrome — it registered the property and
+      // moved the box +155.250px while the reader compared the RAW prelude and
+      // classified the block as a plain rule (guard green, leftover empty).
+      expect(
+        atPropertyMovers(
+          "sheet",
+          String.raw`@\70 roperty --text-base { syntax: "*"; inherits: false; initial-value: 1rem }`,
+        ),
+      ).toEqual([]);
+      expect(
+        atPropertyMovers(
+          "sheet",
+          String.raw`@\70 roperty --text-base { syntax: "*"; inherits: false; initial-value: 50% }`,
+        ),
+      ).toHaveLength(1);
+      // A statement at-rule with the `@` escaped is still a STATEMENT: left in
+      // the buffer it glues onto the next rule's prelude and both vanish.
+      for (const sheet of [
+        String.raw`@layer zz; span:first-of-type { margin-block-start: 8px !important }`,
+        String.raw`\40 layer zz; span:first-of-type { margin-block-start: 8px !important }`,
+      ]) {
+        expect(elementOnlyMovers("sheet", rules(sheet)), sheet).toHaveLength(1);
+      }
+      // …and the grouping frame is recognized by its DECODED name, so text in it
+      // is recorded instead of disappearing into the frame.
+      for (const sheet of [
+        "@media all { margin-block-start: 8px }",
+        String.raw`@\6d edia all { margin-block-start: 8px }`,
+      ]) {
+        const before = PARSE_LEFTOVER.length;
+        rules(sheet);
+        expect(PARSE_LEFTOVER.slice(before).join("\n"), sheet).toContain("declaration in @");
+      }
+    });
+  });
+
+  it("a GLOBAL subject is case-insensitive like the element it names", () => {
+    // HTML type selectors are ASCII case-insensitive, and `writing-mode` on the
+    // root inherits into the label — the docblock above files
+    // `html { writing-mode: vertical-rl }` as a must-be-red payload. Only the
+    // lowercased global path can deliver it: the tag path drops to
+    // `REPLACED_CONTENT`/`PHRASING_CONTENT`, neither of which holds `html`, so
+    // without the lowercase the `HTML` spelling is invisible (measured: one red
+    // row with it, 197/197 green without).
+    for (const sheet of [
+      "html { writing-mode: vertical-rl }",
+      "HTML { writing-mode: vertical-rl }",
+      "Html { writing-mode: vertical-rl }",
+    ]) {
+      expect(elementOnlyMovers("sheet", rules(sheet)), sheet).toHaveLength(1);
+    }
+  });
+
+  it("an escaped element or attribute name still reaches a part", () => {
+    // The tokenizer decodes `\xx` before it matches, so `sp\61 n` IS `span` and
+    // `[cl\61 ss]` IS `[class]`: each of these moved the label 6.500px (and the
+    // `align-self` one restored the −42.000 grid offset) with the reader
+    // comparing raw text.
+    for (const sheet of [
+      String.raw`span:first-of-type { margin-block-start: 8px !important }`,
+      String.raw`sp\61 n:first-of-type { margin-block-start: 8px !important }`,
+      String.raw`[class]:first-of-type { margin-block-start: 8px !important }`,
+      String.raw`[cl\61 ss]:first-of-type { margin-block-start: 8px !important }`,
+      String.raw`sp\61 n:first-of-type { align-self: center !important }`,
+    ]) {
+      expect(elementOnlyMovers("sheet", rules(sheet)), sheet).toHaveLength(1);
+    }
+  });
+
+  it("each `unconsumable text` tripwire fires on a payload", () => {
+    // Four recording sites, four payloads: without these only the
+    // `unclassifiable block` one was pinned (review's M7/M17/M18/M19 all left
+    // the suite green).
+    isolated(() => {
+      const cases: Array<[string, string]> = [
+        ["stray } after", "span { color: red } margin-block-start: 8px }"],
+        ["declaration in @media all", "@media all { margin-block-start: 8px }"],
+        ["1 frame(s) + 0 char(s) left", "@media all { span { color: red }"],
+        ["1 frame(s) + ", "span { margin-block-start: 8px"],
+      ];
+      for (const [needle, sheet] of cases) {
+        const before = PARSE_LEFTOVER.length;
+        rules(sheet);
+        expect(PARSE_LEFTOVER.slice(before).join("\n"), sheet).toContain(needle);
+      }
     });
   });
 
@@ -3537,7 +3700,14 @@ describe("every reader the guard added is pinned by a payload", () => {
     // importTargets: a url token target survives its `;` (and only a real
     // top-level statement counts).
     expect(importTargets("@import url(a;b);")).toEqual(["url(a;b)"]);
-    // rules(): an escaped brace is part of a selector, not a block delimiter.
-    expect(rules(".zz\\{ { margin-block-start: 8px }").map((r) => r.selector)).toEqual([".zz\\{"]);
+    // rules(): an escaped brace is part of a selector, not a block delimiter —
+    // and the selector comes back DECODED, the way Chrome matches it (`.zz\{`
+    // is the class `zz{`), because every reader below compares decoded text.
+    expect(rules(".zz\\{ { margin-block-start: 8px }").map((r) => r.selector)).toEqual([".zz{"]);
+    // The `hk-*` token tests read `className` too, so an erased spelling must
+    // land on the same string as its plain form.
+    expect(rules(String.raw`.\68 k-checkbox { color: red }`).map((r) => r.selector)).toEqual([
+      ".hk-checkbox",
+    ]);
   });
 });

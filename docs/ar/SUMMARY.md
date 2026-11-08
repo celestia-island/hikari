@@ -13,6 +13,7 @@
 
 # التصميم
 - [نظرة عامة](./design/overview.md)
+- [هيكل الصفحة: قواعد شريط الإجراءات](./design/page-chrome.md)
 
 # النظام
 - [نظرة عامة](./system/overview.md)

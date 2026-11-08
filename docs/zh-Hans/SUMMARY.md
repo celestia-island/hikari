@@ -13,6 +13,7 @@
 
 # 设计
 - [概览](./design/overview.md)
+- [页面骨架：动作区语法](./design/page-chrome.md)
 
 # 系统
 - [概览](./system/overview.md)

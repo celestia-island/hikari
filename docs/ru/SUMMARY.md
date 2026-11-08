@@ -13,6 +13,7 @@
 
 # Дизайн
 - [Обзор](./design/overview.md)
+- [Каркас страницы: грамматика панели действий](./design/page-chrome.md)
 
 # Система
 - [Обзор](./system/overview.md)

@@ -13,6 +13,7 @@
 
 # Diseño
 - [Descripción general](./design/overview.md)
+- [Cromo de página: la gramática de la barra de acciones](./design/page-chrome.md)
 
 # Sistema
 - [Descripción general](./system/overview.md)

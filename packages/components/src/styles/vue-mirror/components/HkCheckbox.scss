@@ -16,6 +16,12 @@
 
 .hk-checkbox {
   display: inline-flex;
+  /* Fallback anatomy: centering the box against the label block is what every
+   * engine and every host saw before first-line anchoring, and it needs no
+   * `:has()` support. A labeled control on a `:has()`-capable engine is
+   * handled by the first-line rules below, which move the BOX (`align-self`)
+   * and leave this line alone; a label-less control keeps it on every
+   * engine. */
   align-items: center;
   /* When the control sits INLINE among text (not in a host flex row), the
    * default `vertical-align: baseline` parks the inline-flex's bottom edge
@@ -38,6 +44,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* The first-line offset below reads the box's width as its BORDER-BOX
+   * height, so the sheet declares the sizing itself instead of inheriting it
+   * from the host reset: a consumer importing this sheet without a global
+   * `border-box` would otherwise inflate the box by its 1px border and land
+   * the offset 1px low. */
+  box-sizing: border-box;
   width: 1.125rem;
   height: 1.125rem;
   border-radius: var(--radius-sm, 4px);
@@ -65,6 +77,201 @@
     width: 1.375rem;
     height: 1.375rem;
   }
+}
+
+/* ---------- first-line anchoring ---------- */
+
+/* A labeled control pins its box to the MIDDLE OF THE LABEL'S FIRST LINE BOX
+ * instead of the middle of the whole label block. `center` rode the block, so
+ * a two- or three-line option floated the box between the lines — hosts
+ * re-aligned the row themselves, and the `flex-start` override they reached
+ * for parked the box on the line's top edge — 1.5px above the middle of the
+ * line box it belongs to at the default step (reported as the label text
+ * sitting ~2px low).
+ *
+ * The anatomy rides the BOX, not the row: `align-self: flex-start` on the
+ * item plus one offset per size step. `align-self` on the item outranks any
+ * `align-items` on the container — whatever specificity, whatever order,
+ * whatever sheet — so nothing outside this component can flip the row back
+ * while the offset stays paid. A row-level `align-items: flex-start` would not
+ * be safe that way: any later sheet naming the control (a comma list, an
+ * attribute spelling, a `label` type selector, `!important`) could undo it
+ * while the per-part guards still saw a clean sheet. The row itself keeps
+ * `align-items: center` on every engine.
+ *
+ * Three rules cooperate — the md rule carries `align-self` and the base offset,
+ * the sm/lg rules add only their own offsets. Every one of them carries the
+ * gate, and exactly one offset is IN EFFECT per row: an sm/lg box matches the
+ * md rule too, and the size rule that follows it wins on source order (all
+ * three are (0,4,0)). The anatomy is
+ * atomic — every selector contains `:has()`, so an engine without it drops
+ * each rule whole and the box falls through to the `align-items: center`
+ * fallback in the root rule: the previous PLACEMENT, never the bare top-edge
+ * state. The box rule's own `box-sizing` is the one carrier outside the gate
+ * (it must hold on every engine), so a consumer with no global reset renders
+ * that box 2px smaller — the sizing note above spells it out.
+ *
+ * One line box is `line-height` tall (HkLabel pins 1.5), so on a one-line
+ * label each offset lands the box exactly where `center` did (single-line
+ * rows keep their pixels at all three steps), and on a wrapped label it
+ * keeps the box on line one.
+ *
+ * That last part rests on the label's FIRST line box being exactly `1.5 ×
+ * font-size` tall. A descendant with a larger inline box — a 24px span
+ * inside the label, an icon taller than the text — makes that line taller
+ * and leaves the box `(firstLineBox − 21) / 2` px HIGH, so the text reads
+ * that far low. What sets the error is the resulting LINE, not the height of
+ * the intruder: a 16×26 icon with `vertical-align: middle` gives the 26px
+ * line this table assumes (2.500px), while the same icon baseline-aligned
+ * drags its own box and the font's descender into the line and makes it 32px
+ * (5.500px). Only the declared typography is pinned; content that outgrows it
+ * moves the target, and by how much follows from the line it lands in, so a
+ * replaced element that ignores the baseline can push it further than either
+ * figure — calculate, do not assume a fixed amount.
+ *
+ * Line-box HEIGHT is only one of the THREE channels that move the first line,
+ * and the formula above covers only that one. A block child that INHERITS the
+ * label's typography (`<p>`, `<div>`) leaves the 21px line height untouched and
+ * changes only its OFFSET: it takes its own top margin and displaces the line
+ * DOWN, so a host's `p { margin-block-start: 8px }` leaves a 21px line sitting
+ * 8px lower — the height formula reads 0.000 while the box is 8.000px high —
+ * and a plain `<p>` with no host CSS whatsoever is already 14.000px out (the
+ * UA's `1em` margin-block-start).
+ *
+ * An element that brings its OWN typography is the two-channel case, and a
+ * heading is the one to remember: `<h1>` carries UA `font-size: 2em`, so its
+ * line is 42px — the height channel alone reads 10.500 — AND it carries a
+ * `0.67em` block-start margin (18.76px requested, 18.75 used after the
+ * LayoutUnit snap), which pushes that taller line down; measured together the
+ * label reads 10.500 + 18.750 = 29.250px low. A heading in a label is a typography
+ * decision before it is an anchoring one.
+ *
+ * The third channel is the label's own box. Both parts are pinned to the row's
+ * flex line, so the label's border-box top starts exactly where the box's MARGIN
+ * box does (the box's own border box is `offset` lower) —
+ * and anything the label adds ABOVE its text (`padding-block-start`, a
+ * block-start `border`) pushes the text down inside that border box while the
+ * box stays at the line start. `padding-block-start: 8px` on `.hk-label` is
+ * therefore the same 8.000px error as a block child's top margin, and it is
+ * invisible to `LABEL_BLOCK_CONTENT`, which watches rules on DESCENDANTS (a
+ * block tag as the label's child) rather than rules on the label itself.
+ * HkLabel ships no padding and no border, so this one is a host-authorship
+ * hazard, not a live offset.
+ *
+ * One shape the anchoring does not promise: a size modifier on an ANCESTOR
+ * wrapper instead of on the control. The box sizes are ancestor-scoped
+ * (`.hk-checkbox-sm &` compiles to `.hk-checkbox-sm .hk-checkbox-box`) and so
+ * are the offsets (`…:has(.hk-label:not(:empty)) .hk-checkbox-box` matches a
+ * wrapper too), but the LABEL's typography follows the control — HkLabel's
+ * `size` prop — so a wrapper makes the box and the line disagree instead of
+ * stepping both: `.hk-checkbox-lg` around a default control is a 22px box with
+ * the lg 1px offset on the md 21px line (+1.500px), the sm wrapper is a 14px box
+ * with the sm 2px offset on that same 21px line (−1.500px), and an lg wrapper
+ * around an sm control puts a 22px box 1px onto an 18px line (+3.000px). The
+ * radio adds a second asymmetry: its sizes key on `[data-size=…]` on ANY
+ * ancestor while its offsets need the attribute on `.hk-radio` itself, so an
+ * ancestor `data-size="lg"` gives a 22px box with the md 1.5px offset. Both
+ * renderers put the modifier on the control itself; that is the only spelling
+ * the sheet promises, and the only one the geometry was measured on.
+ *
+ * Nothing in this sheet can neutralise any of the three channels, because the
+ * offset lands the box on the line and the line itself moved; the fix is to
+ * treat the label's slot as text. The styles contract test pairs the block-child
+ * channel with `LABEL_BLOCK_CONTENT`, which reports an UNSCOPED host rule that
+ * declares one of those first-line movers on a block tag (`p { … }`). A SCOPED
+ * one (`.panel p { … }`, `.hk-markdown p`) is not reported even though a wrapper
+ * with that class can hold the label — a recorded limit, not an oversight: the
+ * shipped `.hk-icon svg` / `.hk-markdown p` families are host-internal styling,
+ * and the contract test records what lifting the restriction would cost (73
+ * rows to 279 for the replaced channel alone) — see the `elementOnlyMovers`
+ * comment there.
+ *
+ * The gate needs both halves: `:has(.hk-label)` proves a label element is
+ * there, `:not(:empty)` proves it carries content. A label-less control
+ * (selection column, a bare box next to a host's own caption) has no line box
+ * to ride and keeps its old LAYOUT — centered on its own row, no margin — and
+ * so does an empty-but-present label
+ * shell (`<HkCheckbox>{''}</HkCheckbox>` renders `span.hk-label` with nothing
+ * inside; the Rust side emits no label at all for that input, and the gate
+ * keeps both renderers on the same anatomy). "Layout", not bytes: the box
+ * rule now declares its own `box-sizing: border-box` (see below), so a
+ * consumer with no global reset renders that box 2px smaller than before —
+ * which is the reset the sheet used to borrow from the host. A whitespace-only label is the
+ * one shape the gate cannot see through: it is non-empty for the selector yet
+ * generates no line box once the label is blockified as a flex item, so it
+ * takes the 1.5px offset (md) onto a zero-height line: the control is 1.5px
+ * taller than the empty shell (18px → 19.5px) and its box sits 1.5px lower.
+ * A zero-width space (U+200B) is the marker to reach for when a row must be
+ * visibly empty: unlike a plain space it measures 0.00 against `center`.
+ *
+ * Hosts must DELETE their own `align-items` override on `.hk-checkbox` /
+ * `.hk-radio`: the box no longer reads the row's alignment, so a kept
+ * `flex-start` is inert where the gate applies (it parks the box on the same
+ * line edge) and a `center` is inert too — the offset is what moves the box.
+ * On an engine without `:has()` neither of them is inert: that is the tier the
+ * `center` fallback exists for, and a host that needs the old top-edge look
+ * there should scope its override with `@supports not selector(:has(*))`.
+ * Two host styles become DEAD rather than harmful, and both are worth knowing
+ * about: a `margin-*` nudge on `.hk-checkbox-box` loses to the offset declared
+ * here at equal importance (the gated rule outranks it, so the nudge does not
+ * render — an `!important` nudge still wins, and measured +2.500px), and a
+ * host that stacked the control (`flex-direction: column` on the row) changes
+ * the AXIS this pin acts on rather than losing a vertical centring: in a column
+ * `align-self` is the INLINE axis, so nothing here is pinned to the top — the
+ * box's start edge goes to the column's (measured 106 → 0 on a 230px column)
+ * while the vertical metric is unchanged at every step. `align-self: center` on
+ * the parts restores that horizontal position only if it outranks the gated
+ * rule (an id or `!important`: the natural `.hk-checkbox .hk-checkbox-box` at
+ * (0,2,0) loses to (0,4,0)), and the stacked control is 1.5px taller than it
+ * was (68.00 → 69.50) because the box now carries the offset. Neither shape
+ * exists in this package; they
+ * matter to a consumer only if it restyled the parts itself.
+ *
+ * The label's own line-height is what this rides, and its font size sets the
+ * term, so a host that restyles EITHER on `.hk-label` has to restyle this pair
+ * too — the styles contract test pins the coefficient against HkLabel.scss and
+ * each box term against the size modifiers above.
+ *
+ * HkSwitch is deliberately not part of this. Its md track is 24px, taller than
+ * the 21px line box, so a first-line anchor would need a negative offset and
+ * would hang the track outside the row; its rows stay block-centred. The two
+ * box controls are the ones whose text reads as a paragraph. */
+.hk-checkbox:has(.hk-label:not(:empty)) .hk-checkbox-box {
+  /* The item, not the row: immune to a host's or a sibling sheet's
+   * `align-items` on `.hk-checkbox` (or on the `label` element). */
+  align-self: flex-start;
+  margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
+}
+
+.hk-checkbox-sm:has(.hk-label:not(:empty)) .hk-checkbox-box {
+  margin-block-start: calc((1.5 * var(--text-xs, 0.75rem) - 0.875rem) / 2);
+}
+
+.hk-checkbox-lg:has(.hk-label:not(:empty)) .hk-checkbox-box {
+  margin-block-start: calc((1.5 * var(--text-md, 1rem) - 1.375rem) / 2);
+}
+
+/* Both PARTS are pinned, not the row. Pinning only the box inverts the
+ * anchoring the moment the control is TALLER than its own content — a grid
+ * cell or a flex row that stretches the item (a two-column option grid that
+ * pairs a one-line option with a four-line one; `min-height` on the control
+ * does the same): the box sits at the top of the stretched control while the
+ * label stays centred by the row's `align-items`, measured 42.0px apart at a
+ * 105px control and 13.5px at 48px, against 0.000 before this component
+ * anchored anything. With the label pinned as well the pair moves together
+ * and the offset still lands on line one at every control height (0.000 at
+ * 48/60/105px, sm and lg included).
+ *
+ * Keeping BOTH alignment declarations on the items — never `align-items` on
+ * the row — is also what keeps a host's `align-items` unable to flip the
+ * anatomy: a row-level `flex-start` here would be undone by any later sheet
+ * naming the control while the offset still applied (a host's
+ * `align-items: center !important` measured +0.750px against the item pins
+ * and broke the row-level variant). The visible cost: a control a host
+ * stretches now renders its text at the TOP of the control instead of
+ * centred. */
+.hk-checkbox:has(.hk-label:not(:empty)) .hk-label {
+  align-self: flex-start;
 }
 
 /* Press feedback (house parity: HkSwitch thumb squish). */

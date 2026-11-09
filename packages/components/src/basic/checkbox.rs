@@ -375,7 +375,11 @@ mod tests {
 
     #[test]
     fn checkbox_styles_come_from_the_canonical_vue_sheet() {
-        let css = CheckboxComponent::styles();
+        // Comments stripped first: grass's expanded output keeps every
+        // `/* … */`, and both sheets quote `align-self: flex-start` in prose
+        // (see `test_css::without_comments`), so a raw needle can be
+        // satisfied by a comment alone.
+        let css = crate::test_css::without_comments(CheckboxComponent::styles());
         for needle in [
             ".hk-checkbox",
             ".hk-checkbox-box",
@@ -383,12 +387,56 @@ mod tests {
             ".hk-checkbox-icon",
             ".hk-checkbox-dot",
             ".hk-checkbox-indeterminate",
+            // The first-line anchoring lane: the gated box rule, the item
+            // alignment it declares and the offset it feeds, so a silent drop
+            // cannot leave every needle above intact. These three check
+            // PRESENCE only — the values (`1.5`, the half-line arithmetic, the
+            // per-step box) are pinned against this same sheet by the Vue
+            // styles contract test, which compiles it with sass. `css` above
+            // has block comments stripped, so prose cannot satisfy a needle
+            // (grass keeps `/* … */` in expanded output, and this sheet quotes
+            // `align-self: flex-start` in one).
+            // `align-self: flex-start` is the half only the two gated rules
+            // declare: the row keeps `align-items: center`, which is why a
+            // foreign `align-items` cannot undo the anchoring.
+            ":has(.hk-label:not(:empty)) .hk-checkbox-box {",
+            "margin-block-start",
+            // The label pin: with only the box pinned, a control a host
+            // STRETCHES (a grid cell or flex row taller than the content, or
+            // `min-height` on the control) put the box at the top of the
+            // control while the label stayed centred — measured 42.0px apart
+            // at a 105px control. Both parts pinned is what keeps the pair
+            // together at every control height.
+            ":has(.hk-label:not(:empty)) .hk-label {",
         ] {
             assert!(
                 css.contains(needle),
-                "checkbox css must carry the vue class {needle}"
+                "checkbox css must carry {needle} (a class, a selector or a declaration)"
             );
         }
+        // The two `align-self` needles above are satisfied by EITHER gated rule,
+        // so deleting just one of them stayed green here while the Vue guard went
+        // red (review M-diff, S2). Assert each rule's body separately: the box
+        // rule keeps its item alignment AND the offset arithmetic, the label rule
+        // keeps its own alignment.
+        let body_of = |selector: &str| -> &str {
+            let after = css.split(selector).nth(1).unwrap_or("");
+            &after[..after.find('}').unwrap_or(0)]
+        };
+        let box_rule = body_of(":has(.hk-label:not(:empty)) .hk-checkbox-box {");
+        assert!(
+            box_rule.contains("align-self: flex-start;"),
+            "the gated BOX rule must declare align-self: flex-start"
+        );
+        assert!(
+            box_rule.contains("margin-block-start: calc("),
+            "the gated BOX rule must carry the first-line offset"
+        );
+        let label_rule = body_of(":has(.hk-label:not(:empty)) .hk-label {");
+        assert!(
+            label_rule.contains("align-self: flex-start;"),
+            "the gated LABEL rule must declare align-self: flex-start"
+        );
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored checkbox sheet"

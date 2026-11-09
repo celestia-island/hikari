@@ -24,6 +24,11 @@
 
 .hk-radio {
   display: inline-flex;
+  /* Fallback anatomy (house parity: HkCheckbox): centering the box against
+   * the label block is what every engine and every host saw before first-line
+   * anchoring, and it needs no `:has()` support. A labeled radio on a
+   * `:has()`-capable engine gets an `align-self` on the box by the first-line
+   * rules below; a label-less radio keeps this line on every engine. */
   align-items: center;
   /* House parity (HkCheckbox/HkSwitch): keeps the box on the text's
    * visual midline when a radio row is lifted out of the group into an
@@ -46,6 +51,11 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  /* House parity (HkCheckbox): the first-line offset reads the box's width as
+   * its border-box height, so declare the sizing here rather than inherit it
+   * from a host reset — a consumer importing this sheet without a global
+   * `border-box` would inflate the box by its 1px border and land 1px low. */
+  box-sizing: border-box;
   /* The resting outline is the palette border slot at FULL strength:
    * --hi-color-border is the faint divider channel (15% alpha) and melts
    * into white/dark surfaces. */
@@ -81,6 +91,45 @@
 
 .hk-radio:not([data-disabled]):hover .hk-radio-box:not([data-checked]) {
   border-color: var(--hi-color-primary);
+}
+
+/* ---------- first-line anchoring (house parity: HkCheckbox) ---------- */
+
+/* Same anatomy as HkCheckbox's box offset, and gated the same way so the pair
+ * is atomic: `align-self: flex-start` on a labeled radio's box plus half a
+ * line box minus half the box. One line box is `line-height` tall (HkLabel
+ * pins 1.5),
+ * so a one-line option lands exactly where `center` did and a wrapped option
+ * keeps its box on the first line; an engine without `:has()` falls through to
+ * the `align-items: center` fallback in the root rule (the previous
+ * placement; the box's own `box-sizing` still applies — it is not gated,
+ * see HkCheckbox.scss).
+ *
+ * The gate is `:has(.hk-label:not(:empty))`, the same as HkCheckbox: a radio
+ * without a non-empty label has no line box to ride, so a bare option and an
+ * empty label shell both keep the old layout instead of taking a phantom
+ * offset (a consumer with no global reset renders that box 2px smaller —
+ * the ungated `box-sizing`, as HkCheckbox.scss documents). The styles
+ * contract test pins the coefficient against HkLabel.scss and each box term
+ * against the [data-size] rules above. */
+.hk-radio:has(.hk-label:not(:empty)) .hk-radio-box {
+  /* The item, not the row (HkCheckbox.scss documents why). */
+  align-self: flex-start;
+  margin-block-start: calc((1.5 * var(--text-base, 0.875rem) - 1.125rem) / 2);
+}
+
+.hk-radio[data-size="sm"]:has(.hk-label:not(:empty)) .hk-radio-box {
+  margin-block-start: calc((1.5 * var(--text-xs, 0.75rem) - 0.875rem) / 2);
+}
+
+.hk-radio[data-size="lg"]:has(.hk-label:not(:empty)) .hk-radio-box {
+  margin-block-start: calc((1.5 * var(--text-md, 1rem) - 1.375rem) / 2);
+}
+
+/* Both parts, never the row (HkCheckbox.scss documents the stretch inversion
+ * this closes: −42.0px at a 105px control, −13.5px at 48px, 0.000 after). */
+.hk-radio:has(.hk-label:not(:empty)) .hk-label {
+  align-self: flex-start;
 }
 
 /* Press feedback (house parity: HkCheckbox box / HkSwitch thumb). */

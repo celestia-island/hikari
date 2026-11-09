@@ -334,7 +334,11 @@ mod tests {
 
     #[test]
     fn radio_styles_come_from_the_canonical_vue_sheet() {
-        let css = RadioGroupComponent::styles();
+        // Comments stripped first (see `test_css::without_comments`): grass's
+        // expanded output keeps `/* … */`, and the sheet quotes
+        // `align-self: flex-start` in prose, so a raw needle could be
+        // satisfied by a comment instead of a declaration.
+        let css = crate::test_css::without_comments(RadioGroupComponent::styles());
         for needle in [
             ".hk-radio-group",
             ".hk-radio-group-horizontal",
@@ -343,12 +347,42 @@ mod tests {
             ".hk-radio-box",
             ".hk-radio-input",
             ".hk-radio-dot",
+            // The first-line anchoring lane (house parity: HkCheckbox): the
+            // gated box rule, its item alignment and its calc offset must
+            // survive grass. The needles spell a declaration and a whole rule
+            // head, and `css` has its comments stripped, so prose cannot
+            // stand in for either.
+            ":has(.hk-label:not(:empty)) .hk-radio-box {",
+            "margin-block-start",
+            // Same label pin as HkCheckbox (the stretch inversion).
+            ":has(.hk-label:not(:empty)) .hk-label {",
         ] {
             assert!(
                 css.contains(needle),
-                "radio css must carry the vue class {needle}"
+                "radio css must carry {needle} (a class, a selector or a declaration)"
             );
         }
+        // Each gated rule's alignment is asserted on ITS OWN body: a bare
+        // `align-self: flex-start` needle is satisfied by the label rule too, so
+        // dropping only the box's copy stayed green here (review M-diff, S2).
+        let body_of = |selector: &str| -> &str {
+            let after = css.split(selector).nth(1).unwrap_or("");
+            &after[..after.find('}').unwrap_or(0)]
+        };
+        let box_rule = body_of(":has(.hk-label:not(:empty)) .hk-radio-box {");
+        assert!(
+            box_rule.contains("align-self: flex-start;"),
+            "the gated BOX rule must declare align-self: flex-start"
+        );
+        assert!(
+            box_rule.contains("margin-block-start: calc("),
+            "the gated BOX rule must carry the first-line offset"
+        );
+        let label_rule = body_of(":has(.hk-label:not(:empty)) .hk-label {");
+        assert!(
+            label_rule.contains("align-self: flex-start;"),
+            "the gated LABEL rule must declare align-self: flex-start"
+        );
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored radio sheet"

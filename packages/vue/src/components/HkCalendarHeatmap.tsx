@@ -45,8 +45,10 @@ function fill(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ""));
 }
 
-/** Stable per-instance popup id for the shared cell tooltip's
- * aria-describedby link (HkTooltip's convention). */
+/** Stable per-instance popup id. The popup carries role="tooltip" and
+ * this id; callers' slot content that wants an aria-describedby link
+ * can reference it, but the component binds no describedby itself —
+ * the armed cell is a delegated span, not a managed wrapper. */
 let popupSeq = 0;
 
 /**
@@ -57,7 +59,7 @@ let popupSeq = 0;
  * component — the rich-text-viewer table — and the leading-month
  * marker refinement belongs in the library, not the consumer). A
  * legend (less → more over the primary token), a Monday-first weekday
- * rail, month markers, and hatched no-data gap cells that never claim
+ * rail, month markers, and dimmed no-data gap cells that never claim
  * a fake zero.
  *
  * The leading month is never mislabeled: a month is labeled on the
@@ -295,8 +297,13 @@ export default defineComponent({
       }
     }
 
-    function onGridPointerleave() {
+    function onGridPointerleave(e: PointerEvent) {
       if (!hasTooltipSlot.value) return;
+      // Touch's tap-toggle owns dismissal: the boundary-release chain
+      // after a touch pointerup fires pointerleave on the tapped cell
+      // in the same gesture (implicit capture release), which would
+      // close the tooltip the tap just opened (R2). Desktop leave hides.
+      if (e.pointerType === "touch") return;
       tipHide();
     }
 
@@ -345,6 +352,13 @@ export default defineComponent({
         ? {
             borderRadius: "3px",
             background: HEATMAP_GAP_FILL,
+            // The dimmed wash is presentational, but without a tooltip
+            // slot the gaps stay INERT exactly as before (R2): with the
+            // slot they must stay hoverable — they are the popup's
+            // engage surface.
+            pointerEvents: hasTooltipSlot.value
+              ? undefined
+              : ("none" as const),
           }
         : {
             borderRadius: "3px",

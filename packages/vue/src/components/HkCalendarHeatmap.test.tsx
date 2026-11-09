@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
 import HkCalendarHeatmap, { HEATMAP_GAP_FILL } from "./HkCalendarHeatmap";
-import { HEATMAP_LEVEL_OPACITY, shiftIso, type CalendarCell } from "./calendarHeatmap";
+import { HEATMAP_EMPTY_FILL, HEATMAP_LEVEL_OPACITY, shiftIso, type CalendarCell } from "./calendarHeatmap";
 
 /** The shared hover popup's show delay — pinned here so a silent bump
  *  (hover tests going flaky-red) can't ship unnoticed. */
@@ -279,6 +279,13 @@ describe("HkCalendarHeatmap", () => {
         expect(gap.getAttribute("style") ?? "").not.toContain("gradient");
         expect(gap.getAttribute("style") ?? "").not.toContain("--hi-color-primary");
         expect(gap.getAttribute("data-level")).toBeNull();
+        // The ladder must read gap < empty < data (R2 2026-11): the
+        // dimmed wash sits BELOW the empty level's wash, parsed from
+        // the two exported constants so a percentage drift on either
+        // side flips this even with every other gate green.
+        const pct = (fill: string) =>
+          Number(/(\d+)%/.exec(fill)?.[1] ?? NaN);
+        expect(pct(HEATMAP_GAP_FILL)).toBeLessThan(pct(HEATMAP_EMPTY_FILL));
       }
     } finally {
       vi.useRealTimers();
@@ -311,6 +318,18 @@ describe("HkCalendarHeatmap", () => {
       await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
       await nextTick();
       expect(document.querySelector(".hk-calendar-heatmap-tip")).toBeNull();
+      // The old contract stands in full: the gaps stay INERT (R2 2026-11
+      // restore — the dimmed wash is presentational, and without a slot
+      // nothing can ever engage them). The 5-day fixture spans a whole
+      // week, so a guaranteed-gap mount (one day + first anchor) pins it.
+      const inert = mount(
+        h(HkCalendarHeatmap, {
+          days: [{ date: "2025-12-03", value: 5 }],
+          first: "2025-12-03",
+        }),
+      );
+      const gap = inert.querySelector("[data-gap]") as HTMLElement;
+      expect(gap.style.pointerEvents).toBe("none");
     } finally {
       vi.useRealTimers();
     }
@@ -383,6 +402,47 @@ describe("HkCalendarHeatmap", () => {
         popup.querySelector("[data-tip-kind]")!.textContent ?? "{}",
       );
       expect(payload).toMatchObject({ kind: "gap", date: gap.getAttribute("data-date") });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a touch pointerleave does not close what a tap opened; a desktop leave does", async () => {
+    // Browsers fire the boundary-release chain (pointerleave on the
+    // tapped cell) right after a touch pointerup — implicit capture
+    // release. The tap-toggle owns touch dismissal, so that synthetic
+    // leave must NOT hide the popup (R2 2026-11; the mouse leave path
+    // stays). happy-dom does not model the implicit release, which is
+    // exactly why this needs its own pin.
+    vi.useFakeTimers();
+    try {
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: daysFrom(CLEAN_HEAD_MON, 1, 5),
+          first: null,
+        }, {
+          tooltip: ({ cell }: { cell: CalendarCell }) =>
+            h("div", { "data-tip-for": cell.date }, `tip:${cell.kind}`),
+        }),
+      );
+      const cell = c.querySelector('[data-level]:not([data-level="0"])') as HTMLElement;
+      const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+
+      // A touch tap arms + shows at once.
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      const popup = () => document.querySelector(".hk-calendar-heatmap-tip") as HTMLElement | null;
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+
+      // The implicit-release leave: same gesture, must not hide.
+      grid.dispatchEvent(new PointerEvent("pointerleave", { pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+
+      // A mouse (pointerType-less event reads undefined) leave hides.
+      grid.dispatchEvent(new PointerEvent("pointerleave", {}));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(false);
     } finally {
       vi.useRealTimers();
     }

@@ -114,7 +114,7 @@ describe("calendarGrid", () => {
     expect(cells[6]).toMatchObject({ kind: "gap", phase: "after" });
   });
 
-  it("hatches the before-first region and never claims a fake zero", () => {
+  it("dims the before-first region and never claims a fake zero", () => {
     const cells = calendarGrid(
       [{ date: "2025-12-05", value: 5 }],
       "2025-12-07",
@@ -138,7 +138,7 @@ describe("calendarGrid", () => {
     expect(cells[1]).toMatchObject({ kind: "day", date: "2025-12-02", level: 0 });
   });
 
-  it("clamps a malformed future `first` to hatch nothing", () => {
+  it("clamps a malformed future `first` to dim nothing", () => {
     const cells = calendarGrid(
       [{ date: MON, value: 5 }],
       "2025-12-03",
@@ -151,10 +151,10 @@ describe("calendarGrid", () => {
     expect(calendarGrid([], "2025-12-03", null)).toEqual([]);
   });
 
-  it("never hatches a day the server shipped, even past a skewed `today`", () => {
+  it("never dims a day the server shipped, even past a skewed `today`", () => {
     // A skewed server clock (out of contract): the series runs one day
     // past `today`. The shipped day must render as a real day — every
-    // day of the series vanishing behind the "after" hatch is the
+    // day of the series vanishing behind the "after" dim is the
     // failure mode this guards.
     const cells = calendarGrid(
       [
@@ -169,7 +169,7 @@ describe("calendarGrid", () => {
       value: 3,
       level: 3,
     });
-    // The unshipped padding past it still hatches.
+    // The unshipped padding past it still dims.
     expect(cells.find((c) => c.date === "2025-12-03")).toMatchObject({
       kind: "gap",
       phase: "after",

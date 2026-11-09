@@ -16,9 +16,13 @@
 //! enum, and component render→DOM classes.
 //!
 //! The `emitted` lists carry the family-prefix names the bidirectional
-//! legs enforce PLUS every recorded cross-family literal the component
-//! renders (excused by its whitelist entry); the scanner mints
-//! `&-suffix` atoms so parent nesting cannot hide compiled selectors.
+//! legs enforce PLUS every recorded cross-family emission: literals,
+//! enum-slot tokens, and embedded-component contract outputs (the
+//! shared Button renders `hk-btn hk-btn-{variant} hk-btn-{size}`,
+//! IconButton renders `hk-icon-button hk-icon-button-{size}` plus its
+//! inner icon span), each excused by its whitelist entry. The scanner
+//! mints `&-suffix` atoms so parent nesting cannot hide compiled
+//! selectors.
 //!
 //! Adding a pair: fix any drift first, then append to `pairs()`. A name
 //! that is deliberately on only one side (emitted-but-unstyled, or
@@ -94,6 +98,7 @@ fn pairs() -> Vec<Pair> {
                 "hk-btn-secondary",
                 "hk-btn-sm",
                 "hk-btn-primary",
+                "hk-btn-ghost",
                 "hk-badge",
                 "hk-badge-primary",
             ],
@@ -113,6 +118,10 @@ fn pairs() -> Vec<Pair> {
                 (
                     "hk-btn-primary",
                     "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-ghost",
+                    "runtime emission via the shared Button contract (ButtonVariant::Ghost on the reset verb); styled by the shared HkButton sheet",
                 ),
                 (
                     "hk-badge",
@@ -217,6 +226,11 @@ fn pairs() -> Vec<Pair> {
                 "hk-corner-badge-success",
                 "hk-corner-badge-anchor",
                 "hk-corner-badge--dot",
+                // The footer Apply rides the shared Button contract
+                // (ButtonVariant::Primary, ButtonSize::Sm).
+                "hk-btn",
+                "hk-btn-primary",
+                "hk-btn-sm",
             ],
             whitelist: &[
                 (
@@ -259,6 +273,18 @@ fn pairs() -> Vec<Pair> {
                     "hk-corner-badge--dot",
                     "cross-family emission, styled by the shared HkCornerBadge sheet",
                 ),
+                (
+                    "hk-btn",
+                    "runtime emission via the shared Button contract (ButtonVariant::Primary + ButtonSize::Sm on the footer Apply); styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-primary",
+                    "runtime emission via the shared Button contract; styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-sm",
+                    "runtime emission via the shared Button contract; styled by the shared HkButton sheet",
+                ),
             ],
         },
         Pair {
@@ -276,6 +302,11 @@ fn pairs() -> Vec<Pair> {
                 // The sizer's inline select (pagination.rs:480).
                 "hk-select",
                 "hi-select-sm",
+                // The prev/next pager buttons ride the shared
+                // IconButton contract (IconButtonSize::S32).
+                "hk-icon-button",
+                "hk-icon-button-32",
+                "hk-icon-button-icon",
             ],
             // The sheet is the legacy full chrome (modes, sizes, jump
             // UI, state atoms). The rust component is the simple core;
@@ -289,6 +320,18 @@ fn pairs() -> Vec<Pair> {
                 (
                     "hi-select-sm",
                     "emitted size marker, styled by no sheet anywhere (no hi- select family exists); recorded live drift (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-icon-button",
+                    "runtime emission via the shared IconButton contract (prev/next pager, IconButtonSize::S32); styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-icon-button-32",
+                    "runtime emission via the shared IconButton contract; styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-icon",
+                    "runtime emission via the shared IconButton contract (inner glyph span); styled by the shared HkIconButton sheet",
                 ),
                 (
                     "hk-pagination-sizer",

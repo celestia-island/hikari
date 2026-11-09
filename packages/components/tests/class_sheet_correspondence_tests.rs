@@ -15,6 +15,11 @@
 //! touched: sheet↔hand-written emission list, emission list↔palette
 //! enum, and component render→DOM classes.
 //!
+//! The `emitted` lists carry the family-prefix names the bidirectional
+//! legs enforce PLUS every recorded cross-family literal the component
+//! renders (excused by its whitelist entry); the scanner mints
+//! `&-suffix` atoms so parent nesting cannot hide compiled selectors.
+//!
 //! Adding a pair: fix any drift first, then append to `pairs()`. A name
 //! that is deliberately on only one side (emitted-but-unstyled, or
 //! styled-but-never-emitted state/layout classes) goes into that pair's
@@ -83,15 +88,39 @@ fn pairs() -> Vec<Pair> {
                 "hk-filter-bar-panel",
                 "hk-filter-bar-footer",
                 "hk-filter-bar-popover",
+                // Cross-family render emissions (trigger button + count
+                // badge), styled by the shared button/badge sheets.
+                "hk-btn",
+                "hk-btn-secondary",
+                "hk-btn-sm",
+                "hk-btn-primary",
+                "hk-badge",
+                "hk-badge-primary",
             ],
             whitelist: &[
                 (
-                    "hk-btn-ghost",
+                    "hk-btn",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-secondary",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-sm",
                     "cross-family emission, styled by the shared HkButton sheet",
                 ),
                 (
                     "hk-btn-primary",
                     "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-badge",
+                    "cross-family emission, styled by the shared HkBadge sheet",
+                ),
+                (
+                    "hk-badge-primary",
+                    "cross-family emission, styled by the shared HkBadge sheet",
                 ),
             ],
         },
@@ -106,15 +135,16 @@ fn pairs() -> Vec<Pair> {
                 "hk-filter-chip-caret",
                 "hk-filter-chip-hint",
                 "hk-filter-chip--on",
+                // Cross-family render emissions (the chip rows are built
+                // on the pill toggle group), styled by its shared sheet.
+                "hk-pill-group",
+                "hk-pill-group-pill",
+                "hk-pill-group-icon",
             ],
             whitelist: &[
                 (
                     "hk-filter-chip-text",
                     "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
-                ),
-                (
-                    "hk-filter-chip--on",
-                    "selected-state marker emitted on both sides, styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
                 ),
                 (
                     "hk-pill-group",
@@ -175,6 +205,18 @@ fn pairs() -> Vec<Pair> {
                 "hk-filter-trigger",
                 "hk-filter-trigger-body",
                 "hk-filter-trigger-footer",
+                // Cross-family render emissions (chrome button + corner
+                // mark), styled by the shared icon-button/corner-badge
+                // sheets (sizes via the HkIconButtonVars partial).
+                "hk-icon-button",
+                "hk-icon-button-28",
+                "hk-icon-button-32",
+                "hk-icon-button-ghost",
+                "hk-icon-button-icon",
+                "hk-corner-badge",
+                "hk-corner-badge-success",
+                "hk-corner-badge-anchor",
+                "hk-corner-badge--dot",
             ],
             whitelist: &[
                 (
@@ -182,8 +224,32 @@ fn pairs() -> Vec<Pair> {
                     "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
                 ),
                 (
+                    "hk-icon-button",
+                    "cross-family emission, styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-icon-button-28",
+                    "cross-family emission, styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-32",
+                    "cross-family emission, styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-ghost",
+                    "cross-family emission, styled by the HkIconButtonVars partial",
+                ),
+                (
                     "hk-icon-button-icon",
                     "cross-family emission, styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-corner-badge",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
+                ),
+                (
+                    "hk-corner-badge-success",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
                 ),
                 (
                     "hk-corner-badge-anchor",
@@ -192,18 +258,6 @@ fn pairs() -> Vec<Pair> {
                 (
                     "hk-corner-badge--dot",
                     "cross-family emission, styled by the shared HkCornerBadge sheet",
-                ),
-                (
-                    "hk-filter-panel",
-                    "cross-component embed, guarded by the filter_panel pair",
-                ),
-                (
-                    "hk-filter-panel-row",
-                    "cross-component embed, guarded by the filter_panel pair",
-                ),
-                (
-                    "hk-filter-panel-add",
-                    "cross-component embed, guarded by the filter_panel pair",
                 ),
             ],
         },
@@ -219,12 +273,23 @@ fn pairs() -> Vec<Pair> {
                 "hk-pagination-prev",
                 "hk-pagination-next",
                 "hk-pagination-active",
+                // The sizer's inline select (pagination.rs:480).
+                "hk-select",
+                "hi-select-sm",
             ],
             // The sheet is the legacy full chrome (modes, sizes, jump
             // UI, state atoms). The rust component is the simple core;
             // nothing applies the mode/size wrappers today (2026-11-09
             // census across hikari + chest found zero appliers).
             whitelist: &[
+                (
+                    "hk-select",
+                    "emitted by the sizer's inline select, styled by no sheet — HkSelect styles only its -wrapper/-trigger/-label family; recorded live drift (2026-11-09 ledger)",
+                ),
+                (
+                    "hi-select-sm",
+                    "emitted size marker, styled by no sheet anywhere (no hi- select family exists); recorded live drift (2026-11-09 ledger)",
+                ),
                 (
                     "hk-pagination-sizer",
                     "emitted by the rust component, styled by no sheet — the sheet carries the -size-selector family instead; recorded live drift, naming divergence pending (2026-11-09 ledger)",
@@ -327,22 +392,63 @@ fn pairs() -> Vec<Pair> {
 fn sheet_atoms(sheet: &str) -> BTreeSet<String> {
     let bytes = sheet.as_bytes();
     let mut atoms = BTreeSet::new();
+    // Selector-context stack: `{` pushes the atom heading the selector
+    // being opened (empty when none), `}` pops. `&-suffix` inside a
+    // block mints `context + suffix`, so SCSS parent nesting (`&--on`
+    // compiling to `.hk-filter-chip--on`) cannot hide a compiled atom
+    // from the correspondence legs. Known limits (byte-level): SCSS
+    // interpolation / `@each` selectors are not read; unbalanced braces
+    // inside comments would skew the stack.
+    let mut stack: Vec<String> = Vec::new();
+    let mut pending: Option<String> = None;
     let mut i = 0;
-    while i + 4 <= bytes.len() {
-        if &bytes[i..i + 4] == b".hk-" {
-            let mut j = i + 4;
-            while j < bytes.len()
-                && (bytes[j].is_ascii_lowercase() || bytes[j].is_ascii_digit() || bytes[j] == b'-')
-            {
-                j += 1;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'{' => {
+                stack.push(pending.take().unwrap_or_default());
+                i += 1;
             }
-            let atom = sheet[i + 1..j].trim_end_matches('-').to_string();
-            if !atom.is_empty() {
-                atoms.insert(atom);
+            b'}' => {
+                stack.pop();
+                pending = None;
+                i += 1;
             }
-            i = j;
-        } else {
-            i += 1;
+            b'&' if i + 1 < bytes.len() && bytes[i + 1] == b'-' => {
+                let mut j = i + 1;
+                while j < bytes.len()
+                    && (bytes[j].is_ascii_lowercase()
+                        || bytes[j].is_ascii_digit()
+                        || bytes[j] == b'-')
+                {
+                    j += 1;
+                }
+                if let Some(parent) = stack.last()
+                    && !parent.is_empty()
+                {
+                    atoms.insert(format!("{parent}{}", &sheet[i + 1..j]));
+                }
+                i = j;
+            }
+            _ => {
+                if i + 4 <= bytes.len() && &bytes[i..i + 4] == b".hk-" {
+                    let mut j = i + 4;
+                    while j < bytes.len()
+                        && (bytes[j].is_ascii_lowercase()
+                            || bytes[j].is_ascii_digit()
+                            || bytes[j] == b'-')
+                    {
+                        j += 1;
+                    }
+                    let atom = sheet[i + 1..j].trim_end_matches('-').to_string();
+                    if !atom.is_empty() {
+                        pending = Some(atom.clone());
+                        atoms.insert(atom);
+                    }
+                    i = j;
+                } else {
+                    i += 1;
+                }
+            }
         }
     }
     atoms
@@ -397,6 +503,21 @@ fn sheet_atom_scanner_handles_nesting_and_descendants() {
     // Negative control: without the leading dot nothing is collected
     // (values like `var(--hk-x)` must not pollute the atom set).
     assert!(sheet_atoms("color: var(--hk-x); /* hk-y */").is_empty());
+
+    // SCSS parent minting: `&-suffix` compiles to `parent + suffix`.
+    let atoms = sheet_atoms(".hk-a {\n  &--on { color: red; }\n}\n");
+    assert_eq!(
+        atoms,
+        BTreeSet::from(["hk-a".into(), "hk-a--on".into()]),
+        "scanner missed an `&`-minted atom"
+    );
+    // `&` followed by a pseudo-class mints nothing; a parentless `&`
+    // (no enclosing block) mints nothing either.
+    assert_eq!(
+        sheet_atoms(".hk-a {\n  &:hover { color: red; }\n}\n&--orphan {}\n"),
+        BTreeSet::from(["hk-a".into()]),
+        "scanner minted from a pseudo-class or a parentless &"
+    );
 }
 
 #[test]
@@ -524,12 +645,16 @@ fn pagination_emission_stays_within_the_palette_enum() {
         .iter()
         .map(|c| c.as_class().to_string())
         .collect();
+    // Only the family-prefix names ride the enum; the pair's emitted
+    // list also carries whitelisted cross-family render literals
+    // (hk-select / hi-select-sm), which have their own whitelist story.
     for name in pairs()
         .iter()
         .find(|p| p.component == "pagination")
         .expect("pagination pair")
         .emitted
         .iter()
+        .filter(|n| n.starts_with("hk-pagination"))
     {
         assert!(
             enum_classes.contains(*name),

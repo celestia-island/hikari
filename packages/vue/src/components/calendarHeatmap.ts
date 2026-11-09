@@ -7,7 +7,7 @@
  * The server ships a DENSE daily series (oldest → newest, zero-filled,
  * inclusive of today, plus the account's first activity date).
  * Everything the component renders — the full-year week grid with its
- * hatched no-data gaps, the month markers — derives here so each
+ * dimmed no-data gaps, the month markers — derives here so each
  * derivation is unit-testable without a component mount.
  */
 
@@ -71,8 +71,9 @@ export function todayIso(): string {
 /**
  * One heatmap cell: a real day of the series, or a gap the account has
  * no data for — before its first activity, or after today (the rest of
- * the always-full-year window). Gaps render hatched and inert; they
- * never claim a fake "0 consumption" for a day that never was.
+ * the always-full-year window). Gaps render as the dimmed no-data wash
+ * (the gap channel sits BELOW the empty level); they never claim a
+ * fake "0 consumption" for a day that never was.
  */
 export type CalendarCell =
   | { kind: "day"; date: string; value: number; level: 0 | 1 | 2 | 3 | 4 }
@@ -83,7 +84,7 @@ export type CalendarCell =
  * back to the window's first Monday, tail cells to Sunday — so a
  * trailing-year window ALWAYS lands on a full-year-wide grid, however
  * young the account is. Every cell carries its real calendar date;
- * cells outside [first … today] become gaps (hatched, inert).
+ * cells outside [first … today] become gaps (dimmed, inert).
  *
  * `maxOverride` pins the intensity scale (R2: the component's `max`
  * prop must reach the buckets, not just the data-max attribute — a
@@ -103,17 +104,17 @@ export function calendarGrid(
   const span = total + ((7 - (total % 7)) % 7);
   const max = maxOverride ?? days.reduce((m, d) => Math.max(m, d.value), 0);
   const valueByDate = new Map(days.map((d) => [d.date, d.value]));
-  // A malformed `first` from the future hatches nothing (the clamp
+  // A malformed `first` from the future dims nothing (the clamp
   // keeps the before-check honest).
-  const hatchFrom = first && first <= today ? first : null;
+  const gapFrom = first && first <= today ? first : null;
   const cells: CalendarCell[] = [];
   for (let i = 0; i < span; i++) {
     const date = shiftIso(gridStart, i);
-    // Never hatch a date the server actually shipped: a series whose
+    // Never dim a date the server actually shipped: a series whose
     // last row runs past `today` (a skewed server clock, out of
     // contract) would otherwise render EVERY one of its days as a
-    // future gap — the data would vanish behind the hatch. (The
-    // before-first hatch below deliberately does NOT consult the map:
+    // future gap — the data would vanish behind the dimming. (The
+    // before-first dimming below deliberately does NOT consult the map:
     // the server fills the pre-anchor stretch with dense zeros as
     // filler, and the account's first-activity anchor is what decides
     // that no data existed, however many filler rows arrive.)
@@ -121,7 +122,7 @@ export function calendarGrid(
       cells.push({ kind: "gap", date, phase: "after" });
       continue;
     }
-    if (hatchFrom && date < hatchFrom) {
+    if (gapFrom && date < gapFrom) {
       cells.push({ kind: "gap", date, phase: "before" });
       continue;
     }

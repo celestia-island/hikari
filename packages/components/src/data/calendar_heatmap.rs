@@ -24,7 +24,7 @@
 //           div.hk-calendar-heatmap-grid[data-testid][data-max]
 //               [role=img][aria-label]
 //             span[data-level][data-date][title]     (a day of the series)
-//             span[data-gap][data-date][aria-hidden] (a hatched no-data cell)
+//             span[data-gap][data-date][aria-hidden] (a dimmed no-data cell)
 //
 // HkCalendarHeatmap paints DOM spans only (no `<svg>`), so no
 // `dangerous_inner_html` host appears here: every cell is an element, and the
@@ -84,8 +84,12 @@ pub const HEATMAP_PRIMARY_FILL: &str = "var(--hi-color-primary)";
 pub const HEATMAP_LEVEL_OPACITY: [&str; 4] = ["0.22", "0.42", "0.66", "0.95"];
 
 /// The no-data cell (before the account's first activity / after today):
-/// muted diagonal hatch over the surface. Rendered inert.
-pub const HEATMAP_GAP_HATCH: &str = "repeating-linear-gradient(45deg, color-mix(in srgb, var(--hi-color-muted) 70%, transparent) 0px, color-mix(in srgb, var(--hi-color-muted) 70%, transparent) 2px, transparent 2px, transparent 4px)";
+/// a quiet, recessed wash — the muted token at a fainter strength than
+/// the EMPTY level's (40%), so the ladder reads gap < empty < data. The
+/// old diagonal hatch read as noise at a year-wide grid's density
+/// (2026-11 user direction, mirrored from the Vue form). Rendered inert:
+/// this form has no popup runtime for the Vue `tooltip` slot.
+pub const HEATMAP_GAP_FILL: &str = "color-mix(in srgb, var(--hi-color-muted) 20%, transparent)";
 
 /// The legend's swatch levels, empty first (Vue: `LEGEND_LEVELS`).
 pub const HEATMAP_LEGEND_LEVELS: [u8; 5] = [0, 1, 2, 3, 4];
@@ -123,7 +127,7 @@ impl HeatmapGapPhase {
 }
 
 /// One heatmap cell: a real day of the series, or a gap the account has no
-/// data for (the rest of the always-full-year window). Gaps render hatched
+/// data for (the rest of the always-full-year window). Gaps render dimmed
 /// and inert; they never claim a fake zero.
 #[derive(Clone, PartialEq, Debug)]
 pub enum HeatmapCell {
@@ -207,7 +211,7 @@ pub fn heatmap_level_style(level: u8) -> String {
 pub fn heatmap_gap_style() -> String {
     format!(
         "border-radius:3px;background:{};pointer-events:none",
-        HEATMAP_GAP_HATCH
+        HEATMAP_GAP_FILL
     )
 }
 
@@ -246,10 +250,10 @@ pub fn heatmap_today_iso() -> String {
 /// — so a trailing-year window ALWAYS lands on a full-year-wide grid.
 ///
 /// Every cell carries its real calendar date; cells outside `[first … today]`
-/// become gaps (hatched, inert), except that a date the server actually
-/// shipped is never hatched: a series running past `today` (a skewed server
+/// become gaps (dimmed, inert), except that a date the server actually
+/// shipped is never dimmed: a series running past `today` (a skewed server
 /// clock, out of contract) keeps its data instead of vanishing behind the
-/// hatch. The before-first hatch deliberately does NOT consult the value map:
+/// dimming. The before-first dimming deliberately does NOT consult the value map:
 /// the account's first-activity anchor is what decides that no data existed,
 /// however many dense zero-filler rows arrive.
 ///
@@ -285,8 +289,8 @@ pub fn heatmap_calendar_grid(
     for day in days {
         value_by_date.insert(day.date.as_str(), day.value);
     }
-    // A malformed / future `first` hatches nothing.
-    let hatch_from = first
+    // A malformed / future `first` dims nothing.
+    let gap_from = first
         .and_then(heatmap_parse_iso)
         .filter(|date| *date <= today_date);
 
@@ -305,8 +309,8 @@ pub fn heatmap_calendar_grid(
             });
             continue;
         }
-        if let Some(hatch) = hatch_from
-            && date < hatch
+        if let Some(anchor) = gap_from
+            && date < anchor
         {
             cells.push(HeatmapCell::Gap {
                 date: iso,
@@ -836,7 +840,7 @@ mod tests {
             "border-radius:3px;background:var(--hi-color-primary);opacity:0.95"
         );
         assert!(heatmap_gap_style().contains("pointer-events:none"));
-        assert!(heatmap_gap_style().contains(HEATMAP_GAP_HATCH));
+        assert!(heatmap_gap_style().contains(HEATMAP_GAP_FILL));
     }
 
     #[test]
@@ -858,7 +862,7 @@ mod tests {
     // ── the grid ───────────────────────────────────────────────────────
 
     #[test]
-    fn heatmap_grid_pads_to_full_weeks_and_hatches_outside_the_window() {
+    fn heatmap_grid_pads_to_full_weeks_and_dims_outside_the_window() {
         // Empty input → empty grid.
         assert!(heatmap_calendar_grid(&[], "2025-12-03", None, None).is_empty());
         // A single Monday stays a 7-cell week: no lead padding.
@@ -872,7 +876,7 @@ mod tests {
         assert_eq!(midweek[0].date(), "2025-12-01");
         assert_eq!(midweek[6].date(), "2025-12-07");
         // A day after `today` is a future gap (never a fake zero); the
-        // unarrived tail hatches too.
+        // unarrived tail dims too.
         let ahead = heatmap_calendar_grid(&[day(MON, 1.0)], MON, None, None);
         assert!(ahead[1].is_future_gap(), "Monday+1 is after today");
         assert!(ahead.iter().skip(1).all(|cell| cell.is_future_gap()));
@@ -894,7 +898,7 @@ mod tests {
     }
 
     #[test]
-    fn heatmap_grid_hatches_only_before_the_first_activity_anchor() {
+    fn heatmap_grid_dims_only_before_the_first_activity_anchor() {
         // The series carries dense zero filler BEFORE the account's first
         // activity: those cells are `before` gaps, not fake zeros.
         let days = [
@@ -918,7 +922,7 @@ mod tests {
                 ..
             }
         ));
-        // A future / malformed `first` hatches nothing at all.
+        // A future / malformed `first` dims nothing at all.
         for first in [Some("2026-06-01"), Some("garbage"), None] {
             let grid = heatmap_calendar_grid(&days, "2025-12-03", first, None);
             assert!(
@@ -929,10 +933,10 @@ mod tests {
                         ..
                     }
                 )),
-                "a {first:?} anchor must hatch nothing"
+                "a {first:?} anchor must dim nothing"
             );
         }
-        // A date the server actually shipped is NEVER hatched as future,
+        // A date the server actually shipped is NEVER dimmed as future,
         // even when it runs past `today` (a skewed server clock).
         let skewed = heatmap_calendar_grid(
             &[day("2025-12-01", 1.0), day("2025-12-02", 1.0)],
@@ -941,7 +945,7 @@ mod tests {
             None,
         );
         assert!(matches!(skewed[1], HeatmapCell::Day { .. }));
-        // The empty grid never has cells to hatch.
+        // The empty grid never has cells to dim.
         assert!(heatmap_weeks(&[]) == 0);
     }
 

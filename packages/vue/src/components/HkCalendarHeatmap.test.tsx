@@ -5,8 +5,13 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
-import HkCalendarHeatmap from "./HkCalendarHeatmap";
-import { HEATMAP_LEVEL_OPACITY, shiftIso } from "./calendarHeatmap";
+import HkCalendarHeatmap, { HEATMAP_GAP_FILL } from "./HkCalendarHeatmap";
+import { HEATMAP_LEVEL_OPACITY, shiftIso, type CalendarCell } from "./calendarHeatmap";
+
+/** The shared hover popup's show delay — pinned here so a silent bump
+ *  (hover tests going flaky-red) can't ship unnoticed. */
+const TOOLTIP_DELAY_MS = 300;
+expect(HEATMAP_GAP_FILL).not.toContain("gradient");
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -237,9 +242,9 @@ describe("HkCalendarHeatmap", () => {
     expect(cellAt("0").style.opacity).toBe("");
   });
 
-  it("renders gap cells hatched and inert (no tooltip, no level claim)", () => {
+  it("renders gap cells dimmed below the empty level, with no level claim", () => {
     // A one-day series AT today, anchored at first = today: the head
-    // padding hatches as "before", the tail as "after". The clock is
+    // padding dims as "before", the tail as "after". The clock is
     // PINNED to a Wednesday: with the real clock this test carried
     // both-phase expectations into a Monday (no head padding) or a
     // Sunday (no tail), so it went red two days out of seven
@@ -266,8 +271,118 @@ describe("HkCalendarHeatmap", () => {
       for (const gap of gaps) {
         expect(gap.getAttribute("aria-hidden")).toBe("true");
         expect(gap.getAttribute("title")).toBeNull();
-        expect(gap.style.pointerEvents).toBe("none");
+        // The 2026-11 direction: the diagonal hatch is GONE — a gap
+        // claims no gradient, no level, no primary ink. (The fill's
+        // VALUE rides HEATMAP_GAP_FILL — happy-dom drops color-mix()
+        // from a parsed background, so the constant itself is pinned
+        // at this file's head and by the source contract below.)
+        expect(gap.getAttribute("style") ?? "").not.toContain("gradient");
+        expect(gap.getAttribute("style") ?? "").not.toContain("--hi-color-primary");
+        expect(gap.getAttribute("data-level")).toBeNull();
       }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("paints gap cells with HEATMAP_GAP_FILL, not a hatch (source contract)", () => {
+    // happy-dom cannot observe the gap fill through a parsed style, so
+    // this pin reads the sheet's wiring: the gap branch of cellStyle
+    // must carry the exported dimmed-wash constant — a re-introduced
+    // repeating-linear-gradient hatch (or a hand-written fill) turns
+    // this red.
+    const sheet = readFileSync(join(here, "HkCalendarHeatmap.tsx"), "utf8");
+    expect(sheet).not.toContain("repeating-linear-gradient");
+    expect(sheet).toContain("background: HEATMAP_GAP_FILL");
+  });
+
+  it("without a tooltip slot, day cells keep the native title and no popup ever mounts", async () => {
+    vi.useFakeTimers();
+    try {
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: daysFrom(CLEAN_HEAD_MON, 1, 5),
+          first: null,
+        }),
+      );
+      const cell = c.querySelector('[data-level]:not([data-level="0"])') as HTMLElement;
+      expect(cell.getAttribute("title")).toContain("Dec 1, 2025");
+      cell.dispatchEvent(new Event("pointerover", { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
+      await nextTick();
+      expect(document.querySelector(".hk-calendar-heatmap-tip")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("with a tooltip slot, hovering a day cell opens the shared popup with the caller's content", async () => {
+    vi.useFakeTimers();
+    try {
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: daysFrom(CLEAN_HEAD_MON, 1, 5),
+          first: null,
+        }, {
+          tooltip: ({ cell }: { cell: CalendarCell }) =>
+            h("div", { "data-tip-for": cell.date }, `tip:${cell.kind}`),
+        }),
+      );
+      // The slot owns the explanation: no native title (it would double
+      // up under the popup).
+      const cell = c.querySelector('[data-level]:not([data-level="0"])') as HTMLElement;
+      expect(cell.getAttribute("title")).toBeNull();
+
+      // Lazy: nothing is teleported until the first engage.
+      expect(document.querySelector(".hk-calendar-heatmap-tip")).toBeNull();
+      cell.dispatchEvent(new Event("pointerover", { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
+      await nextTick();
+      const popup = document.querySelector(
+        ".hk-calendar-heatmap-tip",
+      ) as HTMLElement | null;
+      expect(popup, "the shared popup is up after the delay").not.toBeNull();
+      expect(popup!.getAttribute("role")).toBe("tooltip");
+      expect(popup!.textContent).toBe("tip:day");
+      expect(popup!.querySelector('[data-tip-for="2025-12-01"]')).not.toBeNull();
+      expect(popup!.classList.contains("hk-tooltip-visible")).toBe(true);
+
+      // Leaving the grid hides it (the popup element stays mounted —
+      // lazy on FIRST engage, not per hover).
+      const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+      grid.dispatchEvent(new Event("pointerleave", { bubbles: false }));
+      await nextTick();
+      expect(
+        document.querySelector(".hk-calendar-heatmap-tip")!.classList.contains("hk-tooltip-visible"),
+      ).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("the tooltip slot also fires for gap cells — the caller explains 'no data'", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2025-12-03T10:00:00Z")); // a Wednesday
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: [{ date: "2025-12-03", value: 5 }],
+          first: "2025-12-03",
+        }, {
+          tooltip: ({ cell }: { cell: CalendarCell }) =>
+            h("div", { "data-tip-kind": cell.kind }, JSON.stringify(cell)),
+        }),
+      );
+      const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+      const gap = grid.querySelector("[data-gap]") as HTMLElement;
+      gap.dispatchEvent(new Event("pointerover", { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
+      await nextTick();
+      const popup = document.querySelector(".hk-calendar-heatmap-tip") as HTMLElement;
+      const payload = JSON.parse(
+        popup.querySelector("[data-tip-kind]")!.textContent ?? "{}",
+      );
+      expect(payload).toMatchObject({ kind: "gap", date: gap.getAttribute("data-date") });
     } finally {
       vi.useRealTimers();
     }

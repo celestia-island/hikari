@@ -21,20 +21,28 @@
 //! `whitelist` **with a reason** — the whitelist is how known-dead API
 //! surfaces stay recorded next to the guard that watches them.
 //!
-//! Known dormant surfaces NOT covered by a pair yet (no sheet exists /
-//! alignment unverified): `FilterClass` (no `filter.scss`; the
-//! `FilterIcon`/`FilterClearBtn` variants are emitted by no component
-//! and styled by no sheet) and `PaginationClass` (sheet carries many
-//! state/size atoms whose emission path is not enum-driven;
-//! correspondence unverified — 2026-11 sort-class-drift wave ledger).
+//! 2026-11 guard-promotion wave: the live filter family (four mirrored
+//! sheets, hand-written emission) and pagination joined as pairs, and
+//! the `FilterClass` palette enum is pinned as a recorded dormant API
+//! (see `filter_class_enum_is_a_recorded_dormant_api`). Four live
+//! emitted-but-unstyled names are whitelisted with reasons — the styling
+//! direction call is registered in the ledger, not smuggled in here.
 
 use hikari_components::data::ColumnDef;
 use hikari_components::data::{Sort, SortDirection, SortProps};
 use hikari_palette::classes::UtilityClass;
-use hikari_palette::classes::components::data::SortClass;
+use hikari_palette::classes::components::data::{FilterClass, PaginationClass, SortClass};
 use std::collections::BTreeSet;
 
 const SORT_SHEET: &str = include_str!("../src/styles/components/sort.scss");
+const PAGINATION_SHEET: &str = include_str!("../src/styles/components/pagination.scss");
+const FILTER_BAR_SHEET: &str = include_str!("../src/styles/vue-mirror/components/HkFilterBar.scss");
+const FILTER_CHIP_SHEET: &str =
+    include_str!("../src/styles/vue-mirror/components/HkFilterChip.scss");
+const FILTER_PANEL_SHEET: &str =
+    include_str!("../src/styles/vue-mirror/components/HkFilterPanel.scss");
+const FILTER_TRIGGER_SHEET: &str =
+    include_str!("../src/styles/vue-mirror/components/HkFilterTrigger.scss");
 
 /// One component family: the classes it emits vs the sheet it ships.
 struct Pair {
@@ -48,21 +56,267 @@ struct Pair {
 }
 
 fn pairs() -> Vec<Pair> {
-    vec![Pair {
-        component: "sort",
-        sheet: SORT_SHEET,
-        emitted: vec![
-            "hk-sort",
-            "hk-sort-button",
-            "hk-sort-active",
-            "hk-sort-clear",
-            "hk-sort-title",
-            "hk-sort-indicator",
-            "hk-sort-clear-text",
-            "hk-sort-clear-icon",
-        ],
-        whitelist: &[],
-    }]
+    vec![
+        Pair {
+            component: "sort",
+            sheet: SORT_SHEET,
+            emitted: vec![
+                "hk-sort",
+                "hk-sort-button",
+                "hk-sort-active",
+                "hk-sort-clear",
+                "hk-sort-title",
+                "hk-sort-indicator",
+                "hk-sort-clear-text",
+                "hk-sort-clear-icon",
+            ],
+            whitelist: &[],
+        },
+        Pair {
+            component: "filter_bar",
+            sheet: FILTER_BAR_SHEET,
+            emitted: vec![
+                "hk-filter-bar",
+                "hk-filter-bar-actions",
+                "hk-filter-bar-count",
+                "hk-filter-bar-fields",
+                "hk-filter-bar-panel",
+                "hk-filter-bar-footer",
+                "hk-filter-bar-popover",
+            ],
+            whitelist: &[
+                (
+                    "hk-btn-ghost",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-primary",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+            ],
+        },
+        Pair {
+            component: "filter_chip",
+            sheet: FILTER_CHIP_SHEET,
+            emitted: vec![
+                "hk-filter-chip",
+                "hk-filter-chip-text",
+                "hk-filter-chip-anchor",
+                "hk-filter-chip-body",
+                "hk-filter-chip-caret",
+                "hk-filter-chip-hint",
+                "hk-filter-chip--on",
+            ],
+            whitelist: &[
+                (
+                    "hk-filter-chip-text",
+                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-filter-chip--on",
+                    "selected-state marker emitted on both sides, styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-pill-group",
+                    "cross-family emission, styled by the shared HkPillToggleGroup sheet",
+                ),
+                (
+                    "hk-pill-group-pill",
+                    "cross-family emission, styled by the shared HkPillToggleGroup sheet",
+                ),
+                (
+                    "hk-pill-group-icon",
+                    "cross-family emission, styled by the shared HkPillToggleGroup sheet",
+                ),
+            ],
+        },
+        Pair {
+            component: "filter_panel",
+            sheet: FILTER_PANEL_SHEET,
+            emitted: vec![
+                "hk-filter-panel",
+                "hk-filter-panel-row",
+                "hk-filter-panel-ops",
+                "hk-filter-panel-op",
+                "hk-filter-panel-value",
+                "hk-filter-panel-control",
+                "hk-filter-panel-remove",
+                "hk-filter-panel-addrow",
+                "hk-filter-panel-add",
+                "hk-filter-panel-field",
+                "hk-filter-add-list",
+                "hk-filter-add-item",
+                "hk-filter-add-item-label",
+                "hk-filter-add-content",
+            ],
+            whitelist: &[
+                (
+                    "hk-filter-add-item-label",
+                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-filter-add-viewport",
+                    "styled; emitted only by the vue twin HkFilterPanel.tsx (HkScrollContainer wrapper), not by the rust component",
+                ),
+                (
+                    "hk-is-sheet",
+                    "comment mention of the shared sheet token context, not a selector (scanner reads comments)",
+                ),
+                (
+                    "hk-scroll-container-viewport",
+                    "descendant styling of the shared HkScrollContainer viewport inside the panel",
+                ),
+            ],
+        },
+        Pair {
+            component: "filter_trigger",
+            sheet: FILTER_TRIGGER_SHEET,
+            emitted: vec![
+                "hk-filter-trigger",
+                "hk-filter-trigger-body",
+                "hk-filter-trigger-footer",
+            ],
+            whitelist: &[
+                (
+                    "hk-filter-trigger-body",
+                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-icon-button-icon",
+                    "cross-family emission, styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-corner-badge-anchor",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
+                ),
+                (
+                    "hk-corner-badge--dot",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
+                ),
+                (
+                    "hk-filter-panel",
+                    "cross-component embed, guarded by the filter_panel pair",
+                ),
+                (
+                    "hk-filter-panel-row",
+                    "cross-component embed, guarded by the filter_panel pair",
+                ),
+                (
+                    "hk-filter-panel-add",
+                    "cross-component embed, guarded by the filter_panel pair",
+                ),
+            ],
+        },
+        Pair {
+            component: "pagination",
+            sheet: PAGINATION_SHEET,
+            emitted: vec![
+                "hk-pagination",
+                "hk-pagination-total",
+                "hk-pagination-sizer",
+                "hk-pagination-pages",
+                "hk-pagination-item",
+                "hk-pagination-prev",
+                "hk-pagination-next",
+                "hk-pagination-active",
+            ],
+            // The sheet is the legacy full chrome (modes, sizes, jump
+            // UI, state atoms). The rust component is the simple core;
+            // nothing applies the mode/size wrappers today (2026-11-09
+            // census across hikari + chest found zero appliers).
+            whitelist: &[
+                (
+                    "hk-pagination-sizer",
+                    "emitted by the rust component, styled by no sheet — the sheet carries the -size-selector family instead; recorded live drift, naming divergence pending (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-pagination-ellipsis",
+                    "styled; enum variant exists, emission pending",
+                ),
+                (
+                    "hk-pagination-jump",
+                    "styled; enum variant exists, emission pending (the component only builds jump-* DOM ids)",
+                ),
+                (
+                    "hk-pagination-jumper",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-button",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-input",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-invalid",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-label",
+                    "styled; enum variant PaginationJumpLabel maps here since the 2026-11 promotion wave, emission pending",
+                ),
+                (
+                    "hk-pagination-first",
+                    "styled; no emitter — reserved chrome",
+                ),
+                ("hk-pagination-last", "styled; no emitter — reserved chrome"),
+                (
+                    "hk-pagination-left",
+                    "styled; no emitter — reserved alignment",
+                ),
+                (
+                    "hk-pagination-right",
+                    "styled; no emitter — reserved alignment",
+                ),
+                (
+                    "hk-pagination-center",
+                    "styled; no emitter — reserved alignment",
+                ),
+                (
+                    "hk-pagination-animate",
+                    "styled; no emitter — reserved mode",
+                ),
+                (
+                    "hk-pagination-loading",
+                    "styled; no emitter — reserved mode",
+                ),
+                (
+                    "hk-pagination-compact",
+                    "styled; no emitter — reserved mode",
+                ),
+                ("hk-pagination-simple", "styled; no emitter — reserved mode"),
+                ("hk-pagination-lg", "styled; no emitter — reserved size"),
+                ("hk-pagination-md", "styled; no emitter — reserved size"),
+                ("hk-pagination-sm", "styled; no emitter — reserved size"),
+                (
+                    "hk-pagination-size-label",
+                    "styled; no emitter — reserved size-selector chrome",
+                ),
+                (
+                    "hk-pagination-size-select",
+                    "styled; no emitter — reserved size-selector chrome",
+                ),
+                (
+                    "hk-pagination-size-selector",
+                    "styled; no emitter — reserved size-selector chrome",
+                ),
+                (
+                    "hk-pagination-total-label",
+                    "styled; no emitter — reserved total chrome",
+                ),
+                (
+                    "hk-pagination-total-highlight",
+                    "styled; no emitter — reserved total chrome",
+                ),
+                (
+                    "hk-pagination-total-separator",
+                    "styled; no emitter — reserved total chrome",
+                ),
+            ],
+        },
+    ]
 }
 
 /// Extract every `.hk-<name>` atom from a stylesheet source.
@@ -226,5 +480,119 @@ fn sort_class_exhaustiveness_probe(class: SortClass) -> &'static str {
         SortClass::SortIndicator => "hk-sort-indicator",
         SortClass::SortClearText => "hk-sort-clear-text",
         SortClass::SortClearIcon => "hk-sort-clear-icon",
+    }
+}
+
+/// The `FilterClass` palette enum is a recorded dormant API: it predates
+/// the live filter family (filter_bar/chip/panel/trigger above), nothing
+/// emits it, and only its `filter-trigger` name coincides with a live
+/// atom. This test keeps that state honest: if someone starts emitting
+/// the enum they must give it a real sheet + pair (or migrate to the
+/// live families), and a rename on either side of the coinciding name
+/// flags here instead of silently splitting the two surfaces.
+#[test]
+fn filter_class_enum_is_a_recorded_dormant_api() {
+    let live_atoms: BTreeSet<String> = [
+        FILTER_BAR_SHEET,
+        FILTER_CHIP_SHEET,
+        FILTER_PANEL_SHEET,
+        FILTER_TRIGGER_SHEET,
+    ]
+    .iter()
+    .flat_map(|sheet| sheet_atoms(sheet))
+    .collect();
+
+    let enum_classes: Vec<String> = FilterClass::all().iter().map(|c| c.as_class()).collect();
+
+    // 16 of 17 names are styled by no live sheet — that is exactly the
+    // recorded-dormant state; a new sheet or emitter must update this.
+    let styled: Vec<String> = enum_classes
+        .iter()
+        .filter(|c| live_atoms.contains(*c))
+        .cloned()
+        .collect();
+    assert_eq!(
+        styled,
+        vec!["hk-filter-trigger".to_string()],
+        "FilterClass gained a second styled name — promote it to a real pair instead of extending this contract"
+    );
+}
+
+#[test]
+fn pagination_emission_stays_within_the_palette_enum() {
+    let enum_classes: BTreeSet<String> = PaginationClass::all()
+        .iter()
+        .map(|c| c.as_class().to_string())
+        .collect();
+    for name in pairs()
+        .iter()
+        .find(|p| p.component == "pagination")
+        .expect("pagination pair")
+        .emitted
+        .iter()
+    {
+        assert!(
+            enum_classes.contains(*name),
+            "pagination emits {name} outside the PaginationClass enum — add the variant (and keep this list in sync)"
+        );
+    }
+}
+
+/// Enum names the sheet deliberately does not style under the same
+/// name. Each entry must carry its story in the pair whitelist above.
+const PAGINATION_ENUM_DIVERGENCES: &[&str] = &["hk-pagination-sizer"];
+
+#[test]
+fn pagination_palette_enum_is_fully_styled_or_divergence_recorded() {
+    let atoms = sheet_atoms(PAGINATION_SHEET);
+    for class in PaginationClass::all().iter().map(|c| c.as_class()) {
+        assert!(
+            atoms.contains(&class.to_string())
+                || PAGINATION_ENUM_DIVERGENCES.contains(&class.as_ref()),
+            "PaginationClass::{class:?} has no sheet atom — style it, rename it, or record the divergence here and in the pair whitelist"
+        );
+    }
+}
+
+// Compile-time exhaustiveness probes (no wildcard arms): adding a
+// variant without extending these matches fails to compile and drags
+// the author into the guard that must be extended.
+#[allow(dead_code)]
+fn pagination_class_exhaustiveness_probe(class: PaginationClass) -> &'static str {
+    match class {
+        PaginationClass::Pagination => "hk-pagination",
+        PaginationClass::PaginationTotal => "hk-pagination-total",
+        PaginationClass::PaginationSizer => "hk-pagination-sizer",
+        PaginationClass::PaginationPages => "hk-pagination-pages",
+        PaginationClass::PaginationPrev => "hk-pagination-prev",
+        PaginationClass::PaginationNext => "hk-pagination-next",
+        PaginationClass::PaginationEllipsis => "hk-pagination-ellipsis",
+        PaginationClass::PaginationItem => "hk-pagination-item",
+        PaginationClass::PaginationActive => "hk-pagination-active",
+        PaginationClass::PaginationJump => "hk-pagination-jump",
+        PaginationClass::PaginationJumpLabel => "hk-pagination-jumper-label",
+    }
+}
+
+#[allow(dead_code)]
+fn filter_class_exhaustiveness_probe(class: FilterClass) -> &'static str {
+    match class {
+        FilterClass::Filter => "hk-filter",
+        FilterClass::FilterContainer => "hk-filter-container",
+        FilterClass::FilterTrigger => "hk-filter-trigger",
+        FilterClass::FilterActive => "hk-filter-active",
+        FilterClass::FilterIcon => "hk-filter-icon",
+        FilterClass::FilterBadge => "hk-filter-badge",
+        FilterClass::FilterDropdownIcon => "hk-filter-dropdown-icon",
+        FilterClass::FilterDropdown => "hk-filter-dropdown",
+        FilterClass::FilterHeader => "hk-filter-header",
+        FilterClass::FilterTitle => "hk-filter-title",
+        FilterClass::FilterClearBtn => "hk-filter-clear-btn",
+        FilterClass::FilterOptions => "hk-filter-options",
+        FilterClass::FilterOption => "hk-filter-option",
+        FilterClass::FilterCheckbox => "hk-filter-checkbox",
+        FilterClass::FilterLabel => "hk-filter-label",
+        FilterClass::FilterFooter => "hk-filter-footer",
+        FilterClass::FilterHint => "hk-filter-hint",
     }
 }

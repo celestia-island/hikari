@@ -47,10 +47,16 @@ import "./HkTerminal.scss";
  * - `write(data: string | Uint8Array)` — binary-safe feed.
  * - `writeln`, `clear`, `reset`, `fit`, `focus`, `dimensions`.
  *
- * Theming: the xterm theme is derived from the hikari color channels
- * (`--color-background` / `--color-text` / `--color-primary` / …) at
- * mount, and re-derived when the document element's class or style
- * changes (the light/dark switch mechanism consumers use).
+ * Theming: the canvas is a terminal and stays DARK in every app theme —
+ * background/foreground default to the fixed terminal palette and may be
+ * retuned per host via `--color-terminal-bg` / `--color-terminal-fg` /
+ * `--color-terminal-selection`; the cursor accent still derives from the
+ * hikari channel (`--color-primary`). The palette re-derives
+ * when the document element's class or style changes (the light/dark
+ * switch mechanism consumers use). Surface grammar: the component owns
+ * border+radius+background (borderless dark canvas, one radius tier) —
+ * consumers size the host box and must not wrap it in their own framed
+ * surface.
  */
 
 /** Resolve an `r g b` triplet channel (with fallback) to `#rrggbb`. */
@@ -72,11 +78,18 @@ function channelToHex(host: HTMLElement, name: string, fallback: string): string
 
 function deriveXtermTheme(host: HTMLElement): ITheme {
   return {
-    background: channelToHex(host, "--color-background", "#14161a"),
-    foreground: channelToHex(host, "--color-text", "#e6e6e6"),
+    // The canvas is a terminal: fixed dark defaults, NOT the app theme's
+    // background/text (those flip with light/dark and would render a
+    // light terminal). Selection too — a theme-coupled pale wash on the
+    // dark canvas collapses selected-text contrast to ~3:1 in light
+    // themes (R2 of the 2026-11-09 chain). Hosts retune via
+    // --color-terminal-bg/-fg/-selection.
+    background: channelToHex(host, "--color-terminal-bg", "#14161a"),
+    foreground: channelToHex(host, "--color-terminal-fg", "#d6dde6"),
     cursor: channelToHex(host, "--color-primary", "#7aa2f7"),
-    cursorAccent: channelToHex(host, "--color-background", "#14161a"),
-    selectionBackground: channelToHex(host, "--color-selected-bg", "#3b4356") + "88",
+    cursorAccent: channelToHex(host, "--color-terminal-bg", "#14161a"),
+    selectionBackground:
+      channelToHex(host, "--color-terminal-selection", "#3b4356") + "88",
   };
 }
 
@@ -238,4 +251,4 @@ export default defineComponent({
 });
 
 /** Test seam: pure helpers (no DOM dependency beyond getComputedStyle). */
-export const __testables = { channelToHex };
+export const __testables = { channelToHex, deriveXtermTheme };

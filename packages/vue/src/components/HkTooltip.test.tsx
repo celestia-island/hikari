@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
-import HkTooltip, { type HkTooltipSlotProps } from "./HkTooltip";
+import HkTooltip, { type HkTooltipConfirmSlotProps, type HkTooltipSlotProps } from "./HkTooltip";
 import { POPUP_Z_BANDS, POPUP_Z_STEP, usePopupManager } from "../runtime/usePopupManager";
 
 /**
@@ -424,5 +424,208 @@ describe("HkTooltip anchoring", () => {
     enter(container);
     await settle();
     expect(popup().style.width).toBe("max-content");
+  });
+});
+
+/**
+ * Click-trigger confirm mode (`trigger="click"`): the chest billing flow
+ * needs the "this will overspend your window — continue?" decision attached
+ * to the confirm BUTTON, not to a radio. The hover tooltip stays exactly
+ * what it was; this mode adds an anchored dialog surface with actions.
+ */
+function mountClick(
+  props: Record<string, unknown> = {},
+  content?: (slotProps: HkTooltipConfirmSlotProps) => unknown,
+) {
+  const container = document.createElement("div");
+  (document.querySelector("#hk-overlay-root") ?? document.body).appendChild(container);
+  const defaultSlot = () =>
+    h("button", { class: "trigger-btn", type: "button" }, "确认");
+  const app = createApp({
+    render: () =>
+      h(
+        HkTooltip,
+        { trigger: "click", text: "确认继续？", ...props } as never,
+        content
+          ? {
+            default: defaultSlot,
+            content: (slotProps: HkTooltipConfirmSlotProps) => content(slotProps),
+          }
+          : { default: defaultSlot },
+      ),
+  });
+  app.mount(container);
+  const entry = { app, container };
+  mounts.push(entry);
+  return entry;
+}
+
+function triggerButton(container: HTMLElement): HTMLElement {
+  return container.querySelector<HTMLElement>(".trigger-btn")!;
+}
+
+describe("HkTooltip click-trigger confirm mode", () => {
+  it("opens on a trigger click (ignoring the hover delay) and toggles closed", async () => {
+    const { container } = mountClick({ delay: 5000 });
+    const btn = triggerButton(container);
+    btn.click();
+    await nextTick();
+    expect(popup().className).toContain("hk-tooltip-visible");
+    // The click is the intent — no 5s hover delay is waited out.
+    btn.click();
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
+  it("never opens on hover or focus, unlike the hover mode", async () => {
+    const { container } = mountClick();
+    wrapper(container).dispatchEvent(new MouseEvent("mouseenter"));
+    container
+      .querySelector(".hk-tooltip-trigger")!
+      .dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    await settle();
+    // Not even the lazy popup mount ran: the hover path is fully gated.
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+  });
+
+  it("renders the text title plus the slot body and two actions", async () => {
+    let cancelled = 0;
+    const { container } = mountClick({}, ({ close }) =>
+      h("div", { class: "confirm-body" }, [
+        h("button", { class: "cancel-btn", type: "button", onClick: () => { cancelled += 1; close(); } }, "取消"),
+        h("button", { class: "confirm-btn", type: "button" }, "继续"),
+      ]));
+    triggerButton(container).click();
+    await nextTick();
+    const p = popup();
+    expect(p.querySelector(".hk-tooltip-content")!.textContent).toBe("确认继续？");
+    expect(p.querySelectorAll(".confirm-body button")).toHaveLength(2);
+    expect((p.querySelector(".confirm-btn") as HTMLElement).textContent).toBe("继续");
+
+    (p.querySelector(".cancel-btn") as HTMLElement).click();
+    await nextTick();
+    expect(cancelled).toBe(1);
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
+  it("gives the trigger dialog affordances and the popup dialog semantics", async () => {
+    const { container } = mountClick();
+    const anchor = wrapper(container);
+    expect(anchor.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(anchor.getAttribute("aria-expanded")).toBe("false");
+    // A hover tooltip describes; a click confirm does not (it opens a dialog).
+    expect(anchor.getAttribute("aria-describedby")).toBeNull();
+
+    triggerButton(container).click();
+    await nextTick();
+    const p = popup();
+    expect(p.getAttribute("role")).toBe("dialog");
+    expect(p.className).toContain("hk-tooltip-popup--click");
+    expect(p.getAttribute("tabindex")).toBe("-1");
+    // Focus lands on the dialog surface so a keyboard user Tabs to the
+    // actions, not around the trigger.
+    expect(document.activeElement).toBe(p);
+    const titleId = p.getAttribute("aria-labelledby");
+    expect(titleId).toBeTruthy();
+    expect(p.querySelector(".hk-tooltip-content")!.getAttribute("id")).toBe(titleId);
+    expect(anchor.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("dismisses on an outside pointerdown but not on one inside the popup", async () => {
+    const { container } = mountClick();
+    triggerButton(container).click();
+    await nextTick();
+    const p = popup();
+
+    // A press on the actions must not dismiss before their click fires.
+    p.querySelector(".hk-tooltip-content")!.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true }),
+    );
+    await nextTick();
+    expect(popup().className).toContain("hk-tooltip-visible");
+
+    document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
+  it("dismisses on Escape, consumes the key and returns focus to the trigger", async () => {
+    const { container } = mountClick();
+    const btn = triggerButton(container);
+    btn.focus();
+    btn.click();
+    await nextTick();
+    expect(document.activeElement).toBe(popup());
+
+    const esc = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    document.dispatchEvent(esc);
+    await nextTick();
+    await nextTick();
+    expect(esc.defaultPrevented).toBe(true);
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it("hands focus back from the slot's close() too", async () => {
+    const { container } = mountClick({}, ({ close }) =>
+      h("button", { class: "cancel-btn", type: "button", onClick: close }, "取消"));
+    const btn = triggerButton(container);
+    btn.focus();
+    btn.click();
+    await nextTick();
+    (popup().querySelector(".cancel-btn") as HTMLElement).click();
+    await nextTick();
+    await nextTick();
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it("drops its document listeners when unmounted while open", async () => {
+    const entry = mountClick();
+    triggerButton(entry.container).click();
+    await nextTick();
+    entry.app.unmount();
+    mounts.splice(mounts.indexOf(entry), 1);
+    entry.container.remove();
+    // A stale listener would touch the detached popup ref; both gestures
+    // must be inert after unmount.
+    expect(() => {
+      document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    }).not.toThrow();
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+  });
+
+  it("omits the empty title block when the slot owns the whole body", async () => {
+    const { container } = mountClick({ text: "" }, ({ close }) =>
+      h("div", { class: "confirm-body" }, [
+        h("button", { class: "cancel-btn", type: "button", onClick: close }, "取消"),
+      ]));
+    triggerButton(container).click();
+    await nextTick();
+    const p = popup();
+    // No text → no padded title block, and therefore no dangling
+    // aria-labelledby either; the slot body carries the popup.
+    expect(p.querySelector(".hk-tooltip-content")).toBeNull();
+    expect(p.getAttribute("aria-labelledby")).toBeNull();
+    expect(p.querySelector(".confirm-body")).not.toBeNull();
+  });
+
+  it("leaves the hover tooltip's shape untouched (no click affordances)", async () => {
+    const { container } = mount({ text: "hover tip", delay: 0 });
+    const anchor = wrapper(container);
+    expect(anchor.hasAttribute("aria-haspopup")).toBe(false);
+    expect(anchor.hasAttribute("aria-expanded")).toBe(false);
+    enter(container);
+    await settle();
+    const p = popup();
+    expect(p.getAttribute("role")).toBe("tooltip");
+    expect(p.className).not.toContain("hk-tooltip-popup--click");
+    expect(p.hasAttribute("tabindex")).toBe(false);
+    expect(p.querySelector(".hk-tooltip-content")!.textContent).toBe("hover tip");
+    // The describedby contract stays the hover one.
+    expect(anchor.getAttribute("aria-describedby")).toBe(p.getAttribute("id"));
+    leave(container);
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
   });
 });

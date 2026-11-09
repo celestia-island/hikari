@@ -1,4 +1,4 @@
-import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType, type SlotsType } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType, type SlotsType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
 import { armTouchHint } from "../runtime/touchHint";
@@ -17,29 +17,69 @@ export interface HkTooltipSlotProps {
   visible: boolean;
 }
 
+/**
+ * The `content` slot payload — the click-trigger confirm body.
+ *
+ * `close()` hides the popup and hands focus back to the trigger; wire it to
+ * both actions (cancel and confirm) so one decision ends the popup. The
+ * caller keeps ownership of what "confirm" DOES — this component only owns
+ * the confirm surface, never the side effect.
+ */
+export interface HkTooltipConfirmSlotProps {
+  close: () => void;
+}
+
+/** Hover hints follow the pointer; click popups own an explicit decision. */
+export type TooltipTrigger = "hover" | "click";
+
 let popupSeq = 0;
 
 export default defineComponent({
   name: "HkTooltip",
   props: {
-    text: { type: String, required: true },
+    /** The hint/caption text. In click mode it is the confirm popup's title;
+     *  omit it when a `content` slot carries its own heading. */
+    text: { type: String, default: "" },
     placement: { type: String as PropType<TooltipPlacement>, default: "top" },
     delay: { type: Number, default: 300 },
     maxWidth: { type: String, default: undefined },
+    /**
+     * `"hover"` (default) is the classic annotation: shows on hover/focus
+     * after `delay`, hides on leave, never takes pointer events.
+     *
+     * `"click"` turns the same anchored bubble into an explicit-decision
+     * surface: the trigger's click toggles it, no hover/focus path opens or
+     * closes it, the popup takes pointer events (so it can hold buttons),
+     * outside pointerdown and Escape dismiss it, and focus moves into it on
+     * open and back to the trigger on an Escape/`close()` dismissal. This is
+     * the "are you sure?" shape a confirm-on-submit flow needs; `delay` is
+     * ignored in this mode.
+     */
+    trigger: { type: String as PropType<TooltipTrigger>, default: "hover" },
   },
   slots: Object as SlotsType<{
     default?: (props: HkTooltipSlotProps) => unknown;
+    /** Click mode: the popup body below `text` (actions included). */
+    content?: (props: HkTooltipConfirmSlotProps) => unknown;
   }>,
   setup(props, { slots }) {
     const visible = ref(false);
+    const clickMode = computed(() => props.trigger === "click");
     // Stable id for the aria-describedby link from the trigger wrapper to
     // the popup (set while the popup is visible, mirroring the tooltip
     // bridge's contract).
     const popupId = `hk-tooltip-${++popupSeq}`;
+    const titleId = `${popupId}-title`;
     const wrapperRef = ref<HTMLElement | null>(null);
     const popupRef = ref<HTMLElement | null>(null);
     let showTimer: ReturnType<typeof setTimeout> | null = null;
     let positionFrame: number | null = null;
+    // Click mode owns its own dismissal wiring: listeners exist only while
+    // the popup is open, and the trigger focus is remembered so a dismissal
+    // decision can hand focus back.
+    let dismissPointer: ((event: PointerEvent) => void) | null = null;
+    let dismissEscape: ((event: KeyboardEvent) => void) | null = null;
+    let restoreFocusEl: HTMLElement | null = null;
 
     // The band handle and the popup DOM are both LAZY (dense-list contract,
     // 2026-10-05): a tooltip that is never engaged — the overwhelming
@@ -96,6 +136,9 @@ export default defineComponent({
     }
 
     function show() {
+      // Hover/focus entry only: the click-trigger wrapper passes NO
+      // hover/focus handlers at all (see the render below), so a confirm
+      // surface can never pop open from a pointer passing over it.
       clearShowTimer();
       ensureEngaged();
       showTimer = setTimeout(() => {
@@ -104,13 +147,89 @@ export default defineComponent({
       }, props.delay);
     }
 
-    function hide() {
+    function detachDismissal() {
+      if (dismissPointer) {
+        document.removeEventListener("pointerdown", dismissPointer, true);
+        dismissPointer = null;
+      }
+      if (dismissEscape) {
+        document.removeEventListener("keydown", dismissEscape, true);
+        dismissEscape = null;
+      }
+    }
+
+    /**
+     * Click mode dismissal wiring, live only while the popup is open:
+     * - a pointerdown OUTSIDE both the trigger and the popup dismisses (an
+     *   outside click already moves focus elsewhere, so no focus hand-back);
+     * - Escape dismisses and hands focus back to the trigger, consuming the
+     *   key only when it actually closed the popup — the same one-press-one-
+     *   thing rule HkSelect uses for triggers hosted inside a dialog.
+     */
+    function attachDismissal() {
+      if (dismissPointer || dismissEscape) return;
+      dismissPointer = (event: PointerEvent) => {
+        const target = event.target as Node | null;
+        if (target == null) return;
+        // The actions and the trigger keep the popup open; the trigger's
+        // own click handler toggles it.
+        if (popupRef.value?.contains(target) || wrapperRef.value?.contains(target)) return;
+        hide();
+      };
+      dismissEscape = (event: KeyboardEvent) => {
+        if (event.key !== "Escape" || !visible.value) return;
+        event.preventDefault();
+        event.stopPropagation();
+        hide({ restoreFocus: true });
+      };
+      document.addEventListener("pointerdown", dismissPointer, true);
+      document.addEventListener("keydown", dismissEscape, true);
+    }
+
+    function hide(opts: { restoreFocus?: boolean } = {}) {
       clearShowTimer();
+      const wasVisible = visible.value;
       visible.value = false;
       stopPositionTracking();
       // A hide means the hover/focus gesture is over — a touch hint
       // armed in parallel (pen press while hovering) retires with it.
       cancelTouchHint();
+      detachDismissal();
+      const restore = opts.restoreFocus === true ? restoreFocusEl : null;
+      restoreFocusEl = null;
+      if (restore && wasVisible) {
+        // Hand focus back only when it still lives on the popup/trigger:
+        // a dismissal that already moved focus (outside click, caller
+        // navigation) must not yank it back.
+        const active = document.activeElement;
+        const stillOurs = active == null || active === document.body || active === restore
+          || popupRef.value?.contains(active) === true
+          || wrapperRef.value?.contains(active) === true;
+        if (stillOurs) nextTick(() => restore.focus());
+      }
+    }
+
+    /** Click mode: the trigger toggles the popup (open immediately). */
+    function onTriggerClick() {
+      if (visible.value) {
+        hide();
+        return;
+      }
+      clearShowTimer();
+      ensureEngaged();
+      visible.value = true;
+      trackPositionWhileVisible();
+      // A keyboard activation must land on the actions rather than staying
+      // on the trigger; remember the origin for the focus hand-back.
+      const active = document.activeElement;
+      restoreFocusEl = active instanceof HTMLElement ? active : null;
+      attachDismissal();
+      nextTick(() => popupRef.value?.focus());
+    }
+
+    /** The confirm slot's `close`: dismiss and hand focus back. */
+    function closeFromPopup() {
+      hide({ restoreFocus: true });
     }
 
     function clearShowTimer() {
@@ -146,6 +265,9 @@ export default defineComponent({
     }
 
     function onPointerdown(e: PointerEvent) {
+      // Click mode owns touch too: a tap opens the confirm popup, so the
+      // long-press hint bar would be a second, conflicting surface.
+      if (clickMode.value) return;
       if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
       if (!props.text.trim()) return; // nothing to hint
       lastTouchAt = performance.now();
@@ -165,6 +287,7 @@ export default defineComponent({
       clearShowTimer();
       stopPositionTracking();
       cancelTouchHint();
+      detachDismissal();
       if (popupHandle) {
         manager.unregister(popupHandle.id);
         popupHandle = null;
@@ -174,6 +297,7 @@ export default defineComponent({
     const tooltipCls = computed(() => [
       "hk-tooltip-popup",
       `hk-tooltip-${props.placement}`,
+      clickMode.value ? "hk-tooltip-popup--click" : "",
       visible.value ? "hk-tooltip-visible" : "",
     ]);
 
@@ -184,23 +308,53 @@ export default defineComponent({
       zIndex.value != null ? { zIndex: zIndex.value } : {},
     );
 
+    /**
+     * Popup children as an array: absent halves must not leave a comment
+     * placeholder behind, so the hover tooltip's DOM stays exactly the
+     * pre-click-mode shape (the `content` slot is click mode only).
+     */
+    function popupChildren(): unknown[] {
+      const kids: unknown[] = [];
+      // A text-only tooltip keeps its content block even when `text` is
+      // empty (the legacy bubble); with a `content` slot and no text the
+      // slot owns the body and an empty padded block would be dead space.
+      if (props.text !== "" || !slots.content) {
+        kids.push(
+          <div class="hk-tooltip-content" id={clickMode.value ? titleId : undefined}>
+            {props.text}
+          </div>,
+        );
+      }
+      if (slots.content) kids.push(slots.content({ close: closeFromPopup }));
+      return kids;
+    }
+
     return () => (
       <span
         ref={wrapperRef}
         class="hk-tooltip-wrapper"
         data-position={props.placement}
-        aria-describedby={visible.value ? popupId : undefined}
+        // Hover hints describe their trigger; a click confirm announces the
+        // dialog it will open instead.
+        aria-describedby={!clickMode.value && visible.value ? popupId : undefined}
+        aria-haspopup={clickMode.value ? "dialog" : undefined}
+        aria-expanded={clickMode.value ? visible.value : undefined}
+        onClick={clickMode.value ? onTriggerClick : undefined}
         onPointerdown={onPointerdown}
-        onMouseenter={() => {
-          // Synthetic mouseenter right after a touch press must not
-          // flash the anchored popup the touch mode never shows — the
-          // top hint bar owns touch.
-          if (performance.now() - lastTouchAt < 600) return;
-          show();
-        }}
-        onMouseleave={hide}
-        onFocusin={show}
-        onFocusout={hide}
+        onMouseenter={
+          clickMode.value
+            ? undefined
+            : () => {
+              // Synthetic mouseenter right after a touch press must not
+              // flash the anchored popup the touch mode never shows — the
+              // top hint bar owns touch.
+              if (performance.now() - lastTouchAt < 600) return;
+              show();
+            }
+        }
+        onMouseleave={clickMode.value ? undefined : () => hide()}
+        onFocusin={clickMode.value ? undefined : show}
+        onFocusout={clickMode.value ? undefined : () => hide()}
       >
         <span class="hk-tooltip-trigger">
           {slots.default?.({ popupId, visible: visible.value })}
@@ -210,11 +364,15 @@ export default defineComponent({
             <div
               ref={popupRef}
               id={popupId}
-              role="tooltip"
+              role={clickMode.value ? "dialog" : "tooltip"}
               class={tooltipCls.value}
               style={popupStyle.value}
+              // A dialog surface takes focus so keyboard users land on the
+              // actions (the slot's buttons are the next Tab stops).
+              tabindex={clickMode.value ? -1 : undefined}
+              aria-labelledby={clickMode.value && props.text !== "" ? titleId : undefined}
             >
-              <div class="hk-tooltip-content">{props.text}</div>
+              {popupChildren()}
             </div>
           )}
         </Teleport>

@@ -159,6 +159,43 @@ afterEach(() => {
 });
 
 describe("HkTerminal", () => {
+  it("derives the canvas from the TERMINAL channels, not the app theme", async () => {
+    // The canvas is a terminal and stays dark in every app theme: the
+    // 2026-11-09 double-frame report was a light theme-background panel
+    // inside chest's black rounded host. The palette must read
+    // --color-terminal-bg/-fg (fixed dark defaults) and must NOT read
+    // --color-background/--color-text.
+    const theme = __testables.deriveXtermTheme(document.createElement("div")) as Record<
+      string,
+      string
+    >;
+    expect(theme.background).toBe("#14161a");
+    expect(theme.foreground).toBe("#d6dde6");
+    expect(theme.cursorAccent).toBe("#14161a");
+    expect(theme.cursor).toBe("#7aa2f7");
+    expect(theme.selectionBackground).toContain("#3b4356");
+    // Host-side retune wins over the defaults (happy-dom's computed
+    // style doesn't resolve inline custom properties, so the retune arm
+    // is exercised through a stubbed window computed-style).
+    const fakeHost = { tag: "stub" } as unknown as HTMLElement;
+    const resolver = (el: Element) =>
+      el === fakeHost
+        ? ({
+            getPropertyValue: (name: string) =>
+              name === "--color-terminal-bg"
+                ? "10 12 16"
+                : name === "--color-terminal-fg"
+                  ? "#c0c8d4"
+                  : "",
+          } as CSSStyleDeclaration)
+        : window.getComputedStyle(el);
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(resolver);
+    const tuned = __testables.deriveXtermTheme(fakeHost) as Record<string, string>;
+    spy.mockRestore();
+    expect(tuned.background).toBe("#0a0c10");
+    expect(tuned.foreground).toBe("#c0c8d4");
+  });
+
   it("passes the typography props into the Terminal options", async () => {
     mountTerminal({ fontSize: 15, fontFamily: "MyMono", scrollback: 500, cursorBlink: false });
     await nextTick();

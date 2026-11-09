@@ -163,10 +163,32 @@ fn sort_emission_list_stays_in_sync_with_the_palette_enum() {
     );
 }
 
+/// Collect every class-attribute token from rendered HTML, split on
+/// whitespace. Token-exact: the class `hk-sort-button` never satisfies a
+/// check for `hk-sort` — bare substring matching would let a deleted
+/// container/clear emission site hide behind its own children's names.
+fn html_class_tokens(html: &str) -> BTreeSet<String> {
+    let mut tokens = BTreeSet::new();
+    let mut rest = html;
+    while let Some(pos) = rest.find("class=\"") {
+        let start = pos + "class=\"".len();
+        let Some(end) = rest[start..].find('"') else {
+            break;
+        };
+        for token in rest[start..start + end].split_whitespace() {
+            tokens.insert(token.to_string());
+        }
+        rest = &rest[start + end..];
+    }
+    tokens
+}
+
 #[test]
 fn sort_renders_every_emitted_class_into_the_dom() {
     // The component→DOM leg: deleting any emission site in the Sort view
     // must red here, even though the enum↔sheet pin above stays green.
+    // Assertion is token-exact (see html_class_tokens), so no needle can
+    // be satisfied by another class it is a prefix of.
     let props = SortProps {
         column: "name".to_string(),
         direction: SortDirection::Ascending,
@@ -179,7 +201,30 @@ fn sort_renders_every_emitted_class_into_the_dom() {
         ..Default::default()
     };
     let html = Sort(props).render_to_html();
+    let tokens = html_class_tokens(&html);
     for needle in pairs()[0].emitted.clone() {
-        assert!(html.contains(needle), "missing {needle}: {html}");
+        assert!(
+            tokens.contains(needle),
+            "class token missing {needle}: {html}"
+        );
+    }
+}
+
+// Compile-time exhaustiveness probe: this match has no wildcard arm, so
+// adding a `SortClass` variant without updating this file fails to
+// compile and drags the author into the guard that must be extended.
+// Keeping the arm bodies as the literal class names also gives a readable
+// diff when a suffix is renamed.
+#[allow(dead_code)]
+fn sort_class_exhaustiveness_probe(class: SortClass) -> &'static str {
+    match class {
+        SortClass::Sort => "hk-sort",
+        SortClass::SortButton => "hk-sort-button",
+        SortClass::SortActive => "hk-sort-active",
+        SortClass::SortClear => "hk-sort-clear",
+        SortClass::SortTitle => "hk-sort-title",
+        SortClass::SortIndicator => "hk-sort-indicator",
+        SortClass::SortClearText => "hk-sort-clear-text",
+        SortClass::SortClearIcon => "hk-sort-clear-icon",
     }
 }

@@ -1222,8 +1222,9 @@ const PAINTS_ONLY =
  * Deliberately NOT in this set, with what each omission costs:
  *
  * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized
- *   by `width`/`height` rather than by the line box. They are reachable — but
- *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule. The
+ *   by `width`/`height` rather than by the line box. An UNSCOPED rule for them
+ *   is a row through `REPLACED_CONTENT` below; a scoped one is refused as noise
+ *   though it matches just as well. The
  *   shipped `.hk-icon svg { height: 100% }` family DOES reach an icon a label
  *   holds (`HkIcon` renders `span.hk-icon > svg` and the label's slot can hold
  *   an `HkIcon`) — the limit is that a SCOPED rule is not a row, not that it
@@ -1288,11 +1289,10 @@ const LABEL_BLOCK_CONTENT = new Set([
 /** Replaced elements a label may hold. Only an UNSCOPED rule is a row
  * (`svg { display: block }` in the reset). A descendant rule is refused as
  * NOISE, not because it cannot match: `HkIcon` renders `span.hk-icon > svg`
- * inside the label's slot, so `.hk-icon svg` does reach it — and that family
- * (`.hk-icon svg`, `.hk-menu-item-icon svg`, …) would otherwise add 206 rows
- * to the causal table — every one of
- * them carrying a replaced-element subject, 136 from the host bundle and 70
- * from the component sheets (measured by lifting only the unscoped half).
+ * inside the label's slot, so `.hk-icon svg` does reach it (two such rows ship).
+ * Lifting only the unscoped half would add 206 rows to the causal table — the
+ * whole replaced-element delta, every row carrying a replaced-element subject,
+ * 136 from the host bundle and 70 from the component sheets.
  * Review put `svg { height: 40px }` in a foreign sheet — and `height: 40px` on
  * the already-shipped reset — and the icon ink moved 32px with the gate green,
  * so the unscoped shape has to be a row. */
@@ -2886,8 +2886,9 @@ describe("label first-line anchoring", () => {
     //   `packages/vue/src/styles/reset.scss`, and the Rust host bundle's only
     //   bare-`svg` rule is `svg { color: inherit }`). Only the
     //   UNSCOPED shape is a row (`REPLACED_CONTENT` requires a selector with no
-    //   combinator): the `.hk-icon svg { height: 100% }` family is 206 rows of
-    //   styling a label CAN match that the table refuses as noise — every one of
+    //   combinator): the scoped half is 206 rows of replaced-element styling a
+    //   label CAN match that the table refuses as noise (the shipped
+    //   `.hk-icon svg { height: 100% }` family is two of them) — every one of
     //   them carries a replaced-
     //   element subject, 136 of them come from the host bundle and the other 70
     //   from the component sheets (measured by lifting only the unscoped half
@@ -3235,9 +3236,12 @@ describe("label first-line anchoring", () => {
     ]) {
       expect(elementOnlyMovers("pin", rules(sheet)), sheet).toHaveLength(1);
     }
-    // The three negatives: a SCOPED block rule needs an ancestor a label never
-    // has, a paint-only declaration moves nothing, and a custom property set on
-    // a child cannot reach the label (inheritance runs down, not up).
+    // The three negatives: a SCOPE-shaped block rule is refused as noise (a
+    // control nested in a `.hk-markdown` / `.article` wrapper DOES have that
+    // ancestor, so the refusal is noise, not unreachability — same limit as the
+    // replaced-element arm), a paint-only declaration moves nothing, and a
+    // custom property set on a child cannot reach the label (inheritance runs
+    // down, not up).
     for (const sheet of [
       ".article p { margin-block-start: 8px }",
       ".hk-markdown p { margin-block-start: 8px }",

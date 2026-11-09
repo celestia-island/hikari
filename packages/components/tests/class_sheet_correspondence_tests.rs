@@ -386,14 +386,6 @@ fn pairs() -> Vec<Pair> {
                     "styled; no emitter — reserved size-selector chrome",
                 ),
                 (
-                    "hk-pagination-size-select",
-                    "styled; no emitter — reserved size-selector chrome",
-                ),
-                (
-                    "hk-pagination-size-selector",
-                    "styled; no emitter — reserved size-selector chrome",
-                ),
-                (
                     "hk-pagination-total-label",
                     "styled; no emitter — reserved total chrome",
                 ),

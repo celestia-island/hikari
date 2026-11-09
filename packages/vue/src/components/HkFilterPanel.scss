@@ -228,12 +228,10 @@
 
 /* Keyboard highlight face — identical values to the popup-select item's
  * [data-highlighted]; hover comes from mi.item's own guarded :hover. */
-/* Long field names ellipsize instead of stretching the add menu. */
+/* The add row's label rides the shared menu-item label grammar
+ * (flex fill, optical offset, italic cushion, ellipsis). */
 .hk-filter-add-item-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include mi.label;
 }
 
 .hk-filter-add-item[data-highlighted] {

@@ -428,7 +428,7 @@ impl StyledComponent for MarkdownEditorComponent {
 .hk-markdown-editor {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -548,7 +548,7 @@ impl StyledComponent for MarkdownEditorComponent {
 .hk-markdown-editor-preview code {
     background-color: var(--hi-color-bg-elevated);
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 13px;
 }

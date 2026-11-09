@@ -73,7 +73,7 @@ impl StyledComponent for VideoPlayerComponent {
 .hk-video-player {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }

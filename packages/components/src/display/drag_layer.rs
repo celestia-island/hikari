@@ -101,7 +101,7 @@ impl StyledComponent for DragLayerComponent {
     min-width: 100px;
     min-height: 60px;
     border: 2px dashed var(--hi-color-primary);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     background-color: rgba(var(--hi-color-primary-rgb), 0.05);
     display: flex;
     align-items: center;
@@ -137,7 +137,7 @@ impl StyledComponent for DragLayerComponent {
 .hk-drag-layer-drag-preview-content {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     padding: 12px 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     display: flex;

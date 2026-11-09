@@ -41,7 +41,7 @@ impl StyledComponent for CanvasComponent {
         r#"
 .hk-canvas {
     display: block;
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     background-color: transparent;
 }
 "#

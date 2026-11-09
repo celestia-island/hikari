@@ -96,7 +96,7 @@ impl StyledComponent for AudioPlayerComponent {
 .hk-audio-player {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg, 12px);
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     display: flex;
@@ -136,7 +136,7 @@ impl StyledComponent for AudioPlayerComponent {
 .hk-audio-player-cover {
     width: 64px;
     height: 64px;
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     overflow: hidden;
     flex-shrink: 0;
     background-color: var(--hi-color-bg-elevated);

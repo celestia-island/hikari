@@ -171,6 +171,32 @@ describe("theme token inventory", () => {
     expect(unexpected, "new multi-defined scale tokens").toEqual([]);
   });
 
+  it("scale seed defines the full radius ladder with canonical values", () => {
+    // Existence + value pin for the runtime radius scale. Before the
+    // 2026-11 radius wave, deleting a `--radius-*` definition stayed
+    // green everywhere (no read face checked for presence); this test is
+    // that read face. Values mirror hikari scale.scss — the same ladder
+    // chest mirrors into its own `:root`, so a value change here is a
+    // cross-repo contract change and must ride a dedicated wave.
+    const defs = harvestDefinitions(seedFiles);
+    const ladder: Array<[string, string]> = [
+      ["--radius-xs", "2px"],
+      ["--radius-sm", "4px"],
+      ["--radius-md", "8px"],
+      ["--radius-lg", "12px"],
+      ["--radius-xl", "16px"],
+      ["--radius-full", "9999px"],
+    ];
+    for (const [name, value] of ladder) {
+      const sites = defs.get(name);
+      expect(sites, `${name} missing from theme/scale.scss`).toBeDefined();
+      expect(
+        sites![0].value,
+        `${name} value drifted from the canonical ladder`,
+      ).toBe(value);
+    }
+  });
+
   it("component --hi-color-* fallbacks stay on the canonical literals", () => {
     // The standalone-render contract: when a host loads nothing, a
     // component renders through these literals. They are DERIVED FROM THE

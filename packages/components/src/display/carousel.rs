@@ -239,7 +239,7 @@ impl StyledComponent for CarouselComponent {
     position: relative;
     width: 100%;
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     background-color: var(--hi-color-bg-container);
 }
 

@@ -96,7 +96,7 @@ impl StyledComponent for RichTextEditorComponent {
 .hk-rich-text-editor {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     overflow: hidden;
 }
 
@@ -122,7 +122,7 @@ impl StyledComponent for RichTextEditorComponent {
     padding: 0 0.75rem;
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     color: var(--hi-color-text-secondary);
     font-weight: 600;
     cursor: pointer;

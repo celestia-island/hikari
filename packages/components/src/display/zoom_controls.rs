@@ -132,7 +132,7 @@ impl StyledComponent for ZoomControlsComponent {
     padding: 4px;
     background-color: var(--hi-color-bg-elevated);
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
 }
 
 [data-theme="dark"] .hk-zoom-controls {

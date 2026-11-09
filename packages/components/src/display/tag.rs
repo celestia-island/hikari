@@ -84,7 +84,7 @@ impl StyledComponent for TagComponent {
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1;
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     border: 1px solid transparent;
     transition: all 0.2s ease;
 }

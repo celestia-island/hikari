@@ -294,7 +294,7 @@ impl StyledComponent for CalendarComponent {
     padding: 1rem;
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -320,7 +320,7 @@ impl StyledComponent for CalendarComponent {
     padding: 0 0.5rem;
     background-color: var(--hi-color-bg-elevated);
     border: 1px solid var(--hi-color-border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     color: var(--hi-color-text-primary);
     font-size: 0.875rem;
     cursor: pointer;
@@ -381,7 +381,7 @@ impl StyledComponent for CalendarComponent {
     width: 100%;
     height: 100%;
     padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     font-size: 0.875rem;
     color: var(--hi-color-text-primary);
     transition: all 0.2s ease;

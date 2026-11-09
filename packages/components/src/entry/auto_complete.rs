@@ -233,7 +233,7 @@ impl StyledComponent for AutoCompleteComponent {
     padding: 0.5rem 0.75rem;
     padding-right: 2rem;
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     background-color: var(--hi-color-surface);
     color: var(--hi-color-text-primary);
     font-size: 0.875rem;
@@ -290,7 +290,7 @@ impl StyledComponent for AutoCompleteComponent {
     overflow-y: auto;
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     opacity: 0;

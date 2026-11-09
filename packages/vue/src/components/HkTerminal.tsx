@@ -49,9 +49,9 @@ import "./HkTerminal.scss";
  *
  * Theming: the canvas is a terminal and stays DARK in every app theme —
  * background/foreground default to the fixed terminal palette and may be
- * retuned per host via `--color-terminal-bg` / `--color-terminal-fg`;
- * cursor/selection accents still derive from the hikari channels
- * (`--color-primary` / `--color-selected-bg`). The palette re-derives
+ * retuned per host via `--color-terminal-bg` / `--color-terminal-fg` /
+ * `--color-terminal-selection`; the cursor accent still derives from the
+ * hikari channel (`--color-primary`). The palette re-derives
  * when the document element's class or style changes (the light/dark
  * switch mechanism consumers use). Surface grammar: the component owns
  * border+radius+background (borderless dark canvas, one radius tier) —
@@ -80,12 +80,16 @@ function deriveXtermTheme(host: HTMLElement): ITheme {
   return {
     // The canvas is a terminal: fixed dark defaults, NOT the app theme's
     // background/text (those flip with light/dark and would render a
-    // light terminal). Hosts retune via --color-terminal-bg/-fg.
+    // light terminal). Selection too — a theme-coupled pale wash on the
+    // dark canvas collapses selected-text contrast to ~3:1 in light
+    // themes (R2 of the 2026-11-09 chain). Hosts retune via
+    // --color-terminal-bg/-fg/-selection.
     background: channelToHex(host, "--color-terminal-bg", "#14161a"),
     foreground: channelToHex(host, "--color-terminal-fg", "#d6dde6"),
     cursor: channelToHex(host, "--color-primary", "#7aa2f7"),
     cursorAccent: channelToHex(host, "--color-terminal-bg", "#14161a"),
-    selectionBackground: channelToHex(host, "--color-selected-bg", "#3b4356") + "88",
+    selectionBackground:
+      channelToHex(host, "--color-terminal-selection", "#3b4356") + "88",
   };
 }
 

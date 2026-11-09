@@ -173,7 +173,7 @@ describe("HkTerminal", () => {
     expect(theme.foreground).toBe("#d6dde6");
     expect(theme.cursorAccent).toBe("#14161a");
     expect(theme.cursor).toBe("#7aa2f7");
-    expect(theme.selectionBackground).toContain("#3b4356");
+    expect(theme.selectionBackground).toBe("#3b435688");
     // Host-side retune wins over the defaults (happy-dom's computed
     // style doesn't resolve inline custom properties, so the retune arm
     // is exercised through a stubbed window computed-style).
@@ -186,7 +186,9 @@ describe("HkTerminal", () => {
                 ? "10 12 16"
                 : name === "--color-terminal-fg"
                   ? "#c0c8d4"
-                  : "",
+                  : name === "--color-terminal-selection"
+                    ? "#2e3a4e"
+                    : "",
           } as CSSStyleDeclaration)
         : window.getComputedStyle(el);
     const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(resolver);
@@ -194,6 +196,7 @@ describe("HkTerminal", () => {
     spy.mockRestore();
     expect(tuned.background).toBe("#0a0c10");
     expect(tuned.foreground).toBe("#c0c8d4");
+    expect(tuned.selectionBackground).toBe("#2e3a4e88");
   });
 
   it("passes the typography props into the Terminal options", async () => {

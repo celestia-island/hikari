@@ -11,7 +11,9 @@
 //! (`hk-sort-button/-title/-indicator/-clear…`). Both sides compiled,
 //! all existing tests stayed green, and no rule ever matched a real DOM
 //! node; the component rendered as bare UA buttons the whole time. This
-//! guard makes that drift fail CI the day either side is touched.
+//! guard makes that drift fail CI the day any of the three legs is
+//! touched: sheet↔hand-written emission list, emission list↔palette
+//! enum, and component render→DOM classes.
 //!
 //! Adding a pair: fix any drift first, then append to `pairs()`. A name
 //! that is deliberately on only one side (emitted-but-unstyled, or
@@ -26,8 +28,10 @@
 //! state/size atoms whose emission path is not enum-driven;
 //! correspondence unverified — 2026-11 sort-class-drift wave ledger).
 
-use hikari_palette::classes::components::data::SortClass;
+use hikari_components::data::ColumnDef;
+use hikari_components::data::{Sort, SortDirection, SortProps};
 use hikari_palette::classes::UtilityClass;
+use hikari_palette::classes::components::data::SortClass;
 use std::collections::BTreeSet;
 
 const SORT_SHEET: &str = include_str!("../src/styles/components/sort.scss");
@@ -36,8 +40,9 @@ const SORT_SHEET: &str = include_str!("../src/styles/components/sort.scss");
 struct Pair {
     component: &'static str,
     sheet: &'static str,
-    /// `as_class()` of every enum variant that may reach the DOM.
-    emitted: Vec<String>,
+    /// Hand-written `as_class()` literals — deliberately NOT derived from
+    /// the enum here, so the sync test below has a side to compare against.
+    emitted: Vec<&'static str>,
     /// (`name`, reason) for names deliberately on only one side.
     whitelist: &'static [(&'static str, &'static str)],
 }
@@ -46,10 +51,16 @@ fn pairs() -> Vec<Pair> {
     vec![Pair {
         component: "sort",
         sheet: SORT_SHEET,
-        emitted: SortClass::all()
-            .iter()
-            .map(|c| c.as_class())
-            .collect(),
+        emitted: vec![
+            "hk-sort",
+            "hk-sort-button",
+            "hk-sort-active",
+            "hk-sort-clear",
+            "hk-sort-title",
+            "hk-sort-indicator",
+            "hk-sort-clear-text",
+            "hk-sort-clear-icon",
+        ],
         whitelist: &[],
     }]
 }
@@ -71,7 +82,7 @@ fn sheet_atoms(sheet: &str) -> BTreeSet<String> {
             {
                 j += 1;
             }
-            let mut atom = sheet[i + 1..j].trim_end_matches('-').to_string();
+            let atom = sheet[i + 1..j].trim_end_matches('-').to_string();
             if !atom.is_empty() {
                 atoms.insert(atom);
             }
@@ -87,7 +98,7 @@ fn sheet_atoms(sheet: &str) -> BTreeSet<String> {
 fn emitted_classes_match_their_sheets_in_both_directions() {
     for pair in pairs() {
         let atoms: BTreeSet<String> = sheet_atoms(pair.sheet);
-        let emitted: BTreeSet<String> = pair.emitted.iter().cloned().collect();
+        let emitted: BTreeSet<String> = pair.emitted.iter().map(|s| (*s).to_string()).collect();
         let allow: BTreeSet<&str> = pair.whitelist.iter().map(|(n, _)| *n).collect();
 
         let styled_but_never_emitted: Vec<&String> = atoms
@@ -141,9 +152,34 @@ fn sort_emission_list_stays_in_sync_with_the_palette_enum() {
     // fails here first with a readable diff). This test pins the list to
     // the enum so the two cannot drift apart silently.
     let from_enum: Vec<String> = SortClass::all().iter().map(|c| c.as_class()).collect();
-    let in_pairs = &pairs()[0].emitted;
+    let in_pairs: Vec<String> = pairs()[0]
+        .emitted
+        .iter()
+        .map(|s| (*s).to_string())
+        .collect();
     assert_eq!(
-        in_pairs, &from_enum,
+        in_pairs, from_enum,
         "SortClass variants changed — update the sort pair in pairs()"
     );
+}
+
+#[test]
+fn sort_renders_every_emitted_class_into_the_dom() {
+    // The component→DOM leg: deleting any emission site in the Sort view
+    // must red here, even though the enum↔sheet pin above stays green.
+    let props = SortProps {
+        column: "name".to_string(),
+        direction: SortDirection::Ascending,
+        columns: vec![ColumnDef {
+            column_key: "name".to_string(),
+            title: "Name".to_string(),
+            sortable: true,
+            ..Default::default()
+        }],
+        ..Default::default()
+    };
+    let html = Sort(props).render_to_html();
+    for needle in pairs()[0].emitted.clone() {
+        assert!(html.contains(needle), "missing {needle}: {html}");
+    }
 }

@@ -1210,7 +1210,8 @@ const PAINTS_ONLY =
  * `a { line-height: 2 }` in a foreign sheet pulled the label 3.0/3.5/4.0px off
  * the box with the whole gate green — the exact hazard the comment above
  * names. Widening it to EVERY tag is not an option either: reaching every
- * replaced element as well turns the table from 73 rows into 980 — 613 of the
+ * replaced element as well turns the table from 73 rows into 980 (that read
+ * admits `data-field-embedded`; without it the same widening is 975) — 613 of the
  * rows are `@keyframes` steps and the other 367 are element/registration rows
  * — `svg` alone is 154 of them — and 306 of those rows are new, i.e. a table
  * nobody reads. (306, not `367 − 73 = 294`: twelve of the pinned rows change
@@ -1222,14 +1223,16 @@ const PAINTS_ONLY =
  *
  * - the replaced elements (`img`, `svg`, `canvas`, `input`, `video`, …): sized
  *   by `width`/`height` rather than by the line box. They are reachable — but
- *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule,
- *   because the shipped `.hk-icon svg { height: 100% }` family is host-internal
- *   styling that no label can ever match: lifting the unscoped restriction
+ *   only through `REPLACED_CONTENT` below, which requires an UNSCOPED rule. The
+ *   shipped `.hk-icon svg { height: 100% }` family DOES reach an icon a label
+ *   holds (`HkIcon` renders `span.hk-icon > svg` and the label's slot can hold
+ *   an `HkIcon`) — the limit is that a SCOPED rule is not a row, not that it
+ *   cannot match: lifting the unscoped restriction
  *   alone takes this table from 73 rows to 279 (measured), one row per host
  *   icon/track sizing rule, and `svg` alone is 154 of the full-reach rows.
  *   An ATTRIBUTE-QUALIFIED replaced rule falls out of the table for a second
- *   reason (the `PART_ATTRS` gate runs before the tag is consulted), and the
- *   host bundle really ships one:
+ *   reason (the `PART_ATTRS` gate sits in front of the `REPLACED_CONTENT` test,
+ *   though the tag itself is read first), and the host bundle really ships one:
  *   `input:where(:not([class^=hk-]):not([class*=" hk-"]):not([data-field-embedded]))`
  *   with `border` / `font-size` / `padding` is a mover this table does not see
  *   (like the block child, it moves the line the label's text sits on). Two
@@ -1422,8 +1425,10 @@ function couldMatchAPart(compound: string, selector: string = compound): boolean
   if (attributes.some((name) => !PART_ATTRS.has(name))) return false;
   if (isContentTag) return true;
   // `selector` is the whole comma-free selector, not just the subject
-  // compound: `svg { … }` reaches the icon a label holds, `.hk-icon svg { … }`
-  // needs an ancestor class a label never has.
+  // compound: `svg { … }` reaches the icon a label holds, and so does the
+  // shipped `.hk-icon svg { … }` — `HkIcon` renders `span.hk-icon > svg`
+  // inside the label's slot. The unscoped test is a NOISE limit (that family is
+  // host-internal sizing), not a claim of unreachability.
   return REPLACED_CONTENT.has(tag) && !/[ >+~]/.test(selector.trim());
 }
 
@@ -2650,7 +2655,8 @@ describe("label first-line anchoring", () => {
     // and it does not merely resize a part: a foreign rule can also feed the
     // offset (`margin-block-start`), and a pure resize moves the box by
     // `Δheight/2` because the offset's `-1.125rem` is a literal while the box
-    // height is not. Measured in review: +4.000px at one line, +6.500px on a
+    // height is not. Measured in review: +4.000px at one line (before the
+    // label pin landed; +6.500 today), +6.500px on a
     // three-line md row, +11.000px for the resize form, all green. The next
     // test compiles every foreign sheet instead, which closes the language
     // rather than the spelling.
@@ -3130,6 +3136,13 @@ describe("label first-line anchoring", () => {
     // so only the `*|` form is asserted.
     expect(elementOnlyMovers("pin", rules("*|p { margin-block-start: 8px }"))).toEqual([
       "pin :: - | *|p | margin-block-start: 8px",
+    ]);
+    // `data-size` sits on the radio ROOT (`HkRadio.tsx`), so a host rule keyed
+    // on it reaches the box's inherited `--text-base` and drives the offset
+    // (1.5px → 15px on an `sm` root) while the label's line stays put. The
+    // entry was load-bearing and unpinned: removing it left 215/215 green.
+    expect(elementOnlyMovers("pin", rules('[data-size="sm"] { --text-base: 2rem }'))).toEqual([
+      'pin :: - | [data-size="sm"] | --text-base: 2rem',
     ]);
     // The block-child arm reaches the tag through `subjectTag`, which strips
     // attributes for the same reason: `p[data-x]` is still the `<p>` that pushes

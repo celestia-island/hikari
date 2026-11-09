@@ -199,7 +199,7 @@ impl StyledComponent for FileUploadComponent {
 
 .hk-file-upload {
     border: 2px dashed var(--hi-color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     padding: 2rem;
     text-align: center;
     transition: all 0.3s ease;
@@ -266,7 +266,7 @@ impl StyledComponent for FileUploadComponent {
 .hk-file-upload-file {
     padding: 0.5rem 1rem;
     background-color: var(--hi-color-surface);
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     font-size: 0.875rem;
     color: var(--hi-color-text-primary);
     max-width: 100%;

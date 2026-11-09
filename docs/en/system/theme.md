@@ -251,6 +251,8 @@ Or in SCSS:
 --hi-radius-full           /* 9999px */
 ```
 
+**Fine radius doctrine:** the `$hikari-radius-fine-*` SCSS constants (4/6/8px) style micro-decoration only — chips, ticks, inline glyph containers. By doctrine they do **not** follow the runtime radius tiers: `data-radius` remapping governs structural surfaces (cards, modals, controls), while fine micro-radius stays constant in every radius mode so tiny ornaments keep their shape. Existing structural uses of the fine constants (menus, dropdowns, cascader and transfer panels) are known migration debt, to be re-classified in a follow-up wave.
+
 #### Shadow Variables
 
 ```css

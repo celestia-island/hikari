@@ -251,6 +251,8 @@ Ou en SCSS:
 --hi-radius-full           /* 9999px */
 ```
 
+**Doctrine des fins de rayon :** les constantes SCSS `$hikari-radius-fine-*` (4/6/8px) stylisent uniquement le micro-décor — puces, graduations, conteneurs de glyphes en ligne. Par doctrine, elles ne suivent **pas** les paliers de rayon d'exécution : le remappage `data-radius` régit les surfaces structurelles (cartes, modales, contrôles), tandis que le micro-rayon fin reste constant dans tous les modes afin que les petits ornements gardent leur forme.Les usages structurels existants (menus, listes déroulantes, cascader et panneaux de transfert) constituent une dette de migration connue, à reclasser dans une vague ultérieure.
+
 #### Variables d'Ombre
 
 ```css

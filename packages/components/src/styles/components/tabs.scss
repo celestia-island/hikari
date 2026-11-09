@@ -245,7 +245,7 @@
     0 0 16px var(--hi-primary);
 
   // Border radius
-  border-radius: 2px 2px 0 0;
+  border-radius: var(--radius-xs, 2px) var(--radius-xs, 2px) 0 0;
 }
 
 // ------

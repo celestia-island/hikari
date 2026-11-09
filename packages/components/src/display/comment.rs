@@ -88,7 +88,7 @@ impl StyledComponent for CommentComponent {
     flex-direction: column;
     gap: 0.75rem;
     padding: 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
 }

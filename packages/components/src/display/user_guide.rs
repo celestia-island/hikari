@@ -241,7 +241,7 @@ impl StyledComponent for UserGuideComponent {
     z-index: 1001;
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg, 12px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     max-width: 320px;
     animation: hi-user-guide-fade-in 0.3s ease;

@@ -331,7 +331,7 @@ impl StyledComponent for CodeHighlightComponent {
 .hk-code-highlight {
     background-color: var(--hi-color-bg-container, #ffffff);
     border: 1px solid var(--hi-color-border, #e2e8f0);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -362,7 +362,7 @@ impl StyledComponent for CodeHighlightComponent {
     font-size: 0.75rem;
     background-color: transparent;
     border: 1px solid var(--hi-color-border, #e2e8f0);
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     color: var(--hi-color-text-secondary, #64748b);
     cursor: pointer;
     transition: all 0.2s ease;

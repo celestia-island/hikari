@@ -190,10 +190,16 @@ describe("theme token inventory", () => {
     for (const [name, value] of ladder) {
       const sites = defs.get(name);
       expect(sites, `${name} missing from theme/scale.scss`).toBeDefined();
-      expect(
-        sites![0].value,
-        `${name} value drifted from the canonical ladder`,
-      ).toBe(value);
+      // Every site must carry the canonical value — not just the first.
+      // A same-file duplicate would slip past the multi-file guard above
+      // (files.size stays 1) and win the CSS cascade as the LAST
+      // definition; iterating all sites closes that bypass.
+      for (const site of sites!) {
+        expect(
+          site.value,
+          `${name} non-canonical site in ${site.file}`,
+        ).toBe(value);
+      }
     }
   });
 

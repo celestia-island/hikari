@@ -70,6 +70,14 @@
   }
 }
 
+/* Long filter values must not blow the chip row: the text truncates
+ * inside the chip's fixed padding instead. */
+.hk-filter-chip-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .hk-filter-chip-caret {
   opacity: 0.6;
   flex: 0 0 auto;

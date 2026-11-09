@@ -131,4 +131,15 @@
   &-grid {
     display: grid;
   }
+
+  // The shared cell tooltip's content area. The popup chrome (bubble,
+  // shadow, placement geometry) is HkTooltip's .hk-tooltip-popup — the
+  // heatmap only frames the caller's slot content, usually one row per
+  // model with the metering readout on the right.
+  &-tip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
 }

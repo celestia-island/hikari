@@ -1,6 +1,9 @@
-import { computed, defineComponent, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, Teleport, watch, type PropType, type SlotsType } from "vue";
 
 import { useI18n } from "../i18n/context";
+import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { applyTooltipPosition } from "../runtime/tooltipPosition";
+import { ensureOverlayRoot } from "../overlay/overlayRoot";
 import HkScrollContainer from "./HkScrollContainer";
 import {
   calendarGrid,
@@ -20,10 +23,23 @@ import "./HkCalendarHeatmap.scss";
 const LEGEND_LEVELS = [0, 1, 2, 3, 4] as const;
 
 /** The no-data cell (before the account's first activity / after
- * today): muted diagonal hatch over the surface — the wowsp-style
- * "not yet" cell. Rendered inert: no tooltip, no pointer events. */
-const GAP_HATCH =
-  "repeating-linear-gradient(45deg, color-mix(in srgb, var(--hi-color-muted) 70%, transparent) 0px, color-mix(in srgb, var(--hi-color-muted) 70%, transparent) 2px, transparent 2px, transparent 4px)";
+ * today): a quiet, recessed wash — the muted token at a fainter
+ * strength than the EMPTY level's wash (40%), so the visual ladder
+ * reads gap < empty < data with no third channel. (2026-11 user
+ * direction: the old diagonal hatch read as noise at a year-wide
+ * grid's density — a flat dimmer cell carries the same "no data yet"
+ * claim without the stripes.) Deliberately NOT pointer-inert: with a
+ * `tooltip` slot the caller also explains gaps ("the account has no
+ * data for this date"), so cells stay hover targets. */
+export const HEATMAP_GAP_FILL =
+  "color-mix(in srgb, var(--hi-color-muted) 20%, transparent)";
+
+/** The hover tooltip's show delay — HkTooltip's default, so the two
+ * hover surfaces in a page share one cadence. */
+/** The hover tooltip's show delay — HkTooltip's default, so the two
+ * hover surfaces in a page share one cadence. Exported so consumers
+ * (and the tests) derive from it instead of duplicating the literal. */
+export const TOOLTIP_DELAY_MS = 300;
 
 /** Minimal {name} interpolation for the component's i18n strings — the
  * hikari context serves plain strings (no ICU), the placeholders stay
@@ -31,6 +47,12 @@ const GAP_HATCH =
 function fill(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ""));
 }
+
+/** Stable per-instance popup id. The popup carries role="tooltip" and
+ * this id; callers' slot content that wants an aria-describedby link
+ * can reference it, but the component binds no describedby itself —
+ * the armed cell is a delegated span, not a managed wrapper. */
+let popupSeq = 0;
 
 /**
  * HkCalendarHeatmap — a GitHub-style calendar heatmap of daily values.
@@ -40,7 +62,7 @@ function fill(template: string, vars: Record<string, string | number>): string {
  * component — the rich-text-viewer table — and the leading-month
  * marker refinement belongs in the library, not the consumer). A
  * legend (less → more over the primary token), a Monday-first weekday
- * rail, month markers, and hatched no-data gap cells that never claim
+ * rail, month markers, and dimmed no-data gap cells that never claim
  * a fake zero.
  *
  * The leading month is never mislabeled: a month is labeled on the
@@ -54,6 +76,15 @@ function fill(template: string, vars: Record<string, string | number>): string {
  * null = never). All math lives in ./calendarHeatmap (pure, pinned by
  * its own tests). The `toolbar` slot rides right of the legend — the
  * consumer's range tabs / controls belong there.
+ *
+ * Tooltips (2026-11 user direction): every cell — day AND gap — carries
+ * a caller-decided tooltip through the `tooltip` slot (payload
+ * `{ cell }`, the same `CalendarCell` the grid renders). The component
+ * owns the machinery (one lazy, teleported hover popup in the shared
+ * HkTooltip chrome, re-anchored per frame while visible) so a caller
+ * never mounts ~370 popup instances; it decides only the CONTENT.
+ * Without the slot the old behaviour stands: day cells keep their
+ * native `title`, gap cells stay silent.
  *
  * Scrolling (2026-11-08): the calendar body rides HkScrollContainer
  * (axis="horizontal", align="center") so the strip uses hikari's own
@@ -95,6 +126,14 @@ export default defineComponent({
      *  contract. Pass "start" to restore the old GitHub-style origin. */
     anchor: { type: String as PropType<"start" | "end">, default: "end" },
   },
+  slots: Object as SlotsType<{
+    /** Right of the legend: the consumer's range tabs / controls. */
+    toolbar?: (props: Record<string, never>) => unknown;
+    /** One cell's tooltip content. Fires for day AND gap cells; the
+     *  component renders it in a single shared hover popup (the
+     *  HkTooltip chrome), re-anchored to the hovered cell per frame. */
+    tooltip?: (props: { cell: CalendarCell }) => unknown;
+  }>,
   setup(props, { slots }) {
     const { t } = useI18n();
 
@@ -155,12 +194,174 @@ export default defineComponent({
         { date: dateLabel(d.date), n: d.value, unit: props.unit },
       );
 
+    // ── the caller-decided cell tooltip ────────────────────────────────
+    // One shared popup for the whole grid (HkTooltip's chrome and lazy
+    // machinery) — a caller slot decides the CONTENT per cell; the
+    // component never mounts per-cell popup instances. Inactive unless
+    // the slot is present: without it, day cells keep their native
+    // `title` and gap cells stay silent (the pre-tooltip contract).
+    const hasTooltipSlot = computed(() => !!slots.tooltip);
+
+    // date → cell lookup for the delegated hover (cells already carry
+    // data-date; no extra attributes on the grid's 370 spans).
+    const cellByDate = computed(() => {
+      const map = new Map<string, CalendarCell>();
+      for (const cell of cells.value) map.set(cell.date, cell);
+      return map;
+    });
+
+    const tip = ref<{ cell: CalendarCell; el: HTMLElement } | null>(null);
+    const tipVisible = ref(false);
+    const tipPopupId = `hk-calendar-heatmap-tip-${++popupSeq}`;
+    const tipManager = usePopupManager();
+    let tipHandle: PopupHandle | null = null;
+    const tipZIndex = ref<number | null>(null);
+    const tipEverShown = ref(false);
+    let tipShowTimer: ReturnType<typeof setTimeout> | null = null;
+    let tipPositionFrame: number | null = null;
+    let tipArmedCell: string | null = null;
+
+    function tipEngage() {
+      if (tipEverShown.value) return;
+      tipEverShown.value = true;
+      if (!tipHandle) tipHandle = tipManager.register("tooltip", false);
+      tipZIndex.value = tipHandle.zIndex;
+    }
+
+    function tipStopTracking() {
+      if (tipPositionFrame !== null) cancelAnimationFrame(tipPositionFrame);
+      tipPositionFrame = null;
+    }
+
+    function tipUpdatePosition() {
+      if (!tip.value || !popupRef.value) return;
+      applyTooltipPosition(popupRef.value, tip.value.el.getBoundingClientRect(), "top");
+    }
+
+    function tipTrackWhileVisible() {
+      if (tipPositionFrame !== null) return;
+      const tick = () => {
+        tipPositionFrame = null;
+        if (!tipVisible.value) return;
+        // The hovered cell can move without a pointer event (the strip's
+        // horizontal scroll) — re-read its rect per frame while visible.
+        tipUpdatePosition();
+        tipPositionFrame = requestAnimationFrame(tick);
+      };
+      tipPositionFrame = requestAnimationFrame(tick);
+    }
+
+    function tipShowNow() {
+      if (tipShowTimer !== null) {
+        clearTimeout(tipShowTimer);
+        tipShowTimer = null;
+      }
+      tipVisible.value = true;
+      tipTrackWhileVisible();
+    }
+
+    function tipHide() {
+      if (tipShowTimer !== null) {
+        clearTimeout(tipShowTimer);
+        tipShowTimer = null;
+      }
+      tipArmedCell = null;
+      tipVisible.value = false;
+      tipStopTracking();
+    }
+
+    /** The cell a pointer event landed on (delegated: the spans carry
+     *  data-date; find the closest one from the event target). */
+    function cellFromEvent(e: Event): { cell: CalendarCell; el: HTMLElement } | null {
+      const target = e.target as HTMLElement | null;
+      const span = target?.closest?.("[data-date]") as HTMLElement | null;
+      if (!span) return null;
+      const date = span.getAttribute("data-date");
+      if (!date) return null;
+      const cell = cellByDate.value.get(date);
+      return cell ? { cell, el: span } : null;
+    }
+
+    function onGridPointerover(e: PointerEvent) {
+      if (!hasTooltipSlot.value) return;
+      if (performance.now() - lastTouchAt < 600) return;
+      const hit = cellFromEvent(e);
+      if (!hit) return;
+      if (tipArmedCell === hit.cell.date) return;
+      tipArmedCell = hit.cell.date;
+      tip.value = hit;
+      tipEngage();
+      // Cell→cell travel with the popup already up swaps content in
+      // place (no hide/show flicker); a cold hover waits the delay.
+      if (tipVisible.value) tipShowNow();
+      else {
+        if (tipShowTimer !== null) clearTimeout(tipShowTimer);
+        tipShowTimer = setTimeout(tipShowNow, TOOLTIP_DELAY_MS);
+      }
+    }
+
+    function onGridPointerleave(e: PointerEvent) {
+      if (!hasTooltipSlot.value) return;
+      // Touch's tap-toggle owns dismissal: the boundary-release chain
+      // after a touch pointerup fires pointerleave on the tapped cell
+      // in the same gesture (implicit capture release), which would
+      // close the tooltip the tap just opened (R2). Desktop leave hides.
+      if (e.pointerType === "touch") return;
+      tipHide();
+    }
+
+    // Touch has no hover: a tap arms the tooltip for that cell at once,
+    // and a tap anywhere else dismisses it (the outside-listener lives
+    // only while a touch tip is up).
+    let lastTouchAt = -Infinity;
+    const popupRef = ref<HTMLElement | null>(null);
+    const gridRef = ref<HTMLElement | null>(null);
+    function onOutsideTap(e: PointerEvent) {
+      const target = e.target as HTMLElement | null;
+      if (gridRef.value?.contains(target ?? null)) return;
+      tipHide();
+      document.removeEventListener("pointerdown", onOutsideTap, true);
+    }
+
+    function onGridPointerdown(e: PointerEvent) {
+      if (!hasTooltipSlot.value || e.pointerType === "mouse") return;
+      lastTouchAt = performance.now();
+      const hit = cellFromEvent(e);
+      if (!hit) return;
+      if (tipVisible.value && tipArmedCell === hit.cell.date) {
+        tipHide();
+        document.removeEventListener("pointerdown", onOutsideTap, true);
+        return;
+      }
+      tipArmedCell = hit.cell.date;
+      tip.value = hit;
+      tipEngage();
+      tipShowNow();
+      document.removeEventListener("pointerdown", onOutsideTap, true);
+      document.addEventListener("pointerdown", onOutsideTap, true);
+    }
+
+    onBeforeUnmount(() => {
+      tipHide();
+      document.removeEventListener("pointerdown", onOutsideTap, true);
+      if (tipHandle) {
+        tipManager.unregister(tipHandle.id);
+        tipHandle = null;
+      }
+    });
+
     const cellStyle = (cell: CalendarCell) =>
       cell.kind === "gap"
         ? {
             borderRadius: "3px",
-            background: GAP_HATCH,
-            pointerEvents: "none" as const,
+            background: HEATMAP_GAP_FILL,
+            // The dimmed wash is presentational, but without a tooltip
+            // slot the gaps stay INERT exactly as before (R2): with the
+            // slot they must stay hoverable — they are the popup's
+            // engage surface.
+            pointerEvents: hasTooltipSlot.value
+              ? undefined
+              : ("none" as const),
           }
         : {
             borderRadius: "3px",
@@ -298,8 +499,12 @@ export default defineComponent({
                 ))}
               </div>
 
-              {/* The grid itself: cells flow column-first into 7 rows. */}
+              {/* The grid itself: cells flow column-first into 7 rows.
+               * Hover is delegated on the grid (cells carry data-date);
+               * with a `tooltip` slot every cell — gaps included — is a
+               * live hover target for the shared popup below. */}
               <div
+                ref={gridRef}
                 data-testid="hk-calendar-heatmap"
                 data-max={max.value}
                 role="img"
@@ -317,6 +522,9 @@ export default defineComponent({
                   gridAutoFlow: "column",
                   gap: `${props.cellGap}px`,
                 }}
+                onPointerover={onGridPointerover}
+                onPointerleave={onGridPointerleave}
+                onPointerdown={onGridPointerdown}
               >
                 {cells.value.map((cell, i) => (
                   <span
@@ -330,7 +538,10 @@ export default defineComponent({
                       : {
                           "data-level": cell.level,
                           "data-date": cell.date,
-                          title: cellTitle(cell),
+                          // With a tooltip slot the shared popup owns the
+                          // cell's explanation — a native `title` would
+                          // double up on hover (and never fires for gaps).
+                          title: hasTooltipSlot.value ? undefined : cellTitle(cell),
                         })}
                     style={cellStyle(cell)}
                   />
@@ -339,6 +550,31 @@ export default defineComponent({
             </div>
           </div>
         </HkScrollContainer>
+
+        {/* The shared cell tooltip: one lazy popup for the whole grid,
+         * teleported to the overlay root and pinned to the hovered cell
+         * with the shared HkTooltip geometry (zoom-aware, clamped,
+         * pixel-snapped). Content is the caller's `tooltip` slot for
+         * `tip.cell`; the popup mounts on first engage and stays until
+         * unmount so re-shows never churn. */}
+        <Teleport to={ensureOverlayRoot()}>
+          {tipEverShown.value && tip.value && (
+            <div
+              ref={popupRef}
+              id={tipPopupId}
+              role="tooltip"
+              class={[
+                "hk-tooltip-popup",
+                "hk-tooltip-top",
+                tipVisible.value ? "hk-tooltip-visible" : "",
+                "hk-calendar-heatmap-tip",
+              ]}
+              style={tipZIndex.value != null ? { zIndex: tipZIndex.value } : {}}
+            >
+              {slots.tooltip?.({ cell: tip.value.cell })}
+            </div>
+          )}
+        </Teleport>
       </div>
     );
   },

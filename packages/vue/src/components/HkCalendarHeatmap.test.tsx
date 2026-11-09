@@ -5,8 +5,17 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
-import HkCalendarHeatmap from "./HkCalendarHeatmap";
-import { HEATMAP_LEVEL_OPACITY, shiftIso } from "./calendarHeatmap";
+import HkCalendarHeatmap, {
+  HEATMAP_GAP_FILL,
+  TOOLTIP_DELAY_MS,
+} from "./HkCalendarHeatmap";
+import { HEATMAP_EMPTY_FILL, HEATMAP_LEVEL_OPACITY, shiftIso, type CalendarCell } from "./calendarHeatmap";
+
+/** The shared hover popup's show delay rides the component's EXPORTED
+ * constant (R5: the old duplicated literal let a shorter delay ship
+ * green — the tests must DERIVE, not restate). The behavioral pin
+ * lives in the hover test: hidden at delay−1, visible at delay. */
+expect(HEATMAP_GAP_FILL).not.toContain("gradient");
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -237,9 +246,9 @@ describe("HkCalendarHeatmap", () => {
     expect(cellAt("0").style.opacity).toBe("");
   });
 
-  it("renders gap cells hatched and inert (no tooltip, no level claim)", () => {
+  it("renders gap cells dimmed below the empty level, with no level claim", () => {
     // A one-day series AT today, anchored at first = today: the head
-    // padding hatches as "before", the tail as "after". The clock is
+    // padding dims as "before", the tail as "after". The clock is
     // PINNED to a Wednesday: with the real clock this test carried
     // both-phase expectations into a Monday (no head padding) or a
     // Sunday (no tail), so it went red two days out of seven
@@ -266,8 +275,208 @@ describe("HkCalendarHeatmap", () => {
       for (const gap of gaps) {
         expect(gap.getAttribute("aria-hidden")).toBe("true");
         expect(gap.getAttribute("title")).toBeNull();
-        expect(gap.style.pointerEvents).toBe("none");
+        // The 2026-11 direction: the diagonal hatch is GONE — a gap
+        // claims no gradient, no level, no primary ink. (The fill's
+        // VALUE rides HEATMAP_GAP_FILL — happy-dom drops color-mix()
+        // from a parsed background, so the constant itself is pinned
+        // at this file's head and by the source contract below.)
+        expect(gap.getAttribute("style") ?? "").not.toContain("gradient");
+        expect(gap.getAttribute("style") ?? "").not.toContain("--hi-color-primary");
+        expect(gap.getAttribute("data-level")).toBeNull();
+        // The ladder must read gap < empty < data (R2 2026-11): the
+        // dimmed wash sits BELOW the empty level's wash, parsed from
+        // the two exported constants so a percentage drift on either
+        // side flips this even with every other gate green.
+        const pct = (fill: string) =>
+          Number(/(\d+)%/.exec(fill)?.[1] ?? NaN);
+        expect(pct(HEATMAP_GAP_FILL)).toBeLessThan(pct(HEATMAP_EMPTY_FILL));
       }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("paints gap cells with HEATMAP_GAP_FILL, not a hatch (source contract)", () => {
+    // happy-dom cannot observe the gap fill through a parsed style, so
+    // this pin reads the sheet's wiring: the gap branch of cellStyle
+    // must carry the exported dimmed-wash constant — a re-introduced
+    // repeating-linear-gradient hatch (or a hand-written fill) turns
+    // this red.
+    const sheet = readFileSync(join(here, "HkCalendarHeatmap.tsx"), "utf8");
+    expect(sheet).not.toContain("repeating-linear-gradient");
+    expect(sheet).toContain("background: HEATMAP_GAP_FILL");
+  });
+
+  it("without a tooltip slot, day cells keep the native title and no popup ever mounts", async () => {
+    vi.useFakeTimers();
+    try {
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: daysFrom(CLEAN_HEAD_MON, 1, 5),
+          first: null,
+        }),
+      );
+      const cell = c.querySelector('[data-level]:not([data-level="0"])') as HTMLElement;
+      expect(cell.getAttribute("title")).toContain("Dec 1, 2025");
+      cell.dispatchEvent(new Event("pointerover", { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
+      await nextTick();
+      expect(document.querySelector(".hk-calendar-heatmap-tip")).toBeNull();
+      // The old contract stands in full: the gaps stay INERT (R2 2026-11
+      // restore — the dimmed wash is presentational, and without a slot
+      // nothing can ever engage them). The 5-day fixture spans a whole
+      // week, so a guaranteed-gap mount (one day + first anchor) pins it.
+      const inert = mount(
+        h(HkCalendarHeatmap, {
+          days: [{ date: "2025-12-03", value: 5 }],
+          first: "2025-12-03",
+        }),
+      );
+      const gap = inert.querySelector("[data-gap]") as HTMLElement;
+      expect(gap.style.pointerEvents).toBe("none");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("with a tooltip slot, hovering a day cell opens the shared popup with the caller's content", async () => {
+    vi.useFakeTimers();
+    try {
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: daysFrom(CLEAN_HEAD_MON, 1, 5),
+          first: null,
+        }, {
+          tooltip: ({ cell }: { cell: CalendarCell }) =>
+            h("div", { "data-tip-for": cell.date }, `tip:${cell.kind}`),
+        }),
+      );
+      // The slot owns the explanation: no native title (it would double
+      // up under the popup).
+      const cell = c.querySelector('[data-level]:not([data-level="0"])') as HTMLElement;
+      expect(cell.getAttribute("title")).toBeNull();
+
+      // Lazy: nothing is teleported until the first engage.
+      expect(document.querySelector(".hk-calendar-heatmap-tip")).toBeNull();
+      cell.dispatchEvent(new Event("pointerover", { bubbles: true }));
+      // Behavioral lower bound (R5): the popup is NOT visible one
+      // millisecond before the delay — the tests derive the window
+      // from the exported constant, so a shorter delay ships red.
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS - 1);
+      await nextTick();
+      const early = document.querySelector(
+        ".hk-calendar-heatmap-tip.hk-tooltip-visible",
+      );
+      expect(early, "no visible popup before the delay elapses").toBeNull();
+      await vi.advanceTimersByTimeAsync(1);
+      await nextTick();
+      const popup = document.querySelector(
+        ".hk-calendar-heatmap-tip",
+      ) as HTMLElement | null;
+      expect(popup, "the shared popup is up after the delay").not.toBeNull();
+      expect(popup!.getAttribute("role")).toBe("tooltip");
+      expect(popup!.textContent).toBe("tip:day");
+      expect(popup!.querySelector('[data-tip-for="2025-12-01"]')).not.toBeNull();
+      expect(popup!.classList.contains("hk-tooltip-visible")).toBe(true);
+
+      // Leaving the grid hides it (the popup element stays mounted —
+      // lazy on FIRST engage, not per hover).
+      const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+      grid.dispatchEvent(new Event("pointerleave", { bubbles: false }));
+      await nextTick();
+      expect(
+        document.querySelector(".hk-calendar-heatmap-tip")!.classList.contains("hk-tooltip-visible"),
+      ).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("the tooltip slot also fires for gap cells — the caller explains 'no data'", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2025-12-03T10:00:00Z")); // a Wednesday
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: [{ date: "2025-12-03", value: 5 }],
+          first: "2025-12-03",
+        }, {
+          tooltip: ({ cell }: { cell: CalendarCell }) =>
+            h("div", { "data-tip-kind": cell.kind }, JSON.stringify(cell)),
+        }),
+      );
+      const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+      const gap = grid.querySelector("[data-gap]") as HTMLElement;
+      // With the slot the gaps are the popup's engage surface: they
+      // must stay hoverable (synthetic events bypass hit-testing, so
+      // only this pin catches a regression to unconditional none).
+      expect(gap.style.pointerEvents).not.toBe("none");
+      gap.dispatchEvent(new Event("pointerover", { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
+      await nextTick();
+      const popup = document.querySelector(".hk-calendar-heatmap-tip") as HTMLElement;
+      const payload = JSON.parse(
+        popup.querySelector("[data-tip-kind]")!.textContent ?? "{}",
+      );
+      expect(payload).toMatchObject({ kind: "gap", date: gap.getAttribute("data-date") });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a touch pointerleave does not close what a tap opened; a desktop leave does", async () => {
+    // Browsers fire the boundary-release chain (pointerleave on the
+    // tapped cell) right after a touch pointerup — implicit capture
+    // release. The tap-toggle owns touch dismissal, so that synthetic
+    // leave must NOT hide the popup (R2 2026-11; the mouse leave path
+    // stays). happy-dom does not model the implicit release, which is
+    // exactly why this needs its own pin.
+    vi.useFakeTimers();
+    try {
+      const c = mount(
+        h(HkCalendarHeatmap, {
+          days: daysFrom(CLEAN_HEAD_MON, 1, 5),
+          first: null,
+        }, {
+          tooltip: ({ cell }: { cell: CalendarCell }) =>
+            h("div", { "data-tip-for": cell.date }, `tip:${cell.kind}`),
+        }),
+      );
+      const cell = c.querySelector('[data-level]:not([data-level="0"])') as HTMLElement;
+      const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
+
+      // A touch tap arms + shows at once.
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      const popup = () => document.querySelector(".hk-calendar-heatmap-tip") as HTMLElement | null;
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+
+      // The implicit-release leave: same gesture, must not hide.
+      grid.dispatchEvent(new PointerEvent("pointerleave", { pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+
+      // A mouse (pointerType-less event reads undefined) leave hides.
+      grid.dispatchEvent(new PointerEvent("pointerleave", {}));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(false);
+
+      // The tap-toggle owns touch dismissal, so BOTH directions stay
+      // pinned: a second tap on the SAME cell closes it…
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(false);
+
+      // …and a tap OUTSIDE the grid dismisses a re-opened tooltip.
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+      document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(false);
     } finally {
       vi.useRealTimers();
     }

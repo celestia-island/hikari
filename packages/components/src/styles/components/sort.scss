@@ -1,14 +1,35 @@
 // Sort component styles
-// Column sort with direction indicator
+// Column sort with direction indicator.
+//
+// Class names MUST stay in correspondence with the palette `SortClass`
+// emission (guard: tests/class_sheet_correspondence_tests.rs). The sheet
+// drifted from the emitted names at genesis (trigger/icon/clear-btn vs
+// button/indicator/clear) and shipped fully unstyled until 2026-11 —
+// every selector here maps 1:1 onto a `SortClass` variant.
+//
+// Direction has no dedicated class anymore (`SortDirection::class()` is
+// deprecated dead code): the glyphs returned by `icon()` are already
+// directional (⇅ / ↑ / ↓), so the active state only needs color.
 
-.hk-sort-trigger {
+.hk-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hk-sort-button {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 6px 8px;
   cursor: pointer;
   user-select: none;
-  border-radius: var(--radius-sm, 4px);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border-radius: var(--radius-md, 8px);
   transition: background 0.2s ease;
 
   &:hover {
@@ -16,41 +37,47 @@
   }
 }
 
-.hk-sort-icon {
+.hk-sort-title {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.hk-sort-indicator {
   width: 16px;
   height: 16px;
+  display: inline-block;
   color: var(--hi-color-text-secondary, #666666);
   font-size: 12px;
-  transition: transform 0.2s ease;
-  display: inline-block;
+  transition: color 0.2s ease;
 }
 
-.hk-sort-trigger:hover .hk-sort-icon {
+.hk-sort-button:hover .hk-sort-indicator,
+.hk-sort-active .hk-sort-indicator {
   color: var(--hi-color-primary, #00a0e9);
 }
 
-.hk-sort-asc .hk-sort-icon {
-  transform: rotate(0deg);
-  color: var(--hi-color-primary, #00a0e9);
-}
-
-.hk-sort-desc .hk-sort-icon {
-  transform: rotate(180deg);
-  color: var(--hi-color-primary, #00a0e9);
-}
-
-.hk-sort-clear-btn {
+.hk-sort-clear {
   padding: 2px 6px;
   border: none;
   background: transparent;
   color: var(--hi-color-text-placeholder, rgba(127, 127, 127, 0.75));
+  font: inherit;
   font-size: 16px;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: var(--radius-md, 8px);
   transition: all 0.2s ease;
 
   &:hover {
     color: var(--hi-color-primary, #00a0e9);
     background: var(--hi-color-background-light, rgba(127, 127, 127, 0.08));
   }
+}
+
+.hk-sort-clear-text {
+  font-size: 14px;
+}
+
+.hk-sort-clear-icon {
+  width: 14px;
+  height: 14px;
 }

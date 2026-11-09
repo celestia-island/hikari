@@ -336,6 +336,7 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
     for needle in [
         ".hk-alert",
         ".hk-modal",
+        ".hk-sort",
         ".hk-window-close",
         ".hk-btn",
         ".hk-avatar",

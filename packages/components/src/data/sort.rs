@@ -34,6 +34,9 @@ impl SortDirection {
         }
     }
 
+    #[deprecated(
+        note = "dead code: `hk-sort-asc`/`hk-sort-desc` are emitted by no component and styled by no sheet; direction is conveyed by the glyph returned from `icon()`. Kept only for semver compatibility - removal is tracked for the next minor-bump wave."
+    )]
     pub fn class(&self) -> &'static str {
         match self {
             SortDirection::None => "",

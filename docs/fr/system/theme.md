@@ -251,7 +251,7 @@ Ou en SCSS:
 --hi-radius-full           /* 9999px */
 ```
 
-**Doctrine des fins de rayon :** les constantes SCSS `$hikari-radius-fine-*` (4/6/8px) stylisent uniquement le micro-décor — graduations, conteneurs de glyphes en ligne et ornements similaires. Par doctrine, elles ne suivent **pas** les paliers de rayon d'exécution : le remappage `data-radius` régit les surfaces structurelles (cartes, modales, contrôles, puces comprises), tandis que le micro-rayon fin reste constant dans tous les modes. Les usages structurels existants des constantes fines ont été reclassés sur les paliers lors de la vague de dette de migration 2026-11 ; le placeholder d'icône d'image demeure le consommateur autorisé restant.
+**Doctrine des fins de rayon :** les constantes SCSS `$hikari-radius-fine-*` (4/6/8px) stylisent uniquement le micro-décor — graduations, conteneurs de glyphes en ligne et ornements similaires. Par doctrine, elles ne suivent **pas** les paliers de rayon d'exécution : le remappage `data-radius` régit les surfaces structurelles (cartes, modales, contrôles, puces comprises), tandis que le micro-rayon fin reste constant dans tous les modes. Les usages structurels existants des constantes fines ont été reclassés sur les paliers lors de la vague de dette de migration 2026-11 ; le placeholder d'icône d'image et la face HkTerminal gérée par miroir demeurent les consommateurs autorisés restants.
 
 #### Variables d'Ombre
 

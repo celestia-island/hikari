@@ -270,6 +270,31 @@ describe("HkTable sections", () => {
     expect(empty!.getAttribute("colspan")).toBe(String(COLS.length));
   });
 
+  it("names an empty-title header cell via headerLabel without rendering text", async () => {
+    // Utility columns (row actions) intentionally carry `title: ""` —
+    // but an empty `<th>` is an UNNAMED one for assistive tech. The
+    // headerLabel contract: aria-label published on the th, visible
+    // header stays empty, and columns without the label render no
+    // aria-label at all (no behavior change for existing tables).
+    const columns = [
+      { key: "name", title: "Name" },
+      { key: "actions", title: "", headerLabel: "Actions", align: "right" as const },
+    ];
+    const sections: HkTableSection[] = [
+      { key: "panel-a", label: "Panel A", rows: [{ name: "alpha", actions: "…" }] },
+    ];
+    const c = mount(h(HTable, { columns, sections }));
+
+    const heads = Array.from(c.querySelectorAll("thead th"));
+    const named = heads.find((th) => th.getAttribute("aria-label") === "Actions");
+    expect(named, "the actions th carries the accessible name").toBeTruthy();
+    const plain = heads.find((th) => th.getAttribute("aria-label") === null) as HTMLElement;
+    expect(plain.textContent).toContain("Name");
+    // visible header of the named column stays EMPTY — the label is
+    // assistive-only
+    expect(named!.textContent!.trim()).toBe("");
+  });
+
   it("sorts inside each section and keeps the section order", async () => {
     const columns = [{ key: "name", title: "Name", sortable: true }];
     const sections: HkTableSection[] = [

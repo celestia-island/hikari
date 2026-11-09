@@ -111,6 +111,57 @@
   background: rgb(var(--color-primary));
 }
 
+// ── overspend (max + overValue) ─────────────────────────────────────
+// The track grows to `max + overValue`: the main fill keeps the quota's
+// share, the overspend stretch takes the rest to the inline end, and the
+// 1px divider is CARVED out of the stretch's inline-start edge — the track
+// background shows through the seam. A painted line would need a colour of
+// its own (and could not sit correctly over the translucent track); the
+// carved gap is one geometry that also mirrors correctly in RTL.
+.hk-progress-bar-overspend {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  // Square on the seam side, rounded at the track's end: the 1px gap then
+  // reads as a divider over the whole track height instead of a lens
+  // between two round caps.
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: var(--radius-full);
+  border-end-end-radius: var(--radius-full);
+  transition:
+    width var(--duration-normal) var(--ease-standard),
+    inset-inline-start var(--duration-normal) var(--ease-standard);
+
+  &-muted {
+    background: rgb(var(--color-muted));
+  }
+
+  &-danger {
+    background: rgb(var(--color-error));
+  }
+}
+
+// While an overspend stretch follows it, the main fill squares its
+// inline-end corners so the seam divider stays exactly 1px wide.
+.hk-progress-bar-track--overspend .hk-progress-bar-fill {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+// Overspend caption ("超支 0.8 度"), riding the label row after the value.
+.hk-progress-bar-overspend-label {
+  margin-inline-start: var(--space-6);
+
+  &-muted {
+    color: rgb(var(--color-muted));
+  }
+
+  &-danger {
+    color: rgb(var(--color-error));
+  }
+}
+
 // Keyframes animate the logical inset so the sweep mirrors in RTL together
 // with the fill/secondary anchoring (LTR-identical).
 @keyframes hk-progress-indeterminate {
@@ -138,6 +189,7 @@
   // (house guard: the family bar-fill pattern).
   .hk-progress-bar-fill,
   .hk-progress-bar-secondary,
+  .hk-progress-bar-overspend,
   .hk-progress-bar-seg {
     transition: none;
   }

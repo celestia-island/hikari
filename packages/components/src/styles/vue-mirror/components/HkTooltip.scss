@@ -65,6 +65,35 @@
   }
 }
 
+/* Click-trigger confirm mode (trigger="click"): the bubble carries the
+   decision — its actions live inside it — so it must take pointer events,
+   unlike the hover annotation (pointer-transparent: it can never eat the
+   pointer that summoned it). Armed only while VISIBLE: the popup node
+   survives a close (lazy-mount contract), and an opacity-0 fixed box that
+   still hit-tests would swallow clicks in its last footprint. */
+.hk-tooltip-popup--click {
+  pointer-events: none;
+}
+
+.hk-tooltip-popup--click.hk-tooltip-visible {
+  pointer-events: auto;
+}
+
+/* In click mode `text` is the confirm title: weight it and give the body
+   below (the `content` slot) room, so the popup reads as a decision rather
+   than a one-line label. */
+.hk-tooltip-popup--click .hk-tooltip-content {
+  font-weight: 600;
+  margin-block-end: var(--space-6);
+}
+
+/* The dialog surface receives focus on open (tabIndex -1): a keyboard user
+   must see where focus went before Tabbing on to the actions. */
+.hk-tooltip-popup--click:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
 /* Light mode needs no override — the base rule above already is the
    light palette; only dark re-inks the popup. */
 [data-mode="dark"] .hk-tooltip-popup {

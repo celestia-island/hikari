@@ -874,7 +874,11 @@ export { default as HkToast } from "./components/HkToast";
 export { default as HkPersistentToast, type PersistentToastTone } from "./components/HkPersistentToast";
 export { default as HkPersistentToastGroup } from "./components/HkPersistentToastGroup";
 export { default as HkTooltip } from "./components/HkTooltip";
-export { type HkTooltipSlotProps } from "./components/HkTooltip";
+export {
+  type HkTooltipConfirmSlotProps,
+  type HkTooltipSlotProps,
+  type TooltipTrigger,
+} from "./components/HkTooltip";
 export { default as HkTree } from "./components/HkTree";
 export { default as HkWindowedItem } from "./components/HkWindowedItem";
 export { default as HkWaterfall } from "./components/HkWaterfall";

@@ -629,3 +629,47 @@ describe("HkTooltip click-trigger confirm mode", () => {
     expect(popup().className).not.toContain("hk-tooltip-visible");
   });
 });
+
+describe("HkTooltip closed-popup reachability (R2 S2)", () => {
+  it("keeps a closed click popup's actions out of the tab order (inert)", async () => {
+    const { container } = mountClick({}, ({ close }) =>
+      h("div", { class: "confirm-body" }, [
+        h("button", { class: "cancel-btn", type: "button", onClick: close }, "取消"),
+        h("button", { class: "confirm-btn", type: "button" }, "继续"),
+      ]));
+    triggerButton(container).click();
+    await nextTick();
+    const p = popup();
+    // Open: the actions are real tab stops.
+    expect(p.hasAttribute("inert")).toBe(false);
+    expect(document.activeElement).toBe(p);
+
+    (p.querySelector(".cancel-btn") as HTMLElement).click();
+    await nextTick();
+    // The node (and its buttons) survive the lazy-mount contract — that is
+    // exactly why the reachability gate has to live on the popup itself…
+    expect(popup()).toBe(p);
+    expect(p.querySelector(".confirm-btn")).not.toBeNull();
+    expect(p.className).not.toContain("hk-tooltip-visible");
+    // …and a closed confirm surface must leave both the tab order and the
+    // a11y tree, or a keyboard user tabs into an invisible "继续".
+    expect(p.hasAttribute("inert")).toBe(true);
+  });
+
+  it("leaves the hover tooltip non-inert (it has no actions to hide)", async () => {
+    const { container } = mount({ text: "hover tip", delay: 0 });
+    enter(container);
+    await settle();
+    expect(popup().hasAttribute("inert")).toBe(false);
+    leave(container);
+    await nextTick();
+    expect(popup().hasAttribute("inert")).toBe(false);
+  });
+
+  it("stays silent for a text-less hover trigger (no empty bubble)", async () => {
+    const { container } = mount({ text: "", delay: 0 });
+    enter(container);
+    await settle();
+    expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
+  });
+});

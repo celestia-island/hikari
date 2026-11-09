@@ -139,6 +139,11 @@ export default defineComponent({
       // Hover/focus entry only: the click-trigger wrapper passes NO
       // hover/focus handlers at all (see the render below), so a confirm
       // surface can never pop open from a pointer passing over it.
+      //
+      // `text` is optional now (click mode may title from it or not), so a
+      // text-less hover trigger must stay silent like the touch-hint path
+      // does — an empty bubble is a worse answer than no bubble.
+      if (!props.text.trim()) return;
       clearShowTimer();
       ensureEngaged();
       showTimer = setTimeout(() => {
@@ -367,6 +372,12 @@ export default defineComponent({
               role={clickMode.value ? "dialog" : "tooltip"}
               class={tooltipCls.value}
               style={popupStyle.value}
+              // Click mode keeps the popup node mounted after a close (lazy
+              // contract), but its actions must not stay reachable: an
+              // invisible button is still a tab stop and still speaks. `inert`
+              // is the platform's own "out of the tab order and out of the
+              // a11y tree" switch, armed exactly while the popup is closed.
+              inert={clickMode.value ? !visible.value : undefined}
               // A dialog surface takes focus so keyboard users land on the
               // actions (the slot's buttons are the next Tab stops).
               tabindex={clickMode.value ? -1 : undefined}

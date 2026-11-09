@@ -19,8 +19,9 @@
 //! legs enforce PLUS every recorded cross-family emission: literals,
 //! enum-slot tokens, and embedded-component contract outputs (the
 //! shared Button renders `hk-btn hk-btn-{variant} hk-btn-{size}`,
-//! IconButton renders `hk-icon-button hk-icon-button-{size}` plus its
-//! inner icon span), each excused by its whitelist entry. The scanner
+//! IconButton renders `hk-icon-button hk-icon-button-{size}
+//! hk-icon-button-{variant}` plus its inner icon span), each excused by
+//! its whitelist entry. The scanner
 //! mints `&-suffix` atoms so parent nesting cannot hide compiled
 //! selectors.
 //!
@@ -306,6 +307,7 @@ fn pairs() -> Vec<Pair> {
                 // IconButton contract (IconButtonSize::S32).
                 "hk-icon-button",
                 "hk-icon-button-32",
+                "hk-icon-button-ghost",
                 "hk-icon-button-icon",
             ],
             // The sheet is the legacy full chrome (modes, sizes, jump
@@ -328,6 +330,10 @@ fn pairs() -> Vec<Pair> {
                 (
                     "hk-icon-button-32",
                     "runtime emission via the shared IconButton contract; styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-ghost",
+                    "runtime emission via the shared IconButton contract (variant defaults to Ghost); styled by the HkIconButtonVars partial",
                 ),
                 (
                     "hk-icon-button-icon",

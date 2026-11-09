@@ -18,6 +18,13 @@ import "./HkTable.scss";
 interface Column {
   key: string;
   title: string;
+  /** Accessible name for the header cell, WITHOUT visible text. Utility
+   *  columns (row actions, ⋯ menus) intentionally render an empty
+   *  `title` — but an empty `<th>` is also an unnamed one for screen
+   *  readers. Set `headerLabel` to publish `aria-label` on that `<th>`
+   *  while the visible header stays empty; it never renders text and
+   *  never participates in sorting. */
+  headerLabel?: string;
   width?: string;
   sortable?: boolean;
   align?: "left" | "center" | "right";
@@ -1161,6 +1168,7 @@ export default defineComponent({
                 return (
                   <th
                     key={col.key}
+                    aria-label={col.headerLabel}
                     class={[
                       "hk-table-header-cell",
                       col.align ? `hk-text-${col.align}` : "",

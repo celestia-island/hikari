@@ -251,7 +251,7 @@ Or in SCSS:
 --hi-radius-full           /* 9999px */
 ```
 
-**Fine radius doctrine:** the `$hikari-radius-fine-*` SCSS constants (4/6/8px) style micro-decoration only — chips, ticks, inline glyph containers. By doctrine they do **not** follow the runtime radius tiers: `data-radius` remapping governs structural surfaces (cards, modals, controls), while fine micro-radius stays constant in every radius mode so tiny ornaments keep their shape. Existing structural uses of the fine constants (menus, dropdowns, cascader and transfer panels) are known migration debt, to be re-classified in a follow-up wave.
+**Fine radius doctrine:** the `$hikari-radius-fine-*` SCSS constants (4/6/8px) style micro-decoration only — ticks, inline glyph containers and similar ornaments. By doctrine they do **not** follow the runtime radius tiers: `data-radius` remapping governs structural surfaces (cards, modals, controls, chips included), while fine micro-radius stays constant in every radius mode so tiny ornaments keep their shape. Structural uses of the fine constants were re-classified onto the runtime ladder in the 2026-11 fine-debt wave; the image icon placeholder is the remaining sanctioned consumer.
 
 #### Shadow Variables
 

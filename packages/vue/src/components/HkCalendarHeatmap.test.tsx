@@ -394,6 +394,10 @@ describe("HkCalendarHeatmap", () => {
       );
       const grid = c.querySelector('[data-testid="hk-calendar-heatmap"]') as HTMLElement;
       const gap = grid.querySelector("[data-gap]") as HTMLElement;
+      // With the slot the gaps are the popup's engage surface: they
+      // must stay hoverable (synthetic events bypass hit-testing, so
+      // only this pin catches a regression to unconditional none).
+      expect(gap.style.pointerEvents).not.toBe("none");
       gap.dispatchEvent(new Event("pointerover", { bubbles: true }));
       await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
       await nextTick();
@@ -441,6 +445,23 @@ describe("HkCalendarHeatmap", () => {
 
       // A mouse (pointerType-less event reads undefined) leave hides.
       grid.dispatchEvent(new PointerEvent("pointerleave", {}));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(false);
+
+      // The tap-toggle owns touch dismissal, so BOTH directions stay
+      // pinned: a second tap on the SAME cell closes it…
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(false);
+
+      // …and a tap OUTSIDE the grid dismisses a re-opened tooltip.
+      cell.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+      await nextTick();
+      expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(true);
+      document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
       await nextTick();
       expect(popup()!.classList.contains("hk-tooltip-visible")).toBe(false);
     } finally {

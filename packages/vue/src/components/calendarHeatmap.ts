@@ -84,7 +84,10 @@ export type CalendarCell =
  * back to the window's first Monday, tail cells to Sunday — so a
  * trailing-year window ALWAYS lands on a full-year-wide grid, however
  * young the account is. Every cell carries its real calendar date;
- * cells outside [first … today] become gaps (dimmed, inert).
+ * cells outside [first … today] become gaps (dimmed; inert without
+ * the tooltip slot — with one they are the popup's engage surface).
+ * The Rust/WASM mirror keeps them inert unconditionally (no popup
+ * runtime in that form).
  *
  * `maxOverride` pins the intensity scale (R2: the component's `max`
  * prop must reach the buckets, not just the data-max attribute — a

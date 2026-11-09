@@ -1285,10 +1285,12 @@ const LABEL_BLOCK_CONTENT = new Set([
   "thead", "tr", "ul",
 ]);
 
-/** Replaced elements a label may hold. Reachable only through an UNSCOPED rule
- * (`svg { display: block }` in the reset): a descendant rule needs an ancestor
- * a label never has, and the icon family (`.hk-icon svg`, `.hk-menu-item-icon
- * svg`, …) would otherwise add 206 rows to the causal table — every one of
+/** Replaced elements a label may hold. Only an UNSCOPED rule is a row
+ * (`svg { display: block }` in the reset). A descendant rule is refused as
+ * NOISE, not because it cannot match: `HkIcon` renders `span.hk-icon > svg`
+ * inside the label's slot, so `.hk-icon svg` does reach it — and that family
+ * (`.hk-icon svg`, `.hk-menu-item-icon svg`, …) would otherwise add 206 rows
+ * to the causal table — every one of
  * them carrying a replaced-element subject, 136 from the host bundle and 70
  * from the component sheets (measured by lifting only the unscoped half).
  * Review put `svg { height: 40px }` in a foreign sheet — and `height: 40px` on
@@ -1658,8 +1660,9 @@ function elementOnlyMovers(label: string, all: Rule[]): string[] {
         // was the subject set, not the anchoring rule. `div { line-height: 2 }`
         // took the line box 21→28px, `p { font-size: 2rem }` 21→48px,
         // `p { padding-block-start: 8px }` 21→29px. UNSCOPED only, like the
-        // replaced elements (`.hk-markdown p` needs an ancestor a label never
-        // has), and only `FIRST_LINE_MOVERS` (`div { --text-base: 0.875rem }`
+        // replaced elements — `.hk-markdown p` CAN match (a control nested in a
+        // `.hk-markdown` wrapper has that ancestor) but a scoped rule is
+        // refused as noise, and only `FIRST_LINE_MOVERS` (`div { --text-base: 0.875rem }`
         // cannot reach the label: inheritance runs down, not up).
         if (LABEL_BLOCK_CONTENT.has(subjectTag(subject)) && !/[ >+~]/.test(one.trim())) {
           const blockMoves = splitDeclarations(rule.body)
@@ -2884,7 +2887,8 @@ describe("label first-line anchoring", () => {
     //   bare-`svg` rule is `svg { color: inherit }`). Only the
     //   UNSCOPED shape is a row (`REPLACED_CONTENT` requires a selector with no
     //   combinator): the `.hk-icon svg { height: 100% }` family is 206 rows of
-    //   styling no label can match — every one of them carries a replaced-
+    //   styling a label CAN match that the table refuses as noise — every one of
+    //   them carries a replaced-
     //   element subject, 136 of them come from the host bundle and the other 70
     //   from the component sheets (measured by lifting only the unscoped half
     //   of `REPLACED_CONTENT`: the pinned 73 → 279, i.e. +206).
@@ -3138,9 +3142,10 @@ describe("label first-line anchoring", () => {
       "pin :: - | *|p | margin-block-start: 8px",
     ]);
     // `data-size` sits on the radio ROOT (`HkRadio.tsx`), so a host rule keyed
-    // on it reaches the box's inherited `--text-base` and drives the offset
-    // (1.5px → 15px on an `sm` root) while the label's line stays put. The
-    // entry was load-bearing and unpinned: removing it left 215/215 green.
+    // on it reaches the box's inherited `--text-base` and drives the md offset
+    // 1.5px → 15px (on an `sm` root the offset reads `--text-xs`, so the token
+    // is inert there). The entry was load-bearing and unpinned: removing it
+    // left 215/215 green.
     expect(elementOnlyMovers("pin", rules('[data-size="sm"] { --text-base: 2rem }'))).toEqual([
       'pin :: - | [data-size="sm"] | --text-base: 2rem',
     ]);

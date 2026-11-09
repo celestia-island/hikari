@@ -15,26 +15,44 @@
 //! touched: sheet↔hand-written emission list, emission list↔palette
 //! enum, and component render→DOM classes.
 //!
+//! The `emitted` lists carry the family-prefix names the bidirectional
+//! legs enforce PLUS every recorded cross-family emission: literals,
+//! enum-slot tokens, and embedded-component contract outputs (the
+//! shared Button renders `hk-btn hk-btn-{variant} hk-btn-{size}`,
+//! IconButton renders `hk-icon-button hk-icon-button-{size}
+//! hk-icon-button-{variant}` plus its inner icon span), each excused by
+//! its whitelist entry. The scanner
+//! mints `&-suffix` atoms so parent nesting cannot hide compiled
+//! selectors.
+//!
 //! Adding a pair: fix any drift first, then append to `pairs()`. A name
 //! that is deliberately on only one side (emitted-but-unstyled, or
 //! styled-but-never-emitted state/layout classes) goes into that pair's
 //! `whitelist` **with a reason** — the whitelist is how known-dead API
 //! surfaces stay recorded next to the guard that watches them.
 //!
-//! Known dormant surfaces NOT covered by a pair yet (no sheet exists /
-//! alignment unverified): `FilterClass` (no `filter.scss`; the
-//! `FilterIcon`/`FilterClearBtn` variants are emitted by no component
-//! and styled by no sheet) and `PaginationClass` (sheet carries many
-//! state/size atoms whose emission path is not enum-driven;
-//! correspondence unverified — 2026-11 sort-class-drift wave ledger).
+//! 2026-11 guard-promotion wave: the live filter family (four mirrored
+//! sheets, hand-written emission) and pagination joined as pairs, and
+//! the `FilterClass` palette enum is pinned as a recorded dormant API
+//! (see `filter_class_enum_is_a_recorded_dormant_api`). Four live
+//! emitted-but-unstyled names are whitelisted with reasons — the styling
+//! direction call is registered in the ledger, not smuggled in here.
 
 use hikari_components::data::ColumnDef;
 use hikari_components::data::{Sort, SortDirection, SortProps};
 use hikari_palette::classes::UtilityClass;
-use hikari_palette::classes::components::data::SortClass;
+use hikari_palette::classes::components::data::{FilterClass, PaginationClass, SortClass};
 use std::collections::BTreeSet;
 
 const SORT_SHEET: &str = include_str!("../src/styles/components/sort.scss");
+const PAGINATION_SHEET: &str = include_str!("../src/styles/components/pagination.scss");
+const FILTER_BAR_SHEET: &str = include_str!("../src/styles/vue-mirror/components/HkFilterBar.scss");
+const FILTER_CHIP_SHEET: &str =
+    include_str!("../src/styles/vue-mirror/components/HkFilterChip.scss");
+const FILTER_PANEL_SHEET: &str =
+    include_str!("../src/styles/vue-mirror/components/HkFilterPanel.scss");
+const FILTER_TRIGGER_SHEET: &str =
+    include_str!("../src/styles/vue-mirror/components/HkFilterTrigger.scss");
 
 /// One component family: the classes it emits vs the sheet it ships.
 struct Pair {
@@ -48,21 +66,371 @@ struct Pair {
 }
 
 fn pairs() -> Vec<Pair> {
-    vec![Pair {
-        component: "sort",
-        sheet: SORT_SHEET,
-        emitted: vec![
-            "hk-sort",
-            "hk-sort-button",
-            "hk-sort-active",
-            "hk-sort-clear",
-            "hk-sort-title",
-            "hk-sort-indicator",
-            "hk-sort-clear-text",
-            "hk-sort-clear-icon",
-        ],
-        whitelist: &[],
-    }]
+    vec![
+        Pair {
+            component: "sort",
+            sheet: SORT_SHEET,
+            emitted: vec![
+                "hk-sort",
+                "hk-sort-button",
+                "hk-sort-active",
+                "hk-sort-clear",
+                "hk-sort-title",
+                "hk-sort-indicator",
+                "hk-sort-clear-text",
+                "hk-sort-clear-icon",
+            ],
+            whitelist: &[],
+        },
+        Pair {
+            component: "filter_bar",
+            sheet: FILTER_BAR_SHEET,
+            emitted: vec![
+                "hk-filter-bar",
+                "hk-filter-bar-actions",
+                "hk-filter-bar-count",
+                "hk-filter-bar-fields",
+                "hk-filter-bar-panel",
+                "hk-filter-bar-footer",
+                "hk-filter-bar-popover",
+                // Cross-family render emissions (trigger button + count
+                // badge), styled by the shared button/badge sheets.
+                "hk-btn",
+                "hk-btn-secondary",
+                "hk-btn-sm",
+                "hk-btn-primary",
+                "hk-btn-ghost",
+                "hk-badge",
+                "hk-badge-primary",
+            ],
+            whitelist: &[
+                (
+                    "hk-btn",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-secondary",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-sm",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-primary",
+                    "cross-family emission, styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-ghost",
+                    "runtime emission via the shared Button contract (ButtonVariant::Ghost on the reset verb); styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-badge",
+                    "cross-family emission, styled by the shared HkBadge sheet",
+                ),
+                (
+                    "hk-badge-primary",
+                    "cross-family emission, styled by the shared HkBadge sheet",
+                ),
+            ],
+        },
+        Pair {
+            component: "filter_chip",
+            sheet: FILTER_CHIP_SHEET,
+            emitted: vec![
+                "hk-filter-chip",
+                "hk-filter-chip-text",
+                "hk-filter-chip-anchor",
+                "hk-filter-chip-body",
+                "hk-filter-chip-caret",
+                "hk-filter-chip-hint",
+                "hk-filter-chip--on",
+                // Cross-family render emissions (the chip rows are built
+                // on the pill toggle group), styled by its shared sheet.
+                "hk-pill-group",
+                "hk-pill-group-pill",
+                "hk-pill-group-icon",
+            ],
+            whitelist: &[
+                (
+                    "hk-filter-chip-text",
+                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-pill-group",
+                    "cross-family emission, styled by the shared HkPillToggleGroup sheet",
+                ),
+                (
+                    "hk-pill-group-pill",
+                    "cross-family emission, styled by the shared HkPillToggleGroup sheet",
+                ),
+                (
+                    "hk-pill-group-icon",
+                    "cross-family emission, styled by the shared HkPillToggleGroup sheet",
+                ),
+            ],
+        },
+        Pair {
+            component: "filter_panel",
+            sheet: FILTER_PANEL_SHEET,
+            emitted: vec![
+                "hk-filter-panel",
+                "hk-filter-panel-row",
+                "hk-filter-panel-ops",
+                "hk-filter-panel-op",
+                "hk-filter-panel-value",
+                "hk-filter-panel-control",
+                "hk-filter-panel-remove",
+                "hk-filter-panel-addrow",
+                "hk-filter-panel-add",
+                "hk-filter-panel-field",
+                "hk-filter-add-list",
+                "hk-filter-add-item",
+                "hk-filter-add-item-label",
+                "hk-filter-add-content",
+            ],
+            whitelist: &[
+                (
+                    "hk-filter-add-item-label",
+                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-filter-add-viewport",
+                    "styled; emitted only by the vue twin HkFilterPanel.tsx (HkScrollContainer wrapper), not by the rust component",
+                ),
+                (
+                    "hk-is-sheet",
+                    "comment mention of the shared sheet token context, not a selector (scanner reads comments)",
+                ),
+                (
+                    "hk-scroll-container-viewport",
+                    "descendant styling of the shared HkScrollContainer viewport inside the panel",
+                ),
+            ],
+        },
+        Pair {
+            component: "filter_trigger",
+            sheet: FILTER_TRIGGER_SHEET,
+            emitted: vec![
+                "hk-filter-trigger",
+                "hk-filter-trigger-body",
+                "hk-filter-trigger-footer",
+                // Cross-family render emissions (chrome button + corner
+                // mark), styled by the shared icon-button/corner-badge
+                // sheets (sizes via the HkIconButtonVars partial).
+                "hk-icon-button",
+                "hk-icon-button-28",
+                "hk-icon-button-32",
+                "hk-icon-button-ghost",
+                "hk-icon-button-icon",
+                "hk-corner-badge",
+                "hk-corner-badge-success",
+                "hk-corner-badge-anchor",
+                "hk-corner-badge--dot",
+                // The footer Apply rides the shared Button contract
+                // (ButtonVariant::Primary, ButtonSize::Sm).
+                "hk-btn",
+                "hk-btn-primary",
+                "hk-btn-sm",
+            ],
+            whitelist: &[
+                (
+                    "hk-filter-trigger-body",
+                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-icon-button",
+                    "cross-family emission, styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-icon-button-28",
+                    "cross-family emission, styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-32",
+                    "cross-family emission, styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-ghost",
+                    "cross-family emission, styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-icon",
+                    "cross-family emission, styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-corner-badge",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
+                ),
+                (
+                    "hk-corner-badge-success",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
+                ),
+                (
+                    "hk-corner-badge-anchor",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
+                ),
+                (
+                    "hk-corner-badge--dot",
+                    "cross-family emission, styled by the shared HkCornerBadge sheet",
+                ),
+                (
+                    "hk-btn",
+                    "runtime emission via the shared Button contract (ButtonVariant::Primary + ButtonSize::Sm on the footer Apply); styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-primary",
+                    "runtime emission via the shared Button contract; styled by the shared HkButton sheet",
+                ),
+                (
+                    "hk-btn-sm",
+                    "runtime emission via the shared Button contract; styled by the shared HkButton sheet",
+                ),
+            ],
+        },
+        Pair {
+            component: "pagination",
+            sheet: PAGINATION_SHEET,
+            emitted: vec![
+                "hk-pagination",
+                "hk-pagination-total",
+                "hk-pagination-sizer",
+                "hk-pagination-pages",
+                "hk-pagination-item",
+                "hk-pagination-prev",
+                "hk-pagination-next",
+                "hk-pagination-active",
+                // The sizer's inline select (pagination.rs:480).
+                "hk-select",
+                "hi-select-sm",
+                // The prev/next pager buttons ride the shared
+                // IconButton contract (IconButtonSize::S32).
+                "hk-icon-button",
+                "hk-icon-button-32",
+                "hk-icon-button-ghost",
+                "hk-icon-button-icon",
+            ],
+            // The sheet is the legacy full chrome (modes, sizes, jump
+            // UI, state atoms). The rust component is the simple core;
+            // nothing applies the mode/size wrappers today (2026-11-09
+            // census across hikari + chest found zero appliers).
+            whitelist: &[
+                (
+                    "hk-select",
+                    "emitted by the sizer's inline select, styled by no sheet — HkSelect styles only its -wrapper/-trigger/-label family; recorded live drift (2026-11-09 ledger)",
+                ),
+                (
+                    "hi-select-sm",
+                    "emitted size marker, styled by no sheet anywhere (no hi- select family exists); recorded live drift (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-icon-button",
+                    "runtime emission via the shared IconButton contract (prev/next pager, IconButtonSize::S32); styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-icon-button-32",
+                    "runtime emission via the shared IconButton contract; styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-ghost",
+                    "runtime emission via the shared IconButton contract (variant defaults to Ghost); styled by the HkIconButtonVars partial",
+                ),
+                (
+                    "hk-icon-button-icon",
+                    "runtime emission via the shared IconButton contract (inner glyph span); styled by the shared HkIconButton sheet",
+                ),
+                (
+                    "hk-pagination-sizer",
+                    "emitted by the rust component, styled by no sheet — the sheet carries the -size-selector family instead; recorded live drift, naming divergence pending (2026-11-09 ledger)",
+                ),
+                (
+                    "hk-pagination-ellipsis",
+                    "styled; enum variant exists, emission pending",
+                ),
+                (
+                    "hk-pagination-jump",
+                    "styled; enum variant exists, emission pending (the component only builds jump-* DOM ids)",
+                ),
+                (
+                    "hk-pagination-jumper",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-button",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-input",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-invalid",
+                    "styled; no emitter — reserved jump UI",
+                ),
+                (
+                    "hk-pagination-jumper-label",
+                    "styled; enum variant PaginationJumpLabel maps here since the 2026-11 promotion wave, emission pending",
+                ),
+                (
+                    "hk-pagination-first",
+                    "styled; no emitter — reserved chrome",
+                ),
+                ("hk-pagination-last", "styled; no emitter — reserved chrome"),
+                (
+                    "hk-pagination-left",
+                    "styled; no emitter — reserved alignment",
+                ),
+                (
+                    "hk-pagination-right",
+                    "styled; no emitter — reserved alignment",
+                ),
+                (
+                    "hk-pagination-center",
+                    "styled; no emitter — reserved alignment",
+                ),
+                (
+                    "hk-pagination-animate",
+                    "styled; no emitter — reserved mode",
+                ),
+                (
+                    "hk-pagination-loading",
+                    "styled; no emitter — reserved mode",
+                ),
+                (
+                    "hk-pagination-compact",
+                    "styled; no emitter — reserved mode",
+                ),
+                ("hk-pagination-simple", "styled; no emitter — reserved mode"),
+                ("hk-pagination-lg", "styled; no emitter — reserved size"),
+                ("hk-pagination-md", "styled; no emitter — reserved size"),
+                ("hk-pagination-sm", "styled; no emitter — reserved size"),
+                (
+                    "hk-pagination-size-label",
+                    "styled; no emitter — reserved size-selector chrome",
+                ),
+                (
+                    "hk-pagination-size-select",
+                    "styled; no emitter — reserved size-selector chrome",
+                ),
+                (
+                    "hk-pagination-size-selector",
+                    "styled; no emitter — reserved size-selector chrome",
+                ),
+                (
+                    "hk-pagination-total-label",
+                    "styled; no emitter — reserved total chrome",
+                ),
+                (
+                    "hk-pagination-total-highlight",
+                    "styled; no emitter — reserved total chrome",
+                ),
+                (
+                    "hk-pagination-total-separator",
+                    "styled; no emitter — reserved total chrome",
+                ),
+            ],
+        },
+    ]
 }
 
 /// Extract every `.hk-<name>` atom from a stylesheet source.
@@ -73,22 +441,63 @@ fn pairs() -> Vec<Pair> {
 fn sheet_atoms(sheet: &str) -> BTreeSet<String> {
     let bytes = sheet.as_bytes();
     let mut atoms = BTreeSet::new();
+    // Selector-context stack: `{` pushes the atom heading the selector
+    // being opened (empty when none), `}` pops. `&-suffix` inside a
+    // block mints `context + suffix`, so SCSS parent nesting (`&--on`
+    // compiling to `.hk-filter-chip--on`) cannot hide a compiled atom
+    // from the correspondence legs. Known limits (byte-level): SCSS
+    // interpolation / `@each` selectors are not read; unbalanced braces
+    // inside comments would skew the stack.
+    let mut stack: Vec<String> = Vec::new();
+    let mut pending: Option<String> = None;
     let mut i = 0;
-    while i + 4 <= bytes.len() {
-        if &bytes[i..i + 4] == b".hk-" {
-            let mut j = i + 4;
-            while j < bytes.len()
-                && (bytes[j].is_ascii_lowercase() || bytes[j].is_ascii_digit() || bytes[j] == b'-')
-            {
-                j += 1;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'{' => {
+                stack.push(pending.take().unwrap_or_default());
+                i += 1;
             }
-            let atom = sheet[i + 1..j].trim_end_matches('-').to_string();
-            if !atom.is_empty() {
-                atoms.insert(atom);
+            b'}' => {
+                stack.pop();
+                pending = None;
+                i += 1;
             }
-            i = j;
-        } else {
-            i += 1;
+            b'&' if i + 1 < bytes.len() && bytes[i + 1] == b'-' => {
+                let mut j = i + 1;
+                while j < bytes.len()
+                    && (bytes[j].is_ascii_lowercase()
+                        || bytes[j].is_ascii_digit()
+                        || bytes[j] == b'-')
+                {
+                    j += 1;
+                }
+                if let Some(parent) = stack.last()
+                    && !parent.is_empty()
+                {
+                    atoms.insert(format!("{parent}{}", &sheet[i + 1..j]));
+                }
+                i = j;
+            }
+            _ => {
+                if i + 4 <= bytes.len() && &bytes[i..i + 4] == b".hk-" {
+                    let mut j = i + 4;
+                    while j < bytes.len()
+                        && (bytes[j].is_ascii_lowercase()
+                            || bytes[j].is_ascii_digit()
+                            || bytes[j] == b'-')
+                    {
+                        j += 1;
+                    }
+                    let atom = sheet[i + 1..j].trim_end_matches('-').to_string();
+                    if !atom.is_empty() {
+                        pending = Some(atom.clone());
+                        atoms.insert(atom);
+                    }
+                    i = j;
+                } else {
+                    i += 1;
+                }
+            }
         }
     }
     atoms
@@ -143,6 +552,21 @@ fn sheet_atom_scanner_handles_nesting_and_descendants() {
     // Negative control: without the leading dot nothing is collected
     // (values like `var(--hk-x)` must not pollute the atom set).
     assert!(sheet_atoms("color: var(--hk-x); /* hk-y */").is_empty());
+
+    // SCSS parent minting: `&-suffix` compiles to `parent + suffix`.
+    let atoms = sheet_atoms(".hk-a {\n  &--on { color: red; }\n}\n");
+    assert_eq!(
+        atoms,
+        BTreeSet::from(["hk-a".into(), "hk-a--on".into()]),
+        "scanner missed an `&`-minted atom"
+    );
+    // `&` followed by a pseudo-class mints nothing; a parentless `&`
+    // (no enclosing block) mints nothing either.
+    assert_eq!(
+        sheet_atoms(".hk-a {\n  &:hover { color: red; }\n}\n&--orphan {}\n"),
+        BTreeSet::from(["hk-a".into()]),
+        "scanner minted from a pseudo-class or a parentless &"
+    );
 }
 
 #[test]
@@ -226,5 +650,123 @@ fn sort_class_exhaustiveness_probe(class: SortClass) -> &'static str {
         SortClass::SortIndicator => "hk-sort-indicator",
         SortClass::SortClearText => "hk-sort-clear-text",
         SortClass::SortClearIcon => "hk-sort-clear-icon",
+    }
+}
+
+/// The `FilterClass` palette enum is a recorded dormant API: it predates
+/// the live filter family (filter_bar/chip/panel/trigger above), nothing
+/// emits it, and only its `filter-trigger` name coincides with a live
+/// atom. This test keeps that state honest: if someone starts emitting
+/// the enum they must give it a real sheet + pair (or migrate to the
+/// live families), and a rename on either side of the coinciding name
+/// flags here instead of silently splitting the two surfaces.
+#[test]
+fn filter_class_enum_is_a_recorded_dormant_api() {
+    let live_atoms: BTreeSet<String> = [
+        FILTER_BAR_SHEET,
+        FILTER_CHIP_SHEET,
+        FILTER_PANEL_SHEET,
+        FILTER_TRIGGER_SHEET,
+    ]
+    .iter()
+    .flat_map(|sheet| sheet_atoms(sheet))
+    .collect();
+
+    let enum_classes: Vec<String> = FilterClass::all().iter().map(|c| c.as_class()).collect();
+
+    // 16 of 17 names are styled by no live sheet — that is exactly the
+    // recorded-dormant state; a new sheet or emitter must update this.
+    let styled: Vec<String> = enum_classes
+        .iter()
+        .filter(|c| live_atoms.contains(*c))
+        .cloned()
+        .collect();
+    assert_eq!(
+        styled,
+        vec!["hk-filter-trigger".to_string()],
+        "FilterClass gained a second styled name — promote it to a real pair instead of extending this contract"
+    );
+}
+
+#[test]
+fn pagination_emission_stays_within_the_palette_enum() {
+    let enum_classes: BTreeSet<String> = PaginationClass::all()
+        .iter()
+        .map(|c| c.as_class().to_string())
+        .collect();
+    // Only the family-prefix names ride the enum; the pair's emitted
+    // list also carries whitelisted cross-family render literals
+    // (hk-select / hi-select-sm), which have their own whitelist story.
+    for name in pairs()
+        .iter()
+        .find(|p| p.component == "pagination")
+        .expect("pagination pair")
+        .emitted
+        .iter()
+        .filter(|n| n.starts_with("hk-pagination"))
+    {
+        assert!(
+            enum_classes.contains(*name),
+            "pagination emits {name} outside the PaginationClass enum — add the variant (and keep this list in sync)"
+        );
+    }
+}
+
+/// Enum names the sheet deliberately does not style under the same
+/// name. Each entry must carry its story in the pair whitelist above.
+const PAGINATION_ENUM_DIVERGENCES: &[&str] = &["hk-pagination-sizer"];
+
+#[test]
+fn pagination_palette_enum_is_fully_styled_or_divergence_recorded() {
+    let atoms = sheet_atoms(PAGINATION_SHEET);
+    for class in PaginationClass::all().iter().map(|c| c.as_class()) {
+        assert!(
+            atoms.contains(&class.to_string())
+                || PAGINATION_ENUM_DIVERGENCES.contains(&class.as_ref()),
+            "PaginationClass::{class:?} has no sheet atom — style it, rename it, or record the divergence here and in the pair whitelist"
+        );
+    }
+}
+
+// Compile-time exhaustiveness probes (no wildcard arms): adding a
+// variant without extending these matches fails to compile and drags
+// the author into the guard that must be extended.
+#[allow(dead_code)]
+fn pagination_class_exhaustiveness_probe(class: PaginationClass) -> &'static str {
+    match class {
+        PaginationClass::Pagination => "hk-pagination",
+        PaginationClass::PaginationTotal => "hk-pagination-total",
+        PaginationClass::PaginationSizer => "hk-pagination-sizer",
+        PaginationClass::PaginationPages => "hk-pagination-pages",
+        PaginationClass::PaginationPrev => "hk-pagination-prev",
+        PaginationClass::PaginationNext => "hk-pagination-next",
+        PaginationClass::PaginationEllipsis => "hk-pagination-ellipsis",
+        PaginationClass::PaginationItem => "hk-pagination-item",
+        PaginationClass::PaginationActive => "hk-pagination-active",
+        PaginationClass::PaginationJump => "hk-pagination-jump",
+        PaginationClass::PaginationJumpLabel => "hk-pagination-jumper-label",
+    }
+}
+
+#[allow(dead_code)]
+fn filter_class_exhaustiveness_probe(class: FilterClass) -> &'static str {
+    match class {
+        FilterClass::Filter => "hk-filter",
+        FilterClass::FilterContainer => "hk-filter-container",
+        FilterClass::FilterTrigger => "hk-filter-trigger",
+        FilterClass::FilterActive => "hk-filter-active",
+        FilterClass::FilterIcon => "hk-filter-icon",
+        FilterClass::FilterBadge => "hk-filter-badge",
+        FilterClass::FilterDropdownIcon => "hk-filter-dropdown-icon",
+        FilterClass::FilterDropdown => "hk-filter-dropdown",
+        FilterClass::FilterHeader => "hk-filter-header",
+        FilterClass::FilterTitle => "hk-filter-title",
+        FilterClass::FilterClearBtn => "hk-filter-clear-btn",
+        FilterClass::FilterOptions => "hk-filter-options",
+        FilterClass::FilterOption => "hk-filter-option",
+        FilterClass::FilterCheckbox => "hk-filter-checkbox",
+        FilterClass::FilterLabel => "hk-filter-label",
+        FilterClass::FilterFooter => "hk-filter-footer",
+        FilterClass::FilterHint => "hk-filter-hint",
     }
 }

@@ -153,8 +153,33 @@ impl UtilityClass for PaginationClass {
             PaginationClass::PaginationItem => "pagination-item",
             PaginationClass::PaginationActive => "pagination-active",
             PaginationClass::PaginationJump => "pagination-jump",
-            PaginationClass::PaginationJumpLabel => "pagination-jump-label",
+            // Aligned to the sheet atom `hk-pagination-jumper-label` in the
+            // 2026-11 guard-promotion wave: the variant shipped as
+            // `pagination-jump-label`, which the stylesheet never styled
+            // (drift, zero emitters at fix time).
+            PaginationClass::PaginationJumpLabel => "pagination-jumper-label",
         }
+    }
+}
+
+impl PaginationClass {
+    /// Every variant, for guard tests that keep emitted classes and the
+    /// `pagination` stylesheet in correspondence (see
+    /// `packages/components/tests/class_sheet_correspondence_tests.rs`).
+    pub fn all() -> [PaginationClass; 11] {
+        [
+            PaginationClass::Pagination,
+            PaginationClass::PaginationTotal,
+            PaginationClass::PaginationSizer,
+            PaginationClass::PaginationPages,
+            PaginationClass::PaginationPrev,
+            PaginationClass::PaginationNext,
+            PaginationClass::PaginationEllipsis,
+            PaginationClass::PaginationItem,
+            PaginationClass::PaginationActive,
+            PaginationClass::PaginationJump,
+            PaginationClass::PaginationJumpLabel,
+        ]
     }
 }
 
@@ -200,6 +225,33 @@ impl UtilityClass for FilterClass {
             FilterClass::FilterFooter => "filter-footer",
             FilterClass::FilterHint => "filter-hint",
         }
+    }
+}
+
+impl FilterClass {
+    /// Every variant, for guard tests that keep the `filter` stylesheet in
+    /// correspondence with the reserved emission API (see
+    /// `packages/components/tests/class_sheet_correspondence_tests.rs`).
+    pub fn all() -> [FilterClass; 17] {
+        [
+            FilterClass::Filter,
+            FilterClass::FilterContainer,
+            FilterClass::FilterTrigger,
+            FilterClass::FilterActive,
+            FilterClass::FilterIcon,
+            FilterClass::FilterBadge,
+            FilterClass::FilterDropdownIcon,
+            FilterClass::FilterDropdown,
+            FilterClass::FilterHeader,
+            FilterClass::FilterTitle,
+            FilterClass::FilterClearBtn,
+            FilterClass::FilterOptions,
+            FilterClass::FilterOption,
+            FilterClass::FilterCheckbox,
+            FilterClass::FilterLabel,
+            FilterClass::FilterFooter,
+            FilterClass::FilterHint,
+        ]
     }
 }
 

@@ -10,7 +10,7 @@
   "sideEffects": true,
   "peerDependencies": {
     "@celestia-island/hikari": "^0.55",
-    "lucide-vue-next": "^*",
+    "lucide-vue-next": "^1",
     "vue": "^3"
   },
   "private": true

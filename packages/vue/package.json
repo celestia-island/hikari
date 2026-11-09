@@ -62,23 +62,23 @@
     "prepublishOnly": "vue-tsc --noEmit"
   },
   "peerDependencies": {
-    "@types/three": "^*",
+    "@types/three": "^0.185",
     "three": "^0.185",
-    "vue": "^*"
+    "vue": "^3"
   },
   "dependencies": {
-    "@celestia-island/tairitsu-transport": "^0.2.0",
-    "@xterm/addon-fit": "^0.*",
+    "@celestia-island/tairitsu-transport": "^0.2",
+    "@xterm/addon-fit": "^0.11",
     "@xterm/addon-image": "^0.10.0-beta.301",
     "@xterm/xterm": "^6.1.0-beta.304",
-    "dompurify": "^*",
-    "highlight.js": "^*",
-    "lucide-vue-next": "^*",
-    "marked": "^*"
+    "dompurify": "^3",
+    "highlight.js": "^11",
+    "lucide-vue-next": "^1",
+    "marked": "^18"
   },
   "devDependencies": {
     "@types/node": "^*",
-    "@types/three": "^*",
+    "@types/three": "^0.185",
     "@vitejs/plugin-vue": "^*",
     "@vitejs/plugin-vue-jsx": "^*",
     "@vue/server-renderer": "^*",

@@ -843,6 +843,28 @@ mod tests {
         assert!(heatmap_gap_style().contains(HEATMAP_GAP_FILL));
     }
 
+    /// The dimmed wash sits strictly BELOW the EMPTY level's wash in
+    /// the shared muted channel (the 2026-11 ladder: gap < empty <
+    /// data). Parsed from the two constants — the contains-assert above
+    /// is self-referential (R5) and true for any percentage, so a
+    /// percentage drift on either side must turn red HERE.
+    #[test]
+    fn gap_fill_sits_below_the_empty_wash() {
+        fn muted_pct(fill: &str) -> u32 {
+            let end = fill.find('%').expect("fill carries a percentage");
+            let digits: String = fill[..end]
+                .chars()
+                .rev()
+                .take_while(char::is_ascii_digit)
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect();
+            digits.parse().expect("percentage digits")
+        }
+        assert!(muted_pct(HEATMAP_GAP_FILL) < muted_pct(HEATMAP_EMPTY_FILL));
+    }
+
     #[test]
     fn heatmap_buckets_scale_against_the_window_max() {
         assert_eq!(heatmap_bucket_level(0.0, 10.0), 0);

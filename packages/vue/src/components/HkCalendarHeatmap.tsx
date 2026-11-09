@@ -36,7 +36,10 @@ export const HEATMAP_GAP_FILL =
 
 /** The hover tooltip's show delay — HkTooltip's default, so the two
  * hover surfaces in a page share one cadence. */
-const TOOLTIP_DELAY_MS = 300;
+/** The hover tooltip's show delay — HkTooltip's default, so the two
+ * hover surfaces in a page share one cadence. Exported so consumers
+ * (and the tests) derive from it instead of duplicating the literal. */
+export const TOOLTIP_DELAY_MS = 300;
 
 /** Minimal {name} interpolation for the component's i18n strings — the
  * hikari context serves plain strings (no ICU), the placeholders stay

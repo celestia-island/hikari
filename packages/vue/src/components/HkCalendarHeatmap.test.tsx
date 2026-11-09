@@ -5,12 +5,16 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
-import HkCalendarHeatmap, { HEATMAP_GAP_FILL } from "./HkCalendarHeatmap";
+import HkCalendarHeatmap, {
+  HEATMAP_GAP_FILL,
+  TOOLTIP_DELAY_MS,
+} from "./HkCalendarHeatmap";
 import { HEATMAP_EMPTY_FILL, HEATMAP_LEVEL_OPACITY, shiftIso, type CalendarCell } from "./calendarHeatmap";
 
-/** The shared hover popup's show delay — pinned here so a silent bump
- *  (hover tests going flaky-red) can't ship unnoticed. */
-const TOOLTIP_DELAY_MS = 300;
+/** The shared hover popup's show delay rides the component's EXPORTED
+ * constant (R5: the old duplicated literal let a shorter delay ship
+ * green — the tests must DERIVE, not restate). The behavioral pin
+ * lives in the hover test: hidden at delay−1, visible at delay. */
 expect(HEATMAP_GAP_FILL).not.toContain("gradient");
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -355,7 +359,16 @@ describe("HkCalendarHeatmap", () => {
       // Lazy: nothing is teleported until the first engage.
       expect(document.querySelector(".hk-calendar-heatmap-tip")).toBeNull();
       cell.dispatchEvent(new Event("pointerover", { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS);
+      // Behavioral lower bound (R5): the popup is NOT visible one
+      // millisecond before the delay — the tests derive the window
+      // from the exported constant, so a shorter delay ships red.
+      await vi.advanceTimersByTimeAsync(TOOLTIP_DELAY_MS - 1);
+      await nextTick();
+      const early = document.querySelector(
+        ".hk-calendar-heatmap-tip.hk-tooltip-visible",
+      );
+      expect(early, "no visible popup before the delay elapses").toBeNull();
+      await vi.advanceTimersByTimeAsync(1);
       await nextTick();
       const popup = document.querySelector(
         ".hk-calendar-heatmap-tip",

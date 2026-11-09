@@ -15,16 +15,22 @@
  * bare alpha tint — a lone chip over wallpaper reads as a hole).
  */
 
+/* Both flex links must be allowed to shrink below their content or the
+ * chip's text truncation never arms: min-width:auto would keep the chip
+ * at its nowrap min-content width forever. With no consumer width bound
+ * the chip simply renders at its natural width. */
 .hk-filter-chip-anchor {
   position: relative;
   display: inline-flex;
   align-items: center;
+  min-width: 0;
 }
 
 .hk-filter-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--space-6);
+  min-width: 0;
   /* Vertical padding = trigger padding + one track step: the chip shares
    * its row with segmented HkTabs-style chrome, whose track adds
    * var(--space-2) around its triggers (the wowsp filter bar's alignment
@@ -68,6 +74,15 @@
       color: rgb(var(--color-primary));
     }
   }
+}
+
+/* Long filter values ellipsize once a consumer bounds the row (both
+ * flex links above unlock shrinking); unbounded, the chip renders at
+ * its natural nowrap width and nothing truncates. */
+.hk-filter-chip-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hk-filter-chip-caret {

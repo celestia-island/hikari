@@ -145,7 +145,11 @@ impl UtilityClass for PaginationClass {
         match self {
             PaginationClass::Pagination => "pagination",
             PaginationClass::PaginationTotal => "pagination-total",
-            PaginationClass::PaginationSizer => "pagination-sizer",
+            // Aligned to the sheet's designed `.hk-pagination-size-selector`
+            // family in the 2026-11 style-debt wave (the variant shipped as
+            // `pagination-sizer`, which the stylesheet never styled; same
+            // precedent as PaginationJumpLabel -> jumper-label).
+            PaginationClass::PaginationSizer => "pagination-size-selector",
             PaginationClass::PaginationPages => "pagination-pages",
             PaginationClass::PaginationPrev => "pagination-prev",
             PaginationClass::PaginationNext => "pagination-next",

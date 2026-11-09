@@ -477,7 +477,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
             if props.show_size_changer {
                 div { class: size_selector_classes,
                     select {
-                        class: "hk-select hi-select-sm",
+                        class: "hk-pagination-size-select",
                         value: current_size.get().to_string(),
                         onchange: handle_size_change,
                         ..page_size_option_elements

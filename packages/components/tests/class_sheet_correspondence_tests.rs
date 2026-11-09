@@ -153,10 +153,6 @@ fn pairs() -> Vec<Pair> {
             ],
             whitelist: &[
                 (
-                    "hk-filter-chip-text",
-                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
-                ),
-                (
                     "hk-pill-group",
                     "cross-family emission, styled by the shared HkPillToggleGroup sheet",
                 ),
@@ -190,10 +186,6 @@ fn pairs() -> Vec<Pair> {
                 "hk-filter-add-content",
             ],
             whitelist: &[
-                (
-                    "hk-filter-add-item-label",
-                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
-                ),
                 (
                     "hk-filter-add-viewport",
                     "styled; emitted only by the vue twin HkFilterPanel.tsx (HkScrollContainer wrapper), not by the rust component",
@@ -234,10 +226,6 @@ fn pairs() -> Vec<Pair> {
                 "hk-btn-sm",
             ],
             whitelist: &[
-                (
-                    "hk-filter-trigger-body",
-                    "emitted on both sides (rs + vue twin), styled by no sheet — recorded live drift, styling is a pending direction call (2026-11-09 ledger)",
-                ),
                 (
                     "hk-icon-button",
                     "cross-family emission, styled by the shared HkIconButton sheet",
@@ -294,15 +282,16 @@ fn pairs() -> Vec<Pair> {
             emitted: vec![
                 "hk-pagination",
                 "hk-pagination-total",
-                "hk-pagination-sizer",
+                "hk-pagination-size-selector",
                 "hk-pagination-pages",
                 "hk-pagination-item",
                 "hk-pagination-prev",
                 "hk-pagination-next",
                 "hk-pagination-active",
-                // The sizer's inline select (pagination.rs:480).
-                "hk-select",
-                "hi-select-sm",
+                // The sizer's select rides the designed inner atom since
+                // the 2026-11 style-debt wave (was the unstyled pair
+                // hk-select hi-select-sm).
+                "hk-pagination-size-select",
                 // The prev/next pager buttons ride the shared
                 // IconButton contract (IconButtonSize::S32).
                 "hk-icon-button",
@@ -315,14 +304,6 @@ fn pairs() -> Vec<Pair> {
             // nothing applies the mode/size wrappers today (2026-11-09
             // census across hikari + chest found zero appliers).
             whitelist: &[
-                (
-                    "hk-select",
-                    "emitted by the sizer's inline select, styled by no sheet — HkSelect styles only its -wrapper/-trigger/-label family; recorded live drift (2026-11-09 ledger)",
-                ),
-                (
-                    "hi-select-sm",
-                    "emitted size marker, styled by no sheet anywhere (no hi- select family exists); recorded live drift (2026-11-09 ledger)",
-                ),
                 (
                     "hk-icon-button",
                     "runtime emission via the shared IconButton contract (prev/next pager, IconButtonSize::S32); styled by the shared HkIconButton sheet",
@@ -338,10 +319,6 @@ fn pairs() -> Vec<Pair> {
                 (
                     "hk-icon-button-icon",
                     "runtime emission via the shared IconButton contract (inner glyph span); styled by the shared HkIconButton sheet",
-                ),
-                (
-                    "hk-pagination-sizer",
-                    "emitted by the rust component, styled by no sheet — the sheet carries the -size-selector family instead; recorded live drift, naming divergence pending (2026-11-09 ledger)",
                 ),
                 (
                     "hk-pagination-ellipsis",
@@ -406,14 +383,6 @@ fn pairs() -> Vec<Pair> {
                 ("hk-pagination-sm", "styled; no emitter — reserved size"),
                 (
                     "hk-pagination-size-label",
-                    "styled; no emitter — reserved size-selector chrome",
-                ),
-                (
-                    "hk-pagination-size-select",
-                    "styled; no emitter — reserved size-selector chrome",
-                ),
-                (
-                    "hk-pagination-size-selector",
                     "styled; no emitter — reserved size-selector chrome",
                 ),
                 (
@@ -694,16 +663,18 @@ fn pagination_emission_stays_within_the_palette_enum() {
         .iter()
         .map(|c| c.as_class().to_string())
         .collect();
-    // Only the family-prefix names ride the enum; the pair's emitted
-    // list also carries whitelisted cross-family render literals
-    // (hk-select / hi-select-sm), which have their own whitelist story.
+    // Only enum-driven names ride the enum check; the pair's emitted
+    // list also carries hand-written family atoms (the sizer's select,
+    // styled by the sheet) and whitelisted cross-family render
+    // literals, which have their own whitelist stories.
+    const HAND_WRITTEN_PAGINATION_ATOMS: &[&str] = &["hk-pagination-size-select"];
     for name in pairs()
         .iter()
         .find(|p| p.component == "pagination")
         .expect("pagination pair")
         .emitted
         .iter()
-        .filter(|n| n.starts_with("hk-pagination"))
+        .filter(|n| n.starts_with("hk-pagination") && !HAND_WRITTEN_PAGINATION_ATOMS.contains(n))
     {
         assert!(
             enum_classes.contains(*name),
@@ -712,18 +683,13 @@ fn pagination_emission_stays_within_the_palette_enum() {
     }
 }
 
-/// Enum names the sheet deliberately does not style under the same
-/// name. Each entry must carry its story in the pair whitelist above.
-const PAGINATION_ENUM_DIVERGENCES: &[&str] = &["hk-pagination-sizer"];
-
 #[test]
-fn pagination_palette_enum_is_fully_styled_or_divergence_recorded() {
+fn pagination_palette_enum_is_fully_styled() {
     let atoms = sheet_atoms(PAGINATION_SHEET);
     for class in PaginationClass::all().iter().map(|c| c.as_class()) {
         assert!(
-            atoms.contains(&class.to_string())
-                || PAGINATION_ENUM_DIVERGENCES.contains(&class.as_ref()),
-            "PaginationClass::{class:?} has no sheet atom — style it, rename it, or record the divergence here and in the pair whitelist"
+            atoms.contains(&class.to_string()),
+            "PaginationClass::{class:?} has no sheet atom — style it, rename it, or record the divergence in the pair whitelist"
         );
     }
 }
@@ -736,7 +702,7 @@ fn pagination_class_exhaustiveness_probe(class: PaginationClass) -> &'static str
     match class {
         PaginationClass::Pagination => "hk-pagination",
         PaginationClass::PaginationTotal => "hk-pagination-total",
-        PaginationClass::PaginationSizer => "hk-pagination-sizer",
+        PaginationClass::PaginationSizer => "hk-pagination-size-selector",
         PaginationClass::PaginationPages => "hk-pagination-pages",
         PaginationClass::PaginationPrev => "hk-pagination-prev",
         PaginationClass::PaginationNext => "hk-pagination-next",

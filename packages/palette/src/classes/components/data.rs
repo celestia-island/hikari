@@ -107,6 +107,24 @@ impl UtilityClass for SortClass {
     }
 }
 
+impl SortClass {
+    /// Every variant, for guard tests that keep emitted classes and the
+    /// `sort` stylesheet in correspondence (see
+    /// `packages/components/tests/class_sheet_correspondence_tests.rs`).
+    pub fn all() -> [SortClass; 8] {
+        [
+            SortClass::Sort,
+            SortClass::SortButton,
+            SortClass::SortActive,
+            SortClass::SortClear,
+            SortClass::SortTitle,
+            SortClass::SortIndicator,
+            SortClass::SortClearText,
+            SortClass::SortClearIcon,
+        ]
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaginationClass {
     Pagination,

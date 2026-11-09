@@ -251,7 +251,7 @@ O en SCSS:
 --hi-radius-full           /* 9999px */
 ```
 
-**Doctrina de radio fino:** las constantes SCSS `$hikari-radius-fine-*` (4/6/8px) estilizan solo microdecoración: chips, marcas, contenedores de glifos en línea. Por doctrina **no** siguen los niveles de radio en tiempo de ejecución: el remapeo de `data-radius` gobierna las superficies estructurales (tarjetas, modales, controles), mientras el micro-radio fino permanece constante en todos los modos para que los adornos pequeños conserven su forma.Los usos estructurales existentes (menús, desplegables, cascader y paneles de transferencia) son deuda de migración conocida, se reclasificarán en una ola posterior.
+**Doctrina de radio fino:** las constantes SCSS `$hikari-radius-fine-*` (4/6/8px) estilizan solo microdecoración: marcas, contenedores de glifos en línea y ornamentos similares. Por doctrina **no** siguen los niveles de radio en tiempo de ejecución: el remapeo de `data-radius` gobierna las superficies estructurales (tarjetas, modales, controles, incluidos los chips), mientras el micro-radio fino permanece constante en todos los modos. Los usos estructurales existentes de las constantes finas se reclasificaron a los niveles en la ola de deuda de migración de 2026-11; el marcador de icono de imagen y la cara HkTerminal gestionada por espejo son los consumidores autorizados restantes.
 
 #### Variables de Sombra
 

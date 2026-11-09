@@ -114,7 +114,7 @@
 
   background-color: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fine-lg;
+  border-radius: var(--radius-lg, 12px);
   box-shadow: 0 6px 16px var(--hi-color-black-10);
   padding: 4px;
   min-width: 200px;
@@ -125,7 +125,7 @@
   align-items: center;
   gap: vars.$hikari-spacing-xs;
   padding: vars.$hikari-spacing-xs vars.$hikari-spacing-sm;
-  border-radius: vars.$hikari-radius-fine-md;
+  border-radius: var(--radius-sm, 4px);
   cursor: pointer;
   transition: all vars.$hikari-transition-fast;
   font-size: vars.$hikari-font-size-sm;

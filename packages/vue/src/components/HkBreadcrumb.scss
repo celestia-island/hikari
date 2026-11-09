@@ -84,7 +84,7 @@
   // Padding
   padding: var(--space-4) var(--space-8);
   margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-8));
-  border-radius: vars.$hikari-radius-fine-sm;
+  border-radius: var(--radius-sm, 4px);
 
   // Display
   display: inline-flex;
@@ -216,7 +216,7 @@
     z-index: var(--hk-z-header);
 
     // Appearance
-    border-radius: vars.$hikari-radius-fine-md;
+    border-radius: var(--radius-lg, 12px);
     border: 1px solid var(--hi-color-border);
     background: var(--hi-surface);
     @include backdrop-filter(blur(4px));
@@ -321,7 +321,7 @@
   .hk-breadcrumb-item {
     background: var(--hi-card-bg);
     padding: 0.375rem 0.75rem;
-    border-radius: vars.$hikari-radius-fine-sm;
+    border-radius: var(--radius-sm, 4px);
 
     &:not(:last-child):hover {
       background: var(--hi-primary);

@@ -701,7 +701,7 @@
 @mixin accent-card-base {
     @include acrylic-material;
     @include hover-lift(2px);
-    border-radius: $hikari-radius-fine-md;
+    border-radius: var(--radius-md, 8px);
     padding: $hikari-spacing-lg;
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -712,7 +712,7 @@
     align-items: center;
     justify-content: center;
     padding: $hikari-spacing-sm $hikari-spacing-md;
-    border-radius: $hikari-radius-fine-sm;
+    border-radius: var(--radius-sm, 4px);
     font-weight: 500;
     font-size: $hikari-font-size-sm;
     transition: all $hikari-duration-fast $hikari-ease-smooth;
@@ -747,7 +747,7 @@
 /// 输入框基础
 @mixin accent-input-base {
     @include acrylic-focus;
-    border-radius: $hikari-radius-fine-sm;
+    border-radius: var(--radius-md, 8px);
     padding: $hikari-spacing-sm $hikari-spacing-md;
     font-size: $hikari-font-size-sm;
     color: var(--hi-color-text-primary);

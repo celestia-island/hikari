@@ -567,7 +567,7 @@
 .dropdown {
   background-color: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fine-lg;
+  border-radius: var(--radius-lg, 12px);
   box-shadow: 0 4px 16px var(--hi-color-black-15, rgba(0, 0, 0, 0.15));
   box-sizing: border-box;
   overflow: hidden;

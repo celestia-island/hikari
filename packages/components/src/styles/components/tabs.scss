@@ -99,7 +99,7 @@
   // Appearance
   background: transparent;
   border: none;
-  border-radius: vars.$hikari-radius-fine-sm;
+  border-radius: var(--radius-sm, 4px);
 
   // Cursor
   cursor: pointer;
@@ -144,7 +144,7 @@
     border: none;
     color: var(--hi-color-text-secondary);
     cursor: pointer;
-    border-radius: vars.$hikari-radius-fine-sm;
+    border-radius: var(--radius-sm, 4px);
     opacity: 0;
     // DISABLED - migrated to JS animation
 
@@ -370,19 +370,19 @@
   background: var(--hi-surface);
   backdrop-filter: blur(4px);
   border: 1px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fine-md;
+  border-radius: var(--radius-md, 8px);
   box-shadow:
     0 4px 8px rgba(214, 236, 240, 0.5),
     0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   .hk-tabs-header {
     background: rgba(214, 236, 240, 0.5);
-    border-radius: vars.$hikari-radius-fine-md vars.$hikari-radius-fine-md 0 0;
+    border-radius: var(--radius-md, 8px) var(--radius-md, 8px) 0 0;
     margin: 0;
   }
 
   .hk-tab {
-    border-radius: vars.$hikari-radius-fine-sm;
+    border-radius: var(--radius-sm, 4px);
     margin: 0.25rem;
 
     &.hk-tab-active {
@@ -394,7 +394,7 @@
   }
 
   .hk-tabs-content {
-    border-radius: 0 0 vars.$hikari-radius-fine-md vars.$hikari-radius-fine-md;
+    border-radius: 0 0 var(--radius-md, 8px) var(--radius-md, 8px);
   }
 }
 
@@ -403,7 +403,7 @@
   background: var(--hi-surface);
   backdrop-filter: blur(4px);
   border: 2px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fine-md;
+  border-radius: var(--radius-md, 8px);
   box-shadow:
     0 4px 8px rgba(214, 236, 240, 0.5),
     0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
@@ -430,14 +430,14 @@
 .hk-tabs-type-segment {
   .hk-tabs-header {
     background: rgba(23, 89, 168, 0.15);
-    border-radius: vars.$hikari-radius-fine-md;
+    border-radius: var(--radius-md, 8px);
     border: none;
     padding: 0.375rem;
     margin-bottom: 0.5rem;
   }
 
   .hk-tab {
-    border-radius: vars.$hikari-radius-fine-sm;
+    border-radius: var(--radius-sm, 4px);
 
     &.hk-tab-active {
       background: linear-gradient(135deg, var(--hi-primary), rgba(109, 40, 217, 0.9));
@@ -513,7 +513,7 @@
   // Appearance
   background: var(--hi-primary);
   border: 1px solid var(--hi-primary);
-  border-radius: vars.$hikari-radius-fine-sm;
+  border-radius: var(--radius-sm, 4px);
   color: var(--hi-color-primary);
 
   // Cursor
@@ -667,7 +667,7 @@
   background: var(--hi-surface);
   backdrop-filter: blur(4px);
   border: 1px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fine-sm;
+  border-radius: var(--radius-sm, 4px);
   color: var(--hi-color-text-primary);
 
   // Cursor

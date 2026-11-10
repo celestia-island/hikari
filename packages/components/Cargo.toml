@@ -53,10 +53,10 @@ hikari-i18n = { version = "^0.5", path = "../i18n" }
 #     hashed or corrupted component stylesheets).
 # Nothing enforces the tairitsu-web/glue pairing at package time: consumers
 # must package the whole line together (ledger L127's failure mode).
-tairitsu-vdom = "^0.5.26"
-tairitsu-hooks = "^0.5.26"
-tairitsu-macros = "^0.5.26"
-tairitsu-style = "^0.5.26"
+tairitsu-vdom = "^0.5"
+tairitsu-hooks = "^0.5"
+tairitsu-macros = "^0.5"
+tairitsu-style = "^0.5"
 
 # Global static variables
 once_cell = "^1.19"

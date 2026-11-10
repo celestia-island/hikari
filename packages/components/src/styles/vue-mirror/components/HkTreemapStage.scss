@@ -112,13 +112,16 @@
   font-size: var(--text-2xs, 0.6875rem);
 }
 
+/* Same scrim as HkTreemap's group band — one published number
+ * (--hk-treemap-head-scrim, from HK_TREEMAP_HEAD_SCRIM) so the darkened
+ * band and its ink decision cannot disagree. */
 .hk-treemap-stage__nested-head {
   display: flex;
   align-items: center;
   gap: 0.25rem;
   height: 22px;
   padding: 0 0.25rem;
-  background: rgb(0 0 0 / 18%);
+  background: rgb(0 0 0 / var(--hk-treemap-head-scrim, 18%));
   font-weight: 600;
 }
 

@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive } from "vue";
 
@@ -140,6 +144,38 @@ describe("HkTreemapStage — the drill path", () => {
     for (const preview of nested) {
       expect(preview.closest(".hk-treemap-stage__cell--drillable")).not.toBeNull();
     }
+  });
+
+  it("paints a group cell with its band's ink and the nested previews with theirs", async () => {
+    const mounted = mountStage({
+      nodes: [
+        {
+          id: "outer",
+          label: "Outer",
+          value: 0,
+          color: "#59a14f",
+          children: [
+            { id: "inner", label: "Inner", value: 0, children: [{ id: "x", label: "X", value: 6 }] },
+            { id: "y", label: "Y", value: 4 },
+          ],
+        },
+      ],
+    });
+    await setSize(mounted);
+    const root = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage")!;
+    expect(root.style.getPropertyValue("--hk-treemap-head-scrim")).toBe("18%");
+    const cell = mounted.container.querySelector<HTMLElement>(".hk-treemap-stage__cell")!;
+    // The drillable group's glyphs sit on the scrimmed header band.
+    expect(cell.style.getPropertyValue("--hk-treemap-fg")).toBe("#fff");
+    const nested = [...mounted.container
+      .querySelectorAll<HTMLElement>(".hk-treemap-stage__nested-cell")];
+    const nestedGroup = nested
+      .find((node) => node.querySelector(".hk-treemap-stage__nested-head") !== null)!;
+    const nestedLeaf = nested
+      .find((node) => node.querySelector(".hk-treemap-stage__nested-leaf") !== null)!;
+    // Same rule one level down: scrimmed band = white, bare plate = dark ink.
+    expect(nestedGroup.style.getPropertyValue("--hk-treemap-fg")).toBe("#fff");
+    expect(nestedLeaf.style.getPropertyValue("--hk-treemap-fg")).toBe("#0b1220");
   });
 
   it("keeps the tooltip-owned cell frames inside a small canvas at 2×/3× DPI", async () => {
@@ -598,5 +634,17 @@ describe("HkTreemapStage — the camera + minimap", () => {
     expect(mounted.container.querySelector(".hk-treemap__empty")!.textContent).toBe("Nothing");
     expect(mounted.container.querySelector(".hk-minimap")).toBeNull();
     expect(mounted.container.querySelectorAll(".hk-treemap-stage__cell")).toHaveLength(0);
+  });
+});
+
+describe("HkTreemapStage chrome contract (SCSS pins)", () => {
+  const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "./HkTreemapStage.scss"),
+    "utf8",
+  );
+
+  it("the nested group band's scrim comes from the component, not a CSS literal", () => {
+    const block = css.match(/\.hk-treemap-stage__nested-head\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    expect(block).toMatch(/background:\s*rgb\(\s*0 0 0 \/ var\(--hk-treemap-head-scrim/);
   });
 });

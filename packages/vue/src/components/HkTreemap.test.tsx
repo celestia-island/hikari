@@ -26,6 +26,7 @@ vi.mock("./HkTooltip", () => ({
 
 import HkTreemap, {
   HK_TREEMAP_DEFAULT_COLORS,
+  HK_TREEMAP_HEAD_SCRIM,
   buildHkTreemapLayout,
   contrastTextColor,
   createHkTreemapSummary,
@@ -230,13 +231,55 @@ describe("HkTreemap pure layout input", () => {
     ).toEqual({ nodes: [], total: 0 });
   });
 
-  it("cell labels follow the theme icon/text token, not a per-block flip", () => {
-    // User direction 2026-10-28: cells read like icon glyphs — white on the
-    // dark theme via rgb(var(--color-text)), the same vocabulary as
-    // HkIconButton; the token flips the ink in the light theme.
-    expect(contrastTextColor("#edc948")).toBe("rgb(var(--color-text, 30 30 30))");
-    expect(contrastTextColor("#4e79a7")).toBe("rgb(var(--color-text, 30 30 30))");
+  it("a solid plate decides its own ink; only a see-through fill defers to the theme", () => {
+    // User direction 2026-11-10: the theme's light/dark ink flip only
+    // applies to a TRANSPARENT background (a see-through surface says
+    // nothing beyond light-vs-dark). A solid block is a background in its
+    // own right, so its luminance outranks the theme.
+    expect(contrastTextColor("#edc948")).toBe("#0b1220");
+    expect(contrastTextColor("#4e79a7")).toBe("#fff");
+    expect(contrastTextColor("#7c5cd6")).toBe("#fff");
+    expect(contrastTextColor("#d81b60")).toBe("#fff");
+    expect(contrastTextColor("rgb(78, 121, 167)")).toBe("#fff");
+    expect(contrastTextColor("hsl(0, 0%, 12%)")).toBe("#fff");
+    // No solid answer available -> the theme text token decides.
+    expect(contrastTextColor("rgb(78 121 167 / 40%)")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("#4e79a780")).toBe("rgb(var(--color-text, 30 30 30))");
     expect(contrastTextColor("not-a-color")).toBe("rgb(var(--color-text, 30 30 30))");
+  });
+
+  it("keeps every default palette cell at WCAG AA with the ink it picks", () => {
+    const linear = (channel: number) => {
+      const value = channel / 255;
+      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (hex: string) => {
+      const raw = hex.length === 4
+        ? hex.slice(1).split("").map((char) => char + char).join("")
+        : hex.slice(1);
+      return 0.2126 * linear(Number.parseInt(raw.slice(0, 2), 16))
+        + 0.7152 * linear(Number.parseInt(raw.slice(2, 4), 16))
+        + 0.0722 * linear(Number.parseInt(raw.slice(4, 6), 16));
+    };
+    const ratio = (hex: string, ink: string) => {
+      const plate = luminance(hex);
+      const text = luminance(ink);
+      return (Math.max(plate, text) + 0.05) / (Math.min(plate, text) + 0.05);
+    };
+    for (const color of HK_TREEMAP_DEFAULT_COLORS) {
+      const ink = contrastTextColor(color);
+      expect(["#fff", "#0b1220"]).toContain(ink);
+      expect(ratio(color, ink)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("decides a group header band's ink on the scrimmed plate, not the plate", () => {
+    // Green clears AA with dark ink on the plate, but the band darkens it;
+    // ignoring the scrim would paint dark text at ~3.6:1 on the band.
+    expect(contrastTextColor("#59a14f")).toBe("#0b1220");
+    expect(contrastTextColor("#59a14f", HK_TREEMAP_HEAD_SCRIM)).toBe("#fff");
+    // A pale plate stays dark on both surfaces.
+    expect(contrastTextColor("#edc948", HK_TREEMAP_HEAD_SCRIM)).toBe("#0b1220");
   });
 
   it("builds an accessible leaf-path summary from the same layout", () => {
@@ -310,6 +353,33 @@ describe("HkTreemap component", () => {
     expect(mounted.container.querySelector(`#${summaryId}`)!.textContent).toBe(
       "Group / Alpha: 2 units (20%); Group / Beta: 4 units (40%); Other: 4 units (40%)",
     );
+  });
+
+  it("paints each cell with its plate's ink and shares the scrim with the band", async () => {
+    const mounted = mountTreemap({
+      nodes: [
+        {
+          id: "group",
+          label: "Group",
+          value: 0,
+          color: "#59a14f",
+          children: [
+            { id: "a", label: "Alpha", value: 2 },
+            { id: "b", label: "Beta", value: 4 },
+          ],
+        },
+      ],
+    });
+    await setSize(mounted, 400, 240);
+    // The sheet reads the same number the ink decision used.
+    const root = mounted.container.querySelector<HTMLElement>(".hk-treemap")!;
+    expect(root.style.getPropertyValue("--hk-treemap-head-scrim")).toBe("18%");
+    const cells = [...mounted.container.querySelectorAll<HTMLElement>(".hk-treemap__cell")];
+    const head = cells.find((cell) => cell.classList.contains("hk-treemap__cell--group"))!;
+    const leaf = cells.find((cell) => cell.querySelector(".hk-treemap__leaf-body") !== null)!;
+    // Green plate: white on the scrimmed band, dark ink on the leaf plate.
+    expect(head.style.getPropertyValue("--hk-treemap-fg")).toBe("#fff");
+    expect(leaf.style.getPropertyValue("--hk-treemap-fg")).toBe("#0b1220");
   });
 
   it("marks an explicitly unknown label with the italic label class", async () => {
@@ -474,6 +544,11 @@ describe("HkTreemap chrome contract (SCSS pins)", () => {
     expect(css).not.toContain("#fff");
     expect(css).toMatch(/--color-background/);
     expect(css).toMatch(/--color-muted/);
+  });
+
+  it("the group band's scrim comes from the component, not a CSS literal", () => {
+    const block = css.match(/\.hk-treemap__group-head\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    expect(block).toMatch(/background:\s*rgb\(\s*0 0 0 \/ var\(--hk-treemap-head-scrim/);
   });
 
   it("italic unknown labels carry the reviewed horizontal overhang cushion", () => {

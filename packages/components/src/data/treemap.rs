@@ -1409,6 +1409,24 @@ mod tests {
             treemap_contrast_text_color("rgb(1\u{0085}2 3)", 0.0),
             TREEMAP_THEME_INK
         );
+        // A line terminator inside the envelope parses (strip_prefix/suffix
+        // never treats it as a terminator) — match the Vue regex semantics.
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\n2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\u{2028}2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(\t1\n2\r3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("hsl(120\u{2028}, 50%, 50%)", 0.0),
+            treemap_contrast_text_color("hsl(120, 50%, 50%)", 0.0)
+        );
         assert_eq!(treemap_head_scrim_style(), "--hk-treemap-head-scrim:18%");
     }
 

@@ -300,6 +300,12 @@ describe("HkTreemap pure layout input", () => {
     expect(contrastTextColor("\u0085#fff")).toBe("rgb(var(--color-text, 30 30 30))");
     expect(contrastTextColor("#fff\u0085")).toBe("rgb(var(--color-text, 30 30 30))");
     expect(contrastTextColor("rgb(1\u00852 3)")).toBe("rgb(var(--color-text, 30 30 30))");
+    // A line terminator inside the envelope parses (the Rust mirror's
+    // strip_prefix/strip_suffix never sees it as a terminator).
+    expect(contrastTextColor("rgb(1\n2 3)")).toBe(contrastTextColor("rgb(1 2 3)"));
+    expect(contrastTextColor("rgb(1\u20282 3)")).toBe(contrastTextColor("rgb(1 2 3)"));
+    expect(contrastTextColor("rgb(\t1\n2\r3)")).toBe(contrastTextColor("rgb(1 2 3)"));
+    expect(contrastTextColor("hsl(120\u2028, 50%, 50%)")).toBe(contrastTextColor("hsl(120, 50%, 50%)"));
   });
 
   it("keeps every default palette cell AND its group band at WCAG AA", () => {

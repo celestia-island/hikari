@@ -134,7 +134,9 @@ function parseCssColor(raw: string): RgbaChannels | null {
   // mirror's to_ascii_lowercase() — so case-insensitive CSS units (`DEG`,
   // `NONE` channels) parse or reject identically on both sides.
   const lower = value.toLowerCase();
-  const rgb = /^rgba?\((.*)\)$/.exec(lower);
+  // [\s\S] (not `.`): a line terminator inside the envelope is legal for the
+  // Rust mirror's strip_prefix/strip_suffix, so it must be legal here too.
+  const rgb = /^rgba?\(([\s\S]*)\)$/.exec(lower);
   if (rgb) {
     const parts = rgb[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
     if (parts.length < 3) return null;
@@ -144,7 +146,7 @@ function parseCssColor(raw: string): RgbaChannels | null {
     if (alpha === null) return null;
     return [...(channels as [number, number, number]), alpha];
   }
-  const hsl = /^hsla?\((.*)\)$/.exec(lower);
+  const hsl = /^hsla?\(([\s\S]*)\)$/.exec(lower);
   if (hsl) {
     const parts = hsl[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
     if (parts.length < 3) return null;

@@ -190,6 +190,24 @@
   --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
+/* ── Ride docks own the bottom edge (dockMode="ride") ────────────────
+   2026-11-10 review S2-c: a ride dock lives INSIDE the viewport, at its
+   trailing edge, so the viewport's own fade mask would dissolve the
+   dock's lower limb exactly when it matters — content over one screen
+   reports data-v-overflow="end" and lights the band over the pinned dock.
+   The dock body IS the edge treatment there (the same reason no dock-edge
+   fade is published for a ride placement), so the bottom band is zeroed
+   under the container's ride hook.
+
+   Declared AFTER the six lit-band state rules on purpose: this selector
+   carries the same specificity (0,3,0) as they do, so source order decides
+   and the ride suppression wins — while a pin container (no hook, no
+   change) keeps its band. A consumer override still beats it the usual
+   way (inline style or a >=(0,4,0) rule loaded later). */
+.hk-scroll-container[data-fade="true"][data-dock-mode="ride"] {
+  --hk-scroll-fade-bottom: 0px;
+}
+
 /* RTL: the inline start edge is the right side, so the horizontal band
    slots swap instead of the mask (the mask itself is direction-neutral).
    The swap keys on the component's MIRRORED data-dir, not on [dir]:

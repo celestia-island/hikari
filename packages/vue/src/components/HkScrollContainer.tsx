@@ -3,6 +3,7 @@ import {
   defineComponent,
   onBeforeUnmount,
   onMounted,
+  onUpdated,
   provide,
   ref,
   shallowRef,
@@ -153,7 +154,12 @@ export default defineComponent({
      *  moving the offset. */
     anchor: { type: String as PropType<"start" | "end">, default: "start" },
     /** Fade the viewport's inline edges (CSS mask) on the sides where
-     *  the sensed overflow (`data-h-overflow`) reports hidden content. */
+     *  the sensed overflow (`data-h-overflow`) reports hidden content.
+     *  A ride dock (`dockMode="ride"`) suppresses the BOTTOM band: that
+     *  dock lives at the viewport's trailing edge, so the band would
+     *  dissolve the dock's own lower limb exactly while the content
+     *  overflows; the dock body is the edge treatment there (the sheet
+     *  zeroes --hk-scroll-fade-bottom under the container's ride hook). */
     fade: { type: Boolean, default: false },
     /** Hidden-content distance (px) over which a lit edge fade deepens
      *  from a hard cut to the full band (the progressive fade): the
@@ -287,14 +293,15 @@ export default defineComponent({
      *    height between the content end and the dock.
      *  - `ride` — the dock moves INTO the viewport's content flow, after
      *    the slot content: `.hk-scroll-dock-ride-spacer` (a block spacer
-     *    exactly one MEASURED dock height tall, `--hk-scroll-dock-bottom`)
-     *    then the dock itself as `.hk-scroll-dock.hk-scroll-dock-ride`
-     *    (`position: sticky; bottom: 0`). Short content: the dock trails
-     *    the content at its own flow position, so the air above it is
-     *    exactly one dock height and the leftover window height falls
-     *    BELOW the dock. Long content: the spacer delivers the same one
-     *    dock height of air at the scroll end, while the pinned dock sits
-     *    on the visible bottom edge and never scrolls away.
+     *    exactly as tall as the MEASURED dock occupancy,
+     *    `--hk-scroll-dock-bottom`) then the dock itself as
+     *    `.hk-scroll-dock.hk-scroll-dock-ride` (`position: sticky;
+     *    bottom: 0`). Short content: the dock trails the content at its
+     *    own flow position, so the air above it is the dock's occupancy
+     *    and the leftover window height falls BELOW the dock. Long
+     *    content: the spacer delivers the same air at the scroll end,
+     *    while the pinned dock sits on the visible bottom edge and never
+     *    scrolls away.
      *
      *  Ride is NOT the retired frame-level reservation (see the
      *  dockTailClearance lesson below). That recipe reserved room for a
@@ -305,7 +312,29 @@ export default defineComponent({
      *  pre-reserved for something painted elsewhere, and the band tracks
      *  every dock reflow (a model row changing, a breakpoint switch)
      *  because the var is re-measured by the same ResizeObserver that
-     *  publishes `--hk-scroll-dock-top/bottom` in pin mode.
+     *  publishes `--hk-scroll-dock-top/bottom` in pin mode. It is not
+     *  "reserve a second dock of blank space" either.
+     *
+     *  HOST REQUIREMENTS — both measured in a real board, both silent
+     *  killers of the air:
+     *    - THE CONTENT MUST BE ABLE TO END ABOVE THE VIEWPORT BOTTOM. A
+     *      content box that inflates itself to the viewport height
+     *      (`min-height: 100%`, a full-height lane stack) puts the in-flow
+     *      spacer + dock BELOW the fold on every board: the spacer supplies
+     *      nothing visible, the dock is always pinned to the bottom edge,
+     *      and the air reverts to the window's leftover — i.e. ride without
+     *      its only effect (measured: identical to the pin board's 184px,
+     *      and worse at the scroll end). HkKanban releases its own
+     *      `.hk-kanban-lanes` box for a ride host
+     *      (`.hk-kanban[data-dock-mode="ride"] .hk-kanban-lanes
+     *      { min-height: 0 }`); a custom host has to do the same.
+     *    - THE AIR IS THE WRAPPER'S OCCUPANCY, NOT NECESSARILY THE VISIBLE
+     *      SURFACE. `--hk-scroll-dock-bottom` (and therefore the spacer) is
+     *      the dock WRAPPER's measured border-box height. Host-side space
+     *      inside that band — a dock inset margin, a lane's own trailing
+     *      padding — adds to what the user sees, so a host that wants the
+     *      air to match the visible dock pixel-for-pixel keeps those out of
+     *      the band (or accepts the difference as its own chrome).
      *
      *  Load-bearing details:
      *    - the wrapper keeps the `.hk-scroll-dock` class: consumers detect
@@ -319,6 +348,12 @@ export default defineComponent({
      *      `flex: none`, so a column-flex viewport cannot compress it;
      *    - the dock is `flex: none; z-index: 1`: while it is pinned over
      *      scrolling content it must paint above it;
+     *    - the ROOT carries `data-dock-mode="ride"` while a ride
+     *      placement is requested (additive, like `data-dock-tail` /
+     *      `data-dock-fade`; a pin container keeps its pre-2026-11-10
+     *      attribute set). It is the styling hook, and the sheet spends it
+     *      to zero the container's own bottom fade band — the ride dock
+     *      occupies that edge, so the mask would eat its lower limb.
      *    - the wrapper AND the spacer are `pointer-events: none`. A
      *      pinned ride wrapper covers a whole band of the visible area
      *      (a column-flex viewport stretches it to full width × dock
@@ -1022,16 +1057,38 @@ export default defineComponent({
       );
     }
 
+    /** The dock wrappers the size observer is watching RIGHT NOW — the
+     *  change guard that turns every sync into a no-op unless the mounted
+     *  dock set actually changed (this runs after every re-render). */
+    let observedDocks: {
+      top: HTMLElement | null | undefined;
+      bottom: HTMLElement | null | undefined;
+    } = { top: undefined, bottom: undefined };
+
     /** (Re)attach the dock-height observer to the dock wrappers mounted
-     *  RIGHT NOW and re-publish. One helper for both the initial mount and
-     *  a runtime `dockMode` swap: the dock moves between the pin sibling
-     *  and the ride position, so the ref resolves to a NEW element and a
-     *  stale observation would freeze the published height (which in ride
-     *  mode is the air itself). */
+     *  RIGHT NOW and re-publish. One helper for the initial mount, a
+     *  runtime `dockMode` swap and a slot that appears/disappears later:
+     *  the dock moves between the pin sibling and the ride position, so a
+     *  ref resolves to a NEW element (or to null) and a stale observation
+     *  would freeze the published height — which in ride mode is the air
+     *  itself. */
     function syncDockObserver() {
       const top = dockTopRef.value;
       const bottom = dockBottomRef.value;
-      if (!top && !bottom) return;
+      if (top === observedDocks.top && bottom === observedDocks.bottom) return;
+      observedDocks = { top, bottom };
+      if (!top && !bottom) {
+        // The last dock slot went away at runtime: drop the observation (a
+        // live ResizeObserver keeps the unmounted element alive) and
+        // republish the inert 0px — in ride mode the published height IS
+        // the air, so a stale value would leave a spacer standing for a
+        // dock that no longer exists. (A container that never mounted a
+        // dock publishes nothing at all — see the after-mount guard.)
+        dockRO?.disconnect();
+        dockRO = null;
+        publishDockSizes();
+        return;
+      }
       if (!dockRO) dockRO = new ResizeObserver(publishDockSizes);
       dockRO.disconnect();
       if (top) dockRO.observe(top);
@@ -1039,18 +1096,17 @@ export default defineComponent({
       publishDockSizes();
     }
 
-    // A placement swap re-points the observer at the dock's new wrapper
-    // (see syncDockObserver) — flush post, so the refs point at the
-    // element this render mounted.
-    watch(() => props.dockMode, () => syncDockObserver(), { flush: "post" });
+    // Re-point after every render that may have moved a dock: a placement
+    // swap mounts a NEW wrapper, and a slot can appear or vanish at
+    // runtime too. The ref comparison above is the guard, so the common
+    // "the host re-rendered, docks unchanged" case costs two compares.
+    onUpdated(syncDockObserver);
 
     onMounted(() => {
       const vp = viewportRef.value;
       if (!vp) return;
 
-      if (dockTopRef.value || dockBottomRef.value) {
-        syncDockObserver();
-      }
+      syncDockObserver();
 
       if (props.scrollbar) {
         mountScrollbars();
@@ -1283,6 +1339,7 @@ export default defineComponent({
           data-fade={props.fade ? "true" : undefined}
           data-overflow-glow={props.overflowGlow ? "true" : undefined}
           data-dock-tail={props.dockTailClearance ? "true" : undefined}
+          data-dock-mode={rideBottom ? "ride" : undefined}
           data-dock-fade={
             props.dockFade && dockBottomSlot && !rideBottom
               ? "bottom"

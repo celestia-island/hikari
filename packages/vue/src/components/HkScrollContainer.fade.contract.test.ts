@@ -130,13 +130,23 @@ describe("scroll fade composition contract", () => {
     // Sheet-wide: the four zero defaults live EXACTLY in the root rule.
     // A second rule re-declaring any of them (the R2 escape: a bare
     // `.hk-scroll-container-viewport { --hk-scroll-fade-top: 0px }`)
-    // would re-shadow the bands without this going red. The RTL swap
-    // rules also write 0px — the DEAD-side slot, not a default — so
-    // they are excluded from the stray scan.
+    // would re-shadow the bands without this going red. Two kinds of
+    // rule legitimately write 0px and are excluded from the stray scan,
+    // because neither is a DEFAULT:
+    //   - the RTL swap rules — the DEAD-side slot;
+    //   - the ride suppression (`[data-dock-mode="ride"]`, 2026-11-10
+    //     review S2-c) — a ride dock occupies the viewport's bottom edge,
+    //     so that band is switched off on purpose while the placement is
+    //     active. Its own contract test lives in
+    //     HkScrollContainer.dockRide.test.tsx.
     const rtlBlocks = sheet.match(
       /\.hk-scroll-container\[data-dir="rtl"\]\[data-fade="true"\]\[data-h-overflow="(?:start|end|both)"\] \{[^}]*\}/g,
     ) ?? [];
-    const sheetWithoutDefaults = sheet.replace(rootDefaults![0], "").replace(new RegExp(String.raw`${rtlBlocks.map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)).join("|")}`, "g"), "");
+    const rideBlocks = sheet.match(
+      /\.hk-scroll-container\[data-fade="true"\]\[data-dock-mode="ride"\] \{[^}]*\}/g,
+    ) ?? [];
+    const exemptBlocks = [...rtlBlocks, ...rideBlocks];
+    const sheetWithoutDefaults = sheet.replace(rootDefaults![0], "").replace(new RegExp(String.raw`${exemptBlocks.map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)).join("|")}`, "g"), "");
     for (const edge of ["top", "right", "bottom", "left"]) {
       expect(
         sheetWithoutDefaults.includes(`--hk-scroll-fade-${edge}: 0px;`),

@@ -108,10 +108,20 @@ export default defineComponent({
     /** Where a `dockBottom` dock lives, forwarded to the strip's
      *  HkScrollContainer (see its `dockMode`): "pin" (default) keeps the
      *  dock on the strip's bottom edge, "ride" moves it into the strip's
-     *  content flow so the air above it is exactly one dock height and the
-     *  dock follows the content. Only effective on axis="vertical"/"both"
-     *  boards — a horizontal strip carries its tail on the cross axis,
-     *  where the container's ride placement is gated off by design. */
+     *  content flow so the air above it is the measured dock occupancy and
+     *  the dock follows the content. Only effective on axis="vertical"/
+     *  "both" boards — a horizontal strip carries its tail on the cross
+     *  axis, where the container's ride placement is gated off by design.
+     *
+     *  A ride board also carries `data-dock-mode="ride"` on its root, the
+     *  styling hook that releases this component's full-height lanes box
+     *  (see HkKanban.scss): `.hk-kanban-lanes { min-height: 100% }` keeps
+     *  the lanes box as tall as the viewport, which would push the in-flow
+     *  spacer + dock below the fold and turn the air back into the
+     *  window's leftover (measured on a real board: 275.8px static vs the
+     *  139px dock, i.e. zero improvement over the pin board). The
+     *  attribute is emitted only while ride actually applies (not for pin,
+     *  not for a horizontal board), so every existing board is untouched. */
     dockMode: { type: String as PropType<"pin" | "ride">, default: "pin" },
   },
   emits: ["move"],
@@ -200,10 +210,17 @@ export default defineComponent({
       // there the tail is the cross axis, where an in-flow block child
       // leaks onto the hidden vertical axis.
       const docksOnTail = stripAxis.value !== "horizontal";
+      // Styling hook AND behaviour switch for the CONTENT HEIGHT of the
+      // board (see the dockMode prop doc): a ride dock only follows the
+      // content when the lanes box is allowed to end above the viewport
+      // bottom. Ride only — a pin board keeps the full-height lanes box it
+      // always had, so no existing board changes.
+      const rideBoard = docksOnTail && props.dockMode === "ride";
       return (
         <div
           class="hk-kanban"
           data-axis={props.axis}
+          data-dock-mode={rideBoard ? "ride" : undefined}
           data-dragging={dragging.value ? "" : undefined}
           aria-label={props.ariaLabel}
         >

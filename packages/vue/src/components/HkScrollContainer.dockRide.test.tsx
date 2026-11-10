@@ -39,6 +39,16 @@
 // transparent, surface catches). The pin wrapper must stay hit-testable —
 // its own assertions below guard that.
 //
+// Host requirements (2026-11-10 review S0): ride only follows the content
+// when the content box may end above the viewport bottom. In a column-flex
+// strip viewport a `min-height: 100%` lanes box is as tall as the viewport,
+// so the in-flow spacer + dock sit below the fold and the air reverts to the
+// window's leftover. HkKanban therefore prints `data-dock-mode="ride"` on
+// its root and releases its lanes box under that hook — ride only, so no
+// existing board changes. The sheet half is asserted at the bottom of this
+// file; the observer half (a runtime-removed dock must zero the published
+// height) is asserted in the ride suite.
+//
 // happy-dom has no layout engine, so the geometry half of the contract is
 // pinned two ways: the render/DOM placement here, and the sticky/spacer
 // CSS as a source contract (the same discipline as
@@ -133,6 +143,36 @@ function rectangleOf(element: Element): DOMRect {
   return element.getBoundingClientRect();
 }
 
+/** Injectable ResizeObserver (house pattern: HkAuthCard / HkScrollProgressDock
+ *  precedent), per-test opt-in. It exists for the WIRING half of the
+ *  measurement contract — the §6 review found that deleting the
+ *  `dockRO.observe(...)` calls kept the whole suite green, i.e. "the air
+ *  follows a dock reflow" had no guard at all: the synchronous publish on
+ *  mount is all a happy-dom run can observe. `live` is what is watched
+ *  right now (observe adds, disconnect clears), `observed` keeps the
+ *  history, `disconnects` counts re-points. */
+class FakeResizeObserver implements ResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  live: Element[] = [];
+  observed: Element[] = [];
+  disconnects = 0;
+
+  constructor(_callback: ResizeObserverCallback) {
+    FakeResizeObserver.instances.push(this);
+  }
+  observe(el: Element): void {
+    this.observed.push(el);
+    if (!this.live.includes(el)) this.live.push(el);
+  }
+  unobserve(el: Element): void {
+    this.live = this.live.filter((entry) => entry !== el);
+  }
+  disconnect(): void {
+    this.disconnects += 1;
+    this.live = [];
+  }
+}
+
 const MOUNT_SLOTS = {
   default: () => h("div", { class: "content" }, "rows"),
   dockBottom: () => h("div", { class: "the-dock" }, "dock"),
@@ -140,6 +180,13 @@ const MOUNT_SLOTS = {
 
 const scss = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "HkScrollContainer.scss"),
+  "utf8",
+);
+
+/** The board's own sheet — the ride board's content-height switch lives
+ *  there (see the S0 block in the ride contract tests). */
+const kanbanScss = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "HkKanban.scss"),
   "utf8",
 );
 
@@ -182,6 +229,11 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     expect(spacer!.getAttribute("aria-hidden")).toBe("true");
     // The dock content is the slot's own node.
     expect(dock!.querySelector(".the-dock")).toBeTruthy();
+    // The root carries the ride hook (additive, like data-dock-tail): the
+    // sheet spends it to zero the container's own bottom fade band, which
+    // would otherwise dissolve the dock's lower limb while content
+    // overflows over the pinned ride dock.
+    expect(host.getAttribute("data-dock-mode")).toBe("ride");
   });
 
   it("publishes the measured ride dock height as the var the spacer spends", () => {
@@ -209,6 +261,39 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     await nextTick();
     expect(host.querySelector<HTMLElement>(".hk-scroll-dock-ride")).toBeTruthy();
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("139px");
+  });
+
+  it("zeroes the published height when the dock slot disappears at runtime", async () => {
+    // S3: the published height is the spacer's only source, so a dock that
+    // is removed at runtime must not leave the observation (and the px
+    // value) behind — in ride mode that would stand a spacer on the page
+    // for a dock that no longer exists.
+    stubMeasuredHeight(".hk-scroll-dock-ride", 139);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const show = ref(true);
+    const app = createApp(defineComponent({
+      setup() {
+        return () => {
+          const slots: Record<string, () => VNodeChild> = {
+            default: () => h("div", { class: "content" }, "rows"),
+          };
+          if (show.value) slots.dockBottom = () => h("div", { class: "the-dock" }, "dock");
+          return h(HkScrollContainer, { dockMode: "ride" }, slots);
+        };
+      },
+    }));
+    mounts.push(app);
+    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("139px");
+
+    show.value = false;
+    await nextTick();
+    expect(host.querySelector(".hk-scroll-dock-ride")).toBeNull();
+    expect(host.querySelector(".hk-scroll-dock-ride-spacer")).toBeNull();
+    expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("0px");
+    expect(host.style.getPropertyValue("--hk-scroll-dock-top")).toBe("0px");
   });
 
   it("does not publish the dock-edge fade in ride mode", () => {
@@ -269,6 +354,8 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     expect(dock.className).toBe("hk-scroll-dock");
     expect(host.getAttribute("data-dock-fade")).toBe("bottom");
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("0px");
+    // Additive-only: a pin container keeps its pre-2026-11-10 attribute set.
+    expect(host.getAttribute("data-dock-mode")).toBeNull();
   });
 });
 
@@ -305,6 +392,35 @@ describe("HkScrollContainer ride placement style contract", () => {
     expect(height).toBe("var(--hk-scroll-dock-bottom, 0px)");
   });
 
+  it("zeroes the container's own bottom fade band in ride mode", () => {
+    // S2-c: the ride dock lives INSIDE the viewport at its trailing edge,
+    // so the container's own fade mask dissolves the dock's lower limb
+    // exactly when the content overflows over the pinned dock
+    // (data-v-overflow="end" lights the band). The dock body IS the edge
+    // treatment there — the same reason no dock-edge fade is published for
+    // a ride placement — so the sheet spends the root's ride hook to zero
+    // that band, and it must be declared AFTER the lit-band state rules:
+    // same specificity (0,3,0), source order decides.
+    const suppression = scss.match(
+      /\.hk-scroll-container\[data-fade="true"\]\[data-dock-mode="ride"\] \{[^}]*\}/,
+    );
+    expect(suppression, "ride zeroes the viewport's bottom fade band").not.toBeNull();
+    expect(suppression![0]).toMatch(/--hk-scroll-fade-bottom:\s*0px/);
+    const lastBandRule = scss.search(
+      /\.hk-scroll-container\[data-fade="true"\]\[data-v-overflow="both"\]/,
+    );
+    expect(lastBandRule, "the lit-band state rules exist").toBeGreaterThan(-1);
+    expect(
+      scss.indexOf(suppression![0]),
+      "the suppression wins on source order, not on specificity",
+    ).toBeGreaterThan(lastBandRule);
+    // Pin keeps its band: the state rule that lights it is untouched, and
+    // the suppression is keyed on the ride hook only.
+    expect(scss).toMatch(
+      /\.hk-scroll-container\[data-fade="true"\]\[data-v-overflow="end"\] \{\s*--hk-scroll-fade-bottom: calc\(/,
+    );
+  });
+
   it("passes pointer input through the ride band and keeps the pin wrapper hit-testable", () => {
     // While pinned, the ride wrapper covers a whole band of the visible
     // area (a column-flex viewport stretches it to full width × dock
@@ -336,6 +452,65 @@ describe("HkScrollContainer ride placement style contract", () => {
         block,
         `the pin dock wrapper must stay hit-testable: ${block}`,
       ).not.toMatch(/pointer-events/);
+    }
+  });
+});
+
+describe("HkScrollContainer dock-size observer wiring", () => {
+  const originalRO = globalThis.ResizeObserver;
+
+  function installFakeRO() {
+    FakeResizeObserver.instances = [];
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  }
+
+  it("watches the dock wrapper it measures in both placements", () => {
+    // §6 mutation blind spot: with only the synchronous publish asserted,
+    // deleting `dockRO.observe(...)` left the whole suite green — so a dock
+    // reflow (a model row changing, a breakpoint switch) could stop moving
+    // the air without a single red test. These assertions are the guard.
+    installFakeRO();
+    try {
+      const pin = mountDock(MOUNT_SLOTS);
+      const pinDock = (pin.$el as HTMLElement).querySelector(".hk-scroll-dock[data-side='bottom']")!;
+      expect(
+        FakeResizeObserver.instances.some((ro) => ro.live.includes(pinDock)),
+        "the pin wrapper is watched (else a dock reflow never re-publishes)",
+      ).toBe(true);
+
+      const ride = mountDock(MOUNT_SLOTS, { dockMode: "ride" });
+      const rideDock = (ride.$el as HTMLElement).querySelector(".hk-scroll-dock-ride")!;
+      expect(
+        FakeResizeObserver.instances.some((ro) => ro.live.includes(rideDock)),
+        "the ride wrapper is watched (in ride mode the measurement IS the air)",
+      ).toBe(true);
+    } finally {
+      globalThis.ResizeObserver = originalRO;
+    }
+  });
+
+  it("re-points the observation at the wrapper a placement swap mounts", async () => {
+    installFakeRO();
+    try {
+      const { host, mode } = mountSwappable(MOUNT_SLOTS, "pin");
+      const pinDock = host.querySelector<HTMLElement>(".hk-scroll-dock[data-side='bottom']")!;
+      expect(FakeResizeObserver.instances.some((ro) => ro.live.includes(pinDock))).toBe(true);
+
+      mode.value = "ride";
+      await nextTick();
+      const rideDock = host.querySelector<HTMLElement>(".hk-scroll-dock-ride")!;
+      const watching = FakeResizeObserver.instances.filter((ro) => ro.live.includes(rideDock));
+      expect(watching.length, "the new ride wrapper is watched").toBeGreaterThan(0);
+      expect(
+        FakeResizeObserver.instances.some((ro) => ro.live.includes(pinDock)),
+        "the unmounted pin wrapper is no longer watched by anything",
+      ).toBe(false);
+      expect(
+        watching.some((ro) => ro.disconnects > 0),
+        "the swap re-pointed the observer instead of stacking a second one",
+      ).toBe(true);
+    } finally {
+      globalThis.ResizeObserver = originalRO;
     }
   });
 });
@@ -377,6 +552,10 @@ describe("HkKanban ride-dock forwarding", () => {
     expect(dock, "board dock rides the strip content").toBeTruthy();
     expect(dock!.querySelector(".board-dock")).toBeTruthy();
     expect(dock!.querySelector(".board-dock")!.textContent).toBe("dock");
+    // The board also carries the ride hook that releases its full-height
+    // lanes box (see HkKanban.scss): without it the in-flow spacer + dock
+    // sit below the fold and the air reverts to the window's leftover.
+    expect(vm.$el.getAttribute("data-dock-mode")).toBe("ride");
   });
 
   it("forwards the same slot to the pin placement when dockMode is the default", () => {
@@ -391,6 +570,9 @@ describe("HkKanban ride-dock forwarding", () => {
     expect(strip.querySelector(".hk-scroll-dock-ride")).toBeNull();
     // Pin placement: the dock owns the strip's edge, outside the scroll flow.
     expect(viewport.contains(dock)).toBe(false);
+    // No ride hook: a pin board keeps the full-height lanes box it always
+    // had, so the release rule cannot reach an existing board.
+    expect(vm.$el.getAttribute("data-dock-mode")).toBeNull();
   });
 
   it("ignores the slot on a horizontal board (the cross-axis tail)", () => {
@@ -403,5 +585,36 @@ describe("HkKanban ride-dock forwarding", () => {
     const strip = vm.$el.querySelector<HTMLElement>(".hk-kanban-strip")!;
     expect(strip.querySelector(".hk-scroll-dock")).toBeNull();
     expect(strip.querySelector(".hk-scroll-dock-ride-spacer")).toBeNull();
+    // Ride does not apply on the cross axis, so neither does the hook (the
+    // lanes release would shrink a horizontal board's lane columns).
+    expect(vm.$el.getAttribute("data-dock-mode")).toBeNull();
+  });
+});
+
+describe("HkKanban ride board content-height contract", () => {
+  it("releases the full-height lanes box under the ride hook only", () => {
+    // S0, measured on a real board: in a column-flex strip viewport
+    // `min-height: 100%` makes the lanes BOX as tall as the viewport, so
+    // the in-flow spacer + sticky dock always sit below the fold — the dock
+    // can only hug the bottom edge and the air goes back to being the
+    // window's leftover (275.8px static / 563.8px scrolled against a 139px
+    // dock). Releasing it is the half of the contract that makes the air
+    // follow the CONTENT end.
+    const release = kanbanScss.match(
+      /\.hk-kanban\[data-dock-mode="ride"\] \.hk-kanban-lanes \{[^}]*\}/,
+    );
+    expect(release, "the ride boards release their lanes min-height").not.toBeNull();
+    expect(release![0]).toMatch(/min-height:\s*0/);
+    // The base rule keeps the fill for every other mode (pin, horizontal
+    // boards): a short board still reaches the strip's floor there.
+    const base = kanbanScss.match(/\.hk-kanban-lanes \{[^}]*\}/);
+    expect(base, "the lanes base rule exists").not.toBeNull();
+    expect(base![0]).toMatch(/min-height:\s*100%/);
+    // And the release is the ONLY min-height override on the lanes box: an
+    // ungated one would change every board.
+    const overrides = (kanbanScss.match(/\.hk-kanban[^{}]*\.hk-kanban-lanes \{[^}]*\}/g) ?? [])
+      .filter((block) => /min-height/.test(block));
+    expect(overrides).toHaveLength(1);
+    expect(overrides[0]).toContain('[data-dock-mode="ride"]');
   });
 });

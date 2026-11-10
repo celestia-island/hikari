@@ -19,26 +19,35 @@ queda una banda muerta de altura de ventana sobrante entre ambos.
 ## `ride`
 
 El dock entra en el flujo del viewport, después del contenido, detrás de un espaciador de
-exactamente la altura **medida** del dock, y se pega al borde inferior visible
+exactamente la **ocupación medida del dock**, y se pega al borde inferior visible
 (`position: sticky; bottom: 0`):
 
 - contenido corto — el dock sigue el final del contenido en su posición de flujo, el aire sobre
-  él mide exactamente una altura de dock, y la altura de ventana sobrante cae **debajo** del dock;
+  él es esa ocupación medida, y la altura de ventana sobrante cae **debajo** del dock;
 - contenido largo — el dock se queda en el borde inferior visible (nunca se desplaza fuera), y
-  al llegar al final del scroll se abre el mismo aire de una altura de dock.
+  al llegar al final del scroll se abre el mismo aire.
 
-Adecuado para chrome que pertenece al CONTENIDO — la barra inferior de un lienzo de crucero, de
-pie bajo su última fila. El contenedor mide el dock y publica `--hk-scroll-dock-bottom`: el host
-ya no escribe recetas de espaciador ni valores mágicos, y el aire sigue cada recomposición del
-dock (una fila que cambia, un cambio de breakpoint).
+«La ocupación» es la caja que el contenedor mide y publica en `--hk-scroll-dock-bottom`: el hueco
+del propio dock, no necesariamente su superficie visible — el espacio que el host pone DENTRO de
+esa banda (un inset del dock, el padding final de una fila) se suma, así que el aire coincide con
+el dock dentro del padding propio del host. Los hosts leen ese valor publicado en vez de escribir
+una receta de espaciador o un valor mágico, y el aire sigue cada recomposición del dock (una fila
+que cambia, un cambio de breakpoint).
+
+Un host ride también debe dejar que su contenido termine POR ENCIMA del borde inferior del
+viewport: una caja de contenido que se estira hasta la altura del viewport
+(`min-height: 100%`) deja el espaciador y el dock del flujo por debajo de la línea de flotación,
+así que el dock solo puede pegarse al borde y el aire vuelve a ser la altura de ventana sobrante.
+`HkKanban` libera su propia caja de lanes en un tablero ride; un host propio hace lo mismo.
 
 ## Ride no es una reserva a nivel de marco
 
-Ride **no** es la receta retirada que reservaba `altura del dock + respiración` en el viewport con
-un `::after` para un dock flotante sobre el área de scroll desde fuera del flujo. Esa banda
-aparecía como aire muerto *antes* del final del scroll, y el dock nunca seguía el contenido. El
-cuerpo del dock en ride es el hijo dentro del flujo: no se pre-reserva nada para algo pintado en
-otro lugar, y es la caja sticky la que hace que el aire siga al contenido y no a la ventana.
+Ride **no** es la receta retirada que reservaba `altura del dock + respiración` en el viewport
+con un `::after` para un dock flotante sobre el área de scroll desde fuera del flujo — y tampoco
+es «reservar un segundo dock de espacio en blanco». Esa banda aparecía como aire muerto *antes*
+del final del scroll, y el dock nunca seguía el contenido. El cuerpo del dock en ride es el hijo
+dentro del flujo: no se pre-reserva nada para algo pintado en otro lugar, y es la caja sticky la
+que hace que el aire siga al contenido y no a la ventana.
 
 ## Cómo elegir
 

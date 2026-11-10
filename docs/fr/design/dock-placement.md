@@ -19,28 +19,36 @@ garde une bande morte de hauteur de fenêtre résiduelle entre les deux.
 ## `ride`
 
 Le dock entre dans le flux du viewport, après le contenu, derrière un espaceur exactement de la
-hauteur **mesurée** du dock, et se colle au bord inférieur visible
+hauteur de **l'occupation mesurée du dock**, et se colle au bord inférieur visible
 (`position: sticky; bottom: 0`) :
 
 - contenu court — le dock suit la fin du contenu à sa position de flux, l'air au-dessus de lui
-  vaut exactement une hauteur de dock, et la hauteur de fenêtre résiduelle tombe **sous** le
-  dock ;
+  vaut cette occupation mesurée, et la hauteur de fenêtre résiduelle tombe **sous** le dock ;
 - contenu long — le dock reste sur le bord inférieur visible (il ne défile jamais hors de vue),
-  et le même air d'une hauteur de dock s'ouvre à la fin du défilement.
+  et le même air s'ouvre à la fin du défilement.
 
-Indiqué pour du chrome qui appartient au CONTENU — la barre inférieure d'un canevas de croisière,
-debout sous sa dernière rangée. Le conteneur mesure le dock et publie
-`--hk-scroll-dock-bottom` : l'hôte n'écrit plus de recette d'espaceur ni de valeur magique, et
-l'air suit chaque recomposition du dock (une ligne qui change, un changement de point de rupture).
+« L'occupation » est la boîte que le conteneur mesure et publie en `--hk-scroll-dock-bottom` : la
+place du dock lui-même, pas nécessairement sa surface visible — l'espace que l'hôte met DANS
+cette bande (un inset de dock, le padding de fin d'une ligne) s'y ajoute, donc l'air colle au
+dock à hauteur du padding propre de l'hôte. Les hôtes lisent cette valeur publiée au lieu
+d'écrire une recette d'espaceur ou une valeur magique, et l'air suit chaque recomposition du
+dock (une ligne qui change, un changement de point de rupture).
+
+Un hôte ride doit aussi laisser son contenu finir AU-DESSUS du bas du viewport : une boîte de
+contenu qui s'étire jusqu'à la hauteur du viewport (`min-height: 100%`) place l'espaceur et le
+dock du flux sous la ligne de flottaison, si bien que le dock ne peut que coller au bord et que
+l'air redevient la hauteur de fenêtre résiduelle. `HkKanban` libère sa propre boîte de lanes sur
+un tableau ride ; un hôte maison fait de même.
 
 ## Ride n'est pas une réservation au niveau du cadre
 
 Ride n'est **pas** la recette retirée qui réservait `hauteur du dock + respiration` sur le
 viewport avec un `::after` pour un dock flottant au-dessus de la zone défilante depuis
-l'extérieur du flux. Cette bande apparaissait comme de l'air mort *avant* la fin du défilement,
-et le dock ne suivait jamais le contenu. Le corps du dock en mode ride est l'enfant dans le flux :
-rien n'est pré-réservé pour quelque chose peint ailleurs, et c'est la boîte sticky qui fait suivre
-le contenu plutôt que la fenêtre.
+l'extérieur du flux — et ce n'est pas « réserver un deuxième dock d'espace vide » non plus.
+Cette bande apparaissait comme de l'air mort *avant* la fin du défilement, et le dock ne suivait
+jamais le contenu. Le corps du dock en mode ride est l'enfant dans le flux : rien n'est
+pré-réservé pour quelque chose peint ailleurs, et c'est la boîte sticky qui fait suivre le
+contenu plutôt que la fenêtre.
 
 ## Choisir
 

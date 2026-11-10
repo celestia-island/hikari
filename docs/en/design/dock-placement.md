@@ -20,28 +20,36 @@ the two.
 ## `ride`
 
 The dock moves into the viewport's content flow, after the content, behind a
-spacer exactly one **measured** dock height tall, and sticks to the visible
-bottom edge (`position: sticky; bottom: 0`):
+spacer exactly as tall as the **measured dock occupancy**, and sticks to the
+visible bottom edge (`position: sticky; bottom: 0`):
 
-- short content — the dock trails the content end, the air above it is exactly
-  one dock height, and the leftover window height falls BELOW the dock;
+- short content — the dock trails the content end, the air above it is the
+  measured dock occupancy, and the leftover window height falls BELOW the dock;
 - long content — the dock stays on the visible bottom edge (it never scrolls
-  away), and the same one-dock-height air opens up at the scroll end.
+  away), and the same air opens up at the scroll end.
 
-Use it for chrome that belongs to the CONTENT — a cruise canvas's bottom bar
-standing under its last row. The container measures the dock and publishes
-`--hk-scroll-dock-bottom`, so hosts never hand-roll a spacer recipe or a
-magic pixel value, and the air follows every dock reflow (a row changing, a
-breakpoint switch).
+"The dock occupancy" is the box the container measures and publishes as
+`--hk-scroll-dock-bottom` — the dock's own placeholder, and not necessarily its
+visible surface: space the host puts INSIDE that band (a dock inset, a row's
+trailing padding) adds on top, so the air matches the dock within the host's
+own padding. Hosts read the published value instead of hand-rolling a spacer
+recipe or a magic pixel value, and the air follows every dock reflow (a row
+changing, a breakpoint switch).
+
+A ride host must also let its content end ABOVE the viewport bottom: a content
+box that inflates itself to the viewport height (`min-height: 100%`) keeps the
+in-flow spacer and dock below the fold, so the dock can only hug the edge and
+the air reverts to the window's leftover. `HkKanban` releases its own lanes box
+on a ride board; a custom host does the same.
 
 ## Ride is not a frame-level reservation
 
-Ride is **not** the retired recipe that reserved `dock height + breathing
-room` on the viewport with an `::after` for a dock floating over the scroll
-area from outside the flow. That band was dead air *before* the scroll end,
-and the dock never followed the content. A ride dock's own box is the in-flow
-child: nothing is pre-reserved for something painted elsewhere, and the
-sticky box is what makes the air track the content instead of the window.
+Ride is **not** the retired recipe that reserved `dock height + breathing room` on the
+viewport with an `::after` for a dock floating over the scroll area from outside the flow —
+and it is not "reserve a second dock of blank space" either. That band was dead air *before*
+the scroll end, and the dock never followed the content. A ride dock's own box is the in-flow
+child: nothing is pre-reserved for something painted elsewhere, and the sticky box is what
+makes the air track the content instead of the window.
 
 ## Choosing
 

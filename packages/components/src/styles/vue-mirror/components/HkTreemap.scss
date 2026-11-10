@@ -93,6 +93,11 @@
   outline-offset: -1px;
 }
 
+/* The band darkens the group's plate, so the header ink is chosen against
+ * the COMPOSITED surface. The number comes from the component
+ * (HK_TREEMAP_HEAD_SCRIM → --hk-treemap-head-scrim); the var() fallback
+ * covers a sheet used without the component and is pinned to that same
+ * constant by the chrome-contract test. */
 .hk-treemap__group-head {
   display: flex;
   flex: 0 0 auto;
@@ -101,7 +106,7 @@
   gap: 0.375rem;
   height: 22px;
   padding: 0 0.375rem;
-  background: rgb(0 0 0 / 18%);
+  background: rgb(0 0 0 / var(--hk-treemap-head-scrim, 18%));
   font-weight: 600;
 }
 

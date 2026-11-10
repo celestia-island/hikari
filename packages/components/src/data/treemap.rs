@@ -163,12 +163,84 @@ pub struct TreemapRgba {
     pub a: f64,
 }
 
-/// Vue's `contrastTextColor`: the cell ink simply follows the theme's text
-/// token (user direction 2026-10-28), NOT a per-block black/white flip. The
-/// background argument of the Vue helper is deliberately unused there and
-/// has no counterpart here.
-pub fn treemap_contrast_text_color() -> &'static str {
-    "rgb(var(--color-text, 30 30 30))"
+/// Black scrim a group's header band paints over its plate — the
+/// `rgb(0 0 0 / 18%)` band in the sheet. The components publish it as the
+/// `--hk-treemap-head-scrim` custom property (Vue: `HK_TREEMAP_HEAD_SCRIM`)
+/// so the darkened band and its ink decision share one number.
+pub const HK_TREEMAP_HEAD_SCRIM: f64 = 0.18;
+
+/// The theme text token — the ONLY ink source for a translucent or
+/// unparseable fill: a see-through cell says nothing beyond "this theme is
+/// light / dark", so light-versus-dark is all it can carry (Vue:
+/// `THEME_CELL_INK`).
+pub const TREEMAP_THEME_INK: &str = "rgb(var(--color-text, 30 30 30))";
+
+/// The two inks a SOLID fill can carry (Vue: `SOLID_LIGHT_INK` /
+/// `SOLID_DARK_INK`).
+const TREEMAP_LIGHT_INK: &str = "#fff";
+const TREEMAP_DARK_INK: &str = "#0b1220";
+
+/// The root style publishing the band scrim — one string for both
+/// components, so the sheet never has to guess the number.
+pub fn treemap_head_scrim_style() -> String {
+    format!("--hk-treemap-head-scrim:{}%", HK_TREEMAP_HEAD_SCRIM * 100.0)
+}
+
+fn treemap_linear_channel(channel: f64) -> f64 {
+    let value = channel / 255.0;
+    if value <= 0.03928 {
+        value / 12.92
+    } else {
+        ((value + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+/// sRGB relative luminance (WCAG 2.x) of an opaque channel triple.
+fn treemap_relative_luminance(channels: TreemapRgba) -> f64 {
+    0.2126 * treemap_linear_channel(channels.r)
+        + 0.7152 * treemap_linear_channel(channels.g)
+        + 0.0722 * treemap_linear_channel(channels.b)
+}
+
+/// WCAG contrast ratio between two relative luminances.
+fn treemap_contrast_ratio(a: f64, b: f64) -> f64 {
+    let (lighter, darker) = if a >= b { (a, b) } else { (b, a) };
+    (lighter + 0.05) / (darker + 0.05)
+}
+
+/// Vue's `contrastTextColor(background, scrim?)`.
+///
+/// User direction 2026-11-10: a SOLID fill decides its own ink from its
+/// luminance — the theme's light/dark flip only applies to a TRANSPARENT
+/// (translucent or unparseable) fill, because a see-through cell says
+/// nothing beyond "this theme is light / dark". The previous rule
+/// (2026-10-28) followed the theme token on every cell, which painted large
+/// saturated blocks with black ink in the light theme.
+///
+/// `scrim` is the black overlay the glyphs actually sit on: a group's header
+/// band darkens its plate, so the band is measured as composited.
+pub fn treemap_contrast_text_color(background: &str, scrim: f64) -> &'static str {
+    let Some(channels) = treemap_parse_css_color(background) else {
+        return TREEMAP_THEME_INK;
+    };
+    if channels.a < 0.999 {
+        return TREEMAP_THEME_INK;
+    }
+    let shade = 1.0 - scrim.clamp(0.0, 1.0);
+    let luminance = treemap_relative_luminance(TreemapRgba {
+        r: channels.r * shade,
+        g: channels.g * shade,
+        b: channels.b * shade,
+        a: 1.0,
+    });
+    let dark_ink = treemap_parse_hex_color(TREEMAP_DARK_INK)
+        .map(treemap_relative_luminance)
+        .unwrap_or(0.0);
+    if treemap_contrast_ratio(luminance, dark_ink) >= treemap_contrast_ratio(luminance, 1.0) {
+        TREEMAP_DARK_INK
+    } else {
+        TREEMAP_LIGHT_INK
+    }
 }
 
 fn treemap_is_hex(value: &str) -> bool {
@@ -943,7 +1015,7 @@ fn treemap_head_node(cell: &TreemapCell, formatter: Option<&Callback<f64, String
     let style = format!(
         "{};--hk-treemap-fg:{}",
         treemap_cell_frame_style(cell.x, cell.y, cell.w, band_h, &node.color),
-        treemap_contrast_text_color()
+        treemap_contrast_text_color(&node.color, HK_TREEMAP_HEAD_SCRIM)
     );
     let aria = treemap_cell_text(node, formatter);
     VNode::Element(Box::new(
@@ -986,7 +1058,7 @@ fn treemap_leaf_node(cell: &TreemapCell, formatter: Option<&Callback<f64, String
     let style = format!(
         "{};--hk-treemap-fg:{}",
         treemap_cell_frame_style(cell.x, cell.y, cell.w, cell.h, &node.color),
-        treemap_contrast_text_color()
+        treemap_contrast_text_color(&node.color, 0.0)
     );
     let aria = treemap_cell_text(node, formatter);
     VNode::Element(Box::new(
@@ -1075,6 +1147,7 @@ pub fn Treemap(props: TreemapProps) -> Element {
         Vec::new()
     };
     let body_height = format!("height:{}", treemap_px(props.height));
+    let root_style = treemap_head_scrim_style();
     let aria_label = props.aria_label.clone();
     let empty_text = props.empty_text.clone();
     let summary_id = props.summary_id.clone();
@@ -1085,7 +1158,7 @@ pub fn Treemap(props: TreemapProps) -> Element {
     };
 
     rsx! {
-        div { class: "hk-treemap",
+        div { class: "hk-treemap", style: root_style,
             if props.show_legend && has_data {
                 ul { class: "hk-treemap__legend", ..legend_nodes }
             }
@@ -1191,10 +1264,82 @@ mod tests {
             "hk-treemap__label hk-treemap__label--group hk-treemap__label--unknown"
         );
         assert_eq!(treemap_label_classes(false, false), "hk-treemap__label");
+    }
+
+    // ── ink: a solid plate decides, the theme only speaks for see-through ──
+
+    #[test]
+    fn treemap_ink_follows_the_solid_plate_and_its_band_scrim() {
+        // Pale plate -> dark ink, saturated plate -> white, regardless of
+        // the theme (the 2026-10-28 rule painted big blocks with black ink).
+        assert_eq!(treemap_contrast_text_color("#edc948", 0.0), "#0b1220");
+        assert_eq!(treemap_contrast_text_color("#4e79a7", 0.0), "#fff");
+        assert_eq!(treemap_contrast_text_color("#7c5cd6", 0.0), "#fff");
+        // The two other shades from the reported token-usage screenshot.
+        assert_eq!(treemap_contrast_text_color("#2f6fd0", 0.0), "#fff");
+        assert_eq!(treemap_contrast_text_color("#00796b", 0.0), "#fff");
         assert_eq!(
-            treemap_contrast_text_color(),
-            "rgb(var(--color-text, 30 30 30))"
+            treemap_contrast_text_color("rgb(78, 121, 167)", 0.0),
+            "#fff"
         );
+        // The live chest consumer feeds the space-separated triple shape.
+        assert_eq!(
+            treemap_contrast_text_color("rgb(167 139 250)", 0.0),
+            "#0b1220"
+        );
+        // Green clears AA on the plate; its band is darker, so white wins.
+        assert_eq!(treemap_contrast_text_color("#59a14f", 0.0), "#0b1220");
+        assert_eq!(
+            treemap_contrast_text_color("#59a14f", HK_TREEMAP_HEAD_SCRIM),
+            "#fff"
+        );
+        // Translucent / unparseable fills carry no answer: theme token.
+        assert_eq!(
+            treemap_contrast_text_color("rgb(78 121 167 / 40%)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("#4e79a780", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("not-a-color", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(treemap_head_scrim_style(), "--hk-treemap-head-scrim:18%");
+    }
+
+    #[test]
+    fn treemap_default_palette_clear_wcag_aa_with_its_ink() {
+        let channels =
+            |hex: &str| treemap_parse_hex_color(hex).unwrap_or_else(|| panic!("{hex} must parse"));
+        let luminance = |hex: &str| treemap_relative_luminance(channels(hex));
+        for color in HK_TREEMAP_DEFAULT_COLORS {
+            let ink = treemap_contrast_text_color(color, 0.0);
+            assert!(
+                ink == "#fff" || ink == "#0b1220",
+                "unexpected ink {ink} for {color}"
+            );
+            assert!(
+                treemap_contrast_ratio(luminance(color), luminance(ink)) >= 4.5,
+                "{color} with {ink} is under WCAG AA"
+            );
+            // The band the group label actually sits on is the scrimmed
+            // plate — pin it too (worst palette case #59a14f = 4.506:1).
+            let plate = channels(color);
+            let shade = 1.0 - HK_TREEMAP_HEAD_SCRIM;
+            let band = treemap_relative_luminance(TreemapRgba {
+                r: plate.r * shade,
+                g: plate.g * shade,
+                b: plate.b * shade,
+                a: 1.0,
+            });
+            let band_ink = treemap_contrast_text_color(color, HK_TREEMAP_HEAD_SCRIM);
+            assert!(
+                treemap_contrast_ratio(band, luminance(band_ink)) >= 4.5,
+                "{color} band with {band_ink} is under WCAG AA"
+            );
+        }
     }
 
     // ── pure layout: area truth + tiling ──────────────────────────────
@@ -1506,6 +1651,25 @@ mod tests {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
         assert!(html.contains("g / a: 6 (30%)"), "summary text: {html}");
+    }
+
+    #[test]
+    fn treemap_renders_the_band_ink_and_the_leaf_ink_on_one_plate() {
+        let mut node = group("g", vec![leaf("a", 6.0), leaf("b", 4.0)]);
+        node.color = Some("#59a14f".to_string());
+        let html = Treemap(TreemapProps {
+            nodes: vec![node],
+            width: 400.0,
+            height: 200.0,
+            ..Default::default()
+        })
+        .render_to_html();
+        // One plate, two surfaces: the scrimmed band reads white and each
+        // leaf body the dark ink. Counts (not bare `contains`) bind each ink
+        // to its surface — swapping the scrim arguments turns this red.
+        assert!(html.contains("--hk-treemap-head-scrim:18%"), "{html}");
+        assert_eq!(html.matches("--hk-treemap-fg:#fff").count(), 1, "{html}");
+        assert_eq!(html.matches("--hk-treemap-fg:#0b1220").count(), 2, "{html}");
     }
 
     #[test]

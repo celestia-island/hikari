@@ -144,18 +144,75 @@ function resolveOpaqueColor(raw: string, fallback: string): string {
   return `rgb(${Math.round(channels[0])} ${Math.round(channels[1])} ${Math.round(channels[2])})`;
 }
 
+/** sRGB relative luminance (WCAG 2.x) of an opaque channel triple. */
+function relativeLuminance(channels: RgbaChannels): number {
+  const linear = (channel: number) => {
+    const value = channel / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  return (
+    0.2126 * linear(channels[0]) +
+    0.7152 * linear(channels[1]) +
+    0.0722 * linear(channels[2])
+  );
+}
+
+/** WCAG contrast ratio between two relative luminances. */
+function contrastRatio(a: number, b: number): number {
+  const lighter = Math.max(a, b);
+  const darker = Math.min(a, b);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/** The two inks a SOLID fill can carry. The dark end is the family's
+ *  near-black (a hair of blue keeps it from reading as dead #000 on the
+ *  pale palette members). */
+const SOLID_LIGHT_INK = "#fff";
+const SOLID_DARK_INK = "#0b1220";
+
+/** Relative luminances of the two candidate inks (white is the reference 1). */
+const SOLID_DARK_INK_LUMINANCE = relativeLuminance(parseHexColor(SOLID_DARK_INK)!);
+const SOLID_LIGHT_INK_LUMINANCE = 1;
+
+/** The theme text token — the ONLY ink source for a surface whose fill is
+ *  translucent or unparseable: a see-through cell says nothing beyond
+ *  "this theme is light / dark", so light-versus-dark is all it can carry. */
+const THEME_CELL_INK = "rgb(var(--color-text, 30 30 30))";
+
+/** Black scrim a group's header band paints over its plate, i.e. the
+ *  `rgb(0 0 0 / 18%)` band in HkTreemap.scss / HkTreemapStage.scss. Exported
+ *  so the band and the ink decision share one number: the components publish
+ *  it as the `--hk-treemap-head-scrim` custom property those sheets read. */
+export const HK_TREEMAP_HEAD_SCRIM = 0.18;
+
 /**
- * Cell label colour — user direction 2026-10-28: the text inside the colour
- * blocks should read like the family's icon glyphs (WHITE on the dark
- * theme), not a per-block black/white flip that made mid-tone cells carry
- * dark text. So the foreground simply follows the theme's icon/text token
- * (`--hi-icon-color` resolves to `rgb(var(--color-text))`), the same
- * vocabulary HkIconButton uses; the light theme keeps dark ink via the same
- * token. The background argument is kept for signature compatibility and
- * intentionally unused.
+ * Cell label colour.
+ *
+ * User direction 2026-11-10: a SOLID fill decides its own ink from its
+ * luminance — the theme's light/dark flip is only for a TRANSPARENT surface
+ * (that is the only signal a see-through background carries). The previous
+ * rule (2026-10-28) followed the theme token on every cell, which painted
+ * large saturated blocks with black ink in the light theme.
+ *
+ * `scrim` is the black overlay the text actually sits on — the group header
+ * band darkens its plate, so pass it and the decision is made against the
+ * composited surface rather than the plate underneath.
  */
-export function contrastTextColor(_background: string): string {
-  return "rgb(var(--color-text, 30 30 30))";
+export function contrastTextColor(background: string, scrim = 0): string {
+  const channels = parseCssColor(background);
+  if (!channels || channels[3] < 0.999) return THEME_CELL_INK;
+  const shade = 1 - Math.min(1, Math.max(0, scrim));
+  const effective: RgbaChannels = [
+    channels[0] * shade,
+    channels[1] * shade,
+    channels[2] * shade,
+    1,
+  ];
+  const luminance = relativeLuminance(effective);
+  return contrastRatio(luminance, SOLID_DARK_INK_LUMINANCE)
+    >= contrastRatio(luminance, SOLID_LIGHT_INK_LUMINANCE)
+    ? SOLID_DARK_INK
+    : SOLID_LIGHT_INK;
 }
 
 export const HK_TREEMAP_DEFAULT_COLORS = [
@@ -373,6 +430,10 @@ export function createHkTreemapSummary(
  * value + share, a shorter one label only, a tiny one nothing but colour.
  * The a11y summary and the tooltip always describe every leaf regardless
  * of what fits on screen.
+ *
+ * Cell ink is derived from each SOLID plate's own luminance (WCAG
+ * contrast), because a big opaque block is the background that matters;
+ * only a transparent/unparseable fill defers to the theme text token.
  */
 export default defineComponent({
   name: "HkTreemap",
@@ -401,6 +462,8 @@ export default defineComponent({
     const rootStyle = computed(() => ({
       width: "100%",
       height: typeof props.height === "number" ? `${props.height}px` : props.height,
+      // The header band's CSS and the ink decision read ONE number.
+      "--hk-treemap-head-scrim": `${HK_TREEMAP_HEAD_SCRIM * 100}%`,
     }));
     const cells = computed(() => {
       const dims = size.value;
@@ -521,7 +584,12 @@ export default defineComponent({
       const cellStyle = {
         inset: "0px",
         background: node.color,
-        "--hk-treemap-fg": contrastTextColor(node.color),
+        // A header band sits on the scrimmed plate, a leaf body on the plate
+        // itself — the ink follows the surface the glyphs actually sit on.
+        "--hk-treemap-fg": contrastTextColor(
+          node.color,
+          head ? HK_TREEMAP_HEAD_SCRIM : 0,
+        ),
       };
       const label = showLabel || head ? node.label : null;
       const meta = showValue

@@ -11,6 +11,7 @@ import {
   buildHkTreemapLayout,
   contrastTextColor,
   formatHkTreemapPercent,
+  HK_TREEMAP_HEAD_SCRIM,
   layoutHkTreemapCells,
   type HkTreemapCell,
   type HkTreemapLayoutNode,
@@ -356,7 +357,12 @@ export default defineComponent({
             width: `${w}px`,
             height: `${h}px`,
             background: node.color,
-            "--hk-treemap-fg": contrastTextColor(node.color),
+            // A nested group's glyphs sit on its scrimmed header band; a
+            // nested leaf's on the plate itself.
+            "--hk-treemap-fg": contrastTextColor(
+              node.color,
+              isGroup ? HK_TREEMAP_HEAD_SCRIM : 0,
+            ),
           }}
           data-depth={depth}
           aria-hidden="true"
@@ -410,7 +416,10 @@ export default defineComponent({
     }
 
     return () => (
-      <div class="hk-treemap-stage">
+      <div
+        class="hk-treemap-stage"
+        style={{ "--hk-treemap-head-scrim": `${HK_TREEMAP_HEAD_SCRIM * 100}%` }}
+      >
         {hasData.value && resolvedDrill.value.nodes.length > 0 && (
           <header class="hk-treemap-stage__head">
             <nav class="hk-treemap-stage__path" aria-label={t("hikari::treemap.drillPath", "Drill path")}>
@@ -479,7 +488,13 @@ export default defineComponent({
                           style={{
                             inset: "0px",
                             background: node.color,
-                            "--hk-treemap-fg": contrastTextColor(node.color),
+                            // The drillable group cell speaks through its
+                            // scrimmed header band; a leaf body sits on the
+                            // plate.
+                            "--hk-treemap-fg": contrastTextColor(
+                              node.color,
+                              isGroup ? HK_TREEMAP_HEAD_SCRIM : 0,
+                            ),
                           }}
                           // Every cell is an activatable button (groups
                           // drill, leaves select) — keyboard parity with

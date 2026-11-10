@@ -83,9 +83,10 @@
 use hikari_icons::{Icon, MdiIcon};
 
 use crate::data::treemap::{
-    TreemapCell, TreemapLayout, TreemapLayoutNode, TreemapNode, treemap_build_layout,
-    treemap_cell_ladder, treemap_cell_text, treemap_contrast_text_color, treemap_format_percent,
-    treemap_format_value, treemap_label_classes, treemap_layout_cells, treemap_px,
+    HK_TREEMAP_HEAD_SCRIM, TreemapCell, TreemapLayout, TreemapLayoutNode, TreemapNode,
+    treemap_build_layout, treemap_cell_ladder, treemap_cell_text, treemap_contrast_text_color,
+    treemap_format_percent, treemap_format_value, treemap_head_scrim_style, treemap_label_classes,
+    treemap_layout_cells, treemap_px,
 };
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -392,7 +393,7 @@ pub struct TreemapStageProps {
 
 // ── render assembly (no geometry below this line) ───────────────────────
 
-fn treemap_stage_cell_frame_style(cell: &TreemapCell) -> String {
+fn treemap_stage_cell_frame_style(cell: &TreemapCell, scrim: f64) -> String {
     format!(
         "position:absolute;left:{};top:{};width:{};height:{};background:{};--hk-treemap-fg:{}",
         treemap_px(cell.x),
@@ -400,7 +401,7 @@ fn treemap_stage_cell_frame_style(cell: &TreemapCell) -> String {
         treemap_px(cell.w),
         treemap_px(cell.h),
         cell.node.color,
-        treemap_contrast_text_color()
+        treemap_contrast_text_color(&cell.node.color, scrim)
     )
 }
 
@@ -469,7 +470,14 @@ fn treemap_stage_nested_node(
         treemap_px(nested.w),
         treemap_px(nested.h),
         nested.node.color,
-        treemap_contrast_text_color()
+        treemap_contrast_text_color(
+            &nested.node.color,
+            if nested.is_group {
+                HK_TREEMAP_HEAD_SCRIM
+            } else {
+                0.0
+            }
+        )
     );
     VNode::Element(Box::new(
         VElement::new("div")
@@ -561,7 +569,10 @@ fn treemap_stage_cell_node(
         .attr("tabindex", "0")
         .attr("aria-label", aria.clone())
         .attr("title", aria)
-        .style(treemap_stage_cell_frame_style(cell))
+        .style(treemap_stage_cell_frame_style(
+            cell,
+            if is_group { HK_TREEMAP_HEAD_SCRIM } else { 0.0 },
+        ))
         .on_click(click)
         .on_keydown(keydown)
         .child(body);
@@ -690,7 +701,7 @@ pub fn TreemapStage(props: TreemapStageProps) -> Element {
     let level_empty_text = props.empty_text.clone();
 
     rsx! {
-        div { class: "hk-treemap-stage",
+        div { class: "hk-treemap-stage", style: treemap_head_scrim_style(),
             if drilled {
                 header { class: "hk-treemap-stage__head",
                     nav { class: "hk-treemap-stage__path", "aria-label": path_label,
@@ -993,6 +1004,24 @@ mod tests {
         assert!(!html.contains("hk-treemap-stage__head"), "{html}");
         assert!(!html.contains("hk-treemap-stage__crumb"), "{html}");
         assert!(!html.contains("hk-treemap-stage__back-float"), "{html}");
+    }
+
+    #[test]
+    fn treemap_stage_renders_the_band_ink_and_the_nested_plate_ink() {
+        let mut node = group("g", vec![leaf("a", 6.0), leaf("b", 4.0)]);
+        node.color = Some("#59a14f".to_string());
+        let html = TreemapStage(TreemapStageProps {
+            nodes: vec![node],
+            width: 400.0,
+            height: 240.0,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("--hk-treemap-head-scrim:18%"), "{html}");
+        // One drillable group cell (band ink, white) + the two nested leaf
+        // previews (plate ink, dark): counts bind each ink to its surface.
+        assert_eq!(html.matches("--hk-treemap-fg:#fff").count(), 1, "{html}");
+        assert_eq!(html.matches("--hk-treemap-fg:#0b1220").count(), 2, "{html}");
     }
 
     #[test]

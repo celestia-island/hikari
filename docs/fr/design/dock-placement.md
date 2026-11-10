@@ -24,8 +24,9 @@ hauteur de **l'occupation mesurée du dock**, et se colle au bord inférieur vis
 
 - contenu court — le dock suit la fin du contenu à sa position de flux, l'air au-dessus de lui
   vaut cette occupation mesurée, et la hauteur de fenêtre résiduelle tombe **sous** le dock ;
-- contenu long — le dock reste sur le bord inférieur visible (il ne défile jamais hors de vue),
-  et le même air s'ouvre à la fin du défilement.
+- contenu long — le dock reste sur le bord inférieur visible (il ne défile jamais hors de vue
+  sur l'axe vertical ; sur un tableau à deux axes il reste ancré au bord de départ inline au lieu
+  de partir avec le contenu), et le même air s'ouvre à la fin du défilement.
 
 « L'occupation » est la boîte que le conteneur mesure et publie en `--hk-scroll-dock-bottom` : la
 place du dock lui-même, pas nécessairement sa surface visible — l'espace que l'hôte met DANS

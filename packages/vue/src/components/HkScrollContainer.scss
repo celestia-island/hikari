@@ -330,6 +330,17 @@
 .hk-scroll-dock-ride {
   position: sticky;
   bottom: 0;
+  /* Sticky is per-AXIS, and this dock trails the content on the BLOCK axis
+     only. On a two-axis board the viewport also scrolls inline, so without
+     an inline inset the box travels sideways with the content and slides
+     out of view (measured in a real engine: a 300px inline scroll put its
+     left edge at -300, 85px still visible, and past ~385px it was gone
+     entirely — while the prop doc promised "never scrolls away"). The
+     logical start pins that axis too and stays correct under RTL: the dock
+     is anchored to the inline start edge of the scrollport, in both
+     axes. Chest's target board is axis="vertical" and its vertical
+     geometry is unchanged by this line (measured). */
+  inset-inline-start: 0;
   flex: none;
   z-index: 1;
   /* Transparent band: the dock surface inside opts back in (see the

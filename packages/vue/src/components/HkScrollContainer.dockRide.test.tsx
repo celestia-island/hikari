@@ -539,6 +539,21 @@ describe("HkScrollContainer ride placement style contract", () => {
     );
   });
 
+  it("pins the dock on the INLINE axis too, so a both-axis board cannot slide it away", () => {
+    // Final review S2-1, measured in a real engine on axis="both": sticky
+    // is per-axis, and `bottom: 0` only owns the block axis — a 300px inline
+    // scroll put the dock's left edge at -300 (85px still visible) and past
+    // ~385px it was gone entirely, while the docs promised it never scrolls
+    // away. A logical inline inset pins that axis as well and stays correct
+    // under RTL. The vertical geometry is untouched (same measurement).
+    const ride = scss.match(/\.hk-scroll-dock-ride\s*\{[^}]*\}/);
+    expect(ride, "ride dock rule exists").not.toBeNull();
+    expect(ride![0]).toMatch(/inset-inline-start:\s*0/);
+    // Logical, not `left`: a physical offset would pin the wrong edge under
+    // RTL while the block-axis inset (bottom) has no direction at all.
+    expect(ride![0]).not.toMatch(/(?:^|[;{\s])left:\s*0/);
+  });
+
   it("passes pointer input through the ride band and keeps the pin wrapper hit-testable", () => {
     // While pinned, the ride wrapper covers a whole band of the visible
     // area (a column-flex viewport stretches it to full width × dock

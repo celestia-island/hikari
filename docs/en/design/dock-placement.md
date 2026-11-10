@@ -25,8 +25,10 @@ visible bottom edge (`position: sticky; bottom: 0`):
 
 - short content — the dock trails the content end, the air above it is the
   measured dock occupancy, and the leftover window height falls BELOW the dock;
-- long content — the dock stays on the visible bottom edge (it never scrolls
-  away), and the same air opens up at the scroll end.
+- long content — the dock stays on the visible bottom edge (on the vertical
+  axis it never scrolls away; on a two-axis board it also stays anchored to
+  the inline start instead of travelling with the content), and the same air
+  opens up at the scroll end.
 
 "The dock occupancy" is the box the container measures and publishes as
 `--hk-scroll-dock-bottom` — the dock's own placeholder, and not necessarily its

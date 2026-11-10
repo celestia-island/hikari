@@ -24,8 +24,9 @@ exactamente la **ocupación medida del dock**, y se pega al borde inferior visib
 
 - contenido corto — el dock sigue el final del contenido en su posición de flujo, el aire sobre
   él es esa ocupación medida, y la altura de ventana sobrante cae **debajo** del dock;
-- contenido largo — el dock se queda en el borde inferior visible (nunca se desplaza fuera), y
-  al llegar al final del scroll se abre el mismo aire.
+- contenido largo — el dock se queda en el borde inferior visible (nunca se desplaza fuera en el
+  eje vertical; en un tablero de dos ejes también queda anclado al borde inicial en línea en vez de
+  irse con el contenido), y al llegar al final del scroll se abre el mismo aire.
 
 «La ocupación» es la caja que el contenedor mide y publica en `--hk-scroll-dock-bottom`: el hueco
 del propio dock, no necesariamente su superficie visible — el espacio que el host pone DENTRO de

@@ -386,7 +386,10 @@ export default defineComponent({
      *  there the content tail is the cross axis and an in-flow block
      *  child leaks onto the hidden vertical axis — the same measured
      *  defect that gates the dockTailClearance spacer (see there). `pin`
-     *  stays byte-compatible with the pre-2026-11-10 render. */
+     *  stays compatible with the pre-2026-11-10 render — same element
+     *  structure, same attributes, same publication; the only difference
+     *  is one empty comment anchor the ride branch leaves in a pin
+     *  viewport's child list (nothing renders for it). */
     dockMode: { type: String as PropType<"pin" | "ride">, default: "pin" },
     /** Back-to-top signal (scroll parameter every scrollable template
      *  can hand to a floating quick-action pad): while set, the

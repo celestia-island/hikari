@@ -28,7 +28,11 @@ import jaBundle from "../i18n/locales/ja/components.json";
  *   · every reset path (button / dblclick / Escape / Home) lands null and
  *     restores the full view;
  *   · sub-minimum brushes, edge drags and keyboard nudges clamp instead of
- *     crossing.
+ *     crossing;
+ *   · the two layers stay explicit (minimap / detail) over one absolute
+ *     fraction contract, and `headroom` widens ONLY the minimap axis — the
+ *     detail stays window-relative and the blank tail clamps to content
+ *     100%.
  * A stylesheet contract at the bottom compiles the sheet and pins the
  * classes, geometry and the one animation (repo convention: vitest stubs
  * CSS, so the runtime cases can never catch a dead rule).
@@ -1357,6 +1361,182 @@ describe("HkRangeRibbon controlled contract", () => {
   });
 });
 
+// ── Dual-layer waterfall + headroom axis ────────────────────────────────
+describe("HkRangeRibbon dual-layer waterfall", () => {
+  /** The minimap's x for a content fraction, in percent: every minimap box
+   *  is `fraction / span`, where span = 1 + headroom. */
+  function axisPercent(fraction: number, headroom: number): number {
+    return (fraction / (1 + headroom)) * 100;
+  }
+
+  it("marks both layers explicitly and keeps the lane markup intact", () => {
+    const root = mountRibbon({ window: [0.35, 0.67] });
+    const minimap = root.querySelector<HTMLElement>(".hk-range-ribbon-overview");
+    expect(minimap, "the minimap layer renders").toBeTruthy();
+    expect(minimap!.getAttribute("data-layer")).toBe("minimap");
+    // The strip (brush surface + window chrome host) is the minimap's own.
+    expect(minimap!.querySelector(".hk-range-ribbon-strip")).toBeTruthy();
+    expect(minimap!.querySelector(".hk-range-ribbon-overview-gutter")).toBeTruthy();
+    expect(minimap!.querySelectorAll(".hk-range-ribbon-overview-row")).toHaveLength(2);
+
+    const detail = root.querySelector<HTMLElement>(".hk-range-ribbon-detail");
+    expect(detail, "the detail layer renders").toBeTruthy();
+    expect(detail!.getAttribute("data-layer")).toBe("detail");
+    // The lane list keeps its markup verbatim and lives INSIDE the wrapper.
+    const lanes = detail!.querySelector<HTMLElement>(".hk-range-ribbon-lanes");
+    expect(lanes, "the lane list is nested in the detail layer").toBeTruthy();
+    expect(lanes!.parentElement).toBe(detail);
+    expect(detail!.querySelectorAll(".hk-range-ribbon-lane")).toHaveLength(2);
+    expect(detail!.querySelectorAll(".hk-range-ribbon-lane-track")).toHaveLength(2);
+    // Exactly two layers, in reading order (minimap above detail).
+    expect(Array.from(root.children).map((child) => child.getAttribute("data-layer"))).toEqual([
+      "minimap",
+      "detail",
+    ]);
+    // Minimal mode stays a bare bar: no detail layer at all.
+    expect(mountRibbon({ minimal: true }).querySelector(".hk-range-ribbon-detail")).toBeNull();
+  });
+
+  it("maps the same absolute fraction onto both layers (minimap f/span, detail window-relative)", () => {
+    // parse covers 30%..45% of the whole progress; the window is 35%..67%.
+    const root = mountRibbon({ window: [0.35, 0.67], headroom: 0.1 });
+    const parseOverview = root.querySelector<HTMLElement>(
+      '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
+    )!;
+    expect(boxOf(parseOverview).left, "minimap left = 0.3 / span").toBeCloseTo(
+      axisPercent(0.3, 0.1),
+      4,
+    );
+    expect(boxOf(parseOverview).width, "minimap width = 0.15 / span").toBeCloseTo(
+      axisPercent(0.15, 0.1),
+      4,
+    );
+
+    // Detail: the SAME segment, clipped to the window and re-normalized. The
+    // headroom never enters this axis — a [0.35, 0.67] window spans 0..100%.
+    const parseDetail = segmentById(root, "parse")!;
+    expect(boxOf(parseDetail).left, "detail starts at the window start").toBeCloseTo(0, 4);
+    expect(boxOf(parseDetail).width, "detail width is window-relative").toBeCloseTo(
+      ((0.45 - 0.35) / (0.67 - 0.35)) * 100,
+      4,
+    );
+    const writeDetail = segmentById(root, "write")!;
+    expect(
+      boxOf(writeDetail).left + boxOf(writeDetail).width,
+      "detail ends at the window end",
+    ).toBeCloseTo(100, 4);
+
+    // A detail box under a headroom is byte-identical to its box with no
+    // headroom at all — the tail is a minimap-only projection.
+    const noTail = mountRibbon({ window: [0.35, 0.67] });
+    expect(boxOf(segmentById(root, "write")!)).toEqual(boxOf(segmentById(noTail, "write")!));
+    // …while the window frame is axis-projected on the minimap.
+    const frame = root.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
+    expect(boxOf(frame).left).toBeCloseTo(axisPercent(0.35, 0.1), 4);
+    expect(boxOf(frame).width).toBeCloseTo(axisPercent(0.32, 0.1), 4);
+  });
+
+  it("reserves the blank tail: scrims, frame and handles all stop at the axis end", () => {
+    // window [0.2, 1]: the whole content is selected, so the entire tail is
+    // "after the window" and must stay dimmed — reusing 1 - win[1] would
+    // leave it bare.
+    const root = mountRibbon({ window: [0.2, 1], headroom: 0.1 });
+    const before = root.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="before"]')!;
+    const after = root.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="after"]')!;
+    expect(boxOf(before).width, "before scrim = window start / span").toBeCloseTo(
+      axisPercent(0.2, 0.1),
+      4,
+    );
+    expect(boxOf(after).left, "after scrim starts where content 100% sits").toBeCloseTo(
+      axisPercent(1, 0.1),
+      4,
+    );
+    expect(boxOf(after).width, "after scrim width = (span - window end) / span").toBeCloseTo(
+      ((1.1 - 1) / 1.1) * 100,
+      4,
+    );
+    expect(
+      boxOf(after).left + boxOf(after).width,
+      "the after scrim reaches the axis end",
+    ).toBeCloseTo(100, 4);
+
+    const frame = root.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
+    expect(boxOf(frame).left).toBeCloseTo(axisPercent(0.2, 0.1), 4);
+    expect(boxOf(frame).width).toBeCloseTo(axisPercent(0.8, 0.1), 4);
+
+    const start = root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!;
+    const end = root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
+    expect(parseFloat(start.style.left), "start grip at content 20% on the axis").toBeCloseTo(
+      axisPercent(0.2, 0.1),
+      4,
+    );
+    expect(parseFloat(end.style.left), "end grip at content 100% on the axis").toBeCloseTo(
+      axisPercent(1, 0.1),
+      4,
+    );
+    // The a11y readings stay CONTENT percentages: the axis projection is
+    // presentation, never the value the host or assistive tech sees.
+    expect(end.getAttribute("aria-valuenow")).toBe("100");
+    expect(end.getAttribute("aria-valuetext")).toBe("100%");
+    expect(
+      root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.getAttribute("aria-valuetext"),
+    ).toBe("20% – 100%");
+  });
+
+  it("sanitizes the headroom so a bad value never distorts the axis", () => {
+    const cases: Array<[number, number]> = [
+      [0, 1],
+      [-0.5, 1],
+      [Number.NaN, 1],
+      [Number.NEGATIVE_INFINITY, 1],
+      [Number.POSITIVE_INFINITY, 1],
+      [2, 2],
+    ];
+    for (const [headroom, span] of cases) {
+      const root = mountRibbon({ window: null, headroom });
+      const parse = root.querySelector<HTMLElement>(
+        '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
+      )!;
+      expect(parse, `headroom ${headroom} still paints`).toBeTruthy();
+      expect(boxOf(parse).left, `headroom ${headroom} maps through span ${span}`).toBeCloseTo(
+        (0.3 / span) * 100,
+        4,
+      );
+    }
+  });
+
+  it("keeps the headroom out of the detail when no window is selected", () => {
+    const root = mountRibbon({ window: null, headroom: 0.1 });
+    // Detail bars keep the full-domain content axis (30%, not 27.27%).
+    expect(boxOf(segmentById(root, "parse")!).left).toBeCloseTo(30, 4);
+    const overview = root.querySelector<HTMLElement>(
+      '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
+    )!;
+    expect(boxOf(overview).left, "the minimap still reserves the tail").toBeCloseTo(
+      axisPercent(0.3, 0.1),
+      4,
+    );
+  });
+
+  it("clamps a pointer in the blank tail to content 100% (padding is not progress)", async () => {
+    const host = mountHost(null, { headroom: 0.1 });
+    const { strip, x } = stubStrip(host.root);
+
+    // A press at axis 95% is inside the tail (content 104.5%) and must anchor
+    // at content 1.0; the drag back to axis 30% is content 33%.
+    await drag(strip, 0.95, 0.3, x);
+    expectWindow(lastWindow(host.windowChange), 0.33, 1);
+
+    // The end handle dragged to the far right lands on content 100% too —
+    // never on the headroom the host reserved.
+    await host.setWindow([0.2, 0.5]);
+    const end = host.root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
+    expect(end, "the end grip renders for the sub-window").toBeTruthy();
+    await drag(end, 0.45, 1, x);
+    expectWindow(lastWindow(host.windowChange), 0.2, 1);
+  });
+});
+
 // ── Stylesheet contract ─────────────────────────────────────────────────
 const componentDir = dirname(fileURLToPath(import.meta.url));
 
@@ -1509,6 +1689,17 @@ describe("HkRangeRibbon stylesheet contract", () => {
     // The strip's own box is the coordinate space for handle percentages.
     expect(ruleBody(css, ".hk-range-ribbon-overview-field")).toContain("position: relative");
     expect(css).toContain(".hk-range-ribbon-overview-gutter");
+  });
+
+  it("makes the detail layer a plain column container for the lane list", () => {
+    const detail = ruleBody(css, ".hk-range-ribbon-detail");
+    expect(declaration(detail, "display")).toBe("flex");
+    expect(declaration(detail, "flex-direction"), "the lane list keeps its own column").toBe(
+      "column",
+    );
+    // The wrapper adds no rhythm of its own: the lanes keep their gap.
+    expect(detail, "the wrapper owns no gap").not.toContain("gap:");
+    expect(declaration(ruleBody(css, ".hk-range-ribbon-lanes"), "gap")).toBe("var(--space-2)");
   });
 
   it("anchors the tip inward at the track edges", () => {

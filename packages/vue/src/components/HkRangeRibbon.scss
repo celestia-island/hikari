@@ -1,9 +1,14 @@
 @use "../styles/polyfill" as *;
 
-/* HkRangeRibbon — a multi-lane sequence ribbon with a brushed window.
-   Anatomy: a thin OVERVIEW strip (the full domain, always), the window
-   highlight + outside scrims + two edge handles riding over it, then the
-   lane list whose segment bars show either the full domain or the window.
+/* HkRangeRibbon — the two-layer sequence waterfall with a brushed window.
+   Anatomy: LAYER 1 (data-layer="minimap") is the thin OVERVIEW strip over
+   the full domain, always — the window highlight + outside scrims + two edge
+   handles ride over it and the reset seat sits on its field. LAYER 2
+   (data-layer="detail") is the lane list: the same segments shown either
+   across the full domain or mapped onto the window (0..100% of the track).
+   The minimap axis is `1 + headroom` wide, so a host can reserve a blank
+   trailing tail for a >100% budget; the after scrim dims that tail once a
+   window exists. The headroom never reaches the detail layer.
 
    Geometry is part of the contract and pinned by HkRangeRibbon.test.tsx:
    the strip is 32px tall, a handle is an 8px half-overlapping grip
@@ -38,7 +43,7 @@
   min-width: 0;
 }
 
-// ── Overview strip (the full-domain minimap + brush surface) ─────────────
+// ── LAYER 1: overview strip (the full-domain minimap + brush surface) ───
 .hk-range-ribbon-overview {
   position: relative;
   display: grid;
@@ -251,6 +256,17 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+// ── Detail layer (the window-focused lane list) ─────────────────────────
+// A plain column container, nothing else: it exists so the two layers are
+// explicit in the DOM (and to the stylesheet contract) without disturbing
+// the lane list's own gap/column layout. Its x-axis is the selected window
+// mapped to 0..100% — the headroom tail lives only on the minimap layer.
+.hk-range-ribbon-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 // ── Lane list ───────────────────────────────────────────────────────────

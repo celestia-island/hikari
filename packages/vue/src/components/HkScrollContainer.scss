@@ -282,16 +282,31 @@
    it. The wrapper keeps the .hk-scroll-dock class — consumers detect a
    container-owned dock by closest(".hk-scroll-dock") and drop their own
    shell-level clearance publication on it, so a rename would double-clear
-   the same dock. Pointer events stay the dock's own contract (HkDockBar
-   keeps the box transparent and the surface catching), so this wrapper
-   adds no layer of its own. Ride is gated off axis="horizontal"
-   containers in the component — there the tail is the cross axis, where
-   an in-flow block child leaks onto the hidden vertical axis (the same
-   measured defect that gates the dockTailClearance spacer). */
+   the same dock. Ride is gated off axis="horizontal" containers in the
+   component — there the tail is the cross axis, where an in-flow block
+   child leaks onto the hidden vertical axis (the same measured defect
+   that gates the dockTailClearance spacer).
+
+   POINTER CONTRACT (2026-11-10 review S1) — the ride wrapper is
+   `pointer-events: none`, and so is the spacer. While pinned, the
+   wrapper covers a whole band of the visible area (a column-flex
+   viewport stretches it to full width × dock height), so an `auto` hit
+   target there would swallow every click and hover on the cards
+   underneath for the whole band — a defect the pin placement structurally
+   cannot have, because its dock is a sibling OUTSIDE the viewport. Ride
+   therefore follows the floating-dock contract instead: the wrapper is
+   transparent to input and the SURFACE opts back in (`pointer-events:
+   auto` on `.hk-dock-bar-surface` / chest's `.s-dock-bar-surface`), so
+   the dock's own controls stay live while the rest of the band passes
+   input through to the content. Slot content that must catch events has
+   to declare `pointer-events: auto` on the part that catches them — a
+   generic slot child does NOT inherit interactivity from the wrapper. */
 .hk-scroll-dock-ride-spacer {
   display: block;
   flex: none;
   height: var(--hk-scroll-dock-bottom, 0px);
+  /* Pure air band — never a hit target. */
+  pointer-events: none;
 }
 
 .hk-scroll-dock-ride {
@@ -299,6 +314,9 @@
   bottom: 0;
   flex: none;
   z-index: 1;
+  /* Transparent band: the dock surface inside opts back in (see the
+   * pointer contract above). */
+  pointer-events: none;
 }
 
 /* Dock-edge fade: mid-scroll content dissolving at the dock's edge

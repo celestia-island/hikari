@@ -319,8 +319,19 @@ export default defineComponent({
      *      `flex: none`, so a column-flex viewport cannot compress it;
      *    - the dock is `flex: none; z-index: 1`: while it is pinned over
      *      scrolling content it must paint above it;
-     *    - pointer events stay the dock's own contract (HkDockBar: wrapper
-     *      transparent, surface catches) — this wrapper adds no layer.
+     *    - the wrapper AND the spacer are `pointer-events: none`. A
+     *      pinned ride wrapper covers a whole band of the visible area
+     *      (a column-flex viewport stretches it to full width × dock
+     *      height), so an `auto` hit target there would swallow every
+     *      click and hover on the content underneath it — a defect the
+     *      pin placement cannot have, because its dock is a sibling
+     *      OUTSIDE the viewport. Ride follows the floating-dock contract
+     *      instead (HkDockBar: transparent anchor box, catching surface):
+     *      the SURFACE opts back in with `pointer-events: auto`
+     *      (`.hk-dock-bar-surface`, chest's `.s-dock-bar-surface`).
+     *      SLOT CONTENT THAT MUST CATCH EVENTS HAS TO DECLARE
+     *      `pointer-events: auto` ON THE PART THAT CATCHES THEM — the
+     *      wrapper does not hand interactivity to a generic slot child.
      *
      *  Ignored (falls back to `pin`) on `axis="horizontal"` containers:
      *  there the content tail is the cross axis and an in-flow block

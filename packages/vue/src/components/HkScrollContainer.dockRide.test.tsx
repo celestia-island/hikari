@@ -32,6 +32,13 @@
 // assertion below is the mutation guard for that (a `+ 16px` / fixed-px
 // recipe must go red).
 //
+// Pointer contract (2026-11-10 review S1): while pinned, the ride wrapper
+// covers a band of content (full width × dock height in a column-flex
+// viewport), so the wrapper and the spacer are `pointer-events: none` and
+// the dock SURFACE opts back in itself (HkDockBar / chest DockBar: wrapper
+// transparent, surface catches). The pin wrapper must stay hit-testable —
+// its own assertions below guard that.
+//
 // happy-dom has no layout engine, so the geometry half of the contract is
 // pinned two ways: the render/DOM placement here, and the sticky/spacer
 // CSS as a source contract (the same discipline as
@@ -296,6 +303,40 @@ describe("HkScrollContainer ride placement style contract", () => {
     // `calc(var(...) + 16px)`, a fixed height or a hard-coded 139px all
     // mean the air is no longer one dock height.
     expect(height).toBe("var(--hk-scroll-dock-bottom, 0px)");
+  });
+
+  it("passes pointer input through the ride band and keeps the pin wrapper hit-testable", () => {
+    // While pinned, the ride wrapper covers a whole band of the visible
+    // area (a column-flex viewport stretches it to full width × dock
+    // height). An `auto` hit target there would swallow every click and
+    // hover on the cards under that band — a defect the pin placement
+    // structurally cannot have, because its dock is a sibling OUTSIDE the
+    // viewport. Ride therefore follows the floating-dock contract
+    // (HkDockBar / chest DockBar: transparent anchor box, catching
+    // surface): the wrapper and the air spacer are both transparent to
+    // input, and the dock SURFACE opts back in itself.
+    const ride = scss.match(/\.hk-scroll-dock-ride\s*\{[^}]*\}/);
+    expect(ride, "ride dock rule exists").not.toBeNull();
+    expect(ride![0]).toMatch(/pointer-events:\s*none/);
+    const spacer = scss.match(/\.hk-scroll-dock-ride-spacer\s*\{[^}]*\}/);
+    expect(spacer![0]).toMatch(/pointer-events:\s*none/);
+
+    // The other half of the contract: the PIN wrapper must stay a normal
+    // hit target. It cannot cover content (it is a flex sibling of the
+    // viewport), and existing consumers rely on it receiving events —
+    // making it transparent would turn their dock into a dead surface.
+    // So no plain `.hk-scroll-dock*` rule (i.e. every one that is not a
+    // ride rule) may declare pointer-events at all.
+    const plainDockRules = (scss.match(/\.hk-scroll-dock[^{}\n]*\{[^}]*\}/g) ?? []).filter(
+      (block) => !/\.hk-scroll-dock-ride/.test(block.slice(0, block.indexOf("{"))),
+    );
+    expect(plainDockRules.length, "the plain dock rules still exist").toBeGreaterThan(0);
+    for (const block of plainDockRules) {
+      expect(
+        block,
+        `the pin dock wrapper must stay hit-testable: ${block}`,
+      ).not.toMatch(/pointer-events/);
+    }
   });
 });
 

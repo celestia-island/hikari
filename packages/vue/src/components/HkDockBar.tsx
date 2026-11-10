@@ -52,7 +52,10 @@ export type HkDockBarSurface = "glass" | "solid";
  *     content end (the leftover window height falls below it), long
  *     content pins it to the visible bottom edge. Use it for a dock that
  *     belongs to the CONTENT (a cruise canvas's bottom bar under its
- *     last row).
+ *     last row). The container's ride wrapper is `pointer-events: none`
+ *     (it covers content while pinned), so this carrier's own box
+ *     contract is what keeps the dock interactive: the anchor box catches
+ *     nothing, the surface catches everything.
  *   - `pin` (the default, older form): the dock is a non-scrolling flex
  *     SIBLING of the viewport, so it sits on the container's edge and the
  *     viewport shrinks by its height — correct for chrome that owns the

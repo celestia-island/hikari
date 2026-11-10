@@ -337,6 +337,17 @@
   pointer-events: none;
 }
 
+/* Keep scrolled-to content clear of the pinned dock: `scroll-padding`
+   belongs on the SCROLLPORT (the viewport), and it is exactly this band —
+   so `scrollIntoView`, a focus jump or `scrollTo` with a block target lands
+   the content ABOVE the dock instead of under it. Keyed on the ride hook,
+   which is emitted only while a ride dock is actually mounted (S2-2), so a
+   container without a dock keeps its engine default (0). The unset fallback
+   keeps it inert before the first measurement. */
+.hk-scroll-container[data-dock-mode="ride"] > .hk-scroll-container-viewport {
+  scroll-padding-bottom: var(--hk-scroll-dock-bottom, 0px);
+}
+
 /* Dock-edge fade: mid-scroll content dissolving at the dock's edge
    (opacity 100 -> 0 across --hk-scroll-dock-fade) reads as intentional
    instead of a hard clip against the dock's top edge. Content never

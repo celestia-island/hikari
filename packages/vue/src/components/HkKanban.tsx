@@ -113,15 +113,17 @@ export default defineComponent({
      *  "both" boards — a horizontal strip carries its tail on the cross
      *  axis, where the container's ride placement is gated off by design.
      *
-     *  A ride board also carries `data-dock-mode="ride"` on its root, the
-     *  styling hook that releases this component's full-height lanes box
+     *  A ride board ALSO carries `data-dock-mode="ride"` on its root — only
+     *  while a `dockBottom` slot is actually mounted, since that hook
+     *  releases this component's full-height lanes box
      *  (see HkKanban.scss): `.hk-kanban-lanes { min-height: 100% }` keeps
      *  the lanes box as tall as the viewport, which would push the in-flow
      *  spacer + dock below the fold and turn the air back into the
      *  window's leftover (measured on a real board: 275.8px static vs the
      *  139px dock, i.e. zero improvement over the pin board). The
-     *  attribute is emitted only while ride actually applies (not for pin,
-     *  not for a horizontal board), so every existing board is untouched. */
+     *  attribute is emitted only while a ride dock is genuinely mounted (not
+     *  for pin, not for a horizontal board, not for an empty slot), so every
+     *  existing board is untouched. */
     dockMode: { type: String as PropType<"pin" | "ride">, default: "pin" },
   },
   emits: ["move"],
@@ -214,8 +216,11 @@ export default defineComponent({
       // board (see the dockMode prop doc): a ride dock only follows the
       // content when the lanes box is allowed to end above the viewport
       // bottom. Ride only — a pin board keeps the full-height lanes box it
-      // always had, so no existing board changes.
-      const rideBoard = docksOnTail && props.dockMode === "ride";
+      // always had, so no existing board changes. Gated on the dock actually
+      // being mounted too (S2-2): a requested-but-empty slot is legal, and
+      // releasing the lanes box for it would only shrink lane chrome on a
+      // short board while no dock is there to justify it.
+      const rideBoard = docksOnTail && props.dockMode === "ride" && !!slots.dockBottom;
       return (
         <div
           class="hk-kanban"

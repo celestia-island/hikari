@@ -40,6 +40,8 @@ viewport: una caja de contenido que se estira hasta la altura del viewport
 así que el dock solo puede pegarse al borde y el aire vuelve a ser la altura de ventana sobrante.
 `HkKanban` libera su propia caja de lanes en un tablero ride; un host propio hace lo mismo.
 
+`autoFollow` no se admite junto con un dock ride por la misma razón: ancla abajo una caja de contenido de altura de pantalla, así que la cola ride cae bajo la línea de flotación. El contenedor avisa una vez en las compilaciones de desarrollo cuando ambos están activos.
+
 ## Ride no es una reserva a nivel de marco
 
 Ride **no** es la receta retirada que reservaba `altura del dock + respiración` en el viewport

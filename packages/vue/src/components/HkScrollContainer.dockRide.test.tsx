@@ -63,8 +63,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, describe, expect, it } from "vitest";
-import { createApp, defineComponent, h, nextTick, ref, type VNodeChild } from "vue";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, defineComponent, h, nextTick, ref, shallowRef, type VNodeChild } from "vue";
 
 import HkKanban from "./HkKanban";
 import HkScrollContainer from "./HkScrollContainer";
@@ -141,6 +141,59 @@ function stubMeasuredHeight(selector: string, height: number) {
 
 function rectangleOf(element: Element): DOMRect {
   return element.getBoundingClientRect();
+}
+
+/** happy-dom performs no layout, so scroll geometry is stubbed on the
+ *  viewport instance and a `refresh()` pass re-senses the overflow (house
+ *  pattern, HkScrollContainer.test.ts). */
+function stubGeometry(
+  el: HTMLElement,
+  geom: {
+    scrollWidth?: number;
+    clientWidth?: number;
+    scrollLeft?: number;
+    scrollHeight?: number;
+    clientHeight?: number;
+    scrollTop?: number;
+  },
+) {
+  const desc: PropertyDescriptorMap = {};
+  for (const [key, value] of Object.entries(geom)) {
+    desc[key] = { configurable: true, get: () => value };
+  }
+  Object.defineProperties(el, desc);
+}
+
+/** The physical edges the shared <HkEdgeGlow> is painting right now. */
+function bandsOf(host: HTMLElement): (string | null)[] {
+  return Array.from(host.querySelectorAll<HTMLElement>(".hk-edge-glow-band"), (band) =>
+    band.getAttribute("data-edge"),
+  );
+}
+
+/** Mount keeping the container's exposed API (for `refresh()`), which the
+ *  bare `mountDock` helper hides behind its wrapper component. */
+function mountWithApi(
+  slots: Record<string, () => VNodeChild>,
+  props: Record<string, unknown> = {},
+) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  containers.push(container);
+  const api = shallowRef<{ refresh: () => void } | null>(null);
+  const app = createApp(defineComponent({
+    setup() {
+      return () => h(HkScrollContainer, {
+        ...props,
+        ref: (el: unknown) => {
+          api.value = el as { refresh: () => void } | null;
+        },
+      }, slots);
+    },
+  }));
+  mounts.push(app);
+  const vm = app.mount(container) as unknown as { $el: HTMLElement };
+  return { host: vm.$el, api };
 }
 
 /** Injectable ResizeObserver (house pattern: HkAuthCard / HkScrollProgressDock
@@ -294,6 +347,51 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     expect(host.querySelector(".hk-scroll-dock-ride-spacer")).toBeNull();
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("0px");
     expect(host.style.getPropertyValue("--hk-scroll-dock-top")).toBe("0px");
+    // … and the ride hook follows the dock out (S2-2): no dock, no hook.
+    expect(host.getAttribute("data-dock-mode")).toBeNull();
+  });
+
+  it("drops the bottom glow band under a mounted ride dock (pin keeps it)", async () => {
+    // S2-1: the shared <HkEdgeGlow> painter lives on the container root at
+    // z-index 2, i.e. ABOVE the viewport — with a ride dock inside that
+    // viewport its bottom band would paint over the dock's own lower limb,
+    // the same edge the fade mask stops painting. Filtered in the
+    // component (the painter is shared and must not learn Ride).
+    const ride = mountWithApi(MOUNT_SLOTS, { dockMode: "ride", overflowGlow: true });
+    const rideViewport = ride.host.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(rideViewport, { scrollHeight: 300, clientHeight: 100, scrollTop: 100 });
+    ride.api.value!.refresh();
+    await nextTick();
+    // Content hides on BOTH sides, so the verdict lights two edges — the
+    // ride dock's bottom one is the only one dropped.
+    expect(ride.host.getAttribute("data-v-overflow")).toBe("both");
+    expect(bandsOf(ride.host)).toEqual(["top"]);
+
+    const pin = mountWithApi(MOUNT_SLOTS, { overflowGlow: true });
+    const pinViewport = pin.host.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubGeometry(pinViewport, { scrollHeight: 300, clientHeight: 100, scrollTop: 100 });
+    pin.api.value!.refresh();
+    await nextTick();
+    expect(bandsOf(pin.host)).toEqual(["top", "bottom"]);
+  });
+
+  it("warns once in dev when autoFollow is combined with a ride dock", async () => {
+    // S2-3: the combination reproduces the full-height-content trap that
+    // S0 fixed (autoFollow bottom-anchors a min-height:100% box), so it is
+    // documented as unsupported and called out once in dev builds.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const vm = mountDock(MOUNT_SLOTS, { dockMode: "ride", autoFollow: true });
+      await nextTick();
+      const rideWarnings = () =>
+        warn.mock.calls.filter((call) => String(call[0]).includes('dockMode="ride"'));
+      expect(rideWarnings().length, "the unsupported combination is called out").toBe(1);
+      (vm as unknown as { $forceUpdate: () => void }).$forceUpdate();
+      await nextTick();
+      expect(rideWarnings().length, "once per mount, not per re-render").toBe(1);
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it("does not publish the dock-edge fade in ride mode", () => {
@@ -338,6 +436,11 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     expect(host.querySelector(".hk-scroll-dock-ride-spacer")).toBeNull();
     expect(host.querySelector(".hk-scroll-dock-ride")).toBeNull();
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("");
+    // S2-2: a requested-but-empty slot is legal, and nothing owns the
+    // viewport's bottom edge then — so the ride hook must NOT be emitted
+    // (it would zero the fade band, drop the glow band and pad the
+    // scrollport for a dock that is not there).
+    expect(host.getAttribute("data-dock-mode")).toBeNull();
   });
 
   it("leaves the pin placement byte-compatible", () => {
@@ -390,6 +493,21 @@ describe("HkScrollContainer ride placement style contract", () => {
     // `calc(var(...) + 16px)`, a fixed height or a hard-coded 139px all
     // mean the air is no longer one dock height.
     expect(height).toBe("var(--hk-scroll-dock-bottom, 0px)");
+  });
+
+  it("pads the scrollport by the dock band so jumps clear the pinned dock", () => {
+    // A pinned ride dock covers the viewport's last band, so a
+    // `scrollIntoView` / focus jump that parks content at the bottom edge
+    // lands it UNDER the dock. `scroll-padding-bottom` belongs on the
+    // scrollport (the viewport) and is exactly this band; keyed on the ride
+    // hook, which is emitted only while the dock is mounted.
+    const rule = scss.match(
+      /\.hk-scroll-container\[data-dock-mode="ride"\] > \.hk-scroll-container-viewport \{[^}]*\}/,
+    );
+    expect(rule, "the ride viewport reserves the dock band for jumps").not.toBeNull();
+    expect(rule![0]).toMatch(
+      /scroll-padding-bottom:\s*var\(--hk-scroll-dock-bottom,\s*0px\)/,
+    );
   });
 
   it("zeroes the container's own bottom fade band in ride mode", () => {
@@ -573,6 +691,15 @@ describe("HkKanban ride-dock forwarding", () => {
     // No ride hook: a pin board keeps the full-height lanes box it always
     // had, so the release rule cannot reach an existing board.
     expect(vm.$el.getAttribute("data-dock-mode")).toBeNull();
+  });
+
+  it("emits no ride hook while the board's dock slot is empty", () => {
+    // S2-2, board side: `dockMode="ride"` with a conditionally absent dock
+    // is legal — releasing the lanes box then would only shrink a short
+    // board's lane chrome with no dock to justify it.
+    const vm = mountKanban({ axis: "vertical", dockMode: "ride" });
+    expect(vm.$el.getAttribute("data-dock-mode")).toBeNull();
+    expect(vm.$el.querySelector(".hk-scroll-dock-ride")).toBeNull();
   });
 
   it("ignores the slot on a horizontal board (the cross-axis tail)", () => {

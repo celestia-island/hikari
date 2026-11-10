@@ -328,6 +328,13 @@ export default defineComponent({
      *      `.hk-kanban-lanes` box for a ride host
      *      (`.hk-kanban[data-dock-mode="ride"] .hk-kanban-lanes
      *      { min-height: 0 }`); a custom host has to do the same.
+     *    - `autoFollow` IS NOT SUPPORTED TOGETHER WITH RIDE (documented,
+     *      not policed beyond a dev warning): autoFollow bottom-anchors a
+     *      `min-height: 100%` content box, which is the same "content box
+     *      equals the viewport" trap as above — the ride tail falls below
+     *      the fold and the air reverts to the window's leftover. No shipped
+     *      consumer combines them; a host that needs both should own the
+     *      footer itself.
      *    - THE AIR IS THE WRAPPER'S OCCUPANCY, NOT NECESSARILY THE VISIBLE
      *      SURFACE. `--hk-scroll-dock-bottom` (and therefore the spacer) is
      *      the dock WRAPPER's measured border-box height. Host-side space
@@ -348,12 +355,19 @@ export default defineComponent({
      *      `flex: none`, so a column-flex viewport cannot compress it;
      *    - the dock is `flex: none; z-index: 1`: while it is pinned over
      *      scrolling content it must paint above it;
-     *    - the ROOT carries `data-dock-mode="ride"` while a ride
-     *      placement is requested (additive, like `data-dock-tail` /
+     *    - the ROOT carries `data-dock-mode="ride"` while a ride dock is
+     *      actually MOUNTED (additive, like `data-dock-tail` /
      *      `data-dock-fade`; a pin container keeps its pre-2026-11-10
-     *      attribute set). It is the styling hook, and the sheet spends it
-     *      to zero the container's own bottom fade band — the ride dock
-     *      occupies that edge, so the mask would eat its lower limb.
+     *      attribute set). Gated on the slot, not on the prop: a requested
+     *      but empty `dockBottom` is a legal configuration, and while it is
+     *      empty nothing owns the bottom edge — the sheet must keep fading
+     *      it and a board must keep its own content height. The hook drives
+     *      three things on that edge: the container's bottom fade band is
+     *      zeroed (the dock body is the edge treatment), the shared
+     *      <HkEdgeGlow> painters drop their `bottom` band (it would paint
+     *      over the dock's lower limb), and the viewport gets
+     *      `scroll-padding-bottom: var(--hk-scroll-dock-bottom)` so
+     *      `scrollIntoView` / focus jumps clear the pinned dock.
      *    - the wrapper AND the spacer are `pointer-events: none`. A
      *      pinned ride wrapper covers a whole band of the visible area
      *      (a column-flex viewport stretches it to full width × dock
@@ -1297,6 +1311,25 @@ export default defineComponent({
       backTopVisible,
     });
 
+    /** Edge list handed to the shared <HkEdgeGlow> painters. A MOUNTED ride
+     *  dock owns the viewport's bottom edge: the dock now lives INSIDE the
+     *  viewport, at its trailing edge, so a bottom band would paint straight
+     *  over the dock's own lower limb while content overflows under it — the
+     *  same edge the sheet stops fading (S2-c) and the same reason the glow
+     *  is dropped here instead of hidden in the shared painter's CSS
+     *  (HkEdgeGlow is one component for many hosts). */
+    function painterEdges(edges: EdgeGlowEdge[], rideDockMounted: boolean): EdgeGlowEdge[] {
+      return rideDockMounted ? edges.filter((edge) => edge !== "bottom") : edges;
+    }
+
+    /** Dev-only drift alarm (once): `autoFollow` bottom-anchors a
+     *  `min-height: 100%` content box, which keeps the ride spacer + dock
+     *  below the viewport fold and brings back exactly the leftover-window
+     *  air the ride placement exists to remove. No shipped consumer combines
+     *  them; the combination is documented as unsupported rather than
+     *  silently "fixed" (it would need a layout the container does not own). */
+    let warnedAutoFollowRide = false;
+
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";
       let content = props.autoFollow ? (
@@ -1330,6 +1363,21 @@ export default defineComponent({
       const dockTopSlot = slots.dockTop;
       const dockBottomSlot = slots.dockBottom;
       const rideBottom = dockRides();
+      // The ride hook means "a ride dock is MOUNTED", not merely "a ride
+      // placement was requested": a requested-but-empty slot is a legal
+      // configuration (a conditional dock), and while it is empty nothing
+      // owns the viewport's bottom edge — so the sheet must keep fading that
+      // edge and HkKanban must keep its full-height lanes box (S2-2).
+      const rideDockMounted = !!dockBottomSlot && rideBottom;
+      if (import.meta.env.DEV && !warnedAutoFollowRide && rideDockMounted && props.autoFollow) {
+        warnedAutoFollowRide = true;
+        // eslint-disable-next-line no-console -- dev-only unsupported-combination alarm
+        console.warn(
+          "[HkScrollContainer] autoFollow is not supported together with dockMode=\"ride\": " +
+            "autoFollow's min-height:100% content box keeps the ride spacer + dock below the viewport fold, " +
+            "so the air reverts to the window's leftover. Drop one of the two.",
+        );
+      }
       return (
         <Tag
           ref={hostRef}
@@ -1339,7 +1387,7 @@ export default defineComponent({
           data-fade={props.fade ? "true" : undefined}
           data-overflow-glow={props.overflowGlow ? "true" : undefined}
           data-dock-tail={props.dockTailClearance ? "true" : undefined}
-          data-dock-mode={rideBottom ? "ride" : undefined}
+          data-dock-mode={rideDockMounted ? "ride" : undefined}
           data-dock-fade={
             props.dockFade && dockBottomSlot && !rideBottom
               ? "bottom"
@@ -1363,7 +1411,7 @@ export default defineComponent({
             data-scroll-axis={props.axis}
           >
             {content}
-            {dockBottomSlot && rideBottom && (
+            {rideDockMounted && (
               <>
                 <div class="hk-scroll-dock-ride-spacer" aria-hidden="true" />
                 <div ref={dockBottomRef} class="hk-scroll-dock hk-scroll-dock-ride" data-side="bottom">
@@ -1393,7 +1441,7 @@ export default defineComponent({
               tree. */}
           {props.selectionHint && (
             <HkEdgeGlow
-              edges={selectionHintEdges.value}
+              edges={painterEdges(selectionHintEdges.value, rideDockMounted)}
               size="var(--hk-scroll-selection-hint-size)"
               feather="var(--hk-scroll-selection-hint-feather)"
             />
@@ -1401,7 +1449,7 @@ export default defineComponent({
           {props.overflowGlow && (
             <HkEdgeGlow
               animate
-              edges={overflowGlowEdges.value}
+              edges={painterEdges(overflowGlowEdges.value, rideDockMounted)}
               size="var(--hk-scroll-overflow-glow-size, var(--space-24))"
               feather="var(--hk-scroll-overflow-glow-feather, var(--space-24))"
             />

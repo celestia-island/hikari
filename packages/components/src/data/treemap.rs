@@ -180,8 +180,8 @@ pub const TREEMAP_THEME_INK: &str = "rgb(var(--color-text, 30 30 30))";
 const TREEMAP_LIGHT_INK: &str = "#fff";
 const TREEMAP_DARK_INK: &str = "#0b1220";
 
-/// Last-resort ink for the narrow mid-tone dead zone (plate luminance
-/// 0.1833–0.2024) where neither softer ink clears AA; there pure black is the
+/// Last-resort ink for the narrow mid-tone dead zone (plate luminance in the
+/// open interval (0.1833, 0.2024)) where neither softer ink clears AA; there pure black is the
 /// higher-contrast choice that can reach the floor. Outside that band the
 /// softer pair is SELECTED even though black would beat the near-black on raw
 /// ratio everywhere — black stays a floor escape, not the normal dark ink
@@ -1324,6 +1324,24 @@ mod tests {
         );
         assert_eq!(
             treemap_contrast_text_color("not-a-color", 0.0),
+            TREEMAP_THEME_INK
+        );
+        // Parse strictness is part of the mirror contract: trailing garbage
+        // and inf/NaN spellings are NOT truncated numbers.
+        assert_eq!(
+            treemap_contrast_text_color("rgb(10x 20 30)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(inf 0 0)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(50x% 0 0)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("hsl(10x, 50%, 50%)", 0.0),
             TREEMAP_THEME_INK
         );
         assert_eq!(treemap_head_scrim_style(), "--hk-treemap-head-scrim:18%");

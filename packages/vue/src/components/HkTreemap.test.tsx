@@ -275,6 +275,15 @@ describe("HkTreemap pure layout input", () => {
     expect(contrastTextColor("rgb(78 121 167 / 40%)")).toBe("rgb(var(--color-text, 30 30 30))");
     expect(contrastTextColor("#4e79a780")).toBe("rgb(var(--color-text, 30 30 30))");
     expect(contrastTextColor("not-a-color")).toBe("rgb(var(--color-text, 30 30 30))");
+    // Parse strictness is part of the mirror contract: trailing garbage,
+    // inf/NaN spellings and broken hues are NOT truncated numbers — both
+    // runtimes must answer "no solid answer" identically.
+    expect(contrastTextColor("rgb(10x 20 30)")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("rgb(inf 0 0)")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("rgb(50x% 0 0)")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("hsl(10x, 50%, 50%)")).toBe("rgb(var(--color-text, 30 30 30))");
+    // The deg suffix still parses (the Rust angle channel strips it too).
+    expect(contrastTextColor("hsl(120deg, 50%, 50%)")).toBe(contrastTextColor("hsl(120, 50%, 50%)"));
   });
 
   it("keeps every default palette cell AND its group band at WCAG AA", () => {

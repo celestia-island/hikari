@@ -65,13 +65,35 @@ function parseHexColor(raw: string): RgbaChannels | null {
   ];
 }
 
+/** Strict decimal/scientific numeric parse — the WHOLE string must be one
+ *  number, mirroring the Rust mirror's `str::parse::<f64>()` + `is_finite()`
+ *  gate: trailing garbage ("10x") and inf/NaN spellings are rejected, not
+ *  truncated. Returns NaN for anything that is not one number. */
+const NUMERIC_PATTERN = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+function parseStrictNumber(raw: string): number {
+  const value = raw.trim();
+  return NUMERIC_PATTERN.test(value) ? Number(value) : Number.NaN;
+}
+
 function numericChannel(raw: string): number | null {
   if (raw.endsWith("%")) {
-    const percent = Number.parseFloat(raw.slice(0, -1));
+    const percent = parseStrictNumber(raw.slice(0, -1));
     return Number.isFinite(percent) ? Math.min(255, Math.max(0, (percent / 100) * 255)) : null;
   }
-  const value = Number.parseFloat(raw);
+  const value = parseStrictNumber(raw);
   return Number.isFinite(value) ? Math.min(255, Math.max(0, value)) : null;
+}
+
+/** An hsl hue: a strict number with the optional `deg` suffix (all trailing
+ *  repeats stripped, like the Rust mirror's `trim_end_matches("deg")`). */
+function angleChannel(raw: string): number {
+  return parseStrictNumber(raw.replace(/(?:deg)+$/, ""));
+}
+
+/** An hsl saturation/lightness: a strict number with an optional `%` suffix
+ *  (CSS requires the percent, but both forms appear in the wild). */
+function percentChannel(raw: string): number {
+  return parseStrictNumber(raw.replace(/%+$/, ""));
 }
 
 function hueToRgb(hue: number, saturation: number, lightness: number): [number, number, number] {
@@ -96,10 +118,10 @@ function hueToRgb(hue: number, saturation: number, lightness: number): [number, 
 function alphaComponent(raw: string | undefined): number | null {
   if (raw == null || raw === "") return 1;
   if (raw.endsWith("%")) {
-    const percent = Number.parseFloat(raw.slice(0, -1));
+    const percent = parseStrictNumber(raw.slice(0, -1));
     return Number.isFinite(percent) ? Math.min(1, Math.max(0, percent / 100)) : null;
   }
-  const value = Number.parseFloat(raw);
+  const value = parseStrictNumber(raw);
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
 }
 
@@ -120,9 +142,9 @@ function parseCssColor(raw: string): RgbaChannels | null {
   if (hsl) {
     const parts = hsl[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
     if (parts.length < 3) return null;
-    const hue = Number.parseFloat(parts[0]!);
-    const saturation = Number.parseFloat(parts[1]!);
-    const lightness = Number.parseFloat(parts[2]!);
+    const hue = angleChannel(parts[0]!);
+    const saturation = percentChannel(parts[1]!);
+    const lightness = percentChannel(parts[2]!);
     if (![hue, saturation, lightness].every(Number.isFinite)) return null;
     const alpha = alphaComponent(parts[3]);
     if (alpha === null) return null;
@@ -171,7 +193,7 @@ const SOLID_LIGHT_INK = "#fff";
 const SOLID_DARK_INK = "#0b1220";
 
 /** Last-resort ink: the softer pair leaves a narrow mid-tone dead zone
- *  (plate luminance 0.1833–0.2024) where neither clears AA; there pure black
+ *  (plate luminance in the open interval (0.1833, 0.2024)) where neither clears AA; there pure black
  *  is the higher-contrast choice that can reach the floor. Outside that band
  *  the softer pair is SELECTED even though black would beat the near-black on
  *  raw ratio everywhere — black stays a floor escape, not the normal ink. */

@@ -164,13 +164,22 @@ function contrastRatio(a: number, b: number): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** The two inks a SOLID fill can carry. The dark end is the family's
+/** The two inks a SOLID fill normally carries. The dark end is the family's
  *  near-black (a hair of blue keeps it from reading as dead #000 on the
  *  pale palette members). */
 const SOLID_LIGHT_INK = "#fff";
 const SOLID_DARK_INK = "#0b1220";
 
-/** Relative luminances of the two candidate inks (white is the reference 1). */
+/** Last-resort ink: the softer pair leaves a narrow mid-tone dead zone
+ *  (plate luminance 0.1833–0.2024) where neither clears AA; there pure
+ *  black is strictly the higher-contrast choice (and the only one that can
+ *  reach the floor). It never wins anywhere else. */
+const SOLID_NEUTRAL_INK = "#000";
+
+/** WCAG AA floor the cell labels are held to (12px text). */
+const AA_CONTRAST = 4.5;
+
+/** Relative luminances of the candidate inks (white is the reference 1). */
 const SOLID_DARK_INK_LUMINANCE = relativeLuminance(parseHexColor(SOLID_DARK_INK)!);
 const SOLID_LIGHT_INK_LUMINANCE = 1;
 
@@ -209,10 +218,13 @@ export function contrastTextColor(background: string, scrim = 0): string {
     1,
   ];
   const luminance = relativeLuminance(effective);
-  return contrastRatio(luminance, SOLID_DARK_INK_LUMINANCE)
-    >= contrastRatio(luminance, SOLID_LIGHT_INK_LUMINANCE)
-    ? SOLID_DARK_INK
-    : SOLID_LIGHT_INK;
+  const dark = contrastRatio(luminance, SOLID_DARK_INK_LUMINANCE);
+  const light = contrastRatio(luminance, SOLID_LIGHT_INK_LUMINANCE);
+  const best = Math.max(dark, light);
+  // Neither softer ink clears the floor -> pure black, which is strictly the
+  // higher-contrast choice inside that band (see SOLID_NEUTRAL_INK).
+  if (best < AA_CONTRAST) return SOLID_NEUTRAL_INK;
+  return dark >= light ? SOLID_DARK_INK : SOLID_LIGHT_INK;
 }
 
 export const HK_TREEMAP_DEFAULT_COLORS = [
@@ -433,7 +445,9 @@ export function createHkTreemapSummary(
  *
  * Cell ink is derived from each SOLID plate's own luminance (WCAG
  * contrast), because a big opaque block is the background that matters;
- * only a transparent/unparseable fill defers to the theme text token.
+ * only a transparent/unparseable fill defers to the theme text token. The
+ * mid-tone band where neither the white nor the family near-black clears AA
+ * falls back to pure black.
  */
 export default defineComponent({
   name: "HkTreemap",

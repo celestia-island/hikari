@@ -139,6 +139,30 @@ afterEach(() => {
   globalThis.ResizeObserver = originalResizeObserver;
 });
 
+/** WCAG helpers for the ink assertions — an independent re-implementation of
+ *  the requirement (AA contrast), deliberately not the component's own code. */
+const srgbLinear = (channel: number) => {
+  const value = channel / 255;
+  return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+};
+const hexChannels = (hex: string): [number, number, number] => {
+  const raw = hex.length === 4
+    ? hex.slice(1).split("").map((char) => char + char).join("")
+    : hex.slice(1);
+  return [
+    Number.parseInt(raw.slice(0, 2), 16),
+    Number.parseInt(raw.slice(2, 4), 16),
+    Number.parseInt(raw.slice(4, 6), 16),
+  ];
+};
+const luminanceOf = (rgb: readonly number[]) =>
+  0.2126 * srgbLinear(rgb[0]!) + 0.7152 * srgbLinear(rgb[1]!) + 0.0722 * srgbLinear(rgb[2]!);
+const contrastAgainst = (backgroundLuminance: number, ink: string) => {
+  const text = luminanceOf(hexChannels(ink));
+  return (Math.max(backgroundLuminance, text) + 0.05)
+    / (Math.min(backgroundLuminance, text) + 0.05);
+};
+
 describe("HkTreemap pure layout input", () => {
   it("sums nested groups from leaves and ignores caller-provided parent values", () => {
     const layout = buildHkTreemapLayout(NODES);
@@ -254,35 +278,39 @@ describe("HkTreemap pure layout input", () => {
   });
 
   it("keeps every default palette cell AND its group band at WCAG AA", () => {
-    const linear = (channel: number) => {
-      const value = channel / 255;
-      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-    };
-    const channels = (hex: string) => {
-      const raw = hex.length === 4
-        ? hex.slice(1).split("").map((char) => char + char).join("")
-        : hex.slice(1);
-      return [0, 2, 4].map((at) => Number.parseInt(raw.slice(at, at + 2), 16));
-    };
-    const luminance = (rgb: number[]) => 0.2126 * linear(rgb[0]!)
-      + 0.7152 * linear(rgb[1]!)
-      + 0.0722 * linear(rgb[2]!);
-    const ratio = (plate: number, ink: string) => {
-      const text = luminance(channels(ink));
-      return (Math.max(plate, text) + 0.05) / (Math.min(plate, text) + 0.05);
-    };
     for (const color of HK_TREEMAP_DEFAULT_COLORS) {
-      const plate = luminance(channels(color));
+      const plate = luminanceOf(hexChannels(color));
       const ink = contrastTextColor(color);
-      expect(["#fff", "#0b1220"]).toContain(ink);
-      expect(ratio(plate, ink)).toBeGreaterThanOrEqual(4.5);
+      expect(["#fff", "#0b1220", "#000"]).toContain(ink);
+      expect(contrastAgainst(plate, ink)).toBeGreaterThanOrEqual(4.5);
       // The band the group label actually sits on is the scrimmed plate —
       // pin it too, the worst palette case (#59a14f) sits at 4.506:1.
-      const band = luminance(
-        channels(color).map((channel) => channel * (1 - HK_TREEMAP_HEAD_SCRIM)),
+      const band = luminanceOf(
+        hexChannels(color).map((channel) => channel * (1 - HK_TREEMAP_HEAD_SCRIM)),
       );
       const bandInk = contrastTextColor(color, HK_TREEMAP_HEAD_SCRIM);
-      expect(ratio(band, bandInk)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastAgainst(band, bandInk)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("never leaves a solid plate under AA — black covers the mid-tone dead zone", () => {
+    // The white/near-black pair cannot reach 4.5:1 for plate luminances in
+    // (0.1833, 0.2024); pure black is the escape hatch and must appear there.
+    const deadZoneGrey = "rgb(120 120 130)";
+    expect(contrastAgainst(luminanceOf(hexChannels("#787882")), "#fff")).toBeLessThan(4.5);
+    expect(contrastAgainst(luminanceOf(hexChannels("#787882")), "#0b1220")).toBeLessThan(4.5);
+    expect(contrastTextColor(deadZoneGrey)).toBe("#000");
+    // …and only there: the softer pair stays everywhere else.
+    for (const softer of ["#edc948", "#bab0ab", "#9c755f", "#4e79a7", "#edc948"]) {
+      expect(contrastTextColor(softer)).not.toBe("#000");
+    }
+    // The same grey's header band is light enough for white.
+    expect(contrastTextColor(deadZoneGrey, HK_TREEMAP_HEAD_SCRIM)).toBe("#fff");
+    // Property: every grey step clears AA with the ink it picks.
+    for (let value = 0; value <= 255; value += 1) {
+      const color = `rgb(${value} ${value} ${value})`;
+      const plate = luminanceOf([value, value, value]);
+      expect(contrastAgainst(plate, contrastTextColor(color))).toBeGreaterThanOrEqual(4.5);
     }
   });
 

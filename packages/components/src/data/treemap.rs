@@ -175,10 +175,18 @@ pub const HK_TREEMAP_HEAD_SCRIM: f64 = 0.18;
 /// `THEME_CELL_INK`).
 pub const TREEMAP_THEME_INK: &str = "rgb(var(--color-text, 30 30 30))";
 
-/// The two inks a SOLID fill can carry (Vue: `SOLID_LIGHT_INK` /
+/// The two inks a SOLID fill normally carries (Vue: `SOLID_LIGHT_INK` /
 /// `SOLID_DARK_INK`).
 const TREEMAP_LIGHT_INK: &str = "#fff";
 const TREEMAP_DARK_INK: &str = "#0b1220";
+
+/// Last-resort ink for the narrow mid-tone dead zone (plate luminance
+/// 0.1833–0.2024) where neither softer ink clears AA; there pure black is
+/// strictly the higher-contrast choice (Vue: `SOLID_NEUTRAL_INK`).
+const TREEMAP_NEUTRAL_INK: &str = "#000";
+
+/// WCAG AA floor the cell labels are held to (12px text).
+const TREEMAP_AA_CONTRAST: f64 = 4.5;
 
 /// The root style publishing the band scrim — one string for both
 /// components, so the sheet never has to guess the number.
@@ -233,10 +241,17 @@ pub fn treemap_contrast_text_color(background: &str, scrim: f64) -> &'static str
         b: channels.b * shade,
         a: 1.0,
     });
-    let dark_ink = treemap_parse_hex_color(TREEMAP_DARK_INK)
+    let dark = treemap_parse_hex_color(TREEMAP_DARK_INK)
         .map(treemap_relative_luminance)
         .unwrap_or(0.0);
-    if treemap_contrast_ratio(luminance, dark_ink) >= treemap_contrast_ratio(luminance, 1.0) {
+    let dark_ratio = treemap_contrast_ratio(luminance, dark);
+    let light_ratio = treemap_contrast_ratio(luminance, 1.0);
+    // Neither softer ink clears the floor -> pure black, which is strictly
+    // the higher-contrast choice inside that band (see TREEMAP_NEUTRAL_INK).
+    if dark_ratio.max(light_ratio) < TREEMAP_AA_CONTRAST {
+        return TREEMAP_NEUTRAL_INK;
+    }
+    if dark_ratio >= light_ratio {
         TREEMAP_DARK_INK
     } else {
         TREEMAP_LIGHT_INK
@@ -1310,6 +1325,47 @@ mod tests {
     }
 
     #[test]
+    fn treemap_ink_uses_pure_black_to_cover_the_mid_tone_dead_zone() {
+        // White/near-black cannot reach 4.5:1 for plate luminances in
+        // (0.1833, 0.2024); pure black is the escape hatch.
+        let grey = "rgb(120 120 130)";
+        let plate = treemap_relative_luminance(treemap_parse_css_color(grey).expect("parses"));
+        let white = treemap_contrast_ratio(plate, 1.0);
+        let dark = treemap_contrast_ratio(
+            plate,
+            treemap_relative_luminance(treemap_parse_hex_color("#0b1220").expect("parses")),
+        );
+        assert!(white < 4.5 && dark < 4.5, "grey must sit in the dead zone");
+        assert_eq!(treemap_contrast_text_color(grey, 0.0), "#000");
+        // The same grey's header band is light enough for white.
+        assert_eq!(
+            treemap_contrast_text_color(grey, HK_TREEMAP_HEAD_SCRIM),
+            "#fff"
+        );
+        // Every other palette member keeps one of the softer inks.
+        for color in HK_TREEMAP_DEFAULT_COLORS {
+            assert_ne!(treemap_contrast_text_color(color, 0.0), "#000", "{color}");
+        }
+        // Property: every grey step clears AA with the ink it picks.
+        for value in 0..=255u8 {
+            let color = format!("rgb({value} {value} {value})");
+            let luminance = treemap_relative_luminance(TreemapRgba {
+                r: f64::from(value),
+                g: f64::from(value),
+                b: f64::from(value),
+                a: 1.0,
+            });
+            let ink = treemap_contrast_text_color(&color, 0.0);
+            let ink_luminance =
+                treemap_relative_luminance(treemap_parse_hex_color(ink).expect("ink parses"));
+            assert!(
+                treemap_contrast_ratio(luminance, ink_luminance) >= 4.5,
+                "grey {value} with {ink} is under AA"
+            );
+        }
+    }
+
+    #[test]
     fn treemap_default_palette_clear_wcag_aa_with_its_ink() {
         let channels =
             |hex: &str| treemap_parse_hex_color(hex).unwrap_or_else(|| panic!("{hex} must parse"));
@@ -1317,7 +1373,7 @@ mod tests {
         for color in HK_TREEMAP_DEFAULT_COLORS {
             let ink = treemap_contrast_text_color(color, 0.0);
             assert!(
-                ink == "#fff" || ink == "#0b1220",
+                ink == "#fff" || ink == "#0b1220" || ink == "#000",
                 "unexpected ink {ink} for {color}"
             );
             assert!(

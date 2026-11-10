@@ -232,6 +232,75 @@
   min-height: 0;
 }
 
+/* ── In-flow bottom docks that RIDE the content (dockMode="ride") ──
+   2026-11-10 user ruling: the air between a cruise canvas's last card
+   and its dock must be EXACTLY one dock height, with the dock following
+   the content instead of hovering on the window's bottom edge. Only two
+   bottom placements existed before, and neither expresses that:
+
+     1. the dockTop/dockBottom SLOTS (dockMode="pin", unchanged) shrink
+        the viewport permanently — a short board keeps the leftover
+        window height between the content end and the dock, because the
+        dock sits on the container's edge, not on the content's;
+     2. dockTailClearance spends a shell-published occupancy as a tail
+        spacer on content whose dock FLOATS over the scroll area from
+        outside the flow.
+
+   The ride placement moves the dock itself into the viewport's content
+   flow, after the slot content, and gives it two boxes:
+
+     - .hk-scroll-dock-ride-spacer — a block spacer exactly the measured
+       dock height (the container publishes --hk-scroll-dock-bottom on
+       the host, the same var pin mode publishes for consumer padding;
+       the unset fallback keeps it inert before the first measurement):
+       that is the one-dock-height air, no +N breathing and no magic px,
+       and it re-derives whenever the dock reflows (a model row changing,
+       a breakpoint switch);
+     - .hk-scroll-dock-ride — the dock wrapper itself: sticky to the
+       viewport's visible bottom edge, so short content leaves the dock at
+       its own flow position (below the spacer, with the leftover window
+       height falling BELOW the dock) while long content pins it on the
+       bottom edge and it never scrolls away, with the spacer still
+       delivering the same one-dock-height air at the scroll end.
+
+   THIS IS NOT the retired frame-level reservation (the lesson recorded
+   on dockTailClearance above). That recipe reserved room for a dock that
+   lived OUTSIDE the flow — a shell-fixed plane — so the reserved band
+   showed as dead air BEFORE the scroll end and the dock never followed
+   the content; the recommended fix there was to delete the hand-rolled
+   recipe. Here the dock's own body IS the in-flow child: the empty band
+   is its measured box, nothing is pre-reserved for something painted
+   elsewhere, and the sticky box is what makes the band track the content
+   instead of the window. Do not "simplify" this back into a fixed
+   ::after reserve.
+
+   Load-bearing details: `display: block` on the spacer (a height on an
+   inline box is inert, and the default viewport is a block flow — the
+   measured lesson dockTailClearance already carries); `flex: none` so a
+   flex-ified viewport cannot compress either box; `z-index: 1` on the
+   dock because while pinned it paints over the content scrolling under
+   it. The wrapper keeps the .hk-scroll-dock class — consumers detect a
+   container-owned dock by closest(".hk-scroll-dock") and drop their own
+   shell-level clearance publication on it, so a rename would double-clear
+   the same dock. Pointer events stay the dock's own contract (HkDockBar
+   keeps the box transparent and the surface catching), so this wrapper
+   adds no layer of its own. Ride is gated off axis="horizontal"
+   containers in the component — there the tail is the cross axis, where
+   an in-flow block child leaks onto the hidden vertical axis (the same
+   measured defect that gates the dockTailClearance spacer). */
+.hk-scroll-dock-ride-spacer {
+  display: block;
+  flex: none;
+  height: var(--hk-scroll-dock-bottom, 0px);
+}
+
+.hk-scroll-dock-ride {
+  position: sticky;
+  bottom: 0;
+  flex: none;
+  z-index: 1;
+}
+
 /* Dock-edge fade: mid-scroll content dissolving at the dock's edge
    (opacity 100 -> 0 across --hk-scroll-dock-fade) reads as intentional
    instead of a hard clip against the dock's top edge. Content never

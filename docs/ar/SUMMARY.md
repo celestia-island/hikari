@@ -14,6 +14,7 @@
 # التصميم
 - [نظرة عامة](./design/overview.md)
 - [هيكل الصفحة: قواعد شريط الإجراءات](./design/page-chrome.md)
+- [موضع الالتحام: ‏pin أو ride](./design/dock-placement.md)
 
 # النظام
 - [نظرة عامة](./system/overview.md)

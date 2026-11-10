@@ -42,11 +42,29 @@ export type HkDockBarSurface = "glass" | "solid";
  *
  * Relationship to HkScrollContainer: that component's dockTop /
  * dockBottom named slots are the contract for docks that live INSIDE a
- * scrolling region — pinned to the scroll viewport, excluded from the
- * scroll flow. HkDockBar is the carrier for docks that FLOAT over a
- * canvas or page instead. Pick by host: scrolling region →
- * HkScrollContainer dock slots; canvas/page overlay → HkDockBar. Do
- * not nest an HkDockBar inside a scroll viewport expecting pinning.
+ * scrolling region. Those slots place a dock two ways (2026-11-10
+ * addition — `dockMode`):
+ *   - `ride` (the pinned-to-the-visible-bottom-edge form): the dock
+ *     mounts inside the scroll viewport after the content, on a spacer
+ *     exactly one measured dock height tall, `position: sticky; bottom:
+ *     0`. The air between the content end and the dock is therefore
+ *     exactly one dock height; short content lets the dock follow the
+ *     content end (the leftover window height falls below it), long
+ *     content pins it to the visible bottom edge. Use it for a dock that
+ *     belongs to the CONTENT (a cruise canvas's bottom bar under its
+ *     last row).
+ *   - `pin` (the default, older form): the dock is a non-scrolling flex
+ *     SIBLING of the viewport, so it sits on the container's edge and the
+ *     viewport shrinks by its height — correct for chrome that owns the
+ *     region's frame rather than trailing its content.
+ * HkDockBar is the carrier for docks that FLOAT over a canvas or page
+ * instead. Pick by host: scrolling region → HkScrollContainer dock slots
+ * (`ride` to follow the content, `pin` to own the edge); canvas/page
+ * overlay → HkDockBar. Do not nest an HkDockBar inside a scroll viewport
+ * expecting the container to place it — the container's slots do the
+ * placing, and a dock it mounted inside the viewport (ride) makes
+ * `closest(".hk-scroll-dock")` true, which is how a carrier knows to stop
+ * publishing shell-level clearance for it.
  *
  * Surfaces:
  *   - `glass` (default): translucent surface + backdrop blur.

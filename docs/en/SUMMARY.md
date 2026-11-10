@@ -15,6 +15,7 @@
 # Design
 - [Overview](./design/overview.md)
 - [Page Chrome: The Action-Bar Grammar](./design/page-chrome.md)
+- [Dock Placement: Pin or Ride](./design/dock-placement.md)
 
 # System
 - [Overview](./system/overview.md)

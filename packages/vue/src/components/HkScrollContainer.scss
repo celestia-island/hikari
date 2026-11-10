@@ -342,6 +342,14 @@
      geometry is unchanged by this line (measured). */
   inset-inline-start: 0;
   flex: none;
+  /* WEAK STACKING GUARANTEE (2026-11-10 follow-up): 1 stays a literal, not
+   * a `--hk-scroll-dock-ride-z` variable. It only lifts the dock above the
+   * PLAIN in-flow content scrolling under it; a descendant of the viewport
+   * that is itself positioned with z-index >= 2 (a floating toolbar, a drag
+   * layer) paints OVER the pinned dock. No shipped consumer stacks one
+   * inside the dock band, and a variable would add an override surface
+   * before a second consumer needs it (additive-chrome discipline) —
+   * promote it to a variable if one appears. */
   z-index: 1;
   /* Transparent band: the dock surface inside opts back in (see the
    * pointer contract above). */
@@ -427,6 +435,27 @@
   display: block;
   flex: none;
   height: var(--hk-scroll-tail-bottom, 0px);
+}
+
+/* ── Ride wins over the tail spacer (mutual exclusion) ─────────────
+   2026-11-10 follow-up S3, flagged by two review rounds: with
+   `dockTailClearance` on AND a ride dock mounted, the spacer above lined
+   up BEHIND the ride dock (in flow after it) and the tail got TWO
+   stacked reservations — the shell-published `--hk-scroll-tail-bottom`
+   band plus the dock's own measured box. The two props answer the same
+   question for two different dock geometries: the clearance spacer is
+   for a dock FLOATING OVER the scroll area from outside the flow, ride
+   mounts the dock INSIDE it and spends its measured box as the air. So
+   while a ride dock is actually mounted (the root carries BOTH
+   `data-dock-mode="ride"` and `data-dock-tail`) the spacer box is not
+   generated at all. Same specificity (0,4,0) as the generation rule
+   above and declared after it, so source order decides; `content: none`
+   removes the box outright rather than shrinking it (a zero-height box
+   could still perturb the layout). The shrink pin above stays: it is
+   harmless under ride and still load-bearing while the prop serves a
+   floating dock (no ride hook present). */
+.hk-scroll-container[data-dock-mode="ride"][data-dock-tail] > .hk-scroll-container-viewport::after {
+  content: none;
 }
 
 

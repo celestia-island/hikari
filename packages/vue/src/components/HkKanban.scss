@@ -37,9 +37,15 @@
 
    Ride only, by the root hook HkKanban emits for a ride host: a pin board
    must keep the full-height lanes box it always had, so this rule never
-   reaches an existing board. Specificity (0,3,0) beats the base rule
-   above; a host that wants its own rule can override it the same way. */
-.hk-kanban[data-dock-mode="ride"] .hk-kanban-lanes {
+   reaches an existing board. DIRECT-CHILD chain (2026-11-10 follow-up,
+   same shape as chest's consumer-side override): the earlier descendant
+   form ALSO released the lanes box of a board NESTED inside a card — an
+   inner `.hk-kanban` is not the ride host and must keep its own
+   full-height lanes (its strip viewport scrolls its own cards; the
+   release would cut its lane chrome short). Specificity (0,5,0) beats the
+   base rule above; a host that wants its own rule can override it the
+   same way. */
+.hk-kanban[data-dock-mode="ride"] > .hk-kanban-strip > .hk-scroll-container-viewport > .hk-kanban-lanes {
   min-height: 0;
 }
 

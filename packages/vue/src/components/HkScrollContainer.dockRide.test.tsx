@@ -164,6 +164,25 @@ function stubGeometry(
   Object.defineProperties(el, desc);
 }
 
+/** Stub one element's drawn vertical band (house pattern,
+ *  HkScrollContainer.selectionHint.test.ts): the selection hint reads
+ *  `getBoundingClientRect` on the viewport AND on each selected row, and
+ *  happy-dom reports zeros for both. */
+function stubBand(el: HTMLElement, top: number, bottom: number) {
+  const rect = {
+    x: 0,
+    y: top,
+    top,
+    bottom,
+    left: 0,
+    right: 100,
+    width: 100,
+    height: bottom - top,
+    toJSON: () => ({}),
+  };
+  vi.spyOn(el, "getBoundingClientRect").mockReturnValue(rect as DOMRect);
+}
+
 /** The physical edges the shared <HkEdgeGlow> is painting right now. */
 function bandsOf(host: HTMLElement): (string | null)[] {
   return Array.from(host.querySelectorAll<HTMLElement>(".hk-edge-glow-band"), (band) =>
@@ -351,6 +370,46 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     expect(host.getAttribute("data-dock-mode")).toBeNull();
   });
 
+  it("zeroes the published heights when a pin dock slot disappears at runtime", async () => {
+    // 2026-11-10 follow-up: the onUpdated re-point path is
+    // placement-agnostic and the ride case above guards it — this pin
+    // sibling pins the SAME contract there, where the published vars feed
+    // consumer end-padding instead of ride geometry: a dock removed at
+    // runtime must republish the inert 0px on BOTH vars, else a consumer
+    // keeps padding clear of a dock that no longer exists.
+    stubMeasuredHeight(".hk-scroll-dock", 139);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const show = ref(true);
+    const app = createApp(defineComponent({
+      setup() {
+        return () => {
+          const slots: Record<string, () => VNodeChild> = {
+            default: () => h("div", { class: "content" }, "rows"),
+          };
+          if (show.value) slots.dockBottom = () => h("div", { class: "the-dock" }, "dock");
+          // dockMode unset — the pin placement, the pre-ride default.
+          return h(HkScrollContainer, {}, slots);
+        };
+      },
+    }));
+    mounts.push(app);
+    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    expect(host.querySelector(".hk-scroll-dock[data-side='bottom']")).toBeTruthy();
+    expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("139px");
+
+    show.value = false;
+    await nextTick();
+    expect(host.querySelector(".hk-scroll-dock")).toBeNull();
+    expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("0px");
+    expect(host.style.getPropertyValue("--hk-scroll-dock-top")).toBe("0px");
+    // The pin container keeps its pre-ride attribute set: no ride hook and,
+    // with the slot gone, no dock-edge fade either.
+    expect(host.getAttribute("data-dock-mode")).toBeNull();
+    expect(host.getAttribute("data-dock-fade")).toBeNull();
+  });
+
   it("drops the bottom glow band under a mounted ride dock (pin keeps it)", async () => {
     // S2-1: the shared <HkEdgeGlow> painter lives on the container root at
     // z-index 2, i.e. ABOVE the viewport — with a ride dock inside that
@@ -373,6 +432,38 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     pin.api.value!.refresh();
     await nextTick();
     expect(bandsOf(pin.host)).toEqual(["top", "bottom"]);
+  });
+
+  it("drops the bottom band from the selection hint under a mounted ride dock (pin keeps it)", async () => {
+    // 2026-11-10 follow-up: the selection hint's painter rides the SAME
+    // `painterEdges` filter as the overflow glow (same function, same
+    // bottom drop — the band would paint over the ride dock's lower limb
+    // exactly like the glow's). Until now only the glow call site had a
+    // test; the review's mutation g (bypassing the filter at the hint call
+    // site) survived the whole suite green. The verdict attribute — the
+    // documented consumer contract — is untouched: only the BAND is
+    // dropped.
+    const slots = {
+      default: () => h("div", { class: "is-active" }, "row"),
+      dockBottom: () => h("div", { class: "the-dock" }, "dock"),
+    };
+    const ride = mountWithApi(slots, { dockMode: "ride", selectionHint: true });
+    const rideViewport = ride.host.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubBand(rideViewport, 0, 400);
+    stubBand(rideViewport.querySelector<HTMLElement>(".is-active")!, 500, 560);
+    ride.api.value!.refresh();
+    await nextTick();
+    expect(ride.host.getAttribute("data-selection-beyond")).toBe("bottom");
+    expect(bandsOf(ride.host)).toEqual([]);
+
+    const pin = mountWithApi(slots, { selectionHint: true });
+    const pinViewport = pin.host.querySelector<HTMLElement>(".hk-scroll-container-viewport")!;
+    stubBand(pinViewport, 0, 400);
+    stubBand(pinViewport.querySelector<HTMLElement>(".is-active")!, 500, 560);
+    pin.api.value!.refresh();
+    await nextTick();
+    expect(pin.host.getAttribute("data-selection-beyond")).toBe("bottom");
+    expect(bandsOf(pin.host)).toEqual(["bottom"]);
   });
 
   it("warns once in dev when autoFollow is combined with a ride dock", async () => {
@@ -403,6 +494,25 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     expect((ride.$el as HTMLElement).getAttribute("data-dock-fade")).toBeNull();
     const pin = mountDock(MOUNT_SLOTS);
     expect((pin.$el as HTMLElement).getAttribute("data-dock-fade")).toBe("bottom");
+  });
+
+  it("publishes the dock-edge fade for a top dock even in ride mode", () => {
+    // 2026-11-10 follow-up: the ride suppression concerns the BOTTOM dock
+    // only — that is the one living inside the masked viewport band. A
+    // `dockTop` dock is not on that edge, so the container publishes the
+    // dock-edge fade for it as usual, flipping the attribute to "top"
+    // (and, with no bottom slot, emitting no ride hook at all).
+    const vm = mountDock(
+      {
+        default: () => h("div", { class: "content" }, "rows"),
+        dockTop: () => h("div", { class: "top-chrome" }, "top"),
+      },
+      { dockMode: "ride" },
+    );
+    const host = vm.$el as HTMLElement;
+    expect(host.getAttribute("data-dock-fade")).toBe("top");
+    expect(host.getAttribute("data-dock-mode")).toBeNull();
+    expect(host.querySelector(".hk-scroll-dock-ride")).toBeNull();
   });
 
   it("rides when the axis is both", () => {
@@ -443,7 +553,7 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
     expect(host.getAttribute("data-dock-mode")).toBeNull();
   });
 
-  it("leaves the pin placement byte-compatible", () => {
+  it("leaves the pin placement structurally compatible", () => {
     // dockMode is additive: the default must keep today's DOM exactly —
     // sibling dock, no spacer, no ride class, dock fade published, both
     // measured-height vars on the host.
@@ -501,13 +611,55 @@ describe("HkScrollContainer ride placement style contract", () => {
     // lands it UNDER the dock. `scroll-padding-bottom` belongs on the
     // scrollport (the viewport) and is exactly this band; keyed on the ride
     // hook, which is emitted only while the dock is mounted.
-    const rule = scss.match(
-      /\.hk-scroll-container\[data-dock-mode="ride"\] > \.hk-scroll-container-viewport \{[^}]*\}/,
-    );
+    //
+    // Read with comments STRIPPED (house pattern, e.g.
+    // tokenInventory.test.ts / HkModal.open-close-scale.test.ts): the
+    // 2026-11-10 mutation check found that commenting the rule out left
+    // this test green — the regex happily matched the commented text.
+    const rule = scss
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^[ \t]*\/\/.*$/gm, "")
+      .match(
+        /\.hk-scroll-container\[data-dock-mode="ride"\] > \.hk-scroll-container-viewport \{[^}]*\}/,
+      );
     expect(rule, "the ride viewport reserves the dock band for jumps").not.toBeNull();
     expect(rule![0]).toMatch(
       /scroll-padding-bottom:\s*var\(--hk-scroll-dock-bottom,\s*0px\)/,
     );
+  });
+
+  it("suppresses the dockTailClearance spacer while a ride dock is mounted", () => {
+    // 2026-11-10 follow-up S3 (flagged by two review rounds): with
+    // `dockTailClearance` on AND a ride dock mounted, the tail spacer's
+    // `::after` lined up BEHIND the ride dock in the content flow — two
+    // stacked tail reservations for one dock. Ride wins: the sheet drops
+    // the spacer box under the same two root hooks.
+    //
+    // happy-dom computes no CSS, so this is pinned the suite's usual way —
+    // the runtime precondition (both hooks on the same root) plus the rule
+    // itself as a source contract.
+    const vm = mountDock(MOUNT_SLOTS, { dockMode: "ride", dockTailClearance: true });
+    const host = vm.$el as HTMLElement;
+    expect(host.getAttribute("data-dock-mode")).toBe("ride");
+    expect(host.getAttribute("data-dock-tail")).toBe("true");
+
+    const generation = scss.match(
+      /\.hk-scroll-container\[data-dock-tail="true"\]:not\(\[data-axis="horizontal"\]\) > \.hk-scroll-container-viewport::after \{[^}]*\}/,
+    );
+    expect(generation, "the tail spacer generation rule exists").not.toBeNull();
+    const guard = scss.match(
+      /\.hk-scroll-container\[data-dock-mode="ride"\]\[data-dock-tail\] > \.hk-scroll-container-viewport::after \{[^}]*\}/,
+    );
+    expect(guard, "ride suppresses the tail spacer").not.toBeNull();
+    // `content: none` removes the box outright — a zero-height box could
+    // still perturb the layout.
+    expect(guard![0]).toMatch(/content:\s*none/);
+    // Equal specificity (0,4,0) with the generation rule, so source order
+    // is what makes the suppression win.
+    expect(
+      scss.indexOf(guard![0]),
+      "the suppression wins on source order, not on specificity",
+    ).toBeGreaterThan(scss.indexOf(generation![0]));
   });
 
   it("zeroes the container's own bottom fade band in ride mode", () => {
@@ -717,6 +869,24 @@ describe("HkKanban ride-dock forwarding", () => {
     expect(vm.$el.querySelector(".hk-scroll-dock-ride")).toBeNull();
   });
 
+  it("emits no ride hook for an empty board (the strip is not mounted at all)", () => {
+    // 2026-11-10 follow-up: with `lanes.length === 0` the whole strip —
+    // container, dock slot and all — is replaced by the empty slot, so no
+    // ride dock is ever mounted and the root must keep its pre-ride
+    // attribute set. The hook means "a ride dock is mounted", and here
+    // none is: the previously ungated emission contradicted the prop doc.
+    const vm = mountKanban(
+      { axis: "vertical", dockMode: "ride", lanes: [] },
+      {
+        dockBottom: () => h("div", { class: "board-dock" }, "dock"),
+        empty: () => h("div", { class: "board-empty" }, "empty"),
+      },
+    );
+    expect(vm.$el.getAttribute("data-dock-mode")).toBeNull();
+    expect(vm.$el.querySelector(".hk-kanban-strip")).toBeNull();
+    expect(vm.$el.querySelector(".board-empty")).toBeTruthy();
+  });
+
   it("ignores the slot on a horizontal board (the cross-axis tail)", () => {
     // The default axis: pre-2026-11-10 shape — no forwarded dock slot and
     // no ride chrome, because a horizontal strip's tail is its cross axis.
@@ -734,7 +904,7 @@ describe("HkKanban ride-dock forwarding", () => {
 });
 
 describe("HkKanban ride board content-height contract", () => {
-  it("releases the full-height lanes box under the ride hook only", () => {
+  it("releases the full-height lanes box under the ride hook only, via the direct-child chain", () => {
     // S0, measured on a real board: in a column-flex strip viewport
     // `min-height: 100%` makes the lanes BOX as tall as the viewport, so
     // the in-flow spacer + sticky dock always sit below the fold — the dock
@@ -742,11 +912,21 @@ describe("HkKanban ride board content-height contract", () => {
     // window's leftover (275.8px static / 563.8px scrolled against a 139px
     // dock). Releasing it is the half of the contract that makes the air
     // follow the CONTENT end.
+    //
+    // 2026-11-10 follow-up: the release selector is the DIRECT-CHILD chain
+    // (same shape as chest's consumer-side override). The earlier
+    // descendant form also released the lanes box of a board NESTED inside
+    // a card of the outer ride board — the inner board is not the ride
+    // host, and its strip viewport scrolls its own cards, so cutting its
+    // lanes short broke its lane chrome.
     const release = kanbanScss.match(
-      /\.hk-kanban\[data-dock-mode="ride"\] \.hk-kanban-lanes \{[^}]*\}/,
+      /\.hk-kanban\[data-dock-mode="ride"\] > \.hk-kanban-strip > \.hk-scroll-container-viewport > \.hk-kanban-lanes \{[^}]*\}/,
     );
     expect(release, "the ride boards release their lanes min-height").not.toBeNull();
     expect(release![0]).toMatch(/min-height:\s*0/);
+    // And the descendant spelling stays gone: reintroducing it (the
+    // mutation) would leak the release into nested boards again.
+    expect(kanbanScss).not.toMatch(/\.hk-kanban\[data-dock-mode="ride"\] \.hk-kanban-lanes/);
     // The base rule keeps the fill for every other mode (pin, horizontal
     // boards): a short board still reaches the strip's floor there.
     const base = kanbanScss.match(/\.hk-kanban-lanes \{[^}]*\}/);

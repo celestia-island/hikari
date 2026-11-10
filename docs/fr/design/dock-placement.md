@@ -41,7 +41,14 @@ dock du flux sous la ligne de flottaison, si bien que le dock ne peut que coller
 l'air redevient la hauteur de fenêtre résiduelle. `HkKanban` libère sa propre boîte de lanes sur
 un tableau ride ; un hôte maison fait de même.
 
-`autoFollow` n'est pas supporté avec un dock ride, pour la même raison : il cale une boîte de contenu de hauteur d'écran sur le bas, donc la queue ride passe sous la ligne de flottaison. Le conteneur avertit une fois dans les builds de développement quand les deux sont actifs.
+`autoFollow` n'est pas supporté avec un dock ride, pour la même raison : il cale une boîte de
+contenu de hauteur d'écran sur le bas, donc la queue ride passe sous la ligne de flottaison. Le
+conteneur avertit une fois par instance de conteneur dans les builds de développement quand les
+deux sont actifs.
+
+Tant qu'il est collé, l'enveloppe ride et son espaceur sont `pointer-events: none` ; la partie du
+contenu du slot qui doit capter les événements (les contrôles du dock lui-même) doit déclarer
+elle-même `pointer-events: auto`.
 
 ## Ride n'est pas une réservation au niveau du cadre
 

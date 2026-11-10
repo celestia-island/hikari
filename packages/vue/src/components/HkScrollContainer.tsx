@@ -281,7 +281,19 @@ export default defineComponent({
      *  accepted cost: a child that legitimately needs main-axis shrink
      *  inside an opted-in container (a nested pane meant to fit the
      *  viewport and scroll internally) cannot shrink; consumers escape
-     *  with a >=(0,2,0) override loaded after the library CSS. */
+     *  with a >=(0,2,0) override loaded after the library CSS.
+     *
+     *  MUTUALLY EXCLUSIVE WITH `dockMode="ride"` (2026-11-10 follow-up):
+     *  the two props answer the same tail question for two different dock
+     *  geometries — this spacer reserves a band for a dock FLOATING OVER
+     *  the scroll area from outside the flow, ride mounts the dock inside
+     *  it and spends its measured box as the air. With both armed and a
+     *  ride dock actually mounted, the tail spacer is NOT generated (the
+     *  sheet drops the viewport's `::after` under
+     *  `[data-dock-mode="ride"][data-dock-tail]`) — ride wins, the two
+     *  reservations would stack into a double-clear band. The shrink pin
+     *  above stays: harmless under ride, still load-bearing while this
+     *  prop serves a floating dock. */
     dockTailClearance: { type: Boolean, default: false },
     /** Where a mounted `dockBottom` dock LIVES (2026-11-10 user ruling):
      *
@@ -326,7 +338,8 @@ export default defineComponent({
      *      its only effect (measured: identical to the pin board's 184px,
      *      and worse at the scroll end). HkKanban releases its own
      *      `.hk-kanban-lanes` box for a ride host
-     *      (`.hk-kanban[data-dock-mode="ride"] .hk-kanban-lanes
+     *      (`.hk-kanban[data-dock-mode="ride"] > .hk-kanban-strip >
+     *      .hk-scroll-container-viewport > .hk-kanban-lanes
      *      { min-height: 0 }`); a custom host has to do the same.
      *    - `autoFollow` IS NOT SUPPORTED TOGETHER WITH RIDE (documented,
      *      not policed beyond a dev warning): autoFollow bottom-anchors a
@@ -381,6 +394,13 @@ export default defineComponent({
      *      SLOT CONTENT THAT MUST CATCH EVENTS HAS TO DECLARE
      *      `pointer-events: auto` ON THE PART THAT CATCHES THEM — the
      *      wrapper does not hand interactivity to a generic slot child.
+     *    - MUTUALLY EXCLUSIVE WITH `dockTailClearance` (2026-11-10
+     *      follow-up): that prop reserves a tail band for a dock FLOATING
+     *      OVER the scroll area from outside the flow; ride mounts the
+     *      dock inside it. With both set and a ride dock mounted, the
+     *      tail spacer is not generated (the sheet drops the viewport's
+     *      `::after` under the same two root hooks) and ride wins — the
+     *      stacked reservations would double-clear the same tail.
      *
      *  Ignored (falls back to `pin`) on `axis="horizontal"` containers:
      *  there the content tail is the cross axis and an in-flow block
@@ -1372,7 +1392,7 @@ export default defineComponent({
       // owns the viewport's bottom edge — so the sheet must keep fading that
       // edge and HkKanban must keep its full-height lanes box (S2-2).
       const rideDockMounted = !!dockBottomSlot && rideBottom;
-      if (import.meta.env.DEV && !warnedAutoFollowRide && rideDockMounted && props.autoFollow) {
+      if (import.meta.env?.DEV && !warnedAutoFollowRide && rideDockMounted && props.autoFollow) {
         warnedAutoFollowRide = true;
         // eslint-disable-next-line no-console -- dev-only unsupported-combination alarm
         console.warn(

@@ -19,9 +19,10 @@ import jaBundle from "../i18n/locales/ja/components.json";
  *
  * The component's whole reason to exist is the window contract, so the
  * cases below pin it from both sides:
- *   · windowed lanes are the ONLY clipping site (outside the window →
- *     absent; straddling → re-normalized), while the overview keeps painting
- *     the caller's whole domain;
+ *   · clipping has exactly TWO sites: the window (windowed lanes: outside →
+ *     absent, straddling → re-normalized) and the DOMAIN (`clipToDomain`:
+ *     content outside the caller's axis paints nowhere on either layer),
+ *     while the overview keeps painting the whole domain;
  *   · the emitted window is ALWAYS in absolute domain coordinates — never
  *     relative to the currently zoomed sub-domain (the chest row filter
  *     depends on exactly that);
@@ -288,6 +289,7 @@ describe("HkRangeRibbon full domain", () => {
       { id: "far", lane: "cpu", start: -0.5, end: 0.25, label: "far" },
       { id: "nan", lane: "cpu", start: Number.NaN, end: 0.4, label: "nan" },
       { id: "orphan", lane: "gpu", start: 0.1, end: 0.2, label: "orphan" },
+      { id: "outside", lane: "cpu", start: 1.2, end: 1.4, label: "outside" },
     ];
     const root = mountRibbon({ window: null, segments });
     // Inverted → swapped, out-of-domain → clamped, zero-length kept as a tick.
@@ -302,6 +304,11 @@ describe("HkRangeRibbon full domain", () => {
     // …and a segment can never invent an undeclared lane.
     expect(segmentById(root, "orphan")).toBeNull();
     expect(root.querySelector('[data-segment-id="orphan"]')).toBeNull();
+    // Content wholly outside the axis paints NOTHING: the domain is a
+    // clipping rule, not a clamp to an edge tick (pre-domain content would
+    // have collapsed [1.2, 1.4] onto 100% and drawn a tick there).
+    expect(segmentById(root, "outside")).toBeNull();
+    expect(root.querySelector('[data-segment-id="outside"]')).toBeNull();
   });
 
   it("shares the label column with the lanes so both axes agree", () => {
@@ -1424,8 +1431,10 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
     return (length / (domain[1] - domain[0])) * 100;
   }
 
-  /** Inline box assertions at the geometry tolerance: `percent()` keeps four
-   *  decimals, but these cases pin fractions, so 3 is the honest precision. */
+  /** Inline box assertions at the geometry tolerance. `percent()` rounds to
+   *  four decimals OF A PERCENT (~1e-6 fraction), so a four-decimal
+   *  `toBeCloseTo` sits exactly on that rounding boundary; 3 keeps a margin
+   *  while still pinning well below a percent. */
   function expectBox(
     element: HTMLElement | null,
     expected: { left: number; width: number },
@@ -1735,6 +1744,61 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
     expect(
       both.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.getAttribute("aria-valuemax"),
     ).toBe("200");
+  });
+
+  it("treats the headroom alias as a real axis: selectable tail, axis-end rest state", async () => {
+    // The deprecated `headroom` alias is SOURCE-compatible with the old prop,
+    // not behaviour-compatible: [0, 1.1] is the coordinate system, so the old
+    // "padding, not selectable progress" tail is gone. This case pins the
+    // deltas a headroom host would observe.
+    const host = mountHost([0, 1], { headroom: 0.1 });
+    const root = host.root;
+    // [0, 1] is a SUB-view of a [0, 1.1] axis, so there IS something to reset
+    // (the old component treated content 100% as the rest state).
+    expect(
+      root.querySelector(".hk-range-ribbon-reset"),
+      "a sub-view of the alias axis has a reset chip",
+    ).toBeTruthy();
+    keydown(root, "Escape");
+    await nextTick();
+    expect(lastWindow(host.windowChange), "Escape clears to the full axis").toBeNull();
+
+    // The tail is selectable axis: a press at strip 95% reads 1.045 (the old
+    // component clamped it to content 1.0).
+    const { strip, x } = stubStrip(root);
+    await drag(strip, 0.95, 0.5, x);
+    expectWindow(lastWindow(host.windowChange), 0.55, 1.045);
+
+    // Shift+ArrowLeft from the full axis contracts it by 5% of the SPAN
+    // (0.055), not the unit axis's 0.05.
+    keydown(root, "Escape");
+    await nextTick();
+    expect(lastWindow(host.windowChange), "back on the full axis").toBeNull();
+    keydown(root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!, "ArrowLeft", {
+      shiftKey: true,
+    });
+    await nextTick();
+    expectWindow(lastWindow(host.windowChange), 0, 1.045);
+  });
+
+  it("caps minWindow at the axis span when the domain is narrower", () => {
+    // A 0.01 span cannot honour the default 0.02 floor, so the component caps
+    // the floor at the span. The cap is visible in the handle bounds: an
+    // uncapped 0.02 floor would announce 49% / 52% instead of 50% / 51%.
+    const root = mountRibbon({ domain: [0.5, 0.51], window: [0.505, 0.505] });
+    expectBox(
+      root.querySelector<HTMLElement>(".hk-range-ribbon-window"),
+      { left: 0, width: 100 },
+      "a point expands to the whole narrow axis",
+    );
+    expect(
+      root.querySelector<HTMLElement>('[data-edge="start"]')!.getAttribute("aria-valuemax"),
+      "the floor is the span, not the 0.02 default",
+    ).toBe("50");
+    expect(
+      root.querySelector<HTMLElement>('[data-edge="end"]')!.getAttribute("aria-valuemin"),
+      "end floor = start + the capped min",
+    ).toBe("51");
   });
 
   it("maps pointer input onto the domain and clamps to its edges", async () => {
@@ -2120,11 +2184,12 @@ describe("HkRangeRibbon stylesheet contract", () => {
 
   // Wave (2026-11-06 raw-records five): MINIMAL MODE - the bare dual-handle
   // bar. Contract: data-minimal on the root, strip present, no lane rows and
-  // no detail layer (the bar still lives in the overview container), no label
-  // gutter probe; the standard mode keeps its lane chrome + alignment probe.
-  // The uncontrolled default window is NULL here — the grips need a
-  // controlled non-null window; the aria readings below come from the strip's
-  // null-window fallbacks, not from a real window.
+  // no detail layer (the bar still lives in the overview container); the
+  // shared label gutter is still rendered and only display:none in this mode
+  // (the strip spans the full width). The standard mode keeps its lane chrome
+  // + alignment probe. The uncontrolled default window is NULL here — the
+  // grips need a controlled non-null window; the aria readings below come
+  // from the strip's null-window fallbacks, not from a real window.
   it("minimal mode renders the bare dual-handle bar (no lane chrome)", () => {
     const root = mountRibbon({ minimal: true });
     expect(root.getAttribute("data-minimal")).toBe("true");

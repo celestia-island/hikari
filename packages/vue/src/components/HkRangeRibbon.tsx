@@ -36,8 +36,14 @@ import "./HkRangeRibbon.scss";
  * DOMAIN: the axis is the caller's `domain`; content outside it is clipped
  * away, and space inside it the content does not fill stays blank (a 200%
  * budget, a 10% lead-in, a zoomed window of interest). `headroom` is the
- * DEPRECATED shorthand for the trailing-axis case — `[0, 1 + headroom]`, so
- * the "110%" reading is headroom 0.1 — and a valid `domain` wins over it.
+ * DEPRECATED shorthand for the trailing-axis case — the axis is
+ * `[0, 1 + headroom]`, so the "110%" reading is headroom 0.1 — and a valid
+ * `domain` wins over it. The alias is SOURCE-compatible with the old
+ * `headroom` prop but NOT behaviour-compatible: there is no special
+ * tail-clamp, because the whole component reads `[0, 1 + headroom]` as the
+ * coordinate system — the reserved tail is selectable axis, the axis end
+ * (not content 100%) is the reset state, the keyboard steps 5% of the span,
+ * the no-window detail and the minimal bar draw it, and ARIA reads it.
  * Windows and every emitted value stay absolute coordinates in the caller's
  * domain units: pointer x maps back onto the domain (`d0 + x * span`) and
  * clamps to it, the keyboard nudges by 5% of the span, and labels/ARIA read
@@ -54,10 +60,11 @@ import "./HkRangeRibbon.scss";
  * nudge their own edge. Hovering or focusing a segment floats its tip card
  * (tip.title + tip.lines); the card anchors inside the ribbon at the edges.
  *
- * Contract with the host: `segments` are fed in FULL-DOMAIN fractions
- * (0..1) and `windowChange` always answers in those same absolute
- * fractions — never fractions of the currently zoomed sub-domain — so a
- * consumer can filter its own row list with the emitted range unchanged.
+ * Contract with the host: `segments` are fed in ABSOLUTE coordinates on the
+ * caller's domain axis (default 0..1) and `windowChange` always answers in
+ * those same coordinates — never fractions of the currently zoomed
+ * sub-domain — so a consumer can filter its own row list with the emitted
+ * range unchanged.
  * `window === null` is a controlled full view; omitting the prop entirely
  * (undefined) makes the ribbon keep its own window state.
  */
@@ -291,17 +298,16 @@ function clipToDomain(placed: PlacedSegment, domain: DomainRange): WindowRange |
 function domainBox(placed: PlacedSegment, domain: DomainRange): SegmentBox | null {
   const clipped = clipToDomain(placed, domain);
   if (!clipped) return null;
-  const span = domainSpan(domain);
   return {
-    left: (clipped[0] - domain[0]) / span,
-    width: (clipped[1] - clipped[0]) / span,
+    left: projectToAxis(clipped[0], domain),
+    width: projectToAxisLength(clipped[1] - clipped[0], domain),
   };
 }
 
-/** The ONLY place clipping happens: with a window, a segment is clipped to
- *  the window and re-normalized against it. Segments (and zero-length
- *  points) wholly outside the window return null and render nowhere in the
- *  lanes. */
+/** One of the TWO clipping sites (the other is `clipToDomain`, the domain
+ *  axis): with a window, a segment is clipped to the window and
+ *  re-normalized against it. Segments (and zero-length points) wholly
+ *  outside the window return null and render nowhere in the lanes. */
 function windowedBox(placed: PlacedSegment, win: WindowRange): SegmentBox | null {
   if (!intersectsWindow(placed, win)) return null;
   const [lo, hi] = win;
@@ -315,15 +321,17 @@ function windowedBox(placed: PlacedSegment, win: WindowRange): SegmentBox | null
 }
 
 /** Project one CONTENT COORDINATE onto the minimap axis:
- *  `(value - domain[0]) / span`. These helpers are the ONLY place a content
- *  value becomes an axis x: the window frame, both scrims and both handles go
- *  through them, while segments go through `domainBox` (which clips to the
- *  domain first), and `fractionFrom` is the inverse (axis → content) for
- *  pointer input. The detail layer is never projected — its axis is the
- *  window itself — so none of this may leak into `windowedBox` / `domainBox`.
+ *  `(value - domain[0]) / span`. This pair (`projectToAxis` for
+ *  coordinates, `projectToAxisLength` for lengths) is the ONLY place a
+ *  content value becomes an axis x: the window frame, both scrims, both
+ *  handles and `domainBox` (the clipped-domain segments, which delegates
+ *  here) all go through them, and `fractionFrom` is the inverse (axis →
+ *  content) for pointer input. The WINDOWED detail is never projected — its
+ *  axis is the window itself — so none of this may leak into `windowedBox`;
+ *  the no-window detail reuses `domainBox`, i.e. the domain axis.
  *  A coordinate and a length are different projections: a length has no
- *  origin and only divides by the span (see `projectToAxisLength`, which is
- *  why a box must not scale its width through this function). */
+ *  origin and only divides by the span, which is why a box must not scale
+ *  its width through the coordinate function. */
 function projectToAxis(value: number, domain: DomainRange): number {
   return (value - domain[0]) / domainSpan(domain);
 }
@@ -395,20 +403,25 @@ export default defineComponent({
      *  this axis. */
     domain: { type: Array as PropType<number[] | null>, default: undefined },
     /** @deprecated Use `domain`. Trailing-axis shorthand: a positive value
-     *  means the axis is `[0, 1 + headroom]`, so the "110%" reading is
-     *  headroom 0.1; sanitized to 0..1 and ignored when a valid `domain` is
-     *  supplied. Kept for the 0.55 patch line. */
+     *  means the axis is `[0, 1 + headroom]` (the "110%" reading is headroom
+     *  0.1), sanitized to 0..1 and ignored when a valid `domain` is
+     *  supplied. SOURCE-compatible with the old prop, NOT
+     *  behaviour-compatible: there is no special tail-clamp — the component
+     *  treats `[0, 1 + headroom]` as its coordinate system, so the old
+     *  reserved tail becomes selectable axis, the axis end becomes the reset
+     *  state, the keyboard step is 5% of the span and the no-window detail /
+     *  minimal bar draw the axis. Kept for the 0.55 patch line. */
     headroom: { type: Number, default: 0 },
     /** Wave (2026-11-06 raw-records five): MINIMAL MODE — a bare dual-handle
      *  range bar: no lane rows and no detail layer (the strip still lives in
-     *  the overview container, which keeps data-layer="minimap"), no label
-     *  gutter. The strip spans the full width and its track uses muted-based
-     *  tokens (the surface-based track read whitish inside dark phone
-     *  modals).
+     *  the overview container, which keeps data-layer="minimap"). The shared
+     *  label gutter is still rendered and hidden in this mode, so the strip
+     *  spans the full width; its track uses muted-based tokens (the
+     *  surface-based track read whitish inside dark phone modals).
      *  The grips paint only for a NON-null window, so an uncontrolled
      *  minimal bar starts as a bare track; a host that wants the "default =
-     *  everything selected" reading feeds the controlled window `[0, 1]`
-     *  (the chest raw-records adapter does exactly that).
+     *  everything selected" reading feeds the controlled window covering the
+     *  whole axis (`[d0, d1]`, i.e. `[0, 1]` on the default domain).
      *  `segments` / `selectedId` are IGNORED in this mode (no segment DOM to
      *  select from). */
     minimal: { type: Boolean, default: false },
@@ -430,7 +443,7 @@ export default defineComponent({
 
     /** Sanitized trailing headroom (the DEPRECATED `domain` alias): a
      *  non-finite or negative value is no headroom at all, and more than a
-     *  full axis of padding is capped, so the alias axis never exceeds
+     *  full axis of extra range is capped, so the alias axis never exceeds
      *  `[0, 2]`. */
     const headroom = computed(() => {
       const raw = Number(props.headroom);
@@ -506,9 +519,10 @@ export default defineComponent({
       }
     });
 
-    /** Emit the window in FULL-DOMAIN fractions; the uncontrolled fallback
-     *  mirrors it into local state so the ribbon still zooms without a host
-     *  listener. Controlled hosts own the prop and are never overwritten. */
+    /** Emit the window in absolute coordinates on the caller's domain axis;
+     *  the uncontrolled fallback mirrors it into local state so the ribbon
+     *  still zooms without a host listener. Controlled hosts own the prop and
+     *  are never overwritten. */
     function commitWindow(next: WindowRange | null): void {
       if (!props.windowEnabled) return;
       if (!controlled.value) internalWindow.value = next;
@@ -527,7 +541,7 @@ export default defineComponent({
     /** A window that covers the whole domain IS the unfiltered state — there
      *  is nothing to reset back to (2026-11-07, the raw-records consumer: a
      *  minimal bar paints its grips for a non-null window, so its rest state
-     *  is the FULL selection `[0, 1]`; without this check Escape "reset" it
+     *  is the full axis `[d0, d1]`; without this check Escape "reset" it
      *  every press, swallowed the key, and the hosting dialog could never
      *  close while the bar held focus). */
     function isFullDomain(win: WindowRange | null): boolean {
@@ -565,9 +579,12 @@ export default defineComponent({
 
     function brushTo(fraction: number): void {
       if (!gesture || gesture.kind !== "brush") return;
-      const anchor = gesture.anchor;
-      const min = minWidth.value;
       const [d0, d1] = domain.value;
+      // The anchor was captured at pointerdown; a `domain` prop that changes
+      // mid-gesture would otherwise let a stale anchor build a window outside
+      // the current axis.
+      const anchor = clampTo(gesture.anchor, d0, d1);
+      const min = minWidth.value;
       let lo = Math.min(anchor, fraction);
       let hi = Math.max(anchor, fraction);
       if (hi - lo < min) {

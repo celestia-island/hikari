@@ -8,12 +8,13 @@
    across the full domain or mapped onto the window (0..100% of the track).
    The minimap axis is the CALLER's domain (default `[0, 1]`; a host may
    declare `[-0.1, 1]`, `[0, 2]` …), and `headroom` is the deprecated
-   `[0, 1 + headroom]` shorthand for the trailing-axis case. Content outside
-   the domain is clipped away; space inside it the content does not fill
-   stays blank. The detail layer is never rescaled — its axis is the window —
-   and minimal mode, which suppresses the lane rows and the detail layer
-   while the bare bar still lives in the minimap container, draws the same
-   domain axis.
+   `[0, 1 + headroom]` shorthand that IS the axis — no special tail-clamp.
+   Content outside the domain is clipped away; space inside it the content
+   does not fill stays blank. The detail layer is never rescaled on the
+   minimap axis: its axis is the selected window, or the caller's domain when
+   no window is selected. Minimal mode, which suppresses the lane rows and
+   the detail layer while the bare bar still lives in the minimap container,
+   draws the same domain axis.
 
    Geometry is part of the contract and pinned by HkRangeRibbon.test.tsx:
    the strip is 32px tall, a handle is an 8px half-overlapping grip

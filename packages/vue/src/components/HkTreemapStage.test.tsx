@@ -24,7 +24,7 @@ vi.mock("./HkTooltip", () => ({
 }));
 
 import HkTreemapStage from "./HkTreemapStage";
-import type { HkTreemapNode } from "./HkTreemap";
+import { HK_TREEMAP_HEAD_SCRIM, type HkTreemapNode } from "./HkTreemap";
 
 class FakeResizeObserver implements ResizeObserver {
   static instances: FakeResizeObserver[] = [];
@@ -646,5 +646,8 @@ describe("HkTreemapStage chrome contract (SCSS pins)", () => {
   it("the nested group band's scrim comes from the component, not a CSS literal", () => {
     const block = css.match(/\.hk-treemap-stage__nested-head\s*\{([\s\S]*?)\}/)?.[1] ?? "";
     expect(block).toMatch(/background:\s*rgb\(\s*0 0 0 \/ var\(--hk-treemap-head-scrim/);
+    const fallback = block.match(/var\(--hk-treemap-head-scrim,\s*([\d.]+)%\)/)?.[1];
+    expect(fallback).toBeDefined();
+    expect(Number(fallback)).toBeCloseTo(HK_TREEMAP_HEAD_SCRIM * 100, 10);
   });
 });

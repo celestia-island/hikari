@@ -1279,6 +1279,11 @@ mod tests {
             treemap_contrast_text_color("rgb(78, 121, 167)", 0.0),
             "#fff"
         );
+        // The live chest consumer feeds the space-separated triple shape.
+        assert_eq!(
+            treemap_contrast_text_color("rgb(167 139 250)", 0.0),
+            "#0b1220"
+        );
         // Green clears AA on the plate; its band is darker, so white wins.
         assert_eq!(treemap_contrast_text_color("#59a14f", 0.0), "#0b1220");
         assert_eq!(
@@ -1303,10 +1308,9 @@ mod tests {
 
     #[test]
     fn treemap_default_palette_clear_wcag_aa_with_its_ink() {
-        let luminance = |hex: &str| {
-            let channels = treemap_parse_hex_color(hex).expect("palette member parses");
-            treemap_relative_luminance(channels)
-        };
+        let channels =
+            |hex: &str| treemap_parse_hex_color(hex).unwrap_or_else(|| panic!("{hex} must parse"));
+        let luminance = |hex: &str| treemap_relative_luminance(channels(hex));
         for color in HK_TREEMAP_DEFAULT_COLORS {
             let ink = treemap_contrast_text_color(color, 0.0);
             assert!(
@@ -1316,6 +1320,21 @@ mod tests {
             assert!(
                 treemap_contrast_ratio(luminance(color), luminance(ink)) >= 4.5,
                 "{color} with {ink} is under WCAG AA"
+            );
+            // The band the group label actually sits on is the scrimmed
+            // plate — pin it too (worst palette case #59a14f = 4.506:1).
+            let plate = channels(color);
+            let shade = 1.0 - HK_TREEMAP_HEAD_SCRIM;
+            let band = treemap_relative_luminance(TreemapRgba {
+                r: plate.r * shade,
+                g: plate.g * shade,
+                b: plate.b * shade,
+                a: 1.0,
+            });
+            let band_ink = treemap_contrast_text_color(color, HK_TREEMAP_HEAD_SCRIM);
+            assert!(
+                treemap_contrast_ratio(band, luminance(band_ink)) >= 4.5,
+                "{color} band with {band_ink} is under WCAG AA"
             );
         }
     }
@@ -1642,11 +1661,12 @@ mod tests {
             ..Default::default()
         })
         .render_to_html();
-        // One plate, two surfaces: the scrimmed band reads white, the leaf
-        // body reads the dark ink, and the root publishes the shared scrim.
+        // One plate, two surfaces: the scrimmed band reads white and each
+        // leaf body the dark ink. Counts (not bare `contains`) bind each ink
+        // to its surface — swapping the scrim arguments turns this red.
         assert!(html.contains("--hk-treemap-head-scrim:18%"), "{html}");
-        assert!(html.contains("--hk-treemap-fg:#fff"), "{html}");
-        assert!(html.contains("--hk-treemap-fg:#0b1220"), "{html}");
+        assert_eq!(html.matches("--hk-treemap-fg:#fff").count(), 1, "{html}");
+        assert_eq!(html.matches("--hk-treemap-fg:#0b1220").count(), 2, "{html}");
     }
 
     #[test]

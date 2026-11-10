@@ -112,9 +112,10 @@
   font-size: var(--text-2xs, 0.6875rem);
 }
 
-/* Same scrim as HkTreemap's group band — one published number
- * (--hk-treemap-head-scrim, from HK_TREEMAP_HEAD_SCRIM) so the darkened
- * band and its ink decision cannot disagree. */
+/* Same scrim as HkTreemap's group band: the number comes from the
+ * component (--hk-treemap-head-scrim, from HK_TREEMAP_HEAD_SCRIM); the
+ * var() fallback is pinned to the same constant by the chrome-contract
+ * test. */
 .hk-treemap-stage__nested-head {
   display: flex;
   align-items: center;

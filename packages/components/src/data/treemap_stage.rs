@@ -1018,8 +1018,10 @@ mod tests {
         })
         .render_to_html();
         assert!(html.contains("--hk-treemap-head-scrim:18%"), "{html}");
-        assert!(html.contains("--hk-treemap-fg:#fff"), "{html}");
-        assert!(html.contains("--hk-treemap-fg:#0b1220"), "{html}");
+        // One drillable group cell (band ink, white) + the two nested leaf
+        // previews (plate ink, dark): counts bind each ink to its surface.
+        assert_eq!(html.matches("--hk-treemap-fg:#fff").count(), 1, "{html}");
+        assert_eq!(html.matches("--hk-treemap-fg:#0b1220").count(), 2, "{html}");
     }
 
     #[test]

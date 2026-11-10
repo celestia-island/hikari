@@ -6,17 +6,41 @@ import HIconButton from "./HkIconButton";
 import "./HkRangeRibbon.scss";
 
 /**
- * HkRangeRibbon — the generic multi-lane "sequence ribbon" with a brushed
- * observation window.
+ * HkRangeRibbon — the generic sequence-ribbon waterfall: two explicit layers
+ * projected from ONE host-supplied sequence.
  *
- * One thin OVERVIEW strip paints the whole sequence (fractions of the full
- * domain), a highlight marks the active window and the outside is dimmed;
- * below it, every lane renders its segments. With no window the lanes are
- * the full domain; with a window the lanes zoom to it — only segments that
- * intersect the window survive, clipped at the edges and re-normalized to
- * the window. The overview NEVER clips: it is the only place the full
- * domain stays visible. The overview shares the lanes' label column, so a
- * bar at x% sits at the same inline position on both surfaces.
+ * The ribbon owns no content vocabulary. `lanes` is the consumer's row
+ * structure and `segments` are its parts, each fed in ABSOLUTE fractions of
+ * the whole progress (0..1). Both layers derive their x from that same
+ * number, which is what keeps them mutually legible:
+ *
+ *   · data-layer="minimap" — the top, compact strip. It paints every lane's
+ *     segments across the FULL domain and never clips, so the window stays
+ *     locatable; the window frame, the two outside scrims, both edge handles
+ *     and the reset button ride on it, and it owns the brush surface.
+ *   · data-layer="detail" — the lower, taller lane list focused on the
+ *     selected window: a window of [0.35, 0.67] starts the detail at 35% and
+ *     ends it at 67% of the whole progress, because only segments that
+ *     intersect the window survive, clipped at its edges and re-normalized to
+ *     the track. With no window the detail is the full domain.
+ *
+ * The minimap shares the lanes' label column (an empty gutter), so both
+ * layers always start at the same inline x. Their x% agree only in the
+ * FULL-DOMAIN view: a window re-normalizes the detail against the selected
+ * sub-domain, and a headroom compresses the minimap by `1 + headroom`.
+ *
+ * HEADROOM: a host whose sequence is read against more than 100% (a 110%
+ * budget, a "10% still unknown" tail) reserves that space with `headroom`, a
+ * fraction clamped to 0..1. The minimap axis is then `1 + headroom` wide and
+ * every minimap x is `fraction / span`: content 100% sits at 100/110 ≈ 90.9%
+ * and the tail stays blank. The detail layer NEVER sees the headroom — its
+ * axis is always the content window mapped to 0..100%, so a zoomed detail is
+ * never polluted by reserved space. Windows and every emitted value stay
+ * CONTENT fractions in 0..1; a pointer in the blank tail clamps to content
+ * 100%, because the tail is padding, not selectable progress. `minimal` mode
+ * suppresses the minimap lane rows and the whole detail layer (its bare bar
+ * still lives in the overview container), so it ignores the headroom
+ * entirely and stays on the content axis.
  *
  * Editing: drag on the strip to brush a new window, drag either edge handle
  * to resize it, and reset back to the full domain — the reset button, a
@@ -224,6 +248,31 @@ function windowedBox(placed: PlacedSegment, win: WindowRange): SegmentBox | null
   };
 }
 
+/** The minimap projection for one CONTENT scalar — a coordinate or a length:
+ *  its AXIS value is `value / span` (span = 1 + headroom). This pair
+ *  (`projectToAxis` + `axisBox`) is the ONLY place the minimap axis is
+ *  computed, and every axis value is one of them: the overview segments, the
+ *  window frame and the before scrim go through `axisBox`; both handles and
+ *  the after scrim's left edge go through `projectToAxis`. The after scrim's
+ *  width is `1 - its left`, which is what makes it reach the axis end.
+ *  `fractionFrom` is the inverse (axis → content) for pointer input. The
+ *  detail layer is never projected — its axis is the window itself, so none
+ *  of this may leak into `windowedBox` / `fullDomainBox`. */
+function projectToAxis(value: number, span: number): number {
+  return value / span;
+}
+
+/** Project a CONTENT box onto the minimap's `1 + headroom` axis: the content
+ *  is compressed into the left 1/span of the strip and the reserved tail
+ *  stays empty. Delegates to `projectToAxis` so the axis arithmetic has one
+ *  home. The detail layer is never projected. */
+function axisBox(box: SegmentBox, span: number): SegmentBox {
+  return {
+    left: projectToAxis(box.left, span),
+    width: projectToAxis(box.width, span),
+  };
+}
+
 /** Pointer travel (px) that turns a press into a brush; below it a click
  *  with sub-pixel jitter must not zoom to a hairline window. Touch taps
  *  drift much further than a mouse press (4–6px is normal), so touch gets
@@ -260,10 +309,22 @@ export default defineComponent({
     windowEnabled: { type: Boolean, default: true },
     /** Narrowest window the ribbon will produce, in domain fractions. */
     minWindow: { type: Number, default: MIN_WINDOW_FALLBACK },
+    /** Trailing blank axis the MINIMAP reserves after content 100%, in
+     *  content fractions (0..1). The axis span is `1 + headroom`, so 0.1
+     *  reads the sequence against a 110% budget: content 100% lands at
+     *  ~90.9% of the strip and the last ~9.1% stays blank. Sanitized —
+     *  non-finite / negative means no headroom, above 1 caps at 1. This is a
+     *  MINIMAP-only axis: the detail layer ignores it (its axis is always
+     *  the window), `minimal` mode suppresses the minimap lane rows so there
+     *  is nothing to reserve (its bare bar stays on the content axis), and
+     *  windows plus every emitted value stay content fractions. */
+    headroom: { type: Number, default: 0 },
     /** Wave (2026-11-06 raw-records five): MINIMAL MODE — a bare dual-handle
-     *  range bar. No lane rows, no overview minimap, no label gutter; the
-     *  strip spans the full width and its track uses muted-based tokens
-     *  (the surface-based track read whitish inside dark phone modals).
+     *  range bar: no lane rows and no detail layer (the strip still lives in
+     *  the overview container, which keeps data-layer="minimap"), no label
+     *  gutter. The strip spans the full width and its track uses muted-based
+     *  tokens (the surface-based track read whitish inside dark phone
+     *  modals).
      *  The grips paint only for a NON-null window, so an uncontrolled
      *  minimal bar starts as a bare track; a host that wants the "default =
      *  everything selected" reading feeds the controlled window `[0, 1]`
@@ -291,6 +352,21 @@ export default defineComponent({
       const raw = Number(props.minWindow);
       return Number.isFinite(raw) && raw > 0 ? Math.min(raw, 1) : MIN_WINDOW_FALLBACK;
     });
+
+    /** Sanitized trailing headroom: a non-finite or negative value is no
+     *  headroom at all, and more than a full domain of padding is capped
+     *  (the axis never exceeds 2× the content). */
+    const headroom = computed(() => {
+      const raw = Number(props.headroom);
+      return Number.isFinite(raw) && raw > 0 ? Math.min(raw, 1) : 0;
+    });
+
+    /** Width of the minimap's axis in content fractions. Every minimap x is
+     *  divided by it; the detail layer never is. `minimal` mode suppresses
+     *  the lane rows and the detail layer (its bare bar still lives in the
+     *  overview container), so it ignores the headroom and keeps the content
+     *  axis — 100% stays at the right edge. */
+    const axisSpan = computed(() => (props.minimal ? 1 : 1 + headroom.value));
 
     /** A supplied `window` prop (even null) is the controlled contract; no
      *  prop at all means "keep your own state". */
@@ -376,12 +452,18 @@ export default defineComponent({
       return true;
     }
 
+    /** Pointer x → absolute CONTENT fraction (0..1 of the real progress).
+     *  The pointer reads as a fraction of the strip's WHOLE width — the
+     *  axis, headroom included — so the reading is scaled by the span and
+     *  clamped: a press in the blank tail lands on content 100% instead of
+     *  inventing progress the host never declared. This is the only
+     *  axis→content conversion in the component. */
     function fractionFrom(clientX: number): number | null {
       const strip = stripRef.value;
       if (!strip) return null;
       const rect = strip.getBoundingClientRect();
       if (!(rect.width > 0)) return null;
-      return clamp01((clientX - rect.left) / rect.width);
+      return clamp01(((clientX - rect.left) / rect.width) * axisSpan.value);
     }
 
     function brushTo(fraction: number): void {
@@ -569,7 +651,8 @@ export default defineComponent({
     // to its own label; the overview gutter has no text to size from — a
     // hidden-probe attempt measured misaligned in real Chrome). Measuring
     // the widest rendered label and publishing it as the shared var gives
-    // BOTH surfaces the same resolved column: adaptive and aligned.
+    // BOTH surfaces the same resolved column, so they start at the same
+    // inline x: adaptive and aligned.
     const rootRef = ref<HTMLElement | null>(null);
     const pinnedCol = ref<string | null>(null);
     /** TWO-PHASE measure: FREE the column first. A pinned px width clips
@@ -698,6 +781,19 @@ export default defineComponent({
         byLane.get(placed.segment.lane)?.push(placed);
       }
 
+      // Minimap geometry, content → axis (projected through the two helpers
+      // only). The after scrim runs to the AXIS end, tail included: left is
+      // the projection of the window end and width is `1 - left`, whereas
+      // `1 - win[1]` would leave the reserved tail undimmed and read as
+      // progress the host still owes.
+      const span = axisSpan.value;
+      const minimapFrame = win ? axisBox({ left: win[0], width: win[1] - win[0] }, span) : null;
+      const minimapBefore = win ? axisBox({ left: 0, width: win[0] }, span) : null;
+      const minimapAfterLeft = win ? projectToAxis(win[1], span) : 0;
+      const minimapAfter = win
+        ? { left: minimapAfterLeft, width: 1 - minimapAfterLeft }
+        : null;
+
       const strip = (
         <div
           ref={stripRef}
@@ -730,12 +826,14 @@ export default defineComponent({
           onKeydown={onStripKeyDown}
         >
           {/* The overview paints the FULL domain only — it never follows
-              the zoom, so the window's position stays locatable. */}
+              the zoom, so the window's position stays locatable. Its x-axis
+              is the content plus the reserved headroom, so every bar here is
+              projected by `axisBox`. */}
           <div class="hk-range-ribbon-overview-lanes" aria-hidden="true">
             {!props.minimal && lanes.value.map((lane) => (
               <div class="hk-range-ribbon-overview-row" key={lane.key} data-lane={lane.key}>
                 {(byLane.get(lane.key) ?? []).map((placed) => {
-                  const box = fullDomainBox(placed);
+                  const box = axisBox(fullDomainBox(placed), span);
                   return (
                     <div
                       key={placed.segment.id}
@@ -755,18 +853,18 @@ export default defineComponent({
               <div
                 class="hk-range-ribbon-scrim"
                 data-side="before"
-                style={{ left: "0%", width: percent(win[0]) }}
+                style={{ left: percent(minimapBefore!.left), width: percent(minimapBefore!.width) }}
               />
               <div
                 class="hk-range-ribbon-scrim"
                 data-side="after"
-                style={{ left: percent(win[1]), width: percent(1 - win[1]) }}
+                style={{ left: percent(minimapAfter!.left), width: percent(minimapAfter!.width) }}
               />
               <div
                 class="hk-range-ribbon-window"
                 style={{
-                  left: percent(win[0]),
-                  width: percent(win[1] - win[0]),
+                  left: percent(minimapFrame!.left),
+                  width: percent(minimapFrame!.width),
                 }}
               />
             </>
@@ -783,15 +881,19 @@ export default defineComponent({
           data-window-enabled={props.windowEnabled ? "true" : "false"}
           onKeydown={onRootKeyDown}
         >
-          {/* The overview is laid out on the SAME label column as the lanes
-              (empty gutter first), so x% means the same inline position on
-              both surfaces — the strip can be used to locate a bar. */}
-          <div class="hk-range-ribbon-overview">
+          {/* LAYER 1 — the minimap: the full domain, the brush surface, the
+              window chrome. It shares the lanes' label column (an empty
+              gutter first), so both layers always start at the same inline
+              x; their x% agree only in the full-domain view (a window
+              re-normalizes the detail, a headroom compresses the minimap by
+              `1/span`). */}
+          <div class="hk-range-ribbon-overview" data-layer="minimap">
             {/* The gutter's width IS the shared label column: the
                 component JS-measures the widest rendered label and
                 publishes it on the root (two-phase free/measure/pin), so
-                this empty cell keeps the strip's x% aligned with the
-                lanes' x% at any label width. */}
+                this empty cell keeps both layers' inline START aligned at
+                any label width (their x% only agree in the full-domain
+                view, with no headroom). */}
             <span class="hk-range-ribbon-overview-gutter" aria-hidden="true" />
             <div class="hk-range-ribbon-overview-field">
               {strip}
@@ -808,7 +910,7 @@ export default defineComponent({
                     aria-valuemax={percentNumber(win[1] - minWidth.value)}
                     aria-valuenow={percentNumber(win[0])}
                     aria-valuetext={percentText(win[0])}
-                    style={{ left: percent(win[0]) }}
+                    style={{ left: percent(projectToAxis(win[0], span)) }}
                     onPointerdown={(event: PointerEvent) => onHandlePointerDown("start", event)}
                     onKeydown={(event: KeyboardEvent) => onHandleKeyDown("start", event)}
                   />
@@ -823,7 +925,7 @@ export default defineComponent({
                     aria-valuemax={100}
                     aria-valuenow={percentNumber(win[1])}
                     aria-valuetext={percentText(win[1])}
-                    style={{ left: percent(win[1]) }}
+                    style={{ left: percent(projectToAxis(win[1], span)) }}
                     onPointerdown={(event: PointerEvent) => onHandlePointerDown("end", event)}
                     onKeydown={(event: KeyboardEvent) => onHandleKeyDown("end", event)}
                   />
@@ -866,21 +968,28 @@ export default defineComponent({
               </span>
             )}
           </div>
+          {/* LAYER 2 — the detail: the same segments, focused. With a window
+              each bar is clipped to it and re-normalized to the track (so a
+              [0.35, 0.67] window spans 0..100% here); with no window it is
+              the full domain. The headroom is deliberately absent: this axis
+              is the selected content, never the reserved padding. */}
           {!props.minimal && (
-          <div class="hk-range-ribbon-lanes">
-            {lanes.value.map((lane) => (
-              <div class="hk-range-ribbon-lane" key={lane.key} data-lane={lane.key}>
-                <span class="hk-range-ribbon-lane-label" title={lane.label}>
-                  {lane.label}
-                </span>
-                <div class="hk-range-ribbon-lane-track" role="group" aria-label={lane.label}>
-                  {(byLane.get(lane.key) ?? []).map((placed) => {
-                    const box = win ? windowedBox(placed, win) : fullDomainBox(placed);
-                    return box ? renderSegment(placed, box) : null;
-                  })}
+          <div class="hk-range-ribbon-detail" data-layer="detail">
+            <div class="hk-range-ribbon-lanes">
+              {lanes.value.map((lane) => (
+                <div class="hk-range-ribbon-lane" key={lane.key} data-lane={lane.key}>
+                  <span class="hk-range-ribbon-lane-label" title={lane.label}>
+                    {lane.label}
+                  </span>
+                  <div class="hk-range-ribbon-lane-track" role="group" aria-label={lane.label}>
+                    {(byLane.get(lane.key) ?? []).map((placed) => {
+                      const box = win ? windowedBox(placed, win) : fullDomainBox(placed);
+                      return box ? renderSegment(placed, box) : null;
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
           )}
         </div>

@@ -1,9 +1,16 @@
 @use "../styles/polyfill" as *;
 
-/* HkRangeRibbon — a multi-lane sequence ribbon with a brushed window.
-   Anatomy: a thin OVERVIEW strip (the full domain, always), the window
-   highlight + outside scrims + two edge handles riding over it, then the
-   lane list whose segment bars show either the full domain or the window.
+/* HkRangeRibbon — the two-layer sequence waterfall with a brushed window.
+   Anatomy: LAYER 1 (data-layer="minimap") is the thin OVERVIEW strip over
+   the full domain, always — the window highlight + outside scrims + two edge
+   handles ride over it and the reset seat sits on its field. LAYER 2
+   (data-layer="detail") is the lane list: the same segments shown either
+   across the full domain or mapped onto the window (0..100% of the track).
+   The minimap axis is `1 + headroom` wide, so a host can reserve a blank
+   trailing tail for a >100% budget; the after scrim dims that tail once a
+   window exists. The headroom never reaches the detail layer, and minimal
+   mode — which suppresses the lane rows and the detail layer while the bare
+   bar still lives in the minimap container — ignores it too.
 
    Geometry is part of the contract and pinned by HkRangeRibbon.test.tsx:
    the strip is 32px tall, a handle is an 8px half-overlapping grip
@@ -20,15 +27,17 @@
    pending-segment breathe, registered in animation/registerAnimations.ts. */
 
 .hk-range-ribbon {
-  // ONE label column for both surfaces: the overview paints through an
-  // empty gutter of this width, so an x% bar sits at the same inline
-  // position in the strip and in its lane (the strip locates segments).
+  // ONE label column for both layers: the overview paints through an empty
+  // gutter of this width, so both layers always start at the same inline x.
+  // Their x% agree only in the full-domain view — a window re-normalizes the
+  // detail against the selected sub-domain, and a headroom compresses the
+  // strip by `1/span`.
   // Wave (2026-11-06 raw-records five): the label column is JS-MEASURED —
   // the component publishes the widest rendered label as a px value on the
   // root (two-phase free/measure/pin). THIS fixed column is the no-JS /
-  // pre-measure fallback: a shared width keeps strip-lane x% alignment
-  // before the measurement lands (a bare max-content here would resolve
-  // 0px in the empty gutter and misalign everything).
+  // pre-measure fallback: a shared width keeps the two layers' inline START
+  // aligned before the measurement lands (a bare max-content here would
+  // resolve 0px in the empty gutter and misalign everything).
   --hk-range-ribbon-label-col: minmax(48px, 84px);
 
   display: flex;
@@ -38,7 +47,7 @@
   min-width: 0;
 }
 
-// ── Overview strip (the full-domain minimap + brush surface) ─────────────
+// ── LAYER 1: overview strip (the full-domain minimap + brush surface) ───
 .hk-range-ribbon-overview {
   position: relative;
   display: grid;
@@ -251,6 +260,17 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+// ── Detail layer (the window-focused lane list) ─────────────────────────
+// A plain column container, nothing else: it exists so the two layers are
+// explicit in the DOM (and to the stylesheet contract) without disturbing
+// the lane list's own gap/column layout. Its x-axis is the selected window
+// mapped to 0..100% — the headroom tail lives only on the minimap layer.
+.hk-range-ribbon-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 // ── Lane list ───────────────────────────────────────────────────────────

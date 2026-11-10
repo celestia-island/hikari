@@ -125,7 +125,8 @@ function domainSpan(domain: DomainRange): number {
 }
 
 /** Sanitize a caller axis into an ordered, positive-width pair — `null` when
- *  the value cannot be one (not an array, a non-finite member, zero width).
+ *  the value cannot be one (not an array, fewer than two entries, a
+ *  non-finite member, zero width).
  *  An inverted pair is sorted. Stays `null`-able instead of defaulting here
  *  because the component has a second fallback (the `headroom` alias). */
 function sanitizeDomain(input: unknown): DomainRange | null {
@@ -185,9 +186,10 @@ function percent(fraction: number): string {
  *   defaulting to 0.02. Capped at the axis span; a non-finite or non-positive
  *   value falls back to the default.
  * @param domain The axis the window lives on, defaulting to `[0, 1]`. An
- *   inverted pair is sorted; anything malformed (not an array, non-finite
- *   members, zero width) falls back to `[0, 1]`, which keeps the two-argument
- *   host calls byte-identical to the pre-domain contract.
+ *   inverted pair is sorted; anything malformed (not an array, fewer than two
+ *   entries, non-finite members, zero width) falls back to `[0, 1]`, which
+ *   keeps the two-argument host calls byte-identical to the pre-domain
+ *   contract.
  * @returns An ordered, domain-clamped `[start, end]` pair in the caller's
  *   axis units, never narrower than `minWidth` (or than the span), or `null`
  *   for "no window".
@@ -397,8 +399,9 @@ export default defineComponent({
      *  `[-0.5, 1.5]` for a centred one — or a narrower window of interest
      *  such as `[0.2, 0.8]`. Sanitized: two finite numbers with a positive
      *  span; an inverted pair is sorted and anything else (not an array,
-     *  non-finite members, zero width) falls back to the unit axis `[0, 1]`
-     *  — or to the deprecated `headroom` alias when one is set. Content
+     *  non-finite members, zero width — or fewer than two entries) falls back
+     *  to the unit axis `[0, 1]`, or to the deprecated `headroom` alias when
+     *  one is set. Content
      *  outside the domain is clipped away and space inside it the content
      *  does not fill stays blank; every emitted window is a coordinate on
      *  this axis. */

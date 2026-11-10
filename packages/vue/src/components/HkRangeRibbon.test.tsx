@@ -1926,6 +1926,28 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
       { left: 50, width: 50 },
       "write clipped at the domain end",
     );
+
+    // The START clip anchors at the caller's d0, not at absolute 0: on
+    // [-0.5, 1.5] a segment [-1, 0] straddles the domain start and paints
+    // 0%..25% (clipping at 0 would paint 25%..0%: an empty box at the wrong
+    // place). The no-window detail reuses the same domain box.
+    const straddling = mountRibbon({
+      window: null,
+      domain: [-0.5, 1.5],
+      segments: [{ id: "straddle", lane: "cpu", start: -1, end: 0, label: "straddle" }],
+    });
+    expectBox(
+      straddling.querySelector<HTMLElement>(
+        '.hk-range-ribbon-overview-segment[data-segment-id="straddle"]',
+      ),
+      { left: 0, width: 25 },
+      "the overview start clip anchors at d0",
+    );
+    expectBox(
+      segmentById(straddling, "straddle"),
+      { left: 0, width: 25 },
+      "the no-window detail shares that domain box",
+    );
   });
 
   it("treats a window covering the whole domain as the unfiltered state", () => {

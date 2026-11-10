@@ -27,7 +27,30 @@
   display: flex;
   align-items: stretch;
   gap: var(--space-12);
+  /* A short board fills the strip: the lanes box is at least the viewport
+     height, so lane chrome reaches the strip's floor. */
   min-height: 100%;
+}
+
+/* ── Ride boards: the lanes box must follow its CONTENT ────────────────
+   2026-11-10 review S0, measured on a real board (chest cruise canvas):
+   in a column-flex strip viewport `min-height: 100%` makes the lanes BOX
+   exactly as tall as the viewport, so the ride spacer + sticky dock —
+   which are IN FLOW after that box — always sit below the fold. The dock
+   can then only hug the visible bottom edge, the spacer clears nothing,
+   and the air goes back to being the window's leftover (measured 275.8px
+   static / 563.8px at the scroll end against a 139px dock, i.e. no
+   improvement over the pin board and worse when scrolled). Releasing the
+   min-height lets the box end at the real content end, which is what the
+   ride placement needs: the spacer becomes the visible air and the dock
+   trails the content.
+
+   Ride only, by the root hook HkKanban emits for a ride host: a pin board
+   must keep the full-height lanes box it always had, so this rule never
+   reaches an existing board. Specificity (0,3,0) beats the base rule
+   above; a host that wants its own rule can override it the same way. */
+.hk-kanban[data-dock-mode="ride"] .hk-kanban-lanes {
+  min-height: 0;
 }
 
 .hk-kanban[data-axis="vertical"] .hk-kanban-lanes {

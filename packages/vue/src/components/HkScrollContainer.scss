@@ -190,6 +190,24 @@
   --hk-scroll-fade-right: calc(var(--hk-scroll-fade-size) * var(--hk-scroll-fade-strength-right, 1));
 }
 
+/* ── Ride docks own the bottom edge (dockMode="ride") ────────────────
+   2026-11-10 review S2-c: a ride dock lives INSIDE the viewport, at its
+   trailing edge, so the viewport's own fade mask would dissolve the
+   dock's lower limb exactly when it matters — content over one screen
+   reports data-v-overflow="end" and lights the band over the pinned dock.
+   The dock body IS the edge treatment there (the same reason no dock-edge
+   fade is published for a ride placement), so the bottom band is zeroed
+   under the container's ride hook.
+
+   Declared AFTER the six lit-band state rules on purpose: this selector
+   carries the same specificity (0,3,0) as they do, so source order decides
+   and the ride suppression wins — while a pin container (no hook, no
+   change) keeps its band. A consumer override still beats it the usual
+   way (inline style or a >=(0,4,0) rule loaded later). */
+.hk-scroll-container[data-fade="true"][data-dock-mode="ride"] {
+  --hk-scroll-fade-bottom: 0px;
+}
+
 /* RTL: the inline start edge is the right side, so the horizontal band
    slots swap instead of the mask (the mask itself is direction-neutral).
    The swap keys on the component's MIRRORED data-dir, not on [dir]:
@@ -230,6 +248,115 @@
 .hk-scroll-dock {
   flex: none;
   min-height: 0;
+}
+
+/* ── In-flow bottom docks that RIDE the content (dockMode="ride") ──
+   2026-11-10 user ruling: the air between a cruise canvas's last card
+   and its dock must be EXACTLY one dock height, with the dock following
+   the content instead of hovering on the window's bottom edge. Only two
+   bottom placements existed before, and neither expresses that:
+
+     1. the dockTop/dockBottom SLOTS (dockMode="pin", unchanged) shrink
+        the viewport permanently — a short board keeps the leftover
+        window height between the content end and the dock, because the
+        dock sits on the container's edge, not on the content's;
+     2. dockTailClearance spends a shell-published occupancy as a tail
+        spacer on content whose dock FLOATS over the scroll area from
+        outside the flow.
+
+   The ride placement moves the dock itself into the viewport's content
+   flow, after the slot content, and gives it two boxes:
+
+     - .hk-scroll-dock-ride-spacer — a block spacer exactly the measured
+       dock height (the container publishes --hk-scroll-dock-bottom on
+       the host, the same var pin mode publishes for consumer padding;
+       the unset fallback keeps it inert before the first measurement):
+       that is the one-dock-height air, no +N breathing and no magic px,
+       and it re-derives whenever the dock reflows (a model row changing,
+       a breakpoint switch);
+     - .hk-scroll-dock-ride — the dock wrapper itself: sticky to the
+       viewport's visible bottom edge, so short content leaves the dock at
+       its own flow position (below the spacer, with the leftover window
+       height falling BELOW the dock) while long content pins it on the
+       bottom edge and it never scrolls away, with the spacer still
+       delivering the same one-dock-height air at the scroll end.
+
+   THIS IS NOT the retired frame-level reservation (the lesson recorded
+   on dockTailClearance above). That recipe reserved room for a dock that
+   lived OUTSIDE the flow — a shell-fixed plane — so the reserved band
+   showed as dead air BEFORE the scroll end and the dock never followed
+   the content; the recommended fix there was to delete the hand-rolled
+   recipe. Here the dock's own body IS the in-flow child: the empty band
+   is its measured box, nothing is pre-reserved for something painted
+   elsewhere, and the sticky box is what makes the band track the content
+   instead of the window. Do not "simplify" this back into a fixed
+   ::after reserve.
+
+   Load-bearing details: `display: block` on the spacer (a height on an
+   inline box is inert, and the default viewport is a block flow — the
+   measured lesson dockTailClearance already carries); `flex: none` so a
+   flex-ified viewport cannot compress either box; `z-index: 1` on the
+   dock because while pinned it paints over the content scrolling under
+   it. The wrapper keeps the .hk-scroll-dock class — consumers detect a
+   container-owned dock by closest(".hk-scroll-dock") and drop their own
+   shell-level clearance publication on it, so a rename would double-clear
+   the same dock. Ride is gated off axis="horizontal" containers in the
+   component — there the tail is the cross axis, where an in-flow block
+   child leaks onto the hidden vertical axis (the same measured defect
+   that gates the dockTailClearance spacer).
+
+   POINTER CONTRACT (2026-11-10 review S1) — the ride wrapper is
+   `pointer-events: none`, and so is the spacer. While pinned, the
+   wrapper covers a whole band of the visible area (a column-flex
+   viewport stretches it to full width × dock height), so an `auto` hit
+   target there would swallow every click and hover on the cards
+   underneath for the whole band — a defect the pin placement structurally
+   cannot have, because its dock is a sibling OUTSIDE the viewport. Ride
+   therefore follows the floating-dock contract instead: the wrapper is
+   transparent to input and the SURFACE opts back in (`pointer-events:
+   auto` on `.hk-dock-bar-surface` / chest's `.s-dock-bar-surface`), so
+   the dock's own controls stay live while the rest of the band passes
+   input through to the content. Slot content that must catch events has
+   to declare `pointer-events: auto` on the part that catches them — a
+   generic slot child does NOT inherit interactivity from the wrapper. */
+.hk-scroll-dock-ride-spacer {
+  display: block;
+  flex: none;
+  height: var(--hk-scroll-dock-bottom, 0px);
+  /* Pure air band — never a hit target. */
+  pointer-events: none;
+}
+
+.hk-scroll-dock-ride {
+  position: sticky;
+  bottom: 0;
+  /* Sticky is per-AXIS, and this dock trails the content on the BLOCK axis
+     only. On a two-axis board the viewport also scrolls inline, so without
+     an inline inset the box travels sideways with the content and slides
+     out of view (measured in a real engine: a 300px inline scroll put its
+     left edge at -300, 85px still visible, and past ~385px it was gone
+     entirely — while the prop doc promised "never scrolls away"). The
+     logical start pins that axis too and stays correct under RTL: the dock
+     is anchored to the inline start edge of the scrollport, in both
+     axes. Chest's target board is axis="vertical" and its vertical
+     geometry is unchanged by this line (measured). */
+  inset-inline-start: 0;
+  flex: none;
+  z-index: 1;
+  /* Transparent band: the dock surface inside opts back in (see the
+   * pointer contract above). */
+  pointer-events: none;
+}
+
+/* Keep scrolled-to content clear of the pinned dock: `scroll-padding`
+   belongs on the SCROLLPORT (the viewport), and it is exactly this band —
+   so `scrollIntoView`, a focus jump or `scrollTo` with a block target lands
+   the content ABOVE the dock instead of under it. Keyed on the ride hook,
+   which is emitted only while a ride dock is actually mounted (S2-2), so a
+   container without a dock keeps its engine default (0). The unset fallback
+   keeps it inert before the first measurement. */
+.hk-scroll-container[data-dock-mode="ride"] > .hk-scroll-container-viewport {
+  scroll-padding-bottom: var(--hk-scroll-dock-bottom, 0px);
 }
 
 /* Dock-edge fade: mid-scroll content dissolving at the dock's edge

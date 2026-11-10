@@ -105,6 +105,26 @@ export default defineComponent({
      *  contract generates no spacer and the shrink pin is inert in the
      *  block viewport — a horizontal board gets a no-op by design. */
     dockTailClearance: { type: Boolean, default: false },
+    /** Where a `dockBottom` dock lives, forwarded to the strip's
+     *  HkScrollContainer (see its `dockMode`): "pin" (default) keeps the
+     *  dock on the strip's bottom edge, "ride" moves it into the strip's
+     *  content flow so the air above it is the measured dock occupancy and
+     *  the dock follows the content. Only effective on axis="vertical"/
+     *  "both" boards — a horizontal strip carries its tail on the cross
+     *  axis, where the container's ride placement is gated off by design.
+     *
+     *  A ride board ALSO carries `data-dock-mode="ride"` on its root — only
+     *  while a `dockBottom` slot is actually mounted, since that hook
+     *  releases this component's full-height lanes box
+     *  (see HkKanban.scss): `.hk-kanban-lanes { min-height: 100% }` keeps
+     *  the lanes box as tall as the viewport, which would push the in-flow
+     *  spacer + dock below the fold and turn the air back into the
+     *  window's leftover (measured on a real board: 275.8px static vs the
+     *  139px dock, i.e. zero improvement over the pin board). The
+     *  attribute is emitted only while a ride dock is genuinely mounted (not
+     *  for pin, not for a horizontal board, not for an empty slot), so every
+     *  existing board is untouched. */
+    dockMode: { type: String as PropType<"pin" | "ride">, default: "pin" },
   },
   emits: ["move"],
   setup(props, { slots, emit, expose }) {
@@ -185,90 +205,117 @@ export default defineComponent({
 
     expose({ scrollHost, dragging });
 
-    return () => (
-      <div
-        class="hk-kanban"
-        data-axis={props.axis}
-        data-dragging={dragging.value ? "" : undefined}
-        aria-label={props.ariaLabel}
-      >
-        {props.lanes.length === 0
-          ? (slots.empty?.() ?? null)
-          : (
-            <HScrollContainer
-              ref={scrollHost}
-              class="hk-kanban-strip"
-              axis={stripAxis.value}
-              overscanScreens={1}
-              dockTailClearance={props.dockTailClearance}
-            >
-              <div
-                class="hk-kanban-lanes"
-                // One variable; the stylesheet decides whether it is the
-                // lane's width (horizontal boards) or its height (vertical).
-                style={
-                  props.laneSize ? { "--hk-kanban-lane-size": props.laneSize } : undefined
-                }
+    return () => {
+      // Docks attach to the strip's VERTICAL tail: `axis="horizontal"`
+      // boards keep the pre-2026-11-10 shape (no forwarded dock slot), the
+      // same gate the container itself applies to the ride placement —
+      // there the tail is the cross axis, where an in-flow block child
+      // leaks onto the hidden vertical axis.
+      const docksOnTail = stripAxis.value !== "horizontal";
+      // Styling hook AND behaviour switch for the CONTENT HEIGHT of the
+      // board (see the dockMode prop doc): a ride dock only follows the
+      // content when the lanes box is allowed to end above the viewport
+      // bottom. Ride only — a pin board keeps the full-height lanes box it
+      // always had, so no existing board changes. Gated on the dock actually
+      // being mounted too (S2-2): a requested-but-empty slot is legal, and
+      // releasing the lanes box for it would only shrink lane chrome on a
+      // short board while no dock is there to justify it.
+      const rideBoard = docksOnTail && props.dockMode === "ride" && !!slots.dockBottom;
+      return (
+        <div
+          class="hk-kanban"
+          data-axis={props.axis}
+          data-dock-mode={rideBoard ? "ride" : undefined}
+          data-dragging={dragging.value ? "" : undefined}
+          aria-label={props.ariaLabel}
+        >
+          {props.lanes.length === 0
+            ? (slots.empty?.() ?? null)
+            : (
+              <HScrollContainer
+                ref={scrollHost}
+                class="hk-kanban-strip"
+                axis={stripAxis.value}
+                overscanScreens={1}
+                dockTailClearance={props.dockTailClearance}
+                dockMode={props.dockMode}
               >
-                {props.lanes.map((lane, laneIndex) => {
-                  const laneKey = props.laneKeyOf(lane, laneIndex);
-                  const cards = cardsFor(lane, laneIndex);
-                  return (
-                    <section
-                      key={laneKey}
-                      class="hk-kanban-lane"
-                      data-lane={laneKey}
-                      data-drop-target={dropTarget.value === laneKey ? "" : undefined}
-                      onDragover={(event: DragEvent) => onDragOver(laneKey, event)}
-                      onDragleave={(event: DragEvent) => onDragLeave(laneKey, event)}
-                      onDrop={(event: DragEvent) => onDrop(laneKey, cards.length, event)}
+                {{
+                  default: () => (
+                    <div
+                      class="hk-kanban-lanes"
+                      // One variable; the stylesheet decides whether it is the
+                      // lane's width (horizontal boards) or its height (vertical).
+                      style={
+                        props.laneSize ? { "--hk-kanban-lane-size": props.laneSize } : undefined
+                      }
                     >
-                      <header class="hk-kanban-lane-header">
-                        {slots.laneHeader?.({
-                          lane,
-                          laneIndex,
-                          laneKey,
-                          cards,
-                        })}
-                      </header>
-                      <div class="hk-kanban-cards">
-                        {cards.map((card, cardIndex) => {
-                          const cardKey =
-                            props.cardKeyOf?.(card, cardIndex) ?? `${laneKey}#${cardIndex}`;
-                          return (
-                            <div
-                              key={cardKey}
-                              class="hk-kanban-card"
-                              data-card={cardKey}
-                              data-card-index={cardIndex}
-                              draggable={props.draggable || undefined}
-                              onDragstart={(event: DragEvent) =>
-                                onDragStart(card, laneKey, cardIndex, event)
-                              }
-                              onDragend={onDragEnd}
-                            >
-                              {slots.card?.({
-                                card,
-                                cardIndex,
+                      {props.lanes.map((lane, laneIndex) => {
+                        const laneKey = props.laneKeyOf(lane, laneIndex);
+                        const cards = cardsFor(lane, laneIndex);
+                        return (
+                          <section
+                            key={laneKey}
+                            class="hk-kanban-lane"
+                            data-lane={laneKey}
+                            data-drop-target={dropTarget.value === laneKey ? "" : undefined}
+                            onDragover={(event: DragEvent) => onDragOver(laneKey, event)}
+                            onDragleave={(event: DragEvent) => onDragLeave(laneKey, event)}
+                            onDrop={(event: DragEvent) => onDrop(laneKey, cards.length, event)}
+                          >
+                            <header class="hk-kanban-lane-header">
+                              {slots.laneHeader?.({
                                 lane,
                                 laneIndex,
                                 laneKey,
+                                cards,
                               })}
+                            </header>
+                            <div class="hk-kanban-cards">
+                              {cards.map((card, cardIndex) => {
+                                const cardKey =
+                                  props.cardKeyOf?.(card, cardIndex) ?? `${laneKey}#${cardIndex}`;
+                                return (
+                                  <div
+                                    key={cardKey}
+                                    class="hk-kanban-card"
+                                    data-card={cardKey}
+                                    data-card-index={cardIndex}
+                                    draggable={props.draggable || undefined}
+                                    onDragstart={(event: DragEvent) =>
+                                      onDragStart(card, laneKey, cardIndex, event)
+                                    }
+                                    onDragend={onDragEnd}
+                                  >
+                                    {slots.card?.({
+                                      card,
+                                      cardIndex,
+                                      lane,
+                                      laneIndex,
+                                      laneKey,
+                                    })}
+                                  </div>
+                                );
+                              })}
+                              {/* The tail keeps the lane's empty space hittable
+                                  (the lane itself owns the drop). */}
+                              <div class="hk-kanban-lane-tail" />
                             </div>
-                          );
-                        })}
-                        {/* The tail keeps the lane's empty space hittable
-                            (the lane itself owns the drop). */}
-                        <div class="hk-kanban-lane-tail" />
-                      </div>
-                      {slots.laneFooter?.({ lane, laneIndex, laneKey, cards })}
-                    </section>
-                  );
-                })}
-              </div>
-            </HScrollContainer>
-          )}
-      </div>
-    );
+                            {slots.laneFooter?.({ lane, laneIndex, laneKey, cards })}
+                          </section>
+                        );
+                      })}
+                    </div>
+                  ),
+                  // Forwarded so a board's own chrome (a cruise canvas's dock
+                  // under the lanes) keeps the container's dock contract —
+                  // including the --hk-scroll-dock-* heights it publishes.
+                  dockBottom: docksOnTail ? slots.dockBottom : undefined,
+                }}
+              </HScrollContainer>
+            )}
+        </div>
+      );
+    };
   },
 });

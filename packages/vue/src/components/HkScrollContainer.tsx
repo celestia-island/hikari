@@ -3,6 +3,7 @@ import {
   defineComponent,
   onBeforeUnmount,
   onMounted,
+  onUpdated,
   provide,
   ref,
   shallowRef,
@@ -153,7 +154,12 @@ export default defineComponent({
      *  moving the offset. */
     anchor: { type: String as PropType<"start" | "end">, default: "start" },
     /** Fade the viewport's inline edges (CSS mask) on the sides where
-     *  the sensed overflow (`data-h-overflow`) reports hidden content. */
+     *  the sensed overflow (`data-h-overflow`) reports hidden content.
+     *  A ride dock (`dockMode="ride"`) suppresses the BOTTOM band: that
+     *  dock lives at the viewport's trailing edge, so the band would
+     *  dissolve the dock's own lower limb exactly while the content
+     *  overflows; the dock body is the edge treatment there (the sheet
+     *  zeroes --hk-scroll-fade-bottom under the container's ride hook). */
     fade: { type: Boolean, default: false },
     /** Hidden-content distance (px) over which a lit edge fade deepens
      *  from a hard cut to the full band (the progressive fade): the
@@ -223,9 +229,13 @@ export default defineComponent({
      *  no remount. */
     approachDistance: { type: Number, default: 160 },
     /** Fade the viewport's bottom edge (CSS mask, --hk-scroll-dock-fade
-     *  tall, opacity 100 -> 0) while a dock slot is mounted, so mid-
-     *  scroll content dissolving at the dock's edge reads as
-     *  intentional instead of a hard clip. */
+     *  tall, opacity 100 -> 0) while a PINNED (`dockMode="pin"`) dock slot
+     *  is mounted, so mid-scroll content dissolving at the dock's edge
+     *  reads as intentional instead of a hard clip. Not published for a
+     *  ride-mode dock: that dock lives INSIDE the masked viewport, so the
+     *  same band would fade the dock's own bottom edge; and it needs no
+     *  dissolve at all, because the air between content and dock is the
+     *  dock's measured height (see `dockMode`). */
     dockFade: { type: Boolean, default: true },
     /** Opt-in tail clearance for FLOATING docks (2026-10-12): a dock that
      *  lives OUTSIDE this container (a shell-level fixed plane — a page's
@@ -273,6 +283,114 @@ export default defineComponent({
      *  viewport and scroll internally) cannot shrink; consumers escape
      *  with a >=(0,2,0) override loaded after the library CSS. */
     dockTailClearance: { type: Boolean, default: false },
+    /** Where a mounted `dockBottom` dock LIVES (2026-11-10 user ruling):
+     *
+     *  - `pin` (default) — today's placement, unchanged: the dock is a
+     *    NON-scrolling flex SIBLING of the viewport, so it always sits on
+     *    the container's bottom edge and the `flex: 1` viewport shrinks by
+     *    its height. The viewport is that much shorter whether or not the
+     *    content fills it, so short content leaves the leftover window
+     *    height between the content end and the dock.
+     *  - `ride` — the dock moves INTO the viewport's content flow, after
+     *    the slot content: `.hk-scroll-dock-ride-spacer` (a block spacer
+     *    exactly as tall as the MEASURED dock occupancy,
+     *    `--hk-scroll-dock-bottom`) then the dock itself as
+     *    `.hk-scroll-dock.hk-scroll-dock-ride` (`position: sticky;
+     *    bottom: 0`). Short content: the dock trails the content at its
+     *    own flow position, so the air above it is the dock's occupancy
+     *    and the leftover window height falls BELOW the dock. Long
+     *    content: the spacer delivers the same air at the scroll end,
+     *    while the pinned dock sits on the visible bottom edge and never
+     *    scrolls away.
+     *
+     *  Ride is NOT the retired frame-level reservation (see the
+     *  dockTailClearance lesson below). That recipe reserved room for a
+     *  dock living OUTSIDE the flow — a shell-fixed plane — so the
+     *  reserved band showed as dead air BEFORE the scroll end and the
+     *  dock itself never followed the content. Here the dock's own body is
+     *  the in-flow child: the empty band is its measured box, nothing is
+     *  pre-reserved for something painted elsewhere, and the band tracks
+     *  every dock reflow (a model row changing, a breakpoint switch)
+     *  because the var is re-measured by the same ResizeObserver that
+     *  publishes `--hk-scroll-dock-top/bottom` in pin mode. It is not
+     *  "reserve a second dock of blank space" either.
+     *
+     *  HOST REQUIREMENTS — both measured in a real board, both silent
+     *  killers of the air:
+     *    - THE CONTENT MUST BE ABLE TO END ABOVE THE VIEWPORT BOTTOM. A
+     *      content box that inflates itself to the viewport height
+     *      (`min-height: 100%`, a full-height lane stack) puts the in-flow
+     *      spacer + dock BELOW the fold on every board: the spacer supplies
+     *      nothing visible, the dock is always pinned to the bottom edge,
+     *      and the air reverts to the window's leftover — i.e. ride without
+     *      its only effect (measured: identical to the pin board's 184px,
+     *      and worse at the scroll end). HkKanban releases its own
+     *      `.hk-kanban-lanes` box for a ride host
+     *      (`.hk-kanban[data-dock-mode="ride"] .hk-kanban-lanes
+     *      { min-height: 0 }`); a custom host has to do the same.
+     *    - `autoFollow` IS NOT SUPPORTED TOGETHER WITH RIDE (documented,
+     *      not policed beyond a dev warning): autoFollow bottom-anchors a
+     *      `min-height: 100%` content box, which is the same "content box
+     *      equals the viewport" trap as above — the ride tail falls below
+     *      the fold and the air reverts to the window's leftover. No shipped
+     *      consumer combines them; a host that needs both should own the
+     *      footer itself.
+     *    - THE AIR IS THE WRAPPER'S OCCUPANCY, NOT NECESSARILY THE VISIBLE
+     *      SURFACE. `--hk-scroll-dock-bottom` (and therefore the spacer) is
+     *      the dock WRAPPER's measured border-box height. Host-side space
+     *      inside that band — a dock inset margin, a lane's own trailing
+     *      padding — adds to what the user sees, so a host that wants the
+     *      air to match the visible dock pixel-for-pixel keeps those out of
+     *      the band (or accepts the difference as its own chrome).
+     *
+     *  Load-bearing details:
+     *    - the wrapper keeps the `.hk-scroll-dock` class: consumers detect
+     *      "this surface is already a container dock" by
+     *      `closest(".hk-scroll-dock")` (chest's DockBar drops its own
+     *      shell-level clearance publication that way). Renaming it
+     *      double-clears the same dock;
+     *    - the spacer is an explicit `display: block` box (a height on an
+     *      inline box is inert — the measured viewport default is a block
+     *      flow, so a bare inline spacer would measure zero clearance) and
+     *      `flex: none`, so a column-flex viewport cannot compress it;
+     *    - the dock is `flex: none; z-index: 1`: while it is pinned over
+     *      scrolling content it must paint above it;
+     *    - the ROOT carries `data-dock-mode="ride"` while a ride dock is
+     *      actually MOUNTED (additive, like `data-dock-tail` /
+     *      `data-dock-fade`; a pin container keeps its pre-2026-11-10
+     *      attribute set). Gated on the slot, not on the prop: a requested
+     *      but empty `dockBottom` is a legal configuration, and while it is
+     *      empty nothing owns the bottom edge — the sheet must keep fading
+     *      it and a board must keep its own content height. The hook drives
+     *      three things on that edge: the container's bottom fade band is
+     *      zeroed (the dock body is the edge treatment), the shared
+     *      <HkEdgeGlow> painters drop their `bottom` band (it would paint
+     *      over the dock's lower limb), and the viewport gets
+     *      `scroll-padding-bottom: var(--hk-scroll-dock-bottom)` so
+     *      `scrollIntoView` / focus jumps clear the pinned dock.
+     *    - the wrapper AND the spacer are `pointer-events: none`. A
+     *      pinned ride wrapper covers a whole band of the visible area
+     *      (a column-flex viewport stretches it to full width × dock
+     *      height), so an `auto` hit target there would swallow every
+     *      click and hover on the content underneath it — a defect the
+     *      pin placement cannot have, because its dock is a sibling
+     *      OUTSIDE the viewport. Ride follows the floating-dock contract
+     *      instead (HkDockBar: transparent anchor box, catching surface):
+     *      the SURFACE opts back in with `pointer-events: auto`
+     *      (`.hk-dock-bar-surface`, chest's `.s-dock-bar-surface`).
+     *      SLOT CONTENT THAT MUST CATCH EVENTS HAS TO DECLARE
+     *      `pointer-events: auto` ON THE PART THAT CATCHES THEM — the
+     *      wrapper does not hand interactivity to a generic slot child.
+     *
+     *  Ignored (falls back to `pin`) on `axis="horizontal"` containers:
+     *  there the content tail is the cross axis and an in-flow block
+     *  child leaks onto the hidden vertical axis — the same measured
+     *  defect that gates the dockTailClearance spacer (see there). `pin`
+     *  stays compatible with the pre-2026-11-10 render — same element
+     *  structure, same attributes, same publication; the only difference
+     *  is one empty comment anchor the ride branch leaves in a pin
+     *  viewport's child list (nothing renders for it). */
+    dockMode: { type: String as PropType<"pin" | "ride">, default: "pin" },
     /** Back-to-top signal (scroll parameter every scrollable template
      *  can hand to a floating quick-action pad): while set, the
      *  container derives a visibility signal from its own throttled
@@ -497,6 +615,12 @@ export default defineComponent({
 
     const hasV = () => props.axis !== "horizontal";
     const hasH = () => props.axis !== "vertical";
+    /** Whether the bottom dock rides the viewport's content flow (see the
+     *  dockMode prop doc). Axis-gated here as well as at the host: a
+     *  horizontal container's tail is its cross axis, where an in-flow
+     *  block child leaks onto the hidden vertical axis (the measured
+     *  defect documented on the dockTailClearance spacer). */
+    const dockRides = () => props.dockMode === "ride" && hasV();
     // Safe centering applies to horizontal-axis containers only; the
     // rendered aligner + flex overlay are both gated on this.
     const alignCenter = () => props.align === "center" && props.axis === "horizontal";
@@ -924,13 +1048,17 @@ export default defineComponent({
     }
 
     /** Publish each mounted dock's measured height as a host-level custom
-     *  property (`--hk-scroll-dock-top` / `--hk-scroll-dock-bottom`). The
-     *  dock is a non-scrolling flex sibling, so the viewport already
-     *  shrinks by its height; the published var exists so a consumer's
-     *  content end-padding can clear the dock with breathing room
-     *  (padding-bottom: calc(var(--hk-scroll-dock-bottom, 0px) + 2rem))
-     *  instead of hand-rolled px guesses that go stale when the dock
-     *  reflows. ResizeObserver keeps it live across dock reflows. */
+     *  property (`--hk-scroll-dock-top` / `--hk-scroll-dock-bottom`). In
+     *  `dockMode="pin"` the dock is a non-scrolling flex sibling, so the
+     *  viewport already shrinks by its height; the published var exists so
+     *  a consumer's content end-padding can clear the dock with breathing
+     *  room (padding-bottom: calc(var(--hk-scroll-dock-bottom, 0px) +
+     *  2rem)) instead of hand-rolled px guesses that go stale when the dock
+     *  reflows. In `dockMode="ride"` the same var IS the layout: the ride
+     *  spacer spends it as the one-dock-height air above the dock, so the
+     *  measurement feeds the geometry instead of only a consumer's padding
+     *  (see the dockMode prop doc). ResizeObserver keeps it live across
+     *  dock reflows. */
     function publishDockSizes() {
       const host = hostRef.value;
       if (!host) return;
@@ -946,16 +1074,56 @@ export default defineComponent({
       );
     }
 
+    /** The dock wrappers the size observer is watching RIGHT NOW — the
+     *  change guard that turns every sync into a no-op unless the mounted
+     *  dock set actually changed (this runs after every re-render). */
+    let observedDocks: {
+      top: HTMLElement | null | undefined;
+      bottom: HTMLElement | null | undefined;
+    } = { top: undefined, bottom: undefined };
+
+    /** (Re)attach the dock-height observer to the dock wrappers mounted
+     *  RIGHT NOW and re-publish. One helper for the initial mount, a
+     *  runtime `dockMode` swap and a slot that appears/disappears later:
+     *  the dock moves between the pin sibling and the ride position, so a
+     *  ref resolves to a NEW element (or to null) and a stale observation
+     *  would freeze the published height — which in ride mode is the air
+     *  itself. */
+    function syncDockObserver() {
+      const top = dockTopRef.value;
+      const bottom = dockBottomRef.value;
+      if (top === observedDocks.top && bottom === observedDocks.bottom) return;
+      observedDocks = { top, bottom };
+      if (!top && !bottom) {
+        // The last dock slot went away at runtime: drop the observation (a
+        // live ResizeObserver keeps the unmounted element alive) and
+        // republish the inert 0px — in ride mode the published height IS
+        // the air, so a stale value would leave a spacer standing for a
+        // dock that no longer exists. (A container that never mounted a
+        // dock publishes nothing at all — see the after-mount guard.)
+        dockRO?.disconnect();
+        dockRO = null;
+        publishDockSizes();
+        return;
+      }
+      if (!dockRO) dockRO = new ResizeObserver(publishDockSizes);
+      dockRO.disconnect();
+      if (top) dockRO.observe(top);
+      if (bottom) dockRO.observe(bottom);
+      publishDockSizes();
+    }
+
+    // Re-point after every render that may have moved a dock: a placement
+    // swap mounts a NEW wrapper, and a slot can appear or vanish at
+    // runtime too. The ref comparison above is the guard, so the common
+    // "the host re-rendered, docks unchanged" case costs two compares.
+    onUpdated(syncDockObserver);
+
     onMounted(() => {
       const vp = viewportRef.value;
       if (!vp) return;
 
-      if (dockTopRef.value || dockBottomRef.value) {
-        dockRO = new ResizeObserver(publishDockSizes);
-        if (dockTopRef.value) dockRO.observe(dockTopRef.value);
-        if (dockBottomRef.value) dockRO.observe(dockBottomRef.value);
-        publishDockSizes();
-      }
+      syncDockObserver();
 
       if (props.scrollbar) {
         mountScrollbars();
@@ -1146,6 +1314,25 @@ export default defineComponent({
       backTopVisible,
     });
 
+    /** Edge list handed to the shared <HkEdgeGlow> painters. A MOUNTED ride
+     *  dock owns the viewport's bottom edge: the dock now lives INSIDE the
+     *  viewport, at its trailing edge, so a bottom band would paint straight
+     *  over the dock's own lower limb while content overflows under it — the
+     *  same edge the sheet stops fading (S2-c) and the same reason the glow
+     *  is dropped here instead of hidden in the shared painter's CSS
+     *  (HkEdgeGlow is one component for many hosts). */
+    function painterEdges(edges: EdgeGlowEdge[], rideDockMounted: boolean): EdgeGlowEdge[] {
+      return rideDockMounted ? edges.filter((edge) => edge !== "bottom") : edges;
+    }
+
+    /** Dev-only drift alarm (once): `autoFollow` bottom-anchors a
+     *  `min-height: 100%` content box, which keeps the ride spacer + dock
+     *  below the viewport fold and brings back exactly the leftover-window
+     *  air the ride placement exists to remove. No shipped consumer combines
+     *  them; the combination is documented as unsupported rather than
+     *  silently "fixed" (it would need a layout the container does not own). */
+    let warnedAutoFollowRide = false;
+
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";
       let content = props.autoFollow ? (
@@ -1161,14 +1348,39 @@ export default defineComponent({
       if (alignCenter()) {
         content = <div ref={setAligner} class="hk-scroll-container-aligner">{content}</div>;
       }
-      // Anchored dock slots: a dock renders as a NON-scrolling flex
-      // sibling of the viewport — it stays pinned to its edge, never
-      // scrolls, and occupies layout space (the flex: 1 viewport shrinks
-      // by the dock's height). The container measures each mounted dock
-      // and publishes --hk-scroll-dock-top/bottom so consumers can size
-      // their content end-padding against the dock without guessing px.
+      // Anchored dock slots (dockMode="pin", the default): a dock renders
+      // as a NON-scrolling flex sibling of the viewport — it stays pinned
+      // to its edge, never scrolls, and occupies layout space (the flex: 1
+      // viewport shrinks by the dock's height). The container measures each
+      // mounted dock and publishes --hk-scroll-dock-top/bottom so consumers
+      // can size their content end-padding against the dock without
+      // guessing px.
+      //
+      // With dockMode="ride" the BOTTOM dock instead mounts inside the
+      // viewport, after the slot content (see the dockMode prop doc and
+      // the ride section of HkScrollContainer.scss): one measured-height
+      // block spacer, then the .hk-scroll-dock wrapper made sticky. The
+      // wrapper keeps the .hk-scroll-dock class on purpose — consumers
+      // detect a container-owned dock by closest(".hk-scroll-dock") and
+      // drop their own shell-level clearance publication on it.
       const dockTopSlot = slots.dockTop;
       const dockBottomSlot = slots.dockBottom;
+      const rideBottom = dockRides();
+      // The ride hook means "a ride dock is MOUNTED", not merely "a ride
+      // placement was requested": a requested-but-empty slot is a legal
+      // configuration (a conditional dock), and while it is empty nothing
+      // owns the viewport's bottom edge — so the sheet must keep fading that
+      // edge and HkKanban must keep its full-height lanes box (S2-2).
+      const rideDockMounted = !!dockBottomSlot && rideBottom;
+      if (import.meta.env.DEV && !warnedAutoFollowRide && rideDockMounted && props.autoFollow) {
+        warnedAutoFollowRide = true;
+        // eslint-disable-next-line no-console -- dev-only unsupported-combination alarm
+        console.warn(
+          "[HkScrollContainer] autoFollow is not supported together with dockMode=\"ride\": " +
+            "autoFollow's min-height:100% content box keeps the ride spacer + dock below the viewport fold, " +
+            "so the air reverts to the window's leftover. Drop one of the two.",
+        );
+      }
       return (
         <Tag
           ref={hostRef}
@@ -1178,8 +1390,9 @@ export default defineComponent({
           data-fade={props.fade ? "true" : undefined}
           data-overflow-glow={props.overflowGlow ? "true" : undefined}
           data-dock-tail={props.dockTailClearance ? "true" : undefined}
+          data-dock-mode={rideDockMounted ? "ride" : undefined}
           data-dock-fade={
-            props.dockFade && dockBottomSlot
+            props.dockFade && dockBottomSlot && !rideBottom
               ? "bottom"
               : props.dockFade && dockTopSlot
                 ? "top"
@@ -1201,8 +1414,16 @@ export default defineComponent({
             data-scroll-axis={props.axis}
           >
             {content}
+            {rideDockMounted && (
+              <>
+                <div class="hk-scroll-dock-ride-spacer" aria-hidden="true" />
+                <div ref={dockBottomRef} class="hk-scroll-dock hk-scroll-dock-ride" data-side="bottom">
+                  {dockBottomSlot()}
+                </div>
+              </>
+            )}
           </div>
-          {dockBottomSlot && (
+          {dockBottomSlot && !rideBottom && (
             <div ref={dockBottomRef} class="hk-scroll-dock" data-side="bottom">
               {dockBottomSlot()}
             </div>
@@ -1223,7 +1444,7 @@ export default defineComponent({
               tree. */}
           {props.selectionHint && (
             <HkEdgeGlow
-              edges={selectionHintEdges.value}
+              edges={painterEdges(selectionHintEdges.value, rideDockMounted)}
               size="var(--hk-scroll-selection-hint-size)"
               feather="var(--hk-scroll-selection-hint-feather)"
             />
@@ -1231,7 +1452,7 @@ export default defineComponent({
           {props.overflowGlow && (
             <HkEdgeGlow
               animate
-              edges={overflowGlowEdges.value}
+              edges={painterEdges(overflowGlowEdges.value, rideDockMounted)}
               size="var(--hk-scroll-overflow-glow-size, var(--space-24))"
               feather="var(--hk-scroll-overflow-glow-feather, var(--space-24))"
             />

@@ -397,7 +397,8 @@ export default defineComponent({
      *  `[-0.5, 1.5]` for a centred one — or a narrower window of interest
      *  such as `[0.2, 0.8]`. Sanitized: two finite numbers with a positive
      *  span; an inverted pair is sorted and anything else (not an array,
-     *  non-finite members, zero width) falls back to `[0, 1]`. Content
+     *  non-finite members, zero width) falls back to the unit axis `[0, 1]`
+     *  — or to the deprecated `headroom` alias when one is set. Content
      *  outside the domain is clipped away and space inside it the content
      *  does not fill stays blank; every emitted window is a coordinate on
      *  this axis. */
@@ -711,7 +712,11 @@ export default defineComponent({
         next = [nextLo, nextLo + width];
       } else if (!win) {
         if (direction > 0) return; // the full domain cannot grow
-        const end = Math.max(min, d1 - step);
+        // `min` is a WIDTH and the stop is a COORDINATE, so the floor is
+        // `d0 + min`, never the bare width. Using the width went dead on
+        // axes whose end sits below minWindow (the floor exceeded the domain
+        // end) and emitted sub-minimum windows on tight axes.
+        const end = Math.max(d0 + min, d1 - step);
         if (end >= d1) return;
         next = [d0, end];
       } else {

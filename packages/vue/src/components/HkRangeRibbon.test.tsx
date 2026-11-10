@@ -1959,6 +1959,74 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
     expectWindow(lastWindow(host.windowChange), 0.7, 1.2);
   });
 
+  it("keeps the keyboard range entry inside the caller's domain", async () => {
+    // Shift+ArrowLeft on the full view opens a window from the domain start,
+    // stopped at `max(d0 + minWindow, d1 - step)` — a COORDINATE floor. The
+    // bare-width version went dead on axes whose end sits below minWindow
+    // and emitted sub-minimum windows on tight axes.
+    const open = async (domain: [number, number]): Promise<[number, number] | null> => {
+      const host = mountHost(null, { domain });
+      keydown(host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!, "ArrowLeft", {
+        shiftKey: true,
+      });
+      await nextTick();
+      return host.windowChange.mock.calls.length === 0 ? null : lastWindow(host.windowChange);
+    };
+
+    // (a) An axis whose END is below the 0.02 floor: the entry must still
+    // work (the old floor exceeded the domain end and returned early).
+    expectWindow(await open([-1, 0]), -1, -0.05);
+    // (b) A tight axis: the emitted width may never sit below minWindow (the
+    // bare-width floor emitted 0.01995 against a 0.02 floor).
+    const tight = await open([0.5, 0.521]);
+    expectWindow(tight, 0.5, 0.52);
+    expect(tight![1] - tight![0], "never narrower than minWindow").toBeGreaterThanOrEqual(0.02);
+    // (c) The floor anchors at d0 + minWindow (-0.45), not at absolute 0.02.
+    expectWindow(await open([-0.47, 0.03]), -0.47, 0.005);
+  });
+
+  it("keeps a live brush inside a domain that changed mid-gesture", async () => {
+    // The anchor is captured at pointerdown. If the host narrows the axis
+    // while the pointer is down, the anchor must be re-clamped before the
+    // window is built — otherwise the committed window escapes the new axis.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const liveDomain = ref<[number, number]>([0, 1]);
+    const win = ref<[number, number] | null>(null);
+    const windowChange = vi.fn();
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkRangeRibbon, {
+            lanes: LANES,
+            segments: SEGMENTS,
+            domain: liveDomain.value,
+            window: win.value,
+            onWindowChange: (next: [number, number] | null) => {
+              windowChange(next);
+              win.value = next;
+            },
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    mounts.push({ app, container });
+    const root = container.querySelector<HTMLElement>(".hk-range-ribbon")!;
+    const { strip, x } = stubStrip(root);
+
+    // Press at 95% of the unit axis, then narrow the axis to [0, 0.5].
+    pointer("pointerdown", x(0.95), strip);
+    liveDomain.value = [0, 0.5];
+    await nextTick();
+    // Moving to half of the NEW axis must build [0.25, 0.5] (a stale 0.95
+    // anchor would have built [0.25, 0.95], outside the new axis).
+    pointer("pointermove", x(0.5), strip);
+    pointer("pointerup", x(0.5), strip);
+    await nextTick();
+    expectWindow(lastWindow(windowChange), 0.25, 0.5);
+  });
+
   it("draws the caller's domain on minimal mode's bare bar", async () => {
     // Minimal mode suppresses the minimap lane rows and the whole detail
     // layer; the bare bar still lives in the overview container, and its axis

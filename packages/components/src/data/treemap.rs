@@ -361,7 +361,7 @@ pub fn treemap_alpha_component(raw: Option<&str>) -> Option<f64> {
 
 fn treemap_color_parts(inner: &str) -> Vec<&str> {
     inner
-        .split(|c: char| c.is_whitespace() || c == ',' || c == '/')
+        .split(|c: char| c.is_whitespace() || c == '\u{feff}' || c == ',' || c == '/')
         .filter(|part| !part.is_empty() && *part != "none")
         .collect()
 }
@@ -369,7 +369,10 @@ fn treemap_color_parts(inner: &str) -> Vec<&str> {
 /// Vue's `parseCssColor`: hex, `rgb()`/`rgba()` and `hsl()`/`hsla()`, with
 /// `none` channels filtered out of the functional forms.
 pub fn treemap_parse_css_color(raw: &str) -> Option<TreemapRgba> {
-    let value = raw.trim();
+    // JS trim() (the Vue mirror's first step) also strips U+FEFF, which
+    // `char::is_whitespace` does not cover — strip it explicitly so a
+    // BOM-prefixed colour parses or rejects identically on both sides.
+    let value = raw.trim().trim_matches('\u{feff}').trim();
     if value.starts_with('#') {
         return treemap_parse_hex_color(value);
     }
@@ -1343,6 +1346,27 @@ mod tests {
         assert_eq!(
             treemap_contrast_text_color("hsl(10x, 50%, 50%)", 0.0),
             TREEMAP_THEME_INK
+        );
+        // Case-insensitive units/channels and BOM whitespace match Vue.
+        assert_eq!(
+            treemap_contrast_text_color("hsl(120DEG, 50%, 50%)", 0.0),
+            treemap_contrast_text_color("hsl(120, 50%, 50%)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(NONE 1 2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1 2 3 / NONE)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("\u{feff}#fff", 0.0),
+            treemap_contrast_text_color("#fff", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\u{feff}2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
         );
         assert_eq!(treemap_head_scrim_style(), "--hk-treemap-head-scrim:18%");
     }

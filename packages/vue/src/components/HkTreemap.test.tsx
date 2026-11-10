@@ -282,8 +282,16 @@ describe("HkTreemap pure layout input", () => {
     expect(contrastTextColor("rgb(inf 0 0)")).toBe("rgb(var(--color-text, 30 30 30))");
     expect(contrastTextColor("rgb(50x% 0 0)")).toBe("rgb(var(--color-text, 30 30 30))");
     expect(contrastTextColor("hsl(10x, 50%, 50%)")).toBe("rgb(var(--color-text, 30 30 30))");
-    // The deg suffix still parses (the Rust angle channel strips it too).
+    // The deg suffix still parses (the Rust angle channel strips it too) —
+    // in ANY case, because functional forms match on the lowercased value.
     expect(contrastTextColor("hsl(120deg, 50%, 50%)")).toBe(contrastTextColor("hsl(120, 50%, 50%)"));
+    expect(contrastTextColor("hsl(120DEG, 50%, 50%)")).toBe(contrastTextColor("hsl(120, 50%, 50%)"));
+    // Uppercase NONE channels are filtered exactly like lowercase ones, and
+    // a BOM is whitespace on both sides of the mirror.
+    expect(contrastTextColor("rgb(NONE 1 2 3)")).toBe(contrastTextColor("rgb(1 2 3)"));
+    expect(contrastTextColor("rgb(1 2 3 / NONE)")).toBe(contrastTextColor("rgb(1 2 3)"));
+    expect(contrastTextColor("\uFEFF#fff")).toBe(contrastTextColor("#fff"));
+    expect(contrastTextColor("rgb(1\uFEFF2 3)")).toBe(contrastTextColor("rgb(1 2 3)"));
   });
 
   it("keeps every default palette cell AND its group band at WCAG AA", () => {

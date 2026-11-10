@@ -126,9 +126,15 @@ function alphaComponent(raw: string | undefined): number | null {
 }
 
 function parseCssColor(raw: string): RgbaChannels | null {
-  const value = raw.trim();
+  // JS trim() strips U+FEFF; the Rust mirror is taught the same character so
+  // both runtimes accept or reject a BOM-prefixed colour identically.
+  const value = raw.trim().replace(/^\uFEFF+/, "").replace(/\uFEFF+$/, "").trim();
   if (value.startsWith("#")) return parseHexColor(value);
-  const rgb = /^rgba?\((.*)\)$/i.exec(value);
+  // Functional forms are matched on the LOWERCASED value — exactly the Rust
+  // mirror's to_ascii_lowercase() — so case-insensitive CSS units (`DEG`,
+  // `NONE` channels) parse or reject identically on both sides.
+  const lower = value.toLowerCase();
+  const rgb = /^rgba?\((.*)\)$/.exec(lower);
   if (rgb) {
     const parts = rgb[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
     if (parts.length < 3) return null;
@@ -138,7 +144,7 @@ function parseCssColor(raw: string): RgbaChannels | null {
     if (alpha === null) return null;
     return [...(channels as [number, number, number]), alpha];
   }
-  const hsl = /^hsla?\((.*)\)$/i.exec(value);
+  const hsl = /^hsla?\((.*)\)$/.exec(lower);
   if (hsl) {
     const parts = hsl[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
     if (parts.length < 3) return null;

@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, ref, useId, type PropType } from "vue";
 import HkNumberSteppers from "./HkNumberSteppers";
 import "./HkNumberInput.scss";
 
@@ -12,6 +12,13 @@ export default defineComponent({
     disabled: { type: Boolean, default: false },
     placeholder: { type: String, default: undefined },
     label: { type: String, default: undefined },
+    /* `id` for the field element; the rendered label's `for` points here.
+       Generated via Vue's useId when omitted, so a bare `label` prop is
+       fully associated for screen readers and label clicks with zero
+       caller effort (HkInput's contract, same shape). Without this the
+       bare <label> had NO programmatic association at all — the field
+       announced as "spin button" (2026-11-10, #1206). */
+    id: { type: String, default: undefined },
     /* Affix text rendered INSIDE the field (before/after the input,
        flex-centered by the inner row). Slots of the same name take
        precedence; empty/undefined means no affix. Consumers should use
@@ -60,6 +67,13 @@ export default defineComponent({
       emitValue(props.modelValue - props.step);
     }
 
+    // Field identity: the rendered label points at this id, so a bare
+    // `label` prop gives a fully associated field (screen readers, label
+    // clicks). An explicit `id` prop wins. useId() must run synchronously
+    // in setup; it is SSR-safe (HkInput's same shape).
+    const generatedId = useId();
+    const fieldId = computed(() => props.id ?? generatedId);
+
     const wrapperClass = computed(() => [
       "hk-number-input",
       `hk-number-input-${props.size}`,
@@ -68,7 +82,7 @@ export default defineComponent({
 
     return () => (
       <div class={wrapperClass.value}>
-        {props.label && <label class="hk-input-label">{props.label}</label>}
+        {props.label && <label class="hk-input-label" for={fieldId.value}>{props.label}</label>}
         <div class="hk-number-input-inner">
           {(slots.prefix || props.prefix) ? (
             <span class="hk-number-input-prefix">
@@ -77,6 +91,7 @@ export default defineComponent({
           ) : null}
           <input
             ref={inputRef}
+            id={fieldId.value}
             type="number"
             class="hk-number-input-field"
             value={props.modelValue}

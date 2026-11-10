@@ -1527,13 +1527,45 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
     await drag(strip, 0.95, 0.3, x);
     expectWindow(lastWindow(host.windowChange), 0.33, 1);
 
-    // The end handle dragged to the far right lands on content 100% too —
-    // never on the headroom the host reserved.
+    // The end handle dragged INTO the blank tail (axis 95% reads content
+    // 104.5%) still commits content 100%: a read that skipped the span would
+    // answer 95% and leave the window at [0.2, 0.95]. Dragging to the exact
+    // far right would pass either way (1 × span = 1), so this target is the
+    // revert discriminator for the handle path.
     await host.setWindow([0.2, 0.5]);
     const end = host.root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
     expect(end, "the end grip renders for the sub-window").toBeTruthy();
-    await drag(end, 0.45, 1, x);
+    await drag(end, 0.45, 0.95, x);
     expectWindow(lastWindow(host.windowChange), 0.2, 1);
+  });
+
+  it("ignores the headroom in minimal mode (it is a minimap-only axis)", async () => {
+    // Minimal mode has no minimap layer, so the bare bar must stay on the
+    // CONTENT axis. A headroom-applied span would park the rest end grip at
+    // ~90.9% and leave an unlabeled dim tail on a bar that has no tail
+    // semantics.
+    const rest = mountRibbon({ minimal: true, headroom: 0.1, window: [0, 1] });
+    const restStart = rest.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!;
+    const restEnd = rest.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
+    expect(parseFloat(restStart.style.left), "rest start grip at content 0%").toBeCloseTo(0, 4);
+    expect(parseFloat(restEnd.style.left), "rest end grip at content 100%").toBeCloseTo(100, 4);
+
+    // A sub-window keeps content geometry for its grips and after scrim: with
+    // a span the scrim would start at 54.5% and run 45.5%, i.e. a reserved
+    // tail that minimal mode cannot explain.
+    const sub = mountRibbon({ minimal: true, headroom: 0.1, window: [0.2, 0.6] });
+    const subEnd = sub.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
+    expect(parseFloat(subEnd.style.left), "grips keep content fractions").toBeCloseTo(60, 4);
+    const after = sub.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="after"]')!;
+    expect(boxOf(after).left, "the after scrim starts at the window end").toBeCloseTo(60, 4);
+    expect(boxOf(after).width, "no reserved tail to dim").toBeCloseTo(40, 4);
+
+    // …and the pointer axis is the content axis: axis 50% reads content 50%
+    // (a headroom-applied read would answer 55%), and the far right is 100%.
+    const host = mountHost([0.2, 0.6], { minimal: true, headroom: 0.1 });
+    const { strip, x } = stubStrip(host.root);
+    await drag(strip, 0.5, 1, x);
+    expectWindow(lastWindow(host.windowChange), 0.5, 1);
   });
 });
 

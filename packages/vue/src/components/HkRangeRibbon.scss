@@ -8,7 +8,8 @@
    across the full domain or mapped onto the window (0..100% of the track).
    The minimap axis is `1 + headroom` wide, so a host can reserve a blank
    trailing tail for a >100% budget; the after scrim dims that tail once a
-   window exists. The headroom never reaches the detail layer.
+   window exists. The headroom never reaches the detail layer, and minimal
+   mode (no minimap) ignores it too.
 
    Geometry is part of the contract and pinned by HkRangeRibbon.test.tsx:
    the strip is 32px tall, a handle is an 8px half-overlapping grip
@@ -25,15 +26,18 @@
    pending-segment breathe, registered in animation/registerAnimations.ts. */
 
 .hk-range-ribbon {
-  // ONE label column for both surfaces: the overview paints through an
-  // empty gutter of this width, so an x% bar sits at the same inline
-  // position in the strip and in its lane (the strip locates segments).
+  // ONE label column for both layers: the overview paints through an empty
+  // gutter of this width, so both surfaces start at the same inline x. With
+  // no headroom a bar at x% ALSO sits at the same inline position in the
+  // strip and in its lane (that is what lets the strip locate segments); a
+  // headroom compresses the strip by `1/span` and deliberately breaks the
+  // x% match.
   // Wave (2026-11-06 raw-records five): the label column is JS-MEASURED —
   // the component publishes the widest rendered label as a px value on the
   // root (two-phase free/measure/pin). THIS fixed column is the no-JS /
-  // pre-measure fallback: a shared width keeps strip-lane x% alignment
-  // before the measurement lands (a bare max-content here would resolve
-  // 0px in the empty gutter and misalign everything).
+  // pre-measure fallback: a shared width keeps the two layers' inline START
+  // aligned before the measurement lands (a bare max-content here would
+  // resolve 0px in the empty gutter and misalign everything).
   --hk-range-ribbon-label-col: minmax(48px, 84px);
 
   display: flex;

@@ -171,12 +171,15 @@ const SOLID_LIGHT_INK = "#fff";
 const SOLID_DARK_INK = "#0b1220";
 
 /** Last-resort ink: the softer pair leaves a narrow mid-tone dead zone
- *  (plate luminance 0.1833–0.2024) where neither clears AA; there pure
- *  black is strictly the higher-contrast choice (and the only one that can
- *  reach the floor). It never wins anywhere else. */
+ *  (plate luminance 0.1833–0.2024) where neither clears AA; there pure black
+ *  is the higher-contrast choice that can reach the floor. Outside that band
+ *  the softer pair is SELECTED even though black would beat the near-black on
+ *  raw ratio everywhere — black stays a floor escape, not the normal ink. */
 const SOLID_NEUTRAL_INK = "#000";
 
-/** WCAG AA floor the cell labels are held to (12px text). */
+/** WCAG AA floor for the fully-opaque cell label; the meta line and the
+ *  italic unknown label keep their pre-existing 0.85 / 0.9 opacity (a
+ *  deliberate de-emphasis, not part of this contract). */
 const AA_CONTRAST = 4.5;
 
 /** Relative luminances of the candidate inks (white is the reference 1). */

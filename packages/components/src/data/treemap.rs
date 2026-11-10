@@ -181,11 +181,16 @@ const TREEMAP_LIGHT_INK: &str = "#fff";
 const TREEMAP_DARK_INK: &str = "#0b1220";
 
 /// Last-resort ink for the narrow mid-tone dead zone (plate luminance
-/// 0.1833–0.2024) where neither softer ink clears AA; there pure black is
-/// strictly the higher-contrast choice (Vue: `SOLID_NEUTRAL_INK`).
+/// 0.1833–0.2024) where neither softer ink clears AA; there pure black is the
+/// higher-contrast choice that can reach the floor. Outside that band the
+/// softer pair is SELECTED even though black would beat the near-black on raw
+/// ratio everywhere — black stays a floor escape, not the normal dark ink
+/// (Vue: `SOLID_NEUTRAL_INK`).
 const TREEMAP_NEUTRAL_INK: &str = "#000";
 
-/// WCAG AA floor the cell labels are held to (12px text).
+/// WCAG AA floor for the fully-opaque cell label; the meta line and the
+/// italic unknown label keep their pre-existing 0.85 / 0.9 opacity (a
+/// deliberate de-emphasis, not part of this contract).
 const TREEMAP_AA_CONTRAST: f64 = 4.5;
 
 /// The root style publishing the band scrim — one string for both
@@ -1342,24 +1347,52 @@ mod tests {
             treemap_contrast_text_color(grey, HK_TREEMAP_HEAD_SCRIM),
             "#fff"
         );
+        // The band itself can land in the dead zone: #63a04d's plate keeps
+        // the near-black ink (5.94:1), but its scrimmed band cannot clear AA
+        // with either softer ink (white 4.49, near-black 4.17) -> black 4.68.
+        assert_eq!(treemap_contrast_text_color("#63a04d", 0.0), "#0b1220");
+        assert_eq!(
+            treemap_contrast_text_color("#63a04d", HK_TREEMAP_HEAD_SCRIM),
+            "#000"
+        );
         // Every other palette member keeps one of the softer inks.
         for color in HK_TREEMAP_DEFAULT_COLORS {
             assert_ne!(treemap_contrast_text_color(color, 0.0), "#000", "{color}");
         }
-        // Property: every grey step clears AA with the ink it picks.
+        // Property: every grey step clears AA with the ink it picks. The
+        // WCAG primitives are re-implemented here on purpose — a wrong
+        // primitive inside the implementation must not pass its own sweep.
+        fn linear(channel: f64) -> f64 {
+            let value = channel / 255.0;
+            if value <= 0.03928 {
+                value / 12.92
+            } else {
+                ((value + 0.055) / 1.055).powf(2.4)
+            }
+        }
+        fn luminance(rgb: [u8; 3]) -> f64 {
+            0.2126 * linear(f64::from(rgb[0]))
+                + 0.7152 * linear(f64::from(rgb[1]))
+                + 0.0722 * linear(f64::from(rgb[2]))
+        }
+        fn hex_luminance(hex: &str) -> f64 {
+            let raw = hex.trim_start_matches('#');
+            let raw = if raw.len() == 3 {
+                raw.chars().flat_map(|c| [c, c]).collect::<String>()
+            } else {
+                raw.to_string()
+            };
+            let channel = |at: usize| u8::from_str_radix(&raw[at..at + 2], 16).expect("hex pair");
+            luminance([channel(0), channel(2), channel(4)])
+        }
+        fn ratio(a: f64, b: f64) -> f64 {
+            (a.max(b) + 0.05) / (a.min(b) + 0.05)
+        }
         for value in 0..=255u8 {
             let color = format!("rgb({value} {value} {value})");
-            let luminance = treemap_relative_luminance(TreemapRgba {
-                r: f64::from(value),
-                g: f64::from(value),
-                b: f64::from(value),
-                a: 1.0,
-            });
             let ink = treemap_contrast_text_color(&color, 0.0);
-            let ink_luminance =
-                treemap_relative_luminance(treemap_parse_hex_color(ink).expect("ink parses"));
             assert!(
-                treemap_contrast_ratio(luminance, ink_luminance) >= 4.5,
+                ratio(luminance([value, value, value]), hex_luminance(ink)) >= 4.5,
                 "grey {value} with {ink} is under AA"
             );
         }

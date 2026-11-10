@@ -300,12 +300,17 @@ describe("HkTreemap pure layout input", () => {
     expect(contrastAgainst(luminanceOf(hexChannels("#787882")), "#fff")).toBeLessThan(4.5);
     expect(contrastAgainst(luminanceOf(hexChannels("#787882")), "#0b1220")).toBeLessThan(4.5);
     expect(contrastTextColor(deadZoneGrey)).toBe("#000");
-    // …and only there: the softer pair stays everywhere else.
-    for (const softer of ["#edc948", "#bab0ab", "#9c755f", "#4e79a7", "#edc948"]) {
-      expect(contrastTextColor(softer)).not.toBe("#000");
+    // …and only there: no default palette member is ever black.
+    for (const color of HK_TREEMAP_DEFAULT_COLORS) {
+      expect(contrastTextColor(color)).not.toBe("#000");
     }
     // The same grey's header band is light enough for white.
     expect(contrastTextColor(deadZoneGrey, HK_TREEMAP_HEAD_SCRIM)).toBe("#fff");
+    // The band itself can land in the dead zone: #63a04d's plate keeps the
+    // near-black ink (5.94:1), but its scrimmed band cannot clear AA with
+    // either softer ink (white 4.49, near-black 4.17) -> black (4.68).
+    expect(contrastTextColor("#63a04d")).toBe("#0b1220");
+    expect(contrastTextColor("#63a04d", HK_TREEMAP_HEAD_SCRIM)).toBe("#000");
     // Property: every grey step clears AA with the ink it picks.
     for (let value = 0; value <= 255; value += 1) {
       const color = `rgb(${value} ${value} ${value})`;

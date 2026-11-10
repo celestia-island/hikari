@@ -175,10 +175,23 @@ pub const HK_TREEMAP_HEAD_SCRIM: f64 = 0.18;
 /// `THEME_CELL_INK`).
 pub const TREEMAP_THEME_INK: &str = "rgb(var(--color-text, 30 30 30))";
 
-/// The two inks a SOLID fill can carry (Vue: `SOLID_LIGHT_INK` /
+/// The two inks a SOLID fill normally carries (Vue: `SOLID_LIGHT_INK` /
 /// `SOLID_DARK_INK`).
 const TREEMAP_LIGHT_INK: &str = "#fff";
 const TREEMAP_DARK_INK: &str = "#0b1220";
+
+/// Last-resort ink for the narrow mid-tone dead zone (plate luminance in the
+/// open interval (0.1833, 0.2024)) where neither softer ink clears AA; there pure black is the
+/// higher-contrast choice that can reach the floor. Outside that band the
+/// softer pair is SELECTED even though black would beat the near-black on raw
+/// ratio everywhere — black stays a floor escape, not the normal dark ink
+/// (Vue: `SOLID_NEUTRAL_INK`).
+const TREEMAP_NEUTRAL_INK: &str = "#000";
+
+/// WCAG AA floor for the fully-opaque cell label; the meta line and the
+/// italic unknown label keep their pre-existing 0.85 / 0.9 opacity (a
+/// deliberate de-emphasis, not part of this contract).
+const TREEMAP_AA_CONTRAST: f64 = 4.5;
 
 /// The root style publishing the band scrim — one string for both
 /// components, so the sheet never has to guess the number.
@@ -233,14 +246,29 @@ pub fn treemap_contrast_text_color(background: &str, scrim: f64) -> &'static str
         b: channels.b * shade,
         a: 1.0,
     });
-    let dark_ink = treemap_parse_hex_color(TREEMAP_DARK_INK)
+    let dark = treemap_parse_hex_color(TREEMAP_DARK_INK)
         .map(treemap_relative_luminance)
         .unwrap_or(0.0);
-    if treemap_contrast_ratio(luminance, dark_ink) >= treemap_contrast_ratio(luminance, 1.0) {
+    let dark_ratio = treemap_contrast_ratio(luminance, dark);
+    let light_ratio = treemap_contrast_ratio(luminance, 1.0);
+    // Neither softer ink clears the floor -> pure black, which is strictly
+    // the higher-contrast choice inside that band (see TREEMAP_NEUTRAL_INK).
+    if dark_ratio.max(light_ratio) < TREEMAP_AA_CONTRAST {
+        return TREEMAP_NEUTRAL_INK;
+    }
+    if dark_ratio >= light_ratio {
         TREEMAP_DARK_INK
     } else {
         TREEMAP_LIGHT_INK
     }
+}
+
+/// The exact whitespace set of the Vue mirror's JS `trim()` / `\s`: the
+/// Unicode White_Space set MINUS U+0085 (NEL — control, not JS whitespace)
+/// PLUS U+FEFF (BOM / ZWNBSP). Both runtimes must agree on what counts as
+/// space, or they answer differently on whitespace-prefixed colours.
+fn treemap_is_js_space(c: char) -> bool {
+    (c.is_whitespace() && c != '\u{0085}') || c == '\u{feff}'
 }
 
 fn treemap_is_hex(value: &str) -> bool {
@@ -277,13 +305,16 @@ pub fn treemap_parse_hex_color(raw: &str) -> Option<TreemapRgba> {
 /// One numeric colour channel (`0`–`255`, or a percentage of 255).
 pub fn treemap_numeric_channel(raw: &str) -> Option<f64> {
     if let Some(percent) = raw.strip_suffix('%') {
-        let percent = percent.trim().parse::<f64>().ok()?;
+        let percent = percent
+            .trim_matches(treemap_is_js_space)
+            .parse::<f64>()
+            .ok()?;
         if !percent.is_finite() {
             return None;
         }
         Some(((percent / 100.0) * 255.0).clamp(0.0, 255.0))
     } else {
-        let value = raw.trim().parse::<f64>().ok()?;
+        let value = raw.trim_matches(treemap_is_js_space).parse::<f64>().ok()?;
         if !value.is_finite() {
             return None;
         }
@@ -323,13 +354,19 @@ pub fn treemap_alpha_component(raw: Option<&str>) -> Option<f64> {
         None | Some("") => Some(1.0),
         Some(value) => {
             if let Some(percent) = value.strip_suffix('%') {
-                let percent = percent.trim().parse::<f64>().ok()?;
+                let percent = percent
+                    .trim_matches(treemap_is_js_space)
+                    .parse::<f64>()
+                    .ok()?;
                 if !percent.is_finite() {
                     return None;
                 }
                 Some((percent / 100.0).clamp(0.0, 1.0))
             } else {
-                let parsed = value.trim().parse::<f64>().ok()?;
+                let parsed = value
+                    .trim_matches(treemap_is_js_space)
+                    .parse::<f64>()
+                    .ok()?;
                 if !parsed.is_finite() {
                     return None;
                 }
@@ -341,7 +378,7 @@ pub fn treemap_alpha_component(raw: Option<&str>) -> Option<f64> {
 
 fn treemap_color_parts(inner: &str) -> Vec<&str> {
     inner
-        .split(|c: char| c.is_whitespace() || c == ',' || c == '/')
+        .split(|c: char| treemap_is_js_space(c) || c == ',' || c == '/')
         .filter(|part| !part.is_empty() && *part != "none")
         .collect()
 }
@@ -349,7 +386,9 @@ fn treemap_color_parts(inner: &str) -> Vec<&str> {
 /// Vue's `parseCssColor`: hex, `rgb()`/`rgba()` and `hsl()`/`hsla()`, with
 /// `none` channels filtered out of the functional forms.
 pub fn treemap_parse_css_color(raw: &str) -> Option<TreemapRgba> {
-    let value = raw.trim();
+    // JS trim() strips whitespace and U+FEFF in ONE pass over both ends;
+    // phase-wise trimming would leave an interleaved BOM behind and diverge.
+    let value = raw.trim_matches(treemap_is_js_space);
     if value.starts_with('#') {
         return treemap_parse_hex_color(value);
     }
@@ -398,18 +437,21 @@ pub fn treemap_parse_css_color(raw: &str) -> Option<TreemapRgba> {
 /// An hsl hue: a bare number, optionally suffixed `deg`, and optionally
 /// followed by the comma of the legacy comma-separated form.
 fn treemap_angle_channel(raw: &str) -> Option<f64> {
-    let text = raw.trim().trim_end_matches(',').trim_end_matches("deg");
-    text.trim().parse::<f64>().ok()
+    let text = raw
+        .trim_matches(treemap_is_js_space)
+        .trim_end_matches(',')
+        .trim_end_matches("deg");
+    text.trim_matches(treemap_is_js_space).parse::<f64>().ok()
 }
 
 /// An hsl saturation/lightness: a number with an optional `%` suffix (CSS
 /// requires the percent, but both forms appear in the wild).
 fn treemap_percent_channel(raw: &str) -> Option<f64> {
     let text = raw
-        .trim()
+        .trim_matches(treemap_is_js_space)
         .trim_end_matches(',')
         .trim_end_matches('%')
-        .trim();
+        .trim_matches(treemap_is_js_space);
     text.parse::<f64>().ok()
 }
 
@@ -1306,7 +1348,155 @@ mod tests {
             treemap_contrast_text_color("not-a-color", 0.0),
             TREEMAP_THEME_INK
         );
+        // Parse strictness is part of the mirror contract: trailing garbage
+        // and inf/NaN spellings are NOT truncated numbers.
+        assert_eq!(
+            treemap_contrast_text_color("rgb(10x 20 30)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(inf 0 0)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(50x% 0 0)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("hsl(10x, 50%, 50%)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        // Case-insensitive units/channels and BOM whitespace match Vue.
+        assert_eq!(
+            treemap_contrast_text_color("hsl(120DEG, 50%, 50%)", 0.0),
+            treemap_contrast_text_color("hsl(120, 50%, 50%)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(NONE 1 2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1 2 3 / NONE)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("\u{feff}#fff", 0.0),
+            treemap_contrast_text_color("#fff", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\u{feff}2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        // The whitespace MODEL: an interleaved BOM between real spaces still
+        // trims; U+0085 (NEL) is a control character, NOT JS whitespace.
+        assert_eq!(
+            treemap_contrast_text_color("\u{feff} \u{feff}#fff", 0.0),
+            treemap_contrast_text_color("#fff", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("#fff\u{feff} \u{feff}", 0.0),
+            treemap_contrast_text_color("#fff", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("\u{0085}#fff", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("#fff\u{0085}", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\u{0085}2 3)", 0.0),
+            TREEMAP_THEME_INK
+        );
+        // A line terminator inside the envelope parses (strip_prefix/suffix
+        // never treats it as a terminator) — match the Vue regex semantics.
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\n2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\u{2028}2 3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(\t1\n2\r3)", 0.0),
+            treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("hsl(120\u{2028}, 50%, 50%)", 0.0),
+            treemap_contrast_text_color("hsl(120, 50%, 50%)", 0.0)
+        );
         assert_eq!(treemap_head_scrim_style(), "--hk-treemap-head-scrim:18%");
+    }
+
+    #[test]
+    fn treemap_ink_uses_pure_black_to_cover_the_mid_tone_dead_zone() {
+        // White/near-black cannot reach 4.5:1 for plate luminances in
+        // (0.1833, 0.2024); pure black is the escape hatch.
+        let grey = "rgb(120 120 130)";
+        let plate = treemap_relative_luminance(treemap_parse_css_color(grey).expect("parses"));
+        let white = treemap_contrast_ratio(plate, 1.0);
+        let dark = treemap_contrast_ratio(
+            plate,
+            treemap_relative_luminance(treemap_parse_hex_color("#0b1220").expect("parses")),
+        );
+        assert!(white < 4.5 && dark < 4.5, "grey must sit in the dead zone");
+        assert_eq!(treemap_contrast_text_color(grey, 0.0), "#000");
+        // The same grey's header band is light enough for white.
+        assert_eq!(
+            treemap_contrast_text_color(grey, HK_TREEMAP_HEAD_SCRIM),
+            "#fff"
+        );
+        // The band itself can land in the dead zone: #63a04d's plate keeps
+        // the near-black ink (5.94:1), but its scrimmed band cannot clear AA
+        // with either softer ink (white 4.49, near-black 4.17) -> black 4.68.
+        assert_eq!(treemap_contrast_text_color("#63a04d", 0.0), "#0b1220");
+        assert_eq!(
+            treemap_contrast_text_color("#63a04d", HK_TREEMAP_HEAD_SCRIM),
+            "#000"
+        );
+        // Every other palette member keeps one of the softer inks.
+        for color in HK_TREEMAP_DEFAULT_COLORS {
+            assert_ne!(treemap_contrast_text_color(color, 0.0), "#000", "{color}");
+        }
+        // Property: every grey step clears AA with the ink it picks. The
+        // WCAG primitives are re-implemented here on purpose — a wrong
+        // primitive inside the implementation must not pass its own sweep.
+        fn linear(channel: f64) -> f64 {
+            let value = channel / 255.0;
+            if value <= 0.03928 {
+                value / 12.92
+            } else {
+                ((value + 0.055) / 1.055).powf(2.4)
+            }
+        }
+        fn luminance(rgb: [u8; 3]) -> f64 {
+            0.2126 * linear(f64::from(rgb[0]))
+                + 0.7152 * linear(f64::from(rgb[1]))
+                + 0.0722 * linear(f64::from(rgb[2]))
+        }
+        fn hex_luminance(hex: &str) -> f64 {
+            let raw = hex.trim_start_matches('#');
+            let raw = if raw.len() == 3 {
+                raw.chars().flat_map(|c| [c, c]).collect::<String>()
+            } else {
+                raw.to_string()
+            };
+            let channel = |at: usize| u8::from_str_radix(&raw[at..at + 2], 16).expect("hex pair");
+            luminance([channel(0), channel(2), channel(4)])
+        }
+        fn ratio(a: f64, b: f64) -> f64 {
+            (a.max(b) + 0.05) / (a.min(b) + 0.05)
+        }
+        for value in 0..=255u8 {
+            let color = format!("rgb({value} {value} {value})");
+            let ink = treemap_contrast_text_color(&color, 0.0);
+            assert!(
+                ratio(luminance([value, value, value]), hex_luminance(ink)) >= 4.5,
+                "grey {value} with {ink} is under AA"
+            );
+        }
     }
 
     #[test]
@@ -1317,7 +1507,7 @@ mod tests {
         for color in HK_TREEMAP_DEFAULT_COLORS {
             let ink = treemap_contrast_text_color(color, 0.0);
             assert!(
-                ink == "#fff" || ink == "#0b1220",
+                ink == "#fff" || ink == "#0b1220" || ink == "#000",
                 "unexpected ink {ink} for {color}"
             );
             assert!(

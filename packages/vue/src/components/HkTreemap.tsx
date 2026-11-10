@@ -65,13 +65,35 @@ function parseHexColor(raw: string): RgbaChannels | null {
   ];
 }
 
+/** Strict decimal/scientific numeric parse — the WHOLE string must be one
+ *  number, mirroring the Rust mirror's `str::parse::<f64>()` + `is_finite()`
+ *  gate: trailing garbage ("10x") and inf/NaN spellings are rejected, not
+ *  truncated. Returns NaN for anything that is not one number. */
+const NUMERIC_PATTERN = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+function parseStrictNumber(raw: string): number {
+  const value = raw.trim();
+  return NUMERIC_PATTERN.test(value) ? Number(value) : Number.NaN;
+}
+
 function numericChannel(raw: string): number | null {
   if (raw.endsWith("%")) {
-    const percent = Number.parseFloat(raw.slice(0, -1));
+    const percent = parseStrictNumber(raw.slice(0, -1));
     return Number.isFinite(percent) ? Math.min(255, Math.max(0, (percent / 100) * 255)) : null;
   }
-  const value = Number.parseFloat(raw);
+  const value = parseStrictNumber(raw);
   return Number.isFinite(value) ? Math.min(255, Math.max(0, value)) : null;
+}
+
+/** An hsl hue: a strict number with the optional `deg` suffix (all trailing
+ *  repeats stripped, like the Rust mirror's `trim_end_matches("deg")`). */
+function angleChannel(raw: string): number {
+  return parseStrictNumber(raw.replace(/(?:deg)+$/, ""));
+}
+
+/** An hsl saturation/lightness: a strict number with an optional `%` suffix
+ *  (CSS requires the percent, but both forms appear in the wild). */
+function percentChannel(raw: string): number {
+  return parseStrictNumber(raw.replace(/%+$/, ""));
 }
 
 function hueToRgb(hue: number, saturation: number, lightness: number): [number, number, number] {
@@ -96,17 +118,25 @@ function hueToRgb(hue: number, saturation: number, lightness: number): [number, 
 function alphaComponent(raw: string | undefined): number | null {
   if (raw == null || raw === "") return 1;
   if (raw.endsWith("%")) {
-    const percent = Number.parseFloat(raw.slice(0, -1));
+    const percent = parseStrictNumber(raw.slice(0, -1));
     return Number.isFinite(percent) ? Math.min(1, Math.max(0, percent / 100)) : null;
   }
-  const value = Number.parseFloat(raw);
+  const value = parseStrictNumber(raw);
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
 }
 
 function parseCssColor(raw: string): RgbaChannels | null {
-  const value = raw.trim();
+  // JS trim() strips U+FEFF; the Rust mirror is taught the same character so
+  // both runtimes accept or reject a BOM-prefixed colour identically.
+  const value = raw.trim().replace(/^\uFEFF+/, "").replace(/\uFEFF+$/, "").trim();
   if (value.startsWith("#")) return parseHexColor(value);
-  const rgb = /^rgba?\((.*)\)$/i.exec(value);
+  // Functional forms are matched on the LOWERCASED value — exactly the Rust
+  // mirror's to_ascii_lowercase() — so case-insensitive CSS units (`DEG`,
+  // `NONE` channels) parse or reject identically on both sides.
+  const lower = value.toLowerCase();
+  // [\s\S] (not `.`): a line terminator inside the envelope is legal for the
+  // Rust mirror's strip_prefix/strip_suffix, so it must be legal here too.
+  const rgb = /^rgba?\(([\s\S]*)\)$/.exec(lower);
   if (rgb) {
     const parts = rgb[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
     if (parts.length < 3) return null;
@@ -116,13 +146,13 @@ function parseCssColor(raw: string): RgbaChannels | null {
     if (alpha === null) return null;
     return [...(channels as [number, number, number]), alpha];
   }
-  const hsl = /^hsla?\((.*)\)$/i.exec(value);
+  const hsl = /^hsla?\(([\s\S]*)\)$/.exec(lower);
   if (hsl) {
     const parts = hsl[1]!.split(/[\s,/]+/).filter((part) => part && part !== "none");
     if (parts.length < 3) return null;
-    const hue = Number.parseFloat(parts[0]!);
-    const saturation = Number.parseFloat(parts[1]!);
-    const lightness = Number.parseFloat(parts[2]!);
+    const hue = angleChannel(parts[0]!);
+    const saturation = percentChannel(parts[1]!);
+    const lightness = percentChannel(parts[2]!);
     if (![hue, saturation, lightness].every(Number.isFinite)) return null;
     const alpha = alphaComponent(parts[3]);
     if (alpha === null) return null;
@@ -164,13 +194,25 @@ function contrastRatio(a: number, b: number): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** The two inks a SOLID fill can carry. The dark end is the family's
+/** The two inks a SOLID fill normally carries. The dark end is the family's
  *  near-black (a hair of blue keeps it from reading as dead #000 on the
  *  pale palette members). */
 const SOLID_LIGHT_INK = "#fff";
 const SOLID_DARK_INK = "#0b1220";
 
-/** Relative luminances of the two candidate inks (white is the reference 1). */
+/** Last-resort ink: the softer pair leaves a narrow mid-tone dead zone
+ *  (plate luminance in the open interval (0.1833, 0.2024)) where neither clears AA; there pure black
+ *  is the higher-contrast choice that can reach the floor. Outside that band
+ *  the softer pair is SELECTED even though black would beat the near-black on
+ *  raw ratio everywhere — black stays a floor escape, not the normal ink. */
+const SOLID_NEUTRAL_INK = "#000";
+
+/** WCAG AA floor for the fully-opaque cell label; the meta line and the
+ *  italic unknown label keep their pre-existing 0.85 / 0.9 opacity (a
+ *  deliberate de-emphasis, not part of this contract). */
+const AA_CONTRAST = 4.5;
+
+/** Relative luminances of the candidate inks (white is the reference 1). */
 const SOLID_DARK_INK_LUMINANCE = relativeLuminance(parseHexColor(SOLID_DARK_INK)!);
 const SOLID_LIGHT_INK_LUMINANCE = 1;
 
@@ -209,10 +251,13 @@ export function contrastTextColor(background: string, scrim = 0): string {
     1,
   ];
   const luminance = relativeLuminance(effective);
-  return contrastRatio(luminance, SOLID_DARK_INK_LUMINANCE)
-    >= contrastRatio(luminance, SOLID_LIGHT_INK_LUMINANCE)
-    ? SOLID_DARK_INK
-    : SOLID_LIGHT_INK;
+  const dark = contrastRatio(luminance, SOLID_DARK_INK_LUMINANCE);
+  const light = contrastRatio(luminance, SOLID_LIGHT_INK_LUMINANCE);
+  const best = Math.max(dark, light);
+  // Neither softer ink clears the floor -> pure black, which is strictly the
+  // higher-contrast choice inside that band (see SOLID_NEUTRAL_INK).
+  if (best < AA_CONTRAST) return SOLID_NEUTRAL_INK;
+  return dark >= light ? SOLID_DARK_INK : SOLID_LIGHT_INK;
 }
 
 export const HK_TREEMAP_DEFAULT_COLORS = [
@@ -433,7 +478,9 @@ export function createHkTreemapSummary(
  *
  * Cell ink is derived from each SOLID plate's own luminance (WCAG
  * contrast), because a big opaque block is the background that matters;
- * only a transparent/unparseable fill defers to the theme text token.
+ * only a transparent/unparseable fill defers to the theme text token. The
+ * mid-tone band where neither the white nor the family near-black clears AA
+ * falls back to pure black.
  */
 export default defineComponent({
   name: "HkTreemap",

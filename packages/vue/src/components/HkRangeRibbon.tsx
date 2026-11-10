@@ -25,10 +25,9 @@ import "./HkRangeRibbon.scss";
  *     the track. With no window the detail is the full domain.
  *
  * The minimap shares the lanes' label column (an empty gutter), so both
- * layers start at the same inline x and, with NO headroom, a bar at x% sits
- * at the same inline position on both. A headroom deliberately breaks that
- * x% match: the minimap compresses by `1 + headroom` while the detail stays
- * window-relative.
+ * layers always start at the same inline x. Their x% agree only in the
+ * FULL-DOMAIN view: a window re-normalizes the detail against the selected
+ * sub-domain, and a headroom compresses the minimap by `1 + headroom`.
  *
  * HEADROOM: a host whose sequence is read against more than 100% (a 110%
  * budget, a "10% still unknown" tail) reserves that space with `headroom`, a
@@ -39,8 +38,9 @@ import "./HkRangeRibbon.scss";
  * never polluted by reserved space. Windows and every emitted value stay
  * CONTENT fractions in 0..1; a pointer in the blank tail clamps to content
  * 100%, because the tail is padding, not selectable progress. `minimal` mode
- * has no minimap layer, so its bare bar ignores the headroom entirely and
- * stays on the content axis.
+ * suppresses the minimap lane rows and the whole detail layer (its bare bar
+ * still lives in the overview container), so it ignores the headroom
+ * entirely and stays on the content axis.
  *
  * Editing: drag on the strip to brush a new window, drag either edge handle
  * to resize it, and reset back to the full domain — the reset button, a
@@ -315,14 +315,16 @@ export default defineComponent({
      *  ~90.9% of the strip and the last ~9.1% stays blank. Sanitized —
      *  non-finite / negative means no headroom, above 1 caps at 1. This is a
      *  MINIMAP-only axis: the detail layer ignores it (its axis is always
-     *  the window), `minimal` mode has no minimap to reserve for (its bare
-     *  bar stays on the content axis), and windows plus every emitted value
-     *  stay content fractions. */
+     *  the window), `minimal` mode suppresses the minimap lane rows so there
+     *  is nothing to reserve (its bare bar stays on the content axis), and
+     *  windows plus every emitted value stay content fractions. */
     headroom: { type: Number, default: 0 },
     /** Wave (2026-11-06 raw-records five): MINIMAL MODE — a bare dual-handle
-     *  range bar. No lane rows, no overview minimap, no label gutter; the
-     *  strip spans the full width and its track uses muted-based tokens
-     *  (the surface-based track read whitish inside dark phone modals).
+     *  range bar: no lane rows and no detail layer (the strip still lives in
+     *  the overview container, which keeps data-layer="minimap"), no label
+     *  gutter. The strip spans the full width and its track uses muted-based
+     *  tokens (the surface-based track read whitish inside dark phone
+     *  modals).
      *  The grips paint only for a NON-null window, so an uncontrolled
      *  minimal bar starts as a bare track; a host that wants the "default =
      *  everything selected" reading feeds the controlled window `[0, 1]`
@@ -360,9 +362,10 @@ export default defineComponent({
     });
 
     /** Width of the minimap's axis in content fractions. Every minimap x is
-     *  divided by it; the detail layer never is. `minimal` mode renders no
-     *  minimap layer at all (a bare dual-handle bar), so it ignores the
-     *  headroom and keeps the content axis — 100% stays at the right edge. */
+     *  divided by it; the detail layer never is. `minimal` mode suppresses
+     *  the lane rows and the detail layer (its bare bar still lives in the
+     *  overview container), so it ignores the headroom and keeps the content
+     *  axis — 100% stays at the right edge. */
     const axisSpan = computed(() => (props.minimal ? 1 : 1 + headroom.value));
 
     /** A supplied `window` prop (even null) is the controlled contract; no
@@ -880,16 +883,17 @@ export default defineComponent({
         >
           {/* LAYER 1 — the minimap: the full domain, the brush surface, the
               window chrome. It shares the lanes' label column (an empty
-              gutter first), so both layers start at the same inline x; with
-              no headroom an x% bar also lines up on both, which is what lets
-              the strip locate a detail bar. A headroom compresses the minimap
-              by `1/span` and breaks that x% match by design. */}
+              gutter first), so both layers always start at the same inline
+              x; their x% agree only in the full-domain view (a window
+              re-normalizes the detail, a headroom compresses the minimap by
+              `1/span`). */}
           <div class="hk-range-ribbon-overview" data-layer="minimap">
             {/* The gutter's width IS the shared label column: the
                 component JS-measures the widest rendered label and
                 publishes it on the root (two-phase free/measure/pin), so
                 this empty cell keeps both layers' inline START aligned at
-                any label width (their x% only match without a headroom). */}
+                any label width (their x% only agree in the full-domain
+                view, with no headroom). */}
             <span class="hk-range-ribbon-overview-gutter" aria-hidden="true" />
             <div class="hk-range-ribbon-overview-field">
               {strip}

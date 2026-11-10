@@ -40,6 +40,33 @@ function sourcesIn(dir: string): string[] {
   return out;
 }
 
+describe("overlay root accessibility contract (#1206)", () => {
+  it("creates a root that is NOT aria-hidden", () => {
+    // The root USED to be created wholesale aria-hidden (2026-11-10
+    // a11y review). Since HkModal / HkDrawer / HkToast / every floating
+    // layer teleport INTO this root, that hid the whole popup subtree
+    // from the accessibility tree — role="dialog", aria-modal,
+    // aria-label and aria-busy never reached AT. Decorative layers
+    // declare their own aria-hidden where needed (the modal blur
+    // plate); the root itself must stay out of the hiding business,
+    // exactly like hudRoot's documented contract.
+    const root = ensureOverlayRoot();
+    if (!root) throw new Error("overlay root was not created");
+    expect(root.id).toBe("hk-overlay-root");
+    expect(root.hasAttribute("aria-hidden")).toBe(false);
+  });
+
+  it("keeps the root free of an aria-hidden writer", () => {
+    // Guard the fix at the source level too: the module must not grow a
+    // new setAttribute writer for the root's aria-hidden (the same
+    // regression the runtime assertion above catches, caught statically).
+    // The comment deliberately NAMES the attribute to explain its
+    // absence, so this matches the writer shape, not the word.
+    const source = readFileSync(resolve(overlayDir, "overlayRoot.ts"), "utf8");
+    expect(source).not.toMatch(/setAttribute\(["']aria-hidden/);
+  });
+});
+
 describe("overlay root document-space elevation contract", () => {
   const css = compile(resolve(overlayDir, "overlayRoot.scss"), {
     style: "expanded",

@@ -1,5 +1,17 @@
+/**
+ * Elements a native Tab can actually reach.
+ *
+ * Every element-type branch excludes `[tabindex="-1"]` — the generic
+ * `[tabindex]` branch already did, but the named branches did not, so a
+ * `button[tabindex="-1"]` (HkNumberSteppers' hold-to-repeat buttons are
+ * exactly that) matched and could become a trap's `last`. `trapFocus`
+ * only wraps when the focused element IS the first/last member of this
+ * set; with a non-tab-stop as `last`, a forward Tab from the previous
+ * input walked straight out of the dialog (2026-11-10, #1206 — chest's
+ * SMS policy window was the reporter).
+ */
 export const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
 
 /** All focusable elements inside a container (excluding tabindex=-1). */
 export function getFocusableElements(container: HTMLElement): HTMLElement[] {

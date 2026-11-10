@@ -83,7 +83,16 @@ export function ensureOverlayRoot(): HTMLElement | null {
   if (!root) {
     root = document.createElement("div");
     root.id = "hk-overlay-root";
-    root.setAttribute("aria-hidden", "true");
+    // Deliberately NO aria-hidden here — the exact opposite of what the
+    // 2026-11-10 a11y review found (#1206): the root used to be created
+    // wholesale hidden, and since HkModal / HkDrawer / HkToast / every
+    // floating layer teleport INTO this root, the whole popup subtree was
+    // invisible to assistive tech (role="dialog", aria-modal, aria-label
+    // and aria-busy never reached the tree). Decorative layers declare
+    // their own aria-hidden where needed (the modal blur plate), and the
+    // root itself is a zero-size, pointer-transparent wrapper that has
+    // nothing to announce — matching hudRoot's contract.
+    root.setAttribute("data-hk-overlay-root", "");
     // Inline styles — this element is created BEFORE any stylesheet
     // loads, so it must be self-sufficient. `isolation` fences the
     // root's internal z-index space from the document's global stacking

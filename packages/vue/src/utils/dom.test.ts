@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { clearLeaveGeometry, pinLeaveGeometry } from "./dom";
 
@@ -166,5 +166,98 @@ describe("pinLeaveGeometry", () => {
     expect(el.style.height).toBe("");
     expect(el.style.boxSizing).toBe("");
     expect(el.style.marginLeft).toBe("4px");
+  });
+});
+
+/**
+ * FOCUSABLE_SELECTOR contract (#1206): every element-type branch must
+ * exclude [tabindex="-1"].
+ *
+ * The generic `[tabindex]` branch always did; the named branches did not,
+ * so a `button[tabindex="-1"]` (HkNumberSteppers' hold-to-repeat buttons
+ * are exactly that) MATCHED and could become a container's last
+ * "focusable" element. `trapFocus` only wraps when the focused element is
+ * the first/last member of the set — with a non-tab-stop as `last`, a
+ * forward Tab from the previous input walked straight out of the dialog
+ * (chest's SMS policy window was the reporter; the selector's own doc
+ * comment already claimed "excluding tabindex=-1", the implementation
+ * just never delivered it for the named branches).
+ *
+ * These tests use REAL DOM nodes appended to the document: happy-dom
+ * implements matches()/focus() on connected nodes, and the trap's wrap
+ * semantics depend on document.activeElement.
+ */
+import { FOCUSABLE_SELECTOR, getFocusableElements, trapFocus } from "./dom";
+
+describe("FOCUSABLE_SELECTOR excludes tabindex=-1 in every branch", () => {
+  let host: HTMLElement;
+
+  const tabFrom = (el: HTMLElement): boolean => {
+    el.focus();
+    const ev = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    trapFocus(host, ev);
+    return ev.defaultPrevented;
+  };
+
+  beforeEach(() => {
+    host = document.createElement("div");
+    document.body.appendChild(host);
+  });
+
+  afterEach(() => {
+    host.remove();
+  });
+
+  it("excludes a button[tabindex=-1] that would otherwise be the trap's last", () => {
+    // The reporter's shape: switch/input, then a number field whose
+    // stepper column ends with tabindex=-1 buttons, then a disabled Save.
+    host.innerHTML = `
+      <input type="checkbox" data-name="switch" />
+      <input type="number" data-name="ttl" />
+      <button type="button" tabindex="-1" data-name="ttl-up"></button>
+      <button type="button" tabindex="-1" data-name="ttl-down"></button>
+      <input type="number" data-name="cap" />
+      <button type="button" tabindex="-1" data-name="cap-up"></button>
+      <button type="button" tabindex="-1" data-name="cap-down"></button>
+    `;
+    const focusable = getFocusableElements(host);
+    // The three real inputs; the four steppers are excluded.
+    expect(focusable).toHaveLength(3);
+    const last = focusable[focusable.length - 1]!;
+    expect(last.dataset.name).toBe("cap");
+    // The native tab order ends here too — so the trap's last IS the
+    // last real tab stop, and a forward Tab from `cap` wraps to first.
+    expect((last.nextElementSibling as HTMLElement).tabIndex).toBe(-1);
+    expect(tabFrom(last)).toBe(true);
+    expect((document.activeElement as HTMLElement).dataset.name).toBe("switch");
+  });
+
+  it("excludes tabindex=-1 in the a[href], textarea and select branches too", () => {
+    host.innerHTML = `
+      <a href="#" tabindex="-1" data-name="link"></a>
+      <a href="#" data-name="link-ok"></a>
+      <textarea tabindex="-1" data-name="ta"></textarea>
+      <textarea data-name="ta-ok"></textarea>
+      <select tabindex="-1" data-name="sel"></select>
+      <select data-name="sel-ok"></select>
+    `;
+    const names = getFocusableElements(host).map((el) => el.dataset.name);
+    expect(names).toEqual(["link-ok", "ta-ok", "sel-ok"]);
+  });
+
+  it("still counts explicit tabindex=0 as a real tab stop", () => {
+    host.innerHTML = `
+      <button type="button" data-name="first"></button>
+      <div tabindex="0" data-name="panel"></div>
+    `;
+    const names = getFocusableElements(host).map((el) => el.dataset.name);
+    expect(names).toEqual(["first", "panel"]);
+  });
+
+  it("falls back to an empty set when nothing is focusable (trap no-ops)", () => {
+    host.innerHTML = `<button type="button" tabindex="-1"></button>`;
+    expect(getFocusableElements(host)).toHaveLength(0);
+    // trapFocus with an empty set must not throw and must not move focus.
+    expect(tabFrom(document.activeElement as HTMLElement)).toBe(false);
   });
 });

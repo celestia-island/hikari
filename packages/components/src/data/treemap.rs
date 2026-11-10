@@ -1275,6 +1275,9 @@ mod tests {
         assert_eq!(treemap_contrast_text_color("#edc948", 0.0), "#0b1220");
         assert_eq!(treemap_contrast_text_color("#4e79a7", 0.0), "#fff");
         assert_eq!(treemap_contrast_text_color("#7c5cd6", 0.0), "#fff");
+        // The two other shades from the reported token-usage screenshot.
+        assert_eq!(treemap_contrast_text_color("#2f6fd0", 0.0), "#fff");
+        assert_eq!(treemap_contrast_text_color("#00796b", 0.0), "#fff");
         assert_eq!(
             treemap_contrast_text_color("rgb(78, 121, 167)", 0.0),
             "#fff"

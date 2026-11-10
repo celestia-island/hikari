@@ -240,6 +240,9 @@ describe("HkTreemap pure layout input", () => {
     expect(contrastTextColor("#4e79a7")).toBe("#fff");
     expect(contrastTextColor("#7c5cd6")).toBe("#fff");
     expect(contrastTextColor("#d81b60")).toBe("#fff");
+    // The two other shades from the reported token-usage screenshot.
+    expect(contrastTextColor("#2f6fd0")).toBe("#fff");
+    expect(contrastTextColor("#00796b")).toBe("#fff");
     expect(contrastTextColor("rgb(78, 121, 167)")).toBe("#fff");
     // The live chest consumer feeds the space-separated triple shape.
     expect(contrastTextColor("rgb(167 139 250)")).toBe("#0b1220");
@@ -285,7 +288,7 @@ describe("HkTreemap pure layout input", () => {
 
   it("decides a group header band's ink on the scrimmed plate, not the plate", () => {
     // Green clears AA with dark ink on the plate, but the band darkens it;
-    // ignoring the scrim would paint dark text at ~3.6:1 on the band.
+    // ignoring the scrim would paint dark text at ~4.2:1 on the band.
     expect(contrastTextColor("#59a14f")).toBe("#0b1220");
     expect(contrastTextColor("#59a14f", HK_TREEMAP_HEAD_SCRIM)).toBe("#fff");
     // A pale plate stays dark on both surfaces.

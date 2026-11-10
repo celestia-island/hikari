@@ -122,8 +122,9 @@ export default defineComponent({
      *  window's leftover (measured on a real board: 275.8px static vs the
      *  139px dock, i.e. zero improvement over the pin board). The
      *  attribute is emitted only while a ride dock is genuinely mounted (not
-     *  for pin, not for a horizontal board, not for an empty slot), so every
-     *  existing board is untouched. */
+     *  for pin, not for a horizontal board, not for an empty board — with no
+     *  lanes the whole strip including the dock is not rendered — and not
+     *  for an empty dock slot), so every existing board is untouched. */
     dockMode: { type: String as PropType<"pin" | "ride">, default: "pin" },
   },
   emits: ["move"],
@@ -219,8 +220,17 @@ export default defineComponent({
       // always had, so no existing board changes. Gated on the dock actually
       // being mounted too (S2-2): a requested-but-empty slot is legal, and
       // releasing the lanes box for it would only shrink lane chrome on a
-      // short board while no dock is there to justify it.
-      const rideBoard = docksOnTail && props.dockMode === "ride" && !!slots.dockBottom;
+      // short board while no dock is there to justify it. Gated on a
+      // non-empty board as well (2026-11-10 follow-up): with
+      // `lanes.length === 0` the whole strip is replaced by the empty slot,
+      // so the container — and any dock in it — is not rendered at all; the
+      // hook means "a ride dock is mounted", and on an empty board none
+      // ever is.
+      const rideBoard =
+        docksOnTail &&
+        props.dockMode === "ride" &&
+        !!slots.dockBottom &&
+        props.lanes.length > 0;
       return (
         <div
           class="hk-kanban"

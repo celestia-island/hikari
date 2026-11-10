@@ -33,7 +33,11 @@ ride 宿主還必須讓內容能夠結束在**視口底邊之上**：把內容�
 （`min-height: 100%`）會讓 in-flow 的 spacer 與 dock 落在折線之外，dock 只能貼邊，空氣又退回
 視窗剩餘高。`HkKanban` 會在 ride 板上放開自己的 lanes 盒；自建宿主照做。
 
-出於同一原因，`autoFollow` 與 ride dock 不支援同開：它會把內容盒按整螢幕高度底對齊，ride 尾部因此落到視口折線之外。開發建置裡兩者同時開啟時容器會警告一次。
+出於同一原因，`autoFollow` 與 ride dock 不支援同開：它會把內容盒按整螢幕高度底對齊，ride 尾部因此落到
+視口折線之外。開發建置裡兩者同時開啟時，每個容器實例各自警告一次。
+
+ride 貼底期間，其包裹層與 spacer 都是 `pointer-events: none`；插槽內容裡需要接收事件的部件（dock 自己的
+控制項）要自行宣告 `pointer-events: auto`。
 
 ## ride 不是 frame 級預留
 

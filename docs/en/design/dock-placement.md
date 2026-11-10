@@ -44,7 +44,14 @@ in-flow spacer and dock below the fold, so the dock can only hug the edge and
 the air reverts to the window's leftover. `HkKanban` releases its own lanes box
 on a ride board; a custom host does the same.
 
-`autoFollow` is not supported together with a ride dock, for the same reason: it bottom-anchors a full-height content box, so the ride tail falls below the fold. The container warns once in dev builds when both are on.
+`autoFollow` is not supported together with a ride dock, for the same
+reason: it bottom-anchors a full-height content box, so the ride tail
+falls below the fold. The container warns once per container instance in
+dev builds when both are on.
+
+While pinned, the ride wrapper and its spacer are `pointer-events: none`;
+a part of the slot content that must catch events (the dock's own
+controls) has to declare `pointer-events: auto` itself.
 
 ## Ride is not a frame-level reservation
 

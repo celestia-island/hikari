@@ -250,17 +250,30 @@ const MOUNT_SLOTS = {
   dockBottom: () => h("div", { class: "the-dock" }, "dock"),
 };
 
+/** The sheets with comments STRIPPED (block + line comments, house
+ *  two-step form, tokenInventory.test.ts): every source-contract match
+ *  below judges the LIVE rules. A rule commented out must go red — a bare
+ *  regex happily matches commented text, which is exactly how the
+ *  2026-11-10 mutation round's comment-out survivor stayed green (and how
+ *  the round-1 review of a73a9f99 caught the same hole re-created by the
+ *  newer assertions). Both steps are needed: the sheets carry block
+ *  comments as well as line comments. */
 const scss = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "HkScrollContainer.scss"),
   "utf8",
-);
+)
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .replace(/^[ \t]*\/\/.*$/gm, "");
 
 /** The board's own sheet — the ride board's content-height switch lives
- *  there (see the S0 block in the ride contract tests). */
+ *  there (see the S0 block in the ride contract tests). Stripped like
+ *  `scss` above, for the same reason. */
 const kanbanScss = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "HkKanban.scss"),
   "utf8",
-);
+)
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .replace(/^[ \t]*\/\/.*$/gm, "");
 
 afterEach(() => {
   restoreRect?.();
@@ -612,16 +625,12 @@ describe("HkScrollContainer ride placement style contract", () => {
     // scrollport (the viewport) and is exactly this band; keyed on the ride
     // hook, which is emitted only while the dock is mounted.
     //
-    // Read with comments STRIPPED (house pattern, e.g.
-    // tokenInventory.test.ts / HkModal.open-close-scale.test.ts): the
+    // `scss` is the comment-stripped sheet (see the module const): the
     // 2026-11-10 mutation check found that commenting the rule out left
     // this test green — the regex happily matched the commented text.
-    const rule = scss
-      .replace(/\/\*[\s\S]*?\*\//g, "")
-      .replace(/^[ \t]*\/\/.*$/gm, "")
-      .match(
-        /\.hk-scroll-container\[data-dock-mode="ride"\] > \.hk-scroll-container-viewport \{[^}]*\}/,
-      );
+    const rule = scss.match(
+      /\.hk-scroll-container\[data-dock-mode="ride"\] > \.hk-scroll-container-viewport \{[^}]*\}/,
+    );
     expect(rule, "the ride viewport reserves the dock band for jumps").not.toBeNull();
     expect(rule![0]).toMatch(
       /scroll-padding-bottom:\s*var\(--hk-scroll-dock-bottom,\s*0px\)/,

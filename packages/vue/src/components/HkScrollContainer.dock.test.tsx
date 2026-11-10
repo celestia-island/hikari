@@ -163,10 +163,15 @@ describe("HkScrollContainer floating-dock tail clearance", () => {
     // hidden vertical axis (measured: scrollHeight +spacer, and a
     // programmatic scrollTop shifts content up behind
     // overflow-y:hidden with no wheel path back).
+    // Comments stripped (block + line, house two-step form — see
+    // HkScrollContainer.dockRide.test.ts): a rule commented out must go
+    // red, not hide in the text the regex matches.
     const scss = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), "HkScrollContainer.scss"),
       "utf8",
-    );
+    )
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^[ \t]*\/\/.*$/gm, "");
     const spacer = scss.match(
       /\.hk-scroll-container\[data-dock-tail="true"\]:not\(\[data-axis="horizontal"\]\) > \.hk-scroll-container-viewport::after\s*\{[^}]*\}/,
     );

@@ -292,6 +292,14 @@ describe("HkTreemap pure layout input", () => {
     expect(contrastTextColor("rgb(1 2 3 / NONE)")).toBe(contrastTextColor("rgb(1 2 3)"));
     expect(contrastTextColor("\uFEFF#fff")).toBe(contrastTextColor("#fff"));
     expect(contrastTextColor("rgb(1\uFEFF2 3)")).toBe(contrastTextColor("rgb(1 2 3)"));
+    // The whitespace MODEL is pinned too, not just these shapes: an
+    // interleaved BOM between real spaces still trims, and U+0085 (NEL) is
+    // a control character — NOT JS whitespace — so it never parses.
+    expect(contrastTextColor("\uFEFF \uFEFF#fff")).toBe(contrastTextColor("#fff"));
+    expect(contrastTextColor("#fff\uFEFF \uFEFF")).toBe(contrastTextColor("#fff"));
+    expect(contrastTextColor("\u0085#fff")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("#fff\u0085")).toBe("rgb(var(--color-text, 30 30 30))");
+    expect(contrastTextColor("rgb(1\u00852 3)")).toBe("rgb(var(--color-text, 30 30 30))");
   });
 
   it("keeps every default palette cell AND its group band at WCAG AA", () => {

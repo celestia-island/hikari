@@ -263,6 +263,14 @@ pub fn treemap_contrast_text_color(background: &str, scrim: f64) -> &'static str
     }
 }
 
+/// The exact whitespace set of the Vue mirror's JS `trim()` / `\s`: the
+/// Unicode White_Space set MINUS U+0085 (NEL — control, not JS whitespace)
+/// PLUS U+FEFF (BOM / ZWNBSP). Both runtimes must agree on what counts as
+/// space, or they answer differently on whitespace-prefixed colours.
+fn treemap_is_js_space(c: char) -> bool {
+    (c.is_whitespace() && c != '\u{0085}') || c == '\u{feff}'
+}
+
 fn treemap_is_hex(value: &str) -> bool {
     !value.is_empty() && value.chars().all(|c| c.is_ascii_hexdigit())
 }
@@ -297,13 +305,16 @@ pub fn treemap_parse_hex_color(raw: &str) -> Option<TreemapRgba> {
 /// One numeric colour channel (`0`–`255`, or a percentage of 255).
 pub fn treemap_numeric_channel(raw: &str) -> Option<f64> {
     if let Some(percent) = raw.strip_suffix('%') {
-        let percent = percent.trim().parse::<f64>().ok()?;
+        let percent = percent
+            .trim_matches(treemap_is_js_space)
+            .parse::<f64>()
+            .ok()?;
         if !percent.is_finite() {
             return None;
         }
         Some(((percent / 100.0) * 255.0).clamp(0.0, 255.0))
     } else {
-        let value = raw.trim().parse::<f64>().ok()?;
+        let value = raw.trim_matches(treemap_is_js_space).parse::<f64>().ok()?;
         if !value.is_finite() {
             return None;
         }
@@ -343,13 +354,19 @@ pub fn treemap_alpha_component(raw: Option<&str>) -> Option<f64> {
         None | Some("") => Some(1.0),
         Some(value) => {
             if let Some(percent) = value.strip_suffix('%') {
-                let percent = percent.trim().parse::<f64>().ok()?;
+                let percent = percent
+                    .trim_matches(treemap_is_js_space)
+                    .parse::<f64>()
+                    .ok()?;
                 if !percent.is_finite() {
                     return None;
                 }
                 Some((percent / 100.0).clamp(0.0, 1.0))
             } else {
-                let parsed = value.trim().parse::<f64>().ok()?;
+                let parsed = value
+                    .trim_matches(treemap_is_js_space)
+                    .parse::<f64>()
+                    .ok()?;
                 if !parsed.is_finite() {
                     return None;
                 }
@@ -361,7 +378,7 @@ pub fn treemap_alpha_component(raw: Option<&str>) -> Option<f64> {
 
 fn treemap_color_parts(inner: &str) -> Vec<&str> {
     inner
-        .split(|c: char| c.is_whitespace() || c == '\u{feff}' || c == ',' || c == '/')
+        .split(|c: char| treemap_is_js_space(c) || c == ',' || c == '/')
         .filter(|part| !part.is_empty() && *part != "none")
         .collect()
 }
@@ -369,10 +386,9 @@ fn treemap_color_parts(inner: &str) -> Vec<&str> {
 /// Vue's `parseCssColor`: hex, `rgb()`/`rgba()` and `hsl()`/`hsla()`, with
 /// `none` channels filtered out of the functional forms.
 pub fn treemap_parse_css_color(raw: &str) -> Option<TreemapRgba> {
-    // JS trim() (the Vue mirror's first step) also strips U+FEFF, which
-    // `char::is_whitespace` does not cover — strip it explicitly so a
-    // BOM-prefixed colour parses or rejects identically on both sides.
-    let value = raw.trim().trim_matches('\u{feff}').trim();
+    // JS trim() strips whitespace and U+FEFF in ONE pass over both ends;
+    // phase-wise trimming would leave an interleaved BOM behind and diverge.
+    let value = raw.trim_matches(treemap_is_js_space);
     if value.starts_with('#') {
         return treemap_parse_hex_color(value);
     }
@@ -421,18 +437,21 @@ pub fn treemap_parse_css_color(raw: &str) -> Option<TreemapRgba> {
 /// An hsl hue: a bare number, optionally suffixed `deg`, and optionally
 /// followed by the comma of the legacy comma-separated form.
 fn treemap_angle_channel(raw: &str) -> Option<f64> {
-    let text = raw.trim().trim_end_matches(',').trim_end_matches("deg");
-    text.trim().parse::<f64>().ok()
+    let text = raw
+        .trim_matches(treemap_is_js_space)
+        .trim_end_matches(',')
+        .trim_end_matches("deg");
+    text.trim_matches(treemap_is_js_space).parse::<f64>().ok()
 }
 
 /// An hsl saturation/lightness: a number with an optional `%` suffix (CSS
 /// requires the percent, but both forms appear in the wild).
 fn treemap_percent_channel(raw: &str) -> Option<f64> {
     let text = raw
-        .trim()
+        .trim_matches(treemap_is_js_space)
         .trim_end_matches(',')
         .trim_end_matches('%')
-        .trim();
+        .trim_matches(treemap_is_js_space);
     text.parse::<f64>().ok()
 }
 
@@ -1367,6 +1386,28 @@ mod tests {
         assert_eq!(
             treemap_contrast_text_color("rgb(1\u{feff}2 3)", 0.0),
             treemap_contrast_text_color("rgb(1 2 3)", 0.0)
+        );
+        // The whitespace MODEL: an interleaved BOM between real spaces still
+        // trims; U+0085 (NEL) is a control character, NOT JS whitespace.
+        assert_eq!(
+            treemap_contrast_text_color("\u{feff} \u{feff}#fff", 0.0),
+            treemap_contrast_text_color("#fff", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("#fff\u{feff} \u{feff}", 0.0),
+            treemap_contrast_text_color("#fff", 0.0)
+        );
+        assert_eq!(
+            treemap_contrast_text_color("\u{0085}#fff", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("#fff\u{0085}", 0.0),
+            TREEMAP_THEME_INK
+        );
+        assert_eq!(
+            treemap_contrast_text_color("rgb(1\u{0085}2 3)", 0.0),
+            TREEMAP_THEME_INK
         );
         assert_eq!(treemap_head_scrim_style(), "--hk-treemap-head-scrim:18%");
     }

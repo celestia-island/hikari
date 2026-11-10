@@ -10,37 +10,41 @@ import "./HkRangeRibbon.scss";
  * projected from ONE host-supplied sequence.
  *
  * The ribbon owns no content vocabulary. `lanes` is the consumer's row
- * structure and `segments` are its parts, each fed in ABSOLUTE fractions of
- * the whole progress (0..1). Both layers derive their x from that same
- * number, which is what keeps them mutually legible:
+ * structure, `segments` are its parts and `domain` is the axis they are
+ * measured on (default `[0, 1]`, the familiar 0%..100%; a caller may declare
+ * `[-0.1, 1]`, `[0, 2]`, `[-0.5, 1.5]` or a narrower `[0.2, 0.8]`). Segment
+ * starts/ends, the window and `windowChange` all live in those axis units.
  *
  *   · data-layer="minimap" — the top, compact strip. It paints every lane's
- *     segments across the FULL domain and never clips, so the window stays
- *     locatable; the window frame, the two outside scrims, both edge handles
- *     and the reset button ride on it, and it owns the brush surface.
+ *     segments clipped to the DOMAIN and never follows the window, so the
+ *     window stays locatable; the window frame, the two outside scrims, both
+ *     edge handles and the reset button ride on it, and it owns the brush
+ *     surface. Its x is `(f - domain[0]) / span`.
  *   · data-layer="detail" — the lower, taller lane list focused on the
- *     selected window: a window of [0.35, 0.67] starts the detail at 35% and
- *     ends it at 67% of the whole progress, because only segments that
- *     intersect the window survive, clipped at its edges and re-normalized to
- *     the track. With no window the detail is the full domain.
+ *     selected window: the track is always 0..100% of the WINDOW, in the
+ *     caller's domain units, so a window of [0.35, 0.67] starts the detail at
+ *     0 and ends it at 100% however the domain is placed (with the default
+ *     axis those are the familiar 35%..67%). Only segments intersecting the
+ *     window survive, clipped at its edges. With no window the detail is the
+ *     full view, i.e. the caller's domain.
  *
  * The minimap shares the lanes' label column (an empty gutter), so both
  * layers always start at the same inline x. Their x% agree only in the
  * FULL-DOMAIN view: a window re-normalizes the detail against the selected
- * sub-domain, and a headroom compresses the minimap by `1 + headroom`.
+ * sub-domain, and a non-unit domain rescales the minimap.
  *
- * HEADROOM: a host whose sequence is read against more than 100% (a 110%
- * budget, a "10% still unknown" tail) reserves that space with `headroom`, a
- * fraction clamped to 0..1. The minimap axis is then `1 + headroom` wide and
- * every minimap x is `fraction / span`: content 100% sits at 100/110 ≈ 90.9%
- * and the tail stays blank. The detail layer NEVER sees the headroom — its
- * axis is always the content window mapped to 0..100%, so a zoomed detail is
- * never polluted by reserved space. Windows and every emitted value stay
- * CONTENT fractions in 0..1; a pointer in the blank tail clamps to content
- * 100%, because the tail is padding, not selectable progress. `minimal` mode
- * suppresses the minimap lane rows and the whole detail layer (its bare bar
- * still lives in the overview container), so it ignores the headroom
- * entirely and stays on the content axis.
+ * DOMAIN: the axis is the caller's `domain`; content outside it is clipped
+ * away, and space inside it the content does not fill stays blank (a 200%
+ * budget, a 10% lead-in, a zoomed window of interest). `headroom` is the
+ * DEPRECATED shorthand for the trailing-axis case — `[0, 1 + headroom]`, so
+ * the "110%" reading is headroom 0.1 — and a valid `domain` wins over it.
+ * Windows and every emitted value stay absolute coordinates in the caller's
+ * domain units: pointer x maps back onto the domain (`d0 + x * span`) and
+ * clamps to it, the keyboard nudges by 5% of the span, and labels/ARIA read
+ * domain percentages (negative or above 100% when the domain says so).
+ * `minimal` mode suppresses the minimap lane rows and the whole detail layer
+ * (its bare bar still lives in the overview container) and draws the same
+ * domain axis.
  *
  * Editing: drag on the strip to brush a new window, drag either edge handle
  * to resize it, and reset back to the full domain — the reset button, a
@@ -73,13 +77,13 @@ export interface RibbonLane {
   label: string;
 }
 
-/** One bar on a lane, in fractions of the FULL domain (`start < end`). */
+/** One bar on a lane, in the caller's DOMAIN units (`start < end`). */
 export interface RibbonSegment {
   id: string;
   lane: string;
-  /** Fraction of the full sequence, 0..1. */
+  /** Start coordinate on the caller's domain axis. */
   start: number;
-  /** Fraction of the full sequence, 0..1. */
+  /** End coordinate on the caller's domain axis. */
   end: number;
   label: string;
   tone?: RibbonTone;
@@ -94,13 +98,44 @@ type WindowRange = [number, number];
 /** Assumed minimum window width when the host hands over something that is
  *  not a positive finite number (0 / negative / NaN). */
 const MIN_WINDOW_FALLBACK = 0.02;
-/** Keyboard nudge (fraction of the full domain) for move and resize. */
+/** Keyboard nudge as a fraction of the AXIS SPAN for move and resize. */
 const KEYBOARD_STEP = 0.05;
 /** Slack for "did this interaction change anything" comparisons. */
 const WINDOW_EPSILON = 1e-9;
 
-function clamp01(value: number): number {
-  return value < 0 ? 0 : value > 1 ? 1 : value;
+/** An ordered pair of caller coordinates: the axis everything is drawn on. */
+type DomainRange = [number, number];
+
+/** The fallback axis: the familiar 0%..100% reading. */
+const UNIT_DOMAIN: DomainRange = [0, 1];
+
+function clampTo(value: number, lo: number, hi: number): number {
+  return value < lo ? lo : value > hi ? hi : value;
+}
+
+function domainSpan(domain: DomainRange): number {
+  return domain[1] - domain[0];
+}
+
+/** Sanitize a caller axis into an ordered, positive-width pair — `null` when
+ *  the value cannot be one (not an array, a non-finite member, zero width).
+ *  An inverted pair is sorted. Stays `null`-able instead of defaulting here
+ *  because the component has a second fallback (the `headroom` alias). */
+function sanitizeDomain(input: unknown): DomainRange | null {
+  if (!Array.isArray(input) || input.length < 2) return null;
+  const first = Number(input[0]);
+  const second = Number(input[1]);
+  if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
+  const lo = Math.min(first, second);
+  const hi = Math.max(first, second);
+  return hi > lo ? [lo, hi] : null;
+}
+
+/** The axis a caller meant, never `null`: malformed input is the unit axis.
+ *  Shared by the component and `normalizeHkRangeWindow` so hosts and the
+ *  ribbon fall back the same way. */
+function resolveDomain(input: unknown): DomainRange {
+  return sanitizeDomain(input) ?? UNIT_DOMAIN;
 }
 
 /** Percent with adaptive precision. An integer percentage stays an integer —
@@ -139,38 +174,46 @@ function percent(fraction: number): string {
  * @param input Any host window value. `null` / `undefined`, a non-array, an
  *   array with fewer than two entries, or either member non-finite all mean
  *   "no window" and return `null` (the host reads that as the full domain).
- * @param minWidth Narrowest window the ribbon will produce, defaulting to
- *   0.02. Clamped to [0, 1]; a non-finite or non-positive value falls back
- *   to the default.
- * @returns An ordered, domain-clamped `[start, end]` pair of full-domain
- *   fractions, never narrower than `minWidth`, or `null` for "no window".
+ * @param minWidth Narrowest window the ribbon will produce, in domain units,
+ *   defaulting to 0.02. Capped at the axis span; a non-finite or non-positive
+ *   value falls back to the default.
+ * @param domain The axis the window lives on, defaulting to `[0, 1]`. An
+ *   inverted pair is sorted; anything malformed (not an array, non-finite
+ *   members, zero width) falls back to `[0, 1]`, which keeps the two-argument
+ *   host calls byte-identical to the pre-domain contract.
+ * @returns An ordered, domain-clamped `[start, end]` pair in the caller's
+ *   axis units, never narrower than `minWidth` (or than the span), or `null`
+ *   for "no window".
  */
 export function normalizeHkRangeWindow(
   input: unknown,
   minWidth: number = MIN_WINDOW_FALLBACK,
+  domain: readonly number[] | null = UNIT_DOMAIN,
 ): [number, number] | null {
   if (input == null || !Array.isArray(input) || input.length < 2) return null;
   const first = Number(input[0]);
   const second = Number(input[1]);
   if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
+  const [d0, d1] = resolveDomain(domain);
+  const span = d1 - d0;
   const min =
     Number.isFinite(minWidth) && minWidth > 0
-      ? Math.min(minWidth, 1)
-      : MIN_WINDOW_FALLBACK;
-  let lo = clamp01(Math.min(first, second));
-  let hi = clamp01(Math.max(first, second));
+      ? Math.min(minWidth, span)
+      : Math.min(MIN_WINDOW_FALLBACK, span);
+  let lo = clampTo(Math.min(first, second), d0, d1);
+  let hi = clampTo(Math.max(first, second), d0, d1);
   if (hi - lo < min) {
-    // Expand around the point, then shift inward at a domain edge.
+    // Expand around the point, then shift inward at the domain edges.
     const middle = (lo + hi) / 2;
     lo = middle - min / 2;
     hi = middle + min / 2;
-    if (lo < 0) {
-      lo = 0;
-      hi = Math.min(1, min);
+    if (lo < d0) {
+      lo = d0;
+      hi = Math.min(d1, d0 + min);
     }
-    if (hi > 1) {
-      hi = 1;
-      lo = Math.max(0, 1 - min);
+    if (hi > d1) {
+      hi = d1;
+      lo = Math.max(d0, d1 - min);
     }
   }
   return [lo, hi];
@@ -196,11 +239,13 @@ function intersectsWindow(placed: PlacedSegment, win: WindowRange): boolean {
   return placed.end > win[0] && placed.start < win[1];
 }
 
-/** Clamp every segment into the domain; drop NaN/unusable entries (a broken
- *  row must not take the whole ribbon down). A zero-length segment is kept:
- *  the LANE sheet gives it a 2px min-width floor under `box-sizing:
- *  border-box`, so a lane tick is exactly that 2px (the 1px borders sit
- *  inside it); the overview twin draws 1px. */
+/** Keep every usable segment, in the caller's DOMAIN units; drop NaN /
+ *  unusable entries (a broken row must not take the whole ribbon down).
+ *  Segments are deliberately NOT clamped here: content may extend past the
+ *  axis the caller chose to show, and the projections clip to the domain at
+ *  render time. A zero-length segment is kept: the LANE sheet gives it a 2px
+ *  min-width floor under `box-sizing: border-box`, so a lane tick is exactly
+ *  that 2px (the 1px borders sit inside it); the overview twin draws 1px. */
 function placeSegments(segments: RibbonSegment[] | undefined): PlacedSegment[] {
   if (!Array.isArray(segments)) return [];
   const placed: PlacedSegment[] = [];
@@ -211,8 +256,8 @@ function placeSegments(segments: RibbonSegment[] | undefined): PlacedSegment[] {
     if (!Number.isFinite(first) || !Number.isFinite(second)) continue;
     placed.push({
       segment,
-      start: clamp01(Math.min(first, second)),
-      end: clamp01(Math.max(first, second)),
+      start: Math.min(first, second),
+      end: Math.max(first, second),
     });
   }
   return placed;
@@ -225,10 +270,31 @@ type SegmentBox = {
   width: number;
 };
 
-function fullDomainBox(placed: PlacedSegment): SegmentBox {
+/** Clip a placed segment to the DOMAIN, in content units. This is the one
+ *  domain-clipping rule: the minimap and the no-window detail both paint the
+ *  domain, so anything wholly outside it is not drawn. A zero-length point is
+ *  kept only when it lies on the domain (the strict `start < end` test above
+ *  cannot express a point). */
+function clipToDomain(placed: PlacedSegment, domain: DomainRange): WindowRange | null {
+  const [d0, d1] = domain;
+  if (placed.start === placed.end) {
+    return placed.start >= d0 && placed.start <= d1 ? [placed.start, placed.start] : null;
+  }
+  if (placed.end <= d0 || placed.start >= d1) return null;
+  return [Math.max(placed.start, d0), Math.min(placed.end, d1)];
+}
+
+/** The box a segment paints on the FULL-DOMAIN axis (0..1 = domain start..
+ *  domain end). The minimap draws it directly and the no-window detail draws
+ *  it too — with no window the detail's axis IS the domain — so the two
+ *  layers agree by construction in the full-domain view. */
+function domainBox(placed: PlacedSegment, domain: DomainRange): SegmentBox | null {
+  const clipped = clipToDomain(placed, domain);
+  if (!clipped) return null;
+  const span = domainSpan(domain);
   return {
-    left: placed.start,
-    width: placed.end - placed.start,
+    left: (clipped[0] - domain[0]) / span,
+    width: (clipped[1] - clipped[0]) / span,
   };
 }
 
@@ -248,28 +314,33 @@ function windowedBox(placed: PlacedSegment, win: WindowRange): SegmentBox | null
   };
 }
 
-/** The minimap projection for one CONTENT scalar — a coordinate or a length:
- *  its AXIS value is `value / span` (span = 1 + headroom). This pair
- *  (`projectToAxis` + `axisBox`) is the ONLY place the minimap axis is
- *  computed, and every axis value is one of them: the overview segments, the
- *  window frame and the before scrim go through `axisBox`; both handles and
- *  the after scrim's left edge go through `projectToAxis`. The after scrim's
- *  width is `1 - its left`, which is what makes it reach the axis end.
- *  `fractionFrom` is the inverse (axis → content) for pointer input. The
- *  detail layer is never projected — its axis is the window itself, so none
- *  of this may leak into `windowedBox` / `fullDomainBox`. */
-function projectToAxis(value: number, span: number): number {
-  return value / span;
+/** Project one CONTENT COORDINATE onto the minimap axis:
+ *  `(value - domain[0]) / span`. These helpers are the ONLY place a content
+ *  value becomes an axis x: the window frame, both scrims and both handles go
+ *  through them, while segments go through `domainBox` (which clips to the
+ *  domain first), and `fractionFrom` is the inverse (axis → content) for
+ *  pointer input. The detail layer is never projected — its axis is the
+ *  window itself — so none of this may leak into `windowedBox` / `domainBox`.
+ *  A coordinate and a length are different projections: a length has no
+ *  origin and only divides by the span (see `projectToAxisLength`, which is
+ *  why a box must not scale its width through this function). */
+function projectToAxis(value: number, domain: DomainRange): number {
+  return (value - domain[0]) / domainSpan(domain);
 }
 
-/** Project a CONTENT box onto the minimap's `1 + headroom` axis: the content
- *  is compressed into the left 1/span of the strip and the reserved tail
- *  stays empty. Delegates to `projectToAxis` so the axis arithmetic has one
- *  home. The detail layer is never projected. */
-function axisBox(box: SegmentBox, span: number): SegmentBox {
+/** Project a CONTENT LENGTH (a box width) onto the minimap axis: no origin to
+ *  subtract, so it only scales by `1/span`. */
+function projectToAxisLength(length: number, domain: DomainRange): number {
+  return length / domainSpan(domain);
+}
+
+/** Project a CONTENT box onto the minimap axis. The left edge is a
+ *  coordinate, the width a length — scaling the width through
+ *  `projectToAxis` would wrongly subtract the domain start from it. */
+function axisBox(box: SegmentBox, domain: DomainRange): SegmentBox {
   return {
-    left: projectToAxis(box.left, span),
-    width: projectToAxis(box.width, span),
+    left: projectToAxis(box.left, domain),
+    width: projectToAxisLength(box.width, domain),
   };
 }
 
@@ -298,7 +369,7 @@ export default defineComponent({
     segments: { type: Array as PropType<RibbonSegment[]>, required: true },
     /** Id of the segment to paint as selected (host-owned). */
     selectedId: { type: String as PropType<string | null>, default: null },
-    /** Controlled window in FULL-DOMAIN fractions; null = full domain.
+    /** Controlled window in the caller's DOMAIN units; null = full domain.
      *  Omitting the prop (undefined) turns the uncontrolled fallback on. */
     window: {
       type: Array as PropType<number[] | null>,
@@ -307,17 +378,26 @@ export default defineComponent({
     /** Kill switch for the window feature: false = a static full-domain
      *  view (a supplied window is ignored, all window UI disappears). */
     windowEnabled: { type: Boolean, default: true },
-    /** Narrowest window the ribbon will produce, in domain fractions. */
+    /** Narrowest window the ribbon will produce, in DOMAIN units. Capped at
+     *  the axis span, because a floor wider than the axis could never fit
+     *  inside it. */
     minWindow: { type: Number, default: MIN_WINDOW_FALLBACK },
-    /** Trailing blank axis the MINIMAP reserves after content 100%, in
-     *  content fractions (0..1). The axis span is `1 + headroom`, so 0.1
-     *  reads the sequence against a 110% budget: content 100% lands at
-     *  ~90.9% of the strip and the last ~9.1% stays blank. Sanitized —
-     *  non-finite / negative means no headroom, above 1 caps at 1. This is a
-     *  MINIMAP-only axis: the detail layer ignores it (its axis is always
-     *  the window), `minimal` mode suppresses the minimap lane rows so there
-     *  is nothing to reserve (its bare bar stays on the content axis), and
-     *  windows plus every emitted value stay content fractions. */
+    /** The axis the whole ribbon is drawn against: `[start, end]` in the SAME
+     *  units as `segments` and `window`. Defaults to the unit axis `[0, 1]`
+     *  (the familiar 0%..100%). A caller may declare a negative start or an
+     *  end above 1 — `[-0.1, 1]` for a lead-in, `[0, 2]` for a 200% budget,
+     *  `[-0.5, 1.5]` for a centred one — or a narrower window of interest
+     *  such as `[0.2, 0.8]`. Sanitized: two finite numbers with a positive
+     *  span; an inverted pair is sorted and anything else (not an array,
+     *  non-finite members, zero width) falls back to `[0, 1]`. Content
+     *  outside the domain is clipped away and space inside it the content
+     *  does not fill stays blank; every emitted window is a coordinate on
+     *  this axis. */
+    domain: { type: Array as PropType<number[] | null>, default: undefined },
+    /** @deprecated Use `domain`. Trailing-axis shorthand: a positive value
+     *  means the axis is `[0, 1 + headroom]`, so the "110%" reading is
+     *  headroom 0.1; sanitized to 0..1 and ignored when a valid `domain` is
+     *  supplied. Kept for the 0.55 patch line. */
     headroom: { type: Number, default: 0 },
     /** Wave (2026-11-06 raw-records five): MINIMAL MODE — a bare dual-handle
      *  range bar: no lane rows and no detail layer (the strip still lives in
@@ -348,25 +428,36 @@ export default defineComponent({
 
     let gesture: Gesture | null = null;
 
-    const minWidth = computed(() => {
-      const raw = Number(props.minWindow);
-      return Number.isFinite(raw) && raw > 0 ? Math.min(raw, 1) : MIN_WINDOW_FALLBACK;
-    });
-
-    /** Sanitized trailing headroom: a non-finite or negative value is no
-     *  headroom at all, and more than a full domain of padding is capped
-     *  (the axis never exceeds 2× the content). */
+    /** Sanitized trailing headroom (the DEPRECATED `domain` alias): a
+     *  non-finite or negative value is no headroom at all, and more than a
+     *  full axis of padding is capped, so the alias axis never exceeds
+     *  `[0, 2]`. */
     const headroom = computed(() => {
       const raw = Number(props.headroom);
       return Number.isFinite(raw) && raw > 0 ? Math.min(raw, 1) : 0;
     });
 
-    /** Width of the minimap's axis in content fractions. Every minimap x is
-     *  divided by it; the detail layer never is. `minimal` mode suppresses
-     *  the lane rows and the detail layer (its bare bar still lives in the
-     *  overview container), so it ignores the headroom and keeps the content
-     *  axis — 100% stays at the right edge. */
-    const axisSpan = computed(() => (props.minimal ? 1 : 1 + headroom.value));
+    /** The effective axis: the caller's valid `domain`, else the deprecated
+     *  `headroom` shorthand `[0, 1 + headroom]`, else the unit axis. Every
+     *  geometry path (minimap x, scrims, handles, pointer input) reads this
+     *  one pair, so a declared domain and the alias cannot disagree, and
+     *  `minimal` mode draws the same axis as the full ribbon. */
+    const domain = computed<DomainRange>(() => {
+      const provided = sanitizeDomain(props.domain);
+      if (provided) return provided;
+      const extra = headroom.value;
+      return extra > 0 ? [0, 1 + extra] : UNIT_DOMAIN;
+    });
+
+    /** Narrowest window the ribbon will produce, in DOMAIN units. A request
+     *  wider than the axis is capped at the span: a minWindow longer than the
+     *  domain could never be satisfied inside it. */
+    const minWidth = computed(() => {
+      const raw = Number(props.minWindow);
+      const span = domainSpan(domain.value);
+      const requested = Number.isFinite(raw) && raw > 0 ? raw : MIN_WINDOW_FALLBACK;
+      return Math.min(requested, span);
+    });
 
     /** A supplied `window` prop (even null) is the controlled contract; no
      *  prop at all means "keep your own state". */
@@ -375,7 +466,7 @@ export default defineComponent({
     const activeWindow = computed<WindowRange | null>(() => {
       if (!props.windowEnabled) return null;
       const source = controlled.value ? props.window : internalWindow.value;
-      return normalizeHkRangeWindow(source, minWidth.value);
+      return normalizeHkRangeWindow(source, minWidth.value, domain.value);
     });
 
     const lanes = computed<RibbonLane[]>(() =>
@@ -395,11 +486,15 @@ export default defineComponent({
      *  would otherwise resurrect the card with no pointer or focus. */
     const renderedSegmentIds = computed(() => {
       const win = activeWindow.value;
+      const axis = domain.value;
       const declared = new Set(lanes.value.map((lane) => lane.key));
       const ids = new Set<string>();
       for (const placed of placedSegments.value) {
         if (!declared.has(placed.segment.lane)) continue;
-        if (win && !intersectsWindow(placed, win)) continue;
+        // With a window the clipping site is the window; without one it is
+        // the domain (the detail's no-window axis), so a segment outside the
+        // caller's axis cannot leave a tip card behind.
+        if (win ? !intersectsWindow(placed, win) : clipToDomain(placed, axis) === null) continue;
         ids.add(placed.segment.id);
       }
       return ids;
@@ -436,7 +531,8 @@ export default defineComponent({
      *  every press, swallowed the key, and the hosting dialog could never
      *  close while the bar held focus). */
     function isFullDomain(win: WindowRange | null): boolean {
-      return win !== null && win[0] <= WINDOW_EPSILON && win[1] >= 1 - WINDOW_EPSILON;
+      const [d0, d1] = domain.value;
+      return win !== null && win[0] <= d0 + WINDOW_EPSILON && win[1] >= d1 - WINDOW_EPSILON;
     }
 
     /** Returns true when a window actually existed AND was narrower than the
@@ -452,24 +548,26 @@ export default defineComponent({
       return true;
     }
 
-    /** Pointer x → absolute CONTENT fraction (0..1 of the real progress).
-     *  The pointer reads as a fraction of the strip's WHOLE width — the
-     *  axis, headroom included — so the reading is scaled by the span and
-     *  clamped: a press in the blank tail lands on content 100% instead of
-     *  inventing progress the host never declared. This is the only
-     *  axis→content conversion in the component. */
+    /** Pointer x → a CONTENT coordinate in the caller's DOMAIN units. The
+     *  pointer reads as a fraction of the strip's WHOLE width, so the reading
+     *  is mapped onto the axis (`d0 + x * span`) and clamped to it: a press
+     *  past either edge lands on that domain edge, never outside the
+     *  caller's coordinates. This is the only axis→content conversion in the
+     *  component. */
     function fractionFrom(clientX: number): number | null {
       const strip = stripRef.value;
       if (!strip) return null;
       const rect = strip.getBoundingClientRect();
       if (!(rect.width > 0)) return null;
-      return clamp01(((clientX - rect.left) / rect.width) * axisSpan.value);
+      const [d0, d1] = domain.value;
+      return clampTo(d0 + ((clientX - rect.left) / rect.width) * (d1 - d0), d0, d1);
     }
 
     function brushTo(fraction: number): void {
       if (!gesture || gesture.kind !== "brush") return;
       const anchor = gesture.anchor;
       const min = minWidth.value;
+      const [d0, d1] = domain.value;
       let lo = Math.min(anchor, fraction);
       let hi = Math.max(anchor, fraction);
       if (hi - lo < min) {
@@ -486,31 +584,33 @@ export default defineComponent({
           hi = anchor;
           lo = anchor - min;
         }
-        if (lo < 0) {
-          lo = 0;
-          hi = Math.min(1, min);
-        } else if (hi > 1) {
-          hi = 1;
-          lo = Math.max(0, 1 - min);
+        if (lo < d0) {
+          lo = d0;
+          hi = Math.min(d1, d0 + min);
+        } else if (hi > d1) {
+          hi = d1;
+          lo = Math.max(d0, d1 - min);
         }
       }
       commitWindow([lo, hi]);
     }
 
-    /** The window produced by moving ONE edge to `fraction` (absolute domain
-     *  fraction), clamped so the window never crosses itself and never drops
-     *  below minWindow. Pure: drag and keyboard share it. */
+    /** The window produced by moving ONE edge to `fraction` (a DOMAIN-unit
+     *  coordinate), clamped so the window never crosses itself, never drops
+     *  below minWindow and never leaves the caller's axis. Pure: drag and
+     *  keyboard share it. */
     function edgeWindow(
       win: WindowRange,
       edge: "start" | "end",
       fraction: number,
     ): WindowRange {
       const min = minWidth.value;
+      const [d0, d1] = domain.value;
       const [lo, hi] = win;
       if (edge === "start") {
-        return [Math.max(0, Math.min(fraction, hi - min)), hi];
+        return [Math.max(d0, Math.min(fraction, hi - min)), hi];
       }
-      return [lo, Math.min(1, Math.max(fraction, lo + min))];
+      return [lo, Math.min(d1, Math.max(fraction, lo + min))];
     }
 
     function dragEdge(edge: "start" | "end", fraction: number): void {
@@ -573,41 +673,48 @@ export default defineComponent({
     /** Arrow = slide the whole window; Shift+Arrow = resize from the
      *  trailing (end) edge. A plain arrow with no window is inert, so the
      *  full-domain view cannot be nudged into a meaningless window; a
-     *  Shift+Arrow contracts the full domain into one (keyboard entry).
-     *  Inert and no-op arrows are decided FIRST and left un-prevented, so
-     *  the host's normal arrow behaviour survives them. */
+     *  Shift+Arrow contracts the full domain into one (keyboard entry). The
+     *  nudge is 5% of the VISIBLE span, so a domain of [0, 2] steps 0.1 while
+     *  the unit axis keeps the classic 0.05. Inert and no-op arrows are
+     *  decided FIRST and left un-prevented, so the host's normal arrow
+     *  behaviour survives them. */
     function onStripKeyDown(event: KeyboardEvent): void {
       if (!props.windowEnabled) return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       const direction = event.key === "ArrowRight" ? 1 : -1;
+      const [d0, d1] = domain.value;
+      const step = KEYBOARD_STEP * (d1 - d0);
       const win = activeWindow.value;
       const min = minWidth.value;
       let next: WindowRange | null = null;
       if (!event.shiftKey) {
         if (!win) return; // inert without a window
         const width = win[1] - win[0];
-        const nextLo = Math.min(Math.max(win[0] + direction * KEYBOARD_STEP, 0), 1 - width);
+        const nextLo = Math.min(Math.max(win[0] + direction * step, d0), d1 - width);
         next = [nextLo, nextLo + width];
       } else if (!win) {
         if (direction > 0) return; // the full domain cannot grow
-        const end = Math.max(min, 1 - KEYBOARD_STEP);
-        if (end >= 1) return;
-        next = [0, end];
+        const end = Math.max(min, d1 - step);
+        if (end >= d1) return;
+        next = [d0, end];
       } else {
-        next = [win[0], Math.min(1, Math.max(win[0] + min, win[1] + direction * KEYBOARD_STEP))];
+        next = [win[0], Math.min(d1, Math.max(win[0] + min, win[1] + direction * step))];
       }
       if (next && commitIfChanged(next)) event.preventDefault();
     }
 
-    /** Handle sliders keep their own edge keyboard-editable. */
+    /** Handle sliders keep their own edge keyboard-editable (same 5%-of-span
+     *  nudge as the strip). */
     function onHandleKeyDown(edge: "start" | "end", event: KeyboardEvent): void {
       if (!props.windowEnabled) return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       const win = activeWindow.value;
       if (!win) return;
       const direction = event.key === "ArrowRight" ? 1 : -1;
+      const [d0, d1] = domain.value;
+      const step = KEYBOARD_STEP * (d1 - d0);
       const current = edge === "start" ? win[0] : win[1];
-      const next = edgeWindow(win, edge, current + direction * KEYBOARD_STEP);
+      const next = edgeWindow(win, edge, current + direction * step);
       if (commitIfChanged(next)) event.preventDefault();
     }
 
@@ -782,14 +889,14 @@ export default defineComponent({
       }
 
       // Minimap geometry, content → axis (projected through the two helpers
-      // only). The after scrim runs to the AXIS end, tail included: left is
-      // the projection of the window end and width is `1 - left`, whereas
-      // `1 - win[1]` would leave the reserved tail undimmed and read as
-      // progress the host still owes.
-      const span = axisSpan.value;
-      const minimapFrame = win ? axisBox({ left: win[0], width: win[1] - win[0] }, span) : null;
-      const minimapBefore = win ? axisBox({ left: 0, width: win[0] }, span) : null;
-      const minimapAfterLeft = win ? projectToAxis(win[1], span) : 0;
+      // only). The before scrim starts at the DOMAIN start (axis 0) and the
+      // after scrim runs to the DOMAIN end, so both cover exactly the
+      // coordinates outside the window — content the domain shows but the
+      // caller did not select.
+      const axis = domain.value;
+      const minimapFrame = win ? axisBox({ left: win[0], width: win[1] - win[0] }, axis) : null;
+      const minimapBefore = win ? { left: 0, width: projectToAxis(win[0], axis) } : null;
+      const minimapAfterLeft = win ? projectToAxis(win[1], axis) : 0;
       const minimapAfter = win
         ? { left: minimapAfterLeft, width: 1 - minimapAfterLeft }
         : null;
@@ -805,10 +912,12 @@ export default defineComponent({
           aria-label={t("hikari::ribbon.rangeAria", "Observation range")}
           aria-describedby={props.windowEnabled ? hintId : undefined}
           aria-disabled={props.windowEnabled ? undefined : "true"}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percentNumber(win ? win[0] : 0)}
-          aria-valuetext={`${percentText(win ? win[0] : 0)} – ${percentText(win ? win[1] : 1)}`}
+          aria-valuemin={percentNumber(axis[0])}
+          aria-valuemax={percentNumber(axis[1])}
+          aria-valuenow={percentNumber(win ? win[0] : axis[0])}
+          aria-valuetext={`${percentText(win ? win[0] : axis[0])} – ${percentText(
+            win ? win[1] : axis[1],
+          )}`}
           title={
             props.windowEnabled
               ? t(
@@ -825,15 +934,16 @@ export default defineComponent({
           }}
           onKeydown={onStripKeyDown}
         >
-          {/* The overview paints the FULL domain only — it never follows
-              the zoom, so the window's position stays locatable. Its x-axis
-              is the content plus the reserved headroom, so every bar here is
-              projected by `axisBox`. */}
+          {/* The overview paints the whole DOMAIN only — it never follows
+              the zoom, so the window's position stays locatable. Bars are
+              clipped to the caller's axis, so content beyond it simply does
+              not exist here. */}
           <div class="hk-range-ribbon-overview-lanes" aria-hidden="true">
             {!props.minimal && lanes.value.map((lane) => (
               <div class="hk-range-ribbon-overview-row" key={lane.key} data-lane={lane.key}>
                 {(byLane.get(lane.key) ?? []).map((placed) => {
-                  const box = axisBox(fullDomainBox(placed), span);
+                  const box = domainBox(placed, axis);
+                  if (!box) return null;
                   return (
                     <div
                       key={placed.segment.id}
@@ -881,19 +991,19 @@ export default defineComponent({
           data-window-enabled={props.windowEnabled ? "true" : "false"}
           onKeydown={onRootKeyDown}
         >
-          {/* LAYER 1 — the minimap: the full domain, the brush surface, the
-              window chrome. It shares the lanes' label column (an empty
-              gutter first), so both layers always start at the same inline
-              x; their x% agree only in the full-domain view (a window
-              re-normalizes the detail, a headroom compresses the minimap by
-              `1/span`). */}
+          {/* LAYER 1 — the minimap: the caller's whole domain, the brush
+              surface, the window chrome. It shares the lanes' label column
+              (an empty gutter first), so both layers always start at the same
+              inline x; their x% agree only in the full-domain view (a window
+              re-normalizes the detail, a non-unit domain rescales the
+              minimap). */}
           <div class="hk-range-ribbon-overview" data-layer="minimap">
             {/* The gutter's width IS the shared label column: the
                 component JS-measures the widest rendered label and
                 publishes it on the root (two-phase free/measure/pin), so
                 this empty cell keeps both layers' inline START aligned at
                 any label width (their x% only agree in the full-domain
-                view, with no headroom). */}
+                view). */}
             <span class="hk-range-ribbon-overview-gutter" aria-hidden="true" />
             <div class="hk-range-ribbon-overview-field">
               {strip}
@@ -906,11 +1016,11 @@ export default defineComponent({
                     aria-orientation="horizontal"
                     tabindex={0}
                     aria-label={t("hikari::ribbon.windowStart", "Window start")}
-                    aria-valuemin={0}
+                    aria-valuemin={percentNumber(axis[0])}
                     aria-valuemax={percentNumber(win[1] - minWidth.value)}
                     aria-valuenow={percentNumber(win[0])}
                     aria-valuetext={percentText(win[0])}
-                    style={{ left: percent(projectToAxis(win[0], span)) }}
+                    style={{ left: percent(projectToAxis(win[0], axis)) }}
                     onPointerdown={(event: PointerEvent) => onHandlePointerDown("start", event)}
                     onKeydown={(event: KeyboardEvent) => onHandleKeyDown("start", event)}
                   />
@@ -922,10 +1032,10 @@ export default defineComponent({
                     tabindex={0}
                     aria-label={t("hikari::ribbon.windowEnd", "Window end")}
                     aria-valuemin={percentNumber(win[0] + minWidth.value)}
-                    aria-valuemax={100}
+                    aria-valuemax={percentNumber(axis[1])}
                     aria-valuenow={percentNumber(win[1])}
                     aria-valuetext={percentText(win[1])}
-                    style={{ left: percent(projectToAxis(win[1], span)) }}
+                    style={{ left: percent(projectToAxis(win[1], axis)) }}
                     onPointerdown={(event: PointerEvent) => onHandlePointerDown("end", event)}
                     onKeydown={(event: KeyboardEvent) => onHandleKeyDown("end", event)}
                   />
@@ -968,11 +1078,14 @@ export default defineComponent({
               </span>
             )}
           </div>
-          {/* LAYER 2 — the detail: the same segments, focused. With a window
-              each bar is clipped to it and re-normalized to the track (so a
-              [0.35, 0.67] window spans 0..100% here); with no window it is
-              the full domain. The headroom is deliberately absent: this axis
-              is the selected content, never the reserved padding. */}
+          {/* LAYER 2 — the detail: the same segments, focused. Its track is
+              always 0..100% of the SELECTED WINDOW, in the caller's domain
+              units: a window of [0.35, 0.67] (the familiar 35%..67% on the
+              default [0, 1] axis) starts the detail at 0 and ends it at 100%,
+              and a segment at 1.0 inside a [0.5, 1.5] window lands at 50%.
+              With no window the map is absent, so the detail's axis is the
+              caller's DOMAIN (the full view): a domain wider than the content
+              leaves blank space instead of stretching the content. */}
           {!props.minimal && (
           <div class="hk-range-ribbon-detail" data-layer="detail">
             <div class="hk-range-ribbon-lanes">
@@ -983,7 +1096,7 @@ export default defineComponent({
                   </span>
                   <div class="hk-range-ribbon-lane-track" role="group" aria-label={lane.label}>
                     {(byLane.get(lane.key) ?? []).map((placed) => {
-                      const box = win ? windowedBox(placed, win) : fullDomainBox(placed);
+                      const box = win ? windowedBox(placed, win) : domainBox(placed, axis);
                       return box ? renderSegment(placed, box) : null;
                     })}
                   </div>

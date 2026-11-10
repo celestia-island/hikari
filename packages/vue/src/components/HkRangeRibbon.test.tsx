@@ -19,20 +19,20 @@ import jaBundle from "../i18n/locales/ja/components.json";
  *
  * The component's whole reason to exist is the window contract, so the
  * cases below pin it from both sides:
- *   · windowed lanes are the ONLY clipping site (full domain → positions
- *     untouched; clipped → re-normalized; wholly-outside → absent), while
- *     the overview keeps painting the full domain;
- *   · the emitted window is ALWAYS in full-domain absolute fractions —
- *     never relative to the currently zoomed sub-domain (the chest row
- *     filter depends on exactly that);
+ *   · windowed lanes are the ONLY clipping site (outside the window →
+ *     absent; straddling → re-normalized), while the overview keeps painting
+ *     the caller's whole domain;
+ *   · the emitted window is ALWAYS in absolute domain coordinates — never
+ *     relative to the currently zoomed sub-domain (the chest row filter
+ *     depends on exactly that);
  *   · every reset path (button / dblclick / Escape / Home) lands null and
  *     restores the full view;
  *   · sub-minimum brushes, edge drags and keyboard nudges clamp instead of
  *     crossing;
- *   · the two layers stay explicit (minimap / detail) over one absolute
- *     fraction contract, and `headroom` widens ONLY the minimap axis — the
- *     detail stays window-relative and the blank tail clamps to content
- *     100%.
+ *   · the two layers stay explicit (minimap / detail) over ONE caller
+ *     `domain` axis (default [0, 1]): the minimap draws the domain, the
+ *     detail draws the selected window, labels read domain percentages, and
+ *     the deprecated `headroom` prop is the `[0, 1 + headroom]` alias.
  * A stylesheet contract at the bottom compiles the sheet and pins the
  * classes, geometry and the one animation (repo convention: vitest stubs
  * CSS, so the runtime cases can never catch a dead rule).
@@ -327,7 +327,7 @@ describe("HkRangeRibbon window normalizer parity", () => {
     // component must keep CALLING the exported normalizer rather than
     // growing a private copy again.
     const tsx = readFileSync(resolve(componentDir, "HkRangeRibbon.tsx"), "utf8");
-    expect(tsx).toMatch(/return normalizeHkRangeWindow\(source, minWidth\.value\)/);
+    expect(tsx).toMatch(/return normalizeHkRangeWindow\(source, minWidth\.value, domain\.value\)/);
   });
 
   it("renders exactly the window the exported helper returns", () => {
@@ -1361,12 +1361,79 @@ describe("HkRangeRibbon controlled contract", () => {
   });
 });
 
-// ── Dual-layer waterfall + headroom axis ────────────────────────────────
+// ── Domain-aware normalizer ─────────────────────────────────────────────
+describe("HkRangeRibbon domain normalizer", () => {
+  it("clamps, expands and caps inside the caller's domain", () => {
+    // Inverted and out-of-domain windows clamp to the axis.
+    const inverted = normalizeHkRangeWindow([1.5, 0.5], 0.02, [0, 2])!;
+    expect(inverted[0]).toBeCloseTo(0.5, 10);
+    expect(inverted[1]).toBeCloseTo(1.5, 10);
+    const clamped = normalizeHkRangeWindow([-1, 3], 0.02, [0, 2])!;
+    expect(clamped[0]).toBeCloseTo(0, 10);
+    expect(clamped[1]).toBeCloseTo(2, 10);
+
+    // The min width lives in domain units: 0.02 around a point on [0, 2].
+    const point = normalizeHkRangeWindow([0.5, 0.5], 0.02, [0, 2])!;
+    expect(point[0]).toBeCloseTo(0.49, 10);
+    expect(point[1]).toBeCloseTo(0.51, 10);
+
+    // A min width wider than the axis caps at the span instead of escaping
+    // the domain.
+    const capped = normalizeHkRangeWindow([1, 1], 5, [0, 2])!;
+    expect(capped[0]).toBeCloseTo(0, 10);
+    expect(capped[1]).toBeCloseTo(2, 10);
+
+    // At the domain edges the expansion shifts inward, never outside.
+    const leftEdge = normalizeHkRangeWindow([0, 0], 0.02, [0, 2])!;
+    expect(leftEdge[0]).toBeCloseTo(0, 10);
+    expect(leftEdge[1]).toBeCloseTo(0.02, 10);
+    const rightEdge = normalizeHkRangeWindow([2, 2], 0.02, [0, 2])!;
+    expect(rightEdge[0]).toBeCloseTo(1.98, 10);
+    expect(rightEdge[1]).toBeCloseTo(2, 10);
+  });
+
+  it("treats a malformed domain as the unit axis (two-argument parity)", () => {
+    // Hosts calling with two arguments are byte-identical to the old contract.
+    expect(normalizeHkRangeWindow([0.2, 0.4])).toEqual([0.2, 0.4]);
+    expect(normalizeHkRangeWindow([0.2, 0.4], 0.02)).toEqual([0.2, 0.4]);
+    expect(normalizeHkRangeWindow([0.2, 0.4], 0.02, null)).toEqual([0.2, 0.4]);
+    expect(normalizeHkRangeWindow([0.2, 0.4], 0.02, "nope" as unknown as number[])).toEqual([
+      0.2, 0.4,
+    ]);
+    // A zero-width domain has no interior: the unit axis takes over.
+    expect(normalizeHkRangeWindow([0.2, 0.4], 0.02, [0.5, 0.5])).toEqual([0.2, 0.4]);
+    // An inverted domain is sorted, so it behaves like the same ordered pair.
+    expect(normalizeHkRangeWindow([0.2, 0.4], 0.02, [1, 0])).toEqual([0.2, 0.4]);
+  });
+});
+
+// ── Dual-layer waterfall + caller domain axis ───────────────────────────
 describe("HkRangeRibbon dual-layer waterfall", () => {
-  /** The minimap's x for a content fraction, in percent: every minimap box
-   *  is `fraction / span`, where span = 1 + headroom. */
+  /** The minimap's x for a fraction on the deprecated headroom ALIAS axis
+   *  `[0, 1 + headroom]`, in percent. */
   function axisPercent(fraction: number, headroom: number): number {
     return (fraction / (1 + headroom)) * 100;
+  }
+
+  /** The minimap's x of a DOMAIN coordinate / of a domain LENGTH, in percent. */
+  function domainPercent(value: number, domain: [number, number]): number {
+    return ((value - domain[0]) / (domain[1] - domain[0])) * 100;
+  }
+
+  function domainWidthPercent(length: number, domain: [number, number]): number {
+    return (length / (domain[1] - domain[0])) * 100;
+  }
+
+  /** Inline box assertions at the geometry tolerance: `percent()` keeps four
+   *  decimals, but these cases pin fractions, so 3 is the honest precision. */
+  function expectBox(
+    element: HTMLElement | null,
+    expected: { left: number; width: number },
+    label: string,
+  ): void {
+    expect(element, label).toBeTruthy();
+    expect(boxOf(element!).left, `${label} left`).toBeCloseTo(expected.left, 3);
+    expect(boxOf(element!).width, `${label} width`).toBeCloseTo(expected.width, 3);
   }
 
   it("marks both layers explicitly and keeps the lane markup intact", () => {
@@ -1397,85 +1464,204 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
     expect(mountRibbon({ minimal: true }).querySelector(".hk-range-ribbon-detail")).toBeNull();
   });
 
-  it("maps the same absolute fraction onto both layers (minimap f/span, detail window-relative)", () => {
-    // parse covers 30%..45% of the whole progress; the window is 35%..67%.
-    const root = mountRibbon({ window: [0.35, 0.67], headroom: 0.1 });
-    const parseOverview = root.querySelector<HTMLElement>(
+  it("keeps the unit axis when no domain is supplied (backward compatible)", () => {
+    // Omitting `domain` (and the alias) is exactly [0, 1]: same boxes, same
+    // aria bounds as an explicit unit axis.
+    const implicit = mountRibbon({ window: [0.2, 0.6] });
+    const explicit = mountRibbon({ domain: [0, 1], window: [0.2, 0.6] });
+    for (const selector of [
+      ".hk-range-ribbon-window",
+      '.hk-range-ribbon-scrim[data-side="after"]',
+      '.hk-range-ribbon-overview-segment[data-segment-id="write"]',
+      '.hk-range-ribbon-lane-track .hk-range-ribbon-segment[data-segment-id="write"]',
+    ]) {
+      const a = implicit.querySelector<HTMLElement>(selector)!;
+      const b = explicit.querySelector<HTMLElement>(selector)!;
+      expect(a.style.left, `${selector} left`).toBe(b.style.left);
+      expect(a.style.width, `${selector} width`).toBe(b.style.width);
+    }
+    const strip = implicit.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    expect(strip.getAttribute("aria-valuemin")).toBe("0");
+    expect(strip.getAttribute("aria-valuemax")).toBe("100");
+  });
+
+  it("draws the minimap x as (f - domain[0]) / span across caller axes", () => {
+    // Hard anchor first: on [0, 2] half the strip is coordinate 1.0.
+    const wide = mountRibbon({ domain: [0, 2], window: [0.5, 1.5] });
+    expectBox(
+      wide.querySelector<HTMLElement>(".hk-range-ribbon-window"),
+      { left: 25, width: 50 },
+      "frame [0.5, 1.5] of [0, 2]",
+    );
+    expectBox(
+      wide.querySelector<HTMLElement>('.hk-range-ribbon-overview-segment[data-segment-id="parse"]'),
+      { left: 15, width: 7.5 },
+      "parse 0.3..0.45 of [0, 2]",
+    );
+    expectBox(
+      wide.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="before"]'),
+      { left: 0, width: 25 },
+      "before scrim covers the domain before the window",
+    );
+    expectBox(
+      wide.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="after"]'),
+      { left: 75, width: 25 },
+      "after scrim runs to the domain end",
+    );
+    expect(
+      parseFloat(wide.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!.style.left),
+    ).toBeCloseTo(25, 3);
+    expect(
+      parseFloat(wide.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!.style.left),
+    ).toBeCloseTo(75, 3);
+
+    // Formula sweep over the shapes a caller may declare: negative start,
+    // trailing budget and a narrower window of interest. A window at 10%..70%
+    // of each axis must land at the same strip percentages.
+    const cases: Array<[number, number]> = [
+      [-0.1, 1],
+      [0.2, 0.8],
+      [-0.5, 1.5],
+    ];
+    for (const domain of cases) {
+      const span = domain[1] - domain[0];
+      const window: [number, number] = [domain[0] + 0.1 * span, domain[0] + 0.7 * span];
+      const root = mountRibbon({ domain, window });
+      expectBox(
+        root.querySelector<HTMLElement>(".hk-range-ribbon-window"),
+        { left: 10, width: 60 },
+        `${domain} frame is 10%..70% of the axis`,
+      );
+      expectBox(
+        root.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="before"]'),
+        { left: 0, width: 10 },
+        `${domain} before scrim`,
+      );
+      expectBox(
+        root.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="after"]'),
+        { left: 70, width: 30 },
+        `${domain} after scrim reaches the axis end`,
+      );
+      expect(
+        parseFloat(
+          root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!.style.left,
+        ),
+        `${domain} start grip`,
+      ).toBeCloseTo(10, 3);
+      expect(
+        parseFloat(
+          root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!.style.left,
+        ),
+        `${domain} end grip`,
+      ).toBeCloseTo(70, 3);
+    }
+  });
+
+  it("maps the detail track to the selected WINDOW in domain coordinates", () => {
+    // Domain [0, 2], window [0.5, 1.5]: the detail is 0..100% of that window,
+    // so a bar starting at coordinate 1.0 lands halfway.
+    const segments: RibbonSegment[] = [
+      { id: "lead", lane: "cpu", start: 0.5, end: 0.9, label: "lead" },
+      { id: "mid", lane: "cpu", start: 1, end: 1.2, label: "mid" },
+      { id: "tail", lane: "cpu", start: 1.4, end: 1.8, label: "tail" },
+    ];
+    const root = mountRibbon({ domain: [0, 2], window: [0.5, 1.5], segments });
+    expectBox(segmentById(root, "lead"), { left: 0, width: 40 }, "lead 0.5..0.9");
+    expectBox(segmentById(root, "mid"), { left: 50, width: 20 }, "a bar at 1.0 starts halfway");
+    expectBox(segmentById(root, "tail"), { left: 90, width: 10 }, "tail clipped at the window end");
+
+    // The same window on a negative-start axis keeps its relative mapping:
+    // [-0.1, 1] with window [0.2, 0.6] puts parse (0.3..0.45) at 25%..62.5%.
+    const negative = mountRibbon({ domain: [-0.1, 1], window: [0.2, 0.6] });
+    expectBox(segmentById(negative, "parse"), { left: 25, width: 37.5 }, "parse inside a negative axis");
+  });
+
+  it("paints the no-window detail on the domain axis (the full view)", () => {
+    // With no window the detail IS the full view, so its axis is the domain:
+    // on [0, 2] a segment at 0.3..0.45 lands at 15%..22.5%, and the minimap
+    // twin agrees — the full-domain view is where the two layers line up.
+    const root = mountRibbon({ window: null, domain: [0, 2] });
+    const parse = segmentById(root, "parse")!;
+    expect(boxOf(parse).left, "0.3 on a [0, 2] axis").toBeCloseTo(15, 3);
+    expect(boxOf(parse).width).toBeCloseTo(7.5, 3);
+    const overview = root.querySelector<HTMLElement>(
       '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
     )!;
-    expect(boxOf(parseOverview).left, "minimap left = 0.3 / span").toBeCloseTo(
-      axisPercent(0.3, 0.1),
-      4,
+    expect(boxOf(overview).left, "both layers share the domain axis").toBeCloseTo(
+      boxOf(parse).left,
+      3,
     );
-    expect(boxOf(parseOverview).width, "minimap width = 0.15 / span").toBeCloseTo(
-      axisPercent(0.15, 0.1),
-      4,
+    expect(boxOf(overview).width).toBeCloseTo(boxOf(parse).width, 3);
+
+    // The deprecated alias drives the no-window detail the same way: it IS a
+    // domain, not a minimap-only tail.
+    const alias = mountRibbon({ window: null, headroom: 0.1 });
+    expect(boxOf(segmentById(alias, "parse")!).left).toBeCloseTo(axisPercent(0.3, 0.1), 3);
+  });
+
+  it("maps the same absolute fraction onto the alias minimap and the window-relative detail", () => {
+    // parse covers 30%..45% of the alias axis [0, 1.1]; the window is
+    // 35%..67% of that same axis.
+    const root = mountRibbon({ window: [0.35, 0.67], headroom: 0.1 });
+    expectBox(
+      root.querySelector<HTMLElement>('.hk-range-ribbon-overview-segment[data-segment-id="parse"]'),
+      { left: axisPercent(0.3, 0.1), width: axisPercent(0.15, 0.1) },
+      "alias minimap parse",
     );
 
-    // Detail: the SAME segment, clipped to the window and re-normalized. The
-    // headroom never enters this axis — a [0.35, 0.67] window spans 0..100%.
+    // The detail ignores the axis entirely and re-normalizes the window to
+    // its own 0..100% track.
     const parseDetail = segmentById(root, "parse")!;
-    expect(boxOf(parseDetail).left, "detail starts at the window start").toBeCloseTo(0, 4);
+    expect(boxOf(parseDetail).left, "detail starts at the window start").toBeCloseTo(0, 3);
     expect(boxOf(parseDetail).width, "detail width is window-relative").toBeCloseTo(
       ((0.45 - 0.35) / (0.67 - 0.35)) * 100,
-      4,
+      3,
     );
     const writeDetail = segmentById(root, "write")!;
     expect(
       boxOf(writeDetail).left + boxOf(writeDetail).width,
       "detail ends at the window end",
-    ).toBeCloseTo(100, 4);
+    ).toBeCloseTo(100, 3);
 
-    // A detail box under a headroom is byte-identical to its box with no
-    // headroom at all — the tail is a minimap-only projection.
-    const noTail = mountRibbon({ window: [0.35, 0.67] });
-    expect(boxOf(segmentById(root, "write")!)).toEqual(boxOf(segmentById(noTail, "write")!));
+    // A detail box under the alias is byte-identical to its box with no
+    // alias at all — the window, not the axis, is the detail's unit.
+    const noAlias = mountRibbon({ window: [0.35, 0.67] });
+    expect(boxOf(segmentById(root, "write")!)).toEqual(boxOf(segmentById(noAlias, "write")!));
     // …while the window frame is axis-projected on the minimap.
-    const frame = root.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
-    expect(boxOf(frame).left).toBeCloseTo(axisPercent(0.35, 0.1), 4);
-    expect(boxOf(frame).width).toBeCloseTo(axisPercent(0.32, 0.1), 4);
+    expectBox(
+      root.querySelector<HTMLElement>(".hk-range-ribbon-window"),
+      { left: axisPercent(0.35, 0.1), width: axisPercent(0.32, 0.1) },
+      "alias frame",
+    );
   });
 
-  it("reserves the blank tail: scrims, frame and handles all stop at the axis end", () => {
-    // window [0.2, 1]: the whole content is selected, so the entire tail is
-    // "after the window" and must stay dimmed — reusing 1 - win[1] would
-    // leave it bare.
+  it("dims the unselected alias axis all the way to its end", () => {
+    // window [0.2, 1]: content 100% is selected, so the whole 1.0..1.1 end of
+    // the alias axis is unselected and must stay dimmed.
     const root = mountRibbon({ window: [0.2, 1], headroom: 0.1 });
-    const before = root.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="before"]')!;
+    expectBox(
+      root.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="before"]'),
+      { left: 0, width: axisPercent(0.2, 0.1) },
+      "before scrim",
+    );
     const after = root.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="after"]')!;
-    expect(boxOf(before).width, "before scrim = window start / span").toBeCloseTo(
-      axisPercent(0.2, 0.1),
-      4,
-    );
-    expect(boxOf(after).left, "after scrim starts where content 100% sits").toBeCloseTo(
-      axisPercent(1, 0.1),
-      4,
-    );
-    expect(boxOf(after).width, "after scrim width = (span - window end) / span").toBeCloseTo(
-      ((1.1 - 1) / 1.1) * 100,
-      4,
-    );
+    expect(boxOf(after).left, "after scrim starts at content 100%").toBeCloseTo(90.9091, 3);
+    expect(boxOf(after).width, "after scrim covers to the alias end").toBeCloseTo(9.0909, 3);
     expect(
       boxOf(after).left + boxOf(after).width,
-      "the after scrim reaches the axis end",
-    ).toBeCloseTo(100, 4);
+      "the scrim reaches the axis end",
+    ).toBeCloseTo(100, 3);
 
-    const frame = root.querySelector<HTMLElement>(".hk-range-ribbon-window")!;
-    expect(boxOf(frame).left).toBeCloseTo(axisPercent(0.2, 0.1), 4);
-    expect(boxOf(frame).width).toBeCloseTo(axisPercent(0.8, 0.1), 4);
-
+    expectBox(
+      root.querySelector<HTMLElement>(".hk-range-ribbon-window"),
+      { left: axisPercent(0.2, 0.1), width: axisPercent(0.8, 0.1) },
+      "alias frame",
+    );
     const start = root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!;
     const end = root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
-    expect(parseFloat(start.style.left), "start grip at content 20% on the axis").toBeCloseTo(
-      axisPercent(0.2, 0.1),
-      4,
-    );
-    expect(parseFloat(end.style.left), "end grip at content 100% on the axis").toBeCloseTo(
-      axisPercent(1, 0.1),
-      4,
-    );
-    // The a11y readings stay CONTENT percentages: the axis projection is
-    // presentation, never the value the host or assistive tech sees.
+    expect(parseFloat(start.style.left)).toBeCloseTo(axisPercent(0.2, 0.1), 3);
+    expect(parseFloat(end.style.left)).toBeCloseTo(axisPercent(1, 0.1), 3);
+    // The a11y readings are coordinates, not axis percentages.
     expect(end.getAttribute("aria-valuenow")).toBe("100");
     expect(end.getAttribute("aria-valuetext")).toBe("100%");
     expect(
@@ -1483,7 +1669,7 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
     ).toBe("20% – 100%");
   });
 
-  it("sanitizes the headroom so a bad value never distorts the axis", () => {
+  it("sanitizes the deprecated headroom alias into a real axis", () => {
     const cases: Array<[number, number]> = [
       [0, 1],
       [-0.5, 1],
@@ -1500,72 +1686,257 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
       expect(parse, `headroom ${headroom} still paints`).toBeTruthy();
       expect(boxOf(parse).left, `headroom ${headroom} maps through span ${span}`).toBeCloseTo(
         (0.3 / span) * 100,
-        4,
+        3,
       );
     }
   });
 
-  it("keeps the headroom out of the detail when no window is selected", () => {
-    const root = mountRibbon({ window: null, headroom: 0.1 });
-    // Detail bars keep the full-domain content axis (30%, not 27.27%).
-    expect(boxOf(segmentById(root, "parse")!).left).toBeCloseTo(30, 4);
-    const overview = root.querySelector<HTMLElement>(
-      '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
-    )!;
-    expect(boxOf(overview).left, "the minimap still reserves the tail").toBeCloseTo(
-      axisPercent(0.3, 0.1),
-      4,
+  it("treats headroom as the [0, 1 + headroom] alias, and a domain wins over it", () => {
+    // Equivalence: the alias and its explicit domain draw the same geometry.
+    const alias = mountRibbon({ headroom: 0.1, window: [0.2, 0.6] });
+    const explicit = mountRibbon({ domain: [0, 1.1], window: [0.2, 0.6] });
+    const compared: Array<{ selector: string; width: boolean }> = [
+      { selector: ".hk-range-ribbon-window", width: true },
+      { selector: '.hk-range-ribbon-scrim[data-side="before"]', width: true },
+      { selector: '.hk-range-ribbon-scrim[data-side="after"]', width: true },
+      { selector: '.hk-range-ribbon-handle[data-edge="start"]', width: false },
+      { selector: '.hk-range-ribbon-handle[data-edge="end"]', width: false },
+      { selector: '.hk-range-ribbon-overview-segment[data-segment-id="parse"]', width: true },
+    ];
+    for (const { selector, width } of compared) {
+      const fromAlias = alias.querySelector<HTMLElement>(selector)!;
+      const fromDomain = explicit.querySelector<HTMLElement>(selector)!;
+      expect(parseFloat(fromAlias.style.left), `${selector} left`).toBeCloseTo(
+        parseFloat(fromDomain.style.left),
+        10,
+      );
+      if (width) {
+        expect(parseFloat(fromAlias.style.width), `${selector} width`).toBeCloseTo(
+          parseFloat(fromDomain.style.width),
+          10,
+        );
+      }
+    }
+    // The alias announces its own end (110%), never the unit axis.
+    expect(
+      alias.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.getAttribute("aria-valuemax"),
+    ).toBe("110");
+
+    // A valid `domain` wins over a supplied headroom.
+    const both = mountRibbon({ domain: [0, 2], headroom: 0.1 });
+    expect(
+      boxOf(
+        both.querySelector<HTMLElement>(
+          '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
+        )!,
+      ).left,
+      "domain [0, 2] wins: parse at 15%",
+    ).toBeCloseTo(15, 3);
+    expect(
+      both.querySelector<HTMLElement>(".hk-range-ribbon-strip")!.getAttribute("aria-valuemax"),
+    ).toBe("200");
+  });
+
+  it("maps pointer input onto the domain and clamps to its edges", async () => {
+    // Domain [0, 2]: half the strip is coordinate 1.0, so a brush from axis
+    // 50% to the far right is [1, 2]. A read that ignored the domain would
+    // answer [0.5, 1].
+    const wide = mountHost(null, { domain: [0, 2] });
+    const wideStrip = stubStrip(wide.root);
+    await drag(wideStrip.strip, 0.5, 1, wideStrip.x);
+    expectWindow(lastWindow(wide.windowChange), 1, 2);
+
+    // Negative start, [-0.1, 1]: axis 50% is coordinate 0.45, and a press
+    // past the right edge still clamps to the domain end 1.
+    const negative = mountHost(null, { domain: [-0.1, 1] });
+    const neg = stubStrip(negative.root);
+    await drag(neg.strip, 0.5, 1.25, neg.x);
+    expectWindow(lastWindow(negative.windowChange), 0.45, 1);
+
+    // The handle path reads the same axis: with domain [0, 2] the end grip
+    // dragged to axis 95% is coordinate 1.9 (a read that ignored the domain
+    // would leave the window at 0.95).
+    await wide.setWindow([0.5, 1.5]);
+    const end = wide.root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
+    expect(end, "the end grip renders for the sub-window").toBeTruthy();
+    await drag(end, 0.75, 0.95, wideStrip.x);
+    expectWindow(lastWindow(wide.windowChange), 0.5, 1.9);
+  });
+
+  it("reads labels and ARIA in domain units (negative and above 100%)", () => {
+    // Negative start: the full view announces its own axis, not 0%..100%.
+    const negative = mountRibbon({ domain: [-0.1, 0.5] });
+    const strip = negative.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    expect(strip.getAttribute("aria-valuemin")).toBe("-10");
+    expect(strip.getAttribute("aria-valuemax")).toBe("50");
+    expect(strip.getAttribute("aria-valuenow"), "full view = domain start").toBe("-10");
+    expect(strip.getAttribute("aria-valuetext")).toBe("-10% – 50%");
+
+    // A window that itself starts below zero keeps its sign on both the strip
+    // and the start grip.
+    const windowed = mountRibbon({ domain: [-0.1, 1], window: [-0.05, 0.4] });
+    const windowedStrip = windowed.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    expect(windowedStrip.getAttribute("aria-valuenow")).toBe("-5");
+    expect(windowedStrip.getAttribute("aria-valuetext")).toBe("-5% – 40%");
+    expect(
+      windowed
+        .querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!
+        .getAttribute("aria-valuetext"),
+    ).toBe("-5%");
+
+    // Above 100%: a 200% budget reads as 0..200, and a window ending at 150%
+    // announces 150 rather than a rescaled 75.
+    const wide = mountRibbon({ domain: [0, 2], window: [0.5, 1.5] });
+    const wideStrip = wide.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    expect(wideStrip.getAttribute("aria-valuemin")).toBe("0");
+    expect(wideStrip.getAttribute("aria-valuemax")).toBe("200");
+    expect(wideStrip.getAttribute("aria-valuetext")).toBe("50% – 150%");
+    const wideEnd = wide.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
+    expect(wideEnd.getAttribute("aria-valuenow")).toBe("150");
+    expect(wideEnd.getAttribute("aria-valuetext")).toBe("150%");
+    expect(wideEnd.getAttribute("aria-valuemax")).toBe("200");
+  });
+
+  it("sanitizes the domain: inverted sorts, unusable values fall back to [0, 1]", () => {
+    // An inverted pair is a caller typo, not a different axis: it is sorted.
+    const inverted = mountRibbon({ domain: [0.6, 0.2] });
+    expect(
+      boxOf(
+        inverted.querySelector<HTMLElement>(
+          '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
+        )!,
+      ).left,
+      "parse 0.3 on the sorted [0.2, 0.6] axis",
+    ).toBeCloseTo(25, 3);
+
+    const unusable: unknown[] = [
+      [0.5, 0.5],
+      [Number.NaN, 1],
+      [0.2],
+      [],
+      null,
+      [0.2, Number.POSITIVE_INFINITY],
+    ];
+    for (const domain of unusable) {
+      const root = mountRibbon({ domain });
+      const strip = root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+      expect(strip.getAttribute("aria-valuemax"), `${JSON.stringify(domain)} falls back`).toBe(
+        "100",
+      );
+      expect(
+        boxOf(
+          root.querySelector<HTMLElement>(
+            '.hk-range-ribbon-overview-segment[data-segment-id="parse"]',
+          )!,
+        ).left,
+      ).toBeCloseTo(30, 3);
+    }
+  });
+
+  it("clips overview segments to the domain and drops points outside it", () => {
+    // Domain [0.2, 0.8]: boot ends exactly at the domain start and flush
+    // starts past its end, so neither paints. An explicit segment list is
+    // needed here: the shared fixture straddles the axis differently.
+    const segments: RibbonSegment[] = [
+      { id: "boot", lane: "cpu", start: 0.05, end: 0.2, label: "boot" },
+      { id: "write", lane: "io", start: 0.5, end: 0.9, label: "write" },
+      { id: "flush", lane: "io", start: 0.95, end: 1, label: "flush" },
+      { id: "edge", lane: "cpu", start: 0.2, end: 0.2, label: "edge" },
+      { id: "gone", lane: "cpu", start: 0.9, end: 0.9, label: "gone" },
+    ];
+    const root = mountRibbon({ window: null, domain: [0.2, 0.8], segments });
+    expect(root.querySelector('[data-segment-id="boot"]'), "ends at the domain start").toBeNull();
+    expect(root.querySelector('[data-segment-id="flush"]'), "starts past the domain end").toBeNull();
+    // A zero-length point ON the domain start is kept as a tick; one past the
+    // domain end is gone (the domain is the clipping rule, not a clamp).
+    expect(
+      root.querySelector('.hk-range-ribbon-overview-segment[data-segment-id="edge"]'),
+      "a point on the domain edge paints",
+    ).toBeTruthy();
+    expect(root.querySelector('[data-segment-id="gone"]'), "a point outside is gone").toBeNull();
+    // A bar straddling the domain end is clipped, not rescaled away.
+    expectBox(
+      root.querySelector<HTMLElement>(
+        '.hk-range-ribbon-overview-segment[data-segment-id="write"]',
+      ),
+      { left: 50, width: 50 },
+      "write clipped at the domain end",
     );
   });
 
-  it("clamps a pointer in the blank tail to content 100% (padding is not progress)", async () => {
-    const host = mountHost(null, { headroom: 0.1 });
-    const { strip, x } = stubStrip(host.root);
-
-    // A press at axis 95% is inside the tail (content 104.5%) and must anchor
-    // at content 1.0; the drag back to axis 30% is content 33%.
-    await drag(strip, 0.95, 0.3, x);
-    expectWindow(lastWindow(host.windowChange), 0.33, 1);
-
-    // The end handle dragged INTO the blank tail (axis 95% reads content
-    // 104.5%) still commits content 100%: a read that skipped the span would
-    // answer 95% and leave the window at [0.2, 0.95]. Dragging to the exact
-    // far right would pass either way (1 × span = 1), so this target is the
-    // revert discriminator for the handle path.
-    await host.setWindow([0.2, 0.5]);
-    const end = host.root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
-    expect(end, "the end grip renders for the sub-window").toBeTruthy();
-    await drag(end, 0.45, 0.95, x);
-    expectWindow(lastWindow(host.windowChange), 0.2, 1);
+  it("treats a window covering the whole domain as the unfiltered state", () => {
+    // The reset chip keys off the DOMAIN: [0, 2] on a [0, 2] axis is the rest
+    // state (nothing to reset), while [0, 1] is a real sub-selection.
+    const full = mountRibbon({ domain: [0, 2], window: [0, 2] });
+    expect(
+      full.querySelector(".hk-range-ribbon-reset"),
+      "the whole axis selected = nothing to reset",
+    ).toBeNull();
+    const sub = mountRibbon({ domain: [0, 2], window: [0, 1] });
+    expect(sub.querySelector(".hk-range-ribbon-reset"), "a sub-window shows reset").toBeTruthy();
   });
 
-  it("ignores the headroom in minimal mode (it is a minimap-only axis)", async () => {
-    // Minimal mode has no minimap layer, so the bare bar must stay on the
-    // CONTENT axis. A headroom-applied span would park the rest end grip at
-    // ~90.9% and leave an unlabeled dim tail on a bar that has no tail
-    // semantics.
-    const rest = mountRibbon({ minimal: true, headroom: 0.1, window: [0, 1] });
+  it("nudges the window by 5% of the visible span from the keyboard", async () => {
+    // Domain [0, 2]: one arrow moves the window 0.1 (5% of the span), not the
+    // unit axis's 0.05, so the visual step stays 5% of the strip.
+    const host = mountHost([0.5, 1], { domain: [0, 2] });
+    const strip = host.root.querySelector<HTMLElement>(".hk-range-ribbon-strip")!;
+    keydown(strip, "ArrowRight");
+    await nextTick();
+    expectWindow(lastWindow(host.windowChange), 0.6, 1.1);
+    // Shift+Arrow resizes from the trailing edge by the same step.
+    keydown(strip, "ArrowRight", { shiftKey: true });
+    await nextTick();
+    expectWindow(lastWindow(host.windowChange), 0.6, 1.2);
+    // The handle slider nudges its own edge by the same step.
+    const start = host.root.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!;
+    keydown(start, "ArrowRight");
+    await nextTick();
+    expectWindow(lastWindow(host.windowChange), 0.7, 1.2);
+  });
+
+  it("draws the caller's domain on minimal mode's bare bar", async () => {
+    // Minimal mode suppresses the minimap lane rows and the whole detail
+    // layer; the bare bar still lives in the overview container, and its axis
+    // is the caller's domain.
+    const rest = mountRibbon({ minimal: true, domain: [0, 2], window: [0, 2] });
     const restStart = rest.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!;
     const restEnd = rest.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
-    expect(parseFloat(restStart.style.left), "rest start grip at content 0%").toBeCloseTo(0, 4);
-    expect(parseFloat(restEnd.style.left), "rest end grip at content 100%").toBeCloseTo(100, 4);
+    expect(parseFloat(restStart.style.left), "domain start grip").toBeCloseTo(0, 3);
+    expect(parseFloat(restEnd.style.left), "domain end grip").toBeCloseTo(100, 3);
+    expect(restStart.getAttribute("aria-valuetext"), "labels read domain percents").toBe("0%");
+    expect(restEnd.getAttribute("aria-valuetext")).toBe("200%");
 
-    // A sub-window keeps content geometry for its grips and after scrim: with
-    // a span the scrim would start at 54.5% and run 45.5%, i.e. a reserved
-    // tail that minimal mode cannot explain.
-    const sub = mountRibbon({ minimal: true, headroom: 0.1, window: [0.2, 0.6] });
-    const subEnd = sub.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!;
-    expect(parseFloat(subEnd.style.left), "grips keep content fractions").toBeCloseTo(60, 4);
-    const after = sub.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="after"]')!;
-    expect(boxOf(after).left, "the after scrim starts at the window end").toBeCloseTo(60, 4);
-    expect(boxOf(after).width, "no reserved tail to dim").toBeCloseTo(40, 4);
+    // A sub-window is projected by the domain: [0.5, 1.5] of [0, 2] is
+    // 25%..75%, and the scrims cover the domain the caller did not select.
+    const sub = mountRibbon({ minimal: true, domain: [0, 2], window: [0.5, 1.5] });
+    expect(
+      parseFloat(
+        sub.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="start"]')!.style.left,
+      ),
+    ).toBeCloseTo(25, 3);
+    expect(
+      parseFloat(
+        sub.querySelector<HTMLElement>('.hk-range-ribbon-handle[data-edge="end"]')!.style.left,
+      ),
+    ).toBeCloseTo(75, 3);
+    expectBox(
+      sub.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="before"]'),
+      { left: 0, width: 25 },
+      "before scrim",
+    );
+    expectBox(
+      sub.querySelector<HTMLElement>('.hk-range-ribbon-scrim[data-side="after"]'),
+      { left: 75, width: 25 },
+      "after scrim",
+    );
 
-    // …and the pointer axis is the content axis: axis 50% reads content 50%
-    // (a headroom-applied read would answer 55%), and the far right is 100%.
-    const host = mountHost([0.2, 0.6], { minimal: true, headroom: 0.1 });
+    // The pointer maps onto the same domain: axis 50% is coordinate 1.0, and
+    // a press past the right edge clamps to the domain end 2.0.
+    const host = mountHost([0.5, 1.5], { minimal: true, domain: [0, 2] });
     const { strip, x } = stubStrip(host.root);
-    await drag(strip, 0.5, 1, x);
-    expectWindow(lastWindow(host.windowChange), 0.5, 1);
+    await drag(strip, 0.5, 1.4, x);
+    expectWindow(lastWindow(host.windowChange), 1, 2);
   });
 });
 
@@ -1748,13 +2119,12 @@ describe("HkRangeRibbon stylesheet contract", () => {
   });
 
   // Wave (2026-11-06 raw-records five): MINIMAL MODE - the bare dual-handle
-  // bar. Contract: data-minimal on the root, strip present, ZERO lane chrome
-  // (no lanes block, no lane rows, no overview minimap, no gutter probe),
-  // and the standard mode keeps its lane chrome + alignment probe. The
-  // uncontrolled default window is NULL here — the grips need a controlled
-  // non-null window (the chest raw-records adapter feeds [0, 1] for its
-  // "default = everything selected" reading); the aria readings below come
-  // from the strip's null-window fallbacks, not from a real window.
+  // bar. Contract: data-minimal on the root, strip present, no lane rows and
+  // no detail layer (the bar still lives in the overview container), no label
+  // gutter probe; the standard mode keeps its lane chrome + alignment probe.
+  // The uncontrolled default window is NULL here — the grips need a
+  // controlled non-null window; the aria readings below come from the strip's
+  // null-window fallbacks, not from a real window.
   it("minimal mode renders the bare dual-handle bar (no lane chrome)", () => {
     const root = mountRibbon({ minimal: true });
     expect(root.getAttribute("data-minimal")).toBe("true");

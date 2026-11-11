@@ -13,6 +13,7 @@
 
 import type { MermaidQuadrantDoc } from "./types";
 import { MermaidParseError } from "./parseGraph";
+import { PLAIN_FLOAT } from "./parsePie";
 
 export function parseQuadrant(source: string): MermaidQuadrantDoc {
   let title: string | null = null;
@@ -78,10 +79,9 @@ export function parseQuadrant(source: string): MermaidQuadrantDoc {
         const parts = coords.split(",");
         if (parts.length === 2) {
           // Rust f64 parse semantics: plain decimals only (no hex, no
-          // empty → 0) — R2 finding 9.
+          // empty → 0) — R2 finding 9. Shared guard from parsePie.
           const xs = parts[0].trim();
           const ys = parts[1].trim();
-          const PLAIN_FLOAT = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
           if (PLAIN_FLOAT.test(xs) && PLAIN_FLOAT.test(ys)) {
             const x = Number(xs);
             const y = Number(ys);

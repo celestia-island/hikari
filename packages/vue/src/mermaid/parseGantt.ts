@@ -38,11 +38,13 @@ function parseTask(line: string): { name: string; id: string | null; deps: strin
       continue;
     }
     if (part.startsWith("after ")) {
-      deps = part
-        .slice(6)
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s !== "");
+      deps = [...new Set(
+        part
+          .slice(6)
+          .split(",")
+          .map((seg) => seg.trim())
+          .filter((seg) => seg !== ""),
+      )];
       continue;
     }
     if (duration === null) duration = part;

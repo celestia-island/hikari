@@ -184,7 +184,17 @@ function ensureNode(
 
 /** Parse a `graph TD` / `flowchart LR` document. Throws MermaidParseError. */
 export function parseFlowchart(source: string): MermaidGraphDoc {
-  const lines = source.split(/\r\n|\n/);
+  const rawLines = source.split(/\r\n|\n/);
+  // Leading `%%` meta / blank lines are skipped BEFORE the header —
+  // same latitude the dispatcher already grants every other kind
+  // (documented deviation from the pest SOI anchor; R6 finding S3-1).
+  let first = 0;
+  while (first < rawLines.length) {
+    const t = rawLines[first].trim();
+    if (t === "" || t.startsWith("%%")) first += 1;
+    else break;
+  }
+  const lines = rawLines.slice(first);
 
   // Header: `kw sp+ direction sp* (nl | EOI)`.
   const head = lines[0] ?? "";

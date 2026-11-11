@@ -453,21 +453,28 @@ function layoutClass(
       return { id: `n:${c.cls.name}`, x: p.x, y: p.y, w: c.w, h: c.h, kind: "class" as const, data: { cls: c.cls } };
     });
 
+  // Adornment semantics (R4 finding 2): mermaid puts the `<|`/`*`/`o`/
+  // `<` glyphs at the FROM class — the rendered edge SWAPS its ends for
+  // arrowAt === "from" so marker-end lands there, while the RANKING
+  // above keeps the parsed from→to direction (parent above child).
   const dashedRel = new Set(["dependency", "implements"]);
-  const openRel = new Set(["aggregation", "implements"]);
-  const noArrowRel = new Set(["association", "dependency"]);
-  const arrowRel = new Set(["inheritance", "composition", "directed-association"]);
+  const openAdorn = new Set(["inheritance", "aggregation", "implements", "dependency"]);
   const edges: LaidOutEdge[] = doc.relationships
     .filter((r: ClassRelationship) => known.has(r.from) && known.has(r.to) && r.from !== r.to)
-    .map((r, i) => ({
-      id: `e:${i}`,
-      from: `n:${r.from}`,
-      to: `n:${r.to}`,
-      style: "bezier" as const,
-      dashed: dashedRel.has(r.relType),
-      arrow: noArrowRel.has(r.relType) ? ("none" as const) : openRel.has(r.relType) ? ("open" as const) : arrowRel.has(r.relType) ? ("solid" as const) : ("none" as const),
-      label: r.label,
-    }));
+    .map((r, i) => {
+      const swap = r.arrowAt === "from";
+      const arrow: LaidOutEdge["arrow"] =
+        r.arrowAt === "none" ? "none" : openAdorn.has(r.relType) ? "open" : "solid";
+      return {
+        id: `e:${i}`,
+        from: swap ? `n:${r.to}` : `n:${r.from}`,
+        to: swap ? `n:${r.from}` : `n:${r.to}`,
+        style: "bezier" as const,
+        dashed: dashedRel.has(r.relType),
+        arrow,
+        label: r.label,
+      };
+    });
 
   return { nodes, edges, width, height };
 }

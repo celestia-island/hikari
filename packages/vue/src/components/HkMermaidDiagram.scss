@@ -62,22 +62,26 @@
     background: rgb(var(--color-primary) / 10%);
   }
 
-  // Diamond: a rotated square with a counter-rotated label — the layout
-  // already reserved ~1.55x label width and ~2.3x label height for it.
+  // Diamond: a true rhombus SVG polygon (see the node slot painter) —
+  // the layout reserved a wide-short box (horizontal diagonal = width)
+  // so the inscribed label band fits inside the rhombus waist.
   &--diamond {
     position: relative;
     border: none;
     background: none;
     padding: 0;
+  }
 
-    &::before {
-      content: "";
-      position: absolute;
-      inset: 6%;
-      transform: rotate(45deg);
-      border: 1.5px solid rgb(var(--color-primary) / 55%);
-      background: rgb(var(--color-surface));
-      border-radius: 6px;
+  &__diamond {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+
+    polygon {
+      fill: rgb(var(--color-surface));
+      stroke: rgb(var(--color-primary) / 55%);
+      stroke-width: 1.5;
     }
   }
 
@@ -196,20 +200,24 @@
   border-bottom: 1px solid rgb(var(--color-text) / 18%);
 
   &__tick {
+    // Number rides the TOP of the axis band; the tick mark hugs the
+    // border-bottom timeline just below it (R4 finding 3 — the old
+    // -26px offset floated marks entirely above the axis box).
     position: absolute;
-    bottom: 2px;
+    top: 0;
     transform: translateX(4px);
     font-size: 10.5px;
+    line-height: 1.15;
     color: rgb(var(--color-text) / 55%);
 
     &::before {
       content: "";
       position: absolute;
-      left: -4px;
-      top: -26px;
+      left: 0;
+      bottom: -13px;
       width: 1px;
-      height: 5px;
-      background: rgb(var(--color-text) / 22%);
+      height: 6px;
+      background: rgb(var(--color-text) / 25%);
     }
   }
 }

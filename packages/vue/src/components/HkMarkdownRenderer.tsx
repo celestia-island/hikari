@@ -44,6 +44,14 @@ async function ensureDOMPurify(): Promise<Purifier | null> {
   }
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function tryHighlight(code: string, lang?: string): string {
   try {
     // `hljs` is a host-installed global (the consumer may ship highlight.js
@@ -59,23 +67,11 @@ function tryHighlight(code: string, lang?: string): string {
   } catch {
     // fall through
   }
-  return code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return escapeHtml(code);
 }
 
 function renderPlain(content: string): string {
-  const escaped = content
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return `<pre class="hk-md-plain">${escaped}</pre>`;
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return `<pre class="hk-md-plain">${escapeHtml(content)}</pre>`;
 }
 
 async function renderMarkdown(content: string): Promise<string> {

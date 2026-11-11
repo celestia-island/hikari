@@ -96,6 +96,12 @@ export interface ClassRelationship {
   to: string;
   relType: ClassRelationshipType;
   label: string | null;
+  /** TS-side rendering contract (Rust parity note: the TUI renderer
+   * draws no per-end adornments, so the Rust type has no such field):
+   * which END of the rendered edge carries the mermaid adornment —
+   * `<|--`/`*--`/`o--`/`<--` put it at the FROM class, `-->`/`..|>`/`..>`
+   * at TO, plain `--`/`..` nowhere. */
+  arrowAt: "from" | "to" | "none";
 }
 
 export interface MermaidClassDoc {

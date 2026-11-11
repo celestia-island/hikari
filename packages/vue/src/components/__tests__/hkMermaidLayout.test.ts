@@ -95,7 +95,10 @@ describe("buildBoardModel", () => {
     const a = model.nodes.find((n) => n.id === "n:A")!;
     const b = model.nodes.find((n) => n.id === "n:B")!;
     expect(a.h).toBeGreaterThan(b.h);
-    expect(model.edges[0]).toMatchObject({ from: "n:A", to: "n:B", arrow: "solid", dashed: false });
+    // `A <|-- B`: ranking keeps A (parent) above B, but the rendered
+    // edge is END-SWAPPED so the hollow inheritance triangle (open
+    // marker) lands on the parent — mermaid's adornment position.
+    expect(model.edges[0]).toMatchObject({ from: "n:B", to: "n:A", arrow: "open", dashed: false });
   });
 
   it("gantt: sequential tasks advance, deps push starts, axis exists", () => {

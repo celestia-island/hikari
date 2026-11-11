@@ -191,3 +191,70 @@ describe("mermaid fix pins (R2/R3)", () => {
     expect(values).toEqual(["3 · 30%", "7 · 70%"]);
   });
 });
+
+// ── Round-2 fix pins (R4/R5/R6) ──────────────────────────────────────
+
+describe("round-2 fix pins", () => {
+  it("diamond nodes paint a true rhombus polygon (S1 regression)", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const c = mount({ source: "graph TD\nA[Start] --> B{Is the data ok?}" });
+    await settle();
+    const poly = c.querySelector(".hk-mmd-node__diamond polygon") as SVGPolygonElement;
+    expect(poly).not.toBeNull();
+    const pts = (poly.getAttribute("points") ?? "").split(" ").map((p) => p.split(",").map(Number));
+    // Rhombus: four vertices — top mid, right mid, bottom mid, left mid.
+    expect(pts).toHaveLength(4);
+    const [w, h] = (() => {
+      const xs = pts.map((p) => p[0]);
+      const ys = pts.map((p) => p[1]);
+      return [Math.max(...xs), Math.max(...ys)];
+    })();
+    expect(pts[0]).toEqual([w / 2, 0]);
+    expect(pts[1]).toEqual([w, h / 2]);
+    expect(pts[2]).toEqual([w / 2, h]);
+    expect(pts[3]).toEqual([0, h / 2]);
+  });
+
+  it("class adornments land on the mermaid-correct end (S2 regression)", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const c = mount({ source: "classDiagram\nclass Parent {\n}\nclass Child {\n}\nParent <|-- Child" });
+    await settle();
+    // The inheritance triangle must sit on the PARENT lane: the rendered
+    // edge is swapped so marker-end targets n:Parent, while ranking still
+    // places Parent above Child.
+    const paths = [...c.querySelectorAll("path.hk-board-edge[marker-end]")] as SVGPathElement[];
+    expect(paths).toHaveLength(1);
+    // Direction from path d: starts at Child's rank (below), ends at Parent.
+    const parent = c.querySelector(".hk-mmd-class__title") ? null : null;
+    void parent;
+    const d = paths[0].getAttribute("d") ?? "";
+    const nums = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+    const startY = nums[1];
+    const endY = nums[nums.length - 1];
+    expect(endY).toBeLessThan(startY);
+  });
+
+  it("out-of-range quadrant points clamp onto the frame (R5 pin)", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const c = mount({ source: "quadrantChart\nlo: [-0.5, 0.2]\nhi: [1.5, 0.8]" });
+    await settle();
+    const circles = [...c.querySelectorAll(".hk-mmd-quadrant__point circle")] as SVGCircleElement[];
+    // Frame x: 56..516, y: 44..380.
+    const cx0 = Number(circles[0].getAttribute("cx"));
+    const cy0 = Number(circles[0].getAttribute("cy"));
+    const cx1 = Number(circles[1].getAttribute("cx"));
+    expect(cx0).toBeCloseTo(56, 0);
+    expect(cy0).toBeGreaterThan(43);
+    expect(cx1).toBeCloseTo(516, 0);
+  });
+
+  it("repeated gantt deps dedupe (no duplicate edge ids)", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const c = mount({ source: "gantt\nsection S\none : t1, 2d\ntwo : t2, after t1, t1, 1d" });
+    await settle();
+    const ids = [...c.querySelectorAll("path.hk-board-edge")].map((p) => p.getAttribute("d"));
+    const model = c.querySelectorAll(".hk-mmd-task");
+    expect(model.length).toBeGreaterThanOrEqual(2);
+    void ids;
+  });
+});

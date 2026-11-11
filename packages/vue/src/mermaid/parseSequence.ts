@@ -45,7 +45,7 @@ export function parseSequence(source: string): MermaidSequenceDoc {
 
   for (const raw of source.split(/\r\n|\n/)) {
     const line = raw.trim();
-    if (line === "" || line === "sequenceDiagram" || line.startsWith("autonumber") || line.startsWith("%%")) continue;
+    if (line === "" || line === "sequenceDiagram") continue;
 
     if (line.startsWith("participant ")) {
       const name = line.slice("participant ".length).trim();
@@ -56,6 +56,10 @@ export function parseSequence(source: string): MermaidSequenceDoc {
       continue;
     }
 
+    // No explicit `autonumber` skip: Rust has none either — a bare
+    // `autonumber` / `autonumber 2` line finds no arrow in parseMessage
+    // and dies there naturally, while a lane literally named
+    // "autonumber" keeps working (R4 finding 6, exact parity).
     const msg = parseMessage(line);
     if (msg) {
       for (const name of [msg.from, msg.to]) {

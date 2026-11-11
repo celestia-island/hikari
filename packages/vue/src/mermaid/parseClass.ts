@@ -27,21 +27,23 @@ import type {
 } from "./types";
 import { MermaidParseError } from "./parseGraph";
 
-const RELATIONS: Array<[string, ClassRelationshipType]> = [
-  ["<|--", "inheritance"],
-  ["*--", "composition"],
-  ["o--", "aggregation"],
-  ["..|>", "implements"],
+const RELATIONS: Array<[string, ClassRelationshipType, ClassRelationship["arrowAt"]]> = [
+  // Third tuple slot = where mermaid paints the adornment (the glyph
+  // sits adjacent to that end): `<|`, `*`, `o`, `<` hug the FROM class.
+  ["<|--", "inheritance", "from"],
+  ["*--", "composition", "from"],
+  ["o--", "aggregation", "from"],
+  ["..|>", "implements", "to"],
   // `..>` BEFORE `..`: the dotted arrow is the standard mermaid
   // dependency form; the Rust reference lacks this entry and reads
   // `A ..> B` as dependency with a mangled `> B` target. Intentional,
   // documented deviation — sync ratatui-markdown's table when it grows
   // the same pattern.
-  ["..>", "dependency"],
-  ["..", "dependency"],
-  ["<--", "directed-association"],
-  ["-->", "directed-association"],
-  ["--", "association"],
+  ["..>", "dependency", "to"],
+  ["..", "dependency", "none"],
+  ["<--", "directed-association", "from"],
+  ["-->", "directed-association", "to"],
+  ["--", "association", "none"],
 ];
 
 function visibilityOf(ch: string): ClassVisibility | null {
@@ -85,7 +87,7 @@ function parseMember(line: string): ClassMember | null {
 
 function parseRelationship(line: string): ClassRelationship | null {
   if (line === "" || line.startsWith("%")) return null;
-  for (const [pattern, relType] of RELATIONS) {
+  for (const [pattern, relType, arrowAt] of RELATIONS) {
     const pos = line.indexOf(pattern);
     if (pos < 0) continue;
     const from = line.slice(0, pos).trim();
@@ -102,6 +104,7 @@ function parseRelationship(line: string): ClassRelationship | null {
       to: stripEdgeQuotes(to),
       relType,
       label: label !== null && label !== "" ? label : null,
+      arrowAt,
     };
   }
   return null;

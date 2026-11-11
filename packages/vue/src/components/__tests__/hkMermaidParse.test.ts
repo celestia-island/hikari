@@ -213,8 +213,8 @@ describe("parseClassDiagram", () => {
       "A ..> B",
     ].join("\n"));
     expect(doc.relationships).toEqual([
-      { from: "A", to: "B", relType: "inheritance", label: null },
-      { from: "A", to: "B", relType: "dependency", label: null },
+      { from: "A", to: "B", relType: "inheritance", label: null, arrowAt: "from" },
+      { from: "A", to: "B", relType: "dependency", label: null, arrowAt: "to" },
     ]);
   });
 
@@ -232,6 +232,7 @@ describe("parseClassDiagram", () => {
       to: "Vertex",
       relType: "directed-association",
       label: "owns",
+      arrowAt: "to",
     });
   });
 
@@ -339,5 +340,34 @@ describe("numeric acceptance parity (R2 finding 9)", () => {
 
   it("quadrant rejects empty coords instead of coercing to (0,0)", () => {
     expect(() => parseQuadrant("quadrantChart\np: [, ]")).toThrow(MermaidParseError);
+  });
+});
+
+describe("round-2 parity pins (R4/R6)", () => {
+  it("class relationships record their adornment end", () => {
+    const doc = parseClassDiagram([
+      "classDiagram",
+      "class A {\n}",
+      "class B {\n}",
+      "class C {\n}",
+      "A <|-- B",
+      "A ..> B",
+      "A -- C",
+    ].join("\n"));
+    expect(doc.relationships.map((r) => `${r.relType}@${r.arrowAt}`)).toEqual([
+      "inheritance@from",
+      "dependency@to",
+      "association@none",
+    ]);
+  });
+
+  it("a participant literally named autonumber still declares its lane", () => {
+    const doc = parseSequence("sequenceDiagram\nparticipant autonumber\nautonumber\nautonumber ->> autonumber: x");
+    expect(doc.participants).toEqual(["autonumber"]);
+    expect(doc.messages).toHaveLength(1);
+  });
+
+  it("flowchart tolerates %% meta lines before the header (dispatch consistency)", () => {
+    expect(parseMermaid("%% meta\ngraph TD\nA --> B").kind).toBe("graph");
   });
 });

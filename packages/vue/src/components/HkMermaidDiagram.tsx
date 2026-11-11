@@ -67,8 +67,18 @@ function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
       const shape = data.shape ?? "rounded";
       const label = data.label ?? n.label ?? "";
       if (shape === "diamond") {
+        // True rhombus via SVG polygon (horizontal diagonal = node width,
+        // vertical = node height) — a CSS-rotated square is only a
+        // rhombus when the box IS square, and the node box is sized for
+        // the label, not for the shape (R4 finding 1).
+        const w = n.w || 72;
+        const h = n.h || 56;
+        const pts = `${w / 2},0 ${w},${h / 2} ${w / 2},${h} 0,${h / 2}`;
         return (
           <div class="hk-mmd-node hk-mmd-node--diamond">
+            <svg class="hk-mmd-node__diamond" viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+              <polygon points={pts} />
+            </svg>
             <span class="hk-mmd-node__label">{label}</span>
           </div>
         );
@@ -292,8 +302,16 @@ export default defineComponent({
       if (!model.value) {
         return fallbackBlock(props.source)();
       }
+      const kind = parsed.value.doc?.kind ?? "graph";
+      const headLine = props.source.split(/\r\n|\n/).find((l) => l.trim() !== "") ?? "";
       return (
-        <div class="hk-mermaid" style={viewportStyle.value} data-mermaid-kind={parsed.value.doc?.kind}>
+        <div
+          class="hk-mermaid"
+          style={viewportStyle.value}
+          data-mermaid-kind={kind}
+          role="img"
+          aria-label={`mermaid ${kind} diagram: ${headLine.trim().slice(0, 80)}`}
+        >
           <HkBoard
             nodes={boardNodes.value}
             edges={boardEdges.value}

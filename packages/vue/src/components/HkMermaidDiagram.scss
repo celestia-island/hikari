@@ -1,0 +1,357 @@
+// HkMermaidDiagram — chrome for the mermaid board embed and the per-kind
+// node painters. Colors ride the theme vars (--color-*) so dark/light
+// follow the host theme for free; the board itself (grid, camera,
+// minimap) is styled by HkBoard.scss.
+
+.hk-mermaid {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid rgb(var(--color-text) / 10%);
+  overflow: hidden;
+  background: rgb(var(--color-surface));
+}
+
+// ── Fallback (no engine / parse failure) ──────────────────────────────
+
+.hk-mermaid-fallback {
+  border: 1px dashed rgb(var(--color-text) / 18%);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.75em 1em;
+  background: rgb(var(--color-text) / 3%);
+
+  pre {
+    margin: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: var(--text-xs, 12px);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: rgb(var(--color-text) / 85%);
+  }
+}
+
+// ── Graph node shells (shape kinds) ──────────────────────────────────
+
+.hk-mmd-node {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 14px;
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-surface));
+  border: 1.5px solid rgb(var(--color-primary) / 55%);
+  padding: 4px 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  &--rounded {
+    border-radius: 10px;
+  }
+
+  &--rect {
+    border-radius: 2px;
+  }
+
+  &--circle {
+    border-radius: 999px;
+    border-color: rgb(var(--color-primary) / 75%);
+    background: rgb(var(--color-primary) / 10%);
+  }
+
+  // Diamond: a true rhombus SVG polygon (see the node slot painter) —
+  // the layout reserved a wide-short box (horizontal diagonal = width)
+  // so the inscribed label band fits inside the rhombus waist.
+  &--diamond {
+    position: relative;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+
+  &__diamond {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+
+    polygon {
+      fill: rgb(var(--color-surface));
+      stroke: rgb(var(--color-primary) / 55%);
+      stroke-width: 1.5;
+    }
+  }
+
+  &__label {
+    position: relative;
+    z-index: 1;
+    max-width: 72%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    // 1.3: the descender-clipping contract floor for clipped line boxes
+    // (textClip.contract.test.ts) — 1.25 cuts g/j/p/q/y ink.
+    line-height: 1.3;
+  }
+}
+
+// ── Sequence ─────────────────────────────────────────────────────────
+
+.hk-mmd-participant {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-primary) / 12%);
+  border: 1.5px solid rgb(var(--color-primary) / 55%);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// ── Class cards ──────────────────────────────────────────────────────
+
+.hk-mmd-class {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgb(var(--color-surface));
+  border: 1.5px solid rgb(var(--color-primary) / 50%);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 12.5px;
+
+  &__title {
+    font-weight: 600;
+    font-size: 13.5px;
+    text-align: center;
+    padding: 6px 10px;
+    background: rgb(var(--color-primary) / 10%);
+    color: rgb(var(--color-text));
+  }
+
+  &__block {
+    border-top: 1px solid rgb(var(--color-text) / 12%);
+    padding: 4px 10px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    line-height: 20px;
+    color: rgb(var(--color-text) / 88%);
+
+    &--methods {
+      border-top-style: dashed;
+    }
+  }
+
+  &__member {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// ── Gantt ────────────────────────────────────────────────────────────
+
+.hk-mmd-section {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: rgb(var(--color-text) / 90%);
+  white-space: nowrap;
+  overflow: hidden;
+
+  &--header {
+    font-weight: 600;
+    color: rgb(var(--color-text));
+    border-bottom: 1px solid rgb(var(--color-text) / 14%);
+  }
+
+  &--subtle {
+    color: rgb(var(--color-text) / 72%);
+    font-size: 12.5px;
+  }
+}
+
+.hk-mmd-task {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: rgb(var(--color-surface));
+  background: rgb(var(--color-primary) / 72%);
+  border-radius: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.hk-mmd-axis {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-bottom: 1px solid rgb(var(--color-text) / 18%);
+
+  &__tick {
+    // Number rides the TOP of the axis band; the tick mark hugs the
+    // border-bottom timeline just below it (R4 finding 3 — the old
+    // -26px offset floated marks entirely above the axis box).
+    position: absolute;
+    top: 0;
+    transform: translateX(4px);
+    font-size: 10.5px;
+    line-height: 1.15;
+    color: rgb(var(--color-text) / 55%);
+
+    &::before {
+      content: "";
+      position: absolute;
+      // -4px cancels the number's translateX(4px) so the mark sits ON
+      // the day gridline it labels (R7 finding 5).
+      left: -4px;
+      bottom: -13px;
+      width: 1px;
+      height: 6px;
+      background: rgb(var(--color-text) / 25%);
+    }
+  }
+}
+
+// ── Pie ──────────────────────────────────────────────────────────────
+
+.hk-mmd-pie {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  box-sizing: border-box;
+
+  &__title {
+    font-weight: 600;
+    font-size: 14px;
+    color: rgb(var(--color-text));
+    margin-bottom: 6px;
+  }
+
+  &__body {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-height: 0;
+  }
+
+  &__svg {
+    flex: none;
+  }
+
+  &__slice {
+    stroke: rgb(var(--color-surface));
+    stroke-width: 2;
+  }
+
+  // Six-step slice palette: color-mix tints of the theme primary (the
+  // house idiom — an interpolated alpha inside rgb() would be parsed as
+  // a SassScript call, see sheetCompile).
+  &__slice--0 { fill: rgb(var(--color-primary)); }
+  &__slice--1 { fill: color-mix(in srgb, rgb(var(--color-primary)) 86%, rgb(var(--color-surface))); }
+  &__slice--2 { fill: color-mix(in srgb, rgb(var(--color-primary)) 72%, rgb(var(--color-surface))); }
+  &__slice--3 { fill: color-mix(in srgb, rgb(var(--color-primary)) 58%, rgb(var(--color-surface))); }
+  &__slice--4 { fill: color-mix(in srgb, rgb(var(--color-primary)) 44%, rgb(var(--color-surface))); }
+  &__slice--5 { fill: color-mix(in srgb, rgb(var(--color-primary)) 30%, rgb(var(--color-surface))); }
+
+  &__hole {
+    fill: rgb(var(--color-surface));
+  }
+
+  &__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  &__legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: rgb(var(--color-text) / 88%);
+  }
+
+  &__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex: none;
+  }
+
+  &__legend-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__legend-value {
+    color: rgb(var(--color-text) / 60%);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ── Quadrant ─────────────────────────────────────────────────────────
+
+.hk-mmd-quadrant {
+  width: 100%;
+  height: 100%;
+
+  &__title {
+    font-weight: 600;
+    font-size: 14px;
+    color: rgb(var(--color-text));
+    padding: 6px 0 0 12px;
+  }
+
+  &__svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  &__frame {
+    fill: rgb(var(--color-primary) / 4%);
+    stroke: rgb(var(--color-text) / 20%);
+    stroke-width: 1;
+  }
+
+  &__mid {
+    stroke: rgb(var(--color-text) / 16%);
+    stroke-dasharray: 5 5;
+  }
+
+  &__q {
+    fill: rgb(var(--color-text) / 45%);
+    font-size: 13px;
+  }
+
+  &__axis {
+    fill: rgb(var(--color-text) / 62%);
+    font-size: 11.5px;
+  }
+
+  &__point circle {
+    fill: rgb(var(--color-primary) / 80%);
+    stroke: rgb(var(--color-surface));
+    stroke-width: 1.5;
+  }
+
+  &__point text {
+    fill: rgb(var(--color-text) / 88%);
+    font-size: 12px;
+  }
+}

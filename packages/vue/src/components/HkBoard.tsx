@@ -84,6 +84,14 @@ export interface BoardNodeInput {
   data?: Record<string, unknown>;
 }
 
+/** Per-instance sequence for document-unique marker ids (url(#id)
+ * resolves document-wide — two boards must never mint the same id). */
+let boardInstanceCounter = 0;
+function boardInstanceSeq(): number {
+  boardInstanceCounter += 1;
+  return boardInstanceCounter;
+}
+
 export interface BoardEdgeInput {
   id: string;
   from: string;
@@ -96,6 +104,13 @@ export interface BoardEdgeInput {
   ink?: string;
   dashed?: boolean;
   width?: number;
+  /** Arrowhead at the `to` end: solid triangle, open chevron, or none
+   * (the default — plain path, current behavior). */
+  arrow?: "none" | "solid" | "open";
+  /** Caption painted at the path midpoint (mermaid edge labels, sequence
+   * message text). Plain text — no markup, SVG <text> with a surface
+   * halo so it stays legible over the path it names. */
+  label?: string;
 }
 
 // Ink colors ride INLINE STYLES beside the stroke presentation attribute:
@@ -162,7 +177,16 @@ export default defineComponent({
 
     const edgePaths = computed(() => {
       const rects = rectOf.value;
-      const out: { id: string; d: string; ink: string; dashed: boolean; width: number }[] = [];
+      const out: {
+        id: string;
+        d: string;
+        ink: string;
+        dashed: boolean;
+        width: number;
+        arrow: "none" | "solid" | "open";
+        label: string | null;
+        labelAt: { x: number; y: number };
+      }[] = [];
       for (const e of props.edges) {
         const from = rects.get(e.from);
         const to = rects.get(e.to);
@@ -176,16 +200,51 @@ export default defineComponent({
           .map((id) => rects.get(id))
           .filter((r): r is BoardRect => Boolean(r))
           .map((r) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 }));
+        // Label anchor: the chord midpoint, pulled onto the middle via
+        // leg when the route bends through junctions (the sequence
+        // self-loop reads best with the caption beside the jog).
+        const mid = viaCenters.length > 0
+          ? viaCenters[Math.floor((viaCenters.length - 1) / 2)]
+          : { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
         out.push({
           id: e.id,
           d: boardViaPath(a, viaCenters, b, e.style ?? "orthogonal"),
           ink: e.ink ?? DEFAULT_INK,
           dashed: Boolean(e.dashed),
           width: e.width ?? 1.5,
+          arrow: e.arrow ?? "none",
+          label: e.label && e.label !== "" ? e.label : null,
+          labelAt: mid,
         });
       }
       return out;
     });
+
+    /** One marker per (kind, ink) pair actually used — marker fill cannot
+     * follow the referencing stroke on every engine hikari supports, so
+     * the defs are minted from the edge list (deterministic, in edge
+     * order) instead of trusting `context-stroke`. Ids carry a per-BOARD
+     * sequence: `url(#id)` resolves document-wide, and two mounted boards
+     * minting `hk-board-ah-0` each would cross-wire their arrowheads. */
+    const boardSeq = boardInstanceSeq();
+    const edgeMarkers = computed(() => {
+      const index = new Map<string, number>();
+      for (const e of edgePaths.value) {
+        if (e.arrow === "none") continue;
+        const key = `${e.arrow}\u0000${e.ink}`;
+        if (!index.has(key)) index.set(key, index.size);
+      }
+      return [...index.entries()].map(([key, i]) => {
+        const [kind, ink] = key.split("\u0000");
+        return { id: `hk-board-ah-${boardSeq}-${i}`, kind: kind as "solid" | "open", ink };
+      });
+    });
+
+    const markerOf = (kind: "none" | "solid" | "open", ink: string): string | undefined => {
+      if (kind === "none") return undefined;
+      const idx = edgeMarkers.value.findIndex((m) => m.kind === kind && m.ink === ink);
+      return idx >= 0 ? `url(#hk-board-ah-${boardSeq}-${idx})` : undefined;
+    };
 
     const contentBounds = computed(() => content.value);
 
@@ -431,18 +490,50 @@ export default defineComponent({
         <div class="hk-board-grid" style={gridStyle.value} />
         <div class="hk-board-world" style={worldStyle.value}>
           <svg class="hk-board-edges" width={contentBounds.value.w} height={contentBounds.value.h}>
+            <defs>
+              {edgeMarkers.value.map((m) => (
+                <marker
+                  key={m.id}
+                  id={m.id}
+                  viewBox="0 0 10 8"
+                  refX={9}
+                  refY={4}
+                  markerWidth={10}
+                  markerHeight={8}
+                  markerUnits="userSpaceOnUse"
+                  orient="auto"
+                >
+                  {m.kind === "solid"
+                    ? <path d="M0,0 L10,4 L0,8 Z" fill={m.ink} />
+                    : <path d="M0,0 L10,4 L0,8" fill="none" stroke={m.ink} stroke-width={1.5} stroke-linecap="round" />}
+                </marker>
+              ))}
+            </defs>
             {edgePaths.value.map((e) => (
-              <path
-                key={e.id}
-                class="hk-board-edge"
-                d={e.d}
-                stroke={e.ink}
-                style={{ stroke: e.ink }}
-                stroke-width={e.width}
-                stroke-dasharray={e.dashed ? "6 5" : undefined}
-                fill="none"
-                stroke-linecap="round"
-              />
+              <g key={e.id}>
+                <path
+                  class="hk-board-edge"
+                  d={e.d}
+                  stroke={e.ink}
+                  style={{ stroke: e.ink }}
+                  stroke-width={e.width}
+                  stroke-dasharray={e.dashed ? "6 5" : undefined}
+                  fill="none"
+                  stroke-linecap="round"
+                  marker-end={markerOf(e.arrow, e.ink)}
+                />
+                {e.label !== null && (
+                  <text
+                    class="hk-board-edge-label"
+                    x={e.labelAt.x}
+                    y={e.labelAt.y}
+                    text-anchor="middle"
+                    dominant-baseline="middle"
+                  >
+                    {e.label}
+                  </text>
+                )}
+              </g>
             ))}
           </svg>
           {props.nodes.filter((n) => !n.hidden).map((n) => (

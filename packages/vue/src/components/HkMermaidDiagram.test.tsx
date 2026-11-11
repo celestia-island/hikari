@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkMermaidDiagram from "./HkMermaidDiagram";
+import { buildBoardModel, heuristicTextWidth } from "../mermaid/layout";
+import { parseMermaid } from "../mermaid/parse";
 import { setMermaidEngineForTests } from "../mermaid/engine";
 import { mermaidParser } from "../mermaid";
 
@@ -57,7 +59,10 @@ describe("HkMermaidDiagram", () => {
     setMermaidEngineForTests(mermaidParser);
     const c = mount({ source: FLOWCHART });
     await settle();
-    expect(c.querySelector(".hk-mermaid")?.getAttribute("data-mermaid-kind")).toBe("graph");
+    const wrap = c.querySelector(".hk-mermaid") as HTMLElement;
+    expect(wrap.getAttribute("data-mermaid-kind")).toBe("graph");
+    expect(wrap.getAttribute("role")).toBe("img");
+    expect(wrap.getAttribute("aria-label")).toContain("mermaid graph diagram");
     expect(c.querySelector(".hk-board")).not.toBeNull();
     const labels = [...c.querySelectorAll(".hk-mmd-node__label")].map((el) => el.textContent);
     expect(labels).toEqual(["Start", "Choice", "Done"]);
@@ -225,8 +230,6 @@ describe("round-2 fix pins", () => {
     const paths = [...c.querySelectorAll("path.hk-board-edge[marker-end]")] as SVGPathElement[];
     expect(paths).toHaveLength(1);
     // Direction from path d: starts at Child's rank (below), ends at Parent.
-    const parent = c.querySelector(".hk-mmd-class__title") ? null : null;
-    void parent;
     const d = paths[0].getAttribute("d") ?? "";
     const nums = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
     const startY = nums[1];
@@ -248,13 +251,28 @@ describe("round-2 fix pins", () => {
     expect(cx1).toBeCloseTo(516, 0);
   });
 
-  it("repeated gantt deps dedupe (no duplicate edge ids)", async () => {
+  it("gantt space-separated multi-deps parse as real deps and dedupe repeats (R8)", async () => {
     setMermaidEngineForTests(mermaidParser);
-    const c = mount({ source: "gantt\nsection S\none : t1, 2d\ntwo : t2, after t1, t1, 1d" });
+    const c = mount({ source: "gantt\nsection S\none : t1, 2d\nother : t0, 1d\ntwo : t2, after t1 t0 t1, 1d" });
     await settle();
-    const ids = [...c.querySelectorAll("path.hk-board-edge")].map((p) => p.getAttribute("d"));
-    const model = c.querySelectorAll(".hk-mmd-task");
-    expect(model.length).toBeGreaterThanOrEqual(2);
-    void ids;
+    // `after t1 t0 t1` ⇒ deps [t1, t0] (space-split + dedupe), and t2's
+    // bar starts past BOTH dependencies' ends.
+    const model = buildBoardModel(
+      parseMermaid("gantt\nsection S\none : t1, 2d\nother : t0, 1d\ntwo : t2, after t1 t0 t1, 1d") as never,
+      heuristicTextWidth,
+    );
+    const bar = (name: string) => {
+      const n = model.nodes.find((x) => x.data.name === name && x.kind === "task");
+      if (!n) throw new Error(`missing bar ${name}`);
+      return n;
+    };
+    const t1 = bar("one");
+    const t0 = bar("other");
+    const t2 = bar("two");
+    expect(t2.x).toBeGreaterThanOrEqual(Math.max(t1.x + t1.w, t0.x + t0.w));
+    // Rows: one→g:0, other→g:1, two→g:2 — two dependency edges land on
+    // "two" (dedupe collapsed the repeated t1).
+    expect(model.edges.filter((e) => e.to === "g:2")).toHaveLength(2);
+    void c;
   });
 });

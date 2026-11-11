@@ -76,7 +76,10 @@ function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
         const pts = `${w / 2},0 ${w},${h / 2} ${w / 2},${h} 0,${h / 2}`;
         return (
           <div class="hk-mmd-node hk-mmd-node--diamond">
-            <svg class="hk-mmd-node__diamond" viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+            {/* Viewbox inset by 1: the rhombus tips sit ON the box edge
+                and a centered stroke would clip its outer half at the
+                svg viewport (R7 finding 1). */}
+            <svg class="hk-mmd-node__diamond" viewBox={`-1 -1 ${w + 2} ${h + 2}`} aria-hidden="true">
               <polygon points={pts} />
             </svg>
             <span class="hk-mmd-node__label">{label}</span>
@@ -303,7 +306,11 @@ export default defineComponent({
         return fallbackBlock(props.source)();
       }
       const kind = parsed.value.doc?.kind ?? "graph";
-      const headLine = props.source.split(/\r\n|\n/).find((l) => l.trim() !== "") ?? "";
+      const headLine =
+        props.source.split(/\r\n|\n/).find((l) => {
+          const t = l.trim();
+          return t !== "" && !t.startsWith("%%");
+        }) ?? "";
       return (
         <div
           class="hk-mermaid"

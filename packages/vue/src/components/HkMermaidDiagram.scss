@@ -213,7 +213,9 @@
     &::before {
       content: "";
       position: absolute;
-      left: 0;
+      // -4px cancels the number's translateX(4px) so the mark sits ON
+      // the day gridline it labels (R7 finding 5).
+      left: -4px;
       bottom: -13px;
       width: 1px;
       height: 6px;

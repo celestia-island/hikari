@@ -7,10 +7,10 @@
  *  - `section NAME` opens a section; tasks before any section land in an
  *    anonymous one;
  *  - `Task name: id, after dep1 dep2, 5d` — after the FIRST colon: the
- *    first field is the task id, `after ...` lists dependency ids (a
- *    comma-separated `after a,b` splits per the Rust port), a `Nd` field
- *    is the duration, and any other first loose field is taken as the
- *    duration verbatim.
+ *    first field is the task id, `after ...` lists dependency ids
+ *    (space-separated per mermaid, comma also accepted — see the
+ *    deviation note at the split), a `Nd` field is the duration, and
+ *    any other first loose field is taken as the duration verbatim.
  *
  * A gantt with no tasks at all → null.
  */
@@ -38,10 +38,15 @@ function parseTask(line: string): { name: string; id: string | null; deps: strin
       continue;
     }
     if (part.startsWith("after ")) {
+      // Split on comma AND whitespace: mermaid's canonical multi-dep form
+      // is space-separated (`after t1 t2`); the Rust reference splits
+      // commas only and turns the space form into one bogus dep. Same
+      // deviation class as parseClass's `..>` — sync ratatui-markdown.
+      // The Set dedupes `after t1 t1`.
       deps = [...new Set(
         part
           .slice(6)
-          .split(",")
+          .split(/[,\s]+/)
           .map((seg) => seg.trim())
           .filter((seg) => seg !== ""),
       )];

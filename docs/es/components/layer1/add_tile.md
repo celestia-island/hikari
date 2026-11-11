@@ -18,7 +18,7 @@ Rust consuma el tile.
 
 - por defecto — bloque vertical centrado (icono sobre la etiqueta): el
   estado vacío de una lista o panel.
-- `compact` — fila fina alineada a la izquierda («＋ añadir uno más»)
+- `compact` — fila fina alineada al inicio («＋ añadir uno más»)
   que va al FINAL de una lista de filas en lugar de un botón suelto.
 - `droppable` — cualquiera de las formas acepta además arrastres de
   archivos. El estado de arrastre reutiliza el lenguaje de los

@@ -74,10 +74,11 @@ function triggerButton(container: HTMLElement): HTMLButtonElement {
   return trigger!;
 }
 
-function paletteButton(): HTMLButtonElement {
+function customizeEntry(): HTMLButtonElement {
   // The entry rides the standard HkAddTile (2026-11-11 family migration)
   // and no longer carries s-theme-item-btn — the stable host hook class
-  // is the query surface.
+  // is the query surface. (The helper's old paletteButton name retired
+  // with the palette glyph: the tile's default is a Plus.)
   const btn = document.body.querySelector<HTMLButtonElement>(
     ".s-theme-menu .s-theme-item-customize",
   );
@@ -168,7 +169,7 @@ describe("HkThemeToggle external customization", () => {
     openMenu(container);
     await settle();
 
-    paletteButton().click();
+    customizeEntry().click();
     await settle();
 
     expect(openCustomize()).toBe(1);
@@ -183,7 +184,7 @@ describe("HkThemeToggle external customization", () => {
     openMenu(container);
     await settle();
 
-    paletteButton().click();
+    customizeEntry().click();
     await settle();
 
     expect(openCustomize()).toBe(0);

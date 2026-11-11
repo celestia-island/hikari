@@ -128,6 +128,16 @@ describe("HkThemeToggle row lead-cell contract", () => {
     // rules anymore (the alignment contract retired with the row).
     const css = read("HkThemeToggle.scss");
     expect(css).not.toMatch(/\.s-theme-item-customize \.hk-menu-item-icon/);
+    // The entry's vertical rhythm is owned component-side (residual
+    // sweep: the margin rule previously had no vue-side pin at all).
+    expect(css).toMatch(/\.s-theme-item-customize\s*\{[^}]*margin-top/);
+    // And the mobile sheet rides the family's 44px touch contract. The
+    // `}\s*\}` fence pins media-block CONTAINMENT — a rule un-nested
+    // from the block but placed after it would fail the double close
+    // (residual sweep: `[\s\S]*?` alone bridges braces).
+    expect(css).toMatch(
+      /\(max-width: 767px\)[\s\S]*?\.s-theme-item-customize\s*\{[^}]*min-height[^}]*\}\s*\}/,
+    );
   });
 
   it("aligns mode-extra host rows to the lead column without rescaling their glyph", () => {

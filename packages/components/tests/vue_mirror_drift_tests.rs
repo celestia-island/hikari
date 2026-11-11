@@ -460,6 +460,11 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         // W8 theme + misc family
         ".s-about-modal",
         ".s-theme-toggle",
+        // HkAddTile — vendored since the theme panel's customize entry
+        // became the standard tile (#1222); the panel's styles() compiles
+        // this sheet, so the registry bundle must carry the table.
+        ".hk-add-tile",
+        ".hk-add-tile--compact",
         ".hk-wallpaper",
         ".hk-splash",
         ".hk-logo",

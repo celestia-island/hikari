@@ -16,7 +16,7 @@ import "./HkAddTile.scss";
  *     the empty state of a list or panel ("no sources yet — add one to
  *     begin"). The whole tile is the click target; hosts no longer pair
  *     a passive dashed box with a separate button below it.
- *   - **compact** — a slim left-aligned row ("＋ Add node / repo"): the
+ *   - **compact** — a slim start-aligned row ("＋ Add node / repo"): the
  *     tile that rides the END of a list of rows and grows the list. It
  *     replaces the loose secondary button, so the add affordance reads
  *     as part of the list instead of floating under it.
@@ -60,6 +60,7 @@ export default defineComponent({
     const dragOver = computed(
       () => props.droppable && !props.disabled && dragDepth.value > 0,
     );
+    const rootEl = ref<HTMLButtonElement | null>(null);
 
     /** Whether this tile accepts the drag at all. Refusing means NEVER
      *  calling preventDefault: the browser only permits a drop onto a
@@ -83,8 +84,18 @@ export default defineComponent({
       e.preventDefault();
     }
 
-    function onDragleave() {
-      if (dragDepth.value > 0) dragDepth.value -= 1;
+    function onDragleave(e: DragEvent) {
+      // Containment check instead of a blind decrement: a child that
+      // leaves the DOM mid-hover (slot swap) never fires its own leave,
+      // so a plain `depth -= 1` could strand the count above zero and
+      // keep the drag-over wash lit after the pointer has fully exited
+      // (the R3 residual sweep). When the leave's relatedTarget is
+      // outside the tile — or null, i.e. left to nothing — the pointer
+      // has truly gone: reset fully.
+      const root = rootEl.value;
+      const rt = e.relatedTarget as Node | null;
+      if (root && rt && root.contains(rt)) return;
+      dragDepth.value = 0;
     }
 
     function onDrop(e: DragEvent) {
@@ -115,6 +126,7 @@ export default defineComponent({
       return (
         <button
           type="button"
+          ref={rootEl}
           class={[
             "hk-add-tile",
             props.compact && "hk-add-tile--compact",

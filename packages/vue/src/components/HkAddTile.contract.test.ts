@@ -60,8 +60,13 @@ describe("HkAddTile neutrality contract", () => {
     const drag = fullRule(css, ".hk-add-tile--drag-over");
     expect(drag).toContain("rgb(var(--color-primary) / 8%)");
     // Whole-file sweep: exactly one top-level rule chunk paints the
-    // wash, and it is the drag-over rule.
-    const chunks = css.split(/(?=\.hk-add-tile)/g).filter((r) => r.includes("/ 8%)"));
+    // wash, and it is the drag-over rule. Comments are stripped first —
+    // a mere mention of the wash alpha in prose must not red this (the
+    // R3 comment-sensitivity residual).
+    const cssSansComments = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const chunks = cssSansComments
+      .split(/(?=\.hk-add-tile)/g)
+      .filter((r) => r.includes("/ 8%)"));
     expect(chunks.length).toBe(1);
     expect(chunks[0].startsWith(".hk-add-tile--drag-over")).toBe(true);
   });

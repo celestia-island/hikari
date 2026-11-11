@@ -39,6 +39,14 @@ function dropEvent(files: File[]): Event {
   return ev;
 }
 
+/** A dragleave carrying a relatedTarget — the containment contract the
+    handler keys on (undefined leaves it null = "left to nothing"). */
+function leaveEvent(relatedTarget: Node | null): Event {
+  const ev = new Event("dragleave", { bubbles: true, cancelable: true });
+  Object.defineProperty(ev, "relatedTarget", { value: relatedTarget });
+  return ev;
+}
+
 function file(name: string): File {
   return new File(["x"], name, { type: "text/plain" });
 }
@@ -131,22 +139,47 @@ describe("HkAddTile", () => {
     expect(onDropFiles).not.toHaveBeenCalled();
   });
 
-  it("flips the drag-over class across child boundaries without flicker", async () => {
+  it("keeps drag-over across child boundaries, clears on real exit", async () => {
     const c = mount(h(HkAddTile, { droppable: true }, { default: () => "Drop" }));
     const el = tileEl(c);
     // The default slot text is a direct child; enter the tile, then its
-    // label span boundary, then back out of the span only.
+    // glyph boundary, then back into the label area only.
     el.dispatchEvent(new Event("dragenter", { bubbles: true }));
     await nextTick();
     expect(el.classList.contains("hk-add-tile--drag-over")).toBe(true);
-    const inner = el.querySelector("span") ?? el.firstElementChild ?? el;
+    const inner = el.firstElementChild as Element;
     inner.dispatchEvent(new Event("dragenter", { bubbles: true })); // depth 2
-    inner.dispatchEvent(new Event("dragleave", { bubbles: true })); // depth 1 — still over
+    // Internal move (leaving the glyph toward the label): contained, so
+    // the depth must not RESET — an always-reset leave with no
+    // containment check would clear the wash here. (The blind-decrement
+    // direction is the self-heal test's below.)
+    inner.dispatchEvent(leaveEvent(el));
     await nextTick();
     expect(el.classList.contains("hk-add-tile--drag-over")).toBe(true);
-    el.dispatchEvent(new Event("dragleave", { bubbles: true })); // depth 0
+    el.dispatchEvent(leaveEvent(null)); // left to nothing — full reset
     await nextTick();
     expect(el.classList.contains("hk-add-tile--drag-over")).toBe(false);
+  });
+
+  it("self-heals when a hovered child leaves the DOM mid-drag", async () => {
+    // The stuck-depth leak (residual sweep): a slot child removed
+    // mid-hover never fires its own leave, so the old decrement could
+    // strand the count above zero and keep the wash lit after the
+    // pointer had fully exited. The containment reset clears the wash on
+    // the first real exit regardless of how deep the count was stranded.
+    const c = mount(h(HkAddTile, { droppable: true }, { default: () => "Drop" }));
+    const el = tileEl(c);
+    el.dispatchEvent(new Event("dragenter", { bubbles: true }));
+    const inner = el.firstElementChild as Element;
+    inner.dispatchEvent(new Event("dragenter", { bubbles: true })); // depth 2
+    inner.remove(); // slot swap: the child's leave never fires
+    el.dispatchEvent(leaveEvent(null)); // pointer exits the tile for real
+    await nextTick();
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(false);
+    // The next drag session starts from a clean slate.
+    el.dispatchEvent(new Event("dragenter", { bubbles: true }));
+    await nextTick();
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(true);
   });
 
   it("cancels dragenter/dragover exactly when it accepts the drag", () => {

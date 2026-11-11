@@ -375,6 +375,14 @@
   .s-theme-item-row[data-custom] .s-theme-item-name {
     margin-inline-end: 2.75rem;
   }
+
+  /* The customize tile rides the menu family's sheet touch geometry:
+   * its compact padding alone reads ~32px, under the 44px sheet-row
+   * contract every sibling row gets from the item-sheet tokens
+   * (2026-11-11 residual sweep). Desktop keeps the compact metrics. */
+  .s-theme-item-customize {
+    min-height: var(--hk-menu-item-min-h, 2.75rem);
+  }
 }
 
 /* ── Host-provided row anatomy (item-leading / item-trailing) ───────────

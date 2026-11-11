@@ -7,6 +7,16 @@ import "./HkMediaSlider.scss";
  * volume slider are built on. Pointer-drag (with capture) emits the ratio
  * continuously so consumers can scrub live. An optional secondary `buffered`
  * fill renders behind the played fill.
+ *
+ * Rail geometry (2026-11-11, the same shape HkSlider ships): the drawable
+ * rail is inset by the thumb radius (6px — the thumb is 12px at every size)
+ * at each end via the inline `--hk-media-slider-rail-inset` var, so a thumb
+ * parked on 0/1 rests ON the rail instead of hanging off its cap, and the
+ * fill starts FLAT at the rail edge (a rounded cap on a thin saturated bar
+ * reads as a pointed nib). The emitted positions use the linear calc
+ * expansion `calc(F% ± Npx)` — identical geometry to
+ * `inset + (100% - 2·inset)·f`, and the form jsdom/cssstyle parses for the
+ * contract tests.
  */
 export default defineComponent({
   name: "HkMediaSlider",
@@ -24,11 +34,36 @@ export default defineComponent({
     const trackRef = ref<HTMLElement | null>(null);
     let dragging = false;
 
+    /** Thumb radius: the thumb is 12px at every size (scss). */
+    const railInset = 6;
+
+    function round4(n: number): number {
+      return Math.round(n * 1e4) / 1e4;
+    }
+
+    /** The fill/buffered width along the rail: `railLength·f` as
+     *  `calc(F% - Npx)`. */
+    function railWidth(f: number): string {
+      return `calc(${round4(f * 100)}% - ${round4(railInset * 2 * f)}px)`;
+    }
+
+    /** A position ON the rail (thumb center): `inset + railLength·f`. */
+    function railPos(f: number): string {
+      const px = round4(railInset * (1 - 2 * f));
+      const op = px < 0 ? " - " : " + ";
+      return `calc(${round4(f * 100)}%${op}${Math.abs(px)}px)`;
+    }
+
     function ratioFrom(clientX: number): number {
       const el = trackRef.value;
       if (!el) return 0;
       const rect = el.getBoundingClientRect();
-      return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const rail = rect.width - railInset * 2;
+      // Degenerate rail (hidden or thinner than both insets): re-assert the
+      // current value instead of inventing a position (the Rust mirror's
+      // None → no-emit parity).
+      if (rect.width <= 0 || rail <= 0) return props.ratio;
+      return Math.max(0, Math.min(1, (clientX - rect.left - railInset) / rail));
     }
     function onDown(e: PointerEvent) {
       if (props.disabled) return;
@@ -62,6 +97,7 @@ export default defineComponent({
           props.disabled && "is-disabled",
         ].filter(Boolean).join(" ")}
         data-size={props.size}
+        style={{ "--hk-media-slider-rail-inset": `${railInset}px` }}
         role="slider"
         tabindex={-1}
         aria-label={props.ariaLabel}
@@ -71,10 +107,13 @@ export default defineComponent({
         onPointerdown={onDown}
       >
         {props.buffered > 0 && (
-          <div class="hk-media-slider-buffered" style={{ width: `${props.buffered * 100}%` }} />
+          <div
+            class="hk-media-slider-buffered"
+            style={{ width: railWidth(props.buffered) }}
+          />
         )}
-        <div class="hk-media-slider-fill" style={{ width: `${props.ratio * 100}%` }} />
-        <div class="hk-media-slider-thumb" style={{ left: `${props.ratio * 100}%` }} />
+        <div class="hk-media-slider-fill" style={{ width: railWidth(props.ratio) }} />
+        <div class="hk-media-slider-thumb" style={{ left: railPos(props.ratio) }} />
       </div>
     );
   },

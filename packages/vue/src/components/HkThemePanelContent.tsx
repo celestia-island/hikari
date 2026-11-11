@@ -1,7 +1,8 @@
 import HkIconButton from "./HkIconButton";
+import HkAddTile from "./HkAddTile";
 
 import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
-import { Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
+import { Monitor, MoonStar, Sun, Trash as Trash2 } from "lucide-vue-next";
 import {
   HDivider,
   solarAltitude,
@@ -309,9 +310,18 @@ export const HkThemePanelContent = defineComponent({
             );
           })}
 
-          <button
-            type="button"
-            class="s-theme-item-btn s-theme-item-customize"
+          {/* The customize entry is the standard add tile (2026-11-11
+              family migration): the compact dashed form riding the END of
+              the theme list — the same "add one more" gesture semantics
+              as every other list-end affordance, so hosts stop
+              hand-painting it (chest's centered dashed hand-roll retires
+              with this). The s-theme-item-customize class stays as the
+              host hook (host scopes and tests target it); the default
+              Plus glyph replaces the palette mark — creating a scheme is
+              an add gesture. */}
+          <HkAddTile
+            compact
+            class="s-theme-item-customize"
             onClick={() => {
               if (props.externalCustomize) {
                 emit("request-close");
@@ -321,9 +331,8 @@ export const HkThemePanelContent = defineComponent({
               }
             }}
           >
-            <span class="hk-menu-item-icon"><Palette size={14} /></span>
-            <span class="s-theme-item-name">{t("hikari::theme.customize")}</span>
-          </button>
+            {t("hikari::theme.customize")}
+          </HkAddTile>
         </div>
         {(() => {
           const extra = slots["menu-extra"]?.() ?? [];

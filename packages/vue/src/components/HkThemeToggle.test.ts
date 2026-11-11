@@ -75,8 +75,11 @@ function triggerButton(container: HTMLElement): HTMLButtonElement {
 }
 
 function paletteButton(): HTMLButtonElement {
-  const btn = [...document.body.querySelectorAll<HTMLButtonElement>(".s-theme-menu .s-theme-item-btn")].find(
-    (b) => b.textContent?.includes("Customize"),
+  // The entry rides the standard HkAddTile (2026-11-11 family migration)
+  // and no longer carries s-theme-item-btn — the stable host hook class
+  // is the query surface.
+  const btn = document.body.querySelector<HTMLButtonElement>(
+    ".s-theme-menu .s-theme-item-customize",
   );
   return btn!;
 }

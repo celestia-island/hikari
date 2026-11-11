@@ -3,13 +3,15 @@
 // (the theme panel body both the toggle's popover and host settings
 // surfaces render).
 //
-// STYLESHEET: none of its own, and that is upstream's shape — the Vue
-// component imports `./HkThemeToggle.scss` and ships no sheet of its own.
-// This mirror borrows the SAME table its sibling compiles:
-// [`crate::theme::theme_toggle::ThemeToggleComponent::styles`] emits
-// `src/styles/vue-mirror/components/HkThemeToggle.scss`, and a second
-// `styles()` here would duplicate it (the registry path stays the wiring
-// wave's call — see `styled.rs`).
+// STYLESHEET: the menu borrows the sibling toggle's compiled table — the
+// Vue component imports `./HkThemeToggle.scss` and ships no sheet of its
+// own; [`crate::theme::theme_toggle::ThemeToggleComponent::styles`] emits
+// `src/styles/vue-mirror/components/HkThemeToggle.scss` (a second
+// `styles()` for it here would duplicate it — the registry path stays the
+// wiring wave's call, see `styled.rs`). SINCE 2026-11-11 the customize
+// entry is the standard HkAddTile (compact form), so this component ALSO
+// carries the tile's own compiled sheet for hosts that mount the panel
+// without the toggle.
 //
 // DOM contract (mirrors Vue's render output one-to-one; a FRAGMENT root,
 // no wrapper element):
@@ -37,9 +39,8 @@
 //         span.s-theme-item-name
 //         [span.s-theme-item-name-suffix]
 //       [span.s-theme-item-trailing] | [button.s-theme-item-delete]
-//     button.s-theme-item-btn.s-theme-item-customize
-//       span.hk-menu-item-icon  {palette glyph}
-//       span.s-theme-item-name  "Customize"
+//     button.hk-add-tile.hk-add-tile--compact.s-theme-item-customize
+//       {Plus glyph svg}  "Customize"                       (standard add tile)
 //   [div.hk-menu-slot.hk-menu-slot--extra]      (menu_extra slot)
 //   {ColorSchemeDialog}                          (externalCustomize false)
 //
@@ -593,16 +594,16 @@ pub fn ThemePanelContent(props: ThemePanelContentProps) -> Element {
                     }
                 }
             }
+            // The customize entry rides the standard HkAddTile compact
+            // form (2026-11-11 family migration — same markup contract as
+            // the Vue render: dashed tile below the list, Plus glyph,
+            // hook class for host scopes).
             button {
-                class: "s-theme-item-btn s-theme-item-customize",
+                class: "hk-add-tile hk-add-tile--compact s-theme-item-customize",
                 "type": "button",
                 onclick: customize_press,
-                span { class: "hk-menu-item-icon",
-                    Icon { icon: MdiIcon::Palette, size: 14 }
-                }
-                span { class: "s-theme-item-name",
-                    {t("components.hk.themePanelContent.customize", "Customize")}
-                }
+                Icon { icon: MdiIcon::Plus, size: 14 }
+                {t("components.hk.themePanelContent.customize", "Customize")}
             }
         }
     };
@@ -640,10 +641,12 @@ pub fn ThemePanelContent(props: ThemePanelContentProps) -> Element {
 
 impl StyledComponent for ThemePanelContentComponent {
     fn styles() -> &'static str {
-        // No sheet of its own — the sibling toggle compiles the borrowed
-        // `HkThemeToggle.scss` (see the file header). An empty table, not
-        // an error; same convention as `layout::sidebar_rail_swap`.
-        ""
+        // The tile's own compiled sheet (the customize entry is the
+        // standard HkAddTile since 2026-11-11). The menu itself borrows
+        // the sibling toggle's sheet — same convention as before; see the
+        // file header.
+        tairitsu_macros::scss! { file: "src/styles/vue-mirror/components/HkAddTile.scss", no_hash }
+            .0
     }
 
     fn name() -> &'static str {
@@ -824,8 +827,12 @@ mod tests {
         assert!(html.contains(r#"aria-label="Delete theme""#), "{html}");
         assert!(html.contains(r#"title="Delete theme""#), "{html}");
         assert!(html.contains("Delete theme"), "{html}");
-        // The customize entry with the palette glyph cell.
-        assert!(html.contains("s-theme-item-customize"), "{html}");
+        // The customize entry rides the standard add tile (compact form,
+        // hook class intact — 2026-11-11 family migration).
+        assert!(
+            html.contains("hk-add-tile--compact s-theme-item-customize"),
+            "{html}"
+        );
         assert!(html.contains(">Customize<"), "{html}");
         // Both theme names resolved.
         assert!(html.contains(">Default<"), "{html}");
@@ -1045,17 +1052,23 @@ mod tests {
     }
 
     #[test]
-    fn theme_panel_has_no_sheet_of_its_own() {
-        assert_eq!(
-            <ThemePanelContentComponent as StyledComponent>::styles(),
-            "",
-            "the panel content borrows the toggle sheet; invent none"
+    fn theme_panel_sheet_is_exactly_the_add_tile_table() {
+        // The menu borrows the sibling toggle sheet (see the file
+        // header); the tile's own table is the ONLY sheet this component
+        // ships since the customize entry became the standard HkAddTile
+        // (2026-11-11).
+        let css = <ThemePanelContentComponent as StyledComponent>::styles();
+        assert!(css.contains(".hk-add-tile"), "{css}");
+        assert!(css.contains(".hk-add-tile--compact"), "{css}");
+        assert!(
+            !css.contains(".s-theme-menu"),
+            "the menu table is the toggle's to ship"
         );
         assert_eq!(
             <ThemePanelContentComponent as StyledComponent>::name(),
             "theme-panel-content"
         );
-        // The borrowed sheet really is the sibling's table.
+        // The borrowed menu sheet really is the sibling's table.
         let css = crate::theme::theme_toggle::ThemeToggleComponent::styles();
         assert!(css.contains(".s-theme-menu"), "{css}");
     }

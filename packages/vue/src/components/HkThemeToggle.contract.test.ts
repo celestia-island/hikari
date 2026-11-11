@@ -9,13 +9,15 @@
  *
  * The widened cell must stay scoped (2026-09-12 field report): shipped
  * first as a bare `.s-theme-item-btn .hk-menu-item-icon` rule, it also
- * matched the 自定义 row and every host row reusing s-theme-item-btn —
- * and mi.icon normalizes those cells' svg to the cell, so their 14px
- * glyphs rendered 28px wide. The widening therefore targets named scopes
- * (lead slot, customize row) plus the toggle-owned mode-extra strip, the
- * last one widening the CELL while pinning the glyph back to the
- * standard box so host strip rows (chest's DPI entry) align their labels
- * with the theme rows' names without rescaling their icons.
+ * matched every host row reusing s-theme-item-btn — and mi.icon
+ * normalizes those cells' svg to the cell, so their 14px glyphs rendered
+ * 28px wide. The widening therefore targets named scopes (lead slot)
+ * plus the toggle-owned mode-extra strip, the last one widening the CELL
+ * while pinning the glyph back to the standard box so host strip rows
+ * (chest's DPI entry) align their labels with the theme rows' names
+ * without rescaling their icons. (The customize row left this contract
+ * 2026-11-11: the entry is the standard HkAddTile compact form now — a
+ * self-contained dashed tile, not a lead-column row.)
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -105,30 +107,27 @@ describe("HkThemeToggle row lead-cell contract", () => {
 
   it("does not widen icon cells with a bare unscoped theme-row rule", () => {
     const css = read("HkThemeToggle.scss");
-    // A bare `.s-theme-item-btn .hk-menu-item-icon {` rule also hits the
-    // customize row and host mode-extra rows; the widened cell may only
-    // target named scopes (lead slot, customize row, mode-extra strip).
+    // A bare `.s-theme-item-btn .hk-menu-item-icon {` rule also hits
+    // host mode-extra rows; the widened cell may only target named
+    // scopes (lead slot, mode-extra strip).
     expect(css).not.toMatch(/^\.s-theme-item-btn \.hk-menu-item-icon\s*\{/m);
   });
 
-  it("aligns the customize row to the lead column without rescaling its glyph", () => {
+  it("renders the customize entry as the standard HkAddTile compact form", () => {
+    // 2026-11-11 family migration: the entry rides the standard dashed
+    // add tile below the theme list (same "add one more" semantics as
+    // every other list-end affordance) instead of a lead-aligned menu
+    // row — the old .hk-menu-item-icon lead-column alignment rules are
+    // retired with the markup that needed them.
+    const panel = read("HkThemePanelContent.tsx");
+    const entry = panel.match(/<HkAddTile[\s\S]*?s-theme-item-customize[\s\S]*?>[\s\S]*?<\/HkAddTile>/);
+    expect(entry).not.toBeNull();
+    expect(entry![0]).toContain("compact");
+    expect(entry![0]).not.toContain("hk-menu-item-icon");
+    // The toggle's own sheet carries no customize-specific icon cell
+    // rules anymore (the alignment contract retired with the row).
     const css = read("HkThemeToggle.scss");
-    // The customize affordance joins the 28px lead column (2026-09-11
-    // field report: its palette sat a full cell left of the rows' bitmap
-    // marks), but the glyph must keep the standard menu icon size —
-    // mi.icon normalizes svg to the cell, so the box is pinned back.
-    const block = css.match(
-      /\.s-theme-item-customize \.hk-menu-item-icon\s*\{[^}]*\}/,
-    );
-    expect(block).not.toBeNull();
-    expect(block![0]).toContain("width: 28px");
-    expect(block![0]).toContain("height: 28px");
-
-    const svgBlock = css.match(
-      /\.s-theme-item-customize \.hk-menu-item-icon > svg\s*\{[^}]*\}/,
-    );
-    expect(svgBlock).not.toBeNull();
-    expect(svgBlock![0]).toContain("var(--hk-menu-item-icon-box)");
+    expect(css).not.toMatch(/\.s-theme-item-customize \.hk-menu-item-icon/);
   });
 
   it("aligns mode-extra host rows to the lead column without rescaling their glyph", () => {

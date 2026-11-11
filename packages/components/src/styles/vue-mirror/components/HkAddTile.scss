@@ -1,0 +1,81 @@
+// VENDORED MIRROR — byte-identical re-copy of the canonical Vue sheet
+// under packages/vue/src (the Vue library is the design-system source of
+// truth; the Rust crate compiles this copy so both forms ship the same
+// CSS, and so the crates.io sdist — which cannot reach ../vue — stays
+// self-contained).
+//
+// Edit the upstream sheet, then: python3 scripts/sync-vue-mirror.py
+// Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
+// VENDORED MIRROR — do not hand-edit here.
+
+@use "../styles/polyfill" as *;
+
+/* HkAddTile — the dashed add / empty affordance tile. The tile is
+ * neutral AT REST: faint dashed border, muted ink, no surface and no
+ * wash. Primary ink comes in through the states that invite (the
+ * hover border/ink tint below, and the drag-over wash) — the primary
+ * SURFACE wash lives exclusively in the --drag-over rule (pinned by
+ * HkAddTile.contract.test.ts, do not creep a wash into any other
+ * rule). */
+.hk-add-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8, 0.5rem);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-16, 1rem) var(--space-12, 0.75rem);
+  border: 1px dashed var(--border-faint);
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  font: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  text-align: center;
+  cursor: pointer;
+  @include user-select(none);
+  transition:
+    border-color var(--duration-fast, 0.15s) ease,
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    border-color: rgb(var(--color-primary) / 45%);
+    color: rgb(var(--color-primary));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+/* List-end form: a slim left-aligned row ("＋ add one more") that rides
+ * the end of a row list instead of floating under it as a button. */
+.hk-add-tile--compact {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-8, 0.5rem) var(--space-10, 0.625rem);
+  text-align: start;
+}
+
+/* Drag-over wash — dashed primary over a faint primary floor, matching
+ * the drag overlays the product already draws by hand. */
+.hk-add-tile--drag-over {
+  border-color: rgb(var(--color-primary) / 45%);
+  background: rgb(var(--color-primary) / 8%);
+  color: rgb(var(--color-primary));
+}
+
+.hk-add-tile--disabled {
+  cursor: default;
+  opacity: 0.55;
+
+  &:hover {
+    border-color: var(--border-faint);
+    color: rgb(var(--color-muted));
+    background: transparent;
+  }
+}

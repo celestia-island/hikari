@@ -288,24 +288,13 @@
   height: 28px;
 }
 
-/* The customize affordance joins the theme rows' 28px lead column so the
- * palette glyph and the row marks sit on one line and every name starts
- * at the same x (2026-09-11 field report: with the lead cell at 28px and
- * this row at the generic box, the selected theme's bitmap mark read a
- * full cell to the right of the customize palette). The cell widens but
- * the GLYPH keeps the standard menu icon size — mi.icon normalizes svg
- * to the cell, so the box is pinned back explicitly; widening a cell
- * must never re-scale its glyph (the 0.42.2 regression class). */
-.s-theme-item-customize .hk-menu-item-icon {
-  @include mi.icon;
+/* (The customize row's lead-column alignment rules retired 2026-11-11:
+ * the entry itself is the standard HkAddTile compact form now — a
+ * self-contained dashed tile below the list, not a row in the lead
+ * column — so it carries no .hk-menu-item-icon cell to widen.) */
 
-  width: 28px;
-  height: 28px;
-}
-
-.s-theme-item-customize .hk-menu-item-icon > svg {
-  width: var(--hk-menu-item-icon-box);
-  height: var(--hk-menu-item-icon-box);
+.s-theme-item-customize {
+  margin-top: var(--space-8, 0.5rem);
 }
 
 /* Host rows in the mode-extra strip (chest's DPI entry row reuses
@@ -314,9 +303,9 @@
  * (2026-09-12 field report: with the strip row at the generic 16px cell
  * its label sat a full cell-width left of the theme rows' names). The
  * strip container is the toggle's own, so the scope needs no host
- * class-name contract. As with the customize row, the cell widens but
- * the GLYPH keeps the standard menu icon size — widening a cell must
- * never re-scale its glyph (the 0.42.2 regression class). */
+ * class-name contract. The cell widens but the GLYPH keeps the standard
+ * menu icon size — widening a cell must never re-scale its glyph (the
+ * 0.42.2 regression class). */
 .s-theme-mode-extra .s-theme-item-btn .hk-menu-item-icon {
   @include mi.icon;
 

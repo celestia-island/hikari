@@ -81,7 +81,6 @@
     "hikari::log.resume": "Reanudar",
     "hikari::log.autoscroll": "Desplazamiento automático",
     "hikari::log.copy": "Copiar",
-    "hikari::log.copied": "Copiado",
     "hikari::log.clear": "Limpiar",
     "hikari::cookie.text": "Este sitio utiliza cookies",
     "hikari::cookie.ok": "Aceptar",

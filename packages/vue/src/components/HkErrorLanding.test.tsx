@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import { HkErrorLanding } from "./HkErrorLanding";
+import { useToast } from "../runtime/useToast";
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
 interface MountOptions {
@@ -203,16 +204,24 @@ describe("HkErrorLanding", () => {
     expect(buttons[1]!.classList.contains("fake-action")).toBe(true);
   });
 
-  it("writes the copy payload and flips the label to Copied", async () => {
+  it("writes the copy payload, toasts success, and keeps the label constant", async () => {
     const writeText = stubClipboard();
+    useToast().toasts.splice(0);
     const el = mountLanding({ copyText: "full error info" });
     const copy = actionButtons(el)[0]!;
     copy.click();
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     expect(writeText).toHaveBeenCalledWith("full error info");
+    // The toast is the ONLY copy feedback (user direction 2026-11-11):
+    // the button's text never flips to "Copied" — it stays put while the
+    // shared toast speaks.
+    await vi.waitFor(() => {
+      expect(useToast().toasts.some((t) => t.type === "success")).toBe(true);
+    });
     await nextTick();
     await nextTick();
-    expect(actionButtons(el)[0]!.textContent).toBe("Copied");
+    expect(actionButtons(el)[0]!.textContent).toBe("Copy error details");
+    useToast().toasts.splice(0);
   });
 
   it("renders the copy action alone when the host passes no actions", () => {

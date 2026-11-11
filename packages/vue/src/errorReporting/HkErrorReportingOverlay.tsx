@@ -106,7 +106,10 @@ export const HkErrorReportingOverlay = defineComponent({
               paint underneath the landing's opaque backdrop. The
               in-place face (`teleport: false`) renders the band INSIDE
               the takeover, so the landing's copy action actually speaks
-              (2026-11-11 copy-feedback wave). */}
+              (2026-11-11 copy-feedback wave). Host-composed landings
+              (`options.landing`) render inside the same takeover and
+              must mount their own `<HToast teleport={false} />` if their
+              surfaces push toasts. */}
           <HToast teleport={false} />
           <HkErrorLanding
             title={options.title || t("hikari::errors.defaultTitle", "Something went wrong")}

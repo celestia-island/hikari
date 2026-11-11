@@ -48,6 +48,26 @@ afterEach(() => {
 });
 
 describe("createErrorReporting", () => {
+  it("renders the toast band IN PLACE inside the takeover (not teleported)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { app, container } = mountThrowingApp();
+    await nextTick();
+
+    const host = overlayHost();
+    expect(host).not.toBeNull();
+    // The takeover is a full-screen shell ABOVE the family overlay root —
+    // a teleported band would paint under the landing's opaque backdrop
+    // and the landing's copy click would be invisible. The viewport must
+    // ride INSIDE the takeover (HToast teleport={false}).
+    const inPlace = host!.querySelector(".hk-error-reporting-overlay .hk-toast-container");
+    expect(inPlace).not.toBeNull();
+    const teleported = document.getElementById("hk-overlay-root")?.querySelector(".hk-toast-container");
+    expect(teleported).toBeNull();
+
+    app.unmount();
+    container.remove();
+  });
+
   it("shows the unified error landing for uncaught render errors", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const { app, container } = mountThrowingApp();

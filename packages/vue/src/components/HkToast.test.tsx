@@ -236,6 +236,45 @@ describe("HkToast", () => {
   });
 });
 
+describe("HkToast teleport placement", () => {
+  it("renders the band IN PLACE when teleport is false (takeover hosts)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({ render: () => h(HkToast, { teleport: false }) });
+    mounts.push({ app, container });
+    app.mount(container);
+    const toast = useToast();
+    toast.success("in place");
+    await settle();
+
+    // The band lives INSIDE the host container — the takeover-host
+    // contract (the error-reporting overlay's z band sits above the
+    // family overlay root, so a teleported stack would paint under an
+    // opaque backdrop and be invisible).
+    expect(container.querySelector(".hk-toast-container")).not.toBeNull();
+    expect(container.querySelector(".hk-toast-item")).not.toBeNull();
+    // And NOT in the family overlay root.
+    const overlayRoot = document.getElementById("hk-overlay-root");
+    if (overlayRoot) {
+      expect(overlayRoot.querySelector(".hk-toast-container")).toBeNull();
+    }
+  });
+
+  it("teleports the band into the family overlay root by default", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({ render: () => h(HkToast) });
+    mounts.push({ app, container });
+    app.mount(container);
+    const toast = useToast();
+    toast.success("teleported");
+    await settle();
+
+    expect(container.querySelector(".hk-toast-container")).toBeNull();
+    expect(document.getElementById("hk-overlay-root")?.querySelector(".hk-toast-container")).not.toBeNull();
+  });
+});
+
 describe("HkToast live-region semantics", () => {
   it("announces errors as alert/assertive and everything else as status/polite", async () => {
     mountHost();

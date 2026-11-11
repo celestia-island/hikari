@@ -477,6 +477,81 @@ describe("HkModal dial slot (stack priority)", () => {
   });
 });
 
+describe("HkModal window-level material slot", () => {
+  it("wears the backdrop over the whole frame: layer first, chrome above, no body-level bed", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: true,
+            title: "Window",
+          }, {
+            default: () => h("p", { class: "body-probe" }, "content"),
+            backdrop: () => h("div", { class: "material-probe" }, "art"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    await vi.waitFor(() => {
+      const content = document.body.querySelector(".hk-modal-content");
+      expect(content).not.toBeNull();
+      // The frame is MARKED as wearing a material: the stylesheet keys the
+      // gutter-cover suppression off this attribute, so a layer without
+      // the mark would leave solid bands across the padding.
+      expect(content!.getAttribute("data-backdrop")).not.toBeNull();
+      const layer = content!.querySelector(".hk-modal-backdrop");
+      expect(layer).not.toBeNull();
+      // Decorative by contract: inert to pointer and hidden from a11y.
+      expect(layer!.getAttribute("aria-hidden")).toBe("true");
+      // The artwork sits at FRAME level — above the frame's own fill,
+      // below every in-flow chrome band. It must not live in the body:
+      // the body-level bed is exactly the "padding looks like a second
+      // surface" bug this slot replaces.
+      expect(layer!.parentElement).toBe(content);
+      expect(content!.querySelector(".hk-modal-body")!.contains(layer!)).toBe(false);
+      expect(layer!.querySelector(".material-probe")).not.toBeNull();
+      // First child: the header, body and footer all paint above it in
+      // source order, so the material never covers the chrome.
+      expect(content!.firstElementChild).toBe(layer);
+      const header = content!.querySelector(".hk-modal-header");
+      expect(header).not.toBeNull();
+      expect(layer!.contains(header!)).toBe(false);
+    });
+  });
+
+  it("renders no layer and no mark when no backdrop is handed in", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, { modelValue: true, title: "Window" }, {
+            default: () => h("p", null, "content"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    await vi.waitFor(() => {
+      const content = document.body.querySelector(".hk-modal-content");
+      expect(content).not.toBeNull();
+      expect(content!.getAttribute("data-backdrop")).toBeNull();
+      expect(content!.querySelector(".hk-modal-backdrop")).toBeNull();
+    });
+  });
+});
+
 describe("HkModal chrome / content split", () => {
   it("keeps the title bar and the footer action row outside the scaled content region", async () => {
     const container = document.createElement("div");

@@ -1101,6 +1101,12 @@ export default defineComponent({
                   aria-modal="true"
                   aria-label={resolvedSurfaceName.value}
                   data-draggable={props.draggable || undefined}
+                  // Marks the frame as wearing a window-level material
+                  // (see the backdrop slot below): the CSS uses it to stop
+                  // the body's gutter covers painting solid bands over the
+                  // artwork — with a material on the frame, the padding is
+                  // part of the material, not a different surface.
+                  data-backdrop={slots.backdrop ? "" : undefined}
                   style={{
                     maxWidth: resolvedWidth.value,
                     zIndex: contentZ.value,
@@ -1114,6 +1120,19 @@ export default defineComponent({
                       so a consumer tearing down its state on close
                       cannot blank the window mid-fold. */}
                   {contentHold.hold(() => [
+                  slots.backdrop ? (
+                    // Window-level material: one clipped, pointer-inert
+                    // layer the whole frame wears — header, body padding
+                    // and footer included, so a host hands the artwork to
+                    // the WINDOW and no content area needs its own custom
+                    // bed. z-index -1 keeps it above the frame's own fill
+                    // (glass/acrylic finish) and below every in-flow
+                    // sibling; sizing and the render loop belong to the
+                    // handed-in subtree exactly as on the body-level slot.
+                    <div class="hk-modal-backdrop" aria-hidden="true">
+                      {slots.backdrop()}
+                    </div>
+                  ) : null,
                   headerShown ? (
                     <>
                       <div

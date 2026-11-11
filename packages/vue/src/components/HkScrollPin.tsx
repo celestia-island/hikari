@@ -18,7 +18,10 @@ export type ScrollPinSide = "top" | "bottom" | "left" | "right";
  *   (`--hk-scroll-pad-*`); the host paints the zone above/below the pin,
  *   so scrolled content vanishes under the whitespace instead of showing
  *   through a gap. Works for pins anywhere in the flow (toolbars may
- *   precede them).
+ *   precede them). EXCEPTION: a modal wearing a window-level material
+ *   (`data-backdrop`, HkModal's backdrop slot) suppresses those covers —
+ *   over a window-spanning artwork the solid repaint IS the seam, so
+ *   content scrolling through the gutter stays visible there by design.
  * - `"bleed"` — absorb the host's in-flow padding into the pin itself
  *   (`padding: var(--hk-scroll-pad-…) + negative margin`): the pin's own
  *   background paints over the padding zone so the whitespace travels

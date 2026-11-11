@@ -8,33 +8,36 @@
  * carry a `backdrop-filter`, so each one needs its own background render
  * surface. That is pure cost with no visual gain whenever the layer beneath
  * is already an opaque surface (the card fill is 70%-alpha surface over the
- * sheet; the secondary button fill is the opaque surface token itself). On a
- * compositor with a small surface budget the report shows the element's box
- * surviving while its painted contents go missing, which is the failure
- * shape this hatch exists to let a host switch off per engine.
+ * sheet; the secondary button fill is the opaque surface token itself). The
+ * reported artifact is an element's box surviving while its painted contents
+ * go missing, which is what a starved surface budget looks like from the DOM
+ * — so the hatch lets a HOST drop this pass on the engines where that class
+ * shows up.
  *
  * Two invariants are pinned here, both load-bearing:
  *
  *   1. every such surface consumes `--hk-<surface>-blur` with the previous
  *      literal as its fallback, so no host loses the current look by
  *      upgrading hikari and a host can stand the pass down per ENGINE;
- *   2. the knob is DELIBERATELY NOT width-gated. The modal family's
- *      `-mobile` knobs default to none ≤767px; copying that shape here would
- *      re-key the stand-down to the viewport. The artifact follows the
- *      compositor: a phone WebView in "request desktop site" mode reports a
- *      ~980px layout viewport, a tablet reports a wide one, a desktop
+ *   2. the knob is DELIBERATELY NOT hangable off a width axis. The modal
+ *      family's `-mobile` knobs default to none ≤767px; copying that shape
+ *      here would re-key the stand-down to the viewport. The artifact follows
+ *      the compositor: a phone WebView in "request desktop site" mode reports
+ *      a ~980px layout viewport, a tablet reports a wide one, a desktop
  *      WebView2 host reports a desktop one — all three still run the starved
  *      engine, so a width gate would leave exactly those hosts exposed.
  *
  * Assertions run on the COMPILED sheet, never on source text: a stand-down
  * can be written as `@include backdrop-filter(none)`, as a literal
  * declaration, or through a variable, and only the compiled output sees all
- * three. The width gate is checked by a real rule scanner (comments stripped,
- * braces matched) and carries a POSITIVE CONTROL so a broken scanner fails
- * loud instead of reporting "no violations" from an empty scan.
+ * three. The structural checks walk the compiled CSS with a token-aware
+ * scanner (comments stripped, string literals skipped, brace depth tracked,
+ * at-rule wrapper stack carried per rule), so a `}` inside `content: "}"`, a
+ * `//` comment, an `@MEDIA` casing, a `@supports` wrapper, a selector list or
+ * a `(width <= 767px)` range query all behave the way a browser would treat
+ * them. Every guard carries a control that proves it can fail.
  */
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compile } from "sass";
@@ -46,57 +49,122 @@ function compiledSheet(sheet: string): string {
   return compile(join(here, sheet), { loadPaths, style: "expanded" }).css;
 }
 
-/** Comments carry braces and pseudo-selector text; strip before scanning. */
+/** Comments carry braces and `@media` text; strip before any structural pass. */
 function stripComments(css: string): string {
-  return css.replace(/\/\*[\s\S]*?\*\//g, "");
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
+function skipString(src: string, at: number): number {
+  const quote = src[at];
+  for (let i = at + 1; i < src.length; i++) {
+    if (src[i] === "\\") {
+      i += 1;
+      continue;
+    }
+    if (src[i] === quote) return i;
+  }
+  return src.length - 1;
 }
 
 interface CssRule {
   selector: string;
   declarations: string;
+  /** At-rule preludes wrapping this rule, outermost first. */
+  wrappers: string[];
+  /** Index of the rule's selector in the scanned source. */
+  start: number;
 }
 
-/** Flat `selector { declarations }` rules of a stylesheet or block body. */
-function rules(css: string): CssRule[] {
+/** Walk a flat or nested stylesheet, tracking at-rule wrappers and strings. */
+function scanRules(rawSrc: string): CssRule[] {
+  const src = stripComments(rawSrc);
   const out: CssRule[] = [];
-  const re = /([^{}]+)\{([^{}]*)\}/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(stripComments(css))) !== null) {
-    out.push({ selector: m[1]!.trim(), declarations: m[2]! });
-  }
-  return out;
-}
 
-interface MediaRegion {
-  query: string;
-  body: string;
-}
-
-/** Top-level `@media { … }` regions with brace matching. */
-function mediaRegions(css: string): MediaRegion[] {
-  const src = stripComments(css);
-  const out: MediaRegion[] = [];
-  const re = /@media([^{]*)\{/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(src)) !== null) {
-    const open = src.indexOf("{", m.index);
+  const blockEnd = (open: number): number => {
     let depth = 0;
-    let i = open;
-    for (; i < src.length; i++) {
-      if (src[i] === "{") depth += 1;
-      else if (src[i] === "}") {
+    for (let i = open; i < src.length; i++) {
+      const ch = src[i]!;
+      if (ch === '"' || ch === "'") {
+        i = skipString(src, i);
+        continue;
+      }
+      if (ch === "{") depth += 1;
+      else if (ch === "}") {
         depth -= 1;
-        if (depth === 0) break;
+        if (depth === 0) return i;
       }
     }
-    out.push({ query: m[1]!.trim(), body: src.slice(open + 1, i) });
-  }
+    return src.length - 1;
+  };
+
+  const walk = (from: number, to: number, wrappers: string[]): void => {
+    let i = from;
+    let head = "";
+    let headStart = from;
+    while (i < to) {
+      const ch = src[i]!;
+      if (ch === '"' || ch === "'") {
+        const end = skipString(src, i);
+        head += src.slice(i, end + 1);
+        i = end + 1;
+        continue;
+      }
+      if (ch === "{") {
+        const prelude = head.trim();
+        const end = blockEnd(i);
+        if (prelude.startsWith("@")) {
+          walk(i + 1, end, [...wrappers, prelude]);
+        } else {
+          out.push({
+            selector: prelude,
+            declarations: src.slice(i + 1, end),
+            wrappers,
+            start: headStart,
+          });
+        }
+        head = "";
+        i = end + 1;
+        headStart = i;
+        continue;
+      }
+      if (ch === ";") {
+        head = "";
+        i += 1;
+        headStart = i;
+        continue;
+      }
+      if (head === "") headStart = i;
+      head += ch;
+      i += 1;
+    }
+  };
+
+  walk(0, src.length, []);
   return out;
 }
 
-/** Declaration map of the FIRST rule whose selector matches exactly. */
-function declarationsFor(css: string, selector: string): Map<string, string> {
-  const rule = rules(css).find((r) => r.selector === selector);
+const TARGETS = [".hk-card", ".hk-btn-secondary"];
+const KNOBS = ["--hk-card-blur", "--hk-btn-secondary-blur"];
+
+/** Selector mentions a target as a whole token (list members included). */
+function mentionsTarget(selector: string): string | null {
+  for (const selectorPart of selector.split(",")) {
+    const trimmed = selectorPart.trim();
+    for (const target of TARGETS) {
+      const re = new RegExp(`(^|[\\s>+~(])${target.replace(".", "\\.")}(?![\\w-])`);
+      if (re.test(trimmed)) return target;
+    }
+  }
+  return null;
+}
+
+/** Declaration map of the FIRST unwrapped rule whose selector matches exactly. */
+function baseDeclarations(css: string, selector: string): Map<string, string> {
+  const rule = scanRules(css).find(
+    (r) => r.wrappers.length === 0 && r.selector === selector,
+  );
   expect(rule, `${selector} missing from the compiled sheet`).toBeDefined();
   const map = new Map<string, string>();
   for (const decl of rule!.declarations.split(";")) {
@@ -107,22 +175,23 @@ function declarationsFor(css: string, selector: string): Map<string, string> {
   return map;
 }
 
-const TARGETS = [".hk-card", ".hk-btn-secondary"];
-
 /**
- * Width-gated stand-downs for the two surfaces: a rule that targets one of
- * them, lives inside a `max-width` media query, and sets a `backdrop-filter`.
- * Returns `selector @ query` strings; empty is the pass condition.
+ * Conditional (at-rule-wrapped) stand-downs for the two surfaces: any rule
+ * inside ANY at-rule that names one of the targets and touches either the
+ * `backdrop-filter` property or a blur knob. Width is only the most likely
+ * wrapper — `@container`, `@supports` and `min-width` variants would re-key
+ * the same thing, so all of them are violations.
  */
-export function widthGatedStandDowns(css: string): string[] {
+function conditionalStandDowns(css: string): string[] {
   const hits: string[] = [];
-  for (const region of mediaRegions(css)) {
-    if (!/max-width/.test(region.query)) continue;
-    for (const rule of rules(region.body)) {
-      if (!TARGETS.includes(rule.selector)) continue;
-      if (/backdrop-filter/.test(rule.declarations)) {
-        hits.push(`${rule.selector} @ ${region.query}`);
-      }
+  for (const rule of scanRules(css)) {
+    if (rule.wrappers.length === 0) continue;
+    const target = mentionsTarget(rule.selector);
+    if (!target) continue;
+    const touchesFilter = /backdrop-filter/i.test(rule.declarations);
+    const touchesKnob = KNOBS.some((k) => rule.declarations.includes(k));
+    if (touchesFilter || touchesKnob) {
+      hits.push(`${target} inside ${rule.wrappers[rule.wrappers.length - 1]}`);
     }
   }
   return hits;
@@ -130,19 +199,19 @@ export function widthGatedStandDowns(css: string): string[] {
 
 describe("surface live-blur escape hatch", () => {
   it("routes the card blur through --hk-card-blur, keeping the old literal as the fallback", () => {
-    const decls = declarationsFor(compiledSheet("HkCard.scss"), ".hk-card");
+    const decls = baseDeclarations(compiledSheet("HkCard.scss"), ".hk-card");
     expect(decls.get("backdrop-filter")).toBe(
       "var(--hk-card-blur, blur(var(--blur-md)))",
     );
     // Separate property, so the assertion cannot be satisfied by the
-    // prefixed twin alone (Firefox-dropping mutation stays red).
+    // prefixed twin alone (dropping the unprefixed line must stay red).
     expect(decls.get("-webkit-backdrop-filter")).toBe(
       "var(--hk-card-blur, blur(var(--blur-md)))",
     );
   });
 
   it("routes the secondary button blur through --hk-btn-secondary-blur", () => {
-    const decls = declarationsFor(compiledSheet("HkButton.scss"), ".hk-btn-secondary");
+    const decls = baseDeclarations(compiledSheet("HkButton.scss"), ".hk-btn-secondary");
     expect(decls.get("backdrop-filter")).toBe(
       "var(--hk-btn-secondary-blur, blur(var(--blur-sm)))",
     );
@@ -151,53 +220,47 @@ describe("surface live-blur escape hatch", () => {
     );
   });
 
-  it("flags a width-gated stand-down (positive control: the scanner is not blind)", () => {
-    const synthetic = [
-      "@media (max-width: 767px) {",
-      "  .hk-card {",
-      "    backdrop-filter: none;",
-      "  }",
-      "}",
-    ].join("\n");
-    expect(widthGatedStandDowns(synthetic)).toEqual([".hk-card @ (max-width: 767px)"]);
-  });
-
-  it("flags the include form too, so the guard is not syntax-specific", () => {
-    // `@include backdrop-filter(none)` compiles to the same declaration; this
-    // pins the compiled-shape assumption the scanner relies on.
-    const synthetic = [
-      "@media (max-width: 767px) {",
-      "  .hk-btn-secondary {",
-      "    -webkit-backdrop-filter: none;",
-      "    backdrop-filter: none;",
-      "  }",
-      "}",
-    ].join("\n");
-    expect(widthGatedStandDowns(synthetic)).toEqual([
-      ".hk-btn-secondary @ (max-width: 767px)",
-    ]);
-  });
-
-  it("keeps both surfaces engine-gated: no width-gated stand-down exists today", () => {
-    for (const sheet of ["HkCard.scss", "HkButton.scss"]) {
-      expect(widthGatedStandDowns(compiledSheet(sheet)), `${sheet}`).toEqual([]);
+  it("flags every shape of conditional stand-down (positive controls)", () => {
+    const shapes = [
+      // declaration form, plain max-width
+      "@media (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
+      // knob form (the shipped knob, re-keyed to the viewport)
+      "@media (max-width: 767px) { .hk-card { --hk-card-blur: none; } }",
+      // selector list
+      "@media (max-width: 767px) { .hk-card, .x { backdrop-filter: none; } }",
+      // range syntax
+      "@media (width <= 767px) { .hk-card { backdrop-filter: none; } }",
+      // min-width is just as wrong
+      "@media (min-width: 768px) { .hk-btn-secondary { backdrop-filter: none; } }",
+      // container / supports wrappers re-key the same thing
+      "@container (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
+      "@supports (backdrop-filter: blur(1px)) { .hk-card { backdrop-filter: none; } }",
+      // at-rule casing is not significant in CSS
+      "@MEDIA (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
+      // a brace inside a string literal must not end the block early
+      '@media (max-width: 767px) { .x::after { content: "}"; } .hk-card { backdrop-filter: none; } }',
+    ];
+    for (const shape of shapes) {
+      expect(conditionalStandDowns(shape), shape).toHaveLength(1);
     }
-    // Non-vacuity: the button sheet really does carry width media queries
-    // (label collapse), so the scanner above is looking at real content
-    // rather than at an empty set.
-    expect(mediaRegions(compiledSheet("HkButton.scss")).length).toBeGreaterThan(0);
   });
 
-  it("keeps the base declaration off the width axis for every sheet it ships in", () => {
-    // Guard against a future refactor that moves the declaration into a
-    // media query wholesale: the base rule must exist outside every region.
+  it("keeps both surfaces engine-gated: no conditional stand-down exists today", () => {
     for (const sheet of ["HkCard.scss", "HkButton.scss"]) {
-      const css = compiledSheet(sheet);
-      for (const selector of TARGETS) {
-        const rule = rules(css).find((r) => r.selector === selector);
-        if (!rule) continue;
-        expect(rule.declarations).toMatch(/backdrop-filter:/);
-      }
+      expect(conditionalStandDowns(compiledSheet(sheet)), `${sheet}`).toEqual([]);
     }
+  });
+
+  it("scans real content: both base rules exist and the button sheet has wrappers", () => {
+    // Non-vacuity for the guard above: the card sheet has no at-rules at all,
+    // so prove the scanner reads a sheet that DOES have them, and prove the
+    // base rules it looks for are really there.
+    const cardCss = compiledSheet("HkCard.scss");
+    const buttonCss = compiledSheet("HkButton.scss");
+    expect(scanRules(cardCss).filter((r) => r.selector === ".hk-card")).toHaveLength(1);
+    expect(scanRules(buttonCss).filter((r) => r.selector === ".hk-btn-secondary")).toHaveLength(1);
+    expect(
+      scanRules(buttonCss).filter((r) => r.wrappers.length > 0).length,
+    ).toBeGreaterThan(0);
   });
 });

@@ -403,9 +403,14 @@ export const HkAboutModal = defineComponent({
     /** Render the legal filings as a chip group (see {@link HkAboutBody}). */
     filingsAsChips: { type: Boolean, default: false },
     /**
-     * Optional decorative backdrop factory, rendered behind the content
-     * inside a clipped, pointer-inert layer. The modal owns only the layer —
-     * sizing, theming and the render loop belong to the returned subtree.
+     * Optional decorative backdrop factory. In the MODAL this rides the
+     * window-level material slot: one clipped, pointer-inert layer the
+     * whole frame wears — header, body padding and footer included — so
+     * the padding is part of the artwork instead of a second surface
+     * (2026-11-12; the body-level bed this used to mount showed the
+     * artwork clipped to the content box with a different material band
+     * around it). Non-modal hosts mounting {@link HkAboutBody} directly
+     * still get the body-level layer from that component.
      */
     backdrop: { type: Function as PropType<() => unknown>, default: undefined },
     title: { type: String, default: undefined },
@@ -422,23 +427,28 @@ export const HkAboutModal = defineComponent({
         onUpdate:modelValue={(v: boolean) => emit("update:modelValue", v)}
         title={props.title ?? t("hikari::about.title", "About")}
         width="30rem"
-      >
-        <HkAboutBody
-          appName={props.appName}
-          version={props.version}
-          logoSrc={props.logoSrc}
-          tagline={props.tagline}
-          description={props.description}
-          credits={props.credits}
-          licenses={props.licenses}
-          componentVersions={props.componentVersions}
-          copyright={props.copyright}
-          links={props.links}
-          footerLinks={props.footerLinks}
-          filingsAsChips={props.filingsAsChips}
-          backdrop={props.backdrop}
-        />
-      </HModal>
+        v-slots={{
+          // Window-level material: the artwork spans the frame's padding
+          // and header, so no content-area bed is handed to the body.
+          backdrop: props.backdrop ? () => props.backdrop!() : undefined,
+          default: () => (
+            <HkAboutBody
+              appName={props.appName}
+              version={props.version}
+              logoSrc={props.logoSrc}
+              tagline={props.tagline}
+              description={props.description}
+              credits={props.credits}
+              licenses={props.licenses}
+              componentVersions={props.componentVersions}
+              copyright={props.copyright}
+              links={props.links}
+              footerLinks={props.footerLinks}
+              filingsAsChips={props.filingsAsChips}
+            />
+          ),
+        }}
+      />
     );
   },
 });

@@ -341,7 +341,9 @@
   --hk-scroll-pad-bottom: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
   --hk-scroll-pad-left: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
 
-  // Gutter covers (scroll-pin contract, 2026-09-14): the body's top and
+
+
+// Gutter covers (scroll-pin contract, 2026-09-14): the body's top and
   // bottom whitespace stays paintable OUTSIDE the scroll flow, so a
   // pinned child (HkScrollPin strategy="offset") stops below the gutter
   // with the whitespace intact, and scrolled content vanishes under the
@@ -373,6 +375,42 @@
     bottom: 0;
     height: var(--hk-scroll-pad-bottom, 0px);
   }
+}
+
+// Window-level material slot (2026-11-12): the decorative layer the whole
+// frame wears when a `backdrop` slot is handed to HkModal. z-index: -1
+// paints it above the frame's own fill (the user's glass/acrylic finish
+// shows through any transparent regions of the artwork) and below every
+// in-flow sibling — header, body and footer need no z-index of their own.
+// border-radius: inherit + overflow: hidden keep the artwork inside the
+// frame's own corners on desktop AND inside the sheet's clip-path reveal
+// on phones, so a host never re-clips its artwork per surface.
+.hk-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+
+  > * {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// A frame wearing a material has no gutter covers: the covers exist to
+// repaint the body's top/bottom whitespace in the window's surface colour
+// so scrolled content vanishes under the padding — over an artwork that
+// solid repaint IS the seam (the exact "padding looks like another
+// material" bug this slot replaces). With the artwork spanning the
+// padding, the whitespace is already the material; the trade (rows
+// scrolling through the gutter stay visible over the artwork) is the
+// documented cost of opting into a window material, and the header/footer
+// bands still bound the body.
+[data-backdrop] .hk-modal-body::before,
+[data-backdrop] .hk-modal-body::after {
+  content: none;
 }
 
 .hk-modal-body-scroll {

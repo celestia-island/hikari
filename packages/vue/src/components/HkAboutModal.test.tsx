@@ -13,7 +13,10 @@ import { setLocale } from "../i18n/context";
  *   name without an href stays plain text
  * - description / license / copyright render the given strings
  * - component rows split the machine value from an optional meta pill
- * - the backdrop factory renders inside the clipped backdrop layer
+ * - the backdrop factory rides the WINDOW-level material layer (2026-11-12):
+ *   the body-level bed clipped the artwork to the content box and the
+ *   frame's padding read as a second surface — the artwork now spans the
+ *   whole frame, and the body mounts no bed of its own
  * - licenses and links render as chips under one centered block
  * - footer (filing) links render as external links
  * - `face: "plain"` / `face: "accent"` turn any of them into a bare text
@@ -401,12 +404,21 @@ describe("HkAboutModal branding", () => {
     expect(links[0]!.getAttribute("href")).toBe("https://beian.miit.gov.cn/");
   });
 
-  it("renders the backdrop factory inside the clipped layer", async () => {
+  it("wears the backdrop at window level: the artwork spans the frame, the body mounts no bed", async () => {
     mountAbout({ backdrop: () => h("div", { class: "test-backdrop-marker" }) });
     await flushModal();
-    const layer = query<HTMLElement>(".s-about-modal-backdrop");
+    // The artwork rides HkModal's material slot — inside the frame, above
+    // the frame's own fill, below the header/body/footer chrome.
+    const layer = query<HTMLElement>(".hk-modal-backdrop");
     expect(layer.getAttribute("aria-hidden")).toBe("true");
     expect(layer.querySelector(".test-backdrop-marker")).toBeTruthy();
+    const content = layer.closest(".hk-modal-content");
+    expect(content).toBeTruthy();
+    expect(content!.getAttribute("data-backdrop")).not.toBeNull();
+    // The body-level bed is exactly the seam this replaces: clipped to the
+    // content box, it left the window padding a different material. The
+    // modal must not mount one any more.
+    expect(document.body.querySelector(".s-about-modal-backdrop")).toBeNull();
   });
 
   it("renders links as external chips", async () => {

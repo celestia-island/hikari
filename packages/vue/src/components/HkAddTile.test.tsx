@@ -150,8 +150,9 @@ describe("HkAddTile", () => {
     const inner = el.firstElementChild as Element;
     inner.dispatchEvent(new Event("dragenter", { bubbles: true })); // depth 2
     // Internal move (leaving the glyph toward the label): contained, so
-    // the depth must NOT decrement — the old blind decrement cleared the
-    // wash here.
+    // the depth must not RESET — an always-reset leave with no
+    // containment check would clear the wash here. (The blind-decrement
+    // direction is the self-heal test's below.)
     inner.dispatchEvent(leaveEvent(el));
     await nextTick();
     expect(el.classList.contains("hk-add-tile--drag-over")).toBe(true);

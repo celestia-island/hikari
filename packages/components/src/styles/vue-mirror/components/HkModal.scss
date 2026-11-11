@@ -342,8 +342,7 @@
   --hk-scroll-pad-left: var(--hk-pad, var(--hk-modal-padding-body, 1.5rem));
 
 
-
-// Gutter covers (scroll-pin contract, 2026-09-14): the body's top and
+  // Gutter covers (scroll-pin contract, 2026-09-14): the body's top and
   // bottom whitespace stays paintable OUTSIDE the scroll flow, so a
   // pinned child (HkScrollPin strategy="offset") stops below the gutter
   // with the whitespace intact, and scrolled content vanishes under the
@@ -408,8 +407,8 @@
 // scrolling through the gutter stay visible over the artwork) is the
 // documented cost of opting into a window material, and the header/footer
 // bands still bound the body.
-[data-backdrop] .hk-modal-body::before,
-[data-backdrop] .hk-modal-body::after {
+.hk-modal-content[data-backdrop] .hk-modal-body::before,
+.hk-modal-content[data-backdrop] .hk-modal-body::after {
   content: none;
 }
 

@@ -2923,6 +2923,7 @@ describe("label first-line anchoring", () => {
       "bundle :: - | .hk-layout > * | position: relative",
       "bundle :: - | .hk-markdown code | font-family: var(--font-mono, ui-monospace, \"SF Mono\", Menlo, Consolas, \"DejaVu Sans Mono\", \"Liberation Mono\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", monospace); font-size: 0.85em; padding: 0.15em 0.35em",
       "bundle :: - | .hk-menu-item a | align-items: center; display: flex; gap: 1rem; height: 100%; width: 100%",
+      "bundle :: - | .hk-modal-backdrop > * | height: 100%; width: 100%",
       "bundle :: - | .hk-modal-body-inner > * + * | margin-top: var(--hk-modal-body-gap, 0.75rem)",
       "bundle :: - | .hk-row > * | margin: 0 0.5rem",
       "bundle :: - | .hk-sidebar-item-content a | align-items: center; bottom: -0.75rem; display: flex; gap: 0.875rem; left: -1.5rem; padding-left: 1.5rem; position: absolute; right: -1rem; top: -0.75rem",

@@ -1,8 +1,10 @@
-import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, createApp, defineComponent, nextTick, onBeforeUnmount, ref, watch, type App } from "vue";
 import type { Renderer, Tokens } from "marked";
 import HSpinner from "./HkSpinner";
+import HkMermaidDiagram from "./HkMermaidDiagram";
 import { applyInlineChipsToBody } from "./inlineChips";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { getMermaidEngine } from "../mermaid/engine";
 import { asIndexable } from "../utils/typing";
 import "./HkMarkdownRenderer.scss";
 
@@ -68,6 +70,14 @@ function renderPlain(content: string): string {
   return `<pre class="hk-md-plain">${escaped}</pre>`;
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 async function renderMarkdown(content: string): Promise<string> {
   const [marked, DOMPurify] = await Promise.all([ensureMarked(), ensureDOMPurify()]);
 
@@ -83,6 +93,19 @@ async function renderMarkdown(content: string): Promise<string> {
   const renderer = new marked.Renderer();
 
   renderer.code = function ({ text, lang }: Tokens.Code): string {
+    // Mermaid fences become carrier blocks; the mounted
+    // HkMermaidDiagram sub-apps replace them after the DOM settles (see
+    // syncMermaidBlocks). The carrier is a PRE (never a wrapper DIV):
+    // a div leading the sanitized string is not universally kept by the
+    // sanitize pass, while pre/code survive every observed shape — the
+    // mount swaps the carrier for a fresh host div via replaceWith,
+    // which never passes through the sanitizer at all.
+    // Without a registered engine the fence renders as the ordinary
+    // code block below — the exact economy the hljs convention gives
+    // syntax highlighting.
+    if (lang === "mermaid" && getMermaidEngine()) {
+      return `<pre class="hk-md-mermaid-src" data-mermaid="pending"><code>${escapeHtml(text)}</code></pre>`;
+    }
     const highlighted = tryHighlight(text, lang);
     // Audit hikari-R1-5: whitelist the language tag before interpolation
     // (depth-in-defence — the final DOMPurify pass remains the primary
@@ -174,6 +197,40 @@ export default defineComponent({
     const bodyRef = ref<HTMLElement>();
     const overlayScrollbars: Array<{ el: HTMLElement; handle: OverlayScrollbarHandle }> = [];
 
+    // Mounted mermaid sub-apps. Each diagram placeholder gets its own
+    // createApp instance (the body is innerHTML, not vdom — a sub-app is
+    // the only way to mount a component inside it); they are tracked so
+    // a re-parse (body replaced wholesale) and the final unmount never
+    // leak an app on a detached node.
+    const mermaidApps: Array<{ el: HTMLElement; app: App }> = [];
+
+    function pruneMermaidApps(): void {
+      for (let i = mermaidApps.length - 1; i >= 0; i -= 1) {
+        if (!mermaidApps[i].el.isConnected) {
+          mermaidApps[i].app.unmount();
+          mermaidApps.splice(i, 1);
+        }
+      }
+    }
+
+    function syncMermaidBlocks(body: HTMLElement): void {
+      pruneMermaidApps();
+      if (!getMermaidEngine()) return;
+      for (const carrier of body.querySelectorAll<HTMLElement>('.hk-md-mermaid-src[data-mermaid="pending"]')) {
+        const source = carrier.querySelector("code")?.textContent ?? "";
+        const host = document.createElement("div");
+        host.className = "hk-md-mermaid";
+        host.dataset.mermaid = "mounted";
+        carrier.replaceWith(host);
+        // Report contexts are narrow reading panes: the minimap is noise
+        // for a diagram-sized board, canvas dragging stays on (wide
+        // diagrams are exactly what pan was built for).
+        const app = createApp(HkMermaidDiagram, { source, minimap: false, interactive: true });
+        app.mount(host);
+        mermaidApps.push({ el: host, app });
+      }
+    }
+
     function syncOverlayScrollbars() {
       for (let i = overlayScrollbars.length - 1; i >= 0; i--) {
         if (!overlayScrollbars[i].el.isConnected) {
@@ -200,12 +257,17 @@ export default defineComponent({
         // nodes, so the scan must reconcile against the final DOM.
         if (props.inlineChips) applyInlineChipsToBody(body);
         syncOverlayScrollbars();
+        // Mermaid mounts last: it replaces its carrier subtrees
+        // wholesale, which would orphan anything attached inside them.
+        syncMermaidBlocks(body);
       });
     });
 
     onBeforeUnmount(() => {
       for (const c of overlayScrollbars) c.handle.detach();
       overlayScrollbars.length = 0;
+      for (const m of mermaidApps) m.app.unmount();
+      mermaidApps.length = 0;
     });
 
     return () => (

@@ -49,6 +49,18 @@
   pointer-events: none;
 }
 
+/* Edge caption (opt-in `label` on BoardEdgeInput): SVG text with a
+   surface-colored halo (paint-order) so it reads over its own path, the
+   grid, and neighboring edges without a measuring pass. */
+.hk-board-edge-label {
+  font-size: 12px;
+  fill: rgb(var(--color-text) / 85%);
+  paint-order: stroke;
+  stroke: rgb(var(--color-surface));
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
 // Edge ink (fill/stroke/linecap) is set as presentation attributes on every
 // emitted path (HkBoard.tsx) — no CSS declaration here, only per-edge attrs.
 

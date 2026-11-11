@@ -218,6 +218,24 @@
   z-index: 10;
 }
 
+/* Mermaid fence placeholder — the mounted HkMermaidDiagram replaces the
+   subtree after the DOM settles. The inner pre is only a SOURCE CARRIER
+   (it survives the sanitize pass and hands the raw fence text to the
+   sub-app); it never paints. */
+.hk-md-mermaid {
+  margin: 0.75em 0;
+}
+
+.hk-md-mermaid-src {
+  display: none;
+}
+
+.hk-markdown-body .hk-mermaid {
+  // The diagram owns its block: markdown prose margins stop at its
+  // border, the board's own surface takes over.
+  margin: 0;
+}
+
 /* ── Inline chips (opt-in `inlineChips` prop) ────────────────────────
    Fill-template tokens (`{{ name }}`) and asset references (`@level/name`,
    bare `@name`) chipped inside rendered prose. The look is the family's

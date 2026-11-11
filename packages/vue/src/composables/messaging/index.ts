@@ -146,6 +146,7 @@ export function useMessaging() {
       title: options.title,
       body: options.body,
       tag: options.tag,
+      key: options.key,
       requireInteraction: options.requireInteraction,
       copyable: options.copyable ?? defaultCopyable(severity),
       duration: options.duration ?? defaultDurationFor(severity),

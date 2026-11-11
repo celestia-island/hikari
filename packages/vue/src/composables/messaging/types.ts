@@ -44,6 +44,14 @@ export interface NotifyOptions {
   copyable?: boolean;
   /** Browser: dedup tag — same-tag notifications replace each other. */
   tag?: string;
+  /**
+   * Toast: address a dedicated keyed slot instead of the shared severity
+   * slot — see ToastItem.key. The canonical use is a sticky status surface
+   * (duration `0` + a stable key) that must not merge with — or inherit the
+   * lifetime, the inline action, or the dismissal of — same-severity
+   * transient messages. Browser/native transports ignore it.
+   */
+  key?: string;
   /** Browser: stay open until user dismisses. Defaults to severity-driven. */
   requireInteraction?: boolean;
   /**
@@ -68,6 +76,8 @@ export interface MessagePayload {
   title?: string;
   body?: string;
   tag?: string;
+  /** Toast keyed-slot identity — see NotifyOptions.key. */
+  key?: string;
   requireInteraction?: boolean;
   copyable?: boolean;
   duration?: number;

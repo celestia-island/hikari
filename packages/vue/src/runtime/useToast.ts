@@ -47,6 +47,18 @@ export interface ToastItem {
   copyable?: boolean;
   /** Inline action button — see ToastAction. */
   action?: ToastAction;
+  /**
+   * Stable slot identity. Unkeyed pushes (the default) share ONE slot per
+   * {@link ToastType} — the dedupe/stack lane every transient call site
+   * uses. A keyed push addresses its own (key, type) slot instead, so a
+   * long-lived surface (a sticky "machine incomplete" status, an
+   * in-progress task) can sit in the same corner stack for hours WITHOUT
+   * merging with — or inheriting the lifetime, the action, or the ✕ of —
+   * same-type transient messages. The key is caller-chosen (namespaced
+   * strings recommended); the item renders with its {@link ToastType}
+   * icon/tone, which stays fixed for the slot's lifetime.
+   */
+  key?: string;
 }
 
 /** Hard cap on stacked messages per toast slot. Beyond it the oldest
@@ -104,16 +116,22 @@ function scheduleAutoDismiss(slot: ToastItem) {
   );
 }
 
-function findSlot(type: ToastType): ToastItem | undefined {
-  return state.toasts.find((t) => t.type === type);
+function findSlot(type: ToastType, key?: string): ToastItem | undefined {
+  if (key !== undefined) {
+    // Keyed pushes address their own (key, type) slot only — never a
+    // same-key slot of another tone, and never a transient (unkeyed)
+    // slot; the unkeyed branch below is likewise blind to keyed slots.
+    return state.toasts.find((t) => t.key === key && t.type === type);
+  }
+  return state.toasts.find((t) => t.type === type && t.key === undefined);
 }
 
 function push(
   type: ToastType,
   text: string,
-  options: { duration?: number; copyable?: boolean; action?: ToastAction } = {},
+  options: { key?: string; duration?: number; copyable?: boolean; action?: ToastAction } = {},
 ): number {
-  let slot = findSlot(type);
+  let slot = findSlot(type, options.key);
   if (!slot) {
     slot = {
       id: ++nextSlotId,
@@ -122,6 +140,7 @@ function push(
       duration: options.duration ?? TOAST_DURATION[type],
       copyable: options.copyable ?? defaultCopyable(type),
       action: options.action,
+      ...(options.key !== undefined ? { key: options.key } : {}),
     };
     state.toasts.push(slot);
   } else {
@@ -160,6 +179,7 @@ export function useToast() {
   ) {
     const type = options.type || "info";
     return push(type, message, {
+      key: options.key,
       duration: options.duration,
       copyable: options.copyable,
       action: options.action,

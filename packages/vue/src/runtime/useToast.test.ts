@@ -132,3 +132,172 @@ describe("useToast inline actions", () => {
     expect(toast.toasts.find((t) => t.type === "success")!.action).toEqual(second);
   });
 });
+
+describe("useToast keyed slots", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    clearAll();
+  });
+  afterEach(() => {
+    clearAll();
+    vi.useRealTimers();
+  });
+
+  it("a keyed push owns its own slot, not the shared type slot", () => {
+    const toast = useToast();
+    toast.error("transient boom"); // the shared error lane
+    toast.show("machine incomplete", {
+      type: "error",
+      key: "shell.machine-status",
+      duration: 0,
+    });
+
+    expect(toast.toasts).toHaveLength(2);
+    const keyed = toast.toasts.find((t) => t.key === "shell.machine-status")!;
+    expect(keyed.type).toBe("error");
+    expect(keyed.messages.map((m) => m.text)).toEqual(["machine incomplete"]);
+    expect(toast.toasts.find((t) => t.key === undefined)!.messages.map((m) => m.text))
+      .toEqual(["transient boom"]);
+  });
+
+  it("an unkeyed push never lands in the keyed slot", () => {
+    const toast = useToast();
+    toast.show("machine incomplete", {
+      type: "warning",
+      key: "shell.machine-status",
+      duration: 0,
+    });
+    toast.warning("careful"); // transient warning — the shared lane
+
+    const keyed = toast.toasts.find((t) => t.key === "shell.machine-status")!;
+    expect(keyed.messages).toHaveLength(1);
+    expect(toast.toasts).toHaveLength(2);
+  });
+
+  it("re-pushes with the same key update the same keyed slot", () => {
+    const toast = useToast();
+    toast.show("machine incomplete", { type: "warning", key: "k", duration: 0 });
+    const firstId = toast.show("machine incomplete", { type: "warning", key: "k", duration: 0 });
+    const slot = toast.toasts.find((t) => t.key === "k")!;
+    expect(slot.messages).toHaveLength(1); // identical text dedupes
+    expect(firstId).toBe(slot.messages[0]!.id);
+
+    toast.show("machine incomplete: wsl missing", { type: "warning", key: "k", duration: 0 });
+    expect(toast.toasts.find((t) => t.key === "k")!.messages.map((m) => m.text)).toEqual([
+      "machine incomplete",
+      "machine incomplete: wsl missing",
+    ]);
+    expect(toast.toasts).toHaveLength(1);
+  });
+
+  it("a sticky keyed slot never expires and does not poison later unkeyed slots", () => {
+    const toast = useToast();
+    // The sticky status surface: duration 0 — no timer, ever.
+    toast.show("machine incomplete", {
+      type: "warning",
+      key: "shell.machine-status",
+      duration: 0,
+    });
+    // A LATER transient warning in the shared lane keeps its own lifetime.
+    toast.warning("careful");
+    vi.advanceTimersByTime(31_000);
+
+    expect(toast.toasts).toHaveLength(1);
+    const keyed = toast.toasts[0]!;
+    expect(keyed.key).toBe("shell.machine-status");
+    expect(keyed.duration).toBe(0);
+  });
+
+  it("an unkeyed slot created first does not retire the keyed sticky slot", () => {
+    const toast = useToast();
+    toast.warning("careful"); // creates the shared warning lane (30s)
+    toast.show("machine incomplete", {
+      type: "warning",
+      key: "shell.machine-status",
+      duration: 0,
+    });
+    vi.advanceTimersByTime(31_000);
+
+    // The transient lane expired; the keyed sticky slot (own timer = none)
+    // is untouched by the shared lane's clock.
+    expect(toast.toasts).toHaveLength(1);
+    expect(toast.toasts[0]!.key).toBe("shell.machine-status");
+  });
+
+  it("the keyed slot keeps its action across same-type transient pushes", () => {
+    const toast = useToast();
+    const run = vi.fn();
+    toast.show("machine incomplete", {
+      type: "warning",
+      key: "shell.machine-status",
+      duration: 0,
+      action: { label: "Open settings", onClick: run },
+    });
+    toast.warning("careful"); // a plain push clears the SHARED slot's action
+    toast.warning("careful again");
+
+    const keyed = toast.toasts.find((t) => t.key === "shell.machine-status")!;
+    expect(keyed.action?.label).toBe("Open settings");
+    expect(toast.toasts.find((t) => t.key === undefined)!.action).toBeUndefined();
+  });
+
+  it("remove(message id) retires only the keyed slot", () => {
+    const toast = useToast();
+    toast.error("transient boom");
+    const msgId = toast.show("machine incomplete", {
+      type: "error",
+      key: "shell.machine-status",
+      duration: 0,
+    });
+    toast.remove(msgId);
+
+    expect(toast.toasts).toHaveLength(1);
+    expect(toast.toasts[0]!.messages[0]!.text).toBe("transient boom");
+  });
+
+  it("remove(slot id) retires the keyed slot too", () => {
+    const toast = useToast();
+    toast.show("machine incomplete", { type: "warning", key: "shell.machine-status", duration: 0 });
+    const slot = toast.toasts.find((t) => t.key === "shell.machine-status")!;
+    toast.remove(slot.id);
+
+    expect(toast.toasts.find((t) => t.key === "shell.machine-status")).toBeUndefined();
+  });
+
+  it("the same key under a different type opens its own (key, type) slot", () => {
+    const toast = useToast();
+    toast.show("machine incomplete", { type: "warning", key: "shell.machine-status", duration: 0 });
+    toast.show("machine broken", { type: "error", key: "shell.machine-status", duration: 0 });
+
+    const slots = toast.toasts.filter((t) => t.key === "shell.machine-status");
+    expect(slots.map((t) => t.type).sort()).toEqual(["error", "warning"]);
+    // Each keeps its own tone and its own message list — no cross-tone merge.
+    expect(slots.find((t) => t.type === "warning")!.messages.map((m) => m.text))
+      .toEqual(["machine incomplete"]);
+    expect(slots.find((t) => t.type === "error")!.messages.map((m) => m.text))
+      .toEqual(["machine broken"]);
+  });
+
+  it("the per-slot cap applies to a keyed slot as well", () => {
+    const toast = useToast();
+    for (let i = 0; i < MAX_TOASTS_PER_SLOT + 2; i++) {
+      toast.show(`status-${i}`, { type: "info", key: "k", duration: 0 });
+    }
+    const slot = toast.toasts.find((t) => t.key === "k")!;
+    expect(slot.messages).toHaveLength(MAX_TOASTS_PER_SLOT);
+    expect(slot.messages[0]!.text).toBe("status-2");
+  });
+
+  it("a later same-key push cannot un-stick a sticky keyed slot", () => {
+    const toast = useToast();
+    toast.show("machine incomplete", { type: "warning", key: "k", duration: 0 });
+    // Even a push that PASSES a duration cannot rewrite the slot's clock:
+    // duration is fixed at creation (the caller owns the slot's lifetime).
+    toast.show("machine incomplete: wsl missing", { type: "warning", key: "k", duration: 30_000 });
+    vi.advanceTimersByTime(31_000);
+
+    const slot = toast.toasts.find((t) => t.key === "k")!;
+    expect(slot, "still sticky — the 30s push did not arm a timer").toBeTruthy();
+    expect(slot.duration).toBe(0);
+  });
+});

@@ -829,7 +829,10 @@ mod tests {
         assert!(html.contains("Delete theme"), "{html}");
         // The customize entry rides the standard add tile (compact form,
         // hook class intact — 2026-11-11 family migration).
-        assert!(html.contains("hk-add-tile--compact s-theme-item-customize"), "{html}");
+        assert!(
+            html.contains("hk-add-tile--compact s-theme-item-customize"),
+            "{html}"
+        );
         assert!(html.contains(">Customize<"), "{html}");
         // Both theme names resolved.
         assert!(html.contains(">Default<"), "{html}");
@@ -1057,7 +1060,10 @@ mod tests {
         let css = <ThemePanelContentComponent as StyledComponent>::styles();
         assert!(css.contains(".hk-add-tile"), "{css}");
         assert!(css.contains(".hk-add-tile--compact"), "{css}");
-        assert!(!css.contains(".s-theme-menu"), "the menu table is the toggle's to ship");
+        assert!(
+            !css.contains(".s-theme-menu"),
+            "the menu table is the toggle's to ship"
+        );
         assert_eq!(
             <ThemePanelContentComponent as StyledComponent>::name(),
             "theme-panel-content"

@@ -107,14 +107,21 @@ type WindowRange = [number, number];
 const MIN_WINDOW_FALLBACK = 0.02;
 /** Keyboard nudge as a fraction of the AXIS SPAN for move and resize. */
 const KEYBOARD_STEP = 0.05;
-/** Slack for "did this interaction change anything" comparisons. */
+/** Slack for "did this interaction change anything" comparisons. Window to
+ *  window (`windowsMatch`) is absolute — both sides live on the same axis —
+ *  while the full-domain test scales it by the axis SPAN, so a tiny axis can
+ *  still tell its full view from a hairline window. */
 const WINDOW_EPSILON = 1e-9;
 
-/** An ordered pair of caller coordinates: the axis everything is drawn on. */
-type DomainRange = [number, number];
+/** An ordered pair of caller coordinates: the axis everything is drawn on.
+ *  Read-only by contract: the same pair is handed out to every consumer. */
+type DomainRange = readonly [number, number];
 
-/** The fallback axis: the familiar 0%..100% reading. */
-const UNIT_DOMAIN: DomainRange = [0, 1];
+/** The fallback axis: the familiar 0%..100% reading. FROZEN because this
+ *  exact array is handed out by `resolveDomain`, stored in the `domain`
+ *  computed and used as the normalizer's default — an in-place edit would
+ *  corrupt every ribbon on the page. */
+const UNIT_DOMAIN: DomainRange = Object.freeze([0, 1] as const);
 
 function clampTo(value: number, lo: number, hi: number): number {
   return value < lo ? lo : value > hi ? hi : value;
@@ -550,7 +557,10 @@ export default defineComponent({
      *  close while the bar held focus). */
     function isFullDomain(win: WindowRange | null): boolean {
       const [d0, d1] = domain.value;
-      return win !== null && win[0] <= d0 + WINDOW_EPSILON && win[1] >= d1 - WINDOW_EPSILON;
+      // Span-relative: an absolute slack would call every window "full" on an
+      // axis shorter than ~2e-9. On the unit axis this is the historical 1e-9.
+      const eps = WINDOW_EPSILON * (d1 - d0);
+      return win !== null && win[0] <= d0 + eps && win[1] >= d1 - eps;
     }
 
     /** Returns true when a window actually existed AND was narrower than the

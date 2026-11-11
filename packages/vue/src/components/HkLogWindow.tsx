@@ -1,6 +1,6 @@
 import { computed, defineComponent, nextTick, ref, watch, type PropType } from "vue";
 import { Copy, Eraser, Pause, Play, ScrollText } from "lucide-vue-next";
-import { HModal, HScrollContainer, useClipboard, type ModalWidth } from "@celestia-island/hikari";
+import { HModal, HScrollContainer, useClipboardWithToast, useToast, type ModalWidth } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
 
@@ -56,7 +56,11 @@ export const HkLogWindow = defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
-    const clipboard = useClipboard();
+    // Copy feedback speaks through the shared toast ONLY (user direction
+    // 2026-11-11): the copy control's tooltip never flips to "Copied" —
+    // a control whose wording mutates under the cursor reads as a
+    // second, competing signal beside the toast.
+    const clipboard = useClipboardWithToast(useToast());
 
     const activeTab = ref<string>("");
     const autoscroll = ref(true);
@@ -110,8 +114,6 @@ export const HkLogWindow = defineComponent({
       void clipboard.copy(currentLines.value.join("\n"));
     }
 
-    const copied = computed(() => clipboard.copied.value);
-
     return () => (
       <HModal
         modelValue={props.modelValue}
@@ -158,7 +160,7 @@ export const HkLogWindow = defineComponent({
                 class="s-log-btn"
                 disabled={currentLines.value.length === 0}
                 onClick={handleCopy}
-                title={copied.value ? t("hikari::log.copied", "Copied") : t("hikari::log.copy", "Copy")}
+                title={t("hikari::log.copy", "Copy")}
               >
                 <Copy size={12} />
               </button>

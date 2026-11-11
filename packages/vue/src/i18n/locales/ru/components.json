@@ -139,7 +139,6 @@
     "hikari::searchInput.clear": "Очистить поиск",
     "hikari::searchInput.placeholder": "Поиск…",
     "hikari::secret.close": "Закрыть",
-    "hikari::secret.copied": "Скопировано",
     "hikari::secret.copy": "Копировать",
     "hikari::secret.notice": "Показывается только один раз",
     "hikari::secret.title": "Секрет",

@@ -139,7 +139,6 @@
     "hikari::searchInput.clear": "清除搜尋",
     "hikari::searchInput.placeholder": "搜尋…",
     "hikari::secret.close": "關閉",
-    "hikari::secret.copied": "已複製",
     "hikari::secret.copy": "複製",
     "hikari::secret.notice": "僅顯示一次",
     "hikari::secret.title": "密鑰",

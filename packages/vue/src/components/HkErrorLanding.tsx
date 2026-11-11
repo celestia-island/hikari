@@ -1,4 +1,4 @@
-import { Braces, Check, Copy, Info, TriangleAlert } from "lucide-vue-next";
+import { Braces, Copy, Info, TriangleAlert } from "lucide-vue-next";
 import {
   computed,
   defineComponent,
@@ -12,7 +12,8 @@ import {
 
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useI18n } from "../i18n/context";
-import { useClipboard } from "../runtime/useClipboard";
+import { useClipboardWithToast } from "../runtime/useClipboard";
+import { useToast } from "../runtime/useToast";
 import HkBadge from "./HkBadge";
 import HkButton from "./HkButton";
 
@@ -74,7 +75,12 @@ function normalizeSlotNodes(nodes: VNode | VNode[] | undefined): VNode[] {
  * whole error-landing family instead of every consumer hand-rolling its
  * own copy row (the boundary used to ship a private one; it now feeds this
  * hook). `copyLabel` overrides the button wording when a host already
- * ships its own.
+ * ships its own. Feedback rides the shared clipboard-with-toast path and
+ * NOTHING else (user direction 2026-11-11): a copy control's text never
+ * flips to "Copied" — the toast speaks once, and the button stays put.
+ * The toast renders in the HOST's viewport (the family toast surface);
+ * a host without one hears nothing, same contract as every other
+ * useClipboardWithToast consumer.
  */
 export const HkErrorLanding = defineComponent({
   name: "HkErrorLanding",
@@ -106,7 +112,7 @@ export const HkErrorLanding = defineComponent({
   },
   setup(props, { slots }) {
     const { t } = useI18n();
-    const clipboard = useClipboard();
+    const clipboard = useClipboardWithToast(useToast());
 
     const titleText = computed(() => props.title || t("hikari::errors.defaultTitle", "Something went wrong"));
     const hasDetails = computed(() => slots.default != null);
@@ -243,10 +249,8 @@ export const HkErrorLanding = defineComponent({
                       variant="ghost"
                       onClick={() => { void clipboard.copy(props.copyText); }}
                     >
-                      {clipboard.copied.value ? <Check size={12} /> : <Copy size={12} />}
-                      {clipboard.copied.value
-                        ? t("hikari::errors.copied", "Copied")
-                        : props.copyLabel || t("hikari::errors.copyDetails", "Copy error details")}
+                      <Copy size={12} />
+                      {props.copyLabel || t("hikari::errors.copyDetails", "Copy error details")}
                     </HkButton>
                   )]
                   : []),

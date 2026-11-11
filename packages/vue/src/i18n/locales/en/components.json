@@ -139,7 +139,6 @@
     "hikari::searchInput.clear": "Clear search",
     "hikari::searchInput.placeholder": "Search…",
     "hikari::secret.close": "Close",
-    "hikari::secret.copied": "Copied",
     "hikari::secret.copy": "Copy",
     "hikari::secret.notice": "Shown only once",
     "hikari::secret.title": "Secret",

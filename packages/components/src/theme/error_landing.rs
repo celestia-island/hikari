@@ -40,13 +40,15 @@
 // exactly like Vue's `props.fill && props.variant === "inline"` test).
 //
 // Deltas vs Vue (documented, not accidental):
-//   * CLIPBOARD: Vue's built-in copy action runs `useClipboard().copy`
-//     directly and flips its label/icon from the clipboard's internal
-//     `copied` ref. wasip2 has no clipboard, so the button fires
-//     [`ErrorLandingProps::on_copy`] and the HOST performs the copy; the
-//     flipped state is the CONTROLLED [`ErrorLandingProps::copied`] prop
-//     (the same split `overlay/protocol_modal.rs` documents). The button
-//     still renders first-in-row and stays gated on `copy_text`.
+//   * CLIPBOARD: Vue's built-in copy action runs the shared
+//     clipboard-with-toast path (the localized toast is the copy
+//     feedback, user direction 2026-11-11 — the copy control's text never
+//     flips to "Copied"). wasip2 has no clipboard, so the button fires
+//     [`ErrorLandingProps::on_copy`] and the HOST performs the copy and
+//     owns ALL feedback (its toast surface, its wording). The label and
+//     glyph are therefore CONSTANT here — there is no `copied` state to
+//     mirror. The button still renders first-in-row and stays gated on
+//     `copy_text`.
 //   * BRAND GLYPHS: the packed MDI set has no lucide `Braces`, `Copy` is
 //     `ContentCopy`, and the info glyph is `Information` — the details-label
 //     mark rides `MdiIcon::Code` (`code-braces`), the closest packed glyph.
@@ -159,12 +161,11 @@ pub fn error_landing_has_actions(actions_slot: bool, copy_text: &str) -> bool {
     actions_slot || !copy_text.is_empty()
 }
 
-/// The built-in copy button's label (Vue: the flipped `copied` label, the
-/// host override, then the bundle default).
-pub fn error_landing_copy_label(copied: bool, copy_label: &str) -> String {
-    if copied {
-        t("components.hk.errorLanding.copied", "Copied")
-    } else if copy_label.is_empty() {
+/// The built-in copy button's label — CONSTANT (user direction
+/// 2026-11-11: a copy control's text never flips to "Copied"; feedback
+/// belongs to the host's toast). Host override, then the bundle default.
+pub fn error_landing_copy_label(copy_label: &str) -> String {
+    if copy_label.is_empty() {
         t(
             "components.hk.errorLanding.copyDetails",
             "Copy error details",
@@ -174,14 +175,10 @@ pub fn error_landing_copy_label(copied: bool, copy_label: &str) -> String {
     }
 }
 
-/// The built-in copy button's glyph (Vue: `Check` once copied, `Copy` at
-/// rest).
-pub fn error_landing_copy_icon(copied: bool) -> MdiIcon {
-    if copied {
-        MdiIcon::Check
-    } else {
-        MdiIcon::ContentCopy
-    }
+/// The built-in copy button's glyph — CONSTANT `ContentCopy` (see
+/// [`error_landing_copy_label`]).
+pub fn error_landing_copy_icon() -> MdiIcon {
+    MdiIcon::ContentCopy
 }
 
 /// Appends `extra` to a vnode's ROOT element class list — how the landing
@@ -249,13 +246,8 @@ pub struct ErrorLandingProps {
     /// Host action buttons, seated AFTER the built-in copy action.
     pub actions: Option<Element>,
 
-    /// The flipped state of the built-in copy button (controlled — the
-    /// clipboard itself is host-owned, see the header deltas).
-    #[default]
-    pub copied: bool,
-
-    /// The built-in copy verb — the host performs the actual clipboard write
-    /// (see the header deltas).
+    /// The built-in copy verb — the host performs the actual clipboard
+    /// write AND owns all copy feedback (see the header deltas).
     pub on_copy: Option<EventHandler<()>>,
 }
 
@@ -299,14 +291,14 @@ pub fn ErrorLanding(props: ErrorLandingProps) -> Element {
     // every host action) — the host owns the clipboard write.
     let copy_button = (!props.copy_text.is_empty()).then(|| {
         let on_copy = props.on_copy.clone();
-        let label = error_landing_copy_label(props.copied, &props.copy_label);
+        let label = error_landing_copy_label(&props.copy_label);
         rsx! {
             Button {
                 variant: ButtonVariant::Ghost,
                 size: ButtonSize::Sm,
                 icon: Some(rsx! {
                     Icon {
-                        icon: error_landing_copy_icon(props.copied),
+                        icon: error_landing_copy_icon(),
                         size: 12,
                     }
                 }),
@@ -490,12 +482,11 @@ mod tests {
         assert!(error_landing_has_actions(false, "full error"));
         assert!(error_landing_has_actions(true, ""));
         assert!(!error_landing_has_actions(false, ""));
-        // The copy label: flipped → override → bundle.
-        assert_eq!(error_landing_copy_label(false, ""), "Copy error details");
-        assert_eq!(error_landing_copy_label(false, "Copy log"), "Copy log");
-        assert_eq!(error_landing_copy_label(true, "Copy log"), "Copied");
-        assert_eq!(error_landing_copy_icon(false), MdiIcon::ContentCopy);
-        assert_eq!(error_landing_copy_icon(true), MdiIcon::Check);
+        // The copy label: override → bundle (constant — never a "Copied"
+        // flip, user direction 2026-11-11).
+        assert_eq!(error_landing_copy_label(""), "Copy error details");
+        assert_eq!(error_landing_copy_label("Copy log"), "Copy log");
+        assert_eq!(error_landing_copy_icon(), MdiIcon::ContentCopy);
     }
 
     #[test]
@@ -513,7 +504,6 @@ mod tests {
         assert!(props.brand.is_none());
         assert!(props.children.is_none());
         assert!(props.actions.is_none());
-        assert!(!props.copied);
         assert!(props.on_copy.is_none());
     }
 

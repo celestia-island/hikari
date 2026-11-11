@@ -139,7 +139,6 @@
     "hikari::searchInput.clear": "検索をクリア",
     "hikari::searchInput.placeholder": "検索…",
     "hikari::secret.close": "閉じる",
-    "hikari::secret.copied": "コピーしました",
     "hikari::secret.copy": "コピー",
     "hikari::secret.notice": "一度だけ表示されます",
     "hikari::secret.title": "シークレット",

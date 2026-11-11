@@ -8,24 +8,34 @@
 // integrating with syntect.
 //
 // COPY FEEDBACK (user direction 2026-11-11): the copy button's face is
-// CONSTANT — it never flips to "Copied"/check. The crate has no toast
-// surface, so the write result rides `CodeHighlightProps::on_copied` and
-// the host owns all feedback.
+// CONSTANT — it never flips to "Copied"/check. The REAL write result is
+// pushed into the crate's own toast store (`feedback::toast` — hosts
+// rendering the family ToastComponent see it; without one the click is
+// silent, the same contract the Vue HkErrorLanding declares).
 
 use hikari_i18n::t;
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::feedback::toast::use_toast;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
-// Helper function to copy text to clipboard (WASM only)
+// Helper function to copy text to clipboard (WASM only). The second
+// parameter receives the REAL write result: the async-clipboard promise
+// resolves true/false, the execCommand fallback resolves with
+// `execCommand`'s own return — so the Rust side can push an HONEST
+// toast instead of claiming success for a rejected write.
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 #[wasm_bindgen(inline_js = r#"
-export function copyToClipboard(text) {
+export function copyToClipboard(text, onResult) {
+    const finish = (success) => {
+        if (typeof onResult === 'function') onResult(Boolean(success));
+    };
     if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+        return navigator.clipboard.writeText(text).then(() => finish(true)).catch(() => finish(false));
     } else {
         // Fallback to execCommand
         const textarea = document.createElement('textarea');
@@ -37,20 +47,24 @@ export function copyToClipboard(text) {
         textarea.select();
         const success = document.execCommand('copy');
         document.body.removeChild(textarea);
+        finish(success);
         return Promise.resolve(success);
     }
 }
 "#)]
 #[allow(unsafe)]
 unsafe extern "C" {
-    fn copyToClipboard(text: &str) -> js_sys::Promise;
+    fn copyToClipboard(text: &str, on_result: &js_sys::Function);
 }
 
-// WASM implementation
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-fn copy_to_clipboard(text: &str) -> bool {
-    let _promise = copyToClipboard(text);
-    true
+fn copy_to_clipboard(text: &str, on_result: impl FnOnce(bool) + 'static) {
+    // Same idiom `platform::set_timeout` uses: hand the JS side a
+    // one-shot closure. `once_into_js` releases it to the JS GC, which
+    // owns it until the promise settles and calls it.
+    let callback = wasm_bindgen::closure::Closure::once_into_js(on_result);
+    let callback = js_sys::Function::from(callback);
+    copyToClipboard(text, &callback);
 }
 
 pub struct CodeHighlightComponent;
@@ -177,13 +191,6 @@ pub struct CodeHighlightProps {
     #[default(true)]
     pub copyable: bool,
 
-    /// Copy-result hook: `true` = the payload reached the clipboard, `false`
-    /// = the write failed (or the platform has no clipboard). The crate has
-    /// no toast surface, so the HOST owns all copy feedback through this
-    /// event (user direction 2026-11-11 — the button's face is constant,
-    /// never a "Copied" flip).
-    pub on_copied: Option<EventHandler<bool>>,
-
     /// Syntax highlighting palette. See [`CodePalette`].
     #[default(CodePalette::TokyoNight)]
     pub palette: CodePalette,
@@ -199,22 +206,6 @@ pub struct CodeHighlightProps {
 
 #[component]
 pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
-    let code_classes = ClassesBuilder::new().add(CodeHighlightClass::Code).build();
-
-    let line_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::LineNumbers)
-        .build();
-
-    let content_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Content)
-        .build();
-
-    let max_height_style = if let Some(ref height) = props.max_height {
-        format!("max-height: {}; overflow-y: auto; {}", height, props.style)
-    } else {
-        props.style.clone()
-    };
-
     let lines: Vec<&str> = props.code.lines().collect();
     let line_count = lines.len();
 
@@ -256,10 +247,12 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     let language = props.language.clone();
 
     // The copy control's face is CONSTANT (user direction 2026-11-11: a
-    // copy control's text never flips to "Copied" — the crate has no
-    // toast surface of its own, so the copy RESULT is handed to the host
-    // through [`CodeHighlightProps::on_copied`] and the host owns all
-    // feedback). No copied signal, no flipped classes, no reset timer.
+    // copy control's text never flips to "Copied"). The click pushes the
+    // REAL write result into the crate's own toast store (see
+    // `feedback::toast`) — hosts rendering the family ToastComponent see
+    // it; hosts without one hear nothing, the same contract the Vue
+    // HkErrorLanding declares. No copied signal, no flipped classes, no
+    // reset timer.
 
     let button_class = copy_classes;
 
@@ -296,24 +289,28 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                         class: button_class,
                         onclick: {
                             let code_for_copy = code_for_copy.clone();
-                            let on_copied = props.on_copied.clone();
                             move |_| {
                                 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                                 {
-                                    // The write result rides the event — the
-                                    // host toasts success OR failure; the
-                                    // button itself never mutates.
-                                    let ok = copy_to_clipboard(&code_for_copy);
-                                    if let Some(handler) = on_copied.as_ref() {
-                                        handler.call(ok);
-                                    }
+                                    // The REAL write result lands in the
+                                    // callback (the promise settles after
+                                    // this handler returns); the button
+                                    // itself never mutates.
+                                    let code_for_copy = code_for_copy.clone();
+                                    copy_to_clipboard(&code_for_copy, move |ok| {
+                                        let store = use_toast();
+                                        if ok {
+                                            store.success(&t("hikari.code.copyOk", "Copied"));
+                                        } else {
+                                            store.error(&t("hikari.code.copyFailed", "Copy failed"));
+                                        }
+                                    });
                                 }
                                 #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                                 {
+                                    // Server renders never fire clicks; keep
+                                    // the branch an explicit no-op.
                                     let _ = code_for_copy;
-                                    if let Some(handler) = on_copied.as_ref() {
-                                        handler.call(false);
-                                    }
                                 }
                             }
                         },

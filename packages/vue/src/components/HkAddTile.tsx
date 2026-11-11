@@ -16,7 +16,7 @@ import "./HkAddTile.scss";
  *     the empty state of a list or panel ("no sources yet — add one to
  *     begin"). The whole tile is the click target; hosts no longer pair
  *     a passive dashed box with a separate button below it.
- *   - **compact** — a slim left-aligned row ("＋ Add node / repo"): the
+ *   - **compact** — a slim start-aligned row ("＋ Add node / repo"): the
  *     tile that rides the END of a list of rows and grows the list. It
  *     replaces the loose secondary button, so the add affordance reads
  *     as part of the list instead of floating under it.

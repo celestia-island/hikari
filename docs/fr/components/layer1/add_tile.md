@@ -18,7 +18,7 @@ Rust consommera la tuile.
 
 - par défaut — bloc vertical centré (icône au-dessus du libellé) :
   l'état vide d'une liste ou d'un panneau.
-- `compact` — ligne fine alignée à gauche («＋ en ajouter un de plus »)
+- `compact` — ligne fine alignée au début («＋ en ajouter un de plus »)
   qui se place à la FIN d'une liste de lignes au lieu d'un bouton
   isolé.
 - `droppable` — chaque forme accepte en plus le glisser de fichiers.

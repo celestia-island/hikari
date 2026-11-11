@@ -17,7 +17,7 @@ consumes the tile.
 
 - default — centered vertical block (icon above the label): the empty
   state of a list or panel.
-- `compact` — slim left-aligned row ("＋ add one more") that rides the
+- `compact` — slim start-aligned row ("＋ add one more") that rides the
   END of a row list instead of a loose button under it.
 - `droppable` — either form additionally accepts file drags. The
   drag-over state reuses the drag-overlay language (dashed primary on a

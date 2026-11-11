@@ -15,7 +15,25 @@ import "./HkSlider.scss";
  * track jumps and drags (emitting continuously so hosts can apply live),
  * with window-level move/up listeners so the drag keeps tracking the
  * pointer past the element bounds.
+ *
+ * Rail geometry (2026-11-11 user report): the rail is INSET by the thumb
+ * radius at each end — the native range-input shape. A thumb parked on
+ * the first/last stop then rests ON the rail instead of hanging off its
+ * cap, the endpoint tick dots stay inside the rail, and the fill starts
+ * flat at the rail's left edge (a pill cap on a 6px saturated bar reads
+ * as a pointed nib on screen). The inset lives in the
+ * `--hk-slider-rail-inset` var (set inline here, mirrored by the
+ * constants below — the stylesheet consumes the var for the track/fill
+ * edges; keep the numbers in sync).
  */
+
+/** Thumb diameter / 2 per size (HkSlider.scss thumb rules). */
+const RAIL_INSET_PX = { md: 7, sm: 6 } as const;
+/** Tick dot diameter (HkSlider.scss `.hk-slider-tick`); dot centers sit
+ *  one radius further inside the rail so the last dot never clears the
+ *  rail cap. */
+const TICK_DOT_PX = 2;
+
 export default defineComponent({
   name: "HkSlider",
   props: {
@@ -59,6 +77,29 @@ export default defineComponent({
       return span > 0 ? ((value.value - props.min) / span) * 100 : 0;
     });
 
+    /** The value fraction mapped into the INSET rail: `f` runs 0..1
+     *  across the rail's drawable span, so positions derive as
+     *  `inset + railLength * f`. Shared by thumb/fill/tick positioning
+     *  and the pointer mapping below. Emitted in the expanded linear
+     *  calc form (`calc(F% ± Npx)`) — the `(100% - Npx) * f` product
+     *  shape renders identically but cssstyle (jsdom) rejects it, and
+     *  the contract tests assert on the live inline style. */
+    const railInset = computed(() => RAIL_INSET_PX[props.size] ?? RAIL_INSET_PX.md);
+
+    function round4(n: number): number {
+      return Math.round(n * 1e4) / 1e4;
+    }
+
+    /** A position ON the rail (thumb center / tick center); the extra
+     *  inset shaves tick centers by the dot radius so the endpoint
+     *  dots stay inside the rail caps. */
+    function railPos(f: number, extraInsetPx = 0): string {
+      const inset = railInset.value + extraInsetPx;
+      const px = round4(inset * (1 - 2 * f));
+      const op = px < 0 ? " - " : " + ";
+      return `calc(${round4(f * 100)}%${op}${Math.abs(px)}px)`;
+    }
+
     const tickPositions = computed<number[]>(() => {
       if (!props.showTicks) return [];
       const count = Math.round((props.max - props.min) / safeStep.value);
@@ -75,8 +116,12 @@ export default defineComponent({
       const el = trackRef.value;
       if (!el) return value.value;
       const rect = el.getBoundingClientRect();
-      if (rect.width <= 0) return value.value;
-      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const inset = railInset.value;
+      const rail = rect.width - inset * 2;
+      // Degenerate rail (hidden / zero-width): keep the current value
+      // rather than inventing a position.
+      if (rect.width <= 0 || rail <= 0) return value.value;
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left - inset) / rail));
       return snap(props.min + ratio * (props.max - props.min));
     }
 
@@ -145,6 +190,7 @@ export default defineComponent({
         ref={trackRef}
         class={["hk-slider", props.disabled && "is-disabled"].filter(Boolean).join(" ")}
         data-size={props.size}
+        style={{ "--hk-slider-rail-inset": `${railInset.value}px` }}
         role="slider"
         tabindex={props.disabled ? -1 : 0}
         aria-label={props.ariaLabel}
@@ -161,12 +207,17 @@ export default defineComponent({
             key={i}
             class="hk-slider-tick"
             data-active={left <= pct.value + 0.001 || undefined}
-            style={{ left: `${left}%` }}
+            // Tick centers ride the rail span, one dot-radius further
+            // inset, so the endpoint dots stay inside the rail caps.
+            style={{ left: railPos(left / 100, TICK_DOT_PX / 2) }}
             aria-hidden="true"
           />
         ))}
-        <div class="hk-slider-fill" style={{ width: `${pct.value}%` }} />
-        <div class="hk-slider-thumb" style={{ left: `${pct.value}%` }} />
+        <div
+          class="hk-slider-fill"
+          style={{ width: `calc(${round4(pct.value)}% - ${round4(railInset.value * 2 * (pct.value / 100))}px)` }}
+        />
+        <div class="hk-slider-thumb" style={{ left: railPos(pct.value / 100) }} />
       </div>
     );
   },

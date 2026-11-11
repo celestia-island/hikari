@@ -66,8 +66,43 @@ describe("HkSlider", () => {
 
   it("sizes the fill and thumb from the snapped value percentage", () => {
     const c = mount(() => h(HkSlider, { modelValue: 200, min: 100, max: 300, step: 25 }));
-    expect((c.querySelector(".hk-slider-fill") as HTMLElement).style.width).toBe("50%");
-    expect((c.querySelector(".hk-slider-thumb") as HTMLElement).style.left).toBe("50%");
+    // The rail is inset by the thumb radius (md: 7px → 14px span) and the
+    // fill/thumb ride that span (2026-11-11 rail-inset geometry); the
+    // linear calc form is the cssstyle-parseable expansion.
+    expect((c.querySelector(".hk-slider-fill") as HTMLElement).style.width).toBe(
+      "calc(50% - 7px)",
+    );
+    expect((c.querySelector(".hk-slider-thumb") as HTMLElement).style.left).toBe(
+      "calc(50% + 0px)",
+    );
+    expect(
+      (c.querySelector(".hk-slider") as HTMLElement).style.getPropertyValue(
+        "--hk-slider-rail-inset",
+      ),
+    ).toBe("7px");
+  });
+
+  it("keeps the endpoint ticks inside the rail caps", () => {
+    const c = mount(() => h(HkSlider, {
+      modelValue: 100, min: 100, max: 300, step: 25, showTicks: true,
+    }));
+    const ticks = c.querySelectorAll(".hk-slider-tick");
+    const first = (ticks[0] as HTMLElement).style.left;
+    const last = (ticks[ticks.length - 1] as HTMLElement).style.left;
+    // Dot centers sit one dot-radius (1px) further inside the rail, so the
+    // endpoint dots never clear the rail caps.
+    expect(first).toBe("calc(0% + 8px)");
+    expect(last).toBe("calc(100% - 8px)");
+  });
+
+  it("draws the fill with a flat start cap and a rounded end cap", () => {
+    // Source contract: the pill cap on a 6px saturated bar read as a
+    // pointed nib at the rail start (2026-11-11 user report).
+    const here = dirname(fileURLToPath(import.meta.url));
+    const scss = readFileSync(join(here, "HkSlider.scss"), "utf-8");
+    const fill = scss.match(/\.hk-slider-fill\s*{[^}]*}/)?.[0] ?? "";
+    expect(fill).toContain("border-radius: 0 var(--radius-full, 9999px)");
+    expect(fill).toContain("left: var(--hk-slider-rail-inset, 7px)");
   });
 
   it("emits a snapped value when the track is pressed and dragged", () => {

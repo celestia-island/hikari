@@ -49,15 +49,17 @@
 //
 // Behaviour deltas vs Vue (documented, not accidental):
 //   * NO PRECISION-EDITOR DIALOG. Vue mounts `HkAdaptiveDialog` (a draggable
-//     desktop window / mobile slide-up sheet) around the editor body plus a
-//     clear button. This crate has no dialog/portal host in the mirrored
-//     surface (`HkAdaptiveDialog` has no Rust mirror in this wave), so the
-//     value button only REQUESTS the editor (`onupdate_editor_open(true)`) and
-//     the host renders the body — reusing the pure functions above, which are
-//     the whole arithmetic of `HkTokenValueEditor`. Consequences: the
-//     `hk-token-input-editor-body` / `hk-token-editor*` / `hk-token-input-clear`
-//     nodes are NOT rendered here, and Vue's `#editor` slot has no analogue
-//     (a slot with a render-scoped payload cannot be mirrored as a prop).
+//     desktop window / mobile slide-up sheet) around the editor body (the
+//     editor dialog has no separate clear button — clearing the text is the
+//     unset gesture; 2026-11-11). This crate has no dialog/portal host in the
+//     mirrored surface (`HkAdaptiveDialog` has no Rust mirror in this wave),
+//     so the value button only REQUESTS the editor
+//     (`onupdate_editor_open(true)`) and the host renders the body — reusing
+//     the pure functions above, which are the whole arithmetic of
+//     `HkTokenValueEditor`. Consequences: the `hk-token-input-editor-body` /
+//     `hk-token-editor*` nodes are NOT rendered here, and Vue's `#editor`
+//     slot has no analogue (a slot with a render-scoped payload cannot be
+//     mirrored as a prop).
 //   * `format` IS A [`Callback`], NOT AN `EventHandler`: Vue's `format` prop is
 //     a `(value, unit) => string` function, and tairitsu's `Callback<T, R>`
 //     carries a return value (the same shape `utils/positioning.rs` already uses
@@ -73,10 +75,9 @@
 //     component's documented contract (`hk-select-wrapper` + `hk-select-trigger`
 //     + popout/sheet); Vue nests `HkSelect` in exactly the same place, so the
 //     class list matches while the popup host differs (see `basic/select.rs`).
-//   * `editorTitle` / the clear label have i18n fallbacks
-//     (`hikari::tokenField.editValue` / `hikari::tokenField.clear`); the clear
-//     label is unused here because the clear button lives in the un-mirrored
-//     dialog body.
+//   * `editorTitle` has an i18n fallback (`hikari::tokenField.editValue`);
+//     Vue's editor body carries no other strings (the old clear label is
+//     retired with the clear button, 2026-11-11).
 
 use hikari_i18n::t;
 

@@ -3,9 +3,6 @@ import { computed, defineComponent, ref, watch, type PropType } from "vue";
 import HkAdaptiveDialog from "./HkAdaptiveDialog";
 import HkInput from "./HkInput";
 import HkSelect from "./HkSelect";
-import { X } from "lucide-vue-next";
-
-import HkIconButton from "./HkIconButton";
 
 import { useI18n } from "../i18n/context";
 import "./HkTokenInput.scss";
@@ -38,9 +35,13 @@ function trim(n: number): string {
  * The precision editor is a DRAGGABLE desktop window / slide-up
  * mobile sheet (HkAdaptiveDialog): a numeric input (major) plus a
  * unit picker (minor), both live-commit; a unit flip re-expresses the
- * same absolute budget (1.5M ⇄ 1500K) instead of rescaling it; a
- * clear action unsets. Transiently unparseable intermediates ("1e")
- * commit nothing. An `#editor` slot may replace the built-in body.
+ * same absolute budget (1.5M ⇄ 1500K) instead of rescaling it;
+ * deliberately emptying the input unsets. There is deliberately NO
+ * separate clear button in the editor body — the dialog chrome already
+ * carries the window's close ✕, and a second ✕ read as a duplicate
+ * control (2026-11-11 user report); clearing the text is the unset
+ * gesture. Transiently unparseable intermediates ("1e") commit
+ * nothing. An `#editor` slot may replace the built-in body.
  */
 export default defineComponent({
   name: "HkTokenInput",
@@ -72,7 +73,6 @@ export default defineComponent({
     const resolvedEditorTitle = computed(
       () => props.editorTitle ?? t("hikari::tokenField.editValue", "Edit value"),
     );
-    const clearLabel = computed(() => t("hikari::tokenField.clear", "Clear"));
 
     function display(): string {
       if (props.format) return props.format(props.modelValue, props.unit);
@@ -107,11 +107,6 @@ export default defineComponent({
 
     function switchSuffixUnit(next: string) {
       emit("update:unit", next as "auto" | TokenUnit);
-    }
-
-    function clearValue() {
-      emit("update:modelValue", null);
-      editorOpen.value = false;
     }
 
     return () => (
@@ -161,15 +156,6 @@ export default defineComponent({
                     onUpdate:modelValue={(v: number | null) => emit("update:modelValue", v)}
                     onUpdate:unit={(u: TokenUnit) => (editorUnit.value = u)}
                   />
-                  <HkIconButton
-                    class="hk-token-input-clear"
-                    size={24}
-                    variant="ghost"
-                    aria-label={clearLabel.value}
-                    onClick={clearValue}
-                  >
-                    {{ icon: () => <X aria-hidden="true" /> }}
-                  </HkIconButton>
                 </div>
               ),
           }}

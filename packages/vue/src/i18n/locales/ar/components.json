@@ -289,7 +289,6 @@
   "hikari::userPicker.confirm": "تأكيد",
   "hikari::userPicker.selectedCount": "تم اختيار {count}",
   "hikari::tokenField.editValue": "تحرير القيمة",
-  "hikari::tokenField.clear": "مسح",
   "hikari::diff.unchangedLines": "{count} أسطر غير معدّلة",
   "hikari::diff.loadFailed": "فشل التحميل، انقر لإعادة المحاولة",
   "hikari::search.trigger": "بحث",

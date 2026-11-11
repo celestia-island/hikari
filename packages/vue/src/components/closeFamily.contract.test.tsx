@@ -114,17 +114,20 @@ describe("close-button family rides the standard icon button", () => {
     });
   }
 
-  it("sources the wave-B1 field clears from the standard component too", () => {
-    // The token editor's clear lives inside an HkAdaptiveDialog slot (no
-    // bare mount path), so it is pinned at SOURCE level like the toast.
+  it("the token editor has NO clear button in its editor body", () => {
+    // Retired 2026-11-11 (user report): the precision editor's dialog
+    // chrome already carries the window close ✕, and a second ✕ next to
+    // the unit picker read as a duplicate control — clearing the text is
+    // the unset gesture. Pinned NEGATIVELY at source level (the editor
+    // lives inside an HkAdaptiveDialog slot, no bare mount path) so the
+    // button cannot quietly grow back.
     const token = readSource("HkTokenInput.tsx");
-    expect(token, "token clear rides HkIconButton").toMatch(
-      new RegExp('<HkIconButton[\\s\\S]{0,200}?class="hk-token-input-clear"'),
+    expect(token, "no hk-token-input-clear seat class").not.toContain(
+      "hk-token-input-clear",
     );
-    expect(token, "token clear is not a raw button").not.toMatch(
-      new RegExp('<button[^>]*class="hk-token-input-clear"'),
+    expect(token, "no HkIconButton in the editor body").not.toContain(
+      "HkIconButton",
     );
-    expect(token, "token clear rides the 24px rung").toContain("size={24}");
   });
 
   it("sources the toast controls from the standard component too", () => {

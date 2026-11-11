@@ -241,14 +241,31 @@ pub fn slider_value_from_ratio(ratio: f64, min: f64, max: f64, step: f64) -> f64
 /// The pointer's `0..1` ratio across the measured INSET rail, or `None` when
 /// the host cannot measure the element (non-DOM builds report a zero-width
 /// rect) or the rail is degenerate (element thinner than both insets).
+/// The pointer's `0..1` ratio across an INSET rail of `rect_width` px whose
+/// left edge sits at `rect_x` — Vue's `valueFrom()` mapping minus the DOM
+/// lookup. `None` when the rail is degenerate (zero-width element, or
+/// thinner than both insets): the caller keeps the current value instead of
+/// inventing a position. A pure function so the mapping (which only has a
+/// DOM seam in production) stays mutation-testable.
+pub fn slider_pointer_ratio(
+    client_x: f64,
+    rect_x: f64,
+    rect_width: f64,
+    inset_px: f64,
+) -> Option<f64> {
+    let rail = rect_width - inset_px * 2.0;
+    if rect_width <= 0.0 || rail <= 0.0 {
+        return None;
+    }
+    Some(((client_x - rect_x - inset_px) / rail).clamp(0.0, 1.0))
+}
+
+/// The DOM seam: the host-provided measurement for the event's
+/// `currentTarget` handle feeds [`slider_pointer_ratio`].
 fn pointer_ratio(client_x: i32, current_target: Option<u64>, inset_px: f64) -> Option<f64> {
     let handle = current_target?;
     let rect = get_bounding_client_rect(DomHandle::from_raw(handle));
-    let rail = rect.width - inset_px * 2.0;
-    if rect.width <= 0.0 || rail <= 0.0 {
-        return None;
-    }
-    Some(((f64::from(client_x) - rect.x - inset_px) / rail).clamp(0.0, 1.0))
+    slider_pointer_ratio(f64::from(client_x), rect.x, rect.width, inset_px)
 }
 
 #[define_props]
@@ -596,6 +613,46 @@ mod tests {
             style: "margin-top:2px".to_string(),
             ..Default::default()
         });
+    }
+
+    #[test]
+    fn slider_pointer_ratio_maps_into_the_inset_rail() {
+        // 200px rect, 7px insets → a 186px drawable rail.
+        assert_eq!(slider_pointer_ratio(7.0, 0.0, 200.0, 7.0), Some(0.0));
+        assert_eq!(slider_pointer_ratio(193.0, 0.0, 200.0, 7.0), Some(1.0));
+        assert_eq!(slider_pointer_ratio(100.0, 0.0, 200.0, 7.0), Some(0.5));
+        // Presses past either rail end saturate (not extrapolate).
+        assert_eq!(slider_pointer_ratio(0.0, 0.0, 200.0, 7.0), Some(0.0));
+        assert_eq!(slider_pointer_ratio(250.0, 0.0, 200.0, 7.0), Some(1.0));
+        // The minimap press case: (46-7)/186 — the OLD full-width mapping
+        // would say 46/200 = 0.23; the inset mapping must NOT.
+        let ratio = slider_pointer_ratio(46.0, 0.0, 200.0, 7.0).unwrap();
+        assert!((ratio - (46.0 - 7.0) / 186.0).abs() < 1e-9);
+        assert!((ratio - 0.23).abs() > 0.01);
+        // Degenerate rails keep the current value (None → no emit).
+        assert_eq!(slider_pointer_ratio(100.0, 0.0, 0.0, 7.0), None);
+        assert_eq!(slider_pointer_ratio(100.0, 0.0, 10.0, 7.0), None);
+    }
+
+    #[test]
+    fn slider_renders_rail_inset_ticks_inside_the_caps() {
+        let html = Slider(SliderProps {
+            value: 0.0,
+            min: 0.0,
+            max: 100.0,
+            step: 25.0,
+            show_ticks: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        // Endpoint tick centers carry the dot-radius inset (md): flush
+        // INSIDE the rail caps, never past them.
+        assert!(html.contains(r#"style="left:calc(0% + 8px)""#), "{html}");
+        assert!(html.contains(r#"style="left:calc(100% - 8px)""#), "{html}");
+        // Five stops render five ticks.
+        assert_eq!(html.matches("hk-slider-tick").count(), 5, "{html}");
+        // The value sits on the first stop: its tick is active.
+        assert!(html.contains("data-active"), "{html}");
     }
 
     #[test]

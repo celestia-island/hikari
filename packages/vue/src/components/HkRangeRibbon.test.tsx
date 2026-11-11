@@ -965,6 +965,35 @@ describe("HkRangeRibbon reset", () => {
       full.querySelector(".hk-range-ribbon-reset"),
       "the whole tiny axis needs no reset",
     ).toBeNull();
+
+    // A NEGATIVE-ORIGIN axis catches a slack scaled by the wrong end: with
+    // `eps = WINDOW_EPSILON * d1` (~ -1e-9 here) the FULL view would become a
+    // phantom sub-selection. The shipped slack (1e-9 * span) keeps the full
+    // axis full and half the axis a real selection.
+    const negativeDomain: [number, number] = [-1, -1 + 1e-12];
+    const negativeFull = mountRibbon({
+      domain: negativeDomain,
+      minWindow: 1e-13,
+      window: [-1, -1 + 1e-12],
+    });
+    expect(
+      negativeFull.querySelector(".hk-range-ribbon-reset"),
+      "the full negative-origin axis needs no reset",
+    ).toBeNull();
+    expect(
+      keydown(negativeFull, "Escape").defaultPrevented,
+      "a full-axis Escape passes through to the host",
+    ).toBe(false);
+
+    const negativeHalf = mountRibbon({
+      domain: negativeDomain,
+      minWindow: 1e-13,
+      window: [-1, -1 + 5e-13],
+    });
+    expect(
+      negativeHalf.querySelector(".hk-range-ribbon-reset"),
+      "half of the negative-origin axis is a real sub-selection",
+    ).toBeTruthy();
   });
 
   it("cancels an in-flight brush with Escape and consumes the key", async () => {

@@ -139,7 +139,6 @@
     "hikari::searchInput.clear": "검색 지우기",
     "hikari::searchInput.placeholder": "검색…",
     "hikari::secret.close": "닫기",
-    "hikari::secret.copied": "복사됨",
     "hikari::secret.copy": "복사",
     "hikari::secret.notice": "한 번만 표시됩니다",
     "hikari::secret.title": "비밀 키",

@@ -139,7 +139,6 @@
     "hikari::searchInput.clear": "مسح البحث",
     "hikari::searchInput.placeholder": "بحث…",
     "hikari::secret.close": "إغلاق",
-    "hikari::secret.copied": "تم النسخ",
     "hikari::secret.copy": "نسخ",
     "hikari::secret.notice": "يُعرض مرة واحدة فقط",
     "hikari::secret.title": "السر",

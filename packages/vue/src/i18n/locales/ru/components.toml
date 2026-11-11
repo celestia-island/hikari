@@ -75,7 +75,6 @@ hk.mediaPlayer.exitFullscreen = "Выйти из полноэкранного р
 hk.mediaPlayer.fullscreen = "Полноэкранный режим"
 hk.auth.solvingChallenge = "Проверка…"
 hk.secret.close = "Закрыть"
-hk.secret.copied = "Скопировано"
 hk.secret.copy = "Копировать"
 hk.secret.notice = "Показывается только один раз"
 hk.secret.title = "Секрет"

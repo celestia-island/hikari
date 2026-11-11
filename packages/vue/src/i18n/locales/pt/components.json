@@ -139,7 +139,6 @@
     "hikari::searchInput.clear": "Limpar pesquisa",
     "hikari::searchInput.placeholder": "Pesquisar…",
     "hikari::secret.close": "Fechar",
-    "hikari::secret.copied": "Copiado",
     "hikari::secret.copy": "Copiar",
     "hikari::secret.notice": "Exibido apenas uma vez",
     "hikari::secret.title": "Segredo",

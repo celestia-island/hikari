@@ -303,9 +303,9 @@
  * (2026-09-12 field report: with the strip row at the generic 16px cell
  * its label sat a full cell-width left of the theme rows' names). The
  * strip container is the toggle's own, so the scope needs no host
- * class-name contract. As with the customize row, the cell widens but
- * the GLYPH keeps the standard menu icon size — widening a cell must
- * never re-scale its glyph (the 0.42.2 regression class). */
+ * class-name contract. The cell widens but the GLYPH keeps the standard
+ * menu icon size — widening a cell must never re-scale its glyph (the
+ * 0.42.2 regression class). */
 .s-theme-mode-extra .s-theme-item-btn .hk-menu-item-icon {
   @include mi.icon;
 

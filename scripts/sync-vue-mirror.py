@@ -257,6 +257,7 @@ SCENE_SHEETS: list[str] = [
 # `HkAvatarButton` ship no sheet of their own (they borrow a parent's or emit
 # host-utility classes only).
 MISC_SHEETS: list[str] = [
+    "HkAddTile.scss",
     "HkWallpaperBackdrop.scss",
     "HkThemeToggle.scss",
     "HkColorSchemeDialog.scss",

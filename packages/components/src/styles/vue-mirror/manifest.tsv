@@ -146,6 +146,7 @@ components/HkZoomToolbar.scss	components/HkZoomToolbar.scss
 components/HkWindowedItem.scss	components/HkWindowedItem.scss
 components/HkStarSystem.scss	components/HkStarSystem.scss
 components/HkBlankCanvas.scss	components/HkBlankCanvas.scss
+components/HkAddTile.scss	components/HkAddTile.scss
 components/HkWallpaperBackdrop.scss	components/HkWallpaperBackdrop.scss
 components/HkThemeToggle.scss	components/HkThemeToggle.scss
 components/HkColorSchemeDialog.scss	components/HkColorSchemeDialog.scss

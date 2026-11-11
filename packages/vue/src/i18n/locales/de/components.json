@@ -289,7 +289,6 @@
   "hikari::userPicker.confirm": "Bestätigen",
   "hikari::userPicker.selectedCount": "{count} ausgewählt",
   "hikari::tokenField.editValue": "Wert bearbeiten",
-  "hikari::tokenField.clear": "Leeren",
   "hikari::diff.unchangedLines": "{count} unveränderte Zeilen",
   "hikari::diff.loadFailed": "Laden fehlgeschlagen, zum Wiederholen klicken",
   "hikari::search.trigger": "Suchen",

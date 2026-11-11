@@ -285,7 +285,7 @@ describe("HkTokenInput", () => {
     expect(a.emitted.filter((v) => v === null)).toEqual([]);
   });
 
-  it("clearing unsets; unit flips re-express, never rescale", async () => {
+  it("clearing via empty text unsets; unit flips re-express, never rescale", async () => {
     const a = mountInput({ modelValue: 1_500_000 });
     (a.container.querySelector(".hk-token-input-value") as HTMLButtonElement).click();
     await nextTick();
@@ -296,12 +296,16 @@ describe("HkTokenInput", () => {
     await pickOption(editorSelect, "K");
     expect(input.value).toBe("1500");
     expect(a.emitted).toEqual([]);
-    (document.querySelector(".hk-token-input-clear") as HTMLButtonElement).click();
+    // There is deliberately no separate clear button in the editor body
+    // (the window close ✕ plus a second ✕ read as duplicates): emptying
+    // the text IS the unset gesture, and the editor stays open so the
+    // unset value segment ("—") is visible before the host closes it.
+    expect(document.querySelector(".hk-token-input-clear")).toBeNull();
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
     expect(a.emitted.at(-1)).toBe(null);
-    await vi.waitFor(() => {
-      expect(document.querySelector(".hk-modal-content")).toBeNull();
-    }, { timeout: 1500 });
+    expect(document.querySelector(".hk-modal-content")).not.toBeNull();
   });
 
   it("a unit flip with unparseable text clears rather than skewing the scale", async () => {

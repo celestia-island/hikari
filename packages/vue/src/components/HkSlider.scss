@@ -9,20 +9,26 @@
   touch-action: none;
   @include user-select(none);
   outline: none;
+  // The drawable rail is inset by the thumb radius at each end (the value
+  // comes inline from the component; this is only the no-inline fallback).
+  // A thumb parked on the first/last stop then rests ON the rail instead
+  // of hanging off its cap (2026-11-11 user report).
+  --hk-slider-rail-inset: 7px;
+}
+
+.hk-slider[data-size="sm"] {
+  --hk-slider-rail-inset: 6px;
+  height: 14px;
 }
 
 .hk-slider::before {
   content: "";
   position: absolute;
-  inset: 50% 0 auto 0;
+  inset: 50% var(--hk-slider-rail-inset, 7px) auto;
   height: 6px;
   transform: translateY(-50%);
   border-radius: var(--radius-full, 9999px);
   background: rgb(var(--color-muted) / 22%);
-}
-
-.hk-slider[data-size="sm"] {
-  height: 14px;
 }
 
 .hk-slider[data-size="sm"]::before {
@@ -42,10 +48,15 @@
 .hk-slider-fill {
   position: absolute;
   top: 50%;
-  left: 0;
+  // Anchored at the rail's left edge; the width (inline from the
+  // component) is the rail fraction. The LEFT cap stays FLAT — a pill
+  // cap on a 6px saturated bar reads as a pointed nib on screen (the
+  // same report that inset the rail) — while the right cap stays round
+  // and closes the rail off at 100%.
+  left: var(--hk-slider-rail-inset, 7px);
   height: 6px;
   transform: translateY(-50%);
-  border-radius: var(--radius-full, 9999px);
+  border-radius: 0 var(--radius-full, 9999px) var(--radius-full, 9999px) 0;
   background: rgb(var(--color-primary));
   pointer-events: none;
 }

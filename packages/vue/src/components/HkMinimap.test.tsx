@@ -105,9 +105,11 @@ describe("HkMinimap zoom bar", () => {
     expect(slider.getAttribute("aria-valuemax")).toBe("150");
     expect(slider.getAttribute("aria-valuenow")).toBe("100");
     expect(slider.getAttribute("aria-valuetext")).toBe("100%");
-    // Off-grid press: ratio 0.185 → 68.5% snaps to the 5% grid → 70.
+    // Off-grid press: the press maps into the INSET rail (7px thumb
+    // radius each side of the 200px rect → 186px rail); ratio
+    // (46-7)/186 ≈ 0.21 → ~71% snaps to the 5% grid → 70.
     pinRect(slider);
-    slider.dispatchEvent(pointer("pointerdown", 37));
+    slider.dispatchEvent(pointer("pointerdown", 46));
     await nextTick();
     expect(seen).toEqual([[70, "slider"]]);
     expect(slider.getAttribute("aria-valuenow")).toBe("70");

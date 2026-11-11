@@ -263,9 +263,12 @@ mod tests {
         let slider = html.find("hk-slider-field-slider").expect("slider");
         let trailing = html.find("data-side=\"trailing\"").expect("trailing");
         assert!(leading < slider && slider < trailing, "{html}");
-        // The value rides the slider's own DOM contract unchanged.
-        assert!(html.contains("style=\"left:30%\""), "{html}");
-        assert!(html.contains("style=\"width:30%\""), "{html}");
+        // The value rides the inset-rail geometry (2026-11-11): the rail
+        // var on the root, the fill anchored at the rail start (flat cap),
+        // the thumb center ON the rail — Vue's exact emission strings.
+        assert!(html.contains("--hk-slider-rail-inset:7px"), "{html}");
+        assert!(html.contains("style=\"width:calc(30% - 4.2px)\""), "{html}");
+        assert!(html.contains("style=\"left:calc(30% + 2.8px)\""), "{html}");
     }
 
     #[test]

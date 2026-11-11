@@ -26,9 +26,9 @@ export {
   type HkDockBarAnchor as HDockBarAnchor,
   type HkDockBarSurface as HDockBarSurface,
 } from "./components/HkDockBar";
+export { default as HAddTile } from "./components/HkAddTile";
 export { default as HDrawer } from "./components/HkDrawer";
 export { default as HEdgeGlow } from "./components/HkEdgeGlow";
-export { default as HAddTile } from "./components/HkAddTile";
 export { default as HEmptyState } from "./components/HkEmptyState";
 export { default as HStepGuide } from "./components/HkStepGuide";
 export type { StepGuideItem } from "./components/HkStepGuide";

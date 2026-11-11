@@ -149,6 +149,42 @@ describe("HkAddTile", () => {
     expect(el.classList.contains("hk-add-tile--drag-over")).toBe(false);
   });
 
+  it("cancels dragenter/dragover exactly when it accepts the drag", () => {
+    // The browser only DELIVERS a drop onto a target whose last dragover
+    // was not cancelled — these defaultPrevented pins ARE the drop-target
+    // contract; deleting either preventDefault keeps every emit-level
+    // test green while killing the feature in real browsers (R2-S2).
+    const c = mount(h(HkAddTile, { droppable: true }, { default: () => "Drop" }));
+    const el = tileEl(c);
+    const enter = new Event("dragenter", { cancelable: true });
+    el.dispatchEvent(enter);
+    expect(enter.defaultPrevented).toBe(true);
+    const over = new Event("dragover", { cancelable: true });
+    el.dispatchEvent(over);
+    expect(over.defaultPrevented).toBe(true);
+  });
+
+  it("never cancels drag events when not droppable or disabled (refusal = no preventDefault)", () => {
+    const c = mount(h(HkAddTile, {}, { default: () => "No" }));
+    const over = new Event("dragover", { cancelable: true });
+    tileEl(c).dispatchEvent(over);
+    expect(over.defaultPrevented).toBe(false);
+    const off = mount(
+      h(HkAddTile, { droppable: true, disabled: true }, { default: () => "Off" }),
+    );
+    const over2 = new Event("dragover", { cancelable: true });
+    tileEl(off).dispatchEvent(over2);
+    expect(over2.defaultPrevented).toBe(false);
+  });
+
+  it("hands the native drop event as the second drop-files argument", () => {
+    const onDropFiles = vi.fn();
+    const c = mount(h(HkAddTile, { droppable: true, onDropFiles }, { default: () => "Drop" }));
+    const ev = dropEvent([file("a.toml")]);
+    tileEl(c).dispatchEvent(ev);
+    expect(onDropFiles.mock.calls[0][1]).toBe(ev);
+  });
+
   it("clears the drag-over state on drop", async () => {
     const onDropFiles = vi.fn();
     const c = mount(h(HkAddTile, { droppable: true, onDropFiles }, { default: () => "Drop" }));

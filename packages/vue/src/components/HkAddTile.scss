@@ -1,10 +1,12 @@
 @use "../styles/polyfill" as *;
 
-/* HkAddTile — the dashed add / empty affordance tile. The base class is
- * deliberately neutral: faint dashed border, muted ink, NO surface and
- * NO primary tint. Tint belongs to the drag-over state only (same
- * visual language as the established drag overlays) — pinned by
- * HkAddTile.contract.test.ts, do not creep color into the base. */
+/* HkAddTile — the dashed add / empty affordance tile. The tile is
+ * neutral AT REST: faint dashed border, muted ink, no surface and no
+ * wash. Primary ink comes in through the states that invite (the
+ * hover border/ink tint below, and the drag-over wash) — the primary
+ * SURFACE wash lives exclusively in the --drag-over rule (pinned by
+ * HkAddTile.contract.test.ts, do not creep a wash into any other
+ * rule). */
 .hk-add-tile {
   display: flex;
   flex-direction: column;
@@ -15,7 +17,7 @@
   box-sizing: border-box;
   padding: var(--space-16, 1rem) var(--space-12, 0.75rem);
   border: 1px dashed var(--border-faint);
-  border-radius: var(--radius-md, 0.5rem);
+  border-radius: var(--radius-md, 8px);
   background: transparent;
   color: rgb(var(--color-muted));
   font: inherit;

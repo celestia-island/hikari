@@ -101,35 +101,38 @@ export default defineComponent({
       emit("click", e);
     }
 
-    const iconNode = computed(() => {
-      if (slots.icon) return null; // slot wins, rendered inline below
-      const Icon = props.icon ?? Plus;
-      // h() rather than JSX: the icon prop is a Component (object |
-      // function) union, which TS cannot expand as a JSX element type.
-      return h(Icon, { size: props.compact ? 14 : 18, "aria-hidden": true });
-    });
-
-    return () => (
-      <button
-        type="button"
-        class={[
-          "hk-add-tile",
-          props.compact && "hk-add-tile--compact",
-          props.droppable && "hk-add-tile--droppable",
-          props.disabled && "hk-add-tile--disabled",
-          dragOver.value && "hk-add-tile--drag-over",
-        ]}
-        disabled={props.disabled}
-        onClick={onClick}
-        onDragenter={onDragenter}
-        onDragover={onDragover}
-        onDragleave={onDragleave}
-        onDrop={onDrop}
-      >
-        {iconNode.value}
-        {slots.icon?.()}
-        {slots.default?.()}
-      </button>
-    );
+    return () => {
+      // Icon resolution reads `slots` INSIDE the render function — the
+      // slots object is not reactive, so a computed here would cache the
+      // choice across slot add/remove (R2-S1: a parent that adds an icon
+      // slot later rendered the stale default Plus ALONGSIDE the slot;
+      // removing the slot left the tile iconless until an unrelated prop
+      // churned the cache). House style: HkEmptyState reads slots.icon
+      // per render for the same reason. h() rather than JSX: the icon
+      // prop is a Component (object | function) union, which TS cannot
+      // expand as a JSX element type.
+      const Icon = slots.icon ? null : (props.icon ?? Plus);
+      return (
+        <button
+          type="button"
+          class={[
+            "hk-add-tile",
+            props.compact && "hk-add-tile--compact",
+            props.disabled && "hk-add-tile--disabled",
+            dragOver.value && "hk-add-tile--drag-over",
+          ]}
+          disabled={props.disabled}
+          onClick={onClick}
+          onDragenter={onDragenter}
+          onDragover={onDragover}
+          onDragleave={onDragleave}
+          onDrop={onDrop}
+        >
+          {Icon ? h(Icon, { size: props.compact ? 14 : 18, "aria-hidden": true }) : null}
+          {slots.icon?.()}
+          {slots.default?.()}
+        </button>
+      );
+    };
   },
 });

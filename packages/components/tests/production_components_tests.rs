@@ -169,6 +169,44 @@ mod tests {
         assert_eq!(props.max_height.as_deref().unwrap(), "400px");
     }
 
+    /// Copy-feedback source contract (user direction 2026-11-11): the
+    /// copy button's face is CONSTANT (never a "Copied" flip) and the
+    /// REAL write result feeds the crate's own toast store. The wasm
+    /// branch (cfg'd out of this host test binary, browser-only) is
+    /// unreachable by render tests, so the contract is pinned on the
+    /// source — the same source-contract pattern the Vue-side
+    /// HkLogWindow.contract.test.ts uses where the DOM is unreachable.
+    #[test]
+    fn test_code_highlight_copy_contract() {
+        let raw = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/production/code_highlight.rs"
+        ));
+        // Comments stripped first: a prose mention of a retired token must
+        // not trip the negative guards (the same rule the repo's styles
+        // contracts document — the guard is about CODE, not prose).
+        let src: String = raw
+            .lines()
+            .filter(|line| !line.trim().starts_with("//"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        // The face is the constant localized "Copy" — no flipped label,
+        // no retired copied key, no copied-state signal or reset timer.
+        assert!(src.contains(r#"t("hikari.code.copy", "Copy")"#), "constant face missing");
+        assert!(!src.contains("hikari.code.copied"), "retired copied key resurfaced");
+        assert!(!src.contains("copied.set("), "copied signal resurfaced");
+        assert!(!src.contains("set_timeout"), "reset timer resurfaced");
+        assert!(!src.contains("on_copied"), "retired result prop resurfaced");
+        // The honest-result path: the inline JS reports the settled write
+        // through onResult, and the handler pushes the crate toast store
+        // (success AND failure branches, localized).
+        assert!(src.contains("onResult(Boolean(success))"), "inline JS result callback missing");
+        assert!(src.contains(".catch(() => finish(false))"), "failure path missing");
+        assert!(src.contains("use_toast()"), "toast store not driven");
+        assert!(src.contains("store.success(&t("), "success push missing");
+        assert!(src.contains("store.error(&t("), "failure push missing");
+    }
+
     // ── MarkdownEditor ───────────────────────────────────────────
 
     #[test]

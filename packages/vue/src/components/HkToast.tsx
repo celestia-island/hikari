@@ -204,7 +204,15 @@ const HkToastItem = defineComponent({
 
 export default defineComponent({
   name: "HkToast",
-  setup() {
+  props: {
+    /** Render the stack IN PLACE instead of teleporting into the family
+     *  overlay root — for hosts that own their stacking context (a
+     *  full-screen takeover shell, e.g. the error-reporting overlay,
+     *  whose own z band sits above the overlay root and would paint an
+     *  opaque backdrop over the teleported stack). */
+    teleport: { type: Boolean, default: true },
+  },
+  setup(props) {
     const { toasts, remove } = useToast();
     // The toast stack registers with the popup manager (kind "toast") so
     // it holds the topmost z band (POPUP_Z_BANDS.toast): toasts stay
@@ -282,8 +290,14 @@ export default defineComponent({
         : undefined,
     );
 
-    return () => (
-      <Teleport to={ensureOverlayRoot()}>
+    return () => {
+      // The band teleports into the family overlay root by default. The
+      // `teleport: false` face renders it IN PLACE instead — for hosts
+      // that own their stacking context (a full-screen takeover shell,
+      // e.g. the error-reporting overlay, whose own z band sits ABOVE
+      // the overlay root and would paint an opaque backdrop over the
+      // teleported stack, silencing it visually).
+      const band = (
         <div class="hk-toast-container" style={containerStyle.value}>
           <TransitionGroup
             ref={hostRef}
@@ -310,7 +324,8 @@ export default defineComponent({
             ))}
           </TransitionGroup>
         </div>
-      </Teleport>
-    );
+      );
+      return props.teleport === false ? band : <Teleport to={ensureOverlayRoot()}>{band}</Teleport>;
+    };
   },
 });

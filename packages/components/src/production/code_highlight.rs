@@ -6,6 +6,12 @@
 // element for integration with external syntax highlighters like Prism.js
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
+//
+// COPY FEEDBACK (user direction 2026-11-11): the copy button's face is
+// CONSTANT — it never flips to "Copied"/check. The REAL write result is
+// pushed into the crate's own toast store (`feedback::toast` — hosts
+// rendering the family ToastComponent see it; without one the click is
+// silent, the same contract the Vue HkErrorLanding declares).
 
 use hikari_i18n::t;
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
@@ -13,16 +19,23 @@ use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 use wasm_bindgen::prelude::*;
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform;
+use crate::feedback::toast::use_toast;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
-// Helper function to copy text to clipboard (WASM only)
+// Helper function to copy text to clipboard (WASM only). The second
+// parameter receives the REAL write result: the async-clipboard promise
+// resolves true/false, the execCommand fallback resolves with
+// `execCommand`'s own return — so the Rust side can push an HONEST
+// toast instead of claiming success for a rejected write.
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 #[wasm_bindgen(inline_js = r#"
-export function copyToClipboard(text) {
+export function copyToClipboard(text, onResult) {
+    const finish = (success) => {
+        if (typeof onResult === 'function') onResult(Boolean(success));
+    };
     if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+        return navigator.clipboard.writeText(text).then(() => finish(true)).catch(() => finish(false));
     } else {
         // Fallback to execCommand
         const textarea = document.createElement('textarea');
@@ -34,20 +47,24 @@ export function copyToClipboard(text) {
         textarea.select();
         const success = document.execCommand('copy');
         document.body.removeChild(textarea);
+        finish(success);
         return Promise.resolve(success);
     }
 }
 "#)]
 #[allow(unsafe)]
 unsafe extern "C" {
-    fn copyToClipboard(text: &str) -> js_sys::Promise;
+    fn copyToClipboard(text: &str, on_result: &js_sys::Function);
 }
 
-// WASM implementation
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-fn copy_to_clipboard(text: &str) -> bool {
-    let _promise = copyToClipboard(text);
-    true
+fn copy_to_clipboard(text: &str, on_result: impl FnOnce(bool) + 'static) {
+    // Same idiom `platform::set_timeout` uses: hand the JS side a
+    // one-shot closure. `once_into_js` releases it to the JS GC, which
+    // owns it until the promise settles and calls it.
+    let callback = wasm_bindgen::closure::Closure::once_into_js(on_result);
+    let callback = js_sys::Function::from(callback);
+    copyToClipboard(text, &callback);
 }
 
 pub struct CodeHighlightComponent;
@@ -189,7 +206,6 @@ pub struct CodeHighlightProps {
 
 #[component]
 pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
-    let copied = use_signal(|| false);
     let lines: Vec<&str> = props.code.lines().collect();
     let line_count = lines.len();
 
@@ -230,22 +246,17 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     let code = props.code.clone();
     let language = props.language.clone();
 
-    // Computed button class with copied state
-    let button_class = {
-        let base = copy_classes.clone();
-        let copied_state = copied.read();
-        if copied_state {
-            format!("{} copied hi-code-highlight-copy-copied", base)
-        } else {
-            base
-        }
-    };
+    // The copy control's face is CONSTANT (user direction 2026-11-11: a
+    // copy control's text never flips to "Copied"). The click pushes the
+    // REAL write result into the crate's own toast store (see
+    // `feedback::toast`) — hosts rendering the family ToastComponent see
+    // it; hosts without one hear nothing, the same contract the Vue
+    // HkErrorLanding declares. No copied signal, no flipped classes, no
+    // reset timer.
 
-    let button_text = if copied.read() {
-        t("hikari.code.copied", "Copied")
-    } else {
-        t("hikari.code.copy", "Copy")
-    };
+    let button_class = copy_classes;
+
+    let button_text = t("hikari.code.copy", "Copy");
 
     let language_class = format!("language-{}", language);
 
@@ -278,22 +289,28 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                         class: button_class,
                         onclick: {
                             let code_for_copy = code_for_copy.clone();
-                            let copied_for_timeout = copied.clone();
                             move |_| {
                                 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                                 {
-                                    if copy_to_clipboard(&code_for_copy) {
-                                        copied.set(true);
-                                        let copied_signal = copied_for_timeout.clone();
-                                        platform::set_timeout(move || {
-                                            copied_signal.set(false);
-                                        }, 2000);
-                                    }
+                                    // The REAL write result lands in the
+                                    // callback (the promise settles after
+                                    // this handler returns); the button
+                                    // itself never mutates.
+                                    let code_for_copy = code_for_copy.clone();
+                                    copy_to_clipboard(&code_for_copy, move |ok| {
+                                        let store = use_toast();
+                                        if ok {
+                                            store.success(&t("hikari.code.copyOk", "Copied"));
+                                        } else {
+                                            store.error(&t("hikari.code.copyFailed", "Copy failed"));
+                                        }
+                                    });
                                 }
                                 #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                                 {
+                                    // Server renders never fire clicks; keep
+                                    // the branch an explicit no-op.
                                     let _ = code_for_copy;
-                                    let _ = copied;
                                 }
                             }
                         },
@@ -379,28 +396,9 @@ impl StyledComponent for CodeHighlightComponent {
     box-shadow: 0 0 8px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
 }
 
-.hk-code-highlight-copy.hk-code-highlight-copy-copied,
-.hk-code-highlight-copy.copied {
-    background-color: var(--hi-color-primary, #3b82f6);
-    color: var(--hi-color-text-on-solid, #ffffff);
-    box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
-    opacity: 1;
-}
-
-/* Icon-only copy buttons: swap clipboard → check while `.copied` is set. */
+/* Icon-only copy buttons (host-composed face extensions; the component's
+   own button is a text button and never swaps its face on copy). */
 .hk-code-highlight-copy-icon {
-    display: inline-flex;
-}
-
-.hk-code-highlight-check {
-    display: none;
-}
-
-.hk-code-highlight-copy.copied .hk-code-highlight-copy-icon {
-    display: none;
-}
-
-.hk-code-highlight-copy.copied .hk-code-highlight-check {
     display: inline-flex;
 }
 

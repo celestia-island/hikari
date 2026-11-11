@@ -31,6 +31,7 @@
 - [Comment](./components/layer1/comment.md)
 - [Display 컴포넌트](./components/layer1/display.md)
 - [Empty](./components/layer1/empty.md)
+- [추가 타일](./components/layer1/add_tile.md)
 - [Feedback 컴포넌트](./components/layer1/feedback.md)
 - [폼 컴포넌트](./components/layer1/form.md)
 - [Image](./components/layer1/image.md)

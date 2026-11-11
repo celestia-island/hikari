@@ -31,6 +31,7 @@
 - [Comment](./components/layer1/comment.md)
 - [Display](./components/layer1/display.md)
 - [Empty](./components/layer1/empty.md)
+- [بلاطة الإضافة](./components/layer1/add_tile.md)
 - [Feedback](./components/layer1/feedback.md)
 - [Form](./components/layer1/form.md)
 - [Image](./components/layer1/image.md)

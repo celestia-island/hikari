@@ -6,11 +6,15 @@
    handles ride over it and the reset seat sits on its field. LAYER 2
    (data-layer="detail") is the lane list: the same segments shown either
    across the full domain or mapped onto the window (0..100% of the track).
-   The minimap axis is `1 + headroom` wide, so a host can reserve a blank
-   trailing tail for a >100% budget; the after scrim dims that tail once a
-   window exists. The headroom never reaches the detail layer, and minimal
-   mode — which suppresses the lane rows and the detail layer while the bare
-   bar still lives in the minimap container — ignores it too.
+   The minimap axis is the CALLER's domain (default `[0, 1]`; a host may
+   declare `[-0.1, 1]`, `[0, 2]` …), and `headroom` is the deprecated
+   `[0, 1 + headroom]` shorthand that IS the axis — no special tail-clamp.
+   Content outside the domain is clipped away; space inside it the content
+   does not fill stays blank. The detail layer is never rescaled on the
+   minimap axis: its axis is the selected window, or the caller's domain when
+   no window is selected. Minimal mode, which suppresses the lane rows and
+   the detail layer while the bare bar still lives in the minimap container,
+   draws the same domain axis.
 
    Geometry is part of the contract and pinned by HkRangeRibbon.test.tsx:
    the strip is 32px tall, a handle is an 8px half-overlapping grip
@@ -30,8 +34,8 @@
   // ONE label column for both layers: the overview paints through an empty
   // gutter of this width, so both layers always start at the same inline x.
   // Their x% agree only in the full-domain view — a window re-normalizes the
-  // detail against the selected sub-domain, and a headroom compresses the
-  // strip by `1/span`.
+  // detail against the selected sub-domain, and a non-unit domain rescales
+  // the strip.
   // Wave (2026-11-06 raw-records five): the label column is JS-MEASURED —
   // the component publishes the widest rendered label as a px value on the
   // root (two-phase free/measure/pin). THIS fixed column is the no-JS /
@@ -266,7 +270,8 @@
 // A plain column container, nothing else: it exists so the two layers are
 // explicit in the DOM (and to the stylesheet contract) without disturbing
 // the lane list's own gap/column layout. Its x-axis is the selected window
-// mapped to 0..100% — the headroom tail lives only on the minimap layer.
+// mapped to 0..100% — the caller's domain axis lives on the minimap layer and
+// only drives this layer's no-window (full-view) state.
 .hk-range-ribbon-detail {
   display: flex;
   flex-direction: column;

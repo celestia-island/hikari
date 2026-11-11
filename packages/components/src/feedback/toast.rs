@@ -652,9 +652,10 @@ pub fn use_toast() -> ToastStore {
     ToastStore
 }
 
-/// Host props. Vue's `HkToast` takes NO props (it renders the store), so the
-/// only fields here are the host-side seams this port needs: a clipboard
-/// sink (see the CLIPBOARD delta) and an extra class on the container.
+/// Host props. Vue's `HkToast` takes ONE prop — `teleport` (default true;
+/// `false` renders the stack in place, see the Vue-side teleport note) —
+/// plus the host-side seams this port needs: a clipboard sink (see the
+/// CLIPBOARD delta) and an extra class on the container.
 #[define_props]
 pub struct ToastProps {
     /// Copy sink for the per-item copy button: receives the slot's messages

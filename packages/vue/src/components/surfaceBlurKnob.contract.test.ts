@@ -191,11 +191,16 @@ function selectorMembers(selector: string): string[] {
   return selector.split(",").map((part) => part.trim());
 }
 
-/** Declaration map of the FIRST unwrapped rule listing `selector` verbatim. */
+/**
+ * Declaration map of the LAST unwrapped rule listing `selector` verbatim — the
+ * one the cascade actually applies. Taking the first match would let a
+ * duplicate base block below it decide the computed value while this file
+ * inspects the harmless one.
+ */
 function baseDeclarations(css: string, selector: string): Map<string, string> {
-  const rule = scanRules(css).find(
-    (r) => r.wrappers.length === 0 && selectorMembers(r.selector).includes(selector),
-  );
+  const rule = scanRules(css)
+    .filter((r) => r.wrappers.length === 0 && selectorMembers(r.selector).includes(selector))
+    .pop();
   expect(rule, `${selector} missing from the compiled sheet`).toBeDefined();
   const map = new Map<string, string>();
   for (const decl of rule!.declarations.split(";")) {
@@ -211,7 +216,7 @@ function isSizeWrapper(prelude: string): boolean {
   if (!/^@(media|container)\b/i.test(prelude)) return false;
   // `prefers-*` features carry no size term and are legitimate accessibility
   // gates; `@layer` and `@supports` are not size axes at all.
-  return /width|height|orientation/i.test(prelude);
+  return /width|height|orientation|aspect-ratio|resolution|device-width/i.test(prelude);
 }
 
 const KNOB_RE = new RegExp(`(^|[\\s:;(])(${KNOBS.join("|")})\\s*:`, "m");
@@ -240,16 +245,28 @@ function conditionalStandDowns(css: string): string[] {
 }
 
 describe("surface live-blur escape hatch", () => {
-  it("keeps the knob DEFAULT unpinned (upgrading hikari changes nothing)", () => {
-    for (const [sheet, selector] of [
-      ["HkCard.scss", ".hk-card"],
-      ["HkButton.scss", ".hk-btn-secondary"],
-    ] as const) {
-      const decls = baseDeclarations(compiledSheet(sheet), selector);
-      for (const knob of KNOBS) {
-        expect(decls.has(knob), `${selector} pins ${knob} by default`).toBe(false);
+  it("leaves the knobs unpinned everywhere (upgrading hikari changes nothing)", () => {
+    // Not just the base rule: an unconditional `:root { --hk-card-blur: none }`
+    // would change every host on upgrade just as silently, so no rule in
+    // either sheet may declare these tokens.
+    for (const sheet of ["HkCard.scss", "HkButton.scss"]) {
+      for (const rule of scanRules(compiledSheet(sheet))) {
+        for (const knob of KNOBS) {
+          expect(
+            new RegExp(`(^|[\\s;])${knob}\\s*:`).test(rule.declarations),
+            `${rule.selector} pins ${knob}`,
+          ).toBe(false);
+        }
       }
     }
+  });
+
+  it("reads the LAST matching base rule, so a duplicate cannot hide", () => {
+    const css = [
+      ".hk-card { backdrop-filter: var(--hk-card-blur, blur(var(--blur-md))); }",
+      ".hk-card { backdrop-filter: blur(4px); }",
+    ].join("\n");
+    expect(baseDeclarations(css, ".hk-card").get("backdrop-filter")).toBe("blur(4px)");
   });
 
   it("routes the card blur through --hk-card-blur, keeping the old literal as the fallback", () => {
@@ -288,6 +305,9 @@ describe("surface live-blur escape hatch", () => {
       "@media (min-width: 768px) { .hk-btn-secondary { backdrop-filter: none; } }",
       // a container query re-keys by size just like a viewport query
       "@container (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
+      // aspect-ratio / resolution gates are viewport axes too
+      "@media (max-aspect-ratio: 1/1) { .hk-card { backdrop-filter: none; } }",
+      "@media (min-resolution: 2dppx) { .hk-card { backdrop-filter: none; } }",
       // at-rule casing is not significant in CSS
       "@MEDIA (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
       // a brace inside a string literal must not end the block early

@@ -49,11 +49,37 @@ function compiledSheet(sheet: string): string {
   return compile(join(here, sheet), { loadPaths, style: "expanded" }).css;
 }
 
-/** Comments carry braces and `@media` text; strip before any structural pass. */
+/**
+ * Strip `/* *\/` and `//` comments in ONE string-aware pass. A regex pass
+ * cannot do this: `content: "//"` would be read as a line comment and then a
+ * later `content: "/*"` as a block comment, silently swallowing the rest of
+ * the sheet (a witnessed false-green).
+ */
 function stripComments(css: string): string {
-  return css
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+  let out = "";
+  let i = 0;
+  while (i < css.length) {
+    const ch = css[i]!;
+    if (ch === '"' || ch === "'") {
+      const end = skipString(css, i);
+      out += css.slice(i, end + 1);
+      i = end + 1;
+      continue;
+    }
+    if (ch === "/" && css[i + 1] === "*") {
+      const end = css.indexOf("*/", i + 2);
+      i = end < 0 ? css.length : end + 2;
+      continue;
+    }
+    if (ch === "/" && css[i + 1] === "/") {
+      const end = css.indexOf("\n", i + 2);
+      i = end < 0 ? css.length : end;
+      continue;
+    }
+    out += ch;
+    i += 1;
+  }
+  return out;
 }
 
 function skipString(src: string, at: number): number {
@@ -160,10 +186,15 @@ function mentionsTarget(selector: string): string | null {
   return null;
 }
 
-/** Declaration map of the FIRST unwrapped rule whose selector matches exactly. */
+/** Members of a (possibly multi-line, comma-separated) selector list. */
+function selectorMembers(selector: string): string[] {
+  return selector.split(",").map((part) => part.trim());
+}
+
+/** Declaration map of the FIRST unwrapped rule listing `selector` verbatim. */
 function baseDeclarations(css: string, selector: string): Map<string, string> {
   const rule = scanRules(css).find(
-    (r) => r.wrappers.length === 0 && r.selector === selector,
+    (r) => r.wrappers.length === 0 && selectorMembers(r.selector).includes(selector),
   );
   expect(rule, `${selector} missing from the compiled sheet`).toBeDefined();
   const map = new Map<string, string>();
@@ -175,29 +206,52 @@ function baseDeclarations(css: string, selector: string): Map<string, string> {
   return map;
 }
 
+/** A wrapper that re-keys rendering to the viewport/box size. */
+function isSizeWrapper(prelude: string): boolean {
+  if (!/^@(media|container)\b/i.test(prelude)) return false;
+  // `prefers-*` features carry no size term and are legitimate accessibility
+  // gates; `@layer` and `@supports` are not size axes at all.
+  return /width|height|orientation/i.test(prelude);
+}
+
+const KNOB_RE = new RegExp(`(^|[\\s:;(])(${KNOBS.join("|")})\\s*:`, "m");
+
 /**
- * Conditional (at-rule-wrapped) stand-downs for the two surfaces: any rule
- * inside ANY at-rule that names one of the targets and touches either the
- * `backdrop-filter` property or a blur knob. Width is only the most likely
- * wrapper — `@container`, `@supports` and `min-width` variants would re-key
- * the same thing, so all of them are violations.
+ * Size-conditional stand-downs. A wrapped rule is a violation if it is inside
+ * a SIZE wrapper and either names a target selector or sets a blur knob.
+ * The second arm matters: the knob inherits, so
+ * `@media (max-width: 767px) { :root { --hk-card-blur: none } }` re-keys the
+ * stand-down for every card just as effectively as targeting one — and it is
+ * the idiom the shipped consumer uses (`html[data-render] { --hk-card-blur }`).
  */
 function conditionalStandDowns(css: string): string[] {
   const hits: string[] = [];
   for (const rule of scanRules(css)) {
-    if (rule.wrappers.length === 0) continue;
+    const sizeWrappers = rule.wrappers.filter(isSizeWrapper);
+    if (sizeWrappers.length === 0) continue;
     const target = mentionsTarget(rule.selector);
-    if (!target) continue;
     const touchesFilter = /backdrop-filter/i.test(rule.declarations);
-    const touchesKnob = KNOBS.some((k) => rule.declarations.includes(k));
-    if (touchesFilter || touchesKnob) {
-      hits.push(`${target} inside ${rule.wrappers[rule.wrappers.length - 1]}`);
-    }
+    const touchesKnob = KNOB_RE.test(rule.declarations);
+    if (!target && !touchesKnob) continue;
+    if (!touchesFilter && !touchesKnob) continue;
+    hits.push(`${target ?? "knob"} inside ${sizeWrappers[sizeWrappers.length - 1]}`);
   }
   return hits;
 }
 
 describe("surface live-blur escape hatch", () => {
+  it("keeps the knob DEFAULT unpinned (upgrading hikari changes nothing)", () => {
+    for (const [sheet, selector] of [
+      ["HkCard.scss", ".hk-card"],
+      ["HkButton.scss", ".hk-btn-secondary"],
+    ] as const) {
+      const decls = baseDeclarations(compiledSheet(sheet), selector);
+      for (const knob of KNOBS) {
+        expect(decls.has(knob), `${selector} pins ${knob} by default`).toBe(false);
+      }
+    }
+  });
+
   it("routes the card blur through --hk-card-blur, keeping the old literal as the fallback", () => {
     const decls = baseDeclarations(compiledSheet("HkCard.scss"), ".hk-card");
     expect(decls.get("backdrop-filter")).toBe(
@@ -232,9 +286,8 @@ describe("surface live-blur escape hatch", () => {
       "@media (width <= 767px) { .hk-card { backdrop-filter: none; } }",
       // min-width is just as wrong
       "@media (min-width: 768px) { .hk-btn-secondary { backdrop-filter: none; } }",
-      // container / supports wrappers re-key the same thing
+      // a container query re-keys by size just like a viewport query
       "@container (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
-      "@supports (backdrop-filter: blur(1px)) { .hk-card { backdrop-filter: none; } }",
       // at-rule casing is not significant in CSS
       "@MEDIA (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
       // a brace inside a string literal must not end the block early
@@ -242,6 +295,20 @@ describe("surface live-blur escape hatch", () => {
     ];
     for (const shape of shapes) {
       expect(conditionalStandDowns(shape), shape).toHaveLength(1);
+    }
+  });
+
+  it("does not treat capability or accessibility gates as a width axis", () => {
+    // `@supports`, `@layer`, `@media print` and `prefers-*` gates are not size
+    // axes; a stand-down there is a deliberate capability decision, not the
+    // viewport re-keying this guard forbids.
+    for (const shape of [
+      "@supports (backdrop-filter: blur(1px)) { .hk-card { backdrop-filter: none; } }",
+      "@layer hk { .hk-card { backdrop-filter: none; } }",
+      "@media print { .hk-card { backdrop-filter: none; } }",
+      "@media (prefers-reduced-transparency: reduce) { .hk-card { backdrop-filter: none; } }",
+    ]) {
+      expect(conditionalStandDowns(shape), shape).toEqual([]);
     }
   });
 
@@ -257,8 +324,10 @@ describe("surface live-blur escape hatch", () => {
     // base rules it looks for are really there.
     const cardCss = compiledSheet("HkCard.scss");
     const buttonCss = compiledSheet("HkButton.scss");
-    expect(scanRules(cardCss).filter((r) => r.selector === ".hk-card")).toHaveLength(1);
-    expect(scanRules(buttonCss).filter((r) => r.selector === ".hk-btn-secondary")).toHaveLength(1);
+    const members = (css: string, sel: string) =>
+      scanRules(css).filter((r) => selectorMembers(r.selector).includes(sel));
+    expect(members(cardCss, ".hk-card").length).toBeGreaterThanOrEqual(1);
+    expect(members(buttonCss, ".hk-btn-secondary").length).toBeGreaterThanOrEqual(1);
     expect(
       scanRules(buttonCss).filter((r) => r.wrappers.length > 0).length,
     ).toBeGreaterThan(0);

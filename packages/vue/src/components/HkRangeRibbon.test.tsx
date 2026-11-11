@@ -163,6 +163,20 @@ function boxOf(element: HTMLElement): { left: number; width: number } {
   return { left: parseFloat(element.style.left), width: parseFloat(element.style.width) };
 }
 
+/** Inline box assertions at the geometry tolerance. `percent()` rounds to four
+ *  decimals OF A PERCENT (~1e-6 fraction), so a four-decimal `toBeCloseTo`
+ *  sits exactly on that rounding boundary; 3 keeps a margin while still
+ *  pinning well below a percent. */
+function expectBox(
+  element: HTMLElement | null,
+  expected: { left: number; width: number },
+  label: string,
+): void {
+  expect(element, label).toBeTruthy();
+  expect(boxOf(element!).left, `${label} left`).toBeCloseTo(expected.left, 3);
+  expect(boxOf(element!).width, `${label} width`).toBeCloseTo(expected.width, 3);
+}
+
 function lastWindow(mock: ReturnType<typeof vi.fn>): [number, number] | null {
   const calls = mock.mock.calls;
   expect(calls.length, "windowChange was emitted").toBeGreaterThan(0);
@@ -304,9 +318,11 @@ describe("HkRangeRibbon full domain", () => {
     // …and a segment can never invent an undeclared lane.
     expect(segmentById(root, "orphan")).toBeNull();
     expect(root.querySelector('[data-segment-id="orphan"]')).toBeNull();
-    // Content wholly outside the axis paints NOTHING: the domain is a
-    // clipping rule, not a clamp to an edge tick (pre-domain content would
-    // have collapsed [1.2, 1.4] onto 100% and drawn a tick there).
+    // Content wholly outside the axis paints NOTHING on either layer: the
+    // domain is a clipping rule, not a clamp. (Pre-domain, `fullDomainBox`
+    // emitted the raw fractions — left 120%, width 20% for this bar — which
+    // the overview's `overflow: hidden` cut and the detail track painted
+    // overflowing; nothing ever clamped it to an edge.)
     expect(segmentById(root, "outside")).toBeNull();
     expect(root.querySelector('[data-segment-id="outside"]')).toBeNull();
   });
@@ -427,6 +443,38 @@ describe("HkRangeRibbon windowed view", () => {
     expect(boxOf(flush).left).toBeCloseTo(50, 4);
     expect(boxOf(flush).width).toBeCloseTo(50, 4);
     expect(laneSegments(root)).toHaveLength(1);
+  });
+
+  it("paints a domain-edge point in the full view but not through a window edge", () => {
+    // DELIBERATE asymmetry: the DOMAIN edges are INCLUSIVE (a zero-length
+    // point on the axis paints as a tick), while the WINDOW is strict
+    // half-open (`end > win[0] && start < win[1]`), so the same point sitting
+    // exactly on the window end vanishes in the detail. Chest's
+    // `traceRecordsInRange` mirrors that half-open rule verbatim — do NOT
+    // make the window inclusive to "fix" this; it would fork the consumer's
+    // mirrored filter.
+    const segments: RibbonSegment[] = [
+      { id: "edgePoint", lane: "cpu", start: 2, end: 2, label: "edge point" },
+    ];
+    const full = mountRibbon({ window: null, domain: [0, 2], segments });
+    expectBox(
+      full.querySelector<HTMLElement>(
+        '.hk-range-ribbon-overview-segment[data-segment-id="edgePoint"]',
+      ),
+      { left: 100, width: 0 },
+      "the inclusive domain end keeps the point as a tick",
+    );
+    expect(segmentById(full, "edgePoint"), "the no-window detail paints it too").toBeTruthy();
+
+    const windowed = mountRibbon({ window: [1.98, 2], domain: [0, 2], segments });
+    expect(
+      segmentById(windowed, "edgePoint"),
+      "a point ON the window end does not intersect the half-open window",
+    ).toBeNull();
+    expect(
+      windowed.querySelector('.hk-range-ribbon-overview-segment[data-segment-id="edgePoint"]'),
+      "the minimap keeps painting the domain box",
+    ).toBeTruthy();
   });
 
   it("normalizes inverted, out-of-domain and degenerate windows; NaN means full", () => {
@@ -902,6 +950,23 @@ describe("HkRangeRibbon reset", () => {
     expect(host.root.querySelector(".hk-range-ribbon-reset")).toBeNull();
   });
 
+  it("scopes the full-view epsilon to the axis span", () => {
+    // On a 1e-12 axis the window [0, 5e-13] is a REAL sub-selection half the
+    // axis wide, but an absolute 1e-9 slack would call it "full". The
+    // span-relative slack (1e-9 * span) keeps the distinction; the unit axis
+    // still uses the historical 1e-9.
+    const tiny = mountRibbon({ domain: [0, 1e-12], minWindow: 1e-13, window: [0, 5e-13] });
+    expect(
+      tiny.querySelector(".hk-range-ribbon-reset"),
+      "a half-axis window on a tiny axis is a real sub-selection",
+    ).toBeTruthy();
+    const full = mountRibbon({ domain: [0, 1e-12], minWindow: 1e-13, window: [0, 1e-12] });
+    expect(
+      full.querySelector(".hk-range-ribbon-reset"),
+      "the whole tiny axis needs no reset",
+    ).toBeNull();
+  });
+
   it("cancels an in-flight brush with Escape and consumes the key", async () => {
     const host = mountHost(null);
     const { strip, x } = stubStrip(host.root);
@@ -1165,6 +1230,52 @@ describe("HkRangeRibbon tip card", () => {
     expect(host.root.querySelector(".hk-range-ribbon-tip")).toBeNull();
   });
 
+  it("does not resurrect a tip for a segment that left the axis", async () => {
+    // The no-window tip gate: when the domain re-widens, a stale tip id must
+    // not re-open a card for a segment that had left the axis.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const liveDomain = ref<[number, number]>([0, 1]);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkRangeRibbon, {
+            lanes: LANES,
+            segments: SEGMENTS,
+            domain: liveDomain.value,
+            window: null,
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    mounts.push({ app, container });
+    const root = container.querySelector<HTMLElement>(".hk-range-ribbon")!;
+
+    // Hover flush (0.95..1) so its tip card floats.
+    const bar = segmentById(root, "flush")!;
+    expect(bar, "flush paints on the unit axis").toBeTruthy();
+    bar.dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    expect(bar.querySelector(".hk-range-ribbon-tip"), "the tip floats on hover").toBeTruthy();
+
+    // Narrow the axis so flush leaves it: the bar unmounts, so the watch has
+    // to drop the tip id (a removed element never fires mouseleave).
+    liveDomain.value = [0.2, 0.8];
+    await nextTick();
+    expect(segmentById(root, "flush"), "flush left the axis").toBeNull();
+    expect(root.querySelector(".hk-range-ribbon-tip"), "no tip without a mounted bar").toBeNull();
+
+    // Widen back: flush returns, but nothing hovered or focused it again.
+    liveDomain.value = [0, 1];
+    await nextTick();
+    expect(segmentById(root, "flush"), "flush is back").toBeTruthy();
+    expect(
+      root.querySelector(".hk-range-ribbon-tip"),
+      "the stale tip must not resurrect without a pointer or focus",
+    ).toBeNull();
+  });
+
   it("anchors the tip inward at the track edges", async () => {
     const segments: RibbonSegment[] = [
       { id: "left", lane: "cpu", start: 0.02, end: 0.12, label: "left", tip: { title: "Left" } },
@@ -1420,29 +1531,6 @@ describe("HkRangeRibbon dual-layer waterfall", () => {
    *  `[0, 1 + headroom]`, in percent. */
   function axisPercent(fraction: number, headroom: number): number {
     return (fraction / (1 + headroom)) * 100;
-  }
-
-  /** The minimap's x of a DOMAIN coordinate / of a domain LENGTH, in percent. */
-  function domainPercent(value: number, domain: [number, number]): number {
-    return ((value - domain[0]) / (domain[1] - domain[0])) * 100;
-  }
-
-  function domainWidthPercent(length: number, domain: [number, number]): number {
-    return (length / (domain[1] - domain[0])) * 100;
-  }
-
-  /** Inline box assertions at the geometry tolerance. `percent()` rounds to
-   *  four decimals OF A PERCENT (~1e-6 fraction), so a four-decimal
-   *  `toBeCloseTo` sits exactly on that rounding boundary; 3 keeps a margin
-   *  while still pinning well below a percent. */
-  function expectBox(
-    element: HTMLElement | null,
-    expected: { left: number; width: number },
-    label: string,
-  ): void {
-    expect(element, label).toBeTruthy();
-    expect(boxOf(element!).left, `${label} left`).toBeCloseTo(expected.left, 3);
-    expect(boxOf(element!).width, `${label} width`).toBeCloseTo(expected.width, 3);
   }
 
   it("marks both layers explicitly and keeps the lane markup intact", () => {

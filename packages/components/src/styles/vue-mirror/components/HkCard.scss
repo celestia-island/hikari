@@ -20,17 +20,18 @@
   background: color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent);
   /* Host-tunable blur (2026-11-12 chest WebView field report). The fill is
      70%-alpha surface, so whenever the layer BENEATH the card is already an
-     opaque surface the blur samples a flat color and buys nothing visually —
-     yet it still allocates a full backdrop render surface and re-samples it
-     on every composite of the card's subtree. On a compositor with a small
-     tile/surface budget (Android System WebView in a phone shell, VRAM-
-     starved GPUs) that allocation is what fails first, and the failure is
-     visible: the card keeps its box and loses its contents.
+     opaque surface the blur is sampling a flat color: it buys no visible
+     change while still making the card own a background render surface.
+     The reported artifact class is a compositor that keeps an element's box
+     and loses its painted contents, which is what a starved surface budget
+     looks like from the DOM — so the hatch exists to let a HOST drop this
+     pass on the engines where that class shows up.
      DELIBERATELY NOT width-gated (unlike the modal family's -mobile knobs):
-     the trigger is the engine's surface budget, not the viewport size — a
-     phone WebView in "request desktop site" mode, a tablet, or a desktop
-     WebView2 host all want the same stand-down while keeping a wide layout.
-     Hosts express that per engine (`--hk-card-blur: none`), not per width. */
+     the trigger is the engine, not the viewport — a phone WebView in
+     "request desktop site" mode, a tablet, and a desktop WebView2 host all
+     keep a wide layout while running the same budget, so a width gate would
+     miss exactly those hosts. Hosts express the stand-down per engine
+     (`--hk-card-blur: none`). */
   @include backdrop-filter(var(--hk-card-blur, blur(var(--blur-md))));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg, 12px);

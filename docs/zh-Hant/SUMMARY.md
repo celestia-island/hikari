@@ -31,6 +31,7 @@
 - [Comment 評論](./components/layer1/comment.md)
 - [Display 展示元件](./components/layer1/display.md)
 - [Empty 空狀態](./components/layer1/empty.md)
+- [Add Tile 虛線動作塊](./components/layer1/add_tile.md)
 - [Feedback 回饋元件](./components/layer1/feedback.md)
 - [Form 表單元件](./components/layer1/form.md)
 - [Image 圖片](./components/layer1/image.md)

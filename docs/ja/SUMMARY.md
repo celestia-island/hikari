@@ -31,6 +31,7 @@
 - [コメント](./components/layer1/comment.md)
 - [表示コンポーネント](./components/layer1/display.md)
 - [空状態](./components/layer1/empty.md)
+- [追加タイル](./components/layer1/add_tile.md)
 - [フィードバックコンポーネント](./components/layer1/feedback.md)
 - [フォームコンポーネント](./components/layer1/form.md)
 - [画像](./components/layer1/image.md)

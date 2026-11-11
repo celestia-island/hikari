@@ -1,0 +1,69 @@
+@use "../styles/polyfill" as *;
+
+/* HkAddTile — the dashed add / empty affordance tile. The base class is
+ * deliberately neutral: faint dashed border, muted ink, NO surface and
+ * NO primary tint. Tint belongs to the drag-over state only (same
+ * visual language as the established drag overlays) — pinned by
+ * HkAddTile.contract.test.ts, do not creep color into the base. */
+.hk-add-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8, 0.5rem);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-16, 1rem) var(--space-12, 0.75rem);
+  border: 1px dashed var(--border-faint);
+  border-radius: var(--radius-md, 0.5rem);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  font: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  text-align: center;
+  cursor: pointer;
+  @include user-select(none);
+  transition:
+    border-color var(--duration-fast, 0.15s) ease,
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    border-color: rgb(var(--color-primary) / 45%);
+    color: rgb(var(--color-primary));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+/* List-end form: a slim left-aligned row ("＋ add one more") that rides
+ * the end of a row list instead of floating under it as a button. */
+.hk-add-tile--compact {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-8, 0.5rem) var(--space-10, 0.625rem);
+  text-align: start;
+}
+
+/* Drag-over wash — dashed primary over a faint primary floor, matching
+ * the drag overlays the product already draws by hand. */
+.hk-add-tile--drag-over {
+  border-color: rgb(var(--color-primary) / 45%);
+  background: rgb(var(--color-primary) / 8%);
+  color: rgb(var(--color-primary));
+}
+
+.hk-add-tile--disabled {
+  cursor: default;
+  opacity: 0.55;
+
+  &:hover {
+    border-color: var(--border-faint);
+    color: rgb(var(--color-muted));
+    background: transparent;
+  }
+}

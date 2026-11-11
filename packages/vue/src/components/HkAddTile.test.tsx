@@ -1,0 +1,168 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, defineComponent, h, nextTick } from "vue";
+
+import HkAddTile from "./HkAddTile";
+
+const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
+
+function mount(node: ReturnType<typeof h>) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const app = createApp({ render: () => node });
+  app.mount(container);
+  mounts.push({ app, container });
+  return container;
+}
+
+afterEach(() => {
+  for (const { app, container } of mounts.splice(0)) {
+    app.unmount();
+    container.remove();
+  }
+});
+
+/* Functional icon stub with a distinguishing class, same recipe as the
+   HkEmptyState tests, so the icon prop / slot override can be asserted
+   to have actually mounted. */
+const StubIcon = defineComponent({
+  name: "StubIcon",
+  setup() {
+    return () => h("i", { class: "stub-add-icon", "data-stub-icon": "true" });
+  },
+});
+
+/** A drop event carrying the given files — plain Event + a defined
+    dataTransfer, because happy-dom has no real DataTransfer. */
+function dropEvent(files: File[]): Event {
+  const ev = new Event("drop", { bubbles: true, cancelable: true });
+  Object.defineProperty(ev, "dataTransfer", { value: { files } });
+  return ev;
+}
+
+function file(name: string): File {
+  return new File(["x"], name, { type: "text/plain" });
+}
+
+function tileEl(c: HTMLElement): HTMLElement {
+  return c.querySelector(".hk-add-tile") as HTMLElement;
+}
+
+describe("HkAddTile", () => {
+  it("renders the label and the default Plus icon", () => {
+    const c = mount(h(HkAddTile, null, { default: () => "Add one" }));
+    const el = tileEl(c);
+    expect(el.tagName).toBe("BUTTON");
+    expect(el.textContent).toContain("Add one");
+    expect(el.querySelector("svg")).not.toBeNull();
+    expect(el.classList.contains("hk-add-tile--compact")).toBe(false);
+  });
+
+  it("compact form carries the compact modifier", () => {
+    const c = mount(h(HkAddTile, { compact: true }, { default: () => "Add" }));
+    expect(tileEl(c).classList.contains("hk-add-tile--compact")).toBe(true);
+  });
+
+  it("icon prop replaces the default glyph", () => {
+    const c = mount(h(HkAddTile, { icon: StubIcon }, { default: () => "Add" }));
+    expect(c.querySelector(".stub-add-icon")).not.toBeNull();
+  });
+
+  it("icon slot wins over both the default and the icon prop", () => {
+    const c = mount(
+      h(HkAddTile, { icon: StubIcon }, { icon: () => h("i", { class: "slot-icon" }), default: () => "Add" }),
+    );
+    expect(c.querySelector(".slot-icon")).not.toBeNull();
+    expect(c.querySelector(".stub-add-icon")).toBeNull();
+    // The default Plus must not ride along either.
+    expect(tileEl(c).querySelectorAll("svg").length).toBe(0);
+  });
+
+  it("emits click for an enabled tile", () => {
+    const onClick = vi.fn();
+    const c = mount(h(HkAddTile, { onClick }, { default: () => "Add" }));
+    tileEl(c).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not emit click when disabled", () => {
+    const onClick = vi.fn();
+    const c = mount(h(HkAddTile, { disabled: true, onClick }, { default: () => "Add" }));
+    const el = tileEl(c);
+    expect(el.classList.contains("hk-add-tile--disabled")).toBe(true);
+    // The handler-level guard (a disabled button never receives the
+    // native click in a real browser, but dispatchEvent bypasses that).
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("emits drop-files with the dropped files", () => {
+    const onDropFiles = vi.fn();
+    const c = mount(h(HkAddTile, { droppable: true, onDropFiles }, { default: () => "Drop" }));
+    const ev = dropEvent([file("a.toml"), file("b.toml")]);
+    tileEl(c).dispatchEvent(ev);
+    expect(onDropFiles).toHaveBeenCalledTimes(1);
+    const files = onDropFiles.mock.calls[0][0] as File[];
+    expect(files.map((f) => f.name)).toEqual(["a.toml", "b.toml"]);
+  });
+
+  it("ignores drops without files (the gesture contract is files)", () => {
+    const onDropFiles = vi.fn();
+    const c = mount(h(HkAddTile, { droppable: true, onDropFiles }, { default: () => "Drop" }));
+    tileEl(c).dispatchEvent(dropEvent([]));
+    expect(onDropFiles).not.toHaveBeenCalled();
+  });
+
+  it("ignores drops when not droppable", () => {
+    const onDropFiles = vi.fn();
+    const c = mount(h(HkAddTile, { onDropFiles }, { default: () => "Nope" }));
+    tileEl(c).dispatchEvent(dropEvent([file("a.toml")]));
+    expect(onDropFiles).not.toHaveBeenCalled();
+  });
+
+  it("ignores drops and drag styling when disabled", () => {
+    const onDropFiles = vi.fn();
+    const c = mount(
+      h(HkAddTile, { disabled: true, droppable: true, onDropFiles }, { default: () => "Off" }),
+    );
+    const el = tileEl(c);
+    el.dispatchEvent(new Event("dragenter", { bubbles: true }));
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(false);
+    el.dispatchEvent(dropEvent([file("a.toml")]));
+    expect(onDropFiles).not.toHaveBeenCalled();
+  });
+
+  it("flips the drag-over class across child boundaries without flicker", async () => {
+    const c = mount(h(HkAddTile, { droppable: true }, { default: () => "Drop" }));
+    const el = tileEl(c);
+    // The default slot text is a direct child; enter the tile, then its
+    // label span boundary, then back out of the span only.
+    el.dispatchEvent(new Event("dragenter", { bubbles: true }));
+    await nextTick();
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(true);
+    const inner = el.querySelector("span") ?? el.firstElementChild ?? el;
+    inner.dispatchEvent(new Event("dragenter", { bubbles: true })); // depth 2
+    inner.dispatchEvent(new Event("dragleave", { bubbles: true })); // depth 1 — still over
+    await nextTick();
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(true);
+    el.dispatchEvent(new Event("dragleave", { bubbles: true })); // depth 0
+    await nextTick();
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(false);
+  });
+
+  it("clears the drag-over state on drop", async () => {
+    const onDropFiles = vi.fn();
+    const c = mount(h(HkAddTile, { droppable: true, onDropFiles }, { default: () => "Drop" }));
+    const el = tileEl(c);
+    el.dispatchEvent(new Event("dragenter", { bubbles: true }));
+    await nextTick();
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(true);
+    el.dispatchEvent(dropEvent([file("a.toml")]));
+    await nextTick();
+    expect(el.classList.contains("hk-add-tile--drag-over")).toBe(false);
+    // A second drop after the depth reset must still emit (no stale
+    // depth leaking into the next drag session).
+    el.dispatchEvent(new Event("dragenter", { bubbles: true }));
+    el.dispatchEvent(dropEvent([file("b.toml")]));
+    expect(onDropFiles).toHaveBeenCalledTimes(2);
+  });
+});

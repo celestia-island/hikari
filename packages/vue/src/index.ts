@@ -28,6 +28,7 @@ export {
 } from "./components/HkDockBar";
 export { default as HDrawer } from "./components/HkDrawer";
 export { default as HEdgeGlow } from "./components/HkEdgeGlow";
+export { default as HAddTile } from "./components/HkAddTile";
 export { default as HEmptyState } from "./components/HkEmptyState";
 export { default as HStepGuide } from "./components/HkStepGuide";
 export type { StepGuideItem } from "./components/HkStepGuide";
@@ -814,6 +815,7 @@ export { default as HkNavItem } from "./components/HkNavItem";
 export { default as HkNumberInput } from "./components/HkNumberInput";
 export { default as HkPhoneInput } from "./components/HkPhoneInput";
 export { default as HkAffixPicker } from "./components/HkAffixPicker";
+export { default as HkAddTile } from "./components/HkAddTile";
 export { default as HkUserPicker, type HkUserOption } from "./components/HkUserPicker";
 export { default as HkPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HkGaugeRing } from "./components/HkGaugeRing";

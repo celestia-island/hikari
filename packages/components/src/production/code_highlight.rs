@@ -6,14 +6,17 @@
 // element for integration with external syntax highlighters like Prism.js
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
+//
+// COPY FEEDBACK (user direction 2026-11-11): the copy button's face is
+// CONSTANT — it never flips to "Copied"/check. The crate has no toast
+// surface, so the write result rides `CodeHighlightProps::on_copied` and
+// the host owns all feedback.
 
 use hikari_i18n::t;
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -174,6 +177,13 @@ pub struct CodeHighlightProps {
     #[default(true)]
     pub copyable: bool,
 
+    /// Copy-result hook: `true` = the payload reached the clipboard, `false`
+    /// = the write failed (or the platform has no clipboard). The crate has
+    /// no toast surface, so the HOST owns all copy feedback through this
+    /// event (user direction 2026-11-11 — the button's face is constant,
+    /// never a "Copied" flip).
+    pub on_copied: Option<EventHandler<bool>>,
+
     /// Syntax highlighting palette. See [`CodePalette`].
     #[default(CodePalette::TokyoNight)]
     pub palette: CodePalette,
@@ -189,7 +199,22 @@ pub struct CodeHighlightProps {
 
 #[component]
 pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
-    let copied = use_signal(|| false);
+    let code_classes = ClassesBuilder::new().add(CodeHighlightClass::Code).build();
+
+    let line_classes = ClassesBuilder::new()
+        .add(CodeHighlightClass::LineNumbers)
+        .build();
+
+    let content_classes = ClassesBuilder::new()
+        .add(CodeHighlightClass::Content)
+        .build();
+
+    let max_height_style = if let Some(ref height) = props.max_height {
+        format!("max-height: {}; overflow-y: auto; {}", height, props.style)
+    } else {
+        props.style.clone()
+    };
+
     let lines: Vec<&str> = props.code.lines().collect();
     let line_count = lines.len();
 
@@ -230,22 +255,15 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     let code = props.code.clone();
     let language = props.language.clone();
 
-    // Computed button class with copied state
-    let button_class = {
-        let base = copy_classes.clone();
-        let copied_state = copied.read();
-        if copied_state {
-            format!("{} copied hi-code-highlight-copy-copied", base)
-        } else {
-            base
-        }
-    };
+    // The copy control's face is CONSTANT (user direction 2026-11-11: a
+    // copy control's text never flips to "Copied" — the crate has no
+    // toast surface of its own, so the copy RESULT is handed to the host
+    // through [`CodeHighlightProps::on_copied`] and the host owns all
+    // feedback). No copied signal, no flipped classes, no reset timer.
 
-    let button_text = if copied.read() {
-        t("hikari.code.copied", "Copied")
-    } else {
-        t("hikari.code.copy", "Copy")
-    };
+    let button_class = copy_classes;
+
+    let button_text = t("hikari.code.copy", "Copy");
 
     let language_class = format!("language-{}", language);
 
@@ -278,22 +296,24 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                         class: button_class,
                         onclick: {
                             let code_for_copy = code_for_copy.clone();
-                            let copied_for_timeout = copied.clone();
+                            let on_copied = props.on_copied.clone();
                             move |_| {
                                 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                                 {
-                                    if copy_to_clipboard(&code_for_copy) {
-                                        copied.set(true);
-                                        let copied_signal = copied_for_timeout.clone();
-                                        platform::set_timeout(move || {
-                                            copied_signal.set(false);
-                                        }, 2000);
+                                    // The write result rides the event — the
+                                    // host toasts success OR failure; the
+                                    // button itself never mutates.
+                                    let ok = copy_to_clipboard(&code_for_copy);
+                                    if let Some(handler) = on_copied.as_ref() {
+                                        handler.call(ok);
                                     }
                                 }
                                 #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                                 {
                                     let _ = code_for_copy;
-                                    let _ = copied;
+                                    if let Some(handler) = on_copied.as_ref() {
+                                        handler.call(false);
+                                    }
                                 }
                             }
                         },
@@ -379,28 +399,9 @@ impl StyledComponent for CodeHighlightComponent {
     box-shadow: 0 0 8px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
 }
 
-.hk-code-highlight-copy.hk-code-highlight-copy-copied,
-.hk-code-highlight-copy.copied {
-    background-color: var(--hi-color-primary, #3b82f6);
-    color: var(--hi-color-text-on-solid, #ffffff);
-    box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(127, 127, 127, 0.35));
-    opacity: 1;
-}
-
-/* Icon-only copy buttons: swap clipboard → check while `.copied` is set. */
+/* Icon-only copy buttons (host-composed face extensions; the component's
+   own button is a text button and never swaps its face on copy). */
 .hk-code-highlight-copy-icon {
-    display: inline-flex;
-}
-
-.hk-code-highlight-check {
-    display: none;
-}
-
-.hk-code-highlight-copy.copied .hk-code-highlight-copy-icon {
-    display: none;
-}
-
-.hk-code-highlight-copy.copied .hk-code-highlight-check {
     display: inline-flex;
 }
 

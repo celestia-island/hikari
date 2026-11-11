@@ -40,7 +40,9 @@
 //     scroll region.
 //   * The clipboard is a browser API with no wasm32-wasip2 equivalent, so
 //     the copy control emits the joined text through `on_copy` instead of
-//     writing it (Vue: `useClipboard().copy(lines.join("\n"))`).
+//     writing it (Vue: `useClipboardWithToast(useToast()).copy(…)` — the
+//     toast is the Vue twin's copy feedback; this mirror's face is
+//     constant either way).
 //   * `levels` is a mirror-side extension: Vue only CLASSIFIES a line
 //     ([`log_level_of`] → `s-log-entry-{level}`), the mirror can also
 //     filter by the same classification.

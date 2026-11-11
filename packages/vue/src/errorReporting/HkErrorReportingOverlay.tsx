@@ -3,6 +3,7 @@ import { computed, defineComponent } from "vue";
 import { useI18n } from "../i18n/context";
 import HButton from "../components/HkButton";
 import { HkErrorLanding } from "../components/HkErrorLanding";
+import HToast from "../components/HkToast";
 import { HkJsonTree } from "../components/HkJsonTree";
 import {
   getErrorReportingOptions,
@@ -99,6 +100,12 @@ export const HkErrorReportingOverlay = defineComponent({
 
       return (
         <div class="hk-error-reporting-overlay" role="alertdialog" aria-live="assertive" aria-modal="true">
+          {/* The overlay is its OWN app instance (it must survive the host
+              tree crashing), so the shared toast pushes have no viewport
+              unless this shell mounts one — without it the landing's copy
+              action is completely silent (2026-11-11 copy-feedback wave:
+              the host's viewport, if any, is beneath this takeover). */}
+          <HToast />
           <HkErrorLanding
             title={options.title || t("hikari::errors.defaultTitle", "Something went wrong")}
             description={description}

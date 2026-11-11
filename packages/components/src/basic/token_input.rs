@@ -787,13 +787,19 @@ mod tests {
             ".hk-token-input-unit",
             ".hk-token-input-editor-body",
             ".hk-token-editor",
-            ".hk-token-input-clear",
         ] {
             assert!(
                 css.contains(class),
                 "token-input css must carry the vue class {class:?}"
             );
         }
+        // The editor body's clear button is RETIRED (2026-11-11: the
+        // dialog chrome's close ✕ made a second ✕ read as a duplicate);
+        // pin its absence so the sheet and the Vue source stay honest.
+        assert!(
+            !css.contains("hk-token-input-clear"),
+            "retired clear-button class must not return to the sheet"
+        );
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored token input sheet"

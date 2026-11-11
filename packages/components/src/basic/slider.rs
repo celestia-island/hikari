@@ -12,10 +12,21 @@
 //   div.hk-slider[.is-disabled]  data-size={sm|md} role="slider"
 //         tabindex={0|-1} aria-label aria-valuemin aria-valuemax
 //         aria-valuenow aria-valuetext [aria-disabled]
+//         style="--hk-slider-rail-inset:{inset}px" (the inset rail geometry)
 //         (mousedown/move/up, keydown — see the L88 delta below)
-//     span.hk-slider-tick [data-active] style="left:{x}%" aria-hidden="true"
-//     div.hk-slider-fill   style="width:{pct}%"
-//     div.hk-slider-thumb  style="left:{pct}%"
+//     span.hk-slider-tick [data-active] style="left:calc(F% ± Npx)"
+//         aria-hidden="true"
+//     div.hk-slider-fill   style="width:calc(F% - Npx)"
+//     div.hk-slider-thumb  style="left:calc(F% ± Npx)"
+//
+// Rail geometry (2026-11-11, mirrored from Vue): the drawable rail is
+// inset by the thumb radius at each end, so a thumb parked on the
+// first/last stop rests ON the rail, the endpoint tick dot centers sit
+// one dot-radius further inside (never past the caps), and the fill
+// starts FLAT at the rail edge with a rounded end cap. The sheet
+// consumes the inline `--hk-slider-rail-inset` var for the track/fill
+// edges; the position strings are the linear calc expansion of
+// `inset + (100% - 2·inset)·f` (identical geometry, cssstyle-stable).
 //
 // Vue prop mapping: `modelValue` → [`SliderProps::value`]; `showTicks` →
 // [`SliderProps::show_ticks`]; `ariaLabel` → [`SliderProps::aria_label`];
@@ -156,6 +167,44 @@ pub fn slider_pct(value: f64, min: f64, max: f64) -> f64 {
     }
 }
 
+/// The drawable rail's end inset in px: the thumb radius per size (the sheet
+/// draws 14px md / 12px sm thumbs). Must match Vue's `RAIL_INSET_PX` and the
+/// sheet's thumb diameters.
+pub fn slider_rail_inset_px(size: SliderSize) -> f64 {
+    match size {
+        SliderSize::Sm => 6.0,
+        SliderSize::Md => 7.0,
+    }
+}
+
+/// Vue round4: `Math.round(n * 1e4) / 1e4` — kills the float dust of the
+/// linear calc expansion (ties toward +∞ like `js_round`).
+fn round4(value: f64) -> f64 {
+    js_round(value * 1e4) / 1e4
+}
+
+/// A position ON the inset rail (thumb center; tick centers pass one
+/// dot-radius as `extra_inset_px` so the endpoint dots stay inside the
+/// caps). Emitted as the linear calc expansion of
+/// `inset + (100% - 2·inset)·f` — the exact string Vue emits.
+pub fn slider_rail_pos(fraction: f64, inset_px: f64, extra_inset_px: f64) -> String {
+    let inset = inset_px + extra_inset_px;
+    let percent = round4(fraction * 100.0);
+    let px = round4(inset * (1.0 - 2.0 * fraction));
+    if px < 0.0 {
+        format!("calc({percent}% - {}px)", px.abs())
+    } else {
+        format!("calc({percent}% + {px}px)")
+    }
+}
+
+/// The fill width along the inset rail: `railLength·f` as `calc(F% - Npx)`.
+pub fn slider_rail_width(fraction: f64, inset_px: f64) -> String {
+    let percent = round4(fraction * 100.0);
+    let px = round4(inset_px * 2.0 * fraction);
+    format!("calc({percent}% - {px}px)")
+}
+
 /// One tick per step, as `left` percentages; bare for degenerate ranges and for
 /// unreadable tick density (Vue: `count < 2 || count > 32`).
 pub fn slider_tick_positions(min: f64, max: f64, step: f64, show_ticks: bool) -> Vec<f64> {
@@ -181,22 +230,25 @@ pub fn slider_value_text(value: f64, format: Option<&Callback<f64, String>>) -> 
     }
 }
 
-/// The snapped value at a pointer ratio across the span — Vue's `valueFrom()`
-/// minus the rect lookup (`ratio` is already `(clientX - left) / width`).
+/// The snapped value at a pointer ratio across the INSET rail span — Vue's
+/// `valueFrom()` minus the rect lookup (`ratio` is already
+/// `(clientX - left - inset) / (width - 2·inset)`).
 pub fn slider_value_from_ratio(ratio: f64, min: f64, max: f64, step: f64) -> f64 {
     let ratio = ratio.clamp(0.0, 1.0);
     slider_snap(min + ratio * (max - min), min, max, step)
 }
 
-/// The pointer's `0..1` ratio across the measured track, or `None` when the
-/// host cannot measure the element (non-DOM builds report a zero-width rect).
-fn pointer_ratio(client_x: i32, current_target: Option<u64>) -> Option<f64> {
+/// The pointer's `0..1` ratio across the measured INSET rail, or `None` when
+/// the host cannot measure the element (non-DOM builds report a zero-width
+/// rect) or the rail is degenerate (element thinner than both insets).
+fn pointer_ratio(client_x: i32, current_target: Option<u64>, inset_px: f64) -> Option<f64> {
     let handle = current_target?;
     let rect = get_bounding_client_rect(DomHandle::from_raw(handle));
-    if rect.width <= 0.0 {
+    let rail = rect.width - inset_px * 2.0;
+    if rect.width <= 0.0 || rail <= 0.0 {
         return None;
     }
-    Some(((f64::from(client_x) - rect.x) / rect.width).clamp(0.0, 1.0))
+    Some(((f64::from(client_x) - rect.x - inset_px) / rail).clamp(0.0, 1.0))
 }
 
 #[define_props]
@@ -256,6 +308,9 @@ pub fn Slider(props: SliderProps) -> Element {
     let pct = slider_pct(value, min, max);
     let ticks = slider_tick_positions(min, max, step, props.show_ticks);
     let value_text = slider_value_text(value, props.format_value.as_ref());
+    // The inset-rail geometry (2026-11-11, mirrored from Vue): one number
+    // feeds the inline var, the position strings and the pointer mapping.
+    let rail_inset = slider_rail_inset_px(props.size);
 
     let mut root_classes = String::from("hk-slider");
     if disabled {
@@ -289,7 +344,7 @@ pub fn Slider(props: SliderProps) -> Element {
             return;
         }
         set_slider_dragging(true);
-        if let Some(ratio) = pointer_ratio(event.client_x, event.current_target) {
+        if let Some(ratio) = pointer_ratio(event.client_x, event.current_target, rail_inset) {
             commit_down(slider_value_from_ratio(ratio, min, max, step));
         }
     };
@@ -306,7 +361,7 @@ pub fn Slider(props: SliderProps) -> Element {
             set_slider_dragging(false);
             return;
         }
-        if let Some(ratio) = pointer_ratio(event.client_x, event.current_target) {
+        if let Some(ratio) = pointer_ratio(event.client_x, event.current_target, rail_inset) {
             commit_move(slider_value_from_ratio(ratio, min, max, step));
         }
     };
@@ -344,7 +399,7 @@ pub fn Slider(props: SliderProps) -> Element {
                 span {
                     class: "hk-slider-tick",
                     "data-active": if active { Some("") } else { None },
-                    style: format!("left:{left}%"),
+                    style: format!("left:{}", slider_rail_pos(left / 100.0, rail_inset, 1.0)),
                     "aria-hidden": "true",
                 }
             }
@@ -354,7 +409,11 @@ pub fn Slider(props: SliderProps) -> Element {
     rsx! {
         div {
             class: root_classes,
-            style: props.style.clone(),
+            style: if props.style.is_empty() {
+                format!("--hk-slider-rail-inset:{rail_inset}px")
+            } else {
+                format!("{};--hk-slider-rail-inset:{rail_inset}px", props.style)
+            },
             "data-size": props.size.data_size(),
             "role": "slider",
             tabindex: if disabled { -1_i32 } else { 0 },
@@ -371,11 +430,11 @@ pub fn Slider(props: SliderProps) -> Element {
             {VNode::Fragment(tick_nodes)}
             div {
                 class: "hk-slider-fill",
-                style: format!("width:{pct}%"),
+                style: format!("width:{}", slider_rail_width(pct / 100.0, rail_inset)),
             }
             div {
                 class: "hk-slider-thumb",
-                style: format!("left:{pct}%"),
+                style: format!("left:{}", slider_rail_pos(pct / 100.0, rail_inset, 0.0)),
             }
         }
     }
@@ -466,6 +525,34 @@ mod tests {
     }
 
     #[test]
+    fn slider_rail_geometry_matches_the_vue_emission() {
+        // Inset = thumb radius per size (the sheet's 14px md / 12px sm).
+        assert_eq!(slider_rail_inset_px(SliderSize::Md), 7.0);
+        assert_eq!(slider_rail_inset_px(SliderSize::Sm), 6.0);
+        // Thumb center rides the rail; mid-rail is the pure center.
+        assert_eq!(slider_rail_pos(0.5, 7.0, 0.0), "calc(50% + 0px)");
+        assert_eq!(slider_rail_width(0.5, 7.0), "calc(50% - 7px)");
+        // Endpoint stops park the thumb ON the rail (never past the cap).
+        assert_eq!(slider_rail_pos(0.0, 7.0, 0.0), "calc(0% + 7px)");
+        assert_eq!(slider_rail_pos(1.0, 7.0, 0.0), "calc(100% - 7px)");
+        // Tick centers carry the extra dot radius: flush INSIDE the caps.
+        assert_eq!(slider_rail_pos(0.0, 7.0, 1.0), "calc(0% + 8px)");
+        assert_eq!(slider_rail_pos(1.0, 7.0, 1.0), "calc(100% - 8px)");
+        // sm geometry.
+        assert_eq!(slider_rail_pos(0.0, 6.0, 1.0), "calc(0% + 7px)");
+        assert_eq!(slider_rail_pos(1.0, 6.0, 0.0), "calc(100% - 6px)");
+        assert_eq!(slider_rail_width(1.0, 6.0), "calc(100% - 12px)");
+        // A value at 30% on the md rail (slider_field's HTML assertion).
+        assert_eq!(slider_rail_width(0.3, 7.0), "calc(30% - 4.2px)");
+        assert_eq!(slider_rail_pos(0.3, 7.0, 0.0), "calc(30% + 2.8px)");
+        // Float dust is rounded away before formatting (no 4.2000000001px).
+        assert_eq!(
+            slider_rail_pos(0.123456789, 7.0, 0.0),
+            "calc(12.3457% + 5.2716px)"
+        );
+    }
+
+    #[test]
     fn slider_defaults_match_the_vue_props() {
         let props = SliderProps::default();
         assert_eq!(props.value, 0.0);
@@ -525,7 +612,10 @@ mod tests {
         })
         .render_to_html();
         assert!(html.contains(r#"aria-valuenow="9""#), "{html}");
-        assert!(html.contains("width:90%"), "{html}");
+        assert!(
+            html.contains(r#"style="width:calc(90% - 12.6px)""#),
+            "{html}"
+        );
     }
 
     #[test]

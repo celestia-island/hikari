@@ -19,13 +19,10 @@
   touch-action: none;
   @include user-select(none);
   outline: none;
-}
-
-// The drawable rail is inset by the thumb radius at each end (the value
-// comes inline from the component; this is only the no-inline fallback).
-// A thumb parked on the first/last stop then rests ON the rail instead
-// of hanging off its cap (2026-11-11 user report).
-.hk-slider {
+  // The drawable rail is inset by the thumb radius at each end (the value
+  // comes inline from the component; this is only the no-inline fallback).
+  // A thumb parked on the first/last stop then rests ON the rail instead
+  // of hanging off its cap (2026-11-11 user report).
   --hk-slider-rail-inset: 7px;
 }
 

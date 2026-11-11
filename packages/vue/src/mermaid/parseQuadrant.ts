@@ -77,10 +77,17 @@ export function parseQuadrant(source: string): MermaidQuadrantDoc {
         const coords = rest.slice(open + 1, close).trim();
         const parts = coords.split(",");
         if (parts.length === 2) {
-          const x = Number(parts[0].trim());
-          const y = Number(parts[1].trim());
-          if (Number.isFinite(x) && Number.isFinite(y)) {
-            points.push({ label, x, y });
+          // Rust f64 parse semantics: plain decimals only (no hex, no
+          // empty → 0) — R2 finding 9.
+          const xs = parts[0].trim();
+          const ys = parts[1].trim();
+          const PLAIN_FLOAT = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+          if (PLAIN_FLOAT.test(xs) && PLAIN_FLOAT.test(ys)) {
+            const x = Number(xs);
+            const y = Number(ys);
+            if (Number.isFinite(x) && Number.isFinite(y)) {
+              points.push({ label, x, y });
+            }
           }
         }
       }

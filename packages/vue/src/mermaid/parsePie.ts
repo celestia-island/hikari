@@ -15,6 +15,10 @@
 import type { MermaidPieDoc } from "./types";
 import { MermaidParseError } from "./parseGraph";
 
+/** Rust `parse::<f64>()` accepts only plain decimal floats — no hex, no
+ * empty strings. Number() alone would take "0x10" and "" (R2 finding 9). */
+const PLAIN_FLOAT = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+
 function parseSlice(line: string): { label: string; value: number } | null {
   let labelPart: string;
   let valuePart: string;
@@ -30,6 +34,7 @@ function parseSlice(line: string): { label: string; value: number } | null {
     labelPart = line.slice(0, colon).trim();
     valuePart = line.slice(colon + 1).trim();
   }
+  if (!PLAIN_FLOAT.test(valuePart)) return null;
   const value = Number(valuePart);
   if (!Number.isFinite(value) || value <= 0) return null;
   return { label: labelPart, value };

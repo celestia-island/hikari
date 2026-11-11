@@ -84,6 +84,14 @@ export interface BoardNodeInput {
   data?: Record<string, unknown>;
 }
 
+/** Per-instance sequence for document-unique marker ids (url(#id)
+ * resolves document-wide — two boards must never mint the same id). */
+let boardInstanceCounter = 0;
+function boardInstanceSeq(): number {
+  boardInstanceCounter += 1;
+  return boardInstanceCounter;
+}
+
 export interface BoardEdgeInput {
   id: string;
   from: string;
@@ -215,7 +223,10 @@ export default defineComponent({
     /** One marker per (kind, ink) pair actually used — marker fill cannot
      * follow the referencing stroke on every engine hikari supports, so
      * the defs are minted from the edge list (deterministic, in edge
-     * order) instead of trusting `context-stroke`. */
+     * order) instead of trusting `context-stroke`. Ids carry a per-BOARD
+     * sequence: `url(#id)` resolves document-wide, and two mounted boards
+     * minting `hk-board-ah-0` each would cross-wire their arrowheads. */
+    const boardSeq = boardInstanceSeq();
     const edgeMarkers = computed(() => {
       const index = new Map<string, number>();
       for (const e of edgePaths.value) {
@@ -225,14 +236,14 @@ export default defineComponent({
       }
       return [...index.entries()].map(([key, i]) => {
         const [kind, ink] = key.split("\u0000");
-        return { id: `hk-board-ah-${i}`, kind: kind as "solid" | "open", ink };
+        return { id: `hk-board-ah-${boardSeq}-${i}`, kind: kind as "solid" | "open", ink };
       });
     });
 
     const markerOf = (kind: "none" | "solid" | "open", ink: string): string | undefined => {
       if (kind === "none") return undefined;
       const idx = edgeMarkers.value.findIndex((m) => m.kind === kind && m.ink === ink);
-      return idx >= 0 ? `url(#hk-board-ah-${idx})` : undefined;
+      return idx >= 0 ? `url(#hk-board-ah-${boardSeq}-${idx})` : undefined;
     };
 
     const contentBounds = computed(() => content.value);

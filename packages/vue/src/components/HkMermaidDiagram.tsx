@@ -145,8 +145,7 @@ function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
         const d = sweep >= Math.PI * 2 - 1e-6
           ? `M ${CX + R},${CY} A ${R},${R} 0 1 1 ${CX - R},${CY} A ${R},${R} 0 1 1 ${CX + R},${CY}`
           : `M ${CX},${CY} L ${p0} A ${R},${R} 0 ${large} 1 ${p1} Z`;
-        const mid = (a0 + a1) / 2;
-        return { d, labelX: CX + R * 0.62 * Math.cos(mid), labelY: CY + R * 0.62 * Math.sin(mid), pct: Math.round((slice.value / total) * 100), slice, i };
+        return { d, pct: Math.round((slice.value / total) * 100), slice, i };
       });
       return (
         <div class="hk-mmd-pie">
@@ -163,7 +162,7 @@ function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
                 <div key={i} class="hk-mmd-pie__legend-row">
                   <span class={`hk-mmd-pie__dot hk-mmd-pie__slice--${i % 6}`} />
                   <span class="hk-mmd-pie__legend-label">{s.label}</span>
-                  <span class="hk-mmd-pie__legend-value">{s.value}</span>
+                  <span class="hk-mmd-pie__legend-value">{s.value} · {arcs[i].pct}%</span>
                 </div>
               ))}
             </div>
@@ -180,8 +179,12 @@ function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
       const T = 44;
       const PW = W - L - 24;
       const PH = H - T - 40;
-      const px = (x: number): number => L + (x / 100) * PW;
-      const py = (y: number): number => T + (1 - y / 100) * PH;
+      // Mermaid quadrant coords are 0..1 (parser + Rust reference agree);
+      // clamp defends the frame against out-of-range input (the Rust
+      // renderer clamps into its grid the same way).
+      const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+      const px = (x: number): number => L + clamp01(x) * PW;
+      const py = (y: number): number => T + (1 - clamp01(y)) * PH;
       return (
         <div class="hk-mmd-quadrant">
           {doc.title && <div class="hk-mmd-quadrant__title">{doc.title}</div>}

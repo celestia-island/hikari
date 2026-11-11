@@ -115,3 +115,34 @@ describe("HkMarkdownRenderer mermaid fences", () => {
     expect(container.innerHTML).not.toContain("<script");
   });
 });
+
+// ── Lifecycle pins (R3 survivors: prune + teardown) ───────────────────
+
+describe("mermaid sub-app lifecycle pins", () => {
+  it("re-parse unmounts the stale sub-app (no leaked __vue_app__)", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const { container, set } = mount(DOC);
+    await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
+    const stale = container.querySelector(".hk-md-mermaid") as HTMLElement;
+    expect((stale as unknown as Record<string, unknown>).__vue_app__).toBeTruthy();
+
+    set(["Update:", "", "```mermaid", "sequenceDiagram", "X ->> Y: ping", "```"].join("\n"));
+    await settleFor(container, ".hk-mermaid[data-mermaid-kind='sequence']");
+    // The stale host left the document AND its app was unmounted.
+    expect(stale.isConnected).toBe(false);
+    expect((stale as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
+  });
+
+  it("renderer teardown unmounts every mermaid sub-app", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const { container } = mount(DOC);
+    await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
+    const host = container.querySelector(".hk-md-mermaid") as HTMLElement;
+    expect((host as unknown as Record<string, unknown>).__vue_app__).toBeTruthy();
+
+    const entry = mounts[mounts.length - 1];
+    entry.app.unmount();
+    expect((host as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
+    expect(host.isConnected).toBe(false);
+  });
+});

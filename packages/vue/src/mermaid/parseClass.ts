@@ -94,9 +94,12 @@ function parseRelationship(line: string): ClassRelationship | null {
     const [to, label] =
       colon >= 0 ? [after.slice(0, colon).trim(), after.slice(colon + 1).trim()] : [after.trim(), null];
     if (from === "" || to === "") return null;
+    // Rust `trim_matches('"')` strips ONLY edge quotes; replaceAll would
+    // eat inner ones too (R2 finding 10c).
+    const stripEdgeQuotes = (s: string): string => s.replace(/^"+/, "").replace(/"+$/, "");
     return {
-      from: from.replaceAll('"', ""),
-      to: to.replaceAll('"', ""),
+      from: stripEdgeQuotes(from),
+      to: stripEdgeQuotes(to),
       relType,
       label: label !== null && label !== "" ? label : null,
     };

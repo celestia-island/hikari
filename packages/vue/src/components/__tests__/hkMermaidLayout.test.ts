@@ -125,3 +125,66 @@ describe("buildBoardModel", () => {
     expect(quad.nodes[0].kind).toBe("quadrant");
   });
 });
+
+// ── Pins for the mutation survivors (R3 round, fb0c426c) ──────────────
+
+describe("layout pin tests (mutation survivors)", () => {
+  it("barycenter reorders a rank by neighbor position (B→X, A→Y flips X/Y)", () => {
+    const items = [
+      { id: "A", w: 80, h: 40, order: 0 },
+      { id: "B", w: 80, h: 40, order: 1 },
+      { id: "X", w: 80, h: 40, order: 2 },
+      { id: "Y", w: 80, h: 40, order: 3 },
+    ];
+    const { positions } = layoutGraph({ items, edges: [{ from: "B", to: "X" }, { from: "A", to: "Y" }], direction: "TD" });
+    // Without the barycenter pass X (parse order first) would stay left
+    // of Y; with it Y follows its parent A and X follows B.
+    expect(positions.get("Y")!.x).toBeLessThan(positions.get("X")!.x);
+    expect(positions.get("A")!.x).toBeLessThan(positions.get("B")!.x);
+  });
+
+  it("sequence messages stack one row step apart", () => {
+    const model = buildBoardModel(
+      parseMermaid("sequenceDiagram\nA ->> B: one\nA ->> B: two\nA ->> B: three") as never,
+      measure,
+    );
+    const rows = model.nodes
+      .filter((n) => n.id.startsWith("j:m:") && n.id.endsWith(":f"))
+      .map((n) => n.y)
+      .sort((a, b) => a - b);
+    expect(rows).toHaveLength(3);
+    expect(rows[1] - rows[0]).toBe(44);
+    expect(rows[2] - rows[1]).toBe(44);
+  });
+
+  it("a gantt dep ACROSS sections pushes the start past the section cursor", () => {
+    const model = buildBoardModel(
+      parseMermaid([
+        "gantt",
+        "section One",
+        "long : t1, 5d",
+        "section Two",
+        "later : t2, after t1, 1d",
+      ].join("\n")) as never,
+      measure,
+    );
+    const bar = (name: string) => {
+      const n = model.nodes.find((x) => x.data.name === name && x.kind === "task");
+      if (!n) throw new Error(`no bar ${name}`);
+      return n;
+    };
+    const t1 = bar("long");
+    const t2 = bar("later");
+    // Section Two's own cursor restarts at 0 — only the dep can push t2
+    // past t1's end (this is the mutation the single-section golden
+    // could never catch: there the cursor dominated the dep).
+    expect(t2.x).toBeGreaterThanOrEqual(t1.x + t1.w);
+  });
+
+  it("suggestHeight floors at 200px for tiny content", () => {
+    const model = buildBoardModel(parseMermaid("sequenceDiagram\nA ->> B: x") as never, measure);
+    expect(model.suggestedHeight).toBeGreaterThanOrEqual(200);
+    const bare = buildBoardModel(parseMermaid("sequenceDiagram\nparticipant Only") as never, measure);
+    expect(bare.suggestedHeight).toBe(200);
+  });
+});

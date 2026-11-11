@@ -300,3 +300,44 @@ describe("mermaidParser engine wrapper", () => {
     expect(mermaidParser.parse("nothing recognizable")).toBeNull();
   });
 });
+
+// ── R2/R3 fix regression pins ────────────────────────────────────────
+
+describe("pest stxt union stop-set parity (R2 finding 3)", () => {
+  it("labels containing a FOREIGN closer reject the whole file", () => {
+    expect(() => parseFlowchart("graph TD\nA[x)y] --> B")).toThrow(MermaidParseError);
+    expect(() => parseFlowchart("graph TD\nA[B((C))] --> B")).toThrow(MermaidParseError);
+    expect(() => parseFlowchart("graph TD\nC((a)b)) --> D")).toThrow(MermaidParseError);
+  });
+
+  it("circ failure falls back to the rounded reading, exactly like the ordered choice", () => {
+    const doc = parseFlowchart("graph LR\nA((text) --> B");
+    expect(doc.nodes[0]).toEqual({ id: "A", label: "(text", shape: "rounded" });
+    expect(doc.edges[0].target).toBe("B");
+  });
+});
+
+describe("dispatch latitude (R2 finding 4)", () => {
+  it("tab-separated graph/flowchart headers dispatch like spaced ones", () => {
+    expect(parseMermaid("graph\tTD\nA --> B").kind).toBe("graph");
+    expect(parseMermaid("flowchart\tLR\nA --> B").kind).toBe("graph");
+  });
+});
+
+describe("state parity (R2 finding 5)", () => {
+  it("bare state-id lines contribute nothing (Rust: transitions only)", () => {
+    const doc = parseStateDiagram("stateDiagram-v2\nW --- X\nY");
+    expect(doc.nodes.map((n) => n.id)).toEqual(["W", "X"]);
+  });
+});
+
+describe("numeric acceptance parity (R2 finding 9)", () => {
+  it("pie rejects hex and non-decimal values the way Rust f64 parse does", () => {
+    const doc = parsePie('pie\n"hex": 0x10\n"ok": 2');
+    expect(doc.slices).toEqual([{ label: "ok", value: 2 }]);
+  });
+
+  it("quadrant rejects empty coords instead of coercing to (0,0)", () => {
+    expect(() => parseQuadrant("quadrantChart\np: [, ]")).toThrow(MermaidParseError);
+  });
+});

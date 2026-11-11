@@ -535,10 +535,19 @@ function layoutGantt(
   const step = Math.max(1, Math.ceil(totalDays / 12));
   for (let d = 0; d <= totalDays; d += step) ticks.push(d);
   const axisW = Math.max(totalDays * dayW, 60);
-  nodes.push({ id: "ax", x: nameCol, y: MARGIN, w: axisW, h: axisH, kind: "axis", data: { ticks, dayW, unit: "d" } });
+
+  // Chart title (when present) as a spanning header row above the axis —
+  // the Rust renderer paints it too, and a titled chart losing its title
+  // reads as data loss (R2 finding 7).
+  let topY = MARGIN;
+  if (doc.title !== null) {
+    nodes.push({ id: "gt", x: MARGIN, y: topY, w: nameCol + axisW - 10, h: 26, kind: "section", data: { label: doc.title, header: true } });
+    topY += 32;
+  }
+  nodes.push({ id: "ax", x: nameCol, y: topY, w: axisW, h: axisH, kind: "axis", data: { ticks, dayW, unit: "d" } });
 
   // Rows: a header line whenever the section changes, then the task bar.
-  let y = MARGIN + axisH;
+  let y = topY + axisH;
   let lastSection: string | null = null;
   rows.forEach((r, i) => {
     if (r.section !== lastSection) {

@@ -79,24 +79,52 @@ class LineScanner {
     return m[0];
   }
 
-  /** `shape?` — one of the four bracketed forms, when present. */
+  /** `shape?` — pest's ordered choice (circ, rect, rnd, diam) with the
+   * union stop-set: stxt = (!("]" | ")" | "}" | nl) ~ ANY)* — a label
+   * may contain NO closer at all, and the first closer seen must be the
+   * alternative's own (backtracking included: `A((text) --> B` fails
+   * circ then falls back to the rounded `(` reading, exactly like the
+   * grammar). Returns null when no alternative matches — the caller's
+   * statement scan then rejects the trailing junk, which is how pest
+   * fails the whole file. */
   shape(): ShapeInfo | null {
     const l = this.line;
-    const at = (s: string): boolean => l.startsWith(s, this.pos);
-    const closers: Array<[string, MermaidNodeShape, string]> = [
-      ["((", "circle", "))"],
-      ["[", "rect", "]"],
-      ["(", "rounded", ")"],
-      ["{", "diamond", "}"],
-    ];
-    for (const [open, shape, close] of closers) {
-      if (!at(open)) continue;
-      const end = l.indexOf(close, this.pos + open.length);
-      // stxt excludes newlines by construction — the line has none.
-      if (end < 0) throw new MermaidParseError(`unclosed shape bracket in "${l}"`);
-      const text = l.slice(this.pos + open.length, end).trim();
-      this.pos = end + close.length;
-      return { shape, label: text === "" ? null : text };
+    const FIRST_CLOSERS = ["]", ")", "}"];
+    const firstCloserFrom = (from: number): { ch: string; at: number } | null => {
+      for (let i = from; i < l.length; i += 1) {
+        if (FIRST_CLOSERS.includes(l[i])) return { ch: l[i], at: i };
+      }
+      return null;
+    };
+    const readBracketed = (open: string, close: string, closerLen: number): { label: string | null; end: number } | null => {
+      if (!l.startsWith(open, this.pos)) return null;
+      const first = firstCloserFrom(this.pos + open.length);
+      if (!first) return null;
+      if (!l.startsWith(close, first.at)) return null;
+      const text = l.slice(this.pos + open.length, first.at).trim();
+      return { label: text === "" ? null : text, end: first.at + closerLen };
+    };
+    // Ordered choice — circ before rect before rnd before diam, exactly
+    // the grammar's alternative order.
+    const circ = readBracketed("((", "))", 2);
+    if (circ) {
+      this.pos = circ.end;
+      return { shape: "circle", label: circ.label };
+    }
+    const rect = readBracketed("[", "]", 1);
+    if (rect) {
+      this.pos = rect.end;
+      return { shape: "rect", label: rect.label };
+    }
+    const rnd = readBracketed("(", ")", 1);
+    if (rnd) {
+      this.pos = rnd.end;
+      return { shape: "rounded", label: rnd.label };
+    }
+    const diam = readBracketed("{", "}", 1);
+    if (diam) {
+      this.pos = diam.end;
+      return { shape: "diamond", label: diam.label };
     }
     return null;
   }
@@ -264,12 +292,9 @@ export function parseStateDiagram(source: string): MermaidGraphDoc {
       continue;
     }
 
-    // NOTE: `state "Label" as ID` and `state ID` lines are SKIPPED, not
-    // parsed — the Rust reference skips every "state " line the same way
-    // (states materialize from transition lines instead).
-    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(line)) {
-      push(line, line, "rounded");
-    }
+    // NOTE: `state "Label" as ID` AND bare state-id lines are both
+    // SKIPPED — the Rust reference builds states ONLY from transition
+    // lines; a bare `Y` contributes nothing here either (R2 finding 5).
   }
 
   if (nodes.length === 0) throw new MermaidParseError("state diagram has no states");

@@ -12,14 +12,20 @@
 //   div.hk-media-slider [.is-disabled] data-size={md|sm} role="slider"
 //          tabindex="-1" [aria-label] aria-valuenow aria-valuemin="0"
 //          aria-valuemax="100" [+host class]   (mousedown/move/up — L88 delta)
-//     div.hk-media-slider-buffered style="width:{buffered*100}%"   (buffered > 0)
-//     div.hk-media-slider-fill     style="width:{ratio*100}%"
-//     div.hk-media-slider-thumb    style="left:{ratio*100}%"
+//     (root carries an inline --hk-media-slider-rail-inset:{6}px var)
+//     div.hk-media-slider-buffered style="width:calc(F% - Npx)"  (buffered > 0)
+//     div.hk-media-slider-fill     style="width:calc(F% - Npx)"
+//     div.hk-media-slider-thumb    style="left:calc(F% ± Npx)"
+//
+// Rail geometry (2026-11-11, mirrored from Vue): the drawable rail is inset
+// by the thumb radius (6px) at each end — a thumb parked on 0/1 rests ON the
+// rail and the fill starts flat at the rail edge (a rounded cap on a thin
+// saturated bar reads as a pointed nib).
 //
 // Vue prop mapping: `ratio` → [`MediaSliderProps::ratio`], `buffered` /
 // `disabled` / `ariaLabel` / `size` one-to-one, `update:ratio` →
 // [`MediaSliderProps::on_update_ratio`]. The position math is Vue's helper by
-// helper: `ratioFrom` / the `${n*100}%` templates / `Math.round(ratio*100)`
+// helper: `ratioFrom` / the rail calc emitters / `Math.round(ratio*100)`
 // all live in the free functions below so they are testable without a DOM.
 //
 // State contract (the tairitsu 0.5.22 limit this wave works under): the only
@@ -83,20 +89,53 @@ impl MediaSliderSize {
     }
 }
 
-/// Vue's `ratioFrom(event)`: clamp the pointer position across the measured
-/// track into `0..1`. A zero-width rect (an unmeasurable host) answers `0`,
-/// never a division blow-up.
-pub fn media_slider_ratio_from_pointer(client_x: f64, rect_left: f64, rect_width: f64) -> f64 {
-    if rect_width <= 0.0 {
-        return 0.0;
-    }
-    ((client_x - rect_left) / rect_width).clamp(0.0, 1.0)
+/// The thumb radius: the thumb is 12px at every size (the sheet's
+/// `.hk-media-slider-thumb`), so the drawable rail insets 6px per end. Must
+/// match Vue's `RAIL_INSET_PX` and the sheet's inline var fallback
+/// (`--hk-media-slider-rail-inset`).
+pub const MEDIA_SLIDER_RAIL_INSET_PX: f64 = 6.0;
+
+/// Vue round4: `Math.round(n * 1e4) / 1e4` — kills the float dust of the
+/// linear calc expansion (ties toward +∞ like JS `Math.round`).
+fn media_slider_round4(value: f64) -> f64 {
+    (value * 1e4 + 0.5).floor() / 1e4
 }
 
-/// The `${ratio * 100}%` template Vue hands the inline style. Rust's shortest
-/// float rendering matches JS's `String(n)` for every value these props carry.
-pub fn media_slider_css_pct(ratio: f64) -> String {
-    format!("{}%", ratio * 100.0)
+/// Vue's `ratioFrom(event)`: clamp the pointer position across the measured
+/// INSET rail into `0..1` (2026-11-11 rail-inset geometry — a thumb parked on
+/// 0/1 must rest ON the rail). A zero-width rect, or one thinner than both
+/// insets (an unmeasurable host), answers `0`, never a division blow-up.
+pub fn media_slider_ratio_from_pointer(
+    client_x: f64,
+    rect_left: f64,
+    rect_width: f64,
+    inset_px: f64,
+) -> f64 {
+    let rail = rect_width - inset_px * 2.0;
+    if rect_width <= 0.0 || rail <= 0.0 {
+        return 0.0;
+    }
+    ((client_x - rect_left - inset_px) / rail).clamp(0.0, 1.0)
+}
+
+/// The fill/buffered width along the rail: `railLength·f` as the linear
+/// calc expansion `calc(F% - Npx)` — the exact string Vue emits (Rust's
+/// shortest float rendering matches JS number-to-string here).
+pub fn media_slider_rail_width(ratio: f64, inset_px: f64) -> String {
+    let px = media_slider_round4(inset_px * 2.0 * ratio);
+    format!("calc({}% - {px}px)", media_slider_round4(ratio * 100.0))
+}
+
+/// The thumb center ON the rail: `inset + railLength·f` as
+/// `calc(F% ± Npx)`.
+pub fn media_slider_rail_pos(ratio: f64, inset_px: f64) -> String {
+    let px = media_slider_round4(inset_px * (1.0 - 2.0 * ratio));
+    let op = if px < 0.0 { " - " } else { " + " };
+    format!(
+        "calc({}%{op}{}px)",
+        media_slider_round4(ratio * 100.0),
+        px.abs()
+    )
 }
 
 /// `aria-valuenow={Math.round(ratio * 100)}`. JS `Math.round` rounds ties
@@ -159,6 +198,7 @@ fn media_slider_pointer_ratio(client_x: i32, current_target: Option<u64>) -> Opt
         f64::from(client_x),
         rect.x,
         rect.width,
+        MEDIA_SLIDER_RAIL_INSET_PX,
     ))
 }
 
@@ -242,14 +282,24 @@ pub fn MediaSlider(props: MediaSliderProps) -> Element {
     let drag_key_up = props.instance_key.clone();
     let handle_mouse_up = move |_: MouseEvent| set_media_slider_dragging(&drag_key_up, false);
 
-    let fill_style = format!("width:{}", media_slider_css_pct(props.ratio));
-    let thumb_style = format!("left:{}", media_slider_css_pct(props.ratio));
-    let buffered_style = format!("width:{}", media_slider_css_pct(props.buffered));
+    let fill_style = format!(
+        "width:{}",
+        media_slider_rail_width(props.ratio, MEDIA_SLIDER_RAIL_INSET_PX)
+    );
+    let thumb_style = format!(
+        "left:{}",
+        media_slider_rail_pos(props.ratio, MEDIA_SLIDER_RAIL_INSET_PX)
+    );
+    let buffered_style = format!(
+        "width:{}",
+        media_slider_rail_width(props.buffered, MEDIA_SLIDER_RAIL_INSET_PX)
+    );
     let aria_value = media_slider_aria_value(props.ratio).to_string();
 
     rsx! {
         div {
             class: media_slider_root_classes(disabled, &props.class),
+            style: format!("--hk-media-slider-rail-inset:{MEDIA_SLIDER_RAIL_INSET_PX}px"),
             "data-size": props.size.token(),
             "role": "slider",
             tabindex: -1_i32,
@@ -318,16 +368,51 @@ mod tests {
     }
 
     #[test]
-    fn media_slider_ratio_from_pointer_clamps_into_the_track() {
-        // Halfway, both ends, and out-of-track pointers saturate.
-        assert_eq!(media_slider_ratio_from_pointer(250.0, 200.0, 100.0), 0.5);
-        assert_eq!(media_slider_ratio_from_pointer(200.0, 200.0, 100.0), 0.0);
-        assert_eq!(media_slider_ratio_from_pointer(300.0, 200.0, 100.0), 1.0);
-        assert_eq!(media_slider_ratio_from_pointer(0.0, 200.0, 100.0), 0.0);
-        assert_eq!(media_slider_ratio_from_pointer(900.0, 200.0, 100.0), 1.0);
-        // A zero/negative-width rect answers 0 instead of dividing by zero.
-        assert_eq!(media_slider_ratio_from_pointer(250.0, 200.0, 0.0), 0.0);
-        assert_eq!(media_slider_ratio_from_pointer(250.0, 200.0, -10.0), 0.0);
+    fn media_slider_ratio_from_pointer_clamps_into_the_inset_rail() {
+        // 200px rect, 6px insets → a 188px drawable rail.
+        assert_eq!(
+            media_slider_ratio_from_pointer(206.0, 200.0, 200.0, 6.0),
+            0.0
+        );
+        assert_eq!(
+            media_slider_ratio_from_pointer(394.0, 200.0, 200.0, 6.0),
+            1.0
+        );
+        assert_eq!(
+            media_slider_ratio_from_pointer(300.0, 200.0, 200.0, 6.0),
+            0.5
+        );
+        // Out-of-rail pointers saturate (never extrapolate).
+        assert_eq!(media_slider_ratio_from_pointer(0.0, 200.0, 200.0, 6.0), 0.0);
+        assert_eq!(
+            media_slider_ratio_from_pointer(900.0, 200.0, 200.0, 6.0),
+            1.0
+        );
+        // A zero/negative-width rect, or one thinner than both insets,
+        // answers 0 instead of dividing by zero.
+        assert_eq!(media_slider_ratio_from_pointer(250.0, 200.0, 0.0, 6.0), 0.0);
+        assert_eq!(
+            media_slider_ratio_from_pointer(250.0, 200.0, -10.0, 6.0),
+            0.0
+        );
+        assert_eq!(
+            media_slider_ratio_from_pointer(250.0, 200.0, 10.0, 6.0),
+            0.0
+        );
+    }
+
+    #[test]
+    fn media_slider_rail_emission_matches_the_vue_strings() {
+        // Endpoints park the thumb ON the rail; the fill closes it off.
+        assert_eq!(media_slider_rail_width(0.0, 6.0), "calc(0% - 0px)");
+        assert_eq!(media_slider_rail_width(1.0, 6.0), "calc(100% - 12px)");
+        assert_eq!(media_slider_rail_pos(0.0, 6.0), "calc(0% + 6px)");
+        assert_eq!(media_slider_rail_pos(1.0, 6.0), "calc(100% - 6px)");
+        // Quarter/half values (the html contract tests' ratios).
+        assert_eq!(media_slider_rail_width(0.25, 6.0), "calc(25% - 3px)");
+        assert_eq!(media_slider_rail_width(0.5, 6.0), "calc(50% - 6px)");
+        assert_eq!(media_slider_rail_pos(0.25, 6.0), "calc(25% + 3px)");
+        assert_eq!(media_slider_rail_pos(0.5, 6.0), "calc(50% + 0px)");
     }
 
     #[test]
@@ -341,16 +426,6 @@ mod tests {
         // Non-finite input cannot produce a bogus aria value.
         assert_eq!(media_slider_aria_value(f64::NAN), 0);
         assert_eq!(media_slider_aria_value(f64::INFINITY), 0);
-    }
-
-    #[test]
-    fn media_slider_css_pct_matches_the_vue_template() {
-        assert_eq!(media_slider_css_pct(0.0), "0%");
-        assert_eq!(media_slider_css_pct(0.25), "25%");
-        assert_eq!(media_slider_css_pct(0.5), "50%");
-        assert_eq!(media_slider_css_pct(1.0), "100%");
-        // No clamping in the paint path — Vue interpolates the raw ratio.
-        assert_eq!(media_slider_css_pct(1.25), "125%");
     }
 
     #[test]
@@ -394,11 +469,14 @@ mod tests {
         assert!(html.contains(r#"aria-valuemax="100""#), "{html}");
         // The secondary fill only exists above zero (Vue's `buffered > 0`).
         assert_eq!(count(&html, "hk-media-slider-buffered"), 1, "{html}");
-        assert!(html.contains("width:50%"), "{html}");
+        // The inset-rail geometry: the rail var on the root, the buffered
+        // and fill widths anchored at the rail start, the thumb ON the rail.
+        assert!(html.contains("--hk-media-slider-rail-inset:6px"), "{html}");
+        assert!(html.contains("width:calc(50% - 6px)"), "{html}");
         assert!(html.contains("hk-media-slider-fill"), "{html}");
-        assert!(html.contains("width:25%"), "{html}");
+        assert!(html.contains("width:calc(25% - 3px)"), "{html}");
         assert!(html.contains("hk-media-slider-thumb"), "{html}");
-        assert!(html.contains("left:25%"), "{html}");
+        assert!(html.contains("left:calc(25% + 3px)"), "{html}");
     }
 
     #[test]
@@ -415,8 +493,8 @@ mod tests {
         assert!(html.contains("hk-media-slider is-disabled"), "{html}");
         assert!(html.contains(r#"data-size="sm""#), "{html}");
         assert!(html.contains(r#"aria-valuenow="100""#), "{html}");
-        assert!(html.contains("width:100%"), "{html}");
-        assert!(html.contains("left:100%"), "{html}");
+        assert!(html.contains("width:calc(100% - 12px)"), "{html}");
+        assert!(html.contains("left:calc(100% - 6px)"), "{html}");
         // No aria-label attribute at all when the host gives none.
         assert!(!html.contains("aria-label"), "{html}");
     }

@@ -3,11 +3,26 @@
 .hk-media-slider {
   position: relative;
   height: 6px;
-  border-radius: var(--radius-sm);
-  background: rgb(var(--color-muted) / 22%);
   cursor: pointer;
   touch-action: none;
   @include user-select(none);
+  // The drawable rail is inset by the thumb radius at each end (6px — the
+  // thumb is 12px at every size); the value comes inline from the component,
+  // this is only the no-inline fallback. A thumb parked on 0/1 then rests
+  // ON the rail instead of hanging off its cap (2026-11-11, the same shape
+  // HkSlider ships).
+  --hk-media-slider-rail-inset: 6px;
+}
+
+// The track paint moved off the element box onto ::before so it can start
+// and end at the rail edges (the element itself stays the full-width hit
+// area).
+.hk-media-slider::before {
+  content: "";
+  position: absolute;
+  inset: 0 var(--hk-media-slider-rail-inset, 6px);
+  border-radius: var(--radius-full, 9999px);
+  background: rgb(var(--color-muted) / 22%);
 }
 
 .hk-media-slider[data-size="sm"] {
@@ -21,15 +36,20 @@
 
 .hk-media-slider-buffered {
   position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: var(--radius-sm);
+  inset: 0 auto 0 var(--hk-media-slider-rail-inset, 6px);
+  // Flat start (hidden under the fill), rounded end cap: the buffered edge
+  // is visible past the fill at partial playback.
+  border-radius: 0 var(--radius-full, 9999px) var(--radius-full, 9999px) 0;
   background: rgb(var(--color-muted) / 40%);
 }
 
 .hk-media-slider-fill {
   position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: var(--radius-sm);
+  inset: 0 auto 0 var(--hk-media-slider-rail-inset, 6px);
+  // The LEFT cap stays FLAT — a pill cap on a thin saturated bar reads as a
+  // pointed nib at the rail start (2026-11-11 user report) — while the end
+  // cap stays round and closes the rail off at 100%.
+  border-radius: 0 var(--radius-full, 9999px) var(--radius-full, 9999px) 0;
   background: rgb(var(--color-primary));
 }
 

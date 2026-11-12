@@ -15,18 +15,28 @@ export {
 // resolves straight to the self-contained ESM module (this barrel is
 // TypeScript, and a TypeScript entry under node_modules cannot be loaded from a
 // vite config — see boot-recovery.mjs).
-export type { BootRecoveryPluginOptions } from "./boot-recovery.mjs";
+export type {
+  BootRecoveryCopyOptions,
+  BootRecoveryGlobalsOptions,
+  BootRecoveryPluginOptions,
+} from "./boot-recovery.mjs";
 export {
   bootRecoveryPlugin,
   bootRecoveryScript,
   isMangledOrigin,
   BOOT_RECOVERY_ATTR,
+  BOOT_RECOVERY_BLOCK_GLOBAL,
   BOOT_RECOVERY_CANONICAL_ORIGIN,
+  BOOT_RECOVERY_CHUNK_MISS,
   BOOT_RECOVERY_DEADLINE_MS,
   BOOT_RECOVERY_DEFAULTS,
   BOOT_RECOVERY_DISMISSED_CLASS,
+  BOOT_RECOVERY_FATAL_GLOBAL,
   BOOT_RECOVERY_LOADING_SELECTOR,
   BOOT_RECOVERY_MESSAGE,
+  BOOT_RECOVERY_READY_GLOBAL,
+  BOOT_RECOVERY_REASONS,
+  BOOT_RECOVERY_REASON_KEYS,
   BOOT_RECOVERY_RETRY,
   BOOT_RECOVERY_TITLE,
 } from "./boot-recovery.mjs";

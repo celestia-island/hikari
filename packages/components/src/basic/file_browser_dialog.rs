@@ -755,7 +755,7 @@ pub fn FileBrowserDialog(props: FileBrowserDialogProps) -> Element {
                     }
                 });
             if active {
-                chip = chip.attr("data-active", Some(""));
+                chip = chip.attr("data-active", Some("true"));
             }
             chips.push(VNode::Element(Box::new(chip)));
         }
@@ -1383,7 +1383,7 @@ mod tests {
         assert!(html.contains(r#"aria-pressed="true""#), "{html}");
         assert!(html.contains("data-selected"), "{html}");
         // The active quick link is marked.
-        assert!(html.contains("data-active"), "{html}");
+        assert!(html.contains(r#"data-active="true""#), "{html}");
         // Vue's width lands on the frame's max-width cap.
         assert!(html.contains("max-width:min(56rem"), "{html}");
         // The confirmed size column uses the picker scale.

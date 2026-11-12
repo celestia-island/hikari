@@ -274,7 +274,7 @@ fn popup_body(props: &FilterChipProps) -> VNode {
         })
         .child(VNode::Text(VText::new(props.all_label.as_str())));
     if all_pressed {
-        all_pill = all_pill.attr("data-active", "");
+        all_pill = all_pill.attr("data-active", "true");
     }
     group = group.child(VNode::Element(Box::new(all_pill)));
 
@@ -300,7 +300,7 @@ fn popup_body(props: &FilterChipProps) -> VNode {
             {VNode::Text(VText::new(option.label.as_str()))}
         });
         if active {
-            pill = pill.attr("data-active", "");
+            pill = pill.attr("data-active", "true");
         }
         group = group.child(VNode::Element(Box::new(pill)));
     }
@@ -571,7 +571,7 @@ mod tests {
             "hk-pill-group-pill",
             // Nothing-selected? No: one pill is pressed, the all-pill is not.
             "aria-pressed=\"true\"",
-            "data-active",
+            r#"data-active="true""#,
             // The hint line below the group.
             "hk-filter-chip-hint",
             "Multi-select hint line",
@@ -581,7 +581,7 @@ mod tests {
         // The all-pill plus one pill per option.
         assert_eq!(html.matches("hk-pill-group-pill").count(), 5, "{html}");
         // Exactly one pill is active (the picked one).
-        assert_eq!(html.matches("data-active").count(), 1, "{html}");
+        assert_eq!(html.matches(r#"data-active="true""#).count(), 1, "{html}");
     }
 
     #[test]
@@ -599,7 +599,7 @@ mod tests {
         assert!(!html.contains("hk-filter-chip--on"), "{html}");
         assert!(html.contains("aria-label=\"Provider\""), "{html}");
         // The all-pill carries the active tint, the options do not.
-        assert_eq!(html.matches("data-active").count(), 1, "{html}");
+        assert_eq!(html.matches(r#"data-active="true""#).count(), 1, "{html}");
         assert_eq!(html.matches("aria-pressed=\"true\"").count(), 1, "{html}");
     }
 }

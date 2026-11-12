@@ -725,7 +725,7 @@ fn render_tree_node(item: &TreeItem, depth: usize, ctx: &TreeRenderContext) -> E
             "aria-selected": is_selected.then_some("true"),
             "data-selection": selection.data_selection(),
             "data-loading": is_loading.then_some(""),
-            "data-active": is_active.then_some(""),
+            "data-active": is_active.then_some("true"),
             onclick: row_click,
             ..parts
         }
@@ -1217,7 +1217,7 @@ mod tests {
             "data-parent=\"\"",
             "data-loading=\"\"",
             // The keyboard cursor's row.
-            "data-active=\"\"",
+            "data-active=\"true\"",
             // `aria-activedescendant` uses the host prefix.
             "aria-activedescendant=\"tree-run\"",
         ] {

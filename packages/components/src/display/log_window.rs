@@ -272,7 +272,7 @@ pub fn LogWindow(props: LogWindowProps) -> Element {
                 }
             });
         if active_key.as_deref() == Some(tab.key.as_str()) {
-            button = button.attr("data-active", "");
+            button = button.attr("data-active", "true");
         }
         tab_nodes.push(VNode::Element(Box::new(button)));
     }
@@ -299,7 +299,7 @@ pub fn LogWindow(props: LogWindowProps) -> Element {
             }
         });
     if paused_now {
-        pause_button = pause_button.attr("data-active", "");
+        pause_button = pause_button.attr("data-active", "true");
     }
 
     let mut autoscroll_button = VElement::new("button")
@@ -316,7 +316,7 @@ pub fn LogWindow(props: LogWindowProps) -> Element {
             }
         });
     if autoscroll_now {
-        autoscroll_button = autoscroll_button.attr("data-active", "");
+        autoscroll_button = autoscroll_button.attr("data-active", "true");
     }
 
     let mut copy_button = VElement::new("button")
@@ -560,7 +560,9 @@ mod tests {
         assert!(html.contains("my-logs"), "{html}");
         assert!(html.contains("height:55vh"), "{html}");
         // Vue marks the first tab active when nothing else is requested.
-        assert_eq!(html.matches("data-active").count(), 2, "{html}");
+        // The count pins the VALUE form (patchAttr renders "true") — a
+        // ""-revert ships green under a bare-attr count.
+        assert_eq!(html.matches(r#"data-active="true""#).count(), 2, "{html}");
         // The active tab's lines carry their level class.
         assert!(html.contains("s-log-entry s-log-entry-info"), "{html}");
         assert!(html.contains("s-log-entry s-log-entry-warn"), "{html}");

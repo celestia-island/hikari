@@ -218,8 +218,10 @@ pub fn FilterTrigger(props: FilterTriggerProps) -> Element {
         button = button.attr("disabled", "");
     }
     if active {
-        // Vue: `data-active={active.value || undefined}` — presence only.
-        button = button.attr("data-active", "");
+        // Vue: `data-active={active.value || undefined}` — patchAttr
+        // coerces the boolean to "true" (the house value form; the
+        // old "presence only" note was wrong about the Vue output).
+        button = button.attr("data-active", "true");
     }
 
     let mut anchor = VElement::new("span")
@@ -472,7 +474,10 @@ mod tests {
         );
         assert!(html.contains("--hk-corner-badge-offset:1px"), "{html}");
         assert!(html.contains("aria-hidden=\"true\""), "{html}");
-        assert!(html.contains("data-active"), "{html}");
+        // The value form matches Vue's patchAttr output (the house
+        // convention — a presence pin would let a "true"/"" revert ship
+        // green, the 2026-11-13 sweep's own defect class).
+        assert!(html.contains(r#"data-active="true""#), "{html}");
     }
 
     #[test]

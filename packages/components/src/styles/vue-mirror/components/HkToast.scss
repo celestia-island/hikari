@@ -93,42 +93,77 @@
   white-space: nowrap;
 }
 
+/* Each tinted band inks itself from its OWN fill via --hi-color-text-on-<tone>:
+ * the theme derives that per tone (white on the saturated fills, black only
+ * on the light ones — see solidInk in theme/presets.ts). One global on-solid
+ * slot cannot serve a dark red band and a pale amber band at once, which is
+ * exactly how the copy/close glyphs once rendered near-black on the red error
+ * toast (2026-11-12 report). The fallbacks keep themeless hosts readable. */
 .hk-toast-error {
   background: var(--hi-color-danger, #f85149);
-  color: var(--hi-color-text-on-solid, #ffffff);
+  color: var(--hi-color-text-on-danger, #ffffff);
 }
 
 .hk-toast-success {
   background: var(--hi-color-success, #0eb840);
-  color: var(--hi-color-text-on-solid, #ffffff);
+  color: var(--hi-color-text-on-success, #ffffff);
 }
 
-/* Warning toasts use a light, saturated amber background where white text
- * lands at ~2.6:1 contrast (unreadable). Dark text keeps >= 4.5:1 on the
- * amber in BOTH color schemes; the copy/close buttons inherit it. */
+/* Warning fills are light by design, so their ink is dark; the theme still
+ * decides it (a custom amber can be dark enough for white). */
 .hk-toast-warning {
   background: var(--hi-color-warning, #eed677);
-  color: #1c1c1e;
-}
-
-.hk-toast-warning .hk-toast-copy-btn,
-.hk-toast-warning .hk-toast-close {
-  /* The amber surface stays amber in both schemes, so the controls read it
-     through the standard channel vars instead of re-declaring ink/wash. */
-  --hi-icon-button-icon-color: #1c1c1e;
-  --hi-icon-button-icon-color-active: #1c1c1e;
-  --hi-icon-button-bg-hover: rgb(0 0 0 / 12%);
-  --hi-icon-button-bg-active: rgb(0 0 0 / 18%);
+  color: var(--hi-color-text-on-warning, #1c1c1e);
 }
 
 .hk-toast-info {
   background: var(--hi-color-info, #6abed6);
-  color: var(--hi-color-text-on-solid, #ffffff);
+  color: var(--hi-color-text-on-info, #ffffff);
 }
 
 .hk-toast-loading {
   background: var(--hi-color-info, #6abed6);
-  color: var(--hi-color-text-on-solid, #ffffff);
+  color: var(--hi-color-text-on-info, #ffffff);
+}
+
+/* The copy/close controls are the standard icon button in its ghost variant,
+ * whose ink defaults to the page's secondary text color — wrong on any
+ * tinted band. Ghost declares the ink ON the button element, so no inherited
+ * value can beat it: each band re-pins the bridge at that same seat, riding
+ * the band's own on-tone ink. Washes ride that ink (currentColor) so their
+ * polarity follows it too. */
+.hk-toast-error .hk-toast-copy-btn,
+.hk-toast-error .hk-toast-close {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-danger, #ffffff);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-danger, #ffffff);
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.hk-toast-success .hk-toast-copy-btn,
+.hk-toast-success .hk-toast-close {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-success, #ffffff);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-success, #ffffff);
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.hk-toast-info .hk-toast-copy-btn,
+.hk-toast-info .hk-toast-close,
+.hk-toast-loading .hk-toast-copy-btn,
+.hk-toast-loading .hk-toast-close {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-info, #ffffff);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-info, #ffffff);
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.hk-toast-warning .hk-toast-copy-btn,
+.hk-toast-warning .hk-toast-close {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-warning, #1c1c1e);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-warning, #1c1c1e);
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
 }
 
 .hk-toast-loading-spinner {

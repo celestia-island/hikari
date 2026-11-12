@@ -88,6 +88,15 @@
   --color-on-solid: 255 255 255;
   --color-on-solid-text: 255 255 255;
   --color-on-solid-icon: 255 255 255;
+  /* Per-fill content ink for the semantic tones, seeded to what the
+   * solidInk rule itself derives from the fill seeds set below: the
+   * saturated error/success seeds keep white ink; the pale amber warning
+   * and the light sky-blue info seeds take black. A runtime theme
+   * re-derives these per tone from its own fills (see tokensToCSSVars). */
+  --color-on-danger: 255 255 255;
+  --color-on-success: 255 255 255;
+  --color-on-warning: 0 0 0;
+  --color-on-info: 0 0 0;
   --color-secondary: 81 154 115;
   --color-accent: 247 181 0;
   --color-text: 30 30 30;
@@ -133,6 +142,13 @@
   --hi-color-error: rgb(var(--color-error));
   --hi-color-warning: rgb(var(--color-warning));
   --hi-color-info: rgb(var(--color-info));
+  /* Content ink riding each semantic fill. Per-tone on purpose: one global
+   * on-solid slot cannot be right for both a dark red band and a pale amber
+   * one (the toast glyph regression, 2026-11-12). */
+  --hi-color-text-on-danger: rgb(var(--color-on-danger));
+  --hi-color-text-on-success: rgb(var(--color-on-success));
+  --hi-color-text-on-warning: rgb(var(--color-on-warning));
+  --hi-color-text-on-info: rgb(var(--color-on-info));
   /* Surface-layer aliases the runtime writes on every apply — seeded so
    * no-JS consumers resolve them instead of invalid var(). */
   --hi-color-bg-subtle: rgb(var(--color-surface) / 0.5);

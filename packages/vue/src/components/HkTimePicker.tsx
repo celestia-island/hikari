@@ -61,6 +61,17 @@ export function angleToMinute(angleDeg: number, step = 1): number {
 }
 
 /**
+ * Snap an absolute minute to the step grid (0..59). The dial, the number
+ * labels and the keyboard's Home/End/Page steps all use the same grid, so
+ * `minuteStep: 15` can never surface an impossible 09:05 slot.
+ */
+export function snapMinute(value: number, step = 1): number {
+  const safeStep = Math.min(30, Math.max(1, Math.round(step) || 1));
+  const snapped = Math.round(value / safeStep) * safeStep;
+  return ((snapped % 60) + 60) % 60;
+}
+
+/**
  * Position of a dial value on the square face, in percent of the face box:
  * `value` counts clockwise from 12 o'clock across `total` slots, and
  * `radiusPct` is the distance from the center in percent of the box.
@@ -206,7 +217,7 @@ export default defineComponent({
     }
 
     function selectMinute(nextMinute: number): void {
-      draftMinute.value = nextMinute;
+      draftMinute.value = snapMinute(nextMinute, minuteStep.value);
     }
 
     function onTriggerKeydown(e: KeyboardEvent): void {
@@ -276,11 +287,11 @@ export default defineComponent({
       else if (e.key === "PageUp") next = current + (hourMode ? 5 : step * 5);
       else if (e.key === "PageDown") next = current - (hourMode ? 5 : step * 5);
       else if (e.key === "Home") next = 0;
-      else if (e.key === "End") next = hourMode ? 23 : 59;
+      else if (e.key === "End") next = hourMode ? 23 : Math.floor(59 / step) * step;
       if (next === null) return;
       e.preventDefault();
       if (hourMode) draftHour.value = ((next % 24) + 24) % 24;
-      else draftMinute.value = ((next % 60) + 60) % 60;
+      else draftMinute.value = snapMinute(next, step);
     }
 
     const hand = computed(() => {
@@ -316,19 +327,29 @@ export default defineComponent({
       }),
     );
 
-    const minuteNumbers = computed(() =>
-      Array.from({ length: 12 }, (_, i) => {
-        const value = i * 5;
+    /** The dial labels are shortcuts onto the same step grid the dial
+     *  snaps to: every 5-minute mark is snapped to the step and duplicates
+     *  collapse, so `minuteStep: 15` renders 00 / 15 / 30 / 45 (not a
+     *  00..55 row that would let a click commit 09:05). */
+    const minuteNumbers = computed(() => {
+      const step = minuteStep.value;
+      const seen = new Set<number>();
+      const out: Array<{ value: number; label: string; selected: boolean; x: number; y: number }> = [];
+      for (let i = 0; i < 12; i += 1) {
+        const value = snapMinute(i * 5, step);
+        if (seen.has(value)) continue;
+        seen.add(value);
         const point = dialPoint(value, 60);
-        return {
+        out.push({
           value,
           label: String(value).padStart(2, "0"),
           selected: value === draftMinute.value,
           x: point.x,
           y: point.y,
-        };
-      }),
-    );
+        });
+      }
+      return out;
+    });
 
     const numbers = computed(() => (mode.value === "hour" ? hourNumbers.value : minuteNumbers.value));
     const ariaValueNow = computed(() => (mode.value === "hour" ? draftHour.value : draftMinute.value));

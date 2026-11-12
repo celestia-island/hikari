@@ -8,6 +8,7 @@ import HkTimePicker, {
   formatHhmm,
   from12Hour,
   parseHhmm,
+  snapMinute,
   to12Hour,
 } from "./HkTimePicker";
 import { setLocale } from "../i18n/context";
@@ -143,6 +144,21 @@ describe("HkTimePicker helpers", () => {
     expect(angleToMinute(28, 5)).toBe(5);
     expect(angleToMinute(31, 5)).toBe(5);
     expect(angleToMinute(359, 15)).toBe(0);
+  });
+
+  it("snaps absolute minutes onto the step grid", () => {
+    expect(snapMinute(0, 1)).toBe(0);
+    expect(snapMinute(59, 1)).toBe(59);
+    expect(snapMinute(5, 15)).toBe(0);
+    expect(snapMinute(7, 15)).toBe(0);
+    expect(snapMinute(8, 15)).toBe(15);
+    expect(snapMinute(22, 15)).toBe(15);
+    expect(snapMinute(23, 15)).toBe(30);
+    expect(snapMinute(59, 15)).toBe(0);
+    expect(snapMinute(59, 30)).toBe(0);
+    expect(snapMinute(60, 15)).toBe(0);
+    expect(snapMinute(-7, 15)).toBe(0);
+    expect(snapMinute(-8, 15)).toBe(45);
   });
 
   it("places dial values on the face (0 at 12 o'clock, clockwise)", () => {
@@ -285,6 +301,38 @@ describe("HkTimePicker", () => {
     expect(face().getAttribute("aria-valuenow")).toBe("59");
   });
 
+  it("renders only reachable dial labels for a coarse minuteStep", async () => {
+    const p = mountPicker({ modelValue: "09:15", minuteStep: 15 });
+    await openPicker(p);
+    readoutButtons()[1].click();
+    await nextTick();
+    expect(numbers().map((b) => b.textContent)).toEqual(["00", "15", "30", "45"]);
+    clickNumber("30");
+    await nextTick();
+    panel()!.querySelector<HTMLButtonElement>(".hk-tp-confirm")!.click();
+    await nextTick();
+    expect(p.emitted).toEqual(["09:30"]);
+  });
+
+  it("keeps Home/End/Page steps on the minute grid", async () => {
+    const p = mountPicker({ modelValue: "09:15", minuteStep: 30 });
+    await openPicker(p);
+    readoutButtons()[1].click();
+    await nextTick();
+    face().dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("30");
+    face().dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("0");
+    face().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("30");
+    face().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("0");
+  });
+
   it("honours minuteStep for keyboard and dial snapping", async () => {
     const p = mountPicker({ modelValue: "09:30", minuteStep: 5 });
     await openPicker(p);
@@ -326,6 +374,37 @@ describe("HkTimePicker", () => {
     expect(p.emitted).toEqual([""]);
     expect(panel()).toBeNull();
     expect(p.container.querySelector<HTMLElement>(".hk-tp-value")?.getAttribute("data-empty")).not.toBeUndefined();
+  });
+
+  it("closes an open editor when the host disables the field", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const disabled = ref(false);
+    const emitted: string[] = [];
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTimePicker, {
+            modelValue: "09:30",
+            disabled: disabled.value,
+            "onUpdate:modelValue": (v: string) => emitted.push(v),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    trigger({ container, emitted, changes: [] }).dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
+    await nextTick();
+    expect(panel()).not.toBeNull();
+    disabled.value = true;
+    await nextTick();
+    await waitFor("the panel to close on disable", () => panel() === null);
+    expect(emitted).toEqual([]);
   });
 
   it("never opens while disabled", async () => {

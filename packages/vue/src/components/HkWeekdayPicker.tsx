@@ -279,14 +279,13 @@ export default defineComponent({
               <span key={column} class="hk-wp-band" style={bandStyle(column)} />
             ))}
           </div>
-          <div class="hk-wp-grid" role="grid" aria-label={pickerLabel.value}>
+          <div class="hk-wp-grid" role="group" aria-label={pickerLabel.value}>
             {cells.value.map((cell) => (
               <button
                 key={cell.key}
                 type="button"
-                role="gridcell"
                 class={cellClass(cell)}
-                aria-selected={selectedSet.value.has(isoWeekday(cell.date))}
+                aria-pressed={selectedSet.value.has(isoWeekday(cell.date))}
                 aria-label={formatters.value.full.format(cell.date)}
                 disabled={props.disabled}
                 onClick={() => toggleWeekday(isoWeekday(cell.date))}

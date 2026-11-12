@@ -137,8 +137,12 @@ describe("HkWeekdayPicker — empty model / every day", () => {
     expect(cells(harness.container)).toHaveLength(42);
     expect(weekdayButtons(harness.container)).toHaveLength(7);
     const grid = harness.container.querySelector(".hk-wp-grid");
-    expect(grid?.getAttribute("role")).toBe("grid");
-    expect(cells(harness.container).every((c) => c.getAttribute("role") === "gridcell")).toBe(true);
+    expect(grid?.getAttribute("role")).toBe("group");
+    // Plain toggle buttons (the house HkDatePicker pattern) rather than
+    // gridcells: no row/gridcell parent contract to violate, and each
+    // date keeps its native button semantics.
+    expect(cells(harness.container).every((c) => c.getAttribute("role") === null)).toBe(true);
+    expect(cells(harness.container).every((c) => c.hasAttribute("aria-pressed"))).toBe(true);
   });
 
   it("treats an empty model as every day: chip pressed, no bands, no aria-pressed headers", () => {
@@ -209,10 +213,10 @@ describe("HkWeekdayPicker — weekday toggling", () => {
     // out-of-month Tuesday in the trailing week).
     const inMonth = active.filter((c) => !c.classList.contains("is-out"));
     expect(inMonth.map((c) => c.textContent)).toEqual(["4", "11", "18", "25"]);
-    expect(active.every((c) => c.getAttribute("aria-selected") === "true")).toBe(true);
+    expect(active.every((c) => c.getAttribute("aria-pressed") === "true")).toBe(true);
     const plain = cells(harness.container).find((c) => c.textContent === "17");
     expect(plain?.classList.contains("is-active")).toBe(false);
-    expect(plain?.getAttribute("aria-selected")).toBe("false");
+    expect(plain?.getAttribute("aria-pressed")).toBe("false");
   });
 
   it("clicking a date cell toggles that weekday", async () => {

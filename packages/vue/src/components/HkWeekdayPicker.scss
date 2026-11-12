@@ -18,8 +18,11 @@
 
   /* Row metrics. Kept as custom properties so the `sm` and touch
    * variants retune one number instead of re-declaring the rules. */
-  --hk-wp-cell: 2rem;
-  --hk-wp-wd: 1.5rem;
+  /* Ride the family's shared picker metrics when an ancestor supplies
+   * them; the fallbacks keep the inline calendar's designed stock scale
+   * (and the touch fallbacks match HkPickerPane's 44px/1.5rem targets). */
+  --hk-wp-cell: var(--hk-picker-cell, 2rem);
+  --hk-wp-wd: var(--hk-picker-wd, 1.25rem);
   --hk-wp-gap: var(--space-2, 2px);
 }
 
@@ -35,8 +38,8 @@
  * cells. Declared after `sm` so a small-and-touch host still ends up
  * with the enlarged targets. */
 .hk-wp.is-touch {
-  --hk-wp-cell: 2.5rem;
-  --hk-wp-wd: 1.75rem;
+  --hk-wp-cell: var(--hk-picker-cell, 2.75rem);
+  --hk-wp-wd: var(--hk-picker-wd, 1.5rem);
 }
 
 .hk-wp.is-disabled {

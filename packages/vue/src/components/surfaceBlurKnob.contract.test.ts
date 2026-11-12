@@ -216,10 +216,25 @@ function isSizeWrapper(prelude: string): boolean {
   if (!/^@(media|container)\b/i.test(prelude)) return false;
   // `prefers-*` features carry no size term and are legitimate accessibility
   // gates; `@layer` and `@supports` are not size axes at all.
-  return /width|height|orientation|aspect-ratio|resolution|device-width/i.test(prelude);
+  // `inline-size`/`block-size` are the logical width/height axes a container
+  // query honors; `device-pixel-ratio` is the WebKit alias of `resolution`.
+  return /width|height|orientation|aspect-ratio|resolution|device-width|device-pixel-ratio|inline-size|block-size/i.test(prelude);
 }
 
 const KNOB_RE = new RegExp(`(^|[\\s:;(])(${KNOBS.join("|")})\\s*:`, "m");
+
+/** Every rule (anywhere, any wrapper) that declares one of the knobs. */
+function knobPins(css: string): string[] {
+  const hits: string[] = [];
+  for (const rule of scanRules(css)) {
+    for (const knob of KNOBS) {
+      if (new RegExp(`(^|[\\s;])${knob}\\s*:`).test(rule.declarations)) {
+        hits.push(`${rule.selector} pins ${knob}`);
+      }
+    }
+  }
+  return hits;
+}
 
 /**
  * Size-conditional stand-downs. A wrapped rule is a violation if it is inside
@@ -250,14 +265,17 @@ describe("surface live-blur escape hatch", () => {
     // would change every host on upgrade just as silently, so no rule in
     // either sheet may declare these tokens.
     for (const sheet of ["HkCard.scss", "HkButton.scss"]) {
-      for (const rule of scanRules(compiledSheet(sheet))) {
-        for (const knob of KNOBS) {
-          expect(
-            new RegExp(`(^|[\\s;])${knob}\\s*:`).test(rule.declarations),
-            `${rule.selector} pins ${knob}`,
-          ).toBe(false);
-        }
-      }
+      expect(knobPins(compiledSheet(sheet)), sheet).toEqual([]);
+    }
+  });
+
+  it("knob-pin detector: control proving it can fail (any spelling, any scope)", () => {
+    for (const shape of [
+      ":root { --hk-card-blur: none; }", // unconditional ancestor pin
+      ".hk-card { --hk-card-blur: none; }", // base-rule pin
+      "@media (max-width: 767px) { :root { --hk-card-blur: none; } }", // scoped ancestor pin
+    ]) {
+      expect(knobPins(shape), shape).toHaveLength(1);
     }
   });
 
@@ -297,6 +315,11 @@ describe("surface live-blur escape hatch", () => {
       "@media (max-width: 767px) { .hk-card { backdrop-filter: none; } }",
       // knob form (the shipped knob, re-keyed to the viewport)
       "@media (max-width: 767px) { .hk-card { --hk-card-blur: none; } }",
+      // the same knob on an ANCESTOR — it inherits into every target
+      "@media (max-width: 767px) { :root { --hk-card-blur: none; } }",
+      // logical-size container axis and the WebKit resolution alias
+      "@container (min-inline-size: 40em) { .hk-card { backdrop-filter: none; } }",
+      "@media (-webkit-max-device-pixel-ratio: 2) { .hk-card { backdrop-filter: none; } }",
       // selector list
       "@media (max-width: 767px) { .hk-card, .x { backdrop-filter: none; } }",
       // range syntax

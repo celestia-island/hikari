@@ -79,7 +79,9 @@ export const HkThemePanelContent = defineComponent({
      * The grammar follows HkCardList's `actions` prop: a PRESENT
      * builder owns the row's lane — an EMPTY array means "no actions",
      * while a per-row `undefined` declines and falls back to the
-     * built-in anatomy (custom rows get the standard delete). A
+     * built-in anatomy (custom rows get the standard delete, unless an
+     * `item-trailing` slot is rendered — its suppression contract
+     * stands). A
      * CALLBACK PROP, not a slot, deliberately: slot returns are
      * normalized into vnodes by Vue, and plain action objects would be
      * silently destroyed in transit (the name/onSelect payload is

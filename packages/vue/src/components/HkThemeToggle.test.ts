@@ -531,14 +531,24 @@ describe("HkThemeToggle item slots", () => {
     // The documented contract: a PRESENT builder owns the lane, and a
     // per-row undefined DECLINES (falls back to the built-in anatomy —
     // the custom row gets the standard delete), while an explicit []
-    // means "no actions". Returning undefined must NOT read as [].
+    // means "no actions". Both readings are pinned on CUSTOM rows — the
+    // only rows where undefined and [] differ (a stock row has no
+    // built-in lane under either, so pinning there is vacuous — the
+    // B4 round's finding).
     useTheme().addCustomTheme(anyPresetTokens());
+    useTheme().addCustomTheme({
+      ...anyPresetTokens(),
+      id: "test-custom-2",
+      name: "Second custom scheme",
+    });
     const container = document.createElement("div");
     document.body.appendChild(container);
     const app = createApp({
       render: () =>
         h(HkThemeToggle, {
           externalCustomize: true,
+          // Decline on the first custom (undefined → built-in delete),
+          // suppress on the second ([] → no lane at all).
           itemActions: (scope: { id: string }) =>
             scope.id === "test-custom" ? undefined : [],
         }),
@@ -549,14 +559,24 @@ describe("HkThemeToggle item slots", () => {
     openMenu(container);
     await settle();
 
-    const customRow = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")]
-      .find((r) => r.hasAttribute("data-custom"))!;
-    const builtin = customRow.querySelector<HTMLButtonElement>(".hk-list-row-actions__btn");
+    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")];
+    const declined = rows.find(
+      (r) => r.hasAttribute("data-custom") && r.textContent?.includes("A Rather Long Custom Scheme Name"),
+    )!;
+    const suppressed = rows.find(
+      (r) => r.hasAttribute("data-custom") && r.textContent?.includes("Second custom scheme"),
+    )!;
+    expect(declined).toBeTruthy();
+    expect(suppressed).toBeTruthy();
+
+    const builtin = declined.querySelector<HTMLButtonElement>(".hk-list-row-actions__btn");
     expect(builtin, "the declined custom row falls back to the built-in delete").toBeTruthy();
     expect(builtin!.getAttribute("aria-label")).toBe("Delete theme");
-    const stockRow = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")]
-      .find((r) => !r.hasAttribute("data-custom"))!;
-    expect(stockRow.querySelector(".hk-list-row-actions")).toBeNull();
+    // [] must suppress — a [] →decline regression keeps this lane alive.
+    expect(
+      suppressed.querySelector(".hk-list-row-actions"),
+      "the suppressed custom row renders no lane",
+    ).toBeNull();
   });
 
   it("renders the name-suffix cell inside the row's name line, right after the name", async () => {

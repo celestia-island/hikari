@@ -334,11 +334,12 @@
 /* Row actions (the built-in custom delete, or the host's `itemActions`
  * array) come verbatim from the standard lane in HkCardList.scss:
  * hover/focus-within reveal on pointer devices, the ⋯ named menu
- * trigger on touch. The touch trigger's hit target joins the family's
- * 44px touch contract — keyed to the SAME predicate the component uses
- * to render the trigger (HkListRow's touchFirst media query), so a
- * touch-first tablet gets the oversized target too (the retired delete
- * button keyed on viewport width and missed exactly that case).
+ * trigger on touch. The touch trigger's hit target gets the retired
+ * delete button's 36px (2.25rem) touch seat — keyed to the SAME
+ * predicate the component uses to render the trigger (HkListRow's
+ * touchFirst media query), so a touch-first tablet gets the oversized
+ * target too (the button keyed on viewport width and missed exactly
+ * that case; 44px is the sheet ROW contract, not this trigger's).
  * Desktop keeps the standard lane metrics. */
 @media (hover: none), (pointer: coarse) {
   .s-theme-item-row .hk-list-row-actions__trigger {

@@ -475,11 +475,13 @@ describe("HkThemeToggle item slots", () => {
     // Clicks inside the trailing column stop at the column (HkCardList's
     // wrapper guard — the R2b round found the trailing wrapper unpinned
     // while it is load-bearing for exactly this host shape: a badge in a
-    // clickable theme row). A click on the quiet mark neither selects
-    // the row nor closes the menu.
+    // clickable theme row). A click on a NON-ACTIVE row's quiet mark
+    // (the R3 round flagged the active-row fixture as vacuous for the
+    // selection half) neither selects that row nor closes the menu.
     const before = useTheme().currentTheme.value;
-    const mark = rows[0].querySelector<HTMLElement>(".s-theme-item-trailing .trail-mark")!;
-    mark.click();
+    const markedRow = rows.find((r) => r.hasAttribute("data-custom"))!;
+    expect(markedRow.hasAttribute("data-active")).toBe(false);
+    markedRow.querySelector<HTMLElement>(".s-theme-item-trailing .trail-mark")!.click();
     await settle();
     expect(useTheme().currentTheme.value).toBe(before);
     expect(document.body.querySelector(".s-theme-menu")).toBeTruthy();

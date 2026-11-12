@@ -78,6 +78,21 @@ describe("HkThemeToggle theme-row pill contract", () => {
     expect(block![0]).toContain("outline: 2px solid rgb(var(--color-primary) / 70%)");
   });
 
+  it("keeps the item-list wrapper on the family row rhythm", () => {
+    // The rows used to be direct flex children of .s-theme-menu and
+    // lived on its 4px gap; the list wrapper (role="list" band) must
+    // carry the SAME gap or adjacent pills touch edge-to-edge (2026-11-13
+    // R2). happy-dom has no layout engine — pin the declarations.
+    const css = read("HkThemeToggle.scss");
+    const block = css.match(/\.s-theme-item-list\s*\{[^}]*\}/);
+    expect(block).not.toBeNull();
+    expect(block![0]).toContain("display: flex");
+    expect(block![0]).toContain("flex-direction: column");
+    expect(block![0]).toContain("gap: var(--space-4, 0.25rem)");
+    // Band width invariant: the wrapper pads nothing horizontally.
+    expect(block![0]).not.toMatch(/padding/);
+  });
+
   it("registers the theme row family for the mobile sheet token swap", () => {
     const mi = read("_menu-item.scss");
     // The row carries the pill, so the sheet-context token binding must

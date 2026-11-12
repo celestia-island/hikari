@@ -5,6 +5,7 @@ import HkMermaidDiagram from "./HkMermaidDiagram";
 import { applyInlineChipsToBody } from "./inlineChips";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { getMermaidEngine } from "../mermaid/engine";
+import { openHyperlink } from "../runtime/hyperlink";
 import { asIndexable } from "../utils/typing";
 import "./HkMarkdownRenderer.scss";
 
@@ -149,6 +150,13 @@ export default defineComponent({
      * consumer renders exactly as before.
      */
     inlineChips: { type: Boolean, default: false },
+    /**
+     * Opaque per-surface tag carried on every link activation this body
+     * fires — the host coordinator scopes its resolution with it (the
+     * chest tags vendored protocol docs so their relative links map to
+     * the docs site). Never interpreted by hikari itself.
+     */
+    linkContext: { type: String, default: undefined },
   },
   setup(props) {
     const renderedHtml = ref("");
@@ -266,9 +274,32 @@ export default defineComponent({
       mermaidApps.length = 0;
     });
 
+    // THE link path (runtime/hyperlink.ts): every anchor this body
+    // renders activates through the coordinator — a plain browser opens a
+    // new tab, the native shell hands the URL to the system browser, and
+    // the webview itself NEVER navigates (the 2026-11-12 protocol-modal
+    // 404 was exactly an anchor left to its default behavior). All
+    // modifier combos intercept too: ctrl/middle-click on the desktop
+    // would otherwise navigate the app window the same way.
+    function onBodyClick(event: MouseEvent): void {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      event.preventDefault();
+      void openHyperlink(anchor.getAttribute("href") ?? "", {
+        source: "markdown",
+        ...(props.linkContext !== undefined ? { linkContext: props.linkContext } : {}),
+      });
+    }
+
     return () => (
       <div class="hk-markdown" data-plain={props.plain || undefined} data-loading={props.loading}>
-        <div ref={bodyRef} class="hk-markdown-body" innerHTML={renderedHtml.value} />
+        <div
+          ref={bodyRef}
+          class="hk-markdown-body"
+          innerHTML={renderedHtml.value}
+          onClick={onBodyClick}
+        />
         {props.loading && (
           <div class="hk-markdown-overlay">
             <HSpinner center />

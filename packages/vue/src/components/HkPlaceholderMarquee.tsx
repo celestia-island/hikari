@@ -1,5 +1,7 @@
 import { defineComponent, ref, computed, onMounted, onBeforeUnmount, watch, type PropType } from "vue";
 import { drawnScale } from "../composables/layoutGeometry";
+// The component paints `hk-placeholder-marquee*`; this sheet owns their layout.
+import "./HkPlaceholderMarquee.scss";
 
 /**
  * Overflow strategy for a placeholder that does not fit its input.

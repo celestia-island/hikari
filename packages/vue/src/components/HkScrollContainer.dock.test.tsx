@@ -349,11 +349,29 @@ describe("HkScrollContainer dock slots", () => {
     instance.value?.refresh();
     await Promise.resolve();
     expect(strength()).toBe("1");
+    // The gate's retirement feeds a CASCADE: at the end the fade state
+    // rules must withdraw so the dock rule owns the edge. That withdrawal
+    // is driven by the sense verdict, whose atEnd deadband
+    // (scrollPos >= max - 1) is the SAME inequality as the gate's
+    // (depth <= 1) — but the two constants live in different functions,
+    // so this boundary pins BOTH sides of the identity. depth=2: verdict
+    // is "both" (the bottom state rule would paint; gate lit — coherent).
+    expect(host.getAttribute("data-v-overflow")).toBe("both");
 
     stub(299); // 1px: inside the shared deadband, the band retires
     instance.value?.refresh();
     await Promise.resolve();
     expect(strength()).toBe("0");
+    // depth=1: the verdict must have flipped to "start" — no bottom state
+    // rule applies, the dock rule owns the edge and multiplies by the
+    // gate's 0. The two deadbands drifting apart is what this guards
+    // against: a verdict atEnd narrowed to strict ">= max" flips this to
+    // "both" while the gate still says "0" — a full ramp band over a row
+    // the gate declared retired. (A gate narrowed to "<= 0" fails the
+    // strength pin above instead; and only an EXACT boundary drift, like
+    // "> max - 1", is caught by this verdict pin alone — wider drifts
+    // also trip the horizontal-deadband test in HkScrollContainer.test.)
+    expect(host.getAttribute("data-v-overflow")).toBe("start");
   });
 
   it("renders a top dock and fades the top edge instead", () => {

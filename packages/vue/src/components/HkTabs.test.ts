@@ -793,3 +793,16 @@ describe("HkTabs trigger corner badge", () => {
     expect(label.textContent).toBe("Alpha");
   });
 });
+
+describe("HkTabs caption-band drag opt-out (2026-11-12)", () => {
+  // A caption-band ancestor may be a DEEP Tauri drag region, and the scroller
+  // pans overflowing strips with its own pointer sweep — the two gestures
+  // would fight (the window moves while the strip pans). A tab strip is
+  // interactive content, never a window-drag surface: the root carries the
+  // explicit "false", which blocks the ancestor walk (drag.js :62).
+  it("explicitly opts the root out of any ancestor caption-band drag region", () => {
+    const { container } = mountTabs();
+    const root = container.querySelector<HTMLElement>(".hk-tabs")!;
+    expect(root.getAttribute("data-tauri-drag-region")).toBe("false");
+  });
+});

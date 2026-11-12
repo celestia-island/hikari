@@ -11,7 +11,7 @@
   }
   // src/scripts/tauri-titlebar.ts
   // Self-guard: exit silently in a plain (non-Tauri) browser. Using `return`
-  // instead of `throw` avoids triggering fatal-fallback.ts's window.onerror
+  // instead of `throw` avoids triggering the boot surface's window.onerror
   // handler (which would show the "Application failed to load" overlay).
   if (typeof window === "undefined") return;
   if (!("__TAURI_INTERNALS__" in window)) return;

@@ -141,10 +141,12 @@ export {
 export {
   claimWindowChrome,
   resolveWindowApi,
+  watchMaximizedState,
   CHROME_CLAIM_EVENT,
   CHROME_OWNER_ATTR,
   WINDOW_IPC,
   RESIZE_POLL_MS,
+  RESIZE_FALLBACK_TICKS,
   type WindowApiLike,
 } from "./windowChrome";
 export {

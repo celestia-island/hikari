@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, type App } from "vue";
 
-import { WINDOW_IPC } from "../runtime/windowChrome";
+import { RESIZE_POLL_MS, WINDOW_IPC } from "../runtime/windowChrome";
 
 import HkWindowControls, { isApplePlatform } from "./HkWindowControls";
 
@@ -321,6 +321,171 @@ describe("HkWindowControls window-chrome claim", () => {
     } finally {
       stop();
       cleanup();
+    }
+  });
+});
+
+/**
+ * THE 2026-11-12 USER REPORT: "最大化之后这个最大化图标居然没有任何变化" —
+ * a maximized window whose caption button kept drawing the square and kept
+ * announcing "Maximize".
+ *
+ * The fake shell below is a CLASS INSTANCE, exactly like Tauri 2's `Window`:
+ * its methods live on the prototype and read `this.label`. Detaching one
+ * (`const fn = win.isMaximized`) throws — that is the defect the resolver had.
+ */
+describe("HkWindowControls maximized glyph (the reported defect)", () => {
+  class TauriWindowShell {
+    label: string;
+    maximized: boolean;
+    resizeHandler: (() => void) | null = null;
+    resizedSubscribed = 0;
+
+    constructor(maximized = false) {
+      this.label = "main";
+      this.maximized = maximized;
+    }
+
+    // Every method reads `this.label` first, exactly like Tauri 2.12 — so a
+    // detached call raises the engine's own
+    // "Cannot read properties of undefined (reading 'label')".
+    minimize(): Promise<void> {
+      void this.label;
+      return Promise.resolve();
+    }
+
+    toggleMaximize(): Promise<void> {
+      void this.label;
+      this.maximized = !this.maximized;
+      return Promise.resolve();
+    }
+
+    close(): Promise<void> {
+      void this.label;
+      return Promise.resolve();
+    }
+
+    isMaximized(): Promise<boolean> {
+      void this.label;
+      return Promise.resolve(this.maximized);
+    }
+
+    onResized(handler: () => void): Promise<() => void> {
+      void this.label;
+      this.resizedSubscribed += 1;
+      this.resizeHandler = handler;
+      return Promise.resolve(() => {
+        this.resizeHandler = null;
+      });
+    }
+  }
+
+  function stubShell(maximized = false): TauriWindowShell {
+    const shell = new TauriWindowShell(maximized);
+    vi.stubGlobal("__TAURI__", { window: { getCurrentWindow: () => shell } });
+    return shell;
+  }
+
+  function maximizeButton(container: HTMLElement): HTMLButtonElement {
+    const button = container.querySelector<HTMLButtonElement>('[aria-label="Maximize"]');
+    if (!button) throw new Error("no maximize button rendered");
+    return button;
+  }
+
+  async function settle(): Promise<void> {
+    for (let i = 0; i < 8; i += 1) await Promise.resolve();
+    await nextTick();
+  }
+
+  it("draws Restore as soon as the shell reports a maximized window", async () => {
+    stubShell(true);
+    const t = mountControls({ variant: "standard" });
+    await settle();
+
+    expect(t.container.querySelector('[aria-label="Restore"]')).not.toBeNull();
+    expect(t.container.querySelector('[aria-label="Maximize"]')).toBeNull();
+    t.app.unmount();
+  });
+
+  it("flips the glyph after the user clicks maximize (the reported case)", async () => {
+    const shell = stubShell(false);
+    const t = mountControls({ variant: "standard" });
+    await settle();
+
+    // Before the click: the square, labelled Maximize.
+    expect(t.container.querySelector('[aria-label="Maximize"]')).not.toBeNull();
+
+    maximizeButton(t.container).click();
+    await settle();
+
+    // The fake shell really toggled, and the DOM followed it.
+    expect(shell.maximized).toBe(true);
+    const restore = t.container.querySelector('[aria-label="Restore"]');
+    expect(restore).not.toBeNull();
+    expect(t.container.querySelector('[aria-label="Maximize"]')).toBeNull();
+    t.app.unmount();
+  });
+
+  it("follows a resize event that arrives without a click", async () => {
+    const shell = stubShell(false);
+    const t = mountControls({ variant: "standard" });
+    await settle();
+    expect(t.container.querySelector('[aria-label="Maximize"]')).not.toBeNull();
+
+    // The OS maximized the window (double-click the title bar, a snap, a
+    // window-manager shortcut): only the resize event announces it.
+    shell.maximized = true;
+    expect(shell.resizeHandler).not.toBeNull();
+    shell.resizeHandler!();
+    await settle();
+
+    expect(t.container.querySelector('[aria-label="Restore"]')).not.toBeNull();
+    t.app.unmount();
+  });
+
+  it("keeps the glyph when the shell has no resize event to offer (bounded poll)", async () => {
+    vi.useFakeTimers();
+    try {
+      const shell = stubShell(false);
+      // A shell whose subscription silently yields nothing callable: the only
+      // way the glyph can follow is the bounded fallback poll.
+      (shell as unknown as { onResized: unknown }).onResized = () =>
+        Promise.resolve(undefined);
+
+      const t = mountControls({ variant: "standard" });
+      await settle();
+      expect(t.container.querySelector('[aria-label="Maximize"]')).not.toBeNull();
+
+      shell.maximized = true;
+      vi.advanceTimersByTime(RESIZE_POLL_MS);
+      await settle();
+
+      expect(t.container.querySelector('[aria-label="Restore"]')).not.toBeNull();
+      t.app.unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops watching on unmount (no writes, no timers left behind)", async () => {
+    vi.useFakeTimers();
+    try {
+      const shell = stubShell(false);
+      (shell as unknown as { onResized: unknown }).onResized = () =>
+        Promise.resolve(undefined);
+      const t = mountControls({ variant: "standard" });
+      await settle();
+      const subscribed = shell.resizedSubscribed;
+
+      t.app.unmount();
+      // The fallback poll must die with the component...
+      shell.maximized = true;
+      vi.advanceTimersByTime(RESIZE_POLL_MS * 10);
+      await settle();
+      // ...and no re-subscription churn happened behind our back.
+      expect(shell.resizedSubscribed).toBe(subscribed);
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

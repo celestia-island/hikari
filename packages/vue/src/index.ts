@@ -1057,10 +1057,16 @@ export { HK_PAD_VAR, hkPadStyle, type HkPad } from "./runtime/containerPad";
 export {
   claimWindowChrome,
   resolveWindowApi,
+  // THE read path for the maximized glyph: consumers (and hosts painting their
+  // own caption) should watch through this instead of reading by hand — the
+  // 2026-11-12 "square glyph on a maximized window" report was exactly a
+  // hand-rolled read that lost the shell receiver.
+  watchMaximizedState,
   CHROME_CLAIM_EVENT,
   CHROME_OWNER_ATTR,
   WINDOW_IPC,
   RESIZE_POLL_MS,
+  RESIZE_FALLBACK_TICKS,
   type WindowApiLike,
 } from "./runtime/windowChrome";
 // Pre-boot caption bar (`bootChromePlugin`) is NOT exported here. It ships from

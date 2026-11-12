@@ -2,7 +2,11 @@ import { defineComponent, onMounted, onUnmounted, ref, type PropType } from "vue
 
 import { Minus, Square, X, Copy } from "lucide-vue-next";
 
-import { claimWindowChrome, resolveWindowApi } from "../runtime/windowChrome";
+import {
+  claimWindowChrome,
+  resolveWindowApi,
+  watchMaximizedState,
+} from "../runtime/windowChrome";
 
 import "./HkWindowControls.scss";
 
@@ -84,10 +88,14 @@ export const HkWindowControls = defineComponent({
   },
   setup(props) {
     const maximized = ref(false);
-    let unlisten: (() => void) | null = null;
-    // Set on unmount: the mount path awaits `onResized()`, and an unmount that
-    // lands before that promise resolves would otherwise arm a poll interval
-    // (and keep writing `maximized`) for a component that no longer exists.
+    // The ONE read path (runtime/windowChrome): reads the shell now, re-reads on
+    // every resize event, and falls back to a bounded poll only when the shell
+    // refuses to publish events at all. Never arm this by hand again — the
+    // 2026-11-12 report was a hand-rolled path that lost the shell receiver, so
+    // the glyph stayed a square on a maximized window.
+    let stopWatching: (() => void) | null = null;
+    // Set on unmount: the mount path is async, so an unmount that lands before
+    // the watcher exists must not leave one armed for a component that is gone.
     let disposed = false;
     // Only a mount that actually paints the cluster takes the window chrome
     // over from the boot bar (boot-chrome.js): the SAME gates the render
@@ -107,36 +115,25 @@ export const HkWindowControls = defineComponent({
         claimed = true;
         claimWindowChrome("HkWindowControls");
       }
-      // Every shell read is failure-tolerant AND handled: an unhandled
-      // rejection during boot is treated as fatal by the family's
-      // `res/fatal-fallback.js` (it raises the full-screen "Application failed
-      // to load" landing on `unhandledrejection`), and the internals path would
-      // reproduce it every poll interval.
-      const refresh = () => {
-        void win.isMaximized().then(
-          (value) => {
-            if (!disposed) maximized.value = value;
-          },
-          () => {},
-        );
-      };
-      try {
-        refresh();
-        const off = await win.onResized(refresh);
-        if (disposed) {
-          off();
-          return;
-        }
-        unlisten = off;
-      } catch {
-        /* the window API is optional furniture */
+      // The watcher handles every rejection internally: an unhandled rejection
+      // during boot is treated as fatal by the family's `res/fatal-fallback.js`
+      // (it raises the full-screen "Application failed to load" landing on
+      // `unhandledrejection`), and the internals path would reproduce it every
+      // poll interval.
+      const stop = watchMaximizedState(win, (value) => {
+        if (!disposed) maximized.value = value;
+      });
+      if (disposed) {
+        stop();
+        return;
       }
+      stopWatching = stop;
     });
 
     onUnmounted(() => {
       disposed = true;
-      unlisten?.();
-      unlisten = null;
+      stopWatching?.();
+      stopWatching = null;
     });
 
     return () => {
@@ -150,13 +147,21 @@ export const HkWindowControls = defineComponent({
       if (!win) return null;
 
       // Toggle, then re-read the shell state: the glyph must follow the real
-      // window, not a local guess (the internals path may have no resize event).
+      // window, not a local guess. The re-read stays even though the watcher
+      // also fires on resize — the shell may publish that event before it has
+      // actually flipped its own flag, and the user's click is the one moment a
+      // stale glyph is unacceptable. Every step is handled, and a torn-down
+      // component never writes.
       const toggleMaximize = () => {
         void win
           .toggleMaximize()
           .then(() => win.isMaximized())
-          .then((value) => (maximized.value = value))
-          .catch(() => {});
+          .then(
+            (value) => {
+              if (!disposed) maximized.value = value;
+            },
+            () => {},
+          );
       };
 
       // A refused shell call must never surface as an unhandled rejection (the

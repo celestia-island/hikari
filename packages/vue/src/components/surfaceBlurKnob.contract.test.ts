@@ -211,14 +211,16 @@ function baseDeclarations(css: string, selector: string): Map<string, string> {
   return map;
 }
 
-/** A wrapper that re-keys rendering to the viewport/box size. */
-function isSizeWrapper(prelude: string): boolean {
+/** A wrapper that re-keys the stand-down to anything other than the ENGINE.
+ *  `print` and `prefers-*` are deliberate capability/accessibility gates and
+ *  stay allowed; EVERYTHING else a media/container query can express — size,
+ *  ratio, resolution, media TYPE (`screen`), `hover`, `monochrome` — matches
+ *  hosts by environment instead of by engine, which is the exact re-keying
+ *  this guard forbids (an `@media screen` gate is a de-facto unconditional
+ *  stand-down; witnessed green before this broadening).*/
+function isConditionalWrapper(prelude: string): boolean {
   if (!/^@(media|container)\b/i.test(prelude)) return false;
-  // `prefers-*` features carry no size term and are legitimate accessibility
-  // gates; `@layer` and `@supports` are not size axes at all.
-  // `inline-size`/`block-size` are the logical width/height axes a container
-  // query honors; `device-pixel-ratio` is the WebKit alias of `resolution`.
-  return /width|height|orientation|aspect-ratio|resolution|device-width|device-pixel-ratio|inline-size|block-size/i.test(prelude);
+  return !/print|prefers-|speech/i.test(prelude);
 }
 
 const KNOB_RE = new RegExp(`(^|[\\s:;(])(${KNOBS.join("|")})\\s*:`, "m");
@@ -247,14 +249,14 @@ function knobPins(css: string): string[] {
 function conditionalStandDowns(css: string): string[] {
   const hits: string[] = [];
   for (const rule of scanRules(css)) {
-    const sizeWrappers = rule.wrappers.filter(isSizeWrapper);
-    if (sizeWrappers.length === 0) continue;
+    const condWrappers = rule.wrappers.filter(isConditionalWrapper);
+    if (condWrappers.length === 0) continue;
     const target = mentionsTarget(rule.selector);
     const touchesFilter = /backdrop-filter/i.test(rule.declarations);
     const touchesKnob = KNOB_RE.test(rule.declarations);
     if (!target && !touchesKnob) continue;
     if (!touchesFilter && !touchesKnob) continue;
-    hits.push(`${target ?? "knob"} inside ${sizeWrappers[sizeWrappers.length - 1]}`);
+    hits.push(`${target ?? "knob"} inside ${condWrappers[condWrappers.length - 1]}`);
   }
   return hits;
 }
@@ -320,6 +322,12 @@ describe("surface live-blur escape hatch", () => {
       // logical-size container axis and the WebKit resolution alias
       "@container (min-inline-size: 40em) { .hk-card { backdrop-filter: none; } }",
       "@media (-webkit-max-device-pixel-ratio: 2) { .hk-card { backdrop-filter: none; } }",
+      // media TYPE / hover / monochrome re-key by environment, not engine
+      "@media screen { .hk-card { backdrop-filter: none; } }",
+      "@media (hover: none) { .hk-card { backdrop-filter: none; } }",
+      "@media (min-monochrome: 0) { .hk-card { backdrop-filter: none; } }",
+      // a `//` bait ahead of the gate must not white-wash it either
+      '.x::after { content: "//"; } @media (max-width: 767px) { .hk-card { backdrop-filter: none; } }',
       // selector list
       "@media (max-width: 767px) { .hk-card, .x { backdrop-filter: none; } }",
       // range syntax

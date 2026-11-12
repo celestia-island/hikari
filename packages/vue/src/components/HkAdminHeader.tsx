@@ -204,6 +204,13 @@ export const HkAdminHeader = defineComponent({
     // lives OUTSIDE the class expression: the self-sufficiency audit
     // reads that expression's literals, and prose apostrophes inside it
     // parse as string boundaries.)
+    //
+    // Chrome mode is also the caption-band contract: the header IS the
+    // window title bar there, so it claims the titlebar layer
+    // (.hk-chrome-band) and an open modal's veil paints UNDER it — the
+    // drag row and its HkWindowControls stay alive while any HkModal
+    // covers the app, the same immunity HkTitleBar gives a real caption
+    // strip (styles/admin-tokens.scss, the chrome-band block).
     return () => (
       <header
         class={[
@@ -211,6 +218,7 @@ export const HkAdminHeader = defineComponent({
           "s-balanced-header",
           props.compact ? "s-glass-header--compact" : "",
           props.chrome ? "s-glass-header--chrome" : "",
+          props.chrome ? "hk-chrome-band" : "",
         ]}
       >
         <div ref={userTriggerRef} class="s-admin-header-user s-header-wing-start">

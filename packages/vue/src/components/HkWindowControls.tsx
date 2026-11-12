@@ -28,6 +28,16 @@ import "./HkWindowControls.scss";
  *   `.s-glass-header--chrome` is the in-library implementation of the
  *   contract for admin headers, and the chat face sources its
  *   `--chrome` padding from the same tokens.
+ *   LAYER CONTRACT: the host's caption band must claim the titlebar
+ *   layer with the `.hk-chrome-band` class (styles/admin-tokens.scss),
+ *   or the first open HkModal veil dims and deadens the whole drag row
+ *   — field reports 2026-11-12: the chest settings and display windows
+ *   covered the bar. HkAdminHeader's chrome mode hangs the class
+ *   automatically; a hand-rolled band adds it to its own element. The
+ *   claim needs a clean ancestor chain (no stacking-context wrapper
+ *   with z<90000 between band and body); a trapped host instead sets
+ *   `--hk-chrome-band-inset` so the modal veil's top edge starts below
+ *   the band — the geometry leg, stacking-proof by construction.
  *
  * - `flush` — edge-riding squares that fill the host's height (the
  *   host must zero its own right padding so the close button rides

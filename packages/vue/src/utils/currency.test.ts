@@ -75,6 +75,75 @@ describe("formatMoney", () => {
   });
 });
 
+describe("formatMoney / canonicalMoneyText magnitude limits (S2-1)", () => {
+  // The toFixed cliff: past 1e21 `Number#toFixed` returns EXPONENTIAL
+  // notation ("1e+21"), which is not a money text at all — it broke the
+  // canonical contract and left a controlled money field unable to parse
+  // its own display. Formatting now runs on the digit string.
+  it("never emits exponential notation, however large or small the amount", () => {
+    const amounts = [1e21, -1e21, 1.5e21, 1.234567890123456789e21, 1e-7, 1e-21, Number.MAX_VALUE];
+    for (const amount of amounts) {
+      expect(formatMoney(amount, USD), `formatMoney(${amount})`).not.toMatch(/[eE]/);
+      expect(formatMoney(amount, KWD, { precision: 3 })).not.toMatch(/[eE]/);
+      expect(canonicalMoneyText(amount, 8)).not.toMatch(/[eE]/);
+    }
+  });
+
+  it("formats 1e21 as digits and round-trips through parseMoney", () => {
+    expect(formatMoney(1e21, USD)).toBe("1,000,000,000,000,000,000,000.00");
+    expect(formatMoney(-1e21, USD)).toBe("-1,000,000,000,000,000,000,000.00");
+    expect(formatMoney(1e21, USD, { grouping: false })).toBe("1000000000000000000000.00");
+    expect(canonicalMoneyText(1e21)).toBe("1000000000000000000000");
+    expect(parseMoney(formatMoney(1e21, USD), 2)).toBe(1e21);
+    expect(parseMoney(canonicalMoneyText(1e21), 2)).toBe(1e21);
+  });
+
+  it("formats a 22-digit integer without losing it to an exponent", () => {
+    const amount = 1234567890123456789012;
+    const text = canonicalMoneyText(amount);
+    expect(text).not.toMatch(/[eE]/);
+    expect(text).toHaveLength(22);
+    expect(parseMoney(text, 2)).toBe(amount);
+    // 1.2345678901234568e+21 expands to the same 22 digits.
+    expect(text).toBe("1234567890123456800000");
+    expect(formatMoney(amount, USD, { grouping: false })).toBe("1234567890123456800000.00");
+    expect(formatMoney(amount, USD)).toBe("1,234,567,890,123,456,800,000.00");
+  });
+
+  it("keeps the format → parse round trip stable at 18 significant digits", () => {
+    const amount = 123456789012345678;
+    const formatted = formatMoney(amount, USD);
+    // The double's own value — the shortest round-tripping decimal — not a
+    // re-rounded approximation.
+    expect(formatted).toBe("123,456,789,012,345,680.00");
+    expect(parseMoney(formatted, 2)).toBe(amount);
+    expect(formatMoney(parseMoney(formatted, 2)!, USD), "format∘parse is idempotent").toBe(formatted);
+    expect(canonicalMoneyText(amount)).toBe("123456789012345680");
+    expect(parseMoney(canonicalMoneyText(amount), 2)).toBe(amount);
+  });
+
+  it("rounds sub-precision magnitudes to zero instead of spelling them exponentially", () => {
+    expect(formatMoney(1e-21, USD)).toBe("0.00");
+    expect(formatMoney(-1e-21, USD), "no -0.00 either").toBe("0.00");
+    expect(canonicalMoneyText(1e-21, 8)).toBe("0");
+    // The digit budget caps at 8 (MAX_DECIMALS): a requested precision of 9
+    // renders 8 digits rather than dropping the value.
+    expect(formatMoney(1e-7, USD, { precision: 9 })).toBe("0.00000010");
+    expect(parseMoney(formatMoney(1e-7, USD, { precision: 9 }), 8)).toBe(1e-7);
+  });
+
+  it("stays inside the digit-string rounding rule at the extremes", () => {
+    // 9.995 rounds up to 10.00 through the carry, on every path.
+    expect(formatMoney(9.995, USD)).toBe("10.00");
+    expect(canonicalMoneyText(9.995)).toBe("10");
+    expect(parseMoney("9.995", 2)).toBe(10);
+    // Number.MAX_VALUE survives the trip as the same double.
+    const formatted = formatMoney(Number.MAX_VALUE, USD, { grouping: false, precision: 2 });
+    expect(formatted).not.toMatch(/[eE]/);
+    expect(parseMoney(formatted, 2)).toBe(Number.MAX_VALUE);
+  });
+});
+
 describe("parseMoney", () => {
   it("parses the canonical text form", () => {
     expect(parseMoney("1.5", 2)).toBe(1.5);

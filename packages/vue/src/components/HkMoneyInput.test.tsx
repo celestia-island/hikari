@@ -248,6 +248,30 @@ describe("HkMoneyInput formatOnBlur / deformOnFocus", () => {
     expect(precise.emitted[precise.emitted.length - 1]).toBe("1.2346");
   });
 
+  it("stays parseable past the toFixed exponent cliff (S2-1)", async () => {
+    // 1e21 used to render as "1e+21": un-typeable, un-parseable, and the
+    // field could never recover its own display text.
+    const huge = mount({ model: "1000000000000000000000", props: { currency: USD } });
+    expect(huge.input.value).toBe("1,000,000,000,000,000,000,000.00");
+    expect(huge.input.value).not.toMatch(/[eE]/);
+    await focus(huge.input);
+    expect(huge.input.value, "editing text is canonical, not exponential").toBe(
+      "1000000000000000000000",
+    );
+    await blur(huge.input);
+    expect(huge.input.value).toBe("1,000,000,000,000,000,000,000.00");
+    expect(huge.emitted, "a re-format never churns the model").toEqual([]);
+
+    // 18 significant digits keep the double's own decimal value and emit the
+    // canonical text for it (no silent re-rounding on the way out).
+    const long = mount({ model: "0", props: { currency: USD } });
+    await focus(long.input);
+    await type(long.input, "123456789012345678");
+    await blur(long.input);
+    expect(long.input.value).toBe("123,456,789,012,345,680.00");
+    expect(long.emitted[long.emitted.length - 1]).toBe("123456789012345680");
+  });
+
   it("renders negative amounts with the sign preserved", async () => {
     const { input } = mount();
     await focus(input);

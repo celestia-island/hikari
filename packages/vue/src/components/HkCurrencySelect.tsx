@@ -74,6 +74,13 @@ interface CurrencySection {
  * Escape dismissal) — so this component owns only the field chrome, the row
  * model and its keyboard actives; it never hand-rolls an overlay.
  *
+ * The active option follows the APG combobox model: the element that holds
+ * DOM focus carries `role="combobox"` / `aria-controls` / `aria-expanded` /
+ * `aria-activedescendant` — the search input when `searchable` (focus moves
+ * there on open), the trigger otherwise (focus never leaves it). The listbox
+ * only carries its `id`; an `aria-activedescendant` on an unfocused sibling
+ * would be silent for screen readers.
+ *
  * `modelValue` is the currency code (canonical: trimmed, upper-cased on
  * comparison) and `update:modelValue` emits a code — the amount's own
  * precision travels with the `HkCurrency` the host resolves from that code,
@@ -121,6 +128,8 @@ export default defineComponent({
      *  not swap every option id on first paint. */
     const baseId = `hk-currency-select-${useId()}`;
     const errorId = `${baseId}-error`;
+    /** The listbox the combobox input controls (APG: aria-controls). */
+    const listboxId = `${baseId}-listbox`;
 
     const normalizedCode = computed(() => String(props.modelValue ?? "").trim().toUpperCase());
 
@@ -293,6 +302,13 @@ export default defineComponent({
       if (props.disabled) return;
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
+        // Enter commits the highlighted option while the surface is open
+        // (APG combobox); Space keeps the plain toggle.
+        const active = open.value ? flat.value[highlighted.value] : undefined;
+        if (event.key === "Enter" && active) {
+          select(active.currency.code);
+          return;
+        }
         toggle();
       } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
@@ -312,23 +328,35 @@ export default defineComponent({
       }
     }
 
+    /** Is this keydown coming from the search field? A text input owns its
+     *  caret keys — Home/End/Left/Right must move the cursor there, never the
+     *  option list (the S2-3 hijack: Home/End inside the search box could not
+     *  reach the ends of the query). List navigation is limited to
+     *  Up/Down/PageUp/PageDown/Enter, the APG combobox set. */
+    function isSearchTarget(event: KeyboardEvent): boolean {
+      const target = event.target as Node | null;
+      const search = searchRef.value;
+      return Boolean(search && target && (target === search || search.contains(target)));
+    }
+
     function onPanelKeydown(event: KeyboardEvent) {
-      if (event.key === "ArrowDown") {
+      const fromSearch = isSearchTarget(event);
+      if (event.key === "ArrowDown" || event.key === "PageDown") {
         event.preventDefault();
         move(1);
-      } else if (event.key === "ArrowUp") {
+      } else if (event.key === "ArrowUp" || event.key === "PageUp") {
         event.preventDefault();
         move(-1);
-      } else if (event.key === "Home") {
-        event.preventDefault();
-        highlighted.value = flat.value.length > 0 ? 0 : -1;
-      } else if (event.key === "End") {
-        event.preventDefault();
-        highlighted.value = flat.value.length - 1;
       } else if (event.key === "Enter") {
         event.preventDefault();
         const item = flat.value[highlighted.value];
         if (item) select(item.currency.code);
+      } else if (!fromSearch && event.key === "Home") {
+        event.preventDefault();
+        highlighted.value = flat.value.length > 0 ? 0 : -1;
+      } else if (!fromSearch && event.key === "End") {
+        event.preventDefault();
+        highlighted.value = flat.value.length - 1;
       }
     }
 
@@ -414,6 +442,12 @@ export default defineComponent({
               value={query.value}
               placeholder={searchPlaceholder.value}
               aria-label={searchPlaceholder.value}
+              // APG combobox: the FOCUSED element names the active option.
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls={listboxId}
+              aria-expanded={open.value ? "true" : "false"}
+              aria-activedescendant={activeDescendant.value}
               onInput={(event: Event) => {
                 query.value = (event.target as HTMLInputElement).value;
               }}
@@ -427,9 +461,9 @@ export default defineComponent({
         ) : (
           <div
             class="hk-currency-select-list"
+            id={listboxId}
             role="listbox"
             aria-label={panelTitle.value}
-            aria-activedescendant={activeDescendant.value}
           >
             {sections.value.map((section) =>
               section.label === "" ? (
@@ -474,6 +508,10 @@ export default defineComponent({
           disabled={props.disabled}
           aria-haspopup="listbox"
           aria-expanded={open.value ? "true" : "false"}
+          aria-controls={listboxId}
+          // Without a search field focus never leaves the trigger, so IT is
+          // the element naming the active option.
+          aria-activedescendant={props.searchable ? undefined : activeDescendant.value}
           aria-invalid={props.error ? "true" : undefined}
           aria-describedby={props.error ? errorId : undefined}
           onClick={toggle}

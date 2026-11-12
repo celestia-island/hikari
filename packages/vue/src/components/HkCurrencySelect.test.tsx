@@ -96,6 +96,15 @@ async function openPanel(harness: Harness): Promise<void> {
   await harness.settle();
 }
 
+/** The active option id as published by the element that holds DOM focus
+ *  (APG combobox, S2-2) — never a sibling listbox. */
+function activeOptionId(): string | null {
+  const host =
+    document.querySelector<HTMLInputElement>(".hk-currency-select-search")
+    ?? document.querySelector<HTMLElement>(".hk-currency-select-trigger");
+  return host?.getAttribute("aria-activedescendant") ?? null;
+}
+
 async function typeSearch(harness: Harness, text: string): Promise<void> {
   const search = document.querySelector<HTMLInputElement>(".hk-currency-select-search")!;
   expect(search, "the search field renders").not.toBeNull();
@@ -264,15 +273,16 @@ describe("HkCurrencySelect keyboard", () => {
     );
     await harness.settle();
 
-    const list = document.querySelector<HTMLElement>(".hk-currency-select-list")!;
+    const search = document.querySelector<HTMLInputElement>(".hk-currency-select-search")!;
     expect(harness.trigger.getAttribute("aria-expanded")).toBe("true");
-    expect(list.getAttribute("aria-activedescendant")).toBe(panelRows()[0].id);
+    expect(document.activeElement, "the search field owns focus").toBe(search);
+    expect(activeOptionId()).toBe(panelRows()[0].id);
 
     panelRows()[0].dispatchEvent(
       new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }),
     );
     await harness.settle();
-    expect(list.getAttribute("aria-activedescendant")).toBe(panelRows()[1].id);
+    expect(activeOptionId()).toBe(panelRows()[1].id);
 
     panelRows()[1].dispatchEvent(
       new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
@@ -285,18 +295,17 @@ describe("HkCurrencySelect keyboard", () => {
     setViewportWidth(1280);
     const harness = mount();
     await openPanel(harness);
-    const list = document.querySelector<HTMLElement>(".hk-currency-select-list")!;
     const press = async (key: string) => {
       panelRows()[0].dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
       await harness.settle();
     };
 
     await press("End");
-    expect(list.getAttribute("aria-activedescendant")).toBe(panelRows()[2].id);
+    expect(activeOptionId()).toBe(panelRows()[2].id);
     await press("ArrowDown");
-    expect(list.getAttribute("aria-activedescendant"), "the ring wraps").toBe(panelRows()[0].id);
+    expect(activeOptionId(), "the ring wraps").toBe(panelRows()[0].id);
     await press("Home");
-    expect(list.getAttribute("aria-activedescendant")).toBe(panelRows()[0].id);
+    expect(activeOptionId()).toBe(panelRows()[0].id);
   });
 
   it("closes on Escape and consumes the key only while open", async () => {
@@ -321,6 +330,41 @@ describe("HkCurrencySelect keyboard", () => {
     expect(harness.trigger.getAttribute("aria-expanded")).toBe("false");
   });
 });
+
+  it("leaves Home/End and the arrow caret keys to the search text field (S2-3)", async () => {
+    setViewportWidth(1280);
+    const harness = mount();
+    await openPanel(harness);
+    const search = document.querySelector<HTMLInputElement>(".hk-currency-select-search")!;
+    expect(document.activeElement).toBe(search);
+    const before = activeOptionId();
+    expect(before).toBe(panelRows()[0].id);
+
+    // The query field owns its caret: these must reach the input untouched.
+    for (const key of ["Home", "End", "ArrowLeft", "ArrowRight"]) {
+      const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      search.dispatchEvent(event);
+      expect(event.defaultPrevented, `${key} must reach the caret`).toBe(false);
+    }
+    await harness.settle();
+    expect(activeOptionId(), "the highlight never moved").toBe(before);
+
+    // Up/Down still drive the list from inside the field (APG combobox).
+    search.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }));
+    await harness.settle();
+    expect(activeOptionId()).toBe(panelRows()[1].id);
+    search.dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp", bubbles: true, cancelable: true }));
+    await harness.settle();
+    expect(activeOptionId()).toBe(panelRows()[0].id);
+
+    // From a ROW (no text caret) Home/End keep jumping the list.
+    panelRows()[0].dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true, cancelable: true }));
+    await harness.settle();
+    expect(activeOptionId()).toBe(panelRows()[2].id);
+    panelRows()[0].dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true, cancelable: true }));
+    await harness.settle();
+    expect(activeOptionId()).toBe(panelRows()[0].id);
+  });
 
 describe("HkCurrencySelect groups", () => {
   it("renders declared bands in order and buckets the rest", async () => {
@@ -384,6 +428,41 @@ describe("HkCurrencySelect error + a11y wiring", () => {
     expect(harness.trigger.getAttribute("aria-expanded")).toBe("true");
   });
 });
+
+  it("publishes the active option from the focused combobox input (S2-2)", async () => {
+    setViewportWidth(1280);
+    const harness = mount();
+    await openPanel(harness);
+    const search = document.querySelector<HTMLInputElement>(".hk-currency-select-search")!;
+    const list = document.querySelector<HTMLElement>(".hk-currency-select-list")!;
+
+    expect(document.activeElement).toBe(search);
+    expect(search.getAttribute("role")).toBe("combobox");
+    expect(search.getAttribute("aria-autocomplete")).toBe("list");
+    expect(search.getAttribute("aria-expanded")).toBe("true");
+    expect(search.getAttribute("aria-controls")).toBe(list.id);
+    expect(list.id).not.toBe("");
+    // The active option lives on the focus host — the listbox (an unfocused
+    // sibling) must NOT carry the descendant: that was the silent path.
+    expect(list.getAttribute("aria-activedescendant")).toBeNull();
+    expect(search.getAttribute("aria-activedescendant")).toBe(panelRows()[0].id);
+    // The trigger keeps the popup contract.
+    expect(harness.trigger.getAttribute("aria-haspopup")).toBe("listbox");
+    expect(harness.trigger.getAttribute("aria-controls")).toBe(list.id);
+  });
+
+  it("falls back to the trigger as the active-option host without a search field", async () => {
+    setViewportWidth(1280);
+    const harness = mount({ searchable: false });
+    await openPanel(harness);
+    expect(harness.trigger.getAttribute("aria-activedescendant")).toBe(panelRows()[0].id);
+    // Enter on the focused trigger commits the highlighted option (APG).
+    harness.trigger.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+    );
+    await harness.settle();
+    expect(harness.emitted).toEqual(["USD"]);
+  });
 
 describe("HkCurrencySelect surface composition contract", () => {
   it("delegates the opened surface to HkSelectPanel", () => {

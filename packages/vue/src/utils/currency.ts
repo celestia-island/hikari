@@ -96,6 +96,70 @@ function incrementDigits(digits: string): string {
   return `1${out.join("")}`;
 }
 
+/** Exact decimal parts of a FINITE number, never in exponential notation.
+ *
+ *  `String(number)` is the shortest decimal that round-trips to the same
+ *  double, so a canonical text derived from it parses back to that double.
+ *  It spells magnitudes >= 1e21 and < 1e-6 exponentially, though — and
+ *  `toFixed` hands that spelling straight back (`(1e21).toFixed(2)` is
+ *  `"1e+21"`), which breaks the canonical contract and any later
+ *  `parseMoney` of the rendered text. So the exponent is expanded HERE by
+ *  moving the decimal point inside the digit string: `1e+21` becomes
+ *  `{ whole: "1" followed by 21 zeros, fraction: "" }`, `1e-7` becomes
+ *  `{ whole: "0", fraction: "0000001" }`. */
+function decimalParts(value: number): { whole: string; fraction: string } {
+  const text = String(Math.abs(value));
+  const match = /^(\d+)(?:\.(\d+))?(?:e([+-]\d+))?$/.exec(text);
+  if (match === null) return { whole: "0", fraction: "" };
+  const [, intPart, fracPart = "", expPart] = match;
+  const exponent = expPart === undefined ? 0 : Number(expPart);
+  if (exponent === 0) {
+    return { whole: intPart, fraction: fracPart.replace(/0+$/, "") };
+  }
+  let digits = `${intPart}${fracPart}`;
+  let point = intPart.length + exponent;
+  if (point <= 0) {
+    digits = `${"0".repeat(1 - point)}${digits}`;
+    point = 1;
+  } else if (point >= digits.length) {
+    digits = `${digits}${"0".repeat(point - digits.length)}`;
+    point = digits.length;
+  }
+  const whole = digits.slice(0, point).replace(/^0+(?=\d)/, "");
+  const fraction = digits.slice(point).replace(/0+$/, "");
+  return { whole: whole === "" ? "0" : whole, fraction };
+}
+
+/** Digits are all zero — the rounded value is exactly 0, whatever its
+ *  spelling. */
+function isZeroParts(whole: string, fraction: string): boolean {
+  return !/[1-9]/.test(`${whole}${fraction}`);
+}
+
+/** Round `whole` + `fraction` to `decimals` fractional digits, half-up, ON
+ *  THE DIGIT STRING (never through binary float). Shared by
+ *  {@link formatMoney}, {@link canonicalMoneyText} and {@link parseMoney}, so
+ *  a display, a canonical text and a parsed value can never disagree about
+ *  where a money boundary landed (`1.005` at 2 digits is 1.01 everywhere). */
+function roundParts(
+  whole: string,
+  fraction: string,
+  decimals: number,
+): { whole: string; fraction: string } {
+  const head = whole === "" ? "0" : whole;
+  const kept = fraction.slice(0, decimals);
+  const roundUp = fraction.length > decimals && fraction.charCodeAt(decimals) >= 53; // "5"
+  if (!roundUp) return { whole: head, fraction: kept };
+  const digits = incrementDigits(`${head}${kept}`);
+  if (kept.length === 0) return { whole: digits, fraction: "" };
+  const cut = digits.length - kept.length;
+  const nextWhole = digits.slice(0, cut).replace(/^0+(?=\d)/, "");
+  return {
+    whole: nextWhole === "" ? "0" : nextWhole,
+    fraction: digits.slice(cut),
+  };
+}
+
 /** Render `amount` as a money string with the currency's minor-unit digits
  *  (or an explicit `precision`) — grouping optional, no symbol, no code.
  *
@@ -116,13 +180,17 @@ export function formatMoney(
   if (typeof amount !== "number" || !Number.isFinite(amount)) return "";
   const normalized = normalizeCurrency(currency);
   const precision = clampDecimals(opts.precision, normalized.decimals);
-  const fixed = Math.abs(amount).toFixed(precision);
-  const [intPart, fracPart = ""] = fixed.split(".");
-  const body = opts.grouping === false ? intPart : groupDigits(intPart);
-  const text = fracPart === "" ? body : `${body}.${fracPart}`;
+  // Digit-string formatting, never `toFixed`: past 1e21 `toFixed` returns
+  // exponential notation ("1e+21"), which would break both the money text
+  // and any later parse of it.
+  const parts = decimalParts(amount);
+  const rounded = roundParts(parts.whole, parts.fraction, precision);
+  const fraction = rounded.fraction.padEnd(precision, "0");
+  const body = opts.grouping === false ? rounded.whole : groupDigits(rounded.whole);
+  const text = fraction === "" ? body : `${body}.${fraction}`;
   // Sign AFTER rounding: a value that collapses to zero must not read as
   // a negative amount.
-  const negative = amount < 0 && Number(fixed) !== 0;
+  const negative = amount < 0 && !isZeroParts(rounded.whole, fraction);
   return negative ? `-${text}` : text;
 }
 
@@ -136,10 +204,11 @@ export function formatMoney(
 export function canonicalMoneyText(amount: number, maxDecimals = 2): string {
   if (typeof amount !== "number" || !Number.isFinite(amount)) return "";
   const decimals = clampDecimals(maxDecimals, 2);
-  let text = Math.abs(amount).toFixed(decimals);
-  if (text.includes(".")) text = text.replace(/0+$/, "").replace(/\.$/, "");
-  if (text === "") text = "0";
-  const negative = amount < 0 && Number(text) !== 0;
+  const parts = decimalParts(amount);
+  const rounded = roundParts(parts.whole, parts.fraction, decimals);
+  const fraction = rounded.fraction.replace(/0+$/, "");
+  const text = fraction === "" ? rounded.whole : `${rounded.whole}.${fraction}`;
+  const negative = amount < 0 && !isZeroParts(rounded.whole, rounded.fraction);
   return negative ? `-${text}` : text;
 }
 
@@ -264,18 +333,9 @@ export function parseMoney(raw: string, maxDecimals: number): number | null {
   if (body === "" || body === "." || body === ",") return null;
   const split = resolveSeparators(body, decimals);
   if (split === null) return null;
-  let whole = split.whole;
-  let fraction = split.fraction;
-  if (fraction.length > decimals) {
-    const keep = fraction.slice(0, decimals);
-    const roundUp = fraction.charCodeAt(decimals) >= 53; // "5"
-    const digits = keep === "" ? whole : `${whole}${keep}`;
-    const rounded = roundUp ? incrementDigits(digits) : digits;
-    const tail = rounded.slice(Math.max(rounded.length - keep.length, 0));
-    whole = rounded.length - tail.length === 0 ? "0" : rounded.slice(0, rounded.length - tail.length);
-    fraction = tail;
-  }
-  const numericText = fraction === "" ? whole : `${whole}.${fraction}`;
+  const rounded = roundParts(split.whole, split.fraction, decimals);
+  const numericText =
+    rounded.fraction === "" ? rounded.whole : `${rounded.whole}.${rounded.fraction}`;
   const value = Number(numericText);
   if (!Number.isFinite(value)) return null;
   return negative && value !== 0 ? -value : value;

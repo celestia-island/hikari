@@ -340,8 +340,9 @@ describe("HkWeekdayPicker — initial month", () => {
     const Wrapper = defineComponent({
       setup: () => () =>
         h(HkWeekdayPicker, {
-          // A fresh equal Date per render — the inline-template idiom.
-          initialMonth: new Date(2026, 7, 1),
+          // A live Date per render (same month, different timestamp) — the
+          // host that writes `new Date()` inline or re-renders on a clock.
+          initialMonth: new Date(2026, 7, 1, 0, 0, tick.value),
           modelValue: [1 + tick.value * 0],
         }),
     });

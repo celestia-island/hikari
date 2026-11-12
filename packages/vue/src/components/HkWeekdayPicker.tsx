@@ -114,11 +114,18 @@ export default defineComponent({
     // A host that loads the month after mount (async data) still lands the
     // grid on the requested month; selection is weekday-based and unmoved.
     watch(
-      () => (props.initialMonth ? props.initialMonth.getTime() : null),
-      (stamp) => {
-        if (stamp == null || !props.initialMonth) return;
-        viewYear.value = props.initialMonth.getFullYear();
-        viewMonth.value = props.initialMonth.getMonth();
+      () => {
+        const value = props.initialMonth;
+        // Year/month, not the timestamp: a host rendering a live `new
+        // Date()` (or any fresh equal Date) must not yank the operator
+        // out of the month they navigated to.
+        return value ? `${value.getFullYear()}-${value.getMonth()}` : null;
+      },
+      () => {
+        const value = props.initialMonth;
+        if (!value) return;
+        viewYear.value = value.getFullYear();
+        viewMonth.value = value.getMonth();
       },
     );
 

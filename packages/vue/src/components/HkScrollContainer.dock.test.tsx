@@ -153,7 +153,8 @@ describe("HkScrollContainer dock slots", () => {
       Object.defineProperty(viewport, "scrollTop", { value: scrollTop, configurable: true });
     };
 
-    stub(297); // 2px still hidden: the band stays lit
+    // vMax = 400 - 100 = 300; scrollTop 298 leaves EXACTLY 2px hidden.
+    stub(298); // 2px still hidden: the band stays lit
     instance.value?.refresh();
     await Promise.resolve();
     expect(strength()).toBe("1");

@@ -339,7 +339,14 @@
   background: rgb(var(--color-surface));
   color: rgb(var(--color-text));
   border-color: rgb(var(--color-border) / 20%);
-  @include backdrop-filter(blur(var(--blur-sm)));
+  /* Host-tunable (2026-11-12 chest WebView field report, same family as
+     HkCard's knob). The fill is the OPAQUE surface token, so this blur is
+     invisible unless a host deliberately re-alpha'd --color-surface — yet it
+     still makes every secondary button own a background render surface, and
+     a modal footer full of them is where a small surface budget runs out
+     first. Engine-gated by the host, never width-gated (see HkCard.scss for
+     why width is the wrong key). */
+  @include backdrop-filter(var(--hk-btn-secondary-blur, blur(var(--blur-sm))));
 }
 
 /* background stays the base surface — the hover declaration only restated

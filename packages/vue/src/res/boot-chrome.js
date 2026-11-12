@@ -27,7 +27,17 @@
  *   data-hk-title    application name shown on the left (default: document.title)
  *   data-hk-hang-ms  watchdog delay in ms before the reload affordance appears
  *                    (default 20000; a non-positive/invalid value = default)
- *   data-hk-height   bar height in px (default 32, clamped to 20..64)
+ *   data-hk-height   bar height in px (default 32, clamped to 20..64). An
+ *                    explicit value PINNS the bar: it wins over the height
+ *                    contract below.
+ *   height contract  the host may publish its caption band height to :root as
+ *                    `--hk-chrome-band-h` (hikari's CHROME_BAND_HEIGHT_VAR,
+ *                    runtime/windowChrome.ts) — a length or a var() chain.
+ *                    The bar wears it verbatim, so the strip matches the
+ *                    app's caption band from the first frame and keeps
+ *                    tracking the app token once its stylesheet lands
+ *                    (2026-11-12: chest's wide 3rem band booted behind a
+ *                    thin 32px strip). Absent → the 32px default, as before.
  *
  * HOST API — `window.HkBootChrome`:
  *   setStatus(text)  replace the status text (e.g. "connecting…")
@@ -110,13 +120,24 @@
   var HEIGHT_DEFAULT = 32;
   var HEIGHT_MIN = 20;
   var HEIGHT_MAX = 64;
+  // hikari's caption-height contract (runtime/windowChrome.ts — a classic
+  // script cannot import it, so the name is mirrored here and the parity
+  // test in src/res/bootChrome.test.ts pins both spellings).
+  var CAPTION_HEIGHT_VAR = "--hk-chrome-band-h";
   var RETRY_EVERY_MS = 100;
   var RETRY_BUDGET_MS = 5000;
   var FADE_MS = 160; // < 200ms: the claim handoff must not delay the app.
 
   var currentScript = doc.currentScript;
   var cfg = (currentScript && currentScript.dataset) || {};
-  var barHeight = intOption(cfg.hkHeight, HEIGHT_MIN, HEIGHT_MAX) || HEIGHT_DEFAULT;
+  // Height precedence: an explicit data-hk-height PIN beats the caption band
+  // contract (a host that asked for a fixed bar meant it); the contract beats
+  // the thin default. `barHeight` stays the numeric fallback the stylesheet
+  // rule carries; `bandHeight` (when set) is the resolved length applied as an
+  // inline height and published through `--hk-boot-chrome-h`.
+  var pinnedHeight = intOption(cfg.hkHeight, HEIGHT_MIN, HEIGHT_MAX);
+  var bandHeight = pinnedHeight === null ? captionBandHeight() : "";
+  var barHeight = pinnedHeight || HEIGHT_DEFAULT;
   var hangMs = intOption(cfg.hkHangMs, 1, 3600000) || HANG_MS_DEFAULT;
   var appTitle =
     typeof cfg.hkTitle === "string" && cfg.hkTitle
@@ -140,6 +161,67 @@
     } catch (err) {
       return fallback;
     }
+  }
+
+  /** A plain CSS length (or a bare 0) — the only shape the bar can apply. */
+  function isPlainLength(value) {
+    return /^\s*(-?\d*\.?\d+(px|rem|em|ex|ch|vh|dvh|svh|lvh|vw|dvw|%)|0)\s*$/i.test(
+      value
+    );
+  }
+
+  /**
+   * Resolve a host's caption-height declaration to one plain length.
+   *
+   * The contract accepts a length OR a var() chain, but the bar needs a value it
+   * can actually apply: a declaration parser may reject var() inside a style
+   * property (happy-dom's does; some WebViews did too). Resolution therefore
+   * lands on a length, in this order:
+   *
+   *   1. a plain length is taken as-is;
+   *   2. a `var(--name, fallback)` chain resolves to its OWN fallback when the
+   *      referenced property is not in the cascade yet — which is the normal
+   *      boot case: the bar exists BEFORE any stylesheet has loaded, so the
+   *      fallback IS the app's declared height at that instant;
+   *   3. anything else (junk, a chain without a fallback) yields "" and the
+   *      numeric default stays.
+   *
+   * Tarbar tracking: the applied length is a snapshot, not a live chain. That is
+   * deliberate — the bar only lives until the app claims the chrome, and a boot
+   * strip that changes height mid-load is worse than one that matches the
+   * pre-CSS contract exactly.
+   */
+  function resolveBandHeight(raw) {
+    var value = (raw || "").trim();
+    if (!value) return "";
+    if (isPlainLength(value)) return value;
+    var chain = /^var\(\s*--[A-Za-z0-9_-]+\s*,\s*([^()]+?)\s*\)$/i.exec(value);
+    if (chain && isPlainLength(chain[1])) return chain[1].trim();
+    return "";
+  }
+
+  /**
+   * The host's caption band height, when the contract var is published.
+   *
+   * Computed first — a real webview substitutes custom properties, so a chain
+   * arrives already resolved — then the declared value (the pre-paint skeleton
+   * writes it as an inline :root style), which covers engines that do not
+   * substitute in getComputedStyle. Both go through resolveBandHeight.
+   */
+  function captionBandHeight() {
+    var computed = safe(function () {
+      var cs =
+        typeof window.getComputedStyle === "function"
+          ? window.getComputedStyle(root)
+          : null;
+      return cs ? cs.getPropertyValue(CAPTION_HEIGHT_VAR) || "" : "";
+    }, "");
+    var resolved = resolveBandHeight(computed);
+    if (resolved) return resolved;
+    var declared = safe(function () {
+      return root.style.getPropertyValue(CAPTION_HEIGHT_VAR) || "";
+    }, "");
+    return resolveBandHeight(declared);
   }
 
   function noop() {}
@@ -407,8 +489,20 @@
   }, undefined);
 
   // Publish the bar height so the host can keep its own content below it.
+  // The contract value goes out VERBATIM (never re-measured) so the host's
+  // offset tracks the same token chain the bar itself wears.
   safe(function () {
-    root.style.setProperty("--hk-boot-chrome-h", barHeight + "px");
+    root.style.setProperty(
+      "--hk-boot-chrome-h",
+      bandHeight || barHeight + "px"
+    );
+  }, undefined);
+
+  // Wear the caption band height when the contract delivered one: an inline
+  // height beats the stylesheet rule's numeric default, so the strip and the
+  // app's caption band read as one band from the very first frame.
+  safe(function () {
+    if (bandHeight) bar.style.height = bandHeight;
   }, undefined);
   root.setAttribute("data-hk-boot-chrome", "active");
 

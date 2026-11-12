@@ -1070,6 +1070,14 @@ export {
   WINDOW_IPC,
   RESIZE_POLL_MS,
   RESIZE_FALLBACK_TICKS,
+  // Caption-band contracts (2026-11-12): hosts bind their band's
+  // data-tauri-drag-region to CHROME_BAND_DRAG_REGION ("deep" — the bare value
+  // only matches the exact event target, so a band of wrappers never dragged or
+  // double-click-maximized) and publish their band height under
+  // CHROME_BAND_HEIGHT_VAR so hikari's pre-boot bar wears the same height as the
+  // app's caption band instead of a thin default it then replaces.
+  CHROME_BAND_DRAG_REGION,
+  CHROME_BAND_HEIGHT_VAR,
   type WindowApiLike,
 } from "./runtime/windowChrome";
 // THE hyperlink coordination context (runtime/hyperlink.ts): every link

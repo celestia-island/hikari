@@ -50,6 +50,14 @@ import { fileURLToPath } from "node:url";
  *      in dev (Vite only serves `public/` files otherwise, and the script ships
  *      inside the package instead).
  *
+ * HEIGHT CONTRACT (2026-11-12): the bar also follows a host-published custom
+ * property — `--hk-chrome-band-h` on :root (hikari's CHROME_BAND_HEIGHT_VAR,
+ * runtime/windowChrome.ts) — so a shell whose caption band has a real height
+ * draws the SAME band from the first frame instead of a thin default the band
+ * then replaces. Declare it from the host's pre-paint skeleton as a length or a
+ * var() chain (`var(--s-header-height, 3rem)`); the bar applies the resolved
+ * length. The `height` option still wins when a host wants the bar pinned.
+ *
  * KNOWN PRECONDITIONS (host-side, documented rather than enforced):
  *   - `boot-chrome.js` injects its own `<style>` element, so the host CSP needs
  *     `style-src 'unsafe-inline'` (the Tauri shells in the family allow it).

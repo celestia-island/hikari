@@ -54,6 +54,16 @@
  *
  *      Hosts that paint their OWN title bar (instead of HkTitleBar /
  *      HkWindowControls) call `claimWindowChrome(by)` directly.
+ *
+ *   4. `CHROME_BAND_DRAG_REGION` — the drag-region attribute value caption
+ *      band roots carry, so the band's WHOLE surface (not just the pixels the
+ *      band element itself paints) drags and double-click-maximizes under
+ *      Tauri's injected drag handler. See the constant's doc for the exact
+ *      self/deep/false semantics the handler implements.
+ *
+ *   5. `CHROME_BAND_HEIGHT_VAR` — the custom property a host publishes so the
+ *      pre-boot bar wears the app's caption band height from the first frame
+ *      instead of a thin default the band then replaces.
  */
 
 import { type HostWindow } from "../utils/typing";
@@ -63,6 +73,55 @@ export const CHROME_CLAIM_EVENT = "hk:chrome-claim";
 
 /** `<html>` attribute marking the app as the chrome owner. */
 export const CHROME_OWNER_ATTR = "data-hk-chrome";
+
+/**
+ * The `data-tauri-drag-region` attribute value that promotes a WHOLE caption
+ * band — the band AND its non-interactive descendants — to a drag/maximize
+ * surface (2026-11-12 user report, the chest desktop window).
+ *
+ * Tauri's injected drag handler (`tauri` 2.12 `src/window/scripts/drag.js`)
+ * walks the event's composed path and decides per element:
+ *
+ *   - bare attr / `"true"` — SELF-only: the drag region matches only when the
+ *     event target IS that exact element;
+ *   - `"deep"` — any descendant of the element triggers, and the walk stops at
+ *     the first match UNLESS a clickable element (a/button/input/select/
+ *     textarea/label/summary, an editing host, a tabindexed node or an
+ *     interactive role) without the attribute sits in the path — those block;
+ *     an element explicitly carrying `"false"` blocks too;
+ *   - `"false"` — drag blocked here and for every ancestor.
+ *
+ * A caption band is never one element: wings, wrappers and text spans tile the
+ * whole strip, so a BARE attribute on the band matches only the pixels the band
+ * element itself paints — its own children shadow it, and dragging plus the
+ * double-click maximize (`internal_toggle_maximize`, already allowed by
+ * `core:window:default`) never fire even though the attribute is visibly
+ * there. Caption band roots therefore take the value from THIS constant —
+ * `HkTitleBar`, the chrome face of `HkAdminHeader`, and every host band —
+ * instead of a local literal, so the semantics stay reviewable in one place.
+ * Interactive children need no opt-out: the clickables block themselves, and
+ * `HkWindowControls` already carries the explicit `"false"`.
+ */
+export const CHROME_BAND_DRAG_REGION = "deep";
+
+/**
+ * The CSS custom property that publishes a host's caption band height to the
+ * pre-boot window bar (`src/res/boot-chrome.js`).
+ *
+ * The boot strip exists BEFORE the app bundle, so it cannot read the app's
+ * stylesheet tokens directly; the host declares its band height to :root from
+ * its pre-paint skeleton (an inline `:root` style or a static stylesheet) —
+ * a plain length (`"48px"`, `"3rem"`) or a var() chain
+ * (`"var(--s-header-height, 3rem)"`). The bar wears the value verbatim, so it
+ * matches the app's caption band from the first frame AND keeps tracking the
+ * token once the real stylesheet lands (2026-11-12 user report: chest's wide
+ * 3rem band booted behind a thin 32px strip). Without the var — or when the
+ * plugin's explicit `height` option is set — the bar keeps its thin default.
+ * The name is mirrored as a string literal inside `res/boot-chrome.js` (a
+ * classic script, no imports); the parity test in `src/res/bootChrome.test.ts`
+ * fails if either side drifts.
+ */
+export const CHROME_BAND_HEIGHT_VAR = "--hk-chrome-band-h";
 
 /**
  * The Tauri 2.12 IPC command names, in ONE place.

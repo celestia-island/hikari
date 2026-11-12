@@ -7,4 +7,4 @@ on:
 
 jobs:
   depspec:
-    uses: celestia-island/celestia-devtools/.github/workflows/depspec-lint.yml@master
+    uses: celestia-island/celestia-devtools/.github/workflows/depspec-lint.yml@bcf5ed8f3caebe8dbf0a528ab9deecb6d42cf211

@@ -19,7 +19,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, defineComponent, type VNodeChild } from "vue";
+import { createApp, h, defineComponent, ref, type VNodeChild } from "vue";
 
 import HkKanban from "./HkKanban";
 import HkScrollContainer from "./HkScrollContainer";
@@ -68,6 +68,58 @@ describe("HkScrollContainer dock slots", () => {
     // happy-dom — no layout; the contract is the vars exist + RO wired).
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("0px");
     expect(host.style.getPropertyValue("--hk-scroll-dock-top")).toBe("0px");
+  });
+
+  it("retires the dock band at the scroll end instead of covering the last row", async () => {
+    // 2026-11-12 user report: the cruise board's band kept painting over
+    // its own flush-parked last row at full scroll. Dock bands share the
+    // strength vars but are NOT the `fade` ramp, so they used to sit at
+    // their designed full depth forever. The dock path now publishes a
+    // BINARY gate: lit while content still hides past the edge, retired
+    // (0) once nothing does.
+    const instance = ref<{ refresh: () => void } | null>(null);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp(defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkScrollContainer,
+            { ref: instance as never, dockFade: true },
+            {
+              default: () => h("div", { class: "content" }, "rows"),
+              dockBottom: () => h("div", { class: "the-dock" }, "dock"),
+            },
+          );
+      },
+    }));
+    mounts.push(app);
+    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
+    const strength = () => host.style.getPropertyValue("--hk-scroll-fade-strength-bottom");
+
+    const stub = (scrollTop: number) => {
+      Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
+      Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
+      Object.defineProperty(viewport, "scrollTop", { value: scrollTop, configurable: true });
+    };
+
+    stub(0);
+    instance.value?.refresh();
+    await Promise.resolve();
+    // 300 hidden below the fold: lit at full depth.
+    expect(strength()).toBe("1");
+
+    stub(300);
+    viewport.dispatchEvent(new Event("scroll"));
+    // The scroll listener re-senses on a scheduled frame; refresh() is the
+    // synchronous pass these tests use (the scroll event also proves the
+    // listener path does not resurrect the band).
+    instance.value?.refresh();
+    await Promise.resolve();
+    // Parked at the end: nothing left to hide, so the band retires.
+    expect(strength()).toBe("0");
   });
 
   it("renders a top dock and fades the top edge instead", () => {

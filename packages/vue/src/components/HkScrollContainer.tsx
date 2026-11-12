@@ -920,6 +920,22 @@ export default defineComponent({
           lastPublishedDir = dir;
           root.setAttribute("data-dir", dir);
         }
+      } else if (props.dockFade && (slots.dockBottom || slots.dockTop)) {
+        // Dock-fed bands share the strength vars but never the `fade`
+        // ramp: gate them binary so the band retires at the scroll end
+        // instead of covering the flush-parked last row (see
+        // publishFadeStrengths' dock note). Depths reuse the same
+        // physical-side mapping the fade branch computes.
+        publishFadeStrengths(
+          root,
+          {
+            left: hasH() ? (rtl ? hMax - hPos : hPos) : 0,
+            right: hasH() ? (rtl ? hPos : hMax - hPos) : 0,
+            top: hasV() ? vPos : 0,
+            bottom: hasV() ? vMax - vPos : 0,
+          },
+          true,
+        );
       } else {
         clearPublishedFade(root);
       }
@@ -946,13 +962,32 @@ export default defineComponent({
      *  the band's 0..1 depth, so the fade grows with the pull and caps
      *  at the full band. An edge hiding nothing (the same ≤1px deadband
      *  computeOverflow uses) publishes 1 — with its 0px band that is
-     *  invisible, and it keeps dock-fed edges (which share the vars,
-     *  no fade prop → never published) at their designed full band. */
-    function publishFadeStrengths(root: HTMLElement, hidden: { left: number; right: number; top: number; bottom: number }) {
+     *  invisible.
+     *
+     *  `dock` mode (2026-11-12 user report): a dock-fed band shares these
+     *  vars but is NOT the `fade` ramp — it is designed to sit at its
+     *  full depth while content slides beneath the dock. Publishing the
+     *  progressive value there made the band permanent, so a scroller
+     *  parked at its end kept painting over its own last row ("拉到最底部
+     *  仍然有渐变阴影覆盖最后一行"). Dock mode therefore publishes a
+     *  BINARY gate: lit (1) while that edge still hides content, retired
+     *  (0) once the scroller has nothing left past it. The band then
+     *  exists exactly while there is something to reveal, and vanishes at
+     *  the end — for the stream it is the same full-depth band, so the
+     *  mid-scroll dissolve the 2026-11-11 direction asked for is intact.
+     */
+    function publishFadeStrengths(
+      root: HTMLElement,
+      hidden: { left: number; right: number; top: number; bottom: number },
+      dock = false,
+    ) {
       const dist = Math.max(0, props.fadeDistance);
       for (const [side, depth] of Object.entries(hidden) as Array<[keyof typeof hidden, number]>) {
-        const strength =
-          depth <= 1 || dist === 0
+        const strength = dock
+          ? depth <= 1
+            ? "0"
+            : "1"
+          : depth <= 1 || dist === 0
             ? "1"
             : String(Math.min(1, Math.round((depth / dist) * 1000) / 1000));
         if (lastFadeStrengths.get(side) !== strength) {

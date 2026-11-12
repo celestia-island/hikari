@@ -364,11 +364,13 @@ describe("HkScrollContainer dock slots", () => {
     expect(strength()).toBe("0");
     // depth=1: the verdict must have flipped to "start" — no bottom state
     // rule applies, the dock rule owns the edge and multiplies by the
-    // gate's 0. If either deadband drifts past the other (gate at <=0, or
-    // the verdict's atEnd at strict >=max), the gate here says "0" while
-    // the verdict says "both" — a full ramp band over a row the gate
-    // declared retired, with each half's own test still green. This
-    // assertion is the only thing that goes red.
+    // gate's 0. The two deadbands drifting apart is what this guards
+    // against: a verdict atEnd narrowed to strict ">= max" flips this to
+    // "both" while the gate still says "0" — a full ramp band over a row
+    // the gate declared retired. (A gate narrowed to "<= 0" fails the
+    // strength pin above instead; and only an EXACT boundary drift, like
+    // "> max - 1", is caught by this verdict pin alone — wider drifts
+    // also trip the horizontal-deadband test in HkScrollContainer.test.)
     expect(host.getAttribute("data-v-overflow")).toBe("start");
   });
 

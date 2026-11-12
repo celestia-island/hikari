@@ -116,8 +116,8 @@ describe("HkScrollContainer dock slots", () => {
     instance.value?.refresh();
     await Promise.resolve();
     expect(host.getAttribute("data-dir")).toBeNull();
-    // 280 still hidden below the fold: the dock gate is lit.
-    expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
+    // 280 still hidden below the fold: the gate is republished lit.
+    expect(host.style.getPropertyValue("--hk-scroll-dock-gate-bottom")).toBe("1");
   });
 
   it("re-senses when dockFade flips at rest, without a manual refresh", async () => {
@@ -155,17 +155,56 @@ describe("HkScrollContainer dock slots", () => {
       instance.value?.refresh();
       await vi.advanceTimersByTimeAsync(60);
       // 300 hidden below the fold: the gate is lit at full depth.
-      expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
+      expect(host.style.getPropertyValue("--hk-scroll-dock-gate-bottom")).toBe("1");
 
       props.dockFade = false;
       // NO refresh: the watcher's own scheduled update must do the pass.
       await vi.advanceTimersByTimeAsync(60);
       // The dock branch no longer runs, the stale value was cleared and
       // nothing republished it.
-      expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("");
+      expect(host.style.getPropertyValue("--hk-scroll-dock-gate-bottom")).toBe("");
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("keeps the ramp and the gate apart when fade rides with a dock", async () => {
+    // THE case the two-var split exists for: with `fade` on, the ramp
+    // branch runs (not the dock branch), and at the scroll end it
+    // publishes the ramp's "1" — into ITS OWN var. The dock gate on its
+    // var retires to "0". One shared var could not hold both values;
+    // two can, and the sheet consumes the gate for the dock band, so the
+    // flush-parked last row stays visible even in this combination.
+    const instance = ref<{ refresh: () => void } | null>(null);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp(defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkScrollContainer,
+            { ref: instance as never, fade: true, dockFade: true },
+            {
+              default: () => h("div", { class: "content" }, "rows"),
+              dockBottom: () => h("div", { class: "the-dock" }, "dock"),
+            },
+          );
+      },
+    }));
+    mounts.push(app);
+    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
+    Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
+    Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
+    Object.defineProperty(viewport, "scrollTop", { value: 300, configurable: true });
+    instance.value?.refresh();
+    await Promise.resolve();
+    // Parked at the end: the ramp (by its own design) says 1 — but that
+    // value now lives on the ramp's var and cannot reach the dock band…
+    expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
+    // …while the gate, on its own var, retires the band.
+    expect(host.style.getPropertyValue("--hk-scroll-dock-gate-bottom")).toBe("0");
   });
 
   it("retires the dock band at the scroll end instead of covering the last row", async () => {
@@ -195,7 +234,7 @@ describe("HkScrollContainer dock slots", () => {
     mounts.push(app);
     const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
     const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
-    const strength = () => host.style.getPropertyValue("--hk-scroll-fade-strength-bottom");
+    const strength = () => host.style.getPropertyValue("--hk-scroll-dock-gate-bottom");
 
     const stub = (scrollTop: number) => {
       Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
@@ -244,7 +283,7 @@ describe("HkScrollContainer dock slots", () => {
     mounts.push(app);
     const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
     const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
-    const strength = () => host.style.getPropertyValue("--hk-scroll-fade-strength-bottom");
+    const strength = () => host.style.getPropertyValue("--hk-scroll-dock-gate-bottom");
     const stub = (scrollTop: number) => {
       Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
       Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });

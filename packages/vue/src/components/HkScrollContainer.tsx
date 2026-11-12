@@ -237,12 +237,14 @@ export default defineComponent({
      *  dissolve at all, because the air between content and dock is the
      *  dock's measured height (see `dockMode`). The band RETIRES at the
      *  scroll end (2026-11-12 user report): it is the dock size
-     *  multiplied by a binary strength this component publishes for
-     *  dock-fed edges — lit while content still hides past the edge,
-     *  retired at the sense's own 1px deadband — so a flush-parked last
-     *  row reads in full instead of sitting under a permanent gradient.
-     *  With `fade` ALSO on, the ramp branch owns the edges and the
-     *  sheet's ownership note describes that combination. */
+     *  multiplied by a binary gate this component publishes for dock-fed
+     *  edges on its OWN var family (--hk-scroll-dock-gate-<side>) — lit
+     *  while content still hides past the edge, retired at the sense's
+     *  own 1px deadband — so a flush-parked last row reads in full
+     *  instead of sitting under a permanent gradient. With `fade` ALSO
+     *  on, the two semantics coexist: the ramp keeps its progressive
+     *  value mid-scroll (the state rules own the edge there) and the
+     *  gate still retires the band at the end. */
     dockFade: { type: Boolean, default: true },
     /** Opt-in tail clearance for FLOATING docks (2026-10-12): a dock that
      *  lives OUTSIDE this container (a shell-level fixed plane — a page's
@@ -508,6 +510,12 @@ export default defineComponent({
     // ancestor attribute (dir on the container, dir="auto") would
     // light the wrong physical edge.
     const lastFadeStrengths = new Map<string, string>();
+    /** The dock band's binary gate (see publishDockGates): a SEPARATE var
+     *  family from the fade ramp's, so the two semantics can coexist — the
+     *  ramp keeps its progressive value while the gate retires at the end,
+     *  and the sheet composes them by cascade (fade state rules own the
+     *  edge mid-scroll; the dock rule applies once nothing is hidden). */
+    const lastDockGates = new Map<string, string>();
     let lastPublishedDir: string | null = null;
 
     // Sensed selection edge hint (see the selectionHint prop doc),
@@ -895,18 +903,20 @@ export default defineComponent({
       if (props.overflowGlow) {
         publishOverflowGlowEdges(overflowGlowEdgesFor(h, v, rtl));
       }
+      // Physical-side depths shared by both publishers: the normalized
+      // hPos counts the inline START, which is the visual RIGHT edge under
+      // RTL — swap there so --hk-scroll-fade-strength-left always means
+      // the left edge. Axis-gated edges never hide anything this
+      // container can fade, so they publish the unlit "1" rather than
+      // live geometry.
+      const hidden = {
+        left: hasH() ? (rtl ? hMax - hPos : hPos) : 0,
+        right: hasH() ? (rtl ? hPos : hMax - hPos) : 0,
+        top: hasV() ? vPos : 0,
+        bottom: hasV() ? vMax - vPos : 0,
+      };
       if (props.fade) {
-        // Physical-side depths: the normalized hPos counts the inline
-        // START, which is the visual RIGHT edge under RTL — swap there
-        // so --hk-scroll-fade-strength-left always means the left edge.
-        // Axis-gated edges never hide anything this container can fade,
-        // so they publish the unlit "1" rather than live geometry.
-        publishFadeStrengths(root, {
-          left: hasH() ? (rtl ? hMax - hPos : hPos) : 0,
-          right: hasH() ? (rtl ? hPos : hMax - hPos) : 0,
-          top: hasV() ? vPos : 0,
-          bottom: hasV() ? vMax - vPos : 0,
-        });
+        publishFadeStrengths(root, hidden);
         // Mirror the COMPUTED direction for the CSS band-slot swap (the
         // SCSS RTL rules key on this attribute, not on [dir]): the
         // depths above are physical, so the slot mapping must come from
@@ -927,32 +937,20 @@ export default defineComponent({
           lastPublishedDir = dir;
           root.setAttribute("data-dir", dir);
         }
-      } else if (props.dockFade && (slots.dockBottom || slots.dockTop)) {
-        // The dir mirror belongs to the `fade` band-slot swap, which is
-        // off in this branch: drop a value a previous fade-on pass may
-        // have published, so "fade off removes it" holds for dock
-        // containers too (F4 in the 2026-11-12 review).
-        if (lastPublishedDir !== null) {
-          lastPublishedDir = null;
-          root.removeAttribute("data-dir");
-        }
-        // Dock-fed bands share the strength vars but never the `fade`
-        // ramp: gate them binary so the band retires at the scroll end
-        // instead of covering the flush-parked last row (see
-        // publishFadeStrengths' dock note). Depths reuse the same
-        // physical-side mapping the fade branch computes.
-        publishFadeStrengths(
-          root,
-          {
-            left: hasH() ? (rtl ? hMax - hPos : hPos) : 0,
-            right: hasH() ? (rtl ? hPos : hMax - hPos) : 0,
-            top: hasV() ? vPos : 0,
-            bottom: hasV() ? vMax - vPos : 0,
-          },
-          true,
-        );
       } else {
         clearPublishedFade(root);
+      }
+      // The dock gate is an INDEPENDENT lifecycle, no longer an else-if:
+      // with `fade` also on, the ramp keeps its progressive value on this
+      // edge (the state rules own it mid-scroll) while the gate — on its
+      // OWN var — retires the dock band at the end (2026-11-12 user
+      // direction: two vars instead of one shared one). Publishing into a
+      // separate family means the two semantics compose in the sheet
+      // instead of fighting in JS.
+      if (props.dockFade && (slots.dockBottom || slots.dockTop)) {
+        publishDockGates(root, hidden);
+      } else {
+        clearDockGates(root);
       }
     }
 
@@ -977,32 +975,15 @@ export default defineComponent({
      *  the band's 0..1 depth, so the fade grows with the pull and caps
      *  at the full band. An edge hiding nothing (the same ≤1px deadband
      *  computeOverflow uses) publishes 1 — with its 0px band that is
-     *  invisible.
-     *
-     *  `dock` mode (2026-11-12 user report): a dock-fed band shares these
-     *  vars but is NOT the `fade` ramp — it is designed to sit at its
-     *  full depth while content slides beneath the dock. Publishing the
-     *  progressive value there made the band permanent, so a scroller
-     *  parked at its end kept painting over its own last row ("拉到最底部
-     *  仍然有渐变阴影覆盖最后一行"). Dock mode therefore publishes a
-     *  BINARY gate: lit (1) while that edge still hides content, retired
-     *  (0) once the scroller has nothing left past it. The band then
-     *  exists exactly while there is something to reveal, and vanishes at
-     *  the end — for the stream it is the same full-depth band, so the
-     *  mid-scroll dissolve the 2026-11-11 direction asked for is intact.
-     */
-    function publishFadeStrengths(
-      root: HTMLElement,
-      hidden: { left: number; right: number; top: number; bottom: number },
-      dock = false,
-    ) {
+     *  invisible. This family is the RAMP's alone: dock bands read their
+     *  own gate var (see publishDockGates), so a dock container mounted
+     *  alongside `fade` can retire at the end without the ramp's
+     *  end-of-scroll "1" leaking into it. */
+    function publishFadeStrengths(root: HTMLElement, hidden: { left: number; right: number; top: number; bottom: number }) {
       const dist = Math.max(0, props.fadeDistance);
       for (const [side, depth] of Object.entries(hidden) as Array<[keyof typeof hidden, number]>) {
-        const strength = dock
-          ? depth <= 1
-            ? "0"
-            : "1"
-          : depth <= 1 || dist === 0
+        const strength =
+          depth <= 1 || dist === 0
             ? "1"
             : String(Math.min(1, Math.round((depth / dist) * 1000) / 1000));
         if (lastFadeStrengths.get(side) !== strength) {
@@ -1010,6 +991,36 @@ export default defineComponent({
           root.style.setProperty(`--hk-scroll-fade-strength-${side}`, strength);
         }
       }
+    }
+
+    /** The dock band's BINARY gate, on its own var family
+     *  (--hk-scroll-dock-gate-<side>): lit (1) while that edge still
+     *  hides content, retired (0) once the scroller has nothing left past
+     *  it (the sense's own ≤1px deadband). The sheet multiplies the dock
+     *  size by this gate, so a scroller parked at its end shows its
+     *  flush-parked last row in full (2026-11-12 user report:
+     *  「拉到最底部仍然有渐变阴影覆盖最后一行」). Living on a separate
+     *  var from the fade ramp is the point: with `fade` also on, the ramp
+     *  keeps its progressive value AND the gate still retires at the end
+     *  — the two semantics no longer fight over one number. */
+    function publishDockGates(root: HTMLElement, hidden: { left: number; right: number; top: number; bottom: number }) {
+      for (const [side, depth] of Object.entries(hidden) as Array<[keyof typeof hidden, number]>) {
+        const gate = depth <= 1 ? "0" : "1";
+        if (lastDockGates.get(side) !== gate) {
+          lastDockGates.set(side, gate);
+          root.style.setProperty(`--hk-scroll-dock-gate-${side}`, gate);
+        }
+      }
+    }
+
+    /** Drop the dock gate family (dockFade off / no dock slot): a stale
+     *  inline gate must not outlive the feature that wrote it. */
+    function clearDockGates(root: HTMLElement) {
+      if (lastDockGates.size === 0) return;
+      for (const side of ["left", "right", "top", "bottom"]) {
+        root.style.removeProperty(`--hk-scroll-dock-gate-${side}`);
+      }
+      lastDockGates.clear();
     }
 
     /** Selection edge hint (see the selectionHint prop doc): does any

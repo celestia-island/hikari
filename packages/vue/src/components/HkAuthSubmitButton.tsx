@@ -1,6 +1,10 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
 import { HButton, useI18n } from "@celestia-island/hikari";
 import { solvePow, type PowChallenge, type PowSolution } from "../utils/pow";
+// The component paints `.s-auth-submit` / `.s-auth-submit-error`; this stylesheet
+// defines them. It existed but nothing imported it, so both classes shipped
+// unstyled to every consumer.
+import "./HkAuthSubmitButton.scss";
 
 export interface AuthSubmitContext {
   /** Solved PoW for the challenge the backend issued (if any). */

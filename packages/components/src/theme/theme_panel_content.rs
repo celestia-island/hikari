@@ -34,9 +34,9 @@
 //     div.s-theme-item-list [role="list"]
 //       (per theme)
 //       div.hk-list-row.hk-list-row-clickable.s-theme-item-row
-//                            [data-custom?] [data-trailing="slot"?]
-//                            [data-name-suffix="slot"?] [data-active?]
-//                            [role="listitem"] [aria-current="true"?]
+//                            [data-custom="true"?] [data-trailing="slot"?]
+//                            [data-name-suffix="slot"?] [data-active="true"?]
+//                            [role="listitem"] [tabindex="0"] [aria-current="true"?]
 //         div.hk-list-row-main
 //           div.s-theme-item-line
 //             [span.hk-menu-item-icon.s-theme-item-lead]
@@ -44,8 +44,9 @@
 //             [span.s-theme-item-name-suffix]
 //         [div.hk-list-row-trailing > span.s-theme-item-trailing]
 //         [div.hk-list-row-actions.hk-list-row-actions--overlay
-//          [role="toolbar"]                       (click-guarded lane)
-//            button.hk-list-row-actions__btn [data-danger?]]
+//          [role="toolbar"] [aria-label]         (click-guarded lane)
+//            button.hk-list-row-actions__btn [data-danger="true"?]
+//              [aria-label] [title]]
 //     button.hk-add-tile.hk-add-tile--compact.s-theme-item-customize
 //       {Plus glyph svg}  "Customize"                       (standard add tile)
 //   [div.hk-menu-slot.hk-menu-slot--extra]      (menu_extra slot)
@@ -82,8 +83,6 @@
 //   * The scoped slot payload drops `preset`: the host owns the preset
 //     tables and can resolve by `id` — cloning a whole scheme per row per
 //     render had no consumer in the mirror.
-//   * The delete affordance's glyph is `Close` (12px) — the shipped MDI
-//     set has no trash glyph (Vue: `Trash2`); swap when the set grows.
 //   * The scheme dialog's editor state is host-held too: the `scheme_*`
 //     props and channels below are the dialog's controlled pass-through,
 //     documented in its own file. `on_scheme_update` is Vue's
@@ -97,6 +96,11 @@
 //     the clickable div). Lane and trailing clicks stop at their
 //     wrappers (`stop_propagation` — the HkStatCard action-wrapper rule;
 //     a per-row action must never double-fire the row's selection).
+//   * The itemActions builder OWNS the lane on every row it is asked
+//     about: Vue lets a present builder decline per row (return
+//     undefined → the built-in delete falls back); the wire callback
+//     returns a Vec, so an empty Vec means "no lane" even on customs.
+//     Deliberate (tested), not an accident.
 //   * The action lane renders in its POINTER form (overlay revealed by
 //     the sheet's hover/focus-within): the mirror has no matchMedia, so
 //     the touch ⋯ trigger + HkMenu pair is not mirrored — a touch-first
@@ -572,8 +576,8 @@ pub fn ThemePanelContent(props: ThemePanelContentProps) -> Element {
                 {
                     let active = props.current_theme == theme.id;
                     let custom = theme.is_custom;
-                    let row_active = active.then_some("");
-                    let row_custom = custom.then_some("");
+                    let row_active = active.then_some("true");
+                    let row_custom = custom.then_some("true");
                     let has_trailing = props.item_trailing.is_some();
                     let has_suffix = props.item_name_suffix.is_some();
                     let trailing_marker = has_trailing.then_some("slot");
@@ -695,7 +699,7 @@ pub fn ThemePanelContent(props: ThemePanelContentProps) -> Element {
                                             button {
                                                 class: "hk-list-row-actions__btn",
                                                 "type": "button",
-                                                "data-danger": danger.then_some(""),
+                                                "data-danger": danger.then_some("true"),
                                                 "aria-label": label.clone(),
                                                 title: label.clone(),
                                                 onclick: press,
@@ -970,8 +974,11 @@ mod tests {
         assert!(html.contains(r#"class="hk-list-row-main""#), "{html}");
         assert!(html.contains(r#"class="s-theme-item-line""#), "{html}");
         assert!(html.contains(r#"class="s-theme-item-name""#), "{html}");
-        assert!(html.contains(r#"data-active="""#), "{html}");
-        assert!(html.contains(r#"data-custom="""#), "{html}");
+        // Boolean data markers render "true" — Vue's patchAttr coerces
+        // booleans, and the mirrors pin the value form (house convention:
+        // icon_button_group.rs, solar_location_setting.rs).
+        assert!(html.contains(r#"data-active="true""#), "{html}");
+        assert!(html.contains(r#"data-custom="true""#), "{html}");
         // The built-in custom delete rides the standard lane (danger
         // button, aria + title carry the label).
         assert!(
@@ -983,7 +990,7 @@ mod tests {
             html.contains(r#"class="hk-list-row-actions__btn""#),
             "{html}"
         );
-        assert!(html.contains(r#"data-danger="""#), "{html}");
+        assert!(html.contains(r#"data-danger="true""#), "{html}");
         assert!(html.contains(r#"aria-label="Delete theme""#), "{html}");
         assert!(html.contains(r#"title="Delete theme""#), "{html}");
         assert!(html.contains("Delete theme"), "{html}");

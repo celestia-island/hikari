@@ -4,7 +4,11 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { WINDOW_IPC } from "../runtime/windowChrome";
+import {
+  CHROME_BAND_DRAG_REGION,
+  CHROME_BAND_HEIGHT_VAR,
+  WINDOW_IPC,
+} from "../runtime/windowChrome";
 import { asIndexable } from "../utils/typing";
 
 /**
@@ -124,6 +128,7 @@ beforeEach(() => {
   document.documentElement.removeAttribute("data-mode");
   document.documentElement.removeAttribute("data-hk-boot-chrome");
   document.documentElement.style.removeProperty("--hk-boot-chrome-h");
+  document.documentElement.style.removeProperty(CHROME_BAND_HEIGHT_VAR);
   clearGlobal("HkBootChrome");
   clearGlobal("__TAURI__");
   clearGlobal("__TAURI_INTERNALS__");
@@ -616,6 +621,108 @@ describe("boot-chrome.js teardown (S3-1)", () => {
     vi.advanceTimersByTime(200);
     expect(bar()).toBeNull();
     expect(document.getElementById("hk-boot-chrome-style")).toBeNull();
+  });
+});
+
+describe("boot-chrome.js caption band height contract (2026-11-12)", () => {
+  // WHY: the app's caption band is a real band (chest's 3rem-class header), and
+  // the pre-boot bar used to draw a thin 32px strip the band then replaced —
+  // two different heights inside one window, user-visible on every start. The
+  // host publishes its band height to :root; the bar wears it verbatim so the
+  // strip matches from the first frame AND keeps tracking the app token.
+
+  function published(): string {
+    return document.documentElement.style.getPropertyValue("--hk-boot-chrome-h");
+  }
+
+  /** The height the bar actually wears (inline, beats the rule's default). */
+  function worn(): string {
+    return (bar() as HTMLElement).style.height;
+  }
+
+  function declareBandHeight(value: string): void {
+    document.documentElement.style.setProperty(CHROME_BAND_HEIGHT_VAR, value);
+  }
+
+  it("resolves a var() chain to its fallback — the boot strip's real height", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    // The pre-paint skeleton (chest's theme-loader.js) publishes a CHAIN, not a
+    // resolved number. The bar exists BEFORE any stylesheet loads, so the
+    // referenced token is not in the cascade yet and the chain's own fallback
+    // IS the app's declared band height at that instant.
+    declareBandHeight("var(--s-header-height, 3rem)");
+    runBootChrome();
+
+    expect(worn()).toBe("3rem");
+    expect(published()).toBe("3rem");
+  });
+
+  it("prefers a resolvable chain over the numeric default", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    declareBandHeight("var(--chest-caption-height, 40px)");
+    runBootChrome();
+
+    expect(worn()).toBe("40px");
+    expect(published()).toBe("40px");
+  });
+
+  it("falls back to the numeric default for a chain with no resolvable length", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    // No fallback: nothing the boot strip can wear before the cascade exists.
+    declareBandHeight("var(--s-header-height)");
+    runBootChrome();
+
+    expect(worn()).toBe("");
+    expect(published()).toBe("32px");
+  });
+
+  it("accepts a plain length and clamps nothing away (host owns its band)", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    declareBandHeight("56px");
+    runBootChrome();
+
+    expect(worn()).toBe("56px");
+    expect(published()).toBe("56px");
+  });
+
+  it("lets an explicit data-hk-height pin beat the band contract", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    declareBandHeight("56px");
+    runBootChrome({ height: 36 });
+
+    expect(published()).toBe("36px");
+    expect(styleSheet()).toContain("height:36px");
+    // A pinned bar must not be overwritten by the contract.
+    expect(worn()).toBe("");
+  });
+
+  it("ignores a junk contract value instead of shipping a broken height", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    declareBandHeight("banana");
+    runBootChrome();
+
+    // No local height, and the published offset stays the numeric default —
+    // a junk value must not reach either (host offset consumers read this).
+    expect(worn()).toBe("");
+    expect(published()).toBe("32px");
+  });
+
+  it("ignores an empty contract value", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    declareBandHeight("   ");
+    runBootChrome();
+
+    expect(published()).toBe("32px");
+  });
+
+  it("pins the contract name on both sides of the classic-script boundary", () => {
+    // boot-chrome.js cannot import the TS constant; this is the anti-drift gate.
+    expect(CHROME_BAND_HEIGHT_VAR).toBe("--hk-chrome-band-h");
+    expect(SOURCE).toContain(`"${CHROME_BAND_HEIGHT_VAR}"`);
+  });
+
+  it("pins the deep drag-region value the caption bands carry", () => {
+    expect(CHROME_BAND_DRAG_REGION).toBe("deep");
   });
 });
 

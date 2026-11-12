@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
 
 import { setLocale } from "../i18n/context";
+import { CHROME_BAND_DRAG_REGION } from "../runtime/windowChrome";
 
 import HkTitleBar from "./HkTitleBar";
 
@@ -249,5 +250,36 @@ describe("HkTitleBar stylesheet contract", () => {
     expect(body).toContain("height: var(--hk-tb-icon-size, 16px)");
     const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
     expect(scss).not.toMatch(/^\s*--hk-tb-icon-size:/m);
+  });
+});
+
+describe("HkTitleBar caption band drag region (2026-11-12)", () => {
+  // WHY: the bar IS the desktop window's caption band, and Tauri's injected
+  // drag handler only matches a BARE data-tauri-drag-region on the exact event
+  // target — so a band of wrappers/spans left drag (and double-click maximize)
+  // dead everywhere except the few pixels the root paints. The whole bar must
+  // carry hikari's deep contract instead.
+  it("carries the shared deep drag region on the root", () => {
+    const c = mount(h(HkTitleBar, { title: "App" }));
+    const bar = c.querySelector(".hk-titlebar")!;
+    expect(bar.getAttribute("data-tauri-drag-region")).toBe(CHROME_BAND_DRAG_REGION);
+    // The LITERAL, not just the imported constant: asserting the constant alone
+    // follows a wrong value instead of catching it (a mutation to "true" left
+    // this suite green before this pin existed — Tauri needs "deep" for the
+    // whole-band surface).
+    expect(bar.getAttribute("data-tauri-drag-region")).toBe("deep");
+    // The CSS grammar attribute stays: WKWebView drags through app-region.
+    expect(bar.hasAttribute("data-drag-region")).toBe(true);
+  });
+
+  it("keeps the caption buttons OUT of the drag region themselves", () => {
+    // They are clickables, which Tauri's handler already skips — but the
+    // actions row must not carry the attribute either (a future refactor that
+    // moved it there would start dragging instead of clicking).
+    const c = mount(h(HkTitleBar, { title: "App" }));
+    for (const button of c.querySelectorAll(".hk-titlebar-btn")) {
+      expect(button.hasAttribute("data-tauri-drag-region")).toBe(false);
+    }
+    expect(c.querySelector(".hk-titlebar-actions")!.hasAttribute("data-tauri-drag-region")).toBe(false);
   });
 });

@@ -1,6 +1,9 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "../i18n/context";
-import { claimWindowChrome } from "../runtime/windowChrome";
+import {
+  CHROME_BAND_DRAG_REGION,
+  claimWindowChrome,
+} from "../runtime/windowChrome";
 
 import "./HkTitleBar.scss";
 
@@ -16,6 +19,14 @@ import "./HkTitleBar.scss";
  * Dragging is pure CSS (`app-region: drag` on the bar, `no-drag` on the
  * interactive children) — supported by Tauri (WebView2/WKWebView/WebKitGTK)
  * and Electron alike; no JS drag logic needed.
+ *
+ * Tauri's injected drag handler keys off the `data-tauri-drag-region`
+ * ATTRIBUTE (the CSS property above only covers WKWebView), and its bare
+ * value matches the exact event target only — so the bar carries hikari's
+ * `CHROME_BAND_DRAG_REGION` ("deep"): the WHOLE bar surface, not just the
+ * pixels the root paints, drags and double-click-maximizes, while the
+ * interactive children keep blocking for themselves (the handler skips
+ * clickables and honors explicit `"false"`; see runtime/windowChrome).
  *
  * Text selection is disabled across the bar (captions are chrome, not
  * content).
@@ -76,6 +87,7 @@ export default defineComponent({
         class="hk-titlebar"
         data-drag-region
         data-maximized={props.maximized || undefined}
+        data-tauri-drag-region={CHROME_BAND_DRAG_REGION}
       >
         {slots.left?.() ?? (
           <span class="hk-titlebar-title">

@@ -2,6 +2,7 @@ import { computed, defineComponent, ref, watch, type PropType, type VNode } from
 import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
+import { CHROME_BAND_DRAG_REGION } from "../runtime/windowChrome";
 import HkMenu, { type HkMenuItem } from "./HkMenu";
 import { HkAvatarButton } from "./HkAvatarButton";
 
@@ -27,7 +28,13 @@ export const HkAdminHeader = defineComponent({
      *  window-controls chrome contract (.s-glass-header--chrome /
      *  --hk-window-controls-edge-inset) instead of the content inset —
      *  a standard-mode cluster glued to the frame corner is the flush
-     *  variant's look worn by the wrong mode (field report 2026-10-25). */
+     *  variant's look worn by the wrong mode (field report 2026-10-25).
+     *  The face also claims the titlebar layer (.hk-chrome-band) and
+     *  carries hikari's deep drag region (CHROME_BAND_DRAG_REGION): the
+     *  whole header surface drags and double-click-maximizes under
+     *  Tauri's injected handler — the header IS the caption band, and its
+     *  wings/wrappers would otherwise shadow a bare attribute off the
+     *  event target (2026-11-12 user report). */
     chrome: { type: Boolean, default: false },
     actions: { type: Array as PropType<VNode[]>, default: () => [] },
     /** Signed-in identity. Drives the avatar fallback letter, the
@@ -220,6 +227,7 @@ export const HkAdminHeader = defineComponent({
           props.chrome ? "s-glass-header--chrome" : "",
           props.chrome ? "hk-chrome-band" : "",
         ]}
+        data-tauri-drag-region={props.chrome ? CHROME_BAND_DRAG_REGION : undefined}
       >
         <div ref={userTriggerRef} class="s-admin-header-user s-header-wing-start">
           {/* The hamburger rides INSIDE the left wing: the balanced grid

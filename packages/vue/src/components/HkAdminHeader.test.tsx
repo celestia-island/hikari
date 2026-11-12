@@ -60,6 +60,7 @@ vi.mock("./HkMenu", async () => {
   return { default: HMenuStub };
 });
 
+import { CHROME_BAND_DRAG_REGION } from "../runtime/windowChrome";
 import { HkAdminHeader } from "./HkAdminHeader";
 
 /**
@@ -331,5 +332,27 @@ describe("HkAdminHeader", () => {
     // centre (R2, 2026-10-15 — the class IS the column).
     const actions = c.querySelector(".s-admin-header-actions");
     expect(actions?.className).toContain("s-header-wing-end");
+  });
+});
+
+describe("HkAdminHeader chrome face drag region (2026-11-12)", () => {
+  // WHY: with chrome on, this header IS the desktop window's caption band (Tauri
+  // decorations:false). A bare drag attribute only matches the exact event
+  // target, so the wings that tile the header shadowed it — dragging and the
+  // double-click maximize never fired. The chrome face must carry hikari's deep
+  // contract on the header root; the content face (chrome off) must not.
+  it("carries the shared deep drag region when it is the caption band", () => {
+    const c = mount(headerNode({ chrome: true }));
+    const header = c.querySelector("header")!;
+    expect(header.getAttribute("data-tauri-drag-region")).toBe(CHROME_BAND_DRAG_REGION);
+    // The LITERAL as well — the constant comparison alone follows a wrong value
+    // (mutation evidence: "true" kept this suite green before this pin).
+    expect(header.getAttribute("data-tauri-drag-region")).toBe("deep");
+    expect(header.classList.contains("hk-chrome-band")).toBe(true);
+  });
+
+  it("leaves the content-face header out of the drag contract", () => {
+    const c = mount(headerNode({}));
+    expect(c.querySelector("header")!.hasAttribute("data-tauri-drag-region")).toBe(false);
   });
 });

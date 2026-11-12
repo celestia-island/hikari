@@ -20,7 +20,16 @@ export declare const BOOT_CHROME_URL: string;
 export interface BootChromePluginOptions {
   /** Application name on the left of the bar (default: `document.title`). */
   title?: string;
-  /** Bar height in px; `boot-chrome.js` clamps it to 20..64 (default 32). */
+  /**
+   * Bar height in px; `boot-chrome.js` clamps it to 20..64 (default 32).
+   *
+   * PINNING this option is the exception, not the rule: a shell whose caption
+   * band has a real height should publish that height to `root` as
+   * `--hk-chrome-band-h` (hikari's `CHROME_BAND_HEIGHT_VAR`, exported from
+   * `runtime/windowChrome`) instead — the bar then wears the app's own band
+   * height from the first frame and the host never restates a number. An
+   * explicit `height` wins over that contract (it means "pin the bar").
+   */
   height?: number;
   /** Watchdog delay in ms before the reload affordance appears (default 20000). */
   hangMs?: number;

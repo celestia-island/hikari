@@ -147,6 +147,12 @@ export {
   WINDOW_IPC,
   RESIZE_POLL_MS,
   RESIZE_FALLBACK_TICKS,
+  // The caption-band contracts (2026-11-12): hosts bind their band's drag
+  // region to this value and publish their band height under this var, so the
+  // "deep" semantics and the boot-strip height agreement live upstream instead
+  // of being re-spelled by every host.
+  CHROME_BAND_DRAG_REGION,
+  CHROME_BAND_HEIGHT_VAR,
   type WindowApiLike,
 } from "./windowChrome";
 export {

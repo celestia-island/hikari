@@ -96,13 +96,24 @@ describe("HkThemeToggle theme-row pill contract", () => {
     // The standard lane's touch trigger (⋯) is the ONLY actions tap
     // target on touch-first clients; the generic 26px box would be the
     // one undersized target among 44px sheet rows (the retired delete
-    // button made the same accommodation).
+    // button made the same accommodation). The rule MUST sit in the
+    // component's own touch predicate block — the 2026-11-13 R2b round
+    // caught the width-based regex bridging across blocks and pinning
+    // nothing (reverting the predicate kept every test green), so the
+    // fence below pins the media block CONTAINMENT the same way the
+    // customize tile's does: no `[\s\S]*?` crossing a closing brace.
     const css = read("HkThemeToggle.scss");
     const block = css.match(
-      /@media \(max-width: 767px\) \{[\s\S]*?\.s-theme-item-row \.hk-list-row-actions__trigger\s*\{[^}]*width: 2\.25rem[^}]*\}/,
+      /@media \(hover: none\), \(pointer: coarse\) \{[^@]*?\.s-theme-item-row \.hk-list-row-actions__trigger\s*\{[^}]*width: 2\.25rem[^}]*\}/,
     );
     expect(block).not.toBeNull();
     expect(block![0]).toContain("height: 2.25rem");
+    // And the retired width-based seat must not come back: no trigger
+    // rule under the viewport block.
+    const widthBlock = css.match(
+      /@media \(max-width: 767px\) \{[^@]*\.s-theme-item-row \.hk-list-row-actions__trigger/,
+    );
+    expect(widthBlock).toBeNull();
   });
 });
 

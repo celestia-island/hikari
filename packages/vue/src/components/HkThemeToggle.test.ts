@@ -471,6 +471,18 @@ describe("HkThemeToggle item slots", () => {
       if (row.hasAttribute("data-custom")) customRows += 1;
     }
     expect(customRows).toBe(2);
+
+    // Clicks inside the trailing column stop at the column (HkCardList's
+    // wrapper guard — the R2b round found the trailing wrapper unpinned
+    // while it is load-bearing for exactly this host shape: a badge in a
+    // clickable theme row). A click on the quiet mark neither selects
+    // the row nor closes the menu.
+    const before = useTheme().currentTheme.value;
+    const mark = rows[0].querySelector<HTMLElement>(".s-theme-item-trailing .trail-mark")!;
+    mark.click();
+    await settle();
+    expect(useTheme().currentTheme.value).toBe(before);
+    expect(document.body.querySelector(".s-theme-menu")).toBeTruthy();
   });
 
   it("lets the host itemActions prop own the standard action lane", async () => {

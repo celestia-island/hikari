@@ -310,6 +310,9 @@ export const HkThemePanelContent = defineComponent({
                 class="s-theme-item-row"
                 clickable
                 data-custom={th.isCustom || undefined}
+                // Deliberate DOM hook (no stylesheet consumer since the
+                // name-clearance cancellation retired): hosts and tests
+                // key off the trailing-slot mode without re-deriving it.
                 data-trailing={trailingSlot ? "slot" : undefined}
                 data-name-suffix={nameSuffixSlot ? "slot" : undefined}
                 // The ROW is the pill: the highlight state lives here so

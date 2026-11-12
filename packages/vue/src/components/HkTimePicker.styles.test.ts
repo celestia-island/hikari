@@ -9,11 +9,12 @@ const scss = readFileSync(resolve(here, "HkTimePicker.scss"), "utf8");
 const tsx = readFileSync(resolve(here, "HkTimePicker.tsx"), "utf8");
 
 /**
- * Source-contract pins for the two fixes a DOM test cannot see: the
- * minute-mode metrics key (the number layer is a sibling of the slider,
- * so `.hk-tp-face.is-minute` can never match) and the shared segmented
- * period control. A SCSS-only edit reintroducing the old selector used
- * to leave every behavioral test green; this file is the missing guard.
+ * Source-contract pins: the minute-mode metrics key (the number layer is
+ * a sibling of the slider, so `.hk-tp-face.is-minute` can never match —
+ * a regression pin even though the selector predates this PR) and the
+ * shared segmented period control introduced here. A SCSS-only edit
+ * reintroducing the old selector used to leave every behavioral test
+ * green; this file is the missing guard.
  */
 describe("HkTimePicker source contracts", () => {
   it("keys the minute-mode rules on the number layer, never the face", () => {

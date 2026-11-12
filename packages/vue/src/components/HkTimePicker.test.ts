@@ -102,6 +102,7 @@ afterEach(async () => {
   for (const el of containers.splice(0)) el.remove();
   document.querySelectorAll(".hk-tp-panel, .hk-popover-backdrop, .hk-popover-panel").forEach((el) => el.remove());
   vi.useRealTimers();
+  (window as { innerWidth: number }).innerWidth = originalWidth;
   await setLocale("en");
 });
 
@@ -438,6 +439,15 @@ describe("HkTimePicker", () => {
     expect(face().getAttribute("aria-valuemax")).toBe("45");
   });
 
+  it("never renders an aria range below a stored off-grid minute", async () => {
+    const p = mountPicker({ modelValue: "09:59", minuteStep: 30 });
+    await openPicker(p);
+    readoutButtons()[1].click();
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("59");
+    expect(face().getAttribute("aria-valuemax")).toBe("59");
+  });
+
   it("honours minuteStep for keyboard and dial snapping", async () => {
     const p = mountPicker({ modelValue: "09:30", minuteStep: 5 });
     await openPicker(p);
@@ -449,7 +459,7 @@ describe("HkTimePicker", () => {
   });
 
   it("snaps a pointer drag on the dial through minuteStep", async () => {
-    const p = mountPicker({ modelValue: "09:30", minuteStep: 15 });
+    const p = mountPicker({ modelValue: "09:30", minuteStep: 10 });
     await openPicker(p);
     const faceEl = face();
     faceEl.getBoundingClientRect = () => ({
@@ -458,12 +468,13 @@ describe("HkTimePicker", () => {
     } as DOMRect);
     readoutButtons()[1].click();
     await nextTick();
-    // 3 o'clock = 15 minutes; with step 15 it must stay 15.
+    // 3 o'clock is minute 15; step 10 snaps it to 20 (a step-blind path
+    // would leave 15, so this pins the snap, not just the wiring).
     faceEl.dispatchEvent(new MouseEvent("pointerdown", { clientX: 200, clientY: 100, bubbles: true }));
     faceEl.dispatchEvent(new MouseEvent("pointermove", { clientX: 200, clientY: 100, bubbles: true }));
     faceEl.dispatchEvent(new MouseEvent("pointerup", { clientX: 200, clientY: 100, bubbles: true }));
     await nextTick();
-    expect(face().getAttribute("aria-valuenow")).toBe("15");
+    expect(face().getAttribute("aria-valuenow")).toBe("20");
   });
 
   it("cancelling discards the draft and keeps the model untouched", async () => {

@@ -375,7 +375,11 @@ export default defineComponent({
     const ariaValueNow = computed(() => (mode.value === "hour" ? draftHour.value : draftMinute.value));
     const ariaValueMax = computed(() => {
       if (mode.value === "hour") return 23;
-      return Math.floor(59 / minuteStep.value) * minuteStep.value;
+      const gridMax = Math.floor(59 / minuteStep.value) * minuteStep.value;
+      // A stored off-grid minute is kept verbatim (documented contract), so
+      // the range must still contain it: the step grid's last value is the
+      // floor, not a clamp.
+      return Math.max(gridMax, draftMinute.value);
     });
     const ariaFaceLabel = computed(() =>
       mode.value === "hour"

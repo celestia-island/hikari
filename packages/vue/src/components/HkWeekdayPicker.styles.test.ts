@@ -21,5 +21,7 @@ describe("HkWeekdayPicker source contracts", () => {
     expect(tsx).toContain('from "./HkButton"');
     expect(tsx).toContain("<HkIconButton");
     expect(tsx).toContain("<HkButton");
+    expect(scss).toContain(".hk-wp-header .hk-btn");
+    expect(scss).toContain(".hk-wp-header .hk-icon-button");
   });
 });

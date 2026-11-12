@@ -229,6 +229,8 @@ describe("HkTimeZonePicker — trigger", () => {
     const hidden = mountPicker({ label: "Time zone", hideLabel: true });
     expect(hidden.container.querySelector(".hk-tzp-label")).toBeNull();
     expect(trigger(hidden.container).getAttribute("aria-label")).toBe("Time zone");
+    const noLabel = mountPicker({ placeholder: "Zone" });
+    expect(trigger(noLabel.container).getAttribute("aria-label")).toBe("Zone");
   });
 });
 

@@ -255,6 +255,11 @@
 /* Only color/background transitions here — still respect the user's
  * preference instead of animating ink changes against it. */
 @media (prefers-reduced-motion: reduce) {
+  .hk-wp-header .hk-btn,
+  .hk-wp-header .hk-icon-button {
+    transition: none;
+  }
+
   .hk-wp-wd,
   .hk-wp-cell {
     transition: none;

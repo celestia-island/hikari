@@ -195,15 +195,27 @@ const KNOBS = ["--hk-card-blur", "--hk-btn-secondary-blur"];
  *  guarded surface (witnessed). Other suffixed classes (`.hk-card-grid`, a
  *  different component that does not exist here) do not. Keep the list in
  *  sync with the class names in HkCard.tsx / HkButton.tsx. */
-const FAMILY_SUFFIXES = "(--[\\w-]+|-hoverable|-scrollable)";
+// The guarded FAMILY, one regex per surface. The two components spell their
+// same-node classes differently: the card pins modifiers ON the guarded
+// token (`.hk-card-hoverable`), while the button's node carries the BASE
+// token plus a variant plus a size/state (`.hk-btn.hk-btn-secondary.hk-btn-sm`)
+// — so the button family anchors on `hk-btn` with a whitelist of the SHARED
+// classes (its own variant, sizes, states); mutually exclusive variants
+// (`-primary`) and child-element classes (`-icon`, `-suffix`, `-label`)
+// never touch the guarded node and correctly stay out. Sync with
+// HkCard.tsx:40-43 and HkButton.tsx:62-70,96 when either changes.
+const FAMILY: Record<string, RegExp> = {
+  ".hk-card": /\.hk-card(--[\w-]+|-hoverable|-scrollable)?(?![\w-])/,
+  ".hk-btn-secondary":
+    /\.hk-btn(-secondary)?(--[\w-]+|-xs|-sm|-md|-lg|-block|-loading|-has-shortcut|-icon-only|-label-collapse-[\w-]+)?(?![\w-])/,
+};
 
 function mentionsTarget(selector: string): string | null {
   for (const selectorPart of selector.split(",")) {
     const trimmed = selectorPart.trim();
     for (const target of TARGETS) {
-      const cls = target.replace(".", "");
-      const re = new RegExp(`(^|[\\s>+~(])\\.${cls}(${FAMILY_SUFFIXES.slice(1, -1)})?(?![\\w-])`);
-      if (re.test(trimmed)) return target;
+      const re = FAMILY[target];
+      if (re && re.test(trimmed)) return target;
     }
   }
   return null;
@@ -305,7 +317,7 @@ function conditionalStandDowns(css: string): string[] {
 }
 
 describe("surface live-blur escape hatch", () => {
-  it("leaves the knobs unpinned anywhere in the component tree", () => {
+  it("leaves the knobs unpinned anywhere in the scanned sheets", () => {
     // Not just the two sheets: an unconditional pin parked in ANY component
     // sheet (the cross-sheet gap filed with #1232) changes every host on
     // upgrade just as silently.
@@ -382,9 +394,12 @@ describe("surface live-blur escape hatch", () => {
       // BEM variants are the same component family
       "@media (max-width: 767px) { .hk-card--plain { backdrop-filter: none; } }",
       "@media (max-width: 767px) { .hk-btn-secondary--sm { backdrop-filter: none; } }",
-      // so are the same-node modifier classes the component pins itself
+      // so are the same-node modifier classes the components pin themselves
       "@media (max-width: 767px) { .hk-card-hoverable { backdrop-filter: none; } }",
       "@media (max-width: 767px) { .hk-card-scrollable { backdrop-filter: none; } }",
+      "@media (max-width: 767px) { .hk-btn-sm { backdrop-filter: none; } }",
+      "@media (max-width: 767px) { .hk-btn-icon-only { backdrop-filter: none; } }",
+      "@media (max-width: 767px) { .hk-btn-label-collapse-md { backdrop-filter: none; } }",
       // selector list
       "@media (max-width: 767px) { .hk-card, .x { backdrop-filter: none; } }",
       // range syntax
@@ -416,6 +431,9 @@ describe("surface live-blur escape hatch", () => {
       "@media print { .hk-card { backdrop-filter: none; } }",
       // a DIFFERENT component sharing the name prefix is not this surface
       "@media (max-width: 767px) { .hk-card-grid { backdrop-filter: none; } }",
+      // nor are mutually exclusive variants or child-element classes
+      "@media (max-width: 767px) { .hk-btn-primary { backdrop-filter: none; } }",
+      "@media (max-width: 767px) { .hk-btn-icon { backdrop-filter: none; } }",
       "@media speech { .hk-card { backdrop-filter: none; } }",
       "@media (prefers-reduced-transparency: reduce) { .hk-card { backdrop-filter: none; } }",
       "@media (prefers-reduced-contrast: more) and (prefers-reduced-transparency: reduce) { .hk-card { backdrop-filter: none; } }",
@@ -424,7 +442,7 @@ describe("surface live-blur escape hatch", () => {
     }
   });
 
-  it("keeps both surfaces engine-gated: no conditional stand-down exists anywhere", () => {
+  it("keeps both surfaces engine-gated: no conditional stand-down exists in the scanned sheets", () => {
     // Across EVERY component sheet: a width gate parked in a different sheet
     // (the cross-sheet gap filed with #1232) re-keys the same two surfaces.
     for (const sheet of allComponentSheets()) {

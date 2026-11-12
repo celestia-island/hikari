@@ -67,6 +67,27 @@ describe("useMessaging", () => {
       notify("manual", { severity: "error", duration: 1_000 });
       expect(toasts[0].duration).toBe(1_000);
     });
+
+    it("key routes the message into a dedicated keyed slot", () => {
+      const { toasts } = useToast();
+      const { notify, warning } = useMessaging();
+      // A sticky keyed warning: it must not merge with the shared warning
+      // lane a plain warning() push uses.
+      notify("machine incomplete", {
+        severity: "warning",
+        key: "shell.machine-status",
+        duration: 0,
+      });
+      warning("careful");
+
+      expect(toasts).toHaveLength(2);
+      const keyed = toasts.find((t) => t.key === "shell.machine-status")!;
+      expect(keyed.type).toBe("warning");
+      expect(keyed.duration).toBe(0);
+      expect(keyed.messages.map((m) => m.text)).toEqual(["machine incomplete"]);
+      expect(toasts.find((t) => t.key === undefined)!.messages.map((m) => m.text))
+        .toEqual(["careful"]);
+    });
   });
 
   describe("transport allow-list", () => {

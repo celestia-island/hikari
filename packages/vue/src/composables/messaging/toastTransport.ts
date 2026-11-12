@@ -19,6 +19,7 @@ export const toastTransport: MessageTransport = {
     const toast = useToast();
     toast.show(payload.message, {
       type: payload.severity,
+      key: payload.key,
       duration: payload.duration,
       copyable: payload.copyable,
     });

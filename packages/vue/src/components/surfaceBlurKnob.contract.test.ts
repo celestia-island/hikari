@@ -212,15 +212,33 @@ function baseDeclarations(css: string, selector: string): Map<string, string> {
 }
 
 /** A wrapper that re-keys the stand-down to anything other than the ENGINE.
- *  `print` and `prefers-*` are deliberate capability/accessibility gates and
- *  stay allowed; EVERYTHING else a media/container query can express — size,
- *  ratio, resolution, media TYPE (`screen`), `hover`, `monochrome` — matches
- *  hosts by environment instead of by engine, which is the exact re-keying
- *  this guard forbids (an `@media screen` gate is a de-facto unconditional
- *  stand-down; witnessed green before this broadening).*/
+ *  Structure, not substrings: a prelude is allowed only when EVERY comma-
+ *  separated query is (a) a bare `print` / `speech` media type (optionally
+ *  `only`-prefixed) or (b) a parenthesized list whose every feature is
+ *  `prefers-*` joined by `and`. Everything else — media types like `screen`
+ *  (de-facto unconditional), `not print`, a size/ratio/hover feature, a size
+ *  feature ANDed with `prefers-*`, any @container prelude (container queries
+ *  have no a11y features) — matches hosts by environment instead of by
+ *  engine. Each of those shapes was a witnessed substring-whitelist bypass
+ *  (`print, screen` / `not print` / `(max-width) and (prefers-*)` /
+ *  `@container print (min-width)`).*/
 function isConditionalWrapper(prelude: string): boolean {
   if (!/^@(media|container)\b/i.test(prelude)) return false;
-  return !/print|prefers-|speech/i.test(prelude);
+  if (/^@container\b/i.test(prelude)) return true;
+  for (const query of prelude.replace(/^@media\b/i, "").split(",")) {
+    const q = query.trim();
+    if (!q) continue;
+    const features = q.match(/\([^)]*\)/g) ?? [];
+    const residue = q.replace(/\([^)]*\)/g, "").trim();
+    const bareType = features.length === 0 && /^(only\s+)?(print|speech)\b/i.test(q);
+    const purePrefers =
+      features.length > 0 &&
+      features.every((f) => /prefers-/i.test(f)) &&
+      (/^(and\s*)+$/i.test(residue) || residue === "");
+    if (bareType || purePrefers) continue;
+    return true;
+  }
+  return false;
 }
 
 const KNOB_RE = new RegExp(`(^|[\\s:;(])(${KNOBS.join("|")})\\s*:`, "m");
@@ -326,6 +344,12 @@ describe("surface live-blur escape hatch", () => {
       "@media screen { .hk-card { backdrop-filter: none; } }",
       "@media (hover: none) { .hk-card { backdrop-filter: none; } }",
       "@media (min-monochrome: 0) { .hk-card { backdrop-filter: none; } }",
+      // substring-whitelist bypasses: comma-OR, negation, size-AND-prefers,
+      // a container NAME that happens to read like a media type
+      "@media print, screen { .hk-card { backdrop-filter: none; } }",
+      "@media not print { .hk-card { backdrop-filter: none; } }",
+      "@media (max-width: 767px) and (prefers-reduced-transparency: no-preference) { .hk-card { backdrop-filter: none; } }",
+      "@container print (min-width: 400px) { .hk-card { backdrop-filter: none; } }",
       // a `//` bait ahead of the gate must not white-wash it either
       '.x::after { content: "//"; } @media (max-width: 767px) { .hk-card { backdrop-filter: none; } }',
       // selector list
@@ -357,7 +381,9 @@ describe("surface live-blur escape hatch", () => {
       "@supports (backdrop-filter: blur(1px)) { .hk-card { backdrop-filter: none; } }",
       "@layer hk { .hk-card { backdrop-filter: none; } }",
       "@media print { .hk-card { backdrop-filter: none; } }",
+      "@media speech { .hk-card { backdrop-filter: none; } }",
       "@media (prefers-reduced-transparency: reduce) { .hk-card { backdrop-filter: none; } }",
+      "@media (prefers-reduced-contrast: more) and (prefers-reduced-transparency: reduce) { .hk-card { backdrop-filter: none; } }",
     ]) {
       expect(conditionalStandDowns(shape), shape).toEqual([]);
     }

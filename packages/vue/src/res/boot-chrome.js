@@ -242,7 +242,7 @@
 
   // --------------------------------------------------------------------- copy
   // The bar is chrome, so it follows the same locale sources the rest of the
-  // boot skeleton uses (fatal-fallback.js / theme-loader.js): the app-prefixed
+  // boot skeleton uses (theme-loader.js): the app-prefixed
   // stored locale first, then the OS preference the shell publishes, then the
   // navigator list. Unknown locales fall back to English — the two Chinese
   // scripts are carried because they are the loader's largest audience, and

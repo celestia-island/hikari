@@ -8,7 +8,6 @@ export const BOOT_SCRIPTS = [
   "browser-check.js",
   "loader-dismiss.js",
   "theme-loader.js",
-  "fatal-fallback.js",
   "os-prefs.js",
   "tauri-titlebar.js",
 ];
@@ -20,9 +19,14 @@ const RES_DIR = resolve(
 
 /**
  * Vite plugin: after build, copy the shared boot scripts (theme-loader,
- * fatal-fallback, browser-check, ...) from hikari res/ into the output dir so
- * index.html can reference them as first-class static assets. Keep in sync
- * with the hikari res/ directory — every file there is a copy target.
+ * browser-check, ...) from hikari res/ into the output dir so index.html can
+ * reference them as first-class static assets. Keep in sync with the hikari
+ * res/ directory — every file there is a copy target.
+ *
+ * The boot-FAILURE panel is not on this list: it is hikari's
+ * `plugins/boot-recovery` plugin now, which paints hikari's shared error
+ * landing directly (the hand-rolled `res/fatal-fallback.js` it replaces was
+ * retired from this directory).
  *
  * Returning `Plugin` types `configResolved` as Vite's real `ResolvedConfig`,
  * which also makes the `apply: "build"` literal an ordinary assignable value

@@ -32,7 +32,17 @@
  *      asserts it carries the same `WINDOW_IPC` command names. Change one,
  *      change both.
  *
- *   2. `claimWindowChrome()` — the `hk:chrome-claim` handoff. A Tauri shell with
+ *   2. `watchMaximizedState()` — the ONE read path for "is this window
+ *      maximized?", so no consumer can re-derive the state by hand again. It
+ *      reads the shell once, re-reads on every resize event the shell publishes,
+ *      and degrades to a bounded poll when the shell refuses to subscribe. The
+ *      2026-11-12 report (a maximized window whose caption button still drew a
+ *      square, aria-label stuck on "Maximize") was a consumer-side read path
+ *      that had silently lost the shell receiver: Tauri 2's `Window` methods are
+ *      PROTOTYPE methods that read `this.label`, so a reference detached from
+ *      the window object throws on every call.
+ *
+ *   3. `claimWindowChrome()` — the `hk:chrome-claim` handoff. A Tauri shell with
  *      `decorations: false` has no OS title bar, so hikari's boot bar draws a
  *      minimal caption strip while the bundle loads. As soon as a component
  *      renders real window controls it dispatches the claim; the boot bar fades
@@ -72,6 +82,17 @@ export const WINDOW_IPC = {
  * exposes no resize event at all (the glyph must still track the OS).
  */
 export const RESIZE_POLL_MS = 500;
+
+/**
+ * How many resize-fallback reads a shell that hands out NO subscription gets.
+ *
+ * The global path does not poll while the shell publishes resize events (one
+ * event per maximize/restore, verified live) — that would be needless IPC. This
+ * bound only applies to the last-resort case: a shell that failed to give us an
+ * unlisten handle. Bounded on purpose, so a broken shell costs at most this
+ * many reads (a minute at `RESIZE_POLL_MS`) instead of one forever.
+ */
+export const RESIZE_FALLBACK_TICKS = 120;
 
 /**
  * The window-control surface every consumer talks to. Both wiring paths are
@@ -136,6 +157,18 @@ function noUnlisten(): void {
   /* nothing was subscribed */
 }
 
+/**
+ * The handle returned when a shell could not give us an event subscription.
+ *
+ * Exported from THIS module (deliberately NOT from the package barrels, so the
+ * public surface is unchanged) so the two places that must tell "subscribed"
+ * from "nothing to subscribe to" compare against one documented sentinel
+ * instead of re-deriving it. Every `onResized` path returns it verbatim when it
+ * cannot subscribe — pinned by the resolver tests — which is what lets
+ * `watchMaximizedState` decide whether its bounded fallback poll is needed.
+ */
+export const NO_UNLISTEN: () => void = noUnlisten;
+
 /** The documented `__TAURI__` window API, normalized. */
 function globalWindowApi(): WindowApiLike | null {
   if (!canUseDom()) return null;
@@ -162,8 +195,23 @@ function globalWindowApi(): WindowApiLike | null {
     return null;
   }
   const shell = found;
-  const isMaximized = shell.isMaximized;
-  const onResized = shell.onResized;
+  // THE RECEIVER RULE (2026-11-12): Tauri 2 hands out a CLASS INSTANCE whose
+  // methods live on the prototype and read `this.label` (Tauri 2.12:
+  // `async isMaximized() { return invoke("plugin:window|is_maximized", { label:
+  // (await this.getCurrentWindow()).label }) }`-shaped). Extracting a method by
+  // value — `const isMaximized = shell.isMaximized; isMaximized()` — loses the
+  // receiver and throws "Cannot read properties of undefined (reading 'label')"
+  // on EVERY call. That was this file's bug: `minimize`/`toggleMaximize`/`close`
+  // were wrapped as thunks (keeping the receiver) while `isMaximized` was
+  // detached, so the maximized state was permanently `false` and the caption
+  // glyph never flipped to Restore. Every shell method is now invoked THROUGH
+  // `shell` (or with an explicit `.call(shell)`), so the split cannot come back.
+  //
+  // The two optional methods are copied into locals (typed by the resolver's own
+  // interface) and called with `.call(shell)`: keeps the receiver WITHOUT an
+  // assertion, and narrows once instead of once per invocation.
+  const isMax = shell.isMaximized;
+  const onRes = shell.onResized;
 
   return {
     kind: "global",
@@ -172,13 +220,13 @@ function globalWindowApi(): WindowApiLike | null {
     toggleMaximize: () => call(() => shell.toggleMaximize()).then(() => undefined),
     close: () => call(() => shell.close()).then(() => undefined),
     isMaximized:
-      typeof isMaximized === "function"
-        ? () => call(() => isMaximized()).then((value) => Boolean(value))
+      typeof isMax === "function"
+        ? () => call(() => isMax.call(shell)).then((value) => Boolean(value))
         : () => Promise.resolve(false),
     onResized:
-      typeof onResized === "function"
+      typeof onRes === "function"
         ? (handler) =>
-            call(() => onResized.call(shell, handler)).then((off) =>
+            call(() => onRes.call(shell, handler)).then((off) =>
               typeof off === "function" ? (off as () => void) : noUnlisten,
             )
         : () => Promise.resolve(noUnlisten),
@@ -233,6 +281,156 @@ function internalsWindowApi(): WindowApiLike | null {
  */
 export function resolveWindowApi(): WindowApiLike | null {
   return globalWindowApi() ?? internalsWindowApi();
+}
+
+/** What a caller gets when there is no shell to watch. */
+const NO_WATCH: () => void = noUnlisten;
+
+/**
+ * Watch the maximized state — THE read path for caption-button glyphs.
+ *
+ * Depends on nothing but `WindowApiLike`, so it reuses whichever test double
+ * the caller resolved and cannot re-break the receiver rule (a detached helper
+ * function has no receiver to lose). It stops when its handle is called, and
+ * never leaves an unhandled rejection behind: an unresolved state is not a
+ * failure worth taking the window down for (the family's `res/fatal-fallback.js`
+ * turns one into a full-screen boot-failure landing).
+ *
+ * Failure ladder, cheapest first:
+ *   1. one immediate read, so the first paint already matches the window;
+ *   2. `onResized` — Tauri 2 delivers resize events to `Window{label}` targets,
+ *      which is why the internals path has no event to subscribe to and brings
+ *      its own bounded poll instead;
+ *   3. only when the subscription itself is refused (or hands back nothing
+ *      callable) does a bounded poll take over, so a maximized window still
+ *      draws Restore on a shell that cannot publish events at all.
+ *
+ * `report` is called only with real observations — a rejected read keeps the
+ * previous answer rather than flashing a bogus glyph.
+ */
+export function watchMaximizedState(
+  api: WindowApiLike | null,
+  report: (maximized: boolean) => void,
+): () => void {
+  // No shell at all: the callers render nothing in that case, so the only
+  // contract left to keep is "the handle is always callable".
+  if (!api || typeof report !== "function") return NO_WATCH;
+
+  let stopped = false;
+  // True once the shell handed back a callable unlisten handle — the ONLY thing
+  // that keeps the bounded fallback poll disarmed.
+  let subscribed = false;
+  let unlisten: (() => void) | null = null;
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  const read = () => {
+    if (stopped) return;
+    // BOTH failure surfaces are handled: a shell that throws SYNCHRONOUSLY out
+    // of isMaximized() (a foreign WindowApiLike can — the library's own
+    // resolver wraps every call in call()), and a reporter that throws. On this
+    // family res/fatal-fallback.js turns ONE unhandled rejection into the
+    // full-screen "Application failed to load" landing, so neither surface may
+    // ever escape this function.
+    try {
+      void api.isMaximized().then(
+        (value) => {
+          if (stopped) return;
+          try {
+            report(!!value);
+          } catch {
+            /* a throwing reporter is a consumer bug, not a boot failure */
+          }
+        },
+        () => {},
+      );
+    } catch {
+      /* degrade exactly like a rejected read: keep the previous answer */
+    }
+  };
+
+  const stopPolling = () => {
+    if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
+    }
+  };
+
+  /** Call an unlisten handle that may throw — teardown must never surface it. */
+  const safeStop = (stop: () => void): void => {
+    try {
+      stop();
+    } catch {
+      /* a hostile handle must not break teardown (or become unhandled) */
+    }
+  };
+
+  /**
+   * The last resort: at most `RESIZE_FALLBACK_TICKS` reads, then it gives up
+   * quietly (a window whose shell cannot report events should not cost an IPC
+   * round-trip a minute for the rest of the session). Internals already count
+   * their own poll as `onResized`, so this only covers the global path.
+   */
+  const startPolling = () => {
+    if (stopped || subscribed || typeof setInterval !== "function") return;
+    // Never two timers: a refused subscription can reach here twice (a thrown
+    // call and a rejected promise), and a double poll would double the IPC.
+    if (timer !== null) return;
+    let ticks = 0;
+    timer = setInterval(() => {
+      ticks += 1;
+      if (ticks > RESIZE_FALLBACK_TICKS) {
+        stopPolling();
+        return;
+      }
+      read();
+    }, RESIZE_POLL_MS);
+  };
+
+  read();
+  // An EXPLICIT signal, not an identity check against `noUnlisten`: both
+  // wiring paths are allowed to grow their own unlisten shapes, and only this
+  // flag decides whether the bounded fallback poll is needed. The internals
+  // path returns a real `() => clearInterval(timer)` handle, so it counts as
+  // subscribed and never arms a second poll here.
+  const subscribe = (): void => {
+    let subscription: Promise<() => void>;
+    try {
+      subscription = api.onResized(read);
+    } catch {
+      if (!stopped) startPolling();
+      return;
+    }
+    void subscription.then(
+      (off) => {
+        // The documented sentinel, not "any function counts": a path that could
+        // not subscribe hands back `NO_UNLISTEN`, and that is the ONLY thing
+        // that arms the bounded fallback below.
+        const stop = typeof off === "function" ? (off as () => void) : NO_UNLISTEN;
+        if (stopped) {
+          safeStop(stop);
+          return;
+        }
+        if (stop === NO_UNLISTEN) {
+          startPolling();
+          return;
+        }
+        subscribed = true;
+        unlisten = stop;
+      },
+      () => {
+        if (!stopped) startPolling();
+      },
+    );
+  };
+  subscribe();
+
+  return () => {
+    stopped = true;
+    stopPolling();
+    const off = unlisten;
+    unlisten = null;
+    if (off) safeStop(off);
+  };
 }
 
 /**

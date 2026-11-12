@@ -95,7 +95,8 @@
 
 /* Warning toasts use a light, saturated amber background where white text
  * lands at ~2.6:1 contrast (unreadable). Dark text keeps >= 4.5:1 on the
- * amber in BOTH color schemes; the copy/close buttons inherit it. */
+ * amber in BOTH color schemes; the copy/close controls re-pin their ink
+ * through the bridge vars below. */
 .hk-toast-warning {
   background: var(--hi-color-warning, #eed677);
   color: #1c1c1e;
@@ -119,6 +120,31 @@
 .hk-toast-loading {
   background: var(--hi-color-info, #6abed6);
   color: var(--hi-color-text-on-solid, #ffffff);
+}
+
+/* The tinted bands' copy/close controls are the standard icon button in
+ * its ghost variant, whose ink defaults to the page's secondary text
+ * color — near-black on a light surface, unreadable on the saturated
+ * band (2026-11-12 user report: black copy/close glyphs on the red CSRF
+ * error toast). Ghost declares the ink ON the button element, so no
+ * inherited value can beat it; every tinted band re-pins the bridge at
+ * the same seat as the amber warning block above. */
+.hk-toast-error .hk-toast-copy-btn,
+.hk-toast-error .hk-toast-close,
+.hk-toast-success .hk-toast-copy-btn,
+.hk-toast-success .hk-toast-close,
+.hk-toast-info .hk-toast-copy-btn,
+.hk-toast-info .hk-toast-close,
+.hk-toast-loading .hk-toast-copy-btn,
+.hk-toast-loading .hk-toast-close {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-solid, #ffffff);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-solid, #ffffff);
+  /* Washes ride the pinned ink (currentColor), not literal white: the ink
+   * is theme-following, so on a pale-band scheme (the default dark Nord
+   * preset) the washes follow it to the dark polarity for free — the same
+   * grammar the .hk-toast-action glass pill uses below. */
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
 }
 
 .hk-toast-loading-spinner {

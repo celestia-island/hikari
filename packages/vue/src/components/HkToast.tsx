@@ -160,7 +160,9 @@ const HkToastItem = defineComponent({
           {props.toast.action && (
             <button
               class="hk-toast-action"
-              title={props.toast.action.label}
+              // No native `title`: the button's own text IS the action
+              // label, so a title would only repeat what is already on
+              // screen (the duplicated-tooltip defect).
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 handleAction();

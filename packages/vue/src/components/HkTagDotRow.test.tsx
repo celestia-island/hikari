@@ -50,6 +50,9 @@ describe("HkTagDotRow", () => {
     const redDot = red.querySelector(".hk-tag-dot__dot") as HTMLElement;
     expect(redDot.style.getPropertyValue("--hk-tag-color")).toBe("#e5484d");
     expect(red.querySelector(".hk-tag-dot__label")?.textContent).toBe("Red");
+    // No native tooltip repeating the caption: the label is already
+    // visible, and the accessible name rides aria-label.
+    expect(red.hasAttribute("title")).toBe(false);
     expect(red.getAttribute("aria-pressed")).toBe("false");
     expect(red.hasAttribute("data-active")).toBe(false);
 

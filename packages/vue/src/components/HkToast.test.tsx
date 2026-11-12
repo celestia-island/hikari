@@ -323,6 +323,9 @@ describe("HkToast live-region semantics", () => {
     const button = item.querySelector<HTMLButtonElement>(".hk-toast-action");
     expect(button).not.toBeNull();
     expect(button!.textContent).toBe("Undo");
+    // The label is the button's own text; a native title would just repeat
+    // it on hover (the duplicated-tooltip defect this wave removes).
+    expect(button!.hasAttribute("title")).toBe(false);
 
     button!.click();
     await settle();

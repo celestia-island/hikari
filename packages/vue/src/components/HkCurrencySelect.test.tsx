@@ -331,6 +331,90 @@ describe("HkCurrencySelect keyboard", () => {
   });
 });
 
+  it("keeps an IME-composition Enter from committing the highlighted row (N1)", async () => {
+    setViewportWidth(1280);
+    const harness = mount();
+    await openPanel(harness);
+    const search = document.querySelector<HTMLInputElement>(".hk-currency-select-search")!;
+    await typeSearch(harness, "jpy");
+    expect(document.activeElement).toBe(search);
+    expect(panelRows()).toHaveLength(1);
+    const activeBefore = activeOptionId();
+
+    // The Enter that CONFIRMS a composition must reach the IME, not the list.
+    const composing = new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+      isComposing: true,
+    });
+    search.dispatchEvent(composing);
+    await harness.settle();
+
+    expect(composing.defaultPrevented, "the composition key must reach the IME").toBe(false);
+    expect(harness.emitted, "no currency was committed").toEqual([]);
+    expect(harness.trigger.getAttribute("aria-expanded"), "the panel stays open").toBe("true");
+    expect(search.value, "the query text is not reset").toBe("jpy");
+    expect(activeOptionId(), "the highlight never moved").toBe(activeBefore);
+    expect(panelRows()).toHaveLength(1);
+
+    // The composition's own arrow keys belong to the candidate window too.
+    search.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true, isComposing: true }),
+    );
+    await harness.settle();
+    expect(activeOptionId()).toBe(activeBefore);
+  });
+
+  it("keeps a legacy keyCode-229 Enter from committing (N1)", async () => {
+    setViewportWidth(1280);
+    const harness = mount();
+    await openPanel(harness);
+    const search = document.querySelector<HTMLInputElement>(".hk-currency-select-search")!;
+    await typeSearch(harness, "yen");
+    expect(panelRows()).toHaveLength(1);
+    const activeBefore = activeOptionId();
+
+    // Linux FF / older Android report IME-processed keys as keyCode 229 with
+    // no isComposing flag.
+    const legacy = new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(legacy, "keyCode", { value: 229, configurable: true });
+    search.dispatchEvent(legacy);
+    await harness.settle();
+
+    expect(legacy.defaultPrevented).toBe(false);
+    expect(harness.emitted).toEqual([]);
+    expect(harness.trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(search.value).toBe("yen");
+    expect(activeOptionId()).toBe(activeBefore);
+  });
+
+  it("still commits on the plain Enter that follows the composition (N1 positive control)", async () => {
+    setViewportWidth(1280);
+    const harness = mount();
+    await openPanel(harness);
+    const search = document.querySelector<HTMLInputElement>(".hk-currency-select-search")!;
+    await typeSearch(harness, "jpy");
+
+    // Composition confirmed (isComposing false), then a real Enter.
+    search.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true, isComposing: true }),
+    );
+    await harness.settle();
+    expect(harness.emitted).toEqual([]);
+
+    const plain = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    search.dispatchEvent(plain);
+    await harness.settle();
+    expect(plain.defaultPrevented, "a real Enter is consumed by the list").toBe(true);
+    expect(harness.emitted, "the highlighted JPY is committed").toEqual(["JPY"]);
+    expect(harness.trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("leaves Home/End and the arrow caret keys to the search text field (S2-3)", async () => {
     setViewportWidth(1280);
     const harness = mount();

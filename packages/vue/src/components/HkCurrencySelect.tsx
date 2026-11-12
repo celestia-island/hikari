@@ -300,6 +300,9 @@ export default defineComponent({
 
     function onTriggerKeydown(event: KeyboardEvent) {
       if (props.disabled) return;
+      // No IME gate here on purpose: the trigger is a <button>, which has no
+      // composition surface — composition Enter can only originate in the
+      // search field, where onPanelKeydown gates it.
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         // Enter commits the highlighted option while the surface is open
@@ -340,6 +343,14 @@ export default defineComponent({
     }
 
     function onPanelKeydown(event: KeyboardEvent) {
+      // IME composition owns the keyboard: an Enter that CONFIRMS a
+      // composition (macOS/Windows, and the legacy keyCode-229 shape on
+      // Linux/FF/Android) must reach the input, not commit the highlighted
+      // currency and close the panel — that would make the localized-name
+      // search unusable in ja / zh-Hans / zh-Hant. The composition's own
+      // arrow/Home/End keys belong to the candidate window for the same
+      // reason (HkTagInput's handler-top guard, same family).
+      if (event.isComposing || event.keyCode === 229) return;
       const fromSearch = isSearchTarget(event);
       if (event.key === "ArrowDown" || event.key === "PageDown") {
         event.preventDefault();

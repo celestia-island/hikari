@@ -60,13 +60,25 @@ function seedScheme(mode: "dark" | "light"): ThemeSchemeTokens {
 }
 
 type ColorTokenKey = keyof ThemeSchemeTokens;
-/** Required (always-present) token slots — excludes the optional on-solid content colors. */
-type RequiredTokenKey = Exclude<ColorTokenKey, "onSolidText" | "onSolidIcon">;
+/**
+ * Required (always-present) token slots — excludes the optional content
+ * colors: the on-solid brand pair and the per-tone on-fill inks
+ * (danger/success/warning/info), which a theme may leave to solidInk.
+ */
+type OptionalTokenKey = "onSolidText" | "onSolidIcon" | "onDanger" | "onSuccess" | "onWarning" | "onInfo";
+type RequiredTokenKey = Exclude<ColorTokenKey, OptionalTokenKey>;
 
 const editableTokens: RequiredTokenKey[] = ["primary", "secondary", "accent", "success", "error", "warning", "info"];
 const derivedTokens: RequiredTokenKey[] = ["background", "surface", "text", "muted", "border", "focusedBorder", "selectedBackground", "selectedText", "statusBarBackground"];
 /** Content colors ON solid brand fills: user-choosable, never derived. */
-const contentTokens: Array<"onSolidText" | "onSolidIcon"> = ["onSolidText", "onSolidIcon"];
+const contentTokens: OptionalTokenKey[] = ["onSolidText", "onSolidIcon"];
+/** Per-tone on-fill inks: optional too, so legacy prefills may omit them. */
+const toneInkTokens: Array<"onDanger" | "onSuccess" | "onWarning" | "onInfo"> = [
+  "onDanger",
+  "onSuccess",
+  "onWarning",
+  "onInfo",
+];
 const WHITE: ThemeTokenRGB = { r: 255, g: 255, b: 255 };
 
 function clamp(v: number): number {
@@ -208,6 +220,13 @@ export const HkColorSchemeEditor = defineComponent({
       for (const k of contentTokens) {
         dark[k] = props.initialDark?.[k] ?? WHITE;
         light[k] = props.initialLight?.[k] ?? WHITE;
+      }
+      // Per-tone on-fill inks: same optional-slot treatment. Omitted ones
+      // fall back to the tone fill's own judgement (see solidInk), so a
+      // legacy prefill keeps deriving instead of freezing a stale value.
+      for (const k of toneInkTokens) {
+        dark[k] = props.initialDark?.[k];
+        light[k] = props.initialLight?.[k];
       }
       seedGroups(groupDark, "dark", props.initialGroups?.dark);
       seedGroups(groupLight, "light", props.initialGroups?.light);

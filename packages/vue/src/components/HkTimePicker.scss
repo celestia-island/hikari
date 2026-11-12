@@ -378,7 +378,7 @@
   }
 }
 
-.hk-tp-face.is-minute .hk-tp-number {
+.hk-tp-numbers.is-minute .hk-tp-number {
   width: 1.9rem;
   height: 1.9rem;
   font-size: var(--text-xs, 0.75rem);
@@ -417,7 +417,7 @@
   font-size: var(--text-md, 1rem);
 }
 
-.hk-tp-panel.is-touch .hk-tp-face.is-minute .hk-tp-number {
+.hk-tp-panel.is-touch .hk-tp-numbers.is-minute .hk-tp-number {
   width: 2.1rem;
   height: 2.1rem;
   font-size: var(--text-sm, 0.875rem);

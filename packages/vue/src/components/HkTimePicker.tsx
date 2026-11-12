@@ -435,7 +435,7 @@ export default defineComponent({
             <div class="hk-tp-dial-stage">
               <div
                 ref={faceRef}
-                class={["hk-tp-face", mode.value === "hour" ? "is-hour" : "is-minute"].join(" ")}
+                class="hk-tp-face"
                 role="slider"
                 tabindex={0}
                 aria-label={ariaFaceLabel.value}
@@ -472,7 +472,7 @@ export default defineComponent({
                   would lose their role/name in the AT tree. The layer is
                   pointer-transparent; the buttons re-enable pointer
                   events, and drags between them reach the face below. */}
-              <div class="hk-tp-numbers">
+              <div class={["hk-tp-numbers", mode.value === "hour" ? "is-hour" : "is-minute"].join(" ")}>
                 {numbers.value.map((number) => (
                   <button
                     key={number.value}

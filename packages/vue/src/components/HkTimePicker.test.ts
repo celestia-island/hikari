@@ -323,6 +323,9 @@ describe("HkTimePicker", () => {
 
     readoutButtons()[1].click();
     await nextTick();
+    // The minute-mode sizing rules are keyed on the numbers layer (the
+    // numbers are siblings of the slider, not its children).
+    expect(panel()!.querySelector(".hk-tp-numbers")?.classList.contains("is-minute")).toBe(true);
     expect(face().getAttribute("aria-valuenow")).toBe("30");
     face().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     await nextTick();

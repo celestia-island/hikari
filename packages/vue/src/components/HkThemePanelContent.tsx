@@ -75,12 +75,16 @@ export const HkThemePanelContent = defineComponent({
     /**
      * Per-row option-control builder (2026-11-13 user direction: the
      * theme rows ride the standard list row, and the host owns the
-     * affordances on its lane). Returns the row's `HkListRowAction[]` —
-     * or undefined for rows without actions. A CALLBACK PROP, not a
-     * slot, deliberately: slot returns are normalized into vnodes by
-     * Vue, and plain action objects would be silently destroyed in
-     * transit (the name/onSelect payload is data, not render output —
-     * the same grammar as HkCardList's own `actions` prop).
+     * affordances on its lane). Returns the row's `HkListRowAction[]`.
+     * The grammar follows HkCardList's `actions` prop: a PRESENT
+     * builder owns the row's lane — an EMPTY array means "no actions",
+     * while a per-row `undefined` declines and falls back to the
+     * built-in anatomy (custom rows get the standard delete). A
+     * CALLBACK PROP, not a slot, deliberately: slot returns are
+     * normalized into vnodes by Vue, and plain action objects would be
+     * silently destroyed in transit (the name/onSelect payload is
+     * data, not render output — the same grammar as HkCardList's own
+     * `actions` prop).
      */
     itemActions: {
       type: Function as PropType<(scope: ThemeItemScope) => HkListRowAction[] | undefined>,

@@ -527,6 +527,38 @@ describe("HkThemeToggle item slots", () => {
     expect(rows.every((r) => r.querySelector(".s-theme-item-trailing"))).toBe(false);
   });
 
+  it("declines per row: undefined inherits the default, [] suppresses", async () => {
+    // The documented contract: a PRESENT builder owns the lane, and a
+    // per-row undefined DECLINES (falls back to the built-in anatomy —
+    // the custom row gets the standard delete), while an explicit []
+    // means "no actions". Returning undefined must NOT read as [].
+    useTheme().addCustomTheme(anyPresetTokens());
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkThemeToggle, {
+          externalCustomize: true,
+          itemActions: (scope: { id: string }) =>
+            scope.id === "test-custom" ? undefined : [],
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const customRow = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")]
+      .find((r) => r.hasAttribute("data-custom"))!;
+    const builtin = customRow.querySelector<HTMLButtonElement>(".hk-list-row-actions__btn");
+    expect(builtin, "the declined custom row falls back to the built-in delete").toBeTruthy();
+    expect(builtin!.getAttribute("aria-label")).toBe("Delete theme");
+    const stockRow = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")]
+      .find((r) => !r.hasAttribute("data-custom"))!;
+    expect(stockRow.querySelector(".hk-list-row-actions")).toBeNull();
+  });
+
   it("renders the name-suffix cell inside the row's name line, right after the name", async () => {
     // The whole point of the slot (vs. reusing item-trailing) is that the
     // mark reads as part of the NAME. That is a DOM-position claim, so it

@@ -192,16 +192,28 @@ mod tests {
             .join("\n");
         // The face is the constant localized "Copy" — no flipped label,
         // no retired copied key, no copied-state signal or reset timer.
-        assert!(src.contains(r#"t("hikari.code.copy", "Copy")"#), "constant face missing");
-        assert!(!src.contains("hikari.code.copied"), "retired copied key resurfaced");
+        assert!(
+            src.contains(r#"t("hikari.code.copy", "Copy")"#),
+            "constant face missing"
+        );
+        assert!(
+            !src.contains("hikari.code.copied"),
+            "retired copied key resurfaced"
+        );
         assert!(!src.contains("copied.set("), "copied signal resurfaced");
         assert!(!src.contains("set_timeout"), "reset timer resurfaced");
         assert!(!src.contains("on_copied"), "retired result prop resurfaced");
         // The honest-result path: the inline JS reports the settled write
         // through onResult, and the handler pushes the crate toast store
         // (success AND failure branches, localized).
-        assert!(src.contains("onResult(Boolean(success))"), "inline JS result callback missing");
-        assert!(src.contains(".catch(() => finish(false))"), "failure path missing");
+        assert!(
+            src.contains("onResult(Boolean(success))"),
+            "inline JS result callback missing"
+        );
+        assert!(
+            src.contains(".catch(() => finish(false))"),
+            "failure path missing"
+        );
         assert!(src.contains("use_toast()"), "toast store not driven");
         assert!(src.contains("store.success(&t("), "success push missing");
         assert!(src.contains("store.error(&t("), "failure push missing");

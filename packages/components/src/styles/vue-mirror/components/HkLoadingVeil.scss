@@ -17,7 +17,12 @@
 
 .hk-loading-veil {
   position: fixed;
-  inset: 0;
+  /* The chrome-band geometry leg: the blocking veil starts below the
+   * host caption band on native shells (see .hk-modal-overlay). */
+  top: var(--hk-chrome-band-inset, 0px);
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: var(--hk-overlay-z-veil, 150);
   display: flex;
   align-items: center;

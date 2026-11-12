@@ -41,7 +41,13 @@ import { fileURLToPath } from "node:url";
  *      the contract — keep the prose home in sync);
  *   7. the GEOMETRY leg exists: both HkModal fixed plates read
  *      --hk-chrome-band-inset on their top edge (the stacking-proof
- *      fallback for hosts whose wrappers trap the band).
+ *      fallback for hosts whose wrappers trap the band), and so does
+ *      every OTHER windowed veil the library ships — the drawer's
+ *      overlay and its left/right/top panels, the loading veil, and the
+ *      mobile sheet scrims of the popover and the select panel (2026-11-12
+ *      extension: the modal got the leg first; a drawer or a blocking
+ *      veil covering the caption row again would be the same field
+ *      report with a different component).
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -52,6 +58,13 @@ const adminHeader = readFileSync(join(here, "HkAdminHeader.tsx"), "utf8");
 const titleBarScss = readFileSync(join(here, "HkTitleBar.scss"), "utf8");
 const windowControls = readFileSync(join(here, "HkWindowControls.tsx"), "utf8");
 const modalScss = readFileSync(join(here, "HkModal.scss"), "utf8");
+const drawerScss = readFileSync(join(here, "HkDrawer.scss"), "utf8");
+const veilScss = readFileSync(join(here, "HkLoadingVeil.scss"), "utf8");
+const selectScss = readFileSync(join(here, "HkSelect.scss"), "utf8");
+const popoverScss = readFileSync(join(here, "HkPopover.scss"), "utf8");
+const titleBarTsx = readFileSync(join(here, "HkTitleBar.tsx"), "utf8");
+const tooltipBridge = readFileSync(join(here, "..", "runtime", "tooltipBridge.ts"), "utf8");
+const popupBounds = readFileSync(join(here, "..", "runtime", "popupBounds.ts"), "utf8");
 
 /** The numeric value a root z-token declaration carries, or null. */
 function rootTokenZ(source: string, token: string): number | null {
@@ -178,5 +191,45 @@ describe("chrome-band layer contract (the host caption stayed under the veil)", 
 
   it("names .hk-chrome-band on HkWindowControls (the prose home)", () => {
     expect(windowControls).toContain(".hk-chrome-band");
+  });
+
+  it("yields the other windowed veils' top edge to --hk-chrome-band-inset", () => {
+    // The geometry leg across the windowed family: every fixed dim/blur
+    // curtain (and every panel that would physically cover the band row)
+    // starts BELOW the host caption band. A missing leg on any of these
+    // re-dims — or re-covers — the caption row on native shells.
+    const expectInset = (source: string, selector: string, file: string) => {
+      const rules = allRuleDeclarations(source, selector).filter((r) => !r.nested);
+      expect(rules.length, selector + " in " + file + " must exist at top level").toBe(1);
+      expect(rules[0].decls).toContainEqual(["top", "var(--hk-chrome-band-inset, 0px)"]);
+    };
+    expectInset(drawerScss, ".hk-drawer-overlay", "HkDrawer.scss");
+    expectInset(drawerScss, ".hk-drawer-left", "HkDrawer.scss");
+    expectInset(drawerScss, ".hk-drawer-right", "HkDrawer.scss");
+    expectInset(drawerScss, ".hk-drawer-top", "HkDrawer.scss");
+    expectInset(veilScss, ".hk-loading-veil", "HkLoadingVeil.scss");
+    expectInset(selectScss, ".hk-select-sheet-scrim", "HkSelect.scss");
+    expectInset(popoverScss, ".hk-popover-scrim", "HkPopover.scss");
+    // A BOTTOM-docked drawer still owns its bottom edge — the inset is a
+    // top-edge contract only.
+    const bottom = allRuleDeclarations(drawerScss, ".hk-drawer-bottom").filter((r) => !r.nested);
+    expect(bottom[0].decls).not.toContainEqual(["top", "var(--hk-chrome-band-inset, 0px)"]);
+  });
+
+  it("keeps tooltips off the band by default with an explicit exemption", () => {
+    // The tooltip leg of the contract (2026-11-12 user direction): the
+    // popup frame floors at the band inset + POPUP_BAND_GAP_PX (4) —
+    // default NO cover; pinning over the strip is an explicit per-trigger
+    // marker or install option, which the caption's OWN buttons carry.
+    // Three pins: the floor exists, the bridge reads the marker, and the
+    // title bar's buttons carry it.
+    expect(popupBounds).toMatch(/bandInset > 0 \? bandInset \+ POPUP_BAND_GAP_PX : 0/);
+    expect(popupBounds).toContain("POPUP_BAND_GAP_PX = 4");
+    expect(tooltipBridge).toContain('data-hk-tooltip-band-overlap');
+    expect(tooltipBridge).toMatch(/el\.hasAttribute\(\"data-hk-tooltip-band-overlap\"\)/);
+    // Every caption-row button of the reference title bar opts in —
+    // custom actions, minimize, maximize/restore, close.
+    const markers = (titleBarTsx.match(/data-hk-tooltip-band-overlap="true"/g) ?? []).length;
+    expect(markers, "all four caption buttons must carry the exemption").toBe(4);
   });
 });

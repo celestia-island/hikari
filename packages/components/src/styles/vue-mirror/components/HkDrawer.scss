@@ -17,7 +17,13 @@
    * through to the page below (2026-10-15 defect). */
   pointer-events: auto;
   position: fixed;
-  inset: 0;
+  /* --hk-chrome-band-inset: the chrome-band geometry leg (see
+   * .hk-modal-overlay) — the dim/blur curtain yields its top edge to the
+   * host caption band on native shells, same as every windowed veil. */
+  top: var(--hk-chrome-band-inset, 0px);
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: var(--hk-drawer-overlay-bg, rgba(0, 0, 0, 0.45));
   @include backdrop-filter(var(--hk-drawer-overlay-blur, blur(6px)));
 }
@@ -57,7 +63,9 @@
 }
 
 .hk-drawer-left {
-  top: 0;
+  /* Panels dock BELOW the caption band too (geometry leg): the drawer
+   * slides in under the host caption, never over it. */
+  top: var(--hk-chrome-band-inset, 0px);
   bottom: 0;
   left: 0;
   border-right: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
@@ -65,7 +73,8 @@
 }
 
 .hk-drawer-right {
-  top: 0;
+  /* Below the caption band, same as the left panel. */
+  top: var(--hk-chrome-band-inset, 0px);
   bottom: 0;
   right: 0;
   border-left: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
@@ -73,7 +82,8 @@
 }
 
 .hk-drawer-top {
-  top: 0;
+  /* Below the caption band, same as the side panels. */
+  top: var(--hk-chrome-band-inset, 0px);
   left: 0;
   right: 0;
   border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));

@@ -96,6 +96,9 @@ export default defineComponent({
               class="hk-titlebar-btn"
               title={a.label}
               aria-label={a.label}
+          // Caption-row trigger: the tooltip MAY pin over the strip —
+          // the explicit band-overlap exemption (runtime/tooltipBridge).
+          data-hk-tooltip-band-overlap="true"
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("action", a.id);
@@ -110,6 +113,9 @@ export default defineComponent({
               class="hk-titlebar-btn"
               title={t("hikari::titleBar.minimize", "Minimize")}
               aria-label={t("hikari::titleBar.minimize", "Minimize")}
+          // Caption-row trigger: the tooltip MAY pin over the strip —
+          // the explicit band-overlap exemption (runtime/tooltipBridge).
+          data-hk-tooltip-band-overlap="true"
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("minimize");
@@ -124,6 +130,9 @@ export default defineComponent({
               class="hk-titlebar-btn"
               title={props.maximized ? t("hikari::titleBar.restore", "Restore") : t("hikari::titleBar.maximize", "Maximize")}
               aria-label={props.maximized ? t("hikari::titleBar.restore", "Restore") : t("hikari::titleBar.maximize", "Maximize")}
+          // Caption-row trigger: the tooltip MAY pin over the strip —
+          // the explicit band-overlap exemption (runtime/tooltipBridge).
+          data-hk-tooltip-band-overlap="true"
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("toggle-maximize");
@@ -142,6 +151,9 @@ export default defineComponent({
               class="hk-titlebar-btn hk-titlebar-btn-close"
               title={t("hikari::titleBar.close", "Close")}
               aria-label={t("hikari::titleBar.close", "Close")}
+          // Caption-row trigger: the tooltip MAY pin over the strip —
+          // the explicit band-overlap exemption (runtime/tooltipBridge).
+          data-hk-tooltip-band-overlap="true"
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 emit("close");

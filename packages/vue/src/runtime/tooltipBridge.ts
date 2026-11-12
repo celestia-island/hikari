@@ -55,6 +55,16 @@ export interface HkTooltipBridgeOptions {
   selector?: string;
   /** Elements matching this never engage (their title stays native). */
   exclude?: string;
+  /**
+   * The caption-band exemption DEFAULT for this install (2026-11-12 user
+   * direction): false keeps every bridge tooltip off the host caption
+   * strip (the popup frame floors at band + 4px, popupBounds); true lets
+   * them pin over it. A single trigger can opt in either direction with
+   * the data-hk-tooltip-band-overlap attribute — the per-trigger marker
+   * WINS over this install default, which is how the title bar's own
+   * buttons (HkTitleBar) keep their captions readable on the strip.
+   */
+  allowBandOverlap?: boolean;
 }
 
 interface BridgeState {
@@ -71,6 +81,7 @@ interface BridgeState {
   maxWidth: string | undefined;
   selector: string;
   exclude: string;
+  allowBandOverlap: boolean;
   describedBy: string;
   /** How many tooltips this install has shown (registry meta). */
   shown: number;
@@ -144,6 +155,14 @@ function showPopup(state: BridgeState, el: Element) {
     el.getBoundingClientRect(),
     state.placement,
     state.maxWidth,
+    {
+      // The per-trigger marker WINS over the install default: presence
+      // opts IN even on an avoid-by-default install, an explicit "false"
+      // opts OUT even on an overlap-by-default one.
+      allowBandOverlap: el.hasAttribute("data-hk-tooltip-band-overlap")
+        ? el.getAttribute("data-hk-tooltip-band-overlap") !== "false"
+        : state.allowBandOverlap,
+    },
   );
   state.popup.classList.add("hk-tooltip-visible");
   el.setAttribute("aria-describedby", state.describedBy);
@@ -247,6 +266,7 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
     maxWidth: options.maxWidth,
     selector: options.selector ?? "[title]",
     exclude: options.exclude ?? "",
+    allowBandOverlap: options.allowBandOverlap ?? false,
     describedBy: `hk-tooltip-bridge-${++bridgeSeq}`,
     shown: 0,
   };
@@ -258,6 +278,7 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
       delay: state.delay,
       placement: state.placement,
       selector: state.selector,
+      allowBandOverlap: state.allowBandOverlap,
       shown: 0,
     },
     read: () => ({ installed: true, engaged: state.active !== null, shown: state.shown }),

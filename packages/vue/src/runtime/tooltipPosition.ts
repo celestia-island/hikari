@@ -18,6 +18,27 @@ export type TooltipPlacement = "top" | "bottom" | "left" | "right";
 /** Gap between the trigger rect and the popup, in root visual px. */
 export const TOOLTIP_GAP_PX = 8;
 
+/** Options for the measured placement pass. */
+export interface TooltipPositionOptions {
+  /**
+   * The EXPLICIT caption-band exemption (2026-11-12 user direction):
+   * tooltips are one of the few surfaces allowed to pin over the host
+   * caption strip, but only when a caller says so. Default false — the
+   * popup frame is the chrome-band-floored viewport (popupBounds), so a
+   * bubble near the strip flips below or clamps under it with a 4px
+   * minimum gap. True restores the raw-window frame (configured insets
+   * and the band floor ignored) for callers whose trigger LIVES on the
+   * caption — the title bar's own buttons.
+   */
+  allowBandOverlap?: boolean;
+}
+
+/** The raw window as a popup frame (the band-overlap escape hatch). */
+function rawWindowFrame(): PopupViewportRect {
+  const w = window;
+  return { x: 0, y: 0, width: w.innerWidth, height: w.innerHeight };
+}
+
 /**
  * Build the inline style that pins a `position: fixed` popup to one side
  * of a trigger rect.
@@ -203,6 +224,7 @@ export function applyTooltipPosition(
   rect: DOMRect,
   placement: TooltipPlacement,
   maxWidth?: string,
+  options: TooltipPositionOptions = {},
 ): void {
   // Fresh base every call: a previous show's caps (maxWidth/maxHeight)
   // must not leak into this one's box.
@@ -217,10 +239,12 @@ export function applyTooltipPosition(
   const box = popup.getBoundingClientRect();
   if (!(box.width > 0 && box.height > 0)) return; // no layout — pure base stands
 
-  // The popup viewport: the window minus the app-chrome band the host
-  // configured (a frameless shell's title bar), full-window when none —
-  // in which case every number below is exactly the raw-window math.
-  const frame = popupViewportRect();
+  // The popup viewport: the window minus the app-chrome band (the host's
+  // configured insets AND the chrome-band floor, popupBounds) — the
+  // default keeps tooltips off the caption strip entirely. The explicit
+  // allowBandOverlap exemption drops back to the raw window: a trigger
+  // ON the caption (title bar buttons) pins its bubble over the strip.
+  const frame = options.allowBandOverlap ? rawWindowFrame() : popupViewportRect();
   const gutter = viewportGutterPx();
   const z = ancestorZoom(popup);
 

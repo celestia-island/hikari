@@ -1,0 +1,105 @@
+// AI-generated: developed with the DeepSeek Harness agent (model DeepSeek V4.1 Flash); human-directed.
+@use "../tokens";
+
+/* HkEditableTable — the editable layer over HkTable.
+ *
+ * The grid chrome (header, rows, hover, section bands, scrollbar) belongs to
+ * HkTable.scss and is NOT re-declared here. This sheet styles only what the
+ * shell owns: the trailing actions cell, the per-row error band, the
+ * row-invalid tint and the add-row affordance.
+ */
+
+.hk-editable-table {
+  display: block;
+  width: 100%;
+}
+
+/* ── trailing actions cell ───────────────────────────────────────── */
+.hk-editable-table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 1.75rem;
+}
+
+/* A row with a validation message reads as a flagged row, not as a broken
+ * one: a quiet error wash, no alarm icon. `:has()` is the only hook a
+ * composed grid has for tinting HkTable's own <tr>, so the marker lives on
+ * the cell and the row inherits from it. */
+.hk-table-row:has(.hk-editable-table-actions[data-row-invalid]) {
+  background: color-mix(in srgb, rgb(var(--color-error)) 6%, transparent);
+}
+
+/* ── per-row error band ──────────────────────────────────────────── */
+.hk-editable-table-errors {
+  margin-top: var(--space-8);
+}
+
+.hk-editable-table-error-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-editable-table-error {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: rgb(var(--color-error));
+}
+
+/* ── add-row affordance ──────────────────────────────────────────── */
+.hk-editable-table-footer {
+  display: flex;
+  align-items: center;
+  margin-top: var(--space-8);
+}
+
+.hk-editable-table-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-12);
+  border: 1px dashed color-mix(in srgb, rgb(var(--color-text)) 22%, transparent);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: rgb(var(--color-text) / 82%);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  cursor: pointer;
+  transition-property: background-color, border-color, color;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+
+  &:hover:not(:disabled) {
+    border-color: var(--c-primary-strong);
+    background: color-mix(in srgb, rgb(var(--color-primary)) 8%, transparent);
+    color: rgb(var(--color-text));
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* ── read-only mode ──────────────────────────────────────────────── */
+.hk-editable-table[data-disabled] {
+  /* Editors are gone (display slots render instead); the trailing cell and
+   * the add band are inert, so the surface reads as a read-only grid. */
+  .hk-editable-table-actions {
+    opacity: 0.6;
+  }
+}

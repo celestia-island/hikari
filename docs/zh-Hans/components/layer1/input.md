@@ -139,3 +139,54 @@ AnimationBuilder::new()
 | --hi-input-padding-x | 水平内边距 | 0.75rem |
 | --hi-input-padding-y | 垂直内边距 | 0.5rem |
 | --hi-input-font-size | 字体大小 | var(--hi-font-size-sm) |
+
+## 金额输入
+
+`HkMoneyInput` 是感知币种的金额输入框。它的模型是**规范十进制文本**——仅数字、至多一个 `.`、无千分位分隔符、无货币符号（`""`、`"12"`、`"1.5"`、`"-0.25"`）；`""` 表示「未设置 / 沿用」，绝不会被强制转换为 `0`。
+
+输入过程中**绝不重写输入框**：可见文本始终等于你键入的内容；规范化值在输入时发出；显示格式（千分位与币种精度）只在**失焦**时应用；**聚焦**时再还原为可编辑文本。因此键入的 `1.5` 不会在敲字过程中被截成 `5`。
+
+```hikari:tsx
+<HkMoneyInput
+  label="单价"
+  currency={{ code: "USD", symbol: "$", decimals: 2 }}
+  min={0}
+  modelValue={price}
+  onUpdate:modelValue={(next: string) => (price = next)}
+/>
+```
+
+`maxDecimals` 默认取 `currency.decimals`；费率（每百万单价可能需要 4–6 位）可显式提高。`min` / `max` 只**提示**本地化区间信息——越界金额永远不会被悄悄截断。货币符号作为装饰性前缀渲染在输入框内，元素是带 `inputmode="decimal"` 的普通文本框，`error` / `aria-invalid` / `aria-describedby` 由组件自动接线。
+
+| 属性 | 说明 | 类型 | 默认值 |
+|------|------|------|--------|
+| modelValue | 规范十进制文本 | string | "" |
+| currency | 币种（符号、代码、小数位） | HkCurrency | — |
+| maxDecimals | 小数位预算（失焦精度与舍入） | number | currency.decimals |
+| min / max | 建议区间，仅提示不截断 | number | — |
+| label / error / required / disabled | 字段外壳 | string / string / bool / bool | — |
+| size | 尺寸档位 | "sm" \| "md" \| "lg" | "md" |
+
+## 币种
+
+`HkCurrency` 是共享值类型：`{ code, symbol?, name?, decimals }`。配套工具函数从包桶导出，宿主无需挂载组件即可格式化金额：`formatMoney`、`parseMoney`、`canonicalMoneyText`、`currencyDisplayName`、`normalizeCurrency`、`isValidCurrency`、`currencySymbol`。
+
+```hikari:tsx
+formatMoney(1234.5, { code: "USD", decimals: 2 }); // "1,234.50"
+parseMoney("1,234.50", 2);                          // 1234.5
+currencyDisplayName("USD", "en");                   // "US Dollar"
+```
+
+`formatMoney` 刻意与语言环境无关（千分位 `,`、小数点 `.`），因此格式化后的字符串总能解析回同一个数；本地化的部分是币种**名称**——先取 `Intl.DisplayNames`，再取调用方的回退值，最后回落为代码。
+
+```hikari:tsx
+<HkCurrencySelect
+  label="结算币种"
+  currencies={currencies}
+  groups={[{ key: "common", label: "常用", codes: ["USD", "EUR"] }]}
+  modelValue={code}
+  onUpdate:modelValue={(next: string) => (code = next)}
+/>
+```
+
+`HkCurrencySelect` 的每一行都带有符号、代码与本地化名称，搜索同时匹配三者；展开面复用共享下拉面板（桌面浮层 / 手机底部弹层），与选择器组件完全一致。

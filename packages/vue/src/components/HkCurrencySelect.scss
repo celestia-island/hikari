@@ -1,0 +1,250 @@
+// AI-generated: developed with the DeepSeek Harness agent (model DeepSeek V4.1 Flash); human-directed.
+@use "../tokens";
+
+/* HkCurrencySelect — rich currency picker.
+ *
+ * The field chrome follows the house select (HkSelect): same caption
+ * treatment, same trigger box, same error line. The row/list/search styles
+ * are deliberately TOP-LEVEL: the panel content is teleported to the
+ * overlay root, so they can never be nested under `.hk-currency-select`
+ * (a descendant selector would stop matching the moment the surface opens).
+ */
+
+.hk-currency-select {
+  display: block;
+  width: 100%;
+}
+
+.hk-currency-select-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+.hk-currency-select-required {
+  margin-inline-start: var(--space-2);
+  color: rgb(var(--color-error));
+}
+
+.hk-currency-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  padding-block: var(--space-8);
+  padding-inline: var(--space-12) var(--space-32);
+  min-height: var(--space-40);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgb(var(--color-text));
+  text-align: start;
+  cursor: pointer;
+  transition-property: background-color, border-color, box-shadow, opacity;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+
+  &:hover:not([data-disabled]) {
+    border-color: var(--c-primary-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+  }
+
+  &[data-state="open"] {
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+    background: rgb(var(--color-surface));
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.hk-currency-select-trigger-error {
+  border-color: var(--c-error-strong);
+}
+
+.hk-currency-select-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hk-currency-select-placeholder {
+  color: rgb(var(--color-muted) / 70%);
+}
+
+/* symbol + code + name, whether in the trigger or on a row */
+.hk-currency-select-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, rgb(var(--color-text)) 7%, transparent);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-text) / 78%);
+  flex-shrink: 0;
+}
+
+.hk-currency-select-code {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.hk-currency-select-name {
+  font-size: var(--text-sm);
+  color: rgb(var(--color-text) / 68%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-currency-select-arrow {
+  flex-shrink: 0;
+  color: rgb(var(--color-muted) / 80%);
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
+
+.hk-currency-select-trigger[data-state="open"] .hk-currency-select-arrow {
+  transform: rotate(180deg);
+}
+
+.hk-currency-select-error {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: rgb(var(--color-error));
+}
+
+/* ── opened surface content ──────────────────────────────────────── */
+
+.hk-currency-select-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hk-currency-select-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 12%, transparent);
+  border-radius: var(--radius-md);
+  background: rgb(var(--color-background) / 45%);
+  flex-shrink: 0;
+}
+
+.hk-currency-select-search-icon {
+  flex-shrink: 0;
+  color: rgb(var(--color-muted) / 75%);
+}
+
+.hk-currency-select-search {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  &::placeholder {
+    color: rgb(var(--color-muted) / 55%);
+  }
+}
+
+.hk-currency-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-block: var(--space-4) var(--space-8);
+  padding-inline: var(--space-8);
+  min-height: 0;
+  /* NO overflow here: the panel surface owns the one scrollbar (desktop
+   * popout / mobile sheet list band, with the overlay bar attached). A
+   * nested scroller would paint a second, native bar inside the panel. */
+}
+
+.hk-currency-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hk-currency-select-group-label {
+  padding-block: var(--space-4);
+  padding-inline: var(--space-8);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--color-muted) / 75%);
+}
+
+.hk-currency-select-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: rgb(var(--color-text));
+  transition-property: background-color, color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+
+  &[data-highlighted] {
+    background: color-mix(in srgb, rgb(var(--color-text)) 8%, transparent);
+  }
+
+  &[data-checked] {
+    color: rgb(var(--color-primary));
+  }
+
+  &[data-checked] .hk-currency-select-name {
+    color: rgb(var(--color-text) / 78%);
+  }
+}
+
+.hk-currency-select-check {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  color: rgb(var(--color-primary));
+}
+
+.hk-currency-select-empty {
+  padding: var(--space-24) var(--space-16);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: rgb(var(--color-muted) / 75%);
+}

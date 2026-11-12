@@ -328,5 +328,21 @@
   "hikari::tablePage.totalCount": "총 {n}개",
   "hikari::scrollProgress.rangeHead": "총 {total}개 중 {from}",
   "hikari::scrollProgress.rangeTail": "{to}",
-  "hikari::scrollProgress.single": "총 {total}개 중 {from}"
+  "hikari::scrollProgress.single": "총 {total}개 중 {from}",
+  "hikari::money.unset": "설정되지 않음",
+  "hikari::money.approximate": "대략",
+  "hikari::money.rate": "1 {from} = {rate} {to}",
+  "hikari::money.rateAsOf": "{date} 기준",
+  "hikari::money.invalid": "올바른 금액을 입력하세요",
+  "hikari::money.belowMin": "{min} 이상이어야 합니다",
+  "hikari::money.aboveMax": "{max} 이하여야 합니다",
+  "hikari::currency.placeholder": "통화 선택",
+  "hikari::currency.search": "통화 검색",
+  "hikari::currency.empty": "통화를 찾을 수 없습니다",
+  "hikari::currency.otherGroup": "기타 통화",
+  "hikari::editableTable.addRow": "행 추가",
+  "hikari::editableTable.removeRow": "행 삭제",
+  "hikari::editableTable.rowActions": "행 작업",
+  "hikari::editableTable.rowLabel": "{n}행",
+  "hikari::editableTable.empty": "아직 행이 없습니다"
 }

@@ -328,5 +328,21 @@
   "hikari::tablePage.totalCount": "Всего {n}",
   "hikari::scrollProgress.rangeHead": "Строки {from}",
   "hikari::scrollProgress.rangeTail": "{to} из {total}",
-  "hikari::scrollProgress.single": "Строка {from} из {total}"
+  "hikari::scrollProgress.single": "Строка {from} из {total}",
+  "hikari::money.unset": "Не задано",
+  "hikari::money.approximate": "Приблизительно",
+  "hikari::money.rate": "1 {from} = {rate} {to}",
+  "hikari::money.rateAsOf": "На {date}",
+  "hikari::money.invalid": "Введите корректную сумму",
+  "hikari::money.belowMin": "Не менее {min}",
+  "hikari::money.aboveMax": "Не более {max}",
+  "hikari::currency.placeholder": "Выберите валюту",
+  "hikari::currency.search": "Поиск валют",
+  "hikari::currency.empty": "Валюты не найдены",
+  "hikari::currency.otherGroup": "Другие валюты",
+  "hikari::editableTable.addRow": "Добавить строку",
+  "hikari::editableTable.removeRow": "Удалить строку",
+  "hikari::editableTable.rowActions": "Действия со строкой",
+  "hikari::editableTable.rowLabel": "Строка {n}",
+  "hikari::editableTable.empty": "Строк пока нет"
 }

@@ -332,5 +332,21 @@
   "hikari::tablePage.totalCount": "共 {n} 條",
   "hikari::scrollProgress.rangeHead": "第 {from}",
   "hikari::scrollProgress.rangeTail": "{to} 條，共 {total} 條",
-  "hikari::scrollProgress.single": "第 {from} 條，共 {total} 條"
+  "hikari::scrollProgress.single": "第 {from} 條，共 {total} 條",
+  "hikari::money.unset": "未設定",
+  "hikari::money.approximate": "約",
+  "hikari::money.rate": "1 {from} = {rate} {to}",
+  "hikari::money.rateAsOf": "截至 {date}",
+  "hikari::money.invalid": "請輸入有效金額",
+  "hikari::money.belowMin": "不得低於 {min}",
+  "hikari::money.aboveMax": "不得高於 {max}",
+  "hikari::currency.placeholder": "選擇貨幣",
+  "hikari::currency.search": "搜尋貨幣",
+  "hikari::currency.empty": "找不到貨幣",
+  "hikari::currency.otherGroup": "其他貨幣",
+  "hikari::editableTable.addRow": "新增列",
+  "hikari::editableTable.removeRow": "刪除列",
+  "hikari::editableTable.rowActions": "列操作",
+  "hikari::editableTable.rowLabel": "第 {n} 列",
+  "hikari::editableTable.empty": "尚無列"
 }

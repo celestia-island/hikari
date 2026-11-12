@@ -328,5 +328,21 @@
   "hikari::tablePage.totalCount": "全 {n} 件",
   "hikari::scrollProgress.rangeHead": "{total} 件中 {from}",
   "hikari::scrollProgress.rangeTail": "{to} 件目",
-  "hikari::scrollProgress.single": "{total} 件中 {from} 件目"
+  "hikari::scrollProgress.single": "{total} 件中 {from} 件目",
+  "hikari::money.unset": "未設定",
+  "hikari::money.approximate": "概算",
+  "hikari::money.rate": "1 {from} = {rate} {to}",
+  "hikari::money.rateAsOf": "{date} 時点",
+  "hikari::money.invalid": "有効な金額を入力してください",
+  "hikari::money.belowMin": "{min} 以上で入力してください",
+  "hikari::money.aboveMax": "{max} 以下で入力してください",
+  "hikari::currency.placeholder": "通貨を選択",
+  "hikari::currency.search": "通貨を検索",
+  "hikari::currency.empty": "通貨が見つかりません",
+  "hikari::currency.otherGroup": "その他の通貨",
+  "hikari::editableTable.addRow": "行を追加",
+  "hikari::editableTable.removeRow": "行を削除",
+  "hikari::editableTable.rowActions": "行の操作",
+  "hikari::editableTable.rowLabel": "{n} 行目",
+  "hikari::editableTable.empty": "行がまだありません"
 }

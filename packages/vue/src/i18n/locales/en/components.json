@@ -328,5 +328,21 @@
   "hikari::tablePage.totalCount": "{n} in total",
   "hikari::scrollProgress.rangeHead": "Rows {from}",
   "hikari::scrollProgress.rangeTail": "{to} of {total}",
-  "hikari::scrollProgress.single": "Row {from} of {total}"
+  "hikari::scrollProgress.single": "Row {from} of {total}",
+  "hikari::money.unset": "Not set",
+  "hikari::money.approximate": "Approximate",
+  "hikari::money.rate": "1 {from} = {rate} {to}",
+  "hikari::money.rateAsOf": "As of {date}",
+  "hikari::money.invalid": "Enter a valid amount",
+  "hikari::money.belowMin": "Must be at least {min}",
+  "hikari::money.aboveMax": "Must be at most {max}",
+  "hikari::currency.placeholder": "Select currency",
+  "hikari::currency.search": "Search currencies",
+  "hikari::currency.empty": "No currencies found",
+  "hikari::currency.otherGroup": "Other currencies",
+  "hikari::editableTable.addRow": "Add row",
+  "hikari::editableTable.removeRow": "Remove row",
+  "hikari::editableTable.rowActions": "Row actions",
+  "hikari::editableTable.rowLabel": "Row {n}",
+  "hikari::editableTable.empty": "No rows yet"
 }

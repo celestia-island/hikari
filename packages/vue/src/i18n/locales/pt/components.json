@@ -328,5 +328,21 @@
   "hikari::tablePage.totalCount": "{n} no total",
   "hikari::scrollProgress.rangeHead": "Linhas {from}",
   "hikari::scrollProgress.rangeTail": "{to} de {total}",
-  "hikari::scrollProgress.single": "Linha {from} de {total}"
+  "hikari::scrollProgress.single": "Linha {from} de {total}",
+  "hikari::money.unset": "Não definido",
+  "hikari::money.approximate": "Aproximado",
+  "hikari::money.rate": "1 {from} = {rate} {to}",
+  "hikari::money.rateAsOf": "Em {date}",
+  "hikari::money.invalid": "Introduza um valor válido",
+  "hikari::money.belowMin": "Deve ser pelo menos {min}",
+  "hikari::money.aboveMax": "Deve ser no máximo {max}",
+  "hikari::currency.placeholder": "Selecionar moeda",
+  "hikari::currency.search": "Pesquisar moedas",
+  "hikari::currency.empty": "Nenhuma moeda encontrada",
+  "hikari::currency.otherGroup": "Outras moedas",
+  "hikari::editableTable.addRow": "Adicionar linha",
+  "hikari::editableTable.removeRow": "Remover linha",
+  "hikari::editableTable.rowActions": "Ações da linha",
+  "hikari::editableTable.rowLabel": "Linha {n}",
+  "hikari::editableTable.empty": "Ainda não há linhas"
 }

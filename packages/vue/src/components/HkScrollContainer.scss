@@ -86,8 +86,10 @@
       into a 0..1 number mirrored as --hk-scroll-fade-strength-<side>.
       Pull the strip and the trailing edge's fade grows from a hard cut
       through a hint to the full band; scroll back and it recedes. Edges
-      with nothing hidden read strength 1 (the pre-JS / dock-fade
-      fallback), which with a 0px band contributes nothing. Physical-side
+      with nothing hidden read strength 1 (the pre-JS fallback), which
+      with a 0px band contributes nothing. Dock-fed edges are gated
+      separately by the dock branch (binary, see the dock-edge-fade
+      block). Physical-side
       names AND a mirrored data-dir: the component resolves the computed
       direction once and publishes both the depths and the direction
       attribute from the same pass, so the LTR and RTL state rules
@@ -381,16 +383,19 @@
    documented shape, not a bug.
 
    The dock band MULTIPLIES its own size by the published strength
-   (2026-11-12 user report). Without that factor the band was a constant:
-   the component never publishes strengths for a dock-only container (the
-   `fade` prop owns that ramp), so the band sat at full depth forever and
-   a scroller parked at its END kept painting over its own last row —
+   (2026-11-12 user report). Before the dock gate the component published
+   no strengths for a dock-only container (the `fade` prop owns that
+   ramp), so the band sat at full depth forever and a scroller parked at
+   its END kept painting over its own last row —
    「拉到最底部仍然有渐变阴影覆盖最后一行」. The dock path now publishes a
    binary gate (lit while the edge hides content, retired at the end), and
-   this `calc()` is what turns it into px: at the end the band is 0, so
-   the flush-parked row reads in full. The `1` fallback keeps the
-   pre-fix full band wherever nothing is published (SSR, no JS pass yet,
-   a ride dock — those never stamp the marker). */
+   this `calc()` is what turns it into px: with `fade` off, the dock
+   branch publishes 0 at the end, so the flush-parked row reads in full
+   (with `fade` on, the ramp branch owns the edge and the 2026-11-06
+   ownership note above still describes that combination). The `1`
+   fallback keeps the pre-fix full band wherever nothing is published
+   (SSR, no JS pass yet). A ride dock does run the gate but stamps no
+   marker, so its published values have no reader. */
 .hk-scroll-container[data-dock-fade="bottom"] {
   --hk-scroll-fade-bottom: calc(
     var(--hk-scroll-dock-fade, 2rem) * var(--hk-scroll-fade-strength-bottom, 1)

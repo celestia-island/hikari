@@ -18,8 +18,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, defineComponent, ref, type VNodeChild } from "vue";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, defineComponent, reactive, ref, type VNodeChild } from "vue";
 
 import HkKanban from "./HkKanban";
 import HkScrollContainer from "./HkScrollContainer";
@@ -68,6 +68,104 @@ describe("HkScrollContainer dock slots", () => {
     // happy-dom — no layout; the contract is the vars exist + RO wired).
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("0px");
     expect(host.style.getPropertyValue("--hk-scroll-dock-top")).toBe("0px");
+  });
+
+  it("drops a fade-era data-dir mirror once the gate owns the edges", async () => {
+    // The dir mirror belongs to the `fade` band-slot swap (the sheet's RTL
+    // rules read it under [data-fade]). When a dock container ALSO had
+    // `fade` on for a while and then turns it off, the dock branch takes
+    // over - and it must not leave the mirror behind (the cleanup promise
+    // is "fade off removes it", which the no-dock tests pin but a dock
+    // container exercises through a different branch).
+    const instance = ref<{ refresh: () => void } | null>(null);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const props = reactive({ fade: true, dockFade: true });
+    const app = createApp(defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkScrollContainer,
+            { ref: instance as never, ...props },
+            {
+              default: () => h("div", { class: "content" }, "rows"),
+              dockBottom: () => h("div", { class: "the-dock" }, "dock"),
+            },
+          );
+      },
+    }));
+    mounts.push(app);
+    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
+    Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
+    Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
+    Object.defineProperty(viewport, "scrollTop", { value: 120, configurable: true });
+    instance.value?.refresh();
+    await Promise.resolve();
+    // The fade pass has run, so a mirrored dir exists...
+    expect(host.getAttribute("data-dir")).not.toBeNull();
+
+    // ...and turning `fade` off must drop it (the dock branch cleans up)
+    // and re-derive the strengths through the binary gate.
+    props.fade = false;
+    // Let the wrapper re-render first (the spread only re-reads on the
+    // wrapper's own render pass); refresh AFTER the child has the new
+    // props, or the fade branch runs one last time and re-stamps the dir.
+    await Promise.resolve();
+    instance.value?.refresh();
+    await Promise.resolve();
+    expect(host.getAttribute("data-dir")).toBeNull();
+    // 280 still hidden below the fold: the dock gate is lit.
+    expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
+  });
+
+  it("re-senses when dockFade flips at rest, without a manual refresh", async () => {
+    // The re-sense watcher keys on [fade, fadeDistance, dockFade]. This is
+    // its only coverage: flipping dockFade at rest with NO manual refresh —
+    // the watcher's scheduled frame must re-run the dock branch and clear
+    // the stale strength (a manual refresh here would exercise the sense
+    // pass and hide a missing key, which the review's mutation proved).
+    vi.useFakeTimers();
+    try {
+      const instance = ref<{ refresh: () => void } | null>(null);
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+      const props = reactive({ dockFade: true });
+      const app = createApp(defineComponent({
+        setup() {
+          return () =>
+            h(
+              HkScrollContainer,
+              { ref: instance as never, ...props },
+              {
+                default: () => h("div", { class: "content" }, "rows"),
+                dockBottom: () => h("div", { class: "the-dock" }, "dock"),
+              },
+            );
+        },
+      }));
+      mounts.push(app);
+      const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+      const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
+      Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
+      Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
+      Object.defineProperty(viewport, "scrollTop", { value: 0, configurable: true });
+      instance.value?.refresh();
+      await vi.advanceTimersByTimeAsync(60);
+      // 300 hidden below the fold: the gate is lit at full depth.
+      expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
+
+      props.dockFade = false;
+      // NO refresh: the watcher's own scheduled update must do the pass.
+      await vi.advanceTimersByTimeAsync(60);
+      // The dock branch no longer runs, the stale value was cleared and
+      // nothing republished it.
+      expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("retires the dock band at the scroll end instead of covering the last row", async () => {

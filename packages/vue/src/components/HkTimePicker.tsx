@@ -157,7 +157,10 @@ export default defineComponent({
     function seedDraft(): void {
       const current = parsed.value ?? (() => {
         const now = new Date();
-        return { hour: now.getHours(), minute: now.getMinutes() };
+        // The synthesized branches are the only minutes the host never
+        // chose, so they must land on the step grid; a STORED off-grid
+        // model stays verbatim (the user can still re-pick it).
+        return { hour: now.getHours(), minute: snapMinute(now.getMinutes(), props.minuteStep) };
       })();
       draftHour.value = current.hour;
       draftMinute.value = current.minute;
@@ -200,7 +203,7 @@ export default defineComponent({
     function setNow(): void {
       const now = new Date();
       draftHour.value = now.getHours();
-      draftMinute.value = now.getMinutes();
+      draftMinute.value = snapMinute(now.getMinutes(), minuteStep.value);
       commit(formatHhmm(draftHour.value, draftMinute.value));
     }
 
@@ -429,39 +432,46 @@ export default defineComponent({
           </div>
 
           <div class="hk-tp-dial">
-            <div
-              ref={faceRef}
-              class={["hk-tp-face", mode.value === "hour" ? "is-hour" : "is-minute"].join(" ")}
-              role="slider"
-              tabindex={0}
-              aria-label={ariaFaceLabel.value}
-              aria-valuemin={0}
-              aria-valuemax={ariaValueMax.value}
-              aria-valuenow={ariaValueNow.value}
-              aria-valuetext={formatHhmm(draftHour.value, draftMinute.value)}
-              onPointerdown={onFacePointerDown}
-              onPointermove={onFacePointerMove}
-              onPointerup={onFacePointerUp}
-              onPointercancel={onFacePointerUp}
-              onKeydown={onFaceKeydown}
-            >
-              <svg class="hk-tp-ticks" viewBox="0 0 100 100" aria-hidden="true">
-                {ticks.map((tick) => (
-                  <line
-                    key={tick.key}
-                    class={tick.major ? "is-major" : "is-minor"}
-                    x1={tick.x1}
-                    y1={tick.y1}
-                    x2={tick.x2}
-                    y2={tick.y2}
-                  />
-                ))}
-              </svg>
-              <svg class="hk-tp-hand" viewBox="0 0 100 100" aria-hidden="true">
-                <line x1={50} y1={50} x2={hand.value.x} y2={hand.value.y} />
-                <circle class="hk-tp-hand-tip" cx={hand.value.x} cy={hand.value.y} r={2.6} />
-                <circle class="hk-tp-hand-hub" cx={50} cy={50} r={1.8} />
-              </svg>
+            <div class="hk-tp-dial-stage">
+              <div
+                ref={faceRef}
+                class={["hk-tp-face", mode.value === "hour" ? "is-hour" : "is-minute"].join(" ")}
+                role="slider"
+                tabindex={0}
+                aria-label={ariaFaceLabel.value}
+                aria-valuemin={0}
+                aria-valuemax={ariaValueMax.value}
+                aria-valuenow={ariaValueNow.value}
+                aria-valuetext={formatHhmm(draftHour.value, draftMinute.value)}
+                onPointerdown={onFacePointerDown}
+                onPointermove={onFacePointerMove}
+                onPointerup={onFacePointerUp}
+                onPointercancel={onFacePointerUp}
+                onKeydown={onFaceKeydown}
+              >
+                <svg class="hk-tp-ticks" viewBox="0 0 100 100" aria-hidden="true">
+                  {ticks.map((tick) => (
+                    <line
+                      key={tick.key}
+                      class={tick.major ? "is-major" : "is-minor"}
+                      x1={tick.x1}
+                      y1={tick.y1}
+                      x2={tick.x2}
+                      y2={tick.y2}
+                    />
+                  ))}
+                </svg>
+                <svg class="hk-tp-hand" viewBox="0 0 100 100" aria-hidden="true">
+                  <line x1={50} y1={50} x2={hand.value.x} y2={hand.value.y} />
+                  <circle class="hk-tp-hand-tip" cx={hand.value.x} cy={hand.value.y} r={2.6} />
+                  <circle class="hk-tp-hand-hub" cx={50} cy={50} r={1.8} />
+                </svg>
+              </div>
+              {/* Outside the slider on purpose: role=slider has
+                  presentational children, so focusable numbers inside it
+                  would lose their role/name in the AT tree. The layer is
+                  pointer-transparent; the buttons re-enable pointer
+                  events, and drags between them reach the face below. */}
               <div class="hk-tp-numbers">
                 {numbers.value.map((number) => (
                   <button

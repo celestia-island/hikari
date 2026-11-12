@@ -243,6 +243,39 @@ describe("HkTimePicker", () => {
     expect(p.emitted).toEqual(["14:07"]);
   });
 
+  it("snaps the synthesized open time onto a coarse minuteStep", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 4, 6, 14, 7, 0));
+    const p = mountPicker({ minuteStep: 15 });
+    trigger(p).click();
+    await nextTick();
+    panel()!.querySelector<HTMLButtonElement>(".hk-tp-confirm")!.click();
+    await nextTick();
+    expect(p.emitted).toEqual(["14:00"]);
+  });
+
+  it("snaps Now onto a coarse minuteStep", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 4, 6, 14, 7, 0));
+    const p = mountPicker({ modelValue: "09:30", minuteStep: 15 });
+    trigger(p).click();
+    await nextTick();
+    panel()!.querySelector<HTMLButtonElement>(".hk-tp-now")!.click();
+    await nextTick();
+    expect(p.emitted).toEqual(["14:00"]);
+  });
+
+  it("keeps a stored off-grid minute verbatim until the user re-picks", async () => {
+    const p = mountPicker({ modelValue: "09:07", minuteStep: 15 });
+    await openPicker(p);
+    readoutButtons()[1].click();
+    await nextTick();
+    expect(panel()?.querySelectorAll(".hk-tp-number.is-selected").length).toBe(0);
+    panel()!.querySelector<HTMLButtonElement>(".hk-tp-confirm")!.click();
+    await nextTick();
+    expect(p.emitted).toEqual(["09:07"]);
+  });
+
   it("toggles the day period and converts the hour", async () => {
     const p = mountPicker({ modelValue: "09:30" });
     await openPicker(p);
@@ -279,6 +312,10 @@ describe("HkTimePicker", () => {
     const faceEl = face();
     expect(faceEl.getAttribute("role")).toBe("slider");
     expect(faceEl.getAttribute("aria-valuenow")).toBe("9");
+    // A slider's descendants are presentational; the dial numbers must be
+    // siblings (they are focusable buttons), not children of the slider.
+    expect(faceEl.querySelectorAll("button, [tabindex]").length).toBe(0);
+    expect(panel()!.querySelectorAll(".hk-tp-numbers > .hk-tp-number").length).toBe(12);
 
     faceEl.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     await nextTick();
@@ -312,6 +349,20 @@ describe("HkTimePicker", () => {
     panel()!.querySelector<HTMLButtonElement>(".hk-tp-confirm")!.click();
     await nextTick();
     expect(p.emitted).toEqual(["09:30"]);
+  });
+
+  it("snaps an off-grid stored minute onto the step grid when keyboarding", async () => {
+    const p = mountPicker({ modelValue: "09:07", minuteStep: 15 });
+    await openPicker(p);
+    readoutButtons()[1].click();
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("7");
+    face().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("15");
+    face().dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp", bubbles: true }));
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("30");
   });
 
   it("keeps Home/End/Page steps on the minute grid", async () => {

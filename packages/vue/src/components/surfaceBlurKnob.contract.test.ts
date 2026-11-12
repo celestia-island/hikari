@@ -49,13 +49,18 @@ const loadPaths = [here, join(here, "..", "styles")];
 /** Every canonical component sheet — the invariant guards run tree-wide, a
  *  gate parked in any other sheet is as much a violation as one at home. */
 function allComponentSheets(): string[] {
-  return readdirSync(here)
-    .filter((f) => f.endsWith(".scss") && !f.startsWith("_"))
-    .sort();
+  const inDir = (dir: string): string[] =>
+    readdirSync(dir)
+      .filter((f) => f.endsWith(".scss") && !f.startsWith("_"))
+      .map((f) => join(dir, f));
+  // components/ plus the package-exported shared sheets in ../styles/ —
+  // a gate parked there ships just as much.
+  return [...inDir(here), ...inDir(join(here, "..", "styles"))].sort();
 }
 
 function compiledSheet(sheet: string): string {
-  return compile(join(here, sheet), { loadPaths, style: "expanded" }).css;
+  const path = sheet.includes("/") ? sheet : join(here, sheet);
+  return compile(path, { loadPaths, style: "expanded" }).css;
 }
 
 /**
@@ -183,16 +188,21 @@ function scanRules(rawSrc: string): CssRule[] {
 const TARGETS = [".hk-card", ".hk-btn-secondary"];
 const KNOBS = ["--hk-card-blur", "--hk-btn-secondary-blur"];
 
-/** Selector mentions a target as a whole token (list members included). */
-/** BEM modifier variants of a guarded surface (`.hk-card--plain`) are the
- *  same component family and inherit the invariant; other suffixed classes
- *  (`.hk-card-grid`, a different component) do not. */
+/** The guarded FAMILY: the base class, its BEM modifier variants
+ *  (`.hk-card--plain`) and the modifier classes the component itself pins
+ *  onto the same root node (`.hk-card-hoverable`, `.hk-card-scrollable`,
+ *  `.hk-btn-secondary--sm` …) — a width gate through any of them re-keys the
+ *  guarded surface (witnessed). Other suffixed classes (`.hk-card-grid`, a
+ *  different component that does not exist here) do not. Keep the list in
+ *  sync with the class names in HkCard.tsx / HkButton.tsx. */
+const FAMILY_SUFFIXES = "(--[\\w-]+|-hoverable|-scrollable)";
+
 function mentionsTarget(selector: string): string | null {
   for (const selectorPart of selector.split(",")) {
     const trimmed = selectorPart.trim();
     for (const target of TARGETS) {
       const cls = target.replace(".", "");
-      const re = new RegExp(`(^|[\\s>+~(])\\.${cls}(--[\\w-]+)?(?![\\w-])`);
+      const re = new RegExp(`(^|[\\s>+~(])\\.${cls}(${FAMILY_SUFFIXES.slice(1, -1)})?(?![\\w-])`);
       if (re.test(trimmed)) return target;
     }
   }
@@ -372,6 +382,9 @@ describe("surface live-blur escape hatch", () => {
       // BEM variants are the same component family
       "@media (max-width: 767px) { .hk-card--plain { backdrop-filter: none; } }",
       "@media (max-width: 767px) { .hk-btn-secondary--sm { backdrop-filter: none; } }",
+      // so are the same-node modifier classes the component pins itself
+      "@media (max-width: 767px) { .hk-card-hoverable { backdrop-filter: none; } }",
+      "@media (max-width: 767px) { .hk-card-scrollable { backdrop-filter: none; } }",
       // selector list
       "@media (max-width: 767px) { .hk-card, .x { backdrop-filter: none; } }",
       // range syntax

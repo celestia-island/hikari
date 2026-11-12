@@ -235,7 +235,14 @@ export default defineComponent({
      *  ride-mode dock: that dock lives INSIDE the masked viewport, so the
      *  same band would fade the dock's own bottom edge; and it needs no
      *  dissolve at all, because the air between content and dock is the
-     *  dock's measured height (see `dockMode`). */
+     *  dock's measured height (see `dockMode`). The band RETIRES at the
+     *  scroll end (2026-11-12 user report): it is the dock size
+     *  multiplied by a binary strength this component publishes for
+     *  dock-fed edges — lit while content still hides past the edge,
+     *  retired at the sense's own 1px deadband — so a flush-parked last
+     *  row reads in full instead of sitting under a permanent gradient.
+     *  With `fade` ALSO on, the ramp branch owns the edges and the
+     *  sheet's ownership note describes that combination. */
     dockFade: { type: Boolean, default: true },
     /** Opt-in tail clearance for FLOATING docks (2026-10-12): a dock that
      *  lives OUTSIDE this container (a shell-level fixed plane — a page's
@@ -1086,7 +1093,7 @@ export default defineComponent({
     // Runtime fade changes re-sense immediately: flipping `fade` on with
     // content already hidden must not wait for a scroll, and a different
     // fadeDistance re-derives every strength without any DOM motion.
-    watch(() => [props.fade, props.fadeDistance] as const, () => {
+    watch(() => [props.fade, props.fadeDistance, props.dockFade] as const, () => {
       scheduleUpdate();
     });
 

@@ -178,7 +178,9 @@ export default defineComponent({
                   tabindex={isOpen.value ? 0 : -1}
                   aria-hidden={isOpen.value ? "false" : "true"}
                   disabled={props.disabled}
-                  title={action.label}
+                  // No native `title`: the mini action renders its label as
+                  // visible text and aria-label already names the button, so
+                  // a title would only repeat the text on screen.
                   aria-label={action.label ?? action.key}
                   onClick={() => onActionClick(action)}
                 >

@@ -52,7 +52,10 @@ export default defineComponent({
             disabled={tag.disabled}
             aria-pressed={tag.active ? "true" : "false"}
             aria-label={tag.label ?? tag.key}
-            title={tag.label}
+            // No native `title`: the caption span already shows the label, so
+            // a title would only repeat the text the user is reading (the
+            // duplicated-tooltip defect). The accessible name rides
+            // aria-label, which also covers the labelless (dot-only) case.
             onClick={() => emit("toggle", tag.key)}
           >
             <span class="hk-tag-dot__dot" style={{ "--hk-tag-color": tag.color }} />

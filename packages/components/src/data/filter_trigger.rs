@@ -218,8 +218,10 @@ pub fn FilterTrigger(props: FilterTriggerProps) -> Element {
         button = button.attr("disabled", "");
     }
     if active {
-        // Vue: `data-active={active.value || undefined}` — presence only.
-        button = button.attr("data-active", "");
+        // Vue: `data-active={active.value || undefined}` — patchAttr
+        // coerces the boolean to "true" (the house value form; the
+        // old "presence only" note was wrong about the Vue output).
+        button = button.attr("data-active", "true");
     }
 
     let mut anchor = VElement::new("span")

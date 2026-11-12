@@ -719,7 +719,7 @@ pub fn FilterPanel(props: FilterPanelProps) -> Element {
         // panel unpositioned, so the containing block is declared inline.
         .style("position:relative");
     if active > 0 {
-        root = root.attr("data-active", "");
+        root = root.attr("data-active", "true");
     }
     if empty {
         root = root.attr("data-empty", "");

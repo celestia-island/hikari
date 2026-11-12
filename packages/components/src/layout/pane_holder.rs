@@ -95,7 +95,10 @@ pub fn pane_holder_classes(class: &str) -> String {
 /// sheet's `[data-active]` rules match and an inactive pane emits nothing at
 /// all (an `data-active="false"` would still match `[data-active]`).
 pub fn pane_holder_active_marker(active: bool) -> Option<&'static str> {
-    if active { Some("") } else { None }
+    // The value form matches Vue's patchAttr output (`X || undefined` →
+    // data-active="true") — the house convention since the theme-panel
+    // mirror resync (2026-11-13).
+    if active { Some("true") } else { None }
 }
 
 /// The keep-mounted invariant: an inactive pane is out of the layout and inert
@@ -192,7 +195,7 @@ mod tests {
     fn pane_holder_active_marker_is_a_presence_attribute() {
         // Active → an empty `data-active` (the `[data-active]` hook the sheet
         // styles); inactive → no attribute at all.
-        assert_eq!(pane_holder_active_marker(true), Some(""));
+        assert_eq!(pane_holder_active_marker(true), Some("true"));
         assert_eq!(pane_holder_active_marker(false), None);
         // Both branches are MOUNTED: only reachability differs.
         assert!(pane_holder_is_reachable(true));
@@ -212,7 +215,7 @@ mod tests {
         .render_to_html();
 
         assert!(
-            html.contains(r#"<div data-active="" class="hk-pane-holder draft">"#),
+            html.contains(r#"<div data-active="true" class="hk-pane-holder draft">"#),
             "{html}"
         );
         assert!(html.contains(r#"data-el="pane""#), "{html}");
@@ -249,7 +252,7 @@ mod tests {
         .render_to_html();
 
         assert!(
-            html.starts_with(r#"<section data-active="" class="hk-pane-holder">"#),
+            html.starts_with(r#"<section data-active="true" class="hk-pane-holder">"#),
             "{html}"
         );
         assert!(html.ends_with("</section>"), "{html}");

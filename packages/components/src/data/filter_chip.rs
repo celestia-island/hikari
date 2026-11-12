@@ -274,7 +274,7 @@ fn popup_body(props: &FilterChipProps) -> VNode {
         })
         .child(VNode::Text(VText::new(props.all_label.as_str())));
     if all_pressed {
-        all_pill = all_pill.attr("data-active", "");
+        all_pill = all_pill.attr("data-active", "true");
     }
     group = group.child(VNode::Element(Box::new(all_pill)));
 
@@ -300,7 +300,7 @@ fn popup_body(props: &FilterChipProps) -> VNode {
             {VNode::Text(VText::new(option.label.as_str()))}
         });
         if active {
-            pill = pill.attr("data-active", "");
+            pill = pill.attr("data-active", "true");
         }
         group = group.child(VNode::Element(Box::new(pill)));
     }

@@ -7,7 +7,7 @@ import HkMenu from "./HkMenu";
 import type { HkMenuItem } from "./HkMenu";
 import HkTooltip from "./HkTooltip";
 import { hasRenderedContent } from "../runtime/hasRenderedContent";
-import { useMediaQuery } from "../runtime/useMediaQuery";
+import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
 import type { StatTone } from "./HkStatCard";
 import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgressDock";
 import "./HkCardList.scss";
@@ -176,7 +176,11 @@ export const HkListRow = defineComponent({
   setup(props, { emit, slots }) {
     // Touch-first clients get the named menu (tooltips never fire there);
     // pointer clients get the inline icon lane whose names ride tooltips.
+    // Paired with releaseMediaQuery in onBeforeUnmount (the composable's
+    // contract): the theme panel mounts/unmounts rows per theme add and
+    // remove, so an unpaired handle would pin the shared listener forever.
     const touchFirst = useMediaQuery("(hover: none), (pointer: coarse)");
+    onBeforeUnmount(() => releaseMediaQuery("(hover: none), (pointer: coarse)"));
     /** Touch-driven overlay reveal. Pointer devices reveal through CSS
      *  :hover/:focus-within — the common path stays declarative. */
     const revealed = ref(false);

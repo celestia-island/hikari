@@ -303,14 +303,56 @@ describe("HkThemeToggle color-mode group", () => {
     expect(activeRow!.getAttribute("aria-current")).toBe("true");
     expect(activeRow!.classList.contains("hk-list-row-clickable")).toBe(true);
 
-    // Clicking the row still selects the theme (the old anatomy's button
-    // is gone; the row's click contract carries the selection).
-    const activeName = activeRow!.querySelector<HTMLElement>(".s-theme-item-name")!;
+    // Clicking a NON-active row selects it and closes the menu (the row's
+    // click contract carries the selection; request-close dismisses the
+    // popover — the old anatomy's inner button did both).
     const before = useTheme().currentTheme.value;
-    activeRow!.click();
+    // The custom scheme is the fixture's only non-active row.
+    const target = rows.find((r) => !r.hasAttribute("data-active"))!;
+    expect(target.hasAttribute("data-custom")).toBe(true);
+    target.click();
     await settle();
-    expect(useTheme().currentTheme.value).toBe(before);
-    expect(activeName.textContent?.trim().length).toBeGreaterThan(0);
+    expect(useTheme().currentTheme.value).not.toBe(before);
+    expect(useTheme().currentTheme.value).toBe("test-custom");
+    // request-close dismissed the popover.
+    expect(document.body.querySelector(".s-theme-menu")).toBeNull();
+  });
+
+  it("lane action clicks never double-fire the row's selection", async () => {
+    // 2026-11-13 R2: the row is clickable and the lane is INSIDE it —
+    // without the wrapper-level stopPropagation (HkCardList's
+    // HkStatCard-action rule) a lane click also selected the row (the
+    // delete button on a custom row SWITCHED to the theme it was
+    // deleting and closed the menu). The guard must hold for the whole
+    // composed behavior: action runs, selection unchanged, menu open.
+    useTheme().addCustomTheme(anyPresetTokens());
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const deleted: string[] = [];
+    const app = createApp({
+      render: () =>
+        h(HkThemeToggle, {
+          externalCustomize: true,
+          itemActions: (scope: { id: string }) => [
+            { name: `Act ${scope.id}`, onSelect: () => { deleted.push(scope.id); } },
+          ],
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const customRow = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")]
+      .find((r) => r.hasAttribute("data-custom"))!;
+    expect(customRow).toBeTruthy();
+    customRow.querySelector<HTMLButtonElement>(".hk-list-row-actions__btn")!.click();
+    await settle();
+
+    expect(deleted).toHaveLength(1);
+    expect(useTheme().currentTheme.value).toBe("default");
+    expect(document.body.querySelector(".s-theme-menu")).toBeTruthy();
   });
   it("renders the mode-extra strip under the mode group when provided", async () => {
     const container = document.createElement("div");

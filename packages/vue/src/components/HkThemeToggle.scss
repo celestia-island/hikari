@@ -160,6 +160,17 @@
  * the 44px touch geometry (the row family is registered there).
  */
 
+/* The list wrapper is a BAND (geometry-neutral horizontally), but the
+ * inter-row rhythm is its own: the rows used to be direct flex children
+ * of .s-theme-menu and lived on its 4px gap — the wrapper must carry
+ * the same gap or adjacent pills touch edge-to-edge (2026-11-13 R2). */
+.s-theme-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}
+
 .s-theme-item-row {
   @include mi.item;
 
@@ -197,8 +208,8 @@
   outline-offset: -2px;
 }
 
-/* The pill spec's guarded hover (0,5,0 with its :not chain) already
- * outranks the clickable class's flat hover, so the wash never
+/* The pill spec's guarded hover (0,6,0 with its :not chain) already
+ * outranks the clickable class's flat hover (0,2,0), so the wash never
  * double-paints — nothing to suppress. */
 
 /* The name line: one flex run inside HkListRow's main column, so the
@@ -320,20 +331,23 @@
  * user direction): the active row's data-active wash is the sole
  * selection indicator. */
 
-/* Row actions (the built-in custom delete, or the host's `item-actions`
+/* Row actions (the built-in custom delete, or the host's `itemActions`
  * array) come verbatim from the standard lane in HkCardList.scss:
  * hover/focus-within reveal on pointer devices, the ⋯ named menu
- * trigger on touch. Only the touch trigger's hit target is themed
- * here: the sheet token contract gives these rows 44px and the generic
- * 26px trigger would be the one undersized tap target on an otherwise
- * touch-geometry family (the retired delete button made the same
- * accommodation). */
-@media (max-width: 767px) {
+ * trigger on touch. The touch trigger's hit target joins the family's
+ * 44px touch contract — keyed to the SAME predicate the component uses
+ * to render the trigger (HkListRow's touchFirst media query), so a
+ * touch-first tablet gets the oversized target too (the retired delete
+ * button keyed on viewport width and missed exactly that case).
+ * Desktop keeps the standard lane metrics. */
+@media (hover: none), (pointer: coarse) {
   .s-theme-item-row .hk-list-row-actions__trigger {
     width: 2.25rem;
     height: 2.25rem;
   }
+}
 
+@media (max-width: 767px) {
   /* The customize tile rides the menu family's sheet touch geometry:
    * its compact padding alone reads ~32px, under the 44px sheet-row
    * contract every sibling row gets from the item-sheet tokens
@@ -359,16 +373,14 @@
 /* When the host renders the item-trailing slot, its content renders as
  * the row's quiet trailing column (2026-11-13 grammar: trailing carries
  * CONTENT — badges, marks — while affordances live on the standard
- * action lane the host fills via `item-actions`; the lane's overlay
- * parks out of the flow and covers this column only while engaged). */
+ * action lane the host fills via the `itemActions` prop; the lane's
+ * overlay parks out of the flow and covers this column only while
+ * engaged, and clicks inside the column stop at the column — they are
+ * the content's own, never the row's selection). */
 .s-theme-item-trailing {
   display: inline-flex;
   align-items: center;
   gap: var(--space-4, 0.25rem);
   flex-shrink: 0;
   margin-inline-start: var(--space-4, 0.25rem);
-}
-
-.s-theme-item-row[data-trailing="slot"] .s-theme-item-name {
-  margin-inline-end: 0;
 }

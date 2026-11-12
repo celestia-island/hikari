@@ -47,7 +47,11 @@ export interface ThemeItemScope {
  * group (HTabs segmented with the solar-altitude merged cell), the
  * `mode-extra` host strip, the preset/custom theme rows (the STANDARD
  * list row — HkListRow, 2026-11-13 user direction — with four scoped
- * host slots), the customize entry and the `menu-extra` slot. The
+ * host slots), the customize entry and the `menu-extra` slot. The rows
+ * read as list items (role="listitem" + aria-current), not buttons —
+ * selection is the row's wash plus its click/Enter contract; lane and
+ * trailing clicks stop at their wrappers (HkListRow's clickable-row
+ * rule), so per-row affordances never double-fire a selection. The
  * built-in HColorSchemeDialog rides along when `externalCustomize` is
  * false — dialogs teleport, so hosting this inside any surface is safe.
  *

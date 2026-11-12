@@ -244,6 +244,31 @@ Z 层级遵循**单一注册上下文**模型：每个层级家族独占一个�
 > modal（1000+2n）会盖住未注册的弹层。同 band 内多个成员依靠 DOM 顺序
 > 自然堆叠，无需手工管理。
 
+#### 8.1 窗口标题条层（chrome band 契约）
+
+全局叠放次序的顶端是**窗口标题条层**（`--z-titlebar: 100001`）：所有浮动
+层（modal 遮罩、toast、tooltip）都画在 `#hk-overlay-root` 内部，而标题条层
+压在它之上——即 **内容 chrome < 浮动层 < 致命页 < 窗口标题条**。这样任何
+modal 打开时窗口仍可拖动、窗控按钮仍可点击，标题条不会被遮罩压暗。
+
+- `HkTitleBar`（真实标题条）自带该层。
+- `HkAdminHeader` 的 `chrome` 模式（页头即窗口标题条）自动挂上该层。
+- **宿主自绘标题条**（拖拽区行 + `HkWindowControls`，如 chest 聊天面的
+  `s-header-bar--chrome` 与登录条）：给条元素挂 **`.hk-chrome-band`**
+  class（`styles/admin-tokens.scss`）。该 class 只声明层级归属——弱规则
+  给 `position: relative`（让 z 生效，宿主自带的 fixed/sticky 声明可覆盖），
+  强规则（双写 class 提升 specificity）把 `z-index` 钉到标题条层。
+
+**前提与几何兜底**：z 认领只在「条与 body 之间不存在 z < 90000 的堆叠
+上下文祖先」时成立——宿主若用此类包裹层截留（如 chest 的 `#app` 壁纸
+上下文），可改为声明几何腿 **`--hk-chrome-band-inset`**（顶部长度）：
+modal 遮罩（含 blur plate）的顶端从此让位到标题条之下，完全不参与 z
+竞争。两腿可同时声明，互为冗余；缺省 `0px` 保持全视口遮罩不变。
+
+事故背景（2026-11-12）：chest 设置窗口与「屏幕与显示」托盘窗口打开时，整条
+拖拽区被 modal 遮罩压暗、拖动与窗控全部失灵——宿主标题条从未认领过标题条层，
+且 chest 的 `#app` 堆叠上下文使纯 z 方案失效，几何腿由此而来。
+
 ## 主题切换
 
 ### 亮色主题（默认）

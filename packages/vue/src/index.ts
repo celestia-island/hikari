@@ -1048,7 +1048,12 @@ export { HK_PAD_VAR, hkPadStyle, type HkPad } from "./runtime/containerPad";
 // Window-chrome handoff (2026-10-28): the boot bar hikari's Vite plugin draws
 // before the app bundle exists hands the window over on `hk:chrome-claim`.
 // `claimWindowChrome` is for hosts that paint their OWN title bar instead of
-// HkTitleBar/HkWindowControls (both claim automatically).
+// HkTitleBar/HkWindowControls (both claim automatically). A hand-drawn caption
+// band must also claim the LAYER — hang the `.hk-chrome-band` class on the
+// band element (styles/admin-tokens.scss) so open modal veils paint under it;
+// a host whose wrappers trap the band in a lower stacking context drops
+// `--hk-chrome-band-inset` instead, and the veil yields its top edge by
+// geometry (components/HkModal.scss).
 export {
   claimWindowChrome,
   resolveWindowApi,

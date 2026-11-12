@@ -472,6 +472,47 @@
   }
 }
 
+/* ── Chrome band (the host caption contract) ────────────────────────────
+ * Hosts that draw their own window caption band — a drag-region row
+ * hosting HkWindowControls (chest's chat face and login strip; the
+ * console face hangs it from HkAdminHeader's chrome mode) — add this
+ * class so the band occupies the titlebar layer and is never veiled by
+ * an open modal: every floating layer paints inside the overlay root
+ * (--hk-z-overlay-root, 90000), while the documented global order ends
+ * "… < error landing < window titlebar" (--hk-z-titlebar, 100001 — the
+ * layer HkTitleBar itself sits on; overlayRoot.ts states the order, and
+ * the field reports of 2026-11-12 were chest's settings and display
+ * windows dimming and deadening the whole drag row under an open
+ * HkModal veil). The class is a LAYER claim only: it moves no padding,
+ * no background, no app-region — the band's own chrome stays the
+ * host's business.
+ *
+ * PRECONDITION: the claim is a plain z-index — it wins only while the
+ * band's nearest stacking-context ancestor is the root context. A host
+ * wrapper that traps the band inside a z<90000 context (chest keeps
+ * #app as one for its wallpaper layering) voids the claim; such hosts
+ * declare the GEOMETRY leg instead — set --hk-chrome-band-inset (a
+ * top length) so HkModal's veil starts below the band (see
+ * components/HkModal.scss). The two legs compose: claim the layer AND
+ * drop the veil, and the caption survives the trap by geometry alone.
+ *
+ * Split declarations ON PURPOSE. z-index bites only on a positioned
+ * element, but the strong form must not force a position onto bands
+ * that carry their own (a fixed/sticky caption would be silently
+ * re-flowed into the page by a strong relative). The weak (0,1,0)
+ * relative default covers plain in-flow bands — a host position
+ * declaration out-ranks it by specificity or load order — and the
+ * doubled-class (0,2,0) z out-ranks every single-class band z
+ * (s-glass-header's --hk-z-header among them) regardless of sheet
+ * load order. */
+.hk-chrome-band {
+  position: relative;
+}
+
+.hk-chrome-band.hk-chrome-band {
+  z-index: var(--hk-z-titlebar);
+}
+
 /* ── Balanced header columns (the ONE three-zone header layout) ─────────
  * The shared geometry behind every top bar that owns a header-centre
  * group: the frontend chat header (chest ChatLayout's .s-header-bar-*)

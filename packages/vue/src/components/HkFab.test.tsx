@@ -138,6 +138,10 @@ describe("HkFab speed dial", () => {
     let minis = d.root.querySelectorAll<HTMLButtonElement>(".hk-fab-mini");
     expect(minis.length).toBe(2);
     expect(minis[0].getAttribute("aria-hidden")).toBe("true");
+    // The mini action's label is its own visible caption; a native title
+    // would only repeat it on hover (duplicated-tooltip sweep).
+    expect(minis[0].hasAttribute("title")).toBe(false);
+    expect(minis[0].querySelector(".hk-fab-mini-label")?.textContent).toBe("Alpha");
 
     d.button.click();
     await nextTick();

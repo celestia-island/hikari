@@ -35,6 +35,17 @@ export interface ThemeSchemeTokens {
    * themes that predate the slot; defaults to white when absent.
    */
   onSolidIcon?: ThemeTokenRGB;
+  /**
+   * Per-tone ink rendered ON each semantic fill (danger/success/warning/
+   * info bands: toasts, alerts, badges). Optional: when a theme omits a
+   * slot the fill decides by its own perceptual luminance (white on the
+   * saturated tones, black only on the light ones — see solidInk).
+   * Declaring one lets a designer override that judgement per tone.
+   */
+  onDanger?: ThemeTokenRGB;
+  onSuccess?: ThemeTokenRGB;
+  onWarning?: ThemeTokenRGB;
+  onInfo?: ThemeTokenRGB;
 }
 
 /**
@@ -213,6 +224,36 @@ function contrastColor({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
   return luminance > 0.55 ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 };
 }
 
+/**
+ * The white-or-black ink for ONE solid fill. Deliberately NOT "whichever
+ * side wins the WCAG ratio": on saturated fills the ratio winner is the
+ * black ink far more often than design systems ship it (a 32-colour sweep
+ * of shipped brand/semantic solids picked white only 19% of the time by
+ * ratio, while Radix, Bootstrap and Material all ship white on them).
+ * The house rule (user direction, 2026-11-12) is perception-first:
+ *
+ *   solid fill  → WHITE by default; BLACK only when the fill is light
+ *                 enough to need it (perceptual luminance above 0.65,
+ *                 which lands on Radix's "designed for dark foreground"
+ *                 set: Sky, Mint, Lime, Yellow, Amber, plus the pale
+ *                 Nord tones; see the threshold note in solidInk);
+ *   translucent → ride the theme's text channel (never computed here).
+ *
+ * Per-fill, not per-theme: one global on-solid slot cannot be right for a
+ * dark red AND a pale amber at once, which is exactly how the toast
+ * copy/close glyphs went near-black on themed bands (2026-11-12 report).
+ */
+export function solidInk({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
+  // 0.65, not the legacy 0.55: the green channel dominates this metric
+  // (0.7152), so ordinary greens/cyans like #10B981 / #06B6D4 sat just over
+  // 0.55 and flipped to black ink even though they read as saturated fills
+  // (Bootstrap and Radix both ship white on them). At 0.65 only genuinely
+  // pale fills — yellows, pale greens and light sky blues, the Radix
+  // "designed for dark foreground" set — take black.
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.65 ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 };
+}
+
 function mixToken(a: ThemeTokenRGB, b: ThemeTokenRGB, t: number): ThemeTokenRGB {
   return {
     r: Math.round(a.r + (b.r - a.r) * t),
@@ -238,6 +279,14 @@ export function tokensToCSSVars(
   // hardcoded value); saved custom themes that predate the slots stay white.
   const onSolidText = tokens.onSolidText ?? { r: 255, g: 255, b: 255 };
   const onSolidIcon = tokens.onSolidIcon ?? { r: 255, g: 255, b: 255 };
+  // Per-fill content ink for the semantic tone fills (toast bands, tinted
+  // badges, alert headers). A theme that declares the slot wins (a designer
+  // can hand-pick); otherwise the fill decides via solidInk — white on the
+  // saturated tones, black only on the light ones.
+  const onDanger = tokens.onDanger ?? solidInk(tokens.error);
+  const onSuccess = tokens.onSuccess ?? solidInk(tokens.success);
+  const onWarning = tokens.onWarning ?? solidInk(tokens.warning);
+  const onInfo = tokens.onInfo ?? solidInk(tokens.info);
   return {
     "--color-primary": `${tokens.primary.r} ${tokens.primary.g} ${tokens.primary.b}`,
     "--color-on-primary": `${onPrimary.r} ${onPrimary.g} ${onPrimary.b}`,
@@ -247,6 +296,12 @@ export function tokensToCSSVars(
     // (HkButton, --hi-color-text-on-secondary/danger/success) keep working
     // and now follow the theme-configurable text choice.
     "--color-on-solid": `${onSolidText.r} ${onSolidText.g} ${onSolidText.b}`,
+    // Per-tone on-fill inks: the semantic fills carry their own judgement
+    // instead of inheriting the global brand-slot ink.
+    "--color-on-danger": `${onDanger.r} ${onDanger.g} ${onDanger.b}`,
+    "--color-on-success": `${onSuccess.r} ${onSuccess.g} ${onSuccess.b}`,
+    "--color-on-warning": `${onWarning.r} ${onWarning.g} ${onWarning.b}`,
+    "--color-on-info": `${onInfo.r} ${onInfo.g} ${onInfo.b}`,
     "--color-secondary": `${tokens.secondary.r} ${tokens.secondary.g} ${tokens.secondary.b}`,
     "--color-accent": `${tokens.accent.r} ${tokens.accent.g} ${tokens.accent.b}`,
     "--color-text": `${tokens.text.r} ${tokens.text.g} ${tokens.text.b}`,
@@ -280,6 +335,13 @@ export function tokensToCSSVars(
     "--hi-color-error": "rgb(var(--color-error))",
     "--hi-color-warning": "rgb(var(--color-warning))",
     "--hi-color-info": "rgb(var(--color-info))",
+    // Content ink for each semantic fill — the same names the pre-existing
+    // danger/success consumers already read, now fed per-tone instead of by
+    // the global brand slot.
+    "--hi-color-text-on-danger": "rgb(var(--color-on-danger))",
+    "--hi-color-text-on-success": "rgb(var(--color-on-success))",
+    "--hi-color-text-on-warning": "rgb(var(--color-on-warning))",
+    "--hi-color-text-on-info": "rgb(var(--color-on-info))",
     "--hi-color-bg-subtle": "rgb(var(--color-surface) / 0.5)",
     "--hi-color-bg-elevated": "rgb(var(--color-surface))",
     "--hi-color-bg-canvas": "rgb(var(--color-background))",

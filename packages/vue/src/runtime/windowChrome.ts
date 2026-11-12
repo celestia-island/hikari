@@ -99,8 +99,14 @@ export const CHROME_OWNER_ATTR = "data-hk-chrome";
  * there. Caption band roots therefore take the value from THIS constant —
  * `HkTitleBar`, the chrome face of `HkAdminHeader`, and every host band —
  * instead of a local literal, so the semantics stay reviewable in one place.
- * Interactive children need no opt-out: the clickables block themselves, and
- * `HkWindowControls` already carries the explicit `"false"`.
+ * Interactive children need no blanket opt-out, but the block is NOT
+ * universal: only a/button/input/select/textarea/label/summary, a non-false
+ * `contenteditable`, `tabindex` other than `"-1"`, and the
+ * button/link/menuitem/tab/checkbox/radio/switch/option roles block the walk.
+ * A plain `div role="presentation"` or a `span` with only a click handler
+ * DRAGS, and `tabindex="-1"` DRAGS too (the predicate demands `!== "-1"`).
+ * A non-button interactive descendant of a deep band must carry the explicit
+ * `"false"` itself — `HkTabs` and `HkWindowControls` do exactly that.
  */
 export const CHROME_BAND_DRAG_REGION = "deep";
 
@@ -112,11 +118,14 @@ export const CHROME_BAND_DRAG_REGION = "deep";
  * stylesheet tokens directly; the host declares its band height to :root from
  * its pre-paint skeleton (an inline `:root` style or a static stylesheet) —
  * a plain length (`"48px"`, `"3rem"`) or a var() chain
- * (`"var(--s-header-height, 3rem)"`). The bar wears the value verbatim, so it
- * matches the app's caption band from the first frame AND keeps tracking the
- * token once the real stylesheet lands (2026-11-12 user report: chest's wide
- * 3rem band booted behind a thin 32px strip). Without the var — or when the
- * plugin's explicit `height` option is set — the bar keeps its thin default.
+ * ("`var(--s-header-height, 3rem)`"). The bar wears the value RESOLVED to a
+ * plain length, so it matches the app's caption band from the first frame
+ * (2026-11-12 user report: chest's wide 3rem band booted behind a thin 32px
+ * strip). It is a one-shot snapshot, NOT a live chain — the strip only lives
+ * until the app claims the chrome, and a declaration parser may reject var()
+ * in a style property. Unlike `height` this contract is NOT clamped: the
+ * host owns its band height. Without the var — or when the plugin's explicit
+ * `height` option is set — the bar keeps its thin default.
  * The name is mirrored as a string literal inside `res/boot-chrome.js` (a
  * classic script, no imports); the parity test in `src/res/bootChrome.test.ts`
  * fails if either side drifts.

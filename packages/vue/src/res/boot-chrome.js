@@ -33,11 +33,17 @@
  *   height contract  the host may publish its caption band height to :root as
  *                    `--hk-chrome-band-h` (hikari's CHROME_BAND_HEIGHT_VAR,
  *                    runtime/windowChrome.ts) — a length or a var() chain.
- *                    The bar wears it verbatim, so the strip matches the
- *                    app's caption band from the first frame and keeps
- *                    tracking the app token once its stylesheet lands
- *                    (2026-11-12: chest's wide 3rem band booted behind a
- *                    thin 32px strip). Absent → the 32px default, as before.
+ *                    The bar wears the RESOLVED length, so the strip matches
+ *                    the app's caption band from the first frame (2026-11-12:
+ *                    chest's wide 3rem band booted behind a thin 32px strip).
+ *                    It is a one-shot SNAPSHOT, not a live chain — the strip
+ *                    only lives until the app claims the chrome, and a
+ *                    declaration parser may reject var() in a style property,
+ *                    so the value is resolved to a plain length up front.
+ *                    Unlike data-hk-height this path is NOT clamped: the
+ *                    host owns its band height, and clamping it would
+ *                    re-create the very mismatch this contract removes.
+ *                    Absent → the 32px default, as before.
  *
  * HOST API — `window.HkBootChrome`:
  *   setStatus(text)  replace the status text (e.g. "connecting…")
@@ -165,7 +171,11 @@
 
   /** A plain CSS length (or a bare 0) — the only shape the bar can apply. */
   function isPlainLength(value) {
-    return /^\s*(-?\d*\.?\d+(px|rem|em|ex|ch|vh|dvh|svh|lvh|vw|dvw|%)|0)\s*$/i.test(
+    // The bare `0` alternative is deliberately absent: a zero caption band is
+    // never meaningful, and a unitless `0` published through
+    // --hk-boot-chrome-h would break calc()-based host offsets. `0px` still
+    // passes (an explicit zero is the host's call) — but bare `0` is junk.
+    return /^\s*(-?\d*\.?\d+(px|rem|em|ex|ch|vh|dvh|svh|lvh|vw|dvw|%))\s*$/i.test(
       value
     );
   }
@@ -186,7 +196,7 @@
    *   3. anything else (junk, a chain without a fallback) yields "" and the
    *      numeric default stays.
    *
-   * Tarbar tracking: the applied length is a snapshot, not a live chain. That is
+   * Snapshot semantics: the applied length is a snapshot, not a live chain. That is
    * deliberate — the bar only lives until the app claims the chrome, and a boot
    * strip that changes height mid-load is worse than one that matches the
    * pre-CSS contract exactly.
@@ -195,9 +205,13 @@
     var value = (raw || "").trim();
     if (!value) return "";
     if (isPlainLength(value)) return value;
+    // A chain resolves to its OWN fallback; NESTED chains recurse into that
+    // fallback (bounded, so a hostile declaration cannot loop). At boot no
+    // referenced property is in the cascade yet, so the innermost fallback IS
+    // the length a real browser would substitute to.
     var chain = /^var\(\s*--[A-Za-z0-9_-]+\s*,\s*([^()]+?)\s*\)$/i.exec(value);
-    if (chain && isPlainLength(chain[1])) return chain[1].trim();
-    return "";
+    if (!chain) return "";
+    return resolveBandHeight(chain[1]);
   }
 
   /**
@@ -489,8 +503,9 @@
   }, undefined);
 
   // Publish the bar height so the host can keep its own content below it.
-  // The contract value goes out VERBATIM (never re-measured) so the host's
-  // offset tracks the same token chain the bar itself wears.
+  // The value goes out as the resolved length the bar itself wears — the same
+  // snapshot on both surfaces, so a host offsetting by it never disagrees
+  // with what is on screen.
   safe(function () {
     root.style.setProperty(
       "--hk-boot-chrome-h",

@@ -667,7 +667,17 @@ export default defineComponent({
         : props.endAction ? "end"
         : undefined;
       const stripInner = (
-        <div class="hk-tabs" data-variant={props.variant} data-scrollable={props.scrollable || undefined} data-actions={actionsAttr}>
+        <div
+      class="hk-tabs"
+      data-variant={props.variant}
+      data-scrollable={props.scrollable || undefined}
+      data-actions={actionsAttr}
+      // A tab strip is interactive content, never a window-drag surface: the
+      // scroller pans overflowing strips with its own pointer sweep, which
+      // would fight Tauri's caption-band drag on a deep host band (2026-11-12).
+      // "false" blocks the ancestor walk — inert outside a Tauri webview.
+      data-tauri-drag-region={false}
+    >
           {props.scrollable ? (
             <HkScrollContainer
               ref={scrollerRef}

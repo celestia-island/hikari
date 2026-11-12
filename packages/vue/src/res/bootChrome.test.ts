@@ -666,6 +666,28 @@ describe("boot-chrome.js caption band height contract (2026-11-12)", () => {
     expect(published()).toBe("40px");
   });
 
+  it("resolves a NESTED chain to its innermost fallback (pre-CSS boot truth)", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    // var(--a, var(--b, 3rem)) with nothing in the cascade substitutes all the
+    // way down to the innermost fallback — the regex must recurse, not give up.
+    declareBandHeight("var(--a, var(--b, 3rem))");
+    runBootChrome();
+
+    expect(worn()).toBe("3rem");
+    expect(published()).toBe("3rem");
+  });
+
+  it("treats a bare unitless 0 as junk (a zero caption band is never meant)", () => {
+    setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
+    // isPlainLength deliberately has NO bare-0 alternative: a unitless 0
+    // published through --hk-boot-chrome-h would break calc()-based offsets.
+    declareBandHeight("0");
+    runBootChrome();
+
+    expect(worn()).toBe("");
+    expect(published()).toBe("32px");
+  });
+
   it("falls back to the numeric default for a chain with no resolvable length", () => {
     setGlobal("__TAURI_INTERNALS__", { invoke: vi.fn(() => Promise.resolve(false)) });
     // No fallback: nothing the boot strip can wear before the cascade exists.

@@ -652,7 +652,7 @@ mod tests {
         // Five stops render five ticks.
         assert_eq!(html.matches("hk-slider-tick").count(), 5, "{html}");
         // The value sits on the first stop: its tick is active.
-        assert!(html.contains("data-active"), "{html}");
+        assert!(html.contains(r#"data-active="true""#), "{html}");
     }
 
     #[test]

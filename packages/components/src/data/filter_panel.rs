@@ -1101,7 +1101,7 @@ fn add_menu_layer(props: &FilterPanelProps) -> VNode {
                 span { class: "hk-filter-add-item-label", {VNode::Text(VText::new(field.label.as_str()))} }
             });
         if highlighted {
-            item = item.attr("data-highlighted", "");
+            item = item.attr("data-highlighted", "true");
         }
         if props.disabled {
             item = item.attr("disabled", "");
@@ -1781,14 +1781,14 @@ mod tests {
         })
         .render_to_html();
         // No rows yet: the empty marker collapses the panel to the add verb.
-        assert!(html.contains("data-empty"), "{html}");
+        assert!(html.contains(r#"data-empty="true""#), "{html}");
         assert!(!html.contains("hk-filter-panel-row"), "{html}");
         // The chooser is the panel's SIBLING layer, absolutely positioned.
         assert!(html.contains("hk-filter-add-content"), "{html}");
         assert!(html.contains("position:absolute"), "{html}");
         assert!(html.contains("role=\"menu\""), "{html}");
         assert!(html.contains("hk-filter-add-item"), "{html}");
-        assert!(html.contains("data-highlighted"), "{html}");
+        assert!(html.contains(r#"data-highlighted="true""#), "{html}");
         assert!(html.contains("data-kind=\"text\""), "{html}");
         // Open-state disclosure on the add verb.
         assert!(html.contains("data-state=\"open\""), "{html}");

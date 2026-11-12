@@ -474,7 +474,10 @@ mod tests {
         );
         assert!(html.contains("--hk-corner-badge-offset:1px"), "{html}");
         assert!(html.contains("aria-hidden=\"true\""), "{html}");
-        assert!(html.contains("data-active"), "{html}");
+        // The value form matches Vue's patchAttr output (the house
+        // convention — a presence pin would let a "true"/"" revert ship
+        // green, the 2026-11-13 sweep's own defect class).
+        assert!(html.contains(r#"data-active="true""#), "{html}");
     }
 
     #[test]

@@ -531,7 +531,7 @@ mod tests {
         );
         assert!(html.contains("--hk-corner-badge-offset:1px"), "{html}");
         assert!(html.contains(r#"aria-hidden="true""#), "{html}");
-        assert!(html.contains("data-active"), "{html}");
+        assert!(html.contains(r#"data-active="true""#), "{html}");
     }
 
     #[test]

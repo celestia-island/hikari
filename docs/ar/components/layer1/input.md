@@ -131,3 +131,54 @@ AnimationBuilder::new()
 | --hi-input-padding-x | الحشو الأفقي | 0.75rem |
 | --hi-input-padding-y | الحشو العمودي | 0.5rem |
 | --hi-input-font-size | حجم الخط | var(--hi-font-size-sm) |
+
+## إدخال المبلغ
+
+`HkMoneyInput` حقل مبلغ واعٍ بالعملة. نموذجه هو **نص عشري قانوني**: أرقام، وعلى الأكثر نقطة `.` واحدة، دون فاصل آلاف ودون رمز عملة (`""`, `"12"`, `"1.5"`, `"-0.25"`)؛ وتعني `""` «غير محدد / اتباع»، ولا تُحوَّل أبدًا إلى `0`.
+
+لا يُعاد كتابة الحقل **إطلاقًا أثناء الكتابة**: يبقى النص المرئي كما كتبته تمامًا، وتُرسَل القيمة القانونية عند الإدخال، ولا يُطبَّق تنسيق العرض (الفواصل الآلاف ودقة العملة) إلا عند **فقدان التركيز**، ويعود النص صالحًا للتحرير عند **التركيز**. ولهذا يبقى `1.5` المكتوب `1.5` ولا ينهار إلى `5` أثناء الضغط.
+
+```hikari:tsx
+<HkMoneyInput
+  label="سعر الوحدة"
+  currency={{ code: "USD", symbol: "$", decimals: 2 }}
+  min={0}
+  modelValue={price}
+  onUpdate:modelValue={(next: string) => (price = next)}
+/>
+```
+
+القيمة الافتراضية لـ `maxDecimals` هي `currency.decimals`؛ ارفعها للأسعار (قد يحتاج سعر المليون إلى 4–6 أرقام). إن `min` / `max` **تبلّغان** فقط برسالة النطاق المترجمة — ولا يُقتطع مبلغ خارج النطاق من خلف المستخدم أبدًا. يُرسم رمز العملة داخل الحقل كبادئة تزيينية، والعنصر حقل نص عادي مع `inputmode="decimal"`، ويتولى المكوّن ربط `error` / `aria-invalid` / `aria-describedby`.
+
+| الخاصية | الوصف | النوع | الافتراضي |
+|---------|-------|-------|-----------|
+| modelValue | نص عشري قانوني | string | "" |
+| currency | العملة (الرمز، الكود، عدد الخانات العشرية) | HkCurrency | — |
+| maxDecimals | ميزانية الخانات العشرية (دقة الخروج والتقريب) | number | currency.decimals |
+| min / max | حدود إرشادية تُبلَّغ ولا تُقتطع | number | — |
+| label / error / required / disabled | هيئة الحقل | string / string / bool / bool | — |
+| size | درجة الحجم | "sm" \| "md" \| "lg" | "md" |
+
+## العملات
+
+`HkCurrency` هو نوع القيمة المشترك: `{ code, symbol?, name?, decimals }`. تُصدَّر أدواته من برميل الحزمة، فيستطيع المضيف تنسيق مبلغ دون تركيب أي عنصر تحكم: `formatMoney` و`parseMoney` و`canonicalMoneyText` و`currencyDisplayName` و`normalizeCurrency` و`isValidCurrency` و`currencySymbol`.
+
+```hikari:tsx
+formatMoney(1234.5, { code: "USD", decimals: 2 }); // "1,234.50"
+parseMoney("1,234.50", 2);                          // 1234.5
+currencyDisplayName("USD", "en");                   // "US Dollar"
+```
+
+`formatMoney` مستقل عن اللغة عمدًا (فاصل الآلاف `,` والعشري `.`) حتى يُعاد تحليل النص المنسّق إلى العدد نفسه دائمًا؛ أما الجزء المترجم فهو **اسم** العملة — `Intl.DisplayNames` ثم البديل الذي يمرره المستدعي ثم الكود.
+
+```hikari:tsx
+<HkCurrencySelect
+  label="عملة الفوترة"
+  currencies={currencies}
+  groups={[{ key: "common", label: "الشائعة", codes: ["USD", "EUR"] }]}
+  modelValue={code}
+  onUpdate:modelValue={(next: string) => (code = next)}
+/>
+```
+
+تعرض صفوف `HkCurrencySelect` الرمز والكود والاسم المترجم، ويطابق البحث الثلاثة معًا؛ والسطح المفتوح هو لوحة القائمة المنسدلة المشتركة (نافذة منبثقة على الحاسوب / ورقة سفلية على الهاتف) نفسها التي يستخدمها مكوّن الاختيار.

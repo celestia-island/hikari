@@ -146,6 +146,57 @@ AnimationBuilder::new()
 | --hi-input-padding-y | Vertical padding | 0.5rem |
 | --hi-input-font-size | Font size | var(--hi-font-size-sm) |
 
+## Money Input
+
+`HkMoneyInput` is a currency-aware amount field. Its model is **canonical decimal text** — digits, at most one `.`, no grouping separator and no currency symbol (`""`, `"12"`, `"1.5"`, `"-0.25"`); `""` means "unset / follow" and is never coerced to `0`.
+
+The field is **never rewritten while you type**: the visible text stays exactly what you entered, the canonical value is emitted on input, display formatting (grouping and the currency's precision) is applied on **blur**, and the text is de-formatted back for editing on **focus**. That is why a typed `1.5` stays `1.5` instead of collapsing to `5` mid-keystroke.
+
+```hikari:tsx
+<HkMoneyInput
+  label="Unit price"
+  currency={{ code: "USD", symbol: "$", decimals: 2 }}
+  min={0}
+  modelValue={price}
+  onUpdate:modelValue={(next: string) => (price = next)}
+/>
+```
+
+`maxDecimals` defaults to `currency.decimals`; raise it for rates (a per-million price may want 4–6 digits). `min` / `max` only **report** the localized range message — an out-of-range amount is never clamped behind the user's back. The currency symbol is rendered inside the field as a decorative affix, the element is a plain text field with `inputmode="decimal"`, and `error` / `aria-invalid` / `aria-describedby` are wired by the component.
+
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| modelValue | Canonical decimal text | string | "" |
+| currency | Currency (symbol, code, minor-unit digits) | HkCurrency | — |
+| maxDecimals | Fraction-digit budget (blur precision + rounding) | number | currency.decimals |
+| min / max | Advisory bounds, reported not clamped | number | — |
+| label / error / required / disabled | Field chrome | string / string / bool / bool | — |
+| size | Field size step | "sm" \| "md" \| "lg" | "md" |
+
+## Currency
+
+`HkCurrency` is the shared value type: `{ code, symbol?, name?, decimals }`. Its helpers are exported from the package barrel, so a host can format an amount without mounting a control: `formatMoney`, `parseMoney`, `canonicalMoneyText`, `currencyDisplayName`, `normalizeCurrency`, `isValidCurrency` and `currencySymbol`.
+
+```hikari:tsx
+formatMoney(1234.5, { code: "USD", decimals: 2 }); // "1,234.50"
+parseMoney("1,234.50", 2);                          // 1234.5
+currencyDisplayName("USD", "en");                   // "US Dollar"
+```
+
+`formatMoney` is deliberately locale-independent (grouping `,`, decimal `.`) so a formatted string always parses back to the same number; the localized part is the currency **name** — `Intl.DisplayNames`, then the caller's fallback, then the code.
+
+```hikari:tsx
+<HkCurrencySelect
+  label="Billing currency"
+  currencies={currencies}
+  groups={[{ key: "common", label: "Common", codes: ["USD", "EUR"] }]}
+  modelValue={code}
+  onUpdate:modelValue={(next: string) => (code = next)}
+/>
+```
+
+`HkCurrencySelect` rows carry the symbol, the code and the localized name, the search matches all three, and the opened surface is the shared dropdown panel (desktop popout / phone bottom sheet) — the same one the select component uses.
+
 ## Related Documentation
 
 - [Design System Overview](../../design/overview.md)

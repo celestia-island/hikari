@@ -131,3 +131,54 @@ AnimationBuilder::new()
 | --hi-input-padding-x | Padding horizontal | 0.75rem |
 | --hi-input-padding-y | Padding vertical | 0.5rem |
 | --hi-input-font-size | Taille de la police | var(--hi-font-size-sm) |
+
+## Saisie de montant
+
+`HkMoneyInput` est un champ de montant tenant compte de la devise. Son modèle est un **texte décimal canonique** : des chiffres, au plus un `.`, aucun séparateur de milliers et aucun symbole de devise (`""`, `"12"`, `"1.5"`, `"-0.25"`) ; `""` signifie « non défini / suivre » et n'est jamais converti en `0`.
+
+Le champ n'est **jamais réécrit pendant la frappe** : le texte visible reste exactement ce qui a été saisi, la valeur canonique est émise à la frappe, le formatage d'affichage (milliers et précision de la devise) n'est appliqué qu'à la **perte du focus**, et le texte redevient éditable à la **prise de focus**. C'est pourquoi un `1.5` saisi reste `1.5` au lieu de se réduire à `5` en cours de frappe.
+
+```hikari:tsx
+<HkMoneyInput
+  label="Prix unitaire"
+  currency={{ code: "USD", symbol: "$", decimals: 2 }}
+  min={0}
+  modelValue={price}
+  onUpdate:modelValue={(next: string) => (price = next)}
+/>
+```
+
+`maxDecimals` vaut par défaut `currency.decimals` ; augmentez-le pour les taux (un prix au million peut demander 4 à 6 chiffres). `min` / `max` ne font que **signaler** le message de plage localisé : un montant hors plage n'est jamais tronqué dans le dos de l'utilisateur. Le symbole de la devise est dessiné dans le champ comme affixe décoratif, l'élément est un simple champ texte avec `inputmode="decimal"`, et `error` / `aria-invalid` / `aria-describedby` sont câblés par le composant.
+
+| Propriété | Description | Type | Défaut |
+|-----------|-------------|------|--------|
+| modelValue | Texte décimal canonique | string | "" |
+| currency | Devise (symbole, code, décimales) | HkCurrency | — |
+| maxDecimals | Budget de décimales (précision à la sortie et arrondi) | number | currency.decimals |
+| min / max | Bornes indicatives, signalées sans troncature | number | — |
+| label / error / required / disabled | Habillage du champ | string / string / bool / bool | — |
+| size | Échelon de taille | "sm" \| "md" \| "lg" | "md" |
+
+## Devises
+
+`HkCurrency` est le type de valeur partagé : `{ code, symbol?, name?, decimals }`. Ses utilitaires sont exportés par le barillet du paquet, si bien qu'un hôte peut formater un montant sans monter de contrôle : `formatMoney`, `parseMoney`, `canonicalMoneyText`, `currencyDisplayName`, `normalizeCurrency`, `isValidCurrency` et `currencySymbol`.
+
+```hikari:tsx
+formatMoney(1234.5, { code: "USD", decimals: 2 }); // "1,234.50"
+parseMoney("1,234.50", 2);                          // 1234.5
+currencyDisplayName("USD", "en");                   // "US Dollar"
+```
+
+`formatMoney` est volontairement indépendant de la locale (milliers `,`, décimale `.`) afin qu'une chaîne formatée redonne toujours le même nombre ; seule la **nom** de la devise est localisé — `Intl.DisplayNames`, puis le repli de l'appelant, puis le code.
+
+```hikari:tsx
+<HkCurrencySelect
+  label="Devise de facturation"
+  currencies={currencies}
+  groups={[{ key: "common", label: "Fréquentes", codes: ["USD", "EUR"] }]}
+  modelValue={code}
+  onUpdate:modelValue={(next: string) => (code = next)}
+/>
+```
+
+Les lignes de `HkCurrencySelect` portent le symbole, le code et le nom localisé ; la recherche correspond aux trois. La surface ouverte est le panneau déroulant partagé (popout bureau / feuille basse sur téléphone), le même que celui du composant select.

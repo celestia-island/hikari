@@ -131,3 +131,54 @@ AnimationBuilder::new()
 | --hi-input-padding-x | Relleno horizontal | 0.75rem |
 | --hi-input-padding-y | Relleno vertical | 0.5rem |
 | --hi-input-font-size | Tamaño de fuente | var(--hi-font-size-sm) |
+
+## Entrada de importe
+
+`HkMoneyInput` es un campo de importe consciente de la divisa. Su modelo es **texto decimal canónico**: dígitos, como mucho un `.`, sin separador de miles y sin símbolo de divisa (`""`, `"12"`, `"1.5"`, `"-0.25"`); `""` significa «sin definir / seguir» y nunca se convierte en `0`.
+
+El campo **nunca se reescribe mientras escribes**: el texto visible sigue siendo exactamente lo que has introducido, el valor canónico se emite al escribir, el formato de visualización (separador de miles y precisión de la divisa) se aplica al **perder el foco** y el texto vuelve a su forma editable al **enfocar**. Por eso un `1.5` tecleado sigue siendo `1.5` en lugar de colapsar a `5` a mitad de pulsación.
+
+```hikari:tsx
+<HkMoneyInput
+  label="Precio unitario"
+  currency={{ code: "USD", symbol: "$", decimals: 2 }}
+  min={0}
+  modelValue={price}
+  onUpdate:modelValue={(next: string) => (price = next)}
+/>
+```
+
+`maxDecimals` toma por defecto `currency.decimals`; súbelo para tarifas (un precio por millón puede necesitar 4–6 dígitos). `min` / `max` solo **informan** del mensaje de rango localizado: un importe fuera de rango nunca se recorta a espaldas del usuario. El símbolo de la divisa se dibuja dentro del campo como afijo decorativo, el elemento es un campo de texto normal con `inputmode="decimal"` y `error` / `aria-invalid` / `aria-describedby` los cablea el componente.
+
+| Propiedad | Descripción | Tipo | Predeterminado |
+|-----------|-------------|------|----------------|
+| modelValue | Texto decimal canónico | string | "" |
+| currency | Divisa (símbolo, código, decimales) | HkCurrency | — |
+| maxDecimals | Presupuesto de decimales (precisión al salir y redondeo) | number | currency.decimals |
+| min / max | Límites de aviso, se informan no se recortan | number | — |
+| label / error / required / disabled | Presentación del campo | string / string / bool / bool | — |
+| size | Escalón de tamaño | "sm" \| "md" \| "lg" | "md" |
+
+## Divisas
+
+`HkCurrency` es el tipo de valor compartido: `{ code, symbol?, name?, decimals }`. Sus utilidades se exportan desde el barril del paquete, de modo que un host puede formatear un importe sin montar un control: `formatMoney`, `parseMoney`, `canonicalMoneyText`, `currencyDisplayName`, `normalizeCurrency`, `isValidCurrency` y `currencySymbol`.
+
+```hikari:tsx
+formatMoney(1234.5, { code: "USD", decimals: 2 }); // "1,234.50"
+parseMoney("1,234.50", 2);                          // 1234.5
+currencyDisplayName("USD", "en");                   // "US Dollar"
+```
+
+`formatMoney` es deliberadamente independiente del idioma (separador `,`, decimal `.`) para que una cadena con formato siempre vuelva a dar el mismo número; lo localizado es el **nombre** de la divisa: `Intl.DisplayNames`, luego el valor de reserva del llamador y por último el código.
+
+```hikari:tsx
+<HkCurrencySelect
+  label="Divisa de facturación"
+  currencies={currencies}
+  groups={[{ key: "common", label: "Frecuentes", codes: ["USD", "EUR"] }]}
+  modelValue={code}
+  onUpdate:modelValue={(next: string) => (code = next)}
+/>
+```
+
+Las filas de `HkCurrencySelect` muestran símbolo, código y nombre localizado; la búsqueda coincide con los tres. La superficie abierta es el panel desplegable compartido (popout de escritorio / hoja inferior en el móvil), el mismo que usa el componente select.

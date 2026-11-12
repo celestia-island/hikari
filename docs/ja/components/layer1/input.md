@@ -131,3 +131,54 @@ AnimationBuilder::new()
 | --hi-input-padding-x | 水平パディング | 0.75rem |
 | --hi-input-padding-y | 垂直パディング | 0.5rem |
 | --hi-input-font-size | フォントサイズ | var(--hi-font-size-sm) |
+
+## 金額入力
+
+`HkMoneyInput` は通貨を認識する金額入力フィールドです。モデルは**正規化された小数テキスト**——数字と最大 1 つの `.` のみで、桁区切りも通貨記号も含みません（`""`、`"12"`、`"1.5"`、`"-0.25"`）。`""` は「未設定／既定に従う」を意味し、`0` に変換されることはありません。
+
+入力中に**フィールドが書き換えられることはありません**。表示テキストは入力した内容のまま残り、正規化された値は入力時に送出され、表示整形（桁区切りと通貨の精度）は**ブラー時**にだけ適用され、**フォーカス時**に編集用テキストへ戻されます。だからこそ入力した `1.5` が途中で `5` に潰れることはありません。
+
+```hikari:tsx
+<HkMoneyInput
+  label="単価"
+  currency={{ code: "USD", symbol: "$", decimals: 2 }}
+  min={0}
+  modelValue={price}
+  onUpdate:modelValue={(next: string) => (price = next)}
+/>
+```
+
+`maxDecimals` の既定値は `currency.decimals` です。レート（100 万件あたりの単価は 4〜6 桁が必要な場合があります）では引き上げてください。`min` / `max` はローカライズされた範囲メッセージを**報告するだけ**で、範囲外の金額が勝手に丸められることはありません。通貨記号は装飾的な接頭辞としてフィールド内に描画され、要素は `inputmode="decimal"` を備えた通常のテキストフィールドで、`error` / `aria-invalid` / `aria-describedby` はコンポーネントが配線します。
+
+| プロパティ | 説明 | 型 | 既定値 |
+|-----------|------|----|--------|
+| modelValue | 正規化された小数テキスト | string | "" |
+| currency | 通貨（記号・コード・小数桁） | HkCurrency | — |
+| maxDecimals | 小数桁の予算（ブラー精度と丸め） | number | currency.decimals |
+| min / max | 参考範囲。報告のみで丸めない | number | — |
+| label / error / required / disabled | フィールドの外装 | string / string / bool / bool | — |
+| size | サイズ段階 | "sm" \| "md" \| "lg" | "md" |
+
+## 通貨
+
+`HkCurrency` は共有の値型です：`{ code, symbol?, name?, decimals }`。ヘルパーはパッケージのバレルからエクスポートされるため、コントロールをマウントせずに金額を整形できます：`formatMoney`、`parseMoney`、`canonicalMoneyText`、`currencyDisplayName`、`normalizeCurrency`、`isValidCurrency`、`currencySymbol`。
+
+```hikari:tsx
+formatMoney(1234.5, { code: "USD", decimals: 2 }); // "1,234.50"
+parseMoney("1,234.50", 2);                          // 1234.5
+currencyDisplayName("USD", "en");                   // "US Dollar"
+```
+
+`formatMoney` は意図的にロケール非依存です（桁区切り `,`、小数点 `.`）。整形後の文字列は常に同じ数値へ戻せます。ローカライズされるのは通貨**名**の部分で、`Intl.DisplayNames` → 呼び出し側のフォールバック → コードの順に解決します。
+
+```hikari:tsx
+<HkCurrencySelect
+  label="請求通貨"
+  currencies={currencies}
+  groups={[{ key: "common", label: "よく使う", codes: ["USD", "EUR"] }]}
+  modelValue={code}
+  onUpdate:modelValue={(next: string) => (code = next)}
+/>
+```
+
+`HkCurrencySelect` の各行は記号・コード・ローカライズ名を持ち、検索は 3 つすべてに一致します。開く面は共有のドロップダウンパネル（デスクトップのポップアウト／スマートフォンのボトムシート）で、セレクトコンポーネントと同一です。

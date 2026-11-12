@@ -20,6 +20,7 @@ export { HkColorSchemeEditor } from "./components/HkColorSchemeEditor";
 export { default as HConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HCopyBadge } from "./components/HkCopyBadge";
 export { default as HCrossfade } from "./components/HkCrossfade";
+export { default as HCurrencySelect } from "./components/HkCurrencySelect";
 export { default as HDivider } from "./components/HkDivider";
 export {
   default as HDockBar,
@@ -29,6 +30,7 @@ export {
 export { default as HAddTile } from "./components/HkAddTile";
 export { default as HDrawer } from "./components/HkDrawer";
 export { default as HEdgeGlow } from "./components/HkEdgeGlow";
+export { default as HEditableTable } from "./components/HkEditableTable";
 export { default as HEmptyState } from "./components/HkEmptyState";
 export { default as HStepGuide } from "./components/HkStepGuide";
 export type { StepGuideItem } from "./components/HkStepGuide";
@@ -48,9 +50,11 @@ export { default as HLoadMore } from "./components/HkLoadMore";
 export { default as HMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HTerminal } from "./components/HkTerminal";
 export { default as HModal } from "./components/HkModal";
+export { default as HMoneyInput } from "./components/HkMoneyInput";
 export { default as HNavItem } from "./components/HkNavItem";
 export { default as HNumberInput } from "./components/HkNumberInput";
 export { default as HPhoneInput } from "./components/HkPhoneInput";
+export { default as HPrice } from "./components/HkPrice";
 export { HkOtpInput as HOtpInput } from "./components/HkOtpInput";
 export { default as HAffixPicker, type HkAffixOption } from "./components/HkAffixPicker";
 export { default as HPhaseTransition } from "./components/HkPhaseTransition";
@@ -584,6 +588,16 @@ export { probeOrigin, probeOriginWithBody } from "./utils/connectivity";
 export type { OriginProbe } from "./utils/connectivity";
 export { probeHealthEndpoint } from "./utils/healthProbe";
 export type { HealthProbeBody, HealthProbeResult } from "./utils/healthProbe";
+export {
+  canonicalMoneyText,
+  currencyDisplayName,
+  currencySymbol,
+  formatMoney,
+  isValidCurrency,
+  normalizeCurrency,
+  parseMoney,
+} from "./utils/currency";
+export type { HkCurrency, HkMoneyFormatOptions } from "./utils/currency";
 
 export { highlight, languageForPath, useHighlight } from "./composables/useHighlight";
 export { LANGUAGE_LOADERS } from "./composables/highlightLanguages";
@@ -785,7 +799,9 @@ export {
 } from "./components/donutGeometry";
 export type { HkDonutEntry, HkDonutSlice } from "./components/donutGeometry";
 export { default as HkDockBar } from "./components/HkDockBar";
+export { default as HkCurrencySelect, type HkCurrencyGroup } from "./components/HkCurrencySelect";
 export { default as HkDrawer } from "./components/HkDrawer";
+export { default as HkEditableTable, type HkEditableColumn, type HkEditableCellSlotProps, type HkEditableRowErrorSlotProps } from "./components/HkEditableTable";
 // The shared edge-glow painter: the feathered primary-gradient band behind
 // HkScrollContainer's selectionHint and overflowGlow, exported so a host can
 // mount the same effect anywhere (a clipped chart, a carousel) instead of
@@ -812,6 +828,7 @@ export { default as HkMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HkMermaidDiagram } from "./components/HkMermaidDiagram";
 export { default as HkTerminal } from "./components/HkTerminal";
 export { default as HkModal } from "./components/HkModal";
+export { default as HkMoneyInput } from "./components/HkMoneyInput";
 export { default as HkNavItem } from "./components/HkNavItem";
 export { default as HkNumberInput } from "./components/HkNumberInput";
 export { default as HkPhoneInput } from "./components/HkPhoneInput";
@@ -830,6 +847,7 @@ export { default as HkHoverRevealAction } from "./components/HkHoverRevealAction
 export { default as HkKeywordSearchModal } from "./components/HkKeywordSearchModal";
 export { default as HkModalBreadcrumb } from "./components/HkModalBreadcrumb";
 export { default as HkPopover } from "./components/HkPopover";
+export { default as HkPrice, type HkPriceReference } from "./components/HkPrice";
 export { default as HkMenu } from "./components/HkMenu";
 export { default as HkContextMenuProvider } from "./components/HkContextMenuProvider";
 export { default as HkMenuPanel } from "./components/HkMenuPanel";

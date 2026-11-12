@@ -328,5 +328,21 @@
   "hikari::tablePage.totalCount": "الإجمالي {n}",
   "hikari::scrollProgress.rangeHead": "الصفوف {from}",
   "hikari::scrollProgress.rangeTail": "{to} من {total}",
-  "hikari::scrollProgress.single": "الصف {from} من {total}"
+  "hikari::scrollProgress.single": "الصف {from} من {total}",
+  "hikari::money.unset": "غير محدد",
+  "hikari::money.approximate": "تقريبي",
+  "hikari::money.rate": "1 {from} = {rate} {to}",
+  "hikari::money.rateAsOf": "اعتبارًا من {date}",
+  "hikari::money.invalid": "أدخل مبلغًا صالحًا",
+  "hikari::money.belowMin": "يجب ألا يقل عن {min}",
+  "hikari::money.aboveMax": "يجب ألا يزيد عن {max}",
+  "hikari::currency.placeholder": "اختر العملة",
+  "hikari::currency.search": "البحث عن العملات",
+  "hikari::currency.empty": "لم يتم العثور على عملات",
+  "hikari::currency.otherGroup": "عملات أخرى",
+  "hikari::editableTable.addRow": "إضافة صف",
+  "hikari::editableTable.removeRow": "حذف الصف",
+  "hikari::editableTable.rowActions": "إجراءات الصف",
+  "hikari::editableTable.rowLabel": "الصف {n}",
+  "hikari::editableTable.empty": "لا توجد صفوف بعد"
 }

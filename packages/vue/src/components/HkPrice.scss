@@ -1,0 +1,111 @@
+// AI-generated: developed with the DeepSeek Harness agent (model DeepSeek V4.1 Flash); human-directed.
+@use "../tokens";
+
+/* HkPrice — the money-display atom.
+ *
+ * Two shapes, one skeleton: `text` (inline prose/detail rows) and `chip`
+ * (pills/badges in a dense table). Both keep the figures TABULAR — that is
+ * the component's reason to exist beyond `formatMoney`: a column of prices
+ * must align digit-for-digit while the surrounding type scales with `size`.
+ */
+
+.hk-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-text));
+  white-space: nowrap;
+}
+
+.hk-price-primary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.hk-price-symbol {
+  font-size: 0.9em;
+  color: rgb(var(--color-text) / 72%);
+}
+
+.hk-price-amount {
+  font-weight: 600;
+}
+
+.hk-price-unit {
+  font-size: 0.85em;
+  font-weight: 500;
+  color: rgb(var(--color-muted) / 85%);
+}
+
+/* The reference conversion reads as the secondary statement it is: muted,
+ * smaller, never competing with the amount the host actually charges. */
+.hk-price-reference {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 0.88em;
+  color: rgb(var(--color-muted) / 88%);
+  cursor: help;
+  border-radius: var(--radius-sm);
+  outline-offset: 2px;
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+  }
+}
+
+.hk-price-approx {
+  font-variant-numeric: normal;
+}
+
+.hk-price-ref-symbol,
+.hk-price-ref-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+/* An unset amount is a statement, not an error: quiet ink, no alarm color. */
+.hk-price-empty {
+  color: rgb(var(--color-muted) / 70%);
+  font-variant-numeric: normal;
+}
+
+/* Speech-only text (currency codes, "Approximate", "Not set"): the visual
+ * glyphs are decorative, the words are not. */
+.hk-price-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── chip variant ────────────────────────────────────────────────── */
+.hk-price-chip {
+  padding: var(--space-2) var(--space-8);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 12%, transparent);
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, rgb(var(--color-text)) 5%, transparent);
+
+  .hk-price-amount {
+    font-weight: 600;
+  }
+}
+
+/* ── size ladder ─────────────────────────────────────────────────── */
+.hk-price-sm {
+  font-size: var(--text-xs);
+
+  .hk-price-amount {
+    font-weight: 600;
+  }
+}
+
+.hk-price-md {
+  font-size: var(--text-base);
+}

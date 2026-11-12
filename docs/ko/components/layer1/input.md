@@ -131,3 +131,54 @@ AnimationBuilder::new()
 | --hi-input-padding-x | 수평 패딩 | 0.75rem |
 | --hi-input-padding-y | 수직 패딩 | 0.5rem |
 | --hi-input-font-size | 글꼴 크기 | var(--hi-font-size-sm) |
+
+## 금액 입력
+
+`HkMoneyInput` 은 통화를 인식하는 금액 입력 필드입니다. 모델은 **정규화된 소수 텍스트**입니다. 숫자와 최대 하나의 `.` 만 쓰며 천 단위 구분 기호도 통화 기호도 없습니다(`""`, `"12"`, `"1.5"`, `"-0.25"`). `""` 는 "설정 안 됨 / 기본값 따름"을 뜻하며 `0` 으로 강제 변환되지 않습니다.
+
+입력 중에는 **필드를 다시 쓰지 않습니다**. 화면 텍스트는 입력한 그대로 유지되고, 정규화된 값은 입력 시 전송되며, 표시 형식(천 단위 구분과 통화 정밀도)은 **블러 시**에만 적용되고, **포커스 시** 편집용 텍스트로 되돌아갑니다. 그래서 입력한 `1.5` 가 타이핑 도중 `5` 로 무너지지 않습니다.
+
+```hikari:tsx
+<HkMoneyInput
+  label="단가"
+  currency={{ code: "USD", symbol: "$", decimals: 2 }}
+  min={0}
+  modelValue={price}
+  onUpdate:modelValue={(next: string) => (price = next)}
+/>
+```
+
+`maxDecimals` 의 기본값은 `currency.decimals` 입니다. 요율(백만 건당 단가에는 4–6 자리가 필요할 수 있습니다)에서는 값을 올리세요. `min` / `max` 는 현지화된 범위 메시지를 **보고만** 하며, 범위를 벗어난 금액을 임의로 잘라내지 않습니다. 통화 기호는 장식용 접두사로 필드 안에 렌더링되고, 요소는 `inputmode="decimal"` 을 가진 일반 텍스트 필드이며, `error` / `aria-invalid` / `aria-describedby` 는 컴포넌트가 배선합니다.
+
+| 속성 | 설명 | 타입 | 기본값 |
+|------|------|------|--------|
+| modelValue | 정규화된 소수 텍스트 | string | "" |
+| currency | 통화(기호, 코드, 소수 자릿수) | HkCurrency | — |
+| maxDecimals | 소수 자릿수 예산(블러 정밀도와 반올림) | number | currency.decimals |
+| min / max | 참고 범위, 보고만 하고 자르지 않음 | number | — |
+| label / error / required / disabled | 필드 외형 | string / string / bool / bool | — |
+| size | 크기 단계 | "sm" \| "md" \| "lg" | "md" |
+
+## 통화
+
+`HkCurrency` 는 공용 값 타입입니다: `{ code, symbol?, name?, decimals }`. 헬퍼는 패키지 배럴에서 내보내므로 컨트롤을 마운트하지 않고도 금액을 서식화할 수 있습니다: `formatMoney`, `parseMoney`, `canonicalMoneyText`, `currencyDisplayName`, `normalizeCurrency`, `isValidCurrency`, `currencySymbol`.
+
+```hikari:tsx
+formatMoney(1234.5, { code: "USD", decimals: 2 }); // "1,234.50"
+parseMoney("1,234.50", 2);                          // 1234.5
+currencyDisplayName("USD", "en");                   // "US Dollar"
+```
+
+`formatMoney` 는 의도적으로 로케일과 무관합니다(천 단위 `,`, 소수점 `.`). 서식화된 문자열은 언제나 같은 숫자로 되돌아갑니다. 현지화되는 부분은 통화 **이름**이며 `Intl.DisplayNames` → 호출자의 대체값 → 코드 순으로 해석합니다.
+
+```hikari:tsx
+<HkCurrencySelect
+  label="결제 통화"
+  currencies={currencies}
+  groups={[{ key: "common", label: "자주 쓰는 통화", codes: ["USD", "EUR"] }]}
+  modelValue={code}
+  onUpdate:modelValue={(next: string) => (code = next)}
+/>
+```
+
+`HkCurrencySelect` 의 각 행은 기호·코드·현지화 이름을 함께 표시하며, 검색은 세 가지 모두를 대상으로 합니다. 열리는 면은 셀렉트 컴포넌트와 동일한 공용 드롭다운 패널(데스크톱 팝아웃 / 휴대폰 바텀 시트)입니다.

@@ -97,8 +97,8 @@ function summary(container: HTMLElement): string {
 }
 
 function everyChip(container: HTMLElement): HTMLButtonElement {
-  const el = container.querySelector<HTMLButtonElement>(".hk-wp-every");
-  expect(el, ".hk-wp-every renders").not.toBeNull();
+  const el = container.querySelector<HTMLButtonElement>('[data-test="hk-wp-every"]');
+  expect(el, "the every-day button renders").not.toBeNull();
   return el!;
 }
 
@@ -278,7 +278,7 @@ describe("HkWeekdayPicker — month navigation", () => {
     const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
     expect(title(harness.container)).toBe(fmt.format(new Date(2026, 7, 1)));
 
-    const navs = harness.container.querySelectorAll<HTMLButtonElement>(".hk-wp-nav");
+    const navs = harness.container.querySelectorAll<HTMLButtonElement>('[data-test="hk-wp-prev"], [data-test="hk-wp-next"]');
     navs[1]!.click();
     await nextTick();
     expect(title(harness.container)).toBe(fmt.format(new Date(2026, 8, 1)));
@@ -301,13 +301,63 @@ describe("HkWeekdayPicker — month navigation", () => {
 
   it("keeps the weekday bands after navigating to another month", async () => {
     const harness = mountPicker({ modelValue: [5] }); // Fridays
-    harness.container.querySelectorAll<HTMLButtonElement>(".hk-wp-nav")[1]!.click();
+    harness.container.querySelectorAll<HTMLButtonElement>('[data-test="hk-wp-prev"], [data-test="hk-wp-next"]')[1]!.click();
     await nextTick();
     expect(bands(harness.container)).toHaveLength(1);
     const active = cells(harness.container).filter((c) => c.classList.contains("is-active"));
     expect(active.length).toBeGreaterThan(0);
     // 2026-09-04 is the first Friday of September 2026.
     expect(active.some((c) => c.textContent === "4")).toBe(true);
+  });
+});
+
+describe("HkWeekdayPicker — initial month", () => {
+  it("follows a late initialMonth prop without moving the selection", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const month = ref<Date | null>(new Date(2026, 7, 1));
+    const Wrapper = defineComponent({
+      setup: () => () => h(HkWeekdayPicker, { modelValue: [1], initialMonth: month.value }),
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
+    expect(title(container)).toBe(fmt.format(new Date(2026, 7, 1)));
+    month.value = new Date(2026, 2, 1);
+    await nextTick();
+    expect(title(container)).toBe(fmt.format(new Date(2026, 2, 1)));
+    expect(container.querySelectorAll(".hk-wp-band")).toHaveLength(1);
+  });
+
+  it("does not reset month navigation when the host re-renders the same month", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const tick = ref(0);
+    const Wrapper = defineComponent({
+      setup: () => () =>
+        h(HkWeekdayPicker, {
+          // A live Date per render (same month, different timestamp) — the
+          // host that writes `new Date()` inline or re-renders on a clock.
+          initialMonth: new Date(2026, 7, 1, 0, 0, tick.value),
+          modelValue: [1 + tick.value * 0],
+        }),
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
+    const next = container.querySelector<HTMLButtonElement>('[data-test="hk-wp-next"]')!;
+    next.click();
+    await nextTick();
+    expect(title(container)).toBe(fmt.format(new Date(2026, 8, 1)));
+    tick.value += 1;
+    await nextTick();
+    expect(title(container)).toBe(fmt.format(new Date(2026, 8, 1)));
   });
 });
 

@@ -9,10 +9,12 @@ import HkTimePicker, {
   from12Hour,
   parseHhmm,
   snapMinute,
+  snapTimeToStep,
   to12Hour,
 } from "./HkTimePicker";
 import { setLocale } from "../i18n/context";
 
+const originalWidth = window.innerWidth;
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
 
@@ -88,7 +90,7 @@ function readoutButtons(): HTMLButtonElement[] {
 }
 
 function periodButtons(): HTMLButtonElement[] {
-  return Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-tp-period-btn") ?? []);
+  return Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-pill-group-pill") ?? []);
 }
 
 function face(): HTMLElement {
@@ -100,6 +102,7 @@ afterEach(async () => {
   for (const el of containers.splice(0)) el.remove();
   document.querySelectorAll(".hk-tp-panel, .hk-popover-backdrop, .hk-popover-panel").forEach((el) => el.remove());
   vi.useRealTimers();
+  (window as { innerWidth: number }).innerWidth = originalWidth;
   await setLocale("en");
 });
 
@@ -161,6 +164,16 @@ describe("HkTimePicker helpers", () => {
     expect(snapMinute(-8, 15)).toBe(45);
   });
 
+  it("snaps a whole time onto the step grid and carries the hour", () => {
+    expect(snapTimeToStep(14, 59, 30)).toEqual({ hour: 15, minute: 0 });
+    expect(snapTimeToStep(14, 46, 30)).toEqual({ hour: 15, minute: 0 });
+    expect(snapTimeToStep(14, 7, 15)).toEqual({ hour: 14, minute: 0 });
+    expect(snapTimeToStep(14, 8, 15)).toEqual({ hour: 14, minute: 15 });
+    expect(snapTimeToStep(23, 59, 30)).toEqual({ hour: 0, minute: 0 });
+    expect(snapTimeToStep(0, 0, 1)).toEqual({ hour: 0, minute: 0 });
+    expect(snapTimeToStep(9, 30, 1)).toEqual({ hour: 9, minute: 30 });
+  });
+
   it("places dial values on the face (0 at 12 o'clock, clockwise)", () => {
     const close = (actual: number, expected: number) => expect(actual).toBeCloseTo(expected, 6);
     const north = dialPoint(0, 12);
@@ -185,6 +198,15 @@ describe("HkTimePicker helpers", () => {
 });
 
 describe("HkTimePicker", () => {
+  it("uses hikari's HkPillToggleGroup for the day period", async () => {
+    const p = mountPicker({ modelValue: "09:30" });
+    await openPicker(p);
+    const group = panel()?.querySelector(".hk-pill-group.hk-tp-period");
+    expect(group, "the period is the shared pill group").not.toBeNull();
+    expect(group?.getAttribute("role")).toBe("group");
+    expect(periodButtons().map((b) => b.textContent)).toEqual(["AM", "PM"]);
+  });
+
   it("renders the trigger value and falls back to a localized placeholder", () => {
     const p = mountPicker({ modelValue: "09:30" });
     const value = p.container.querySelector<HTMLElement>(".hk-tp-value");
@@ -254,6 +276,17 @@ describe("HkTimePicker", () => {
     expect(p.emitted).toEqual(["14:00"]);
   });
 
+  it("carries the hour when the synthesized time crosses a coarse step boundary", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 4, 6, 14, 59, 0));
+    const p = mountPicker({ minuteStep: 30 });
+    trigger(p).click();
+    await nextTick();
+    panel()!.querySelector<HTMLButtonElement>(".hk-tp-confirm")!.click();
+    await nextTick();
+    expect(p.emitted).toEqual(["15:00"]);
+  });
+
   it("snaps Now onto a coarse minuteStep", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date(2026, 4, 6, 14, 7, 0));
@@ -263,6 +296,17 @@ describe("HkTimePicker", () => {
     panel()!.querySelector<HTMLButtonElement>(".hk-tp-now")!.click();
     await nextTick();
     expect(p.emitted).toEqual(["14:00"]);
+  });
+
+  it("carries the hour when Now crosses a coarse step boundary", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 4, 6, 14, 59, 0));
+    const p = mountPicker({ modelValue: "09:30", minuteStep: 30 });
+    trigger(p).click();
+    await nextTick();
+    panel()!.querySelector<HTMLButtonElement>(".hk-tp-now")!.click();
+    await nextTick();
+    expect(p.emitted).toEqual(["15:00"]);
   });
 
   it("keeps a stored off-grid minute verbatim until the user re-picks", async () => {
@@ -387,6 +431,23 @@ describe("HkTimePicker", () => {
     expect(face().getAttribute("aria-valuenow")).toBe("0");
   });
 
+  it("reports the last reachable minute as aria-valuemax", async () => {
+    const p = mountPicker({ modelValue: "09:30", minuteStep: 15 });
+    await openPicker(p);
+    readoutButtons()[1].click();
+    await nextTick();
+    expect(face().getAttribute("aria-valuemax")).toBe("45");
+  });
+
+  it("never renders an aria range below a stored off-grid minute", async () => {
+    const p = mountPicker({ modelValue: "09:59", minuteStep: 30 });
+    await openPicker(p);
+    readoutButtons()[1].click();
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("59");
+    expect(face().getAttribute("aria-valuemax")).toBe("59");
+  });
+
   it("honours minuteStep for keyboard and dial snapping", async () => {
     const p = mountPicker({ modelValue: "09:30", minuteStep: 5 });
     await openPicker(p);
@@ -395,6 +456,25 @@ describe("HkTimePicker", () => {
     face().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     await nextTick();
     expect(face().getAttribute("aria-valuenow")).toBe("35");
+  });
+
+  it("snaps a pointer drag on the dial through minuteStep", async () => {
+    const p = mountPicker({ modelValue: "09:30", minuteStep: 10 });
+    await openPicker(p);
+    const faceEl = face();
+    faceEl.getBoundingClientRect = () => ({
+      left: 0, top: 0, right: 200, bottom: 200, width: 200, height: 200,
+      x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    readoutButtons()[1].click();
+    await nextTick();
+    // 3 o'clock is minute 15; step 10 snaps it to 20 (a step-blind path
+    // would leave 15, so this pins the snap, not just the wiring).
+    faceEl.dispatchEvent(new MouseEvent("pointerdown", { clientX: 200, clientY: 100, bubbles: true }));
+    faceEl.dispatchEvent(new MouseEvent("pointermove", { clientX: 200, clientY: 100, bubbles: true }));
+    faceEl.dispatchEvent(new MouseEvent("pointerup", { clientX: 200, clientY: 100, bubbles: true }));
+    await nextTick();
+    expect(face().getAttribute("aria-valuenow")).toBe("20");
   });
 
   it("cancelling discards the draft and keeps the model untouched", async () => {
@@ -459,6 +539,28 @@ describe("HkTimePicker", () => {
     await nextTick();
     await waitFor("the panel to close on disable", () => panel() === null);
     expect(emitted).toEqual([]);
+  });
+
+  it("focuses the dial on open and dismisses on an outside click without emitting", async () => {
+    const p = mountPicker({ modelValue: "09:30" });
+    await openPicker(p);
+    expect(document.activeElement).toBe(face());
+    const outside = document.createElement("div");
+    document.body.appendChild(outside);
+    outside.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await waitFor("the popup to close on an outside click", () => panel() === null);
+    expect(p.emitted).toEqual([]);
+    outside.remove();
+  });
+
+  it("docks as a bottom sheet on touch-width viewports", async () => {
+    (window as { innerWidth: number }).innerWidth = 375;
+    const p = mountPicker({ modelValue: "09:30" });
+    await openPicker(p);
+    const surface = document.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(surface?.classList.contains("hk-is-sheet")).toBe(true);
+    expect(panel()?.classList.contains("is-touch")).toBe(true);
+    (window as { innerWidth: number }).innerWidth = originalWidth;
   });
 
   it("never opens while disabled", async () => {

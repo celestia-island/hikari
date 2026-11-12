@@ -153,55 +153,17 @@
 }
 
 /* ── Day period (AM / PM) ─────────────────────────────────────── */
-
+/* The segmented control is hikari's HkPillToggleGroup; only the clock
+ * panel's own alignment/icon scale lives here. */
 .hk-tp-period {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  padding: 2px;
-  background: color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent);
-  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 12%, transparent);
-  border-radius: var(--radius-md, 8px);
+  justify-content: center;
+  cursor: default;
+  touch-action: manipulation;
 }
 
-.hk-tp-period-btn {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  height: 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-6, 6px);
-  font-family: inherit;
-  font-size: var(--text-xs, 0.75rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--hi-color-muted);
-  border-radius: var(--radius-sm, 4px);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-fast, 0.15s) ease,
-    color var(--duration-fast, 0.15s) ease;
-
-  &:hover:not(.is-active) {
-    background: color-mix(in srgb, rgb(var(--color-text)) 6%, transparent);
-    color: var(--hi-color-text-primary);
-  }
-
-  &.is-active {
-    background: rgb(var(--color-primary));
-    color: rgb(var(--color-on-solid));
-
-    svg {
-      color: rgb(var(--color-on-solid-icon, 255 255 255));
-    }
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
-    outline-offset: 1px;
-  }
+.hk-tp-period .hk-pill-group-icon svg {
+  width: 13px;
+  height: 13px;
 }
 
 /* ── Readout ──────────────────────────────────────────────────── */
@@ -423,15 +385,15 @@
   font-size: var(--text-sm, 0.875rem);
 }
 
-.hk-tp-panel.is-touch .hk-tp-period-btn {
-  height: 2.35rem;
+.hk-tp-panel.is-touch .hk-tp-period .hk-pill-group-pill {
+  min-height: 2.35rem;
   font-size: var(--text-sm, 0.875rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hk-tp-trigger,
   .hk-tp-clear,
-  .hk-tp-period-btn,
+  .hk-tp-period .hk-pill-group-pill,
   .hk-tp-readout-btn,
   .hk-tp-number {
     transition: none;

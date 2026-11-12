@@ -222,9 +222,15 @@ describe("HkTimeZonePicker — trigger", () => {
     const harness = mountPicker({ label: "Time zone", size: "sm" });
     expect(harness.container.querySelector(".hk-tzp-label")?.textContent).toBe("Time zone");
     expect(trigger(harness.container).classList.contains("hk-tzp-trigger-sm")).toBe(true);
+    const visible = mountPicker({ label: "Time zone" });
+    const labelEl = visible.container.querySelector(".hk-tzp-label");
+    expect(trigger(visible.container).getAttribute("aria-labelledby")).toBe(labelEl?.id);
+    expect(trigger(visible.container).getAttribute("aria-label")).toBeNull();
     const hidden = mountPicker({ label: "Time zone", hideLabel: true });
     expect(hidden.container.querySelector(".hk-tzp-label")).toBeNull();
     expect(trigger(hidden.container).getAttribute("aria-label")).toBe("Time zone");
+    const noLabel = mountPicker({ placeholder: "Zone" });
+    expect(trigger(noLabel.container).getAttribute("aria-label")).toBe("Zone");
   });
 });
 

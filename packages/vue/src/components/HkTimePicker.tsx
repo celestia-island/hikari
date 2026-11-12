@@ -2,6 +2,7 @@ import { Check, Clock, Moon, Sun, X } from "lucide-vue-next";
 import {
   computed,
   defineComponent,
+  h,
   nextTick,
   ref,
   useId,
@@ -12,6 +13,7 @@ import {
 import { useI18n } from "../i18n/context";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import HkButton from "./HkButton";
+import HkPillToggleGroup from "./HkPillToggleGroup";
 import HPopover from "./HkPopover";
 import "./HkTimePicker.scss";
 
@@ -69,6 +71,20 @@ export function snapMinute(value: number, step = 1): number {
   const safeStep = Math.min(30, Math.max(1, Math.round(step) || 1));
   const snapped = Math.round(value / safeStep) * safeStep;
   return ((snapped % 60) + 60) % 60;
+}
+
+/**
+ * Snap a whole clock time to the step grid, carrying the hour. The
+ * synthesized branches (empty model on open, Now) must not land an hour
+ * earlier than the real nearest slot: 14:59 with step 30 is 15:00, not
+ * 14:00. A STORED off-grid value is never passed through this helper.
+ */
+export function snapTimeToStep(hour: number, minute: number, step = 1): { hour: number; minute: number } {
+  const safeStep = Math.min(30, Math.max(1, Math.round(step) || 1));
+  const dayMinutes = 24 * 60;
+  const total = (((Math.round(hour) % 24) + 24) % 24) * 60 + Math.round(minute);
+  const snapped = ((Math.round(total / safeStep) * safeStep) % dayMinutes + dayMinutes) % dayMinutes;
+  return { hour: Math.floor(snapped / 60) % 24, minute: snapped % 60 };
 }
 
 /**
@@ -157,10 +173,10 @@ export default defineComponent({
     function seedDraft(): void {
       const current = parsed.value ?? (() => {
         const now = new Date();
-        // The synthesized branches are the only minutes the host never
-        // chose, so they must land on the step grid; a STORED off-grid
-        // model stays verbatim (the user can still re-pick it).
-        return { hour: now.getHours(), minute: snapMinute(now.getMinutes(), props.minuteStep) };
+        // The synthesized branches are the only times the host never
+        // chose, so they carry the hour onto the step grid; a STORED
+        // off-grid model stays verbatim (the user can still re-pick it).
+        return snapTimeToStep(now.getHours(), now.getMinutes(), props.minuteStep);
       })();
       draftHour.value = current.hour;
       draftMinute.value = current.minute;
@@ -202,8 +218,9 @@ export default defineComponent({
 
     function setNow(): void {
       const now = new Date();
-      draftHour.value = now.getHours();
-      draftMinute.value = snapMinute(now.getMinutes(), minuteStep.value);
+      const snapped = snapTimeToStep(now.getHours(), now.getMinutes(), minuteStep.value);
+      draftHour.value = snapped.hour;
+      draftMinute.value = snapped.minute;
       commit(formatHhmm(draftHour.value, draftMinute.value));
     }
 
@@ -356,12 +373,33 @@ export default defineComponent({
 
     const numbers = computed(() => (mode.value === "hour" ? hourNumbers.value : minuteNumbers.value));
     const ariaValueNow = computed(() => (mode.value === "hour" ? draftHour.value : draftMinute.value));
-    const ariaValueMax = computed(() => (mode.value === "hour" ? 23 : 59));
+    const ariaValueMax = computed(() => {
+      if (mode.value === "hour") return 23;
+      const gridMax = Math.floor(59 / minuteStep.value) * minuteStep.value;
+      // A stored off-grid minute is kept verbatim (documented contract), so
+      // the range must still contain it: the step grid's last value is the
+      // floor, not a clamp.
+      return Math.max(gridMax, draftMinute.value);
+    });
     const ariaFaceLabel = computed(() =>
       mode.value === "hour"
         ? t("hikari::dateTimePicker.hour", "Hour")
         : t("hikari::dateTimePicker.minute", "Minute"),
     );
+
+    const periodOptions = computed(() => [
+      {
+        value: "am",
+        label: t("hikari::timePicker.am", "AM"),
+        icon: h(Sun, { size: 13 }),
+      },
+      {
+        value: "pm",
+        label: t("hikari::timePicker.pm", "PM"),
+        icon: h(Moon, { size: 13 }),
+      },
+    ]);
+    const periodSelected = computed(() => new Set([pm.value ? "pm" : "am"]));
 
     const triggerAriaLabel = computed(() => {
       if (props.label && !props.hideLabel) return undefined;
@@ -384,30 +422,14 @@ export default defineComponent({
           role="group"
           aria-label={surfaceTitle.value}
         >
-          <div
+          <HkPillToggleGroup
             class="hk-tp-period"
-            role="group"
-            aria-label={t("hikari::timePicker.period", "Day period")}
-          >
-            <button
-              type="button"
-              class={["hk-tp-period-btn", !pm.value ? "is-active" : ""].filter(Boolean).join(" ")}
-              aria-pressed={!pm.value}
-              onClick={() => setPeriod(false)}
-            >
-              <Sun size={13} />
-              <span>{t("hikari::timePicker.am", "AM")}</span>
-            </button>
-            <button
-              type="button"
-              class={["hk-tp-period-btn", pm.value ? "is-active" : ""].filter(Boolean).join(" ")}
-              aria-pressed={pm.value}
-              onClick={() => setPeriod(true)}
-            >
-              <Moon size={13} />
-              <span>{t("hikari::timePicker.pm", "PM")}</span>
-            </button>
-          </div>
+            data-test="hk-time-picker-period"
+            label={t("hikari::timePicker.period", "Day period")}
+            options={periodOptions.value}
+            selected={periodSelected.value}
+            onToggle={(value: string) => setPeriod(value === "pm")}
+          />
 
           <div class="hk-tp-readout">
             <button

@@ -39,6 +39,31 @@ export declare const BOOT_RECOVERY_RETRY: string;
 /** Marker attribute on the injected inline `<script>` tag. */
 export declare const BOOT_RECOVERY_ATTR: "data-hk-boot-recovery";
 
+/** Default name of the unsupported-browser entry (the family's `__appBlock`). */
+export declare const BOOT_RECOVERY_BLOCK_GLOBAL: "__appBlock";
+
+/** Default name of the pre-mount error report (the family's `__appFatal`). */
+export declare const BOOT_RECOVERY_FATAL_GLOBAL: "__appFatal";
+
+/** Default name of the mount-succeeded handoff (the family's `__appReady`). */
+export declare const BOOT_RECOVERY_READY_GLOBAL: "__appReady";
+
+/** The reason classes the panel can paint, in the family's order. */
+export declare const BOOT_RECOVERY_REASON_KEYS: readonly [
+  "timeout",
+  "chunk",
+  "error",
+  "browser",
+];
+
+/** The English default copy per reason class. */
+export declare const BOOT_RECOVERY_REASONS: Readonly<
+  Record<"timeout" | "chunk" | "error" | "browser", { title: string; message: string }>
+>;
+
+/** The chunk-miss signatures the panel classifies a failure by. */
+export declare const BOOT_RECOVERY_CHUNK_MISS: RegExp;
+
 /** The default options, frozen (see {@link BootRecoveryPluginOptions}). */
 export interface BootRecoveryDefaults {
   readonly canonicalOrigin: string;
@@ -92,7 +117,14 @@ export interface BootRecoveryCopyOptions {
    */
   locales?: Record<
     string,
-    { title?: string; message: string; retry: string }
+    {
+      title?: string;
+      message: string;
+      retry: string;
+      /** Translated heading of the raw-details pane; omitted falls back to
+       *  the host's `rawDetailsLabel`. */
+      rawDetailsLabel?: string;
+    }
   >;
   /**
    * `localStorage` key that holds the host's saved UI locale tag (WoWSP
@@ -102,6 +134,173 @@ export interface BootRecoveryCopyOptions {
    * a table fails at config time.
    */
   storageKey?: string;
+  /**
+   * Heading of the panel's RAW-DETAILS pane, and the pane's ON/OFF switch.
+   *
+   * Configuring it makes the failure panel carry a diagnostic snapshot of the
+   * dead page — reason, message, `capturedAt`, `elapsedMs`, `timeoutMs`,
+   * `readyState`, `appMounted`, `locale`, `buildHash`, `href`,
+   * `bootScripts`, `failedResources` and (when a failure was captured) the
+   * `error` detail — rendered as the same collapsible `HkJsonTree` the in-app
+   * error landing uses, inside `HkErrorLanding`'s own standing frame and under
+   * hikari's overlay scrollbar chrome. Credential-shaped values are masked with
+   * the family's three-disc rule before they reach the pane, because that text
+   * is what a user pastes into an issue.
+   *
+   * Omit it (or pass `""`) and the generated script is byte-identical to the
+   * panel without the pane — the CSP hash a host already owns keeps working.
+   * An explicit `false` loading screen cannot be combined with it: the pane
+   * lives inside the watchdog's panel, which heal-only mode never paints, so
+   * that combination fails at config time.
+   *
+   * With `locales` configured, a row may carry its own `rawDetailsLabel` to
+   * translate the heading; a row without one falls back to this value.
+   */
+  rawDetailsLabel?: string;
+  /**
+   * The BROWSER-BLOCK notice — the panel's info-tone mode for a shell that
+   * refuses to run on an unsupported browser.
+   *
+   * Configuring it makes the generated script publish
+   * `window[globals.block](browser, current, min)`, the SAME call the family's
+   * hand-rolled `res/fatal-fallback.js` exposed as `__appBlock` — so a host's
+   * existing UA check keeps working with no source change. The call paints the
+   * panel IMMEDIATELY (an unsupported browser is already the answer, so waiting
+   * out the watchdog would only delay the news), in the landing's `info` tone
+   * rather than `error` (a compatibility notice is not a crash), and never
+   * reloads.
+   *
+   * `title` and `message` are the host's product wording; `message` may carry
+   * the placeholders `{browser}`, `{current}` and `{min}`, filled from the
+   * call's three arguments at page runtime. The block notice never carries the
+   * raw-details pane, whatever `rawDetailsLabel` says.
+   *
+   * Omit it (or pass `false`) and the script is byte-identical to the panel
+   * without the entry. Cannot be combined with `loadingScreen: false`: the
+   * notice paints inside the loading element, which heal-only mode never
+   * touches.
+   */
+  browserBlock?:
+    | {
+        title: string;
+        message: string;
+        /**
+         * Per-locale translations of the notice, keyed by BCP 47-ish tag. Tags
+         * normalise like `copy.locales` keys (trimmed, lowercased, `_` → `-`),
+         * and two keys collapsing onto one tag fail the build. The current
+         * locale's entry wins; a locale this map omits paints the top-level
+         * `title`/`message`, so those must be in the host's base language.
+         * Placeholders work inside translated entries too.
+         */
+        locales?: Record<string, { title: string; message: string }>;
+      }
+    | false;
+  /**
+   * The REASON TABLE: what the panel says for each class of boot failure.
+   *
+   * Four classes, the family's long-standing set — `timeout` (nothing
+   * mounted before `deadlineMs`), `chunk` (a bundle could not be FETCHED; the
+   * stale-tab-after-redeploy signature), `error` (a captured pre-mount
+   * exception) and `browser` (an unsupported browser). Each is
+   * `{ title, message }`; a class the host omits keeps its English default,
+   * so no class can ever paint a blank headline. The classification itself is
+   * automatic: the watchdog reads the resource timing table to tell a chunk
+   * miss from a plain timeout, and `__appFatal`'s message is matched against
+   * the browser family of chunk-miss patterns.
+   *
+   * Configuring the table ALSO publishes the `__appFatal` and `__appReady`
+   * entries (see {@link globals}) — the two remaining globals the family
+   * script provided, and the reason a host can retire it at all:
+   * `__appFatal(message, detail?)` paints the panel at once with the
+   * classified reason and a payload carrying the error detail;
+   * `__appReady()` stands the panel down after a successful mount, removing
+   * ONLY the nodes this script added (never the host's loader element, its
+   * contents or its dismissal class).
+   *
+   * Omit it and the script is byte-identical to the panel without the table.
+   * Cannot be combined with `loadingScreen: false`.
+   */
+  reasons?: Partial<
+    Record<
+      "timeout" | "chunk" | "error" | "browser",
+      {
+        title: string;
+        message: string;
+        /**
+         * Per-locale translations of THIS class — what makes the table usable
+         * by a multilingual host.
+         *
+         * Without it, the class's single `title`/`message` OVERWRITES the
+         * headline and explanation `copy.locales` already selected, so a host
+         * configuring both gets one language's reason wording above another
+         * language's retry button. With it, the panel resolves the matrix the
+         * retired `res/fatal-fallback.js` carried:
+         *
+         *   1. the current locale's translation of this class;
+         *   2. otherwise THIS LOCALE's generic wording (the row `copy.locales`
+         *      already selected) — never another language's reason text,
+         *      because a translated panel showing one foreign sentence reads
+         *      as a bug;
+         *   3. otherwise (no locale resolved at all) the `title`/`message`
+         *      above.
+         *
+         * So write the base-language wording in `title`/`message` and
+         * translate the rest through this map. Tags normalise like
+         * `copy.locales` keys; matching also strips trailing subtags
+         * (`zh-Hant-CN` finds a `zh` entry).
+         *
+         * @example
+         * // ⚠ LIST YOUR BASE LANGUAGE IN `copy.locales` TOO.
+         * // The `title`/`message` above only paint when NO locale resolved. A panel
+         * // that resolved `en` instead uses the en row from `copy.locales` for any
+         * // class this map does not translate — `en` itself included. Omit the `en`
+         * // row and English users get a generic paragraph instead of the headline.
+         * // (A real host shipped exactly this bug.)
+         * copy: {
+         *   locales: {
+         *     // EVERY language the panel can paint in, base language included:
+         *     en: { title: "Application failed to load", message: "…", retry: "Reload" },
+         *     "zh-CN": { title: "应用加载失败", message: "…", retry: "刷新" },
+         *   },
+         *   reasons: {
+         *     timeout: {
+         *       title: "Application initialization timed out",
+         *       message: "The app did not finish initializing in time.",
+         *       locales: {
+         *         en: { title: "Application initialization timed out",
+         *               message: "The app did not finish initializing in time." },
+         *         "zh-CN": { title: "应用初始化超时",
+         *                    message: "应用未在预期时间内完成初始化。" },
+         *       },
+         *     },
+         *   },
+         * }
+         */
+        locales?: Record<string, { title: string; message: string }>;
+      }
+    >
+  >;
+}
+
+/**
+ * The page globals the panel publishes for a host's own boot code.
+ *
+ * The trio is the family's long-standing contract, and all three are defaults
+ * of the `res/fatal-fallback.js` this plugin replaces — which is what makes
+ * retiring that script possible: a host keeps calling the same names. Each
+ * slot accepts a name, `{ global }` to rename, or `false` to turn that entry
+ * OFF; leaving a slot out keeps the family default.
+ *
+ * The defaults are published only alongside the feature that needs them:
+ * `block` with `copy.browserBlock`, `fatal` / `ready` with `copy.reasons`.
+ */
+export interface BootRecoveryGlobalsOptions {
+  /** Unsupported-browser entry (default `"__appBlock"`). */
+  block?: string | { global?: string | false } | false;
+  /** Pre-mount error report entry (default `"__appFatal"`). */
+  fatal?: string | { global?: string | false } | false;
+  /** Mount-succeeded handoff entry (default `"__appReady"`). */
+  ready?: string | { global?: string | false } | false;
 }
 
 /** Options for {@link bootRecoveryPlugin} / {@link bootRecoveryScript}. */
@@ -142,7 +341,15 @@ export interface BootRecoveryPluginOptions {
    */
   isMangledOrigin?: (protocol: string, hostname: string) => boolean;
   /** Failure-panel copy overrides. */
+  /** Failure-panel copy overrides and the opt-in diagnostics halves
+   *  (`copy.rawDetailsLabel`, `copy.browserBlock`, `copy.reasons`). */
   copy?: BootRecoveryCopyOptions;
+  /**
+   * Rename or disable the page globals the panel publishes for the host's own
+   * boot code (see {@link BootRecoveryGlobalsOptions}). Entries are only
+   * published when the matching `copy` feature is configured.
+   */
+  globals?: BootRecoveryGlobalsOptions;
   /**
    * Where the tag is injected. Default `"head"` (end of `<head>`, after
    * `<meta charset>` — charset-prescan safe). `"head-prepend"` runs even

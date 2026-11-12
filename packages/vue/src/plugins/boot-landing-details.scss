@@ -1,0 +1,43 @@
+// AI-generated: developed with the DeepSeek Harness agent (model
+// DeepSeek-V4.1-Flash) directed and reviewed by langyo — SySL-1.0 §2.3
+// disclosure.
+//
+// The boot failure panel's DETAILS SHEET — the second, conditional half of
+// the panel's stylesheet.
+//
+// Why a second sheet instead of more @use lines in boot-landing.scss:
+// BOOT_LANDING_CSS is embedded VERBATIM into the generated inline script
+// (PANEL_CSS), so adding a single selector there would change the script bytes
+// of every host that never opts into the details pane. The module's
+// documented BYTE-COMPAT contract says the opposite: an option a host does not
+// configure must not reach its CSP hash. The details region only exists when
+// the host sets `copy.rawDetailsLabel`, so its chrome compiles into its OWN
+// module (bootLandingDetailsCss.mjs) that the generator embeds only when that
+// option is on. Default hosts keep byte-identical scripts.
+//
+// The sheets below are the LIVE component sheets, for the same reason the
+// landing sheet uses them: the details pane has to read as the in-app
+// HkErrorLanding + HkJsonTree surface, not a hand-copied imitation.
+//
+//   - HkJsonTree.scss      the `s-tool-json-tree` / `s-jt-*` / `s-jv-*` tree.
+//                          The generated script builds that exact DOM shape
+//                          with DOM APIs, so the compiled rules apply as-is.
+//   - theme/scrollbar.scss the `.hk-scrollbar-track` / `.hk-scrollbar-thumb`
+//                          overlay chrome the panel's minimal geometry sync
+//                          drives (the Vue composable cannot be inlined: it
+//                          imports layoutGeometry/cronBus/animationBus).
+//
+// The tree's own 320px capped viewport and its frame/border/background are
+// reset by the LANDING sheet's rule
+// `.hk-error-landing .hk-error-landing__details-body .s-tool-json-tree` — three
+// class components (0,3,0) against the base rule's one (0,1,0), so the reset
+// wins on specificity alone and the two sheets' append order never matters.
+// Both rules are asserted by bootLandingCss.test.ts; that pairing is the
+// contract that keeps the standing frame from growing a second border.
+//
+// The sheet is emitted ONLY alongside the landing sheet (one panel, one
+// <style> pair), so it deliberately does not repeat the seed channels or
+// scale tokens: it reads the ones the landing sheet already published.
+
+@use "../components/HkJsonTree.scss";
+@use "../styles/theme/scrollbar.scss";

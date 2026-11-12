@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 
 import { stockDefaultPreset } from "../theme/presets";
 import { BOOT_LANDING_CSS } from "./bootLandingCss.mjs";
+import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.mjs";
 
 /**
  * The boot failure panel's stylesheet drift guard.
@@ -40,9 +41,9 @@ import { BOOT_LANDING_CSS } from "./bootLandingCss.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC_DIR = resolve(HERE, "..");
 
-/** Compile the entry exactly the way the generator does. */
-function compile(): string {
-  const compiled = sass.compile(resolve(HERE, "boot-landing.scss"), {
+/** Compile an entry exactly the way the generator does. */
+function compile(entry = "boot-landing.scss"): string {
+  const compiled = sass.compile(resolve(HERE, entry), {
     loadPaths: [
       SRC_DIR,
       resolve(SRC_DIR, "styles"),
@@ -62,6 +63,23 @@ function channel(token: { r: number; g: number; b: number }): string {
 describe("boot failure panel stylesheet", () => {
   it("is the current compilation of boot-landing.scss", () => {
     expect(BOOT_LANDING_CSS).toBe(compile());
+  });
+
+  it("is the current compilation of boot-landing-details.scss", () => {
+    // The opt-in details sheet is a SECOND artifact: it stays out of
+    // BOOT_LANDING_CSS so a host that never configures the pane keeps a
+    // byte-identical script (see boot-recovery.details.test.ts), and this
+    // guard keeps its checked-in copy from drifting the same way.
+    expect(BOOT_LANDING_DETAILS_CSS).toBe(compile("boot-landing-details.scss"));
+  });
+
+  it("keeps the details chrome out of the landing sheet, and vice versa", () => {
+    // The two sheets ship as separate modules for the BYTE-COMPAT reason
+    // above; a selector that leaked across would defeat the split silently.
+    expect(BOOT_LANDING_CSS).not.toContain(".hk-scrollbar-track{");
+    expect(BOOT_LANDING_CSS).not.toContain(".s-jt-row{");
+    expect(BOOT_LANDING_DETAILS_CSS).not.toContain(".hk-error-landing__card{");
+    expect(BOOT_LANDING_DETAILS_CSS).not.toContain(".hk-btn{");
   });
 
   it("ships the component's own classes, not a bespoke panel", () => {

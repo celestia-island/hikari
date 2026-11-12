@@ -205,6 +205,60 @@ describe("HkScrollContainer dock slots", () => {
     expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
     // …while the gate, on its own var, retires the band.
     expect(host.style.getPropertyValue("--hk-scroll-dock-gate-bottom")).toBe("0");
+    // …AND the sense verdict has flipped to "start", which is what makes
+    // the fade state rules withdraw from the cascade at all — the dock
+    // rule then owns the edge and multiplies by the gate. The verdict
+    // flip and the gate share the same ≤1px deadband and the same sensing
+    // pass, but the cascade hinge is load-bearing enough to pin: if the
+    // verdict deadband ever drifted narrower than the gate's, the state
+    // rules would stay in the cascade at the end and paint the ramp's
+    // full band over the last row again (engine-verified cascade, R1).
+    expect(host.getAttribute("data-v-overflow")).toBe("start");
+  });
+
+  it("clears the gate family when the dock slot unmounts", async () => {
+    // Two independent lifecycles means two cleanup paths: fade-off clears
+    // the ramp (already pinned); DOCK-SLOT-UNMOUNT must clear the gate —
+    // the same render that un-stamps data-dock-fade drops the gate's only
+    // reader, and a stale inline value must not outlive it.
+    const instance = ref<{ refresh: () => void } | null>(null);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    // The slot PRESENCE is what stamps data-dock-fade (a requested but
+    // empty dockBottom is legal), so the unmount is simulated by dropping
+    // the slot NAME — exactly what a consumer's v-if does to the slot.
+    const props = reactive({ docked: true });
+    const app = createApp(defineComponent({
+      setup() {
+        return () => {
+          const slots: Record<string, () => VNodeChild> = {
+            default: () => h("div", { class: "content" }, "rows"),
+          };
+          if (props.docked) slots.dockBottom = () => h("div", { class: "the-dock" }, "dock");
+          return h(HkScrollContainer, { ref: instance as never, dockFade: true }, slots);
+        };
+      },
+    }));
+    mounts.push(app);
+    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
+    Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
+    Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
+    Object.defineProperty(viewport, "scrollTop", { value: 0, configurable: true });
+    instance.value?.refresh();
+    await Promise.resolve();
+    expect(host.getAttribute("data-dock-fade")).toBe("bottom");
+    expect(host.style.getPropertyValue("--hk-scroll-dock-gate-bottom")).toBe("1");
+
+    props.docked = false;
+    await Promise.resolve();
+    await Promise.resolve();
+    instance.value?.refresh();
+    await Promise.resolve();
+    // Marker gone AND gate family cleared in the same transition.
+    expect(host.getAttribute("data-dock-fade")).toBeNull();
+    expect(host.style.getPropertyValue("--hk-scroll-dock-gate-bottom")).toBe("");
   });
 
   it("retires the dock band at the scroll end instead of covering the last row", async () => {

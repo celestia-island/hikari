@@ -1,0 +1,426 @@
+/* ── HkTimePicker ───────────────────────────────────────────────
+ * Input-like trigger (mirrors HkInput / HkDatePicker chrome) + an
+ * adaptive popover holding a Material-style analog clock: a day-period
+ * segmented control on top, a big HH:MM readout, the dial, then the
+ * action row. Uses the shared --hi-* design tokens. */
+
+@use "../styles/polyfill" as *;
+
+.hk-tp {
+  display: block;
+  width: 100%;
+}
+
+.hk-tp.is-disabled {
+  opacity: 0.5;
+}
+
+.hk-tp-label {
+  display: block;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4, 4px);
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+/* ── Trigger ──────────────────────────────────────────────────── */
+
+.hk-tp-trigger {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-md, 8px);
+  color: rgb(var(--color-text));
+  font-family: inherit;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.5;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    border-color var(--duration-fast, 0.15s) ease,
+    box-shadow var(--duration-fast, 0.15s) ease;
+  @include user-select(none);
+}
+
+.hk-tp-trigger-sm {
+  min-height: 2rem;
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.hk-tp-trigger-lg {
+  min-height: 2.75rem;
+  padding: var(--space-10, 10px) var(--space-14, 14px);
+  font-size: var(--text-md, 1rem);
+}
+
+.hk-tp:not(.is-disabled) .hk-tp-trigger:hover,
+.hk-tp-trigger:focus-visible {
+  border-color: rgb(var(--color-focused-border));
+}
+
+.hk-tp.is-disabled .hk-tp-trigger {
+  cursor: not-allowed;
+}
+
+.hk-tp-trigger:focus-visible,
+.hk-tp-trigger.is-open {
+  outline: none;
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-tp-value {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+
+  &[data-empty] {
+    color: var(--hi-color-muted);
+  }
+}
+
+.hk-tp-clear {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-md, 8px);
+  color: var(--hi-icon-button-icon-color, var(--hi-color-muted));
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
+
+  .hk-tp-trigger:hover &,
+  .hk-tp-trigger:focus &,
+  .hk-tp-clear:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: var(--hi-icon-button-icon-color-active, var(--hi-color-text-primary));
+  }
+}
+
+.hk-tp-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--hi-color-muted);
+  pointer-events: none;
+}
+
+/* ── Panel ────────────────────────────────────────────────────── */
+
+.hk-tp-popover.hk-popover-panel {
+  padding: var(--space-10, 10px) var(--space-12, 12px) var(--space-8, 8px);
+}
+
+.hk-tp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 8px);
+  min-width: 18rem;
+  @include user-select(none);
+  color: var(--hi-color-text-primary);
+}
+
+/* Mobile sheet context: keep the designed measure inside the
+ * viewport-wide sheet instead of left-gluing at the popover min-width. */
+.hk-popover-panel.hk-is-sheet .hk-tp-panel {
+  min-width: 0;
+  max-width: min(22rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* ── Day period (AM / PM) ─────────────────────────────────────── */
+
+.hk-tp-period {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 12%, transparent);
+  border-radius: var(--radius-md, 8px);
+}
+
+.hk-tp-period-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6, 6px);
+  font-family: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--hi-color-muted);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(.is-active) {
+    background: color-mix(in srgb, rgb(var(--color-text)) 6%, transparent);
+    color: var(--hi-color-text-primary);
+  }
+
+  &.is-active {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-on-solid));
+
+    svg {
+      color: rgb(var(--color-on-solid-icon, 255 255 255));
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+/* ── Readout ──────────────────────────────────────────────────── */
+
+.hk-tp-readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-2, 2px);
+  font-variant-numeric: tabular-nums;
+}
+
+.hk-tp-readout-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0 var(--space-2, 2px);
+  font-family: inherit;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--hi-color-muted);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover {
+    background: color-mix(in srgb, rgb(var(--color-text)) 6%, transparent);
+  }
+
+  &.is-active {
+    color: var(--hi-color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-tp-readout-sep {
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--hi-color-muted);
+}
+
+/* ── Dial ─────────────────────────────────────────────────────── */
+
+.hk-tp-dial {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-2, 2px);
+}
+
+.hk-tp-face {
+  position: relative;
+  width: 15rem;
+  max-width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent),
+      color-mix(in srgb, rgb(var(--color-surface)) 35%, transparent)
+    );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, rgb(var(--color-text)) 10%, transparent);
+  touch-action: none;
+  cursor: pointer;
+  outline: none;
+
+  &:focus-visible {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, rgb(var(--color-text)) 10%, transparent),
+      0 0 0 2px rgb(var(--color-background)),
+      0 0 0 4px color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+  }
+}
+
+.hk-tp-ticks,
+.hk-tp-hand {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hk-tp-ticks line {
+  stroke: color-mix(in srgb, var(--hi-color-text-secondary) 45%, transparent);
+}
+
+.hk-tp-ticks .is-major {
+  stroke-width: 0.9;
+  opacity: 0.9;
+}
+
+.hk-tp-ticks .is-minor {
+  stroke-width: 0.5;
+  opacity: 0.45;
+}
+
+.hk-tp-hand line {
+  stroke: var(--hi-color-primary);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.hk-tp-hand-tip {
+  fill: var(--hi-color-primary);
+}
+
+.hk-tp-hand-hub {
+  fill: var(--hi-color-primary);
+}
+
+.hk-tp-numbers {
+  position: absolute;
+  inset: 0;
+}
+
+.hk-tp-number {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hi-color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(.is-selected) {
+    background: color-mix(in srgb, rgb(var(--color-text)) 7%, transparent);
+    color: var(--hi-color-text-primary);
+  }
+
+  &.is-selected {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-on-solid));
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-tp-face.is-minute .hk-tp-number {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: var(--text-xs, 0.75rem);
+}
+
+/* ── Footer ───────────────────────────────────────────────────── */
+
+.hk-tp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6, 6px);
+  padding-top: var(--space-8, 8px);
+  border-top: 1px solid color-mix(in srgb, rgb(var(--color-text)) 10%, transparent);
+}
+
+.hk-tp-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+}
+
+.hk-tp-confirm-icon {
+  margin-inline-end: var(--space-2, 2px);
+}
+
+/* ── Touch geometry ───────────────────────────────────────────── */
+
+.hk-tp-panel.is-touch .hk-tp-face {
+  width: min(17rem, 74vw);
+}
+
+.hk-tp-panel.is-touch .hk-tp-number {
+  width: 2.35rem;
+  height: 2.35rem;
+  font-size: var(--text-md, 1rem);
+}
+
+.hk-tp-panel.is-touch .hk-tp-face.is-minute .hk-tp-number {
+  width: 2.1rem;
+  height: 2.1rem;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.hk-tp-panel.is-touch .hk-tp-period-btn {
+  height: 2.35rem;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-tp-trigger,
+  .hk-tp-clear,
+  .hk-tp-period-btn,
+  .hk-tp-readout-btn,
+  .hk-tp-number {
+    transition: none;
+  }
+}

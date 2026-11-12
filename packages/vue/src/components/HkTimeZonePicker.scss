@@ -1,0 +1,269 @@
+/* ── HkTimeZonePicker ──────────────────────────────────────────────
+ * Input-like trigger (mirrors HkDatePicker's field chrome) + an HkPopover
+ * carrying the lazy 3D globe and the exact-zone select. Uses the shared
+ * --hi-* / --space-* / --radius-* / --text-* / --duration-* tokens. */
+
+@use "../styles/polyfill" as *;
+
+.hk-tzp {
+  display: block;
+  width: 100%;
+}
+
+.hk-tzp.is-disabled {
+  opacity: 0.5;
+}
+
+/* ── Caption ──────────────────────────────────────────────────── */
+
+.hk-tzp-label {
+  display: block;
+  margin-bottom: var(--space-4, 4px);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--hi-color-muted);
+  line-height: 1.4;
+}
+
+/* ── Trigger field ────────────────────────────────────────────── */
+
+.hk-tzp-trigger {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-md, 8px);
+  color: rgb(var(--color-text));
+  font-family: inherit;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.5;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 0.15s) ease,
+    border-color var(--duration-fast, 0.15s) ease,
+    box-shadow var(--duration-fast, 0.15s) ease;
+  @include user-select(none);
+}
+
+.hk-tzp:not(.is-disabled) .hk-tzp-trigger:hover,
+.hk-tzp-trigger:focus-visible {
+  border-color: rgb(var(--color-focused-border));
+}
+
+.hk-tzp.is-disabled .hk-tzp-trigger {
+  cursor: not-allowed;
+
+  &:focus-visible {
+    border-color: color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+    box-shadow: none;
+    background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  }
+}
+
+/* Focus ring + open state live on the field itself. */
+.hk-tzp-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-tzp-trigger.is-open {
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+}
+
+.hk-tzp-trigger-sm {
+  min-height: 2rem;
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  font-size: var(--text-xs, 0.75rem);
+
+  .hk-tzp-offset {
+    font-size: 0.6875rem;
+  }
+}
+
+.hk-tzp-value {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+
+  &[data-empty] {
+    color: var(--hi-color-muted);
+  }
+}
+
+/* The exact UTC offset of the current zone: a quiet chip, never a second
+ * editable control. */
+.hk-tzp-offset {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 var(--space-6, 6px);
+  min-height: 1.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
+  color: color-mix(in srgb, var(--hi-color-primary) 80%, var(--hi-color-text-primary));
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hk-tzp-clear {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-md, 8px);
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  .hk-tzp-trigger:hover &,
+  .hk-tzp-trigger:focus &,
+  .hk-tzp-clear:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: var(--hi-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+}
+
+.hk-tzp-icon,
+.hk-tzp-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--hi-color-muted);
+}
+
+.hk-tzp-icon {
+  pointer-events: none;
+}
+
+.hk-tzp-chevron {
+  pointer-events: none;
+  transition: transform var(--duration-fast, 0.15s) ease;
+}
+
+.hk-tzp-trigger.is-open .hk-tzp-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Popover panel ────────────────────────────────────────────── */
+
+/* The anchored popout keeps its designed measure; the sheet branch
+ * stretches to the viewport-wide sheet (the sheet's own padding comes
+ * from the `padding="md"` prop's --hk-pad token). */
+.hk-tzp-popover.hk-popover-panel {
+  min-width: 20rem;
+}
+
+.hk-popover-panel.hk-is-sheet .hk-tzp-panel {
+  min-width: 0;
+  width: 100%;
+}
+
+.hk-tzp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10, 10px);
+  @include user-select(none);
+  color: var(--hi-color-text-primary);
+}
+
+/* Reserve the globe's stage height while the lazy chunk resolves, so the
+ * popover does not resize when three.js lands. */
+.hk-tzp-globe {
+  min-height: 15rem;
+}
+
+.hk-tzp-exact {
+  min-width: 0;
+}
+
+.hk-tzp-system {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 2rem;
+  padding: var(--space-4, 4px) var(--space-8, 8px);
+  border: 0;
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--hi-color-muted);
+  font-family: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}
+
+/* Touch geometry: the sheet's field and rows grow to finger size. */
+.hk-tzp-panel.is-touch {
+  gap: var(--space-12, 12px);
+
+  .hk-tzp-system {
+    min-height: 2.75rem;
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-tzp-trigger,
+  .hk-tzp-clear,
+  .hk-tzp-chevron,
+  .hk-tzp-system {
+    transition: none;
+  }
+
+  .hk-tzp-trigger.is-open .hk-tzp-chevron {
+    transform: none;
+  }
+}

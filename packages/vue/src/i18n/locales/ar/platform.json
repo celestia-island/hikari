@@ -18,6 +18,7 @@
     "hikari::theme.modeLight": "فاتح",
     "hikari::theme.modeDark": "داكن",
     "hikari::theme.modeAuto": "تلقائي",
+    "hikari::theme.rowActionsLabel": "إجراءات الصف",
     "hikari::theme.themes": "سمات الألوان",
     "hikari::theme.autoAltitudeTip": "يتبع الوضع التلقائي ارتفاع الشمس. اضغط للتبديل إلى الوضع اليدوي",
     "hikari::theme.editScheme": "تعديل نظام الألوان…",

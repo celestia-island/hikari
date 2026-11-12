@@ -3,7 +3,8 @@ import { Palette } from "lucide-vue-next";
 import { HPopover, useI18n, type PopupPlacement } from "@celestia-island/hikari";
 
 import HkIconButton from "./HkIconButton";
-import { HkThemePanelContent } from "./HkThemePanelContent";
+import { HkThemePanelContent, type ThemeItemScope } from "./HkThemePanelContent";
+import type { HkListRowAction } from "./HkCardList";
 import type { HCustomTheme } from "./HkColorSchemeDialog";
 import "./HkThemeToggle.scss";
 import { useChromeActionSize } from "../composables/useChromeActionSize";
@@ -29,14 +30,20 @@ export { type ThemeItemScope } from "./HkThemePanelContent";
  *  · `item-leading` — renders for
  *    every row in the fixed icon cell so names align regardless of the
  *    active row. Scope: `ThemeItemScope` (id/name/isCustom/preset).
- *  · `item-name-suffix` — an inline cell rendered INSIDE the row button,
+ *  · `item-name-suffix` — an inline cell rendered in the row's name line,
  *    immediately after the (catalog-resolved) name, so a host mark reads
  *    as part of the name rather than as an affordance. Renders only when
  *    the host provides the slot; the cell is `aria-hidden`-free and
  *    layout-neutral (does not grow, never pushes the trailing column).
- *  · `item-trailing` — reserves a trailing column on every row and owns
- *    it entirely; the built-in custom-delete overlay is suppressed, so
- *    the host renders delete/edit itself where it wants them.
+ *  · `item-trailing` — quiet trailing CONTENT (badges, marks) rendered
+ *    as the row's trailing column; the standard action lane covers it
+ *    only while engaged.
+ *
+ * The row affordances themselves live on the STANDARD action lane
+ * (2026-11-13 user direction): the `itemActions` callback prop returns
+ * each row's `HkListRowAction[]`; without it, custom rows carry the
+ * built-in delete and hosts rendering `item-trailing` take over the
+ * affordance column entirely (the suppression contract).
  *
  * `mode-extra` — a host strip rendered directly under the color-mode
  * group (before the divider). Mode-adjacent host chrome that is NOT a
@@ -74,6 +81,16 @@ export const HkThemeToggle = defineComponent({
      * dialog). The internal dialog is not rendered in this mode.
      */
     externalCustomize: { type: Boolean, default: false },
+    /**
+     * Per-row option-control builder, forwarded verbatim to the shared
+     * panel content (a callback PROP — slot returns would be normalized
+     * into vnodes and destroy the plain action objects; see
+     * HkThemePanelContent's prop doc).
+     */
+    itemActions: {
+      type: Function as PropType<(scope: ThemeItemScope) => HkListRowAction[] | undefined>,
+      default: undefined,
+    },
   },
   emits: {
     "update:scheme": (_theme: HCustomTheme) => true,
@@ -131,6 +148,7 @@ export const HkThemeToggle = defineComponent({
            * one implementation. Slots and events pass straight through. */}
           <HkThemePanelContent
             externalCustomize={props.externalCustomize}
+            itemActions={props.itemActions}
             onRequest-close={closeMenu}
             onOpen-customize={() => emit("open-customize")}
             onUpdate:scheme={(theme: HCustomTheme) => emit("update:scheme", theme)}

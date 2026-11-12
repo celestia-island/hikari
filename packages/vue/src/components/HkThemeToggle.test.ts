@@ -258,7 +258,7 @@ describe("HkThemeToggle color-mode group", () => {
     expect(modeSegments()).toHaveLength(3);
   });
 
-  it("keeps every theme row one full-width pill with deletes overlaid", async () => {
+  it("keeps every theme row one standard list row with the delete on the action lane", async () => {
     useTheme().addCustomTheme(anyPresetTokens());
     const { container } = mountToggle(true);
     await settle();
@@ -271,20 +271,23 @@ describe("HkThemeToggle color-mode group", () => {
 
     let customRows = 0;
     for (const row of rows) {
-      // The pill is the first (and for built-ins the ONLY) in-flow child:
-      // no trailing slot element survives (it reserved a dead column
-      // right of every built-in row in the mobile sheet). Custom rows
-      // flag themselves and carry the delete button overlay as the one
-      // extra child.
-      expect(row.children[0].classList.contains("s-theme-item-btn")).toBe(true);
-      expect(row.querySelector(".s-theme-item-slot")).toBeNull();
-      const extra = [...row.children].slice(1);
+      // Every row is the STANDARD list row (2026-11-13 user direction):
+      // the menu-item pill stays on the shared root, the name rides the
+      // row's main column, and affordances live on HkListRow's action
+      // lane — custom rows flag themselves and carry the delete there;
+      // built-ins carry no lane at all.
+      expect(row.classList.contains("hk-list-row")).toBe(true);
+      expect(row.querySelector(".s-theme-item-line .s-theme-item-name")).toBeTruthy();
+      const lane = row.querySelector<HTMLElement>(".hk-list-row-actions");
       if (row.hasAttribute("data-custom")) {
         customRows += 1;
-        expect(extra).toHaveLength(1);
-        expect(extra[0].classList.contains("s-theme-item-delete")).toBe(true);
+        expect(lane).toBeTruthy();
+        const del = lane!.querySelector<HTMLElement>(".hk-list-row-actions__btn");
+        expect(del).toBeTruthy();
+        expect(del!.hasAttribute("data-danger")).toBe(true);
+        expect(del!.getAttribute("aria-label")).toBe("Delete theme");
       } else {
-        expect(extra).toHaveLength(0);
+        expect(lane).toBeNull();
       }
     }
     expect(customRows).toBe(1);
@@ -292,16 +295,22 @@ describe("HkThemeToggle color-mode group", () => {
     // The active row's selection indicator is the data-active wash alone:
     // the check glyph retired with the leading-icon cell (2026-10-21 user
     // direction). No leading mark renders without an item-leading slot.
-    const activeBtn = document.body.querySelector<HTMLButtonElement>(".s-theme-item-btn[data-active]");
-    expect(activeBtn).toBeTruthy();
-    expect(activeBtn?.querySelector(".s-theme-item-check")).toBeNull();
+    const activeRow = document.body.querySelector<HTMLElement>(".s-theme-item-row[data-active]");
+    expect(activeRow).toBeTruthy();
+    expect(activeRow!.querySelector(".s-theme-item-check")).toBeNull();
+    // The row is a real selectable list item (clickable contract):
+    // keyboard parity comes from HkListRow.
+    expect(activeRow!.getAttribute("aria-current")).toBe("true");
+    expect(activeRow!.classList.contains("hk-list-row-clickable")).toBe(true);
 
-    // The ROW is the pill (2026-10-01): the active state surfaces on the
-    // row element too, so the highlight spans the full row width instead
-    // of stopping short at a trailing column.
-    const activeRows = rows.filter((r) => r.hasAttribute("data-active"));
-    expect(activeRows).toHaveLength(1);
-    expect(activeRows[0].querySelector(".s-theme-item-btn[data-active]")).toBeTruthy();
+    // Clicking the row still selects the theme (the old anatomy's button
+    // is gone; the row's click contract carries the selection).
+    const activeName = activeRow!.querySelector<HTMLElement>(".s-theme-item-name")!;
+    const before = useTheme().currentTheme.value;
+    activeRow!.click();
+    await settle();
+    expect(useTheme().currentTheme.value).toBe(before);
+    expect(activeName.textContent?.trim().length).toBeGreaterThan(0);
   });
   it("renders the mode-extra strip under the mode group when provided", async () => {
     const container = document.createElement("div");
@@ -393,7 +402,7 @@ describe("HkThemeToggle item slots", () => {
     expect(seen.length).toBeGreaterThanOrEqual(rows.length);
   });
 
-  it("reserves the trailing column and suppresses the built-in delete overlay", async () => {
+  it("renders the trailing slot as quiet content and suppresses the built-in delete lane", async () => {
     // The stock table holds one preset; two customs give the three rows
     // (built-in + 2 custom) this column sweep needs.
     useTheme().addCustomTheme(anyPresetTokens());
@@ -413,20 +422,62 @@ describe("HkThemeToggle item slots", () => {
       expect(row.hasAttribute("data-trailing")).toBe(true);
       expect(row.getAttribute("data-trailing")).toBe("slot");
       expect(row.querySelector(".s-theme-item-trailing .trail-mark")).toBeTruthy();
-      // The slot owns the trailing zone: the built-in overlay is gone
-      // even on custom rows.
-      expect(row.querySelector(".s-theme-item-delete")).toBeNull();
+      // The slot owns the affordance column (the old suppression
+      // contract): no built-in action lane renders, not even on
+      // custom rows.
+      expect(row.querySelector(".hk-list-row-actions")).toBeNull();
       if (row.hasAttribute("data-custom")) customRows += 1;
     }
     expect(customRows).toBe(2);
   });
 
-  it("renders the name-suffix cell INSIDE the row button, right after the name", async () => {
+  it("lets the host itemActions prop own the standard action lane", async () => {
+    // The new grammar: the host returns named actions from the callback
+    // PROP (deliberately not a slot — slot returns are normalized into
+    // vnodes, which would destroy the plain action objects);
+    // HkListRow renders them through its lane (the same facility every
+    // card list uses).
+    useTheme().addCustomTheme(anyPresetTokens());
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const picked: string[] = [];
+    const app = createApp({
+      render: () =>
+        h(HkThemeToggle, {
+          externalCustomize: true,
+          itemActions: (scope: { id: string }) => [
+            {
+              name: `Inspect ${scope.id}`,
+              onSelect: () => { picked.push(scope.id); },
+            },
+          ],
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")];
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    for (const row of rows) {
+      const btn = row.querySelector<HTMLButtonElement>(".hk-list-row-actions__btn");
+      expect(btn).toBeTruthy();
+      expect(btn!.getAttribute("aria-label")).toMatch(/^Inspect /);
+      btn!.click();
+    }
+    expect(picked.length).toBeGreaterThanOrEqual(2);
+    expect(rows.every((r) => r.querySelector(".s-theme-item-trailing"))).toBe(false);
+  });
+
+  it("renders the name-suffix cell inside the row's name line, right after the name", async () => {
     // The whole point of the slot (vs. reusing item-trailing) is that the
     // mark reads as part of the NAME. That is a DOM-position claim, so it
-    // is asserted structurally: inside `.s-theme-item-btn`, in the same
-    // row, and immediately after `.s-theme-item-name` — not merely
-    // "somewhere in the row".
+    // is asserted structurally: inside the row's `.s-theme-item-line`
+    // (the row IS the click target — HkListRow's clickable contract), in
+    // the same row, and immediately after `.s-theme-item-name` — not
+    // merely "somewhere in the row".
     useTheme().addCustomTheme(anyPresetTokens());
     const container = mountSlotted(
       () => null,
@@ -446,9 +497,10 @@ describe("HkThemeToggle item slots", () => {
       expect(row.querySelectorAll(".suffix-mark")).toHaveLength(1);
       const name = row.querySelector<HTMLElement>(".s-theme-item-name");
       expect(name).toBeTruthy();
-      // Inside the row BUTTON (so a click on the row still selects the
-      // theme) and the name's immediate next sibling.
-      expect(name!.closest(".s-theme-item-btn")).toBeTruthy();
+      // Inside the row's name line (the row itself carries the click
+      // contract) and the name's immediate next sibling.
+      expect(name!.closest(".s-theme-item-line")).toBeTruthy();
+      expect(name!.closest(".s-theme-item-line")!.parentElement!.classList.contains("hk-list-row-main")).toBe(true);
       expect(cell!.closest(".s-theme-item-name-suffix")!.parentElement).toBe(name!.parentElement);
       expect(name!.nextElementSibling).toBe(cell!.closest(".s-theme-item-name-suffix"));
     }

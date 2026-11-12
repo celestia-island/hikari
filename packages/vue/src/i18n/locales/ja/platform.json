@@ -18,6 +18,7 @@
     "hikari::theme.modeLight": "ライト",
     "hikari::theme.modeDark": "ダーク",
     "hikari::theme.modeAuto": "自動",
+    "hikari::theme.rowActionsLabel": "行の操作",
     "hikari::theme.themes": "配色テーマ",
     "hikari::theme.autoAltitudeTip": "自動モードは太陽高度に追従します。押すと手動に切り替わります",
     "hikari::theme.editScheme": "配色を編集…",

@@ -18,6 +18,7 @@
     "hikari::theme.modeLight": "라이트",
     "hikari::theme.modeDark": "다크",
     "hikari::theme.modeAuto": "자동",
+    "hikari::theme.rowActionsLabel": "행 작업",
     "hikari::theme.themes": "색상 테마",
     "hikari::theme.autoAltitudeTip": "자동 모드는 태양 고도를 따릅니다. 눌러서 수동으로 전환하세요",
     "hikari::theme.editScheme": "색 구성표 편집…",

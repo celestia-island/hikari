@@ -17,7 +17,8 @@
  * (chest's DPI entry) align their labels with the theme rows' names
  * without rescaling their icons. (The customize row left this contract
  * 2026-11-11: the entry is the standard HkAddTile compact form now — a
- * self-contained dashed tile, not a lead-column row.)
+ * self-contained dashed tile, not a lead-column row. The lead cell rides
+ * the standard row's name line since 2026-11-13.)
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -31,52 +32,50 @@ describe("HkThemeToggle theme-row pill contract", () => {
   // 2026-10-01 user report: with the item-trailing slot reserving a real
   // column, the row button's hover wash stopped short of the row edge —
   // theme rows and the standalone 自定义 row hovered at different widths.
-  // The pill therefore lives on `.s-theme-item-row` (full row width no
-  // matter how wide the trailing column is) and the row's button is
-  // chromeless. happy-dom has no layout engine, so the geometry is pinned
-  // as scss-text assertions.
-  it("puts the unified menu-item pill on the row, not the row button", () => {
+  // The pill lives on `.s-theme-item-row` (full row width no matter how
+  // wide the trailing column is). Since 2026-11-13 the row root IS the
+  // standard list row (HkListRow), so the same element carries both
+  // families' classes and the card-list metrics must be compound-beaten.
+  // happy-dom has no layout engine, so the geometry is pinned as
+  // scss-text assertions.
+  it("puts the unified menu-item pill on the row root", () => {
     const css = read("HkThemeToggle.scss");
     const rowBlock = css.match(/\.s-theme-item-row\s*\{[^}]*\}/);
     expect(rowBlock).not.toBeNull();
     expect(rowBlock![0]).toContain("@include mi.item;");
-    // The overlaid delete affordance pins to the row (positioning context).
+    // The standard lane's overlay pins to the row (positioning context).
     expect(rowBlock![0]).toContain("position: relative");
   });
 
-  it("strips the row button's own chrome so the wash is not doubled", () => {
+  it("compound-beats the card-list row metrics WITHOUT re-including the mixin", () => {
     const css = read("HkThemeToggle.scss");
-    const block = css.match(/\.s-theme-item-row \.s-theme-item-btn\s*\{[^}]*\}/);
+    const block = css.match(/\.hk-list-row\.s-theme-item-row\s*\{[^}]*\}/);
     expect(block).not.toBeNull();
-    // The ROW owns the frame: its border 1 + padding 12 put the content at
-    // the same 13px the standalone pills measure (border 1 + padding 12), so
-    // the button drops its own border entirely.
-    expect(block![0]).toContain("border: none;");
-    expect(block![0]).toContain("background: transparent");
-    expect(block![0]).toContain("min-height: 0");
-    // The button stretches over the row's frame (negative block margins
-    // mirrored by re-applied padding) so the WHOLE pill is the click/focus
-    // target — master's pill WAS the button — while the name's content box
-    // keeps the standalone offsets. Losing the stretch drops the button
-    // back to a centered auto-height box inside the row (misaligned and
-    // undersized); losing the bleed pair desyncs the content offset by the
-    // frame width.
-    expect(block![0]).toContain("align-self: stretch");
-    expect(block![0]).toContain("margin-block: calc(");
-    expect(block![0]).toContain("padding-block: calc(");
+    // The card-list base (0,1,0 in HkCardList.scss) would tie-break
+    // against the pill chrome; the compound selector (0,2,0) pins the
+    // menu-item metrics deterministically — through var() references so
+    // the sheet-context token re-binding keeps flowing in.
+    expect(block![0]).toContain("padding: var(--hk-menu-item-pad-y) var(--hk-menu-item-pad-x)");
+    expect(block![0]).toContain("min-height: var(--hk-menu-item-min-h)");
+    expect(block![0]).toContain("gap: var(--hk-menu-item-gap)");
+    expect(block![0]).toContain("border-radius: var(--hk-menu-item-radius)");
+    // The re-include trap (see _menu-item.scss's adoption note): a nested
+    // mi.item at (0,2,0) would tie with the modal sheet-token re-binding
+    // (0,2,0) and defeat the 44px touch geometry there (HkBreadcrumb).
+    // This rule must reference the tokens, never re-declare them.
+    expect(block![0]).not.toContain("mi.item");
+    // The full state transition is restored (the clickable class's
+    // narrower transition would otherwise win at (0,2,0)).
+    expect(block![0]).toContain("border-color 0.12s ease");
   });
 
-  it("suppresses the row button's own hover and active state chrome", () => {
+  it("keeps the row focus ring deterministic against the clickable class", () => {
     const css = read("HkThemeToggle.scss");
-    // The hover override must repeat mi.item's guard chain to out-specify
-    // the mixin's hover rule; the active/checked suppression targets the
-    // state attributes directly.
-    expect(css).toContain(
-      ".s-theme-item-row .s-theme-item-btn:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked])",
-    );
-    expect(css).toMatch(
-      /\.s-theme-item-row \.s-theme-item-btn\[data-active\][^{]*\{[^}]*background: transparent/,
-    );
+    // mi.item's :focus-visible ties with HkListRow-clickable's at (0,2,0);
+    // the compound rule (0,3,0) makes the ring order-independent.
+    const block = css.match(/\.hk-list-row\.s-theme-item-row:focus-visible\s*\{[^}]*\}/);
+    expect(block).not.toBeNull();
+    expect(block![0]).toContain("outline: 2px solid rgb(var(--color-primary) / 70%)");
   });
 
   it("registers the theme row family for the mobile sheet token swap", () => {
@@ -92,13 +91,26 @@ describe("HkThemeToggle theme-row pill contract", () => {
     expect(modalList).not.toBeNull();
     expect(modalList![0]).toContain(".s-theme-item-row");
   });
+
+  it("sizes the sheet action trigger up to the family's touch contract", () => {
+    // The standard lane's touch trigger (⋯) is the ONLY actions tap
+    // target on touch-first clients; the generic 26px box would be the
+    // one undersized target among 44px sheet rows (the retired delete
+    // button made the same accommodation).
+    const css = read("HkThemeToggle.scss");
+    const block = css.match(
+      /@media \(max-width: 767px\) \{[\s\S]*?\.s-theme-item-row \.hk-list-row-actions__trigger\s*\{[^}]*width: 2\.25rem[^}]*\}/,
+    );
+    expect(block).not.toBeNull();
+    expect(block![0]).toContain("height: 2.25rem");
+  });
 });
 
 describe("HkThemeToggle row lead-cell contract", () => {
   it("sizes the theme-row lead cell to fit a 28px swatch mark", () => {
     const css = read("HkThemeToggle.scss");
     const block = css.match(
-      /\.s-theme-item-btn \.hk-menu-item-icon\.s-theme-item-lead\s*\{[^}]*\}/,
+      /\.s-theme-item-line \.hk-menu-item-icon\.s-theme-item-lead\s*\{[^}]*\}/,
     );
     expect(block).not.toBeNull();
     expect(block![0]).toContain("width: 28px");
@@ -107,10 +119,10 @@ describe("HkThemeToggle row lead-cell contract", () => {
 
   it("does not widen icon cells with a bare unscoped theme-row rule", () => {
     const css = read("HkThemeToggle.scss");
-    // A bare `.s-theme-item-btn .hk-menu-item-icon {` rule also hits
-    // host mode-extra rows; the widened cell may only target named
+    // A bare `.s-theme-item-line .hk-menu-item-icon {` would normalize
+    // every cell in the line; the widened cell may only target named
     // scopes (lead slot, mode-extra strip).
-    expect(css).not.toMatch(/^\.s-theme-item-btn \.hk-menu-item-icon\s*\{/m);
+    expect(css).not.toMatch(/^\.s-theme-item-line \.hk-menu-item-icon\s*\{/m);
   });
 
   it("renders the customize entry as the standard HkAddTile compact form", () => {

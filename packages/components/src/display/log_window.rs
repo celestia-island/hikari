@@ -272,7 +272,7 @@ pub fn LogWindow(props: LogWindowProps) -> Element {
                 }
             });
         if active_key.as_deref() == Some(tab.key.as_str()) {
-            button = button.attr("data-active", "");
+            button = button.attr("data-active", "true");
         }
         tab_nodes.push(VNode::Element(Box::new(button)));
     }
@@ -299,7 +299,7 @@ pub fn LogWindow(props: LogWindowProps) -> Element {
             }
         });
     if paused_now {
-        pause_button = pause_button.attr("data-active", "");
+        pause_button = pause_button.attr("data-active", "true");
     }
 
     let mut autoscroll_button = VElement::new("button")
@@ -316,7 +316,7 @@ pub fn LogWindow(props: LogWindowProps) -> Element {
             }
         });
     if autoscroll_now {
-        autoscroll_button = autoscroll_button.attr("data-active", "");
+        autoscroll_button = autoscroll_button.attr("data-active", "true");
     }
 
     let mut copy_button = VElement::new("button")

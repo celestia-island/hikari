@@ -284,8 +284,9 @@ pub fn SearchTrigger(props: SearchTriggerProps) -> Element {
         button = button.attr("disabled", "");
     }
     if active {
-        // Vue: `data-active={active.value || undefined}` — presence only.
-        button = button.attr("data-active", "");
+        // Vue: `data-active={active.value || undefined}` — patchAttr
+        // coerces the boolean to "true" (the house value form).
+        button = button.attr("data-active", "true");
     }
 
     // The active-keyword marker rides the generic corner badge — the same

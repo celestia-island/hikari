@@ -8,6 +8,11 @@ import type { HkMenuItem } from "./HkMenu";
 import HkTooltip from "./HkTooltip";
 import { hasRenderedContent } from "../runtime/hasRenderedContent";
 import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
+
+/** The touch-first predicate, kept as ONE literal: use and release must
+ *  name the same registry entry, or the release silently no-ops and the
+ *  shared listener leaks. */
+const TOUCH_FIRST_QUERY = "(hover: none), (pointer: coarse)";
 import type { StatTone } from "./HkStatCard";
 import { HK_SCROLL_PROGRESS_REGISTRAR, type HkScrollProgressHandle } from "./HkScrollProgressDock";
 import "./HkCardList.scss";
@@ -179,8 +184,8 @@ export const HkListRow = defineComponent({
     // Paired with releaseMediaQuery in onBeforeUnmount (the composable's
     // contract): the theme panel mounts/unmounts rows per theme add and
     // remove, so an unpaired handle would pin the shared listener forever.
-    const touchFirst = useMediaQuery("(hover: none), (pointer: coarse)");
-    onBeforeUnmount(() => releaseMediaQuery("(hover: none), (pointer: coarse)"));
+    const touchFirst = useMediaQuery(TOUCH_FIRST_QUERY);
+    onBeforeUnmount(() => releaseMediaQuery(TOUCH_FIRST_QUERY));
     /** Touch-driven overlay reveal. Pointer devices reveal through CSS
      *  :hover/:focus-within — the common path stays declarative. */
     const revealed = ref(false);

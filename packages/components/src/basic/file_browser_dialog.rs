@@ -755,7 +755,7 @@ pub fn FileBrowserDialog(props: FileBrowserDialogProps) -> Element {
                     }
                 });
             if active {
-                chip = chip.attr("data-active", Some(""));
+                chip = chip.attr("data-active", Some("true"));
             }
             chips.push(VNode::Element(Box::new(chip)));
         }

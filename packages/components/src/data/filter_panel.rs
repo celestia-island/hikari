@@ -722,7 +722,7 @@ pub fn FilterPanel(props: FilterPanelProps) -> Element {
         root = root.attr("data-active", "true");
     }
     if empty {
-        root = root.attr("data-empty", "");
+        root = root.attr("data-empty", "true");
     }
 
     for index in 0..props.model_value.len() {

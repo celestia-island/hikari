@@ -415,7 +415,7 @@ pub fn Slider(props: SliderProps) -> Element {
             rsx! {
                 span {
                     class: "hk-slider-tick",
-                    "data-active": if active { Some("") } else { None },
+                    "data-active": if active { Some("true") } else { None },
                     style: format!("left:{}", slider_rail_pos(left / 100.0, rail_inset, 1.0)),
                     "aria-hidden": "true",
                 }

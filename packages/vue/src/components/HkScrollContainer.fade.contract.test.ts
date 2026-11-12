@@ -198,8 +198,19 @@ describe("scroll fade composition contract", () => {
     ).toBeNull();
   });
 
-  it("routes the dock fades through the same edge vars", () => {
-    expect(sheet).toContain('--hk-scroll-fade-bottom: var(--hk-scroll-dock-fade, 2rem)');
-    expect(sheet).toContain('--hk-scroll-fade-top: var(--hk-scroll-dock-fade, 2rem)');
+  it("routes the dock fades through the same edge vars, scaled by strength", () => {
+    // A dock band is its own size TIMES the published strength: the
+    // component's dock path publishes a binary gate (lit while the edge
+    // hides content, retired at the end), and a constant band would never
+    // retire — it used to paint over the flush-parked last row at full
+    // scroll (2026-11-12 user report). The multiplication is the only
+    // consumer of that gate, so this pin is what keeps the fix real; the
+    // `1` fallback preserves the pre-fix band wherever nothing publishes.
+    const scaled = (side: "top" | "bottom") =>
+      new RegExp(
+        `--hk-scroll-fade-${side}:\\s*calc\\(\\s*var\\(--hk-scroll-dock-fade, 2rem\\)\\s*\\*\\s*var\\(--hk-scroll-fade-strength-${side}, 1\\)\\s*\\)`,
+      );
+    expect(sheet, "bottom dock band scales by strength").toMatch(scaled("bottom"));
+    expect(sheet, "top dock band scales by strength").toMatch(scaled("top"));
   });
 });

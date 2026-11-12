@@ -122,6 +122,48 @@ describe("HkScrollContainer dock slots", () => {
     expect(strength()).toBe("0");
   });
 
+  it("keeps the dock gate's 1px deadband, like the overflow sense", async () => {
+    // The gate is `depth <= 1`, the same deadband computeOverflow uses, so
+    // a band can never retire while a visible sliver is still hidden, and
+    // it can never linger one pixel past the end.
+    const instance = ref<{ refresh: () => void } | null>(null);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp(defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkScrollContainer,
+            { ref: instance as never, dockFade: true },
+            {
+              default: () => h("div", { class: "content" }, "rows"),
+              dockBottom: () => h("div", { class: "the-dock" }, "dock"),
+            },
+          );
+      },
+    }));
+    mounts.push(app);
+    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
+    const strength = () => host.style.getPropertyValue("--hk-scroll-fade-strength-bottom");
+    const stub = (scrollTop: number) => {
+      Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
+      Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
+      Object.defineProperty(viewport, "scrollTop", { value: scrollTop, configurable: true });
+    };
+
+    stub(297); // 2px still hidden: the band stays lit
+    instance.value?.refresh();
+    await Promise.resolve();
+    expect(strength()).toBe("1");
+
+    stub(299); // 1px: inside the shared deadband, the band retires
+    instance.value?.refresh();
+    await Promise.resolve();
+    expect(strength()).toBe("0");
+  });
+
   it("renders a top dock and fades the top edge instead", () => {
     const vm = mountDock({
       default: () => h("div", { class: "content" }, "rows"),

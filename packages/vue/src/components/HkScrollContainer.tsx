@@ -921,6 +921,14 @@ export default defineComponent({
           root.setAttribute("data-dir", dir);
         }
       } else if (props.dockFade && (slots.dockBottom || slots.dockTop)) {
+        // The dir mirror belongs to the `fade` band-slot swap, which is
+        // off in this branch: drop a value a previous fade-on pass may
+        // have published, so "fade off removes it" holds for dock
+        // containers too (F4 in the 2026-11-12 review).
+        if (lastPublishedDir !== null) {
+          lastPublishedDir = null;
+          root.removeAttribute("data-dir");
+        }
         // Dock-fed bands share the strength vars but never the `fade`
         // ramp: gate them binary so the band retires at the scroll end
         // instead of covering the flush-parked last row (see

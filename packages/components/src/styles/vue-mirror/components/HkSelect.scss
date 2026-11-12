@@ -302,8 +302,12 @@
 .hk-select-sheet-scrim {
   pointer-events: auto;
   position: fixed;
-  inset: 0;
-  pointer-events: auto;
+  /* The chrome-band geometry leg (see .hk-modal-overlay): the sheet's
+   * dim curtain yields its top edge to the host caption band. */
+  top: var(--hk-chrome-band-inset, 0px);
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgb(0 0 0 / 40%);
 }
 

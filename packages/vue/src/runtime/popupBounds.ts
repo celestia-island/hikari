@@ -25,13 +25,21 @@
 // at bootstrap from its real layout and re-sets it when that layout
 // changes (maximize, a phone-layout bar raising). null clears the band.
 // Scope: the JS-positioned floating surfaces honor the band today
-// (tooltips, popovers, select/menu popouts, context-menu quadrants);
+// (tooltips, popovers, select/menu popouts, context-menu quadrants) — and
+// since 2026-11-12 the chrome-band contract's --hk-chrome-band-inset is a
+// FLOOR for the top side even without an explicit configuration (popups
+// keep POPUP_BAND_GAP_PX off the strip); a surface that must pin over the
+// band passes an explicit overlap opt-in (the tooltip surfaces'
+// allowBandOverlap / the bridge's data-hk-tooltip-band-overlap trigger
+// marker);
+//
 // CSS-positioned overlays (modals, drawers, bottom sheets) do not yet —
 // a bottom band will underlap them until they read the mirrored vars.
 //
 // AI disclosure: drafted by GLM via the ZCode agent, directed and
 // reviewed by langyo — SySL-1.0 §2.3.
 import { reportHkRuntime } from "./registry";
+import { CHROME_OWNER_ATTR } from "./windowChrome";
 
 /** The app-chrome band: how much of the window each side reserves. */
 export interface PopupInsets {
@@ -63,6 +71,31 @@ export interface PopupViewportRect {
   y: number;
   width: number;
   height: number;
+}
+
+/**
+ * The MINIMUM distance (root visual px) a JS-positioned popup must keep
+ * from the host caption band when the chrome-band contract's inset token
+ * is declared (2026-11-12 user direction): the frame floor is the band
+ * inset PLUS this gap, so a tooltip flipped below the strip never rides
+ * its bottom edge.
+ */
+export const POPUP_BAND_GAP_PX = 4;
+
+/**
+ * The chrome-band contract's geometry token, resolved at the html level —
+ * the SAME var the modal veil's top edge reads (components/HkModal.scss).
+ * Only a shell whose app claimed the chrome carries it (the attribute is
+ * the cheap guard: a browser face never even pays the getComputedStyle),
+ * and only a positive px value counts.
+ */
+function chromeBandInsetPx(): number {
+  if (typeof document === "undefined") return 0;
+  const root = document.documentElement;
+  if (root.getAttribute(CHROME_OWNER_ATTR) !== "app") return 0;
+  const raw = window.getComputedStyle(root).getPropertyValue("--hk-chrome-band-inset").trim();
+  const px = Number.parseFloat(raw);
+  return Number.isFinite(px) && px > 0 ? px : 0;
 }
 
 let current: Readonly<ResolvedPopupInsets> = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -135,8 +168,18 @@ export function popupViewportRect(win?: Window | null): PopupViewportRect {
   reportOnce();
   if (typeof window === "undefined") return { x: 0, y: 0, width: 0, height: 0 };
   const w = win ?? window;
+  // The chrome-band floor: with the caption-band token declared (native
+  // shells), popups occupy the window BELOW band + gap even when the host
+  // configured no explicit top inset — the "generally never cover the
+  // caption row" default (2026-11-12 field report: the chest account menu
+  // tooltip pinned over the caption strip). An explicit configurePopupInsets
+  // top LARGER than the floor still wins (max, not override).
+  // The gap rides ON the band: no declared band, no floor at all (a
+  // browser face keeps the byte-identical raw-window frame).
+  const bandInset = chromeBandInsetPx();
+  const bandFloor = bandInset > 0 ? bandInset + POPUP_BAND_GAP_PX : 0;
   const x = Math.min(current.left, w.innerWidth);
-  const y = Math.min(current.top, w.innerHeight);
+  const y = Math.min(Math.max(current.top, bandFloor), w.innerHeight);
   return {
     x,
     y,

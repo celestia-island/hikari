@@ -56,6 +56,14 @@ export default defineComponent({
      * ignored in this mode.
      */
     trigger: { type: String as PropType<TooltipTrigger>, default: "hover" },
+    /**
+     * The EXPLICIT caption-band exemption (2026-11-12 user direction):
+     * default false — the placed bubble keeps at least a 4px gap under the
+     * host caption strip (popupBounds floors the popup frame at the
+     * chrome-band inset); true lets the bubble pin over the strip, for
+     * triggers that live ON the caption (the title bar's own buttons).
+     */
+    allowBandOverlap: { type: Boolean, default: false },
   },
   slots: Object as SlotsType<{
     default?: (props: HkTooltipSlotProps) => unknown;
@@ -113,7 +121,9 @@ export default defineComponent({
       // that keeps the measured bubble inside the viewport gutter (flip,
       // cap, shift) instead of spilling off-screen or shrinking to the
       // containing block's leftover space.
-      applyTooltipPosition(popupRef.value, rect, props.placement, props.maxWidth);
+      applyTooltipPosition(popupRef.value, rect, props.placement, props.maxWidth, {
+        allowBandOverlap: props.allowBandOverlap,
+      });
     }
 
     function stopPositionTracking() {

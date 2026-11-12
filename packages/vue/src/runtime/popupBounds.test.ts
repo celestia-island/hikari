@@ -2,9 +2,10 @@
 //
 // AI disclosure: drafted by GLM via the ZCode agent, directed and
 // reviewed by langyo — SySL-1.0 §2.3.
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { readHkRuntime, writeHkRuntime } from "./registry";
+import { CHROME_OWNER_ATTR } from "./windowChrome";
 import {
   configurePopupInsets,
   popupInsets,
@@ -16,8 +17,64 @@ const PREV_INNER = { width: window.innerWidth, height: window.innerHeight };
 
 afterEach(() => {
   configurePopupInsets(null);
+  document.documentElement.removeAttribute(CHROME_OWNER_ATTR);
+  document.documentElement.style.removeProperty("--hk-chrome-band-inset");
+  vi.restoreAllMocks();
   window.innerWidth = PREV_INNER.width;
   window.innerHeight = PREV_INNER.height;
+});
+
+/** Declare a claimed native shell whose caption band measures bandInset. */
+function claimBand(bandInset: string): void {
+  document.documentElement.setAttribute(CHROME_OWNER_ATTR, "app");
+  document.documentElement.style.setProperty("--hk-chrome-band-inset", bandInset);
+  vi.spyOn(window, "getComputedStyle").mockReturnValue({
+    getPropertyValue: (name: string) =>
+      name === "--hk-chrome-band-inset" ? bandInset : "",
+  } as unknown as CSSStyleDeclaration);
+}
+
+describe("popupBounds chrome-band floor", () => {
+  it("floors the frame below the caption band plus the minimum gap", () => {
+    window.innerWidth = 1280;
+    window.innerHeight = 800;
+    claimBand("48px");
+    // 48px band + the 4px minimum gap: popups occupy y >= 52 without any
+    // explicit configuration.
+    expect(popupViewportRect()).toEqual({ x: 0, y: 52, width: 1280, height: 748 });
+  });
+
+  it("lets a larger configured top inset win over the band floor", () => {
+    window.innerWidth = 1280;
+    window.innerHeight = 800;
+    claimBand("48px");
+    configurePopupInsets({ top: 80 });
+    expect(popupViewportRect().y).toBe(80);
+    // ...and a smaller one loses to the floor (max, not override).
+    configurePopupInsets({ top: 10 });
+    expect(popupViewportRect().y).toBe(52);
+  });
+
+  it("ignores the token without the chrome claim (browser faces)", () => {
+    window.innerWidth = 1280;
+    window.innerHeight = 800;
+    // The var is declared but nobody claimed the chrome — a browser face
+    // must keep the byte-identical raw-window frame.
+    document.documentElement.style.setProperty("--hk-chrome-band-inset", "48px");
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      getPropertyValue: (name: string) =>
+        name === "--hk-chrome-band-inset" ? "48px" : "",
+    } as unknown as CSSStyleDeclaration);
+    expect(popupViewportRect()).toEqual({ x: 0, y: 0, width: 1280, height: 800 });
+  });
+
+  it("degrades a zero or unreadable token to no floor", () => {
+    window.innerWidth = 1280;
+    window.innerHeight = 800;
+    claimBand("0px");
+    configurePopupInsets({ top: 12 });
+    expect(popupViewportRect().y).toBe(12);
+  });
 });
 
 describe("popupBounds", () => {

@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const positionSpy = vi.hoisted(() => vi.fn());
+
+vi.mock("./tooltipPosition", () => ({
+  applyTooltipPosition: positionSpy,
+}));
+
 import { installHkTooltipBridge, type HkTooltipBridgeOptions } from "./tooltipBridge";
 import { usePopupManager } from "./usePopupManager";
+import { CHROME_OWNER_ATTR } from "./windowChrome";
 
 /**
  * installHkTooltipBridge contract tests:
@@ -56,6 +63,10 @@ function bridgePopup(): HTMLElement | null {
 
 afterEach(() => {
   vi.useRealTimers();
+  document.documentElement.removeAttribute(CHROME_OWNER_ATTR);
+  document.documentElement.style.removeProperty("--hk-chrome-band-inset");
+  vi.restoreAllMocks();
+  positionSpy.mockClear();
   for (const u of uninstalls.splice(0)) u();
   for (const entry of [...manager.registry.value.values()]) {
     manager.unregister(entry.id);
@@ -237,5 +248,82 @@ describe("installHkTooltipBridge", () => {
     const el = trigger("After uninstall");
     hover(el);
     expect(el.getAttribute("title")).toBe("After uninstall");
+  });
+});
+
+
+/**
+ * The caption-band avoidance (2026-11-12 user direction): a bridge
+ * tooltip never pins over the host caption strip by default — the popup
+ * frame floors at band + 4px (popupBounds), so a caption-hugging trigger
+ * flips below the strip instead. The EXEMPTION is explicit: the
+ * data-hk-tooltip-band-overlap marker on the trigger (HkTitleBar's own
+ * buttons) or the install-level allowBandOverlap option puts the bubble
+ * back over the strip.
+ */
+
+describe("tooltipBridge caption-band avoidance", () => {
+  function bandTrigger(title: string, marker?: string): HTMLElement {
+    const el = trigger(title);
+    if (marker !== undefined) el.setAttribute("data-hk-tooltip-band-overlap", marker);
+    return el;
+  }
+
+  function claimBand(): void {
+    document.documentElement.setAttribute(CHROME_OWNER_ATTR, "app");
+    document.documentElement.style.setProperty("--hk-chrome-band-inset", "48px");
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      getPropertyValue: (name: string) =>
+        name === "--hk-chrome-band-inset" ? "48px" : "",
+    } as unknown as CSSStyleDeclaration);
+  }
+
+  it("places an unmarked trigger with the band-overlap avoidance default", () => {
+    vi.useFakeTimers();
+    claimBand();
+    install({ delay: 0 });
+    const el = bandTrigger("Band test");
+    hover(el);
+    vi.advanceTimersByTime(0);
+    // The placement pass ran with NO exemption: the frame is the
+    // chrome-band-floored viewport (band + 4px, popupBounds) and the
+    // bubble lands below the strip.
+    expect(positionSpy).toHaveBeenCalledTimes(1);
+    expect(positionSpy.mock.calls[0]?.[3]).toBeUndefined();
+    expect(positionSpy.mock.calls[0]?.[4]).toEqual({ allowBandOverlap: false });
+  });
+
+  it("lets a marked trigger pin over the strip (the explicit exemption)", () => {
+    vi.useFakeTimers();
+    claimBand();
+    install({ delay: 0 });
+    const el = bandTrigger("Band test", "true");
+    hover(el);
+    vi.advanceTimersByTime(0);
+    // The marker opts the trigger IN: the placement pass drops to the
+    // raw-window frame and may cover the strip.
+    expect(positionSpy.mock.calls[0]?.[4]).toEqual({ allowBandOverlap: true });
+  });
+
+  it("honors an explicit marker false over an overlap-by-default install", () => {
+    vi.useFakeTimers();
+    claimBand();
+    install({ delay: 0, allowBandOverlap: true });
+    const el = bandTrigger("Band test", "false");
+    hover(el);
+    vi.advanceTimersByTime(0);
+    // The per-trigger marker wins BOTH ways: an explicit "false" keeps
+    // the avoidance even on an overlap-by-default install.
+    expect(positionSpy.mock.calls[0]?.[4]).toEqual({ allowBandOverlap: false });
+  });
+
+  it("carries the install-level exemption to unmarked triggers", () => {
+    vi.useFakeTimers();
+    claimBand();
+    install({ delay: 0, allowBandOverlap: true });
+    const el = bandTrigger("Band test");
+    hover(el);
+    vi.advanceTimersByTime(0);
+    expect(positionSpy.mock.calls[0]?.[4]).toEqual({ allowBandOverlap: true });
   });
 });

@@ -4,6 +4,7 @@ import {
   defineAsyncComponent,
   defineComponent,
   ref,
+  useId,
   type PropType,
 } from "vue";
 
@@ -138,6 +139,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
     const { isMobile } = useBreakpoint();
+    const generatedId = useId();
+    const labelId = `hk-tzp-label-${generatedId}`;
 
     const zone = computed(() => props.modelValue ?? "");
     const hasZone = computed(() => zone.value.length > 0);
@@ -147,8 +150,10 @@ export default defineComponent({
         ? zone.value
         : (props.emptyLabel ?? t("hikari::timeZonePicker.system", "System time zone")));
 
-    const triggerLabel = computed(() =>
-      props.label ?? t("hikari::timeZonePicker.placeholder", "Pick a time zone"));
+    const triggerAriaLabel = computed(() => {
+      if (props.label && !props.hideLabel) return undefined;
+      return props.label ?? props.placeholder ?? t("hikari::timeZonePicker.placeholder", "Pick a time zone");
+    });
 
     /** What the GLOBE is oriented to. `""` means "the system zone", and
      *  the globe has no empty sector — handing it `""` would resolve to
@@ -238,7 +243,7 @@ export default defineComponent({
       return (
         <div class={["hk-tzp", props.disabled ? "is-disabled" : ""].filter(Boolean).join(" ")}>
           {props.label && !props.hideLabel && (
-            <span class="hk-tzp-label">{props.label}</span>
+            <span class="hk-tzp-label" id={labelId}>{props.label}</span>
           )}
           <div
             ref={triggerRef}
@@ -251,7 +256,8 @@ export default defineComponent({
             aria-haspopup="dialog"
             aria-expanded={open.value}
             aria-disabled={props.disabled || undefined}
-            aria-label={triggerLabel.value}
+            aria-labelledby={props.label && !props.hideLabel ? labelId : undefined}
+            aria-label={triggerAriaLabel.value}
             tabindex={props.disabled ? -1 : 0}
             onClick={toggle}
             onKeydown={onTriggerKeydown}

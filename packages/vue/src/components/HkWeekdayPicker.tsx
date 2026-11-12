@@ -3,6 +3,7 @@ import {
   computed,
   defineComponent,
   ref,
+  watch,
   type CSSProperties,
   type PropType,
 } from "vue";
@@ -19,6 +20,8 @@ import {
   weekdayLabels,
   type CalendarDay,
 } from "./calendarGrid";
+import HkButton from "./HkButton";
+import HkIconButton from "./HkIconButton";
 import "./HkWeekdayPicker.scss";
 
 /** The inline style carrying a band's grid column (an integer 0 … 6). */
@@ -107,6 +110,17 @@ export default defineComponent({
     const viewYear = ref(initial.getFullYear());
     const viewMonth = ref(initial.getMonth());
     const today = new Date();
+
+    // A host that loads the month after mount (async data) still lands the
+    // grid on the requested month; selection is weekday-based and unmoved.
+    watch(
+      () => props.initialMonth,
+      (value) => {
+        if (!value) return;
+        viewYear.value = value.getFullYear();
+        viewMonth.value = value.getMonth();
+      },
+    );
 
     function shiftMonth(delta: number) {
       const d = new Date(viewYear.value, viewMonth.value + delta, 1);
@@ -224,34 +238,37 @@ export default defineComponent({
         {!props.hideLabel && <span class="hk-wp-label">{pickerLabel.value}</span>}
 
         <div class="hk-wp-header">
-          <button
-            type="button"
-            class="hk-wp-nav"
+          <HkIconButton
+            size={24}
+            variant="ghost"
+            data-test="hk-wp-prev"
             aria-label={t("hikari::datePicker.prevMonth", "Previous month")}
             disabled={props.disabled}
             onClick={() => shiftMonth(-1)}
           >
-            <ChevronLeft size={16} />
-          </button>
+            <ChevronLeft size={14} />
+          </HkIconButton>
           <div class="hk-wp-title">{headerLabel.value}</div>
-          <button
-            type="button"
-            class="hk-wp-nav"
+          <HkIconButton
+            size={24}
+            variant="ghost"
+            data-test="hk-wp-next"
             aria-label={t("hikari::datePicker.nextMonth", "Next month")}
             disabled={props.disabled}
             onClick={() => shiftMonth(1)}
           >
-            <ChevronRight size={16} />
-          </button>
-          <button
-            type="button"
-            class="hk-wp-every"
+            <ChevronRight size={14} />
+          </HkIconButton>
+          <HkButton
+            size="sm"
+            variant={everyDay.value ? "primary" : "secondary"}
+            data-test="hk-wp-every"
             aria-pressed={everyDay.value}
             disabled={props.disabled}
             onClick={selectEveryDay}
           >
             {everyDayText.value}
-          </button>
+          </HkButton>
         </div>
 
         <div class="hk-wp-weekdays">

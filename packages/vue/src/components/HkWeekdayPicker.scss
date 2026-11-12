@@ -65,42 +65,6 @@
   min-height: 1.75rem;
 }
 
-.hk-wp-nav {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--radius-md, 8px);
-  color: var(--hi-color-muted);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background var(--duration-fast, 0.15s) ease,
-    color var(--duration-fast, 0.15s) ease;
-
-  &:hover:not(:disabled) {
-    background: var(--hi-color-surface);
-    color: var(--hi-color-text-primary);
-  }
-
-  &:active:not(:disabled) {
-    filter: brightness(0.95);
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
-    outline-offset: 1px;
-  }
-
-  &:disabled {
-    opacity: 0.25;
-    cursor: not-allowed;
-  }
-}
-
 .hk-wp-title {
   font-size: var(--text-sm, 0.875rem);
   font-weight: 600;
@@ -112,56 +76,6 @@
   text-overflow: ellipsis;
 }
 
-.hk-wp-every {
-  appearance: none;
-  border: 1px solid color-mix(in srgb, var(--hi-color-border) 60%, transparent);
-  border-radius: 999px;
-  padding: var(--space-2, 2px) var(--space-10, 10px);
-  min-height: 1.5rem;
-  background: transparent;
-  color: var(--hi-color-muted);
-  font-family: inherit;
-  font-size: var(--text-xs, 0.75rem);
-  font-weight: 500;
-  line-height: 1.2;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background var(--duration-fast, 0.15s) ease,
-    border-color var(--duration-fast, 0.15s) ease,
-    color var(--duration-fast, 0.15s) ease;
-
-  &:hover:not(:disabled) {
-    background: var(--hi-color-surface);
-    color: var(--hi-color-text-primary);
-  }
-
-  &:active:not(:disabled) {
-    filter: brightness(0.95);
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
-    outline-offset: 1px;
-  }
-
-  &[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--hi-color-primary) 14%, transparent);
-    border-color: color-mix(in srgb, var(--hi-color-primary) 45%, transparent);
-    color: var(--hi-color-primary);
-    font-weight: 600;
-  }
-
-  &:disabled {
-    opacity: 0.25;
-    cursor: not-allowed;
-  }
-}
-
-/* ── Weekday header buttons ───────────────────────────────────── */
-
-/* Same seven tracks and the same gap as .hk-wp-grid, so every header
- * button sits exactly above its column. */
 .hk-wp-weekdays {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -341,8 +255,6 @@
 /* Only color/background transitions here — still respect the user's
  * preference instead of animating ink changes against it. */
 @media (prefers-reduced-motion: reduce) {
-  .hk-wp-nav,
-  .hk-wp-every,
   .hk-wp-wd,
   .hk-wp-cell {
     transition: none;

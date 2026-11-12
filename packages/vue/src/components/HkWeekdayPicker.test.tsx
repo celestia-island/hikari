@@ -97,8 +97,8 @@ function summary(container: HTMLElement): string {
 }
 
 function everyChip(container: HTMLElement): HTMLButtonElement {
-  const el = container.querySelector<HTMLButtonElement>(".hk-wp-every");
-  expect(el, ".hk-wp-every renders").not.toBeNull();
+  const el = container.querySelector<HTMLButtonElement>('[data-test="hk-wp-every"]');
+  expect(el, "the every-day button renders").not.toBeNull();
   return el!;
 }
 
@@ -278,7 +278,7 @@ describe("HkWeekdayPicker — month navigation", () => {
     const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
     expect(title(harness.container)).toBe(fmt.format(new Date(2026, 7, 1)));
 
-    const navs = harness.container.querySelectorAll<HTMLButtonElement>(".hk-wp-nav");
+    const navs = harness.container.querySelectorAll<HTMLButtonElement>('[data-test="hk-wp-prev"], [data-test="hk-wp-next"]');
     navs[1]!.click();
     await nextTick();
     expect(title(harness.container)).toBe(fmt.format(new Date(2026, 8, 1)));
@@ -301,7 +301,7 @@ describe("HkWeekdayPicker — month navigation", () => {
 
   it("keeps the weekday bands after navigating to another month", async () => {
     const harness = mountPicker({ modelValue: [5] }); // Fridays
-    harness.container.querySelectorAll<HTMLButtonElement>(".hk-wp-nav")[1]!.click();
+    harness.container.querySelectorAll<HTMLButtonElement>('[data-test="hk-wp-prev"], [data-test="hk-wp-next"]')[1]!.click();
     await nextTick();
     expect(bands(harness.container)).toHaveLength(1);
     const active = cells(harness.container).filter((c) => c.classList.contains("is-active"));
@@ -310,6 +310,26 @@ describe("HkWeekdayPicker — month navigation", () => {
     expect(active.some((c) => c.textContent === "4")).toBe(true);
   });
 });
+
+  it("follows a late initialMonth prop without moving the selection", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const month = ref<Date | null>(new Date(2026, 7, 1));
+    const Wrapper = defineComponent({
+      setup: () => () => h(HkWeekdayPicker, { modelValue: [1], initialMonth: month.value }),
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
+    expect(title(container)).toBe(fmt.format(new Date(2026, 7, 1)));
+    month.value = new Date(2026, 2, 1);
+    await nextTick();
+    expect(title(container)).toBe(fmt.format(new Date(2026, 2, 1)));
+    expect(container.querySelectorAll(".hk-wp-band")).toHaveLength(1);
+  });
 
 describe("HkWeekdayPicker — disabled + accessibility", () => {
   it("blocks every interaction when disabled", async () => {

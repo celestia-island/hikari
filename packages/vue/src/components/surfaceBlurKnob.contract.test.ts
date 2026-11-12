@@ -38,12 +38,21 @@
  * them. Every guard carries a control that proves it can fail.
  */
 import { describe, expect, it } from "vitest";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compile } from "sass";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const loadPaths = [here, join(here, "..", "styles")];
+
+/** Every canonical component sheet — the invariant guards run tree-wide, a
+ *  gate parked in any other sheet is as much a violation as one at home. */
+function allComponentSheets(): string[] {
+  return readdirSync(here)
+    .filter((f) => f.endsWith(".scss") && !f.startsWith("_"))
+    .sort();
+}
 
 function compiledSheet(sheet: string): string {
   return compile(join(here, sheet), { loadPaths, style: "expanded" }).css;
@@ -175,11 +184,15 @@ const TARGETS = [".hk-card", ".hk-btn-secondary"];
 const KNOBS = ["--hk-card-blur", "--hk-btn-secondary-blur"];
 
 /** Selector mentions a target as a whole token (list members included). */
+/** BEM modifier variants of a guarded surface (`.hk-card--plain`) are the
+ *  same component family and inherit the invariant; other suffixed classes
+ *  (`.hk-card-grid`, a different component) do not. */
 function mentionsTarget(selector: string): string | null {
   for (const selectorPart of selector.split(",")) {
     const trimmed = selectorPart.trim();
     for (const target of TARGETS) {
-      const re = new RegExp(`(^|[\\s>+~(])${target.replace(".", "\\.")}(?![\\w-])`);
+      const cls = target.replace(".", "");
+      const re = new RegExp(`(^|[\\s>+~(])\\.${cls}(--[\\w-]+)?(?![\\w-])`);
       if (re.test(trimmed)) return target;
     }
   }
@@ -223,8 +236,10 @@ function baseDeclarations(css: string, selector: string): Map<string, string> {
  *  (`print, screen` / `not print` / `(max-width) and (prefers-*)` /
  *  `@container print (min-width)`).*/
 function isConditionalWrapper(prelude: string): boolean {
-  if (!/^@(media|container)\b/i.test(prelude)) return false;
-  if (/^@container\b/i.test(prelude)) return true;
+  if (!/^@(media|container|scope)\b/i.test(prelude)) return false;
+  // @container and @scope are structural conditions (box scope / DOM scope),
+  // not capability gates: every prelude they can carry re-keys by context.
+  if (/^@(container|scope)\b/i.test(prelude)) return true;
   for (const query of prelude.replace(/^@media\b/i, "").split(",")) {
     const q = query.trim();
     if (!q) continue;
@@ -280,11 +295,11 @@ function conditionalStandDowns(css: string): string[] {
 }
 
 describe("surface live-blur escape hatch", () => {
-  it("leaves the knobs unpinned everywhere (upgrading hikari changes nothing)", () => {
-    // Not just the base rule: an unconditional `:root { --hk-card-blur: none }`
-    // would change every host on upgrade just as silently, so no rule in
-    // either sheet may declare these tokens.
-    for (const sheet of ["HkCard.scss", "HkButton.scss"]) {
+  it("leaves the knobs unpinned anywhere in the component tree", () => {
+    // Not just the two sheets: an unconditional pin parked in ANY component
+    // sheet (the cross-sheet gap filed with #1232) changes every host on
+    // upgrade just as silently.
+    for (const sheet of allComponentSheets()) {
       expect(knobPins(compiledSheet(sheet)), sheet).toEqual([]);
     }
   });
@@ -352,6 +367,11 @@ describe("surface live-blur escape hatch", () => {
       "@container print (min-width: 400px) { .hk-card { backdrop-filter: none; } }",
       // a `//` bait ahead of the gate must not white-wash it either
       '.x::after { content: "//"; } @media (max-width: 767px) { .hk-card { backdrop-filter: none; } }',
+      // DOM-scoped stand-downs re-key by context, not engine
+      "@scope (.hk-card) { .hk-card { backdrop-filter: none; } }",
+      // BEM variants are the same component family
+      "@media (max-width: 767px) { .hk-card--plain { backdrop-filter: none; } }",
+      "@media (max-width: 767px) { .hk-btn-secondary--sm { backdrop-filter: none; } }",
       // selector list
       "@media (max-width: 767px) { .hk-card, .x { backdrop-filter: none; } }",
       // range syntax
@@ -381,6 +401,8 @@ describe("surface live-blur escape hatch", () => {
       "@supports (backdrop-filter: blur(1px)) { .hk-card { backdrop-filter: none; } }",
       "@layer hk { .hk-card { backdrop-filter: none; } }",
       "@media print { .hk-card { backdrop-filter: none; } }",
+      // a DIFFERENT component sharing the name prefix is not this surface
+      "@media (max-width: 767px) { .hk-card-grid { backdrop-filter: none; } }",
       "@media speech { .hk-card { backdrop-filter: none; } }",
       "@media (prefers-reduced-transparency: reduce) { .hk-card { backdrop-filter: none; } }",
       "@media (prefers-reduced-contrast: more) and (prefers-reduced-transparency: reduce) { .hk-card { backdrop-filter: none; } }",
@@ -389,8 +411,10 @@ describe("surface live-blur escape hatch", () => {
     }
   });
 
-  it("keeps both surfaces engine-gated: no conditional stand-down exists today", () => {
-    for (const sheet of ["HkCard.scss", "HkButton.scss"]) {
+  it("keeps both surfaces engine-gated: no conditional stand-down exists anywhere", () => {
+    // Across EVERY component sheet: a width gate parked in a different sheet
+    // (the cross-sheet gap filed with #1232) re-keys the same two surfaces.
+    for (const sheet of allComponentSheets()) {
       expect(conditionalStandDowns(compiledSheet(sheet)), `${sheet}`).toEqual([]);
     }
   });

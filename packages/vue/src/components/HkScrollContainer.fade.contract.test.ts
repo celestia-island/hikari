@@ -198,19 +198,32 @@ describe("scroll fade composition contract", () => {
     ).toBeNull();
   });
 
-  it("routes the dock fades through the same edge vars, scaled by strength", () => {
-    // A dock band is its own size TIMES the published strength: the
-    // component's dock path publishes a binary gate (lit while the edge
-    // hides content, retired at the end), and a constant band would never
-    // retire — it used to paint over the flush-parked last row at full
-    // scroll (2026-11-12 user report). The multiplication is the only
-    // consumer of that gate, so this pin is what keeps the fix real; the
+  it("scales each dock band by ITS OWN gate, not the fade ramp", () => {
+    // The dock band is its own size TIMES a binary gate the component
+    // publishes — on a SEPARATE var family from the fade ramp. That split
+    // is load-bearing: with `fade` and a dock slot both on, the ramp
+    // branch publishes "1" at the scroll end by its own design, and a
+    // shared var let that value keep the dock band at full depth, painting
+    // over the flush-parked last row again. Two vars let the ramp keep its
+    // progressive value while the gate retires independently; this pin is
+    // the only consumer of the gate, so it is what keeps the fix real. The
     // `1` fallback preserves the pre-fix band wherever nothing publishes.
     const scaled = (side: "top" | "bottom") =>
       new RegExp(
-        `--hk-scroll-fade-${side}:\\s*calc\\(\\s*var\\(--hk-scroll-dock-fade, 2rem\\)\\s*\\*\\s*var\\(--hk-scroll-fade-strength-${side}, 1\\)\\s*\\)`,
+        `--hk-scroll-fade-${side}:\\s*calc\\(\\s*var\\(--hk-scroll-dock-fade, 2rem\\)\\s*\\*\\s*var\\(--hk-scroll-dock-gate-${side}, 1\\)\\s*\\)`,
       );
-    expect(sheet, "bottom dock band scales by strength").toMatch(scaled("bottom"));
-    expect(sheet, "top dock band scales by strength").toMatch(scaled("top"));
+    expect(sheet, "bottom dock band reads its own gate").toMatch(scaled("bottom"));
+    expect(sheet, "top dock band reads its own gate").toMatch(scaled("top"));
+    // And the DOCK rules themselves must not read the ramp's strengths —
+    // scoped to those rule bodies, since the fade state rules legitimately
+    // do (that is the ramp's own consumer).
+    for (const side of ["top", "bottom"] as const) {
+      const body =
+        new RegExp(`\\[data-dock-fade="${side}"\\]\\s*\\{([^}]*)\\}`).exec(sheet)?.[1] ?? "";
+      expect(body, `the ${side} dock rule exists`).not.toBe("");
+      expect(body, `the ${side} dock rule never reads the ramp strength`).not.toMatch(
+        /--hk-scroll-fade-strength-/,
+      );
+    }
   });
 });

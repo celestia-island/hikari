@@ -18,7 +18,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, defineComponent, reactive, ref, type VNodeChild } from "vue";
 
 import HkKanban from "./HkKanban";
@@ -118,6 +118,54 @@ describe("HkScrollContainer dock slots", () => {
     expect(host.getAttribute("data-dir")).toBeNull();
     // 280 still hidden below the fold: the dock gate is lit.
     expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
+  });
+
+  it("re-senses when dockFade flips at rest, without a manual refresh", async () => {
+    // The re-sense watcher keys on [fade, fadeDistance, dockFade]. This is
+    // its only coverage: flipping dockFade at rest with NO manual refresh —
+    // the watcher's scheduled frame must re-run the dock branch and clear
+    // the stale strength (a manual refresh here would exercise the sense
+    // pass and hide a missing key, which the review's mutation proved).
+    vi.useFakeTimers();
+    try {
+      const instance = ref<{ refresh: () => void } | null>(null);
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+      const props = reactive({ dockFade: true });
+      const app = createApp(defineComponent({
+        setup() {
+          return () =>
+            h(
+              HkScrollContainer,
+              { ref: instance as never, ...props },
+              {
+                default: () => h("div", { class: "content" }, "rows"),
+                dockBottom: () => h("div", { class: "the-dock" }, "dock"),
+              },
+            );
+        },
+      }));
+      mounts.push(app);
+      const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+      const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
+      Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
+      Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
+      Object.defineProperty(viewport, "scrollTop", { value: 0, configurable: true });
+      instance.value?.refresh();
+      await vi.advanceTimersByTimeAsync(60);
+      // 300 hidden below the fold: the gate is lit at full depth.
+      expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("1");
+
+      props.dockFade = false;
+      // NO refresh: the watcher's own scheduled update must do the pass.
+      await vi.advanceTimersByTimeAsync(60);
+      // The dock branch no longer runs, the stale value was cleared and
+      // nothing republished it.
+      expect(host.style.getPropertyValue("--hk-scroll-fade-strength-bottom")).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("retires the dock band at the scroll end instead of covering the last row", async () => {

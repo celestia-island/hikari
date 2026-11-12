@@ -1,0 +1,350 @@
+/* ── HkWeekdayPicker ───────────────────────────────────────────────
+ * Inline month grid whose selection unit is the WEEKDAY: one full-height
+ * band layer paints the selected columns, the dates inside them carry a
+ * filled circle. Uses the shared --hi-* / --space-* / --radius-* /
+ * --text-* / --duration-* tokens; the band geometry is derived from the
+ * grid's own gap so the strip can never drift off its column. */
+
+@use "../styles/polyfill" as *;
+
+.hk-wp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 6px);
+  width: 100%;
+  min-width: 16rem;
+  color: var(--hi-color-text-primary);
+  @include user-select(none);
+
+  /* Row metrics. Kept as custom properties so the `sm` and touch
+   * variants retune one number instead of re-declaring the rules. */
+  /* Ride the family's shared picker metrics when an ancestor supplies
+   * them; the fallbacks keep the inline calendar's designed stock scale
+   * (and the touch fallbacks match HkPickerPane's 44px/1.5rem targets). */
+  --hk-wp-cell: var(--hk-picker-cell, 2rem);
+  --hk-wp-wd: var(--hk-picker-wd, 1.25rem);
+  --hk-wp-gap: var(--space-2, 2px);
+}
+
+/* Compact field variant (dense forms / dialogs). */
+.hk-wp.hk-wp-sm {
+  --hk-wp-cell: 1.75rem;
+  --hk-wp-wd: 1.25rem;
+  gap: var(--space-4, 4px);
+  min-width: 14rem;
+}
+
+/* Touch geometry: the sheet/inline phone rendering gets finger-sized
+ * cells. Declared after `sm` so a small-and-touch host still ends up
+ * with the enlarged targets. */
+.hk-wp.is-touch {
+  --hk-wp-cell: var(--hk-picker-cell, 2.75rem);
+  --hk-wp-wd: var(--hk-picker-wd, 1.5rem);
+}
+
+.hk-wp.is-disabled {
+  opacity: 0.5;
+}
+
+/* ── Caption ──────────────────────────────────────────────────── */
+
+.hk-wp-label {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--hi-color-muted);
+  line-height: 1.4;
+}
+
+/* ── Header: prev · month · next · "Every day" ────────────────── */
+
+.hk-wp-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-4, 4px);
+  min-height: 1.75rem;
+}
+
+.hk-wp-nav {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-md, 8px);
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}
+
+.hk-wp-title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-wp-every {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 60%, transparent);
+  border-radius: 999px;
+  padding: var(--space-2, 2px) var(--space-10, 10px);
+  min-height: 1.5rem;
+  background: transparent;
+  color: var(--hi-color-muted);
+  font-family: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 0.15s) ease,
+    border-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+
+  &[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--hi-color-primary) 14%, transparent);
+    border-color: color-mix(in srgb, var(--hi-color-primary) 45%, transparent);
+    color: var(--hi-color-primary);
+    font-weight: 600;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}
+
+/* ── Weekday header buttons ───────────────────────────────────── */
+
+/* Same seven tracks and the same gap as .hk-wp-grid, so every header
+ * button sits exactly above its column. */
+.hk-wp-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--hk-wp-gap);
+  height: var(--hk-wp-wd);
+}
+
+.hk-wp-wd {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md, 8px);
+  padding: 0;
+  height: 100%;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+
+  &[aria-pressed="true"] {
+    color: var(--hi-color-primary);
+    font-weight: 700;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}
+
+/* ── Grid + the band layer behind it ──────────────────────────── */
+
+.hk-wp-grid-wrap {
+  position: relative;
+}
+
+/* One layer for the whole grid — NEVER per-cell backgrounds: a selected
+ * column must read as a single continuous strip. The layer sits behind
+ * the cells (z-index), ignores the pointer, and derives each band's
+ * offset/width from the same 7 tracks + gap the grid uses. */
+.hk-wp-bands {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hk-wp-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc((100% - 6 * var(--hk-wp-gap)) / 7);
+  left: calc(
+    (100% - 6 * var(--hk-wp-gap)) / 7 * var(--hk-wp-col, 0) +
+      var(--hk-wp-gap) * var(--hk-wp-col, 0)
+  );
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--hi-color-primary) 9%, transparent);
+}
+
+.hk-wp-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--hk-wp-gap);
+}
+
+.hk-wp-cell {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  height: var(--hk-wp-cell);
+  min-width: 0;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
+  font-family: inherit;
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--hi-color-surface) 80%, transparent);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: -1px;
+  }
+
+  /* Neighbour-month days stay legible and CLICKABLE — the weekday they
+   * carry is as valid as any other. */
+  &.is-out {
+    opacity: 0.32;
+  }
+
+  &.is-today:not(.is-active) {
+    font-weight: 700;
+    color: var(--hi-color-text-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+  }
+
+  &.is-active {
+    color: var(--hi-color-primary);
+    font-weight: 600;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}
+
+/* The filled circle: in-month dates inside a selected column only. The
+ * out-of-month days in that column keep the band without the disc. */
+.hk-wp-cell-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+}
+
+.hk-wp-cell.is-active:not(.is-out) .hk-wp-cell-num {
+  background: var(--hi-color-primary);
+  color: rgb(var(--color-on-solid-text, 255 255 255));
+}
+
+/* ── Selection summary ────────────────────────────────────────── */
+
+.hk-wp-summary {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-muted);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.2em;
+  text-align: start;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────── */
+/* Only color/background transitions here — still respect the user's
+ * preference instead of animating ink changes against it. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-wp-nav,
+  .hk-wp-every,
+  .hk-wp-wd,
+  .hk-wp-cell {
+    transition: none;
+  }
+}

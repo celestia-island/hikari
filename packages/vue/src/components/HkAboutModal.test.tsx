@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import { HkAboutModal } from "./HkAboutModal";
 import { setLocale } from "../i18n/context";
+import { provideHyperlinkCoordinator } from "../runtime/hyperlink";
 
 /**
  * HkAboutModal contract tests for the branding + redesign waves:
@@ -77,6 +78,9 @@ afterEach(() => {
     app.unmount();
     container.remove();
   }
+  provideHyperlinkCoordinator(null);
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   setLocale("en");
 });
 
@@ -498,5 +502,33 @@ describe("HkAboutModal branding", () => {
       "Chat with your agents",
     );
     expect(subtitle.querySelector(".s-about-modal-subtitle-sep")).toBeTruthy();
+  });
+
+  it("routes a link click through the hyperlink coordinator (never the default)", async () => {
+    // The coordination contract (runtime/hyperlink.ts): the About dialog's
+    // rows are exactly the "help links" class — on the web face a click
+    // must open a hardened new tab through the coordinator, and the
+    // anchor's own default must stay dead so the dialog never navigates
+    // away. Observed through the resolver half: it saw the About source,
+    // and its null verdict swallowed the activation.
+    const seen: Array<{ href: string; source: string }> = [];
+    provideHyperlinkCoordinator({
+      resolve: (info) => {
+        seen.push({ href: info.href, source: info.source });
+        return null;
+      },
+    });
+    mountAbout({
+      links: [{ label: "Homepage", href: "https://example.com" }],
+    });
+    await flushModal();
+
+    const link = query<HTMLAnchorElement>('.s-about-modal-link[href="https://example.com"]');
+    const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+    link.dispatchEvent(event);
+    await flushModal();
+
+    expect(seen).toEqual([{ href: "https://example.com", source: "about" }]);
+    expect(event.defaultPrevented).toBe(true);
   });
 });

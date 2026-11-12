@@ -1072,6 +1072,23 @@ export {
   RESIZE_FALLBACK_TICKS,
   type WindowApiLike,
 } from "./runtime/windowChrome";
+// THE hyperlink coordination context (runtime/hyperlink.ts): every link
+// activation — markdown anchors, About-dialog rows, host surfaces — goes
+// through openHyperlink so the environment picks the destination (new tab
+// on the web, the system browser in the native shell) and the webview
+// itself never navigates. Hosts register resolve/open overrides once at
+// bootstrap with provideHyperlinkCoordinator.
+export {
+  classifyHyperlink,
+  openExternalHyperlink,
+  openHyperlink,
+  provideHyperlinkCoordinator,
+  useHyperlinkCoordinator,
+  type HyperlinkCoordinator,
+  type HyperlinkInfo,
+  type HyperlinkKind,
+  type HyperlinkSource,
+} from "./runtime/hyperlink";
 // Pre-boot caption bar (`bootChromePlugin`) is NOT exported here. It ships from
 // its own published subpath — `@celestia-island/hikari/plugins/boot-chrome` —
 // resolved to a self-contained ESM module, and that is what a host imports in

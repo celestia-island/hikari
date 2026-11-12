@@ -3,6 +3,7 @@ import { Github } from "lucide-vue-next";
 import { HBadge, HModal } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
+import { openHyperlink } from "../runtime/hyperlink";
 
 import "./HkAboutModal.scss";
 
@@ -177,6 +178,16 @@ export const HkAboutBody = defineComponent({
           href={item.href}
           target="_blank"
           rel="noopener noreferrer"
+          // The activation rides the hyperlink coordinator (runtime/
+          // hyperlink.ts): a new tab on the web face, the system browser
+          // in the native shell — the webview itself never navigates.
+          // The href/target attributes stay for semantics and the
+          // browser's link menu; only the left-click default is taken
+          // over.
+          onClick={(event: MouseEvent) => {
+            event.preventDefault();
+            void openHyperlink(item.href, { source: "about" });
+          }}
           // A text link is named by its own label unless the host names it
           // explicitly; an icon-only link has no text to be named by, so it
           // always needs a name of its own.

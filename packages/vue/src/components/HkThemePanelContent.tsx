@@ -1,5 +1,5 @@
-import HkIconButton from "./HkIconButton";
 import HkAddTile from "./HkAddTile";
+import { HkListRow, type HkListRowAction } from "./HkCardList";
 
 import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
 import { Monitor, MoonStar, Sun, Trash as Trash2 } from "lucide-vue-next";
@@ -45,8 +45,13 @@ export interface ThemeItemScope {
  *
  * Everything between the popover's padding lives here: the color-mode
  * group (HTabs segmented with the solar-altitude merged cell), the
- * `mode-extra` host strip, the preset/custom theme rows (three scoped
- * host slots), the customize entry and the `menu-extra` slot. The
+ * `mode-extra` host strip, the preset/custom theme rows (the STANDARD
+ * list row — HkListRow, 2026-11-13 user direction — with four scoped
+ * host slots), the customize entry and the `menu-extra` slot. The rows
+ * read as list items (role="listitem" + aria-current), not buttons —
+ * selection is the row's wash plus its click/Enter contract; lane and
+ * trailing clicks stop at their wrappers (HkListRow's clickable-row
+ * rule), so per-row affordances never double-fire a selection. The
  * built-in HColorSchemeDialog rides along when `externalCustomize` is
  * false — dialogs teleport, so hosting this inside any surface is safe.
  *
@@ -67,6 +72,26 @@ export const HkThemePanelContent = defineComponent({
      * dialog is not rendered in this mode.
      */
     externalCustomize: { type: Boolean, default: false },
+    /**
+     * Per-row option-control builder (2026-11-13 user direction: the
+     * theme rows ride the standard list row, and the host owns the
+     * affordances on its lane). Returns the row's `HkListRowAction[]`.
+     * The grammar follows HkCardList's `actions` prop: a PRESENT
+     * builder owns the row's lane — an EMPTY array means "no actions",
+     * while a per-row `undefined` declines and falls back to the
+     * built-in anatomy (custom rows get the standard delete, unless an
+     * `item-trailing` slot is rendered — its suppression contract
+     * stands). A
+     * CALLBACK PROP, not a slot, deliberately: slot returns are
+     * normalized into vnodes by Vue, and plain action objects would be
+     * silently destroyed in transit (the name/onSelect payload is
+     * data, not render output — the same grammar as HkCardList's own
+     * `actions` prop).
+     */
+    itemActions: {
+      type: Function as PropType<(scope: ThemeItemScope) => HkListRowAction[] | undefined>,
+      default: undefined,
+    },
   },
   emits: {
     "update:scheme": (_theme: HCustomTheme) => true,
@@ -227,19 +252,28 @@ export const HkThemePanelContent = defineComponent({
           <HDivider spacing="md" />
 
           <div class="s-theme-menu-label">{t("hikari::theme.themes")}</div>
+          {/* The rows are a real list (role="list") so HkListRow's
+              role="listitem" anatomy reads correctly to assistive tech. */}
+          <div class="s-theme-item-list" role="list">
           {allThemeList.value.map((th) => {
-            // Host-customizable row anatomy. `item-leading` replaces the
-            // selected-check cell and renders for EVERY row (fixed icon
-            // cell, so names stay aligned); `item-name-suffix` renders
-            // INSIDE the row button right after the name, so a host mark
-            // (e.g. a provenance/sync glyph) reads as part of the name
-            // instead of as an affordance; `item-trailing` reserves a
-            // real trailing column for every row and takes full
-            // ownership of the affordances there — the built-in custom
-            // delete overlay is suppressed in that mode, so the host
-            // renders delete (and anything else) itself. Without the
-            // slots the rows behave exactly as before: check only on the
-            // active row, delete overlaid on custom rows only.
+            // Host-customizable row anatomy, on the STANDARD list row
+            // (2026-11-13 user direction: the theme list rides hikari's
+            // standard list component so its right-side control facility
+            // — the hover-revealed action lane on pointer devices, the
+            // ⋯ named menu on touch — comes for free). `item-leading`
+            // renders for EVERY row (fixed icon cell, so names stay
+            // aligned); `item-name-suffix` renders right after the name,
+            // so a host mark (e.g. a provenance/sync glyph) reads as
+            // part of the name instead of as an affordance;
+            // `item-trailing` renders quiet trailing CONTENT (badges) —
+            // it is what the action lane covers while engaged, so
+            // affordances do not belong there anymore; the `itemActions`
+            // prop supplies the row's option-control array
+            // (HkListRowAction[] — named, localized by the host's own
+            // translator; a callback PROP, see the prop's doc). Without
+            // them the rows behave exactly as before: the active row's
+            // wash marks selection, and custom rows carry the built-in
+            // delete on the standard lane.
             const scope: ThemeItemScope = {
               id: th.id,
               name: th.name,
@@ -256,59 +290,76 @@ export const HkThemePanelContent = defineComponent({
             // key, so literal display names pass through unchanged, and the
             // reactive message lookup re-renders rows on locale switches.
             const displayName = t(th.name);
+            const isActive = currentTheme.value === th.id;
+            // Default lane anatomy: the host's `itemActions` builder wins;
+            // a host that renders `item-trailing` owns the affordance
+            // column (the suppression contract the old overlay button
+            // honored) and gets no built-in lane; fully default rows put
+            // the custom delete on the standard lane.
+            const actions: HkListRowAction[] | undefined =
+              props.itemActions?.(scope) ??
+              (trailingSlot
+                ? undefined
+                : th.isCustom
+                  ? [
+                      {
+                        name: t("hikari::theme.deleteTheme"),
+                        icon: Trash2,
+                        danger: true,
+                        onSelect: () => removeCustomTheme(th.id),
+                      },
+                    ]
+                  : undefined);
             return (
-              <div
+              <HkListRow
                 key={th.id}
                 class="s-theme-item-row"
+                clickable
                 data-custom={th.isCustom || undefined}
+                // Deliberate DOM hook (no stylesheet consumer since the
+                // name-clearance cancellation retired): hosts and tests
+                // key off the trailing-slot mode without re-deriving it.
                 data-trailing={trailingSlot ? "slot" : undefined}
                 data-name-suffix={nameSuffixSlot ? "slot" : undefined}
                 // The ROW is the pill: the highlight state lives here so
                 // the hover/active wash spans the full row width — a
                 // trailing slot column must not shrink it (2026-10-01
                 // user report: theme rows and the 自定义 row hovered at
-                // different widths). The button keeps the click/focus
-                // semantics; the stylesheet strips its own chrome.
-                data-active={currentTheme.value === th.id || undefined}
+                // different widths). The stylesheet keeps the unified
+                // menu-item pill on this root and strips the card-list
+                // row's own chrome so the two specs don't double-paint.
+                data-active={isActive || undefined}
+                aria-current={isActive ? "true" : undefined}
+                actions={actions}
+                actionsLabel={t("hikari::theme.rowActionsLabel")}
+                onClick={() => onSelectTheme(th.id)}
               >
-                <button
-                  type="button"
-                  class="s-theme-item-btn"
-                  data-active={currentTheme.value === th.id || undefined}
-                  onClick={() => onSelectTheme(th.id)}
-                >
-                  {/* The selected-check fallback is RETIRED (2026-10-21
-                      user direction): selection is conveyed by the row's
-                      data-active wash alone — with the leading icon cell
-                      gone across hosts, the leftover check read as a
-                      stray icon. No leading slot = no leading mark. */}
-                  {leadingSlot ? (
-                    <span class="hk-menu-item-icon s-theme-item-lead">
-                      {leadingSlot(scope)}
-                    </span>
-                  ) : null}
-                  <span class="s-theme-item-name">{displayName}</span>
-                  {nameSuffixSlot ? (
-                    <span class="s-theme-item-name-suffix">{nameSuffixSlot(scope)}</span>
-                  ) : null}
-                </button>
-                {trailingSlot ? (
-                  <span class="s-theme-item-trailing">{trailingSlot(scope)}</span>
-                ) : th.isCustom ? (
-                  <HkIconButton
-                    class="s-theme-item-delete"
-                    size={24}
-                    variant="ghost"
-                    aria-label={t("hikari::theme.deleteTheme")}
-                    {...{ title: t("hikari::theme.deleteTheme") }}
-                    onClick={() => removeCustomTheme(th.id)}
-                  >
-                    {{ icon: () => <Trash2 aria-hidden="true" /> }}
-                  </HkIconButton>
-                ) : null}
-              </div>
+                {{
+                  default: () => (
+                    <div class="s-theme-item-line">
+                      {/* The selected-check fallback is RETIRED (2026-10-21
+                          user direction): selection is conveyed by the row's
+                          data-active wash alone. No leading slot = no
+                          leading mark. */}
+                      {leadingSlot ? (
+                        <span class="hk-menu-item-icon s-theme-item-lead">
+                          {leadingSlot(scope)}
+                        </span>
+                      ) : null}
+                      <span class="s-theme-item-name">{displayName}</span>
+                      {nameSuffixSlot ? (
+                        <span class="s-theme-item-name-suffix">{nameSuffixSlot(scope)}</span>
+                      ) : null}
+                    </div>
+                  ),
+                  trailing: trailingSlot
+                    ? () => <span class="s-theme-item-trailing">{trailingSlot(scope)}</span>
+                    : undefined,
+                }}
+              </HkListRow>
             );
           })}
+          </div>
 
           {/* The customize entry is the standard add tile (2026-11-11
               family migration): the compact dashed form riding the END of

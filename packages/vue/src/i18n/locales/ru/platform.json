@@ -18,6 +18,7 @@
     "hikari::theme.modeLight": "Светлая",
     "hikari::theme.modeDark": "Тёмная",
     "hikari::theme.modeAuto": "Авто",
+    "hikari::theme.rowActionsLabel": "Действия строки",
     "hikari::theme.themes": "Цветовые темы",
     "hikari::theme.autoAltitudeTip": "Автоматический режим следует за высотой солнца. Нажмите, чтобы перейти на ручной",
     "hikari::theme.editScheme": "Изменить цветовую схему…",

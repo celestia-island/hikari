@@ -144,21 +144,32 @@
  * Every row is ONE full-width pill, and the pill is THE ROW (2026-10-01
  * user report: with the trailing slot reserving a real column, the row
  * button's wash stopped short of the row edge — theme rows and the
- * standalone 自定义 row hovered at different widths). The unified
- * menu-item chrome therefore lives on `.s-theme-item-row` (which also
- * carries `data-active` from the TSX), and the row's button surrenders
- * its own chrome below, so the hover/active wash, border and radius
- * span the full row no matter how wide the trailing column is. The
- * standalone pills (自定义 row, host mode-extra rows) keep the chrome on
- * the button itself — same spec, same width as a row.
+ * standalone 自定义 row hovered at different widths). Since 2026-11-13
+ * the row root is the STANDARD list row (HkListRow): the unified
+ * menu-item chrome stays on `.s-theme-item-row` (which also carries
+ * `data-active` through attr fallthrough), and the card-list row's own
+ * card metrics are compound-beaten below so the two specs on one element
+ * don't fight over padding/gap. The row's click/focus semantics come
+ * from HkListRow's `clickable` contract (Enter/Space parity included).
+ * The standalone pills (自定义 row, host mode-extra rows) keep the
+ * chrome on their own `.s-theme-item-btn` — same spec, same width.
  *
  * Metrics/states come from the unified menu-item spec (./_menu-item.scss)
  * — the same grammar as menu rows and select options; inside the mobile
  * sheet the shared `.hk-popover-panel.hk-is-sheet` token context applies
- * the 44px touch geometry (the row family is registered there), so the
- * old component-local media bump is gone (only the overlaid delete
- * button keeps its own touch sizing below).
+ * the 44px touch geometry (the row family is registered there).
  */
+
+/* The list wrapper is a BAND (geometry-neutral horizontally), but the
+ * inter-row rhythm is its own: the rows used to be direct flex children
+ * of .s-theme-menu and lived on its 4px gap — the wrapper must carry
+ * the same gap or adjacent pills touch edge-to-edge (2026-11-13 R2). */
+.s-theme-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}
 
 .s-theme-item-row {
   @include mi.item;
@@ -166,57 +177,50 @@
   position: relative;
 }
 
-/* The row's button keeps the CLICK and FOCUS semantics (keyboard parity,
- * screen-reader role) but no visual chrome of its own: background goes
- * transparent and the border is dropped entirely — the ROW now owns the
- * frame, and the content x lands on the same offset as the standalone
- * pills anyway (row border 1 + row padding 12 = the standalone border 1 +
- * padding 12 = 13px from the pill edge). Vertically the button bleeds
- * over the row's frame (negative margins) and re-applies the padding
- * inside, so the WHOLE pill is the click/focus target — master's pill
- * WAS the button — while the name's content box keeps the standalone
- * offsets (border 1 + pad-y). Row heights are unchanged: the button's
- * net layout contribution is its content, so the row's own min-height
- * rules exactly as the button's did before. */
-.s-theme-item-row .s-theme-item-btn {
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  width: auto;
-  /* Fill the row's full cross size (overriding the row's align-items:
-   * center FOR THIS ITEM only) so the click/focus target is the whole
-   * pill, not just the name's line box. */
-  align-self: stretch;
-  /* Bleed over the row's frame — its vertical padding plus the 1px
-   * mi.item border — then re-apply that padding inside: the name's
-   * content box keeps the standalone pills' offsets (border 1 + pad)
-   * while the hit area covers the pill edge to edge. The 1px constant
-   * mirrors mi.item's border width; if the mixin's border ever changes,
-   * this pair moves with it. */
-  margin-block: calc(-1 * var(--hk-menu-item-pad-y, 6px) - 1px);
-  padding-block: calc(var(--hk-menu-item-pad-y, 6px) + 1px);
-  padding-inline: 0;
-  border: none;
-  /* Follow the row's pill radius: the button keeps mi.item's :focus-visible
-   * inset outline (keyboard parity), and outlines follow border-radius —
-   * a zero radius here would render the ring as a sharp rectangle poking
-   * past the row's rounded corners. */
-  border-radius: inherit;
-  background: transparent;
-  font: inherit;
-  color: inherit;
+/* The element now carries BOTH families' classes; the card-list base
+ * (0,1,0 in HkCardList.scss, resolved before this sheet) would otherwise
+ * tie-break against the pill chrome above. This compound rule (0,2,0)
+ * pins the menu-item metrics deterministically — and deliberately does
+ * NOT re-include mi.item: re-declaring the token set at (0,2,0) would
+ * tie with the modal sheet-context re-binding (0,2,0 in _menu-item.scss)
+ * and defeat the 44px touch geometry there (the HkBreadcrumb trap the
+ * mixin's adoption note warns about). var() references resolve through
+ * the cascade, so the tokens keep flowing from wherever they legally
+ * bind. */
+.hk-list-row.s-theme-item-row {
+  gap: var(--hk-menu-item-gap);
+  min-height: var(--hk-menu-item-min-h);
+  padding: var(--hk-menu-item-pad-y) var(--hk-menu-item-pad-x);
+  border-radius: var(--hk-menu-item-radius);
+  text-align: start;
+  /* Restore the full state transition the pill spec declares (the
+   * clickable class's narrower transition would win at (0,2,0)). */
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
-/* Suppress the button's own state chrome — the row above owns the wash.
- * The hover guard repeats mi.item's guard chain so this override
- * out-specifies the mixin's (0,6,0) hover rule. */
-.s-theme-item-row .s-theme-item-btn:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]),
-.s-theme-item-row .s-theme-item-btn[data-active],
-.s-theme-item-row .s-theme-item-btn[data-checked] {
-  background: transparent;
-  border-color: transparent;
-  color: inherit;
-  font-weight: inherit;
+/* The clickable row's own focus ring ties with the pill spec's at
+ * (0,2,0); compound-beat it so the ring never depends on sheet order. */
+.hk-list-row.s-theme-item-row:focus-visible {
+  outline: 2px solid rgb(var(--color-primary) / 70%);
+  outline-offset: -2px;
+}
+
+/* The pill spec's guarded hover (0,6,0 with its :not chain) already
+ * outranks the clickable class's flat hover (0,2,0), so the wash never
+ * double-paints — nothing to suppress. */
+
+/* The name line: one flex run inside HkListRow's main column, so the
+ * name, the optional lead cell and the name-suffix mark stay on ONE
+ * baseline (the main column is vertical; without this wrapper the
+ * mi.label flex would stretch the wrong axis). */
+.s-theme-item-line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .s-theme-item-btn {
@@ -276,12 +280,12 @@
  * leaves the bleed zero room at any zoom.
  *
  * The widened cell is scoped to the LEAD slot only (2026-09-12 field
- * report): the bare `.s-theme-item-btn .hk-menu-item-icon` this shipped
- * as also matched the 自定义 row and every host row reusing
- * s-theme-item-btn (chest's mode-extra DPI entry), where mi.icon
- * normalizes the svg to the cell — their 14px glyphs rendered 28px
- * wide. Rows without a leading slot keep the standard menu metrics. */
-.s-theme-item-btn .hk-menu-item-icon.s-theme-item-lead {
+ * report): a bare `.s-theme-item-line .hk-menu-item-icon` would also
+ * normalize unrelated cells. Rows without a leading slot keep the
+ * standard menu metrics. Since 2026-11-13 the lead cell rides the
+ * standard row's name line (no inner button anymore) — the selector
+ * follows the line wrapper. */
+.s-theme-item-line .hk-menu-item-icon.s-theme-item-lead {
   @include mi.icon;
 
   width: 28px;
@@ -318,54 +322,33 @@
   height: var(--hk-menu-item-icon-box);
 }
 
-/* Custom rows keep the name clear of the overlaid delete button. */
-.s-theme-item-row[data-custom] .s-theme-item-name {
-  margin-inline-end: 2rem;
-}
+/* Custom rows used to reserve name clearance for the pinned delete
+ * overlay; the standard action lane (2026-11-13) parks OUT of the flow
+ * and only covers the row's right content while engaged, so no row
+ * pays for actions it is not using — no clearance anymore. */
 
 /* The selected-check cell retired with its render branch (2026-10-21
  * user direction): the active row's data-active wash is the sole
  * selection indicator. */
 
-/* Hover/active states come verbatim from the unified mi.item spec included
- * on .s-theme-item-btn above — former local copies deleted (R3 sweep). */
-
-/* Delete affordance for custom themes — an overlay pinned inside the
- * pill's trailing edge (the row is relative), not a reserved column:
- * built-in rows show nothing there and the pill runs to the row edge. */
-.s-theme-item-delete {
-  /* Wave B2/B3: the custom-theme delete is the STANDARD icon button at S24
-     (= the old 1.5rem desktop box). The seat keeps the row's parked-edge
-     positioning (absolute, trailing, vertically centred) — real geometry.
-     The error-tinted hover rides the channel vars, ink hover-scoped (token
-     lesson); the inset error focus ring yields to the standard ring. */
-  position: absolute;
-  inset-inline-end: var(--space-8, 0.5rem);
-  top: 50%;
-  transform: translateY(-50%);
-  --hi-icon-button-bg-hover: rgb(var(--color-error) / 15%);
-
-  &:hover {
-    --hi-icon-button-icon-color: rgb(var(--color-error));
+/* Row actions (the built-in custom delete, or the host's `itemActions`
+ * array) come verbatim from the standard lane in HkCardList.scss:
+ * hover/focus-within reveal on pointer devices, the ⋯ named menu
+ * trigger on touch. The touch trigger's hit target gets the retired
+ * delete button's 36px (2.25rem) touch seat — keyed to the SAME
+ * predicate the component uses to render the trigger (HkListRow's
+ * touchFirst media query), so a touch-first tablet gets the oversized
+ * target too (the button keyed on viewport width and missed exactly
+ * that case; 44px is the sheet ROW contract, not this trigger's).
+ * Desktop keeps the standard lane metrics. */
+@media (hover: none), (pointer: coarse) {
+  .s-theme-item-row .hk-list-row-actions__trigger {
+    width: 2.25rem;
+    height: 2.25rem;
   }
 }
 
-/* Touch-sized delete target on phone widths, scaled for the 44px sheet
- * rows that the shared spec applies inside sheet contexts (see
- * ./_menu-item.scss). The name clearance follows so the button and the
- * label never collide on long custom scheme names. */
 @media (max-width: 767px) {
-  .s-theme-item-delete {
-    /* Set the COMPONENT's size var (not width/height — the S24 rung's
-       min/max clamps would defeat them): the phone delete target keeps its
-       36px sheet-row contract. */
-    --hi-icon-button-size: 2.25rem;
-  }
-
-  .s-theme-item-row[data-custom] .s-theme-item-name {
-    margin-inline-end: 2.75rem;
-  }
-
   /* The customize tile rides the menu family's sheet touch geometry:
    * its compact padding alone reads ~32px, under the 44px sheet-row
    * contract every sibling row gets from the item-sheet tokens
@@ -388,19 +371,17 @@
   color: inherit;
 }
 
-/* When the host renders the item-trailing slot, every row reserves a
- * REAL trailing column (the slot owns it — the built-in custom-delete
- * overlay is suppressed), so trailing affordances align across rows
- * instead of floating over the pill's edge. The custom-name clearance
- * for the overlay delete no longer applies in this mode. */
+/* When the host renders the item-trailing slot, its content renders as
+ * the row's quiet trailing column (2026-11-13 grammar: trailing carries
+ * CONTENT — badges, marks — while affordances live on the standard
+ * action lane the host fills via the `itemActions` prop; the lane's
+ * overlay parks out of the flow and covers this column only while
+ * engaged, and clicks inside the column stop at the column — they are
+ * the content's own, never the row's selection). */
 .s-theme-item-trailing {
   display: inline-flex;
   align-items: center;
   gap: var(--space-4, 0.25rem);
   flex-shrink: 0;
   margin-inline-start: var(--space-4, 0.25rem);
-}
-
-.s-theme-item-row[data-trailing="slot"] .s-theme-item-name {
-  margin-inline-end: 0;
 }

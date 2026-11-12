@@ -31,14 +31,22 @@
 //     [div.s-theme-mode-extra]                   (mode_extra slot)
 //     div.hk-divider.hk-divider-spacing-md
 //     div.s-theme-menu-label                    "Themes"
-//     (per theme)
-//     div.s-theme-item-row [data-custom?] [data-trailing="slot"?]
-//                          [data-name-suffix="slot"?] [data-active?]
-//       button.s-theme-item-btn [data-active?]
-//         [span.hk-menu-item-icon.s-theme-item-lead]
-//         span.s-theme-item-name
-//         [span.s-theme-item-name-suffix]
-//       [span.s-theme-item-trailing] | [button.s-theme-item-delete]
+//     div.s-theme-item-list [role="list"]
+//       (per theme)
+//       div.hk-list-row.hk-list-row-clickable.s-theme-item-row
+//                            [data-custom="true"?] [data-trailing="slot"?]
+//                            [data-name-suffix="slot"?] [data-active="true"?]
+//                            [role="listitem"] [tabindex="0"] [aria-current="true"?]
+//         div.hk-list-row-main
+//           div.s-theme-item-line
+//             [span.hk-menu-item-icon.s-theme-item-lead]
+//             span.s-theme-item-name
+//             [span.s-theme-item-name-suffix]
+//         [div.hk-list-row-trailing > span.s-theme-item-trailing]
+//         [div.hk-list-row-actions.hk-list-row-actions--overlay
+//          [role="toolbar"] [aria-label]         (click-guarded lane)
+//            button.hk-list-row-actions__btn [data-danger="true"?]
+//              [aria-label] [title]]
 //     button.hk-add-tile.hk-add-tile--compact.s-theme-item-customize
 //       {Plus glyph svg}  "Customize"                       (standard add tile)
 //   [div.hk-menu-slot.hk-menu-slot--extra]      (menu_extra slot)
@@ -75,14 +83,32 @@
 //   * The scoped slot payload drops `preset`: the host owns the preset
 //     tables and can resolve by `id` — cloning a whole scheme per row per
 //     render had no consumer in the mirror.
-//   * The delete affordance's glyph is `Close` (12px) — the shipped MDI
-//     set has no trash glyph (Vue: `Trash2`); swap when the set grows.
 //   * The scheme dialog's editor state is host-held too: the `scheme_*`
 //     props and channels below are the dialog's controlled pass-through,
 //     documented in its own file. `on_scheme_update` is Vue's
 //     `update:scheme` (fired after the dialog's own Save already asked to
 //     close itself); applying the theme (`addCustomTheme` + `setTheme`)
 //     stays with the host.
+//   * The rows are listitems, not buttons (2026-11-13 the Vue side moved
+//     onto HkListRow): row selection rides the row's click + the host's
+//     keyboard bridge (Vue's Enter/Space parity lives in HkListRow's
+//     keydown — a native renderer owns key synthesis, the mirror renders
+//     the clickable div). Lane and trailing clicks stop at their
+//     wrappers (`stop_propagation` — the HkStatCard action-wrapper rule;
+//     a per-row action must never double-fire the row's selection).
+//   * The itemActions builder OWNS the lane on every row it is asked
+//     about: Vue lets a present builder decline per row (return
+//     undefined → the built-in delete falls back); the wire callback
+//     returns a Vec, so an empty Vec means "no lane" even on customs.
+//     Deliberate (tested), not an accident.
+//   * The action lane renders in its POINTER form (overlay revealed by
+//     the sheet's hover/focus-within): the mirror has no matchMedia, so
+//     the touch ⋯ trigger + HkMenu pair is not mirrored — a touch-first
+//     native shell reveals the lane through its own focus bridge.
+//   * Name-only host actions render title/aria-only buttons (the Vue
+//     lane's identity rides tooltips; the crate has no Tooltip mirror
+//     yet) — icons ride `ThemeRowAction`'s future fields when a host
+//     needs them.
 //   * Glyph hosts are `div.hk-icon` (the crate's `Icon` mirror), not
 //     Vue's inline `<svg>` — the crate-wide delta `basic/button.rs`
 //     documents; the sheet's direct-child `> svg` pins therefore miss,
@@ -91,7 +117,6 @@
 use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 
-use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::layout::divider::{Divider, DividerProps, DividerSpacing};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -160,6 +185,17 @@ impl From<&ThemeListItem> for ThemeItemScope {
             is_custom: item.is_custom,
         }
     }
+}
+
+/// One named action of a row's option-control array (Vue:
+/// `HkListRowAction`, the plain-data subset the wire needs — `name` is
+/// the accessible name AND the identity: names are unique per row by
+/// the lane contract, so [`ThemePanelContentProps::on_row_action`]
+/// carries `(theme_id, action_name)`).
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
+pub struct ThemeRowAction {
+    pub name: String,
+    pub danger: bool,
 }
 
 /// The auto-mode merged run, hoisted like Vue's `AUTO_MERGE_KEYS` (a
@@ -241,12 +277,31 @@ pub fn theme_panel_mode_switch_label() -> String {
     )
 }
 
+/// The action lane's accessible name (Vue:
+/// `hikari::theme.rowActionsLabel`).
+pub fn theme_panel_row_actions_label() -> String {
+    t(
+        "components.hk.themePanelContent.rowActionsLabel",
+        "Row actions",
+    )
+}
+
 /// The altitude strip's tip (Vue: `hikari::theme.autoAltitudeTip`).
 pub fn theme_panel_auto_altitude_tip() -> String {
     t(
         "components.hk.themePanelContent.autoAltitudeTip",
         "Auto follows the sun altitude. Press to switch to manual",
     )
+}
+
+/// One lane entry's dispatch shape: the built-in delete carries the
+/// mirror's own delete channel; a host action rides
+/// [`ThemePanelContentProps::on_row_action`] with (theme_id, action_name).
+/// (Module-level on purpose — rsx for-body blocks accept statements, not
+/// items, and the lane builds per row.)
+enum RowActionSpec {
+    BuiltinDelete,
+    Host { name: String, danger: bool },
 }
 
 #[define_props]
@@ -309,9 +364,16 @@ pub struct ThemePanelContentProps {
     /// Per-row inline mark right after the name (Vue: `item-name-suffix`).
     pub item_name_suffix: Option<Callback<ThemeItemScope, Element>>,
 
-    /// Per-row trailing column (Vue: `item-trailing`); suppresses the
-    /// built-in delete overlay.
+    /// Per-row trailing column (Vue: `item-trailing`); quiet CONTENT —
+    /// suppresses the built-in delete lane, and clicks inside stop at
+    /// the column.
     pub item_trailing: Option<Callback<ThemeItemScope, Element>>,
+
+    /// Per-row option-control builder (Vue: the `itemActions` callback
+    /// prop — 2026-11-13 the rows ride the standard list row and the
+    /// host owns the affordances on its lane). Wins over the built-in
+    /// delete; without it, custom rows carry the built-in delete.
+    pub item_actions: Option<Callback<ThemeItemScope, Vec<ThemeRowAction>>>,
 
     /// Extra menu content after the panel (Vue: `menu-extra`).
     pub menu_extra: Option<Element>,
@@ -330,6 +392,10 @@ pub struct ThemePanelContentProps {
 
     /// A custom theme's delete was pressed (Vue: `removeCustomTheme`).
     pub on_delete_theme: Option<EventHandler<String>>,
+
+    /// A host action from [`ThemePanelContentProps::item_actions`] was
+    /// pressed — `(theme_id, action_name)` (names are unique per row).
+    pub on_row_action: Option<EventHandler<(String, String)>>,
 
     /// The panel asks its surface to close (theme applied or customize
     /// pressed; a popover host closes, an inline host ignores it).
@@ -501,12 +567,17 @@ pub fn ThemePanelContent(props: ThemePanelContentProps) -> Element {
             div { class: "s-theme-menu-label",
                 {t("components.hk.themePanelContent.themes", "Themes")}
             }
-            for theme in &props.themes {
+            // The list band (Vue: div.s-theme-item-list[role="list"]) —
+            // the rows' role=listitem anatomy needs the real list parent.
+            div {
+                class: "s-theme-item-list",
+                role: "list",
+                for theme in &props.themes {
                 {
                     let active = props.current_theme == theme.id;
                     let custom = theme.is_custom;
-                    let row_active = active.then_some("");
-                    let row_custom = custom.then_some("");
+                    let row_active = active.then_some("true");
+                    let row_custom = custom.then_some("true");
                     let has_trailing = props.item_trailing.is_some();
                     let has_suffix = props.item_name_suffix.is_some();
                     let trailing_marker = has_trailing.then_some("slot");
@@ -537,61 +608,143 @@ pub fn ThemePanelContent(props: ThemePanelContentProps) -> Element {
                             }
                         }
                     };
-                    let delete_press = {
-                        let on_delete_theme = props.on_delete_theme.clone();
-                        let id = theme.id.clone();
-                        move |_e: MouseEvent| {
-                            if let Some(handler) = on_delete_theme.as_ref() {
-                                handler.call(id.clone());
-                            }
-                        }
-                    };
                     let delete_title = t(
                         "components.hk.themePanelContent.deleteTheme",
                         "Delete theme",
                     );
+                    // The row's option-control array (Vue grammar:
+                    // itemActions prop wins; the trailing slot suppresses
+                    // the built-in delete; fully default rows put the
+                    // custom delete on the lane). BuiltinDelete carries
+                    // the mirror's own delete channel; Host actions ride
+                    // on_row_action with (theme_id, action_name).
+                    let actions: Vec<RowActionSpec> =
+                        if let Some(build) = props.item_actions.as_ref() {
+                            build.call(theme.into())
+                                .into_iter()
+                                .map(|a| RowActionSpec::Host {
+                                    name: a.name,
+                                    danger: a.danger,
+                                })
+                                .collect()
+                        } else if has_trailing {
+                            Vec::new()
+                        } else if custom {
+                            vec![RowActionSpec::BuiltinDelete]
+                        } else {
+                            Vec::new()
+                        };
+                    // Vue: the whole row is the click target (HkListRow
+                    // clickable), and clicks inside the trailing column /
+                    // the action lane stop at their wrappers — an action
+                    // button never double-fires the row's selection (the
+                    // HkStatCard action-wrapper rule).
+                    let stop_row_press = |e: MouseEvent| e.stop_propagation();
+                    // The lane's dispatch is bound OUTSIDE the rsx tree
+                    // (the same grammar as select_press): a for-body with
+                    // closures/match inside the macro defeats the rsx
+                    // parser, so the buttons render from plain tuples.
+                    let lane: Vec<(String, bool, EventHandler<MouseEvent>)> = actions
+                        .into_iter()
+                        .map(|spec| match spec {
+                            RowActionSpec::BuiltinDelete => {
+                                let on_delete_theme = props.on_delete_theme.clone();
+                                let id = theme.id.clone();
+                                let press =
+                                    EventHandler::new(move |_e: MouseEvent| {
+                                        if let Some(handler) = on_delete_theme.as_ref() {
+                                            handler.call(id.clone());
+                                        }
+                                    });
+                                (delete_title.clone(), true, press)
+                            }
+                            RowActionSpec::Host { name, danger } => {
+                                let on_row_action = props.on_row_action.clone();
+                                let id = theme.id.clone();
+                                let label = name.clone();
+                                let label_for_press = label.clone();
+                                let press = EventHandler::new(move |_e: MouseEvent| {
+                                    if let Some(handler) = on_row_action.as_ref() {
+                                        handler.call((id.clone(), label_for_press.clone()));
+                                    }
+                                });
+                                (label, danger, press)
+                            }
+                        })
+                        .collect();
+                    // The lane pre-renders as an Option<Element>: this rsx
+                    // dialect parses a for-in-body only at element-body
+                    // top level — nested under an if arm it reads
+                    // "expected ,".
+                    let lane_render = if lane.is_empty() {
+                        None
+                    } else {
+                        Some(rsx! {
+                            div {
+                                class: "hk-list-row-actions hk-list-row-actions--overlay",
+                                role: "toolbar",
+                                "aria-label": theme_panel_row_actions_label(),
+                                onclick: stop_row_press,
+                                // The mode strip's loop is the grammar
+                                // shape: for-body = BLOCK with let
+                                // bindings and a tail rsx! — tuple-index
+                                // attribute expressions and bare element
+                                // bodies both defeat this rsx parser.
+                                for entry in lane.iter() {
+                                    {
+                                        let label = entry.0.clone();
+                                        let danger = entry.1;
+                                        let press = entry.2.clone();
+                                        rsx! {
+                                            button {
+                                                class: "hk-list-row-actions__btn",
+                                                "type": "button",
+                                                "data-danger": danger.then_some("true"),
+                                                "aria-label": label.clone(),
+                                                title: label.clone(),
+                                                onclick: press,
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                    };
                     rsx! {
                         div {
-                            class: "s-theme-item-row",
+                            class: "hk-list-row hk-list-row-clickable s-theme-item-row",
+                            role: "listitem",
+                            tabindex: 0,
                             "data-custom": row_custom,
                             "data-trailing": trailing_marker,
                             "data-name-suffix": suffix_marker,
                             "data-active": row_active,
-                            button {
-                                class: "s-theme-item-btn",
-                                "type": "button",
-                                "data-active": row_active,
-                                onclick: select_press,
-                                if let Some(lead) = leading {
-                                    span { class: "hk-menu-item-icon s-theme-item-lead", {lead} }
-                                }
-                                span { class: "s-theme-item-name", "{display_name}" }
-                                if let Some(mark) = suffix {
-                                    span { class: "s-theme-item-name-suffix", {mark} }
+                            "aria-current": active.then_some("true"),
+                            onclick: select_press,
+                            div {
+                                class: "hk-list-row-main",
+                                div {
+                                    class: "s-theme-item-line",
+                                    if let Some(lead) = leading {
+                                        span { class: "hk-menu-item-icon s-theme-item-lead", {lead} }
+                                    }
+                                    span { class: "s-theme-item-name", "{display_name}" }
+                                    if let Some(mark) = suffix {
+                                        span { class: "s-theme-item-name-suffix", {mark} }
+                                    }
                                 }
                             }
                             if let Some(tail) = trailing {
-                                span { class: "s-theme-item-trailing", {tail} }
-                            } else if custom {
-                                // Wave B2/B3: standard icon button; the
-                                // title-only a11y gap is closed (the label
-                                // now rides aria-label too).
-                                IconButton {
-                                    size: IconButtonSize::S24,
-                                    variant: IconButtonVariant::Ghost,
-                                    title: Some(delete_title.clone()),
-                                    aria_label: Some(delete_title.clone()),
-                                    class: "s-theme-item-delete".to_string(),
-                                    onclick: Some(EventHandler::new(move |event: MouseEvent| {
-                                        delete_press(event);
-                                    })),
-                                    children: rsx! {
-                                        Icon { icon: MdiIcon::Close, size: 12 }
-                                    },
+                                div {
+                                    class: "hk-list-row-trailing",
+                                    onclick: stop_row_press,
+                                    span { class: "s-theme-item-trailing", {tail} }
                                 }
                             }
+                            {lane_render.unwrap_or_else(empty_vnode)}
                         }
                     }
+                }
                 }
             }
             // The customize entry rides the standard HkAddTile compact
@@ -807,26 +960,43 @@ mod tests {
             html.contains(r#"class="hk-divider hk-divider-spacing-md""#),
             "{html}"
         );
-        // Rows: active marker on row + button, custom marker + delete.
-        // (write_html emits sorted attributes BEFORE the class list, so
-        // the needles target each attr on its own.)
-        assert!(html.contains(r#"class="s-theme-item-row""#), "{html}");
-        assert!(html.contains(r#"class="s-theme-item-btn""#), "{html}");
-        assert!(html.contains(r#"class="s-theme-item-name""#), "{html}");
-        assert!(html.contains(r#"data-active="""#), "{html}");
-        assert!(html.contains(r#"data-custom="""#), "{html}");
-        // Wave B2/B3: the delete is the STANDARD icon button (S24/ghost +
-        // seat = the old 1.5rem box), and the label now rides aria-label too
-        // (it was title-only).
+        // Rows: the STANDARD list row (2026-11-13 — HkListRow anatomy,
+        // list wrapper, name line, guarded lane with the delete). The
+        // class list is emitted sorted, so the needles target whole
+        // attribute values on their own.
         assert!(
-            html.contains(
-                r#"class="hk-icon-button hk-icon-button-24 hk-icon-button-ghost s-theme-item-delete""#,
-            ),
+            html.contains(r#"class="hk-list-row hk-list-row-clickable s-theme-item-row""#),
             "{html}"
         );
+        assert!(html.contains(r#"role="listitem""#), "{html}");
+        assert!(html.contains(r#"aria-current="true""#), "{html}");
+        assert!(html.contains(r#"class="s-theme-item-list""#), "{html}");
+        assert!(html.contains(r#"class="hk-list-row-main""#), "{html}");
+        assert!(html.contains(r#"class="s-theme-item-line""#), "{html}");
+        assert!(html.contains(r#"class="s-theme-item-name""#), "{html}");
+        // Boolean data markers render "true" — Vue's patchAttr coerces
+        // booleans, and the mirrors pin the value form (house convention:
+        // icon_button_group.rs, solar_location_setting.rs).
+        assert!(html.contains(r#"data-active="true""#), "{html}");
+        assert!(html.contains(r#"data-custom="true""#), "{html}");
+        // The built-in custom delete rides the standard lane (danger
+        // button, aria + title carry the label).
+        assert!(
+            html.contains(r#"class="hk-list-row-actions hk-list-row-actions--overlay""#),
+            "{html}"
+        );
+        assert!(html.contains(r#"role="toolbar""#), "{html}");
+        assert!(
+            html.contains(r#"class="hk-list-row-actions__btn""#),
+            "{html}"
+        );
+        assert!(html.contains(r#"data-danger="true""#), "{html}");
         assert!(html.contains(r#"aria-label="Delete theme""#), "{html}");
         assert!(html.contains(r#"title="Delete theme""#), "{html}");
         assert!(html.contains("Delete theme"), "{html}");
+        // The retired pinned overlay button is gone for good.
+        assert!(!html.contains("s-theme-item-delete"), "{html}");
+        assert!(!html.contains("s-theme-item-btn"), "{html}");
         // The customize entry rides the standard add tile (compact form,
         // hook class intact — 2026-11-11 family migration).
         assert!(
@@ -895,13 +1065,96 @@ mod tests {
         assert!(html.contains("suffix:Dusk"), "{html}");
         assert!(html.contains("tail:custom"), "{html}");
         assert!(html.contains("tail:stock"), "{html}");
-        // The trailing slot suppresses the built-in delete overlay.
+        // The trailing slot suppresses the built-in delete lane.
         assert!(!html.contains("s-theme-item-delete"), "{html}");
+        assert!(!html.contains("hk-list-row-actions"), "{html}");
+        // Clicks inside the column stop at the wrapper (the guard is on
+        // the trailing div — asserted structurally below by the walker
+        // finding no row-level press when only the column is clicked).
         // The lead cell carries both hook classes.
         assert!(
             html.contains(r#"class="hk-menu-item-icon s-theme-item-lead""#),
             "{html}"
         );
+    }
+
+    #[test]
+    fn theme_panel_host_actions_ride_the_lane_and_the_wire_channel() {
+        // The itemActions builder (Vue: the itemActions callback prop)
+        // wins over the built-in delete: the lane renders the host's
+        // named actions with (theme_id, action_name) leaving through
+        // on_row_action — names are the lane contract's identity.
+        let seen = std::rc::Rc::new(std::cell::RefCell::new(Vec::<(String, String)>::new()));
+        let sink = std::rc::Rc::clone(&seen);
+        let node = ThemePanelContent(ThemePanelContentProps {
+            themes: themes(),
+            item_actions: Some(Callback::new(|scope: ThemeItemScope| {
+                vec![ThemeRowAction {
+                    name: format!("Inspect {}", scope.id),
+                    danger: false,
+                }]
+            })),
+            on_row_action: Some(EventHandler::new(move |pair: (String, String)| {
+                sink.borrow_mut().push(pair);
+            })),
+            ..Default::default()
+        });
+        let html = node.clone().render_to_html();
+        assert!(
+            html.contains(r#"aria-label="Inspect custom-theme-1""#),
+            "{html}"
+        );
+        // No danger flag on a non-danger host action.
+        assert!(
+            !html.contains("Inspect custom-theme-1\"></button><button"),
+            "{html}"
+        );
+
+        fn click_inspect(node: &Element, fired: &mut bool) {
+            match node {
+                VNode::Element(el) => {
+                    if el.tag == "button"
+                        && el.class.to_string().contains("hk-list-row-actions__btn")
+                        && let Some(handler) = el.event_handlers.get("click")
+                    {
+                        handler.borrow_mut()(
+                            Box::new(MouseEvent::default()) as Box<dyn tairitsu_vdom::EventData>
+                        );
+                        *fired = true;
+                        return;
+                    }
+                    for child in &el.children {
+                        click_inspect(child, fired);
+                        if *fired {
+                            return;
+                        }
+                    }
+                }
+                VNode::Fragment(children) => {
+                    for child in children {
+                        click_inspect(child, fired);
+                        if *fired {
+                            return;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        let mut fired = false;
+        click_inspect(&node, &mut fired);
+        assert!(fired, "no lane button found");
+        // The builder wins on EVERY row, so the walker's first lane
+        // button belongs to the fixture's first row (default).
+        assert_eq!(
+            seen.borrow().as_slice(),
+            [("default".to_string(), "Inspect default".to_string())].as_slice(),
+            "the press carries (theme_id, action_name)"
+        );
+        // The custom row no longer carries the BUILT-IN delete: the
+        // builder's array is the whole lane (precedence, not a merge).
+        let html = node.render_to_html();
+        assert!(!html.contains(r#"aria-label="Delete theme""#), "{html}");
     }
 
     #[test]
@@ -921,14 +1174,15 @@ mod tests {
             ..Default::default()
         });
         // Serialization drops handlers, so walk the tree and INVOKE the
-        // first row button's click listener.
+        // first row's click listener — the row IS the click target since
+        // the standard-row migration (HkListRow clickable).
         fn click_row_button(node: &Element, fired: &mut bool) {
             match node {
                 VNode::Element(el) => {
                     let classes = el.class.to_string();
-                    if el.tag == "button"
-                        && classes.contains("s-theme-item-btn")
-                        && !classes.contains("s-theme-item-customize")
+                    if el.tag == "div"
+                        && classes.contains("s-theme-item-row")
+                        && classes.contains("hk-list-row-clickable")
                         && let Some(handler) = el.event_handlers.get("click")
                     {
                         handler.borrow_mut()(

@@ -138,7 +138,17 @@ export function hkListRowMenuItems(actions: readonly HkListRowAction[]): HkMenuI
  *
  * The row is a list item, not a button — set `clickable` when the whole
  * row drills through, which adds the cursor/focus/hover contract the
- * stat cards use.
+ * stat cards use. Clicks inside the trailing column and the action lane
+ * STOP at their wrapper (the HkStatCard action-wrapper rule): an
+ * affordance nested in a clickable row owns its click and never
+ * double-fires the row's — the synthesized click a keyboard Enter
+ * produces on a lane button bubbles exactly like a pointer click, so
+ * the guard lives on the containers, not on individual buttons. The
+ * touch trigger's named menu teleports (HkMenu popup panels are
+ * siblings of the row, not children), so menu selections don't bubble
+ * either. When the touch lane owns the right edge, the trailing column
+ * gives up its auto margin (`--parked` below) so the two never split
+ * the row's free space.
  */
 export const HkListRow = defineComponent({
   name: "HkListRow",
@@ -188,6 +198,15 @@ export const HkListRow = defineComponent({
     onMounted(() => document.addEventListener("pointerdown", onDocumentPointerDown, true));
     onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocumentPointerDown, true));
     const menuItems = computed<HkMenuItem[]>(() => hkListRowMenuItems(props.actions ?? []));
+    /** Clicks inside an interactive wrapper (trailing column, action
+     *  lane) stop here: the row's clickable handler must never see
+     *  them — a per-row delete button that also selected the row was
+     *  the 2026-11-13 theme-panel field report. Covers pointer clicks
+     *  AND the click a keyboard Enter synthesizes on the focused
+     *  button (same bubbling path). */
+    function stopRowClick(e: MouseEvent) {
+      e.stopPropagation();
+    }
     return () => (
       <div
         ref={rowEl}
@@ -217,7 +236,20 @@ export const HkListRow = defineComponent({
           {props.subtitle ? <div class="hk-list-row-subtitle">{props.subtitle}</div> : null}
           {slots.default?.()}
         </div>
-        {slots.trailing ? <div class="hk-list-row-trailing">{slots.trailing()}</div> : null}
+        {slots.trailing ? (
+          <div
+            class={[
+              "hk-list-row-trailing",
+              // The touch lane parks in the same flex line and owns the
+              // auto margin; the trailing column yields (see class doc
+              // above) so the two never split the free space.
+              hasActions() && touchFirst.value && "hk-list-row-trailing--parked",
+            ]}
+            onClick={stopRowClick}
+          >
+            {slots.trailing()}
+          </div>
+        ) : null}
         {hasActions() && (
           <div
             class={[
@@ -231,6 +263,7 @@ export const HkListRow = defineComponent({
             data-revealed={revealed.value ? "" : undefined}
             role={touchFirst.value ? undefined : "toolbar"}
             aria-label={touchFirst.value ? undefined : props.actionsLabel}
+            onClick={stopRowClick}
           >
             {touchFirst.value ? (
               <button

@@ -77,6 +77,14 @@
   gap: var(--space-8, 0.5rem);
 }
 
+/* The touch action lane parks in the same flex line and owns the auto
+   margin; a trailing column beside it yields its own (the class the TSX
+   binds), so the row's free space never splits between the two right
+   edges. */
+.hk-list-row-trailing--parked {
+  margin-left: 0;
+}
+
 /* ── Option-control array (HkListRow's `actions`) ───────────────────────
  * The row's last lane: named icon buttons in one of two layouts (see
  * HkListRowActionsMode). "persistent" keeps the lane in the flow — it

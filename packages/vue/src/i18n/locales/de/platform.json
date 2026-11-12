@@ -18,6 +18,7 @@
     "hikari::theme.modeLight": "Hell",
     "hikari::theme.modeDark": "Dunkel",
     "hikari::theme.modeAuto": "Automatisch",
+    "hikari::theme.rowActionsLabel": "Zeilenaktionen",
     "hikari::theme.themes": "Farbschemata",
     "hikari::theme.autoAltitudeTip": "Der Automatikmodus folgt dem Sonnenstand. Zum manuellen Wechsel drücken",
     "hikari::theme.editScheme": "Farbschema bearbeiten…",

@@ -18,6 +18,7 @@
     "hikari::theme.modeLight": "Clair",
     "hikari::theme.modeDark": "Sombre",
     "hikari::theme.modeAuto": "Auto",
+    "hikari::theme.rowActionsLabel": "Actions de ligne",
     "hikari::theme.themes": "Thèmes de couleurs",
     "hikari::theme.autoAltitudeTip": "Le mode auto suit l'altitude du soleil. Appuyez pour passer en manuel",
     "hikari::theme.editScheme": "Modifier le schéma de couleurs…",

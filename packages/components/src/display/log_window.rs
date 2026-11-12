@@ -560,7 +560,9 @@ mod tests {
         assert!(html.contains("my-logs"), "{html}");
         assert!(html.contains("height:55vh"), "{html}");
         // Vue marks the first tab active when nothing else is requested.
-        assert_eq!(html.matches("data-active").count(), 2, "{html}");
+        // The count pins the VALUE form (patchAttr renders "true") — a
+        // ""-revert ships green under a bare-attr count.
+        assert_eq!(html.matches(r#"data-active="true""#).count(), 2, "{html}");
         // The active tab's lines carry their level class.
         assert!(html.contains("s-log-entry s-log-entry-info"), "{html}");
         assert!(html.contains("s-log-entry s-log-entry-warn"), "{html}");

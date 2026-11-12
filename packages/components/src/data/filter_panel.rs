@@ -1741,7 +1741,7 @@ mod tests {
             "class=\"hk-filter-panel\"",
             "data-testid=\"hk-filter-panel\"",
             "aria-label=\"Ledger filters\"",
-            "data-active",
+            "data-active=\"true\"",
             // Two rows, typed by their field's kind.
             "hk-filter-panel-row",
             "data-kind=\"text\"",

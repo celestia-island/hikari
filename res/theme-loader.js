@@ -145,4 +145,17 @@
   document.documentElement.style.setProperty("--loader-card-bg", rgb(surface));
   document.documentElement.style.setProperty("--loader-card-border", isDark ? "#333" : "#ddd");
   document.documentElement.style.setProperty("--loader-overlay-bg", "rgba(" + bg[0] + "," + bg[1] + "," + bg[2] + ",0.93)");
+
+  // Caption band height contract (hikari runtime/windowChrome.ts,
+  // CHROME_BAND_HEIGHT_VAR): publish the desktop window's caption band height
+  // BEFORE the app bundle exists, so hikari's pre-boot window bar
+  // (res/boot-chrome.js) draws the SAME wide band the app's chrome will wear
+  // instead of a thin 32px strip it then replaces (2026-11-12 user report).
+  // The expression is deliberately the one theme.scss's --hk-chrome-band-inset
+  // resolves (var(--s-header-height, 3rem)): hikari's own token carries the
+  // fallback, so this file never restates a px number and the two cannot drift.
+  document.documentElement.style.setProperty(
+    "--hk-chrome-band-h",
+    "var(--s-header-height, 3rem)",
+  );
 })();

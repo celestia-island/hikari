@@ -197,6 +197,23 @@ export const BOOT_RECOVERY_RETRY = "Reload";
 export const BOOT_RECOVERY_ATTR = "data-hk-boot-recovery";
 
 /**
+ * The emitted asset's name when `external: true` (output root).
+ *
+ * WHY THE OPTION EXISTS: an INLINE classic script is the right shape for a
+ * host whose CSP already admits it — the Tauri shells hash the script into
+ * their compile-time policy, and inline parsing-time execution is exactly
+ * what a crash-recovery heal needs. A HOST SERVED OVER HTTP WITH A
+ * `script-src 'self'` POLICY cannot admit it at all: the browser logs a
+ * violation and SKIPS the script on every single page load, so the panel
+ * this module exists for can never paint while the console fills with
+ * errors. `external: true` emits the same script as a same-origin classic
+ * script (`src`, no `async`/`defer`), which keeps parse-time execution and
+ * satisfies `script-src 'self'` unchanged. (2026-11-14: chest's faces ran
+ * with the inline form and reported the violation on every load.)
+ */
+export const BOOT_RECOVERY_SCRIPT = "hk-boot-recovery.js";
+
+/**
  * Default name of the `window` function that raises the browser-block panel.
  * It matches the family's long-standing hand-rolled global (`__appBlock`), so a
  * host's existing browser gate keeps calling the same name after switching to
@@ -2593,6 +2610,7 @@ export function bootRecoveryScript(options = {}) {
  *     storageKey?: string,
  *   },
  *   injectTo?: "head" | "head-prepend",
+ *   external?: boolean,
  *   }} [options]
  * @returns {import("vite").Plugin}
  */
@@ -2623,14 +2641,56 @@ export function bootRecoveryPlugin(options = {}) {
   // transform (where a host may never notice the stack).
   resolveOptions(opts);
 
+  // `external: true` moves the script out of the document (see
+  // BOOT_RECOVERY_SCRIPT). The base prefix keeps sub-path deployments
+  // resolving; the emitted asset always lands at the output root.
+  const external = opts.external === true;
+  let base = "/";
+
   return {
     name: "hikari-boot-recovery",
+
+    configResolved(config) {
+      base =
+        config && typeof config.base === "string" && config.base
+          ? config.base
+          : "/";
+    },
+
+    generateBundle() {
+      if (!external) return;
+      // Fail early if the script cannot be produced (same reason the inline
+      // path builds it during the transform): a build that ships an
+      // index.html pointing at a missing recovery asset is worse than a
+      // build error.
+      this.emitFile({
+        type: "asset",
+        fileName: BOOT_RECOVERY_SCRIPT,
+        source: bootRecoveryScript(opts),
+      });
+    },
 
     transformIndexHtml(_html, ctx) {
       const filename = ctx && typeof ctx.filename === "string" ? ctx.filename : "";
       if (!htmlFileMatches(filename, opts.htmlFiles)) {
         warnSkipped(this, filename);
         return [];
+      }
+      if (external) {
+        const prefix = base === "/" || base === "" ? "/" : base.replace(/\/?$/, "/");
+        return [
+          {
+            tag: "script",
+            // NO async / defer: a parser-blocking classic script runs at the
+            // same point the inline form did, so the heal still lands before
+            // the app's modules evaluate.
+            attrs: {
+              [BOOT_RECOVERY_ATTR]: "",
+              src: `${prefix}${BOOT_RECOVERY_SCRIPT}`,
+            },
+            injectTo: normaliseInjectTo(opts.injectTo),
+          },
+        ];
       }
       return [
         {

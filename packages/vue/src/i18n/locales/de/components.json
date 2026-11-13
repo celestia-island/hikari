@@ -345,5 +345,9 @@
   "hikari::editableTable.removeRow": "Zeile entfernen",
   "hikari::editableTable.rowActions": "Zeilenaktionen",
   "hikari::editableTable.rowLabel": "Zeile {n}",
-  "hikari::editableTable.empty": "Noch keine Zeilen"
+  "hikari::editableTable.empty": "Noch keine Zeilen",
+  "hikari::emergencyAlert.dismiss": "Vorerst ausblenden",
+  "hikari::emergencyAlert.kicker.danger": "KRITISCHE WARNUNG",
+  "hikari::emergencyAlert.kicker.warning": "WARNUNG",
+  "hikari::emergencyAlert.more": "weitere Warnungen offen"
 }

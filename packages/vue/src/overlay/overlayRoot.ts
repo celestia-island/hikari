@@ -19,7 +19,7 @@
  * own — `--hk-z-overlay-root` (fallback 90000) — parked between the old
  * floating bands and `--hk-z-error`, so the pre-isolation global order
  * is preserved: content chrome < floating layers < error landing <
- * window titlebar.
+ * emergency alert < window titlebar.
  *
  * The root is created lazily on first use (`ensureOverlayRoot()`), so
  * consumers don't need to include a bootstrap component — any Teleport

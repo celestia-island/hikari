@@ -84,7 +84,8 @@
    * ONE band consumed by the fenced floating-layer root itself rather
    * than by a component: it lifts #hk-overlay-root above every
    * content-chrome band while keeping the pre-isolation order (floating
-   * layers < ambient HUD < error landing < window titlebar). --hk-z-hud
+   * layers < ambient HUD < error landing < emergency alert < window
+   * titlebar). --hk-z-hud
    * is the ONE band consumed by the ambient-HUD root
    * (overlay/hudRoot.ts): always-visible, non-interactive annotations
    * (screen-identify cards, recording marks) that must paint above the
@@ -119,6 +120,12 @@
                                 popup (modal backdrop included), below
                                 error + titlebar */
   --hk-z-error: 95000;       /* error landing overlay (covers everything) */
+  --hk-z-emergency: 96000;   /* emergency alert takeover (HkEmergencyAlert):
+                                above the error landing, strictly below the
+                                window titlebar — the band demands attention
+                                but must never cover the titlebar (user
+                                direction 2026-11-13); body-mounted, not in
+                                #hk-overlay-root */
   --hk-z-titlebar: 100001;   /* window titlebar (Tauri shell) */
 
   /* Viewport gutter — the minimum distance every floating layer (tooltip,

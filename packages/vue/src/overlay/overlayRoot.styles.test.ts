@@ -241,6 +241,25 @@ describe("overlay root document-space elevation contract", () => {
             `--hk-z-hud consumed at ${file} — only ${[...hudOwners].join(" / ")} may own the HUD band`,
           ).toBe(true);
         }
+      } else if (name === "emergency") {
+        // The emergency takeover band (HkEmergencyAlert): a third
+        // top-owner above the error landing and strictly below the
+        // window titlebar — the band demands attention but must never
+        // cover the titlebar (user direction 2026-11-13). Only its own
+        // sheet may consume the rung.
+        expect(
+          value!,
+          `--hk-z-emergency (${value}) must sit strictly above the error band ` +
+            `(${bandValues.get("error")}) and below the titlebar ` +
+            `(${bandValues.get("titlebar")}) — consumers: ${[...files].join(", ")}`,
+        ).toBeGreaterThan(bandValues.get("error")!);
+        expect(value!).toBeLessThan(bandValues.get("titlebar")!);
+        for (const file of files) {
+          expect(
+            file.endsWith(join("components", "HkEmergencyAlert.scss")),
+            `--hk-z-emergency consumed at ${file} — only HkEmergencyAlert.scss may own the band`,
+          ).toBe(true);
+        }
       } else {
         expect(
           value!,

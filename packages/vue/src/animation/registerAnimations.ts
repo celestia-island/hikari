@@ -151,3 +151,9 @@ registerCssAnimation("hk-badge-dot-pulse", { infinite: true });
 // Reduced motion keeps the band and drops the loop (house pattern, see
 // HkSkeleton); the global CSS-animation switch pauses it as usual.
 registerCssAnimation("hk-edge-glow-breathe", { infinite: true });
+// components/HkEmergencyAlert.scss — the takeover band's steady-state
+// life signs: the tone badge breathe and the hairline edge signal pulse
+// (both loop forever while the alert stands). Reduced motion keeps the
+// band and drops the loops (house pattern, see HkSkeleton).
+registerCssAnimation("hk-emergency-breathe", { infinite: true });
+registerCssAnimation("hk-emergency-signal", { infinite: true });

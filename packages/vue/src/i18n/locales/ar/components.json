@@ -345,5 +345,9 @@
   "hikari::editableTable.removeRow": "حذف الصف",
   "hikari::editableTable.rowActions": "إجراءات الصف",
   "hikari::editableTable.rowLabel": "الصف {n}",
-  "hikari::editableTable.empty": "لا توجد صفوف بعد"
+  "hikari::editableTable.empty": "لا توجد صفوف بعد",
+  "hikari::emergencyAlert.dismiss": "إخفاء مؤقتًا",
+  "hikari::emergencyAlert.kicker.danger": "تنبيه حرج",
+  "hikari::emergencyAlert.kicker.warning": "تحذير",
+  "hikari::emergencyAlert.more": "مزيد من التنبيهات قيد الانتظار"
 }

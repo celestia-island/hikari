@@ -49,6 +49,10 @@
     "./plugins/boot-recovery": {
       "import": "./src/plugins/boot-recovery.js",
       "types": "./src/plugins/boot-recovery.d.ts"
+    },
+    "./shared": {
+      "import": "./src/shared.ts",
+      "types": "./src/shared.ts"
     }
   },
   "files": [
@@ -68,7 +72,8 @@
   "peerDependencies": {
     "@types/three": "^0.185",
     "three": "^0.185",
-    "vue": "^3"
+    "vue": "^3",
+    "pinia": "^3"
   },
   "dependencies": {
     "@celestia-island/tairitsu-transport": "^0.2",
@@ -97,5 +102,10 @@
   "sideEffects": [
     "**/*.scss",
     "**/*.css"
-  ]
+  ],
+  "peerDependenciesMeta": {
+    "pinia": {
+      "optional": true
+    }
+  }
 }

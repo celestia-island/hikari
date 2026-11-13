@@ -12,9 +12,13 @@
 // subpath installs nothing extra.
 export { detectLocale } from "./i18n/detectLocale";
 export { useSystemStore } from "./stores/system";
-// Renamed on the way out: hikari's main barrel already exports its own
-// `useConfirm`, and this one is a different API over it.
-export { useConfirm as useConfirmView } from "./runtime/useConfirmView";
+// Same NAME as the main barrel's `useConfirm` but a different API — the
+// view-facing state machine (`confirm(title, message)` plus the exposed
+// visible/title/message/cancel fields) over the core one-liner. The two
+// live on different specifiers (`hikari` vs `hikari/shared`), so they do
+// not collide; the name stays so a consumer migrating from its own copy
+// keeps its 100+ call sites unchanged.
+export { useConfirm } from "./runtime/useConfirmView";
 export {
   WALLPAPER_UPLOAD_LIMITS,
   WallpaperUploadError,

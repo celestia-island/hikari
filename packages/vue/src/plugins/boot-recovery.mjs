@@ -15,9 +15,9 @@
  * static loading screen sits on screen forever — with no way for the user to
  * tell a slow boot from a dead one.
  *
- * The recovery is ONE framework-free script placed in the page's header —
- * inline by default, or a same-origin classic file with `external: true`
- * `<head>`, with two independent halves (the second one optional):
+ * The recovery is ONE framework-free script placed in the page head —
+ * inline by default, or a same-origin classic file with `external: true` —
+ * with two independent halves (the second one optional):
  *
  *   1. ORIGIN HEAL (always on) — when the observed hostname is the configured
  *      origin's hostname with crash-recovery debris glued onto it, replace the
@@ -2576,8 +2576,10 @@ export function bootRecoveryScript(options = {}) {
 }
 
 /**
- * The recovery as a Vite plugin: ONE inline, classic (non-module) `<script>`
- * carrying `data-hk-boot-recovery`, injected into the configured HTML entries.
+ * The recovery as a Vite plugin: ONE classic (non-module) `<script>`
+ * carrying `data-hk-boot-recovery`, injected into the configured HTML
+ * entries — inline by default, a same-origin `src` reference with
+ * `external: true`.
  *
  * MULTI-ENTRY: by default only the entry whose basename is `index.html` is
  * instrumented. A shell that builds more than one page (a host builds five;

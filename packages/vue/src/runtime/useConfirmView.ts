@@ -1,4 +1,7 @@
-import { useConfirm as useConfirmHikari } from "@celestia-island/hikari";
+// Internal path, not the package name: importing the barrel from inside
+// the package would make this module part of a cycle (barrel -> shared
+// -> barrel). Both are leaves that read the same runtime module.
+import { useConfirm as useConfirmHikari } from "./useConfirm";
 
 /**
  * Confirmation-dialog state machine (thin wrapper over hikari's).

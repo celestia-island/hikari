@@ -12,7 +12,7 @@
 // documented BYTE-COMPAT contract says the opposite: an option a host does not
 // configure must not reach its CSP hash. The details region only exists when
 // the host sets `copy.rawDetailsLabel`, so its chrome compiles into its OWN
-// module (bootLandingDetailsCss.mjs) that the generator embeds only when that
+// module (bootLandingDetailsCss.js) that the generator embeds only when that
 // option is on. Default hosts keep byte-identical scripts.
 //
 // The sheets below are the LIVE component sheets, for the same reason the

@@ -39,7 +39,7 @@
  * `__desc` + `__actions` with an `.hk-btn-primary` action), and its
  * stylesheet is compiled from the LIVE component sheets — theme/channels,
  * theme/scale, `HkErrorLanding.scss` and `HkButton.scss` — into
- * `./bootLandingCss.mjs` by `scripts/gen-boot-landing-css.mjs`.
+ * `./bootLandingCss.js` by `scripts/gen-boot-landing-css.js`.
  * `bootLandingCss.test.ts` recompiles that entry and fails whenever the
  * checked-in sheet drifts, so the boot surface cannot fork away from the app's
  * error landing (the pre-0.55.3xx panel hand-rolled `.hk-boot-recovery`
@@ -70,14 +70,14 @@
  *     available for hosts that send an explicit charset header and want the
  *     heal even earlier; it is documented as charset-unsafe.
  *
- * WHY A SELF-CONTAINED `.mjs` (not TypeScript): a CONSUMER loads this module
+ * WHY A SELF-CONTAINED plain `.js` (not TypeScript): a CONSUMER loads this module
  * from `node_modules` while resolving `vite.config.*`, where Node refuses type
  * stripping (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) and Vite's
  * `configLoader: "runner"` may have torn its module runner down before plugin
  * hooks run. The implementation therefore uses static imports only, and in fact
  * needs nothing from Node but `basename`; the panel stylesheet comes in as a
- * static import of the generated `bootLandingCss.mjs` (plain ESM, no Node
- * API). Types live next door in `boot-recovery.d.mts`.
+ * static import of the generated `bootLandingCss.js` (plain ESM, no Node
+ * API). Types live next door in `boot-recovery.d.ts`.
  * `boot-recovery.install.test.ts` imports the file from a simulated npm
  * install in a child node process — the guard that keeps it that way.
  *
@@ -168,8 +168,8 @@
 
 import { basename } from "node:path";
 
-import { BOOT_LANDING_CSS } from "./bootLandingCss.mjs";
-import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.mjs";
+import { BOOT_LANDING_CSS } from "./bootLandingCss.js";
+import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
 
 /** The canonical Tauri app origin on Windows/Android. */
 export const BOOT_RECOVERY_CANONICAL_ORIGIN = "http://tauri.localhost";
@@ -1106,8 +1106,8 @@ function htmlFileMatches(filename, htmlFiles) {
  * disc, the headline/explanation and the action row are the component's own
  * classes, and the stylesheet is compiled from the LIVE component sources
  * (`boot-landing.scss`: theme/channels + theme/scale + HkErrorLanding +
- * HkButton) into `./bootLandingCss.mjs` by
- * `scripts/gen-boot-landing-css.mjs`. `bootLandingCss.test.ts` recompiles
+ * HkButton) into `./bootLandingCss.js` by
+ * `scripts/gen-boot-landing-css.js`. `bootLandingCss.test.ts` recompiles
  * the entry and fails whenever the checked-in sheet drifts from the
  * components, so the boot surface cannot fork away from the app's error
  * landing again (the pre-0.55.3xx panel hand-rolled `.hk-boot-recovery`
@@ -1952,7 +1952,7 @@ export function bootRecoveryScript(options = {}) {
   lines.push(
     "     the host's own self-contained source; otherwise it mirrors",
   );
-  lines.push("     isMangledOrigin() from boot-recovery.mjs. */");
+  lines.push("     isMangledOrigin() from boot-recovery.js. */");
   if (resolved.predicateSource) {
     lines.push("  var isMangled = (" + resolved.predicateSource + ");");
   } else {

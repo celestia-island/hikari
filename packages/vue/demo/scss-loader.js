@@ -1,4 +1,4 @@
 import { register } from "node:module";
 import { pathToFileURL } from "node:url";
 
-register("./scss-hook.mjs", pathToFileURL("./"));
+register("./scss-hook.js", pathToFileURL("./"));

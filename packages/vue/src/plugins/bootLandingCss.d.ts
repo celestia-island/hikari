@@ -3,8 +3,8 @@
 // disclosure.
 
 /**
- * Types for `bootLandingCss.mjs` — the generated boot failure panel sheet
- * (compiled from `boot-landing.scss` by `scripts/gen-boot-landing-css.mjs`;
+ * Types for `bootLandingCss.js` — the generated boot failure panel sheet
+ * (compiled from `boot-landing.scss` by `scripts/gen-boot-landing-css.js`;
  * do not edit the module by hand).
  */
 export declare const BOOT_LANDING_CSS: string;

@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 
 /**
- * The npm install-face regression test for `boot-recovery.mjs`.
+ * The npm install-face regression test for `boot-recovery.js`.
  *
  * `bootRecoveryPlugin` runs inside a consumer's `vite.config.*`, loaded from
  * `node_modules`. Two failure modes have bitten hikari before (pinned by
@@ -153,8 +153,8 @@ describe("published install face (boot recovery)", () => {
   it("declares a resolvable ESM subpath with types", () => {
     const entry = PACKAGE_JSON.exports[INSTALL_SUBPATH];
     expect(entry, INSTALL_SUBPATH + " must be exported").toBeTruthy();
-    expect(entry.import).toBe("./src/plugins/boot-recovery.mjs");
-    expect(entry.types).toBe("./src/plugins/boot-recovery.d.mts");
+    expect(entry.import).toBe("./src/plugins/boot-recovery.js");
+    expect(entry.types).toBe("./src/plugins/boot-recovery.d.ts");
     expect(existsSync(join(VUE_DIR, entry.import))).toBe(true);
     expect(existsSync(join(VUE_DIR, entry.types!))).toBe(true);
   });
@@ -224,7 +224,7 @@ describe("published install face (boot recovery)", () => {
     );
     writeFileSync(join(root, "main.js"), 'document.getElementById("app");');
     writeFileSync(
-      join(root, "vite.config.mjs"),
+      join(root, "vite.config.js"),
       [
         'import { bootRecoveryPlugin } from "' +
           PACKAGE_JSON.name +
@@ -263,7 +263,7 @@ describe("published install face (boot recovery)", () => {
     // build. Comments mention the banned forms (they explain why), so only
     // real code is checked.
     const source = readFileSync(
-      join(VUE_DIR, "src/plugins/boot-recovery.mjs"),
+      join(VUE_DIR, "src/plugins/boot-recovery.js"),
       "utf8",
     );
     const code = source

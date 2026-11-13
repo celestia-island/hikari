@@ -5,14 +5,14 @@
 import type { Plugin } from "vite";
 
 /**
- * Types for `boot-recovery.mjs` — the published Vite plugin entry
+ * Types for `boot-recovery.js` — the published Vite plugin entry
  * (`@celestia-island/hikari/plugins/boot-recovery`).
  *
  * The implementation is plain ESM loaded from `node_modules` while a consumer's
  * `vite.config.*` is resolved, where TypeScript cannot be stripped and Vite's
  * `configLoader: "runner"` tears the module runner down before plugin hooks
  * run. Keep the runtime file limited to static imports (`node:path` plus the
- * generated `./bootLandingCss.mjs` sheet — both plain ESM, no dynamic import).
+ * generated `./bootLandingCss.js` sheet — both plain ESM, no dynamic import).
  */
 
 /** The canonical Tauri app origin on Windows/Android. */

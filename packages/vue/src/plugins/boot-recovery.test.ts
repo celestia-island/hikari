@@ -24,7 +24,7 @@ import {
   bootRecoveryPlugin,
   bootRecoveryScript,
   isMangledOrigin,
-} from "./boot-recovery.mjs";
+} from "./boot-recovery.js";
 import { invalidInput } from "../test-utils/invalid";
 
 /**

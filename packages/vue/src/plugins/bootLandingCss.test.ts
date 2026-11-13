@@ -10,8 +10,8 @@ import * as sass from "sass";
 import { describe, expect, it } from "vitest";
 
 import { stockDefaultPreset } from "../theme/presets";
-import { BOOT_LANDING_CSS } from "./bootLandingCss.mjs";
-import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.mjs";
+import { BOOT_LANDING_CSS } from "./bootLandingCss.js";
+import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
 
 /**
  * The boot failure panel's stylesheet drift guard.
@@ -20,8 +20,8 @@ import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.mjs";
  * as hikari's in-app error landing. So instead of hand-copying token values
  * (the pre-0.55.3xx `.hk-boot-recovery` card did), the panel ships the LIVE
  * component sheets: `boot-landing.scss` @uses theme/channels, theme/scale,
- * HkErrorLanding and HkButton, and `scripts/gen-boot-landing-css.mjs`
- * compiles that entry into `bootLandingCss.mjs`, which the plugin inlines.
+ * HkErrorLanding and HkButton, and `scripts/gen-boot-landing-css.js`
+ * compiles that entry into `bootLandingCss.js`, which the plugin inlines.
  *
  * This suite recompiles the entry with the same sass a consumer uses and
  * fails when the checked-in module no longer matches — the guard that makes

@@ -12,10 +12,10 @@ import {
   BOOT_CHROME_SCRIPT,
   BOOT_CHROME_URL,
   bootChromePlugin,
-} from "./boot-chrome.mjs";
+} from "./boot-chrome.js";
 
 /**
- * `boot-chrome.mjs` contract tests.
+ * `boot-chrome.js` contract tests.
  *
  * The plugin is the only thing that puts `res/boot-chrome.js` in front of a
  * host build, so every hook is pinned here:
@@ -287,7 +287,7 @@ describe("boot-chrome plugin asset emission", () => {
       },
     }));
     try {
-      const isolated = (await import("./boot-chrome.mjs")) as typeof import("./boot-chrome.mjs");
+      const isolated = (await import("./boot-chrome.js")) as typeof import("./boot-chrome.js");
       const { ctx } = emitContext();
       expect(() =>
         callHook(isolated.bootChromePlugin().generateBundle, ctx, {}, {}),

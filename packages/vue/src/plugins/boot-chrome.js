@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
  * framework-free bar that exists from the first frame and hands the window over
  * when the app claims it (`hk:chrome-claim`).
  *
- * WHY THIS FILE IS A SELF-CONTAINED `.mjs` (not TS, no dynamic imports):
+ * WHY THIS FILE IS A SELF-CONTAINED plain `.js` (not TS, no dynamic imports):
  * this module is what a CONSUMER loads from `node_modules` inside their
  * `vite.config.*`. Node refuses to strip types from files under `node_modules`
  * (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`), and Vite's alternative
@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
  * down after config resolution — a lazy `import("node:fs")` from a plugin hook
  * then dies with "Vite module runner has been closed". Both were observed with
  * the packed package (Vite 8.3.2). Static imports only, plain ESM only.
- * Types live next door in `boot-chrome.d.mts`; the regression test
+ * Types live next door in `boot-chrome.d.ts`; the regression test
  * `boot-chrome.install.test.ts` imports this file from a simulated npm install
  * in a child Node process, which is the check that keeps it that way.
  *

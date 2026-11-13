@@ -149,8 +149,8 @@ describe("published install face (S1-1)", () => {
   it("declares a resolvable ESM subpath with types", () => {
     const entry = PACKAGE_JSON.exports[INSTALL_SUBPATH];
     expect(entry, `${INSTALL_SUBPATH} must be exported`).toBeTruthy();
-    expect(entry.import).toBe("./src/plugins/boot-chrome.mjs");
-    expect(entry.types).toBe("./src/plugins/boot-chrome.d.mts");
+    expect(entry.import).toBe("./src/plugins/boot-chrome.js");
+    expect(entry.types).toBe("./src/plugins/boot-chrome.d.ts");
     expect(existsSync(join(VUE_DIR, entry.import))).toBe(true);
     expect(existsSync(join(VUE_DIR, entry.types!))).toBe(true);
   });
@@ -221,7 +221,7 @@ describe("published install face (S1-1)", () => {
     );
     writeFileSync(join(root, "main.js"), 'document.getElementById("app");');
     writeFileSync(
-      join(root, "vite.config.mjs"),
+      join(root, "vite.config.js"),
       [
         'import { bootChromePlugin } from "' +
           PACKAGE_JSON.name +
@@ -256,7 +256,7 @@ describe("published install face (S1-1)", () => {
     // refactor back to `import("node:fs")` or a .ts implementation is caught
     // without a full consumer build.
     const source = readFileSync(
-      join(VUE_DIR, "src/plugins/boot-chrome.mjs"),
+      join(VUE_DIR, "src/plugins/boot-chrome.js"),
       "utf8",
     );
     // Comments mention the banned forms (they explain why they are banned), so

@@ -6,9 +6,9 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import { bootRecoveryScript } from "./boot-recovery.mjs";
-import { BOOT_LANDING_CSS } from "./bootLandingCss.mjs";
-import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.mjs";
+import { bootRecoveryScript } from "./boot-recovery.js";
+import { BOOT_LANDING_CSS } from "./bootLandingCss.js";
+import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
 
 /**
  * The OPT-IN raw-details pane (task: boot panel details contract).
@@ -39,10 +39,10 @@ import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.mjs";
 
 /** The default script's bytes, pinned so an accidental default change fails. */
 const DEFAULT_SCRIPT_SHA256 =
-  "9c2e92b860bec8a0ab598dde0cea4044b09eb648d92f62d9ec2f08c16d4fc6e2";
+  "bc3cd48e9bb05c26d3ee49e823b4b28cafdf429b761e17df09bde5ec05f714a0";
 /** The heal-only script's bytes (the other shape a host may hash). */
 const HEAL_ONLY_SCRIPT_SHA256 =
-  "8c2f9e87abca07aceef26330f8f0b377bc3d1d0b332b9c6dfdf573ea79cc72f7";
+  "bee06d4652e55708d8b130fec11ff8ede54d4eafb944ef0d18f7be5a76b3dca6";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");

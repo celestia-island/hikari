@@ -24,7 +24,7 @@ import {
   BOOT_RECOVERY_SCRIPT,
   bootRecoveryPlugin,
   bootRecoveryScript,
-} from "./boot-recovery.mjs";
+} from "./boot-recovery.js";
 
 /** Drive the plugin the way Vite does, without a real build. */
 function drivePlugin(

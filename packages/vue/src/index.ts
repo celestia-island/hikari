@@ -649,6 +649,11 @@ export { leadingZeroBits, sha256, solvePow, solvePowSync, verifyPow } from "./ut
 export type { PowChallenge, PowSolution } from "./utils/pow";
 export { HkLocalePicker as HLocalePicker } from "./components/HkLocalePicker";
 export { fetchChallenge, negotiateNonce } from "./utils/powNonce";
+// Generic typing helpers (PA-15, 2026-11-13): chest carried byte-identical
+// copies that had started drifting in comment wording. Exported so both
+// webuis consume the one implementation.
+export { asIndexable, asPropType } from "./utils/typing";
+export type { HostWindow } from "./utils/typing";
 export type { ChallengeDescriptor } from "./utils/powNonce";
 export { HkAdminTablePage as HAdminTablePage } from "./components/HkAdminTablePage";
 export type { HTableColumn } from "./components/HkAdminTablePage";

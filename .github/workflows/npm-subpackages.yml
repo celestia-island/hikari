@@ -133,16 +133,24 @@ jobs:
             # version older than npm's `latest` must never be published, or
             # `latest` moves backwards and later green runs (already-
             # published → skip) never correct it. Fail-closed offline.
-            # The guard answers "is this newer than latest?" — and it cannot
-            # answer at all for a package the registry has never seen: the
-            # dist-tags endpoint returns 401 and the floor stops the run
-            # before the publish ever reaches npm. That is the fleet's
-            # normal first-publish path, not an outage, so say so.
-            if ! python3 scripts/release_guard.py --registry npm \
-                 --package "$name" --version "$ver"; then
-              echo "::error::$name@$ver was refused by the version floor. If this is the package's FIRST release, that is expected: a name the registry does not know yet has no floor to compare against, and OIDC cannot create a package — publish once by hand, then register this workflow as its trusted publisher (see the header). Anything else means the guard could not reach the registry."
-              exit 1
-            fi
+            # The guard answers "is this newer than latest?" and exits 1 for
+            # "no, so don't" and 2 for "I could not even ask". The two need
+            # different advice: for a package the registry has never seen,
+            # the dist-tags endpoint answers 401 and exit 2 is the fleet's
+            # normal first-publish path, not an outage. Nothing publishes
+            # either way — the publish is below this line.
+            set +e
+            python3 scripts/release_guard.py --registry npm \
+              --package "$name" --version "$ver"
+            guard_rc=$?
+            set -e
+            case "$guard_rc" in
+              0) ;;
+              1) echo "::error::$name@$ver was refused by the version floor: it is not newer than the registry's latest (or is not a valid version). Bump the version; a deliberate maintenance-line release needs --allow-downgrade on the guard."
+                 exit 1 ;;
+              *) echo "::error::the version floor could not establish $name's current version (guard exit $guard_rc). For a package the registry has never seen that is expected — dist-tags answers 401 for an unknown name, and OIDC cannot create a package: publish it once by hand, then register this workflow as its trusted publisher (see the header). Otherwise the guard could not reach the registry."
+                 exit 1 ;;
+            esac
             echo "publishing $name@$ver"
             ( cd "$dir" && npm publish --access public --provenance )
             published=$((published + 1))

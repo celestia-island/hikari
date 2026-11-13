@@ -143,8 +143,9 @@ describe("actions & snooze", () => {
     raiseEmergencyAlert({ id: "q", severity: "warning", title: "t" });
     await settle();
     const el = layer()!;
-    // Focus is moved onto the primary action on raise — inside the band.
-    expect(document.activeElement).toBeInstanceOf(HTMLElement);
+    // Focus is moved onto the band's primary action on raise — the Esc
+    // path below only acts while the band owns the focus.
+    expect(el.contains(document.activeElement)).toBe(true);
     el.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     await settle();
     expect(layer()).toBeNull();
@@ -157,6 +158,57 @@ describe("actions & snooze", () => {
     layer()!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     await settle();
     expect(layer()).not.toBeNull();
+  });
+});
+
+describe("focus choreography", () => {
+  it("raise then clear returns the focus to the element that held it", async () => {
+    const outside = document.createElement("button");
+    outside.textContent = "work";
+    document.body.appendChild(outside);
+    outside.focus();
+    mountHost();
+    raiseEmergencyAlert({ id: "q", severity: "warning", title: "t" });
+    await settle();
+    // The band took the focus on raise…
+    expect(layer()!.contains(document.activeElement)).toBe(true);
+    clearEmergencyAlert("q");
+    await settle();
+    // …and gave it back on clear (first-raise capture works even though
+    // the layer was not yet in the DOM during the pre-flush watch).
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+  });
+
+  it("focus lands on the primary action when the alert pre-dates the host mount", async () => {
+    raiseEmergencyAlert({
+      id: "pre",
+      severity: "danger",
+      title: "t",
+      dismissible: false,
+      actions: [{ label: "Go" }],
+    });
+    mountHost();
+    await settle();
+    const primary = layer()!.querySelector<HTMLButtonElement>(".hk-emergency-actions button");
+    expect(primary?.textContent).toBe("Go");
+    expect(document.activeElement).toBe(primary);
+  });
+
+  it("clearing never steals the focus back from work below", async () => {
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    mountHost();
+    raiseEmergencyAlert({ id: "q", severity: "warning", title: "t" });
+    await settle();
+    // The user moves into the page below while the alert stands (the
+    // page stays focusable by design)…
+    input.focus();
+    clearEmergencyAlert("q");
+    await settle();
+    // …and the clear must leave that focus alone.
+    expect(document.activeElement).toBe(input);
+    input.remove();
   });
 });
 

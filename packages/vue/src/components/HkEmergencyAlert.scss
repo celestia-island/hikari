@@ -30,7 +30,21 @@
   // covers the titlebar (user direction 2026-11-13).
   z-index: var(--hk-z-emergency, 96000);
   display: flex;
-  align-items: center;
+  // Safe centering: the band centers through margin-block:auto (below)
+  // instead of a flex align rule — when long content (wrapped actions,
+  // tall description) outgrows the viewport the same rules let the
+  // layer SCROLL to it, where flex centering would clip both ends with
+  // no way back (fixed layers never grow the document). The wheel
+  // reaches this container only over the band itself (pointer
+  // transparency elsewhere), and an overflowing band covers the layer
+  // anyway — so the actions are always reachable. The native bar is
+  // hidden per the family scrollbar invariant (scrolling is the
+  // rare tall-content escape hatch, not part of the look).
+  overflow-y: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
   // The scrim never blocks work (user direction 2026-11-13): the
   // layer itself lets pointers through; only the band is interactive.
   pointer-events: none;
@@ -53,6 +67,10 @@
 .hk-emergency-band {
   position: relative;
   pointer-events: auto;
+  // The other half of safe centering: margin-block:auto centers the
+  // band when it fits and collapses to flush-top when it overflows
+  // (the layer then scrolls — see .hk-emergency).
+  margin-block: auto;
   // Edge to edge — no viewport gutter, the emergency band spans the
   // full width by design (user direction 2026-11-13); only the inner
   // column constrains reading width.

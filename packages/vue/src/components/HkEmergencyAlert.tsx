@@ -38,6 +38,7 @@ import {
   defineComponent,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   ref,
   Teleport,
   Transition,
@@ -88,35 +89,65 @@ export default defineComponent({
     const layerRef = ref<HTMLElement | null>(null);
     let prevFocus: HTMLElement | null = null;
 
+    function focusPrimary() {
+      layerRef.value?.querySelector<HTMLElement>(".hk-emergency-actions button")?.focus();
+    }
+
+    function capturePrevFocus() {
+      // NOTE the negation (not `=== false`): the first watch callback
+      // runs flush:'pre' — the layer is not in the DOM yet, so
+      // `layerRef.value?.contains(el)` is `undefined` there. `!undefined`
+      // must read as "outside the band" (capture), or the FIRST raise
+      // never records a give-back target at all.
+      if (
+        document.activeElement instanceof HTMLElement &&
+        !layerRef.value?.contains(document.activeElement)
+      ) {
+        prevFocus = document.activeElement;
+      }
+    }
+
+    /** Give focus back ONLY when the band still owns it: the focused
+     *  button vanishes with the band (focus falls back to <body>), and
+     *  the page below is focusable by design — a user who moved focus
+     *  into their work while the alert stood must not be yanked back to
+     *  wherever they were when it arrived. */
+    function restoreFocus() {
+      const current = document.activeElement;
+      const bandOwnsFocus =
+        current === document.body || (layerRef.value?.contains(current) ?? false);
+      if (prevFocus?.isConnected && bandOwnsFocus) prevFocus.focus();
+      prevFocus = null;
+    }
+
     // Focus choreography: the band demands attention, so on raise the
     // focus moves onto its primary action (keyboard users land on
     // "handle now", not wherever they were); when the last alert
-    // clears, the focus returns to what held it before — the same
-    // give-back contract HkModal's trap uses, minus the trap: the
+    // clears, a band-owned focus returns to what held it before — the
+    // same give-back contract HkModal's trap uses, minus the trap: the
     // page below stays focusable by design (non-blocking scrim).
-    watch(
-      visible,
-      async (item) => {
-        if (item) {
-          if (document.activeElement instanceof HTMLElement && layerRef.value?.contains(document.activeElement) === false) {
-            prevFocus = document.activeElement;
-          }
-          await nextTick();
-          const primary = layerRef.value?.querySelector<HTMLElement>(".hk-emergency-actions button");
-          primary?.focus();
-        } else if (prevFocus?.isConnected) {
-          prevFocus.focus();
-          prevFocus = null;
-        } else {
-          prevFocus = null;
-        }
-      },
-      { immediate: false },
-    );
+    watch(visible, async (item) => {
+      if (item) {
+        capturePrevFocus();
+        await nextTick();
+        focusPrimary();
+      } else {
+        restoreFocus();
+      }
+    });
+
+    // An alert raised BEFORE this host mounted renders its band with no
+    // watch transition — run the choreography once at mount too. The
+    // guard keeps SSR/no-document environments untouched.
+    onMounted(() => {
+      if (typeof document === "undefined" || !visible.value) return;
+      capturePrevFocus();
+      focusPrimary();
+    });
 
     onBeforeUnmount(() => {
-      if (prevFocus?.isConnected) prevFocus.focus();
-      prevFocus = null;
+      if (typeof document === "undefined") return;
+      restoreFocus();
     });
 
     // Esc snoozes — but only while the focus is inside the band, so

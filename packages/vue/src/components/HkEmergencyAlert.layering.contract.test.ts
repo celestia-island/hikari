@@ -53,4 +53,16 @@ describe("emergency alert layering contract", () => {
     // …and exactly ONE element opts back in — the band.
     expect(css.match(/pointer-events:\s*auto;/g)?.length).toBe(1);
   });
+
+  it("long content stays reachable: the layer scrolls and the band safe-centers", () => {
+    // A fixed full-height layer never grows the document, so clipped
+    // content would strand the actions forever (R2 finding 5). The
+    // layer must scroll, and the band must center via margin-block
+    // (align-items:center on the LAYER clips both ends with no way
+    // back; the icon/actions rows may still center their own content).
+    const css = sheet();
+    expect(css).toContain("overflow-y: auto;");
+    expect(css).toContain("margin-block: auto;");
+    expect(css).not.toMatch(/\.hk-emergency\s*\{[^}]*align-items\s*:/s);
+  });
 });

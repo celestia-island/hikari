@@ -97,3 +97,58 @@ describe("bootRecoveryPlugin({ external: true })", () => {
     expect(tag.children).toBe(bootRecoveryScript({}));
   });
 });
+
+describe("dev server (external mode has no bundle to serve from)", () => {
+  it("serves the script from memory as JavaScript, not the HTML fallback", () => {
+    // In dev `generateBundle` never runs, so a SPA dev server would answer
+    // the injected src with index.html (`200 text/html`) and the browser
+    // would refuse to execute it — the watchdog dies AND every dev load
+    // logs a MIME refusal. The plugin must serve the text itself.
+    const plugin = bootRecoveryPlugin({ external: true });
+    const handlers: Array<(req: unknown, res: unknown, next: () => void) => void> = [];
+    const server = {
+      config: { base: "/" },
+      middlewares: { use: (fn: (typeof handlers)[number]) => handlers.push(fn) },
+    };
+    (plugin.configureServer as unknown as (s: typeof server) => void)(server);
+    expect(handlers).toHaveLength(1);
+
+    const served: { status?: number; headers?: Record<string, string>; body?: string } = {};
+    const res = {
+      set statusCode(v: number) { served.status = v; },
+      setHeader(k: string, v: string) { (served.headers ??= {})[k] = v; },
+      end(body?: string) { served.body = body; },
+    };
+    let nexted = false;
+    handlers[0]({ url: "/hk-boot-recovery.js", method: "GET" }, res, () => { nexted = true; });
+
+    expect(nexted).toBe(false);
+    expect(served.status).toBe(200);
+    expect(served.headers?.["Content-Type"]).toContain("application/javascript");
+    expect(served.body).toBe(bootRecoveryScript({}));
+  });
+
+  it("passes unrelated paths through", () => {
+    const plugin = bootRecoveryPlugin({ external: true });
+    const handlers: Array<(req: unknown, res: unknown, next: () => void) => void> = [];
+    (plugin.configureServer as unknown as (s: unknown) => void)({
+      config: { base: "/" },
+      middlewares: { use: (fn: (typeof handlers)[number]) => handlers.push(fn) },
+    });
+    let nexted = false;
+    handlers[0]({ url: "/app.js", method: "GET" }, { setHeader() {}, end() {} }, () => { nexted = true; });
+    expect(nexted).toBe(true);
+  });
+
+  it("installs no middleware when inline is in use", () => {
+    // The hook itself stays defined (Vite plugin objects do not gain or lose
+    // hooks conditionally); it must simply register nothing.
+    const handlers: unknown[] = [];
+    const plugin = bootRecoveryPlugin();
+    (plugin.configureServer as unknown as (s: unknown) => void)({
+      config: { base: "/" },
+      middlewares: { use: (fn: unknown) => handlers.push(fn) },
+    });
+    expect(handlers).toHaveLength(0);
+  });
+});

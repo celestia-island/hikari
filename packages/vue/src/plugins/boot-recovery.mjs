@@ -15,7 +15,8 @@
  * static loading screen sits on screen forever — with no way for the user to
  * tell a slow boot from a dead one.
  *
- * The recovery is ONE inline, framework-free script placed in the page's
+ * The recovery is ONE framework-free script placed in the page's header —
+ * inline by default, or a same-origin classic file with `external: true`
  * `<head>`, with two independent halves (the second one optional):
  *
  *   1. ORIGIN HEAL (always on) — when the observed hostname is the configured
@@ -2612,6 +2613,15 @@ export function bootRecoveryScript(options = {}) {
  *   injectTo?: "head" | "head-prepend",
  *   external?: boolean,
  *   }} [options]
+ *
+ * `external: true` emits the same script as `hk-boot-recovery.js` (a
+ * same-origin classic script, no async/defer) instead of inlining it — the
+ * shape a host with a `script-src 'self'` policy needs, since an inline
+ * script there is blocked on every load. Trade-off, stated plainly: the
+ * heal keeps its parse-time ordering, but it now needs one extra same-origin
+ * fetch; if that fetch fails the watchdog is silently absent (for the
+ * "server can't even serve JS" failures this module targets, the inline form
+ * would have failed too).
  * @returns {import("vite").Plugin}
  */
 export function bootRecoveryPlugin(options = {}) {
@@ -2700,6 +2710,46 @@ export function bootRecoveryPlugin(options = {}) {
           injectTo: normaliseInjectTo(opts.injectTo),
         },
       ];
+    },
+
+    // `generateBundle` is build-only, so in DEV the emitted asset does not
+    // exist — and a SPA dev server answers `/hk-boot-recovery.js` with the
+    // HTML fallback (`200 text/html`), which browsers refuse to execute as a
+    // classic script: the watchdog silently never installs AND every dev load
+    // logs a MIME refusal (the exact noise class this option exists to
+    // remove). Serve it from memory instead. Both the base-prefixed and the
+    // bare form are accepted, mirroring boot-chrome.
+    configureServer(server) {
+      if (!external) return;
+      const devBase =
+        server && server.config && typeof server.config.base === "string"
+          ? server.config.base
+          : "/";
+      const prefix = devBase === "/" || devBase === "" ? "/" : devBase.replace(/\/?$/, "/");
+      const urls = new Set([`${prefix}${BOOT_RECOVERY_SCRIPT}`, `/${BOOT_RECOVERY_SCRIPT}`]);
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url || "").split("?")[0];
+        if (!urls.has(path)) {
+          next();
+          return;
+        }
+        let body;
+        try {
+          body = bootRecoveryScript(opts);
+        } catch (err) {
+          next(err);
+          return;
+        }
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Content-Length", Buffer.byteLength(body));
+        if (req.method === "HEAD") {
+          res.end();
+          return;
+        }
+        res.end(body);
+      });
     },
   };
 }

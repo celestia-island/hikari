@@ -1,0 +1,85 @@
+name: npm Sub-packages
+
+# Sub-packages carry their own version lines (webui-shared 0.1.x vs the
+# vue package's 0.55.x), so they cannot ride a v* tag: the tag names one
+# version. This lane publishes whatever sub-package version is not yet on
+# the registry, on demand — idempotent, so a retry after a permissions
+# fix costs nothing and a re-run with nothing new to ship is a no-op.
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Sub-package directory under packages/ (default: every one)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish sub-packages to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Same guard the main lane carries: an artifact must be reproducible
+      # from master, so the dispatched ref has to be on it.
+      - name: Ensure the dispatched ref is on master
+        shell: bash
+        run: |
+          git fetch --no-tags --prune origin +refs/heads/master:refs/remotes/origin/master
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::$GITHUB_SHA is not an ancestor of origin/master — publish only from a squash-merged master commit"
+            exit 1
+          fi
+          echo "$GITHUB_SHA is on master"
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org/
+
+      - name: Publish every sub-package whose version is not on the registry
+        env:
+          ONLY: ${{ github.event.inputs.package }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          published=0
+          for dir in packages/*/; do
+            [ -f "$dir/package.json" ] || continue
+            name=$(node -e "console.log(require('./$dir/package.json').name)")
+            ver=$(node -e "console.log(require('./$dir/package.json').version)")
+            private=$(node -e "console.log(require('./$dir/package.json').private === true)")
+            # The vue package is the main lane's business; a private package
+            # is never published by definition.
+            if [ "$name" != "@celestia-island/webui-shared" ] && [ "$name" != "@celestia-island/hikari" ]; then
+              echo "$name: not a published sub-package — skipping"
+              continue
+            fi
+            if [ "$name" = "@celestia-island/hikari" ]; then
+              echo "$name: the main lane publishes it — skipping"
+              continue
+            fi
+            if [ "$private" = "true" ]; then
+              echo "$name: private — skipping"
+              continue
+            fi
+            if [ -n "${ONLY:-}" ] && [ "$dir" != "packages/$ONLY/" ]; then
+              echo "$name: filtered out by the package input"
+              continue
+            fi
+            if npm view "$name@$ver" version >/dev/null 2>&1; then
+              echo "$name@$ver already on the registry — skipping"
+              continue
+            fi
+            echo "publishing $name@$ver"
+            ( cd "$dir" && npm publish --access public --provenance )
+            published=$((published + 1))
+          done
+          echo "published $published package(s)"

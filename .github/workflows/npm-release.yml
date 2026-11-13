@@ -100,24 +100,3 @@ jobs:
         run: |
           cd packages/vue
           npm publish --access public --provenance
-
-      # Sub-packages with independent version lines (PA-7, 2026-11-13).
-      # Each ships from its own package.json version; a package whose
-      # version already matches the registry is skipped (idempotent —
-      # the same shape as the crates publish lane). Provenance rides the
-      # job's id-token permission.
-      - name: Publish sub-packages (independent version lines)
-        run: |
-          publish_if_new() {
-            local dir="$1" name="$2"
-            local ver=$(node -e "console.log(require('./$dir/package.json').version)")
-            if npm view "$name@$ver" version >/dev/null 2>&1; then
-              echo "$name@$ver already on npm — skipping"
-            else
-              echo "publishing $name@$ver"
-              cd "$dir"
-              npm publish --access public --provenance
-              cd - >/dev/null
-            fi
-          }
-          publish_if_new "packages/webui_shared" "@celestia-island/webui-shared"

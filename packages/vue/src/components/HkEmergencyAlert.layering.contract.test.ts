@@ -27,6 +27,25 @@ function sheet(): string {
   return readFileSync(join(here, "HkEmergencyAlert.scss"), "utf-8");
 }
 
+/** The `.hk-emergency { … }` root rule, brace-balanced (it nests the
+ *  webkit scrollbar rule). Assertions about the LAYER must bind here,
+ *  not to the whole sheet: the band's pseudo-elements carry their own
+ *  `pointer-events: none` lines, which a whole-file contains() would
+ *  happily satisfy even with the root declaration deleted (R3 M6). */
+function rootBlock(css: string): string {
+  const start = css.indexOf(".hk-emergency {");
+  if (start < 0) throw new Error("root rule .hk-emergency { not found");
+  let depth = 0;
+  for (let i = start; i < css.length; i++) {
+    if (css[i] === "{") depth++;
+    else if (css[i] === "}") {
+      depth--;
+      if (depth === 0) return css.slice(start, i + 1);
+    }
+  }
+  throw new Error("unbalanced braces in .hk-emergency root rule");
+}
+
 describe("emergency alert layering contract", () => {
   it("pins the document-space z band between error landing and titlebar", () => {
     const css = sheet();
@@ -48,9 +67,12 @@ describe("emergency alert layering contract", () => {
 
   it("the layer is pointer-transparent; only the band is interactive", () => {
     const css = sheet();
-    // Root layer: transparent (the scrim never blocks work)…
-    expect(css).toContain("pointer-events: none;");
-    // …and exactly ONE element opts back in — the band.
+    // Root rule: transparent (the scrim never blocks work) — bound to
+    // the ROOT block because the band pseudo-elements also carry
+    // pointer-events:none lines that would mask its deletion (M6).
+    expect(rootBlock(css)).toContain("pointer-events: none;");
+    expect(rootBlock(css)).not.toContain("pointer-events: auto;");
+    // …and exactly ONE rule in the whole sheet opts back in — the band.
     expect(css.match(/pointer-events:\s*auto;/g)?.length).toBe(1);
   });
 

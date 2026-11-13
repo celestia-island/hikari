@@ -15,8 +15,9 @@
  * static loading screen sits on screen forever — with no way for the user to
  * tell a slow boot from a dead one.
  *
- * The recovery is ONE inline, framework-free script placed in the page's
- * `<head>`, with two independent halves (the second one optional):
+ * The recovery is ONE framework-free script placed in the page head —
+ * inline by default, or a same-origin classic file with `external: true` —
+ * with two independent halves (the second one optional):
  *
  *   1. ORIGIN HEAL (always on) — when the observed hostname is the configured
  *      origin's hostname with crash-recovery debris glued onto it, replace the
@@ -195,6 +196,23 @@ export const BOOT_RECOVERY_RETRY = "Reload";
  * into its CSP can find the exact tag it must whitelist by this attribute.
  */
 export const BOOT_RECOVERY_ATTR = "data-hk-boot-recovery";
+
+/**
+ * The emitted asset's name when `external: true` (output root).
+ *
+ * WHY THE OPTION EXISTS: an INLINE classic script is the right shape for a
+ * host whose CSP already admits it — the Tauri shells hash the script into
+ * their compile-time policy, and inline parsing-time execution is exactly
+ * what a crash-recovery heal needs. A HOST SERVED OVER HTTP WITH A
+ * `script-src 'self'` POLICY cannot admit it at all: the browser logs a
+ * violation and SKIPS the script on every single page load, so the panel
+ * this module exists for can never paint while the console fills with
+ * errors. `external: true` emits the same script as a same-origin classic
+ * script (`src`, no `async`/`defer`), which keeps parse-time execution and
+ * satisfies `script-src 'self'` unchanged. (2026-11-14: chest's faces ran
+ * with the inline form and reported the violation on every load.)
+ */
+export const BOOT_RECOVERY_SCRIPT = "hk-boot-recovery.js";
 
 /**
  * Default name of the `window` function that raises the browser-block panel.
@@ -2558,8 +2576,10 @@ export function bootRecoveryScript(options = {}) {
 }
 
 /**
- * The recovery as a Vite plugin: ONE inline, classic (non-module) `<script>`
- * carrying `data-hk-boot-recovery`, injected into the configured HTML entries.
+ * The recovery as a Vite plugin: ONE classic (non-module) `<script>`
+ * carrying `data-hk-boot-recovery`, injected into the configured HTML
+ * entries — inline by default, a same-origin `src` reference with
+ * `external: true`.
  *
  * MULTI-ENTRY: by default only the entry whose basename is `index.html` is
  * instrumented. A shell that builds more than one page (a host builds five;
@@ -2593,7 +2613,17 @@ export function bootRecoveryScript(options = {}) {
  *     storageKey?: string,
  *   },
  *   injectTo?: "head" | "head-prepend",
+ *   external?: boolean,
  *   }} [options]
+ *
+ * `external: true` emits the same script as `hk-boot-recovery.js` (a
+ * same-origin classic script, no async/defer) instead of inlining it — the
+ * shape a host with a `script-src 'self'` policy needs, since an inline
+ * script there is blocked on every load. Trade-off, stated plainly: the
+ * heal keeps its parse-time ordering, but it now needs one extra same-origin
+ * fetch; if that fetch fails the watchdog is silently absent (for the
+ * "server can't even serve JS" failures this module targets, the inline form
+ * would have failed too).
  * @returns {import("vite").Plugin}
  */
 export function bootRecoveryPlugin(options = {}) {
@@ -2623,14 +2653,56 @@ export function bootRecoveryPlugin(options = {}) {
   // transform (where a host may never notice the stack).
   resolveOptions(opts);
 
+  // `external: true` moves the script out of the document (see
+  // BOOT_RECOVERY_SCRIPT). The base prefix keeps sub-path deployments
+  // resolving; the emitted asset always lands at the output root.
+  const external = opts.external === true;
+  let base = "/";
+
   return {
     name: "hikari-boot-recovery",
+
+    configResolved(config) {
+      base =
+        config && typeof config.base === "string" && config.base
+          ? config.base
+          : "/";
+    },
+
+    generateBundle() {
+      if (!external) return;
+      // Fail early if the script cannot be produced (same reason the inline
+      // path builds it during the transform): a build that ships an
+      // index.html pointing at a missing recovery asset is worse than a
+      // build error.
+      this.emitFile({
+        type: "asset",
+        fileName: BOOT_RECOVERY_SCRIPT,
+        source: bootRecoveryScript(opts),
+      });
+    },
 
     transformIndexHtml(_html, ctx) {
       const filename = ctx && typeof ctx.filename === "string" ? ctx.filename : "";
       if (!htmlFileMatches(filename, opts.htmlFiles)) {
         warnSkipped(this, filename);
         return [];
+      }
+      if (external) {
+        const prefix = base === "/" || base === "" ? "/" : base.replace(/\/?$/, "/");
+        return [
+          {
+            tag: "script",
+            // NO async / defer: a parser-blocking classic script runs at the
+            // same point the inline form did, so the heal still lands before
+            // the app's modules evaluate.
+            attrs: {
+              [BOOT_RECOVERY_ATTR]: "",
+              src: `${prefix}${BOOT_RECOVERY_SCRIPT}`,
+            },
+            injectTo: normaliseInjectTo(opts.injectTo),
+          },
+        ];
       }
       return [
         {
@@ -2640,6 +2712,46 @@ export function bootRecoveryPlugin(options = {}) {
           injectTo: normaliseInjectTo(opts.injectTo),
         },
       ];
+    },
+
+    // `generateBundle` is build-only, so in DEV the emitted asset does not
+    // exist — and a SPA dev server answers `/hk-boot-recovery.js` with the
+    // HTML fallback (`200 text/html`), which browsers refuse to execute as a
+    // classic script: the watchdog silently never installs AND every dev load
+    // logs a MIME refusal (the exact noise class this option exists to
+    // remove). Serve it from memory instead. Both the base-prefixed and the
+    // bare form are accepted, mirroring boot-chrome.
+    configureServer(server) {
+      if (!external) return;
+      const devBase =
+        server && server.config && typeof server.config.base === "string"
+          ? server.config.base
+          : "/";
+      const prefix = devBase === "/" || devBase === "" ? "/" : devBase.replace(/\/?$/, "/");
+      const urls = new Set([`${prefix}${BOOT_RECOVERY_SCRIPT}`, `/${BOOT_RECOVERY_SCRIPT}`]);
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url || "").split("?")[0];
+        if (!urls.has(path)) {
+          next();
+          return;
+        }
+        let body;
+        try {
+          body = bootRecoveryScript(opts);
+        } catch (err) {
+          next(err);
+          return;
+        }
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Content-Length", Buffer.byteLength(body));
+        if (req.method === "HEAD") {
+          res.end();
+          return;
+        }
+        res.end(body);
+      });
     },
   };
 }

@@ -36,8 +36,13 @@ export declare const BOOT_RECOVERY_MESSAGE: string;
 /** Default failure-panel retry label (English; override through `copy.retry`). */
 export declare const BOOT_RECOVERY_RETRY: string;
 
-/** Marker attribute on the injected inline `<script>` tag. */
+/** Marker attribute on the injected `<script>` tag (inline or, with
+ *  `external: true`, the `src` tag). */
 export declare const BOOT_RECOVERY_ATTR: "data-hk-boot-recovery";
+
+/** The emitted asset's file name when `external: true` (output root). Also
+ *  the URL path the dev middleware serves it from. */
+export declare const BOOT_RECOVERY_SCRIPT: string;
 
 /** Default name of the unsupported-browser entry (the family's `__appBlock`). */
 export declare const BOOT_RECOVERY_BLOCK_GLOBAL: "__appBlock";
@@ -357,6 +362,21 @@ export interface BootRecoveryPluginOptions {
    * 1024 bytes); use it only when the host sends an explicit charset header.
    */
   injectTo?: "head" | "head-prepend";
+  /**
+   * Emit the recovery script as a same-origin CLASSIC file
+   * (`hk-boot-recovery.js`, `src`, no async/defer) instead of inlining it.
+   *
+   * Use this in every host served over HTTP with `script-src 'self'` — an
+   * inline script there is blocked on EVERY page load (the browser skips it
+   * and logs a violation), so the recovery panel can never paint. Inline
+   * stays the default because the Tauri shells hash the inline text into
+   * their compile-time CSP.
+   *
+   * PLUGIN-ONLY: `bootRecoveryScript()` ignores it (the script text is the
+   * same either way) — it selects the DELIVERY shape, which only the plugin
+   * controls.
+   */
+  external?: boolean;
 }
 
 /**

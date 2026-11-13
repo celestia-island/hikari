@@ -36,9 +36,16 @@ export interface KanbanMove {
   fromLaneKey: string;
   fromIndex: number;
   toLaneKey: string;
-  /** Where the card lands in the target lane, in the TARGET's coordinates:
-   *  the host inserts at this index AFTER removing the card from its source
-   *  lane (so moving a card to the end is `toIndex === targetLength`). */
+  /** Where the drop lands, in the target lane's PRE-REMOVAL
+   *  coordinates: a drop ON a card names that card's current index
+   *  (the dragged card is still rendered when the index is read), and
+   *  a drop into a gap, on the header/footer, or at the tail names
+   *  `cardCount` — the append-to-end semantic. Hosts inserting into a
+   *  list that no longer contains the dragged card must therefore
+   *  shift one slot left for same-lane FORWARD drops on a card
+   *  (`toIndex > fromIndex` → insert at `toIndex - 1`); backward and
+   *  cross-lane moves need no shift, and gap drops always mean
+   *  "append". */
   toIndex: number;
 }
 

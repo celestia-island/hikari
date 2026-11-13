@@ -51,22 +51,28 @@ jobs:
         run: |
           set -euo pipefail
           published=0
+          matched=0
           for dir in packages/*/; do
             [ -f "$dir/package.json" ] || continue
             name=$(node -e "console.log(require('./$dir/package.json').name)")
             ver=$(node -e "console.log(require('./$dir/package.json').version)")
-            private=$(node -e "console.log(require('./$dir/package.json').private === true)")
+            is_private=$(node -e "console.log(require('./$dir/package.json').private === true)")
             # The vue package is the main lane's business; a private package
-            # is never published by definition.
-            if [ "$name" != "@celestia-island/webui-shared" ] && [ "$name" != "@celestia-island/hikari" ]; then
-              echo "$name: not a published sub-package — skipping"
-              continue
-            fi
-            if [ "$name" = "@celestia-island/hikari" ]; then
-              echo "$name: the main lane publishes it — skipping"
-              continue
-            fi
-            if [ "$private" = "true" ]; then
+            # is never published by definition; anything else under
+            # packages/ is internal (mockups, fixtures) until it says
+            # otherwise in this list.
+            case "$name" in
+              @celestia-island/hikari)
+                echo "$name: the main lane publishes it — skipping"
+                continue
+                ;;
+              @celestia-island/webui-shared) ;;
+              *)
+                echo "$name: not a published sub-package — skipping"
+                continue
+                ;;
+            esac
+            if [ "$is_private" = "true" ]; then
               echo "$name: private — skipping"
               continue
             fi
@@ -74,12 +80,28 @@ jobs:
               echo "$name: filtered out by the package input"
               continue
             fi
-            if npm view "$name@$ver" version >/dev/null 2>&1; then
-              echo "$name@$ver already on the registry — skipping"
+            matched=$((matched + 1))
+            # A registry lookup answers three ways, and only one of them
+            # means "go publish": E404 = the version is absent. Any other
+            # failure (network, auth, 5xx) must stop the run — treating it
+            # as "absent" would turn every blip into a red publish attempt
+            # that npm then refuses with E403.
+            if lookup=$(npm view "$name@$ver" version 2>&1); then
+              echo "$name@$ver is already on the registry — skipping"
               continue
+            fi
+            if ! printf '%s' "$lookup" | grep -qE 'E404|404 Not Found'; then
+              echo "::error::registry lookup for $name@$ver failed: $lookup"
+              exit 1
             fi
             echo "publishing $name@$ver"
             ( cd "$dir" && npm publish --access public --provenance )
             published=$((published + 1))
           done
+          # A filter that matches nothing is a typo, not a no-op: silently
+          # exiting 0 would read as "already published" to whoever dispatched.
+          if [ -n "${ONLY:-}" ] && [ "$matched" -eq 0 ]; then
+            echo "::error::the package input '$ONLY' matched no published sub-package"
+            exit 1
+          fi
           echo "published $published package(s)"

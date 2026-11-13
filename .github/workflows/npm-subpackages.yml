@@ -129,27 +129,41 @@ jobs:
               echo "::error::registry lookup for $name@$ver failed: $lookup"
               exit 1
             fi
-            # Same floor the main lane enforces (structural scan S1-2): a
-            # version older than npm's `latest` must never be published, or
-            # `latest` moves backwards and later green runs (already-
-            # published → skip) never correct it. Fail-closed offline.
-            # The guard answers "is this newer than latest?" and exits 1 for
-            # "no, so don't" and 2 for "I could not even ask". The two need
-            # different advice: for a package the registry has never seen,
-            # the dist-tags endpoint answers 401 and exit 2 is the fleet's
-            # normal first-publish path, not an outage. Nothing publishes
-            # either way — the publish is below this line.
-            set +e
-            python3 scripts/release_guard.py --registry npm \
-              --package "$name" --version "$ver"
-            guard_rc=$?
-            set -e
-            case "$guard_rc" in
-              0) ;;
-              1) echo "::error::$name@$ver was refused by the version floor: it is not newer than the registry's latest (or is not a valid version). Bump the version; a deliberate maintenance-line release needs --allow-downgrade on the guard."
-                 exit 1 ;;
-              *) echo "::error::the version floor could not establish $name's current version (guard exit $guard_rc). For a package the registry has never seen that is expected — dist-tags answers 401 for an unknown name, and OIDC cannot create a package: publish it once by hand, then register this workflow as its trusted publisher (see the header). Otherwise the guard could not reach the registry."
-                 exit 1 ;;
+            # The version floor (structural scan S1-2): a version older than
+            # npm's `latest` must never be published, or `latest` moves
+            # backwards and later green runs (already-published → skip)
+            # never correct it.
+            #
+            # The floor only means something when a `latest` EXISTS. Ask the
+            # packument: 404 is the registry stating the name is unclaimed,
+            # so there is nothing to move backwards and nothing to protect.
+            # Anything else — 200 (exists), 5xx, a timeout, an empty reply —
+            # keeps the floor on, and the guard then decides as usual (and
+            # fails closed if it cannot ask).
+            packument_status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
+              "https://registry.npmjs.org/${name//\//%2F}" || echo "000")
+            case "$packument_status" in
+              404)
+                echo "$name is unclaimed on the registry — no floor to compare against, first release"
+                ;;
+              200)
+                set +e
+                python3 scripts/release_guard.py --registry npm \
+                  --package "$name" --version "$ver"
+                guard_rc=$?
+                set -e
+                case "$guard_rc" in
+                  0) ;;
+                  1) echo "::error::$name@$ver was refused by the version floor: it is not newer than the registry's latest (or is not a valid version). Bump the version; a deliberate maintenance-line release needs --allow-downgrade on the guard."
+                     exit 1 ;;
+                  *) echo "::error::the version floor could not establish $name's current version (guard exit $guard_rc) and the registry answered neither 'exists' nor 'unclaimed' (packument HTTP $packument_status). Refusing to publish unverifiable releases."
+                     exit 1 ;;
+                esac
+                ;;
+              *)
+                echo "::error::the registry answered HTTP $packument_status for $name, so this run cannot tell whether the name is claimed. Refusing to publish on a guess."
+                exit 1
+                ;;
             esac
             echo "publishing $name@$ver"
             ( cd "$dir" && npm publish --access public --provenance )

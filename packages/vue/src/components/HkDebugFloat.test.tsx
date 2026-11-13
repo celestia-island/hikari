@@ -355,6 +355,21 @@ describe("HkDebugFloat stylesheet contract", () => {
     expect(css).toMatch(/\.hk-debug-float\[data-dragging\]\s*\{\s*opacity:\s*1;/);
   });
 
+  it("pins the drag exception AFTER the hover rule (equal specificity — order is the cascade)", () => {
+    // `.hk-debug-float:hover`/`[data-hovered]` and `[data-dragging]` have
+    // EQUAL specificity (0,2,0): mid-grab both match (the pointer is captured
+    // over the header, so :hover holds and pointerleave cannot fire). Which
+    // rule wins is decided purely by source order — moving the drag exception
+    // above the hover rule fades the window mid-grab, and no runtime test
+    // exercises that co-occurrence (happy-dom has no real hover pipeline).
+    const hoverIdx = css.search(
+      /\.hk-debug-float:hover,\s*\.hk-debug-float\[data-hovered\]\s*\{/,
+    );
+    const dragIdx = css.search(/\.hk-debug-float\[data-dragging\]\s*\{/);
+    expect(hoverIdx).toBeGreaterThan(-1);
+    expect(dragIdx).toBeGreaterThan(hoverIdx);
+  });
+
   it("keeps scale.scss, the sheet fallback and the TS constant on one band", () => {
     const band = scale.match(/--hk-z-debug-float:\s*(\d+)/);
     // A missing match is a broken contract, not an empty pass.

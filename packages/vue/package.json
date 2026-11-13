@@ -1,6 +1,6 @@
 {
   "name": "@celestia-island/hikari",
-  "version": "0.55.368",
+  "version": "0.55.369",
   "private": false,
   "type": "module",
   "description": "Hikari UI library, Vue 3 runtime \u2014 one design system for Vue 3 and Rust/WASM applications",

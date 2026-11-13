@@ -5,13 +5,28 @@ name: npm Sub-packages
 # version. This lane publishes whatever sub-package version is not yet on
 # the registry, on demand — idempotent, so a retry after a permissions
 # fix costs nothing and a re-run with nothing new to ship is a no-op.
+#
+# npm-side prerequisite (no NODE_AUTH_TOKEN is injected anywhere in this
+# repo — publishing rides OIDC trusted publishing): each package must have
+# a trusted publisher naming THIS workflow file. hikari is registered
+# against npm-release.yml; a sub-package first published from here needs
+# its own entry, and a brand-new package cannot be created by OIDC at all
+# — that first publish takes a human. A 404 on PUT means exactly this.
 on:
   workflow_dispatch:
     inputs:
       package:
-        description: "One directory name under packages/ to publish (default: every publishable sub-package)"
+        description: "One directory name under packages/ to publish, e.g. webui_shared (default: every publishable sub-package)"
         required: false
         default: ""
+
+# One dispatch at a time. Two in flight could publish out of order, and a
+# late-arriving dispatch for an older version would move npm's `latest`
+# backwards while later green runs (already-published → skip) never
+# correct it.
+concurrency:
+  group: npm-subpackages
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -55,7 +70,13 @@ jobs:
           for dir in packages/*/; do
             [ -f "$dir/package.json" ] || continue
             name=$(node -e "console.log(require('./$dir/package.json').name)")
-            ver=$(node -e "console.log(require('./$dir/package.json').version)")
+            # A missing version prints `undefined`, which is a non-empty
+            # string — reading it as a version would make `npm view name@`
+            # resolve `latest` and silently skip. Let node fail instead.
+            if ! ver=$(node -e "const v=require('./$dir/package.json').version; if(!v) process.exit(2); console.log(v)"); then
+              echo "::error::$name has no version in $dir/package.json"
+              exit 1
+            fi
             is_private=$(node -e "console.log(require('./$dir/package.json').private === true)")
             # The vue package is the main lane's business; a private package
             # is never published by definition; anything else under

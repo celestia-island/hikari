@@ -31,7 +31,23 @@
 //      carries no `DataTransfer`, so an `on_files` report could never be built.
 // What that leaves (this is the same grammar as a plain HTML file input):
 //   * picking files still works — the native `input`'s `change` event is a typed
-//     channel, so click-to-browse uploads are unaffected;
+//     channel (tairitsu 0.5.25) and it carries the committed value since 0.5.26.
+//     That value is the input's `value` property, i.e. the browser's FAKE PATH
+//     (`C:\fakepath\a.png`), and for a `multiple` input only the FIRST picked
+//     file's name (the spec makes `value` one string, never a list). The handler
+//     therefore reduces the value to a leaf name through
+//     `basic/file_field`'s `picked_files_from_change_value` and never reports a
+//     path a host cannot open.
+//     The full `FileList` needs TWO upstream fixes, not one, and neither is in
+//     this crate: (a) `tairitsu-vdom`'s `ChangeEvent` exposes `value` and an
+//     opaque `target` handle but no FileList accessor; (b) the glue's handle
+//     tables do not meet — `getFiles` stores into
+//     `globalThis.__fileListHandles` (glue-html) while the `file-list` members
+//     read a module-local `_fileListhandles` map (glue-fetch), so a handle from
+//     one is unknown to the other and `getLength` / `item` throw. The WIT
+//     members exist (`html-input-element.get-files`, `file-list`), so this is
+//     wiring, not a missing feature. Until both land, a multi pick reports one
+//     leaf name;
 //   * `FileUploadStatus::Dragging` and the `.hk-file-upload-dragging` sheet rule
 //     are UNREACHABLE (the enum variant and the CSS stay: public/stylesheet
 //     surface, not behaviour);
@@ -83,11 +99,37 @@ pub struct FileUploadProps {
     #[default]
     pub style: String,
 
+    /// Fires with the picked file's leaf name(s) — the path is stripped, and on
+    /// this wire the vec holds AT MOST ONE entry: a `change` event carries the
+    /// input's `value` (one fake path, the first file for a `multiple` input),
+    /// not its `FileList`. A cleared / cancelled picker emits nothing.
     #[default]
     pub on_files: Option<EventHandler<Vec<String>>>,
 
     #[default]
     pub on_error: Option<EventHandler<String>>,
+}
+
+/// The leaf name of a file pick, recovered from the `change` value.
+///
+/// tairitsu 0.5.26 fills `ChangeEvent.value` from the target's `value`
+/// property through the `html-input-element` getter — never from its
+/// `FileList`: the event has no FileList accessor (`target` is an opaque
+/// handle), so the glue's live `getFiles` is out of reach from a handler. What
+/// arrives is the browser's fake path (`C:\fakepath\a.png`, or a bare name on
+/// engines that do not fake it), and one path even for a `multiple` input. A
+/// host cannot open a fake path, so only the leaf name crosses this boundary.
+///
+/// The parse itself is [`picked_files_from_change_value`], shared with
+/// `basic/file_field`: the two file components must not grow two spellings of
+/// "turn a change value into a file name". Crate-private: the crate's public
+/// file API is the components' props, not this helper.
+#[cfg(any(test, all(target_arch = "wasm32", target_os = "unknown")))]
+pub(crate) fn upload_leaf_names(value: &str) -> Vec<String> {
+    crate::basic::file_field::picked_files_from_change_value(value)
+        .into_iter()
+        .map(|file| file.name)
+        .collect()
 }
 
 #[component]
@@ -126,26 +168,23 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let on_change = move |e: ChangeEvent| {
         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
-            let file_value = e.value;
-            if file_value.is_empty() {
+            // `e.value` is the browser's fake path, never a name a host can
+            // open — `upload_leaf_names` reduces it. An empty value means the
+            // input has nothing selected (a cancelled picker, a reset), which
+            // is not a selection event: report nothing rather than an empty
+            // list a host would read as "the user cleared the field".
+            let selected_files = upload_leaf_names(&e.value);
+            if selected_files.is_empty() {
                 return;
             }
 
-            let selected_files: Vec<String> = file_value
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
+            files_for_change.set(selected_files.clone());
 
-            if !selected_files.is_empty() {
-                files_for_change.set(selected_files.clone());
-
-                if let Some(handler) = on_files_for_change.as_ref() {
-                    handler.call(selected_files);
-                }
-
-                upload_status_for_change.set(FileUploadStatus::Success);
+            if let Some(handler) = on_files_for_change.as_ref() {
+                handler.call(selected_files);
             }
+
+            upload_status_for_change.set(FileUploadStatus::Success);
         }
 
         #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
@@ -283,5 +322,51 @@ impl StyledComponent for FileUploadComponent {
 
     fn name() -> &'static str {
         "file_upload"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // GUARD PIN: a file input's `change` value is the browser fake path, so the
+    // emission must be leaf names. Reporting `e.value` verbatim (as the mirror
+    // did while the handler was still dead on the wire) puts an unopenable
+    // `C:\fakepath\…` string into the host's file list — the shape this test
+    // reds on.
+    #[test]
+    fn upload_leaf_names_drops_the_browser_fake_path() {
+        assert_eq!(
+            upload_leaf_names("C:\\fakepath\\report.csv"),
+            vec!["report.csv".to_string()]
+        );
+        assert_eq!(
+            upload_leaf_names("/home/lab/report.csv"),
+            vec!["report.csv".to_string()]
+        );
+        // A browser that does not fake the path hands over the bare name.
+        assert_eq!(
+            upload_leaf_names("report.csv"),
+            vec!["report.csv".to_string()]
+        );
+    }
+
+    #[test]
+    fn upload_leaf_names_keeps_a_comma_inside_the_name() {
+        // `value` is ONE path even for a `multiple` input, so a comma is part of
+        // the name. Splitting on it would report "report" and hide the real file.
+        assert_eq!(
+            upload_leaf_names("C:\\fakepath\\report, final.pdf"),
+            vec!["report, final.pdf".to_string()]
+        );
+    }
+
+    #[test]
+    fn upload_leaf_names_reports_nothing_for_a_cleared_input() {
+        // The cleared / cancelled picker: no names, so the handler emits
+        // nothing instead of an empty selection.
+        assert!(upload_leaf_names("").is_empty());
+        // Path-only fragments have no leaf name.
+        assert!(upload_leaf_names("C:\\fakepath\\").is_empty());
     }
 }

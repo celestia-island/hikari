@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       package:
-        description: "Sub-package directory under packages/ (default: every one)"
+        description: "One directory name under packages/ to publish (default: every publishable sub-package)"
         required: false
         default: ""
 

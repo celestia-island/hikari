@@ -6,17 +6,24 @@ name: npm Sub-packages
 # the registry, on demand — idempotent, so a retry after a permissions
 # fix costs nothing and a re-run with nothing new to ship is a no-op.
 #
-# npm-side prerequisite (no NODE_AUTH_TOKEN is injected anywhere in this
-# repo — publishing rides OIDC trusted publishing): each package must have
-# a trusted publisher naming THIS workflow file. hikari is registered
-# against npm-release.yml; a sub-package first published from here needs
-# its own entry, and a brand-new package cannot be created by OIDC at all
-# — that first publish takes a human. The binding is repo + workflow
-# filename + optional npm "environment"; this job declares no environment,
-# which is only correct if the npm side left it empty too. A 404 on PUT
-# means "no package / no trusted publisher"; a 403 means the OIDC token
-# was minted but rejected — check the workflow filename and environment
-# before reading either as a code bug.
+# npm-side prerequisites, in the order a package meets them:
+#
+# 1. CREATING the name. OIDC cannot do it — npm only mints a publish token
+#    for a package that already exists (measured 2026-11-13: the PUT
+#    reached the registry and answered 404). The unclaimed-name branch
+#    below therefore uses an optional NPM_TOKEN repository secret for that
+#    one release. No such secret exists today, so that branch currently
+#    stops with instructions; every ordinary release never reads it.
+# 2. PUBLISHING afterwards. Every later version rides OIDC trusted
+#    publishing — nothing in this repo injects NODE_AUTH_TOKEN for it. The
+#    binding is repo + workflow filename + optional npm "environment": the
+#    package needs a trusted publisher naming THIS workflow file, and this
+#    job declares no environment, which is only correct if the npm side
+#    left it empty too.
+# 3. READING the failures. A 404 on PUT means "no package / no trusted
+#    publisher"; a 403 means the OIDC token was minted but rejected —
+#    check the workflow filename and environment before reading either as
+#    a code bug.
 on:
   workflow_dispatch:
     inputs:

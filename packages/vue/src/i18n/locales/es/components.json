@@ -30,6 +30,7 @@
     "hikari::datePicker.prevYear": "Año anterior",
     "hikari::datePicker.prevYears": "Previous years",
     "hikari::datePicker.today": "Hoy",
+    "hikari::debugFloat.title": "Depuración",
     "hikari::dateTimePicker.back": "Atrás",
     "hikari::dateTimePicker.hour": "Hora",
     "hikari::dateTimePicker.minute": "Minuto",

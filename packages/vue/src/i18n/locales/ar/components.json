@@ -30,6 +30,7 @@
     "hikari::datePicker.prevYear": "السنة السابقة",
     "hikari::datePicker.prevYears": "Previous years",
     "hikari::datePicker.today": "اليوم",
+    "hikari::debugFloat.title": "تصحيح",
     "hikari::dateTimePicker.back": "رجوع",
     "hikari::dateTimePicker.hour": "الساعة",
     "hikari::dateTimePicker.minute": "الدقيقة",

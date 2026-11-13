@@ -1,0 +1,145 @@
+// AI-generated: developed with the DeepSeek Harness agent (model GLM-5.3 Flash); human-directed.
+
+/*
+ * HkDebugFloat — generic debug floating window (HUD grammar).
+ *
+ * The wowsp idiom this window ports: a HUD card that turns SEMI-TRANSPARENT
+ * while the pointer is over it (`&:hover { opacity: 0.8 }` on the
+ * HoloScorebar/HoloShipCard family), so it stops competing with the
+ * content it measures and yields the visual field back to the page. The
+ * hovered opacity is prop-tunable (--hk-debug-float-hover-opacity, inline
+ * from the `hoverOpacity` prop); data-hovered mirrors :hover for the
+ * runtime tests and for pen/touch engines where :hover is sticky.
+ *
+ * Every ink hangs off hikari's theme tokens (no hardcoded colors); the
+ * body is compact mono with tabular figures so debug numbers line up.
+ */
+
+@use "../styles/polyfill" as *;
+
+.hk-debug-float {
+  /* Document-space debug band: above every content-chrome rung, strictly
+   * below #hk-overlay-root (--hk-z-overlay-root, 90000) so every
+   * functional popup — modal, drawer, toast, tooltip — paints above the
+   * debug window. The band lives in scale.scss; the constant behind the
+   * fallback is HK_DEBUG_FLOAT_DOCUMENT_Z (kept honest by the test). */
+  z-index: var(--hk-z-debug-float, 80000);
+
+  position: fixed;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface) / 0.82);
+  box-shadow: var(--shadow-dropdown);
+  color: rgb(var(--color-text));
+  font-size: var(--text-xs);
+  /* A debug HUD is a numbers surface: mono face, tabular figures, so
+   * FPS/counters keep their columns while values tick (the wowsp
+   * scorebar's font-variant-numeric contract). */
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+  /* The window catches pointers ONLY on itself — it is never an
+   * inset-0 overlay, so clicks outside its box land on the page. */
+  pointer-events: auto;
+  touch-action: none;
+
+  /* Hover → yield: the pointer over the HUD drops it to the translucent
+   * state so the measured content reads through it (~150ms, opacity only
+   * — nothing moves). hoverOpacity flows in as an inline custom
+   * property; 0.45 is the wowsp-derived default. */
+  opacity: 1;
+  transition: opacity var(--duration-short) ease;
+
+  &:hover,
+  &[data-hovered] {
+    opacity: var(--hk-debug-float-hover-opacity, 0.45);
+  }
+
+  /* Drag exception: while the user is GRABBING the window it must stay
+   * fully opaque — fading mid-grab hides what the hand is holding. */
+  &[data-dragging] {
+    opacity: 1;
+  }
+}
+
+/* ---------- corner anchoring (pre-drag) ----------
+ * Physical corners on purpose: the `position` prop is named physically
+ * and the window is a viewport HUD, not in-flow content (HkFloatingLayer's
+ * precedent). Safe-area-aware like the HkFab/HkFloatingLayer insets. */
+.hk-debug-float {
+  &[data-corner="top-left"] {
+    top: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-top, 0px));
+    left: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-left, 0px));
+  }
+
+  &[data-corner="top-right"] {
+    top: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-top, 0px));
+    right: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-right, 0px));
+  }
+
+  &[data-corner="bottom-left"] {
+    bottom: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-bottom, 0px));
+    left: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-left, 0px));
+  }
+
+  &[data-corner="bottom-right"] {
+    bottom: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-bottom, 0px));
+    right: max(var(--hk-debug-float-offset, 16px), env(safe-area-inset-right, 0px));
+  }
+}
+
+/* ---------- header (drag handle) ---------- */
+.hk-debug-float [data-el="header"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-8) var(--space-4) var(--space-10);
+  border-bottom: 1px solid var(--border-faint);
+  background: rgb(var(--color-muted) / 8%);
+  cursor: grab;
+  /* The handle owns the drag gesture — mobile browsers must not fire
+   * pointercancel and scroll the page instead (HkMinimap precedent). */
+  touch-action: none;
+  @include user-select(none);
+}
+
+.hk-debug-float[data-dragging] [data-el="header"] {
+  cursor: grabbing;
+}
+
+.hk-debug-float [data-el="title"] {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--color-muted));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- body (slot content) ---------- */
+.hk-debug-float [data-el="body"] {
+  padding: var(--space-8);
+  /* A fat debug dump must never cover the viewport: cap and scroll.
+   * Bar-less HUD scroller (nativeScrollbar contract): the bar stays
+   * hidden, wheel/touch/keyboard still scroll. */
+  max-height: 40vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ---------- close ---------- */
+/* The close affordance rides the STANDARD icon button at the 24 rung
+ * (close-button family contract) with the seat class for this window. */
+.hk-debug-float-close {
+  flex-shrink: 0;
+}

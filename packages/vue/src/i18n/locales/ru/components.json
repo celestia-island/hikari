@@ -30,6 +30,7 @@
     "hikari::datePicker.prevYear": "Предыдущий год",
     "hikari::datePicker.prevYears": "Previous years",
     "hikari::datePicker.today": "Сегодня",
+    "hikari::debugFloat.title": "Отладка",
     "hikari::dateTimePicker.back": "Назад",
     "hikari::dateTimePicker.hour": "Час",
     "hikari::dateTimePicker.minute": "Минута",

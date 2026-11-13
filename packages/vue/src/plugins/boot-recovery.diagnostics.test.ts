@@ -34,7 +34,7 @@ import {
  */
 
 const GOLDEN_DEFAULT_SHA256 =
-  "bc3cd48e9bb05c26d3ee49e823b4b28cafdf429b761e17df09bde5ec05f714a0";
+  "b244cd45481ef9cd376c2e1a146fe78a51f9801c3e0c97dbd3057e6e28d9a5f7";
 const GOLDEN_HEAL_ONLY_SHA256 =
   "bee06d4652e55708d8b130fec11ff8ede54d4eafb944ef0d18f7be5a76b3dca6";
 

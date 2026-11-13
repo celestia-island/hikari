@@ -754,6 +754,15 @@ export { default as HkColorPicker } from "./components/HkColorPicker";
 export { default as HkCopyBadge } from "./components/HkCopyBadge";
 export { default as HkConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HkCrossfade } from "./components/HkCrossfade";
+export { default as HkDebugFloat } from "./components/HkDebugFloat";
+export {
+  clampDebugFloatPosition,
+  debugFloatStorageKey,
+  HK_DEBUG_FLOAT_DOCUMENT_Z,
+  HK_DEBUG_FLOAT_STORAGE_PREFIX,
+  type HkDebugFloatCorner,
+  type HkDebugFloatPersisted,
+} from "./components/debugFloat";
 export { default as HkTransitionContainer } from "./components/HkTransitionContainer";
 export { default as HkPaneHolder } from "./components/HkPaneHolder";
 export { default as HkWindowControls, isApplePlatform } from "./components/HkWindowControls";

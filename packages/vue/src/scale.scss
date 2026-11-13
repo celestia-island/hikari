@@ -96,6 +96,10 @@
   --hk-z-modal: 5000;        /* modal backdrop + frame */
   --hk-z-tooltip: 6000;      /* tooltip — above toasts and modals so its text
                                  is always readable and copyable */
+  --hk-z-debug-float: 80000; /* debug floating windows (HkDebugFloat): above
+                                all content chrome, strictly below the
+                                overlay root — a debug window must never
+                                cover the popup it measures */
   --hk-z-overlay-root: 90000; /* #hk-overlay-root — every floating layer's
                                  document-space elevation (overlay/overlayRoot.ts);
                                  above all content chrome, below the HUD root */

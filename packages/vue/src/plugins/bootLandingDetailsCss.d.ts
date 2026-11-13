@@ -3,9 +3,9 @@
 // disclosure.
 
 /**
- * Types for `bootLandingDetailsCss.mjs` — the generated boot failure panel's
+ * Types for `bootLandingDetailsCss.js` — the generated boot failure panel's
  * DETAILS sheet (compiled from `boot-landing-details.scss` by
- * `scripts/gen-boot-landing-css.mjs`; do not edit the module by hand).
+ * `scripts/gen-boot-landing-css.js`; do not edit the module by hand).
  *
  * A second artifact on purpose: this sheet is inlined into the generated
  * script only when the host opts into the raw-details pane

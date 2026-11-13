@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import { bootRecoveryScript } from "./boot-recovery.mjs";
+import { bootRecoveryScript } from "./boot-recovery.js";
 
 /**
  * The MULTILINGUAL matrix: a panel that is BOTH translated and reason-classed.
@@ -28,9 +28,9 @@ import { bootRecoveryScript } from "./boot-recovery.mjs";
  */
 
 const GOLDEN_DEFAULT_SHA256 =
-  "9c2e92b860bec8a0ab598dde0cea4044b09eb648d92f62d9ec2f08c16d4fc6e2";
+  "bc3cd48e9bb05c26d3ee49e823b4b28cafdf429b761e17df09bde5ec05f714a0";
 const GOLDEN_HEAL_ONLY_SHA256 =
-  "8c2f9e87abca07aceef26330f8f0b377bc3d1d0b332b9c6dfdf573ea79cc72f7";
+  "bee06d4652e55708d8b130fec11ff8ede54d4eafb944ef0d18f7be5a76b3dca6";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");

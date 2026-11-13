@@ -1,7 +1,7 @@
 import type { Plugin } from "vite";
 
 /**
- * Types for `boot-chrome.mjs` — the self-contained, published Vite plugin entry
+ * Types for `boot-chrome.js` — the self-contained, published Vite plugin entry
  * (`@celestia-island/hikari/plugins/boot-chrome`).
  *
  * The implementation is plain ESM with static Node imports on purpose: a

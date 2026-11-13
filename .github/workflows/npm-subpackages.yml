@@ -71,6 +71,9 @@ jobs:
       - name: Publish every sub-package whose version is not on the registry
         env:
           ONLY: ${{ github.event.inputs.package }}
+          # Only ever used by the first-release branch below. Absent = the
+          # normal OIDC path, which is where every later version goes.
+          NPM_BOOTSTRAP_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
@@ -145,6 +148,20 @@ jobs:
             case "$packument_status" in
               404)
                 echo "$name is unclaimed on the registry — no floor to compare against, first release"
+                # OIDC cannot create a package name: npm only mints a publish
+                # token for a package that already exists and has a trusted
+                # publisher. Measured on 2026-11-13 — the PUT reached the
+                # registry and came back 404. So the very first release of a
+                # new name needs a real token, once; every later version
+                # rides OIDC. The token is written into this run's npmrc and
+                # never printed.
+                if [ -n "${NPM_BOOTSTRAP_TOKEN:-}" ]; then
+                  printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_BOOTSTRAP_TOKEN" >> "$NPM_CONFIG_USERCONFIG"
+                  echo "using the one-time bootstrap token for this first release"
+                else
+                  echo "::error::$name has never been published and this repository has no NPM_TOKEN secret, so OIDC cannot create it (npm only mints publish tokens for packages that already exist). Add a repository secret NPM_TOKEN with @celestia-island write access, dispatch again, then delete the secret and register this workflow as the package's trusted publisher."
+                  exit 1
+                fi
                 ;;
               200)
                 set +e

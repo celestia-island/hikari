@@ -30,6 +30,7 @@
     "hikari::datePicker.prevYear": "前年",
     "hikari::datePicker.prevYears": "前の12年",
     "hikari::datePicker.today": "今日",
+    "hikari::debugFloat.title": "デバッグ",
     "hikari::dateTimePicker.back": "戻る",
     "hikari::dateTimePicker.hour": "時",
     "hikari::dateTimePicker.minute": "分",

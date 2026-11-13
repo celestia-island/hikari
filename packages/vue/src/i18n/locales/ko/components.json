@@ -30,6 +30,7 @@
     "hikari::datePicker.prevYear": "이전 연도",
     "hikari::datePicker.prevYears": "이전 12년",
     "hikari::datePicker.today": "오늘",
+    "hikari::debugFloat.title": "디버그",
     "hikari::dateTimePicker.back": "뒤로",
     "hikari::dateTimePicker.hour": "시",
     "hikari::dateTimePicker.minute": "분",

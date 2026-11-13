@@ -11,7 +11,12 @@ name: npm Sub-packages
 # a trusted publisher naming THIS workflow file. hikari is registered
 # against npm-release.yml; a sub-package first published from here needs
 # its own entry, and a brand-new package cannot be created by OIDC at all
-# — that first publish takes a human. A 404 on PUT means exactly this.
+# — that first publish takes a human. The binding is repo + workflow
+# filename + optional npm "environment"; this job declares no environment,
+# which is only correct if the npm side left it empty too. A 404 on PUT
+# means "no package / no trusted publisher"; a 403 means the OIDC token
+# was minted but rejected — check the workflow filename and environment
+# before reading either as a code bug.
 on:
   workflow_dispatch:
     inputs:
@@ -20,10 +25,11 @@ on:
         required: false
         default: ""
 
-# One dispatch at a time. Two in flight could publish out of order, and a
-# late-arriving dispatch for an older version would move npm's `latest`
-# backwards while later green runs (already-published → skip) never
-# correct it.
+# One dispatch at a time: two in flight would interleave a multi-package
+# run and leave it half-published. Serialising does NOT order by version —
+# a late dispatch for an older ref still runs — so the floor below (the
+# shared release_guard) is what actually keeps `latest` from moving
+# backwards.
 concurrency:
   group: npm-subpackages
   cancel-in-progress: false
@@ -36,6 +42,9 @@ jobs:
   publish:
     name: Publish sub-packages to npm
     runs-on: ubuntu-latest
+    # A stuck run holds the concurrency group; GitHub's default is six
+    # hours. Publishing a source-only package takes seconds.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -115,6 +124,12 @@ jobs:
               echo "::error::registry lookup for $name@$ver failed: $lookup"
               exit 1
             fi
+            # Same floor the main lane enforces (structural scan S1-2): a
+            # version older than npm's `latest` must never be published, or
+            # `latest` moves backwards and later green runs (already-
+            # published → skip) never correct it. Fail-closed offline.
+            python3 scripts/release_guard.py --registry npm \
+              --package "$name" --version "$ver"
             echo "publishing $name@$ver"
             ( cd "$dir" && npm publish --access public --provenance )
             published=$((published + 1))

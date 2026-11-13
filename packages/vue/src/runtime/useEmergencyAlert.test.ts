@@ -8,6 +8,7 @@ import {
   snoozeEmergencyAlert,
   useEmergencyAlert,
 } from "./useEmergencyAlert";
+import { listHkRuntime, readHkRuntime } from "./registry";
 
 /**
  * useEmergencyAlert contract tests:
@@ -102,5 +103,19 @@ describe("snooze episode semantics", () => {
 describe("severity rank", () => {
   it("danger outranks warning", () => {
     expect(emergencySeverityRank("danger")).toBeGreaterThan(emergencySeverityRank("warning"));
+  });
+});
+
+describe("runtime registry", () => {
+  it("the first raise registers the context (readHkRuntime answers)", () => {
+    raiseEmergencyAlert({ id: "reg", severity: "warning", title: "t" });
+    // readHkRuntime returns the entry's live read() snapshot directly.
+    expect(readHkRuntime("emergencyAlert")).toEqual({
+      active: [{ id: "reg", severity: "warning" }],
+      snoozed: 0,
+    });
+    // The registered entry itself is a "context".
+    const entry = listHkRuntime().find((e) => e.id === "emergencyAlert");
+    expect(entry?.kind).toBe("context");
   });
 });

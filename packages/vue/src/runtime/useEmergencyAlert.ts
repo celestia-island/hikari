@@ -165,7 +165,10 @@ export function raiseEmergencyAlert(opts: EmergencyAlertOptions): void {
     seq: ++nextSeq,
     snoozed: readSnoozeSet().has(opts.id),
   });
-  runtimeReport?.pulse();
+  // Lazy first-use registration (same contract as useToast/useBlockingToast):
+  // the context reports itself on the first raise so the live alert set is
+  // answerable from readHkRuntime("emergencyAlert").
+  ensureRuntimeReport().pulse();
 }
 
 /** End the episode for an id: remove the alert AND wipe its snooze

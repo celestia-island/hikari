@@ -74,18 +74,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The guard's own docstring says release workflows run this before
+          # the live check: a regression in its comparison logic turns the
+          # release red instead of silently disarming the floor.
+          python3 scripts/release_guard.py --selftest
           published=0
           matched=0
           for dir in packages/*/; do
             [ -f "$dir/package.json" ] || continue
             name=$(node -e "console.log(require('./$dir/package.json').name)")
-            # A missing version prints `undefined`, which is a non-empty
-            # string — reading it as a version would make `npm view name@`
-            # resolve `latest` and silently skip. Let node fail instead.
-            if ! ver=$(node -e "const v=require('./$dir/package.json').version; if(!v) process.exit(2); console.log(v)"); then
-              echo "::error::$name has no version in $dir/package.json"
-              exit 1
-            fi
             is_private=$(node -e "console.log(require('./$dir/package.json').private === true)")
             # The vue package is the main lane's business; a private package
             # is never published by definition; anything else under
@@ -111,6 +108,14 @@ jobs:
               continue
             fi
             matched=$((matched + 1))
+            # Read the version only now, so an internal package that never
+            # gets here cannot fail the run. A missing version prints
+            # `undefined`, a non-empty string that would make `npm view
+            # name@` resolve `latest` and skip silently — let node fail.
+            if ! ver=$(node -e "const v=require('./$dir/package.json').version; if(!v) process.exit(2); console.log(v)"); then
+              echo "::error::$name has no version in $dir/package.json"
+              exit 1
+            fi
             # A registry lookup answers three ways, and only one of them
             # means "go publish": E404 = the version is absent. Any other
             # failure (network, auth, 5xx) must stop the run — treating it

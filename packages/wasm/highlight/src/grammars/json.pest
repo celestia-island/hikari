@@ -1,0 +1,11 @@
+// json.pest — syntax highlighting grammar for JSON.
+whitespace = @{ (" " | "\t" | "\r" | "\n")+ }
+string = @{ "\"" ~ (!"\"" ~ ("\\" ~ ANY | ANY))* ~ "\"" }
+number = @{ "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+kw_const = @{ ("true" | "false" | "null") ~ !(ASCII_ALPHANUMERIC | "_") }
+punctuation = @{ "{" | "}" | "[" | "]" | "," | ":" }
+token = { string | number | kw_const | punctuation | whitespace | other }
+other = @{ ANY }
+
+// Top-level: repeat token to consume the whole input.
+tokens = { token+ }

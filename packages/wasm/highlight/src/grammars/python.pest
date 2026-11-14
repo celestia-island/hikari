@@ -1,0 +1,11 @@
+whitespace = @{ (" " | "\t")+ }
+comment = @{ "#" ~ (!"\n" ~ ANY)* }
+string = @{ "\"" ~ (!"\"" ~ !"\n" ~ ANY)* ~ "\""? }
+number = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+kw = @{ ("def" | "class" | "return" | "if" | "None") ~ !(ASCII_ALPHANUMERIC | "_") }
+identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+token = { comment | string | number | kw | identifier | whitespace | other }
+other = @{ ANY }
+
+// Top-level: repeat token to consume the whole input.
+tokens = { token+ }

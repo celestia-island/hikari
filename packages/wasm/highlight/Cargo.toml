@@ -1,0 +1,16 @@
+[package]
+name = "hikari-wasm-highlight"
+version = "0.1.0"
+license = "SySL-1.0"
+edition.workspace = true
+publish = false
+
+[dependencies]
+pest = "^2"
+pest_derive = "^2"
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+wit-bindgen = { version = "^0.57", features = ["macros"] }
+
+[lib]
+crate-type = ["cdylib", "rlib"]

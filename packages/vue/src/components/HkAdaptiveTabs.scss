@@ -2,8 +2,9 @@
  * HkAdaptiveTabs chrome: the mobile trigger row and the option rows
  * inside the HkSelectPanel surface. The rows reuse the shared
  * `hk-select-option` / `hk-menu-*` grammar (HkSelect's own option
- * voice), so this sheet only adds the trigger's caret geometry and a
- * selected-row emphasis — never a second option-row family.
+ * voice, including its checked/disabled faces from the shared
+ * menu-item mixin) — this sheet only adds the trigger's caret
+ * geometry and open-state flip, never a second option-row family.
  */
 
 .hk-adaptive-tabs {
@@ -38,12 +39,9 @@
 .hk-adaptive-tabs-option {
   text-align: left;
 
-  /* The checked face is NOT re-styled here: the shared menu-row mixin
-     (that the hk-select-option grammar composes) already paints
-     &[data-checked] — one emphasis, one implementation (R2 note). */
-  &[data-disabled] {
-    opacity: 0.45;
-  }
+  /* Checked AND disabled faces come from the shared menu-item mixin the
+     `hk-select-option` grammar already composes — nothing re-styled
+     here (one emphasis, one implementation). */
 }
 
 /* Open-state feedback for the trigger (the data-active hook the

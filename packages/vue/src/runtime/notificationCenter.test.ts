@@ -165,13 +165,16 @@ describe("ring buffer", () => {
       recordNotification({ id: `t${i}`, kind: "toast", tone: "info", title: String(i) });
     }
     expect(entries).toHaveLength(MAX_NOTIFICATION_ENTRIES);
-    // Deterministic recency: age the first survivors, refresh the last.
-    entries[0].updatedAt = 1;
+    // Deterministic recency: age a MIDDLE entry (R4 note — aging index
+    // 0 cannot distinguish "drop min(updatedAt)" from "drop index 0"),
+    // refresh the last, and require exactly the aged one to go.
+    entries[50].updatedAt = 1;
     entries[entries.length - 1].updatedAt = Date.now() + 10_000;
     recordNotification({ id: "fresh", kind: "toast", tone: "info", title: "fresh" });
     expect(entries).toHaveLength(MAX_NOTIFICATION_ENTRIES);
     expect(entries.some((e) => e.id === "fresh")).toBe(true);
-    expect(entries.some((e) => e.id === "t0")).toBe(false);
+    expect(entries.some((e) => e.id === "t55")).toBe(false);
+    expect(entries.some((e) => e.id === "t5")).toBe(true);
   });
 });
 

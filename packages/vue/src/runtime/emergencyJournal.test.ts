@@ -8,8 +8,7 @@ import {
   snoozeEmergencyAlert,
   unsnoozeEmergencyAlert,
   useEmergencyAlert,
-} from "./useEmergencyAlert";
-import { clearBlockingToasts, showBlockingToast } from "./useBlockingToast";
+} from "./useEmergencyAlert";import { clearBlockingToasts, showBlockingToast } from "./useBlockingToast";
 
 /**
  * Emergency/blocking → journal integration (user ruling 2026-11-15):
@@ -76,6 +75,20 @@ describe("emergency episode mirror", () => {
   it("clear ends the episode but KEEPS the record as cleared", () => {
     raiseEmergencyAlert({ id: "quota", severity: "warning", title: "额度" });
     clearEmergencyAlert("quota");
+    const { alerts } = useEmergencyAlert();
+    const { entries } = useNotificationCenter();
+    expect(alerts).toHaveLength(0);
+    const entry = entries.find((e) => e.id === "emergency:quota");
+    expect(entry?.state).toBe("cleared");
+    expect(entry?.onResummon).toBeUndefined();
+  });
+
+  it("resetEmergencyAlerts marks removed episodes' journal entries cleared", () => {
+    // R4 note (PR #1322): the teardown helper must not leave a snoozed
+    // journal entry armed with a resummon no alert can answer.
+    raiseEmergencyAlert({ id: "quota", severity: "warning", title: "额度" });
+    snoozeEmergencyAlert("quota");
+    resetEmergencyAlerts();
     const { alerts } = useEmergencyAlert();
     const { entries } = useNotificationCenter();
     expect(alerts).toHaveLength(0);

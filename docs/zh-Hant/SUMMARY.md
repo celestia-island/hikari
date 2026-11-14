@@ -15,6 +15,7 @@
 - [總覽](./design/overview.md)
 - [頁面骨架：動作區語法](./design/page-chrome.md)
 - [停靠位置：pin 與 ride](./design/dock-placement.md)
+- [通知中心：關閉語法](./design/notification-center.md)
 
 # 系統
 - [總覽](./system/overview.md)

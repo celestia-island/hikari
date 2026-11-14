@@ -50,3 +50,5 @@
 `components/HkNotificationBell.tsx`（ベル + パネルの一体構成）。
 ソースは `recordNotification` / `setNotificationState` で書き込み、
 ホストは `<HkNotificationBell />` をマウントして住まいを決める。
+
+ホスト記録の id は組み込みミラーと一つのフラットな文字列空間を共有します：`toast:` / `blocking:` / `emergency:` 接頭辞は組み込みが予約しており、常駐チップやカスタム項目を記録するホストは独自の接頭辞（例 `myapp:`）を選ぶ——カスタム id が組み込みエピソードを乗っ取ることは決してありません。

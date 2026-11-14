@@ -16,6 +16,7 @@
 - [Overview](./design/overview.md)
 - [Page Chrome: The Action-Bar Grammar](./design/page-chrome.md)
 - [Dock Placement: Pin or Ride](./design/dock-placement.md)
+- [Notification Center: The Dismissal Grammar](./design/notification-center.md)
 
 # System
 - [Overview](./system/overview.md)

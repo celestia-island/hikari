@@ -15,6 +15,7 @@
 - [概览](./design/overview.md)
 - [页面骨架：动作区语法](./design/page-chrome.md)
 - [停靠位：pin 与 ride](./design/dock-placement.md)
+- [通知中心：关闭语法](./design/notification-center.md)
 
 # 系统
 - [概览](./system/overview.md)

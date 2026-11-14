@@ -63,6 +63,57 @@ describe("record / update", () => {
     recordNotification({ id: "e", kind: "emergency", tone: "error", title: "t", state: "snoozed" });
     expect(entries[0].state).toBe("snoozed");
   });
+
+  it("a create-time read:true makes the entry born-read (blocking semantics)", () => {
+    const { entries } = useNotificationCenter();
+    recordNotification({
+      id: "blocking:x",
+      kind: "blocking",
+      tone: "warning",
+      title: "answered gate",
+      state: "dismissed",
+      read: true,
+    });
+    expect(entries[0].read).toBe(true);
+  });
+
+  it("callbacks are owned by the LATEST record call — an input without one clears", () => {
+    const { entries } = useNotificationCenter();
+    recordNotification({
+      id: "emergency:q",
+      kind: "emergency",
+      tone: "warning",
+      title: "t",
+      state: "snoozed",
+      onResummon: () => {},
+    });
+    expect(entries[0].onResummon).toBeTypeOf("function");
+    // A later re-record with no callback (an active re-raise) must not
+    // keep a restore button that unsnoozes nothing (R2 finding).
+    recordNotification({ id: "emergency:q", kind: "emergency", tone: "warning", title: "t" });
+    expect(entries[0].onResummon).toBeUndefined();
+  });
+
+  it("a CLEARED episode re-raising as active wakes up UNREAD (fresh episode)", () => {
+    const { entries } = useNotificationCenter();
+    recordNotification({ id: "emergency:q", kind: "emergency", tone: "warning", title: "seen" });
+    markAllNotificationsRead();
+    setNotificationState("emergency:q", "cleared");
+    expect(entries[0].read).toBe(true);
+    // The condition recurs: new information, the dot must light again.
+    recordNotification({
+      id: "emergency:q",
+      kind: "emergency",
+      tone: "warning",
+      title: "seen",
+      state: "active",
+    });
+    expect(entries[0].read).toBe(false);
+    // Unsnooze (setNotificationState active from snoozed) does NOT unread.
+    recordNotification({ id: "emergency:u", kind: "emergency", tone: "warning", title: "u", state: "snoozed", read: true });
+    setNotificationState("emergency:u", "active");
+    expect(entries.find((e) => e.id === "emergency:u")?.read).toBe(true);
+  });
 });
 
 describe("setState / forget / read", () => {

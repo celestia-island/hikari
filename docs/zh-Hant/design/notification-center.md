@@ -42,3 +42,5 @@ HeaderEndCluster），帶額外視窗控制鈕的桌面殼不受影響（它們�
 `components/HkNotificationBell.tsx`（鈴鐺 + 面板一體組合）。
 資料源經 `recordNotification` / `setNotificationState` 寫入；
 宿主掛 `<HkNotificationBell />` 並決定它住在哪。
+
+宿主記帳的 id 與內建鏡像共用同一個扁平字串空間：`toast:` / `blocking:` / `emergency:` 前綴為內建保留——宿主記錄駐留 chip 或自訂條目時自選前綴（如 `myapp:`），自訂 id 永遠不可能劫持內建 episode。

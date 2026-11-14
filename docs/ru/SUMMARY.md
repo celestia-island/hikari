@@ -15,6 +15,7 @@
 - [Обзор](./design/overview.md)
 - [Каркас страницы: грамматика панели действий](./design/page-chrome.md)
 - [Размещение дока: pin или ride](./design/dock-placement.md)
+- [Центр уведомлений: грамматика исчезновения](./design/notification-center.md)
 
 # Система
 - [Обзор](./system/overview.md)

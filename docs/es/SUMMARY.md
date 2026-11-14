@@ -15,6 +15,7 @@
 - [Descripción general](./design/overview.md)
 - [Cromo de página: la gramática de la barra de acciones](./design/page-chrome.md)
 - [Ubicación del dock: pin o ride](./design/dock-placement.md)
+- [Centro de notificaciones: la gramática del descarte](./design/notification-center.md)
 
 # Sistema
 - [Descripción general](./system/overview.md)

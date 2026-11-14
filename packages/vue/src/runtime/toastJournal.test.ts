@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { resetNotifications, useNotificationCenter } from "./notificationCenter";
 import { useToast, MAX_TOASTS_PER_SLOT } from "./useToast";
@@ -107,5 +107,39 @@ describe("dismissal bookkeeping", () => {
     toast.error("same");
     expect(entries).toHaveLength(1);
     expect(entries[0].title).toBe("same");
+  });
+
+  it("a reload's first toast does not collide with the previous session's record", async () => {
+    // R2 finding (PR #1322): the journal persists across reloads while
+    // the toast counters restart at zero. Pre-persist a record shaped
+    // exactly like what a PRE-epoch module would have written for the
+    // first error toast (`toast:1:1`) — the fresh module must join it
+    // as a NEW entry, not overwrite it in place (which would keep the
+    // old raisedAt/read and never light the dot).
+    sessionStorage.setItem(
+      "hk-notification-journal",
+      JSON.stringify([
+        {
+          id: "toast:1:1",
+          kind: "toast",
+          tone: "error",
+          title: "old session",
+          raisedAt: 1,
+          updatedAt: 1,
+          state: "dismissed",
+          read: true,
+        },
+      ]),
+    );
+    vi.resetModules();
+    const freshToast = (await import("./useToast")).useToast();
+    const freshJournal = await import("./notificationCenter");
+    freshToast.error("new session");
+    const { entries } = freshJournal.useNotificationCenter();
+    expect(entries).toHaveLength(2);
+    const freshEntry = entries.find((e) => e.title === "new session");
+    expect(freshEntry).toMatchObject({ state: "active", read: false });
+    expect(entries.find((e) => e.title === "old session")?.title).toBe("old session");
+    freshJournal.resetNotifications();
   });
 });

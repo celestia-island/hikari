@@ -60,3 +60,5 @@ punto de ruptura seguro en vivo.
 composición). Las fuentes escriben mediante `recordNotification` /
 `setNotificationState`; los anfitriones montan `<HkNotificationBell />`
 y deciden dónde vive.
+
+Los ids que registra el anfitrión comparten un espacio de cadenas plano con los espejos integrados: los prefijos `toast:` / `blocking:` / `emergency:` están reservados por ellos — un anfitrión que registre fichas persistentes o elementos propios elige su propio prefijo (p. ej. `myapp:`) para que un id personalizado nunca pueda secuestrar un episodio integrado.

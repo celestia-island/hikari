@@ -44,8 +44,11 @@ describe("HkNotificationBell composition contract", () => {
 
   it("restore is REPLAY-FREE except the entry's own resummon path", () => {
     const src = body();
-    // The only action a row may fire is the journal-carried callback.
+    // The only action a row may fire is the journal-carried callback,
+    // gated on the SNOOZED state (an on-screen band has nothing to
+    // restore — R2 finding, PR #1322).
     expect(src).toContain("onResummon?.()");
+    expect(src).toContain('entry.state === "snoozed"');
     // No direct emergency/toast import here — resummon must ride the
     // journal entry, or replay semantics would fork.
     expect(src).not.toContain("useEmergencyAlert");

@@ -6,6 +6,7 @@ import {
   raiseEmergencyAlert,
   resetEmergencyAlerts,
   snoozeEmergencyAlert,
+  unsnoozeEmergencyAlert,
   useEmergencyAlert,
 } from "./useEmergencyAlert";
 import { listHkRuntime, readHkRuntime } from "./registry";
@@ -103,6 +104,26 @@ describe("snooze episode semantics", () => {
 describe("severity rank", () => {
   it("danger outranks warning", () => {
     expect(emergencySeverityRank("danger")).toBeGreaterThan(emergencySeverityRank("warning"));
+  });
+});
+
+describe("unsnooze", () => {
+  it("restore makes the alert visible again and clears the record", () => {
+    const { alerts } = useEmergencyAlert();
+    raiseEmergencyAlert({ id: "q", severity: "warning", title: "t" });
+    snoozeEmergencyAlert("q");
+    expect(alerts[0].snoozed).toBe(true);
+    unsnoozeEmergencyAlert("q");
+    expect(alerts[0].snoozed).toBe(false);
+    expect(sessionStorage.getItem("hk-emergency-snooze")).not.toContain("q");
+  });
+
+  it("unsnoozing an unknown or visible alert is a no-op", () => {
+    raiseEmergencyAlert({ id: "q", severity: "warning", title: "t" });
+    expect(() => unsnoozeEmergencyAlert("ghost")).not.toThrow();
+    expect(() => unsnoozeEmergencyAlert("q")).not.toThrow();
+    const { alerts } = useEmergencyAlert();
+    expect(alerts[0].snoozed).toBe(false);
   });
 });
 

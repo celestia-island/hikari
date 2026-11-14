@@ -132,3 +132,16 @@ button.hk-persistent-toast {
     animation: none;
   }
 }
+
+// Icon-only mode (HkPersistentToast iconOnly prop): the chip collapses
+// to its tone icon — narrow chrome bars (mobile headers) keep a
+// clickable, severity-colored surface without the label text. The
+// label rides along as aria-label on the button, so the accessible
+// name survives the collapse.
+.hk-persistent-toast--icon-only {
+  padding: 2px var(--space-6, 0.375rem);
+
+  .hk-persistent-toast__label {
+    display: none;
+  }
+}

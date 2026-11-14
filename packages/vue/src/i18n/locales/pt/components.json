@@ -349,5 +349,6 @@
   "hikari::emergencyAlert.dismiss": "Ocultar por enquanto",
   "hikari::emergencyAlert.kicker.danger": "ALERTA CRÍTICO",
   "hikari::emergencyAlert.kicker.warning": "AVISO",
-  "hikari::emergencyAlert.more": "mais alerta(s) pendente(s)"
+  "hikari::emergencyAlert.more": "mais alerta(s) pendente(s)",
+  "hikari::emergencyAlert.restore": "Mostrar novamente"
 }

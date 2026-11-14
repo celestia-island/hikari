@@ -349,5 +349,6 @@
   "hikari::emergencyAlert.dismiss": "일시적으로 숨기기",
   "hikari::emergencyAlert.kicker.danger": "긴급 경고",
   "hikari::emergencyAlert.kicker.warning": "경고",
-  "hikari::emergencyAlert.more": "대기 중인 경고 더 있음"
+  "hikari::emergencyAlert.more": "대기 중인 경고 더 있음",
+  "hikari::emergencyAlert.restore": "다시 표시"
 }

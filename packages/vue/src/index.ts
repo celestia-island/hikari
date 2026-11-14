@@ -9,6 +9,7 @@ export { default as HCornerBadge } from "./components/HkCornerBadge";
 export { default as HBoard } from "./components/HkBoard";
 export { default as HBlockingToast } from "./components/HkBlockingToast";
 export { default as HEmergencyAlert } from "./components/HkEmergencyAlert";
+export { default as HEmergencySnoozeTray } from "./components/HkEmergencySnoozeTray";
 export { default as HBreadcrumb } from "./components/HkBreadcrumb";
 export { default as HButton } from "./components/HkButton";
 export { default as HCard } from "./components/HkCard";
@@ -424,6 +425,7 @@ export {
   raiseEmergencyAlert,
   clearEmergencyAlert,
   snoozeEmergencyAlert,
+  unsnoozeEmergencyAlert,
   resetEmergencyAlerts,
   emergencySeverityRank,
   type EmergencyAlertItem,
@@ -757,6 +759,7 @@ export { default as HkBadge } from "./components/HkBadge";
 export { default as HkBoard } from "./components/HkBoard";
 export { default as HkBlockingToast } from "./components/HkBlockingToast";
 export { default as HkEmergencyAlert } from "./components/HkEmergencyAlert";
+export { default as HkEmergencySnoozeTray } from "./components/HkEmergencySnoozeTray";
 export { default as HkBreadcrumb } from "./components/HkBreadcrumb";
 export { default as HkButton } from "./components/HkButton";
 export { default as HkCard } from "./components/HkCard";

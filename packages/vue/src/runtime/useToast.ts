@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "./cronBus";
+import { recordNotification, setNotificationState } from "./notificationCenter";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
 export type ToastType = "error" | "success" | "warning" | "info" | "loading";
@@ -59,6 +60,17 @@ export interface ToastItem {
    * icon/tone, which stays fixed for the slot's lifetime.
    */
   key?: string;
+  /**
+   * Whether the slot feeds the notification-center journal (user ruling
+   * 2026-11-15: the tones worth a second look — error/warning — journal
+   * by DEFAULT; success/info/loading only by explicit opt-in, because
+   * journaling every 3s "Saved." buries the list in noise). Opt-in is
+   * monotonic per slot like `copyable`: one `journal: true` push turns
+   * the whole slot in. Journaling is a RECORD, not a replay — the
+   * notification center shows what was said; a toast action button
+   * (a caller closure) is never re-fired from there.
+   */
+  journal?: boolean;
 }
 
 /** Hard cap on stacked messages per toast slot. Beyond it the oldest
@@ -101,9 +113,20 @@ function clearTimer(slotId: number) {
 
 function removeSlot(slotId: number) {
   const idx = state.toasts.findIndex((t) => t.id === slotId);
-  if (idx !== -1) state.toasts.splice(idx, 1);
-  clearTimer(slotId);
-  if (idx !== -1) runtimeReport?.pulse(); // unknown-id no-ops stay pulse-silent
+  if (idx !== -1) {
+    const slot = state.toasts[idx];
+    state.toasts.splice(idx, 1);
+    // Journal bookkeeping: everything that just left the screen becomes
+    // a "dismissed" record. Unknown-id no-ops cover messages pushed
+    // before a later `journal: true` opt-in upgraded the slot.
+    for (const m of slot.messages) {
+      setNotificationState(`toast:${slot.id}:${m.id}`, "dismissed");
+    }
+    clearTimer(slotId);
+    runtimeReport?.pulse();
+  } else {
+    clearTimer(slotId); // unknown-id no-ops stay pulse-silent
+  }
 }
 
 function scheduleAutoDismiss(slot: ToastItem) {
@@ -126,10 +149,30 @@ function findSlot(type: ToastType, key?: string): ToastItem | undefined {
   return state.toasts.find((t) => t.type === type && t.key === undefined);
 }
 
+/** Journal one toast message as the slot sees it (no-op unless the slot
+ *  journals). The entry mirrors the slot tone; dismissal is recorded by
+ *  removeSlot / cap eviction, never here. */
+function journalMessage(slot: ToastItem, msgId: number, text: string): void {
+  if (!slot.journal) return;
+  recordNotification({
+    id: `toast:${slot.id}:${msgId}`,
+    kind: "toast",
+    tone: slot.type,
+    title: text,
+    state: "active",
+  });
+}
+
 function push(
   type: ToastType,
   text: string,
-  options: { key?: string; duration?: number; copyable?: boolean; action?: ToastAction } = {},
+  options: {
+    key?: string;
+    duration?: number;
+    copyable?: boolean;
+    action?: ToastAction;
+    journal?: boolean;
+  } = {},
 ): number {
   let slot = findSlot(type, options.key);
   if (!slot) {
@@ -140,12 +183,17 @@ function push(
       duration: options.duration ?? TOAST_DURATION[type],
       copyable: options.copyable ?? defaultCopyable(type),
       action: options.action,
+      journal: options.journal ?? (type === "error" || type === "warning"),
       ...(options.key !== undefined ? { key: options.key } : {}),
     };
     state.toasts.push(slot);
   } else {
     if (options.copyable === true && !slot.copyable) {
       slot.copyable = true;
+    }
+    // Journal opt-in is monotonic (same shape as the copyable upgrade).
+    if (options.journal === true && !slot.journal) {
+      slot.journal = true;
     }
     // Latest push owns the action: re-passing it keeps the button, a
     // plain message (no action) clears it off the shared slot.
@@ -162,10 +210,16 @@ function push(
     msgId = ++nextMsgId;
     slot.messages.push({ id: msgId, text });
   }
-  // Cap: drop the oldest messages beyond the per-slot cap.
+  // Cap: drop the oldest messages beyond the per-slot cap. Evicted
+  // messages left the screen without user action — record them
+  // "dismissed" so the journal keeps what the stack had to forget.
   while (slot.messages.length > MAX_TOASTS_PER_SLOT) {
-    slot.messages.shift();
+    const evicted = slot.messages.shift();
+    if (evicted) {
+      setNotificationState(`toast:${slot.id}:${evicted.id}`, "dismissed");
+    }
   }
+  journalMessage(slot, msgId, text);
   scheduleAutoDismiss(slot);
   runtimeReport?.pulse();
   return msgId;
@@ -183,6 +237,7 @@ export function useToast() {
       duration: options.duration,
       copyable: options.copyable,
       action: options.action,
+      journal: options.journal,
     });
   }
 

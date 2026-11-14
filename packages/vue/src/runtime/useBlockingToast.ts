@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "./cronBus";
+import { recordNotification, type HkNotificationTone } from "./notificationCenter";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
 export type BlockingToastVariant = "info" | "warning" | "danger";
@@ -67,6 +68,14 @@ const resolvers = new Map<number, (value: boolean) => void>();
 const timers = new Map<number, CronHandle>();
 let nextId = 0;
 
+/** Blocking variants ride the journal's tone vocabulary (danger reads
+ *  as the error tone in the notification center list). */
+const BLOCKING_TONE: Record<BlockingToastVariant, HkNotificationTone> = {
+  info: "info",
+  warning: "warning",
+  danger: "error",
+};
+
 function settle(id: number, value: boolean) {
   const resolve = resolvers.get(id);
   if (!resolve) return;
@@ -77,7 +86,22 @@ function settle(id: number, value: boolean) {
     timers.delete(id);
   }
   const idx = state.queue.findIndex((item) => item.id === id);
-  if (idx !== -1) state.queue.splice(idx, 1);
+  if (idx !== -1) {
+    const item = state.queue[idx];
+    state.queue.splice(idx, 1);
+    // Journal the ANSWERED gate (user ruling 2026-11-15: every gating
+    // prompt is worth a second look — blocking toasts journal by
+    // default, no opt-in). The record is what was asked, not what was
+    // answered — the boolean went to the caller's promise.
+    recordNotification({
+      id: `blocking:${item.id}`,
+      kind: "blocking",
+      tone: BLOCKING_TONE[item.variant],
+      title: item.title ?? item.message,
+      ...(item.title !== undefined ? { detail: item.message } : {}),
+      state: "dismissed",
+    });
+  }
   runtimeReport?.pulse();
   resolve(value);
 }

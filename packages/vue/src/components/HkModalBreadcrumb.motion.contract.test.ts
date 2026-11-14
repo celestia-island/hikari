@@ -99,6 +99,11 @@ const reducedBreadcrumb = topBlock(breadcrumb, "@media (prefers-reduced-motion: 
 const reducedList = topBlock(list, "@media (prefers-reduced-motion: reduce)");
 
 const MODAL_POSE = "translateY(10px) scale(0.97)";
+/** The strip's own ride legs — px only; the centering sits on the
+ *  `translate` longhand (see the carrier test below). */
+const POSE_FROM = "translateY(-10px) scale(0.97)";
+const POSE_TO = "translateY(0) scale(1)";
+const CENTERING = "-50% -50%";
 const EASE_OUT = "cubic-bezier(0.33, 1, 0.68, 1)";
 const EASE_IN = "cubic-bezier(0.45, 0, 0.55, 1)";
 
@@ -121,10 +126,10 @@ describe("strip surface enter/leave (window choreography)", () => {
     expect(enter).toContain(`transform var(--duration-normal, 0.3s) ${EASE_OUT}`);
     const from = rule(breadcrumb, ".hk-modal-breadcrumb-enter-from");
     expect(from).toContain("opacity: 0");
-    expect(from).toContain("translate(-50%, calc(-50% - 10px)) scale(0.97)");
+    expect(from).toContain(`transform: ${POSE_FROM}`);
     const to = rule(breadcrumb, ".hk-modal-breadcrumb-enter-to");
     expect(to).toContain("opacity: 1");
-    expect(to).toContain("translate(-50%, -50%) scale(1)");
+    expect(to).toContain(`transform: ${POSE_TO}`);
   });
 
   it("leaves as the true reverse, quicker than the windows it names", () => {
@@ -133,21 +138,34 @@ describe("strip surface enter/leave (window choreography)", () => {
     expect(leave).toContain(`transform var(--duration-short, 0.15s) ${EASE_IN}`);
     const to = rule(breadcrumb, ".hk-modal-breadcrumb-leave-to");
     expect(to).toContain("opacity: 0");
-    expect(to).toContain("translate(-50%, calc(-50% - 10px)) scale(0.97)");
+    expect(to).toContain(`transform: ${POSE_FROM}`);
   });
 
-  it("keeps the centering prefix in every animated state", () => {
-    // The resting rule's transform is byte-identical to the enter-to /
-    // leave-from state — a re-seated mid-flight frame would drift the
-    // strip off its measured `top` line (the modal frame keeps the same
-    // contract for its dragged-shift vars).
-    const resting = rule(breadcrumb, ".hk-modal-breadcrumb")
-      .match(/transform:\s*([^;]+);/)?.[1]
-      ?.trim();
-    expect(resting).toBe("translate(-50%, -50%)");
-    expect(rule(breadcrumb, ".hk-modal-breadcrumb-enter-to")).toContain(
-      `transform: ${resting} scale(1)`,
-    );
+  it("carries the centering on the translate longhand, never in an animated transform", () => {
+    // The strip's box changes WHILE it is up (the keyed crumb list folds its
+    // tail, a late webfont reflows the labels, a crumb is re-inserted), and
+    // those changes land mid-entrance. A -50% inside the transitioned
+    // `transform` freezes its composited matrix against the mount-time box,
+    // re-seating the strip against a stale height — the modal-frame defect
+    // family hikari #1325 removed. The centering therefore rides the
+    // individual `translate` longhand, which re-resolves every frame.
+    const base = rule(breadcrumb, ".hk-modal-breadcrumb");
+    expect(base).toContain(`translate: ${CENTERING}`);
+    expect(base, "the base rule must not carry a transform").not.toMatch(/transform\s*:/);
+    // Known-positive probe: the sweep below is worthless if it matches no
+    // rule at all (hikari #1325's first sweep shipped vacuous exactly that
+    // way), so assert the ride rules really are in the compiled sheet.
+    const rides = [".hk-modal-breadcrumb-enter-from", ".hk-modal-breadcrumb-leave-to"];
+    for (const sel of rides) expect(rule(breadcrumb, sel)).toContain("transform:");
+    // Every rule in this sheet that does carry a transform must be
+    // percentage-free (the ride legs are px only).
+    const offenders: string[] = [];
+    for (const frame of frames(breadcrumb)) {
+      const decl = frame.body.match(/transform\s*:\s*([^;]+);/)?.[1]?.trim();
+      if (decl === undefined || decl === "none") continue;
+      if (decl.includes("%")) offenders.push(`${frame.selectors.join(", ")} { transform: ${decl} }`);
+    }
+    expect(offenders, "the animated transform must stay percentage-free").toEqual([]);
   });
 
   it("has no keyframe animation on the base class (no double entrance)", () => {

@@ -3,7 +3,17 @@
 .hk-modal-breadcrumb {
   position: fixed;
   left: 50%;
-  transform: translate(-50%, -50%);
+  /* The centering pair lives on the individual `translate` property —
+     NEVER inside the animated `transform` (see the choreography block
+     below). The strip's box changes while it is up: the keyed crumb list
+     folds its tail, labels wrap when a late webfont lands, and the script
+     side re-inserts a crumb — all mid-flight during an entrance. A -50%
+     frozen inside a running ride's matrices would then re-seat the strip
+     against its mount-time height, the exact defect family hikari #1325
+     removed from the modal frame; the longhand re-resolves against the
+     live box on every frame. `translate` composes before `transform`, so
+     the painted order (centre, then the ride legs) is unchanged. */
+  translate: -50% -50%;
   /* Above every popup band's scrim (modal 1000+, dropdown 2000+; in-band
      steps of 2 keep real stacks far below this) so multi-layer windows
      never bury the strip; still below tooltip (3000) / toast (4000). */
@@ -48,9 +58,11 @@
    (opacity + transform only; nothing layout ever animates — the
    backdrop-filtered layer never re-rasters mid-motion).
 
-   The centering translate is the PERMANENT transform prefix in every
-   state (byte-identical between resting and animated), exactly the
-   contract the modal frame keeps for its dragged-shift vars.
+   The centering pair rides the individual `translate` property only;
+   the ride states below animate px legs (translateY + scale) and carry
+   no percentage at all, so a mid-flight box change can never freeze a
+   stale -50% into the strip's composited matrices (the carrier split
+   the modal frame adopted in hikari #1325).
 
    Vue drives these classes (<Transition name="hk-modal-breadcrumb"
    appear> in the tsx); there is no keyframe animation on the base class —
@@ -73,13 +85,13 @@
 .hk-modal-breadcrumb-enter-from,
 .hk-modal-breadcrumb-leave-to {
   opacity: 0;
-  transform: translate(-50%, calc(-50% - 10px)) scale(0.97);
+  transform: translateY(-10px) scale(0.97);
 }
 
 .hk-modal-breadcrumb-enter-to,
 .hk-modal-breadcrumb-leave-from {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translateY(0) scale(1);
 }
 
 /* ── The keyed crumb list ────────────────────────────────────────────

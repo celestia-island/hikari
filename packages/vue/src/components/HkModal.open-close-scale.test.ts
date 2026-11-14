@@ -3,10 +3,14 @@
  * against the COMPILED stylesheet, not the source text.
  *
  * User direction 2026-11-07 (fifth revision, chosen from a comparison
- * page): the whole window zooms and rises — B3. The frame's transform is
- * the permanent centering translate with a translateY+scale appended, a
- * compositor-only motion; opacity rides the same clock. The body carries
- * NO rule in this choreography (nothing inside is ever scaled on its own).
+ * page): the whole window zooms and rises — B3. The ride lives on
+ * `transform` as a px-only translateY+scale pair; the PERMANENT centering
+ * lives on the individual `translate` property (2026-11-15 carrier split —
+ * it composes before `transform`, is never animated, and re-resolves
+ * against the live box every frame, so a mid-enter content growth can no
+ * longer seat the window on a stale ride matrix); opacity rides the same
+ * clock. The body carries NO rule in this choreography (nothing inside is
+ * ever scaled on its own).
   */
 import { describe, expect, it } from "vitest";
 import { dirname, join } from "node:path";
@@ -305,14 +309,15 @@ const RIDE = [
 
 const child = (parent: MockElement, cls: string): MockElement => el([cls], parent);
 
-const CENTERING =
-  "translate(calc(-50% + var(--hk-modal-shift-x, 0px)), calc(-50% + var(--hk-modal-shift-y, 0px)))";
+const CENTERING_TRANSLATE =
+  "calc(-50% + var(--hk-modal-shift-x, 0px)) calc(-50% + var(--hk-modal-shift-y, 0px))";
 
-/** Frame ride states: the centering translate is a PERMANENT prefix and
- *  only the appended scaleY changes (2026-11-06: the window's height rides
- *  the open/close about its center). */
-const FRAME_FROM = `${CENTERING} translateY(10px) scale(0.97)`;
-const FRAME_TO = `${CENTERING} translateY(0) scale(1)`;
+/** Frame ride states: the centering translate lives on the INDIVIDUAL
+ *  `translate` property (never animated, re-resolves against the live box
+ *  every frame — the 2026-11-15 field fix) and only the ride legs change
+ *  on `transform` (the whole window zooms about its center). */
+const FRAME_FROM = "translateY(10px) scale(0.97)";
+const FRAME_TO = "translateY(0) scale(1)";
 
 /** Exact compiled transition values (winner()-normalized) — pinned whole,
  *  not by prefix: an embedded fourth time value (delay) or a smuggled extra
@@ -337,42 +342,98 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
   });
 
   it("rides the whole window on the centering translate plus a zoom pair", () => {
-    // B3 (user direction 2026-11-07, fifth revision): the frame's transform
-    // is the PERMANENT centering translate with a translateY+scale appended
-    // — a compositor-only motion. Rest keeps the bare translate; the two
-    // ride ends are the contracted zoom pair, byte-identical across the
-    // draggable variant. Anything else (a bare scale, a lost shift token,
-    // a different function order) is the regression this pins.
+    // B3 (user direction 2026-11-07, fifth revision; carrier split
+    // 2026-11-15): the frame's `transform` is ONLY the ride legs
+    // (translateY+scale, percentages nowhere) — a compositor-safe px-only
+    // animation — while the PERMANENT centering lives on the individual
+    // `translate` property in every state, shift tokens included. A
+    // -50% smuggled back into any ride state is the exact regression
+    // this pins: the ride would freeze its matrices against the
+    // mount-time box again and a mid-enter content growth would seat the
+    // window low (2026-11-15 field report).
     for (const state of [...RIDE, { name: "rest", classes: [] as string[] }]) {
       const compressed = state.classes.some((c) =>
         c.includes("enter-from") || c.includes("leave-to"));
       const expected = state.classes.length === 0
-        ? CENTERING
+        ? undefined
         : compressed ? FRAME_FROM : FRAME_TO;
       for (const [label, frame] of [
         ["", frameWith(...state.classes)],
         ["draggable ", draggableFrameWith(...state.classes)],
       ] as const) {
         expect(winner(frame, "transform", DESKTOP), `${label}${state.name}`).toBe(expected);
-        for (const prop of ["scale", "zoom", "translate", "rotate", "transform-origin"]) {
+        expect(winner(frame, "translate", DESKTOP), `${label}${state.name} translate`).toBe(
+          CENTERING_TRANSLATE,
+        );
+        for (const prop of ["scale", "zoom", "rotate", "transform-origin"]) {
           expect(winner(frame, prop, DESKTOP), `${label}${state.name} ${prop}`).toBeUndefined();
+        }
+        // The ride transform carries no percentage anywhere — the whole
+        // point of the carrier split (a % leg inside the animated
+        // property is what froze the stale centering offset).
+        if (expected !== undefined) {
+          expect(expected, `${label}${state.name} has no % leg`).not.toContain("%");
         }
       }
     }
   });
 
+  it("never lets the centering percentage ride the animated transform", () => {
+    // Fail-closed, selector-level and MEDIA-INDEPENDENT: every rule that
+    // names the frame — the base rule, any ride state, any media-gated
+    // duplicate — must keep the CENTERING legs (-50%, and the shift vars
+    // they are composed with) out of the ANIMATED `transform` property.
+    // They live on the `translate` longhand alone; inside a transitioned
+    // transform their matrices freeze against the mount-time box, which
+    // is the 2026-11-15 field bug verbatim. The mobile sheet's
+    // `translateY(100%)` slide is a DIFFERENT percentage by design (it
+    // docks from below the viewport and is pinned by the sheet test) and
+    // stays legal here.
+    const offenders: string[] = [];
+    for (const rule of RULES) {
+      if (!/hk-modal-content/.test(rule.selector)) continue;
+      const isRide = /hk-modal-content-(enter|leave)-(from|to|active)/.test(rule.selector);
+      for (const prop of rule.declarations.keys()) {
+        if (prop !== "transform") continue;
+        const value = (rule.declarations.get(prop) ?? "").replace(/\s+/g, " ").trim();
+        if (value === "none") continue;
+        if (value.includes("-50%")) {
+          offenders.push(`${rule.selector} { transform: ${value} } (a centering leg in the animated transform)`);
+        } else if (isRide && value.includes("var(--hk-modal-shift")) {
+          offenders.push(`${rule.selector} { transform: ${value} } (shift vars belong to the translate longhand)`);
+        }
+      }
+    }
+    expect(offenders, "the centering carrier must stay the translate longhand").toEqual([]);
+    // Known-positive self-check: the probes above must really see the ride
+    // rules (the R2-audited matcher bug made this sweep vacuous once — a
+    // matcher that matches nothing is not a green gate).
+    expect(RULES.filter((r) => /hk-modal-content-(enter|leave)-(from|to)/.test(r.selector)).length).toBeGreaterThan(0);
+    const probe = RULES.find(
+      (r) => /hk-modal-content-enter-from/.test(r.selector) && r.declarations.has("transform"),
+    );
+    expect(probe, "an enter-from transform rule exists to guard").toBeDefined();
+  });
+
   it("never lets a transform longhand creep onto the frame", () => {
-    // A frame-level `scale:` / `zoom:` / `translate:` / `rotate:` longhand
+    // The frame carries exactly ONE longhand — the centering `translate`
+    // — plus nothing else: a frame-level `scale:` / `zoom:` / `rotate:`
     // (or an origin override) would ride the chrome on its own grammar
-    // instead of the contracted translate+scaleY list.
+    // instead of the contracted ride list.
     for (const state of RIDE) {
       const frame = frameWith(...state.classes);
-      for (const prop of ["scale", "zoom", "translate", "rotate", "transform-origin"]) {
+      expect(winner(frame, "translate", DESKTOP), `${state.name} frame translate`).toBe(
+        CENTERING_TRANSLATE,
+      );
+      for (const prop of ["scale", "zoom", "rotate", "transform-origin"]) {
         expect(winner(frame, prop, DESKTOP), `${state.name} frame ${prop}`).toBeUndefined();
       }
       // …and the same at rest, where a duplicate frame rule would re-seat it.
       const rest = frameWith();
-      for (const prop of ["scale", "zoom", "translate", "rotate", "transform-origin"]) {
+      expect(winner(rest, "translate", DESKTOP), "rest frame translate").toBe(
+        CENTERING_TRANSLATE,
+      );
+      for (const prop of ["scale", "zoom", "rotate", "transform-origin"]) {
         expect(winner(rest, prop, DESKTOP), `rest frame ${prop}`).toBeUndefined();
       }
     }
@@ -467,22 +528,27 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(winner(body, "transition", DESKTOP_REDUCED)).toBe("none");
     expect(winner(body, "will-change", DESKTOP_REDUCED)).toBe("auto");
     expect(winner(frame, "transition", DESKTOP_REDUCED)).toBe("none");
-    // The frame's height ride flattens too: the ride states fall back to
-    // the bare centering translate (no appended scaleY) — same specificity
-    // as the desktop state rules, later in the sheet, so the flatten wins
-    // by source order. Both ride directions pin (R2 finding 2026-11-06
-    // (S3): the body flatten used to pin enter-from only).
-    expect(winner(frame, "transform", DESKTOP_REDUCED)).toBe(CENTERING);
+    // The ride flatten is now "no ride legs at all": the ride states drop
+    // their transform override while the centering — which lives on the
+    // individual `translate` property, outside every ride rule — keeps
+    // the desktop frame seated. Both ride directions pin (R2 finding
+    // 2026-11-06 (S3): the body flatten used to pin enter-from only).
+    expect(winner(frame, "transform", DESKTOP_REDUCED)).toBe("none");
+    expect(winner(frame, "translate", DESKTOP_REDUCED)).toBe(CENTERING_TRANSLATE);
     const leaveEnd = frameWith("hk-modal-content-leave-to", "hk-modal-content-leave-active");
-    expect(winner(leaveEnd, "transform", DESKTOP_REDUCED)).toBe(CENTERING);
+    expect(winner(leaveEnd, "transform", DESKTOP_REDUCED)).toBe("none");
+    expect(winner(leaveEnd, "translate", DESKTOP_REDUCED)).toBe(CENTERING_TRANSLATE);
     const leaveBody = child(leaveEnd, "hk-modal-body");
     expect(winner(leaveBody, "transform", DESKTOP_REDUCED)).toBe("none");
     // Phones flatten too: the media-independent reduce block also wins over
     // the ≤767px sheet's translateY(100%) — a reduced-motion phone falls
-    // back to the bare translate (one opacity-0 frame hides the flip)
-    // instead of a full-height slide flash.
-    expect(winner(frame, "transform", MOBILE_REDUCED)).toBe(CENTERING);
-    expect(winner(leaveEnd, "transform", MOBILE_REDUCED)).toBe(CENTERING);
+    // back to a plain fade in place (one opacity-0 frame hides the flip)
+    // instead of a full-height slide flash. The sheet's own translate
+    // neutralization holds under reduce as well.
+    expect(winner(frame, "transform", MOBILE_REDUCED)).toBe("none");
+    expect(winner(leaveEnd, "transform", MOBILE_REDUCED)).toBe("none");
+    expect(winner(frame, "translate", MOBILE_REDUCED)).toBe("none");
+    expect(winner(leaveEnd, "translate", MOBILE_REDUCED)).toBe("none");
   });
 
   it("keeps the mobile sheet's translateY choreography untouched", () => {
@@ -498,6 +564,21 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     expect(winner(frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active"), "transform", MOBILE)).toBe("none");
     const resting = frameWith();
     expect(winner(resting, "transform", MOBILE)).toBe("none");
+    // The desktop centering `translate` is NEUTRALIZED in the sheet
+    // branch — a docked sheet anchors by top:auto/bottom/full width, and
+    // the live -50%/-50% would shift it up-left by half its own size.
+    // Pinned at all three shapes: entering, leaving, resting (the sheet
+    // rule is class-independent, but the states are where a ride rule
+    // could smuggle a translate back in).
+    for (const [name, f] of [
+      ["enter-from", frame],
+      ["leave-to", leaveEnd],
+      ["enter-to", frameWith("hk-modal-content-enter-to", "hk-modal-content-enter-active")],
+      ["leave-from", frameWith("hk-modal-content-leave-from", "hk-modal-content-leave-active")],
+      ["rest", resting],
+    ] as const) {
+      expect(winner(f, "translate", MOBILE), `sheet ${name} translate`).toBe("none");
+    }
     // No content-region scale in the sheet layout — at EITHER end of the
     // ride. The settled states used to go unpinned (a max-width block
     // could scale the body there and no assertion noticed; R3 mutation
@@ -595,9 +676,10 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
       "bottom",
     ]);
     // The contracted transform values a ride rule may carry. Frame: the
-    // three translate+scaleY states (reduced-motion flatten included);
-    // body: nothing (its width is never scaled — 2026-11-07).
-    const LEGAL_FRAME = new Set([CENTERING, FRAME_FROM, FRAME_TO]);
+    // two px-only zoom pairs (reduced-motion flatten included — the
+    // centering lives on the `translate` longhand, outside every ride
+    // rule); body: nothing (its width is never scaled — 2026-11-07).
+    const LEGAL_FRAME = new Set([FRAME_FROM, FRAME_TO, "none"]);
     // The body carries no transform contract any more (2026-11-07): any
     // ride rule targeting it is an offender outright.
     const LEGAL_BODY = new Set<string>([

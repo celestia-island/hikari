@@ -181,10 +181,11 @@ export default defineComponent({
     backGuard: { type: Boolean, default: true },
     /**
      * Desktop-only drag: the header becomes a grab handle that moves
-     * the centered frame (composited into the transform via the
-     * --hk-modal-shift-x/y vars, so the enter/leave choreography is
-     * untouched). The mobile bottom sheet never drags. Reopening
-     * resets the shift.
+     * the centered frame (the shift composes into the frame's
+     * individual `translate` property via the --hk-modal-shift-x/y
+     * vars, so the enter/leave choreography — which animates only
+     * `transform` — is untouched). The mobile bottom sheet never
+     * drags. Reopening resets the shift.
      */
     draggable: { type: Boolean, default: false },
   },
@@ -212,7 +213,8 @@ export default defineComponent({
     const bodyRef = ref<HTMLElement>();
     const contentRef = ref<HTMLElement>();
     /** Live drag shift in px (null = not dragged); mirrored onto the
-     * frame as CSS vars so the class-driven transforms stay intact. */
+     * frame as CSS vars so the centering `translate` property (and the
+     * class-driven choreography) stays intact. */
     const dragShift = ref<{ x: number; y: number } | null>(null);
     let dragStart: { px: number; py: number; x: number; y: number } | null = null;
 

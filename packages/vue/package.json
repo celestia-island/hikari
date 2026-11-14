@@ -86,7 +86,7 @@
     "marked": "^18"
   },
   "devDependencies": {
-    "@bytecodealliance/preview2-shim": "^0.31.1",
+    "@bytecodealliance/preview2-shim": "^0.31",
     "@types/node": "^*",
     "@types/three": "^0.185",
     "@vitejs/plugin-vue": "^*",

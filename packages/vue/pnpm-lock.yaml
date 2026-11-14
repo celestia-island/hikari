@@ -44,7 +44,7 @@ importers:
         version: 3.5.40(typescript@6.0.3)
     devDependencies:
       '@bytecodealliance/preview2-shim':
-        specifier: ^0.31.1
+        specifier: ^0.31
         version: 0.31.1
       '@types/node':
         specifier: ^*

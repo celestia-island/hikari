@@ -2,13 +2,18 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Direction {
+    #[serde(rename = "TD")]
     TopDown,
+    #[serde(rename = "BT")]
     BottomUp,
+    #[serde(rename = "LR")]
     LeftRight,
+    #[serde(rename = "RL")]
     RightLeft,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum NodeShape {
     Rect,
     Rounded,
@@ -24,6 +29,7 @@ pub struct MermaidNode {
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum EdgeType {
     Arrow,
     Line,
@@ -34,11 +40,16 @@ pub struct MermaidEdge {
     pub source: String,
     pub target: String,
     pub label: Option<String>,
+    #[serde(rename = "edgeType")]
     pub edge_type: EdgeType,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct MermaidDiagram {
+    /// Always "graph" — mirrors the TS MermaidGraphDoc discriminator.
+    pub kind: String,
+    /// "flowchart" | "state" — mirrors the TS variant flag.
+    pub variant: String,
     pub direction: Direction,
     pub nodes: Vec<MermaidNode>,
     pub edges: Vec<MermaidEdge>,

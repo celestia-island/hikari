@@ -45,6 +45,8 @@ pub fn parse(source: &str) -> Result<MermaidDiagram, String> {
     }
 
     Ok(MermaidDiagram {
+        kind: "graph".to_string(),
+        variant: "flowchart".to_string(),
         direction,
         nodes,
         edges,

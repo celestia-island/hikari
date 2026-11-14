@@ -139,6 +139,11 @@ const DYNAMIC_KEY_FAMILIES: Record<string, string> = {
  *  per-locale overrides (statusBar.region.) deliberately stay out. */
 const CONSTRUCTED_FAMILY_KEYS: Record<string, string[]> = {
   "hikari::statusBar.tier.": ["local", "poll", "sse", "ws"],
+  // The emergency kicker is a closed set inside hikari (severity union),
+  // so — unlike registry-type families — the concrete keys MUST exist in
+  // every locale; listing them here keeps the existence loop from going
+  // blind if both suffixes vanish from all bundles at once (R6 S2).
+  "hikari::emergencyAlert.kicker.": ["danger", "warning"],
 };
 
 describe("t() usage surface vs locale bundles", () => {

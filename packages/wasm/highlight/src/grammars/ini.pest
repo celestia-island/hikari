@@ -1,0 +1,14 @@
+// ini.pest — structural grammar for INI/config files.
+whitespace = @{ " " | "\t" }
+newline = { "\r\n" | "\n" | "\r" }
+comment = @{ (";" | "#") ~ (!"\n" ~ ANY)* }
+string = @{ "\"" ~ (!"\"" ~ !"\n" ~ ANY)* ~ "\"" | "'" ~ (!"'" ~ !"\n" ~ ANY)* ~ "'" }
+number = @{ ("+" | "-")? ~ (ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ | ASCII_DIGIT+) }
+kw = @{ ("true" | "false" | "yes" | "no" | "on" | "off" | "none" | "null") ~ !ident_char }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" | "-" }
+identifier = @{ (ASCII_ALPHA | "_" | "-" | "$" | "%") ~ (ASCII_ALPHANUMERIC | "_" | "-" | "." | "$" | "%" | ":" | "/" | "\\")* }
+operator = @{ "=" }
+punctuation = @{ "[" | "]" | "," | ":" | "." | "\\" | "/" }
+token = { comment | string | number | kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+tokens = { token+ }

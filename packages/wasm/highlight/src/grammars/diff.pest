@@ -1,0 +1,12 @@
+// diff.pest — structural grammar for unified diffs.
+whitespace = @{ (" " | "\t")+ }
+newline = { "\r\n" | "\n" | "\r" }
+added = @{ "+" ~ (!"\n" ~ ANY)* }
+removed = @{ "-" ~ (!"\n" ~ ANY)* }
+meta = @{ "@" ~ ("+" | "-") ~ ASCII_DIGIT+ ~ ("," ~ ASCII_DIGIT+)? ~ ("+" | "-") ~ ASCII_DIGIT+ ~ ("," ~ ASCII_DIGIT+)? ~ "@" }
+header = @{ "---" ~ (!"\n" ~ ANY)* | "+++" ~ (!"\n" ~ ANY)* | "diff " ~ (!"\n" ~ ANY)* }
+number = @{ ASCII_DIGIT+ }
+identifier = @{ (!newline ~ !whitespace ~ ANY)+ }
+token = { header | meta | added | removed | number | identifier | whitespace | newline | other }
+other = @{ ANY }
+tokens = { token+ }

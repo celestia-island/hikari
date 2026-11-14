@@ -64,6 +64,18 @@ pub mod grammars {
         #[grammar = "grammars/dart.pest"]
         pub struct Parser;
     }
+    pub mod diff {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/diff.pest"]
+        pub struct Parser;
+    }
+    pub mod dockerfile {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/dockerfile.pest"]
+        pub struct Parser;
+    }
     pub mod elixir {
         use pest_derive::Parser;
         #[derive(Parser)]
@@ -80,6 +92,12 @@ pub mod grammars {
         use pest_derive::Parser;
         #[derive(Parser)]
         #[grammar = "grammars/graphql.pest"]
+        pub struct Parser;
+    }
+    pub mod ini {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/ini.pest"]
         pub struct Parser;
     }
     pub mod java {
@@ -202,6 +220,12 @@ pub mod grammars {
         #[grammar = "grammars/swift.pest"]
         pub struct Parser;
     }
+    pub mod toml {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/toml.pest"]
+        pub struct Parser;
+    }
     pub mod typescript {
         use pest_derive::Parser;
         #[derive(Parser)]
@@ -224,6 +248,12 @@ pub mod grammars {
         use pest_derive::Parser;
         #[derive(Parser)]
         #[grammar = "grammars/xml.pest"]
+        pub struct Parser;
+    }
+    pub mod yaml {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/yaml.pest"]
         pub struct Parser;
     }
 
@@ -267,6 +297,14 @@ pub mod grammars {
                 let pairs = dart::Parser::parse(dart::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
+            "diff" => {
+                let pairs = diff::Parser::parse(diff::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "dockerfile" => {
+                let pairs = dockerfile::Parser::parse(dockerfile::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "elixir" => {
                 let pairs = elixir::Parser::parse(elixir::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
@@ -277,6 +315,10 @@ pub mod grammars {
             }
             "graphql" => {
                 let pairs = graphql::Parser::parse(graphql::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "ini" => {
+                let pairs = ini::Parser::parse(ini::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
             "java" => {
@@ -359,6 +401,10 @@ pub mod grammars {
                 let pairs = swift::Parser::parse(swift::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
+            "toml" => {
+                let pairs = toml::Parser::parse(toml::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "typescript" => {
                 let pairs = typescript::Parser::parse(typescript::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
@@ -373,6 +419,10 @@ pub mod grammars {
             }
             "xml" => {
                 let pairs = xml::Parser::parse(xml::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "yaml" => {
+                let pairs = yaml::Parser::parse(yaml::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
             _ => None,
@@ -406,9 +456,12 @@ pub mod grammars {
             "csharp".to_string(),
             "css".to_string(),
             "dart".to_string(),
+            "diff".to_string(),
+            "dockerfile".to_string(),
             "elixir".to_string(),
             "go".to_string(),
             "graphql".to_string(),
+            "ini".to_string(),
             "java".to_string(),
             "javascript".to_string(),
             "json".to_string(),
@@ -429,10 +482,12 @@ pub mod grammars {
             "scala".to_string(),
             "sql".to_string(),
             "swift".to_string(),
+            "toml".to_string(),
             "typescript".to_string(),
             "vbnet".to_string(),
             "vim".to_string(),
             "xml".to_string(),
+            "yaml".to_string(),
         ]
     }
 }

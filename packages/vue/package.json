@@ -3,7 +3,7 @@
   "version": "0.55.369",
   "private": false,
   "type": "module",
-  "description": "Hikari UI library, Vue 3 runtime \u2014 one design system for Vue 3 and Rust/WASM applications",
+  "description": "Hikari UI library, Vue 3 runtime — one design system for Vue 3 and Rust/WASM applications",
   "license": "SySL-1.0",
   "repository": {
     "type": "git",
@@ -71,9 +71,9 @@
   },
   "peerDependencies": {
     "@types/three": "^0.185",
+    "pinia": "^3",
     "three": "^0.185",
-    "vue": "^3",
-    "pinia": "^3"
+    "vue": "^3"
   },
   "dependencies": {
     "@celestia-island/tairitsu-transport": "^0.2",
@@ -86,6 +86,7 @@
     "marked": "^18"
   },
   "devDependencies": {
+    "@bytecodealliance/preview2-shim": "^0.31.1",
     "@types/node": "^*",
     "@types/three": "^0.185",
     "@vitejs/plugin-vue": "^*",

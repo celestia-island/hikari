@@ -1,0 +1,39 @@
+package hikari:qr;
+
+interface types {
+    /// Error correction level, matching the QR spec.
+    enum ecc-level {
+        l,
+        m,
+        q,
+        h,
+    }
+
+    /// Options for encoding a QR code.
+    record encode-options {
+        /// Error correction level. Default: "m".
+        ecc: option<ecc-level>,
+        /// Explicit QR version 1..40, or 0 for auto-selection. Default: 0.
+        version: option<u8>,
+    }
+
+    /// A single QR code symbol: the module matrix plus metadata.
+    record qr-code {
+        /// Module count per side (21 for v1, 25 for v2, …).
+        size: u8,
+        /// The module matrix in row-major order: true = dark, false = light.
+        modules: list<bool>,
+        /// The QR version actually used (1..40).
+        version: u8,
+        /// The ECC level actually used.
+        ecc: ecc-level,
+        /// The mask pattern applied (0..7).
+        mask: u8,
+    }
+}
+
+/// Encode a payload into a QR code symbol.
+world qr {
+    use types.{encode-options, qr-code};
+    export encode: func(text: string, options: option<encode-options>) -> result<qr-code, string>;
+}

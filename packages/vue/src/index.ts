@@ -774,6 +774,7 @@ export {
   HK_DEBUG_FLOAT_STORAGE_PREFIX,
   type HkDebugFloatCorner,
   type HkDebugFloatPersisted,
+  type HkDebugFloatSection,
 } from "./components/debugFloat";
 export { default as HkTransitionContainer } from "./components/HkTransitionContainer";
 export { default as HkPaneHolder } from "./components/HkPaneHolder";

@@ -95,21 +95,32 @@ pub struct SequenceMessage {
     pub from: String,
     pub to: String,
     pub text: String,
+    #[serde(rename = "arrowKind")]
     pub arrow_kind: SeqArrowKind,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum SeqArrowKind {
+    #[serde(rename = "solid")]
     Solid,
+    #[serde(rename = "dotted")]
     Dotted,
+    #[serde(rename = "solid-open")]
     SolidOpen,
+    #[serde(rename = "dotted-open")]
     DottedOpen,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct PieChart {
     pub title: Option<String>,
-    pub slices: Vec<(String, f64)>,
+    pub slices: Vec<PieSlice>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct PieSlice {
+    pub label: String,
+    pub value: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

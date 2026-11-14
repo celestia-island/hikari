@@ -1,0 +1,62 @@
+// nim.pest — Nim syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "#" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "converter"    | "interface"    | "continue"    | "iterator"    | "template"    | "distinct"    | "include"    | "concept"
+    | "guarded"    | "finally"    | "generic"    | "discard"    | "without"    | "export"    | "shared"    | "method"
+    | "object"    | "static"    | "except"    | "return"    | "import"    | "raise"    | "const"    | "using"
+    | "block"    | "tuple"    | "yield"    | "defer"    | "notin"    | "macro"    | "mixin"    | "break"
+    | "isnot"    | "while"    | "addr"    | "from"    | "proc"    | "else"    | "case"    | "bind"
+    | "enum"    | "when"    | "func"    | "with"    | "elif"    | "cast"    | "type"    | "try"
+    | "ref"    | "xor"    | "not"    | "shl"    | "ptr"    | "div"    | "for"    | "asm"
+    | "mod"    | "end"    | "out"    | "nil"    | "let"    | "and"    | "shr"    | "var"
+    | "do"    | "in"    | "if"    | "is"    | "or"    | "of"    | "as"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "stderr"    | "stdout"    | "result"    | "stdin"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "false"    | "true"
+    ) ~ !ident_char
+}
+type_kw = @{ (
+    "cstringarray"    | "clongdouble"    | "culonglong"    | "semistatic"    | "openarray"    | "clonglong"    | "cushort"    | "cdouble"
+    | "float32"    | "float64"    | "cstring"    | "varargs"    | "pointer"    | "cfloat"    | "culong"    | "uint32"
+    | "uint64"    | "cuchar"    | "uint16"    | "cshort"    | "string"    | "cschar"    | "clong"    | "int16"
+    | "range"    | "cchar"    | "cuint"    | "int32"    | "array"    | "int64"    | "uint8"    | "float"
+    | "csize"    | "expr"    | "stmt"    | "uint"    | "void"    | "cint"    | "auto"    | "char"
+    | "bool"    | "int8"    | "seq"    | "int"    | "set"    | "any"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | type_kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

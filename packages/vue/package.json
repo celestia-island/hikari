@@ -82,7 +82,6 @@
     "@xterm/addon-image": "^0.10.0-beta.301",
     "@xterm/xterm": "^6.1.0-beta.304",
     "dompurify": "^3",
-    "highlight.js": "^11",
     "lucide-vue-next": "^1",
     "marked": "^18"
   },

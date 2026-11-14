@@ -1,0 +1,69 @@
+// vbnet.pest — Visual Basic .NET syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "/'''/" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "notinheritable"    | "notoverridable"    | "removehandler"    | "mustoverride"    | "mustinherit"    | "overridable"    | "implements"    | "paramarray"
+    | "addhandler"    | "raiseevent"    | "withevents"    | "aggregate"    | "writeonly"    | "interface"    | "namespace"    | "narrowing"
+    | "structure"    | "protected"    | "overrides"    | "overloads"    | "readonly"    | "explicit"    | "distinct"    | "assembly"
+    | "delegate"    | "continue"    | "preserve"    | "operator"    | "function"    | "widening"    | "optional"    | "iterator"
+    | "synclock"    | "inherits"    | "property"    | "declare"    | "finally"    | "private"    | "handles"    | "default"
+    | "myclass"    | "unicode"    | "shadows"    | "imports"    | "partial"    | "compare"    | "friend"    | "custom"
+    | "module"    | "select"    | "global"    | "elseif"    | "strict"    | "resume"    | "mybase"    | "shared"
+    | "public"    | "option"    | "return"    | "binary"    | "equals"    | "static"    | "class"    | "throw"
+    | "erase"    | "error"    | "using"    | "async"    | "byref"    | "byval"    | "catch"    | "order"
+    | "while"    | "until"    | "group"    | "const"    | "yield"    | "event"    | "alias"    | "redim"
+    | "where"    | "then"    | "step"    | "skip"    | "else"    | "case"    | "goto"    | "when"
+    | "from"    | "join"    | "enum"    | "into"    | "stop"    | "next"    | "with"    | "call"
+    | "take"    | "text"    | "each"    | "ansi"    | "loop"    | "exit"    | "auto"    | "try"
+    | "get"    | "new"    | "let"    | "off"    | "sub"    | "set"    | "for"    | "dim"
+    | "lib"    | "key"    | "mid"    | "end"    | "if"    | "of"    | "by"    | "me"
+    | "in"    | "on"    | "do"    | "to"    | "as"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "getxmlnamespace"    | "directcast"    | "addressof"    | "cushort"    | "trycast"    | "andalso"    | "gettype"    | "isfalse"
+    | "csbyte"    | "orelse"    | "istrue"    | "cshort"    | "nameof"    | "typeof"    | "cdate"    | "cchar"
+    | "cbyte"    | "cuint"    | "culng"    | "await"    | "cbool"    | "isnot"    | "cint"    | "cobj"
+    | "like"    | "cstr"    | "cdbl"    | "csng"    | "cdec"    | "clng"    | "xor"    | "not"
+    | "new"    | "mod"    | "and"    | "is"    | "or"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "nothing"    | "false"    | "true"
+    ) ~ !ident_char
+}
+type_kw = @{ (
+    "uinteger"    | "decimal"    | "integer"    | "boolean"    | "ushort"    | "single"    | "string"    | "double"
+    | "object"    | "short"    | "ulong"    | "sbyte"    | "char"    | "byte"    | "long"    | "date"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | type_kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

@@ -24,14 +24,23 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 
 function sheet(): string {
-  return readFileSync(join(here, "HkEmergencyAlert.scss"), "utf-8");
+  const raw = readFileSync(join(here, "HkEmergencyAlert.scss"), "utf-8");
+  // Full-line `//` comments are stripped before ANY assertion (the
+  // registerAnimations parity convention): a commented-out declaration
+  // is not a declaration — R5 B1 deleted the root pointer-events line
+  // and left `// pointer-events: none;` behind, and every contains()
+  // here happily read the comment as the declaration.
+  return raw.replace(/^[ \t]*\/\/.*$/gm, "");
 }
 
 /** The `.hk-emergency { … }` root rule, brace-balanced (it nests the
  *  webkit scrollbar rule). Assertions about the LAYER must bind here,
  *  not to the whole sheet: the band's pseudo-elements carry their own
  *  `pointer-events: none` lines, which a whole-file contains() would
- *  happily satisfy even with the root declaration deleted (R3 M6). */
+ *  happily satisfy even with the root declaration deleted (R3 M6).
+ *  Comment-blindness is handled upstream in sheet() — stripping here
+ *  as well would double-handle; braces inside comments were the other
+ *  R5 hazard, and they are gone before the walk runs. */
 function rootBlock(css: string): string {
   const start = css.indexOf(".hk-emergency {");
   if (start < 0) throw new Error("root rule .hk-emergency { not found");

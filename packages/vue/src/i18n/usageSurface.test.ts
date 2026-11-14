@@ -122,6 +122,7 @@ function scanSources(): { statics: Site[]; constructed: Site[] } {
  *  every listed family must still exist in source, so this whitelist
  *  cannot rot into silence. */
 const DYNAMIC_KEY_FAMILIES: Record<string, string> = {
+  "hikari::emergencyAlert.kicker.": "HkEmergencyAlert — the per-severity kicker word (danger/warning).",
   "hikari::statusBar.backend.": "HkConnectionStatus — enumerated connection-state suffixes.",
   "hikari::statusBar.region.": "HkStatusBar region names — OPTIONAL per-locale overrides over Intl.DisplayNames (see LOCALE_SPECIFIC_NESTED in flatKeyParity.test.ts).",
   "hikari::statusBar.tier.": "HkStatusBar transport tiers — constructed into a variable at a distance from its t() call (F1); the four concrete ids are pinned by name in CONSTRUCTED_FAMILY_KEYS below.",
@@ -138,6 +139,11 @@ const DYNAMIC_KEY_FAMILIES: Record<string, string> = {
  *  per-locale overrides (statusBar.region.) deliberately stay out. */
 const CONSTRUCTED_FAMILY_KEYS: Record<string, string[]> = {
   "hikari::statusBar.tier.": ["local", "poll", "sse", "ws"],
+  // The emergency kicker is a closed set inside hikari (severity union),
+  // so — unlike registry-type families — the concrete keys MUST exist in
+  // every locale; listing them here keeps the existence loop from going
+  // blind if both suffixes vanish from all bundles at once (R6 S2).
+  "hikari::emergencyAlert.kicker.": ["danger", "warning"],
 };
 
 describe("t() usage surface vs locale bundles", () => {

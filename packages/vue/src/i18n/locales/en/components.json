@@ -345,5 +345,9 @@
   "hikari::editableTable.removeRow": "Remove row",
   "hikari::editableTable.rowActions": "Row actions",
   "hikari::editableTable.rowLabel": "Row {n}",
-  "hikari::editableTable.empty": "No rows yet"
+  "hikari::editableTable.empty": "No rows yet",
+  "hikari::emergencyAlert.dismiss": "Hide for now",
+  "hikari::emergencyAlert.kicker.danger": "CRITICAL ALERT",
+  "hikari::emergencyAlert.kicker.warning": "WARNING",
+  "hikari::emergencyAlert.more": "more alert(s) pending"
 }

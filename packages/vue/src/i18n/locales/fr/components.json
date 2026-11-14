@@ -345,5 +345,9 @@
   "hikari::editableTable.removeRow": "Supprimer la ligne",
   "hikari::editableTable.rowActions": "Actions de la ligne",
   "hikari::editableTable.rowLabel": "Ligne {n}",
-  "hikari::editableTable.empty": "Aucune ligne pour l'instant"
+  "hikari::editableTable.empty": "Aucune ligne pour l'instant",
+  "hikari::emergencyAlert.dismiss": "Masquer pour l'instant",
+  "hikari::emergencyAlert.kicker.danger": "ALERTE CRITIQUE",
+  "hikari::emergencyAlert.kicker.warning": "AVERTISSEMENT",
+  "hikari::emergencyAlert.more": "autre(s) alerte(s) en attente"
 }

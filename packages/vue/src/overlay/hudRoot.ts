@@ -27,6 +27,7 @@
  * |   90000 | #hk-overlay-root — every popup (modal backdrop included) |
  * |   90050 | #hk-hud-root — the ambient HUD (this module) |
  * |   95000 | error landing (covers everything) |
+ * |   96000 | emergency alert takeover (HkEmergencyAlert, body-mounted) |
  * |  100001 | window titlebar (Tauri shell) |
  *
  * Everything above the HUD is a deliberate top-owner: an error takeover

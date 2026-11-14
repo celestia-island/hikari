@@ -345,5 +345,9 @@
   "hikari::editableTable.removeRow": "Удалить строку",
   "hikari::editableTable.rowActions": "Действия со строкой",
   "hikari::editableTable.rowLabel": "Строка {n}",
-  "hikari::editableTable.empty": "Строк пока нет"
+  "hikari::editableTable.empty": "Строк пока нет",
+  "hikari::emergencyAlert.dismiss": "Скрыть пока",
+  "hikari::emergencyAlert.kicker.danger": "КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ",
+  "hikari::emergencyAlert.kicker.warning": "ВНИМАНИЕ",
+  "hikari::emergencyAlert.more": "ещё предупреждения ожидают"
 }

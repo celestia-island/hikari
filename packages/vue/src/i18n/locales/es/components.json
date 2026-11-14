@@ -345,5 +345,9 @@
   "hikari::editableTable.removeRow": "Eliminar fila",
   "hikari::editableTable.rowActions": "Acciones de fila",
   "hikari::editableTable.rowLabel": "Fila {n}",
-  "hikari::editableTable.empty": "Aún no hay filas"
+  "hikari::editableTable.empty": "Aún no hay filas",
+  "hikari::emergencyAlert.dismiss": "Ocultar por ahora",
+  "hikari::emergencyAlert.kicker.danger": "ALERTA CRÍTICA",
+  "hikari::emergencyAlert.kicker.warning": "AVISO",
+  "hikari::emergencyAlert.more": "más alertas pendientes"
 }

@@ -349,5 +349,9 @@
   "hikari::editableTable.removeRow": "删除行",
   "hikari::editableTable.rowActions": "行操作",
   "hikari::editableTable.rowLabel": "第 {n} 行",
-  "hikari::editableTable.empty": "暂无行"
+  "hikari::editableTable.empty": "暂无行",
+  "hikari::emergencyAlert.dismiss": "暂时隐藏",
+  "hikari::emergencyAlert.kicker.danger": "紧急警告",
+  "hikari::emergencyAlert.kicker.warning": "警告",
+  "hikari::emergencyAlert.more": "另有警告待处理"
 }

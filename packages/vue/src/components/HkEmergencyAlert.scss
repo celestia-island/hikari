@@ -1,0 +1,279 @@
+// HkEmergencyAlert — the toast family's full-screen takeover member.
+//
+// Token strategy: severity colors read the host's RGB-triplet theme
+// channels (--color-error / --color-warning) with neutral fallbacks,
+// mirroring HkErrorLanding so the band renders correctly standalone
+// and adapts to host themes. Themes customize through the exposed
+// --hk-emergency-* variable family (line / wash / band / scrim) —
+// geometry (full-width band, circle badge, inset, z) is component
+// owned and never theme-overridable.
+
+@use "../styles/polyfill" as *;
+
+.hk-emergency {
+  // Severity tone defaults; a theme re-points these per band state.
+  --hk-emergency-tone: rgb(var(--color-error, 226 84 84));
+  --hk-emergency-line: var(--hk-emergency-tone);
+  --hk-emergency-line-soft: rgb(var(--color-error, 226 84 84) / 55%);
+  --hk-emergency-wash: rgb(var(--color-error, 226 84 84) / 9%);
+  --hk-emergency-band-bg: rgb(var(--color-surface, 24 26 32) / 96%);
+  --hk-emergency-scrim: rgb(var(--color-background, 10 12 16) / 52%);
+
+  position: fixed;
+  // Chrome-band leg: in native hosts the window titlebar owns the top
+  // strip (--hk-chrome-band-inset, e.g. the 3rem header); the layer
+  // starts BELOW it so the bar stays visible and draggable. Browser
+  // hosts leave the var unset → 0px → true full-screen.
+  inset: var(--hk-chrome-band-inset, 0px) 0 0 0;
+  // Document-space z band (scale.scss): above error landing (95000),
+  // strictly below the window titlebar (100001) — the alert never
+  // covers the titlebar (user direction 2026-11-13).
+  z-index: var(--hk-z-emergency, 96000);
+  display: flex;
+  // Safe centering: the band centers through margin-block:auto (below)
+  // instead of a flex align rule — when long content (wrapped actions,
+  // tall description) outgrows the viewport the same rules let the
+  // layer SCROLL to it, where flex centering would clip both ends with
+  // no way back (fixed layers never grow the document). The wheel
+  // reaches this container only over the band itself (pointer
+  // transparency elsewhere), and an overflowing band covers the layer
+  // anyway — so the actions are always reachable. The native bar is
+  // hidden per the family scrollbar invariant (scrolling is the
+  // rare tall-content escape hatch, not part of the look).
+  overflow-y: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  // The scrim never blocks work (user direction 2026-11-13): the
+  // layer itself lets pointers through; only the band is interactive.
+  pointer-events: none;
+}
+
+.hk-emergency.is-warning {
+  --hk-emergency-tone: rgb(var(--color-warning, 222 168 62));
+  --hk-emergency-line: var(--hk-emergency-tone);
+  --hk-emergency-line-soft: rgb(var(--color-warning, 222 168 62) / 55%);
+  --hk-emergency-wash: rgb(var(--color-warning, 222 168 62) / 10%);
+}
+
+.hk-emergency-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--hk-emergency-scrim);
+  @include backdrop-filter(blur(2px));
+}
+
+.hk-emergency-band {
+  position: relative;
+  pointer-events: auto;
+  // The other half of safe centering: margin-block:auto centers the
+  // band when it fits and collapses to flush-top when it overflows
+  // (the layer then scrolls — see .hk-emergency).
+  margin-block: auto;
+  // Edge to edge — no viewport gutter, the emergency band spans the
+  // full width by design (user direction 2026-11-13); only the inner
+  // column constrains reading width.
+  width: 100%;
+  padding: clamp(1.75rem, 4vh, 2.75rem) var(--space-20, 1.25rem);
+  background:
+    linear-gradient(to bottom, var(--hk-emergency-wash), transparent 34%, transparent 66%, var(--hk-emergency-wash)),
+    var(--hk-emergency-band-bg);
+  border-top: 2px solid var(--hk-emergency-line);
+  border-bottom: 2px solid var(--hk-emergency-line);
+  text-align: center;
+  color: rgb(var(--color-text, 236 238 242));
+  font-family: var(--font-sans, system-ui, sans-serif);
+
+  // FUI double line: a second, fainter signal line hugging each edge
+  // just inside the solid one — reads as instrument chrome, not a
+  // decorative frame. Pure gradient layers, no extra DOM.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--hk-emergency-line-soft);
+    pointer-events: none;
+  }
+  &::before {
+    top: 4px;
+  }
+  &::after {
+    bottom: 4px;
+  }
+}
+
+.hk-emergency-inner {
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+// The tone circular badge — the HkErrorLanding __icon recipe scaled
+// up for the band: gradient disc, hairline ring, layered halo plus a
+// long soft drop shadow. A circle is the one badge shape legal across
+// every shipped theme language (instrument dial / circles-stay-
+// circles / measure-circle), so no rounded-square variant exists.
+.hk-emergency-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto var(--space-14, 0.875rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--hk-emergency-tone);
+  background: linear-gradient(145deg, rgb(var(--color-error, 226 84 84) / 18%), rgb(var(--color-error, 226 84 84) / 6%));
+  border: 1px solid rgb(var(--color-error, 226 84 84) / 26%);
+  box-shadow:
+    0 0 0 8px rgb(var(--color-error, 226 84 84) / 5%),
+    0 10px 28px -12px rgb(var(--color-error, 226 84 84) / 45%);
+}
+
+.is-warning .hk-emergency-icon {
+  background: linear-gradient(145deg, rgb(var(--color-warning, 222 168 62) / 20%), rgb(var(--color-warning, 222 168 62) / 7%));
+  border-color: rgb(var(--color-warning, 222 168 62) / 28%);
+  box-shadow:
+    0 0 0 8px rgb(var(--color-warning, 222 168 62) / 6%),
+    0 10px 28px -12px rgb(var(--color-warning, 222 168 62) / 45%);
+}
+
+.hk-emergency-meta {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-8, 0.5rem);
+}
+
+// FUI micro-label: mono, wide tracking, tone ink — the "PLATFORM LINK
+// LOST // 01" line above the headline. Decorative duplicate of the
+// severity, hence aria-hidden in the tsx.
+.hk-emergency-kicker {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--hk-emergency-tone);
+  margin-bottom: var(--space-6, 0.375rem);
+}
+
+.hk-emergency-title {
+  margin: 0 0 var(--space-8, 0.5rem);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: rgb(var(--color-text, 236 238 242));
+}
+
+.hk-emergency-desc {
+  margin: 0 auto var(--space-10, 0.625rem);
+  max-width: 56ch;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  line-height: 1.6;
+  color: rgb(var(--color-muted, 158 162 170));
+  white-space: pre-line;
+}
+
+.hk-emergency-more {
+  margin: 0 0 var(--space-10, 0.625rem);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  color: rgb(var(--color-muted, 158 162 170));
+}
+
+.hk-emergency-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-12, 0.75rem);
+  margin-top: var(--space-14, 0.875rem);
+}
+
+// ── Motion ────────────────────────────────────────────────────────────
+// Enter/leave: the band draws its signal edges and lifts into place;
+// leave mirrors it. Steady state stays ALIVE but quiet — the badge
+// breathes ±2% and the hairline edges pulse — the cinematic klaxon
+// turned down to instrument level. All motion dies under
+// reduced-motion (OS level and the .reduce-motion class), matching
+// the theme packages' dual kill-switch convention.
+
+@keyframes hk-emergency-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes hk-emergency-signal {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.hk-emergency-icon {
+  animation: hk-emergency-breathe 2.8s ease-in-out infinite;
+}
+
+.hk-emergency-band::before,
+.hk-emergency-band::after {
+  animation: hk-emergency-signal 2.8s ease-in-out infinite;
+}
+
+.hk-emergency-enter-active,
+.hk-emergency-leave-active {
+  transition: opacity 240ms var(--ease-out, cubic-bezier(0.4, 0, 0.2, 1));
+
+  .hk-emergency-band {
+    transition: transform 320ms var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+  }
+}
+
+.hk-emergency-enter-from,
+.hk-emergency-leave-to {
+  opacity: 0;
+
+  .hk-emergency-band {
+    transform: scaleY(0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-emergency-enter-active,
+  .hk-emergency-leave-active,
+  .hk-emergency-enter-active .hk-emergency-band,
+  .hk-emergency-leave-active .hk-emergency-band {
+    transition: none;
+  }
+
+  .hk-emergency-icon,
+  .hk-emergency-band::before,
+  .hk-emergency-band::after {
+    animation: none;
+  }
+}
+
+html.reduce-motion {
+  .hk-emergency-enter-active,
+  .hk-emergency-leave-active,
+  .hk-emergency-enter-active .hk-emergency-band,
+  .hk-emergency-leave-active .hk-emergency-band {
+    transition: none;
+  }
+
+  .hk-emergency-icon,
+  .hk-emergency-band::before,
+  .hk-emergency-band::after {
+    animation: none;
+  }
+}

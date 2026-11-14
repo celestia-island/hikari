@@ -12,12 +12,22 @@
 
 .hk-emergency {
   // Severity tone defaults; a theme re-points these per band state.
+  // line-soft / edge-glow / wash derive from the LINE through
+  // color-mix, so a theme that re-points --hk-emergency-line (the
+  // endfield hazard yellow, say) gets matching soft edges, glow and
+  // wash for free instead of a mismatched token pair.
   --hk-emergency-tone: rgb(var(--color-error, 226 84 84));
   --hk-emergency-line: var(--hk-emergency-tone);
-  --hk-emergency-line-soft: rgb(var(--color-error, 226 84 84) / 55%);
-  --hk-emergency-wash: rgb(var(--color-error, 226 84 84) / 9%);
+  --hk-emergency-line-soft: color-mix(in srgb, var(--hk-emergency-line) 55%, transparent);
+  --hk-emergency-edge-glow: color-mix(in srgb, var(--hk-emergency-line) 22%, transparent);
+  --hk-emergency-wash: color-mix(in srgb, var(--hk-emergency-tone) 14%, transparent);
   --hk-emergency-band-bg: rgb(var(--color-surface, 24 26 32) / 96%);
-  --hk-emergency-scrim: rgb(var(--color-background, 10 12 16) / 52%);
+  // The scrim is DARK INK ON PURPOSE — theme-independent. Pointing it
+  // at --color-background (the 0.55.370 default) makes it a WHITE veil
+  // in light themes: the page never darkens, and the takeover reads as
+  // a pastel banner on plain paper (2026-11-14 field report). A scrim
+  // darkens what is behind it; that is mode-independent.
+  --hk-emergency-scrim: rgb(9 11 16 / 55%);
 
   position: fixed;
   // Chrome-band leg: in native hosts the window titlebar owns the top
@@ -53,8 +63,6 @@
 .hk-emergency.is-warning {
   --hk-emergency-tone: rgb(var(--color-warning, 222 168 62));
   --hk-emergency-line: var(--hk-emergency-tone);
-  --hk-emergency-line-soft: rgb(var(--color-warning, 222 168 62) / 55%);
-  --hk-emergency-wash: rgb(var(--color-warning, 222 168 62) / 10%);
 }
 
 .hk-emergency-scrim {
@@ -81,13 +89,20 @@
     var(--hk-emergency-band-bg);
   border-top: 2px solid var(--hk-emergency-line);
   border-bottom: 2px solid var(--hk-emergency-line);
+  // Elevation: the band is the one LIT surface over a darkened page —
+  // a deep soft shadow lifts it off the scrim so the takeover reads
+  // as layered, not pasted (0.55.370 field note: without this the
+  // light band floated flat on the light page).
+  box-shadow: 0 24px 72px rgb(3 5 9 / 42%);
   text-align: center;
   color: rgb(var(--color-text, 236 238 242));
   font-family: var(--font-sans, system-ui, sans-serif);
 
   // FUI double line: a second, fainter signal line hugging each edge
   // just inside the solid one — reads as instrument chrome, not a
-  // decorative frame. Pure gradient layers, no extra DOM.
+  // decorative frame. The hairline carries a soft tone glow so the
+  // edges read as EMISSIVE signal lines (the restrained FUI note):
+  // light emitted by the alert, not decoration painted on.
   &::before,
   &::after {
     content: "";
@@ -96,6 +111,7 @@
     right: 0;
     height: 1px;
     background: var(--hk-emergency-line-soft);
+    box-shadow: 0 0 14px var(--hk-emergency-edge-glow);
     pointer-events: none;
   }
   &::before {

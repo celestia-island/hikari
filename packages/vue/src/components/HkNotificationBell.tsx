@@ -66,7 +66,7 @@ function formatRowTime(ts: number, locale: string): string {
 export default defineComponent({
   name: "HkNotificationBell",
   setup() {
-    const { t, locale } = useI18n();
+    const { t } = useI18n();
     const { entries, markAllRead, reset } = useNotificationCenter();
     const chromeSize = useChromeActionSize();
     const open = ref(false);
@@ -74,11 +74,12 @@ export default defineComponent({
 
     const unread = computed(() => entries.filter((e) => !e.read).length);
     const sorted = computed(() =>
-      // Newest first; the id tiebreak is DESCENDING so a same-millisecond
-      // burst still renders later pushes above earlier ones (R7 note,
-      // PR #1322 — the old ascending tiebreak contradicted this).
+      // Newest first; ties fall back to the journal's own append order
+      // (newest INSERTION above). A string-id tiebreak would flip across
+      // digit widths ("9" sorts above "10") — the R8 pin test caught
+      // exactly that, so the ledger's insertion order is the judge.
       [...entries].sort(
-        (a, b) => b.updatedAt - a.updatedAt || (a.id > b.id ? -1 : a.id < b.id ? 1 : 0),
+        (a, b) => b.updatedAt - a.updatedAt || entries.indexOf(b) - entries.indexOf(a),
       ),
     );
 
@@ -113,7 +114,7 @@ export default defineComponent({
                 class="hk-notification-row__time"
                 datetime={new Date(entry.updatedAt).toISOString()}
               >
-                {formatRowTime(entry.updatedAt, activeLocale() || locale)}
+                {formatRowTime(entry.updatedAt, activeLocale())}
               </time>
             </div>
             {(entry.detail || entry.code) && (

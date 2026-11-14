@@ -156,6 +156,23 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
+  it("a same-millisecond tie renders the LATER push above (descending id)", async () => {
+    // R8 pin (PR #1322): the id tiebreak is DESCENDING — with updatedAt
+    // equal, the later push must sit above the earlier one (newest-first
+    // holds even when the clock ties).
+    await setLocale("en");
+    recordNotification({ id: "toast:e:1:9", kind: "toast", tone: "error", title: "earlier" });
+    recordNotification({ id: "toast:e:1:10", kind: "toast", tone: "warning", title: "later" });
+    const { entries } = useNotificationCenter();
+    entries.forEach((e) => { e.updatedAt = 1_000; });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const titles = rows().map((r) => r.querySelector(".hk-notification-row__title")?.textContent);
+    expect(titles).toEqual(["later", "earlier"]);
+  });
+
   it("the restore button is STATE-gated even when a callback lingers", async () => {
     // R2 finding, PR #1322 (mutation-e pin): the S1 gate is redundant
     // in-tree (active emergencies never carry a callback), so this test
@@ -202,8 +219,8 @@ describe("panel rows", () => {
     const { entries } = useNotificationCenter();
     recordNotification({ id: "old", kind: "toast", tone: "error", title: "older" });
     recordNotification({ id: "new", kind: "toast", tone: "warning", title: "newer" });
-    // Same-millisecond pushes would tie on updatedAt (stable sort keeps
-    // insertion order) — make the recency explicit for this assertion.
+    // Same-millisecond pushes would tie on updatedAt — make the recency
+    // explicit for this assertion (the pure-tie case is pinned below).
     entries.find((e) => e.id === "new")!.updatedAt = Date.now() + 5_000;
     mountBell();
     await settle();

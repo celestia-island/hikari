@@ -91,8 +91,11 @@ export interface HkNotificationEntry {
   updatedAt: number;
   state: HkNotificationState;
   read: boolean;
-  /** Present ONLY while a live resummon path exists (snoozed emergency
-   *  alerts; never persisted — callbacks cannot survive a reload). */
+  /** The live resummon path. Armed only while the source keeps it in
+   *  the latest record call; an emergency that UNSNOOZED keeps the
+   *  callback until its next raise/clear (the bell gates the button on
+   *  `state === "snoozed"`, so no dead control renders). Never
+   *  persisted — callbacks cannot survive a reload. */
   onResummon?: () => void;
 }
 

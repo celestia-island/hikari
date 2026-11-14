@@ -24,6 +24,7 @@
  */
 
 import { hashIdToUnit, lerpPalette, type Vec3 } from "../utils/scene3d";
+import { buildFleetSceneSpecWasm } from "./wasmFleetSpec";
 
 /** Public, renderer-agnostic node input for HkStarSystem. Every HUD
  * field is caller-owned data: the component never invents traffic, alerts
@@ -299,7 +300,10 @@ export function buildFleetSceneSpec(rows: FleetRowLike[]): FleetSceneSpec {
 export function buildHolographicFleetSpec(
   nodes: readonly StarSystemBodyInput[],
 ): FleetSceneSpec {
-  return buildFleetSceneSpec(nodes.map((node) => ({
+  // Route through the wasm component (the Rust layout engine); the TS
+  // buildFleetSceneSpec stays as the reference implementation and test
+  // oracle — holographicFleetSpec.test.ts pins it against golden fixtures.
+  return buildFleetSceneSpecWasm(nodes.map((node) => ({
     node_id: node.id,
     tier: node.role === "star" ? 3 : 2,
     station_count: Number.isFinite(node.endpointCount)

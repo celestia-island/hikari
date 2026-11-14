@@ -146,6 +146,26 @@ describe("emergency alert layering contract", () => {
     expect(root).toMatch(/--hk-emergency-wash:\s*color-mix\(in srgb, var\(--hk-emergency-line\)/);
   });
 
+  it("the warning action is a caution chip in the band's own ink", () => {
+    // The chip replaces the brand-primary blue: tone wash fill, tone
+    // border — and the TEXT follows the theme text ink (NOT
+    // --color-on-warning, whose dark ink only works on a solid tone
+    // surface; the chip sits on the theme band in both modes). The
+    // doctrine chain (line/wash, never solid fill) is what R2's
+    // rejected fill form got wrong.
+    const css = sheet();
+    const root = rootBlock(css);
+    void root;
+    const chip = css.match(
+      /\.is-warning \.hk-emergency-actions \.hk-btn-primary\s*{[^}]*}/,
+    );
+    expect(chip, "the warning chip rule must exist").not.toBeNull();
+    expect(chip![0]).toContain("background: var(--hk-emergency-wash);");
+    expect(chip![0]).toContain("border-color: var(--hk-emergency-line);");
+    expect(chip![0]).toContain("color: rgb(var(--color-text");
+    expect(chip![0]).not.toContain("--color-on-warning");
+  });
+
   it("long content stays reachable: the layer scrolls and the band safe-centers", () => {
     // A fixed full-height layer never grows the document, so clipped
     // content would strand the actions forever (R2 finding 5). The

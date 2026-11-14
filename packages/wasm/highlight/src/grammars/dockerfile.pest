@@ -1,0 +1,14 @@
+// dockerfile.pest — structural grammar for Dockerfiles.
+whitespace = @{ " " | "\t" }
+newline = { "\r\n" | "\n" | "\r" }
+comment = @{ "#" ~ (!"\n" ~ ANY)* }
+string = @{ "\"" ~ (!"\"" ~ !"\n" ~ ANY)* ~ "\"" }
+number = @{ ASCII_DIGIT+ }
+kw = @{ ("FROM" | "RUN" | "CMD" | "LABEL" | "EXPOSE" | "ENV" | "ADD" | "COPY" | "ENTRYPOINT" | "VOLUME" | "USER" | "WORKDIR" | "ARG" | "ONBUILD" | "STOPSIGNAL" | "HEALTHCHECK" | "SHELL" | "AS") ~ !ident_char }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" | "-" | "." | "/" | "$" | "{" | "}" }
+identifier = @{ (ASCII_ALPHA | "_" | "-" | "$" | "/" | "." | "~") ~ (ASCII_ALPHANUMERIC | "_" | "-" | "." | "/" | ":" | "$" | "@" | "~")* }
+operator = @{ "=" | "&&" | "||" | "|" | ">" | "<" }
+punctuation = @{ "[" | "]" | "{" | "}" | "(" | ")" | "," | ":" | "\\" }
+token = { comment | string | number | kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+tokens = { token+ }

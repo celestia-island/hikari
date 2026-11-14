@@ -1,0 +1,15 @@
+// yaml.pest — structural grammar for YAML (no keywords, pattern-based).
+whitespace = @{ " " | "\t" }
+newline = { "\r\n" | "\n" | "\r" }
+comment = @{ "#" ~ (!"\n" ~ ANY)* }
+string = @{ "\"" ~ (!"\"" ~ !"\n" ~ ANY)* ~ "\"" | "'" ~ (!"'" ~ !"\n" ~ ANY)* ~ "'" }
+number = @{ "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+kw = @{ ("true" | "false" | "null" | "yes" | "no" | "on" | "off") ~ !ident_char }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" | "-" }
+identifier = @{ (ASCII_ALPHA | "_" | "-") ~ (ASCII_ALPHANUMERIC | "_" | "-" | "." | "/" | ":")* }
+operator = @{ "-" | ":" | "?" | "|" | ">" | "&" | "*" | "!" | "=" | "%" | "@" }
+punctuation = @{ "[" | "]" | "{" | "}" | "," | "#" | "\"" | "'"
+}
+token = { comment | string | number | kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+tokens = { token+ }

@@ -18,7 +18,9 @@ describe("HkAdaptiveTabs composition contract", () => {
     expect(src).toContain("HkTabs");
     expect(src).toContain("HkButton");
     expect(src).toContain("HkSelectPanel");
-    expect(src).toContain("sheetOnMobile"); // panel default — sheet on phones
+    // The sheet pin is exact (a sheetOnMobile={false} mutant must fail
+    // here AND the behavioral .hk-select-sheet-panel assertion).
+    expect(src).toContain("sheetOnMobile={true}"); // — sheet on phones
     // No hand-rolled overlay machinery in this component.
     expect(src).not.toContain("Teleport");
     expect(src).not.toContain("ensureOverlayRoot");

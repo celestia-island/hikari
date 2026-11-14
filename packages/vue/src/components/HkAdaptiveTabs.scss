@@ -38,15 +38,17 @@
 .hk-adaptive-tabs-option {
   text-align: left;
 
-  /* The one emphasis this component owns: the checked row reads apart
-     from its siblings (accent ink, same channel the pill strip uses
-     for its active trigger). */
-  &[data-checked] {
-    color: rgb(var(--color-primary, var(--color-text)));
-    font-weight: 600;
-  }
-
+  /* The checked face is NOT re-styled here: the shared menu-row mixin
+     (that the hk-select-option grammar composes) already paints
+     &[data-checked] — one emphasis, one implementation (R2 note). */
   &[data-disabled] {
     opacity: 0.45;
   }
+}
+
+/* Open-state feedback for the trigger (the data-active hook the
+   component sets while the picker is up): the caret flips — the same
+   voice as a select field. */
+.hk-adaptive-tabs .hk-btn[data-active] .hk-adaptive-tabs-caret {
+  transform: rotate(180deg);
 }

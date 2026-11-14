@@ -61,6 +61,6 @@ type sélecteur nommant l'élément ACTIF, et ses options s'ouvrent en
 feuille inférieure (`HkSelectPanel` avec `sheetOnMobile`). Un seul
 contrat de valeur pilote les deux formes — les liens profonds `?tab=`
 survivent au point de rupture. `HkAdaptiveTabs` est l'implémentation
-par défaut ; les commutateurs de listes dynamiques avec des lignes
-propires (le sélecteur de plateforme) sont le cas particulier exempté,
+par défaut ; les commutateurs de listes de projets dynamiques avec des lignes
+propres (le sélecteur de plateforme) sont le cas particulier exempté,
 pas le modèle à copier.

@@ -45,4 +45,4 @@ chrome 由 hikari 提供：`HkAdminHeader` 的动作行、`HkIconButton` 与
 sheet 家族的阈值）折叠为：原按钮组变成一个读出**当前项**的下拉式触发钮，选项
 以底部 sheet 展开（`HkSelectPanel` 的 `sheetOnMobile`）。两套形态共用同一份
 value 契约，`?tab=` 深链跨断点不受影响。`HkAdaptiveTabs` 是默认实现；
-自带专属行的动态项目切换器（平台切换器）是豁免的特例，不是可照抄的模式。
+自带专属行的动态项目列表切换器（平台切换器）是豁免的特例，不是可照抄的模式。

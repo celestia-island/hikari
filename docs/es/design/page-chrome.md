@@ -61,5 +61,5 @@ tipo selector que nombra el elemento ACTIVO, y sus opciones abren como
 hoja inferior (`HkSelectPanel` con `sheetOnMobile`). Un único contrato
 de valor gobierna ambas formas — los enlaces profundos `?tab=` sobreviven
 al punto de ruptura. `HkAdaptiveTabs` es la implementación por defecto;
-los conmutadores de listas dinámicas con filas propias (el selector de
+los conmutadores de listas de proyectos dinámicas con filas propias (el selector de
 plataforma) son el caso especial exento, no el modelo a copiar.

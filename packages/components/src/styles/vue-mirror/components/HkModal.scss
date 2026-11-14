@@ -781,10 +781,12 @@
   .hk-modal-content {
     transition: none;
   }
-  // The zoom choreography flattens with it: the ride states fall back to
-  // the bare centering translate (same specificity as the desktop state
+  // The zoom choreography flattens with it: the ride states drop their
+  // transform override entirely (same specificity as the desktop state
   // rules above, later in the sheet, so the flattened state wins by source
-  // order — one painted frame at opacity 0 hides the flip).
+  // order — one painted frame at opacity 0 hides the flip). The centering
+  // is untouched: it lives on the `translate` longhand, outside every
+  // ride rule.
   .hk-modal-content-enter-from,
   .hk-modal-content-leave-to {
     // The flatten is "no ride legs at all": the ride states drop their

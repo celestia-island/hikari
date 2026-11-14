@@ -204,6 +204,8 @@ const { currentTheme, currentMode, setTheme, setMode, toggleMode } = useTheme();
 
 Older engines need the `-webkit-` spelling of `backdrop-filter`, `user-select` and `mask-image`. hikari authors those prefixes itself, in `styles/polyfill.scss`, instead of leaving them to whichever CSS minifier a consumer runs. A minifier only emits a prefix when its target matrix asks for one, so narrowing a target (pinning `cssTarget` to a support gate, raising a baseline) silently drops a prefix the library still needs — no build error, no diff in the consumer's own dev browser, only a broken old engine in the field. A library ships to hosts it cannot enumerate, so the prefixes belong next to the sheets.
 
+The floors that prefixes cannot cover: hikari assumes **evergreen engines** for the individual transform properties (`translate` / `scale` / `rotate` — Chrome/Edge 104+, Firefox 72+, Safari 14.1+; the modal frame's centering is carried by `translate`, see `HkModal.scss`). They are not prefixable, and a pre-104 engine would lose the property outright, so a host still serving older WebViews must not take a hikari version that introduces a new longhand without auditing that host's engine floor first.
+
 Every hikari sheet that sets one of those properties goes through the partial's mixins:
 
 ```scss

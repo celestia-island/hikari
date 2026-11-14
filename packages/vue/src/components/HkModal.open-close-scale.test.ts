@@ -3,10 +3,14 @@
  * against the COMPILED stylesheet, not the source text.
  *
  * User direction 2026-11-07 (fifth revision, chosen from a comparison
- * page): the whole window zooms and rises — B3. The frame's transform is
- * the permanent centering translate with a translateY+scale appended, a
- * compositor-only motion; opacity rides the same clock. The body carries
- * NO rule in this choreography (nothing inside is ever scaled on its own).
+ * page): the whole window zooms and rises — B3. The ride lives on
+ * `transform` as a px-only translateY+scale pair; the PERMANENT centering
+ * lives on the individual `translate` property (2026-11-15 carrier split —
+ * it composes before `transform`, is never animated, and re-resolves
+ * against the live box every frame, so a mid-enter content growth can no
+ * longer seat the window on a stale ride matrix); opacity rides the same
+ * clock. The body carries NO rule in this choreography (nothing inside is
+ * ever scaled on its own).
   */
 import { describe, expect, it } from "vitest";
 import { dirname, join } from "node:path";
@@ -374,25 +378,41 @@ describe("HkModal desktop open/close contract (compiled cascade, user direction 
     }
   });
 
-  it("never lets a centering percentage ride the animated transform", () => {
-    // Fail-closed, selector-level: EVERY rule that dresses the frame
-    // with a `transform` must carry px-only values (the centering -50%
-    // belongs to the `translate` longhand alone). This is the sweep the
-    // 2026-11-15 field bug hides behind — any future state rule that
-    // re-appends the centering prefix to `transform` re-opens the
-    // frozen-matrix race.
+  it("never lets the centering percentage ride the animated transform", () => {
+    // Fail-closed, selector-level and MEDIA-INDEPENDENT: every rule that
+    // names the frame — the base rule, any ride state, any media-gated
+    // duplicate — must keep the CENTERING legs (-50%, and the shift vars
+    // they are composed with) out of the ANIMATED `transform` property.
+    // They live on the `translate` longhand alone; inside a transitioned
+    // transform their matrices freeze against the mount-time box, which
+    // is the 2026-11-15 field bug verbatim. The mobile sheet's
+    // `translateY(100%)` slide is a DIFFERENT percentage by design (it
+    // docks from below the viewport and is pinned by the sheet test) and
+    // stays legal here.
     const offenders: string[] = [];
     for (const rule of RULES) {
-      if (!/hk-modal-content(?![\w-])/.test(rule.selector)) continue;
+      if (!/hk-modal-content/.test(rule.selector)) continue;
+      const isRide = /hk-modal-content-(enter|leave)-(from|to|active)/.test(rule.selector);
       for (const prop of rule.declarations.keys()) {
         if (prop !== "transform") continue;
         const value = (rule.declarations.get(prop) ?? "").replace(/\s+/g, " ").trim();
-        if (value !== "none" && value.includes("%")) {
-          offenders.push(`${rule.selector} { transform: ${value} }`);
+        if (value === "none") continue;
+        if (value.includes("-50%")) {
+          offenders.push(`${rule.selector} { transform: ${value} } (a centering leg in the animated transform)`);
+        } else if (isRide && value.includes("var(--hk-modal-shift")) {
+          offenders.push(`${rule.selector} { transform: ${value} } (shift vars belong to the translate longhand)`);
         }
       }
     }
-    expect(offenders, "the animated transform must stay percentage-free").toEqual([]);
+    expect(offenders, "the centering carrier must stay the translate longhand").toEqual([]);
+    // Known-positive self-check: the probes above must really see the ride
+    // rules (the R2-audited matcher bug made this sweep vacuous once — a
+    // matcher that matches nothing is not a green gate).
+    expect(RULES.filter((r) => /hk-modal-content-(enter|leave)-(from|to)/.test(r.selector)).length).toBeGreaterThan(0);
+    const probe = RULES.find(
+      (r) => /hk-modal-content-enter-from/.test(r.selector) && r.declarations.has("transform"),
+    );
+    expect(probe, "an enter-from transform rule exists to guard").toBeDefined();
   });
 
   it("never lets a transform longhand creep onto the frame", () => {

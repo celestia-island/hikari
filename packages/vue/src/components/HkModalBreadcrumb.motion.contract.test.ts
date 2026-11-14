@@ -160,33 +160,48 @@ describe("strip surface enter/leave (window choreography)", () => {
     // output, and a regex would otherwise read a comment's prose as a
     // declaration.
     const stripComments = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, " ");
-
-    const base = stripComments(rule(breadcrumb, ".hk-modal-breadcrumb"));
-    expect(base).toContain(`translate: ${CENTERING}`);
-    // A base `transform` is allowed only as the inert reset.
-    const baseTransform = base.match(/transform\s*:\s*([^;]+);/)?.[1]?.trim();
-    if (baseTransform !== undefined) {
-      expect(baseTransform, "the base rule's transform may only be the inert reset").toBe("none");
-    }
+    // EVERY declaration of a property, case-insensitively. Both halves are
+    // load-bearing: CSS property names are case-insensitive (`Translate:` is
+    // the same property), and a duplicate declaration is last-wins — a second
+    // `translate: none` appended to the base rule paints un-centred while a
+    // first-match-only reader still sees the good pair (independent delta
+    // round, 2026-11-15: both bypasses survived the first-match sweep).
+    // Split on `;` and test each segment: a boundary-consuming regex cannot
+    // see two consecutive declarations of the same property (the match eats
+    // the preceding `;`, so the second segment starts without a boundary and
+    // only the LAST one is found — measured, 2026-11-15).
+    const decls = (body: string, prop: string): string[] => {
+      const re = new RegExp(`^\\s*${prop}\\s*:\\s*([\\s\\S]*)$`, "i");
+      return body
+        .split(";")
+        .map((segment) => segment.match(re))
+        .filter((m): m is RegExpMatchArray => m !== null)
+        .map((m) => m[1].trim().replace(/\\s+/g, " "));
+    };
 
     const offenders: string[] = [];
+    let baseCarriesCentring = false;
     for (const frame of frames(breadcrumb)) {
       const body = stripComments(frame.body);
       const label = frame.selectors.join(", ");
       const isBase = frame.selectors.includes(".hk-modal-breadcrumb");
-      const transform = body.match(/transform\s*:\s*([^;]+);/)?.[1]?.trim();
-      if (transform !== undefined && transform !== "none" && transform.includes("%")) {
-        offenders.push(`${label} { transform: ${transform} }`);
+      for (const transform of decls(body, "transform")) {
+        if (transform !== "none" && transform.includes("%")) {
+          offenders.push(`${label} { transform: ${transform} }`);
+        }
       }
-      const translate = body.match(/(?:^|[;{])\s*translate\s*:\s*([^;]+);/)?.[1]?.trim();
-      if (translate === undefined) continue;
-      if (!isBase) {
-        offenders.push(`${label} { translate: ${translate} } (only the base rule may set the centring longhand)`);
-      } else if (translate !== CENTERING) {
-        offenders.push(`${label} { translate: ${translate} }`);
+      for (const translate of decls(body, "translate")) {
+        if (!isBase) {
+          offenders.push(`${label} { translate: ${translate} } (only the base rule may set the centring longhand)`);
+        } else if (translate !== CENTERING) {
+          offenders.push(`${label} { translate: ${translate} }`);
+        } else {
+          baseCarriesCentring = true;
+        }
       }
     }
     expect(offenders, "the centring carrier must stay the base rule's translate longhand").toEqual([]);
+    expect(baseCarriesCentring, "the base rule must declare the centring pair").toBe(true);
 
     // Known-positive probe: the sweep is worthless if it matches no rule at
     // all (hikari #1325's first sweep shipped vacuous exactly that way), so

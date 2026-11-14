@@ -15,8 +15,8 @@ import { parse } from "../wasm/mermaid/hikari_wasm_mermaid.js";
 
 /** Check whether the wasm component handles this diagram type. */
 function wasmHandles(source: string): boolean {
-  // First wave: graph/flowchart only.
-  return /^\s*(graph|flowchart)\b/i.test(source);
+  // Second wave: graph/flowchart + pie/gantt/sequence.
+  return /^\s*(graph|flowchart|pie|gantt|sequenceDiagram)\b/i.test(source);
 }
 
 export const wasmMermaidEngine: MermaidParserEngine = {

@@ -15,13 +15,9 @@ pub struct Mermaid;
 #[cfg(target_family = "wasm")]
 impl bindings::Guest for Mermaid {
     fn parse(source: String) -> bindings::ParseResult {
-        match mermaid::parse(&source) {
-            Ok(diagram) => {
-                let json = serde_json::to_string(&diagram)
-                    .unwrap_or_else(|e| format!("{{\"error\":\"serialize: {e}\"}}"));
-                bindings::ParseResult { json: Some(json) }
-            }
-            Err(_) => bindings::ParseResult { json: None },
+        match mermaid::parse_any(&source) {
+            Some(json) => bindings::ParseResult { json: Some(json) },
+            None => bindings::ParseResult { json: None },
         }
     }
 }
@@ -29,9 +25,7 @@ impl bindings::Guest for Mermaid {
 #[cfg(not(target_family = "wasm"))]
 pub mod native {
     pub fn parse(source: &str) -> Option<String> {
-        crate::mermaid::parse(source)
-            .ok()
-            .and_then(|d| serde_json::to_string(&d).ok())
+        crate::mermaid::parse_any(source)
     }
 }
 
@@ -47,5 +41,29 @@ mod tests {
     #[test]
     fn returns_none_on_garbage() {
         assert!(super::native::parse("not a diagram at all").is_none());
+    }
+
+    #[test]
+    fn parses_pie() {
+        let src = "pie\n  title Test Pie\n  \"A\" : 30\n  \"B\" : 70";
+        let json = super::native::parse(src).unwrap();
+        assert!(json.contains("\"kind\":\"pie\""));
+        assert!(json.contains("A"));
+    }
+
+    #[test]
+    fn parses_gantt() {
+        let src = "gantt\n  title Project\n  section Design\n  Task1 :a1, 2024-01-01, 5d";
+        let json = super::native::parse(src).unwrap();
+        assert!(json.contains("\"kind\":\"gantt\""));
+        assert!(json.contains("Design"));
+    }
+
+    #[test]
+    fn parses_sequence() {
+        let src = "sequenceDiagram\n  Alice->>Bob: Hello\n  Bob-->>Alice: Hi";
+        let json = super::native::parse(src).unwrap();
+        assert!(json.contains("\"kind\":\"sequence\""));
+        assert!(json.contains("Alice"));
     }
 }

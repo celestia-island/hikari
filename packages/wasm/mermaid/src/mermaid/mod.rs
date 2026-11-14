@@ -1,14 +1,12 @@
-//! The mermaid parser core, vendored from ratatui-markdown v0.3.6 (the
-//! semantic reference hikari's TS port was a mirror of), with serde
-//! serialization added for the wasm component's JSON contract.
-//!
-//! This first wave carries the graph/flowchart parser (the pest-driven
-//! mainstay); sequence/class/gantt/pie/quadrant parsers ride the next
-//! wave — they need their parse functions separated from their render
-//! functions in the source crate first.
+//! The mermaid parser, vendored from ratatui-markdown v0.3.6, with serde
+//! serialization for the wasm component's JSON contract.
 
 pub mod types;
+pub mod graph_parser;
 pub mod parser;
+pub mod pie;
+pub mod gantt;
+pub mod sequence;
 
 pub use types::*;
-pub use parser::parse;
+pub use parser::{parse, parse_any};

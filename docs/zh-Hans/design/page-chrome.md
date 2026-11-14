@@ -38,3 +38,11 @@
 chrome 由 hikari 提供：`HkAdminHeader` 的动作行、`HkIconButton` 与
 `useChromeActionSize`。宿主经渲染上述槽位的动作区上下文注册；chest webui 的
 `useActionBar` / `usePageCreateAction` 是这套语法的参考实现。
+
+## 移动端折叠
+
+锚定在页眉中槽或页脚中槽的按钮组，在手机宽度视口（<768，`useBreakpoint().isMobile`——
+sheet 家族的阈值）折叠为：原按钮组变成一个读出**当前项**的下拉式触发钮，选项
+以底部 sheet 展开（`HkSelectPanel` 的 `sheetOnMobile`）。两套形态共用同一份
+value 契约，`?tab=` 深链跨断点不受影响。`HkAdaptiveTabs` 是默认实现；
+自带专属行的动态项目列表切换器（平台切换器）是豁免的特例，不是可照抄的模式。

@@ -51,3 +51,16 @@ hikari fournit le chrome : la rangée d'actions de `HkAdminHeader`,
 contexte de barre d'actions qui rend les slots ci-dessus ; le `useActionBar` /
 `usePageCreateAction` du webui de chest est l'implémentation de référence de
 cette grammaire.
+
+## Repli mobile
+
+Un groupe de boutons ancré dans le slot central de l'en-tête ou du pied
+de page se replie aux largeurs téléphone (<768, `useBreakpoint().isMobile`
+— le seuil de la famille sheet) : la bande devient un déclencheur de
+type sélecteur nommant l'élément ACTIF, et ses options s'ouvrent en
+feuille inférieure (`HkSelectPanel` avec `sheetOnMobile`). Un seul
+contrat de valeur pilote les deux formes — les liens profonds `?tab=`
+survivent au point de rupture. `HkAdaptiveTabs` est l'implémentation
+par défaut ; les commutateurs de listes de projets dynamiques avec des lignes
+propres (le sélecteur de plateforme) sont le cas particulier exempté,
+pas le modèle à copier.

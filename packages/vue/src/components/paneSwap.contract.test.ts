@@ -172,6 +172,11 @@ describe("pane-swap contract", () => {
       // empty-action hooks (modals own their own enter/leave motion).
       "HkAdminHeader.tsx",
       "HkAdminTablePage.tsx",
+      // Trigger icon slots only (the `icon-${key}` vocabulary mirrored
+      // from HkTabs): decorative glyphs inside triggers and option rows,
+      // never a keyed pane — HkAdaptiveTabs renders no panels at all
+      // (renderPanels defaults false) and owns no pane-swap motion.
+      "HkAdaptiveTabs.tsx",
     ]);
     const unexplained = slotRenders.filter((r) => !EXCEPTIONS.has(r.file));
     expect(

@@ -45,3 +45,15 @@ hikari supplies the chrome: `HkAdminHeader`'s action row, `HkIconButton`, and
 `useChromeActionSize`. Hosts register through an action-bar context that
 renders the slots above; the chest webui's `useActionBar` /
 `usePageCreateAction` is the reference implementation of this grammar.
+
+## Mobile collapse
+
+A button group anchored to the header's center slot or the footer's
+center slot collapses on phone-width viewports (<768,
+`useBreakpoint().isMobile` — the sheet family's threshold): the strip
+becomes a select-style trigger naming the ACTIVE item, and its options
+open as a bottom sheet (`HkSelectPanel` with `sheetOnMobile`). One
+value contract drives both forms, so `?tab=` deep links survive the
+breakpoint. `HkAdaptiveTabs` is the default implementation; dynamic
+project-list switchers with bespoke rows (the platform switcher) are
+the exempt special case, not the pattern to copy.

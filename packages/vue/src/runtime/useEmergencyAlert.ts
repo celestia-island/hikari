@@ -1,5 +1,9 @@
 import { reactive } from "vue";
 
+import {
+  recordNotification,
+  setNotificationState,
+} from "./notificationCenter";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
 /**
@@ -135,6 +139,24 @@ function writeSnoozeSet(set: Set<string>): void {
   }
 }
 
+/** Mirror one alert into the notification-center journal: the episode's
+ *  journal entry (id `emergency:<alert id>`) tracks the band through
+ *  active → snoozed → (unsnooze) → cleared. `onResummon` wires the
+ *  panel's "show again" button to the real unsnooze path — the one
+ *  reversible record in the journal (toast records are replay-free). */
+function journalEpisode(id: string, item: EmergencyAlertItem): void {
+  recordNotification({
+    id: `emergency:${id}`,
+    kind: "emergency",
+    tone: item.severity === "danger" ? "error" : "warning",
+    title: item.title,
+    detail: item.description !== "" ? item.description : undefined,
+    code: item.code !== "" ? item.code : undefined,
+    state: item.snoozed ? "snoozed" : "active",
+    onResummon: () => unsnoozeEmergencyAlert(id),
+  });
+}
+
 /** Raise (or update) an emergency alert. Re-raising an active id
  *  updates its content in place and NEVER resets the snooze state —
  *  pollers may call this every cycle. */
@@ -149,10 +171,11 @@ export function raiseEmergencyAlert(opts: EmergencyAlertOptions): void {
     existing.actions = opts.actions ?? [];
     existing.dismissible = opts.dismissible ?? true;
     existing.onSnooze = opts.onSnooze;
+    journalEpisode(opts.id, existing);
     runtimeReport?.pulse();
     return;
   }
-  state.alerts.push({
+  const item: EmergencyAlertItem = {
     id: opts.id,
     severity: opts.severity,
     title: opts.title,
@@ -164,7 +187,9 @@ export function raiseEmergencyAlert(opts: EmergencyAlertOptions): void {
     onSnooze: opts.onSnooze,
     seq: ++nextSeq,
     snoozed: readSnoozeSet().has(opts.id),
-  });
+  };
+  state.alerts.push(item);
+  journalEpisode(opts.id, item);
   // Lazy first-use registration (same contract as useToast/useBlockingToast):
   // the context reports itself on the first raise so the live alert set is
   // answerable from readHkRuntime("emergencyAlert").
@@ -179,6 +204,9 @@ export function clearEmergencyAlert(id: string): void {
   if (idx !== -1) state.alerts.splice(idx, 1);
   const snooze = readSnoozeSet();
   if (snooze.delete(id)) writeSnoozeSet(snooze);
+  // The episode is over; the journal KEEPS the entry as "cleared"
+  // (user ruling 2026-11-15: resolved episodes stay reviewable).
+  setNotificationState(`emergency:${id}`, "cleared");
   runtimeReport?.pulse();
 }
 
@@ -192,6 +220,7 @@ export function snoozeEmergencyAlert(id: string): void {
   const snooze = readSnoozeSet();
   snooze.add(id);
   writeSnoozeSet(snooze);
+  setNotificationState(`emergency:${id}`, "snoozed");
   item.onSnooze?.();
   runtimeReport?.pulse();
 }
@@ -207,6 +236,9 @@ export function unsnoozeEmergencyAlert(id: string): void {
   item.snoozed = false;
   const snooze = readSnoozeSet();
   if (snooze.delete(id)) writeSnoozeSet(snooze);
+  // The band returns — journal entry follows (and the notification
+  // center's restore button lands here via the entry's onResummon).
+  setNotificationState(`emergency:${id}`, "active");
   runtimeReport?.pulse();
 }
 

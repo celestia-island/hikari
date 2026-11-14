@@ -350,5 +350,11 @@
   "hikari::emergencyAlert.kicker.danger": "KRITISCHE WARNUNG",
   "hikari::emergencyAlert.kicker.warning": "WARNUNG",
   "hikari::emergencyAlert.more": "weitere Warnungen offen",
-  "hikari::emergencyAlert.restore": "Wieder anzeigen"
+  "hikari::emergencyAlert.restore": "Wieder anzeigen",
+  "hikari::notificationCenter.title": "Benachrichtigungen",
+  "hikari::notificationCenter.unread": "Ungelesene Benachrichtigungen",
+  "hikari::notificationCenter.empty": "Noch keine Benachrichtigungen",
+  "hikari::notificationCenter.stateHidden": "Ausgeblendet",
+  "hikari::notificationCenter.stateResolved": "Behoben",
+  "hikari::notificationCenter.clearAll": "Alle löschen"
 }

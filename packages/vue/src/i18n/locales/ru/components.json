@@ -350,5 +350,11 @@
   "hikari::emergencyAlert.kicker.danger": "КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ",
   "hikari::emergencyAlert.kicker.warning": "ВНИМАНИЕ",
   "hikari::emergencyAlert.more": "ещё предупреждения ожидают",
-  "hikari::emergencyAlert.restore": "Показать снова"
+  "hikari::emergencyAlert.restore": "Показать снова",
+  "hikari::notificationCenter.title": "Уведомления",
+  "hikari::notificationCenter.unread": "Непрочитанные уведомления",
+  "hikari::notificationCenter.empty": "Уведомлений пока нет",
+  "hikari::notificationCenter.stateHidden": "Скрыто",
+  "hikari::notificationCenter.stateResolved": "Устранено",
+  "hikari::notificationCenter.clearAll": "Очистить всё"
 }

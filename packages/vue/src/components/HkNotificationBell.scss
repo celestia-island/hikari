@@ -1,0 +1,187 @@
+/**
+ * HkNotificationBell chrome: the bell wrapper and the notification-
+ * center panel body. Tone colors reuse the badge/status channels the
+ * toast family already speaks (HkBadge's --hk-badge-* family) so a
+ * journal row reads as the same grammar as the surface it records;
+ * layout is deliberately plain flex/flow — the popup chrome (glass,
+ * scroll, sheet band) is HkPopover's job, not ours.
+ */
+
+.hk-notification-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Panel body: the list is the popup's ONE scroll surface (the
+ * single-scroll contract — never a nested pane inside it). */
+.hk-notification-center {
+  display: flex;
+  flex-direction: column;
+  width: min(22rem, 100%);
+}
+
+.hk-notification-center__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(24rem, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
+     list keeps native overflow mechanics, the platform bar never
+     paints — overlay scrollbars ride the popup chrome instead. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hk-notification-center__empty {
+  margin: 0;
+  padding: var(--space-12, 0.75rem) var(--space-8, 0.5rem);
+  color: rgb(var(--color-text) / 55%);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.hk-notification-center__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-8, 0.5rem);
+  border-top: 1px solid rgb(var(--color-border) / 10%);
+  margin-top: var(--space-8, 0.5rem);
+}
+
+.hk-notification-center__clear {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0 var(--space-4, 0.25rem);
+  color: rgb(var(--color-text) / 55%);
+  font-size: 0.75rem;
+  cursor: pointer;
+
+  &:hover {
+    color: rgb(var(--color-text) / 85%);
+    text-decoration: underline;
+  }
+}
+
+/* ── rows ─────────────────────────────────────────────────────────── */
+
+.hk-notification-row {
+  display: flex;
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-8, 0.5rem) var(--space-8, 0.5rem);
+  border-bottom: 1px solid rgb(var(--color-border) / 6%);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.hk-notification-row__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding-top: 2px;
+  /* Tone ink follows the row's tone class (rules below). */
+  color: rgb(var(--color-text) / 65%);
+}
+
+/* Tone ink on the glyph (status channels with toast-family fallbacks). */
+.hk-notification-row.is-error .hk-notification-row__icon {
+  color: var(--hk-badge-error-bg, #e5484d);
+}
+
+.hk-notification-row.is-warning .hk-notification-row__icon {
+  color: var(--hk-badge-warning-bg, #f5a623);
+}
+
+.hk-notification-row.is-success .hk-notification-row__icon {
+  color: var(--hk-badge-success-bg, #46a758);
+}
+
+.hk-notification-row.is-info .hk-notification-row__icon,
+.hk-notification-row.is-loading .hk-notification-row__icon {
+  color: rgb(var(--color-text) / 65%);
+}
+
+.hk-notification-row__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hk-notification-row__top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-notification-row__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: rgb(var(--color-text) / 92%);
+}
+
+.hk-notification-row__time {
+  flex: none;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-text) / 45%);
+}
+
+.hk-notification-row__detail {
+  margin: 2px 0 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: rgb(var(--color-text) / 55%);
+}
+
+.hk-notification-row__detail-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-notification-row__code {
+  flex: none;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  padding: 0 4px;
+  border: 1px solid rgb(var(--color-border) / 25%);
+  border-radius: 4px;
+}
+
+.hk-notification-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  margin-top: 2px;
+}
+
+.hk-notification-row__state {
+  font-size: 0.6875rem;
+  color: rgb(var(--color-text) / 45%);
+}
+
+.hk-notification-row__restore {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: rgb(var(--color-primary, var(--color-text)) / 90%);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

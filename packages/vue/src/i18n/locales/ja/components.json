@@ -350,5 +350,11 @@
   "hikari::emergencyAlert.kicker.danger": "緊急警告",
   "hikari::emergencyAlert.kicker.warning": "警告",
   "hikari::emergencyAlert.more": "他の警告が保留中",
-  "hikari::emergencyAlert.restore": "再度表示"
+  "hikari::emergencyAlert.restore": "再度表示",
+  "hikari::notificationCenter.title": "通知",
+  "hikari::notificationCenter.unread": "未読の通知があります",
+  "hikari::notificationCenter.empty": "通知はまだありません",
+  "hikari::notificationCenter.stateHidden": "非表示",
+  "hikari::notificationCenter.stateResolved": "解決済み",
+  "hikari::notificationCenter.clearAll": "すべて消去"
 }

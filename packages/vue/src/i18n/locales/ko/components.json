@@ -350,5 +350,11 @@
   "hikari::emergencyAlert.kicker.danger": "긴급 경고",
   "hikari::emergencyAlert.kicker.warning": "경고",
   "hikari::emergencyAlert.more": "대기 중인 경고 더 있음",
-  "hikari::emergencyAlert.restore": "다시 표시"
+  "hikari::emergencyAlert.restore": "다시 표시",
+  "hikari::notificationCenter.title": "알림",
+  "hikari::notificationCenter.unread": "읽지 않은 알림이 있습니다",
+  "hikari::notificationCenter.empty": "알림이 없습니다",
+  "hikari::notificationCenter.stateHidden": "숨김",
+  "hikari::notificationCenter.stateResolved": "해제됨",
+  "hikari::notificationCenter.clearAll": "모두 지우기"
 }

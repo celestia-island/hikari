@@ -1,0 +1,68 @@
+// matlab.pest — Matlab syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "%" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "enumeration"    | "properties"    | "persistent"    | "arguments"    | "otherwise"    | "function"    | "classdef"    | "continue"
+    | "methods"    | "elseif"    | "return"    | "switch"    | "parfor"    | "global"    | "events"    | "while"
+    | "catch"    | "break"    | "case"    | "spmd"    | "else"    | "for"    | "try"    | "end"
+    | "if"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "isequalwithequalnans"    | "procrustes"    | "accumarray"    | "writetable"    | "intersect"    | "readtable"    | "factorial"    | "circshift"
+    | "freqspace"    | "wilkinson"    | "nchoosek"    | "ipermute"    | "nextpow2"    | "meshgrid"    | "toeplitz"    | "ismember"
+    | "gammainc"    | "cart2sph"    | "logspace"    | "isvector"    | "shiftdim"    | "linspace"    | "realsqrt"    | "isfinite"
+    | "sph2cart"    | "cart2pol"    | "cplxpair"    | "num2cell"    | "hadamard"    | "pol2cart"    | "sortrows"    | "legendre"
+    | "scatter3"    | "isscalar"    | "ind2sub"    | "ellipke"    | "gallery"    | "besselj"    | "isprime"    | "permute"
+    | "blkdiag"    | "besselh"    | "betainc"    | "bessely"    | "besselk"    | "realpow"    | "invhilb"    | "realmin"
+    | "reshape"    | "isempty"    | "reallog"    | "cellfun"    | "hsv2rgb"    | "rgb2hsv"    | "complex"    | "gammaln"
+    | "realmax"    | "flipdim"    | "isequal"    | "nthroot"    | "scatter"    | "sub2ind"    | "squeeze"    | "nanmean"
+    | "besseli"    | "compan"    | "primes"    | "nanmin"    | "ndgrid"    | "figure"    | "betaln"    | "expint"
+    | "repmat"    | "flipud"    | "unwrap"    | "rosser"    | "isreal"    | "factor"    | "hankel"    | "bsxfun"
+    | "fliplr"    | "erfinv"    | "length"    | "nanmax"    | "vander"    | "ellipj"    | "legend"    | "pascal"
+    | "erfcx"    | "atand"    | "atanh"    | "rot90"    | "floor"    | "isinf"    | "ndims"    | "acosd"
+    | "isnan"    | "acsch"    | "asinh"    | "log10"    | "acosh"    | "round"    | "cross"    | "hypot"
+    | "numel"    | "asecd"    | "acoth"    | "log1p"    | "asind"    | "acscd"    | "table"    | "expm1"
+    | "gamma"    | "angle"    | "asech"    | "zeros"    | "magic"    | "atan2"    | "acotd"    | "randn"
+    | "perms"    | "plot3"    | "asec"    | "sinh"    | "real"    | "type"    | "conj"    | "rats"
+    | "log2"    | "ceil"    | "cosd"    | "csch"    | "sort"    | "ones"    | "cscd"    | "secd"
+    | "imag"    | "tril"    | "size"    | "tanh"    | "cotd"    | "acos"    | "disp"    | "diag"
+    | "sind"    | "airy"    | "triu"    | "asin"    | "sqrt"    | "find"    | "rand"    | "beta"
+    | "atan"    | "coth"    | "sech"    | "tand"    | "plot"    | "cosh"    | "mean"    | "acot"
+    | "hilb"    | "sign"    | "erfc"    | "pow2"    | "acsc"    | "hold"    | "cos"    | "dot"
+    | "why"    | "psi"    | "log"    | "fix"    | "mod"    | "csc"    | "tan"    | "max"
+    | "cot"    | "abs"    | "nan"    | "cat"    | "lcm"    | "sec"    | "gcd"    | "rat"
+    | "min"    | "sin"    | "rem"    | "inf"    | "erf"    | "eye"    | "eps"    | "exp"
+    | "ans"    | "pi"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

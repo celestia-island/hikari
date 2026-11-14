@@ -1,0 +1,62 @@
+// r.pest — R syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "/#'/" ~ (!"\n" ~ ANY)* | "#" ~ (!"\n" ~ ANY)* | "#" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "function"    | "repeat"    | "while"    | "break"    | "else"    | "next"    | "for"    | "if"
+    | "in"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "as.null.default"    | "lazyLoadDBfetch"    | "standardGeneric"    | "as.environment"    | "is.environment"    | "is.expression"    | "is.character"    | "as.character"
+    | "is.recursive"    | "forceAndCall"    | "is.infinite"    | "is.function"    | "is.language"    | "interactive"    | "is.pairlist"    | "month.name"
+    | "as.complex"    | "is.numeric"    | "as.numeric"    | "as.logical"    | "as.integer"    | "untracemem"    | "is.integer"    | "is.complex"
+    | "expression"    | "pos.to.env"    | "retracemem"    | "substitute"    | "attributes"    | "is.logical"    | "month.abb"    | "is.atomic"
+    | "invisible"    | "as.double"    | "is.single"    | "is.matrix"    | "is.object"    | "UseMethod"    | "seq_along"    | "is.finite"
+    | "is.double"    | "globalenv"    | "is.symbol"    | "proc.time"    | "dimnames"    | "oldClass"    | "is.array"    | "trigamma"
+    | "emptyenv"    | "tracemem"    | "seq_len"    | "is.list"    | "baseenv"    | "on.exit"    | "gc.time"    | "unclass"
+    | "missing"    | "letters"    | "as.call"    | "is.null"    | "seq.int"    | "is.name"    | "digamma"    | "ceiling"
+    | "LETTERS"    | "is.call"    | "cumprod"    | "browser"    | "lgamma"    | "nzchar"    | "cummax"    | "signif"
+    | "switch"    | "cummin"    | "as.raw"    | "is.raw"    | "cumsum"    | "return"    | "length"    | "is.nan"
+    | "cospi"    | "atanh"    | "sinpi"    | "nargs"    | "is.na"    | "floor"    | "anyNA"    | "asinh"
+    | "acosh"    | "round"    | "xtfrm"    | "names"    | "quote"    | "gamma"    | "class"    | "trunc"
+    | "range"    | "tanpi"    | "prod"    | "sinh"    | "attr"    | "list"    | "tanh"    | "acos"
+    | "call"    | "asin"    | "sqrt"    | "atan"    | "Conj"    | "cosh"    | "sign"    | "rep"
+    | "cos"    | "log"    | "Arg"    | "all"    | "tan"    | "max"    | "abs"    | "Mod"
+    | "min"    | "sin"    | "sum"    | "exp"    | "any"    | "dim"    | "Im"    | "pi"
+    | "Re"    | "T"    | "F"    | "c"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "FALSE"    | "NULL"    | "TRUE"    | "Inf"    | "NaN"    | "NA"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

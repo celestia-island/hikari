@@ -1,0 +1,60 @@
+// typescript.pest — TypeScript syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "//" ~ (!"\n" ~ ANY)* | "/*" ~ (!"*/" ~ ANY)* ~ "*/"? }
+
+kw = @{ (
+    "instanceof"    | "implements"    | "interface"    | "satisfies"    | "protected"    | "function"    | "override"    | "debugger"
+    | "readonly"    | "abstract"    | "continue"    | "extends"    | "private"    | "finally"    | "declare"    | "default"
+    | "typeof"    | "return"    | "static"    | "export"    | "public"    | "switch"    | "import"    | "delete"
+    | "throw"    | "class"    | "while"    | "catch"    | "using"    | "break"    | "async"    | "const"
+    | "await"    | "yield"    | "case"    | "enum"    | "with"    | "type"    | "else"    | "from"
+    | "void"    | "for"    | "var"    | "try"    | "new"    | "let"    | "as"    | "if"
+    | "do"    | "in"    | "of"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "encodeURIComponent"    | "decodeURIComponent"    | "GeneratorFunction"    | "Uint8ClampedArray"    | "SharedArrayBuffer"    | "ReferenceError"    | "BigUint64Array"    | "BigInt64Array"
+    | "clearInterval"    | "InternalError"    | "AsyncFunction"    | "Float64Array"    | "Float32Array"    | "clearTimeout"    | "Uint16Array"    | "SyntaxError"
+    | "Uint32Array"    | "setInterval"    | "WebAssembly"    | "ArrayBuffer"    | "setTimeout"    | "Uint8Array"    | "Int16Array"    | "Int32Array"
+    | "parseFloat"    | "RangeError"    | "TypeError"    | "EvalError"    | "Int8Array"    | "encodeURI"    | "decodeURI"    | "Generator"
+    | "DataView"    | "Function"    | "unescape"    | "URIError"    | "isFinite"    | "parseInt"    | "Atomics"    | "WeakMap"
+    | "exports"    | "Promise"    | "WeakSet"    | "boolean"    | "require"    | "Boolean"    | "Reflect"    | "unknown"
+    | "Number"    | "Symbol"    | "String"    | "symbol"    | "BigInt"    | "object"    | "Object"    | "string"
+    | "RegExp"    | "escape"    | "bigint"    | "number"    | "isNaN"    | "Array"    | "Proxy"    | "never"
+    | "Error"    | "Math"    | "eval"    | "Intl"    | "void"    | "Date"    | "JSON"    | "Map"
+    | "any"    | "Set"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "undefined"    | "Infinity"    | "false"    | "null"    | "true"    | "NaN"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

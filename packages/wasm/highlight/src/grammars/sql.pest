@@ -1,0 +1,87 @@
+// sql.pest — SQL syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "/*" ~ (!"*/" ~ ANY)* ~ "*/"? }
+
+kw = @{ (
+    "current_transform_group_for_type"    | "current_default_transform_group"    | "array_max_cardinality"    | "occurrences_regex"    | "current_timestamp"    | "character_length"    | "timezone_minute"    | "current_catalog"
+    | "begin_partition"    | "match_recognize"    | "localtimestamp"    | "current_schema"    | "corresponding"    | "end_partition"    | "deterministic"    | "authorization"
+    | "timezone_hour"    | "current_time"    | "current_role"    | "current_path"    | "intersection"    | "match_number"    | "session_user"    | "current_user"
+    | "sqlexception"    | "current_date"    | "specifictype"    | "octet_length"    | "system_time"    | "tablesample"    | "current_row"    | "system_user"
+    | "translation"    | "insensitive"    | "char_length"    | "begin_frame"    | "cardinality"    | "referencing"    | "submultiset"    | "sqlwarning"
+    | "disconnect"    | "versioning"    | "references"    | "classifier"    | "asymmetric"    | "asensitive"    | "constraint"    | "like_regex"
+    | "deallocate"    | "intersect"    | "savepoint"    | "parameter"    | "localtime"    | "precision"    | "partition"    | "sensitive"
+    | "procedure"    | "indicator"    | "normalize"    | "character"    | "timestamp"    | "recursive"    | "end_frame"    | "condition"
+    | "collation"    | "symmetric"    | "varbinary"    | "frame_row"    | "function"    | "rollback"    | "national"    | "precedes"
+    | "multiset"    | "modifies"    | "trailing"    | "overlaps"    | "cascaded"    | "end-exec"    | "succeeds"    | "contains"
+    | "specific"    | "truncate"    | "whenever"    | "grouping"    | "external"    | "distinct"    | "decfloat"    | "smallint"
+    | "language"    | "sqlstate"    | "describe"    | "interval"    | "identity"    | "allocate"    | "initial"    | "natural"
+    | "portion"    | "similar"    | "collate"    | "lateral"    | "without"    | "overlay"    | "between"    | "dynamic"
+    | "uescape"    | "percent"    | "foreign"    | "matches"    | "collect"    | "prepare"    | "connect"    | "leading"
+    | "numeric"    | "release"    | "boolean"    | "declare"    | "integer"    | "primary"    | "returns"    | "execute"
+    | "running"    | "current"    | "decimal"    | "convert"    | "trigger"    | "pattern"    | "default"    | "unknown"
+    | "varying"    | "varchar"    | "filter"    | "rollup"    | "result"    | "create"    | "unique"    | "update"
+    | "delete"    | "global"    | "second"    | "member"    | "static"    | "values"    | "search"    | "offset"
+    | "scroll"    | "period"    | "revoke"    | "except"    | "subset"    | "method"    | "minute"    | "fusion"
+    | "groups"    | "exists"    | "called"    | "module"    | "return"    | "select"    | "cursor"    | "double"
+    | "window"    | "escape"    | "system"    | "insert"    | "binary"    | "column"    | "commit"    | "atomic"
+    | "equals"    | "within"    | "bigint"    | "having"    | "define"    | "large"    | "false"    | "local"
+    | "right"    | "scope"    | "empty"    | "reads"    | "array"    | "month"    | "begin"    | "first"
+    | "cross"    | "float"    | "inner"    | "outer"    | "start"    | "inout"    | "using"    | "check"
+    | "value"    | "alter"    | "table"    | "final"    | "match"    | "nchar"    | "every"    | "union"
+    | "group"    | "where"    | "merge"    | "range"    | "cycle"    | "order"    | "grant"    | "fetch"
+    | "nclob"    | "close"    | "user"    | "with"    | "both"    | "skip"    | "real"    | "full"
+    | "none"    | "from"    | "some"    | "cube"    | "open"    | "drop"    | "view"    | "desc"
+    | "rows"    | "clob"    | "copy"    | "time"    | "char"    | "then"    | "blob"    | "last"
+    | "date"    | "year"    | "when"    | "left"    | "case"    | "null"    | "show"    | "each"
+    | "call"    | "exec"    | "else"    | "over"    | "omit"    | "join"    | "free"    | "true"
+    | "hour"    | "seek"    | "hold"    | "like"    | "only"    | "into"    | "not"    | "set"
+    | "sql"    | "and"    | "asc"    | "row"    | "are"    | "all"    | "ref"    | "int"
+    | "new"    | "one"    | "old"    | "for"    | "dec"    | "per"    | "ptf"    | "add"
+    | "get"    | "any"    | "day"    | "end"    | "out"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "current_transform_group_for_type"    | "current_default_transform_group"    | "current_timestamp"    | "current_catalog"    | "current_schema"    | "localtimestamp"    | "session_user"    | "current_user"
+    | "current_time"    | "current_date"    | "current_role"    | "current_path"    | "system_user"    | "system_time"    | "localtime"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "unknown"    | "false"    | "true"
+    ) ~ !ident_char
+}
+type_kw = @{ (
+    "character"    | "timestamp"    | "varbinary"    | "decfloat"    | "national"    | "smallint"    | "interval"    | "decimal"
+    | "numeric"    | "boolean"    | "integer"    | "varying"    | "varchar"    | "binary"    | "bigint"    | "float"
+    | "nchar"    | "nclob"    | "clob"    | "real"    | "time"    | "char"    | "blob"    | "date"
+    | "row"    | "int"    | "dec"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | type_kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

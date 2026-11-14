@@ -1,0 +1,66 @@
+// lua.pest — Lua syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "--" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "repeat"    | "elseif"    | "return"    | "until"    | "while"    | "local"    | "break"    | "then"
+    | "else"    | "goto"    | "for"    | "not"    | "end"    | "and"    | "if"    | "do"
+    | "in"    | "or"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "collectgarbage"    | "setmetatable"    | "getmetatable"    | "__metatable"    | "getregistry"    | "__newindex"    | "setupvalue"    | "getupvalue"
+    | "randomseed"    | "loadstring"    | "__tostring"    | "traceback"    | "coroutine"    | "setlocale"    | "rawequal"    | "tostring"
+    | "loadfile"    | "__concat"    | "difftime"    | "getlocal"    | "tonumber"    | "setlocal"    | "foreachi"    | "_VERSION"
+    | "gethook"    | "preload"    | "foreach"    | "getfenv"    | "setfenv"    | "getinfo"    | "loadlib"    | "loaders"
+    | "sethook"    | "tmpname"    | "tmpfile"    | "execute"    | "running"    | "reverse"    | "package"    | "__index"
+    | "require"    | "stdout"    | "remove"    | "create"    | "string"    | "xpcall"    | "assert"    | "getenv"
+    | "__mode"    | "random"    | "stderr"    | "loaded"    | "ipairs"    | "dofile"    | "status"    | "config"
+    | "unpack"    | "resume"    | "rename"    | "module"    | "select"    | "__call"    | "concat"    | "insert"
+    | "seeall"    | "gmatch"    | "rawget"    | "rawset"    | "format"    | "output"    | "ldexp"    | "lower"
+    | "__add"    | "flush"    | "__sub"    | "__mul"    | "error"    | "floor"    | "pairs"    | "lines"
+    | "__len"    | "clock"    | "__mod"    | "__pow"    | "pcall"    | "write"    | "log10"    | "input"
+    | "popen"    | "stdin"    | "print"    | "upper"    | "debug"    | "cpath"    | "frexp"    | "table"
+    | "yield"    | "gfind"    | "match"    | "__unm"    | "__div"    | "atan2"    | "close"    | "dump"
+    | "gsub"    | "sinh"    | "getn"    | "maxn"    | "type"    | "ceil"    | "fmod"    | "setn"
+    | "open"    | "sort"    | "time"    | "path"    | "char"    | "__gc"    | "read"    | "date"
+    | "tanh"    | "wrap"    | "acos"    | "_ENV"    | "__eq"    | "math"    | "asin"    | "load"
+    | "find"    | "sqrt"    | "modf"    | "atan"    | "__le"    | "byte"    | "self"    | "__lt"
+    | "cosh"    | "exit"    | "huge"    | "next"    | "rep"    | "deg"    | "cos"    | "sub"
+    | "log"    | "mod"    | "tan"    | "max"    | "abs"    | "pow"    | "min"    | "sin"
+    | "rad"    | "arg"    | "exp"    | "len"    | "os"    | "_G"    | "io"    | "pi"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "false"    | "true"    | "nil"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

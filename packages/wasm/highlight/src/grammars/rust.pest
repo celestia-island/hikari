@@ -1,0 +1,64 @@
+// rust.pest — Rust syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "//" ~ (!"\n" ~ ANY)* | "/*" ~ (!"*/" ~ ANY)* ~ "*/"? }
+
+kw = @{ (
+    "override"    | "abstract"    | "continue"    | "virtual"    | "unsized"    | "typeof"    | "become"    | "struct"
+    | "return"    | "static"    | "unsafe"    | "extern"    | "super"    | "union"    | "false"    | "where"
+    | "while"    | "break"    | "async"    | "macro"    | "trait"    | "crate"    | "const"    | "final"
+    | "await"    | "yield"    | "match"    | "enum"    | "self"    | "type"    | "impl"    | "Self"
+    | "loop"    | "else"    | "move"    | "priv"    | "true"    | "for"    | "use"    | "try"
+    | "ref"    | "mut"    | "pub"    | "let"    | "dyn"    | "box"    | "mod"    | "as"
+    | "if"    | "do"    | "in"    | "fn"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "DoubleEndedIterator"    | "ExactSizeIterator"    | "debug_assert_eq!"    | "debug_assert_ne!"    | "local_data_key!"    | "unimplemented!"    | "SliceConcatExt"    | "concat_idents!"
+    | "include_bytes!"    | "debug_assert!"    | "include_str!"    | "module_path!"    | "unreachable!"    | "format_args!"    | "macro_rules!"    | "IntoIterator"
+    | "option_env!"    | "PartialOrd"    | "stringify!"    | "assert_eq!"    | "assert_ne!"    | "bitflags!"    | "eprintln!"    | "PartialEq"
+    | "println!"    | "ToString"    | "Iterator"    | "writeln!"    | "Default"    | "select!"    | "format!"    | "concat!"
+    | "assert!"    | "ToOwned"    | "bytes!"    | "write!"    | "FnOnce"    | "print!"    | "Extend"    | "panic!"
+    | "Clone"    | "FnMut"    | "drop "    | "Sized"    | "line!"    | "file!"    | "AsMut"    | "AsRef"
+    | "Debug"    | "Copy"    | "try!"    | "Into"    | "vec!"    | "env!"    | "Drop"    | "cfg!"
+    | "Send"    | "col!"    | "From"    | "Sync"    | "Ord"    | "Eq"    | "Fn"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "false"    | "true"    | "Some"    | "None"    | "Err"    | "Ok"
+    ) ~ !ident_char
+}
+type_kw = @{ (
+    "Option"    | "String"    | "Result"    | "isize"    | "usize"    | "u128"    | "char"    | "bool"
+    | "i128"    | "i64"    | "Vec"    | "f32"    | "str"    | "u16"    | "i16"    | "u64"
+    | "f64"    | "i32"    | "Box"    | "u32"    | "i8"    | "u8"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | type_kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

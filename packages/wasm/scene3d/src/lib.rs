@@ -25,10 +25,10 @@ const MAX_BODY_RADIUS: f64 = 1.3; // 0.85 + 0.45 (planet max)
 const MAX_STAR_RADIUS: f64 = 3.2; // 2.4 + 0.8 (star max)
 
 const STAR_PALETTE: &[&str] = &[
-    "#9db4ff", "#aabfff", "#cad7ff", "#f8f7ff", "#fff4ea", "#ffd2a1", "#ffcc6f",
+    "#9bb0ff", "#aabfff", "#c9d6ff", "#f8f9ff", "#fff2df", "#ffd9a0", "#ffb46c", "#ff9a55",
 ];
 const PLANET_PALETTE: &[&str] = &[
-    "#4a9eff", "#6bb6ff", "#8ecbff", "#a3d5ff", "#7ee0d6", "#5ec8f0",
+    "#7fb8dd", "#a8c6e0", "#d9c49a", "#c98a5a", "#b06a4f", "#8d9db6", "#e0d3b8", "#c1573b",
 ];
 
 // ── Pure computation helpers ──────────────────────────────────────────────
@@ -48,9 +48,12 @@ fn hash_id_to_unit(id: &str) -> f64 {
                     .wrapping_add(h.wrapping_shl(24)),
             );
     }
-    // Second fold (same as TS: murmur-style avalanche).
+    // Second fold — mirrors the TS exactly: the multiply happens in f64
+    // (where large products lose their low bits before >>> 0 truncates),
+    // so we do the same rather than a wrapping u32 multiply.
     h ^= h >> 13;
-    h = h.wrapping_mul(0x5bd1_e995);
+    let h_f64 = (h as f64) * 1540483477.0_f64; // 0x5bd1e995
+    h = (h_f64.trunc() as i64 & 0xFFFF_FFFF) as u32;
     h ^= h >> 15;
     (h as f64) / 4294967296.0
 }

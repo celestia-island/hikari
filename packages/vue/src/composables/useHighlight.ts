@@ -15,6 +15,8 @@
 import hljs from "highlight.js/lib/core";
 import { ref } from "vue";
 
+import { wasmHighlight, wasmSupportedLanguages } from "./wasmHighlight";
+
 import { LANGUAGE_LOADERS } from "./highlightLanguages";
 
 // Bumped each time a grammar registers; read inside highlight() so reactive
@@ -216,6 +218,12 @@ export function highlight(code: string, lang?: string): string {
 
   const name = lang ? normalize(lang) : "";
   if (name) {
+    // Wasm component first: it is synchronous and always loaded (the
+    // grammars are compiled in), so languages it covers never hit the
+    // lazy hljs loader — no flash of unstyled code.
+    const wasmResult = wasmHighlight(code, name);
+    if (wasmResult !== null) return wasmResult;
+
     if (loaded.has(name)) {
       try {
         return hljs.highlight(code, { language: name }).value;

@@ -167,7 +167,7 @@ function sweepDangerousUrlAttributes(html: string): string {
   try {
     const doc = new DOMParser().parseFromString(html, "text/html");
     let swept = false;
-    for (const a of [...doc.querySelectorAll("a[href]")]) {
+    for (const a of [...doc.querySelectorAll("a[href], area[href]")]) {
       if (isDangerousHref(a.getAttribute("href") ?? "")) {
         a.removeAttribute("href");
         swept = true;

@@ -151,6 +151,23 @@ describe("HkMarkdownRenderer raw-HTML and image sweep (review S1/S2)", () => {
     expect(srcs).toEqual(["https://example.com/i.png"]);
   });
 
+  it("strips a script-scheme image-map area href (review follow-up)", async () => {
+    // <area href> is the same navigation sink as <a href>, and it is the
+    // one shape DOMPurify's unreliable builds let through alongside it.
+    const doc = [
+      '<map name="m">',
+      '<area href="javascript:alert(1)" alt="evil">',
+      '<area href="https://ok.example/x" alt="ok">',
+      "</map>",
+    ].join("");
+    const { container } = mount(doc);
+    await settleFor(container, ".hk-markdown-body area");
+    const hrefs = [...container.querySelectorAll("area")]
+      .map((el) => el.getAttribute("href"))
+      .filter(Boolean);
+    expect(hrefs).toEqual(["https://ok.example/x"]);
+  });
+
   it("keeps a legit raw-HTML anchor untouched", async () => {
     const { container } = mount('<a href="https://ok.example/x">raw-ok</a>');
     await settleFor(container, "a[href]");

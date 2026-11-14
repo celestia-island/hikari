@@ -122,6 +122,11 @@ describe("actions & snooze", () => {
     const [primary, snooze] = buttons();
     expect(primary.textContent).toBe("立即处理");
     expect(snooze.textContent).toBe("Hide for now");
+    // The band's color language carries the primary action: a WARNING
+    // band paints the primary button in the severity tone (band-scoped
+    // rule) — it must NOT be the brand-primary blue chip.
+    expect(primary.className).toContain("hk-btn-primary");
+    expect(primary.className).not.toContain("hk-btn-danger");
 
     primary.click();
     expect(handle).toHaveBeenCalledTimes(1);

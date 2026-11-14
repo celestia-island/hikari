@@ -211,6 +211,24 @@
   margin-top: var(--space-14, 0.875rem);
 }
 
+// The band's own color language carries its primary action: on a
+// WARNING band the brand-primary (blue) button read as another app's
+// chrome pasted onto the alert (2026-11-14 field report) — repaint it
+// in the severity tone with the on-warning ink, matching the badge
+// disc treatment. DANGER bands keep the solid hk-btn-danger (red on
+// red). Themes may re-point either: endfield's "yellow never fills"
+// doctrine overrides this rule from its own package with a paper CTA.
+.is-warning .hk-emergency-actions .hk-btn-primary {
+  background: var(--hk-emergency-tone);
+  border-color: transparent;
+  color: rgb(var(--color-on-warning, 0 0 0));
+}
+
+.is-warning .hk-emergency-actions .hk-btn-primary:hover:not(:disabled):not(:focus-visible) {
+  filter: brightness(1.08);
+  box-shadow: 0 0 14px var(--hk-emergency-edge-glow);
+}
+
 // ── Motion ────────────────────────────────────────────────────────────
 // Enter/leave: the band draws its signal edges and lifts into place;
 // leave mirrors it. Steady state stays ALIVE but quiet — the badge

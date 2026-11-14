@@ -1,0 +1,232 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: class-basic 1`] = `
+{
+  "classes": [
+    {
+      "attributes": [
+        {
+          "isMethod": false,
+          "name": "name",
+          "typeInfo": "String",
+          "visibility": "public",
+        },
+      ],
+      "methods": [
+        {
+          "isMethod": true,
+          "name": "speak",
+          "typeInfo": "",
+          "visibility": "public",
+        },
+      ],
+      "name": "Animal",
+    },
+  ],
+  "kind": "class",
+  "relationships": [
+    {
+      "arrowAt": "from",
+      "from": "Dog",
+      "label": null,
+      "relType": "inheritance",
+      "to": "Animal",
+    },
+  ],
+}
+`;
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: flowchart-shaped 1`] = `
+{
+  "direction": "LR",
+  "edges": [
+    {
+      "edgeType": "arrow",
+      "label": null,
+      "source": "S",
+      "target": "M",
+    },
+    {
+      "edgeType": "arrow",
+      "label": null,
+      "source": "M",
+      "target": "E",
+    },
+  ],
+  "kind": "graph",
+  "nodes": [
+    {
+      "id": "S",
+      "label": "Start",
+      "shape": "rect",
+    },
+    {
+      "id": "M",
+      "label": "Check",
+      "shape": "diamond",
+    },
+    {
+      "id": "E",
+      "label": "E",
+      "shape": "rect",
+    },
+  ],
+  "variant": "flowchart",
+}
+`;
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: gantt-basic 1`] = `
+{
+  "kind": "gantt",
+  "sections": [
+    {
+      "name": "Design",
+      "tasks": [
+        {
+          "deps": [],
+          "duration": null,
+          "id": null,
+          "name": "Task1",
+        },
+      ],
+    },
+  ],
+  "title": "Project",
+}
+`;
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: graph-basic 1`] = `
+{
+  "direction": "TD",
+  "edges": [
+    {
+      "edgeType": "arrow",
+      "label": null,
+      "source": "A",
+      "target": "B",
+    },
+    {
+      "edgeType": "arrow",
+      "label": null,
+      "source": "B",
+      "target": "C",
+    },
+  ],
+  "kind": "graph",
+  "nodes": [
+    {
+      "id": "A",
+      "label": "A",
+      "shape": "rect",
+    },
+    {
+      "id": "B",
+      "label": "B",
+      "shape": "rect",
+    },
+    {
+      "id": "C",
+      "label": "C",
+      "shape": "rect",
+    },
+  ],
+  "variant": "flowchart",
+}
+`;
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: pie-basic 1`] = `
+{
+  "kind": "pie",
+  "slices": [
+    {
+      "label": "Alpha",
+      "value": 40,
+    },
+    {
+      "label": "Beta",
+      "value": 60,
+    },
+  ],
+  "title": "Sales",
+}
+`;
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: quadrant-basic 1`] = `
+{
+  "kind": "quadrant",
+  "points": [
+    {
+      "label": "Point A",
+      "x": 0.5,
+      "y": 0.7,
+    },
+  ],
+  "quadrants": [
+    null,
+    null,
+    null,
+    null,
+  ],
+  "title": null,
+  "xAxisLeft": "Low",
+  "xAxisRight": "High",
+  "yAxisBottom": "Bottom",
+  "yAxisTop": "Top",
+}
+`;
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: sequence-arrows 1`] = `
+{
+  "kind": "sequence",
+  "messages": [
+    {
+      "arrowKind": "solid",
+      "from": "A",
+      "text": "solid",
+      "to": "B",
+    },
+    {
+      "arrowKind": "dotted",
+      "from": "B",
+      "text": "dotted",
+      "to": "C",
+    },
+    {
+      "arrowKind": "solid-open",
+      "from": "C",
+      "text": "solid-open",
+      "to": "D",
+    },
+  ],
+  "participants": [
+    "A",
+    "B",
+    "C",
+    "D",
+  ],
+}
+`;
+
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: sequence-basic 1`] = `
+{
+  "kind": "sequence",
+  "messages": [
+    {
+      "arrowKind": "solid-open",
+      "from": "Alice",
+      "text": "Hello",
+      "to": "Bob",
+    },
+    {
+      "arrowKind": "dotted-open",
+      "from": "Bob",
+      "text": "Hi",
+      "to": "Alice",
+    },
+  ],
+  "participants": [
+    "Alice",
+    "Bob",
+  ],
+}
+`;

@@ -1,0 +1,12 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scene3d golden snapshot (wasm is the reference) > fleet scene spec golden 1`] = `
+{
+  "hasRegistryCore": false,
+  "planet0OrbitRadius": 9,
+  "planet0Period": 22,
+  "planetCount": 3,
+  "star0Radius": 2.7752130031585693,
+  "starCount": 2,
+}
+`;

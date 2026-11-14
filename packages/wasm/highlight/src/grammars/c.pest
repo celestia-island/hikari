@@ -1,0 +1,69 @@
+// c.pest — C syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "//" ~ (!"\n" ~ ANY)* | "/*" ~ (!"*/" ~ ANY)* ~ "*/"? }
+
+kw = @{ (
+    "_Static_assert"    | "typeof_unqual"    | "static_assert"    | "_Thread_local"    | "thread_local"    | "_Noreturn"    | "volatile"    | "noreturn"
+    | "_Alignas"    | "register"    | "_Alignof"    | "_Generic"    | "restrict"    | "continue"    | "alignof"    | "fortran"
+    | "_Atomic"    | "alignas"    | "_Pragma"    | "default"    | "typedef"    | "typeof"    | "struct"    | "return"
+    | "sizeof"    | "switch"    | "inline"    | "extern"    | "union"    | "while"    | "break"    | "case"
+    | "enum"    | "auto"    | "else"    | "goto"    | "for"    | "asm"    | "if"    | "do"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "unordered_multiset"    | "unordered_multimap"    | "initializer_list"    | "priority_queue"    | "ostringstream"    | "unordered_map"    | "istringstream"    | "unordered_set"
+    | "stringstream"    | "shared_ptr"    | "unique_ptr"    | "make_pair"    | "terminate"    | "multiset"    | "snprintf"    | "multimap"
+    | "vfprintf"    | "isxdigit"    | "auto_ptr"    | "vsprintf"    | "strncpy"    | "ispunct"    | "strncat"    | "isupper"
+    | "isspace"    | "wstring"    | "strncmp"    | "islower"    | "isalpha"    | "putchar"    | "isdigit"    | "isgraph"
+    | "sprintf"    | "toupper"    | "tolower"    | "iscntrl"    | "vprintf"    | "fprintf"    | "isprint"    | "strrchr"
+    | "strcspn"    | "strpbrk"    | "isalnum"    | "realloc"    | "memset"    | "stdout"    | "memcmp"    | "calloc"
+    | "memcpy"    | "string"    | "strstr"    | "strlen"    | "strspn"    | "fscanf"    | "stderr"    | "sscanf"
+    | "strcmp"    | "bitset"    | "vector"    | "memchr"    | "strcat"    | "printf"    | "strchr"    | "strcpy"
+    | "malloc"    | "future"    | "ldexp"    | "deque"    | "stack"    | "queue"    | "abort"    | "scanf"
+    | "floor"    | "fputs"    | "array"    | "log10"    | "stdin"    | "frexp"    | "atan2"    | "clog"
+    | "sinh"    | "fabs"    | "ceil"    | "labs"    | "fmod"    | "list"    | "tanh"    | "acos"
+    | "pair"    | "asin"    | "endl"    | "cout"    | "sqrt"    | "modf"    | "atan"    | "puts"
+    | "free"    | "cerr"    | "cosh"    | "exit"    | "cos"    | "set"    | "log"    | "map"
+    | "tan"    | "abs"    | "pow"    | "std"    | "sin"    | "cin"    | "exp"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "false"    | "NULL"    | "true"
+    ) ~ !ident_char
+}
+type_kw = @{ (
+    "_Decimal128x"    | "_Decimal128"    | "_Decimal64x"    | "_Imaginary"    | "_Decimal32"    | "_Decimal64"    | "_Float128x"    | "_Decimal96"
+    | "_Float128"    | "_Float64x"    | "_Float32x"    | "constexpr"    | "imaginary"    | "_Float16"    | "_Float64"    | "_Float32"
+    | "unsigned"    | "_Complex"    | "_BitInt"    | "complex"    | "signed"    | "static"    | "double"    | "float"
+    | "short"    | "_Bool"    | "const"    | "char"    | "void"    | "bool"    | "long"    | "int"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | type_kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

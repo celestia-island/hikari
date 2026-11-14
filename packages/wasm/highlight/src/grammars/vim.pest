@@ -1,0 +1,191 @@
+// vim.pest — Vim Script syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "\"\"" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "scriptencoding"    | "startgreplace"    | "menutranslate"    | "redrawstatus"    | "startreplace"    | "unabbreviate"    | "folddoclosed"    | "delfunction"
+    | "colorscheme"    | "inoreabbrev"    | "endfunction"    | "tabprevious"    | "setfiletype"    | "lvimgrepadd"    | "cnoreabbrev"    | "scriptnames"
+    | "startinsert"    | "debuggreedy"    | "spellrepall"    | "cgetbuffer"    | "promptrepl"    | "delcommand"    | "belowright"    | "lgetbuffer"
+    | "substitute"    | "vimgrepadd"    | "stopinsert"    | "caddbuffer"    | "sbmodified"    | "promptfind"    | "laddbuffer"    | "abbreviate"
+    | "sbprevious"    | "nohlsearch"    | "noreabbrev"    | "diffupdate"    | "ptprevious"    | "folddoopen"    | "spellwrong"    | "loadkeymap"
+    | "rightbelow"    | "breaklist"    | "leftabove"    | "lmapclear"    | "registers"    | "onoremenu"    | "spellgood"    | "anoremenu"
+    | "spellinfo"    | "cunabbrev"    | "snoremenu"    | "cmapclear"    | "vmapclear"    | "diffpatch"    | "checktime"    | "lhelpgrep"
+    | "keepmarks"    | "bmodified"    | "sargument"    | "keepjumps"    | "spellundo"    | "doautoall"    | "doautocmd"    | "vnoremenu"
+    | "argglobal"    | "iunabbrev"    | "lockmarks"    | "imapclear"    | "spelldump"    | "nnoremenu"    | "mksession"    | "argdelete"
+    | "smapclear"    | "bprevious"    | "setglobal"    | "diffsplit"    | "cprevious"    | "nmapclear"    | "inoremenu"    | "noautocmd"
+    | "sprevious"    | "checkpath"    | "wprevious"    | "xnoremenu"    | "aboveleft"    | "tabrewind"    | "foldclose"    | "xmapclear"
+    | "omapclear"    | "cnoremenu"    | "highlight"    | "unlockvar"    | "lprevious"    | "lvimgrepa"    | "ownsyntax"    | "tprevious"
+    | "vertical"    | "sbrewind"    | "delmarks"    | "messages"    | "rubyfile"    | "laddexpr"    | "previous"    | "cgetexpr"
+    | "lnoremap"    | "diffthis"    | "compiler"    | "setlocal"    | "cgetfile"    | "lgetexpr"    | "comclear"    | "argument"
+    | "filetype"    | "loadview"    | "vnoremap"    | "iabclear"    | "cabclear"    | "function"    | "ptselect"    | "helptags"
+    | "snomagic"    | "noremenu"    | "ptrewind"    | "syncbind"    | "lgetfile"    | "digraphs"    | "helpfind"    | "wviminfo"
+    | "breakadd"    | "onoremap"    | "arglocal"    | "stselect"    | "continue"    | "lvimgrep"    | "tabclose"    | "bwipeout"
+    | "undolist"    | "caddexpr"    | "nnoremap"    | "tabfirst"    | "helpgrep"    | "mzscheme"    | "snoremap"    | "oldfiles"
+    | "laddfile"    | "hardcopy"    | "inoremap"    | "botright"    | "cnoremap"    | "rviminfo"    | "language"    | "vimgrepa"
+    | "unsilent"    | "undojoin"    | "caddfile"    | "mapclear"    | "lgrepadd"    | "breakdel"    | "xnoremap"    | "endwhile"
+    | "foldopen"    | "swapname"    | "preserve"    | "promptr"    | "topleft"    | "bdelete"    | "earlier"    | "diffput"
+    | "deletel"    | "onoreme"    | "cabbrev"    | "display"    | "argedit"    | "vunmenu"    | "profile"    | "lcscope"
+    | "runtime"    | "options"    | "execute"    | "tabonly"    | "nunmenu"    | "deletep"    | "scscope"    | "autocmd"
+    | "buffers"    | "cunmenu"    | "nnoreme"    | "python3"    | "tabfind"    | "scripte"    | "profdel"    | "tabnext"
+    | "vglobal"    | "tselect"    | "luafile"    | "recover"    | "version"    | "snoreme"    | "iabbrev"    | "suspend"
+    | "keepalt"    | "inoreme"    | "mkvimrc"    | "echomsg"    | "command"    | "echoerr"    | "vimgrep"    | "sbuffer"
+    | "redraws"    | "cwindow"    | "iunmenu"    | "trewind"    | "sunhide"    | "ptfirst"    | "sunmenu"    | "py3file"
+    | "vnoreme"    | "tunmenu"    | "augroup"    | "lrewind"    | "brewind"    | "crewind"    | "diffget"    | "lwindow"
+    | "tabmove"    | "confirm"    | "tabedit"    | "cbuffer"    | "tearoff"    | "noremap"    | "sbfirst"    | "bunload"
+    | "abclear"    | "sandbox"    | "syntime"    | "mkspell"    | "aunmenu"    | "lockvar"    | "dsearch"    | "changes"
+    | "verbose"    | "cnoreme"    | "srewind"    | "quitall"    | "ounmenu"    | "folddoc"    | "diffoff"    | "history"
+    | "tablast"    | "nbclose"    | "isearch"    | "tclfile"    | "winsize"    | "doautoa"    | "psearch"    | "grepadd"
+    | "xnoreme"    | "exusage"    | "xunmenu"    | "tabNext"    | "lbuffer"    | "viusage"    | "finally"    | "append"
+    | "browse"    | "sblast"    | "tabfir"    | "spellr"    | "ptlast"    | "lnfile"    | "elseif"    | "vunmap"
+    | "source"    | "pyfile"    | "unhide"    | "lpfile"    | "sbNext"    | "ptjump"    | "insert"    | "lclose"
+    | "startg"    | "redraw"    | "cnewer"    | "rubydo"    | "breakd"    | "diffpu"    | "saveas"    | "cclose"
+    | "lchdir"    | "spellu"    | "spelli"    | "argadd"    | "syntax"    | "rewind"    | "sbnext"    | "inorea"
+    | "perldo"    | "lfirst"    | "xunmap"    | "ptnext"    | "mkexrc"    | "python"    | "number"    | "isplit"
+    | "nunmap"    | "spelld"    | "breakl"    | "checkt"    | "lgrepa"    | "unmenu"    | "nbsart"    | "cfirst"
+    | "colder"    | "bfirst"    | "noreme"    | "iunmap"    | "update"    | "vsplit"    | "winpos"    | "tfirst"
+    | "ounmap"    | "pclose"    | "delete"    | "center"    | "ptNext"    | "visual"    | "startr"    | "cnfile"
+    | "debugg"    | "finish"    | "tabnew"    | "sfirst"    | "echohl"    | "sunmap"    | "return"    | "cnorea"
+    | "spellw"    | "endfor"    | "lolder"    | "cunmap"    | "mzfile"    | "normal"    | "lunmap"    | "lnewer"
+    | "simalt"    | "breaka"    | "wsverb"    | "global"    | "fixdel"    | "rightb"    | "mkview"    | "buffer"
+    | "wincmd"    | "silent"    | "resize"    | "change"    | "behave"    | "endtry"    | "smagic"    | "dsplit"
+    | "cpfile"    | "cscope"    | "lNfile"    | "stjump"    | "cNfile"    | "echoe"    | "diffs"    | "while"
+    | "tjump"    | "sview"    | "nunme"    | "bnext"    | "ascii"    | "write"    | "llast"    | "mkvie"
+    | "sunme"    | "split"    | "jumps"    | "smapc"    | "imenu"    | "lfile"    | "lexpr"    | "cquit"
+    | "laddf"    | "synti"    | "norea"    | "foldo"    | "vunme"    | "cmenu"    | "helpt"    | "sball"
+    | "foldc"    | "xmenu"    | "lgete"    | "undoj"    | "throw"    | "helpg"    | "py3do"    | "tlast"
+    | "bufdo"    | "clast"    | "emenu"    | "stopi"    | "files"    | "sleep"    | "tNext"    | "pedit"
+    | "lefta"    | "perld"    | "dlist"    | "nmenu"    | "sfind"    | "blast"    | "omenu"    | "diffp"
+    | "intro"    | "cunme"    | "sniff"    | "bNext"    | "smenu"    | "lgetb"    | "retab"    | "wundo"
+    | "argdo"    | "omapc"    | "ounme"    | "djump"    | "filet"    | "endif"    | "cgetb"    | "cfile"
+    | "helpf"    | "unmap"    | "undol"    | "nbkey"    | "chdir"    | "loadk"    | "clist"    | "sNext"
+    | "close"    | "xmapc"    | "vmenu"    | "wNext"    | "foldd"    | "scrip"    | "lopen"    | "echon"
+    | "right"    | "grepa"    | "ijump"    | "cmapc"    | "iunme"    | "xunme"    | "tabdo"    | "lnext"
+    | "caddf"    | "print"    | "debug"    | "wqall"    | "luado"    | "shell"    | "tmenu"    | "ilist"
+    | "cNext"    | "wnext"    | "amenu"    | "diffg"    | "rubyd"    | "tnext"    | "cgete"    | "menut"
+    | "lmake"    | "redir"    | "lgrep"    | "keepj"    | "profd"    | "cnext"    | "Print"    | "elsei"
+    | "keepa"    | "copen"    | "lockv"    | "rundo"    | "imapc"    | "vmapc"    | "lNext"    | "rubyf"
+    | "nmapc"    | "snext"    | "lmapc"    | "later"    | "first"    | "marks"    | "tcldo"    | "windo"
+    | "laddb"    | "caddb"    | "slast"    | "break"    | "endfo"    | "echoh"    | "match"    | "diffo"
+    | "llist"    | "cstag"    | "catch"    | "unlet"    | "echom"    | "cexpr"    | "quita"    | "popup"
+    | "ppop"    | "colo"    | "cuna"    | "luaf"    | "tabm"    | "read"    | "tcld"    | "delf"
+    | "tabN"    | "tabo"    | "vnew"    | "mode"    | "tabn"    | "else"    | "hide"    | "setf"
+    | "help"    | "join"    | "sunm"    | "argl"    | "luad"    | "iuna"    | "tabr"    | "omap"
+    | "ltag"    | "brea"    | "redo"    | "ptag"    | "file"    | "sall"    | "setg"    | "edit"
+    | "tabp"    | "py3f"    | "star"    | "tabs"    | "rund"    | "drop"    | "unlo"    | "tabf"
+    | "argu"    | "lmak"    | "sync"    | "endt"    | "prev"    | "left"    | "arga"    | "vmap"
+    | "endw"    | "comp"    | "goto"    | "lfir"    | "sfir"    | "badd"    | "tabl"    | "exit"
+    | "only"    | "vert"    | "Next"    | "qall"    | "tclf"    | "wall"    | "smap"    | "mksp"
+    | "popu"    | "last"    | "args"    | "mapc"    | "arge"    | "sort"    | "snor"    | "stag"
+    | "view"    | "dell"    | "quit"    | "lope"    | "delc"    | "argd"    | "yank"    | "tags"
+    | "menu"    | "list"    | "delm"    | "redi"    | "fina"    | "winp"    | "undo"    | "conf"
+    | "find"    | "lmap"    | "move"    | "py3d"    | "tabe"    | "cabc"    | "mark"    | "norm"
+    | "xmap"    | "fold"    | "endf"    | "grep"    | "retu"    | "fini"    | "lnew"    | "open"
+    | "perl"    | "echo"    | "cmap"    | "gvim"    | "iabc"    | "redr"    | "copy"    | "setl"
+    | "comc"    | "make"    | "nmap"    | "stop"    | "imap"    | "xall"    | "verb"    | "cope"
+    | "cnew"    | "ball"    | "pydo"    | "call"    | "enew"    | "unme"    | "argg"    | "cfir"
+    | "ruby"    | "tabc"    | "winc"    | "sign"    | "prof"    | "next"    | "lex"    | "tag"
+    | "cst"    | "sta"    | "ped"    | "mzf"    | "cnf"    | "sbm"    | "lcl"    | "san"
+    | "lpf"    | "lgr"    | "cal"    | "dig"    | "ccl"    | "new"    | "sts"    | "ime"
+    | "rew"    | "ptN"    | "dif"    | "nbs"    | "cat"    | "sim"    | "cla"    | "lua"
+    | "let"    | "sig"    | "ptn"    | "lla"    | "ptj"    | "ono"    | "bro"    | "noa"
+    | "ptl"    | "set"    | "mes"    | "mat"    | "che"    | "sal"    | "lNf"    | "red"
+    | "lan"    | "spe"    | "map"    | "sre"    | "sav"    | "mkv"    | "lol"    | "sun"
+    | "cex"    | "bad"    | "cno"    | "all"    | "fin"    | "ret"    | "sme"    | "dli"
+    | "pyf"    | "ptp"    | "tcl"    | "lli"    | "sno"    | "lcs"    | "sbl"    | "nme"
+    | "pyd"    | "unl"    | "com"    | "col"    | "ptf"    | "exu"    | "uns"    | "xit"
+    | "hid"    | "mks"    | "put"    | "viu"    | "mak"    | "noh"    | "ptr"    | "lnf"
+    | "tab"    | "clo"    | "fix"    | "xme"    | "cNf"    | "dsp"    | "stj"    | "sba"
+    | "aug"    | "loc"    | "cad"    | "exe"    | "nbc"    | "nun"    | "for"    | "spr"
+    | "lne"    | "sil"    | "sbn"    | "sor"    | "abc"    | "con"    | "fir"    | "py3"
+    | "bun"    | "unh"    | "res"    | "vie"    | "his"    | "cpf"    | "wqa"    | "sbr"
+    | "vne"    | "lch"    | "mod"    | "pre"    | "ino"    | "chd"    | "vim"    | "int"
+    | "cme"    | "aun"    | "sbp"    | "scs"    | "exi"    | "sni"    | "ene"    | "sla"
+    | "lat"    | "pts"    | "opt"    | "una"    | "rec"    | "ome"    | "lad"    | "try"
+    | "vme"    | "rub"    | "lcd"    | "abo"    | "sbf"    | "gui"    | "sus"    | "pop"
+    | "pwd"    | "kee"    | "deb"    | "pro"    | "isp"    | "bel"    | "unm"    | "sbN"
+    | "reg"    | "so"    | "sy"    | "sa"    | "ex"    | "tn"    | "ma"    | "sf"
+    | "al"    | "cq"    | "up"    | "as"    | "bo"    | "lv"    | "lw"    | "gv"
+    | "vu"    | "im"    | "is"    | "di"    | "cc"    | "br"    | "cu"    | "xa"
+    | "rv"    | "ru"    | "ab"    | "bl"    | "ll"    | "ln"    | "xm"    | "ps"
+    | "au"    | "wi"    | "st"    | "ou"    | "th"    | "ri"    | "fo"    | "pw"
+    | "lh"    | "sl"    | "ca"    | "qa"    | "vn"    | "iu"    | "be"    | "cf"
+    | "hi"    | "nb"    | "tN"    | "cg"    | "pe"    | "dp"    | "go"    | "ts"
+    | "xn"    | "sN"    | "te"    | "cN"    | "bN"    | "em"    | "vs"    | "wn"
+    | "tj"    | "cl"    | "tp"    | "om"    | "wN"    | "sp"    | "ol"    | "wp"
+    | "se"    | "py"    | "co"    | "ce"    | "lp"    | "tl"    | "cp"    | "sv"
+    | "ve"    | "cs"    | "nm"    | "po"    | "nu"    | "lo"    | "bn"    | "wa"
+    | "tm"    | "sb"    | "lg"    | "ls"    | "cn"    | "la"    | "xu"    | "bw"
+    | "vm"    | "no"    | "bm"    | "dl"    | "lu"    | "lr"    | "ij"    | "nn"
+    | "dj"    | "to"    | "ia"    | "lt"    | "lN"    | "cm"    | "if"    | "do"
+    | "ju"    | "tr"    | "sh"    | "ws"    | "ow"    | "me"    | "cr"    | "le"
+    | "wh"    | "lm"    | "am"    | "bd"    | "vi"    | "on"    | "lb"    | "en"
+    | "sw"    | "fu"    | "pp"    | "ta"    | "bf"    | "tf"    | "cb"    | "pu"
+    | "ds"    | "sn"    | "mk"    | "ha"    | "sm"    | "ar"    | "wu"    | "cw"
+    | "il"    | "pc"    | "lc"    | "mz"    | "ba"    | "ec"    | "pt"    | "wv"
+    | "ea"    | "el"    | "gr"    | "tc"    | "bp"    | "tu"    | "gu"    | "cd"
+    | "dr"    | "lf"    | "wq"    | "~"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "cscope_connection"    | "remote_foreground"    | "strdisplaywidth"    | "garbagecollect"    | "complete_check"    | "foldtextresult"    | "tabpagebuflist"    | "searchpairpos"
+    | "foldclosedend"    | "server2client"    | "prevnonblank"    | "wildmenumode"    | "settabwinvar"    | "eventhandler"    | "filereadable"    | "tabpagewinnr"
+    | "clearmatches"    | "complete_add"    | "gettabwinvar"    | "nextnonblank"    | "filewritable"    | "inputrestore"    | "spellsuggest"    | "did_filetype"
+    | "synconcealed"    | "spellbadword"    | "inputsecret"    | "remote_peek"    | "fnamemodify"    | "remote_expr"    | "winrestview"    | "diff_filler"
+    | "remote_send"    | "pathshorten"    | "haslocaldir"    | "isdirectory"    | "getfontname"    | "inputdialog"    | "shellescape"    | "fnameescape"
+    | "matchdelete"    | "remote_read"    | "winsaveview"    | "searchdecl"    | "screenchar"    | "getwinposx"    | "pumvisible"    | "setloclist"
+    | "lispindent"    | "searchpair"    | "reltimestr"    | "winrestcmd"    | "foreground"    | "getcmdline"    | "getcmdtype"    | "getloclist"
+    | "serverlist"    | "foldclosed"    | "getregtype"    | "visualmode"    | "getbufline"    | "shiftwidth"    | "getmatches"    | "getcharmod"
+    | "executable"    | "synIDtrans"    | "screenattr"    | "getwinposy"    | "setmatches"    | "inputlist"    | "libcallnr"    | "writefile"
+    | "getqflist"    | "diff_hlID"    | "setwinvar"    | "foldlevel"    | "localtime"    | "getbufvar"    | "settabvar"    | "synIDattr"
+    | "getwinvar"    | "tabpagenr"    | "byte2line"    | "gettabvar"    | "bufexists"    | "winheight"    | "soundfold"    | "setqflist"
+    | "inputsave"    | "setbufvar"    | "getcmdpos"    | "matchlist"    | "line2byte"    | "buflisted"    | "browsedir"    | "screencol"
+    | "screenrow"    | "searchpos"    | "bufloaded"    | "str2float"    | "setcmdpos"    | "foldtext"    | "globpath"    | "matcharg"
+    | "submatch"    | "undotree"    | "matchadd"    | "getftype"    | "synstack"    | "undofile"    | "getftime"    | "tagfiles"
+    | "feedkeys"    | "deepcopy"    | "winbufnr"    | "readfile"    | "hostname"    | "matchstr"    | "hasmapto"    | "matchend"
+    | "simplify"    | "mapcheck"    | "bufwinnr"    | "strftime"    | "strwidth"    | "complete"    | "findfile"    | "winwidth"
+    | "float2nr"    | "strchars"    | "changenr"    | "getfsize"    | "getfperm"    | "tempname"    | "islocked"    | "strtrans"
+    | "hlexists"    | "strridx"    | "winline"    | "setline"    | "taglist"    | "histget"    | "histdel"    | "libcall"
+    | "finddir"    | "getline"    | "has_key"    | "strpart"    | "byteidx"    | "nr2char"    | "virtcol"    | "char2nr"
+    | "toupper"    | "tolower"    | "cindent"    | "luaeval"    | "reverse"    | "getchar"    | "py3eval"    | "reltime"
+    | "histadd"    | "resolve"    | "bufname"    | "mzeval"    | "extend"    | "filter"    | "remove"    | "repeat"
+    | "sha256"    | "string"    | "str2nr"    | "getcwd"    | "invert"    | "getpos"    | "strlen"    | "stridx"
+    | "values"    | "setreg"    | "setpos"    | "getpid"    | "exists"    | "rename"    | "indent"    | "argidx"
+    | "pyeval"    | "histnr"    | "search"    | "expand"    | "cursor"    | "escape"    | "getreg"    | "wincol"
+    | "maparg"    | "printf"    | "system"    | "count"    | "iconv"    | "floor"    | "empty"    | "log10"
+    | "bufnr"    | "input"    | "round"    | "items"    | "winnr"    | "synID"    | "mkdir"    | "index"
+    | "atan2"    | "trunc"    | "range"    | "sinh"    | "line"    | "type"    | "ceil"    | "eval"
+    | "fmod"    | "keys"    | "glob"    | "tanh"    | "acos"    | "hlID"    | "argv"    | "asin"
+    | "sqrt"    | "argc"    | "atan"    | "cosh"    | "cos"    | "xor"    | "log"    | "and"
+    | "tan"    | "max"    | "abs"    | "pow"    | "min"    | "sin"    | "add"    | "get"
+    | "exp"    | "len"    | "has"    | "or"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

@@ -1,0 +1,56 @@
+// cmake.pest — CMake syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "/#[[/" ~ (!"\n" ~ ANY)* | "#" ~ (!"\n" ~ ANY)* | "#" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "cmake_host_system_information"    | "ctest_empty_binary_directory"    | "export_library_dependencies"    | "set_source_files_properties"    | "include_external_msproject"    | "target_compile_definitions"    | "target_include_directories"    | "include_regular_expression"
+    | "get_source_file_property"    | "set_directory_properties"    | "add_compile_definitions"    | "target_link_directories"    | "ctest_read_custom_files"    | "target_compile_features"    | "create_test_sourcelist"    | "get_filename_component"
+    | "target_compile_options"    | "get_directory_property"    | "cmake_minimum_required"    | "output_required_files"    | "version_greater_equal"    | "target_link_libraries"    | "set_target_properties"    | "cmake_parse_arguments"
+    | "set_tests_properties"    | "aux_source_directory"    | "get_target_property"    | "target_link_options"    | "include_directories"    | "add_compile_options"    | "version_less_equal"    | "add_custom_command"
+    | "remove_definitions"    | "separate_arguments"    | "get_cmake_property"    | "variable_requires"    | "add_custom_target"    | "get_test_property"    | "link_directories"    | "strgreater_equal"
+    | "add_subdirectory"    | "add_dependencies"    | "ctest_run_script"    | "add_link_options"    | "install_programs"    | "use_mangled_mesa"    | "mark_as_advanced"    | "qt5_use_package"
+    | "qt5_use_modules"    | "execute_process"    | "version_greater"    | "add_definitions"    | "enable_language"    | "define_property"    | "ctest_configure"    | "install_targets"
+    | "ctest_memcheck"    | "link_libraries"    | "ctest_coverage"    | "configure_file"    | "utility_source"    | "subdir_depends"    | "add_executable"    | "target_sources"
+    | "enable_testing"    | "variable_watch"    | "make_directory"    | "version_equal"    | "include_guard"    | "is_newer_than"    | "greater_equal"    | "install_files"
+    | "strless_equal"    | "build_command"    | "load_command"    | "ctest_submit"    | "set_property"    | "find_program"    | "version_less"    | "find_library"
+    | "is_directory"    | "exec_program"    | "source_group"    | "get_property"    | "fltk_wrap_ui"    | "ctest_update"    | "cmake_policy"    | "ctest_upload"
+    | "qt5_wrap_cpp"    | "find_package"    | "ctest_sleep"    | "ctest_build"    | "endfunction"    | "try_compile"    | "qt_wrap_cpp"    | "add_library"
+    | "ctest_start"    | "is_absolute"    | "endforeach"    | "is_symlink"    | "build_name"    | "strgreater"    | "write_file"    | "qt_wrap_ui"
+    | "load_cache"    | "less_equal"    | "ctest_test"    | "find_file"    | "find_path"    | "site_name"    | "function"    | "endmacro"
+    | "strequal"    | "add_test"    | "endwhile"    | "continue"    | "foreach"    | "message"    | "in_list"    | "strless"
+    | "install"    | "defined"    | "greater"    | "matches"    | "include"    | "command"    | "try_run"    | "project"
+    | "subdirs"    | "remove"    | "string"    | "option"    | "policy"    | "elseif"    | "exists"    | "return"
+    | "export"    | "target"    | "false"    | "while"    | "macro"    | "break"    | "unset"    | "endif"
+    | "equal"    | "less"    | "list"    | "test"    | "math"    | "else"    | "true"    | "file"
+    | "not"    | "set"    | "and"    | "off"    | "on"    | "or"    | "if"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

@@ -1,0 +1,65 @@
+// perl.pest — Perl syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "#" ~ (!"\n" ~ ANY)* | "/=w/" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "getprotobynumber"    | "getprotobyname"    | "gethostbyname"    | "getservbyname"    | "gethostbyaddr"    | "getservbyport"    | "getnetbyname"    | "getnetbyaddr"
+    | "getprotoent"    | "getsockname"    | "getpeername"    | "endprotoent"    | "getpriority"    | "setprotoent"    | "setpriority"    | "gethostent"
+    | "socketpair"    | "endhostent"    | "endservent"    | "getsockopt"    | "sethostent"    | "setservent"    | "setsockopt"    | "getservent"
+    | "quotemeta"    | "endnetent"    | "prototype"    | "localtime"    | "getnetent"    | "rewinddir"    | "setnetent"    | "wantarray"
+    | "readline"    | "shutdown"    | "getgrgid"    | "readlink"    | "syswrite"    | "shmwrite"    | "setgrent"    | "endpwent"
+    | "getgrent"    | "endgrent"    | "truncate"    | "getpwuid"    | "readpipe"    | "getgrnam"    | "closedir"    | "formline"
+    | "setpwent"    | "getpwent"    | "getpwnam"    | "getlogin"    | "dbmclose"    | "continue"    | "foreach"    | "seekdir"
+    | "shmread"    | "syscall"    | "getpgrp"    | "lcfirst"    | "unshift"    | "defined"    | "symlink"    | "connect"
+    | "ucfirst"    | "sprintf"    | "opendir"    | "waitpid"    | "binmode"    | "sysread"    | "sysseek"    | "reverse"
+    | "package"    | "sysopen"    | "dbmopen"    | "telldir"    | "require"    | "readdir"    | "setpgrp"    | "shmget"
+    | "fileno"    | "substr"    | "accept"    | "rindex"    | "delete"    | "values"    | "listen"    | "semctl"
+    | "unlink"    | "msgget"    | "method"    | "caller"    | "unpack"    | "exists"    | "socket"    | "rename"
+    | "msgrcv"    | "return"    | "select"    | "chroot"    | "length"    | "unless"    | "gmtime"    | "printf"
+    | "system"    | "semget"    | "splice"    | "shmctl"    | "format"    | "msgctl"    | "scalar"    | "msgsnd"
+    | "fcntl"    | "times"    | "given"    | "state"    | "flock"    | "srand"    | "umask"    | "utime"
+    | "while"    | "local"    | "study"    | "sleep"    | "lstat"    | "alarm"    | "write"    | "chown"
+    | "bless"    | "split"    | "semop"    | "shift"    | "until"    | "print"    | "elsif"    | "chmod"
+    | "mkdir"    | "break"    | "ioctl"    | "rmdir"    | "untie"    | "chomp"    | "undef"    | "crypt"
+    | "field"    | "index"    | "class"    | "atan2"    | "reset"    | "chdir"    | "close"    | "stat"
+    | "dump"    | "wait"    | "push"    | "pack"    | "last"    | "grep"    | "eval"    | "link"
+    | "open"    | "sort"    | "chop"    | "keys"    | "warn"    | "glob"    | "fork"    | "time"
+    | "send"    | "read"    | "tied"    | "recv"    | "when"    | "getc"    | "each"    | "tell"
+    | "exec"    | "else"    | "goto"    | "sqrt"    | "rand"    | "join"    | "kill"    | "seek"
+    | "exit"    | "pipe"    | "redo"    | "bind"    | "next"    | "not"    | "cos"    | "use"
+    | "xor"    | "pos"    | "hex"    | "sub"    | "ord"    | "log"    | "map"    | "and"
+    | "our"    | "ref"    | "int"    | "eof"    | "abs"    | "die"    | "tie"    | "for"
+    | "vec"    | "chr"    | "sin"    | "oct"    | "say"    | "pop"    | "exp"    | "ne"
+    | "ma"    | "qx"    | "or"    | "no"    | "qq"    | "my"    | "lc"    | "uc"
+    | "lt"    | "qw"    | "gt"    | "if"    | "do"    | "tr"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

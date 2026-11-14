@@ -1,0 +1,56 @@
+// dart.pest — Dart syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "//**(?!/)/" ~ (!"\n" ~ ANY)* | "//{3,} ?/" ~ (!"\n" ~ ANY)* | "//" ~ (!"\n" ~ ANY)* | "/*" ~ (!"*/" ~ ANY)* ~ "*/"? }
+
+kw = @{ (
+    "implements"    | "interface"    | "extension"    | "covariant"    | "operator"    | "Function"    | "external"    | "deferred"
+    | "abstract"    | "required"    | "continue"    | "extends"    | "library"    | "finally"    | "dynamic"    | "factory"
+    | "rethrow"    | "default"    | "typedef"    | "return"    | "static"    | "export"    | "sealed"    | "switch"
+    | "import"    | "assert"    | "super"    | "throw"    | "mixin"    | "class"    | "false"    | "while"
+    | "catch"    | "break"    | "async"    | "const"    | "final"    | "await"    | "yield"    | "case"
+    | "null"    | "show"    | "enum"    | "with"    | "this"    | "part"    | "late"    | "else"
+    | "hide"    | "base"    | "void"    | "when"    | "sync"    | "true"    | "for"    | "get"
+    | "var"    | "set"    | "try"    | "new"    | "is"    | "as"    | "if"    | "do"
+    | "on"    | "in"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "querySelectorAll"    | "querySelector"    | "StringBuffer?"    | "StringBuffer"    | "ElementList?"    | "ElementList"    | "Comparable?"    | "StringSink?"
+    | "Comparable"    | "StringSink"    | "Stopwatch?"    | "DateTime?"    | "Duration?"    | "Iterable?"    | "Function?"    | "Iterator?"
+    | "Stopwatch"    | "Duration"    | "DateTime"    | "Function"    | "document"    | "Element?"    | "Iterable"    | "Iterator"
+    | "Pattern?"    | "Pattern"    | "Element"    | "String?"    | "Object?"    | "dynamic"    | "Symbol?"    | "double?"
+    | "RegExp?"    | "Symbol"    | "String"    | "Match?"    | "Object"    | "RegExp"    | "double"    | "window"
+    | "Type?"    | "bool?"    | "print"    | "Match"    | "List?"    | "Never"    | "num?"    | "Map?"
+    | "Set?"    | "int?"    | "Null"    | "Uri?"    | "bool"    | "List"    | "Type"    | "Map"
+    | "int"    | "Set"    | "Uri"    | "num"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

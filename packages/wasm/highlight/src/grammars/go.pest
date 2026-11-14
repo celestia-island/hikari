@@ -1,0 +1,55 @@
+// go.pest — Go syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "//" ~ (!"\n" ~ ANY)* | "/*" ~ (!"*/" ~ ANY)* ~ "*/"? }
+
+kw = @{ (
+    "fallthrough"    | "interface"    | "continue"    | "package"    | "default"    | "return"    | "select"    | "switch"
+    | "import"    | "struct"    | "defer"    | "break"    | "range"    | "const"    | "case"    | "type"
+    | "chan"    | "else"    | "func"    | "goto"    | "for"    | "var"    | "map"    | "if"
+    | "go"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "println"    | "complex"    | "recover"    | "append"    | "delete"    | "close"    | "print"    | "panic"
+    | "make"    | "imag"    | "real"    | "copy"    | "len"    | "new"    | "cap"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "false"    | "iota"    | "true"    | "nil"
+    ) ~ !ident_char
+}
+type_kw = @{ (
+    "complex128"    | "complex64"    | "float32"    | "float64"    | "uintptr"    | "uint64"    | "uint32"    | "string"
+    | "uint16"    | "int16"    | "int64"    | "uint8"    | "error"    | "int32"    | "rune"    | "byte"
+    | "int8"    | "bool"    | "uint"    | "int"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | type_kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

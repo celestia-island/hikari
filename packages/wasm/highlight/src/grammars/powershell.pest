@@ -1,0 +1,63 @@
+// powershell.pest — PowerShell syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+kw = @{ (
+    "dynamicparam"    | "parameter"    | "continue"    | "foreach"    | "finally"    | "process"    | "hidden"    | "filter"
+    | "return"    | "static"    | "switch"    | "elseif"    | "param"    | "throw"    | "until"    | "while"
+    | "catch"    | "break"    | "begin"    | "trap"    | "exit"    | "else"    | "data"    | "for"
+    | "try"    | "end"    | "if"    | "do"    | "in"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "compare"    | "history"    | "measure"    | "select"    | "npssc"    | "sleep"    | "write"    | "erase"
+    | "mount"    | "start"    | "epcsv"    | "rmdir"    | "clear"    | "group"    | "where"    | "pushd"
+    | "chdir"    | "ipcsv"    | "clhy"    | "rsnp"    | "sasv"    | "etsn"    | "dnsn"    | "type"
+    | "gsnp"    | "epal"    | "popd"    | "rwmi"    | "asnp"    | "sort"    | "curl"    | "wget"
+    | "sujb"    | "copy"    | "trcm"    | "swmi"    | "cnsn"    | "spps"    | "rcsn"    | "ipsn"
+    | "cvpa"    | "rcjb"    | "sajb"    | "gwmi"    | "diff"    | "exsn"    | "epsn"    | "iwmi"
+    | "gerr"    | "kill"    | "spjb"    | "saps"    | "spsv"    | "ipal"    | "shcm"    | "rvpa"
+    | "move"    | "ipmo"    | "rujb"    | "dir"    | "set"    | "sal"    | "clv"    | "fhx"
+    | "icm"    | "gal"    | "ndr"    | "gmo"    | "ebp"    | "ghy"    | "gsn"    | "rsn"
+    | "ogv"    | "sbp"    | "gpv"    | "gps"    | "cli"    | "man"    | "rnp"    | "rjb"
+    | "nal"    | "cpi"    | "gtz"    | "sls"    | "cat"    | "rbp"    | "tee"    | "gbp"
+    | "nsn"    | "del"    | "nmo"    | "gin"    | "dbp"    | "CFS"    | "ise"    | "rmo"
+    | "wjb"    | "gcm"    | "gjb"    | "pwd"    | "clc"    | "irm"    | "iex"    | "rdr"
+    | "gcb"    | "cpp"    | "gsv"    | "gdr"    | "ihy"    | "rni"    | "scb"    | "cls"
+    | "gci"    | "stz"    | "gcs"    | "clp"    | "ren"    | "iwr"    | "sl"    | "lp"
+    | "cp"    | "mi"    | "sv"    | "gp"    | "gl"    | "ni"    | "ls"    | "gm"
+    | "gv"    | "rm"    | "rp"    | "si"    | "fc"    | "ac"    | "ii"    | "ft"
+    | "rd"    | "oh"    | "fl"    | "sc"    | "rv"    | "mv"    | "mp"    | "sp"
+    | "gi"    | "ps"    | "gu"    | "cd"    | "md"    | "fw"    | "nv"    | "ri"
+    | "gc"    | "r"    | "h"
+    ) ~ !ident_char
+}
+
+comment = @{ "#" ~ (!"\n" ~ ANY)* }
+
+token = { comment | string | number | kw | builtin | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

@@ -1,0 +1,60 @@
+// cpp.pest — C++ syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "//" ~ (!"\n" ~ ANY)* | "/*" ~ (!"*/" ~ ANY)* ~ "*/"? }
+
+kw = @{ (
+    "transaction_safe_dynamic"    | "transaction_safe"    | "atomic_noexcept"    | "atomic_cancel"    | "atomic_commit"    | "static_assert"    | "synchronized"    | "thread_local"
+    | "constexpr"    | "constinit"    | "co_return"    | "protected"    | "consteval"    | "namespace"    | "explicit"    | "typename"
+    | "volatile"    | "co_await"    | "requires"    | "noexcept"    | "decltype"    | "override"    | "co_yield"    | "operator"
+    | "register"    | "template"    | "continue"    | "reflexpr"    | "alignof"    | "alignas"    | "virtual"    | "nullptr"
+    | "private"    | "concept"    | "mutable"    | "typedef"    | "default"    | "sizeof"    | "import"    | "delete"
+    | "inline"    | "typeid"    | "friend"    | "xor_eq"    | "and_eq"    | "switch"    | "struct"    | "bitand"
+    | "return"    | "module"    | "export"    | "public"    | "not_eq"    | "extern"    | "throw"    | "false"
+    | "while"    | "bitor"    | "compl"    | "using"    | "break"    | "final"    | "union"    | "class"
+    | "catch"    | "or_eq"    | "enum"    | "case"    | "auto"    | "else"    | "goto"    | "true"
+    | "this"    | "not"    | "xor"    | "asm"    | "and"    | "new"    | "for"    | "try"
+    | "or"    | "if"    | "do"
+    ) ~ !ident_char
+}
+builtin = @{ (
+    "_Pragma"
+    ) ~ !ident_char
+}
+literal = @{ (
+    "nullptr"    | "nullopt"    | "false"    | "true"    | "NULL"
+    ) ~ !ident_char
+}
+type_kw = @{ (
+    "unsigned"    | "char32_t"    | "char16_t"    | "char8_t"    | "wchar_t"    | "double"    | "static"    | "signed"
+    | "float"    | "short"    | "const"    | "char"    | "bool"    | "long"    | "void"    | "int"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | type_kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+
+tokens = { token+ }

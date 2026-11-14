@@ -156,6 +156,29 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
+  it("the restore button is STATE-gated even when a callback lingers", async () => {
+    // R2 finding, PR #1322 (mutation-e pin): the S1 gate is redundant
+    // in-tree (active emergencies never carry a callback), so this test
+    // builds the one shape that would otherwise render a dead control —
+    // a host-recorded entry holding a callback in a non-snoozed state.
+    await setLocale("en");
+    recordNotification({
+      id: "emergency:done",
+      kind: "emergency",
+      tone: "warning",
+      title: "resolved but armed",
+      state: "cleared",
+      onResummon: () => {},
+    });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const row = rows()[0];
+    expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
+    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+  });
+
   it("a cleared emergency shows Resolved without a restore button", async () => {
     await setLocale("en");
     recordNotification({

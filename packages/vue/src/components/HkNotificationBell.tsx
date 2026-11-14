@@ -74,11 +74,11 @@ export default defineComponent({
 
     const unread = computed(() => entries.filter((e) => !e.read).length);
     const sorted = computed(() =>
-      // Newest first; the id tiebreak keeps same-millisecond pushes
-      // deterministic (R2 note, PR #1322 — a burst must not render
-      // older-first just because the clock tied).
+      // Newest first; the id tiebreak is DESCENDING so a same-millisecond
+      // burst still renders later pushes above earlier ones (R7 note,
+      // PR #1322 — the old ascending tiebreak contradicted this).
       [...entries].sort(
-        (a, b) => b.updatedAt - a.updatedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+        (a, b) => b.updatedAt - a.updatedAt || (a.id > b.id ? -1 : a.id < b.id ? 1 : 0),
       ),
     );
 

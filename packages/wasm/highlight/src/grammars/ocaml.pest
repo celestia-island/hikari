@@ -1,0 +1,56 @@
+// ocaml.pest — ocaml syntax highlighting grammar.
+
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "(*" ~ (!"*)" ~ ANY)* ~ "*)"? }
+
+kw = @{ (
+    "initializer"    | "constraint"    | "exception"    | "external"    | "function"    | "virtual"    | "include"    | "functor"
+    | "inherit"    | "private"    | "mutable"    | "module"    | "object"    | "downto"    | "method"    | "struct"
+    | "nonrec"    | "assert"    | "class"    | "begin"    | "while"    | "false"    | "match"    | "open"
+    | "type"    | "lxor"    | "land"    | "done"    | "lazy"    | "else"    | "then"    | "when"
+    | "with"    | "true"    | "let"    | "mod"    | "new"    | "try"    | "asr"    | "lsr"
+    | "rec"    | "and"    | "fun"    | "end"    | "lsl"    | "sig"    | "for"    | "val"
+    | "lor"    | "to"    | "do"    | "as"    | "if"    | "or"    | "of"    | "in"
+    ) ~ !ident_char
+}
+
+builtin = @{ (
+    "prerr_endline"    | "print_endline"    | "invalid_arg"    | "nativeint"    | "read_line"    | "failwith"    | "sprintf"    | "ignore"
+    | "string"    | "option"    | "format"    | "printf"    | "result"    | "float"    | "int64"    | "bytes"
+    | "int32"    | "array"    | "char"    | "list"    | "bool"    | "unit"    | "exit"    | "fst"
+    | "exn"    | "int"    | "snd"
+    ) ~ !ident_char
+}
+
+literal = @{ (
+    "Error"    | "false"    | "Some"    | "None"    | "true"    | "Ok"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | literal | identifier | operator | punctuation | whitespace | newline | other }
+
+other = @{ ANY }
+
+tokens = { token+ }

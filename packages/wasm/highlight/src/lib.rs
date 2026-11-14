@@ -82,6 +82,24 @@ pub mod grammars {
         #[grammar = "grammars/elixir.pest"]
         pub struct Parser;
     }
+    pub mod erlang {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/erlang.pest"]
+        pub struct Parser;
+    }
+    pub mod fortran {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/fortran.pest"]
+        pub struct Parser;
+    }
+    pub mod fsharp {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/fsharp.pest"]
+        pub struct Parser;
+    }
     pub mod go {
         use pest_derive::Parser;
         #[derive(Parser)]
@@ -152,6 +170,12 @@ pub mod grammars {
         use pest_derive::Parser;
         #[derive(Parser)]
         #[grammar = "grammars/nim.pest"]
+        pub struct Parser;
+    }
+    pub mod ocaml {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/ocaml.pest"]
         pub struct Parser;
     }
     pub mod perl {
@@ -309,6 +333,18 @@ pub mod grammars {
                 let pairs = elixir::Parser::parse(elixir::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
+            "erlang" => {
+                let pairs = erlang::Parser::parse(erlang::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "fortran" => {
+                let pairs = fortran::Parser::parse(fortran::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "fsharp" => {
+                let pairs = fsharp::Parser::parse(fsharp::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "go" => {
                 let pairs = go::Parser::parse(go::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
@@ -355,6 +391,10 @@ pub mod grammars {
             }
             "nim" => {
                 let pairs = nim::Parser::parse(nim::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "ocaml" => {
+                let pairs = ocaml::Parser::parse(ocaml::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
             "perl" => {
@@ -459,6 +499,9 @@ pub mod grammars {
             "diff".to_string(),
             "dockerfile".to_string(),
             "elixir".to_string(),
+            "erlang".to_string(),
+            "fortran".to_string(),
+            "fsharp".to_string(),
             "go".to_string(),
             "graphql".to_string(),
             "ini".to_string(),
@@ -471,6 +514,7 @@ pub mod grammars {
             "markdown".to_string(),
             "matlab".to_string(),
             "nim".to_string(),
+            "ocaml".to_string(),
             "perl".to_string(),
             "php".to_string(),
             "powershell".to_string(),

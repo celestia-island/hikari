@@ -85,6 +85,21 @@ describe("emergency alert layering contract", () => {
     expect(css.match(/pointer-events:\s*auto;/g)?.length).toBe(1);
   });
 
+  it("the scrim stays dark ink — never a mode-inverting background token", () => {
+    // 0.55.370 pointed the scrim at --color-background: a WHITE veil in
+    // light themes, so the page never darkened and the takeover read
+    // as a pastel banner (2026-11-14 field report). Darkening is what
+    // a scrim does, in every mode — pin the ink and ban the inversion
+    // vector outright (R3 M1 replayed the bug with every test green).
+    const css = sheet();
+    const root = rootBlock(css);
+    expect(root).toMatch(/--hk-emergency-scrim: rgb\(9 11 16 \/ 55%\);/);
+    expect(root).not.toContain("var(--color-background");
+    // And the wash derives from the LINE (the theme's authoritative
+    // signal color), not the tone — R2's derivation-mismatch finding:
+    expect(root).toMatch(/--hk-emergency-wash:\s*color-mix\(in srgb, var\(--hk-emergency-line\)/);
+  });
+
   it("long content stays reachable: the layer scrolls and the band safe-centers", () => {
     // A fixed full-height layer never grows the document, so clipped
     // content would strand the actions forever (R2 finding 5). The

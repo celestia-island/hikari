@@ -104,15 +104,15 @@
 /* Tone ink on the glyph (the toast family's own --hi-color-<tone>
    channels, theme-following, with the same fallbacks). */
 .hk-notification-row.is-error .hk-notification-row__icon {
-  color: var(--hi-color-danger, #e5484d);
+  color: var(--hi-color-danger, #f7768e);
 }
 
 .hk-notification-row.is-warning .hk-notification-row__icon {
-  color: var(--hi-color-warning, #f5a623);
+  color: var(--hi-color-warning, #eed677);
 }
 
 .hk-notification-row.is-success .hk-notification-row__icon {
-  color: var(--hi-color-success, #46a758);
+  color: var(--hi-color-success, #0eb840);
 }
 
 .hk-notification-row.is-info .hk-notification-row__icon,

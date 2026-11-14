@@ -109,3 +109,53 @@ describe("HkMarkdownRenderer link scheme guard", () => {
     expect(container.querySelector(".hk-md-link-neutralized")).toBeNull();
   });
 });
+
+describe("HkMarkdownRenderer raw-HTML and image sweep (review S1/S2)", () => {
+  it("strips the href of a raw-HTML anchor with a script scheme", async () => {
+    // renderer.link never sees raw HTML — it rides renderer.html into the
+    // sanitize pass, which is unreliable in some environments. The
+    // post-sanitize DOM sweep is what must catch this shape.
+    const { container } = mount('<a href="javascript:alert(1)">raw</a>');
+    await settleFor(container, ".hk-markdown-body a, .hk-markdown-body span");
+    const anchors = [...container.querySelectorAll("a")];
+    expect(anchors.length).toBe(1);
+    expect(anchors[0].getAttribute("href")).toBeNull();
+    expect(anchors[0].textContent).toBe("raw");
+  });
+
+  it("strips raw-HTML anchors case-insensitively and data: variants", async () => {
+    const doc = [
+      '<A HREF="JavaScript:alert(1)">up</A>',
+      '<a href="data:text/html,<b>x</b>">data</a>',
+      "<a href='vbscript:msgbox'>vb</a>",
+    ].join("\n");
+    const { container } = mount(doc);
+    await settleFor(container, ".hk-markdown-body a, .hk-markdown-body span");
+    for (const a of [...container.querySelectorAll("a")]) {
+      expect(a.getAttribute("href")).toBeNull();
+    }
+    expect(container.querySelectorAll("a").length).toBe(3);
+  });
+
+  it("strips a script-scheme img src (image token AND raw HTML)", async () => {
+    const doc = [
+      "![x](javascript:alert(1))",
+      '<img src="javascript:alert(1)" alt="y">',
+      "![ok](https://example.com/i.png)",
+    ].join("\n");
+    const { container } = mount(doc);
+    await settleFor(container, ".hk-markdown-body img");
+    const srcs = [...container.querySelectorAll("img")]
+      .map((i) => i.getAttribute("src"))
+      .filter(Boolean);
+    expect(srcs).toEqual(["https://example.com/i.png"]);
+  });
+
+  it("keeps a legit raw-HTML anchor untouched", async () => {
+    const { container } = mount('<a href="https://ok.example/x">raw-ok</a>');
+    await settleFor(container, "a[href]");
+    expect(container.querySelector("a[href]")?.getAttribute("href")).toBe(
+      "https://ok.example/x",
+    );
+  });
+});

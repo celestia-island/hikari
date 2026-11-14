@@ -148,7 +148,42 @@ async function renderMarkdown(content: string): Promise<string> {
 
   const raw = marked.parse(content, { renderer, async: false });
   const html = typeof raw === "string" ? raw : "";
-  return DOMPurify.sanitize(html);
+  return sweepDangerousUrlAttributes(DOMPurify.sanitize(html));
+}
+
+/**
+ * SECURITY (perfsec follow-up, 2026-11-15, review S1): the renderer.link
+ * override only sees marked's LINK tokens — raw HTML written straight into
+ * the markdown (`<a href="javascript:…">`) rides renderer.html into the
+ * sanitize pass, which is exactly the environment-unreliable half this
+ * guard exists for. This post-sanitize DOM sweep is the braces: every
+ * anchor href and image src in the FINAL html is checked, whatever path
+ * produced it (link token, autolink, raw HTML, image token). Dangerous
+ * values drop the attribute entirely — the element stays (text/link
+ * label visible), the navigation face does not.
+ */
+function sweepDangerousUrlAttributes(html: string): string {
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") return html;
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    let swept = false;
+    for (const a of [...doc.querySelectorAll("a[href]")]) {
+      if (isDangerousHref(a.getAttribute("href") ?? "")) {
+        a.removeAttribute("href");
+        swept = true;
+      }
+    }
+    for (const img of [...doc.querySelectorAll("img[src]")]) {
+      if (isDangerousHref(img.getAttribute("src") ?? "")) {
+        img.removeAttribute("src");
+        swept = true;
+      }
+    }
+    if (!swept) return html;
+    return doc.body.innerHTML;
+  } catch {
+    return html;
+  }
 }
 
 export default defineComponent({

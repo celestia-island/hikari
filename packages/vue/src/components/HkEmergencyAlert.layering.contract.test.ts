@@ -123,7 +123,7 @@ describe("emergency alert layering contract", () => {
     expect(root).not.toContain("var(--color-background");
     // Dark-ink DIRECTION, not a literal: every RGB channel must be
     // dark (<60) and the veil substantial (alpha >= 40%). A future
-    // retune (55%→52%, 9 11 16→12 14 20) passes; a light recolor
+    // retune (55%→52%, 12 14 20 etc.) passes; a light recolor
     // (200 210 220) fails on semantics, not on mismatched text.
     // EXACTLY ONE declaration per property, counted by NAME in any
     // value form: a later duplicate wins the cascade silently, so a

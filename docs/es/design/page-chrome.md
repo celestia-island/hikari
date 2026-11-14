@@ -51,3 +51,15 @@ hikari suministra el cromo: la fila de acciones de `HkAdminHeader`,
 un contexto de barra de acciones que renderiza los slots de arriba; el
 `useActionBar` / `usePageCreateAction` del webui de chest es la implementación
 de referencia de esta gramática.
+
+## Replegado móvil
+
+Un grupo de botones anclado en el slot central del encabezado o del pie
+se replega en ventanas de anchura telefónica (<768, `useBreakpoint().isMobile`
+— el umbral de la familia sheet): la tira se convierte en un disparador
+tipo selector que nombra el elemento ACTIVO, y sus opciones abren como
+hoja inferior (`HkSelectPanel` con `sheetOnMobile`). Un único contrato
+de valor gobierna ambas formas — los enlaces profundos `?tab=` sobreviven
+al punto de ruptura. `HkAdaptiveTabs` es la implementación por defecto;
+los conmutadores de listas de proyectos dinámicas con filas propias (el selector de
+plataforma) son el caso especial exento, no el modelo a copiar.

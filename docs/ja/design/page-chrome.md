@@ -42,3 +42,14 @@ chrome は hikari が提供します：`HkAdminHeader` のアクション行、`
 `useChromeActionSize`。ホストは上記スロットを描画するアクションバーコンテキスト経由で
 登録します。chest webui の `useActionBar` / `usePageCreateAction` がこの文法の
 リファレンス実装です。
+
+## モバイル折りたたみ
+
+ヘッダー中央スロットやフッター中央スロットに固定されたボタン群は、電話幅の
+ビューポート（<768、`useBreakpoint().isMobile`——sheet ファミリーの閾値）で
+折りたたまれる：ストリップは**現在の項目**を読み上げるセレクト式トリガーになり、
+選択肢はボトムシートとして開く（`HkSelectPanel` の `sheetOnMobile`）。
+両形態は同一の value 契約を共有し、`?tab=` ディープリンクはブレークポイントを
+跨いでも生き残る。`HkAdaptiveTabs` が既定の実装。専用行を持つ動的
+プロジェクトリスト切替器（プラットフォームスイッチャー）は免除される特例であり、
+模範ではない。

@@ -1,5 +1,6 @@
 export { default as HActionBar } from "./components/HkActionBar";
 export { default as HAdaptiveDialog } from "./components/HkAdaptiveDialog";
+export { default as HAdaptiveTabs } from "./components/HkAdaptiveTabs";
 export { default as HAlert } from "./components/HkAlert";
 export { default as HAltSignIn } from "./components/HkAltSignIn";
 export { default as HAmbientLayer } from "./components/HkAmbientLayer";
@@ -751,6 +752,7 @@ export {
 
 export { default as HkActionBar } from "./components/HkActionBar";
 export { default as HkAdaptiveDialog } from "./components/HkAdaptiveDialog";
+export { default as HkAdaptiveTabs } from "./components/HkAdaptiveTabs";
 export { default as HkAlert } from "./components/HkAlert";
 export { default as HkAltSignIn, type HkAltSignInEntry } from "./components/HkAltSignIn";
 export { default as HkAmbientLayer } from "./components/HkAmbientLayer";

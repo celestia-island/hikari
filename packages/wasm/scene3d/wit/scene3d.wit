@@ -1,0 +1,51 @@
+package hikari:scene3d;
+
+interface types {
+    /// Input row for the fleet scene layout.
+    record fleet-row {
+        node-id: string,
+        tier: u32,
+        station-count: u32,
+        label: option<string>,
+        status: option<string>,
+        online: option<bool>,
+        detail: option<string>,
+    }
+
+    /// A positioned body (star or planet) in the computed scene.
+    record fleet-body-spec {
+        id: string,
+        label: string,
+        status: string,
+        online: bool,
+        detail: string,
+        /// "star" or "planet"
+        role: string,
+        /// RGB color, each channel 0.0..1.0.
+        color: tuple<f32, f32, f32>,
+        /// Body radius in scene units.
+        radius: f32,
+        /// The point this body orbits.
+        orbit-center: tuple<f32, f32, f32>,
+        /// 0 for a star, > 0 for a planet.
+        orbit-radius: f32,
+        orbit-period-sec: f32,
+        orbit-phase: f32,
+        /// Orbit-plane tilt in radians.
+        orbit-tilt: f32,
+        spin-period-sec: f32,
+        satellites: u32,
+        satellite-total: u32,
+    }
+
+    record fleet-scene-spec {
+        stars: list<fleet-body-spec>,
+        planets: list<fleet-body-spec>,
+        has-registry-core: bool,
+    }
+}
+
+world scene3d {
+    use types.{fleet-row, fleet-scene-spec};
+    export build-fleet-scene: func(rows: list<fleet-row>) -> fleet-scene-spec;
+}

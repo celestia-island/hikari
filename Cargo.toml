@@ -2,6 +2,7 @@
 members = [
     "packages/wasm/qr",
     "packages/wasm/mermaid",
+    "packages/wasm/scene3d",
     "packages/palette",
     "packages/theme",
     "packages/animation",

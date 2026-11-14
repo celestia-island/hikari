@@ -85,4 +85,21 @@ mod tests {
         assert!(json.contains("\"label\":\"Alpha\""));
         assert!(!json.contains("Beta"));
     }
+
+    #[test]
+    fn parses_class() {
+        let src = "classDiagram\n  class Animal {\n    +name: String\n    +speak() void\n  }\n  Dog <|-- Animal";
+        let json = super::native::parse(src).unwrap();
+        assert!(json.contains("\"kind\":\"class\""));
+        assert!(json.contains("Animal"));
+        assert!(json.contains("\"relType\":\"inheritance\""));
+    }
+
+    #[test]
+    fn parses_quadrant() {
+        let src = "quadrantChart\n  x-axis Low --> High\n  y-axis Bottom --> Top\n  Point A: [0.5, 0.7]";
+        let json = super::native::parse(src).unwrap();
+        assert!(json.contains("\"kind\":\"quadrant\""));
+        assert!(json.contains("Point A"));
+    }
 }

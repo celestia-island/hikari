@@ -7,6 +7,8 @@ pub mod parser;
 pub mod pie;
 pub mod gantt;
 pub mod sequence;
+pub mod quadrant;
+pub mod class_diagram;
 
 pub use types::*;
 pub use parser::{parse, parse_any};

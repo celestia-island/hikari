@@ -1,7 +1,7 @@
 //! The top-level mermaid parser: dispatches by diagram type keyword,
 //! serializes the result to JSON with a `kind` discriminator.
 
-use super::{graph_parser, gantt, pie, sequence};
+use super::{class_diagram, graph_parser, gantt, pie, quadrant, sequence};
 use super::types::*;
 
 use serde::Serialize;
@@ -17,6 +17,10 @@ enum AnyDiagram {
     Gantt(GanttChart),
     #[serde(rename = "sequence")]
     Sequence(SequenceDiagram),
+    #[serde(rename = "class")]
+    Class(MermaidClassDoc),
+    #[serde(rename = "quadrant")]
+    Quadrant(MermaidQuadrantDoc),
 }
 
 pub fn parse(source: &str) -> Result<MermaidDiagram, String> {
@@ -38,6 +42,14 @@ pub fn parse_any(source: &str) -> Option<String> {
     if trimmed.starts_with("sequenceDiagram") {
         return sequence::parse_sequence(trimmed)
             .and_then(|d| serde_json::to_string(&AnyDiagram::Sequence(d)).ok());
+    }
+    if trimmed.starts_with("classDiagram") {
+        return class_diagram::parse_class_diagram(trimmed)
+            .and_then(|d| serde_json::to_string(&AnyDiagram::Class(d)).ok());
+    }
+    if trimmed.starts_with("quadrantChart") {
+        return quadrant::parse_quadrant(trimmed)
+            .and_then(|d| serde_json::to_string(&AnyDiagram::Quadrant(d)).ok());
     }
     if trimmed.starts_with("graph") || trimmed.starts_with("flowchart") {
         return graph_parser::parse(trimmed)

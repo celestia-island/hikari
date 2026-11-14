@@ -142,3 +142,63 @@ pub struct GanttTask {
     pub deps: Vec<String>,
     pub duration: Option<String>,
 }
+
+// ── Class Diagram ──────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ClassMember {
+    pub visibility: String,
+    pub name: String,
+    #[serde(rename = "typeInfo")]
+    pub type_info: String,
+    #[serde(rename = "isMethod")]
+    pub is_method: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ClassDefinition {
+    pub name: String,
+    pub attributes: Vec<ClassMember>,
+    pub methods: Vec<ClassMember>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ClassRelationship {
+    pub from: String,
+    pub to: String,
+    #[serde(rename = "relType")]
+    pub rel_type: String,
+    pub label: Option<String>,
+    #[serde(rename = "arrowAt")]
+    pub arrow_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct MermaidClassDoc {
+    pub classes: Vec<ClassDefinition>,
+    pub relationships: Vec<ClassRelationship>,
+}
+
+// ── Quadrant Chart ─────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct QuadrantPoint {
+    pub label: String,
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct MermaidQuadrantDoc {
+    pub title: Option<String>,
+    #[serde(rename = "xAxisLeft")]
+    pub x_axis_left: String,
+    #[serde(rename = "xAxisRight")]
+    pub x_axis_right: String,
+    #[serde(rename = "yAxisBottom")]
+    pub y_axis_bottom: String,
+    #[serde(rename = "yAxisTop")]
+    pub y_axis_top: String,
+    pub quadrants: Vec<Option<String>>,
+    pub points: Vec<QuadrantPoint>,
+}

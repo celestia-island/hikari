@@ -34,6 +34,19 @@ const PLANET_PALETTE: &[&str] = &[
 // ── Pure computation helpers ──────────────────────────────────────────────
 
 /// FNV-1a hash → unit interval [0,1). Mirrors hashIdToUnit in scene3d.ts.
+
+/// JavaScript ToUint32: truncate toward zero, then modulo 2^32 (always
+/// non-negative). This is what `>>> 0` does in the TS source.
+fn to_uint32(x: f64) -> u32 {
+    let int = x.trunc();
+    let m = int % 4294967296.0;
+    if m < 0.0 {
+        (m + 4294967296.0) as u32
+    } else {
+        m as u32
+    }
+}
+
 fn hash_id_to_unit(id: &str) -> f64 {
     let mut h: u32 = 0x811c_9dc5;
     for b in id.bytes() {
@@ -52,8 +65,9 @@ fn hash_id_to_unit(id: &str) -> f64 {
     // (where large products lose their low bits before >>> 0 truncates),
     // so we do the same rather than a wrapping u32 multiply.
     h ^= h >> 13;
-    let h_f64 = (h as f64) * 1540483477.0_f64; // 0x5bd1e995
-    h = (h_f64.trunc() as i64 & 0xFFFF_FFFF) as u32;
+    // In JS, h after ^ is a signed i32 (negative when bit 31 is set), and
+    // the f64 multiply runs on that negative value. Mirror it exactly.
+    h = to_uint32((h as i32) as f64 * 1540483477.0_f64); // 0x5bd1e995
     h ^= h >> 15;
     (h as f64) / 4294967296.0
 }

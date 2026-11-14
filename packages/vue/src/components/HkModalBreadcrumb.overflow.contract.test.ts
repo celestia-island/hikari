@@ -27,8 +27,9 @@ function rule(selector: string): string {
 describe("HkModalBreadcrumb overflow fence", () => {
   it("fences the strip against the viewport, not against its content", () => {
     const block = rule(".hk-modal-breadcrumb");
-    // The strip is centred with translate(-50%) and lives outside the page
-    // flow: without a viewport-derived cap its width IS its content width.
+    // The strip is centred on the individual `translate` longhand (see the
+    // motion contract) and lives outside the page flow: without a
+    // viewport-derived cap its width IS its content width.
     expect(block).toContain("max-width: calc(100vw - 2 * var(--viewport-gutter");
     expect(block).toContain("box-sizing: border-box");
     // Last-resort clip: the script folds the leading layers, this keeps a

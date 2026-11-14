@@ -99,6 +99,11 @@ const reducedBreadcrumb = topBlock(breadcrumb, "@media (prefers-reduced-motion: 
 const reducedList = topBlock(list, "@media (prefers-reduced-motion: reduce)");
 
 const MODAL_POSE = "translateY(10px) scale(0.97)";
+/** The strip's own ride legs — px only; the centering sits on the
+ *  `translate` longhand (see the carrier test below). */
+const POSE_FROM = "translateY(-10px) scale(0.97)";
+const POSE_TO = "translateY(0) scale(1)";
+const CENTERING = "-50% -50%";
 const EASE_OUT = "cubic-bezier(0.33, 1, 0.68, 1)";
 const EASE_IN = "cubic-bezier(0.45, 0, 0.55, 1)";
 
@@ -121,10 +126,10 @@ describe("strip surface enter/leave (window choreography)", () => {
     expect(enter).toContain(`transform var(--duration-normal, 0.3s) ${EASE_OUT}`);
     const from = rule(breadcrumb, ".hk-modal-breadcrumb-enter-from");
     expect(from).toContain("opacity: 0");
-    expect(from).toContain("translate(-50%, calc(-50% - 10px)) scale(0.97)");
+    expect(from).toContain(`transform: ${POSE_FROM}`);
     const to = rule(breadcrumb, ".hk-modal-breadcrumb-enter-to");
     expect(to).toContain("opacity: 1");
-    expect(to).toContain("translate(-50%, -50%) scale(1)");
+    expect(to).toContain(`transform: ${POSE_TO}`);
   });
 
   it("leaves as the true reverse, quicker than the windows it names", () => {
@@ -133,21 +138,86 @@ describe("strip surface enter/leave (window choreography)", () => {
     expect(leave).toContain(`transform var(--duration-short, 0.15s) ${EASE_IN}`);
     const to = rule(breadcrumb, ".hk-modal-breadcrumb-leave-to");
     expect(to).toContain("opacity: 0");
-    expect(to).toContain("translate(-50%, calc(-50% - 10px)) scale(0.97)");
+    expect(to).toContain(`transform: ${POSE_FROM}`);
   });
 
-  it("keeps the centering prefix in every animated state", () => {
-    // The resting rule's transform is byte-identical to the enter-to /
-    // leave-from state — a re-seated mid-flight frame would drift the
-    // strip off its measured `top` line (the modal frame keeps the same
-    // contract for its dragged-shift vars).
-    const resting = rule(breadcrumb, ".hk-modal-breadcrumb")
-      .match(/transform:\s*([^;]+);/)?.[1]
-      ?.trim();
-    expect(resting).toBe("translate(-50%, -50%)");
-    expect(rule(breadcrumb, ".hk-modal-breadcrumb-enter-to")).toContain(
-      `transform: ${resting} scale(1)`,
-    );
+  it("carries the centring on the translate longhand, never in an animated transform", () => {
+    // The strip's box changes WHILE it is up (the keyed crumb list folds its
+    // tail, a late webfont reflows the labels, a crumb is re-inserted), and
+    // those changes land mid-entrance. A -50% inside the transitioned
+    // `transform` freezes its composited matrix against the mount-time box,
+    // re-seating the strip against a stale height — the modal-frame defect
+    // family hikari #1325 removed. The centring therefore rides the
+    // individual `translate` longhand, which re-resolves every frame.
+    //
+    // BOTH carriers are guarded, because the defect can return through
+    // either one: a `translate: none` (or a re-created `translate`) on a ride
+    // rule un-centres / double-centres the strip for the whole ride, and a
+    // `-50%` re-appended to a ride transform restores the frozen matrix. The
+    // first revision of this test swept only `transform:` and let both
+    // `translate:` variants pass green (R2 mutation, 2026-11-15). Comments are
+    // stripped before matching: sass keeps loud `/* */` comments in expanded
+    // output, and a regex would otherwise read a comment's prose as a
+    // declaration.
+    const stripComments = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, " ");
+    // EVERY declaration of a property, case-insensitively. Both halves are
+    // load-bearing: CSS property names are case-insensitive (`Translate:` is
+    // the same property), and a duplicate declaration is last-wins — a second
+    // `translate: none` appended to the base rule paints un-centred while a
+    // first-match-only reader still sees the good pair (independent delta
+    // round, 2026-11-15: both bypasses survived the first-match sweep).
+    // Split on `;` and test each segment: a boundary-consuming regex cannot
+    // see two consecutive declarations of the same property (the match eats
+    // the preceding `;`, so the second segment starts without a boundary and
+    // only the LAST one is found — measured, 2026-11-15).
+    const decls = (body: string, prop: string): string[] => {
+      // Vendor prefixes are the same painting: `-webkit-transform` would
+      // otherwise slip past an exact-name anchor (closure round, 2026-11-15).
+      const re = new RegExp(`^\\s*(?:-webkit-|-moz-|-ms-)?${prop}\\s*:\\s*([\\s\\S]*)$`, "i");
+      return body
+        .split(";")
+        .map((segment) => segment.match(re))
+        .filter((m): m is RegExpMatchArray => m !== null)
+        .map((m) => m[1].trim().replace(/\s+/g, " "));
+    };
+
+    const offenders: string[] = [];
+    /** The FIRST base-matching frame in source order — the top-level rule
+     *  (sass emits media blocks after it). Only its declarations decide
+     *  whether the strip is centred everywhere: parking the pair solely in
+     *  an @media override would leave every wider viewport un-centred. */
+    let topLevelBaseTranslate: string[] | null = null;
+    for (const frame of frames(breadcrumb)) {
+      const body = stripComments(frame.body);
+      const label = frame.selectors.join(", ");
+      const isBase = frame.selectors.includes(".hk-modal-breadcrumb");
+      const translates = decls(body, "translate");
+      if (isBase && topLevelBaseTranslate === null) topLevelBaseTranslate = translates;
+      for (const transform of decls(body, "transform")) {
+        if (transform !== "none" && transform.includes("%")) {
+          offenders.push(`${label} { transform: ${transform} }`);
+        }
+      }
+      for (const translate of translates) {
+        if (!isBase) {
+          offenders.push(`${label} { translate: ${translate} } (only the base rule may set the centring longhand)`);
+        } else if (translate !== CENTERING) {
+          offenders.push(`${label} { translate: ${translate} }`);
+        }
+      }
+    }
+    expect(offenders, "the centring carrier must stay the base rule's translate longhand").toEqual([]);
+    expect(topLevelBaseTranslate, "the top-level base rule must exist").not.toBeNull();
+    expect(topLevelBaseTranslate, "the top-level base rule must declare exactly the centring pair").toEqual([
+      CENTERING,
+    ]);
+
+    // Known-positive probe: the sweep is worthless if it matches no rule at
+    // all (hikari #1325's first sweep shipped vacuous exactly that way), so
+    // assert the ride rules really are in the compiled sheet.
+    for (const sel of [".hk-modal-breadcrumb-enter-from", ".hk-modal-breadcrumb-leave-to"]) {
+      expect(rule(breadcrumb, sel)).toContain("transform:");
+    }
   });
 
   it("has no keyframe animation on the base class (no double entrance)", () => {

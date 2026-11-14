@@ -32,7 +32,7 @@ pub fn rule_to_css(rule: &str) -> Option<&'static str> {
         "regexp" => Some("hljs-regexp"),
         "escape" => Some("hljs-subst"),
         "tag" => Some("hljs-tag"),
-        "attr_name" => Some("hljs-attr"),
+        
         "attr_value" => Some("hljs-string"),
         _ => None,
     }

@@ -1,8 +1,5 @@
 // fsharp.pest — fsharp syntax highlighting grammar.
 
-// python.pest — Python syntax highlighting grammar.
-// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
-// Rule names use the standard token classification (engine.rs maps them).
 
 whitespace = @{ (" " | "\t" | "\r")+ }
 newline = { "\r\n" | "\n" | "\r" }

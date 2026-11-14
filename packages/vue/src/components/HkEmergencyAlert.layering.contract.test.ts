@@ -100,16 +100,24 @@ describe("emergency alert layering contract", () => {
     // dark (<60) and the veil substantial (alpha >= 40%). A future
     // retune (55%→52%, 9 11 16→12 14 20) passes; a light recolor
     // (200 210 220) fails on semantics, not on mismatched text.
-    // EXACTLY ONE active declaration: a later duplicate wins the
-    // cascade silently, so "first match is dark" would let a light
-    // override appended below slip past (R5's probe did exactly that).
-    const scrims = [...root.matchAll(/--hk-emergency-scrim:\s*rgb\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\/\s*(\d+)%\s*\);/g)];
-    expect(scrims, "the root must declare exactly one rgb(…) scrim").toHaveLength(1);
-    const [, r, g, b, a] = scrims[0].map(Number) as unknown as number[];
+    // EXACTLY ONE declaration per property, counted by NAME in any
+    // value form: a later duplicate wins the cascade silently, so a
+    // first-match-is-dark pin let `white` / var() forms slip past
+    // (R5's rgb probe; R6's white/var probes). Counting the name also
+    // guards the wash the same way (R6: an old tone-form wash could be
+    // appended under a correct color-mix line).
+    expect(root.match(/--hk-emergency-scrim\s*:/g)?.length, "exactly one --hk-emergency-scrim declaration").toBe(1);
+    // The one declaration must be a LITERAL dark rgb ink (darkening is
+    // mode-independent; symbolic or token forms may invert in light
+    // themes — the 0.55.370 bug).
+    const scrim = root.match(/--hk-emergency-scrim:\s*rgb\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\/\s*(\d+)%\s*\);/);
+    expect(scrim, "the scrim must be a literal rgb(…) dark ink").not.toBeNull();
+    const [, r, g, b, a] = scrim!.map(Number) as unknown as number[];
     expect(Math.max(r, g, b)).toBeLessThan(60);
     expect(a).toBeGreaterThanOrEqual(40);
-    // And the wash derives from the LINE (the theme's authoritative
-    // signal color), not the tone — R2's derivation-mismatch finding:
+    // Wash: exactly one, and it derives from the LINE (the theme's
+    // authoritative signal color) — R2's derivation-mismatch finding.
+    expect(root.match(/--hk-emergency-wash\s*:/g)?.length, "exactly one --hk-emergency-wash declaration").toBe(1);
     expect(root).toMatch(/--hk-emergency-wash:\s*color-mix\(in srgb, var\(--hk-emergency-line\)/);
   });
 

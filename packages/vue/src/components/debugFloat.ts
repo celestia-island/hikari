@@ -27,14 +27,30 @@ export const HK_DEBUG_FLOAT_DOCUMENT_Z = 80000;
 /** localStorage namespace: `hk-debug-float:<persistKey>`. */
 export const HK_DEBUG_FLOAT_STORAGE_PREFIX = "hk-debug-float:";
 
+/**
+ * A declarative content section of the float (HkDebugFloat `sections`
+ * prop). The producer lists the sections it can render; the float renders
+ * each through a same-named slot and gives every one a toggle in the
+ * hover chrome, so a dense debug HUD can be thinned to just the lines
+ * that matter right now.
+ */
+export interface HkDebugFloatSection {
+  /** Slot name and persistence identity of the section. */
+  key: string;
+  /** Chip label in the hover chrome (verbatim producer text). */
+  label: string;
+}
+
 /** Shape persisted under a persistKey. `x`/`y` are the window's
  *  top-left offset in viewport pixels (the dragged position); both are
  *  optional but PAIRED — a close before the first drag stores open-state
- *  only, and a drop always stores both. */
+ *  only, and a drop always stores both. `hidden` lists section keys the
+ *  user toggled off (only written when non-empty; absent = all visible). */
 export interface HkDebugFloatPersisted {
   open: boolean;
   x?: number;
   y?: number;
+  hidden?: string[];
 }
 
 /**
@@ -102,9 +118,16 @@ export function readDebugFloatPersisted(persistKey: string): HkDebugFloatPersist
     ) {
       return null;
     }
+    if (
+      "hidden" in rec &&
+      (!Array.isArray(rec.hidden) || !rec.hidden.every((k) => typeof k === "string"))
+    ) {
+      return null;
+    }
     return {
       open: rec.open,
       ...(hasPos ? { x: rec.x as number, y: rec.y as number } : {}),
+      ...("hidden" in rec ? { hidden: rec.hidden as string[] } : {}),
     };
   } catch {
     return null;

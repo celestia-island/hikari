@@ -11,6 +11,12 @@
  * from the `hoverOpacity` prop); data-hovered mirrors :hover for the
  * runtime tests and for pen/touch engines where :hover is sticky.
  *
+ * The fade lives on the `[data-el="fade"]` CARD, not the root: the hover
+ * chrome (`[data-el="overlay"]` — section chips, the headerless close) is
+ * a sibling of the card so the controls stay legible while the content
+ * dims — at a 0.15 hover dim a close button inside the fading subtree
+ * would fade out of reach together with the content it closes.
+ *
  * Every ink hangs off hikari's theme tokens (no hardcoded colors); the
  * body is compact mono with tabular figures so debug numbers line up.
  */
@@ -26,7 +32,22 @@
   z-index: var(--hk-z-debug-float, 80000);
 
   position: fixed;
-  min-width: 0;
+  /* The window catches pointers ONLY on itself — it is never an
+   * inset-0 overlay, so clicks outside its box land on the page. */
+  pointer-events: auto;
+  touch-action: none;
+
+  /* Content-sized seat (`width="auto"`): the window grows to its
+   * longest line (a `white-space: pre` mono dump) instead of clipping
+   * it, capped so a pathological line cannot span the viewport. */
+  &[data-auto-width] {
+    width: max-content;
+    max-width: calc(100vw - 2 * var(--hk-debug-float-offset, 16px));
+  }
+}
+
+/* ---------- the card (visual chrome + the hover fade) ---------- */
+.hk-debug-float [data-el="fade"] {
   overflow: hidden;
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-sm);
@@ -40,10 +61,6 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   line-height: 1.45;
-  /* The window catches pointers ONLY on itself — it is never an
-   * inset-0 overlay, so clicks outside its box land on the page. */
-  pointer-events: auto;
-  touch-action: none;
 
   /* Hover → yield: the pointer over the HUD drops it to the translucent
    * state so the measured content reads through it (~150ms, opacity only
@@ -51,17 +68,19 @@
    * property; 0.45 is the wowsp-derived default. */
   opacity: 1;
   transition: opacity var(--duration-short) ease;
+}
 
-  &:hover,
-  &[data-hovered] {
-    opacity: var(--hk-debug-float-hover-opacity, 0.45);
-  }
+.hk-debug-float:hover [data-el="fade"],
+.hk-debug-float[data-hovered] [data-el="fade"] {
+  opacity: var(--hk-debug-float-hover-opacity, 0.45);
+}
 
-  /* Drag exception: while the user is GRABBING the window it must stay
-   * fully opaque — fading mid-grab hides what the hand is holding. */
-  &[data-dragging] {
-    opacity: 1;
-  }
+/* Drag exception: while the user is GRABBING the window it must stay
+ * fully opaque — fading mid-grab hides what the hand holds. Equal
+ * specificity with the hover rule above: source order (this rule LAST)
+ * is the cascade. */
+.hk-debug-float[data-dragging] [data-el="fade"] {
+  opacity: 1;
 }
 
 /* ---------- corner anchoring (pre-drag) ----------
@@ -90,7 +109,7 @@
   }
 }
 
-/* ---------- header (drag handle) ---------- */
+/* ---------- header (drag handle, headered chrome) ---------- */
 .hk-debug-float [data-el="header"] {
   display: flex;
   align-items: center;
@@ -108,6 +127,16 @@
 
 .hk-debug-float[data-dragging] [data-el="header"] {
   cursor: grabbing;
+}
+
+/* Headerless: the whole window is the handle. */
+.hk-debug-float[data-chrome="none"] {
+  cursor: grab;
+  @include user-select(none);
+
+  &[data-dragging] {
+    cursor: grabbing;
+  }
 }
 
 .hk-debug-float [data-el="title"] {
@@ -134,6 +163,63 @@
 
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* ---------- hover chrome (section chips + headerless close) ----------
+ * Revealed ONLY while it is usable — hover, drag, or keyboard focus —
+ * and click-transparent otherwise (opacity alone would leave invisible
+ * buttons catching clicks). It never fades with the card: it is a
+ * sibling of [data-el="fade"], pinned inside the window corner. */
+.hk-debug-float [data-el="overlay"] {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-short) ease;
+}
+
+/* Headerless: no header bar, so the chrome owns the top edge... */
+.hk-debug-float[data-chrome="none"] [data-el="overlay"] {
+  top: var(--space-4);
+  right: var(--space-4);
+}
+
+/* ...headered: park it on the bottom edge — the header already has its
+ * own close button up top. */
+.hk-debug-float[data-chrome="header"] [data-el="overlay"] {
+  bottom: var(--space-4);
+  right: var(--space-4);
+}
+
+.hk-debug-float:hover [data-el="overlay"],
+.hk-debug-float[data-hovered] [data-el="overlay"],
+.hk-debug-float[data-dragging] [data-el="overlay"],
+.hk-debug-float:focus-within [data-el="overlay"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Section toggle chip: a compact mono pill, on = section visible. */
+.hk-debug-float [data-el="overlay"] .hk-debug-float-section {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-surface) / 92%);
+  color: rgb(var(--color-muted));
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &[data-on] {
+    color: rgb(var(--color-text));
+    border-color: var(--border-input);
   }
 }
 

@@ -3,6 +3,7 @@ import { createApp, h, nextTick } from "vue";
 import { FileText, History, Network } from "lucide-vue-next";
 
 import HkAdaptiveTabs from "./HkAdaptiveTabs";
+import { setLocale } from "../i18n/context";
 import type { TabItem } from "./HkTabs";
 
 /**
@@ -124,6 +125,10 @@ describe("mobile arm", () => {
     await settle();
     trigger().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
+    // The sheet pin (R2 S3): phones must get the BOTTOM SHEET surface,
+    // not a desktop-style popout — a sheetOnMobile={false} mutant fails
+    // this line.
+    expect(document.querySelector(".hk-select-sheet-panel")).toBeTruthy();
     const rows = optionRows();
     expect(rows).toHaveLength(3);
     const checked = rows.find((r) => r.hasAttribute("data-checked"));
@@ -135,6 +140,51 @@ describe("mobile arm", () => {
     expect(values).toEqual(["history"]);
     // Picking closes the popup (the surface leaves the document).
     expect(document.querySelector(".hk-adaptive-tabs-option")).toBeFalsy();
+  });
+
+  it("crossing the breakpoint while open resets the picker — no self-reopen", async () => {
+    // R2 S2 (PR #1323): the branch swap unmounts the panel before its
+    // own isMobile close watcher can run; without a reset here the next
+    // mobile mount would come up open=true and the sheet would reopen
+    // itself unbidden.
+    setMobile(true);
+    mountTabs();
+    await settle();
+    trigger().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(document.querySelector(".hk-select-sheet-panel")).toBeTruthy();
+
+    setMobile(false);
+    await settle();
+    expect(document.querySelector(".hk-select-sheet-panel")).toBeFalsy();
+
+    setMobile(true);
+    await settle();
+    // Back on the phone arm: the sheet must stay SHUT until the user
+    // taps the trigger again.
+    expect(document.querySelector(".hk-select-sheet-panel")).toBeFalsy();
+    expect(optionRows()).toHaveLength(0);
+  });
+
+  it("a disabled row swallows the click — no emit, sheet stays open", async () => {
+    setMobile(true);
+    const { values } = mountTabs({
+      tabs: [
+        { key: "a", label: "甲" },
+        { key: "b", label: "乙", disabled: true },
+      ],
+    });
+    await settle();
+    trigger().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const disabledRow = optionRows().find((r) => r.textContent?.includes("乙"))!;
+    // A REAL disabled attribute: the click never reaches the handler
+    // (the row is not actionable at all) — no emit, no close.
+    expect(disabledRow.hasAttribute("disabled")).toBe(true);
+    disabledRow.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(values).toEqual([]);
+    expect(document.querySelector(".hk-adaptive-tabs-option")).toBeTruthy();
   });
 
   it("renders named icon slots in the sheet rows", async () => {
@@ -170,5 +220,20 @@ describe("mobile arm", () => {
     expect(anchor.textContent).toContain("甲");
     expect(anchor.querySelector(".hk-corner-badge")?.textContent).toContain("3");
     expect(anchor.querySelector(".hk-corner-badge")?.textContent).not.toContain("甲");
+  });
+
+  it("a count-0 badge STAYS VISIBLE on the row (presence information)", async () => {
+    // The HkTabs contract (R2 S2, PR #1323): zero is presence, not
+    // noise — showZero passes through to the mobile rows too.
+    await setLocale("en");
+    setMobile(true);
+    mountTabs({
+      tabs: [{ key: "a", label: "甲", badge: { count: 0, label: "0 条" } }],
+    });
+    await settle();
+    trigger().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const anchor = optionRows()[0].querySelector<HTMLElement>(".hk-corner-badge-anchor")!;
+    expect(anchor.querySelector(".hk-corner-badge")?.textContent).toContain("0");
   });
 });

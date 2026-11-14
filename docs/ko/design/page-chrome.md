@@ -48,5 +48,5 @@ webui의 `useActionBar` / `usePageCreateAction`이 이 문법의 참조 구현�
 **현재 항목**을 읽어 주는 셀렉트식 트리거가 되고, 옵션은 바텀 시트로 열린다
 (`HkSelectPanel`의 `sheetOnMobile`). 두 형태는 같은 value 계약을 공유하므로
 `?tab=` 딥링크는 중단점을 넘어도 유지된다. `HkAdaptiveTabs`가 기본 구현이며,
-고유 행을 지닌 동적 프로젝트 전환기(플랫폼 스위처)는 면제되는 특례지
+고유 행을 지닌 동적 프로젝트 목록 전환기(플랫폼 스위처)는 면제되는 특례지
 따라 배울 패턴이 아니다.

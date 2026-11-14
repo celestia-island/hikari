@@ -182,9 +182,8 @@ const MOON_BAND = (() => {
 export function buildHolographicFleetSpec(
   nodes: readonly StarSystemBodyInput[],
 ): FleetSceneSpec {
-  // Route through the wasm component (the Rust layout engine); the TS
-  // buildFleetSceneSpec stays as the reference implementation and test
-  // oracle — holographicFleetSpec.test.ts pins it against golden fixtures.
+  // Route through the wasm component (the Rust layout engine); the
+  // wasm output is pinned by the golden snapshot tests.
   return buildFleetSceneSpecWasm(nodes.map((node) => ({
     node_id: node.id,
     tier: node.role === "star" ? 3 : 2,

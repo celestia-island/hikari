@@ -28,33 +28,56 @@ function sheet(): string {
   // Comments are stripped before ANY assertion (the registerAnimations
   // parity convention): a commented-out declaration is not a
   // declaration. Block comments first (a leftover `/* scrim */` fed
-  // the dark-ink pin while the real declaration was gone or recolored
-  // — R4), then full-line `//` (the 0.55.370-wave B1 form).
+  // the dark-ink pin — R4), then // comments ANYWHERE on a line —
+  // trailing `position: relative; // --hk-emergency-scrim: …` fed the
+  // pins with the real declaration gone (R7). The whitespace anchor
+  // keeps `https://` inside a value alive.
   return raw
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^[ \t]*\/\/.*$/gm, "");
+    .replace(/(^|\s)\/\/.*$/gm, "$1");
 }
 
-/** The `.hk-emergency { … }` root rule, brace-balanced (it nests the
- *  webkit scrollbar rule). Assertions about the LAYER must bind here,
- *  not to the whole sheet: the band's pseudo-elements carry their own
- *  `pointer-events: none` lines, which a whole-file contains() would
- *  happily satisfy even with the root declaration deleted (R3 M6).
- *  Comment-blindness is handled upstream in sheet() — stripping here
- *  as well would double-handle; braces inside comments were the other
- *  R5 hazard, and they are gone before the walk runs. */
-function rootBlock(css: string): string {
-  const start = css.indexOf(".hk-emergency {");
-  if (start < 0) throw new Error("root rule .hk-emergency { not found");
-  let depth = 0;
-  for (let i = start; i < css.length; i++) {
-    if (css[i] === "{") depth++;
-    else if (css[i] === "}") {
-      depth--;
-      if (depth === 0) return css.slice(start, i + 1);
+/** EVERY `.hk-emergency { … }` root rule, brace-balanced (each may
+ *  nest the webkit scrollbar rule). Assertions about the LAYER must
+ *  bind to these blocks — the band's pseudo-elements carry their own
+ *  `pointer-events: none` lines (R3 M6), and a SECOND root block later
+ *  in the sheet silently overrides the first (R7's white-scrim append),
+ *  so the tests below also require the collection to hold exactly one.
+ *  Comment-blindness is handled upstream in sheet(); braces inside
+ *  comments are gone before the walk runs. */
+function rootBlocks(css: string): string[] {
+  const marker = ".hk-emergency {";
+  const blocks: string[] = [];
+  let from = 0;
+  for (;;) {
+    const start = css.indexOf(marker, from);
+    if (start < 0) break;
+    let depth = 0;
+    let end = -1;
+    for (let i = start; i < css.length; i++) {
+      if (css[i] === "{") depth++;
+      else if (css[i] === "}") {
+        depth--;
+        if (depth === 0) {
+          end = i + 1;
+          break;
+        }
+      }
     }
+    if (end < 0) throw new Error("unbalanced braces in a .hk-emergency root rule");
+    blocks.push(css.slice(start, end));
+    from = end;
   }
-  throw new Error("unbalanced braces in .hk-emergency root rule");
+  return blocks;
+}
+
+/** The single root rule, or a thrown failure naming the drift. */
+function rootBlock(css: string): string {
+  const blocks = rootBlocks(css);
+  if (blocks.length !== 1) {
+    throw new Error(`expected exactly one .hk-emergency root rule, found ${blocks.length}`);
+  }
+  return blocks[0];
 }
 
 describe("emergency alert layering contract", () => {
@@ -94,6 +117,8 @@ describe("emergency alert layering contract", () => {
     // a scrim does, in every mode — pin the ink and ban the inversion
     // vector outright (R3 M1 replayed the bug with every test green).
     const css = sheet();
+    // A second root block would silently override the first (R7).
+    expect(rootBlocks(css)).toHaveLength(1);
     const root = rootBlock(css);
     expect(root).not.toContain("var(--color-background");
     // Dark-ink DIRECTION, not a literal: every RGB channel must be

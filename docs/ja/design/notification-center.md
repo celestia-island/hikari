@@ -10,7 +10,7 @@
 ユーザー裁定（2026-11-15）により、既定で収集するのは見返す価値のあるトーン：
 
 - error / warning トースト。回答済みのブロッキング ゲート。緊急警告の全
-  エピソード（active・snoozed・cleared——解決済みの条件も見返し可能のまま）。
+  エピソード（active・snoozed・cleared——解決済みの条件も見返し可能なまま）。
   ホストが明示記録した常駐チップ。
 - success / info / loading トーストは push 単位の opt-in
   （`journal: true`）——3 秒の「保存しました」をすべて記録しては、

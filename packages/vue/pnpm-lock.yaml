@@ -12,6 +12,9 @@ importers:
 
   .:
     dependencies:
+      '@bytecodealliance/preview2-shim':
+        specifier: ^0.31
+        version: 0.31.1
       '@celestia-island/tairitsu-transport':
         specifier: ^0.2
         version: 0.2.0
@@ -43,9 +46,6 @@ importers:
         specifier: ^3
         version: 3.5.40(typescript@6.0.3)
     devDependencies:
-      '@bytecodealliance/preview2-shim':
-        specifier: ^0.31
-        version: 0.31.1
       '@types/node':
         specifier: ^*
         version: 26.2.0

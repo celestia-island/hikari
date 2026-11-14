@@ -1,0 +1,15 @@
+package hikari:mermaid;
+
+interface types {
+    /// The JSON-serialized mermaid AST (a MermaidDoc in the TS contract).
+    record parse-result {
+        /// JSON string of the parsed document, or null when the source
+        /// is not a recognizable mermaid diagram.
+        json: option<string>,
+    }
+}
+
+world mermaid {
+    use types.{parse-result};
+    export parse: func(source: string) -> parse-result;
+}

@@ -15,6 +15,7 @@
 - [نظرة عامة](./design/overview.md)
 - [هيكل الصفحة: قواعد شريط الإجراءات](./design/page-chrome.md)
 - [موضع الالتحام: ‏pin أو ride](./design/dock-placement.md)
+- [مركز الإشعارات: قواعد الإخفاء](./design/notification-center.md)
 
 # النظام
 - [نظرة عامة](./system/overview.md)

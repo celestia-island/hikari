@@ -1,4 +1,18 @@
 export { credentialAutocomplete } from "./credentialAutofill";
+export {
+  useNotificationCenter,
+  recordNotification,
+  setNotificationState,
+  forgetNotification,
+  markAllNotificationsRead,
+  resetNotifications,
+  MAX_NOTIFICATION_ENTRIES,
+  type HkNotificationEntry,
+  type HkNotificationKind,
+  type HkNotificationRecordInput,
+  type HkNotificationState,
+  type HkNotificationTone,
+} from "./notificationCenter";
 export * from "./animationBus";
 export * from "./cronBus";
 export * from "./intervalBus";

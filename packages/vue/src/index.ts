@@ -10,6 +10,7 @@ export { default as HBoard } from "./components/HkBoard";
 export { default as HBlockingToast } from "./components/HkBlockingToast";
 export { default as HEmergencyAlert } from "./components/HkEmergencyAlert";
 export { default as HEmergencySnoozeTray } from "./components/HkEmergencySnoozeTray";
+export { default as HNotificationBell } from "./components/HkNotificationBell";
 export { default as HBreadcrumb } from "./components/HkBreadcrumb";
 export { default as HButton } from "./components/HkButton";
 export { default as HCard } from "./components/HkCard";
@@ -428,6 +429,18 @@ export {
   unsnoozeEmergencyAlert,
   resetEmergencyAlerts,
   emergencySeverityRank,
+  useNotificationCenter,
+  recordNotification,
+  setNotificationState,
+  forgetNotification,
+  markAllNotificationsRead,
+  resetNotifications,
+  MAX_NOTIFICATION_ENTRIES,
+  type HkNotificationEntry,
+  type HkNotificationKind,
+  type HkNotificationRecordInput,
+  type HkNotificationState,
+  type HkNotificationTone,
   type EmergencyAlertItem,
   type EmergencyAlertOptions,
   type EmergencyAction,
@@ -762,6 +775,7 @@ export { default as HkEmergencyAlert } from "./components/HkEmergencyAlert";
 export { default as HkEmergencySnoozeTray } from "./components/HkEmergencySnoozeTray";
 export { default as HkBreadcrumb } from "./components/HkBreadcrumb";
 export { default as HkButton } from "./components/HkButton";
+export { default as HkNotificationBell } from "./components/HkNotificationBell";
 export { default as HkCard } from "./components/HkCard";
 export { default as HkCheckbox } from "./components/HkCheckbox";
 export { default as HkColorPicker } from "./components/HkColorPicker";

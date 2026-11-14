@@ -15,6 +15,7 @@
 - [概要](./design/overview.md)
 - [ページクローム：アクションバーの文法](./design/page-chrome.md)
 - [ドックの配置：pin と ride](./design/dock-placement.md)
+- [通知センター：閉じる文法](./design/notification-center.md)
 
 # システム
 - [概要](./system/overview.md)

@@ -179,15 +179,20 @@ export default defineComponent({
 
     /** Best-effort persistence — the new open value is passed in because
      *  under a controlled v-model the prop (and thus isOpen) only flips
-     *  after the parent round-trips the emitted update. */
+     *  after the parent round-trips the emitted update. The hidden half
+     *  persists the DERIVED set (hiddenKeys, sections order) — under a
+     *  controlled visibleSections the internal list stays at its
+     *  mount-time value (the prop is authoritative), and persisting
+     *  that stale internal list would clobber the record on the next
+     *  drag/close. */
     function persistState(open: boolean): void {
       if (!props.persistKey) return;
       const pos = dragPos.value;
-      const hidden = internalHidden.value;
+      const hidden = props.sections != null ? [...hiddenKeys.value] : [];
       writeDebugFloatPersisted(props.persistKey, {
         open,
         ...(pos ? { x: pos.x, y: pos.y } : {}),
-        ...(hidden.length > 0 ? { hidden: [...hidden] } : {}),
+        ...(hidden.length > 0 ? { hidden } : {}),
       });
     }
 

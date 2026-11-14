@@ -170,11 +170,17 @@
  * Revealed ONLY while it is usable — hover, drag, or keyboard focus —
  * and click-transparent otherwise (opacity alone would leave invisible
  * buttons catching clicks). It never fades with the card: it is a
- * sibling of [data-el="fade"], pinned inside the window corner. */
+ * sibling of [data-el="fade"], pinned INSIDE the window box (both
+ * insets + wrap): a chip row wider than the seat wraps instead of
+ * painting (and catching clicks) outside the window. */
 .hk-debug-float [data-el="overlay"] {
   position: absolute;
+  left: var(--space-4);
+  right: var(--space-4);
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: var(--space-4);
   opacity: 0;
   pointer-events: none;
@@ -184,14 +190,12 @@
 /* Headerless: no header bar, so the chrome owns the top edge... */
 .hk-debug-float[data-chrome="none"] [data-el="overlay"] {
   top: var(--space-4);
-  right: var(--space-4);
 }
 
 /* ...headered: park it on the bottom edge — the header already has its
  * own close button up top. */
 .hk-debug-float[data-chrome="header"] [data-el="overlay"] {
   bottom: var(--space-4);
-  right: var(--space-4);
 }
 
 .hk-debug-float:hover [data-el="overlay"],

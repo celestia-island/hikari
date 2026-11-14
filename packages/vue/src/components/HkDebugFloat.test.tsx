@@ -589,6 +589,55 @@ describe("HkDebugFloat sections", () => {
     expect(emitted[1]).toEqual(["gpu"]);
   });
 
+  it("a drag under controlled visibility persists the prop-derived set, not a stale internal one", async () => {
+    // A record from an uncontrolled era must not resurrect through a
+    // controlled mount: the visibleSections prop is authoritative, so
+    // the drag-drop persistence writes the DERIVED hidden set (empty
+    // here) — never the mount-time internal list.
+    localStorage.setItem(
+      debugFloatStorageKey("ctl-stale"),
+      JSON.stringify({ open: true, hidden: ["gpu"] }),
+    );
+    const win = mountSections({
+      persistKey: "ctl-stale",
+      visibleSections: ["timing", "draws", "gpu"],
+    });
+    expect(section(win, "gpu")).toBeTruthy();
+    dispatchMouse("pointerdown", win, { clientX: 10, clientY: 10, button: 0, buttons: 1 });
+    dispatchMouse("pointermove", win, { clientX: 30, clientY: 20, buttons: 1 });
+    dispatchMouse("pointerup", win);
+    await nextTick();
+    expect(JSON.parse(localStorage.getItem(debugFloatStorageKey("ctl-stale"))!)).toEqual({
+      open: true,
+      x: 20,
+      y: 10,
+    });
+    // The inverse direction: a controlled prop that HIDES a section
+    // persists that same set on drop (prop-derived, both ways). Two
+    // windows are mounted by now — the new one is the LAST in document
+    // order (floatWindow() would return the first).
+    localStorage.setItem(
+      debugFloatStorageKey("ctl-stale2"),
+      JSON.stringify({ open: true }),
+    );
+    mountSections({
+      persistKey: "ctl-stale2",
+      visibleSections: ["timing"],
+    });
+    const windows = document.querySelectorAll<HTMLElement>(".hk-debug-float");
+    const win2 = windows[windows.length - 1];
+    dispatchMouse("pointerdown", win2, { clientX: 10, clientY: 10, button: 0, buttons: 1 });
+    dispatchMouse("pointermove", win2, { clientX: 30, clientY: 20, buttons: 1 });
+    dispatchMouse("pointerup", win2);
+    await nextTick();
+    expect(JSON.parse(localStorage.getItem(debugFloatStorageKey("ctl-stale2"))!)).toEqual({
+      open: true,
+      x: 20,
+      y: 10,
+      hidden: ["draws", "gpu"],
+    });
+  });
+
   it("keeps the default-slot contract when no sections are declared", () => {
     mount(() => h(HkDebugFloat, null, () => "fps 60"));
     const win = floatWindow()!;
@@ -720,17 +769,29 @@ describe("HkDebugFloat stylesheet contract", () => {
   it("keeps the hover chrome out of the fading card and click-transparent until revealed", () => {
     // Structure: the overlay is a sibling of the card, never inside it —
     // a nested overlay would fade (and unclickable) with the content.
-    const fadeIdx = css.indexOf('[data-el="fade"]');
-    const overlayIdx = css.indexOf('[data-el="overlay"]');
+    // dart-sass compiles the attribute selectors UNQUOTED, so search the
+    // compiled form — the quoted spelling only survives inside comments
+    // and would make this assertion vacuous.
+    const fadeIdx = css.indexOf("[data-el=fade]");
+    const overlayIdx = css.indexOf("[data-el=overlay]");
     expect(fadeIdx).toBeGreaterThan(-1);
     expect(overlayIdx).toBeGreaterThan(fadeIdx);
-    expect(css).not.toMatch(/\.hk-debug-float \[data-el=fade\]\s*\{[^}]*\[data-el=overlay\]/);
+    expect(css).not.toMatch(/\.hk-debug-float \[data-el=fade\][^{]*\[data-el=overlay\]/);
     // Hidden until revealed, and reveal never happens inside the card.
     expect(css).toMatch(
       /\.hk-debug-float \[data-el=overlay\]\s*\{[^}]*opacity:\s*0;[^}]*pointer-events:\s*none;/,
     );
     expect(css).toMatch(
       /\.hk-debug-float:hover \[data-el=overlay\],[\s\S]*?\.hk-debug-float\[data-dragging\] \[data-el=overlay\],[\s\S]*?\.hk-debug-float:focus-within \[data-el=overlay\]\s*\{\s*opacity:\s*1;\s*pointer-events:\s*auto;/,
+    );
+  });
+
+  it("pins the hover chrome INSIDE the window box so wide chip rows cannot catch off-window clicks", () => {
+    // The overlay spans both insets and wraps: a chip row wider than a
+    // fixed seat stays inside the window instead of painting (and, while
+    // revealed, clicking) past its edge.
+    expect(css).toMatch(
+      /\.hk-debug-float \[data-el=overlay\]\s*\{[^}]*left:\s*var\(--space-4\);[^}]*right:\s*var\(--space-4\);[^}]*flex-wrap:\s*wrap;/,
     );
   });
 

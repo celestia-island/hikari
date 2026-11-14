@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   classifyHyperlink,
+  isDangerousHref,
   openExternalHyperlink,
   openHyperlink,
   provideHyperlinkCoordinator,
@@ -227,5 +228,124 @@ describe("openExternalHyperlink floor", () => {
   it("returns false when the shell has no bridge at all and popups are blocked", async () => {
     vi.stubGlobal("open", vi.fn(() => null));
     expect(await openExternalHyperlink("https://example.com")).toBe(false);
+  });
+});
+
+/**
+ * SECURITY (audit PS-18, 2026-11-15): the `other` bucket must keep carrying
+ * custom protocols to the OS handler, so the fix is a scheme BLOCKLIST —
+ * never an allowlist like `safeHref` enforces for anchors. These pins hold
+ * both halves of that: script schemes must never reach a navigation sink,
+ * and a legitimate custom scheme must keep flowing.
+ */
+describe("isDangerousHref", () => {
+  it("blocks the script and local-file schemes", () => {
+    expect(isDangerousHref("javascript:alert(1)")).toBe(true);
+    expect(isDangerousHref("JaVaScRiPt:alert(1)")).toBe(true);
+    expect(isDangerousHref("  javascript:alert(1)")).toBe(true);
+    expect(isDangerousHref("vbscript:msgbox(1)")).toBe(true);
+    expect(isDangerousHref("data:text/html,<script>alert(1)</script>")).toBe(true);
+    expect(isDangerousHref("file:///etc/passwd")).toBe(true);
+  });
+
+  it("sees through the control characters engines skip", () => {
+    // Browsers drop tab/LF/CR inside the scheme — `java\tscript:` still runs.
+    expect(isDangerousHref("java\tscript:alert(1)")).toBe(true);
+    expect(isDangerousHref("java\nscript:alert(1)")).toBe(true);
+    expect(isDangerousHref("j\u0000avascript:alert(1)")).toBe(true);
+  });
+
+  it("leaves every legitimate navigation form alone", () => {
+    expect(isDangerousHref("https://docs.celestia.world/x")).toBe(false);
+    expect(isDangerousHref("mailto:security@celestia.world")).toBe(false);
+    expect(isDangerousHref("tel:+8610000000000")).toBe(false);
+    expect(isDangerousHref("cla.md")).toBe(false);
+    expect(isDangerousHref("#section")).toBe(false);
+    // The whole point of `other`: custom protocols must keep working.
+    expect(isDangerousHref("vscode://file/x")).toBe(false);
+    expect(isDangerousHref("zoommtg://zoom.us/join?confno=1")).toBe(false);
+    expect(isDangerousHref("ftp://example.com/pub")).toBe(false);
+  });
+});
+
+describe("openHyperlink refuses script schemes (PS-18)", () => {
+  function stubLocation(): string[] {
+    const writes: string[] = [];
+    const original = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: new Proxy(original, {
+        set(_t, prop, value) {
+          if (prop === "href") writes.push(String(value));
+          return true;
+        },
+      }),
+    });
+    return writes;
+  }
+
+  it("never assigns location.href for a javascript: link", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    const writes = stubLocation();
+    try {
+      expect(await openHyperlink("javascript:alert(1)")).toBeNull();
+      expect(writes).toEqual([]);
+      expect(open).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("refuses a dangerous URL the RESOLVER minted, not just the href", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    const writes = stubLocation();
+    provideHyperlinkCoordinator({
+      resolve: () => "javascript:alert(1)",
+    });
+    try {
+      expect(await openHyperlink("https://docs.celestia.world/x")).toBeNull();
+      expect(writes).toEqual([]);
+      expect(open).not.toHaveBeenCalled();
+    } finally {
+      provideHyperlinkCoordinator(null);
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("never hands a dangerous URL to a host-provided open", async () => {
+    // Pins the guard at the ENTRY, not just the default opener: with both
+    // halves in place, removing either one alone must break something.
+    const seen: string[] = [];
+    provideHyperlinkCoordinator({
+      open: (url) => {
+        seen.push(url);
+        return true;
+      },
+    });
+    try {
+      expect(await openHyperlink("javascript:alert(1)")).toBeNull();
+      expect(seen).toEqual([]);
+    } finally {
+      provideHyperlinkCoordinator(null);
+    }
+  });
+
+  it("still hands a custom scheme to the OS handler", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    const writes = stubLocation();
+    try {
+      expect(await openHyperlink("vscode://file/x")).toBe("vscode://file/x");
+      expect(writes).toEqual(["vscode://file/x"]);
+      expect(open).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
   });
 });

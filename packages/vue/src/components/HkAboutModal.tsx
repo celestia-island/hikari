@@ -4,6 +4,7 @@ import { HBadge, HModal } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
 import { openHyperlink } from "../runtime/hyperlink";
+import { safeHref } from "../utils/safeHref";
 
 import "./HkAboutModal.scss";
 
@@ -175,7 +176,7 @@ export const HkAboutBody = defineComponent({
           key={key}
           class={classes}
           data-face={item.face ?? "chip"}
-          href={item.href}
+          href={safeHref(item.href)}
           target="_blank"
           rel="noopener noreferrer"
           // The activation rides the hyperlink coordinator (runtime/

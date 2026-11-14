@@ -141,31 +141,59 @@ describe("strip surface enter/leave (window choreography)", () => {
     expect(to).toContain(`transform: ${POSE_FROM}`);
   });
 
-  it("carries the centering on the translate longhand, never in an animated transform", () => {
+  it("carries the centring on the translate longhand, never in an animated transform", () => {
     // The strip's box changes WHILE it is up (the keyed crumb list folds its
     // tail, a late webfont reflows the labels, a crumb is re-inserted), and
     // those changes land mid-entrance. A -50% inside the transitioned
     // `transform` freezes its composited matrix against the mount-time box,
     // re-seating the strip against a stale height — the modal-frame defect
-    // family hikari #1325 removed. The centering therefore rides the
+    // family hikari #1325 removed. The centring therefore rides the
     // individual `translate` longhand, which re-resolves every frame.
-    const base = rule(breadcrumb, ".hk-modal-breadcrumb");
+    //
+    // BOTH carriers are guarded, because the defect can return through
+    // either one: a `translate: none` (or a re-created `translate`) on a ride
+    // rule un-centres / double-centres the strip for the whole ride, and a
+    // `-50%` re-appended to a ride transform restores the frozen matrix. The
+    // first revision of this test swept only `transform:` and let both
+    // `translate:` variants pass green (R2 mutation, 2026-11-15). Comments are
+    // stripped before matching: sass keeps loud `/* */` comments in expanded
+    // output, and a regex would otherwise read a comment's prose as a
+    // declaration.
+    const stripComments = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, " ");
+
+    const base = stripComments(rule(breadcrumb, ".hk-modal-breadcrumb"));
     expect(base).toContain(`translate: ${CENTERING}`);
-    expect(base, "the base rule must not carry a transform").not.toMatch(/transform\s*:/);
-    // Known-positive probe: the sweep below is worthless if it matches no
-    // rule at all (hikari #1325's first sweep shipped vacuous exactly that
-    // way), so assert the ride rules really are in the compiled sheet.
-    const rides = [".hk-modal-breadcrumb-enter-from", ".hk-modal-breadcrumb-leave-to"];
-    for (const sel of rides) expect(rule(breadcrumb, sel)).toContain("transform:");
-    // Every rule in this sheet that does carry a transform must be
-    // percentage-free (the ride legs are px only).
+    // A base `transform` is allowed only as the inert reset.
+    const baseTransform = base.match(/transform\s*:\s*([^;]+);/)?.[1]?.trim();
+    if (baseTransform !== undefined) {
+      expect(baseTransform, "the base rule's transform may only be the inert reset").toBe("none");
+    }
+
     const offenders: string[] = [];
     for (const frame of frames(breadcrumb)) {
-      const decl = frame.body.match(/transform\s*:\s*([^;]+);/)?.[1]?.trim();
-      if (decl === undefined || decl === "none") continue;
-      if (decl.includes("%")) offenders.push(`${frame.selectors.join(", ")} { transform: ${decl} }`);
+      const body = stripComments(frame.body);
+      const label = frame.selectors.join(", ");
+      const isBase = frame.selectors.includes(".hk-modal-breadcrumb");
+      const transform = body.match(/transform\s*:\s*([^;]+);/)?.[1]?.trim();
+      if (transform !== undefined && transform !== "none" && transform.includes("%")) {
+        offenders.push(`${label} { transform: ${transform} }`);
+      }
+      const translate = body.match(/(?:^|[;{])\s*translate\s*:\s*([^;]+);/)?.[1]?.trim();
+      if (translate === undefined) continue;
+      if (!isBase) {
+        offenders.push(`${label} { translate: ${translate} } (only the base rule may set the centring longhand)`);
+      } else if (translate !== CENTERING) {
+        offenders.push(`${label} { translate: ${translate} }`);
+      }
     }
-    expect(offenders, "the animated transform must stay percentage-free").toEqual([]);
+    expect(offenders, "the centring carrier must stay the base rule's translate longhand").toEqual([]);
+
+    // Known-positive probe: the sweep is worthless if it matches no rule at
+    // all (hikari #1325's first sweep shipped vacuous exactly that way), so
+    // assert the ride rules really are in the compiled sheet.
+    for (const sel of [".hk-modal-breadcrumb-enter-from", ".hk-modal-breadcrumb-leave-to"]) {
+      expect(rule(breadcrumb, sel)).toContain("transform:");
+    }
   });
 
   it("has no keyframe animation on the base class (no double entrance)", () => {

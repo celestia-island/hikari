@@ -236,4 +236,28 @@ describe("mobile arm", () => {
     const anchor = optionRows()[0].querySelector<HTMLElement>(".hk-corner-badge-anchor")!;
     expect(anchor.querySelector(".hk-corner-badge")?.textContent).toContain("0");
   });
+
+  it("an empty-label badge renders no mark (a badge anchors a LABEL)", async () => {
+    // R3 mutation-d pin (PR #1323): dropping the `&& tab.label` guard
+    // must fail here — a badge without a label is a floating mark.
+    await setLocale("en");
+    setMobile(true);
+    mountTabs({
+      tabs: [{ key: "a", label: "", badge: { count: 2, label: "2 条" } }],
+    });
+    await settle();
+    trigger().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(optionRows()[0].querySelector(".hk-corner-badge")).toBeFalsy();
+  });
+
+  it("the trigger declares the popup it actually opens", async () => {
+    // R3 mutation-e pin (PR #1323): the sheet surface is a dialog —
+    // the trigger must not claim a listbox that never renders.
+    await setLocale("en");
+    setMobile(true);
+    mountTabs();
+    await settle();
+    expect(trigger().getAttribute("aria-haspopup")).toBe("dialog");
+  });
 });

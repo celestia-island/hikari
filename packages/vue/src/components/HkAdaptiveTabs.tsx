@@ -104,6 +104,20 @@ export default defineComponent({
           props.tabs.map((t) => t.key).join(", "),
         );
       }
+      if (import.meta.env.DEV) {
+        // HkTabs' second alarm, mirrored (R3 note, PR #1323): a badge
+        // without an accessible label renders as aria-hidden decoration
+        // — the count is announced nowhere on the mobile rows.
+        for (const t of props.tabs) {
+          if (t.badge && !t.badge.label) {
+            // eslint-disable-next-line no-console -- dev-only a11y alarm
+            console.warn(
+              "[HkAdaptiveTabs] tab badge without a label is aria-hidden — pass badge.label so the count is announced:",
+              t.key,
+            );
+          }
+        }
+      }
       return list;
     });
 

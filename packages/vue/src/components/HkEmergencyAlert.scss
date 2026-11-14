@@ -23,13 +23,16 @@
   --hk-emergency-line-soft: color-mix(in srgb, var(--hk-emergency-line) 55%, transparent);
   --hk-emergency-edge-glow: color-mix(in srgb, var(--hk-emergency-line) 22%, transparent);
   --hk-emergency-wash: color-mix(in srgb, var(--hk-emergency-line) 14%, transparent);
-  --hk-emergency-band-bg: rgb(var(--color-surface, 24 26 32) / 96%);
+  --hk-emergency-band-bg: rgb(var(--color-surface, 255 255 255) / 96%);
   // The scrim is DARK INK ON PURPOSE — theme-independent. Pointing it
   // at --color-background (the 0.55.370 default) makes it a WHITE veil
   // in light themes: the page never darkens, and the takeover reads as
   // a pastel banner on plain paper (2026-11-14 field report). A scrim
-  // darkens what is behind it; that is mode-independent.
-  --hk-emergency-scrim: rgb(9 11 16 / 55%);
+  // darkens what is behind it; that is mode-independent. The ink is
+  // the house pure black (HkModal / HkDrawer scrims = rgba(0,0,0,α)
+  // behind their own --hk-*-overlay-bg vars); this takeover dims at
+  // 55% versus their 45% — a takeover sits above work, not beside it.
+  --hk-emergency-scrim: rgb(0 0 0 / 55%);
 
   position: fixed;
   // Chrome-band leg: in native hosts the window titlebar owns the top
@@ -95,9 +98,9 @@
   // a deep soft shadow lifts it off the scrim so the takeover reads
   // as layered, not pasted (0.55.370 field note: without this the
   // light band floated flat on the light page).
-  box-shadow: 0 24px 72px rgb(3 5 9 / 42%);
+  box-shadow: 0 24px 72px rgb(0 0 0 / 45%);
   text-align: center;
-  color: rgb(var(--color-text, 236 238 242));
+  color: rgb(var(--color-text, 30 32 36));
   font-family: var(--font-sans, system-ui, sans-serif);
 
   // FUI double line: a second, fainter signal line hugging each edge
@@ -183,7 +186,7 @@
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.01em;
-  color: rgb(var(--color-text, 236 238 242));
+  color: rgb(var(--color-text, 30 32 36));
 }
 
 .hk-emergency-desc {
@@ -191,7 +194,7 @@
   max-width: 56ch;
   font-size: clamp(1rem, 2vw, 1.125rem);
   line-height: 1.6;
-  color: rgb(var(--color-muted, 158 162 170));
+  color: rgb(var(--color-muted, 118 122 128));
   white-space: pre-line;
 }
 
@@ -200,7 +203,7 @@
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.8125rem;
   letter-spacing: 0.08em;
-  color: rgb(var(--color-muted, 158 162 170));
+  color: rgb(var(--color-muted, 118 122 128));
 }
 
 .hk-emergency-actions {
@@ -224,7 +227,7 @@
 .is-warning .hk-emergency-actions .hk-btn-primary {
   background: var(--hk-emergency-wash);
   border-color: var(--hk-emergency-line);
-  color: rgb(var(--color-text, 236 238 242));
+  color: rgb(var(--color-text, 30 32 36));
 }
 
 .is-warning .hk-emergency-actions .hk-btn-primary:hover:not(:disabled):not(:focus-visible) {

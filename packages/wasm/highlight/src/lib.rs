@@ -10,6 +10,12 @@ pub mod engine;
 // ── Pest parser declarations (one per grammar) ──────────────────────
 
 pub mod grammars {
+    pub mod julia {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/Julia.pest"]
+        pub struct Parser;
+    }
     pub mod bash {
         use pest_derive::Parser;
         #[derive(Parser)]
@@ -34,16 +40,34 @@ pub mod grammars {
         #[grammar = "grammars/cpp.pest"]
         pub struct Parser;
     }
+    pub mod crystal {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/crystal.pest"]
+        pub struct Parser;
+    }
     pub mod csharp {
         use pest_derive::Parser;
         #[derive(Parser)]
         #[grammar = "grammars/csharp.pest"]
         pub struct Parser;
     }
+    pub mod css {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/css.pest"]
+        pub struct Parser;
+    }
     pub mod dart {
         use pest_derive::Parser;
         #[derive(Parser)]
         #[grammar = "grammars/dart.pest"]
+        pub struct Parser;
+    }
+    pub mod elixir {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/elixir.pest"]
         pub struct Parser;
     }
     pub mod go {
@@ -94,10 +118,22 @@ pub mod grammars {
         #[grammar = "grammars/makefile.pest"]
         pub struct Parser;
     }
+    pub mod markdown {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/markdown.pest"]
+        pub struct Parser;
+    }
     pub mod matlab {
         use pest_derive::Parser;
         #[derive(Parser)]
         #[grammar = "grammars/matlab.pest"]
+        pub struct Parser;
+    }
+    pub mod nim {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/nim.pest"]
         pub struct Parser;
     }
     pub mod perl {
@@ -172,10 +208,22 @@ pub mod grammars {
         #[grammar = "grammars/typescript.pest"]
         pub struct Parser;
     }
+    pub mod vbnet {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/vbnet.pest"]
+        pub struct Parser;
+    }
     pub mod vim {
         use pest_derive::Parser;
         #[derive(Parser)]
         #[grammar = "grammars/vim.pest"]
+        pub struct Parser;
+    }
+    pub mod xml {
+        use pest_derive::Parser;
+        #[derive(Parser)]
+        #[grammar = "grammars/xml.pest"]
         pub struct Parser;
     }
 
@@ -183,6 +231,10 @@ pub mod grammars {
 
     pub fn tokenize(language: &str, code: &str) -> Option<Vec<(String, String)>> {
         match language {
+            "julia" => {
+                let pairs = julia::Parser::parse(julia::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "bash" => {
                 let pairs = bash::Parser::parse(bash::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
@@ -199,12 +251,24 @@ pub mod grammars {
                 let pairs = cpp::Parser::parse(cpp::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
+            "crystal" => {
+                let pairs = crystal::Parser::parse(crystal::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "csharp" => {
                 let pairs = csharp::Parser::parse(csharp::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
+            "css" => {
+                let pairs = css::Parser::parse(css::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "dart" => {
                 let pairs = dart::Parser::parse(dart::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "elixir" => {
+                let pairs = elixir::Parser::parse(elixir::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
             "go" => {
@@ -239,8 +303,16 @@ pub mod grammars {
                 let pairs = makefile::Parser::parse(makefile::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
+            "markdown" => {
+                let pairs = markdown::Parser::parse(markdown::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "matlab" => {
                 let pairs = matlab::Parser::parse(matlab::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "nim" => {
+                let pairs = nim::Parser::parse(nim::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
             "perl" => {
@@ -291,8 +363,16 @@ pub mod grammars {
                 let pairs = typescript::Parser::parse(typescript::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
+            "vbnet" => {
+                let pairs = vbnet::Parser::parse(vbnet::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
             "vim" => {
                 let pairs = vim::Parser::parse(vim::Rule::tokens, code).ok()?;
+                Some(flat_tokens(pairs))
+            }
+            "xml" => {
+                let pairs = xml::Parser::parse(xml::Rule::tokens, code).ok()?;
                 Some(flat_tokens(pairs))
             }
             _ => None,
@@ -317,12 +397,16 @@ pub mod grammars {
     }
     pub fn supported_languages() -> Vec<String> {
         vec![
+            "julia".to_string(),
             "bash".to_string(),
             "c".to_string(),
             "cmake".to_string(),
             "cpp".to_string(),
+            "crystal".to_string(),
             "csharp".to_string(),
+            "css".to_string(),
             "dart".to_string(),
+            "elixir".to_string(),
             "go".to_string(),
             "graphql".to_string(),
             "java".to_string(),
@@ -331,7 +415,9 @@ pub mod grammars {
             "kotlin".to_string(),
             "lua".to_string(),
             "makefile".to_string(),
+            "markdown".to_string(),
             "matlab".to_string(),
+            "nim".to_string(),
             "perl".to_string(),
             "php".to_string(),
             "powershell".to_string(),
@@ -344,7 +430,9 @@ pub mod grammars {
             "sql".to_string(),
             "swift".to_string(),
             "typescript".to_string(),
+            "vbnet".to_string(),
             "vim".to_string(),
+            "xml".to_string(),
         ]
     }
 }

@@ -30,9 +30,6 @@ importers:
       dompurify:
         specifier: ^3
         version: 3.4.12
-      highlight.js:
-        specifier: ^11
-        version: 11.11.1
       lucide-vue-next:
         specifier: ^1
         version: 1.0.0(vue@3.5.40(typescript@6.0.3))
@@ -747,10 +744,6 @@ packages:
   happy-dom@20.11.2:
     resolution: {integrity: sha512-7MB+bJLkxu3SowAfBJbjW+c55kNz5tkR45gu2qzrxznezhLeN5YIlJbwUgSzlGc+qWoZ8Ykg71H5ezz69xixrw==}
     engines: {node: '>=20.0.0'}
-
-  highlight.js@11.11.1:
-    resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
-    engines: {node: '>=12.0.0'}
 
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
@@ -1814,8 +1807,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-
-  highlight.js@11.11.1: {}
 
   hookable@5.5.3: {}
 

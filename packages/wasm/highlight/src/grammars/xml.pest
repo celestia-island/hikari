@@ -1,0 +1,15 @@
+// xml.pest — structural grammar for XML/HTML/SVG.
+whitespace = @{ " " | "\t" }
+newline = { "\r\n" | "\n" | "\r" }
+comment = @{ "<!--" ~ (!"-->" ~ ANY)* ~ "-->"? }
+string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" | "'" ~ (!"'" ~ ANY)* ~ "'" }
+number = @{ ASCII_DIGIT+ }
+tag = @{ "</"? ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "-" | "_" | ":")* }
+attr_name = @{ (ASCII_ALPHA | "_" | "-" | ":") ~ (ASCII_ALPHANUMERIC | "_" | "-" | ":")* }
+kw = @{ ("xmlns" | "xml" | "html" | "head" | "body" | "div" | "span" | "script" | "style" | "link" | "meta") }
+identifier = @{ (ASCII_ALPHA | "_" | "-") ~ (ASCII_ALPHANUMERIC | "_" | "-" | ".")* }
+operator = @{ "=" | "/" | "<" | ">" }
+punctuation = @{ "{" | "}" | "(" | ")" | "[" | "]" | "," | ":" | ";" | "." | "@" | "!" | "#" }
+token = { comment | string | tag | attr_name | number | kw | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+tokens = { token+ }

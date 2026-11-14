@@ -1,0 +1,14 @@
+// markdown.pest — structural grammar (no keywords, pattern-based).
+whitespace = @{ " " | "\t" }
+newline = { "\r\n" | "\n" | "\r" }
+comment = @{ "" ~ !ANY }
+string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" | "`" ~ (!"`" ~ ANY)* ~ "`" }
+number = @{ ASCII_DIGIT+ }
+heading = @{ "#"+ }
+kw = @{ ("**" | "*" | "__" | "_" | "~~" | "```" | "---" | "===" | ">") }
+identifier = @{ (!newline ~ !" " ~ ANY)+ }
+operator = @{ "[" | "]" | "(" | ")" | "|" | "!" | "-" | "+" }
+punctuation = @{ ":" | "." | "/" | "\\" }
+token = { heading | string | kw | number | identifier | operator | punctuation | whitespace | newline | other }
+other = @{ ANY }
+tokens = { token+ }

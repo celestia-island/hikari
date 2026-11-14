@@ -1,8 +1,8 @@
 // wasmHighlight.ts — the wasm-backed syntax highlighting engine.
 //
 // Wraps hikari-wasm-highlight (the pest-driven Rust component) and
-// produces hljs-compatible HTML. When the wasm component supports the
-// requested language, it takes over; otherwise the hljs fallback stays.
+// produces hljs-compatible HTML. Unsupported languages return null
+// (callers render escaped plain text).
 
 import { highlight as wasmHighlightFn, languages as wasmLanguages } from "../wasm/highlight/hikari_wasm_highlight.js";
 

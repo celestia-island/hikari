@@ -611,7 +611,6 @@ export {
 export type { HkCurrency, HkMoneyFormatOptions } from "./utils/currency";
 
 export { highlight, languageForPath, useHighlight } from "./composables/useHighlight";
-export { LANGUAGE_LOADERS } from "./composables/highlightLanguages";
 export {
   iconByName,
   registerFunctionalIconPack,

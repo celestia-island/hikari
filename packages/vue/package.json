@@ -1,111 +1,111 @@
 {
-  "name": "@celestia-island/hikari",
-  "version": "0.55.381",
-  "private": false,
-  "type": "module",
-  "description": "Hikari UI library, Vue 3 runtime — one design system for Vue 3 and Rust/WASM applications",
-  "license": "SySL-1.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/celestia-island/hikari"
+ "name": "@celestia-island/hikari",
+ "version": "0.55.386",
+ "private": false,
+ "type": "module",
+ "description": "Hikari UI library, Vue 3 runtime — one design system for Vue 3 and Rust/WASM applications",
+ "license": "SySL-1.0",
+ "repository": {
+  "type": "git",
+  "url": "https://github.com/celestia-island/hikari"
+ },
+ "homepage": "https://github.com/celestia-island/hikari",
+ "keywords": [
+  "vue3",
+  "ui-components",
+  "design-system",
+  "hikari",
+  "celestia-island"
+ ],
+ "main": "./src/index.ts",
+ "types": "./src/index.ts",
+ "exports": {
+  ".": {
+   "import": "./src/index.ts",
+   "types": "./src/index.ts"
   },
-  "homepage": "https://github.com/celestia-island/hikari",
-  "keywords": [
-    "vue3",
-    "ui-components",
-    "design-system",
-    "hikari",
-    "celestia-island"
-  ],
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "exports": {
-    ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
-    },
-    "./mermaid": {
-      "import": "./src/mermaid/index.ts",
-      "types": "./src/mermaid/index.ts"
-    },
-    "./runtime": {
-      "import": "./src/runtime/index.ts",
-      "types": "./src/runtime/index.ts"
-    },
-    "./styles": {
-      "import": "./src/styles/index.scss"
-    },
-    "./styles/*": "./src/styles/*",
-    "./theme/*": "./src/theme/*",
-    "./components/*": "./src/components/*",
-    "./plugins": {
-      "import": "./src/plugins/index.ts",
-      "types": "./src/plugins/index.ts"
-    },
-    "./plugins/boot-chrome": {
-      "import": "./src/plugins/boot-chrome.js",
-      "types": "./src/plugins/boot-chrome.d.ts"
-    },
-    "./plugins/boot-recovery": {
-      "import": "./src/plugins/boot-recovery.js",
-      "types": "./src/plugins/boot-recovery.d.ts"
-    },
-    "./shared": {
-      "import": "./src/shared.ts",
-      "types": "./src/shared.ts"
-    }
+  "./mermaid": {
+   "import": "./src/mermaid/index.ts",
+   "types": "./src/mermaid/index.ts"
   },
-  "files": [
-    "src/",
-    "package.json"
-  ],
-  "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit",
-    "build:docs": "vite build",
-    "lint": "vue-tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "gen:boot-landing-css": "node scripts/gen-boot-landing-css.js",
-    "prepublishOnly": "vue-tsc --noEmit"
+  "./runtime": {
+   "import": "./src/runtime/index.ts",
+   "types": "./src/runtime/index.ts"
   },
-  "peerDependencies": {
-    "@types/three": "^0.185",
-    "pinia": "^3",
-    "three": "^0.185",
-    "vue": "^3"
+  "./styles": {
+   "import": "./src/styles/index.scss"
   },
-  "dependencies": {
-    "@bytecodealliance/preview2-shim": "^0.31",
-    "@celestia-island/tairitsu-transport": "^0.2",
-    "@xterm/addon-fit": "^0.11",
-    "@xterm/addon-image": "^0.10.0-beta.301",
-    "@xterm/xterm": "^6.1.0-beta.304",
-    "dompurify": "^3",
-    "lucide-vue-next": "^1",
-    "marked": "^18"
+  "./styles/*": "./src/styles/*",
+  "./theme/*": "./src/theme/*",
+  "./components/*": "./src/components/*",
+  "./plugins": {
+   "import": "./src/plugins/index.ts",
+   "types": "./src/plugins/index.ts"
   },
-  "devDependencies": {
-    "@types/node": "^*",
-    "@types/three": "^0.185",
-    "@vitejs/plugin-vue": "^*",
-    "@vitejs/plugin-vue-jsx": "^*",
-    "@vue/server-renderer": "^*",
-    "happy-dom": "^*",
-    "sass": "^*",
-    "three": "^0.185",
-    "typescript": "^*",
-    "vite": "^*",
-    "vitest": "^*",
-    "vue-tsc": "^*"
+  "./plugins/boot-chrome": {
+   "import": "./src/plugins/boot-chrome.js",
+   "types": "./src/plugins/boot-chrome.d.ts"
   },
-  "sideEffects": [
-    "**/*.scss",
-    "**/*.css"
-  ],
-  "peerDependenciesMeta": {
-    "pinia": {
-      "optional": true
-    }
+  "./plugins/boot-recovery": {
+   "import": "./src/plugins/boot-recovery.js",
+   "types": "./src/plugins/boot-recovery.d.ts"
+  },
+  "./shared": {
+   "import": "./src/shared.ts",
+   "types": "./src/shared.ts"
   }
+ },
+ "files": [
+  "src/",
+  "package.json"
+ ],
+ "scripts": {
+  "dev": "vite",
+  "build": "vue-tsc --noEmit",
+  "build:docs": "vite build",
+  "lint": "vue-tsc --noEmit",
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "gen:boot-landing-css": "node scripts/gen-boot-landing-css.js",
+  "prepublishOnly": "vue-tsc --noEmit"
+ },
+ "peerDependencies": {
+  "@types/three": "^0.185",
+  "pinia": "^3",
+  "three": "^0.185",
+  "vue": "^3"
+ },
+ "dependencies": {
+  "@bytecodealliance/preview2-shim": "^0.31",
+  "@celestia-island/tairitsu-transport": "^0.2",
+  "@xterm/addon-fit": "^0.11",
+  "@xterm/addon-image": "^0.10.0-beta.301",
+  "@xterm/xterm": "^6.1.0-beta.304",
+  "dompurify": "^3",
+  "lucide-vue-next": "^1",
+  "marked": "^18"
+ },
+ "devDependencies": {
+  "@types/node": "^*",
+  "@types/three": "^0.185",
+  "@vitejs/plugin-vue": "^*",
+  "@vitejs/plugin-vue-jsx": "^*",
+  "@vue/server-renderer": "^*",
+  "happy-dom": "^*",
+  "sass": "^*",
+  "three": "^0.185",
+  "typescript": "^*",
+  "vite": "^*",
+  "vitest": "^*",
+  "vue-tsc": "^*"
+ },
+ "sideEffects": [
+  "**/*.scss",
+  "**/*.css"
+ ],
+ "peerDependenciesMeta": {
+  "pinia": {
+   "optional": true
+  }
+ }
 }

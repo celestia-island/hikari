@@ -22,6 +22,13 @@ pub fn rule_to_css(rule: &str) -> Option<&'static str> {
         "variable" | "param" => Some("hljs-params"),
         "operator" => Some("hljs-symbol"),
         "punctuation" => Some("hljs-punctuation"),
+        // Structural language rules (diff, markdown, etc.)
+        "added" => Some("hljs-addition"),
+        "removed" => Some("hljs-deletion"),
+        "header" => Some("hljs-meta"),
+        "meta" => Some("hljs-meta"),
+        "heading" => Some("hljs-section"),
+        "attr_name" => Some("hljs-attr"),
         "regexp" => Some("hljs-regexp"),
         "escape" => Some("hljs-subst"),
         "tag" => Some("hljs-tag"),

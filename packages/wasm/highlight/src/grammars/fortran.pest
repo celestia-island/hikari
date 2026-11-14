@@ -1,0 +1,65 @@
+// fortran.pest — fortran syntax highlighting grammar.
+
+// python.pest — Python syntax highlighting grammar.
+// Auto-generated from highlight.js v11 by hljs_to_pest.py (one-time).
+// Rule names use the standard token classification (engine.rs maps them).
+
+whitespace = @{ (" " | "\t" | "\r")+ }
+newline = { "\r\n" | "\n" | "\r" }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+string = @{ triple_dq | triple_sq | dq | sq }
+triple_dq = @{ "\"\"\"" ~ (!"\"\"\"" ~ ANY)* ~ "\"\"\""? }
+triple_sq = @{ "'''" ~ (!"'''" ~ ANY)* ~ "'''"? }
+dq = @{ "\"" ~ (!"\"" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "\""? }
+sq = @{ "'" ~ (!"'" ~ !"\n" ~ ("\\" ~ ANY | ANY))* ~ "'"? }
+
+number = @{ hex | bin | oct | float | int }
+hex = @{ ("0x" | "0X") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ }
+bin = @{ ("0b" | "0B") ~ ('0'..'1')+ }
+oct = @{ ("0o" | "0O") ~ ('0'..'7')+ }
+float = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ (("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT+)? }
+int = @{ ASCII_DIGIT+ }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+
+operator = @{ "===" | "!==" | "**" | "//" | "<<" | ">>" | "<=" | ">=" | "==" | "!=" | "+=" | "-=" | "*=" | "/=" | "%=" | "->" | "=>" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=" | "!" | "&" | "|" | "^" | "~" | "?" | ":" }
+punctuation = @{ "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | "." | "@" | "$" }
+
+comment = @{ "!" ~ (!"\n" ~ ANY)* }
+
+kw = @{ (
+    "equivalence"    | "subroutine"    | "assignment"    | "deallocate"    | "parameter"    | "intrinsic"    | "dimension"    | "recursive"
+    | "elsewhere"    | "sequence"    | "operator"    | "allocate"    | "namelist"    | "contains"    | "continue"    | "implicit"
+    | "external"    | "optional"    | "function"    | "program"    | "endfile"    | "pointer"    | "private"    | "nullify"
+    | "inquire"    | "module"    | "common"    | "return"    | "format"    | "rewind"    | "elseif"    | "public"
+    | "result"    | "target"    | "select"    | "write"    | "enddo"    | "print"    | "close"    | "cycle"
+    | "endif"    | "entry"    | "while"    | "pause"    | "where"    | "open"    | "type"    | "kind"
+    | "call"    | "save"    | "only"    | "then"    | "else"    | "case"    | "goto"    | "read"
+    | "stop"    | "pure"    | "exit"    | "data"    | "use"    | "end"    | "do"    | "if"
+    ) ~ !ident_char
+}
+
+builtin = @{ (
+    "selected_real_kind"    | "selected_int_kind"    | "random_number"    | "set_exponent"    | "system_clock"    | "random_seed"    | "maxexponent"    | "minexponent"
+    | "dot_product"    | "rrspacing"    | "precision"    | "transpose"    | "allocated"    | "fraction"    | "transfer"    | "len_trim"
+    | "exponent"    | "ceiling"    | "adjustl"    | "epsilon"    | "nearest"    | "spacing"    | "adjustr"    | "logical"
+    | "present"    | "eoshift"    | "product"    | "reshape"    | "verify"    | "maxloc"    | "lbound"    | "modulo"
+    | "spread"    | "minval"    | "iachar"    | "repeat"    | "digits"    | "ishftc"    | "maxval"    | "matmul"
+    | "cshift"    | "mvbits"    | "minloc"    | "unpack"    | "ubound"    | "shape"    | "count"    | "ibclr"
+    | "range"    | "scale"    | "ibset"    | "floor"    | "ishft"    | "conjg"    | "radix"    | "ibits"
+    | "anint"    | "merge"    | "cmplx"    | "aimag"    | "index"    | "log10"    | "atan2"    | "dprod"
+    | "ichar"    | "sinh"    | "ieor"    | "pack"    | "aint"    | "sign"    | "size"    | "null"
+    | "tiny"    | "char"    | "scan"    | "acos"    | "iand"    | "nint"    | "cosh"    | "sqrt"
+    | "asin"    | "atan"    | "huge"    | "tanh"    | "dble"    | "trim"    | "abs"    | "lgt"
+    | "ior"    | "exp"    | "any"    | "len"    | "tan"    | "lle"    | "log"    | "mod"
+    | "sum"    | "cos"    | "not"    | "int"    | "min"    | "max"    | "all"    | "lge"
+    | "llt"    | "sin"    | "dim"
+    ) ~ !ident_char
+}
+
+token = { comment | string | number | kw | builtin | identifier | operator | punctuation | whitespace | newline | other }
+
+other = @{ ANY }
+
+tokens = { token+ }

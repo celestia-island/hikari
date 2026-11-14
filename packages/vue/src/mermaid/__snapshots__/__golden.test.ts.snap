@@ -84,8 +84,8 @@ exports[`mermaid golden snapshots (wasm is the reference) > mermaid: gantt-basic
       "tasks": [
         {
           "deps": [],
-          "duration": null,
-          "id": null,
+          "duration": "5d",
+          "id": "a1",
           "name": "Task1",
         },
       ],

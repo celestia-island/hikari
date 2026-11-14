@@ -65,12 +65,24 @@ fn parse_task(line: &str) -> Option<GanttTask> {
         } else if let Some(d) = part.strip_prefix("dur=") {
             task.duration = Some(d.to_string());
         } else if part.starts_with("after ") {
-            for dep in part.strip_prefix("after ").unwrap_or("").split(' ') {
+            for dep in part.strip_prefix("after ").unwrap_or("").split_whitespace() {
                 let dep = dep.trim();
-                if !dep.is_empty() {
+                if !dep.is_empty() && !task.deps.iter().any(|d| d == dep) {
                     task.deps.push(dep.to_string());
                 }
             }
+        } else if task.id.is_none()
+            && !part.contains(' ')
+            && part.chars().next().map_or(false, |c| c.is_alphanumeric() || c == '_')
+        {
+            // Bare positional ID: `task : t1, 2d` → id=t1 (no `id=` prefix).
+            task.id = Some(part.to_string());
+        } else if task.duration.is_none()
+            && part.chars().next().map_or(false, |c| c.is_ascii_digit())
+            && part.ends_with(|c: char| c.is_ascii_alphabetic())
+        {
+            // Bare positional duration: `2d`, `1w`, `3h` etc.
+            task.duration = Some(part.to_string());
         }
     }
     Some(task)

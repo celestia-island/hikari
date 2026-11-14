@@ -27,6 +27,8 @@ export const wasmMermaidEngine: MermaidParserEngine = {
       ? source
           .replace(/^\s*stateDiagram(-v\d+)?/, "graph TD")
           .replace(/\[\*\]/g, "STATE_START_END")
+          // State transition labels: `A --> B : label` → `A -->|label| B`
+          .replace(/^(\s*)(\S+)\s+(-->|--)\s+(\S+)\s*:\s*(.+)$/gm, "$1$2 $3|$5| $4")
       : source;
     if (wasmHandles(normalized)) {
       const result = parse(normalized);

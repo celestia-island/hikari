@@ -196,6 +196,20 @@ export function snoozeEmergencyAlert(id: string): void {
   runtimeReport?.pulse();
 }
 
+/** Undo a snooze: the alert becomes visible again (the band returns)
+ *  and the storage record is wiped, so the episode is live once more.
+ *  Unknown or already-visible ids are no-ops. This is the user-facing
+ *  "restore from the persistent chip" path — clearing the CONDITION is
+ *  still `clearEmergencyAlert`'s job. */
+export function unsnoozeEmergencyAlert(id: string): void {
+  const item = state.alerts.find((a) => a.id === id);
+  if (!item || !item.snoozed) return;
+  item.snoozed = false;
+  const snooze = readSnoozeSet();
+  if (snooze.delete(id)) writeSnoozeSet(snooze);
+  runtimeReport?.pulse();
+}
+
 /** Drop every alert and the whole snooze record. Test/teardown helper
  *  (the emergency twin of `clearBlockingToasts`). */
 export function resetEmergencyAlerts(): void {

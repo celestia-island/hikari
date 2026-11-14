@@ -1,0 +1,37 @@
+// HEmergencySnoozeTray — in-flow chrome-bar composition over
+// HkPersistentToast(Group); the only bespoke ink here is the detail
+// card's content block (the chips themselves are upstream members).
+// Severity coloring rides the chips' own tone classes.
+
+.hk-emergency-snooze-tray {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.hk-emergency-snooze-card {
+  display: grid;
+  gap: var(--space-8, 0.5rem);
+  justify-items: start;
+  max-width: 320px;
+  padding: var(--space-12, 0.75rem);
+
+  &__icon {
+    color: var(--hi-color-warning, rgb(var(--color-warning, 222 168 62)));
+  }
+
+  &.is-danger &__icon {
+    color: var(--hi-color-error, rgb(var(--color-error, 226 84 84)));
+  }
+
+  &__title {
+    margin: 0;
+    font-weight: 600;
+    color: rgb(var(--color-text, 30 32 36));
+  }
+
+  &__desc {
+    margin: 0;
+    color: rgb(var(--color-muted, 118 122 128));
+  }
+}

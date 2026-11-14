@@ -349,5 +349,6 @@
   "hikari::emergencyAlert.dismiss": "Скрыть пока",
   "hikari::emergencyAlert.kicker.danger": "КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ",
   "hikari::emergencyAlert.kicker.warning": "ВНИМАНИЕ",
-  "hikari::emergencyAlert.more": "ещё предупреждения ожидают"
+  "hikari::emergencyAlert.more": "ещё предупреждения ожидают",
+  "hikari::emergencyAlert.restore": "Показать снова"
 }

@@ -349,5 +349,6 @@
   "hikari::emergencyAlert.dismiss": "一時的に隠す",
   "hikari::emergencyAlert.kicker.danger": "緊急警告",
   "hikari::emergencyAlert.kicker.warning": "警告",
-  "hikari::emergencyAlert.more": "他の警告が保留中"
+  "hikari::emergencyAlert.more": "他の警告が保留中",
+  "hikari::emergencyAlert.restore": "再度表示"
 }

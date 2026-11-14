@@ -73,6 +73,13 @@ export default defineComponent({
     dismissible: { type: Boolean, default: false },
     openDelay: { type: Number, default: 150 },
     closeGrace: { type: Number, default: 250 },
+    /** Icon-only mode (narrow chrome bars, e.g. mobile headers): the
+     *  label span is dropped and the chip collapses to the tone icon —
+     *  still a button with the full detail-slot interactivity, announced
+     *  via aria-label from the label text. The HOST decides when to
+     *  collapse (breakpoint/viewport is chrome-bar context, not the
+     *  chip's own concern). */
+    iconOnly: { type: Boolean, default: false },
   },
   emits: {
     dismiss: () => true,
@@ -232,7 +239,12 @@ export default defineComponent({
         <span ref={wrapRef} class="hk-persistent-toast-wrap" role="status" aria-live="polite">
           <Tag
             type={interactive.value ? "button" : undefined}
-            class={["hk-persistent-toast", `hk-persistent-toast--${props.tone}`]}
+            class={[
+              "hk-persistent-toast",
+              `hk-persistent-toast--${props.tone}`,
+              props.iconOnly && "hk-persistent-toast--icon-only",
+            ]}
+            aria-label={props.iconOnly ? props.label : undefined}
             aria-expanded={interactive.value ? open.value : undefined}
             aria-haspopup={interactive.value ? "true" : undefined}
             aria-controls={open.value ? popupId : undefined}
@@ -258,7 +270,7 @@ export default defineComponent({
             ) : (
               <Info size={12} class="hk-persistent-toast__icon" aria-hidden="true" />
             )}
-            <span class="hk-persistent-toast__label">{props.label}</span>
+            {!props.iconOnly && <span class="hk-persistent-toast__label">{props.label}</span>}
           </Tag>
           {props.dismissible && (
             <HIconButton

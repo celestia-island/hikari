@@ -349,5 +349,6 @@
   "hikari::emergencyAlert.dismiss": "إخفاء مؤقتًا",
   "hikari::emergencyAlert.kicker.danger": "تنبيه حرج",
   "hikari::emergencyAlert.kicker.warning": "تحذير",
-  "hikari::emergencyAlert.more": "مزيد من التنبيهات قيد الانتظار"
+  "hikari::emergencyAlert.more": "مزيد من التنبيهات قيد الانتظار",
+  "hikari::emergencyAlert.restore": "إظهار مرة أخرى"
 }

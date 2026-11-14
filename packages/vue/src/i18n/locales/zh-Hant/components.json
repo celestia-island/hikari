@@ -353,5 +353,6 @@
   "hikari::emergencyAlert.dismiss": "暫時隱藏",
   "hikari::emergencyAlert.kicker.danger": "緊急警告",
   "hikari::emergencyAlert.kicker.warning": "警告",
-  "hikari::emergencyAlert.more": "另有警告待處理"
+  "hikari::emergencyAlert.more": "另有警告待處理",
+  "hikari::emergencyAlert.restore": "重新顯示"
 }

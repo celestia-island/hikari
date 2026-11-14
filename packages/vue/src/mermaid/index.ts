@@ -18,6 +18,7 @@ import type { MermaidParserEngine } from "./engine";
 import { MermaidParseError, parseMermaid } from "./parse";
 
 export { MermaidParseError, parseMermaid };
+export { wasmMermaidEngine } from "./wasmEngine";
 export type {
   MermaidDoc,
   MermaidGraphDoc,

@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "packages/wasm/qr",
+    "packages/wasm/mermaid",
     "packages/palette",
     "packages/theme",
     "packages/animation",

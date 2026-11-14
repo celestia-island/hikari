@@ -5,7 +5,7 @@ import HkMermaidDiagram from "./HkMermaidDiagram";
 import { applyInlineChipsToBody } from "./inlineChips";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { getMermaidEngine } from "../mermaid/engine";
-import { openHyperlink } from "../runtime/hyperlink";
+import { isDangerousHref, openHyperlink } from "../runtime/hyperlink";
 import { asIndexable } from "../utils/typing";
 import "./HkMarkdownRenderer.scss";
 
@@ -113,6 +113,24 @@ async function renderMarkdown(content: string): Promise<string> {
     return `<div class="hk-md-code-wrap"><div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div></div>`;
   };
 
+  // SECURITY (perfsec follow-up, 2026-11-15): the anchor's HREF attribute
+  // must never carry a script scheme — DOMPurify is the primary guard in
+  // real browsers, but the delegated click only covers plain activation;
+  // middle-click / "open in new tab" reads the attribute directly, and the
+  // sanitizer is unreliable under some environments (happy-dom strips odd
+  // things — see the mermaid tests). A dangerous href renders as an inert
+  // span with NO href at all: nothing to intercept, nothing to open, no
+  // dependency on the sanitize pass. Legit custom protocols (vscode:, …)
+  // keep their attribute — the coordinator decides on click, same as
+  // #1321.
+  renderer.link = function (this: Renderer, token: Tokens.Link): string {
+    if (isDangerousHref(token.href)) {
+      const text = this.parser.parseInline(token.tokens);
+      return `<span class="hk-md-link-neutralized" title="link removed: unsafe scheme">${text}</span>`;
+    }
+    return marked.Renderer.prototype.link.call(this, token);
+  };
+
   renderer.table = function (this: Renderer, token: Tokens.Table): string {
     // Tables size to their content: a wide one (many columns, or a single
     // unbreakable cell) pushes every ancestor's min-content width past its
@@ -130,7 +148,42 @@ async function renderMarkdown(content: string): Promise<string> {
 
   const raw = marked.parse(content, { renderer, async: false });
   const html = typeof raw === "string" ? raw : "";
-  return DOMPurify.sanitize(html);
+  return sweepDangerousUrlAttributes(DOMPurify.sanitize(html));
+}
+
+/**
+ * SECURITY (perfsec follow-up, 2026-11-15, review S1): the renderer.link
+ * override only sees marked's LINK tokens — raw HTML written straight into
+ * the markdown (`<a href="javascript:…">`) rides renderer.html into the
+ * sanitize pass, which is exactly the environment-unreliable half this
+ * guard exists for. This post-sanitize DOM sweep is the braces: every
+ * anchor href and image src in the FINAL html is checked, whatever path
+ * produced it (link token, autolink, raw HTML, image token). Dangerous
+ * values drop the attribute entirely — the element stays (text/link
+ * label visible), the navigation face does not.
+ */
+function sweepDangerousUrlAttributes(html: string): string {
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") return html;
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    let swept = false;
+    for (const a of [...doc.querySelectorAll("a[href], area[href]")]) {
+      if (isDangerousHref(a.getAttribute("href") ?? "")) {
+        a.removeAttribute("href");
+        swept = true;
+      }
+    }
+    for (const img of [...doc.querySelectorAll("img[src]")]) {
+      if (isDangerousHref(img.getAttribute("src") ?? "")) {
+        img.removeAttribute("src");
+        swept = true;
+      }
+    }
+    if (!swept) return html;
+    return doc.body.innerHTML;
+  } catch {
+    return html;
+  }
 }
 
 export default defineComponent({

@@ -136,6 +136,19 @@ describe("HkAboutModal branding", () => {
     expect(chips[0]!.getAttribute("href")).toBe("https://github.com/celestia-island");
   });
 
+  it("neutralizes a script scheme in the anchor itself (audit PS-18)", async () => {
+    mountAbout({
+      credits: [{ text: "来自 " }, { name: "恶意", href: "javascript:alert(1)" }],
+    });
+    await flushModal();
+    const anchor = document.body.querySelector<HTMLAnchorElement>(".s-about-modal-credit-link");
+    expect(anchor).not.toBeNull();
+    // The coordinator refuses script schemes on activation, but the ATTRIBUTE
+    // still has to be inert: a middle-click or "open link in new tab" bypasses
+    // the click handler entirely.
+    expect(anchor!.getAttribute("href")).toBe("#");
+  });
+
   it("renders a credit name as a plain text link when the entry asks for it", async () => {
     mountAbout({
       credits: [

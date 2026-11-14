@@ -86,6 +86,41 @@ export function classifyHyperlink(href: string): HyperlinkKind {
   return "other";
 }
 
+/**
+ * Schemes that execute script (or re-enter the local filesystem) the moment
+ * a browser navigates to them. SECURITY (2026-11-15, audit PS-18): the
+ * `other` bucket exists so custom protocols (`vscode:`, `zoommtg:`, …) reach
+ * the OS handler — `safeHref`'s allowlist would kill every one of them, so
+ * this is deliberately a BLOCKLIST applied on top.
+ *
+ * Obfuscation: engines drop ASCII tab/LF/CR anywhere inside the scheme, so
+ * `java\tscript:` still runs. Matching therefore retries on a
+ * control-character-squeezed copy rather than trusting the raw prefix.
+ */
+// `blob:` and `filesystem:` join the list because the web face of this
+// module ASSIGNS `location.href` (navigating the app away) and a blob minted
+// by the page is same-origin HTML — one click away from running script here.
+// A legitimate download should carry `download`, not ride a hyperlink.
+const DANGEROUS_SCHEME = /^(?:javascript|vbscript|data|file|blob|filesystem)$/;
+
+function schemeOf(candidate: string): string | null {
+  const match = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(candidate.trim());
+  return match?.[1]?.toLowerCase() ?? null;
+}
+
+/** True when `href` would execute script (or reach local files) if a browser
+ *  navigated to it. Never true for http(s)/mailto/tel/relative/fragment, and
+ *  never true for a custom scheme such as `vscode:` — those stay in `other`
+ *  and keep flowing to the OS handler. */
+export function isDangerousHref(href: string): boolean {
+  if (typeof href !== "string") return false;
+  const direct = schemeOf(href);
+  if (direct !== null) return DANGEROUS_SCHEME.test(direct);
+  // No clean scheme at the front: re-test after removing what engines skip.
+  const squeezed = schemeOf(href.replace(/[\u0000-\u0020]/g, ""));
+  return squeezed !== null && DANGEROUS_SCHEME.test(squeezed);
+}
+
 /** True when an absolute http(s) URL points at the CURRENT app origin.
  *  Only used by the default native opener — a system browser must never
  *  be pointed at the shell's own origin (a local server URL the user
@@ -114,6 +149,10 @@ interface TauriOpenerScope {
  *  Returns false when every bridge refused (the caller may surface that;
  *  the click still never navigates the webview). */
 export async function openExternalHyperlink(url: string): Promise<boolean> {
+  // SECURITY (PS-18 follow-up): this one is publicly exported, so a host may
+  // call it directly — a guard living only in its callers would leave the last
+  // `window.open` sink reachable. Cheap, so it guards itself.
+  if (isDangerousHref(url)) return false;
   if (typeof window === "undefined") return false;
   const scope = window as unknown as TauriOpenerScope;
 
@@ -179,6 +218,11 @@ export async function openExternalHyperlink(url: string): Promise<boolean> {
  *  new tab resolved against the document base on the web. */
 async function defaultOpenHyperlink(url: string, info: HyperlinkInfo): Promise<boolean> {
   if (typeof window === "undefined") return false;
+  // SECURITY (PS-18): belt to openHyperlink's braces — this is the function
+  // that actually assigns `window.location.href` / calls `window.open`, so it
+  // must never be reachable with a script scheme even if a caller bypasses
+  // the entry (or a host wires this half in directly).
+  if (isDangerousHref(url)) return false;
 
   // The native shell must never hand its own origin to the system browser.
   if (isNative() && info.kind === "external" && isSameOriginUrl(url)) {
@@ -271,6 +315,11 @@ export async function openHyperlink(
 
   let url = await coordinator.resolve(info);
   if (typeof url !== "string" || url === "") return null;
+  // SECURITY (PS-18): the resolver may hand back anything — including a
+  // `javascript:` URL minted from the href it was given. Refuse here, at the
+  // ONE entry every component drives, so a future sink cannot forget the
+  // check. A host-supplied `open` never sees a dangerous URL at all.
+  if (isDangerousHref(url)) return null;
   if (url === info.href && info.kind === "internal") {
     // The resolver left a relative link untouched — give it its absolute
     // form so the opener decides on a real origin (native refuses it,

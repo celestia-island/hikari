@@ -171,37 +171,46 @@ describe("strip surface enter/leave (window choreography)", () => {
     // the preceding `;`, so the second segment starts without a boundary and
     // only the LAST one is found — measured, 2026-11-15).
     const decls = (body: string, prop: string): string[] => {
-      const re = new RegExp(`^\\s*${prop}\\s*:\\s*([\\s\\S]*)$`, "i");
+      // Vendor prefixes are the same painting: `-webkit-transform` would
+      // otherwise slip past an exact-name anchor (closure round, 2026-11-15).
+      const re = new RegExp(`^\\s*(?:-webkit-|-moz-|-ms-)?${prop}\\s*:\\s*([\\s\\S]*)$`, "i");
       return body
         .split(";")
         .map((segment) => segment.match(re))
         .filter((m): m is RegExpMatchArray => m !== null)
-        .map((m) => m[1].trim().replace(/\\s+/g, " "));
+        .map((m) => m[1].trim().replace(/\s+/g, " "));
     };
 
     const offenders: string[] = [];
-    let baseCarriesCentring = false;
+    /** The FIRST base-matching frame in source order — the top-level rule
+     *  (sass emits media blocks after it). Only its declarations decide
+     *  whether the strip is centred everywhere: parking the pair solely in
+     *  an @media override would leave every wider viewport un-centred. */
+    let topLevelBaseTranslate: string[] | null = null;
     for (const frame of frames(breadcrumb)) {
       const body = stripComments(frame.body);
       const label = frame.selectors.join(", ");
       const isBase = frame.selectors.includes(".hk-modal-breadcrumb");
+      const translates = decls(body, "translate");
+      if (isBase && topLevelBaseTranslate === null) topLevelBaseTranslate = translates;
       for (const transform of decls(body, "transform")) {
         if (transform !== "none" && transform.includes("%")) {
           offenders.push(`${label} { transform: ${transform} }`);
         }
       }
-      for (const translate of decls(body, "translate")) {
+      for (const translate of translates) {
         if (!isBase) {
           offenders.push(`${label} { translate: ${translate} } (only the base rule may set the centring longhand)`);
         } else if (translate !== CENTERING) {
           offenders.push(`${label} { translate: ${translate} }`);
-        } else {
-          baseCarriesCentring = true;
         }
       }
     }
     expect(offenders, "the centring carrier must stay the base rule's translate longhand").toEqual([]);
-    expect(baseCarriesCentring, "the base rule must declare the centring pair").toBe(true);
+    expect(topLevelBaseTranslate, "the top-level base rule must exist").not.toBeNull();
+    expect(topLevelBaseTranslate, "the top-level base rule must declare exactly the centring pair").toEqual([
+      CENTERING,
+    ]);
 
     // Known-positive probe: the sweep is worthless if it matches no rule at
     // all (hikari #1325's first sweep shipped vacuous exactly that way), so

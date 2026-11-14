@@ -8,7 +8,8 @@ import {
   snoozeEmergencyAlert,
   unsnoozeEmergencyAlert,
   useEmergencyAlert,
-} from "./useEmergencyAlert";import { clearBlockingToasts, showBlockingToast } from "./useBlockingToast";
+} from "./useEmergencyAlert";
+import { clearBlockingToasts, showBlockingToast } from "./useBlockingToast";
 
 /**
  * Emergency/blocking → journal integration (user ruling 2026-11-15):

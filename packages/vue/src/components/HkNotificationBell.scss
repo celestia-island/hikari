@@ -1,7 +1,7 @@
 /**
  * HkNotificationBell chrome: the bell wrapper and the notification-
  * center panel body. Tone colors reuse the badge/status channels the
- * toast family already speaks (HkBadge's --hk-badge-* family) so a
+ * toast family already speaks (HkToast's --hi-color-* family) so a
  * journal row reads as the same grammar as the surface it records;
  * layout is deliberately plain flex/flow — the popup chrome (glass,
  * scroll, sheet band) is HkPopover's job, not ours.
@@ -101,17 +101,18 @@
   color: rgb(var(--color-text) / 65%);
 }
 
-/* Tone ink on the glyph (status channels with toast-family fallbacks). */
+/* Tone ink on the glyph (the toast family's own --hi-color-<tone>
+   channels, theme-following, with the same fallbacks). */
 .hk-notification-row.is-error .hk-notification-row__icon {
-  color: var(--hk-badge-error-bg, #e5484d);
+  color: var(--hi-color-danger, #e5484d);
 }
 
 .hk-notification-row.is-warning .hk-notification-row__icon {
-  color: var(--hk-badge-warning-bg, #f5a623);
+  color: var(--hi-color-warning, #f5a623);
 }
 
 .hk-notification-row.is-success .hk-notification-row__icon {
-  color: var(--hk-badge-success-bg, #46a758);
+  color: var(--hi-color-success, #46a758);
 }
 
 .hk-notification-row.is-info .hk-notification-row__icon,

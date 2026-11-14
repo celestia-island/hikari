@@ -85,6 +85,15 @@ describe("HEmergencySnoozeTray", () => {
     expect(alerts).toHaveLength(1); // snoozed, not cleared
   });
 
+  it("danger alerts map to the error tone chip (R3 M3b)", async () => {
+    mountHost();
+    raiseEmergencyAlert({ id: "d", severity: "danger", title: "t", dismissible: true });
+    snoozeEmergencyAlert("d");
+    await settle();
+    expect(chips()[0].classList.contains("hk-persistent-toast--error")).toBe(true);
+    resetEmergencyAlerts();
+  });
+
   it("iconOnly collapses chips to the icon (label span dropped, aria-label kept)", async () => {
     mountHost({ iconOnly: true });
     raiseEmergencyAlert({ id: "q", severity: "warning", title: "可用额度已用完", dismissible: true });

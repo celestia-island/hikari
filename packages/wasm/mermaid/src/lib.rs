@@ -66,4 +66,23 @@ mod tests {
         assert!(json.contains("\"kind\":\"sequence\""));
         assert!(json.contains("Alice"));
     }
+
+    #[test]
+    fn arrow_order_matters() {
+        let json = super::native::parse(
+            "sequenceDiagram\n  A-->>B: dotted reply",
+        ).unwrap();
+        assert!(json.contains("\"from\":\"A\""));
+        assert!(json.contains("\"to\":\"B\""));
+        assert!(json.contains("\"arrowKind\":\"dotted-open\""));
+    }
+
+    #[test]
+    fn pie_strips_quotes_and_validates() {
+        let json = super::native::parse(
+            "pie\n  \"Alpha\" : 40\n  Beta: -5",
+        ).unwrap();
+        assert!(json.contains("\"label\":\"Alpha\""));
+        assert!(!json.contains("Beta"));
+    }
 }

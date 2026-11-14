@@ -246,6 +246,10 @@ describe("isDangerousHref", () => {
     expect(isDangerousHref("vbscript:msgbox(1)")).toBe(true);
     expect(isDangerousHref("data:text/html,<script>alert(1)</script>")).toBe(true);
     expect(isDangerousHref("file:///etc/passwd")).toBe(true);
+    // A page-minted blob is same-origin HTML: assigning location.href to it
+    // runs script here. `filesystem:` is the old Chrome spelling of the same.
+    expect(isDangerousHref("blob:https://app.example/uuid-1")).toBe(true);
+    expect(isDangerousHref("filesystem:https://app.example/temporary/x")).toBe(true);
   });
 
   it("sees through the control characters engines skip", () => {
@@ -317,9 +321,25 @@ describe("openHyperlink refuses script schemes (PS-18)", () => {
     }
   });
 
+  it("guards its own last-resort sink (openExternalHyperlink)", async () => {
+    // Publicly exported => a host may call it directly. A guard that lives
+    // only in the callers would leave this window.open reachable.
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    try {
+      expect(await openExternalHyperlink("javascript:alert(1)")).toBe(false);
+      expect(open).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
   it("never hands a dangerous URL to a host-provided open", async () => {
-    // Pins the guard at the ENTRY, not just the default opener: with both
-    // halves in place, removing either one alone must break something.
+    // Pins the guard at the ENTRY, not just the default opener. The inner
+    // default-opener guard is a redundant belt (mutation-tested: removing it
+    // alone stays green because the entry guard pre-empts it) — it exists for
+    // hosts that drive `useHyperlinkCoordinator().open()` directly.
     const seen: string[] = [];
     provideHyperlinkCoordinator({
       open: (url) => {

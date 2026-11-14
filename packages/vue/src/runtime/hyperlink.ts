@@ -97,7 +97,11 @@ export function classifyHyperlink(href: string): HyperlinkKind {
  * `java\tscript:` still runs. Matching therefore retries on a
  * control-character-squeezed copy rather than trusting the raw prefix.
  */
-const DANGEROUS_SCHEME = /^(?:javascript|vbscript|data|file)$/;
+// `blob:` and `filesystem:` join the list because the web face of this
+// module ASSIGNS `location.href` (navigating the app away) and a blob minted
+// by the page is same-origin HTML — one click away from running script here.
+// A legitimate download should carry `download`, not ride a hyperlink.
+const DANGEROUS_SCHEME = /^(?:javascript|vbscript|data|file|blob|filesystem)$/;
 
 function schemeOf(candidate: string): string | null {
   const match = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(candidate.trim());
@@ -145,6 +149,10 @@ interface TauriOpenerScope {
  *  Returns false when every bridge refused (the caller may surface that;
  *  the click still never navigates the webview). */
 export async function openExternalHyperlink(url: string): Promise<boolean> {
+  // SECURITY (PS-18 follow-up): this one is publicly exported, so a host may
+  // call it directly — a guard living only in its callers would leave the last
+  // `window.open` sink reachable. Cheap, so it guards itself.
+  if (isDangerousHref(url)) return false;
   if (typeof window === "undefined") return false;
   const scope = window as unknown as TauriOpenerScope;
 

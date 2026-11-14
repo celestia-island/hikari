@@ -8,11 +8,11 @@ import { fakeAs } from "../test-utils/fakes";
 import { buildFleetScene } from "./holographicFleetScene";
 import {
   bodyReach,
-  buildFleetSceneSpec,
   fleetEnclosure,
   MOON_RADIUS,
   satelliteOrbit,
 } from "./holographicFleetSpec";
+import { buildFleetSceneSpecWasm as buildFleetSceneSpec } from "./wasmFleetSpec";
 
 /**
  * fleetScene owns everything it puts into the board: meshes, lights,

@@ -13,11 +13,12 @@
  * hljs convention gives syntax highlighting).
  */
 
+import { wasmMermaidEngine } from "./wasmEngine";
 import type { MermaidDoc } from "./types";
 import type { MermaidParserEngine } from "./engine";
-import { MermaidParseError, parseMermaid } from "./parse";
 
-export { MermaidParseError, parseMermaid };
+
+
 export { wasmMermaidEngine } from "./wasmEngine";
 export type {
   MermaidDoc,
@@ -49,7 +50,7 @@ export type { MermaidParserEngine } from "./engine";
 export const mermaidParser: MermaidParserEngine = {
   parse(source: string): MermaidDoc | null {
     try {
-      return parseMermaid(source);
+      return wasmMermaidEngine.parse(source);
     } catch {
       return null;
     }

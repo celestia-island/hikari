@@ -10,7 +10,7 @@
 
 import type { MermaidDoc } from "./types";
 import type { MermaidParserEngine } from "./engine";
-import { parseMermaid } from "./parse";
+
 import { parse } from "../wasm/mermaid/hikari_wasm_mermaid.js";
 
 /** Check whether the wasm component handles this diagram type. */
@@ -21,8 +21,15 @@ function wasmHandles(source: string): boolean {
 
 export const wasmMermaidEngine: MermaidParserEngine = {
   parse(source: string): MermaidDoc | null {
-    if (wasmHandles(source)) {
-      const result = parse(source);
+    // State diagrams parse into the same graph shape; the pest grammar
+    // only speaks "graph"/"flowchart", so rewrite the keyword.
+    const normalized = /^\s*stateDiagram/i.test(source)
+      ? source
+          .replace(/^\s*stateDiagram(-v\d+)?/, "graph TD")
+          .replace(/\[\*\]/g, "STATE_START_END")
+      : source;
+    if (wasmHandles(normalized)) {
+      const result = parse(normalized);
       if (result.json) {
         try {
           return JSON.parse(result.json) as MermaidDoc;
@@ -32,12 +39,8 @@ export const wasmMermaidEngine: MermaidParserEngine = {
       }
       return null;
     }
-    // Fall back to the TS parser for diagram types the wasm component
-    // does not cover yet (sequence/class/gantt/pie/quadrant).
-    try {
-      return parseMermaid(source);
-    } catch {
-      return null;
-    }
+    // Wasm didn't recognize the diagram — return null (callers render
+    // the source as a plain code block).
+    return null;
   },
 };

@@ -350,5 +350,11 @@
   "hikari::emergencyAlert.kicker.danger": "تنبيه حرج",
   "hikari::emergencyAlert.kicker.warning": "تحذير",
   "hikari::emergencyAlert.more": "مزيد من التنبيهات قيد الانتظار",
-  "hikari::emergencyAlert.restore": "إظهار مرة أخرى"
+  "hikari::emergencyAlert.restore": "إظهار مرة أخرى",
+  "hikari::notificationCenter.title": "الإشعارات",
+  "hikari::notificationCenter.unread": "إشعارات غير مقروءة",
+  "hikari::notificationCenter.empty": "لا إشعارات بعد",
+  "hikari::notificationCenter.stateHidden": "مخفي",
+  "hikari::notificationCenter.stateResolved": "تم الحل",
+  "hikari::notificationCenter.clearAll": "مسح الكل"
 }

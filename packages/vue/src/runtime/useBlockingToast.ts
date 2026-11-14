@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "./cronBus";
+import { recordNotification, type HkNotificationTone } from "./notificationCenter";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
 export type BlockingToastVariant = "info" | "warning" | "danger";
@@ -67,6 +68,18 @@ const resolvers = new Map<number, (value: boolean) => void>();
 const timers = new Map<number, CronHandle>();
 let nextId = 0;
 
+/** Blocking variants ride the journal's tone vocabulary (danger reads
+ *  as the error tone in the notification center list). */
+const BLOCKING_TONE: Record<BlockingToastVariant, HkNotificationTone> = {
+  info: "info",
+  warning: "warning",
+  danger: "error",
+};
+
+/** Per-page-load epoch (same rationale as useToast's — the journal
+ *  persists across reloads while this counter restarts at zero). */
+const PAGE_EPOCH = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
 function settle(id: number, value: boolean) {
   const resolve = resolvers.get(id);
   if (!resolve) return;
@@ -77,7 +90,25 @@ function settle(id: number, value: boolean) {
     timers.delete(id);
   }
   const idx = state.queue.findIndex((item) => item.id === id);
-  if (idx !== -1) state.queue.splice(idx, 1);
+  if (idx !== -1) {
+    const item = state.queue[idx];
+    state.queue.splice(idx, 1);
+    // Journal the ANSWERED gate (user ruling 2026-11-15: every gating
+    // prompt is worth a second look — blocking toasts journal by
+    // default, no opt-in). The record is what was asked, not what was
+    // answered — the boolean went to the caller's promise. Born READ:
+    // the user answered this prompt themselves moments ago; the entry
+    // exists to be FOUND again, not to light the dot retroactively.
+    recordNotification({
+      id: `blocking:${PAGE_EPOCH}:${item.id}`,
+      kind: "blocking",
+      tone: BLOCKING_TONE[item.variant],
+      title: item.title ?? item.message,
+      ...(item.title !== undefined ? { detail: item.message } : {}),
+      state: "dismissed",
+      read: true,
+    });
+  }
   runtimeReport?.pulse();
   resolve(value);
 }

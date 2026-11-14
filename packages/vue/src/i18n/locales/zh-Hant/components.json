@@ -354,5 +354,11 @@
   "hikari::emergencyAlert.kicker.danger": "緊急警告",
   "hikari::emergencyAlert.kicker.warning": "警告",
   "hikari::emergencyAlert.more": "另有警告待處理",
-  "hikari::emergencyAlert.restore": "重新顯示"
+  "hikari::emergencyAlert.restore": "重新顯示",
+  "hikari::notificationCenter.title": "通知中心",
+  "hikari::notificationCenter.unread": "有未讀通知",
+  "hikari::notificationCenter.empty": "暫無通知",
+  "hikari::notificationCenter.stateHidden": "已隱藏",
+  "hikari::notificationCenter.stateResolved": "已恢復",
+  "hikari::notificationCenter.clearAll": "全部清空"
 }

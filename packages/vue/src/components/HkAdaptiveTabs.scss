@@ -1,0 +1,52 @@
+/**
+ * HkAdaptiveTabs chrome: the mobile trigger row and the option rows
+ * inside the HkSelectPanel surface. The rows reuse the shared
+ * `hk-select-option` / `hk-menu-*` grammar (HkSelect's own option
+ * voice), so this sheet only adds the trigger's caret geometry and a
+ * selected-row emphasis — never a second option-row family.
+ */
+
+.hk-adaptive-tabs {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hk-adaptive-tabs-trigger-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.hk-adaptive-tabs-trigger-label {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-adaptive-tabs-caret {
+  margin-left: var(--space-4, 0.25rem);
+  color: rgb(var(--color-text) / 55%);
+}
+
+.hk-adaptive-tabs-options {
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+}
+
+.hk-adaptive-tabs-option {
+  text-align: left;
+
+  /* The one emphasis this component owns: the checked row reads apart
+     from its siblings (accent ink, same channel the pill strip uses
+     for its active trigger). */
+  &[data-checked] {
+    color: rgb(var(--color-primary, var(--color-text)));
+    font-weight: 600;
+  }
+
+  &[data-disabled] {
+    opacity: 0.45;
+  }
+}

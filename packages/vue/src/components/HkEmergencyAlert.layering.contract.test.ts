@@ -25,12 +25,14 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 function sheet(): string {
   const raw = readFileSync(join(here, "HkEmergencyAlert.scss"), "utf-8");
-  // Full-line `//` comments are stripped before ANY assertion (the
-  // registerAnimations parity convention): a commented-out declaration
-  // is not a declaration — R5 B1 deleted the root pointer-events line
-  // and left `// pointer-events: none;` behind, and every contains()
-  // here happily read the comment as the declaration.
-  return raw.replace(/^[ \t]*\/\/.*$/gm, "");
+  // Comments are stripped before ANY assertion (the registerAnimations
+  // parity convention): a commented-out declaration is not a
+  // declaration. Block comments first (a leftover `/* scrim */` fed
+  // the dark-ink pin while the real declaration was gone or recolored
+  // — R4), then full-line `//` (the 0.55.370-wave B1 form).
+  return raw
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^[ \t]*\/\/.*$/gm, "");
 }
 
 /** The `.hk-emergency { … }` root rule, brace-balanced (it nests the
@@ -93,8 +95,16 @@ describe("emergency alert layering contract", () => {
     // vector outright (R3 M1 replayed the bug with every test green).
     const css = sheet();
     const root = rootBlock(css);
-    expect(root).toMatch(/--hk-emergency-scrim: rgb\(9 11 16 \/ 55%\);/);
     expect(root).not.toContain("var(--color-background");
+    // Dark-ink DIRECTION, not a literal: every RGB channel must be
+    // dark (<60) and the veil substantial (alpha >= 40%). A future
+    // retune (55%→52%, 9 11 16→12 14 20) passes; a light recolor
+    // (200 210 220) fails on semantics, not on mismatched text.
+    const scrim = root.match(/--hk-emergency-scrim:\s*rgb\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\/\s*(\d+)%\s*\);/);
+    expect(scrim, "the root must declare an rgb(…) scrim").not.toBeNull();
+    const [, r, g, b, a] = scrim!.map(Number) as unknown as number[];
+    expect(Math.max(r, g, b)).toBeLessThan(60);
+    expect(a).toBeGreaterThanOrEqual(40);
     // And the wash derives from the LINE (the theme's authoritative
     // signal color), not the tone — R2's derivation-mismatch finding:
     expect(root).toMatch(/--hk-emergency-wash:\s*color-mix\(in srgb, var\(--hk-emergency-line\)/);

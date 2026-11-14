@@ -1,0 +1,18 @@
+package hikari:highlight;
+
+interface types {
+    /// Highlight result: the HTML string (same format as
+    /// highlight.js: `<span class="hljs-keyword">def</span>…`).
+    record highlight-result {
+        /// HTML string, or null when the language is not registered.
+        html: option<string>,
+    }
+}
+
+world highlight {
+    use types.{highlight-result};
+    /// Highlight `code` in `language`. Returns hljs-compatible HTML.
+    export highlight: func(code: string, language: string) -> highlight-result;
+    /// The list of languages this component supports.
+    export languages: func() -> list<string>;
+}

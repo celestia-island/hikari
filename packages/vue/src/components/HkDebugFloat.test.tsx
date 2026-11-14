@@ -279,16 +279,21 @@ describe("HkDebugFloat drag", () => {
     expect(win.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
   });
 
-  it("ignores non-primary-button grabs and pointerdowns on the close button", () => {
+  it("ignores non-primary-button grabs and pointerdowns on the close button", async () => {
     mount(() => h(HkDebugFloat));
     const win = floatWindow()!;
     const header = win.querySelector("[data-el='header']")!;
 
     dispatchMouse("pointerdown", header, { clientX: 100, clientY: 100, button: 2, buttons: 2 });
+    // Vue patches the DOM on a microtask — without the tick the
+    // assertion reads the PRE-drag DOM and passes vacuously even when a
+    // drag started.
+    await nextTick();
     expect(win.hasAttribute("data-dragging")).toBe(false);
 
     const close = win.querySelector("button.hk-icon-button")!;
     dispatchMouse("pointerdown", close, { clientX: 100, clientY: 100, button: 0, buttons: 1 });
+    await nextTick();
     expect(win.hasAttribute("data-dragging")).toBe(false);
     // The close button also never starts a drag position.
     expect(win.style.left).toBe("");
@@ -423,11 +428,13 @@ describe("HkDebugFloat headerless chrome", () => {
     expect(win.hasAttribute("data-dragging")).toBe(false);
   });
 
-  it("a press on the overlay's close button never starts a body drag", () => {
+  it("a press on the overlay's close button never starts a body drag", async () => {
     mount(() => h(HkDebugFloat, { chrome: "none" }));
     const win = floatWindow()!;
     const close = win.querySelector("[data-el='overlay'] button")!;
     dispatchMouse("pointerdown", close, { clientX: 100, clientY: 100, button: 0, buttons: 1 });
+    // Await the DOM flush so a (broken) drag start is actually visible.
+    await nextTick();
     expect(win.hasAttribute("data-dragging")).toBe(false);
     expect(win.style.left).toBe("");
   });
@@ -562,6 +569,20 @@ describe("HkDebugFloat sections", () => {
     const win = mountSections({ persistKey: "corrupt-hidden" });
     expect(section(win, "draws")).toBeTruthy();
     expect(section(win, "gpu")).toBeTruthy();
+
+    // A NON-ARRAY hidden that slipped past the reader would throw at
+    // mount time (new Set(3) on a number) — the mount itself succeeding
+    // is part of the contract, so pin the numeric shape on a fresh
+    // record too (the new window is the LAST in document order).
+    localStorage.setItem(
+      debugFloatStorageKey("corrupt-hidden-2"),
+      JSON.stringify({ open: true, hidden: 3 }),
+    );
+    mountSections({ persistKey: "corrupt-hidden-2" });
+    const windows = document.querySelectorAll<HTMLElement>(".hk-debug-float");
+    const win2 = windows[windows.length - 1];
+    expect(section(win2, "draws")).toBeTruthy();
+    expect(section(win2, "timing")).toBeTruthy();
   });
 
   it("controlled visibleSections wins over the internal state and emits the next list", async () => {

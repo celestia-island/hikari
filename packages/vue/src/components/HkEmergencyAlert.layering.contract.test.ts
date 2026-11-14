@@ -154,16 +154,19 @@ describe("emergency alert layering contract", () => {
     // doctrine chain (line/wash, never solid fill) is what R2's
     // rejected fill form got wrong.
     const css = sheet();
-    const root = rootBlock(css);
-    void root;
+    rootBlock(css);
+    // EXACTLY ONE chip rule, counted by name in any value form — a
+    // later duplicate would win the cascade silently (the R7
+    // multi-root vector, at chip granularity).
+    expect(css.match(/\.is-warning \.hk-emergency-actions \.hk-btn-primary\s*{/g)?.length).toBe(1);
     const chip = css.match(
-      /\.is-warning \.hk-emergency-actions \.hk-btn-primary\s*{[^}]*}/,
+      /\.is-warning \.hk-emergency-actions \.hk-btn-primary\s*{([^}]*)}/,
     );
     expect(chip, "the warning chip rule must exist").not.toBeNull();
-    expect(chip![0]).toContain("background: var(--hk-emergency-wash);");
-    expect(chip![0]).toContain("border-color: var(--hk-emergency-line);");
-    expect(chip![0]).toContain("color: rgb(var(--color-text");
-    expect(chip![0]).not.toContain("--color-on-warning");
+    expect(chip![1]).toContain("background: var(--hk-emergency-wash);");
+    expect(chip![1]).toContain("border-color: var(--hk-emergency-line);");
+    expect(chip![1]).toContain("color: rgb(var(--color-text");
+    expect(chip![1]).not.toContain("--color-on-warning");
   });
 
   it("long content stays reachable: the layer scrolls and the band safe-centers", () => {

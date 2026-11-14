@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 import { FileText, History, Network } from "lucide-vue-next";
 
@@ -259,5 +259,23 @@ describe("mobile arm", () => {
     mountTabs();
     await settle();
     expect(trigger().getAttribute("aria-haspopup")).toBe("dialog");
+  });
+
+  it("warns in DEV when a badge lacks an accessible label", async () => {
+    // R4 pin (PR #1323): the mobile rows mirror HkTabs' second a11y
+    // alarm — a label-less badge is announced nowhere on the sheet.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      setMobile(true);
+      mountTabs({
+        tabs: [{ key: "a", label: "甲", badge: { count: 3 } }],
+      });
+      await settle();
+      const alarms = warn.mock.calls.filter((c) => String(c[0]).includes("badge without a label"));
+      expect(alarms.length, "the a11y drift alarm must fire").toBeGreaterThan(0);
+      expect(alarms[0]![1]).toBe("a");
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

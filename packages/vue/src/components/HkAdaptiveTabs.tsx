@@ -35,6 +35,12 @@
  * the header's center slot or the footer's center slot (user ruling
  * 2026-11-15); dynamic-list switchers with bespoke rows (the
  * platform switcher) keep their own composition.
+ *
+ * Deliberate prop subset (R4 note, PR #1323): the HkTabs-only surface
+ * controls — `disabled` (whole strip), `scrollable`, `scrollbar`,
+ * `startAction`/`endAction`, `mergeKeys` — are NOT forwarded. Header/
+ * footer groups don't disable themselves wholesale and never carry
+ * strip decorations; if a host needs them, it wants HkTabs directly.
  */
 import { ChevronDown } from "lucide-vue-next";
 import { computed, defineComponent, ref, watch, type PropType, type VNodeChild } from "vue";

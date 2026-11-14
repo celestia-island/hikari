@@ -123,15 +123,26 @@
   z-index: 1;
   top: 50%;
   left: 50%;
-  // The centering translate is the frame's PERMANENT transform prefix:
-  // every state (rest, enter-from/to, leave-from/to) carries this exact
-  // translate, and the open/close choreography only ever APPENDS a
-  // translateY + scale to it (see the desktop block) — so the ride can
-  // never re-seat the frame and dragged windows keep their shift.
-  transform: translate(
-        calc(-50% + var(--hk-modal-shift-x, 0px)),
-        calc(-50% + var(--hk-modal-shift-y, 0px))
-      );
+  // The centering translate is the frame's PERMANENT prefix — carried by
+  // the INDIVIDUAL `translate` property, never by `transform`. The
+  // open/close choreography animates `transform` only (a translateY +
+  // scale pair with no percentages anywhere), so a running ride's
+  // matrices are pure px and can never freeze a stale centering offset.
+  // Why this matters (2026-11-15 field report, chest: the topic window
+  // opened from the report window's footer): a window whose content grew
+  // during its enter (async detail fetch — loading spinner, then the
+  // full body) visibly sat too low — its top edge parked at the viewport
+  // midline, exactly the unparsed -50% — until the choreography ended
+  // and snapped it centered, because the promoted layer's ride matrices
+  // were resolved against the small mount-time box and the box then grew
+  // under them. With the centering on `translate` it re-resolves
+  // against the LIVE box every frame: the race has no representation
+  // left. (`translate` composes before `transform`, so the painted
+  // order — center, then ride legs, drag shift included — is
+  // unchanged. The ≤767px sheet block neutralizes it alongside its own
+  // `transform: none`.)
+  translate: calc(-50% + var(--hk-modal-shift-x, 0px))
+    calc(-50% + var(--hk-modal-shift-y, 0px));
   width: 100%;
   // Size changes animate instead of snapping: `height: auto` growth
   // cannot fire a CSS transition (verified in Chromium — neither auto
@@ -192,9 +203,10 @@
   // frame's layout height and read as jank on content-heavy windows. The 3%
   // scale is imperceptible as glyph distortion while still giving the window
   // a sense of arriving; the 10px rise adds direction. The centering
-  // translate stays the frame's PERMANENT transform prefix (byte-identical
-  // in every state, `--hk-modal-shift-*` included) so the ride can never
-  // re-seat the frame and dragged windows keep their shift.
+  // translate does NOT ride here — it lives on the individual `translate`
+  // property (see the base rule), which the choreography never animates, so
+  // a mid-enter content growth re-seats the frame live instead of sliding
+  // on a stale ride matrix.
   .hk-modal-content-enter-active {
     transition:
       opacity var(--hk-modal-duration, 0.42s)
@@ -224,21 +236,13 @@
     // end pose) means the layer is composited before the transition's
     // first measured frame, not one hitch later.
     will-change: opacity, transform;
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        )
-        translateY(10px) scale(0.97);
+    transform: translateY(10px) scale(0.97);
   }
 
   .hk-modal-content-enter-to,
   .hk-modal-content-leave-from {
     opacity: 1;
-    transform: translate(
-          calc(-50% + var(--hk-modal-shift-x, 0px)),
-          calc(-50% + var(--hk-modal-shift-y, 0px))
-        )
-        translateY(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -622,6 +626,10 @@
     left: 0;
     right: 0;
     transform: none;
+    // The centering translate is neutralized with it: the sheet anchors
+    // by `top: auto` / `bottom` / full width, and the base rule's live
+    // -50%/-50% would shift a docked sheet up-left by half its own size.
+    translate: none;
     // Content morphs reveal by clip instead of animating height (see
     // useSizeMorph): the pin lands instantly and the top edge sweeps up
     // as a paint-only clip with the box's own corner radii — the same
@@ -769,10 +777,13 @@
   // order — one painted frame at opacity 0 hides the flip).
   .hk-modal-content-enter-from,
   .hk-modal-content-leave-to {
-    transform: translate(
-      calc(-50% + var(--hk-modal-shift-x, 0px)),
-      calc(-50% + var(--hk-modal-shift-y, 0px))
-    );
+    // The flatten is "no ride legs at all": the ride states drop their
+    // transform override and the centering — which lives on the
+    // individual `translate` property, outside every ride rule — keeps
+    // centering desktop frames untouched. Phones fall back to a plain
+    // fade in place (one opacity-0 frame hides the flip) instead of a
+    // full-height slide flash.
+    transform: none;
   }
   // The content region carries no transform of its own in this choreography
   // (the whole window zooms; the body is never scaled). Belt-and-braces.

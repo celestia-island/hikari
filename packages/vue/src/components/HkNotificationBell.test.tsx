@@ -156,10 +156,11 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
-  it("a same-millisecond tie renders the LATER push above (descending id)", async () => {
-    // R8 pin (PR #1322): the id tiebreak is DESCENDING — with updatedAt
-    // equal, the later push must sit above the earlier one (newest-first
-    // holds even when the clock ties).
+  it("a same-millisecond tie renders the LATER push above (append order)", async () => {
+    // R8/R9 pin (PR #1322): with updatedAt equal the journal's own
+    // append order judges — the later push must sit above the earlier
+    // one (string ids carry no numeric order, so an id tiebreak would
+    // flip across digit widths).
     await setLocale("en");
     recordNotification({ id: "toast:e:1:9", kind: "toast", tone: "error", title: "earlier" });
     recordNotification({ id: "toast:e:1:10", kind: "toast", tone: "warning", title: "later" });

@@ -102,7 +102,8 @@
 }
 
 /* Tone ink on the glyph (the toast family's own --hi-color-<tone>
-   channels, theme-following, with the same fallbacks). */
+   channels, theme-following; fallbacks are the tokenInventory-canonical
+   literals, NOT the toast family's sheet-local ones). */
 .hk-notification-row.is-error .hk-notification-row__icon {
   color: var(--hi-color-danger, #f7768e);
 }

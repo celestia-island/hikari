@@ -273,7 +273,14 @@ describe("isDangerousHref", () => {
 });
 
 describe("openHyperlink refuses script schemes (PS-18)", () => {
-  function stubLocation(): string[] {
+  /**
+   * Capture `location.href` writes. Unlike a bare stub, this RETURNS a
+   * restore handle — `vi.restoreAllMocks()` cannot undo an
+   * `Object.defineProperty`, so every caller MUST run the returned
+   * `restore()` in a `finally` (a leaked proxy breaks any later test that
+   * touches `window.location`, with a misleading private-member error).
+   */
+  function stubLocation(): { writes: string[]; restore: () => void } {
     const writes: string[] = [];
     const original = window.location;
     Object.defineProperty(window, "location", {
@@ -286,18 +293,26 @@ describe("openHyperlink refuses script schemes (PS-18)", () => {
         },
       }),
     });
-    return writes;
+    const restore = () => {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        writable: true,
+        value: original,
+      });
+    };
+    return { writes, restore };
   }
 
   it("never assigns location.href for a javascript: link", async () => {
     const open = vi.fn();
     vi.stubGlobal("open", open);
-    const writes = stubLocation();
+    const { writes, restore } = stubLocation();
     try {
       expect(await openHyperlink("javascript:alert(1)")).toBeNull();
       expect(writes).toEqual([]);
       expect(open).not.toHaveBeenCalled();
     } finally {
+      restore();
       vi.unstubAllGlobals();
       vi.restoreAllMocks();
     }
@@ -306,7 +321,7 @@ describe("openHyperlink refuses script schemes (PS-18)", () => {
   it("refuses a dangerous URL the RESOLVER minted, not just the href", async () => {
     const open = vi.fn();
     vi.stubGlobal("open", open);
-    const writes = stubLocation();
+    const { writes, restore } = stubLocation();
     provideHyperlinkCoordinator({
       resolve: () => "javascript:alert(1)",
     });
@@ -315,6 +330,7 @@ describe("openHyperlink refuses script schemes (PS-18)", () => {
       expect(writes).toEqual([]);
       expect(open).not.toHaveBeenCalled();
     } finally {
+      restore();
       provideHyperlinkCoordinator(null);
       vi.unstubAllGlobals();
       vi.restoreAllMocks();
@@ -358,12 +374,13 @@ describe("openHyperlink refuses script schemes (PS-18)", () => {
   it("still hands a custom scheme to the OS handler", async () => {
     const open = vi.fn();
     vi.stubGlobal("open", open);
-    const writes = stubLocation();
+    const { writes, restore } = stubLocation();
     try {
       expect(await openHyperlink("vscode://file/x")).toBe("vscode://file/x");
       expect(writes).toEqual(["vscode://file/x"]);
       expect(open).not.toHaveBeenCalled();
     } finally {
+      restore();
       vi.unstubAllGlobals();
       vi.restoreAllMocks();
     }

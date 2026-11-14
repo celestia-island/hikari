@@ -137,8 +137,23 @@ describe("panel rows", () => {
     expect(restore?.textContent).toBe("Show again");
     restore!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
-    // The band is live again and the record follows.
+    // The band is live again and the record follows — and the restore
+    // button is GONE (R2 finding: no dead control on an active band).
     expect(row.classList.contains("is-active")).toBe(true);
+    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+  });
+
+  it("an ACTIVE emergency row (band on screen) shows no restore button", async () => {
+    await setLocale("en");
+    raiseEmergencyAlert({ id: "quota", severity: "warning", title: "quota out" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const row = rows()[0];
+    expect(row.classList.contains("is-active")).toBe(true);
+    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
   it("a cleared emergency shows Resolved without a restore button", async () => {

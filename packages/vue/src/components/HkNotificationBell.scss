@@ -36,6 +36,16 @@
   &::-webkit-scrollbar {
     display: none;
   }
+
+  /* Mobile sheet branch (R2 finding, PR #1322): HkPopover's own sheet
+     panel is the scroller there, so the list must NOT become a second,
+     contained scroll surface — a drag inside the list would never hand
+     off to the sheet, stranding the Clear-all foot on short viewports.
+     The sheet shows the whole list; its panel scrolls. */
+  .hk-is-sheet & {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .hk-notification-center__empty {

@@ -76,6 +76,10 @@ const BLOCKING_TONE: Record<BlockingToastVariant, HkNotificationTone> = {
   danger: "error",
 };
 
+/** Per-page-load epoch (same rationale as useToast's — the journal
+ *  persists across reloads while this counter restarts at zero). */
+const PAGE_EPOCH = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
 function settle(id: number, value: boolean) {
   const resolve = resolvers.get(id);
   if (!resolve) return;
@@ -92,14 +96,17 @@ function settle(id: number, value: boolean) {
     // Journal the ANSWERED gate (user ruling 2026-11-15: every gating
     // prompt is worth a second look — blocking toasts journal by
     // default, no opt-in). The record is what was asked, not what was
-    // answered — the boolean went to the caller's promise.
+    // answered — the boolean went to the caller's promise. Born READ:
+    // the user answered this prompt themselves moments ago; the entry
+    // exists to be FOUND again, not to light the dot retroactively.
     recordNotification({
-      id: `blocking:${item.id}`,
+      id: `blocking:${PAGE_EPOCH}:${item.id}`,
       kind: "blocking",
       tone: BLOCKING_TONE[item.variant],
       title: item.title ?? item.message,
       ...(item.title !== undefined ? { detail: item.message } : {}),
       state: "dismissed",
+      read: true,
     });
   }
   runtimeReport?.pulse();

@@ -143,7 +143,10 @@ function writeSnoozeSet(set: Set<string>): void {
  *  journal entry (id `emergency:<alert id>`) tracks the band through
  *  active → snoozed → (unsnooze) → cleared. `onResummon` wires the
  *  panel's "show again" button to the real unsnooze path — the one
- *  reversible record in the journal (toast records are replay-free). */
+ *  reversible record in the journal (toast records are replay-free).
+ *  The callback arms ONLY for a snoozed item (R2 finding, PR #1322):
+ *  an on-screen band has nothing to restore, and a dead button would
+ *  just be a promise unsnooze keeps refusing. */
 function journalEpisode(id: string, item: EmergencyAlertItem): void {
   recordNotification({
     id: `emergency:${id}`,
@@ -153,7 +156,7 @@ function journalEpisode(id: string, item: EmergencyAlertItem): void {
     detail: item.description !== "" ? item.description : undefined,
     code: item.code !== "" ? item.code : undefined,
     state: item.snoozed ? "snoozed" : "active",
-    onResummon: () => unsnoozeEmergencyAlert(id),
+    ...(item.snoozed ? { onResummon: () => unsnoozeEmergencyAlert(id) } : {}),
   });
 }
 
@@ -220,7 +223,10 @@ export function snoozeEmergencyAlert(id: string): void {
   const snooze = readSnoozeSet();
   snooze.add(id);
   writeSnoozeSet(snooze);
-  setNotificationState(`emergency:${id}`, "snoozed");
+  // Re-record (not bare setNotificationState): a snoozed episode's
+  // journal entry must now ARM the resummon callback — the restore
+  // button's whole job (R2 finding, PR #1322).
+  journalEpisode(id, item);
   item.onSnooze?.();
   runtimeReport?.pulse();
 }

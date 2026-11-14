@@ -51,3 +51,5 @@ a bottom sheet on phones, safe to cross the breakpoint live.
 `components/HkNotificationBell.tsx` (bell + panel in one composition).
 Sources write through `recordNotification` / `setNotificationState`;
 hosts mount `<HkNotificationBell />` and decide where it lives.
+
+Host-recorded ids share one flat string space: the `toast:` / `blocking:` / `emergency:` prefixes are reserved by the built-in mirrors — hosts recording persistent chips or custom items pick their own prefix (e.g. `myapp:`) so a custom id can never hijack a built-in episode.

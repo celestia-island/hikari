@@ -69,7 +69,12 @@ export type HkNotificationState =
 
 export interface HkNotificationEntry {
   /** Source-qualified identity (e.g. `toast:3:12`, `emergency:<alert id>`).
-   *  Re-recording the same id updates in place — pollers may repeat. */
+   *  Re-recording the same id updates in place — pollers may repeat.
+   *  The id space is ONE flat string space and the built-in mirrors
+   *  RESERVE the `toast:` / `blocking:` / `emergency:` prefixes; hosts
+   *  recording persistent chips or custom items pick their own prefix
+   *  (e.g. `myapp:<thing>`) so a host id can never hijack a built-in
+   *  episode's entry. */
   id: string;
   kind: HkNotificationKind;
   tone: HkNotificationTone;
@@ -101,7 +106,14 @@ export interface HkNotificationRecordInput {
   detail?: string;
   code?: string;
   state?: HkNotificationState;
-  /** Resummon callback (in-memory only — see module doc). */
+  /** Read flag honored on CREATE only (the blocking family records
+   *  born-read: the user answered the gate themselves). Updates never
+   *  touch `read` — a poller re-recording must not unread the list. */
+  read?: boolean;
+  /** Resummon callback (in-memory only — see module doc). Present on
+   *  the input replaces whatever the entry carried (pass nothing and
+   *  the entry loses any previous callback — callbacks are always
+   *  owned by the latest record call). */
   onResummon?: () => void;
 }
 
@@ -225,10 +237,16 @@ function enforceCap(): void {
 // ── public mutation surface ──────────────────────────────────────────
 
 /** Create-or-update one entry. Re-recording a known id updates the
- *  content fields in place (raisedAt and read are preserved — a poller
- *  re-recording the same condition must not unread the list), and an
- *  explicitly passed state overrides the stored one. New ids are born
- *  unread. */
+ *  content fields in place (raisedAt is preserved; `read` is untouched
+ *  EXCEPT for the one fresh-episode rule below), and an explicitly
+ *  passed state overrides the stored one. New ids are born unread
+ *  unless `read: true` is passed at creation.
+ *
+ *  Fresh-episode rule (R2 finding, PR #1322): a CLEARED entry whose
+ *  source re-raises as "active" is a NEW occurrence of the condition —
+ *  seen history must not swallow it, so it wakes up unread. Unsnooze
+ *  never rides this path (it is `setNotificationState`, and the user
+ *  performed it themselves). */
 export function recordNotification(input: HkNotificationRecordInput): void {
   ensureLoaded();
   ensureRuntimeReport();
@@ -240,8 +258,16 @@ export function recordNotification(input: HkNotificationRecordInput): void {
     existing.title = input.title;
     existing.detail = input.detail;
     existing.code = input.code;
-    if (input.state !== undefined) existing.state = input.state;
-    if (input.onResummon !== undefined) existing.onResummon = input.onResummon;
+    if (input.state !== undefined) {
+      if (input.state === "active" && existing.state === "cleared") {
+        existing.read = false;
+      }
+      existing.state = input.state;
+    }
+    // Callbacks are owned by the latest record call: an input without
+    // one CLEARS the previous (an active alert must not keep a restore
+    // button that unsnoozes nothing).
+    existing.onResummon = input.onResummon;
     existing.updatedAt = now;
   } else {
     state.entries.push({
@@ -254,7 +280,7 @@ export function recordNotification(input: HkNotificationRecordInput): void {
       raisedAt: now,
       updatedAt: now,
       state: input.state ?? "active",
-      read: false,
+      read: input.read ?? false,
       ...(input.onResummon !== undefined ? { onResummon: input.onResummon } : {}),
     });
     enforceCap();
@@ -274,7 +300,10 @@ export function setNotificationState(
   if (!entry || entry.state === nextState) return;
   entry.state = nextState;
   entry.updatedAt = Date.now();
-  // A cleared/snoozed episode has no live resummon path anymore.
+  // Only "cleared" drops a resummon callback: "snoozed" is exactly the
+  // state whose entry MUST carry the live restore path (that is the
+  // whole re-summon feature), and it re-arms via the source's next
+  // recordNotification call.
   if (nextState === "cleared") entry.onResummon = undefined;
   writeStorage();
   runtimeReport?.pulse();

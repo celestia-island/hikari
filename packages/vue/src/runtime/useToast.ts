@@ -120,13 +120,26 @@ function removeSlot(slotId: number) {
     // a "dismissed" record. Unknown-id no-ops cover messages pushed
     // before a later `journal: true` opt-in upgraded the slot.
     for (const m of slot.messages) {
-      setNotificationState(`toast:${slot.id}:${m.id}`, "dismissed");
+      setNotificationState(toastEntryId(slot.id, m.id), "dismissed");
     }
     clearTimer(slotId);
     runtimeReport?.pulse();
   } else {
     clearTimer(slotId); // unknown-id no-ops stay pulse-silent
   }
+}
+
+/** Per-page-load epoch for journal ids (R2 finding, PR #1322): the
+ *  journal persists across reloads while these module counters restart
+ *  at zero — without the epoch, the first toast after a reload would
+ *  collide with (`toast:1:1`) and overwrite the previous session's
+ *  first record instead of joining it as a new entry. The emergency
+ *  family deliberately does NOT epoch: its ids are caller-chosen and
+ *  stable, because an episode IS the same condition across reloads. */
+const PAGE_EPOCH = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+function toastEntryId(slotId: number, msgId: number): string {
+  return `toast:${PAGE_EPOCH}:${slotId}:${msgId}`;
 }
 
 function scheduleAutoDismiss(slot: ToastItem) {
@@ -155,7 +168,7 @@ function findSlot(type: ToastType, key?: string): ToastItem | undefined {
 function journalMessage(slot: ToastItem, msgId: number, text: string): void {
   if (!slot.journal) return;
   recordNotification({
-    id: `toast:${slot.id}:${msgId}`,
+    id: toastEntryId(slot.id, msgId),
     kind: "toast",
     tone: slot.type,
     title: text,
@@ -216,7 +229,7 @@ function push(
   while (slot.messages.length > MAX_TOASTS_PER_SLOT) {
     const evicted = slot.messages.shift();
     if (evicted) {
-      setNotificationState(`toast:${slot.id}:${evicted.id}`, "dismissed");
+      setNotificationState(toastEntryId(slot.id, evicted.id), "dismissed");
     }
   }
   journalMessage(slot, msgId, text);

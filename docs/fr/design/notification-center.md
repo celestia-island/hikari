@@ -62,3 +62,5 @@ franchissement de point de rupture sûr en direct.
 composition). Les sources écrivent via `recordNotification` /
 `setNotificationState` ; les hôtes montent `<HkNotificationBell />` et
 décident où il vit.
+
+Les ids enregistrés par l'hôte partagent un espace de chaînes plat avec les miroirs intégrés : les préfixes `toast:` / `blocking:` / `emergency:` sont réservés par ceux-ci — un hôte qui enregistre des puces persistantes ou des éléments personnalisés choisit son propre préfixe (p. ex. `myapp:`) pour qu'un id personnalisé ne puisse jamais détourner un épisode intégré.

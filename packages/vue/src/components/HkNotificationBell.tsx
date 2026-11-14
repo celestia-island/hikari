@@ -74,7 +74,12 @@ export default defineComponent({
 
     const unread = computed(() => entries.filter((e) => !e.read).length);
     const sorted = computed(() =>
-      [...entries].sort((a, b) => b.updatedAt - a.updatedAt),
+      // Newest first; the id tiebreak keeps same-millisecond pushes
+      // deterministic (R2 note, PR #1322 — a burst must not render
+      // older-first just because the clock tied).
+      [...entries].sort(
+        (a, b) => b.updatedAt - a.updatedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+      ),
     );
 
     // Open = read receipt. Watching the flag (not wiring it into the
@@ -85,7 +90,12 @@ export default defineComponent({
 
     function renderRow(entry: HkNotificationEntry) {
       const Icon = TONE_ICONS[entry.tone] ?? Info;
-      const resummonable = entry.onResummon !== undefined;
+      // A restore button exists ONLY for a SNOOZED entry with a live
+      // path (R2 finding, PR #1322): the callback may briefly survive
+      // a restore (the source re-arms/clears it), but an on-screen
+      // band is not something "Show again" can bring back — the state
+      // gate keeps a dead control off the row.
+      const resummonable = entry.onResummon !== undefined && entry.state === "snoozed";
       return (
         <li key={entry.id} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
           <span class="hk-notification-row__icon" aria-hidden="true">
@@ -112,7 +122,7 @@ export default defineComponent({
                 {entry.detail && <span class="hk-notification-row__detail-text">{entry.detail}</span>}
               </p>
             )}
-            {(entry.state === "snoozed" || entry.state === "cleared" || resummonable) && (
+            {(entry.state === "snoozed" || entry.state === "cleared") && (
               <div class="hk-notification-row__meta">
                 {entry.state === "snoozed" && (
                   <span class="hk-notification-row__state">

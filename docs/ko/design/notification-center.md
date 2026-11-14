@@ -48,3 +48,5 @@
 `components/HkNotificationBell.tsx`(벨 + 패널 일체 구성).
 소스는 `recordNotification` / `setNotificationState`로 기록하고,
 호스트는 `<HkNotificationBell />`을 마운트해 자리를 정한다.
+
+호스트가 기록하는 id는 내장 미러와 하나의 평면 문자열 공간을 공유합니다: `toast:` / `blocking:` / `emergency:` 접두사는 내장이 예약하며, 상주 칩이나 사용자 항목을 기록하는 호스트는 자신의 접두사(예 `myapp:`)를 택합니다 — 사용자 지정 id가 내장 에피소드를 가로채는 일은 결코 없습니다.

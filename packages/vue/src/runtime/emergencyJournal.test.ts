@@ -49,6 +49,16 @@ describe("emergency episode mirror", () => {
     expect(entries.find((e) => e.id === "emergency:link")?.tone).toBe("error");
   });
 
+  it("an ACTIVE episode carries NO resummon — the band is already on screen", () => {
+    raiseEmergencyAlert({ id: "quota", severity: "warning", title: "额度" });
+    const { entries } = useNotificationCenter();
+    const entry = entries.find((e) => e.id === "emergency:quota");
+    expect(entry?.state).toBe("active");
+    // R2 finding (PR #1322): a restore button on an on-screen band is
+    // a dead control — unsnooze would early-return.
+    expect(entry?.onResummon).toBeUndefined();
+  });
+
   it("snooze → snoozed; the entry's resummon lands in unsnooze", () => {
     const { alerts } = useEmergencyAlert();
     raiseEmergencyAlert({ id: "quota", severity: "warning", title: "额度" });
@@ -94,7 +104,7 @@ describe("emergency episode mirror", () => {
 });
 
 describe("blocking gate journal", () => {
-  it("a settled gate journals as dismissed, default on", async () => {
+  it("a settled gate journals as dismissed and born-READ (the user answered it)", async () => {
     const promise = showBlockingToast("加入群组？", { title: "确认", variant: "warning" });
     clearBlockingToasts();
     await promise;
@@ -106,6 +116,7 @@ describe("blocking gate journal", () => {
       title: "确认",
       detail: "加入群组？",
       state: "dismissed",
+      read: true,
     });
   });
 

@@ -251,7 +251,7 @@ describe("round-2 fix pins", () => {
     expect(cx1).toBeCloseTo(516, 0);
   });
 
-  it.todo("gantt space-separated multi-deps parse as real deps and dedupe repeats (R8)", async () => {
+  it("gantt space-separated multi-deps parse as real deps and dedupe repeats (R8)", async () => {
     setMermaidEngineForTests(mermaidParser);
     const c = mount({ source: "gantt\nsection S\none : t1, 2d\nother : t0, 1d\ntwo : t2, after t1 t0 t1, 1d" });
     await settle();

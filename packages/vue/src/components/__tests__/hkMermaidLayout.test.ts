@@ -101,7 +101,7 @@ describe("buildBoardModel", () => {
     expect(model.edges[0]).toMatchObject({ from: "n:B", to: "n:A", arrow: "open", dashed: false });
   });
 
-  it.todo("gantt: sequential tasks advance, deps push starts, axis exists", () => {
+  it("gantt: sequential tasks advance, deps push starts, axis exists", () => {
     const model = buildBoardModel(
       wasmMermaidEngine.parse("gantt\nsection S\none : t1, 2d\ntwo : t2, 3d\nthree : t3, after t1, 1d") as never,
       measure,
@@ -160,7 +160,7 @@ describe("layout pin tests (mutation survivors)", () => {
     expect(rows[2] - rows[1]).toBe(44);
   });
 
-  it.todo("a gantt dep ACROSS sections pushes the start past the section cursor", () => {
+  it("a gantt dep ACROSS sections pushes the start past the section cursor", () => {
     const model = buildBoardModel(
       wasmMermaidEngine.parse([
         "gantt",

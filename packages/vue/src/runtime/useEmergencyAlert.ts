@@ -249,8 +249,14 @@ export function unsnoozeEmergencyAlert(id: string): void {
 }
 
 /** Drop every alert and the whole snooze record. Test/teardown helper
- *  (the emergency twin of `clearBlockingToasts`). */
+ *  (the emergency twin of `clearBlockingToasts`). Each removed
+ *  episode's journal entry is marked "cleared" (R4 note, PR #1322) —
+ *  otherwise a snoozed entry would keep its armed onResummon with no
+ *  alert behind it: a dead "Show again" button until the next raise. */
 export function resetEmergencyAlerts(): void {
+  for (const item of [...state.alerts]) {
+    setNotificationState(`emergency:${item.id}`, "cleared");
+  }
   state.alerts.splice(0, state.alerts.length);
   try {
     globalThis.sessionStorage?.removeItem(SNOOZE_KEY);

@@ -1,0 +1,93 @@
+/* HkVirtualCursor — the virtual mouse's rendered half.
+ *
+ * The overlay is inset-0 over the remote screen's display box and
+ * click-transparent except for the glyph: position rides percentages
+ * of the overlay, so letterbox/fill transforms of the underlying
+ * canvas carry the pointer along with the pixels. The glyph's lobes
+ * are the only hit area (the phone's missing mouse buttons). */
+
+.hk-virtual-cursor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2; /* above the canvas + grab hint, below floating chrome */
+}
+
+.hk-virtual-cursor__glyph {
+  position: absolute;
+  /* The arrow's hotspot (top-left of the glyph) rides the exact
+     percentage; the box itself hangs down-right from it. */
+  transform: translate(-1px, -1px);
+  display: block;
+  pointer-events: none;
+}
+
+.hk-virtual-cursor__arrow {
+  width: 18px;
+  height: 27px;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 55%));
+  pointer-events: none;
+
+  path {
+    fill: rgb(var(--color-text));
+    stroke: rgb(0 0 0 / 65%);
+    stroke-width: 1;
+  }
+}
+
+/* The lobes: a horizontal two-button pill tucked under the arrow's
+ * tail — the two buttons sit on one inline row (inline-grid keeps the
+ * glyph block layout). Real buttons (focusable, pressable,
+ * cancellable); held renders lit. */
+.hk-virtual-cursor__lobe {
+  pointer-events: auto;
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 24px;
+  border: 1px solid rgb(var(--color-border));
+  background: rgb(var(--color-background) / 92%);
+  color: rgb(var(--color-text));
+  border-radius: 8px;
+  vertical-align: top;
+  cursor: pointer;
+  touch-action: none;
+
+  /* TinyMouseButton glyphs: the lobe IS the button — draw its own
+     profile so no icon dependency is needed. */
+  &[data-lobe="left"] {
+    border-bottom-right-radius: 2px;
+  }
+  &[data-lobe="right"] {
+    border-bottom-left-radius: 2px;
+  }
+  &[data-lobe="left"]::after,
+  &[data-lobe="right"]::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: currentColor;
+    opacity: 0.55;
+  }
+
+  &[data-held] {
+    background: rgb(var(--color-primary) / 80%);
+    border-color: rgb(var(--color-primary));
+    color: rgb(var(--color-on-primary, 255 255 255));
+
+    &::after {
+      opacity: 1;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 70%);
+    outline-offset: 1px;
+  }
+}
+
+/* The two lobes sit side by side under the arrow (inline row). */
+.hk-virtual-cursor__lobe + .hk-virtual-cursor__lobe {
+  margin-left: -1px; /* share the border, one pill */
+}

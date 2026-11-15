@@ -53,3 +53,12 @@ Sources write through `recordNotification` / `setNotificationState`;
 hosts mount `<HkNotificationBell />` and decide where it lives.
 
 Host-recorded ids share one flat string space: the `toast:` / `blocking:` / `emergency:` prefixes are reserved by the built-in mirrors — hosts recording persistent chips or custom items pick their own prefix (e.g. `myapp:`) so a custom id can never hijack a built-in episode.
+
+## The emergency carve-out
+
+Emergency rows are the one exception: while an episode is live
+(active or snoozed) the row carries no dismiss control — its journal
+entry holds the ONLY restore handle for the alert, and a polled
+re-raise would resurrect a deleted row. A user dismiss therefore
+applies to records (toasts, gates, resolved emergencies — which the
+clear path keeps reviewable), never to a live episode.

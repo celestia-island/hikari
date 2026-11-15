@@ -16,8 +16,9 @@ import {
  * - snoozed alerts render HkPersistentToast chips (severity tone,
  *   label = title), iconOnly collapses to the icon (label span gone,
  *   aria-label kept)
- * - the restore button in the detail card unsnoozes (the alert
- *   returns to the band; the chip leaves the tray)
+ * - the detail card mirrors the original toast text (icon + title +
+ *   description) with NO restore button — restore lives in the
+ *   notification-center bell panel (2026-11-15 user ruling)
  */
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -121,8 +122,5 @@ describe("HEmergencySnoozeTray", () => {
     ).toBeNull();
     // The title text still mirrors the original toast.
     expect(document.querySelector(".hk-emergency-snooze-card__title")?.textContent).toBe("t");
-    // The chip still leaves the tray after the (now-implicit) restore
-    // semantics changed: restore lives in the bell — the tray entry is
-    // dropped only when the episode clears.
   });
 });

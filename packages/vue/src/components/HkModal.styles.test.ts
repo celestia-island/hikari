@@ -116,6 +116,15 @@ describe("HkModal JS-driven sheet dock (compiled contract)", () => {
     expect(dock).not.toContain("transform");
   });
 
+  it("the slide reveal the dock protects is itself pinned", () => {
+    // Symmetry guard (round-3 review): the dock's transform-free rule
+    // exists so the enter-from translateY(100%) can slide the sheet up
+    // from the bottom edge — the reveal literal is load-bearing for
+    // that contract (it appears in BOTH the desktop and the ≤767px
+    // enter-from blocks) and must not silently disappear.
+    expect(sheet).toContain("transform: translateY(100%)");
+  });
+
   it("keeps the mobile chrome subset (radius, borders, caps)", () => {
     expect(dock).toContain("border-radius: var(--hk-modal-radius, var(--radius-xl, 16px))");
     expect(dock).toContain("border-left: 0");

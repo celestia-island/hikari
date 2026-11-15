@@ -27,11 +27,15 @@ export const MASK_RIGHT = 0b100 as const;
  */
 export interface RemoteButtonActions {
   /**
-   * Press/release buttons (absolute UI mask) at the host's CURRENT
-   * pointer position. Called on every transition; a mask bit going 0→1
-   * is a press, 1→0 a release.
+   * The PAD's OWN held bits (its absolute mask), called on every pad
+   * transition. This is NOT the global pressed set: the host MUST
+   * union it with every other holder (a virtual pointer's held state,
+   * another surface's hold) before sending the wire frame —
+   * forwarding it verbatim would release a co-resident hold's bit
+   * (one holder per bit, the same law the cursor's lobes enforce
+   * structurally).
    */
-  setButtons(mask: number): void;
+  setButtons(padHeldMask: number): void;
   /**
    * Vertical wheel notches at the host's current pointer position;
    * positive scrolls up/away from the operator.

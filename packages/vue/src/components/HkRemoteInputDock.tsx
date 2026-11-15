@@ -30,6 +30,10 @@ import "./HkRemoteInputDock.scss";
  * `hidden`, component teardown) force-releases every held bit, so a
  * removed button can never leave the remote button latched.
  *
+ * The mask the pad reports is the PAD'S OWN held bits — the host
+ * unions it with every other holder before wiring (see
+ * RemoteButtonActions.setButtons); one holder per bit.
+ *
  * Dismissal follows the HkFab grammar: outside pointerdown or Escape
  * closes the card (Escape is swallowed so an ancestor modal survives;
  * a hidden dock swallows nothing).

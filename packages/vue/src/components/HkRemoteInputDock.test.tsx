@@ -220,8 +220,10 @@ describe("HkRemoteInputDock", () => {
     (container.querySelector<HTMLButtonElement>(".revive"))!.click();
     await nextTick();
     actions.setButtons.mockClear();
-    pad()[0]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
-    expect(actions.setButtons).toHaveBeenLastCalledWith(0b001); // the strand died with the old wire
+    // Press a DIFFERENT mask: a stranded 0b001 would ride along as
+    // 0b011 — the collinear same-mask form cannot distinguish.
+    pad()[1]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(actions.setButtons).toHaveBeenLastCalledWith(0b010); // the strand died with the old wire
   });
 
   it("the radiogroup roves tabindex and switches on arrows", async () => {

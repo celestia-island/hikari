@@ -97,6 +97,23 @@ describe("useVirtualPointer", () => {
     expect(vp.state.x).toBe(99);
   });
 
+  it("tap COLLISION: tapping a bit the same surface holds releases nothing", () => {
+    const sinks = makeSinks();
+    const vp = useVirtualPointer(ref({ width: 100, height: 100 }), sinks);
+    vp.press(MASK_LEFT, true); // held
+    sinks.pointer.mockClear();
+    // The discriminator the frames alone cannot show: tap the SAME bit.
+    // The releasing twin (press down + press up) would emit a 0 frame
+    // and drop state.buttons; the transient semantics emits held|mask
+    // then held and touches nothing.
+    vp.tap(MASK_LEFT);
+    const frames = sinks.pointer.mock.calls.map((c) => c[2]);
+    expect(frames).toEqual([0b001, 0b001]);
+    expect(frames, "no spurious release frame").not.toContain(0);
+    expect(vp.state.buttons).toBe(0b001);
+    vp.press(MASK_LEFT, false);
+  });
+
   it("click is transient: it rides alongside held buttons (ownership)", () => {
     const sinks = makeSinks();
     const vp = useVirtualPointer(ref({ width: 100, height: 100 }), sinks);

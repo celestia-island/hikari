@@ -142,7 +142,7 @@ describe("panel rows", () => {
     // The band is live again and the record follows — and the restore
     // button is GONE (R2 finding: no dead control on an active band).
     expect(row.classList.contains("is-active")).toBe(true);
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
   });
 
   it("an ACTIVE emergency row (band on screen) shows no restore button", async () => {
@@ -154,7 +154,7 @@ describe("panel rows", () => {
     await settle();
     const row = rows()[0];
     expect(row.classList.contains("is-active")).toBe(true);
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
@@ -211,7 +211,7 @@ describe("panel rows", () => {
     await settle();
     const row = rows()[0];
     expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     // R10 (PR #1333): the state-scoped gate means a CLEARED emergency
     // row IS dismissable — this is the pin that was lost in eb492e44's
     // wrong-sibling deletion.

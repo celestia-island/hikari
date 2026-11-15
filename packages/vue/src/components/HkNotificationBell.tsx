@@ -29,7 +29,6 @@
  */
 import { CircleCheck as CheckCircle, Info, LoaderCircle, RotateCcw, TriangleAlert as AlertTriangle, X } from "lucide-vue-next";
 import { computed, defineComponent, h, ref, watch, type Component } from "vue";
-import HkMenu from "./HkMenu";
 
 import { useChromeActionSize } from "../composables/useChromeActionSize";
 import { activeLocale, useI18n } from "../i18n/context";
@@ -97,6 +96,10 @@ export default defineComponent({
       const resummonable = entry.onResummon !== undefined && entry.state === "snoozed";
       return (
         <li key={entry.id} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
+          {/* The row glyph renders through h(Icon, …): Vue's Component
+              union is not a valid JSX element type, so `<Icon />` is
+              not available here — both this tone glyph and the row
+              actions' RotateCcw go through the render function. */}
           <span class="hk-notification-row__icon" aria-hidden="true">
             {h(Icon, { size: 14 })}
           </span>

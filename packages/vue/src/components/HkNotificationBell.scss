@@ -78,8 +78,6 @@
   margin-top: var(--space-8, 0.5rem);
 }
 
-
-
 /* ── rows ─────────────────────────────────────────────────────────── */
 
 .hk-notification-row {
@@ -207,16 +205,4 @@
 .hk-notification-row__state {
   font-size: 0.6875rem;
   color: rgb(var(--color-text) / 45%);
-}
-
-.hk-notification-row__restore {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 0.75rem;
-  color: rgb(var(--color-primary, var(--color-text)) / 90%);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }

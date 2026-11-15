@@ -78,26 +78,13 @@
   margin-top: var(--space-8, 0.5rem);
 }
 
-.hk-notification-center__clear {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 0 var(--space-4, 0.25rem);
-  color: rgb(var(--color-text) / 55%);
-  font-size: 0.75rem;
-  cursor: pointer;
 
-  &:hover {
-    color: rgb(var(--color-text) / 85%);
-    text-decoration: underline;
-  }
-}
 
 /* ── rows ─────────────────────────────────────────────────────────── */
 
 .hk-notification-row {
   display: flex;
-  gap: var(--space-8, 0.5rem);
+  gap: var(--space-10, 0.625rem);
   padding: var(--space-8, 0.5rem) var(--space-8, 0.5rem);
   border-bottom: 1px solid rgb(var(--color-border) / 6%);
 
@@ -193,6 +180,7 @@
   display: flex;
   align-items: center;
   align-self: flex-start;
+  gap: var(--space-4, 0.25rem);
 }
 
 /* Ink for the per-row dismiss glyph (round-3 review, PR #1333 — proven

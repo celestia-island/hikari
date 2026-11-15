@@ -133,8 +133,10 @@ describe("panel rows", () => {
     const row = rows()[0];
     expect(row.classList.contains("is-snoozed")).toBe(true);
     expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Hidden");
-    const restore = row.querySelector<HTMLButtonElement>(".hk-notification-row__restore");
-    expect(restore?.textContent).toBe("Show again");
+    const restoreBtns = row.querySelectorAll<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button");
+    const restore = restoreBtns[restoreBtns.length - 1];
+    expect(restore, "restore button renders").toBeTruthy();
+    expect(restore!.getAttribute("aria-label")).toContain("Show again");
     restore!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
     // The band is live again and the record follows — and the restore
@@ -166,7 +168,7 @@ describe("panel rows", () => {
     await settle();
     expect(rows()).toHaveLength(1);
     expect(
-      rows()[0].querySelector(".hk-notification-row__actions .hk-icon-button"),
+      rows()[0].querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]'),
       "the emergency row must not carry the dismiss control",
     ).toBeNull();
   });
@@ -255,7 +257,7 @@ describe("panel rows", () => {
     const titles = rows().map((r) => r.querySelector(".hk-notification-row__title")?.textContent);
     expect(titles).toEqual(["newer", "older"]);
 
-    (document.querySelector<HTMLButtonElement>(".hk-notification-center__clear")!).dispatchEvent(
+    (document.querySelector<HTMLButtonElement>(".hk-notification-center__foot .hk-btn")!).dispatchEvent(
       new MouseEvent("click", { bubbles: true }),
     );
     await settle();

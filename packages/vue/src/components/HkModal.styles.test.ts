@@ -117,11 +117,13 @@ describe("HkModal JS-driven sheet dock (compiled contract)", () => {
   });
 
   it("the slide reveal the dock protects is itself pinned", () => {
-    // Symmetry guard (round-3 review): the dock's transform-free rule
-    // exists so the enter-from translateY(100%) can slide the sheet up
-    // from the bottom edge — the reveal literal is load-bearing for
-    // that contract (it appears in BOTH the desktop and the ≤767px
-    // enter-from blocks) and must not silently disappear.
+    // Round-3 symmetry guard, corrected in round 4: the translateY(100%)
+    // literal lives ONLY in the ≤767px enter-from block (desktop rides
+    // translateY(10px) scale(0.97)); the dock's transform-free rule
+    // exists so that mobile literal can slide the sheet up from the
+    // bottom edge. The deeper winner-level pin lives in
+    // HkModal.open-close-scale.test.ts; this whole-sheet containment is
+    // the cheap tripwire.
     expect(sheet).toContain("transform: translateY(100%)");
   });
 

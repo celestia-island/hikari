@@ -27,7 +27,7 @@
  * itself — an empty notification center still shows its (disabled-
  * looking) trigger so the host chrome never reflows on first use.
  */
-import { CircleCheck as CheckCircle, Info, LoaderCircle, TriangleAlert as AlertTriangle } from "lucide-vue-next";
+import { CircleCheck as CheckCircle, Info, LoaderCircle, TriangleAlert as AlertTriangle, X } from "lucide-vue-next";
 import { computed, defineComponent, h, ref, watch, type Component } from "vue";
 
 import { useChromeActionSize } from "../composables/useChromeActionSize";
@@ -67,7 +67,7 @@ export default defineComponent({
   name: "HkNotificationBell",
   setup() {
     const { t } = useI18n();
-    const { entries, markAllRead, reset } = useNotificationCenter();
+    const { entries, forget, markAllRead, reset } = useNotificationCenter();
     const chromeSize = useChromeActionSize();
     const open = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
@@ -146,6 +146,16 @@ export default defineComponent({
                 )}
               </div>
             )}
+          </div>
+          <div class="hk-notification-row__actions">
+            <HIconButton
+              size={24}
+              variant="ghost"
+              aria-label={t("hikari::notificationCenter.dismiss", "Dismiss")}
+              onClick={() => forget(entry.id)}
+            >
+              {{ icon: () => <X size={14} /> }}
+            </HIconButton>
           </div>
         </li>
       );

@@ -356,5 +356,6 @@
   "hikari::notificationCenter.empty": "No notifications yet",
   "hikari::notificationCenter.stateHidden": "Hidden",
   "hikari::notificationCenter.stateResolved": "Resolved",
-  "hikari::notificationCenter.clearAll": "Clear all"
+  "hikari::notificationCenter.clearAll": "Clear all",
+  "hikari::notificationCenter.dismiss": "Dismiss"
 }

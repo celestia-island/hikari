@@ -360,5 +360,6 @@
   "hikari::notificationCenter.empty": "暫無通知",
   "hikari::notificationCenter.stateHidden": "已隱藏",
   "hikari::notificationCenter.stateResolved": "已恢復",
-  "hikari::notificationCenter.clearAll": "全部清空"
+  "hikari::notificationCenter.clearAll": "全部清空",
+  "hikari::notificationCenter.dismiss": "消除"
 }

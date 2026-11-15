@@ -356,5 +356,6 @@
   "hikari::notificationCenter.empty": "通知はまだありません",
   "hikari::notificationCenter.stateHidden": "非表示",
   "hikari::notificationCenter.stateResolved": "解決済み",
-  "hikari::notificationCenter.clearAll": "すべて消去"
+  "hikari::notificationCenter.clearAll": "すべて消去",
+  "hikari::notificationCenter.dismiss": "削除"
 }

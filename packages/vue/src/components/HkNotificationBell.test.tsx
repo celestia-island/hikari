@@ -197,6 +197,27 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
   });
 
+  it("the row dismiss button forgets that entry only", async () => {
+    // The unified per-row affordance (user ruling 2026-11-15): every row
+    // carries a trailing dismiss control — remove THIS record, leave the
+    // rest of the journal alone.
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "keep me" });
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "drop me" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(2);
+    const dropRow = rows().find((r) => r.textContent?.includes("drop me"))!;
+    const dismiss = dropRow.querySelector<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button")!;
+    expect(dismiss.getAttribute("aria-label")).toBe("Dismiss");
+    dismiss.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0].textContent).toContain("keep me");
+  });
+
   it("a cleared emergency shows Resolved without a restore button", async () => {
     await setLocale("en");
     recordNotification({

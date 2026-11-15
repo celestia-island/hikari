@@ -18,7 +18,18 @@
 .hk-notification-center {
   display: flex;
   flex-direction: column;
-  width: min(22rem, 100%);
+  /* FIXED width, never a percentage: the popover panel sizes itself to
+     max-content, and a `min(22rem, 100%)` child resolves cyclically
+     there — the panel hugged the nowrap detail's FULL text width while
+     the body clamped to 22rem, leaving a dead band on the right (the
+     "莫名其妙的空挡"). A definite 22rem makes the panel wrap it exactly. */
+  width: 22rem;
+  max-width: calc(100vw - 2 * var(--viewport-gutter, 16px));
+
+  /* The mobile sheet is viewport-wide: the body follows. */
+  .hk-is-sheet & {
+    width: 100%;
+  }
 }
 
 .hk-notification-center__list {
@@ -172,6 +183,21 @@
   padding: 0 4px;
   border: 1px solid rgb(var(--color-border) / 25%);
   border-radius: 4px;
+}
+
+.hk-notification-row__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  /* Quiet by default, legible on hover/focus: a per-row dismiss must be
+     discoverable without shouting over the row's own content. */
+  color: rgb(var(--color-text) / 40%);
+
+  .hk-icon-button:hover &,
+  .hk-icon-button:focus-visible & {
+    color: rgb(var(--color-text) / 85%);
+  }
 }
 
 .hk-notification-row__meta {

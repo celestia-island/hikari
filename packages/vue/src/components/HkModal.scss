@@ -560,7 +560,12 @@
   bottom: var(--hk-sheet-bottom-gap, 0px);
   left: 0;
   right: 0;
-  transform: none;
+  /* NO transform here on purpose: the mobile slide-from-bottom reveal
+     (enter-from translateY(100%)) lives at (0,1,0) inside the media
+     query — a class-level `transform: none` at (0,2,0) would out-rank
+     it and kill the slide on every phone (round-2 review, PR #1335,
+     computed-style-proven). HkPopover's own .hk-is-sheet rule carries
+     no transform either. */
   translate: none;
   max-width: 100% !important;
   contain: layout style;

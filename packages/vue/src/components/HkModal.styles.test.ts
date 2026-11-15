@@ -32,7 +32,13 @@ function ruleBody(sheet: string, selector: string): string {
 
 const sheet = compile(resolve(componentDir, "HkModal.scss"), {
   style: "expanded",
-}).css.replace(/\s+/g, " ");
+}).css
+  // Strip comments BEFORE flattening: the sheet-dock rule sits behind a
+  // block comment in the compiled output, and its body carries an inline
+  // rationale — both would break the `}`-lookbehind selector match and
+  // poison the `not.toContain("transform")` negative.
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .replace(/\s+/g, " ");
 
 describe("HkModal window material (compiled contract)", () => {
   it("positions the backdrop layer under the chrome and inside the frame's corners", () => {
@@ -78,5 +84,41 @@ describe("HkModal window material (compiled contract)", () => {
     const shared = ruleBody(sheet, ".hk-modal-body::before, .hk-modal-body::after");
     expect(shared).toContain('content: ""');
     expect(shared).not.toContain("content: none");
+  });
+});
+
+
+describe("HkModal JS-driven sheet dock (compiled contract)", () => {
+  // Round-2 guard for PR #1335 (Via-browser field report): the class-
+  // driven dock rule is the fix's whole payload, and Vitest stubs CSS —
+  // deleting the 26-line block left every runtime test green. These pins
+  // read the COMPILED sheet: deleting the block or any load-bearing
+  // declaration fails here.
+  const dock = ruleBody(sheet, ".hk-modal-content.hk-is-sheet");
+
+  it("the dock rule compiles exactly once with the positioning subset", () => {
+    expect(dock).toContain("top: auto");
+    expect(dock).toContain("bottom: var(--hk-sheet-bottom-gap, 0px)");
+    expect(dock).toContain("left: 0");
+    expect(dock).toContain("right: 0");
+    // The dock anchors by left/right/bottom — the centered base's
+    // translate must be neutralized or the sheet rides half its own
+    // size up-left.
+    expect(dock).toContain("translate: none");
+    expect(dock).toContain("max-width: 100% !important");
+  });
+
+  it("carries NO class-level transform (the slide reveal must survive)", () => {
+    // Round-2 S1: a class-level `transform: none` at (0,2,0) out-ranks
+    // the media query's enter-from translateY(100%) at (0,1,0) and kills
+    // the slide-from-bottom on every phone. The class rule must not
+    // mention transform at all.
+    expect(dock).not.toContain("transform");
+  });
+
+  it("keeps the mobile chrome subset (radius, borders, caps)", () => {
+    expect(dock).toContain("border-radius: var(--hk-modal-radius, var(--radius-xl, 16px))");
+    expect(dock).toContain("border-left: 0");
+    expect(dock).toContain("max-height: calc(100dvh");
   });
 });

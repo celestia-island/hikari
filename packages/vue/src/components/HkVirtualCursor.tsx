@@ -67,7 +67,13 @@ export default defineComponent({
     const leftHeld = computed(() => (props.buttons & MASK_LEFT) !== 0);
     const rightHeld = computed(() => (props.buttons & MASK_RIGHT) !== 0);
 
+    /** One holder per bit: a lobe never TAKES OVER a bit another
+     *  surface (the dock pad, a host-side hold) already holds — its
+     *  release could not know the other holder remains, and an early
+     *  release would drop an in-flight drag. Release the other surface
+     *  first; the lobe renders held either way. */
     function lobeDown(mask: number) {
+      if ((props.buttons & mask) !== 0 && (pressedHere.value & mask) === 0) return;
       pressedHere.value |= mask;
       emit("press", mask, true);
     }

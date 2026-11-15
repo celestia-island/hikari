@@ -3,6 +3,7 @@ import { nextTick, ref } from "vue";
 
 import { useRemoteTouchGestures } from "./useRemoteTouchGestures";
 
+
 /** Dispatch a TouchEvent the recogniser sees (happy-dom carries no
  * real touch layout — the handler only reads clientX/Y and the touch
  * lists, which a synthetic TouchEvent accepts). */
@@ -138,6 +139,21 @@ describe("useRemoteTouchGestures", () => {
     host.value = null;
     await nextTick();
     expect(el.style.touchAction, "host value restored").toBe("pan-y");
+  });
+
+  it("a DISABLED grammar never claims touch-action (native gestures live)", async () => {
+    const host = ref<HTMLElement | null>(document.createElement("div"));
+    const enabled = ref(false);
+    useRemoteTouchGestures(host, {
+      onDelta: () => {}, onTap: () => {}, onLongPress: () => {}, onWheel: () => {},
+    }, enabled);
+    const el = host.value!;
+    expect(el.style.touchAction, "mounted-but-off leaves the host alone").toBe("");
+    // Re-armed mid-flight: claims; disarmed again: restores.
+    enabled.value = true;
+    expect(el.style.touchAction, "re-armed claims").toBe("none");
+    enabled.value = false;
+    expect(el.style.touchAction, "disarmed restores").toBe("");
   });
 
   it("disarm→rearm inside the tap window: the old finger's tail is dead", () => {

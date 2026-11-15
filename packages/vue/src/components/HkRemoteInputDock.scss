@@ -8,8 +8,10 @@
 
 .hk-remote-input-dock {
   position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
+  /* The dock-gap law (#1340): every dock's edge gap reads the shared
+   * override chain, never a private constant. */
+  right: var(--hk-dock-gap-right, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
+  bottom: var(--hk-dock-gap-bottom, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
   z-index: 3; /* above the session surface + virtual cursor */
   display: flex;
   flex-direction: column;

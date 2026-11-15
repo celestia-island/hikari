@@ -5,7 +5,7 @@ import { MousePointerClick } from "lucide-vue-next";
 import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
-import type { RemoteButtonActions } from "./remoteInputTypes";
+import { MASK_LEFT, MASK_MIDDLE, MASK_RIGHT, type RemoteButtonActions } from "./remoteInputTypes";
 import "./HkRemoteInputDock.scss";
 
 /**
@@ -140,9 +140,9 @@ export default defineComponent({
     }
 
     const padItems = computed(() => [
-      { key: "left", mask: 0b001 },
-      { key: "middle", mask: 0b010 },
-      { key: "right", mask: 0b100 },
+      { key: "left", mask: MASK_LEFT },
+      { key: "middle", mask: MASK_MIDDLE },
+      { key: "right", mask: MASK_RIGHT },
     ] as const);
 
     /** Roving-tab tabindex: only the checked radio is a tab stop. */

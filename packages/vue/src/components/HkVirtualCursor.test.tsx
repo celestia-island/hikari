@@ -110,6 +110,20 @@ describe("HkVirtualCursor", () => {
     ]);
   });
 
+  it("one holder per bit: a lobe refuses to take over a foreign hold", async () => {
+    // LEFT is held by the dock pad (flows in through props.buttons):
+    // pressing the left lobe must be refused — its release could not
+    // know the dock still holds the bit, and an early release would
+    // drop an in-flight drag.
+    const { lobes, presses } = mountCursor({
+      x: 10, y: 10, viewport: { width: 100, height: 100 }, buttons: 0b001,
+    });
+    lobes[0]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    lobes[0]!.dispatchEvent(new Event("pointerup", { bubbles: true }));
+    await nextTick();
+    expect(presses).toEqual([]);
+  });
+
   it("ownership: a leave releases only what THIS lobe pressed", async () => {
     // The left bit is held by ANOTHER surface (the dock pad — it flows
     // in through props.buttons): this surface's leave must NOT release

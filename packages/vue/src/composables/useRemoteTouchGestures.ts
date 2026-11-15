@@ -171,20 +171,45 @@ export function useRemoteTouchGestures(
   }
 
   let unbind: (() => void) | null = null;
+  let boundEl: HTMLElement | null = null;
   let prevTouchAction: string | null = null;
+
+  /** Claim the touch stream: without this the browser takes the
+   *  two-finger moves as pinch-zoom and cancels our touches before a
+   *  single notch lands (useContextMenu documents the same trap).
+   *  Only while ENABLED — a mounted-but-off grammar must not suppress
+   *  the host's native pinch/pan (the R5 finding). */
+  function claimTouchAction() {
+    const el = boundEl;
+    if (!el || !enabled.value || prevTouchAction !== null) return;
+    prevTouchAction = el.style.touchAction || "";
+    el.style.touchAction = "none";
+  }
+  function releaseTouchAction() {
+    const el = boundEl;
+    if (!el || prevTouchAction === null) return;
+    // Restore the host's own value; an empty prior value clears the
+    // property (assigning "" is a no-op in some engines' style sets).
+    if (prevTouchAction === "") {
+      el.style.removeProperty("touch-action");
+    } else {
+      el.style.touchAction = prevTouchAction;
+    }
+    prevTouchAction = null;
+  }
 
   function attach(el: HTMLElement | null) {
     unbind?.();
     unbind = null;
-    if (!el) return;
+    // Release with the OLD element still bound (the previous host's
+    // touch-action must go back before the pointer moves on).
+    releaseTouchAction();
+    boundEl = el;
     // A stale half-gesture (a finger left over from a disabled or
     // rebound session) must not poison the next one's bookkeeping.
     reset();
-    // Claim the touch stream: without this the browser takes the
-    // two-finger moves as pinch-zoom and cancels our touches before a
-    // single notch lands (useContextMenu documents the same trap).
-    prevTouchAction = el.style.touchAction || null;
-    el.style.touchAction = "none";
+    if (!el) return;
+    claimTouchAction();
     el.addEventListener("touchstart", onStart, { passive: true });
     el.addEventListener("touchmove", onMove, { passive: true });
     el.addEventListener("touchend", onEnd);
@@ -194,27 +219,23 @@ export function useRemoteTouchGestures(
       el.removeEventListener("touchmove", onMove);
       el.removeEventListener("touchend", onEnd);
       el.removeEventListener("touchcancel", onCancel);
-      // Restore the host's own value; an absent prior value clears the
-      // property (assigning "" is a no-op in some engines' style sets).
-      if (prevTouchAction === null) {
-        el.style.removeProperty("touch-action");
-      } else {
-        el.style.touchAction = prevTouchAction;
-      }
     };
   }
 
   const stop = watch(host, attach, { immediate: true });
-  // Disarming mid-gesture (the mode radio flipped while a finger rests
-  // on the surface) must not leave a live long-press timer or stale
-  // records — the grammar stops AT the flip, not after the next event.
-  // flush: 'sync' — a disarm→rearm flip INSIDE one tick (the mode
-  // radio bounced) must still reset; a pre-flush watch would only see
-  // the final value and let the stale gesture's tail fire.
+  // The gate stops the grammar AT the flip, not after the next event;
+  // the touch claim follows it — disarmed restores the host's native
+  // gestures, re-armed reclaims them. flush: 'sync' so a disarm→rearm
+  // bounce inside one tick still resets the stale gesture's tail.
   const stopEnabled = watch(
     enabled,
     (on) => {
-      if (!on) reset();
+      if (!on) {
+        reset();
+        releaseTouchAction();
+      } else {
+        claimTouchAction();
+      }
     },
     { flush: "sync" },
   );
@@ -222,6 +243,7 @@ export function useRemoteTouchGestures(
     stop();
     stopEnabled();
     unbind?.();
+    releaseTouchAction();
     reset();
   });
 

@@ -208,9 +208,16 @@ export function useRemoteTouchGestures(
   // Disarming mid-gesture (the mode radio flipped while a finger rests
   // on the surface) must not leave a live long-press timer or stale
   // records — the grammar stops AT the flip, not after the next event.
-  const stopEnabled = watch(enabled, (on) => {
-    if (!on) reset();
-  });
+  // flush: 'sync' — a disarm→rearm flip INSIDE one tick (the mode
+  // radio bounced) must still reset; a pre-flush watch would only see
+  // the final value and let the stale gesture's tail fire.
+  const stopEnabled = watch(
+    enabled,
+    (on) => {
+      if (!on) reset();
+    },
+    { flush: "sync" },
+  );
   onBeforeUnmount(() => {
     stop();
     stopEnabled();

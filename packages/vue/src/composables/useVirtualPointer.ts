@@ -50,7 +50,8 @@ export interface UseVirtualPointer {
   /** Move by a display-pixel delta inside a display box, rescaled
    *  per-axis into remote px. */
   nudge(displayDx: number, displayDy: number, display: { width: number; height: number }): void;
-  /** Press and release a mask (tap-click); reports both transitions. */
+  /** A TRANSIENT tap-click — an alias of `click` (held buttons ride
+   *  along; nothing persistent changes). */
   tap(mask: number): void;
   /** A TRANSIENT click alongside held buttons (see the docblock). */
   click(mask: number): void;
@@ -125,9 +126,11 @@ export function useVirtualPointer(
     sinks.pointer(state.x, state.y, state.buttons);
   }
 
+  // tap IS click: the pre-R3 twin (press down + press up) could
+  // silently RELEASE a button another surface held — the gesture
+  // handler is named onTap, so the releasing form was a trap.
   function tap(mask: number) {
-    press(mask, true);
-    press(mask, false);
+    click(mask);
   }
 
   function wheel(units: number) {

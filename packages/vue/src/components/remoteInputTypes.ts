@@ -74,15 +74,6 @@ export function clampToViewport(
   };
 }
 
-/** Map a display-pixel delta into remote pixels along both axes. */
-export function displayDeltaToRemote(
-  dx: number,
-  dy: number,
-  scale: number,
-): { dx: number; dy: number } {
-  return { dx: dx * scale, dy: dy * scale };
-}
-
 /** Wheel notches from a display-pixel vertical scroll (the canvas
  * coefficient: 53 display px per notch, positive scrolls up). */
 export function wheelNotches(displayDy: number): number {

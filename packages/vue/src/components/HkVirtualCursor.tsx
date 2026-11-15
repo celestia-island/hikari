@@ -1,6 +1,6 @@
 // AI-generated: developed with the DeepSeek Harness agent (model GLM-5.3 Flash); human-directed.
 
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 import {
@@ -77,6 +77,14 @@ export default defineComponent({
       pressedHere.value &= ~mask;
       emit("press", mask, false);
     }
+
+    // Teardown honesty (the dock's own invariant, applied here too): a
+    // lobe held when the cursor unmounts (mode flip, session drop)
+    // must release — a removed button can never leave the remote
+    // button latched.
+    onBeforeUnmount(() => {
+      for (const mask of [MASK_LEFT, MASK_RIGHT]) lobeUp(mask);
+    });
 
     return () => (
       <div class="hk-virtual-cursor" aria-label={props.label} role="presentation">

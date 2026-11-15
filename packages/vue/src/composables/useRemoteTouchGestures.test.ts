@@ -127,6 +127,38 @@ describe("useRemoteTouchGestures", () => {
     expect(el.style.touchAction, "claimed while attached").toBe("none");
     host.value = null; // rebind to nothing → restore
     await nextTick(); // the host watch flushes pre-render
-    expect(el.style.touchAction, "restored on detach").not.toBe("none");
+    expect(el.style.touchAction, "restored on detach").toBe("");
+    // A host-owned value survives the claim/detach cycle verbatim, and
+    // a flap back onto the same element re-captures the ORIGINAL (not
+    // the 'none' we set while attached).
+    el.style.touchAction = "pan-y";
+    host.value = el;
+    await nextTick();
+    expect(el.style.touchAction, "claimed again").toBe("none");
+    host.value = null;
+    await nextTick();
+    expect(el.style.touchAction, "host value restored").toBe("pan-y");
+  });
+
+  it("disarm→rearm inside the tap window: the old finger's tail is dead", () => {
+    const { el, h, enabled } = setup();
+    touch(el, "touchstart", [{ id: 1, x: 50, y: 50 }]);
+    enabled.value = false; // flip away…
+    enabled.value = true; // …and back, before the finger lifts
+    touch(el, "touchend", [], [{ id: 1, x: 51, y: 50 }]);
+    expect(h.onTap, "the pre-flip gesture's tail fires nothing").not.toHaveBeenCalled();
+  });
+
+  it("a rebound surface starts clean (no stale records)", async () => {
+    const { el, h, host } = setup();
+    touch(el, "touchstart", [{ id: 1, x: 50, y: 50 }]); // a gesture in flight…
+    const el2 = document.createElement("div");
+    host.value = el2; // …the host ref flaps to a NEW element
+    await nextTick();
+    // The fresh surface must not inherit the stale record: a normal
+    // tap on el2 lands.
+    touch(el2, "touchstart", [{ id: 2, x: 60, y: 60 }]);
+    touch(el2, "touchend", [], [{ id: 2, x: 61, y: 60 }]);
+    expect(h.onTap).toHaveBeenCalledWith(0b001);
   });
 });

@@ -180,6 +180,86 @@ describe("HkRemoteInputDock", () => {
     expect(esc.defaultPrevented).toBe(false);
   });
 
+  it("component UNMOUNT releases a held pad (the third teardown path)", async () => {
+    const actions = { setButtons: vitest.fn(), wheel: vitest.fn() };
+    const m = mountDock({ actions });
+    m.dial.click();
+    await nextTick();
+    m.btns()[1]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(actions.setButtons).toHaveBeenLastCalledWith(0b010);
+    while (mounts.length) mounts.pop()?.unmount();
+    expect(actions.setButtons).toHaveBeenLastCalledWith(0);
+  });
+
+  it("actions vanishing mid-hold clears the strand locally", async () => {
+    const actions = { setButtons: vitest.fn(), wheel: vitest.fn() };
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      setup() {
+        const live = ref<typeof actions | null>(actions);
+        return () => [
+          h(HkRemoteInputDock, { actions: live.value }),
+          h("button", { class: "drop", onClick: () => { live.value = null; } }, "drop"),
+          h("button", { class: "revive", onClick: () => { live.value = actions; } }, "revive"),
+        ];
+      },
+    });
+    mounts.push(app);
+    app.mount(container);
+    (container.querySelector<HTMLButtonElement>(".hk-remote-input-dock__dial"))!.click();
+    await nextTick();
+    const pad = () => [...container.querySelectorAll<HTMLButtonElement>(".hk-remote-input-dock__btn")];
+    pad()[0]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(actions.setButtons).toHaveBeenLastCalledWith(0b001);
+    // The wire vanishes mid-hold: no release frame can ride it (it is
+    // GONE), but the local bit must not linger into the next session.
+    (container.querySelector<HTMLButtonElement>(".drop"))!.click();
+    await nextTick();
+    (container.querySelector<HTMLButtonElement>(".revive"))!.click();
+    await nextTick();
+    actions.setButtons.mockClear();
+    pad()[0]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(actions.setButtons).toHaveBeenLastCalledWith(0b001); // the strand died with the old wire
+  });
+
+  it("the radiogroup roves tabindex and switches on arrows", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const mode = ref<"direct" | "virtual">("direct");
+    const app = createApp({
+      setup: () => () =>
+        h(HkRemoteInputDock, {
+          mode: mode.value,
+          "onUpdate:mode": (v: "direct" | "virtual") => { mode.value = v; },
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    (container.querySelector<HTMLButtonElement>(".hk-remote-input-dock__dial"))!.click();
+    await nextTick();
+    const radios = () => [...container.querySelectorAll<HTMLButtonElement>(".hk-remote-input-dock__mode")];
+    expect(radios()[0]!.tabIndex).toBe(0);
+    expect(radios()[1]!.tabIndex).toBe(-1);
+    radios()[0]!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    await nextTick();
+    expect(mode.value, "the arrow flipped the mode").toBe("virtual");
+    expect(radios()[1]!.tabIndex, "focus roved to the now-checked radio").toBe(0);
+  });
+
+  it("the pad carries its accessible group role and labels", async () => {
+    const m = mountDock({ actions: { setButtons: () => {}, wheel: () => {} } });
+    m.dial.click();
+    await nextTick();
+    const pad = m.container.querySelector('[class="hk-remote-input-dock__pad"]');
+    expect(pad!.getAttribute("role")).toBe("group");
+    expect(pad!.getAttribute("aria-label")).toBeTruthy();
+    const labelled = [...m.btns()].every((b) => b.getAttribute("aria-label"));
+    expect(labelled, "every pad button is labelled").toBe(true);
+  });
+
   it("renders host view controls through the default slot", async () => {
     const m = mountDock({}, () => h("button", { class: "host-ctl" }, "FIT"));
     m.dial.click();

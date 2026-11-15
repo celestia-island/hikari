@@ -122,6 +122,14 @@ export default defineComponent({
         if (h && open.value) setOpen(false);
       },
     );
+    // actions vanishing mid-hold (the session dropped): the disabled
+    // pad would swallow the pointerup — release what it held.
+    watch(
+      () => props.actions,
+      (a) => {
+        if (!a) releaseAll();
+      },
+    );
     onBeforeUnmount(() => {
       unbind();
       releaseAll();

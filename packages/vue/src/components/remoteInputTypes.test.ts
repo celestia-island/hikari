@@ -4,7 +4,6 @@ import {
   TAP_MAX_MS,
   TAP_MAX_TRAVEL_PX,
   clampToViewport,
-  displayDeltaToRemote,
   displayScale,
   wheelNotches,
 } from "./remoteInputTypes";
@@ -30,10 +29,6 @@ describe("remoteInputTypes pure helpers", () => {
     // Degenerate boxes keep 1:1 instead of exploding.
     expect(displayScale(1920, 0)).toBe(1);
     expect(displayScale(0, 960)).toBe(1);
-  });
-
-  it("maps display deltas into remote deltas", () => {
-    expect(displayDeltaToRemote(10, -4, 2)).toEqual({ dx: 20, dy: -8 });
   });
 
   it("converts display scroll to notches with the canvas coefficient", () => {

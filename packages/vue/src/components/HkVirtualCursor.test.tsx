@@ -96,6 +96,16 @@ describe("HkVirtualCursor", () => {
     ]);
   });
 
+  it("unmount releases a lobe still held (teardown honesty)", async () => {
+    const { lobes, presses } = mountCursor({ x: 10, y: 10, viewport: { width: 100, height: 100 } });
+    lobes[0]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(presses).toEqual([[0b001, true]]);
+    // Unmount mid-hold (a mode flip / session drop): the held bit MUST
+    // release — a removed button can never stay latched on the remote.
+    while (mounts.length) mounts.pop()?.unmount();
+    expect(presses).toEqual([[0b001, true], [0b001, false]]);
+  });
+
   it("ownership: a leave releases only what THIS lobe pressed", async () => {
     // The left bit is held by ANOTHER surface (the dock pad — it flows
     // in through props.buttons): this surface's leave must NOT release

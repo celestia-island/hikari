@@ -47,14 +47,17 @@ describe("useVirtualPointer", () => {
     expect(sinks.pointer, "pinned move reports nothing").not.toHaveBeenCalled();
   });
 
-  it("press reports absolute masks; tap is down-then-up in order", () => {
+  it("press reports absolute masks; tap rides alongside held buttons", () => {
     const sinks = makeSinks();
     const vp = useVirtualPointer(ref({ width: 100, height: 100 }), sinks);
+    vp.press(MASK_RIGHT, true); // something holds RIGHT
+    sinks.pointer.mockClear();
+    // tap (the gesture handler's natural target) is now the TRANSIENT
+    // semantics — a LEFT tap must not release the held RIGHT.
     vp.tap(MASK_LEFT);
     const calls = sinks.pointer.mock.calls.map((c) => c[2]);
-    expect(calls).toEqual([1, 0]); // press then release, positionally stable
-    vp.press(MASK_RIGHT, true);
-    expect(sinks.pointer).toHaveBeenLastCalledWith(50, 50, 4);
+    expect(calls).toEqual([0b101, 0b100]); // held|tap then held baseline
+    expect(vp.state.buttons).toBe(0b100); // untouched by the tap
     vp.press(MASK_RIGHT, false);
     expect(sinks.pointer).toHaveBeenLastCalledWith(50, 50, 0);
   });

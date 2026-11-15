@@ -14,9 +14,10 @@
  *
  * Chip contract:
  * - tone = the alert's severity (warning amber / danger red);
- * - label = the alert title; the detail card carries the description
- *   and a "show again" button — clicking it UNSNOOZES the alert (the
- *   band returns; the episode stays live until the condition clears).
+ * - label = the alert title; the detail card mirrors the original
+ *   toast text (icon + title + description — no extra affordances;
+ *   the tray's own Show-again button was retired 2026-11-15 — restore
+ *   lives in the notification-center bell panel).
  * - Narrow chrome bars (host passes `iconOnly`, e.g. via
  *   useBreakpoint().isMobile) collapse each chip to its tone icon;
  *   the group counter takes over from there.
@@ -27,13 +28,10 @@
 import { TriangleAlert } from "lucide-vue-next";
 import { computed, defineComponent } from "vue";
 
-import { useI18n } from "../i18n/context";
 import {
-  unsnoozeEmergencyAlert,
   useEmergencyAlert,
   type EmergencyAlertItem,
 } from "../runtime/useEmergencyAlert";
-import HkButton from "./HkButton";
 import HkPersistentToast from "./HkPersistentToast";
 import HkPersistentToastGroup from "./HkPersistentToastGroup";
 
@@ -50,7 +48,6 @@ export default defineComponent({
   },
   setup(props) {
     const { alerts } = useEmergencyAlert();
-    const { t } = useI18n();
 
     const snoozed = computed(() => alerts.filter((a) => a.snoozed));
     const resolvedMaxVisible = computed(() =>
@@ -77,13 +74,6 @@ export default defineComponent({
                 {item.description && (
                   <p class="hk-emergency-snooze-card__desc">{item.description}</p>
                 )}
-                <HkButton
-                  size="sm"
-                  variant="primary"
-                  onClick={() => unsnoozeEmergencyAlert(item.id)}
-                >
-                  {t("hikari::emergencyAlert.restore", "Show again")}
-                </HkButton>
               </div>
             ),
           }}

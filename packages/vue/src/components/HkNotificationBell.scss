@@ -26,9 +26,12 @@
   width: 22rem;
   max-width: calc(100vw - 2 * var(--viewport-gutter, 16px));
 
-  /* The mobile sheet is viewport-wide: the body follows. */
+  /* The mobile sheet is viewport-wide: the body follows (and the
+     desktop max-width must be reset, or a dead band reappears on the
+     sheet's right — round-2 review, PR #1333). */
   .hk-is-sheet & {
     width: 100%;
+    max-width: none;
   }
 }
 
@@ -191,11 +194,14 @@
   align-items: center;
   align-self: flex-start;
   /* Quiet by default, legible on hover/focus: a per-row dismiss must be
-     discoverable without shouting over the row's own content. */
+     discoverable without shouting over the row's own content. The ink
+     lands on the cell (the ghost button paints its own icon color), and
+     the brightening keys off the ROW's hover — the button is the child,
+     so a `.hk-icon-button:hover &` selector can never match. */
   color: rgb(var(--color-text) / 40%);
 
-  .hk-icon-button:hover &,
-  .hk-icon-button:focus-visible & {
+  .hk-notification-row:hover &,
+  .hk-notification-row:focus-within & {
     color: rgb(var(--color-text) / 85%);
   }
 }

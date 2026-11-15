@@ -26,7 +26,15 @@ describe("emergency snooze tray composition contract", () => {
     expect(tsx).not.toMatch(/class=["'][^"']*hk-persistent-toast(?!-group)/);
   });
 
-  it("restore goes through the context, not ad-hoc state", () => {
-    expect(tsx).toMatch(/unsnoozeEmergencyAlert\(item\.id\)/);
+  it("the detail card mirrors the toast text — no restore affordance here", () => {
+    // 2026-11-15 user ruling: the bell panel owns restore (each snoozed
+    // bell row carries the armed unsnooze button). The tray's hover card
+    // must not re-create it — that was the "添油加醋" the ruling retired,
+    // and a second restore home beside the bell's would fork the path.
+    expect(tsx).not.toMatch(/unsnoozeEmergencyAlert/);
+    expect(tsx).not.toMatch(/HkButton/);
+    // The card still mirrors the original toast's text surface:
+    expect(tsx).toContain("hk-emergency-snooze-card__title");
+    expect(tsx).toContain("hk-emergency-snooze-card__desc");
   });
 });

@@ -10,8 +10,9 @@ import { setLocale } from "../i18n/context";
  * COMPONENT contract: the segment order follows the ACTIVE hikari
  * locale (year first for zh-Hans, year LAST for en) with that locale's
  * own separators, the order re-derives live when the host flips the
- * locale, `time` appends the muted trailing segment, and unparseable
- * input renders the empty pill shell.
+ * locale, `time` appends the muted trailing segment, `seconds` widens
+ * that segment to hour:minute:second (only under `time`), and
+ * unparseable input renders the empty pill shell.
  */
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -20,7 +21,11 @@ const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement 
 // every CI time zone; the pill renders local calendar segments.
 const SHIP_DATE = new Date(2024, 9, 6, 14, 30);
 
-function mountTag(props: { value: string | number | Date; time?: boolean }): HTMLElement {
+function mountTag(props: {
+  value: string | number | Date;
+  time?: boolean;
+  seconds?: boolean;
+}): HTMLElement {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const app = createApp({ render: () => h(HkDateTag, props) });
@@ -120,6 +125,39 @@ describe("HkDateTag time segment", () => {
     expect(segs).toHaveLength(4);
     expect(segs[3].textContent).toBe("02:30 PM");
     expect(textOf(container)).toBe("10/06/2024 02:30 PM");
+  });
+});
+
+describe("HkDateTag seconds segment", () => {
+  // A nonzero second is the point: the widened segment must show the
+  // record's exact tick, not a padded zero.
+  const TICK = new Date(2024, 9, 6, 14, 30, 5);
+
+  it("widens the time segment to hour:minute:second when asked", async () => {
+    await setLocale("zh-Hans");
+    const container = mountTag({ value: TICK, time: true, seconds: true });
+    const segs = segsOf(container);
+    // Same segment count and element role as the plain time pill — the
+    // widening refines the segment in place.
+    expect(segs).toHaveLength(4);
+    expect(segs[3].classList.contains("hk-date-tag__seg--time")).toBe(true);
+    expect(segs[3].textContent).toBe("14:30:05");
+    expect(textOf(container)).toBe("2024/10/06 14:30:05");
+  });
+
+  it("formats the seconds form for the active locale", async () => {
+    await setLocale("en");
+    const container = mountTag({ value: TICK, time: true, seconds: true });
+    expect(segsOf(container)[3]!.textContent).toBe("02:30:05 PM");
+    expect(textOf(container)).toBe("10/06/2024 02:30:05 PM");
+  });
+
+  it("does nothing without the time flag", async () => {
+    await setLocale("zh-Hans");
+    const container = mountTag({ value: TICK, seconds: true });
+    const segs = segsOf(container);
+    expect(segs).toHaveLength(3);
+    expect(segs.some((s) => s.classList.contains("hk-date-tag__seg--time"))).toBe(false);
   });
 });
 

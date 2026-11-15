@@ -32,6 +32,11 @@ import "./HkDateTag.scss";
  *    `setLocale` re-orders the line live.
  *  - `time` (default false) appends the muted time segment
  *    (`hk-date-tag__seg--time`) after a blank separator.
+ *  - `seconds` (default false) widens the time segment to
+ *    hour:minute:second — it refines the `time` segment in place (same
+ *    element, same muted role) and does nothing when `time` is false.
+ *    Trace/log surfaces that need second precision (a 176ms tool call
+ *    landing between two :30 ticks) opt in; tables stay at HH:mm.
  */
 export const HkDateTag = defineComponent({
   name: "HkDateTag",
@@ -44,6 +49,8 @@ export const HkDateTag = defineComponent({
     },
     /** Append the muted locale time segment (hour + minute, 2-digit). */
     time: { type: Boolean, default: false },
+    /** Widen the time segment to hour:minute:second (needs `time`). */
+    seconds: { type: Boolean, default: false },
   },
   setup(props) {
     const date = computed<Date | null>(() => {
@@ -70,12 +77,18 @@ export const HkDateTag = defineComponent({
       }).formatToParts(d);
     });
 
-    /** The locale time (hour + minute, 2-digit) when the pill opts
-     * in — null without `time` or for an invalid date. */
+    /** The locale time (hour + minute, or hour:minute:second under
+     * `seconds`) when the pill opts in — null without `time` or for an
+     * invalid date. */
     const timeText = computed<string | null>(() => {
       const d = date.value;
       if (!props.time || d === null) return null;
-      return new Intl.DateTimeFormat(locale.value, { hour: "2-digit", minute: "2-digit" }).format(d);
+      return new Intl.DateTimeFormat(
+        locale.value,
+        props.seconds
+          ? { hour: "2-digit", minute: "2-digit", second: "2-digit" }
+          : { hour: "2-digit", minute: "2-digit" },
+      ).format(d);
     });
 
     return () => (

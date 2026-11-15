@@ -187,6 +187,10 @@ describe("installHkTooltipBridge", () => {
     );
     expect(el.hasAttribute("title")).toBe(true);
     expect(bridgePopup()?.classList.contains("hk-tooltip-visible")).toBe(false);
+    // The described-by relationship drops with the popup: a dangling
+    // aria-describedby to a hidden node would be announced by AT with
+    // no visible source (round-2 review, PR #1338).
+    expect(el.hasAttribute("aria-describedby")).toBe(false);
   });
 
   it("never engages a touch pointerover (the touch hint bar owns touch)", () => {

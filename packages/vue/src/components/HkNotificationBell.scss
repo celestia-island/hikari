@@ -142,6 +142,9 @@
 }
 
 .hk-notification-row__title-state {
+  /* flex:none sibling of the clipping title: must never be eaten by
+     the title's own ellipsis (round-2 review, PR #1338). */
+  flex: none;
   font-size: 0.6875rem;
   font-weight: 400;
   color: rgb(var(--color-muted, 108 108 108));

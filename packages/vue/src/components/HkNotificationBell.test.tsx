@@ -132,7 +132,7 @@ describe("panel rows", () => {
     await settle();
     const row = rows()[0];
     expect(row.classList.contains("is-snoozed")).toBe(true);
-    expect(row.querySelector(".hk-notification-row__title-state")?.textContent).toBe(" · Hidden");
+    expect(row.querySelector(".hk-notification-row__title-state")?.textContent).toBe("· Hidden");
     // The standalone chip is gone (folded into the title, user ruling).
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
     const restoreBtns = row.querySelectorAll<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button");
@@ -212,7 +212,7 @@ describe("panel rows", () => {
     bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
     const row = rows()[0];
-    expect(row.querySelector(".hk-notification-row__title-state")?.textContent).toBe(" · Resolved");
+    expect(row.querySelector(".hk-notification-row__title-state")?.textContent).toBe("· Resolved");
     expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     // R10 (PR #1333): the state-scoped gate means a CLEARED emergency
     // row IS dismissable — this is the pin that was lost in eb492e44's

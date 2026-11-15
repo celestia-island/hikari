@@ -390,6 +390,11 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
   }
 
   on("keydown", (e) => {
+    // Typing/tabs switch the modality back to keyboard: a hardware-
+    // keyboard user on a hybrid device must not lose focus tooltips
+    // because a finger touched the screen earlier (sticky-modality fix,
+    // round-2 review PR #1338).
+    state.lastPointerType = "keyboard";
     if ((e as KeyboardEvent).key === "Escape" && state.active) disengage(state);
   }, { capture: true });
 

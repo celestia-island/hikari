@@ -424,15 +424,15 @@
    * roughly another --space-16 of leading padding inside, so the old
    * single --space-16 left the title hanging left of every row it
    * named instead of reading as the list's heading. Hosts tune it via
-   * --hk-sheet-title-inset. Size/weight match the popover sheet heading
-   * (--text-base, window chrome never text-selectable). The trailing
+   * --hk-sheet-title-inset. Size/weight/color follow the WINDOW title
+   * grammar (.hk-modal-title, 2026-11-15 ruling: a sheet is a window —
+   * no special-cased sheet-title framework anywhere). The trailing
    * inset doubles as the gap to the close button; the vertical rhythm
    * moved to the header row. */
   padding: 0 var(--space-16) 0 var(--hk-sheet-title-inset, calc(var(--space-16) * 2));
-  font-size: var(--text-base);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgb(var(--color-muted));
+  font-size: var(--hk-modal-title-font-size, 1.125rem);
+  font-weight: var(--hk-modal-title-font-weight, 700);
+  color: var(--hk-modal-title-color, var(--hi-color-text-primary, #1e1e1e));
   @include user-select(none);
 }
 

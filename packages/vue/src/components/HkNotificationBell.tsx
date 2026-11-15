@@ -107,21 +107,21 @@ export default defineComponent({
             <div class="hk-notification-row__top">
               <span class="hk-notification-row__title" title={entry.title}>
                 {entry.title}
-                {/* The state word rides the TITLE as a muted suffix
-                    (2026-11-15 user ruling: the standalone chip was a
-                    meaningless extra label). */}
-                {(entry.state === "snoozed" || entry.state === "cleared") && (
-                  <span class="hk-notification-row__title-state">
-                    {" · "}
-                    {t(
-                      entry.state === "snoozed"
-                        ? "hikari::notificationCenter.stateHidden"
-                        : "hikari::notificationCenter.stateResolved",
-                      entry.state === "snoozed" ? "Hidden" : "Resolved",
-                    )}
-                  </span>
-                )}
               </span>
+              {/* The state word is a flex:none SIBLING of the clipping
+                  title (round-2 review: inside the span, ellipsis ate it
+                  first for exactly the long titles where it matters). */}
+              {(entry.state === "snoozed" || entry.state === "cleared") && (
+                <span class="hk-notification-row__title-state">
+                  {"· "}
+                  {t(
+                    entry.state === "snoozed"
+                      ? "hikari::notificationCenter.stateHidden"
+                      : "hikari::notificationCenter.stateResolved",
+                    entry.state === "snoozed" ? "Hidden" : "Resolved",
+                  )}
+                </span>
+              )}
               <time
                 class="hk-notification-row__time"
                 datetime={new Date(entry.updatedAt).toISOString()}

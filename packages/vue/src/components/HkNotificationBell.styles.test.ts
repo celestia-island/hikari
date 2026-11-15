@@ -31,8 +31,11 @@ describe("HkNotificationBell scss contract", () => {
     expect(scss).toMatch(
       /\.hk-notification-row__actions \.hk-icon-button\s*\{\s*--hi-icon-button-icon-color:/,
     );
+    // The joint rule block: BOTH pseudo-classes must key the var, each
+    // in its own selector arm (a mutant that keeps only :focus-within
+    // and downgrades :hover to inert ancestor color fails here).
     expect(scss).toMatch(
-      /\.hk-notification-row:(?:hover|focus-within) \.hk-notification-row__actions \.hk-icon-button[\s\S]*?--hi-icon-button-icon-color:/,
+      /\.hk-notification-row:hover \.hk-notification-row__actions \.hk-icon-button,\s*\n\.hk-notification-row:focus-within \.hk-notification-row__actions \.hk-icon-button\s*\{[^}]*--hi-icon-button-icon-color:\s*rgb\(var\(--color-text\) \/ 85%\)/,
     );
     expect(scss).toMatch(
       /\.hk-notification-row:focus-within \.hk-notification-row__actions \.hk-icon-button\s*\{\s*--hi-icon-button-icon-color:/,

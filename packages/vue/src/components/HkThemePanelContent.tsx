@@ -331,6 +331,7 @@ export const HkThemePanelContent = defineComponent({
                 data-active={isActive || undefined}
                 aria-current={isActive ? "true" : undefined}
                 actions={actions}
+                actionsMode="persistent"
                 actionsLabel={t("hikari::theme.rowActionsLabel")}
                 onClick={() => onSelectTheme(th.id)}
               >

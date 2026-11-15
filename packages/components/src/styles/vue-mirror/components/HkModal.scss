@@ -555,6 +555,48 @@
 //     band tracks the real chrome instead of a static guess)
 //   - rounded top corners only, full width
 // ------
+/* JS-driven sheet dock (2026-11-15 field report — Via browser on an
+ * aging Android WebView: every HkModal skewed off-viewport-left while
+ * HkPopover's JS-class sheet rendered fine — the engine lags on the
+ * CSS media query and/or the individual `translate` property this
+ * file's centered frame relies on). HkModal now carries the SAME
+ * breakpoint signal HkPopover uses; when the app is mobile this class
+ * docks the sheet with ancient-CSS-only positioning (left/right/
+ * bottom/top:auto — no `translate` in the path), out-ranking the
+ * centered base (0,2,0 > 0,1,0). Modern engines: the class and the
+ * ≤767px media query below agree — same values, no conflict. */
+.hk-modal-content.hk-is-sheet {
+  top: auto;
+  bottom: var(--hk-sheet-bottom-gap, 0px);
+  left: 0;
+  right: 0;
+  /* NO transform here on purpose: the mobile slide-from-bottom reveal
+     (enter-from translateY(100%)) lives at (0,1,0) inside the media
+     query — a class-level `transform: none` at (0,2,0) would out-rank
+     it and kill the slide on every phone (round-2 review, PR #1335,
+     computed-style-proven). HkPopover's own .hk-is-sheet rule carries
+     no transform either. */
+  translate: none;
+  max-width: 100% !important;
+  contain: layout style;
+  background: var(
+    --hk-modal-bg-mobile,
+    var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)))
+  );
+  border-radius: var(--hk-modal-radius, var(--radius-xl, 16px))
+                 var(--hk-modal-radius, var(--radius-xl, 16px))
+                 0 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  max-height: calc(
+    100vh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+  ) !important;
+  max-height: calc(
+    100dvh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+  ) !important;
+}
+
 @media (max-width: 767px) {
   // Docked sheets never re-filter their backdrop per frame: the sheet
   // is a fixed, full-width layer whose geometry changes with every

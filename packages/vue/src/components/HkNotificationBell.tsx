@@ -108,6 +108,20 @@ export default defineComponent({
               <span class="hk-notification-row__title" title={entry.title}>
                 {entry.title}
               </span>
+              {/* The state word is a flex:none SIBLING of the clipping
+                  title (round-2 review: inside the span, ellipsis ate it
+                  first for exactly the long titles where it matters). */}
+              {(entry.state === "snoozed" || entry.state === "cleared") && (
+                <span class="hk-notification-row__title-state">
+                  {"· "}
+                  {t(
+                    entry.state === "snoozed"
+                      ? "hikari::notificationCenter.stateHidden"
+                      : "hikari::notificationCenter.stateResolved",
+                    entry.state === "snoozed" ? "Hidden" : "Resolved",
+                  )}
+                </span>
+              )}
               <time
                 class="hk-notification-row__time"
                 datetime={new Date(entry.updatedAt).toISOString()}
@@ -120,20 +134,6 @@ export default defineComponent({
                 {entry.code && <code class="hk-notification-row__code">{entry.code}</code>}
                 {entry.detail && <span class="hk-notification-row__detail-text">{entry.detail}</span>}
               </p>
-            )}
-            {(entry.state === "snoozed" || entry.state === "cleared") && (
-              <div class="hk-notification-row__meta">
-                {entry.state === "snoozed" && (
-                  <span class="hk-notification-row__state">
-                    {t("hikari::notificationCenter.stateHidden", "Hidden")}
-                  </span>
-                )}
-                {entry.state === "cleared" && (
-                  <span class="hk-notification-row__state">
-                    {t("hikari::notificationCenter.stateResolved", "Resolved")}
-                  </span>
-                )}
-              </div>
             )}
           </div>
           <div class="hk-notification-row__actions">

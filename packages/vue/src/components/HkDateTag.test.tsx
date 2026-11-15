@@ -148,7 +148,9 @@ describe("HkDateTag seconds segment", () => {
   it("formats the seconds form for the active locale", async () => {
     await setLocale("en");
     const container = mountTag({ value: TICK, time: true, seconds: true });
-    expect(segsOf(container)[3]!.textContent).toBe("02:30:05 PM");
+    const segs = segsOf(container);
+    expect(segs).toHaveLength(4);
+    expect(segs[3]!.textContent).toBe("02:30:05 PM");
     expect(textOf(container)).toBe("10/06/2024 02:30:05 PM");
   });
 
@@ -158,6 +160,9 @@ describe("HkDateTag seconds segment", () => {
     const segs = segsOf(container);
     expect(segs).toHaveLength(3);
     expect(segs.some((s) => s.classList.contains("hk-date-tag__seg--time"))).toBe(false);
+    // No time segment also means NO separator — the pill's text is the
+    // bare date, byte-identical to the no-flags render.
+    expect(textOf(container)).toBe("2024/10/06");
   });
 });
 

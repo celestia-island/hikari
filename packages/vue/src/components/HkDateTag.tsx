@@ -10,7 +10,8 @@ import "./HkDateTag.scss";
  * dates (zh: 2024/10/06 — year first; en: 10/06/2024 — the year LAST;
  * de: 06.10.2024 — day first), joined by that locale's own literal
  * separators. With the `time` flag a fourth, muted segment carries the
- * locale time (hour + minute, 2-digit) after a blank separator.
+ * locale time (hour + minute, 2-digit — widened to hour:minute:second
+ * under `seconds`) after a blank separator.
  *
  * Generic business part (peer of HkTemplateText / HkMarkdownRenderer,
  * NOT of the HkInput family): hosts render compact per-row dates in

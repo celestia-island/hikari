@@ -2,7 +2,7 @@ import { computed, defineComponent, onMounted, ref, watch } from "vue";
 import { AlertTriangle, ChevronDown, ChevronRight, UnfoldVertical } from "lucide-vue-next";
 import HkSpinner from "./HkSpinner";
 import { useI18n } from "../i18n/context";
-import { highlight } from "../composables/useHighlight";
+import { highlight, useHighlight } from "../composables/useHighlight";
 import { computeGaps, parseUnifiedDiff, type DiffLine, type UnchangedGap } from "./diffParse";
 import type { OverlayScrollMapSegment } from "../composables/useOverlayScrollbar";
 import "./HkDiffViewer.scss";
@@ -28,6 +28,45 @@ import "./HkDiffViewer.scss";
  * (useHighlight): grammars load on demand and rows re-color once the
  * grammar lands, exactly like the markdown code blocks.
  */
+
+/**
+ * Line-highlight memo.
+ *
+ * A diff pane re-renders on every fold toggle, every revealed context
+ * batch and every scroll-map emission, and each pass used to run the wasm
+ * pest parser once per VISIBLE row — so collapsing and re-expanding one
+ * hunk re-highlighted the same bytes three times, and a long file paid for
+ * its whole window on every interaction. A row's html is a pure function of
+ * (language, text) and rows come straight out of the immutable parsed diff,
+ * so the result is computed once per pair and reused for the lifetime of
+ * the page (bounded, and keyed by language so two panes on different
+ * languages never share an entry).
+ *
+ * Invalidation: `highlight()` falls back to escaped text until the wasm
+ * module lands, and the module bumps a reactive version when it does — the
+ * epoch below drops every pre-load entry so the colored html is recomputed
+ * exactly once instead of the plaintext being served forever.
+ */
+const HIGHLIGHT_MEMO_LIMIT = 4000;
+const highlightMemo = new Map<string, string>();
+let highlightMemoEpoch = -1;
+
+function memoHighlight(text: string, lang: string, epoch: number): string {
+  if (epoch !== highlightMemoEpoch) {
+    highlightMemoEpoch = epoch;
+    highlightMemo.clear();
+  }
+  const key = `${lang}\u0000${text}`;
+  const hit = highlightMemo.get(key);
+  if (hit !== undefined) return hit;
+  const html = highlight(text, lang);
+  // Drop the whole batch rather than track an LRU: the memo is shared
+  // module-level across panes, so an overflow clears every pane's entries
+  // (bounded, not locality-preserving) and the next pass refills it.
+  if (highlightMemo.size >= HIGHLIGHT_MEMO_LIMIT) highlightMemo.clear();
+  highlightMemo.set(key, html);
+  return html;
+}
 
 interface GapState {
   /** Lines already revealed. */
@@ -75,6 +114,10 @@ export default defineComponent({
   setup(props, { emit }) {
     const host = ref<HTMLElement | null>(null);
     const { t } = useI18n();
+    // Reading this inside the render effect keeps the rows subscribed to the
+    // wasm load: when the module lands the epoch changes, the memo drops its
+    // plaintext entries and every row re-colors in the same pass.
+    const { version: highlightEpoch } = useHighlight();
 
     const parsed = computed(() => parseUnifiedDiff(props.diff));
     const gaps = computed(() => computeGaps(parsed.value, props.totalLines ?? null));
@@ -253,7 +296,10 @@ export default defineComponent({
 
     function renderLine(line: DiffLine, key: string) {
       const sign = line.kind === "add" ? "+" : line.kind === "del" ? "−" : "";
-      const html = props.language ? highlight(line.text, props.language) : null;
+      // Memoized: a fold toggle re-renders the row, it does not re-parse it.
+      const html = props.language
+        ? memoHighlight(line.text, props.language, highlightEpoch.value)
+        : null;
       return (
         <div class="hk-diff-viewer__line" data-kind={line.kind} key={key}>
           <span class="hk-diff-viewer__no">{line.oldNo ?? ""}</span>

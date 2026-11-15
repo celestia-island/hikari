@@ -186,6 +186,28 @@ function sweepDangerousUrlAttributes(html: string): string {
   }
 }
 
+/**
+ * Streaming coalescing window, in ms.
+ *
+ * A streamed reply (chat delta, agent trace, report being assembled) lands
+ * one chunk per token batch — many chunks per animation frame — and every
+ * chunk used to run the WHOLE pipeline: marked.parse over the entire body,
+ * DOMPurify, the DOMParser URL sweep, an innerHTML replacement of a node
+ * the browser then re-lays-out, plus a full mermaid re-mount. At n chunks
+ * over a body of length L that is O(n·L) parse work for O(L) of visible
+ * text, and the DOM writes land far faster than the eye (or the compositor)
+ * can use them.
+ *
+ * Chunks arriving inside one window collapse into a single parse against
+ * the LATEST props: the leading edge renders immediately when the renderer
+ * is idle (first paint, a settled body), and a change that lands inside the
+ * window defers to the window's end. The timer is armed once per window,
+ * never re-armed by later chunks — a debounce would starve the render
+ * entirely under a chunk every 40ms, and the trailing edge guarantees the
+ * final chunk is always rendered.
+ */
+const STREAM_COALESCE_MS = 50;
+
 export default defineComponent({
   name: "HkMarkdownRenderer",
   props: {
@@ -220,30 +242,111 @@ export default defineComponent({
     // behind after `inlineChips` goes back to false.
     const parseSeq = ref(0);
 
+    let coalesceTimer: ReturnType<typeof setTimeout> | null = null;
+    let parsePending = false;
+    let lastParseStartedAt = Number.NEGATIVE_INFINITY;
+    // Monotonic token: a coalesced parse can still overlap the previous one
+    // (the marked/DOMPurify imports resolve on their own schedule), and the
+    // older one must never overwrite the newer body when it finishes last.
+    let parseToken = 0;
+    // Parse memo. `renderedHtml` is a pure function of (content, plain) — the
+    // sanitize configuration is module-fixed, so nothing else can change the
+    // markup. Remembers the source the CURRENT html came from, which lets an
+    // `inlineChips` flip (same body, different chrome) re-seat the existing
+    // markup instead of paying a second marked+sanitize pass for it.
+    let parsedSourceKey: string | null = null;
+
+    function nowMs(): number {
+      return typeof performance !== "undefined" && typeof performance.now === "function"
+        ? performance.now()
+        : Date.now();
+    }
+
+    function parseSourceKey(content: string, plain: boolean): string {
+      return plain ? `plain\u0000${content}` : `md\u0000${content}`;
+    }
+
     async function parse() {
-      if (!props.content) {
+      const token = (parseToken += 1);
+      lastParseStartedAt = nowMs();
+      const content = props.content;
+      if (!content) {
         renderedHtml.value = "";
+        parseError.value = false;
+        parsedSourceKey = null;
+        // Re-seat the body even when empty: the DOM pass is what prunes the
+        // sub-apps and the overlay handles the now-gone content owned.
+        parseSeq.value += 1;
+        return;
+      }
+      const plain = props.plain;
+      const sourceKey = parseSourceKey(content, plain);
+      if (sourceKey === parsedSourceKey) {
+        // Same body, different chrome: the markup is already in hand. Bump
+        // the sequence so the chip pass re-runs from the pristine html.
+        parseSeq.value += 1;
         return;
       }
       parseError.value = false;
+      let html: string;
       try {
-        if (props.plain) {
-          renderedHtml.value = renderPlain(props.content);
-        } else {
-          renderedHtml.value = await renderMarkdown(props.content);
-        }
+        html = plain ? renderPlain(content) : await renderMarkdown(content);
       } catch {
         parseError.value = true;
-        renderedHtml.value = renderPlain(props.content);
-      } finally {
-        parseSeq.value += 1;
+        html = renderPlain(content);
       }
+      if (token !== parseToken) return; // a newer parse already owns the body
+      renderedHtml.value = html;
+      parsedSourceKey = sourceKey;
+      parseSeq.value += 1;
     }
 
+    /** @see STREAM_COALESCE_MS — coalesced entry for streaming content. */
+    function scheduleParse(): void {
+      parsePending = true;
+      if (coalesceTimer !== null) return;
+      const elapsed = nowMs() - lastParseStartedAt;
+      if (elapsed >= STREAM_COALESCE_MS) {
+        // Idle leading edge: start now, on the same tick the unfixed
+        // renderer always did (first paint, SSR/hydration, a settled body
+        // receiving one edit). The window exists only to collect a burst.
+        parsePending = false;
+        void parse();
+        return;
+      }
+      coalesceTimer = setTimeout(() => {
+        coalesceTimer = null;
+        if (!parsePending) return;
+        parsePending = false;
+        void parse();
+      }, STREAM_COALESCE_MS - elapsed);
+    }
+
+    /** Immediate entry for one-shot prop flips (drop a pending coalesce). */
+    function parseNow(): void {
+      if (coalesceTimer !== null) {
+        clearTimeout(coalesceTimer);
+        coalesceTimer = null;
+      }
+      parsePending = false;
+      void parse();
+    }
+
+    // Content is the streaming dimension: coalesced (see scheduleParse).
+    // `flush: "post"` keeps the parse behind any prop update that landed in
+    // the same tick, so it always reads the settled props.
     watch(
-      () => [props.content, props.plain, props.inlineChips],
-      () => { void parse(); },
-      { immediate: true },
+      () => props.content,
+      () => { scheduleParse(); },
+      { immediate: true, flush: "post" },
+    );
+
+    // Chrome flips are deliberate one-shot actions, not a stream: render at
+    // once (the memo turns an `inlineChips` flip into a DOM re-seat).
+    watch(
+      () => [props.plain, props.inlineChips],
+      () => { parseNow(); },
+      { flush: "post" },
     );
 
     // Overlay scrollbars (shared chrome) on the markdown blocks that can
@@ -259,33 +362,57 @@ export default defineComponent({
     // the only way to mount a component inside it); they are tracked so
     // a re-parse (body replaced wholesale) and the final unmount never
     // leak an app on a detached node.
-    const mermaidApps: Array<{ el: HTMLElement; app: App }> = [];
-
-    function pruneMermaidApps(): void {
-      for (let i = mermaidApps.length - 1; i >= 0; i -= 1) {
-        if (!mermaidApps[i].el.isConnected) {
-          mermaidApps[i].app.unmount();
-          mermaidApps.splice(i, 1);
-        }
-      }
-    }
+    //
+    // `source` is kept alongside the node so a re-parse can RECOGNISE a
+    // diagram whose fence text did not change and hand the existing node
+    // (with its live sub-app, board and canvas) into the new slot: the
+    // mount is the expensive half of a mermaid block (engine layout), and
+    // while streaming every chunk that grows a LATER part of the body
+    // re-emits the fences above it byte-identically.
+    const mermaidApps: Array<{ el: HTMLElement; app: App; source: string }> = [];
 
     function syncMermaidBlocks(body: HTMLElement): void {
-      pruneMermaidApps();
-      if (!getMermaidEngine()) return;
-      for (const carrier of body.querySelectorAll<HTMLElement>('.hk-md-mermaid-src[data-mermaid="pending"]')) {
-        const source = carrier.querySelector("code")?.textContent ?? "";
-        const host = document.createElement("div");
-        host.className = "hk-md-mermaid";
-        host.dataset.mermaid = "mounted";
-        carrier.replaceWith(host);
-        // Report contexts are narrow reading panes: the minimap is noise
-        // for a diagram-sized board, canvas dragging stays on (wide
-        // diagrams are exactly what pan was built for).
-        const app = createApp(HkMermaidDiagram, { source, minimap: false, interactive: true });
-        app.mount(host);
-        mermaidApps.push({ el: host, app });
+      const carriers = [...body.querySelectorAll<HTMLElement>('.hk-md-mermaid-src[data-mermaid="pending"]')];
+      // Reuse pool: mounted hosts grouped by fence source, in document
+      // order, so identical fences pair up one-to-one and predictably.
+      const spare = new Map<string, Array<{ el: HTMLElement; app: App; source: string }>>();
+      for (const mounted of mermaidApps) {
+        const list = spare.get(mounted.source);
+        if (list) list.push(mounted);
+        else spare.set(mounted.source, [mounted]);
       }
+      const kept = new Set<{ el: HTMLElement; app: App; source: string }>();
+      if (getMermaidEngine()) {
+        for (const carrier of carriers) {
+          const source = carrier.querySelector("code")?.textContent ?? "";
+          const reuse = spare.get(source)?.shift();
+          if (reuse) {
+            // Same fence text → the same rendered diagram: splice the live
+            // node into the re-seated body instead of unmounting it here
+            // and mounting a byte-identical one a millisecond later.
+            carrier.replaceWith(reuse.el);
+            kept.add(reuse);
+            continue;
+          }
+          const host = document.createElement("div");
+          host.className = "hk-md-mermaid";
+          host.dataset.mermaid = "mounted";
+          carrier.replaceWith(host);
+          // Report contexts are narrow reading panes: the minimap is noise
+          // for a diagram-sized board, canvas dragging stays on (wide
+          // diagrams are exactly what pan was built for).
+          const app = createApp(HkMermaidDiagram, { source, minimap: false, interactive: true });
+          app.mount(host);
+          kept.add({ el: host, app, source });
+        }
+      }
+      // Everything not carried into this pass belongs to a fence that is
+      // gone from the body (or to a render with no engine): retire it.
+      for (const mounted of mermaidApps) {
+        if (!kept.has(mounted)) mounted.app.unmount();
+      }
+      mermaidApps.length = 0;
+      mermaidApps.push(...kept);
     }
 
     function syncOverlayScrollbars() {
@@ -321,6 +448,14 @@ export default defineComponent({
     });
 
     onBeforeUnmount(() => {
+      // A stream can still be mid-flight at teardown: the pending coalesce
+      // must not fire a parse (and a body write) on an unmounted component.
+      if (coalesceTimer !== null) {
+        clearTimeout(coalesceTimer);
+        coalesceTimer = null;
+      }
+      parsePending = false;
+      parseToken += 1;
       for (const c of overlayScrollbars) c.handle.detach();
       overlayScrollbars.length = 0;
       for (const m of mermaidApps) m.app.unmount();

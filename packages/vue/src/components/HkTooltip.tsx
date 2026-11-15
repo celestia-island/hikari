@@ -1,4 +1,4 @@
-import { computed, defineComponent, nextTick, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType, type SlotsType } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, ref, Teleport, watch, type CSSProperties, type PropType, type SlotsType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
 import { armTouchHint } from "../runtime/touchHint";
@@ -33,6 +33,39 @@ export interface HkTooltipConfirmSlotProps {
 export type TooltipTrigger = "hover" | "click";
 
 let popupSeq = 0;
+
+/**
+ * Position tracking budget.
+ *
+ * The bubble used to own a permanent per-frame loop for as long as it was
+ * visible: two `getBoundingClientRect` reads plus the computed-style zoom
+ * lookup, re-placing the popup 60 times a second whether anything had moved
+ * or not (a hover annotation in a dense grid cost more than the app it
+ * annotated). Geometry now follows explicit signals — see `hookPositionSignals`
+ * — and the frame loop only survives to catch motion that fires no event at
+ * all; it retires on its own once the trigger has held still.
+ */
+/** One geometry sample per display frame at most (16.7ms @ 60Hz). */
+const POSITION_FRAME_MIN_MS = 16;
+/** No rect change for this long ⇒ the trigger is at rest ⇒ retire. */
+const POSITION_QUIET_MS = 180;
+
+interface RectSnapshot {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+function nowMs(): number {
+  return typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
+}
+
+function rectSnapshot(rect: DOMRect): RectSnapshot {
+  return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+}
 
 export default defineComponent({
   name: "HkTooltip",
@@ -82,6 +115,25 @@ export default defineComponent({
     const popupRef = ref<HTMLElement | null>(null);
     let showTimer: ReturnType<typeof setTimeout> | null = null;
     let positionFrame: number | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let signalsHooked = false;
+    let lastSampleAt = Number.NEGATIVE_INFINITY;
+    let quietSince = 0;
+    let lastTriggerRect: RectSnapshot | null = null;
+
+    /** Did the trigger move since the last placement? One gBCR read is the
+     *  entire cost of a static frame now. */
+    function rectMoved(next: RectSnapshot): boolean {
+      const prev = lastTriggerRect;
+      return (
+        !prev ||
+        prev.left !== next.left ||
+        prev.top !== next.top ||
+        prev.width !== next.width ||
+        prev.height !== next.height
+      );
+    }
+
     // Click mode owns its own dismissal wiring: listeners exist only while
     // the popup is open, and the trigger focus is remembered so a dismissal
     // decision can hand focus back.
@@ -112,8 +164,12 @@ export default defineComponent({
     }
 
     function updatePosition() {
-      if (!wrapperRef.value || !popupRef.value) return;
-      const rect = wrapperRef.value.getBoundingClientRect();
+      const trigger = wrapperRef.value;
+      const popup = popupRef.value;
+      if (!trigger || !popup) return;
+      const rect = trigger.getBoundingClientRect();
+      lastTriggerRect = rectSnapshot(rect);
+      quietSince = nowMs();
       // Placement geometry lives in the shared runtime helper (it also
       // serves the document-level tooltip bridge) — including the
       // ancestor-zoom division that keeps teleported popups pinned to
@@ -121,28 +177,139 @@ export default defineComponent({
       // that keeps the measured bubble inside the viewport gutter (flip,
       // cap, shift) instead of spilling off-screen or shrinking to the
       // containing block's leftover space.
-      applyTooltipPosition(popupRef.value, rect, props.placement, props.maxWidth, {
+      applyTooltipPosition(popup, rect, props.placement, props.maxWidth, {
         allowBandOverlap: props.allowBandOverlap,
       });
+      observeGeometry();
     }
 
     function stopPositionTracking() {
       if (positionFrame !== null) cancelAnimationFrame(positionFrame);
       positionFrame = null;
+      // A fresh show always places once, whatever the trigger did while
+      // the bubble was down.
+      lastTriggerRect = null;
     }
 
-    function trackPositionWhileVisible() {
+    /** One cheap sample: the trigger rect, and nothing else. */
+    function samplePosition() {
+      positionFrame = null;
+      if (!visible.value) return;
+      const now = nowMs();
+      // One sample per display frame at most: `requestAnimationFrame` is a
+      // ~60Hz clock in a browser, but not in accelerated environments
+      // (happy-dom drives it off setImmediate), and the geometry pass must
+      // never run more often than a paint could use it.
+      if (now - lastSampleAt < POSITION_FRAME_MIN_MS) {
+        ensureSampler();
+        return;
+      }
+      lastSampleAt = now;
+      const trigger = wrapperRef.value;
+      // Both nodes must exist before a sample means anything: the popup is
+      // rendered by the next flush after a show, so a missing node is
+      // "not placed yet", never "at rest" — the loop waits for it instead
+      // of retiring before the first placement.
+      if (trigger && popupRef.value) {
+        if (rectMoved(rectSnapshot(trigger.getBoundingClientRect()))) {
+          updatePosition();
+        } else if (now - quietSince >= POSITION_QUIET_MS) {
+          // Nothing has moved for a while: retire the loop. The next signal
+          // (scroll / resize / wheel / ResizeObserver) revives it, and a
+          // resting tooltip then costs exactly zero frames.
+          return;
+        }
+      }
+      ensureSampler();
+    }
+
+    function ensureSampler() {
       if (positionFrame !== null) return;
-      const tick = () => {
-        positionFrame = null;
-        if (!visible.value) return;
-        // A visible trigger can move without a pointer event (treemap wheel
-        // zoom, minimap pan, layout animation). Re-read its rect per frame
-        // until hide/unmount; each visible tooltip owns one such loop.
-        updatePosition();
-        positionFrame = requestAnimationFrame(tick);
-      };
-      positionFrame = requestAnimationFrame(tick);
+      positionFrame = requestAnimationFrame(samplePosition);
+    }
+
+    /**
+     * Event-driven re-placement: the signal itself is the measurement
+     * trigger, so the bubble lands on the event's own turn instead of
+     * waiting for the next frame — pan/zoom/drag then track the trigger
+     * exactly, and stay free while nothing happens.
+     */
+    function nudgePositionTracking() {
+      if (!visible.value) return;
+      lastSampleAt = Number.NEGATIVE_INFINITY;
+      lastTriggerRect = null;
+      updatePosition();
+      ensureSampler();
+    }
+
+    function beginPositionTracking() {
+      hookPositionSignals();
+      lastTriggerRect = null;
+      lastSampleAt = Number.NEGATIVE_INFINITY;
+      quietSince = nowMs();
+      ensureSampler();
+      observeGeometry();
+    }
+
+    // ── geometry signals ─────────────────────────────────────────────
+    // A visible bubble follows three kinds of motion: container movement
+    // (scroll, any scroller — capture phase), viewport changes (resize),
+    // and canvas/camera motion (wheel), all of which move the trigger
+    // without an enter/leave. Size changes come from a ResizeObserver on
+    // the trigger and on the bubble itself (its own box reflows when the
+    // text lands). Whatever still slips through — an un-evented transform
+    // animation — is caught by the short sampler above, which is the only
+    // reason a frame loop still exists at all.
+    const observedNodes = new Set<Element>();
+
+    function observeGeometry() {
+      if (typeof ResizeObserver === "undefined") return;
+      const observer = ensureResizeObserver();
+      for (const node of [wrapperRef.value, popupRef.value]) {
+        if (!node || observedNodes.has(node)) continue;
+        observedNodes.add(node);
+        observer.observe(node);
+      }
+    }
+
+    function ensureResizeObserver(): ResizeObserver {
+      if (!resizeObserver) {
+        resizeObserver = new ResizeObserver(() => nudgePositionTracking());
+      }
+      return resizeObserver;
+    }
+
+    function hookPositionSignals() {
+      if (signalsHooked) return;
+      signalsHooked = true;
+      window.addEventListener("resize", nudgePositionTracking, { passive: true });
+      // Capture phase on purpose: the scroller that moves the trigger is
+      // usually an inner card / list / diff body, and a bubble-phase
+      // document listener would never see it.
+      document.addEventListener("scroll", nudgePositionTracking, { capture: true, passive: true });
+      // Wheel is the pan/zoom signal of every canvas surface (treemap,
+      // minimap, board) — those move an element with no scroll and no
+      // resize at all.
+      window.addEventListener("wheel", nudgePositionTracking, { passive: true, capture: true });
+      // A DRAG pan emits neither scroll nor wheel: it starts at a
+      // pointerdown, which nudges once and re-arms the sampler while the
+      // trigger keeps moving (each moving sample restarts the quiet
+      // window). A pause longer than POSITION_QUIET_MS mid-gesture retires
+      // the sampler; the next pointerdown/scroll/wheel re-arms it.
+      document.addEventListener("pointerdown", nudgePositionTracking, { capture: true, passive: true });
+    }
+
+    function unhookPositionSignals() {
+      if (signalsHooked) {
+        signalsHooked = false;
+        window.removeEventListener("resize", nudgePositionTracking);
+        document.removeEventListener("scroll", nudgePositionTracking, true);
+        window.removeEventListener("wheel", nudgePositionTracking, true);
+        document.removeEventListener("pointerdown", nudgePositionTracking, true);
+      }
+      resizeObserver?.disconnect();
+      resizeObserver = null;
+      observedNodes.clear();
     }
 
     function show() {
@@ -158,7 +325,7 @@ export default defineComponent({
       ensureEngaged();
       showTimer = setTimeout(() => {
         visible.value = true;
-        trackPositionWhileVisible();
+        beginPositionTracking();
       }, props.delay);
     }
 
@@ -233,7 +400,7 @@ export default defineComponent({
       clearShowTimer();
       ensureEngaged();
       visible.value = true;
-      trackPositionWhileVisible();
+      beginPositionTracking();
       // A keyboard activation must land on the actions rather than staying
       // on the trigger; remember the origin for the focus hand-back.
       const active = document.activeElement;
@@ -298,9 +465,22 @@ export default defineComponent({
       });
     }
 
+    // Anything that changes the geometry INPUTS while the bubble is up
+    // (placement, the width cap, the band exemption, the caption text that
+    // sizes the box) re-places on the spot — the retired frame loop used to
+    // pick these up for free, so they must be an explicit signal.
+    watch(
+      () => [props.placement, props.maxWidth, props.allowBandOverlap, props.text],
+      () => { nudgePositionTracking(); },
+      { flush: "post" },
+    );
+
     onBeforeUnmount(() => {
       clearShowTimer();
       stopPositionTracking();
+      // Observers and listeners outlive the bubble by design (re-shows must
+      // not churn them) but never the component.
+      unhookPositionSignals();
       cancelTouchHint();
       detachDismissal();
       if (popupHandle) {

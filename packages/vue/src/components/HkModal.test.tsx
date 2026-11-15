@@ -14,6 +14,49 @@ afterEach(async () => {
 });
 
 describe("HkModal overlay integration", () => {
+  it("the JS breakpoint drives the sheet class (2026-11-15 Via-browser field report)", async () => {
+    // The CSS media query and the individual `translate` property both
+    // lagged on the reporting device's WebView — every HkModal skewed
+    // off-viewport-left while HkPopover's JS-class sheet rendered fine.
+    // The sheet branch now rides the SAME JS signal: isMobile →
+    // .hk-is-sheet, and the SCSS docks the frame by class alone.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const previousWidth = window.innerWidth;
+    const open = ref(true);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, { modelValue: open.value }, { default: () => h("div", "content") });
+      },
+    });
+    try {
+      // Mobile: the frame docks via the class.
+      (window as { innerWidth: number }).innerWidth = 500;
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      await nextTick();
+      const sheetFrame = document.querySelector<HTMLElement>(".hk-modal-content");
+      expect(sheetFrame, "modal frame renders").toBeTruthy();
+      expect(sheetFrame!.classList.contains("hk-is-sheet")).toBe(true);
+
+      // Desktop: the centered frame comes back (class absent).
+      app.unmount();
+      (window as { innerWidth: number }).innerWidth = 1280;
+      const app2 = createApp(Wrapper);
+      mounts.push(app2);
+      app2.mount(container);
+      await nextTick();
+      const deskFrame = document.querySelector<HTMLElement>(".hk-modal-content");
+      expect(deskFrame!.classList.contains("hk-is-sheet")).toBe(false);
+    } finally {
+      (window as { innerWidth: number }).innerWidth = previousWidth;
+    }
+  });
+
   it("closeAll() closes an open closable modal through its update:modelValue", async () => {
     const container = document.createElement("div");
     document.body.appendChild(container);

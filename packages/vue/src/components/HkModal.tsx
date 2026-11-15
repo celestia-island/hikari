@@ -32,6 +32,7 @@ import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 
 export interface ModalAction {
   label: string;
@@ -196,6 +197,14 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const { t } = useI18n();
     const manager = usePopupManager();
+    // JS-driven sheet branch (2026-11-15 field report — Via browser:
+    // every HkModal skewed off-viewport-left while HkPopover's
+    // JS-class sheet rendered fine; the device's WebView lags on the
+    // CSS media query / individual `translate` path). The class rides
+    // the SAME breakpoint signal the rest of the app uses, so when the
+    // app is mobile the modal docks as a sheet regardless of engine
+    // CSS support. Modern engines: class and media query agree.
+    const { isMobile: sheetMobile } = useBreakpoint();
     // Open/close motion reported into the unified animation context
     // (animationBus) — one track for the whole surface, armed on the
     // machine's animation-phase edges.
@@ -1098,7 +1107,7 @@ export default defineComponent({
             />
             <div
                   ref={contentRef}
-                  class={["hk-modal-content", props.contentClass, ...machine.classesFor("hk-modal-content")]}
+                  class={["hk-modal-content", ...(sheetMobile.value ? ["hk-is-sheet"] : []), props.contentClass, ...machine.classesFor("hk-modal-content")]}
                   role="dialog"
                   aria-modal="true"
                   aria-label={resolvedSurfaceName.value}

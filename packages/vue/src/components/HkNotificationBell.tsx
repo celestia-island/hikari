@@ -27,7 +27,7 @@
  * itself — an empty notification center still shows its (disabled-
  * looking) trigger so the host chrome never reflows on first use.
  */
-import { CircleCheck as CheckCircle, Info, LoaderCircle, TriangleAlert as AlertTriangle, X } from "lucide-vue-next";
+import { CircleCheck as CheckCircle, Info, LoaderCircle, RotateCcw, TriangleAlert as AlertTriangle, X } from "lucide-vue-next";
 import { computed, defineComponent, h, ref, watch, type Component } from "vue";
 
 import { useChromeActionSize } from "../composables/useChromeActionSize";
@@ -37,7 +37,8 @@ import {
   type HkNotificationEntry,
   type HkNotificationTone,
 } from "../runtime/notificationCenter";
-import HIconButton from "./HkIconButton";
+import HkIconButton from "./HkIconButton";
+import HkButton from "./HkButton";
 import HkPopover from "./HkPopover";
 import "./HkNotificationBell.scss";
 
@@ -91,18 +92,15 @@ export default defineComponent({
 
     function renderRow(entry: HkNotificationEntry) {
       const Icon = TONE_ICONS[entry.tone] ?? Info;
-      // A restore button exists ONLY for a SNOOZED entry with a live
-      // path (R2 finding, PR #1322): the callback may briefly survive
-      // a restore (the source re-arms/clears it), but an on-screen
-      // band is not something "Show again" can bring back — the state
-      // gate keeps a dead control off the row.
+      const isLive = entry.kind === "emergency" && entry.state !== "cleared";
       const resummonable = entry.onResummon !== undefined && entry.state === "snoozed";
       return (
         <li key={entry.id} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
+          {/* The row glyph renders through h(Icon, …): Vue's Component
+              union is not a valid JSX element type, so `<Icon />` is
+              not available here — both this tone glyph and the row
+              actions' RotateCcw go through the render function. */}
           <span class="hk-notification-row__icon" aria-hidden="true">
-            {/* Render via h(): Vue's `Component` union includes non-callable
-                option types, so `<Icon />` is not a valid JSX element type
-                (the HkNavSidebar convention). */}
             {h(Icon, { size: 14 })}
           </span>
           <div class="hk-notification-row__body">
@@ -135,38 +133,34 @@ export default defineComponent({
                     {t("hikari::notificationCenter.stateResolved", "Resolved")}
                   </span>
                 )}
-                {resummonable && (
-                  <button
-                    type="button"
-                    class="hk-notification-row__restore"
-                    onClick={() => entry.onResummon?.()}
-                  >
-                    {t("hikari::emergencyAlert.restore", "Show again")}
-                  </button>
-                )}
               </div>
             )}
           </div>
-          {/* The unified per-row dismiss (user ruling 2026-11-15) applies
-              to RECORDS — but never to a LIVE emergency episode: a
-              snoozed alert's entry carries the app's ONLY restore handle
-              (onResummon), and forgetting it would strand the alert with
-              no recall path while the polled episode self-reverts the
-              row (round-6 review, PR #1333). Cleared rows are records
-              again and stay dismissable. */}
-          {(entry.kind !== "emergency" ||
-            entry.state === "cleared") && (
-            <div class="hk-notification-row__actions">
-              <HIconButton
+          <div class="hk-notification-row__actions">
+            {/* Dismiss is gated OFF for live emergency episodes (round-6
+                S1: a snoozed alert's entry carries the ONLY restore
+                handle). Restore is gated ON only for snoozed entries. */}
+            {!isLive && (
+              <HkIconButton
                 size={24}
                 variant="ghost"
                 aria-label={t("hikari::notificationCenter.dismiss", "Dismiss")}
                 onClick={() => forget(entry.id)}
               >
                 {{ icon: () => <X size={14} /> }}
-              </HIconButton>
-            </div>
-          )}
+              </HkIconButton>
+            )}
+            {resummonable && (
+              <HkIconButton
+                size={24}
+                variant="ghost"
+                aria-label={t("hikari::emergencyAlert.restore", "Show again")}
+                onClick={() => entry.onResummon?.()}
+              >
+                {{ icon: () => h(RotateCcw, { size: 14 }) }}
+              </HkIconButton>
+            )}
+          </div>
         </li>
       );
     }
@@ -175,7 +169,7 @@ export default defineComponent({
       const label = t("hikari::notificationCenter.title", "Notifications");
       return (
         <span ref={anchorRef} class="hk-notification-bell">
-          <HIconButton
+          <HkIconButton
             icon="bell"
             size={chromeSize.value}
             variant="ghost"
@@ -213,13 +207,13 @@ export default defineComponent({
                     {sorted.value.map(renderRow)}
                   </ul>
                   <div class="hk-notification-center__foot">
-                    <button
-                      type="button"
-                      class="hk-notification-center__clear"
+                    <HkButton
+                      variant="ghost"
+                      size="sm"
                       onClick={() => reset()}
                     >
                       {t("hikari::notificationCenter.clearAll", "Clear all")}
-                    </button>
+                    </HkButton>
                   </div>
                 </>
               )}

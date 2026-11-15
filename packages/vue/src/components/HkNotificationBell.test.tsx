@@ -133,14 +133,16 @@ describe("panel rows", () => {
     const row = rows()[0];
     expect(row.classList.contains("is-snoozed")).toBe(true);
     expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Hidden");
-    const restore = row.querySelector<HTMLButtonElement>(".hk-notification-row__restore");
-    expect(restore?.textContent).toBe("Show again");
+    const restoreBtns = row.querySelectorAll<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button");
+    const restore = restoreBtns[restoreBtns.length - 1];
+    expect(restore, "restore button renders").toBeTruthy();
+    expect(restore!.getAttribute("aria-label")).toContain("Show again");
     restore!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
     // The band is live again and the record follows — and the restore
     // button is GONE (R2 finding: no dead control on an active band).
     expect(row.classList.contains("is-active")).toBe(true);
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
   });
 
   it("an ACTIVE emergency row (band on screen) shows no restore button", async () => {
@@ -152,7 +154,7 @@ describe("panel rows", () => {
     await settle();
     const row = rows()[0];
     expect(row.classList.contains("is-active")).toBe(true);
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
@@ -166,7 +168,7 @@ describe("panel rows", () => {
     await settle();
     expect(rows()).toHaveLength(1);
     expect(
-      rows()[0].querySelector(".hk-notification-row__actions .hk-icon-button"),
+      rows()[0].querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]'),
       "the emergency row must not carry the dismiss control",
     ).toBeNull();
   });
@@ -209,7 +211,7 @@ describe("panel rows", () => {
     await settle();
     const row = rows()[0];
     expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     // R10 (PR #1333): the state-scoped gate means a CLEARED emergency
     // row IS dismissable — this is the pin that was lost in eb492e44's
     // wrong-sibling deletion.
@@ -255,7 +257,7 @@ describe("panel rows", () => {
     const titles = rows().map((r) => r.querySelector(".hk-notification-row__title")?.textContent);
     expect(titles).toEqual(["newer", "older"]);
 
-    (document.querySelector<HTMLButtonElement>(".hk-notification-center__clear")!).dispatchEvent(
+    (document.querySelector<HTMLButtonElement>(".hk-notification-center__foot .hk-btn")!).dispatchEvent(
       new MouseEvent("click", { bubbles: true }),
     );
     await settle();

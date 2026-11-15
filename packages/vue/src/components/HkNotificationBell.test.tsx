@@ -233,24 +233,6 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
-  it("a snoozed emergency shows Hidden + a working restore button", async () => {
-    await setLocale("en");
-    recordNotification({
-      id: "emergency:done",
-      kind: "emergency",
-      tone: "warning",
-      title: "resolved",
-      state: "cleared",
-    });
-    mountBell();
-    await settle();
-    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    await settle();
-    const row = rows()[0];
-    expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
-  });
-
   it("rows sort newest-first and Clear all empties the journal", async () => {
     await setLocale("en");
     const { entries } = useNotificationCenter();

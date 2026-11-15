@@ -356,5 +356,6 @@
   "hikari::notificationCenter.empty": "Noch keine Benachrichtigungen",
   "hikari::notificationCenter.stateHidden": "Ausgeblendet",
   "hikari::notificationCenter.stateResolved": "Behoben",
-  "hikari::notificationCenter.clearAll": "Alle löschen"
+  "hikari::notificationCenter.clearAll": "Alle löschen",
+  "hikari::notificationCenter.dismiss": "Verwerfen"
 }

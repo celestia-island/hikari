@@ -27,7 +27,7 @@
  * itself — an empty notification center still shows its (disabled-
  * looking) trigger so the host chrome never reflows on first use.
  */
-import { CircleCheck as CheckCircle, Info, LoaderCircle, TriangleAlert as AlertTriangle } from "lucide-vue-next";
+import { CircleCheck as CheckCircle, Info, LoaderCircle, TriangleAlert as AlertTriangle, X } from "lucide-vue-next";
 import { computed, defineComponent, h, ref, watch, type Component } from "vue";
 
 import { useChromeActionSize } from "../composables/useChromeActionSize";
@@ -67,7 +67,7 @@ export default defineComponent({
   name: "HkNotificationBell",
   setup() {
     const { t } = useI18n();
-    const { entries, markAllRead, reset } = useNotificationCenter();
+    const { entries, forget, markAllRead, reset } = useNotificationCenter();
     const chromeSize = useChromeActionSize();
     const open = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
@@ -147,6 +147,26 @@ export default defineComponent({
               </div>
             )}
           </div>
+          {/* The unified per-row dismiss (user ruling 2026-11-15) applies
+              to RECORDS — but never to a LIVE emergency episode: a
+              snoozed alert's entry carries the app's ONLY restore handle
+              (onResummon), and forgetting it would strand the alert with
+              no recall path while the polled episode self-reverts the
+              row (round-6 review, PR #1333). Cleared rows are records
+              again and stay dismissable. */}
+          {(entry.kind !== "emergency" ||
+            entry.state === "cleared") && (
+            <div class="hk-notification-row__actions">
+              <HIconButton
+                size={24}
+                variant="ghost"
+                aria-label={t("hikari::notificationCenter.dismiss", "Dismiss")}
+                onClick={() => forget(entry.id)}
+              >
+                {{ icon: () => <X size={14} /> }}
+              </HIconButton>
+            </div>
+          )}
         </li>
       );
     }

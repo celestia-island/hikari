@@ -356,5 +356,6 @@
   "hikari::notificationCenter.empty": "لا إشعارات بعد",
   "hikari::notificationCenter.stateHidden": "مخفي",
   "hikari::notificationCenter.stateResolved": "تم الحل",
-  "hikari::notificationCenter.clearAll": "مسح الكل"
+  "hikari::notificationCenter.clearAll": "مسح الكل",
+  "hikari::notificationCenter.dismiss": "تجاهل"
 }

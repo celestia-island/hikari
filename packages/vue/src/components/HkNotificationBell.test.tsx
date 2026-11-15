@@ -156,6 +156,21 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
+  it("an emergency row carries NO dismiss button (live episode is not user-dismissable)", async () => {
+    await setLocale("en");
+    raiseEmergencyAlert({ id: "quota", severity: "warning", title: "quota out", dismissible: true });
+    snoozeEmergencyAlert("quota");
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    expect(
+      rows()[0].querySelector(".hk-notification-row__actions .hk-icon-button"),
+      "the emergency row must not carry the dismiss control",
+    ).toBeNull();
+  });
+
   it("a same-millisecond tie renders the LATER push above (append order)", async () => {
     // R8/R9 pin (PR #1322): with updatedAt equal the journal's own
     // append order judges — the later push must sit above the earlier
@@ -195,24 +210,34 @@ describe("panel rows", () => {
     const row = rows()[0];
     expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
     expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    // R10 (PR #1333): the state-scoped gate means a CLEARED emergency
+    // row IS dismissable — this is the pin that was lost in eb492e44's
+    // wrong-sibling deletion.
+    expect(
+      row.querySelector(".hk-notification-row__actions .hk-icon-button"),
+      "a resolved record is dismissable",
+    ).not.toBeNull();
   });
 
-  it("a cleared emergency shows Resolved without a restore button", async () => {
+  it("the row dismiss button forgets that entry only", async () => {
+    // The unified per-row affordance (user ruling 2026-11-15): every row
+    // carries a trailing dismiss control — remove THIS record, leave the
+    // rest of the journal alone.
     await setLocale("en");
-    recordNotification({
-      id: "emergency:done",
-      kind: "emergency",
-      tone: "warning",
-      title: "resolved",
-      state: "cleared",
-    });
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "keep me" });
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "drop me" });
     mountBell();
     await settle();
     bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
-    const row = rows()[0];
-    expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
-    expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    expect(rows()).toHaveLength(2);
+    const dropRow = rows().find((r) => r.textContent?.includes("drop me"))!;
+    const dismiss = dropRow.querySelector<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button")!;
+    expect(dismiss.getAttribute("aria-label")).toBe("Dismiss");
+    dismiss.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0].textContent).toContain("keep me");
   });
 
   it("rows sort newest-first and Clear all empties the journal", async () => {

@@ -16,8 +16,9 @@ import {
  * - snoozed alerts render HkPersistentToast chips (severity tone,
  *   label = title), iconOnly collapses to the icon (label span gone,
  *   aria-label kept)
- * - the restore button in the detail card unsnoozes (the alert
- *   returns to the band; the chip leaves the tray)
+ * - the detail card mirrors the original toast text (icon + title +
+ *   description) with NO restore button — restore lives in the
+ *   notification-center bell panel (2026-11-15 user ruling)
  */
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -105,21 +106,21 @@ describe("HEmergencySnoozeTray", () => {
     expect(chip.getAttribute("aria-label")).toBe("可用额度已用完");
   });
 
-  it("the restore button unsnoozes: the chip leaves the tray", async () => {
+  it("the hover card mirrors the toast text with NO restore button", async () => {
+    // 2026-11-15 user ruling: the bell panel owns restore; the tray's
+    // hover card is a text mirror only (no second restore home beside
+    // the bell's).
     mountHost();
     raiseEmergencyAlert({ id: "q", severity: "warning", title: "t", dismissible: true });
     snoozeEmergencyAlert("q");
     await settle();
-    // The detail card is lazy: clicking the chip pins it open, which
-    // is how a keyboard/touch user reaches the restore button.
     chips()[0].click();
     await settle();
-    const restore = document.querySelector<HTMLButtonElement>(".hk-emergency-snooze-card button");
-    expect(restore).not.toBeNull();
-    restore!.click();
-    await settle();
-    const { alerts } = useEmergencyAlert();
-    expect(alerts[0]?.snoozed).toBe(false);
-    expect(chips()).toHaveLength(0);
+    expect(
+      document.querySelector(".hk-emergency-snooze-card button"),
+      "the tray must not grow a second restore affordance",
+    ).toBeNull();
+    // The title text still mirrors the original toast.
+    expect(document.querySelector(".hk-emergency-snooze-card__title")?.textContent).toBe("t");
   });
 });

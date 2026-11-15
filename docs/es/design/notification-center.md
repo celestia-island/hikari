@@ -62,3 +62,7 @@ composición). Las fuentes escriben mediante `recordNotification` /
 y deciden dónde vive.
 
 Los ids que registra el anfitrión comparten un espacio de cadenas plano con los espejos integrados: los prefijos `toast:` / `blocking:` / `emergency:` están reservados por ellos — un anfitrión que registre fichas persistentes o elementos propios elige su propio prefijo (p. ej. `myapp:`) para que un id personalizado nunca pueda secuestrar un episodio integrado.
+
+## La excepción de emergencia
+
+Las filas de emergencia son la única excepción: mientras el episodio está VIVO (activo o snoozed), la fila no lleva control de descarte — su entrada del diario contiene la única guía de restauración de la alerta, y un re-raise sondeado resucitaría una fila borrada. El gesto del usuario se aplica a registros (toasts, puertas de confirmación, emergencias resueltas que siguen consultables), nunca a un episodio vivo.

@@ -18,7 +18,21 @@
 .hk-notification-center {
   display: flex;
   flex-direction: column;
-  width: min(22rem, 100%);
+  /* FIXED width, never a percentage: the popover panel sizes itself to
+     max-content, and a `min(22rem, 100%)` child resolves cyclically
+     there — the panel hugged the nowrap detail's FULL text width while
+     the body clamped to 22rem, leaving a dead band on the right (the
+     "莫名其妙的空挡"). A definite 22rem makes the panel wrap it exactly. */
+  width: 22rem;
+  max-width: calc(100vw - 2 * var(--viewport-gutter, 16px));
+
+  /* The mobile sheet is viewport-wide: the body follows (and the
+     desktop max-width must be reset, or a dead band reappears on the
+     sheet's right — round-2 review, PR #1333). */
+  .hk-is-sheet & {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 .hk-notification-center__list {
@@ -172,6 +186,27 @@
   padding: 0 4px;
   border: 1px solid rgb(var(--color-border) / 25%);
   border-radius: 4px;
+}
+
+.hk-notification-row__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+}
+
+/* Ink for the per-row dismiss glyph (round-3 review, PR #1333 — proven
+ * by computed style): the ghost HkIconButton pins its glyph to
+ * --hi-icon-button-icon-color ON the button, so `color` on any ancestor
+ * is inert. The var must be overridden on the button itself: quiet
+ * secondary ink at rest, legible on row hover or keyboard focus-within. */
+.hk-notification-row__actions .hk-icon-button {
+  --hi-icon-button-icon-color: rgb(var(--color-text) / 40%);
+}
+
+.hk-notification-row:hover .hk-notification-row__actions .hk-icon-button,
+.hk-notification-row:focus-within .hk-notification-row__actions .hk-icon-button {
+  --hi-icon-button-icon-color: rgb(var(--color-text) / 85%);
 }
 
 .hk-notification-row__meta {

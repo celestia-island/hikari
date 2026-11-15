@@ -356,5 +356,6 @@
   "hikari::notificationCenter.empty": "Уведомлений пока нет",
   "hikari::notificationCenter.stateHidden": "Скрыто",
   "hikari::notificationCenter.stateResolved": "Устранено",
-  "hikari::notificationCenter.clearAll": "Очистить всё"
+  "hikari::notificationCenter.clearAll": "Очистить всё",
+  "hikari::notificationCenter.dismiss": "Скрыть"
 }

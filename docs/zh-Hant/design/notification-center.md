@@ -44,3 +44,7 @@ HeaderEndCluster），帶額外視窗控制鈕的桌面殼不受影響（它們�
 宿主掛 `<HkNotificationBell />` 並決定它住在哪。
 
 宿主記帳的 id 與內建鏡像共用同一個扁平字串空間：`toast:` / `blocking:` / `emergency:` 前綴為內建保留——宿主記錄駐留 chip 或自訂條目時自選前綴（如 `myapp:`），自訂 id 永遠不可能劫持內建 episode。
+
+## 緊急行例外
+
+緊急行是唯一的例外：episode **存續期間**（active 或 snoozed）該行**不帶消除鈕**——其帳本條目持有該警報唯一的恢復句柄，且輪詢 re-raise 會復活被刪的行。已恢復（cleared）的緊急是記錄，用戶可消除；活著的 episode 從不被用戶消除。

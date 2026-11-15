@@ -64,3 +64,7 @@ composition). Les sources écrivent via `recordNotification` /
 décident où il vit.
 
 Les ids enregistrés par l'hôte partagent un espace de chaînes plat avec les miroirs intégrés : les préfixes `toast:` / `blocking:` / `emergency:` sont réservés par ceux-ci — un hôte qui enregistre des puces persistantes ou des éléments personnalisés choisit son propre préfixe (p. ex. `myapp:`) pour qu'un id personnalisé ne puisse jamais détourner un épisode intégré.
+
+## L'exception d'urgence
+
+Les lignes d'urgence sont la seule exception : tant que l'épisode est VIVANT (actif ou snoozé), la ligne ne porte pas de contrôle de suppression — son entrée de journal détient l'unique poignée de restauration de l'alerte, et un re-raise pollé ressusciterait une ligne supprimée. Le geste de l'utilisateur s'applique aux enregistrements (toasts, portes de confirmation) et aux urgences résolues une fois leur épisode terminé ; jamais à un épisode vivant.
